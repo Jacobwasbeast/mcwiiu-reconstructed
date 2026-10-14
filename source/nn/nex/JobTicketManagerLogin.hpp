@@ -25,9 +25,9 @@ class JobTicketManagerLogin : public StepSequenceJob
 {
 public:
     JobTicketManagerLogin(unsigned int uiCallId, TicketManager* pTicketManager, qResult* pResult,
-        const String& rUserName, const char* pPassword, unsigned int* pPrincipalID,
-        RVConnectionData* pConnectionData, String* pReturnMessage,
-        AnyObjectHolder<Data, String>* pCustomData);
+                          const String& rUserName, const char* pPassword, unsigned int* pPrincipalID,
+                          RVConnectionData* pConnectionData, String* pReturnMessage,
+                          AnyObjectHolder<Data, String>* pCustomData);
     virtual ~JobTicketManagerLogin();
 
     void CompleteJob(CallContext::State state, qResult result);

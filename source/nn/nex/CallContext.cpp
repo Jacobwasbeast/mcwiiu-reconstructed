@@ -25,15 +25,15 @@ void CallbackRoot::Call()
 }
 
 CallContext::CallContext()
-    : RefCountedObject()
-    , m_state(Ready)
-    , m_completionCallbacks()
-    , m_userContexts()
-    , m_result()
-    , m_uiCallId(0)
-    , m_pDependentConnection(0)
-    , m_pCancellationCallback(0)
-    , m_expirationTime()
+    : RefCountedObject(),
+      m_state(Ready),
+      m_completionCallbacks(),
+      m_userContexts(),
+      m_result(),
+      m_uiCallId(0),
+      m_pDependentConnection(0),
+      m_pCancellationCallback(0),
+      m_expirationTime()
 {
     m_result = qResult(CALL_CONTEXT_RESULT_PENDING);
     m_uiFlags = 0;
@@ -71,8 +71,8 @@ bool CallContext::Wait(unsigned int uiTimeout)
     {
         bool bCompleted = false;
 
-        if (Scheduler::PreventBlockCall(uiTimeout != 0, uiTimeout, false,
-                &CallContextPreventBlockCallCallback, this, &bCompleted)
+        if (Scheduler::PreventBlockCall(uiTimeout != 0, uiTimeout, false, &CallContextPreventBlockCallCallback, this,
+                                        &bCompleted)
             != 0)
             return bCompleted;
 
@@ -83,10 +83,9 @@ bool CallContext::Wait(unsigned int uiTimeout)
         {
             Scheduler::GlobalSingleThreadDispatch(spinTest.GetRemainingTime());
 
-            if (spinTest.SpinOnce(
-                    L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/"
-                    L"CallContext.cpp",
-                    0x1A4, L"GetState()==CallContext::CallInProgress")
+            if (spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/"
+                                  L"CallContext.cpp",
+                                  0x1A4, L"GetState()==CallContext::CallInProgress")
                 == 0)
                 break;
         }
@@ -115,9 +114,8 @@ bool CallContext::Reset()
 {
     if (m_state == CallInProgress)
     {
-        SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/CallContext.cpp",
-            0xDB, 0xE000000E, 0);
+        SystemError::SignalError(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/CallContext.cpp",
+                                 0xDB, 0xE000000E, 0);
         return false;
     }
 
@@ -204,11 +202,10 @@ bool CallContext::Cancel(State state)
 
         bCanceled = CancelImpl(state);
 
-        for (qVector<unsigned int>::iterator associatedId = associatedIds.begin();
-             associatedId != associatedIds.end(); ++associatedId)
+        for (qVector<unsigned int>::iterator associatedId = associatedIds.begin(); associatedId != associatedIds.end();
+             ++associatedId)
         {
-            CallContext* pCallContext =
-                Core::GetInstance()->GetCallContextRegister()->GetCallContext(*associatedId);
+            CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(*associatedId);
 
             if (pCallContext != 0)
                 pCallContext->Cancel(CallCanceled);
@@ -323,8 +320,8 @@ bool CallContext::FlagsAreValid() const
     return FlagIsSet(CALL_CONTEXT_FLAG_CALLBACK_EXPECTED);
 }
 
-void CallContext::RegisterCompletionCallback(
-    CompletionCallback cbCallback, const UserContext& rUserContext, bool bAppend)
+void CallContext::RegisterCompletionCallback(CompletionCallback cbCallback, const UserContext& rUserContext,
+                                             bool bAppend)
 {
     InternalData internalData;
     internalData.m_cbCallback = cbCallback;
@@ -336,8 +333,7 @@ void CallContext::RegisterCompletionCallback(
         m_completionCallbacks.push_front(internalData);
 }
 
-void CallContext::RegisterCompletionCallback(
-    CallbackRoot* pCallback, bool bOnSuccessOnly, bool bAppend)
+void CallContext::RegisterCompletionCallback(CallbackRoot* pCallback, bool bOnSuccessOnly, bool bAppend)
 {
     if (bOnSuccessOnly)
         RegisterCompletionCallback(&InvokeCallbackOnSuccess, UserContext(pCallback), bAppend);

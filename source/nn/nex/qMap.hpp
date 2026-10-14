@@ -14,8 +14,7 @@ namespace nex
 {
 
 template <typename K, typename V>
-class qMap : public std::map<K, V, std::less<K>, MemAllocator<std::pair<const K, V> > >,
-             public RootObject
+class qMap : public std::map<K, V, std::less<K>, MemAllocator<std::pair<const K, V> > >, public RootObject
 {
 public:
     typedef std::map<K, V, std::less<K>, MemAllocator<std::pair<const K, V> > > _Base;

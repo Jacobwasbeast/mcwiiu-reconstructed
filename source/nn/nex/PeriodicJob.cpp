@@ -5,9 +5,7 @@ namespace nn
 namespace nex
 {
 
-PeriodicJob::PeriodicJob(JobType jobType, const DebugString& rDebugString)
-    : Job(jobType, rDebugString)
-    , m_iPeriod(0)
+PeriodicJob::PeriodicJob(JobType jobType, const DebugString& rDebugString) : Job(jobType, rDebugString), m_iPeriod(0)
 {
     SetToWaiting(m_waitContext);
 }

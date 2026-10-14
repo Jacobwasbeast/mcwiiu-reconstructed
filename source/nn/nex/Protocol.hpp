@@ -46,18 +46,11 @@ public:
     virtual bool BeginInitialization();
     virtual bool BeginTermination();
     virtual _Type GetProtocolType() const = 0;
-    virtual void EndPointDisconnected(EndPoint* pEndPoint)
-    {
-    }
+    virtual void EndPointDisconnected(EndPoint* pEndPoint) {}
 
-    virtual void FaultDetected(EndPoint* pEndPoint, unsigned int uiReason)
-    {
-    }
+    virtual void FaultDetected(EndPoint* pEndPoint, unsigned int uiReason) {}
 
-    virtual Protocol* Clone() const
-    {
-        return 0;
-    }
+    virtual Protocol* Clone() const { return 0; }
 
 
     bool FlagIsSet(unsigned int uiFlag) const;
@@ -66,10 +59,7 @@ public:
 
     void SetProtocolID(unsigned short uiProtocolID);
 
-    unsigned short GetProtocolID() const
-    {
-        return m_uiProtocolID;
-    }
+    unsigned short GetProtocolID() const { return m_uiProtocolID; }
 
     OperationManager* GetOperationManager() const;
     EndPoint* GetIncomingConnection() const;

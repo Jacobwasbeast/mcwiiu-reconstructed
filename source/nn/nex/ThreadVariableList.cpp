@@ -10,8 +10,7 @@ namespace nex
 extern ThreadVariableList* g_threadVariableList;
 extern bool g_threadVariableListReady;
 
-ThreadVariableList::ThreadVariableList()
-    : m_criticalSection(1)
+ThreadVariableList::ThreadVariableList() : m_criticalSection(1)
 {
     g_threadVariableListReady = true;
 }

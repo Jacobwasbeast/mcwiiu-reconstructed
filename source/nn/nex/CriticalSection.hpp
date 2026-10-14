@@ -59,42 +59,26 @@ protected:
 class ForcedCriticalSection : public CriticalSection
 {
 public:
-    explicit ForcedCriticalSection(unsigned int traceMask)
-        : CriticalSection(traceMask)
-    {
-    }
+    explicit ForcedCriticalSection(unsigned int traceMask) : CriticalSection(traceMask) {}
 
     virtual ~ForcedCriticalSection() {}
 
-    virtual void Enter()
-    {
-        m_mutex.Lock();
-    }
+    virtual void Enter() { m_mutex.Lock(); }
 
-    virtual void Leave()
-    {
-        m_mutex.Unlock();
-    }
+    virtual void Leave() { m_mutex.Unlock(); }
 
-    virtual bool IsForce() const
-    {
-        return true;
-    }
+    virtual bool IsForce() const { return true; }
 };
 
 class ScopedCS : public RootObject
 {
 public:
-    explicit ScopedCS(CriticalSection* criticalSection)
-        : m_criticalSection(criticalSection)
+    explicit ScopedCS(CriticalSection* criticalSection) : m_criticalSection(criticalSection)
     {
         m_criticalSection->Enter();
     }
 
-    ~ScopedCS()
-    {
-        m_criticalSection->Leave();
-    }
+    ~ScopedCS() { m_criticalSection->Leave(); }
 
 private:
     CriticalSection* m_criticalSection;

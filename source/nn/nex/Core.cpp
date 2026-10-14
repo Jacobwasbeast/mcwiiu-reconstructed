@@ -21,13 +21,13 @@ unsigned int g_coreInstanceCount = 0;
 Core::ThreadMode g_threadMode = Core::THREAD_MODE_0;
 
 Core::Core()
-    : RefCountedObject()
-    , m_instanceControl(ClassID)
-    , m_bTerminateImmediately(false)
-    , m_terminateImmediatelyTime()
-    , m_cbTerminateImmediately(0)
-    , m_pTerminateImmediatelyContext(0)
-    , m_reserved0(false)
+    : RefCountedObject(),
+      m_instanceControl(ClassID),
+      m_bTerminateImmediately(false),
+      m_terminateImmediatelyTime(),
+      m_cbTerminateImmediately(0),
+      m_pTerminateImmediatelyContext(0),
+      m_reserved0(false)
 {
     g_fatalState = false;
 

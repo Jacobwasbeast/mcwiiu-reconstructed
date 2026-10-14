@@ -8,8 +8,7 @@ namespace nn
 namespace nex
 {
 
-StringConverter::StringConverter(int size)
-    : m_buffer(0), m_bufferSize(0)
+StringConverter::StringConverter(int size) : m_buffer(0), m_bufferSize(0)
 {
     int bufferSize = size * 3;
 

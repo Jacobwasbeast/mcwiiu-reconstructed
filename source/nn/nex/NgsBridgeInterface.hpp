@@ -17,9 +17,7 @@ class StationURL;
 class NgsBridgeInterface : public RootObject
 {
 public:
-    virtual ~NgsBridgeInterface()
-    {
-    }
+    virtual ~NgsBridgeInterface() {}
 
     virtual Credentials* GetCredentials() = 0;
     virtual unsigned int GetPrincipalID() = 0;

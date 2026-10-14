@@ -9,8 +9,7 @@ namespace nn
 namespace nex
 {
 
-JobHttpBuffered::JobHttpBuffered()
-    : m_pStatusCode(0)
+JobHttpBuffered::JobHttpBuffered() : m_pStatusCode(0)
 {
 }
 
@@ -18,9 +17,8 @@ JobHttpBuffered::~JobHttpBuffered()
 {
 }
 
-qResult JobHttpBuffered::Initialize(unsigned int uiCallId, const String& rUrl,
-    HttpConnection::Method method, unsigned int uiMaxSize, qVector<unsigned char>* pBuffer,
-    int* pStatusCode)
+qResult JobHttpBuffered::Initialize(unsigned int uiCallId, const String& rUrl, HttpConnection::Method method,
+                                    unsigned int uiMaxSize, qVector<unsigned char>* pBuffer, int* pStatusCode)
 {
     m_pBuffer = pBuffer;
     m_uiMaxSize = uiMaxSize;
@@ -35,8 +33,7 @@ void JobHttpBuffered::ProcessResponseHeader(HttpConnection* pConnection, int iSt
 
 bool JobHttpBuffered::ProcessResponse(const unsigned char* pData, unsigned int uiSize)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0 || m_pBuffer->size() + uiSize > m_uiMaxSize)
     {
         pCallContext->Cancel(CallContext::CallCanceled);

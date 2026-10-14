@@ -21,8 +21,7 @@ inline bool IsPublicURL(const StationURL& rStationURL)
 
 }
 
-StationContactInfo::StationContactInfo()
-    : m_uiConnectionID(0)
+StationContactInfo::StationContactInfo() : m_uiConnectionID(0)
 {
 }
 
@@ -74,14 +73,13 @@ void StationContactInfo::SortAndFilterTarget(StationContactInfo& rTarget) const
 {
     bool bMatch = false;
     int nbPublic = 0;
-    for (qList<StationURL>::iterator target = rTarget.m_urls.begin();
-         target != rTarget.m_urls.end() && !bMatch; ++target)
+    for (qList<StationURL>::iterator target = rTarget.m_urls.begin(); target != rTarget.m_urls.end() && !bMatch;
+         ++target)
     {
         const StationURL& rTargetURL = *target;
         if (IsPublicURL(rTargetURL))
         {
-            for (qList<StationURL>::const_iterator url = m_urls.begin();
-                 url != m_urls.end() && !bMatch; ++url)
+            for (qList<StationURL>::const_iterator url = m_urls.begin(); url != m_urls.end() && !bMatch; ++url)
             {
                 if (String::IsEqual(url->GetAddress(), rTargetURL.GetAddress()))
                     bMatch = true;
@@ -94,16 +92,14 @@ void StationContactInfo::SortAndFilterTarget(StationContactInfo& rTarget) const
     qList<StationURL> sorted;
     if (bMatch)
     {
-        for (qList<StationURL>::iterator target = rTarget.m_urls.begin();
-             target != rTarget.m_urls.end(); ++target)
+        for (qList<StationURL>::iterator target = rTarget.m_urls.begin(); target != rTarget.m_urls.end(); ++target)
         {
             const StationURL& rTargetURL = *target;
             if (!IsPublicURL(rTargetURL))
                 sorted.push_back(rTargetURL);
         }
     }
-    for (qList<StationURL>::iterator target = rTarget.m_urls.begin();
-         target != rTarget.m_urls.end(); ++target)
+    for (qList<StationURL>::iterator target = rTarget.m_urls.begin(); target != rTarget.m_urls.end(); ++target)
     {
         const StationURL& rTargetURL = *target;
         if (IsPublicURL(rTargetURL))

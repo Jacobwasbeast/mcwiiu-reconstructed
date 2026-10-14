@@ -21,14 +21,9 @@ class Message;
 class _DDL_DataStorePreparePostParam : public RootObject
 {
 public:
-    _DDL_DataStorePreparePostParam()
-        : m_uiStructureVersion(0), m_Tags(0), m_RatingInitParams(0), m_ExtraData(0)
-    {
-    }
+    _DDL_DataStorePreparePostParam() : m_uiStructureVersion(0), m_Tags(0), m_RatingInitParams(0), m_ExtraData(0) {}
 
-    virtual ~_DDL_DataStorePreparePostParam()
-    {
-    }
+    virtual ~_DDL_DataStorePreparePostParam() {}
 
     _DDL_DataStorePreparePostParam& operator=(const _DDL_DataStorePreparePostParam& rSource);
     bool operator==(const _DDL_DataStorePreparePostParam& rSource) const;

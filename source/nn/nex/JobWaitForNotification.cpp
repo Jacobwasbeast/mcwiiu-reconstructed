@@ -37,10 +37,10 @@ enum WaitResult
 }
 
 JobWaitForNotification::JobWaitForNotification()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_bRegistered(false)
-    , m_iTimeout(0)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_bRegistered(false),
+      m_iTimeout(0)
 {
 }
 
@@ -58,15 +58,15 @@ JobWaitForNotification::~JobWaitForNotification()
 }
 
 bool JobWaitForNotification::StartImpl(ProtocolCallContext* pContext, unsigned int uiEventType,
-    unsigned int uiEventSubType, int iTimeout, unsigned int uiParam1,
-    NotificationEventFilterInterface** ppFilter, NotificationEvent* pEvent)
+                                       unsigned int uiEventSubType, int iTimeout, unsigned int uiParam1,
+                                       NotificationEventFilterInterface** ppFilter, NotificationEvent* pEvent)
 {
     if (!pContext->InitiateCall())
         return qResult(WAIT_CALL_FAILED_RESULT);
 
     JobWaitForNotification* pJob = new JobWaitForNotification();
-    qResult result = pJob->Initialize(pContext->m_uiCallId, uiEventType, uiEventSubType, iTimeout,
-        uiParam1, ppFilter, pEvent);
+    qResult result = pJob->Initialize(pContext->m_uiCallId, uiEventType, uiEventSubType, iTimeout, uiParam1, ppFilter,
+                                      pEvent);
     if (!result)
     {
         pJob->ReleaseRef();
@@ -77,22 +77,21 @@ bool JobWaitForNotification::StartImpl(ProtocolCallContext* pContext, unsigned i
     return qResult(WAIT_SUCCEEDED_RESULT);
 }
 
-bool JobWaitForNotification::Start(ProtocolCallContext* pContext, unsigned int uiEventType,
-    unsigned int uiEventSubType, int iTimeout, unsigned int uiParam1, NotificationEvent* pEvent)
+bool JobWaitForNotification::Start(ProtocolCallContext* pContext, unsigned int uiEventType, unsigned int uiEventSubType,
+                                   int iTimeout, unsigned int uiParam1, NotificationEvent* pEvent)
 {
     return StartImpl(pContext, uiEventType, uiEventSubType, iTimeout, uiParam1, 0, pEvent);
 }
 
-bool JobWaitForNotification::Start(ProtocolCallContext* pContext, unsigned int uiEventType,
-    unsigned int uiEventSubType, int iTimeout, NotificationEventFilterInterface** ppFilter,
-    NotificationEvent* pEvent)
+bool JobWaitForNotification::Start(ProtocolCallContext* pContext, unsigned int uiEventType, unsigned int uiEventSubType,
+                                   int iTimeout, NotificationEventFilterInterface** ppFilter, NotificationEvent* pEvent)
 {
     return StartImpl(pContext, uiEventType, uiEventSubType, iTimeout, 0, ppFilter, pEvent);
 }
 
-qResult JobWaitForNotification::Initialize(unsigned int uiCallId, unsigned int uiEventType,
-    unsigned int uiEventSubType, int iTimeout, unsigned int uiParam1,
-    NotificationEventFilterInterface** ppFilter, NotificationEvent* pEvent)
+qResult JobWaitForNotification::Initialize(unsigned int uiCallId, unsigned int uiEventType, unsigned int uiEventSubType,
+                                           int iTimeout, unsigned int uiParam1,
+                                           NotificationEventFilterInterface** ppFilter, NotificationEvent* pEvent)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 

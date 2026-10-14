@@ -25,8 +25,8 @@ enum ConnectResult
 }
 
 SecureEndPoint::SecureEndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL)
-    : EndPoint(pStream, pStationURL)
-    , m_disconnectContext()
+    : EndPoint(pStream, pStationURL),
+      m_disconnectContext()
 {
     m_pAssociatedEndPoint = 0;
     m_pDisconnectCallback = 0;
@@ -229,11 +229,11 @@ Key& SecureEndPoint::GetEncryptionKey()
     return m_pAssociatedEndPoint->GetEncryptionKey();
 }
 
-qResult SecureEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
-    ConnectionCallback pCallback, const UserContext& rUserContext, unsigned int uiTimeout)
+qResult SecureEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData, ConnectionCallback pCallback,
+                                 const UserContext& rUserContext, unsigned int uiTimeout)
 {
-    JobConnectSecureEndPoint* pJob = new JobConnectSecureEndPoint(this, &m_stationURL,
-        pRequestData, pResponseData, pCallback, rUserContext, uiTimeout);
+    JobConnectSecureEndPoint* pJob = new JobConnectSecureEndPoint(this, &m_stationURL, pRequestData, pResponseData,
+                                                                  pCallback, rUserContext, uiTimeout);
     pJob->AddRef();
     Scheduler::GetInstance()->Queue(pJob, false);
 
@@ -254,8 +254,7 @@ qResult SecureEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
     return qResult(static_cast<int>(CONNECT_PENDING_RESULT));
 }
 
-void SecureEndPoint::DisconnectCallback(EndPoint* pEndPoint, qResult result,
-    const UserContext*)
+void SecureEndPoint::DisconnectCallback(EndPoint* pEndPoint, qResult result, const UserContext*)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 
@@ -270,7 +269,7 @@ void SecureEndPoint::DisconnectCallback(EndPoint* pEndPoint, qResult result,
 }
 
 qResult SecureEndPoint::_Disconnect(ConnectionCallback pCallback, const UserContext& rUserContext,
-    unsigned int uiTimeout)
+                                    unsigned int uiTimeout)
 {
     qResult result(static_cast<int>(DISCONNECT_SUCCEEDED_RESULT));
     if (pCallback == 0)
@@ -289,14 +288,13 @@ qResult SecureEndPoint::_Disconnect(ConnectionCallback pCallback, const UserCont
     return result;
 }
 
-qResult SecureEndPoint::_Send(Buffer* pBuffer, unsigned int uiSize, bool bReliable,
-    unsigned char uiSubStreamID, unsigned int uiFlags)
+qResult SecureEndPoint::_Send(Buffer* pBuffer, unsigned int uiSize, bool bReliable, unsigned char uiSubStreamID,
+                              unsigned int uiFlags)
 {
     EndPoint* pAssociatedEndPoint = m_pAssociatedEndPoint;
     CriticalSection& csScheduler = Scheduler::GetInstance()->GetCriticalSection();
     csScheduler.Enter();
-    qResult result =
-        pAssociatedEndPoint->_Send(pBuffer, uiSize, bReliable, uiSubStreamID, uiFlags);
+    qResult result = pAssociatedEndPoint->_Send(pBuffer, uiSize, bReliable, uiSubStreamID, uiFlags);
     csScheduler.Leave();
     return result;
 }

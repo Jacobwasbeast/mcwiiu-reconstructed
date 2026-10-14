@@ -21,7 +21,7 @@ typedef qChain<Packet*, ChainPolicyTemp<Packet*> > PacketBundleChain;
 }
 
 PacketHistoryChain::iterator PacketHistoryChainDequeue(PacketHistoryChain* pChain,
-    PacketHistoryChain::iterator position)
+                                                       PacketHistoryChain::iterator position)
 {
     Packet* pPacket = *position;
     position = pChain->erase(position);
@@ -39,8 +39,8 @@ void PacketHistoryChainPurge(PacketHistoryChain* pChain)
 void PacketHistoryChainQueueFront(PacketHistoryChain* pChain, PacketOut* pPacket)
 {
     pPacket->AddRef();
-    if (pPacket->m_historyLink.m_pPrevious != 0 || pPacket->m_historyLink.m_pNext != 0 ||
-        pChain->begin() == PacketHistoryChain::iterator(pPacket))
+    if (pPacket->m_historyLink.m_pPrevious != 0 || pPacket->m_historyLink.m_pNext != 0
+        || pChain->begin() == PacketHistoryChain::iterator(pPacket))
         PacketHistoryChainDequeue(pChain, PacketHistoryChain::iterator(pPacket));
     pChain->push_front(pPacket);
     pPacket->m_historyTime = Time::GetTime();
@@ -52,9 +52,9 @@ void InsertToHistoryPacketQueue(PacketHistoryChain* pChain, PacketQueue* pQueue)
     while (position != pQueue->end())
     {
         PacketOut* pPacket = static_cast<PacketOut*>(*position);
-        if (!g_historyBundlingEnabled || !pPacket->CanHistoryBundle() ||
-            (!g_historyBundleWithoutFlag && !(pPacket->m_uiTypeAndFlags & PACKET_FLAG_HISTORY_BUNDLE)) ||
-            pPacket->m_unknown129)
+        if (!g_historyBundlingEnabled || !pPacket->CanHistoryBundle()
+            || (!g_historyBundleWithoutFlag && !(pPacket->m_uiTypeAndFlags & PACKET_FLAG_HISTORY_BUNDLE))
+            || pPacket->m_unknown129)
         {
             position = pQueue->Dequeue(position);
             continue;
@@ -72,8 +72,8 @@ void InsertToHistoryPacketQueue(PacketHistoryChain* pChain, PacketQueue* pQueue)
     }
 }
 
-unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pChain,
-    PacketOut* pPacket, Time rLimit, unsigned int uiMaxSize, ByteStream* pStream)
+unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pChain, PacketOut* pPacket, Time rLimit,
+                                                        unsigned int uiMaxSize, ByteStream* pStream)
 {
     if (pChain->size() == 0)
         return 0;
@@ -98,8 +98,8 @@ unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pCha
         }
         if (pHistoryPacket->m_historyTime < rLimit)
             break;
-        if (!g_historyBundlingEnabled || !pPacket->CanHistoryBundle() || pPacket->m_unknown129 ||
-            !pHistoryPacket->IsBundlableWithPortTypeCheck(pPacket))
+        if (!g_historyBundlingEnabled || !pPacket->CanHistoryBundle() || pPacket->m_unknown129
+            || !pHistoryPacket->IsBundlableWithPortTypeCheck(pPacket))
         {
             ++position;
             continue;

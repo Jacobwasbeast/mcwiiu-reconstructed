@@ -24,16 +24,12 @@ public:
     JobDataStoreGetRating();
     virtual ~JobDataStoreGetRating();
 
-    virtual qResult Initialize(unsigned int uiCallId,
-                               DataStoreLogicServerClientInterface* pClient,
-                               const uint64_t& uiDataId,
-                               qMap<signed char, DataStoreRatingInfo>* pRatings,
+    virtual qResult Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
+                               const uint64_t& uiDataId, qMap<signed char, DataStoreRatingInfo>* pRatings,
                                uint64_t uiAccessPassword);
-    virtual qResult Initialize(unsigned int uiCallId,
-                               DataStoreLogicServerClientInterface* pClient,
+    virtual qResult Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
                                const qVector<uint64_t>& rDataIds,
-                               qVector<qMap<signed char, DataStoreRatingInfo> >* pRatings,
-                               qVector<qResult>* pResults);
+                               qVector<qMap<signed char, DataStoreRatingInfo> >* pRatings, qVector<qResult>* pResults);
 
     void CompleteJob(const qResult& rResult);
     void StepGetRating();

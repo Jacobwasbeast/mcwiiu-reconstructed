@@ -10,8 +10,7 @@ namespace nn
 namespace nex
 {
 
-qBuffer::qBuffer(unsigned int uiSize, unsigned int uiHeadRoom)
-    : RefCountedObject()
+qBuffer::qBuffer(unsigned int uiSize, unsigned int uiHeadRoom) : RefCountedObject()
 {
     m_uiHeadRoom = uiHeadRoom;
     m_pBegin = 0;
@@ -21,8 +20,7 @@ qBuffer::qBuffer(unsigned int uiSize, unsigned int uiHeadRoom)
     initialize(uiSize);
 }
 
-qBuffer::qBuffer(const qBuffer& rBuffer)
-    : RefCountedObject()
+qBuffer::qBuffer(const qBuffer& rBuffer) : RefCountedObject()
 {
     m_pBegin = 0;
     m_pFront = 0;
@@ -88,8 +86,7 @@ void qBuffer::resize(unsigned int uiSize, const unsigned char* pData, unsigned i
     int nGranularity = static_cast<int>(capacity()) / 2;
     if (nGranularity != 0)
     {
-        uiSize = (uiSize / static_cast<unsigned int>(nGranularity) + 1)
-                 * static_cast<unsigned int>(nGranularity);
+        uiSize = (uiSize / static_cast<unsigned int>(nGranularity) + 1) * static_cast<unsigned int>(nGranularity);
     }
     if (uiSize < 10)
     {

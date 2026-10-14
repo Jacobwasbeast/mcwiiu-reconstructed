@@ -27,8 +27,8 @@ namespace
 
 const unsigned int STATION_URL_TYPE_BIT = 1;
 const unsigned long long TRACE_NAT_PROBE = 0x40000;
-const NATProperties::MappingProperties NAT_MAPPING_ENDPOINT_DEPENDENT =
-    static_cast<NATProperties::MappingProperties>(2);
+const NATProperties::MappingProperties NAT_MAPPING_ENDPOINT_DEPENDENT = static_cast<NATProperties::MappingProperties>(
+    2);
 const int PROBE_INTERVAL = 90000;
 const unsigned int PROBE_MAX_COUNT = 12;
 const unsigned int NAT_MESSAGE_APPEND_AT_END = 0xFFFFFFFF;
@@ -43,18 +43,30 @@ unsigned short s_uiNATCheckPort = 33335;
 
 inline bool IsSameStation(const StationURL& rLeft, const StationURL& rRight)
 {
-    return String::IsEqual(rLeft.GetAddress(), rRight.GetAddress()) &&
-        rLeft.GetRVConnectionID() == rRight.GetRVConnectionID();
+    return String::IsEqual(rLeft.GetAddress(), rRight.GetAddress())
+           && rLeft.GetRVConnectionID() == rRight.GetRVConnectionID();
 }
 
 }
 
 NATTraversalEngine::NATTraversalEngine()
-    : m_unsupportedNATReferee(), m_pRelay(0), m_pEcho(0), m_pStream(0), m_pTransportAdapter(0),
-      m_activeProbes(), m_completedProbes(), m_nextProbeTime(),
-      m_pCheckAndRelayJob(0), m_callContext(), m_bSendingDummyPackets(false),
-      m_nextDummyPacketTime(), m_uiProbeRequestCount(0), m_probeRequests(),
-      m_relayServerAddress(L""), m_uiRelayServerPort(0), m_bUseRelayServer(false)
+    : m_unsupportedNATReferee(),
+      m_pRelay(0),
+      m_pEcho(0),
+      m_pStream(0),
+      m_pTransportAdapter(0),
+      m_activeProbes(),
+      m_completedProbes(),
+      m_nextProbeTime(),
+      m_pCheckAndRelayJob(0),
+      m_callContext(),
+      m_bSendingDummyPackets(false),
+      m_nextDummyPacketTime(),
+      m_uiProbeRequestCount(0),
+      m_probeRequests(),
+      m_relayServerAddress(L""),
+      m_uiRelayServerPort(0),
+      m_bUseRelayServer(false)
 {
 }
 
@@ -126,8 +138,7 @@ bool NATTraversalEngine::RegisterConnectivityTester(ConnectivityTester* pConnect
     if (&Network::GetInstance()->GetConnectivityManager() == 0)
         return false;
 
-    return Network::GetInstance()->GetConnectivityManager().RegisterConnectivityTester(
-        pConnectivityTester);
+    return Network::GetInstance()->GetConnectivityManager().RegisterConnectivityTester(pConnectivityTester);
 }
 
 bool NATTraversalEngine::UnregisterConnectivityTester()
@@ -152,8 +163,7 @@ bool NATTraversalEngine::UnregisterTransportAdapter()
 
 unsigned int NATTraversalEngine::GetNumOfMaxProbes()
 {
-    NATProperties::MappingProperties mapping =
-        RootTransport::GetInstance()->GetNATProperties().GetNATMapping();
+    NATProperties::MappingProperties mapping = RootTransport::GetInstance()->GetNATProperties().GetNATMapping();
     if (mapping == NAT_MAPPING_ENDPOINT_DEPENDENT)
         return 1;
 
@@ -162,8 +172,8 @@ unsigned int NATTraversalEngine::GetNumOfMaxProbes()
 
 bool NATTraversalEngine::CanUseRelay(const StationURL& rStationURL, bool bCheckURL) const
 {
-    if (!RootTransport::GetInstance()->GetRelay()->IsEnabled() ||
-        String::IsEqual(m_relayServerAddress, L"") || m_uiRelayServerPort == 0)
+    if (!RootTransport::GetInstance()->GetRelay()->IsEnabled() || String::IsEqual(m_relayServerAddress, L"")
+        || m_uiRelayServerPort == 0)
         return false;
 
     if (bCheckURL)
@@ -212,8 +222,8 @@ bool NATTraversalEngine::PrepareNATTraversal(StationURL stationURL)
             break;
     }
 
-    if (it == m_pendingURLs.end() && m_activeProbes.FindProbe(stationURL) == 0 &&
-        m_completedProbes.FindProbe(stationURL) == 0)
+    if (it == m_pendingURLs.end() && m_activeProbes.FindProbe(stationURL) == 0
+        && m_completedProbes.FindProbe(stationURL) == 0)
     {
         m_pendingURLs.push_back(stationURL);
         return true;
@@ -230,8 +240,7 @@ bool NATTraversalEngine::PrepareNATTraversal(const qList<StationURL>& rStationUR
             return false;
     }
 
-    for (qList<StationURL>::const_iterator it = rStationURLs.begin(); it != rStationURLs.end();
-         ++it)
+    for (qList<StationURL>::const_iterator it = rStationURLs.begin(); it != rStationURLs.end(); ++it)
     {
         if (PrepareNATTraversal(*it))
             return true;
@@ -241,18 +250,17 @@ bool NATTraversalEngine::PrepareNATTraversal(const qList<StationURL>& rStationUR
 }
 
 void NATTraversalEngine::ReportNATTraversalResult(unsigned int uiConnectionID, bool bSucceeded,
-    unsigned int uiRVConnectionID)
+                                                  unsigned int uiRVConnectionID)
 {
     if (m_pRelay != 0)
     {
         NATTraversalResult result = GetNATTraversalResult(uiConnectionID);
-        m_pRelay->ReportNATTraversalResultDetail(uiConnectionID, bSucceeded, result,
-            uiRVConnectionID);
+        m_pRelay->ReportNATTraversalResultDetail(uiConnectionID, bSucceeded, result, uiRVConnectionID);
     }
 }
 
 void NATTraversalEngine::ReportNATProperties(NATProperties::MappingProperties mapping,
-    NATProperties::FilteringProperties filtering, unsigned int uiPortIncrease)
+                                             NATProperties::FilteringProperties filtering, unsigned int uiPortIncrease)
 {
     if (m_pRelay != 0)
         m_pRelay->ReportNATProperties(mapping, filtering, uiPortIncrease);
@@ -270,9 +278,8 @@ void NATTraversalEngine::TimeoutProbeRequest(const Time& rTime)
         }
         else
         {
-            m_completedProbes.push_back(
-                URLProbe(it->second.second, ConnectionManager::s_iNATTraversalTimeout,
-                    PROBE_INTERVAL, PROBE_MAX_COUNT));
+            m_completedProbes.push_back(URLProbe(it->second.second, ConnectionManager::s_iNATTraversalTimeout,
+                                                 PROBE_INTERVAL, PROBE_MAX_COUNT));
             ProbeRequestMap::iterator expired = it;
             ++it;
             m_probeRequests.erase(expired);
@@ -298,10 +305,9 @@ void NATTraversalEngine::ProcessRequestProbe(const StationURL& rStationURL)
             return;
 
         bool bRelayFastProbe = false;
-        if (!m_bUseRelayServer &&
-            RootTransport::GetInstance()->GetNATProperties().GetNATMapping() ==
-                NAT_MAPPING_ENDPOINT_DEPENDENT &&
-            (m_pendingURLs.size() != 0 || m_pCheckAndRelayJob != 0))
+        if (!m_bUseRelayServer
+            && RootTransport::GetInstance()->GetNATProperties().GetNATMapping() == NAT_MAPPING_ENDPOINT_DEPENDENT
+            && (m_pendingURLs.size() != 0 || m_pCheckAndRelayJob != 0))
             bRelayFastProbe = true;
 
         if (bRelayFastProbe)
@@ -365,15 +371,13 @@ void NATTraversalEngine::ProcessRequestProbe(const StationURL& rStationURL)
 
 void NATTraversalEngine::SendDummyPacket(unsigned char)
 {
-    StationURL stationURL(
-        String(RootTransport::GetInstance()->GetNATCheckServerAddresses()[0]->GetBuffer()));
+    StationURL stationURL(String(RootTransport::GetInstance()->GetNATCheckServerAddresses()[0]->GetBuffer()));
     stationURL.SetPortNumber(s_uiNATCheckPort);
     stationURL.SetURLType(StationURL::Udp);
     Buffer* pBuffer = new Buffer();
     ByteStream stream;
     stream << Buffer(String(L"Dummy"));
-    pBuffer->AppendData(stream.GetBuffer(), stream.GetBuffer()->GetLength(),
-        NAT_MESSAGE_APPEND_AT_END);
+    pBuffer->AppendData(stream.GetBuffer(), stream.GetBuffer()->GetLength(), NAT_MESSAGE_APPEND_AT_END);
     for (unsigned int uiCount = 0; uiCount < s_uiDummyPacketCount; ++uiCount)
         RootTransport::GetInstance()->Send(&stationURL, pBuffer);
 
@@ -388,14 +392,12 @@ void NATTraversalEngine::SendDummyPacket(const StationURL& rStationURL, unsigned
     Buffer* pBuffer = new Buffer();
     ByteStream stream;
     stream << Buffer(String(L"Dummy"));
-    pBuffer->AppendData(stream.GetBuffer(), stream.GetBuffer()->GetLength(),
-        NAT_MESSAGE_APPEND_AT_END);
+    pBuffer->AppendData(stream.GetBuffer(), stream.GetBuffer()->GetLength(), NAT_MESSAGE_APPEND_AT_END);
     for (unsigned int uiCount = 0; uiCount < s_uiDummyPacketCount; ++uiCount)
     {
         if (m_pTransportAdapter != 0)
         {
-            m_pTransportAdapter->Send(stationURL, pBuffer->GetData(), pBuffer->GetLength(),
-                uiFlags);
+            m_pTransportAdapter->Send(stationURL, pBuffer->GetData(), pBuffer->GetLength(), uiFlags);
         }
         else if (m_pStream != 0)
         {
@@ -406,8 +408,7 @@ void NATTraversalEngine::SendDummyPacket(const StationURL& rStationURL, unsigned
     pBuffer->ReleaseRef();
 }
 
-void NATTraversalEngine::CheckPortAndRelay(const qList<StationURL>& rLocalURLs,
-    const StationURL& rStationURL)
+void NATTraversalEngine::CheckPortAndRelay(const qList<StationURL>& rLocalURLs, const StationURL& rStationURL)
 {
     if (m_callContext.GetState() != CallContext::Ready)
         m_callContext.Reset();
@@ -448,18 +449,14 @@ void NATTraversalEngine::StartSendProbe(const StationURL& rStationURL)
     {
         StationURL stationURL(rStationURL);
         stationURL.Trace(TRACE_NAT_PROBE);
-        if (RootTransport::GetInstance()->GetRelay()->IsEnabled() &&
-            stationURL.GetUseRelayServer())
+        if (RootTransport::GetInstance()->GetRelay()->IsEnabled() && stationURL.GetUseRelayServer())
         {
-            if (String::IsEqual(stationURL.GetRelayAddress(), L"") ||
-                stationURL.GetRelayPort() == 0 ||
-                String::IsEqual(stationURL.GetRelayServerAddress(), L"") ||
-                stationURL.GetRelayServerPort() == 0)
+            if (String::IsEqual(stationURL.GetRelayAddress(), L"") || stationURL.GetRelayPort() == 0
+                || String::IsEqual(stationURL.GetRelayServerAddress(), L"") || stationURL.GetRelayServerPort() == 0)
             {
                 stationURL.Trace(TRACE_NAT_PROBE);
                 m_completedProbes.push_back(
-                    URLProbe(stationURL, ConnectionManager::s_iNATTraversalTimeout,
-                        PROBE_INTERVAL, PROBE_MAX_COUNT));
+                    URLProbe(stationURL, ConnectionManager::s_iNATTraversalTimeout, PROBE_INTERVAL, PROBE_MAX_COUNT));
                 return;
             }
 
@@ -474,14 +471,12 @@ void NATTraversalEngine::StartSendProbe(const StationURL& rStationURL)
             relayServerAddress.SetAddress(stationURL.GetRelayServerAddress());
             relayServerAddress.SetPortNumber(stationURL.GetRelayServerPort());
 
-            RootTransport::GetInstance()->GetRelay()->AddRelay(relayAddress, relayServerAddress,
-                true);
+            RootTransport::GetInstance()->GetRelay()->AddRelay(relayAddress, relayServerAddress, true);
             SendDummyPacket(relayServerAddress);
         }
 
         m_activeProbes.push_back(
-            URLProbe(stationURL, ConnectionManager::s_iNATTraversalTimeout, PROBE_INTERVAL,
-                PROBE_MAX_COUNT));
+            URLProbe(stationURL, ConnectionManager::s_iNATTraversalTimeout, PROBE_INTERVAL, PROBE_MAX_COUNT));
     }
     else
     {
@@ -493,14 +488,12 @@ void NATTraversalEngine::StartSendProbe(const StationURL& rStationURL)
 void NATTraversalEngine::SendProbeRequests()
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    while (!m_pendingURLs.empty() &&
-        (m_bUseRelayServer ||
-            (GetNumOfSendingProbes() < GetNumOfMaxProbes() && m_pCheckAndRelayJob == 0)))
+    while (!m_pendingURLs.empty()
+           && (m_bUseRelayServer || (GetNumOfSendingProbes() < GetNumOfMaxProbes() && m_pCheckAndRelayJob == 0)))
     {
         StationURL& rStationURL = m_pendingURLs.front();
         String publicAddress = RootTransport::GetInstance()->GetNATProperties().GetPublicAddress();
-        bool bSamePublicAddress =
-            String::IsEqual(rStationURL.GetInetAddress()->GetAddressStr(), publicAddress);
+        bool bSamePublicAddress = String::IsEqual(rStationURL.GetInetAddress()->GetAddressStr(), publicAddress);
         bool bNotInitiator = !rStationURL.GetProbeRequestInitiation();
 
         qList<StationURL> localURLs;
@@ -528,18 +521,16 @@ void NATTraversalEngine::SendProbeRequests()
             probeURL.SetProbeRequestID(rStationURL.GetProbeRequestID());
             if (Network::GetInstance()->GetTransport()->GetRelay()->IsEnabled())
             {
-                InetAddress relayAddress(
-                    Network::GetInstance()->GetTransport()->GetRelay()->GetSrcPublicAddress());
+                InetAddress relayAddress(Network::GetInstance()->GetTransport()->GetRelay()->GetSrcPublicAddress());
                 probeURL.SetRelayAddress(relayAddress.GetAddressStr());
                 probeURL.SetRelayPort(relayAddress.GetPortNumber());
             }
 
             qList<StationURL> targetURLs;
             targetURLs.push_back(rStationURL);
-            if (((rLocalURL.GetType() >> STATION_URL_TYPE_BIT) & 1) != 0 &&
-                RootTransport::GetInstance()->GetNATProperties().GetNATMapping() ==
-                    NAT_MAPPING_ENDPOINT_DEPENDENT &&
-                !rStationURL.GetUseRelayServer())
+            if (((rLocalURL.GetType() >> STATION_URL_TYPE_BIT) & 1) != 0
+                && RootTransport::GetInstance()->GetNATProperties().GetNATMapping() == NAT_MAPPING_ENDPOINT_DEPENDENT
+                && !rStationURL.GetUseRelayServer())
             {
                 if (RootTransport::GetInstance()->GetNATProperties().m_bMappingPortIncrementValid)
                     SendDummyPacket(rStationURL, s_ucProbeFlags);
@@ -548,8 +539,7 @@ void NATTraversalEngine::SendProbeRequests()
             }
             else
             {
-                if (rStationURL.GetUseRelayServer() &&
-                    ((rLocalURL.GetType() >> STATION_URL_TYPE_BIT) & 1) != 0)
+                if (rStationURL.GetUseRelayServer() && ((rLocalURL.GetType() >> STATION_URL_TYPE_BIT) & 1) != 0)
                 {
                     probeURL.SetRelayServerAddress(rStationURL.GetRelayServerAddress());
                     probeURL.SetRelayServerPort(rStationURL.GetRelayServerPort());
@@ -558,8 +548,7 @@ void NATTraversalEngine::SendProbeRequests()
                 }
                 else if (((rLocalURL.GetType() >> STATION_URL_TYPE_BIT) & 1) != 0)
                 {
-                    probeURL.SetPortNumber(
-                        RootTransport::GetInstance()->GetNATProperties().GetPublicPort());
+                    probeURL.SetPortNumber(RootTransport::GetInstance()->GetNATProperties().GetPublicPort());
                     m_pRelay->RelayProbeRequest(targetURLs, probeURL);
                 }
                 else
@@ -575,16 +564,15 @@ void NATTraversalEngine::SendProbeRequests()
 
         if (bNotInitiator)
         {
-            m_probeRequests[rStationURL.GetProbeRequestID()] =
-                std::make_pair(Time::GetTime() + s_iProbeRequestTimeout, rStationURL);
+            m_probeRequests[rStationURL.GetProbeRequestID()] = std::make_pair(Time::GetTime() + s_iProbeRequestTimeout,
+                                                                              rStationURL);
         }
 
         m_pendingURLs.erase(m_pendingURLs.begin());
     }
 }
 
-void NATTraversalEngine::SendProbe(Msg msg, const StationURL& rStationURL, Time time,
-    unsigned char uiFlags)
+void NATTraversalEngine::SendProbe(Msg msg, const StationURL& rStationURL, Time time, unsigned char uiFlags)
 {
     ByteStream stream;
     unsigned char uiMessage = msg;
@@ -599,8 +587,7 @@ void NATTraversalEngine::SendProbe(Msg msg, const StationURL& rStationURL, Time 
 
     if (m_pTransportAdapter != 0)
     {
-        m_pTransportAdapter->Send(rStationURL, stream.GetBuffer()->GetData(),
-            stream.GetBuffer()->GetLength(), uiFlags);
+        m_pTransportAdapter->Send(rStationURL, stream.GetBuffer()->GetData(), stream.GetBuffer()->GetLength(), uiFlags);
     }
     else
     {
@@ -653,8 +640,7 @@ void NATTraversalEngine::StopProbes()
     URLProbeList::iterator probe = m_activeProbes.begin();
     while (probe != m_activeProbes.end())
     {
-        if (probe->UpdateIsNeeded(Time(Time::GetTime())) &&
-            probe->m_uiPingTime == URLProbe::UNREACHED_PING_TIME)
+        if (probe->UpdateIsNeeded(Time(Time::GetTime())) && probe->m_uiPingTime == URLProbe::UNREACHED_PING_TIME)
         {
             ++probe;
             continue;
@@ -663,15 +649,13 @@ void NATTraversalEngine::StopProbes()
         probe->Trace(TRACE_NAT_PROBE);
         if (probe->m_uiPingTime == URLProbe::UNREACHED_PING_TIME)
         {
-            if (!CanUseRelay(probe->m_stationURL, true) ||
-                probe->m_stationURL.GetProbeRequestInitiation())
+            if (!CanUseRelay(probe->m_stationURL, true) || probe->m_stationURL.GetProbeRequestInitiation())
                 m_completedProbes.push_back(*probe);
             else
                 relayURLs.push_back(probe->m_stationURL);
 
             bool bUseRelay = false;
-            if (RootTransport::GetInstance()->GetNATProperties().GetNATMapping() ==
-                NAT_MAPPING_ENDPOINT_DEPENDENT)
+            if (RootTransport::GetInstance()->GetNATProperties().GetNATMapping() == NAT_MAPPING_ENDPOINT_DEPENDENT)
             {
                 bUseRelay = false;
                 if (RootTransport::GetInstance()->GetRelay()->IsEnabled())
@@ -684,11 +668,9 @@ void NATTraversalEngine::StopProbes()
             if (bUseRelay)
             {
                 m_bUseRelayServer = true;
-                for (qList<StationURL>::iterator url = m_pendingURLs.begin();
-                     url != m_pendingURLs.end(); ++url)
+                for (qList<StationURL>::iterator url = m_pendingURLs.begin(); url != m_pendingURLs.end(); ++url)
                 {
-                    if (!url->GetUseRelayServer() &&
-                        ((url->GetType() >> STATION_URL_TYPE_BIT) & 1) != 0)
+                    if (!url->GetUseRelayServer() && ((url->GetType() >> STATION_URL_TYPE_BIT) & 1) != 0)
                     {
                         url->SetUseRelayServer(true);
                         url->SetRelayServerAddress(m_relayServerAddress);
@@ -727,8 +709,8 @@ void NATTraversalEngine::StopProbes()
     probe = m_activeProbes.begin();
     while (!completedIDs.empty() && probe != m_activeProbes.end())
     {
-        if (std::find(completedIDs.begin(), completedIDs.end(),
-                probe->m_stationURL.GetRVConnectionID()) != completedIDs.end())
+        if (std::find(completedIDs.begin(), completedIDs.end(), probe->m_stationURL.GetRVConnectionID())
+            != completedIDs.end())
         {
             probe->Trace(TRACE_NAT_PROBE);
             m_completedProbes.push_back(*probe);
@@ -756,8 +738,8 @@ void NATTraversalEngine::StopProbes()
         }
     }
 
-    for (std::list<StationURL, MemAllocator<StationURL> >::iterator url = relayURLs.begin();
-         url != relayURLs.end(); ++url)
+    for (std::list<StationURL, MemAllocator<StationURL> >::iterator url = relayURLs.begin(); url != relayURLs.end();
+         ++url)
     {
         url->Trace(TRACE_NAT_PROBE);
         url->SetUseRelayServer(true);
@@ -796,8 +778,7 @@ void NATTraversalEngine::Execute()
     }
 }
 
-void NATTraversalEngine::ReceiveMessage(const StationURL& rStationURL, const unsigned char* pData,
-    unsigned int uiSize)
+void NATTraversalEngine::ReceiveMessage(const StationURL& rStationURL, const unsigned char* pData, unsigned int uiSize)
 {
     rStationURL.Trace(TRACE_NAT_PROBE);
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -824,8 +805,8 @@ void NATTraversalEngine::ReceiveMessage(const StationURL& rStationURL, const uns
 
         if (pProbe == 0)
         {
-            if (m_activeProbes.FindProbe(uiConnectionID) != 0 &&
-                ((stationURL.GetType() >> STATION_URL_TYPE_BIT) & 1) == 0)
+            if (m_activeProbes.FindProbe(uiConnectionID) != 0
+                && ((stationURL.GetType() >> STATION_URL_TYPE_BIT) & 1) == 0)
                 StartSendProbe(stationURL);
         }
         else
@@ -843,17 +824,15 @@ void NATTraversalEngine::ReceiveMessage(const StationURL& rStationURL, const uns
         else if (uiMessage == MSG_PROBE_REPLY && pProbe != 0)
         {
             bool bUpdatePublicPort = false;
-            if (RootTransport::GetInstance() != 0 &&
-                RootTransport::GetInstance()->GetNATProperties().GetNATMapping() ==
-                    NAT_MAPPING_ENDPOINT_DEPENDENT &&
-                ((pProbe->m_stationURL.GetType() >> STATION_URL_TYPE_BIT) & 1) != 0 &&
-                !pProbe->m_stationURL.GetProbeRequestInitiation())
+            if (RootTransport::GetInstance() != 0
+                && RootTransport::GetInstance()->GetNATProperties().GetNATMapping() == NAT_MAPPING_ENDPOINT_DEPENDENT
+                && ((pProbe->m_stationURL.GetType() >> STATION_URL_TYPE_BIT) & 1) != 0
+                && !pProbe->m_stationURL.GetProbeRequestInitiation())
                 bUpdatePublicPort = true;
 
             if (bUpdatePublicPort)
             {
-                unsigned short uiCurrentPort =
-                    RootTransport::GetInstance()->GetNATProperties().GetPublicPort();
+                unsigned short uiCurrentPort = RootTransport::GetInstance()->GetNATProperties().GetPublicPort();
                 if (uiCurrentPort != uiPublicPort)
                 {
                     NATProperties properties = RootTransport::GetInstance()->GetNATProperties();
@@ -898,8 +877,7 @@ void NATTraversalEngine::StopSendDummyPacket()
 int NATTraversalEngine::GetNumOfSendingProbes()
 {
     int iCount = 0;
-    for (URLProbeList::iterator it = m_activeProbes.begin();
-         it != m_activeProbes.end(); ++it)
+    for (URLProbeList::iterator it = m_activeProbes.begin(); it != m_activeProbes.end(); ++it)
     {
         if ((it->m_stationURL.GetType() >> STATION_URL_TYPE_BIT) & 1)
             ++iCount;
@@ -959,16 +937,16 @@ bool NATTraversalEngine::GetProbeFailed(const StationURL& rStationURL)
 
     for (qList<StationURL>::iterator it = m_pendingURLs.begin(); it != m_pendingURLs.end(); ++it)
     {
-        if (String::IsEqual(it->GetAddress(), rStationURL.GetAddress()) &&
-            it->GetRVConnectionID() == rStationURL.GetRVConnectionID())
+        if (String::IsEqual(it->GetAddress(), rStationURL.GetAddress())
+            && it->GetRVConnectionID() == rStationURL.GetRVConnectionID())
             return false;
     }
 
     for (ProbeRequestMap::iterator it = m_probeRequests.begin(); it != m_probeRequests.end(); it++)
     {
         const StationURL& rProbeURL = it->second.second;
-        if (String::IsEqual(rProbeURL.GetAddress(), rStationURL.GetAddress()) &&
-            rProbeURL.GetRVConnectionID() == rStationURL.GetRVConnectionID())
+        if (String::IsEqual(rProbeURL.GetAddress(), rStationURL.GetAddress())
+            && rProbeURL.GetRVConnectionID() == rStationURL.GetRVConnectionID())
             return false;
     }
 

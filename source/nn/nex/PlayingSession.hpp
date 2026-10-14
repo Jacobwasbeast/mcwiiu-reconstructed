@@ -13,9 +13,7 @@ class MatchmakeSession;
 class PlayingSession : public _DDL_PlayingSession
 {
 public:
-    virtual ~PlayingSession()
-    {
-    }
+    virtual ~PlayingSession() {}
 
     MatchmakeSession* GetMatchmakeSession() const;
 };

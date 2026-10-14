@@ -15,15 +15,9 @@ class VirtualFilterDevice : public RootObject
 public:
     bool Match(const InetAddress& rAddress);
 
-    void Reset()
-    {
-        m_addresses.clear();
-    }
+    void Reset() { m_addresses.clear(); }
 
-    void Add(const InetAddress& rAddress)
-    {
-        m_addresses.insert(rAddress);
-    }
+    void Add(const InetAddress& rAddress) { m_addresses.insert(rAddress); }
 
 private:
     qSet<InetAddress> m_addresses;

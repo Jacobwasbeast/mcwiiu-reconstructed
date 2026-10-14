@@ -21,9 +21,8 @@ RVConnectivityTester::~RVConnectivityTester()
 {
 }
 
-bool RVConnectivityTester::ProbeStations(CallContext* pCallContext,
-    StationProbeList* pStationProbeList, unsigned int uiTimeout, bool bUseRelay,
-    Job::JobType jobType)
+bool RVConnectivityTester::ProbeStations(CallContext* pCallContext, StationProbeList* pStationProbeList,
+                                         unsigned int uiTimeout, bool bUseRelay, Job::JobType jobType)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 
@@ -32,8 +31,8 @@ bool RVConnectivityTester::ProbeStations(CallContext* pCallContext,
         return false;
 
     JobWaitForProbes* pJob = new JobWaitForProbes(pCallContext->GetCallID(),
-        Network::GetInstance()->GetNATTraversalEngine(), pStationProbeList, uiTimeout,
-        bUseRelay, jobType);
+                                                  Network::GetInstance()->GetNATTraversalEngine(), pStationProbeList,
+                                                  uiTimeout, bUseRelay, jobType);
     Scheduler::GetInstance()->Queue(pJob, false);
     return true;
 }

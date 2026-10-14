@@ -34,10 +34,7 @@ public:
     Buffer* AllocateBuffer(unsigned int uiSize);
     void FreeBuffer(Buffer* pBuffer);
 
-    unsigned int GetEmptyDropCount() const
-    {
-        return m_uiEmptyDropCount;
-    }
+    unsigned int GetEmptyDropCount() const { return m_uiEmptyDropCount; }
 
 private:
     qReservedQueue<Buffer*>* m_pBuffers;

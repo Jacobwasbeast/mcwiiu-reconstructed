@@ -14,15 +14,9 @@ class DDLClassMetaType
 public:
     typedef T CPPType;
 
-    static void Add(Message* pMessage, const CPPType& rSource)
-    {
-        CPPType::Add(pMessage, rSource);
-    }
+    static void Add(Message* pMessage, const CPPType& rSource) { CPPType::Add(pMessage, rSource); }
 
-    static void Extract(Message* pMessage, CPPType* pDestination)
-    {
-        CPPType::Extract(pMessage, pDestination);
-    }
+    static void Extract(Message* pMessage, CPPType* pDestination) { CPPType::Extract(pMessage, pDestination); }
 };
 
 }

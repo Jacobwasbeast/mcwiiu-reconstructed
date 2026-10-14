@@ -15,13 +15,9 @@ template <int Capacity>
 class LiteBuffer : public RootObject
 {
 public:
-    LiteBuffer() : m_length(0)
-    {
-    }
+    LiteBuffer() : m_length(0) {}
 
-    virtual ~LiteBuffer()
-    {
-    }
+    virtual ~LiteBuffer() {}
 
     bool AppendData(const void* data, unsigned int size, unsigned int offset)
     {
@@ -44,8 +40,8 @@ public:
         if (length > static_cast<unsigned int>(Capacity))
         {
             SystemError::SignalError(
-                L"D:\\home\\jenkins\\workspace\\Master\\Pack\\d4f027b8\\.\\OnlineCore/src/Core/LiteBuffer.h",
-                79, 0xE0000019u, 0);
+                L"D:\\home\\jenkins\\workspace\\Master\\Pack\\d4f027b8\\.\\OnlineCore/src/Core/LiteBuffer.h", 79,
+                0xE0000019u, 0);
             return false;
         }
 
@@ -54,25 +50,13 @@ public:
         return true;
     }
 
-    unsigned char* GetData()
-    {
-        return m_data;
-    }
+    unsigned char* GetData() { return m_data; }
 
-    const unsigned char* GetData() const
-    {
-        return m_data;
-    }
+    const unsigned char* GetData() const { return m_data; }
 
-    unsigned int GetLength() const
-    {
-        return m_length;
-    }
+    unsigned int GetLength() const { return m_length; }
 
-    void Clear()
-    {
-        m_length = 0;
-    }
+    void Clear() { m_length = 0; }
 
 private:
     unsigned int m_length;

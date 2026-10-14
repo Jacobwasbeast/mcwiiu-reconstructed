@@ -16,15 +16,9 @@ class Message;
 class _DDL_GameKey : public Data
 {
 public:
-    _DDL_GameKey()
-        : Data()
-        , m_uiStructureVersion(0)
-    {
-    }
+    _DDL_GameKey() : Data(), m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_GameKey()
-    {
-    }
+    virtual ~_DDL_GameKey() {}
 
     _DDL_GameKey& operator=(const _DDL_GameKey& rSource);
     bool operator==(const _DDL_GameKey& rSource) const;

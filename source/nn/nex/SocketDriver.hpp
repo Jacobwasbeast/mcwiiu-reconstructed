@@ -34,17 +34,9 @@ public:
 
     struct InetAddress
     {
-        InetAddress()
-            : m_uiAddress(0)
-            , m_uiPort(0)
-        {
-        }
+        InetAddress() : m_uiAddress(0), m_uiPort(0) {}
 
-        InetAddress(unsigned int uiAddress, unsigned short uiPort)
-            : m_uiAddress(uiAddress)
-            , m_uiPort(uiPort)
-        {
-        }
+        InetAddress(unsigned int uiAddress, unsigned short uiPort) : m_uiAddress(uiAddress), m_uiPort(uiPort) {}
 
         unsigned int m_uiAddress;
         unsigned short m_uiPort;
@@ -53,37 +45,24 @@ public:
     class Socket : public RootObject
     {
     public:
-        Socket()
-            : m_bAsync(false)
-        {
-        }
+        Socket() : m_bAsync(false) {}
 
         virtual bool Open(_TrafficType type) = 0;
         virtual void Close() = 0;
         virtual bool Bind(unsigned short& rPort) = 0;
-        virtual _Result RecvFrom(unsigned char* pBuffer, unsigned int uiSize,
-            InetAddress* pAddress, unsigned int* pReceived, _SocketFlag flag) = 0;
-        virtual _Result SendTo(unsigned char* pBuffer, unsigned int uiSize,
-            const InetAddress& rAddress, unsigned int* pSent) = 0;
+        virtual _Result RecvFrom(unsigned char* pBuffer, unsigned int uiSize, InetAddress* pAddress,
+                                 unsigned int* pReceived, _SocketFlag flag) = 0;
+        virtual _Result SendTo(unsigned char* pBuffer, unsigned int uiSize, const InetAddress& rAddress,
+                               unsigned int* pSent) = 0;
         virtual bool Shutdown() = 0;
         virtual _Result Connect(const InetAddress& rAddress) = 0;
-        virtual _Result Recv(unsigned char* pBuffer, unsigned int uiSize,
-            unsigned int* pReceived) = 0;
-        virtual _Result Send(unsigned char* pBuffer, unsigned int uiSize,
-            unsigned int* pSent) = 0;
-        virtual bool SetMulticastAddress(unsigned int uiAddress)
-        {
-            return true;
-        }
+        virtual _Result Recv(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived) = 0;
+        virtual _Result Send(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pSent) = 0;
+        virtual bool SetMulticastAddress(unsigned int uiAddress) { return true; }
 
-        virtual bool SetTTL(unsigned char uiTTL)
-        {
-            return false;
-        }
+        virtual bool SetTTL(unsigned char uiTTL) { return false; }
 
-        virtual ~Socket()
-        {
-        }
+        virtual ~Socket() {}
 
         virtual bool SetAsync(bool bAsync) = 0;
 
@@ -93,21 +72,14 @@ public:
 
     struct PollInfo
     {
-        PollInfo()
-            : m_pSocket(0)
-            , m_uiResult(0)
-            , m_uiEvents(0)
-        {
-        }
+        PollInfo() : m_pSocket(0), m_uiResult(0), m_uiEvents(0) {}
 
         Socket* m_pSocket;
         unsigned int m_uiEvents;
         unsigned int m_uiResult;
     };
 
-    virtual ~SocketDriver()
-    {
-    }
+    virtual ~SocketDriver() {}
 
     virtual Socket* Create() = 0;
     virtual void Delete(Socket* pSocket) = 0;

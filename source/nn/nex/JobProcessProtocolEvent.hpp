@@ -5,7 +5,10 @@
 
 #include "nn/nex/Job.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 extern bool g_jobProcessProtocolEventCloseGuard;
 
@@ -17,9 +20,7 @@ class JobProcessProtocolEvent : public Job
 public:
     JobProcessProtocolEvent(ProtocolRequestBrokerInterface*, EndPoint*, const wchar_t*);
     virtual ~JobProcessProtocolEvent();
-    virtual void Trace(uint64_t)
-    {
-    }
+    virtual void Trace(uint64_t) {}
 
     void SetBroker(ProtocolRequestBrokerInterface*);
     uint64_t GetLifeTime() const;
@@ -34,6 +35,7 @@ protected:
     uint32_t m_processingTime;
 };
 
-}}
+}
+}
 
 #endif

@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-STLExtDDLDeclarations::STLExtDDLDeclarations()
-    : DDLDeclarations(true)
+STLExtDDLDeclarations::STLExtDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

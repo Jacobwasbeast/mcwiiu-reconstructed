@@ -11,23 +11,16 @@ namespace nex
 class EndPointUniqueID
 {
 public:
-    EndPointUniqueID()
-        : m_address()
-        , m_uiStreamID(0)
-    {
-    }
+    EndPointUniqueID() : m_address(), m_uiStreamID(0) {}
 
-    EndPointUniqueID(const InetAddress& rAddress, unsigned char uiStreamID)
-        : m_address()
-        , m_uiStreamID(uiStreamID)
+    EndPointUniqueID(const InetAddress& rAddress, unsigned char uiStreamID) : m_address(), m_uiStreamID(uiStreamID)
     {
         m_address = rAddress;
     }
 
     bool operator<(const EndPointUniqueID& rOther) const
     {
-        return m_address < rOther.m_address ||
-               (m_address == rOther.m_address && m_uiStreamID < rOther.m_uiStreamID);
+        return m_address < rOther.m_address || (m_address == rOther.m_address && m_uiStreamID < rOther.m_uiStreamID);
     }
 
 private:

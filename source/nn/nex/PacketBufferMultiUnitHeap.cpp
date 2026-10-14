@@ -6,7 +6,7 @@ namespace nex
 {
 
 void PacketBufferMultiUnitHeap::Initialize(void* pMemory, unsigned int,
-    qVector<PacketBufferManager::UnitHeapParam> aParams)
+                                           qVector<PacketBufferManager::UnitHeapParam> aParams)
 {
     unsigned char* pCursor = static_cast<unsigned char*>(pMemory);
 
@@ -33,8 +33,7 @@ void PacketBufferMultiUnitHeap::Initialize(void* pMemory, unsigned int,
 
         for (unsigned int j = 0; j < uiBlockNum; ++j)
         {
-            PacketBufferUnitHeap::Unit* pUnit =
-                reinterpret_cast<PacketBufferUnitHeap::Unit*>(pBlock);
+            PacketBufferUnitHeap::Unit* pUnit = reinterpret_cast<PacketBufferUnitHeap::Unit*>(pBlock);
 
             pUnit->m_pNext = rUnitHeap.m_pFreeList;
             rUnitHeap.m_pFreeList = pUnit;
@@ -78,8 +77,7 @@ void PacketBufferMultiUnitHeap::Finalize()
     }
 }
 
-void* PacketBufferMultiUnitHeap::Allocate(unsigned int uiSize,
-    MemoryManager::Deallocator pDeallocator)
+void* PacketBufferMultiUnitHeap::Allocate(unsigned int uiSize, MemoryManager::Deallocator pDeallocator)
 {
     void* pBlock = 0;
     const unsigned int uiUnitHeapNum = m_uiUnitHeapNum;
@@ -143,8 +141,7 @@ void PacketBufferMultiUnitHeap::Free(void* pBlock)
     Unlock();
 }
 
-void PacketBufferMultiUnitHeap::GetDebugInfo(
-    qVector<PacketBufferManager::UnitHeapDebugInfo>& rDebugInfo) const
+void PacketBufferMultiUnitHeap::GetDebugInfo(qVector<PacketBufferManager::UnitHeapDebugInfo>& rDebugInfo) const
 {
     Lock();
 

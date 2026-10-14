@@ -12,9 +12,7 @@ class HTTPEngineConfigurationThread : public HTTPEngineConfiguration
 {
 public:
     HTTPEngineConfigurationThread();
-    virtual ~HTTPEngineConfigurationThread()
-    {
-    }
+    virtual ~HTTPEngineConfigurationThread() {}
 
     virtual bool SetOption(HTTPModule::ConfigurationOptions option, va_list arguments);
     virtual void TraceOptions(unsigned int uiFilter);

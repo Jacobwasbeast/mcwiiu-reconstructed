@@ -17,14 +17,9 @@ public:
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
 
-    virtual Protocol* CreateResponder() const
-    {
-        return new RemoteLogDeviceProtocolClient();
-    }
+    virtual Protocol* CreateResponder() const { return new RemoteLogDeviceProtocolClient(); }
 
-    static void ProtoReturn_Log(Message* pMessage, ProtocolCallContext* pCallContext)
-    {
-    }
+    static void ProtoReturn_Log(Message* pMessage, ProtocolCallContext* pCallContext) {}
 
     bool CallLog(ProtocolCallContext* pCallContext, const String& rMessage);
 

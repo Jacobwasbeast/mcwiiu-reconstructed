@@ -17,8 +17,7 @@ const uint8_t NOTIFICATION_V1_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStoreNotificationV1& _DDL_DataStoreNotificationV1::operator=(
-    const _DDL_DataStoreNotificationV1& rSource)
+_DDL_DataStoreNotificationV1& _DDL_DataStoreNotificationV1::operator=(const _DDL_DataStoreNotificationV1& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiNotificationId = rSource.m_uiNotificationId;
@@ -26,8 +25,7 @@ _DDL_DataStoreNotificationV1& _DDL_DataStoreNotificationV1::operator=(
     return *this;
 }
 
-void _DDL_DataStoreNotificationV1::Add(Message* pMessage,
-    const _DDL_DataStoreNotificationV1& rSource)
+void _DDL_DataStoreNotificationV1::Add(Message* pMessage, const _DDL_DataStoreNotificationV1& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -54,14 +52,12 @@ void _DDL_DataStoreNotificationV1::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
-void _DDL_DataStoreNotificationV1::Extract(Message* pMessage,
-    _DDL_DataStoreNotificationV1* pDestination)
+void _DDL_DataStoreNotificationV1::Extract(Message* pMessage, _DDL_DataStoreNotificationV1* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

@@ -22,15 +22,15 @@ struct ProtocolKey
 };
 
 Protocol::Protocol(unsigned int uiFlags)
-    : SystemComponent(String(L"<unknown>"))
-    , m_uiProtocolID(0)
-    , m_pOutgoingConnection(0)
-    , m_pProtocolRequestBroker(0)
-    , m_uiFlags(uiFlags)
-    , m_pIncomingConnection(0)
-    , m_bLocalLoopback(false)
-    , m_uiCallerPID(0)
-    , m_uiCallerCID(0)
+    : SystemComponent(String(L"<unknown>")),
+      m_uiProtocolID(0),
+      m_pOutgoingConnection(0),
+      m_pProtocolRequestBroker(0),
+      m_uiFlags(uiFlags),
+      m_pIncomingConnection(0),
+      m_bLocalLoopback(false),
+      m_uiCallerPID(0),
+      m_uiCallerCID(0)
 {
 }
 
@@ -176,8 +176,8 @@ void Protocol::AddCallContextID(Message* pMessage, unsigned int uiCallContextID)
     pMessage->Append(reinterpret_cast<const unsigned char*>(&uiCallContextID), 4, 1);
 }
 
-void Protocol::AddCallResponse(Message* pMessage, CallProtocolMethodOperation* pOperation,
-                               unsigned int uiCallContextID, const Message& rResponse)
+void Protocol::AddCallResponse(Message* pMessage, CallProtocolMethodOperation* pOperation, unsigned int uiCallContextID,
+                               const Message& rResponse)
 {
     qResult result = pOperation->m_result;
     AddCallOutcome(pMessage, result);
@@ -186,8 +186,7 @@ void Protocol::AddCallResponse(Message* pMessage, CallProtocolMethodOperation* p
         pMessage->AddDataFromMessage(rResponse);
 }
 
-void Protocol::ExtractProtocolKey(Message* pMessage, _Command& rCommand,
-                                  unsigned short& rProtocolID)
+void Protocol::ExtractProtocolKey(Message* pMessage, _Command& rCommand, unsigned short& rProtocolID)
 {
     ProtocolKey key;
     pMessage->ExtractPrimitive(reinterpret_cast<unsigned char*>(&key));
@@ -233,8 +232,7 @@ unsigned int Protocol::ExtractCallContextID(Message* pMessage)
 ProtocolCallContext* Protocol::RetrieveCallContext(Message* pMessage)
 {
     const unsigned int id = ExtractCallContextID(pMessage);
-    return reinterpret_cast<ProtocolCallContext*>(
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(id));
+    return reinterpret_cast<ProtocolCallContext*>(Core::GetInstance()->GetCallContextRegister()->GetCallContext(id));
 }
 
 bool Protocol::IsOldRVDDLVersion(EndPoint* pEndPoint)
@@ -242,8 +240,7 @@ bool Protocol::IsOldRVDDLVersion(EndPoint* pEndPoint)
     bool bIsOldVersion = false;
     if (pEndPoint != 0)
     {
-        if (pEndPoint->m_uiPrincipalID - 0x6E < 10
-            || (pEndPoint->GetSupportedFunctionsFlags() & 0x08000000u) == 0)
+        if (pEndPoint->m_uiPrincipalID - 0x6E < 10 || (pEndPoint->GetSupportedFunctionsFlags() & 0x08000000u) == 0)
             bIsOldVersion = true;
     }
     return bIsOldVersion;

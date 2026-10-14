@@ -101,7 +101,8 @@ void BitStream::AppendBitImpl(bool bBit)
     }
     else if (bBit)
     {
-        (*m_pBuffer)[m_uiBytePosition] = (*m_pBuffer)[m_uiBytePosition] | (1 << static_cast<unsigned char>(m_uiBitPosition));
+        (*m_pBuffer)[m_uiBytePosition] = (*m_pBuffer)[m_uiBytePosition]
+                                         | (1 << static_cast<unsigned char>(m_uiBitPosition));
     }
 
     unsigned int uiBitPosition = m_uiBitPosition;
@@ -149,8 +150,7 @@ void BitStream::AppendRaw(const unsigned char* pData, unsigned int uiBits)
             AppendBitImpl((uiLast & uiMask) != 0);
             --uiRemaining;
             uiMask >>= 1;
-        }
-        while (uiRemaining != 0);
+        } while (uiRemaining != 0);
     }
 }
 
@@ -249,8 +249,7 @@ void BitStream::ExtractRaw(unsigned char* pData, unsigned int uiBits)
 
             --uiRemaining;
             uiMask >>= 1;
-        }
-        while (uiRemaining != 0);
+        } while (uiRemaining != 0);
 
         pData[uiByte] = static_cast<unsigned char>(uiLast);
     }

@@ -10,7 +10,10 @@
 #include "nn/nex/NotificationEvent.hpp"
 #include "nn/nex/NotificationEventHandler.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class NotificationEventManager : public _Proto_NotificationProtocolServer
 {
@@ -31,7 +34,8 @@ private:
     friend class BackEndServices;
     friend class JobWaitForNotification;
     typedef std::set<NotificationEventHandler*, std::less<NotificationEventHandler*>,
-                     MemAllocator<NotificationEventHandler*> > HandlerSet;
+                     MemAllocator<NotificationEventHandler*> >
+        HandlerSet;
     typedef std::list<NotificationEvent, MemAllocator<NotificationEvent> > EventList;
 
     HandlerSet m_handlers;
@@ -42,6 +46,7 @@ private:
     bool m_bDispatchServiceEvents;
 };
 
-}}
+}
+}
 
 #endif

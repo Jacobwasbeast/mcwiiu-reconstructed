@@ -58,8 +58,10 @@ struct PrimitiveReader<sizeof(uint32_t)>
     template <typename T>
     static void Read(const unsigned char* pSource, T* pValue)
     {
-        *reinterpret_cast<uint32_t*>(pValue) = static_cast<uint32_t>(pSource[0]) | (static_cast<uint32_t>(pSource[1]) << 8)
-            | (static_cast<uint32_t>(pSource[2]) << 16) | (static_cast<uint32_t>(pSource[3]) << 24);
+        *reinterpret_cast<uint32_t*>(pValue) = static_cast<uint32_t>(pSource[0])
+                                               | (static_cast<uint32_t>(pSource[1]) << 8)
+                                               | (static_cast<uint32_t>(pSource[2]) << 16)
+                                               | (static_cast<uint32_t>(pSource[3]) << 24);
     }
 };
 
@@ -69,10 +71,11 @@ struct PrimitiveReader<sizeof(uint64_t)>
     template <typename T>
     static void Read(const unsigned char* pSource, T* pValue)
     {
-        *reinterpret_cast<uint64_t*>(pValue) = static_cast<uint64_t>(pSource[0]) | (static_cast<uint64_t>(pSource[1]) << 8)
-            | (static_cast<uint64_t>(pSource[2]) << 16) | (static_cast<uint64_t>(pSource[3]) << 24)
-            | (static_cast<uint64_t>(pSource[4]) << 32) | (static_cast<uint64_t>(pSource[5]) << 40)
-            | (static_cast<uint64_t>(pSource[6]) << 48) | (static_cast<uint64_t>(pSource[7]) << 56);
+        *reinterpret_cast<uint64_t*>(
+            pValue) = static_cast<uint64_t>(pSource[0]) | (static_cast<uint64_t>(pSource[1]) << 8)
+                      | (static_cast<uint64_t>(pSource[2]) << 16) | (static_cast<uint64_t>(pSource[3]) << 24)
+                      | (static_cast<uint64_t>(pSource[4]) << 32) | (static_cast<uint64_t>(pSource[5]) << 40)
+                      | (static_cast<uint64_t>(pSource[6]) << 48) | (static_cast<uint64_t>(pSource[7]) << 56);
     }
 };
 
@@ -156,35 +159,17 @@ public:
         return true;
     }
 
-    Buffer* GetBuffer() const
-    {
-        return m_pBuffer;
-    }
+    Buffer* GetBuffer() const { return m_pBuffer; }
 
-    bool HasError() const
-    {
-        return m_bError;
-    }
+    bool HasError() const { return m_bError; }
 
-    void SetError()
-    {
-        m_bError = true;
-    }
+    void SetError() { m_bError = true; }
 
-    unsigned int GetPosition() const
-    {
-        return m_uiPosition;
-    }
+    unsigned int GetPosition() const { return m_uiPosition; }
 
-    void SetPosition(unsigned int uiPosition)
-    {
-        m_uiPosition = uiPosition;
-    }
+    void SetPosition(unsigned int uiPosition) { m_uiPosition = uiPosition; }
 
-    unsigned int GetLength() const
-    {
-        return m_pBuffer->GetLength();
-    }
+    unsigned int GetLength() const { return m_pBuffer->GetLength(); }
 
 protected:
     enum

@@ -43,8 +43,7 @@ ProtoReturnFunction s_ProtoReturn[METHOD_ID_COUNT];
 
 }
 
-void TicketGrantingProtocolClient::ProtoReturn_Login(Message* pMessage,
-                                                     ProtocolCallContext* pCallContext)
+void TicketGrantingProtocolClient::ProtoReturn_Login(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
     if (pResult != 0)
@@ -82,8 +81,7 @@ void TicketGrantingProtocolClient::ProtoReturn_Login(Message* pMessage,
         if (pMessage->HasError())
             return;
     }
-    RVConnectionData* pConnectionData =
-        static_cast<RVConnectionData*>(pCallContext->GetReturnValuePtr(3));
+    RVConnectionData* pConnectionData = static_cast<RVConnectionData*>(pCallContext->GetReturnValuePtr(3));
     if (pConnectionData != 0)
     {
         _DDL_RVConnectionData::Extract(pMessage, pConnectionData);
@@ -107,8 +105,7 @@ void TicketGrantingProtocolClient::ProtoReturn_Login(Message* pMessage,
     _Type_string::Extract(pMessage, &discardedReturnMessage[0]);
 }
 
-void TicketGrantingProtocolClient::ProtoReturn_LoginEx(Message* pMessage,
-                                                       ProtocolCallContext* pCallContext)
+void TicketGrantingProtocolClient::ProtoReturn_LoginEx(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
     if (pResult != 0)
@@ -146,8 +143,7 @@ void TicketGrantingProtocolClient::ProtoReturn_LoginEx(Message* pMessage,
         if (pMessage->HasError())
             return;
     }
-    RVConnectionData* pConnectionData =
-        static_cast<RVConnectionData*>(pCallContext->GetReturnValuePtr(3));
+    RVConnectionData* pConnectionData = static_cast<RVConnectionData*>(pCallContext->GetReturnValuePtr(3));
     if (pConnectionData != 0)
     {
         _DDL_RVConnectionData::Extract(pMessage, pConnectionData);
@@ -171,8 +167,7 @@ void TicketGrantingProtocolClient::ProtoReturn_LoginEx(Message* pMessage,
     _Type_string::Extract(pMessage, &discardedReturnMessage[0]);
 }
 
-void TicketGrantingProtocolClient::ProtoReturn_RequestTicket(Message* pMessage,
-                                                             ProtocolCallContext* pCallContext)
+void TicketGrantingProtocolClient::ProtoReturn_RequestTicket(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
     if (pResult == 0)
@@ -194,8 +189,7 @@ void TicketGrantingProtocolClient::ProtoReturn_RequestTicket(Message* pMessage,
     }
 }
 
-void TicketGrantingProtocolClient::ProtoReturn_GetPID(Message* pMessage,
-                                                      ProtocolCallContext* pCallContext)
+void TicketGrantingProtocolClient::ProtoReturn_GetPID(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     unsigned int uiDiscardedPrincipalID;
     unsigned int* pPrincipalID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
@@ -205,8 +199,7 @@ void TicketGrantingProtocolClient::ProtoReturn_GetPID(Message* pMessage,
     pMessage->ExtractPrimitive(pDestination);
 }
 
-void TicketGrantingProtocolClient::ProtoReturn_GetName(Message* pMessage,
-                                                       ProtocolCallContext* pCallContext)
+void TicketGrantingProtocolClient::ProtoReturn_GetName(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     String* pUserName = static_cast<String*>(pCallContext->GetReturnValuePtr(0));
     if (pUserName != 0)
@@ -218,8 +211,7 @@ void TicketGrantingProtocolClient::ProtoReturn_GetName(Message* pMessage,
     _Type_string::Extract(pMessage, &discardedUserName[0]);
 }
 
-void TicketGrantingProtocolClient::ProtoReturn_LoginWithContext(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void TicketGrantingProtocolClient::ProtoReturn_LoginWithContext(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
     if (pResult != 0)
@@ -257,8 +249,7 @@ void TicketGrantingProtocolClient::ProtoReturn_LoginWithContext(Message* pMessag
         if (pMessage->HasError())
             return;
     }
-    RVConnectionData* pConnectionData =
-        static_cast<RVConnectionData*>(pCallContext->GetReturnValuePtr(3));
+    RVConnectionData* pConnectionData = static_cast<RVConnectionData*>(pCallContext->GetReturnValuePtr(3));
     if (pConnectionData != 0)
     {
         _DDL_RVConnectionData::Extract(pMessage, pConnectionData);
@@ -268,18 +259,16 @@ void TicketGrantingProtocolClient::ProtoReturn_LoginWithContext(Message* pMessag
     _DDL_RVConnectionData::Extract(pMessage, &discardedConnectionData[0]);
 }
 
-TicketGrantingProtocolClient::TicketGrantingProtocolClient(unsigned short uiProtocolID)
-    : ClientProtocol(1)
+TicketGrantingProtocolClient::TicketGrantingProtocolClient(unsigned short uiProtocolID) : ClientProtocol(1)
 {
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new TicketGrantingProtocolClient());
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(uiProtocolID,
+                                                                         new TicketGrantingProtocolClient());
 }
 
-void TicketGrantingProtocolClient::ExtractCallSpecificResults(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void TicketGrantingProtocolClient::ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
@@ -296,7 +285,9 @@ Protocol* TicketGrantingProtocolClient::CreateResponder() const
     return new TicketGrantingProtocolClient();
 }
 
-bool TicketGrantingProtocolClient::CallLogin(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData, String* pReturnMessage)
+bool TicketGrantingProtocolClient::CallLogin(ProtocolCallContext* pCallContext, qResult* pResult,
+                                             const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket,
+                                             RVConnectionData* pConnectionData, String* pReturnMessage)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -328,7 +319,10 @@ bool TicketGrantingProtocolClient::CallLogin(ProtocolCallContext* pCallContext, 
     return bSent;
 }
 
-bool TicketGrantingProtocolClient::Login_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData, String* pReturnMessage)
+bool TicketGrantingProtocolClient::Login_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                        qResult* pResult, const String& rUserName,
+                                                        unsigned int* pPrincipalID, Buffer* pTicket,
+                                                        RVConnectionData* pConnectionData, String* pReturnMessage)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -352,7 +346,10 @@ bool TicketGrantingProtocolClient::Login_PrepareRequest(ProtocolCallContext* pCa
     return true;
 }
 
-bool TicketGrantingProtocolClient::CallLoginEx(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData, String* pReturnMessage, const AnyObjectHolder<Data, String>& rCustomData)
+bool TicketGrantingProtocolClient::CallLoginEx(ProtocolCallContext* pCallContext, qResult* pResult,
+                                               const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket,
+                                               RVConnectionData* pConnectionData, String* pReturnMessage,
+                                               const AnyObjectHolder<Data, String>& rCustomData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -385,7 +382,11 @@ bool TicketGrantingProtocolClient::CallLoginEx(ProtocolCallContext* pCallContext
     return bSent;
 }
 
-bool TicketGrantingProtocolClient::LoginEx_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData, String* pReturnMessage, const AnyObjectHolder<Data, String>& rCustomData)
+bool TicketGrantingProtocolClient::LoginEx_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                          qResult* pResult, const String& rUserName,
+                                                          unsigned int* pPrincipalID, Buffer* pTicket,
+                                                          RVConnectionData* pConnectionData, String* pReturnMessage,
+                                                          const AnyObjectHolder<Data, String>& rCustomData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -410,7 +411,9 @@ bool TicketGrantingProtocolClient::LoginEx_PrepareRequest(ProtocolCallContext* p
     return true;
 }
 
-bool TicketGrantingProtocolClient::CallRequestTicket(ProtocolCallContext* pCallContext, qResult* pResult, const unsigned int& rSourcePrincipalID, const unsigned int& rTargetPrincipalID, Buffer* pTicket)
+bool TicketGrantingProtocolClient::CallRequestTicket(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                     const unsigned int& rSourcePrincipalID,
+                                                     const unsigned int& rTargetPrincipalID, Buffer* pTicket)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -440,7 +443,10 @@ bool TicketGrantingProtocolClient::CallRequestTicket(ProtocolCallContext* pCallC
     return bSent;
 }
 
-bool TicketGrantingProtocolClient::RequestTicket_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const unsigned int& rSourcePrincipalID, const unsigned int& rTargetPrincipalID, Buffer* pTicket)
+bool TicketGrantingProtocolClient::RequestTicket_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                qResult* pResult,
+                                                                const unsigned int& rSourcePrincipalID,
+                                                                const unsigned int& rTargetPrincipalID, Buffer* pTicket)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -462,7 +468,8 @@ bool TicketGrantingProtocolClient::RequestTicket_PrepareRequest(ProtocolCallCont
     return true;
 }
 
-bool TicketGrantingProtocolClient::CallGetPID(ProtocolCallContext* pCallContext, unsigned int* pPrincipalID, const String& rUserName)
+bool TicketGrantingProtocolClient::CallGetPID(ProtocolCallContext* pCallContext, unsigned int* pPrincipalID,
+                                              const String& rUserName)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -490,7 +497,8 @@ bool TicketGrantingProtocolClient::CallGetPID(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool TicketGrantingProtocolClient::GetPID_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, unsigned int* pPrincipalID, const String& rUserName)
+bool TicketGrantingProtocolClient::GetPID_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                         unsigned int* pPrincipalID, const String& rUserName)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -510,7 +518,8 @@ bool TicketGrantingProtocolClient::GetPID_PrepareRequest(ProtocolCallContext* pC
     return true;
 }
 
-bool TicketGrantingProtocolClient::CallGetName(ProtocolCallContext* pCallContext, String* pUserName, const unsigned int& rPrincipalID)
+bool TicketGrantingProtocolClient::CallGetName(ProtocolCallContext* pCallContext, String* pUserName,
+                                               const unsigned int& rPrincipalID)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -538,7 +547,8 @@ bool TicketGrantingProtocolClient::CallGetName(ProtocolCallContext* pCallContext
     return bSent;
 }
 
-bool TicketGrantingProtocolClient::GetName_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, String* pUserName, const unsigned int& rPrincipalID)
+bool TicketGrantingProtocolClient::GetName_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                          String* pUserName, const unsigned int& rPrincipalID)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -558,7 +568,10 @@ bool TicketGrantingProtocolClient::GetName_PrepareRequest(ProtocolCallContext* p
     return true;
 }
 
-bool TicketGrantingProtocolClient::CallLoginWithContext(ProtocolCallContext* pCallContext, qResult* pResult, const AnyObjectHolder<Data, String>& rLoginData, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData)
+bool TicketGrantingProtocolClient::CallLoginWithContext(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                        const AnyObjectHolder<Data, String>& rLoginData,
+                                                        unsigned int* pPrincipalID, Buffer* pTicket,
+                                                        RVConnectionData* pConnectionData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -589,7 +602,11 @@ bool TicketGrantingProtocolClient::CallLoginWithContext(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool TicketGrantingProtocolClient::LoginWithContext_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const AnyObjectHolder<Data, String>& rLoginData, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData)
+bool TicketGrantingProtocolClient::LoginWithContext_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                   qResult* pResult,
+                                                                   const AnyObjectHolder<Data, String>& rLoginData,
+                                                                   unsigned int* pPrincipalID, Buffer* pTicket,
+                                                                   RVConnectionData* pConnectionData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();

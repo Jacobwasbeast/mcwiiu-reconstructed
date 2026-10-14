@@ -35,12 +35,11 @@ _DDL_AccountData& _DDL_AccountData::operator=(const _DDL_AccountData& rSource)
 
 bool _DDL_AccountData::operator==(const _DDL_AccountData& rSource) const
 {
-    return m_uiPid == rSource.m_uiPid && String::IsEqual(m_Name, rSource.m_Name) &&
-           m_uiGroups == rSource.m_uiGroups && String::IsEqual(m_Email, rSource.m_Email) &&
-           m_Date == rSource.m_Date && m_EffectiveDate == rSource.m_EffectiveDate &&
-           String::IsEqual(m_NotEffectiveMessage, rSource.m_NotEffectiveMessage) &&
-           m_ExpiryDate == rSource.m_ExpiryDate &&
-           String::IsEqual(m_ExpiredMessage, rSource.m_ExpiredMessage);
+    return m_uiPid == rSource.m_uiPid && String::IsEqual(m_Name, rSource.m_Name) && m_uiGroups == rSource.m_uiGroups
+           && String::IsEqual(m_Email, rSource.m_Email) && m_Date == rSource.m_Date
+           && m_EffectiveDate == rSource.m_EffectiveDate
+           && String::IsEqual(m_NotEffectiveMessage, rSource.m_NotEffectiveMessage)
+           && m_ExpiryDate == rSource.m_ExpiryDate && String::IsEqual(m_ExpiredMessage, rSource.m_ExpiredMessage);
 }
 
 void _DDL_AccountData::Add(Message* pMessage, const _DDL_AccountData& rSource)

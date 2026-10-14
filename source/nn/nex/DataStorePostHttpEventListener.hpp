@@ -18,15 +18,15 @@ class DataStorePostHttpEventListener : public HttpEventListener, public RootObje
 {
 public:
     DataStorePostHttpEventListener(unsigned int uiCallId, const qVector<DataStoreKeyValue>& rHeaders,
-        const qVector<DataStoreKeyValue>& rFormFields, const qVector<unsigned char>& rRootCa,
-        unsigned int uiThreadPriority, unsigned int uiTransferBufferSize,
-        const unsigned char* pData, unsigned int uiDataSize,
-        DataStorePostObjectEventListener* pListener);
+                                   const qVector<DataStoreKeyValue>& rFormFields, const qVector<unsigned char>& rRootCa,
+                                   unsigned int uiThreadPriority, unsigned int uiTransferBufferSize,
+                                   const unsigned char* pData, unsigned int uiDataSize,
+                                   DataStorePostObjectEventListener* pListener);
     virtual ~DataStorePostHttpEventListener();
 
     virtual void PrepareRequest(HttpConnection* pConnection);
-    virtual unsigned int PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer,
-        unsigned int uiSize, bool* pbLastChunk);
+    virtual unsigned int PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer, unsigned int uiSize,
+                                           bool* pbLastChunk);
 
 private:
     unsigned int m_uiCallId;

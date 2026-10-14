@@ -9,8 +9,8 @@ namespace nn
 namespace nex
 {
 
-void _Proto_HealthProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_HealthProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                          bool* pResponseRequired, EndPoint*)
 {
     switch (static_cast<uint16_t>(ExtractMethodID(pRequest)))
     {

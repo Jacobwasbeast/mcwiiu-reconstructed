@@ -31,10 +31,9 @@ public:
         Udp = 3
     };
 
-    typedef std::map<String, unsigned int, std::less<String>,
-        MemAllocator<std::pair<const String, unsigned int> > > UIntParamMap;
-    typedef std::map<String, String, std::less<String>,
-        MemAllocator<std::pair<const String, String> > > StrParamMap;
+    typedef std::map<String, unsigned int, std::less<String>, MemAllocator<std::pair<const String, unsigned int> > >
+        UIntParamMap;
+    typedef std::map<String, String, std::less<String>, MemAllocator<std::pair<const String, String> > > StrParamMap;
 
     StationURL();
     StationURL(const StationURL& rStationURL);
@@ -148,8 +147,8 @@ private:
     bool ParseParam(wchar_t* pParam, bool bFragment);
     bool ParseParams(wchar_t* pParams, bool bFragment);
 
-    static qResult CopyInSuppliedBuffer(wchar_t* pDestination, unsigned int uiSize,
-        const wchar_t* pSource, unsigned int uiLength);
+    static qResult CopyInSuppliedBuffer(wchar_t* pDestination, unsigned int uiSize, const wchar_t* pSource,
+                                        unsigned int uiLength);
 
     InetAddress* m_pAddress;
     URLType m_URLType;

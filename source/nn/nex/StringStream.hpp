@@ -39,14 +39,11 @@ public:
 
     void BytesDump(const unsigned char* pData, unsigned int uiSize);
 
-    const wchar_t* GetBuffer() const
-    {
-        return m_pBuffer;
-    }
+    const wchar_t* GetBuffer() const { return m_pBuffer; }
 
 private:
     friend void zerohex(StringStream& rStream);
-StringStream& hex(StringStream& rStream);
+    StringStream& hex(StringStream& rStream);
     friend StringStream& hex(StringStream& rStream);
     friend StringStream& noshowbase(StringStream& rStream);
 

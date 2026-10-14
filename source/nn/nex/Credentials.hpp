@@ -28,10 +28,7 @@ public:
     void SetAuthenticationConnection(EndPoint* connection);
     void SetSecureConnection(EndPoint* connection);
 
-    uint32_t GetPrincipalID() const
-    {
-        return m_value;
-    }
+    uint32_t GetPrincipalID() const { return m_value; }
 
 private:
     friend class BackEndServices;

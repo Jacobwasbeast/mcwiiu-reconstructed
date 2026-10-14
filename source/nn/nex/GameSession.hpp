@@ -11,14 +11,9 @@ namespace nex
 class GameSession : public _DDL_GameSession
 {
 public:
-    GameSession()
-        : _DDL_GameSession()
-    {
-    }
+    GameSession() : _DDL_GameSession() {}
 
-    virtual ~GameSession()
-    {
-    }
+    virtual ~GameSession() {}
 };
 
 }

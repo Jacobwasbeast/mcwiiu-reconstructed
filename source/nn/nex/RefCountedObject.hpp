@@ -22,16 +22,10 @@ public:
     RefCountedObject();
     virtual ~RefCountedObject();
 
-    void AddRef()
-    {
-        AddAndFetch(&m_refCount, 1);
-    }
+    void AddRef() { AddAndFetch(&m_refCount, 1); }
     void ReleaseRef();
 
-    uint32_t GetRefCount() const
-    {
-        return static_cast<uint32_t>(m_refCount);
-    }
+    uint32_t GetRefCount() const { return static_cast<uint32_t>(m_refCount); }
 
 private:
     static int32_t AddAndFetch(volatile int32_t* pValue, int32_t iDelta)
@@ -43,8 +37,7 @@ private:
             unsigned int* pWord = reinterpret_cast<unsigned int*>(const_cast<int32_t*>(pValue));
             uiPrevious = __LWARX(pWord, 0);
             __DCBST(pWord, 0);
-        } while (!__STWCX(reinterpret_cast<unsigned int*>(const_cast<int32_t*>(pValue)), 0,
-                          uiPrevious + iDelta));
+        } while (!__STWCX(reinterpret_cast<unsigned int*>(const_cast<int32_t*>(pValue)), 0, uiPrevious + iDelta));
 
         return static_cast<int32_t>(uiPrevious + iDelta);
 #else

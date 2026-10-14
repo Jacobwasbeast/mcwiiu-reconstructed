@@ -16,14 +16,9 @@ class Message;
 class _DDL_DataStoreKeyValue : public RootObject
 {
 public:
-    _DDL_DataStoreKeyValue()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreKeyValue() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreKeyValue()
-    {
-    }
+    virtual ~_DDL_DataStoreKeyValue() {}
 
     _DDL_DataStoreKeyValue& operator=(const _DDL_DataStoreKeyValue& rSource);
     bool operator==(const _DDL_DataStoreKeyValue& rSource) const;

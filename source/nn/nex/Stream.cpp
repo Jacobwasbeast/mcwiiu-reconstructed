@@ -7,8 +7,7 @@ namespace nn
 namespace nex
 {
 
-Stream::Stream(Type type)
-    : m_Type(type)
+Stream::Stream(Type type) : m_Type(type)
 {
     g_streamSettings[type].Get().SetStreamType(m_Type);
 }

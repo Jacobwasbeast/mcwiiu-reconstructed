@@ -104,7 +104,6 @@ void EventHandler::DeleteEventObject(Event* pEvent)
     m_pEvents[GetEventIndex(pEvent)] = 0;
 
     delete pEvent;
-
 }
 
 unsigned short EventHandler::GetSignaledEvent() const
@@ -115,8 +114,7 @@ unsigned short EventHandler::GetSignaledEvent() const
     {
         if (EventSet(m_pEvents[(index + s_nextEvent) % m_nbEvents]))
         {
-            unsigned short signaled =
-                static_cast<unsigned short>((index + s_nextEvent) % m_nbEvents);
+            unsigned short signaled = static_cast<unsigned short>((index + s_nextEvent) % m_nbEvents);
 
             return signaled;
         }

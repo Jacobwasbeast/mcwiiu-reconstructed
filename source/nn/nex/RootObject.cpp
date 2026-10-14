@@ -18,8 +18,7 @@ void* RootObject::operator new(std::size_t size, TargetPool pool)
     if (pool != TARGET_POOL_PACKET_MANAGEMENT)
         return 0;
 
-    return PacketBufferManager::GetInstance()->AllocateManagementObject(
-        static_cast<unsigned int>(size));
+    return PacketBufferManager::GetInstance()->AllocateManagementObject(static_cast<unsigned int>(size));
 }
 
 void RootObject::operator delete(void* memory)

@@ -38,13 +38,13 @@ enum AcquireTicketResult
 
 }
 
-JobTicketManagerAcquireTicket::JobTicketManagerAcquireTicket(unsigned int uiCallId,
-    TicketManager* pTicketManager, unsigned int uiSourcePrincipalID,
-    unsigned int uiTargetPrincipalID, Ticket** ppTicket)
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_acquireContext(0)
-    , m_ticketData()
-    , m_result()
+JobTicketManagerAcquireTicket::JobTicketManagerAcquireTicket(unsigned int uiCallId, TicketManager* pTicketManager,
+                                                             unsigned int uiSourcePrincipalID,
+                                                             unsigned int uiTargetPrincipalID, Ticket** ppTicket)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_acquireContext(0),
+      m_ticketData(),
+      m_result()
 {
     m_uiCallId = uiCallId;
     m_uiSourcePrincipalID = uiSourcePrincipalID;
@@ -62,15 +62,12 @@ JobTicketManagerAcquireTicket::~JobTicketManagerAcquireTicket()
 void JobTicketManagerAcquireTicket::CompleteJob(CallContext::State)
 {
     SetToComplete();
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
-        pCallContext->SetStateImpl(CallContext::CallSucceeded,
-            qResult(ACQUIRE_TICKET_SUCCEEDED_RESULT), true);
+        pCallContext->SetStateImpl(CallContext::CallSucceeded, qResult(ACQUIRE_TICKET_SUCCEEDED_RESULT), true);
 }
 
-void JobTicketManagerAcquireTicket::AcquireTicketCompletionCallback(CallContext*,
-    const UserContext* pUserContext)
+void JobTicketManagerAcquireTicket::AcquireTicketCompletionCallback(CallContext*, const UserContext* pUserContext)
 {
     static_cast<JobTicketManagerAcquireTicket*>(pUserContext->GetPointer())->SetToReady();
 }
@@ -92,15 +89,13 @@ void JobTicketManagerAcquireTicket::PrepareCall()
         return;
     }
     Message message;
-    ProtocolRequestBrokerInterface::InitMessage(&message, TICKET_GRANTING_PROTOCOL_ID,
-        Protocol::COMMAND_REQUEST);
+    ProtocolRequestBrokerInterface::InitMessage(&message, TICKET_GRANTING_PROTOCOL_ID, Protocol::COMMAND_REQUEST);
     m_acquireContext.m_expirationTime = m_pTicketManager->m_pAuthenticationClient->m_loginDeadline;
-    TicketGrantingProtocolClient::RequestTicket_PrepareRequest(&m_acquireContext, &message,
-        &m_result, m_uiSourcePrincipalID, m_uiTargetPrincipalID, &m_ticketData);
-    m_acquireContext.RegisterCompletionCallback(AcquireTicketCompletionCallback,
-        UserContext(this), false);
-    EndPoint* pConnection = m_pTicketManager->m_pAuthenticationClient->m_pCredentials
-                                ->GetConnection(AUTHENTICATION_CONNECTION_TYPE);
+    TicketGrantingProtocolClient::RequestTicket_PrepareRequest(
+        &m_acquireContext, &message, &m_result, m_uiSourcePrincipalID, m_uiTargetPrincipalID, &m_ticketData);
+    m_acquireContext.RegisterCompletionCallback(AcquireTicketCompletionCallback, UserContext(this), false);
+    EndPoint* pConnection = m_pTicketManager->m_pAuthenticationClient->m_pCredentials->GetConnection(
+        AUTHENTICATION_CONNECTION_TYPE);
     m_acquireContext.SetDependentConnection(pConnection, pConnection->GetConnectionID());
     Buffer* pBuffer = message.GetBuffer();
     CriticalSection& csScheduler = Scheduler::GetInstance()->GetCriticalSection();
@@ -117,8 +112,7 @@ void JobTicketManagerAcquireTicket::ProcessResponse()
     if (m_acquireContext.GetState() == CallContext::CallSucceeded)
     {
         Buffer decryptedTicket;
-        if (!m_pTicketManager->m_pAuthenticationClient->m_pKerberosEncryption->Decrypt(
-                m_ticketData, &decryptedTicket))
+        if (!m_pTicketManager->m_pAuthenticationClient->m_pKerberosEncryption->Decrypt(m_ticketData, &decryptedTicket))
         {
             CompleteJob(CallContext::CallFailed);
             return;
@@ -128,13 +122,11 @@ void JobTicketManagerAcquireTicket::ProcessResponse()
         BitStream stream(&decryptedTicket);
         stream.ExtractRaw(sessionKey.PrepareContentPtr(TICKET_KEY_LENGTH), TICKET_KEY_BITS);
         unsigned int uiTargetPrincipalID;
-        stream.Extract(reinterpret_cast<unsigned char*>(&uiTargetPrincipalID),
-            sizeof(uiTargetPrincipalID), 1);
+        stream.Extract(reinterpret_cast<unsigned char*>(&uiTargetPrincipalID), sizeof(uiTargetPrincipalID), 1);
         stream >> ticketData;
         DateTime currentTime;
         DateTime::GetSystemTime(currentTime);
-        Ticket* pTicket = new Ticket(ticketData, m_uiSourcePrincipalID, uiTargetPrincipalID,
-            sessionKey, currentTime);
+        Ticket* pTicket = new Ticket(ticketData, m_uiSourcePrincipalID, uiTargetPrincipalID, sessionKey, currentTime);
         m_pTicketManager->InsertTicket(uiTargetPrincipalID, pTicket);
         *m_ppTicket = pTicket;
         pTicket->AddRef();

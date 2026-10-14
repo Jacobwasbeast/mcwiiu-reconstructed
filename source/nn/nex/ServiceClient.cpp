@@ -17,9 +17,9 @@ namespace nex
 {
 
 ServiceClient::ServiceClient(unsigned int uiServiceID)
-    : m_uiServiceID(uiServiceID)
-    , m_pCredentials(0)
-    , m_bLocalLoopback(false)
+    : m_uiServiceID(uiServiceID),
+      m_pCredentials(0),
+      m_bLocalLoopback(false)
 {
     if (RVClientCore::GetInstance() != 0)
         RVClientCore::GetInstance()->AddRef();
@@ -82,8 +82,7 @@ bool ServiceClient::IsConnected() const
 
 bool ServiceClient::SetDependentRvConnection(ProtocolCallContext* pCallContext) const
 {
-    Credentials* pCredentials =
-        pCallContext->GetCredentials() != 0 ? pCallContext->GetCredentials() : m_pCredentials;
+    Credentials* pCredentials = pCallContext->GetCredentials() != 0 ? pCallContext->GetCredentials() : m_pCredentials;
 
     if (pCredentials == 0)
         return false;

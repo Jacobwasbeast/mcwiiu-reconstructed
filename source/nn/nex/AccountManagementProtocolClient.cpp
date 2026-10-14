@@ -77,18 +77,16 @@ ProtoReturnFunction s_ProtoReturn[METHOD_ID_COUNT];
 
 }
 
-AccountManagementProtocolClient::AccountManagementProtocolClient(unsigned short uiProtocolID)
-    : ClientProtocol(1)
+AccountManagementProtocolClient::AccountManagementProtocolClient(unsigned short uiProtocolID) : ClientProtocol(1)
 {
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new AccountManagementProtocolClient());
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(uiProtocolID,
+                                                                         new AccountManagementProtocolClient());
 }
 
-void AccountManagementProtocolClient::ExtractCallSpecificResults(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
@@ -116,7 +114,9 @@ void AccountManagementProtocolClient::ProtoReturn_CreateAccount(Message* pMessag
     _Type_qresult::Extract(pMessage, pResult);
 }
 
-bool AccountManagementProtocolClient::CallCreateAccount(ProtocolCallContext* pCallContext, qResult* pResult, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail)
+bool AccountManagementProtocolClient::CallCreateAccount(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                        const String& rName, const String& rKey,
+                                                        const unsigned int& rGroups, const String& rEmail)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -147,7 +147,10 @@ bool AccountManagementProtocolClient::CallCreateAccount(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool AccountManagementProtocolClient::CreateAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail)
+bool AccountManagementProtocolClient::CreateAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                   qResult* pResult, const String& rName,
+                                                                   const String& rKey, const unsigned int& rGroups,
+                                                                   const String& rEmail)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -174,7 +177,8 @@ void AccountManagementProtocolClient::ProtoReturn_DeleteAccount(Message*, Protoc
 {
 }
 
-bool AccountManagementProtocolClient::CallDeleteAccount(ProtocolCallContext* pCallContext, const unsigned int& rPrincipalID)
+bool AccountManagementProtocolClient::CallDeleteAccount(ProtocolCallContext* pCallContext,
+                                                        const unsigned int& rPrincipalID)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -198,7 +202,8 @@ bool AccountManagementProtocolClient::CallDeleteAccount(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool AccountManagementProtocolClient::DeleteAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rPrincipalID)
+bool AccountManagementProtocolClient::DeleteAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                   const unsigned int& rPrincipalID)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -225,7 +230,9 @@ void AccountManagementProtocolClient::ProtoReturn_DisableAccount(Message* pMessa
     _Type_qresult::Extract(pMessage, pResult);
 }
 
-bool AccountManagementProtocolClient::CallDisableAccount(ProtocolCallContext* pCallContext, qResult* pResult, const unsigned int& rPrincipalID, const DateTime& rDate, const String& rMessage)
+bool AccountManagementProtocolClient::CallDisableAccount(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                         const unsigned int& rPrincipalID, const DateTime& rDate,
+                                                         const String& rMessage)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -256,7 +263,10 @@ bool AccountManagementProtocolClient::CallDisableAccount(ProtocolCallContext* pC
     return bSent;
 }
 
-bool AccountManagementProtocolClient::DisableAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const unsigned int& rPrincipalID, const DateTime& rDate, const String& rMessage)
+bool AccountManagementProtocolClient::DisableAccount_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                    Message* pMessage, qResult* pResult,
+                                                                    const unsigned int& rPrincipalID,
+                                                                    const DateTime& rDate, const String& rMessage)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -289,7 +299,8 @@ void AccountManagementProtocolClient::ProtoReturn_ChangePassword(Message* pMessa
     *pMessage >> *pDestination;
 }
 
-bool AccountManagementProtocolClient::CallChangePassword(ProtocolCallContext* pCallContext, bool* pSuccess, const String& rNewKey)
+bool AccountManagementProtocolClient::CallChangePassword(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                         const String& rNewKey)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -317,7 +328,9 @@ bool AccountManagementProtocolClient::CallChangePassword(ProtocolCallContext* pC
     return bSent;
 }
 
-bool AccountManagementProtocolClient::ChangePassword_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const String& rNewKey)
+bool AccountManagementProtocolClient::ChangePassword_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                    Message* pMessage, bool* pSuccess,
+                                                                    const String& rNewKey)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -347,7 +360,8 @@ void AccountManagementProtocolClient::ProtoReturn_TestCapability(Message* pMessa
     *pMessage >> *pDestination;
 }
 
-bool AccountManagementProtocolClient::CallTestCapability(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rCapability)
+bool AccountManagementProtocolClient::CallTestCapability(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                         const unsigned int& rCapability)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -375,7 +389,9 @@ bool AccountManagementProtocolClient::CallTestCapability(ProtocolCallContext* pC
     return bSent;
 }
 
-bool AccountManagementProtocolClient::TestCapability_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rCapability)
+bool AccountManagementProtocolClient::TestCapability_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                    Message* pMessage, bool* pSuccess,
+                                                                    const unsigned int& rCapability)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -407,7 +423,8 @@ void AccountManagementProtocolClient::ProtoReturn_GetName(Message* pMessage, Pro
     _Type_string::Extract(pMessage, &discardedString[0]);
 }
 
-bool AccountManagementProtocolClient::CallGetName(ProtocolCallContext* pCallContext, const unsigned int& rPrincipalID, String* pName)
+bool AccountManagementProtocolClient::CallGetName(ProtocolCallContext* pCallContext, const unsigned int& rPrincipalID,
+                                                  String* pName)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -435,7 +452,8 @@ bool AccountManagementProtocolClient::CallGetName(ProtocolCallContext* pCallCont
     return bSent;
 }
 
-bool AccountManagementProtocolClient::GetName_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rPrincipalID, String* pName)
+bool AccountManagementProtocolClient::GetName_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                             const unsigned int& rPrincipalID, String* pName)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -476,7 +494,8 @@ void AccountManagementProtocolClient::ProtoReturn_GetAccountData(Message* pMessa
     _DDL_AccountData::Extract(pMessage, &discardedAccountData[0]);
 }
 
-bool AccountManagementProtocolClient::CallGetAccountData(ProtocolCallContext* pCallContext, qResult* pResult, AccountData* pAccountData)
+bool AccountManagementProtocolClient::CallGetAccountData(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                         AccountData* pAccountData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -504,7 +523,9 @@ bool AccountManagementProtocolClient::CallGetAccountData(ProtocolCallContext* pC
     return bSent;
 }
 
-bool AccountManagementProtocolClient::GetAccountData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, AccountData* pAccountData)
+bool AccountManagementProtocolClient::GetAccountData_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                    Message* pMessage, qResult* pResult,
+                                                                    AccountData* pAccountData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -546,7 +567,8 @@ void AccountManagementProtocolClient::ProtoReturn_GetPrivateData(Message* pMessa
     }
 }
 
-bool AccountManagementProtocolClient::CallGetPrivateData(ProtocolCallContext* pCallContext, bool* pSuccess, DataHolder* pData)
+bool AccountManagementProtocolClient::CallGetPrivateData(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                         DataHolder* pData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -574,7 +596,9 @@ bool AccountManagementProtocolClient::CallGetPrivateData(ProtocolCallContext* pC
     return bSent;
 }
 
-bool AccountManagementProtocolClient::GetPrivateData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, DataHolder* pData)
+bool AccountManagementProtocolClient::GetPrivateData_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                    Message* pMessage, bool* pSuccess,
+                                                                    DataHolder* pData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -616,7 +640,8 @@ void AccountManagementProtocolClient::ProtoReturn_GetPublicData(Message* pMessag
     }
 }
 
-bool AccountManagementProtocolClient::CallGetPublicData(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rPrincipalID, DataHolder* pData)
+bool AccountManagementProtocolClient::CallGetPublicData(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                        const unsigned int& rPrincipalID, DataHolder* pData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -645,7 +670,9 @@ bool AccountManagementProtocolClient::CallGetPublicData(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool AccountManagementProtocolClient::GetPublicData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rPrincipalID, DataHolder* pData)
+bool AccountManagementProtocolClient::GetPublicData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                   bool* pSuccess, const unsigned int& rPrincipalID,
+                                                                   DataHolder* pData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -666,7 +693,8 @@ bool AccountManagementProtocolClient::GetPublicData_PrepareRequest(ProtocolCallC
     return true;
 }
 
-void AccountManagementProtocolClient::ProtoReturn_GetMultiplePublicData(Message* pMessage, ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ProtoReturn_GetMultiplePublicData(Message* pMessage,
+                                                                        ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -686,7 +714,9 @@ void AccountManagementProtocolClient::ProtoReturn_GetMultiplePublicData(Message*
     _Type_std_list<DataAny>::Extract(pMessage, &discardedDataList[0]);
 }
 
-bool AccountManagementProtocolClient::CallGetMultiplePublicData(ProtocolCallContext* pCallContext, bool* pSuccess, const qList<unsigned int>& rPrincipalIDs, DataHolderList* pDataList)
+bool AccountManagementProtocolClient::CallGetMultiplePublicData(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                                const qList<unsigned int>& rPrincipalIDs,
+                                                                DataHolderList* pDataList)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -715,7 +745,10 @@ bool AccountManagementProtocolClient::CallGetMultiplePublicData(ProtocolCallCont
     return bSent;
 }
 
-bool AccountManagementProtocolClient::GetMultiplePublicData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const qList<unsigned int>& rPrincipalIDs, DataHolderList* pDataList)
+bool AccountManagementProtocolClient::GetMultiplePublicData_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                           Message* pMessage, bool* pSuccess,
+                                                                           const qList<unsigned int>& rPrincipalIDs,
+                                                                           DataHolderList* pDataList)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -736,7 +769,8 @@ bool AccountManagementProtocolClient::GetMultiplePublicData_PrepareRequest(Proto
     return true;
 }
 
-void AccountManagementProtocolClient::ProtoReturn_UpdateAccountName(Message* pMessage, ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ProtoReturn_UpdateAccountName(Message* pMessage,
+                                                                    ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
     if (pResult == 0)
@@ -747,7 +781,8 @@ void AccountManagementProtocolClient::ProtoReturn_UpdateAccountName(Message* pMe
     _Type_qresult::Extract(pMessage, pResult);
 }
 
-bool AccountManagementProtocolClient::CallUpdateAccountName(ProtocolCallContext* pCallContext, qResult* pResult, const String& rName)
+bool AccountManagementProtocolClient::CallUpdateAccountName(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                            const String& rName)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -775,7 +810,9 @@ bool AccountManagementProtocolClient::CallUpdateAccountName(ProtocolCallContext*
     return bSent;
 }
 
-bool AccountManagementProtocolClient::UpdateAccountName_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const String& rName)
+bool AccountManagementProtocolClient::UpdateAccountName_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                       Message* pMessage, qResult* pResult,
+                                                                       const String& rName)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -795,7 +832,8 @@ bool AccountManagementProtocolClient::UpdateAccountName_PrepareRequest(ProtocolC
     return true;
 }
 
-void AccountManagementProtocolClient::ProtoReturn_UpdateAccountEmail(Message* pMessage, ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ProtoReturn_UpdateAccountEmail(Message* pMessage,
+                                                                     ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
     if (pResult == 0)
@@ -806,7 +844,8 @@ void AccountManagementProtocolClient::ProtoReturn_UpdateAccountEmail(Message* pM
     _Type_qresult::Extract(pMessage, pResult);
 }
 
-bool AccountManagementProtocolClient::CallUpdateAccountEmail(ProtocolCallContext* pCallContext, qResult* pResult, const String& rEmail)
+bool AccountManagementProtocolClient::CallUpdateAccountEmail(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                             const String& rEmail)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -834,7 +873,9 @@ bool AccountManagementProtocolClient::CallUpdateAccountEmail(ProtocolCallContext
     return bSent;
 }
 
-bool AccountManagementProtocolClient::UpdateAccountEmail_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const String& rEmail)
+bool AccountManagementProtocolClient::UpdateAccountEmail_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                        Message* pMessage, qResult* pResult,
+                                                                        const String& rEmail)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -865,7 +906,9 @@ void AccountManagementProtocolClient::ProtoReturn_UpdateCustomData(Message* pMes
     _Type_qresult::Extract(pMessage, pResult);
 }
 
-bool AccountManagementProtocolClient::CallUpdateCustomData(ProtocolCallContext* pCallContext, qResult* pResult, const DataHolder& rPublicData, const DataHolder& rPrivateData)
+bool AccountManagementProtocolClient::CallUpdateCustomData(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                           const DataHolder& rPublicData,
+                                                           const DataHolder& rPrivateData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -894,7 +937,10 @@ bool AccountManagementProtocolClient::CallUpdateCustomData(ProtocolCallContext* 
     return bSent;
 }
 
-bool AccountManagementProtocolClient::UpdateCustomData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const DataHolder& rPublicData, const DataHolder& rPrivateData)
+bool AccountManagementProtocolClient::UpdateCustomData_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                      Message* pMessage, qResult* pResult,
+                                                                      const DataHolder& rPublicData,
+                                                                      const DataHolder& rPrivateData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -920,14 +966,18 @@ void AccountManagementProtocolClient::ProtoReturn_FindByNameRegex(Message* pMess
     void* pAccountInfos = pCallContext->GetReturnValuePtr(0);
     if (pAccountInfos != 0)
     {
-        _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(pMessage, static_cast<qList<BasicAccountInfo>*>(pAccountInfos));
+        _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(
+            pMessage, static_cast<qList<BasicAccountInfo>*>(pAccountInfos));
         return;
     }
     qList<BasicAccountInfo> discardedAccountInfos[1];
     _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(pMessage, &discardedAccountInfos[0]);
 }
 
-bool AccountManagementProtocolClient::CallFindByNameRegex(ProtocolCallContext* pCallContext, const unsigned int& rGroups, const String& rRegex, const ResultRange& rRange, qList<BasicAccountInfo>* pAccountInfos)
+bool AccountManagementProtocolClient::CallFindByNameRegex(ProtocolCallContext* pCallContext,
+                                                          const unsigned int& rGroups, const String& rRegex,
+                                                          const ResultRange& rRange,
+                                                          qList<BasicAccountInfo>* pAccountInfos)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -957,7 +1007,10 @@ bool AccountManagementProtocolClient::CallFindByNameRegex(ProtocolCallContext* p
     return bSent;
 }
 
-bool AccountManagementProtocolClient::FindByNameRegex_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rGroups, const String& rRegex, const ResultRange& rRange, qList<BasicAccountInfo>* pAccountInfos)
+bool AccountManagementProtocolClient::FindByNameRegex_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                     Message* pMessage, const unsigned int& rGroups,
+                                                                     const String& rRegex, const ResultRange& rRange,
+                                                                     qList<BasicAccountInfo>* pAccountInfos)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -983,7 +1036,9 @@ void AccountManagementProtocolClient::ProtoReturn_UpdateAccountExpiryDate(Messag
 {
 }
 
-bool AccountManagementProtocolClient::CallUpdateAccountExpiryDate(ProtocolCallContext* pCallContext, const unsigned int& rPrincipalID, const DateTime& rDate, const String& rMessage)
+bool AccountManagementProtocolClient::CallUpdateAccountExpiryDate(ProtocolCallContext* pCallContext,
+                                                                  const unsigned int& rPrincipalID,
+                                                                  const DateTime& rDate, const String& rMessage)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1010,7 +1065,11 @@ bool AccountManagementProtocolClient::CallUpdateAccountExpiryDate(ProtocolCallCo
     return bSent;
 }
 
-bool AccountManagementProtocolClient::UpdateAccountExpiryDate_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rPrincipalID, const DateTime& rDate, const String& rMessage)
+bool AccountManagementProtocolClient::UpdateAccountExpiryDate_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                             Message* pMessage,
+                                                                             const unsigned int& rPrincipalID,
+                                                                             const DateTime& rDate,
+                                                                             const String& rMessage)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1033,7 +1092,9 @@ void AccountManagementProtocolClient::ProtoReturn_UpdateAccountEffectiveDate(Mes
 {
 }
 
-bool AccountManagementProtocolClient::CallUpdateAccountEffectiveDate(ProtocolCallContext* pCallContext, const unsigned int& rPrincipalID, const DateTime& rDate, const String& rMessage)
+bool AccountManagementProtocolClient::CallUpdateAccountEffectiveDate(ProtocolCallContext* pCallContext,
+                                                                     const unsigned int& rPrincipalID,
+                                                                     const DateTime& rDate, const String& rMessage)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1060,7 +1121,11 @@ bool AccountManagementProtocolClient::CallUpdateAccountEffectiveDate(ProtocolCal
     return bSent;
 }
 
-bool AccountManagementProtocolClient::UpdateAccountEffectiveDate_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rPrincipalID, const DateTime& rDate, const String& rMessage)
+bool AccountManagementProtocolClient::UpdateAccountEffectiveDate_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                                Message* pMessage,
+                                                                                const unsigned int& rPrincipalID,
+                                                                                const DateTime& rDate,
+                                                                                const String& rMessage)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1107,7 +1172,8 @@ bool AccountManagementProtocolClient::CallUpdateStatus(ProtocolCallContext* pCal
     return bSent;
 }
 
-bool AccountManagementProtocolClient::UpdateStatus_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const String& rStatus)
+bool AccountManagementProtocolClient::UpdateStatus_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                  const String& rStatus)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1135,7 +1201,8 @@ void AccountManagementProtocolClient::ProtoReturn_GetStatus(Message* pMessage, P
     _Type_string::Extract(pMessage, &discardedString[0]);
 }
 
-bool AccountManagementProtocolClient::CallGetStatus(ProtocolCallContext* pCallContext, const unsigned int& rPrincipalID, String* pStatus)
+bool AccountManagementProtocolClient::CallGetStatus(ProtocolCallContext* pCallContext, const unsigned int& rPrincipalID,
+                                                    String* pStatus)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1163,7 +1230,8 @@ bool AccountManagementProtocolClient::CallGetStatus(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool AccountManagementProtocolClient::GetStatus_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rPrincipalID, String* pStatus)
+bool AccountManagementProtocolClient::GetStatus_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                               const unsigned int& rPrincipalID, String* pStatus)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1183,7 +1251,8 @@ bool AccountManagementProtocolClient::GetStatus_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-void AccountManagementProtocolClient::ProtoReturn_GetLastConnectionStats(Message* pMessage, ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ProtoReturn_GetLastConnectionStats(Message* pMessage,
+                                                                         ProtocolCallContext* pCallContext)
 {
     DateTime* pDate1 = static_cast<DateTime*>(pCallContext->GetReturnValuePtr(0));
     if (pDate1 != 0)
@@ -1233,7 +1302,9 @@ void AccountManagementProtocolClient::ProtoReturn_GetLastConnectionStats(Message
     }
 }
 
-bool AccountManagementProtocolClient::CallGetLastConnectionStats(ProtocolCallContext* pCallContext, const unsigned int& rPrincipalID, DateTime* pDate1, DateTime* pDate2, DateTime* pDate3)
+bool AccountManagementProtocolClient::CallGetLastConnectionStats(ProtocolCallContext* pCallContext,
+                                                                 const unsigned int& rPrincipalID, DateTime* pDate1,
+                                                                 DateTime* pDate2, DateTime* pDate3)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1263,7 +1334,11 @@ bool AccountManagementProtocolClient::CallGetLastConnectionStats(ProtocolCallCon
     return bSent;
 }
 
-bool AccountManagementProtocolClient::GetLastConnectionStats_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rPrincipalID, DateTime* pDate1, DateTime* pDate2, DateTime* pDate3)
+bool AccountManagementProtocolClient::GetLastConnectionStats_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                            Message* pMessage,
+                                                                            const unsigned int& rPrincipalID,
+                                                                            DateTime* pDate1, DateTime* pDate2,
+                                                                            DateTime* pDate3)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1322,7 +1397,8 @@ bool AccountManagementProtocolClient::CallResetPassword(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool AccountManagementProtocolClient::ResetPassword_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess)
+bool AccountManagementProtocolClient::ResetPassword_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                   bool* pSuccess)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1345,7 +1421,11 @@ void AccountManagementProtocolClient::ProtoReturn_CreateAccountWithCustomData(Me
 {
 }
 
-bool AccountManagementProtocolClient::CallCreateAccountWithCustomData(ProtocolCallContext* pCallContext, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rPublicData, const DataHolder& rPrivateData)
+bool AccountManagementProtocolClient::CallCreateAccountWithCustomData(ProtocolCallContext* pCallContext,
+                                                                      const String& rName, const String& rKey,
+                                                                      const unsigned int& rGroups, const String& rEmail,
+                                                                      const DataHolder& rPublicData,
+                                                                      const DataHolder& rPrivateData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1374,7 +1454,9 @@ bool AccountManagementProtocolClient::CallCreateAccountWithCustomData(ProtocolCa
     return bSent;
 }
 
-bool AccountManagementProtocolClient::CreateAccountWithCustomData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rPublicData, const DataHolder& rPrivateData)
+bool AccountManagementProtocolClient::CreateAccountWithCustomData_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const String& rName, const String& rKey,
+    const unsigned int& rGroups, const String& rEmail, const DataHolder& rPublicData, const DataHolder& rPrivateData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1437,7 +1519,8 @@ void AccountManagementProtocolClient::ProtoReturn_RetrieveAccount(Message* pMess
     }
 }
 
-bool AccountManagementProtocolClient::CallRetrieveAccount(ProtocolCallContext* pCallContext, AccountData* pAccountData, DataHolder* pPublicData, DataHolder* pPrivateData)
+bool AccountManagementProtocolClient::CallRetrieveAccount(ProtocolCallContext* pCallContext, AccountData* pAccountData,
+                                                          DataHolder* pPublicData, DataHolder* pPrivateData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1466,7 +1549,9 @@ bool AccountManagementProtocolClient::CallRetrieveAccount(ProtocolCallContext* p
     return bSent;
 }
 
-bool AccountManagementProtocolClient::RetrieveAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, AccountData* pAccountData, DataHolder* pPublicData, DataHolder* pPrivateData)
+bool AccountManagementProtocolClient::RetrieveAccount_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                     Message* pMessage, AccountData* pAccountData,
+                                                                     DataHolder* pPublicData, DataHolder* pPrivateData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1491,7 +1576,9 @@ void AccountManagementProtocolClient::ProtoReturn_UpdateAccount(Message*, Protoc
 {
 }
 
-bool AccountManagementProtocolClient::CallUpdateAccount(ProtocolCallContext* pCallContext, const String& rKey, const String& rEmail, const DataHolder& rPublicData, const DataHolder& rPrivateData)
+bool AccountManagementProtocolClient::CallUpdateAccount(ProtocolCallContext* pCallContext, const String& rKey,
+                                                        const String& rEmail, const DataHolder& rPublicData,
+                                                        const DataHolder& rPrivateData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1518,7 +1605,10 @@ bool AccountManagementProtocolClient::CallUpdateAccount(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool AccountManagementProtocolClient::UpdateAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const String& rKey, const String& rEmail, const DataHolder& rPublicData, const DataHolder& rPrivateData)
+bool AccountManagementProtocolClient::UpdateAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                   const String& rKey, const String& rEmail,
+                                                                   const DataHolder& rPublicData,
+                                                                   const DataHolder& rPrivateData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1541,7 +1631,8 @@ void AccountManagementProtocolClient::ProtoReturn_ChangePasswordByGuest(Message*
 {
 }
 
-bool AccountManagementProtocolClient::CallChangePasswordByGuest(ProtocolCallContext* pCallContext, const String& rName, const String& rString1, const String& rString2)
+bool AccountManagementProtocolClient::CallChangePasswordByGuest(ProtocolCallContext* pCallContext, const String& rName,
+                                                                const String& rString1, const String& rString2)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1567,7 +1658,10 @@ bool AccountManagementProtocolClient::CallChangePasswordByGuest(ProtocolCallCont
     return bSent;
 }
 
-bool AccountManagementProtocolClient::ChangePasswordByGuest_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const String& rName, const String& rString1, const String& rString2)
+bool AccountManagementProtocolClient::ChangePasswordByGuest_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                           Message* pMessage, const String& rName,
+                                                                           const String& rString1,
+                                                                           const String& rString2)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1590,14 +1684,17 @@ void AccountManagementProtocolClient::ProtoReturn_FindByNameLike(Message* pMessa
     void* pAccountInfos = pCallContext->GetReturnValuePtr(0);
     if (pAccountInfos != 0)
     {
-        _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(pMessage, static_cast<qList<BasicAccountInfo>*>(pAccountInfos));
+        _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(
+            pMessage, static_cast<qList<BasicAccountInfo>*>(pAccountInfos));
         return;
     }
     qList<BasicAccountInfo> discardedAccountInfos[1];
     _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(pMessage, &discardedAccountInfos[0]);
 }
 
-bool AccountManagementProtocolClient::CallFindByNameLike(ProtocolCallContext* pCallContext, const unsigned int& rGroups, const String& rPattern, const ResultRange& rRange, qList<BasicAccountInfo>* pAccountInfos)
+bool AccountManagementProtocolClient::CallFindByNameLike(ProtocolCallContext* pCallContext, const unsigned int& rGroups,
+                                                         const String& rPattern, const ResultRange& rRange,
+                                                         qList<BasicAccountInfo>* pAccountInfos)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1627,7 +1724,10 @@ bool AccountManagementProtocolClient::CallFindByNameLike(ProtocolCallContext* pC
     return bSent;
 }
 
-bool AccountManagementProtocolClient::FindByNameLike_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rGroups, const String& rPattern, const ResultRange& rRange, qList<BasicAccountInfo>* pAccountInfos)
+bool AccountManagementProtocolClient::FindByNameLike_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                    Message* pMessage, const unsigned int& rGroups,
+                                                                    const String& rPattern, const ResultRange& rRange,
+                                                                    qList<BasicAccountInfo>* pAccountInfos)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1649,7 +1749,8 @@ bool AccountManagementProtocolClient::FindByNameLike_PrepareRequest(ProtocolCall
     return true;
 }
 
-void AccountManagementProtocolClient::ProtoReturn_CustomCreateAccount(Message* pMessage, ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ProtoReturn_CustomCreateAccount(Message* pMessage,
+                                                                      ProtocolCallContext* pCallContext)
 {
     unsigned int uiDiscardedPrincipalID;
     unsigned int* pPrincipalID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
@@ -1659,7 +1760,10 @@ void AccountManagementProtocolClient::ProtoReturn_CustomCreateAccount(Message* p
     pMessage->ExtractPrimitive(pDestination);
 }
 
-bool AccountManagementProtocolClient::CallCustomCreateAccount(ProtocolCallContext* pCallContext, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID)
+bool AccountManagementProtocolClient::CallCustomCreateAccount(ProtocolCallContext* pCallContext, const String& rName,
+                                                              const String& rKey, const unsigned int& rGroups,
+                                                              const String& rEmail, const DataHolder& rData,
+                                                              unsigned int* pPrincipalID)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1691,7 +1795,9 @@ bool AccountManagementProtocolClient::CallCustomCreateAccount(ProtocolCallContex
     return bSent;
 }
 
-bool AccountManagementProtocolClient::CustomCreateAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID)
+bool AccountManagementProtocolClient::CustomCreateAccount_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const String& rName, const String& rKey,
+    const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1715,7 +1821,8 @@ bool AccountManagementProtocolClient::CustomCreateAccount_PrepareRequest(Protoco
     return true;
 }
 
-void AccountManagementProtocolClient::ProtoReturn_NintendoCreateAccount(Message* pMessage, ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ProtoReturn_NintendoCreateAccount(Message* pMessage,
+                                                                        ProtocolCallContext* pCallContext)
 {
     unsigned int uiDiscardedPrincipalID;
     unsigned int* pPrincipalID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
@@ -1735,7 +1842,10 @@ void AccountManagementProtocolClient::ProtoReturn_NintendoCreateAccount(Message*
     _Type_string::Extract(pMessage, &discardedString[0]);
 }
 
-bool AccountManagementProtocolClient::CallNintendoCreateAccount(ProtocolCallContext* pCallContext, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID, String* pString)
+bool AccountManagementProtocolClient::CallNintendoCreateAccount(ProtocolCallContext* pCallContext, const String& rName,
+                                                                const String& rKey, const unsigned int& rGroups,
+                                                                const String& rEmail, const DataHolder& rData,
+                                                                unsigned int* pPrincipalID, String* pString)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1768,7 +1878,10 @@ bool AccountManagementProtocolClient::CallNintendoCreateAccount(ProtocolCallCont
     return bSent;
 }
 
-bool AccountManagementProtocolClient::NintendoCreateAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID, String* pString)
+bool AccountManagementProtocolClient::NintendoCreateAccount_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const String& rName, const String& rKey,
+    const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID,
+    String* pString)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1793,7 +1906,8 @@ bool AccountManagementProtocolClient::NintendoCreateAccount_PrepareRequest(Proto
     return true;
 }
 
-void AccountManagementProtocolClient::ProtoReturn_LookupOrCreateAccount(Message* pMessage, ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ProtoReturn_LookupOrCreateAccount(Message* pMessage,
+                                                                        ProtocolCallContext* pCallContext)
 {
     unsigned int uiDiscardedPrincipalID;
     unsigned int* pPrincipalID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
@@ -1803,7 +1917,10 @@ void AccountManagementProtocolClient::ProtoReturn_LookupOrCreateAccount(Message*
     pMessage->ExtractPrimitive(pDestination);
 }
 
-bool AccountManagementProtocolClient::CallLookupOrCreateAccount(ProtocolCallContext* pCallContext, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID)
+bool AccountManagementProtocolClient::CallLookupOrCreateAccount(ProtocolCallContext* pCallContext, const String& rName,
+                                                                const String& rKey, const unsigned int& rGroups,
+                                                                const String& rEmail, const DataHolder& rData,
+                                                                unsigned int* pPrincipalID)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1835,7 +1952,9 @@ bool AccountManagementProtocolClient::CallLookupOrCreateAccount(ProtocolCallCont
     return bSent;
 }
 
-bool AccountManagementProtocolClient::LookupOrCreateAccount_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID)
+bool AccountManagementProtocolClient::LookupOrCreateAccount_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const String& rName, const String& rKey,
+    const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1859,7 +1978,8 @@ bool AccountManagementProtocolClient::LookupOrCreateAccount_PrepareRequest(Proto
     return true;
 }
 
-void AccountManagementProtocolClient::ProtoReturn_DisconnectPrincipal(Message* pMessage, ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ProtoReturn_DisconnectPrincipal(Message* pMessage,
+                                                                      ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -1869,7 +1989,8 @@ void AccountManagementProtocolClient::ProtoReturn_DisconnectPrincipal(Message* p
     *pMessage >> *pDestination;
 }
 
-bool AccountManagementProtocolClient::CallDisconnectPrincipal(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rPrincipalID)
+bool AccountManagementProtocolClient::CallDisconnectPrincipal(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                              const unsigned int& rPrincipalID)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1897,7 +2018,9 @@ bool AccountManagementProtocolClient::CallDisconnectPrincipal(ProtocolCallContex
     return bSent;
 }
 
-bool AccountManagementProtocolClient::DisconnectPrincipal_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rPrincipalID)
+bool AccountManagementProtocolClient::DisconnectPrincipal_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                         Message* pMessage, bool* pSuccess,
+                                                                         const unsigned int& rPrincipalID)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1917,7 +2040,8 @@ bool AccountManagementProtocolClient::DisconnectPrincipal_PrepareRequest(Protoco
     return true;
 }
 
-void AccountManagementProtocolClient::ProtoReturn_DisconnectAllPrincipals(Message* pMessage, ProtocolCallContext* pCallContext)
+void AccountManagementProtocolClient::ProtoReturn_DisconnectAllPrincipals(Message* pMessage,
+                                                                          ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -1954,7 +2078,8 @@ bool AccountManagementProtocolClient::CallDisconnectAllPrincipals(ProtocolCallCo
     return bSent;
 }
 
-bool AccountManagementProtocolClient::DisconnectAllPrincipals_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess)
+bool AccountManagementProtocolClient::DisconnectAllPrincipals_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                             Message* pMessage, bool* pSuccess)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();

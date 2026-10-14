@@ -19,7 +19,10 @@
 #include "nn/nex/Scheduler.hpp"
 #include "nn/nex/StationURL.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 namespace
 {
@@ -85,18 +88,15 @@ ProtoReturnFunction s_ProtoReturn[METHOD_COUNT];
 
 }
 
-MatchMakingProtocolClient::MatchMakingProtocolClient(unsigned short protocol_id)
-    : ClientProtocol(1)
+MatchMakingProtocolClient::MatchMakingProtocolClient(unsigned short protocol_id) : ClientProtocol(1)
 {
     if (protocol_id == 0)
         return;
     SetProtocolID(protocol_id);
-    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
-        protocol_id, new MatchMakingProtocolClient());
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(protocol_id, new MatchMakingProtocolClient());
 }
 
-void MatchMakingProtocolClient::ExtractCallSpecificResults(Message* pMessage,
-                                                           ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_COUNT)
@@ -113,8 +113,7 @@ Protocol* MatchMakingProtocolClient::CreateResponder() const
     return new MatchMakingProtocolClient();
 }
 
-bool MatchMakingProtocolClient::CallRegisterGathering(ProtocolCallContext* pCallContext,
-                                                      unsigned int* pGatheringID,
+bool MatchMakingProtocolClient::CallRegisterGathering(ProtocolCallContext* pCallContext, unsigned int* pGatheringID,
                                                       const GatheringHolder& rGathering)
 {
     Message message;
@@ -143,8 +142,7 @@ bool MatchMakingProtocolClient::CallRegisterGathering(ProtocolCallContext* pCall
     return bSent;
 }
 
-bool MatchMakingProtocolClient::RegisterGathering_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                 Message* pMessage,
+bool MatchMakingProtocolClient::RegisterGathering_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                  unsigned int* pGatheringID,
                                                                  const GatheringHolder& rGathering)
 {
@@ -161,8 +159,7 @@ bool MatchMakingProtocolClient::RegisterGathering_PrepareRequest(ProtocolCallCon
     return true;
 }
 
-bool MatchMakingProtocolClient::CallUnregisterGathering(ProtocolCallContext* pCallContext,
-                                                        bool* pSuccess,
+bool MatchMakingProtocolClient::CallUnregisterGathering(ProtocolCallContext* pCallContext, bool* pSuccess,
                                                         const unsigned int& rGatheringID)
 {
     Message message;
@@ -191,10 +188,8 @@ bool MatchMakingProtocolClient::CallUnregisterGathering(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool MatchMakingProtocolClient::UnregisterGathering_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                   Message* pMessage,
-                                                                   bool* pSuccess,
-                                                                   const unsigned int& rGatheringID)
+bool MatchMakingProtocolClient::UnregisterGathering_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                   bool* pSuccess, const unsigned int& rGatheringID)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
@@ -209,8 +204,7 @@ bool MatchMakingProtocolClient::UnregisterGathering_PrepareRequest(ProtocolCallC
     return true;
 }
 
-bool MatchMakingProtocolClient::CallUnregisterGatherings(ProtocolCallContext* pCallContext,
-                                                         bool* pSuccess,
+bool MatchMakingProtocolClient::CallUnregisterGatherings(ProtocolCallContext* pCallContext, bool* pSuccess,
                                                          const qList<unsigned int>& rGatheringIDs)
 {
     Message message;
@@ -240,8 +234,7 @@ bool MatchMakingProtocolClient::CallUnregisterGatherings(ProtocolCallContext* pC
 }
 
 bool MatchMakingProtocolClient::UnregisterGatherings_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                    Message* pMessage,
-                                                                    bool* pSuccess,
+                                                                    Message* pMessage, bool* pSuccess,
                                                                     const qList<unsigned int>& rGatheringIDs)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -257,8 +250,7 @@ bool MatchMakingProtocolClient::UnregisterGatherings_PrepareRequest(ProtocolCall
     return true;
 }
 
-bool MatchMakingProtocolClient::CallUpdateGathering(ProtocolCallContext* pCallContext,
-                                                    bool* pSuccess,
+bool MatchMakingProtocolClient::CallUpdateGathering(ProtocolCallContext* pCallContext, bool* pSuccess,
                                                     const GatheringHolder& rGathering)
 {
     Message message;
@@ -287,10 +279,8 @@ bool MatchMakingProtocolClient::CallUpdateGathering(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool MatchMakingProtocolClient::UpdateGathering_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                               Message* pMessage,
-                                                               bool* pSuccess,
-                                                               const GatheringHolder& rGathering)
+bool MatchMakingProtocolClient::UpdateGathering_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                               bool* pSuccess, const GatheringHolder& rGathering)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
@@ -305,10 +295,8 @@ bool MatchMakingProtocolClient::UpdateGathering_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-bool MatchMakingProtocolClient::CallInvite(ProtocolCallContext* pCallContext,
-                                           bool* pSuccess,
-                                           const unsigned int& rGatheringID,
-                                           const qList<unsigned int>& rPrincipalIDs,
+bool MatchMakingProtocolClient::CallInvite(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                           const unsigned int& rGatheringID, const qList<unsigned int>& rPrincipalIDs,
                                            const String& rMessage)
 {
     Message message;
@@ -339,12 +327,9 @@ bool MatchMakingProtocolClient::CallInvite(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool MatchMakingProtocolClient::Invite_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                      Message* pMessage,
-                                                      bool* pSuccess,
-                                                      const unsigned int& rGatheringID,
-                                                      const qList<unsigned int>& rPrincipalIDs,
-                                                      const String& rMessage)
+bool MatchMakingProtocolClient::Invite_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                      bool* pSuccess, const unsigned int& rGatheringID,
+                                                      const qList<unsigned int>& rPrincipalIDs, const String& rMessage)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
@@ -361,10 +346,8 @@ bool MatchMakingProtocolClient::Invite_PrepareRequest(ProtocolCallContext* pCall
     return true;
 }
 
-bool MatchMakingProtocolClient::CallAcceptInvitation(ProtocolCallContext* pCallContext,
-                                                     bool* pSuccess,
-                                                     const unsigned int& rGatheringID,
-                                                     const String& rMessage)
+bool MatchMakingProtocolClient::CallAcceptInvitation(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                     const unsigned int& rGatheringID, const String& rMessage)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -393,10 +376,8 @@ bool MatchMakingProtocolClient::CallAcceptInvitation(ProtocolCallContext* pCallC
     return bSent;
 }
 
-bool MatchMakingProtocolClient::AcceptInvitation_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
-                                                                bool* pSuccess,
-                                                                const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::AcceptInvitation_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                bool* pSuccess, const unsigned int& rGatheringID,
                                                                 const String& rMessage)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -413,10 +394,8 @@ bool MatchMakingProtocolClient::AcceptInvitation_PrepareRequest(ProtocolCallCont
     return true;
 }
 
-bool MatchMakingProtocolClient::CallDeclineInvitation(ProtocolCallContext* pCallContext,
-                                                      bool* pSuccess,
-                                                      const unsigned int& rGatheringID,
-                                                      const String& rMessage)
+bool MatchMakingProtocolClient::CallDeclineInvitation(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                      const unsigned int& rGatheringID, const String& rMessage)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -445,10 +424,8 @@ bool MatchMakingProtocolClient::CallDeclineInvitation(ProtocolCallContext* pCall
     return bSent;
 }
 
-bool MatchMakingProtocolClient::DeclineInvitation_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                 Message* pMessage,
-                                                                 bool* pSuccess,
-                                                                 const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::DeclineInvitation_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                 bool* pSuccess, const unsigned int& rGatheringID,
                                                                  const String& rMessage)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -465,11 +442,9 @@ bool MatchMakingProtocolClient::DeclineInvitation_PrepareRequest(ProtocolCallCon
     return true;
 }
 
-bool MatchMakingProtocolClient::CallCancelInvitation(ProtocolCallContext* pCallContext,
-                                                     bool* pSuccess,
+bool MatchMakingProtocolClient::CallCancelInvitation(ProtocolCallContext* pCallContext, bool* pSuccess,
                                                      const unsigned int& rGatheringID,
-                                                     const qList<unsigned int>& rPrincipalIDs,
-                                                     const String& rMessage)
+                                                     const qList<unsigned int>& rPrincipalIDs, const String& rMessage)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -499,10 +474,8 @@ bool MatchMakingProtocolClient::CallCancelInvitation(ProtocolCallContext* pCallC
     return bSent;
 }
 
-bool MatchMakingProtocolClient::CancelInvitation_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
-                                                                bool* pSuccess,
-                                                                const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::CancelInvitation_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                bool* pSuccess, const unsigned int& rGatheringID,
                                                                 const qList<unsigned int>& rPrincipalIDs,
                                                                 const String& rMessage)
 {
@@ -551,8 +524,7 @@ bool MatchMakingProtocolClient::CallGetInvitationsSent(ProtocolCallContext* pCal
     return bSent;
 }
 
-bool MatchMakingProtocolClient::GetInvitationsSent_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                  Message* pMessage,
+bool MatchMakingProtocolClient::GetInvitationsSent_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                   const unsigned int& rGatheringID,
                                                                   qList<Invitation>* pInvitations)
 {
@@ -613,10 +585,8 @@ bool MatchMakingProtocolClient::GetInvitationsReceived_PrepareRequest(ProtocolCa
     return true;
 }
 
-bool MatchMakingProtocolClient::CallParticipate(ProtocolCallContext* pCallContext,
-                                                bool* pSuccess,
-                                                const unsigned int& rGatheringID,
-                                                const String& rMessage)
+bool MatchMakingProtocolClient::CallParticipate(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                const unsigned int& rGatheringID, const String& rMessage)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -645,10 +615,8 @@ bool MatchMakingProtocolClient::CallParticipate(ProtocolCallContext* pCallContex
     return bSent;
 }
 
-bool MatchMakingProtocolClient::Participate_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                           Message* pMessage,
-                                                           bool* pSuccess,
-                                                           const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::Participate_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                           bool* pSuccess, const unsigned int& rGatheringID,
                                                            const String& rMessage)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -665,10 +633,8 @@ bool MatchMakingProtocolClient::Participate_PrepareRequest(ProtocolCallContext* 
     return true;
 }
 
-bool MatchMakingProtocolClient::CallCancelParticipation(ProtocolCallContext* pCallContext,
-                                                        bool* pSuccess,
-                                                        const unsigned int& rGatheringID,
-                                                        const String& rMessage)
+bool MatchMakingProtocolClient::CallCancelParticipation(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                        const unsigned int& rGatheringID, const String& rMessage)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -697,10 +663,8 @@ bool MatchMakingProtocolClient::CallCancelParticipation(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool MatchMakingProtocolClient::CancelParticipation_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                   Message* pMessage,
-                                                                   bool* pSuccess,
-                                                                   const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::CancelParticipation_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                   bool* pSuccess, const unsigned int& rGatheringID,
                                                                    const String& rMessage)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -717,8 +681,7 @@ bool MatchMakingProtocolClient::CancelParticipation_PrepareRequest(ProtocolCallC
     return true;
 }
 
-bool MatchMakingProtocolClient::CallGetParticipants(ProtocolCallContext* pCallContext,
-                                                    const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::CallGetParticipants(ProtocolCallContext* pCallContext, const unsigned int& rGatheringID,
                                                     qList<unsigned int>* pParticipantIDs)
 {
     Message message;
@@ -747,8 +710,7 @@ bool MatchMakingProtocolClient::CallGetParticipants(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool MatchMakingProtocolClient::GetParticipants_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                               Message* pMessage,
+bool MatchMakingProtocolClient::GetParticipants_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                const unsigned int& rGatheringID,
                                                                qList<unsigned int>* pParticipantIDs)
 {
@@ -765,11 +727,9 @@ bool MatchMakingProtocolClient::GetParticipants_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-bool MatchMakingProtocolClient::CallAddParticipants(ProtocolCallContext* pCallContext,
-                                                    bool* pSuccess,
+bool MatchMakingProtocolClient::CallAddParticipants(ProtocolCallContext* pCallContext, bool* pSuccess,
                                                     const unsigned int& rGatheringID,
-                                                    const qList<unsigned int>& rPrincipalIDs,
-                                                    const String& rMessage)
+                                                    const qList<unsigned int>& rPrincipalIDs, const String& rMessage)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -799,10 +759,8 @@ bool MatchMakingProtocolClient::CallAddParticipants(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool MatchMakingProtocolClient::AddParticipants_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                               Message* pMessage,
-                                                               bool* pSuccess,
-                                                               const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::AddParticipants_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                               bool* pSuccess, const unsigned int& rGatheringID,
                                                                const qList<unsigned int>& rPrincipalIDs,
                                                                const String& rMessage)
 {
@@ -870,8 +828,7 @@ bool MatchMakingProtocolClient::GetDetailedParticipants_PrepareRequest(ProtocolC
 }
 
 bool MatchMakingProtocolClient::CallGetParticipantsURLs(ProtocolCallContext* pCallContext,
-                                                        const unsigned int& rGatheringID,
-                                                        qList<StationURL>* pURLs)
+                                                        const unsigned int& rGatheringID, qList<StationURL>* pURLs)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -899,8 +856,7 @@ bool MatchMakingProtocolClient::CallGetParticipantsURLs(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool MatchMakingProtocolClient::GetParticipantsURLs_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                   Message* pMessage,
+bool MatchMakingProtocolClient::GetParticipantsURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                    const unsigned int& rGatheringID,
                                                                    qList<StationURL>* pURLs)
 {
@@ -917,10 +873,8 @@ bool MatchMakingProtocolClient::GetParticipantsURLs_PrepareRequest(ProtocolCallC
     return true;
 }
 
-bool MatchMakingProtocolClient::CallFindByType(ProtocolCallContext* pCallContext,
-                                               const String& rType,
-                                               const ResultRange& rRange,
-                                               GatheringHolderList* pGatherings)
+bool MatchMakingProtocolClient::CallFindByType(ProtocolCallContext* pCallContext, const String& rType,
+                                               const ResultRange& rRange, GatheringHolderList* pGatherings)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -949,10 +903,8 @@ bool MatchMakingProtocolClient::CallFindByType(ProtocolCallContext* pCallContext
     return bSent;
 }
 
-bool MatchMakingProtocolClient::FindByType_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                          Message* pMessage,
-                                                          const String& rType,
-                                                          const ResultRange& rRange,
+bool MatchMakingProtocolClient::FindByType_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                          const String& rType, const ResultRange& rRange,
                                                           GatheringHolderList* pGatherings)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -969,10 +921,8 @@ bool MatchMakingProtocolClient::FindByType_PrepareRequest(ProtocolCallContext* p
     return true;
 }
 
-bool MatchMakingProtocolClient::CallFindByDescription(ProtocolCallContext* pCallContext,
-                                                      const String& rDescription,
-                                                      const ResultRange& rRange,
-                                                      GatheringHolderList* pGatherings)
+bool MatchMakingProtocolClient::CallFindByDescription(ProtocolCallContext* pCallContext, const String& rDescription,
+                                                      const ResultRange& rRange, GatheringHolderList* pGatherings)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1001,10 +951,8 @@ bool MatchMakingProtocolClient::CallFindByDescription(ProtocolCallContext* pCall
     return bSent;
 }
 
-bool MatchMakingProtocolClient::FindByDescription_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                 Message* pMessage,
-                                                                 const String& rDescription,
-                                                                 const ResultRange& rRange,
+bool MatchMakingProtocolClient::FindByDescription_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                 const String& rDescription, const ResultRange& rRange,
                                                                  GatheringHolderList* pGatherings)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1022,8 +970,7 @@ bool MatchMakingProtocolClient::FindByDescription_PrepareRequest(ProtocolCallCon
 }
 
 bool MatchMakingProtocolClient::CallFindByDescriptionRegex(ProtocolCallContext* pCallContext,
-                                                           const String& rDescription,
-                                                           const ResultRange& rRange,
+                                                           const String& rDescription, const ResultRange& rRange,
                                                            GatheringHolderList* pGatherings)
 {
     Message message;
@@ -1054,8 +1001,7 @@ bool MatchMakingProtocolClient::CallFindByDescriptionRegex(ProtocolCallContext* 
 }
 
 bool MatchMakingProtocolClient::FindByDescriptionRegex_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                      Message* pMessage,
-                                                                      const String& rDescription,
+                                                                      Message* pMessage, const String& rDescription,
                                                                       const ResultRange& rRange,
                                                                       GatheringHolderList* pGatherings)
 {
@@ -1074,8 +1020,7 @@ bool MatchMakingProtocolClient::FindByDescriptionRegex_PrepareRequest(ProtocolCa
 }
 
 bool MatchMakingProtocolClient::CallFindByID(ProtocolCallContext* pCallContext,
-                                             const qList<unsigned int>& rGatheringIDs,
-                                             GatheringHolderList* pGatherings)
+                                             const qList<unsigned int>& rGatheringIDs, GatheringHolderList* pGatherings)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1103,8 +1048,7 @@ bool MatchMakingProtocolClient::CallFindByID(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool MatchMakingProtocolClient::FindByID_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                        Message* pMessage,
+bool MatchMakingProtocolClient::FindByID_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                         const qList<unsigned int>& rGatheringIDs,
                                                         GatheringHolderList* pGatherings)
 {
@@ -1121,10 +1065,8 @@ bool MatchMakingProtocolClient::FindByID_PrepareRequest(ProtocolCallContext* pCa
     return true;
 }
 
-bool MatchMakingProtocolClient::CallFindBySingleID(ProtocolCallContext* pCallContext,
-                                                   const unsigned int& rGatheringID,
-                                                   bool* pSuccess,
-                                                   GatheringHolder* pGathering)
+bool MatchMakingProtocolClient::CallFindBySingleID(ProtocolCallContext* pCallContext, const unsigned int& rGatheringID,
+                                                   bool* pSuccess, GatheringHolder* pGathering)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1153,10 +1095,8 @@ bool MatchMakingProtocolClient::CallFindBySingleID(ProtocolCallContext* pCallCon
     return bSent;
 }
 
-bool MatchMakingProtocolClient::FindBySingleID_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                              Message* pMessage,
-                                                              const unsigned int& rGatheringID,
-                                                              bool* pSuccess,
+bool MatchMakingProtocolClient::FindBySingleID_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                              const unsigned int& rGatheringID, bool* pSuccess,
                                                               GatheringHolder* pGathering)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1173,10 +1113,8 @@ bool MatchMakingProtocolClient::FindBySingleID_PrepareRequest(ProtocolCallContex
     return true;
 }
 
-bool MatchMakingProtocolClient::CallFindByOwner(ProtocolCallContext* pCallContext,
-                                                const unsigned int& rOwnerID,
-                                                const ResultRange& rRange,
-                                                GatheringHolderList* pGatherings)
+bool MatchMakingProtocolClient::CallFindByOwner(ProtocolCallContext* pCallContext, const unsigned int& rOwnerID,
+                                                const ResultRange& rRange, GatheringHolderList* pGatherings)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1205,10 +1143,8 @@ bool MatchMakingProtocolClient::CallFindByOwner(ProtocolCallContext* pCallContex
     return bSent;
 }
 
-bool MatchMakingProtocolClient::FindByOwner_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                           Message* pMessage,
-                                                           const unsigned int& rOwnerID,
-                                                           const ResultRange& rRange,
+bool MatchMakingProtocolClient::FindByOwner_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                           const unsigned int& rOwnerID, const ResultRange& rRange,
                                                            GatheringHolderList* pGatherings)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1255,8 +1191,7 @@ bool MatchMakingProtocolClient::CallFindByParticipants(ProtocolCallContext* pCal
     return bSent;
 }
 
-bool MatchMakingProtocolClient::FindByParticipants_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                  Message* pMessage,
+bool MatchMakingProtocolClient::FindByParticipants_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                   const qList<unsigned int>& rPrincipalIDs,
                                                                   GatheringHolderList* pGatherings)
 {
@@ -1273,8 +1208,7 @@ bool MatchMakingProtocolClient::FindByParticipants_PrepareRequest(ProtocolCallCo
     return true;
 }
 
-bool MatchMakingProtocolClient::CallFindInvitations(ProtocolCallContext* pCallContext,
-                                                    const ResultRange& rRange,
+bool MatchMakingProtocolClient::CallFindInvitations(ProtocolCallContext* pCallContext, const ResultRange& rRange,
                                                     GatheringHolderList* pGatherings)
 {
     Message message;
@@ -1303,8 +1237,7 @@ bool MatchMakingProtocolClient::CallFindInvitations(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool MatchMakingProtocolClient::FindInvitations_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                               Message* pMessage,
+bool MatchMakingProtocolClient::FindInvitations_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                const ResultRange& rRange,
                                                                GatheringHolderList* pGatherings)
 {
@@ -1321,10 +1254,8 @@ bool MatchMakingProtocolClient::FindInvitations_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-bool MatchMakingProtocolClient::CallFindBySQLQuery(ProtocolCallContext* pCallContext,
-                                                   const String& rQuery,
-                                                   const ResultRange& rRange,
-                                                   GatheringHolderList* pGatherings)
+bool MatchMakingProtocolClient::CallFindBySQLQuery(ProtocolCallContext* pCallContext, const String& rQuery,
+                                                   const ResultRange& rRange, GatheringHolderList* pGatherings)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1353,10 +1284,8 @@ bool MatchMakingProtocolClient::CallFindBySQLQuery(ProtocolCallContext* pCallCon
     return bSent;
 }
 
-bool MatchMakingProtocolClient::FindBySQLQuery_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                              Message* pMessage,
-                                                              const String& rQuery,
-                                                              const ResultRange& rRange,
+bool MatchMakingProtocolClient::FindBySQLQuery_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                              const String& rQuery, const ResultRange& rRange,
                                                               GatheringHolderList* pGatherings)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1373,10 +1302,8 @@ bool MatchMakingProtocolClient::FindBySQLQuery_PrepareRequest(ProtocolCallContex
     return true;
 }
 
-bool MatchMakingProtocolClient::CallLaunchSession(ProtocolCallContext* pCallContext,
-                                                  bool* pSuccess,
-                                                  const unsigned int& rGatheringID,
-                                                  const String& rSessionURL)
+bool MatchMakingProtocolClient::CallLaunchSession(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                  const unsigned int& rGatheringID, const String& rSessionURL)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1405,10 +1332,8 @@ bool MatchMakingProtocolClient::CallLaunchSession(ProtocolCallContext* pCallCont
     return bSent;
 }
 
-bool MatchMakingProtocolClient::LaunchSession_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                             Message* pMessage,
-                                                             bool* pSuccess,
-                                                             const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::LaunchSession_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                             bool* pSuccess, const unsigned int& rGatheringID,
                                                              const String& rSessionURL)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1425,10 +1350,8 @@ bool MatchMakingProtocolClient::LaunchSession_PrepareRequest(ProtocolCallContext
     return true;
 }
 
-bool MatchMakingProtocolClient::CallUpdateSessionURL(ProtocolCallContext* pCallContext,
-                                                     bool* pSuccess,
-                                                     const unsigned int& rGatheringID,
-                                                     const String& rSessionURL)
+bool MatchMakingProtocolClient::CallUpdateSessionURL(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                     const unsigned int& rGatheringID, const String& rSessionURL)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1457,10 +1380,8 @@ bool MatchMakingProtocolClient::CallUpdateSessionURL(ProtocolCallContext* pCallC
     return bSent;
 }
 
-bool MatchMakingProtocolClient::UpdateSessionURL_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
-                                                                bool* pSuccess,
-                                                                const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::UpdateSessionURL_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                bool* pSuccess, const unsigned int& rGatheringID,
                                                                 const String& rSessionURL)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1477,10 +1398,8 @@ bool MatchMakingProtocolClient::UpdateSessionURL_PrepareRequest(ProtocolCallCont
     return true;
 }
 
-bool MatchMakingProtocolClient::CallGetSessionURL(ProtocolCallContext* pCallContext,
-                                                  bool* pSuccess,
-                                                  const unsigned int& rGatheringID,
-                                                  String* pSessionURL)
+bool MatchMakingProtocolClient::CallGetSessionURL(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                  const unsigned int& rGatheringID, String* pSessionURL)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1509,10 +1428,8 @@ bool MatchMakingProtocolClient::CallGetSessionURL(ProtocolCallContext* pCallCont
     return bSent;
 }
 
-bool MatchMakingProtocolClient::GetSessionURL_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                             Message* pMessage,
-                                                             bool* pSuccess,
-                                                             const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::GetSessionURL_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                             bool* pSuccess, const unsigned int& rGatheringID,
                                                              String* pSessionURL)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1529,10 +1446,8 @@ bool MatchMakingProtocolClient::GetSessionURL_PrepareRequest(ProtocolCallContext
     return true;
 }
 
-bool MatchMakingProtocolClient::CallGetState(ProtocolCallContext* pCallContext,
-                                             bool* pSuccess,
-                                             const unsigned int& rGatheringID,
-                                             unsigned int* pState)
+bool MatchMakingProtocolClient::CallGetState(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                             const unsigned int& rGatheringID, unsigned int* pState)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1561,10 +1476,8 @@ bool MatchMakingProtocolClient::CallGetState(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool MatchMakingProtocolClient::GetState_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                        Message* pMessage,
-                                                        bool* pSuccess,
-                                                        const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::GetState_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                        bool* pSuccess, const unsigned int& rGatheringID,
                                                         unsigned int* pState)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1581,10 +1494,8 @@ bool MatchMakingProtocolClient::GetState_PrepareRequest(ProtocolCallContext* pCa
     return true;
 }
 
-bool MatchMakingProtocolClient::CallSetState(ProtocolCallContext* pCallContext,
-                                             bool* pSuccess,
-                                             const unsigned int& rGatheringID,
-                                             const unsigned int& rState)
+bool MatchMakingProtocolClient::CallSetState(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                             const unsigned int& rGatheringID, const unsigned int& rState)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1613,10 +1524,8 @@ bool MatchMakingProtocolClient::CallSetState(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool MatchMakingProtocolClient::SetState_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                        Message* pMessage,
-                                                        bool* pSuccess,
-                                                        const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::SetState_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                        bool* pSuccess, const unsigned int& rGatheringID,
                                                         const unsigned int& rState)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1633,10 +1542,8 @@ bool MatchMakingProtocolClient::SetState_PrepareRequest(ProtocolCallContext* pCa
     return true;
 }
 
-bool MatchMakingProtocolClient::CallReportStats(ProtocolCallContext* pCallContext,
-                                                bool* pSuccess,
-                                                const unsigned int& rGatheringID,
-                                                const qList<GatheringStats>& rStats)
+bool MatchMakingProtocolClient::CallReportStats(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                const unsigned int& rGatheringID, const qList<GatheringStats>& rStats)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1665,10 +1572,8 @@ bool MatchMakingProtocolClient::CallReportStats(ProtocolCallContext* pCallContex
     return bSent;
 }
 
-bool MatchMakingProtocolClient::ReportStats_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                           Message* pMessage,
-                                                           bool* pSuccess,
-                                                           const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::ReportStats_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                           bool* pSuccess, const unsigned int& rGatheringID,
                                                            const qList<GatheringStats>& rStats)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -1685,12 +1590,9 @@ bool MatchMakingProtocolClient::ReportStats_PrepareRequest(ProtocolCallContext* 
     return true;
 }
 
-bool MatchMakingProtocolClient::CallGetStats(ProtocolCallContext* pCallContext,
-                                             bool* pSuccess,
-                                             const unsigned int& rGatheringID,
-                                             const qList<unsigned int>& rIDs,
-                                             const qList<unsigned char>& rTypes,
-                                             qList<GatheringStats>* pStats)
+bool MatchMakingProtocolClient::CallGetStats(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                             const unsigned int& rGatheringID, const qList<unsigned int>& rIDs,
+                                             const qList<unsigned char>& rTypes, qList<GatheringStats>* pStats)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1721,10 +1623,8 @@ bool MatchMakingProtocolClient::CallGetStats(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool MatchMakingProtocolClient::GetStats_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                        Message* pMessage,
-                                                        bool* pSuccess,
-                                                        const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::GetStats_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                        bool* pSuccess, const unsigned int& rGatheringID,
                                                         const qList<unsigned int>& rIDs,
                                                         const qList<unsigned char>& rTypes,
                                                         qList<GatheringStats>* pStats)
@@ -1745,8 +1645,7 @@ bool MatchMakingProtocolClient::GetStats_PrepareRequest(ProtocolCallContext* pCa
     return true;
 }
 
-bool MatchMakingProtocolClient::CallDeleteGathering(ProtocolCallContext* pCallContext,
-                                                    bool* pSuccess,
+bool MatchMakingProtocolClient::CallDeleteGathering(ProtocolCallContext* pCallContext, bool* pSuccess,
                                                     const unsigned int& rGatheringID)
 {
     Message message;
@@ -1775,10 +1674,8 @@ bool MatchMakingProtocolClient::CallDeleteGathering(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool MatchMakingProtocolClient::DeleteGathering_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                               Message* pMessage,
-                                                               bool* pSuccess,
-                                                               const unsigned int& rGatheringID)
+bool MatchMakingProtocolClient::DeleteGathering_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                               bool* pSuccess, const unsigned int& rGatheringID)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
@@ -1793,10 +1690,8 @@ bool MatchMakingProtocolClient::DeleteGathering_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-bool MatchMakingProtocolClient::CallGetPendingDeletions(ProtocolCallContext* pCallContext,
-                                                        bool* pSuccess,
-                                                        const unsigned int& rGatheringID,
-                                                        const ResultRange& rRange,
+bool MatchMakingProtocolClient::CallGetPendingDeletions(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                        const unsigned int& rGatheringID, const ResultRange& rRange,
                                                         qList<DeletionEntry>* pDeletions)
 {
     Message message;
@@ -1827,10 +1722,8 @@ bool MatchMakingProtocolClient::CallGetPendingDeletions(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool MatchMakingProtocolClient::GetPendingDeletions_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                   Message* pMessage,
-                                                                   bool* pSuccess,
-                                                                   const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::GetPendingDeletions_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                   bool* pSuccess, const unsigned int& rGatheringID,
                                                                    const ResultRange& rRange,
                                                                    qList<DeletionEntry>* pDeletions)
 {
@@ -1849,8 +1742,7 @@ bool MatchMakingProtocolClient::GetPendingDeletions_PrepareRequest(ProtocolCallC
     return true;
 }
 
-bool MatchMakingProtocolClient::CallDeleteFromDeletions(ProtocolCallContext* pCallContext,
-                                                        bool* pSuccess,
+bool MatchMakingProtocolClient::CallDeleteFromDeletions(ProtocolCallContext* pCallContext, bool* pSuccess,
                                                         const qList<unsigned int>& rGatheringIDs)
 {
     Message message;
@@ -1879,8 +1771,7 @@ bool MatchMakingProtocolClient::CallDeleteFromDeletions(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool MatchMakingProtocolClient::DeleteFromDeletions_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                   Message* pMessage,
+bool MatchMakingProtocolClient::DeleteFromDeletions_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                    bool* pSuccess,
                                                                    const qList<unsigned int>& rGatheringIDs)
 {
@@ -1897,8 +1788,7 @@ bool MatchMakingProtocolClient::DeleteFromDeletions_PrepareRequest(ProtocolCallC
     return true;
 }
 
-bool MatchMakingProtocolClient::CallMigrateGatheringOwnershipV1(ProtocolCallContext* pCallContext,
-                                                                bool* pSuccess,
+bool MatchMakingProtocolClient::CallMigrateGatheringOwnershipV1(ProtocolCallContext* pCallContext, bool* pSuccess,
                                                                 const unsigned int& rGatheringID,
                                                                 const qList<unsigned int>& rCandidateIDs)
 {
@@ -1930,8 +1820,7 @@ bool MatchMakingProtocolClient::CallMigrateGatheringOwnershipV1(ProtocolCallCont
 }
 
 bool MatchMakingProtocolClient::MigrateGatheringOwnershipV1_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                           Message* pMessage,
-                                                                           bool* pSuccess,
+                                                                           Message* pMessage, bool* pSuccess,
                                                                            const unsigned int& rGatheringID,
                                                                            const qList<unsigned int>& rCandidateIDs)
 {
@@ -1949,10 +1838,8 @@ bool MatchMakingProtocolClient::MigrateGatheringOwnershipV1_PrepareRequest(Proto
     return true;
 }
 
-bool MatchMakingProtocolClient::CallFindByDescriptionLike(ProtocolCallContext* pCallContext,
-                                                          const String& rDescription,
-                                                          const ResultRange& rRange,
-                                                          GatheringHolderList* pGatherings)
+bool MatchMakingProtocolClient::CallFindByDescriptionLike(ProtocolCallContext* pCallContext, const String& rDescription,
+                                                          const ResultRange& rRange, GatheringHolderList* pGatherings)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -1982,8 +1869,7 @@ bool MatchMakingProtocolClient::CallFindByDescriptionLike(ProtocolCallContext* p
 }
 
 bool MatchMakingProtocolClient::FindByDescriptionLike_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                     Message* pMessage,
-                                                                     const String& rDescription,
+                                                                     Message* pMessage, const String& rDescription,
                                                                      const ResultRange& rRange,
                                                                      GatheringHolderList* pGatherings)
 {
@@ -2002,8 +1888,7 @@ bool MatchMakingProtocolClient::FindByDescriptionLike_PrepareRequest(ProtocolCal
 }
 
 bool MatchMakingProtocolClient::CallRegisterLocalURL(ProtocolCallContext* pCallContext,
-                                                     const unsigned int& rGatheringID,
-                                                     const String& rSessionURL)
+                                                     const unsigned int& rGatheringID, const String& rSessionURL)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -2028,8 +1913,7 @@ bool MatchMakingProtocolClient::CallRegisterLocalURL(ProtocolCallContext* pCallC
     return bSent;
 }
 
-bool MatchMakingProtocolClient::RegisterLocalURL_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
+bool MatchMakingProtocolClient::RegisterLocalURL_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                 const unsigned int& rGatheringID,
                                                                 const String& rSessionURL)
 {
@@ -2070,8 +1954,7 @@ bool MatchMakingProtocolClient::CallRegisterLocalURLs(ProtocolCallContext* pCall
     return bSent;
 }
 
-bool MatchMakingProtocolClient::RegisterLocalURLs_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                 Message* pMessage,
+bool MatchMakingProtocolClient::RegisterLocalURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                  const unsigned int& rGatheringID,
                                                                  const qList<StationURL>& rSessionURLs)
 {
@@ -2110,8 +1993,7 @@ bool MatchMakingProtocolClient::CallUpdateSessionHostV1(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool MatchMakingProtocolClient::UpdateSessionHostV1_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                   Message* pMessage,
+bool MatchMakingProtocolClient::UpdateSessionHostV1_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                    const unsigned int& rGatheringID)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -2123,8 +2005,7 @@ bool MatchMakingProtocolClient::UpdateSessionHostV1_PrepareRequest(ProtocolCallC
     return true;
 }
 
-bool MatchMakingProtocolClient::CallGetSessionURLs(ProtocolCallContext* pCallContext,
-                                                   const unsigned int& rGatheringID,
+bool MatchMakingProtocolClient::CallGetSessionURLs(ProtocolCallContext* pCallContext, const unsigned int& rGatheringID,
                                                    qList<StationURL>* pURLs)
 {
     Message message;
@@ -2153,8 +2034,7 @@ bool MatchMakingProtocolClient::CallGetSessionURLs(ProtocolCallContext* pCallCon
     return bSent;
 }
 
-bool MatchMakingProtocolClient::GetSessionURLs_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                              Message* pMessage,
+bool MatchMakingProtocolClient::GetSessionURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                               const unsigned int& rGatheringID,
                                                               qList<StationURL>* pURLs)
 {
@@ -2172,8 +2052,7 @@ bool MatchMakingProtocolClient::GetSessionURLs_PrepareRequest(ProtocolCallContex
 }
 
 bool MatchMakingProtocolClient::CallUpdateSessionHost(ProtocolCallContext* pCallContext,
-                                                      const unsigned int& rGatheringID,
-                                                      const bool& rFlag)
+                                                      const unsigned int& rGatheringID, const bool& rFlag)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -2198,10 +2077,8 @@ bool MatchMakingProtocolClient::CallUpdateSessionHost(ProtocolCallContext* pCall
     return bSent;
 }
 
-bool MatchMakingProtocolClient::UpdateSessionHost_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                 Message* pMessage,
-                                                                 const unsigned int& rGatheringID,
-                                                                 const bool& rFlag)
+bool MatchMakingProtocolClient::UpdateSessionHost_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                 const unsigned int& rGatheringID, const bool& rFlag)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
@@ -2214,8 +2091,7 @@ bool MatchMakingProtocolClient::UpdateSessionHost_PrepareRequest(ProtocolCallCon
 }
 
 bool MatchMakingProtocolClient::CallUpdateGatheringOwnership(ProtocolCallContext* pCallContext,
-                                                             const unsigned int& rGatheringID,
-                                                             const bool& rFlag)
+                                                             const unsigned int& rGatheringID, const bool& rFlag)
 {
     Message message;
     CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
@@ -2301,8 +2177,7 @@ bool MatchMakingProtocolClient::MigrateGatheringOwnership_PrepareRequest(Protoco
     return true;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_RegisterGathering(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_RegisterGathering(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     unsigned int uiDiscardedGatheringID;
     unsigned int* pGatheringID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
@@ -2312,8 +2187,7 @@ void MatchMakingProtocolClient::ProtoReturn_RegisterGathering(Message* pMessage,
     _Type_uint32::Extract(pMessage, pDestination);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_UnregisterGathering(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_UnregisterGathering(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2323,8 +2197,7 @@ void MatchMakingProtocolClient::ProtoReturn_UnregisterGathering(Message* pMessag
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_UnregisterGatherings(Message* pMessage,
-                                                                 ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_UnregisterGatherings(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2334,8 +2207,7 @@ void MatchMakingProtocolClient::ProtoReturn_UnregisterGatherings(Message* pMessa
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_UpdateGathering(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_UpdateGathering(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2345,8 +2217,7 @@ void MatchMakingProtocolClient::ProtoReturn_UpdateGathering(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_Invite(Message* pMessage,
-                                                   ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_Invite(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2356,8 +2227,7 @@ void MatchMakingProtocolClient::ProtoReturn_Invite(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_AcceptInvitation(Message* pMessage,
-                                                             ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_AcceptInvitation(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2367,8 +2237,7 @@ void MatchMakingProtocolClient::ProtoReturn_AcceptInvitation(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_DeclineInvitation(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_DeclineInvitation(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2378,8 +2247,7 @@ void MatchMakingProtocolClient::ProtoReturn_DeclineInvitation(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_CancelInvitation(Message* pMessage,
-                                                             ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_CancelInvitation(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2389,8 +2257,7 @@ void MatchMakingProtocolClient::ProtoReturn_CancelInvitation(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_GetInvitationsSent(Message* pMessage,
-                                                               ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_GetInvitationsSent(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2402,8 +2269,7 @@ void MatchMakingProtocolClient::ProtoReturn_GetInvitationsSent(Message* pMessage
     _Type_std_list<DDLClassMetaType<Invitation> >::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_GetInvitationsReceived(Message* pMessage,
-                                                                   ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_GetInvitationsReceived(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2415,8 +2281,7 @@ void MatchMakingProtocolClient::ProtoReturn_GetInvitationsReceived(Message* pMes
     _Type_std_list<DDLClassMetaType<Invitation> >::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_Participate(Message* pMessage,
-                                                        ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_Participate(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2426,8 +2291,7 @@ void MatchMakingProtocolClient::ProtoReturn_Participate(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_CancelParticipation(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_CancelParticipation(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2437,8 +2301,7 @@ void MatchMakingProtocolClient::ProtoReturn_CancelParticipation(Message* pMessag
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_GetParticipants(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_GetParticipants(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qList<unsigned int>* pList = static_cast<qList<unsigned int>*>(pCallContext->GetReturnValuePtr(0));
     if (pList != 0)
@@ -2450,8 +2313,7 @@ void MatchMakingProtocolClient::ProtoReturn_GetParticipants(Message* pMessage,
     _Type_std_list<_Type_uint32>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_AddParticipants(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_AddParticipants(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2476,8 +2338,7 @@ void MatchMakingProtocolClient::ProtoReturn_GetDetailedParticipants(Message* pMe
     }
 }
 
-void MatchMakingProtocolClient::ProtoReturn_GetParticipantsURLs(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_GetParticipantsURLs(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qList<StationURL>* pList = static_cast<qList<StationURL>*>(pCallContext->GetReturnValuePtr(0));
     if (pList != 0)
@@ -2491,8 +2352,7 @@ void MatchMakingProtocolClient::ProtoReturn_GetParticipantsURLs(Message* pMessag
     }
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindByType(Message* pMessage,
-                                                       ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindByType(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2504,8 +2364,7 @@ void MatchMakingProtocolClient::ProtoReturn_FindByType(Message* pMessage,
     _Type_std_list<GatheringAny>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindByDescription(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindByDescription(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2517,8 +2376,7 @@ void MatchMakingProtocolClient::ProtoReturn_FindByDescription(Message* pMessage,
     _Type_std_list<GatheringAny>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindByDescriptionRegex(Message* pMessage,
-                                                                   ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindByDescriptionRegex(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2530,8 +2388,7 @@ void MatchMakingProtocolClient::ProtoReturn_FindByDescriptionRegex(Message* pMes
     _Type_std_list<GatheringAny>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindByID(Message* pMessage,
-                                                     ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindByID(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2543,8 +2400,7 @@ void MatchMakingProtocolClient::ProtoReturn_FindByID(Message* pMessage,
     _Type_std_list<GatheringAny>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindBySingleID(Message* pMessage,
-                                                           ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindBySingleID(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2566,8 +2422,7 @@ void MatchMakingProtocolClient::ProtoReturn_FindBySingleID(Message* pMessage,
     }
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindByOwner(Message* pMessage,
-                                                        ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindByOwner(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2579,8 +2434,7 @@ void MatchMakingProtocolClient::ProtoReturn_FindByOwner(Message* pMessage,
     _Type_std_list<GatheringAny>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindByParticipants(Message* pMessage,
-                                                               ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindByParticipants(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2592,8 +2446,7 @@ void MatchMakingProtocolClient::ProtoReturn_FindByParticipants(Message* pMessage
     _Type_std_list<GatheringAny>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindInvitations(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindInvitations(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2605,8 +2458,7 @@ void MatchMakingProtocolClient::ProtoReturn_FindInvitations(Message* pMessage,
     _Type_std_list<GatheringAny>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindBySQLQuery(Message* pMessage,
-                                                           ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindBySQLQuery(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2618,8 +2470,7 @@ void MatchMakingProtocolClient::ProtoReturn_FindBySQLQuery(Message* pMessage,
     _Type_std_list<GatheringAny>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_LaunchSession(Message* pMessage,
-                                                          ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_LaunchSession(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2629,8 +2480,7 @@ void MatchMakingProtocolClient::ProtoReturn_LaunchSession(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_UpdateSessionURL(Message* pMessage,
-                                                             ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_UpdateSessionURL(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2640,8 +2490,7 @@ void MatchMakingProtocolClient::ProtoReturn_UpdateSessionURL(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_GetSessionURL(Message* pMessage,
-                                                          ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_GetSessionURL(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2661,8 +2510,7 @@ void MatchMakingProtocolClient::ProtoReturn_GetSessionURL(Message* pMessage,
     _Type_string::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_GetState(Message* pMessage,
-                                                     ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_GetState(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     unsigned int uiDiscardedState;
@@ -2680,8 +2528,7 @@ void MatchMakingProtocolClient::ProtoReturn_GetState(Message* pMessage,
     _Type_uint32::Extract(pMessage, pState);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_SetState(Message* pMessage,
-                                                     ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_SetState(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2691,8 +2538,7 @@ void MatchMakingProtocolClient::ProtoReturn_SetState(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_ReportStats(Message* pMessage,
-                                                        ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_ReportStats(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2702,8 +2548,7 @@ void MatchMakingProtocolClient::ProtoReturn_ReportStats(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_GetStats(Message* pMessage,
-                                                     ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_GetStats(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2723,8 +2568,7 @@ void MatchMakingProtocolClient::ProtoReturn_GetStats(Message* pMessage,
     _Type_std_list<DDLClassMetaType<GatheringStats> >::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_DeleteGathering(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_DeleteGathering(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2734,8 +2578,7 @@ void MatchMakingProtocolClient::ProtoReturn_DeleteGathering(Message* pMessage,
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_GetPendingDeletions(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_GetPendingDeletions(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2748,15 +2591,15 @@ void MatchMakingProtocolClient::ProtoReturn_GetPendingDeletions(Message* pMessag
     void* pReturn = pCallContext->GetReturnValuePtr(1);
     if (pReturn != 0)
     {
-        _Type_std_list<DDLClassMetaType<DeletionEntry> >::Extract(pMessage, static_cast<qList<DeletionEntry>*>(pReturn));
+        _Type_std_list<DDLClassMetaType<DeletionEntry> >::Extract(pMessage,
+                                                                  static_cast<qList<DeletionEntry>*>(pReturn));
         return;
     }
     qList<DeletionEntry> discarded[1];
     _Type_std_list<DDLClassMetaType<DeletionEntry> >::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_DeleteFromDeletions(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_DeleteFromDeletions(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -2777,8 +2620,7 @@ void MatchMakingProtocolClient::ProtoReturn_MigrateGatheringOwnershipV1(Message*
     *pMessage >> *pDestination;
 }
 
-void MatchMakingProtocolClient::ProtoReturn_FindByDescriptionLike(Message* pMessage,
-                                                                  ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_FindByDescriptionLike(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pReturn = pCallContext->GetReturnValuePtr(0);
     if (pReturn != 0)
@@ -2790,23 +2632,19 @@ void MatchMakingProtocolClient::ProtoReturn_FindByDescriptionLike(Message* pMess
     _Type_std_list<GatheringAny>::Extract(pMessage, &discarded[0]);
 }
 
-void MatchMakingProtocolClient::ProtoReturn_RegisterLocalURL(Message* pMessage,
-                                                             ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_RegisterLocalURL(Message* pMessage, ProtocolCallContext* pCallContext)
 {
 }
 
-void MatchMakingProtocolClient::ProtoReturn_RegisterLocalURLs(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_RegisterLocalURLs(Message* pMessage, ProtocolCallContext* pCallContext)
 {
 }
 
-void MatchMakingProtocolClient::ProtoReturn_UpdateSessionHostV1(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_UpdateSessionHostV1(Message* pMessage, ProtocolCallContext* pCallContext)
 {
 }
 
-void MatchMakingProtocolClient::ProtoReturn_GetSessionURLs(Message* pMessage,
-                                                           ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_GetSessionURLs(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qList<StationURL>* pList = static_cast<qList<StationURL>*>(pCallContext->GetReturnValuePtr(0));
     if (pList != 0)
@@ -2820,8 +2658,7 @@ void MatchMakingProtocolClient::ProtoReturn_GetSessionURLs(Message* pMessage,
     }
 }
 
-void MatchMakingProtocolClient::ProtoReturn_UpdateSessionHost(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void MatchMakingProtocolClient::ProtoReturn_UpdateSessionHost(Message* pMessage, ProtocolCallContext* pCallContext)
 {
 }
 
@@ -2835,4 +2672,5 @@ void MatchMakingProtocolClient::ProtoReturn_MigrateGatheringOwnership(Message* p
 {
 }
 
-}}
+}
+}

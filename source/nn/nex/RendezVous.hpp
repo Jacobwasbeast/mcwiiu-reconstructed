@@ -3,7 +3,10 @@
 
 #include "nn/nex/BackEndServices.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class DateTime;
 
@@ -13,18 +16,17 @@ public:
     RendezVous();
     virtual ~RendezVous();
 
-    bool Login(CallContext* pCallContext, const wchar_t* pUserName, const char* pPassword,
-               const wchar_t* pHostName, unsigned short uiPort,
-               const AnyObjectHolder<Data, String>& rExtraData, Credentials** ppCredentials,
+    bool Login(CallContext* pCallContext, const wchar_t* pUserName, const char* pPassword, const wchar_t* pHostName,
+               unsigned short uiPort, const AnyObjectHolder<Data, String>& rExtraData, Credentials** ppCredentials,
                String* pErrorMessage);
     bool SilentLogin(CallContext* pCallContext, const wchar_t* pUserName, const char* pPassword,
-                     const wchar_t* pHostName, unsigned short uiPort,
-                     Credentials** ppCredentials);
+                     const wchar_t* pHostName, unsigned short uiPort, Credentials** ppCredentials);
     bool Logout(CallContext* pCallContext, Credentials* pCredentials);
     bool SilentLogout(CallContext* pCallContext, Credentials* pCredentials);
     unsigned int GetGameServerTime(DateTime* pTime) const;
 };
 
-}}
+}
+}
 
 #endif

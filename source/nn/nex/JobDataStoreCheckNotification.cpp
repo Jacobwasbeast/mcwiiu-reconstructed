@@ -25,8 +25,7 @@ JobDataStoreCheckNotification::~JobDataStoreCheckNotification()
 
 void JobDataStoreCheckNotification::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         m_context.Cancel(CallContext::CallCanceled);
@@ -60,8 +59,7 @@ void JobDataStoreCheckNotification::CompleteJob(const qResult& rResult)
 
 void JobDataStoreCheckNotification::PrepareRequest(HttpConnection* pConnection)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -73,16 +71,14 @@ void JobDataStoreCheckNotification::PrepareRequest(HttpConnection* pConnection)
         pConnection->AddRootCa(&m_urlInfo.m_RootCaCert[0], m_urlInfo.m_RootCaCert.size());
 }
 
-void JobDataStoreCheckNotification::ProcessResponseHeader(HttpConnection* pConnection,
-    int iStatusCode)
+void JobDataStoreCheckNotification::ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode)
 {
     m_iStatusCode = iStatusCode;
 }
 
 bool JobDataStoreCheckNotification::ProcessResponse(const unsigned char* pData, unsigned int uiSize)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -101,35 +97,36 @@ bool JobDataStoreCheckNotification::ProcessResponse(const unsigned char* pData, 
 }
 
 JobDataStoreCheckNotification::JobDataStoreCheckNotification()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_pClient(0)
-    , m_pFileServerClient(0)
-    , m_pNextNotificationUrl(0)
-    , m_notificationUrl(L"")
-    , m_uiThreadPriority(0)
-    , m_iTimeout(0)
-    , m_context()
-    , m_pLastDataId(0)
-    , m_uiLastDataId(0)
-    , m_pSequence(0)
-    , m_uiSequence(0)
-    , m_uiKey(0)
-    , m_urlInfo()
-    , m_response()
-    , m_iStatusCode(0)
-    , m_bResponseOverflow(false)
-    , m_bForceUrlRequest(false)
-    , m_pbUrlRequestFailed(0)
-    , m_bInvalidNotification(false)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_pClient(0),
+      m_pFileServerClient(0),
+      m_pNextNotificationUrl(0),
+      m_notificationUrl(L""),
+      m_uiThreadPriority(0),
+      m_iTimeout(0),
+      m_context(),
+      m_pLastDataId(0),
+      m_uiLastDataId(0),
+      m_pSequence(0),
+      m_uiSequence(0),
+      m_uiKey(0),
+      m_urlInfo(),
+      m_response(),
+      m_iStatusCode(0),
+      m_bResponseOverflow(false),
+      m_bForceUrlRequest(false),
+      m_pbUrlRequestFailed(0),
+      m_bInvalidNotification(false)
 {
 }
 
-qResult JobDataStoreCheckNotification::Initialize(unsigned int uiCallId,
-    DataStoreLogicServerClientInterface* pClient, unsigned int uiThreadPriority, int iTimeout,
-    const String& rNotificationUrl, String* pNextNotificationUrl, uint64_t uiLastDataId,
-    uint64_t* pLastDataId, unsigned int uiSequence, unsigned int* pSequence, unsigned int uiKey,
-    bool* pbUrlRequestFailed, bool bForceUrlRequest)
+qResult JobDataStoreCheckNotification::Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
+                                                  unsigned int uiThreadPriority, int iTimeout,
+                                                  const String& rNotificationUrl, String* pNextNotificationUrl,
+                                                  uint64_t uiLastDataId, uint64_t* pLastDataId, unsigned int uiSequence,
+                                                  unsigned int* pSequence, unsigned int uiKey, bool* pbUrlRequestFailed,
+                                                  bool bForceUrlRequest)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_pClient = pClient;
@@ -147,28 +144,23 @@ qResult JobDataStoreCheckNotification::Initialize(unsigned int uiCallId,
     m_bForceUrlRequest = bForceUrlRequest;
     m_pLastDataId = pLastDataId;
     *pbUrlRequestFailed = false;
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     m_context.SetCredentials(static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
     if (!m_bForceUrlRequest && !String::IsEqual(m_notificationUrl, L"")
         && !String::IsEqual(m_notificationUrl, L"invalidurl") && m_uiSequence != 0)
     {
-        SetStep(Step(static_cast<Step::Function>(
-                         &JobDataStoreCheckNotification::StepFileServerCheckNotificationFile),
-            L""));
+        SetStep(Step(static_cast<Step::Function>(&JobDataStoreCheckNotification::StepFileServerCheckNotificationFile),
+                     L""));
         return qResult(true);
     }
 
-    SetStep(Step(static_cast<Step::Function>(
-                     &JobDataStoreCheckNotification::StepLogicServerGetNotificationUrl),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreCheckNotification::StepLogicServerGetNotificationUrl), L""));
     return qResult(true);
 }
 
 void JobDataStoreCheckNotification::StepLogicServerGetNotificationUrl()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -187,19 +179,17 @@ void JobDataStoreCheckNotification::StepLogicServerGetNotificationUrl()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreCheckNotification::StepWaitingLogicServerGetNotificationUrl),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context,
+        new Step(static_cast<Step::Function>(&JobDataStoreCheckNotification::StepWaitingLogicServerGetNotificationUrl),
+                 L""));
 }
 
 void JobDataStoreCheckNotification::StepWaitingLogicServerGetNotificationUrl()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -232,8 +222,7 @@ void JobDataStoreCheckNotification::StepWaitingLogicServerGetNotificationUrl()
 
 void JobDataStoreCheckNotification::StepFileServerCheckNotificationFile()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -248,19 +237,17 @@ void JobDataStoreCheckNotification::StepFileServerCheckNotificationFile()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
     ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreCheckNotification::StepWaitingFileServerCheckNotificationFile),
-            L""));
+                           new Step(static_cast<Step::Function>(
+                                        &JobDataStoreCheckNotification::StepWaitingFileServerCheckNotificationFile),
+                                    L""));
 }
 
 void JobDataStoreCheckNotification::StepWaitingFileServerCheckNotificationFile()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -280,8 +267,7 @@ void JobDataStoreCheckNotification::StepWaitingFileServerCheckNotificationFile()
             if (uiKey != 0 && *pEnd == ',' && uiFileKey == uiKey)
             {
                 unsigned long uiFileSequence = strtoul(pEnd + 1, &pEnd, NUMBER_BASE);
-                if ((uiFileSequence != 0 && uiSequence == uiFileSequence) || uiSequence == 1
-                    || uiSequence == 0)
+                if ((uiFileSequence != 0 && uiSequence == uiFileSequence) || uiSequence == 1 || uiSequence == 0)
                 {
                     m_uiSequence = uiFileSequence;
                     if (uiDataId > m_uiLastDataId)
@@ -305,9 +291,7 @@ void JobDataStoreCheckNotification::StepWaitingFileServerCheckNotificationFile()
         return;
     }
 
-    SetStep(Step(static_cast<Step::Function>(
-                     &JobDataStoreCheckNotification::StepLogicServerGetNotificationUrl),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreCheckNotification::StepLogicServerGetNotificationUrl), L""));
 }
 
 }

@@ -31,8 +31,8 @@ public:
     JobHttp();
     virtual ~JobHttp();
 
-    virtual qResult Initialize(unsigned int uiCallId, const String& rUrl,
-        HttpConnection::Method method, HttpEventListener* pListener, unsigned int uiBufferSize);
+    virtual qResult Initialize(unsigned int uiCallId, const String& rUrl, HttpConnection::Method method,
+                               HttpEventListener* pListener, unsigned int uiBufferSize);
 
     qResult PrepareHttp();
     qResult ProceedReceivedBuffer();

@@ -45,18 +45,17 @@ struct AnalyzeInfo
     unsigned int m_uiReceiveCalls;
 };
 
-typedef void (*RecvFromCallback)(SocketDriver::_Result result, const unsigned char* pBuffer,
-    unsigned int uiSize, const SocketDriver::InetAddress* pAddress, const unsigned int* pReceived);
-typedef void (*SendToCallback)(SocketDriver::_Result result, const unsigned char* pBuffer,
-    unsigned int uiSize, const SocketDriver::InetAddress& rAddress, const unsigned int* pSent);
-typedef void (*RecvCallback)(SocketDriver::_Result result, const unsigned char* pBuffer,
-    unsigned int uiSize, const unsigned int* pReceived);
-typedef void (*SendCallback)(SocketDriver::_Result result, const unsigned char* pBuffer,
-    unsigned int uiSize, const unsigned int* pSent);
+typedef void (*RecvFromCallback)(SocketDriver::_Result result, const unsigned char* pBuffer, unsigned int uiSize,
+                                 const SocketDriver::InetAddress* pAddress, const unsigned int* pReceived);
+typedef void (*SendToCallback)(SocketDriver::_Result result, const unsigned char* pBuffer, unsigned int uiSize,
+                               const SocketDriver::InetAddress& rAddress, const unsigned int* pSent);
+typedef void (*RecvCallback)(SocketDriver::_Result result, const unsigned char* pBuffer, unsigned int uiSize,
+                             const unsigned int* pReceived);
+typedef void (*SendCallback)(SocketDriver::_Result result, const unsigned char* pBuffer, unsigned int uiSize,
+                             const unsigned int* pSent);
 
 AnalyzeInfo s_analyzeInfo;
-RecvFromCallback s_pfnRecvFromCallback =
-    __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvFromCallback;
+RecvFromCallback s_pfnRecvFromCallback = __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvFromCallback;
 SendToCallback s_pfnSendToCallback = __N_19_OnlineCore_Blob_cpp_9428d484::DefaultSendToCallback;
 RecvCallback s_pfnRecvCallback = __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvCallback;
 SendCallback s_pfnSendCallback = __N_19_OnlineCore_Blob_cpp_9428d484::DefaultSendCallback;
@@ -85,9 +84,7 @@ inline BerkeleySocketDriver::PeerAddressTable& GetPeerAddressTable()
 
 }
 
-BerkeleySocketDriver::BerkeleySocket::BerkeleySocket()
-    : m_iHandle(-1)
-    , m_pPeerAddressTable(&GetPeerAddressTable())
+BerkeleySocketDriver::BerkeleySocket::BerkeleySocket() : m_iHandle(-1), m_pPeerAddressTable(&GetPeerAddressTable())
 {
 }
 
@@ -188,8 +185,8 @@ bool BerkeleySocketDriver::BerkeleySocket::Bind(unsigned short& rPort)
     return true;
 }
 
-SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::LastSocketErrorToResult(
-    const wchar_t* pContext, int iResult)
+SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::LastSocketErrorToResult(const wchar_t* pContext,
+                                                                                    int iResult)
 {
     unsigned int uiError = GetLastSocketError(iResult);
     switch (uiError)
@@ -203,9 +200,9 @@ SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::LastSocketErrorToRes
     }
 }
 
-SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::RecvFrom(unsigned char* pBuffer,
-    unsigned int uiSize, SocketDriver::InetAddress* pAddress, unsigned int* pReceived,
-    _SocketFlag flag)
+SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::RecvFrom(unsigned char* pBuffer, unsigned int uiSize,
+                                                                     SocketDriver::InetAddress* pAddress,
+                                                                     unsigned int* pReceived, _SocketFlag flag)
 {
     sockaddr_in from;
     memset(&from, 0, sizeof(from));
@@ -218,8 +215,7 @@ SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::RecvFrom(unsigned ch
     ++s_analyzeInfo.m_uiReceiveCalls;
     _Result result = RESULT_SUCCESS;
     int iReceived = recvfrom(m_iHandle, pBuffer, uiSize, iFlags, reinterpret_cast<sockaddr*>(&from), &iAddressSize);
-    if (iReceived >= 0 ||
-        (result = LastSocketErrorToResult(L"Socket::RecvFrom", iReceived)) == RESULT_SUCCESS)
+    if (iReceived >= 0 || (result = LastSocketErrorToResult(L"Socket::RecvFrom", iReceived)) == RESULT_SUCCESS)
     {
         ++s_analyzeInfo.m_uiReceived;
         if (pAddress != 0)
@@ -236,8 +232,9 @@ SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::RecvFrom(unsigned ch
     return result;
 }
 
-SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::SendTo(unsigned char* pBuffer,
-    unsigned int uiSize, const SocketDriver::InetAddress& rAddress, unsigned int* pSent)
+SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::SendTo(unsigned char* pBuffer, unsigned int uiSize,
+                                                                   const SocketDriver::InetAddress& rAddress,
+                                                                   unsigned int* pSent)
 {
     sockaddr_in to;
     memset(&to, 0, sizeof(to));
@@ -263,8 +260,7 @@ SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::SendTo(unsigned char
     return result;
 }
 
-SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Connect(
-    const SocketDriver::InetAddress& rAddress)
+SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Connect(const SocketDriver::InetAddress& rAddress)
 {
     sockaddr_in to;
     memset(&to, 0, sizeof(to));
@@ -283,8 +279,8 @@ SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Connect(
     return RESULT_SUCCESS;
 }
 
-SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Recv(unsigned char* pBuffer,
-    unsigned int uiSize, unsigned int* pReceived)
+SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Recv(unsigned char* pBuffer, unsigned int uiSize,
+                                                                 unsigned int* pReceived)
 {
     int iReceived = recv(m_iHandle, pBuffer, uiSize, MSG_DONTWAIT);
     _Result result;
@@ -305,8 +301,8 @@ SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Recv(unsigned char* 
     return result;
 }
 
-SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Send(unsigned char* pBuffer,
-    unsigned int uiSize, unsigned int* pSent)
+SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Send(unsigned char* pBuffer, unsigned int uiSize,
+                                                                 unsigned int* pSent)
 {
     int iSent = send(m_iHandle, pBuffer, uiSize, MSG_DONTWAIT);
     _Result result;
@@ -394,7 +390,7 @@ bool BerkeleySocketDriver::Poll(PollInfo* pInfo, unsigned int uiCount, unsigned 
 
     Time now(Time::GetTime());
     Time deadline = now + static_cast<int>(uiTimeout);
-    struct timeval zeroTimeout = { 0, 0 };
+    struct timeval zeroTimeout = {0, 0};
     fd_set savedReadSet = readSet;
     fd_set savedWriteSet = writeSet;
     do
@@ -422,14 +418,13 @@ bool BerkeleySocketDriver::Poll(PollInfo* pInfo, unsigned int uiCount, unsigned 
         writeSet = savedWriteSet;
         Platform::Sleep(1);
         now = Time(Time::GetTime());
-    }
-    while (static_cast<unsigned long long>(now) < static_cast<unsigned long long>(deadline));
+    } while (static_cast<unsigned long long>(now) < static_cast<unsigned long long>(deadline));
 
     return false;
 }
 
-void BerkeleySocketDriver::GetPeerAddress(nn::nex::InetAddress* pAddresses,
-    unsigned int uiCapacity, unsigned int* pCount)
+void BerkeleySocketDriver::GetPeerAddress(nn::nex::InetAddress* pAddresses, unsigned int uiCapacity,
+                                          unsigned int* pCount)
 {
     PeerAddressTable& rTable = GetPeerAddressTable();
     if (rTable.m_uiCount <= uiCapacity)
@@ -452,8 +447,7 @@ void BerkeleySocketDriver::GetPeerAddress(nn::nex::InetAddress* pAddresses,
     }
 }
 
-void BerkeleySocketDriver::SetPeerAddress(const nn::nex::InetAddress* pAddresses,
-    unsigned int uiCount)
+void BerkeleySocketDriver::SetPeerAddress(const nn::nex::InetAddress* pAddresses, unsigned int uiCount)
 {
     PeerAddressTable& rTable = GetPeerAddressTable();
     if (uiCount < PEER_ADDRESS_CAPACITY + 1)

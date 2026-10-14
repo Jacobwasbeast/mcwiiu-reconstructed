@@ -8,11 +8,11 @@ namespace nex
 {
 
 Timeout::Timeout()
-    : m_uiRTO(0)
-    , m_awaitedTime()
-    , m_expirationTime()
-    , m_relativeExpirationTime(0)
-    , m_pCore(Core::GetInstance())
+    : m_uiRTO(0),
+      m_awaitedTime(),
+      m_expirationTime(),
+      m_relativeExpirationTime(0),
+      m_pCore(Core::GetInstance())
 {
 }
 
@@ -55,8 +55,9 @@ bool Timeout::IsExpired() const
 {
     return (static_cast<long long>(m_expirationTime) != 0
             && static_cast<long long>(m_expirationTime) < static_cast<long long>(Time::GetTime()))
-        || (m_pCore->GetTerminateImmediately()
-            && static_cast<long long>(m_pCore->GetTerminateImmediatelyTime()) < static_cast<long long>(Time::GetTime()));
+           || (m_pCore->GetTerminateImmediately()
+               && static_cast<long long>(m_pCore->GetTerminateImmediatelyTime())
+                      < static_cast<long long>(Time::GetTime()));
 }
 
 }

@@ -15,12 +15,10 @@ class StationProbeList;
 class ConnectivityTester : public RootObject
 {
 public:
-    virtual ~ConnectivityTester()
-    {
-    }
+    virtual ~ConnectivityTester() {}
 
-    virtual bool ProbeStations(CallContext* pCallContext, StationProbeList* pStationProbeList,
-        unsigned int uiTimeout, bool bUseRelay, Job::JobType jobType) = 0;
+    virtual bool ProbeStations(CallContext* pCallContext, StationProbeList* pStationProbeList, unsigned int uiTimeout,
+                               bool bUseRelay, Job::JobType jobType) = 0;
 };
 
 }

@@ -29,11 +29,11 @@ public:
         NintendoCreateAccountFunc = 4
     };
 
-    JobCreateAccount(unsigned int uiCallId, const char* pGuestPassword, const String& rHost,
-        unsigned short uiPort, const String& rName, const char* pPassword, unsigned int uiGroups,
-        const String& rEmail, FuncType funcType, AnyObjectHolder<Data, String>* pPublicData,
-        AnyObjectHolder<Data, String>* pPrivateData, AnyObjectHolder<Data, String>* pCustomData,
-        unsigned int* pPrincipalID, String* pPidHmac);
+    JobCreateAccount(unsigned int uiCallId, const char* pGuestPassword, const String& rHost, unsigned short uiPort,
+                     const String& rName, const char* pPassword, unsigned int uiGroups, const String& rEmail,
+                     FuncType funcType, AnyObjectHolder<Data, String>* pPublicData,
+                     AnyObjectHolder<Data, String>* pPrivateData, AnyObjectHolder<Data, String>* pCustomData,
+                     unsigned int* pPrincipalID, String* pPidHmac);
     virtual ~JobCreateAccount();
 
     void CompleteJob(qResult result);

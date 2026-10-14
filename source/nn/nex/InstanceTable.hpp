@@ -25,11 +25,9 @@ public:
     int GetHighestID() const;
 
     bool AddInstance(InstanceControl* instance, unsigned int classId, unsigned int contextId);
-    bool AddInstanceToVector(InstanceControl* instance, unsigned int classId,
-                             unsigned int contextId);
+    bool AddInstanceToVector(InstanceControl* instance, unsigned int classId, unsigned int contextId);
     void DelInstance(InstanceControl* instance, unsigned int classId, unsigned int contextId);
-    void DelInstanceFromVector(InstanceControl* instance, unsigned int classId,
-                               unsigned int contextId);
+    void DelInstanceFromVector(InstanceControl* instance, unsigned int classId, unsigned int contextId);
 
     unsigned int FindInstanceContext(InstanceControl* instance, unsigned int classId);
 
@@ -61,8 +59,8 @@ public:
         if (contextId >= m_extraContexts->size())
         {
             SystemError::SignalError(
-                L"D:\\home\\jenkins\\workspace\\Master\\Pack\\d4f027b8\\.\\OnlineCore/src/Core/InstanceTable.h",
-                0x48, 0xE0000003, 0);
+                L"D:\\home\\jenkins\\workspace\\Master\\Pack\\d4f027b8\\.\\OnlineCore/src/Core/InstanceTable.h", 0x48,
+                0xE0000003, 0);
             return reinterpret_cast<InstanceControl*>(0xFFFFFFFF);
         }
 

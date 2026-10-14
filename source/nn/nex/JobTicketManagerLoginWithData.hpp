@@ -25,9 +25,9 @@ class CustomDataHolder;
 class JobTicketManagerLoginWithData : public StepSequenceJob
 {
 public:
-    JobTicketManagerLoginWithData(unsigned int uiCallId, TicketManager* pTicketManager,
-        qResult* pResult, const char* pPassword, unsigned int* pPrincipalID,
-        RVConnectionData* pConnectionData, CustomDataHolder<LoginData>* pLoginData);
+    JobTicketManagerLoginWithData(unsigned int uiCallId, TicketManager* pTicketManager, qResult* pResult,
+                                  const char* pPassword, unsigned int* pPrincipalID, RVConnectionData* pConnectionData,
+                                  CustomDataHolder<LoginData>* pLoginData);
     virtual ~JobTicketManagerLoginWithData();
 
     void CompleteJob(CallContext::State state, qResult result);

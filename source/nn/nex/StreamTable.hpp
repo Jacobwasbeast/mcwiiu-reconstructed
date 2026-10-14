@@ -18,8 +18,7 @@ class StationURL;
 class StreamTable : public RootObject
 {
 public:
-    typedef std::list<ConnectionOrientedStream*, MemAllocator<ConnectionOrientedStream*> >
-        StreamList;
+    typedef std::list<ConnectionOrientedStream*, MemAllocator<ConnectionOrientedStream*> > StreamList;
 
     StreamTable();
     virtual ~StreamTable();
@@ -27,10 +26,7 @@ public:
     ConnectionOrientedStream* FindStream(const StationURL* pStationURL);
     ConnectionOrientedStream* FindStream(wchar_t* pType);
 
-    StreamList& GetStreams()
-    {
-        return m_streams;
-    }
+    StreamList& GetStreams() { return m_streams; }
 
 private:
     uint32_t m_unresolved0;

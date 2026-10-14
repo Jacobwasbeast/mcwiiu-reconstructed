@@ -19,13 +19,10 @@ public:
         METHOD_GET_CLUSTER_MEMBERS = 2
     };
 
-    explicit _Proto_MonitoringProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_MonitoringProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual bool PingDaemon() = 0;
     virtual void GetClusterMembers(qList<String>* pClusterMembers) = 0;
 

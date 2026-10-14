@@ -13,8 +13,7 @@ namespace nex
 class GameKey : public _DDL_GameKey
 {
 public:
-    GameKey()
-        : _DDL_GameKey()
+    GameKey() : _DDL_GameKey()
     {
         m_uiTitleID = 0;
         m_uiTitleVersion = 0;
@@ -22,9 +21,7 @@ public:
 
     GameKey(unsigned long long uiTitleID, unsigned short uiTitleVersion);
 
-    virtual ~GameKey()
-    {
-    }
+    virtual ~GameKey() {}
 
     bool operator==(const GameKey& rOther) const;
     bool operator!=(const GameKey& rOther) const;

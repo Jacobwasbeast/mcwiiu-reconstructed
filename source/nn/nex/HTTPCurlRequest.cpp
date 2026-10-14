@@ -41,11 +41,7 @@ unsigned int CurlHeaderWriter(char* pBuffer, unsigned int uiSize, unsigned int u
 
 }
 
-HTTPCurlRequest::HTTPCurlRequest()
-    : m_pHandle(0)
-    , m_uiError(0)
-    , m_pHeaderList(0)
-    , m_bUnresolved32(false)
+HTTPCurlRequest::HTTPCurlRequest() : m_pHandle(0), m_uiError(0), m_pHeaderList(0), m_bUnresolved32(false)
 {
     m_pHandle = mw_curl_easy_init();
 }
@@ -184,8 +180,9 @@ bool HTTPCurlRequest::SetProxy(const HTTPProxySettings& rProxy)
         {
             if (rPassword.GetLength() != 0)
             {
-                proxy.Format(L"%s:%s@%s:%d", static_cast<const wchar_t*>(rUsername), static_cast<const wchar_t*>(rPassword),
-                             static_cast<const wchar_t*>(rName), rProxy.GetProxyPort());
+                proxy.Format(L"%s:%s@%s:%d", static_cast<const wchar_t*>(rUsername),
+                             static_cast<const wchar_t*>(rPassword), static_cast<const wchar_t*>(rName),
+                             rProxy.GetProxyPort());
             }
             else
             {

@@ -45,10 +45,7 @@ public:
     GlobalVariables();
     virtual ~GlobalVariables();
 
-    static GlobalVariables* GetInstancePtr()
-    {
-        return g_globalVariables;
-    }
+    static GlobalVariables* GetInstancePtr() { return g_globalVariables; }
 
     static void AcquireInstance();
     static void ReleaseInstance();
@@ -56,40 +53,19 @@ public:
     static void ClearCache();
     static void* GetThreadVariableListPtr();
 
-    ThreadVariable<unsigned int>& GetErrorCode()
-    {
-        return m_errorCode;
-    }
+    ThreadVariable<unsigned int>& GetErrorCode() { return m_errorCode; }
 
-    ThreadVariable<unsigned int>& GetErrorDetail()
-    {
-        return m_errorDetail;
-    }
+    ThreadVariable<unsigned int>& GetErrorDetail() { return m_errorDetail; }
 
-    ThreadVariable<ObjectThreadRoot*>& GetCurrentThread()
-    {
-        return m_currentThread;
-    }
+    ThreadVariable<ObjectThreadRoot*>& GetCurrentThread() { return m_currentThread; }
 
-    EventLog& GetEventLog()
-    {
-        return m_eventLog;
-    }
+    EventLog& GetEventLog() { return m_eventLog; }
 
-    TraceLog& GetTraceLog()
-    {
-        return m_traceLog;
-    }
+    TraceLog& GetTraceLog() { return m_traceLog; }
 
-    CacheManager& GetCacheManager()
-    {
-        return m_cacheManager;
-    }
+    CacheManager& GetCacheManager() { return m_cacheManager; }
 
-    String& GetBroadcastAddress()
-    {
-        return m_broadcastAddress;
-    }
+    String& GetBroadcastAddress() { return m_broadcastAddress; }
 
 private:
     friend class PacketBufferManager;

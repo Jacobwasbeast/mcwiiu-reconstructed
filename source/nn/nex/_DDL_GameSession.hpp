@@ -15,14 +15,9 @@ class Message;
 class _DDL_GameSession : public Gathering
 {
 public:
-    _DDL_GameSession()
-        : Gathering(), m_uiStructureVersion(0)
-    {
-    }
+    _DDL_GameSession() : Gathering(), m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_GameSession()
-    {
-    }
+    virtual ~_DDL_GameSession() {}
 
     _DDL_GameSession& operator=(const _DDL_GameSession& rSource);
 

@@ -33,11 +33,11 @@ class JobBackEndServicesLogin : public StepSequenceJob
 public:
     typedef StreamManager* (*StreamManagerFactory)();
 
-    JobBackEndServicesLogin(unsigned int uiCallId, BackEndServices* pBackEndServices,
-        qResult* pResult, const String& rUserName, const char* pPassword, const wchar_t* pHost,
-        unsigned short uiPort, Credentials** ppCredentials, String* pErrorMessage,
-        AnyObjectHolder<Data, String>* pExtraData, int iTimeout,
-        StreamManagerFactory pStreamManagerFactory);
+    JobBackEndServicesLogin(unsigned int uiCallId, BackEndServices* pBackEndServices, qResult* pResult,
+                            const String& rUserName, const char* pPassword, const wchar_t* pHost, unsigned short uiPort,
+                            Credentials** ppCredentials, String* pErrorMessage,
+                            AnyObjectHolder<Data, String>* pExtraData, int iTimeout,
+                            StreamManagerFactory pStreamManagerFactory);
     virtual ~JobBackEndServicesLogin();
 
     virtual void CancelJob();

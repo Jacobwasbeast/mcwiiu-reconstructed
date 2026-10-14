@@ -33,8 +33,8 @@ public:
 
 private:
     typedef std::set<PacketOut*, std::less<PacketOut*>, MemAllocator<PacketOut*> > PacketSet;
-    typedef std::multimap<Time, PacketOut*, std::less<Time>,
-        MemAllocator<std::pair<const Time, PacketOut*> > > TimeoutMap;
+    typedef std::multimap<Time, PacketOut*, std::less<Time>, MemAllocator<std::pair<const Time, PacketOut*> > >
+        TimeoutMap;
 
     unsigned int m_unknown0;
     PacketSet m_packets;

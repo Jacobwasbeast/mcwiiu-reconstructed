@@ -31,13 +31,14 @@ void DataStorePreparePostParam::Reset()
     m_PersistenceInitParam = persistenceInitParam;
 
     std::map<int8_t, DataStoreRatingInitParam, std::less<int8_t>,
-             MemAllocator<std::pair<const int8_t, DataStoreRatingInitParam> > > ratingInitParams;
+             MemAllocator<std::pair<const int8_t, DataStoreRatingInitParam> > >
+        ratingInitParams;
 
     m_RatingInitParams.clear();
 
     for (std::map<int8_t, DataStoreRatingInitParam, std::less<int8_t>,
-                  MemAllocator<std::pair<const int8_t, DataStoreRatingInitParam> > >::const_iterator
-             it = ratingInitParams.begin();
+                  MemAllocator<std::pair<const int8_t, DataStoreRatingInitParam> > >::const_iterator it =
+             ratingInitParams.begin();
          it != ratingInitParams.end(); ++it)
     {
         DataStoreRatingInitParamWithSlot ratingInitParamWithSlot;

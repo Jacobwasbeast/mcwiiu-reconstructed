@@ -32,8 +32,8 @@ public:
     bool ShouldRelay(const InetAddress* pAddress);
     bool AddRelay(const InetAddress& rAddress, const InetAddress& rKey, bool bReplace);
     bool RelayMessage(Buffer* pPayload, const InetAddress* pDestination, unsigned short uiPort);
-    bool PingMessage(Buffer* pPayload, const RelayPingProtocolHeader* pHeader,
-        const InetAddress* pDestination, unsigned short uiPort);
+    bool PingMessage(Buffer* pPayload, const RelayPingProtocolHeader* pHeader, const InetAddress* pDestination,
+                     unsigned short uiPort);
 
     void SetRelayGatheringID(unsigned int uiID);
     unsigned int GetRelayGatheringID();
@@ -41,15 +41,9 @@ public:
     unsigned int GetGameServerID();
     void SetSrcPublicAddress(const StationURL& rURL);
 
-    bool IsEnabled() const
-    {
-        return m_bEnabled;
-    }
+    bool IsEnabled() const { return m_bEnabled; }
 
-    const InetAddress& GetSrcPublicAddress() const
-    {
-        return m_address;
-    }
+    const InetAddress& GetSrcPublicAddress() const { return m_address; }
 
 private:
     RelayStream* m_pStream;

@@ -31,9 +31,7 @@ enum
 
 }
 
-ClientProtocol::ClientProtocol(unsigned int uiFlags)
-    : Protocol(uiFlags)
-    , m_pDefaultCredentials(0)
+ClientProtocol::ClientProtocol(unsigned int uiFlags) : Protocol(uiFlags), m_pDefaultCredentials(0)
 {
 }
 
@@ -75,8 +73,7 @@ bool ClientProtocol::SendOverLocalLoopback(ProtocolCallContext* pCallContext, Me
     _Command command;
     unsigned short uiProtocolID;
     ExtractProtocolKey(&request, command, uiProtocolID);
-    qResult result = pServerProtocol->m_pProtocolRequestBroker->DispatchLocalRMC(&request, this,
-        pServerProtocol, 0);
+    qResult result = pServerProtocol->m_pProtocolRequestBroker->DispatchLocalRMC(&request, this, pServerProtocol, 0);
     if (!result)
     {
         if (pCallContext->GetState() == CallContext::CallInProgress)

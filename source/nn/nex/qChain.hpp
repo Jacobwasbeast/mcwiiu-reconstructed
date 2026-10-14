@@ -12,36 +12,26 @@ namespace nn
 namespace nex
 {
 
-template<class T>
+template <class T>
 class qChainLink
 {
 public:
-    qChainLink()
-        : m_pNext(0)
-        , m_pPrevious(0)
-    {
-    }
+    qChainLink() : m_pNext(0), m_pPrevious(0) {}
 
     T m_pNext;
     T m_pPrevious;
 };
 
-template<class T>
+template <class T>
 class DefaultChainPolicy
 {
 public:
-    static T& Next(T element)
-    {
-        return element->m_link.m_pNext;
-    }
+    static T& Next(T element) { return element->m_link.m_pNext; }
 
-    static T& Previous(T element)
-    {
-        return element->m_link.m_pPrevious;
-    }
+    static T& Previous(T element) { return element->m_link.m_pPrevious; }
 };
 
-template<class T, class TPolicy>
+template <class T, class TPolicy>
 class qChain : public RootObject
 {
 public:
@@ -54,20 +44,11 @@ public:
         typedef T* pointer;
         typedef T& reference;
 
-        iterator()
-            : m_element(0)
-        {
-        }
+        iterator() : m_element(0) {}
 
-        explicit iterator(T element)
-            : m_element(element)
-        {
-        }
+        explicit iterator(T element) : m_element(element) {}
 
-        iterator(const iterator& other)
-            : m_element(other.m_element)
-        {
-        }
+        iterator(const iterator& other) : m_element(other.m_element) {}
 
         iterator& operator=(const iterator& other)
         {
@@ -75,15 +56,9 @@ public:
             return *this;
         }
 
-        T& operator*()
-        {
-            return m_element;
-        }
+        T& operator*() { return m_element; }
 
-        const T& operator*() const
-        {
-            return m_element;
-        }
+        const T& operator*() const { return m_element; }
 
         iterator& operator++()
         {
@@ -91,15 +66,9 @@ public:
             return *this;
         }
 
-        bool operator==(const iterator& other) const
-        {
-            return m_element == other.m_element;
-        }
+        bool operator==(const iterator& other) const { return m_element == other.m_element; }
 
-        bool operator!=(const iterator& other) const
-        {
-            return m_element != other.m_element;
-        }
+        bool operator!=(const iterator& other) const { return m_element != other.m_element; }
 
     private:
         T m_element;
@@ -116,25 +85,13 @@ public:
             position = erase(position);
     }
 
-    iterator begin() const
-    {
-        return iterator(m_pFirst);
-    }
+    iterator begin() const { return iterator(m_pFirst); }
 
-    iterator end() const
-    {
-        return iterator(m_pEnd);
-    }
+    iterator end() const { return iterator(m_pEnd); }
 
-    bool empty() const
-    {
-        return m_pFirst == m_pEnd;
-    }
+    bool empty() const { return m_pFirst == m_pEnd; }
 
-    unsigned int size() const
-    {
-        return m_size;
-    }
+    unsigned int size() const { return m_size; }
 
     iterator find(const T& element) const
     {
@@ -152,15 +109,9 @@ public:
         return position;
     }
 
-    T& front()
-    {
-        return m_pFirst;
-    }
+    T& front() { return m_pFirst; }
 
-    T& back()
-    {
-        return m_pLast;
-    }
+    T& back() { return m_pLast; }
 
     void push_back(const T& element)
     {
@@ -245,12 +196,11 @@ private:
     unsigned int m_size;
 };
 
-template<class T, class TPolicy>
-qChain<T, TPolicy>::qChain()
-    : m_pFirst(0)
-    , m_pLast(0)
-    , m_pEnd(0)
-    , m_size(0)
+template <class T, class TPolicy>
+qChain<T, TPolicy>::qChain() : m_pFirst(0),
+                               m_pLast(0),
+                               m_pEnd(0),
+                               m_size(0)
 {
 }
 

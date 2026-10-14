@@ -8,9 +8,9 @@ namespace nex
 {
 
 RC4Encryption::RC4Encryption()
-    : EncryptionAlgorithm(5, 0x40)
-    , m_bReinitEverytime(true)
-    , m_pCriticalSection(new CriticalSection())
+    : EncryptionAlgorithm(5, 0x40),
+      m_bReinitEverytime(true),
+      m_pCriticalSection(new CriticalSection())
 {
     SetKey(GetDefaultKey());
 }
@@ -22,7 +22,7 @@ RC4Encryption::~RC4Encryption()
 
 Key RC4Encryption::GetDefaultKey()
 {
-    unsigned char key[5] = { 'C', 'D', '&', 'M', 'L' };
+    unsigned char key[5] = {'C', 'D', '&', 'M', 'L'};
     return Key(key, 5);
 }
 

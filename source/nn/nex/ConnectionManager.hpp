@@ -25,17 +25,17 @@ class JobConnectEndPoint;
 class ConnectionManager : public TransportEventHandler
 {
 public:
-    typedef bool (*ConnectionFilter)(const UserContext& rUserContext, Buffer* pRequest,
-        Buffer* pResponse, EndPoint* pEndPoint);
+    typedef bool (*ConnectionFilter)(const UserContext& rUserContext, Buffer* pRequest, Buffer* pResponse,
+                                     EndPoint* pEndPoint);
 
-    ConnectionManager(EndPointEventHandler* pEndPointEventHandler, Job::JobType jobType,
-        bool bFlag, bool bRoutingEnabled);
+    ConnectionManager(EndPointEventHandler* pEndPointEventHandler, Job::JobType jobType, bool bFlag,
+                      bool bRoutingEnabled);
     virtual ~ConnectionManager();
 
-    virtual bool ConnectionRequest(ConnectionOrientedStream* pStream,
-        const StationURL* pStationURL, Buffer* pBuffer, EndPoint* pEndPoint);
-    virtual bool FilterConnectionRequest(ConnectionOrientedStream* pStream,
-        const StationURL* pStationURL, Buffer* pBuffer, EndPoint* pEndPoint);
+    virtual bool ConnectionRequest(ConnectionOrientedStream* pStream, const StationURL* pStationURL, Buffer* pBuffer,
+                                   EndPoint* pEndPoint);
+    virtual bool FilterConnectionRequest(ConnectionOrientedStream* pStream, const StationURL* pStationURL,
+                                         Buffer* pBuffer, EndPoint* pEndPoint);
 
     void Terminate();
     bool IsTerminated() const;
@@ -45,16 +45,12 @@ public:
     bool Disconnect(CallContext* pCallContext, EndPoint* pEndPoint);
     void SetRouterAddress(const InetAddress& rAddress);
     void ConfigureEndPointForRouting(EndPoint* pEndPoint);
-    void ConstructAndAssociateRoutingURL(unsigned short uiPort, StationURL oStationURL,
-        StationURL* pRoutingURL);
+    void ConstructAndAssociateRoutingURL(unsigned short uiPort, StationURL oStationURL, StationURL* pRoutingURL);
     bool ConnectImpl(CallContext* pCallContext, Buffer* pRequestBuffer, Buffer* pResponseBuffer,
-        const qList<StationURL>& rURLs, EndPoint** ppEndPoint, unsigned int uiTimeout,
-        bool bFlag, JobConnectEndPoint** ppJob);
+                     const qList<StationURL>& rURLs, EndPoint** ppEndPoint, unsigned int uiTimeout, bool bFlag,
+                     JobConnectEndPoint** ppJob);
 
-    StreamTable& GetStreamTable()
-    {
-        return m_streamTable;
-    }
+    StreamTable& GetStreamTable() { return m_streamTable; }
 
     static int s_iNATTraversalTimeout;
     static unsigned int s_uiDisconnectTimeout;

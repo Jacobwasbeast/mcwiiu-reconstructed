@@ -22,14 +22,13 @@ class StationURL;
 class SecureStream : public ConnectionOrientedStream
 {
 public:
-    typedef void (*SendCallback)(ConnectionOrientedStream* pStream, Buffer* pBuffer,
-        unsigned int uiParameter, UserContext* pUserContext);
+    typedef void (*SendCallback)(ConnectionOrientedStream* pStream, Buffer* pBuffer, unsigned int uiParameter,
+                                 UserContext* pUserContext);
 
     SecureStream();
     virtual ~SecureStream();
 
-    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
-        Packet* pPacket);
+    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket);
     virtual void DoWork();
     virtual bool ResponsibleForURL(const StationURL* pStationURL);
     virtual const wchar_t* GetURLType();
@@ -51,7 +50,7 @@ public:
     virtual StationURL* BuildURL(unsigned int uiConnectionID, unsigned int uiPrincipalID);
     virtual qResult Send(StationURL* pStationURL, Buffer* pBuffer);
     virtual qResult Send(StationURL* pStationURL, Buffer* pBuffer, SendCallback pCallback,
-        const UserContext& rUserContext);
+                         const UserContext& rUserContext);
     virtual qResult SetOption(unsigned int uiOption, const UserContext& rUserContext);
     virtual qResult GetOption(unsigned int uiOption, UserContext& rUserContext);
 
@@ -60,20 +59,11 @@ public:
 
     void SetAssociatedStream(ConnectionOrientedStream* pAssociatedStream);
 
-    ConnectionOrientedStream* GetAssociatedStream() const
-    {
-        return m_pAssociatedStream;
-    }
+    ConnectionOrientedStream* GetAssociatedStream() const { return m_pAssociatedStream; }
 
-    AuthenticationClient* GetAuthenticationClient() const
-    {
-        return m_pAuthenticationClient;
-    }
+    AuthenticationClient* GetAuthenticationClient() const { return m_pAuthenticationClient; }
 
-    SecureConnectionClient* GetSecureConnectionClient() const
-    {
-        return m_pSecureConnectionClient;
-    }
+    SecureConnectionClient* GetSecureConnectionClient() const { return m_pSecureConnectionClient; }
 
 protected:
     friend class JobBackEndServicesLogin;
@@ -85,8 +75,8 @@ protected:
     Credentials* m_pCredentials;
 };
 
-bool SecureStreamConnectionFilter(const UserContext& rUserContext, Buffer* pRequest,
-    Buffer* pResponse, EndPoint* pEndPoint);
+bool SecureStreamConnectionFilter(const UserContext& rUserContext, Buffer* pRequest, Buffer* pResponse,
+                                  EndPoint* pEndPoint);
 
 }
 }

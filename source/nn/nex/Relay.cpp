@@ -61,8 +61,7 @@ void Relay::UnregisterStream()
 
         if (pTransport != 0)
         {
-            m_bRegistered = !pTransport->m_streamManager.UnregisterStream(m_pStream->GetType(),
-                RELAY_STREAM_ID);
+            m_bRegistered = !pTransport->m_streamManager.UnregisterStream(m_pStream->GetType(), RELAY_STREAM_ID);
         }
 
         Clean();
@@ -88,8 +87,7 @@ void Relay::Clean()
 
         if (&Network::GetInstance()->GetMessageSelector() != 0)
         {
-            Network::GetInstance()->GetMessageSelector().GetRelayMessage()
-                ->ClearRelayDataPacketSignatureKey();
+            Network::GetInstance()->GetMessageSelector().GetRelayMessage()->ClearRelayDataPacketSignatureKey();
         }
     }
 }
@@ -128,8 +126,7 @@ bool Relay::HasRelay(const InetAddress* pAddress, const InetAddress* pRelay)
 
     if (bFound)
     {
-        if (pAddress->GetAddress() == found.GetAddress()
-            && pAddress->GetPortNumber() == found.GetPortNumber())
+        if (pAddress->GetAddress() == found.GetAddress() && pAddress->GetPortNumber() == found.GetPortNumber())
         {
             return false;
         }
@@ -186,15 +183,15 @@ bool Relay::RelayMessage(Buffer* pPayload, const InetAddress* pDestination, unsi
     pPacket->GetRelayHeader().m_uiDestinationAddress = pDestination->GetAddress();
     pPacket->GetRelayHeader().m_uiDestinationPort = pDestination->GetPortNumber();
 
-    const bool bSent = m_pStream->m_pTransport->Send(uiPort, m_pStream->GetType(),
-        RELAY_STREAM_ID, RELAY_STREAM_ID, pPacket, true);
+    const bool bSent = m_pStream->m_pTransport->Send(uiPort, m_pStream->GetType(), RELAY_STREAM_ID, RELAY_STREAM_ID,
+                                                     pPacket, true);
 
     pPacket->ReleaseRef();
     return bSent;
 }
 
-bool Relay::PingMessage(Buffer* pPayload, const RelayPingProtocolHeader* pHeader,
-    const InetAddress* pDestination, unsigned short uiPort)
+bool Relay::PingMessage(Buffer* pPayload, const RelayPingProtocolHeader* pHeader, const InetAddress* pDestination,
+                        unsigned short uiPort)
 {
     PacketOut* pPacket = RelayStream::BuildRelayPacket(pPayload, RELAY_TYPE_PING);
 
@@ -228,8 +225,8 @@ bool Relay::PingMessage(Buffer* pPayload, const RelayPingProtocolHeader* pHeader
         pPacket->GetRelayPingHeader().m_unknown4 = pHeader->m_unknown4;
         pPacket->GetRelayPingHeader().m_unknown8 = pHeader->m_unknown8;
         pPacket->m_unknown128 = true;
-        bSent = m_pStream->m_pTransport->Send(uiPort, m_pStream->GetType(), RELAY_STREAM_ID,
-            RELAY_STREAM_ID, pPacket, true);
+        bSent = m_pStream->m_pTransport->Send(uiPort, m_pStream->GetType(), RELAY_STREAM_ID, RELAY_STREAM_ID, pPacket,
+                                              true);
         pPacket->ReleaseRef();
     }
     else
@@ -241,8 +238,8 @@ bool Relay::PingMessage(Buffer* pPayload, const RelayPingProtocolHeader* pHeader
         pPacket->GetRelayPingHeader().m_unknown4 = pHeader->m_unknown4;
         pPacket->GetRelayPingHeader().m_unknown8 = pHeader->m_unknown8;
         pPacket->m_unknown128 = true;
-        bSent = m_pStream->m_pTransport->Send(uiPort, m_pStream->GetType(), RELAY_STREAM_ID,
-            RELAY_STREAM_ID, pPacket, true);
+        bSent = m_pStream->m_pTransport->Send(uiPort, m_pStream->GetType(), RELAY_STREAM_ID, RELAY_STREAM_ID, pPacket,
+                                              true);
         pPacket->ReleaseRef();
     }
 

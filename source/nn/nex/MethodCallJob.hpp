@@ -18,23 +18,17 @@ class MethodCallJob : public Base
 public:
     typedef void (Owner::*Method)(Arg);
 
-    MethodCallJob(
-        Job::JobType jobType, const DebugString& rDebugString, Method pMethod, Owner* pOwner)
-        : Base(jobType, rDebugString)
-        , m_pMethod(pMethod)
-        , m_pOwner(pOwner)
-        , m_argument(Arg())
+    MethodCallJob(Job::JobType jobType, const DebugString& rDebugString, Method pMethod, Owner* pOwner)
+        : Base(jobType, rDebugString),
+          m_pMethod(pMethod),
+          m_pOwner(pOwner),
+          m_argument(Arg())
     {
     }
 
-    virtual ~MethodCallJob()
-    {
-    }
+    virtual ~MethodCallJob() {}
 
-    virtual void Execute()
-    {
-        (m_pOwner->*m_pMethod)(m_argument);
-    }
+    virtual void Execute() { (m_pOwner->*m_pMethod)(m_argument); }
 
     virtual String GetTraceInfo() const
     {

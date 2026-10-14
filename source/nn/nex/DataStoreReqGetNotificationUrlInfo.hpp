@@ -11,13 +11,9 @@ namespace nex
 class DataStoreReqGetNotificationUrlInfo : public _DDL_DataStoreReqGetNotificationUrlInfo
 {
 public:
-    DataStoreReqGetNotificationUrlInfo()
-    {
-    }
+    DataStoreReqGetNotificationUrlInfo() {}
 
-    virtual ~DataStoreReqGetNotificationUrlInfo()
-    {
-    }
+    virtual ~DataStoreReqGetNotificationUrlInfo() {}
 };
 
 }

@@ -11,14 +11,9 @@ namespace nex
 class DataStoreRatingLog : public _DDL_DataStoreRatingLog
 {
 public:
-    DataStoreRatingLog()
-    {
-        m_bIsRated = false;
-    }
+    DataStoreRatingLog() { m_bIsRated = false; }
 
-    virtual ~DataStoreRatingLog()
-    {
-    }
+    virtual ~DataStoreRatingLog() {}
 };
 
 }

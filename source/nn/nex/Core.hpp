@@ -76,35 +76,17 @@ public:
     static void SetThreadStackSize(unsigned int uiStackSize);
     static unsigned int GetThreadStackSize();
 
-    Scheduler* GetScheduler() const
-    {
-        return m_pScheduler;
-    }
+    Scheduler* GetScheduler() const { return m_pScheduler; }
 
-    CallContextRegister* GetCallContextRegister() const
-    {
-        return m_pCallContextRegister;
-    }
+    CallContextRegister* GetCallContextRegister() const { return m_pCallContextRegister; }
 
-    SystemComponents* GetSystemComponents() const
-    {
-        return m_pSystemComponents;
-    }
+    SystemComponents* GetSystemComponents() const { return m_pSystemComponents; }
 
-    SecurityContextManager* GetSecurityContextManager() const
-    {
-        return m_pSecurityContextManager;
-    }
+    SecurityContextManager* GetSecurityContextManager() const { return m_pSecurityContextManager; }
 
-    bool GetTerminateImmediately() const
-    {
-        return m_bTerminateImmediately;
-    }
+    bool GetTerminateImmediately() const { return m_bTerminateImmediately; }
 
-    Time GetTerminateImmediatelyTime() const
-    {
-        return m_terminateImmediatelyTime;
-    }
+    Time GetTerminateImmediatelyTime() const { return m_terminateImmediatelyTime; }
 
     void SetTerminateImmediately(bool bTerminateImmediately);
     void SetTerminateImmediatelyCallback(TerminateImmediatelyCallback cbCallback, void* pContext);

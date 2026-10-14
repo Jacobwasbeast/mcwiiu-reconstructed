@@ -23,10 +23,7 @@ public:
     void finalize();
     void raw_digest(unsigned char* pDigest);
 
-    const unsigned char* GetDigest() const
-    {
-        return m_digest;
-    }
+    const unsigned char* GetDigest() const { return m_digest; }
 
 private:
     unsigned char m_digest[DigestSize];

@@ -6,14 +6,14 @@ namespace nex
 {
 
 NATProperties::NATProperties()
-    : m_interfaceAddress(L"")
-    , m_uiInterfacePort(0)
-    , m_publicAddress(L"")
-    , m_uiPublicPort(0)
-    , m_mapping(static_cast<MappingProperties>(0))
-    , m_filtering(static_cast<FilteringProperties>(0))
-    , m_uiMappingPortIncrement(0)
-    , m_bMappingPortIncrementValid(false)
+    : m_interfaceAddress(L""),
+      m_uiInterfacePort(0),
+      m_publicAddress(L""),
+      m_uiPublicPort(0),
+      m_mapping(static_cast<MappingProperties>(0)),
+      m_filtering(static_cast<FilteringProperties>(0)),
+      m_uiMappingPortIncrement(0),
+      m_bMappingPortIncrementValid(false)
 {
 }
 

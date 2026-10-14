@@ -7,8 +7,7 @@ namespace nn
 namespace nex
 {
 
-InstantiationContext::InstantiationContext()
-    : m_initialized(false)
+InstantiationContext::InstantiationContext() : m_initialized(false)
 {
     InitContext();
     m_initialized = true;
@@ -26,8 +25,7 @@ void InstantiationContext::InitContext()
     {
         m_instances[classId] = 0;
         ++classId;
-    }
-    while (classId < NumInstances);
+    } while (classId < NumInstances);
 }
 
 bool InstantiationContext::AddInstance(InstanceControl* instance, unsigned int classId)
@@ -35,16 +33,16 @@ bool InstantiationContext::AddInstance(InstanceControl* instance, unsigned int c
     if (classId >= NumInstances)
     {
         SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/InstantiationContext.cpp",
-            0x3E, 0xE0000003, 0);
+            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/InstantiationContext.cpp", 0x3E,
+            0xE0000003, 0);
         return false;
     }
 
     if (m_instances[classId] != 0)
     {
         SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/InstantiationContext.cpp",
-            0x44, 0xE000000F, 0);
+            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/InstantiationContext.cpp", 0x44,
+            0xE000000F, 0);
         return false;
     }
 
@@ -57,8 +55,8 @@ bool InstantiationContext::DelInstance(InstanceControl*, unsigned int classId)
     if (classId >= NumInstances)
     {
         SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/InstantiationContext.cpp",
-            0x55, 0xE0000003, 0);
+            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/InstantiationContext.cpp", 0x55,
+            0xE0000003, 0);
         return false;
     }
 

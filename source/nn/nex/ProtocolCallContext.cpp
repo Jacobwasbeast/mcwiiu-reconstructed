@@ -9,11 +9,11 @@ namespace nex
 {
 
 ProtocolCallContext::ProtocolCallContext(Credentials* pCredentials)
-    : CallContext()
-    , m_returnValues()
-    , m_completionFlag(0)
-    , m_completionResult(0)
-    , m_credentials(0)
+    : CallContext(),
+      m_returnValues(),
+      m_completionFlag(0),
+      m_completionResult(0),
+      m_credentials(0)
 {
     SetCredentials(pCredentials);
 }

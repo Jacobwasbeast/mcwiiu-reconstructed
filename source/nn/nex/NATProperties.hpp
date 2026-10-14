@@ -27,8 +27,8 @@ public:
     };
 
     enum PortIncreaseProperties
-{
-};
+    {
+    };
 
     struct AllProperties
     {

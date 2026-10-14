@@ -12,19 +12,11 @@ namespace nex
 class DynamicGathering : public _DDL_DynamicGathering
 {
 public:
-    DynamicGathering()
-        : _DDL_DynamicGathering(), m_Type(L"DynamicGathering")
-    {
-    }
+    DynamicGathering() : _DDL_DynamicGathering(), m_Type(L"DynamicGathering") {}
 
-    virtual ~DynamicGathering()
-    {
-    }
+    virtual ~DynamicGathering() {}
 
-    virtual String GetGatheringType() const
-    {
-        return m_Type;
-    }
+    virtual String GetGatheringType() const { return m_Type; }
 
     String m_Type;
 };

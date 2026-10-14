@@ -14,14 +14,9 @@ template <typename T>
 class VirtualInternet : public TimedQueue<T>
 {
 public:
-    explicit VirtualInternet(EmulationDevice* pDevice)
-        : m_pDevice(pDevice)
-    {
-    }
+    explicit VirtualInternet(EmulationDevice* pDevice) : m_pDevice(pDevice) {}
 
-    virtual ~VirtualInternet()
-    {
-    }
+    virtual ~VirtualInternet() {}
 
     virtual void Queue(const T& rItem, Time time)
     {

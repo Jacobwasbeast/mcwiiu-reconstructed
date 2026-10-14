@@ -18,8 +18,7 @@ public:
     {
     public:
         HostCredentials();
-        HostCredentials(const String& rHost, unsigned short uiPort, const String& rUserName,
-            const String& rPassword);
+        HostCredentials(const String& rHost, unsigned short uiPort, const String& rUserName, const String& rPassword);
 
         bool IsValid() const;
         void Trace(uint64_t uiFlag) const;
@@ -31,11 +30,10 @@ public:
     };
 
     SandboxConnectionInfo();
-    SandboxConnectionInfo(const String& rHost, unsigned short uiPort, const String& rUserName,
-        const String& rPassword);
+    SandboxConnectionInfo(const String& rHost, unsigned short uiPort, const String& rUserName, const String& rPassword);
     SandboxConnectionInfo(const HostCredentials& rCredentials);
-    SandboxConnectionInfo(const HostCredentials& rCredentialsDev,
-        const HostCredentials& rCredentialsCert, const HostCredentials& rCredentialsProd);
+    SandboxConnectionInfo(const HostCredentials& rCredentialsDev, const HostCredentials& rCredentialsCert,
+                          const HostCredentials& rCredentialsProd);
     ~SandboxConnectionInfo();
 
     const HostCredentials& GetCredentialsDev() const;
@@ -44,8 +42,7 @@ public:
     void SetCredentialsCert(const HostCredentials& rCredentials);
     const HostCredentials& GetCredentialsProd() const;
     void SetCredentialsProd(const HostCredentials& rCredentials);
-    void SetCredentialsProd(const HostCredentials& rPrimaryCredentials,
-        const HostCredentials& rSecondaryCredentials);
+    void SetCredentialsProd(const HostCredentials& rPrimaryCredentials, const HostCredentials& rSecondaryCredentials);
 
     void Trace(uint64_t uiFlag) const;
 

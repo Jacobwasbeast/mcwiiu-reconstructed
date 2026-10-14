@@ -16,23 +16,16 @@ class Message;
 class _DDL_DataStoreReqGetAdditionalMeta : public RootObject
 {
 public:
-    _DDL_DataStoreReqGetAdditionalMeta()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreReqGetAdditionalMeta() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreReqGetAdditionalMeta()
-    {
-    }
+    virtual ~_DDL_DataStoreReqGetAdditionalMeta() {}
 
     _DDL_DataStoreReqGetAdditionalMeta& operator=(const _DDL_DataStoreReqGetAdditionalMeta& rSource);
 
     bool operator==(const _DDL_DataStoreReqGetAdditionalMeta& rSource) const
     {
-        return m_uiOwnerId == rSource.m_uiOwnerId &&
-            m_uiDataType == rSource.m_uiDataType &&
-            m_uiVersion == rSource.m_uiVersion &&
-            m_MetaBinary == rSource.m_MetaBinary;
+        return m_uiOwnerId == rSource.m_uiOwnerId && m_uiDataType == rSource.m_uiDataType
+               && m_uiVersion == rSource.m_uiVersion && m_MetaBinary == rSource.m_MetaBinary;
     }
 
     static void Add(Message* pMessage, const _DDL_DataStoreReqGetAdditionalMeta& rSource);

@@ -13,9 +13,7 @@ class NintendoNotificationEvent;
 class NintendoNotificationEventHandler : public RootObject
 {
 public:
-    virtual ~NintendoNotificationEventHandler()
-    {
-    }
+    virtual ~NintendoNotificationEventHandler() {}
 
     virtual void ProcessNintendoNotificationEvent(const NintendoNotificationEvent& rEvent) = 0;
 };

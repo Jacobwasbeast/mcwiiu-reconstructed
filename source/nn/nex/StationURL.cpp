@@ -49,41 +49,29 @@ const unsigned int PLATFORM_TYPE = 2;
 
 }
 
-StationURL::StationURL()
-    : m_pURL(0)
-    , m_bDataValid(true)
-    , m_bStrValid(false)
-    , m_bValid(true)
+StationURL::StationURL() : m_pURL(0), m_bDataValid(true), m_bStrValid(false), m_bValid(true)
 {
     m_pAddress = new InetAddress;
     SetURLType(Prudp);
 }
 
 StationURL::StationURL(const StationURL& rStationURL)
-    : m_pURL(0)
-    , m_bDataValid(true)
-    , m_bStrValid(false)
-    , m_bValid(false)
+    : m_pURL(0),
+      m_bDataValid(true),
+      m_bStrValid(false),
+      m_bValid(false)
 {
     m_pAddress = new InetAddress;
     Copy(rStationURL);
 }
 
-StationURL::StationURL(const String& rURL)
-    : m_pURL(0)
-    , m_bDataValid(false)
-    , m_bStrValid(true)
-    , m_bValid(false)
+StationURL::StationURL(const String& rURL) : m_pURL(0), m_bDataValid(false), m_bStrValid(true), m_bValid(false)
 {
     m_pAddress = new InetAddress;
     SetURL(rURL);
 }
 
-StationURL::StationURL(const wchar_t* pURL)
-    : m_pURL(0)
-    , m_bDataValid(false)
-    , m_bStrValid(true)
-    , m_bValid(false)
+StationURL::StationURL(const wchar_t* pURL) : m_pURL(0), m_bDataValid(false), m_bStrValid(true), m_bValid(false)
 {
     m_pAddress = new InetAddress;
     SetURL(pURL);
@@ -272,8 +260,7 @@ unsigned int StationURL::GetParamValue(const wchar_t* pName, unsigned int uiDefa
 
         if (itString != m_strParams.end())
         {
-            uiDefault = static_cast<unsigned int>(
-                std::wcstoul(itString->second, 0, 10));
+            uiDefault = static_cast<unsigned int>(std::wcstoul(itString->second, 0, 10));
             const_cast<StationURL*>(this)->SetParamValue(pName, uiDefault);
         }
     }
@@ -524,8 +511,8 @@ void StationURL::ValidateStr() const
     const_cast<StationURL*>(this)->Format();
 }
 
-qResult StationURL::CopyInSuppliedBuffer(wchar_t* pDestination, unsigned int uiSize,
-    const wchar_t* pSource, unsigned int uiLength)
+qResult StationURL::CopyInSuppliedBuffer(wchar_t* pDestination, unsigned int uiSize, const wchar_t* pSource,
+                                         unsigned int uiLength)
 {
     if (pDestination == 0)
     {
@@ -573,10 +560,8 @@ qResult StationURL::GetURLType(wchar_t* pBuffer, unsigned int uiSize) const
     {
         const unsigned int uiChar = static_cast<unsigned int>(m_pURL[uiIndex]);
 
-        if (!((uiChar >= L'A' && uiChar <= L'Z') ||
-              (uiChar >= L'a' && uiChar <= L'z') ||
-              (uiChar >= L'0' && uiChar <= L'9') ||
-              uiChar == L'-' || uiChar == L'_'))
+        if (!((uiChar >= L'A' && uiChar <= L'Z') || (uiChar >= L'a' && uiChar <= L'z')
+              || (uiChar >= L'0' && uiChar <= L'9') || uiChar == L'-' || uiChar == L'_'))
         {
             return qResult(URL_RESULT_INVALID_URL);
         }
@@ -779,8 +764,7 @@ void StationURL::Format()
 
     if (m_pAddress->GetAddress() != 0)
     {
-        iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls",
-            PARAM_ADDRESS, L"=");
+        iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls", PARAM_ADDRESS, L"=");
         m_pAddress->GetAddress(&buffer[iLength], URL_BUFFER_LENGTH - iLength);
         iLength += static_cast<int>(std::wcslen(&buffer[iLength]));
         bNeedSeparator = true;
@@ -793,8 +777,8 @@ void StationURL::Format()
             iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L";");
         }
 
-        iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls%u",
-            PARAM_PORT, L"=", m_pAddress->GetPortNumber());
+        iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls%u", PARAM_PORT, L"=",
+                                 m_pAddress->GetPortNumber());
         bNeedSeparator = true;
     }
 
@@ -839,13 +823,11 @@ void StationURL::Format()
 
         if (pStringValue == 0)
         {
-            iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls%u",
-                pName, L"=", uiValue);
+            iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls%u", pName, L"=", uiValue);
         }
         else
         {
-            iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls%ls",
-                pName, L"=", pStringValue);
+            iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls%ls", pName, L"=", pStringValue);
         }
 
         bNeedSeparator = true;
@@ -856,8 +838,8 @@ void StationURL::Format()
         iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"#");
         bNeedSeparator = false;
 
-        for (StrParamMap::const_iterator itFragment = m_fragmentParams.begin();
-             itFragment != m_fragmentParams.end(); ++itFragment)
+        for (StrParamMap::const_iterator itFragment = m_fragmentParams.begin(); itFragment != m_fragmentParams.end();
+             ++itFragment)
         {
             if (bNeedSeparator)
             {
@@ -865,8 +847,8 @@ void StationURL::Format()
             }
 
             iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls%ls",
-                static_cast<const wchar_t*>(itFragment->first), L"=",
-                static_cast<const wchar_t*>(itFragment->second));
+                                     static_cast<const wchar_t*>(itFragment->first), L"=",
+                                     static_cast<const wchar_t*>(itFragment->second));
             bNeedSeparator = true;
         }
     }

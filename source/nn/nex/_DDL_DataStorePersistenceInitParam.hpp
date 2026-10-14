@@ -15,14 +15,9 @@ class Message;
 class _DDL_DataStorePersistenceInitParam : public RootObject
 {
 public:
-    _DDL_DataStorePersistenceInitParam()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStorePersistenceInitParam() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStorePersistenceInitParam()
-    {
-    }
+    virtual ~_DDL_DataStorePersistenceInitParam() {}
 
     _DDL_DataStorePersistenceInitParam& operator=(const _DDL_DataStorePersistenceInitParam& rSource);
     bool operator==(const _DDL_DataStorePersistenceInitParam& rSource) const;

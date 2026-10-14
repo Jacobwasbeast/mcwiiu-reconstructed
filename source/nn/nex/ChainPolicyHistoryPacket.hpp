@@ -10,15 +10,9 @@ template <class T>
 class ChainPolicyHistoryPacket
 {
 public:
-    static T& Next(T element)
-    {
-        return element->m_historyLink.m_pNext;
-    }
+    static T& Next(T element) { return element->m_historyLink.m_pNext; }
 
-    static T& Previous(T element)
-    {
-        return element->m_historyLink.m_pPrevious;
-    }
+    static T& Previous(T element) { return element->m_historyLink.m_pPrevious; }
 };
 
 }

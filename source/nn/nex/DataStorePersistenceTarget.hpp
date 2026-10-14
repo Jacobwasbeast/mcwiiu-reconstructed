@@ -11,13 +11,9 @@ namespace nex
 class DataStorePersistenceTarget : public _DDL_DataStorePersistenceTarget
 {
 public:
-    DataStorePersistenceTarget()
-    {
-    }
+    DataStorePersistenceTarget() {}
 
-    virtual ~DataStorePersistenceTarget()
-    {
-    }
+    virtual ~DataStorePersistenceTarget() {}
 };
 
 }

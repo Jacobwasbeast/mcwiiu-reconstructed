@@ -40,8 +40,8 @@ void _Proto_AccountManagementProtocolServer::ProtoStub_RetrieveAccount(
     DataAny::Add(pResponse, privateData);
 }
 
-void _Proto_AccountManagementProtocolServer::ProtoStub_UpdateAccount(
-    Message* pRequest, Message* pResponse, _Proto_AccountManagementProtocolServer* pProtocol)
+void _Proto_AccountManagementProtocolServer::ProtoStub_UpdateAccount(Message* pRequest, Message* pResponse,
+                                                                     _Proto_AccountManagementProtocolServer* pProtocol)
 {
     String key;
     _Type_string::Extract(pRequest, &key);
@@ -82,8 +82,8 @@ void _Proto_AccountManagementProtocolServer::ProtoStub_ChangePasswordByGuest(
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_CHANGE_PASSWORD_BY_GUEST);
 }
 
-void _Proto_AccountManagementProtocolServer::ProtoStub_FindByNameLike(
-    Message* pRequest, Message* pResponse, _Proto_AccountManagementProtocolServer* pProtocol)
+void _Proto_AccountManagementProtocolServer::ProtoStub_FindByNameLike(Message* pRequest, Message* pResponse,
+                                                                      _Proto_AccountManagementProtocolServer* pProtocol)
 {
     unsigned int uiGroups;
     _Type_uint32::Extract(pRequest, &uiGroups);
@@ -212,8 +212,8 @@ void _Proto_AccountManagementProtocolServer::ProtoStub_DisconnectAllPrincipals(
     *pResponse << bResult;
 }
 
-void _Proto_AccountManagementProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_AccountManagementProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                                     bool* pResponseRequired, EndPoint*)
 {
     switch (static_cast<uint16_t>(ExtractMethodID(pRequest)))
     {

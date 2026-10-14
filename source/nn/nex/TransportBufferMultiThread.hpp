@@ -49,10 +49,7 @@ public:
     void TransportSendLoop(int iThread);
     void TransportRecvLoop(int iThread);
 
-    Condition* GetCondition()
-    {
-        return &m_condition;
-    }
+    Condition* GetCondition() { return &m_condition; }
 
 private:
     bool m_bStopped;

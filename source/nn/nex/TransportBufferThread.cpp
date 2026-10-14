@@ -81,10 +81,9 @@ void TransportBufferThread::TransportLoop(void* pParameter)
         CriticalSection* pLock = &m_criticalSection;
         pLock->Enter();
         for (qSortedVector<unsigned short, QueuingSocket*>::iterator socket = m_sockets.begin();
-            socket != m_sockets.end(); ++socket)
+             socket != m_sockets.end(); ++socket)
         {
-            QueuingSocketTransportBuffer* pTransportSocket =
-                static_cast<QueuingSocketTransportBuffer*>(socket->second);
+            QueuingSocketTransportBuffer* pTransportSocket = static_cast<QueuingSocketTransportBuffer*>(socket->second);
             pTransportSocket->RecvCore(true);
             pTransportSocket->SendBufferCore();
         }

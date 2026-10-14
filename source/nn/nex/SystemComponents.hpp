@@ -14,10 +14,7 @@ public:
     SystemComponents();
     virtual ~SystemComponents();
 
-    SystemComponentGroup* GetCoreGroup() const
-    {
-        return m_pCoreGroup;
-    }
+    SystemComponentGroup* GetCoreGroup() const { return m_pCoreGroup; }
 
 private:
     unsigned int m_reserved0;

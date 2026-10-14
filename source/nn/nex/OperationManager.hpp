@@ -4,7 +4,10 @@
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/qList.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class Operation;
 
@@ -14,10 +17,7 @@ public:
     virtual ~OperationCallback() {}
     virtual void CallMethod(Operation* operation) = 0;
 
-    int GetPriority() const
-    {
-        return m_priority;
-    }
+    int GetPriority() const { return m_priority; }
 
 protected:
     int m_priority;
@@ -46,6 +46,7 @@ private:
     OperationList m_operations;
 };
 
-}}
+}
+}
 
 #endif

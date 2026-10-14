@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-SystemComponents::SystemComponents()
-    : SystemComponentGroup(String(L"System Components"))
+SystemComponents::SystemComponents() : SystemComponentGroup(String(L"System Components"))
 {
     m_reserved0 = 0;
     m_reserved1 = 0;

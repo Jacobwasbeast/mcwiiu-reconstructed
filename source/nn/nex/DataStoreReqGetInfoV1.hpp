@@ -11,13 +11,9 @@ namespace nex
 class DataStoreReqGetInfoV1 : public _DDL_DataStoreReqGetInfoV1
 {
 public:
-    DataStoreReqGetInfoV1()
-    {
-    }
+    DataStoreReqGetInfoV1() {}
 
-    virtual ~DataStoreReqGetInfoV1()
-    {
-    }
+    virtual ~DataStoreReqGetInfoV1() {}
 };
 
 }

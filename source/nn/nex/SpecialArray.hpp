@@ -10,7 +10,7 @@ namespace nn
 namespace nex
 {
 
-template<class T>
+template <class T>
 T* SpecialNew(wchar_t*, unsigned int)
 {
     T* object;
@@ -21,7 +21,7 @@ T* SpecialNew(wchar_t*, unsigned int)
     return object;
 }
 
-template<class T>
+template <class T>
 void SpecialDelete(T* object)
 {
     if (object != 0)
@@ -30,7 +30,7 @@ void SpecialDelete(T* object)
     MemoryManager::Free(object);
 }
 
-template<class T>
+template <class T>
 T* SpecialNewArray(unsigned int count, wchar_t*, unsigned int)
 {
     unsigned int* block;
@@ -47,7 +47,7 @@ T* SpecialNewArray(unsigned int count, wchar_t*, unsigned int)
     return elements;
 }
 
-template<class T>
+template <class T>
 void SpecialDeleteArray(T* elements)
 {
     unsigned int* block;

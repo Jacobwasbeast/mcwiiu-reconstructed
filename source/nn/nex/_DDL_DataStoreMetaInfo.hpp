@@ -21,14 +21,9 @@ class Message;
 class _DDL_DataStoreMetaInfo : public RootObject
 {
 public:
-    _DDL_DataStoreMetaInfo()
-        : m_uiStructureVersion(0), m_Tags(0), m_Ratings(0)
-    {
-    }
+    _DDL_DataStoreMetaInfo() : m_uiStructureVersion(0), m_Tags(0), m_Ratings(0) {}
 
-    virtual ~_DDL_DataStoreMetaInfo()
-    {
-    }
+    virtual ~_DDL_DataStoreMetaInfo() {}
 
     _DDL_DataStoreMetaInfo& operator=(const _DDL_DataStoreMetaInfo& rSource);
     bool operator==(const _DDL_DataStoreMetaInfo& rSource) const;

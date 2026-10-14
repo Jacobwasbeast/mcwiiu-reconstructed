@@ -32,24 +32,18 @@ public:
         METHOD_SEND_REPORT = 8
     };
 
-    explicit _Proto_SecureConnectionProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_SecureConnectionProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
     virtual ~_Proto_SecureConnectionProtocolServer();
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
-    virtual qResult Register(const qList<StationURL>& rURLs, unsigned int* pConnectionID,
-                             StationURL* pPublicURL) = 0;
-    virtual bool RequestConnectionData(const unsigned int& rConnectionID,
-                                       const unsigned int& rPrincipalID,
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
+    virtual qResult Register(const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL) = 0;
+    virtual bool RequestConnectionData(const unsigned int& rConnectionID, const unsigned int& rPrincipalID,
                                        qList<ConnectionData>* pConnectionData) = 0;
     virtual bool RequestURLs(const unsigned int& rConnectionID, const unsigned int& rPrincipalID,
                              qList<StationURL>* pURLs) = 0;
-    virtual qResult RegisterEx(const qList<StationURL>& rURLs, unsigned int* pConnectionID,
-                               StationURL* pPublicURL,
+    virtual qResult RegisterEx(const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL,
                                const AnyObjectHolder<Data, String>& rCustomData) = 0;
     virtual void TestConnectivity() = 0;
     virtual void UpdateURLs(const qList<StationURL>& rURLs) = 0;

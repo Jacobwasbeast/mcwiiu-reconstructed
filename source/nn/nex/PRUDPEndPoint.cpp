@@ -143,14 +143,12 @@ inline unsigned int GetPayloadSize(const Buffer* pPayload)
 
 }
 
-PRUDPEndPoint::CalcRetransmissionTimeoutCallback
-    PRUDPEndPoint::s_pCalcRetransmissionTimeoutCallback = 0;
+PRUDPEndPoint::CalcRetransmissionTimeoutCallback PRUDPEndPoint::s_pCalcRetransmissionTimeoutCallback = 0;
 bool PRUDPEndPoint::s_bHybridPartialFaultProcessingMode = false;
 bool PRUDPEndPoint::s_bDiscardLateUnreliablePackets = false;
 int PRUDPEndPoint::s_iPushErrorMode = 0;
 
-void PRUDPEndPoint::SetCalcRetransmissionTimeoutCallback(
-    CalcRetransmissionTimeoutCallback pCallback)
+void PRUDPEndPoint::SetCalcRetransmissionTimeoutCallback(CalcRetransmissionTimeoutCallback pCallback)
 {
     s_pCalcRetransmissionTimeoutCallback = pCallback;
 }
@@ -314,8 +312,7 @@ bool PRUDPEndPoint::CancelPacketTimeout(PacketOut* pPacket)
     return static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().CancelPacketTimeout(pPacket);
 }
 
-float PRUDPEndPoint::GetTimeoutMultiplier(unsigned short uiRetransmissions,
-    StreamSettings& rSettings) const
+float PRUDPEndPoint::GetTimeoutMultiplier(unsigned short uiRetransmissions, StreamSettings& rSettings) const
 {
     if (uiRetransmissions < rSettings.GetExtraRetransmitTimeoutTrigger())
         return rSettings.GetRetransmitTimeoutMultiplier();
@@ -328,36 +325,34 @@ unsigned int PRUDPEndPoint::ComputeRetransmitTimeout(const PacketOut* pPacket)
     if (s_pCalcRetransmissionTimeoutCallback != 0)
     {
         unsigned int uiVariation = m_rtt.GetVariation() & RTT_VARIATION_MASK;
-        return s_pCalcRetransmissionTimeoutCallback(
-            m_rtt.GetAverage() + std::max(MinimumRetransmitMargin, uiVariation),
-            pPacket->m_unknown118);
+        return s_pCalcRetransmissionTimeoutCallback(m_rtt.GetAverage() + std::max(MinimumRetransmitMargin, uiVariation),
+                                                    pPacket->m_unknown118);
     }
     float fTimeout;
     if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_SYN)
     {
-        fTimeout = static_cast<float>(rSettings.GetSynInitialRTT() * pPacket->m_unknown118) *
-            GetTimeoutMultiplier(pPacket->m_unknown118, rSettings);
+        fTimeout = static_cast<float>(rSettings.GetSynInitialRTT() * pPacket->m_unknown118)
+                   * GetTimeoutMultiplier(pPacket->m_unknown118, rSettings);
     }
     else
     {
         unsigned int uiVariation = m_rtt.GetVariation() & RTT_VARIATION_MASK;
-        fTimeout = static_cast<float>(
-                       (m_rtt.GetAverage() + std::max(MinimumRetransmitMargin, uiVariation)) *
-                       pPacket->m_unknown118) *
-            GetTimeoutMultiplier(pPacket->m_unknown118, rSettings);
+        fTimeout = static_cast<float>((m_rtt.GetAverage() + std::max(MinimumRetransmitMargin, uiVariation))
+                                      * pPacket->m_unknown118)
+                   * GetTimeoutMultiplier(pPacket->m_unknown118, rSettings);
     }
     return std::min(static_cast<unsigned int>(fTimeout), rSettings.GetMaxRetransmitTimeout());
 }
 
-PRUDPMessageInterface::SignatureMethod PRUDPEndPoint::DecideSignatureMethod(
-    const Packet* pPacket, Stream::Type type, bool bFlag)
+PRUDPMessageInterface::SignatureMethod PRUDPEndPoint::DecideSignatureMethod(const Packet* pPacket, Stream::Type type,
+                                                                            bool bFlag)
 {
     if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT)
     {
         if (m_uiVersion == 1)
         {
-            bool bNegotiationSupported =
-                (GetSupportedFunctionsFlags() & FUNCTION_CONNECTION_SIGNATURE_NEGOTIATION) != 0;
+            bool bNegotiationSupported = (GetSupportedFunctionsFlags() & FUNCTION_CONNECTION_SIGNATURE_NEGOTIATION)
+                                         != 0;
             if (!bNegotiationSupported)
                 return PRUDPMessageInterface::SIGNATURE_METHOD_4;
         }
@@ -389,8 +384,7 @@ bool PRUDPEndPoint::Defrag(PacketIn* pPacket)
     {
         if (m_defragBuffers[uiSubStreamID]->IsPooled())
         {
-            unsigned int uiLength =
-                m_defragBuffers[uiSubStreamID]->GetLength() + pPayload->GetLength();
+            unsigned int uiLength = m_defragBuffers[uiSubStreamID]->GetLength() + pPayload->GetLength();
             if (uiLength > PacketBufferManager::MaxUnitSize)
             {
                 Buffer* pBuffer = new Buffer(uiLength, 0);
@@ -445,8 +439,7 @@ void PRUDPEndPoint::HandlerDispatch(Buffer* pBuffer, PacketIn* pPacket)
         PRUDPUserProtocol* pUserProtocol = PRUDPUserProtocol::GetInstance();
         if (pUserProtocol != 0)
         {
-            pUserProtocol->Receive(
-                this, pBuffer, pPacket->m_uiTypeAndFlags, pPacket->m_uiSubStreamID);
+            pUserProtocol->Receive(this, pBuffer, pPacket->m_uiTypeAndFlags, pPacket->m_uiSubStreamID);
         }
     }
     else if (m_pEventHandler != 0)
@@ -460,9 +453,8 @@ void PRUDPEndPoint::InitUnreliableSeq(PacketOut* pPacket)
 {
     if (pPacket->m_uiVersion != 0 && m_unreliableSequence == SequenceClock())
     {
-        unsigned short uiSequence = static_cast<unsigned short>(
-            (Time::GetTime() & SEQUENCE_RANDOM_RANGE) +
-            Platform::GetRandomNumber(SEQUENCE_RANDOM_RANGE));
+        unsigned short uiSequence = static_cast<unsigned short>((Time::GetTime() & SEQUENCE_RANDOM_RANGE)
+                                                                + Platform::GetRandomNumber(SEQUENCE_RANDOM_RANGE));
         m_unreliableSequence = uiSequence;
         if (uiSequence == 0)
         {
@@ -484,14 +476,13 @@ bool PRUDPEndPoint::IsDuplicateReorderingPacket(PacketIn* pPacket)
     {
         if (pPacket->m_uiSubStreamID > m_uiMaxSubStreamID)
             return false;
-        return m_slidingWindows[pPacket->m_uiSubStreamID]->GetOldestUnacknowledged() >
-            pPacket->m_sequenceID ? true : false;
+        return m_slidingWindows[pPacket->m_uiSubStreamID]->GetOldestUnacknowledged() > pPacket->m_sequenceID ? true
+                                                                                                             : false;
     }
     if ((uiFlags & PACKET_FLAG_AGGREGATE_ACK) != 0)
         return false;
     bool bLate;
-    if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 &&
-        (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
+    if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 && (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
     {
         bLate = m_expectedUnreliableSequence > pPacket->m_sequenceID;
     }
@@ -511,8 +502,8 @@ bool PRUDPEndPoint::IsDuplicateReorderingPacket(PacketIn* pPacket)
 
 bool PRUDPEndPoint::IsNegotiationConnectionSignatureVersion(const Packet* pPacket)
 {
-    if (pPacket->m_uiVersion == 0 ||
-        (pPacket->m_uiVersion == 1 && static_cast<unsigned char>(pPacket->m_unknown90) < 2))
+    if (pPacket->m_uiVersion == 0
+        || (pPacket->m_uiVersion == 1 && static_cast<unsigned char>(pPacket->m_unknown90) < 2))
         return false;
     return true;
 }
@@ -614,12 +605,11 @@ void PRUDPEndPoint::DecideMaxUserReliableSubStreams(unsigned short uiMaxSubStrea
         m_dispatchQueues.push_back(new PacketDispatchQueue());
         m_slidingWindows.push_back(
             new SlidingWindow(g_streamSettings[m_pStream->GetType()].Get().GetWindowSize(),
-                g_streamSettings[m_pStream->GetType()].Get().GetMaxBufferedPackets()));
+                              g_streamSettings[m_pStream->GetType()].Get().GetMaxBufferedPackets()));
     }
 }
 
-void PRUDPEndPoint::SendAggregateACK(
-    Buffer* pBuffer, unsigned short uiSequence, unsigned char uiSubStreamID)
+void PRUDPEndPoint::SendAggregateACK(Buffer* pBuffer, unsigned short uiSequence, unsigned char uiSubStreamID)
 {
     PacketOut* pPacket;
     if (!pBuffer->IsPooled())
@@ -628,8 +618,8 @@ void PRUDPEndPoint::SendAggregateACK(
     }
     else
     {
-        pPacket = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT) PacketBufferPacketOut(
-            this, PACKET_TYPE_DATA, PACKET_FLAG_AGGREGATE_ACK, pBuffer, 0);
+        pPacket = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT)
+            PacketBufferPacketOut(this, PACKET_TYPE_DATA, PACKET_FLAG_AGGREGATE_ACK, pBuffer, 0);
         if (pPacket == 0)
             return;
         if (!pPacket->IsValid())
@@ -651,8 +641,7 @@ void PRUDPEndPoint::SendACK(PacketIn* pPacket)
     PacketOut* pAcknowledgement;
     if (uiType == PACKET_TYPE_CONNECT)
     {
-        pAcknowledgement = new PacketOut(
-            this, PACKET_TYPE_CONNECT, PACKET_FLAG_ACK, pPacket->m_pPayload, 0);
+        pAcknowledgement = new PacketOut(this, PACKET_TYPE_CONNECT, PACKET_FLAG_ACK, pPacket->m_pPayload, 0);
         m_uiVersion = pPacket->m_uiVersion;
         m_uiNegotiatedFlags = pPacket->m_unknown90;
         pAcknowledgement->m_uiVersion = m_uiVersion;
@@ -669,13 +658,10 @@ void PRUDPEndPoint::SendACK(PacketIn* pPacket)
     }
     else
     {
-        if (uiType == PACKET_TYPE_DATA && pPacket->m_pPayload != 0 &&
-            pPacket->m_pPayload->IsPooled())
+        if (uiType == PACKET_TYPE_DATA && pPacket->m_pPayload != 0 && pPacket->m_pPayload->IsPooled())
         {
-            pAcknowledgement = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT)
-                PacketBufferPacketOut(this, static_cast<PacketType>(pPacket->m_uiTypeAndFlags &
-                                                                    PACKET_TYPE_MASK),
-                    PACKET_FLAG_ACK, 0, 0);
+            pAcknowledgement = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT) PacketBufferPacketOut(
+                this, static_cast<PacketType>(pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK), PACKET_FLAG_ACK, 0, 0);
             if (pAcknowledgement == 0)
                 return;
             if (!pAcknowledgement->IsValid())
@@ -686,8 +672,7 @@ void PRUDPEndPoint::SendACK(PacketIn* pPacket)
         }
         else
         {
-            pAcknowledgement = new PacketOut(
-                this, static_cast<PacketType>(uiType), PACKET_FLAG_ACK, 0, 0);
+            pAcknowledgement = new PacketOut(this, static_cast<PacketType>(uiType), PACKET_FLAG_ACK, 0, 0);
         }
         pAcknowledgement->m_uiVersion = m_uiVersion;
         ++m_endPointInfo.m_uiAcksSent;
@@ -700,8 +685,7 @@ void PRUDPEndPoint::SendACK(PacketIn* pPacket)
     {
         for (int i = 0; i < 2; ++i)
         {
-            PacketOut* pDisconnect =
-                new PacketOut(this, PACKET_TYPE_DISCONNECT, PACKET_FLAG_ACK, 0, 0);
+            PacketOut* pDisconnect = new PacketOut(this, PACKET_TYPE_DISCONNECT, PACKET_FLAG_ACK, 0, 0);
             pDisconnect->m_uiFragmentID = pPacket->m_uiFragmentID;
             pDisconnect->m_uiVersion = m_uiVersion;
             pDisconnect->m_sequenceID = pPacket->m_sequenceID.GetValue();
@@ -734,15 +718,13 @@ void PRUDPEndPoint::StartPing()
         if (GetKeepAliveTimeout() == 0 || GetKeepAliveTimeout() == NO_TIMEOUT)
         {
             m_pPingPacket->m_pTimeout->SetRTO(PING_RETRANSMIT_TIMEOUT);
-            static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().SchedulePacketTimeout(
-                m_pPingPacket);
+            static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().SchedulePacketTimeout(m_pPingPacket);
         }
         else
         {
             pTimeout = m_pPingPacket->m_pTimeout;
             pTimeout->SetRTO(GetKeepAliveTimeout());
-            static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().SchedulePacketTimeout(
-                m_pPingPacket);
+            static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().SchedulePacketTimeout(m_pPingPacket);
         }
     }
 }
@@ -793,13 +775,11 @@ bool PRUDPEndPoint::SetConnectionState(_ConnectionState state)
         qResult result(RESULT_CONNECTION_FAILED);
         if (previousState == Connecting)
         {
-            result = state == Connected ? qResult(RESULT_SUCCESS) :
-                                          qResult(RESULT_CONNECTION_FAILED);
+            result = state == Connected ? qResult(RESULT_SUCCESS) : qResult(RESULT_CONNECTION_FAILED);
         }
         if (previousState == Disconnecting)
         {
-            result = state == NotConnected ? qResult(RESULT_SUCCESS) :
-                                             qResult(RESULT_CONNECTION_FAILED);
+            result = state == NotConnected ? qResult(RESULT_SUCCESS) : qResult(RESULT_CONNECTION_FAILED);
         }
         qResult callbackResult = result;
         ConnectionCallback pCallback = m_ioRequest.m_pCallback;
@@ -840,8 +820,7 @@ void PRUDPEndPoint::ProcessFaultEvent(unsigned int uiError)
     m_uiSignaledFaultError = uiError;
     {
         ScopedCS lock(&Network::GetInstance()->m_unknown43c);
-        Network::GetInstance()->m_unknown42c.push_back(
-            std::pair<void*, unsigned int>(this, m_uiConnectionID));
+        Network::GetInstance()->m_unknown42c.push_back(std::pair<void*, unsigned int>(this, m_uiConnectionID));
     }
     if (IsConnected() || PeerIsConnected())
     {
@@ -875,19 +854,18 @@ void PRUDPEndPoint::ServiceTimeout(PacketOut* pPacket)
         TimeToPing();
         return;
     }
-    if (pPacket->m_unknown118 <
-            g_streamSettings[m_pStream->GetType()].Get().GetMaxRetransmission() &&
-        !pPacket->m_pTimeout->IsExpired())
+    if (pPacket->m_unknown118 < g_streamSettings[m_pStream->GetType()].Get().GetMaxRetransmission()
+        && !pPacket->m_pTimeout->IsExpired())
     {
         SendReliable(pPacket);
         return;
     }
-    if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_DISCONNECT &&
-        GetConnectionState() == Disconnecting)
+    if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_DISCONNECT
+        && GetConnectionState() == Disconnecting)
         SetConnectionState(NotConnected);
-    if (((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT ||
-            (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_SYN) &&
-        GetConnectionState() == Connecting)
+    if (((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT
+         || (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_SYN)
+        && GetConnectionState() == Connecting)
         SetConnectionState(NotConnected);
     bool bFaulty;
     if (!pPacket->m_pTimeout->IsExpired())
@@ -927,8 +905,7 @@ void PRUDPEndPoint::SendReliable(PacketOut* pPacket)
             if (m_slidingWindows[i]->DataPending())
             {
                 ++m_endPointInfo.m_uiDeferredReliableSends;
-                static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().SchedulePacketTimeout(
-                    pPacket);
+                static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().SchedulePacketTimeout(pPacket);
                 return;
             }
         }
@@ -946,7 +923,7 @@ void PRUDPEndPoint::SendReliable(PacketOut* pPacket)
     if (g_streamSettings[m_pStream->GetType()].Get().UsesEarlyActivityTimestamps())
         m_lastSendTime = Time(Time::GetTime());
     if (!static_cast<PRUDPStream*>(m_pStream)->Send(m_uiPort, m_stationURL.GetStreamID(), pPacket,
-            &m_packetEncDec.GetEncryptionKey()))
+                                                    &m_packetEncDec.GetEncryptionKey()))
         ++m_endPointInfo.m_uiSendFailures;
 }
 
@@ -987,8 +964,7 @@ qResult PRUDPEndPoint::SendPacket(PacketOut* pPacket)
         if (pPacket->m_unknown118 == 0)
         {
             ++m_endPointInfo.m_uiQueuedReliablePackets;
-            if (!m_slidingWindows[pPacket->m_uiSubStreamID]->Push(
-                    pPacket, &m_packetEncDec, m_pStream))
+            if (!m_slidingWindows[pPacket->m_uiSubStreamID]->Push(pPacket, &m_packetEncDec, m_pStream))
                 return HandleSlidingWindowPushError();
         }
         SendNextReliable(pPacket->m_uiSubStreamID);
@@ -996,13 +972,12 @@ qResult PRUDPEndPoint::SendPacket(PacketOut* pPacket)
     }
     ++m_endPointInfo.m_uiUnreliablePacketsSent;
     m_endPointInfo.m_uiUnreliableBytesSent += GetPayloadSize(pPacket->m_pPayload);
-    if ((uiFlags & PACKET_FLAG_ACK) == 0 && (uiFlags & PACKET_FLAG_AGGREGATE_ACK) == 0 &&
-        (uiFlags & PACKET_TYPE_MASK) == PACKET_TYPE_DATA)
+    if ((uiFlags & PACKET_FLAG_ACK) == 0 && (uiFlags & PACKET_FLAG_AGGREGATE_ACK) == 0
+        && (uiFlags & PACKET_TYPE_MASK) == PACKET_TYPE_DATA)
     {
         ++m_endPointInfo.m_uiUnreliableDataPacketsSent;
         m_endPointInfo.m_uiUnreliableDataBytesSent += GetPayloadSize(pPacket->m_pPayload);
-        if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 &&
-            (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
+        if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 && (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
         {
             pPacket->m_sequenceID = m_unreliableSequence;
             ++m_unreliableSequence;
@@ -1018,7 +993,7 @@ qResult PRUDPEndPoint::SendPacket(PacketOut* pPacket)
     if (g_streamSettings[m_pStream->GetType()].Get().UsesEarlyActivityTimestamps())
         m_lastSendTime = Time(Time::GetTime());
     static_cast<PRUDPStream*>(m_pStream)->Send(m_uiPort, m_stationURL.GetStreamID(), pPacket,
-        &m_packetEncDec.GetEncryptionKey());
+                                               &m_packetEncDec.GetEncryptionKey());
     return qResult(RESULT_SUCCESS);
 }
 
@@ -1028,8 +1003,8 @@ qResult PRUDPEndPoint::HandleSlidingWindowPushError()
     ++m_endPointInfo.m_uiSlidingWindowPushFailures;
     m_uiFaultReason = NET_FAULT_SLIDING_WINDOW_PUSH;
     SignalFaultEvent(NET_FAULT_KEEP_ALIVE_TIMEOUT, true);
-    if (m_pStream->GetType() != Stream::RendezVousSecure &&
-        (m_pStream->GetType() != Stream::Unknown1 || s_iPushErrorMode != 1))
+    if (m_pStream->GetType() != Stream::RendezVousSecure
+        && (m_pStream->GetType() != Stream::Unknown1 || s_iPushErrorMode != 1))
     {
         result = qResult(RESULT_PUSH_ERROR);
         if (m_pErrorHolder != 0)
@@ -1056,16 +1031,16 @@ void PRUDPEndPoint::TimeToPing()
     }
     if (static_cast<long long>(currentTime - m_lastReceiveTime) > GetMaxSilenceTime())
     {
-        if (IsConnected() && s_bHybridPartialFaultProcessingMode &&
-            static_cast<PRUDPStream*>(m_pStream)->m_pEventHandler->SwitchToRoutingConnection(this))
+        if (IsConnected() && s_bHybridPartialFaultProcessingMode
+            && static_cast<PRUDPStream*>(m_pStream)->m_pEventHandler->SwitchToRoutingConnection(this))
             return;
         m_uiFaultReason = NET_FAULT_SILENCE_TIMEOUT;
         ProcessFaultEvent(NET_FAULT_KEEP_ALIVE_TIMEOUT);
         return;
     }
     StreamSettings& rSettings = g_streamSettings[m_pStream->GetType()].Get();
-    if (static_cast<long long>(currentTime - m_lastSendTime) > GetKeepAliveTimeout() &&
-        rSettings.FaultDetectionIsActive())
+    if (static_cast<long long>(currentTime - m_lastSendTime) > GetKeepAliveTimeout()
+        && rSettings.FaultDetectionIsActive())
     {
         ++m_pPingPacket->m_sequenceID;
         m_pPingPacket->m_bHeaderParsed = 0;
@@ -1079,8 +1054,7 @@ void PRUDPEndPoint::TimeToPing()
     static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().SchedulePacketTimeout(m_pPingPacket);
 }
 
-void PRUDPEndPoint::PacketAcknowledged(
-    const Time& rTime, const SequenceClock& rSequence, unsigned char uiSubStreamID)
+void PRUDPEndPoint::PacketAcknowledged(const Time& rTime, const SequenceClock& rSequence, unsigned char uiSubStreamID)
 {
     PacketOut* pPacket = m_slidingWindows[uiSubStreamID]->GetPacket(rSequence);
     if (pPacket == 0 || !CancelPacketTimeout(pPacket))
@@ -1128,8 +1102,9 @@ void PRUDPEndPoint::PacketAggregateAcknoledgedOld(Packet* pPacket)
     unsigned short uiSequence = pPacket->m_sequenceID.GetValue();
     PacketOut* pFirst = m_slidingWindows[0]->GetPacket(position);
     std::vector<SequenceClock, MemAllocator<SequenceClock> > acknowledged;
-    while (pFirst != 0 && (uiSequence == pFirst->m_sequenceID.GetValue() ||
-                              static_cast<short>(uiSequence - pFirst->m_sequenceID.GetValue()) > 0))
+    while (pFirst != 0
+           && (uiSequence == pFirst->m_sequenceID.GetValue()
+               || static_cast<short>(uiSequence - pFirst->m_sequenceID.GetValue()) > 0))
     {
         acknowledged.push_back(position->first);
         ++position;
@@ -1171,13 +1146,12 @@ void PRUDPEndPoint::PacketAggregateAcknoledgedNew(Packet* pPacket)
         }
         else
         {
-            SlidingWindow::PacketMap::iterator position =
-                m_slidingWindows[uiSubStreamID]->AcquireIterator();
+            SlidingWindow::PacketMap::iterator position = m_slidingWindows[uiSubStreamID]->AcquireIterator();
             PacketOut* pFirst = m_slidingWindows[uiSubStreamID]->GetPacket(position);
             std::vector<SequenceClock, MemAllocator<SequenceClock> > acknowledged;
-            while (pFirst != 0 &&
-                (uiSequence == pFirst->m_sequenceID.GetValue() ||
-                    static_cast<short>(uiSequence - pFirst->m_sequenceID.GetValue()) > 0))
+            while (pFirst != 0
+                   && (uiSequence == pFirst->m_sequenceID.GetValue()
+                       || static_cast<short>(uiSequence - pFirst->m_sequenceID.GetValue()) > 0))
             {
                 acknowledged.push_back(position->first);
                 ++position;
@@ -1204,16 +1178,15 @@ void PRUDPEndPoint::SendAggregateACKOld()
     PacketDispatchQueue* pQueue = m_dispatchQueues[0];
     PacketDispatchQueue::PacketMap::iterator position = pQueue->m_packets.begin();
     unsigned short uiLastSequence = pQueue->m_nextToDispatch.GetValue() - 1;
-    while (position != pQueue->m_packets.end() &&
-        position->first.GetValue() == static_cast<unsigned short>(uiLastSequence + 1))
+    while (position != pQueue->m_packets.end()
+           && position->first.GetValue() == static_cast<unsigned short>(uiLastSequence + 1))
     {
         uiLastSequence = position->first.GetValue();
         ++position;
     }
     bool bPooled = true;
     ByteStream* pStream;
-    if (m_pStream->GetType() == Stream::RendezVousSecure ||
-        m_pStream->GetType() == Stream::RendezVous)
+    if (m_pStream->GetType() == Stream::RendezVousSecure || m_pStream->GetType() == Stream::RendezVous)
     {
         bPooled = false;
         pStream = new ByteStream(AGGREGATE_ACK_OLD_BUFFER_SIZE);
@@ -1285,8 +1258,7 @@ void PRUDPEndPoint::SendAggregateACKNew()
 {
     bool bPooled = true;
     Buffer* pBuffer;
-    if (m_pStream->GetType() == Stream::RendezVousSecure ||
-        m_pStream->GetType() == Stream::RendezVous)
+    if (m_pStream->GetType() == Stream::RendezVousSecure || m_pStream->GetType() == Stream::RendezVous)
     {
         bPooled = false;
         pBuffer = new Buffer(AGGREGATE_ACK_BUFFER_SIZE, 0);
@@ -1314,8 +1286,8 @@ void PRUDPEndPoint::SendAggregateACKNew()
             m_pendingAcknowledgements[i] = false;
             unsigned short uiLastSequence = pQueue->m_nextToDispatch.GetValue() - 1;
             PacketDispatchQueue::PacketMap::iterator position = pQueue->m_packets.begin();
-            while (position != pQueue->m_packets.end() &&
-                position->first.GetValue() == static_cast<unsigned short>(uiLastSequence + 1))
+            while (position != pQueue->m_packets.end()
+                   && position->first.GetValue() == static_cast<unsigned short>(uiLastSequence + 1))
             {
                 uiLastSequence = position->first.GetValue();
                 ++position;
@@ -1364,9 +1336,8 @@ void PRUDPEndPoint::SendAggregateACKNew()
         SendAggregateACK(stream.GetBuffer(), 0, 1);
 }
 
-qResult PRUDPEndPoint::Frag(Buffer* pBuffer, unsigned int uiBufferSize,
-    unsigned int uiFragmentSize, PacketType type, unsigned short uiFlags, bool bNotify,
-    unsigned int uiKey, unsigned char uiSubStreamID)
+qResult PRUDPEndPoint::Frag(Buffer* pBuffer, unsigned int uiBufferSize, unsigned int uiFragmentSize, PacketType type,
+                            unsigned short uiFlags, bool bNotify, unsigned int uiKey, unsigned char uiSubStreamID)
 {
     std::vector<PacketOut*, MemAllocator<PacketOut*> > fragments;
     unsigned int uiOffset = 0;
@@ -1461,8 +1432,8 @@ qResult PRUDPEndPoint::Frag(Buffer* pBuffer, unsigned int uiBufferSize,
     }
 }
 
-qResult PRUDPEndPoint::_Send(Buffer* pBuffer, unsigned int uiFlags, bool bCopyPayload,
-    unsigned char uiSubStreamID, unsigned int uiKey)
+qResult PRUDPEndPoint::_Send(Buffer* pBuffer, unsigned int uiFlags, bool bCopyPayload, unsigned char uiSubStreamID,
+                             unsigned int uiKey)
 {
     if (!IsConnected() && !PeerIsConnected())
         return qResult(RESULT_INVALID_STATE);
@@ -1474,9 +1445,9 @@ qResult PRUDPEndPoint::_Send(Buffer* pBuffer, unsigned int uiFlags, bool bCopyPa
     }
     if (pBuffer->IsPooled())
     {
-        if (PacketBufferManager::GetInstance() != 0 &&
-            !PacketBufferManager::GetInstance()->IsAllocatable(PacketBufferManager::MaxUnitSize,
-                PacketBufferManager::GetInstance()->GetUnitAlignment()))
+        if (PacketBufferManager::GetInstance() != 0
+            && !PacketBufferManager::GetInstance()->IsAllocatable(
+                PacketBufferManager::MaxUnitSize, PacketBufferManager::GetInstance()->GetUnitAlignment()))
             return qResult(RESULT_PACKET_ALLOCATION_FAILED);
     }
     unsigned int uiBufferSize = RootTransport::GetInstance()->GetBufferSize();
@@ -1501,7 +1472,7 @@ qResult PRUDPEndPoint::_Send(Buffer* pBuffer, unsigned int uiFlags, bool bCopyPa
         }
         ++m_endPointInfo.m_uiFragmentedSends;
         return Frag(pBuffer, uiBufferSize, uiMaxPacketSize, PACKET_TYPE_DATA, uiPacketFlags,
-            (uiFlags & SEND_FLAG_NOTIFY) != 0, uiKey, uiSubStreamID);
+                    (uiFlags & SEND_FLAG_NOTIFY) != 0, uiKey, uiSubStreamID);
     }
     PacketOut* pPacket;
     if (pBuffer->IsPooled())
@@ -1540,8 +1511,8 @@ qResult PRUDPEndPoint::_Send(Buffer* pBuffer, unsigned int uiFlags, bool bCopyPa
     return qResult(RESULT_SUCCESS);
 }
 
-qResult PRUDPEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
-    ConnectionCallback pCallback, const UserContext& rUserContext, unsigned int uiTimeout)
+qResult PRUDPEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData, ConnectionCallback pCallback,
+                                const UserContext& rUserContext, unsigned int uiTimeout)
 {
     if (uiTimeout == NO_TIMEOUT)
         uiTimeout = DEFAULT_CONNECT_TIMEOUT;
@@ -1567,9 +1538,8 @@ qResult PRUDPEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
     }
     else
     {
-        pTimeout->SetRelativeExpirationTime(static_cast<int>(
-            Core::GetInstance()->GetTerminateImmediatelyTime() +
-            g_terminateImmediatelyTimeout));
+        pTimeout->SetRelativeExpirationTime(
+            static_cast<int>(Core::GetInstance()->GetTerminateImmediatelyTime() + g_terminateImmediatelyTimeout));
         m_pConnectPacket->m_address = *m_stationURL.GetInetAddress();
         SendReliable(m_pConnectPacket);
         m_bFaultIgnored = !PeerIsConnected();
@@ -1585,11 +1555,10 @@ qResult PRUDPEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
             if (Core::GetInstance()->GetTerminateImmediately())
                 break;
             Scheduler::GlobalSingleThreadSpecialDispatch();
-            if (spinTest.SpinOnce(
-                    L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Transport/PRUDP/"
-                    L"PRUDPEndPoint.cpp",
-                    SPIN_CONNECT_WAIT_LINE,
-                    L"(IsConnecting() && !Core::GetInstance()->GetTerminateImmediately())")
+            if (spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Transport/PRUDP/"
+                                  L"PRUDPEndPoint.cpp",
+                                  SPIN_CONNECT_WAIT_LINE,
+                                  L"(IsConnecting() && !Core::GetInstance()->GetTerminateImmediately())")
                 == 0)
                 break;
         }
@@ -1601,10 +1570,9 @@ qResult PRUDPEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
         while (IsConnecting())
         {
             Scheduler::GlobalSingleThreadSpecialDispatch();
-            if (spinTest.SpinOnce(
-                    L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Transport/PRUDP/"
-                    L"PRUDPEndPoint.cpp",
-                    SPIN_CONNECT_STATE_LINE, L"IsConnecting()")
+            if (spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Transport/PRUDP/"
+                                  L"PRUDPEndPoint.cpp",
+                                  SPIN_CONNECT_STATE_LINE, L"IsConnecting()")
                 == 0)
                 break;
         }
@@ -1622,8 +1590,8 @@ qResult PRUDPEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
     return qResult(RESULT_SUCCESS);
 }
 
-qResult PRUDPEndPoint::_Disconnect(
-    ConnectionCallback pCallback, const UserContext& rUserContext, unsigned int uiTimeout)
+qResult PRUDPEndPoint::_Disconnect(ConnectionCallback pCallback, const UserContext& rUserContext,
+                                   unsigned int uiTimeout)
 {
     if (m_iOpenCount == 0)
         return qResult(RESULT_INVALID_STATE);
@@ -1635,8 +1603,7 @@ qResult PRUDPEndPoint::_Disconnect(
     m_ioRequest.m_pResponse = 0;
     m_ioRequest.m_pRequest = 0;
     m_ioRequest.m_userContext = rUserContext;
-    PacketOut* pPacket = new PacketOut(this, PACKET_TYPE_DISCONNECT,
-        PACKET_FLAG_RELIABLE | PACKET_FLAG_NEED_ACK, 0, 0);
+    PacketOut* pPacket = new PacketOut(this, PACKET_TYPE_DISCONNECT, PACKET_FLAG_RELIABLE | PACKET_FLAG_NEED_ACK, 0, 0);
     pPacket->m_uiVersion = m_uiVersion;
     Timeout* pTimeout = pPacket->m_pTimeout;
     qResult result;
@@ -1649,9 +1616,8 @@ qResult PRUDPEndPoint::_Disconnect(
     }
     else
     {
-        pTimeout->SetRelativeExpirationTime(static_cast<int>(
-            Core::GetInstance()->GetTerminateImmediatelyTime() +
-            g_terminateImmediatelyTimeout));
+        pTimeout->SetRelativeExpirationTime(
+            static_cast<int>(Core::GetInstance()->GetTerminateImmediatelyTime() + g_terminateImmediatelyTimeout));
         pTimeout->SetRTO(DISCONNECT_RETRANSMIT_TIMEOUT);
         static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().SchedulePacketTimeout(pPacket);
         result = SendPacket(pPacket);
@@ -1678,11 +1644,10 @@ qResult PRUDPEndPoint::_Disconnect(
             if (Core::GetInstance()->GetTerminateImmediately())
                 break;
             Scheduler::GlobalSingleThreadSpecialDispatch();
-            if (spinTest.SpinOnce(
-                    L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Transport/PRUDP/"
-                    L"PRUDPEndPoint.cpp",
-                    SPIN_DISCONNECT_WAIT_LINE,
-                    L"(IsDisconnecting() && !Core::GetInstance()->GetTerminateImmediately())")
+            if (spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Transport/PRUDP/"
+                                  L"PRUDPEndPoint.cpp",
+                                  SPIN_DISCONNECT_WAIT_LINE,
+                                  L"(IsDisconnecting() && !Core::GetInstance()->GetTerminateImmediately())")
                 == 0)
                 break;
         }
@@ -1694,10 +1659,9 @@ qResult PRUDPEndPoint::_Disconnect(
         while (IsDisconnecting())
         {
             Scheduler::GlobalSingleThreadSpecialDispatch();
-            if (spinTest.SpinOnce(
-                    L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Transport/PRUDP/"
-                    L"PRUDPEndPoint.cpp",
-                    SPIN_DISCONNECT_STATE_LINE, L"IsDisconnecting()")
+            if (spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Transport/PRUDP/"
+                                  L"PRUDPEndPoint.cpp",
+                                  SPIN_DISCONNECT_STATE_LINE, L"IsDisconnecting()")
                 == 0)
                 break;
         }
@@ -1715,24 +1679,23 @@ qResult PRUDPEndPoint::_Disconnect(
     return qResult(RESULT_SUCCESS);
 }
 PRUDPEndPoint::PRUDPEndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL,
-    SequenceClock* pBroadcastSequence, unsigned char uiVersion)
-    : EndPoint(pStream, pStationURL)
-    , m_uiPort(0)
-    , m_dispatchQueues(1)
-    , m_slidingWindows(1)
-    , m_rtt(g_streamSettings[pStream->GetType()].Get().GetInitialRTT())
-    , m_defragBuffers(1)
-    , m_defragFragmentIDs(1)
-    , m_pendingAcknowledgements(1)
-    , m_sendProfile(L"Send", 1000, L"")
+                             SequenceClock* pBroadcastSequence, unsigned char uiVersion)
+    : EndPoint(pStream, pStationURL),
+      m_uiPort(0),
+      m_dispatchQueues(1),
+      m_slidingWindows(1),
+      m_rtt(g_streamSettings[pStream->GetType()].Get().GetInitialRTT()),
+      m_defragBuffers(1),
+      m_defragFragmentIDs(1),
+      m_pendingAcknowledgements(1),
+      m_sendProfile(L"Send", 1000, L"")
 {
     m_bPeerConnected = false;
     m_bFaultIgnored = false;
     m_connectionState = NotConnected;
     m_dispatchQueues[0] = new PacketDispatchQueue();
     StreamSettings& rSettings = g_streamSettings[pStream->GetType()].Get();
-    m_slidingWindows[0] = new SlidingWindow(rSettings.GetWindowSize(),
-        rSettings.GetMaxBufferedPackets());
+    m_slidingWindows[0] = new SlidingWindow(rSettings.GetWindowSize(), rSettings.GetMaxBufferedPackets());
     m_uiNegotiatedFlags = 0;
     m_pPingPacket = 0;
     m_expectedUnreliableSequence = 0;
@@ -1741,11 +1704,9 @@ PRUDPEndPoint::PRUDPEndPoint(ConnectionOrientedStream* pStream, const StationURL
     m_uiVersion = uiVersion;
     m_uiSignaledFaultError = 0;
     m_expectedBroadcastSequence = 0;
-    m_uiNegotiatedFlags =
-        (g_negotiationFlagsMask << NEGOTIATED_FLAGS_SHIFT) | g_negotiationVersion.Get();
-    if ((pStream->GetType() != Stream::RendezVousSecure &&
-            pStream->GetType() != Stream::RendezVous) ||
-        rSettings.GetSecureMode() != SECURE_MODE_ENABLED)
+    m_uiNegotiatedFlags = (g_negotiationFlagsMask << NEGOTIATED_FLAGS_SHIFT) | g_negotiationVersion.Get();
+    if ((pStream->GetType() != Stream::RendezVousSecure && pStream->GetType() != Stream::RendezVous)
+        || rSettings.GetSecureMode() != SECURE_MODE_ENABLED)
         m_uiNegotiatedFlags &= ~NEGOTIATED_FLAG_SECURE_STREAM_MODE;
     m_uiMaxSubStreamID = rSettings.GetMaxSubStreamID();
     m_pConnectPacket = new PacketOut(this, PACKET_TYPE_SYN, PACKET_FLAG_NEED_ACK, 0, 0);
@@ -1756,7 +1717,8 @@ PRUDPEndPoint::PRUDPEndPoint(ConnectionOrientedStream* pStream, const StationURL
     m_defragFragmentIDs[0] = 1;
     unsigned char& rSessionCounter = g_sessionCounter.Get();
     if (rSessionCounter == 0)
-        rSessionCounter = static_cast<unsigned char>(static_cast<unsigned long long>(Time::GetTime()) + Platform::GetRandomNumber(SESSION_RANDOM_RANGE));
+        rSessionCounter = static_cast<unsigned char>(static_cast<unsigned long long>(Time::GetTime())
+                                                     + Platform::GetRandomNumber(SESSION_RANDOM_RANGE));
     else
         ++rSessionCounter;
     if (rSessionCounter == 0)
@@ -1778,13 +1740,11 @@ PRUDPEndPoint::~PRUDPEndPoint()
     StopPing();
     if (m_pConnectPacket != 0)
     {
-        static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().CancelPacketTimeout(
-            m_pConnectPacket);
+        static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().CancelPacketTimeout(m_pConnectPacket);
         m_pConnectPacket->ReleaseRef();
         m_pConnectPacket = 0;
     }
-    for (SlidingWindowVector::iterator window = m_slidingWindows.begin();
-         window != m_slidingWindows.end(); ++window)
+    for (SlidingWindowVector::iterator window = m_slidingWindows.begin(); window != m_slidingWindows.end(); ++window)
     {
         SlidingWindow::PacketMap::iterator position = (*window)->AcquireIterator();
         PacketOut* pPacket = (*window)->GetPacket(position);
@@ -1798,14 +1758,12 @@ PRUDPEndPoint::~PRUDPEndPoint()
         (*window)->Purge();
         delete *window;
     }
-    for (DispatchQueueVector::iterator queue = m_dispatchQueues.begin();
-         queue != m_dispatchQueues.end(); ++queue)
+    for (DispatchQueueVector::iterator queue = m_dispatchQueues.begin(); queue != m_dispatchQueues.end(); ++queue)
     {
         (*queue)->Purge();
         delete *queue;
     }
-    for (BufferVector::iterator buffer = m_defragBuffers.begin();
-         buffer != m_defragBuffers.end(); ++buffer)
+    for (BufferVector::iterator buffer = m_defragBuffers.begin(); buffer != m_defragBuffers.end(); ++buffer)
     {
         if (*buffer != 0)
             (*buffer)->ReleaseRef();
@@ -1817,31 +1775,28 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
     unsigned short uiFlags = pPacket->m_uiTypeAndFlags;
     unsigned short uiType = uiFlags & PACKET_TYPE_MASK;
     bool bDispatch = false;
-    if (m_pStream->GetType() == Stream::RendezVousSecure ||
-        m_pStream->GetType() == Stream::RendezVous)
+    if (m_pStream->GetType() == Stream::RendezVousSecure || m_pStream->GetType() == Stream::RendezVous)
     {
-        if (uiType == PACKET_TYPE_SYN && (uiFlags & PACKET_FLAG_ACK) != 0 && IsConnecting() &&
-            !m_bConnectSignatureSent &&
-            (pPacket->m_unknown90 & NEGOTIATED_FLAG_SECURE_STREAM_MODE) != 0)
+        if (uiType == PACKET_TYPE_SYN && (uiFlags & PACKET_FLAG_ACK) != 0 && IsConnecting() && !m_bConnectSignatureSent
+            && (pPacket->m_unknown90 & NEGOTIATED_FLAG_SECURE_STREAM_MODE) != 0)
         {
             ProcessFaultEvent(NET_FAULT_CONNECT_REQUEST);
             return;
         }
     }
-    else if ((uiFlags & (PACKET_FLAG_ACK | PACKET_FLAG_AGGREGATE_ACK)) == 0 &&
-        uiType == PACKET_TYPE_DATA && (uiFlags & PACKET_FLAG_HISTORY_BUNDLE) == 0)
+    else if ((uiFlags & (PACKET_FLAG_ACK | PACKET_FLAG_AGGREGATE_ACK)) == 0 && uiType == PACKET_TYPE_DATA
+             && (uiFlags & PACKET_FLAG_HISTORY_BUNDLE) == 0)
     {
-        if (PacketBufferManager::GetInstance() != 0 &&
-            !PacketBufferManager::GetInstance()->IsAllocatable(PacketBufferManager::MaxUnitSize,
-                PacketBufferManager::GetInstance()->GetUnitHeaderSize()))
+        if (PacketBufferManager::GetInstance() != 0
+            && !PacketBufferManager::GetInstance()->IsAllocatable(
+                PacketBufferManager::MaxUnitSize, PacketBufferManager::GetInstance()->GetUnitHeaderSize()))
             return;
     }
     if (g_streamSettings[m_pStream->GetType()].Get().UsesEarlyActivityTimestamps())
         m_lastReceiveTime = Time(g_lastTime);
     uiFlags = pPacket->m_uiTypeAndFlags;
-    if (((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) != 0 ||
-            (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) != 0) &&
-        m_BroadcastState != BroadcastUnrestricted)
+    if (((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) != 0 || (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) != 0)
+        && m_BroadcastState != BroadcastUnrestricted)
     {
         if (m_uiPeerSessionID == 0)
             return;
@@ -1854,19 +1809,18 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
         return;
     if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 && (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
     {
-        if ((uiType == PACKET_TYPE_SYN && (uiFlags & PACKET_FLAG_ACK) != 0) ||
-            (uiType == PACKET_TYPE_CONNECT && (uiFlags & PACKET_FLAG_ACK) == 0))
+        if ((uiType == PACKET_TYPE_SYN && (uiFlags & PACKET_FLAG_ACK) != 0)
+            || (uiType == PACKET_TYPE_CONNECT && (uiFlags & PACKET_FLAG_ACK) == 0))
         {
             if (!IsNegotiationConnectionSignatureVersion(pPacket))
             {
-                memcpy(m_signature.m_bytes, pPacket->m_aConnectionSignature,
-                    pPacket->m_uiConnectionSignatureSize);
+                memcpy(m_signature.m_bytes, pPacket->m_aConnectionSignature, pPacket->m_uiConnectionSignatureSize);
                 m_signature.m_uiLength = pPacket->m_uiConnectionSignatureSize;
             }
             else
             {
                 memcpy(m_negotiationSignature.m_bytes, pPacket->m_aConnectionSignature,
-                    pPacket->m_uiConnectionSignatureSize);
+                       pPacket->m_uiConnectionSignatureSize);
                 m_negotiationSignature.m_uiLength = pPacket->m_uiConnectionSignatureSize;
             }
         }
@@ -1896,8 +1850,8 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
                 if (pPacket->m_uiVersion != 0 && pPacket->m_unknown4c != SequenceClock())
                     m_expectedUnreliableSequence = pPacket->m_unknown4c;
                 Stream::Type streamType = VirtualPort(pPacket->m_uiSource).GetType();
-                if ((streamType == Stream::Unknown1 || streamType == Stream::Unknown9) &&
-                    g_streamSettings[streamType].Get().IsEncryptionRequired())
+                if ((streamType == Stream::Unknown1 || streamType == Stream::Unknown9)
+                    && g_streamSettings[streamType].Get().IsEncryptionRequired())
                 {
                     LiteBuffer<StreamSettings::KEY_BUFFER_SIZE> keyBuffer =
                         g_streamSettings[streamType].Get().GetEncryptionKey();
@@ -1905,8 +1859,7 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
                     if (key.GetLength() != 0)
                     {
                         m_packetEncDec.SetUnreliableEncryptionKey(key);
-                        m_packetEncDec.SetReliableEncryptionKey(key, m_uiSessionID,
-                            m_uiPeerSessionID);
+                        m_packetEncDec.SetReliableEncryptionKey(key, m_uiSessionID, m_uiPeerSessionID);
                     }
                 }
             }
@@ -1914,8 +1867,7 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
     }
     if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_NEED_ACK) != 0)
     {
-        if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) != PACKET_TYPE_DATA ||
-            !IsSendAggregateACK())
+        if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) != PACKET_TYPE_DATA || !IsSendAggregateACK())
             SendACK(pPacket);
         else
             m_pendingAcknowledgements[pPacket->m_uiSubStreamID] = true;
@@ -1930,12 +1882,10 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
     }
     if (uiType == PACKET_TYPE_SYN)
     {
-        if (IsConnecting() && (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ACK) != 0 &&
-            !m_bConnectSignatureSent)
+        if (IsConnecting() && (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ACK) != 0 && !m_bConnectSignatureSent)
         {
-            PacketOut* pConnect = new PacketOut(
-                this, PACKET_TYPE_CONNECT, PACKET_FLAG_RELIABLE | PACKET_FLAG_NEED_ACK,
-                m_ioRequest.m_pRequest, 0);
+            PacketOut* pConnect = new PacketOut(this, PACKET_TYPE_CONNECT, PACKET_FLAG_RELIABLE | PACKET_FLAG_NEED_ACK,
+                                                m_ioRequest.m_pRequest, 0);
             m_uiVersion = pPacket->m_uiVersion;
             pConnect->m_uiVersion = pPacket->m_uiVersion;
             m_uiNegotiatedFlags = pPacket->m_unknown90;
@@ -1946,8 +1896,8 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
             InitUnreliableSeq(pConnect);
             SignatureBytes signature;
             signature.m_uiLength = 0;
-            m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1,
-                0, VirtualPort(pPacket->m_uiSource).GetType(),
+            m_pMessageSelector->CalcSignature(
+                pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1, 0, VirtualPort(pPacket->m_uiSource).GetType(),
                 &static_cast<PRUDPStream*>(m_pStream)->m_signatureGenerator, 0, signature);
             memcpy(pConnect->m_aConnectionSignature, signature.m_bytes, signature.m_uiLength);
             pConnect->m_uiConnectionSignatureSize = signature.m_uiLength;
@@ -1961,8 +1911,7 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
                 memcpy(m_signature.m_bytes, signature.m_bytes, signature.m_uiLength);
                 m_signature.m_uiLength = signature.m_uiLength;
             }
-            pConnect->m_pTimeout->SetExpirationTime(
-                Time(m_pConnectPacket->m_pTimeout->GetExpirationTime()));
+            pConnect->m_pTimeout->SetExpirationTime(Time(m_pConnectPacket->m_pTimeout->GetExpirationTime()));
             SendPacket(pConnect);
             pConnect->ReleaseRef();
             CancelPacketTimeout(m_pConnectPacket);
@@ -1996,8 +1945,7 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
             uiFlags = pPacket->m_uiTypeAndFlags;
             if ((uiFlags & PACKET_FLAG_ACK) != 0)
             {
-                PacketAcknowledged(Time(pPacket->m_unknownF8), pPacket->m_sequenceID,
-                    pPacket->m_uiSubStreamID);
+                PacketAcknowledged(Time(pPacket->m_unknownF8), pPacket->m_sequenceID, pPacket->m_uiSubStreamID);
             }
             else if ((uiFlags & PACKET_FLAG_AGGREGATE_ACK) != 0)
             {
@@ -2009,8 +1957,7 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
                 if ((uiFlags & PACKET_FLAG_RELIABLE) == 0)
                 {
                     short iDifference;
-                    if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 &&
-                        (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
+                    if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 && (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
                     {
                         iDifference = pPacket->m_sequenceID - m_expectedUnreliableSequence;
                     }
@@ -2034,13 +1981,13 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
                     else
                     {
                         m_endPointInfo.m_uiLostPackets += iDifference;
-                        if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 &&
-                            (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
-                            m_expectedUnreliableSequence =
-                                static_cast<unsigned short>(pPacket->m_sequenceID.GetValue() + 1);
+                        if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0
+                            && (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
+                            m_expectedUnreliableSequence = static_cast<unsigned short>(pPacket->m_sequenceID.GetValue()
+                                                                                       + 1);
                         else
-                            m_expectedBroadcastSequence =
-                                static_cast<unsigned short>(pPacket->m_sequenceID.GetValue() + 1);
+                            m_expectedBroadcastSequence = static_cast<unsigned short>(pPacket->m_sequenceID.GetValue()
+                                                                                      + 1);
                     }
                 }
             }
@@ -2055,10 +2002,9 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
             SetPeerDisconnected();
             if (bPeerConnected && m_pEventHandler != 0)
                 m_pEventHandler->PeerDisconnected(this);
-            if (m_pStream != 0 &&
-                (m_pStream->GetType() == Stream::RendezVousSecure ||
-                    m_pStream->GetType() == Stream::RendezVous) &&
-                IsConnected() && (pPacket->m_uiTypeAndFlags & PACKET_FLAG_NEED_ACK) == 0)
+            if (m_pStream != 0
+                && (m_pStream->GetType() == Stream::RendezVousSecure || m_pStream->GetType() == Stream::RendezVous)
+                && IsConnected() && (pPacket->m_uiTypeAndFlags & PACKET_FLAG_NEED_ACK) == 0)
             {
                 SetConnectionState(Faulty);
                 StopPing();

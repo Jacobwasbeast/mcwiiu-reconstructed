@@ -17,14 +17,9 @@ public:
         MAX_PROGRESS_SCORE = 100
     };
 
-    UpdateMatchmakeSessionParam()
-    {
-        Reset();
-    }
+    UpdateMatchmakeSessionParam() { Reset(); }
 
-    virtual ~UpdateMatchmakeSessionParam()
-    {
-    }
+    virtual ~UpdateMatchmakeSessionParam() {}
 
     void Reset();
 };

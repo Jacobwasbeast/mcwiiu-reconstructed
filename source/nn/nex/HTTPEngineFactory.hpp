@@ -25,16 +25,20 @@ public:
 
     unsigned int AddEngine(HTTPModule::HttpEngineType type, HTTPEngine* pEngine);
     HTTPEngine* GetHTTPEngine(unsigned int uiEngineHandle);
-    bool SetGlobaEngineOption(HTTPModule::HttpEngineType type, HTTPModule::ConfigurationOptions option, va_list arguments);
+    bool SetGlobaEngineOption(HTTPModule::HttpEngineType type, HTTPModule::ConfigurationOptions option,
+                              va_list arguments);
     void TraceGlobaEngineOptions(HTTPModule::HttpEngineType type, unsigned int uiFilter);
 
 private:
     typedef std::map<unsigned int, HTTPEngine*, std::less<unsigned int>,
-                     MemAllocator<std::pair<const unsigned int, HTTPEngine*> > > EngineMap;
+                     MemAllocator<std::pair<const unsigned int, HTTPEngine*> > >
+        EngineMap;
     typedef std::map<HTTPModule::HttpEngineType, qList<unsigned int>*, std::less<HTTPModule::HttpEngineType>,
-                     MemAllocator<std::pair<const HTTPModule::HttpEngineType, qList<unsigned int>*> > > EngineHandleMap;
+                     MemAllocator<std::pair<const HTTPModule::HttpEngineType, qList<unsigned int>*> > >
+        EngineHandleMap;
     typedef std::map<HTTPModule::HttpEngineType, HTTPEngineConfiguration*, std::less<HTTPModule::HttpEngineType>,
-                     MemAllocator<std::pair<const HTTPModule::HttpEngineType, HTTPEngineConfiguration*> > > ConfigurationMap;
+                     MemAllocator<std::pair<const HTTPModule::HttpEngineType, HTTPEngineConfiguration*> > >
+        ConfigurationMap;
 
     unsigned int m_unresolved0;
     EngineMap m_engines;

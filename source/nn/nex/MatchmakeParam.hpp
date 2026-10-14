@@ -11,14 +11,9 @@ namespace nex
 class MatchmakeParam : public _DDL_MatchmakeParam
 {
 public:
-    MatchmakeParam()
-    {
-        m_Parameters.clear();
-    }
+    MatchmakeParam() { m_Parameters.clear(); }
 
-    virtual ~MatchmakeParam()
-    {
-    }
+    virtual ~MatchmakeParam() {}
 };
 
 }

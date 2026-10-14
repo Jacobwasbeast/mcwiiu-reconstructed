@@ -81,8 +81,7 @@ void TransportAdapter::ReleaseAddress(const StationURL&)
 {
 }
 
-void TransportAdapter::SortAndFilterTargetURLs(const qProtectedList<StationURL>& rTargetURLs,
-    qList<StationURL>* pURLs)
+void TransportAdapter::SortAndFilterTargetURLs(const qProtectedList<StationURL>& rTargetURLs, qList<StationURL>* pURLs)
 {
     qList<StationURL> targetURLs = rTargetURLs.GetList();
     StationContactInfo targetInfo(targetURLs);

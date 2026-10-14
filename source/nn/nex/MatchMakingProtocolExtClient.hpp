@@ -5,7 +5,10 @@
 #include "nn/nex/String.hpp"
 #include "nn/nex/qList.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class GatheringURLs;
 class ParticipantDetails;
@@ -18,18 +21,36 @@ public:
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
     virtual Protocol* CreateResponder() const;
 
-    bool CallEndParticipation(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rGatheringID, const String& rMessage);
-    static bool EndParticipation_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rGatheringID, const String& rMessage);
-    bool CallGetParticipants(ProtocolCallContext* pCallContext, const unsigned int& rGatheringID, qList<unsigned int>* pParticipants, const bool& rOnlyActive);
-    static bool GetParticipants_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rGatheringID, qList<unsigned int>* pParticipants, const bool& rOnlyActive);
-    bool CallGetDetailedParticipants(ProtocolCallContext* pCallContext, const unsigned int& rGatheringID, qList<ParticipantDetails>* pParticipants, const bool& rOnlyActive);
-    static bool GetDetailedParticipants_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rGatheringID, qList<ParticipantDetails>* pParticipants, const bool& rOnlyActive);
-    bool CallGetParticipantsURLs(ProtocolCallContext* pCallContext, const qList<unsigned int>& rGatheringIDs, qList<GatheringURLs>* pGatheringURLs);
-    static bool GetParticipantsURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const qList<unsigned int>& rGatheringIDs, qList<GatheringURLs>* pGatheringURLs);
-    bool CallGetGatheringRelations(ProtocolCallContext* pCallContext, String* pRelations, const unsigned int& rGatheringID, const String& rDescription);
-    static bool GetGatheringRelations_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, String* pRelations, const unsigned int& rGatheringID, const String& rDescription);
-    bool CallDeleteFromDeletions(ProtocolCallContext* pCallContext, const qList<unsigned int>& rDeletionIDs, const unsigned int& rPrincipalID);
-    static bool DeleteFromDeletions_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const qList<unsigned int>& rDeletionIDs, const unsigned int& rPrincipalID);
+    bool CallEndParticipation(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rGatheringID,
+                              const String& rMessage);
+    static bool EndParticipation_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess,
+                                                const unsigned int& rGatheringID, const String& rMessage);
+    bool CallGetParticipants(ProtocolCallContext* pCallContext, const unsigned int& rGatheringID,
+                             qList<unsigned int>* pParticipants, const bool& rOnlyActive);
+    static bool GetParticipants_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                               const unsigned int& rGatheringID, qList<unsigned int>* pParticipants,
+                                               const bool& rOnlyActive);
+    bool CallGetDetailedParticipants(ProtocolCallContext* pCallContext, const unsigned int& rGatheringID,
+                                     qList<ParticipantDetails>* pParticipants, const bool& rOnlyActive);
+    static bool GetDetailedParticipants_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                       const unsigned int& rGatheringID,
+                                                       qList<ParticipantDetails>* pParticipants,
+                                                       const bool& rOnlyActive);
+    bool CallGetParticipantsURLs(ProtocolCallContext* pCallContext, const qList<unsigned int>& rGatheringIDs,
+                                 qList<GatheringURLs>* pGatheringURLs);
+    static bool GetParticipantsURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                   const qList<unsigned int>& rGatheringIDs,
+                                                   qList<GatheringURLs>* pGatheringURLs);
+    bool CallGetGatheringRelations(ProtocolCallContext* pCallContext, String* pRelations,
+                                   const unsigned int& rGatheringID, const String& rDescription);
+    static bool GetGatheringRelations_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                     String* pRelations, const unsigned int& rGatheringID,
+                                                     const String& rDescription);
+    bool CallDeleteFromDeletions(ProtocolCallContext* pCallContext, const qList<unsigned int>& rDeletionIDs,
+                                 const unsigned int& rPrincipalID);
+    static bool DeleteFromDeletions_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                   const qList<unsigned int>& rDeletionIDs,
+                                                   const unsigned int& rPrincipalID);
 
     static void ProtoReturn_EndParticipation(Message* pMessage, ProtocolCallContext* pCallContext);
     static void ProtoReturn_GetParticipants(Message* pMessage, ProtocolCallContext* pCallContext);
@@ -54,6 +75,7 @@ private:
     };
 };
 
-}}
+}
+}
 
 #endif

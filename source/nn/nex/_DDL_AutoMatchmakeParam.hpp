@@ -20,14 +20,16 @@ class _DDL_AutoMatchmakeParam : public RootObject
 {
 public:
     _DDL_AutoMatchmakeParam()
-        : m_uiStructureVersion(0), m_MatchmakeSession(), m_AdditionalParticipants(), m_strJoinMessage(),
-          m_SearchCriteria(), m_TargetGatheringIDs()
+        : m_uiStructureVersion(0),
+          m_MatchmakeSession(),
+          m_AdditionalParticipants(),
+          m_strJoinMessage(),
+          m_SearchCriteria(),
+          m_TargetGatheringIDs()
     {
     }
 
-    virtual ~_DDL_AutoMatchmakeParam()
-    {
-    }
+    virtual ~_DDL_AutoMatchmakeParam() {}
 
     _DDL_AutoMatchmakeParam& operator=(const _DDL_AutoMatchmakeParam& rSource);
 

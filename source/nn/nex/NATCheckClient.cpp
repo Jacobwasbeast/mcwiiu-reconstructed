@@ -12,8 +12,7 @@ namespace nn
 namespace nex
 {
 
-NATCheckClient::NATCheckClient(const InetAddress& rAddress)
-    : m_address()
+NATCheckClient::NATCheckClient(const InetAddress& rAddress) : m_address()
 {
     m_address = rAddress;
 }

@@ -18,9 +18,7 @@ class MemoryStorageUnit;
 class MemoryStorageDevice : public StorageDevice
 {
 public:
-    MemoryStorageDevice()
-    {
-    }
+    MemoryStorageDevice() {}
 
     virtual ~MemoryStorageDevice();
 

@@ -48,90 +48,45 @@ public:
     void SetIsEncryptionRequired(bool bIsEncryptionRequired);
     bool FaultDetectionIsActive();
 
-    StreamBundling& GetBundling()
-    {
-        return m_bundling;
-    }
+    StreamBundling& GetBundling() { return m_bundling; }
 
-    unsigned char GetKeyByteSum() const
-    {
-        return m_ucKeyByteSum;
-    }
+    unsigned char GetKeyByteSum() const { return m_ucKeyByteSum; }
 
-    int GetKeySum() const
-    {
-        return m_iKeySum;
-    }
+    int GetKeySum() const { return m_iKeySum; }
 
-    CompressionAlgorithm* GetCompressionAlgorithm() const
-    {
-        return m_pCompressionAlgorithm;
-    }
+    CompressionAlgorithm* GetCompressionAlgorithm() const { return m_pCompressionAlgorithm; }
 
     void SetCompressionAlgorithm(CompressionAlgorithm* pCompressionAlgorithm)
     {
         m_pCompressionAlgorithm = pCompressionAlgorithm;
     }
 
-    EncryptionAlgorithm* GetEncryptionAlgorithm() const
-    {
-        return m_pEncryptionAlgorithm;
-    }
+    EncryptionAlgorithm* GetEncryptionAlgorithm() const { return m_pEncryptionAlgorithm; }
 
     void SetEncryptionAlgorithm(EncryptionAlgorithm* pEncryptionAlgorithm)
     {
         m_pEncryptionAlgorithm = pEncryptionAlgorithm;
     }
 
-    KeyedChecksumAlgorithm* GetChecksumAlgorithm() const
-    {
-        return m_pChecksumAlgorithm;
-    }
+    KeyedChecksumAlgorithm* GetChecksumAlgorithm() const { return m_pChecksumAlgorithm; }
 
-    void SetChecksumAlgorithm(KeyedChecksumAlgorithm* pChecksumAlgorithm)
-    {
-        m_pChecksumAlgorithm = pChecksumAlgorithm;
-    }
+    void SetChecksumAlgorithm(KeyedChecksumAlgorithm* pChecksumAlgorithm) { m_pChecksumAlgorithm = pChecksumAlgorithm; }
 
-    void SetStreamType(int iStreamType)
-    {
-        m_iStreamType = iStreamType;
-    }
+    void SetStreamType(int iStreamType) { m_iStreamType = iStreamType; }
 
-    bool UsesEarlyActivityTimestamps() const
-    {
-        return m_bEarlyActivityTimestamps;
-    }
+    bool UsesEarlyActivityTimestamps() const { return m_bEarlyActivityTimestamps; }
 
-    unsigned int GetMaxBufferedPackets() const
-    {
-        return m_uiMaxBufferedPackets;
-    }
+    unsigned int GetMaxBufferedPackets() const { return m_uiMaxBufferedPackets; }
 
-    unsigned int GetMaxRetransmitTimeout() const
-    {
-        return m_uiMaxRetransmitTimeout;
-    }
+    unsigned int GetMaxRetransmitTimeout() const { return m_uiMaxRetransmitTimeout; }
 
-    unsigned char GetMaxSubStreamID() const
-    {
-        return m_uiMaxSubStreamID;
-    }
+    unsigned char GetMaxSubStreamID() const { return m_uiMaxSubStreamID; }
 
-    int GetSecureMode() const
-    {
-        return m_iSecureMode;
-    }
+    int GetSecureMode() const { return m_iSecureMode; }
 
-    const LiteBuffer<KEY_BUFFER_SIZE>& GetEncryptionKey() const
-    {
-        return m_encryptionKey;
-    }
+    const LiteBuffer<KEY_BUFFER_SIZE>& GetEncryptionKey() const { return m_encryptionKey; }
 
-    bool IsEncryptionRequired() const
-    {
-        return m_bIsEncryptionRequired;
-    }
+    bool IsEncryptionRequired() const { return m_bIsEncryptionRequired; }
 
     qResult SetWindowSize(unsigned int uiWindowSize)
     {
@@ -181,10 +136,7 @@ public:
         return qResult(RESULT_SUCCESS);
     }
 
-    void SetActiveFaultDetection(bool bActive)
-    {
-        m_bFaultDetectionActive = bActive;
-    }
+    void SetActiveFaultDetection(bool bActive) { m_bFaultDetectionActive = bActive; }
 
 private:
     enum

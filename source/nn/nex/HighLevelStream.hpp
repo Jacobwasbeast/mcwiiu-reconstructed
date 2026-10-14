@@ -26,13 +26,12 @@ public:
     HighLevelStream(Stream::Type type, RootTransport* pTransport);
     virtual ~HighLevelStream();
 
-    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
-        Packet* pPacket);
+    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket);
     virtual void DoWork();
-    virtual void ReceiveIncomingMsg(const InetAddress& rAddress, Stream::Type type,
-        unsigned char uiStreamID, Buffer* pPayload, Time receptionTime, unsigned short uiPort);
-    virtual qResult Send(const InetAddress& rAddress, Stream::Type type, unsigned char uiStreamID,
-        Buffer* pPayload, unsigned char uiTTL, unsigned short uiPort);
+    virtual void ReceiveIncomingMsg(const InetAddress& rAddress, Stream::Type type, unsigned char uiStreamID,
+                                    Buffer* pPayload, Time receptionTime, unsigned short uiPort);
+    virtual qResult Send(const InetAddress& rAddress, Stream::Type type, unsigned char uiStreamID, Buffer* pPayload,
+                         unsigned char uiTTL, unsigned short uiPort);
 
     bool Listen(unsigned char uiStreamID);
     bool IsListened();

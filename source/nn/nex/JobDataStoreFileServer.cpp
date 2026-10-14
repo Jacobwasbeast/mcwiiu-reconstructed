@@ -11,19 +11,19 @@ namespace nex
 {
 
 JobDataStoreFileServer::JobDataStoreFileServer()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_url(L"")
-    , m_method(HttpConnection::HTTP_GET)
-    , m_pListener(0)
-    , m_httpContext()
-    , m_httpClient()
-    , m_uiAttemptCount(0)
-    , m_iStatusCode(0)
-    , m_errorResponse()
-    , m_bErrorResponseOverflow(false)
-    , m_location(L"")
-    , m_uiBufferSize(0)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_url(L""),
+      m_method(HttpConnection::HTTP_GET),
+      m_pListener(0),
+      m_httpContext(),
+      m_httpClient(),
+      m_uiAttemptCount(0),
+      m_iStatusCode(0),
+      m_errorResponse(),
+      m_bErrorResponseOverflow(false),
+      m_location(L""),
+      m_uiBufferSize(0)
 {
 }
 
@@ -33,8 +33,7 @@ JobDataStoreFileServer::~JobDataStoreFileServer()
 
 void JobDataStoreFileServer::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         m_httpContext.Cancel(CallContext::CallCanceled);
@@ -55,8 +54,7 @@ void JobDataStoreFileServer::CompleteJob(const qResult& rResult)
 
 void JobDataStoreFileServer::PrepareRequest(HttpConnection* pConnection)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -68,11 +66,10 @@ void JobDataStoreFileServer::PrepareRequest(HttpConnection* pConnection)
     m_pListener->PrepareRequest(pConnection);
 }
 
-unsigned int JobDataStoreFileServer::PostChunkedBuffer(HttpConnection* pConnection,
-    unsigned char* pBuffer, unsigned int uiSize, bool* pbLastChunk)
+unsigned int JobDataStoreFileServer::PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer,
+                                                       unsigned int uiSize, bool* pbLastChunk)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -89,8 +86,7 @@ bool JobDataStoreFileServer::IsHttpStatusCodeSuccess()
 
 void JobDataStoreFileServer::ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -107,8 +103,7 @@ void JobDataStoreFileServer::ProcessResponseHeader(HttpConnection* pConnection, 
 
 bool JobDataStoreFileServer::ProcessResponse(const unsigned char* pData, unsigned int uiSize)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -134,8 +129,8 @@ bool JobDataStoreFileServer::ProcessResponse(const unsigned char* pData, unsigne
     return true;
 }
 
-qResult JobDataStoreFileServer::Initialize(unsigned int uiCallId, const String& rUrl,
-    HttpConnection::Method method, HttpEventListener* pListener, unsigned int uiBufferSize)
+qResult JobDataStoreFileServer::Initialize(unsigned int uiCallId, const String& rUrl, HttpConnection::Method method,
+                                           HttpEventListener* pListener, unsigned int uiBufferSize)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_uiCallId = uiCallId;
@@ -158,8 +153,7 @@ void JobDataStoreFileServer::ResetHttpResult()
 
 void JobDataStoreFileServer::StepHttp()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -174,17 +168,15 @@ void JobDataStoreFileServer::StepHttp()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_httpContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_httpContext.GetCallID());
     SetToSuspended();
     ResumeOnCallCompletion(&m_httpContext,
-        new Step(static_cast<Step::Function>(&JobDataStoreFileServer::StepWaitingForHttp), L""));
+                           new Step(static_cast<Step::Function>(&JobDataStoreFileServer::StepWaitingForHttp), L""));
 }
 
 void JobDataStoreFileServer::StepWaitingForHttp()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));

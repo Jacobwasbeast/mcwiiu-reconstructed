@@ -15,14 +15,9 @@ class Message;
 class _DDL_DataStorePasswordInfo : public RootObject
 {
 public:
-    _DDL_DataStorePasswordInfo()
-    {
-        m_uiStructureVersion = 0;
-    }
+    _DDL_DataStorePasswordInfo() { m_uiStructureVersion = 0; }
 
-    virtual ~_DDL_DataStorePasswordInfo()
-    {
-    }
+    virtual ~_DDL_DataStorePasswordInfo() {}
 
     _DDL_DataStorePasswordInfo& operator=(const _DDL_DataStorePasswordInfo& rSource);
     bool operator==(const _DDL_DataStorePasswordInfo& rSource) const;

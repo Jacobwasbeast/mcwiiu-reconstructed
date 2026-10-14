@@ -9,8 +9,7 @@ namespace nn
 namespace nex
 {
 
-Log::Log()
-    : m_logDevice(new LogDeviceConsole(0)), m_outputFormat(new OutputFormat), m_logFilter(0)
+Log::Log() : m_logDevice(new LogDeviceConsole(0)), m_outputFormat(new OutputFormat), m_logFilter(0)
 {
 }
 
@@ -61,8 +60,7 @@ void Log::PrepareOutput(wchar_t* buffer, unsigned int capacity, void* context)
 
 void Log::OutputImpl(const wchar_t* format, va_list arguments, void* context)
 {
-    if (m_logDevice != 0 && (m_logFilter == 0 || m_logFilter->OutputCurrentTrace()) &&
-        m_outputFormat != 0)
+    if (m_logDevice != 0 && (m_logFilter == 0 || m_logFilter->OutputCurrentTrace()) && m_outputFormat != 0)
     {
         wchar_t buffer[256];
         std::memset(buffer, 0, sizeof(buffer));

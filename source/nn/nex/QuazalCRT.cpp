@@ -53,5 +53,4 @@ void QuazalCZlibFree(voidpf opaque, voidpf address)
 {
     QuazalCRTFree(reinterpret_cast<int>(address));
 }
-
 }

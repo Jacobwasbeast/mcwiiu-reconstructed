@@ -15,14 +15,9 @@ class Message;
 class _DDL_DataStoreNotification : public RootObject
 {
 public:
-    _DDL_DataStoreNotification()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreNotification() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreNotification()
-    {
-    }
+    virtual ~_DDL_DataStoreNotification() {}
 
     _DDL_DataStoreNotification& operator=(const _DDL_DataStoreNotification& rSource);
     bool operator==(const _DDL_DataStoreNotification& rSource) const;

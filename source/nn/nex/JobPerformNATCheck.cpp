@@ -75,41 +75,41 @@ unsigned int s_uiPreviousPortWord = 0;
 }
 
 JobPerformNATCheck::JobPerformNATCheck(CallContext* pCallContext, const InetAddress& rAddress)
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L"JobPerformNATCheck"))
-    , m_ioNotifierFirst()
-    , m_ioNotifierSecond()
-    , m_servers()
-    , m_localAddress(rAddress)
-    , m_publicAddress()
-    , m_receivedFrom()
-    , m_mode(CHECK_MODE_NONE)
-    , m_recvMessage()
-    , m_socket(0, 1000)
-    , m_pRelay(0)
-    , m_targetURL()
-    , m_sourceURL()
-    , m_uiTimeoutCount(0)
-    , m_uiRoundTripTime(0)
-    , m_uiTest(TEST_NONE)
-    , m_pMapping(s_pUnknownName)
-    , m_pFiltering(s_pUnknownName)
-    , m_deadline(0)
-    , m_sendTime(0)
-    , m_destination()
-    , m_sendMessage()
-    , m_bPortPreserved(false)
-    , m_uiFirstPassPort(0)
-    , m_uiFirstPassFinalPort(0)
-    , m_uiSecondPassPort(0)
-    , m_uiSecondPassFinalPort(0)
-    , m_uiAttempt(0)
-    , m_bResponsesReceived(false)
-    , m_unknown2C8(0)
-    , m_unknown2CC(0)
-    , m_queue()
-    , m_natProperties()
-    , m_aReceived()
-    , m_bRelayProbe(false)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"JobPerformNATCheck")),
+      m_ioNotifierFirst(),
+      m_ioNotifierSecond(),
+      m_servers(),
+      m_localAddress(rAddress),
+      m_publicAddress(),
+      m_receivedFrom(),
+      m_mode(CHECK_MODE_NONE),
+      m_recvMessage(),
+      m_socket(0, 1000),
+      m_pRelay(0),
+      m_targetURL(),
+      m_sourceURL(),
+      m_uiTimeoutCount(0),
+      m_uiRoundTripTime(0),
+      m_uiTest(TEST_NONE),
+      m_pMapping(s_pUnknownName),
+      m_pFiltering(s_pUnknownName),
+      m_deadline(0),
+      m_sendTime(0),
+      m_destination(),
+      m_sendMessage(),
+      m_bPortPreserved(false),
+      m_uiFirstPassPort(0),
+      m_uiFirstPassFinalPort(0),
+      m_uiSecondPassPort(0),
+      m_uiSecondPassFinalPort(0),
+      m_uiAttempt(0),
+      m_bResponsesReceived(false),
+      m_unknown2C8(0),
+      m_unknown2CC(0),
+      m_queue(),
+      m_natProperties(),
+      m_aReceived(),
+      m_bRelayProbe(false)
 {
     m_uiCallId = pCallContext->m_uiCallId;
     SetStep(Step(static_cast<Step::Function>(&JobPerformNATCheck::StepPreTest), L""));
@@ -145,8 +145,8 @@ bool JobPerformNATCheck::BindRandomPort()
 
 bool JobPerformNATCheck::HandleSimplifiedResults()
 {
-    if (RootTransport::GetInstance() == 0 || m_aReceived[0].m_message.m_uiPortWord == 0 ||
-        m_aReceived[2].m_message.m_uiPortWord == 0)
+    if (RootTransport::GetInstance() == 0 || m_aReceived[0].m_message.m_uiPortWord == 0
+        || m_aReceived[2].m_message.m_uiPortWord == 0)
         return false;
     m_natProperties.SetInterfaceAddress(m_localAddress.GetAddressStr());
     m_natProperties.SetInterfacePort(m_localAddress.GetPortNumber());
@@ -155,8 +155,8 @@ bool JobPerformNATCheck::HandleSimplifiedResults()
     m_natProperties.SetPublicAddress(m_publicAddress.GetAddressStr());
     m_natProperties.SetPublicPort(m_publicAddress.GetPortNumber());
     m_natProperties.SetNATFiltering(m_aReceived[1].m_message.m_uiPortWord == 0
-            ? NATProperties::FILTERING_ENDPOINT_DEPENDENT
-            : NATProperties::FILTERING_ENDPOINT_INDEPENDENT);
+                                        ? NATProperties::FILTERING_ENDPOINT_DEPENDENT
+                                        : NATProperties::FILTERING_ENDPOINT_INDEPENDENT);
     if (m_aReceived[0].m_message.m_uiPortWord == m_aReceived[2].m_message.m_uiPortWord)
     {
         m_natProperties.SetNATMapping(NATProperties::MAPPING_ENDPOINT_INDEPENDENT);
@@ -212,32 +212,26 @@ bool JobPerformNATCheck::HandleFullResults()
 
 void JobPerformNATCheck::StepPreTest()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetToComplete();
         return;
     }
-    if (RootTransport::GetInstance() == 0 ||
-        !RootTransport::GetInstance()->m_bNATCheckServerAddressesSet)
+    if (RootTransport::GetInstance() == 0 || !RootTransport::GetInstance()->m_bNATCheckServerAddressesSet)
     {
-        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT),
-            false);
+        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT), false);
         SetToComplete();
         return;
     }
     if (m_mode == CHECK_MODE_NONE)
     {
-        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT),
-            false);
+        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT), false);
         SetToComplete();
         return;
     }
-    const qVector<StringStream*>& rServerAddresses =
-        RootTransport::GetInstance()->GetNATCheckServerAddresses();
-    for (qVector<StringStream*>::const_iterator it = rServerAddresses.begin();
-         it < rServerAddresses.end(); ++it)
+    const qVector<StringStream*>& rServerAddresses = RootTransport::GetInstance()->GetNATCheckServerAddresses();
+    for (qVector<StringStream*>::const_iterator it = rServerAddresses.begin(); it < rServerAddresses.end(); ++it)
     {
         if ((*it)->GetLength() != 0)
         {
@@ -247,18 +241,15 @@ void JobPerformNATCheck::StepPreTest()
     }
     if (m_servers.empty())
     {
-        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT),
-            false);
+        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT), false);
         SetToComplete();
         return;
     }
     m_socket.Open(true);
-    if ((m_localAddress.GetPortNumber() == 0 || !m_socket.Bind(&m_localAddress, false)) &&
-        !BindRandomPort())
+    if ((m_localAddress.GetPortNumber() == 0 || !m_socket.Bind(&m_localAddress, false)) && !BindRandomPort())
     {
         m_socket.Close();
-        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT),
-            false);
+        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT), false);
         SetToComplete();
         return;
     }
@@ -274,11 +265,9 @@ void JobPerformNATCheck::StepStart()
 {
     if (RootTransport::GetInstance() == 0)
     {
-        CallContext* pCallContext =
-            Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+        CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
         if (pCallContext != 0)
-            pCallContext->SetStateImpl(CallContext::CallFailed,
-                qResult(NAT_CHECK_FAILED_RESULT), false);
+            pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT), false);
         SetToComplete();
         return;
     }
@@ -292,15 +281,14 @@ void JobPerformNATCheck::StepStart()
     unsigned int uiSent = 0;
     while (uiSent < SEND_REPEAT_COUNT)
     {
-        QueueMessage(InetAddress(m_servers.front().GetAddress(), NAT_CHECK_ECHO_PORT),
-            MESSAGE_TYPE_ECHO);
+        QueueMessage(InetAddress(m_servers.front().GetAddress(), NAT_CHECK_ECHO_PORT), MESSAGE_TYPE_ECHO);
         ++uiSent;
     }
     ServerList::iterator second = m_servers.begin();
-    bool bUseSecondServer = second != m_servers.end() && ++second != m_servers.end() &&
-        m_mode == CHECK_MODE_PORT_MAPPING &&
-        RootTransport::GetInstance()->GetNATProperties().GetNATMapping() ==
-            NATProperties::MAPPING_ENDPOINT_DEPENDENT;
+    bool bUseSecondServer = second != m_servers.end() && ++second != m_servers.end()
+                            && m_mode == CHECK_MODE_PORT_MAPPING
+                            && RootTransport::GetInstance()->GetNATProperties().GetNATMapping()
+                                   == NATProperties::MAPPING_ENDPOINT_DEPENDENT;
     if (bUseSecondServer)
     {
         unsigned int uiSent = 0;
@@ -331,8 +319,8 @@ void JobPerformNATCheck::StepStart()
         ++it;
         while (it != m_servers.end())
         {
-            if (it->GetAddress() != m_servers.front().GetAddress() &&
-                it->GetPortNumber() == m_servers.front().GetPortNumber())
+            if (it->GetAddress() != m_servers.front().GetAddress()
+                && it->GetPortNumber() == m_servers.front().GetPortNumber())
             {
                 unsigned int uiSent = 0;
                 while (uiSent < SEND_REPEAT_COUNT)
@@ -379,8 +367,7 @@ void JobPerformNATCheck::StepTest4()
     m_servers.remove(m_destination);
     for (ServerList::iterator it = m_servers.begin(); it != m_servers.end(); ++it)
     {
-        if (it->GetAddress() != m_destination.GetAddress() &&
-            it->GetPortNumber() == m_destination.GetPortNumber())
+        if (it->GetAddress() != m_destination.GetAddress() && it->GetPortNumber() == m_destination.GetPortNumber())
         {
             m_destination = *it;
             m_uiTest = TEST_4;
@@ -396,8 +383,7 @@ void JobPerformNATCheck::StepTest5()
     m_servers.remove(m_destination);
     for (ServerList::iterator it = m_servers.begin(); it != m_servers.end(); ++it)
     {
-        if (it->GetAddress() == m_destination.GetAddress() &&
-            it->GetPortNumber() != m_destination.GetPortNumber())
+        if (it->GetAddress() == m_destination.GetAddress() && it->GetPortNumber() != m_destination.GetPortNumber())
         {
             m_destination = *it;
             m_uiTest = TEST_5;
@@ -413,8 +399,7 @@ void JobPerformNATCheck::StepSend()
     m_sendMessage.m_uiType = m_uiTest;
     m_sendMessage.m_uiTargetAddress = m_publicAddress.GetAddress();
     m_sendMessage.ToNetworkByteOrder();
-    m_socket.Send(reinterpret_cast<const unsigned char*>(&m_sendMessage),
-        sizeof(NATCheckMessage), m_destination);
+    m_socket.Send(reinterpret_cast<const unsigned char*>(&m_sendMessage), sizeof(NATCheckMessage), m_destination);
     m_sendTime = Time::GetTime();
     unsigned int uiTimeout = m_uiRoundTripTime + (m_uiRoundTripTime >> 2);
     if (uiTimeout < MINIMUM_TIMEOUT)
@@ -426,8 +411,9 @@ void JobPerformNATCheck::StepSend()
 void JobPerformNATCheck::StepRecv()
 {
     unsigned int uiReceived = 0;
-    if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage),
-            sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == SOCKET_SUCCESS)
+    if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage), sizeof(NATCheckMessage), &uiReceived,
+                              &m_receivedFrom)
+        == SOCKET_SUCCESS)
     {
         m_uiTimeoutCount = 0;
         m_recvMessage.FromNetworkByteOrder();
@@ -593,8 +579,9 @@ bool JobPerformNATCheck::SendNextQueuedMessage()
     if (m_queue.empty())
         return false;
     bool bSent = true;
-    if (m_socket.Send(reinterpret_cast<const unsigned char*>(&m_queue.begin()->second),
-            sizeof(NATCheckMessage), m_queue.begin()->first) != SOCKET_SUCCESS)
+    if (m_socket.Send(reinterpret_cast<const unsigned char*>(&m_queue.begin()->second), sizeof(NATCheckMessage),
+                      m_queue.begin()->first)
+        != SOCKET_SUCCESS)
         bSent = false;
     m_queue.pop_front();
     return bSent;
@@ -611,9 +598,10 @@ void JobPerformNATCheck::StepRun()
             bSent = SendNextQueuedMessage();
         } while (bSent);
         unsigned int uiReceived = 0;
-        if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage),
-                sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == SOCKET_SUCCESS &&
-            uiReceived == sizeof(NATCheckMessage))
+        if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage), sizeof(NATCheckMessage),
+                                  &uiReceived, &m_receivedFrom)
+                == SOCKET_SUCCESS
+            && uiReceived == sizeof(NATCheckMessage))
         {
             m_recvMessage.FromNetworkByteOrder();
             unsigned int uiIndex = m_recvMessage.m_uiType - MESSAGE_TYPE_TEST1_REQUEST;
@@ -629,8 +617,7 @@ void JobPerformNATCheck::StepRun()
             }
             else if (m_mode == CHECK_MODE_SIMPLIFIED)
             {
-                if (m_aReceived[0].m_uiCount != 0 && m_aReceived[1].m_uiCount != 0 &&
-                    m_aReceived[2].m_uiCount != 0)
+                if (m_aReceived[0].m_uiCount != 0 && m_aReceived[1].m_uiCount != 0 && m_aReceived[2].m_uiCount != 0)
                     m_bResponsesReceived = true;
             }
         }
@@ -640,8 +627,7 @@ void JobPerformNATCheck::StepRun()
     unsigned int uiFirstWord = m_aReceived[0].m_message.m_uiPortWord;
     if (m_mode != CHECK_MODE_PORT_MAPPING)
     {
-        if ((uiFirstWord == 0 || m_aReceived[2].m_message.m_uiPortWord == 0) &&
-            m_uiAttempt < MAX_ATTEMPT_COUNT)
+        if ((uiFirstWord == 0 || m_aReceived[2].m_message.m_uiPortWord == 0) && m_uiAttempt < MAX_ATTEMPT_COUNT)
         {
             m_bResponsesReceived = false;
             ++m_uiAttempt;
@@ -653,12 +639,10 @@ void JobPerformNATCheck::StepRun()
     }
     if (uiFirstWord != 0 || m_uiAttempt >= PORT_MAPPING_ATTEMPT_LIMIT)
     {
-        if (uiFirstWord >= s_uiPreviousPortWord || !m_bRelayProbe ||
-            m_uiAttempt >= PORT_MAPPING_ATTEMPT_LIMIT)
+        if (uiFirstWord >= s_uiPreviousPortWord || !m_bRelayProbe || m_uiAttempt >= PORT_MAPPING_ATTEMPT_LIMIT)
         {
             s_uiPreviousPortWord = uiFirstWord;
-            SetStep(Step(static_cast<Step::Function>(&JobPerformNATCheck::StepSendProbeRequest),
-                L""));
+            SetStep(Step(static_cast<Step::Function>(&JobPerformNATCheck::StepSendProbeRequest), L""));
             return;
         }
         m_socket.Close();
@@ -672,11 +656,9 @@ void JobPerformNATCheck::StepRun()
 
 void JobPerformNATCheck::StepSendProbeRequest()
 {
-    InetAddress probeAddress(m_aReceived[0].m_message.m_uiAddress,
-        m_aReceived[0].m_message.GetPortNumber());
+    InetAddress probeAddress(m_aReceived[0].m_message.m_uiAddress, m_aReceived[0].m_message.GetPortNumber());
     m_sourceURL.SetInetAddress(&probeAddress);
-    short iPortIncrement =
-        RootTransport::GetInstance()->GetNATProperties().GetNATMappingPortIncrement();
+    short iPortIncrement = RootTransport::GetInstance()->GetNATProperties().GetNATMappingPortIncrement();
     unsigned short uiPort = m_sourceURL.GetPortNumber() + iPortIncrement;
     if (uiPort >= MAXIMUM_PORT_NUMBER)
         uiPort = MAXIMUM_PORT_NUMBER;
@@ -692,8 +674,7 @@ void JobPerformNATCheck::StepSendProbeRequest()
 
 void JobPerformNATCheck::StepEnd()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetToComplete();
@@ -701,8 +682,7 @@ void JobPerformNATCheck::StepEnd()
     }
     if (RootTransport::GetInstance() == 0)
     {
-        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT),
-            false);
+        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT), false);
         SetToComplete();
         return;
     }
@@ -747,11 +727,9 @@ void JobPerformNATCheck::StepEnd()
         bSucceeded = false;
     }
     if (bSucceeded)
-        pCallContext->SetStateImpl(CallContext::CallSucceeded,
-            qResult(NAT_CHECK_SUCCEEDED_RESULT), true);
+        pCallContext->SetStateImpl(CallContext::CallSucceeded, qResult(NAT_CHECK_SUCCEEDED_RESULT), true);
     else
-        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT),
-            false);
+        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT), false);
     SetToComplete();
 }
 

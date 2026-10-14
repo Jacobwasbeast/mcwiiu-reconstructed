@@ -24,15 +24,9 @@ public:
     explicit Buffer(const String& rString);
     virtual ~Buffer();
 
-    Buffer()
-    {
-        Initialize(GetDefaultBufferSize(), 0);
-    }
+    Buffer() { Initialize(GetDefaultBufferSize(), 0); }
 
-    Buffer(unsigned int uiRealSize, unsigned char uiFlags)
-    {
-        Initialize(uiRealSize, uiFlags);
-    }
+    Buffer(unsigned int uiRealSize, unsigned char uiFlags) { Initialize(uiRealSize, uiFlags); }
 
     Buffer& operator=(const Buffer& rBuffer);
     Buffer operator+(const Buffer& rBuffer);
@@ -65,45 +59,21 @@ public:
     static void SetDefaultBufferSize(unsigned int uiSize);
     static unsigned int GetAllocateSize(unsigned int uiCurrentSize, unsigned int uiRequiredSize);
 
-    unsigned char* GetData() const
-    {
-        return m_pData + m_uiHeadShiftSize;
-    }
+    unsigned char* GetData() const { return m_pData + m_uiHeadShiftSize; }
 
-    bool IsPooled() const
-    {
-        return (m_uiFlags & BUFFER_FLAG_POOLED) != 0;
-    }
+    bool IsPooled() const { return (m_uiFlags & BUFFER_FLAG_POOLED) != 0; }
 
-    unsigned char GetTTL() const
-    {
-        return m_uiTTL;
-    }
+    unsigned char GetTTL() const { return m_uiTTL; }
 
-    void SetTTL(unsigned char uiTTL)
-    {
-        m_uiTTL = uiTTL;
-    }
+    void SetTTL(unsigned char uiTTL) { m_uiTTL = uiTTL; }
 
-    unsigned int GetLength() const
-    {
-        return m_uiLength;
-    }
+    unsigned int GetLength() const { return m_uiLength; }
 
-    void SetLength(unsigned int uiLength)
-    {
-        m_uiLength = uiLength;
-    }
+    void SetLength(unsigned int uiLength) { m_uiLength = uiLength; }
 
-    unsigned int GetRealSize() const
-    {
-        return m_uiRealSize;
-    }
+    unsigned int GetRealSize() const { return m_uiRealSize; }
 
-    unsigned int GetHeadShiftSize() const
-    {
-        return m_uiHeadShiftSize;
-    }
+    unsigned int GetHeadShiftSize() const { return m_uiHeadShiftSize; }
 
     void Clear()
     {

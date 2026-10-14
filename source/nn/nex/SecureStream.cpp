@@ -27,9 +27,9 @@ enum
 }
 
 SecureStream::SecureStream()
-    : ConnectionOrientedStream(Stream::RendezVousSecure, 0)
-    , m_pAuthenticationClient(new AuthenticationClient)
-    , m_pSecureConnectionClient(new SecureConnectionClient)
+    : ConnectionOrientedStream(Stream::RendezVousSecure, 0),
+      m_pAuthenticationClient(new AuthenticationClient),
+      m_pSecureConnectionClient(new SecureConnectionClient)
 {
     m_pAssociatedStream = 0;
     m_pCredentials = 0;
@@ -46,8 +46,7 @@ SecureStream::~SecureStream()
     delete m_pAuthenticationClient;
 }
 
-bool SecureStream::FilterIncomingConnection(Buffer* pRequest, Buffer* pResponse,
-    EndPoint* pEndPoint)
+bool SecureStream::FilterIncomingConnection(Buffer* pRequest, Buffer* pResponse, EndPoint* pEndPoint)
 {
     if (pRequest == 0)
         return false;
@@ -56,8 +55,8 @@ bool SecureStream::FilterIncomingConnection(Buffer* pRequest, Buffer* pResponse,
     BitStream responseStream(pResponse);
     unsigned int uiConnectionID = 0;
     Ticket* pTicket = 0;
-    if (KerberosAuthentication::ValidateConnectionRequest(&requestStream, &responseStream,
-            m_pAuthenticationClient, &uiConnectionID, &pTicket))
+    if (KerberosAuthentication::ValidateConnectionRequest(&requestStream, &responseStream, m_pAuthenticationClient,
+                                                          &uiConnectionID, &pTicket))
     {
         if (!pEndPoint->PeerIsConnected() && !pEndPoint->IsAnyPacketProcessed())
         {
@@ -213,11 +212,11 @@ qResult SecureStream::GetOption(unsigned int, UserContext&)
     return qResult(STREAM_RESULT_ERROR);
 }
 
-bool SecureStreamConnectionFilter(const UserContext& rUserContext, Buffer* pRequest,
-    Buffer* pResponse, EndPoint* pEndPoint)
+bool SecureStreamConnectionFilter(const UserContext& rUserContext, Buffer* pRequest, Buffer* pResponse,
+                                  EndPoint* pEndPoint)
 {
-    return static_cast<SecureStream*>(rUserContext.GetPointer())->FilterIncomingConnection(
-        pRequest, pResponse, pEndPoint);
+    return static_cast<SecureStream*>(rUserContext.GetPointer())
+        ->FilterIncomingConnection(pRequest, pResponse, pEndPoint);
 }
 
 }

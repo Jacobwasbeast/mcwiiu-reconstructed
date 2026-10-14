@@ -11,14 +11,9 @@ namespace nex
 class DataStorePrepareGetParamV1 : public _DDL_DataStorePrepareGetParamV1
 {
 public:
-    DataStorePrepareGetParamV1()
-    {
-        m_uiDataId = 0;
-    }
+    DataStorePrepareGetParamV1() { m_uiDataId = 0; }
 
-    virtual ~DataStorePrepareGetParamV1()
-    {
-    }
+    virtual ~DataStorePrepareGetParamV1() {}
 };
 
 }

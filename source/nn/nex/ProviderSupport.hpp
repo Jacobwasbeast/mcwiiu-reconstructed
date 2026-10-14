@@ -6,11 +6,15 @@
 #include "nn/nex/MatchMakingProtocolExtClient.hpp"
 #include "nn/nex/RootObject.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class Credentials;
 class Gathering;
 
 class MatchMakingClient;
 
-}}
+}
+}

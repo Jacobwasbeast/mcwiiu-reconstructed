@@ -18,16 +18,15 @@ public:
     {
     public:
         iterator(const qReservedQueue<T>* pQueue, unsigned int uiIndex, bool bEnd)
-            : m_pQueue(pQueue), m_uiIndex(uiIndex), m_bEnd(bEnd)
+            : m_pQueue(pQueue),
+              m_uiIndex(uiIndex),
+              m_bEnd(bEnd)
         {
         }
 
         bool operator==(const iterator& rOther) const;
 
-        bool operator!=(const iterator& rOther) const
-        {
-            return !(*this == rOther);
-        }
+        bool operator!=(const iterator& rOther) const { return !(*this == rOther); }
 
         const T& operator*() const;
 
@@ -45,29 +44,21 @@ public:
     };
 
     explicit qReservedQueue(unsigned int uiCapacity)
-        : m_elements(uiCapacity), m_uiBack(0), m_uiFront(0), m_iSize(0), m_uiCapacity(uiCapacity)
+        : m_elements(uiCapacity),
+          m_uiBack(0),
+          m_uiFront(0),
+          m_iSize(0),
+          m_uiCapacity(uiCapacity)
     {
     }
 
-    bool empty() const
-    {
-        return m_iSize == 0;
-    }
+    bool empty() const { return m_iSize == 0; }
 
-    int size() const
-    {
-        return m_iSize;
-    }
+    int size() const { return m_iSize; }
 
-    unsigned int capacity() const
-    {
-        return m_uiCapacity;
-    }
+    unsigned int capacity() const { return m_uiCapacity; }
 
-    T& front()
-    {
-        return m_elements[m_uiFront];
-    }
+    T& front() { return m_elements[m_uiFront]; }
 
     void push(const T& rElement)
     {
@@ -93,20 +84,11 @@ public:
         m_uiFront = (m_uiFront + uiCount) % m_uiCapacity;
     }
 
-    T& operator[](unsigned int uiIndex)
-    {
-        return m_elements.at((m_uiFront + uiIndex) % m_uiCapacity);
-    }
+    T& operator[](unsigned int uiIndex) { return m_elements.at((m_uiFront + uiIndex) % m_uiCapacity); }
 
-    iterator begin() const
-    {
-        return iterator(this, m_uiFront, false);
-    }
+    iterator begin() const { return iterator(this, m_uiFront, false); }
 
-    iterator end() const
-    {
-        return iterator(this, m_uiBack, true);
-    }
+    iterator end() const { return iterator(this, m_uiBack, true); }
 
 private:
     qVector<T> m_elements;

@@ -28,13 +28,18 @@ public:
     virtual Protocol* CreateResponder() const;
 
     static void ProtoReturn_Register(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallRegister(ProtocolCallContext* pCallContext, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL);
+    bool CallRegister(ProtocolCallContext* pCallContext, qResult* pResult, const qList<StationURL>& rURLs,
+                      unsigned int* pConnectionID, StationURL* pPublicURL);
     static void ProtoReturn_RequestConnectionData(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallRequestConnectionData(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<ConnectionData>* pConnectionData);
+    bool CallRequestConnectionData(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rConnectionID,
+                                   const unsigned int& rPrincipalID, qList<ConnectionData>* pConnectionData);
     static void ProtoReturn_RequestURLs(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallRequestURLs(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<StationURL>* pURLs);
+    bool CallRequestURLs(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rConnectionID,
+                         const unsigned int& rPrincipalID, qList<StationURL>* pURLs);
     static void ProtoReturn_RegisterEx(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallRegisterEx(ProtocolCallContext* pCallContext, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL, const AnyObjectHolder<Data, String>& rCustomData);
+    bool CallRegisterEx(ProtocolCallContext* pCallContext, qResult* pResult, const qList<StationURL>& rURLs,
+                        unsigned int* pConnectionID, StationURL* pPublicURL,
+                        const AnyObjectHolder<Data, String>& rCustomData);
     static void ProtoReturn_TestConnectivity(Message* pMessage, ProtocolCallContext* pCallContext);
     bool CallTestConnectivity(ProtocolCallContext* pCallContext);
     static void ProtoReturn_UpdateURLs(Message* pMessage, ProtocolCallContext* pCallContext);
@@ -44,14 +49,26 @@ public:
     static void ProtoReturn_SendReport(Message* pMessage, ProtocolCallContext* pCallContext);
     bool CallSendReport(ProtocolCallContext* pCallContext, const unsigned int& rReportID, const qBuffer& rReport);
 
-    static bool Register_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL);
-    static bool RequestConnectionData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<ConnectionData>* pConnectionData);
-    static bool RequestURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<StationURL>* pURLs);
-    static bool RegisterEx_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL, const AnyObjectHolder<Data, String>& rCustomData);
+    static bool Register_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult,
+                                        const qList<StationURL>& rURLs, unsigned int* pConnectionID,
+                                        StationURL* pPublicURL);
+    static bool RequestConnectionData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                     bool* pSuccess, const unsigned int& rConnectionID,
+                                                     const unsigned int& rPrincipalID,
+                                                     qList<ConnectionData>* pConnectionData);
+    static bool RequestURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess,
+                                           const unsigned int& rConnectionID, const unsigned int& rPrincipalID,
+                                           qList<StationURL>* pURLs);
+    static bool RegisterEx_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult,
+                                          const qList<StationURL>& rURLs, unsigned int* pConnectionID,
+                                          StationURL* pPublicURL, const AnyObjectHolder<Data, String>& rCustomData);
     static bool TestConnectivity_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage);
-    static bool UpdateURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const qList<StationURL>& rURLs);
-    static bool ReplaceURL_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const StationURL& rTarget, const StationURL& rReplacement);
-    static bool SendReport_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rReportID, const qBuffer& rReport);
+    static bool UpdateURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                          const qList<StationURL>& rURLs);
+    static bool ReplaceURL_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                          const StationURL& rTarget, const StationURL& rReplacement);
+    static bool SendReport_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                          const unsigned int& rReportID, const qBuffer& rReport);
 };
 
 }

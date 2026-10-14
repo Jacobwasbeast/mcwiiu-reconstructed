@@ -22,13 +22,12 @@ public:
     virtual void AddPrefixes(wchar_t* buffer, unsigned int capacity);
     virtual void EndPrefixes(wchar_t* buffer, unsigned int capacity);
     virtual void AddIndent(wchar_t* buffer, unsigned int capacity);
-    virtual void AddMessage(wchar_t* buffer, unsigned int capacity,
-                            const wchar_t* format, va_list arguments);
+    virtual void AddMessage(wchar_t* buffer, unsigned int capacity, const wchar_t* format, va_list arguments);
     virtual void EndString(wchar_t* buffer, unsigned int capacity);
 
     static void AppendToString(wchar_t* buffer, const wchar_t* text, unsigned int capacity);
-    static unsigned int AddMessageImpl(wchar_t* buffer, unsigned int capacity,
-                                       const wchar_t* format, va_list arguments);
+    static unsigned int AddMessageImpl(wchar_t* buffer, unsigned int capacity, const wchar_t* format,
+                                       va_list arguments);
     void IncreaseIndent(unsigned int amount);
     void DecreaseIndent(unsigned int amount);
 

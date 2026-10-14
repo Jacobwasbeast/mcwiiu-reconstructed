@@ -18,8 +18,7 @@ const unsigned char OUTER_PAD_XOR = 0x5C;
 
 }
 
-HMACChecksum::HMACChecksum()
-    : KeyedChecksumAlgorithm(6, 0x40)
+HMACChecksum::HMACChecksum() : KeyedChecksumAlgorithm(6, 0x40)
 {
 }
 
@@ -27,8 +26,8 @@ HMACChecksum::~HMACChecksum()
 {
 }
 
-void HMACChecksum::ChecksumComputeHelper(const unsigned char** ppData,
-    const unsigned int* pLengths, int iCount, MD5& rMd5)
+void HMACChecksum::ChecksumComputeHelper(const unsigned char** ppData, const unsigned int* pLengths, int iCount,
+                                         MD5& rMd5)
 {
     MD5 inner;
     inner.update(m_innerPad, PadBlockSize);
@@ -54,8 +53,8 @@ bool HMACChecksum::ComputeChecksum(const Buffer& rBuffer, Buffer* pChecksum)
     return true;
 }
 
-bool HMACChecksum::ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths,
-    int iCount, SignatureBytes& rSignature)
+bool HMACChecksum::ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths, int iCount,
+                                   SignatureBytes& rSignature)
 {
     MD5 md5;
     ChecksumComputeHelper(ppData, pLengths, iCount, md5);
@@ -64,15 +63,14 @@ bool HMACChecksum::ComputeChecksum(const unsigned char** ppData, const unsigned 
     return true;
 }
 
-unsigned int HMACChecksum::ComputeChecksumForTransportArray(const unsigned char** ppData,
-    const unsigned int* pLengths, int iCount)
+unsigned int HMACChecksum::ComputeChecksumForTransportArray(const unsigned char** ppData, const unsigned int* pLengths,
+                                                            int iCount)
 {
     unsigned int uiChecksum;
     MD5 md5;
     ChecksumComputeHelper(ppData, pLengths, iCount, md5);
     memcpy(&uiChecksum, md5.GetDigest(), sizeof(uiChecksum));
-    return (uiChecksum >> 24) | ((uiChecksum >> 8) & 0xFF00) | ((uiChecksum & 0xFF00) << 8) |
-        (uiChecksum << 24);
+    return (uiChecksum >> 24) | ((uiChecksum >> 8) & 0xFF00) | ((uiChecksum & 0xFF00) << 8) | (uiChecksum << 24);
 }
 
 void HMACChecksum::KeyHasChanged()

@@ -18,13 +18,10 @@ public:
         METHOD_LOG = 1
     };
 
-    explicit _Proto_RemoteLogDeviceProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_RemoteLogDeviceProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual void Log(const String& rMessage) = 0;
 
 private:

@@ -13,13 +13,9 @@ class ProtocolFoundationDDLDeclarations : public DDLDeclarations
 public:
     ProtocolFoundationDDLDeclarations();
 
-    virtual ~ProtocolFoundationDDLDeclarations()
-    {
-    }
+    virtual ~ProtocolFoundationDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

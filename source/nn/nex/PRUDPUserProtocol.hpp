@@ -23,10 +23,9 @@ public:
         ClassID = 13
     };
 
-    typedef void (*UserReceiveCallback)(unsigned int uiConnectionID, unsigned char* pData,
-        unsigned int uiLength);
-    typedef void (*UserPrivateReceiveCallback)(unsigned int uiConnectionID, Buffer* pBuffer,
-        unsigned int uiFlags, unsigned char uiSubStreamID);
+    typedef void (*UserReceiveCallback)(unsigned int uiConnectionID, unsigned char* pData, unsigned int uiLength);
+    typedef void (*UserPrivateReceiveCallback)(unsigned int uiConnectionID, Buffer* pBuffer, unsigned int uiFlags,
+                                               unsigned char uiSubStreamID);
 
     PRUDPUserProtocol();
     virtual ~PRUDPUserProtocol();
@@ -34,8 +33,7 @@ public:
     virtual void Receive(EndPoint* pEndPoint, Buffer* pBuffer, unsigned char uiSubStreamID);
     virtual void FaultDetection(EndPoint* pEndPoint, unsigned int uiError);
     virtual void PeerDisconnected(EndPoint* pEndPoint);
-    virtual void Receive(EndPoint* pEndPoint, Buffer* pBuffer, unsigned int uiFlags,
-        unsigned char uiSubStreamID);
+    virtual void Receive(EndPoint* pEndPoint, Buffer* pBuffer, unsigned int uiFlags, unsigned char uiSubStreamID);
 
     static PRUDPUserProtocol* GetInstance()
     {
@@ -58,8 +56,8 @@ public:
     void UnregisterUserReceiveCallback();
     void RegisterUserPrivateReceiveCallback(UserPrivateReceiveCallback pCallback);
     void UnregisterUserPrivateReceiveCallback();
-    qResult Send(EndPoint* pEndPoint, const unsigned char* pData, unsigned int uiSize,
-        unsigned int uiFlags, unsigned char uiSubStreamID, unsigned int uiKey);
+    qResult Send(EndPoint* pEndPoint, const unsigned char* pData, unsigned int uiSize, unsigned int uiFlags,
+                 unsigned char uiSubStreamID, unsigned int uiKey);
 
 private:
     PseudoSingleton m_instanceControl;

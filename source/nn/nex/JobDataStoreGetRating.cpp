@@ -14,18 +14,18 @@ namespace nex
 {
 
 JobDataStoreGetRating::JobDataStoreGetRating()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_pClient(0)
-    , m_dataIds()
-    , m_ratingInfos()
-    , m_pRatingsList(0)
-    , m_pRatings(0)
-    , m_pResults(0)
-    , m_results()
-    , m_bSingleTarget(false)
-    , m_getRatingContext()
-    , m_uiAccessPassword(0)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_pClient(0),
+      m_dataIds(),
+      m_ratingInfos(),
+      m_pRatingsList(0),
+      m_pRatings(0),
+      m_pResults(0),
+      m_results(),
+      m_bSingleTarget(false),
+      m_getRatingContext(),
+      m_uiAccessPassword(0)
 {
 }
 
@@ -33,9 +33,9 @@ JobDataStoreGetRating::~JobDataStoreGetRating()
 {
 }
 
-qResult JobDataStoreGetRating::Initialize(unsigned int uiCallId,
-    DataStoreLogicServerClientInterface* pClient, const uint64_t& uiDataId,
-    qMap<signed char, DataStoreRatingInfo>* pRatings, uint64_t uiAccessPassword)
+qResult JobDataStoreGetRating::Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
+                                          const uint64_t& uiDataId, qMap<signed char, DataStoreRatingInfo>* pRatings,
+                                          uint64_t uiAccessPassword)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_uiCallId = uiCallId;
@@ -45,17 +45,16 @@ qResult JobDataStoreGetRating::Initialize(unsigned int uiCallId,
     m_pResults = 0;
     m_bSingleTarget = true;
     m_uiAccessPassword = uiAccessPassword;
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
-    m_getRatingContext.SetCredentials(
-        static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    m_getRatingContext.SetCredentials(static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
     SetStep(Step(static_cast<Step::Function>(&JobDataStoreGetRating::StepGetRating), L""));
     return qResult(true);
 }
 
-qResult JobDataStoreGetRating::Initialize(unsigned int uiCallId,
-    DataStoreLogicServerClientInterface* pClient, const qVector<uint64_t>& rDataIds,
-    qVector<qMap<signed char, DataStoreRatingInfo> >* pRatings, qVector<qResult>* pResults)
+qResult JobDataStoreGetRating::Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
+                                          const qVector<uint64_t>& rDataIds,
+                                          qVector<qMap<signed char, DataStoreRatingInfo> >* pRatings,
+                                          qVector<qResult>* pResults)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_uiCallId = uiCallId;
@@ -63,18 +62,15 @@ qResult JobDataStoreGetRating::Initialize(unsigned int uiCallId,
     m_pResults = pResults;
     m_pRatingsList = pRatings;
     m_pClient = pClient;
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
-    m_getRatingContext.SetCredentials(
-        static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    m_getRatingContext.SetCredentials(static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
     SetStep(Step(static_cast<Step::Function>(&JobDataStoreGetRating::StepGetRating), L""));
     return qResult(true);
 }
 
 void JobDataStoreGetRating::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         m_getRatingContext.Cancel(CallContext::CallCanceled);
@@ -98,8 +94,7 @@ void JobDataStoreGetRating::CompleteJob(const qResult& rResult)
 
 void JobDataStoreGetRating::StepGetRating()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -107,24 +102,21 @@ void JobDataStoreGetRating::StepGetRating()
     }
 
     m_getRatingContext.Reset();
-    if (!m_pClient->GetRating(&m_getRatingContext, m_dataIds, &m_ratingInfos, &m_results,
-            m_uiAccessPassword))
+    if (!m_pClient->GetRating(&m_getRatingContext, m_dataIds, &m_ratingInfos, &m_results, m_uiAccessPassword))
     {
         CompleteJob(qResult(RESULT_CORE_CALL_FAILED));
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_getRatingContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_getRatingContext.GetCallID());
     SetToSuspended();
     ResumeOnCallCompletion(&m_getRatingContext,
-        new Step(static_cast<Step::Function>(&JobDataStoreGetRating::StepConvertType), L""));
+                           new Step(static_cast<Step::Function>(&JobDataStoreGetRating::StepConvertType), L""));
 }
 
 void JobDataStoreGetRating::StepConvertType()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));

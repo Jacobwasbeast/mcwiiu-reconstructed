@@ -70,24 +70,14 @@ public:
     static bool RegisterTransportAdapter(TransportAdapter* pAdapter);
     static bool UnregisterTransportAdapter();
 
-    static void SetP2PDataPacketDefaultSignatureKey(const unsigned char* pKey,
-        unsigned int uiLength);
+    static void SetP2PDataPacketDefaultSignatureKey(const unsigned char* pKey, unsigned int uiLength);
     static void SetP2PChecksumAlgorithm(KeyedChecksumAlgorithm* pAlgorithm);
 
-    RootTransport* GetTransport() const
-    {
-        return m_pTransport;
-    }
+    RootTransport* GetTransport() const { return m_pTransport; }
 
-    PRUDPMessageSelector& GetMessageSelector()
-    {
-        return m_messageSelector;
-    }
+    PRUDPMessageSelector& GetMessageSelector() { return m_messageSelector; }
 
-    ConnectivityManager& GetConnectivityManager()
-    {
-        return m_connectivityManager;
-    }
+    ConnectivityManager& GetConnectivityManager() { return m_connectivityManager; }
 
     NATTraversalEngine* GetNATTraversalEngine();
 

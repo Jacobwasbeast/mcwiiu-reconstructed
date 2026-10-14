@@ -22,7 +22,8 @@ public:
     {
     public:
         RTEntry(const InetAddress& rAddress, unsigned int uiTimeRemaining)
-            : m_address(rAddress), m_timeRemaining(uiTimeRemaining)
+            : m_address(rAddress),
+              m_timeRemaining(uiTimeRemaining)
         {
         }
 
@@ -43,10 +44,7 @@ public:
     bool Find(const InetAddress& rKey, InetAddress& rAddress) const;
     void Clean();
 
-    unsigned int GetSize() const
-    {
-        return m_entries.size();
-    }
+    unsigned int GetSize() const { return m_entries.size(); }
 
     void PeriodicHouseCleaning();
 

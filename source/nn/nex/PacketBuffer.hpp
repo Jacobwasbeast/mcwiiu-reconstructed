@@ -11,10 +11,7 @@ namespace nex
 class PacketBuffer : public Buffer
 {
 public:
-    PacketBuffer(unsigned int uiRealSize, unsigned char uiFlags)
-        : Buffer(uiRealSize, uiFlags)
-    {
-    }
+    PacketBuffer(unsigned int uiRealSize, unsigned char uiFlags) : Buffer(uiRealSize, uiFlags) {}
 };
 
 }

@@ -19,17 +19,15 @@ class _DDL_NintendoPresence : public Data
 {
 public:
     _DDL_NintendoPresence()
-        : Data()
-        , m_uiStructureVersion(0)
-        , m_GameKey()
-        , m_strGameModeDescription()
-        , m_ApplicationArg(0)
+        : Data(),
+          m_uiStructureVersion(0),
+          m_GameKey(),
+          m_strGameModeDescription(),
+          m_ApplicationArg(0)
     {
     }
 
-    virtual ~_DDL_NintendoPresence()
-    {
-    }
+    virtual ~_DDL_NintendoPresence() {}
 
     _DDL_NintendoPresence& operator=(const _DDL_NintendoPresence& rSource);
     bool operator==(const _DDL_NintendoPresence& rSource) const;

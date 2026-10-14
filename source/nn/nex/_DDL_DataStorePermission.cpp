@@ -18,8 +18,7 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStorePermission& _DDL_DataStorePermission::operator=(
-    const _DDL_DataStorePermission& rSource)
+_DDL_DataStorePermission& _DDL_DataStorePermission::operator=(const _DDL_DataStorePermission& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiPermission = rSource.m_uiPermission;
@@ -59,8 +58,7 @@ void _DDL_DataStorePermission::Add(Message* pMessage, const _DDL_DataStorePermis
     }
 }
 
-void _DDL_DataStorePermission::Extract(Message* pMessage,
-    _DDL_DataStorePermission* pDestination)
+void _DDL_DataStorePermission::Extract(Message* pMessage, _DDL_DataStorePermission* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

@@ -14,9 +14,7 @@ const unsigned short NAT_TRAVERSAL_PROTOCOL_ID = 3;
 
 }
 
-NATTraversalRelayProtocol::NATTraversalRelayProtocol()
-    : _Proto_NATTraversalProtocolServer(1)
-    , m_reportInternalClient(0)
+NATTraversalRelayProtocol::NATTraversalRelayProtocol() : _Proto_NATTraversalProtocolServer(1), m_reportInternalClient(0)
 {
     m_pProtocolClient = 0;
     m_pProtocolClient = new NATTraversalProtocolClient(0);
@@ -79,23 +77,20 @@ void NATTraversalRelayProtocol::RequestProbeInitiationExt(const qList<StationURL
 {
 }
 
-void NATTraversalRelayProtocol::ReportNATTraversalResult(const unsigned int&, const bool&,
-                                                         const unsigned int&)
+void NATTraversalRelayProtocol::ReportNATTraversalResult(const unsigned int&, const bool&, const unsigned int&)
 {
 }
 
-void NATTraversalRelayProtocol::ReportNATProperties(const unsigned int&, const unsigned int&,
-                                                    const unsigned int&)
+void NATTraversalRelayProtocol::ReportNATProperties(const unsigned int&, const unsigned int&, const unsigned int&)
 {
 }
 
-void NATTraversalRelayProtocol::GetRelaySignatureKey(int*, DateTime*, String*, unsigned short*,
-                                                     int*, unsigned int*)
+void NATTraversalRelayProtocol::GetRelaySignatureKey(int*, DateTime*, String*, unsigned short*, int*, unsigned int*)
 {
 }
 
-void NATTraversalRelayProtocol::ReportNATTraversalResultDetail(const unsigned int&, const bool&,
-                                                               const int&, const unsigned int&)
+void NATTraversalRelayProtocol::ReportNATTraversalResultDetail(const unsigned int&, const bool&, const int&,
+                                                               const unsigned int&)
 {
 }
 

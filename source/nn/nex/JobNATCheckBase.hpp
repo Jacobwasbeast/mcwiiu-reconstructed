@@ -24,15 +24,9 @@ public:
     class RecvNATCheckMessage
     {
     public:
-        RecvNATCheckMessage()
-            : m_message()
-            , m_uiCount(0)
-        {
-        }
+        RecvNATCheckMessage() : m_message(), m_uiCount(0) {}
 
-        ~RecvNATCheckMessage()
-        {
-        }
+        ~RecvNATCheckMessage() {}
 
         NATCheckMessage m_message;
         unsigned int m_uiCount;
@@ -40,8 +34,7 @@ public:
 
     struct QueuedMessage
     {
-        QueuedMessage(const InetAddress& rAddress, unsigned int uiType)
-            : first(rAddress)
+        QueuedMessage(const InetAddress& rAddress, unsigned int uiType) : first(rAddress)
         {
             second.m_uiType = uiType;
             second.ToNetworkByteOrder();
@@ -76,10 +69,7 @@ public:
     bool SendNextQueuedMessage();
 
 protected:
-    void QueueMessage(InetAddress address, unsigned int uiType)
-    {
-        m_queue.push_back(QueuedMessage(address, uiType));
-    }
+    void QueueMessage(InetAddress address, unsigned int uiType) { m_queue.push_back(QueuedMessage(address, uiType)); }
 
     InetAddress m_localAddress;
     Socket m_socket;

@@ -11,10 +11,9 @@ class StationURL;
 class NATTransportAdapter
 {
 public:
-    virtual void Receive(const StationURL& rStationURL, const unsigned char* pData,
-        unsigned int uiSize) = 0;
-    virtual void Send(const StationURL& rStationURL, const unsigned char* pData,
-        unsigned int uiSize, unsigned char uiTTL) = 0;
+    virtual void Receive(const StationURL& rStationURL, const unsigned char* pData, unsigned int uiSize) = 0;
+    virtual void Send(const StationURL& rStationURL, const unsigned char* pData, unsigned int uiSize,
+                      unsigned char uiTTL) = 0;
 };
 
 }

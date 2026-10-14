@@ -1,14 +1,16 @@
 #include "nn/nex/CallProtocolMethodOperation.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 enum
 {
     CALL_RESULT_SUCCESS = 0x00010001
 };
 
-CallProtocolMethodOperation::CallProtocolMethodOperation()
-    : Operation(0)
+CallProtocolMethodOperation::CallProtocolMethodOperation() : Operation(0)
 {
     m_attemptCount = 0;
     m_postponed = false;
@@ -57,4 +59,5 @@ UserContext CallProtocolMethodOperation::GetUserContext()
     return m_callUserContext;
 }
 
-}}
+}
+}

@@ -25,8 +25,7 @@ public:
 
     void SetEncryptionKey(const Key& rKey);
     void SetUnreliableEncryptionKey(const Key& rKey);
-    void SetReliableEncryptionKey(const Key& rKey, unsigned char uiEncryptSalt,
-        unsigned char uiDecryptSalt);
+    void SetReliableEncryptionKey(const Key& rKey, unsigned char uiEncryptSalt, unsigned char uiDecryptSalt);
     Key& GetEncryptionKey();
 
     void DecideMaxUserReliableSubStreams(unsigned short uiMaxSubStreams);
@@ -34,8 +33,7 @@ public:
 private:
     typedef qVector<EncryptionAlgorithm*> EncryptorVector;
 
-    void GenerateKey(const Key& rKey, const unsigned char* pSaltA, const unsigned char* pSaltB,
-        Key* pOutput);
+    void GenerateKey(const Key& rKey, const unsigned char* pSaltA, const unsigned char* pSaltB, Key* pOutput);
     void ReinitUserReliableSubStreams();
 
     EncryptorVector m_encryptors;

@@ -14,9 +14,7 @@ class StationURL;
 class NATEchoInterface : public RootObject
 {
 public:
-    virtual ~NATEchoInterface()
-    {
-    }
+    virtual ~NATEchoInterface() {}
 
     virtual bool PrepareMessage(Buffer* pRequest, Buffer* pResponse, StationURL* pStationURL) = 0;
 };

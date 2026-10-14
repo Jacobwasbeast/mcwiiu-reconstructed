@@ -39,10 +39,7 @@ bool CheckCurlSHError(CURLSHcode code)
 
 }
 
-HTTPEngineCurlBase::HTTPEngineCurlBase()
-    : m_requestLock(1)
-    , m_curlLock(1)
-    , m_pMultiHandle(0)
+HTTPEngineCurlBase::HTTPEngineCurlBase() : m_requestLock(1), m_curlLock(1), m_pMultiHandle(0)
 {
     m_nextRequestID = 0;
     m_runningHandles = 0;
@@ -89,7 +86,8 @@ unsigned int HTTPClientWriterCallback(char* pBuffer, unsigned int uiSize, unsign
 
 }
 
-unsigned int HTTPEngineCurlBase::CreateGETRequest(const HTTPURL& rURL, const qVector<String>& rHeaders, HTTPWriter& rWriter)
+unsigned int HTTPEngineCurlBase::CreateGETRequest(const HTTPURL& rURL, const qVector<String>& rHeaders,
+                                                  HTTPWriter& rWriter)
 {
     ScopedCS lock(&m_requestLock);
     HTTPCurlRequest* pRequest = new HTTPCurlRequest();
@@ -113,7 +111,8 @@ unsigned int HTTPClientReaderCallback(char* pBuffer, unsigned int uiSize, unsign
 
 }
 
-unsigned int HTTPEngineCurlBase::CreatePOSTRequest(const HTTPURL& rURL, const qVector<String>& rHeaders, HTTPData& rData, HTTPWriter& rWriter)
+unsigned int HTTPEngineCurlBase::CreatePOSTRequest(const HTTPURL& rURL, const qVector<String>& rHeaders,
+                                                   HTTPData& rData, HTTPWriter& rWriter)
 {
     ScopedCS lock(&m_requestLock);
     HTTPCurlRequest* pRequest = new HTTPCurlRequest();
@@ -137,7 +136,8 @@ unsigned int HTTPClientPutReaderCallback(char* pBuffer, unsigned int uiSize, uns
 
 }
 
-unsigned int HTTPEngineCurlBase::CreatePUTRequest(const HTTPURL& rURL, const qVector<String>& rHeaders, HTTPReader& rReader)
+unsigned int HTTPEngineCurlBase::CreatePUTRequest(const HTTPURL& rURL, const qVector<String>& rHeaders,
+                                                  HTTPReader& rReader)
 {
     ScopedCS lock(&m_requestLock);
     HTTPCurlRequest* pRequest = new HTTPCurlRequest();
@@ -155,7 +155,8 @@ int HTTPEngineCurlBase::CurlMultiAddHandle(void* pHandle)
     return curl_multi_add_handle(m_pMultiHandle, pHandle);
 }
 
-bool HTTPEngineCurlBase::ScheduleRequest(CallContext& rCallContext, unsigned int uiRequestID, HTTPResponse& rResponse, HTTPClientImpl* pClient)
+bool HTTPEngineCurlBase::ScheduleRequest(CallContext& rCallContext, unsigned int uiRequestID, HTTPResponse& rResponse,
+                                         HTTPClientImpl* pClient)
 {
     ScopedCS schedulerLock(&Scheduler::GetInstance()->GetCriticalSection());
     ScopedCS lock(&m_requestLock);
@@ -166,7 +167,8 @@ bool HTTPEngineCurlBase::ScheduleRequest(CallContext& rCallContext, unsigned int
     }
     rCallContext.InitiateCall();
     ApplyConfiguration(uiRequestID);
-    HTTPClientRequestData* pRequestData = new HTTPClientRequestData(rCallContext.GetCallID(), pClient, uiRequestID, &rResponse);
+    HTTPClientRequestData* pRequestData = new HTTPClientRequestData(rCallContext.GetCallID(), pClient, uiRequestID,
+                                                                    &rResponse);
     rCallContext.RegisterCompletionCallback(HTTPClientImpl::OnCompletionCallback, UserContext(pRequestData), false);
     m_requests.push_back(pRequestData);
     CheckMultiResult(CurlMultiAddHandle(pRequest->GetHandle()));
@@ -328,10 +330,7 @@ public:
         curl_global_init_mem(CURL_GLOBAL_NOTHING, CurlMalloc, CurlFree, CurlRealloc, CurlStrDup, CurlCalloc);
     }
 
-    ~CurlEngine()
-    {
-        curl_global_cleanup();
-    }
+    ~CurlEngine() { curl_global_cleanup(); }
 };
 
 }
@@ -403,7 +402,9 @@ int HTTPEngineCurlBase::GetCurlTransferInfo(void* pHandle, unsigned int uiInfo, 
     return curl_easy_getinfo(pHandle, static_cast<CURLINFO>(uiInfo), pValue);
 }
 
-HTTPEngine::TransferProgress HTTPEngineCurlBase::GetDownloadProgress(CallContext* pCallContext, unsigned long long& rCurrent, unsigned long long& rTotal)
+HTTPEngine::TransferProgress HTTPEngineCurlBase::GetDownloadProgress(CallContext* pCallContext,
+                                                                     unsigned long long& rCurrent,
+                                                                     unsigned long long& rTotal)
 {
     double dCurrent = 0.0;
     double dTotal = 0.0;
@@ -413,8 +414,10 @@ HTTPEngine::TransferProgress HTTPEngineCurlBase::GetDownloadProgress(CallContext
     {
         if (m_requests[i]->GetCallID() == pCallContext->GetCallID())
         {
-            GetCurlTransferInfo(m_curlRequests[m_requests[i]->GetRequestID()]->GetHandle(), CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dTotal);
-            GetCurlTransferInfo(m_curlRequests[m_requests[i]->GetRequestID()]->GetHandle(), CURLINFO_SIZE_DOWNLOAD, &dCurrent);
+            GetCurlTransferInfo(m_curlRequests[m_requests[i]->GetRequestID()]->GetHandle(),
+                                CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dTotal);
+            GetCurlTransferInfo(m_curlRequests[m_requests[i]->GetRequestID()]->GetHandle(), CURLINFO_SIZE_DOWNLOAD,
+                                &dCurrent);
             progress = dCurrent > 0.0 ? TRANSFER_STARTED : TRANSFER_NOT_STARTED;
             break;
         }
@@ -432,7 +435,9 @@ HTTPEngine::TransferProgress HTTPEngineCurlBase::GetDownloadProgress(CallContext
     return progress;
 }
 
-HTTPEngine::TransferProgress HTTPEngineCurlBase::GetUploadProgress(CallContext* pCallContext, unsigned long long& rCurrent, unsigned long long& rTotal)
+HTTPEngine::TransferProgress HTTPEngineCurlBase::GetUploadProgress(CallContext* pCallContext,
+                                                                   unsigned long long& rCurrent,
+                                                                   unsigned long long& rTotal)
 {
     double dCurrent = 0.0;
     double dTotal = 0.0;
@@ -442,8 +447,10 @@ HTTPEngine::TransferProgress HTTPEngineCurlBase::GetUploadProgress(CallContext* 
     {
         if (m_requests[i]->GetCallID() == pCallContext->GetCallID())
         {
-            GetCurlTransferInfo(m_curlRequests[m_requests[i]->GetRequestID()]->GetHandle(), CURLINFO_CONTENT_LENGTH_UPLOAD, &dTotal);
-            GetCurlTransferInfo(m_curlRequests[m_requests[i]->GetRequestID()]->GetHandle(), CURLINFO_SIZE_UPLOAD, &dCurrent);
+            GetCurlTransferInfo(m_curlRequests[m_requests[i]->GetRequestID()]->GetHandle(),
+                                CURLINFO_CONTENT_LENGTH_UPLOAD, &dTotal);
+            GetCurlTransferInfo(m_curlRequests[m_requests[i]->GetRequestID()]->GetHandle(), CURLINFO_SIZE_UPLOAD,
+                                &dCurrent);
             progress = dCurrent > 0.0 ? TRANSFER_STARTED : TRANSFER_NOT_STARTED;
             break;
         }
@@ -467,8 +474,9 @@ void HTTPEngineCurlBase::ApplyConfiguration(unsigned int uiRequestID)
     pRequest->SetTransferBufferSize(m_pConfiguration->GetEngineTransferBufferSize());
     if (HTTPModule::GetInstance()->GetProxyName().GetLength() != 0)
     {
-        HTTPProxySettings proxySettings(HTTPModule::GetInstance()->GetProxyName(), HTTPModule::GetInstance()->GetProxyPort(),
-                                        HTTPModule::GetInstance()->GetProxyUsername(), HTTPModule::GetInstance()->GetProxyPassword());
+        HTTPProxySettings proxySettings(
+            HTTPModule::GetInstance()->GetProxyName(), HTTPModule::GetInstance()->GetProxyPort(),
+            HTTPModule::GetInstance()->GetProxyUsername(), HTTPModule::GetInstance()->GetProxyPassword());
         pRequest->SetProxy(proxySettings);
     }
 }
@@ -481,8 +489,9 @@ unsigned int HTTPEngineCurlBase::RequestCompleted(void* pHandle)
         if (m_curlRequests[m_requests[i]->GetRequestID()]->GetHandle() == pHandle)
         {
             HTTPClientRequestData* pRequestData = m_requests[i];
-            pRequestData->GetResponse()->OnResponseReceived(m_curlRequests[pRequestData->GetRequestID()]->GetResponseCode(),
-                                                            m_curlRequests[pRequestData->GetRequestID()]->GetHeaders());
+            pRequestData->GetResponse()->OnResponseReceived(
+                m_curlRequests[pRequestData->GetRequestID()]->GetResponseCode(),
+                m_curlRequests[pRequestData->GetRequestID()]->GetHeaders());
             pRequestData->SetCompleted();
             return pRequestData->GetCallID();
         }

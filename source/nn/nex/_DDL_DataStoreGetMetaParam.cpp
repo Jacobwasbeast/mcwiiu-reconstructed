@@ -17,8 +17,7 @@ const uint8_t GET_META_PARAM_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStoreGetMetaParam& _DDL_DataStoreGetMetaParam::operator=(
-    const _DDL_DataStoreGetMetaParam& rSource)
+_DDL_DataStoreGetMetaParam& _DDL_DataStoreGetMetaParam::operator=(const _DDL_DataStoreGetMetaParam& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiDataId = rSource.m_uiDataId;
@@ -28,8 +27,7 @@ _DDL_DataStoreGetMetaParam& _DDL_DataStoreGetMetaParam::operator=(
     return *this;
 }
 
-void _DDL_DataStoreGetMetaParam::Add(Message* pMessage,
-    const _DDL_DataStoreGetMetaParam& rSource)
+void _DDL_DataStoreGetMetaParam::Add(Message* pMessage, const _DDL_DataStoreGetMetaParam& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -58,14 +56,12 @@ void _DDL_DataStoreGetMetaParam::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
-void _DDL_DataStoreGetMetaParam::Extract(Message* pMessage,
-    _DDL_DataStoreGetMetaParam* pDestination)
+void _DDL_DataStoreGetMetaParam::Extract(Message* pMessage, _DDL_DataStoreGetMetaParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

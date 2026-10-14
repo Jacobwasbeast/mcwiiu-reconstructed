@@ -32,16 +32,17 @@ enum LoginResult
 
 }
 
-JobTicketManagerLoginWithData::JobTicketManagerLoginWithData(unsigned int uiCallId,
-    TicketManager* pTicketManager, qResult* pResult, const char* pPassword,
-    unsigned int* pPrincipalID, RVConnectionData* pConnectionData,
-    CustomDataHolder<LoginData>* pLoginData)
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_keyContext()
-    , m_key()
-    , m_pLoginData(pLoginData)
-    , m_loginContext(0)
-    , m_ticketData()
+JobTicketManagerLoginWithData::JobTicketManagerLoginWithData(unsigned int uiCallId, TicketManager* pTicketManager,
+                                                             qResult* pResult, const char* pPassword,
+                                                             unsigned int* pPrincipalID,
+                                                             RVConnectionData* pConnectionData,
+                                                             CustomDataHolder<LoginData>* pLoginData)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_keyContext(),
+      m_key(),
+      m_pLoginData(pLoginData),
+      m_loginContext(0),
+      m_ticketData()
 {
     m_pPrincipalID = pPrincipalID;
     m_uiCallId = uiCallId;
@@ -62,8 +63,7 @@ JobTicketManagerLoginWithData::~JobTicketManagerLoginWithData()
 void JobTicketManagerLoginWithData::CompleteJob(CallContext::State state, qResult result)
 {
     SetToComplete();
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
         pCallContext->SetStateImpl(state, result, true);
 }
@@ -72,9 +72,8 @@ void JobTicketManagerLoginWithData::InitiateLogin()
 {
     AuthenticationClient* pAuthenticationClient = m_pTicketManager->m_pAuthenticationClient;
     m_loginContext.m_expirationTime = pAuthenticationClient->m_loginDeadline;
-    if (!m_pTicketManager->m_pAuthenticationClient->m_pTicketGrantingProtocolClient
-             ->CallLoginWithContext(&m_loginContext, m_pResult, *m_pLoginData, m_pPrincipalID,
-                 &m_ticketData, m_pConnectionData))
+    if (!m_pTicketManager->m_pAuthenticationClient->m_pTicketGrantingProtocolClient->CallLoginWithContext(
+            &m_loginContext, m_pResult, *m_pLoginData, m_pPrincipalID, &m_ticketData, m_pConnectionData))
     {
         CompleteJob(CallContext::CallFailed, qResult(CALL_INITIATION_FAILED_RESULT));
         return;
@@ -82,7 +81,8 @@ void JobTicketManagerLoginWithData::InitiateLogin()
     if (m_loginContext.GetState() == CallContext::CallInProgress)
     {
         SetToSuspended();
-        ResumeOnCallCompletion(&m_loginContext,
+        ResumeOnCallCompletion(
+            &m_loginContext,
             new Step(static_cast<Step::Function>(&JobTicketManagerLoginWithData::ProcessLoginResult), L""));
         return;
     }
@@ -127,7 +127,7 @@ void JobTicketManagerLoginWithData::DeriveKey()
     {
         SetToSuspended();
         ResumeOnCallCompletion(&m_keyContext,
-            new Step(static_cast<Step::Function>(&JobTicketManagerLoginWithData::ValidateKey), L""));
+                               new Step(static_cast<Step::Function>(&JobTicketManagerLoginWithData::ValidateKey), L""));
     }
     else
     {
@@ -141,8 +141,7 @@ void JobTicketManagerLoginWithData::ValidateKey()
     {
         m_pTicketManager->m_pAuthenticationClient->m_pKerberosEncryption->SetKey(m_key);
         Buffer decryptedTicket;
-        if (!m_pTicketManager->m_pAuthenticationClient->m_pKerberosEncryption->Decrypt(m_ticketData,
-                &decryptedTicket))
+        if (!m_pTicketManager->m_pAuthenticationClient->m_pKerberosEncryption->Decrypt(m_ticketData, &decryptedTicket))
         {
             *m_pResult = qResult(TICKET_DECRYPTION_FAILED_RESULT);
             CompleteJob(CallContext::CallSucceeded, qResult(TICKET_VALIDATION_FAILED_RESULT));

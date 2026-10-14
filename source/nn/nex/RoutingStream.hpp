@@ -28,33 +28,25 @@ class RoutingStream : public Stream
 {
 public:
     typedef std::pair<InetAddress, InetAddress> AddressPair;
-    typedef std::map<AddressPair, Time, std::less<AddressPair>,
-                     MemAllocator<std::pair<const AddressPair, Time> > >
+    typedef std::map<AddressPair, Time, std::less<AddressPair>, MemAllocator<std::pair<const AddressPair, Time> > >
         HistoryMap;
-    typedef std::map<InetAddress, Time, std::less<InetAddress>,
-                     MemAllocator<std::pair<const InetAddress, Time> > >
+    typedef std::map<InetAddress, Time, std::less<InetAddress>, MemAllocator<std::pair<const InetAddress, Time> > >
         DenyMap;
-    typedef bool (*RoutingFilter)(const InetAddress& rTarget, const InetAddress& rSource,
-        Packet* pPacket);
+    typedef bool (*RoutingFilter)(const InetAddress& rTarget, const InetAddress& rSource, Packet* pPacket);
 
     RoutingStream();
     virtual ~RoutingStream();
 
-    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
-        Packet* pPacket);
+    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket);
     virtual void DoWork();
 
-    static PacketOut* BuildRoutingPacket(Buffer* pPayload, PacketType type,
-        const InetAddress& rAddress);
+    static PacketOut* BuildRoutingPacket(Buffer* pPayload, PacketType type, const InetAddress& rAddress);
 
     void CleanHostRoutingHistory();
     unsigned int GetHistoryCount(const InetAddress* pAddress);
     void SetDenyForAddress(const InetAddress* pAddress);
 
-    RoutingTable* GetRoutingTable()
-    {
-        return &m_routingTable;
-    }
+    RoutingTable* GetRoutingTable() { return &m_routingTable; }
 
 private:
     friend class Router;

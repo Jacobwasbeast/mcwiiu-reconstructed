@@ -17,22 +17,15 @@ public:
     virtual ~MD5ChecksumWithKey();
 
     virtual bool ComputeChecksum(const Buffer& rBuffer, Buffer* pChecksum);
-    virtual bool ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths,
-        int iCount, SignatureBytes& rSignature);
-    virtual bool IsReady() const
-    {
-        return true;
-    }
-    virtual unsigned int ComputeChecksumForTransportArray(const unsigned char** ppData,
-        const unsigned int* pLengths, int iCount);
-    virtual unsigned char GetChecksumLength()
-    {
-        return 16;
-    }
+    virtual bool ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths, int iCount,
+                                 SignatureBytes& rSignature);
+    virtual bool IsReady() const { return true; }
+    virtual unsigned int ComputeChecksumForTransportArray(const unsigned char** ppData, const unsigned int* pLengths,
+                                                          int iCount);
+    virtual unsigned char GetChecksumLength() { return 16; }
 
 private:
-    void ChecksumComputeHelper(const unsigned char** ppData, const unsigned int* pLengths,
-        int iCount, MD5& rMd5);
+    void ChecksumComputeHelper(const unsigned char** ppData, const unsigned int* pLengths, int iCount, MD5& rMd5);
 };
 
 }

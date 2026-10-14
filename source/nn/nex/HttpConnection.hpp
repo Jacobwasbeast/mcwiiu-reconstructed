@@ -28,18 +28,13 @@ public:
         BOUNDARY_CAPACITY = 41
     };
 
-    virtual ~HttpConnection()
-    {
-    }
+    virtual ~HttpConnection() {}
 
     virtual qResult Initialize(const char* pUrl, Method method) = 0;
     virtual qResult AddHeaderField(const char* pName, const char* pValue) = 0;
     virtual qResult AddPostData(const char* pName, const char* pValue) = 0;
     virtual void UseChunkedPost(unsigned int uiContentLength) = 0;
-    virtual bool IsUseChunkedPost() const
-    {
-        return m_bUseChunkedPost;
-    }
+    virtual bool IsUseChunkedPost() const { return m_bUseChunkedPost; }
 
     virtual void CompleteChunkedPost() = 0;
     virtual bool IsCompleteChunkedPost() const = 0;
@@ -54,29 +49,18 @@ public:
     virtual bool IsFinished() const = 0;
     virtual qResult AddFormData(const char* pName, const void* pData, unsigned int uiSize) = 0;
     virtual bool GetResponseHeader(const char* pName, String* pValue) const = 0;
-    virtual void NoMoreResponseHeader()
-    {
-    }
+    virtual void NoMoreResponseHeader() {}
 
     virtual bool AddRootCa(const unsigned char* pCertificate, int iSize) = 0;
     virtual void SetTransferBufferSize(unsigned int uiSize) = 0;
 
     const char* GetBoundaryString() const;
 
-    void SetThreadPriority(unsigned int uiPriority)
-    {
-        m_uiThreadPriority = uiPriority;
-    }
+    void SetThreadPriority(unsigned int uiPriority) { m_uiThreadPriority = uiPriority; }
 
-    void SetUnknown9(bool bValue)
-    {
-        m_bUnknown9 = bValue;
-    }
+    void SetUnknown9(bool bValue) { m_bUnknown9 = bValue; }
 
-    void SetUnknown10(bool bValue)
-    {
-        m_bUnknown10 = bValue;
-    }
+    void SetUnknown10(bool bValue) { m_bUnknown10 = bValue; }
 
     static HttpConnection* GetHttpConnection();
     static void ReleaseHttpConnection(HttpConnection* pConnection);
@@ -84,11 +68,11 @@ public:
 
 protected:
     HttpConnection()
-        : m_method(HTTP_POST)
-        , m_uiThreadPriority(16)
-        , m_bUseChunkedPost(false)
-        , m_bUnknown9(true)
-        , m_bUnknown10(true)
+        : m_method(HTTP_POST),
+          m_uiThreadPriority(16),
+          m_bUseChunkedPost(false),
+          m_bUnknown9(true),
+          m_bUnknown10(true)
     {
         memset(m_aBoundary, 0, sizeof(m_aBoundary));
     }

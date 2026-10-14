@@ -11,13 +11,9 @@ namespace nex
 class DataStoreGetSpecificMetaParamV1 : public _DDL_DataStoreGetSpecificMetaParamV1
 {
 public:
-    DataStoreGetSpecificMetaParamV1()
-    {
-    }
+    DataStoreGetSpecificMetaParamV1() {}
 
-    virtual ~DataStoreGetSpecificMetaParamV1()
-    {
-    }
+    virtual ~DataStoreGetSpecificMetaParamV1() {}
 };
 
 }

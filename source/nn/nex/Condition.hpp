@@ -22,9 +22,7 @@ public:
     bool WaitForOSEvent(ForcedCriticalSection* pLock, unsigned int uiTimeout);
     bool WaitForEvent(ForcedCriticalSection* pLock, unsigned int uiTimeout);
 
-    void ResetEvent()
-    {
-    }
+    void ResetEvent() {}
 
 private:
     class PlatformCondition : public RootObject

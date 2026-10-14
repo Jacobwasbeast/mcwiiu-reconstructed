@@ -5,7 +5,10 @@
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/qChain.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 namespace
 {
@@ -27,8 +30,12 @@ CriticalSection* BandwidthCounter::GetCriticalSection()
 }
 
 BandwidthCounter::BandwidthCounter(const String& name)
-    : m_link(), m_name(name), m_minimum(0xffffffff),
-      m_maximum(0), m_total(0), m_count(0)
+    : m_link(),
+      m_name(name),
+      m_minimum(0xffffffff),
+      m_maximum(0),
+      m_total(0),
+      m_count(0)
 {
     ScopedCS lock(&g_bandwidthCounterLock);
     g_bandwidthCounters.push_back(this);
@@ -53,8 +60,7 @@ void BandwidthCounter::Reset()
 void BandwidthCounter::ResetAll()
 {
     ScopedCS lock(&g_bandwidthCounterLock);
-    for (CounterChain::iterator it = g_bandwidthCounters.begin();
-         it != g_bandwidthCounters.end(); ++it)
+    for (CounterChain::iterator it = g_bandwidthCounters.begin(); it != g_bandwidthCounters.end(); ++it)
         (*it)->Reset();
 }
 
@@ -65,8 +71,7 @@ void BandwidthCounter::Log()
 void BandwidthCounter::LogAll(bool activeOnly)
 {
     ScopedCS lock(&g_bandwidthCounterLock);
-    for (CounterChain::iterator it = g_bandwidthCounters.begin();
-         it != g_bandwidthCounters.end(); ++it)
+    for (CounterChain::iterator it = g_bandwidthCounters.begin(); it != g_bandwidthCounters.end(); ++it)
     {
         if (!activeOnly || (*it)->m_count != 0)
             (*it)->Log();
@@ -87,4 +92,5 @@ void BandwidthCounter::Trace(unsigned long long)
 {
 }
 
-}}
+}
+}

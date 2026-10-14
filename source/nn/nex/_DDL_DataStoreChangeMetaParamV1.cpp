@@ -33,8 +33,7 @@ _DDL_DataStoreChangeMetaParamV1& _DDL_DataStoreChangeMetaParamV1::operator=(
     return *this;
 }
 
-void _DDL_DataStoreChangeMetaParamV1::Add(Message* pMessage,
-    const _DDL_DataStoreChangeMetaParamV1& rSource)
+void _DDL_DataStoreChangeMetaParamV1::Add(Message* pMessage, const _DDL_DataStoreChangeMetaParamV1& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -73,8 +72,7 @@ void _DDL_DataStoreChangeMetaParamV1::Add(Message* pMessage,
     }
 }
 
-void _DDL_DataStoreChangeMetaParamV1::Extract(Message* pMessage,
-    _DDL_DataStoreChangeMetaParamV1* pDestination)
+void _DDL_DataStoreChangeMetaParamV1::Extract(Message* pMessage, _DDL_DataStoreChangeMetaParamV1* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

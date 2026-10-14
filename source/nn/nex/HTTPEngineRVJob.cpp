@@ -9,8 +9,8 @@ namespace nex
 {
 
 HTTPEngineRVJob::HTTPEngineRVJob(HTTPEngineCurlBase* pEngine)
-    : PeriodicJob(JOB_TYPE_2, DebugString(L""))
-    , m_pEngine(pEngine)
+    : PeriodicJob(JOB_TYPE_2, DebugString(L"")),
+      m_pEngine(pEngine)
 {
 }
 

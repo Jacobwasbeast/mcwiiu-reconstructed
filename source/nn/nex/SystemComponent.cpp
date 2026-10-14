@@ -5,10 +5,8 @@
 #include "nn/nex/Scheduler.hpp"
 #include "nn/nex/SpinTest.hpp"
 
-bool WaitForTerminatedStatePreventBlockCallCallback(
-    nn::nex::RootObject* pObject, unsigned int uiTimeout);
-bool WaitForReadyStatePreventBlockCallCallback(
-    nn::nex::RootObject* pObject, unsigned int uiTimeout);
+bool WaitForTerminatedStatePreventBlockCallCallback(nn::nex::RootObject* pObject, unsigned int uiTimeout);
+bool WaitForReadyStatePreventBlockCallCallback(nn::nex::RootObject* pObject, unsigned int uiTimeout);
 
 namespace nn
 {
@@ -22,10 +20,10 @@ enum
 };
 
 SystemComponent::SystemComponent(const String& rName)
-    : m_Name(rName)
-    , m_uiState(STATE_CREATED)
-    , m_iInUseCount(0)
-    , m_pParent(0)
+    : m_Name(rName),
+      m_uiState(STATE_CREATED),
+      m_iInUseCount(0),
+      m_pParent(0)
 {
 }
 
@@ -200,19 +198,19 @@ qResult SystemComponent::WaitForTerminatedState(unsigned int uiTimeout)
 
     qResult result;
 
-    if (Scheduler::PreventRegularBlockCall(uiTimeout != 0, uiTimeout,
-            &WaitForTerminatedStatePreventBlockCallCallback, this, &result))
+    if (Scheduler::PreventRegularBlockCall(uiTimeout != 0, uiTimeout, &WaitForTerminatedStatePreventBlockCallCallback,
+                                           this, &result))
         return result;
 
     SpinTest spinTest(10, uiTimeout);
 
     spinTest.LeaveOnTimeout();
 
-    while (TestState() != STATE_TERMINATED
-        && spinTest.SpinOnce(
-               L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/SystemComponent.cpp",
-               339, L"TestState()!=Terminated")
-            != 0)
+    while (
+        TestState() != STATE_TERMINATED
+        && spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/SystemComponent.cpp",
+                             339, L"TestState()!=Terminated")
+               != 0)
     {
     }
 
@@ -228,19 +226,19 @@ qResult SystemComponent::WaitForReadyState(unsigned int uiTimeout)
 
     qResult result;
 
-    if (Scheduler::PreventRegularBlockCall(uiTimeout != 0, uiTimeout,
-            &WaitForReadyStatePreventBlockCallCallback, this, &result))
+    if (Scheduler::PreventRegularBlockCall(uiTimeout != 0, uiTimeout, &WaitForReadyStatePreventBlockCallCallback, this,
+                                           &result))
         return result;
 
     SpinTest spinTest(10, uiTimeout);
 
     spinTest.LeaveOnTimeout();
 
-    while (TestState() != STATE_READY
-        && spinTest.SpinOnce(
-               L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/SystemComponent.cpp",
-               368, L"TestState()!=Ready")
-            != 0)
+    while (
+        TestState() != STATE_READY
+        && spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/SystemComponent.cpp",
+                             368, L"TestState()!=Ready")
+               != 0)
     {
     }
 
@@ -251,9 +249,9 @@ qResult SystemComponent::WaitForReadyState(unsigned int uiTimeout)
 }
 
 SystemComponent::Use::Use(SystemComponent* pComponent, const wchar_t* pReason)
-    : m_pComponent(pComponent)
-    , m_pReason(pReason)
-    , m_bInUse(pComponent->IncrementInUseCount(pReason))
+    : m_pComponent(pComponent),
+      m_pReason(pReason),
+      m_bInUse(pComponent->IncrementInUseCount(pReason))
 {
 }
 
@@ -266,16 +264,12 @@ SystemComponent::Use::~Use()
 }
 }
 
-bool WaitForTerminatedStatePreventBlockCallCallback(
-    nn::nex::RootObject* pObject, unsigned int uiTimeout)
+bool WaitForTerminatedStatePreventBlockCallCallback(nn::nex::RootObject* pObject, unsigned int uiTimeout)
 {
-    return static_cast<bool>(
-        static_cast<nn::nex::SystemComponent*>(pObject)->WaitForTerminatedState(uiTimeout));
+    return static_cast<bool>(static_cast<nn::nex::SystemComponent*>(pObject)->WaitForTerminatedState(uiTimeout));
 }
 
-bool WaitForReadyStatePreventBlockCallCallback(
-    nn::nex::RootObject* pObject, unsigned int uiTimeout)
+bool WaitForReadyStatePreventBlockCallCallback(nn::nex::RootObject* pObject, unsigned int uiTimeout)
 {
-    return static_cast<bool>(
-        static_cast<nn::nex::SystemComponent*>(pObject)->WaitForReadyState(uiTimeout));
+    return static_cast<bool>(static_cast<nn::nex::SystemComponent*>(pObject)->WaitForReadyState(uiTimeout));
 }

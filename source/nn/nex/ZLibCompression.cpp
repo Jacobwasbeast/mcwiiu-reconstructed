@@ -34,7 +34,7 @@ ZLibCompression::ZLibCompression()
 ZLibCompression::ZLibCompression(int iWindowBits, int iMemLevel)
 {
     Initialize(iWindowBits == USE_DEFAULT ? DEFAULT_WINDOW_BITS : iWindowBits,
-        iMemLevel == USE_DEFAULT ? DEFAULT_MEM_LEVEL : iMemLevel);
+               iMemLevel == USE_DEFAULT ? DEFAULT_MEM_LEVEL : iMemLevel);
 }
 
 ZLibCompression::~ZLibCompression()
@@ -55,8 +55,8 @@ void ZLibCompression::Initialize(int iWindowBits, int iMemLevel)
     m_pStreams->m_deflate.zalloc = QuazalCZlibAlloc;
     m_pStreams->m_deflate.zfree = QuazalCZlibFree;
     m_pStreams->m_deflate.opaque = 0;
-    quazal_deflateInit2_(&m_pStreams->m_deflate, Z_DEFAULT_COMPRESSION, Z_DEFLATED, iWindowBits,
-        iMemLevel, Z_DEFAULT_STRATEGY, ZLIB_VERSION, sizeof(z_stream));
+    quazal_deflateInit2_(&m_pStreams->m_deflate, Z_DEFAULT_COMPRESSION, Z_DEFLATED, iWindowBits, iMemLevel,
+                         Z_DEFAULT_STRATEGY, ZLIB_VERSION, sizeof(z_stream));
 }
 
 int ZLibCompression::CompressImpl(const Buffer& rSource, Buffer* pDestination)
@@ -64,8 +64,7 @@ int ZLibCompression::CompressImpl(const Buffer& rSource, Buffer* pDestination)
     quazal_deflateReset(&m_pStreams->m_deflate);
     if (pDestination->GetRealSize() - pDestination->GetHeadShiftSize() < rSource.GetLength() + 1)
     {
-        pDestination->ResizeByRealSize(
-            rSource.GetLength() + pDestination->GetHeadShiftSize() + 1);
+        pDestination->ResizeByRealSize(rSource.GetLength() + pDestination->GetHeadShiftSize() + 1);
     }
 
     z_stream* pStream = &m_pStreams->m_deflate;
@@ -74,12 +73,10 @@ int ZLibCompression::CompressImpl(const Buffer& rSource, Buffer* pDestination)
     pStream->next_in = rSource.GetData();
     pStream->next_out = pDestination->GetData() + 1;
     pStream->avail_out = uiAvailable - 1;
-    if (quazal_deflate(pStream, Z_FINISH) == Z_STREAM_END &&
-        m_pStreams->m_deflate.total_out < rSource.GetLength())
+    if (quazal_deflate(pStream, Z_FINISH) == Z_STREAM_END && m_pStreams->m_deflate.total_out < rSource.GetLength())
     {
         unsigned int uiCompressedLength = m_pStreams->m_deflate.total_out;
-        float fRatio = static_cast<float>(rSource.GetLength()) /
-                static_cast<float>(uiCompressedLength) + 1.0f;
+        float fRatio = static_cast<float>(rSource.GetLength()) / static_cast<float>(uiCompressedLength) + 1.0f;
         unsigned char uiMarker = UNKNOWN_RATIO_MARKER;
         if (fRatio <= MAX_RATIO_MARKER)
             uiMarker = static_cast<unsigned char>(static_cast<int>(fRatio));
@@ -106,14 +103,12 @@ int ZLibCompression::DecompressImpl(const Buffer& rSource, Buffer* pDestination)
         bool bFinished = false;
         if (uiMarker == UNKNOWN_RATIO_MARKER)
         {
-            pDestination->ResizeByRealSize(
-                rSource.GetLength() * UNKNOWN_RATIO_EXPANSION + pDestination->GetHeadShiftSize());
+            pDestination->ResizeByRealSize(rSource.GetLength() * UNKNOWN_RATIO_EXPANSION
+                                           + pDestination->GetHeadShiftSize());
         }
-        else if (pDestination->GetRealSize() - pDestination->GetHeadShiftSize() <
-            rSource.GetLength() * uiMarker)
+        else if (pDestination->GetRealSize() - pDestination->GetHeadShiftSize() < rSource.GetLength() * uiMarker)
         {
-            pDestination->ResizeByRealSize(
-                rSource.GetLength() * uiMarker * 2 + pDestination->GetHeadShiftSize());
+            pDestination->ResizeByRealSize(rSource.GetLength() * uiMarker * 2 + pDestination->GetHeadShiftSize());
         }
 
         unsigned int uiAttempt = 0;
@@ -129,9 +124,8 @@ int ZLibCompression::DecompressImpl(const Buffer& rSource, Buffer* pDestination)
             iResult = quazal_inflate(pStream, Z_FINISH);
             if ((m_pStreams->m_inflate.avail_out == 0 && iResult == Z_OK) || iResult == Z_BUF_ERROR)
             {
-                pDestination->ResizeByRealSize(
-                    (pDestination->GetRealSize() - pDestination->GetHeadShiftSize()) * 2 +
-                    pDestination->GetHeadShiftSize());
+                pDestination->ResizeByRealSize((pDestination->GetRealSize() - pDestination->GetHeadShiftSize()) * 2
+                                               + pDestination->GetHeadShiftSize());
             }
             else
             {

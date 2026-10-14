@@ -8,8 +8,12 @@ namespace nex
 {
 
 EmulationDevice::EmulationDevice()
-    : m_enabled(false), m_field4(0), m_bandwidth(UINT_MAX),
-      m_latency(0), m_jitter(0), m_packetDropProbability(0.0f)
+    : m_enabled(false),
+      m_field4(0),
+      m_bandwidth(UINT_MAX),
+      m_latency(0),
+      m_jitter(0),
+      m_packetDropProbability(0.0f)
 {
 }
 

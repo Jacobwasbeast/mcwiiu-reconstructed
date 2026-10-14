@@ -25,8 +25,7 @@ EndPointInfoInterface::~EndPointInfoInterface()
 {
 }
 
-EndPoint::EndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL)
-    : m_stationURL(*pStationURL)
+EndPoint::EndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL) : m_stationURL(*pStationURL)
 {
     m_pStream = pStream;
     m_uiCtorFlag = 0;

@@ -24,10 +24,9 @@ enum TerminateResult
 
 }
 
-JobBackEndServicesTerminate::JobBackEndServicesTerminate(unsigned int uiCallId,
-    BackEndServices* pBackEndServices)
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_callContext()
+JobBackEndServicesTerminate::JobBackEndServicesTerminate(unsigned int uiCallId, BackEndServices* pBackEndServices)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_callContext()
 {
     m_pBackEndServices = pBackEndServices;
     m_uiCallId = uiCallId;
@@ -70,8 +69,7 @@ void JobBackEndServicesTerminate::StepWaitOnLoginCancel()
 
 void JobBackEndServicesTerminate::SetFinalState(CallContext::State state, const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
         pCallContext->SetStateImpl(state, rResult, true);
 
@@ -84,7 +82,8 @@ void JobBackEndServicesTerminate::StepInitLogoutIfRequired()
     {
         m_pBackEndServices->LogoutImpl(&m_callContext, m_pBackEndServices->GetCredentials());
         SetToSuspended();
-        ResumeOnCallCompletion(&m_callContext,
+        ResumeOnCallCompletion(
+            &m_callContext,
             new Step(static_cast<Step::Function>(&JobBackEndServicesTerminate::StepLogoutComplete), L""));
         return;
     }

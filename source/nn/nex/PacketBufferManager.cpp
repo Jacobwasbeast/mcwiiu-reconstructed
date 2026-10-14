@@ -18,7 +18,7 @@ namespace
 
 CriticalSection s_criticalSection;
 
-const unsigned int PACKET_MANAGEMENT_OBJECT_SIZES[3] = { 40, 36, 328 };
+const unsigned int PACKET_MANAGEMENT_OBJECT_SIZES[3] = {40, 36, 328};
 
 const unsigned int PACKET_MANAGEMENT_OBJECT_KINDS = 3;
 
@@ -35,18 +35,18 @@ const unsigned long long TRACE_FILTER_PACKET_BUFFER_POOL = 0x0000008000801000ULL
 }
 
 PacketBufferManager::PacketBufferManager()
-    : PseudoSingleton(ClassID)
-    , m_pfnAllocate(0)
-    , m_pfnAllocateManagementObject(0)
-    , m_pMemory(0)
-    , m_uiMemorySize(0)
-    , m_iInitializeCount(0)
-    , m_uiUnitHeaderSize(PACKET_BUFFER_UNIT_HEADER_SIZE)
-    , m_uiUnitAlignment(PACKET_BUFFER_UNIT_ALIGNMENT)
-    , m_fMemoryUsageRate(0.0f)
-    , m_bActive(false)
-    , m_pPacketBufferHeap(0)
-    , m_pManagementObjectHeap(0)
+    : PseudoSingleton(ClassID),
+      m_pfnAllocate(0),
+      m_pfnAllocateManagementObject(0),
+      m_pMemory(0),
+      m_uiMemorySize(0),
+      m_iInitializeCount(0),
+      m_uiUnitHeaderSize(PACKET_BUFFER_UNIT_HEADER_SIZE),
+      m_uiUnitAlignment(PACKET_BUFFER_UNIT_ALIGNMENT),
+      m_fMemoryUsageRate(0.0f),
+      m_bActive(false),
+      m_pPacketBufferHeap(0),
+      m_pManagementObjectHeap(0)
 {
 }
 
@@ -145,8 +145,8 @@ bool PacketBufferManager::CheckUnitHeapParam(const qVector<UnitHeapParam>& rPara
     return true;
 }
 
-void PacketBufferManager::GetPacketManagementUnitHeapParam(
-    qVector<UnitHeapParam>& rManagementParams, const qVector<UnitHeapParam>& rParams)
+void PacketBufferManager::GetPacketManagementUnitHeapParam(qVector<UnitHeapParam>& rManagementParams,
+                                                           const qVector<UnitHeapParam>& rParams)
 {
     unsigned int uiUnitNum = 0;
 
@@ -187,7 +187,7 @@ unsigned int PacketBufferManager::GetRequiredMemorySize(const qVector<UnitHeapPa
 }
 
 bool PacketBufferManager::GetSimpleUnitHeapParam(unsigned int uiPoolSize, unsigned int uiUnitSize,
-    qVector<UnitHeapParam>& rParams)
+                                                 qVector<UnitHeapParam>& rParams)
 {
     if (uiPoolSize < MinimumPoolSize || uiUnitSize == 0 || uiUnitSize > MaxUnitSize)
         return false;
@@ -223,10 +223,9 @@ bool PacketBufferManager::GetSimpleUnitHeapParam(unsigned int uiPoolSize, unsign
 
     for (unsigned int i = 0; i < aParams.size(); ++i)
     {
-        const unsigned int uiUnitNum =
-            ((uiPoolSize - uiManagementBlockSize * PACKET_MANAGEMENT_OBJECT_MARGIN)
-                / static_cast<unsigned int>(aParams.size()))
-            / (((aParams[i].m_uiUnitSize + 11) & ~3u) + uiManagementBlockSize);
+        const unsigned int uiUnitNum = ((uiPoolSize - uiManagementBlockSize * PACKET_MANAGEMENT_OBJECT_MARGIN)
+                                        / static_cast<unsigned int>(aParams.size()))
+                                       / (((aParams[i].m_uiUnitSize + 11) & ~3u) + uiManagementBlockSize);
 
         if (uiUnitNum == 0)
             return false;
@@ -334,7 +333,7 @@ bool PacketBufferManager::IsAllocatable(unsigned int uiSize, unsigned int uiUnit
                 continue;
 
             uiFreeUnitNum += rUnitHeap.m_uiTotalSize / ((rUnitHeap.m_uiUnitSize + 11) & ~3u)
-                - rUnitHeap.m_uiUsedUnitNum;
+                             - rUnitHeap.m_uiUsedUnitNum;
 
             if (uiUnitNum <= uiFreeUnitNum)
             {
@@ -366,7 +365,6 @@ void PacketBufferManager::GetUnitHeapDebugInfo(qVector<UnitHeapDebugInfo>& rDebu
 
     if (pInstance != 0 && pInstance->m_pPacketBufferHeap != 0)
         pInstance->m_pPacketBufferHeap->GetDebugInfo(rDebugInfo);
-
 }
 
 void PacketBufferManager::GetAllUnitHeapDebugInfo(qVector<UnitHeapDebugInfo>& rDebugInfo)
@@ -386,11 +384,8 @@ void PacketBufferManager::GetAllUnitHeapDebugInfo(qVector<UnitHeapDebugInfo>& rD
         pInstance->m_pManagementObjectHeap->GetDebugInfo(aManagementObjectDebugInfo);
 
     rDebugInfo.clear();
-    rDebugInfo.insert(rDebugInfo.end(), aPacketBufferDebugInfo.begin(),
-        aPacketBufferDebugInfo.end());
-    rDebugInfo.insert(rDebugInfo.end(), aManagementObjectDebugInfo.begin(),
-        aManagementObjectDebugInfo.end());
-
+    rDebugInfo.insert(rDebugInfo.end(), aPacketBufferDebugInfo.begin(), aPacketBufferDebugInfo.end());
+    rDebugInfo.insert(rDebugInfo.end(), aManagementObjectDebugInfo.begin(), aManagementObjectDebugInfo.end());
 }
 
 void PacketBufferManager::Dump(unsigned long long)

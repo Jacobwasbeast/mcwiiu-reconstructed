@@ -28,11 +28,11 @@ class JobConnectEndPoint;
 class JobBackEndServicesLoginWithData : public StepSequenceJob
 {
 public:
-    JobBackEndServicesLoginWithData(unsigned int uiCallId, BackEndServices* pBackEndServices,
-        qResult* pResult, const char* pPassword, const wchar_t* pHost, unsigned short uiPort,
-        const CustomDataHolder<LoginData>& rLoginData,
-        const AnyObjectHolder<Data, String>& rExtraData, Credentials** ppCredentials,
-        int iTimeout);
+    JobBackEndServicesLoginWithData(unsigned int uiCallId, BackEndServices* pBackEndServices, qResult* pResult,
+                                    const char* pPassword, const wchar_t* pHost, unsigned short uiPort,
+                                    const CustomDataHolder<LoginData>& rLoginData,
+                                    const AnyObjectHolder<Data, String>& rExtraData, Credentials** ppCredentials,
+                                    int iTimeout);
     virtual ~JobBackEndServicesLoginWithData();
 
     virtual void CancelJob();

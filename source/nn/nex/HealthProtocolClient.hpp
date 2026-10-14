@@ -15,10 +15,7 @@ public:
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
 
-    virtual Protocol* CreateResponder() const
-    {
-        return new HealthProtocolClient();
-    }
+    virtual Protocol* CreateResponder() const { return new HealthProtocolClient(); }
 
     static void ProtoReturn_PingDaemon(Message* pMessage, ProtocolCallContext* pCallContext);
     bool CallPingDaemon(ProtocolCallContext* pCallContext, bool* pReturnValue);
@@ -32,7 +29,8 @@ public:
     static bool PingDaemon_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pReturnValue);
     static bool PingDatabase_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pReturnValue);
     static bool RunSanityCheck_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pReturnValue);
-    static bool FixSanityErrors_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pReturnValue);
+    static bool FixSanityErrors_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                               bool* pReturnValue);
 };
 
 }

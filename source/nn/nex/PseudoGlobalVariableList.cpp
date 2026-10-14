@@ -93,22 +93,19 @@ void PseudoGlobalVariableList::RemoveVariable(PseudoGlobalVariableRoot* pVariabl
 
 void PseudoGlobalVariableList::ResetContextForAllVariables(unsigned int uiContextId)
 {
-    for (PseudoGlobalVariableRoot* pVariable = s_pFirst; pVariable != 0;
-         pVariable = pVariable->GetNext())
+    for (PseudoGlobalVariableRoot* pVariable = s_pFirst; pVariable != 0; pVariable = pVariable->GetNext())
         pVariable->ResetContext(uiContextId);
 }
 
 void PseudoGlobalVariableList::AllocateExtraContextsForAllVariables()
 {
-    for (PseudoGlobalVariableRoot* pVariable = s_pFirst; pVariable != 0;
-         pVariable = pVariable->GetNext())
+    for (PseudoGlobalVariableRoot* pVariable = s_pFirst; pVariable != 0; pVariable = pVariable->GetNext())
         pVariable->AllocateExtraContexts();
 }
 
 void PseudoGlobalVariableList::FreeExtraContextsForAllVariables()
 {
-    for (PseudoGlobalVariableRoot* pVariable = s_pFirst; pVariable != 0;
-         pVariable = pVariable->GetNext())
+    for (PseudoGlobalVariableRoot* pVariable = s_pFirst; pVariable != 0; pVariable = pVariable->GetNext())
         pVariable->FreeExtraContexts();
 }
 

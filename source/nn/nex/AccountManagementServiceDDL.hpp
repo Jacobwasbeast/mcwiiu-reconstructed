@@ -16,15 +16,9 @@ class Message;
 class _DDL_PublicData : public Data
 {
 public:
-    _DDL_PublicData()
-        : Data()
-        , m_uiStructureVersion(0)
-    {
-    }
+    _DDL_PublicData() : Data(), m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_PublicData()
-    {
-    }
+    virtual ~_DDL_PublicData() {}
 
     _DDL_PublicData& operator=(const _DDL_PublicData& rSource);
     bool operator==(const _DDL_PublicData& rSource) const;
@@ -47,24 +41,15 @@ public:
 class PublicData : public _DDL_PublicData
 {
 public:
-    PublicData()
-        : _DDL_PublicData()
-    {
-    }
+    PublicData() : _DDL_PublicData() {}
 };
 
 class _DDL_PrivateData : public Data
 {
 public:
-    _DDL_PrivateData()
-        : Data()
-        , m_uiStructureVersion(0)
-    {
-    }
+    _DDL_PrivateData() : Data(), m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_PrivateData()
-    {
-    }
+    virtual ~_DDL_PrivateData() {}
 
     _DDL_PrivateData& operator=(const _DDL_PrivateData& rSource);
     bool operator==(const _DDL_PrivateData& rSource) const;
@@ -87,10 +72,7 @@ public:
 class PrivateData : public _DDL_PrivateData
 {
 public:
-    PrivateData()
-        : _DDL_PrivateData()
-    {
-    }
+    PrivateData() : _DDL_PrivateData() {}
 };
 
 }

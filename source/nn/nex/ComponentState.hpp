@@ -12,19 +12,11 @@ namespace nex
 class ComponentState : public SystemComponent
 {
 public:
-    explicit ComponentState(const String& rName)
-        : SystemComponent(rName)
-    {
-    }
+    explicit ComponentState(const String& rName) : SystemComponent(rName) {}
 
-    virtual ~ComponentState()
-    {
-    }
+    virtual ~ComponentState() {}
 
-    bool IsTerminated() const
-    {
-        return m_uiState == STATE_TERMINATED;
-    }
+    bool IsTerminated() const { return m_uiState == STATE_TERMINATED; }
 
     virtual const wchar_t* GetType() const;
     virtual bool IsAKindOf(const wchar_t* pType) const;

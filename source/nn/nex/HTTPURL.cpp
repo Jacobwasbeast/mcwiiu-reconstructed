@@ -11,15 +11,15 @@ namespace nex
 {
 
 HTTPURL::HTTPURL(const String& rURL)
-    : m_scheme(L"http")
-    , m_username(L"")
-    , m_password(L"")
-    , m_host(L"localhost")
-    , m_port(0)
-    , m_path(L"")
-    , m_parameters(L"")
-    , m_query(L"")
-    , m_fragment(L"")
+    : m_scheme(L"http"),
+      m_username(L""),
+      m_password(L""),
+      m_host(L"localhost"),
+      m_port(0),
+      m_path(L""),
+      m_parameters(L""),
+      m_query(L""),
+      m_fragment(L"")
 {
     ParseURL(rURL);
 }

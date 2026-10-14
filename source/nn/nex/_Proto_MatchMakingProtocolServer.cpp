@@ -19,8 +19,8 @@ namespace nn
 namespace nex
 {
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_RegisterGathering(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_RegisterGathering(Message* pRequest, Message* pResponse,
+                                                                          _Proto_MatchMakingProtocolServer* pProtocol)
 {
     AnyObjectHolder<Gathering, String> gathering;
     _Type_any<DDLClassMetaType<Gathering>, _Type_string>::Extract(pRequest, &gathering);
@@ -33,8 +33,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_RegisterGathering(
     _Type_uint32::Add(pResponse, uiGatheringID);
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_UnregisterGathering(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_UnregisterGathering(Message* pRequest, Message* pResponse,
+                                                                            _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -61,8 +61,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_UnregisterGatherings(
     *pResponse << bResult;
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateGathering(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateGathering(Message* pRequest, Message* pResponse,
+                                                                        _Proto_MatchMakingProtocolServer* pProtocol)
 {
     AnyObjectHolder<Gathering, String> gathering;
     _Type_any<DDLClassMetaType<Gathering>, _Type_string>::Extract(pRequest, &gathering);
@@ -75,8 +75,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateGathering(
     *pResponse << bResult;
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_Invite(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_Invite(Message* pRequest, Message* pResponse,
+                                                               _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -101,8 +101,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_Invite(
     *pResponse << bResult;
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_AcceptInvitation(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_AcceptInvitation(Message* pRequest, Message* pResponse,
+                                                                         _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -121,8 +121,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_AcceptInvitation(
     *pResponse << bResult;
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_DeclineInvitation(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_DeclineInvitation(Message* pRequest, Message* pResponse,
+                                                                          _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -141,8 +141,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_DeclineInvitation(
     *pResponse << bResult;
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_CancelInvitation(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_CancelInvitation(Message* pRequest, Message* pResponse,
+                                                                         _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -162,14 +162,13 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_CancelInvitation(
     {
         return;
     }
-    const bool bResult =
-        pProtocol->CancelInvitation(uiGatheringID, principalIDs, message);
+    const bool bResult = pProtocol->CancelInvitation(uiGatheringID, principalIDs, message);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_CANCEL_INVITATION);
     *pResponse << bResult;
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_GetInvitationsSent(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_GetInvitationsSent(Message* pRequest, Message* pResponse,
+                                                                           _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -192,8 +191,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_GetInvitationsReceived(
     _Type_std_list<DDLClassMetaType<Invitation> >::Add(pResponse, invitations);
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_Participate(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_Participate(Message* pRequest, Message* pResponse,
+                                                                    _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -212,8 +211,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_Participate(
     *pResponse << bResult;
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_CancelParticipation(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_CancelParticipation(Message* pRequest, Message* pResponse,
+                                                                     _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -232,8 +231,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_CancelParticipation(
     *pResponse << bResult;
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_GetParticipants(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_GetParticipants(Message* pRequest, Message* pResponse,
+                                                                 _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -247,8 +246,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_GetParticipants(
     _Type_std_list<_Type_uint32>::Add(pResponse, participantIDs);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_AddParticipants(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_AddParticipants(Message* pRequest, Message* pResponse,
+                                                                 _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -268,14 +267,13 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_AddParticipants(
     {
         return;
     }
-    const bool bResult =
-        pProtocol->AddParticipants(uiGatheringID, principalIDs, message);
+    const bool bResult = pProtocol->AddParticipants(uiGatheringID, principalIDs, message);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_ADD_PARTICIPANTS);
     *pResponse << bResult;
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_GetDetailedParticipants(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_GetDetailedParticipants(Message* pRequest, Message* pResponse,
+                                                                         _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -289,8 +287,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_GetDetailedParticipants(
     _Type_std_list<DDLClassMetaType<ParticipantDetails> >::Add(pResponse, participants);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_GetParticipantsURLs(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_GetParticipantsURLs(Message* pRequest, Message* pResponse,
+                                                                     _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -304,8 +302,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_GetParticipantsURLs(
     _Type_std_list<_Type_stationurl>::Add(pResponse, urls);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_FindByType(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_FindByType(Message* pRequest, Message* pResponse,
+                                                            _Proto_MatchMakingProtocolServer* pProtocol)
 {
     String type;
     _Type_string::Extract(pRequest, &type);
@@ -322,12 +320,11 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_FindByType(
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->FindByType(type, range, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_BY_TYPE);
-    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-        pResponse, gatherings);
+    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_FindByDescription(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_FindByDescription(Message* pRequest, Message* pResponse,
+                                                                   _Proto_MatchMakingProtocolServer* pProtocol)
 {
     String description;
     _Type_string::Extract(pRequest, &description);
@@ -344,12 +341,11 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_FindByDescription(
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->FindByDescription(description, range, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_BY_DESCRIPTION);
-    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-        pResponse, gatherings);
+    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_FindByDescriptionRegex(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_FindByDescriptionRegex(Message* pRequest, Message* pResponse,
+                                                                        _Proto_MatchMakingProtocolServer* pProtocol)
 {
     String description;
     _Type_string::Extract(pRequest, &description);
@@ -366,12 +362,11 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_FindByDescriptionRegex(
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->FindByDescriptionRegex(description, range, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_BY_DESCRIPTION_REGEX);
-    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-        pResponse, gatherings);
+    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_FindByID(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_FindByID(Message* pRequest, Message* pResponse,
+                                                          _Proto_MatchMakingProtocolServer* pProtocol)
 {
     qList<unsigned int> gatheringIDs;
     _Type_std_list<_Type_uint32>::Extract(pRequest, &gatheringIDs);
@@ -382,12 +377,11 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_FindByID(
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->FindByID(gatheringIDs, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_BY_ID);
-    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-        pResponse, gatherings);
+    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_FindBySingleID(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_FindBySingleID(Message* pRequest, Message* pResponse,
+                                                                       _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -403,8 +397,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_FindBySingleID(
     _Type_any<DDLClassMetaType<Gathering>, _Type_string>::Add(pResponse, gathering);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_FindByOwner(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_FindByOwner(Message* pRequest, Message* pResponse,
+                                                             _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiOwnerID;
     _Type_uint32::Extract(pRequest, &uiOwnerID);
@@ -421,12 +415,11 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_FindByOwner(
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->FindByOwner(uiOwnerID, range, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_BY_OWNER);
-    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-        pResponse, gatherings);
+    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_FindByParticipants(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_FindByParticipants(Message* pRequest, Message* pResponse,
+                                                                    _Proto_MatchMakingProtocolServer* pProtocol)
 {
     qList<unsigned int> principalIDs;
     _Type_std_list<_Type_uint32>::Extract(pRequest, &principalIDs);
@@ -437,12 +430,11 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_FindByParticipants(
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->FindByParticipants(principalIDs, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_BY_PARTICIPANTS);
-    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-        pResponse, gatherings);
+    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_FindInvitations(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_FindInvitations(Message* pRequest, Message* pResponse,
+                                                                 _Proto_MatchMakingProtocolServer* pProtocol)
 {
     ResultRange range;
     DDLClassMetaType<ResultRange>::Extract(pRequest, &range);
@@ -453,12 +445,11 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_FindInvitations(
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->FindInvitations(range, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_INVITATIONS);
-    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-        pResponse, gatherings);
+    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_FindBySQLQuery(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_FindBySQLQuery(Message* pRequest, Message* pResponse,
+                                                                _Proto_MatchMakingProtocolServer* pProtocol)
 {
     String query;
     _Type_string::Extract(pRequest, &query);
@@ -475,12 +466,11 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_FindBySQLQuery(
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->FindBySQLQuery(query, range, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_BY_SQL_QUERY);
-    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-        pResponse, gatherings);
+    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_LaunchSession(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_LaunchSession(Message* pRequest, Message* pResponse,
+                                                               _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -499,8 +489,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_LaunchSession(
     *pResponse << bResult;
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateSessionURL(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateSessionURL(Message* pRequest, Message* pResponse,
+                                                                  _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -519,8 +509,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateSessionURL(
     *pResponse << bResult;
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_GetSessionURL(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_GetSessionURL(Message* pRequest, Message* pResponse,
+                                                                      _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -535,8 +525,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_GetSessionURL(
     _Type_string::Add(pResponse, sessionURL);
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_GetState(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_GetState(Message* pRequest, Message* pResponse,
+                                                                 _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -551,8 +541,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_GetState(
     _Type_uint32::Add(pResponse, uiState);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_SetState(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_SetState(Message* pRequest, Message* pResponse,
+                                                          _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -571,8 +561,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_SetState(
     *pResponse << bResult;
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_ReportStats(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_ReportStats(Message* pRequest, Message* pResponse,
+                                                             _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -591,8 +581,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_ReportStats(
     *pResponse << bResult;
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_GetStats(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_GetStats(Message* pRequest, Message* pResponse,
+                                                          _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -619,8 +609,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_GetStats(
     _Type_std_list<DDLClassMetaType<GatheringStats> >::Add(pResponse, stats);
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_DeleteGathering(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_DeleteGathering(Message* pRequest, Message* pResponse,
+                                                                        _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -633,8 +623,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_DeleteGathering(
     *pResponse << bResult;
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_GetPendingDeletions(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_GetPendingDeletions(Message* pRequest, Message* pResponse,
+                                                                     _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -649,15 +639,14 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_GetPendingDeletions(
         return;
     }
     qList<DeletionEntry> deletions;
-    const bool bResult =
-        pProtocol->GetPendingDeletions(uiGatheringID, range, &deletions);
+    const bool bResult = pProtocol->GetPendingDeletions(uiGatheringID, range, &deletions);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_GET_PENDING_DELETIONS);
     *pResponse << bResult;
     _Type_std_list<DDLClassMetaType<DeletionEntry> >::Add(pResponse, deletions);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_DeleteFromDeletions(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_DeleteFromDeletions(Message* pRequest, Message* pResponse,
+                                                                     _Proto_MatchMakingProtocolServer* pProtocol)
 {
     qList<unsigned int> gatheringIDs;
     _Type_std_list<_Type_uint32>::Extract(pRequest, &gatheringIDs);
@@ -681,16 +670,15 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_MigrateGatheringOwnershi
         _Type_std_list<_Type_uint32>::Extract(pRequest, &candidateIDs);
         if (!pRequest->HasError())
         {
-            const bool bResult =
-                pProtocol->MigrateGatheringOwnershipV1(uiGatheringID, candidateIDs);
+            const bool bResult = pProtocol->MigrateGatheringOwnershipV1(uiGatheringID, candidateIDs);
             AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_MIGRATE_GATHERING_OWNERSHIP_V1);
             *pResponse << bResult;
         }
     }
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_FindByDescriptionLike(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_FindByDescriptionLike(Message* pRequest, Message* pResponse,
+                                                                       _Proto_MatchMakingProtocolServer* pProtocol)
 {
     String description;
     _Type_string::Extract(pRequest, &description);
@@ -707,12 +695,11 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_FindByDescriptionLike(
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->FindByDescriptionLike(description, range, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_BY_DESCRIPTION_LIKE);
-    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-        pResponse, gatherings);
+    _Type_std_list<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_RegisterLocalURL(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_RegisterLocalURL(Message* pRequest, Message* pResponse,
+                                                                         _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -730,8 +717,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_RegisterLocalURL(
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_REGISTER_LOCAL_URL);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_RegisterLocalURLs(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_RegisterLocalURLs(Message* pRequest, Message* pResponse,
+                                                                   _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -749,8 +736,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_RegisterLocalURLs(
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_REGISTER_LOCAL_URLS);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateSessionHostV1(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateSessionHostV1(Message* pRequest, Message* pResponse,
+                                                                     _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -762,8 +749,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateSessionHostV1(
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_UPDATE_SESSION_HOST_V1);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_GetSessionURLs(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_GetSessionURLs(Message* pRequest, Message* pResponse,
+                                                                _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -777,8 +764,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_GetSessionURLs(
     _Type_std_list<_Type_stationurl>::Add(pResponse, urls);
 }
 
-inline void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateSessionHost(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+inline void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateSessionHost(Message* pRequest, Message* pResponse,
+                                                                          _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -815,8 +802,8 @@ inline void _Proto_MatchMakingProtocolServer::ProtoStub_UpdateGatheringOwnership
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_UPDATE_GATHERING_OWNERSHIP);
 }
 
-void _Proto_MatchMakingProtocolServer::ProtoStub_MigrateGatheringOwnership(
-    Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol)
+void _Proto_MatchMakingProtocolServer::ProtoStub_MigrateGatheringOwnership(Message* pRequest, Message* pResponse,
+                                                                           _Proto_MatchMakingProtocolServer* pProtocol)
 {
     unsigned int uiGatheringID;
     _Type_uint32::Extract(pRequest, &uiGatheringID);
@@ -840,8 +827,8 @@ void _Proto_MatchMakingProtocolServer::ProtoStub_MigrateGatheringOwnership(
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_MIGRATE_GATHERING_OWNERSHIP);
 }
 
-void _Proto_MatchMakingProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_MatchMakingProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                               bool* pResponseRequired, EndPoint*)
 {
     switch (static_cast<uint16_t>(ExtractMethodID(pRequest)))
     {

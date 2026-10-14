@@ -29,8 +29,8 @@ HttpClient::~HttpClient()
 {
 }
 
-qResult HttpClient::Start(CallContext* pCallContext, const String& rUrl,
-    HttpConnection::Method method, HttpEventListener* pListener, unsigned int uiBufferSize)
+qResult HttpClient::Start(CallContext* pCallContext, const String& rUrl, HttpConnection::Method method,
+                          HttpEventListener* pListener, unsigned int uiBufferSize)
 {
     if (!pCallContext->InitiateCall())
         return qResult(START_CALL_FAILED_RESULT);
@@ -46,9 +46,8 @@ qResult HttpClient::Start(CallContext* pCallContext, const String& rUrl,
     return qResult(START_SUCCEEDED_RESULT);
 }
 
-qResult HttpClient::Start(CallContext* pCallContext, const String& rUrl,
-    HttpConnection::Method method, unsigned int uiMaxSize, qVector<unsigned char>* pBuffer,
-    int* pStatusCode)
+qResult HttpClient::Start(CallContext* pCallContext, const String& rUrl, HttpConnection::Method method,
+                          unsigned int uiMaxSize, qVector<unsigned char>* pBuffer, int* pStatusCode)
 {
     if (!pCallContext->InitiateCall())
         return qResult(START_CALL_FAILED_RESULT);

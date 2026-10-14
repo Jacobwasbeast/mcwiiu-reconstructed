@@ -14,8 +14,8 @@ public:
     RVConnectivityTester();
     virtual ~RVConnectivityTester();
 
-    virtual bool ProbeStations(CallContext* pCallContext, StationProbeList* pStationProbeList,
-        unsigned int uiTimeout, bool bUseRelay, Job::JobType jobType);
+    virtual bool ProbeStations(CallContext* pCallContext, StationProbeList* pStationProbeList, unsigned int uiTimeout,
+                               bool bUseRelay, Job::JobType jobType);
 };
 
 }

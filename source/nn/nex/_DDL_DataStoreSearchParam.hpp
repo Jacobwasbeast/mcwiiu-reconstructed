@@ -19,14 +19,11 @@ class Message;
 class _DDL_DataStoreSearchParam : public RootObject
 {
 public:
-    _DDL_DataStoreSearchParam()
-        : m_uiStructureVersion(3), m_OwnerIds(0), m_DestinationIds(0), m_Tags(0), m_DataTypes(0)
+    _DDL_DataStoreSearchParam() : m_uiStructureVersion(3), m_OwnerIds(0), m_DestinationIds(0), m_Tags(0), m_DataTypes(0)
     {
     }
 
-    virtual ~_DDL_DataStoreSearchParam()
-    {
-    }
+    virtual ~_DDL_DataStoreSearchParam() {}
 
     _DDL_DataStoreSearchParam& operator=(const _DDL_DataStoreSearchParam& rSource);
     bool operator==(const _DDL_DataStoreSearchParam& rSource) const;

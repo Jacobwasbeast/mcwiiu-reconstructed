@@ -11,13 +11,9 @@ namespace nex
 class DataStoreRateObjectParam : public _DDL_DataStoreRateObjectParam
 {
 public:
-    DataStoreRateObjectParam()
-    {
-    }
+    DataStoreRateObjectParam() {}
 
-    virtual ~DataStoreRateObjectParam()
-    {
-    }
+    virtual ~DataStoreRateObjectParam() {}
 };
 
 }

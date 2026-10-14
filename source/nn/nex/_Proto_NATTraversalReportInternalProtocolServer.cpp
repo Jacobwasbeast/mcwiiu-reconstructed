@@ -17,8 +17,8 @@ const unsigned int RESPONSE_METHOD_FLAG = 0x8000;
 
 }
 
-void _Proto_NATTraversalReportInternalProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_NATTraversalReportInternalProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                                              bool* pResponseRequired, EndPoint*)
 {
     const uint16_t uiMethodID = static_cast<uint16_t>(ExtractMethodID(pRequest));
     switch (uiMethodID)

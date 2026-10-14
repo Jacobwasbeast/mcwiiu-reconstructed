@@ -15,9 +15,7 @@ class HTTPEngineConfiguration : public RootObject
 {
 public:
     HTTPEngineConfiguration();
-    virtual ~HTTPEngineConfiguration()
-    {
-    }
+    virtual ~HTTPEngineConfiguration() {}
 
     virtual bool SetOption(HTTPModule::ConfigurationOptions option, va_list arguments) = 0;
     virtual void TraceOptions(unsigned int uiFilter);

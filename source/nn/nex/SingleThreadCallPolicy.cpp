@@ -8,10 +8,10 @@ namespace nex
 {
 
 SingleThreadCallPolicy::SingleThreadCallPolicy()
-    : m_callDepth(0)
-    , m_threadId(0)
-    , m_maximumRecursionLevel(1)
-    , m_recursionLevel(0)
+    : m_callDepth(0),
+      m_threadId(0),
+      m_maximumRecursionLevel(1),
+      m_recursionLevel(0)
 {
 }
 

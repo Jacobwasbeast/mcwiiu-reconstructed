@@ -11,13 +11,9 @@ namespace nex
 class DataStoreReqGetAdditionalMeta : public _DDL_DataStoreReqGetAdditionalMeta
 {
 public:
-    DataStoreReqGetAdditionalMeta()
-    {
-    }
+    DataStoreReqGetAdditionalMeta() {}
 
-    virtual ~DataStoreReqGetAdditionalMeta()
-    {
-    }
+    virtual ~DataStoreReqGetAdditionalMeta() {}
 };
 
 }

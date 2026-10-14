@@ -14,8 +14,7 @@ AnyGatheringAdapter AnyGatheringAdapter::s_instance;
 AnyGatheringAdapter::PrototypeList* AnyGatheringAdapter::s_pPrototypes = 0;
 CriticalSection AnyGatheringAdapter::s_criticalSection;
 
-AnyGatheringAdapter::AnyGatheringAdapter()
-    : m_uiUseCount(0)
+AnyGatheringAdapter::AnyGatheringAdapter() : m_uiUseCount(0)
 {
 }
 
@@ -26,8 +25,7 @@ AnyGatheringAdapter::~AnyGatheringAdapter()
 Gathering* AnyGatheringAdapter::FindPrototype(const String& rType) const
 {
     ScopedCS lock(&s_criticalSection);
-    for (PrototypeList::const_iterator it = s_pPrototypes->begin(); it != s_pPrototypes->end();
-         ++it)
+    for (PrototypeList::const_iterator it = s_pPrototypes->begin(); it != s_pPrototypes->end(); ++it)
     {
         if (String::IsEqual((*it)->GetGatheringType(), rType))
             return *it;
@@ -117,8 +115,7 @@ void AnyGatheringAdapter::StreamOut(Message* pMessage, Gathering** ppGathering) 
     unsigned int uiLength = 0;
     if (pMessage->ExtractPrimitive(&uiLength) && pMessage->ValidateBufferLimit(uiLength))
     {
-        buffer.AppendData(pMessage->GetBuffer()->GetData() + pMessage->GetPosition(), uiLength,
-                          0xFFFFFFFF);
+        buffer.AppendData(pMessage->GetBuffer()->GetData() + pMessage->GetPosition(), uiLength, 0xFFFFFFFF);
         const unsigned int uiNewPosition = pMessage->GetPosition() + uiLength;
         if (uiNewPosition <= pMessage->GetLength())
             pMessage->SetPosition(uiNewPosition);

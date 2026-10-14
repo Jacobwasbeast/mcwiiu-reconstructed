@@ -16,14 +16,9 @@ public:
         DEFAULT_PARTICIPATION_COUNT = 1
     };
 
-    AutoMatchmakeParam()
-    {
-        Reset();
-    }
+    AutoMatchmakeParam() { Reset(); }
 
-    virtual ~AutoMatchmakeParam()
-    {
-    }
+    virtual ~AutoMatchmakeParam() {}
 
     void Reset();
 };

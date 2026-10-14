@@ -26,17 +26,16 @@ const unsigned int TIME_CHECK_INTERVAL_MASK = 0x3F;
 
 }
 
-JobDeriveKey::JobDeriveKey(JobType jobType, unsigned int uiCallId,
-    ChecksumAlgorithm* pChecksumAlgorithm, const Buffer* pBuffer, unsigned int uiIterations,
-    Key* pKey)
-    : Job(jobType, DebugString(L""))
-    , m_uiCallId(uiCallId)
-    , m_pChecksumAlgorithm(pChecksumAlgorithm)
-    , m_current()
-    , m_uiCompletedIterations(0)
-    , m_uiIterations(uiIterations)
-    , m_pKey(pKey)
-    , m_cacheKey()
+JobDeriveKey::JobDeriveKey(JobType jobType, unsigned int uiCallId, ChecksumAlgorithm* pChecksumAlgorithm,
+                           const Buffer* pBuffer, unsigned int uiIterations, Key* pKey)
+    : Job(jobType, DebugString(L"")),
+      m_uiCallId(uiCallId),
+      m_pChecksumAlgorithm(pChecksumAlgorithm),
+      m_current(),
+      m_uiCompletedIterations(0),
+      m_uiIterations(uiIterations),
+      m_pKey(pKey),
+      m_cacheKey()
 {
     m_current = *pBuffer;
     m_pKeyCache = 0;
@@ -50,8 +49,7 @@ JobDeriveKey::~JobDeriveKey()
 
 void JobDeriveKey::CompleteJob(const Key& rKey)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         *m_pKey = rKey;

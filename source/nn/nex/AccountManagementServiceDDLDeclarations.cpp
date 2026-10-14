@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-AccountManagementServiceDDLDeclarations::AccountManagementServiceDDLDeclarations()
-    : DDLDeclarations(true)
+AccountManagementServiceDDLDeclarations::AccountManagementServiceDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

@@ -16,11 +16,11 @@ CriticalSection g_profilingUnitCriticalSection(0);
 unsigned int g_nextProfilingUnitID = 0;
 
 ProfilingUnit::ProfilingUnit(const wchar_t* pName, unsigned int uiTraceMask, const wchar_t*)
-    : m_link()
-    , m_lastResetTime()
-    , m_name(pName)
-    , m_lastActivity()
-    , m_maxTimeActivity()
+    : m_link(),
+      m_lastResetTime(),
+      m_name(pName),
+      m_lastActivity(),
+      m_maxTimeActivity()
 {
     Reset(Time::GetTime());
 

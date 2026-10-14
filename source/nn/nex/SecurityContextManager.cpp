@@ -11,8 +11,7 @@ SecurityContext::~SecurityContext()
 {
 }
 
-SecurityContextManager::SecurityContextManager()
-    : m_securityContexts(SecurityContextList())
+SecurityContextManager::SecurityContextManager() : m_securityContexts(SecurityContextList())
 {
 }
 

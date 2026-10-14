@@ -9,29 +9,25 @@ namespace nn
 namespace nex
 {
 
-template<class TObject, class TParam>
+template <class TObject, class TParam>
 class ObjectThread : public ObjectThreadRoot
 {
 public:
     typedef void (TObject::*Method)(TParam);
 
-    explicit ObjectThread(const String& name)
-        : ObjectThreadRoot(name)
+    explicit ObjectThread(const String& name) : ObjectThreadRoot(name)
     {
         m_pObject = 0;
         m_method = 0;
     }
 
-    ObjectThread(const String& name, uint32_t priority)
-        : ObjectThreadRoot(name, priority)
+    ObjectThread(const String& name, uint32_t priority) : ObjectThreadRoot(name, priority)
     {
         m_pObject = 0;
         m_method = 0;
     }
 
-    virtual ~ObjectThread()
-    {
-    }
+    virtual ~ObjectThread() {}
 
     void SetObjectMethod(Method method, TObject* pObject, TParam param)
     {

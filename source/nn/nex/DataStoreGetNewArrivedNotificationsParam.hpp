@@ -11,13 +11,9 @@ namespace nex
 class DataStoreGetNewArrivedNotificationsParam : public _DDL_DataStoreGetNewArrivedNotificationsParam
 {
 public:
-    DataStoreGetNewArrivedNotificationsParam()
-    {
-    }
+    DataStoreGetNewArrivedNotificationsParam() {}
 
-    virtual ~DataStoreGetNewArrivedNotificationsParam()
-    {
-    }
+    virtual ~DataStoreGetNewArrivedNotificationsParam() {}
 };
 
 }

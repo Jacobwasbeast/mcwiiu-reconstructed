@@ -18,14 +18,9 @@ class Message;
 class _DDL_DataStorePrepareGetParam : public RootObject
 {
 public:
-    _DDL_DataStorePrepareGetParam()
-        : m_uiStructureVersion(0), m_ExtraData(0)
-    {
-    }
+    _DDL_DataStorePrepareGetParam() : m_uiStructureVersion(0), m_ExtraData(0) {}
 
-    virtual ~_DDL_DataStorePrepareGetParam()
-    {
-    }
+    virtual ~_DDL_DataStorePrepareGetParam() {}
 
     _DDL_DataStorePrepareGetParam& operator=(const _DDL_DataStorePrepareGetParam& rSource);
     bool operator==(const _DDL_DataStorePrepareGetParam& rSource) const;

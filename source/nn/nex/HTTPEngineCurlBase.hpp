@@ -23,13 +23,17 @@ public:
 
     virtual void Initialize();
     virtual unsigned int CreateGETRequest(const HTTPURL& rURL, const qVector<String>& rHeaders, HTTPWriter& rWriter);
-    virtual unsigned int CreatePOSTRequest(const HTTPURL& rURL, const qVector<String>& rHeaders, HTTPData& rData, HTTPWriter& rWriter);
+    virtual unsigned int CreatePOSTRequest(const HTTPURL& rURL, const qVector<String>& rHeaders, HTTPData& rData,
+                                           HTTPWriter& rWriter);
     virtual unsigned int CreatePUTRequest(const HTTPURL& rURL, const qVector<String>& rHeaders, HTTPReader& rReader);
-    virtual bool ScheduleRequest(CallContext& rCallContext, unsigned int uiRequestID, HTTPResponse& rResponse, HTTPClientImpl* pClient);
+    virtual bool ScheduleRequest(CallContext& rCallContext, unsigned int uiRequestID, HTTPResponse& rResponse,
+                                 HTTPClientImpl* pClient);
     virtual void DestroyRequest(unsigned int uiRequestID);
     virtual void CancelRequest(unsigned int uiRequestID);
-    virtual TransferProgress GetDownloadProgress(CallContext* pCallContext, unsigned long long& rCurrent, unsigned long long& rTotal);
-    virtual TransferProgress GetUploadProgress(CallContext* pCallContext, unsigned long long& rCurrent, unsigned long long& rTotal);
+    virtual TransferProgress GetDownloadProgress(CallContext* pCallContext, unsigned long long& rCurrent,
+                                                 unsigned long long& rTotal);
+    virtual TransferProgress GetUploadProgress(CallContext* pCallContext, unsigned long long& rCurrent,
+                                               unsigned long long& rTotal);
     virtual void ApplyConfiguration(unsigned int uiRequestID);
     virtual unsigned int RequestCompleted(void* pHandle);
 
@@ -74,7 +78,8 @@ protected:
 
 private:
     typedef std::map<unsigned int, HTTPCurlRequest*, std::less<unsigned int>,
-                     MemAllocator<std::pair<const unsigned int, HTTPCurlRequest*> > > RequestMap;
+                     MemAllocator<std::pair<const unsigned int, HTTPCurlRequest*> > >
+        RequestMap;
 
     CriticalSection m_requestLock;
     CriticalSection m_curlLock;

@@ -18,8 +18,13 @@ const unsigned int TRACE_MASK = 0x100000;
 }
 
 TransportBufferSet::TransportBufferSet(TransportBuffer* pTransportBuffer, int iCount)
-    : m_bHasUse(false), m_bFull(false), m_useInfos(iCount), m_freeInfos(iCount),
-      m_uiBufferSize(DEFAULT_BUFFER_SIZE), m_criticalSection(TRACE_MASK), m_uiEmptyDropCount(0),
+    : m_bHasUse(false),
+      m_bFull(false),
+      m_useInfos(iCount),
+      m_freeInfos(iCount),
+      m_uiBufferSize(DEFAULT_BUFFER_SIZE),
+      m_criticalSection(TRACE_MASK),
+      m_uiEmptyDropCount(0),
       m_pTransportBuffer(pTransportBuffer)
 {
     for (int i = 0; i < iCount; ++i)

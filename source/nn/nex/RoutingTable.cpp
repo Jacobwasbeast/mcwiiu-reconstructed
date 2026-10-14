@@ -21,8 +21,7 @@ bool RoutingTable::RTEntry::IsExpired(unsigned int uiElapsed) const
     return bExpired;
 }
 
-RoutingTable::RoutingTable(unsigned int uiTimeout)
-    : m_entries(), m_timeout(uiTimeout), m_lastCleaning(Time::GetTime())
+RoutingTable::RoutingTable(unsigned int uiTimeout) : m_entries(), m_timeout(uiTimeout), m_lastCleaning(Time::GetTime())
 {
 }
 
@@ -33,8 +32,8 @@ bool RoutingTable::Add(const InetAddress& rKey, const InetAddress& rAddress, boo
     {
         if (!(rAddress == rKey))
         {
-            std::pair<EntryMap::iterator, bool> result =
-                m_entries.insert(std::make_pair(rKey, RTEntry(rAddress, m_timeout)));
+            std::pair<EntryMap::iterator, bool> result = m_entries.insert(
+                std::make_pair(rKey, RTEntry(rAddress, m_timeout)));
             bAdded = result.second;
             if (!bAdded && bReplace)
             {

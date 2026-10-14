@@ -33,7 +33,9 @@ public:
     MemAllocator(const MemAllocator<T>&) {}
 
     template <typename U>
-    MemAllocator(const MemAllocator<U>&) {}
+    MemAllocator(const MemAllocator<U>&)
+    {
+    }
 
     ~MemAllocator() {}
 
@@ -43,41 +45,22 @@ public:
         return *this;
     }
 
-    pointer address(reference value) const
-    {
-        return &value;
-    }
+    pointer address(reference value) const { return &value; }
 
-    const_pointer address(const_reference value) const
-    {
-        return &value;
-    }
+    const_pointer address(const_reference value) const { return &value; }
 
     pointer allocate(size_type count)
     {
-        return static_cast<pointer>(
-            MemoryManager::Allocate(static_cast<unsigned int>(count * sizeof(T))));
+        return static_cast<pointer>(MemoryManager::Allocate(static_cast<unsigned int>(count * sizeof(T))));
     }
 
-    pointer allocate(size_type count, const void*)
-    {
-        return allocate(count);
-    }
+    pointer allocate(size_type count, const void*) { return allocate(count); }
 
-    void deallocate(pointer block, size_type)
-    {
-        MemoryManager::Free(block);
-    }
+    void deallocate(pointer block, size_type) { MemoryManager::Free(block); }
 
-    void construct(pointer position, const_reference value)
-    {
-        ::new (static_cast<void*>(position)) T(value);
-    }
+    void construct(pointer position, const_reference value) { ::new (static_cast<void*>(position)) T(value); }
 
-    void destroy(pointer position)
-    {
-        position->~T();
-    }
+    void destroy(pointer position) { position->~T(); }
 
     template <typename U>
     bool operator==(const MemAllocator<U>&) const
@@ -91,10 +74,7 @@ public:
         return false;
     }
 
-    size_type max_size() const
-    {
-        return static_cast<size_type>(-1) / sizeof(T);
-    }
+    size_type max_size() const { return static_cast<size_type>(-1) / sizeof(T); }
 };
 
 }

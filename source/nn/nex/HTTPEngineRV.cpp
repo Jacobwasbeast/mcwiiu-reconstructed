@@ -9,8 +9,7 @@ namespace nn
 namespace nex
 {
 
-HTTPEngineRV::HTTPEngineRV(HTTPEngineConfiguration* pConfiguration)
-    : m_pJob(0)
+HTTPEngineRV::HTTPEngineRV(HTTPEngineConfiguration* pConfiguration) : m_pJob(0)
 {
     if (pConfiguration != 0)
     {
@@ -36,7 +35,8 @@ HTTPEngineRV::~HTTPEngineRV()
     }
 }
 
-bool HTTPEngineRV::ScheduleRequest(CallContext& rCallContext, unsigned int uiRequestID, HTTPResponse& rResponse, HTTPClientImpl* pClient)
+bool HTTPEngineRV::ScheduleRequest(CallContext& rCallContext, unsigned int uiRequestID, HTTPResponse& rResponse,
+                                   HTTPClientImpl* pClient)
 {
     bool bScheduled = HTTPEngineCurlBase::ScheduleRequest(rCallContext, uiRequestID, rResponse, pClient);
     LockEngineRequest(true);

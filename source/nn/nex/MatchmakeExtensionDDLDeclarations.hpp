@@ -13,13 +13,9 @@ class MatchmakeExtensionDDLDeclarations : public DDLDeclarations
 public:
     MatchmakeExtensionDDLDeclarations();
 
-    virtual ~MatchmakeExtensionDDLDeclarations()
-    {
-    }
+    virtual ~MatchmakeExtensionDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

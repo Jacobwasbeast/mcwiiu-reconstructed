@@ -67,20 +67,19 @@ void BackEndServices::InternalData::Set(const CallContext::CompletionCallback& r
     m_bIsSet = true;
 }
 
-BackEndServices::EffectiveLoginTimeout::EffectiveLoginTimeout()
-    : m_iTimeout(0)
+BackEndServices::EffectiveLoginTimeout::EffectiveLoginTimeout() : m_iTimeout(0)
 {
 }
 
 BackEndServices::BackEndServices()
-    : m_preTerminate()
-    , m_terminateCallContext()
-    , m_iDefaultLoginTimeout(DEFAULT_LOGIN_TIMEOUT)
-    , m_effectiveLoginTimeout()
-    , m_pLoginOperation(0)
-    , m_pLogoutOperation(0)
-    , m_reserved1(true)
-    , m_stationURL()
+    : m_preTerminate(),
+      m_terminateCallContext(),
+      m_iDefaultLoginTimeout(DEFAULT_LOGIN_TIMEOUT),
+      m_effectiveLoginTimeout(),
+      m_pLoginOperation(0),
+      m_pLogoutOperation(0),
+      m_reserved1(true),
+      m_stationURL()
 {
     m_pCredentials = 0;
     Core::AcquireInstance();
@@ -233,9 +232,8 @@ qResult BackEndServices::IsConnected() const
     if (m_pLoginJob != 0 && m_pLoginJob->GetState() == Job::Complete)
     {
         SecureConnectionClient* pClient = GetSecureConnectionClient();
-        if (pClient != 0 && pClient->IsConnected() && !pClient->IsFaulty() &&
-            pClient->m_pCredentials->m_value != 0 &&
-            !RootTransport::GetInstance()->m_reserved4)
+        if (pClient != 0 && pClient->IsConnected() && !pClient->IsFaulty() && pClient->m_pCredentials->m_value != 0
+            && !RootTransport::GetInstance()->m_reserved4)
         {
             return qResult(SUCCESS_RESULT);
         }
@@ -258,11 +256,9 @@ bool BackEndServices::Disconnect(CallContext* pCallContext)
     return true;
 }
 
-void BackEndServices::RegisterOperationOnCallContext(CallContext& rCallContext,
-                                                     RendezVousOperation& rOperation)
+void BackEndServices::RegisterOperationOnCallContext(CallContext& rCallContext, RendezVousOperation& rOperation)
 {
-    rCallContext.RegisterCompletionCallback(CallOperationOnCompletion, UserContext(&rOperation),
-                                            false);
+    rCallContext.RegisterCompletionCallback(CallOperationOnCompletion, UserContext(&rOperation), false);
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 }
 
@@ -351,16 +347,14 @@ void BackEndServices::RegisterServerProtocols()
 {
     m_pNotificationEventManager->m_uiPrincipalID = m_pCredentials->m_value;
     m_pNotificationEventManager->m_uiConnectionID = m_pCredentials->m_state;
-    RVClientCore::GetInstance()->RegisterGlobalNotificationEventManager(
-        m_pNotificationEventManager);
+    RVClientCore::GetInstance()->RegisterGlobalNotificationEventManager(m_pNotificationEventManager);
     m_pCredentials->m_streamManager->GetProtocolRequestBroker()->RegisterServerProtocol(
         NINTENDO_NOTIFICATION_EVENT_PROTOCOL_ID, m_pNintendoNotificationEventManager);
 }
 
 void BackEndServices::UnregisterServerProtocols()
 {
-    RVClientCore::GetInstance()->UnregisterGlobalNotificationEventManager(
-        m_pNotificationEventManager);
+    RVClientCore::GetInstance()->UnregisterGlobalNotificationEventManager(m_pNotificationEventManager);
     m_pCredentials->m_streamManager->GetProtocolRequestBroker()->UnregisterServerProtocol(
         NINTENDO_NOTIFICATION_EVENT_PROTOCOL_ID);
 }
@@ -439,9 +433,8 @@ ProtocolRegistry* BackEndServices::GetProtocolRegistry() const
     return RVClientCore::GetInstance()->GetProtocolRegistry();
 }
 
-bool BackEndServices::LoginImpl(CallContext* pCallContext, qResult* pResult,
-                                const wchar_t* pUserName, const char* pPassword,
-                                const wchar_t* pHostName, unsigned short uiPort,
+bool BackEndServices::LoginImpl(CallContext* pCallContext, qResult* pResult, const wchar_t* pUserName,
+                                const char* pPassword, const wchar_t* pHostName, unsigned short uiPort,
                                 Credentials** ppCredentials, String* pErrorMessage,
                                 AnyObjectHolder<Data, String>* pExtraData)
 {
@@ -483,21 +476,18 @@ bool BackEndServices::LoginImpl(CallContext* pCallContext, qResult* pResult,
     if (m_effectiveLoginTimeout == 0)
         m_effectiveLoginTimeout = m_iDefaultLoginTimeout;
 
-    m_pLoginJob = new JobBackEndServicesLogin(pCallContext->m_uiCallId, this, pResult,
-                                              String(pUserName), pPassword, pHostName, uiPort,
-                                              ppCredentials, pErrorMessage, pExtraData,
+    m_pLoginJob = new JobBackEndServicesLogin(pCallContext->m_uiCallId, this, pResult, String(pUserName), pPassword,
+                                              pHostName, uiPort, ppCredentials, pErrorMessage, pExtraData,
                                               m_effectiveLoginTimeout, m_pStreamManagerFactory);
     m_pLoginJob->AddRef();
     Scheduler::GetInstance()->Queue(m_pLoginJob, false);
     return true;
 }
 
-bool BackEndServices::LoginImplWithData(CallContext* pCallContext, qResult* pResult,
-                                        const char* pName, const wchar_t* pHostName,
-                                        unsigned short uiPort,
+bool BackEndServices::LoginImplWithData(CallContext* pCallContext, qResult* pResult, const char* pName,
+                                        const wchar_t* pHostName, unsigned short uiPort,
                                         const CustomDataHolder<LoginData>& rLoginData,
-                                        const AnyObjectHolder<Data, String>& rExtraData,
-                                        Credentials** ppCredentials)
+                                        const AnyObjectHolder<Data, String>& rExtraData, Credentials** ppCredentials)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_pTerminateJob != 0)
@@ -541,10 +531,8 @@ bool BackEndServices::LoginImplWithData(CallContext* pCallContext, qResult* pRes
 
     m_pCredentials->m_description = String(pName);
     m_pCredentials->m_name = rLoginData.GetObject()->m_Name;
-    m_pLoginJob = new JobBackEndServicesLoginWithData(pCallContext->m_uiCallId, this, pResult,
-                                                      pName, pHostName, uiPort, rLoginData,
-                                                      rExtraData, ppCredentials,
-                                                      m_effectiveLoginTimeout);
+    m_pLoginJob = new JobBackEndServicesLoginWithData(pCallContext->m_uiCallId, this, pResult, pName, pHostName, uiPort,
+                                                      rLoginData, rExtraData, ppCredentials, m_effectiveLoginTimeout);
     m_pLoginJob->AddRef();
     Scheduler::GetInstance()->Queue(m_pLoginJob, false);
     return true;

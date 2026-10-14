@@ -9,8 +9,7 @@ namespace nn
 namespace nex
 {
 
-EndPointInfo::EndPointInfo()
-    : m_resetTime()
+EndPointInfo::EndPointInfo() : m_resetTime()
 {
     Reset();
 }

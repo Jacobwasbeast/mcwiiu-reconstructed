@@ -16,16 +16,14 @@
 namespace __N_19_OnlineCore_Blob_cpp_9428d484
 {
 
-void DisconnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult result,
-    const nn::nex::UserContext* pUserContext)
+void DisconnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult result, const nn::nex::UserContext* pUserContext)
 {
-    nn::nex::CriticalSection& csScheduler =
-        nn::nex::Scheduler::GetInstance()->GetCriticalSection();
+    nn::nex::CriticalSection& csScheduler = nn::nex::Scheduler::GetInstance()->GetCriticalSection();
     csScheduler.Enter();
 
     unsigned int uiCallId = reinterpret_cast<unsigned int>(pUserContext->GetPointer());
-    nn::nex::CallContext* pCallContext =
-        nn::nex::Core::GetInstance()->GetCallContextRegister()->GetCallContext(uiCallId);
+    nn::nex::CallContext* pCallContext = nn::nex::Core::GetInstance()->GetCallContextRegister()->GetCallContext(
+        uiCallId);
     if (pCallContext != 0)
     {
         if (result == true)
@@ -52,13 +50,13 @@ namespace nex
 int ConnectionManager::s_iNATTraversalTimeout = 60000;
 unsigned int ConnectionManager::s_uiDisconnectTimeout = 15000;
 
-ConnectionManager::ConnectionManager(EndPointEventHandler* pEndPointEventHandler,
-    Job::JobType jobType, bool bFlag, bool bRoutingEnabled)
-    : m_component(String(L"ConnectionManager"))
-    , m_pEndPointEventHandler(pEndPointEventHandler)
-    , m_flag64(bFlag)
-    , m_bRoutingEnabled(bRoutingEnabled)
-    , m_jobType(jobType)
+ConnectionManager::ConnectionManager(EndPointEventHandler* pEndPointEventHandler, Job::JobType jobType, bool bFlag,
+                                     bool bRoutingEnabled)
+    : m_component(String(L"ConnectionManager")),
+      m_pEndPointEventHandler(pEndPointEventHandler),
+      m_flag64(bFlag),
+      m_bRoutingEnabled(bRoutingEnabled),
+      m_jobType(jobType)
 {
     m_bFilterEnabled = false;
     m_pConnectionFilter = 0;
@@ -96,15 +94,14 @@ void ConnectionManager::AttachStream(ConnectionOrientedStream* pStream, bool)
     m_streamTable.GetStreams().push_back(pStream);
 }
 
-void ConnectionManager::RegisterConnectionFilter(ConnectionFilter pFilter,
-    UserContext userContext)
+void ConnectionManager::RegisterConnectionFilter(ConnectionFilter pFilter, UserContext userContext)
 {
     m_pConnectionFilter = pFilter;
     m_connectionFilterContext = userContext;
 }
 
-bool ConnectionManager::ConnectionRequest(ConnectionOrientedStream* pStream,
-    const StationURL* pStationURL, Buffer* pBuffer, EndPoint* pEndPoint)
+bool ConnectionManager::ConnectionRequest(ConnectionOrientedStream* pStream, const StationURL* pStationURL,
+                                          Buffer* pBuffer, EndPoint* pEndPoint)
 {
     PseudoSingleton::SetContextIfRequired(m_uiContextId);
     if (!m_bFilterEnabled)
@@ -116,8 +113,8 @@ bool ConnectionManager::ConnectionRequest(ConnectionOrientedStream* pStream,
     return true;
 }
 
-bool ConnectionManager::FilterConnectionRequest(ConnectionOrientedStream*, const StationURL*,
-    Buffer* pBuffer, EndPoint* pEndPoint)
+bool ConnectionManager::FilterConnectionRequest(ConnectionOrientedStream*, const StationURL*, Buffer* pBuffer,
+                                                EndPoint* pEndPoint)
 {
     if (m_pConnectionFilter != 0)
     {
@@ -153,9 +150,8 @@ bool ConnectionManager::Disconnect(CallContext* pCallContext, EndPoint* pEndPoin
     }
 
     UserContext userContext(reinterpret_cast<void*>(pCallContext->m_uiCallId));
-    qResult result = pEndPoint->_Disconnect(
-        __N_19_OnlineCore_Blob_cpp_9428d484::DisconnectCallback, userContext,
-        s_uiDisconnectTimeout);
+    qResult result = pEndPoint->_Disconnect(__N_19_OnlineCore_Blob_cpp_9428d484::DisconnectCallback, userContext,
+                                            s_uiDisconnectTimeout);
     if (!result)
     {
         pEndPoint->Close();
@@ -179,13 +175,13 @@ void ConnectionManager::ConfigureEndPointForRouting(EndPoint* pEndPoint)
     {
         pEndPoint->SetMaxSilenceTime(0xFFFFFFFF);
         pEndPoint->DisableKeepAlive();
-        RootTransport::GetInstance()->GetRouter()->AddRoute(
-            *pEndPoint->m_stationURL.GetInetAddress(), m_routerAddress, true);
+        RootTransport::GetInstance()->GetRouter()->AddRoute(*pEndPoint->m_stationURL.GetInetAddress(), m_routerAddress,
+                                                            true);
     }
 }
 
-void ConnectionManager::ConstructAndAssociateRoutingURL(unsigned short uiPort,
-    StationURL oStationURL, StationURL* pRoutingURL)
+void ConnectionManager::ConstructAndAssociateRoutingURL(unsigned short uiPort, StationURL oStationURL,
+                                                        StationURL* pRoutingURL)
 {
     Router* pRouter = RootTransport::GetInstance()->GetRouter();
     InetAddress target;
@@ -195,9 +191,9 @@ void ConnectionManager::ConstructAndAssociateRoutingURL(unsigned short uiPort,
     pRoutingURL->SetInetAddress(&routing);
 }
 
-bool ConnectionManager::ConnectImpl(CallContext* pCallContext, Buffer* pRequestBuffer,
-    Buffer* pResponseBuffer, const qList<StationURL>& rURLs, EndPoint** ppEndPoint,
-    unsigned int uiTimeout, bool bFlag, JobConnectEndPoint** ppJob)
+bool ConnectionManager::ConnectImpl(CallContext* pCallContext, Buffer* pRequestBuffer, Buffer* pResponseBuffer,
+                                    const qList<StationURL>& rURLs, EndPoint** ppEndPoint, unsigned int uiTimeout,
+                                    bool bFlag, JobConnectEndPoint** ppJob)
 {
     CriticalSection& csScheduler = Scheduler::GetInstance()->GetCriticalSection();
     csScheduler.Enter();
@@ -208,8 +204,8 @@ bool ConnectionManager::ConnectImpl(CallContext* pCallContext, Buffer* pRequestB
         return false;
     }
 
-    JobConnectEndPoint* pJob = new JobConnectEndPoint(m_jobType, this, pCallContext->m_uiCallId,
-        pRequestBuffer, pResponseBuffer, rURLs, ppEndPoint, uiTimeout, bFlag);
+    JobConnectEndPoint* pJob = new JobConnectEndPoint(m_jobType, this, pCallContext->m_uiCallId, pRequestBuffer,
+                                                      pResponseBuffer, rURLs, ppEndPoint, uiTimeout, bFlag);
     Scheduler::GetInstance()->Queue(pJob, false);
     if (ppJob != 0)
         *ppJob = pJob;

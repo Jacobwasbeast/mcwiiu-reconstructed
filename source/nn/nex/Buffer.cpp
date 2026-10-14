@@ -93,7 +93,7 @@ Buffer& Buffer::operator=(const Buffer& rBuffer)
         SetHeadShiftSize(rBuffer.m_uiHeadShiftSize);
 
         m_uiFlags = static_cast<unsigned char>((rBuffer.m_uiFlags & ~BUFFER_FLAG_POOLED)
-            | (m_uiFlags & BUFFER_FLAG_POOLED));
+                                               | (m_uiFlags & BUFFER_FLAG_POOLED));
         m_uiTTL = rBuffer.m_uiTTL;
     }
 
@@ -182,9 +182,8 @@ bool Buffer::CopyContent(void* pDestination, unsigned int uiSize, unsigned int u
 {
     if (m_uiLength < uiOffset + uiSize)
     {
-        SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Buffer.cpp",
-            0xC6, 0xE0000019, 0);
+        SystemError::SignalError(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Buffer.cpp", 0xC6,
+                                 0xE0000019, 0);
         return false;
     }
 
@@ -220,8 +219,7 @@ void Buffer::ResizeByRealSize(unsigned int uiRealSize)
 
 bool Buffer::AttemptExpand(unsigned int uiSize)
 {
-    const unsigned int uiRealSize =
-        GetAllocateSize(m_uiRealSize, m_uiLength + m_uiHeadShiftSize + uiSize);
+    const unsigned int uiRealSize = GetAllocateSize(m_uiRealSize, m_uiLength + m_uiHeadShiftSize + uiSize);
 
     if (uiRealSize <= m_uiRealSize)
     {
@@ -271,10 +269,9 @@ unsigned char Buffer::ComputeCheckSum(unsigned int uiSize, unsigned char uiSeed)
 
     for (i = 0; i < uiSize / 4; ++i)
     {
-        uiSum += static_cast<unsigned int>(pData[i * 4])
-            | (static_cast<unsigned int>(pData[i * 4 + 1]) << 8)
-            | (static_cast<unsigned int>(pData[i * 4 + 2]) << 16)
-            | (static_cast<unsigned int>(pData[i * 4 + 3]) << 24);
+        uiSum += static_cast<unsigned int>(pData[i * 4]) | (static_cast<unsigned int>(pData[i * 4 + 1]) << 8)
+                 | (static_cast<unsigned int>(pData[i * 4 + 2]) << 16)
+                 | (static_cast<unsigned int>(pData[i * 4 + 3]) << 24);
     }
 
     for (i = 0; i < (uiSize & 3); ++i)
@@ -377,8 +374,7 @@ unsigned int Buffer::GetAllocateSize(unsigned int uiCurrentSize, unsigned int ui
 
 unsigned char* Buffer::AllocateDataBuffer(unsigned int uiSize)
 {
-    if (PacketBufferManager::GetInstance() == 0
-        || uiSize > PacketBufferManager::GetInstance()->GetMaxUnitSize())
+    if (PacketBufferManager::GetInstance() == 0 || uiSize > PacketBufferManager::GetInstance()->GetMaxUnitSize())
     {
         m_uiFlags = static_cast<unsigned char>(m_uiFlags & ~BUFFER_FLAG_POOLED);
     }

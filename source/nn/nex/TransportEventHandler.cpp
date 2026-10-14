@@ -30,8 +30,7 @@ void TransportEventHandler::DeviceDiscovery(ConnectionOrientedStream*, wchar_t*)
 {
 }
 
-bool TransportEventHandler::ConnectionRequest(ConnectionOrientedStream*, const StationURL*,
-    Buffer*, EndPoint*)
+bool TransportEventHandler::ConnectionRequest(ConnectionOrientedStream*, const StationURL*, Buffer*, EndPoint*)
 {
     return false;
 }

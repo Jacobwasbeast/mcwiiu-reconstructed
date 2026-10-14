@@ -20,11 +20,11 @@ const unsigned int WINDOW_TRACE_MASK = 0x20000000;
 }
 
 SlidingWindow::SlidingWindow(unsigned short uiWindowSize, unsigned int uiMaxBufferedPackets)
-    : m_packets()
-    , m_nextSequence()
-    , m_nextToSend()
-    , m_oldestUnacknowledged()
-    , m_criticalSection(WINDOW_TRACE_MASK)
+    : m_packets(),
+      m_nextSequence(),
+      m_nextToSend(),
+      m_oldestUnacknowledged(),
+      m_criticalSection(WINDOW_TRACE_MASK)
 {
     m_uiWindowSize = uiWindowSize;
     m_uiMaxBufferedPackets = uiMaxBufferedPackets;

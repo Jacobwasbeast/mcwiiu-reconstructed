@@ -11,13 +11,9 @@ namespace nex
 class DataStoreCompleteUpdateParam : public _DDL_DataStoreCompleteUpdateParam
 {
 public:
-    DataStoreCompleteUpdateParam()
-    {
-    }
+    DataStoreCompleteUpdateParam() {}
 
-    virtual ~DataStoreCompleteUpdateParam()
-    {
-    }
+    virtual ~DataStoreCompleteUpdateParam() {}
 };
 
 }

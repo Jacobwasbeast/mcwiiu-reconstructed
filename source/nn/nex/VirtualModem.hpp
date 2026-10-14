@@ -14,15 +14,9 @@ template <typename T>
 class VirtualModem : public TimedQueue<T>
 {
 public:
-    explicit VirtualModem(EmulationDevice* pDevice)
-        : m_pDevice(pDevice)
-        , m_lastTime(Time::GetTime())
-    {
-    }
+    explicit VirtualModem(EmulationDevice* pDevice) : m_pDevice(pDevice), m_lastTime(Time::GetTime()) {}
 
-    virtual ~VirtualModem()
-    {
-    }
+    virtual ~VirtualModem() {}
 
     virtual void Queue(const T& rItem, Time time)
     {

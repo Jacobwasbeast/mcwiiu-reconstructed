@@ -30,7 +30,6 @@ InstanceControl::~InstanceControl()
 
     if (m_registered)
         g_instanceTable.DelInstance(this, m_classId, m_contextId);
-
 }
 
 void InstanceControl::SetDelegatorInstance(void* delegatorInstance)

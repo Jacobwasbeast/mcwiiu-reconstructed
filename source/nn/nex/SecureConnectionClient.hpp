@@ -29,9 +29,12 @@ public:
 
     void PrepareURLs(qList<StationURL>& rURLs);
     bool RegisterURLs(ProtocolCallContext* pCallContext, qResult* pResult, StationURL* pPublicURL);
-    bool RegisterURLsEx(ProtocolCallContext* pCallContext, qResult* pResult, StationURL* pPublicURL, const AnyObjectHolder<Data, String>& rCustomData);
-    bool RequestConnectionData(ProtocolCallContext* pCallContext, unsigned int uiConnectionID, unsigned int uiPrincipalID, qList<ConnectionData>* pConnectionData);
-    bool RequestURLs(ProtocolCallContext* pCallContext, unsigned int uiConnectionID, unsigned int uiPrincipalID, qList<StationURL>* pURLs);
+    bool RegisterURLsEx(ProtocolCallContext* pCallContext, qResult* pResult, StationURL* pPublicURL,
+                        const AnyObjectHolder<Data, String>& rCustomData);
+    bool RequestConnectionData(ProtocolCallContext* pCallContext, unsigned int uiConnectionID,
+                               unsigned int uiPrincipalID, qList<ConnectionData>* pConnectionData);
+    bool RequestURLs(ProtocolCallContext* pCallContext, unsigned int uiConnectionID, unsigned int uiPrincipalID,
+                     qList<StationURL>* pURLs);
     bool RequestURLs(ProtocolCallContext* pCallContext, unsigned int uiConnectionID, qList<StationURL>* pURLs);
     bool TestConnectivity(ProtocolCallContext* pCallContext);
     bool UpdateURLs(ProtocolCallContext* pCallContext);

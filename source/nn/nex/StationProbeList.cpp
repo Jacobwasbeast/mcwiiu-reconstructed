@@ -15,10 +15,7 @@ const unsigned int UNREACHED_PING_TIME = static_cast<unsigned int>(-1);
 
 struct AscendingPingSort
 {
-    bool operator()(unsigned int uiLeft, unsigned int uiRight) const
-    {
-        return uiLeft < uiRight;
-    }
+    bool operator()(unsigned int uiLeft, unsigned int uiRight) const { return uiLeft < uiRight; }
 };
 
 }
@@ -36,8 +33,8 @@ void StationProbe::Update()
 {
     NATTraversalEngine* pEngine = Network::GetInstance()->GetNATTraversalEngine();
     bool bFailed = true;
-    for (qList<StationURL>::const_iterator url = m_contactInfo.GetURLs().begin();
-         url != m_contactInfo.GetURLs().end(); ++url)
+    for (qList<StationURL>::const_iterator url = m_contactInfo.GetURLs().begin(); url != m_contactInfo.GetURLs().end();
+         ++url)
     {
         unsigned int uiPingTime = pEngine->GetURLPingTime(*url);
         if (uiPingTime != UNREACHED_PING_TIME && uiPingTime < static_cast<unsigned int>(m_iPingTime))

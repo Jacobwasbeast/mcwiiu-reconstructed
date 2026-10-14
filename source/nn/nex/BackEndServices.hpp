@@ -48,19 +48,11 @@ public:
     class InternalData
     {
     public:
-        InternalData()
-            : m_userContext()
-            , m_bIsSet(false)
-        {
-        }
+        InternalData() : m_userContext(), m_bIsSet(false) {}
 
-        ~InternalData()
-        {
-            m_bIsSet = false;
-        }
+        ~InternalData() { m_bIsSet = false; }
 
-        void Set(const CallContext::CompletionCallback& rCallback,
-                 const UserContext& rUserContext);
+        void Set(const CallContext::CompletionCallback& rCallback, const UserContext& rUserContext);
 
         CallContext::CompletionCallback m_cbCallback;
         UserContext m_userContext;
@@ -78,10 +70,7 @@ public:
             return *this;
         }
 
-        operator int() const
-        {
-            return m_iTimeout;
-        }
+        operator int() const { return m_iTimeout; }
 
     private:
         int m_iTimeout;
@@ -108,16 +97,14 @@ public:
     qResult IsConnected() const;
     bool Disconnect(CallContext* pCallContext);
 
-    void RegisterOperationOnCallContext(CallContext& rCallContext,
-                                        RendezVousOperation& rOperation);
+    void RegisterOperationOnCallContext(CallContext& rCallContext, RendezVousOperation& rOperation);
     void OnLogoutStart(CallContext& rCallContext);
     void OnLoginStart(CallContext& rCallContext);
 
     bool LogoutImpl(CallContext* pCallContext, Credentials* pCredentials);
     bool Logout_(CallContext* pCallContext, Credentials* pCredentials);
 
-    void RegisterPreTerminateCallback(CallContext::CompletionCallback pCallback,
-                                      const UserContext& rUserContext);
+    void RegisterPreTerminateCallback(CallContext::CompletionCallback pCallback, const UserContext& rUserContext);
     void ReleaseCredentials();
 
     bool RegisterNotificationEventHandler(NotificationEventHandler* pHandler);
@@ -133,30 +120,18 @@ public:
     void SetEffectiveLoginTimeout(int iTimeout);
     bool EffectiveTimeoutIsSet() const;
 
-    bool LoginImpl(CallContext* pCallContext, qResult* pResult, const wchar_t* pUserName,
-                   const char* pPassword, const wchar_t* pHost, unsigned short uiPort,
-                   Credentials** ppCredentials, String* pErrorMessage,
+    bool LoginImpl(CallContext* pCallContext, qResult* pResult, const wchar_t* pUserName, const char* pPassword,
+                   const wchar_t* pHost, unsigned short uiPort, Credentials** ppCredentials, String* pErrorMessage,
                    AnyObjectHolder<Data, String>* pExtraData);
-    bool LoginImplWithData(CallContext* pCallContext, qResult* pResult, const char* pPassword,
-                           const wchar_t* pHost, unsigned short uiPort,
-                           const CustomDataHolder<LoginData>& rLoginData,
-                           const AnyObjectHolder<Data, String>& rExtraData,
-                           Credentials** ppCredentials);
+    bool LoginImplWithData(CallContext* pCallContext, qResult* pResult, const char* pPassword, const wchar_t* pHost,
+                           unsigned short uiPort, const CustomDataHolder<LoginData>& rLoginData,
+                           const AnyObjectHolder<Data, String>& rExtraData, Credentials** ppCredentials);
 
-    void InitStreamManagerFactory(StreamManagerFactory pFactory)
-    {
-        m_pStreamManagerFactory = pFactory;
-    }
+    void InitStreamManagerFactory(StreamManagerFactory pFactory) { m_pStreamManagerFactory = pFactory; }
 
-    unsigned short GetWellKnownPortNumber() const
-    {
-        return m_uiPort;
-    }
+    unsigned short GetWellKnownPortNumber() const { return m_uiPort; }
 
-    Credentials* GetCredentials()
-    {
-        return m_pCredentials;
-    }
+    Credentials* GetCredentials() { return m_pCredentials; }
 
 protected:
     friend class JobBackEndServicesLogin;

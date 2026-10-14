@@ -20,14 +20,9 @@ class Message;
 class _DDL_DataStorePreparePostParamV1 : public RootObject
 {
 public:
-    _DDL_DataStorePreparePostParamV1()
-        : m_uiStructureVersion(0), m_Tags(0), m_RatingInitParams(0)
-    {
-    }
+    _DDL_DataStorePreparePostParamV1() : m_uiStructureVersion(0), m_Tags(0), m_RatingInitParams(0) {}
 
-    virtual ~_DDL_DataStorePreparePostParamV1()
-    {
-    }
+    virtual ~_DDL_DataStorePreparePostParamV1() {}
 
     _DDL_DataStorePreparePostParamV1& operator=(const _DDL_DataStorePreparePostParamV1& rSource);
     bool operator==(const _DDL_DataStorePreparePostParamV1& rSource) const;

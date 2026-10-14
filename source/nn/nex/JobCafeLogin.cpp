@@ -17,8 +17,8 @@ namespace nn
 namespace act
 {
 
-nn::Result AcquireNexServiceToken(ACTNexAuthenticationResult* pResult, unsigned int uiGameId)
-    asm("AcquireNexServiceToken__Q2_2nn3actFP26ACTNexAuthenticationResultUi");
+nn::Result AcquireNexServiceToken(ACTNexAuthenticationResult* pResult, unsigned int uiGameId) asm(
+    "AcquireNexServiceToken__Q2_2nn3actFP26ACTNexAuthenticationResultUi");
 
 }
 }
@@ -47,7 +47,7 @@ enum LoginResult
     LOGIN_TOKEN_EXPIRED_RESULT = static_cast<int>(0x80680006u)
 };
 
-const NNResult INVALID_RESULT = { -1 };
+const NNResult INVALID_RESULT = {-1};
 
 OSEvent s_authenticationEvent;
 nn::Result s_authenticationResult(INVALID_RESULT);
@@ -63,9 +63,9 @@ void RegisterAccountAsyncCallback(nn::Result result, void*)
 }
 
 JobCafeLogin::JobCafeLogin(unsigned int uiPrincipalId)
-    : JobLogin()
-    , m_pAuthenticationThread(0)
-    , m_uiPrincipalId(uiPrincipalId)
+    : JobLogin(),
+      m_pAuthenticationThread(0),
+      m_uiPrincipalId(uiPrincipalId)
 {
     if (uiPrincipalId == 0)
         m_uiPrincipalId = nn::act::GetPrincipalId();
@@ -103,8 +103,7 @@ void JobCafeLogin::StepRegisterAccount()
     nn::Result result = nn::fp::RegisterAccountAsync(RegisterAccountAsyncCallback, 0);
     if (result.IsSuccess())
     {
-        SetStep(Step(static_cast<Step::Function>(&JobCafeLogin::StepWaitingForRegisterAccount),
-                     L""));
+        SetStep(Step(static_cast<Step::Function>(&JobCafeLogin::StepWaitingForRegisterAccount), L""));
         return;
     }
 
@@ -114,8 +113,7 @@ void JobCafeLogin::StepRegisterAccount()
 
 void JobCafeLogin::StepWaitingForRegisterAccount()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetToComplete();
@@ -126,8 +124,7 @@ void JobCafeLogin::StepWaitingForRegisterAccount()
     {
         if (s_registerAccountResult.IsSuccess())
         {
-            SetStep(Step(static_cast<Step::Function>(&JobCafeLogin::StepGetGameAuthentication),
-                         L""));
+            SetStep(Step(static_cast<Step::Function>(&JobCafeLogin::StepGetGameAuthentication), L""));
             return;
         }
 
@@ -166,9 +163,7 @@ void JobCafeLogin::StepGetGameAuthentication()
     m_pAuthenticationThread->SetObjectMethod(&JobCafeLogin::NexAuthenticationFunc, this, 0);
     if (m_pAuthenticationThread->Launch(AUTHENTICATION_THREAD_STACK_SIZE))
     {
-        SetStep(Step(
-            static_cast<Step::Function>(&JobCafeLogin::StepWaitingForGetGameAuthentication),
-            L""));
+        SetStep(Step(static_cast<Step::Function>(&JobCafeLogin::StepWaitingForGetGameAuthentication), L""));
         return;
     }
 
@@ -177,8 +172,7 @@ void JobCafeLogin::StepGetGameAuthentication()
 
 void JobCafeLogin::StepWaitingForGetGameAuthentication()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetToComplete();
@@ -247,9 +241,9 @@ void JobCafeLogin::StepGameLogin()
     unsigned short uiPort = pGlobals->m_nexPortMap[m_uiPrincipalId];
     char* pPassword;
     pGlobals->m_nexPasswordMap[m_uiPrincipalId].CreateCopy(&pPassword);
-    bool bLoggingIn = m_pNgsFacade->RendezVous::Login(
-        &m_protocolContext, userName.GetBuffer(), s_nexAuthentication.password, host, uiPort,
-        m_authenticationInfo, &m_pCredentials, &m_errorMessage);
+    bool bLoggingIn = m_pNgsFacade->RendezVous::Login(&m_protocolContext, userName.GetBuffer(),
+                                                      s_nexAuthentication.password, host, uiPort, m_authenticationInfo,
+                                                      &m_pCredentials, &m_errorMessage);
     String::ReleaseCopy(pPassword);
     if (!bLoggingIn)
     {
@@ -262,8 +256,7 @@ void JobCafeLogin::StepGameLogin()
 
 void JobCafeLogin::StepWaitingForGameLogin()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetToComplete();

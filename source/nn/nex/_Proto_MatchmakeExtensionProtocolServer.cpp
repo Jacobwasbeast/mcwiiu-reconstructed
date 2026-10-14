@@ -91,8 +91,7 @@ inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_BrowseMatchmakeSe
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     pProtocol->BrowseMatchmakeSession(searchCriteria, range, &gatherings);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_BROWSE_MATCHMAKE_SESSION);
-    _Type_qlist<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-            pResponse, gatherings);
+    _Type_qlist<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
 }
 
 inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_BrowseMatchmakeSessionWithHostUrls(
@@ -112,12 +111,9 @@ inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_BrowseMatchmakeSe
     }
     qList<AnyObjectHolder<Gathering, String> > gatherings;
     qList<GatheringURLs> gatheringURLs;
-    pProtocol->BrowseMatchmakeSessionWithHostUrls(searchCriteria, range, &gatherings,
-                                                  &gatheringURLs);
-    AddMethodID(pResponse,
-                RESPONSE_METHOD_FLAG | METHOD_BROWSE_MATCHMAKE_SESSION_WITH_HOST_URLS);
-    _Type_qlist<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(
-            pResponse, gatherings);
+    pProtocol->BrowseMatchmakeSessionWithHostUrls(searchCriteria, range, &gatherings, &gatheringURLs);
+    AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_BROWSE_MATCHMAKE_SESSION_WITH_HOST_URLS);
+    _Type_qlist<_Type_any<DDLClassMetaType<Gathering>, _Type_string> >::Add(pResponse, gatherings);
     _Type_qlist<DDLClassMetaType<GatheringURLs> >::Add(pResponse, gatheringURLs);
 }
 
@@ -144,8 +140,7 @@ inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_CreateMatchmakeSe
         return;
     }
     unsigned int uiGatheringID;
-    pProtocol->CreateMatchmakeSession(gathering, &uiGatheringID, message, &sessionKey,
-                                      uiParticipationCount);
+    pProtocol->CreateMatchmakeSession(gathering, &uiGatheringID, message, &sessionKey, uiParticipationCount);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_CREATE_MATCHMAKE_SESSION);
     _Type_uint32::Add(pResponse, uiGatheringID);
     _Type_qvector<_Type_byte>::Add(pResponse, sessionKey);
@@ -278,8 +273,7 @@ inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_UpdateMatchmakeSe
         return;
     }
     pProtocol->UpdateMatchmakeSessionAttribute(uiGatheringID, attributes);
-    AddMethodID(pResponse,
-                RESPONSE_METHOD_FLAG | METHOD_UPDATE_MATCHMAKE_SESSION_ATTRIBUTE);
+    AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_UPDATE_MATCHMAKE_SESSION_ATTRIBUTE);
 }
 
 inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_GetlstFriendNotificationData(
@@ -314,8 +308,7 @@ inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_AutoMatchmakeWith
     Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol)
 {
     qList<MatchmakeSessionSearchCriteria> searchCriteria;
-    _Type_qlist<DDLClassMetaType<MatchmakeSessionSearchCriteria> >::Extract(
-            pRequest, &searchCriteria);
+    _Type_qlist<DDLClassMetaType<MatchmakeSessionSearchCriteria> >::Extract(pRequest, &searchCriteria);
     if (pRequest->HasError())
     {
         return;
@@ -333,12 +326,9 @@ inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_AutoMatchmakeWith
     {
         return;
     }
-    pProtocol->AutoMatchmakeWithSearchCriteria_Postpone(searchCriteria, gathering,
-                                                        &joinedGathering, message);
-    AddMethodID(pResponse,
-                RESPONSE_METHOD_FLAG | METHOD_AUTO_MATCHMAKE_WITH_SEARCH_CRITERIA_POSTPONE);
-    _Type_any<DDLClassMetaType<Gathering>, _Type_string>::Add(
-            pResponse, joinedGathering);
+    pProtocol->AutoMatchmakeWithSearchCriteria_Postpone(searchCriteria, gathering, &joinedGathering, message);
+    AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_AUTO_MATCHMAKE_WITH_SEARCH_CRITERIA_POSTPONE);
+    _Type_any<DDLClassMetaType<Gathering>, _Type_string>::Add(pResponse, joinedGathering);
 }
 
 void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_GetPlayingSession(
@@ -597,8 +587,7 @@ void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_JoinMatchmakeSessionEx(
     {
         return;
     }
-    pProtocol->JoinMatchmakeSessionEx(uiGatheringID, message, bIgnoreBlockList,
-                                      &sessionKey, uiParticipationCount);
+    pProtocol->JoinMatchmakeSessionEx(uiGatheringID, message, bIgnoreBlockList, &sessionKey, uiParticipationCount);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_JOIN_MATCHMAKE_SESSION_EX);
     _Type_qvector<_Type_byte>::Add(pResponse, sessionKey);
 }
@@ -619,11 +608,9 @@ void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_GetSimplePlayingSession(
         return;
     }
     qList<SimplePlayingSession> simplePlayingSessions;
-    pProtocol->GetSimplePlayingSession(principalIDs, bIncludeLoginUser,
-                                       &simplePlayingSessions);
+    pProtocol->GetSimplePlayingSession(principalIDs, bIncludeLoginUser, &simplePlayingSessions);
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_GET_SIMPLE_PLAYING_SESSION);
-    _Type_qlist<DDLClassMetaType<SimplePlayingSession> >::Add(pResponse,
-                                                              simplePlayingSessions);
+    _Type_qlist<DDLClassMetaType<SimplePlayingSession> >::Add(pResponse, simplePlayingSessions);
 }
 
 void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_GetSimpleCommunity(
@@ -663,12 +650,9 @@ void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_AutoMatchmakeWithGatheri
     {
         return;
     }
-    pProtocol->AutoMatchmakeWithGatheringId_Postpone(gatheringIDs, gathering,
-                                                     &joinedGathering, message);
-    AddMethodID(pResponse,
-                RESPONSE_METHOD_FLAG | METHOD_AUTO_MATCHMAKE_WITH_GATHERING_ID_POSTPONE);
-    _Type_any<DDLClassMetaType<Gathering>, _Type_string>::Add(
-            pResponse, joinedGathering);
+    pProtocol->AutoMatchmakeWithGatheringId_Postpone(gatheringIDs, gathering, &joinedGathering, message);
+    AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_AUTO_MATCHMAKE_WITH_GATHERING_ID_POSTPONE);
+    _Type_any<DDLClassMetaType<Gathering>, _Type_string>::Add(pResponse, joinedGathering);
 }
 
 inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_UpdateProgressScore(
@@ -729,10 +713,8 @@ inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_DebugNotifyEvent(
     {
         return;
     }
-    pProtocol->DebugNotifyEvent(uiPrincipalID, uiMainType, uiSubType,
-                                uiParam1, uiParam2, param3);
-    AddMethodID(pResponse,
-                RESPONSE_METHOD_FLAG | METHOD_DEBUG_NOTIFY_EVENT);
+    pProtocol->DebugNotifyEvent(uiPrincipalID, uiMainType, uiSubType, uiParam1, uiParam2, param3);
+    AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_DEBUG_NOTIFY_EVENT);
 }
 
 inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_GenerateMatchmakeSessionSystemPassword(
@@ -744,8 +726,7 @@ inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_GenerateMatchmake
     {
         String password;
         pProtocol->GenerateMatchmakeSessionSystemPassword(uiGatheringID, &password);
-        AddMethodID(pResponse,
-                    RESPONSE_METHOD_FLAG | METHOD_GENERATE_MATCHMAKE_SESSION_SYSTEM_PASSWORD);
+        AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_GENERATE_MATCHMAKE_SESSION_SYSTEM_PASSWORD);
         _Type_string::Add(pResponse, password);
     }
 }
@@ -760,8 +741,7 @@ void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_ClearMatchmakeSessionSys
         return;
     }
     pProtocol->ClearMatchmakeSessionSystemPassword(uiGatheringID);
-    AddMethodID(pResponse,
-                RESPONSE_METHOD_FLAG | METHOD_CLEAR_MATCHMAKE_SESSION_SYSTEM_PASSWORD);
+    AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_CLEAR_MATCHMAKE_SESSION_SYSTEM_PASSWORD);
 }
 
 inline void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_CreateMatchmakeSessionWithParam(
@@ -818,8 +798,7 @@ void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_FindMatchmakeSessionByGa
     }
     MatchmakeSession matchmakeSession;
     pProtocol->FindMatchmakeSessionByGatheringIdDetail(uiGatheringID, &matchmakeSession);
-    AddMethodID(pResponse,
-                RESPONSE_METHOD_FLAG | METHOD_FIND_MATCHMAKE_SESSION_BY_GATHERING_ID_DETAIL);
+    AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_FIND_MATCHMAKE_SESSION_BY_GATHERING_ID_DETAIL);
     DDLClassMetaType<MatchmakeSession>::Add(pResponse, matchmakeSession);
 }
 
@@ -840,8 +819,7 @@ void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_BrowseMatchmakeSessionNo
     }
     qList<MatchmakeSession> matchmakeSessions;
     pProtocol->BrowseMatchmakeSessionNoHolder(searchCriteria, range, &matchmakeSessions);
-    AddMethodID(pResponse,
-                RESPONSE_METHOD_FLAG | METHOD_BROWSE_MATCHMAKE_SESSION_NO_HOLDER);
+    AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_BROWSE_MATCHMAKE_SESSION_NO_HOLDER);
     _Type_qlist<DDLClassMetaType<MatchmakeSession> >::Add(pResponse, matchmakeSessions);
 }
 
@@ -862,11 +840,8 @@ void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_BrowseMatchmakeSessionWi
     }
     qList<MatchmakeSession> matchmakeSessions;
     qList<GatheringURLs> gatheringURLs;
-    pProtocol->BrowseMatchmakeSessionWithHostUrlsNoHolder(searchCriteria, range,
-                                                          &matchmakeSessions,
-                                                          &gatheringURLs);
-    AddMethodID(pResponse,
-                RESPONSE_METHOD_FLAG | METHOD_BROWSE_MATCHMAKE_SESSION_WITH_HOST_URLS_NO_HOLDER);
+    pProtocol->BrowseMatchmakeSessionWithHostUrlsNoHolder(searchCriteria, range, &matchmakeSessions, &gatheringURLs);
+    AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_BROWSE_MATCHMAKE_SESSION_WITH_HOST_URLS_NO_HOLDER);
     _Type_qlist<DDLClassMetaType<MatchmakeSession> >::Add(pResponse, matchmakeSessions);
     _Type_qlist<DDLClassMetaType<GatheringURLs> >::Add(pResponse, gatheringURLs);
 }
@@ -918,8 +893,8 @@ void _Proto_MatchmakeExtensionProtocolServer::ProtoStub_WithdrawMatchmakingAll(
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_WITHDRAW_MATCHMAKING_ALL);
 }
 
-void _Proto_MatchmakeExtensionProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_MatchmakeExtensionProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                                      bool* pResponseRequired, EndPoint*)
 {
     switch (static_cast<uint16_t>(ExtractMethodID(pRequest)))
     {

@@ -28,25 +28,21 @@ public:
         METHOD_LOGIN_WITH_CONTEXT = 6
     };
 
-    explicit _Proto_TicketGrantingProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_TicketGrantingProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual qResult Login(const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket,
                           RVConnectionData* pConnectionData, String* pReturnMessage) = 0;
     virtual qResult LoginEx(const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket,
                             RVConnectionData* pConnectionData, String* pReturnMessage,
                             const AnyObjectHolder<Data, String>& rCustomData) = 0;
-    virtual qResult RequestTicket(const unsigned int& rSourcePrincipalID,
-                                  const unsigned int& rTargetPrincipalID, Buffer* pTicket) = 0;
+    virtual qResult RequestTicket(const unsigned int& rSourcePrincipalID, const unsigned int& rTargetPrincipalID,
+                                  Buffer* pTicket) = 0;
     virtual unsigned int GetPID(const String& rUserName) = 0;
     virtual String GetName(const unsigned int& rPrincipalID) = 0;
-    virtual qResult LoginWithContext(const AnyObjectHolder<Data, String>& rLoginData,
-                                     unsigned int* pPrincipalID, Buffer* pTicket,
-                                     RVConnectionData* pConnectionData) = 0;
+    virtual qResult LoginWithContext(const AnyObjectHolder<Data, String>& rLoginData, unsigned int* pPrincipalID,
+                                     Buffer* pTicket, RVConnectionData* pConnectionData) = 0;
 };
 
 }

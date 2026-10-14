@@ -21,8 +21,7 @@ class PacketDispatchQueue : public RootObject
 {
 public:
     typedef LogicalClockTmpl<unsigned short, short> Clock;
-    typedef std::map<Clock, PacketIn*, std::less<Clock>,
-                     MemAllocator<std::pair<const Clock, PacketIn*> > > PacketMap;
+    typedef std::map<Clock, PacketIn*, std::less<Clock>, MemAllocator<std::pair<const Clock, PacketIn*> > > PacketMap;
 
     PacketDispatchQueue();
     ~PacketDispatchQueue();
@@ -32,10 +31,7 @@ public:
     void Dispatched(PacketIn* pPacket);
     void Purge();
 
-    const Clock& GetNextSequence() const
-    {
-        return m_nextToDispatch;
-    }
+    const Clock& GetNextSequence() const { return m_nextToDispatch; }
 
 private:
     friend class PRUDPEndPoint;

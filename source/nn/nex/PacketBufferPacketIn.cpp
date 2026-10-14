@@ -7,8 +7,7 @@ namespace nn
 namespace nex
 {
 
-PacketBufferPacketIn::PacketBufferPacketIn(unsigned int uiBufferSize)
-    : PacketIn(0)
+PacketBufferPacketIn::PacketBufferPacketIn(unsigned int uiBufferSize) : PacketIn(0)
 {
     SetPayload(new (RootObject::TARGET_POOL_PACKET_MANAGEMENT) PacketBuffer(uiBufferSize, 4));
 }

@@ -155,11 +155,9 @@ ProtoReturnFunction s_ProtoReturn[METHOD_ID_COUNT];
 
 }
 
-void DataStoreProtocolClient::ProtoReturn_PrepareGetObject(Message* pMessage,
-                                                           ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_PrepareGetObject(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreReqGetInfo* pReqGetInfo =
-        static_cast<DataStoreReqGetInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreReqGetInfo* pReqGetInfo = static_cast<DataStoreReqGetInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pReqGetInfo != 0)
     {
         _DDL_DataStoreReqGetInfo::Extract(pMessage, pReqGetInfo);
@@ -199,11 +197,9 @@ bool DataStoreProtocolClient::CallPrepareGetObject(ProtocolCallContext* pCallCon
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_PrepareGetObjectV1(Message* pMessage,
-                                                             ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_PrepareGetObjectV1(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreReqGetInfoV1* pReqGetInfoV1 =
-        static_cast<DataStoreReqGetInfoV1*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreReqGetInfoV1* pReqGetInfoV1 = static_cast<DataStoreReqGetInfoV1*>(pCallContext->GetReturnValuePtr(0));
     if (pReqGetInfoV1 != 0)
     {
         _DDL_DataStoreReqGetInfoV1::Extract(pMessage, pReqGetInfoV1);
@@ -246,8 +242,7 @@ bool DataStoreProtocolClient::CallPrepareGetObjectV1(ProtocolCallContext* pCallC
 void DataStoreProtocolClient::ProtoReturn_PrepareGetObjectOrMetaBinary(Message* pMessage,
                                                                        ProtocolCallContext* pCallContext)
 {
-    DataStoreReqGetInfo* pReqGetInfo =
-        static_cast<DataStoreReqGetInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreReqGetInfo* pReqGetInfo = static_cast<DataStoreReqGetInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pReqGetInfo != 0)
     {
         _DDL_DataStoreReqGetInfo::Extract(pMessage, pReqGetInfo);
@@ -266,8 +261,8 @@ void DataStoreProtocolClient::ProtoReturn_PrepareGetObjectOrMetaBinary(Message* 
         }
     }
 
-    DataStoreReqGetAdditionalMeta* pReqGetAdditionalMeta =
-        static_cast<DataStoreReqGetAdditionalMeta*>(pCallContext->GetReturnValuePtr(1));
+    DataStoreReqGetAdditionalMeta* pReqGetAdditionalMeta = static_cast<DataStoreReqGetAdditionalMeta*>(
+        pCallContext->GetReturnValuePtr(1));
     if (pReqGetAdditionalMeta == 0)
     {
         DataStoreReqGetAdditionalMeta discarded[1];
@@ -309,11 +304,9 @@ bool DataStoreProtocolClient::CallPrepareGetObjectOrMetaBinary(ProtocolCallConte
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_PreparePostObject(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_PreparePostObject(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreReqPostInfo* pReqPostInfo =
-        static_cast<DataStoreReqPostInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreReqPostInfo* pReqPostInfo = static_cast<DataStoreReqPostInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pReqPostInfo != 0)
     {
         _DDL_DataStoreReqPostInfo::Extract(pMessage, pReqPostInfo);
@@ -353,11 +346,9 @@ bool DataStoreProtocolClient::CallPreparePostObject(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_PreparePostObjectV1(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_PreparePostObjectV1(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreReqPostInfoV1* pReqPostInfoV1 =
-        static_cast<DataStoreReqPostInfoV1*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreReqPostInfoV1* pReqPostInfoV1 = static_cast<DataStoreReqPostInfoV1*>(pCallContext->GetReturnValuePtr(0));
     if (pReqPostInfoV1 != 0)
     {
         _DDL_DataStoreReqPostInfoV1::Extract(pMessage, pReqPostInfoV1);
@@ -472,11 +463,9 @@ bool DataStoreProtocolClient::CallCompletePostObjects(ProtocolCallContext* pCall
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_PrepareUpdateObject(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_PrepareUpdateObject(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreReqUpdateInfo* pReqUpdateInfo =
-        static_cast<DataStoreReqUpdateInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreReqUpdateInfo* pReqUpdateInfo = static_cast<DataStoreReqUpdateInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pReqUpdateInfo != 0)
     {
         _DDL_DataStoreReqUpdateInfo::Extract(pMessage, pReqUpdateInfo);
@@ -591,11 +580,9 @@ bool DataStoreProtocolClient::CallChangeMeta(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetMeta(Message* pMessage,
-                                                  ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetMeta(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreMetaInfo* pMetaInfo =
-        static_cast<DataStoreMetaInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreMetaInfo* pMetaInfo = static_cast<DataStoreMetaInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pMetaInfo != 0)
     {
         _DDL_DataStoreMetaInfo::Extract(pMessage, pMetaInfo);
@@ -605,8 +592,7 @@ void DataStoreProtocolClient::ProtoReturn_GetMeta(Message* pMessage,
     _DDL_DataStoreMetaInfo::Extract(pMessage, discarded);
 }
 
-bool DataStoreProtocolClient::CallGetMeta(ProtocolCallContext* pCallContext,
-                                          const DataStoreGetMetaParam& rGetMetaParam,
+bool DataStoreProtocolClient::CallGetMeta(ProtocolCallContext* pCallContext, const DataStoreGetMetaParam& rGetMetaParam,
                                           DataStoreMetaInfo* pMetaInfo)
 {
     Message message;
@@ -635,11 +621,10 @@ bool DataStoreProtocolClient::CallGetMeta(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetMetas(Message* pMessage,
-                                                   ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetMetas(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    qVector<DataStoreMetaInfo>* pMetaInfos =
-        static_cast<qVector<DataStoreMetaInfo>*>(pCallContext->GetReturnValuePtr(0));
+    qVector<DataStoreMetaInfo>* pMetaInfos = static_cast<qVector<DataStoreMetaInfo>*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pMetaInfos != 0)
     {
         _Type_qvector<DDLClassMetaType<DataStoreMetaInfo> >::Extract(pMessage, pMetaInfos);
@@ -658,8 +643,7 @@ void DataStoreProtocolClient::ProtoReturn_GetMetas(Message* pMessage,
         }
     }
 
-    qVector<qResult>* pResults =
-        static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
+    qVector<qResult>* pResults = static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
     if (pResults != 0)
     {
         _Type_qvector<_Type_qresult>::Extract(pMessage, pResults);
@@ -672,8 +656,7 @@ void DataStoreProtocolClient::ProtoReturn_GetMetas(Message* pMessage,
 bool DataStoreProtocolClient::CallGetMetas(ProtocolCallContext* pCallContext,
                                            const qVector<unsigned long long>& rDataIds,
                                            const DataStoreGetMetaParam& rGetMetaParam,
-                                           qVector<DataStoreMetaInfo>* pMetaInfos,
-                                           qVector<qResult>* pResults)
+                                           qVector<DataStoreMetaInfo>* pMetaInfos, qVector<qResult>* pResults)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -703,11 +686,10 @@ bool DataStoreProtocolClient::CallGetMetas(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetMetasMultipleParam(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetMetasMultipleParam(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    qVector<DataStoreMetaInfo>* pMetaInfos =
-        static_cast<qVector<DataStoreMetaInfo>*>(pCallContext->GetReturnValuePtr(0));
+    qVector<DataStoreMetaInfo>* pMetaInfos = static_cast<qVector<DataStoreMetaInfo>*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pMetaInfos != 0)
     {
         _Type_qvector<DDLClassMetaType<DataStoreMetaInfo> >::Extract(pMessage, pMetaInfos);
@@ -726,8 +708,7 @@ void DataStoreProtocolClient::ProtoReturn_GetMetasMultipleParam(Message* pMessag
         }
     }
 
-    qVector<qResult>* pResults =
-        static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
+    qVector<qResult>* pResults = static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
     if (pResults != 0)
     {
         _Type_qvector<_Type_qresult>::Extract(pMessage, pResults);
@@ -769,11 +750,9 @@ bool DataStoreProtocolClient::CallGetMetasMultipleParam(ProtocolCallContext* pCa
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_SearchObject(Message* pMessage,
-                                                       ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_SearchObject(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreSearchResult* pSearchResult =
-        static_cast<DataStoreSearchResult*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreSearchResult* pSearchResult = static_cast<DataStoreSearchResult*>(pCallContext->GetReturnValuePtr(0));
     if (pSearchResult != 0)
     {
         _DDL_DataStoreSearchResult::Extract(pMessage, pSearchResult);
@@ -813,11 +792,9 @@ bool DataStoreProtocolClient::CallSearchObject(ProtocolCallContext* pCallContext
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_SearchObjectLight(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_SearchObjectLight(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreSearchResult* pSearchResult =
-        static_cast<DataStoreSearchResult*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreSearchResult* pSearchResult = static_cast<DataStoreSearchResult*>(pCallContext->GetReturnValuePtr(0));
     if (pSearchResult != 0)
     {
         _DDL_DataStoreSearchResult::Extract(pMessage, pSearchResult);
@@ -857,11 +834,10 @@ bool DataStoreProtocolClient::CallSearchObjectLight(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetNotificationUrl(Message* pMessage,
-                                                             ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetNotificationUrl(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreReqGetNotificationUrlInfo* pReqGetNotificationUrlInfo =
-        static_cast<DataStoreReqGetNotificationUrlInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreReqGetNotificationUrlInfo* pReqGetNotificationUrlInfo = static_cast<DataStoreReqGetNotificationUrlInfo*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pReqGetNotificationUrlInfo != 0)
     {
         _DDL_DataStoreReqGetNotificationUrlInfo::Extract(pMessage, pReqGetNotificationUrlInfo);
@@ -904,8 +880,8 @@ bool DataStoreProtocolClient::CallGetNotificationUrl(ProtocolCallContext* pCallC
 void DataStoreProtocolClient::ProtoReturn_GetNewArrivedNotifications(Message* pMessage,
                                                                      ProtocolCallContext* pCallContext)
 {
-    qVector<DataStoreNotification>* pNotifications =
-        static_cast<qVector<DataStoreNotification>*>(pCallContext->GetReturnValuePtr(0));
+    qVector<DataStoreNotification>* pNotifications = static_cast<qVector<DataStoreNotification>*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pNotifications != 0)
     {
         _Type_qvector<DDLClassMetaType<DataStoreNotification> >::Extract(pMessage, pNotifications);
@@ -934,10 +910,9 @@ void DataStoreProtocolClient::ProtoReturn_GetNewArrivedNotifications(Message* pM
     *pMessage >> discarded;
 }
 
-bool DataStoreProtocolClient::CallGetNewArrivedNotifications(ProtocolCallContext* pCallContext,
-                                                             const DataStoreGetNewArrivedNotificationsParam& rGetNewArrivedNotificationsParam,
-                                                             qVector<DataStoreNotification>* pNotifications,
-                                                             bool* pFlag)
+bool DataStoreProtocolClient::CallGetNewArrivedNotifications(
+    ProtocolCallContext* pCallContext, const DataStoreGetNewArrivedNotificationsParam& rGetNewArrivedNotificationsParam,
+    qVector<DataStoreNotification>* pNotifications, bool* pFlag)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -969,8 +944,8 @@ bool DataStoreProtocolClient::CallGetNewArrivedNotifications(ProtocolCallContext
 void DataStoreProtocolClient::ProtoReturn_GetNewArrivedNotificationsV1(Message* pMessage,
                                                                        ProtocolCallContext* pCallContext)
 {
-    qVector<DataStoreNotificationV1>* pNotificationV1s =
-        static_cast<qVector<DataStoreNotificationV1>*>(pCallContext->GetReturnValuePtr(0));
+    qVector<DataStoreNotificationV1>* pNotificationV1s = static_cast<qVector<DataStoreNotificationV1>*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pNotificationV1s != 0)
     {
         _Type_qvector<DDLClassMetaType<DataStoreNotificationV1> >::Extract(pMessage, pNotificationV1s);
@@ -999,10 +974,9 @@ void DataStoreProtocolClient::ProtoReturn_GetNewArrivedNotificationsV1(Message* 
     *pMessage >> discarded;
 }
 
-bool DataStoreProtocolClient::CallGetNewArrivedNotificationsV1(ProtocolCallContext* pCallContext,
-                                                               const DataStoreGetNewArrivedNotificationsParam& rGetNewArrivedNotificationsParam,
-                                                               qVector<DataStoreNotificationV1>* pNotificationV1s,
-                                                               bool* pFlag)
+bool DataStoreProtocolClient::CallGetNewArrivedNotificationsV1(
+    ProtocolCallContext* pCallContext, const DataStoreGetNewArrivedNotificationsParam& rGetNewArrivedNotificationsParam,
+    qVector<DataStoreNotificationV1>* pNotificationV1s, bool* pFlag)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1031,11 +1005,9 @@ bool DataStoreProtocolClient::CallGetNewArrivedNotificationsV1(ProtocolCallConte
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_RateObject(Message* pMessage,
-                                                     ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_RateObject(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreRatingInfo* pRatingInfo =
-        static_cast<DataStoreRatingInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreRatingInfo* pRatingInfo = static_cast<DataStoreRatingInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pRatingInfo != 0)
     {
         _DDL_DataStoreRatingInfo::Extract(pMessage, pRatingInfo);
@@ -1047,8 +1019,7 @@ void DataStoreProtocolClient::ProtoReturn_RateObject(Message* pMessage,
 
 bool DataStoreProtocolClient::CallRateObject(ProtocolCallContext* pCallContext,
                                              const DataStoreRatingTarget& rRatingTarget,
-                                             const DataStoreRateObjectParam& rRateObjectParam,
-                                             const bool& rFlag,
+                                             const DataStoreRateObjectParam& rRateObjectParam, const bool& rFlag,
                                              DataStoreRatingInfo* pRatingInfo)
 {
     Message message;
@@ -1079,11 +1050,9 @@ bool DataStoreProtocolClient::CallRateObject(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetRating(Message* pMessage,
-                                                    ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetRating(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreRatingInfo* pRatingInfo =
-        static_cast<DataStoreRatingInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreRatingInfo* pRatingInfo = static_cast<DataStoreRatingInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pRatingInfo != 0)
     {
         _DDL_DataStoreRatingInfo::Extract(pMessage, pRatingInfo);
@@ -1095,8 +1064,7 @@ void DataStoreProtocolClient::ProtoReturn_GetRating(Message* pMessage,
 
 bool DataStoreProtocolClient::CallGetRating(ProtocolCallContext* pCallContext,
                                             const DataStoreRatingTarget& rRatingTarget,
-                                            DataStoreRatingInfo* pRatingInfo,
-                                            const unsigned long long& rDataId)
+                                            DataStoreRatingInfo* pRatingInfo, const unsigned long long& rDataId)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1125,14 +1093,14 @@ bool DataStoreProtocolClient::CallGetRating(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetRatings(Message* pMessage,
-                                                     ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetRatings(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qVector<qVector<DataStoreRatingInfoWithSlot> >* pRatingInfoWithSlotss =
         static_cast<qVector<qVector<DataStoreRatingInfoWithSlot> >*>(pCallContext->GetReturnValuePtr(0));
     if (pRatingInfoWithSlotss != 0)
     {
-        _Type_qvector<_Type_qvector<DDLClassMetaType<DataStoreRatingInfoWithSlot> > >::Extract(pMessage, pRatingInfoWithSlotss);
+        _Type_qvector<_Type_qvector<DDLClassMetaType<DataStoreRatingInfoWithSlot> > >::Extract(pMessage,
+                                                                                               pRatingInfoWithSlotss);
         if (pMessage->HasError())
         {
             return;
@@ -1148,8 +1116,7 @@ void DataStoreProtocolClient::ProtoReturn_GetRatings(Message* pMessage,
         }
     }
 
-    qVector<qResult>* pResults =
-        static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
+    qVector<qResult>* pResults = static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
     if (pResults != 0)
     {
         _Type_qvector<_Type_qresult>::Extract(pMessage, pResults);
@@ -1162,8 +1129,7 @@ void DataStoreProtocolClient::ProtoReturn_GetRatings(Message* pMessage,
 bool DataStoreProtocolClient::CallGetRatings(ProtocolCallContext* pCallContext,
                                              const qVector<unsigned long long>& rDataIds,
                                              qVector<qVector<DataStoreRatingInfoWithSlot> >* pRatingInfoWithSlotss,
-                                             qVector<qResult>* pResults,
-                                             const unsigned long long& rDataId)
+                                             qVector<qResult>* pResults, const unsigned long long& rDataId)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1220,8 +1186,7 @@ bool DataStoreProtocolClient::CallResetRating(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_ResetRatings(Message* pMessage,
-                                                       ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_ResetRatings(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pValue = pCallContext->GetReturnValuePtr(0);
     if (pValue != 0)
@@ -1234,8 +1199,7 @@ void DataStoreProtocolClient::ProtoReturn_ResetRatings(Message* pMessage,
 }
 
 bool DataStoreProtocolClient::CallResetRatings(ProtocolCallContext* pCallContext,
-                                               const qVector<unsigned long long>& rDataIds,
-                                               const bool& rFlag,
+                                               const qVector<unsigned long long>& rDataIds, const bool& rFlag,
                                                qVector<qResult>* pResults)
 {
     Message message;
@@ -1265,13 +1229,13 @@ bool DataStoreProtocolClient::CallResetRatings(ProtocolCallContext* pCallContext
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetSpecificMeta(Message* pMessage,
-                                                          ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetSpecificMeta(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pValue = pCallContext->GetReturnValuePtr(0);
     if (pValue != 0)
     {
-        _Type_qvector<DDLClassMetaType<DataStoreSpecificMetaInfo> >::Extract(pMessage, static_cast<qVector<DataStoreSpecificMetaInfo>*>(pValue));
+        _Type_qvector<DDLClassMetaType<DataStoreSpecificMetaInfo> >::Extract(
+            pMessage, static_cast<qVector<DataStoreSpecificMetaInfo>*>(pValue));
         return;
     }
     qVector<DataStoreSpecificMetaInfo> discarded[1];
@@ -1308,13 +1272,13 @@ bool DataStoreProtocolClient::CallGetSpecificMeta(ProtocolCallContext* pCallCont
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetSpecificMetaV1(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetSpecificMetaV1(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pValue = pCallContext->GetReturnValuePtr(0);
     if (pValue != 0)
     {
-        _Type_qvector<DDLClassMetaType<DataStoreSpecificMetaInfoV1> >::Extract(pMessage, static_cast<qVector<DataStoreSpecificMetaInfoV1>*>(pValue));
+        _Type_qvector<DDLClassMetaType<DataStoreSpecificMetaInfoV1> >::Extract(
+            pMessage, static_cast<qVector<DataStoreSpecificMetaInfoV1>*>(pValue));
         return;
     }
     qVector<DataStoreSpecificMetaInfoV1> discarded[1];
@@ -1351,12 +1315,10 @@ bool DataStoreProtocolClient::CallGetSpecificMetaV1(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_PostMetaBinary(Message* pMessage,
-                                                         ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_PostMetaBinary(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     unsigned long long discarded;
-    unsigned long long* pDataId =
-        static_cast<unsigned long long*>(pCallContext->GetReturnValuePtr(0));
+    unsigned long long* pDataId = static_cast<unsigned long long*>(pCallContext->GetReturnValuePtr(0));
     unsigned long long* pDestination = &discarded;
     if (pDataId != 0)
         pDestination = pDataId;
@@ -1433,11 +1395,9 @@ void DataStoreProtocolClient::ProtoReturn_PostMetaBinariesWithDataId(Message* pM
     _Type_qvector<_Type_qresult>::Extract(pMessage, discarded);
 }
 
-bool DataStoreProtocolClient::CallPostMetaBinariesWithDataId(ProtocolCallContext* pCallContext,
-                                                             const qVector<unsigned long long>& rDataIds,
-                                                             const qVector<DataStorePreparePostParam>& rPreparePostParams,
-                                                             const bool& rFlag,
-                                                             qVector<qResult>* pResults)
+bool DataStoreProtocolClient::CallPostMetaBinariesWithDataId(
+    ProtocolCallContext* pCallContext, const qVector<unsigned long long>& rDataIds,
+    const qVector<DataStorePreparePostParam>& rPreparePostParams, const bool& rFlag, qVector<qResult>* pResults)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1492,11 +1452,9 @@ bool DataStoreProtocolClient::CallTouchObject(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetRatingWithLog(Message* pMessage,
-                                                           ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetRatingWithLog(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreRatingInfo* pRatingInfo =
-        static_cast<DataStoreRatingInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreRatingInfo* pRatingInfo = static_cast<DataStoreRatingInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pRatingInfo == 0)
     {
         DataStoreRatingInfo discarded[1];
@@ -1508,8 +1466,7 @@ void DataStoreProtocolClient::ProtoReturn_GetRatingWithLog(Message* pMessage,
         return;
     }
 
-    DataStoreRatingLog* pRatingLog =
-        static_cast<DataStoreRatingLog*>(pCallContext->GetReturnValuePtr(1));
+    DataStoreRatingLog* pRatingLog = static_cast<DataStoreRatingLog*>(pCallContext->GetReturnValuePtr(1));
     if (pRatingLog == 0)
     {
         DataStoreRatingLog discarded[1];
@@ -1523,8 +1480,7 @@ void DataStoreProtocolClient::ProtoReturn_GetRatingWithLog(Message* pMessage,
 
 bool DataStoreProtocolClient::CallGetRatingWithLog(ProtocolCallContext* pCallContext,
                                                    const DataStoreRatingTarget& rRatingTarget,
-                                                   DataStoreRatingInfo* pRatingInfo,
-                                                   DataStoreRatingLog* pRatingLog,
+                                                   DataStoreRatingInfo* pRatingInfo, DataStoreRatingLog* pRatingLog,
                                                    const unsigned long long& rDataId)
 {
     Message message;
@@ -1555,11 +1511,10 @@ bool DataStoreProtocolClient::CallGetRatingWithLog(ProtocolCallContext* pCallCon
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetPersistenceInfo(Message* pMessage,
-                                                             ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetPersistenceInfo(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStorePersistenceInfo* pPersistenceInfo =
-        static_cast<DataStorePersistenceInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStorePersistenceInfo* pPersistenceInfo = static_cast<DataStorePersistenceInfo*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pPersistenceInfo != 0)
     {
         _DDL_DataStorePersistenceInfo::Extract(pMessage, pPersistenceInfo);
@@ -1569,8 +1524,7 @@ void DataStoreProtocolClient::ProtoReturn_GetPersistenceInfo(Message* pMessage,
     _DDL_DataStorePersistenceInfo::Extract(pMessage, discarded);
 }
 
-bool DataStoreProtocolClient::CallGetPersistenceInfo(ProtocolCallContext* pCallContext,
-                                                     const unsigned int& rValue,
+bool DataStoreProtocolClient::CallGetPersistenceInfo(ProtocolCallContext* pCallContext, const unsigned int& rValue,
                                                      const unsigned short& rSlot,
                                                      DataStorePersistenceInfo* pPersistenceInfo)
 {
@@ -1601,11 +1555,10 @@ bool DataStoreProtocolClient::CallGetPersistenceInfo(ProtocolCallContext* pCallC
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetPersistenceInfos(Message* pMessage,
-                                                              ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetPersistenceInfos(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    qVector<DataStorePersistenceInfo>* pPersistenceInfos =
-        static_cast<qVector<DataStorePersistenceInfo>*>(pCallContext->GetReturnValuePtr(0));
+    qVector<DataStorePersistenceInfo>* pPersistenceInfos = static_cast<qVector<DataStorePersistenceInfo>*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pPersistenceInfos != 0)
     {
         _Type_qvector<DDLClassMetaType<DataStorePersistenceInfo> >::Extract(pMessage, pPersistenceInfos);
@@ -1624,8 +1577,7 @@ void DataStoreProtocolClient::ProtoReturn_GetPersistenceInfos(Message* pMessage,
         }
     }
 
-    qVector<qResult>* pResults =
-        static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
+    qVector<qResult>* pResults = static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
     if (pResults != 0)
     {
         _Type_qvector<_Type_qresult>::Extract(pMessage, pResults);
@@ -1635,8 +1587,7 @@ void DataStoreProtocolClient::ProtoReturn_GetPersistenceInfos(Message* pMessage,
     _Type_qvector<_Type_qresult>::Extract(pMessage, discarded);
 }
 
-bool DataStoreProtocolClient::CallGetPersistenceInfos(ProtocolCallContext* pCallContext,
-                                                      const unsigned int& rValue,
+bool DataStoreProtocolClient::CallGetPersistenceInfos(ProtocolCallContext* pCallContext, const unsigned int& rValue,
                                                       const qVector<unsigned short>& rSlots,
                                                       qVector<DataStorePersistenceInfo>* pPersistenceInfos,
                                                       qVector<qResult>* pResults)
@@ -1669,10 +1620,8 @@ bool DataStoreProtocolClient::CallGetPersistenceInfos(ProtocolCallContext* pCall
     return bSent;
 }
 
-bool DataStoreProtocolClient::CallPerpetuateObject(ProtocolCallContext* pCallContext,
-                                                   const unsigned short& rSlot,
-                                                   const unsigned long long& rDataId,
-                                                   const bool& rFlag)
+bool DataStoreProtocolClient::CallPerpetuateObject(ProtocolCallContext* pCallContext, const unsigned short& rSlot,
+                                                   const unsigned long long& rDataId, const bool& rFlag)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1698,8 +1647,7 @@ bool DataStoreProtocolClient::CallPerpetuateObject(ProtocolCallContext* pCallCon
     return bSent;
 }
 
-bool DataStoreProtocolClient::CallUnperpetuateObject(ProtocolCallContext* pCallContext,
-                                                     const unsigned short& rSlot,
+bool DataStoreProtocolClient::CallUnperpetuateObject(ProtocolCallContext* pCallContext, const unsigned short& rSlot,
                                                      const bool& rFlag)
 {
     Message message;
@@ -1725,11 +1673,9 @@ bool DataStoreProtocolClient::CallUnperpetuateObject(ProtocolCallContext* pCallC
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetPasswordInfo(Message* pMessage,
-                                                          ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetPasswordInfo(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStorePasswordInfo* pPasswordInfo =
-        static_cast<DataStorePasswordInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStorePasswordInfo* pPasswordInfo = static_cast<DataStorePasswordInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pPasswordInfo != 0)
     {
         _DDL_DataStorePasswordInfo::Extract(pMessage, pPasswordInfo);
@@ -1739,8 +1685,7 @@ void DataStoreProtocolClient::ProtoReturn_GetPasswordInfo(Message* pMessage,
     _DDL_DataStorePasswordInfo::Extract(pMessage, discarded);
 }
 
-bool DataStoreProtocolClient::CallGetPasswordInfo(ProtocolCallContext* pCallContext,
-                                                  const unsigned long long& rDataId,
+bool DataStoreProtocolClient::CallGetPasswordInfo(ProtocolCallContext* pCallContext, const unsigned long long& rDataId,
                                                   DataStorePasswordInfo* pPasswordInfo)
 {
     Message message;
@@ -1769,11 +1714,10 @@ bool DataStoreProtocolClient::CallGetPasswordInfo(ProtocolCallContext* pCallCont
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetPasswordInfos(Message* pMessage,
-                                                           ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetPasswordInfos(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    qVector<DataStorePasswordInfo>* pPasswordInfos =
-        static_cast<qVector<DataStorePasswordInfo>*>(pCallContext->GetReturnValuePtr(0));
+    qVector<DataStorePasswordInfo>* pPasswordInfos = static_cast<qVector<DataStorePasswordInfo>*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pPasswordInfos != 0)
     {
         _Type_qvector<DDLClassMetaType<DataStorePasswordInfo> >::Extract(pMessage, pPasswordInfos);
@@ -1834,11 +1778,10 @@ bool DataStoreProtocolClient::CallGetPasswordInfos(ProtocolCallContext* pCallCon
     return bSent;
 }
 
-void DataStoreProtocolClient::ProtoReturn_GetObjectInfos(Message* pMessage,
-                                                         ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_GetObjectInfos(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    qVector<DataStoreReqGetInfo>* pReqGetInfos =
-        static_cast<qVector<DataStoreReqGetInfo>*>(pCallContext->GetReturnValuePtr(0));
+    qVector<DataStoreReqGetInfo>* pReqGetInfos = static_cast<qVector<DataStoreReqGetInfo>*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pReqGetInfos != 0)
     {
         _Type_qvector<DDLClassMetaType<DataStoreReqGetInfo> >::Extract(pMessage, pReqGetInfos);
@@ -1857,8 +1800,7 @@ void DataStoreProtocolClient::ProtoReturn_GetObjectInfos(Message* pMessage,
         }
     }
 
-    qVector<qResult>* pResults =
-        static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
+    qVector<qResult>* pResults = static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
     if (pResults != 0)
     {
         _Type_qvector<_Type_qresult>::Extract(pMessage, pResults);
@@ -1870,8 +1812,7 @@ void DataStoreProtocolClient::ProtoReturn_GetObjectInfos(Message* pMessage,
 
 bool DataStoreProtocolClient::CallGetObjectInfos(ProtocolCallContext* pCallContext,
                                                  const qVector<unsigned long long>& rDataIds,
-                                                 qVector<DataStoreReqGetInfo>* pReqGetInfos,
-                                                 qVector<qResult>* pResults)
+                                                 qVector<DataStoreReqGetInfo>* pReqGetInfos, qVector<qResult>* pResults)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -1900,8 +1841,7 @@ bool DataStoreProtocolClient::CallGetObjectInfos(ProtocolCallContext* pCallConte
     return bSent;
 }
 
-bool DataStoreProtocolClient::PrepareGetObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                              Message* pMessage,
+bool DataStoreProtocolClient::PrepareGetObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                               const DataStorePrepareGetParam& rPrepareGetParam,
                                                               DataStoreReqGetInfo* pReqGetInfo)
 {
@@ -1923,8 +1863,7 @@ bool DataStoreProtocolClient::PrepareGetObject_PrepareRequest(ProtocolCallContex
     return true;
 }
 
-bool DataStoreProtocolClient::PrepareGetObjectV1_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
+bool DataStoreProtocolClient::PrepareGetObjectV1_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                 const DataStorePrepareGetParamV1& rPrepareGetParamV1,
                                                                 DataStoreReqGetInfoV1* pReqGetInfoV1)
 {
@@ -1946,11 +1885,9 @@ bool DataStoreProtocolClient::PrepareGetObjectV1_PrepareRequest(ProtocolCallCont
     return true;
 }
 
-bool DataStoreProtocolClient::PrepareGetObjectOrMetaBinary_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                          Message* pMessage,
-                                                                          const DataStorePrepareGetParam& rPrepareGetParam,
-                                                                          DataStoreReqGetInfo* pReqGetInfo,
-                                                                          DataStoreReqGetAdditionalMeta* pReqGetAdditionalMeta)
+bool DataStoreProtocolClient::PrepareGetObjectOrMetaBinary_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const DataStorePrepareGetParam& rPrepareGetParam,
+    DataStoreReqGetInfo* pReqGetInfo, DataStoreReqGetAdditionalMeta* pReqGetAdditionalMeta)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -1971,8 +1908,7 @@ bool DataStoreProtocolClient::PrepareGetObjectOrMetaBinary_PrepareRequest(Protoc
     return true;
 }
 
-bool DataStoreProtocolClient::PreparePostObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                               Message* pMessage,
+bool DataStoreProtocolClient::PreparePostObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                const DataStorePreparePostParam& rPreparePostParam,
                                                                DataStoreReqPostInfo* pReqPostInfo)
 {
@@ -1994,8 +1930,7 @@ bool DataStoreProtocolClient::PreparePostObject_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-bool DataStoreProtocolClient::PreparePostObjectV1_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                 Message* pMessage,
+bool DataStoreProtocolClient::PreparePostObjectV1_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                  const DataStorePreparePostParamV1& rPreparePostParamV1,
                                                                  DataStoreReqPostInfoV1* pReqPostInfoV1)
 {
@@ -2017,8 +1952,7 @@ bool DataStoreProtocolClient::PreparePostObjectV1_PrepareRequest(ProtocolCallCon
     return true;
 }
 
-bool DataStoreProtocolClient::CompletePostObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
+bool DataStoreProtocolClient::CompletePostObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                 const DataStoreCompletePostParam& rCompletePostParam)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -2035,9 +1969,8 @@ bool DataStoreProtocolClient::CompletePostObject_PrepareRequest(ProtocolCallCont
     return true;
 }
 
-bool DataStoreProtocolClient::CompletePostObjectV1_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                  Message* pMessage,
-                                                                  const DataStoreCompletePostParamV1& rCompletePostParamV1)
+bool DataStoreProtocolClient::CompletePostObjectV1_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const DataStoreCompletePostParamV1& rCompletePostParamV1)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2053,8 +1986,7 @@ bool DataStoreProtocolClient::CompletePostObjectV1_PrepareRequest(ProtocolCallCo
     return true;
 }
 
-bool DataStoreProtocolClient::CompletePostObjects_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                 Message* pMessage,
+bool DataStoreProtocolClient::CompletePostObjects_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                  const qVector<unsigned long long>& rDataIds)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -2071,8 +2003,7 @@ bool DataStoreProtocolClient::CompletePostObjects_PrepareRequest(ProtocolCallCon
     return true;
 }
 
-bool DataStoreProtocolClient::PrepareUpdateObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                 Message* pMessage,
+bool DataStoreProtocolClient::PrepareUpdateObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                  const DataStorePrepareUpdateParam& rPrepareUpdateParam,
                                                                  DataStoreReqUpdateInfo* pReqUpdateInfo)
 {
@@ -2094,9 +2025,8 @@ bool DataStoreProtocolClient::PrepareUpdateObject_PrepareRequest(ProtocolCallCon
     return true;
 }
 
-bool DataStoreProtocolClient::CompleteUpdateObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                  Message* pMessage,
-                                                                  const DataStoreCompleteUpdateParam& rCompleteUpdateParam)
+bool DataStoreProtocolClient::CompleteUpdateObject_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const DataStoreCompleteUpdateParam& rCompleteUpdateParam)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2112,8 +2042,7 @@ bool DataStoreProtocolClient::CompleteUpdateObject_PrepareRequest(ProtocolCallCo
     return true;
 }
 
-bool DataStoreProtocolClient::DeleteObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                          Message* pMessage,
+bool DataStoreProtocolClient::DeleteObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                           const DataStoreDeleteParam& rDeleteParam)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -2130,8 +2059,7 @@ bool DataStoreProtocolClient::DeleteObject_PrepareRequest(ProtocolCallContext* p
     return true;
 }
 
-bool DataStoreProtocolClient::ChangeMeta_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                        Message* pMessage,
+bool DataStoreProtocolClient::ChangeMeta_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                         const DataStoreChangeMetaParam& rChangeMetaParam)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -2148,8 +2076,7 @@ bool DataStoreProtocolClient::ChangeMeta_PrepareRequest(ProtocolCallContext* pCa
     return true;
 }
 
-bool DataStoreProtocolClient::GetMeta_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                     Message* pMessage,
+bool DataStoreProtocolClient::GetMeta_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                      const DataStoreGetMetaParam& rGetMetaParam,
                                                      DataStoreMetaInfo* pMetaInfo)
 {
@@ -2171,8 +2098,7 @@ bool DataStoreProtocolClient::GetMeta_PrepareRequest(ProtocolCallContext* pCallC
     return true;
 }
 
-bool DataStoreProtocolClient::GetMetas_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                      Message* pMessage,
+bool DataStoreProtocolClient::GetMetas_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                       const qVector<unsigned long long>& rDataIds,
                                                       const DataStoreGetMetaParam& rGetMetaParam,
                                                       qVector<DataStoreMetaInfo>* pMetaInfos,
@@ -2198,8 +2124,7 @@ bool DataStoreProtocolClient::GetMetas_PrepareRequest(ProtocolCallContext* pCall
     return true;
 }
 
-bool DataStoreProtocolClient::GetMetasMultipleParam_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                   Message* pMessage,
+bool DataStoreProtocolClient::GetMetasMultipleParam_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                    const qVector<DataStoreGetMetaParam>& rGetMetaParams,
                                                                    qVector<DataStoreMetaInfo>* pMetaInfos,
                                                                    qVector<qResult>* pResults)
@@ -2223,8 +2148,7 @@ bool DataStoreProtocolClient::GetMetasMultipleParam_PrepareRequest(ProtocolCallC
     return true;
 }
 
-bool DataStoreProtocolClient::SearchObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                          Message* pMessage,
+bool DataStoreProtocolClient::SearchObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                           const DataStoreSearchParam& rSearchParam,
                                                           DataStoreSearchResult* pSearchResult)
 {
@@ -2246,8 +2170,7 @@ bool DataStoreProtocolClient::SearchObject_PrepareRequest(ProtocolCallContext* p
     return true;
 }
 
-bool DataStoreProtocolClient::SearchObjectLight_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                               Message* pMessage,
+bool DataStoreProtocolClient::SearchObjectLight_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                const DataStoreSearchParam& rSearchParam,
                                                                DataStoreSearchResult* pSearchResult)
 {
@@ -2269,10 +2192,10 @@ bool DataStoreProtocolClient::SearchObjectLight_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-bool DataStoreProtocolClient::GetNotificationUrl_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
-                                                                const DataStoreGetNotificationUrlParam& rGetNotificationUrlParam,
-                                                                DataStoreReqGetNotificationUrlInfo* pReqGetNotificationUrlInfo)
+bool DataStoreProtocolClient::GetNotificationUrl_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage,
+    const DataStoreGetNotificationUrlParam& rGetNotificationUrlParam,
+    DataStoreReqGetNotificationUrlInfo* pReqGetNotificationUrlInfo)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2292,11 +2215,10 @@ bool DataStoreProtocolClient::GetNotificationUrl_PrepareRequest(ProtocolCallCont
     return true;
 }
 
-bool DataStoreProtocolClient::GetNewArrivedNotifications_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                        Message* pMessage,
-                                                                        const DataStoreGetNewArrivedNotificationsParam& rGetNewArrivedNotificationsParam,
-                                                                        qVector<DataStoreNotification>* pNotifications,
-                                                                        bool* pFlag)
+bool DataStoreProtocolClient::GetNewArrivedNotifications_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage,
+    const DataStoreGetNewArrivedNotificationsParam& rGetNewArrivedNotificationsParam,
+    qVector<DataStoreNotification>* pNotifications, bool* pFlag)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2317,11 +2239,10 @@ bool DataStoreProtocolClient::GetNewArrivedNotifications_PrepareRequest(Protocol
     return true;
 }
 
-bool DataStoreProtocolClient::GetNewArrivedNotificationsV1_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                          Message* pMessage,
-                                                                          const DataStoreGetNewArrivedNotificationsParam& rGetNewArrivedNotificationsParam,
-                                                                          qVector<DataStoreNotificationV1>* pNotificationV1s,
-                                                                          bool* pFlag)
+bool DataStoreProtocolClient::GetNewArrivedNotificationsV1_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage,
+    const DataStoreGetNewArrivedNotificationsParam& rGetNewArrivedNotificationsParam,
+    qVector<DataStoreNotificationV1>* pNotificationV1s, bool* pFlag)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2342,12 +2263,10 @@ bool DataStoreProtocolClient::GetNewArrivedNotificationsV1_PrepareRequest(Protoc
     return true;
 }
 
-bool DataStoreProtocolClient::RateObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                        Message* pMessage,
+bool DataStoreProtocolClient::RateObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                         const DataStoreRatingTarget& rRatingTarget,
                                                         const DataStoreRateObjectParam& rRateObjectParam,
-                                                        const bool& rFlag,
-                                                        DataStoreRatingInfo* pRatingInfo)
+                                                        const bool& rFlag, DataStoreRatingInfo* pRatingInfo)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2369,8 +2288,7 @@ bool DataStoreProtocolClient::RateObject_PrepareRequest(ProtocolCallContext* pCa
     return true;
 }
 
-bool DataStoreProtocolClient::GetRating_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                       Message* pMessage,
+bool DataStoreProtocolClient::GetRating_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                        const DataStoreRatingTarget& rRatingTarget,
                                                        DataStoreRatingInfo* pRatingInfo,
                                                        const unsigned long long& rDataId)
@@ -2394,12 +2312,10 @@ bool DataStoreProtocolClient::GetRating_PrepareRequest(ProtocolCallContext* pCal
     return true;
 }
 
-bool DataStoreProtocolClient::GetRatings_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                        Message* pMessage,
-                                                        const qVector<unsigned long long>& rDataIds,
-                                                        qVector<qVector<DataStoreRatingInfoWithSlot> >* pRatingInfoWithSlotss,
-                                                        qVector<qResult>* pResults,
-                                                        const unsigned long long& rDataId)
+bool DataStoreProtocolClient::GetRatings_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const qVector<unsigned long long>& rDataIds,
+    qVector<qVector<DataStoreRatingInfoWithSlot> >* pRatingInfoWithSlotss, qVector<qResult>* pResults,
+    const unsigned long long& rDataId)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2421,8 +2337,7 @@ bool DataStoreProtocolClient::GetRatings_PrepareRequest(ProtocolCallContext* pCa
     return true;
 }
 
-bool DataStoreProtocolClient::ResetRating_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                         Message* pMessage,
+bool DataStoreProtocolClient::ResetRating_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                          const DataStoreRatingTarget& rRatingTarget,
                                                          const unsigned long long& rDataId)
 {
@@ -2441,11 +2356,9 @@ bool DataStoreProtocolClient::ResetRating_PrepareRequest(ProtocolCallContext* pC
     return true;
 }
 
-bool DataStoreProtocolClient::ResetRatings_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                          Message* pMessage,
+bool DataStoreProtocolClient::ResetRatings_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                           const qVector<unsigned long long>& rDataIds,
-                                                          const bool& rFlag,
-                                                          qVector<qResult>* pResults)
+                                                          const bool& rFlag, qVector<qResult>* pResults)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2466,8 +2379,7 @@ bool DataStoreProtocolClient::ResetRatings_PrepareRequest(ProtocolCallContext* p
     return true;
 }
 
-bool DataStoreProtocolClient::GetSpecificMeta_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                             Message* pMessage,
+bool DataStoreProtocolClient::GetSpecificMeta_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                              const DataStoreGetSpecificMetaParam& rGetSpecificMetaParam,
                                                              qVector<DataStoreSpecificMetaInfo>* pSpecificMetaInfos)
 {
@@ -2489,10 +2401,10 @@ bool DataStoreProtocolClient::GetSpecificMeta_PrepareRequest(ProtocolCallContext
     return true;
 }
 
-bool DataStoreProtocolClient::GetSpecificMetaV1_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                               Message* pMessage,
-                                                               const DataStoreGetSpecificMetaParamV1& rGetSpecificMetaParamV1,
-                                                               qVector<DataStoreSpecificMetaInfoV1>* pSpecificMetaInfoV1s)
+bool DataStoreProtocolClient::GetSpecificMetaV1_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage,
+    const DataStoreGetSpecificMetaParamV1& rGetSpecificMetaParamV1,
+    qVector<DataStoreSpecificMetaInfoV1>* pSpecificMetaInfoV1s)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2512,8 +2424,7 @@ bool DataStoreProtocolClient::GetSpecificMetaV1_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-bool DataStoreProtocolClient::PostMetaBinary_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                            Message* pMessage,
+bool DataStoreProtocolClient::PostMetaBinary_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                             const DataStorePreparePostParam& rPreparePostParam,
                                                             unsigned long long* pDataId)
 {
@@ -2535,10 +2446,9 @@ bool DataStoreProtocolClient::PostMetaBinary_PrepareRequest(ProtocolCallContext*
     return true;
 }
 
-bool DataStoreProtocolClient::PostMetaBinaryWithDataId_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                      Message* pMessage,
-                                                                      const unsigned long long& rDataId,
-                                                                      const DataStorePreparePostParam& rPreparePostParam)
+bool DataStoreProtocolClient::PostMetaBinaryWithDataId_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const unsigned long long& rDataId,
+    const DataStorePreparePostParam& rPreparePostParam)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2555,12 +2465,9 @@ bool DataStoreProtocolClient::PostMetaBinaryWithDataId_PrepareRequest(ProtocolCa
     return true;
 }
 
-bool DataStoreProtocolClient::PostMetaBinariesWithDataId_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                        Message* pMessage,
-                                                                        const qVector<unsigned long long>& rDataIds,
-                                                                        const qVector<DataStorePreparePostParam>& rPreparePostParams,
-                                                                        const bool& rFlag,
-                                                                        qVector<qResult>* pResults)
+bool DataStoreProtocolClient::PostMetaBinariesWithDataId_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const qVector<unsigned long long>& rDataIds,
+    const qVector<DataStorePreparePostParam>& rPreparePostParams, const bool& rFlag, qVector<qResult>* pResults)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2582,8 +2489,7 @@ bool DataStoreProtocolClient::PostMetaBinariesWithDataId_PrepareRequest(Protocol
     return true;
 }
 
-bool DataStoreProtocolClient::TouchObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                         Message* pMessage,
+bool DataStoreProtocolClient::TouchObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                          const DataStoreTouchObjectParam& rTouchObjectParam)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -2600,8 +2506,7 @@ bool DataStoreProtocolClient::TouchObject_PrepareRequest(ProtocolCallContext* pC
     return true;
 }
 
-bool DataStoreProtocolClient::GetRatingWithLog_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                              Message* pMessage,
+bool DataStoreProtocolClient::GetRatingWithLog_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                               const DataStoreRatingTarget& rRatingTarget,
                                                               DataStoreRatingInfo* pRatingInfo,
                                                               DataStoreRatingLog* pRatingLog,
@@ -2627,10 +2532,8 @@ bool DataStoreProtocolClient::GetRatingWithLog_PrepareRequest(ProtocolCallContex
     return true;
 }
 
-bool DataStoreProtocolClient::GetPersistenceInfo_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
-                                                                const unsigned int& rValue,
-                                                                const unsigned short& rSlot,
+bool DataStoreProtocolClient::GetPersistenceInfo_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                const unsigned int& rValue, const unsigned short& rSlot,
                                                                 DataStorePersistenceInfo* pPersistenceInfo)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -2652,8 +2555,7 @@ bool DataStoreProtocolClient::GetPersistenceInfo_PrepareRequest(ProtocolCallCont
     return true;
 }
 
-bool DataStoreProtocolClient::GetPersistenceInfos_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                 Message* pMessage,
+bool DataStoreProtocolClient::GetPersistenceInfos_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                  const unsigned int& rValue,
                                                                  const qVector<unsigned short>& rSlots,
                                                                  qVector<DataStorePersistenceInfo>* pPersistenceInfos,
@@ -2679,11 +2581,9 @@ bool DataStoreProtocolClient::GetPersistenceInfos_PrepareRequest(ProtocolCallCon
     return true;
 }
 
-bool DataStoreProtocolClient::PerpetuateObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                              Message* pMessage,
+bool DataStoreProtocolClient::PerpetuateObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                               const unsigned short& rSlot,
-                                                              const unsigned long long& rDataId,
-                                                              const bool& rFlag)
+                                                              const unsigned long long& rDataId, const bool& rFlag)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2701,10 +2601,8 @@ bool DataStoreProtocolClient::PerpetuateObject_PrepareRequest(ProtocolCallContex
     return true;
 }
 
-bool DataStoreProtocolClient::UnperpetuateObject_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
-                                                                const unsigned short& rSlot,
-                                                                const bool& rFlag)
+bool DataStoreProtocolClient::UnperpetuateObject_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                const unsigned short& rSlot, const bool& rFlag)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -2721,8 +2619,7 @@ bool DataStoreProtocolClient::UnperpetuateObject_PrepareRequest(ProtocolCallCont
     return true;
 }
 
-bool DataStoreProtocolClient::GetPasswordInfo_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                             Message* pMessage,
+bool DataStoreProtocolClient::GetPasswordInfo_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                              const unsigned long long& rDataId,
                                                              DataStorePasswordInfo* pPasswordInfo)
 {
@@ -2744,8 +2641,7 @@ bool DataStoreProtocolClient::GetPasswordInfo_PrepareRequest(ProtocolCallContext
     return true;
 }
 
-bool DataStoreProtocolClient::GetPasswordInfos_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                              Message* pMessage,
+bool DataStoreProtocolClient::GetPasswordInfos_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                               const qVector<unsigned long long>& rDataIds,
                                                               qVector<DataStorePasswordInfo>* pPasswordInfos,
                                                               qVector<qResult>* pResults)
@@ -2769,8 +2665,7 @@ bool DataStoreProtocolClient::GetPasswordInfos_PrepareRequest(ProtocolCallContex
     return true;
 }
 
-bool DataStoreProtocolClient::GetObjectInfos_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                            Message* pMessage,
+bool DataStoreProtocolClient::GetObjectInfos_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                             const qVector<unsigned long long>& rDataIds,
                                                             qVector<DataStoreReqGetInfo>* pReqGetInfos,
                                                             qVector<qResult>* pResults)
@@ -2794,8 +2689,7 @@ bool DataStoreProtocolClient::GetObjectInfos_PrepareRequest(ProtocolCallContext*
     return true;
 }
 
-void DataStoreProtocolClient::ProtoReturn_DeleteObjects(Message* pMessage,
-                                                        ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_DeleteObjects(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pValue = pCallContext->GetReturnValuePtr(0);
     if (pValue != 0)
@@ -2807,8 +2701,7 @@ void DataStoreProtocolClient::ProtoReturn_DeleteObjects(Message* pMessage,
     _Type_qvector<_Type_qresult>::Extract(pMessage, discarded);
 }
 
-void DataStoreProtocolClient::ProtoReturn_ChangeMetasV1(Message* pMessage,
-                                                        ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_ChangeMetasV1(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pValue = pCallContext->GetReturnValuePtr(0);
     if (pValue != 0)
@@ -2820,8 +2713,7 @@ void DataStoreProtocolClient::ProtoReturn_ChangeMetasV1(Message* pMessage,
     _Type_qvector<_Type_qresult>::Extract(pMessage, discarded);
 }
 
-void DataStoreProtocolClient::ProtoReturn_ChangeMetas(Message* pMessage,
-                                                      ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_ChangeMetas(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     void* pValue = pCallContext->GetReturnValuePtr(0);
     if (pValue != 0)
@@ -2833,11 +2725,10 @@ void DataStoreProtocolClient::ProtoReturn_ChangeMetas(Message* pMessage,
     _Type_qvector<_Type_qresult>::Extract(pMessage, discarded);
 }
 
-void DataStoreProtocolClient::ProtoReturn_RateObjects(Message* pMessage,
-                                                      ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_RateObjects(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    qVector<DataStoreRatingInfo>* pRatingInfos =
-        static_cast<qVector<DataStoreRatingInfo>*>(pCallContext->GetReturnValuePtr(0));
+    qVector<DataStoreRatingInfo>* pRatingInfos = static_cast<qVector<DataStoreRatingInfo>*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pRatingInfos != 0)
     {
         _Type_qvector<DDLClassMetaType<DataStoreRatingInfo> >::Extract(pMessage, pRatingInfos);
@@ -2856,8 +2747,7 @@ void DataStoreProtocolClient::ProtoReturn_RateObjects(Message* pMessage,
         }
     }
 
-    qVector<qResult>* pResults =
-        static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
+    qVector<qResult>* pResults = static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
     if (pResults != 0)
     {
         _Type_qvector<_Type_qresult>::Extract(pMessage, pResults);
@@ -2867,11 +2757,9 @@ void DataStoreProtocolClient::ProtoReturn_RateObjects(Message* pMessage,
     _Type_qvector<_Type_qresult>::Extract(pMessage, discarded);
 }
 
-void DataStoreProtocolClient::ProtoReturn_RateObjectWithPosting(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_RateObjectWithPosting(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    DataStoreRatingInfo* pRatingInfo =
-        static_cast<DataStoreRatingInfo*>(pCallContext->GetReturnValuePtr(0));
+    DataStoreRatingInfo* pRatingInfo = static_cast<DataStoreRatingInfo*>(pCallContext->GetReturnValuePtr(0));
     if (pRatingInfo != 0)
     {
         _DDL_DataStoreRatingInfo::Extract(pMessage, pRatingInfo);
@@ -2881,11 +2769,10 @@ void DataStoreProtocolClient::ProtoReturn_RateObjectWithPosting(Message* pMessag
     _DDL_DataStoreRatingInfo::Extract(pMessage, discarded);
 }
 
-void DataStoreProtocolClient::ProtoReturn_RateObjectsWithPosting(Message* pMessage,
-                                                                 ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ProtoReturn_RateObjectsWithPosting(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    qVector<DataStoreRatingInfo>* pRatingInfos =
-        static_cast<qVector<DataStoreRatingInfo>*>(pCallContext->GetReturnValuePtr(0));
+    qVector<DataStoreRatingInfo>* pRatingInfos = static_cast<qVector<DataStoreRatingInfo>*>(
+        pCallContext->GetReturnValuePtr(0));
     if (pRatingInfos != 0)
     {
         _Type_qvector<DDLClassMetaType<DataStoreRatingInfo> >::Extract(pMessage, pRatingInfos);
@@ -2904,8 +2791,7 @@ void DataStoreProtocolClient::ProtoReturn_RateObjectsWithPosting(Message* pMessa
         }
     }
 
-    qVector<qResult>* pResults =
-        static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
+    qVector<qResult>* pResults = static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
     if (pResults != 0)
     {
         _Type_qvector<_Type_qresult>::Extract(pMessage, pResults);
@@ -2915,18 +2801,15 @@ void DataStoreProtocolClient::ProtoReturn_RateObjectsWithPosting(Message* pMessa
     _Type_qvector<_Type_qresult>::Extract(pMessage, discarded);
 }
 
-DataStoreProtocolClient::DataStoreProtocolClient(unsigned short uiProtocolID)
-    : ClientProtocol(1)
+DataStoreProtocolClient::DataStoreProtocolClient(unsigned short uiProtocolID) : ClientProtocol(1)
 {
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new DataStoreProtocolClient());
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(uiProtocolID, new DataStoreProtocolClient());
 }
 
-void DataStoreProtocolClient::ExtractCallSpecificResults(Message* pMessage,
-                                                         ProtocolCallContext* pCallContext)
+void DataStoreProtocolClient::ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
@@ -2939,8 +2822,7 @@ void DataStoreProtocolClient::ExtractCallSpecificResults(Message* pMessage,
 }
 
 bool DataStoreProtocolClient::CallDeleteObjects(ProtocolCallContext* pCallContext,
-                                                const qVector<DataStoreDeleteParam>& rDeleteParams,
-                                                const bool& rFlag,
+                                                const qVector<DataStoreDeleteParam>& rDeleteParams, const bool& rFlag,
                                                 qVector<qResult>* pResults)
 {
     Message message;
@@ -2970,11 +2852,9 @@ bool DataStoreProtocolClient::CallDeleteObjects(ProtocolCallContext* pCallContex
     return bSent;
 }
 
-bool DataStoreProtocolClient::DeleteObjects_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                           Message* pMessage,
+bool DataStoreProtocolClient::DeleteObjects_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                            const qVector<DataStoreDeleteParam>& rDeleteParams,
-                                                           const bool& rFlag,
-                                                           qVector<qResult>* pResults)
+                                                           const bool& rFlag, qVector<qResult>* pResults)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -3020,8 +2900,7 @@ bool DataStoreProtocolClient::CallChangeMetaV1(ProtocolCallContext* pCallContext
     return bSent;
 }
 
-bool DataStoreProtocolClient::ChangeMetaV1_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                          Message* pMessage,
+bool DataStoreProtocolClient::ChangeMetaV1_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                           const DataStoreChangeMetaParamV1& rChangeMetaParamV1)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -3041,8 +2920,7 @@ bool DataStoreProtocolClient::ChangeMetaV1_PrepareRequest(ProtocolCallContext* p
 bool DataStoreProtocolClient::CallChangeMetasV1(ProtocolCallContext* pCallContext,
                                                 const qVector<unsigned long long>& rDataIds,
                                                 const qVector<DataStoreChangeMetaParamV1>& rChangeMetaParamV1s,
-                                                const bool& rFlag,
-                                                qVector<qResult>* pResults)
+                                                const bool& rFlag, qVector<qResult>* pResults)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -3072,12 +2950,9 @@ bool DataStoreProtocolClient::CallChangeMetasV1(ProtocolCallContext* pCallContex
     return bSent;
 }
 
-bool DataStoreProtocolClient::ChangeMetasV1_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                           Message* pMessage,
-                                                           const qVector<unsigned long long>& rDataIds,
-                                                           const qVector<DataStoreChangeMetaParamV1>& rChangeMetaParamV1s,
-                                                           const bool& rFlag,
-                                                           qVector<qResult>* pResults)
+bool DataStoreProtocolClient::ChangeMetasV1_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const qVector<unsigned long long>& rDataIds,
+    const qVector<DataStoreChangeMetaParamV1>& rChangeMetaParamV1s, const bool& rFlag, qVector<qResult>* pResults)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -3102,8 +2977,7 @@ bool DataStoreProtocolClient::ChangeMetasV1_PrepareRequest(ProtocolCallContext* 
 bool DataStoreProtocolClient::CallChangeMetas(ProtocolCallContext* pCallContext,
                                               const qVector<unsigned long long>& rDataIds,
                                               const qVector<DataStoreChangeMetaParam>& rChangeMetaParams,
-                                              const bool& rFlag,
-                                              qVector<qResult>* pResults)
+                                              const bool& rFlag, qVector<qResult>* pResults)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -3133,12 +3007,10 @@ bool DataStoreProtocolClient::CallChangeMetas(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool DataStoreProtocolClient::ChangeMetas_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                         Message* pMessage,
+bool DataStoreProtocolClient::ChangeMetas_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                          const qVector<unsigned long long>& rDataIds,
                                                          const qVector<DataStoreChangeMetaParam>& rChangeMetaParams,
-                                                         const bool& rFlag,
-                                                         qVector<qResult>* pResults)
+                                                         const bool& rFlag, qVector<qResult>* pResults)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -3163,10 +3035,8 @@ bool DataStoreProtocolClient::ChangeMetas_PrepareRequest(ProtocolCallContext* pC
 bool DataStoreProtocolClient::CallRateObjects(ProtocolCallContext* pCallContext,
                                               const qVector<DataStoreRatingTarget>& rRatingTargets,
                                               const qVector<DataStoreRateObjectParam>& rRateObjectParams,
-                                              const bool& rFlag,
-                                              const bool& rFlag2,
-                                              qVector<DataStoreRatingInfo>* pRatingInfos,
-                                              qVector<qResult>* pResults)
+                                              const bool& rFlag, const bool& rFlag2,
+                                              qVector<DataStoreRatingInfo>* pRatingInfos, qVector<qResult>* pResults)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -3198,12 +3068,10 @@ bool DataStoreProtocolClient::CallRateObjects(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool DataStoreProtocolClient::RateObjects_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                         Message* pMessage,
+bool DataStoreProtocolClient::RateObjects_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                          const qVector<DataStoreRatingTarget>& rRatingTargets,
                                                          const qVector<DataStoreRateObjectParam>& rRateObjectParams,
-                                                         const bool& rFlag,
-                                                         const bool& rFlag2,
+                                                         const bool& rFlag, const bool& rFlag2,
                                                          qVector<DataStoreRatingInfo>* pRatingInfos,
                                                          qVector<qResult>* pResults)
 {
@@ -3233,8 +3101,7 @@ bool DataStoreProtocolClient::CallRateObjectWithPosting(ProtocolCallContext* pCa
                                                         const DataStoreRatingTarget& rRatingTarget,
                                                         const DataStoreRateObjectParam& rRateObjectParam,
                                                         const DataStorePreparePostParam& rPreparePostParam,
-                                                        const bool& rFlag,
-                                                        DataStoreRatingInfo* pRatingInfo)
+                                                        const bool& rFlag, DataStoreRatingInfo* pRatingInfo)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -3265,13 +3132,11 @@ bool DataStoreProtocolClient::CallRateObjectWithPosting(ProtocolCallContext* pCa
     return bSent;
 }
 
-bool DataStoreProtocolClient::RateObjectWithPosting_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                   Message* pMessage,
+bool DataStoreProtocolClient::RateObjectWithPosting_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                    const DataStoreRatingTarget& rRatingTarget,
                                                                    const DataStoreRateObjectParam& rRateObjectParam,
                                                                    const DataStorePreparePostParam& rPreparePostParam,
-                                                                   const bool& rFlag,
-                                                                   DataStoreRatingInfo* pRatingInfo)
+                                                                   const bool& rFlag, DataStoreRatingInfo* pRatingInfo)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -3298,8 +3163,7 @@ bool DataStoreProtocolClient::CallRateObjectsWithPosting(ProtocolCallContext* pC
                                                          const qVector<DataStoreRatingTarget>& rRatingTargets,
                                                          const qVector<DataStoreRateObjectParam>& rRateObjectParams,
                                                          const qVector<DataStorePreparePostParam>& rPreparePostParams,
-                                                         const bool& rFlag,
-                                                         const bool& rFlag2,
+                                                         const bool& rFlag, const bool& rFlag2,
                                                          qVector<DataStoreRatingInfo>* pRatingInfos,
                                                          qVector<qResult>* pResults)
 {
@@ -3334,15 +3198,11 @@ bool DataStoreProtocolClient::CallRateObjectsWithPosting(ProtocolCallContext* pC
     return bSent;
 }
 
-bool DataStoreProtocolClient::RateObjectsWithPosting_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                    Message* pMessage,
-                                                                    const qVector<DataStoreRatingTarget>& rRatingTargets,
-                                                                    const qVector<DataStoreRateObjectParam>& rRateObjectParams,
-                                                                    const qVector<DataStorePreparePostParam>& rPreparePostParams,
-                                                                    const bool& rFlag,
-                                                                    const bool& rFlag2,
-                                                                    qVector<DataStoreRatingInfo>* pRatingInfos,
-                                                                    qVector<qResult>* pResults)
+bool DataStoreProtocolClient::RateObjectsWithPosting_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const qVector<DataStoreRatingTarget>& rRatingTargets,
+    const qVector<DataStoreRateObjectParam>& rRateObjectParams,
+    const qVector<DataStorePreparePostParam>& rPreparePostParams, const bool& rFlag, const bool& rFlag2,
+    qVector<DataStoreRatingInfo>* pRatingInfos, qVector<qResult>* pResults)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();

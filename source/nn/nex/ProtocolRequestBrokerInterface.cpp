@@ -8,7 +8,10 @@
 #include "nn/nex/SecurityContextManager.hpp"
 #include "nn/nex/Scheduler.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 unsigned int (*g_protocolCurrentPID)() = 0;
 unsigned int (*g_protocolCurrentCID)() = 0;
@@ -21,7 +24,8 @@ bool g_protocolIdentityCallbacksInitialized = false;
 }
 
 ProtocolRequestBrokerInterface::ProtocolRequestBrokerInterface()
-    : m_bandwidthCounters(String(L"Protocol")), m_operationManager()
+    : m_bandwidthCounters(String(L"Protocol")),
+      m_operationManager()
 {
     if (!g_protocolIdentityCallbacksInitialized)
     {
@@ -41,12 +45,11 @@ void ProtocolRequestBrokerInterface::InitMessage(Message* message, unsigned shor
     Protocol::AddProtocolKey(message, command, protocolId);
 }
 
-JobProcessProtocolEvent::JobProcessProtocolEvent(ProtocolRequestBrokerInterface* pBroker,
-                                                 EndPoint* pEndPoint,
+JobProcessProtocolEvent::JobProcessProtocolEvent(ProtocolRequestBrokerInterface* pBroker, EndPoint* pEndPoint,
                                                  const wchar_t* pName)
-    : Job(JOB_TYPE_2, DebugString(pName))
-    , m_pBroker(pBroker)
-    , m_pEndPoint(pEndPoint)
+    : Job(JOB_TYPE_2, DebugString(pName)),
+      m_pBroker(pBroker),
+      m_pEndPoint(pEndPoint)
 {
     m_processingTime = 0;
     m_processingStart = 0;
@@ -62,12 +65,11 @@ void JobProcessProtocolEvent::SetBroker(ProtocolRequestBrokerInterface* pBroker)
     m_pBroker = pBroker;
 }
 
-JobProcessProtocolMessage::JobProcessProtocolMessage(ProtocolRequestBrokerInterface* pBroker,
-                                                     EndPoint* pEndPoint,
+JobProcessProtocolMessage::JobProcessProtocolMessage(ProtocolRequestBrokerInterface* pBroker, EndPoint* pEndPoint,
                                                      Buffer* pBuffer)
-    : JobProcessProtocolEvent(pBroker, pEndPoint, L"ProcessProtocoMessage")
-    , m_operation()
-    , m_pBuffer(pBuffer)
+    : JobProcessProtocolEvent(pBroker, pEndPoint, L"ProcessProtocoMessage"),
+      m_operation(),
+      m_pBuffer(pBuffer)
 {
     pBuffer->AddRef();
 }
@@ -98,4 +100,5 @@ void JobProcessProtocolMessage::Execute()
         SetToComplete();
 }
 
-}}
+}
+}

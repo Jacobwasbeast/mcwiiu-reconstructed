@@ -17,14 +17,9 @@ class Message;
 class _DDL_Data : public RootObject
 {
 public:
-    _DDL_Data()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_Data() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_Data()
-    {
-    }
+    virtual ~_DDL_Data() {}
 
     _DDL_Data& operator=(const _DDL_Data& rSource);
     bool operator==(const _DDL_Data& rSource) const;

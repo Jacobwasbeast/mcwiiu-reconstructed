@@ -18,8 +18,7 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStorePasswordInfo& _DDL_DataStorePasswordInfo::operator=(
-    const _DDL_DataStorePasswordInfo& rSource)
+_DDL_DataStorePasswordInfo& _DDL_DataStorePasswordInfo::operator=(const _DDL_DataStorePasswordInfo& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiDataId = rSource.m_uiDataId;
@@ -61,8 +60,7 @@ void _DDL_DataStorePasswordInfo::Add(Message* pMessage, const _DDL_DataStorePass
     }
 }
 
-void _DDL_DataStorePasswordInfo::Extract(Message* pMessage,
-    _DDL_DataStorePasswordInfo* pDestination)
+void _DDL_DataStorePasswordInfo::Extract(Message* pMessage, _DDL_DataStorePasswordInfo* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

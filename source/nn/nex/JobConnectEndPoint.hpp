@@ -24,10 +24,9 @@ class StationURL;
 class JobConnectEndPoint : public StepSequenceJob
 {
 public:
-    JobConnectEndPoint(Job::JobType jobType, ConnectionManager* pConnectionManager,
-        unsigned int uiContextId, Buffer* pRequestBuffer, Buffer* pResponseBuffer,
-        const qList<StationURL>& rURLs, EndPoint** ppEndPoint, unsigned int uiTimeout,
-        bool bFlag);
+    JobConnectEndPoint(Job::JobType jobType, ConnectionManager* pConnectionManager, unsigned int uiContextId,
+                       Buffer* pRequestBuffer, Buffer* pResponseBuffer, const qList<StationURL>& rURLs,
+                       EndPoint** ppEndPoint, unsigned int uiTimeout, bool bFlag);
     virtual ~JobConnectEndPoint();
 
     virtual void CancelJob();

@@ -76,10 +76,7 @@ public:
 
     static unsigned int GetOverhead();
 
-    Stream::Type GetStreamType() const
-    {
-        return VirtualPort(m_uiDestination).GetType();
-    }
+    Stream::Type GetStreamType() const { return VirtualPort(m_uiDestination).GetType(); }
 
     RelayProtocolHeader& GetRelayHeader()
     {

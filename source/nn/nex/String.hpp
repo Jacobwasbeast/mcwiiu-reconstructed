@@ -30,15 +30,9 @@ public:
 
     String& Format(const wchar_t* format, ...);
 
-    operator const wchar_t*() const
-    {
-        return m_data;
-    }
+    operator const wchar_t*() const { return m_data; }
 
-    operator wchar_t*()
-    {
-        return m_data;
-    }
+    operator wchar_t*() { return m_data; }
 
     unsigned int GetLength() const;
     void Reserve(int size);
@@ -60,15 +54,18 @@ public:
     unsigned long long ToUInt64() const;
 
     static bool IsEqual(const wchar_t* left, const wchar_t* right);
-    static bool ByteArrayToBase64(const unsigned char* bytes, unsigned int size, wchar_t* destination, unsigned int capacity);
-    static bool Base64ToByteArray(const wchar_t* source, unsigned int length, unsigned char* destination, unsigned int capacity);
+    static bool ByteArrayToBase64(const unsigned char* bytes, unsigned int size, wchar_t* destination,
+                                  unsigned int capacity);
+    static bool Base64ToByteArray(const wchar_t* source, unsigned int length, unsigned char* destination,
+                                  unsigned int capacity);
     static bool Base64ToByteArray(const String& source, unsigned char* destination, unsigned int capacity);
 
     void Trace(unsigned long long flags);
     static void SetDefaultStringEncoding(unsigned int encoding);
 
 private:
-    static String _Copy(const wchar_t* first, unsigned int firstLength, const wchar_t* second, unsigned int secondLength);
+    static String _Copy(const wchar_t* first, unsigned int firstLength, const wchar_t* second,
+                        unsigned int secondLength);
 
     friend String operator+(const String& left, const String& right);
     friend String operator+(const String& left, const wchar_t* right);

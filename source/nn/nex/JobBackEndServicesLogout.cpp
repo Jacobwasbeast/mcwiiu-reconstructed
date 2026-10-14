@@ -34,10 +34,10 @@ enum LogoutResult
 
 }
 
-JobBackEndServicesLogout::JobBackEndServicesLogout(unsigned int uiCallId,
-    BackEndServices* pBackEndServices, Credentials* pCredentials)
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_callContext()
+JobBackEndServicesLogout::JobBackEndServicesLogout(unsigned int uiCallId, BackEndServices* pBackEndServices,
+                                                   Credentials* pCredentials)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_callContext()
 {
     m_pBackEndServices = pBackEndServices;
     m_pCredentials = pCredentials;
@@ -61,25 +61,26 @@ JobBackEndServicesLogout::~JobBackEndServicesLogout()
 
 void JobBackEndServicesLogout::DisconnectFromAuthenticationService()
 {
-    if (m_pBackEndServices->GetAuthenticationClient() == 0 ||
-        !m_pBackEndServices->GetAuthenticationClient()->IsConnected())
+    if (m_pBackEndServices->GetAuthenticationClient() == 0
+        || !m_pBackEndServices->GetAuthenticationClient()->IsConnected())
     {
-        SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesLogout::DisconnectFromSecureConnectionService), L""));
+        SetStep(
+            Step(static_cast<Step::Function>(&JobBackEndServicesLogout::DisconnectFromSecureConnectionService), L""));
     }
     else
     {
         BackEndServices* pBackEndServices = m_pBackEndServices;
-        ConnectionManager* pConnectionManager =
-            pBackEndServices->GetStreamManager()->GetConnectionManager();
+        ConnectionManager* pConnectionManager = pBackEndServices->GetStreamManager()->GetConnectionManager();
         if (!pConnectionManager->Disconnect(&m_callContext,
-                pBackEndServices->m_pCredentials->m_authenticationConnection))
+                                            pBackEndServices->m_pCredentials->m_authenticationConnection))
         {
             SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesLogout::CompleteLogoutFailure), L""));
         }
         else
         {
             SetToSuspended();
-            ResumeOnCallCompletion(&m_callContext,
+            ResumeOnCallCompletion(
+                &m_callContext,
                 new Step(static_cast<Step::Function>(&JobBackEndServicesLogout::ProcessAuthDisconnectionResult), L""));
         }
     }
@@ -92,7 +93,8 @@ void JobBackEndServicesLogout::ProcessAuthDisconnectionResult()
         m_pBackEndServices->GetAuthenticationClient()->Logout();
         m_pBackEndServices->GetAuthenticationClient()->Unbind();
         m_pBackEndServices->GetCredentials()->SetAuthenticationConnection(0);
-        SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesLogout::DisconnectFromSecureConnectionService), L""));
+        SetStep(
+            Step(static_cast<Step::Function>(&JobBackEndServicesLogout::DisconnectFromSecureConnectionService), L""));
         m_callContext.Reset();
     }
     else
@@ -111,17 +113,16 @@ void JobBackEndServicesLogout::DisconnectFromSecureConnectionService()
         return;
     }
 
-    ConnectionManager* pConnectionManager =
-        pBackEndServices->GetStreamManager()->GetConnectionManager();
-    if (!pConnectionManager->Disconnect(&m_callContext,
-            pBackEndServices->m_pCredentials->m_secureConnection))
+    ConnectionManager* pConnectionManager = pBackEndServices->GetStreamManager()->GetConnectionManager();
+    if (!pConnectionManager->Disconnect(&m_callContext, pBackEndServices->m_pCredentials->m_secureConnection))
     {
         SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesLogout::ProcessSecConnDisconnectionResult), L""));
         return;
     }
 
     SetToSuspended();
-    ResumeOnCallCompletion(&m_callContext,
+    ResumeOnCallCompletion(
+        &m_callContext,
         new Step(static_cast<Step::Function>(&JobBackEndServicesLogout::ProcessSecConnDisconnectionResult), L""));
 }
 
@@ -194,8 +195,7 @@ void JobBackEndServicesLogout::CompleteLogout()
 {
     m_pBackEndServices->PostLogoutCleanup();
     SetToComplete();
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
         pCallContext->SetStateImpl(CallContext::CallSucceeded, qResult(LOGOUT_SUCCEEDED_RESULT), true);
 }
@@ -204,8 +204,7 @@ void JobBackEndServicesLogout::CompleteLogoutFailure()
 {
     m_pBackEndServices->PostLogoutCleanup();
     SetToComplete();
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
         pCallContext->SetStateImpl(CallContext::CallFailed, qResult(LOGOUT_FAILED_RESULT), false);
 }

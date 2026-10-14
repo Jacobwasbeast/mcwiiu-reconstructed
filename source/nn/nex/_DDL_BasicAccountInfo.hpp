@@ -16,14 +16,9 @@ class Message;
 class _DDL_BasicAccountInfo : public RootObject
 {
 public:
-    _DDL_BasicAccountInfo()
-        : m_uiStructureVersion(0), m_Name()
-    {
-    }
+    _DDL_BasicAccountInfo() : m_uiStructureVersion(0), m_Name() {}
 
-    virtual ~_DDL_BasicAccountInfo()
-    {
-    }
+    virtual ~_DDL_BasicAccountInfo() {}
 
     _DDL_BasicAccountInfo& operator=(const _DDL_BasicAccountInfo& rSource);
     bool operator==(const _DDL_BasicAccountInfo& rSource) const;

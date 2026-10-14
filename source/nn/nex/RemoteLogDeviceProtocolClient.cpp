@@ -34,18 +34,16 @@ ProtoReturnFunction s_ProtoReturn[METHOD_ID_COUNT];
 
 }
 
-RemoteLogDeviceProtocolClient::RemoteLogDeviceProtocolClient(unsigned short uiProtocolID)
-    : ClientProtocol(1)
+RemoteLogDeviceProtocolClient::RemoteLogDeviceProtocolClient(unsigned short uiProtocolID) : ClientProtocol(1)
 {
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new RemoteLogDeviceProtocolClient());
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(uiProtocolID,
+                                                                         new RemoteLogDeviceProtocolClient());
 }
 
-void RemoteLogDeviceProtocolClient::ExtractCallSpecificResults(Message* pMessage,
-                                                               ProtocolCallContext* pCallContext)
+void RemoteLogDeviceProtocolClient::ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 > 0)
@@ -81,8 +79,7 @@ bool RemoteLogDeviceProtocolClient::CallLog(ProtocolCallContext* pCallContext, c
     return bSent;
 }
 
-bool RemoteLogDeviceProtocolClient::Log_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                       Message* pMessage,
+bool RemoteLogDeviceProtocolClient::Log_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                        const String& rMessage)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();

@@ -13,13 +13,9 @@ class NATTraversalDDLDeclarations : public DDLDeclarations
 public:
     NATTraversalDDLDeclarations();
 
-    virtual ~NATTraversalDDLDeclarations()
-    {
-    }
+    virtual ~NATTraversalDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

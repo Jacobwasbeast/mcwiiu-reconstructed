@@ -11,8 +11,8 @@ namespace nn
 namespace act
 {
 
-nn::Result GetHostServerSettings(char* pHost, char* pSettings, SlotNo slot)
-    asm("GetHostServerSettings__Q2_2nn3actFPcT1Uc");
+nn::Result GetHostServerSettings(char* pHost, char* pSettings,
+                                 SlotNo slot) asm("GetHostServerSettings__Q2_2nn3actFPcT1Uc");
 
 }
 }
@@ -57,7 +57,7 @@ bool ServiceHttpClient::GetPrincipalId(unsigned int& rPrincipalId) const
 
 bool ServiceHttpClient::GetPassword(String& rPassword) const
 {
-    char acPassword[PASSWORD_BUFFER_SIZE] = { 0 };
+    char acPassword[PASSWORD_BUFFER_SIZE] = {0};
     nn::Result result = nn::act::GetNfsPasswordEx(acPassword, m_ucSlotNo);
     if (result.IsFailure() || strncmp(acPassword, "", sizeof(acPassword)) == 0)
         return false;
@@ -90,8 +90,8 @@ String ServiceHttpClient::MakeHppUrl() const
     String strSettings(pSettings);
     strSettings.ToLower();
     StringStream stream;
-    stream << (m_bSecure ? L"https://" : L"http://") << L"hpp-" << String(acGameServerId) << L"-"
-           << strSettings << L"." << String(s_pHppDomain) << String(s_pHppPath);
+    stream << (m_bSecure ? L"https://" : L"http://") << L"hpp-" << String(acGameServerId) << L"-" << strSettings << L"."
+           << String(s_pHppDomain) << String(s_pHppPath);
     String::ReleaseCopy(pSettings);
     return String(stream.GetBuffer());
 }
@@ -114,7 +114,8 @@ bool ServiceHttpClient::SetSandboxContextImpl(unsigned int uiGameServerId, const
     return true;
 }
 
-void ServiceHttpClient::SetSandboxContext(unsigned int uiGameServerId, const wchar_t* pAccessKey, unsigned char ucSlotNo)
+void ServiceHttpClient::SetSandboxContext(unsigned int uiGameServerId, const wchar_t* pAccessKey,
+                                          unsigned char ucSlotNo)
 {
     m_ucSlotNo = ucSlotNo;
     SetSandboxContextImpl(uiGameServerId, pAccessKey);

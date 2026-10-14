@@ -59,15 +59,12 @@ public:
     unsigned int GetGameServerTime(DateTime* pTime) const;
     void SetGameServerTime(DateTime& rTime);
 
-    ProtocolRegistry* GetProtocolRegistry() const
-    {
-        return m_pProtocolRegistry;
-    }
+    ProtocolRegistry* GetProtocolRegistry() const { return m_pProtocolRegistry; }
 
 private:
     typedef std::pair<const unsigned short, ServerProtocol*> ServerProtocolEntry;
-    typedef std::map<unsigned short, ServerProtocol*, std::less<unsigned short>,
-                     MemAllocator<ServerProtocolEntry> > ServerProtocolMap;
+    typedef std::map<unsigned short, ServerProtocol*, std::less<unsigned short>, MemAllocator<ServerProtocolEntry> >
+        ServerProtocolMap;
 
     enum
     {

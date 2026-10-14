@@ -11,14 +11,9 @@ namespace nex
 class NintendoNotificationEvent : public _DDL_NintendoNotificationEvent
 {
 public:
-    NintendoNotificationEvent()
-        : _DDL_NintendoNotificationEvent()
-    {
-    }
+    NintendoNotificationEvent() : _DDL_NintendoNotificationEvent() {}
 
-    virtual ~NintendoNotificationEvent()
-    {
-    }
+    virtual ~NintendoNotificationEvent() {}
 };
 
 }

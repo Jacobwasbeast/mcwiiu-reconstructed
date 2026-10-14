@@ -32,16 +32,15 @@ public:
         NintendoCreateAccountFunc = 6
     };
 
+    JobManageAccount(unsigned int uiCallId, AccountManagementProtocolClient* pProtocolClient, const String& rName,
+                     const String& rPassword, unsigned int uiGroups, const String& rEmail, qResult* pResult,
+                     FuncType funcType, AnyObjectHolder<Data, String>* pPublicData,
+                     AnyObjectHolder<Data, String>* pPrivateData, AnyObjectHolder<Data, String>* pCustomData,
+                     unsigned int* pPrincipalID, String* pPidHmac);
     JobManageAccount(unsigned int uiCallId, AccountManagementProtocolClient* pProtocolClient,
-        const String& rName, const String& rPassword, unsigned int uiGroups,
-        const String& rEmail, qResult* pResult, FuncType funcType,
-        AnyObjectHolder<Data, String>* pPublicData, AnyObjectHolder<Data, String>* pPrivateData,
-        AnyObjectHolder<Data, String>* pCustomData, unsigned int* pPrincipalID,
-        String* pPidHmac);
-    JobManageAccount(unsigned int uiCallId, AccountManagementProtocolClient* pProtocolClient,
-        AccountManagementCommand* pCommand);
-    JobManageAccount(unsigned int uiCallId, AccountManagementProtocolClient* pProtocolClient,
-        const String& rPassword, bool* pSuccess, FuncType funcType);
+                     AccountManagementCommand* pCommand);
+    JobManageAccount(unsigned int uiCallId, AccountManagementProtocolClient* pProtocolClient, const String& rPassword,
+                     bool* pSuccess, FuncType funcType);
     virtual ~JobManageAccount();
 
     void Cleanup();

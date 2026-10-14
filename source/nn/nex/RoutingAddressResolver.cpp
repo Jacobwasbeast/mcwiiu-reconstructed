@@ -59,8 +59,7 @@ bool RoutingAddressResolver::ResolveToAddress(unsigned short uiID, InetAddress* 
 
 void RoutingAddressResolver::Trace(unsigned long long) const
 {
-    for (IdToAddressMap::const_iterator it = m_idToAddress.begin(); it != m_idToAddress.end();
-         ++it)
+    for (IdToAddressMap::const_iterator it = m_idToAddress.begin(); it != m_idToAddress.end(); ++it)
     {
     }
 }

@@ -11,13 +11,9 @@ namespace nex
 class DataStoreNotification : public _DDL_DataStoreNotification
 {
 public:
-    DataStoreNotification()
-    {
-    }
+    DataStoreNotification() {}
 
-    virtual ~DataStoreNotification()
-    {
-    }
+    virtual ~DataStoreNotification() {}
 };
 
 }

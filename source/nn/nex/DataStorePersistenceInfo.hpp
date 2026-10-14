@@ -11,14 +11,9 @@ namespace nex
 class DataStorePersistenceInfo : public _DDL_DataStorePersistenceInfo
 {
 public:
-    DataStorePersistenceInfo()
-    {
-        m_uiDataId = 0;
-    }
+    DataStorePersistenceInfo() { m_uiDataId = 0; }
 
-    virtual ~DataStorePersistenceInfo()
-    {
-    }
+    virtual ~DataStorePersistenceInfo() {}
 };
 
 }

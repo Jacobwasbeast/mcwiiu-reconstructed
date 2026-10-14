@@ -31,14 +31,14 @@ enum ProbeResult
 
 }
 
-JobWaitForProbes::JobWaitForProbes(unsigned int uiCallId, NATTraversalEngine* pEngine,
-    StationProbeList* pProbeList, unsigned int uiTimeout, bool bUseRelay, JobType jobType)
-    : Job(jobType, DebugString(L""))
-    , m_uiCallId(uiCallId)
-    , m_pEngine(pEngine)
-    , m_pProbeList(pProbeList)
-    , m_deadline(Time::ConvertTimeoutToDeadline(uiTimeout))
-    , m_bUseRelay(bUseRelay)
+JobWaitForProbes::JobWaitForProbes(unsigned int uiCallId, NATTraversalEngine* pEngine, StationProbeList* pProbeList,
+                                   unsigned int uiTimeout, bool bUseRelay, JobType jobType)
+    : Job(jobType, DebugString(L"")),
+      m_uiCallId(uiCallId),
+      m_pEngine(pEngine),
+      m_pProbeList(pProbeList),
+      m_deadline(Time::ConvertTimeoutToDeadline(uiTimeout)),
+      m_bUseRelay(bUseRelay)
 {
 }
 
@@ -52,8 +52,7 @@ void JobWaitForProbes::ReportNATTraversalResults()
     if (pEngine == 0)
         return;
 
-    for (StationProbeList::iterator probe = m_pProbeList->begin(); probe != m_pProbeList->end();
-         ++probe)
+    for (StationProbeList::iterator probe = m_pProbeList->begin(); probe != m_pProbeList->end(); ++probe)
     {
         unsigned int uiConnectionID = probe->m_contactInfo.GetConnectionID();
         if (uiConnectionID == 0)
@@ -70,8 +69,7 @@ void JobWaitForProbes::ReportNATTraversalResults()
 
 void JobWaitForProbes::Execute()
 {
-    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(
-        m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetToComplete();
@@ -81,8 +79,7 @@ void JobWaitForProbes::Execute()
     m_pProbeList->Update();
     if (m_pProbeList->EveryoneReached())
     {
-        pCallContext->SetStateImpl(CallContext::CallSucceeded, qResult(PROBE_SUCCEEDED_RESULT),
-            true);
+        pCallContext->SetStateImpl(CallContext::CallSucceeded, qResult(PROBE_SUCCEEDED_RESULT), true);
         SetToComplete();
         return;
     }

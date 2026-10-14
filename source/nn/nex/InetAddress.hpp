@@ -27,8 +27,8 @@ public:
 
     bool operator==(const InetAddress& rAddress) const
     {
-        return m_address.sin_addr.s_addr == rAddress.m_address.sin_addr.s_addr &&
-               m_address.sin_port == rAddress.m_address.sin_port;
+        return m_address.sin_addr.s_addr == rAddress.m_address.sin_addr.s_addr
+               && m_address.sin_port == rAddress.m_address.sin_port;
     }
 
     bool operator<(const InetAddress& rAddress) const
@@ -38,8 +38,7 @@ public:
         unsigned short uiPortNumber = m_address.sin_port;
         unsigned short uiOtherPortNumber = rAddress.m_address.sin_port;
 
-        return iAddress <= iOtherAddress &&
-               (iAddress < iOtherAddress || uiPortNumber < uiOtherPortNumber);
+        return iAddress <= iOtherAddress && (iAddress < iOtherAddress || uiPortNumber < uiOtherPortNumber);
     }
 
     void Init();

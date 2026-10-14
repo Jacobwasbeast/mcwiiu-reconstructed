@@ -11,9 +11,7 @@ namespace nex
 class LogFilter : public RootObject
 {
 public:
-    virtual ~LogFilter()
-    {
-    }
+    virtual ~LogFilter() {}
 
     virtual bool OutputCurrentTrace() = 0;
 };

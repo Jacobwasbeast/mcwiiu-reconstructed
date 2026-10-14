@@ -280,8 +280,7 @@ void _DDL_DataStoreMetaInfo::Extract(Message* pMessage, _DDL_DataStoreMetaInfo* 
         return;
     }
 
-    _Type_qvector<DDLClassMetaType<DataStoreRatingInfoWithSlot> >::Extract(
-        pMessage, &pDestination->m_Ratings);
+    _Type_qvector<DDLClassMetaType<DataStoreRatingInfoWithSlot> >::Extract(pMessage, &pDestination->m_Ratings);
 
     if (pMessage->HasError() || bCompactFormat)
     {

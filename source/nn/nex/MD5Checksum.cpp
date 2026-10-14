@@ -24,8 +24,8 @@ MD5Checksum::~MD5Checksum()
 {
 }
 
-void MD5Checksum::ChecksumComputeHelper(const unsigned char** ppData,
-    const unsigned int* pLengths, int iCount, MD5& rMd5)
+void MD5Checksum::ChecksumComputeHelper(const unsigned char** ppData, const unsigned int* pLengths, int iCount,
+                                        MD5& rMd5)
 {
     for (int i = 0; i < iCount; ++i)
     {
@@ -36,8 +36,8 @@ void MD5Checksum::ChecksumComputeHelper(const unsigned char** ppData,
     rMd5.finalize();
 }
 
-bool MD5Checksum::ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths,
-    int iCount, SignatureBytes& rSignature)
+bool MD5Checksum::ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths, int iCount,
+                                  SignatureBytes& rSignature)
 {
     MD5 md5;
     ChecksumComputeHelper(ppData, pLengths, iCount, md5);
@@ -55,8 +55,8 @@ bool MD5Checksum::ComputeChecksum(const Buffer& rBuffer, Buffer* pChecksum)
     return true;
 }
 
-unsigned int MD5Checksum::ComputeChecksumForTransportArray(const unsigned char** ppData,
-    const unsigned int* pLengths, int iCount)
+unsigned int MD5Checksum::ComputeChecksumForTransportArray(const unsigned char** ppData, const unsigned int* pLengths,
+                                                           int iCount)
 {
     MD5 md5;
     ChecksumComputeHelper(ppData, pLengths, iCount, md5);

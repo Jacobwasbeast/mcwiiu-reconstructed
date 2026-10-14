@@ -17,9 +17,9 @@ class TransportBuffer;
 class QueuingSocketTransportBuffer : public QueuingSocket
 {
 public:
-    QueuingSocketTransportBuffer(unsigned int uiTrafficType, RootTransport* pTransport,
-        unsigned int uiRecvCount, unsigned int uiSendCount, unsigned int uiMTU,
-        Condition* pCondition, TransportBuffer* pTransportBuffer);
+    QueuingSocketTransportBuffer(unsigned int uiTrafficType, RootTransport* pTransport, unsigned int uiRecvCount,
+                                 unsigned int uiSendCount, unsigned int uiMTU, Condition* pCondition,
+                                 TransportBuffer* pTransportBuffer);
     virtual ~QueuingSocketTransportBuffer();
 
     virtual bool IsRecvDataExists() const;

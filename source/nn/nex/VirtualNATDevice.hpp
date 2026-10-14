@@ -13,9 +13,7 @@ class StationURL;
 class VirtualNATDevice : public RootObject
 {
 public:
-    virtual ~VirtualNATDevice()
-    {
-    }
+    virtual ~VirtualNATDevice() {}
 
     virtual bool ProcessOutgoingAddress(StationURL* pURL, unsigned short uiPort) = 0;
     virtual bool ProcessIncomingAddress(StationURL* pURL, unsigned short uiPort) = 0;

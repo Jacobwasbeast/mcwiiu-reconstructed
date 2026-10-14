@@ -19,14 +19,12 @@ public:
     TransportEventHandler();
     virtual ~TransportEventHandler();
 
-    virtual void Receive(ConnectionOrientedStream* pStream, Buffer* pBuffer,
-        const StationURL* pStationURL);
-    virtual void ReceiveBroadcast(ConnectionOrientedStream* pStream, Buffer* pBuffer,
-        const StationURL* pStationURL);
+    virtual void Receive(ConnectionOrientedStream* pStream, Buffer* pBuffer, const StationURL* pStationURL);
+    virtual void ReceiveBroadcast(ConnectionOrientedStream* pStream, Buffer* pBuffer, const StationURL* pStationURL);
     virtual bool SwitchToRoutingConnection(EndPoint* pEndPoint);
     virtual void DeviceDiscovery(ConnectionOrientedStream* pStream, wchar_t* pDevice);
-    virtual bool ConnectionRequest(ConnectionOrientedStream* pStream,
-        const StationURL* pStationURL, Buffer* pBuffer, EndPoint* pEndPoint);
+    virtual bool ConnectionRequest(ConnectionOrientedStream* pStream, const StationURL* pStationURL, Buffer* pBuffer,
+                                   EndPoint* pEndPoint);
 };
 
 }

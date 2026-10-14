@@ -25,15 +25,9 @@ public:
     bool IsAwaited() const;
     bool IsExpired() const;
 
-    Time GetExpirationTime() const
-    {
-        return m_expirationTime;
-    }
+    Time GetExpirationTime() const { return m_expirationTime; }
 
-    unsigned int GetRTO()
-    {
-        return m_uiRTO;
-    }
+    unsigned int GetRTO() { return m_uiRTO; }
 
 private:
     unsigned int m_uiRTO;

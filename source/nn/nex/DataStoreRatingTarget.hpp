@@ -11,13 +11,9 @@ namespace nex
 class DataStoreRatingTarget : public _DDL_DataStoreRatingTarget
 {
 public:
-    DataStoreRatingTarget()
-    {
-    }
+    DataStoreRatingTarget() {}
 
-    virtual ~DataStoreRatingTarget()
-    {
-    }
+    virtual ~DataStoreRatingTarget() {}
 };
 
 }

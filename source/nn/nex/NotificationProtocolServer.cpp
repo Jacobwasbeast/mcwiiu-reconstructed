@@ -8,8 +8,8 @@ namespace nn
 namespace nex
 {
 
-void _Proto_NotificationProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_NotificationProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                                bool* pResponseRequired, EndPoint*)
 {
     const uint16_t uiMethodID = static_cast<uint16_t>(ExtractMethodID(pRequest));
     if (uiMethodID == METHOD_PROCESS_NOTIFICATION_EVENT)

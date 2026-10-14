@@ -4,7 +4,10 @@
 #include "nn/nex/StateMachine.hpp"
 #include "nn/nex/UserContext.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class Operation : public StateMachine::QEvent
 {
@@ -31,6 +34,7 @@ protected:
     unsigned int m_flags;
 };
 
-}}
+}
+}
 
 #endif

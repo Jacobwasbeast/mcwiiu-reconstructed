@@ -5,7 +5,10 @@
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/qMap.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class ProtocolRegistry : public RootObject
 {
@@ -24,6 +27,7 @@ private:
     ProtocolMap m_serverProtocols;
 };
 
-}}
+}
+}
 
 #endif

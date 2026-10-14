@@ -14,9 +14,8 @@ public:
     JobNNIDLogin();
     virtual ~JobNNIDLogin();
 
-    void Initialize(unsigned int uiCallId, unsigned int uiLoginParam, NgsFacade* pNgsFacade,
-                    const char* pFirstString, char* pSecondString, const void* pToken,
-                    int iTimeout, unsigned int uiPrincipalId);
+    void Initialize(unsigned int uiCallId, unsigned int uiLoginParam, NgsFacade* pNgsFacade, const char* pFirstString,
+                    char* pSecondString, const void* pToken, int iTimeout, unsigned int uiPrincipalId);
 
     virtual void StepFirst();
 

@@ -13,8 +13,7 @@ namespace nex
 HTTPModule* HTTPModule::s_pInstance = 0;
 CriticalSection HTTPModule::s_criticalSection;
 
-HTTPModule::HTTPModule()
-    : m_pImpl(new HTTPModuleImpl)
+HTTPModule::HTTPModule() : m_pImpl(new HTTPModuleImpl)
 {
 }
 

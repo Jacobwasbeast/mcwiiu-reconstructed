@@ -16,14 +16,9 @@ class Message;
 class _DDL_DataStoreGetNotificationUrlParam : public RootObject
 {
 public:
-    _DDL_DataStoreGetNotificationUrlParam()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreGetNotificationUrlParam() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreGetNotificationUrlParam()
-    {
-    }
+    virtual ~_DDL_DataStoreGetNotificationUrlParam() {}
 
     bool operator==(const _DDL_DataStoreGetNotificationUrlParam& rSource) const;
 

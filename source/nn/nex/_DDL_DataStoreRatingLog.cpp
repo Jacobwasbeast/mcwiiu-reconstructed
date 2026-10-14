@@ -17,8 +17,7 @@ const uint8_t RATING_LOG_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStoreRatingLog& _DDL_DataStoreRatingLog::operator=(
-    const _DDL_DataStoreRatingLog& rSource)
+_DDL_DataStoreRatingLog& _DDL_DataStoreRatingLog::operator=(const _DDL_DataStoreRatingLog& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_bIsRated = rSource.m_bIsRated;
@@ -28,8 +27,7 @@ _DDL_DataStoreRatingLog& _DDL_DataStoreRatingLog::operator=(
     return *this;
 }
 
-void _DDL_DataStoreRatingLog::Add(Message* pMessage,
-    const _DDL_DataStoreRatingLog& rSource)
+void _DDL_DataStoreRatingLog::Add(Message* pMessage, const _DDL_DataStoreRatingLog& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -59,14 +57,12 @@ void _DDL_DataStoreRatingLog::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
-void _DDL_DataStoreRatingLog::Extract(Message* pMessage,
-    _DDL_DataStoreRatingLog* pDestination)
+void _DDL_DataStoreRatingLog::Extract(Message* pMessage, _DDL_DataStoreRatingLog* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

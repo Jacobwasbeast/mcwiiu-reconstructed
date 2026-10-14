@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-MatchmakeExtensionDDLDeclarations::MatchmakeExtensionDDLDeclarations()
-    : DDLDeclarations(true)
+MatchmakeExtensionDDLDeclarations::MatchmakeExtensionDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

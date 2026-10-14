@@ -20,9 +20,7 @@ public:
         m_ExtraData.clear();
     }
 
-    virtual ~DataStorePrepareGetParam()
-    {
-    }
+    virtual ~DataStorePrepareGetParam() {}
 };
 
 }

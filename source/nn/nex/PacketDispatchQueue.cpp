@@ -7,9 +7,7 @@ namespace nn
 namespace nex
 {
 
-PacketDispatchQueue::PacketDispatchQueue()
-    : m_packets()
-    , m_nextToDispatch()
+PacketDispatchQueue::PacketDispatchQueue() : m_packets(), m_nextToDispatch()
 {
     m_nextToDispatch = 1;
 }

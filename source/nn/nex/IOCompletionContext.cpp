@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-IOCompletionContext::IOCompletionContext()
-    : m_unknown2C(0)
+IOCompletionContext::IOCompletionContext() : m_unknown2C(0)
 {
     Reset();
 }

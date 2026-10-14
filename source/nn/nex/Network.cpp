@@ -44,9 +44,17 @@ bool Network::s_bHMACChecksumEnabled = true;
 bool Network::s_bMD5ChecksumEnabled = true;
 
 Network::Network()
-    : m_criticalSection(), m_instanceControl(ClassID), m_localURLs(),
-      m_packetBufferManager(), m_connectivityManager(), m_messageSelector(), m_rc4Encryption(),
-      m_p2pSignatureKey(), m_unknown3d0(), m_unknown3e0(), m_unknown42c(),
+    : m_criticalSection(),
+      m_instanceControl(ClassID),
+      m_localURLs(),
+      m_packetBufferManager(),
+      m_connectivityManager(),
+      m_messageSelector(),
+      m_rc4Encryption(),
+      m_p2pSignatureKey(),
+      m_unknown3d0(),
+      m_unknown3e0(),
+      m_unknown42c(),
       m_unknown43c()
 {
     m_instanceControl.SetDelegatorInstance(this);
@@ -163,8 +171,7 @@ void Network::AddLocalURL(const StationURL& rURL)
     while (url != m_localURLs.GetList().end())
     {
         bool bMatch = false;
-        if (String::IsEqual(url->GetAddress(), rURL.GetAddress()) &&
-            url->GetPortNumber() == rURL.GetPortNumber())
+        if (String::IsEqual(url->GetAddress(), rURL.GetAddress()) && url->GetPortNumber() == rURL.GetPortNumber())
             bMatch = true;
 
         if (bMatch)
@@ -220,8 +227,7 @@ bool Network::ReplaceLocalURL(const StationURL& rOldURL, const StationURL& rNewU
     while (url != m_localURLs.GetList().end())
     {
         bool bMatch = false;
-        if (String::IsEqual(url->GetAddress(), rOldURL.GetAddress()) &&
-            url->GetPortNumber() == rOldURL.GetPortNumber())
+        if (String::IsEqual(url->GetAddress(), rOldURL.GetAddress()) && url->GetPortNumber() == rOldURL.GetPortNumber())
             bMatch = true;
 
         if (bMatch)
@@ -281,8 +287,7 @@ void Network::InitP2PChecksumAlgorithmKey()
     if (s_uiP2PDataPacketDefaultSignatureKeyLength == 0)
         pChecksum->SetKey(Key(s_aDefaultChecksumKey, DefaultChecksumKeyLength));
     else
-        pChecksum->SetKey(
-            Key(s_aP2PDataPacketDefaultSignatureKey, s_uiP2PDataPacketDefaultSignatureKeyLength));
+        pChecksum->SetKey(Key(s_aP2PDataPacketDefaultSignatureKey, s_uiP2PDataPacketDefaultSignatureKeyLength));
 }
 
 void Network::InitChecksumAlgorithm()
@@ -319,7 +324,8 @@ void Network::SetP2PDataPacketSessionSignatureKey(const qVector<unsigned char>& 
     m_pMD5Checksum->SetKey(key);
     if (RootTransport::GetInstance()->GetRelay()->IsEnabled())
     {
-        GetInstance()->m_messageSelector.GetRelayMessage()
+        GetInstance()
+            ->m_messageSelector.GetRelayMessage()
             ->SetRelayDataPacketSignatureKeyFromP2PDataPacketSessionSignatureKey(rKey);
     }
 }

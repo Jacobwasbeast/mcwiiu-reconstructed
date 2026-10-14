@@ -92,8 +92,7 @@ void _DDL_LoginData::Add(Message* pMessage, const _DDL_LoginData& rSource)
 
         pMessage->SetLength(uiSizePosition);
 
-        const int32_t iSize =
-            static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
+        const int32_t iSize = static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
 
         pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
         pMessage->SetLength(uiEndPosition);

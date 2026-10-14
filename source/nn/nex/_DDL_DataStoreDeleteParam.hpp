@@ -15,14 +15,9 @@ class Message;
 class _DDL_DataStoreDeleteParam : public RootObject
 {
 public:
-    _DDL_DataStoreDeleteParam()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreDeleteParam() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreDeleteParam()
-    {
-    }
+    virtual ~_DDL_DataStoreDeleteParam() {}
 
     _DDL_DataStoreDeleteParam& operator=(const _DDL_DataStoreDeleteParam& rSource);
     bool operator==(const _DDL_DataStoreDeleteParam& rSource) const;

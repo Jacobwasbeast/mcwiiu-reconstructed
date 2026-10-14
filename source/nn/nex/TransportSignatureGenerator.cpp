@@ -39,14 +39,13 @@ TransportSignatureGenerator::~TransportSignatureGenerator()
 {
 }
 
-unsigned int TransportSignatureGenerator::ComputeSourceSignature(unsigned int uiAddress,
-    unsigned short uiPortNumber)
+unsigned int TransportSignatureGenerator::ComputeSourceSignature(unsigned int uiAddress, unsigned short uiPortNumber)
 {
     unsigned char aData[ADDRESS_LENGTH + PORT_LENGTH];
-    unsigned int uiNetworkAddress = ((uiAddress & 0xFF) << 24) | (((uiAddress >> 8) & 0xFF) << 16) |
-        (((uiAddress >> 16) & 0xFF) << 8) | ((uiAddress >> 24) & 0xFF);
-    unsigned short uiNetworkPortNumber =
-        static_cast<unsigned short>(((uiPortNumber & 0xFF) << 8) + ((uiPortNumber & 0xFF00) >> 8));
+    unsigned int uiNetworkAddress = ((uiAddress & 0xFF) << 24) | (((uiAddress >> 8) & 0xFF) << 16)
+                                    | (((uiAddress >> 16) & 0xFF) << 8) | ((uiAddress >> 24) & 0xFF);
+    unsigned short uiNetworkPortNumber = static_cast<unsigned short>(((uiPortNumber & 0xFF) << 8)
+                                                                     + ((uiPortNumber & 0xFF00) >> 8));
     memcpy(aData, &uiNetworkAddress, ADDRESS_LENGTH);
     memcpy(aData + ADDRESS_LENGTH, &uiNetworkPortNumber, PORT_LENGTH);
     return m_checksum->ComputeChecksumForTransport(aData, ADDRESS_LENGTH + PORT_LENGTH);

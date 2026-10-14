@@ -13,13 +13,9 @@ class STLExtDDLDeclarations : public DDLDeclarations
 public:
     STLExtDDLDeclarations();
 
-    virtual ~STLExtDDLDeclarations()
-    {
-    }
+    virtual ~STLExtDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

@@ -27,9 +27,9 @@ public:
     uint32_t UnregisterNintendoNotificationEventHandler(NintendoNotificationEventHandler* pHandler);
 
 private:
-    typedef std::set<NintendoNotificationEventHandler*,
-                     std::less<NintendoNotificationEventHandler*>,
-                     MemAllocator<NintendoNotificationEventHandler*> > HandlerSet;
+    typedef std::set<NintendoNotificationEventHandler*, std::less<NintendoNotificationEventHandler*>,
+                     MemAllocator<NintendoNotificationEventHandler*> >
+        HandlerSet;
 
     HandlerSet m_handlers;
     NintendoNotificationEventManager* m_pParent;

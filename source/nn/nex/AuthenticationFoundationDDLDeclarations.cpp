@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-AuthenticationFoundationDDLDeclarations::AuthenticationFoundationDDLDeclarations()
-    : DDLDeclarations(true)
+AuthenticationFoundationDDLDeclarations::AuthenticationFoundationDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

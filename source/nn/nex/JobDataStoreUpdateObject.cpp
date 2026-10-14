@@ -22,24 +22,24 @@ namespace nex
 {
 
 JobDataStoreUpdateObject::JobDataStoreUpdateObject()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_pClient(0)
-    , m_pFileServerClient(0)
-    , m_bUseHttps(true)
-    , m_uiTransferBufferSize(0)
-    , m_uiThreadPriority(0)
-    , m_uiMinimumTransferRate(0)
-    , m_iMinimumTimeout(0)
-    , m_pListener(0)
-    , m_uiBufferSize(0)
-    , m_context()
-    , m_prepareParam()
-    , m_reqUpdateInfo()
-    , m_pCopiedData(0)
-    , m_pData(0)
-    , m_postResult(RESULT_SUCCESS)
-    , m_pHttpListener(0)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_pClient(0),
+      m_pFileServerClient(0),
+      m_bUseHttps(true),
+      m_uiTransferBufferSize(0),
+      m_uiThreadPriority(0),
+      m_uiMinimumTransferRate(0),
+      m_iMinimumTimeout(0),
+      m_pListener(0),
+      m_uiBufferSize(0),
+      m_context(),
+      m_prepareParam(),
+      m_reqUpdateInfo(),
+      m_pCopiedData(0),
+      m_pData(0),
+      m_postResult(RESULT_SUCCESS),
+      m_pHttpListener(0)
 {
 }
 
@@ -51,12 +51,12 @@ JobDataStoreUpdateObject::~JobDataStoreUpdateObject()
         MemoryManager::Free(m_pCopiedData);
 }
 
-qResult JobDataStoreUpdateObject::Initialize(unsigned int uiCallId,
-    DataStoreLogicServerClientInterface* pClient, const DataStorePrepareUpdateParam& rParam,
-    unsigned int uiThreadPriority, bool bUseHttps, unsigned int uiTransferBufferSize,
-    unsigned int uiMinimumTransferRate, int iMinimumTimeout,
-    DataStorePostObjectEventListener* pListener, unsigned int uiBufferSize,
-    const unsigned char* pData, bool bCopyData)
+qResult JobDataStoreUpdateObject::Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
+                                             const DataStorePrepareUpdateParam& rParam, unsigned int uiThreadPriority,
+                                             bool bUseHttps, unsigned int uiTransferBufferSize,
+                                             unsigned int uiMinimumTransferRate, int iMinimumTimeout,
+                                             DataStorePostObjectEventListener* pListener, unsigned int uiBufferSize,
+                                             const unsigned char* pData, bool bCopyData)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_uiCallId = uiCallId;
@@ -83,19 +83,15 @@ qResult JobDataStoreUpdateObject::Initialize(unsigned int uiCallId,
         }
     }
 
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     m_context.SetCredentials(static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
-    SetStep(Step(static_cast<Step::Function>(
-                     &JobDataStoreUpdateObject::StepLogicServerPrepareUpdateObject),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreUpdateObject::StepLogicServerPrepareUpdateObject), L""));
     return qResult(true);
 }
 
 void JobDataStoreUpdateObject::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         m_context.Cancel(CallContext::CallCanceled);
@@ -116,8 +112,7 @@ void JobDataStoreUpdateObject::CompleteJob(const qResult& rResult)
 
 void JobDataStoreUpdateObject::StepLogicServerPrepareUpdateObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -131,18 +126,15 @@ void JobDataStoreUpdateObject::StepLogicServerPrepareUpdateObject()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(&JobDataStoreUpdateObject::StepFileServerPostObject),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context, new Step(static_cast<Step::Function>(&JobDataStoreUpdateObject::StepFileServerPostObject), L""));
 }
 
 void JobDataStoreUpdateObject::StepFileServerPostObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -157,14 +149,13 @@ void JobDataStoreUpdateObject::StepFileServerPostObject()
 
     m_context.Reset();
     const unsigned char* pData = m_pCopiedData != 0 ? m_pCopiedData : m_pData;
-    m_pHttpListener = new DataStorePostHttpEventListener(m_uiCallId,
-        m_reqUpdateInfo.m_RequestHeaders, m_reqUpdateInfo.m_FormFields,
-        m_reqUpdateInfo.m_RootCaCert, m_uiThreadPriority, m_uiTransferBufferSize, pData,
-        m_prepareParam.m_uiSize, m_pListener);
+    m_pHttpListener = new DataStorePostHttpEventListener(
+        m_uiCallId, m_reqUpdateInfo.m_RequestHeaders, m_reqUpdateInfo.m_FormFields, m_reqUpdateInfo.m_RootCaCert,
+        m_uiThreadPriority, m_uiTransferBufferSize, pData, m_prepareParam.m_uiSize, m_pListener);
     String url = (m_reqUpdateInfo.m_Url.FindSubstringNoCase(L"http://") == 0
-                     || m_reqUpdateInfo.m_Url.FindSubstringNoCase(L"https://") == 0)
-        ? m_reqUpdateInfo.m_Url
-        : (m_bUseHttps ? L"https://" : L"http://") + m_reqUpdateInfo.m_Url;
+                  || m_reqUpdateInfo.m_Url.FindSubstringNoCase(L"https://") == 0)
+                     ? m_reqUpdateInfo.m_Url
+                     : (m_bUseHttps ? L"https://" : L"http://") + m_reqUpdateInfo.m_Url;
     if (m_uiMinimumTransferRate != 0)
     {
         int iTimeout = m_prepareParam.m_uiSize / m_uiMinimumTransferRate * MILLISECONDS_PER_SECOND;
@@ -181,19 +172,16 @@ void JobDataStoreUpdateObject::StepFileServerPostObject()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreUpdateObject::StepLogicServerCompleteUpdateObject),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context,
+        new Step(static_cast<Step::Function>(&JobDataStoreUpdateObject::StepLogicServerCompleteUpdateObject), L""));
 }
 
 void JobDataStoreUpdateObject::StepLogicServerCompleteUpdateObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -214,19 +202,17 @@ void JobDataStoreUpdateObject::StepLogicServerCompleteUpdateObject()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreUpdateObject::StepWaitingLogicServerCompleteUpdateObject),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context,
+        new Step(static_cast<Step::Function>(&JobDataStoreUpdateObject::StepWaitingLogicServerCompleteUpdateObject),
+                 L""));
 }
 
 void JobDataStoreUpdateObject::StepWaitingLogicServerCompleteUpdateObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));

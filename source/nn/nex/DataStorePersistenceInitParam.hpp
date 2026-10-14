@@ -19,9 +19,7 @@ public:
 
     static const uint16_t NO_PERSISTENCE_SLOT_ID = 0xFFFF;
 
-    virtual ~DataStorePersistenceInitParam()
-    {
-    }
+    virtual ~DataStorePersistenceInitParam() {}
 };
 
 }

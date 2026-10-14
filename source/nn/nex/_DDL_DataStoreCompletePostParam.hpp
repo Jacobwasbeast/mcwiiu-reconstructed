@@ -15,21 +15,15 @@ class Message;
 class _DDL_DataStoreCompletePostParam : public RootObject
 {
 public:
-    _DDL_DataStoreCompletePostParam()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreCompletePostParam() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreCompletePostParam()
-    {
-    }
+    virtual ~_DDL_DataStoreCompletePostParam() {}
 
     _DDL_DataStoreCompletePostParam& operator=(const _DDL_DataStoreCompletePostParam& rSource);
 
     bool operator==(const _DDL_DataStoreCompletePostParam& rSource) const
     {
-        return m_uiDataId == rSource.m_uiDataId &&
-            m_bIsSuccess == rSource.m_bIsSuccess;
+        return m_uiDataId == rSource.m_uiDataId && m_bIsSuccess == rSource.m_bIsSuccess;
     }
 
     static void Add(Message* pMessage, const _DDL_DataStoreCompletePostParam& rSource);

@@ -11,14 +11,9 @@ namespace nex
 class DataStorePreparePostParam : public _DDL_DataStorePreparePostParam
 {
 public:
-    DataStorePreparePostParam()
-    {
-        Reset();
-    }
+    DataStorePreparePostParam() { Reset(); }
 
-    virtual ~DataStorePreparePostParam()
-    {
-    }
+    virtual ~DataStorePreparePostParam() {}
 
     void Reset();
 };

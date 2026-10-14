@@ -21,12 +21,9 @@ class _DDL_DataStoreChangeMetaCompareParam : public RootObject
 public:
     _DDL_DataStoreChangeMetaCompareParam();
 
-    virtual ~_DDL_DataStoreChangeMetaCompareParam()
-    {
-    }
+    virtual ~_DDL_DataStoreChangeMetaCompareParam() {}
 
-    _DDL_DataStoreChangeMetaCompareParam& operator=(
-        const _DDL_DataStoreChangeMetaCompareParam& rSource);
+    _DDL_DataStoreChangeMetaCompareParam& operator=(const _DDL_DataStoreChangeMetaCompareParam& rSource);
     bool operator==(const _DDL_DataStoreChangeMetaCompareParam& rSource) const;
 
     static void Add(Message* pMessage, const _DDL_DataStoreChangeMetaCompareParam& rSource);

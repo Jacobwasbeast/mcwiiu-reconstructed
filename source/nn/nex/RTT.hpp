@@ -17,20 +17,11 @@ public:
     void Adjust(unsigned int uiRTT);
     void Trace(unsigned long long uiFilter);
 
-    unsigned int GetAverage() const
-    {
-        return m_uiSmoothedRTT >> 3;
-    }
+    unsigned int GetAverage() const { return m_uiSmoothedRTT >> 3; }
 
-    unsigned int GetVariation() const
-    {
-        return m_uiRTTVariation;
-    }
+    unsigned int GetVariation() const { return m_uiRTTVariation; }
 
-    unsigned int GetLast() const
-    {
-        return m_uiLastRTT;
-    }
+    unsigned int GetLast() const { return m_uiLastRTT; }
 
 private:
     unsigned int m_uiSmoothedRTT;

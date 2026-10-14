@@ -11,9 +11,7 @@ namespace nex
 class HTTPReader : public RootObject
 {
 public:
-    virtual ~HTTPReader()
-    {
-    }
+    virtual ~HTTPReader() {}
 
     virtual unsigned int Read(void* pBuffer, unsigned int uiSize) = 0;
     virtual unsigned int GetContentLength() const = 0;

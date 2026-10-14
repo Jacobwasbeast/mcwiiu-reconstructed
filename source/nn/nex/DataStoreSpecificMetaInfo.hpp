@@ -11,13 +11,9 @@ namespace nex
 class DataStoreSpecificMetaInfo : public _DDL_DataStoreSpecificMetaInfo
 {
 public:
-    DataStoreSpecificMetaInfo()
-    {
-    }
+    DataStoreSpecificMetaInfo() {}
 
-    virtual ~DataStoreSpecificMetaInfo()
-    {
-    }
+    virtual ~DataStoreSpecificMetaInfo() {}
 };
 
 }

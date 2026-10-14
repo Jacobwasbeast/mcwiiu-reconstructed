@@ -16,14 +16,9 @@ class Message;
 class _DDL_DataStoreRatingInitParamWithSlot : public RootObject
 {
 public:
-    _DDL_DataStoreRatingInitParamWithSlot()
-        : m_uiStructureVersion(0), m_Param()
-    {
-    }
+    _DDL_DataStoreRatingInitParamWithSlot() : m_uiStructureVersion(0), m_Param() {}
 
-    virtual ~_DDL_DataStoreRatingInitParamWithSlot()
-    {
-    }
+    virtual ~_DDL_DataStoreRatingInitParamWithSlot() {}
 
     _DDL_DataStoreRatingInitParamWithSlot& operator=(const _DDL_DataStoreRatingInitParamWithSlot& rSource);
     bool operator==(const _DDL_DataStoreRatingInitParamWithSlot& rSource) const;

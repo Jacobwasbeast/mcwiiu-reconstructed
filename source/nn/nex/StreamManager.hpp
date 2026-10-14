@@ -28,54 +28,31 @@ public:
     StreamManager(Stream::Type type, RootTransport* pTransport);
     virtual ~StreamManager();
 
-    virtual void SetCredentials(Credentials*)
-    {
-    }
+    virtual void SetCredentials(Credentials*) {}
 
     bool Initialize(unsigned short uiPort, unsigned char uiStreamID, unsigned int uiFlags);
     void Terminate();
     bool IsTerminated() const;
-    void AssociateSecureStream(ConnectionOrientedStream* pSecureStream,
-        ConnectionManager::ConnectionFilter pFilter);
+    void AssociateSecureStream(ConnectionOrientedStream* pSecureStream, ConnectionManager::ConnectionFilter pFilter);
     void SetMaxSilenceTimeout(unsigned int uiTimeout);
     void SetKeepAliveTimeout(unsigned int uiTimeout);
     bool SimulateFault(unsigned int uiPrincipalID);
 
-    void ClearAssociatedSecureStream()
-    {
-        m_pSecureStream = 0;
-    }
+    void ClearAssociatedSecureStream() { m_pSecureStream = 0; }
 
-    void EmulateSymmetricNAT()
-    {
-    }
+    void EmulateSymmetricNAT() {}
 
     static void SetSandboxAccessKey(const String& rKey);
 
-    static const wchar_t* GetSandboxAccessKey()
-    {
-        return s_aSandboxAccessKey;
-    }
+    static const wchar_t* GetSandboxAccessKey() { return s_aSandboxAccessKey; }
 
-    PRUDPStream* GetStream() const
-    {
-        return m_pStream;
-    }
+    PRUDPStream* GetStream() const { return m_pStream; }
 
-    ConnectionOrientedStream* GetSecureStream() const
-    {
-        return m_pSecureStream;
-    }
+    ConnectionOrientedStream* GetSecureStream() const { return m_pSecureStream; }
 
-    ProtocolRequestBrokerInterface* GetProtocolRequestBroker() const
-    {
-        return m_pProtocolRequestBroker;
-    }
+    ProtocolRequestBrokerInterface* GetProtocolRequestBroker() const { return m_pProtocolRequestBroker; }
 
-    ConnectionManager* GetConnectionManager() const
-    {
-        return m_pConnectionManager;
-    }
+    ConnectionManager* GetConnectionManager() const { return m_pConnectionManager; }
 
 protected:
     PRUDPStream* m_pStream;

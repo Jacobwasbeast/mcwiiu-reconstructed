@@ -11,13 +11,9 @@ namespace nex
 class DataStoreRatingInitParam : public _DDL_DataStoreRatingInitParam
 {
 public:
-    DataStoreRatingInitParam()
-    {
-    }
+    DataStoreRatingInitParam() {}
 
-    virtual ~DataStoreRatingInitParam()
-    {
-    }
+    virtual ~DataStoreRatingInitParam() {}
 };
 
 }

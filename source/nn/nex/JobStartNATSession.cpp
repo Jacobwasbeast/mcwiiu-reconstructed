@@ -46,8 +46,7 @@ bool JobStartNATSession::StartJob()
     Scheduler::GetInstance()->Queue(this, false);
     if (m_sessionContext.GetState() != CallContext::CallSucceeded)
     {
-        Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-            m_sessionContext.GetCallID());
+        Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_sessionContext.GetCallID());
     }
 
     m_relayInfoContext.Reset();
@@ -58,16 +57,14 @@ bool JobStartNATSession::StartJob()
         return true;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_relayInfoContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_relayInfoContext.GetCallID());
     SetStep(Step(static_cast<Step::Function>(&JobStartNATSession::StepReady), L""));
     return true;
 }
 
 void JobStartNATSession::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (rResult)
@@ -88,8 +85,7 @@ void JobStartNATSession::CompleteJob(const qResult& rResult)
 
 void JobStartNATSession::StepReady()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetStep(Step(static_cast<Step::Function>(&JobStartNATSession::StepCallCompletion), L""));
@@ -104,7 +100,7 @@ void JobStartNATSession::StepReady()
 
     SetToSuspended();
     ResumeOnCallCompletion(&m_sessionContext,
-        new Step(static_cast<Step::Function>(&JobStartNATSession::StepCallCompletion), L""));
+                           new Step(static_cast<Step::Function>(&JobStartNATSession::StepCallCompletion), L""));
 }
 
 void JobStartNATSession::StepCallCompletion()
@@ -119,21 +115,20 @@ void JobStartNATSession::StepCallCompletion()
     {
         SetToSuspended();
         ResumeOnCallCompletion(&m_relayInfoContext,
-            new Step(static_cast<Step::Function>(&JobStartNATSession::StepCallCompletion), L""));
+                               new Step(static_cast<Step::Function>(&JobStartNATSession::StepCallCompletion), L""));
         return;
     }
 
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(START_NAT_SESSION_ABORTED_RESULT));
         return;
     }
 
-    if (m_pRelayInfoJob == 0 ||
-        m_pRelayInfoJob->m_key.m_relayAddressType != JobResolveRelayInfo::RELAY_ADDRESS_HOST_NAME ||
-        RootTransport::GetInstance()->m_bRelayAddressSet)
+    if (m_pRelayInfoJob == 0
+        || m_pRelayInfoJob->m_key.m_relayAddressType != JobResolveRelayInfo::RELAY_ADDRESS_HOST_NAME
+        || RootTransport::GetInstance()->m_bRelayAddressSet)
     {
         SetStep(Step(static_cast<Step::Function>(&JobStartNATSession::StepFinish), L""));
         return;
@@ -147,21 +142,19 @@ void JobStartNATSession::StepCallCompletion()
         return;
     }
 
-    JobNameResolve* pNameResolve = new JobNameResolve(g_nameResolveThreadPriority,
-        g_nameResolveThreadAffinity, &RootTransport::SetUpRelayServer);
+    JobNameResolve* pNameResolve = new JobNameResolve(g_nameResolveThreadPriority, g_nameResolveThreadAffinity,
+                                                      &RootTransport::SetUpRelayServer);
     pNameResolve->Initialize(m_nameResolveContext.GetCallID());
     Scheduler::GetInstance()->Queue(pNameResolve, true);
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_nameResolveContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_nameResolveContext.GetCallID());
     SetToSuspended();
     ResumeOnCallCompletion(&m_nameResolveContext,
-        new Step(static_cast<Step::Function>(&JobStartNATSession::StepDNSCallCompletion), L""));
+                           new Step(static_cast<Step::Function>(&JobStartNATSession::StepDNSCallCompletion), L""));
 }
 
 void JobStartNATSession::StepDNSCallCompletion()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetStep(Step(static_cast<Step::Function>(&JobCallContextCallback::StepFinish), L""));

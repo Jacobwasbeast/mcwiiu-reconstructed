@@ -11,13 +11,9 @@ namespace nex
 class OutputEmulationDevice : public EmulationDevice
 {
 public:
-    OutputEmulationDevice()
-    {
-    }
+    OutputEmulationDevice() {}
 
-    virtual ~OutputEmulationDevice()
-    {
-    }
+    virtual ~OutputEmulationDevice() {}
 };
 
 }

@@ -14,9 +14,7 @@ class EndPoint;
 class EndPointEventHandler : public RefCountedObject
 {
 public:
-    virtual ~EndPointEventHandler()
-    {
-    }
+    virtual ~EndPointEventHandler() {}
 
     virtual void Receive(EndPoint* pEndPoint, Buffer* pBuffer, unsigned char ucParameter) = 0;
     virtual void FaultDetection(EndPoint* pEndPoint, unsigned int uiError) = 0;

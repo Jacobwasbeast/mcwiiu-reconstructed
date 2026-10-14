@@ -13,9 +13,7 @@ class DataStorePreparePostParamV1 : public _DDL_DataStorePreparePostParamV1
 public:
     DataStorePreparePostParamV1();
 
-    virtual ~DataStorePreparePostParamV1()
-    {
-    }
+    virtual ~DataStorePreparePostParamV1() {}
 };
 
 }

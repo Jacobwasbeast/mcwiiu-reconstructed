@@ -17,14 +17,9 @@ class Message;
 class _DDL_DataStoreSearchResult : public RootObject
 {
 public:
-    _DDL_DataStoreSearchResult()
-        : m_uiStructureVersion(0), m_Result(0)
-    {
-    }
+    _DDL_DataStoreSearchResult() : m_uiStructureVersion(0), m_Result(0) {}
 
-    virtual ~_DDL_DataStoreSearchResult()
-    {
-    }
+    virtual ~_DDL_DataStoreSearchResult() {}
 
     _DDL_DataStoreSearchResult& operator=(const _DDL_DataStoreSearchResult& rSource);
     bool operator==(const _DDL_DataStoreSearchResult& rSource) const;

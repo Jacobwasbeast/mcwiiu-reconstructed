@@ -17,15 +17,24 @@ public:
     virtual Protocol* CreateResponder() const;
 
     static void ProtoReturn_ReportNATTraversalResult(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallReportNATTraversalResult(ProtocolCallContext* pCallContext, const unsigned int& rCID, const bool& rResult, const unsigned int& rRTT);
+    bool CallReportNATTraversalResult(ProtocolCallContext* pCallContext, const unsigned int& rCID, const bool& rResult,
+                                      const unsigned int& rRTT);
     static void ProtoReturn_ReportNATProperties(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallReportNATProperties(ProtocolCallContext* pCallContext, const unsigned int& rNATMapping, const unsigned int& rNATFiltering, const unsigned int& rRTT);
+    bool CallReportNATProperties(ProtocolCallContext* pCallContext, const unsigned int& rNATMapping,
+                                 const unsigned int& rNATFiltering, const unsigned int& rRTT);
     static void ProtoReturn_ReportNATTraversalResultDetail(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallReportNATTraversalResultDetail(ProtocolCallContext* pCallContext, const unsigned int& rCID, const bool& rResult, const int& rConnectionType, const unsigned int& rRTT);
+    bool CallReportNATTraversalResultDetail(ProtocolCallContext* pCallContext, const unsigned int& rCID,
+                                            const bool& rResult, const int& rConnectionType, const unsigned int& rRTT);
 
-    static bool ReportNATTraversalResult_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rCID, const bool& rResult, const unsigned int& rRTT);
-    static bool ReportNATProperties_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rNATMapping, const unsigned int& rNATFiltering, const unsigned int& rRTT);
-    static bool ReportNATTraversalResultDetail_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rCID, const bool& rResult, const int& rConnectionType, const unsigned int& rRTT);
+    static bool ReportNATTraversalResult_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                        const unsigned int& rCID, const bool& rResult,
+                                                        const unsigned int& rRTT);
+    static bool ReportNATProperties_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                   const unsigned int& rNATMapping, const unsigned int& rNATFiltering,
+                                                   const unsigned int& rRTT);
+    static bool ReportNATTraversalResultDetail_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                              const unsigned int& rCID, const bool& rResult,
+                                                              const int& rConnectionType, const unsigned int& rRTT);
 };
 
 }

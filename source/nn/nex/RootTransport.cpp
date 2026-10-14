@@ -48,9 +48,16 @@ wchar_t** RootTransport::s_pInterfaceAddresses;
 wchar_t* RootTransport::s_pInterfaceAddress;
 
 RootTransport::RootTransport()
-    : m_uiBufferSize(DEFAULT_BUFFER_SIZE), m_reserved0(false), m_pVirtualNATDevice(0),
-      m_uiPortNumber(0), m_bNATCheckEnabled(true), m_bUPnPSupported(false), m_reserved2(false),
-      m_reserved3(false), m_bNATCheckServerAddressesSet(false), m_bRelayAddressSet(false),
+    : m_uiBufferSize(DEFAULT_BUFFER_SIZE),
+      m_reserved0(false),
+      m_pVirtualNATDevice(0),
+      m_uiPortNumber(0),
+      m_bNATCheckEnabled(true),
+      m_bUPnPSupported(false),
+      m_reserved2(false),
+      m_reserved3(false),
+      m_bNATCheckServerAddressesSet(false),
+      m_bRelayAddressSet(false),
       m_reserved4(false)
 {
     m_streamManager.m_pTransport = this;
@@ -147,8 +154,7 @@ void RootTransport::SetInterfaceAddress(wchar_t* pAddress)
 void RootTransport::SetBlockedAddresses(const qList<InetAddress>& rAddresses)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    for (qList<InetAddress>::const_iterator address = rAddresses.begin();
-         address != rAddresses.end(); ++address)
+    for (qList<InetAddress>::const_iterator address = rAddresses.begin(); address != rAddresses.end(); ++address)
     {
         g_blockedAddresses.push_back(address->GetAddress());
     }
@@ -169,8 +175,7 @@ void RootTransport::DetachVNATDevice(VirtualNATDevice* pDevice)
 bool RootTransport::RegisterPacketRecognizer(PacketRecognizer* pRecognizer)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    if (std::find(m_packetRecognizers.begin(), m_packetRecognizers.end(), pRecognizer) !=
-        m_packetRecognizers.end())
+    if (std::find(m_packetRecognizers.begin(), m_packetRecognizers.end(), pRecognizer) != m_packetRecognizers.end())
     {
         return false;
     }
@@ -182,8 +187,8 @@ bool RootTransport::RegisterPacketRecognizer(PacketRecognizer* pRecognizer)
 bool RootTransport::UnregisterPacketRecognizer(PacketRecognizer* pRecognizer)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    std::list<PacketRecognizer*, MemAllocator<PacketRecognizer*> >::iterator recognizer =
-        std::find(m_packetRecognizers.begin(), m_packetRecognizers.end(), pRecognizer);
+    std::list<PacketRecognizer*, MemAllocator<PacketRecognizer*> >::iterator recognizer = std::find(
+        m_packetRecognizers.begin(), m_packetRecognizers.end(), pRecognizer);
     if (recognizer == m_packetRecognizers.end())
         return false;
 
@@ -208,7 +213,7 @@ bool RootTransport::RejectPacket(Buffer* pBuffer, const InetAddress* pAddress)
 }
 
 bool RootTransport::SetPrimaryNATCheckServer(const wchar_t* pAddress, unsigned short uiFirstPort,
-    unsigned short uiSecondPort)
+                                             unsigned short uiSecondPort)
 {
     if (uiFirstPort == 0 || uiSecondPort == 0)
         return false;
@@ -221,20 +226,20 @@ bool RootTransport::SetPrimaryNATCheckServer(const wchar_t* pAddress, unsigned s
     text[0] = 0;
     address.GetAddress(text, sizeof(text));
     m_natCheckServerAddresses[0]->Clear();
-    (*m_natCheckServerAddresses[0] << L"prudp:/address=" << text << L";port=").StreamNumber(
-        static_cast<int>(uiFirstPort));
+    (*m_natCheckServerAddresses[0] << L"prudp:/address=" << text << L";port=")
+        .StreamNumber(static_cast<int>(uiFirstPort));
 
     address.SetPortNumber(uiSecondPort);
     text[0] = 0;
     address.GetAddress(text, sizeof(text));
     m_natCheckServerAddresses[1]->Clear();
-    (*m_natCheckServerAddresses[1] << L"prudp:/address=" << text << L";port=").StreamNumber(
-        static_cast<int>(uiSecondPort));
+    (*m_natCheckServerAddresses[1] << L"prudp:/address=" << text << L";port=")
+        .StreamNumber(static_cast<int>(uiSecondPort));
     return true;
 }
 
 bool RootTransport::SetSecondaryNATCheckServer(const wchar_t* pAddress, unsigned short uiFirstPort,
-    unsigned short uiSecondPort)
+                                               unsigned short uiSecondPort)
 {
     if (uiFirstPort == 0 || uiSecondPort == 0)
         return false;
@@ -247,15 +252,15 @@ bool RootTransport::SetSecondaryNATCheckServer(const wchar_t* pAddress, unsigned
     text[0] = 0;
     address.GetAddress(text, sizeof(text));
     m_natCheckServerAddresses[2]->Clear();
-    (*m_natCheckServerAddresses[2] << L"prudp:/address=" << text << L";port=").StreamNumber(
-        static_cast<int>(uiFirstPort));
+    (*m_natCheckServerAddresses[2] << L"prudp:/address=" << text << L";port=")
+        .StreamNumber(static_cast<int>(uiFirstPort));
 
     address.SetPortNumber(uiSecondPort);
     text[0] = 0;
     address.GetAddress(text, sizeof(text));
     m_natCheckServerAddresses[3]->Clear();
-    (*m_natCheckServerAddresses[3] << L"prudp:/address=" << text << L";port=").StreamNumber(
-        static_cast<int>(uiSecondPort));
+    (*m_natCheckServerAddresses[3] << L"prudp:/address=" << text << L";port=")
+        .StreamNumber(static_cast<int>(uiSecondPort));
     return true;
 }
 
@@ -267,8 +272,8 @@ const qVector<StringStream*>& RootTransport::GetNATCheckServerAddresses() const
 void RootTransport::SetIsNATCheckServerAddressesSet()
 {
     StringStream** addresses = &m_natCheckServerAddresses[0];
-    if (addresses[0]->GetLength() == 0 || addresses[1]->GetLength() == 0 ||
-        addresses[2]->GetLength() == 0 || addresses[3]->GetLength() == 0)
+    if (addresses[0]->GetLength() == 0 || addresses[1]->GetLength() == 0 || addresses[2]->GetLength() == 0
+        || addresses[3]->GetLength() == 0)
     {
         m_bNATCheckServerAddressesSet = false;
     }
@@ -283,12 +288,10 @@ bool RootTransport::SetUpDefaultNATCheckServerInternal()
     if (m_bNATCheckServerAddressesSet)
         return true;
 
-    if (!SetPrimaryNATCheckServer(s_pPrimaryNATCheckServer, NAT_CHECK_SERVER_PORT,
-            NAT_CHECK_SERVER_REPLY_PORT))
+    if (!SetPrimaryNATCheckServer(s_pPrimaryNATCheckServer, NAT_CHECK_SERVER_PORT, NAT_CHECK_SERVER_REPLY_PORT))
         return false;
 
-    if (!SetSecondaryNATCheckServer(s_pSecondaryNATCheckServer, NAT_CHECK_SERVER_PORT,
-            NAT_CHECK_SERVER_REPLY_PORT))
+    if (!SetSecondaryNATCheckServer(s_pSecondaryNATCheckServer, NAT_CHECK_SERVER_PORT, NAT_CHECK_SERVER_REPLY_PORT))
         return false;
 
     SetIsNATCheckServerAddressesSet();

@@ -16,24 +16,23 @@ namespace nn
 namespace nex
 {
 
-DataStorePostHttpEventListener::DataStorePostHttpEventListener(unsigned int uiCallId,
-    const qVector<DataStoreKeyValue>& rHeaders, const qVector<DataStoreKeyValue>& rFormFields,
-    const qVector<unsigned char>& rRootCa, unsigned int uiThreadPriority,
-    unsigned int uiTransferBufferSize, const unsigned char* pData, unsigned int uiDataSize,
-    DataStorePostObjectEventListener* pListener)
-    : m_uiCallId(uiCallId)
-    , m_rHeaders(rHeaders)
-    , m_rFormFields(rFormFields)
-    , m_rRootCa(rRootCa)
-    , m_uiThreadPriority(uiThreadPriority)
-    , m_uiTransferBufferSize(uiTransferBufferSize)
-    , m_pData(pData)
-    , m_uiDataSize(uiDataSize)
-    , m_pListener(pListener)
-    , m_uiPosted(0)
-    , m_formHeader()
-    , m_formFooter()
-    , m_bBodySent(false)
+DataStorePostHttpEventListener::DataStorePostHttpEventListener(
+    unsigned int uiCallId, const qVector<DataStoreKeyValue>& rHeaders, const qVector<DataStoreKeyValue>& rFormFields,
+    const qVector<unsigned char>& rRootCa, unsigned int uiThreadPriority, unsigned int uiTransferBufferSize,
+    const unsigned char* pData, unsigned int uiDataSize, DataStorePostObjectEventListener* pListener)
+    : m_uiCallId(uiCallId),
+      m_rHeaders(rHeaders),
+      m_rFormFields(rFormFields),
+      m_rRootCa(rRootCa),
+      m_uiThreadPriority(uiThreadPriority),
+      m_uiTransferBufferSize(uiTransferBufferSize),
+      m_pData(pData),
+      m_uiDataSize(uiDataSize),
+      m_pListener(pListener),
+      m_uiPosted(0),
+      m_formHeader(),
+      m_formFooter(),
+      m_bBodySent(false)
 {
 }
 
@@ -43,16 +42,14 @@ DataStorePostHttpEventListener::~DataStorePostHttpEventListener()
 
 void DataStorePostHttpEventListener::PrepareRequest(HttpConnection* pConnection)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
         return;
 
     pConnection->SetThreadPriority(m_uiThreadPriority);
     pConnection->SetTransferBufferSize(m_uiTransferBufferSize);
 
-    for (qVector<DataStoreKeyValue>::const_iterator it = m_rHeaders.begin();
-         it != m_rHeaders.end(); ++it)
+    for (qVector<DataStoreKeyValue>::const_iterator it = m_rHeaders.begin(); it != m_rHeaders.end(); ++it)
     {
         char* pName;
         char* pValue;
@@ -66,13 +63,14 @@ void DataStorePostHttpEventListener::PrepareRequest(HttpConnection* pConnection)
     if (!m_rRootCa.empty())
         pConnection->AddRootCa(&m_rRootCa[0], m_rRootCa.size());
 
-    for (qVector<DataStoreKeyValue>::const_iterator it = m_rFormFields.begin();
-         it != m_rFormFields.end(); ++it)
+    for (qVector<DataStoreKeyValue>::const_iterator it = m_rFormFields.begin(); it != m_rFormFields.end(); ++it)
     {
         String boundary(pConnection->GetBoundaryString());
         StringStream stream;
-        stream << L"--" << boundary << L"\r\n" << L"Content-Disposition: form-data; name=\""
-               << it->m_Key << L"\"" << L"\r\n" << L"\r\n" << it->m_Value << L"\r\n";
+        stream << L"--" << boundary << L"\r\n"
+               << L"Content-Disposition: form-data; name=\"" << it->m_Key << L"\"" << L"\r\n"
+               << L"\r\n"
+               << it->m_Value << L"\r\n";
         String text(stream.GetBuffer());
         char* pText;
         text.CreateCopy(&pText);
@@ -83,8 +81,9 @@ void DataStorePostHttpEventListener::PrepareRequest(HttpConnection* pConnection)
     {
         String boundary(pConnection->GetBoundaryString());
         StringStream stream;
-        stream << L"--" << boundary << L"\r\n" << L"Content-Disposition: form-data; name=\"file\""
-               << L"\r\n" << L"\r\n";
+        stream << L"--" << boundary << L"\r\n"
+               << L"Content-Disposition: form-data; name=\"file\"" << L"\r\n"
+               << L"\r\n";
         String text(stream.GetBuffer());
         char* pText;
         text.CreateCopy(&pText);
@@ -106,11 +105,10 @@ void DataStorePostHttpEventListener::PrepareRequest(HttpConnection* pConnection)
     pConnection->UseChunkedPost(m_formHeader.size() + m_uiDataSize + m_formFooter.size());
 }
 
-unsigned int DataStorePostHttpEventListener::PostChunkedBuffer(HttpConnection* pConnection,
-    unsigned char* pBuffer, unsigned int uiSize, bool* pbLastChunk)
+unsigned int DataStorePostHttpEventListener::PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer,
+                                                               unsigned int uiSize, bool* pbLastChunk)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
         return 0;
 

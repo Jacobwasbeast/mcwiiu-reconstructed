@@ -41,12 +41,12 @@ public:
     virtual ~JobDataStoreGetObject();
 
     virtual qResult Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
-        const typename TTraits::TPrepareGetParam& rParam, unsigned int uiThreadPriority,
-        bool bUseHttps, unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate,
-        int iMinimumTimeout, typename TTraits::TGetObjectEventListener* pListener,
-        unsigned int uiBufferSize, unsigned char* pReceiveBuffer,
-        unsigned int uiReceiveBufferSize, bool bOrMetaBinary, unsigned int* pReceivedSize,
-        const typename TTraits::TReqGetInfo* pReqGetInfo);
+                               const typename TTraits::TPrepareGetParam& rParam, unsigned int uiThreadPriority,
+                               bool bUseHttps, unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate,
+                               int iMinimumTimeout, typename TTraits::TGetObjectEventListener* pListener,
+                               unsigned int uiBufferSize, unsigned char* pReceiveBuffer,
+                               unsigned int uiReceiveBufferSize, bool bOrMetaBinary, unsigned int* pReceivedSize,
+                               const typename TTraits::TReqGetInfo* pReqGetInfo);
 
     virtual void PrepareRequest(HttpConnection* pConnection);
     virtual void ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode);
@@ -78,14 +78,12 @@ private:
         WAIT_CONTEXT_LISTENER_BUSY = 16
     };
 
-    static uint64_t GetDataId(const DataStorePrepareGetParam& rParam,
-        const DataStoreReqGetInfo& rReqGetInfo)
+    static uint64_t GetDataId(const DataStorePrepareGetParam& rParam, const DataStoreReqGetInfo& rReqGetInfo)
     {
         return rReqGetInfo.m_uiDataId != 0 ? rReqGetInfo.m_uiDataId : rParam.m_uiDataId;
     }
 
-    static uint32_t GetDataId(const DataStorePrepareGetParamV1& rParam,
-        const DataStoreReqGetInfoV1& rReqGetInfo)
+    static uint32_t GetDataId(const DataStorePrepareGetParamV1& rParam, const DataStoreReqGetInfoV1& rReqGetInfo)
     {
         return rParam.m_uiDataId;
     }
@@ -116,29 +114,29 @@ private:
 
 template <typename TTraits>
 JobDataStoreGetObject<TTraits>::JobDataStoreGetObject()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_pClient(0)
-    , m_pFileServerClient(0)
-    , m_bUseHttps(true)
-    , m_uiTransferBufferSize(0)
-    , m_uiThreadPriority(0)
-    , m_uiMinimumTransferRate(0)
-    , m_iMinimumTimeout(0)
-    , m_pListener(0)
-    , m_uiBufferSize(0)
-    , m_context()
-    , m_prepareParam()
-    , m_reqGetInfo()
-    , m_additionalMeta()
-    , m_pReceiveBuffer(0)
-    , m_uiReceiveBufferSize(0)
-    , m_bOrMetaBinary(false)
-    , m_pReceivedSize(0)
-    , m_uiReceivedSize(0)
-    , m_bReceiveBufferOverflow(false)
-    , m_bContentLengthMismatch(false)
-    , m_bFirstResponse(true)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_pClient(0),
+      m_pFileServerClient(0),
+      m_bUseHttps(true),
+      m_uiTransferBufferSize(0),
+      m_uiThreadPriority(0),
+      m_uiMinimumTransferRate(0),
+      m_iMinimumTimeout(0),
+      m_pListener(0),
+      m_uiBufferSize(0),
+      m_context(),
+      m_prepareParam(),
+      m_reqGetInfo(),
+      m_additionalMeta(),
+      m_pReceiveBuffer(0),
+      m_uiReceiveBufferSize(0),
+      m_bOrMetaBinary(false),
+      m_pReceivedSize(0),
+      m_uiReceivedSize(0),
+      m_bReceiveBufferOverflow(false),
+      m_bContentLengthMismatch(false),
+      m_bFirstResponse(true)
 {
 }
 
@@ -151,8 +149,7 @@ JobDataStoreGetObject<TTraits>::~JobDataStoreGetObject()
 template <typename TTraits>
 void JobDataStoreGetObject<TTraits>::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (rResult)
@@ -178,8 +175,7 @@ void JobDataStoreGetObject<TTraits>::CompleteJob(const qResult& rResult)
 template <typename TTraits>
 void JobDataStoreGetObject<TTraits>::PrepareRequest(HttpConnection* pConnection)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -205,11 +201,9 @@ void JobDataStoreGetObject<TTraits>::PrepareRequest(HttpConnection* pConnection)
 }
 
 template <typename TTraits>
-void JobDataStoreGetObject<TTraits>::ProcessResponseHeader(HttpConnection* pConnection,
-    int iStatusCode)
+void JobDataStoreGetObject<TTraits>::ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
         return;
 
@@ -230,11 +224,9 @@ void JobDataStoreGetObject<TTraits>::ProcessResponseHeader(HttpConnection* pConn
 }
 
 template <typename TTraits>
-bool JobDataStoreGetObject<TTraits>::ProcessResponse(const unsigned char* pData,
-    unsigned int uiSize)
+bool JobDataStoreGetObject<TTraits>::ProcessResponse(const unsigned char* pData, unsigned int uiSize)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
         return false;
 
@@ -246,18 +238,15 @@ bool JobDataStoreGetObject<TTraits>::ProcessResponse(const unsigned char* pData,
             TDataId dataId = GetDataId(m_prepareParam, m_reqGetInfo);
             if (m_bOrMetaBinary)
             {
-                m_pListener->BeginInternal(dataId, m_reqGetInfo.m_uiSize,
-                    m_additionalMeta.m_uiOwnerId, m_additionalMeta.m_uiDataType,
-                    m_additionalMeta.m_uiVersion, true);
-                pCallContext =
-                    Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+                m_pListener->BeginInternal(dataId, m_reqGetInfo.m_uiSize, m_additionalMeta.m_uiOwnerId,
+                                           m_additionalMeta.m_uiDataType, m_additionalMeta.m_uiVersion, true);
+                pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
                 if (pCallContext == 0)
                     return false;
             }
 
             m_pListener->Begin(dataId, m_reqGetInfo.m_uiSize);
-            pCallContext =
-                Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+            pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
             if (pCallContext == 0)
                 return false;
         }
@@ -287,13 +276,12 @@ bool JobDataStoreGetObject<TTraits>::ProcessResponse(const unsigned char* pData,
 }
 
 template <typename TTraits>
-qResult JobDataStoreGetObject<TTraits>::Initialize(unsigned int uiCallId,
-    DataStoreLogicServerClientInterface* pClient,
-    const typename TTraits::TPrepareGetParam& rParam, unsigned int uiThreadPriority,
-    bool bUseHttps, unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate,
-    int iMinimumTimeout, typename TTraits::TGetObjectEventListener* pListener,
-    unsigned int uiBufferSize, unsigned char* pReceiveBuffer, unsigned int uiReceiveBufferSize,
-    bool bOrMetaBinary, unsigned int* pReceivedSize,
+qResult JobDataStoreGetObject<TTraits>::Initialize(
+    unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
+    const typename TTraits::TPrepareGetParam& rParam, unsigned int uiThreadPriority, bool bUseHttps,
+    unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate, int iMinimumTimeout,
+    typename TTraits::TGetObjectEventListener* pListener, unsigned int uiBufferSize, unsigned char* pReceiveBuffer,
+    unsigned int uiReceiveBufferSize, bool bOrMetaBinary, unsigned int* pReceivedSize,
     const typename TTraits::TReqGetInfo* pReqGetInfo)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -312,28 +300,23 @@ qResult JobDataStoreGetObject<TTraits>::Initialize(unsigned int uiCallId,
     m_bOrMetaBinary = bOrMetaBinary;
     m_uiBufferSize = uiBufferSize;
     m_pReceivedSize = pReceivedSize;
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     m_context.SetCredentials(static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
     if (pReqGetInfo != 0)
     {
         m_reqGetInfo = *pReqGetInfo;
-        SetStep(Step(static_cast<Step::Function>(&JobDataStoreGetObject::StepFileServerGetObject),
-            L""));
+        SetStep(Step(static_cast<Step::Function>(&JobDataStoreGetObject::StepFileServerGetObject), L""));
         return qResult(true);
     }
 
-    SetStep(Step(static_cast<Step::Function>(
-                     &JobDataStoreGetObject::StepLogicServerPrepareGetObject),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreGetObject::StepLogicServerPrepareGetObject), L""));
     return qResult(true);
 }
 
 template <typename TTraits>
 void JobDataStoreGetObject<TTraits>::StepLogicServerPrepareGetObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -343,8 +326,7 @@ void JobDataStoreGetObject<TTraits>::StepLogicServerPrepareGetObject()
     m_context.Reset();
     if (m_bOrMetaBinary)
     {
-        if (!m_pClient->PrepareGetObjectOrMetaBinary(&m_context, m_prepareParam, &m_reqGetInfo,
-                &m_additionalMeta))
+        if (!m_pClient->PrepareGetObjectOrMetaBinary(&m_context, m_prepareParam, &m_reqGetInfo, &m_additionalMeta))
         {
             CompleteJob(qResult(RESULT_CORE_CALL_FAILED));
             return;
@@ -356,20 +338,17 @@ void JobDataStoreGetObject<TTraits>::StepLogicServerPrepareGetObject()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreGetObject::StepWaitingLogicServerPrepareGetObject),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context,
+        new Step(static_cast<Step::Function>(&JobDataStoreGetObject::StepWaitingLogicServerPrepareGetObject), L""));
 }
 
 template <typename TTraits>
 void JobDataStoreGetObject<TTraits>::StepWaitingLogicServerPrepareGetObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -385,20 +364,17 @@ void JobDataStoreGetObject<TTraits>::StepWaitingLogicServerPrepareGetObject()
     m_context.Reset();
     if (m_bOrMetaBinary && String::IsEqual(m_reqGetInfo.m_Url, L""))
     {
-        SetStep(Step(static_cast<Step::Function>(&JobDataStoreGetObject::StepProcessMetaBinary),
-            L""));
+        SetStep(Step(static_cast<Step::Function>(&JobDataStoreGetObject::StepProcessMetaBinary), L""));
         return;
     }
 
-    SetStep(Step(static_cast<Step::Function>(&JobDataStoreGetObject::StepFileServerGetObject),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreGetObject::StepFileServerGetObject), L""));
 }
 
 template <typename TTraits>
 void JobDataStoreGetObject<TTraits>::StepFileServerGetObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -406,13 +382,12 @@ void JobDataStoreGetObject<TTraits>::StepFileServerGetObject()
     }
 
     String url = (m_reqGetInfo.m_Url.FindSubstringNoCase(L"http://") == 0
-                     || m_reqGetInfo.m_Url.FindSubstringNoCase(L"https://") == 0)
-        ? m_reqGetInfo.m_Url
-        : (m_bUseHttps ? L"https://" : L"http://") + m_reqGetInfo.m_Url;
+                  || m_reqGetInfo.m_Url.FindSubstringNoCase(L"https://") == 0)
+                     ? m_reqGetInfo.m_Url
+                     : (m_bUseHttps ? L"https://" : L"http://") + m_reqGetInfo.m_Url;
     if (m_uiMinimumTransferRate != 0)
     {
-        int iTimeout =
-            m_reqGetInfo.m_uiSize / m_uiMinimumTransferRate * MILLISECONDS_PER_SECOND;
+        int iTimeout = m_reqGetInfo.m_uiSize / m_uiMinimumTransferRate * MILLISECONDS_PER_SECOND;
         m_context.SetTimeout(std::max(iTimeout, m_iMinimumTimeout));
     }
     else
@@ -426,20 +401,16 @@ void JobDataStoreGetObject<TTraits>::StepFileServerGetObject()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreGetObject::StepWaitingFileServerGetObject),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context, new Step(static_cast<Step::Function>(&JobDataStoreGetObject::StepWaitingFileServerGetObject), L""));
 }
 
 template <typename TTraits>
 void JobDataStoreGetObject<TTraits>::StepWaitingFileServerGetObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -476,8 +447,7 @@ void JobDataStoreGetObject<TTraits>::StepWaitingFileServerGetObject()
 template <typename TTraits>
 void JobDataStoreGetObject<TTraits>::StepProcessMetaBinary()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -496,11 +466,9 @@ void JobDataStoreGetObject<TTraits>::StepProcessMetaBinary()
         {
             m_bFirstResponse = false;
             TDataId dataId = GetDataId(m_prepareParam, m_reqGetInfo);
-            m_pListener->BeginInternal(dataId, m_additionalMeta.m_MetaBinary.size(),
-                m_additionalMeta.m_uiOwnerId, m_additionalMeta.m_uiDataType,
-                m_additionalMeta.m_uiVersion, false);
-            pCallContext =
-                Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+            m_pListener->BeginInternal(dataId, m_additionalMeta.m_MetaBinary.size(), m_additionalMeta.m_uiOwnerId,
+                                       m_additionalMeta.m_uiDataType, m_additionalMeta.m_uiVersion, false);
+            pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
             if (pCallContext == 0)
             {
                 CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -508,8 +476,7 @@ void JobDataStoreGetObject<TTraits>::StepProcessMetaBinary()
             }
 
             m_pListener->Begin(dataId, m_additionalMeta.m_MetaBinary.size());
-            pCallContext =
-                Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+            pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
             if (pCallContext == 0)
             {
                 CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -517,8 +484,7 @@ void JobDataStoreGetObject<TTraits>::StepProcessMetaBinary()
             }
         }
 
-        if (!m_pListener->ProcessResponse(m_additionalMeta.m_MetaBinary.front(),
-                m_additionalMeta.m_MetaBinary.size()))
+        if (!m_pListener->ProcessResponse(m_additionalMeta.m_MetaBinary.front(), m_additionalMeta.m_MetaBinary.size()))
         {
             SetToWaiting(WAIT_CONTEXT_LISTENER_BUSY);
             return;
@@ -533,8 +499,7 @@ void JobDataStoreGetObject<TTraits>::StepProcessMetaBinary()
     {
         if (m_additionalMeta.m_MetaBinary.size() <= m_uiReceiveBufferSize)
         {
-            memcpy(m_pReceiveBuffer, m_additionalMeta.m_MetaBinary.front(),
-                m_additionalMeta.m_MetaBinary.size());
+            memcpy(m_pReceiveBuffer, m_additionalMeta.m_MetaBinary.front(), m_additionalMeta.m_MetaBinary.size());
             m_uiReceivedSize += m_additionalMeta.m_MetaBinary.size();
             CompleteJob(qResult(RESULT_SUCCESS));
         }

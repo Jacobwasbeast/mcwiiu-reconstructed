@@ -16,14 +16,9 @@ public:
         DEFAULT_PARTICIPATION_COUNT = 1
     };
 
-    JoinMatchmakeSessionParam()
-    {
-        Reset();
-    }
+    JoinMatchmakeSessionParam() { Reset(); }
 
-    virtual ~JoinMatchmakeSessionParam()
-    {
-    }
+    virtual ~JoinMatchmakeSessionParam() {}
 
     void Reset();
 };

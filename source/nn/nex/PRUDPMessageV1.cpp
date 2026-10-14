@@ -51,15 +51,13 @@ const unsigned char OPTION_MAX_SUBSTREAM_ID = 4;
 
 inline unsigned short SwapShort(unsigned short uiValue)
 {
-    return static_cast<unsigned short>(static_cast<unsigned short>((uiValue & 0xFF) << 8) |
-        static_cast<unsigned short>((uiValue >> 8) & 0xFF));
+    return static_cast<unsigned short>(static_cast<unsigned short>((uiValue & 0xFF) << 8)
+                                       | static_cast<unsigned short>((uiValue >> 8) & 0xFF));
 }
 
 }
 
-PRUDPMessageV1::PRUDPMessageV1()
-    : m_randomNumberGenerator()
-    , m_criticalSection(1)
+PRUDPMessageV1::PRUDPMessageV1() : m_randomNumberGenerator(), m_criticalSection(1)
 {
     m_randomNumberGenerator.SetRandomNumberSeed(Platform::GetRandomSeed());
 }
@@ -72,20 +70,18 @@ void PRUDPMessageV1::SubHeaderBuilder(PacketOut* pPacket)
 {
     pPacket->m_headerImage.m_uiSource = pPacket->m_uiSource;
     pPacket->m_headerImage.m_uiDestination = pPacket->m_uiDestination;
-    pPacket->m_headerImage.m_unknown6 =
-        HostOrderToNexNetworkOrder<unsigned short>(pPacket->m_uiTypeAndFlags);
+    pPacket->m_headerImage.m_unknown6 = HostOrderToNexNetworkOrder<unsigned short>(pPacket->m_uiTypeAndFlags);
     pPacket->m_headerImage.m_uiSessionID = pPacket->m_uiSessionID;
     pPacket->m_headerImage.m_uiSubStreamID = pPacket->m_uiSubStreamID;
-    pPacket->m_headerImage.m_unknown10 =
-        HostOrderToNexNetworkOrder<unsigned short>(pPacket->m_sequenceID.GetValue());
+    pPacket->m_headerImage.m_unknown10 = HostOrderToNexNetworkOrder<unsigned short>(pPacket->m_sequenceID.GetValue());
 }
 
 bool PRUDPMessageV1::OptionBuilder(PacketOut* pPacket)
 {
     LiteByteStream<MAX_OPTION_LENGTH>& rStream = pPacket->m_stream;
     rStream.Clear();
-    if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_SYN ||
-        (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT)
+    if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_SYN
+        || (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT)
     {
         if (!rStream.AppendPrimitive(OPTION_SUPPORTED_FUNCTIONS))
             return false;
@@ -104,8 +100,8 @@ bool PRUDPMessageV1::OptionBuilder(PacketOut* pPacket)
 
         if (pPacket->m_uiConnectionSignatureSize != 0)
         {
-            if (!rStream.GetBuffer().AppendData(pPacket->m_aConnectionSignature,
-                    pPacket->m_uiConnectionSignatureSize, APPEND_AT_END))
+            if (!rStream.GetBuffer().AppendData(pPacket->m_aConnectionSignature, pPacket->m_uiConnectionSignatureSize,
+                                                APPEND_AT_END))
             {
                 return false;
             }
@@ -120,9 +116,8 @@ bool PRUDPMessageV1::OptionBuilder(PacketOut* pPacket)
             }
         }
 
-        bool bHasInitialSequenceID =
-            (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT &&
-            pPacket->m_unknown4c != LogicalClockTmpl<unsigned short, short>(0);
+        bool bHasInitialSequenceID = (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT
+                                     && pPacket->m_unknown4c != LogicalClockTmpl<unsigned short, short>(0);
 
         if (bHasInitialSequenceID)
         {
@@ -173,21 +168,20 @@ bool PRUDPMessageV1::OptionSubHeaderBuilder(PacketOut* pPacket)
     return true;
 }
 
-PRUDPMessageInterface::SignatureMethod PRUDPMessageV1::DecideSignatureMethod(
-    const Packet* pPacket, Stream::Type type, bool bFlag)
+PRUDPMessageInterface::SignatureMethod PRUDPMessageV1::DecideSignatureMethod(const Packet* pPacket, Stream::Type type,
+                                                                             bool bFlag)
 {
     if (g_streamSettings[type].Get().GetChecksumAlgorithm() == 0)
         return SIGNATURE_METHOD_0;
 
     unsigned short uiPacketType = pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK;
-    if (uiPacketType != PACKET_TYPE_SYN && uiPacketType != PACKET_TYPE_CONNECT &&
-        (type == Stream::RendezVousSecure || type == Stream::RendezVous))
+    if (uiPacketType != PACKET_TYPE_SYN && uiPacketType != PACKET_TYPE_CONNECT
+        && (type == Stream::RendezVousSecure || type == Stream::RendezVous))
     {
         if (bFlag)
             return SIGNATURE_METHOD_6;
 
-        if (uiPacketType == PACKET_TYPE_DISCONNECT &&
-            (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ACK) != 0)
+        if (uiPacketType == PACKET_TYPE_DISCONNECT && (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ACK) != 0)
         {
             return SIGNATURE_METHOD_9;
         }
@@ -196,8 +190,8 @@ PRUDPMessageInterface::SignatureMethod PRUDPMessageV1::DecideSignatureMethod(
     return SIGNATURE_METHOD_5;
 }
 
-void PRUDPMessageV1::CalcSignatureHelper(const Packet* pPacket, SignatureMethod method,
-    const Key* pKey, Stream::Type type, const SignatureBytes* pSignature, SignatureBytes& rResult)
+void PRUDPMessageV1::CalcSignatureHelper(const Packet* pPacket, SignatureMethod method, const Key* pKey,
+                                         Stream::Type type, const SignatureBytes* pSignature, SignatureBytes& rResult)
 {
     rResult.m_uiLength = SIGNATURE_LENGTH;
     switch (method)
@@ -251,8 +245,8 @@ void PRUDPMessageV1::CalcSignatureHelper(const Packet* pPacket, SignatureMethod 
         LiteByteStream<20> stream;
         LiteBuffer<20>& rBuffer = stream.GetBuffer();
         unsigned short uiPacketType = pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK;
-        if (uiPacketType != PACKET_TYPE_SYN || (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ACK) == 0 ||
-            (pPacket->m_unknown90 & ENDPOINT_FLAG) == 0)
+        if (uiPacketType != PACKET_TYPE_SYN || (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ACK) == 0
+            || (pPacket->m_unknown90 & ENDPOINT_FLAG) == 0)
         {
             unsigned int uiKeySum = g_streamSettings[type].Get().GetKeySum();
             stream.AppendPrimitive(uiKeySum);
@@ -261,11 +255,9 @@ void PRUDPMessageV1::CalcSignatureHelper(const Packet* pPacket, SignatureMethod 
         if (pSignature != 0)
         {
             unsigned short uiTypeAndFlags = pPacket->m_uiTypeAndFlags;
-            if (uiPacketType != PACKET_TYPE_SYN &&
-                (method != SIGNATURE_METHOD_4 || uiPacketType != PACKET_TYPE_CONNECT) &&
-                (uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 &&
-                (uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0 &&
-                uiPacketType != PACKET_TYPE_USER)
+            if (uiPacketType != PACKET_TYPE_SYN && (method != SIGNATURE_METHOD_4 || uiPacketType != PACKET_TYPE_CONNECT)
+                && (uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0
+                && (uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0 && uiPacketType != PACKET_TYPE_USER)
             {
                 rBuffer.AppendData(pSignature->m_bytes, pSignature->m_uiLength, APPEND_AT_END);
             }
@@ -315,8 +307,7 @@ void PRUDPMessageV1::CalcSignatureHelper(const Packet* pPacket, SignatureMethod 
         ScopedCS lock(&m_criticalSection);
         for (unsigned int i = 0; i < SIGNATURE_LENGTH; ++i)
         {
-            rResult.m_bytes[i] =
-                static_cast<unsigned char>(m_randomNumberGenerator.GetRandomNumber(RANDOM_LIMIT));
+            rResult.m_bytes[i] = static_cast<unsigned char>(m_randomNumberGenerator.GetRandomNumber(RANDOM_LIMIT));
         }
         return;
     }
@@ -325,9 +316,9 @@ void PRUDPMessageV1::CalcSignatureHelper(const Packet* pPacket, SignatureMethod 
     }
 }
 
-bool PRUDPMessageV1::CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
-    Stream::Type type, TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
-    SignatureBytes& rResult)
+bool PRUDPMessageV1::CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey, Stream::Type type,
+                                   TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                                   SignatureBytes& rResult)
 {
     pPacket->m_uiTypeAndFlags |= PACKET_FLAG_HAS_SIZE;
     if (OptionSubHeaderBuilder(pPacket))
@@ -339,27 +330,26 @@ bool PRUDPMessageV1::CalcSignature(PacketOut* pPacket, SignatureMethod method, c
     return false;
 }
 
-void PRUDPMessageV1::CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey,
-    Stream::Type type, TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
-    SignatureBytes& rResult)
+void PRUDPMessageV1::CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey, Stream::Type type,
+                                   TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                                   SignatureBytes& rResult)
 {
     CalcSignatureHelper(pPacket, method, pKey, type, pSignature, rResult);
 }
 
-int PRUDPMessageV1::CalcExpectedSignature(const Packet* pPacket, SignatureMethod method,
-    const Key* pKey, TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
-    SignatureBytes& rResult)
+int PRUDPMessageV1::CalcExpectedSignature(const Packet* pPacket, SignatureMethod method, const Key* pKey,
+                                          TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                                          SignatureBytes& rResult)
 {
     if (method == SIGNATURE_METHOD_9)
         return 3;
 
-    CalcSignatureHelper(pPacket, method, pKey, VirtualPort(pPacket->m_uiSource).GetType(),
-        pSignature, rResult);
+    CalcSignatureHelper(pPacket, method, pKey, VirtualPort(pPacket->m_uiSource).GetType(), pSignature, rResult);
     return 0;
 }
 
-bool PRUDPMessageV1::HeaderParse(ByteStream* pStream, PacketIn* pPacket,
-    unsigned int& rOptionLength, unsigned int& rPayloadLength)
+bool PRUDPMessageV1::HeaderParse(ByteStream* pStream, PacketIn* pPacket, unsigned int& rOptionLength,
+                                 unsigned int& rPayloadLength)
 {
     unsigned int uiPosition = pStream->GetPosition() + MAGIC_LENGTH;
     if (uiPosition <= pStream->GetBuffer()->GetLength())
@@ -368,8 +358,7 @@ bool PRUDPMessageV1::HeaderParse(ByteStream* pStream, PacketIn* pPacket,
         pStream->SetPosition(uiPosition);
         if (uiAlreadyParsed == 0)
         {
-            if (pStream->Extract(reinterpret_cast<unsigned char*>(&pPacket->m_headerImage), 1,
-                    HEADER_IMAGE_LENGTH))
+            if (pStream->Extract(reinterpret_cast<unsigned char*>(&pPacket->m_headerImage), 1, HEADER_IMAGE_LENGTH))
             {
                 unsigned short uiPayloadLength = pPacket->m_headerImage.m_unknown2;
                 unsigned short uiTypeAndFlags = pPacket->m_headerImage.m_unknown6;
@@ -408,8 +397,7 @@ bool PRUDPMessageV1::HeaderParse(ByteStream* pStream, PacketIn* pPacket,
     return false;
 }
 
-bool PRUDPMessageV1::OptionUnpack(ByteStream* pStream, PacketIn* pPacket,
-    unsigned int uiOptionLength)
+bool PRUDPMessageV1::OptionUnpack(ByteStream* pStream, PacketIn* pPacket, unsigned int uiOptionLength)
 {
     if (uiOptionLength < MAX_OPTION_LENGTH)
     {
@@ -500,8 +488,8 @@ bool PRUDPMessageV1::OptionUnpack(ByteStream* pStream, PacketIn* pPacket,
             }
 
             pPacket->m_stream.Clear();
-            return pPacket->m_stream.GetBuffer().AppendData(
-                pStream->GetBuffer()->GetData() + uiStart, uiOptionLength, APPEND_AT_END);
+            return pPacket->m_stream.GetBuffer().AppendData(pStream->GetBuffer()->GetData() + uiStart, uiOptionLength,
+                                                            APPEND_AT_END);
         }
     }
 
@@ -542,8 +530,7 @@ bool PRUDPMessageV1::Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int
         if (pBuffer->GetLength() < pStream->GetPosition() + uiPayloadLength)
             return false;
 
-        if (pPayload->AppendData(pBuffer->GetData() + pStream->GetPosition(), uiPayloadLength,
-                APPEND_AT_END))
+        if (pPayload->AppendData(pBuffer->GetData() + pStream->GetPosition(), uiPayloadLength, APPEND_AT_END))
         {
             unsigned int uiPosition = pStream->GetPosition() + uiPayloadLength;
             if (uiPosition <= pStream->GetBuffer()->GetLength())
@@ -552,13 +539,11 @@ bool PRUDPMessageV1::Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int
             bUnpacked = true;
             if (pPacket->m_pPayload->GetLength() != 0)
             {
-                EncryptionAlgorithm* pEncryption =
-                    g_streamSettings[iStreamType].Get().GetEncryptionAlgorithm();
+                EncryptionAlgorithm* pEncryption = g_streamSettings[iStreamType].Get().GetEncryptionAlgorithm();
                 if (pEncryption != 0)
                     pEncryption->Decrypt(pPacket->m_pPayload);
 
-                CompressionAlgorithm* pCompression =
-                    g_streamSettings[iStreamType].Get().GetCompressionAlgorithm();
+                CompressionAlgorithm* pCompression = g_streamSettings[iStreamType].Get().GetCompressionAlgorithm();
                 if (pCompression != 0)
                 {
                     bUnpacked = pCompression->Decompress(pPacket->m_pPayload) == 0;
@@ -628,8 +613,7 @@ bool PRUDPMessageV1::Pack(PacketOut* pPacket, ByteStream* pStream)
     Buffer* pCurrent = pPacket->m_pPayload;
     if (pPacket->m_pPayload != 0)
     {
-        CompressionAlgorithm* pCompression =
-            g_streamSettings[iStreamType].Get().GetCompressionAlgorithm();
+        CompressionAlgorithm* pCompression = g_streamSettings[iStreamType].Get().GetCompressionAlgorithm();
         if (pCompression != 0)
         {
             Buffer* pCompressed = new Buffer(pPacket->m_pPayload->GetLength() + COMPRESSION_HEADROOM, 0);
@@ -638,8 +622,7 @@ bool PRUDPMessageV1::Pack(PacketOut* pPacket, ByteStream* pStream)
             bOwnsBuffer = true;
         }
 
-        EncryptionAlgorithm* pEncryption =
-            g_streamSettings[iStreamType].Get().GetEncryptionAlgorithm();
+        EncryptionAlgorithm* pEncryption = g_streamSettings[iStreamType].Get().GetEncryptionAlgorithm();
         if (pEncryption != 0)
         {
             Buffer* pEncrypted = new Buffer(pCurrent->GetLength(), 0);
@@ -657,11 +640,9 @@ bool PRUDPMessageV1::Pack(PacketOut* pPacket, ByteStream* pStream)
     pStream->AppendPrimitive(MAGIC_FIRST);
     pStream->AppendPrimitive(MAGIC_SECOND);
     pPacket->m_headerImage.m_unknown0 = VERSION;
-    pPacket->m_headerImage.m_unknown1 =
-        static_cast<unsigned char>(pPacket->m_stream.GetBuffer().GetLength());
+    pPacket->m_headerImage.m_unknown1 = static_cast<unsigned char>(pPacket->m_stream.GetBuffer().GetLength());
     pPacket->m_headerImage.m_unknown2 = SwapShort(uiPayloadLength);
-    if (!pStream->Append(reinterpret_cast<const unsigned char*>(&pPacket->m_headerImage), 1,
-            HEADER_IMAGE_LENGTH))
+    if (!pStream->Append(reinterpret_cast<const unsigned char*>(&pPacket->m_headerImage), 1, HEADER_IMAGE_LENGTH))
     {
         return false;
     }
@@ -680,9 +661,8 @@ bool PRUDPMessageV1::Pack(PacketOut* pPacket, ByteStream* pStream)
         }
     }
 
-    if (pPacket->m_stream.GetBuffer().GetLength() != 0 &&
-        !pStream->Append(pPacket->m_stream.GetBuffer().GetData(), 1,
-            pPacket->m_stream.GetBuffer().GetLength()))
+    if (pPacket->m_stream.GetBuffer().GetLength() != 0
+        && !pStream->Append(pPacket->m_stream.GetBuffer().GetData(), 1, pPacket->m_stream.GetBuffer().GetLength()))
     {
         return false;
     }

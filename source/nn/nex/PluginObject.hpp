@@ -13,19 +13,11 @@ class Plugin;
 class PluginObject : public RootObject
 {
 public:
-    PluginObject()
-        : m_pPlugin(0)
-    {
-    }
+    PluginObject() : m_pPlugin(0) {}
 
-    virtual ~PluginObject()
-    {
-    }
+    virtual ~PluginObject() {}
 
-    void SetPlugin(Plugin* pPlugin)
-    {
-        m_pPlugin = pPlugin;
-    }
+    void SetPlugin(Plugin* pPlugin) { m_pPlugin = pPlugin; }
 
 private:
     Plugin* m_pPlugin;

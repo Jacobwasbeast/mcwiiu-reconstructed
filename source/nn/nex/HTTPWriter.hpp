@@ -11,9 +11,7 @@ namespace nex
 class HTTPWriter : public RootObject
 {
 public:
-    virtual ~HTTPWriter()
-    {
-    }
+    virtual ~HTTPWriter() {}
 
     virtual bool Write(const void* pBuffer, unsigned int uiSize) = 0;
 };

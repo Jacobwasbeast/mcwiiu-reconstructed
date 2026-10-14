@@ -26,8 +26,7 @@ _DDL_DataStorePersistenceTarget& _DDL_DataStorePersistenceTarget::operator=(
     return *this;
 }
 
-void _DDL_DataStorePersistenceTarget::Add(Message* pMessage,
-    const _DDL_DataStorePersistenceTarget& rSource)
+void _DDL_DataStorePersistenceTarget::Add(Message* pMessage, const _DDL_DataStorePersistenceTarget& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -59,8 +58,7 @@ void _DDL_DataStorePersistenceTarget::Add(Message* pMessage,
     }
 }
 
-void _DDL_DataStorePersistenceTarget::Extract(Message* pMessage,
-    _DDL_DataStorePersistenceTarget* pDestination)
+void _DDL_DataStorePersistenceTarget::Extract(Message* pMessage, _DDL_DataStorePersistenceTarget* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

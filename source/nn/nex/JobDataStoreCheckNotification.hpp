@@ -27,10 +27,10 @@ public:
     virtual ~JobDataStoreCheckNotification();
 
     virtual qResult Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
-        unsigned int uiThreadPriority, int iTimeout, const String& rNotificationUrl,
-        String* pNextNotificationUrl, uint64_t uiLastDataId, uint64_t* pLastDataId,
-        unsigned int uiSequence, unsigned int* pSequence, unsigned int uiKey,
-        bool* pbUrlRequestFailed, bool bForceUrlRequest);
+                               unsigned int uiThreadPriority, int iTimeout, const String& rNotificationUrl,
+                               String* pNextNotificationUrl, uint64_t uiLastDataId, uint64_t* pLastDataId,
+                               unsigned int uiSequence, unsigned int* pSequence, unsigned int uiKey,
+                               bool* pbUrlRequestFailed, bool bForceUrlRequest);
 
     virtual void PrepareRequest(HttpConnection* pConnection);
     virtual void ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode);

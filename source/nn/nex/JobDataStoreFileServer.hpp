@@ -23,12 +23,12 @@ public:
     JobDataStoreFileServer();
     virtual ~JobDataStoreFileServer();
 
-    virtual qResult Initialize(unsigned int uiCallId, const String& rUrl,
-        HttpConnection::Method method, HttpEventListener* pListener, unsigned int uiBufferSize);
+    virtual qResult Initialize(unsigned int uiCallId, const String& rUrl, HttpConnection::Method method,
+                               HttpEventListener* pListener, unsigned int uiBufferSize);
 
     virtual void PrepareRequest(HttpConnection* pConnection);
-    virtual unsigned int PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer,
-        unsigned int uiSize, bool* pbLastChunk);
+    virtual unsigned int PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer, unsigned int uiSize,
+                                           bool* pbLastChunk);
     virtual void ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode);
     virtual bool ProcessResponse(const unsigned char* pData, unsigned int uiSize);
 
@@ -83,22 +83,18 @@ private:
 class DataStoreFileServerClient : public RootObject
 {
 public:
-    DataStoreFileServerClient()
-    {
-    }
+    DataStoreFileServerClient() {}
 
-    virtual ~DataStoreFileServerClient()
-    {
-    }
+    virtual ~DataStoreFileServerClient() {}
 
     qResult PostObject(CallContext* pContext, const String& rUrl, HttpEventListener* pListener,
-        unsigned int uiBufferSize)
+                       unsigned int uiBufferSize)
     {
         return ApiImpl(pContext, rUrl, pListener, HttpConnection::HTTP_POST, uiBufferSize);
     }
 
     qResult GetObject(CallContext* pContext, const String& rUrl, HttpEventListener* pListener,
-        unsigned int uiBufferSize)
+                      unsigned int uiBufferSize)
     {
         return ApiImpl(pContext, rUrl, pListener, HttpConnection::HTTP_GET, uiBufferSize);
     }
@@ -111,7 +107,7 @@ private:
     };
 
     qResult ApiImpl(CallContext* pContext, const String& rUrl, HttpEventListener* pListener,
-        HttpConnection::Method method, unsigned int uiBufferSize)
+                    HttpConnection::Method method, unsigned int uiBufferSize)
     {
         if (!pContext->InitiateCall())
             return qResult(RESULT_CORE_CALL_FAILED);

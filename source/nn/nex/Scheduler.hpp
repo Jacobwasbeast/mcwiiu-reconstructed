@@ -33,11 +33,7 @@ public:
     class SchedulerWorkerThread : public WorkerThreads
     {
     public:
-        SchedulerWorkerThread()
-            : WorkerThreads()
-            , m_pScheduler(0)
-        {
-        }
+        SchedulerWorkerThread() : WorkerThreads(), m_pScheduler(0) {}
 
         virtual ~SchedulerWorkerThread();
 
@@ -63,10 +59,7 @@ public:
         return pCore->GetScheduler();
     }
 
-    CriticalSection& GetCriticalSection()
-    {
-        return m_criticalSection;
-    }
+    CriticalSection& GetCriticalSection() { return m_criticalSection; }
 
     void StartDispatcherThread();
     void StopDispatcherThread();
@@ -92,9 +85,9 @@ public:
 
     static bool CurrentThreadCanWaitForJob();
     static bool PreventBlockCall(bool bAllowDispatch, unsigned int uiTimeout, bool bErrorValue,
-        PreventBlockCallback cbCallback, RootObject* pObject, bool* pResult);
-    static bool PreventRegularBlockCall(bool bAllowDispatch, unsigned int uiTimeout,
-        PreventBlockCallback cbCallback, RootObject* pObject, qResult* pResult);
+                                 PreventBlockCallback cbCallback, RootObject* pObject, bool* pResult);
+    static bool PreventRegularBlockCall(bool bAllowDispatch, unsigned int uiTimeout, PreventBlockCallback cbCallback,
+                                        RootObject* pObject, qResult* pResult);
 
     void WaitForAllJobsToComplete(unsigned int uiTimeout, bool bRequeueDelayedJobs);
     void WaitForEmptyQueues() const;

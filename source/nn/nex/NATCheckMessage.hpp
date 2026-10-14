@@ -16,10 +16,7 @@ public:
     void FromNetworkByteOrder();
     void Trace(unsigned long long uiFilter);
 
-    unsigned short GetPortNumber() const
-    {
-        return static_cast<unsigned short>(m_uiPortWord);
-    }
+    unsigned short GetPortNumber() const { return static_cast<unsigned short>(m_uiPortWord); }
 
     unsigned int m_uiType;
     unsigned int m_uiPortWord;

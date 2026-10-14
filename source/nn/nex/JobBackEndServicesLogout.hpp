@@ -16,8 +16,7 @@ class StreamManager;
 class JobBackEndServicesLogout : public StepSequenceJob
 {
 public:
-    JobBackEndServicesLogout(unsigned int uiCallId, BackEndServices* pBackEndServices,
-        Credentials* pCredentials);
+    JobBackEndServicesLogout(unsigned int uiCallId, BackEndServices* pBackEndServices, Credentials* pCredentials);
     virtual ~JobBackEndServicesLogout();
 
     void DisconnectFromAuthenticationService();

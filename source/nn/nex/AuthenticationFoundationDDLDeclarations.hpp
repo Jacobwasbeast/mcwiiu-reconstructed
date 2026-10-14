@@ -13,13 +13,9 @@ class AuthenticationFoundationDDLDeclarations : public DDLDeclarations
 public:
     AuthenticationFoundationDDLDeclarations();
 
-    virtual ~AuthenticationFoundationDDLDeclarations()
-    {
-    }
+    virtual ~AuthenticationFoundationDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

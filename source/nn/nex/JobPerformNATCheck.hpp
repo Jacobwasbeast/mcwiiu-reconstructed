@@ -28,15 +28,9 @@ public:
     class RecvNATCheckMessage
     {
     public:
-        RecvNATCheckMessage()
-            : m_message()
-            , m_uiCount(0)
-        {
-        }
+        RecvNATCheckMessage() : m_message(), m_uiCount(0) {}
 
-        ~RecvNATCheckMessage()
-        {
-        }
+        ~RecvNATCheckMessage() {}
 
         NATCheckMessage m_message;
         unsigned int m_uiCount;
@@ -45,8 +39,7 @@ public:
     typedef std::list<InetAddress, MemAllocator<InetAddress> > ServerList;
     struct QueuedMessage
     {
-        QueuedMessage(InetAddress address, unsigned int uiType)
-            : first(address)
+        QueuedMessage(InetAddress address, unsigned int uiType) : first(address)
         {
             second.m_uiType = uiType;
             second.ToNetworkByteOrder();
@@ -67,8 +60,8 @@ public:
 
     void DetectFullNATProperties();
     void DetectSimplifiedNATProperties();
-    void DetectCurrentPortMapping(NATRelayInterface* pRelay, const StationURL& rTargetURL,
-        const StationURL& rSourceURL, bool bRelayProbe);
+    void DetectCurrentPortMapping(NATRelayInterface* pRelay, const StationURL& rTargetURL, const StationURL& rSourceURL,
+                                  bool bRelayProbe);
 
     bool BindRandomPort();
     bool HandleSimplifiedResults();
@@ -91,10 +84,7 @@ public:
     void StepEnd();
 
 private:
-    void QueueMessage(InetAddress address, unsigned int uiType)
-    {
-        m_queue.push_back(QueuedMessage(address, uiType));
-    }
+    void QueueMessage(InetAddress address, unsigned int uiType) { m_queue.push_back(QueuedMessage(address, uiType)); }
 
     IOCompletionNotifier m_ioNotifierFirst;
     IOCompletionNotifier m_ioNotifierSecond;

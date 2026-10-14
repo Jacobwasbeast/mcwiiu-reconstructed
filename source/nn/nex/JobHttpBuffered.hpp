@@ -19,15 +19,14 @@ public:
     JobHttpBuffered();
     virtual ~JobHttpBuffered();
 
-    virtual qResult Initialize(unsigned int uiCallId, const String& rUrl,
-        HttpConnection::Method method, HttpEventListener* pListener, unsigned int uiBufferSize)
+    virtual qResult Initialize(unsigned int uiCallId, const String& rUrl, HttpConnection::Method method,
+                               HttpEventListener* pListener, unsigned int uiBufferSize)
     {
         return qResult(RESULT_CORE_NOT_IMPLEMENTED);
     }
 
-    virtual qResult Initialize(unsigned int uiCallId, const String& rUrl,
-        HttpConnection::Method method, unsigned int uiMaxSize, qVector<unsigned char>* pBuffer,
-        int* pStatusCode);
+    virtual qResult Initialize(unsigned int uiCallId, const String& rUrl, HttpConnection::Method method,
+                               unsigned int uiMaxSize, qVector<unsigned char>* pBuffer, int* pStatusCode);
 
     virtual void ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode);
     virtual bool ProcessResponse(const unsigned char* pData, unsigned int uiSize);

@@ -11,13 +11,9 @@ namespace nex
 class DataStoreCompletePostParam : public _DDL_DataStoreCompletePostParam
 {
 public:
-    DataStoreCompletePostParam()
-    {
-    }
+    DataStoreCompletePostParam() {}
 
-    virtual ~DataStoreCompletePostParam()
-    {
-    }
+    virtual ~DataStoreCompletePostParam() {}
 };
 
 }

@@ -23,10 +23,7 @@ public:
     static void ResetContextForAllVariables(unsigned int uiContextId);
     static void FreeExtraContextsForAllVariables();
 
-    static unsigned int GetNbOfExtraContexts()
-    {
-        return s_uiNbOfExtraContexts;
-    }
+    static unsigned int GetNbOfExtraContexts() { return s_uiNbOfExtraContexts; }
 
 protected:
     PseudoGlobalVariableRoot* m_pNext;

@@ -18,14 +18,15 @@ class _DDL_JoinMatchmakeSessionParam : public RootObject
 {
 public:
     _DDL_JoinMatchmakeSessionParam()
-        : m_uiStructureVersion(1), m_AdditionalParticipants(), m_strUserPassword(), m_strSystemPassword(),
+        : m_uiStructureVersion(1),
+          m_AdditionalParticipants(),
+          m_strUserPassword(),
+          m_strSystemPassword(),
           m_strJoinMessage()
     {
     }
 
-    virtual ~_DDL_JoinMatchmakeSessionParam()
-    {
-    }
+    virtual ~_DDL_JoinMatchmakeSessionParam() {}
 
     _DDL_JoinMatchmakeSessionParam& operator=(const _DDL_JoinMatchmakeSessionParam& rSource);
 

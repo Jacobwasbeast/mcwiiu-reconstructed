@@ -26,25 +26,19 @@ public:
         METHOD_DELETE_FROM_DELETIONS = 6
     };
 
-    explicit _Proto_MatchMakingProtocolExtServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_MatchMakingProtocolExtServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual bool EndParticipation(const unsigned int& rGatheringID, const String& rMessage) = 0;
-    virtual void GetParticipants(const unsigned int& rGatheringID,
-                                 qList<unsigned int>* pParticipantIDs, const bool& rOnlyActive) = 0;
-    virtual void GetDetailedParticipants(const unsigned int& rGatheringID,
-                                         qList<ParticipantDetails>* pParticipants,
+    virtual void GetParticipants(const unsigned int& rGatheringID, qList<unsigned int>* pParticipantIDs,
+                                 const bool& rOnlyActive) = 0;
+    virtual void GetDetailedParticipants(const unsigned int& rGatheringID, qList<ParticipantDetails>* pParticipants,
                                          const bool& rOnlyActive) = 0;
     virtual void GetParticipantsURLs(const qList<unsigned int>& rGatheringIDs,
                                      qList<GatheringURLs>* pGatheringURLs) = 0;
-    virtual String GetGatheringRelations(const unsigned int& rGatheringID,
-                                         const String& rDescription) = 0;
-    virtual void DeleteFromDeletions(const qList<unsigned int>& rDeletionIDs,
-                                     const unsigned int& rPrincipalID) = 0;
+    virtual String GetGatheringRelations(const unsigned int& rGatheringID, const String& rDescription) = 0;
+    virtual void DeleteFromDeletions(const qList<unsigned int>& rDeletionIDs, const unsigned int& rPrincipalID) = 0;
 
 private:
     enum

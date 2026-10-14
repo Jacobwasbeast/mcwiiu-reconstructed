@@ -20,14 +20,17 @@ class _DDL_UpdateMatchmakeSessionParam : public RootObject
 {
 public:
     _DDL_UpdateMatchmakeSessionParam()
-        : m_uiStructureVersion(1), m_Attributes(), m_ApplicationBuffer(), m_MatchmakeParam(), m_StartedTime(),
-          m_strValue1(), m_strValue2()
+        : m_uiStructureVersion(1),
+          m_Attributes(),
+          m_ApplicationBuffer(),
+          m_MatchmakeParam(),
+          m_StartedTime(),
+          m_strValue1(),
+          m_strValue2()
     {
     }
 
-    virtual ~_DDL_UpdateMatchmakeSessionParam()
-    {
-    }
+    virtual ~_DDL_UpdateMatchmakeSessionParam() {}
 
     _DDL_UpdateMatchmakeSessionParam& operator=(const _DDL_UpdateMatchmakeSessionParam& rSource);
 

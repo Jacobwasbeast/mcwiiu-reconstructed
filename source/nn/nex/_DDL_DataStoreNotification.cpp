@@ -18,8 +18,7 @@ const unsigned int NOTIFICATION_SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStoreNotification& _DDL_DataStoreNotification::operator=(
-    const _DDL_DataStoreNotification& rSource)
+_DDL_DataStoreNotification& _DDL_DataStoreNotification::operator=(const _DDL_DataStoreNotification& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiNotificationId = rSource.m_uiNotificationId;
@@ -59,8 +58,7 @@ void _DDL_DataStoreNotification::Add(Message* pMessage, const _DDL_DataStoreNoti
     }
 }
 
-void _DDL_DataStoreNotification::Extract(Message* pMessage,
-    _DDL_DataStoreNotification* pDestination)
+void _DDL_DataStoreNotification::Extract(Message* pMessage, _DDL_DataStoreNotification* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

@@ -10,9 +10,10 @@ namespace nn
 namespace nex
 {
 
-QueuingSocketTransportBuffer::QueuingSocketTransportBuffer(unsigned int uiTrafficType,
-    RootTransport* pTransport, unsigned int uiRecvCount, unsigned int uiSendCount,
-    unsigned int uiMTU, Condition* pCondition, TransportBuffer* pTransportBuffer)
+QueuingSocketTransportBuffer::QueuingSocketTransportBuffer(unsigned int uiTrafficType, RootTransport* pTransport,
+                                                           unsigned int uiRecvCount, unsigned int uiSendCount,
+                                                           unsigned int uiMTU, Condition* pCondition,
+                                                           TransportBuffer* pTransportBuffer)
     : QueuingSocket(uiTrafficType, pTransport, uiMTU, pTransportBuffer),
       m_recvSet(pTransportBuffer, g_transportBufferCount),
       m_sendSet(pTransportBuffer, g_transportBufferCount)

@@ -24,9 +24,8 @@ public:
     void UpdateChecksum()
     {
         MD5Checksum checksum;
-        m_uiChecksum = checksum.ComputeChecksumForTransport(
-            reinterpret_cast<const unsigned char*>(this),
-            offsetof(DataStoreNewArrivalCheckToken, m_uiChecksum));
+        m_uiChecksum = checksum.ComputeChecksumForTransport(reinterpret_cast<const unsigned char*>(this),
+                                                            offsetof(DataStoreNewArrivalCheckToken, m_uiChecksum));
     }
 
     unsigned int m_uiReserved0;

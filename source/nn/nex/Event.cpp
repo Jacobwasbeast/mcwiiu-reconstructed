@@ -8,9 +8,9 @@ namespace nex
 {
 
 Event::Event(EventHandler* pEventHandler, unsigned int type, unsigned int context)
-    : m_pEventHandler(pEventHandler)
-    , m_type(type)
-    , m_context(context)
+    : m_pEventHandler(pEventHandler),
+      m_type(type),
+      m_context(context)
 {
 }
 

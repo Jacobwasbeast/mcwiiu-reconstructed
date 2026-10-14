@@ -4,7 +4,10 @@
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/VirtualRootObject.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class StateMachine : public VirtualRootObject
 {
@@ -14,17 +17,12 @@ public:
     class QEvent : public RootObject
     {
     public:
-        virtual ~QEvent()
-        {
-        }
+        virtual ~QEvent() {}
 
         virtual unsigned short GetSignal() const = 0;
 
     protected:
-        QEvent()
-            : m_unknownByte(false)
-        {
-        }
+        QEvent() : m_unknownByte(false) {}
 
         bool m_unknownByte;
     };
@@ -40,6 +38,7 @@ public:
     };
 };
 
-}}
+}
+}
 
 #endif

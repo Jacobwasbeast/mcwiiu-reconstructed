@@ -11,13 +11,9 @@ namespace nex
 class RVConnectionData : public _DDL_RVConnectionData
 {
 public:
-    RVConnectionData()
-    {
-    }
+    RVConnectionData() {}
 
-    virtual ~RVConnectionData()
-    {
-    }
+    virtual ~RVConnectionData() {}
 };
 
 }

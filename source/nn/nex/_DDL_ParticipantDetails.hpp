@@ -16,14 +16,9 @@ class Message;
 class _DDL_ParticipantDetails : public RootObject
 {
 public:
-    _DDL_ParticipantDetails()
-        : m_uiStructureVersion(0), m_StringValue1(), m_StringValue2()
-    {
-    }
+    _DDL_ParticipantDetails() : m_uiStructureVersion(0), m_StringValue1(), m_StringValue2() {}
 
-    virtual ~_DDL_ParticipantDetails()
-    {
-    }
+    virtual ~_DDL_ParticipantDetails() {}
 
     static void Add(Message* pMessage, const _DDL_ParticipantDetails& rSource);
     static void Extract(Message* pMessage, _DDL_ParticipantDetails* pDestination);

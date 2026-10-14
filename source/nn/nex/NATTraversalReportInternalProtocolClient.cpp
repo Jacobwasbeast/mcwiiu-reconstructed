@@ -92,11 +92,9 @@ bool NATTraversalReportInternalProtocolClient::CallReportNATTraversalResult(Prot
     return bSent;
 }
 
-bool NATTraversalReportInternalProtocolClient::ReportNATTraversalResult_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                                       Message* pMessage,
-                                                                                       const unsigned int& rCID,
-                                                                                       const bool& rResult,
-                                                                                       const unsigned int& rRTT)
+bool NATTraversalReportInternalProtocolClient::ReportNATTraversalResult_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rCID, const bool& rResult,
+    const unsigned int& rRTT)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -196,12 +194,9 @@ bool NATTraversalReportInternalProtocolClient::CallReportNATTraversalResultDetai
     return bSent;
 }
 
-bool NATTraversalReportInternalProtocolClient::ReportNATTraversalResultDetail_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                                             Message* pMessage,
-                                                                                             const unsigned int& rCID,
-                                                                                             const bool& rResult,
-                                                                                             const int& rConnectionType,
-                                                                                             const unsigned int& rRTT)
+bool NATTraversalReportInternalProtocolClient::ReportNATTraversalResultDetail_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rCID, const bool& rResult,
+    const int& rConnectionType, const unsigned int& rRTT)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -228,7 +223,8 @@ void NATTraversalReportInternalProtocolClient::ProtoReturn_ReportNATProperties(M
 {
 }
 
-void NATTraversalReportInternalProtocolClient::ProtoReturn_ReportNATTraversalResultDetail(Message*, ProtocolCallContext*)
+void NATTraversalReportInternalProtocolClient::ProtoReturn_ReportNATTraversalResultDetail(Message*,
+                                                                                          ProtocolCallContext*)
 {
 }
 

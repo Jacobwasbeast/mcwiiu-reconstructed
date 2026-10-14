@@ -28,34 +28,31 @@ volatile int32_t s_nbAttachedThreads = 0;
 
 }
 
-ObjectThreadRoot::ThreadData::ThreadData()
-    : m_pThread(0)
-    , m_pStack(0)
-    , m_bJoined(false)
+ObjectThreadRoot::ThreadData::ThreadData() : m_pThread(0), m_pStack(0), m_bJoined(false)
 {
 }
 
 ObjectThreadRoot::ObjectThreadRoot(const String& name)
-    : m_name(name)
-    , m_pThreadData(new ThreadData())
-    , m_threadId(0)
-    , m_priority(s_defaultPriority)
-    , m_stackSize(0)
-    , m_bLaunched(false)
-    , m_bFinished(false)
-    , m_affinity(INHERIT_THREAD_AFFINITY)
+    : m_name(name),
+      m_pThreadData(new ThreadData()),
+      m_threadId(0),
+      m_priority(s_defaultPriority),
+      m_stackSize(0),
+      m_bLaunched(false),
+      m_bFinished(false),
+      m_affinity(INHERIT_THREAD_AFFINITY)
 {
 }
 
 ObjectThreadRoot::ObjectThreadRoot(const String& name, uint32_t priority)
-    : m_name(name)
-    , m_pThreadData(new ThreadData())
-    , m_threadId(0)
-    , m_priority(priority)
-    , m_stackSize(0)
-    , m_bLaunched(false)
-    , m_bFinished(false)
-    , m_affinity(INHERIT_THREAD_AFFINITY)
+    : m_name(name),
+      m_pThreadData(new ThreadData()),
+      m_threadId(0),
+      m_priority(priority),
+      m_stackSize(0),
+      m_bLaunched(false),
+      m_bFinished(false),
+      m_affinity(INHERIT_THREAD_AFFINITY)
 {
 }
 
@@ -110,8 +107,8 @@ bool ObjectThreadRoot::Launch(uint32_t stackSize)
     if (m_pThreadData->m_pThread != 0)
     {
         SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Platform/Core/ObjectThreadRoot.cpp",
-            364, 0xe000000eu, 0);
+            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Platform/Core/ObjectThreadRoot.cpp", 364,
+            0xe000000eu, 0);
         return false;
     }
 
@@ -146,10 +143,9 @@ bool ObjectThreadRoot::LaunchImpl()
     if (m_affinity != INHERIT_THREAD_AFFINITY)
         affinity = m_affinity & 0xffffu;
 
-    if (!OSCreateThread(m_pThreadData->m_pThread,
-            reinterpret_cast<OSThreadEntryPointFn>(&ObjectThreadProc), 0,
-            reinterpret_cast<char*>(this), m_pThreadData->m_pStack + m_stackSize, m_stackSize,
-            static_cast<int32_t>(m_priority), static_cast<OSThreadAttributes>(affinity)))
+    if (!OSCreateThread(m_pThreadData->m_pThread, reinterpret_cast<OSThreadEntryPointFn>(&ObjectThreadProc), 0,
+                        reinterpret_cast<char*>(this), m_pThreadData->m_pStack + m_stackSize, m_stackSize,
+                        static_cast<int32_t>(m_priority), static_cast<OSThreadAttributes>(affinity)))
     {
         SpecialDelete(m_pThreadData->m_pThread);
         m_pThreadData->m_pThread = 0;
@@ -186,10 +182,12 @@ bool ObjectThreadRoot::Wait(uint32_t timeout)
 
         spinTest.LeaveOnTimeout();
 
-        while (!m_bFinished
+        while (
+            !m_bFinished
             && spinTest.SpinOnce(
-                L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Platform/Core/ObjectThreadRoot.cpp",
-                803, L"!m_bFinished") != 0)
+                   L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Platform/Core/ObjectThreadRoot.cpp",
+                   803, L"!m_bFinished")
+                   != 0)
         {
         }
 
@@ -216,10 +214,12 @@ bool ObjectThreadRoot::Wait(uint32_t timeout)
 
         spinTest.LeaveOnTimeout();
 
-        while (!m_bFinished
+        while (
+            !m_bFinished
             && spinTest.SpinOnce(
-                L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Platform/Core/ObjectThreadRoot.cpp",
-                847, L"!m_bFinished") != 0)
+                   L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Platform/Core/ObjectThreadRoot.cpp",
+                   847, L"!m_bFinished")
+                   != 0)
         {
         }
     }

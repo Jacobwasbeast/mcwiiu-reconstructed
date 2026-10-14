@@ -8,8 +8,7 @@ namespace nn
 namespace nex
 {
 
-StreamBundling::StreamBundling()
-    : m_lastFlushTime()
+StreamBundling::StreamBundling() : m_lastFlushTime()
 {
     m_bEnabled = false;
     m_iMaxFlushDelay = 0;

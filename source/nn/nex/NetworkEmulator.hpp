@@ -33,10 +33,7 @@ public:
             m_address = rPacket.m_address;
         }
 
-        ~NetworkPacket()
-        {
-            m_pBuffer->ReleaseRef();
-        }
+        ~NetworkPacket() { m_pBuffer->ReleaseRef(); }
 
         Buffer* m_pBuffer;
         InetAddress m_address;
@@ -49,10 +46,7 @@ public:
     void Dequeue(Buffer* pBuffer);
     void Trace(unsigned long long uiFilter);
 
-    EmulationDevice* GetDevice() const
-    {
-        return m_pDevice;
-    }
+    EmulationDevice* GetDevice() const { return m_pDevice; }
 
 private:
     VirtualModem<NetworkPacket> m_modem;

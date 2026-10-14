@@ -15,8 +15,8 @@ class StationProbeList;
 class JobWaitForProbes : public Job
 {
 public:
-    JobWaitForProbes(unsigned int uiCallId, NATTraversalEngine* pEngine,
-        StationProbeList* pProbeList, unsigned int uiTimeout, bool bUseRelay, JobType jobType);
+    JobWaitForProbes(unsigned int uiCallId, NATTraversalEngine* pEngine, StationProbeList* pProbeList,
+                     unsigned int uiTimeout, bool bUseRelay, JobType jobType);
     virtual ~JobWaitForProbes();
 
     virtual void Execute();

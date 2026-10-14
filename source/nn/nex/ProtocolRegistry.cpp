@@ -3,7 +3,10 @@
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/Scheduler.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 ProtocolRegistry::ProtocolRegistry()
 {
@@ -28,8 +31,7 @@ ProtocolRegistry::~ProtocolRegistry()
 bool ProtocolRegistry::RegisterProtocol(Protocol* protocol)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    ProtocolMap& protocols = protocol->GetProtocolType() == Protocol::TYPE_SERVER
-        ? m_serverProtocols : m_protocols;
+    ProtocolMap& protocols = protocol->GetProtocolType() == Protocol::TYPE_SERVER ? m_serverProtocols : m_protocols;
     if (protocols.find(protocol->GetProtocolID()) != protocols.end())
     {
         delete protocol;
@@ -63,11 +65,11 @@ Protocol* ProtocolRegistry::GetServerProtocol(unsigned short protocolId)
 void ProtocolRegistry::UnregisterProtocol(Protocol* protocol)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    ProtocolMap& protocols = protocol->GetProtocolType() == Protocol::TYPE_SERVER
-        ? m_serverProtocols : m_protocols;
+    ProtocolMap& protocols = protocol->GetProtocolType() == Protocol::TYPE_SERVER ? m_serverProtocols : m_protocols;
     ProtocolMap::iterator it = protocols.find(protocol->GetProtocolID());
     if (it != protocols.end())
         protocols.erase(it);
 }
 
-}}
+}
+}

@@ -33,9 +33,8 @@ bool Chrono::Start()
 {
     if (m_state != Stopped)
     {
-        SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Chrono.cpp", 47,
-            CHRONO_ERROR_INVALID_STATE, 0);
+        SystemError::SignalError(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Chrono.cpp", 47,
+                                 CHRONO_ERROR_INVALID_STATE, 0);
         return false;
     }
 
@@ -70,9 +69,8 @@ int Chrono::Stop()
 {
     if (m_state != Running)
     {
-        SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Chrono.cpp", 97,
-            CHRONO_ERROR_INVALID_STATE, 0);
+        SystemError::SignalError(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Chrono.cpp", 97,
+                                 CHRONO_ERROR_INVALID_STATE, 0);
         return -1;
     }
 

@@ -17,8 +17,7 @@
 #include "nn/nex/Ticket.hpp"
 #include "nn/nex/TicketManager.hpp"
 
-void ClientRequestCallback(nn::nex::CallContext* pCallContext,
-    const nn::nex::UserContext* pUserContext)
+void ClientRequestCallback(nn::nex::CallContext* pCallContext, const nn::nex::UserContext* pUserContext)
 {
     nn::nex::Job* pJob = static_cast<nn::nex::Job*>(pUserContext->GetPointer());
     nn::nex::ScopedCS lock(&nn::nex::Scheduler::GetInstance()->GetCriticalSection());
@@ -45,17 +44,17 @@ enum ConnectResult
 
 }
 
-JobConnectSecureEndPoint::JobConnectSecureEndPoint(SecureEndPoint* pSecureEndPoint,
-    const StationURL* pStationURL, Buffer* pRequestData, Buffer* pResponseData,
-    EndPoint::ConnectionCallback pCallback, const UserContext& rUserContext,
-    unsigned int uiTimeout)
-    : Job(JOB_TYPE_2, DebugString(L""))
-    , m_pSecureEndPoint(pSecureEndPoint)
-    , m_stationURL(*pStationURL)
-    , m_pResponseData(pResponseData)
-    , m_pCallback(pCallback)
-    , m_userContext(rUserContext)
-    , m_pConnectJob(0)
+JobConnectSecureEndPoint::JobConnectSecureEndPoint(SecureEndPoint* pSecureEndPoint, const StationURL* pStationURL,
+                                                   Buffer* pRequestData, Buffer* pResponseData,
+                                                   EndPoint::ConnectionCallback pCallback,
+                                                   const UserContext& rUserContext, unsigned int uiTimeout)
+    : Job(JOB_TYPE_2, DebugString(L"")),
+      m_pSecureEndPoint(pSecureEndPoint),
+      m_stationURL(*pStationURL),
+      m_pResponseData(pResponseData),
+      m_pCallback(pCallback),
+      m_userContext(rUserContext),
+      m_pConnectJob(0)
 {
     m_uiStep = STEP_PARSE_URL;
     m_deadline = Time::ConvertTimeoutToDeadline(uiTimeout);
@@ -107,8 +106,7 @@ void JobConnectSecureEndPoint::ParseURL()
     m_uiPrincipalID = m_stationURL.GetPrincipalID();
 
     bool bHasAddress = false;
-    if (m_stationURL.GetAddress().GetLength() > 0 && m_stationURL.GetPortNumber() > 0 &&
-        m_stationURL.GetStreamID() > 0)
+    if (m_stationURL.GetAddress().GetLength() > 0 && m_stationURL.GetPortNumber() > 0 && m_stationURL.GetStreamID() > 0)
     {
         bHasAddress = true;
     }
@@ -157,8 +155,8 @@ void JobConnectSecureEndPoint::RequestConnectionData()
     if (m_uiPrincipalID != 0 && m_pTicket == 0 && m_ticketContext.GetState() == CallContext::Ready)
     {
         m_ticketContext.RegisterCompletionCallback(ClientRequestCallback, UserContext(this), true);
-        if (!pStream->GetAuthenticationClient()->m_pTicketManager->AcquireTicket(&m_ticketContext,
-                uiSourcePrincipalID, m_uiPrincipalID, &m_pTicket))
+        if (!pStream->GetAuthenticationClient()->m_pTicketManager->AcquireTicket(&m_ticketContext, uiSourcePrincipalID,
+                                                                                 m_uiPrincipalID, &m_pTicket))
         {
             m_result = qResult(static_cast<int>(CONNECT_CALL_FAILED_RESULT));
             m_uiStep = STEP_COMPLETE;
@@ -169,10 +167,9 @@ void JobConnectSecureEndPoint::RequestConnectionData()
 
     if (m_connectionData.empty() && m_connectionDataContext.GetState() == CallContext::Ready)
     {
-        m_connectionDataContext.RegisterCompletionCallback(ClientRequestCallback, UserContext(this),
-            true);
-        if (!pStream->GetSecureConnectionClient()->RequestConnectionData(&m_connectionDataContext,
-                m_uiConnectionID, m_uiPrincipalID, &m_connectionData))
+        m_connectionDataContext.RegisterCompletionCallback(ClientRequestCallback, UserContext(this), true);
+        if (!pStream->GetSecureConnectionClient()->RequestConnectionData(&m_connectionDataContext, m_uiConnectionID,
+                                                                         m_uiPrincipalID, &m_connectionData))
         {
             m_result = qResult(static_cast<int>(CONNECT_CALL_FAILED_RESULT));
             m_uiStep = STEP_COMPLETE;
@@ -181,8 +178,8 @@ void JobConnectSecureEndPoint::RequestConnectionData()
         }
     }
 
-    if (m_ticketContext.GetState() == CallContext::CallInProgress ||
-        m_connectionDataContext.GetState() == CallContext::CallInProgress)
+    if (m_ticketContext.GetState() == CallContext::CallInProgress
+        || m_connectionDataContext.GetState() == CallContext::CallInProgress)
     {
         m_uiStep = STEP_CHECK_CONNECTION_DATA;
         SetToSuspended();
@@ -200,8 +197,8 @@ void JobConnectSecureEndPoint::InitializeBufferRequest()
     SecureStream* pStream = static_cast<SecureStream*>(m_pSecureEndPoint->GetStream());
     delete m_pRequestStream;
     m_pRequestStream = new BitStream();
-    KerberosAuthentication::PrepareConnectionRequest(m_pRequestStream,
-        pStream->GetAuthenticationClient(), m_pTicket, &m_uiNonce);
+    KerberosAuthentication::PrepareConnectionRequest(m_pRequestStream, pStream->GetAuthenticationClient(), m_pTicket,
+                                                     &m_uiNonce);
 }
 
 void JobConnectSecureEndPoint::BuildListURLs(qList<StationURL>* pURLs)
@@ -227,8 +224,7 @@ void JobConnectSecureEndPoint::PerformConnect()
     }
 
     SecureStream* pStream = static_cast<SecureStream*>(m_pSecureEndPoint->GetStream());
-    ConnectionManager* pConnectionManager =
-        pStream->m_pCredentials->m_streamManager->GetConnectionManager();
+    ConnectionManager* pConnectionManager = pStream->m_pCredentials->m_streamManager->GetConnectionManager();
     InitializeBufferRequest();
     delete m_pResponseStream;
     m_pResponseStream = new BitStream;
@@ -237,8 +233,8 @@ void JobConnectSecureEndPoint::PerformConnect()
     BuildListURLs(&urls);
     m_connectContext.RegisterCompletionCallback(ConnectCompletionCallback, UserContext(this), false);
     if (!pConnectionManager->ConnectImpl(&m_connectContext, m_pRequestStream->GetBuffer(),
-            m_pResponseStream->GetBuffer(), urls, &m_pEndPoint,
-            Time::ConvertDeadlineToTimeout(m_deadline), false, &m_pConnectJob))
+                                         m_pResponseStream->GetBuffer(), urls, &m_pEndPoint,
+                                         Time::ConvertDeadlineToTimeout(m_deadline), false, &m_pConnectJob))
     {
         m_result = qResult(static_cast<int>(CONNECT_CALL_FAILED_RESULT));
         m_uiStep = STEP_PROCESS_CONNECT_RESULT;
@@ -294,11 +290,9 @@ void JobConnectSecureEndPoint::ConnectCompletion(CallContext* pCallContext)
     csScheduler.Leave();
 }
 
-void JobConnectSecureEndPoint::ConnectCompletionCallback(CallContext* pCallContext,
-    const UserContext* pUserContext)
+void JobConnectSecureEndPoint::ConnectCompletionCallback(CallContext* pCallContext, const UserContext* pUserContext)
 {
-    static_cast<JobConnectSecureEndPoint*>(pUserContext->GetPointer())
-        ->ConnectCompletion(pCallContext);
+    static_cast<JobConnectSecureEndPoint*>(pUserContext->GetPointer())->ConnectCompletion(pCallContext);
 }
 
 void JobConnectSecureEndPoint::ExecuteStep()

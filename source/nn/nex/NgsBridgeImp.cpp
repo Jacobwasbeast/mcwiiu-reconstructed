@@ -7,8 +7,7 @@ namespace nn
 namespace nex
 {
 
-NgsBridgeImp::NgsBridgeImp(NgsFacade* pNgsFacade)
-    : m_pNgsFacade(pNgsFacade)
+NgsBridgeImp::NgsBridgeImp(NgsFacade* pNgsFacade) : m_pNgsFacade(pNgsFacade)
 {
 }
 

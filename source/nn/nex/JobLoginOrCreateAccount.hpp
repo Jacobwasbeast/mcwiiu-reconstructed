@@ -27,10 +27,10 @@ class JobLoginOrCreateAccount : public StepSequenceJob
 {
 public:
     JobLoginOrCreateAccount(unsigned int uiCallId, BackEndServices* pBackEndServices,
-        const SandboxConnectionInfo& rSandboxConnectionInfo, const String& rName,
-        const String& rPassword, const String& rEmail, unsigned int uiGroups,
-        Credentials** ppCredentials, String* pErrorMessage,
-        AnyObjectHolder<Data, String>* pExtraData);
+                            const SandboxConnectionInfo& rSandboxConnectionInfo, const String& rName,
+                            const String& rPassword, const String& rEmail, unsigned int uiGroups,
+                            Credentials** ppCredentials, String* pErrorMessage,
+                            AnyObjectHolder<Data, String>* pExtraData);
     virtual ~JobLoginOrCreateAccount();
 
     virtual void CompleteJob(const qResult& rResult);

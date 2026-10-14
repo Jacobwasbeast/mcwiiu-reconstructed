@@ -14,10 +14,12 @@ const unsigned int PROBE_TRACE_INDENT = 2;
 
 }
 
-URLProbe::URLProbe(const StationURL& rStationURL, int iTimeout, int iInterval,
-    unsigned int uiMaxProbes)
-    : m_stationURL(rStationURL), m_uiPingTime(UNREACHED_PING_TIME), m_iInterval(iInterval),
-      m_uiProbeCount(0), m_uiMaxProbes(uiMaxProbes)
+URLProbe::URLProbe(const StationURL& rStationURL, int iTimeout, int iInterval, unsigned int uiMaxProbes)
+    : m_stationURL(rStationURL),
+      m_uiPingTime(UNREACHED_PING_TIME),
+      m_iInterval(iInterval),
+      m_uiProbeCount(0),
+      m_uiMaxProbes(uiMaxProbes)
 {
     m_expirationTime = Time::GetTime() + iTimeout;
 }

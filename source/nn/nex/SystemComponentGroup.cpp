@@ -8,8 +8,7 @@ namespace nn
 namespace nex
 {
 
-SystemComponentGroup::SystemComponentGroup(const String& rName)
-    : SystemComponent(rName)
+SystemComponentGroup::SystemComponentGroup(const String& rName) : SystemComponent(rName)
 {
 }
 
@@ -80,8 +79,7 @@ void SystemComponentGroup::DoWork()
         }
         else
         {
-            for (ComponentList::iterator component = m_components.begin();
-                 component != m_components.end(); component++)
+            for (ComponentList::iterator component = m_components.begin(); component != m_components.end(); component++)
             {
                 if ((*component)->m_uiState != STATE_TERMINATED)
                     (*component)->Terminate();
@@ -97,8 +95,7 @@ void SystemComponentGroup::DoWork()
         }
         else
         {
-            for (ComponentList::iterator component = m_components.begin();
-                 component != m_components.end(); component++)
+            for (ComponentList::iterator component = m_components.begin(); component != m_components.end(); component++)
             {
                 if ((*component)->m_uiState != STATE_READY)
                     (*component)->Initialize();
@@ -140,8 +137,7 @@ unsigned int SystemComponentGroup::GetComponentsStates() const
 {
     unsigned int uiStates = 0;
 
-    for (ComponentList::const_iterator component = m_components.begin();
-         component != m_components.end(); ++component)
+    for (ComponentList::const_iterator component = m_components.begin(); component != m_components.end(); ++component)
     {
         uiStates |= (*component)->TestState();
     }
@@ -197,11 +193,8 @@ SystemComponent::_State SystemComponentGroup::ComputeGroupState(unsigned int uiS
             == (STATE_CREATED | STATE_INITIALIZING | STATE_READY | STATE_IN_USE))
             return STATE_INITIALIZING;
 
-        if ((uiStates
-                | (STATE_READY | STATE_IN_USE | STATE_TERMINATING | STATE_TERMINATION_PENDING
-                    | STATE_TERMINATED))
-            == (STATE_READY | STATE_IN_USE | STATE_TERMINATING | STATE_TERMINATION_PENDING
-                   | STATE_TERMINATED))
+        if ((uiStates | (STATE_READY | STATE_IN_USE | STATE_TERMINATING | STATE_TERMINATION_PENDING | STATE_TERMINATED))
+            == (STATE_READY | STATE_IN_USE | STATE_TERMINATING | STATE_TERMINATION_PENDING | STATE_TERMINATED))
             return STATE_TERMINATING;
     }
 

@@ -11,13 +11,9 @@ namespace nex
 class DataStoreSearchResult : public _DDL_DataStoreSearchResult
 {
 public:
-    DataStoreSearchResult()
-    {
-    }
+    DataStoreSearchResult() {}
 
-    virtual ~DataStoreSearchResult()
-    {
-    }
+    virtual ~DataStoreSearchResult() {}
 };
 
 }

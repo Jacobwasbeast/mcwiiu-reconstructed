@@ -64,8 +64,7 @@ JobResolveRelayInfo* JobResolveRelayInfo::CreateAndStartJob(CallContext* pCallCo
 
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     JobResolveRelayInfo* pJob = new JobResolveRelayInfo(pCallContext);
-    if (!pEngine->m_pRelay->GetRelaySignatureKey(pJob->GetCallContext(), &pJob->m_key) ||
-        !pJob->StartJob())
+    if (!pEngine->m_pRelay->GetRelaySignatureKey(pJob->GetCallContext(), &pJob->m_key) || !pJob->StartJob())
     {
         pJob->ReleaseRef();
         FailResolvedRelayInfo();
@@ -87,8 +86,7 @@ bool JobResolveRelayInfo::SetRelayAddress()
     switch (m_key.m_relayAddressType)
     {
     case RELAY_ADDRESS_IP:
-        Network::GetInstance()->GetNATTraversalEngine()->m_relayServerAddress =
-            m_key.m_relayAddress;
+        Network::GetInstance()->GetNATTraversalEngine()->m_relayServerAddress = m_key.m_relayAddress;
         break;
 
     case RELAY_ADDRESS_HOST_NAME:
@@ -133,8 +131,8 @@ void JobResolveRelayInfo::ResolvedRelayInfo()
         if (!SetRelayAddress())
             return;
 
-        if (RootTransport::GetInstance()->GetNATProperties().GetNATMapping() !=
-            NATProperties::MAPPING_ENDPOINT_DEPENDENT)
+        if (RootTransport::GetInstance()->GetNATProperties().GetNATMapping()
+            != NATProperties::MAPPING_ENDPOINT_DEPENDENT)
         {
             Network::GetInstance()->GetNATTraversalEngine()->m_bUseRelayServer = true;
         }
@@ -158,8 +156,8 @@ void JobResolveRelayInfo::ResolvedRelayInfo()
     RootTransport::GetInstance()->GetRelay()->SetGameServerID(m_key.m_gameServerID);
 
     NATProperties properties = RootTransport::GetInstance()->GetNATProperties();
-    if (properties.GetNATMapping() == NATProperties::MAPPING_ENDPOINT_DEPENDENT &&
-        properties.GetNATMappingPortIncrement() != NAT_PORT_INCREMENT_SEQUENTIAL)
+    if (properties.GetNATMapping() == NATProperties::MAPPING_ENDPOINT_DEPENDENT
+        && properties.GetNATMappingPortIncrement() != NAT_PORT_INCREMENT_SEQUENTIAL)
     {
         Network::GetInstance()->GetNATTraversalEngine()->m_bUseRelayServer = true;
     }

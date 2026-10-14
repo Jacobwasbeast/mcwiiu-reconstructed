@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-NATTraversalDDLDeclarations::NATTraversalDDLDeclarations()
-    : DDLDeclarations(true)
+NATTraversalDDLDeclarations::NATTraversalDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

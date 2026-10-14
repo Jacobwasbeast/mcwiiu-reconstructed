@@ -11,9 +11,7 @@ namespace nex
 class PIDLogFilter : public LogFilter
 {
 public:
-    virtual ~PIDLogFilter()
-    {
-    }
+    virtual ~PIDLogFilter() {}
 
     virtual bool OutputCurrentTrace();
 

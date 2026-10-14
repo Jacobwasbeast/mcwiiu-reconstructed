@@ -17,8 +17,7 @@ public:
     void SetErrorInfo(unsigned int errorCode, unsigned int errorDetail);
     void Trace(unsigned long long traceMask);
 
-    static void SignalError(wchar_t* file, unsigned int line, unsigned int errorCode,
-                            unsigned int errorDetail);
+    static void SignalError(wchar_t* file, unsigned int line, unsigned int errorCode, unsigned int errorDetail);
     static void GetErrorString(unsigned int errorCode, wchar_t* buffer, unsigned int bufferSize);
     static void ClearLast();
     static unsigned int GetLast();

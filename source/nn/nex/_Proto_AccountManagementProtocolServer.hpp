@@ -58,66 +58,51 @@ public:
         METHOD_DISCONNECT_ALL_PRINCIPALS = 30
     };
 
-    explicit _Proto_AccountManagementProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_AccountManagementProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
-    virtual qResult CreateAccount(const String& rName, const String& rKey,
-                                  const unsigned int& rGroups, const String& rEmail) = 0;
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
+    virtual qResult CreateAccount(const String& rName, const String& rKey, const unsigned int& rGroups,
+                                  const String& rEmail) = 0;
     virtual void DeleteAccount(const unsigned int& rPrincipalID) = 0;
-    virtual qResult DisableAccount(const unsigned int& rPrincipalID, const DateTime& rDate,
-                                   const String& rMessage) = 0;
+    virtual qResult DisableAccount(const unsigned int& rPrincipalID, const DateTime& rDate, const String& rMessage) = 0;
     virtual bool ChangePassword(const String& rNewKey) = 0;
     virtual bool TestCapability(const unsigned int& rCapability) = 0;
     virtual void GetName(const unsigned int& rPrincipalID, String* pName) = 0;
     virtual qResult GetAccountData(AccountData* pAccountData) = 0;
     virtual bool GetPrivateData(DataHolder* pData) = 0;
     virtual bool GetPublicData(const unsigned int& rPrincipalID, DataHolder* pData) = 0;
-    virtual bool GetMultiplePublicData(const qList<unsigned int>& rPrincipalIDs,
-                                       DataHolderList* pDataList) = 0;
+    virtual bool GetMultiplePublicData(const qList<unsigned int>& rPrincipalIDs, DataHolderList* pDataList) = 0;
     virtual qResult UpdateAccountName(const String& rName) = 0;
     virtual qResult UpdateAccountEmail(const String& rEmail) = 0;
-    virtual qResult UpdateCustomData(const DataHolder& rPublicData,
-                                     const DataHolder& rPrivateData) = 0;
-    virtual void FindByNameRegex(const unsigned int& rGroups, const String& rRegex,
-                                 const ResultRange& rRange,
+    virtual qResult UpdateCustomData(const DataHolder& rPublicData, const DataHolder& rPrivateData) = 0;
+    virtual void FindByNameRegex(const unsigned int& rGroups, const String& rRegex, const ResultRange& rRange,
                                  qList<BasicAccountInfo>* pAccountInfos) = 0;
     virtual void UpdateAccountExpiryDate(const unsigned int& rPrincipalID, const DateTime& rDate,
                                          const String& rMessage) = 0;
-    virtual void UpdateAccountEffectiveDate(const unsigned int& rPrincipalID,
-                                            const DateTime& rDate, const String& rMessage) = 0;
+    virtual void UpdateAccountEffectiveDate(const unsigned int& rPrincipalID, const DateTime& rDate,
+                                            const String& rMessage) = 0;
     virtual void UpdateStatus(const String& rStatus) = 0;
     virtual void GetStatus(const unsigned int& rPrincipalID, String* pStatus) = 0;
-    virtual void GetLastConnectionStats(const unsigned int& rPrincipalID, DateTime* pDate1,
-                                        DateTime* pDate2, DateTime* pDate3) = 0;
+    virtual void GetLastConnectionStats(const unsigned int& rPrincipalID, DateTime* pDate1, DateTime* pDate2,
+                                        DateTime* pDate3) = 0;
     virtual bool ResetPassword() = 0;
-    virtual void CreateAccountWithCustomData(const String& rName, const String& rKey,
-                                             const unsigned int& rGroups, const String& rEmail,
-                                             const DataHolder& rPublicData,
+    virtual void CreateAccountWithCustomData(const String& rName, const String& rKey, const unsigned int& rGroups,
+                                             const String& rEmail, const DataHolder& rPublicData,
                                              const DataHolder& rPrivateData) = 0;
-    virtual void RetrieveAccount(AccountData* pAccountData, DataHolder* pPublicData,
-                                 DataHolder* pPrivateData) = 0;
-    virtual void UpdateAccount(const String& rKey, const String& rEmail,
-                               const DataHolder& rPublicData,
+    virtual void RetrieveAccount(AccountData* pAccountData, DataHolder* pPublicData, DataHolder* pPrivateData) = 0;
+    virtual void UpdateAccount(const String& rKey, const String& rEmail, const DataHolder& rPublicData,
                                const DataHolder& rPrivateData) = 0;
-    virtual void ChangePasswordByGuest(const String& rName, const String& rString1,
-                                       const String& rString2) = 0;
-    virtual void FindByNameLike(const unsigned int& rGroups, const String& rPattern,
-                                const ResultRange& rRange,
+    virtual void ChangePasswordByGuest(const String& rName, const String& rString1, const String& rString2) = 0;
+    virtual void FindByNameLike(const unsigned int& rGroups, const String& rPattern, const ResultRange& rRange,
                                 qList<BasicAccountInfo>* pAccountInfos) = 0;
-    virtual void CustomCreateAccount(const String& rName, const String& rKey,
-                                     const unsigned int& rGroups, const String& rEmail,
-                                     const DataHolder& rData, unsigned int* pPrincipalID) = 0;
-    virtual void NintendoCreateAccount(const String& rName, const String& rKey,
-                                       const unsigned int& rGroups, const String& rEmail,
-                                       const DataHolder& rData, unsigned int* pPrincipalID,
+    virtual void CustomCreateAccount(const String& rName, const String& rKey, const unsigned int& rGroups,
+                                     const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID) = 0;
+    virtual void NintendoCreateAccount(const String& rName, const String& rKey, const unsigned int& rGroups,
+                                       const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID,
                                        String* pString) = 0;
-    virtual void LookupOrCreateAccount(const String& rName, const String& rKey,
-                                       const unsigned int& rGroups, const String& rEmail,
-                                       const DataHolder& rData, unsigned int* pPrincipalID) = 0;
+    virtual void LookupOrCreateAccount(const String& rName, const String& rKey, const unsigned int& rGroups,
+                                       const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID) = 0;
     virtual bool DisconnectPrincipal(const unsigned int& rPrincipalID) = 0;
     virtual bool DisconnectAllPrincipals() = 0;
 

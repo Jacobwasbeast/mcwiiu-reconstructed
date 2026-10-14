@@ -24,10 +24,7 @@ public:
     static unsigned int FindVariableIndex(PseudoGlobalVariableRoot* pVariable);
     static PseudoGlobalVariableRoot* GetVariable(unsigned int uiIndex);
 
-    static unsigned int GetNbOfVariables()
-    {
-        return s_uiNbOfVariables;
-    }
+    static unsigned int GetNbOfVariables() { return s_uiNbOfVariables; }
 
 private:
     static PseudoGlobalVariableRoot* s_pFirst;

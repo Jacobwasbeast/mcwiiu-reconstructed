@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-NintendoAuthenticationDDLDeclarations::NintendoAuthenticationDDLDeclarations()
-    : DDLDeclarations(true)
+NintendoAuthenticationDDLDeclarations::NintendoAuthenticationDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

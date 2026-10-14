@@ -31,8 +31,8 @@ NATEchoStream::~NATEchoStream()
 {
 }
 
-void NATEchoStream::ReceiveIncomingMsg(const InetAddress& rAddress, Stream::Type type,
-    unsigned char uiStreamID, Buffer* pPayload, Time receptionTime, unsigned short uiPort)
+void NATEchoStream::ReceiveIncomingMsg(const InetAddress& rAddress, Stream::Type type, unsigned char uiStreamID,
+                                       Buffer* pPayload, Time receptionTime, unsigned short uiPort)
 {
     ByteStream response;
     response.AppendRaw(pPayload->GetData(), pPayload->GetLength());
@@ -40,7 +40,7 @@ void NATEchoStream::ReceiveIncomingMsg(const InetAddress& rAddress, Stream::Type
     sourceURL.SetURLType(StationURL::Udp);
     sourceURL.SetInetAddress(&rAddress);
     response.AppendRaw(reinterpret_cast<const unsigned char*>(sourceURL.GetURL()),
-        wcslen(sourceURL.GetURL()) + sizeof(wchar_t));
+                       wcslen(sourceURL.GetURL()) + sizeof(wchar_t));
     m_pTransport->Send(&sourceURL, response.GetBuffer());
 }
 

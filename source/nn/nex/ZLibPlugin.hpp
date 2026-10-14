@@ -11,43 +11,21 @@ namespace nex
 class ZLibPlugin : public CompressionPlugin
 {
 public:
-    virtual ~ZLibPlugin()
-    {
-    }
+    virtual ~ZLibPlugin() {}
 
-    virtual const wchar_t* GetGUID()
-    {
-        return L"Quazal-ZLib-Fake-GUID";
-    }
+    virtual const wchar_t* GetGUID() { return L"Quazal-ZLib-Fake-GUID"; }
 
-    virtual const wchar_t* GetName()
-    {
-        return L"Quazal ZLib Compression Plugin";
-    }
+    virtual const wchar_t* GetName() { return L"Quazal ZLib Compression Plugin"; }
 
-    virtual const wchar_t* GetAuthor()
-    {
-        return L"Quazal";
-    }
+    virtual const wchar_t* GetAuthor() { return L"Quazal"; }
 
-    virtual unsigned int GetVersion()
-    {
-        return 1;
-    }
+    virtual unsigned int GetVersion() { return 1; }
 
-    virtual bool IsCertified()
-    {
-        return true;
-    }
+    virtual bool IsCertified() { return true; }
 
-    virtual bool Activate()
-    {
-        return true;
-    }
+    virtual bool Activate() { return true; }
 
-    virtual void Release()
-    {
-    }
+    virtual void Release() {}
 
     virtual PluginObject* CreatePluginObject();
     virtual void DeletePluginObject(PluginObject* pObject);

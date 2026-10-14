@@ -17,14 +17,9 @@ class Message;
 class _DDL_DataStorePrepareUpdateParam : public RootObject
 {
 public:
-    _DDL_DataStorePrepareUpdateParam()
-        : m_uiStructureVersion(0), m_ExtraData(0)
-    {
-    }
+    _DDL_DataStorePrepareUpdateParam() : m_uiStructureVersion(0), m_ExtraData(0) {}
 
-    virtual ~_DDL_DataStorePrepareUpdateParam()
-    {
-    }
+    virtual ~_DDL_DataStorePrepareUpdateParam() {}
 
     _DDL_DataStorePrepareUpdateParam& operator=(const _DDL_DataStorePrepareUpdateParam& rSource);
     bool operator==(const _DDL_DataStorePrepareUpdateParam& rSource) const;

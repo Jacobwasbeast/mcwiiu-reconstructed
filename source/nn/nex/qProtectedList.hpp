@@ -24,20 +24,11 @@ public:
         m_list.push_back(rValue);
     }
 
-    CriticalSection& GetCriticalSection() const
-    {
-        return m_criticalSection;
-    }
+    CriticalSection& GetCriticalSection() const { return m_criticalSection; }
 
-    qList<T>& GetList()
-    {
-        return m_list;
-    }
+    qList<T>& GetList() { return m_list; }
 
-    const qList<T>& GetList() const
-    {
-        return m_list;
-    }
+    const qList<T>& GetList() const { return m_list; }
 
 private:
     unsigned int m_unknown0;

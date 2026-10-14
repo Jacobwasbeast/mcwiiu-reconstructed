@@ -14,9 +14,7 @@ class StationURL;
 class PacketRecognizer : public RootObject
 {
 public:
-    virtual ~PacketRecognizer()
-    {
-    }
+    virtual ~PacketRecognizer() {}
 
     virtual bool Recognize(Buffer* pBuffer, StationURL* pURL) = 0;
 };

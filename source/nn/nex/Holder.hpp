@@ -12,21 +12,11 @@ template <typename T>
 class Holder : public RootObject
 {
 public:
-    explicit Holder(T* pObject = 0)
-        : m_pObject(pObject)
-    {
-    }
+    explicit Holder(T* pObject = 0) : m_pObject(pObject) {}
 
-    Holder(const Holder<T>& rOther)
-        : m_pObject(rOther.m_pObject)
-    {
-        rOther.m_pObject = 0;
-    }
+    Holder(const Holder<T>& rOther) : m_pObject(rOther.m_pObject) { rOther.m_pObject = 0; }
 
-    ~Holder()
-    {
-        delete m_pObject;
-    }
+    ~Holder() { delete m_pObject; }
 
     Holder<T>& operator=(T* pObject)
     {
@@ -44,15 +34,9 @@ public:
         return *this;
     }
 
-    T* operator->() const
-    {
-        return m_pObject;
-    }
+    T* operator->() const { return m_pObject; }
 
-    T* GetObject() const
-    {
-        return m_pObject;
-    }
+    T* GetObject() const { return m_pObject; }
 
     T* Release()
     {

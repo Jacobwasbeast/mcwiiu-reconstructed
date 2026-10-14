@@ -18,12 +18,12 @@ class Time;
 typedef qChain<Packet*, ChainPolicyHistoryPacket<Packet*> > PacketHistoryChain;
 
 PacketHistoryChain::iterator PacketHistoryChainDequeue(PacketHistoryChain* pChain,
-    PacketHistoryChain::iterator position);
+                                                       PacketHistoryChain::iterator position);
 void PacketHistoryChainPurge(PacketHistoryChain* pChain);
 void PacketHistoryChainQueueFront(PacketHistoryChain* pChain, PacketOut* pPacket);
 void InsertToHistoryPacketQueue(PacketHistoryChain* pChain, PacketQueue* pQueue);
-unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pChain,
-    PacketOut* pPacket, Time rLimit, unsigned int uiMaxSize, ByteStream* pStream);
+unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pChain, PacketOut* pPacket, Time rLimit,
+                                                        unsigned int uiMaxSize, ByteStream* pStream);
 
 }
 }

@@ -11,14 +11,9 @@ namespace nex
 class DataStoreReqGetInfo : public _DDL_DataStoreReqGetInfo
 {
 public:
-    DataStoreReqGetInfo()
-    {
-        m_uiDataId = 0;
-    }
+    DataStoreReqGetInfo() { m_uiDataId = 0; }
 
-    virtual ~DataStoreReqGetInfo()
-    {
-    }
+    virtual ~DataStoreReqGetInfo() {}
 };
 
 }

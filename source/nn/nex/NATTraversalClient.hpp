@@ -24,9 +24,7 @@ public:
     virtual ~NATTraversalClient();
 
     virtual bool IsConnected() const;
-    virtual void ConnectionStateHasChanged()
-    {
-    }
+    virtual void ConnectionStateHasChanged() {}
 
     virtual void UpdateProtocolsDefaultCredentials(Credentials* pCredentials);
 

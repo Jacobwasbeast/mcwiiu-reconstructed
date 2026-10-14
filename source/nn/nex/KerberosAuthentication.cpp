@@ -23,37 +23,34 @@ const unsigned int REJECTED_RESPONSE = 0;
 
 }
 
-void KerberosAuthentication::PrepareConnectionRequest(BitStream* pRequest,
-    AuthenticationClient* pAuthenticationClient, Ticket* pTicket, unsigned int* pNonce)
+void KerberosAuthentication::PrepareConnectionRequest(BitStream* pRequest, AuthenticationClient* pAuthenticationClient,
+                                                      Ticket* pTicket, unsigned int* pNonce)
 {
     Credentials* pCredentials = pAuthenticationClient->m_pCredentials;
     *pRequest << pTicket->m_buffer;
     *pNonce = Platform::GetRandomNumber(0xFFFFFFFF);
     BitStream stream;
     unsigned int uiPrincipalID = pAuthenticationClient->m_uiPrincipalID;
-    stream.Append(reinterpret_cast<const unsigned char*>(&uiPrincipalID), sizeof(uiPrincipalID),
-        1);
+    stream.Append(reinterpret_cast<const unsigned char*>(&uiPrincipalID), sizeof(uiPrincipalID), 1);
     if (pCredentials != 0)
     {
         unsigned int uiConnectionID = pCredentials->m_state;
-        stream.Append(reinterpret_cast<const unsigned char*>(&uiConnectionID),
-            sizeof(uiConnectionID), 1);
+        stream.Append(reinterpret_cast<const unsigned char*>(&uiConnectionID), sizeof(uiConnectionID), 1);
     }
     else
     {
         unsigned int uiConnectionID = 0;
-        stream.Append(reinterpret_cast<const unsigned char*>(&uiConnectionID),
-            sizeof(uiConnectionID), 1);
+        stream.Append(reinterpret_cast<const unsigned char*>(&uiConnectionID), sizeof(uiConnectionID), 1);
     }
     stream.Append(reinterpret_cast<const unsigned char*>(pNonce), sizeof(*pNonce), 1);
     Buffer encryptedRequest;
-    pAuthenticationClient->m_pKerberosEncryption->Encrypt(*stream.m_pBuffer, &encryptedRequest,
-        pTicket->m_key);
+    pAuthenticationClient->m_pKerberosEncryption->Encrypt(*stream.m_pBuffer, &encryptedRequest, pTicket->m_key);
     *pRequest << encryptedRequest;
 }
 
 bool KerberosAuthentication::ValidateConnectionRequest(BitStream* pRequest, BitStream* pResponse,
-    AuthenticationClient* pAuthenticationClient, unsigned int* pConnectionID, Ticket** ppTicket)
+                                                       AuthenticationClient* pAuthenticationClient,
+                                                       unsigned int* pConnectionID, Ticket** ppTicket)
 {
     Buffer requestData;
     *pRequest >> requestData;
@@ -67,8 +64,7 @@ bool KerberosAuthentication::ValidateConnectionRequest(BitStream* pRequest, BitS
     {
         BitStream rejection;
         unsigned int uiRejection = REJECTED_RESPONSE;
-        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection),
-            sizeof(uiRejection), 1);
+        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection), sizeof(uiRejection), 1);
         *pResponse << *rejection.m_pBuffer;
         return false;
     }
@@ -82,8 +78,7 @@ bool KerberosAuthentication::ValidateConnectionRequest(BitStream* pRequest, BitS
         delete pTicket;
         BitStream rejection;
         unsigned int uiRejection = REJECTED_RESPONSE;
-        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection),
-            sizeof(uiRejection), 1);
+        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection), sizeof(uiRejection), 1);
         *pResponse << *rejection.m_pBuffer;
         return false;
     }
@@ -92,33 +87,28 @@ bool KerberosAuthentication::ValidateConnectionRequest(BitStream* pRequest, BitS
         delete pTicket;
         BitStream rejection;
         unsigned int uiRejection = REJECTED_RESPONSE;
-        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection),
-            sizeof(uiRejection), 1);
+        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection), sizeof(uiRejection), 1);
         *pResponse << *rejection.m_pBuffer;
         return false;
     }
     Buffer encryptedRequest;
     *pRequest >> encryptedRequest;
     Buffer decryptedRequest;
-    pAuthenticationClient->m_pKerberosEncryption->Decrypt(encryptedRequest, &decryptedRequest,
-        pTicket->m_key);
+    pAuthenticationClient->m_pKerberosEncryption->Decrypt(encryptedRequest, &decryptedRequest, pTicket->m_key);
     BitStream decryptedStream(&decryptedRequest);
     unsigned int uiResponse;
     unsigned int uiNonce;
     unsigned int uiPrincipalID;
     unsigned int uiConnectionID;
-    decryptedStream.Extract(reinterpret_cast<unsigned char*>(&uiPrincipalID),
-        sizeof(uiPrincipalID), 1);
-    decryptedStream.Extract(reinterpret_cast<unsigned char*>(&uiConnectionID),
-        sizeof(uiConnectionID), 1);
+    decryptedStream.Extract(reinterpret_cast<unsigned char*>(&uiPrincipalID), sizeof(uiPrincipalID), 1);
+    decryptedStream.Extract(reinterpret_cast<unsigned char*>(&uiConnectionID), sizeof(uiConnectionID), 1);
     decryptedStream.Extract(reinterpret_cast<unsigned char*>(&uiNonce), sizeof(uiNonce), 1);
     if (decryptedStream.m_bError)
     {
         delete pTicket;
         BitStream rejection;
         unsigned int uiRejection = REJECTED_RESPONSE;
-        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection),
-            sizeof(uiRejection), 1);
+        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection), sizeof(uiRejection), 1);
         *pResponse << *rejection.m_pBuffer;
         return false;
     }
@@ -127,23 +117,20 @@ bool KerberosAuthentication::ValidateConnectionRequest(BitStream* pRequest, BitS
         delete pTicket;
         BitStream rejection;
         unsigned int uiRejection = REJECTED_RESPONSE;
-        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection),
-            sizeof(uiRejection), 1);
+        rejection.Append(reinterpret_cast<const unsigned char*>(&uiRejection), sizeof(uiRejection), 1);
         *pResponse << *rejection.m_pBuffer;
         return false;
     }
     *pConnectionID = uiConnectionID;
     BitStream acceptance;
     uiResponse = uiNonce + 1;
-    acceptance.Append(reinterpret_cast<const unsigned char*>(&uiResponse), sizeof(uiResponse),
-        1);
+    acceptance.Append(reinterpret_cast<const unsigned char*>(&uiResponse), sizeof(uiResponse), 1);
     *pResponse << *acceptance.m_pBuffer;
     *ppTicket = pTicket;
     return true;
 }
 
-bool KerberosAuthentication::ValidateConnectionResponse(BitStream* pResponse,
-    unsigned int uiNonce)
+bool KerberosAuthentication::ValidateConnectionResponse(BitStream* pResponse, unsigned int uiNonce)
 {
     BitStream stream;
     *pResponse >> stream;

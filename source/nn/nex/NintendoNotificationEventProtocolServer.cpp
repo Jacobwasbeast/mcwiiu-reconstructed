@@ -8,8 +8,8 @@ namespace nn
 namespace nex
 {
 
-void _Proto_NintendoNotificationEventProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_NintendoNotificationEventProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                                             bool* pResponseRequired, EndPoint*)
 {
     const uint16_t uiMethodID = static_cast<uint16_t>(ExtractMethodID(pRequest));
     if (uiMethodID == METHOD_PROCESS_NINTENDO_NOTIFICATION_EVENT)

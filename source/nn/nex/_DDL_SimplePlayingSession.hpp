@@ -15,14 +15,9 @@ class Message;
 class _DDL_SimplePlayingSession : public RootObject
 {
 public:
-    _DDL_SimplePlayingSession()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_SimplePlayingSession() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_SimplePlayingSession()
-    {
-    }
+    virtual ~_DDL_SimplePlayingSession() {}
 
     _DDL_SimplePlayingSession& operator=(const _DDL_SimplePlayingSession& rSource);
 

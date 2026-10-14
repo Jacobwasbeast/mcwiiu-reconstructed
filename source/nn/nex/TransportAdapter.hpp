@@ -34,8 +34,7 @@ public:
     virtual bool GetLocalURLs(qList<StationURL>* pURLs);
     virtual void ResolveAddress(CallContext* pCallContext, StationURL* pStationURL);
     virtual void ReleaseAddress(const StationURL& rStationURL);
-    virtual void SortAndFilterTargetURLs(const qProtectedList<StationURL>& rTargetURLs,
-        qList<StationURL>* pURLs);
+    virtual void SortAndFilterTargetURLs(const qProtectedList<StationURL>& rTargetURLs, qList<StationURL>* pURLs);
     virtual bool IsExportableURL(const StationURL& rStationURL);
     virtual unsigned int GetUniqueMachineID(const StationURL& rStationURL) const;
     virtual void Load();
@@ -46,30 +45,15 @@ public:
 
     void SetTransportMode(ETransportMode mode);
 
-    ETransportMode GetTransportMode() const
-    {
-        return m_transportMode;
-    }
+    ETransportMode GetTransportMode() const { return m_transportMode; }
 
-    const InetAddress& GetBroadcastAddress() const
-    {
-        return m_broadcastAddress;
-    }
+    const InetAddress& GetBroadcastAddress() const { return m_broadcastAddress; }
 
-    const InetAddress& GetMulticastAddress() const
-    {
-        return m_multicastAddress;
-    }
+    const InetAddress& GetMulticastAddress() const { return m_multicastAddress; }
 
-    const InetAddress& GetLocalAddress() const
-    {
-        return m_localAddress;
-    }
+    const InetAddress& GetLocalAddress() const { return m_localAddress; }
 
-    SocketDriver* GetSocketDriver() const
-    {
-        return m_pSocketDriver;
-    }
+    SocketDriver* GetSocketDriver() const { return m_pSocketDriver; }
     void Trace(unsigned long long uiFilter);
 
     static bool IsSendMultiAddress(const InetAddress* pAddress);

@@ -11,13 +11,9 @@ namespace nex
 class DataStoreReqUpdateInfo : public _DDL_DataStoreReqUpdateInfo
 {
 public:
-    DataStoreReqUpdateInfo()
-    {
-    }
+    DataStoreReqUpdateInfo() {}
 
-    virtual ~DataStoreReqUpdateInfo()
-    {
-    }
+    virtual ~DataStoreReqUpdateInfo() {}
 };
 
 }

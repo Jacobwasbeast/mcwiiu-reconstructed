@@ -5,7 +5,10 @@
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/Scheduler.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 OperationManager::OperationManager()
 {
@@ -94,4 +97,5 @@ bool OperationManager::UnregisterCallback(OperationCallback* callback)
     return false;
 }
 
-}}
+}
+}

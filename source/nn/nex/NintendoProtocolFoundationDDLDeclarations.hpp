@@ -18,15 +18,9 @@ class Message;
 class _DDL_u8KeyValue : public Data
 {
 public:
-    _DDL_u8KeyValue()
-        : Data()
-        , m_uiStructureVersion(0)
-    {
-    }
+    _DDL_u8KeyValue() : Data(), m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_u8KeyValue()
-    {
-    }
+    virtual ~_DDL_u8KeyValue() {}
 
     _DDL_u8KeyValue& operator=(const _DDL_u8KeyValue& rSource);
 
@@ -50,28 +44,17 @@ public:
 class u8KeyValue : public _DDL_u8KeyValue
 {
 public:
-    u8KeyValue()
-        : _DDL_u8KeyValue()
-    {
-    }
+    u8KeyValue() : _DDL_u8KeyValue() {}
 
-    virtual ~u8KeyValue()
-    {
-    }
+    virtual ~u8KeyValue() {}
 };
 
 class _DDL_u32KeyValue : public Data
 {
 public:
-    _DDL_u32KeyValue()
-        : Data()
-        , m_uiStructureVersion(0)
-    {
-    }
+    _DDL_u32KeyValue() : Data(), m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_u32KeyValue()
-    {
-    }
+    virtual ~_DDL_u32KeyValue() {}
 
     _DDL_u32KeyValue& operator=(const _DDL_u32KeyValue& rSource);
 
@@ -95,28 +78,17 @@ public:
 class u32KeyValue : public _DDL_u32KeyValue
 {
 public:
-    u32KeyValue()
-        : _DDL_u32KeyValue()
-    {
-    }
+    u32KeyValue() : _DDL_u32KeyValue() {}
 
-    virtual ~u32KeyValue()
-    {
-    }
+    virtual ~u32KeyValue() {}
 };
 
 class _DDL_u64KeyValue : public Data
 {
 public:
-    _DDL_u64KeyValue()
-        : Data()
-        , m_uiStructureVersion(0)
-    {
-    }
+    _DDL_u64KeyValue() : Data(), m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_u64KeyValue()
-    {
-    }
+    virtual ~_DDL_u64KeyValue() {}
 
     _DDL_u64KeyValue& operator=(const _DDL_u64KeyValue& rSource);
 
@@ -140,29 +112,17 @@ public:
 class u64KeyValue : public _DDL_u64KeyValue
 {
 public:
-    u64KeyValue()
-        : _DDL_u64KeyValue()
-    {
-    }
+    u64KeyValue() : _DDL_u64KeyValue() {}
 
-    virtual ~u64KeyValue()
-    {
-    }
+    virtual ~u64KeyValue() {}
 };
 
 class _DDL_StringKeyValue : public Data
 {
 public:
-    _DDL_StringKeyValue()
-        : Data()
-        , m_uiStructureVersion(0)
-        , m_strValue()
-    {
-    }
+    _DDL_StringKeyValue() : Data(), m_uiStructureVersion(0), m_strValue() {}
 
-    virtual ~_DDL_StringKeyValue()
-    {
-    }
+    virtual ~_DDL_StringKeyValue() {}
 
     _DDL_StringKeyValue& operator=(const _DDL_StringKeyValue& rSource);
 
@@ -186,29 +146,17 @@ public:
 class StringKeyValue : public _DDL_StringKeyValue
 {
 public:
-    StringKeyValue()
-        : _DDL_StringKeyValue()
-    {
-    }
+    StringKeyValue() : _DDL_StringKeyValue() {}
 
-    virtual ~StringKeyValue()
-    {
-    }
+    virtual ~StringKeyValue() {}
 };
 
 class _DDL_NintendoNotificationEventGeneral : public Data
 {
 public:
-    _DDL_NintendoNotificationEventGeneral()
-        : Data()
-        , m_uiStructureVersion(0)
-        , m_strStrParam()
-    {
-    }
+    _DDL_NintendoNotificationEventGeneral() : Data(), m_uiStructureVersion(0), m_strStrParam() {}
 
-    virtual ~_DDL_NintendoNotificationEventGeneral()
-    {
-    }
+    virtual ~_DDL_NintendoNotificationEventGeneral() {}
 
     _DDL_NintendoNotificationEventGeneral& operator=(const _DDL_NintendoNotificationEventGeneral& rSource);
 
@@ -234,28 +182,17 @@ public:
 class NintendoNotificationEventGeneral : public _DDL_NintendoNotificationEventGeneral
 {
 public:
-    NintendoNotificationEventGeneral()
-        : _DDL_NintendoNotificationEventGeneral()
-    {
-    }
+    NintendoNotificationEventGeneral() : _DDL_NintendoNotificationEventGeneral() {}
 
-    virtual ~NintendoNotificationEventGeneral()
-    {
-    }
+    virtual ~NintendoNotificationEventGeneral() {}
 };
 
 class _DDL_NintendoNotificationEventProfile : public Data
 {
 public:
-    _DDL_NintendoNotificationEventProfile()
-        : Data()
-        , m_uiStructureVersion(0)
-    {
-    }
+    _DDL_NintendoNotificationEventProfile() : Data(), m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_NintendoNotificationEventProfile()
-    {
-    }
+    virtual ~_DDL_NintendoNotificationEventProfile() {}
 
     _DDL_NintendoNotificationEventProfile& operator=(const _DDL_NintendoNotificationEventProfile& rSource);
 
@@ -282,28 +219,17 @@ public:
 class NintendoNotificationEventProfile : public _DDL_NintendoNotificationEventProfile
 {
 public:
-    NintendoNotificationEventProfile()
-        : _DDL_NintendoNotificationEventProfile()
-    {
-    }
+    NintendoNotificationEventProfile() : _DDL_NintendoNotificationEventProfile() {}
 
-    virtual ~NintendoNotificationEventProfile()
-    {
-    }
+    virtual ~NintendoNotificationEventProfile() {}
 };
 
 class _DDL_NintendoNotificationEventKeyValue : public Data
 {
 public:
-    _DDL_NintendoNotificationEventKeyValue()
-        : Data()
-        , m_uiStructureVersion(0)
-    {
-    }
+    _DDL_NintendoNotificationEventKeyValue() : Data(), m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_NintendoNotificationEventKeyValue()
-    {
-    }
+    virtual ~_DDL_NintendoNotificationEventKeyValue() {}
 
     _DDL_NintendoNotificationEventKeyValue& operator=(const _DDL_NintendoNotificationEventKeyValue& rSource);
 
@@ -329,14 +255,9 @@ public:
 class NintendoNotificationEventKeyValue : public _DDL_NintendoNotificationEventKeyValue
 {
 public:
-    NintendoNotificationEventKeyValue()
-        : _DDL_NintendoNotificationEventKeyValue()
-    {
-    }
+    NintendoNotificationEventKeyValue() : _DDL_NintendoNotificationEventKeyValue() {}
 
-    virtual ~NintendoNotificationEventKeyValue()
-    {
-    }
+    virtual ~NintendoNotificationEventKeyValue() {}
 };
 
 class NintendoProtocolFoundationDDLDeclarations : public DDLDeclarations
@@ -344,13 +265,9 @@ class NintendoProtocolFoundationDDLDeclarations : public DDLDeclarations
 public:
     NintendoProtocolFoundationDDLDeclarations();
 
-    virtual ~NintendoProtocolFoundationDDLDeclarations()
-    {
-    }
+    virtual ~NintendoProtocolFoundationDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

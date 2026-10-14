@@ -29,7 +29,7 @@ _DDL_DataStoreReqGetNotificationUrlInfo& _DDL_DataStoreReqGetNotificationUrlInfo
 }
 
 void _DDL_DataStoreReqGetNotificationUrlInfo::Add(Message* pMessage,
-    const _DDL_DataStoreReqGetNotificationUrlInfo& rSource)
+                                                  const _DDL_DataStoreReqGetNotificationUrlInfo& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -58,14 +58,13 @@ void _DDL_DataStoreReqGetNotificationUrlInfo::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
 void _DDL_DataStoreReqGetNotificationUrlInfo::Extract(Message* pMessage,
-    _DDL_DataStoreReqGetNotificationUrlInfo* pDestination)
+                                                      _DDL_DataStoreReqGetNotificationUrlInfo* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

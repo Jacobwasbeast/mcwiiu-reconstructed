@@ -22,19 +22,11 @@ public:
         m_bError = false;
     }
 
-    virtual ~LiteByteStream()
-    {
-    }
+    virtual ~LiteByteStream() {}
 
-    LiteBuffer<Capacity>& GetBuffer()
-    {
-        return m_buffer;
-    }
+    LiteBuffer<Capacity>& GetBuffer() { return m_buffer; }
 
-    const LiteBuffer<Capacity>& GetBuffer() const
-    {
-        return m_buffer;
-    }
+    const LiteBuffer<Capacity>& GetBuffer() const { return m_buffer; }
 
     void Clear()
     {

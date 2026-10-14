@@ -25,14 +25,9 @@ public:
     class FixedBufferPool : public RootObject
     {
     public:
-        explicit FixedBufferPool(unsigned int uiCapacity)
-            : m_buffer(uiCapacity)
-        {
-        }
+        explicit FixedBufferPool(unsigned int uiCapacity) : m_buffer(uiCapacity) {}
 
-        virtual ~FixedBufferPool()
-        {
-        }
+        virtual ~FixedBufferPool() {}
 
         char* Add(const void* pData, unsigned int uiSize);
 
@@ -66,17 +61,13 @@ public:
     size_t ReadCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount);
     int HeaderCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount);
     size_t WriteCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount);
-    int ProgressCallback(double dDownloadTotal, double dDownloaded, double dUploadTotal,
-        double dUploaded);
+    int ProgressCallback(double dDownloadTotal, double dDownloaded, double dUploadTotal, double dUploaded);
 
-    static size_t StaticReadCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount,
-        void* pUser);
-    static size_t StaticHeaderCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount,
-        void* pUser);
-    static size_t StaticWriteCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount,
-        void* pUser);
-    static int StaticProgressCallback(void* pUser, double dDownloadTotal, double dDownloaded,
-        double dUploadTotal, double dUploaded);
+    static size_t StaticReadCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount, void* pUser);
+    static size_t StaticHeaderCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount, void* pUser);
+    static size_t StaticWriteCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount, void* pUser);
+    static int StaticProgressCallback(void* pUser, double dDownloadTotal, double dDownloaded, double dUploadTotal,
+                                      double dUploaded);
 
     void SetupCurlParameter();
     void RunThread(void* pParameter);

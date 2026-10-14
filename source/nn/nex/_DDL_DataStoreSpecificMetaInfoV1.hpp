@@ -15,14 +15,9 @@ class Message;
 class _DDL_DataStoreSpecificMetaInfoV1 : public RootObject
 {
 public:
-    _DDL_DataStoreSpecificMetaInfoV1()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreSpecificMetaInfoV1() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreSpecificMetaInfoV1()
-    {
-    }
+    virtual ~_DDL_DataStoreSpecificMetaInfoV1() {}
 
     _DDL_DataStoreSpecificMetaInfoV1& operator=(const _DDL_DataStoreSpecificMetaInfoV1& rSource);
     bool operator==(const _DDL_DataStoreSpecificMetaInfoV1& rSource) const;

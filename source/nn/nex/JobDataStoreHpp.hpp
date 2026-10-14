@@ -28,15 +28,15 @@ public:
     JobDataStoreHpp();
     virtual ~JobDataStoreHpp();
 
-    virtual qResult Initialize(unsigned int uiCallId, ClientProtocol* pProtocol,
-        const Buffer& rRequest, unsigned int uiThreadPriority, unsigned int uiPrincipalId,
-        const String& rPassword, const String& rAccessKey, const String& rUrl, int iTimeout,
-        ServiceHttpClient::PriorityType priorityType);
+    virtual qResult Initialize(unsigned int uiCallId, ClientProtocol* pProtocol, const Buffer& rRequest,
+                               unsigned int uiThreadPriority, unsigned int uiPrincipalId, const String& rPassword,
+                               const String& rAccessKey, const String& rUrl, int iTimeout,
+                               ServiceHttpClient::PriorityType priorityType);
     virtual void PrepareRequest(HttpConnection* pConnection);
     virtual void ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode);
     virtual bool ProcessResponse(const unsigned char* pData, unsigned int uiSize);
-    virtual unsigned int PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer,
-        unsigned int uiSize, bool* pbLastChunk);
+    virtual unsigned int PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer, unsigned int uiSize,
+                                           bool* pbLastChunk);
 
     void CompleteJob(const qResult& rResult);
     void PrepareRequestHeaders();

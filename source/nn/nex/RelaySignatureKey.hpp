@@ -13,12 +13,12 @@ class RelaySignatureKey
 {
 public:
     RelaySignatureKey()
-        : m_currentUTCTime()
-        , m_relayAddress()
-        , m_relayPort(0)
-        , m_relayAddressType(0)
-        , m_relayMode(0)
-        , m_gameServerID(0xffffffff)
+        : m_currentUTCTime(),
+          m_relayAddress(),
+          m_relayPort(0),
+          m_relayAddressType(0),
+          m_relayMode(0),
+          m_gameServerID(0xffffffff)
     {
     }
 

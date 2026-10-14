@@ -26,8 +26,8 @@ const unsigned int RESPONSE_METHOD_FLAG = 0x8000;
 
 }
 
-void _Proto_TicketGrantingProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_TicketGrantingProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                                  bool* pResponseRequired, EndPoint*)
 {
     const uint16_t uiMethodID = static_cast<uint16_t>(ExtractMethodID(pRequest));
     switch (uiMethodID)
@@ -46,8 +46,7 @@ void _Proto_TicketGrantingProtocolServer::DispatchProtocolMessage(
         Buffer ticket;
         RVConnectionData connectionData;
         String returnMessage;
-        const qResult result = Login(userName, &uiPrincipalID, &ticket, &connectionData,
-                                     &returnMessage);
+        const qResult result = Login(userName, &uiPrincipalID, &ticket, &connectionData, &returnMessage);
         AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_LOGIN);
         _Type_qresult::Add(pResponse, result);
         _Type_uint32::Add(pResponse, uiPrincipalID);
@@ -70,8 +69,7 @@ void _Proto_TicketGrantingProtocolServer::DispatchProtocolMessage(
         CustomDataAny::Extract(pRequest, &customData);
         if (pRequest->HasError())
             break;
-        const qResult result = LoginEx(userName, &uiPrincipalID, &ticket, &connectionData,
-                                       &returnMessage, customData);
+        const qResult result = LoginEx(userName, &uiPrincipalID, &ticket, &connectionData, &returnMessage, customData);
         AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_LOGIN_EX);
         _Type_qresult::Add(pResponse, result);
         _Type_uint32::Add(pResponse, uiPrincipalID);
@@ -128,8 +126,7 @@ void _Proto_TicketGrantingProtocolServer::DispatchProtocolMessage(
         unsigned int uiPrincipalID;
         Buffer ticket;
         RVConnectionData connectionData;
-        const qResult result = LoginWithContext(loginData, &uiPrincipalID, &ticket,
-                                                &connectionData);
+        const qResult result = LoginWithContext(loginData, &uiPrincipalID, &ticket, &connectionData);
         AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_LOGIN_WITH_CONTEXT);
         _Type_qresult::Add(pResponse, result);
         _Type_uint32::Add(pResponse, uiPrincipalID);

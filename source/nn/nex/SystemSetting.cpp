@@ -2,7 +2,10 @@
 
 #include <algorithm>
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 SystemSetting::SettingList* SystemSetting::GetList()
 {
@@ -11,7 +14,10 @@ SystemSetting::SettingList* SystemSetting::GetList()
 }
 
 SystemSetting::SystemSetting(const wchar_t* name, unsigned int value)
-    : m_link(), m_name(name), m_value(value), m_state(false)
+    : m_link(),
+      m_name(name),
+      m_value(value),
+      m_state(false)
 {
     GetList()->push_back(this);
 }
@@ -23,4 +29,5 @@ SystemSetting::~SystemSetting()
     GetList()->erase(position);
 }
 
-}}
+}
+}

@@ -19,14 +19,9 @@ class Message;
 class _DDL_DataStoreChangeMetaParamV1 : public RootObject
 {
 public:
-    _DDL_DataStoreChangeMetaParamV1()
-        : m_uiStructureVersion(0), m_Tags(0)
-    {
-    }
+    _DDL_DataStoreChangeMetaParamV1() : m_uiStructureVersion(0), m_Tags(0) {}
 
-    virtual ~_DDL_DataStoreChangeMetaParamV1()
-    {
-    }
+    virtual ~_DDL_DataStoreChangeMetaParamV1() {}
 
     _DDL_DataStoreChangeMetaParamV1& operator=(const _DDL_DataStoreChangeMetaParamV1& rSource);
     bool operator==(const _DDL_DataStoreChangeMetaParamV1& rSource) const;

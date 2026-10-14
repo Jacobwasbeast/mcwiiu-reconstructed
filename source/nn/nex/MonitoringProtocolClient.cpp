@@ -34,18 +34,15 @@ ProtoReturnFunction s_ProtoReturn[METHOD_ID_COUNT];
 
 }
 
-MonitoringProtocolClient::MonitoringProtocolClient(unsigned short uiProtocolID)
-    : ClientProtocol(1)
+MonitoringProtocolClient::MonitoringProtocolClient(unsigned short uiProtocolID) : ClientProtocol(1)
 {
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new MonitoringProtocolClient());
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(uiProtocolID, new MonitoringProtocolClient());
 }
 
-void MonitoringProtocolClient::ExtractCallSpecificResults(Message* pMessage,
-                                                          ProtocolCallContext* pCallContext)
+void MonitoringProtocolClient::ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
@@ -94,8 +91,7 @@ bool MonitoringProtocolClient::CallPingDaemon(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool MonitoringProtocolClient::PingDaemon_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                         Message* pMessage,
+bool MonitoringProtocolClient::PingDaemon_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                          bool* pReturnValue)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -129,8 +125,7 @@ void MonitoringProtocolClient::ProtoReturn_GetClusterMembers(Message* pMessage, 
     }
 }
 
-bool MonitoringProtocolClient::CallGetClusterMembers(ProtocolCallContext* pCallContext,
-                                                     qList<String>* pClusterMembers)
+bool MonitoringProtocolClient::CallGetClusterMembers(ProtocolCallContext* pCallContext, qList<String>* pClusterMembers)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -157,8 +152,7 @@ bool MonitoringProtocolClient::CallGetClusterMembers(ProtocolCallContext* pCallC
     return bSent;
 }
 
-bool MonitoringProtocolClient::GetClusterMembers_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
+bool MonitoringProtocolClient::GetClusterMembers_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                 qList<String>* pClusterMembers)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();

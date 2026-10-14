@@ -17,18 +17,9 @@ class Message;
 class _DDL_UserMessage : public Data
 {
 public:
-    _DDL_UserMessage()
-        : Data()
-        , m_uiStructureVersion(0)
-        , m_ReceptionTime()
-        , m_Subject()
-        , m_SenderName()
-    {
-    }
+    _DDL_UserMessage() : Data(), m_uiStructureVersion(0), m_ReceptionTime(), m_Subject(), m_SenderName() {}
 
-    virtual ~_DDL_UserMessage()
-    {
-    }
+    virtual ~_DDL_UserMessage() {}
 
     _DDL_UserMessage& operator=(const _DDL_UserMessage& rSource);
     bool operator==(const _DDL_UserMessage& rSource) const;

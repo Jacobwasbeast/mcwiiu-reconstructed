@@ -24,14 +24,13 @@ const PacketType RELAY_PACKET_TYPE = static_cast<PacketType>(0xF);
 }
 
 RelayStream::RelayStream()
-    : Stream(Relay)
-    , m_pTransport(0)
-    , m_routingTable(g_streamSettings[Unknown1].Get().GetMaxSilenceTime()
-          * RELAY_ROUTING_TIMEOUT_FACTOR)
-    , m_uiGameServerID(RELAY_INVALID_ID)
-    , m_uiRelayGatheringID(RELAY_INVALID_ID)
-    , m_pPingCallback(0)
-    , m_unknown3C(0)
+    : Stream(Relay),
+      m_pTransport(0),
+      m_routingTable(g_streamSettings[Unknown1].Get().GetMaxSilenceTime() * RELAY_ROUTING_TIMEOUT_FACTOR),
+      m_uiGameServerID(RELAY_INVALID_ID),
+      m_uiRelayGatheringID(RELAY_INVALID_ID),
+      m_pPingCallback(0),
+      m_unknown3C(0)
 {
 }
 
@@ -39,10 +38,9 @@ bool RelayStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char, Pa
 {
     bool bResult = false;
     Buffer* pPayload = pPacket->m_pPayload;
-    InetAddress source(pPacket->GetRelayHeader().m_uiSourceAddress,
-        pPacket->GetRelayHeader().m_uiSourcePort);
+    InetAddress source(pPacket->GetRelayHeader().m_uiSourceAddress, pPacket->GetRelayHeader().m_uiSourcePort);
     InetAddress destination(pPacket->GetRelayHeader().m_uiDestinationAddress,
-        pPacket->GetRelayHeader().m_uiDestinationPort);
+                            pPacket->GetRelayHeader().m_uiDestinationPort);
 
     if ((pPacket->GetRelayHeader().m_uiType & RELAY_TYPE_MASK) == RELAY_TYPE_DATA)
     {
@@ -58,13 +56,13 @@ bool RelayStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char, Pa
             pPacket->ReleaseRef();
         }
     }
-    else if ((pPacket->GetRelayHeader().m_uiType & RELAY_TYPE_MASK) == RELAY_TYPE_PING &&
-        pPacket->GetRelayPingHeader().m_unknown0 == 0)
+    else if ((pPacket->GetRelayHeader().m_uiType & RELAY_TYPE_MASK) == RELAY_TYPE_PING
+             && pPacket->GetRelayPingHeader().m_unknown0 == 0)
     {
         if (m_pPingCallback != 0)
         {
-            m_pPingCallback(&m_unknown3C, &pPacket->m_address, uiPort,
-                pPacket->GetRelayHeader().m_uiTimeStamp, &pPacket->GetRelayPingHeader(), pPayload);
+            m_pPingCallback(&m_unknown3C, &pPacket->m_address, uiPort, pPacket->GetRelayHeader().m_uiTimeStamp,
+                            &pPacket->GetRelayPingHeader(), pPayload);
         }
 
         bResult = true;

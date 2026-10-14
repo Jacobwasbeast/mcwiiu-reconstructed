@@ -16,23 +16,16 @@ class Message;
 class _DDL_DataStoreGetMetaParam : public RootObject
 {
 public:
-    _DDL_DataStoreGetMetaParam()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreGetMetaParam() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreGetMetaParam()
-    {
-    }
+    virtual ~_DDL_DataStoreGetMetaParam() {}
 
     _DDL_DataStoreGetMetaParam& operator=(const _DDL_DataStoreGetMetaParam& rSource);
 
     bool operator==(const _DDL_DataStoreGetMetaParam& rSource) const
     {
-        return m_uiDataId == rSource.m_uiDataId &&
-            m_PersistenceTarget == rSource.m_PersistenceTarget &&
-            m_uiResultOption == rSource.m_uiResultOption &&
-            m_uiAccessPassword == rSource.m_uiAccessPassword;
+        return m_uiDataId == rSource.m_uiDataId && m_PersistenceTarget == rSource.m_PersistenceTarget
+               && m_uiResultOption == rSource.m_uiResultOption && m_uiAccessPassword == rSource.m_uiAccessPassword;
     }
 
     static void Add(Message* pMessage, const _DDL_DataStoreGetMetaParam& rSource);

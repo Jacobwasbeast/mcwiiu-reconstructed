@@ -34,11 +34,11 @@ public:
     virtual ~JobDataStorePostObject();
 
     virtual qResult Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
-        const typename TTraits::TPreparePostParam& rParam, unsigned int uiThreadPriority,
-        bool bUseHttps, unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate,
-        int iMinimumTimeout, typename TTraits::TDataId* pDataId,
-        DataStorePostObjectEventListener* pListener, unsigned int uiBufferSize,
-        const unsigned char* pData, bool bCopyData);
+                               const typename TTraits::TPreparePostParam& rParam, unsigned int uiThreadPriority,
+                               bool bUseHttps, unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate,
+                               int iMinimumTimeout, typename TTraits::TDataId* pDataId,
+                               DataStorePostObjectEventListener* pListener, unsigned int uiBufferSize,
+                               const unsigned char* pData, bool bCopyData);
 
     void CompleteJob(const qResult& rResult);
     void StepLogicServerPreparePostObject();
@@ -87,25 +87,25 @@ private:
 
 template <typename TTraits>
 JobDataStorePostObject<TTraits>::JobDataStorePostObject()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_pClient(0)
-    , m_pFileServerClient(0)
-    , m_bUseHttps(true)
-    , m_uiTransferBufferSize(0)
-    , m_uiThreadPriority(0)
-    , m_uiMinimumTransferRate(0)
-    , m_iMinimumTimeout(0)
-    , m_pListener(0)
-    , m_uiBufferSize(0)
-    , m_context()
-    , m_prepareParam()
-    , m_pDataId(0)
-    , m_reqPostInfo()
-    , m_pCopiedData(0)
-    , m_pData(0)
-    , m_postResult(true)
-    , m_pHttpListener(0)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_pClient(0),
+      m_pFileServerClient(0),
+      m_bUseHttps(true),
+      m_uiTransferBufferSize(0),
+      m_uiThreadPriority(0),
+      m_uiMinimumTransferRate(0),
+      m_iMinimumTimeout(0),
+      m_pListener(0),
+      m_uiBufferSize(0),
+      m_context(),
+      m_prepareParam(),
+      m_pDataId(0),
+      m_reqPostInfo(),
+      m_pCopiedData(0),
+      m_pData(0),
+      m_postResult(true),
+      m_pHttpListener(0)
 {
 }
 
@@ -119,12 +119,11 @@ JobDataStorePostObject<TTraits>::~JobDataStorePostObject()
 }
 
 template <typename TTraits>
-qResult JobDataStorePostObject<TTraits>::Initialize(unsigned int uiCallId,
-    DataStoreLogicServerClientInterface* pClient,
-    const typename TTraits::TPreparePostParam& rParam, unsigned int uiThreadPriority,
-    bool bUseHttps, unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate,
-    int iMinimumTimeout, typename TTraits::TDataId* pDataId,
-    DataStorePostObjectEventListener* pListener, unsigned int uiBufferSize,
+qResult JobDataStorePostObject<TTraits>::Initialize(
+    unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
+    const typename TTraits::TPreparePostParam& rParam, unsigned int uiThreadPriority, bool bUseHttps,
+    unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate, int iMinimumTimeout,
+    typename TTraits::TDataId* pDataId, DataStorePostObjectEventListener* pListener, unsigned int uiBufferSize,
     const unsigned char* pData, bool bCopyData)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -153,20 +152,16 @@ qResult JobDataStorePostObject<TTraits>::Initialize(unsigned int uiCallId,
         }
     }
 
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     m_context.SetCredentials(static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
-    SetStep(Step(static_cast<Step::Function>(
-                     &JobDataStorePostObject::StepLogicServerPreparePostObject),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStorePostObject::StepLogicServerPreparePostObject), L""));
     return qResult(true);
 }
 
 template <typename TTraits>
 void JobDataStorePostObject<TTraits>::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (rResult)
@@ -189,8 +184,7 @@ void JobDataStorePostObject<TTraits>::CompleteJob(const qResult& rResult)
 template <typename TTraits>
 void JobDataStorePostObject<TTraits>::StepLogicServerPreparePostObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -204,19 +198,16 @@ void JobDataStorePostObject<TTraits>::StepLogicServerPreparePostObject()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(&JobDataStorePostObject::StepFileServerPostObject),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context, new Step(static_cast<Step::Function>(&JobDataStorePostObject::StepFileServerPostObject), L""));
 }
 
 template <typename TTraits>
 void JobDataStorePostObject<TTraits>::StepFileServerPostObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -231,13 +222,13 @@ void JobDataStorePostObject<TTraits>::StepFileServerPostObject()
 
     m_context.Reset();
     const unsigned char* pData = m_pCopiedData != 0 ? m_pCopiedData : m_pData;
-    m_pHttpListener = new DataStorePostHttpEventListener(m_uiCallId,
-        m_reqPostInfo.m_RequestHeaders, m_reqPostInfo.m_FormFields, m_reqPostInfo.m_RootCaCert,
+    m_pHttpListener = new DataStorePostHttpEventListener(
+        m_uiCallId, m_reqPostInfo.m_RequestHeaders, m_reqPostInfo.m_FormFields, m_reqPostInfo.m_RootCaCert,
         m_uiThreadPriority, m_uiTransferBufferSize, pData, m_prepareParam.m_uiSize, m_pListener);
     String url = (m_reqPostInfo.m_Url.FindSubstringNoCase(L"http://") == 0
-                     || m_reqPostInfo.m_Url.FindSubstringNoCase(L"https://") == 0)
-        ? m_reqPostInfo.m_Url
-        : (m_bUseHttps ? L"https://" : L"http://") + m_reqPostInfo.m_Url;
+                  || m_reqPostInfo.m_Url.FindSubstringNoCase(L"https://") == 0)
+                     ? m_reqPostInfo.m_Url
+                     : (m_bUseHttps ? L"https://" : L"http://") + m_reqPostInfo.m_Url;
     if (m_uiMinimumTransferRate != 0)
     {
         int iTimeout = m_prepareParam.m_uiSize / m_uiMinimumTransferRate * MILLISECONDS_PER_SECOND;
@@ -254,20 +245,17 @@ void JobDataStorePostObject<TTraits>::StepFileServerPostObject()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStorePostObject::StepLogicServerCompletePostObject),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context,
+        new Step(static_cast<Step::Function>(&JobDataStorePostObject::StepLogicServerCompletePostObject), L""));
 }
 
 template <typename TTraits>
 void JobDataStorePostObject<TTraits>::StepLogicServerCompletePostObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -293,20 +281,17 @@ void JobDataStorePostObject<TTraits>::StepLogicServerCompletePostObject()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStorePostObject::StepWaitingLogicServerCompletePostObject),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context,
+        new Step(static_cast<Step::Function>(&JobDataStorePostObject::StepWaitingLogicServerCompletePostObject), L""));
 }
 
 template <typename TTraits>
 void JobDataStorePostObject<TTraits>::StepWaitingLogicServerCompletePostObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));

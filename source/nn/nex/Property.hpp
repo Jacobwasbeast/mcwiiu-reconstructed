@@ -16,14 +16,9 @@ class Message;
 class _DDL_Property : public RootObject
 {
 public:
-    _DDL_Property()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_Property() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_Property()
-    {
-    }
+    virtual ~_DDL_Property() {}
 
     _DDL_Property& operator=(const _DDL_Property& rSource);
     bool operator==(const _DDL_Property& rSource) const;
@@ -51,14 +46,9 @@ public:
 class _DDL_PropertyVariant : public RootObject
 {
 public:
-    _DDL_PropertyVariant()
-        : m_uiStructureVersion(0), m_Value()
-    {
-    }
+    _DDL_PropertyVariant() : m_uiStructureVersion(0), m_Value() {}
 
-    virtual ~_DDL_PropertyVariant()
-    {
-    }
+    virtual ~_DDL_PropertyVariant() {}
 
     _DDL_PropertyVariant& operator=(const _DDL_PropertyVariant& rSource);
     bool operator==(const _DDL_PropertyVariant& rSource) const;

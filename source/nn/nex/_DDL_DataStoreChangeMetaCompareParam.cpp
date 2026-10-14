@@ -17,8 +17,7 @@ const uint8_t CHANGE_META_COMPARE_PARAM_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStoreChangeMetaCompareParam::_DDL_DataStoreChangeMetaCompareParam()
-    : m_uiStructureVersion(0), m_Tags(0)
+_DDL_DataStoreChangeMetaCompareParam::_DDL_DataStoreChangeMetaCompareParam() : m_uiStructureVersion(0), m_Tags(0)
 {
 }
 
@@ -39,8 +38,7 @@ _DDL_DataStoreChangeMetaCompareParam& _DDL_DataStoreChangeMetaCompareParam::oper
     return *this;
 }
 
-void _DDL_DataStoreChangeMetaCompareParam::Add(Message* pMessage,
-    const _DDL_DataStoreChangeMetaCompareParam& rSource)
+void _DDL_DataStoreChangeMetaCompareParam::Add(Message* pMessage, const _DDL_DataStoreChangeMetaCompareParam& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -81,7 +79,7 @@ void _DDL_DataStoreChangeMetaCompareParam::Add(Message* pMessage,
 }
 
 void _DDL_DataStoreChangeMetaCompareParam::Extract(Message* pMessage,
-    _DDL_DataStoreChangeMetaCompareParam* pDestination)
+                                                   _DDL_DataStoreChangeMetaCompareParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

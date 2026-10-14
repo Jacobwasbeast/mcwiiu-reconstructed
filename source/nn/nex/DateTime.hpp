@@ -17,14 +17,10 @@ class DateTime : public RootObject
 public:
     DateTime();
     DateTime(const DateTime& other);
-    DateTime(uint16_t year, uint8_t month, uint8_t day,
-        uint8_t hour, uint8_t minute, uint8_t second);
+    DateTime(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second);
     explicit DateTime(const OSCalendarTime& calendarTime);
 
-    explicit DateTime(uint64_t value)
-        : m_value(value)
-    {
-    }
+    explicit DateTime(uint64_t value) : m_value(value) {}
 
     DateTime& operator=(const DateTime& other);
 

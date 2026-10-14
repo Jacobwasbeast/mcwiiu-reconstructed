@@ -23,8 +23,8 @@ public:
     virtual ~NATTraversalStream();
 
     virtual void DoWork();
-    virtual void ReceiveIncomingMsg(const InetAddress& rAddress, Stream::Type type,
-        unsigned char uiStreamID, Buffer* pPayload, Time receptionTime, unsigned short uiPort);
+    virtual void ReceiveIncomingMsg(const InetAddress& rAddress, Stream::Type type, unsigned char uiStreamID,
+                                    Buffer* pPayload, Time receptionTime, unsigned short uiPort);
 
     void SendMsg(const StationURL& rStationURL, Buffer* pPayload, unsigned char uiTTL);
 

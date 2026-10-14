@@ -18,8 +18,7 @@ const uint8_t PREPARE_POST_PARAM_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStorePreparePostParam& _DDL_DataStorePreparePostParam::operator=(
-    const _DDL_DataStorePreparePostParam& rSource)
+_DDL_DataStorePreparePostParam& _DDL_DataStorePreparePostParam::operator=(const _DDL_DataStorePreparePostParam& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiSize = rSource.m_uiSize;
@@ -38,8 +37,7 @@ _DDL_DataStorePreparePostParam& _DDL_DataStorePreparePostParam::operator=(
     return *this;
 }
 
-void _DDL_DataStorePreparePostParam::Add(Message* pMessage,
-    const _DDL_DataStorePreparePostParam& rSource)
+void _DDL_DataStorePreparePostParam::Add(Message* pMessage, const _DDL_DataStorePreparePostParam& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -82,8 +80,7 @@ void _DDL_DataStorePreparePostParam::Add(Message* pMessage,
     }
 }
 
-void _DDL_DataStorePreparePostParam::Extract(Message* pMessage,
-    _DDL_DataStorePreparePostParam* pDestination)
+void _DDL_DataStorePreparePostParam::Extract(Message* pMessage, _DDL_DataStorePreparePostParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 
@@ -184,8 +181,8 @@ void _DDL_DataStorePreparePostParam::Extract(Message* pMessage,
         return;
     }
 
-    _Type_qvector<DDLClassMetaType<DataStoreRatingInitParamWithSlot> >::Extract(
-        pMessage, &pDestination->m_RatingInitParams);
+    _Type_qvector<DDLClassMetaType<DataStoreRatingInitParamWithSlot> >::Extract(pMessage,
+                                                                                &pDestination->m_RatingInitParams);
 
     if (pMessage->HasError())
     {

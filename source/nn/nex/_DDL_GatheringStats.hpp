@@ -16,14 +16,9 @@ class Message;
 class _DDL_GatheringStats : public RootObject
 {
 public:
-    _DDL_GatheringStats()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_GatheringStats() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_GatheringStats()
-    {
-    }
+    virtual ~_DDL_GatheringStats() {}
 
     static void Add(Message* pMessage, const _DDL_GatheringStats& rSource);
     static void Extract(Message* pMessage, _DDL_GatheringStats* pDestination);

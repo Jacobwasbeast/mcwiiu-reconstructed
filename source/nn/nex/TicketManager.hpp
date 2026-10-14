@@ -28,14 +28,13 @@ public:
     explicit TicketManager(AuthenticationClient* pAuthenticationClient);
     ~TicketManager();
 
-    bool Login(CallContext* pCallContext, qResult* pResult, const String& rUserName,
-        const char* pPassword, unsigned int* pPrincipalID, RVConnectionData* pConnectionData,
-        String* pReturnMessage, AnyObjectHolder<Data, String>* pCustomData);
-    bool LoginWithData(CallContext* pCallContext, qResult* pResult, const char* pPassword,
-        unsigned int* pPrincipalID, RVConnectionData* pConnectionData,
-        CustomDataHolder<LoginData>* pLoginData);
-    bool AcquireTicket(CallContext* pCallContext, unsigned int uiSourcePrincipalID,
-        unsigned int uiTargetPrincipalID, Ticket** ppTicket);
+    bool Login(CallContext* pCallContext, qResult* pResult, const String& rUserName, const char* pPassword,
+               unsigned int* pPrincipalID, RVConnectionData* pConnectionData, String* pReturnMessage,
+               AnyObjectHolder<Data, String>* pCustomData);
+    bool LoginWithData(CallContext* pCallContext, qResult* pResult, const char* pPassword, unsigned int* pPrincipalID,
+                       RVConnectionData* pConnectionData, CustomDataHolder<LoginData>* pLoginData);
+    bool AcquireTicket(CallContext* pCallContext, unsigned int uiSourcePrincipalID, unsigned int uiTargetPrincipalID,
+                       Ticket** ppTicket);
     Ticket* FindTicket(unsigned int uiTargetPrincipalID);
     void InsertTicket(unsigned int uiTargetPrincipalID, Ticket* pTicket);
     void ReleaseTicket(Ticket* pTicket);

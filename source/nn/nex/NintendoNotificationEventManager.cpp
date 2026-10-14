@@ -10,11 +10,10 @@ namespace nn
 namespace nex
 {
 
-NintendoNotificationEventManager::NintendoNotificationEventManager(
-    NintendoNotificationEventManager* pParent)
-    : _Proto_NintendoNotificationEventProtocolServer(1)
-    , m_handlers()
-    , m_pParent(pParent)
+NintendoNotificationEventManager::NintendoNotificationEventManager(NintendoNotificationEventManager* pParent)
+    : _Proto_NintendoNotificationEventProtocolServer(1),
+      m_handlers(),
+      m_pParent(pParent)
 {
     SetFlag(8);
     SetName(String(L"NintendoNotificationEventManager"));
@@ -55,8 +54,7 @@ uint32_t NintendoNotificationEventManager::UnregisterNintendoNotificationEventHa
     return 0;
 }
 
-void NintendoNotificationEventManager::ProcessNintendoNotificationEvent(
-    const NintendoNotificationEvent& rEvent)
+void NintendoNotificationEventManager::ProcessNintendoNotificationEvent(const NintendoNotificationEvent& rEvent)
 {
     if (m_pParent != 0)
     {

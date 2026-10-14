@@ -13,13 +13,9 @@ class NintendoAuthenticationDDLDeclarations : public DDLDeclarations
 public:
     NintendoAuthenticationDDLDeclarations();
 
-    virtual ~NintendoAuthenticationDDLDeclarations()
-    {
-    }
+    virtual ~NintendoAuthenticationDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

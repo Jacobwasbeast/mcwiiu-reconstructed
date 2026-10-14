@@ -10,8 +10,8 @@ namespace nn
 namespace nex
 {
 
-void _Proto_MonitoringProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_MonitoringProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                              bool* pResponseRequired, EndPoint*)
 {
     const uint16_t uiMethodID = static_cast<uint16_t>(ExtractMethodID(pRequest));
     switch (uiMethodID)
@@ -31,8 +31,8 @@ void _Proto_MonitoringProtocolServer::DispatchProtocolMessage(
         AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_GET_CLUSTER_MEMBERS);
         _Type_std_list<_Type_string>::Add(pResponse, clusterMembers);
     }
-    *pResponseRequired = true;
-    return;
+        *pResponseRequired = true;
+        return;
     default:
         SetCallError(qResult(RESULT_NOT_IMPLEMENTED));
         return;

@@ -13,10 +13,7 @@ namespace nn
 namespace nex
 {
 
-RVClientCore::RVClientCore()
-    : RefCountedObject()
-    , m_instanceControl(ClassID)
-    , m_serverProtocols()
+RVClientCore::RVClientCore() : RefCountedObject(), m_instanceControl(ClassID), m_serverProtocols()
 {
     m_instanceControl.SetDelegatorInstance(this);
     Core::AcquireInstance();
@@ -52,8 +49,7 @@ void RVClientCore::ReleaseInstance()
     Core::ReleaseInstance();
 }
 
-unsigned int RVClientCore::RegisterServerProtocol(unsigned short uiProtocolID,
-                                                  ServerProtocol* pProtocol)
+unsigned int RVClientCore::RegisterServerProtocol(unsigned short uiProtocolID, ServerProtocol* pProtocol)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_serverProtocols.find(uiProtocolID) != m_serverProtocols.end())

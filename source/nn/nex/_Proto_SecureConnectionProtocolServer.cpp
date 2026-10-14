@@ -20,8 +20,8 @@ _Proto_SecureConnectionProtocolServer::~_Proto_SecureConnectionProtocolServer()
 {
 }
 
-void _Proto_SecureConnectionProtocolServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_SecureConnectionProtocolServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                                    bool* pResponseRequired, EndPoint*)
 {
     const uint16_t uiMethodID = static_cast<uint16_t>(ExtractMethodID(pRequest));
     switch (uiMethodID)
@@ -57,12 +57,10 @@ void _Proto_SecureConnectionProtocolServer::DispatchProtocolMessage(
             {
                 {
                     qList<ConnectionData> connectionData;
-                    const bool bSuccess =
-                        RequestConnectionData(uiConnectionID, uiPrincipalID, &connectionData);
+                    const bool bSuccess = RequestConnectionData(uiConnectionID, uiPrincipalID, &connectionData);
                     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_REQUEST_CONNECTION_DATA);
                     *pResponse << bSuccess;
-                    _Type_std_list<DDLClassMetaType<ConnectionData> >::Add(pResponse,
-                                                                           connectionData);
+                    _Type_std_list<DDLClassMetaType<ConnectionData> >::Add(pResponse, connectionData);
                 }
                 *pResponseRequired = true;
                 return;
@@ -106,8 +104,7 @@ void _Proto_SecureConnectionProtocolServer::DispatchProtocolMessage(
                 _Type_any<DDLClassMetaType<Data>, _Type_string>::Extract(pRequest, &customData);
                 if (!pRequest->HasError())
                 {
-                    const qResult result =
-                        RegisterEx(urls, &uiConnectionID, &publicURL, customData);
+                    const qResult result = RegisterEx(urls, &uiConnectionID, &publicURL, customData);
                     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_REGISTER_EX);
                     _Type_qresult::Add(pResponse, result);
                     _Type_uint32::Add(pResponse, uiConnectionID);

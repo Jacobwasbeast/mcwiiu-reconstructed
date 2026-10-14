@@ -11,8 +11,7 @@ namespace nn
 namespace nex
 {
 
-Job::Job(JobType jobType, const DebugString& rDebugString)
-    : m_jobType(jobType)
+Job::Job(JobType jobType, const DebugString& rDebugString) : m_jobType(jobType)
 {
     m_state = Initial;
     m_waitContext = 0;
@@ -134,8 +133,7 @@ bool Job::WaitForCompletion(uint32_t uiTimeout)
 {
     bool bCompleted = false;
 
-    if (Scheduler::PreventBlockCall(uiTimeout != 0, uiTimeout, false, &JobPreventBlockCallCallback,
-            this, &bCompleted)
+    if (Scheduler::PreventBlockCall(uiTimeout != 0, uiTimeout, false, &JobPreventBlockCallCallback, this, &bCompleted)
         != 0)
         return bCompleted;
 
@@ -144,10 +142,9 @@ bool Job::WaitForCompletion(uint32_t uiTimeout)
     spinTest.LeaveOnTimeout();
 
     while (m_state != Complete
-        && spinTest.SpinOnce(
-               L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Job.cpp", 208,
-               L"GetState()!=Complete")
-            != 0)
+           && spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Job.cpp", 208,
+                                L"GetState()!=Complete")
+                  != 0)
     {
     }
 

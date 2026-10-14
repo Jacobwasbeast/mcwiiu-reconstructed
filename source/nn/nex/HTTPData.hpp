@@ -11,9 +11,7 @@ namespace nex
 class HTTPData : public RootObject
 {
 public:
-    virtual ~HTTPData()
-    {
-    }
+    virtual ~HTTPData() {}
 
     virtual unsigned int GetContentLength() const = 0;
     virtual unsigned int Read(void* pBuffer, unsigned int uiSize) = 0;

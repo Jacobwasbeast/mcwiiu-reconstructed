@@ -32,15 +32,15 @@ public:
     virtual ~SocketTransport();
 
     virtual qResult Initialize();
-    virtual bool StartListen(unsigned short uiPort, unsigned short* pPortOut, bool bPublish,
-        unsigned int uiTrafficType, bool bFlag);
+    virtual bool StartListen(unsigned short uiPort, unsigned short* pPortOut, bool bPublish, unsigned int uiTrafficType,
+                             bool bFlag);
     virtual bool StartListenReuse(unsigned short uiPort, unsigned short* pPortOut, bool bPublish,
-        unsigned int uiTrafficType, bool bFlag);
+                                  unsigned int uiTrafficType, bool bFlag);
     virtual bool StopListen(unsigned short uiPort);
     virtual bool StopListen();
     virtual unsigned int GetNbListeningPorts();
     virtual bool Send(unsigned short uiPort, Stream::Type type, unsigned char uiSourceStreamID,
-        unsigned char uiDestinationStreamID, PacketOut* pPacket, bool bFlag);
+                      unsigned char uiDestinationStreamID, PacketOut* pPacket, bool bFlag);
     virtual qResult Send(StationURL* pURL, Buffer* pBuffer);
     virtual bool Receive(unsigned short uiPort, Buffer* pBuffer, const InetAddress* pAddress);
     virtual Router* GetRouter();
@@ -62,7 +62,8 @@ private:
     {
     public:
         explicit TransportJob(SocketTransport* pTransport)
-            : Job(JOB_TYPE_0, DebugString(String(L"SocketTransport::TransportJob"))), m_pTransport(pTransport)
+            : Job(JOB_TYPE_0, DebugString(String(L"SocketTransport::TransportJob"))),
+              m_pTransport(pTransport)
         {
         }
 
@@ -75,18 +76,17 @@ private:
     typedef qChain<Packet*, ChainPolicyHistoryPacket<Packet*> > HistoryChain;
     typedef qSortedVector<unsigned short, QueuingSocket*> SocketTable;
 
-    bool StartListenImpl(unsigned short uiPort, unsigned short* pPortOut, bool bPublish,
-        unsigned int uiTrafficType, bool bFlag, bool bReuse);
-    bool BindSocket(unsigned short uiPort, unsigned short* pPortOut, unsigned int uiTrafficType,
-        bool bFlag, bool bReuse);
+    bool StartListenImpl(unsigned short uiPort, unsigned short* pPortOut, bool bPublish, unsigned int uiTrafficType,
+                         bool bFlag, bool bReuse);
+    bool BindSocket(unsigned short uiPort, unsigned short* pPortOut, unsigned int uiTrafficType, bool bFlag,
+                    bool bReuse);
     QueuingSocket* GetSocket(unsigned short uiPort);
-    bool FillPacketQueueFromBuffer(QueuingSocket* pSocket, Buffer* pBuffer,
-        const InetAddress* pAddress);
+    bool FillPacketQueueFromBuffer(QueuingSocket* pSocket, Buffer* pBuffer, const InetAddress* pAddress);
     void DeliverIncomingBuffer();
     void DeliverIncoming();
     bool RouteRelaySendMultiMessage(Buffer* pBuffer, unsigned short uiPort);
-    void DeliverOutgoingBuffer(QueuingSocket* pSocket, Buffer* pBuffer,
-        const InetAddress& rAddress, unsigned short uiPort);
+    void DeliverOutgoingBuffer(QueuingSocket* pSocket, Buffer* pBuffer, const InetAddress& rAddress,
+                               unsigned short uiPort);
     void DeliverOutgoingImpl();
     void DeliverOutgoing();
     void TransportJobMethod();

@@ -17,10 +17,7 @@ template <typename T>
 class PseudoGlobalVariable : public PseudoGlobalVariableRoot
 {
 public:
-    PseudoGlobalVariable()
-        : PseudoGlobalVariableRoot()
-        , m_value()
-        , m_initialValue()
+    PseudoGlobalVariable() : PseudoGlobalVariableRoot(), m_value(), m_initialValue()
     {
         m_value = m_initialValue;
         m_pExtraContexts = 0;
@@ -30,9 +27,9 @@ public:
     }
 
     explicit PseudoGlobalVariable(const T& rInitialValue)
-        : PseudoGlobalVariableRoot()
-        , m_value(rInitialValue)
-        , m_initialValue(rInitialValue)
+        : PseudoGlobalVariableRoot(),
+          m_value(rInitialValue),
+          m_initialValue(rInitialValue)
     {
         m_pExtraContexts = 0;
         g_pseudoGlobalVariableList.AddVariable(this);
@@ -61,20 +58,11 @@ public:
         }
     }
 
-    virtual void ResetContext(unsigned int uiContextId)
-    {
-        m_pExtraContexts[uiContextId] = m_initialValue;
-    }
+    virtual void ResetContext(unsigned int uiContextId) { m_pExtraContexts[uiContextId] = m_initialValue; }
 
-    virtual PseudoGlobalVariableRoot* GetNext()
-    {
-        return m_pNext;
-    }
+    virtual PseudoGlobalVariableRoot* GetNext() { return m_pNext; }
 
-    virtual void SetNext(PseudoGlobalVariableRoot* pNext)
-    {
-        m_pNext = pNext;
-    }
+    virtual void SetNext(PseudoGlobalVariableRoot* pNext) { m_pNext = pNext; }
 
     T& Get()
     {

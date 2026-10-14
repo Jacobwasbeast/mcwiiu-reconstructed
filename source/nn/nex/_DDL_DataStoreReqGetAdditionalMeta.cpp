@@ -28,8 +28,7 @@ _DDL_DataStoreReqGetAdditionalMeta& _DDL_DataStoreReqGetAdditionalMeta::operator
     return *this;
 }
 
-void _DDL_DataStoreReqGetAdditionalMeta::Add(Message* pMessage,
-    const _DDL_DataStoreReqGetAdditionalMeta& rSource)
+void _DDL_DataStoreReqGetAdditionalMeta::Add(Message* pMessage, const _DDL_DataStoreReqGetAdditionalMeta& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -58,14 +57,12 @@ void _DDL_DataStoreReqGetAdditionalMeta::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
-void _DDL_DataStoreReqGetAdditionalMeta::Extract(Message* pMessage,
-    _DDL_DataStoreReqGetAdditionalMeta* pDestination)
+void _DDL_DataStoreReqGetAdditionalMeta::Extract(Message* pMessage, _DDL_DataStoreReqGetAdditionalMeta* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

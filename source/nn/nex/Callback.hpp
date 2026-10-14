@@ -15,20 +15,15 @@ public:
     typedef void (T::*Method)(Argument);
 
     Callback(T* pObject, Method pMethod, Argument argument)
-        : m_pObject(pObject)
-        , m_pMethod(pMethod)
-        , m_argument(argument)
+        : m_pObject(pObject),
+          m_pMethod(pMethod),
+          m_argument(argument)
     {
     }
 
-    virtual ~Callback()
-    {
-    }
+    virtual ~Callback() {}
 
-    virtual void CallObjectMethod()
-    {
-        (m_pObject->*m_pMethod)(m_argument);
-    }
+    virtual void CallObjectMethod() { (m_pObject->*m_pMethod)(m_argument); }
 
 private:
     T* m_pObject;

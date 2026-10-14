@@ -43,32 +43,24 @@ public:
     virtual ~RootTransport();
 
     virtual qResult Initialize();
-    virtual bool StartListen(unsigned short uiPort, unsigned short* pPortOut, bool bFlag,
-        unsigned int uiFirst, bool bSecond) = 0;
-    virtual bool StartListenReuse(unsigned short uiPort, unsigned short* pPortOut, bool bFlag,
-        unsigned int uiFirst, bool bSecond) = 0;
+    virtual bool StartListen(unsigned short uiPort, unsigned short* pPortOut, bool bFlag, unsigned int uiFirst,
+                             bool bSecond) = 0;
+    virtual bool StartListenReuse(unsigned short uiPort, unsigned short* pPortOut, bool bFlag, unsigned int uiFirst,
+                                  bool bSecond) = 0;
     virtual bool StopListen(unsigned short uiPort) = 0;
     virtual bool StopListen() = 0;
     virtual unsigned int GetNbListeningPorts() = 0;
-    virtual bool Send(unsigned short uiPort, Stream::Type type, unsigned char uiSource,
-        unsigned char uiDestination, PacketOut* pPacket, bool bFlag) = 0;
+    virtual bool Send(unsigned short uiPort, Stream::Type type, unsigned char uiSource, unsigned char uiDestination,
+                      PacketOut* pPacket, bool bFlag) = 0;
     virtual qResult Send(StationURL* pURL, Buffer* pBuffer);
     virtual bool Receive(unsigned short uiPort, Buffer* pBuffer, const InetAddress* pAddress) = 0;
-    virtual Router* GetRouter()
-    {
-        return 0;
-    }
+    virtual Router* GetRouter() { return 0; }
 
-    virtual Relay* GetRelay()
-    {
-        return 0;
-    }
+    virtual Relay* GetRelay() { return 0; }
 
     virtual unsigned int GetPacketQueueSize() const = 0;
     virtual unsigned int GetEstimatedPacketQueueMemoryUsage() const = 0;
-    virtual void ClearPacketInPacketBufferPool()
-    {
-    }
+    virtual void ClearPacketInPacketBufferPool() {}
 
     virtual void StopTransportThreadImpl() = 0;
 
@@ -83,20 +75,11 @@ public:
 
     void StopTransportThread();
 
-    OutputEmulationDevice* GetOutputEmulationDevice()
-    {
-        return &m_outputEmulation;
-    }
+    OutputEmulationDevice* GetOutputEmulationDevice() { return &m_outputEmulation; }
 
-    InputEmulationDevice* GetInputEmulationDevice()
-    {
-        return &m_inputEmulation;
-    }
+    InputEmulationDevice* GetInputEmulationDevice() { return &m_inputEmulation; }
 
-    TransportStreamManager* GetStreamManager()
-    {
-        return &m_streamManager;
-    }
+    TransportStreamManager* GetStreamManager() { return &m_streamManager; }
 
     void AttachVNATDevice(VirtualNATDevice* pDevice);
     void DetachVNATDevice(VirtualNATDevice* pDevice);
@@ -104,28 +87,17 @@ public:
     bool UnregisterPacketRecognizer(PacketRecognizer* pRecognizer);
     bool RejectPacket(Buffer* pBuffer, const InetAddress* pAddress);
 
-    bool SetPrimaryNATCheckServer(const wchar_t* pAddress, unsigned short uiFirstPort,
-        unsigned short uiSecondPort);
-    bool SetSecondaryNATCheckServer(const wchar_t* pAddress, unsigned short uiFirstPort,
-        unsigned short uiSecondPort);
+    bool SetPrimaryNATCheckServer(const wchar_t* pAddress, unsigned short uiFirstPort, unsigned short uiSecondPort);
+    bool SetSecondaryNATCheckServer(const wchar_t* pAddress, unsigned short uiFirstPort, unsigned short uiSecondPort);
     const qVector<StringStream*>& GetNATCheckServerAddresses() const;
     void SetIsNATCheckServerAddressesSet();
     bool SetUpDefaultNATCheckServerInternal();
 
-    unsigned int GetBufferSize() const
-    {
-        return m_uiBufferSize;
-    }
+    unsigned int GetBufferSize() const { return m_uiBufferSize; }
 
-    unsigned short GetPortNumber() const
-    {
-        return m_uiPortNumber;
-    }
+    unsigned short GetPortNumber() const { return m_uiPortNumber; }
 
-    bool IsStopped() const
-    {
-        return m_reserved4;
-    }
+    bool IsStopped() const { return m_reserved4; }
 
     NATProperties GetNATProperties() const;
     void SetNATProperties(const NATProperties& rProperties);

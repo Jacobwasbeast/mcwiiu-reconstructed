@@ -129,8 +129,8 @@ inline void _Proto_MatchMakingProtocolExtServer::ProtoStub_DeleteFromDeletions(
     AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_DELETE_FROM_DELETIONS);
 }
 
-void _Proto_MatchMakingProtocolExtServer::DispatchProtocolMessage(
-    Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
+void _Proto_MatchMakingProtocolExtServer::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                                  bool* pResponseRequired, EndPoint*)
 {
     switch (static_cast<uint16_t>(ExtractMethodID(pRequest)))
     {

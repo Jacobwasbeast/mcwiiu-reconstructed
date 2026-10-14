@@ -19,7 +19,8 @@ const uint8_t MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_CreateMatchmakeSessionParam& _DDL_CreateMatchmakeSessionParam::operator=(const _DDL_CreateMatchmakeSessionParam& rSource)
+_DDL_CreateMatchmakeSessionParam& _DDL_CreateMatchmakeSessionParam::operator=(
+    const _DDL_CreateMatchmakeSessionParam& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_MatchmakeSession = rSource.m_MatchmakeSession;

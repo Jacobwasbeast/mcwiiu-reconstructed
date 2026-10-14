@@ -9,8 +9,7 @@ namespace nex
 
 unsigned int PseudoGlobalVariableRoot::s_uiNbOfExtraContexts = 1;
 
-PseudoGlobalVariableRoot::PseudoGlobalVariableRoot()
-    : m_pNext(0)
+PseudoGlobalVariableRoot::PseudoGlobalVariableRoot() : m_pNext(0)
 {
 }
 

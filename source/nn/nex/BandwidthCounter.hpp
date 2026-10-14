@@ -7,7 +7,10 @@
 #include "nn/nex/qChain.hpp"
 #include <list>
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class CriticalSection;
 
@@ -39,6 +42,7 @@ private:
     unsigned int m_count;
 };
 
-}}
+}
+}
 
 #endif

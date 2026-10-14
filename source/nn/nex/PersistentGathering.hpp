@@ -13,9 +13,7 @@ class PersistentGathering : public _DDL_PersistentGathering
 {
 public:
     PersistentGathering();
-    virtual ~PersistentGathering()
-    {
-    }
+    virtual ~PersistentGathering() {}
 
     void Reset();
     void SetPersistentGatheringType(PersistentGatheringType::PersistentGatheringType type);

@@ -34,14 +34,9 @@ public:
 
     void SetLogLevel(LogLevel level);
 
-    LogLevel GetLogLevel()
-    {
-        return m_logLevel;
-    }
+    LogLevel GetLogLevel() { return m_logLevel; }
 
-    void TraceOutput(LogLevel, const wchar_t*, va_list)
-    {
-    }
+    void TraceOutput(LogLevel, const wchar_t*, va_list) {}
 
 private:
     LogLevel m_logLevel;

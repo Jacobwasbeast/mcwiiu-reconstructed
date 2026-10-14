@@ -16,14 +16,9 @@ class Message;
 class _DDL_DynamicData : public Data
 {
 public:
-    _DDL_DynamicData()
-        : Data(), m_uiDynamicStructureVersion(0), m_Buffer()
-    {
-    }
+    _DDL_DynamicData() : Data(), m_uiDynamicStructureVersion(0), m_Buffer() {}
 
-    virtual ~_DDL_DynamicData()
-    {
-    }
+    virtual ~_DDL_DynamicData() {}
 
     _DDL_DynamicData& operator=(const _DDL_DynamicData& rSource);
     bool operator==(const _DDL_DynamicData& rSource) const;

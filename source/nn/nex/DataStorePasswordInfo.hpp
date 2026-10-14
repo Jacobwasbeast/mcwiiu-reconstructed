@@ -11,14 +11,9 @@ namespace nex
 class DataStorePasswordInfo : public _DDL_DataStorePasswordInfo
 {
 public:
-    DataStorePasswordInfo()
-    {
-        m_uiDataId = 0;
-    }
+    DataStorePasswordInfo() { m_uiDataId = 0; }
 
-    virtual ~DataStorePasswordInfo()
-    {
-    }
+    virtual ~DataStorePasswordInfo() {}
 };
 
 }

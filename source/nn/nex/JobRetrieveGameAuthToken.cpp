@@ -36,11 +36,11 @@ char s_acCachedKey[CACHED_KEY_CAPACITY] = "";
 }
 
 JobRetrieveGameAuthToken::JobRetrieveGameAuthToken()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_uiPrincipalId(0)
-    , m_password()
-    , m_pKey(0)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_uiPrincipalId(0),
+      m_password(),
+      m_pKey(0)
 {
 }
 
@@ -48,8 +48,8 @@ JobRetrieveGameAuthToken::~JobRetrieveGameAuthToken()
 {
 }
 
-qResult JobRetrieveGameAuthToken::Initialize(unsigned int uiCallId, unsigned int uiPrincipalId,
-    const String& rPassword, String* pToken, String* pKey)
+qResult JobRetrieveGameAuthToken::Initialize(unsigned int uiCallId, unsigned int uiPrincipalId, const String& rPassword,
+                                             String* pToken, String* pKey)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_uiCallId = uiCallId;
@@ -57,8 +57,7 @@ qResult JobRetrieveGameAuthToken::Initialize(unsigned int uiCallId, unsigned int
     m_password = rPassword;
     m_pKey = pKey;
     *pToken = L"normaltoken";
-    if (s_uiCachedPrincipalId == uiPrincipalId &&
-        strncmp(s_acCachedKey, "", CACHED_KEY_CAPACITY) != 0)
+    if (s_uiCachedPrincipalId == uiPrincipalId && strncmp(s_acCachedKey, "", CACHED_KEY_CAPACITY) != 0)
     {
         *m_pKey = s_acCachedKey;
         SetStep(Step(static_cast<Step::Function>(&JobRetrieveGameAuthToken::StepDummyToComplete), L""));
@@ -73,8 +72,7 @@ qResult JobRetrieveGameAuthToken::Initialize(unsigned int uiCallId, unsigned int
 
 void JobRetrieveGameAuthToken::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (rResult)
@@ -96,8 +94,7 @@ void JobRetrieveGameAuthToken::CompleteJob(const qResult& rResult)
 
 void JobRetrieveGameAuthToken::StepDeriveKey()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RETRIEVE_ABORTED_RESULT));
@@ -114,8 +111,7 @@ void JobRetrieveGameAuthToken::StepDeriveKey()
 
 void JobRetrieveGameAuthToken::StepDummyToComplete()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RETRIEVE_ABORTED_RESULT));

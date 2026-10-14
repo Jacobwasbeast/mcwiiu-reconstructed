@@ -10,50 +10,36 @@ namespace nn
 namespace nex
 {
 
-Variant::Variant()
-    : m_type(TYPE_NONE)
+Variant::Variant() : m_type(TYPE_NONE)
 {
 }
 
-Variant::Variant(const Variant& other)
-    : m_type(TYPE_NONE)
+Variant::Variant(const Variant& other) : m_type(TYPE_NONE)
 {
     *this = other;
 }
 
-Variant::Variant(long long value)
-    : m_integer(value)
-    , m_type(TYPE_INTEGER)
+Variant::Variant(long long value) : m_integer(value), m_type(TYPE_INTEGER)
 {
 }
 
-Variant::Variant(unsigned long long value)
-    : m_unsignedInteger(value)
-    , m_type(TYPE_UNSIGNED_INTEGER)
+Variant::Variant(unsigned long long value) : m_unsignedInteger(value), m_type(TYPE_UNSIGNED_INTEGER)
 {
 }
 
-Variant::Variant(int value)
-    : m_integer(value)
-    , m_type(TYPE_INTEGER)
+Variant::Variant(int value) : m_integer(value), m_type(TYPE_INTEGER)
 {
 }
 
-Variant::Variant(unsigned int value)
-    : m_unsignedInteger(value)
-    , m_type(TYPE_UNSIGNED_INTEGER)
+Variant::Variant(unsigned int value) : m_unsignedInteger(value), m_type(TYPE_UNSIGNED_INTEGER)
 {
 }
 
-Variant::Variant(double value)
-    : m_double(value)
-    , m_type(TYPE_DOUBLE)
+Variant::Variant(double value) : m_double(value), m_type(TYPE_DOUBLE)
 {
 }
 
-Variant::Variant(bool value)
-    : m_bool(value)
-    , m_type(TYPE_BOOL)
+Variant::Variant(bool value) : m_bool(value), m_type(TYPE_BOOL)
 {
 }
 
@@ -91,11 +77,11 @@ Variant& Variant::operator=(const Variant& other)
     switch (other.GetType())
     {
     case TYPE_STRING:
-        {
-            String text = other.GetStringValue();
-            CopyString(&m_text, static_cast<const wchar_t*>(text));
-        }
-        break;
+    {
+        String text = other.GetStringValue();
+        CopyString(&m_text, static_cast<const wchar_t*>(text));
+    }
+    break;
     case TYPE_INTEGER:
         m_integer = other.GetInt64Value();
         break;

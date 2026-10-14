@@ -23,10 +23,7 @@ public:
     void ClearReturnValuePtr();
     void* GetReturnValuePtr(unsigned int uiIndex);
 
-    Credentials* GetCredentials() const
-    {
-        return m_credentials;
-    }
+    Credentials* GetCredentials() const { return m_credentials; }
 
 protected:
     friend class AccountManagementClient;

@@ -16,8 +16,8 @@ public:
     JobRetrieveGameAuthToken();
     virtual ~JobRetrieveGameAuthToken();
 
-    qResult Initialize(unsigned int uiCallId, unsigned int uiPrincipalId, const String& rPassword,
-        String* pToken, String* pKey);
+    qResult Initialize(unsigned int uiCallId, unsigned int uiPrincipalId, const String& rPassword, String* pToken,
+                       String* pKey);
     void CompleteJob(const qResult& rResult);
     void StepDeriveKey();
     void StepDummyToComplete();

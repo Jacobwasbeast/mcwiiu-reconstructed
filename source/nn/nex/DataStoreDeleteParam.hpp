@@ -11,13 +11,9 @@ namespace nex
 class DataStoreDeleteParam : public _DDL_DataStoreDeleteParam
 {
 public:
-    DataStoreDeleteParam()
-    {
-    }
+    DataStoreDeleteParam() {}
 
-    virtual ~DataStoreDeleteParam()
-    {
-    }
+    virtual ~DataStoreDeleteParam() {}
 };
 
 }

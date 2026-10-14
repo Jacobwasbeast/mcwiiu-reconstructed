@@ -9,8 +9,7 @@ bool g_usingInstantiationContext = false;
 ThreadVariable<unsigned int>* g_instantiationContextVariable = 0;
 
 PseudoSingleton::PseudoSingleton(unsigned int classId)
-    : InstanceControl(classId,
-          g_usingInstantiationContext ? g_instantiationContextVariable->GetRef() : 0)
+    : InstanceControl(classId, g_usingInstantiationContext ? g_instantiationContextVariable->GetRef() : 0)
 {
 }
 

@@ -12,19 +12,11 @@ template <typename T, typename KeyType>
 class AnyObjectHolder : public Holder<T>
 {
 public:
-    explicit AnyObjectHolder(T* pObject = 0)
-        : Holder<T>(pObject)
-    {
-    }
+    explicit AnyObjectHolder(T* pObject = 0) : Holder<T>(pObject) {}
 
-    AnyObjectHolder(const AnyObjectHolder<T, KeyType>& rOther)
-        : Holder<T>(rOther)
-    {
-    }
+    AnyObjectHolder(const AnyObjectHolder<T, KeyType>& rOther) : Holder<T>(rOther) {}
 
-    virtual ~AnyObjectHolder()
-    {
-    }
+    virtual ~AnyObjectHolder() {}
 };
 
 }

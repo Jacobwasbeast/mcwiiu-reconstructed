@@ -16,20 +16,20 @@ namespace nex
 namespace
 {
 
-const unsigned char s_unreliableSaltA[8] = { 0x18, 0xD8, 0x23, 0x34, 0x37, 0xE4, 0xE3, 0xFE };
-const unsigned char s_unreliableSaltB[8] = { 0x23, 0x3E, 0x60, 0x01, 0x23, 0xCD, 0xAB, 0x80 };
-const unsigned char s_alternateSaltA[8] = { 0x98, 0xA8, 0x93, 0x84, 0x87, 0x94, 0xE3, 0x6E };
-const unsigned char s_alternateSaltB[8] = { 0x45, 0xEE, 0xFC, 0xAB, 0xE0, 0x54, 0x02, 0x01 };
+const unsigned char s_unreliableSaltA[8] = {0x18, 0xD8, 0x23, 0x34, 0x37, 0xE4, 0xE3, 0xFE};
+const unsigned char s_unreliableSaltB[8] = {0x23, 0x3E, 0x60, 0x01, 0x23, 0xCD, 0xAB, 0x80};
+const unsigned char s_alternateSaltA[8] = {0x98, 0xA8, 0x93, 0x84, 0x87, 0x94, 0xE3, 0x6E};
+const unsigned char s_alternateSaltB[8] = {0x45, 0xEE, 0xFC, 0xAB, 0xE0, 0x54, 0x02, 0x01};
 
 }
 
 PacketEncDec::PacketEncDec()
-    : m_encryptors(1)
-    , m_decryptors(1)
-    , m_unreliableKey(32)
-    , m_unreliableAlternateKey(32)
-    , m_bReliableKeySet(false)
-    , m_uiMaxUserReliableSubStreams(1)
+    : m_encryptors(1),
+      m_decryptors(1),
+      m_unreliableKey(32),
+      m_unreliableAlternateKey(32),
+      m_bReliableKeySet(false),
+      m_uiMaxUserReliableSubStreams(1)
 {
     RC4Encryption* pReliableEncryptor = new RC4Encryption();
     pReliableEncryptor->SetReinitEverytime(false);
@@ -127,8 +127,7 @@ void PacketEncDec::Encode(Packet* pPacket, Stream::Type streamType, bool bSwapPa
     }
 }
 
-void PacketEncDec::GenerateKey(const Key& rKey, const unsigned char* pSaltA,
-    const unsigned char* pSaltB, Key* pOutput)
+void PacketEncDec::GenerateKey(const Key& rKey, const unsigned char* pSaltA, const unsigned char* pSaltB, Key* pOutput)
 {
     MD5 digestA;
     MD5 digestB;
@@ -205,8 +204,7 @@ void PacketEncDec::DecideMaxUserReliableSubStreams(unsigned short uiMaxSubStream
     }
 }
 
-void PacketEncDec::SetReliableEncryptionKey(const Key& rKey, unsigned char uiEncryptSalt,
-    unsigned char uiDecryptSalt)
+void PacketEncDec::SetReliableEncryptionKey(const Key& rKey, unsigned char uiEncryptSalt, unsigned char uiDecryptSalt)
 {
     m_encryptionKey = rKey;
     Key encryptKey(rKey);

@@ -9,20 +9,11 @@ namespace nex
 class UserContext
 {
 public:
-    UserContext()
-        : m_pPointer(0)
-    {
-    }
+    UserContext() : m_pPointer(0) {}
 
-    UserContext(void* pPointer)
-        : m_pPointer(pPointer)
-    {
-    }
+    UserContext(void* pPointer) : m_pPointer(pPointer) {}
 
-    void* GetPointer() const
-    {
-        return m_pPointer;
-    }
+    void* GetPointer() const { return m_pPointer; }
 
 private:
     void* m_pPointer;

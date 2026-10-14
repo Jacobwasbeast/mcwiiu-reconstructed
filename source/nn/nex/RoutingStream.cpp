@@ -35,12 +35,11 @@ unsigned int s_uiHistoryLimit = 0;
 }
 
 RoutingStream::RoutingStream()
-    : Stream(Routing)
-    , m_criticalSection(ROUTING_CRITICAL_SECTION_TRACE_MASK)
-    , m_routingTable(g_streamSettings[Unknown1].Get().GetMaxSilenceTime()
-          * ROUTING_TABLE_TIMEOUT_FACTOR)
-    , m_pTransport(0)
-    , m_pFilter(0)
+    : Stream(Routing),
+      m_criticalSection(ROUTING_CRITICAL_SECTION_TRACE_MASK),
+      m_routingTable(g_streamSettings[Unknown1].Get().GetMaxSilenceTime() * ROUTING_TABLE_TIMEOUT_FACTOR),
+      m_pTransport(0),
+      m_pFilter(0)
 {
     m_lastCleaning = Time(0);
 }
@@ -49,8 +48,7 @@ RoutingStream::~RoutingStream()
 {
 }
 
-PacketOut* RoutingStream::BuildRoutingPacket(Buffer* pPayload, PacketType type,
-    const InetAddress& rAddress)
+PacketOut* RoutingStream::BuildRoutingPacket(Buffer* pPayload, PacketType type, const InetAddress& rAddress)
 {
     Buffer* pBuffer;
     if (pPayload != 0 && pPayload->IsPooled())
@@ -116,7 +114,7 @@ bool RoutingStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char, 
             source.SetPortNumber(uiSourcePort);
             payload.Clear();
             payload.AppendData(stream.GetBuffer()->GetData() + stream.GetPosition(),
-                stream.GetLength() - stream.GetPosition(), ROUTING_APPEND_AT_END);
+                               stream.GetLength() - stream.GetPosition(), ROUTING_APPEND_AT_END);
         }
 
         unsigned short uiType = pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK;
@@ -152,8 +150,7 @@ bool RoutingStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char, 
             bool bRoute = true;
             if (s_uiHistoryCleaningPeriod != 0)
             {
-                if (m_denied.find(source) == m_denied.end() &&
-                    m_denied.find(origin) == m_denied.end())
+                if (m_denied.find(source) == m_denied.end() && m_denied.find(origin) == m_denied.end())
                 {
                     CriticalSection& rCriticalSection = m_criticalSection;
                     rCriticalSection.Enter();
@@ -190,8 +187,8 @@ bool RoutingStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char, 
                     else
                     {
                         pRouted->m_address = target;
-                        m_pTransport->Send(uiPort, m_Type, ROUTING_SOURCE_PORT,
-                            ROUTING_DESTINATION_PORT, pRouted, false);
+                        m_pTransport->Send(uiPort, m_Type, ROUTING_SOURCE_PORT, ROUTING_DESTINATION_PORT, pRouted,
+                                           false);
                         pRouted->ReleaseRef();
                     }
                 }
@@ -209,8 +206,7 @@ void RoutingStream::DoWork()
     if (s_uiHistoryCleaningPeriod != 0)
     {
         Time now(Time::GetTime());
-        if (static_cast<long long>(now - m_lastCleaning) >
-            static_cast<long long>(s_uiHistoryCleaningPeriod))
+        if (static_cast<long long>(now - m_lastCleaning) > static_cast<long long>(s_uiHistoryCleaningPeriod))
         {
             m_lastCleaning = now;
             CleanHostRoutingHistory();

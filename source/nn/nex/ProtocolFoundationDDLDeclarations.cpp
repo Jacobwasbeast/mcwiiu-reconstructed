@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-ProtocolFoundationDDLDeclarations::ProtocolFoundationDDLDeclarations()
-    : DDLDeclarations(true)
+ProtocolFoundationDDLDeclarations::ProtocolFoundationDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

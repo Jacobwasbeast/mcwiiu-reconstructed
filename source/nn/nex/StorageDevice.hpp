@@ -14,9 +14,7 @@ class StorageUnit;
 class StorageDevice : public RootObject
 {
 public:
-    virtual ~StorageDevice()
-    {
-    }
+    virtual ~StorageDevice() {}
 
     virtual StorageUnit* Create(const String& rName) = 0;
     virtual StorageUnit* Open(const String& rName) = 0;

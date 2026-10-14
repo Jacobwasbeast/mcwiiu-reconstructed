@@ -11,13 +11,9 @@ namespace nex
 class AccountData : public _DDL_AccountData
 {
 public:
-    AccountData()
-    {
-    }
+    AccountData() {}
 
-    virtual ~AccountData()
-    {
-    }
+    virtual ~AccountData() {}
 };
 
 }

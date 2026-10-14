@@ -23,10 +23,7 @@ public:
     void SortAndFilterTarget(StationContactInfo& rTarget) const;
     void Trace(unsigned long long uiFilter);
 
-    const qList<StationURL>& GetURLs() const
-    {
-        return m_urls;
-    }
+    const qList<StationURL>& GetURLs() const { return m_urls; }
 
 private:
     unsigned int m_uiConnectionID;

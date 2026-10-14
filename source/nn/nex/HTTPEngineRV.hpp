@@ -17,7 +17,8 @@ public:
     explicit HTTPEngineRV(HTTPEngineConfiguration* pConfiguration);
     virtual ~HTTPEngineRV();
 
-    virtual bool ScheduleRequest(CallContext& rCallContext, unsigned int uiRequestID, HTTPResponse& rResponse, HTTPClientImpl* pClient);
+    virtual bool ScheduleRequest(CallContext& rCallContext, unsigned int uiRequestID, HTTPResponse& rResponse,
+                                 HTTPClientImpl* pClient);
     virtual void CancelRequest(unsigned int uiRequestID);
     virtual unsigned int RequestCompleted(void* pHandle);
 

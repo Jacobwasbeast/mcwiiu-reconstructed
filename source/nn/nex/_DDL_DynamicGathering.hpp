@@ -16,14 +16,9 @@ class Message;
 class _DDL_DynamicGathering : public Gathering
 {
 public:
-    _DDL_DynamicGathering()
-        : Gathering(), m_uiDynamicStructureVersion(0), m_Buffer()
-    {
-    }
+    _DDL_DynamicGathering() : Gathering(), m_uiDynamicStructureVersion(0), m_Buffer() {}
 
-    virtual ~_DDL_DynamicGathering()
-    {
-    }
+    virtual ~_DDL_DynamicGathering() {}
 
     virtual Gathering* Clone() const;
     virtual String GetGatheringType() const;

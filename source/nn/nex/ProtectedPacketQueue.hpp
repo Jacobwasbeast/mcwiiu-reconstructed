@@ -12,10 +12,7 @@ namespace nex
 class ProtectedPacketQueue : public PacketQueue
 {
 public:
-    ProtectedPacketQueue(const wchar_t* pName, CriticalSection* pLock)
-        : PacketQueue(pName), m_pLock(pLock)
-    {
-    }
+    ProtectedPacketQueue(const wchar_t* pName, CriticalSection* pLock) : PacketQueue(pName), m_pLock(pLock) {}
 
     virtual ~ProtectedPacketQueue();
 

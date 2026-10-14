@@ -1,14 +1,17 @@
 #include "nn/nex/BandwidthCounterMap.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 BandwidthCounterMap::IOBandwidthCounter::IOBandwidthCounter(const String& name)
-    : m_incoming(name + L"/Incoming"), m_outgoing(name + L"/Outgoing")
+    : m_incoming(name + L"/Incoming"),
+      m_outgoing(name + L"/Outgoing")
 {
 }
 
-BandwidthCounterMap::BandwidthCounterMap(const String& name)
-    : m_name(name), m_counters()
+BandwidthCounterMap::BandwidthCounterMap(const String& name) : m_name(name), m_counters()
 {
 }
 
@@ -32,4 +35,5 @@ BandwidthCounterMap::IOBandwidthCounter* BandwidthCounterMap::operator[](unsigne
     return counter;
 }
 
-}}
+}
+}

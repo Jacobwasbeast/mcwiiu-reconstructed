@@ -20,15 +20,15 @@ class JobTicketManagerAcquireTicket : public StepSequenceJob
 {
 public:
     JobTicketManagerAcquireTicket(unsigned int uiCallId, TicketManager* pTicketManager,
-        unsigned int uiSourcePrincipalID, unsigned int uiTargetPrincipalID, Ticket** ppTicket);
+                                  unsigned int uiSourcePrincipalID, unsigned int uiTargetPrincipalID,
+                                  Ticket** ppTicket);
     virtual ~JobTicketManagerAcquireTicket();
 
     void CompleteJob(CallContext::State state);
     void PrepareCall();
     void ProcessResponse();
 
-    static void AcquireTicketCompletionCallback(CallContext* pCallContext,
-        const UserContext* pUserContext);
+    static void AcquireTicketCompletionCallback(CallContext* pCallContext, const UserContext* pUserContext);
 
 private:
     unsigned int m_uiCallId;

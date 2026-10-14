@@ -18,8 +18,7 @@ const unsigned char DEFAULT_TTL = 0x40;
 
 const unsigned int SOCKET_SUCCESS = 0;
 
-Socket::Socket(unsigned int uiTrafficType, unsigned int uiMTU)
-    : m_uiState(STATE_CLOSED)
+Socket::Socket(unsigned int uiTrafficType, unsigned int uiMTU) : m_uiState(STATE_CLOSED)
 {
     m_uiTrafficType = uiTrafficType;
     m_bConnected = true;
@@ -53,8 +52,8 @@ void Socket::Close()
 bool Socket::Open(bool bUDP)
 {
     m_bUDP = bUDP;
-    if (m_pDriverSocket != 0 &&
-        m_pDriverSocket->Open(bUDP ? SocketDriver::TRAFFIC_DATAGRAM : SocketDriver::TRAFFIC_STREAM))
+    if (m_pDriverSocket != 0
+        && m_pDriverSocket->Open(bUDP ? SocketDriver::TRAFFIC_DATAGRAM : SocketDriver::TRAFFIC_STREAM))
     {
         m_uiState = STATE_OPEN;
         return true;
@@ -100,8 +99,7 @@ bool Socket::Bind(InetAddress* pAddress, bool bReuse)
     return false;
 }
 
-bool Socket::ProcessDriverSocketResult(SocketDriver::_Result result,
-    IOCompletionContext* pContext)
+bool Socket::ProcessDriverSocketResult(SocketDriver::_Result result, IOCompletionContext* pContext)
 {
     switch (result)
     {
@@ -116,8 +114,8 @@ bool Socket::ProcessDriverSocketResult(SocketDriver::_Result result,
     return false;
 }
 
-int Socket::RecvImpl(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived,
-    InetAddress* pAddress, SocketDriver::_SocketFlag flag)
+int Socket::RecvImpl(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived, InetAddress* pAddress,
+                     SocketDriver::_SocketFlag flag)
 {
     if (m_pDriverSocket == 0)
         return -1;
@@ -145,8 +143,7 @@ int Socket::RecvImpl(unsigned char* pBuffer, unsigned int uiSize, unsigned int* 
     return 0;
 }
 
-int Socket::RecvNonBlock(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived,
-    InetAddress* pAddress)
+int Socket::RecvNonBlock(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived, InetAddress* pAddress)
 {
     return RecvImpl(pBuffer, uiSize, pReceived, pAddress, SocketDriver::SOCKET_FLAG_NON_BLOCK);
 }
@@ -154,8 +151,8 @@ int Socket::RecvNonBlock(unsigned char* pBuffer, unsigned int uiSize, unsigned i
 int Socket::Recv(Buffer* pBuffer, InetAddress* pAddress)
 {
     unsigned int uiReceived = 0;
-    int iResult = RecvImpl(pBuffer->GetData(), pBuffer->GetRealSize() - pBuffer->GetHeadShiftSize(),
-        &uiReceived, pAddress, SocketDriver::SOCKET_FLAG_NONE);
+    int iResult = RecvImpl(pBuffer->GetData(), pBuffer->GetRealSize() - pBuffer->GetHeadShiftSize(), &uiReceived,
+                           pAddress, SocketDriver::SOCKET_FLAG_NONE);
     if (iResult == 0)
         pBuffer->SetLength(uiReceived);
 
@@ -165,8 +162,8 @@ int Socket::Recv(Buffer* pBuffer, InetAddress* pAddress)
 int Socket::RecvNonBlock(Buffer* pBuffer, InetAddress* pAddress)
 {
     unsigned int uiReceived = 0;
-    int iResult = RecvImpl(pBuffer->GetData(), pBuffer->GetRealSize() - pBuffer->GetHeadShiftSize(),
-        &uiReceived, pAddress, SocketDriver::SOCKET_FLAG_NON_BLOCK);
+    int iResult = RecvImpl(pBuffer->GetData(), pBuffer->GetRealSize() - pBuffer->GetHeadShiftSize(), &uiReceived,
+                           pAddress, SocketDriver::SOCKET_FLAG_NON_BLOCK);
     if (iResult == 0)
         pBuffer->SetLength(uiReceived);
 
@@ -233,8 +230,7 @@ bool Socket::Connect(InetAddress* pAddress, IOCompletionContext* pContext)
     pContext->m_pSocket = this;
     if (m_pDriverSocket != 0)
     {
-        SocketDriver::InetAddress to(pContext->m_address.GetAddress(),
-            pContext->m_address.GetPortNumber());
+        SocketDriver::InetAddress to(pContext->m_address.GetAddress(), pContext->m_address.GetPortNumber());
         SocketDriver::_Result result = m_pDriverSocket->Connect(to);
         return ProcessDriverSocketResult(result, pContext);
     }

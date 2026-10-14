@@ -29,17 +29,14 @@ public:
     typedef qChain<Packet*, ChainPolicyHistoryPacket<Packet*> > HistoryChain;
 
     QueuingSocket(unsigned int uiTrafficType, RootTransport* pTransport, unsigned int uiMTU,
-        TransportBuffer* pTransportBuffer);
+                  TransportBuffer* pTransportBuffer);
     virtual ~QueuingSocket();
 
     virtual bool Bind(InetAddress* pAddress, bool bReuse);
     virtual int Recv(Buffer* pBuffer, InetAddress* pAddress);
     virtual int RecvNonBlock(Buffer* pBuffer, InetAddress* pAddress);
     virtual int Send(const Buffer& rBuffer, const InetAddress& rAddress);
-    virtual bool IsRecvDataExists() const
-    {
-        return true;
-    }
+    virtual bool IsRecvDataExists() const { return true; }
 
     virtual int SendBuffer(const Buffer& rBuffer, const InetAddress& rAddress);
     virtual int RecvBuffer(Buffer* pBuffer, InetAddress* pAddress);
@@ -47,15 +44,13 @@ public:
     int OutputQueue(const Buffer& rBuffer, const InetAddress& rAddress);
     void RecvAndQueueIncomingBuffer(unsigned int uiBufferSize);
     void DequeueAndSendOutgoingBuffer();
-    int FillPacketQueueFromBuffer(Buffer* pBuffer, const InetAddress* pAddress,
-        PacketQueue* pQueue, TransportStreamManager* pStreamManager, bool* pFailed);
-    Packet* ExtractIncomingPacket(TransportStreamManager* pStreamManager,
-        const InetAddress* pAddress, Buffer* pBuffer, bool* pFailed);
-    Buffer* CreateBufferFromPacketQueue(PacketQueue* pQueue, HistoryChain* pHistory,
-        unsigned int uiMaxSize);
+    int FillPacketQueueFromBuffer(Buffer* pBuffer, const InetAddress* pAddress, PacketQueue* pQueue,
+                                  TransportStreamManager* pStreamManager, bool* pFailed);
+    Packet* ExtractIncomingPacket(TransportStreamManager* pStreamManager, const InetAddress* pAddress, Buffer* pBuffer,
+                                  bool* pFailed);
+    Buffer* CreateBufferFromPacketQueue(PacketQueue* pQueue, HistoryChain* pHistory, unsigned int uiMaxSize);
 
-    static void RetransmitFromHistoryPacketQueue(PacketQueue* pQueue, HistoryChain* pHistory,
-        unsigned short uiPort);
+    static void RetransmitFromHistoryPacketQueue(PacketQueue* pQueue, HistoryChain* pHistory, unsigned short uiPort);
 
 private:
     friend class QueuingSocketTransportBuffer;

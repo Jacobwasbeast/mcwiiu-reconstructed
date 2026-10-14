@@ -17,19 +17,13 @@ public:
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
 
-    virtual Protocol* CreateResponder() const
-    {
-        return new NotificationProtocolClient();
-    }
+    virtual Protocol* CreateResponder() const { return new NotificationProtocolClient(); }
 
-    static void ProtoReturn_ProcessNotificationEvent(Message* pMessage, ProtocolCallContext* pCallContext)
-    {
-    }
+    static void ProtoReturn_ProcessNotificationEvent(Message* pMessage, ProtocolCallContext* pCallContext) {}
 
     bool CallProcessNotificationEvent(ProtocolCallContext* pCallContext, const NotificationEvent& rEvent);
 
-    static bool ProcessNotificationEvent_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                        Message* pMessage,
+    static bool ProcessNotificationEvent_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                         const NotificationEvent& rEvent);
 };
 

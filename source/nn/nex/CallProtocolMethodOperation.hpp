@@ -4,7 +4,10 @@
 #include "nn/nex/Operation.hpp"
 #include "nn/nex/qResult.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class ServerProtocol;
 class JobProcessProtocolMessage;
@@ -14,9 +17,7 @@ class CallProtocolMethodOperation : public Operation
 {
 public:
     CallProtocolMethodOperation();
-    virtual ~CallProtocolMethodOperation()
-    {
-    }
+    virtual ~CallProtocolMethodOperation() {}
     virtual unsigned int GetType() const;
     virtual const wchar_t* GetClassNameString() const;
     virtual void ForceImplOperationCommonMethodsMacro();
@@ -41,6 +42,7 @@ private:
     qResult m_result;
 };
 
-}}
+}
+}
 
 #endif

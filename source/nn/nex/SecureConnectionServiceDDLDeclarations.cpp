@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-SecureConnectionServiceDDLDeclarations::SecureConnectionServiceDDLDeclarations()
-    : DDLDeclarations(true)
+SecureConnectionServiceDDLDeclarations::SecureConnectionServiceDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

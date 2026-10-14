@@ -53,8 +53,7 @@ public:
         BroadcastUnrestricted = 2
     };
 
-    typedef void (*ConnectionCallback)(EndPoint* pEndPoint, qResult result,
-        const UserContext* pUserContext);
+    typedef void (*ConnectionCallback)(EndPoint* pEndPoint, qResult result, const UserContext* pUserContext);
 
     EndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL);
     virtual ~EndPoint();
@@ -85,12 +84,12 @@ public:
     virtual unsigned int GetSignaledFaultError() const = 0;
     virtual unsigned int GetRTT() const = 0;
     virtual unsigned int GetRTTAverage() const = 0;
-    virtual qResult _Connect(Buffer* pRequestData, Buffer* pResponseData,
-        ConnectionCallback pCallback, const UserContext& rUserContext, unsigned int uiTimeout) = 0;
+    virtual qResult _Connect(Buffer* pRequestData, Buffer* pResponseData, ConnectionCallback pCallback,
+                             const UserContext& rUserContext, unsigned int uiTimeout) = 0;
     virtual qResult _Disconnect(ConnectionCallback pCallback, const UserContext& rUserContext,
-        unsigned int uiTimeout) = 0;
-    virtual qResult _Send(Buffer* pBuffer, unsigned int uiSize, bool bReliable,
-        unsigned char uiSubStreamID, unsigned int uiFlags) = 0;
+                                unsigned int uiTimeout) = 0;
+    virtual qResult _Send(Buffer* pBuffer, unsigned int uiSize, bool bReliable, unsigned char uiSubStreamID,
+                          unsigned int uiFlags) = 0;
     virtual unsigned long long GetSupportedFunctionsFlags() const = 0;
     virtual void SetErrorHolder(FirstErrorHolder* pErrorHolder);
     virtual void UnsetErrorHolder();
@@ -110,15 +109,9 @@ public:
     void SetConnectionID(unsigned int uiConnectionID);
     void SetPrincipalID(unsigned int uiPrincipalID);
 
-    unsigned int GetConnectionID() const
-    {
-        return m_uiConnectionID;
-    }
+    unsigned int GetConnectionID() const { return m_uiConnectionID; }
 
-    ConnectionOrientedStream* GetStream() const
-    {
-        return m_pStream;
-    }
+    ConnectionOrientedStream* GetStream() const { return m_pStream; }
 
 protected:
     friend class Protocol;

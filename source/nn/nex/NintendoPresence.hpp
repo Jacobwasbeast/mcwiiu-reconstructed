@@ -16,15 +16,9 @@ namespace nex
 class NintendoPresence : public _DDL_NintendoPresence
 {
 public:
-    NintendoPresence()
-        : _DDL_NintendoPresence()
-    {
-        Clear();
-    }
+    NintendoPresence() : _DDL_NintendoPresence() { Clear(); }
 
-    virtual ~NintendoPresence()
-    {
-    }
+    virtual ~NintendoPresence() {}
 
     void Clear()
     {

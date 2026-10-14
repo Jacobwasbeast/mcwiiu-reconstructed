@@ -13,11 +13,11 @@ class Ticket;
 class KerberosAuthentication
 {
 public:
-    static void PrepareConnectionRequest(BitStream* pRequest,
-        AuthenticationClient* pAuthenticationClient, Ticket* pTicket, unsigned int* pNonce);
+    static void PrepareConnectionRequest(BitStream* pRequest, AuthenticationClient* pAuthenticationClient,
+                                         Ticket* pTicket, unsigned int* pNonce);
     static bool ValidateConnectionRequest(BitStream* pRequest, BitStream* pResponse,
-        AuthenticationClient* pAuthenticationClient, unsigned int* pConnectionID,
-        Ticket** ppTicket);
+                                          AuthenticationClient* pAuthenticationClient, unsigned int* pConnectionID,
+                                          Ticket** ppTicket);
     static bool ValidateConnectionResponse(BitStream* pResponse, unsigned int uiNonce);
 };
 

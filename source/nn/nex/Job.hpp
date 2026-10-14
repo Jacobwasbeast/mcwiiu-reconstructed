@@ -55,10 +55,7 @@ public:
     void RegisterCompletionCallback(CompletionCallback pCallback, const UserContext& rUserContext);
     void RegisterCompletionCallback(CallbackRoot* pCallback);
 
-    State GetState() const
-    {
-        return m_state;
-    }
+    State GetState() const { return m_state; }
 
     String GetStateString(State state) const;
 

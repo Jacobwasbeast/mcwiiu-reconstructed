@@ -22,8 +22,8 @@ class Message;
 class GlobalNotificationEventManager : public NotificationEventManager
 {
 public:
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual void ProcessNotificationEvent(unsigned int uiPrincipalID, unsigned int uiConnectionID,
                                           const NotificationEvent& rEvent);
 
@@ -32,7 +32,8 @@ public:
 
 private:
     typedef std::set<NotificationEventManager*, std::less<NotificationEventManager*>,
-                     MemAllocator<NotificationEventManager*> > ManagerSet;
+                     MemAllocator<NotificationEventManager*> >
+        ManagerSet;
 
     ManagerSet m_managers;
 };

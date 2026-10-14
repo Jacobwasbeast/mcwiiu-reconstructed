@@ -61,17 +61,17 @@ void RelayMessage::SetRelayDataPacketSignatureKey(const unsigned char* pKey, uns
 void RelayMessage::SetRelayDataPacketSignatureKeyFromP2PDataPacketSessionSignatureKey(
     const qVector<unsigned char>& rKey)
 {
-    const unsigned int uiGatheringID = static_cast<unsigned int>(rKey[0])
-        | static_cast<unsigned int>(rKey[1]) << 8 | static_cast<unsigned int>(rKey[2]) << 16
-        | static_cast<unsigned int>(rKey[3]) << 24;
+    const unsigned int uiGatheringID = static_cast<unsigned int>(rKey[0]) | static_cast<unsigned int>(rKey[1]) << 8
+                                       | static_cast<unsigned int>(rKey[2]) << 16
+                                       | static_cast<unsigned int>(rKey[3]) << 24;
 
     RootTransport::GetInstance()->GetRelay()->SetRelayGatheringID(uiGatheringID);
     SetRelayDataPacketSignatureKey(&rKey[RELAY_GATHERING_ID_KEY_OFFSET], RELAY_SIGNATURE_LENGTH);
 }
 
-void RelayMessage::CalcSignature(SignatureBytes* pSignature, RelayType type,
-    const unsigned char* pKey, unsigned int uiKeyLength, const unsigned char* pHeader,
-    const unsigned char* pPayload, unsigned int uiPayloadLength)
+void RelayMessage::CalcSignature(SignatureBytes* pSignature, RelayType type, const unsigned char* pKey,
+                                 unsigned int uiKeyLength, const unsigned char* pHeader, const unsigned char* pPayload,
+                                 unsigned int uiPayloadLength)
 {
     MD5 md5;
 
@@ -98,24 +98,22 @@ void RelayMessage::CalcSignature(SignatureBytes* pSignature, RelayType type,
 int RelayMessage::GetCurrentTimeStamp()
 {
     return static_cast<int>(m_timeStampOrigin.m_uiBaseTime)
-        + static_cast<int>(static_cast<long long>(g_lastTime - m_timeStampOrigin.m_uiStartTime)
-            / RELAY_TIME_STAMP_UNIT);
+           + static_cast<int>(static_cast<long long>(g_lastTime - m_timeStampOrigin.m_uiStartTime)
+                              / RELAY_TIME_STAMP_UNIT);
 }
 
 bool RelayMessage::CheckTimeStamp(PacketIn* pPacket)
 {
     const unsigned int uiGameServerID = pPacket->GetRelayHeader().m_uiGameServerID;
 
-    if (uiGameServerID != RELAY_GAME_SERVER_ID_PING
-        && uiGameServerID != RELAY_GAME_SERVER_ID_BROADCAST)
+    if (uiGameServerID != RELAY_GAME_SERVER_ID_PING && uiGameServerID != RELAY_GAME_SERVER_ID_BROADCAST)
     {
         const unsigned int uiNow = GetCurrentTimeStamp();
         const unsigned int uiTimeStamp = pPacket->GetRelayHeader().m_uiTimeStamp;
         const unsigned int uiEarliest = uiNow - RELAY_TIME_STAMP_TOLERANCE;
         const unsigned int uiLatest = uiNow + RELAY_TIME_STAMP_TOLERANCE;
-        const bool bInRange =
-            (uiTimeStamp == uiEarliest || static_cast<int>(uiTimeStamp - uiEarliest) > 0)
-            && (uiLatest == uiTimeStamp || static_cast<int>(uiLatest - uiTimeStamp) > 0);
+        const bool bInRange = (uiTimeStamp == uiEarliest || static_cast<int>(uiTimeStamp - uiEarliest) > 0)
+                              && (uiLatest == uiTimeStamp || static_cast<int>(uiLatest - uiTimeStamp) > 0);
 
         if (!bInRange)
         {
@@ -126,16 +124,15 @@ bool RelayMessage::CheckTimeStamp(PacketIn* pPacket)
     return true;
 }
 
-bool RelayMessage::CheckSignature(ByteStream* pStream, PacketIn* pPacket,
-    const unsigned char* pKey, unsigned int uiKeyLength)
+bool RelayMessage::CheckSignature(ByteStream* pStream, PacketIn* pPacket, const unsigned char* pKey,
+                                  unsigned int uiKeyLength)
 {
     bool bValid = false;
     SignatureBytes signature;
 
-    CalcSignature(&signature, static_cast<RelayType>(pPacket->GetRelayHeader().m_uiType & RELAY_TYPE_MASK),
-        pKey, uiKeyLength, pStream->GetBuffer()->GetData(),
-        pStream->GetBuffer()->GetData() + RELAY_PAYLOAD_OFFSET,
-        pStream->GetLength() - RELAY_PAYLOAD_OFFSET);
+    CalcSignature(&signature, static_cast<RelayType>(pPacket->GetRelayHeader().m_uiType & RELAY_TYPE_MASK), pKey,
+                  uiKeyLength, pStream->GetBuffer()->GetData(), pStream->GetBuffer()->GetData() + RELAY_PAYLOAD_OFFSET,
+                  pStream->GetLength() - RELAY_PAYLOAD_OFFSET);
 
     if (pPacket->m_uiSignatureSize == signature.m_uiLength)
     {
@@ -145,25 +142,24 @@ bool RelayMessage::CheckSignature(ByteStream* pStream, PacketIn* pPacket,
     return bValid;
 }
 
-bool RelayMessage::CalcSignature(PacketOut*, SignatureMethod, const Key*, Stream::Type,
-    TransportSignatureGenerator*, const SignatureBytes*, SignatureBytes&)
+bool RelayMessage::CalcSignature(PacketOut*, SignatureMethod, const Key*, Stream::Type, TransportSignatureGenerator*,
+                                 const SignatureBytes*, SignatureBytes&)
 {
     return false;
 }
 
-void RelayMessage::CalcSignature(Packet*, SignatureMethod, const Key*, Stream::Type,
-    TransportSignatureGenerator*, const SignatureBytes*, SignatureBytes&)
+void RelayMessage::CalcSignature(Packet*, SignatureMethod, const Key*, Stream::Type, TransportSignatureGenerator*,
+                                 const SignatureBytes*, SignatureBytes&)
 {
 }
 
-RelayMessage::SignatureMethod RelayMessage::DecideSignatureMethod(const Packet*, Stream::Type,
-    bool)
+RelayMessage::SignatureMethod RelayMessage::DecideSignatureMethod(const Packet*, Stream::Type, bool)
 {
     return SIGNATURE_METHOD_0;
 }
 
-int RelayMessage::CalcExpectedSignature(const Packet*, SignatureMethod, const Key*,
-    TransportSignatureGenerator*, const SignatureBytes*, SignatureBytes&)
+int RelayMessage::CalcExpectedSignature(const Packet*, SignatureMethod, const Key*, TransportSignatureGenerator*,
+                                        const SignatureBytes*, SignatureBytes&)
 {
     return 3;
 }
@@ -180,12 +176,9 @@ bool RelayMessage::UnpackPayload(const ByteStream* pStream, PacketIn* pPacket)
 
     pPayload->Clear();
 
-    const unsigned short uiLength =
-        static_cast<unsigned short>(pBuffer->GetLength() - RELAY_PAYLOAD_OFFSET);
+    const unsigned short uiLength = static_cast<unsigned short>(pBuffer->GetLength() - RELAY_PAYLOAD_OFFSET);
 
-    if (uiLength != 0
-        && !pPayload->AppendData(pBuffer->GetData() + pStream->GetPosition(), uiLength,
-            APPEND_AT_END))
+    if (uiLength != 0 && !pPayload->AppendData(pBuffer->GetData() + pStream->GetPosition(), uiLength, APPEND_AT_END))
     {
         return false;
     }
@@ -193,8 +186,8 @@ bool RelayMessage::UnpackPayload(const ByteStream* pStream, PacketIn* pPacket)
     return true;
 }
 
-bool RelayMessage::UnpackWithoutValidation(ByteStream* pStream, PacketIn* pPacket,
-    unsigned int* pConsumed, bool bUnpackPayload)
+bool RelayMessage::UnpackWithoutValidation(ByteStream* pStream, PacketIn* pPacket, unsigned int* pConsumed,
+                                           bool bUnpackPayload)
 {
     if (pStream->GetBuffer()->GetLength() == 0)
     {
@@ -291,8 +284,7 @@ bool RelayMessage::UnpackWithoutValidation(ByteStream* pStream, PacketIn* pPacke
     pPacket->m_uiSource = uiPort;
     pPacket->m_uiDestination = uiPort;
 
-    const unsigned short uiPayloadLength =
-        static_cast<unsigned short>(pBuffer->GetLength() - RELAY_PAYLOAD_OFFSET);
+    const unsigned short uiPayloadLength = static_cast<unsigned short>(pBuffer->GetLength() - RELAY_PAYLOAD_OFFSET);
 
     if (uiPayloadLength != 0 && bUnpackPayload)
     {
@@ -366,8 +358,8 @@ bool RelayMessage::UnpackPing(PacketIn* pPacket)
     return true;
 }
 
-bool RelayMessage::Unpack(ByteStream* pStream, PacketIn* pPacket, const unsigned char* pKey,
-    unsigned int uiKeyLength, unsigned int* pConsumed)
+bool RelayMessage::Unpack(ByteStream* pStream, PacketIn* pPacket, const unsigned char* pKey, unsigned int uiKeyLength,
+                          unsigned int* pConsumed)
 {
     if (UnpackWithoutValidation(pStream, pPacket, pConsumed, true)
         && CheckSignature(pStream, pPacket, pKey, uiKeyLength) && CheckTimeStamp(pPacket))
@@ -385,8 +377,7 @@ bool RelayMessage::Unpack(ByteStream* pStream, PacketIn* pPacket, const unsigned
 
 bool RelayMessage::Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int* pConsumed)
 {
-    return Unpack(pStream, pPacket, m_signatureKey.GetData(), m_signatureKey.GetLength(),
-        pConsumed);
+    return Unpack(pStream, pPacket, m_signatureKey.GetData(), m_signatureKey.GetLength(), pConsumed);
 }
 
 bool RelayMessage::PackPing(PacketOut* pPacket)
@@ -434,8 +425,7 @@ bool RelayMessage::PackPing(PacketOut* pPacket)
     return true;
 }
 
-bool RelayMessage::Pack(PacketOut* pPacket, ByteStream* pStream, const unsigned char* pKey,
-    unsigned int uiKeyLength)
+bool RelayMessage::Pack(PacketOut* pPacket, ByteStream* pStream, const unsigned char* pKey, unsigned int uiKeyLength)
 {
     pStream->Clear();
     pStream->AppendPrimitive(RELAY_PROTOCOL_BYTE);
@@ -469,8 +459,7 @@ bool RelayMessage::Pack(PacketOut* pPacket, ByteStream* pStream, const unsigned 
         }
         else
         {
-            CalcSignature(&signature, type, pKey, uiKeyLength, pData, pPayload->GetData(),
-                pPayload->GetLength());
+            CalcSignature(&signature, type, pKey, uiKeyLength, pData, pPayload->GetData(), pPayload->GetLength());
             bAppended = pStream->AppendRaw(signature.m_bytes, signature.m_uiLength);
         }
 

@@ -11,9 +11,7 @@ namespace nex
 class CIDLogFilter : public LogFilter
 {
 public:
-    virtual ~CIDLogFilter()
-    {
-    }
+    virtual ~CIDLogFilter() {}
 
     virtual bool OutputCurrentTrace();
 

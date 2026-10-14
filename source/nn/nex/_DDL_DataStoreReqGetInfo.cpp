@@ -18,8 +18,7 @@ const uint8_t REQ_GET_INFO_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStoreReqGetInfo& _DDL_DataStoreReqGetInfo::operator=(
-    const _DDL_DataStoreReqGetInfo& rSource)
+_DDL_DataStoreReqGetInfo& _DDL_DataStoreReqGetInfo::operator=(const _DDL_DataStoreReqGetInfo& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_Url = rSource.m_Url;
@@ -103,8 +102,7 @@ void _DDL_DataStoreReqGetInfo::Extract(Message* pMessage, _DDL_DataStoreReqGetIn
         return;
     }
 
-    _Type_qvector<DDLClassMetaType<DataStoreKeyValue> >::Extract(pMessage,
-        &pDestination->m_RequestHeaders);
+    _Type_qvector<DDLClassMetaType<DataStoreKeyValue> >::Extract(pMessage, &pDestination->m_RequestHeaders);
 
     if (pMessage->HasError())
     {

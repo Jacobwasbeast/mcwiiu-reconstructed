@@ -18,16 +18,9 @@ class Message;
 class _DDL_NintendoNotificationEvent : public RootObject
 {
 public:
-    _DDL_NintendoNotificationEvent()
-        : m_uiStructureVersion(0)
-        , m_Data()
-    {
-        m_uiType = 0;
-    }
+    _DDL_NintendoNotificationEvent() : m_uiStructureVersion(0), m_Data() { m_uiType = 0; }
 
-    virtual ~_DDL_NintendoNotificationEvent()
-    {
-    }
+    virtual ~_DDL_NintendoNotificationEvent() {}
 
     _DDL_NintendoNotificationEvent& operator=(const _DDL_NintendoNotificationEvent& rSource);
     bool operator==(const _DDL_NintendoNotificationEvent& rSource) const;

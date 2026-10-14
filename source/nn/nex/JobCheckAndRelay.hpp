@@ -18,8 +18,7 @@ namespace nex
 class JobCheckAndRelay : public StepSequenceJob
 {
 public:
-    JobCheckAndRelay(CallContext* pCallContext, const qList<StationURL>& rLocalURLs,
-        const StationURL& rStationURL);
+    JobCheckAndRelay(CallContext* pCallContext, const qList<StationURL>& rLocalURLs, const StationURL& rStationURL);
     virtual ~JobCheckAndRelay();
 
     void StepCheck();

@@ -32,20 +32,11 @@ public:
     void UpdateFlushTime();
     Time GetLastFlushTime();
 
-    bool IsEnabled() const
-    {
-        return m_bEnabled;
-    }
+    bool IsEnabled() const { return m_bEnabled; }
 
-    unsigned short GetPlainBundleLimit() const
-    {
-        return m_unknown10;
-    }
+    unsigned short GetPlainBundleLimit() const { return m_unknown10; }
 
-    unsigned short GetReliableBundleLimit() const
-    {
-        return m_unknown12;
-    }
+    unsigned short GetReliableBundleLimit() const { return m_unknown12; }
 
 private:
     bool m_bEnabled;

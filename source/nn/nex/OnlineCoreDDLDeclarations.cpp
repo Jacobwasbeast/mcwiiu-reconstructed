@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-OnlineCoreDDLDeclarations::OnlineCoreDDLDeclarations()
-    : DDLDeclarations(true)
+OnlineCoreDDLDeclarations::OnlineCoreDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

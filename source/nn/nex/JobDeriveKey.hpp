@@ -16,8 +16,8 @@ class KeyCache;
 class JobDeriveKey : public Job
 {
 public:
-    JobDeriveKey(JobType jobType, unsigned int uiCallId, ChecksumAlgorithm* pChecksumAlgorithm,
-        const Buffer* pBuffer, unsigned int uiIterations, Key* pKey);
+    JobDeriveKey(JobType jobType, unsigned int uiCallId, ChecksumAlgorithm* pChecksumAlgorithm, const Buffer* pBuffer,
+                 unsigned int uiIterations, Key* pKey);
     virtual ~JobDeriveKey();
 
     virtual void Execute();

@@ -22,23 +22,15 @@ public:
     virtual void Output(const wchar_t* format, ...);
     virtual void OutputString(const wchar_t* format, ...);
 
-    virtual void AddCustomPrefix(wchar_t*, int, void*)
-    {
-    }
+    virtual void AddCustomPrefix(wchar_t*, int, void*) {}
 
     void SetLogDevice(LogDevice* device, bool deleteOld);
     void SetOutputFormat(OutputFormat* format);
     void SetLogFilter(LogFilter* filter);
 
-    LogDevice* GetLogDevice()
-    {
-        return m_logDevice;
-    }
+    LogDevice* GetLogDevice() { return m_logDevice; }
 
-    LogFilter* GetLogFilter()
-    {
-        return m_logFilter;
-    }
+    LogFilter* GetLogFilter() { return m_logFilter; }
 
     OutputFormat* GetOutputFormat();
     void PrepareOutput(wchar_t* buffer, unsigned int capacity, void* context);

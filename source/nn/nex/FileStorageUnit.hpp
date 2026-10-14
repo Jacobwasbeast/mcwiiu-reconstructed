@@ -11,15 +11,11 @@ namespace nex
 class FileStorageUnit : public StorageUnit
 {
 public:
-    virtual ~FileStorageUnit()
-    {
-    }
+    virtual ~FileStorageUnit() {}
 
     virtual unsigned int GetSize() const;
 
-    virtual void Truncate()
-    {
-    }
+    virtual void Truncate() {}
 
     virtual unsigned int Read(unsigned int uiOffset, unsigned int uiSize, unsigned char* pBuffer) const;
     virtual unsigned int Write(unsigned int uiOffset, unsigned int uiSize, unsigned char* pBuffer);

@@ -11,13 +11,9 @@ namespace nex
 class DataStoreReqPostInfoV1 : public _DDL_DataStoreReqPostInfoV1
 {
 public:
-    DataStoreReqPostInfoV1()
-    {
-    }
+    DataStoreReqPostInfoV1() {}
 
-    virtual ~DataStoreReqPostInfoV1()
-    {
-    }
+    virtual ~DataStoreReqPostInfoV1() {}
 };
 
 }

@@ -22,23 +22,22 @@ public:
     JobWaitForNotification();
     virtual ~JobWaitForNotification();
 
-    virtual qResult Initialize(unsigned int uiCallId, unsigned int uiEventType,
-        unsigned int uiEventSubType, int iTimeout, unsigned int uiParam1,
-        NotificationEventFilterInterface** ppFilter, NotificationEvent* pEvent);
+    virtual qResult Initialize(unsigned int uiCallId, unsigned int uiEventType, unsigned int uiEventSubType,
+                               int iTimeout, unsigned int uiParam1, NotificationEventFilterInterface** ppFilter,
+                               NotificationEvent* pEvent);
 
-    static bool Start(ProtocolCallContext* pContext, unsigned int uiEventType,
-        unsigned int uiEventSubType, int iTimeout, unsigned int uiParam1, NotificationEvent* pEvent);
-    static bool Start(ProtocolCallContext* pContext, unsigned int uiEventType,
-        unsigned int uiEventSubType, int iTimeout, NotificationEventFilterInterface** ppFilter,
-        NotificationEvent* pEvent);
+    static bool Start(ProtocolCallContext* pContext, unsigned int uiEventType, unsigned int uiEventSubType,
+                      int iTimeout, unsigned int uiParam1, NotificationEvent* pEvent);
+    static bool Start(ProtocolCallContext* pContext, unsigned int uiEventType, unsigned int uiEventSubType,
+                      int iTimeout, NotificationEventFilterInterface** ppFilter, NotificationEvent* pEvent);
 
     void StepWaitingNotify();
     void CompleteJob(const qResult& rResult);
 
 private:
-    static bool StartImpl(ProtocolCallContext* pContext, unsigned int uiEventType,
-        unsigned int uiEventSubType, int iTimeout, unsigned int uiParam1,
-        NotificationEventFilterInterface** ppFilter, NotificationEvent* pEvent);
+    static bool StartImpl(ProtocolCallContext* pContext, unsigned int uiEventType, unsigned int uiEventSubType,
+                          int iTimeout, unsigned int uiParam1, NotificationEventFilterInterface** ppFilter,
+                          NotificationEvent* pEvent);
 
     unsigned int m_uiCallId;
     MyNotificationEventHandler* m_pEventHandler;

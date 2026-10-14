@@ -15,12 +15,11 @@ class Timeout;
 class PacketOut : public Packet
 {
 public:
-    PacketOut(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short uiFlags, Buffer* pPayload,
-        unsigned int uiSize);
+    PacketOut(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short uiFlags, Buffer* pPayload, unsigned int uiSize);
     virtual ~PacketOut();
 
-    void Initialize(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short uiFlags,
-        Buffer* pPayload, unsigned int uiSize, Timeout* pTimeout);
+    void Initialize(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short uiFlags, Buffer* pPayload,
+                    unsigned int uiSize, Timeout* pTimeout);
     bool IsValid();
     bool IsBundlable() const;
     bool IsBundlableWithPortTypeCheck(PacketOut* pPacket);
@@ -43,12 +42,7 @@ public:
     unsigned int m_unknown144;
 
 protected:
-    PacketOut()
-        : Packet()
-        , m_unknown120(0)
-        , m_unknown138(0)
-    {
-    }
+    PacketOut() : Packet(), m_unknown120(0), m_unknown138(0) {}
 };
 
 }

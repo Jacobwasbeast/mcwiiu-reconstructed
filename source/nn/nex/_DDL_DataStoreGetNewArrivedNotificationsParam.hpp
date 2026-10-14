@@ -15,16 +15,12 @@ class Message;
 class _DDL_DataStoreGetNewArrivedNotificationsParam : public RootObject
 {
 public:
-    _DDL_DataStoreGetNewArrivedNotificationsParam()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreGetNewArrivedNotificationsParam() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreGetNewArrivedNotificationsParam()
-    {
-    }
+    virtual ~_DDL_DataStoreGetNewArrivedNotificationsParam() {}
 
-    _DDL_DataStoreGetNewArrivedNotificationsParam& operator=(const _DDL_DataStoreGetNewArrivedNotificationsParam& rSource);
+    _DDL_DataStoreGetNewArrivedNotificationsParam& operator=(
+        const _DDL_DataStoreGetNewArrivedNotificationsParam& rSource);
     bool operator==(const _DDL_DataStoreGetNewArrivedNotificationsParam& rSource) const;
 
     static void Add(Message* pMessage, const _DDL_DataStoreGetNewArrivedNotificationsParam& rSource);

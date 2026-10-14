@@ -16,15 +16,9 @@ public:
     MutexPrimitive();
     virtual ~MutexPrimitive();
 
-    void Lock()
-    {
-        OSLockMutex(&m_mutex);
-    }
+    void Lock() { OSLockMutex(&m_mutex); }
 
-    void Unlock()
-    {
-        OSUnlockMutex(&m_mutex);
-    }
+    void Unlock() { OSUnlockMutex(&m_mutex); }
 
 private:
     friend class Condition;

@@ -18,8 +18,7 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStoreRatingInfo& _DDL_DataStoreRatingInfo::operator=(
-    const _DDL_DataStoreRatingInfo& rSource)
+_DDL_DataStoreRatingInfo& _DDL_DataStoreRatingInfo::operator=(const _DDL_DataStoreRatingInfo& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_iTotalValue = rSource.m_iTotalValue;
@@ -61,8 +60,7 @@ void _DDL_DataStoreRatingInfo::Add(Message* pMessage, const _DDL_DataStoreRating
     }
 }
 
-void _DDL_DataStoreRatingInfo::Extract(Message* pMessage,
-    _DDL_DataStoreRatingInfo* pDestination)
+void _DDL_DataStoreRatingInfo::Extract(Message* pMessage, _DDL_DataStoreRatingInfo* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

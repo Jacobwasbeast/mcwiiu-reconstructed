@@ -16,16 +16,9 @@ class Message;
 class _DDL_LoginData : public Data
 {
 public:
-    _DDL_LoginData()
-        : Data()
-        , m_uiStructureVersion(0)
-        , m_Name()
-    {
-    }
+    _DDL_LoginData() : Data(), m_uiStructureVersion(0), m_Name() {}
 
-    virtual ~_DDL_LoginData()
-    {
-    }
+    virtual ~_DDL_LoginData() {}
 
     _DDL_LoginData& operator=(const _DDL_LoginData& rSource);
     bool operator==(const _DDL_LoginData& rSource) const;

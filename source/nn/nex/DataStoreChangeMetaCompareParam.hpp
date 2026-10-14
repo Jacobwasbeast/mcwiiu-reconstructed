@@ -11,14 +11,9 @@ namespace nex
 class DataStoreChangeMetaCompareParam : public _DDL_DataStoreChangeMetaCompareParam
 {
 public:
-    DataStoreChangeMetaCompareParam()
-    {
-        Reset();
-    }
+    DataStoreChangeMetaCompareParam() { Reset(); }
 
-    virtual ~DataStoreChangeMetaCompareParam()
-    {
-    }
+    virtual ~DataStoreChangeMetaCompareParam() {}
 
     void Reset();
 };

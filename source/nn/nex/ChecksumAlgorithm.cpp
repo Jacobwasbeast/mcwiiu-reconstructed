@@ -20,8 +20,7 @@ const unsigned int APPEND_AT_END = 0xFFFFFFFFu;
 
 }
 
-ChecksumAlgorithm::ChecksumAlgorithm()
-    : m_uiChecksumLength(0)
+ChecksumAlgorithm::ChecksumAlgorithm() : m_uiChecksumLength(0)
 {
 }
 
@@ -77,8 +76,7 @@ bool ChecksumAlgorithm::RemoveChecksum(Buffer* pBuffer)
 
     Buffer received;
     pBuffer->SetLength(pBuffer->GetLength() - m_uiChecksumLength);
-    received.AppendData(pBuffer->GetData() + pBuffer->GetLength(), m_uiChecksumLength,
-        APPEND_AT_END);
+    received.AppendData(pBuffer->GetData() + pBuffer->GetLength(), m_uiChecksumLength, APPEND_AT_END);
 
     Buffer computed(GetChecksumLength(), 0);
     ComputeChecksum(*pBuffer, &computed);
@@ -110,30 +108,28 @@ Key ChecksumAlgorithm::DeriveKey(const char* pString, unsigned int uiIterations)
     return DeriveKey(buffer, uiIterations);
 }
 
-bool ChecksumAlgorithm::DeriveKey(CallContext* pCallContext,
-    ChecksumAlgorithm* pChecksumAlgorithm, const Buffer& rBuffer, unsigned int uiIterations,
-    Key* pKey, KeyCache* pKeyCache, Job::JobType jobType)
+bool ChecksumAlgorithm::DeriveKey(CallContext* pCallContext, ChecksumAlgorithm* pChecksumAlgorithm,
+                                  const Buffer& rBuffer, unsigned int uiIterations, Key* pKey, KeyCache* pKeyCache,
+                                  Job::JobType jobType)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!pCallContext->InitiateCall())
         return false;
 
     Buffer buffer(rBuffer);
-    JobDeriveKey* pJob = new JobDeriveKey(jobType, pCallContext->m_uiCallId, pChecksumAlgorithm,
-        &buffer, uiIterations, pKey);
+    JobDeriveKey* pJob = new JobDeriveKey(jobType, pCallContext->m_uiCallId, pChecksumAlgorithm, &buffer, uiIterations,
+                                          pKey);
     pJob->m_pKeyCache = pKeyCache;
     Scheduler::GetInstance()->Queue(pJob, false);
     return true;
 }
 
-bool ChecksumAlgorithm::DeriveKey(CallContext* pCallContext,
-    ChecksumAlgorithm* pChecksumAlgorithm, const char* pString, unsigned int uiIterations,
-    Key* pKey, KeyCache* pKeyCache, Job::JobType jobType)
+bool ChecksumAlgorithm::DeriveKey(CallContext* pCallContext, ChecksumAlgorithm* pChecksumAlgorithm, const char* pString,
+                                  unsigned int uiIterations, Key* pKey, KeyCache* pKeyCache, Job::JobType jobType)
 {
     Buffer buffer;
     buffer.AppendData(pString, static_cast<unsigned int>(strlen(pString)), APPEND_AT_END);
-    return DeriveKey(pCallContext, pChecksumAlgorithm, buffer, uiIterations, pKey, pKeyCache,
-        jobType);
+    return DeriveKey(pCallContext, pChecksumAlgorithm, buffer, uiIterations, pKey, pKeyCache, jobType);
 }
 
 }

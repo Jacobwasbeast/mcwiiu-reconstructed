@@ -23,10 +23,7 @@ enum LoginResult
 
 }
 
-JobNNIDLogin::JobNNIDLogin()
-    : JobLogin()
-    , m_pToken(0)
-    , m_uiPrincipalId(0)
+JobNNIDLogin::JobNNIDLogin() : JobLogin(), m_pToken(0), m_uiPrincipalId(0)
 {
 }
 
@@ -34,13 +31,11 @@ JobNNIDLogin::~JobNNIDLogin()
 {
 }
 
-void JobNNIDLogin::Initialize(unsigned int uiCallId, unsigned int uiLoginParam,
-                              NgsFacade* pNgsFacade, const char* pFirstString,
-                              char* pSecondString, const void* pToken, int iTimeout,
+void JobNNIDLogin::Initialize(unsigned int uiCallId, unsigned int uiLoginParam, NgsFacade* pNgsFacade,
+                              const char* pFirstString, char* pSecondString, const void* pToken, int iTimeout,
                               unsigned int uiPrincipalId)
 {
-    JobLogin::Initialize(uiCallId, uiLoginParam, pNgsFacade, pFirstString, pSecondString,
-                         iTimeout);
+    JobLogin::Initialize(uiCallId, uiLoginParam, pNgsFacade, pFirstString, pSecondString, iTimeout);
     m_pToken = static_cast<const ACTNexAuthenticationResult*>(pToken);
     m_uiPrincipalId = uiPrincipalId;
 }
@@ -67,9 +62,8 @@ void JobNNIDLogin::StepGameLogin()
 
         unsigned short uiPort = pToken->port;
         m_authenticationInfo.GetObject()->m_uiValue2 = true;
-        if (!m_pNgsFacade->RendezVous::Login(&m_protocolContext, userName.GetBuffer(),
-                                             pToken->password, host, uiPort, m_authenticationInfo,
-                                             &m_pCredentials, 0))
+        if (!m_pNgsFacade->RendezVous::Login(&m_protocolContext, userName.GetBuffer(), pToken->password, host, uiPort,
+                                             m_authenticationInfo, &m_pCredentials, 0))
         {
             Complete(qResult(LOGIN_CALL_FAILED_RESULT));
             return;
@@ -81,8 +75,7 @@ void JobNNIDLogin::StepGameLogin()
 
 void JobNNIDLogin::StepWaitingForGameLogin()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetToComplete();

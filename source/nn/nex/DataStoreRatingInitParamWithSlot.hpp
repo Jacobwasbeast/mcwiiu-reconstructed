@@ -11,13 +11,9 @@ namespace nex
 class DataStoreRatingInitParamWithSlot : public _DDL_DataStoreRatingInitParamWithSlot
 {
 public:
-    DataStoreRatingInitParamWithSlot()
-    {
-    }
+    DataStoreRatingInitParamWithSlot() {}
 
-    virtual ~DataStoreRatingInitParamWithSlot()
-    {
-    }
+    virtual ~DataStoreRatingInitParamWithSlot() {}
 };
 
 }

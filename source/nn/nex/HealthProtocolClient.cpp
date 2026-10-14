@@ -35,18 +35,15 @@ ProtoReturnFunction s_ProtoReturn[METHOD_ID_COUNT];
 
 }
 
-HealthProtocolClient::HealthProtocolClient(unsigned short uiProtocolID)
-    : ClientProtocol(1)
+HealthProtocolClient::HealthProtocolClient(unsigned short uiProtocolID) : ClientProtocol(1)
 {
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new HealthProtocolClient());
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(uiProtocolID, new HealthProtocolClient());
 }
 
-void HealthProtocolClient::ExtractCallSpecificResults(Message* pMessage,
-                                                      ProtocolCallContext* pCallContext)
+void HealthProtocolClient::ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
@@ -85,9 +82,8 @@ bool HealthProtocolClient::CallPingDaemon(ProtocolCallContext* pCallContext, boo
     return bSent;
 }
 
-bool HealthProtocolClient::PingDaemon_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                Message* pMessage,
-                                                bool* pReturnValue)
+bool HealthProtocolClient::PingDaemon_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                     bool* pReturnValue)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -143,9 +139,8 @@ bool HealthProtocolClient::CallPingDatabase(ProtocolCallContext* pCallContext, b
     return bSent;
 }
 
-bool HealthProtocolClient::PingDatabase_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                Message* pMessage,
-                                                bool* pReturnValue)
+bool HealthProtocolClient::PingDatabase_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                       bool* pReturnValue)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -201,9 +196,8 @@ bool HealthProtocolClient::CallRunSanityCheck(ProtocolCallContext* pCallContext,
     return bSent;
 }
 
-bool HealthProtocolClient::RunSanityCheck_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                Message* pMessage,
-                                                bool* pReturnValue)
+bool HealthProtocolClient::RunSanityCheck_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                         bool* pReturnValue)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -259,9 +253,8 @@ bool HealthProtocolClient::CallFixSanityErrors(ProtocolCallContext* pCallContext
     return bSent;
 }
 
-bool HealthProtocolClient::FixSanityErrors_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                Message* pMessage,
-                                                bool* pReturnValue)
+bool HealthProtocolClient::FixSanityErrors_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                          bool* pReturnValue)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();

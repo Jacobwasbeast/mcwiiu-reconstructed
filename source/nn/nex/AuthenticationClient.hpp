@@ -34,11 +34,10 @@ public:
 
     virtual void UpdateProtocolsDefaultCredentials(Credentials* pCredentials);
 
-    bool Login(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName,
-        const char* pPassword, RVConnectionData* pConnectionData, String* pReturnMessage,
-        AnyObjectHolder<Data, String>* pCustomData);
+    bool Login(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName, const char* pPassword,
+               RVConnectionData* pConnectionData, String* pReturnMessage, AnyObjectHolder<Data, String>* pCustomData);
     bool LoginWithData(ProtocolCallContext* pCallContext, qResult* pResult, const char* pPassword,
-        RVConnectionData* pConnectionData, CustomDataHolder<LoginData>* pLoginData);
+                       RVConnectionData* pConnectionData, CustomDataHolder<LoginData>* pLoginData);
     void Logout();
     bool Rebind(Credentials* pCredentials);
     bool GetPID(ProtocolCallContext* pCallContext, unsigned int* pPrincipalID, String userName);

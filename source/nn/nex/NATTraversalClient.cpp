@@ -7,8 +7,7 @@ namespace nn
 namespace nex
 {
 
-NATTraversalClient::NATTraversalClient()
-    : ServiceClient(SERVICE_ID)
+NATTraversalClient::NATTraversalClient() : ServiceClient(SERVICE_ID)
 {
     m_relayClient.Init();
     m_relayClient.RegisterRelayInterface(&m_relay);

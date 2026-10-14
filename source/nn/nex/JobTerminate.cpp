@@ -24,8 +24,8 @@ enum TerminateResult
 }
 
 JobTerminate::JobTerminate(unsigned int uiCallId, NgsFacade* pNgsFacade)
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_callContext()
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_callContext()
 {
     m_pNgsFacade = pNgsFacade;
     m_uiCallId = uiCallId;
@@ -45,8 +45,7 @@ void JobTerminate::StepWaitOnPendingJobs()
         return;
     }
 
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
         pCallContext->SignalSuccess(qResult(TERMINATE_SUCCEEDED_RESULT));
 

@@ -51,8 +51,8 @@ extern "C"
 int quazal_deflate(z_streamp strm, int flush);
 int quazal_deflateEnd(z_streamp strm);
 int quazal_deflateReset(z_streamp strm);
-int quazal_deflateInit2_(z_streamp strm, int level, int method, int windowBits, int memLevel,
-    int strategy, const char* version, int stream_size);
+int quazal_deflateInit2_(z_streamp strm, int level, int method, int windowBits, int memLevel, int strategy,
+                         const char* version, int stream_size);
 int quazal_inflate(z_streamp strm, int flush);
 int quazal_inflateEnd(z_streamp strm);
 int quazal_inflateReset(z_streamp strm);

@@ -51,18 +51,18 @@ int g_nasErrorCodeBase = 20000;
 int g_httpErrorCodeBase = 22968;
 
 NgsFacade::NgsFacade()
-    : RendezVous()
-    , m_reserved0(0)
-    , m_pLoginJob(0)
-    , m_pTerminateJob(0)
-    , m_iNasErrorCode(0)
-    , m_iHttpStatusCode(HTTP_STATUS_OK)
-    , m_loginResult(SUCCESS_RESULT)
-    , m_uiLoginErrorCode(0)
-    , m_reserved1(false)
-    , m_reserved2(false)
-    , m_reserved3(false)
-    , m_authenticationInfo()
+    : RendezVous(),
+      m_reserved0(0),
+      m_pLoginJob(0),
+      m_pTerminateJob(0),
+      m_iNasErrorCode(0),
+      m_iHttpStatusCode(HTTP_STATUS_OK),
+      m_loginResult(SUCCESS_RESULT),
+      m_uiLoginErrorCode(0),
+      m_reserved1(false),
+      m_reserved2(false),
+      m_reserved3(false),
+      m_authenticationInfo()
 {
     RootTransport::GetInstance()->EnableUPnPSupport(false);
     RegisterPreTerminateCallback(OnTerminate, UserContext(this));
@@ -132,12 +132,9 @@ void NgsFacade::OnTerminate(CallContext* pCallContext, const UserContext* pUserC
     static_cast<NgsFacade*>(pUserContext->GetPointer())->TerminateImpl(pCallContext);
 }
 
-qResult NgsFacade::LoginAndRequestAuthenticationTokenImpl(ProtocolCallContext* pCallContext,
-                                                          unsigned int uiLoginParam,
-                                                          const wchar_t* pSandboxAccessKey,
-                                                          const char* pFirstString,
-                                                          char* pSecondString, const void* pToken,
-                                                          int iFirstValue,
+qResult NgsFacade::LoginAndRequestAuthenticationTokenImpl(ProtocolCallContext* pCallContext, unsigned int uiLoginParam,
+                                                          const wchar_t* pSandboxAccessKey, const char* pFirstString,
+                                                          char* pSecondString, const void* pToken, int iFirstValue,
                                                           unsigned int uiSecondValue)
 {
     m_iNasErrorCode = 0;
@@ -192,14 +189,14 @@ qResult NgsFacade::LoginAndRequestAuthenticationTokenImpl(ProtocolCallContext* p
     {
         JobCafeLogin* pCafeLoginJob = new JobCafeLogin();
         m_pLoginJob = pCafeLoginJob;
-        pCafeLoginJob->Initialize(pCallContext->m_uiCallId, uiLoginParam, this, pFirstString,
-                                  pSecondString, iFirstValue);
+        pCafeLoginJob->Initialize(pCallContext->m_uiCallId, uiLoginParam, this, pFirstString, pSecondString,
+                                  iFirstValue);
     }
     else
     {
         JobNNIDLogin* pNNIDLoginJob = new JobNNIDLogin();
-        pNNIDLoginJob->Initialize(pCallContext->m_uiCallId, uiLoginParam, this, pFirstString,
-                                  pSecondString, pToken, iFirstValue, uiSecondValue);
+        pNNIDLoginJob->Initialize(pCallContext->m_uiCallId, uiLoginParam, this, pFirstString, pSecondString, pToken,
+                                  iFirstValue, uiSecondValue);
         m_pLoginJob = pNNIDLoginJob;
     }
 
@@ -208,32 +205,26 @@ qResult NgsFacade::LoginAndRequestAuthenticationTokenImpl(ProtocolCallContext* p
     return qResult(SUCCESS_RESULT);
 }
 
-qResult NgsFacade::LoginAndRequestAuthenticationToken(ProtocolCallContext* pCallContext,
-                                                      unsigned int uiLoginParam,
-                                                      const wchar_t* pSandboxAccessKey,
-                                                      const char* pFirstString,
-                                                      char* pSecondString, int iFirstValue,
-                                                      unsigned int uiSecondValue)
+qResult NgsFacade::LoginAndRequestAuthenticationToken(ProtocolCallContext* pCallContext, unsigned int uiLoginParam,
+                                                      const wchar_t* pSandboxAccessKey, const char* pFirstString,
+                                                      char* pSecondString, int iFirstValue, unsigned int uiSecondValue)
 {
-    return LoginAndRequestAuthenticationTokenImpl(pCallContext, uiLoginParam, pSandboxAccessKey,
-                                                  pFirstString, pSecondString, 0, iFirstValue,
+    return LoginAndRequestAuthenticationTokenImpl(pCallContext, uiLoginParam, pSandboxAccessKey, pFirstString,
+                                                  pSecondString, 0, iFirstValue, uiSecondValue);
+}
+
+qResult NgsFacade::Login(ProtocolCallContext* pCallContext, unsigned int uiLoginParam, const wchar_t* pSandboxAccessKey,
+                         int iFirstValue, unsigned int uiSecondValue)
+{
+    return LoginAndRequestAuthenticationToken(pCallContext, uiLoginParam, pSandboxAccessKey, 0, 0, iFirstValue,
+                                              uiSecondValue);
+}
+
+qResult NgsFacade::Login(ProtocolCallContext* pCallContext, const void* pToken, const wchar_t* pSandboxAccessKey,
+                         int iFirstValue, unsigned int uiSecondValue)
+{
+    return LoginAndRequestAuthenticationTokenImpl(pCallContext, 0, pSandboxAccessKey, 0, 0, pToken, iFirstValue,
                                                   uiSecondValue);
-}
-
-qResult NgsFacade::Login(ProtocolCallContext* pCallContext, unsigned int uiLoginParam,
-                         const wchar_t* pSandboxAccessKey, int iFirstValue,
-                         unsigned int uiSecondValue)
-{
-    return LoginAndRequestAuthenticationToken(pCallContext, uiLoginParam, pSandboxAccessKey, 0, 0,
-                                              iFirstValue, uiSecondValue);
-}
-
-qResult NgsFacade::Login(ProtocolCallContext* pCallContext, const void* pToken,
-                         const wchar_t* pSandboxAccessKey, int iFirstValue,
-                         unsigned int uiSecondValue)
-{
-    return LoginAndRequestAuthenticationTokenImpl(pCallContext, 0, pSandboxAccessKey, 0, 0, pToken,
-                                                  iFirstValue, uiSecondValue);
 }
 
 qResult NgsFacade::Logout(ProtocolCallContext* pCallContext)

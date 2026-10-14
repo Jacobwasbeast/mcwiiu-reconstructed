@@ -6,7 +6,10 @@
 #include "nn/nex/BandwidthCounter.hpp"
 #include "nn/nex/MemAllocator.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class BandwidthCounterMap : public RootObject
 {
@@ -26,12 +29,14 @@ public:
 
 private:
     typedef std::map<unsigned int, IOBandwidthCounter*, std::less<unsigned int>,
-                     MemAllocator<std::pair<const unsigned int, IOBandwidthCounter*> > > CounterMap;
+                     MemAllocator<std::pair<const unsigned int, IOBandwidthCounter*> > >
+        CounterMap;
 
     String m_name;
     CounterMap m_counters;
 };
 
-}}
+}
+}
 
 #endif

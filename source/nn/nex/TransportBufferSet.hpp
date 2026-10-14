@@ -24,10 +24,7 @@ public:
     void FreeOneBuffer(TransportBufferInfo* pInfo);
     void ClearList_(qReservedQueue<TransportBufferInfo*>& rQueue);
 
-    unsigned int GetEmptyDropCount() const
-    {
-        return m_uiEmptyDropCount;
-    }
+    unsigned int GetEmptyDropCount() const { return m_uiEmptyDropCount; }
 
 private:
     friend class QueuingSocketTransportBuffer;

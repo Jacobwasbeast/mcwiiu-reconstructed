@@ -13,15 +13,13 @@ Key::Key()
 {
 }
 
-Key::Key(const unsigned char* pContent, unsigned int uiLength)
-    : m_content(uiLength)
+Key::Key(const unsigned char* pContent, unsigned int uiLength) : m_content(uiLength)
 {
     for (unsigned int i = 0; i < uiLength; ++i)
         m_content[i] = pContent[i];
 }
 
-Key::Key(unsigned int uiLength)
-    : m_content(uiLength)
+Key::Key(unsigned int uiLength) : m_content(uiLength)
 {
     memset(&m_content[0], 0, uiLength);
 }
@@ -40,9 +38,7 @@ Key::Key(const String& rString)
     }
 }
 
-Key::Key(const Key& rKey)
-    : RefCountedObject()
-    , m_content(rKey.m_content)
+Key::Key(const Key& rKey) : RefCountedObject(), m_content(rKey.m_content)
 {
 }
 

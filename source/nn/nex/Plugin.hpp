@@ -25,38 +25,23 @@ public:
     virtual bool Activate() = 0;
     virtual void Release() = 0;
 
-    virtual bool Initialize()
-    {
-        return true;
-    }
+    virtual bool Initialize() { return true; }
 
-    virtual void ThreadAttach()
-    {
-    }
+    virtual void ThreadAttach() {}
 
-    virtual void ThreadDetach()
-    {
-    }
+    virtual void ThreadDetach() {}
 
-    virtual void Destroy()
-    {
-    }
+    virtual void Destroy() {}
 
     virtual PluginObject* CreatePluginObject() = 0;
     virtual void DeletePluginObject(PluginObject* pObject) = 0;
 
-    void SetLibrary(void* pLibrary)
-    {
-        m_pLibrary = pLibrary;
-    }
+    void SetLibrary(void* pLibrary) { m_pLibrary = pLibrary; }
 
     void Unload();
     void Trace(unsigned long long uiFilter);
 
-    static Plugin* GetInstance()
-    {
-        return s_pInstance;
-    }
+    static Plugin* GetInstance() { return s_pInstance; }
 
 private:
     static Plugin* s_pInstance;

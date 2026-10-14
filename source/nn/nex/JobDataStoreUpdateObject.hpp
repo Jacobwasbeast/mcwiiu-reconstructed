@@ -24,10 +24,10 @@ public:
     virtual ~JobDataStoreUpdateObject();
 
     virtual qResult Initialize(unsigned int uiCallId, DataStoreLogicServerClientInterface* pClient,
-        const DataStorePrepareUpdateParam& rParam, unsigned int uiThreadPriority, bool bUseHttps,
-        unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate,
-        int iMinimumTimeout, DataStorePostObjectEventListener* pListener,
-        unsigned int uiBufferSize, const unsigned char* pData, bool bCopyData);
+                               const DataStorePrepareUpdateParam& rParam, unsigned int uiThreadPriority, bool bUseHttps,
+                               unsigned int uiTransferBufferSize, unsigned int uiMinimumTransferRate,
+                               int iMinimumTimeout, DataStorePostObjectEventListener* pListener,
+                               unsigned int uiBufferSize, const unsigned char* pData, bool bCopyData);
 
     void CompleteJob(const qResult& rResult);
     void StepLogicServerPrepareUpdateObject();

@@ -21,14 +21,9 @@ public:
 
     static TraceLog* GetInstance();
 
-    void SetFlag(unsigned int uiFlag)
-    {
-        m_uiFlags |= uiFlag;
-    }
+    void SetFlag(unsigned int uiFlag) { m_uiFlags |= uiFlag; }
 
-    void SetFlag(const wchar_t*)
-    {
-    }
+    void SetFlag(const wchar_t*) {}
 
 private:
     unsigned int m_field10;

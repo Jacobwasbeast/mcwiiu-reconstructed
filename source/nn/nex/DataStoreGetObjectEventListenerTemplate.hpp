@@ -10,18 +10,14 @@ template <typename TDataId>
 class DataStoreGetObjectEventListenerTemplate
 {
 public:
-    virtual ~DataStoreGetObjectEventListenerTemplate()
+    virtual ~DataStoreGetObjectEventListenerTemplate() {}
+
+    virtual void BeginInternal(TDataId dataId, unsigned int uiSize, unsigned int uiOwnerId, unsigned short usDataType,
+                               unsigned short usVersion, bool bIsObject)
     {
     }
 
-    virtual void BeginInternal(TDataId dataId, unsigned int uiSize, unsigned int uiOwnerId,
-        unsigned short usDataType, unsigned short usVersion, bool bIsObject)
-    {
-    }
-
-    virtual void Begin(TDataId dataId, unsigned int uiSize)
-    {
-    }
+    virtual void Begin(TDataId dataId, unsigned int uiSize) {}
 
     virtual bool ProcessResponse(const void* pData, unsigned int uiSize) = 0;
 };

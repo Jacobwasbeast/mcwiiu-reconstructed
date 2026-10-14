@@ -31,14 +31,14 @@ unsigned int s_uiBuffersCreated = 0;
 
 }
 
-QueuingSocket::QueuingSocket(unsigned int uiTrafficType, RootTransport* pTransport,
-    unsigned int uiMTU, TransportBuffer* pTransportBuffer)
-    : Socket(uiTrafficType, uiMTU)
-    , m_unknown38(1)
-    , m_outputEmulator(pTransport->GetOutputEmulationDevice())
-    , m_inputEmulator(pTransport->GetInputEmulationDevice())
-    , m_unknownD0(1)
-    , m_sendingQueue(L"Sending Packet Queue")
+QueuingSocket::QueuingSocket(unsigned int uiTrafficType, RootTransport* pTransport, unsigned int uiMTU,
+                             TransportBuffer* pTransportBuffer)
+    : Socket(uiTrafficType, uiMTU),
+      m_unknown38(1),
+      m_outputEmulator(pTransport->GetOutputEmulationDevice()),
+      m_inputEmulator(pTransport->GetInputEmulationDevice()),
+      m_unknownD0(1),
+      m_sendingQueue(L"Sending Packet Queue")
 {
     m_pTransportBuffer = pTransportBuffer;
     m_unknownF8 = false;
@@ -142,8 +142,8 @@ void QueuingSocket::DequeueAndSendOutgoingBuffer()
     }
 }
 
-int QueuingSocket::FillPacketQueueFromBuffer(Buffer* pBuffer, const InetAddress* pAddress,
-    PacketQueue* pQueue, TransportStreamManager* pStreamManager, bool* pFailed)
+int QueuingSocket::FillPacketQueueFromBuffer(Buffer* pBuffer, const InetAddress* pAddress, PacketQueue* pQueue,
+                                             TransportStreamManager* pStreamManager, bool* pFailed)
 {
     if (m_bVDP)
     {
@@ -166,8 +166,8 @@ int QueuingSocket::FillPacketQueueFromBuffer(Buffer* pBuffer, const InetAddress*
     return iCount;
 }
 
-Packet* QueuingSocket::ExtractIncomingPacket(TransportStreamManager* pStreamManager,
-    const InetAddress* pAddress, Buffer* pBuffer, bool* pFailed)
+Packet* QueuingSocket::ExtractIncomingPacket(TransportStreamManager* pStreamManager, const InetAddress* pAddress,
+                                             Buffer* pBuffer, bool* pFailed)
 {
     PacketIn* pPacket;
     if (!m_unknownF8)
@@ -176,8 +176,7 @@ Packet* QueuingSocket::ExtractIncomingPacket(TransportStreamManager* pStreamMana
     }
     else
     {
-        pPacket = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT)
-            PacketBufferPacketIn(pBuffer->GetLength());
+        pPacket = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT) PacketBufferPacketIn(pBuffer->GetLength());
         if (pPacket == 0)
         {
             *pFailed = true;
@@ -198,9 +197,9 @@ Packet* QueuingSocket::ExtractIncomingPacket(TransportStreamManager* pStreamMana
         unsigned int uiBundled = 0;
         PRUDPMessageSelector& rSelector = Network::GetInstance()->GetMessageSelector();
         bool bUnpacked = rSelector.FastUnpack(&stream, pPacket, &uiConsumed);
-        while (bUnpacked && pPacket->CanHistoryBundle() &&
-            (g_historyBundleWithoutFlag || (pPacket->m_uiTypeAndFlags & PACKET_FLAG_HISTORY_BUNDLE)) &&
-            pStreamManager->IsDuplicateReorderingPacket(pPacket))
+        while (bUnpacked && pPacket->CanHistoryBundle()
+               && (g_historyBundleWithoutFlag || (pPacket->m_uiTypeAndFlags & PACKET_FLAG_HISTORY_BUNDLE))
+               && pStreamManager->IsDuplicateReorderingPacket(pPacket))
         {
             uiBundled += uiConsumed;
             bUnpacked = rSelector.FastUnpack(&stream, pPacket, &uiConsumed);
@@ -227,8 +226,7 @@ Packet* QueuingSocket::ExtractIncomingPacket(TransportStreamManager* pStreamMana
     return pPacket;
 }
 
-void QueuingSocket::RetransmitFromHistoryPacketQueue(PacketQueue* pQueue, HistoryChain* pHistory,
-    unsigned short uiPort)
+void QueuingSocket::RetransmitFromHistoryPacketQueue(PacketQueue* pQueue, HistoryChain* pHistory, unsigned short uiPort)
 {
     Time now = Time::GetTime();
     HistoryChain::iterator position = pHistory->begin();
@@ -276,8 +274,7 @@ void QueuingSocket::RetransmitFromHistoryPacketQueue(PacketQueue* pQueue, Histor
     }
 }
 
-Buffer* QueuingSocket::CreateBufferFromPacketQueue(PacketQueue* pQueue, HistoryChain* pHistory,
-    unsigned int uiMaxSize)
+Buffer* QueuingSocket::CreateBufferFromPacketQueue(PacketQueue* pQueue, HistoryChain* pHistory, unsigned int uiMaxSize)
 {
     PacketOut* pPacket = static_cast<PacketOut*>(pQueue->front());
     PacketOut* pHistoryPacket = 0;
@@ -291,16 +288,15 @@ Buffer* QueuingSocket::CreateBufferFromPacketQueue(PacketQueue* pQueue, HistoryC
     unsigned char uiTTL = pPacket->m_uiTTL;
     Buffer* pScratchBuffer = 0;
     Buffer* pOutputBuffer = 0;
-    if (((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_PING ||
-            pPacket->m_pPayload == 0 || pPacket->m_pPayload->IsPooled()) &&
-        m_unknownF8)
+    if (((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_PING || pPacket->m_pPayload == 0
+         || pPacket->m_pPayload->IsPooled())
+        && m_unknownF8)
     {
         pScratchBuffer = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT)
             PacketBuffer(uiMaxSize, Buffer::BUFFER_FLAG_POOLED);
         pOutputBuffer = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT)
             PacketBuffer(uiMaxSize, Buffer::BUFFER_FLAG_POOLED);
-        if (pScratchBuffer == 0 || !pScratchBuffer->IsValid() || pOutputBuffer == 0 ||
-            !pOutputBuffer->IsValid())
+        if (pScratchBuffer == 0 || !pScratchBuffer->IsValid() || pOutputBuffer == 0 || !pOutputBuffer->IsValid())
         {
             delete pScratchBuffer;
             delete pOutputBuffer;
@@ -332,8 +328,7 @@ Buffer* QueuingSocket::CreateBufferFromPacketQueue(PacketQueue* pQueue, HistoryC
         scratch.Clear();
         rSelector.Pack(pPacket, &scratch);
         unsigned int uiTrailingSize = pTrailing != 0 ? pTrailing->GetBuffer()->GetLength() : 0;
-        if (uiMaxSize <
-            output.GetBuffer()->GetLength() + scratch.GetBuffer()->GetLength() + uiTrailingSize)
+        if (uiMaxSize < output.GetBuffer()->GetLength() + scratch.GetBuffer()->GetLength() + uiTrailingSize)
             break;
         if (!m_bVDP || (pPacket->m_uiTypeAndFlags & PACKET_FLAG_TRAILER) == 0)
         {
@@ -347,8 +342,8 @@ Buffer* QueuingSocket::CreateBufferFromPacketQueue(PacketQueue* pQueue, HistoryC
         }
         pPacket->AddRef();
         PacketQueue::Chain::iterator next = pQueue->Dequeue(position);
-        if (pPacket->m_unknown12c != 0 && g_historyBundlingEnabled &&
-            pPacket->CanHistoryBundle() && !pPacket->m_unknown129)
+        if (pPacket->m_unknown12c != 0 && g_historyBundlingEnabled && pPacket->CanHistoryBundle()
+            && !pPacket->m_unknown129)
         {
             m_sendingQueue.Queue(pPacket, false);
             pHistoryPacket = pPacket;
@@ -365,8 +360,8 @@ Buffer* QueuingSocket::CreateBufferFromPacketQueue(PacketQueue* pQueue, HistoryC
             if (pPacket->IsBundlable() && pNextPacket->IsBundlableWithPortTypeCheck(pPacket))
             {
                 unsigned int uiLimit = uiReliableLimit;
-                if ((pNextPacket->m_uiTypeAndFlags & PACKET_FLAG_RELIABLE) == 0 &&
-                    (pNextPacket->m_uiTypeAndFlags & PACKET_FLAG_ACK) == 0)
+                if ((pNextPacket->m_uiTypeAndFlags & PACKET_FLAG_RELIABLE) == 0
+                    && (pNextPacket->m_uiTypeAndFlags & PACKET_FLAG_ACK) == 0)
                     uiLimit = uiPlainLimit;
                 if (uiBundled <= uiLimit)
                     break;
@@ -398,15 +393,14 @@ Buffer* QueuingSocket::CreateBufferFromPacketQueue(PacketQueue* pQueue, HistoryC
             }
             Time now(Time::GetTime());
             Time limit;
-            if (static_cast<unsigned long long>(g_historyBundleAge) <
-                static_cast<unsigned long long>(now))
+            if (static_cast<unsigned long long>(g_historyBundleAge) < static_cast<unsigned long long>(now))
                 limit = now + -g_historyBundleAge;
-            uiHistoryBundled = CreateBunldingStreamFromHistoryPacketQueue(pHistory,
-                pHistoryPacket, limit, iRemaining, &scratch);
+            uiHistoryBundled = CreateBunldingStreamFromHistoryPacketQueue(pHistory, pHistoryPacket, limit, iRemaining,
+                                                                          &scratch);
             if (uiPrefixSize < scratch.GetBuffer()->GetLength())
             {
                 scratch.GetBuffer()->AppendData(output.GetBuffer()->GetData() + uiPrefixSize,
-                    output.GetBuffer()->GetLength() - uiPrefixSize, 0xFFFFFFFFu);
+                                                output.GetBuffer()->GetLength() - uiPrefixSize, 0xFFFFFFFFu);
                 pFinal = &scratch;
             }
         }

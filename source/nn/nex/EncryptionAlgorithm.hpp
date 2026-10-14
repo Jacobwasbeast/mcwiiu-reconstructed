@@ -25,10 +25,7 @@ public:
 
     bool SetKey(const Key& rKey);
 
-    const Key& GetKey() const
-    {
-        return m_key;
-    }
+    const Key& GetKey() const { return m_key; }
 
 protected:
     Key m_key;

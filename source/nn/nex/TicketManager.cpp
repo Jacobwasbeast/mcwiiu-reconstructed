@@ -23,9 +23,9 @@ TicketManager::~TicketManager()
 {
 }
 
-bool TicketManager::Login(CallContext* pCallContext, qResult* pResult, const String& rUserName,
-    const char* pPassword, unsigned int* pPrincipalID, RVConnectionData* pConnectionData,
-    String* pReturnMessage, AnyObjectHolder<Data, String>* pCustomData)
+bool TicketManager::Login(CallContext* pCallContext, qResult* pResult, const String& rUserName, const char* pPassword,
+                          unsigned int* pPrincipalID, RVConnectionData* pConnectionData, String* pReturnMessage,
+                          AnyObjectHolder<Data, String>* pCustomData)
 {
     CriticalSection& csScheduler = Scheduler::GetInstance()->GetCriticalSection();
     csScheduler.Enter();
@@ -34,17 +34,17 @@ bool TicketManager::Login(CallContext* pCallContext, qResult* pResult, const Str
         csScheduler.Leave();
         return false;
     }
-    JobTicketManagerLogin* pJob = new JobTicketManagerLogin(pCallContext->m_uiCallId, this,
-        pResult, rUserName, pPassword, pPrincipalID, pConnectionData, pReturnMessage,
-        pCustomData);
+    JobTicketManagerLogin* pJob = new JobTicketManagerLogin(pCallContext->m_uiCallId, this, pResult, rUserName,
+                                                            pPassword, pPrincipalID, pConnectionData, pReturnMessage,
+                                                            pCustomData);
     Scheduler::GetInstance()->Queue(pJob, false);
     csScheduler.Leave();
     return true;
 }
 
-bool TicketManager::LoginWithData(CallContext* pCallContext, qResult* pResult,
-    const char* pPassword, unsigned int* pPrincipalID, RVConnectionData* pConnectionData,
-    CustomDataHolder<LoginData>* pLoginData)
+bool TicketManager::LoginWithData(CallContext* pCallContext, qResult* pResult, const char* pPassword,
+                                  unsigned int* pPrincipalID, RVConnectionData* pConnectionData,
+                                  CustomDataHolder<LoginData>* pLoginData)
 {
     CriticalSection& csScheduler = Scheduler::GetInstance()->GetCriticalSection();
     csScheduler.Enter();
@@ -54,15 +54,14 @@ bool TicketManager::LoginWithData(CallContext* pCallContext, qResult* pResult,
         return false;
     }
     JobTicketManagerLoginWithData* pJob = new JobTicketManagerLoginWithData(
-        pCallContext->m_uiCallId, this, pResult, pPassword, pPrincipalID, pConnectionData,
-        pLoginData);
+        pCallContext->m_uiCallId, this, pResult, pPassword, pPrincipalID, pConnectionData, pLoginData);
     Scheduler::GetInstance()->Queue(pJob, false);
     csScheduler.Leave();
     return true;
 }
 
 bool TicketManager::AcquireTicket(CallContext* pCallContext, unsigned int uiSourcePrincipalID,
-    unsigned int uiTargetPrincipalID, Ticket** ppTicket)
+                                  unsigned int uiTargetPrincipalID, Ticket** ppTicket)
 {
     CriticalSection& csScheduler = Scheduler::GetInstance()->GetCriticalSection();
     csScheduler.Enter();

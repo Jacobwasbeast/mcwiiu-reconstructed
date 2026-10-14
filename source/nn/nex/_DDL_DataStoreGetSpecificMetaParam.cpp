@@ -49,8 +49,7 @@ void _DDL_DataStoreGetSpecificMetaParam::Add(Message* pMessage, const _DDL_DataS
     }
 }
 
-void _DDL_DataStoreGetSpecificMetaParam::Extract(Message* pMessage,
-    _DDL_DataStoreGetSpecificMetaParam* pDestination)
+void _DDL_DataStoreGetSpecificMetaParam::Extract(Message* pMessage, _DDL_DataStoreGetSpecificMetaParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

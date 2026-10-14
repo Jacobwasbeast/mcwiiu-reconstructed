@@ -19,14 +19,17 @@ class _DDL_PersistentGathering : public Gathering
 {
 public:
     _DDL_PersistentGathering()
-        : Gathering(), m_uiStructureVersion(0), m_strPassword(), m_Attributes(0), m_ApplicationBuffer(0),
-          m_ParticipationStartDate(), m_ParticipationEndDate()
+        : Gathering(),
+          m_uiStructureVersion(0),
+          m_strPassword(),
+          m_Attributes(0),
+          m_ApplicationBuffer(0),
+          m_ParticipationStartDate(),
+          m_ParticipationEndDate()
     {
     }
 
-    virtual ~_DDL_PersistentGathering()
-    {
-    }
+    virtual ~_DDL_PersistentGathering() {}
 
     virtual Gathering* Clone() const;
     virtual String GetGatheringType() const;

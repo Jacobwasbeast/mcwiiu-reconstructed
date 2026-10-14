@@ -13,9 +13,7 @@ class QueuingSocket;
 class TransportBufferThreadInterface : public RootObject
 {
 public:
-    virtual ~TransportBufferThreadInterface()
-    {
-    }
+    virtual ~TransportBufferThreadInterface() {}
 
     virtual void Start() = 0;
     virtual void Stop() = 0;

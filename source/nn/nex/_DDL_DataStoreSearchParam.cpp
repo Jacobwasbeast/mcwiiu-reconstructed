@@ -64,8 +64,7 @@ void _DDL_DataStoreSearchParam::Add(Message* pMessage, const _DDL_DataStoreSearc
     pMessage->Append(&rSource.m_uiResultOrder, 1, 1);
     _DDL_ResultRange::Add(pMessage, rSource.m_ResultRange);
     pMessage->Append(&rSource.m_uiResultOption, 1, 1);
-    pMessage->Append(
-        reinterpret_cast<const unsigned char*>(&rSource.m_uiMinimalRatingFrequency), 4, 1);
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource.m_uiMinimalRatingFrequency), 4, 1);
 
     if (!bCompactFormat)
     {
@@ -93,8 +92,7 @@ void _DDL_DataStoreSearchParam::Add(Message* pMessage, const _DDL_DataStoreSearc
     }
 }
 
-void _DDL_DataStoreSearchParam::Extract(Message* pMessage,
-    _DDL_DataStoreSearchParam* pDestination)
+void _DDL_DataStoreSearchParam::Extract(Message* pMessage, _DDL_DataStoreSearchParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

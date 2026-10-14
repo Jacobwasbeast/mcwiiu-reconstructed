@@ -1,6 +1,9 @@
 #include "nn/nex/RendezVousLogoutOperation.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 RendezVousLogoutOperation::RendezVousLogoutOperation(BackEndServices& rBackEndServices)
     : RendezVousOperation(rBackEndServices)
@@ -25,4 +28,5 @@ void RendezVousLogoutOperation::ForceImplOperationCommonMethodsMacro()
 {
 }
 
-}}
+}
+}

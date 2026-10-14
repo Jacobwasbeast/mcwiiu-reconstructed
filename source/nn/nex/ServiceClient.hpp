@@ -48,10 +48,7 @@ public:
     EndPoint* GetConnection(unsigned short uiConnectionType) const;
     StreamManager* GetStreamManager() const;
 
-    Credentials* GetCredentials() const
-    {
-        return m_pCredentials;
-    }
+    Credentials* GetCredentials() const { return m_pCredentials; }
 
 protected:
     friend class BackEndServices;

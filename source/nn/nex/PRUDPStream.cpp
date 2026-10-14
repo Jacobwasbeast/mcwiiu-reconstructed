@@ -72,17 +72,17 @@ bool PRUDPStream::s_bSendFlag = false;
 unsigned char PRUDPStream::s_uiDefaultVersion = 1;
 
 PRUDPStream::PRUDPStream(Stream::Type type, RootTransport* pTransport)
-    : ConnectionOrientedStream(type, pTransport)
-    , m_timeoutManager()
-    , m_endPoints()
-    , m_deletedEndPoints()
-    , m_lastWorkTime()
-    , m_signatureGenerator()
-    , m_clock()
-    , m_pidEndPoints()
-    , m_cidEndPoints()
-    , m_connectionIDs()
-    , m_endPointMapLock(CRITICAL_SECTION_TRACE_MASK)
+    : ConnectionOrientedStream(type, pTransport),
+      m_timeoutManager(),
+      m_endPoints(),
+      m_deletedEndPoints(),
+      m_lastWorkTime(),
+      m_signatureGenerator(),
+      m_clock(),
+      m_pidEndPoints(),
+      m_cidEndPoints(),
+      m_connectionIDs(),
+      m_endPointMapLock(CRITICAL_SECTION_TRACE_MASK)
 {
     m_lastWorkTime = 0;
     m_bDestroying = false;
@@ -94,8 +94,7 @@ PRUDPStream::PRUDPStream(Stream::Type type, RootTransport* pTransport)
     m_uiContextId = uiContextId;
     m_pTransport = pTransport;
     m_clock = static_cast<unsigned long long>(Time::GetTime()) + Platform::GetRandomNumber(RANDOM_SEQUENCE_LIMIT);
-    Core::GetInstance()->SetTerminateImmediatelyCallback(
-        PRUDPStreamCoreTerminateImmediatelyCallback, this);
+    Core::GetInstance()->SetTerminateImmediatelyCallback(PRUDPStreamCoreTerminateImmediatelyCallback, this);
     m_pMessageSelector = &Network::GetInstance()->GetMessageSelector();
     switch (type)
     {
@@ -134,8 +133,8 @@ PRUDPStream::~PRUDPStream()
 
 void PRUDPStream::OnSetTerminateImmediately()
 {
-    m_timeoutManager.ForceSetPacketTimeouts(
-        Core::GetInstance()->GetTerminateImmediatelyTime() + g_terminateImmediatelyTimeout);
+    m_timeoutManager.ForceSetPacketTimeouts(Core::GetInstance()->GetTerminateImmediatelyTime()
+                                            + g_terminateImmediatelyTimeout);
 }
 
 bool PRUDPStream::StopListen()
@@ -214,8 +213,7 @@ bool PRUDPStream::ResponsibleForURL(const StationURL* pStationURL)
     return pStationURL->GetURLType() == StationURL::Prudp;
 }
 
-PRUDPEndPoint* PRUDPStream::CreateEndPoint(const StationURL* pStationURL,
-    unsigned short uiPortNumber, bool)
+PRUDPEndPoint* PRUDPStream::CreateEndPoint(const StationURL* pStationURL, unsigned short uiPortNumber, bool)
 {
     PRUDPEndPoint* pEndPoint = 0;
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
@@ -223,16 +221,14 @@ PRUDPEndPoint* PRUDPStream::CreateEndPoint(const StationURL* pStationURL,
     if (pStationURL->IsValid())
     {
         unsigned char uiStreamID = pStationURL->GetStreamID();
-        EndPointMap::iterator endPoint =
-            m_endPoints.find(EndPointUniqueID(*pStationURL->GetInetAddress(), uiStreamID));
+        EndPointMap::iterator endPoint = m_endPoints.find(EndPointUniqueID(*pStationURL->GetInetAddress(), uiStreamID));
         if (endPoint == m_endPoints.end() || (pEndPoint = endPoint->second) == 0)
         {
             pEndPoint = new PRUDPEndPoint(this, pStationURL, &m_clock, m_uiVersion);
             pEndPoint->m_uiPort = uiPortNumber;
             unsigned char uiEndPointStreamID = pStationURL->GetStreamID();
             m_endPoints.insert(std::pair<const EndPointUniqueID, PRUDPEndPoint*>(
-                EndPointUniqueID(*pEndPoint->m_stationURL.GetInetAddress(), uiEndPointStreamID),
-                pEndPoint));
+                EndPointUniqueID(*pEndPoint->m_stationURL.GetInetAddress(), uiEndPointStreamID), pEndPoint));
         }
     }
 
@@ -313,8 +309,7 @@ void PRUDPStream::ForceCompleteIO()
 
         UnlockEndPointMap();
         EndPointList::iterator listedEndPoint;
-        for (listedEndPoint = endPoints.begin(); listedEndPoint != endPoints.end();
-             ++listedEndPoint)
+        for (listedEndPoint = endPoints.begin(); listedEndPoint != endPoints.end(); ++listedEndPoint)
         {
             PRUDPEndPoint* pEndPoint = *listedEndPoint;
             pEndPoint->CompleteIO(qResult(RESULT_CONNECTION_FAILED));
@@ -322,8 +317,7 @@ void PRUDPStream::ForceCompleteIO()
     }
 
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    for (EndPointList::iterator endPoint = m_deletedEndPoints.begin();
-         endPoint != m_deletedEndPoints.end(); ++endPoint)
+    for (EndPointList::iterator endPoint = m_deletedEndPoints.begin(); endPoint != m_deletedEndPoints.end(); ++endPoint)
     {
         PRUDPEndPoint* pEndPoint = *endPoint;
         pEndPoint->CompleteIO(qResult(RESULT_CONNECTION_FAILED));
@@ -467,8 +461,7 @@ bool PRUDPStream::RemoveCIDEndPointAssociation(unsigned int uiConnectionID, EndP
         if (association->second == pEndPoint)
         {
             m_cidEndPoints.erase(association);
-            m_connectionIDs.erase(
-                std::find(m_connectionIDs.begin(), m_connectionIDs.end(), uiConnectionID));
+            m_connectionIDs.erase(std::find(m_connectionIDs.begin(), m_connectionIDs.end(), uiConnectionID));
             return true;
         }
 
@@ -478,8 +471,8 @@ bool PRUDPStream::RemoveCIDEndPointAssociation(unsigned int uiConnectionID, EndP
     return false;
 }
 
-PRUDPEndPoint* PRUDPStream::ServiceConnectionRequest(InetAddress* pAddress, Buffer* pBuffer,
-    unsigned short uiPort, unsigned char uiStreamID)
+PRUDPEndPoint* PRUDPStream::ServiceConnectionRequest(InetAddress* pAddress, Buffer* pBuffer, unsigned short uiPort,
+                                                     unsigned char uiStreamID)
 {
     StationURL stationURL;
     stationURL.SetInetAddress(pAddress);
@@ -489,11 +482,9 @@ PRUDPEndPoint* PRUDPStream::ServiceConnectionRequest(InetAddress* pAddress, Buff
     {
         bool bAccepted;
         if (pBuffer->GetLength() != 0)
-            bAccepted = m_pEventHandler->ConnectionRequest(this, &pEndPoint->m_stationURL,
-                pBuffer, pEndPoint);
+            bAccepted = m_pEventHandler->ConnectionRequest(this, &pEndPoint->m_stationURL, pBuffer, pEndPoint);
         else
-            bAccepted = m_pEventHandler->ConnectionRequest(this, &pEndPoint->m_stationURL, 0,
-                pEndPoint);
+            bAccepted = m_pEventHandler->ConnectionRequest(this, &pEndPoint->m_stationURL, 0, pEndPoint);
 
         if (!bAccepted)
         {
@@ -538,15 +529,15 @@ void PRUDPStream::ReleaseEndPointImpl(PRUDPEndPoint* pEndPoint)
 
     pEndPoint->SetConnectionID(0);
     pEndPoint->SetPrincipalID(0);
-    EndPointMap::iterator endPoint = m_endPoints.find(EndPointUniqueID(
-        *pEndPoint->m_stationURL.GetInetAddress(), pEndPoint->m_stationURL.GetStreamID()));
+    EndPointMap::iterator endPoint = m_endPoints.find(
+        EndPointUniqueID(*pEndPoint->m_stationURL.GetInetAddress(), pEndPoint->m_stationURL.GetStreamID()));
     if (endPoint == m_endPoints.end())
         return;
 
     if (endPoint->second != 0)
     {
-        endPoint = m_endPoints.find(EndPointUniqueID(*pEndPoint->m_stationURL.GetInetAddress(),
-            pEndPoint->m_stationURL.GetStreamID()));
+        endPoint = m_endPoints.find(
+            EndPointUniqueID(*pEndPoint->m_stationURL.GetInetAddress(), pEndPoint->m_stationURL.GetStreamID()));
         if (endPoint != m_endPoints.end())
             m_endPoints.erase(endPoint);
 
@@ -582,19 +573,17 @@ void PRUDPStream::DoWork()
     PurgeDeletedEndPoints(false);
 }
 
-int PRUDPStream::CheckSignature(InetAddress* pAddress, unsigned short uiPort,
-    unsigned char uiStreamID, Packet* pPacket, Key* pKey, SignatureBytes* pSignature,
-    PRUDPMessageInterface::SignatureMethod method)
+int PRUDPStream::CheckSignature(InetAddress* pAddress, unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket,
+                                Key* pKey, SignatureBytes* pSignature, PRUDPMessageInterface::SignatureMethod method)
 {
     SignatureBytes expectedSignature;
-    int iResult = m_pMessageSelector->CalcExpectedSignature(pPacket, method, pKey,
-        &m_signatureGenerator, pSignature, expectedSignature);
+    int iResult = m_pMessageSelector->CalcExpectedSignature(pPacket, method, pKey, &m_signatureGenerator, pSignature,
+                                                            expectedSignature);
     if (iResult != CHECK_DROPPED)
     {
         bool bValid = false;
         if (expectedSignature.m_uiLength == pPacket->m_uiSignatureSize)
-            bValid = memcmp(expectedSignature.m_bytes, pPacket->m_aSignature,
-                pPacket->m_uiSignatureSize) == 0;
+            bValid = memcmp(expectedSignature.m_bytes, pPacket->m_aSignature, pPacket->m_uiSignatureSize) == 0;
 
         if (!bValid && (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) != PACKET_TYPE_USER)
         {
@@ -607,12 +596,12 @@ int PRUDPStream::CheckSignature(InetAddress* pAddress, unsigned short uiPort,
     return iResult;
 }
 
-PRUDPMessageInterface::SignatureMethod PRUDPStream::DecideSignatureMethod(const Packet* pPacket,
-    Stream::Type type, bool bFlag)
+PRUDPMessageInterface::SignatureMethod PRUDPStream::DecideSignatureMethod(const Packet* pPacket, Stream::Type type,
+                                                                          bool bFlag)
 {
-    if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT &&
-        pPacket->m_uiVersion == NEGOTIATION_SIGNATURE_VERSION &&
-        !PRUDPEndPoint::IsNegotiationConnectionSignatureVersion(pPacket))
+    if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT
+        && pPacket->m_uiVersion == NEGOTIATION_SIGNATURE_VERSION
+        && !PRUDPEndPoint::IsNegotiationConnectionSignatureVersion(pPacket))
     {
         return PRUDPMessageInterface::SIGNATURE_METHOD_4;
     }
@@ -620,8 +609,7 @@ PRUDPMessageInterface::SignatureMethod PRUDPStream::DecideSignatureMethod(const 
     return m_pMessageSelector->DecideSignatureMethod(pPacket, type, bFlag);
 }
 
-int PRUDPStream::CheckSignature(InetAddress* pAddress, unsigned short uiPort,
-    unsigned char uiStreamID, Packet* pPacket)
+int PRUDPStream::CheckSignature(InetAddress* pAddress, unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket)
 {
     PRUDPEndPoint* pEndPoint = 0;
     LockEndPointMap();
@@ -639,7 +627,7 @@ int PRUDPStream::CheckSignature(InetAddress* pAddress, unsigned short uiPort,
     }
 
     return CheckSignature(pAddress, uiPort, uiStreamID, pPacket, pKey, pSignature,
-        DecideSignatureMethod(pPacket, m_Type, pKey != 0));
+                          DecideSignatureMethod(pPacket, m_Type, pKey != 0));
 }
 
 void PRUDPStream::VersionNegotiation(Packet* pRequest, Packet* pResponse)
@@ -650,27 +638,23 @@ void PRUDPStream::VersionNegotiation(Packet* pRequest, Packet* pResponse)
     if (uiVersion != 0)
     {
         unsigned char uiRequestedVersion = static_cast<unsigned char>(pRequest->m_unknown90);
-        const unsigned char& uiNegotiatedVersion =
-            std::min(uiRequestedVersion, g_negotiationVersion.Get());
-        unsigned int uiRequestedFlags = (pRequest->m_unknown90 >> FLAGS_SHIFT) &
-            g_negotiationFlagsMask;
+        const unsigned char& uiNegotiatedVersion = std::min(uiRequestedVersion, g_negotiationVersion.Get());
+        unsigned int uiRequestedFlags = (pRequest->m_unknown90 >> FLAGS_SHIFT) & g_negotiationFlagsMask;
         uiNegotiatedFlags = uiNegotiatedVersion | (uiRequestedFlags << FLAGS_SHIFT);
-        if ((m_Type != Stream::RendezVousSecure && m_Type != Stream::RendezVous) ||
-            g_streamSettings[m_Type].Get().GetSecureMode() != 1)
+        if ((m_Type != Stream::RendezVousSecure && m_Type != Stream::RendezVous)
+            || g_streamSettings[m_Type].Get().GetSecureMode() != 1)
         {
-            uiNegotiatedFlags = (((uiNegotiatedFlags >> FLAGS_SHIFT) & FLAGS_WITHOUT_SECURE_MODE) << FLAGS_SHIFT) |
-                uiNegotiatedVersion;
+            uiNegotiatedFlags = (((uiNegotiatedFlags >> FLAGS_SHIFT) & FLAGS_WITHOUT_SECURE_MODE) << FLAGS_SHIFT)
+                                | uiNegotiatedVersion;
         }
     }
 
     unsigned char uiRequestedSubStreamID = pRequest->m_unknown6b;
     pResponse->m_unknown90 = uiNegotiatedFlags;
-    pResponse->m_unknown6b =
-        std::min(uiRequestedSubStreamID, g_streamSettings[m_Type].Get().GetMaxSubStreamID());
+    pResponse->m_unknown6b = std::min(uiRequestedSubStreamID, g_streamSettings[m_Type].Get().GetMaxSubStreamID());
 }
 
-bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
-    Packet* pPacket)
+bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket)
 {
     if (pPacket == 0)
         return true;
@@ -686,9 +670,9 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
         {
             SignatureBytes signature;
             signature.m_uiLength = 0;
-            m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1,
-                0, VirtualPort(pPacket->m_uiSource).GetType(),
-                &m_signatureGenerator, 0, signature);
+            m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1, 0,
+                                              VirtualPort(pPacket->m_uiSource).GetType(), &m_signatureGenerator, 0,
+                                              signature);
             PacketOut* pReply = new PacketOut(0, PACKET_TYPE_SYN, PACKET_FLAG_ACK, 0, 0);
             pReply->m_sequenceID = pPacket->m_sequenceID.GetValue();
             pReply->m_bSkipEncryption = pPacket->m_bSkipEncryption;
@@ -726,8 +710,7 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
                 return false;
 
             LockEndPointMap();
-            EndPointMap::iterator endPoint =
-                m_endPoints.find(EndPointUniqueID(*pAddress, uiStreamID));
+            EndPointMap::iterator endPoint = m_endPoints.find(EndPointUniqueID(*pAddress, uiStreamID));
             pEndPoint = 0;
             if (endPoint != m_endPoints.end())
                 pEndPoint = endPoint->second;
@@ -738,13 +721,11 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
         {
             SignatureBytes signature;
             signature.m_uiLength = 0;
-            m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1,
-                0, VirtualPort(pPacket->m_uiSource).GetType(),
-                &m_signatureGenerator, 0, signature);
-            PRUDPMessageInterface::SignatureMethod method =
-                DecideSignatureMethod(pPacket, m_Type, false);
-            int iResult =
-                CheckSignature(pAddress, uiPort, uiStreamID, pPacket, 0, &signature, method);
+            m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1, 0,
+                                              VirtualPort(pPacket->m_uiSource).GetType(), &m_signatureGenerator, 0,
+                                              signature);
+            PRUDPMessageInterface::SignatureMethod method = DecideSignatureMethod(pPacket, m_Type, false);
+            int iResult = CheckSignature(pAddress, uiPort, uiStreamID, pPacket, 0, &signature, method);
             if (iResult == CHECK_DROPPED)
             {
                 pPacket->ReleaseRef();
@@ -766,8 +747,7 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
 
             if (!PRUDPEndPoint::IsNegotiationConnectionSignatureVersion(pPacket))
             {
-                memcpy(pEndPoint->m_negotiationSignature.m_bytes, signature.m_bytes,
-                    signature.m_uiLength);
+                memcpy(pEndPoint->m_negotiationSignature.m_bytes, signature.m_bytes, signature.m_uiLength);
                 pEndPoint->m_negotiationSignature.m_uiLength = signature.m_uiLength;
             }
             else
@@ -795,10 +775,9 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
 
         UnlockEndPointMap();
         int iResult = CHECK_ACCEPTED;
-        if (pEndPoint == 0 ||
-            (g_historyBundlingEnabled &&
-                pEndPoint->IsDuplicateReorderingPacket(static_cast<PacketIn*>(pPacket))) ||
-            (iResult = CheckSignature(pAddress, uiPort, uiStreamID, pPacket)) == CHECK_DROPPED)
+        if (pEndPoint == 0
+            || (g_historyBundlingEnabled && pEndPoint->IsDuplicateReorderingPacket(static_cast<PacketIn*>(pPacket)))
+            || (iResult = CheckSignature(pAddress, uiPort, uiStreamID, pPacket)) == CHECK_DROPPED)
         {
             pPacket->ReleaseRef();
             return true;
@@ -822,8 +801,7 @@ bool PRUDPStream::IsDuplicateReorderingPacket(Packet* pPacket)
 {
     unsigned char uiStreamID = VirtualPort(pPacket->m_uiSource).GetStreamID();
     LockEndPointMap();
-    EndPointMap::iterator endPoint =
-        m_endPoints.find(EndPointUniqueID(pPacket->m_address, uiStreamID));
+    EndPointMap::iterator endPoint = m_endPoints.find(EndPointUniqueID(pPacket->m_address, uiStreamID));
     PRUDPEndPoint* pEndPoint = 0;
     if (endPoint != m_endPoints.end())
         pEndPoint = endPoint->second;
@@ -840,14 +818,12 @@ const wchar_t* PRUDPStream::GetURLType()
     return URL_TYPE_NAME;
 }
 
-bool PRUDPStream::Send(unsigned short uiPort, unsigned char uiStreamID, PacketOut* pPacket,
-    Key* pKey)
+bool PRUDPStream::Send(unsigned short uiPort, unsigned char uiStreamID, PacketOut* pPacket, Key* pKey)
 {
     pPacket->m_uiSource = VirtualPort(m_Type, m_uiStreamID).m_uiValue;
     pPacket->m_uiDestination = VirtualPort(m_Type, uiStreamID).m_uiValue;
     LockEndPointMap();
-    EndPointMap::iterator endPoint =
-        m_endPoints.find(EndPointUniqueID(pPacket->m_address, uiStreamID));
+    EndPointMap::iterator endPoint = m_endPoints.find(EndPointUniqueID(pPacket->m_address, uiStreamID));
     PRUDPEndPoint* pEndPoint = 0;
     if (endPoint != m_endPoints.end())
         pEndPoint = endPoint->second;
@@ -869,8 +845,8 @@ bool PRUDPStream::Send(unsigned short uiPort, unsigned char uiStreamID, PacketOu
         SignatureBytes signature;
         SignatureBytes* pSignature = pEndPoint != 0 ? &pEndPoint->m_negotiationSignature : 0;
 
-        if (!m_pMessageSelector->CalcSignature(pPacket, method, pKey, m_Type,
-                &m_signatureGenerator, pSignature, signature))
+        if (!m_pMessageSelector->CalcSignature(pPacket, method, pKey, m_Type, &m_signatureGenerator, pSignature,
+                                               signature))
         {
             return false;
         }

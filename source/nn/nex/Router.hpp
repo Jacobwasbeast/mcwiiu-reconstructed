@@ -20,32 +20,22 @@ public:
     Router();
     virtual ~Router();
 
-    bool IsEnabled() const
-    {
-        return m_bEnabled;
-    }
+    bool IsEnabled() const { return m_bEnabled; }
 
     void EnableRouting(bool bEnable);
     void SetTransport(RootTransport* pTransport);
     void UnregisterStream();
     bool ShouldRoute(const InetAddress* pAddress);
     bool HasRoute(const InetAddress* pAddress, const InetAddress* pSource);
-    RoutingStream* GetRoutingStream()
-    {
-        return m_pRoutingStream;
-    }
+    RoutingStream* GetRoutingStream() { return m_pRoutingStream; }
     void AddRoute(const InetAddress& rAddress, const InetAddress& rRoute, bool bReplace);
     bool RouteMessage(Buffer* pBuffer, const InetAddress* pAddress, unsigned short uiPort);
     void Clean();
 
-    void PeriodicHouseCleaning()
-    {
-        m_pRoutingStream->m_routingTable.PeriodicHouseCleaning();
-    }
+    void PeriodicHouseCleaning() { m_pRoutingStream->m_routingTable.PeriodicHouseCleaning(); }
 
     unsigned int GetRoutingIPAddressTemplate();
-    void ConstructAndAssociateRoutingAddress(unsigned short uiPort, InetAddress oAddress,
-        InetAddress* pRoutingAddress);
+    void ConstructAndAssociateRoutingAddress(unsigned short uiPort, InetAddress oAddress, InetAddress* pRoutingAddress);
 
 private:
     friend class RoutingStream;

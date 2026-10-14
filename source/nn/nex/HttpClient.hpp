@@ -22,9 +22,9 @@ public:
     virtual ~HttpClient();
 
     qResult Start(CallContext* pCallContext, const String& rUrl, HttpConnection::Method method,
-        HttpEventListener* pListener, unsigned int uiBufferSize);
-    qResult Start(CallContext* pCallContext, const String& rUrl, HttpConnection::Method method,
-        unsigned int uiMaxSize, qVector<unsigned char>* pBuffer, int* pStatusCode);
+                  HttpEventListener* pListener, unsigned int uiBufferSize);
+    qResult Start(CallContext* pCallContext, const String& rUrl, HttpConnection::Method method, unsigned int uiMaxSize,
+                  qVector<unsigned char>* pBuffer, int* pStatusCode);
 };
 
 }

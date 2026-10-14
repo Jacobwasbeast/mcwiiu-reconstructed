@@ -13,13 +13,9 @@ class MatchMakingServiceDDLDeclarations : public DDLDeclarations
 public:
     MatchMakingServiceDDLDeclarations();
 
-    virtual ~MatchMakingServiceDDLDeclarations()
-    {
-    }
+    virtual ~MatchMakingServiceDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

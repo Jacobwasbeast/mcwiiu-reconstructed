@@ -19,9 +19,7 @@ public:
     typedef std::pair<T, Time> Entry;
     typedef qList<Entry> EntryList;
 
-    TimedQueue()
-    {
-    }
+    TimedQueue() {}
 
     virtual ~TimedQueue();
 
@@ -32,8 +30,7 @@ public:
         {
             typename EntryList::iterator previous = position;
             --previous;
-            if (static_cast<unsigned long long>(previous->second) <=
-                static_cast<unsigned long long>(time))
+            if (static_cast<unsigned long long>(previous->second) <= static_cast<unsigned long long>(time))
             {
                 break;
             }
@@ -46,15 +43,11 @@ public:
 
     virtual bool Ready(Time time)
     {
-        return !m_entries.empty() &&
-               static_cast<unsigned long long>(m_entries.front().second) <=
-                   static_cast<unsigned long long>(time);
+        return !m_entries.empty()
+               && static_cast<unsigned long long>(m_entries.front().second) <= static_cast<unsigned long long>(time);
     }
 
-    virtual T GetHead(Time time)
-    {
-        return m_entries.front().first;
-    }
+    virtual T GetHead(Time time) { return m_entries.front().first; }
 
     virtual void Dequeue(const T& rItem)
     {
@@ -64,8 +57,7 @@ public:
 
     void Trace(unsigned long long uiFilter)
     {
-        for (typename EntryList::iterator entry = m_entries.begin(); entry != m_entries.end();
-             ++entry)
+        for (typename EntryList::iterator entry = m_entries.begin(); entry != m_entries.end(); ++entry)
         {
         }
     }

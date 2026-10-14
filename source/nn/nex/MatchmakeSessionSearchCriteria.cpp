@@ -85,7 +85,8 @@ bool MatchmakeSessionSearchCriteria::SetAttribute(unsigned int uiIndex, const qV
     return true;
 }
 
-void MatchmakeSessionSearchCriteria::SetAttributeWithRange(unsigned int uiIndex, unsigned int uiMinimum, unsigned int uiMaximum)
+void MatchmakeSessionSearchCriteria::SetAttributeWithRange(unsigned int uiIndex, unsigned int uiMinimum,
+                                                           unsigned int uiMaximum)
 {
     m_Attributes[uiIndex].Format(L"%u,%u", uiMinimum, uiMaximum);
 }

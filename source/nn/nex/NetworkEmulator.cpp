@@ -7,10 +7,7 @@ namespace nn
 namespace nex
 {
 
-NetworkEmulator::NetworkEmulator(EmulationDevice* pDevice)
-    : m_modem(pDevice)
-    , m_internet(pDevice)
-    , m_pDevice(pDevice)
+NetworkEmulator::NetworkEmulator(EmulationDevice* pDevice) : m_modem(pDevice), m_internet(pDevice), m_pDevice(pDevice)
 {
 }
 

@@ -11,13 +11,9 @@ namespace nex
 class DataStoreGetMetaParam : public _DDL_DataStoreGetMetaParam
 {
 public:
-    DataStoreGetMetaParam()
-    {
-    }
+    DataStoreGetMetaParam() {}
 
-    virtual ~DataStoreGetMetaParam()
-    {
-    }
+    virtual ~DataStoreGetMetaParam() {}
 };
 
 }

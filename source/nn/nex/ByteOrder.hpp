@@ -14,7 +14,7 @@ T HostOrderToNexNetworkOrder(T value)
         return static_cast<T>(static_cast<T>((value & 0xFF) << 8) | static_cast<T>((value >> 8) & 0xFF));
     }
     return static_cast<T>(static_cast<T>((value & 0xFF) << 24) | static_cast<T>(((value >> 8) & 0xFF) << 16)
-        | static_cast<T>(((value >> 16) & 0xFF) << 8) | static_cast<T>((value >> 24) & 0xFF));
+                          | static_cast<T>(((value >> 16) & 0xFF) << 8) | static_cast<T>((value >> 24) & 0xFF));
 }
 
 }

@@ -571,7 +571,8 @@ const Data* _DDL_StringKeyValue::DynamicCast(const Data* pData)
     return 0;
 }
 
-_DDL_NintendoNotificationEventGeneral& _DDL_NintendoNotificationEventGeneral::operator=(const _DDL_NintendoNotificationEventGeneral& rSource)
+_DDL_NintendoNotificationEventGeneral& _DDL_NintendoNotificationEventGeneral::operator=(
+    const _DDL_NintendoNotificationEventGeneral& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiU32Param = rSource.m_uiU32Param;
@@ -617,7 +618,8 @@ void _DDL_NintendoNotificationEventGeneral::Add(Message* pMessage, const _DDL_Ni
     }
 }
 
-void _DDL_NintendoNotificationEventGeneral::Extract(Message* pMessage, _DDL_NintendoNotificationEventGeneral* pDestination)
+void _DDL_NintendoNotificationEventGeneral::Extract(Message* pMessage,
+                                                    _DDL_NintendoNotificationEventGeneral* pDestination)
 {
     _DDL_Data::Extract(pMessage, pDestination);
 
@@ -723,7 +725,8 @@ const Data* _DDL_NintendoNotificationEventGeneral::DynamicCast(const Data* pData
     return 0;
 }
 
-_DDL_NintendoNotificationEventProfile& _DDL_NintendoNotificationEventProfile::operator=(const _DDL_NintendoNotificationEventProfile& rSource)
+_DDL_NintendoNotificationEventProfile& _DDL_NintendoNotificationEventProfile::operator=(
+    const _DDL_NintendoNotificationEventProfile& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiRegion = rSource.m_uiRegion;
@@ -771,7 +774,8 @@ void _DDL_NintendoNotificationEventProfile::Add(Message* pMessage, const _DDL_Ni
     }
 }
 
-void _DDL_NintendoNotificationEventProfile::Extract(Message* pMessage, _DDL_NintendoNotificationEventProfile* pDestination)
+void _DDL_NintendoNotificationEventProfile::Extract(Message* pMessage,
+                                                    _DDL_NintendoNotificationEventProfile* pDestination)
 {
     _DDL_Data::Extract(pMessage, pDestination);
 
@@ -882,7 +886,8 @@ const Data* _DDL_NintendoNotificationEventProfile::DynamicCast(const Data* pData
     return 0;
 }
 
-_DDL_NintendoNotificationEventKeyValue& _DDL_NintendoNotificationEventKeyValue::operator=(const _DDL_NintendoNotificationEventKeyValue& rSource)
+_DDL_NintendoNotificationEventKeyValue& _DDL_NintendoNotificationEventKeyValue::operator=(
+    const _DDL_NintendoNotificationEventKeyValue& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_U8KeyValues = rSource.m_U8KeyValues;
@@ -892,7 +897,8 @@ _DDL_NintendoNotificationEventKeyValue& _DDL_NintendoNotificationEventKeyValue::
     return *this;
 }
 
-void _DDL_NintendoNotificationEventKeyValue::Add(Message* pMessage, const _DDL_NintendoNotificationEventKeyValue& rSource)
+void _DDL_NintendoNotificationEventKeyValue::Add(Message* pMessage,
+                                                 const _DDL_NintendoNotificationEventKeyValue& rSource)
 {
     _DDL_Data::Add(pMessage, rSource);
 
@@ -928,7 +934,8 @@ void _DDL_NintendoNotificationEventKeyValue::Add(Message* pMessage, const _DDL_N
     }
 }
 
-void _DDL_NintendoNotificationEventKeyValue::Extract(Message* pMessage, _DDL_NintendoNotificationEventKeyValue* pDestination)
+void _DDL_NintendoNotificationEventKeyValue::Extract(Message* pMessage,
+                                                     _DDL_NintendoNotificationEventKeyValue* pDestination)
 {
     _DDL_Data::Extract(pMessage, pDestination);
 
@@ -1034,12 +1041,12 @@ const Data* _DDL_NintendoNotificationEventKeyValue::DynamicCast(const Data* pDat
     return 0;
 }
 
-NintendoProtocolFoundationDDLDeclarations::NintendoProtocolFoundationDDLDeclarations()
-    : DDLDeclarations(true)
+NintendoProtocolFoundationDDLDeclarations::NintendoProtocolFoundationDDLDeclarations() : DDLDeclarations(true)
 {
 }
 
-PseudoGlobalVariable<NintendoProtocolFoundationDDLDeclarations> NintendoProtocolFoundationDDLDeclarations::s_declarations;
+PseudoGlobalVariable<NintendoProtocolFoundationDDLDeclarations>
+    NintendoProtocolFoundationDDLDeclarations::s_declarations;
 
 void NintendoProtocolFoundationDDLDeclarations::Register()
 {

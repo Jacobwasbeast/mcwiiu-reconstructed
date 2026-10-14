@@ -13,13 +13,9 @@ class DataStoreDDLDeclarations : public DDLDeclarations
 public:
     DataStoreDDLDeclarations();
 
-    virtual ~DataStoreDDLDeclarations()
-    {
-    }
+    virtual ~DataStoreDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

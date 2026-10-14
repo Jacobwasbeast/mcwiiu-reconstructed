@@ -28,34 +28,33 @@ PRUDPMessageSelector::~PRUDPMessageSelector()
     delete m_pRelayMessage;
 }
 
-bool PRUDPMessageSelector::CalcSignature(PacketOut* pPacket, SignatureMethod method,
-    const Key* pKey, Stream::Type type, TransportSignatureGenerator* pGenerator,
-    const SignatureBytes* pSignature, SignatureBytes& rResult)
+bool PRUDPMessageSelector::CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey, Stream::Type type,
+                                         TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                                         SignatureBytes& rResult)
 {
-    return m_messages[pPacket->m_uiVersion]->CalcSignature(
-        pPacket, method, pKey, type, pGenerator, pSignature, rResult);
+    return m_messages[pPacket->m_uiVersion]->CalcSignature(pPacket, method, pKey, type, pGenerator, pSignature,
+                                                           rResult);
 }
 
-void PRUDPMessageSelector::CalcSignature(Packet* pPacket, SignatureMethod method,
-    const Key* pKey, Stream::Type type, TransportSignatureGenerator* pGenerator,
-    const SignatureBytes* pSignature, SignatureBytes& rResult)
+void PRUDPMessageSelector::CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey, Stream::Type type,
+                                         TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                                         SignatureBytes& rResult)
 {
-    m_messages[pPacket->m_uiVersion]->CalcSignature(
-        pPacket, method, pKey, type, pGenerator, pSignature, rResult);
+    m_messages[pPacket->m_uiVersion]->CalcSignature(pPacket, method, pKey, type, pGenerator, pSignature, rResult);
 }
 
-PRUDPMessageInterface::SignatureMethod PRUDPMessageSelector::DecideSignatureMethod(
-    const Packet* pPacket, Stream::Type type, bool bFlag)
+PRUDPMessageInterface::SignatureMethod PRUDPMessageSelector::DecideSignatureMethod(const Packet* pPacket,
+                                                                                   Stream::Type type, bool bFlag)
 {
     return m_messages[pPacket->m_uiVersion]->DecideSignatureMethod(pPacket, type, bFlag);
 }
 
-int PRUDPMessageSelector::CalcExpectedSignature(const Packet* pPacket, SignatureMethod method,
-    const Key* pKey, TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
-    SignatureBytes& rResult)
+int PRUDPMessageSelector::CalcExpectedSignature(const Packet* pPacket, SignatureMethod method, const Key* pKey,
+                                                TransportSignatureGenerator* pGenerator,
+                                                const SignatureBytes* pSignature, SignatureBytes& rResult)
 {
-    return m_messages[pPacket->m_uiVersion]->CalcExpectedSignature(
-        pPacket, method, pKey, pGenerator, pSignature, rResult);
+    return m_messages[pPacket->m_uiVersion]->CalcExpectedSignature(pPacket, method, pKey, pGenerator, pSignature,
+                                                                   rResult);
 }
 
 }
@@ -133,8 +132,7 @@ bool PRUDPMessageSelector::Unpack(ByteStream* pStream, PacketIn* pPacket, unsign
     return m_messages[iVersion]->Unpack(pStream, pPacket, pConsumed);
 }
 
-bool PRUDPMessageSelector::FastUnpack(ByteStream* pStream, PacketIn* pPacket,
-    unsigned int* pConsumed)
+bool PRUDPMessageSelector::FastUnpack(ByteStream* pStream, PacketIn* pPacket, unsigned int* pConsumed)
 {
     if (!__N_19_OnlineCore_Blob_cpp_9428d484::PRUDPUnpackCheck(pStream, pConsumed))
         return false;

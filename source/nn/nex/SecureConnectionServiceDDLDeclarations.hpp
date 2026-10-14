@@ -13,13 +13,9 @@ class SecureConnectionServiceDDLDeclarations : public DDLDeclarations
 public:
     SecureConnectionServiceDDLDeclarations();
 
-    virtual ~SecureConnectionServiceDDLDeclarations()
-    {
-    }
+    virtual ~SecureConnectionServiceDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

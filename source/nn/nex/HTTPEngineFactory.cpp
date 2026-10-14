@@ -68,7 +68,8 @@ HTTPEngine* HTTPEngineFactory::GetHTTPEngine(unsigned int uiEngineHandle)
     return m_engines[uiEngineHandle];
 }
 
-bool HTTPEngineFactory::SetGlobaEngineOption(HTTPModule::HttpEngineType type, HTTPModule::ConfigurationOptions option, va_list arguments)
+bool HTTPEngineFactory::SetGlobaEngineOption(HTTPModule::HttpEngineType type, HTTPModule::ConfigurationOptions option,
+                                             va_list arguments)
 {
     if (m_configurations.find(type) != m_configurations.end())
     {

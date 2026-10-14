@@ -66,8 +66,7 @@ unsigned int OutputFormat::AddMessageImpl(wchar_t*, unsigned int, const wchar_t*
     return 0;
 }
 
-void OutputFormat::AddMessage(wchar_t* buffer, unsigned int capacity,
-                              const wchar_t* format, va_list arguments)
+void OutputFormat::AddMessage(wchar_t* buffer, unsigned int capacity, const wchar_t* format, va_list arguments)
 {
     AddMessageImpl(buffer, capacity, format, arguments);
 }

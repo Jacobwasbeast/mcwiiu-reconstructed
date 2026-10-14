@@ -11,10 +11,7 @@ namespace nex
 class LoginData : public _DDL_LoginData
 {
 public:
-    LoginData()
-        : _DDL_LoginData()
-    {
-    }
+    LoginData() : _DDL_LoginData() {}
 };
 
 }

@@ -15,22 +15,16 @@ class Message;
 class _DDL_DataStoreTouchObjectParam : public RootObject
 {
 public:
-    _DDL_DataStoreTouchObjectParam()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreTouchObjectParam() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreTouchObjectParam()
-    {
-    }
+    virtual ~_DDL_DataStoreTouchObjectParam() {}
 
     _DDL_DataStoreTouchObjectParam& operator=(const _DDL_DataStoreTouchObjectParam& rSource);
 
     bool operator==(const _DDL_DataStoreTouchObjectParam& rSource) const
     {
-        return m_uiDataId == rSource.m_uiDataId &&
-            m_uiLockId == rSource.m_uiLockId &&
-            m_uiAccessPassword == rSource.m_uiAccessPassword;
+        return m_uiDataId == rSource.m_uiDataId && m_uiLockId == rSource.m_uiLockId
+               && m_uiAccessPassword == rSource.m_uiAccessPassword;
     }
 
     static void Add(Message* pMessage, const _DDL_DataStoreTouchObjectParam& rSource);

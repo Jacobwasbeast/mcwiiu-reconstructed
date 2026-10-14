@@ -19,22 +19,18 @@ template <typename T>
 class ThreadVariable : public ThreadVariableRoot
 {
 public:
-    typedef std::map<uint32_t, T, std::less<uint32_t>,
-                     MemAllocator<std::pair<const uint32_t, T> > > ValueMap;
+    typedef std::map<uint32_t, T, std::less<uint32_t>, MemAllocator<std::pair<const uint32_t, T> > > ValueMap;
 
     explicit ThreadVariable(const T& defaultValue)
-        : ThreadVariableRoot()
-        , m_defaultValue(defaultValue)
-        , m_criticalSection(1)
-        , m_values()
+        : ThreadVariableRoot(),
+          m_defaultValue(defaultValue),
+          m_criticalSection(1),
+          m_values()
     {
         m_values[GetThreadID()] = defaultValue;
     }
 
-    virtual ~ThreadVariable()
-    {
-        ResetValues();
-    }
+    virtual ~ThreadVariable() { ResetValues(); }
 
     T& GetRef()
     {

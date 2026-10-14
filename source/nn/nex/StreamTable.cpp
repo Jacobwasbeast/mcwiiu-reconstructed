@@ -9,8 +9,7 @@ namespace nn
 namespace nex
 {
 
-StreamTable::StreamTable()
-    : m_streams()
+StreamTable::StreamTable() : m_streams()
 {
 }
 

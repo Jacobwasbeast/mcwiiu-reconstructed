@@ -29,10 +29,7 @@ public:
         unsigned int m_uiUnitSize;
         unsigned int m_uiUnitNum;
 
-        bool operator<(const UnitHeapParam& rParam) const
-        {
-            return m_uiUnitSize < rParam.m_uiUnitSize;
-        }
+        bool operator<(const UnitHeapParam& rParam) const { return m_uiUnitSize < rParam.m_uiUnitSize; }
     };
 
     struct UnitHeapDebugInfo
@@ -67,9 +64,9 @@ public:
     static unsigned int GetRequiredMemorySizeImpl(const qVector<UnitHeapParam>& rParams);
     static unsigned int GetRequiredMemorySize(const qVector<UnitHeapParam>& rParams);
     static void GetPacketManagementUnitHeapParam(qVector<UnitHeapParam>& rManagementParams,
-        const qVector<UnitHeapParam>& rParams);
+                                                 const qVector<UnitHeapParam>& rParams);
     static bool GetSimpleUnitHeapParam(unsigned int uiPoolSize, unsigned int uiUnitSize,
-        qVector<UnitHeapParam>& rParams);
+                                       qVector<UnitHeapParam>& rParams);
     static void GetUnitHeapParam(qVector<UnitHeapParam>& rParams);
     static bool SetUnitHeapParam(const qVector<UnitHeapParam>& rParams);
 
@@ -92,15 +89,9 @@ public:
     bool IsAllocatable(unsigned int uiSize, unsigned int uiUnitNum);
     unsigned int GetMaxUnitSize();
 
-    unsigned int GetUnitHeaderSize() const
-    {
-        return m_uiUnitHeaderSize;
-    }
+    unsigned int GetUnitHeaderSize() const { return m_uiUnitHeaderSize; }
 
-    unsigned int GetUnitAlignment() const
-    {
-        return m_uiUnitAlignment;
-    }
+    unsigned int GetUnitAlignment() const { return m_uiUnitAlignment; }
 
     unsigned int GetProperUnitSize(unsigned int uiSize);
 

@@ -23,33 +23,35 @@ const int CREATE_ACCOUNT_CALL_FAILED_RESULT = static_cast<int>(0x8001000Du);
 
 }
 
-JobCreateAccount::JobCreateAccount(unsigned int uiCallId, const char* pGuestPassword,
-    const String& rHost, unsigned short uiPort, const String& rName, const char* pPassword,
-    unsigned int uiGroups, const String& rEmail, FuncType funcType,
-    AnyObjectHolder<Data, String>* pPublicData, AnyObjectHolder<Data, String>* pPrivateData,
-    AnyObjectHolder<Data, String>* pCustomData, unsigned int* pPrincipalID, String* pPidHmac)
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(uiCallId)
-    , m_pGuestCredentials(0)
-    , m_host(rHost)
-    , m_uiPort(uiPort)
-    , m_name(rName)
-    , m_uiGroups(uiGroups)
-    , m_email(rEmail)
-    , m_funcType(funcType)
-    , m_publicData()
-    , m_privateData()
-    , m_customData()
-    , m_pPrincipalID(pPrincipalID)
-    , m_pPidHmac(pPidHmac)
-    , m_createResult()
-    , m_jobResult()
-    , m_pRendezVous(new RendezVous())
-    , m_pAccountManagementClient(new AccountManagementClient())
-    , m_loginContext(0)
-    , m_createContext(0)
-    , m_logoutContext(0)
-    , m_reservedContext(0)
+JobCreateAccount::JobCreateAccount(unsigned int uiCallId, const char* pGuestPassword, const String& rHost,
+                                   unsigned short uiPort, const String& rName, const char* pPassword,
+                                   unsigned int uiGroups, const String& rEmail, FuncType funcType,
+                                   AnyObjectHolder<Data, String>* pPublicData,
+                                   AnyObjectHolder<Data, String>* pPrivateData,
+                                   AnyObjectHolder<Data, String>* pCustomData, unsigned int* pPrincipalID,
+                                   String* pPidHmac)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(uiCallId),
+      m_pGuestCredentials(0),
+      m_host(rHost),
+      m_uiPort(uiPort),
+      m_name(rName),
+      m_uiGroups(uiGroups),
+      m_email(rEmail),
+      m_funcType(funcType),
+      m_publicData(),
+      m_privateData(),
+      m_customData(),
+      m_pPrincipalID(pPrincipalID),
+      m_pPidHmac(pPidHmac),
+      m_createResult(),
+      m_jobResult(),
+      m_pRendezVous(new RendezVous()),
+      m_pAccountManagementClient(new AccountManagementClient()),
+      m_loginContext(0),
+      m_createContext(0),
+      m_logoutContext(0),
+      m_reservedContext(0)
 {
     m_jobResult = qResult(CREATE_ACCOUNT_SUCCEEDED_RESULT);
     SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::LoginGuest), L""));
@@ -95,8 +97,7 @@ JobCreateAccount::~JobCreateAccount()
 
 void JobCreateAccount::CompleteJob(qResult result)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (result && m_jobResult)
@@ -112,7 +113,7 @@ void JobCreateAccount::CompleteJob(qResult result)
 void JobCreateAccount::LoginGuest()
 {
     if (!m_pRendezVous->SilentLogin(&m_loginContext, L"guest", m_pGuestPassword, m_host, m_uiPort,
-            &m_pGuestCredentials))
+                                    &m_pGuestCredentials))
     {
         const qResult& result = m_loginContext.GetResult();
         CompleteJob(result);
@@ -120,7 +121,7 @@ void JobCreateAccount::LoginGuest()
     }
     SetToSuspended();
     ResumeOnCallCompletion(&m_loginContext,
-        new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessLoginGuestResult), L""));
+                           new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessLoginGuestResult), L""));
 }
 
 void JobCreateAccount::ProcessLoginGuestResult()
@@ -133,20 +134,16 @@ void JobCreateAccount::ProcessLoginGuestResult()
             SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::CreateAccount), L""));
             break;
         case CreateAccountWithCustomDataFunc:
-            SetStep(Step(
-                static_cast<Step::Function>(&JobCreateAccount::CreateAccountWithCustomData), L""));
+            SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::CreateAccountWithCustomData), L""));
             break;
         case ChangePasswordByGuestFunc:
-            SetStep(
-                Step(static_cast<Step::Function>(&JobCreateAccount::ChangePasswordByGuest), L""));
+            SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::ChangePasswordByGuest), L""));
             break;
         case CustomCreateAccountFunc:
-            SetStep(
-                Step(static_cast<Step::Function>(&JobCreateAccount::CustomCreateAccount), L""));
+            SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::CustomCreateAccount), L""));
             break;
         case NintendoCreateAccountFunc:
-            SetStep(
-                Step(static_cast<Step::Function>(&JobCreateAccount::NintendoCreateAccount), L""));
+            SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::NintendoCreateAccount), L""));
             break;
         }
     }
@@ -159,8 +156,8 @@ void JobCreateAccount::ProcessLoginGuestResult()
 void JobCreateAccount::CreateAccount()
 {
     m_pAccountManagementClient->Bind(m_pGuestCredentials);
-    if (!m_pAccountManagementClient->CreateAccount(&m_createContext, &m_createResult, m_name,
-            String(m_pPassword), m_uiGroups, m_email))
+    if (!m_pAccountManagementClient->CreateAccount(&m_createContext, &m_createResult, m_name, String(m_pPassword),
+                                                   m_uiGroups, m_email))
     {
         m_jobResult = m_createContext.GetResult();
         SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::LogoutGuest), L""));
@@ -168,14 +165,14 @@ void JobCreateAccount::CreateAccount()
     }
     SetToSuspended();
     ResumeOnCallCompletion(&m_createContext,
-        new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
+                           new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
 }
 
 void JobCreateAccount::CustomCreateAccount()
 {
     m_pAccountManagementClient->Bind(m_pGuestCredentials);
-    if (!m_pAccountManagementClient->CustomCreateAccount(&m_createContext, m_name,
-            String(m_pPassword), m_uiGroups, m_email, m_customData, m_pPrincipalID))
+    if (!m_pAccountManagementClient->CustomCreateAccount(&m_createContext, m_name, String(m_pPassword), m_uiGroups,
+                                                         m_email, m_customData, m_pPrincipalID))
     {
         m_jobResult = m_createContext.GetResult();
         SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::LogoutGuest), L""));
@@ -183,14 +180,14 @@ void JobCreateAccount::CustomCreateAccount()
     }
     SetToSuspended();
     ResumeOnCallCompletion(&m_createContext,
-        new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
+                           new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
 }
 
 void JobCreateAccount::CreateAccountWithCustomData()
 {
     m_pAccountManagementClient->Bind(m_pGuestCredentials);
-    if (!m_pAccountManagementClient->CreateAccount(&m_createContext, m_name, String(m_pPassword),
-            m_uiGroups, m_email, m_publicData, m_privateData))
+    if (!m_pAccountManagementClient->CreateAccount(&m_createContext, m_name, String(m_pPassword), m_uiGroups, m_email,
+                                                   m_publicData, m_privateData))
     {
         m_jobResult = qResult(static_cast<int>(CREATE_ACCOUNT_CALL_FAILED_RESULT));
         SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::LogoutGuest), L""));
@@ -198,14 +195,14 @@ void JobCreateAccount::CreateAccountWithCustomData()
     }
     SetToSuspended();
     ResumeOnCallCompletion(&m_createContext,
-        new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
+                           new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
 }
 
 void JobCreateAccount::NintendoCreateAccount()
 {
     m_pAccountManagementClient->Bind(m_pGuestCredentials);
-    if (!m_pAccountManagementClient->NintendoCreateAccount(&m_createContext, m_name,
-            String(m_pPassword), m_uiGroups, m_email, m_customData, m_pPrincipalID, m_pPidHmac))
+    if (!m_pAccountManagementClient->NintendoCreateAccount(&m_createContext, m_name, String(m_pPassword), m_uiGroups,
+                                                           m_email, m_customData, m_pPrincipalID, m_pPidHmac))
     {
         m_jobResult = m_createContext.GetResult();
         SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::LogoutGuest), L""));
@@ -213,14 +210,13 @@ void JobCreateAccount::NintendoCreateAccount()
     }
     SetToSuspended();
     ResumeOnCallCompletion(&m_createContext,
-        new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
+                           new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
 }
 
 void JobCreateAccount::ChangePasswordByGuest()
 {
     m_pAccountManagementClient->Bind(m_pGuestCredentials);
-    if (!m_pAccountManagementClient->ChangePassword(&m_createContext, m_name, m_email,
-            String(m_pPassword)))
+    if (!m_pAccountManagementClient->ChangePassword(&m_createContext, m_name, m_email, String(m_pPassword)))
     {
         m_jobResult = qResult(static_cast<int>(CREATE_ACCOUNT_CALL_FAILED_RESULT));
         SetStep(Step(static_cast<Step::Function>(&JobCreateAccount::LogoutGuest), L""));
@@ -228,7 +224,7 @@ void JobCreateAccount::ChangePasswordByGuest()
     }
     SetToSuspended();
     ResumeOnCallCompletion(&m_createContext,
-        new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
+                           new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessCreateAccountResult), L""));
 }
 
 void JobCreateAccount::ProcessCreateAccountResult()
@@ -262,7 +258,7 @@ void JobCreateAccount::LogoutGuest()
     }
     SetToSuspended();
     ResumeOnCallCompletion(&m_logoutContext,
-        new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessLogoutGuestResult), L""));
+                           new Step(static_cast<Step::Function>(&JobCreateAccount::ProcessLogoutGuestResult), L""));
 }
 
 void JobCreateAccount::ProcessLogoutGuestResult()

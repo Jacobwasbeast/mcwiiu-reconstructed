@@ -16,23 +16,16 @@ class Message;
 class _DDL_DataStoreRatingLog : public RootObject
 {
 public:
-    _DDL_DataStoreRatingLog()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreRatingLog() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreRatingLog()
-    {
-    }
+    virtual ~_DDL_DataStoreRatingLog() {}
 
     _DDL_DataStoreRatingLog& operator=(const _DDL_DataStoreRatingLog& rSource);
 
     bool operator==(const _DDL_DataStoreRatingLog& rSource) const
     {
-        return m_bIsRated == rSource.m_bIsRated &&
-            m_uiPid == rSource.m_uiPid &&
-            m_iRatingValue == rSource.m_iRatingValue &&
-            m_LockExpirationTime == rSource.m_LockExpirationTime;
+        return m_bIsRated == rSource.m_bIsRated && m_uiPid == rSource.m_uiPid
+               && m_iRatingValue == rSource.m_iRatingValue && m_LockExpirationTime == rSource.m_LockExpirationTime;
     }
 
     static void Add(Message* pMessage, const _DDL_DataStoreRatingLog& rSource);

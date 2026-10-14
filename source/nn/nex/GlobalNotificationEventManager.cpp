@@ -11,8 +11,7 @@ namespace nn
 namespace nex
 {
 
-uint32_t GlobalNotificationEventManager::RegisterGlobalNotificationEventManager(
-    NotificationEventManager* pManager)
+uint32_t GlobalNotificationEventManager::RegisterGlobalNotificationEventManager(NotificationEventManager* pManager)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_managers.find(pManager) != m_managers.end())
@@ -22,8 +21,7 @@ uint32_t GlobalNotificationEventManager::RegisterGlobalNotificationEventManager(
     return 1;
 }
 
-uint32_t GlobalNotificationEventManager::UnregisterGlobalNotificationEventManager(
-    NotificationEventManager* pManager)
+uint32_t GlobalNotificationEventManager::UnregisterGlobalNotificationEventManager(NotificationEventManager* pManager)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     ManagerSet::iterator it = m_managers.find(pManager);
@@ -34,18 +32,17 @@ uint32_t GlobalNotificationEventManager::UnregisterGlobalNotificationEventManage
     return 1;
 }
 
-void GlobalNotificationEventManager::ProcessNotificationEvent(unsigned int uiPrincipalID,
-    unsigned int uiConnectionID, const NotificationEvent& rEvent)
+void GlobalNotificationEventManager::ProcessNotificationEvent(unsigned int uiPrincipalID, unsigned int uiConnectionID,
+                                                              const NotificationEvent& rEvent)
 {
     for (ManagerSet::iterator it = m_managers.begin(); it != m_managers.end(); ++it)
         (*it)->ProcessNotificationEvent(uiPrincipalID, uiConnectionID, rEvent);
 }
 
-void GlobalNotificationEventManager::DispatchProtocolMessage(Message* pRequest,
-    Message* pResponse, bool* pResponseRequired, EndPoint* pEndPoint)
+void GlobalNotificationEventManager::DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                                             bool* pResponseRequired, EndPoint* pEndPoint)
 {
-    Credentials* pCredentials =
-        static_cast<ClientStreamManager*>(pEndPoint->m_pEventHandler)->m_pCredentials;
+    Credentials* pCredentials = static_cast<ClientStreamManager*>(pEndPoint->m_pEventHandler)->m_pCredentials;
     unsigned int uiPrincipalID = pCredentials->m_value;
     unsigned int uiConnectionID = pCredentials->m_state;
     if (static_cast<uint16_t>(ExtractMethodID(pRequest)) == METHOD_PROCESS_NOTIFICATION_EVENT)

@@ -11,29 +11,20 @@ class HttpConnection;
 class HttpEventListener
 {
 public:
-    virtual ~HttpEventListener()
-    {
-    }
+    virtual ~HttpEventListener() {}
 
-    virtual void PrepareRequest(HttpConnection* pConnection)
-    {
-    }
+    virtual void PrepareRequest(HttpConnection* pConnection) {}
 
-    virtual unsigned int PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer,
-        unsigned int uiSize, bool* pbLastChunk)
+    virtual unsigned int PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer, unsigned int uiSize,
+                                           bool* pbLastChunk)
     {
         *pbLastChunk = true;
         return 0;
     }
 
-    virtual void ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode)
-    {
-    }
+    virtual void ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode) {}
 
-    virtual bool ProcessResponse(const unsigned char* pData, unsigned int uiSize)
-    {
-        return true;
-    }
+    virtual bool ProcessResponse(const unsigned char* pData, unsigned int uiSize) { return true; }
 };
 
 }

@@ -12,19 +12,11 @@ namespace nex
 class DynamicData : public _DDL_DynamicData
 {
 public:
-    DynamicData()
-        : _DDL_DynamicData(), m_Type(L"DynamicData"), m_bCompactFormat(false)
-    {
-    }
+    DynamicData() : _DDL_DynamicData(), m_Type(L"DynamicData"), m_bCompactFormat(false) {}
 
-    virtual ~DynamicData()
-    {
-    }
+    virtual ~DynamicData() {}
 
-    virtual String GetDataType() const
-    {
-        return m_Type;
-    }
+    virtual String GetDataType() const { return m_Type; }
 
     String m_Type;
     bool m_bCompactFormat;

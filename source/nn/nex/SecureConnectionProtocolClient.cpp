@@ -48,18 +48,16 @@ ProtoReturnFunction s_ProtoReturn[METHOD_ID_COUNT];
 
 }
 
-SecureConnectionProtocolClient::SecureConnectionProtocolClient(unsigned short uiProtocolID)
-    : ClientProtocol(1)
+SecureConnectionProtocolClient::SecureConnectionProtocolClient(unsigned short uiProtocolID) : ClientProtocol(1)
 {
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new SecureConnectionProtocolClient());
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(uiProtocolID,
+                                                                         new SecureConnectionProtocolClient());
 }
 
-void SecureConnectionProtocolClient::ExtractCallSpecificResults(Message* pMessage,
-                                                                ProtocolCallContext* pCallContext)
+void SecureConnectionProtocolClient::ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
@@ -76,7 +74,9 @@ Protocol* SecureConnectionProtocolClient::CreateResponder() const
     return new SecureConnectionProtocolClient();
 }
 
-bool SecureConnectionProtocolClient::CallRegister(ProtocolCallContext* pCallContext, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL)
+bool SecureConnectionProtocolClient::CallRegister(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                  const qList<StationURL>& rURLs, unsigned int* pConnectionID,
+                                                  StationURL* pPublicURL)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -106,7 +106,9 @@ bool SecureConnectionProtocolClient::CallRegister(ProtocolCallContext* pCallCont
     return bSent;
 }
 
-bool SecureConnectionProtocolClient::Register_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL)
+bool SecureConnectionProtocolClient::Register_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                             qResult* pResult, const qList<StationURL>& rURLs,
+                                                             unsigned int* pConnectionID, StationURL* pPublicURL)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -128,7 +130,10 @@ bool SecureConnectionProtocolClient::Register_PrepareRequest(ProtocolCallContext
     return true;
 }
 
-bool SecureConnectionProtocolClient::CallRequestConnectionData(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<ConnectionData>* pConnectionData)
+bool SecureConnectionProtocolClient::CallRequestConnectionData(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                               const unsigned int& rConnectionID,
+                                                               const unsigned int& rPrincipalID,
+                                                               qList<ConnectionData>* pConnectionData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -158,7 +163,11 @@ bool SecureConnectionProtocolClient::CallRequestConnectionData(ProtocolCallConte
     return bSent;
 }
 
-bool SecureConnectionProtocolClient::RequestConnectionData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<ConnectionData>* pConnectionData)
+bool SecureConnectionProtocolClient::RequestConnectionData_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                          Message* pMessage, bool* pSuccess,
+                                                                          const unsigned int& rConnectionID,
+                                                                          const unsigned int& rPrincipalID,
+                                                                          qList<ConnectionData>* pConnectionData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -180,7 +189,9 @@ bool SecureConnectionProtocolClient::RequestConnectionData_PrepareRequest(Protoc
     return true;
 }
 
-bool SecureConnectionProtocolClient::CallRequestURLs(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<StationURL>* pURLs)
+bool SecureConnectionProtocolClient::CallRequestURLs(ProtocolCallContext* pCallContext, bool* pSuccess,
+                                                     const unsigned int& rConnectionID,
+                                                     const unsigned int& rPrincipalID, qList<StationURL>* pURLs)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -210,7 +221,10 @@ bool SecureConnectionProtocolClient::CallRequestURLs(ProtocolCallContext* pCallC
     return bSent;
 }
 
-bool SecureConnectionProtocolClient::RequestURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<StationURL>* pURLs)
+bool SecureConnectionProtocolClient::RequestURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                                bool* pSuccess, const unsigned int& rConnectionID,
+                                                                const unsigned int& rPrincipalID,
+                                                                qList<StationURL>* pURLs)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -232,7 +246,10 @@ bool SecureConnectionProtocolClient::RequestURLs_PrepareRequest(ProtocolCallCont
     return true;
 }
 
-bool SecureConnectionProtocolClient::CallRegisterEx(ProtocolCallContext* pCallContext, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL, const AnyObjectHolder<Data, String>& rCustomData)
+bool SecureConnectionProtocolClient::CallRegisterEx(ProtocolCallContext* pCallContext, qResult* pResult,
+                                                    const qList<StationURL>& rURLs, unsigned int* pConnectionID,
+                                                    StationURL* pPublicURL,
+                                                    const AnyObjectHolder<Data, String>& rCustomData)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -263,7 +280,10 @@ bool SecureConnectionProtocolClient::CallRegisterEx(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool SecureConnectionProtocolClient::RegisterEx_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL, const AnyObjectHolder<Data, String>& rCustomData)
+bool SecureConnectionProtocolClient::RegisterEx_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                               qResult* pResult, const qList<StationURL>& rURLs,
+                                                               unsigned int* pConnectionID, StationURL* pPublicURL,
+                                                               const AnyObjectHolder<Data, String>& rCustomData)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -309,7 +329,8 @@ bool SecureConnectionProtocolClient::CallTestConnectivity(ProtocolCallContext* p
     return bSent;
 }
 
-bool SecureConnectionProtocolClient::TestConnectivity_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage)
+bool SecureConnectionProtocolClient::TestConnectivity_PrepareRequest(ProtocolCallContext* pCallContext,
+                                                                     Message* pMessage)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -348,7 +369,8 @@ bool SecureConnectionProtocolClient::CallUpdateURLs(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool SecureConnectionProtocolClient::UpdateURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const qList<StationURL>& rURLs)
+bool SecureConnectionProtocolClient::UpdateURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                               const qList<StationURL>& rURLs)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -364,7 +386,8 @@ bool SecureConnectionProtocolClient::UpdateURLs_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-bool SecureConnectionProtocolClient::CallReplaceURL(ProtocolCallContext* pCallContext, const StationURL& rTarget, const StationURL& rReplacement)
+bool SecureConnectionProtocolClient::CallReplaceURL(ProtocolCallContext* pCallContext, const StationURL& rTarget,
+                                                    const StationURL& rReplacement)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -389,7 +412,9 @@ bool SecureConnectionProtocolClient::CallReplaceURL(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool SecureConnectionProtocolClient::ReplaceURL_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const StationURL& rTarget, const StationURL& rReplacement)
+bool SecureConnectionProtocolClient::ReplaceURL_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                               const StationURL& rTarget,
+                                                               const StationURL& rReplacement)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -406,7 +431,8 @@ bool SecureConnectionProtocolClient::ReplaceURL_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-bool SecureConnectionProtocolClient::CallSendReport(ProtocolCallContext* pCallContext, const unsigned int& rReportID, const qBuffer& rReport)
+bool SecureConnectionProtocolClient::CallSendReport(ProtocolCallContext* pCallContext, const unsigned int& rReportID,
+                                                    const qBuffer& rReport)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -431,7 +457,8 @@ bool SecureConnectionProtocolClient::CallSendReport(ProtocolCallContext* pCallCo
     return bSent;
 }
 
-bool SecureConnectionProtocolClient::SendReport_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rReportID, const qBuffer& rReport)
+bool SecureConnectionProtocolClient::SendReport_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                               const unsigned int& rReportID, const qBuffer& rReport)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
@@ -448,8 +475,7 @@ bool SecureConnectionProtocolClient::SendReport_PrepareRequest(ProtocolCallConte
     return true;
 }
 
-void SecureConnectionProtocolClient::ProtoReturn_Register(Message* pMessage,
-                                                          ProtocolCallContext* pCallContext)
+void SecureConnectionProtocolClient::ProtoReturn_Register(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
     if (pResult == 0)
@@ -480,8 +506,7 @@ void SecureConnectionProtocolClient::ProtoReturn_Register(Message* pMessage,
     }
 }
 
-void SecureConnectionProtocolClient::ProtoReturn_RegisterEx(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void SecureConnectionProtocolClient::ProtoReturn_RegisterEx(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
     if (pResult == 0)
@@ -523,8 +548,7 @@ void SecureConnectionProtocolClient::ProtoReturn_RequestConnectionData(Message* 
     *pMessage >> *pDestination;
     if (pMessage->HasError())
         return;
-    qList<ConnectionData>* pConnectionData =
-        static_cast<qList<ConnectionData>*>(pCallContext->GetReturnValuePtr(1));
+    qList<ConnectionData>* pConnectionData = static_cast<qList<ConnectionData>*>(pCallContext->GetReturnValuePtr(1));
     if (pConnectionData != 0)
     {
         _Type_std_list<DDLClassMetaType<ConnectionData> >::Extract(pMessage, pConnectionData);
@@ -534,8 +558,7 @@ void SecureConnectionProtocolClient::ProtoReturn_RequestConnectionData(Message* 
     _Type_std_list<DDLClassMetaType<ConnectionData> >::Extract(pMessage, &discardedConnectionData[0]);
 }
 
-void SecureConnectionProtocolClient::ProtoReturn_RequestURLs(Message* pMessage,
-                                                             ProtocolCallContext* pCallContext)
+void SecureConnectionProtocolClient::ProtoReturn_RequestURLs(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
@@ -555,23 +578,19 @@ void SecureConnectionProtocolClient::ProtoReturn_RequestURLs(Message* pMessage,
     _Type_std_list<_Type_stationurl>::Extract(pMessage, &discardedURLs[0]);
 }
 
-void SecureConnectionProtocolClient::ProtoReturn_TestConnectivity(Message* pMessage,
-                                                                  ProtocolCallContext* pCallContext)
+void SecureConnectionProtocolClient::ProtoReturn_TestConnectivity(Message* pMessage, ProtocolCallContext* pCallContext)
 {
 }
 
-void SecureConnectionProtocolClient::ProtoReturn_UpdateURLs(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void SecureConnectionProtocolClient::ProtoReturn_UpdateURLs(Message* pMessage, ProtocolCallContext* pCallContext)
 {
 }
 
-void SecureConnectionProtocolClient::ProtoReturn_ReplaceURL(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void SecureConnectionProtocolClient::ProtoReturn_ReplaceURL(Message* pMessage, ProtocolCallContext* pCallContext)
 {
 }
 
-void SecureConnectionProtocolClient::ProtoReturn_SendReport(Message* pMessage,
-                                                            ProtocolCallContext* pCallContext)
+void SecureConnectionProtocolClient::ProtoReturn_SendReport(Message* pMessage, ProtocolCallContext* pCallContext)
 {
 }
 

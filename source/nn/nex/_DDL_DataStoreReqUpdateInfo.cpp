@@ -18,8 +18,7 @@ const uint8_t REQ_UPDATE_INFO_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStoreReqUpdateInfo& _DDL_DataStoreReqUpdateInfo::operator=(
-    const _DDL_DataStoreReqUpdateInfo& rSource)
+_DDL_DataStoreReqUpdateInfo& _DDL_DataStoreReqUpdateInfo::operator=(const _DDL_DataStoreReqUpdateInfo& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiVersion = rSource.m_uiVersion;
@@ -30,8 +29,7 @@ _DDL_DataStoreReqUpdateInfo& _DDL_DataStoreReqUpdateInfo::operator=(
     return *this;
 }
 
-void _DDL_DataStoreReqUpdateInfo::Add(Message* pMessage,
-    const _DDL_DataStoreReqUpdateInfo& rSource)
+void _DDL_DataStoreReqUpdateInfo::Add(Message* pMessage, const _DDL_DataStoreReqUpdateInfo& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -61,14 +59,12 @@ void _DDL_DataStoreReqUpdateInfo::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
-void _DDL_DataStoreReqUpdateInfo::Extract(Message* pMessage,
-    _DDL_DataStoreReqUpdateInfo* pDestination)
+void _DDL_DataStoreReqUpdateInfo::Extract(Message* pMessage, _DDL_DataStoreReqUpdateInfo* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 
@@ -113,16 +109,14 @@ void _DDL_DataStoreReqUpdateInfo::Extract(Message* pMessage,
         return;
     }
 
-    _Type_qvector<DDLClassMetaType<DataStoreKeyValue> >::Extract(pMessage,
-        &pDestination->m_RequestHeaders);
+    _Type_qvector<DDLClassMetaType<DataStoreKeyValue> >::Extract(pMessage, &pDestination->m_RequestHeaders);
 
     if (pMessage->HasError())
     {
         return;
     }
 
-    _Type_qvector<DDLClassMetaType<DataStoreKeyValue> >::Extract(pMessage,
-        &pDestination->m_FormFields);
+    _Type_qvector<DDLClassMetaType<DataStoreKeyValue> >::Extract(pMessage, &pDestination->m_FormFields);
 
     if (pMessage->HasError())
     {

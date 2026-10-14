@@ -38,25 +38,13 @@ public:
     void SetThreadName(const String& name);
     void CheckStack();
 
-    uint32_t GetPriority() const
-    {
-        return m_priority;
-    }
+    uint32_t GetPriority() const { return m_priority; }
 
-    bool IsLaunched() const
-    {
-        return m_bLaunched;
-    }
+    bool IsLaunched() const { return m_bLaunched; }
 
-    bool IsFinished() const
-    {
-        return m_bFinished;
-    }
+    bool IsFinished() const { return m_bFinished; }
 
-    void SetAffinity(uint32_t affinity)
-    {
-        m_affinity = affinity;
-    }
+    void SetAffinity(uint32_t affinity) { m_affinity = affinity; }
 
 protected:
     void ReadyToRun();

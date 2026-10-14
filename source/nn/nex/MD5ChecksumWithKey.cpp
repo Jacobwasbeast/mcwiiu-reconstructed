@@ -16,8 +16,7 @@ const unsigned int APPEND_AT_END = 0xFFFFFFFFu;
 
 }
 
-MD5ChecksumWithKey::MD5ChecksumWithKey()
-    : KeyedChecksumAlgorithm(6, 0x40)
+MD5ChecksumWithKey::MD5ChecksumWithKey() : KeyedChecksumAlgorithm(6, 0x40)
 {
 }
 
@@ -25,8 +24,8 @@ MD5ChecksumWithKey::~MD5ChecksumWithKey()
 {
 }
 
-void MD5ChecksumWithKey::ChecksumComputeHelper(const unsigned char** ppData,
-    const unsigned int* pLengths, int iCount, MD5& rMd5)
+void MD5ChecksumWithKey::ChecksumComputeHelper(const unsigned char** ppData, const unsigned int* pLengths, int iCount,
+                                               MD5& rMd5)
 {
     int iKeyLength = m_key.GetLength();
     for (int i = 0; i < iCount; ++i)
@@ -41,8 +40,8 @@ void MD5ChecksumWithKey::ChecksumComputeHelper(const unsigned char** ppData,
     rMd5.finalize();
 }
 
-bool MD5ChecksumWithKey::ComputeChecksum(const unsigned char** ppData,
-    const unsigned int* pLengths, int iCount, SignatureBytes& rSignature)
+bool MD5ChecksumWithKey::ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths, int iCount,
+                                         SignatureBytes& rSignature)
 {
     MD5 md5;
     ChecksumComputeHelper(ppData, pLengths, iCount, md5);
@@ -62,7 +61,7 @@ bool MD5ChecksumWithKey::ComputeChecksum(const Buffer& rBuffer, Buffer* pChecksu
 }
 
 unsigned int MD5ChecksumWithKey::ComputeChecksumForTransportArray(const unsigned char** ppData,
-    const unsigned int* pLengths, int iCount)
+                                                                  const unsigned int* pLengths, int iCount)
 {
     MD5 md5;
     ChecksumComputeHelper(ppData, pLengths, iCount, md5);

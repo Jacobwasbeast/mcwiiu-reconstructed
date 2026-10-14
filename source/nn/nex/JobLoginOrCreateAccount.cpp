@@ -41,19 +41,18 @@ void JobLoginOrCreateAccount::RVLogin()
     }
     char* pPassword = 0;
     m_password.CreateCopy(&pPassword);
-    const SandboxConnectionInfo::HostCredentials& rCredentials =
-        m_sandboxConnectionInfo.GetCredentialsProd();
+    const SandboxConnectionInfo::HostCredentials& rCredentials = m_sandboxConnectionInfo.GetCredentialsProd();
     if (!m_pBackEndServices->LoginImpl(&m_loginContext, 0, m_name, pPassword, rCredentials.m_host,
-            rCredentials.m_uiPort, m_ppCredentials, m_pErrorMessage, m_pExtraData))
+                                       rCredentials.m_uiPort, m_ppCredentials, m_pErrorMessage, m_pExtraData))
     {
         CompleteJob(qResult(LOGIN_CALL_FAILED_RESULT));
     }
     else
     {
         SetToSuspended();
-        ResumeOnCallCompletion(&m_loginContext,
-            new Step(
-                static_cast<Step::Function>(&JobLoginOrCreateAccount::ProcessRVLoginResult), L""));
+        ResumeOnCallCompletion(
+            &m_loginContext,
+            new Step(static_cast<Step::Function>(&JobLoginOrCreateAccount::ProcessRVLoginResult), L""));
     }
     String::ReleaseCopy(pPassword);
 }
@@ -71,8 +70,7 @@ void JobLoginOrCreateAccount::ProcessRVLoginResult()
         if (!m_bCreateAccountAttempted)
         {
             m_bCreateAccountAttempted = true;
-            SetStep(Step(
-                static_cast<Step::Function>(&JobLoginOrCreateAccount::CreateAccount), L""));
+            SetStep(Step(static_cast<Step::Function>(&JobLoginOrCreateAccount::CreateAccount), L""));
         }
         else
         {
@@ -94,9 +92,9 @@ void JobLoginOrCreateAccount::CreateAccount()
         return;
     }
     SetToSuspended();
-    ResumeOnCallCompletion(&m_createContext,
-        new Step(static_cast<Step::Function>(&JobLoginOrCreateAccount::ProcessCreateAccountResult),
-            L""));
+    ResumeOnCallCompletion(
+        &m_createContext,
+        new Step(static_cast<Step::Function>(&JobLoginOrCreateAccount::ProcessCreateAccountResult), L""));
 }
 
 void JobLoginOrCreateAccount::ProcessCreateAccountResult()
@@ -112,8 +110,7 @@ void JobLoginOrCreateAccount::ProcessCreateAccountResult()
 
 void JobLoginOrCreateAccount::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (rResult == true)

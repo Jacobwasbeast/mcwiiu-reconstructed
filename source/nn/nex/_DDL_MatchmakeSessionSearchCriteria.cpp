@@ -18,7 +18,8 @@ const uint8_t MAX_STRUCTURE_VERSION = 3;
 
 }
 
-_DDL_MatchmakeSessionSearchCriteria& _DDL_MatchmakeSessionSearchCriteria::operator=(const _DDL_MatchmakeSessionSearchCriteria& rSource)
+_DDL_MatchmakeSessionSearchCriteria& _DDL_MatchmakeSessionSearchCriteria::operator=(
+    const _DDL_MatchmakeSessionSearchCriteria& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_Attributes = rSource.m_Attributes;

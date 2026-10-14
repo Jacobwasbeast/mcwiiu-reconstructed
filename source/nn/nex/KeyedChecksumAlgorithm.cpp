@@ -5,10 +5,9 @@ namespace nn
 namespace nex
 {
 
-KeyedChecksumAlgorithm::KeyedChecksumAlgorithm(unsigned int uiMinKeyLength,
-    unsigned int uiMaxKeyLength)
-    : m_uiMinKeyLength(uiMinKeyLength)
-    , m_uiMaxKeyLength(uiMaxKeyLength)
+KeyedChecksumAlgorithm::KeyedChecksumAlgorithm(unsigned int uiMinKeyLength, unsigned int uiMaxKeyLength)
+    : m_uiMinKeyLength(uiMinKeyLength),
+      m_uiMaxKeyLength(uiMaxKeyLength)
 {
 }
 

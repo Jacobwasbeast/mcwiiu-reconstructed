@@ -23,10 +23,7 @@ const unsigned int INFINITE_TIMEOUT = 0xFFFFFFFF;
 
 ThreadScrambler* ThreadScrambler::s_instance = 0;
 
-ThreadScrambler::ThreadScrambler()
-    : m_thread(String(L"Thread Scrambler"))
-    , m_uiNbThreads(0)
-    , m_bStop(false)
+ThreadScrambler::ThreadScrambler() : m_thread(String(L"Thread Scrambler")), m_uiNbThreads(0), m_bStop(false)
 {
     m_thread.SetObjectMethod(&ThreadScrambler::ScramblingThread, this, 0);
     m_thread.Launch(0);
@@ -84,7 +81,7 @@ void ThreadScrambler::Unregister(ObjectThreadRoot* pThread)
                 if (i != MAX_THREADS - 1)
                 {
                     std::memcpy(&s_instance->m_apThreads[i], &s_instance->m_apThreads[i + 1],
-                        (s_instance->m_uiNbThreads - i - 1) * sizeof(ObjectThreadRoot*));
+                                (s_instance->m_uiNbThreads - i - 1) * sizeof(ObjectThreadRoot*));
                 }
                 --s_instance->m_uiNbThreads;
                 return;

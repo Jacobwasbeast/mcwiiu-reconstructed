@@ -19,9 +19,7 @@ const unsigned int MESSAGE_SIZE_FIELD_LENGTH = 4;
 
 }
 
-Message::Message()
-    : ByteStream(),
-      m_Result()
+Message::Message() : ByteStream(), m_Result()
 {
     m_uiBufferState = 0;
     m_uiCommonStateC = 0;
@@ -31,9 +29,7 @@ Message::Message()
     SetToBegining();
 }
 
-Message::Message(Buffer* pBuffer)
-    : ByteStream(pBuffer),
-      m_Result()
+Message::Message(Buffer* pBuffer) : ByteStream(pBuffer), m_Result()
 {
     m_uiBufferState = 0;
     m_uiCommonStateC = 0;
@@ -118,8 +114,7 @@ void Message::AddDataFromMessage(const Message& rMessage)
 {
     const Buffer* pBuffer = rMessage.m_pBuffer;
 
-    AppendRaw(pBuffer->GetData() + MESSAGE_SIZE_FIELD_LENGTH,
-        pBuffer->GetLength() - MESSAGE_SIZE_FIELD_LENGTH);
+    AppendRaw(pBuffer->GetData() + MESSAGE_SIZE_FIELD_LENGTH, pBuffer->GetLength() - MESSAGE_SIZE_FIELD_LENGTH);
 }
 
 }

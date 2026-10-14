@@ -27,8 +27,7 @@ _DDL_DataStoreRatingInfoWithSlot& _DDL_DataStoreRatingInfoWithSlot::operator=(
     return *this;
 }
 
-void _DDL_DataStoreRatingInfoWithSlot::Add(Message* pMessage,
-    const _DDL_DataStoreRatingInfoWithSlot& rSource)
+void _DDL_DataStoreRatingInfoWithSlot::Add(Message* pMessage, const _DDL_DataStoreRatingInfoWithSlot& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -60,8 +59,7 @@ void _DDL_DataStoreRatingInfoWithSlot::Add(Message* pMessage,
     }
 }
 
-void _DDL_DataStoreRatingInfoWithSlot::Extract(Message* pMessage,
-    _DDL_DataStoreRatingInfoWithSlot* pDestination)
+void _DDL_DataStoreRatingInfoWithSlot::Extract(Message* pMessage, _DDL_DataStoreRatingInfoWithSlot* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

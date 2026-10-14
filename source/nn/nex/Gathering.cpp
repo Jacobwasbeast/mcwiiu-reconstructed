@@ -12,8 +12,7 @@ const uint32_t DEFAULT_VALUE4 = 0x200;
 
 }
 
-Gathering::Gathering()
-    : _DDL_Gathering()
+Gathering::Gathering() : _DDL_Gathering()
 {
     Reset();
 }

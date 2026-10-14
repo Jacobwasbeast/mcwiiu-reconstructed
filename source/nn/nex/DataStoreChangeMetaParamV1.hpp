@@ -11,14 +11,9 @@ namespace nex
 class DataStoreChangeMetaParamV1 : public _DDL_DataStoreChangeMetaParamV1
 {
 public:
-    DataStoreChangeMetaParamV1()
-    {
-        Reset();
-    }
+    DataStoreChangeMetaParamV1() { Reset(); }
 
-    virtual ~DataStoreChangeMetaParamV1()
-    {
-    }
+    virtual ~DataStoreChangeMetaParamV1() {}
 
     void Reset();
 };

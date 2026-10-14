@@ -18,14 +18,9 @@ class Message;
 class _DDL_DataStoreReqGetInfo : public RootObject
 {
 public:
-    _DDL_DataStoreReqGetInfo()
-        : m_uiStructureVersion(0), m_RequestHeaders(0), m_RootCaCert(0)
-    {
-    }
+    _DDL_DataStoreReqGetInfo() : m_uiStructureVersion(0), m_RequestHeaders(0), m_RootCaCert(0) {}
 
-    virtual ~_DDL_DataStoreReqGetInfo()
-    {
-    }
+    virtual ~_DDL_DataStoreReqGetInfo() {}
 
     _DDL_DataStoreReqGetInfo& operator=(const _DDL_DataStoreReqGetInfo& rSource);
     bool operator==(const _DDL_DataStoreReqGetInfo& rSource) const;

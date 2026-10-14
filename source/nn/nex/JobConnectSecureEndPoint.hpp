@@ -28,18 +28,15 @@ class Ticket;
 class JobConnectSecureEndPoint : public Job
 {
 public:
-    JobConnectSecureEndPoint(SecureEndPoint* pSecureEndPoint, const StationURL* pStationURL,
-        Buffer* pRequestData, Buffer* pResponseData, EndPoint::ConnectionCallback pCallback,
-        const UserContext& rUserContext, unsigned int uiTimeout);
+    JobConnectSecureEndPoint(SecureEndPoint* pSecureEndPoint, const StationURL* pStationURL, Buffer* pRequestData,
+                             Buffer* pResponseData, EndPoint::ConnectionCallback pCallback,
+                             const UserContext& rUserContext, unsigned int uiTimeout);
     virtual ~JobConnectSecureEndPoint();
 
     virtual void Execute();
     virtual void CancelJob();
 
-    qResult GetResult() const
-    {
-        return m_result;
-    }
+    qResult GetResult() const { return m_result; }
 
     void ParseURL();
     bool ReadyToPerformConnect();
@@ -52,8 +49,7 @@ public:
     void ProcessConnectResult();
     void ExecuteStep();
 
-    static void ConnectCompletionCallback(CallContext* pCallContext,
-        const UserContext* pUserContext);
+    static void ConnectCompletionCallback(CallContext* pCallContext, const UserContext* pUserContext);
 
 private:
     enum Step

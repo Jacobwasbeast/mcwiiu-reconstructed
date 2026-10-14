@@ -23,10 +23,7 @@ public:
     void SetDescription(const String& rDescription);
     unsigned int GetPolicyArgument() const;
 
-    unsigned int GetParticipationPolicy() const
-    {
-        return m_uiParticipationPolicy;
-    }
+    unsigned int GetParticipationPolicy() const { return m_uiParticipationPolicy; }
 };
 
 }

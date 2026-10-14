@@ -42,8 +42,8 @@ public:
     bool IsNATSessionStarted();
     bool CheckUnupdateNATPort();
 
-    bool ProbeStations(CallContext* callContext, StationProbeList* stationProbeList,
-                       unsigned int timeout, bool useRelay);
+    bool ProbeStations(CallContext* callContext, StationProbeList* stationProbeList, unsigned int timeout,
+                       bool useRelay);
     bool InitiateProbes(StationProbeList& stationProbeList);
 
     void SetProbeLifetime(int probeLifetime);

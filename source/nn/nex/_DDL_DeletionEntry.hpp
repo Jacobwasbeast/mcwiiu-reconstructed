@@ -15,14 +15,9 @@ class Message;
 class _DDL_DeletionEntry : public RootObject
 {
 public:
-    _DDL_DeletionEntry()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DeletionEntry() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DeletionEntry()
-    {
-    }
+    virtual ~_DDL_DeletionEntry() {}
 
     static void Add(Message* pMessage, const _DDL_DeletionEntry& rSource);
     static void Extract(Message* pMessage, _DDL_DeletionEntry* pDestination);

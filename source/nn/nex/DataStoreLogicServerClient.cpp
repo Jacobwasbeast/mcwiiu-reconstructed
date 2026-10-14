@@ -75,8 +75,7 @@ void DataStoreLogicServerClient::CreateExtraData(qVector<String>& rExtraData) co
     }
 }
 
-bool DataStoreLogicServerClient::PrepareGetObject(ProtocolCallContext* pContext,
-                                                  const DataStorePrepareGetParam& rParam,
+bool DataStoreLogicServerClient::PrepareGetObject(ProtocolCallContext* pContext, const DataStorePrepareGetParam& rParam,
                                                   DataStoreReqGetInfo* pReqGetInfo)
 {
     CreateExtraData(const_cast<qVector<String>&>(rParam.m_ExtraData));
@@ -108,22 +107,19 @@ bool DataStoreLogicServerClient::PrepareUpdateObject(ProtocolCallContext* pConte
     return m_protocolClient.CallPrepareUpdateObject(pContext, rParam, pReqUpdateInfo);
 }
 
-bool DataStoreLogicServerClient::PostMetaBinary(ProtocolCallContext* pContext,
-                                                const DataStorePreparePostParam& rParam,
+bool DataStoreLogicServerClient::PostMetaBinary(ProtocolCallContext* pContext, const DataStorePreparePostParam& rParam,
                                                 uint64_t* pDataId)
 {
     return m_protocolClient.CallPostMetaBinary(pContext, rParam, pDataId);
 }
 
-bool DataStoreLogicServerClient::SearchObject(ProtocolCallContext* pContext,
-                                              const DataStoreSearchParam& rParam,
+bool DataStoreLogicServerClient::SearchObject(ProtocolCallContext* pContext, const DataStoreSearchParam& rParam,
                                               DataStoreSearchResult* pSearchResult)
 {
     return m_protocolClient.CallSearchObject(pContext, rParam, pSearchResult);
 }
 
-bool DataStoreLogicServerClient::SearchObjectLight(ProtocolCallContext* pContext,
-                                                   const DataStoreSearchParam& rParam,
+bool DataStoreLogicServerClient::SearchObjectLight(ProtocolCallContext* pContext, const DataStoreSearchParam& rParam,
                                                    DataStoreSearchResult* pSearchResult)
 {
     return m_protocolClient.CallSearchObjectLight(pContext, rParam, pSearchResult);
@@ -136,20 +132,18 @@ bool DataStoreLogicServerClient::GetNotificationUrl(ProtocolCallContext* pContex
     return m_protocolClient.CallGetNotificationUrl(pContext, rParam, pInfo);
 }
 
-bool DataStoreLogicServerClient::GetNewArrivedNotifications(
-    ProtocolCallContext* pContext,
-    const DataStoreGetNewArrivedNotificationsParam& rParam,
-    qVector<DataStoreNotification>* pNotifications,
-    bool* pbHasNext)
+bool DataStoreLogicServerClient::GetNewArrivedNotifications(ProtocolCallContext* pContext,
+                                                            const DataStoreGetNewArrivedNotificationsParam& rParam,
+                                                            qVector<DataStoreNotification>* pNotifications,
+                                                            bool* pbHasNext)
 {
     return m_protocolClient.CallGetNewArrivedNotifications(pContext, rParam, pNotifications, pbHasNext);
 }
 
-bool DataStoreLogicServerClient::GetNewArrivedNotifications(
-    ProtocolCallContext* pContext,
-    const DataStoreGetNewArrivedNotificationsParam& rParam,
-    qVector<DataStoreNotificationV1>* pNotifications,
-    bool* pbHasNext)
+bool DataStoreLogicServerClient::GetNewArrivedNotifications(ProtocolCallContext* pContext,
+                                                            const DataStoreGetNewArrivedNotificationsParam& rParam,
+                                                            qVector<DataStoreNotificationV1>* pNotifications,
+                                                            bool* pbHasNext)
 {
     return m_protocolClient.CallGetNewArrivedNotificationsV1(pContext, rParam, pNotifications, pbHasNext);
 }
@@ -168,14 +162,12 @@ bool DataStoreLogicServerClient::GetSpecificMeta(ProtocolCallContext* pContext,
     return m_protocolClient.CallGetSpecificMetaV1(pContext, rParam, pMetaInfos);
 }
 
-bool DataStoreLogicServerClient::TouchObject(ProtocolCallContext* pContext,
-                                             const DataStoreTouchObjectParam& rParam)
+bool DataStoreLogicServerClient::TouchObject(ProtocolCallContext* pContext, const DataStoreTouchObjectParam& rParam)
 {
     return m_protocolClient.CallTouchObject(pContext, rParam);
 }
 
-bool DataStoreLogicServerClient::GetPersistenceInfo(ProtocolCallContext* pContext,
-                                                    uint32_t uiOwnerId,
+bool DataStoreLogicServerClient::GetPersistenceInfo(ProtocolCallContext* pContext, uint32_t uiOwnerId,
                                                     qVector<uint16_t> persistenceSlotIds,
                                                     qVector<DataStorePersistenceInfo>* pInfos,
                                                     qVector<qResult>* pResults)
@@ -183,81 +175,64 @@ bool DataStoreLogicServerClient::GetPersistenceInfo(ProtocolCallContext* pContex
     return m_protocolClient.CallGetPersistenceInfos(pContext, uiOwnerId, persistenceSlotIds, pInfos, pResults);
 }
 
-bool DataStoreLogicServerClient::PostMetaBinaryWithDataId(ProtocolCallContext* pContext,
-                                                          uint64_t uiDataId,
+bool DataStoreLogicServerClient::PostMetaBinaryWithDataId(ProtocolCallContext* pContext, uint64_t uiDataId,
                                                           const DataStorePreparePostParam& rParam)
 {
     return m_protocolClient.CallPostMetaBinaryWithDataId(pContext, uiDataId, rParam);
 }
 
-bool DataStoreLogicServerClient::GetRating(ProtocolCallContext* pContext,
-                                           const DataStoreRatingTarget& rTarget,
-                                           DataStoreRatingInfo* pRatingInfo,
-                                           uint64_t uiAccessPassword)
+bool DataStoreLogicServerClient::GetRating(ProtocolCallContext* pContext, const DataStoreRatingTarget& rTarget,
+                                           DataStoreRatingInfo* pRatingInfo, uint64_t uiAccessPassword)
 {
     return m_protocolClient.CallGetRating(pContext, rTarget, pRatingInfo, uiAccessPassword);
 }
 
-bool DataStoreLogicServerClient::GetRating(ProtocolCallContext* pContext,
-                                           const qVector<uint64_t>& rDataIds,
+bool DataStoreLogicServerClient::GetRating(ProtocolCallContext* pContext, const qVector<uint64_t>& rDataIds,
                                            qVector<qVector<DataStoreRatingInfoWithSlot> >* pRatingInfos,
-                                           qVector<qResult>* pResults,
-                                           uint64_t uiAccessPassword)
+                                           qVector<qResult>* pResults, uint64_t uiAccessPassword)
 {
     return m_protocolClient.CallGetRatings(pContext, rDataIds, pRatingInfos, pResults, uiAccessPassword);
 }
 
-bool DataStoreLogicServerClient::GetRatingWithLog(ProtocolCallContext* pContext,
-                                                  const DataStoreRatingTarget& rTarget,
-                                                  DataStoreRatingInfo* pRatingInfo,
-                                                  DataStoreRatingLog* pRatingLog,
+bool DataStoreLogicServerClient::GetRatingWithLog(ProtocolCallContext* pContext, const DataStoreRatingTarget& rTarget,
+                                                  DataStoreRatingInfo* pRatingInfo, DataStoreRatingLog* pRatingLog,
                                                   uint64_t uiAccessPassword)
 {
     return m_protocolClient.CallGetRatingWithLog(pContext, rTarget, pRatingInfo, pRatingLog, uiAccessPassword);
 }
 
-bool DataStoreLogicServerClient::ResetRating(ProtocolCallContext* pContext,
-                                             const DataStoreRatingTarget& rTarget,
+bool DataStoreLogicServerClient::ResetRating(ProtocolCallContext* pContext, const DataStoreRatingTarget& rTarget,
                                              uint64_t uiUpdatePassword)
 {
     return m_protocolClient.CallResetRating(pContext, rTarget, uiUpdatePassword);
 }
 
-bool DataStoreLogicServerClient::ResetRating(ProtocolCallContext* pContext,
-                                             const qVector<uint64_t>& rDataIds,
-                                             bool bTransactional,
-                                             qVector<qResult>* pResults)
+bool DataStoreLogicServerClient::ResetRating(ProtocolCallContext* pContext, const qVector<uint64_t>& rDataIds,
+                                             bool bTransactional, qVector<qResult>* pResults)
 {
     return m_protocolClient.CallResetRatings(pContext, rDataIds, bTransactional, pResults);
 }
 
-bool DataStoreLogicServerClient::PerpetuateObject(ProtocolCallContext* pContext,
-                                                  uint16_t uiPersistenceSlotId,
-                                                  uint64_t uiDataId,
-                                                  bool bDeleteLastObject)
+bool DataStoreLogicServerClient::PerpetuateObject(ProtocolCallContext* pContext, uint16_t uiPersistenceSlotId,
+                                                  uint64_t uiDataId, bool bDeleteLastObject)
 {
     return m_protocolClient.CallPerpetuateObject(pContext, uiPersistenceSlotId, uiDataId, bDeleteLastObject);
 }
 
-bool DataStoreLogicServerClient::UnperpetuateObject(ProtocolCallContext* pContext,
-                                                    uint16_t uiPersistenceSlotId,
+bool DataStoreLogicServerClient::UnperpetuateObject(ProtocolCallContext* pContext, uint16_t uiPersistenceSlotId,
                                                     bool bDeleteLastObject)
 {
     return m_protocolClient.CallUnperpetuateObject(pContext, uiPersistenceSlotId, bDeleteLastObject);
 }
 
-bool DataStoreLogicServerClient::GetPersistenceInfo(ProtocolCallContext* pContext,
-                                                    uint32_t uiOwnerId,
-                                                    uint16_t uiPersistenceSlotId,
-                                                    DataStorePersistenceInfo* pInfo)
+bool DataStoreLogicServerClient::GetPersistenceInfo(ProtocolCallContext* pContext, uint32_t uiOwnerId,
+                                                    uint16_t uiPersistenceSlotId, DataStorePersistenceInfo* pInfo)
 {
     return m_protocolClient.CallGetPersistenceInfo(pContext, uiOwnerId, uiPersistenceSlotId, pInfo);
 }
 
-bool DataStoreLogicServerClient::RateObject(ProtocolCallContext* pContext,
-                                            const DataStoreRatingTarget& rTarget,
-                                            const DataStoreRateObjectParam& rParam,
-                                            DataStoreRatingInfo* pRatingInfo)
+bool DataStoreLogicServerClient::RateObject(ProtocolCallContext* pContext, const DataStoreRatingTarget& rTarget,
+                                            const DataStoreRateObjectParam& rParam, DataStoreRatingInfo* pRatingInfo)
 {
     return m_protocolClient.CallRateObject(pContext, rTarget, rParam, pRatingInfo != NULL, pRatingInfo);
 }
@@ -308,60 +283,49 @@ bool DataStoreLogicServerClient::CompleteUpdateObject(ProtocolCallContext* pCont
     return m_protocolClient.CallCompleteUpdateObject(pContext, rParam);
 }
 
-bool DataStoreLogicServerClient::DeleteObject(ProtocolCallContext* pContext,
-                                              const DataStoreDeleteParam& rParam)
+bool DataStoreLogicServerClient::DeleteObject(ProtocolCallContext* pContext, const DataStoreDeleteParam& rParam)
 {
     return m_protocolClient.CallDeleteObject(pContext, rParam);
 }
 
-bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
-                                            const DataStoreChangeMetaParam& rParam)
+bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext, const DataStoreChangeMetaParam& rParam)
 {
     return m_protocolClient.CallChangeMeta(pContext, rParam);
 }
 
-bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
-                                            const DataStoreChangeMetaParamV1& rParam)
+bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext, const DataStoreChangeMetaParamV1& rParam)
 {
     return m_protocolClient.CallChangeMetaV1(pContext, rParam);
 }
 
-bool DataStoreLogicServerClient::GetMeta(ProtocolCallContext* pContext,
-                                         const DataStoreGetMetaParam& rParam,
+bool DataStoreLogicServerClient::GetMeta(ProtocolCallContext* pContext, const DataStoreGetMetaParam& rParam,
                                          DataStoreMetaInfo* pMetaInfo)
 {
     return m_protocolClient.CallGetMeta(pContext, rParam, pMetaInfo);
 }
 
-bool DataStoreLogicServerClient::GetMeta(ProtocolCallContext* pContext,
-                                         const qVector<uint64_t>& rDataIds,
-                                         const DataStoreGetMetaParam& rParam,
-                                         qVector<DataStoreMetaInfo>* pMetaInfos,
+bool DataStoreLogicServerClient::GetMeta(ProtocolCallContext* pContext, const qVector<uint64_t>& rDataIds,
+                                         const DataStoreGetMetaParam& rParam, qVector<DataStoreMetaInfo>* pMetaInfos,
                                          qVector<qResult>* pResults)
 {
     return m_protocolClient.CallGetMetas(pContext, rDataIds, rParam, pMetaInfos, pResults);
 }
 
-bool DataStoreLogicServerClient::GetMeta(ProtocolCallContext* pContext,
-                                         const qVector<DataStoreGetMetaParam>& rParams,
-                                         qVector<DataStoreMetaInfo>* pMetaInfos,
-                                         qVector<qResult>* pResults)
+bool DataStoreLogicServerClient::GetMeta(ProtocolCallContext* pContext, const qVector<DataStoreGetMetaParam>& rParams,
+                                         qVector<DataStoreMetaInfo>* pMetaInfos, qVector<qResult>* pResults)
 {
     return m_protocolClient.CallGetMetasMultipleParam(pContext, rParams, pMetaInfos, pResults);
 }
 
-bool DataStoreLogicServerClient::GetPasswordInfo(ProtocolCallContext* pContext,
-                                                 const qVector<uint64_t>& rDataIds,
+bool DataStoreLogicServerClient::GetPasswordInfo(ProtocolCallContext* pContext, const qVector<uint64_t>& rDataIds,
                                                  qVector<DataStorePasswordInfo>* pPasswordInfos,
                                                  qVector<qResult>* pResults)
 {
     return m_protocolClient.CallGetPasswordInfos(pContext, rDataIds, pPasswordInfos, pResults);
 }
 
-bool DataStoreLogicServerClient::GetObjectInfo(ProtocolCallContext* pContext,
-                                               const qVector<uint64_t>& rDataIds,
-                                               qVector<DataStoreReqGetInfo>* pReqGetInfos,
-                                               qVector<qResult>* pResults)
+bool DataStoreLogicServerClient::GetObjectInfo(ProtocolCallContext* pContext, const qVector<uint64_t>& rDataIds,
+                                               qVector<DataStoreReqGetInfo>* pReqGetInfos, qVector<qResult>* pResults)
 {
     return m_protocolClient.CallGetObjectInfos(pContext, rDataIds, pReqGetInfos, pResults);
 }
@@ -409,8 +373,7 @@ uint32_t DataStoreLogicServerClient::GetMyPrincipalId() const
     return pCredentials->GetPrincipalID();
 }
 
-bool DataStoreLogicServerClient::ResetRating(ProtocolCallContext* pContext,
-                                             const uint64_t& rDataId)
+bool DataStoreLogicServerClient::ResetRating(ProtocolCallContext* pContext, const uint64_t& rDataId)
 {
     qVector<uint64_t> dataIds;
     dataIds.push_back(rDataId);
@@ -419,8 +382,7 @@ bool DataStoreLogicServerClient::ResetRating(ProtocolCallContext* pContext,
     return m_protocolClient.CallResetRatings(pContext, dataIds, bTransactional, NULL);
 }
 
-bool DataStoreLogicServerClient::DeleteObject(ProtocolCallContext* pContext,
-                                              const uint64_t& rDataId)
+bool DataStoreLogicServerClient::DeleteObject(ProtocolCallContext* pContext, const uint64_t& rDataId)
 {
     DataStoreDeleteParam param;
     param.m_uiUpdatePassword = 0;
@@ -430,17 +392,14 @@ bool DataStoreLogicServerClient::DeleteObject(ProtocolCallContext* pContext,
 }
 
 bool DataStoreLogicServerClient::DeleteObject(ProtocolCallContext* pContext,
-                                              const qVector<DataStoreDeleteParam>& rParams,
-                                              bool bTransactional,
+                                              const qVector<DataStoreDeleteParam>& rParams, bool bTransactional,
                                               qVector<qResult>* pResults)
 {
     return m_protocolClient.CallDeleteObjects(pContext, rParams, bTransactional, pResults);
 }
 
-bool DataStoreLogicServerClient::DeleteObject(ProtocolCallContext* pContext,
-                                              const qVector<uint64_t>& rDataIds,
-                                              bool bTransactional,
-                                              qVector<qResult>* pResults)
+bool DataStoreLogicServerClient::DeleteObject(ProtocolCallContext* pContext, const qVector<uint64_t>& rDataIds,
+                                              bool bTransactional, qVector<qResult>* pResults)
 {
     qVector<DataStoreDeleteParam> params;
     DataStoreDeleteParam param;
@@ -454,10 +413,8 @@ bool DataStoreLogicServerClient::DeleteObject(ProtocolCallContext* pContext,
     return m_protocolClient.CallDeleteObjects(pContext, params, bTransactional, pResults);
 }
 
-bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
-                                            const qVector<uint64_t>& rDataIds,
-                                            const DataStoreChangeMetaParam& rParam,
-                                            bool bTransactional,
+bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext, const qVector<uint64_t>& rDataIds,
+                                            const DataStoreChangeMetaParam& rParam, bool bTransactional,
                                             qVector<qResult>* pResults)
 {
     qVector<DataStoreChangeMetaParam> params;
@@ -466,10 +423,8 @@ bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
     return m_protocolClient.CallChangeMetas(pContext, rDataIds, params, bTransactional, pResults);
 }
 
-bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
-                                            const qVector<uint64_t>& rDataIds,
-                                            const DataStoreChangeMetaParamV1& rParam,
-                                            bool bTransactional,
+bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext, const qVector<uint64_t>& rDataIds,
+                                            const DataStoreChangeMetaParamV1& rParam, bool bTransactional,
                                             qVector<qResult>* pResults)
 {
     qVector<DataStoreChangeMetaParamV1> params;
@@ -479,8 +434,7 @@ bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
 }
 
 bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
-                                            const qVector<DataStoreChangeMetaParam>& rParams,
-                                            bool bTransactional,
+                                            const qVector<DataStoreChangeMetaParam>& rParams, bool bTransactional,
                                             qVector<qResult>* pResults)
 {
     qVector<uint64_t> dataIds;
@@ -489,8 +443,7 @@ bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
 }
 
 bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
-                                            const qVector<DataStoreChangeMetaParamV1>& rParams,
-                                            bool bTransactional,
+                                            const qVector<DataStoreChangeMetaParamV1>& rParams, bool bTransactional,
                                             qVector<qResult>* pResults)
 {
     qVector<uint64_t> dataIds;
@@ -500,10 +453,8 @@ bool DataStoreLogicServerClient::ChangeMeta(ProtocolCallContext* pContext,
 
 bool DataStoreLogicServerClient::RateObject(ProtocolCallContext* pContext,
                                             const qVector<DataStoreRatingTarget>& rTargets,
-                                            const DataStoreRateObjectParam& rParam,
-                                            bool bTransactional,
-                                            qVector<DataStoreRatingInfo>* pRatingInfos,
-                                            qVector<qResult>* pResults)
+                                            const DataStoreRateObjectParam& rParam, bool bTransactional,
+                                            qVector<DataStoreRatingInfo>* pRatingInfos, qVector<qResult>* pResults)
 {
     qVector<DataStoreRateObjectParam> params;
     params.push_back(rParam);
@@ -514,10 +465,8 @@ bool DataStoreLogicServerClient::RateObject(ProtocolCallContext* pContext,
 
 bool DataStoreLogicServerClient::RateObject(ProtocolCallContext* pContext,
                                             const qVector<DataStoreRatingTarget>& rTargets,
-                                            const qVector<DataStoreRateObjectParam>& rParams,
-                                            bool bTransactional,
-                                            qVector<DataStoreRatingInfo>* pRatingInfos,
-                                            qVector<qResult>* pResults)
+                                            const qVector<DataStoreRateObjectParam>& rParams, bool bTransactional,
+                                            qVector<DataStoreRatingInfo>* pRatingInfos, qVector<qResult>* pResults)
 {
     return m_protocolClient.CallRateObjects(pContext, rTargets, rParams, bTransactional, pRatingInfos != NULL,
                                             pRatingInfos, pResults);
@@ -527,8 +476,7 @@ bool DataStoreLogicServerClient::RateObjectsWithPosting(ProtocolCallContext* pCo
                                                         const qVector<DataStoreRatingTarget>& rTargets,
                                                         const qVector<DataStoreRateObjectParam>& rRateParams,
                                                         const qVector<DataStorePreparePostParam>& rPostParams,
-                                                        bool bTransactional,
-                                                        qVector<DataStoreRatingInfo>* pRatingInfos,
+                                                        bool bTransactional, qVector<DataStoreRatingInfo>* pRatingInfos,
                                                         qVector<qResult>* pResults)
 {
     for (uint32_t i = 0; i < rTargets.size(); ++i)
@@ -556,8 +504,7 @@ bool DataStoreLogicServerClient::RateObjectsWithPosting(ProtocolCallContext* pCo
                                                         const qVector<DataStoreRatingTarget>& rTargets,
                                                         const DataStoreRateObjectParam& rRateParam,
                                                         const DataStorePreparePostParam& rPostParam,
-                                                        bool bTransactional,
-                                                        qVector<DataStoreRatingInfo>* pRatingInfos,
+                                                        bool bTransactional, qVector<DataStoreRatingInfo>* pRatingInfos,
                                                         qVector<qResult>* pResults)
 {
     qVector<DataStoreRateObjectParam> rateParams;
@@ -590,8 +537,7 @@ bool DataStoreLogicServerClient::RateObjectWithPosting(ProtocolCallContext* pCon
 
 bool DataStoreLogicServerClient::PostMetaBinaryWithDataIds(ProtocolCallContext* pContext,
                                                            const qVector<uint64_t>& rDataIds,
-                                                           const DataStorePreparePostParam& rParam,
-                                                           bool bTransactional,
+                                                           const DataStorePreparePostParam& rParam, bool bTransactional,
                                                            qVector<qResult>* pResults)
 {
     qVector<DataStorePreparePostParam> params;
@@ -601,10 +547,8 @@ bool DataStoreLogicServerClient::PostMetaBinaryWithDataIds(ProtocolCallContext* 
 }
 
 bool DataStoreLogicServerClient::PostMetaBinariesWithDataId(
-    ProtocolCallContext* pContext,
-    const qVector<std::pair<uint64_t, DataStorePreparePostParam> >& rParams,
-    bool bTransactional,
-    qVector<qResult>* pResults)
+    ProtocolCallContext* pContext, const qVector<std::pair<uint64_t, DataStorePreparePostParam> >& rParams,
+    bool bTransactional, qVector<qResult>* pResults)
 {
     qVector<DataStorePreparePostParam> params;
     qVector<uint64_t> dataIds;
@@ -618,8 +562,7 @@ bool DataStoreLogicServerClient::PostMetaBinariesWithDataId(
     return m_protocolClient.CallPostMetaBinariesWithDataId(pContext, dataIds, params, bTransactional, pResults);
 }
 
-bool DataStoreLogicServerClient::GetPasswordInfo(ProtocolCallContext* pContext,
-                                                 uint64_t uiDataId,
+bool DataStoreLogicServerClient::GetPasswordInfo(ProtocolCallContext* pContext, uint64_t uiDataId,
                                                  DataStorePasswordInfo* pPasswordInfo)
 {
     return m_protocolClient.CallGetPasswordInfo(pContext, uiDataId, pPasswordInfo);

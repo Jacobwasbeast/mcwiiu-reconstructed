@@ -18,14 +18,9 @@ class Message;
 class _DDL_MatchmakeParam : public RootObject
 {
 public:
-    _DDL_MatchmakeParam()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_MatchmakeParam() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_MatchmakeParam()
-    {
-    }
+    virtual ~_DDL_MatchmakeParam() {}
 
     _DDL_MatchmakeParam& operator=(const _DDL_MatchmakeParam& rSource);
 

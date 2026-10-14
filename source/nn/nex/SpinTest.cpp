@@ -8,8 +8,7 @@ namespace nn
 namespace nex
 {
 
-SpinTest::SpinTest(uint32_t sleepInterval, uint32_t timeout)
-    : m_sleepInterval(sleepInterval)
+SpinTest::SpinTest(uint32_t sleepInterval, uint32_t timeout) : m_sleepInterval(sleepInterval)
 {
     m_timeout = timeout;
     m_started = Time::GetTime();

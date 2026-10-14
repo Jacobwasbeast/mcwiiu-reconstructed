@@ -13,9 +13,7 @@ class EmulationDevice : public RootObject
 {
 public:
     EmulationDevice();
-    virtual ~EmulationDevice()
-    {
-    }
+    virtual ~EmulationDevice() {}
     virtual void Enable();
 
     unsigned int GetBandwidth();
@@ -30,10 +28,7 @@ public:
     void SetBandwidth(unsigned int bandwidth);
     unsigned int GetProtocolHeaderSize();
 
-    bool IsEnabled() const
-    {
-        return m_enabled;
-    }
+    bool IsEnabled() const { return m_enabled; }
 
 private:
     bool m_enabled;

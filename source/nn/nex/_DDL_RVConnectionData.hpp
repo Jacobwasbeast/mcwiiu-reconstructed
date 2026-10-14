@@ -18,14 +18,9 @@ class Message;
 class _DDL_RVConnectionData : public RootObject
 {
 public:
-    _DDL_RVConnectionData()
-        : m_uiStructureVersion(1)
-    {
-    }
+    _DDL_RVConnectionData() : m_uiStructureVersion(1) {}
 
-    virtual ~_DDL_RVConnectionData()
-    {
-    }
+    virtual ~_DDL_RVConnectionData() {}
 
     _DDL_RVConnectionData& operator=(const _DDL_RVConnectionData& rSource);
     bool operator==(const _DDL_RVConnectionData& rSource) const;

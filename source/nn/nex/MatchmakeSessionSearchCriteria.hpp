@@ -21,9 +21,7 @@ public:
         SetMatchmakeSystemType(type);
     }
 
-    virtual ~MatchmakeSessionSearchCriteria()
-    {
-    }
+    virtual ~MatchmakeSessionSearchCriteria() {}
 
     void Reset();
     void SetGameMode(unsigned int uiGameMode);

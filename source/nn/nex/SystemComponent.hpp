@@ -44,51 +44,29 @@ public:
     virtual ~SystemComponent();
 
     virtual const wchar_t* GetType() const;
-    virtual bool IsAKindOf(const wchar_t* pType) const
-    {
-        return std::wcscmp(L"SystemComponent", pType) == 0;
-    }
+    virtual bool IsAKindOf(const wchar_t* pType) const { return std::wcscmp(L"SystemComponent", pType) == 0; }
 
     virtual void EnforceDeclareSysComponentMacro() = 0;
-    virtual void StateTransition(_State state)
-    {
-    }
+    virtual void StateTransition(_State state) {}
 
-    virtual void OnInitialize()
-    {
-        TestState();
-    }
+    virtual void OnInitialize() { TestState(); }
 
-    virtual void OnTerminate()
-    {
-        TestState();
-    }
+    virtual void OnTerminate() { TestState(); }
 
     virtual bool BeginInitialization();
 
-    virtual bool EndInitialization()
-    {
-        return true;
-    }
+    virtual bool EndInitialization() { return true; }
 
     virtual bool BeginTermination();
 
-    virtual bool EndTermination()
-    {
-        return true;
-    }
+    virtual bool EndTermination() { return true; }
 
     virtual bool ValidTransition(_State state);
     virtual bool UseIsAllowed();
 
-    virtual _State TestState()
-    {
-        return static_cast<_State>(m_uiState);
-    }
+    virtual _State TestState() { return static_cast<_State>(m_uiState); }
 
-    virtual void DoWork()
-    {
-    }
+    virtual void DoWork() {}
 
     void SetParent(SystemComponent* pParent);
     bool SetState(_State state, bool bForce);

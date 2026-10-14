@@ -50,18 +50,18 @@ enum MatchmakingResult
 }
 
 JobDoMatchmaking::JobDoMatchmaking()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_pMatchmakeExtensionClient(0)
-    , m_autoMatchmakeParam()
-    , m_pJoinedSession(0)
-    , m_requestContext(0)
-    , m_notificationContext(0)
-    , m_pNotificationFilter(0)
-    , m_notificationEvent()
-    , m_uiRequestID(0)
-    , m_uiGatheringID(0)
-    , m_matchmakeSession()
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_pMatchmakeExtensionClient(0),
+      m_autoMatchmakeParam(),
+      m_pJoinedSession(0),
+      m_requestContext(0),
+      m_notificationContext(0),
+      m_pNotificationFilter(0),
+      m_notificationEvent(),
+      m_uiRequestID(0),
+      m_uiGatheringID(0),
+      m_matchmakeSession()
 {
 }
 
@@ -69,9 +69,8 @@ JobDoMatchmaking::~JobDoMatchmaking()
 {
 }
 
-qResult JobDoMatchmaking::Initialize(unsigned int uiCallId,
-    MatchmakeExtensionClient* pMatchmakeExtensionClient, const AutoMatchmakeParam& rParam,
-    MatchmakeSession* pJoinedSession)
+qResult JobDoMatchmaking::Initialize(unsigned int uiCallId, MatchmakeExtensionClient* pMatchmakeExtensionClient,
+                                     const AutoMatchmakeParam& rParam, MatchmakeSession* pJoinedSession)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 
@@ -125,28 +124,26 @@ void JobDoMatchmaking::StepRequestMatchmaking()
     }
 
     m_requestContext.Reset();
-    if (!m_pMatchmakeExtensionClient->RequestMatchmaking(&m_requestContext, m_autoMatchmakeParam,
-            &m_uiRequestID))
+    if (!m_pMatchmakeExtensionClient->RequestMatchmaking(&m_requestContext, m_autoMatchmakeParam, &m_uiRequestID))
     {
         CompleteJob(qResult(MATCHMAKING_CALL_FAILED_RESULT));
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_requestContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_requestContext.GetCallID());
     m_notificationContext.Reset();
     if (!JobWaitForNotification::Start(&m_notificationContext, MATCHMAKING_NOTIFICATION_TYPE,
-            MATCHMAKING_NOTIFICATION_SUB_TYPE, MATCHMAKING_NOTIFICATION_TIMEOUT,
-            &m_pNotificationFilter, &m_notificationEvent))
+                                       MATCHMAKING_NOTIFICATION_SUB_TYPE, MATCHMAKING_NOTIFICATION_TIMEOUT,
+                                       &m_pNotificationFilter, &m_notificationEvent))
     {
         CompleteJob(qResult(MATCHMAKING_CALL_FAILED_RESULT));
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_notificationContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_notificationContext.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_requestContext,
+    ResumeOnCallCompletion(
+        &m_requestContext,
         new Step(static_cast<Step::Function>(&JobDoMatchmaking::StepWaitingRequestMatchmaking), L""));
 }
 
@@ -167,8 +164,8 @@ void JobDoMatchmaking::StepWaitingRequestMatchmaking()
 
     m_pNotificationFilter->SetEventUInt64Param1(m_uiRequestID);
     SetToSuspended();
-    ResumeOnCallCompletionOrAlreadyDone(&m_notificationContext,
-        new Step(static_cast<Step::Function>(&JobDoMatchmaking::StepWaitingNotify), L""));
+    ResumeOnCallCompletionOrAlreadyDone(
+        &m_notificationContext, new Step(static_cast<Step::Function>(&JobDoMatchmaking::StepWaitingNotify), L""));
 }
 
 void JobDoMatchmaking::StepWaitingNotify()
@@ -201,9 +198,7 @@ void JobDoMatchmaking::StepWaitingNotify()
             return;
         }
 
-        SetStep(Step(static_cast<Step::Function>(
-                         &JobDoMatchmaking::StepFindMatchmakeSessionByGatheringIdDetail),
-            L""));
+        SetStep(Step(static_cast<Step::Function>(&JobDoMatchmaking::StepFindMatchmakeSessionByGatheringIdDetail), L""));
         return;
     }
     case REASON_UNAVAILABLE:
@@ -231,20 +226,19 @@ void JobDoMatchmaking::StepFindMatchmakeSessionByGatheringIdDetail()
     }
 
     m_requestContext.Reset();
-    if (!m_pMatchmakeExtensionClient->FindMatchmakeSessionByGatheringIdDetail(&m_requestContext,
-            m_uiGatheringID, &m_matchmakeSession))
+    if (!m_pMatchmakeExtensionClient->FindMatchmakeSessionByGatheringIdDetail(&m_requestContext, m_uiGatheringID,
+                                                                              &m_matchmakeSession))
     {
         CompleteJob(qResult(MATCHMAKING_CALL_FAILED_RESULT));
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_requestContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_requestContext.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_requestContext,
-        new Step(static_cast<Step::Function>(
-                     &JobDoMatchmaking::StepWaitingFindMatchmakeSessionByGatheringIdDetail),
-            L""));
+    ResumeOnCallCompletion(
+        &m_requestContext,
+        new Step(static_cast<Step::Function>(&JobDoMatchmaking::StepWaitingFindMatchmakeSessionByGatheringIdDetail),
+                 L""));
 }
 
 void JobDoMatchmaking::StepWaitingFindMatchmakeSessionByGatheringIdDetail()

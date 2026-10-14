@@ -25,9 +25,12 @@ public:
     explicit HTTPClientImpl(HTTPEngine* pEngine);
     ~HTTPClientImpl();
 
-    bool GET(CallContext& rCallContext, const HTTPURL& rURL, HTTPResponse& rResponse, HTTPWriter& rWriter, const qVector<String>& rHeaders);
-    bool POST(CallContext& rCallContext, const HTTPURL& rURL, HTTPData& rData, HTTPResponse& rResponse, HTTPWriter& rWriter, const qVector<String>& rHeaders);
-    bool PUT(CallContext& rCallContext, const HTTPURL& rURL, HTTPResponse& rResponse, HTTPReader& rReader, const qVector<String>& rHeaders);
+    bool GET(CallContext& rCallContext, const HTTPURL& rURL, HTTPResponse& rResponse, HTTPWriter& rWriter,
+             const qVector<String>& rHeaders);
+    bool POST(CallContext& rCallContext, const HTTPURL& rURL, HTTPData& rData, HTTPResponse& rResponse,
+              HTTPWriter& rWriter, const qVector<String>& rHeaders);
+    bool PUT(CallContext& rCallContext, const HTTPURL& rURL, HTTPResponse& rResponse, HTTPReader& rReader,
+             const qVector<String>& rHeaders);
 
     void GetDownloadProgress(CallContext& rCallContext, unsigned long long& rCurrent, unsigned long long& rTotal);
     void GetUploadProgress(CallContext& rCallContext, unsigned long long& rCurrent, unsigned long long& rTotal);

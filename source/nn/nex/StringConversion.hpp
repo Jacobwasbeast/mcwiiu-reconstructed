@@ -34,8 +34,10 @@ public:
     static int HexToString(const unsigned char* source, wchar_t* destination, unsigned int count);
     static int HexToString(const unsigned char* source, char* destination, unsigned int count);
 
-    static bool ByteArrayToBase64(const unsigned char* bytes, unsigned int size, wchar_t* destination, unsigned int* length);
-    static bool Base64ToByteArray(const wchar_t* source, unsigned int length, unsigned char* destination, unsigned int* size);
+    static bool ByteArrayToBase64(const unsigned char* bytes, unsigned int size, wchar_t* destination,
+                                  unsigned int* length);
+    static bool Base64ToByteArray(const wchar_t* source, unsigned int length, unsigned char* destination,
+                                  unsigned int* size);
     static bool Encode(const unsigned char* bytes, unsigned int size, wchar_t* destination, unsigned int capacity);
     static bool Decode(const wchar_t* source, unsigned char* destination, unsigned int capacity);
 };

@@ -81,8 +81,7 @@ public:
     void SetUserContext(unsigned int uiIndex, const UserContext& rUserContext);
     UserContext GetUserContext(unsigned int uiIndex) const;
 
-    void RegisterCompletionCallback(CompletionCallback cbCallback, const UserContext& rUserContext,
-                                    bool bAppend);
+    void RegisterCompletionCallback(CompletionCallback cbCallback, const UserContext& rUserContext, bool bAppend);
     void RegisterCompletionCallback(CallbackRoot* pCallback, bool bOnSuccessOnly, bool bAppend);
     void RegisterCancellationCallback(CallbackRoot* pCallback);
 

@@ -20,31 +20,31 @@ namespace nex
 {
 
 JobDataStoreHpp::JobDataStoreHpp()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_url()
-    , m_method(HttpConnection::HTTP_POST)
-    , m_request()
-    , m_callContext()
-    , m_httpClient()
-    , m_uiHttpRequestCount(0)
-    , m_iStatusCode(0)
-    , m_response()
-    , m_bResponseTooLarge(false)
-    , m_location(L"")
-    , m_uiThreadPriority(0)
-    , m_uiPrincipalId(0)
-    , m_password(L"")
-    , m_accessKey(L"")
-    , m_iTimeout(INFINITE_TIMEOUT)
-    , m_retrieveGameAuthTokenClient()
-    , m_token()
-    , m_key()
-    , m_pListener(0)
-    , m_headers()
-    , m_formFields()
-    , m_rootCa()
-    , m_priorityType(ServiceHttpClient::PRIORITY_TYPE_DEFAULT)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_url(),
+      m_method(HttpConnection::HTTP_POST),
+      m_request(),
+      m_callContext(),
+      m_httpClient(),
+      m_uiHttpRequestCount(0),
+      m_iStatusCode(0),
+      m_response(),
+      m_bResponseTooLarge(false),
+      m_location(L""),
+      m_uiThreadPriority(0),
+      m_uiPrincipalId(0),
+      m_password(L""),
+      m_accessKey(L""),
+      m_iTimeout(INFINITE_TIMEOUT),
+      m_retrieveGameAuthTokenClient(),
+      m_token(),
+      m_key(),
+      m_pListener(0),
+      m_headers(),
+      m_formFields(),
+      m_rootCa(),
+      m_priorityType(ServiceHttpClient::PRIORITY_TYPE_DEFAULT)
 {
 }
 
@@ -53,10 +53,10 @@ JobDataStoreHpp::~JobDataStoreHpp()
     delete m_pListener;
 }
 
-qResult JobDataStoreHpp::Initialize(unsigned int uiCallId, ClientProtocol* pProtocol,
-    const Buffer& rRequest, unsigned int uiThreadPriority, unsigned int uiPrincipalId,
-    const String& rPassword, const String& rAccessKey, const String& rUrl, int iTimeout,
-    ServiceHttpClient::PriorityType priorityType)
+qResult JobDataStoreHpp::Initialize(unsigned int uiCallId, ClientProtocol* pProtocol, const Buffer& rRequest,
+                                    unsigned int uiThreadPriority, unsigned int uiPrincipalId, const String& rPassword,
+                                    const String& rAccessKey, const String& rUrl, int iTimeout,
+                                    ServiceHttpClient::PriorityType priorityType)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_uiCallId = uiCallId;
@@ -75,8 +75,7 @@ qResult JobDataStoreHpp::Initialize(unsigned int uiCallId, ClientProtocol* pProt
 
 void JobDataStoreHpp::PrepareRequest(HttpConnection* pConnection)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -88,8 +87,7 @@ void JobDataStoreHpp::PrepareRequest(HttpConnection* pConnection)
 
 void JobDataStoreHpp::ProcessResponseHeader(HttpConnection* pConnection, int iStatusCode)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -103,8 +101,7 @@ void JobDataStoreHpp::ProcessResponseHeader(HttpConnection* pConnection, int iSt
 
 bool JobDataStoreHpp::ProcessResponse(const unsigned char* pData, unsigned int uiSize)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -122,11 +119,10 @@ bool JobDataStoreHpp::ProcessResponse(const unsigned char* pData, unsigned int u
     return true;
 }
 
-unsigned int JobDataStoreHpp::PostChunkedBuffer(HttpConnection* pConnection,
-    unsigned char* pBuffer, unsigned int uiSize, bool* pbLastChunk)
+unsigned int JobDataStoreHpp::PostChunkedBuffer(HttpConnection* pConnection, unsigned char* pBuffer,
+                                                unsigned int uiSize, bool* pbLastChunk)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -138,8 +134,7 @@ unsigned int JobDataStoreHpp::PostChunkedBuffer(HttpConnection* pConnection,
 
 void JobDataStoreHpp::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
         m_callContext.Cancel(CallContext::CallCanceled);
     else if (rResult)
@@ -199,8 +194,7 @@ void JobDataStoreHpp::PrepareRequestHeaders()
 
 void JobDataStoreHpp::StepRetrieveGameAuthToken()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -208,25 +202,22 @@ void JobDataStoreHpp::StepRetrieveGameAuthToken()
     }
 
     m_callContext.Reset();
-    if (!m_retrieveGameAuthTokenClient.RetrieveGameAuthToken(&m_callContext, m_uiPrincipalId,
-            m_password, &m_token, &m_key))
+    if (!m_retrieveGameAuthTokenClient.RetrieveGameAuthToken(&m_callContext, m_uiPrincipalId, m_password, &m_token,
+                                                             &m_key))
     {
         CompleteJob(qResult(RESULT_CORE_CALL_INITIATION_FAILURE));
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_callContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_callContext.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_callContext,
-        new Step(static_cast<Step::Function>(&JobDataStoreHpp::StepWaitingRetrieveGameAuthToken),
-            L""));
+    ResumeOnCallCompletion(
+        &m_callContext, new Step(static_cast<Step::Function>(&JobDataStoreHpp::StepWaitingRetrieveGameAuthToken), L""));
 }
 
 void JobDataStoreHpp::StepWaitingRetrieveGameAuthToken()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -253,8 +244,7 @@ void JobDataStoreHpp::ResetHttpResult()
 
 void JobDataStoreHpp::StepHttp()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -271,19 +261,18 @@ void JobDataStoreHpp::StepHttp()
         m_pListener = 0;
     }
 
-    m_pListener = new DataStorePostHttpEventListener(m_uiCallId, m_headers, m_formFields, m_rootCa,
-        m_uiThreadPriority, HTTP_BUFFER_SIZE, m_request.GetData(), m_request.GetLength(), 0);
+    m_pListener = new DataStorePostHttpEventListener(m_uiCallId, m_headers, m_formFields, m_rootCa, m_uiThreadPriority,
+                                                     HTTP_BUFFER_SIZE, m_request.GetData(), m_request.GetLength(), 0);
     if (!m_httpClient.Start(&m_callContext, m_url, m_method, this, HTTP_BUFFER_SIZE))
     {
         CompleteJob(qResult(RESULT_CORE_CALL_INITIATION_FAILURE));
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_callContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_callContext.GetCallID());
     SetToSuspended();
     ResumeOnCallCompletion(&m_callContext,
-        new Step(static_cast<Step::Function>(&JobDataStoreHpp::StepWaitingForHttp), L""));
+                           new Step(static_cast<Step::Function>(&JobDataStoreHpp::StepWaitingForHttp), L""));
 }
 
 bool JobDataStoreHpp::IsHttpStatusCodeSuccess()
@@ -321,8 +310,7 @@ qResult JobDataStoreHpp::ProcessFinalResponse(const qVector<unsigned char>& rRes
 
 void JobDataStoreHpp::StepWaitingForHttp()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));

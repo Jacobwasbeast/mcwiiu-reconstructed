@@ -26,23 +26,42 @@ public:
     static void ProtoReturn_InitiateProbe(Message* pMessage, ProtocolCallContext* pCallContext);
     bool CallInitiateProbe(ProtocolCallContext* pCallContext, const StationURL& rStationToProbe);
     static void ProtoReturn_RequestProbeInitiationExt(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallRequestProbeInitiationExt(ProtocolCallContext* pCallContext, const qList<StationURL>& rTargetList, const StationURL& rStationToProbe);
+    bool CallRequestProbeInitiationExt(ProtocolCallContext* pCallContext, const qList<StationURL>& rTargetList,
+                                       const StationURL& rStationToProbe);
     static void ProtoReturn_ReportNATTraversalResult(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallReportNATTraversalResult(ProtocolCallContext* pCallContext, const unsigned int& rCID, const bool& rResult, const unsigned int& rRTT);
+    bool CallReportNATTraversalResult(ProtocolCallContext* pCallContext, const unsigned int& rCID, const bool& rResult,
+                                      const unsigned int& rRTT);
     static void ProtoReturn_ReportNATProperties(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallReportNATProperties(ProtocolCallContext* pCallContext, const unsigned int& rNATMapping, const unsigned int& rNATFiltering, const unsigned int& rRTT);
+    bool CallReportNATProperties(ProtocolCallContext* pCallContext, const unsigned int& rNATMapping,
+                                 const unsigned int& rNATFiltering, const unsigned int& rRTT);
     static void ProtoReturn_GetRelaySignatureKey(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallGetRelaySignatureKey(ProtocolCallContext* pCallContext, int* pRelayMode, DateTime* pCurrentUTCTime, String* pRelayAddress, unsigned short* pRelayPort, int* pRelayAddressType, unsigned int* pGameServerID);
+    bool CallGetRelaySignatureKey(ProtocolCallContext* pCallContext, int* pRelayMode, DateTime* pCurrentUTCTime,
+                                  String* pRelayAddress, unsigned short* pRelayPort, int* pRelayAddressType,
+                                  unsigned int* pGameServerID);
     static void ProtoReturn_ReportNATTraversalResultDetail(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallReportNATTraversalResultDetail(ProtocolCallContext* pCallContext, const unsigned int& rCID, const bool& rResult, const int& rConnectionType, const unsigned int& rRTT);
+    bool CallReportNATTraversalResultDetail(ProtocolCallContext* pCallContext, const unsigned int& rCID,
+                                            const bool& rResult, const int& rConnectionType, const unsigned int& rRTT);
 
-    static bool RequestProbeInitiation_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const qList<StationURL>& rTargetList);
-    static bool InitiateProbe_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const StationURL& rStationToProbe);
-    static bool RequestProbeInitiationExt_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const qList<StationURL>& rTargetList, const StationURL& rStationToProbe);
-    static bool ReportNATTraversalResult_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rCID, const bool& rResult, const unsigned int& rRTT);
-    static bool ReportNATProperties_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rNATMapping, const unsigned int& rNATFiltering, const unsigned int& rRTT);
-    static bool GetRelaySignatureKey_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, int* pRelayMode, DateTime* pCurrentUTCTime, String* pRelayAddress, unsigned short* pRelayPort, int* pRelayAddressType, unsigned int* pGameServerID);
-    static bool ReportNATTraversalResultDetail_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rCID, const bool& rResult, const int& rConnectionType, const unsigned int& rRTT);
+    static bool RequestProbeInitiation_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                      const qList<StationURL>& rTargetList);
+    static bool InitiateProbe_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                             const StationURL& rStationToProbe);
+    static bool RequestProbeInitiationExt_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                         const qList<StationURL>& rTargetList,
+                                                         const StationURL& rStationToProbe);
+    static bool ReportNATTraversalResult_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                        const unsigned int& rCID, const bool& rResult,
+                                                        const unsigned int& rRTT);
+    static bool ReportNATProperties_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                   const unsigned int& rNATMapping, const unsigned int& rNATFiltering,
+                                                   const unsigned int& rRTT);
+    static bool GetRelaySignatureKey_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                    int* pRelayMode, DateTime* pCurrentUTCTime, String* pRelayAddress,
+                                                    unsigned short* pRelayPort, int* pRelayAddressType,
+                                                    unsigned int* pGameServerID);
+    static bool ReportNATTraversalResultDetail_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                              const unsigned int& rCID, const bool& rResult,
+                                                              const int& rConnectionType, const unsigned int& rRTT);
 };
 
 }

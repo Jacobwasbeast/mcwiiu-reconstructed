@@ -18,8 +18,7 @@ const unsigned int PERSISTENCE_INFO_SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStorePersistenceInfo& _DDL_DataStorePersistenceInfo::operator=(
-    const _DDL_DataStorePersistenceInfo& rSource)
+_DDL_DataStorePersistenceInfo& _DDL_DataStorePersistenceInfo::operator=(const _DDL_DataStorePersistenceInfo& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiOwnerId = rSource.m_uiOwnerId;
@@ -61,8 +60,7 @@ void _DDL_DataStorePersistenceInfo::Add(Message* pMessage, const _DDL_DataStoreP
     }
 }
 
-void _DDL_DataStorePersistenceInfo::Extract(Message* pMessage,
-    _DDL_DataStorePersistenceInfo* pDestination)
+void _DDL_DataStorePersistenceInfo::Extract(Message* pMessage, _DDL_DataStorePersistenceInfo* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

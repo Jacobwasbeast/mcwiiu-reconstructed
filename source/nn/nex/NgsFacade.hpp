@@ -29,39 +29,26 @@ public:
     void TerminateImpl(CallContext* pCallContext);
     static void OnTerminate(CallContext* pCallContext, const UserContext* pUserContext);
 
-    qResult LoginAndRequestAuthenticationTokenImpl(ProtocolCallContext* pCallContext,
-                                                   unsigned int uiLoginParam,
-                                                   const wchar_t* pSandboxAccessKey,
-                                                   const char* pFirstString,
-                                                   char* pSecondString, const void* pToken,
-                                                   int iFirstValue, unsigned int uiSecondValue);
-    qResult LoginAndRequestAuthenticationToken(ProtocolCallContext* pCallContext,
-                                               unsigned int uiLoginParam,
-                                               const wchar_t* pSandboxAccessKey,
-                                               const char* pFirstString, char* pSecondString,
-                                               int iFirstValue, unsigned int uiSecondValue);
-    qResult Login(ProtocolCallContext* pCallContext, unsigned int uiLoginParam,
-                  const wchar_t* pSandboxAccessKey, int iFirstValue, unsigned int uiSecondValue);
-    qResult Login(ProtocolCallContext* pCallContext, const void* pToken,
-                  const wchar_t* pSandboxAccessKey, int iFirstValue, unsigned int uiSecondValue);
+    qResult LoginAndRequestAuthenticationTokenImpl(ProtocolCallContext* pCallContext, unsigned int uiLoginParam,
+                                                   const wchar_t* pSandboxAccessKey, const char* pFirstString,
+                                                   char* pSecondString, const void* pToken, int iFirstValue,
+                                                   unsigned int uiSecondValue);
+    qResult LoginAndRequestAuthenticationToken(ProtocolCallContext* pCallContext, unsigned int uiLoginParam,
+                                               const wchar_t* pSandboxAccessKey, const char* pFirstString,
+                                               char* pSecondString, int iFirstValue, unsigned int uiSecondValue);
+    qResult Login(ProtocolCallContext* pCallContext, unsigned int uiLoginParam, const wchar_t* pSandboxAccessKey,
+                  int iFirstValue, unsigned int uiSecondValue);
+    qResult Login(ProtocolCallContext* pCallContext, const void* pToken, const wchar_t* pSandboxAccessKey,
+                  int iFirstValue, unsigned int uiSecondValue);
     qResult Logout(ProtocolCallContext* pCallContext);
     bool LoginJobIsInProgress() const;
     int GetLastLoginErrorCode() const;
 
-    int GetNasErrorCode() const
-    {
-        return m_iNasErrorCode;
-    }
+    int GetNasErrorCode() const { return m_iNasErrorCode; }
 
-    int GetHttpStatusCode() const
-    {
-        return m_iHttpStatusCode;
-    }
+    int GetHttpStatusCode() const { return m_iHttpStatusCode; }
 
-    NgsBridgeInterface* GetNgsBridge()
-    {
-        return m_pNgsBridge;
-    }
+    NgsBridgeInterface* GetNgsBridge() { return m_pNgsBridge; }
 
 private:
     friend class JobLogin;

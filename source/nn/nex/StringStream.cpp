@@ -127,8 +127,9 @@ StringStream& StringStream::operator<<(const void* pPointer)
 
     wchar_t* pCursor = m_pCursor;
 
-    m_pCursor = pCursor + std::swprintf(pCursor, NUMBER_FIELD_LENGTH, L"%llx",
-        static_cast<unsigned long long>(reinterpret_cast<unsigned int>(pPointer)));
+    m_pCursor = pCursor
+                + std::swprintf(pCursor, NUMBER_FIELD_LENGTH, L"%llx",
+                                static_cast<unsigned long long>(reinterpret_cast<unsigned int>(pPointer)));
     return *this;
 }
 

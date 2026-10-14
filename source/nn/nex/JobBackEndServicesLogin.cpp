@@ -54,35 +54,35 @@ enum LoginResult
 
 AnyObjectHolder<Data, String> g_registerURLsExtraData;
 
-JobBackEndServicesLogin::JobBackEndServicesLogin(unsigned int uiCallId,
-    BackEndServices* pBackEndServices, qResult* pResult, const String& rUserName,
-    const char* pPassword, const wchar_t* pHost, unsigned short uiPort,
-    Credentials** ppCredentials, String* pErrorMessage,
-    AnyObjectHolder<Data, String>* pExtraData, int iTimeout,
-    StreamManagerFactory pStreamManagerFactory)
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(uiCallId)
-    , m_userName(rUserName)
-    , m_host(pHost)
-    , m_uiPort(uiPort)
-    , m_ppCredentials(ppCredentials)
-    , m_connectContext()
-    , m_protocolContext(0)
-    , m_authResult()
-    , m_jobResult()
-    , m_buffer()
-    , m_pBackEndServices(pBackEndServices)
-    , m_publicURL()
-    , m_connectionData()
-    , m_pResult(pResult)
-    , m_pErrorMessage(pErrorMessage)
-    , m_pExtraData(pExtraData)
-    , m_pConnectJob(0)
-    , m_pAuthenticationEndPoint(0)
-    , m_pSecureEndPoint(0)
-    , m_deadline(Time::ConvertTimeoutToDeadline(iTimeout))
-    , m_bCancelled(false)
-    , m_pStreamManagerFactory(pStreamManagerFactory)
+JobBackEndServicesLogin::JobBackEndServicesLogin(unsigned int uiCallId, BackEndServices* pBackEndServices,
+                                                 qResult* pResult, const String& rUserName, const char* pPassword,
+                                                 const wchar_t* pHost, unsigned short uiPort,
+                                                 Credentials** ppCredentials, String* pErrorMessage,
+                                                 AnyObjectHolder<Data, String>* pExtraData, int iTimeout,
+                                                 StreamManagerFactory pStreamManagerFactory)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(uiCallId),
+      m_userName(rUserName),
+      m_host(pHost),
+      m_uiPort(uiPort),
+      m_ppCredentials(ppCredentials),
+      m_connectContext(),
+      m_protocolContext(0),
+      m_authResult(),
+      m_jobResult(),
+      m_buffer(),
+      m_pBackEndServices(pBackEndServices),
+      m_publicURL(),
+      m_connectionData(),
+      m_pResult(pResult),
+      m_pErrorMessage(pErrorMessage),
+      m_pExtraData(pExtraData),
+      m_pConnectJob(0),
+      m_pAuthenticationEndPoint(0),
+      m_pSecureEndPoint(0),
+      m_deadline(Time::ConvertTimeoutToDeadline(iTimeout)),
+      m_bCancelled(false),
+      m_pStreamManagerFactory(pStreamManagerFactory)
 {
     m_traceData = TRACE_LOGIN;
     m_pPassword = 0;
@@ -140,14 +140,14 @@ void JobBackEndServicesLogin::CompleteJob(qResult result)
         if (m_pBackEndServices->LogoutImpl(&m_connectContext, m_pBackEndServices->GetCredentials()))
         {
             SetToSuspended();
-            ResumeOnCallCompletion(&m_connectContext,
+            ResumeOnCallCompletion(
+                &m_connectContext,
                 new Step(static_cast<Step::Function>(&JobBackEndServicesLogin::CompleteLogout), L""));
             return;
         }
     }
 
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (m_pResult != 0)
@@ -192,14 +192,14 @@ StreamManager* JobBackEndServicesLogin::CreateStreamManager() const
     if (m_pStreamManagerFactory == 0)
     {
         pStreamManager = new ClientStreamManager();
-        bInitialized = pStreamManager->Initialize(m_pBackEndServices->m_uiPort,
-            m_pBackEndServices->m_uiStreamFlags, m_pBackEndServices->m_uiStreamParameter);
+        bInitialized = pStreamManager->Initialize(m_pBackEndServices->m_uiPort, m_pBackEndServices->m_uiStreamFlags,
+                                                  m_pBackEndServices->m_uiStreamParameter);
     }
     else
     {
         pStreamManager = m_pStreamManagerFactory();
-        bInitialized = pStreamManager->Initialize(m_pBackEndServices->m_uiPort,
-            m_pBackEndServices->m_uiStreamFlags, m_pBackEndServices->m_uiStreamParameter);
+        bInitialized = pStreamManager->Initialize(m_pBackEndServices->m_uiPort, m_pBackEndServices->m_uiStreamFlags,
+                                                  m_pBackEndServices->m_uiStreamParameter);
     }
 
     if (bInitialized)
@@ -221,10 +221,12 @@ StreamManager* JobBackEndServicesLogin::CreateStreamManager() const
 void JobBackEndServicesLogin::ConnectToAuthenticationService()
 {
     StringStream urlStream;
-    ((((urlStream << L"prudp:/address=" << m_host << L";port=").StreamNumber(m_uiPort)
-        << L";stream=").StreamNumber(Stream::RendezVousSecure)
-        << L";sid=").StreamNumber(AUTHENTICATION_STREAM_ID)
-        << L";type=").StreamNumber(AUTHENTICATION_URL_TYPE);
+    ((((urlStream << L"prudp:/address=" << m_host << L";port=").StreamNumber(m_uiPort) << L";stream=")
+          .StreamNumber(Stream::RendezVousSecure)
+      << L";sid=")
+         .StreamNumber(AUTHENTICATION_STREAM_ID)
+     << L";type=")
+        .StreamNumber(AUTHENTICATION_URL_TYPE);
     StationURL authenticationURL(urlStream.GetBuffer());
 
     StreamManager* pStreamManager = CreateStreamManager();
@@ -235,21 +237,19 @@ void JobBackEndServicesLogin::ConnectToAuthenticationService()
     }
 
     m_pBackEndServices->GetCredentials()->SetStreamManager(pStreamManager);
-    m_pBackEndServices->GetCredentials()->m_streamManager->SetCredentials(
-        m_pBackEndServices->GetCredentials());
+    m_pBackEndServices->GetCredentials()->m_streamManager->SetCredentials(m_pBackEndServices->GetCredentials());
     m_pBackEndServices->GetCredentials()->m_description = String(m_pPassword);
     m_pBackEndServices->GetCredentials()->m_name = m_userName;
     m_connectContext.Reset();
 
-    ConnectionManager* pConnectionManager =
-        m_pBackEndServices->GetStreamManager()->GetConnectionManager();
+    ConnectionManager* pConnectionManager = m_pBackEndServices->GetStreamManager()->GetConnectionManager();
     unsigned int uiTimeout = Time::ConvertDeadlineToTimeout(m_deadline);
     bool bConnecting;
     {
         qList<StationURL> urls;
         urls.push_back(authenticationURL);
-        bConnecting = pConnectionManager->ConnectImpl(&m_connectContext, 0, 0, urls,
-            &m_pAuthenticationEndPoint, uiTimeout, false, &m_pConnectJob);
+        bConnecting = pConnectionManager->ConnectImpl(&m_connectContext, 0, 0, urls, &m_pAuthenticationEndPoint,
+                                                      uiTimeout, false, &m_pConnectJob);
     }
 
     if (!bConnecting)
@@ -260,7 +260,8 @@ void JobBackEndServicesLogin::ConnectToAuthenticationService()
 
     m_pConnectJob->AddRef();
     SetToSuspended();
-    ResumeOnCallCompletion(&m_connectContext,
+    ResumeOnCallCompletion(
+        &m_connectContext,
         new Step(static_cast<Step::Function>(&JobBackEndServicesLogin::ProcessAuthConnectionResult), L""));
 }
 
@@ -275,8 +276,7 @@ void JobBackEndServicesLogin::ProcessAuthConnectionResult()
     if (m_connectContext.GetState() == CallContext::CallSucceeded)
     {
         m_pBackEndServices->GetCredentials()->SetAuthenticationConnection(m_pAuthenticationEndPoint);
-        m_pBackEndServices->GetAuthenticationClient()->SetDefaultCredentials(
-            m_pBackEndServices->GetCredentials());
+        m_pBackEndServices->GetAuthenticationClient()->SetDefaultCredentials(m_pBackEndServices->GetCredentials());
         SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesLogin::Authenticate), L""));
         return;
     }
@@ -301,15 +301,16 @@ void JobBackEndServicesLogin::Authenticate()
 
     AuthenticationClient* pAuthenticationClient = pBackEndServices->GetAuthenticationClient();
     m_protocolContext.m_expirationTime = m_deadline;
-    if (!pAuthenticationClient->Login(&m_protocolContext, &m_authResult, m_userName, m_pPassword,
-            &m_connectionData, m_pErrorMessage, m_pExtraData))
+    if (!pAuthenticationClient->Login(&m_protocolContext, &m_authResult, m_userName, m_pPassword, &m_connectionData,
+                                      m_pErrorMessage, m_pExtraData))
     {
         CompleteJob(qResult(LOGIN_CALL_FAILED_RESULT));
         return;
     }
 
     SetToSuspended();
-    ResumeOnCallCompletion(&m_protocolContext,
+    ResumeOnCallCompletion(
+        &m_protocolContext,
         new Step(static_cast<Step::Function>(&JobBackEndServicesLogin::ProcessAuthenticationResult), L""));
 }
 
@@ -353,22 +354,21 @@ void JobBackEndServicesLogin::ConnectToSecureConnectionService()
     else
     {
         secureAddress.Format(L"prudps:/address=%ls;port=%d;stream=%d;sid=%d;PID=%d;CID=1;type=%d",
-            static_cast<const wchar_t*>(m_host), m_uiPort + 1, Stream::RendezVousSecure,
-            AUTHENTICATION_STREAM_ID, SECURE_URL_PRINCIPAL_ID, SECURE_URL_TYPE);
+                             static_cast<const wchar_t*>(m_host), m_uiPort + 1, Stream::RendezVousSecure,
+                             AUTHENTICATION_STREAM_ID, SECURE_URL_PRINCIPAL_ID, SECURE_URL_TYPE);
         secureURL = secureAddress;
     }
 
     m_connectContext.Reset();
 
-    ConnectionManager* pConnectionManager =
-        m_pBackEndServices->GetStreamManager()->GetConnectionManager();
+    ConnectionManager* pConnectionManager = m_pBackEndServices->GetStreamManager()->GetConnectionManager();
     unsigned int uiTimeout = Time::ConvertDeadlineToTimeout(m_deadline);
     bool bConnecting;
     {
         qList<StationURL> urls;
         urls.push_back(secureURL);
-        bConnecting = pConnectionManager->ConnectImpl(&m_connectContext, 0, 0, urls,
-            &m_pSecureEndPoint, uiTimeout, false, &m_pConnectJob);
+        bConnecting = pConnectionManager->ConnectImpl(&m_connectContext, 0, 0, urls, &m_pSecureEndPoint, uiTimeout,
+                                                      false, &m_pConnectJob);
     }
 
     if (!bConnecting)
@@ -379,7 +379,8 @@ void JobBackEndServicesLogin::ConnectToSecureConnectionService()
 
     m_pConnectJob->AddRef();
     SetToSuspended();
-    ResumeOnCallCompletion(&m_connectContext,
+    ResumeOnCallCompletion(
+        &m_connectContext,
         new Step(static_cast<Step::Function>(&JobBackEndServicesLogin::ProcessSecConnConnectionResult), L""));
 }
 
@@ -412,8 +413,8 @@ void JobBackEndServicesLogin::RegisterURLs()
 {
     m_protocolContext.Reset();
     m_protocolContext.m_expirationTime = m_deadline;
-    if (!m_pBackEndServices->GetSecureConnectionClient()->RegisterURLsEx(&m_protocolContext,
-            &m_authResult, &m_publicURL, g_registerURLsExtraData))
+    if (!m_pBackEndServices->GetSecureConnectionClient()->RegisterURLsEx(&m_protocolContext, &m_authResult,
+                                                                         &m_publicURL, g_registerURLsExtraData))
     {
         CompleteJob(qResult(LOGIN_CALL_FAILED_RESULT));
         return;
@@ -421,7 +422,7 @@ void JobBackEndServicesLogin::RegisterURLs()
 
     SetToSuspended();
     ResumeOnCallCompletion(&m_protocolContext,
-        new Step(static_cast<Step::Function>(&JobBackEndServicesLogin::CompleteLogin), L""));
+                           new Step(static_cast<Step::Function>(&JobBackEndServicesLogin::CompleteLogin), L""));
 }
 
 void JobBackEndServicesLogin::CompleteLogin()
@@ -484,15 +485,15 @@ void JobBackEndServicesLogin::DisconnectFromAuthenticationService()
     m_connectContext.Reset();
     m_connectContext.m_expirationTime = m_deadline;
 
-    if (!m_pBackEndServices->GetStreamManager()->GetConnectionManager()->Disconnect(
-            &m_connectContext, pEndPoint))
+    if (!m_pBackEndServices->GetStreamManager()->GetConnectionManager()->Disconnect(&m_connectContext, pEndPoint))
     {
         CompleteJob(qResult(LOGIN_SUCCEEDED_RESULT));
         return;
     }
 
     SetToSuspended();
-    ResumeOnCallCompletion(&m_connectContext,
+    ResumeOnCallCompletion(
+        &m_connectContext,
         new Step(static_cast<Step::Function>(&JobBackEndServicesLogin::ProcessAuthDisconnectionResult), L""));
 }
 

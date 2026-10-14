@@ -20,18 +20,18 @@ const int WAIT_FOREVER = -1;
 }
 
 JobLogin::JobLogin()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_protocolContext(0)
-    , m_uiCallId(0)
-    , m_uiLoginParam(0)
-    , m_pNgsFacade(0)
-    , m_pCredentials(0)
-    , m_pFirstString(0)
-    , m_pSecondString(0)
-    , m_iTimeout(0)
-    , m_startTime()
-    , m_authenticationInfo()
-    , m_errorMessage()
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_protocolContext(0),
+      m_uiCallId(0),
+      m_uiLoginParam(0),
+      m_pNgsFacade(0),
+      m_pCredentials(0),
+      m_pFirstString(0),
+      m_pSecondString(0),
+      m_iTimeout(0),
+      m_startTime(),
+      m_authenticationInfo(),
+      m_errorMessage()
 {
 }
 
@@ -41,9 +41,8 @@ JobLogin::~JobLogin()
     g_registerURLsExtraData = emptyData;
 }
 
-void JobLogin::Initialize(unsigned int uiCallId, unsigned int uiLoginParam,
-                          NgsFacade* pNgsFacade, const char* pFirstString, char* pSecondString,
-                          int iTimeout)
+void JobLogin::Initialize(unsigned int uiCallId, unsigned int uiLoginParam, NgsFacade* pNgsFacade,
+                          const char* pFirstString, char* pSecondString, int iTimeout)
 {
     m_uiCallId = uiCallId;
     m_uiLoginParam = uiLoginParam;
@@ -57,8 +56,7 @@ void JobLogin::Initialize(unsigned int uiCallId, unsigned int uiLoginParam,
 
 void JobLogin::Complete(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     m_pNgsFacade->m_loginResult = rResult;
     if (pCallContext != 0)
     {

@@ -22,9 +22,9 @@ public:
     virtual ~DataStoreHppClient();
 
     qResult Request(CallContext* pCallContext, ClientProtocol* pProtocol, const Buffer& rRequest,
-        unsigned int uiThreadPriority, unsigned int uiPrincipalId, const String& rPassword,
-        const String& rAccessKey, const String& rUrl, int iTimeout,
-        ServiceHttpClient::PriorityType priorityType);
+                    unsigned int uiThreadPriority, unsigned int uiPrincipalId, const String& rPassword,
+                    const String& rAccessKey, const String& rUrl, int iTimeout,
+                    ServiceHttpClient::PriorityType priorityType);
 
 private:
     enum RequestResult

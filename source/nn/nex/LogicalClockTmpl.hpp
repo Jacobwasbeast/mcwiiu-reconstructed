@@ -12,22 +12,13 @@ template <typename ValueType, typename DifferenceType>
 class LogicalClockTmpl : public RootObject
 {
 public:
-    LogicalClockTmpl() : m_value(0)
-    {
-    }
+    LogicalClockTmpl() : m_value(0) {}
 
-    LogicalClockTmpl(ValueType value) : m_value(value)
-    {
-    }
+    LogicalClockTmpl(ValueType value) : m_value(value) {}
 
-    virtual ~LogicalClockTmpl()
-    {
-    }
+    virtual ~LogicalClockTmpl() {}
 
-    ValueType GetValue() const
-    {
-        return m_value;
-    }
+    ValueType GetValue() const { return m_value; }
 
     LogicalClockTmpl& operator++()
     {
@@ -40,30 +31,15 @@ public:
         return static_cast<DifferenceType>(m_value - other.m_value);
     }
 
-    bool operator==(const LogicalClockTmpl& other) const
-    {
-        return m_value == other.m_value;
-    }
+    bool operator==(const LogicalClockTmpl& other) const { return m_value == other.m_value; }
 
-    bool operator!=(const LogicalClockTmpl& other) const
-    {
-        return m_value != other.m_value;
-    }
+    bool operator!=(const LogicalClockTmpl& other) const { return m_value != other.m_value; }
 
-    bool operator>(const LogicalClockTmpl& other) const
-    {
-        return *this - other > 0;
-    }
+    bool operator>(const LogicalClockTmpl& other) const { return *this - other > 0; }
 
-    bool operator>=(const LogicalClockTmpl& other) const
-    {
-        return *this == other || *this > other;
-    }
+    bool operator>=(const LogicalClockTmpl& other) const { return *this == other || *this > other; }
 
-    bool operator<(const LogicalClockTmpl& other) const
-    {
-        return other - *this > 0;
-    }
+    bool operator<(const LogicalClockTmpl& other) const { return other - *this > 0; }
 
 private:
     ValueType m_value;

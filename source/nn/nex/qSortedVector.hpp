@@ -22,54 +22,25 @@ public:
     typedef typename VectorType::const_iterator const_iterator;
     typedef typename VectorType::size_type size_type;
 
-    qSortedVector()
-    {
-    }
+    qSortedVector() {}
 
-    explicit qSortedVector(size_type count)
-    {
-        m_elements.reserve(count);
-    }
+    explicit qSortedVector(size_type count) { m_elements.reserve(count); }
 
-    iterator begin()
-    {
-        return m_elements.begin();
-    }
+    iterator begin() { return m_elements.begin(); }
 
-    iterator end()
-    {
-        return m_elements.end();
-    }
+    iterator end() { return m_elements.end(); }
 
-    const_iterator begin() const
-    {
-        return m_elements.begin();
-    }
+    const_iterator begin() const { return m_elements.begin(); }
 
-    const_iterator end() const
-    {
-        return m_elements.end();
-    }
+    const_iterator end() const { return m_elements.end(); }
 
-    bool empty() const
-    {
-        return m_elements.empty();
-    }
+    bool empty() const { return m_elements.empty(); }
 
-    size_type size() const
-    {
-        return m_elements.size();
-    }
+    size_type size() const { return m_elements.size(); }
 
-    value_type& front()
-    {
-        return m_elements.front();
-    }
+    value_type& front() { return m_elements.front(); }
 
-    void reserve(size_type count)
-    {
-        m_elements.reserve(count);
-    }
+    void reserve(size_type count) { m_elements.reserve(count); }
 
     iterator find(const K& rKey)
     {
@@ -82,8 +53,7 @@ public:
 
     std::pair<iterator, bool> insert(const value_type& rElement)
     {
-        iterator position = std::lower_bound(m_elements.begin(), m_elements.end(), rElement.first,
-            KeyLess());
+        iterator position = std::lower_bound(m_elements.begin(), m_elements.end(), rElement.first, KeyLess());
         if (position == m_elements.end() || rElement.first < position->first)
         {
             position = m_elements.insert(position, rElement);
@@ -98,10 +68,7 @@ public:
 private:
     struct KeyLess
     {
-        bool operator()(const value_type& rElement, const K& rKey) const
-        {
-            return rElement.first < rKey;
-        }
+        bool operator()(const value_type& rElement, const K& rKey) const { return rElement.first < rKey; }
     };
 
     VectorType m_elements;

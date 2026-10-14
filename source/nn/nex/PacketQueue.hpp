@@ -25,35 +25,17 @@ public:
     virtual void QueueFront(Packet* pPacket, bool bStampTime);
     virtual Chain::iterator Dequeue(Chain::iterator position);
 
-    virtual CriticalSection* GetLock()
-    {
-        return 0;
-    }
+    virtual CriticalSection* GetLock() { return 0; }
 
-    Chain::iterator begin() const
-    {
-        return m_packets.begin();
-    }
+    Chain::iterator begin() const { return m_packets.begin(); }
 
-    Chain::iterator end() const
-    {
-        return m_packets.end();
-    }
+    Chain::iterator end() const { return m_packets.end(); }
 
-    bool empty() const
-    {
-        return m_packets.empty();
-    }
+    bool empty() const { return m_packets.empty(); }
 
-    unsigned int size() const
-    {
-        return m_packets.size();
-    }
+    unsigned int size() const { return m_packets.size(); }
 
-    Packet* front()
-    {
-        return m_packets.front();
-    }
+    Packet* front() { return m_packets.front(); }
 
 private:
     Chain m_packets;

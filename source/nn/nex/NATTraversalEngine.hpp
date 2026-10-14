@@ -52,10 +52,9 @@ public:
     bool ShouldUseRelay(const StationURL& rStationURL, bool bCheckURL) const;
     bool PrepareNATTraversal(StationURL stationURL);
     bool PrepareNATTraversal(const qList<StationURL>& rStationURLs);
-    void ReportNATTraversalResult(unsigned int uiConnectionID, bool bSucceeded,
-        unsigned int uiRVConnectionID);
-    void ReportNATProperties(NATProperties::MappingProperties mapping,
-        NATProperties::FilteringProperties filtering, unsigned int uiPortIncrease);
+    void ReportNATTraversalResult(unsigned int uiConnectionID, bool bSucceeded, unsigned int uiRVConnectionID);
+    void ReportNATProperties(NATProperties::MappingProperties mapping, NATProperties::FilteringProperties filtering,
+                             unsigned int uiPortIncrease);
     void TimeoutProbeRequest(const Time& rTime);
     void ProcessRequestProbe(const StationURL& rStationURL);
     void StopProbes();
@@ -69,8 +68,7 @@ public:
     bool GetProbeFailed(const StationURL& rStationURL);
     NATTraversalResult GetNATTraversalResult(unsigned int uiConnectionID);
     void Execute();
-    void ReceiveMessage(const StationURL& rStationURL, const unsigned char* pData,
-        unsigned int uiSize);
+    void ReceiveMessage(const StationURL& rStationURL, const unsigned char* pData, unsigned int uiSize);
 
 private:
     friend class ConnectivityManager;
@@ -80,7 +78,7 @@ private:
     friend class RVNATRelay;
 
     typedef std::map<unsigned int, std::pair<Time, StationURL>, std::less<unsigned int>,
-        MemAllocator<std::pair<const unsigned int, std::pair<Time, StationURL> > > >
+                     MemAllocator<std::pair<const unsigned int, std::pair<Time, StationURL> > > >
         ProbeRequestMap;
 
     enum Msg

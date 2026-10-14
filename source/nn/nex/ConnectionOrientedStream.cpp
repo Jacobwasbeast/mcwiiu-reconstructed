@@ -20,8 +20,7 @@ enum StreamResult
 
 }
 
-ConnectionOrientedStream::ConnectionOrientedStream(Stream::Type type, RootTransport* pTransport)
-    : Stream(type)
+ConnectionOrientedStream::ConnectionOrientedStream(Stream::Type type, RootTransport* pTransport) : Stream(type)
 {
     Network::AcquireInstance();
     m_pTransport = pTransport;

@@ -12,8 +12,7 @@ namespace nn
 namespace nex
 {
 
-TransportStreamManager::TransportStreamManager()
-    : m_streams(16)
+TransportStreamManager::TransportStreamManager() : m_streams(16)
 {
 }
 
@@ -65,8 +64,7 @@ bool TransportStreamManager::UnregisterStream(Stream::Type type, unsigned char u
     return false;
 }
 
-bool TransportStreamManager::RegisterStream(Stream* pStream, unsigned char uiStreamID,
-    unsigned char* pAssignedID)
+bool TransportStreamManager::RegisterStream(Stream* pStream, unsigned char uiStreamID, unsigned char* pAssignedID)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (uiStreamID == 0)
@@ -97,8 +95,7 @@ bool TransportStreamManager::RegisterStream(Stream* pStream, unsigned char uiStr
 bool TransportStreamManager::IsStreamTypeRegistered(Stream::Type type)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin();
-         stream != m_streams.end(); ++stream)
+    for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin(); stream != m_streams.end(); ++stream)
     {
         if (stream->second->GetType() == type)
             return true;
@@ -111,8 +108,7 @@ int TransportStreamManager::GetNBStreamByStreamType(Stream::Type type)
 {
     int iCount = 0;
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin();
-         stream != m_streams.end(); ++stream)
+    for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin(); stream != m_streams.end(); ++stream)
     {
         if (stream->second->GetType() == type)
             ++iCount;
@@ -152,8 +148,7 @@ void TransportStreamManager::DemuxIncomingPacket(Packet* pPacket)
             }
         }
 
-        if (pStream->ReceiveIncomingPacket(uiPort, VirtualPort(pPacket->m_uiSource).GetStreamID(),
-                pPacket))
+        if (pStream->ReceiveIncomingPacket(uiPort, VirtualPort(pPacket->m_uiSource).GetStreamID(), pPacket))
             return;
 
         m_pTransport->RejectPacket(pPacket->m_pPayload, &pPacket->m_address);
@@ -162,8 +157,7 @@ void TransportStreamManager::DemuxIncomingPacket(Packet* pPacket)
     }
 
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin();
-         stream != m_streams.end(); ++stream)
+    for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin(); stream != m_streams.end(); ++stream)
     {
     }
     pPacket->ReleaseRef();
@@ -174,14 +168,13 @@ void TransportStreamManager::DoWork()
     if (g_transportThreadEnabled)
     {
         ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-        for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin();
-             stream != m_streams.end(); ++stream)
+        for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin(); stream != m_streams.end();
+             ++stream)
             stream->second->DoWork();
         return;
     }
 
-    for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin();
-         stream != m_streams.end(); ++stream)
+    for (qSortedVector<VirtualPort, Stream*>::iterator stream = m_streams.begin(); stream != m_streams.end(); ++stream)
         stream->second->DoWork();
 }
 

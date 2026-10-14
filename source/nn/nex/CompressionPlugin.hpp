@@ -16,14 +16,9 @@ public:
         PLUGIN_TYPE_COMPRESSION = 2
     };
 
-    virtual ~CompressionPlugin()
-    {
-    }
+    virtual ~CompressionPlugin() {}
 
-    virtual unsigned int GetType()
-    {
-        return PLUGIN_TYPE_COMPRESSION;
-    }
+    virtual unsigned int GetType() { return PLUGIN_TYPE_COMPRESSION; }
 };
 
 }

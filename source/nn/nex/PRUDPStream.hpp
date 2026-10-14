@@ -40,8 +40,7 @@ public:
     PRUDPStream(Stream::Type type, RootTransport* pTransport);
     virtual ~PRUDPStream();
 
-    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
-        Packet* pPacket);
+    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket);
     virtual void DoWork();
     virtual bool IsDuplicateReorderingPacket(Packet* pPacket);
     virtual bool StopListen();
@@ -69,15 +68,11 @@ public:
     virtual void ForceCompleteIO();
     virtual void SetMaxSilenceTimeAll(unsigned int uiSilenceTime);
 
-    TimeoutManager& GetTimeoutManager()
-    {
-        return m_timeoutManager;
-    }
+    TimeoutManager& GetTimeoutManager() { return m_timeoutManager; }
 
     unsigned short GetPreferredPortNumber();
     bool Send(unsigned short uiPort, unsigned char uiStreamID, PacketOut* pPacket, Key* pKey);
-    PRUDPMessageInterface::SignatureMethod DecideSignatureMethod(const Packet* pPacket,
-        Stream::Type type, bool bFlag);
+    PRUDPMessageInterface::SignatureMethod DecideSignatureMethod(const Packet* pPacket, Stream::Type type, bool bFlag);
     void ReleaseEndPoint(PRUDPEndPoint* pEndPoint);
     void OnSetTerminateImmediately();
 
@@ -86,25 +81,24 @@ private:
     friend class StreamManager;
 
     typedef std::map<EndPointUniqueID, PRUDPEndPoint*, std::less<EndPointUniqueID>,
-        MemAllocator<std::pair<const EndPointUniqueID, PRUDPEndPoint*> > > EndPointMap;
+                     MemAllocator<std::pair<const EndPointUniqueID, PRUDPEndPoint*> > >
+        EndPointMap;
     typedef std::list<PRUDPEndPoint*, MemAllocator<PRUDPEndPoint*> > EndPointList;
     typedef std::multimap<unsigned int, EndPoint*, std::less<unsigned int>,
-        MemAllocator<std::pair<const unsigned int, EndPoint*> > > EndPointAssociationMap;
+                          MemAllocator<std::pair<const unsigned int, EndPoint*> > >
+        EndPointAssociationMap;
     typedef std::vector<unsigned int, MemAllocator<unsigned int> > ConnectionIDVector;
 
-    PRUDPEndPoint* CreateEndPoint(const StationURL* pStationURL, unsigned short uiPortNumber,
-        bool bFlag);
+    PRUDPEndPoint* CreateEndPoint(const StationURL* pStationURL, unsigned short uiPortNumber, bool bFlag);
     void ReleaseEndPointImpl(PRUDPEndPoint* pEndPoint);
     void PurgeDeletedEndPoints(bool bForce);
     void PurgeDeletedEndPointsImpl(bool bForce);
-    PRUDPEndPoint* ServiceConnectionRequest(InetAddress* pAddress, Buffer* pBuffer,
-        unsigned short uiPort, unsigned char uiStreamID);
+    PRUDPEndPoint* ServiceConnectionRequest(InetAddress* pAddress, Buffer* pBuffer, unsigned short uiPort,
+                                            unsigned char uiStreamID);
     void ServiceUserMsg(InetAddress* pAddress, Buffer* pBuffer);
-    int CheckSignature(InetAddress* pAddress, unsigned short uiPort, unsigned char uiStreamID,
-        Packet* pPacket);
-    int CheckSignature(InetAddress* pAddress, unsigned short uiPort, unsigned char uiStreamID,
-        Packet* pPacket, Key* pKey, SignatureBytes* pSignature,
-        PRUDPMessageInterface::SignatureMethod method);
+    int CheckSignature(InetAddress* pAddress, unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket);
+    int CheckSignature(InetAddress* pAddress, unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket,
+                       Key* pKey, SignatureBytes* pSignature, PRUDPMessageInterface::SignatureMethod method);
     void VersionNegotiation(Packet* pRequest, Packet* pResponse);
 
     TimeoutManager m_timeoutManager;

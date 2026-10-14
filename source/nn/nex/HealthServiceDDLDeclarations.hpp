@@ -13,13 +13,9 @@ class HealthServiceDDLDeclarations : public DDLDeclarations
 public:
     HealthServiceDDLDeclarations();
 
-    virtual ~HealthServiceDDLDeclarations()
-    {
-    }
+    virtual ~HealthServiceDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

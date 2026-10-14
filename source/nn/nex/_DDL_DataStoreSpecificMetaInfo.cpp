@@ -18,8 +18,7 @@ const unsigned int SPECIFIC_META_INFO_SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStoreSpecificMetaInfo& _DDL_DataStoreSpecificMetaInfo::operator=(
-    const _DDL_DataStoreSpecificMetaInfo& rSource)
+_DDL_DataStoreSpecificMetaInfo& _DDL_DataStoreSpecificMetaInfo::operator=(const _DDL_DataStoreSpecificMetaInfo& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiDataId = rSource.m_uiDataId;
@@ -65,8 +64,7 @@ void _DDL_DataStoreSpecificMetaInfo::Add(Message* pMessage, const _DDL_DataStore
     }
 }
 
-void _DDL_DataStoreSpecificMetaInfo::Extract(Message* pMessage,
-    _DDL_DataStoreSpecificMetaInfo* pDestination)
+void _DDL_DataStoreSpecificMetaInfo::Extract(Message* pMessage, _DDL_DataStoreSpecificMetaInfo* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

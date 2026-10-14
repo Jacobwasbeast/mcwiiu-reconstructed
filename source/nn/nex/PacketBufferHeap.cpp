@@ -7,11 +7,7 @@ namespace nn
 namespace nex
 {
 
-PacketBufferUnitHeap::PacketBufferUnitHeap()
-    : m_pMemory(0)
-    , m_uiTotalSize(0)
-    , m_uiUnitSize(0)
-    , m_pFreeList(0)
+PacketBufferUnitHeap::PacketBufferUnitHeap() : m_pMemory(0), m_uiTotalSize(0), m_uiUnitSize(0), m_pFreeList(0)
 {
 }
 

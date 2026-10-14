@@ -15,14 +15,9 @@ class Message;
 class _DDL_SimpleCommunity : public RootObject
 {
 public:
-    _DDL_SimpleCommunity()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_SimpleCommunity() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_SimpleCommunity()
-    {
-    }
+    virtual ~_DDL_SimpleCommunity() {}
 
     _DDL_SimpleCommunity& operator=(const _DDL_SimpleCommunity& rSource);
 

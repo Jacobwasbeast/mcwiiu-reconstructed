@@ -17,8 +17,7 @@ const uint8_t CHANGE_META_PARAM_MAX_STRUCTURE_VERSION = 1;
 
 }
 
-_DDL_DataStoreChangeMetaParam& _DDL_DataStoreChangeMetaParam::operator=(
-    const _DDL_DataStoreChangeMetaParam& rSource)
+_DDL_DataStoreChangeMetaParam& _DDL_DataStoreChangeMetaParam::operator=(const _DDL_DataStoreChangeMetaParam& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiDataId = rSource.m_uiDataId;
@@ -38,8 +37,7 @@ _DDL_DataStoreChangeMetaParam& _DDL_DataStoreChangeMetaParam::operator=(
     return *this;
 }
 
-void _DDL_DataStoreChangeMetaParam::Add(Message* pMessage,
-    const _DDL_DataStoreChangeMetaParam& rSource)
+void _DDL_DataStoreChangeMetaParam::Add(Message* pMessage, const _DDL_DataStoreChangeMetaParam& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -87,8 +85,7 @@ void _DDL_DataStoreChangeMetaParam::Add(Message* pMessage,
     }
 }
 
-void _DDL_DataStoreChangeMetaParam::Extract(Message* pMessage,
-    _DDL_DataStoreChangeMetaParam* pDestination)
+void _DDL_DataStoreChangeMetaParam::Extract(Message* pMessage, _DDL_DataStoreChangeMetaParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

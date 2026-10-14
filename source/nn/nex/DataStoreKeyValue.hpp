@@ -11,13 +11,9 @@ namespace nex
 class DataStoreKeyValue : public _DDL_DataStoreKeyValue
 {
 public:
-    DataStoreKeyValue()
-    {
-    }
+    DataStoreKeyValue() {}
 
-    virtual ~DataStoreKeyValue()
-    {
-    }
+    virtual ~DataStoreKeyValue() {}
 };
 
 }

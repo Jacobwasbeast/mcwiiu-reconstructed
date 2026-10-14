@@ -50,7 +50,8 @@ void SocketTransport::TransportJob::Execute()
 }
 
 SocketTransport::SocketTransport()
-    : m_sockets(SOCKET_TABLE_RESERVE), m_incomingQueue(L"UDP Incoming Queue Size"),
+    : m_sockets(SOCKET_TABLE_RESERVE),
+      m_incomingQueue(L"UDP Incoming Queue Size"),
       m_profilingUnit(L"Transport Job", PROFILING_TRACE_MASK, L"")
 {
     Core::AcquireInstance();
@@ -154,8 +155,8 @@ bool SocketTransport::TerminateTransport()
     return true;
 }
 
-bool SocketTransport::BindSocket(unsigned short uiPort, unsigned short* pPortOut,
-    unsigned int uiTrafficType, bool bFlag, bool bReuse)
+bool SocketTransport::BindSocket(unsigned short uiPort, unsigned short* pPortOut, unsigned int uiTrafficType,
+                                 bool bFlag, bool bReuse)
 {
     QueuingSocket* pSocket;
     bool bOpened;
@@ -164,9 +165,9 @@ bool SocketTransport::BindSocket(unsigned short uiPort, unsigned short* pPortOut
         Condition* pCondition = 0;
         if (g_transportBufferMode == 1)
             pCondition = static_cast<TransportBufferMultiThread*>(m_pBufferThread)->GetCondition();
-        pSocket = new QueuingSocketTransportBuffer(uiTrafficType, this,
-            g_transportRecvCountPerCycle, g_transportSendCountPerCycle, m_uiBufferSize, pCondition,
-            m_pTransportBuffer);
+        pSocket = new QueuingSocketTransportBuffer(uiTrafficType, this, g_transportRecvCountPerCycle,
+                                                   g_transportSendCountPerCycle, m_uiBufferSize, pCondition,
+                                                   m_pTransportBuffer);
         bOpened = pSocket->Open(true);
     }
     else
@@ -191,8 +192,7 @@ bool SocketTransport::BindSocket(unsigned short uiPort, unsigned short* pPortOut
     }
     *pPortOut = address.GetPortNumber();
     m_sockets.insert(std::make_pair(*pPortOut, pSocket));
-    if (g_transportThreadEnabled && m_pBufferThread != 0 &&
-        !m_pBufferThread->InsertSocketPort(*pPortOut, pSocket))
+    if (g_transportThreadEnabled && m_pBufferThread != 0 && !m_pBufferThread->InsertSocketPort(*pPortOut, pSocket))
     {
         m_sockets.erase(*pPortOut);
         pSocket->Close();
@@ -203,12 +203,11 @@ bool SocketTransport::BindSocket(unsigned short uiPort, unsigned short* pPortOut
     return true;
 }
 
-bool SocketTransport::StartListenImpl(unsigned short uiPort, unsigned short* pPortOut,
-    bool bPublish, unsigned int uiTrafficType, bool bFlag, bool bReuse)
+bool SocketTransport::StartListenImpl(unsigned short uiPort, unsigned short* pPortOut, bool bPublish,
+                                      unsigned int uiTrafficType, bool bFlag, bool bReuse)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    if (uiPort == 0 && !m_sockets.empty() &&
-        m_sockets.front().second->m_uiTrafficType == uiTrafficType)
+    if (uiPort == 0 && !m_sockets.empty() && m_sockets.front().second->m_uiTrafficType == uiTrafficType)
         uiPort = m_sockets.front().first;
     unsigned short uiBoundPort = 0;
     bool bBound = false;
@@ -248,13 +247,13 @@ bool SocketTransport::StartListenImpl(unsigned short uiPort, unsigned short* pPo
 }
 
 bool SocketTransport::StartListen(unsigned short uiPort, unsigned short* pPortOut, bool bPublish,
-    unsigned int uiTrafficType, bool bFlag)
+                                  unsigned int uiTrafficType, bool bFlag)
 {
     return StartListenImpl(uiPort, pPortOut, bPublish, uiTrafficType, bFlag, false);
 }
 
-bool SocketTransport::StartListenReuse(unsigned short uiPort, unsigned short* pPortOut,
-    bool bPublish, unsigned int uiTrafficType, bool bFlag)
+bool SocketTransport::StartListenReuse(unsigned short uiPort, unsigned short* pPortOut, bool bPublish,
+                                       unsigned int uiTrafficType, bool bFlag)
 {
     return StartListenImpl(uiPort, pPortOut, bPublish, uiTrafficType, bFlag, true);
 }
@@ -326,9 +325,8 @@ QueuingSocket* SocketTransport::GetSocket(unsigned short uiPort)
     return socket->second;
 }
 
-bool SocketTransport::Send(unsigned short uiPort, Stream::Type type,
-    unsigned char uiSourceStreamID, unsigned char uiDestinationStreamID, PacketOut* pPacket,
-    bool bFlag)
+bool SocketTransport::Send(unsigned short uiPort, Stream::Type type, unsigned char uiSourceStreamID,
+                           unsigned char uiDestinationStreamID, PacketOut* pPacket, bool bFlag)
 {
     if (m_reserved4)
         return false;
@@ -411,16 +409,14 @@ bool SocketTransport::Receive(unsigned short uiPort, Buffer* pBuffer, const Inet
     return bResult;
 }
 
-bool SocketTransport::FillPacketQueueFromBuffer(QueuingSocket* pSocket, Buffer* pBuffer,
-    const InetAddress* pAddress)
+bool SocketTransport::FillPacketQueueFromBuffer(QueuingSocket* pSocket, Buffer* pBuffer, const InetAddress* pAddress)
 {
-    if (g_transportAdapter->GetTransportMode() == TransportAdapter::TRANSPORT_MODE_1 &&
-        *pAddress == g_transportAdapter->GetLocalAddress())
+    if (g_transportAdapter->GetTransportMode() == TransportAdapter::TRANSPORT_MODE_1
+        && *pAddress == g_transportAdapter->GetLocalAddress())
         return true;
     bool bFailed = false;
     bool bResult = true;
-    int iResult = pSocket->FillPacketQueueFromBuffer(pBuffer, pAddress, &m_incomingQueue,
-        &m_streamManager, &bFailed);
+    int iResult = pSocket->FillPacketQueueFromBuffer(pBuffer, pAddress, &m_incomingQueue, &m_streamManager, &bFailed);
     if (!bFailed && iResult == 0 && pBuffer->GetLength() != 0)
     {
         InetAddress address(*pAddress);
@@ -445,8 +441,7 @@ void SocketTransport::DeliverIncomingBuffer()
         int iResult = 0;
         while (pSocket->IsRecvDataExists() && iResult == 0)
         {
-            Buffer* pBuffer =
-                new (RootObject::TARGET_POOL_PACKET_MANAGEMENT) PacketBuffer(uiBufferSize, 4);
+            Buffer* pBuffer = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT) PacketBuffer(uiBufferSize, 4);
             if (pBuffer == 0)
                 break;
             if (!pBuffer->IsValid())
@@ -483,8 +478,7 @@ bool SocketTransport::RouteRelaySendMultiMessage(Buffer* pBuffer, unsigned short
     bool bResult = true;
     InetAddress aPeers[BerkeleySocketDriver::PEER_ADDRESS_CAPACITY];
     unsigned int uiCount = 0;
-    BerkeleySocketDriver::GetPeerAddress(aPeers, BerkeleySocketDriver::PEER_ADDRESS_CAPACITY,
-        &uiCount);
+    BerkeleySocketDriver::GetPeerAddress(aPeers, BerkeleySocketDriver::PEER_ADDRESS_CAPACITY, &uiCount);
     InetAddress address;
     for (unsigned int i = 0; i < uiCount; ++i)
     {
@@ -501,8 +495,8 @@ bool SocketTransport::RouteRelaySendMultiMessage(Buffer* pBuffer, unsigned short
     return bResult;
 }
 
-void SocketTransport::DeliverOutgoingBuffer(QueuingSocket* pSocket, Buffer* pBuffer,
-    const InetAddress& rAddress, unsigned short uiPort)
+void SocketTransport::DeliverOutgoingBuffer(QueuingSocket* pSocket, Buffer* pBuffer, const InetAddress& rAddress,
+                                            unsigned short uiPort)
 {
     if (TransportAdapter::IsSendMultiAddress(&rAddress))
     {
@@ -534,8 +528,7 @@ void SocketTransport::DeliverOutgoingImpl()
         unsigned long long ullNow = Time::GetTime();
         if (m_nextHistoryTime <= ullNow)
         {
-            QueuingSocket::RetransmitFromHistoryPacketQueue(m_pOutgoingQueue, &m_history,
-                m_history.front()->m_uiPort);
+            QueuingSocket::RetransmitFromHistoryPacketQueue(m_pOutgoingQueue, &m_history, m_history.front()->m_uiPort);
             m_nextHistoryTime = Time(ullNow + HISTORY_RETRANSMIT_INTERVAL);
         }
     }
@@ -555,14 +548,13 @@ void SocketTransport::DeliverOutgoingImpl()
         if (m_relay.ShouldRelay(&address))
         {
             pBuffer = pSocket->CreateBufferFromPacketQueue(m_pOutgoingQueue, &m_history,
-                uiMaxSize - RELAY_PACKET_OVERHEAD);
+                                                           uiMaxSize - RELAY_PACKET_OVERHEAD);
         }
         else
         {
             if (m_router.ShouldRoute(&address))
                 uiMaxSize -= ROUTING_PACKET_OVERHEAD;
-            pBuffer = pSocket->CreateBufferFromPacketQueue(m_pOutgoingQueue, &m_history,
-                uiMaxSize);
+            pBuffer = pSocket->CreateBufferFromPacketQueue(m_pOutgoingQueue, &m_history, uiMaxSize);
         }
         if (pBuffer == 0)
             break;
@@ -681,19 +673,17 @@ unsigned int SocketTransport::GetTransportBufferThreadCurrentPriority() const
     return m_pBufferThread->GetPriority();
 }
 
-void SocketTransport::GetBufferSetEmptyDropCount(unsigned int& rSendCount,
-    unsigned int& rReceiveCount) const
+void SocketTransport::GetBufferSetEmptyDropCount(unsigned int& rSendCount, unsigned int& rReceiveCount) const
 {
     rSendCount = 0;
     rReceiveCount = 0;
     if (g_transportThreadEnabled)
     {
         ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-        for (SocketTable::const_iterator socket = m_sockets.begin(); socket != m_sockets.end();
-            ++socket)
+        for (SocketTable::const_iterator socket = m_sockets.begin(); socket != m_sockets.end(); ++socket)
         {
-            const QueuingSocketTransportBuffer* pSocket =
-                static_cast<const QueuingSocketTransportBuffer*>(socket->second);
+            const QueuingSocketTransportBuffer* pSocket = static_cast<const QueuingSocketTransportBuffer*>(
+                socket->second);
             rSendCount += pSocket->m_sendSet.GetEmptyDropCount();
             rReceiveCount += pSocket->m_recvSet.GetEmptyDropCount();
         }

@@ -9,7 +9,10 @@
 #include "nn/nex/ProtocolRequestBrokerInterface.hpp"
 #include "nn/nex/SingleThreadCallPolicy.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class ProtocolRequestBroker : public ProtocolRequestBrokerInterface
 {
@@ -57,8 +60,7 @@ private:
     void ProcessLocalCallRequest(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
 
     typedef std::pair<const unsigned short, Protocol*> ProtocolEntry;
-    typedef std::map<unsigned short, Protocol*, std::less<unsigned short>,
-                     MemAllocator<ProtocolEntry> > ProtocolMap;
+    typedef std::map<unsigned short, Protocol*, std::less<unsigned short>, MemAllocator<ProtocolEntry> > ProtocolMap;
 
     ProtocolMap m_clientProtocols;
     ProtocolMap m_serverProtocols;
@@ -67,6 +69,7 @@ private:
     SingleThreadCallPolicy m_callPolicy;
 };
 
-}}
+}
+}
 
 #endif

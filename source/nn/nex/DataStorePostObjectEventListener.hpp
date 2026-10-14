@@ -9,12 +9,9 @@ namespace nex
 class DataStorePostObjectEventListener
 {
 public:
-    virtual ~DataStorePostObjectEventListener()
-    {
-    }
+    virtual ~DataStorePostObjectEventListener() {}
 
-    virtual unsigned int PostChunkedBuffer(unsigned char* pBuffer, unsigned int uiSize,
-        bool* pbLastChunk) = 0;
+    virtual unsigned int PostChunkedBuffer(unsigned char* pBuffer, unsigned int uiSize, bool* pbLastChunk) = 0;
 };
 
 }

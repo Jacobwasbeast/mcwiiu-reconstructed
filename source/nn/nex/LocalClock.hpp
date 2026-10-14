@@ -17,10 +17,7 @@ public:
 
     static void DeleteInstance();
 
-    Time GetTime() const
-    {
-        return Time(Time::GetTime() - m_startTime);
-    }
+    Time GetTime() const { return Time(Time::GetTime() - m_startTime); }
 
 private:
     static LocalClock* s_pInstance;

@@ -29,28 +29,18 @@ public:
     };
 
     explicit JobResolveRelayInfo(CallContext* pCallContext)
-        : JobCallContextCallback(JOB_TYPE_0, L"StartResolveRelayInfoCallback", pCallContext)
-        , m_key()
+        : JobCallContextCallback(JOB_TYPE_0, L"StartResolveRelayInfoCallback", pCallContext),
+          m_key()
     {
     }
 
-    virtual ~JobResolveRelayInfo()
-    {
-    }
+    virtual ~JobResolveRelayInfo() {}
 
-    virtual void ProccessSuccess(CallContext*)
-    {
-    }
+    virtual void ProccessSuccess(CallContext*) {}
 
-    virtual void ProccessFailure(CallContext*)
-    {
-        FailResolvedRelayInfo();
-    }
+    virtual void ProccessFailure(CallContext*) { FailResolvedRelayInfo(); }
 
-    virtual void ProccessCancel()
-    {
-        FailResolvedRelayInfo();
-    }
+    virtual void ProccessCancel() { FailResolvedRelayInfo(); }
 
     static void FailResolvedRelayInfo();
     static JobResolveRelayInfo* CreateAndStartJob(CallContext* pCallContext);

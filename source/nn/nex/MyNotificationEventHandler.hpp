@@ -18,23 +18,16 @@ class MyNotificationEventHandler : public NotificationEventHandler, public Notif
 public:
     struct NotificationEventEqualParam1
     {
-        explicit NotificationEventEqualParam1(uint32_t uiParam1) : m_uiParam1(uiParam1)
-        {
-        }
+        explicit NotificationEventEqualParam1(uint32_t uiParam1) : m_uiParam1(uiParam1) {}
 
-        bool operator()(const NotificationEvent& rEvent) const
-        {
-            return rEvent.GetParam1() == m_uiParam1;
-        }
+        bool operator()(const NotificationEvent& rEvent) const { return rEvent.GetParam1() == m_uiParam1; }
 
         uint32_t m_uiParam1;
     };
 
     struct NotificationEventEqualUInt64Param1
     {
-        explicit NotificationEventEqualUInt64Param1(uint64_t ui64Param1) : m_ui64Param1(ui64Param1)
-        {
-        }
+        explicit NotificationEventEqualUInt64Param1(uint64_t ui64Param1) : m_ui64Param1(ui64Param1) {}
 
         bool operator()(const NotificationEvent& rEvent) const
         {
@@ -45,19 +38,17 @@ public:
     };
 
     MyNotificationEventHandler(uint32_t uiEventType, uint32_t uiEventSubType, NotificationEvent* pEvent)
-        : m_bEventReceived(false)
-        , m_bUseParam1(false)
-        , m_bUseUInt64Param1(false)
-        , m_uiEventType(uiEventType)
-        , m_uiEventSubType(uiEventSubType)
-        , m_uiParam1(0)
-        , m_pEvent(pEvent)
+        : m_bEventReceived(false),
+          m_bUseParam1(false),
+          m_bUseUInt64Param1(false),
+          m_uiEventType(uiEventType),
+          m_uiEventSubType(uiEventSubType),
+          m_uiParam1(0),
+          m_pEvent(pEvent)
     {
     }
 
-    virtual ~MyNotificationEventHandler()
-    {
-    }
+    virtual ~MyNotificationEventHandler() {}
 
     virtual void ProcessNotificationEvent(const NotificationEvent& rEvent);
 

@@ -11,8 +11,7 @@ namespace nex
 class AuthenticationInfo : public _DDL_AuthenticationInfo
 {
 public:
-    AuthenticationInfo()
-        : _DDL_AuthenticationInfo()
+    AuthenticationInfo() : _DDL_AuthenticationInfo()
     {
         m_Name = L"";
         m_uiValue1 = 3;

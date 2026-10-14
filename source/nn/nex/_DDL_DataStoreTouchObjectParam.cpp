@@ -17,8 +17,7 @@ const uint8_t TOUCH_OBJECT_PARAM_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStoreTouchObjectParam& _DDL_DataStoreTouchObjectParam::operator=(
-    const _DDL_DataStoreTouchObjectParam& rSource)
+_DDL_DataStoreTouchObjectParam& _DDL_DataStoreTouchObjectParam::operator=(const _DDL_DataStoreTouchObjectParam& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiDataId = rSource.m_uiDataId;
@@ -27,8 +26,7 @@ _DDL_DataStoreTouchObjectParam& _DDL_DataStoreTouchObjectParam::operator=(
     return *this;
 }
 
-void _DDL_DataStoreTouchObjectParam::Add(Message* pMessage,
-    const _DDL_DataStoreTouchObjectParam& rSource)
+void _DDL_DataStoreTouchObjectParam::Add(Message* pMessage, const _DDL_DataStoreTouchObjectParam& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -56,14 +54,12 @@ void _DDL_DataStoreTouchObjectParam::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
-void _DDL_DataStoreTouchObjectParam::Extract(Message* pMessage,
-    _DDL_DataStoreTouchObjectParam* pDestination)
+void _DDL_DataStoreTouchObjectParam::Extract(Message* pMessage, _DDL_DataStoreTouchObjectParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

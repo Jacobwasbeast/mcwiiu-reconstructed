@@ -18,14 +18,11 @@ public:
         METHOD_PROCESS_NOTIFICATION_EVENT = 1
     };
 
-    explicit _Proto_NotificationProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_NotificationProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual void ProcessNotificationEvent(const NotificationEvent& rEvent) = 0;
     virtual void ProcessNotificationEvent(unsigned int uiPrincipalID, unsigned int uiConnectionID,
                                           const NotificationEvent& rEvent) = 0;

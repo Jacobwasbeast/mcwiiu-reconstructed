@@ -14,16 +14,16 @@ namespace nex
 {
 
 JobHttp::JobHttp()
-    : StepSequenceJob(JOB_TYPE_0, DebugString(L""))
-    , m_uiCallId(0)
-    , m_pConnection(0)
-    , m_url(L"")
-    , m_method(HttpConnection::HTTP_GET)
-    , m_receiveBuffer()
-    , m_bHeaderReceived(false)
-    , m_pListener(0)
-    , m_uiBufferSize(0)
-    , m_iWaitTime(g_dispatcherThreadEnabled ? WAIT_TIME_DISPATCHER_THREAD : WAIT_TIME)
+    : StepSequenceJob(JOB_TYPE_0, DebugString(L"")),
+      m_uiCallId(0),
+      m_pConnection(0),
+      m_url(L""),
+      m_method(HttpConnection::HTTP_GET),
+      m_receiveBuffer(),
+      m_bHeaderReceived(false),
+      m_pListener(0),
+      m_uiBufferSize(0),
+      m_iWaitTime(g_dispatcherThreadEnabled ? WAIT_TIME_DISPATCHER_THREAD : WAIT_TIME)
 {
 }
 
@@ -36,8 +36,8 @@ JobHttp::~JobHttp()
     }
 }
 
-qResult JobHttp::Initialize(unsigned int uiCallId, const String& rUrl,
-    HttpConnection::Method method, HttpEventListener* pListener, unsigned int uiBufferSize)
+qResult JobHttp::Initialize(unsigned int uiCallId, const String& rUrl, HttpConnection::Method method,
+                            HttpEventListener* pListener, unsigned int uiBufferSize)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_uiCallId = uiCallId;
@@ -106,8 +106,7 @@ qResult JobHttp::ProceedReceivedBuffer()
 
 void JobHttp::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (rResult)
@@ -153,7 +152,7 @@ void JobHttp::StepWaitingForHttp()
 
     unsigned int uiChunkCount = 0;
     while (m_pConnection->IsUseChunkedPost() && !m_pConnection->IsCompleteChunkedPost()
-        && uiChunkCount++ <= MAX_POST_CHUNKS_PER_STEP)
+           && uiChunkCount++ <= MAX_POST_CHUNKS_PER_STEP)
     {
         unsigned int uiChunkSize = m_uiBufferSize;
         if (m_pConnection->GetWritableSize() < uiChunkSize)
@@ -164,8 +163,7 @@ void JobHttp::StepWaitingForHttp()
 
         qVector<unsigned char> chunk(uiChunkSize);
         bool bLastChunk = false;
-        unsigned int uiWritten =
-            m_pListener->PostChunkedBuffer(m_pConnection, &chunk[0], chunk.size(), &bLastChunk);
+        unsigned int uiWritten = m_pListener->PostChunkedBuffer(m_pConnection, &chunk[0], chunk.size(), &bLastChunk);
         if (uiWritten > uiChunkSize)
         {
             CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));

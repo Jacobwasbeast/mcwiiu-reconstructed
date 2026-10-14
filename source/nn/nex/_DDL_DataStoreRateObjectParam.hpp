@@ -15,14 +15,9 @@ class Message;
 class _DDL_DataStoreRateObjectParam : public RootObject
 {
 public:
-    _DDL_DataStoreRateObjectParam()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreRateObjectParam() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreRateObjectParam()
-    {
-    }
+    virtual ~_DDL_DataStoreRateObjectParam() {}
 
     _DDL_DataStoreRateObjectParam& operator=(const _DDL_DataStoreRateObjectParam& rSource);
     bool operator==(const _DDL_DataStoreRateObjectParam& rSource) const;

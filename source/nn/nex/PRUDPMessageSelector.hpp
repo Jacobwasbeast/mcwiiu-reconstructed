@@ -17,25 +17,21 @@ public:
     PRUDPMessageSelector();
     virtual ~PRUDPMessageSelector();
 
-    virtual bool CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
-        Stream::Type type, TransportSignatureGenerator* pGenerator,
-        const SignatureBytes* pSignature, SignatureBytes& rResult);
-    virtual void CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey,
-        Stream::Type type, TransportSignatureGenerator* pGenerator,
-        const SignatureBytes* pSignature, SignatureBytes& rResult);
-    virtual SignatureMethod DecideSignatureMethod(const Packet* pPacket, Stream::Type type,
-        bool bFlag);
-    virtual int CalcExpectedSignature(const Packet* pPacket, SignatureMethod method,
-        const Key* pKey, TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
-        SignatureBytes& rResult);
+    virtual bool CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey, Stream::Type type,
+                               TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                               SignatureBytes& rResult);
+    virtual void CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey, Stream::Type type,
+                               TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                               SignatureBytes& rResult);
+    virtual SignatureMethod DecideSignatureMethod(const Packet* pPacket, Stream::Type type, bool bFlag);
+    virtual int CalcExpectedSignature(const Packet* pPacket, SignatureMethod method, const Key* pKey,
+                                      TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                                      SignatureBytes& rResult);
     virtual bool Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int* pConsumed);
     virtual bool FastUnpack(ByteStream* pStream, PacketIn* pPacket, unsigned int* pConsumed);
     virtual bool Pack(PacketOut* pPacket, ByteStream* pStream);
 
-    RelayMessage* GetRelayMessage() const
-    {
-        return m_pRelayMessage;
-    }
+    RelayMessage* GetRelayMessage() const { return m_pRelayMessage; }
 
 private:
     enum

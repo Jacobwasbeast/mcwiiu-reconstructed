@@ -7,7 +7,10 @@
 #include <list>
 #include "nn/nex/qList.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class SystemSetting : public RootObject
 {
@@ -31,6 +34,7 @@ public:
     static qList<String> GetAllNames();
 };
 
-}}
+}
+}
 
 #endif

@@ -23,19 +23,14 @@ public:
 
     virtual void RequestProbeInitiation(const qList<StationURL>& rTargetList);
     virtual void InitiateProbe(const StationURL& rStationToProbe);
-    virtual void RequestProbeInitiationExt(const qList<StationURL>& rTargetList,
-                                           const StationURL& rStationToProbe);
-    virtual void ReportNATTraversalResult(const unsigned int& rCID, const bool& rResult,
-                                          const unsigned int& rRTT);
-    virtual void ReportNATProperties(const unsigned int& rNATMapping,
-                                     const unsigned int& rNATFiltering,
+    virtual void RequestProbeInitiationExt(const qList<StationURL>& rTargetList, const StationURL& rStationToProbe);
+    virtual void ReportNATTraversalResult(const unsigned int& rCID, const bool& rResult, const unsigned int& rRTT);
+    virtual void ReportNATProperties(const unsigned int& rNATMapping, const unsigned int& rNATFiltering,
                                      const unsigned int& rRTT);
-    virtual void GetRelaySignatureKey(int* pRelayMode, DateTime* pCurrentUTCTime,
-                                      String* pRelayAddress, unsigned short* pRelayPort,
-                                      int* pRelayAddressType, unsigned int* pGameServerID);
+    virtual void GetRelaySignatureKey(int* pRelayMode, DateTime* pCurrentUTCTime, String* pRelayAddress,
+                                      unsigned short* pRelayPort, int* pRelayAddressType, unsigned int* pGameServerID);
     virtual void ReportNATTraversalResultDetail(const unsigned int& rCID, const bool& rResult,
-                                                const int& rConnectionType,
-                                                const unsigned int& rRTT);
+                                                const int& rConnectionType, const unsigned int& rRTT);
     virtual void SetDefaultCredentials(Credentials* pCredentials);
 
     void CloneRelayProtocol(NATTraversalRelayProtocol* pTarget) const;

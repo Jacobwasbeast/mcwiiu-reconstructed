@@ -47,8 +47,7 @@ void _Type_string::Add(Message* pMessage, const String& rSource)
         converter.Encode(pSource, false);
         const uint16_t uiSize = static_cast<uint16_t>(converter.GetBufferSize());
         pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), 2, 1);
-        pMessage->Append(reinterpret_cast<const unsigned char*>(converter.GetBuffer()),
-                         1, converter.GetBufferSize());
+        pMessage->Append(reinterpret_cast<const unsigned char*>(converter.GetBuffer()), 1, converter.GetBufferSize());
         return;
     }
 
@@ -71,8 +70,7 @@ bool _Type_string::Extract(Message* pMessage, String* pDestination)
             if (ShouldConvertForUTF8Connection() && !ShouldConvertForLatin1Connection())
             {
                 StringConverter converter(uiSize + 1);
-                pMessage->Extract(reinterpret_cast<unsigned char*>(converter.GetBuffer()),
-                                  1, uiSize);
+                pMessage->Extract(reinterpret_cast<unsigned char*>(converter.GetBuffer()), 1, uiSize);
                 converter.Decode(*pDestination, uiSize, false);
             }
             else if (ShouldConvertForLatin1Connection())
@@ -153,8 +151,7 @@ void _Type_buffertail::Extract(Message* pMessage, Buffer* pDestination)
     if (uiPosition < uiLength)
     {
         const unsigned int uiRemaining = uiLength - uiPosition;
-        pDestination->AppendData(pMessage->GetBuffer()->GetData() + pMessage->GetPosition(),
-                                 uiRemaining, 0xFFFFFFFF);
+        pDestination->AppendData(pMessage->GetBuffer()->GetData() + pMessage->GetPosition(), uiRemaining, 0xFFFFFFFF);
         const unsigned int uiNewPosition = pMessage->GetPosition() + uiRemaining;
         if (uiNewPosition <= pMessage->GetLength())
             pMessage->SetPosition(uiNewPosition);

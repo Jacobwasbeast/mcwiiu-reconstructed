@@ -12,13 +12,9 @@ namespace nex
 class MemoryStorageUnit : public StorageUnit
 {
 public:
-    MemoryStorageUnit()
-    {
-    }
+    MemoryStorageUnit() {}
 
-    virtual ~MemoryStorageUnit()
-    {
-    }
+    virtual ~MemoryStorageUnit() {}
 
     virtual unsigned int GetSize() const;
     virtual void Truncate();

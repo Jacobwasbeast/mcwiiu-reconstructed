@@ -59,8 +59,7 @@ StreamManager::StreamManager(Stream::Type type, RootTransport* pTransport)
     if (s_fPacketDropProbability > 0.0f)
     {
         m_pTransport->GetInputEmulationDevice()->Enable();
-        m_pTransport->GetInputEmulationDevice()->SetPacketDropProbability(
-            s_fPacketDropProbability);
+        m_pTransport->GetInputEmulationDevice()->SetPacketDropProbability(s_fPacketDropProbability);
     }
 
     m_pConnectionManager = new ConnectionManager(this, Job::JOB_TYPE_2, true, false);
@@ -97,8 +96,7 @@ StreamManager::~StreamManager()
     Network::ReleaseInstance();
 }
 
-bool StreamManager::Initialize(unsigned short uiPort, unsigned char uiStreamID,
-    unsigned int uiFlags)
+bool StreamManager::Initialize(unsigned short uiPort, unsigned char uiStreamID, unsigned int uiFlags)
 {
     if (m_bInitialized)
         return false;
@@ -112,14 +110,12 @@ bool StreamManager::Initialize(unsigned short uiPort, unsigned char uiStreamID,
         bool bListening;
         if ((uiFlags & INITIALIZE_FLAG_2) != 0)
         {
-            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, false,
-                UNKNOWN_LISTEN_OPTION, false);
+            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, false, UNKNOWN_LISTEN_OPTION, false);
         }
         else
         {
-            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, false,
-                    UNKNOWN_LISTEN_OPTION, false)
-                || m_pTransport->StartListen(0, &m_uiPort, false, UNKNOWN_LISTEN_OPTION, false);
+            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, false, UNKNOWN_LISTEN_OPTION, false)
+                         || m_pTransport->StartListen(0, &m_uiPort, false, UNKNOWN_LISTEN_OPTION, false);
         }
 
         if (!bListening)
@@ -137,7 +133,7 @@ bool StreamManager::Initialize(unsigned short uiPort, unsigned char uiStreamID,
         else
         {
             bListening = m_pTransport->StartListen(uiPort, &m_uiPort, true, 0, false)
-                || m_pTransport->StartListen(0, &m_uiPort, true, 0, false);
+                         || m_pTransport->StartListen(0, &m_uiPort, true, 0, false);
         }
 
         if (!bListening)
@@ -151,8 +147,7 @@ bool StreamManager::Initialize(unsigned short uiPort, unsigned char uiStreamID,
     }
     else
     {
-        bStreamListening = m_pStream->StartListen(uiStreamID, 0)
-            || m_pStream->StartListen(0, 0);
+        bStreamListening = m_pStream->StartListen(uiStreamID, 0) || m_pStream->StartListen(0, 0);
     }
 
     if (!bStreamListening)
@@ -173,7 +168,7 @@ bool StreamManager::IsTerminated() const
 }
 
 void StreamManager::AssociateSecureStream(ConnectionOrientedStream* pSecureStream,
-    ConnectionManager::ConnectionFilter pFilter)
+                                          ConnectionManager::ConnectionFilter pFilter)
 {
     m_pSecureStream = pSecureStream;
     m_pConnectionManager->AttachStream(m_pSecureStream, false);

@@ -20,10 +20,7 @@ KeyDerivation* KerberosEncryption::s_pKeyDerivation = 0;
 KeyCache* KerberosEncryption::s_pKeyCache = 0;
 MD5KeyDerivation KerberosEncryption::s_defaultKeyDerivation;
 
-KerberosEncryption::KerberosEncryption()
-    : m_encryption()
-    , m_checksum()
-    , m_key()
+KerberosEncryption::KerberosEncryption() : m_encryption(), m_checksum(), m_key()
 {
 }
 
@@ -43,8 +40,7 @@ bool KerberosEncryption::Encrypt(const Buffer& rSource, Buffer* pDestination, co
 {
     RC4Encryption encryption;
     HMACChecksum checksum;
-    if (!checksum.SetKey(rKey) || !encryption.SetKey(rKey) ||
-        encryption.Encrypt(rSource, pDestination) != 0)
+    if (!checksum.SetKey(rKey) || !encryption.SetKey(rKey) || encryption.Encrypt(rSource, pDestination) != 0)
     {
         return false;
     }
@@ -65,8 +61,8 @@ bool KerberosEncryption::Decrypt(const Buffer& rSource, Buffer* pDestination, co
     return encryption.Decrypt(buffer, pDestination) == 0;
 }
 
-bool KerberosEncryption::CreateKey(CallContext* pCallContext, unsigned int uiPrincipalID,
-    const char* pPassword, Key* pKey)
+bool KerberosEncryption::CreateKey(CallContext* pCallContext, unsigned int uiPrincipalID, const char* pPassword,
+                                   Key* pKey)
 {
     return s_pKeyDerivation->CreateKey(pCallContext, uiPrincipalID, pPassword, pKey, s_pKeyCache);
 }
@@ -88,8 +84,7 @@ Key KerberosEncryption::CreateKey(unsigned int uiPrincipalID, const char* pPassw
     return s_pKeyDerivation->CreateKey(uiPrincipalID, pPassword);
 }
 
-bool KerberosEncryption::InitializeKey(CallContext* pCallContext, const char* pPassword,
-    Key* pKey)
+bool KerberosEncryption::InitializeKey(CallContext* pCallContext, const char* pPassword, Key* pKey)
 {
     if (s_pKeyDerivation == 0)
         s_pKeyDerivation = &s_defaultKeyDerivation;
@@ -103,8 +98,8 @@ Key KerberosEncryption::InitializeKey(const char* pPassword)
     return s_pKeyDerivation->InitializeKey(pPassword);
 }
 
-bool KerberosEncryption::FinalizeKey(CallContext* pCallContext, unsigned int uiPrincipalID,
-    const Key& rKey, Key* pFinalKey)
+bool KerberosEncryption::FinalizeKey(CallContext* pCallContext, unsigned int uiPrincipalID, const Key& rKey,
+                                     Key* pFinalKey)
 {
     if (s_pKeyDerivation == 0)
         s_pKeyDerivation = &s_defaultKeyDerivation;

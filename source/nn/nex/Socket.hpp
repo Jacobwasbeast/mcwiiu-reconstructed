@@ -46,15 +46,14 @@ public:
     bool Connect(InetAddress* pAddress, IOCompletionContext* pContext);
     bool SetMulticastAddress(unsigned int uiAddress);
     void Poll(PollEvent events, PollEvent* pResult, unsigned int uiTimeout);
-    int RecvNonBlock(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived,
-        InetAddress* pAddress);
+    int RecvNonBlock(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived, InetAddress* pAddress);
     int Send(const unsigned char* pBuffer, unsigned int uiSize, const InetAddress& rAddress);
     void Trace(unsigned long long uiFilter);
 
 protected:
     bool ProcessDriverSocketResult(SocketDriver::_Result result, IOCompletionContext* pContext);
-    int RecvImpl(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived,
-        InetAddress* pAddress, SocketDriver::_SocketFlag flag);
+    int RecvImpl(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived, InetAddress* pAddress,
+                 SocketDriver::_SocketFlag flag);
 
     unsigned char m_uiState;
     InetAddress m_address;

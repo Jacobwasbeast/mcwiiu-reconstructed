@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-MatchMakingServiceDDLDeclarations::MatchMakingServiceDDLDeclarations()
-    : DDLDeclarations(true)
+MatchMakingServiceDDLDeclarations::MatchMakingServiceDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

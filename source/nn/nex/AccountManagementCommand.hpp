@@ -38,11 +38,9 @@ protected:
 class LookupOrCreateAccountCommand : public AccountManagementCommand
 {
 public:
-    LookupOrCreateAccountCommand(const DebugString& rDescription,
-                                 AccountManagementProtocolClient* pProtocolClient,
-                                 const String& strPrincipalName, const String& strPassword,
-                                 const String& strEmail, unsigned int uiGroups,
-                                 AnyObjectHolder<Data, String>* pCustomData,
+    LookupOrCreateAccountCommand(const DebugString& rDescription, AccountManagementProtocolClient* pProtocolClient,
+                                 const String& strPrincipalName, const String& strPassword, const String& strEmail,
+                                 unsigned int uiGroups, AnyObjectHolder<Data, String>* pCustomData,
                                  unsigned int* pPrincipalID);
 
     virtual ~LookupOrCreateAccountCommand();
@@ -62,10 +60,9 @@ private:
 class GuestCreateAccountCommand : public AccountManagementCommand
 {
 public:
-    GuestCreateAccountCommand(const DebugString& rDescription,
-                              const SandboxConnectionInfo& oSandboxConnectionInfo,
-                              const String& strPrincipalName, const String& strPassword,
-                              const String& strEmail, unsigned int uiGroups);
+    GuestCreateAccountCommand(const DebugString& rDescription, const SandboxConnectionInfo& oSandboxConnectionInfo,
+                              const String& strPrincipalName, const String& strPassword, const String& strEmail,
+                              unsigned int uiGroups);
     virtual ~GuestCreateAccountCommand();
 
 protected:
@@ -81,11 +78,9 @@ class GuestCustomCreateAccountCommand : public GuestCreateAccountCommand
 {
 public:
     GuestCustomCreateAccountCommand(const DebugString& rDescription,
-                                    const SandboxConnectionInfo& oSandboxConnectionInfo,
-                                    const String& strPrincipalName, const String& strPassword,
-                                    const String& strEmail, unsigned int uiGroups,
-                                    AnyObjectHolder<Data, String>* pCustomData,
-                                    unsigned int* pPrincipalID);
+                                    const SandboxConnectionInfo& oSandboxConnectionInfo, const String& strPrincipalName,
+                                    const String& strPassword, const String& strEmail, unsigned int uiGroups,
+                                    AnyObjectHolder<Data, String>* pCustomData, unsigned int* pPrincipalID);
     virtual ~GuestCustomCreateAccountCommand();
 
 protected:

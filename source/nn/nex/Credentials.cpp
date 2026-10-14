@@ -6,26 +6,26 @@ namespace nex
 {
 
 Credentials::Credentials()
-    : RefCountedObject()
-    , m_value(0)
-    , m_state(0)
-    , m_name()
-    , m_description("")
-    , m_streamManager(0)
-    , m_authenticationConnection(0)
-    , m_secureConnection(0)
+    : RefCountedObject(),
+      m_value(0),
+      m_state(0),
+      m_name(),
+      m_description(""),
+      m_streamManager(0),
+      m_authenticationConnection(0),
+      m_secureConnection(0)
 {
 }
 
 Credentials::Credentials(uint32_t value, StreamManager* streamManager)
-    : RefCountedObject()
-    , m_value(value)
-    , m_state(0)
-    , m_name()
-    , m_description("")
-    , m_streamManager(streamManager)
-    , m_authenticationConnection(0)
-    , m_secureConnection(0)
+    : RefCountedObject(),
+      m_value(value),
+      m_state(0),
+      m_name(),
+      m_description(""),
+      m_streamManager(streamManager),
+      m_authenticationConnection(0),
+      m_secureConnection(0)
 {
 }
 

@@ -36,15 +36,15 @@ unsigned int s_uiMaxAttemptCount = 3;
 }
 
 JobNATCheckBase::JobNATCheckBase(CallContext* pCallContext, const InetAddress& rAddress)
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L"JobNATCheckBase"))
-    , m_localAddress(rAddress)
-    , m_socket(0, 1000)
-    , m_queue()
-    , m_recvMessage()
-    , m_receivedFrom()
-    , m_aReceived()
-    , m_deadline(0)
-    , m_callContext()
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"JobNATCheckBase")),
+      m_localAddress(rAddress),
+      m_socket(0, 1000),
+      m_queue(),
+      m_recvMessage(),
+      m_receivedFrom(),
+      m_aReceived(),
+      m_deadline(0),
+      m_callContext()
 {
     m_uiCallId = pCallContext->m_uiCallId;
     m_uiAttempt = 0;
@@ -61,8 +61,7 @@ void JobNATCheckBase::StepInitialize()
         SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
         return;
     }
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
@@ -70,8 +69,7 @@ void JobNATCheckBase::StepInitialize()
     }
     for (int i = 0; i < RECEIVED_MESSAGE_COUNT; ++i)
         m_aReceived[i] = RecvNATCheckMessage();
-    if (RootTransport::GetInstance() != 0 &&
-        RootTransport::GetInstance()->m_bNATCheckServerAddressesSet)
+    if (RootTransport::GetInstance() != 0 && RootTransport::GetInstance()->m_bNATCheckServerAddressesSet)
     {
         SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepInitializeImpl), L""));
         return;
@@ -82,21 +80,19 @@ void JobNATCheckBase::StepInitialize()
         SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
         return;
     }
-    JobNameResolve* pNameResolve = new JobNameResolve(g_nameResolveThreadPriority,
-        g_nameResolveThreadAffinity, &RootTransport::SetUpDefaultNATCheckServerInternal);
+    JobNameResolve* pNameResolve = new JobNameResolve(g_nameResolveThreadPriority, g_nameResolveThreadAffinity,
+                                                      &RootTransport::SetUpDefaultNATCheckServerInternal);
     pNameResolve->Initialize(m_callContext.GetCallID());
     Scheduler::GetInstance()->Queue(pNameResolve, true);
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_callContext.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_callContext.GetCallID());
     SetToSuspended();
     ResumeOnCallCompletion(&m_callContext,
-        new Step(static_cast<Step::Function>(&JobNATCheckBase::StepDNSResolve), L""));
+                           new Step(static_cast<Step::Function>(&JobNATCheckBase::StepDNSResolve), L""));
 }
 
 void JobNATCheckBase::StepDNSResolve()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
@@ -124,8 +120,7 @@ void JobNATCheckBase::StepDNSResolve()
 
 void JobNATCheckBase::StepFinish()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         m_socket.Close();
@@ -146,8 +141,7 @@ void JobNATCheckBase::StepFinish()
     qResult result = HandleResult();
     if (result)
     {
-        pCallContext->SetStateImpl(CallContext::CallSucceeded,
-            qResult(NAT_CHECK_SUCCEEDED_RESULT), true);
+        pCallContext->SetStateImpl(CallContext::CallSucceeded, qResult(NAT_CHECK_SUCCEEDED_RESULT), true);
         SetToComplete();
         return;
     }
@@ -175,8 +169,8 @@ bool JobNATCheckBase::BindRandomPort()
 
 bool JobNATCheckBase::InitializeSocket()
 {
-    if (RootTransport::GetInstance() == 0 ||
-        !RootTransport::GetInstance()->m_bNATCheckServerAddressesSet || !m_socket.Open(true))
+    if (RootTransport::GetInstance() == 0 || !RootTransport::GetInstance()->m_bNATCheckServerAddressesSet
+        || !m_socket.Open(true))
         return false;
     if (m_uiAttempt != 0)
         m_localAddress.SetPortNumber(0);
@@ -204,8 +198,9 @@ bool JobNATCheckBase::SendNextQueuedMessage()
     if (m_queue.empty())
         return false;
     bool bSent = true;
-    if (m_socket.Send(reinterpret_cast<const unsigned char*>(&m_queue.begin()->second),
-            sizeof(NATCheckMessage), m_queue.begin()->first) != SOCKET_SUCCESS)
+    if (m_socket.Send(reinterpret_cast<const unsigned char*>(&m_queue.begin()->second), sizeof(NATCheckMessage),
+                      m_queue.begin()->first)
+        != SOCKET_SUCCESS)
         bSent = false;
     m_queue.pop_front();
     return bSent;
@@ -213,8 +208,7 @@ bool JobNATCheckBase::SendNextQueuedMessage()
 
 void JobNATCheckBase::StepExecute()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
@@ -232,9 +226,10 @@ void JobNATCheckBase::StepExecute()
         bSent = SendNextQueuedMessage();
     } while (bSent);
     unsigned int uiReceived = 0;
-    if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage),
-            sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == SOCKET_SUCCESS &&
-        uiReceived == sizeof(NATCheckMessage))
+    if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage), sizeof(NATCheckMessage), &uiReceived,
+                              &m_receivedFrom)
+            == SOCKET_SUCCESS
+        && uiReceived == sizeof(NATCheckMessage))
     {
         m_recvMessage.FromNetworkByteOrder();
         unsigned int uiIndex = m_recvMessage.m_uiType - MESSAGE_TYPE_TEST1_REQUEST;

@@ -14,8 +14,7 @@ const unsigned int INFINITE_TIMEOUT = 0xFFFFFFFF;
 
 }
 
-Condition::Condition(unsigned int uiTraceMask, bool bFlag)
-    : m_criticalSection(uiTraceMask)
+Condition::Condition(unsigned int uiTraceMask, bool bFlag) : m_criticalSection(uiTraceMask)
 {
     m_bFlag = bFlag;
     m_pPlatformCondition = new PlatformCondition();

@@ -114,29 +114,29 @@ char* CurlHttpConnection::FixedBufferPool::Add(const void* pData, unsigned int u
 }
 
 CurlHttpConnection::CurlHttpConnection()
-    : m_postData()
-    , m_pPostFields(0)
-    , m_pRequestHeaders(0)
-    , m_iStatusCode(0)
-    , m_pCurl(0)
-    , m_pThread(0)
-    , m_result(true)
-    , m_criticalSection(LOCK_TRACE_MASK)
-    , m_bFinished(false)
-    , m_bCancelled(false)
-    , m_bResponseStarted(false)
-    , m_bPostBodyComplete(true)
-    , m_bPostCompleted(true)
-    , m_uiContentLength(0)
-    , m_bExpectHeader(false)
-    , m_bSecure(false)
-    , m_pTransferQueue(0)
-    , m_pFormPost(0)
-    , m_pFormPostLast(0)
-    , m_blockList()
-    , m_uiTransferBufferSize(DEFAULT_TRANSFER_BUFFER_SIZE)
-    , m_headerPool(HEADER_POOL_CAPACITY)
-    , m_headers(HEADER_QUEUE_CAPACITY)
+    : m_postData(),
+      m_pPostFields(0),
+      m_pRequestHeaders(0),
+      m_iStatusCode(0),
+      m_pCurl(0),
+      m_pThread(0),
+      m_result(true),
+      m_criticalSection(LOCK_TRACE_MASK),
+      m_bFinished(false),
+      m_bCancelled(false),
+      m_bResponseStarted(false),
+      m_bPostBodyComplete(true),
+      m_bPostCompleted(true),
+      m_uiContentLength(0),
+      m_bExpectHeader(false),
+      m_bSecure(false),
+      m_pTransferQueue(0),
+      m_pFormPost(0),
+      m_pFormPostLast(0),
+      m_blockList(),
+      m_uiTransferBufferSize(DEFAULT_TRANSFER_BUFFER_SIZE),
+      m_headerPool(HEADER_POOL_CAPACITY),
+      m_headers(HEADER_QUEUE_CAPACITY)
 {
 }
 
@@ -287,8 +287,7 @@ size_t CurlHttpConnection::ReadCallback(void* pBuffer, unsigned int uiSize, unsi
     return uiAvailable;
 }
 
-size_t CurlHttpConnection::StaticReadCallback(void* pBuffer, unsigned int uiSize,
-    unsigned int uiCount, void* pUser)
+size_t CurlHttpConnection::StaticReadCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount, void* pUser)
 {
     return static_cast<CurlHttpConnection*>(pUser)->ReadCallback(pBuffer, uiSize, uiCount);
 }
@@ -338,8 +337,7 @@ int CurlHttpConnection::HeaderCallback(void* pBuffer, unsigned int uiSize, unsig
     return uiTotal;
 }
 
-size_t CurlHttpConnection::StaticHeaderCallback(void* pBuffer, unsigned int uiSize,
-    unsigned int uiCount, void* pUser)
+size_t CurlHttpConnection::StaticHeaderCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount, void* pUser)
 {
     return static_cast<CurlHttpConnection*>(pUser)->HeaderCallback(pBuffer, uiSize, uiCount);
 }
@@ -373,14 +371,13 @@ size_t CurlHttpConnection::WriteCallback(void* pBuffer, unsigned int uiSize, uns
     return uiTotal;
 }
 
-size_t CurlHttpConnection::StaticWriteCallback(void* pBuffer, unsigned int uiSize,
-    unsigned int uiCount, void* pUser)
+size_t CurlHttpConnection::StaticWriteCallback(void* pBuffer, unsigned int uiSize, unsigned int uiCount, void* pUser)
 {
     return static_cast<CurlHttpConnection*>(pUser)->WriteCallback(pBuffer, uiSize, uiCount);
 }
 
-int CurlHttpConnection::ProgressCallback(double dDownloadTotal, double dDownloaded,
-    double dUploadTotal, double dUploaded)
+int CurlHttpConnection::ProgressCallback(double dDownloadTotal, double dDownloaded, double dUploadTotal,
+                                         double dUploaded)
 {
     ScopedCS lock(&m_criticalSection);
     curl_easy_pause(m_pCurl, CURLPAUSE_CONT);
@@ -389,11 +386,11 @@ int CurlHttpConnection::ProgressCallback(double dDownloadTotal, double dDownload
     return 0;
 }
 
-int CurlHttpConnection::StaticProgressCallback(void* pUser, double dDownloadTotal,
-    double dDownloaded, double dUploadTotal, double dUploaded)
+int CurlHttpConnection::StaticProgressCallback(void* pUser, double dDownloadTotal, double dDownloaded,
+                                               double dUploadTotal, double dUploaded)
 {
-    return static_cast<CurlHttpConnection*>(pUser)->ProgressCallback(dDownloadTotal, dDownloaded,
-        dUploadTotal, dUploaded);
+    return static_cast<CurlHttpConnection*>(pUser)->ProgressCallback(dDownloadTotal, dDownloaded, dUploadTotal,
+                                                                     dUploaded);
 }
 
 void CurlHttpConnection::SetupCurlParameter()
@@ -449,8 +446,7 @@ qResult CurlHttpConnection::ConnectAsync()
         return qResult(RESULT_INVALID_BUFFER_SIZE);
     m_pTransferQueue = new qReservedQueue<unsigned char>(uiBufferSize);
     SetupCurlParameter();
-    m_pThread = new ObjectThread<CurlHttpConnection, void*>(String(L"CurlHttpConnection Thread"),
-        m_uiThreadPriority);
+    m_pThread = new ObjectThread<CurlHttpConnection, void*>(String(L"CurlHttpConnection Thread"), m_uiThreadPriority);
     m_pThread->SetObjectMethod(&CurlHttpConnection::RunThread, this, 0);
     m_pThread->Launch(THREAD_STACK_SIZE);
     return qResult(RESULT_SUCCESS);
@@ -466,8 +462,7 @@ bool CurlHttpConnection::GetStatusCode(int* pStatusCode) const
     return true;
 }
 
-qResult CurlHttpConnection::Read(unsigned char* pBuffer, unsigned int* pReadSize,
-    unsigned int uiCapacity)
+qResult CurlHttpConnection::Read(unsigned char* pBuffer, unsigned int* pReadSize, unsigned int uiCapacity)
 {
     ScopedCS lock(&m_criticalSection);
     qReservedQueue<unsigned char>* pQueue = m_pTransferQueue;
@@ -544,8 +539,8 @@ bool CurlHttpConnection::GetResponseHeader(const char* pName, String* pValue) co
     std::vector<char, MemAllocator<char> > name(strlen(pName) + 1);
     strcpy(&name[0], pName);
     ToLower(&name[0]);
-    qReservedQueue<std::pair<char*, char*> >::iterator found = std::find_if(
-        m_headers.begin(), m_headers.end(), std::bind1st(EqualFirst(), &name[0]));
+    qReservedQueue<std::pair<char*, char*> >::iterator found = std::find_if(m_headers.begin(), m_headers.end(),
+                                                                            std::bind1st(EqualFirst(), &name[0]));
     if (found == m_headers.end())
         return false;
     *pValue = (*found).second;

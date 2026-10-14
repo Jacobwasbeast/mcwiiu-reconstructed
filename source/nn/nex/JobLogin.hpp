@@ -40,8 +40,8 @@ public:
     JobLogin();
     virtual ~JobLogin();
 
-    void Initialize(unsigned int uiCallId, unsigned int uiLoginParam, NgsFacade* pNgsFacade,
-                    const char* pFirstString, char* pSecondString, int iTimeout);
+    void Initialize(unsigned int uiCallId, unsigned int uiLoginParam, NgsFacade* pNgsFacade, const char* pFirstString,
+                    char* pSecondString, int iTimeout);
     void Complete(const qResult& rResult);
     bool Wait();
 

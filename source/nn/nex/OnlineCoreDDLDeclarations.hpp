@@ -13,13 +13,9 @@ class OnlineCoreDDLDeclarations : public DDLDeclarations
 public:
     OnlineCoreDDLDeclarations();
 
-    virtual ~OnlineCoreDDLDeclarations()
-    {
-    }
+    virtual ~OnlineCoreDDLDeclarations() {}
 
-    virtual void Init()
-    {
-    }
+    virtual void Init() {}
 
     static void Register();
     static void RegisterParseTree();

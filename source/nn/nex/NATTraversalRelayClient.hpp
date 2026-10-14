@@ -47,11 +47,18 @@ public:
     }
 
     void CallRequestProbeInitiation(ProtocolCallContext* pCallContext, const qList<StationURL>& rTargetList);
-    void CallRequestProbeInitiationExt(ProtocolCallContext* pCallContext, const qList<StationURL>& rTargetList, const StationURL& rStationToProbe);
-    void CallReportNATTraversalResult(ProtocolCallContext* pCallContext, const unsigned int& rCID, const bool& rResult, const unsigned int& rRTT);
-    void CallReportNATProperties(ProtocolCallContext* pCallContext, const unsigned int& rNATMapping, const unsigned int& rNATFiltering, const unsigned int& rRTT);
-    bool CallGetRelaySignatureKey(ProtocolCallContext* pCallContext, int* pRelayMode, DateTime* pCurrentUTCTime, String* pRelayAddress, unsigned short* pRelayPort, int* pRelayAddressType, unsigned int* pGameServerID);
-    void CallReportNATTraversalResultDetail(ProtocolCallContext* pCallContext, const unsigned int& rCID, const bool& rResult, const NATTraversalResult& rResultDetail, unsigned int& rRTT);
+    void CallRequestProbeInitiationExt(ProtocolCallContext* pCallContext, const qList<StationURL>& rTargetList,
+                                       const StationURL& rStationToProbe);
+    void CallReportNATTraversalResult(ProtocolCallContext* pCallContext, const unsigned int& rCID, const bool& rResult,
+                                      const unsigned int& rRTT);
+    void CallReportNATProperties(ProtocolCallContext* pCallContext, const unsigned int& rNATMapping,
+                                 const unsigned int& rNATFiltering, const unsigned int& rRTT);
+    bool CallGetRelaySignatureKey(ProtocolCallContext* pCallContext, int* pRelayMode, DateTime* pCurrentUTCTime,
+                                  String* pRelayAddress, unsigned short* pRelayPort, int* pRelayAddressType,
+                                  unsigned int* pGameServerID);
+    void CallReportNATTraversalResultDetail(ProtocolCallContext* pCallContext, const unsigned int& rCID,
+                                            const bool& rResult, const NATTraversalResult& rResultDetail,
+                                            unsigned int& rRTT);
 
 private:
     friend class NATTraversalRelayProtocolImpl;

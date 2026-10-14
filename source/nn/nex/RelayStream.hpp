@@ -22,15 +22,13 @@ class RootTransport;
 class RelayStream : public Stream
 {
 public:
-    typedef void (*PingCallback)(unsigned int* pContext, const InetAddress* pAddress,
-        unsigned short uiPort, unsigned int uiTimeStamp, const RelayPingProtocolHeader* pHeader,
-        Buffer* pPayload);
+    typedef void (*PingCallback)(unsigned int* pContext, const InetAddress* pAddress, unsigned short uiPort,
+                                 unsigned int uiTimeStamp, const RelayPingProtocolHeader* pHeader, Buffer* pPayload);
 
     RelayStream();
     virtual ~RelayStream() {}
 
-    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
-        Packet* pPacket);
+    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket);
     virtual void DoWork();
 
     static PacketOut* BuildRelayPacket(Buffer* pPayload, RelayType type);

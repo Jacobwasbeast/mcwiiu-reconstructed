@@ -83,8 +83,9 @@ public:
                             unsigned long long* pRequestID);
     bool DoMatchmaking(ProtocolCallContext* pCallContext, const AutoMatchmakeParam& rParam,
                        MatchmakeSession* pJoinedSession);
-    bool BrowseMatchmakeSession(ProtocolCallContext* pCallContext, const MatchmakeSessionSearchCriteria& rSearchCriteria,
-                                const ResultRange& rRange, qList<AnyObjectHolder<Gathering, String> >* pGatherings);
+    bool BrowseMatchmakeSession(ProtocolCallContext* pCallContext,
+                                const MatchmakeSessionSearchCriteria& rSearchCriteria, const ResultRange& rRange,
+                                qList<AnyObjectHolder<Gathering, String> >* pGatherings);
     bool CreateMatchmakeSession(ProtocolCallContext* pCallContext, const CreateMatchmakeSessionParam& rParam,
                                 MatchmakeSession* pCreatedSession);
     bool JoinMatchmakeSession(ProtocolCallContext* pCallContext, const JoinMatchmakeSessionParam& rParam,
@@ -95,20 +96,20 @@ public:
                                          unsigned int uiAttributeIndex, unsigned int uiNewValue);
     bool UpdateMatchmakeSessionAttribute(ProtocolCallContext* pCallContext, unsigned int uiGatheringID,
                                          unsigned int* pAttributes);
-    bool UpdateProgressScore(ProtocolCallContext* pCallContext, unsigned int uiGatheringID, unsigned char uiProgressScore);
+    bool UpdateProgressScore(ProtocolCallContext* pCallContext, unsigned int uiGatheringID,
+                             unsigned char uiProgressScore);
     bool UpdateProgressScore(unsigned int uiGatheringID, unsigned char uiProgressScore);
     bool UpdateApplicationBuffer(ProtocolCallContext* pCallContext, unsigned int uiGatheringID,
                                  qVector<unsigned char> applicationBuffer);
     bool UpdateMatchmakeSession(ProtocolCallContext* pCallContext, const UpdateMatchmakeSessionParam& rParam);
-    bool UpdateNotificationData(ProtocolCallContext* pCallContext, unsigned int uiType,
-                                unsigned int uiParam1, unsigned int uiParam2, String strText);
+    bool UpdateNotificationData(ProtocolCallContext* pCallContext, unsigned int uiType, unsigned int uiParam1,
+                                unsigned int uiParam2, String strText);
     static void SetPersistentGatheringCodeKey(const String& rKey);
     static void ClearPersistentGatheringCodeKey();
     static unsigned long long GatheringIdToPersistentGatheringCode(unsigned int uiGatheringID);
     static unsigned int PersistentGatheringCodeToGatheringId(unsigned long long uiPersistentGatheringCode);
     static bool IsValidPersistentGatheringCode(unsigned long long uiPersistentGatheringCode);
-    bool GetFriendNotificationData(ProtocolCallContext* pCallContext,
-                                   qList<NotificationEvent>* pEvents,
+    bool GetFriendNotificationData(ProtocolCallContext* pCallContext, qList<NotificationEvent>* pEvents,
                                    const qList<unsigned int>& rTypes);
     bool GetPlayingSession(ProtocolCallContext* pCallContext, const qList<unsigned int>& rPrincipalIDs,
                            qList<PlayingSession>* pPlayingSessions);

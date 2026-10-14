@@ -12,24 +12,13 @@ public:
     qResult();
     explicit qResult(const int&);
     explicit qResult(const bool&);
-    ~qResult()
-    {
-    }
+    ~qResult() {}
     bool Equals(const int&) const;
     bool Equals(const bool&) const;
     operator bool() const;
-    unsigned int GetReturnCode() const
-    {
-        return m_code;
-    }
-    bool IsError() const
-    {
-        return (m_code & ERROR_BIT) != 0;
-    }
-    bool operator==(const qResult& rOther) const
-    {
-        return m_code == rOther.m_code;
-    }
+    unsigned int GetReturnCode() const { return m_code; }
+    bool IsError() const { return (m_code & ERROR_BIT) != 0; }
+    bool operator==(const qResult& rOther) const { return m_code == rOther.m_code; }
     qResult& operator=(const qResult&);
     qResult& operator=(const bool&);
     int GetFacility() const;
@@ -44,13 +33,13 @@ private:
 }
 }
 
-template<class T>
+template <class T>
 bool operator==(const nn::nex::qResult& rResult, const T& rValue)
 {
     return rResult.Equals(rValue);
 }
 
-template<class T>
+template <class T>
 bool operator!=(const nn::nex::qResult& rResult, const T& rValue)
 {
     return !rResult.Equals(rValue);

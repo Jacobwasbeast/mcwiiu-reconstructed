@@ -52,8 +52,7 @@ void _DDL_DataStoreSearchResult::Add(Message* pMessage, const _DDL_DataStoreSear
     }
 }
 
-void _DDL_DataStoreSearchResult::Extract(Message* pMessage,
-    _DDL_DataStoreSearchResult* pDestination)
+void _DDL_DataStoreSearchResult::Extract(Message* pMessage, _DDL_DataStoreSearchResult* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

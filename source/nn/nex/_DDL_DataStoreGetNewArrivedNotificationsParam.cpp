@@ -27,7 +27,7 @@ _DDL_DataStoreGetNewArrivedNotificationsParam& _DDL_DataStoreGetNewArrivedNotifi
 }
 
 void _DDL_DataStoreGetNewArrivedNotificationsParam::Add(Message* pMessage,
-    const _DDL_DataStoreGetNewArrivedNotificationsParam& rSource)
+                                                        const _DDL_DataStoreGetNewArrivedNotificationsParam& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -54,14 +54,13 @@ void _DDL_DataStoreGetNewArrivedNotificationsParam::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
 void _DDL_DataStoreGetNewArrivedNotificationsParam::Extract(Message* pMessage,
-    _DDL_DataStoreGetNewArrivedNotificationsParam* pDestination)
+                                                            _DDL_DataStoreGetNewArrivedNotificationsParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

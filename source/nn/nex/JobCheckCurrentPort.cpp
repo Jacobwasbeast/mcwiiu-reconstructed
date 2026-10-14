@@ -38,10 +38,9 @@ unsigned int s_uiPreviousPortWord = 0;
 
 }
 
-JobCheckCurrentPort::JobCheckCurrentPort(CallContext* pCallContext, const InetAddress& rAddress,
-    bool bRelayProbe)
-    : JobNATCheckBase(pCallContext, rAddress)
-    , m_bRelayProbe(bRelayProbe)
+JobCheckCurrentPort::JobCheckCurrentPort(CallContext* pCallContext, const InetAddress& rAddress, bool bRelayProbe)
+    : JobNATCheckBase(pCallContext, rAddress),
+      m_bRelayProbe(bRelayProbe)
 {
     SetStep(Step(static_cast<Step::Function>(&JobCheckCurrentPort::StepInitialize), L""));
 }
@@ -53,8 +52,7 @@ void JobCheckCurrentPort::StepInitializeImpl()
 
 void JobCheckCurrentPort::StepPrepareSocket()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetStep(Step(static_cast<Step::Function>(&JobCheckCurrentPort::StepFinish), L""));
@@ -62,8 +60,7 @@ void JobCheckCurrentPort::StepPrepareSocket()
     }
     if (!InitializeSocket())
     {
-        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT),
-            false);
+        pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT), false);
         SetToComplete();
         return;
     }
@@ -72,33 +69,29 @@ void JobCheckCurrentPort::StepPrepareSocket()
 
 void JobCheckCurrentPort::StepSend()
 {
-    if (RootTransport::GetInstance() == 0 ||
-        !RootTransport::GetInstance()->m_bNATCheckServerAddressesSet)
+    if (RootTransport::GetInstance() == 0 || !RootTransport::GetInstance()->m_bNATCheckServerAddressesSet)
     {
         SetStep(Step(static_cast<Step::Function>(&JobCheckCurrentPort::StepFinish), L""));
         return;
     }
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         SetStep(Step(static_cast<Step::Function>(&JobCheckCurrentPort::StepFinish), L""));
         return;
     }
-    const qVector<StringStream*>& rServerAddresses =
-        RootTransport::GetInstance()->GetNATCheckServerAddresses();
+    const qVector<StringStream*>& rServerAddresses = RootTransport::GetInstance()->GetNATCheckServerAddresses();
     for (int i = 0; i < SEND_REPEAT_COUNT; ++i)
     {
-        InetAddress echoAddress(
-            StationURL(rServerAddresses[0]->GetBuffer()).GetInetAddress()->GetAddress(),
-            NAT_CHECK_ECHO_PORT);
+        InetAddress echoAddress(StationURL(rServerAddresses[0]->GetBuffer()).GetInetAddress()->GetAddress(),
+                                NAT_CHECK_ECHO_PORT);
         QueueMessage(echoAddress, MESSAGE_TYPE_ECHO);
     }
     for (int i = 0; i < SEND_REPEAT_COUNT; ++i)
     {
-        if (RootTransport::GetInstance()->GetNATProperties().GetNATMapping() ==
-                NATProperties::MAPPING_ENDPOINT_DEPENDENT &&
-            rServerAddresses.size() > 1)
+        if (RootTransport::GetInstance()->GetNATProperties().GetNATMapping()
+                == NATProperties::MAPPING_ENDPOINT_DEPENDENT
+            && rServerAddresses.size() > 1)
         {
             StationURL url(rServerAddresses[1]->GetBuffer());
             QueueMessage(*url.GetInetAddress(), MESSAGE_TYPE_TEST1_REQUEST);

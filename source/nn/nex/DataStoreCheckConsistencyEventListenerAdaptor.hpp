@@ -12,25 +12,23 @@ namespace nex
 
 template <typename TTraits>
 class DataStoreCheckConsistencyEventListenerAdaptor
-    : public DataStoreGetObjectEventListenerTemplate<typename TTraits::TDataId>
-    , public RootObject
+    : public DataStoreGetObjectEventListenerTemplate<typename TTraits::TDataId>,
+      public RootObject
 {
 public:
-    DataStoreCheckConsistencyEventListenerAdaptor(
-        typename TTraits::TGetObjectEventListener* pListener, CallContext* pContext,
-        const typename TTraits::TSpecificMetaInfo& rMetaInfo)
-        : m_pListener(pListener)
-        , m_pContext(pContext)
-        , m_metaInfo(rMetaInfo)
+    DataStoreCheckConsistencyEventListenerAdaptor(typename TTraits::TGetObjectEventListener* pListener,
+                                                  CallContext* pContext,
+                                                  const typename TTraits::TSpecificMetaInfo& rMetaInfo)
+        : m_pListener(pListener),
+          m_pContext(pContext),
+          m_metaInfo(rMetaInfo)
     {
     }
 
-    virtual ~DataStoreCheckConsistencyEventListenerAdaptor()
-    {
-    }
+    virtual ~DataStoreCheckConsistencyEventListenerAdaptor() {}
 
-    virtual void BeginInternal(typename TTraits::TDataId dataId, unsigned int uiSize,
-        unsigned int uiValue, unsigned short usDataType, unsigned short usVersion, bool bFlag);
+    virtual void BeginInternal(typename TTraits::TDataId dataId, unsigned int uiSize, unsigned int uiValue,
+                               unsigned short usDataType, unsigned short usVersion, bool bFlag);
     virtual void Begin(typename TTraits::TDataId dataId, unsigned int uiSize);
     virtual bool ProcessResponse(const void* pData, unsigned int uiSize);
 
@@ -41,12 +39,12 @@ private:
 };
 
 template <typename TTraits>
-void DataStoreCheckConsistencyEventListenerAdaptor<TTraits>::BeginInternal(
-    typename TTraits::TDataId dataId, unsigned int uiSize, unsigned int uiValue,
-    unsigned short usDataType, unsigned short usVersion, bool bFlag)
+void DataStoreCheckConsistencyEventListenerAdaptor<TTraits>::BeginInternal(typename TTraits::TDataId dataId,
+                                                                           unsigned int uiSize, unsigned int uiValue,
+                                                                           unsigned short usDataType,
+                                                                           unsigned short usVersion, bool bFlag)
 {
-    if (uiSize != m_metaInfo.m_uiSize || usDataType != m_metaInfo.m_uiDataType
-        || usVersion != m_metaInfo.m_uiVersion)
+    if (uiSize != m_metaInfo.m_uiSize || usDataType != m_metaInfo.m_uiDataType || usVersion != m_metaInfo.m_uiVersion)
     {
         m_pContext->Cancel(CallContext::CallCanceled);
         return;
@@ -56,15 +54,14 @@ void DataStoreCheckConsistencyEventListenerAdaptor<TTraits>::BeginInternal(
 }
 
 template <typename TTraits>
-void DataStoreCheckConsistencyEventListenerAdaptor<TTraits>::Begin(
-    typename TTraits::TDataId dataId, unsigned int uiSize)
+void DataStoreCheckConsistencyEventListenerAdaptor<TTraits>::Begin(typename TTraits::TDataId dataId,
+                                                                   unsigned int uiSize)
 {
     m_pListener->Begin(dataId, uiSize);
 }
 
 template <typename TTraits>
-bool DataStoreCheckConsistencyEventListenerAdaptor<TTraits>::ProcessResponse(const void* pData,
-    unsigned int uiSize)
+bool DataStoreCheckConsistencyEventListenerAdaptor<TTraits>::ProcessResponse(const void* pData, unsigned int uiSize)
 {
     return m_pListener->ProcessResponse(pData, uiSize);
 }

@@ -12,7 +12,7 @@ namespace nex
 namespace
 {
 
-const unsigned char kHexLetterValues[] = { 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+const unsigned char kHexLetterValues[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
 
 int UnicodeToUtf8(const wchar_t* source, char* destination, unsigned int capacity)
 {
@@ -113,8 +113,7 @@ int Utf8ToUnicode(const char* source, wchar_t* destination, unsigned int capacit
         }
 
         ++source;
-    }
-    while (!invalid);
+    } while (!invalid);
 
     *destination = 0;
     return -1;
@@ -202,7 +201,7 @@ void StringConversion::StringToHex(const wchar_t* source, unsigned char* destina
     for (index = 0; index < count; ++index)
     {
         destination[index] = static_cast<unsigned char>((GetCharValue(source[index * 2]) << 4)
-            | GetCharValue(source[index * 2 + 1]));
+                                                        | GetCharValue(source[index * 2 + 1]));
     }
 }
 

@@ -11,8 +11,7 @@ SystemError::~SystemError()
 {
 }
 
-void SystemError::SignalError(wchar_t*, unsigned int, unsigned int errorCode,
-                              unsigned int errorDetail)
+void SystemError::SignalError(wchar_t*, unsigned int, unsigned int errorCode, unsigned int errorDetail)
 {
     GlobalVariables::GetInstancePtr()->GetErrorCode().SetValue(errorCode);
     GlobalVariables::GetInstancePtr()->GetErrorDetail().SetValue(errorDetail);

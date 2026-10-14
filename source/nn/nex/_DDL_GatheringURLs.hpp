@@ -17,14 +17,9 @@ class Message;
 class _DDL_GatheringURLs : public RootObject
 {
 public:
-    _DDL_GatheringURLs()
-        : m_uiStructureVersion(0), m_StationURLs()
-    {
-    }
+    _DDL_GatheringURLs() : m_uiStructureVersion(0), m_StationURLs() {}
 
-    virtual ~_DDL_GatheringURLs()
-    {
-    }
+    virtual ~_DDL_GatheringURLs() {}
 
     _DDL_GatheringURLs& operator=(const _DDL_GatheringURLs& rSource);
 

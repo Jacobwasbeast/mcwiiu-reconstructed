@@ -27,8 +27,7 @@ public:
     bool UnregisterCache(const String& name);
 
 private:
-    typedef std::map<String, BasicCache*, std::less<String>,
-                     MemAllocator<std::pair<const String, BasicCache*> > >
+    typedef std::map<String, BasicCache*, std::less<String>, MemAllocator<std::pair<const String, BasicCache*> > >
         CacheMap;
 
     unsigned int m_field0;

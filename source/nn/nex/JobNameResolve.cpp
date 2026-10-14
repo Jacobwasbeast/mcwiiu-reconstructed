@@ -42,16 +42,15 @@ PseudoGlobalVariable<bool> g_bNameResolveThreadStarted;
 unsigned int g_nameResolveThreadPriority = 10;
 int g_nameResolveThreadAffinity = static_cast<int>(INHERIT_THREAD_AFFINITY);
 
-JobNameResolve::JobNameResolve(unsigned int uiThreadPriority, int iThreadAffinity,
-    ResolveMethod method)
-    : StepSequenceJob(JOB_TYPE_0, DebugString(L""))
-    , m_uiCallId(0)
-    , m_result(NAME_RESOLVE_PENDING_RESULT)
-    , m_pThread(0)
-    , m_criticalSection(NAME_RESOLVE_CRITICAL_SECTION_TRACE_MASK)
-    , m_uiThreadPriority(uiThreadPriority)
-    , m_iThreadAffinity(iThreadAffinity)
-    , m_method(method)
+JobNameResolve::JobNameResolve(unsigned int uiThreadPriority, int iThreadAffinity, ResolveMethod method)
+    : StepSequenceJob(JOB_TYPE_0, DebugString(L"")),
+      m_uiCallId(0),
+      m_result(NAME_RESOLVE_PENDING_RESULT),
+      m_pThread(0),
+      m_criticalSection(NAME_RESOLVE_CRITICAL_SECTION_TRACE_MASK),
+      m_uiThreadPriority(uiThreadPriority),
+      m_iThreadAffinity(iThreadAffinity),
+      m_method(method)
 {
     Network::AcquireInstance();
 }
@@ -77,8 +76,7 @@ void JobNameResolve::Initialize(unsigned int uiCallId)
 
 void JobNameResolve::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (rResult)
@@ -96,8 +94,7 @@ void JobNameResolve::CompleteJob(const qResult& rResult)
 
 void JobNameResolve::StepRunThread()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(NAME_RESOLVE_ABORTED_RESULT));
@@ -121,8 +118,7 @@ void JobNameResolve::StepRunThread()
 void JobNameResolve::StepCheck()
 {
     ScopedCS lock(&m_criticalSection);
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (m_result == qResult(NAME_RESOLVE_PENDING_RESULT))

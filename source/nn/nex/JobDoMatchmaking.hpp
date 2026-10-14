@@ -23,7 +23,7 @@ public:
     virtual ~JobDoMatchmaking();
 
     virtual qResult Initialize(unsigned int uiCallId, MatchmakeExtensionClient* pMatchmakeExtensionClient,
-        const AutoMatchmakeParam& rParam, MatchmakeSession* pJoinedSession);
+                               const AutoMatchmakeParam& rParam, MatchmakeSession* pJoinedSession);
 
     void CompleteJob(const qResult& rResult);
     void StepRequestMatchmaking();

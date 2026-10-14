@@ -22,8 +22,7 @@ enum
 
 }
 
-IOCompletionNotifier::IOCompletionNotifier()
-    : m_criticalSection(TRACE_MASK)
+IOCompletionNotifier::IOCompletionNotifier() : m_criticalSection(TRACE_MASK)
 {
     unsigned int i = 0;
     while (i < MAX_CONTEXTS)
@@ -97,11 +96,11 @@ bool IOCompletionNotifier::WaitForPollIOCompletion(unsigned int uiTimeout)
         while (i < uiCount)
         {
             IOCompletionContext* pContext = m_aContexts[aIndices[i]];
-            if (pContext != 0 && pContext->m_uiState == IOCompletionContext::STATE_PENDING &&
-                pContext->m_uiOperation != OPERATION_WRITE)
+            if (pContext != 0 && pContext->m_uiState == IOCompletionContext::STATE_PENDING
+                && pContext->m_uiOperation != OPERATION_WRITE)
             {
-                if (pContext->m_uiOperation == IOCompletionContext::OPERATION_CONNECT &&
-                    (aInfo[i].m_uiResult & POLL_WRITE) != 0)
+                if (pContext->m_uiOperation == IOCompletionContext::OPERATION_CONNECT
+                    && (aInfo[i].m_uiResult & POLL_WRITE) != 0)
                 {
                     pContext = m_aContexts[i];
                     pContext->m_uiState = IOCompletionContext::STATE_COMPLETE;

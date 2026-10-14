@@ -19,13 +19,14 @@ class _DDL_CreateMatchmakeSessionParam : public RootObject
 {
 public:
     _DDL_CreateMatchmakeSessionParam()
-        : m_uiStructureVersion(0), m_MatchmakeSession(), m_AdditionalParticipants(), m_strJoinMessage()
+        : m_uiStructureVersion(0),
+          m_MatchmakeSession(),
+          m_AdditionalParticipants(),
+          m_strJoinMessage()
     {
     }
 
-    virtual ~_DDL_CreateMatchmakeSessionParam()
-    {
-    }
+    virtual ~_DDL_CreateMatchmakeSessionParam() {}
 
     _DDL_CreateMatchmakeSessionParam& operator=(const _DDL_CreateMatchmakeSessionParam& rSource);
 

@@ -19,9 +19,9 @@ namespace nex
 {
 
 MatchMakingClient::MatchMakingClient()
-    : ServiceClient(0x0c)
-    , m_matchMakingProtocolClient(0)
-    , m_matchMakingProtocolExtClient(0)
+    : ServiceClient(0x0c),
+      m_matchMakingProtocolClient(0),
+      m_matchMakingProtocolExtClient(0)
 {
     SetModuleId("[SDK+Nintendo:NEX_MM_3_10_0]");
     m_matchMakingProtocolClient.SetProtocolID(0x15);
@@ -93,7 +93,7 @@ bool MatchMakingClient::MigrateGatheringOwnership(ProtocolCallContext* pCallCont
         return false;
     }
     return m_matchMakingProtocolClient.CallMigrateGatheringOwnership(pCallContext, uiGatheringID, rCandidateIDs,
-                                                                    bParticipantsOnly);
+                                                                     bParticipantsOnly);
 }
 
 bool MatchMakingClient::MigrateGatheringOwnership(ProtocolCallContext* pCallContext, unsigned int uiGatheringID,

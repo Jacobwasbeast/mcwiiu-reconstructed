@@ -15,8 +15,7 @@ class StringStream;
 class UserMessage : public _DDL_UserMessage
 {
 public:
-    UserMessage()
-        : _DDL_UserMessage()
+    UserMessage() : _DDL_UserMessage()
     {
         m_uiID = 0;
         m_uiParentID = 0;
@@ -29,9 +28,7 @@ public:
         m_Subject = L"";
     }
 
-    virtual ~UserMessage()
-    {
-    }
+    virtual ~UserMessage() {}
 
     virtual void Trace(uint64_t uiFilter);
 };

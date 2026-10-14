@@ -18,8 +18,8 @@ public:
     RetrieveGameAuthTokenClient();
     virtual ~RetrieveGameAuthTokenClient();
 
-    qResult RetrieveGameAuthToken(CallContext* pCallContext, unsigned int uiPrincipalId,
-        const String& rPassword, String* pToken, String* pKey);
+    qResult RetrieveGameAuthToken(CallContext* pCallContext, unsigned int uiPrincipalId, const String& rPassword,
+                                  String* pToken, String* pKey);
 
 private:
     enum RetrieveResult

@@ -7,11 +7,7 @@ namespace nn
 namespace nex
 {
 
-IORequestContext::IORequestContext()
-    : m_pResponse(0)
-    , m_pRequest(0)
-    , m_pCallback(0)
-    , m_userContext()
+IORequestContext::IORequestContext() : m_pResponse(0), m_pRequest(0), m_pCallback(0), m_userContext()
 {
 }
 

@@ -26,28 +26,21 @@ public:
         METHOD_REPORT_NAT_TRAVERSAL_RESULT_DETAIL = 7
     };
 
-    explicit _Proto_NATTraversalProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_NATTraversalProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual void RequestProbeInitiation(const qList<StationURL>& rTargetList) = 0;
     virtual void InitiateProbe(const StationURL& rStationToProbe) = 0;
-    virtual void RequestProbeInitiationExt(const qList<StationURL>& rTargetList,
-                                           const StationURL& rStationToProbe) = 0;
-    virtual void ReportNATTraversalResult(const unsigned int& rCID, const bool& rResult,
-                                          const unsigned int& rRTT) = 0;
-    virtual void ReportNATProperties(const unsigned int& rNATMapping,
-                                     const unsigned int& rNATFiltering,
+    virtual void RequestProbeInitiationExt(const qList<StationURL>& rTargetList, const StationURL& rStationToProbe) = 0;
+    virtual void ReportNATTraversalResult(const unsigned int& rCID, const bool& rResult, const unsigned int& rRTT) = 0;
+    virtual void ReportNATProperties(const unsigned int& rNATMapping, const unsigned int& rNATFiltering,
                                      const unsigned int& rRTT) = 0;
-    virtual void GetRelaySignatureKey(int* pRelayMode, DateTime* pCurrentUTCTime,
-                                      String* pRelayAddress, unsigned short* pRelayPort,
-                                      int* pRelayAddressType, unsigned int* pGameServerID) = 0;
+    virtual void GetRelaySignatureKey(int* pRelayMode, DateTime* pCurrentUTCTime, String* pRelayAddress,
+                                      unsigned short* pRelayPort, int* pRelayAddressType,
+                                      unsigned int* pGameServerID) = 0;
     virtual void ReportNATTraversalResultDetail(const unsigned int& rCID, const bool& rResult,
-                                                const int& rConnectionType,
-                                                const unsigned int& rRTT) = 0;
+                                                const int& rConnectionType, const unsigned int& rRTT) = 0;
 };
 
 }

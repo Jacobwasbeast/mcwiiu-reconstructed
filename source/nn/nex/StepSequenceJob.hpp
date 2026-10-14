@@ -24,21 +24,11 @@ public:
     public:
         typedef void (StepSequenceJob::*Function)();
 
-        Step()
-            : m_function(0)
-            , m_pActivity(0)
-        {
-        }
+        Step() : m_function(0), m_pActivity(0) {}
 
-        Step(Function function, const wchar_t* pActivity)
-            : m_function(function)
-            , m_pActivity(pActivity)
-        {
-        }
+        Step(Function function, const wchar_t* pActivity) : m_function(function), m_pActivity(pActivity) {}
 
-        virtual ~Step()
-        {
-        }
+        virtual ~Step() {}
 
     private:
         friend class StepSequenceJob;

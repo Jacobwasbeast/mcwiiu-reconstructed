@@ -47,8 +47,8 @@ void MyNotificationEventHandler::SetEventParam1(uint32_t uiParam1)
     m_uiParam1 = uiParam1;
     m_bUseParam1 = true;
 
-    EventList::iterator it =
-        std::find_if(m_pendingEvents.begin(), m_pendingEvents.end(), NotificationEventEqualParam1(uiParam1));
+    EventList::iterator it = std::find_if(m_pendingEvents.begin(), m_pendingEvents.end(),
+                                          NotificationEventEqualParam1(uiParam1));
     if (it != m_pendingEvents.end())
     {
         *m_pEvent = *it;

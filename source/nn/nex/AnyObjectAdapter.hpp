@@ -12,13 +12,9 @@ template <typename T, typename KeyType>
 class AnyObjectAdapter
 {
 public:
-    AnyObjectAdapter()
-    {
-    }
+    AnyObjectAdapter() {}
 
-    virtual ~AnyObjectAdapter()
-    {
-    }
+    virtual ~AnyObjectAdapter() {}
 
     virtual void StreamIn(Message* pMessage, const T& rObject) const = 0;
     virtual void StreamOut(Message* pMessage, T** ppObject) const = 0;

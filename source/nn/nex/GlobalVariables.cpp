@@ -18,19 +18,19 @@ bool g_threadVariableListReady = false;
 ForcedCriticalSection g_globalVariablesCriticalSection(1);
 
 GlobalVariables::GlobalVariables()
-    : m_broadcastAddress()
-    , m_errorCode(0)
-    , m_errorDetail(0)
-    , m_currentThread(static_cast<ObjectThreadRoot*>(0))
-    , m_binaryDataMap()
-    , m_nexTokenMap()
-    , m_nexPasswordMap()
-    , m_nexHostMap()
-    , m_nexPortMap()
-    , m_eventLog()
-    , m_traceLog()
-    , m_cacheManager()
-    , m_packetBufferParams()
+    : m_broadcastAddress(),
+      m_errorCode(0),
+      m_errorDetail(0),
+      m_currentThread(static_cast<ObjectThreadRoot*>(0)),
+      m_binaryDataMap(),
+      m_nexTokenMap(),
+      m_nexPasswordMap(),
+      m_nexHostMap(),
+      m_nexPortMap(),
+      m_eventLog(),
+      m_traceLog(),
+      m_cacheManager(),
+      m_packetBufferParams()
 {
     g_criticalSectionDisabled = false;
     m_packetBufferPoolEnabled = true;

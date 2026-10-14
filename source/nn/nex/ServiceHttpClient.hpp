@@ -31,10 +31,7 @@ public:
     bool SetSandboxContextImpl(unsigned int uiGameServerId, const wchar_t* pAccessKey);
     void SetSandboxContext(unsigned int uiGameServerId, const wchar_t* pAccessKey, unsigned char ucSlotNo);
 
-    Credentials* GetCredentials() const
-    {
-        return 0;
-    }
+    Credentials* GetCredentials() const { return 0; }
 
 protected:
     unsigned int m_uiGameServerId;

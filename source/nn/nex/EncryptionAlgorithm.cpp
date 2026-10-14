@@ -15,8 +15,8 @@ const int ENCRYPTION_ERROR_NULL_BUFFER = 3;
 }
 
 EncryptionAlgorithm::EncryptionAlgorithm(unsigned int uiMinKeyLength, unsigned int uiMaxKeyLength)
-    : m_uiMinKeyLength(uiMinKeyLength)
-    , m_uiMaxKeyLength(uiMaxKeyLength)
+    : m_uiMinKeyLength(uiMinKeyLength),
+      m_uiMaxKeyLength(uiMaxKeyLength)
 {
 }
 
@@ -47,8 +47,7 @@ int EncryptionAlgorithm::Decrypt(Buffer* pBuffer)
     return iResult;
 }
 
-bool EncryptionAlgorithm::GetErrorString(unsigned int uiError, wchar_t* pString,
-    unsigned int uiLength)
+bool EncryptionAlgorithm::GetErrorString(unsigned int uiError, wchar_t* pString, unsigned int uiLength)
 {
     if (wcslen(L"Encryption Error") >= uiLength)
         return false;

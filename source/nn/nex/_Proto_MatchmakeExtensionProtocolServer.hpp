@@ -84,37 +84,29 @@ public:
         METHOD_WITHDRAW_MATCHMAKING_ALL = 47
     };
 
-    explicit _Proto_MatchmakeExtensionProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_MatchmakeExtensionProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual void CloseParticipation(const unsigned int& rGatheringID) = 0;
     virtual void OpenParticipation(const unsigned int& rGatheringID) = 0;
-    virtual void AutoMatchmake_Postpone(const GatheringHolder& rGathering,
-                                        GatheringHolder* pJoinedGathering,
+    virtual void AutoMatchmake_Postpone(const GatheringHolder& rGathering, GatheringHolder* pJoinedGathering,
                                         const String& rMessage) = 0;
-    virtual void BrowseMatchmakeSession(
-        const MatchmakeSessionSearchCriteria& rSearchCriteria, const ResultRange& rRange,
-        GatheringHolderList* pGatherings) = 0;
-    virtual void BrowseMatchmakeSessionWithHostUrls(
-        const MatchmakeSessionSearchCriteria& rSearchCriteria, const ResultRange& rRange,
-        GatheringHolderList* pGatherings, qList<GatheringURLs>* pGatheringURLs) = 0;
-    virtual void CreateMatchmakeSession(const GatheringHolder& rGathering,
-                                        unsigned int* pGatheringID, const String& rMessage,
-                                        qVector<unsigned char>* pSessionKey,
+    virtual void BrowseMatchmakeSession(const MatchmakeSessionSearchCriteria& rSearchCriteria,
+                                        const ResultRange& rRange, GatheringHolderList* pGatherings) = 0;
+    virtual void BrowseMatchmakeSessionWithHostUrls(const MatchmakeSessionSearchCriteria& rSearchCriteria,
+                                                    const ResultRange& rRange, GatheringHolderList* pGatherings,
+                                                    qList<GatheringURLs>* pGatheringURLs) = 0;
+    virtual void CreateMatchmakeSession(const GatheringHolder& rGathering, unsigned int* pGatheringID,
+                                        const String& rMessage, qVector<unsigned char>* pSessionKey,
                                         const unsigned short& rParticipationCount) = 0;
     virtual void JoinMatchmakeSession(const unsigned int& rGatheringID, const String& rMessage,
                                       qVector<unsigned char>* pSessionKey) = 0;
-    virtual void ModifyCurrentGameAttribute(const unsigned int& rGatheringID,
-                                            const unsigned int& rAttributeIndex,
+    virtual void ModifyCurrentGameAttribute(const unsigned int& rGatheringID, const unsigned int& rAttributeIndex,
                                             const unsigned int& rNewValue) = 0;
     virtual void UpdateNotificationData(const unsigned int& rType, const unsigned int& rParam1,
                                         const unsigned int& rParam2, const String& rParam3) = 0;
-    virtual void GetFriendNotificationData(qList<NotificationEvent>* pNotificationEvents,
-                                           const int& rType) = 0;
+    virtual void GetFriendNotificationData(qList<NotificationEvent>* pNotificationEvents, const int& rType) = 0;
     virtual void UpdateApplicationBuffer(const unsigned int& rGatheringID,
                                          const qVector<unsigned char>& rApplicationBuffer) = 0;
     virtual void UpdateMatchmakeSessionAttribute(const unsigned int& rGatheringID,
@@ -122,23 +114,21 @@ public:
     virtual void GetlstFriendNotificationData(qList<NotificationEvent>* pNotificationEvents,
                                               const qList<unsigned int>& rTypes) = 0;
     virtual void UpdateMatchmakeSession(const GatheringHolder& rGathering) = 0;
-    virtual void AutoMatchmakeWithSearchCriteria_Postpone(
-        const qList<MatchmakeSessionSearchCriteria>& rSearchCriteria,
-        const GatheringHolder& rGathering, GatheringHolder* pJoinedGathering,
-        const String& rMessage) = 0;
+    virtual void AutoMatchmakeWithSearchCriteria_Postpone(const qList<MatchmakeSessionSearchCriteria>& rSearchCriteria,
+                                                          const GatheringHolder& rGathering,
+                                                          GatheringHolder* pJoinedGathering,
+                                                          const String& rMessage) = 0;
     virtual void GetPlayingSession(const qList<unsigned int>& rPrincipalIDs,
                                    qList<PlayingSession>* pPlayingSessions) = 0;
     virtual void CreateCommunity(const PersistentGathering& rCommunity, unsigned int* pGatheringID,
                                  const String& rMessage) = 0;
     virtual void UpdateCommunity(const PersistentGathering& rCommunity) = 0;
-    virtual void JoinCommunity(const unsigned int& rGatheringID, const String& rMessage,
-                               const String& rPassword) = 0;
+    virtual void JoinCommunity(const unsigned int& rGatheringID, const String& rMessage, const String& rPassword) = 0;
     virtual void FindCommunityByGatheringId(const qList<unsigned int>& rGatheringIDs,
                                             qList<PersistentGathering>* pCommunities) = 0;
-    virtual void FindOfficialCommunity(qList<PersistentGathering>* pCommunities,
-                                       const bool& rAvailableOnly, const ResultRange& rRange) = 0;
-    virtual void FindCommunityByParticipant(qList<PersistentGathering>* pCommunities,
-                                            const unsigned int& rPrincipalID,
+    virtual void FindOfficialCommunity(qList<PersistentGathering>* pCommunities, const bool& rAvailableOnly,
+                                       const ResultRange& rRange) = 0;
+    virtual void FindCommunityByParticipant(qList<PersistentGathering>* pCommunities, const unsigned int& rPrincipalID,
                                             const ResultRange& rRange) = 0;
     virtual void UpdatePrivacySetting(const bool& rPublic, const bool& rPublicParticipation) = 0;
     virtual void GetMyBlackList(qList<unsigned int>* pPrincipalIDs) = 0;
@@ -149,24 +139,20 @@ public:
                                  const unsigned int& rViolationCode) = 0;
     virtual void IsViolationUser(bool* pViolationUser, unsigned int* pScore) = 0;
     virtual void JoinMatchmakeSessionEx(const unsigned int& rGatheringID, const String& rMessage,
-                                        const bool& rIgnoreBlockList,
-                                        qVector<unsigned char>* pSessionKey,
+                                        const bool& rIgnoreBlockList, qVector<unsigned char>* pSessionKey,
                                         const unsigned short& rParticipationCount) = 0;
-    virtual void GetSimplePlayingSession(const qList<unsigned int>& rPrincipalIDs,
-                                         const bool& rIncludeLoginUser,
+    virtual void GetSimplePlayingSession(const qList<unsigned int>& rPrincipalIDs, const bool& rIncludeLoginUser,
                                          qList<SimplePlayingSession>* pSimplePlayingSessions) = 0;
     virtual void GetSimpleCommunity(const qList<unsigned int>& rGatheringIDs,
                                     qList<SimpleCommunity>* pSimpleCommunities) = 0;
-    virtual void AutoMatchmakeWithGatheringId_Postpone(
-        const qList<unsigned int>& rGatheringIDs, const GatheringHolder& rGathering,
-        GatheringHolder* pJoinedGathering, const String& rMessage) = 0;
-    virtual void UpdateProgressScore(const unsigned int& rGatheringID,
-                                     const unsigned char& rProgressScore) = 0;
+    virtual void AutoMatchmakeWithGatheringId_Postpone(const qList<unsigned int>& rGatheringIDs,
+                                                       const GatheringHolder& rGathering,
+                                                       GatheringHolder* pJoinedGathering, const String& rMessage) = 0;
+    virtual void UpdateProgressScore(const unsigned int& rGatheringID, const unsigned char& rProgressScore) = 0;
     virtual void DebugNotifyEvent(const unsigned int& rPrincipalID, const unsigned int& rMainType,
                                   const unsigned int& rSubType, const unsigned int& rParam1,
                                   const unsigned int& rParam2, const String& rParam3) = 0;
-    virtual void GenerateMatchmakeSessionSystemPassword(const unsigned int& rGatheringID,
-                                                        String* pPassword) = 0;
+    virtual void GenerateMatchmakeSessionSystemPassword(const unsigned int& rGatheringID, String* pPassword) = 0;
     virtual void ClearMatchmakeSessionSystemPassword(const unsigned int& rGatheringID) = 0;
     virtual void CreateMatchmakeSessionWithParam(const CreateMatchmakeSessionParam& rParam,
                                                  MatchmakeSession* pMatchmakeSession) = 0;
@@ -176,15 +162,15 @@ public:
                                                  MatchmakeSession* pMatchmakeSession) = 0;
     virtual void FindMatchmakeSessionByGatheringIdDetail(const unsigned int& rGatheringID,
                                                          MatchmakeSession* pMatchmakeSession) = 0;
-    virtual void BrowseMatchmakeSessionNoHolder(
-        const MatchmakeSessionSearchCriteria& rSearchCriteria, const ResultRange& rRange,
-        qList<MatchmakeSession>* pMatchmakeSessions) = 0;
-    virtual void BrowseMatchmakeSessionWithHostUrlsNoHolder(
-        const MatchmakeSessionSearchCriteria& rSearchCriteria, const ResultRange& rRange,
-        qList<MatchmakeSession>* pMatchmakeSessions, qList<GatheringURLs>* pGatheringURLs) = 0;
+    virtual void BrowseMatchmakeSessionNoHolder(const MatchmakeSessionSearchCriteria& rSearchCriteria,
+                                                const ResultRange& rRange,
+                                                qList<MatchmakeSession>* pMatchmakeSessions) = 0;
+    virtual void BrowseMatchmakeSessionWithHostUrlsNoHolder(const MatchmakeSessionSearchCriteria& rSearchCriteria,
+                                                            const ResultRange& rRange,
+                                                            qList<MatchmakeSession>* pMatchmakeSessions,
+                                                            qList<GatheringURLs>* pGatheringURLs) = 0;
     virtual void UpdateMatchmakeSessionPart(const UpdateMatchmakeSessionParam& rParam) = 0;
-    virtual void RequestMatchmaking(const AutoMatchmakeParam& rParam,
-                                    unsigned long long* pRequestID) = 0;
+    virtual void RequestMatchmaking(const AutoMatchmakeParam& rParam, unsigned long long* pRequestID) = 0;
     virtual void WithdrawMatchmaking(const unsigned long long& rRequestID) = 0;
     virtual void WithdrawMatchmakingAll() = 0;
 
@@ -199,32 +185,32 @@ private:
                                              _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_OpenParticipation(Message* pRequest, Message* pResponse,
                                             _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_AutoMatchmake_Postpone(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_BrowseMatchmakeSession(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_BrowseMatchmakeSessionWithHostUrls(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_CreateMatchmakeSession(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_JoinMatchmakeSession(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_ModifyCurrentGameAttribute(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_UpdateNotificationData(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_GetFriendNotificationData(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_UpdateApplicationBuffer(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_UpdateMatchmakeSessionAttribute(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_GetlstFriendNotificationData(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_UpdateMatchmakeSession(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_AutoMatchmakeWithSearchCriteria_Postpone(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_AutoMatchmake_Postpone(Message* pRequest, Message* pResponse,
+                                                 _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_BrowseMatchmakeSession(Message* pRequest, Message* pResponse,
+                                                 _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_BrowseMatchmakeSessionWithHostUrls(Message* pRequest, Message* pResponse,
+                                                             _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_CreateMatchmakeSession(Message* pRequest, Message* pResponse,
+                                                 _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_JoinMatchmakeSession(Message* pRequest, Message* pResponse,
+                                               _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_ModifyCurrentGameAttribute(Message* pRequest, Message* pResponse,
+                                                     _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_UpdateNotificationData(Message* pRequest, Message* pResponse,
+                                                 _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_GetFriendNotificationData(Message* pRequest, Message* pResponse,
+                                                    _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_UpdateApplicationBuffer(Message* pRequest, Message* pResponse,
+                                                  _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_UpdateMatchmakeSessionAttribute(Message* pRequest, Message* pResponse,
+                                                          _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_GetlstFriendNotificationData(Message* pRequest, Message* pResponse,
+                                                       _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_UpdateMatchmakeSession(Message* pRequest, Message* pResponse,
+                                                 _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_AutoMatchmakeWithSearchCriteria_Postpone(Message* pRequest, Message* pResponse,
+                                                                   _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_GetPlayingSession(Message* pRequest, Message* pResponse,
                                             _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_CreateCommunity(Message* pRequest, Message* pResponse,
@@ -233,14 +219,14 @@ private:
                                           _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_JoinCommunity(Message* pRequest, Message* pResponse,
                                         _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_FindCommunityByGatheringId(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_FindOfficialCommunity(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_FindCommunityByParticipant(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_UpdatePrivacySetting(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_FindCommunityByGatheringId(Message* pRequest, Message* pResponse,
+                                                     _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_FindOfficialCommunity(Message* pRequest, Message* pResponse,
+                                                _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_FindCommunityByParticipant(Message* pRequest, Message* pResponse,
+                                                     _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_UpdatePrivacySetting(Message* pRequest, Message* pResponse,
+                                               _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_GetMyBlackList(Message* pRequest, Message* pResponse,
                                          _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_AddToBlackList(Message* pRequest, Message* pResponse,
@@ -253,42 +239,42 @@ private:
                                           _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_IsViolationUser(Message* pRequest, Message* pResponse,
                                           _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_JoinMatchmakeSessionEx(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_GetSimplePlayingSession(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_JoinMatchmakeSessionEx(Message* pRequest, Message* pResponse,
+                                                 _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_GetSimplePlayingSession(Message* pRequest, Message* pResponse,
+                                                  _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_GetSimpleCommunity(Message* pRequest, Message* pResponse,
                                              _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_AutoMatchmakeWithGatheringId_Postpone(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_AutoMatchmakeWithGatheringId_Postpone(Message* pRequest, Message* pResponse,
+                                                                _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_UpdateProgressScore(Message* pRequest, Message* pResponse,
                                               _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_DebugNotifyEvent(Message* pRequest, Message* pResponse,
                                            _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_GenerateMatchmakeSessionSystemPassword(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_ClearMatchmakeSessionSystemPassword(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_CreateMatchmakeSessionWithParam(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_JoinMatchmakeSessionWithParam(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_AutoMatchmakeWithParam_Postpone(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_FindMatchmakeSessionByGatheringIdDetail(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_BrowseMatchmakeSessionNoHolder(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_GenerateMatchmakeSessionSystemPassword(Message* pRequest, Message* pResponse,
+                                                                 _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_ClearMatchmakeSessionSystemPassword(Message* pRequest, Message* pResponse,
+                                                              _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_CreateMatchmakeSessionWithParam(Message* pRequest, Message* pResponse,
+                                                          _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_JoinMatchmakeSessionWithParam(Message* pRequest, Message* pResponse,
+                                                        _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_AutoMatchmakeWithParam_Postpone(Message* pRequest, Message* pResponse,
+                                                          _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_FindMatchmakeSessionByGatheringIdDetail(Message* pRequest, Message* pResponse,
+                                                                  _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_BrowseMatchmakeSessionNoHolder(Message* pRequest, Message* pResponse,
+                                                         _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_BrowseMatchmakeSessionWithHostUrlsNoHolder(
         Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_UpdateMatchmakeSessionPart(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_UpdateMatchmakeSessionPart(Message* pRequest, Message* pResponse,
+                                                     _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_RequestMatchmaking(Message* pRequest, Message* pResponse,
                                              _Proto_MatchmakeExtensionProtocolServer* pProtocol);
     static void ProtoStub_WithdrawMatchmaking(Message* pRequest, Message* pResponse,
                                               _Proto_MatchmakeExtensionProtocolServer* pProtocol);
-    static void ProtoStub_WithdrawMatchmakingAll(
-        Message* pRequest, Message* pResponse, _Proto_MatchmakeExtensionProtocolServer* pProtocol);
+    static void ProtoStub_WithdrawMatchmakingAll(Message* pRequest, Message* pResponse,
+                                                 _Proto_MatchmakeExtensionProtocolServer* pProtocol);
 };
 
 }

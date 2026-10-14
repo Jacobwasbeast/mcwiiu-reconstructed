@@ -40,31 +40,31 @@ enum ConnectResult
 
 bool JobConnectEndPoint::s_bNATTraversalEnabled = true;
 
-JobConnectEndPoint::JobConnectEndPoint(Job::JobType jobType,
-    ConnectionManager* pConnectionManager, unsigned int uiContextId, Buffer* pRequestBuffer,
-    Buffer* pResponseBuffer, const qList<StationURL>& rURLs, EndPoint** ppEndPoint,
-    unsigned int uiTimeout, bool bFlag)
-    : StepSequenceJob(jobType, DebugString(L""))
-    , m_componentUse(&pConnectionManager->m_component, L"JobConnectEndPoint")
-    , m_pEndPoint(0)
-    , m_pConnectionManager(pConnectionManager)
-    , m_unresolved98(0)
-    , m_timeout(uiTimeout)
-    , m_unresolvedB0(0)
-    , m_uiCallContextId(uiContextId)
-    , m_pRequestBuffer(pRequestBuffer)
-    , m_pResponseBuffer(pResponseBuffer)
-    , m_ppEndPointOutput(ppEndPoint)
-    , m_natTraversalDeadline(0)
-    , m_urls(rURLs)
-    , m_isRouting(false)
-    , m_originalPort(0)
-    , m_currentURL(m_urls.begin())
-    , m_flag194(bFlag)
-    , m_cancelRequested(false)
-    , m_pCancelTarget(0)
-    , m_uiPingTime(0)
-    , m_flag1A0(false)
+JobConnectEndPoint::JobConnectEndPoint(Job::JobType jobType, ConnectionManager* pConnectionManager,
+                                       unsigned int uiContextId, Buffer* pRequestBuffer, Buffer* pResponseBuffer,
+                                       const qList<StationURL>& rURLs, EndPoint** ppEndPoint, unsigned int uiTimeout,
+                                       bool bFlag)
+    : StepSequenceJob(jobType, DebugString(L"")),
+      m_componentUse(&pConnectionManager->m_component, L"JobConnectEndPoint"),
+      m_pEndPoint(0),
+      m_pConnectionManager(pConnectionManager),
+      m_unresolved98(0),
+      m_timeout(uiTimeout),
+      m_unresolvedB0(0),
+      m_uiCallContextId(uiContextId),
+      m_pRequestBuffer(pRequestBuffer),
+      m_pResponseBuffer(pResponseBuffer),
+      m_ppEndPointOutput(ppEndPoint),
+      m_natTraversalDeadline(0),
+      m_urls(rURLs),
+      m_isRouting(false),
+      m_originalPort(0),
+      m_currentURL(m_urls.begin()),
+      m_flag194(bFlag),
+      m_cancelRequested(false),
+      m_pCancelTarget(0),
+      m_uiPingTime(0),
+      m_flag1A0(false)
 {
     m_traceData = TRACE_CONNECTION;
     if (m_pRequestBuffer != 0)
@@ -75,14 +75,11 @@ JobConnectEndPoint::JobConnectEndPoint(Job::JobType jobType,
 
     m_result = qResult(CONNECT_SUCCEEDED_RESULT);
     if (m_pConnectionManager->m_flag64)
-        m_steps.push_back(
-            Step(static_cast<Step::Function>(&JobConnectEndPoint::TryDirectConnect), L""));
+        m_steps.push_back(Step(static_cast<Step::Function>(&JobConnectEndPoint::TryDirectConnect), L""));
 
     if (m_pConnectionManager->m_bRoutingEnabled
-        && (m_pConnectionManager->m_routerAddress.GetAddress() != 0
-            || !m_pConnectionManager->m_flag64))
-        m_steps.push_back(
-            Step(static_cast<Step::Function>(&JobConnectEndPoint::TryConnectViaRouting), L""));
+        && (m_pConnectionManager->m_routerAddress.GetAddress() != 0 || !m_pConnectionManager->m_flag64))
+        m_steps.push_back(Step(static_cast<Step::Function>(&JobConnectEndPoint::TryConnectViaRouting), L""));
 
     if (m_urls.size() == 0)
         SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ConnectionFailed), L""));
@@ -260,16 +257,14 @@ void JobConnectEndPoint::PrepareNATTraversal()
             return;
         }
 
-        m_natTraversalDeadline =
-            Time::ConvertTimeoutToDeadline(ConnectionManager::s_iNATTraversalTimeout);
+        m_natTraversalDeadline = Time::ConvertTimeoutToDeadline(ConnectionManager::s_iNATTraversalTimeout);
         SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::WaitForNATTraversal), L""));
         return;
     }
 
     if (Network::GetInstance()->GetNATTraversalEngine()->PrepareNATTraversal(*m_currentURL))
     {
-        m_natTraversalDeadline =
-            Time::ConvertTimeoutToDeadline(ConnectionManager::s_iNATTraversalTimeout);
+        m_natTraversalDeadline = Time::ConvertTimeoutToDeadline(ConnectionManager::s_iNATTraversalTimeout);
         SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::WaitForNATTraversal), L""));
     }
     else
@@ -361,7 +356,7 @@ void JobConnectEndPoint::TryCurrentURL()
             m_pConnectionManager->ConfigureEndPointForRouting(m_pEndPoint);
 
         m_result = m_pEndPoint->_Connect(m_pRequestBuffer, m_pResponseBuffer,
-            NS_JobConnectEndPoint_CPP::ConnectCallback, UserContext(this), m_timeout);
+                                         NS_JobConnectEndPoint_CPP::ConnectCallback, UserContext(this), m_timeout);
         if (m_result == false)
         {
             m_pEndPoint->Close();
@@ -389,8 +384,8 @@ void JobConnectEndPoint::ProcessConnectionResult()
     {
         if (m_pEndPoint->IsConnected())
         {
-            qResult result = m_pEndPoint->_Disconnect(NS_JobConnectEndPoint_CPP::DisconnectCallback,
-                UserContext(this), ConnectionManager::s_uiDisconnectTimeout);
+            qResult result = m_pEndPoint->_Disconnect(NS_JobConnectEndPoint_CPP::DisconnectCallback, UserContext(this),
+                                                      ConnectionManager::s_uiDisconnectTimeout);
             if (result)
             {
                 AddRef();
@@ -443,8 +438,7 @@ void JobConnectEndPoint::WaitForNATTraversal()
         return;
     }
 
-    if (m_natTraversalDeadline < Time::GetTime()
-        || (!m_flag194 && pEngine->GetProbeFailed(*m_currentURL)))
+    if (m_natTraversalDeadline < Time::GetTime() || (!m_flag194 && pEngine->GetProbeFailed(*m_currentURL)))
     {
         RestoreOriginalPort();
         ++m_currentURL;
@@ -475,8 +469,7 @@ void JobConnectEndPoint::CheckForUpdatedURL()
 
 void JobConnectEndPoint::SetFinalState(CallContext::State state, qResult result)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallContextId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallContextId);
     if (pCallContext != 0)
         pCallContext->SetStateImpl(state, result, true);
 }

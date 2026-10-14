@@ -26,24 +26,43 @@ public:
     virtual Protocol* CreateResponder() const;
 
     static void ProtoReturn_Login(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallLogin(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData, String* pReturnMessage);
+    bool CallLogin(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName,
+                   unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData,
+                   String* pReturnMessage);
     static void ProtoReturn_LoginEx(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallLoginEx(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData, String* pReturnMessage, const AnyObjectHolder<Data, String>& rCustomData);
+    bool CallLoginEx(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName,
+                     unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData,
+                     String* pReturnMessage, const AnyObjectHolder<Data, String>& rCustomData);
     static void ProtoReturn_RequestTicket(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallRequestTicket(ProtocolCallContext* pCallContext, qResult* pResult, const unsigned int& rSourcePrincipalID, const unsigned int& rTargetPrincipalID, Buffer* pTicket);
+    bool CallRequestTicket(ProtocolCallContext* pCallContext, qResult* pResult, const unsigned int& rSourcePrincipalID,
+                           const unsigned int& rTargetPrincipalID, Buffer* pTicket);
     static void ProtoReturn_GetPID(Message* pMessage, ProtocolCallContext* pCallContext);
     bool CallGetPID(ProtocolCallContext* pCallContext, unsigned int* pPrincipalID, const String& rUserName);
     static void ProtoReturn_GetName(Message* pMessage, ProtocolCallContext* pCallContext);
     bool CallGetName(ProtocolCallContext* pCallContext, String* pUserName, const unsigned int& rPrincipalID);
     static void ProtoReturn_LoginWithContext(Message* pMessage, ProtocolCallContext* pCallContext);
-    bool CallLoginWithContext(ProtocolCallContext* pCallContext, qResult* pResult, const AnyObjectHolder<Data, String>& rLoginData, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData);
+    bool CallLoginWithContext(ProtocolCallContext* pCallContext, qResult* pResult,
+                              const AnyObjectHolder<Data, String>& rLoginData, unsigned int* pPrincipalID,
+                              Buffer* pTicket, RVConnectionData* pConnectionData);
 
-    static bool Login_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData, String* pReturnMessage);
-    static bool LoginEx_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData, String* pReturnMessage, const AnyObjectHolder<Data, String>& rCustomData);
-    static bool RequestTicket_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const unsigned int& rSourcePrincipalID, const unsigned int& rTargetPrincipalID, Buffer* pTicket);
-    static bool GetPID_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, unsigned int* pPrincipalID, const String& rUserName);
-    static bool GetName_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, String* pUserName, const unsigned int& rPrincipalID);
-    static bool LoginWithContext_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const AnyObjectHolder<Data, String>& rLoginData, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData);
+    static bool Login_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult,
+                                     const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket,
+                                     RVConnectionData* pConnectionData, String* pReturnMessage);
+    static bool LoginEx_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult,
+                                       const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket,
+                                       RVConnectionData* pConnectionData, String* pReturnMessage,
+                                       const AnyObjectHolder<Data, String>& rCustomData);
+    static bool RequestTicket_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult,
+                                             const unsigned int& rSourcePrincipalID,
+                                             const unsigned int& rTargetPrincipalID, Buffer* pTicket);
+    static bool GetPID_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, unsigned int* pPrincipalID,
+                                      const String& rUserName);
+    static bool GetName_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, String* pUserName,
+                                       const unsigned int& rPrincipalID);
+    static bool LoginWithContext_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult,
+                                                const AnyObjectHolder<Data, String>& rLoginData,
+                                                unsigned int* pPrincipalID, Buffer* pTicket,
+                                                RVConnectionData* pConnectionData);
 };
 
 }

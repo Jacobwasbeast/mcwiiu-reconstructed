@@ -36,8 +36,7 @@ _DDL_DataStorePreparePostParamV1& _DDL_DataStorePreparePostParamV1::operator=(
     return *this;
 }
 
-void _DDL_DataStorePreparePostParamV1::Add(Message* pMessage,
-    const _DDL_DataStorePreparePostParamV1& rSource)
+void _DDL_DataStorePreparePostParamV1::Add(Message* pMessage, const _DDL_DataStorePreparePostParamV1& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -78,8 +77,7 @@ void _DDL_DataStorePreparePostParamV1::Add(Message* pMessage,
     }
 }
 
-void _DDL_DataStorePreparePostParamV1::Extract(Message* pMessage,
-    _DDL_DataStorePreparePostParamV1* pDestination)
+void _DDL_DataStorePreparePostParamV1::Extract(Message* pMessage, _DDL_DataStorePreparePostParamV1* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 
@@ -180,8 +178,8 @@ void _DDL_DataStorePreparePostParamV1::Extract(Message* pMessage,
         return;
     }
 
-    _Type_qvector<DDLClassMetaType<DataStoreRatingInitParamWithSlot> >::Extract(
-        pMessage, &pDestination->m_RatingInitParams);
+    _Type_qvector<DDLClassMetaType<DataStoreRatingInitParamWithSlot> >::Extract(pMessage,
+                                                                                &pDestination->m_RatingInitParams);
 
     if (pMessage->HasError() || bCompactFormat)
     {

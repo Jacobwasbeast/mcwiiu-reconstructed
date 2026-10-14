@@ -19,14 +19,14 @@ DataStoreHppClient::~DataStoreHppClient()
 {
 }
 
-qResult DataStoreHppClient::Request(CallContext* pCallContext, ClientProtocol* pProtocol,
-    const Buffer& rRequest, unsigned int uiThreadPriority, unsigned int uiPrincipalId,
-    const String& rPassword, const String& rAccessKey, const String& rUrl, int iTimeout,
-    ServiceHttpClient::PriorityType priorityType)
+qResult DataStoreHppClient::Request(CallContext* pCallContext, ClientProtocol* pProtocol, const Buffer& rRequest,
+                                    unsigned int uiThreadPriority, unsigned int uiPrincipalId, const String& rPassword,
+                                    const String& rAccessKey, const String& rUrl, int iTimeout,
+                                    ServiceHttpClient::PriorityType priorityType)
 {
     JobDataStoreHpp* pJob = new JobDataStoreHpp();
-    qResult result = pJob->Initialize(pCallContext->GetCallID(), pProtocol, rRequest,
-        uiThreadPriority, uiPrincipalId, rPassword, rAccessKey, rUrl, iTimeout, priorityType);
+    qResult result = pJob->Initialize(pCallContext->GetCallID(), pProtocol, rRequest, uiThreadPriority, uiPrincipalId,
+                                      rPassword, rAccessKey, rUrl, iTimeout, priorityType);
     if (!result)
     {
         pJob->ReleaseRef();

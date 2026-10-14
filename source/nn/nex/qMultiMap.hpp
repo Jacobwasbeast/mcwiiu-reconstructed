@@ -14,9 +14,7 @@ namespace nex
 {
 
 template <typename K, typename V>
-class qMultiMap
-    : public std::multimap<K, V, std::less<K>, MemAllocator<std::pair<const K, V> > >,
-      public RootObject
+class qMultiMap : public std::multimap<K, V, std::less<K>, MemAllocator<std::pair<const K, V> > >, public RootObject
 {
 public:
     typedef std::multimap<K, V, std::less<K>, MemAllocator<std::pair<const K, V> > > _Base;

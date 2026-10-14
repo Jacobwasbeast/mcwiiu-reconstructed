@@ -16,14 +16,9 @@ class Message;
 class _DDL_DataStoreGetSpecificMetaParam : public RootObject
 {
 public:
-    _DDL_DataStoreGetSpecificMetaParam()
-        : m_uiStructureVersion(0), m_DataIds(0)
-    {
-    }
+    _DDL_DataStoreGetSpecificMetaParam() : m_uiStructureVersion(0), m_DataIds(0) {}
 
-    virtual ~_DDL_DataStoreGetSpecificMetaParam()
-    {
-    }
+    virtual ~_DDL_DataStoreGetSpecificMetaParam() {}
 
     _DDL_DataStoreGetSpecificMetaParam& operator=(const _DDL_DataStoreGetSpecificMetaParam& rSource);
     bool operator==(const _DDL_DataStoreGetSpecificMetaParam& rSource) const;

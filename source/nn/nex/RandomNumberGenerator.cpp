@@ -56,20 +56,18 @@ unsigned int RandomNumberGenerator::GetRandomNumber(unsigned int uiLimit)
         for (; uiPosition < STATE_SIZE - STATE_SHIFT; ++uiPosition)
         {
             uiValue = (m_aState[uiPosition] & UPPER_MASK) | (m_aState[uiPosition + 1] & LOWER_MASK);
-            m_aState[uiPosition] = m_aState[uiPosition + STATE_SHIFT] ^ (uiValue >> 1) ^
-                m_aMagic[uiValue & 1];
+            m_aState[uiPosition] = m_aState[uiPosition + STATE_SHIFT] ^ (uiValue >> 1) ^ m_aMagic[uiValue & 1];
         }
 
         for (; uiPosition < STATE_SIZE - 1; ++uiPosition)
         {
             uiValue = (m_aState[uiPosition] & UPPER_MASK) | (m_aState[uiPosition + 1] & LOWER_MASK);
-            m_aState[uiPosition] = m_aState[uiPosition + STATE_SHIFT - STATE_SIZE] ^
-                (uiValue >> 1) ^ m_aMagic[uiValue & 1];
+            m_aState[uiPosition] = m_aState[uiPosition + STATE_SHIFT - STATE_SIZE] ^ (uiValue >> 1)
+                                   ^ m_aMagic[uiValue & 1];
         }
 
         uiValue = (m_aState[STATE_SIZE - 1] & UPPER_MASK) | (m_aState[0] & LOWER_MASK);
-        m_aState[STATE_SIZE - 1] = m_aState[STATE_SHIFT - 1] ^ (uiValue >> 1) ^
-            m_aMagic[uiValue & 1];
+        m_aState[STATE_SIZE - 1] = m_aState[STATE_SHIFT - 1] ^ (uiValue >> 1) ^ m_aMagic[uiValue & 1];
         m_uiIndex = 0;
     }
 

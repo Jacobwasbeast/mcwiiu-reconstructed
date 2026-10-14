@@ -12,8 +12,8 @@ namespace nex
 {
 
 ClientStreamManager::ClientStreamManager(Stream::Type type)
-    : StreamManager(type, RootTransport::GetInstance())
-    , m_pCredentials(0)
+    : StreamManager(type, RootTransport::GetInstance()),
+      m_pCredentials(0)
 {
     m_pProtocolRequestBroker = new ClientProtocolRequestBroker;
 }
@@ -25,20 +25,17 @@ ClientStreamManager::~ClientStreamManager()
 
 void ClientStreamManager::Receive(EndPoint* pEndPoint, Buffer* pBuffer, unsigned char)
 {
-    Scheduler::GetInstance()->Queue(
-        new JobProcessProtocolMessage(m_pProtocolRequestBroker, pEndPoint, pBuffer), false);
+    Scheduler::GetInstance()->Queue(new JobProcessProtocolMessage(m_pProtocolRequestBroker, pEndPoint, pBuffer), false);
 }
 
 void ClientStreamManager::FaultDetection(EndPoint* pEndPoint, unsigned int uiError)
 {
-    static_cast<ClientProtocolRequestBroker*>(m_pProtocolRequestBroker)->FaultDetection(
-        pEndPoint, uiError);
+    static_cast<ClientProtocolRequestBroker*>(m_pProtocolRequestBroker)->FaultDetection(pEndPoint, uiError);
 }
 
 void ClientStreamManager::PeerDisconnected(EndPoint* pEndPoint)
 {
-    static_cast<ClientProtocolRequestBroker*>(m_pProtocolRequestBroker)->PeerDisconnected(
-        pEndPoint);
+    static_cast<ClientProtocolRequestBroker*>(m_pProtocolRequestBroker)->PeerDisconnected(pEndPoint);
 }
 
 void ClientStreamManager::SetCredentials(Credentials* pCredentials)

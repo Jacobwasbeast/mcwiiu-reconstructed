@@ -36,28 +36,28 @@ void Scheduler::SchedulerWorkerThread::Work()
 }
 
 Scheduler::Scheduler(unsigned int uiTraceMask, SchedulerWorkerThread* pWorkerThreads)
-    : m_pCurrentJob(0)
-    , m_bCurrentJobValid(false)
-    , m_pWorkerThreads(pWorkerThreads)
-    , m_eventHandler(1)
-    , m_pJobQueuedEvent(0)
-    , m_criticalSection(uiTraceMask)
-    , m_queueCriticalSection(0x400)
-    , m_specialCriticalSection(0x400)
-    , m_readyJobs()
-    , m_waitingJobs()
-    , m_delayedJobs()
-    , m_specialDispatchJobs()
-    , m_bTerminating(false)
-    , m_jobProcessingProfilingUnit(L"JobProcessing", 0, L"")
-    , m_reserved0(0)
-    , m_reserved1(0)
-    , m_reserved2(0)
-    , m_reserved3(0)
-    , m_uiContextId(0)
-    , m_callPolicy()
-    , m_dispatchTime()
-    , m_bActivityTraceEnabled(false)
+    : m_pCurrentJob(0),
+      m_bCurrentJobValid(false),
+      m_pWorkerThreads(pWorkerThreads),
+      m_eventHandler(1),
+      m_pJobQueuedEvent(0),
+      m_criticalSection(uiTraceMask),
+      m_queueCriticalSection(0x400),
+      m_specialCriticalSection(0x400),
+      m_readyJobs(),
+      m_waitingJobs(),
+      m_delayedJobs(),
+      m_specialDispatchJobs(),
+      m_bTerminating(false),
+      m_jobProcessingProfilingUnit(L"JobProcessing", 0, L""),
+      m_reserved0(0),
+      m_reserved1(0),
+      m_reserved2(0),
+      m_reserved3(0),
+      m_uiContextId(0),
+      m_callPolicy(),
+      m_dispatchTime(),
+      m_bActivityTraceEnabled(false)
 {
     m_pJobQueuedEvent = m_eventHandler.CreateEventObject(0, 0);
 
@@ -106,8 +106,7 @@ void Scheduler::QueueImpl(Job* pJob, bool bFront)
         break;
 
     case Job::Waiting:
-        m_delayedJobs.insert(JobMap::value_type(
-            Time::GetTime() + pJob->m_waitContext, pJob));
+        m_delayedJobs.insert(JobMap::value_type(Time::GetTime() + pJob->m_waitContext, pJob));
         break;
 
     case Job::Suspended:
@@ -180,7 +179,6 @@ void Scheduler::SpecialDispatch(const Time& rDeadline)
 
         ++position;
     }
-
 }
 
 bool Scheduler::QueueNewlyReadyJobs()
@@ -345,15 +343,13 @@ unsigned int Scheduler::GetNbSpecialJobs() const
 
     ScopedCS lock(&m_queueCriticalSection);
 
-    for (JobMap::const_iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end();
-         ++delayed)
+    for (JobMap::const_iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end(); ++delayed)
     {
         if (delayed->second->m_reserved0)
             ++uiCount;
     }
 
-    for (JobChain::iterator waiting = m_waitingJobs.begin(); waiting != m_waitingJobs.end();
-         ++waiting)
+    for (JobChain::iterator waiting = m_waitingJobs.begin(); waiting != m_waitingJobs.end(); ++waiting)
     {
         if ((*waiting)->m_reserved0)
             ++uiCount;
@@ -381,15 +377,13 @@ unsigned int Scheduler::GetOneTypeJobsCount(Job::JobType jobType) const
             ++uiCount;
     }
 
-    for (JobChain::iterator waiting = m_waitingJobs.begin(); waiting != m_waitingJobs.end();
-         ++waiting)
+    for (JobChain::iterator waiting = m_waitingJobs.begin(); waiting != m_waitingJobs.end(); ++waiting)
     {
         if ((*waiting)->m_jobType == jobType)
             ++uiCount;
     }
 
-    for (JobMap::const_iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end();
-         ++delayed)
+    for (JobMap::const_iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end(); ++delayed)
     {
         if (delayed->second->m_jobType == jobType)
             ++uiCount;
@@ -419,8 +413,7 @@ void Scheduler::WaitForJobToExecute(unsigned int uiTimeout)
 
         if (m_delayedJobs.size() != 0)
         {
-            const unsigned int uiDelay =
-                static_cast<unsigned int>(TimeToDeadline(m_delayedJobs.begin()->first));
+            const unsigned int uiDelay = static_cast<unsigned int>(TimeToDeadline(m_delayedJobs.begin()->first));
             if (uiDelay < uiTimeout)
                 uiTimeout = uiDelay;
         }
@@ -586,16 +579,15 @@ void Scheduler::GlobalSingleThreadSpecialDispatch()
 }
 
 bool Scheduler::PreventBlockCall(bool bAllowDispatch, unsigned int uiTimeout, bool bErrorValue,
-    PreventBlockCallback cbCallback, RootObject* pObject, bool* pResult)
+                                 PreventBlockCallback cbCallback, RootObject* pObject, bool* pResult)
 {
     if (!bAllowDispatch || CurrentThreadCanWaitForJob())
         return false;
 
     if (GetInstance()->m_callPolicy.CurrentThreadIsDispatchingJobs())
     {
-        SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
-            0x69, 0xE000001A, 0);
+        SystemError::SignalError(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
+                                 0x69, 0xE000001A, 0);
         *pResult = bErrorValue;
         return true;
     }
@@ -609,34 +601,32 @@ bool Scheduler::PreventBlockCall(bool bAllowDispatch, unsigned int uiTimeout, bo
     {
         GlobalSingleThreadDispatch(static_cast<unsigned int>(spinTest.GetRemainingTime()));
 
-        if (spinTest.SpinOnce(
-                L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
-                0x72, L"(vResult = cbCallback(object, 0)) == bErrorValue") == 0)
+        if (spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp", 0x72,
+                              L"(vResult = cbCallback(object, 0)) == bErrorValue")
+            == 0)
             break;
 
         vResult = cbCallback(pObject, 0);
     }
 
     if (vResult == bErrorValue)
-        SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
-            0x79, 0xE000000C, 0);
+        SystemError::SignalError(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
+                                 0x79, 0xE000000C, 0);
 
     *pResult = vResult;
     return true;
 }
 
-bool Scheduler::PreventRegularBlockCall(bool bAllowDispatch, unsigned int uiTimeout,
-    PreventBlockCallback cbCallback, RootObject* pObject, qResult* pResult)
+bool Scheduler::PreventRegularBlockCall(bool bAllowDispatch, unsigned int uiTimeout, PreventBlockCallback cbCallback,
+                                        RootObject* pObject, qResult* pResult)
 {
     if (!bAllowDispatch || CurrentThreadCanWaitForJob())
         return false;
 
     if (GetInstance()->m_callPolicy.CurrentThreadIsDispatchingJobs())
     {
-        SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
-            0x93, 0xE000001A, 0);
+        SystemError::SignalError(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
+                                 0x93, 0xE000001A, 0);
         *pResult = qResult(static_cast<int>(0x8001000B));
         return true;
     }
@@ -650,9 +640,9 @@ bool Scheduler::PreventRegularBlockCall(bool bAllowDispatch, unsigned int uiTime
     {
         vResult = cbCallback(pObject, 0);
 
-        if (spinTest.SpinOnce(
-                L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
-                0xA0, L"PreventRegularBlockCall") == 0)
+        if (spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp", 0xA0,
+                              L"PreventRegularBlockCall")
+            == 0)
             break;
 
         GlobalSingleThreadDispatch(static_cast<unsigned int>(spinTest.GetRemainingTime()));
@@ -660,9 +650,8 @@ bool Scheduler::PreventRegularBlockCall(bool bAllowDispatch, unsigned int uiTime
 
     if (!vResult)
     {
-        SystemError::SignalError(
-            L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
-            0xA9, 0xE000000C, 0);
+        SystemError::SignalError(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
+                                 0xA9, 0xE000000C, 0);
         *pResult = qResult(static_cast<int>(0x8001000B));
         return true;
     }
@@ -701,8 +690,7 @@ bool Scheduler::Cancel(Job* pJob)
         }
         else
         {
-            JobChain::iterator waiting =
-                std::find(m_waitingJobs.begin(), m_waitingJobs.end(), pJob);
+            JobChain::iterator waiting = std::find(m_waitingJobs.begin(), m_waitingJobs.end(), pJob);
 
             if (waiting != m_waitingJobs.end())
             {
@@ -762,7 +750,6 @@ void Scheduler::ClearAllQueues()
         waiting = m_waitingJobs.erase(waiting);
 
     m_delayedJobs.clear();
-
 }
 
 void Scheduler::RegisterSpecialDispatchJob(Job* pJob, bool bFront)
@@ -773,7 +760,6 @@ void Scheduler::RegisterSpecialDispatchJob(Job* pJob, bool bFront)
         m_specialDispatchJobs.push_front(pJob);
     else
         m_specialDispatchJobs.push_back(pJob);
-
 }
 
 void Scheduler::UnregisterSpecialDispatchJob(Job* pJob)
@@ -781,12 +767,10 @@ void Scheduler::UnregisterSpecialDispatchJob(Job* pJob)
     ScopedCS lock(&m_criticalSection);
     ScopedCS innerLock(&m_specialCriticalSection);
 
-    JobChain::iterator position =
-        std::find(m_specialDispatchJobs.begin(), m_specialDispatchJobs.end(), pJob);
+    JobChain::iterator position = std::find(m_specialDispatchJobs.begin(), m_specialDispatchJobs.end(), pJob);
 
     m_specialDispatchJobs.erase(position);
     DeleteJob(pJob);
-
 }
 
 void Scheduler::WaitForAllJobsToComplete(unsigned int uiTimeout, bool bRequeueDelayedJobs)
@@ -795,8 +779,7 @@ void Scheduler::WaitForAllJobsToComplete(unsigned int uiTimeout, bool bRequeueDe
     {
         ScopedCS lock(&m_queueCriticalSection);
 
-        for (JobMap::iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end();
-             ++delayed)
+        for (JobMap::iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end(); ++delayed)
         {
             delayed->second->SetToReady();
             Queue(delayed->second, false);
@@ -812,9 +795,9 @@ void Scheduler::WaitForAllJobsToComplete(unsigned int uiTimeout, bool bRequeueDe
     {
         GlobalSingleThreadDispatch(static_cast<unsigned int>(spinTest.GetRemainingTime()));
 
-        if (spinTest.SpinOnce(
-                L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
-                0x278, L"GetTotalNumberOfJobs() != 0") == 0)
+        if (spinTest.SpinOnce(L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/Scheduler.cpp",
+                              0x278, L"GetTotalNumberOfJobs() != 0")
+            == 0)
             break;
     }
 
@@ -830,15 +813,13 @@ void Scheduler::ProcessJobsInTermination(Job::JobType jobType)
             (*ready)->ProcessInTermination();
     }
 
-    for (JobChain::iterator waiting = m_waitingJobs.begin(); waiting != m_waitingJobs.end();
-         ++waiting)
+    for (JobChain::iterator waiting = m_waitingJobs.begin(); waiting != m_waitingJobs.end(); ++waiting)
     {
         if ((*waiting)->m_jobType == jobType)
             (*waiting)->ProcessInTermination();
     }
 
-    for (JobMap::iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end();
-         ++delayed)
+    for (JobMap::iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end(); ++delayed)
     {
         if (delayed->second->m_jobType == jobType)
             delayed->second->ProcessInTermination();
@@ -932,10 +913,8 @@ void Scheduler::RequeueWaitingJob(Job* pJob, Time delay)
 
         pJob->m_waitContext = static_cast<int>(static_cast<unsigned long long>(delay));
 
-        m_delayedJobs.insert(JobMap::value_type(
-            Time::GetTime() + pJob->m_waitContext, pJob));
+        m_delayedJobs.insert(JobMap::value_type(Time::GetTime() + pJob->m_waitContext, pJob));
     }
-
 }
 
 void Scheduler::ForceTerminateJobs()
@@ -943,14 +922,12 @@ void Scheduler::ForceTerminateJobs()
     for (JobChain::iterator ready = m_readyJobs.begin(); ready != m_readyJobs.end(); ++ready)
         (*ready)->ForceTerminate();
 
-    for (JobChain::iterator waiting = m_waitingJobs.begin(); waiting != m_waitingJobs.end();
-         ++waiting)
+    for (JobChain::iterator waiting = m_waitingJobs.begin(); waiting != m_waitingJobs.end(); ++waiting)
         (*waiting)->ForceTerminate();
 
     qList<Job*> terminatedJobs;
 
-    for (JobMap::iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end();
-         ++delayed)
+    for (JobMap::iterator delayed = m_delayedJobs.begin(); delayed != m_delayedJobs.end(); ++delayed)
     {
         Job* pJob = delayed->second;
         const Job::State previousState = pJob->GetState();
@@ -961,8 +938,7 @@ void Scheduler::ForceTerminateJobs()
             terminatedJobs.push_back(pJob);
     }
 
-    for (qList<Job*>::iterator terminated = terminatedJobs.begin();
-         terminated != terminatedJobs.end(); ++terminated)
+    for (qList<Job*>::iterator terminated = terminatedJobs.begin(); terminated != terminatedJobs.end(); ++terminated)
     {
         RequeueWaitingJob(*terminated, Time());
     }

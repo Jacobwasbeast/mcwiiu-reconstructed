@@ -26,17 +26,13 @@ namespace
 
 const unsigned int SECURE_CONNECTION_SERVICE_ID = 2;
 const unsigned short SECURE_CONNECTION_PROTOCOL_ID = 11;
-const NATProperties::MappingProperties NAT_MAPPING_UNKNOWN =
-    static_cast<NATProperties::MappingProperties>(0);
-const NATProperties::FilteringProperties NAT_FILTERING_UNKNOWN =
-    static_cast<NATProperties::FilteringProperties>(0);
+const NATProperties::MappingProperties NAT_MAPPING_UNKNOWN = static_cast<NATProperties::MappingProperties>(0);
+const NATProperties::FilteringProperties NAT_FILTERING_UNKNOWN = static_cast<NATProperties::FilteringProperties>(0);
 bool g_bRequestSuccess;
 
 }
 
-SecureConnectionClient::SecureConnectionClient()
-    : ServiceClient(SECURE_CONNECTION_SERVICE_ID)
-    , m_protocolClient(0)
+SecureConnectionClient::SecureConnectionClient() : ServiceClient(SECURE_CONNECTION_SERVICE_ID), m_protocolClient(0)
 {
     AnyDataAdapter::Register();
     m_protocolClient.SetProtocolID(SECURE_CONNECTION_PROTOCOL_ID);
@@ -52,7 +48,8 @@ SecureConnectionClient::~SecureConnectionClient()
 void SecureConnectionClient::PrepareURLs(qList<StationURL>& rURLs)
 {
     Network::GetInstance()->GetLocalURLs(&rURLs);
-    ConnectionOrientedStream* pStream = GetStreamManager()->GetConnectionManager()->GetStreamTable().FindStream(L"prudp");
+    ConnectionOrientedStream* pStream = GetStreamManager()->GetConnectionManager()->GetStreamTable().FindStream(
+        L"prudp");
     for (qList<StationURL>::iterator it = rURLs.begin(); it != rURLs.end(); ++it)
     {
         it->SetStreamID(pStream->GetStreamID());
@@ -72,27 +69,33 @@ bool SecureConnectionClient::RegisterURLs(ProtocolCallContext* pCallContext, qRe
     return m_protocolClient.CallRegister(pCallContext, pResult, urls, &m_pCredentials->m_state, pPublicURL);
 }
 
-bool SecureConnectionClient::RegisterURLsEx(ProtocolCallContext* pCallContext, qResult* pResult, StationURL* pPublicURL, const AnyObjectHolder<Data, String>& rCustomData)
+bool SecureConnectionClient::RegisterURLsEx(ProtocolCallContext* pCallContext, qResult* pResult, StationURL* pPublicURL,
+                                            const AnyObjectHolder<Data, String>& rCustomData)
 {
     qList<StationURL> urls;
     PrepareURLs(urls);
     if (rCustomData.GetObject() == 0)
         return m_protocolClient.CallRegister(pCallContext, pResult, urls, &m_pCredentials->m_state, pPublicURL);
 
-    return m_protocolClient.CallRegisterEx(pCallContext, pResult, urls, &m_pCredentials->m_state, pPublicURL, rCustomData);
+    return m_protocolClient.CallRegisterEx(pCallContext, pResult, urls, &m_pCredentials->m_state, pPublicURL,
+                                           rCustomData);
 }
 
-bool SecureConnectionClient::RequestConnectionData(ProtocolCallContext* pCallContext, unsigned int uiConnectionID, unsigned int uiPrincipalID, qList<ConnectionData>* pConnectionData)
+bool SecureConnectionClient::RequestConnectionData(ProtocolCallContext* pCallContext, unsigned int uiConnectionID,
+                                                   unsigned int uiPrincipalID, qList<ConnectionData>* pConnectionData)
 {
-    return m_protocolClient.CallRequestConnectionData(pCallContext, &g_bRequestSuccess, uiConnectionID, uiPrincipalID, pConnectionData);
+    return m_protocolClient.CallRequestConnectionData(pCallContext, &g_bRequestSuccess, uiConnectionID, uiPrincipalID,
+                                                      pConnectionData);
 }
 
-bool SecureConnectionClient::RequestURLs(ProtocolCallContext* pCallContext, unsigned int uiConnectionID, unsigned int uiPrincipalID, qList<StationURL>* pURLs)
+bool SecureConnectionClient::RequestURLs(ProtocolCallContext* pCallContext, unsigned int uiConnectionID,
+                                         unsigned int uiPrincipalID, qList<StationURL>* pURLs)
 {
     return m_protocolClient.CallRequestURLs(pCallContext, &g_bRequestSuccess, uiConnectionID, uiPrincipalID, pURLs);
 }
 
-bool SecureConnectionClient::RequestURLs(ProtocolCallContext* pCallContext, unsigned int uiConnectionID, qList<StationURL>* pURLs)
+bool SecureConnectionClient::RequestURLs(ProtocolCallContext* pCallContext, unsigned int uiConnectionID,
+                                         qList<StationURL>* pURLs)
 {
     return RequestURLs(pCallContext, uiConnectionID, 0, pURLs);
 }
@@ -109,7 +112,8 @@ bool SecureConnectionClient::UpdateURLs(ProtocolCallContext* pCallContext)
     return m_protocolClient.CallUpdateURLs(pCallContext, urls);
 }
 
-bool SecureConnectionClient::ReplaceURL(ProtocolCallContext* pCallContext, const StationURL& rTarget, const StationURL& rReplacement)
+bool SecureConnectionClient::ReplaceURL(ProtocolCallContext* pCallContext, const StationURL& rTarget,
+                                        const StationURL& rReplacement)
 {
     if (rTarget.GetPortNumber() == 0)
         return false;

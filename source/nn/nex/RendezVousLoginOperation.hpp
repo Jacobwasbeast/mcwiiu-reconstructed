@@ -3,7 +3,10 @@
 
 #include "nn/nex/RendezVousOperation.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class RendezVousLoginOperation : public RendezVousOperation
 {
@@ -15,6 +18,7 @@ public:
     virtual void ForceImplOperationCommonMethodsMacro();
 };
 
-}}
+}
+}
 
 #endif

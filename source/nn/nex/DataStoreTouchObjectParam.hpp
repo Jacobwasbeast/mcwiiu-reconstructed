@@ -11,13 +11,9 @@ namespace nex
 class DataStoreTouchObjectParam : public _DDL_DataStoreTouchObjectParam
 {
 public:
-    DataStoreTouchObjectParam()
-    {
-    }
+    DataStoreTouchObjectParam() {}
 
-    virtual ~DataStoreTouchObjectParam()
-    {
-    }
+    virtual ~DataStoreTouchObjectParam() {}
 };
 
 }

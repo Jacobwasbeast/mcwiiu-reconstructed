@@ -20,12 +20,12 @@ class PacketBufferMultiUnitHeap : public RootObject
 {
 public:
     PacketBufferMultiUnitHeap()
-        : m_pUnitHeaps(0)
-        , m_uiUnitHeapNum(0)
-        , m_uiMaxUnitSize(0)
-        , m_bInitialized(false)
-        , m_bUnitExhausted(false)
-        , m_pMutex(0)
+        : m_pUnitHeaps(0),
+          m_uiUnitHeapNum(0),
+          m_uiMaxUnitSize(0),
+          m_bInitialized(false),
+          m_bUnitExhausted(false),
+          m_pMutex(0)
     {
     }
 
@@ -35,8 +35,7 @@ public:
             Finalize();
     }
 
-    void Initialize(void* pMemory, unsigned int uiMemorySize,
-        qVector<PacketBufferManager::UnitHeapParam> aParams);
+    void Initialize(void* pMemory, unsigned int uiMemorySize, qVector<PacketBufferManager::UnitHeapParam> aParams);
     void Finalize();
 
     void* Allocate(unsigned int uiSize, MemoryManager::Deallocator pDeallocator);

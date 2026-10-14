@@ -19,7 +19,8 @@ class Ticket : public RefCountedObject
 {
 public:
     Ticket(const Buffer& rBuffer, unsigned int uiTargetPrincipalID);
-    Ticket(const Buffer& rBuffer, unsigned int uiSourcePrincipalID, unsigned int uiTargetPrincipalID, const Key& rKey, DateTime oTime);
+    Ticket(const Buffer& rBuffer, unsigned int uiSourcePrincipalID, unsigned int uiTargetPrincipalID, const Key& rKey,
+           DateTime oTime);
     Ticket(unsigned int uiSourcePrincipalID, unsigned int uiTargetPrincipalID, const Key& rKey, DateTime oTime);
     virtual ~Ticket();
 
@@ -28,15 +29,9 @@ public:
     bool IsValid() const;
     void Trace(uint64_t uiFilter) const;
 
-    unsigned int GetPrincipalID() const
-    {
-        return m_uiSourcePrincipalID;
-    }
+    unsigned int GetPrincipalID() const { return m_uiSourcePrincipalID; }
 
-    const Key& GetKey() const
-    {
-        return m_key;
-    }
+    const Key& GetKey() const { return m_key; }
 
 private:
     friend class KerberosAuthentication;

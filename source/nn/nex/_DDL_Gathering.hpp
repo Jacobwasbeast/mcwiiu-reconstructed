@@ -17,14 +17,9 @@ class Message;
 class _DDL_Gathering : public RootObject
 {
 public:
-    _DDL_Gathering()
-        : m_uiStructureVersion(0), m_Description()
-    {
-    }
+    _DDL_Gathering() : m_uiStructureVersion(0), m_Description() {}
 
-    virtual ~_DDL_Gathering()
-    {
-    }
+    virtual ~_DDL_Gathering() {}
 
     _DDL_Gathering& operator=(const _DDL_Gathering& rSource);
 

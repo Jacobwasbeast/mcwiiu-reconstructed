@@ -24,8 +24,7 @@ class SlidingWindow : public RootObject
 {
 public:
     typedef LogicalClockTmpl<unsigned short, short> Clock;
-    typedef std::map<Clock, PacketOut*, std::less<Clock>,
-                     MemAllocator<std::pair<const Clock, PacketOut*> > > PacketMap;
+    typedef std::map<Clock, PacketOut*, std::less<Clock>, MemAllocator<std::pair<const Clock, PacketOut*> > > PacketMap;
 
     SlidingWindow(unsigned short uiWindowSize, unsigned int uiMaxBufferedPackets);
     ~SlidingWindow();
@@ -45,15 +44,9 @@ public:
     void ReleaseIterator();
     void Trace(unsigned long long uiFilter);
 
-    unsigned int GetBufferedPacketCount() const
-    {
-        return m_packets.size();
-    }
+    unsigned int GetBufferedPacketCount() const { return m_packets.size(); }
 
-    const Clock& GetOldestUnacknowledged() const
-    {
-        return m_oldestUnacknowledged;
-    }
+    const Clock& GetOldestUnacknowledged() const { return m_oldestUnacknowledged; }
 
 private:
     unsigned int m_unknown0;

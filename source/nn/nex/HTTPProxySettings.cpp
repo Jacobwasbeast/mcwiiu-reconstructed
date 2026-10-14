@@ -7,19 +7,16 @@ namespace nn
 namespace nex
 {
 
-HTTPProxySettings::HTTPProxySettings()
-    : m_proxyName(L"")
-    , m_proxyPort(0)
-    , m_username(L"")
-    , m_password(L"")
+HTTPProxySettings::HTTPProxySettings() : m_proxyName(L""), m_proxyPort(0), m_username(L""), m_password(L"")
 {
 }
 
-HTTPProxySettings::HTTPProxySettings(const String& proxyName, unsigned int proxyPort, const String& username, const String& password)
-    : m_proxyName(proxyName)
-    , m_proxyPort(proxyPort)
-    , m_username(username)
-    , m_password(password)
+HTTPProxySettings::HTTPProxySettings(const String& proxyName, unsigned int proxyPort, const String& username,
+                                     const String& password)
+    : m_proxyName(proxyName),
+      m_proxyPort(proxyPort),
+      m_username(username),
+      m_password(password)
 {
 }
 

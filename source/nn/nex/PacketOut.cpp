@@ -12,14 +12,13 @@ namespace nn
 namespace nex
 {
 
-PacketOut::PacketOut(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short uiFlags,
-    Buffer* pPayload, unsigned int uiSize)
-    : Packet()
-    , m_unknown120(0)
-    , m_unknown138(0)
+PacketOut::PacketOut(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short uiFlags, Buffer* pPayload,
+                     unsigned int uiSize)
+    : Packet(),
+      m_unknown120(0),
+      m_unknown138(0)
 {
-    Initialize(pEndPoint, type, uiFlags, pPayload, uiSize,
-        (uiFlags & PACKET_FLAG_NEED_ACK) ? new Timeout() : 0);
+    Initialize(pEndPoint, type, uiFlags, pPayload, uiSize, (uiFlags & PACKET_FLAG_NEED_ACK) ? new Timeout() : 0);
 }
 
 PacketOut::~PacketOut()
@@ -31,13 +30,13 @@ PacketOut::~PacketOut()
     }
 }
 
-void PacketOut::Initialize(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short uiFlags,
-    Buffer* pPayload, unsigned int uiSize, Timeout* pTimeout)
+void PacketOut::Initialize(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short uiFlags, Buffer* pPayload,
+                           unsigned int uiSize, Timeout* pTimeout)
 {
     m_unknown11a = 0;
     m_unknown120 = 0;
-    m_uiTypeAndFlags = m_uiTypeAndFlags | (type & PACKET_TYPE_MASK) |
-        (uiFlags & static_cast<unsigned short>(~PACKET_TYPE_MASK));
+    m_uiTypeAndFlags = m_uiTypeAndFlags | (type & PACKET_TYPE_MASK)
+                       | (uiFlags & static_cast<unsigned short>(~PACKET_TYPE_MASK));
     m_pEndPoint = pEndPoint;
     m_unknown140 = uiSize;
     m_unknown118 = 0;
@@ -97,9 +96,9 @@ bool PacketOut::IsBundlableWithPortTypeCheck(PacketOut* pPacket)
     if (m_uiTTL != pPacket->m_uiTTL || m_uiPort != pPacket->m_uiPort)
         return false;
 
-    if (g_transportAdapter->GetTransportMode() == TransportAdapter::TRANSPORT_MODE_1 &&
-        (m_uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_A) &&
-        (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_A))
+    if (g_transportAdapter->GetTransportMode() == TransportAdapter::TRANSPORT_MODE_1
+        && (m_uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_A)
+        && (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_A))
         return true;
 
     return m_address == pPacket->m_address;

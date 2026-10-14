@@ -27,30 +27,15 @@ public:
 
     void Trace(uint64_t uiFilter, bool bDumpContents);
 
-    unsigned int size() const
-    {
-        return m_pBack != m_pFront ? static_cast<unsigned int>(m_pBack - m_pFront) : 0;
-    }
+    unsigned int size() const { return m_pBack != m_pFront ? static_cast<unsigned int>(m_pBack - m_pFront) : 0; }
 
-    unsigned int capacity() const
-    {
-        return m_pBegin != m_pEnd ? static_cast<unsigned int>(m_pEnd - m_pBegin) : 0;
-    }
+    unsigned int capacity() const { return m_pBegin != m_pEnd ? static_cast<unsigned int>(m_pEnd - m_pBegin) : 0; }
 
-    bool empty() const
-    {
-        return m_pFront == m_pBack;
-    }
+    bool empty() const { return m_pFront == m_pBack; }
 
-    unsigned char* front() const
-    {
-        return m_pFront;
-    }
+    unsigned char* front() const { return m_pFront; }
 
-    unsigned char* back() const
-    {
-        return m_pBack;
-    }
+    unsigned char* back() const { return m_pBack; }
 
     bool operator==(const qBuffer& rBuffer) const;
     bool operator<(const qBuffer& rBuffer) const;

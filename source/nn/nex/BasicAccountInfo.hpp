@@ -11,13 +11,9 @@ namespace nex
 class BasicAccountInfo : public _DDL_BasicAccountInfo
 {
 public:
-    BasicAccountInfo()
-    {
-    }
+    BasicAccountInfo() {}
 
-    virtual ~BasicAccountInfo()
-    {
-    }
+    virtual ~BasicAccountInfo() {}
 };
 
 }

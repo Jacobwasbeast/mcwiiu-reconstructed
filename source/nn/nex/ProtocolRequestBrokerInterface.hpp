@@ -5,7 +5,10 @@
 #include "nn/nex/OperationManager.hpp"
 #include "nn/nex/Protocol.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class ClientProtocol;
 class ServerProtocol;
@@ -19,10 +22,9 @@ public:
     ProtocolRequestBrokerInterface();
     virtual ~ProtocolRequestBrokerInterface();
 
-    virtual void ProcessMessage(CallProtocolMethodOperation* operation, EndPoint* endPoint,
-                        Buffer* buffer) = 0;
+    virtual void ProcessMessage(CallProtocolMethodOperation* operation, EndPoint* endPoint, Buffer* buffer) = 0;
     virtual void ProcessCallRequest(unsigned short protocolId, Message* request, Message* response,
-                            bool* responseRequired, EndPoint* endPoint) = 0;
+                                    bool* responseRequired, EndPoint* endPoint) = 0;
     virtual void ProcessCallResponse(unsigned short protocolId, Message* response, EndPoint* endPoint) = 0;
     virtual bool RegisterProtocol(Protocol* protocol) = 0;
     virtual void UnregisterProtocol(Protocol* protocol) = 0;
@@ -31,12 +33,12 @@ public:
     virtual bool RegisterServerProtocol(unsigned short protocolId, ServerProtocol* protocol) = 0;
     virtual bool UnregisterServerProtocol(unsigned short protocolId) = 0;
     virtual ServerProtocol* GetServerProtocol(unsigned short protocolId) = 0;
-    virtual qResult DispatchLocalRMC(Message* message, ClientProtocol* client,
-                             ServerProtocol* server, EndPoint* endPoint) = 0;
-    virtual qResult DispatchBlockingLocalRMC(Message* message, ClientProtocol* client,
-                                     ServerProtocol* server, EndPoint* endPoint) = 0;
-    virtual qResult DispatchThreadSafeLocalRMC(Message* message, ClientProtocol* client,
-                                       ServerProtocol* server, EndPoint* endPoint) = 0;
+    virtual qResult DispatchLocalRMC(Message* message, ClientProtocol* client, ServerProtocol* server,
+                                     EndPoint* endPoint) = 0;
+    virtual qResult DispatchBlockingLocalRMC(Message* message, ClientProtocol* client, ServerProtocol* server,
+                                             EndPoint* endPoint) = 0;
+    virtual qResult DispatchThreadSafeLocalRMC(Message* message, ClientProtocol* client, ServerProtocol* server,
+                                               EndPoint* endPoint) = 0;
 
     static void InitMessage(Message* message, unsigned short protocolId, Protocol::_Command command);
     void Receive(EndPoint* endPoint, Buffer* buffer);
@@ -48,6 +50,7 @@ protected:
     OperationManager m_operationManager;
 };
 
-}}
+}
+}
 
 #endif

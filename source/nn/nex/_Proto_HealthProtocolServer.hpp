@@ -19,13 +19,10 @@ public:
         METHOD_FIX_SANITY_ERRORS = 4
     };
 
-    explicit _Proto_HealthProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_HealthProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual bool PingDaemon() = 0;
     virtual bool PingDatabase() = 0;
     virtual bool RunSanityCheck() = 0;

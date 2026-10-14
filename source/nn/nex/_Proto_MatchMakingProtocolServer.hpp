@@ -70,13 +70,10 @@ public:
         METHOD_MIGRATE_GATHERING_OWNERSHIP = 44
     };
 
-    explicit _Proto_MatchMakingProtocolServer(unsigned int uiFlags)
-        : ServerProtocol(uiFlags)
-    {
-    }
+    explicit _Proto_MatchMakingProtocolServer(unsigned int uiFlags) : ServerProtocol(uiFlags) {}
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint);
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint);
     virtual unsigned int RegisterGathering(const AnyObjectHolder<Gathering, String>& rGathering) = 0;
     virtual bool UnregisterGathering(const unsigned int& rGatheringID) = 0;
     virtual bool UnregisterGatherings(const qList<unsigned int>& rGatheringIDs) = 0;
@@ -85,23 +82,18 @@ public:
                         const String& rMessage) = 0;
     virtual bool AcceptInvitation(const unsigned int& rGatheringID, const String& rMessage) = 0;
     virtual bool DeclineInvitation(const unsigned int& rGatheringID, const String& rMessage) = 0;
-    virtual bool CancelInvitation(const unsigned int& rGatheringID,
-                                  const qList<unsigned int>& rPrincipalIDs,
+    virtual bool CancelInvitation(const unsigned int& rGatheringID, const qList<unsigned int>& rPrincipalIDs,
                                   const String& rMessage) = 0;
-    virtual void GetInvitationsSent(const unsigned int& rGatheringID,
-                                    qList<Invitation>* pInvitations) = 0;
+    virtual void GetInvitationsSent(const unsigned int& rGatheringID, qList<Invitation>* pInvitations) = 0;
     virtual void GetInvitationsReceived(qList<Invitation>* pInvitations) = 0;
     virtual bool Participate(const unsigned int& rGatheringID, const String& rMessage) = 0;
     virtual bool CancelParticipation(const unsigned int& rGatheringID, const String& rMessage) = 0;
-    virtual void GetParticipants(const unsigned int& rGatheringID,
-                                 qList<unsigned int>* pParticipantIDs) = 0;
-    virtual bool AddParticipants(const unsigned int& rGatheringID,
-                                 const qList<unsigned int>& rPrincipalIDs,
+    virtual void GetParticipants(const unsigned int& rGatheringID, qList<unsigned int>* pParticipantIDs) = 0;
+    virtual bool AddParticipants(const unsigned int& rGatheringID, const qList<unsigned int>& rPrincipalIDs,
                                  const String& rMessage) = 0;
     virtual void GetDetailedParticipants(const unsigned int& rGatheringID,
                                          qList<ParticipantDetails>* pParticipants) = 0;
-    virtual void GetParticipantsURLs(const unsigned int& rGatheringID,
-                                     qList<StationURL>* pURLs) = 0;
+    virtual void GetParticipantsURLs(const unsigned int& rGatheringID, qList<StationURL>* pURLs) = 0;
     virtual void FindByType(const String& rType, const ResultRange& rRange,
                             qList<AnyObjectHolder<Gathering, String> >* pGatherings) = 0;
     virtual void FindByDescription(const String& rDescription, const ResultRange& rRange,
@@ -125,11 +117,9 @@ public:
     virtual bool GetSessionURL(const unsigned int& rGatheringID, String* pSessionURL) = 0;
     virtual bool GetState(const unsigned int& rGatheringID, unsigned int* pState) = 0;
     virtual bool SetState(const unsigned int& rGatheringID, const unsigned int& rState) = 0;
-    virtual bool ReportStats(const unsigned int& rGatheringID,
-                             const qList<GatheringStats>& rStats) = 0;
+    virtual bool ReportStats(const unsigned int& rGatheringID, const qList<GatheringStats>& rStats) = 0;
     virtual bool GetStats(const unsigned int& rGatheringID, const qList<unsigned int>& rIDs,
-                          const qList<unsigned char>& rTypes,
-                          qList<GatheringStats>* pStats) = 0;
+                          const qList<unsigned char>& rTypes, qList<GatheringStats>* pStats) = 0;
     virtual bool DeleteGathering(const unsigned int& rGatheringID) = 0;
     virtual bool GetPendingDeletions(const unsigned int& rGatheringID, const ResultRange& rRange,
                                      qList<DeletionEntry>* pDeletions) = 0;
@@ -139,14 +129,12 @@ public:
     virtual void FindByDescriptionLike(const String& rDescription, const ResultRange& rRange,
                                        qList<AnyObjectHolder<Gathering, String> >* pGatherings) = 0;
     virtual void RegisterLocalURL(const unsigned int& rGatheringID, const String& rSessionURL) = 0;
-    virtual void RegisterLocalURLs(const unsigned int& rGatheringID,
-                                   const qList<StationURL>& rSessionURLs) = 0;
+    virtual void RegisterLocalURLs(const unsigned int& rGatheringID, const qList<StationURL>& rSessionURLs) = 0;
     virtual void UpdateSessionHostV1(const unsigned int& rGatheringID) = 0;
     virtual void GetSessionURLs(const unsigned int& rGatheringID, qList<StationURL>* pURLs) = 0;
     virtual void UpdateSessionHost(const unsigned int& rGatheringID, const bool& rFlag) = 0;
     virtual void UpdateGatheringOwnership(const unsigned int& rGatheringID, const bool& rFlag) = 0;
-    virtual void MigrateGatheringOwnership(const unsigned int& rGatheringID,
-                                           const qList<unsigned int>& rCandidateIDs,
+    virtual void MigrateGatheringOwnership(const unsigned int& rGatheringID, const qList<unsigned int>& rCandidateIDs,
                                            const bool& rFlag) = 0;
 
 private:
@@ -164,8 +152,7 @@ private:
                                                _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_UpdateGathering(Message* pRequest, Message* pResponse,
                                           _Proto_MatchMakingProtocolServer* pProtocol);
-    static void ProtoStub_Invite(Message* pRequest, Message* pResponse,
-                                 _Proto_MatchMakingProtocolServer* pProtocol);
+    static void ProtoStub_Invite(Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_AcceptInvitation(Message* pRequest, Message* pResponse,
                                            _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_DeclineInvitation(Message* pRequest, Message* pResponse,
@@ -194,8 +181,7 @@ private:
                                             _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_FindByDescriptionRegex(Message* pRequest, Message* pResponse,
                                                  _Proto_MatchMakingProtocolServer* pProtocol);
-    static void ProtoStub_FindByID(Message* pRequest, Message* pResponse,
-                                   _Proto_MatchMakingProtocolServer* pProtocol);
+    static void ProtoStub_FindByID(Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_FindBySingleID(Message* pRequest, Message* pResponse,
                                          _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_FindByOwner(Message* pRequest, Message* pResponse,
@@ -212,14 +198,11 @@ private:
                                            _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_GetSessionURL(Message* pRequest, Message* pResponse,
                                         _Proto_MatchMakingProtocolServer* pProtocol);
-    static void ProtoStub_GetState(Message* pRequest, Message* pResponse,
-                                   _Proto_MatchMakingProtocolServer* pProtocol);
-    static void ProtoStub_SetState(Message* pRequest, Message* pResponse,
-                                   _Proto_MatchMakingProtocolServer* pProtocol);
+    static void ProtoStub_GetState(Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol);
+    static void ProtoStub_SetState(Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_ReportStats(Message* pRequest, Message* pResponse,
                                       _Proto_MatchMakingProtocolServer* pProtocol);
-    static void ProtoStub_GetStats(Message* pRequest, Message* pResponse,
-                                   _Proto_MatchMakingProtocolServer* pProtocol);
+    static void ProtoStub_GetStats(Message* pRequest, Message* pResponse, _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_DeleteGathering(Message* pRequest, Message* pResponse,
                                           _Proto_MatchMakingProtocolServer* pProtocol);
     static void ProtoStub_GetPendingDeletions(Message* pRequest, Message* pResponse,

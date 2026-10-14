@@ -17,8 +17,7 @@ const uint8_t DELETE_PARAM_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStoreDeleteParam& _DDL_DataStoreDeleteParam::operator=(
-    const _DDL_DataStoreDeleteParam& rSource)
+_DDL_DataStoreDeleteParam& _DDL_DataStoreDeleteParam::operator=(const _DDL_DataStoreDeleteParam& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiDataId = rSource.m_uiDataId;
@@ -58,8 +57,7 @@ void _DDL_DataStoreDeleteParam::Add(Message* pMessage, const _DDL_DataStoreDelet
     }
 }
 
-void _DDL_DataStoreDeleteParam::Extract(Message* pMessage,
-    _DDL_DataStoreDeleteParam* pDestination)
+void _DDL_DataStoreDeleteParam::Extract(Message* pMessage, _DDL_DataStoreDeleteParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

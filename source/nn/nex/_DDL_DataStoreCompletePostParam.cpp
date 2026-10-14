@@ -26,8 +26,7 @@ _DDL_DataStoreCompletePostParam& _DDL_DataStoreCompletePostParam::operator=(
     return *this;
 }
 
-void _DDL_DataStoreCompletePostParam::Add(Message* pMessage,
-    const _DDL_DataStoreCompletePostParam& rSource)
+void _DDL_DataStoreCompletePostParam::Add(Message* pMessage, const _DDL_DataStoreCompletePostParam& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -54,14 +53,12 @@ void _DDL_DataStoreCompletePostParam::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
-void _DDL_DataStoreCompletePostParam::Extract(Message* pMessage,
-    _DDL_DataStoreCompletePostParam* pDestination)
+void _DDL_DataStoreCompletePostParam::Extract(Message* pMessage, _DDL_DataStoreCompletePostParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

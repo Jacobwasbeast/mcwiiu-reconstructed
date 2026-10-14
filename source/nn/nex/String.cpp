@@ -294,8 +294,7 @@ bool String::IsEqual(const wchar_t* left, const wchar_t* right)
     return std::wcscmp(left, right) == 0;
 }
 
-String String::_Copy(const wchar_t* first, unsigned int firstLength,
-    const wchar_t* second, unsigned int secondLength)
+String String::_Copy(const wchar_t* first, unsigned int firstLength, const wchar_t* second, unsigned int secondLength)
 {
     String joined;
 
@@ -329,8 +328,7 @@ String operator+(const String& left, const wchar_t* right)
         return String(right);
 
     if (right != 0 && right[0] != 0)
-        return String::_Copy(left.m_data, leftLength, right,
-            static_cast<unsigned int>(std::wcslen(right)));
+        return String::_Copy(left.m_data, leftLength, right, static_cast<unsigned int>(std::wcslen(right)));
 
     return left;
 }
@@ -344,8 +342,7 @@ String operator+(const wchar_t* left, const String& right)
         if (rightLength == 0)
             return String(left);
 
-        return String::_Copy(left, static_cast<unsigned int>(std::wcslen(left)),
-            right.m_data, rightLength);
+        return String::_Copy(left, static_cast<unsigned int>(std::wcslen(left)), right.m_data, rightLength);
     }
 
     return right;

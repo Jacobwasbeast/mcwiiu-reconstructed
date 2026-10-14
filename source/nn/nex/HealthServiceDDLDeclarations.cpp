@@ -5,8 +5,7 @@ namespace nn
 namespace nex
 {
 
-HealthServiceDDLDeclarations::HealthServiceDDLDeclarations()
-    : DDLDeclarations(true)
+HealthServiceDDLDeclarations::HealthServiceDDLDeclarations() : DDLDeclarations(true)
 {
 }
 

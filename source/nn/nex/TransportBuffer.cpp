@@ -25,7 +25,8 @@ unsigned int g_transportBufferThreadAffinity = INHERIT_THREAD_AFFINITY;
 bool g_transportBufferPoolEnabled = true;
 
 TransportBuffer::TransportBuffer(unsigned int uiCount, unsigned int uiBufferSize)
-    : m_criticalSection(CRITICAL_SECTION_TRACE_MASK), m_uiEmptyDropCount(0)
+    : m_criticalSection(CRITICAL_SECTION_TRACE_MASK),
+      m_uiEmptyDropCount(0)
 {
     m_pBuffers = new qReservedQueue<Buffer*>(uiCount);
     ReserveBuffer(uiBufferSize, uiCount);

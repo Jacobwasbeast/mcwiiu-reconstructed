@@ -28,15 +28,11 @@ public:
     explicit Stream(Type type);
     virtual ~Stream();
 
-    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
-        Packet* pPacket) = 0;
+    virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID, Packet* pPacket) = 0;
     virtual void DoWork() = 0;
     virtual bool IsDuplicateReorderingPacket(Packet* pPacket);
 
-    Type GetType() const
-    {
-        return m_Type;
-    }
+    Type GetType() const { return m_Type; }
 
 protected:
     Type m_Type;

@@ -19,9 +19,7 @@ public:
         m_ExtraData.clear();
     }
 
-    virtual ~DataStorePrepareUpdateParam()
-    {
-    }
+    virtual ~DataStorePrepareUpdateParam() {}
 };
 
 }

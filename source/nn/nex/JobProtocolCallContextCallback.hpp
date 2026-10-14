@@ -12,15 +12,12 @@ namespace nex
 class JobProtocolCallContextCallback : public JobCallContextCallback
 {
 public:
-    JobProtocolCallContextCallback(JobType jobType, const wchar_t* pName,
-        CallContext* pCallContext)
+    JobProtocolCallContextCallback(JobType jobType, const wchar_t* pName, CallContext* pCallContext)
         : JobCallContextCallback(jobType, pName, pCallContext)
     {
     }
 
-    virtual ~JobProtocolCallContextCallback()
-    {
-    }
+    virtual ~JobProtocolCallContextCallback() {}
 
     ProtocolCallContext* GetProtocolCallContext();
     virtual CallContext* CreateCallContext();

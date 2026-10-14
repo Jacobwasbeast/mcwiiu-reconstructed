@@ -43,8 +43,8 @@ public:
     typedef LogicalClockTmpl<unsigned short, short> SequenceClock;
     typedef unsigned int (*CalcRetransmissionTimeoutCallback)(unsigned int, unsigned short);
 
-    PRUDPEndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL,
-        SequenceClock* pBroadcastSequence, unsigned char uiVersion);
+    PRUDPEndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL, SequenceClock* pBroadcastSequence,
+                  unsigned char uiVersion);
     virtual ~PRUDPEndPoint();
 
     virtual void ResetEndPointInfo();
@@ -71,12 +71,11 @@ public:
     virtual unsigned int GetSignaledFaultError() const;
     virtual unsigned int GetRTT() const;
     virtual unsigned int GetRTTAverage() const;
-    virtual qResult _Connect(Buffer* pRequestData, Buffer* pResponseData,
-        ConnectionCallback pCallback, const UserContext& rUserContext, unsigned int uiTimeout);
-    virtual qResult _Disconnect(ConnectionCallback pCallback, const UserContext& rUserContext,
-        unsigned int uiTimeout);
-    virtual qResult _Send(Buffer* pBuffer, unsigned int uiFlags, bool bCopyPayload,
-        unsigned char uiSubStreamID, unsigned int uiKey);
+    virtual qResult _Connect(Buffer* pRequestData, Buffer* pResponseData, ConnectionCallback pCallback,
+                             const UserContext& rUserContext, unsigned int uiTimeout);
+    virtual qResult _Disconnect(ConnectionCallback pCallback, const UserContext& rUserContext, unsigned int uiTimeout);
+    virtual qResult _Send(Buffer* pBuffer, unsigned int uiFlags, bool bCopyPayload, unsigned char uiSubStreamID,
+                          unsigned int uiKey);
     virtual unsigned long long GetSupportedFunctionsFlags() const;
     virtual void SignalFaultEvent(unsigned int uiError, bool bProcessNow);
     virtual void SetEncryptionKey(const Key& rKey);
@@ -100,24 +99,19 @@ public:
 
     static void SetCalcRetransmissionTimeoutCallback(CalcRetransmissionTimeoutCallback pCallback);
 
-    static void SetHybridPartialFaultProcessingMode(bool bEnabled)
-    {
-        s_bHybridPartialFaultProcessingMode = bEnabled;
-    }
+    static void SetHybridPartialFaultProcessingMode(bool bEnabled) { s_bHybridPartialFaultProcessingMode = bEnabled; }
 
 private:
     friend class PRUDPStream;
 
-    typedef std::vector<PacketDispatchQueue*, MemAllocator<PacketDispatchQueue*> >
-        DispatchQueueVector;
+    typedef std::vector<PacketDispatchQueue*, MemAllocator<PacketDispatchQueue*> > DispatchQueueVector;
     typedef std::vector<SlidingWindow*, MemAllocator<SlidingWindow*> > SlidingWindowVector;
     typedef std::vector<Buffer*, MemAllocator<Buffer*> > BufferVector;
     typedef std::vector<unsigned char, MemAllocator<unsigned char> > FragmentIDVector;
     typedef std::vector<bool, MemAllocator<bool> > BitVector;
 
-    qResult Frag(Buffer* pBuffer, unsigned int uiBufferSize, unsigned int uiFragmentSize,
-        PacketType type, unsigned short uiFlags, bool bNotify, unsigned int uiKey,
-        unsigned char uiSubStreamID);
+    qResult Frag(Buffer* pBuffer, unsigned int uiBufferSize, unsigned int uiFragmentSize, PacketType type,
+                 unsigned short uiFlags, bool bNotify, unsigned int uiKey, unsigned char uiSubStreamID);
     bool Defrag(PacketIn* pPacket);
     void Dispatch(PacketIn* pPacket, Time receiveTime);
     void HandlerDispatch(Buffer* pBuffer, PacketIn* pPacket);
@@ -129,19 +123,16 @@ private:
     void SendAggregateACKNew();
     void SendAggregateACKOld();
     void SendResetDisconnectPacket();
-    void PacketAcknowledged(const Time& rTime, const SequenceClock& rSequence,
-        unsigned char uiSubStreamID);
+    void PacketAcknowledged(const Time& rTime, const SequenceClock& rSequence, unsigned char uiSubStreamID);
     void PacketAggregateAcknoledged(Packet* pPacket);
     void PacketAggregateAcknoledgedNew(Packet* pPacket);
     void PacketAggregateAcknoledgedOld(Packet* pPacket);
     void InitUnreliableSeq(PacketOut* pPacket);
     void DecideMaxUserReliableSubStreams(unsigned short uiMaxSubStreams);
-    PRUDPMessageInterface::SignatureMethod DecideSignatureMethod(const Packet* pPacket,
-        Stream::Type type, bool bFlag);
+    PRUDPMessageInterface::SignatureMethod DecideSignatureMethod(const Packet* pPacket, Stream::Type type, bool bFlag);
     bool CancelPacketTimeout(PacketOut* pPacket);
     unsigned int ComputeRetransmitTimeout(const PacketOut* pPacket);
-    float GetTimeoutMultiplier(unsigned short uiRetransmissions,
-        StreamSettings& rSettings) const;
+    float GetTimeoutMultiplier(unsigned short uiRetransmissions, StreamSettings& rSettings) const;
     void AdjustRTT(const Packet* pPacket, const PacketOut* pSentPacket);
     void AdjustRTT(const Time& rTime, const PacketOut* pSentPacket);
     void AnalyzeRttRto(unsigned int uiRTO);

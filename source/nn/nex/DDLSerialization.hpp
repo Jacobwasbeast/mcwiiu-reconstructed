@@ -33,10 +33,7 @@ public:
         pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource), sizeof(CPPType), 1);
     }
 
-    static void Extract(Message* pMessage, CPPType* pDestination)
-    {
-        pMessage->ExtractPrimitive(pDestination);
-    }
+    static void Extract(Message* pMessage, CPPType* pDestination) { pMessage->ExtractPrimitive(pDestination); }
 };
 
 class _Type_uint16
@@ -49,10 +46,7 @@ public:
         pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource), sizeof(CPPType), 1);
     }
 
-    static void Extract(Message* pMessage, CPPType* pDestination)
-    {
-        pMessage->ExtractPrimitive(pDestination);
-    }
+    static void Extract(Message* pMessage, CPPType* pDestination) { pMessage->ExtractPrimitive(pDestination); }
 };
 
 class _Type_uint32
@@ -65,10 +59,7 @@ public:
         pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource), sizeof(CPPType), 1);
     }
 
-    static void Extract(Message* pMessage, CPPType* pDestination)
-    {
-        pMessage->ExtractPrimitive(pDestination);
-    }
+    static void Extract(Message* pMessage, CPPType* pDestination) { pMessage->ExtractPrimitive(pDestination); }
 };
 
 class _Type_uint64
@@ -81,10 +72,7 @@ public:
         pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource), sizeof(CPPType), 1);
     }
 
-    static void Extract(Message* pMessage, CPPType* pDestination)
-    {
-        pMessage->ExtractPrimitive(pDestination);
-    }
+    static void Extract(Message* pMessage, CPPType* pDestination) { pMessage->ExtractPrimitive(pDestination); }
 };
 
 class _Type_float
@@ -97,10 +85,7 @@ public:
         pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource), sizeof(CPPType), 1);
     }
 
-    static void Extract(Message* pMessage, CPPType* pDestination)
-    {
-        pMessage->ExtractPrimitive(pDestination);
-    }
+    static void Extract(Message* pMessage, CPPType* pDestination) { pMessage->ExtractPrimitive(pDestination); }
 };
 
 class _Type_string
@@ -148,15 +133,13 @@ public:
 
     static void Add(Message* pMessage, const CPPType& rSource)
     {
-        AnyObjectAdapter<ObjectType, typename KeyType::CPPType>::s_pInstance->StreamIn(
-            pMessage, *rSource.GetObject());
+        AnyObjectAdapter<ObjectType, typename KeyType::CPPType>::s_pInstance->StreamIn(pMessage, *rSource.GetObject());
     }
 
     static void Extract(Message* pMessage, CPPType* pDestination)
     {
         ObjectType* pObject;
-        AnyObjectAdapter<ObjectType, typename KeyType::CPPType>::s_pInstance->StreamOut(
-            pMessage, &pObject);
+        AnyObjectAdapter<ObjectType, typename KeyType::CPPType>::s_pInstance->StreamOut(pMessage, &pObject);
         pDestination->SetObject(pObject);
     }
 };

@@ -15,14 +15,9 @@ class Message;
 class _DDL_DataStoreRatingInfo : public RootObject
 {
 public:
-    _DDL_DataStoreRatingInfo()
-        : m_uiStructureVersion(0)
-    {
-    }
+    _DDL_DataStoreRatingInfo() : m_uiStructureVersion(0) {}
 
-    virtual ~_DDL_DataStoreRatingInfo()
-    {
-    }
+    virtual ~_DDL_DataStoreRatingInfo() {}
 
     _DDL_DataStoreRatingInfo& operator=(const _DDL_DataStoreRatingInfo& rSource);
     bool operator==(const _DDL_DataStoreRatingInfo& rSource) const;

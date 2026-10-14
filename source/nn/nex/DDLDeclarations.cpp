@@ -16,8 +16,7 @@ PseudoGlobalVariable<DDLDeclarations*> DDLDeclarations::s_pFirstDeclarations(0);
 PseudoGlobalVariable<unsigned int> DDLDeclarations::s_uiNextDOClassID(FIRST_DYNAMIC_DO_CLASS_ID);
 PseudoGlobalVariable<DynamicRunTimeInterface*> DynamicRunTimeInterface::s_pInstance;
 
-DDLDeclarations::DDLDeclarations(bool bConstructionFlag)
-    : m_bConstructionFlag(bConstructionFlag)
+DDLDeclarations::DDLDeclarations(bool bConstructionFlag) : m_bConstructionFlag(bConstructionFlag)
 {
     m_bRegistered = false;
     m_iLoadCount = 0;
@@ -36,7 +35,8 @@ void DDLDeclarations::Load()
 
 void DDLDeclarations::LoadAll()
 {
-    for (DDLDeclarations* pDeclarations = s_pFirstDeclarations.Get(); pDeclarations != 0; pDeclarations = pDeclarations->m_pNext)
+    for (DDLDeclarations* pDeclarations = s_pFirstDeclarations.Get(); pDeclarations != 0;
+         pDeclarations = pDeclarations->m_pNext)
         pDeclarations->Load();
 }
 
@@ -66,7 +66,8 @@ void DDLDeclarations::UnregisterAll()
 
 void DDLDeclarations::UnloadAll()
 {
-    for (DDLDeclarations* pDeclarations = s_pFirstDeclarations.Get(); pDeclarations != 0; pDeclarations = pDeclarations->m_pNext)
+    for (DDLDeclarations* pDeclarations = s_pFirstDeclarations.Get(); pDeclarations != 0;
+         pDeclarations = pDeclarations->m_pNext)
         pDeclarations->Unload();
 
     UnregisterAll();

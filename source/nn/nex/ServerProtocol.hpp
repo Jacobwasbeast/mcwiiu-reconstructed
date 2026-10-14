@@ -14,38 +14,26 @@ public:
     explicit ServerProtocol(unsigned int uiFlags);
     virtual ~ServerProtocol();
 
-    virtual const wchar_t* GetType() const
-    {
-        return L"ServerProtocol";
-    }
+    virtual const wchar_t* GetType() const { return L"ServerProtocol"; }
 
     virtual bool IsAKindOf(const wchar_t* pType) const
     {
         return std::wcscmp(L"ServerProtocol", pType) == 0 || Protocol::IsAKindOf(pType);
     }
 
-    virtual void EnforceDeclareSysComponentMacro()
-    {
-    }
+    virtual void EnforceDeclareSysComponentMacro() {}
 
-    virtual _Type GetProtocolType() const
-    {
-        return TYPE_SERVER;
-    }
+    virtual _Type GetProtocolType() const { return TYPE_SERVER; }
 
-    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
-                                         bool* pResponseRequired, EndPoint* pEndPoint) = 0;
-    virtual void DispatchProtocolMessageWithAttemptCount(unsigned int uiAttemptCount,
-                                                         Message* pRequest, Message* pResponse,
-                                                         bool* pResponseRequired, int* pAttempt,
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse, bool* pResponseRequired,
+                                         EndPoint* pEndPoint) = 0;
+    virtual void DispatchProtocolMessageWithAttemptCount(unsigned int uiAttemptCount, Message* pRequest,
+                                                         Message* pResponse, bool* pResponseRequired, int* pAttempt,
                                                          EndPoint* pEndPoint)
     {
     }
 
-    virtual bool UseAttemptCountMethod()
-    {
-        return false;
-    }
+    virtual bool UseAttemptCountMethod() { return false; }
 
     void DispatchCallRequest(unsigned int uiAttemptCount, Message* pRequest, Message* pResponse,
                              bool* pResponseRequired, int* pAttempt, EndPoint* pEndPoint);

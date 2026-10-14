@@ -20,8 +20,7 @@ typedef _Type_any<DDLClassMetaType<Data>, _Type_string> NotificationDataAny;
 
 }
 
-_DDL_NintendoNotificationEvent& _DDL_NintendoNotificationEvent::operator=(
-    const _DDL_NintendoNotificationEvent& rSource)
+_DDL_NintendoNotificationEvent& _DDL_NintendoNotificationEvent::operator=(const _DDL_NintendoNotificationEvent& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_uiType = rSource.m_uiType;
@@ -30,8 +29,7 @@ _DDL_NintendoNotificationEvent& _DDL_NintendoNotificationEvent::operator=(
     return *this;
 }
 
-void _DDL_NintendoNotificationEvent::Add(Message* pMessage,
-                                         const _DDL_NintendoNotificationEvent& rSource)
+void _DDL_NintendoNotificationEvent::Add(Message* pMessage, const _DDL_NintendoNotificationEvent& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -61,8 +59,7 @@ void _DDL_NintendoNotificationEvent::Add(Message* pMessage,
     }
 }
 
-void _DDL_NintendoNotificationEvent::Extract(Message* pMessage,
-                                             _DDL_NintendoNotificationEvent* pDestination)
+void _DDL_NintendoNotificationEvent::Extract(Message* pMessage, _DDL_NintendoNotificationEvent* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

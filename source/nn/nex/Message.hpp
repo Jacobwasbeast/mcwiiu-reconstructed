@@ -35,10 +35,7 @@ public:
 
     void SetSourceEndPoint(EndPoint* pEndPoint);
 
-    bool IsCompactFormat() const
-    {
-        return m_bCompactFormat;
-    }
+    bool IsCompactFormat() const { return m_bCompactFormat; }
 
 protected:
     friend class ClientProtocol;

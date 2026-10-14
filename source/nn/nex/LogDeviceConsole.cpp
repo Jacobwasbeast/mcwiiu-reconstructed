@@ -7,8 +7,7 @@ namespace nn
 namespace nex
 {
 
-LogDeviceConsole::LogDeviceConsole(void* pHandle)
-    : m_pHandle(pHandle)
+LogDeviceConsole::LogDeviceConsole(void* pHandle) : m_pHandle(pHandle)
 {
     if (pHandle == 0)
     {

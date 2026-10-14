@@ -17,20 +17,14 @@ public:
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
 
-    virtual Protocol* CreateResponder() const
-    {
-        return new NintendoNotificationEventProtocolClient();
-    }
+    virtual Protocol* CreateResponder() const { return new NintendoNotificationEventProtocolClient(); }
 
-    static void ProtoReturn_ProcessNintendoNotificationEvent(Message* pMessage, ProtocolCallContext* pCallContext)
-    {
-    }
+    static void ProtoReturn_ProcessNintendoNotificationEvent(Message* pMessage, ProtocolCallContext* pCallContext) {}
 
     bool CallProcessNintendoNotificationEvent(ProtocolCallContext* pCallContext,
                                               const NintendoNotificationEvent& rEvent);
 
-    static bool ProcessNintendoNotificationEvent_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                Message* pMessage,
+    static bool ProcessNintendoNotificationEvent_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
                                                                 const NintendoNotificationEvent& rEvent);
 };
 

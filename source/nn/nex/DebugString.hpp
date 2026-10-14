@@ -11,13 +11,9 @@ class String;
 class DebugString
 {
 public:
-    DebugString(const String&)
-    {
-    }
+    DebugString(const String&) {}
 
-    DebugString(const wchar_t*)
-    {
-    }
+    DebugString(const wchar_t*) {}
 };
 
 }

@@ -33,21 +33,18 @@ public:
         SIGNATURE_METHOD_9 = 9
     };
 
-    virtual ~PRUDPMessageInterface()
-    {
-    }
+    virtual ~PRUDPMessageInterface() {}
 
-    virtual bool CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
-        Stream::Type type, TransportSignatureGenerator* pGenerator,
-        const SignatureBytes* pSignature, SignatureBytes& rResult) = 0;
-    virtual void CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey,
-        Stream::Type type, TransportSignatureGenerator* pGenerator,
-        const SignatureBytes* pSignature, SignatureBytes& rResult) = 0;
-    virtual SignatureMethod DecideSignatureMethod(const Packet* pPacket, Stream::Type type,
-        bool bFlag) = 0;
-    virtual int CalcExpectedSignature(const Packet* pPacket, SignatureMethod method,
-        const Key* pKey, TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
-        SignatureBytes& rResult) = 0;
+    virtual bool CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey, Stream::Type type,
+                               TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                               SignatureBytes& rResult) = 0;
+    virtual void CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey, Stream::Type type,
+                               TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                               SignatureBytes& rResult) = 0;
+    virtual SignatureMethod DecideSignatureMethod(const Packet* pPacket, Stream::Type type, bool bFlag) = 0;
+    virtual int CalcExpectedSignature(const Packet* pPacket, SignatureMethod method, const Key* pKey,
+                                      TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
+                                      SignatureBytes& rResult) = 0;
     virtual bool Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int* pConsumed) = 0;
     virtual bool FastUnpack(ByteStream* pStream, PacketIn* pPacket, unsigned int* pConsumed) = 0;
     virtual bool Pack(PacketOut* pPacket, ByteStream* pStream) = 0;

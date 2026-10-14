@@ -11,13 +11,9 @@ namespace nex
 class DataStoreGetNotificationUrlParam : public _DDL_DataStoreGetNotificationUrlParam
 {
 public:
-    DataStoreGetNotificationUrlParam()
-    {
-    }
+    DataStoreGetNotificationUrlParam() {}
 
-    virtual ~DataStoreGetNotificationUrlParam()
-    {
-    }
+    virtual ~DataStoreGetNotificationUrlParam() {}
 };
 
 }

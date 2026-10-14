@@ -17,8 +17,7 @@ const uint8_t RATE_OBJECT_PARAM_MAX_STRUCTURE_VERSION = 0;
 
 }
 
-_DDL_DataStoreRateObjectParam& _DDL_DataStoreRateObjectParam::operator=(
-    const _DDL_DataStoreRateObjectParam& rSource)
+_DDL_DataStoreRateObjectParam& _DDL_DataStoreRateObjectParam::operator=(const _DDL_DataStoreRateObjectParam& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;
     m_iRatingValue = rSource.m_iRatingValue;
@@ -26,8 +25,7 @@ _DDL_DataStoreRateObjectParam& _DDL_DataStoreRateObjectParam::operator=(
     return *this;
 }
 
-void _DDL_DataStoreRateObjectParam::Add(Message* pMessage,
-    const _DDL_DataStoreRateObjectParam& rSource)
+void _DDL_DataStoreRateObjectParam::Add(Message* pMessage, const _DDL_DataStoreRateObjectParam& rSource)
 {
     unsigned int uiSizePosition = 0;
     const bool bCompactFormat = pMessage->IsCompactFormat();
@@ -54,14 +52,12 @@ void _DDL_DataStoreRateObjectParam::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        _Type_uint32::Add(pMessage,
-            uiEndPosition - uiSizePosition - sizeof(uint32_t));
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
 
-void _DDL_DataStoreRateObjectParam::Extract(Message* pMessage,
-    _DDL_DataStoreRateObjectParam* pDestination)
+void _DDL_DataStoreRateObjectParam::Extract(Message* pMessage, _DDL_DataStoreRateObjectParam* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

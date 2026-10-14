@@ -36,12 +36,11 @@ _DDL_UserMessage& _DDL_UserMessage::operator=(const _DDL_UserMessage& rSource)
 
 bool _DDL_UserMessage::operator==(const _DDL_UserMessage& rSource) const
 {
-    return m_uiID == rSource.m_uiID && m_uiRecipientID == rSource.m_uiRecipientID &&
-           m_uiRecipientType == rSource.m_uiRecipientType &&
-           m_uiParentID == rSource.m_uiParentID && m_uiSenderID == rSource.m_uiSenderID &&
-           m_ReceptionTime == rSource.m_ReceptionTime && m_uiLifeTime == rSource.m_uiLifeTime &&
-           m_uiFlags == rSource.m_uiFlags && String::IsEqual(m_Subject, rSource.m_Subject) &&
-           String::IsEqual(m_SenderName, rSource.m_SenderName);
+    return m_uiID == rSource.m_uiID && m_uiRecipientID == rSource.m_uiRecipientID
+           && m_uiRecipientType == rSource.m_uiRecipientType && m_uiParentID == rSource.m_uiParentID
+           && m_uiSenderID == rSource.m_uiSenderID && m_ReceptionTime == rSource.m_ReceptionTime
+           && m_uiLifeTime == rSource.m_uiLifeTime && m_uiFlags == rSource.m_uiFlags
+           && String::IsEqual(m_Subject, rSource.m_Subject) && String::IsEqual(m_SenderName, rSource.m_SenderName);
 }
 
 void _DDL_UserMessage::Add(Message* pMessage, const _DDL_UserMessage& rSource)

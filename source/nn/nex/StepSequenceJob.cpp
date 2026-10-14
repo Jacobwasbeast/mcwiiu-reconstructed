@@ -14,11 +14,11 @@ namespace nex
 {
 
 StepSequenceJob::StepSequenceJob(JobType jobType, const DebugString& rDebugString)
-    : Job(jobType, rDebugString)
-    , m_stepStartTime(0)
-    , m_executionCount(0)
-    , m_step()
-    , m_traceData(0)
+    : Job(jobType, rDebugString),
+      m_stepStartTime(0),
+      m_executionCount(0),
+      m_step(),
+      m_traceData(0)
 {
 }
 

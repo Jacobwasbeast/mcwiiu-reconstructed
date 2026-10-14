@@ -15,8 +15,7 @@ namespace nn
 namespace nex
 {
 
-ServerProtocol::ServerProtocol(unsigned int uiFlags)
-    : Protocol(uiFlags)
+ServerProtocol::ServerProtocol(unsigned int uiFlags) : Protocol(uiFlags)
 {
 }
 
@@ -26,14 +25,12 @@ ServerProtocol::~ServerProtocol()
 
 void ServerProtocol::SetCallError(qResult result)
 {
-    CallProtocolMethodOperation* pOperation =
-        static_cast<CallProtocolMethodOperation*>(GetCurrentOperation());
+    CallProtocolMethodOperation* pOperation = static_cast<CallProtocolMethodOperation*>(GetCurrentOperation());
     pOperation->m_result = qResult(result);
 }
 
-void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* pRequest,
-                                         Message* pResponse, bool* pResponseRequired,
-                                         int* pAttempt, EndPoint* pEndPoint)
+void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* pRequest, Message* pResponse,
+                                         bool* pResponseRequired, int* pAttempt, EndPoint* pEndPoint)
 {
     if (pEndPoint == 0)
     {
@@ -50,8 +47,8 @@ void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* p
             uiAddress = pStationURL->GetInetAddress()->GetAddress();
         if (uiAddress == 0)
             uiAddress = SecurityContextManager::GetInstance()->GetCurrentAddress();
-        SecurityContextManager::GetInstance()->Push(pEndPoint->m_uiPrincipalID,
-                                                    pEndPoint->GetConnectionID(), uiAddress);
+        SecurityContextManager::GetInstance()->Push(pEndPoint->m_uiPrincipalID, pEndPoint->GetConnectionID(),
+                                                    uiAddress);
         SetIncomingConnection(pEndPoint);
     }
 
@@ -64,8 +61,8 @@ void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* p
     if (FlagIsSet(2))
     {
         if (UseAttemptCountMethod())
-            DispatchProtocolMessageWithAttemptCount(uiAttemptCount, pRequest, pResponse,
-                                                     pResponseRequired, pAttempt, pEndPoint);
+            DispatchProtocolMessageWithAttemptCount(uiAttemptCount, pRequest, pResponse, pResponseRequired, pAttempt,
+                                                    pEndPoint);
         else
             DispatchProtocolMessage(pRequest, pResponse, pResponseRequired, pEndPoint);
     }
@@ -73,8 +70,8 @@ void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* p
     {
         ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         if (UseAttemptCountMethod())
-            DispatchProtocolMessageWithAttemptCount(uiAttemptCount, pRequest, pResponse,
-                                                     pResponseRequired, pAttempt, pEndPoint);
+            DispatchProtocolMessageWithAttemptCount(uiAttemptCount, pRequest, pResponse, pResponseRequired, pAttempt,
+                                                    pEndPoint);
         else
             DispatchProtocolMessage(pRequest, pResponse, pResponseRequired, pEndPoint);
     }

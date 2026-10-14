@@ -14,28 +14,19 @@ class SecurityContext : public RootObject
 {
 public:
     SecurityContext(unsigned int uiPID, unsigned int uiCID, unsigned int uiAddress)
-        : m_uiPID(uiPID)
-        , m_uiCID(uiCID)
-        , m_uiAddress(uiAddress)
+        : m_uiPID(uiPID),
+          m_uiCID(uiCID),
+          m_uiAddress(uiAddress)
     {
     }
 
     virtual ~SecurityContext();
 
-    unsigned int GetPID() const
-    {
-        return m_uiPID;
-    }
+    unsigned int GetPID() const { return m_uiPID; }
 
-    unsigned int GetCID() const
-    {
-        return m_uiCID;
-    }
+    unsigned int GetCID() const { return m_uiCID; }
 
-    unsigned int GetAddress() const
-    {
-        return m_uiAddress;
-    }
+    unsigned int GetAddress() const { return m_uiAddress; }
 
 private:
     unsigned int m_uiPID;

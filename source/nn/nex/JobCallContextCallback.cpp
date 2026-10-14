@@ -23,8 +23,7 @@ enum CallContextResult
 
 }
 
-JobCallContextCallback::JobCallContextCallback(JobType jobType, const wchar_t* pName,
-    CallContext* pCallContext)
+JobCallContextCallback::JobCallContextCallback(JobType jobType, const wchar_t* pName, CallContext* pCallContext)
     : StepSequenceJob(jobType, DebugString(pName))
 {
     m_pCallContext = pCallContext;
@@ -50,8 +49,7 @@ bool JobCallContextCallback::StartJob()
 
     m_uiCallId = m_pCallContext->m_uiCallId;
     Scheduler::GetInstance()->Queue(this, false);
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_pJobCallContext->m_uiCallId);
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_pJobCallContext->m_uiCallId);
     SetStep(Step(static_cast<Step::Function>(&JobCallContextCallback::StepCallStart), L""));
     csScheduler.Leave();
     return true;
@@ -59,8 +57,7 @@ bool JobCallContextCallback::StartJob()
 
 void JobCallContextCallback::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (rResult)
@@ -85,8 +82,7 @@ void JobCallContextCallback::CompleteJob(const qResult& rResult)
 
 void JobCallContextCallback::StepCallStart()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(CALL_CONTEXT_RESULT_CONNECTION_LOST));
@@ -101,13 +97,12 @@ void JobCallContextCallback::StepCallStart()
 
     SetToSuspended();
     ResumeOnCallCompletion(m_pJobCallContext,
-        new Step(static_cast<Step::Function>(&JobCallContextCallback::StepCallCompletion), L""));
+                           new Step(static_cast<Step::Function>(&JobCallContextCallback::StepCallCompletion), L""));
 }
 
 void JobCallContextCallback::StepFinish()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(CALL_CONTEXT_RESULT_CONNECTION_LOST));

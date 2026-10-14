@@ -17,10 +17,7 @@ public:
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
 
-    virtual Protocol* CreateResponder() const
-    {
-        return new MonitoringProtocolClient();
-    }
+    virtual Protocol* CreateResponder() const { return new MonitoringProtocolClient(); }
 
     static void ProtoReturn_PingDaemon(Message* pMessage, ProtocolCallContext* pCallContext);
     bool CallPingDaemon(ProtocolCallContext* pCallContext, bool* pReturnValue);
@@ -28,7 +25,8 @@ public:
     bool CallGetClusterMembers(ProtocolCallContext* pCallContext, qList<String>* pClusterMembers);
 
     static bool PingDaemon_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pReturnValue);
-    static bool GetClusterMembers_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qList<String>* pClusterMembers);
+    static bool GetClusterMembers_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage,
+                                                 qList<String>* pClusterMembers);
 };
 
 }

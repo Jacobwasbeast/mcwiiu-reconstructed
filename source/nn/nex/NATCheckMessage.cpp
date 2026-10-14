@@ -9,11 +9,7 @@ namespace nn
 namespace nex
 {
 
-NATCheckMessage::NATCheckMessage()
-    : m_uiType(0)
-    , m_uiPortWord(0)
-    , m_uiAddress(0)
-    , m_uiTargetAddress(0)
+NATCheckMessage::NATCheckMessage() : m_uiType(0), m_uiPortWord(0), m_uiAddress(0), m_uiTargetAddress(0)
 {
 }
 

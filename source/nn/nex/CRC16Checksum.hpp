@@ -15,14 +15,11 @@ public:
     virtual ~CRC16Checksum();
 
     virtual bool ComputeChecksum(const Buffer& rBuffer, Buffer* pChecksum);
-    virtual bool ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths,
-        int iCount, SignatureBytes& rSignature);
-    virtual unsigned int ComputeChecksumForTransportArray(const unsigned char** ppData,
-        const unsigned int* pLengths, int iCount);
-    virtual unsigned char GetChecksumLength()
-    {
-        return 2;
-    }
+    virtual bool ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths, int iCount,
+                                 SignatureBytes& rSignature);
+    virtual unsigned int ComputeChecksumForTransportArray(const unsigned char** ppData, const unsigned int* pLengths,
+                                                          int iCount);
+    virtual unsigned char GetChecksumLength() { return 2; }
 };
 
 }

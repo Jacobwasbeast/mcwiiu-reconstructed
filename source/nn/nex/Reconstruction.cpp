@@ -43,10 +43,10 @@ bool s_bPersistentGatheringCodeKeySet = false;
 }
 
 MatchmakeExtensionClient::MatchmakeExtensionClient()
-    : MatchMakingClient()
-    , m_protocolRegistered(false)
-    , m_matchmakeExtensionProtocolClient(0)
-    , m_uiLastProgressScoreTime(0)
+    : MatchMakingClient(),
+      m_protocolRegistered(false),
+      m_matchmakeExtensionProtocolClient(0),
+      m_uiLastProgressScoreTime(0)
 {
     m_matchmakeExtensionProtocolClient.SetProtocolID(0x6d);
 }
@@ -102,14 +102,16 @@ bool MatchmakeExtensionClient::BrowseMatchmakeSession(ProtocolCallContext* pCall
                                                       const ResultRange& rRange,
                                                       qList<AnyObjectHolder<Gathering, String> >* pGatherings)
 {
-    return m_matchmakeExtensionProtocolClient.CallBrowseMatchmakeSession(pCallContext, rSearchCriteria, rRange, pGatherings);
+    return m_matchmakeExtensionProtocolClient.CallBrowseMatchmakeSession(pCallContext, rSearchCriteria, rRange,
+                                                                         pGatherings);
 }
 
 bool MatchmakeExtensionClient::CreateMatchmakeSession(ProtocolCallContext* pCallContext,
                                                       const CreateMatchmakeSessionParam& rParam,
                                                       MatchmakeSession* pCreatedSession)
 {
-    return m_matchmakeExtensionProtocolClient.CallCreateMatchmakeSessionWithParam(pCallContext, rParam, pCreatedSession);
+    return m_matchmakeExtensionProtocolClient.CallCreateMatchmakeSessionWithParam(pCallContext, rParam,
+                                                                                  pCreatedSession);
 }
 
 bool MatchmakeExtensionClient::JoinMatchmakeSession(ProtocolCallContext* pCallContext,
@@ -146,7 +148,7 @@ bool MatchmakeExtensionClient::UpdateMatchmakeSessionAttribute(ProtocolCallConte
         attributes.push_back(pAttributes[i]);
     }
     return m_matchmakeExtensionProtocolClient.CallUpdateMatchmakeSessionAttribute(pCallContext, uiGatheringID,
-                                                                                attributes);
+                                                                                  attributes);
 }
 
 bool MatchmakeExtensionClient::UpdateProgressScore(ProtocolCallContext* pCallContext, unsigned int uiGatheringID,
@@ -159,8 +161,8 @@ bool MatchmakeExtensionClient::UpdateProgressScore(ProtocolCallContext* pCallCon
         pCallContext->SignalFailure(qResult(RESULT_INVALID_ARGUMENT));
         return false;
     }
-    if (uiProgressScore != PROGRESS_SCORE_MIN && uiProgressScore != PROGRESS_SCORE_MAX &&
-        m_uiLastProgressScoreTime != 0)
+    if (uiProgressScore != PROGRESS_SCORE_MIN && uiProgressScore != PROGRESS_SCORE_MAX
+        && m_uiLastProgressScoreTime != 0)
     {
         const long long iElapsedTime = currentTime - m_uiLastProgressScoreTime;
         if (iElapsedTime < PROGRESS_SCORE_UPDATE_INTERVAL)
@@ -185,7 +187,7 @@ bool MatchmakeExtensionClient::UpdateApplicationBuffer(ProtocolCallContext* pCal
                                                        qVector<unsigned char> applicationBuffer)
 {
     return m_matchmakeExtensionProtocolClient.CallUpdateApplicationBuffer(pCallContext, uiGatheringID,
-                                                                        applicationBuffer);
+                                                                          applicationBuffer);
 }
 
 bool MatchmakeExtensionClient::UpdateMatchmakeSession(ProtocolCallContext* pCallContext,
@@ -198,7 +200,7 @@ bool MatchmakeExtensionClient::UpdateNotificationData(ProtocolCallContext* pCall
                                                       unsigned int uiParam1, unsigned int uiParam2, String strText)
 {
     return m_matchmakeExtensionProtocolClient.CallUpdateNotificationData(pCallContext, uiType, uiParam1, uiParam2,
-                                                                       strText);
+                                                                         strText);
 }
 
 bool MatchmakeExtensionClient::GetFriendNotificationData(ProtocolCallContext* pCallContext,
@@ -222,8 +224,7 @@ bool MatchmakeExtensionClient::RequestMatchmaking(ProtocolCallContext* pCallCont
 }
 
 bool MatchMakingClient::FindByOwner(ProtocolCallContext* pCallContext, unsigned int uiOwnerID,
-                                    const ResultRange& rRange,
-                                    qList<AnyObjectHolder<Gathering, String> >* pGatherings)
+                                    const ResultRange& rRange, qList<AnyObjectHolder<Gathering, String> >* pGatherings)
 {
     return m_matchMakingProtocolClient.CallFindByOwner(pCallContext, uiOwnerID, rRange, pGatherings);
 }
@@ -258,7 +259,8 @@ bool MatchmakeExtensionClient::FindOfficialPersistentGathering(ProtocolCallConte
                                                                const ResultRange& rRange,
                                                                qList<PersistentGathering>* pGatherings)
 {
-    return m_matchmakeExtensionProtocolClient.CallFindOfficialCommunity(pCallContext, pGatherings, bAvailableOnly, rRange);
+    return m_matchmakeExtensionProtocolClient.CallFindOfficialCommunity(pCallContext, pGatherings, bAvailableOnly,
+                                                                        rRange);
 }
 
 bool MatchmakeExtensionClient::FindPersistentGatheringByParticipant(ProtocolCallContext* pCallContext,
@@ -266,7 +268,8 @@ bool MatchmakeExtensionClient::FindPersistentGatheringByParticipant(ProtocolCall
                                                                     const ResultRange& rRange,
                                                                     qList<PersistentGathering>* pGatherings)
 {
-    return m_matchmakeExtensionProtocolClient.CallFindCommunityByParticipant(pCallContext, pGatherings, uiPrincipalID, rRange);
+    return m_matchmakeExtensionProtocolClient.CallFindCommunityByParticipant(pCallContext, pGatherings, uiPrincipalID,
+                                                                             rRange);
 }
 
 bool MatchmakeExtensionClient::FindMatchmakeSessionByGatheringIdDetail(ProtocolCallContext* pCallContext,
@@ -274,14 +277,14 @@ bool MatchmakeExtensionClient::FindMatchmakeSessionByGatheringIdDetail(ProtocolC
                                                                        MatchmakeSession* pMatchmakeSession)
 {
     return m_matchmakeExtensionProtocolClient.CallFindMatchmakeSessionByGatheringIdDetail(pCallContext, uiGatheringID,
-                                                                                         pMatchmakeSession);
+                                                                                          pMatchmakeSession);
 }
 
 bool MatchmakeExtensionClient::GenerateMatchmakeSessionSystemPassword(ProtocolCallContext* pCallContext,
                                                                       unsigned int uiGatheringID, String* pPassword)
 {
     return m_matchmakeExtensionProtocolClient.CallGenerateMatchmakeSessionSystemPassword(pCallContext, uiGatheringID,
-                                                                                        pPassword);
+                                                                                         pPassword);
 }
 
 bool MatchmakeExtensionClient::ClearMatchmakeSessionSystemPassword(ProtocolCallContext* pCallContext,
@@ -306,12 +309,14 @@ unsigned long long MatchmakeExtensionClient::GatheringIdToPersistentGatheringCod
 
 bool MatchmakeExtensionClient::IsValidPersistentGatheringCode(unsigned long long uiPersistentGatheringCode)
 {
-    return uiPersistentGatheringCode != 0 && uiPersistentGatheringCode <= PERSISTENT_GATHERING_CODE_MAX &&
-           GatheringIdToPersistentGatheringCode(static_cast<unsigned int>(uiPersistentGatheringCode & GATHERING_ID_MASK)) ==
-               uiPersistentGatheringCode;
+    return uiPersistentGatheringCode != 0 && uiPersistentGatheringCode <= PERSISTENT_GATHERING_CODE_MAX
+           && GatheringIdToPersistentGatheringCode(
+                  static_cast<unsigned int>(uiPersistentGatheringCode & GATHERING_ID_MASK))
+                  == uiPersistentGatheringCode;
 }
 
-unsigned int MatchmakeExtensionClient::PersistentGatheringCodeToGatheringId(unsigned long long uiPersistentGatheringCode)
+unsigned int MatchmakeExtensionClient::PersistentGatheringCodeToGatheringId(
+    unsigned long long uiPersistentGatheringCode)
 {
     unsigned int uiGatheringID = 0;
     if (IsValidPersistentGatheringCode(uiPersistentGatheringCode))

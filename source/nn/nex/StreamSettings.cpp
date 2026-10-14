@@ -14,9 +14,7 @@ namespace nex
 
 PseudoGlobalVariable<StreamSettings> g_streamSettings[StreamSettings::StreamTypeCount];
 
-StreamSettings::StreamSettings()
-    : m_bundling()
-    , m_encryptionKey()
+StreamSettings::StreamSettings() : m_bundling(), m_encryptionKey()
 {
     m_iStreamType = -1;
     m_ucKeyByteSum = 0;

@@ -65,8 +65,7 @@ void _DDL_DataStoreSpecificMetaInfoV1::Add(Message* pMessage, const _DDL_DataSto
     }
 }
 
-void _DDL_DataStoreSpecificMetaInfoV1::Extract(Message* pMessage,
-    _DDL_DataStoreSpecificMetaInfoV1* pDestination)
+void _DDL_DataStoreSpecificMetaInfoV1::Extract(Message* pMessage, _DDL_DataStoreSpecificMetaInfoV1* pDestination)
 {
     pDestination->m_uiStructureVersion = 0;
 

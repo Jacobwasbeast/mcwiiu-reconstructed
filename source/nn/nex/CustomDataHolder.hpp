@@ -14,24 +14,13 @@ template <typename T>
 class CustomDataHolder : public AnyObjectHolder<Data, String>
 {
 public:
-    explicit CustomDataHolder(T* pObject = 0)
-        : AnyObjectHolder<Data, String>(pObject)
-    {
-    }
+    explicit CustomDataHolder(T* pObject = 0) : AnyObjectHolder<Data, String>(pObject) {}
 
-    CustomDataHolder(const CustomDataHolder<T>& rOther)
-        : AnyObjectHolder<Data, String>(rOther)
-    {
-    }
+    CustomDataHolder(const CustomDataHolder<T>& rOther) : AnyObjectHolder<Data, String>(rOther) {}
 
-    virtual ~CustomDataHolder()
-    {
-    }
+    virtual ~CustomDataHolder() {}
 
-    T* GetObject() const
-    {
-        return static_cast<T*>(this->m_pObject);
-    }
+    T* GetObject() const { return static_cast<T*>(this->m_pObject); }
 };
 
 }

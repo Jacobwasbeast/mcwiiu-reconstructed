@@ -40,21 +40,20 @@ class JobDataStoreReceiveNewArrivedObjects : public StepSequenceJob
 {
 public:
     typedef bool (DataStoreClientInterface::*GetObjectFunction)(ProtocolCallContext* pContext,
-        const typename TTraits::TPrepareGetParam& rParam,
-        typename TTraits::TGetObjectEventListener* pListener);
+                                                                const typename TTraits::TPrepareGetParam& rParam,
+                                                                typename TTraits::TGetObjectEventListener* pListener);
 
     JobDataStoreReceiveNewArrivedObjects();
     virtual ~JobDataStoreReceiveNewArrivedObjects();
 
     virtual qResult Initialize(unsigned int uiCallId, DataStoreClientInterface* pClient,
-        DataStoreLogicServerClientInterface* pLogicServerClient, unsigned int uiThreadPriority,
-        bool bUseHttps, unsigned int uiPrincipalId, const unsigned char* pNotificationBuffer,
-        qVector<typename TTraits::TGetObjectEventListener*> getObjectListeners,
-        typename TTraits::TReceiveNewArrivedObjectsEventListener* pListener, bool* pbHasNext);
-    virtual qResult Initialize(unsigned int uiCallId, DataStoreClientInterface* pClient,
-        unsigned int uiThreadPriority, unsigned int uiPrincipalId,
-        const unsigned char* pNotificationBuffer,
-        typename TTraits::TReceiveNewArrivedObjectsEventListener* pListener, bool* pbHasNext);
+                               DataStoreLogicServerClientInterface* pLogicServerClient, unsigned int uiThreadPriority,
+                               bool bUseHttps, unsigned int uiPrincipalId, const unsigned char* pNotificationBuffer,
+                               qVector<typename TTraits::TGetObjectEventListener*> getObjectListeners,
+                               typename TTraits::TReceiveNewArrivedObjectsEventListener* pListener, bool* pbHasNext);
+    virtual qResult Initialize(unsigned int uiCallId, DataStoreClientInterface* pClient, unsigned int uiThreadPriority,
+                               unsigned int uiPrincipalId, const unsigned char* pNotificationBuffer,
+                               typename TTraits::TReceiveNewArrivedObjectsEventListener* pListener, bool* pbHasNext);
 
     void CompleteJob(const qResult& rResult);
     void StepCheckNotification();
@@ -112,31 +111,31 @@ private:
 
 template <typename TTraits>
 JobDataStoreReceiveNewArrivedObjects<TTraits>::JobDataStoreReceiveNewArrivedObjects()
-    : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
-    , m_uiCallId(0)
-    , m_pClient(0)
-    , m_pLogicServerClient(0)
-    , m_bUseHttps(true)
-    , m_uiThreadPriority(0)
-    , m_context()
-    , m_uiLastDataId(0)
-    , m_notificationUrl(L"")
-    , m_uiSequence(0)
-    , m_uiPrincipalId(0)
-    , m_notifications()
-    , m_checkToken()
-    , m_nextCheckToken()
-    , m_getObjectListeners()
-    , m_pListener(0)
-    , m_uiGetObjectListenerIndex(0)
-    , m_uiNotificationIndex(0)
-    , m_pbHasNext(0)
-    , m_metaInfos()
-    , m_bUrlRequestFailed(false)
-    , m_pAdaptor(0)
-    , m_bCheckNewArrivalOnly(false)
-    , m_pbHasNewArrival(0)
-    , m_bNoCheckToken(false)
+    : StepSequenceJob(JOB_TYPE_2, DebugString(L"")),
+      m_uiCallId(0),
+      m_pClient(0),
+      m_pLogicServerClient(0),
+      m_bUseHttps(true),
+      m_uiThreadPriority(0),
+      m_context(),
+      m_uiLastDataId(0),
+      m_notificationUrl(L""),
+      m_uiSequence(0),
+      m_uiPrincipalId(0),
+      m_notifications(),
+      m_checkToken(),
+      m_nextCheckToken(),
+      m_getObjectListeners(),
+      m_pListener(0),
+      m_uiGetObjectListenerIndex(0),
+      m_uiNotificationIndex(0),
+      m_pbHasNext(0),
+      m_metaInfos(),
+      m_bUrlRequestFailed(false),
+      m_pAdaptor(0),
+      m_bCheckNewArrivalOnly(false),
+      m_pbHasNewArrival(0),
+      m_bNoCheckToken(false)
 {
 }
 
@@ -147,10 +146,9 @@ JobDataStoreReceiveNewArrivedObjects<TTraits>::~JobDataStoreReceiveNewArrivedObj
 }
 
 template <typename TTraits>
-qResult JobDataStoreReceiveNewArrivedObjects<TTraits>::Initialize(unsigned int uiCallId,
-    DataStoreClientInterface* pClient, DataStoreLogicServerClientInterface* pLogicServerClient,
-    unsigned int uiThreadPriority, bool bUseHttps, unsigned int uiPrincipalId,
-    const unsigned char* pNotificationBuffer,
+qResult JobDataStoreReceiveNewArrivedObjects<TTraits>::Initialize(
+    unsigned int uiCallId, DataStoreClientInterface* pClient, DataStoreLogicServerClientInterface* pLogicServerClient,
+    unsigned int uiThreadPriority, bool bUseHttps, unsigned int uiPrincipalId, const unsigned char* pNotificationBuffer,
     qVector<typename TTraits::TGetObjectEventListener*> getObjectListeners,
     typename TTraits::TReceiveNewArrivedObjectsEventListener* pListener, bool* pbHasNext)
 {
@@ -187,20 +185,17 @@ qResult JobDataStoreReceiveNewArrivedObjects<TTraits>::Initialize(unsigned int u
     }
 
     m_nextCheckToken = m_checkToken;
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     m_context.SetCredentials(static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
-    SetStep(Step(static_cast<Step::Function>(
-                     &JobDataStoreReceiveNewArrivedObjects::StepCheckNotification),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepCheckNotification), L""));
     return qResult(true);
 }
 
 template <typename TTraits>
-qResult JobDataStoreReceiveNewArrivedObjects<TTraits>::Initialize(unsigned int uiCallId,
-    DataStoreClientInterface* pClient, unsigned int uiThreadPriority, unsigned int uiPrincipalId,
-    const unsigned char* pNotificationBuffer,
-    typename TTraits::TReceiveNewArrivedObjectsEventListener* pListener, bool* pbHasNext)
+qResult JobDataStoreReceiveNewArrivedObjects<TTraits>::Initialize(
+    unsigned int uiCallId, DataStoreClientInterface* pClient, unsigned int uiThreadPriority, unsigned int uiPrincipalId,
+    const unsigned char* pNotificationBuffer, typename TTraits::TReceiveNewArrivedObjectsEventListener* pListener,
+    bool* pbHasNext)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_uiCallId = uiCallId;
@@ -236,20 +231,16 @@ qResult JobDataStoreReceiveNewArrivedObjects<TTraits>::Initialize(unsigned int u
     }
 
     m_nextCheckToken = m_checkToken;
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     m_context.SetCredentials(static_cast<ProtocolCallContext*>(pCallContext)->GetCredentials());
-    SetStep(Step(static_cast<Step::Function>(
-                     &JobDataStoreReceiveNewArrivedObjects::StepCheckNotification),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepCheckNotification), L""));
     return qResult(true);
 }
 
 template <typename TTraits>
 void JobDataStoreReceiveNewArrivedObjects<TTraits>::CompleteJob(const qResult& rResult)
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
     {
         if (rResult)
@@ -268,8 +259,7 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::CompleteJob(const qResult& r
 template <typename TTraits>
 void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepCheckNotification()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -277,29 +267,27 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepCheckNotification()
     }
 
     m_context.Reset();
-    if (!m_pClient->CheckNotification(&m_context, String(m_checkToken.m_szNotificationUrl),
-            &m_notificationUrl, m_checkToken.m_uiLastNotificationId, &m_uiLastDataId,
-            m_checkToken.m_uiSequence, &m_uiSequence, m_uiPrincipalId, &m_bUrlRequestFailed,
-            m_checkToken.m_uiFailureCount >= FORCE_URL_REQUEST_FAILURE_COUNT))
+    if (!m_pClient->CheckNotification(&m_context, String(m_checkToken.m_szNotificationUrl), &m_notificationUrl,
+                                      m_checkToken.m_uiLastNotificationId, &m_uiLastDataId, m_checkToken.m_uiSequence,
+                                      &m_uiSequence, m_uiPrincipalId, &m_bUrlRequestFailed,
+                                      m_checkToken.m_uiFailureCount >= FORCE_URL_REQUEST_FAILURE_COUNT))
     {
         CompleteJob(qResult(RESULT_CORE_CALL_FAILED));
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreReceiveNewArrivedObjects::StepWaitingCheckNotification),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context,
+        new Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepWaitingCheckNotification),
+                 L""));
 }
 
 template <typename TTraits>
 void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingCheckNotification()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -327,8 +315,7 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingCheckNotification
         {
             m_nextCheckToken.m_uiLastNotificationId = m_uiLastDataId;
             m_nextCheckToken.UpdateChecksum();
-            memset(m_nextCheckToken.m_szNotificationUrl, 0,
-                sizeof(m_nextCheckToken.m_szNotificationUrl));
+            memset(m_nextCheckToken.m_szNotificationUrl, 0, sizeof(m_nextCheckToken.m_szNotificationUrl));
             char* pNotificationUrl = 0;
             m_notificationUrl.CreateCopy(&pNotificationUrl);
             strcpy(m_nextCheckToken.m_szNotificationUrl, pNotificationUrl);
@@ -336,8 +323,8 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingCheckNotification
             m_nextCheckToken.UpdateChecksum();
             m_nextCheckToken.m_uiSequence = m_uiSequence;
             m_nextCheckToken.UpdateChecksum();
-            m_pListener->UpdateCheckToken(reinterpret_cast<const unsigned char*>(&m_nextCheckToken),
-                0, m_nextCheckToken.m_uiLastNotificationId);
+            m_pListener->UpdateCheckToken(reinterpret_cast<const unsigned char*>(&m_nextCheckToken), 0,
+                                          m_nextCheckToken.m_uiLastNotificationId);
             CompleteJob(qResult(RESULT_SUCCESS));
             return;
         }
@@ -351,8 +338,7 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingCheckNotification
 
         if (!String::IsEqual(String(m_checkToken.m_szNotificationUrl), m_notificationUrl))
         {
-            memset(m_nextCheckToken.m_szNotificationUrl, 0,
-                sizeof(m_nextCheckToken.m_szNotificationUrl));
+            memset(m_nextCheckToken.m_szNotificationUrl, 0, sizeof(m_nextCheckToken.m_szNotificationUrl));
             char* pNotificationUrl = 0;
             m_notificationUrl.CreateCopy(&pNotificationUrl);
             strcpy(m_nextCheckToken.m_szNotificationUrl, pNotificationUrl);
@@ -377,7 +363,7 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingCheckNotification
 
     if (bCheckTokenUpdated)
         m_pListener->UpdateCheckToken(reinterpret_cast<const unsigned char*>(&m_nextCheckToken), 0,
-            m_nextCheckToken.m_uiLastNotificationId);
+                                      m_nextCheckToken.m_uiLastNotificationId);
 
     if (bNoNewArrival || m_bCheckNewArrivalOnly)
     {
@@ -385,16 +371,14 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingCheckNotification
         return;
     }
 
-    SetStep(Step(static_cast<Step::Function>(
-                     &JobDataStoreReceiveNewArrivedObjects::StepGetNewArrivedNotifications),
-        L""));
+    SetStep(
+        Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepGetNewArrivedNotifications), L""));
 }
 
 template <typename TTraits>
 void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepGetNewArrivedNotifications()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -404,27 +388,24 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepGetNewArrivedNotificatio
     DataStoreGetNewArrivedNotificationsParam param;
     param.m_uiLastNotificationId = m_checkToken.m_uiLastNotificationId;
     param.m_uiLimit = static_cast<uint16_t>(m_getObjectListeners.size());
-    if (!m_pLogicServerClient->GetNewArrivedNotifications(&m_context, param, &m_notifications,
-            m_pbHasNext))
+    if (!m_pLogicServerClient->GetNewArrivedNotifications(&m_context, param, &m_notifications, m_pbHasNext))
     {
         CompleteJob(qResult(RESULT_CORE_CALL_FAILED));
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
     ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreReceiveNewArrivedObjects::StepWaitingGetNewArrivedNotifications),
-            L""));
+                           new Step(static_cast<Step::Function>(
+                                        &JobDataStoreReceiveNewArrivedObjects::StepWaitingGetNewArrivedNotifications),
+                                    L""));
 }
 
 template <typename TTraits>
 void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingGetNewArrivedNotifications()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -447,20 +428,17 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingGetNewArrivedNoti
         m_nextCheckToken.m_uiLastNotificationId = m_uiLastDataId;
         m_nextCheckToken.UpdateChecksum();
         m_pListener->UpdateCheckToken(reinterpret_cast<const unsigned char*>(&m_nextCheckToken), 0,
-            m_nextCheckToken.m_uiLastNotificationId);
+                                      m_nextCheckToken.m_uiLastNotificationId);
         CompleteJob(qResult(RESULT_SUCCESS));
     }
 
-    SetStep(Step(static_cast<Step::Function>(
-                     &JobDataStoreReceiveNewArrivedObjects::StepGetSpecificMeta),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepGetSpecificMeta), L""));
 }
 
 template <typename TTraits>
 void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepGetSpecificMeta()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -477,9 +455,7 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepGetSpecificMeta()
 
     if (param.m_DataIds.size() == 0)
     {
-        SetStep(Step(static_cast<Step::Function>(
-                         &JobDataStoreReceiveNewArrivedObjects::StepGetObject),
-            L""));
+        SetStep(Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepGetObject), L""));
         return;
     }
 
@@ -489,20 +465,17 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepGetSpecificMeta()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreReceiveNewArrivedObjects::StepWaitingGetSpecificMeta),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context,
+        new Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepWaitingGetSpecificMeta), L""));
 }
 
 template <typename TTraits>
 void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingGetSpecificMeta()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -515,23 +488,20 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingGetSpecificMeta()
         return;
     }
 
-    SetStep(Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepGetObject),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepGetObject), L""));
 }
 
 template <typename TTraits>
 void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepGetObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
         return;
     }
 
-    if (m_uiGetObjectListenerIndex > m_getObjectListeners.size()
-        || m_notifications.size() == m_uiNotificationIndex)
+    if (m_uiGetObjectListenerIndex > m_getObjectListeners.size() || m_notifications.size() == m_uiNotificationIndex)
     {
         CompleteJob(qResult(RESULT_SUCCESS));
         return;
@@ -551,11 +521,10 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepGetObject()
 
     if (!bFound)
     {
-        m_nextCheckToken.m_uiLastNotificationId =
-            m_notifications.at(m_uiNotificationIndex).m_uiNotificationId;
+        m_nextCheckToken.m_uiLastNotificationId = m_notifications.at(m_uiNotificationIndex).m_uiNotificationId;
         m_nextCheckToken.UpdateChecksum();
         m_pListener->UpdateCheckToken(reinterpret_cast<const unsigned char*>(&m_nextCheckToken), 0,
-            m_nextCheckToken.m_uiLastNotificationId);
+                                      m_nextCheckToken.m_uiLastNotificationId);
         pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
         if (pCallContext == 0)
         {
@@ -567,9 +536,8 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepGetObject()
         return;
     }
 
-    m_pListener->BeginObject(metaInfo.m_uiDataId, metaInfo.m_uiOwnerId, metaInfo.m_uiSize,
-        metaInfo.m_uiDataType, metaInfo.m_uiVersion,
-        m_notifications.at(m_uiNotificationIndex).m_uiNotificationId);
+    m_pListener->BeginObject(metaInfo.m_uiDataId, metaInfo.m_uiOwnerId, metaInfo.m_uiSize, metaInfo.m_uiDataType,
+                             metaInfo.m_uiVersion, m_notifications.at(m_uiNotificationIndex).m_uiNotificationId);
     pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
@@ -588,20 +556,17 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepGetObject()
         return;
     }
 
-    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
-        m_context.GetCallID());
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId, m_context.GetCallID());
     SetToSuspended();
-    ResumeOnCallCompletion(&m_context,
-        new Step(static_cast<Step::Function>(
-                     &JobDataStoreReceiveNewArrivedObjects::StepWaitingGetObject),
-            L""));
+    ResumeOnCallCompletion(
+        &m_context,
+        new Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepWaitingGetObject), L""));
 }
 
 template <typename TTraits>
 void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingGetObject()
 {
-    CallContext* pCallContext =
-        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext == 0)
     {
         CompleteJob(qResult(RESULT_CORE_OPERATION_ABORTED));
@@ -618,8 +583,7 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingGetObject()
     if (m_context.GetState() != CallContext::CallSucceeded)
     {
         qResult result = m_context.GetResult();
-        if (result.GetFacility() == FACILITY_DATASTORE
-            && result != static_cast<int>(RESULT_DATASTORE_UNKNOWN))
+        if (result.GetFacility() == FACILITY_DATASTORE && result != static_cast<int>(RESULT_DATASTORE_UNKNOWN))
         {
             bSkipped = true;
         }
@@ -630,18 +594,16 @@ void JobDataStoreReceiveNewArrivedObjects<TTraits>::StepWaitingGetObject()
         }
     }
 
-    m_nextCheckToken.m_uiLastNotificationId =
-        m_notifications.at(m_uiNotificationIndex).m_uiNotificationId;
+    m_nextCheckToken.m_uiLastNotificationId = m_notifications.at(m_uiNotificationIndex).m_uiNotificationId;
     m_nextCheckToken.UpdateChecksum();
     m_pListener->UpdateCheckToken(reinterpret_cast<const unsigned char*>(&m_nextCheckToken),
-        bSkipped ? 0 : m_getObjectListeners.at(m_uiGetObjectListenerIndex),
-        m_nextCheckToken.m_uiLastNotificationId);
+                                  bSkipped ? 0 : m_getObjectListeners.at(m_uiGetObjectListenerIndex),
+                                  m_nextCheckToken.m_uiLastNotificationId);
     if (!bSkipped)
         ++m_uiGetObjectListenerIndex;
 
     ++m_uiNotificationIndex;
-    SetStep(Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepGetObject),
-        L""));
+    SetStep(Step(static_cast<Step::Function>(&JobDataStoreReceiveNewArrivedObjects::StepGetObject), L""));
 }
 
 }

@@ -40,12 +40,12 @@ NintendoNotificationEventProtocolClient::NintendoNotificationEventProtocolClient
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new NintendoNotificationEventProtocolClient());
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(uiProtocolID,
+                                                                         new NintendoNotificationEventProtocolClient());
 }
 
 void NintendoNotificationEventProtocolClient::ExtractCallSpecificResults(Message* pMessage,
-                                                                          ProtocolCallContext* pCallContext)
+                                                                         ProtocolCallContext* pCallContext)
 {
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID < 1 || uiMethodID >= METHOD_ID_COUNT)
@@ -57,8 +57,8 @@ void NintendoNotificationEventProtocolClient::ExtractCallSpecificResults(Message
         s_ProtoReturn[uiMethodID](pMessage, pCallContext);
 }
 
-bool NintendoNotificationEventProtocolClient::CallProcessNintendoNotificationEvent(ProtocolCallContext* pCallContext,
-                                                                                    const NintendoNotificationEvent& rEvent)
+bool NintendoNotificationEventProtocolClient::CallProcessNintendoNotificationEvent(
+    ProtocolCallContext* pCallContext, const NintendoNotificationEvent& rEvent)
 {
     Message message;
     Scheduler* pScheduler = Scheduler::GetInstance();
@@ -82,9 +82,8 @@ bool NintendoNotificationEventProtocolClient::CallProcessNintendoNotificationEve
     return bSent;
 }
 
-bool NintendoNotificationEventProtocolClient::ProcessNintendoNotificationEvent_PrepareRequest(ProtocolCallContext* pCallContext,
-                                                                                                Message* pMessage,
-                                                                                                const NintendoNotificationEvent& rEvent)
+bool NintendoNotificationEventProtocolClient::ProcessNintendoNotificationEvent_PrepareRequest(
+    ProtocolCallContext* pCallContext, Message* pMessage, const NintendoNotificationEvent& rEvent)
 {
     Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();

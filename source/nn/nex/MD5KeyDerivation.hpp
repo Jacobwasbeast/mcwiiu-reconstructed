@@ -16,7 +16,8 @@ public:
     virtual ~MD5KeyDerivation();
 
     virtual Key CreateKey(unsigned int uiPrincipalID, const char* pPassword);
-    virtual bool CreateKey(CallContext* pCallContext, unsigned int uiPrincipalID, const char* pPassword, Key* pKey, KeyCache* pKeyCache);
+    virtual bool CreateKey(CallContext* pCallContext, unsigned int uiPrincipalID, const char* pPassword, Key* pKey,
+                           KeyCache* pKeyCache);
     virtual Key InitializeKey(const char* pPassword);
     virtual bool InitializeKey(CallContext* pCallContext, const char* pPassword, Key* pKey);
     virtual Key FinalizeKey(unsigned int uiPrincipalID, const Key& rKey);

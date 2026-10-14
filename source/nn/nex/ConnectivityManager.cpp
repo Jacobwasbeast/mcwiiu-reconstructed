@@ -59,8 +59,7 @@ const unsigned int BOSS_DAEMONS = 3;
 bool ConnectivityManager::s_suspendBossDaemonOnNATSession = true;
 bool ConnectivityManager::s_enableRelayOnNATSession = false;
 
-ConnectivityManager::ConnectivityManager()
-    : PseudoSingleton(ClassID)
+ConnectivityManager::ConnectivityManager() : PseudoSingleton(ClassID)
 {
     m_natSessionStarted = false;
     m_natTraversalEnabled = true;
@@ -79,8 +78,7 @@ ConnectivityManager::~ConnectivityManager()
     {
         ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 
-        CallContext* pCallContext =
-            Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_callContextId);
+        CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_callContextId);
         if (pCallContext != 0 && pCallContext->GetState() == CallContext::CallInProgress)
             pCallContext->SignalFailure(qResult(RESULT_CORE_OPERATION_ABORTED));
     }
@@ -189,8 +187,8 @@ bool ConnectivityManager::StartNATSessionInternal(CallContext* callContext)
         address.SetPortNumber(m_portNumber);
         pRelay->DetectSimplifiedNATProperties(pCheckContext, address);
     }
-    else if (RootTransport::GetInstance()->GetNATProperties().GetNATMapping() ==
-             NATProperties::MAPPING_ENDPOINT_DEPENDENT)
+    else if (RootTransport::GetInstance()->GetNATProperties().GetNATMapping()
+             == NATProperties::MAPPING_ENDPOINT_DEPENDENT)
     {
         OnStartNATSession(0);
     }
@@ -212,11 +210,11 @@ bool ConnectivityManager::StartNATSessionInternal(CallContext* callContext)
         pRelay->CheckCurrentPublicPort(pCheckContext, address, false);
     }
 
-    if (s_suspendBossDaemonOnNATSession &&
-        (RootTransport::GetInstance()->GetNATProperties().GetNATMapping() !=
-             NATProperties::MAPPING_ENDPOINT_DEPENDENT ||
-         m_natSessionStarted) &&
-        ndm::Initialize().IsSuccess())
+    if (s_suspendBossDaemonOnNATSession
+        && (RootTransport::GetInstance()->GetNATProperties().GetNATMapping()
+                != NATProperties::MAPPING_ENDPOINT_DEPENDENT
+            || m_natSessionStarted)
+        && ndm::Initialize().IsSuccess())
     {
         ndm::SuspendDaemons(BOSS_DAEMONS);
         ++m_bossDaemonSuspendCount;
@@ -308,10 +306,9 @@ void ConnectivityManager::SetRelayPublicAddress()
 void ConnectivityManager::OnStartNATSession(CallContext* callContext)
 {
     bool useInterfacePort = false;
-    if (RootTransport::GetInstance() != 0 &&
-        RootTransport::GetInstance()->GetNATProperties().GetInterfacePort() != 0 &&
-        RootTransport::GetInstance()->GetNATProperties().GetNATMapping() !=
-            NATProperties::MAPPING_ENDPOINT_DEPENDENT)
+    if (RootTransport::GetInstance() != 0 && RootTransport::GetInstance()->GetNATProperties().GetInterfacePort() != 0
+        && RootTransport::GetInstance()->GetNATProperties().GetNATMapping()
+               != NATProperties::MAPPING_ENDPOINT_DEPENDENT)
     {
         useInterfacePort = true;
     }
@@ -325,9 +322,9 @@ void ConnectivityManager::OnStartNATSession(CallContext* callContext)
 
     CallContext* pCallContext = Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_callContextId);
 
-    if ((callContext != 0 && callContext->GetState() != CallContext::CallSucceeded) ||
-        Network::GetInstance() == 0 || RootTransport::GetInstance() == 0 ||
-        !RootTransport::GetInstance()->StartListenReuse(m_portNumber, 0, true, 0, true))
+    if ((callContext != 0 && callContext->GetState() != CallContext::CallSucceeded) || Network::GetInstance() == 0
+        || RootTransport::GetInstance() == 0
+        || !RootTransport::GetInstance()->StartListenReuse(m_portNumber, 0, true, 0, true))
     {
         m_natSessionStarted = false;
 
@@ -373,8 +370,8 @@ void ConnectivityManager::OnStartNATSession(CallContext* callContext)
 
 void StartNATSessionCallback(nn::nex::CallContext* pCallContext, const nn::nex::UserContext* pUserContext)
 {
-    nn::nex::ConnectivityManager* pConnectivityManager =
-        static_cast<nn::nex::ConnectivityManager*>(pUserContext->GetPointer());
+    nn::nex::ConnectivityManager* pConnectivityManager = static_cast<nn::nex::ConnectivityManager*>(
+        pUserContext->GetPointer());
     if (pConnectivityManager == nn::nex::ConnectivityManager::GetInstanceWithoutNetworkCheck())
         pConnectivityManager->OnStartNATSession(pCallContext);
 }

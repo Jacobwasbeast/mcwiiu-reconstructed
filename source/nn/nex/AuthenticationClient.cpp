@@ -23,11 +23,11 @@ const unsigned int LOGIN_TIMEOUT = 30000;
 }
 
 AuthenticationClient::AuthenticationClient()
-    : ServiceClient(AUTHENTICATION_SERVICE_ID)
-    , m_pTicketGrantingProtocolClient(0)
-    , m_pKerberosEncryption(0)
-    , m_pTicketManager(0)
-    , m_loginDeadline(0)
+    : ServiceClient(AUTHENTICATION_SERVICE_ID),
+      m_pTicketGrantingProtocolClient(0),
+      m_pKerberosEncryption(0),
+      m_pTicketManager(0),
+      m_loginDeadline(0)
 {
     m_pKerberosEncryption = new KerberosEncryption;
     m_pTicketManager = new TicketManager(this);
@@ -36,8 +36,7 @@ AuthenticationClient::AuthenticationClient()
     m_uiPrincipalID = 0;
     m_loginDeadline = Time::ConvertTimeoutToDeadline(LOGIN_TIMEOUT);
     AnyDataAdapter::Register();
-    GetProtocolRegistry()->RegisterProtocol(TICKET_GRANTING_PROTOCOL_ID,
-        new TicketGrantingProtocolClient());
+    GetProtocolRegistry()->RegisterProtocol(TICKET_GRANTING_PROTOCOL_ID, new TicketGrantingProtocolClient());
 }
 
 AuthenticationClient::~AuthenticationClient()
@@ -48,22 +47,21 @@ AuthenticationClient::~AuthenticationClient()
     AnyDataAdapter::Unregister();
 }
 
-bool AuthenticationClient::Login(ProtocolCallContext* pCallContext, qResult* pResult,
-    const String& rUserName, const char* pPassword, RVConnectionData* pConnectionData,
-    String* pReturnMessage, AnyObjectHolder<Data, String>* pCustomData)
+bool AuthenticationClient::Login(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName,
+                                 const char* pPassword, RVConnectionData* pConnectionData, String* pReturnMessage,
+                                 AnyObjectHolder<Data, String>* pCustomData)
 {
     m_loginDeadline = pCallContext->m_expirationTime;
-    return m_pTicketManager->Login(pCallContext, pResult, rUserName, pPassword, &m_uiPrincipalID,
-        pConnectionData, pReturnMessage, pCustomData);
+    return m_pTicketManager->Login(pCallContext, pResult, rUserName, pPassword, &m_uiPrincipalID, pConnectionData,
+                                   pReturnMessage, pCustomData);
 }
 
-bool AuthenticationClient::LoginWithData(ProtocolCallContext* pCallContext, qResult* pResult,
-    const char* pPassword, RVConnectionData* pConnectionData,
-    CustomDataHolder<LoginData>* pLoginData)
+bool AuthenticationClient::LoginWithData(ProtocolCallContext* pCallContext, qResult* pResult, const char* pPassword,
+                                         RVConnectionData* pConnectionData, CustomDataHolder<LoginData>* pLoginData)
 {
     m_loginDeadline = pCallContext->m_expirationTime;
-    return m_pTicketManager->LoginWithData(pCallContext, pResult, pPassword, &m_uiPrincipalID,
-        pConnectionData, pLoginData);
+    return m_pTicketManager->LoginWithData(pCallContext, pResult, pPassword, &m_uiPrincipalID, pConnectionData,
+                                           pLoginData);
 }
 
 void AuthenticationClient::Logout()
@@ -82,14 +80,12 @@ void AuthenticationClient::UpdateProtocolsDefaultCredentials(Credentials* pCrede
     m_pTicketGrantingProtocolClient->SetDefaultCredentials(pCredentials);
 }
 
-bool AuthenticationClient::GetPID(ProtocolCallContext* pCallContext, unsigned int* pPrincipalID,
-    String userName)
+bool AuthenticationClient::GetPID(ProtocolCallContext* pCallContext, unsigned int* pPrincipalID, String userName)
 {
     return m_pTicketGrantingProtocolClient->CallGetPID(pCallContext, pPrincipalID, userName);
 }
 
-bool AuthenticationClient::GetName(ProtocolCallContext* pCallContext, String* pUserName,
-    unsigned int uiPrincipalID)
+bool AuthenticationClient::GetName(ProtocolCallContext* pCallContext, String* pUserName, unsigned int uiPrincipalID)
 {
     return m_pTicketGrantingProtocolClient->CallGetName(pCallContext, pUserName, uiPrincipalID);
 }

@@ -44,8 +44,7 @@ TransportBufferMultiThread::TransportBufferMultiThread()
         m_slots[i].second = 0;
         m_slots[i].first = 0;
     }
-    m_pSendThread = new Thread(String(L"Transport Buffer Thread (send)"),
-        g_transportBufferSendThreadPriority);
+    m_pSendThread = new Thread(String(L"Transport Buffer Thread (send)"), g_transportBufferSendThreadPriority);
     if (g_transportBufferThreadAffinity != INHERIT_THREAD_AFFINITY)
         m_pSendThread->SetAffinity(g_transportBufferThreadAffinity);
 }
@@ -107,12 +106,10 @@ bool TransportBufferMultiThread::InsertSocketPort(unsigned short uiPort, Queuing
     }
     if (m_pRecvThreads[iSlot] == 0)
     {
-        m_pRecvThreads[iSlot] = new Thread(String(L"Transport Buffer Thread (recv)"),
-            g_transportBufferThreadPriority);
+        m_pRecvThreads[iSlot] = new Thread(String(L"Transport Buffer Thread (recv)"), g_transportBufferThreadPriority);
         if (g_transportBufferThreadAffinity != INHERIT_THREAD_AFFINITY)
             m_pRecvThreads[iSlot]->SetAffinity(g_transportBufferThreadAffinity);
-        m_pRecvThreads[iSlot]->SetObjectMethod(&TransportBufferMultiThread::TransportRecvLoop,
-            this, iSlot);
+        m_pRecvThreads[iSlot]->SetObjectMethod(&TransportBufferMultiThread::TransportRecvLoop, this, iSlot);
         m_pRecvThreads[iSlot]->Launch(0);
     }
     PortThreadSocket portThread;
@@ -198,11 +195,9 @@ void TransportBufferMultiThread::TransportSendLoop(int iThread)
     {
         bool bSent = false;
         m_sendCriticalSection.Enter();
-        for (qVector<PortSocket>::iterator socket = m_sendSockets.begin();
-            socket != m_sendSockets.end(); ++socket)
+        for (qVector<PortSocket>::iterator socket = m_sendSockets.begin(); socket != m_sendSockets.end(); ++socket)
         {
-            QueuingSocketTransportBuffer* pSocket =
-                static_cast<QueuingSocketTransportBuffer*>(socket->second);
+            QueuingSocketTransportBuffer* pSocket = static_cast<QueuingSocketTransportBuffer*>(socket->second);
             if (pSocket != 0 && socket->first != m_iErasingPort && pSocket->SendBufferCore())
                 bSent = true;
         }
@@ -228,8 +223,7 @@ void TransportBufferMultiThread::TransportRecvLoop(int iThread)
         if (!m_bSlotErasing[iThread])
         {
             m_pSlotLocks[iThread]->Enter();
-            QueuingSocketTransportBuffer* pSocket =
-                static_cast<QueuingSocketTransportBuffer*>(m_slots[iThread].second);
+            QueuingSocketTransportBuffer* pSocket = static_cast<QueuingSocketTransportBuffer*>(m_slots[iThread].second);
             if (pSocket != 0)
                 bReceived = pSocket->RecvCore(false);
             m_pSlotLocks[iThread]->Leave();
