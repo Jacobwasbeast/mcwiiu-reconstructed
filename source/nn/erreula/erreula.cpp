@@ -15,10 +15,7 @@ struct ClosureA0
 {
     typedef void (*Function)();
 
-    void operator()() const
-    {
-        function();
-    }
+    void operator()() const { function(); }
 
     Function function;
 };
