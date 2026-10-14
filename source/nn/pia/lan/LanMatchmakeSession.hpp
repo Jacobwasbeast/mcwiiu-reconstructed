@@ -37,7 +37,7 @@ public:
     virtual ~LanMatchmakeSession();
     virtual void Cleanup();
     virtual Result RandomMatchmakeSession(common::CallContext* callContext);
-    virtual bool WaitRandomMatchmakeSession(unsigned int* gatheringId, bool* found);
+    virtual bool WaitRandomMatchmakeSession(unsigned int* gatheringId, bool* isNewSession);
     virtual Result BrowseMatchmakeSession(common::CallContext* callContext);
     virtual bool WaitBrowseMatchmakeSession();
     virtual session::ISessionInfoList* GetBrowseMatchmakeSessionResult();

@@ -117,9 +117,125 @@ void LanMatchmakeSession::SetSessionParam(const unsigned char* sessionParam, uns
     m_publishedSessionInfo.Copy(m_sessionInfo);
 }
 
-bool LanMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, bool* found)
+bool LanMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, bool* isNewSession)
 {
-    return false;
+    if (gatheringId == 0 || isNewSession == 0)
+    {
+        m_callContext->SignalFailure(ResultInvalidArgument());
+        return true;
+    }
+    if (!LanFacade::GetInstance()->IsBrowseMessageCompleted())
+        return false;
+    if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
+    {
+        Result failure = cResultDisconnected;
+        m_callContext->SignalFailure(failure);
+        m_callContext = 0;
+        return true;
+    }
+    LanSessionInfo* sessionInfo = 0;
+    bool found = false;
+    unsigned int participantNum = 1;
+    session::MeshLayerController* meshLayerController = session::g_piaSession->m_meshLayerController;
+    if (meshLayerController->IsRegisteredPlayerInfo() && meshLayerController->IsPlayersCountedAsParticipants())
+        participantNum = meshLayerController->GetPlayerInfoSize();
+    if (m_preferredSessionId != 0 && m_preferredSessionId != m_ignoredSessionId)
+    {
+        for (session::ISessionInfo** it = m_sessionInfoList->Begin(); it != m_sessionInfoList->End(); ++it)
+        {
+            sessionInfo = static_cast<LanSessionInfo*>(*it);
+            if (sessionInfo->GetSessionId() == m_preferredSessionId)
+            {
+                bool isHit = false;
+                for (int i = 0; i < m_searchCriteriaCount; ++i)
+                    isHit |= m_searchCriteria[i].IsHit(sessionInfo);
+                if (isHit && sessionInfo->IsOpened() &&
+                    sessionInfo->GetCurrentParticipantNum() + participantNum <= sessionInfo->GetMaxParticipantNum())
+                {
+                    found = true;
+                    break;
+                }
+            }
+        }
+    }
+    for (int i = 0; i < m_searchCriteriaCount && !found; ++i)
+    {
+        for (session::ISessionInfo** it = m_sessionInfoList->Begin(); it != m_sessionInfoList->End(); ++it)
+        {
+            sessionInfo = static_cast<LanSessionInfo*>(*it);
+            if (m_searchCriteria[i].IsHit(sessionInfo) && sessionInfo->IsOpened() &&
+                sessionInfo->GetSessionId() != m_ignoredSessionId &&
+                sessionInfo->GetSystemCommunicationVersion() == m_sessionInfo.GetSystemCommunicationVersion() &&
+                sessionInfo->GetApplicationCommunicationVersion() == m_sessionInfo.GetApplicationCommunicationVersion() &&
+                sessionInfo->GetCurrentParticipantNum() + participantNum <= sessionInfo->GetMaxParticipantNum())
+            {
+                found = true;
+                break;
+            }
+        }
+    }
+    for (int i = 0; !found && i < m_searchCriteriaCount; ++i)
+    {
+        for (session::ISessionInfo** it = m_sessionInfoList->Begin(); it != m_sessionInfoList->End(); ++it)
+        {
+            sessionInfo = static_cast<LanSessionInfo*>(*it);
+            if (m_searchCriteria[i].IsHit(sessionInfo) && sessionInfo->IsOpened() &&
+                sessionInfo->GetSessionId() != m_ignoredSessionId &&
+                sessionInfo->GetCurrentParticipantNum() + participantNum <= sessionInfo->GetMaxParticipantNum())
+            {
+                found = true;
+                break;
+            }
+        }
+    }
+    if (!found)
+    {
+        m_matchmakeOwner = true;
+        sessionInfo = &m_sessionInfo;
+        m_gatheringId =
+            (LanFacade::GetInstance()->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_address << 16) |
+            LanFacade::GetInstance()->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_port;
+        m_sessionInfo.SetStationConnectionInfo(LanFacade::GetInstance()->GetLocalStationConnectionInfo());
+        m_sessionInfo.SetCurrentParticipantNum(participantNum);
+        pead::Random random;
+        for (unsigned int i = 0; i < LanSessionInfo::cSessionParamSize; ++i)
+            m_sessionInfo.m_sessionParam[i] = random.getU32();
+    }
+    else
+    {
+        if (sessionInfo->GetSystemCommunicationVersion() != m_sessionInfo.GetSystemCommunicationVersion() ||
+            sessionInfo->GetApplicationCommunicationVersion() != m_sessionInfo.GetApplicationCommunicationVersion())
+        {
+            Result failure;
+            if (sessionInfo->GetSystemCommunicationVersion() > m_sessionInfo.GetSystemCommunicationVersion() ||
+                sessionInfo->GetApplicationCommunicationVersion() > m_sessionInfo.GetApplicationCommunicationVersion())
+                failure = cResultRemoteVersionNewer;
+            else
+                failure = cResultRemoteVersionOlder;
+            m_callContext->SignalFailure(failure);
+            m_callContext = 0;
+            m_sessionInfo.Clear();
+            m_gatheringId = 0;
+            m_publishedSessionInfo.Clear();
+            return true;
+        }
+        m_matchmakeOwner = false;
+        m_gatheringId = sessionInfo->GetSessionId();
+        m_sessionInfo.Copy(*sessionInfo);
+        m_sessionInfo.SetCurrentParticipantNum(m_sessionInfo.GetCurrentParticipantNum() + participantNum);
+        SetSessionParam(sessionInfo->GetSessionParam(), LanSessionInfo::cSessionParamSize);
+        LanFacade::GetInstance()->GetLanProtocol()->RegisterSessionKey();
+    }
+    m_matchmakeOwnerUniqueId = sessionInfo->GetHostPrincipalId();
+    m_sessionInfo.SetSessionId(m_gatheringId);
+    *gatheringId = m_gatheringId;
+    *isNewSession = m_matchmakeOwner;
+    m_publishedSessionInfo.Clear();
+    m_publishedSessionInfo.Copy(m_sessionInfo);
+    Result success = 0;
+    m_callContext->SignalSuccess(success);
+    m_callContext = 0;
+    return true;
 }
 
 Result LanMatchmakeSession::BrowseMatchmakeSession(common::CallContext* callContext)
