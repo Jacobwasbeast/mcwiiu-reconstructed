@@ -16,16 +16,15 @@ class AbstractProjectileDispenseBehavior : public DefaultDispenseItemBehavior
 public:
     virtual ~AbstractProjectileDispenseBehavior() {}
 
-    virtual not_null_ptr<ItemInstance> execute(BlockSource* blockSource,
-                                                not_null_ptr<ItemInstance> itemInstance,
-                                                DefaultDispenseItemBehavior::eOUTCOME& outcome);
+    virtual not_null_ptr<ItemInstance> execute(BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance,
+                                               DefaultDispenseItemBehavior::eOUTCOME& outcome);
     virtual void playSound(BlockSource* blockSource, DefaultDispenseItemBehavior::eOUTCOME outcome);
     virtual float getUncertainty();
     virtual float getPower();
 
 protected:
     virtual boost::shared_ptr<Projectile> getProjectile(Level* level, Position* position,
-                                                         not_null_ptr<ItemInstance> itemInstance) = 0;
+                                                        not_null_ptr<ItemInstance> itemInstance) = 0;
 };
 
 #endif

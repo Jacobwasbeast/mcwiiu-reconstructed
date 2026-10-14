@@ -13,18 +13,14 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-Projectile::Projectile(Level* level, const boost::shared_ptr<LivingEntity>& owner)
-    : mOwner(owner), mLevel(level)
+Projectile::Projectile(Level* level, const boost::shared_ptr<LivingEntity>& owner) : mOwner(owner), mLevel(level)
 {
 }
 
 bool Projectile::onHit(const HitResult* result)
 {
-    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureProjectilesBreakBlocks()
-        && !mLevel->mIsClientSide
-        && result->mType == HitResult::BLOCK
-        && mOwner
-        && eTYPE_DERIVED_FROM(EntityType::PLAYER, mOwner->GetType()))
+    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureProjectilesBreakBlocks() && !mLevel->mIsClientSide
+        && result->mType == HitResult::BLOCK && mOwner && eTYPE_DERIVED_FROM(EntityType::PLAYER, mOwner->GetType()))
     {
         const BlockPos& pos = result->getBlockPos();
         GameMode* gameMode = boost::static_pointer_cast<Player>(mOwner)->GetGameMode();
@@ -49,9 +45,7 @@ bool Projectile::onHit(const HitResult* result)
     if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades())
     {
         BlockPos pos = result->getBlockPos();
-        mLevel->explode(boost::shared_ptr<Entity>(), pos.x, pos.y, pos.z, 2.0f,
-            false, true, false, false, false, 0.0f);
+        mLevel->explode(boost::shared_ptr<Entity>(), pos.x, pos.y, pos.z, 2.0f, false, true, false, false, false, 0.0f);
     }
     return false;
 }
-

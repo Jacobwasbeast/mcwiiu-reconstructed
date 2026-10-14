@@ -24,20 +24,17 @@
 
 const EntityDataAccessor<int>* TippableArrow::DATA_EFFECT_COLOR_ID = NULL;
 
-TippableArrow::TippableArrow(Level* level)
-    : Arrow(level)
+TippableArrow::TippableArrow(Level* level) : Arrow(level)
 {
     init();
 }
 
-TippableArrow::TippableArrow(Level* level, double x, double y, double z)
-    : Arrow(level, x, y, z)
+TippableArrow::TippableArrow(Level* level, double x, double y, double z) : Arrow(level, x, y, z)
 {
     init();
 }
 
-TippableArrow::TippableArrow(Level* level, boost::shared_ptr<LivingEntity> owner)
-    : Arrow(level, owner)
+TippableArrow::TippableArrow(Level* level, boost::shared_ptr<LivingEntity> owner) : Arrow(level, owner)
 {
     init();
 }
@@ -49,8 +46,8 @@ Entity* TippableArrow::create(Level* level)
 
 void TippableArrow::staticCtor()
 {
-    DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(EntityType::TIPPABLE_ARROW,
-        EntityType::ARROW, EntityDataSerializers::INT);
+    DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(EntityType::TIPPABLE_ARROW, EntityType::ARROW,
+                                                       EntityDataSerializers::INT);
 }
 
 void TippableArrow::init()
@@ -158,11 +155,9 @@ void TippableArrow::makeParticle(int count)
     double blue = static_cast<double>(color & 255) / 255.0;
     for (int i = 0; i < count; ++i)
     {
-        mLevel->addParticle(PARTICLE_MOB_SPELL,
-            mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
-            mY + mRandom->nextDouble() * mBbHeight,
-            mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
-            red, green, blue, arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_MOB_SPELL, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                            mY + mRandom->nextDouble() * mBbHeight, mZ + (mRandom->nextDouble() - 0.5) * mBbWidth, red,
+                            green, blue, arrayWithLength<int>());
     }
 }
 
@@ -261,17 +256,15 @@ void TippableArrow::doPostHurtEffects(const boost::shared_ptr<LivingEntity>& ent
         MobEffectInstance* effect = *it;
         if (Minecraft::InMiniGame(eMiniGameId_Battle, false))
         {
-            entity->addEffect(new MobEffectInstance(effect->getEffect(),
-                std::max(effect->getDuration() / 3, 1), effect->getAmplifier(),
-                effect->isAmbient(), effect->isVisible()),
-                boost::shared_ptr<Entity>());
+            entity->addEffect(new MobEffectInstance(effect->getEffect(), std::max(effect->getDuration() / 3, 1),
+                                                    effect->getAmplifier(), effect->isAmbient(), effect->isVisible()),
+                              boost::shared_ptr<Entity>());
         }
         else
         {
-            entity->addEffect(new MobEffectInstance(effect->getEffect(),
-                std::max(effect->getDuration() / 8, 1), effect->getAmplifier(),
-                effect->isAmbient(), effect->isVisible()),
-                boost::shared_ptr<Entity>());
+            entity->addEffect(new MobEffectInstance(effect->getEffect(), std::max(effect->getDuration() / 8, 1),
+                                                    effect->getAmplifier(), effect->isAmbient(), effect->isVisible()),
+                              boost::shared_ptr<Entity>());
         }
     }
     if (!mEffects.empty())
@@ -314,11 +307,10 @@ void TippableArrow::handleEntityEvent(unsigned char event, int data)
             double blue = static_cast<double>(color & 255) / 255.0;
             for (int i = 0; i < 20; ++i)
             {
-                mLevel->addParticle(PARTICLE_MOB_SPELL,
-                    mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                    mY + mRandom->nextDouble() * mBbHeight,
-                    mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                    red, green, blue, arrayWithLength<int>());
+                mLevel->addParticle(PARTICLE_MOB_SPELL, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                                    mY + mRandom->nextDouble() * mBbHeight,
+                                    mZ + (mRandom->nextDouble() - 0.5) * mBbWidth, red, green, blue,
+                                    arrayWithLength<int>());
             }
         }
     }

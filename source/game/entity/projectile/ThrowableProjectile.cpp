@@ -24,20 +24,23 @@
 #include "game/core/PIXNamedEvents.hpp"
 
 ThrowableProjectile::ThrowableProjectile(Level* level)
-    : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
+    : Entity(level, true),
+      Projectile(level, boost::shared_ptr<LivingEntity>())
 {
     _throwableInit();
 }
 
 ThrowableProjectile::ThrowableProjectile(Level* level, boost::shared_ptr<LivingEntity> owner)
-    : Entity(level, true), Projectile(level, owner)
+    : Entity(level, true),
+      Projectile(level, owner)
 {
     _throwableInit();
     setPos(owner->mX, owner->mY + owner->getEyeHeight(), owner->mZ);
 }
 
 ThrowableProjectile::ThrowableProjectile(Level* level, double x, double y, double z)
-    : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
+    : Entity(level, true),
+      Projectile(level, boost::shared_ptr<LivingEntity>())
 {
     _throwableInit();
     setPos(x, y, z);
@@ -69,7 +72,8 @@ void ThrowableProjectile::shoot(double x, double y, double z, float velocity, fl
     mLife = 0;
 }
 
-void ThrowableProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset, float velocity, float inaccuracy)
+void ThrowableProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset,
+                                            float velocity, float inaccuracy)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
@@ -183,8 +187,8 @@ void ThrowableProjectile::tick()
 
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        typedef boost::unordered_set<Block*, boost::hash<Block*>, std::equal_to<Block*>,
-            std::allocator<Block*> > BlockSet;
+        typedef boost::unordered_set<Block*, boost::hash<Block*>, std::equal_to<Block*>, std::allocator<Block*> >
+            BlockSet;
         BlockSet* alwaysClipBlocks = NULL;
         if (Minecraft::InMiniGame(eMiniGameId_Tumble, true))
         {
@@ -205,8 +209,7 @@ void ThrowableProjectile::tick()
     if (hitResult != NULL)
         to = Vec3::newTemp(hitResult->mLocation->x, hitResult->mLocation->y, hitResult->mLocation->z);
 
-    if (!mLevel->mIsClientSide
-        && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureGhostThroughProjectiles())
+    if (!mLevel->mIsClientSide && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureGhostThroughProjectiles())
     {
         boost::shared_ptr<Entity> hitEntity;
         double nearestDistance = 0.0;
@@ -223,9 +226,8 @@ void ThrowableProjectile::tick()
             if (owner && (entity == owner || entity == owner->getVehicle()) && mFlightTime < 5)
                 continue;
 
-            AABB* hitbox = shorterHitbox
-                ? entity->mBoundingBox->scaleAndShift(1.0, 0.8, 1.0)
-                : entity->mBoundingBox->grow(0.30000001192092896);
+            AABB* hitbox = shorterHitbox ? entity->mBoundingBox->scaleAndShift(1.0, 0.8, 1.0)
+                                         : entity->mBoundingBox->grow(0.30000001192092896);
             HitResult* entityHit = hitbox->clip(from, to);
             if (entityHit != NULL)
             {
@@ -279,8 +281,8 @@ void ThrowableProjectile::tick()
     if (isInWater())
     {
         for (int i = 0; i < 4; ++i)
-            mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25,
-                mZ - mZd * 0.25, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25, mZ - mZd * 0.25, 0.0, 0.0, 0.0,
+                                arrayWithLength<int>());
         inertia = 0.8f;
     }
     mXd *= inertia;

@@ -42,8 +42,7 @@
 
 const EntityDataAccessor<int>* FishingHook::DATA_HOOKED_ENTITY = NULL;
 
-FishingHook::FishingHook(Level* level, boost::shared_ptr<Player> owner)
-    : Entity(level, true), mOwner(), mHookedIn()
+FishingHook::FishingHook(Level* level, boost::shared_ptr<Player> owner) : Entity(level, true), mOwner(), mHookedIn()
 {
     _init();
     init(owner);
@@ -51,7 +50,9 @@ FishingHook::FishingHook(Level* level, boost::shared_ptr<Player> owner)
 }
 
 FishingHook::FishingHook(Level* level, boost::shared_ptr<Player> owner, double x, double y, double z)
-    : Entity(level, true), mOwner(), mHookedIn()
+    : Entity(level, true),
+      mOwner(),
+      mHookedIn()
 {
     _init();
     init(owner);
@@ -100,9 +101,7 @@ int FishingHook::retrieve()
         LootTable* lootTable = BuiltInLootTables::getLootTable(&BuiltInLootTables::FISHING);
         std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(mRandom, context);
 
-        for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
-             it != items->end();
-             it++)
+        for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin(); it != items->end(); it++)
         {
             boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, mY, mZ, *it));
 
@@ -234,8 +233,8 @@ void FishingHook::handleEntityEvent(unsigned char event, int data)
 {
     if (event == EntityEvent::FISHING_ROD_REEL_IN)
     {
-        if (mHookedIn && Entity::instanceof(mHookedIn, EntityType::PLAYER) &&
-            boost::static_pointer_cast<Player>(mHookedIn)->isLocalPlayer())
+        if (mHookedIn && Entity::instanceof(mHookedIn, EntityType::PLAYER)
+            && boost::static_pointer_cast<Player>(mHookedIn)->isLocalPlayer())
         {
             bringInHookedEntity();
         }
@@ -250,8 +249,7 @@ bool FishingHook::shouldStopFishing()
     not_null_ptr<ItemInstance> offhandItem = mOwner->getOffhandItem();
     bool mainHandIsRod = mainHandItem->getItem() == Items::fishingRod;
     bool offhandIsRod = offhandItem->getItem() == Items::fishingRod;
-    if (mOwner->mRemoved || !mOwner->isAlive() || !(mainHandIsRod || offhandIsRod) ||
-        distanceToSqr(mOwner) > 1024.0)
+    if (mOwner->mRemoved || !mOwner->isAlive() || !(mainHandIsRod || offhandIsRod) || distanceToSqr(mOwner) > 1024.0)
     {
         remove();
         return true;
@@ -311,12 +309,10 @@ void FishingHook::checkCollision()
 
     boost::shared_ptr<Entity> hitEntity;
     double nearest = 0.0;
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+        shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), NULL);
 
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end();
-         ++it)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
 
@@ -369,8 +365,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
     int speedBonus = 1;
     BlockPos abovePos = pos.above();
 
-    if (mRandom->nextFloat() < 0.25f &&
-        mLevel->getBiome(pos)->getBiomeType() == Biome::eBiomeType_Ocean)
+    if (mRandom->nextFloat() < 0.25f && mLevel->getBiome(pos)->getBiomeType() == Biome::eBiomeType_Ocean)
     {
         speedBonus = 2;
     }
@@ -418,42 +413,29 @@ void FishingHook::catchingFish(const BlockPos& pos)
             {
                 if (mRandom->nextFloat() < 0.15f)
                 {
-                    serverLevel->sendParticles(PARTICLE_BUBBLE,
-                                               x, y - 0.10000000149011612, z,
-                                               1, (double)sinAngle, 0.1, (double)cosAngle, 0.0,
-                                               arrayWithLength<int>());
+                    serverLevel->sendParticles(PARTICLE_BUBBLE, x, y - 0.10000000149011612, z, 1, (double)sinAngle, 0.1,
+                                               (double)cosAngle, 0.0, arrayWithLength<int>());
                 }
 
                 float wakeX = cosAngle * 0.04f;
                 float wakeZ = sinAngle * 0.04f;
-                serverLevel->sendParticles(PARTICLE_WAKE,
-                                           x, y, z,
-                                           0, (double)wakeX, 0.01, (double)(-wakeZ), 1.0,
+                serverLevel->sendParticles(PARTICLE_WAKE, x, y, z, 0, (double)wakeX, 0.01, (double)(-wakeZ), 1.0,
                                            arrayWithLength<int>());
-                serverLevel->sendParticles(PARTICLE_WAKE,
-                                           x, y, z,
-                                           0, (double)(-wakeX), 0.01, (double)wakeZ, 1.0,
+                serverLevel->sendParticles(PARTICLE_WAKE, x, y, z, 0, (double)(-wakeX), 0.01, (double)wakeZ, 1.0,
                                            arrayWithLength<int>());
             }
         }
         else
         {
             mYd = (double)(-0.4f * Mth::nextFloat(mRandom, 0.6f, 1.0f));
-            playSound(SoundEvents::BOBBER_SPLASH, 0.25f,
-                      (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
+            playSound(SoundEvents::BOBBER_SPLASH, 0.25f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
 
             double surfaceY = mBoundingBox->mMinY + 0.5;
-            serverLevel->sendParticles(PARTICLE_BUBBLE,
-                                       mX, surfaceY, mZ,
-                                       (int)(mBbWidth * 20.0f + 1.0f),
-                                       (double)mBbWidth, 0.0, (double)mBbWidth,
-                                       0.20000000298023224,
+            serverLevel->sendParticles(PARTICLE_BUBBLE, mX, surfaceY, mZ, (int)(mBbWidth * 20.0f + 1.0f),
+                                       (double)mBbWidth, 0.0, (double)mBbWidth, 0.20000000298023224,
                                        arrayWithLength<int>());
-            serverLevel->sendParticles(PARTICLE_WAKE,
-                                       mX, surfaceY, mZ,
-                                       (int)(mBbWidth * 20.0f + 1.0f),
-                                       (double)mBbWidth, 0.0, (double)mBbWidth,
-                                       0.20000000298023224,
+            serverLevel->sendParticles(PARTICLE_WAKE, mX, surfaceY, mZ, (int)(mBbWidth * 20.0f + 1.0f),
+                                       (double)mBbWidth, 0.0, (double)mBbWidth, 0.20000000298023224,
                                        arrayWithLength<int>());
             mTicksCatchable = Mth::nextInt(mRandom, 20, 40);
         }
@@ -489,11 +471,8 @@ void FishingHook::catchingFish(const BlockPos& pos)
 
             if (block == Blocks::water || block == Blocks::flowing_water)
             {
-                serverLevel->sendParticles(PARTICLE_SPLASH,
-                                           x, y, z,
-                                           mRandom->nextInt(2) + 2,
-                                           0.10000000149011612, 0.0, 0.10000000149011612, 0.0,
-                                           arrayWithLength<int>());
+                serverLevel->sendParticles(PARTICLE_SPLASH, x, y, z, mRandom->nextInt(2) + 2, 0.10000000149011612, 0.0,
+                                           0.10000000149011612, 0.0, arrayWithLength<int>());
             }
         }
 

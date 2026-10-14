@@ -9,10 +9,8 @@ class SmallFireball : public Fireball
 {
 public:
     SmallFireball(Level* level);
-    SmallFireball(Level* level, boost::shared_ptr<LivingEntity> owner,
-                  double xd, double yd, double zd);
-    SmallFireball(Level* level, double x, double y, double z,
-                  double xd, double yd, double zd);
+    SmallFireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd);
+    SmallFireball(Level* level, double x, double y, double z, double xd, double yd, double zd);
 
     static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);

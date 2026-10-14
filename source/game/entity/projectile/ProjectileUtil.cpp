@@ -10,8 +10,7 @@
 #include "game/util/Vec3.hpp"
 
 
-HitResult* ProjectileUtil::forwardsRaycast(const boost::shared_ptr<Entity>& entity,
-                                           bool checkEntities,
+HitResult* ProjectileUtil::forwardsRaycast(const boost::shared_ptr<Entity>& entity, bool checkEntities,
                                            const std::vector<boost::shared_ptr<Entity> >* ignoredEntities,
                                            const std::vector<unsigned long long>* ignoredEntityTypes)
 {
@@ -41,8 +40,7 @@ HitResult* ProjectileUtil::forwardsRaycast(const boost::shared_ptr<Entity>& enti
         AABB* searchBox = entity->mBoundingBox->expand(xd, yd, zd)->grow(1.0);
         std::vector<boost::shared_ptr<Entity> >* candidates = level->getEntities(entity, searchBox, NULL);
 
-        for (std::vector<boost::shared_ptr<Entity> >::const_iterator it = candidates->begin();
-             it != candidates->end();
+        for (std::vector<boost::shared_ptr<Entity> >::const_iterator it = candidates->begin(); it != candidates->end();
              ++it)
         {
             boost::shared_ptr<Entity> candidate = *it;
@@ -57,8 +55,7 @@ HitResult* ProjectileUtil::forwardsRaycast(const boost::shared_ptr<Entity>& enti
                 bool ignored = false;
 
                 for (std::vector<boost::shared_ptr<Entity> >::const_iterator ignoredIt = ignoredEntities->begin();
-                     ignoredIt != ignoredEntities->end();
-                     ++ignoredIt)
+                     ignoredIt != ignoredEntities->end(); ++ignoredIt)
                 {
                     if (candidate->is(*ignoredIt))
                     {
@@ -78,8 +75,7 @@ HitResult* ProjectileUtil::forwardsRaycast(const boost::shared_ptr<Entity>& enti
                 bool ignored = false;
 
                 for (std::vector<unsigned long long>::const_iterator typeIt = ignoredEntityTypes->begin();
-                     typeIt != ignoredEntityTypes->end();
-                     ++typeIt)
+                     typeIt != ignoredEntityTypes->end(); ++typeIt)
                 {
                     unsigned long long ignoredType = *typeIt;
                     unsigned long long candidateType = candidate->GetType();

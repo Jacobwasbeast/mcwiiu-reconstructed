@@ -16,9 +16,8 @@ public:
     ArrowItem();
     virtual ~ArrowItem() {}
 
-    virtual boost::shared_ptr<Arrow> createArrow(Level* level,
-                                                not_null_ptr<ItemInstance> itemInstance,
-                                                boost::shared_ptr<LivingEntity> entity);
+    virtual boost::shared_ptr<Arrow> createArrow(Level* level, not_null_ptr<ItemInstance> itemInstance,
+                                                 boost::shared_ptr<LivingEntity> entity);
 };
 
 #endif

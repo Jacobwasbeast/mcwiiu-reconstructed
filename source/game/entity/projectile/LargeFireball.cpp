@@ -11,8 +11,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/Level.hpp"
 
-LargeFireball::LargeFireball(Level* level)
-    : Fireball(level)
+LargeFireball::LargeFireball(Level* level) : Fireball(level)
 {
     Entity::fjDerivedCtorCalls();
     mExplosionPower = 1;
@@ -58,8 +57,8 @@ void LargeFireball::onHit(const HitResult* result)
     }
 
     const bool mobGriefing = mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING);
-    mLevel->explode(boost::shared_ptr<Entity>(), mX, mY, mZ, static_cast<float>(mExplosionPower),
-                    mobGriefing, mobGriefing, false, false, false, -1.0f);
+    mLevel->explode(boost::shared_ptr<Entity>(), mX, mY, mZ, static_cast<float>(mExplosionPower), mobGriefing,
+                    mobGriefing, false, false, false, -1.0f);
     remove();
 }
 

@@ -22,23 +22,20 @@
 
 const double DragonFireball::SPLASH_RANGE = 4.0;
 
-DragonFireball::DragonFireball(Level* level)
-    : Fireball(level)
+DragonFireball::DragonFireball(Level* level) : Fireball(level)
 {
     fjDerivedCtorCalls();
     setSize(1.0f, 1.0f);
 }
 
-DragonFireball::DragonFireball(Level* level, boost::shared_ptr<LivingEntity> owner,
-                               double xd, double yd, double zd)
+DragonFireball::DragonFireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd)
     : Fireball(level, owner, xd, yd, zd)
 {
     fjDerivedCtorCalls();
     setSize(1.0f, 1.0f);
 }
 
-DragonFireball::DragonFireball(Level* level, double x, double y, double z,
-                               double xd, double yd, double zd)
+DragonFireball::DragonFireball(Level* level, double x, double y, double z, double xd, double yd, double zd)
     : Fireball(level, x, y, z, xd, yd, zd)
 {
     fjDerivedCtorCalls();
@@ -54,8 +51,8 @@ void DragonFireball::onHit(const HitResult* result)
 {
     if ((result->mEntity == NULL || result->mEntity != mOwner) && !mLevel->mIsClientSide)
     {
-        std::vector<boost::shared_ptr<Entity> >* entities =
-            mLevel->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(4.0, 2.0, 4.0));
+        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(
+            typeid(LivingEntity), mBoundingBox->grow(4.0, 2.0, 4.0));
 
         boost::shared_ptr<AreaEffectCloud> cloud(new AreaEffectCloud(mLevel, mX, mY, mZ));
         cloud->setOwner(mOwner);

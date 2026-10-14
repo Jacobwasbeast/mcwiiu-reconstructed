@@ -13,8 +13,7 @@ not_null_ptr<ItemInstance> TippedArrowItem::getDefaultInstance()
     return PotionUtils::setPotion(Item::getDefaultInstance(), Potions::POISON);
 }
 
-boost::shared_ptr<Arrow> TippedArrowItem::createArrow(Level* level,
-                                                      not_null_ptr<ItemInstance> itemInstance,
+boost::shared_ptr<Arrow> TippedArrowItem::createArrow(Level* level, not_null_ptr<ItemInstance> itemInstance,
                                                       boost::shared_ptr<LivingEntity> entity)
 {
     boost::shared_ptr<TippableArrow> arrow(new TippableArrow(level, entity));
@@ -22,10 +21,8 @@ boost::shared_ptr<Arrow> TippedArrowItem::createArrow(Level* level,
     return arrow;
 }
 
-void TippedArrowItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                      boost::shared_ptr<Player> player,
-                                      std::vector<HtmlString>* lines,
-                                      bool)
+void TippedArrowItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                      std::vector<HtmlString>* lines, bool)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Battle, false))
     {
@@ -53,9 +50,7 @@ bool TippedArrowItem::hasMultipleSpriteLayers()
     return true;
 }
 
-TextureAtlasSprite* TippedArrowItem::getLayerIcon(int auxValue,
-                                                  int layer,
-                                                  not_null_ptr<ItemInstance> itemInstance)
+TextureAtlasSprite* TippedArrowItem::getLayerIcon(int auxValue, int layer, not_null_ptr<ItemInstance> itemInstance)
 {
     if (layer == 0)
     {

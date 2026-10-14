@@ -20,7 +20,8 @@ public:
     ThrowableProjectile(Level* level, boost::shared_ptr<LivingEntity> owner);
     ThrowableProjectile(Level* level, double x, double y, double z);
     virtual ~ThrowableProjectile();
-    virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset, float velocity, float inaccuracy);
+    virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset,
+                                   float velocity, float inaccuracy);
     virtual void shoot(double x, double y, double z, float velocity, float inaccuracy);
     void fjSetParticleSpawnPos(double x, double y, double z);
     static void addDataWalkers(DataFixerUpper* fixer, unsigned long long version);
@@ -35,6 +36,7 @@ public:
     virtual boost::shared_ptr<LivingEntity> getOwner();
     Vec3* fjGetParticleSpawnPos() const;
     virtual bool shouldTick();
+
 protected:
     using Entity::mLevel;
     int mXTile;

@@ -16,9 +16,9 @@
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DispenserBlock.hpp"
 
-not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
-    BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance,
-    DefaultDispenseItemBehavior::eOUTCOME& outcome)
+not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(BlockSource* blockSource,
+                                                                       not_null_ptr<ItemInstance> itemInstance,
+                                                                       DefaultDispenseItemBehavior::eOUTCOME& outcome)
 {
     Level* level = blockSource->getWorld();
 
@@ -39,8 +39,8 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
     return itemInstance;
 }
 
-void AbstractProjectileDispenseBehavior::playSound(
-    BlockSource* blockSource, DefaultDispenseItemBehavior::eOUTCOME outcome)
+void AbstractProjectileDispenseBehavior::playSound(BlockSource* blockSource,
+                                                   DefaultDispenseItemBehavior::eOUTCOME outcome)
 {
     if (outcome != DefaultDispenseItemBehavior::eOUTCOME_Failure)
     {

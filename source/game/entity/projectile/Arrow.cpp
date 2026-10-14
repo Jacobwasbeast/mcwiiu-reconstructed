@@ -18,20 +18,17 @@
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/Level.hpp"
 
-Arrow::Arrow(Level* level)
-    : AbstractRotatedItemProjectile(level)
+Arrow::Arrow(Level* level) : AbstractRotatedItemProjectile(level)
 {
     _init();
 }
 
-Arrow::Arrow(Level* level, boost::shared_ptr<LivingEntity> owner)
-    : AbstractRotatedItemProjectile(level, owner)
+Arrow::Arrow(Level* level, boost::shared_ptr<LivingEntity> owner) : AbstractRotatedItemProjectile(level, owner)
 {
     _init();
 }
 
-Arrow::Arrow(Level* level, double x, double y, double z)
-    : AbstractRotatedItemProjectile(level, x, y, z)
+Arrow::Arrow(Level* level, double x, double y, double z) : AbstractRotatedItemProjectile(level, x, y, z)
 {
     _init();
 }
@@ -93,8 +90,9 @@ void Arrow::onHitEntity(const HitResult* result)
     boost::shared_ptr<Entity> entity = result->mEntity;
     const float speed = Mth::sqrt(mXd * mXd + mYd * mYd + mZd * mZd);
     float damage = mRandom->nextFloat(1.0f, 5.0f)
-        + (speed * 0.97f + (static_cast<float>(mRandom->nextGaussian()) * 0.25f
-        + static_cast<float>(mLevel->getDifficulty()->getId()) * 0.11f));
+                   + (speed * 0.97f
+                      + (static_cast<float>(mRandom->nextGaussian()) * 0.25f
+                         + static_cast<float>(mLevel->getDifficulty()->getId()) * 0.11f));
     if (isCritArrow())
         damage = Mth::clamp(damage + mRandom->nextFloat(damage * 0.5f + 2.0f), 9.0f, 10.0f);
     if (mEnchantPower > 0)
@@ -110,7 +108,8 @@ void Arrow::onHitEntity(const HitResult* result)
     }
     DamageSource* source;
     if (mOwner == NULL)
-        source = DamageSource::CreateArrow(boost::static_pointer_cast<Arrow>(shared_from_this()), shared_from_this(), fire);
+        source = DamageSource::CreateArrow(boost::static_pointer_cast<Arrow>(shared_from_this()), shared_from_this(),
+                                           fire);
     else
         source = DamageSource::CreateArrow(boost::static_pointer_cast<Arrow>(shared_from_this()), mOwner, fire);
     if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
@@ -139,8 +138,8 @@ void Arrow::onHitEntity(const HitResult* result)
             doPostHurtEffects(living);
             if (mOwner != NULL && result->mEntity != mOwner && mOwner->GetType() == EntityType::SERVER_PLAYER)
             {
-                boost::static_pointer_cast<ServerPlayer>(mOwner)->mConnection->send(
-                    boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::SUCCESSFUL_ARROW_HIT, 0.0f)));
+                boost::static_pointer_cast<ServerPlayer>(mOwner)->mConnection->send(boost::shared_ptr<Packet>(
+                    new ClientboundGameEventPacket(ClientboundGameEventPacket::SUCCESSFUL_ARROW_HIT, 0.0f)));
             }
         }
 

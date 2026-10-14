@@ -48,21 +48,23 @@ void fjSanitisePosAndVel(Entity* entity)
 const EntityDataAccessor<unsigned char>* AbstractRotatedItemProjectile::DATA_FLAGS = NULL;
 
 AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level)
-    : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
+    : Entity(level, true),
+      Projectile(level, boost::shared_ptr<LivingEntity>())
 {
     _init();
 }
 
 AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level, double x, double y, double z)
-    : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
+    : Entity(level, true),
+      Projectile(level, boost::shared_ptr<LivingEntity>())
 {
     _init();
     setPos(x, y, z);
 }
 
-AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level,
-    boost::shared_ptr<LivingEntity> owner)
-    : Entity(level, true), Projectile(level, owner)
+AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level, boost::shared_ptr<LivingEntity> owner)
+    : Entity(level, true),
+      Projectile(level, owner)
 {
     _init();
     setPos(owner->mX, owner->mY + owner->getEyeHeight() - 0.10000000149011612, owner->mZ);
@@ -71,16 +73,14 @@ AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level,
         mPickup = ePickup_Allowed;
 }
 
-void AbstractRotatedItemProjectile::doPostHurtEffects(
-    const boost::shared_ptr<LivingEntity>& entity)
+void AbstractRotatedItemProjectile::doPostHurtEffects(const boost::shared_ptr<LivingEntity>& entity)
 {
     (void)entity;
 }
 
 void AbstractRotatedItemProjectile::staticCtor()
 {
-    DATA_FLAGS = SynchedEntityData::defineId(EntityType::ARROW, EntityType::ENTITY,
-        EntityDataSerializers::BYTE);
+    DATA_FLAGS = SynchedEntityData::defineId(EntityType::ARROW, EntityType::ENTITY, EntityDataSerializers::BYTE);
 }
 
 void AbstractRotatedItemProjectile::_init()
@@ -107,8 +107,7 @@ void AbstractRotatedItemProjectile::defineSynchedData()
     mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
 }
 
-void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float velocity,
-    float inaccuracy)
+void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float velocity, float inaccuracy)
 {
     float length = Mth::sqrt(x * x + y * y + z * z);
     x /= length;
@@ -132,8 +131,8 @@ void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float ve
     fjSanitisePosAndVel(this);
 }
 
-void AbstractRotatedItemProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot,
-    float yRot, float offset, float velocity, float inaccuracy)
+void AbstractRotatedItemProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot,
+                                                      float offset, float velocity, float inaccuracy)
 {
     float x = -std::sin(yRot * Mth::DEG_TO_RAD) * std::cos(xRot * Mth::DEG_TO_RAD);
     float y = -std::sin(xRot * Mth::DEG_TO_RAD);
@@ -214,8 +213,8 @@ const SoundEvent* AbstractRotatedItemProjectile::getOnHitSound() const
 boost::shared_ptr<Entity> AbstractRotatedItemProjectile::findHitEntity(Vec3* from, Vec3* to)
 {
     boost::shared_ptr<Entity> hitEntity;
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(),
-        mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), sArrowTargetsPredicates, NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+        shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), sArrowTargetsPredicates, NULL);
     double nearestDistance = 0.0;
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
@@ -306,8 +305,7 @@ void AbstractRotatedItemProjectile::tick()
     if (mInGround && !isNoPhysics())
     {
         int data = block->convertBlockStateToLegacyData(state);
-        if ((block != mInTile || data != mInData)
-            && !mLevel->hasBlockCubes(mBoundingBox->grow(0.05)))
+        if ((block != mInTile || data != mInData) && !mLevel->hasBlockCubes(mBoundingBox->grow(0.05)))
         {
             mInGround = false;
             mXd = mXd * mRandom->nextDouble() * 0.2;
@@ -325,12 +323,12 @@ void AbstractRotatedItemProjectile::tick()
 
     mInGroundTime = 0;
     ++mFlightTime;
-    HitResult* hitResult = mLevel->clip(Vec3::newTemp(mX, mY, mZ), Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd),
-                                        false, true, false, false, NULL, false);
+    HitResult* hitResult = mLevel->clip(Vec3::newTemp(mX, mY, mZ), Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd), false,
+                                        true, false, false, NULL, false);
     Vec3* from = Vec3::newTemp(mX, mY, mZ);
-    Vec3* to = hitResult == NULL ? Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd)
-                           : Vec3::newTemp(hitResult->mLocation->x, hitResult->mLocation->y,
-                                                 hitResult->mLocation->z);
+    Vec3* to = hitResult == NULL
+                   ? Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd)
+                   : Vec3::newTemp(hitResult->mLocation->x, hitResult->mLocation->y, hitResult->mLocation->z);
 
     boost::shared_ptr<Entity> hitEntity = findHitEntity(from, to);
     if (hitEntity)
@@ -364,8 +362,8 @@ void AbstractRotatedItemProjectile::tick()
     {
         for (int i = 0; i < 4; ++i)
         {
-            mLevel->addParticle(PARTICLE_CRIT, mX + mXd * i / 4.0, mY + mYd * i / 4.0,
-                mZ + mZd * i / 4.0, -mXd, 0.2 - mYd, -mZd, arrayWithLength<int>());
+            mLevel->addParticle(PARTICLE_CRIT, mX + mXd * i / 4.0, mY + mYd * i / 4.0, mZ + mZd * i / 4.0, -mXd,
+                                0.2 - mYd, -mZd, arrayWithLength<int>());
         }
     }
 
@@ -394,8 +392,8 @@ void AbstractRotatedItemProjectile::tick()
     if (isInWater())
     {
         for (int i = 0; i < 4; ++i)
-            mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25,
-                mZ - mZd * 0.25, mXd, mYd, mZd, arrayWithLength<int>());
+            mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25, mZ - mZd * 0.25, mXd, mYd, mZd,
+                                arrayWithLength<int>());
         inertia = getWaterInertia();
     }
     if (isInWaterOrRain())
@@ -423,8 +421,8 @@ void AbstractRotatedItemProjectile::tick()
     }
 }
 
-void AbstractRotatedItemProjectile::lerpTo(double x, double y, double z, float yRot, float xRot,
-    int steps, bool teleport)
+void AbstractRotatedItemProjectile::lerpTo(double x, double y, double z, float yRot, float xRot, int steps,
+                                           bool teleport)
 {
     setPos(x, y, z);
     setRot(yRot, xRot);
@@ -447,8 +445,7 @@ void AbstractRotatedItemProjectile::lerpMotion(double xd, double yd, double zd)
     }
 }
 
-void AbstractRotatedItemProjectile::move(MoverType type, double x, double y, double z,
-    bool pushedByPiston)
+void AbstractRotatedItemProjectile::move(MoverType type, double x, double y, double z, bool pushedByPiston)
 {
     Entity::move(type, x, y, z, pushedByPiston);
     if (mInGround)
@@ -499,7 +496,7 @@ void AbstractRotatedItemProjectile::playerTouch(boost::shared_ptr<Player> player
     if (!mLevel->mIsClientSide && (mInGround || isNoPhysics()) && mShake < 1)
     {
         bool canPickup = mPickup == ePickup_Allowed || mPickup == ePickup_CreativeOnly
-            || (isNoPhysics() && mOwner.get() == player.get());
+                         || (isNoPhysics() && mOwner.get() == player.get());
         if (mPickup == ePickup_Allowed)
         {
             if (!player->mInventory->add(getPickupItem()))

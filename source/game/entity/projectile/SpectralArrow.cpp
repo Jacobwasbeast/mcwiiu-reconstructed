@@ -10,22 +10,19 @@
 #include "game/item/Items.hpp"
 #include "game/world/Level.hpp"
 
-SpectralArrow::SpectralArrow(Level* level)
-    : Arrow(level)
+SpectralArrow::SpectralArrow(Level* level) : Arrow(level)
 {
     fjDerivedCtorCalls();
     init();
 }
 
-SpectralArrow::SpectralArrow(Level* level, boost::shared_ptr<LivingEntity> owner)
-    : Arrow(level, owner)
+SpectralArrow::SpectralArrow(Level* level, boost::shared_ptr<LivingEntity> owner) : Arrow(level, owner)
 {
     fjDerivedCtorCalls();
     init();
 }
 
-SpectralArrow::SpectralArrow(Level* level, double x, double y, double z)
-    : Arrow(level, x, y, z)
+SpectralArrow::SpectralArrow(Level* level, double x, double y, double z) : Arrow(level, x, y, z)
 {
     fjDerivedCtorCalls();
     init();
@@ -46,8 +43,7 @@ void SpectralArrow::tick()
 {
     AbstractRotatedItemProjectile::tick();
     if (mLevel->mIsClientSide && !mInGround)
-        mLevel->addParticle(PARTICLE_INSTANT_SPELL, mX, mY, mZ, 0.0, 0.0, 0.0,
-            arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_INSTANT_SPELL, mX, mY, mZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
 }
 
 void SpectralArrow::addDataWalkers(DataFixerUpper* fixer)

@@ -1,13 +1,13 @@
 #include "game/entity/projectile/ArrowKnockbackEnchantment.hpp"
 
-namespace {
+namespace
+{
 const int kArrowKnockbackDescriptionId = static_cast<int>(0x86d14a8dU);
 }
 
 #include "game/item/EnchantmentCategory.hpp"
 
-ArrowKnockbackEnchantment::ArrowKnockbackEnchantment(const Rarity* rarity,
-                                                     arrayWithLength<const EquipmentSlot*> slots)
+ArrowKnockbackEnchantment::ArrowKnockbackEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::BOW, slots)
 {
     setDescriptionId(kArrowKnockbackDescriptionId);

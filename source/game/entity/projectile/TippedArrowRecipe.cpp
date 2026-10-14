@@ -8,8 +8,7 @@
 #include "game/item/Potions.hpp"
 #include "game/item/Recipes.hpp"
 
-TippedArrowRecipe::TippedArrowRecipe()
-    : Recipe()
+TippedArrowRecipe::TippedArrowRecipe() : Recipe()
 {
 }
 
@@ -67,8 +66,8 @@ void TippedArrowRecipe::addRecipes(Recipes* recipes)
         not_null_ptr<ItemInstance> ingredient = PotionUtils::setPotion(
             not_null_ptr<ItemInstance>(new ItemInstance(Items::lingeringPotion)), potion);
 
-        recipes->addShapedRecipe(result->copy_not_shared(), L"sssciczg", L"|||", L"|o|", L"|||",
-            L'|', Items::arrow, L'o', ingredient->copy_not_shared(), L'T');
+        recipes->addShapedRecipe(result->copy_not_shared(), L"sssciczg", L"|||", L"|o|", L"|||", L'|', Items::arrow,
+                                 L'o', ingredient->copy_not_shared(), L'T');
     }
 }
 
@@ -133,9 +132,11 @@ ItemInstance* TippedArrowRecipe::getIngredientItem(int column, int row)
     return ItemInstance::EMPTY.get();
 }
 
-NonNullList<not_null_ptr<ItemInstance> > TippedArrowRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > TippedArrowRecipe::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    return NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    return NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(),
+                                                              ItemInstance::EMPTY);
 }
 
 boost::shared_ptr<CraftingContainer> TippedArrowRecipe::generateExpectedCraftSlots()

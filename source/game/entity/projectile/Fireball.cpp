@@ -23,15 +23,15 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 
-Fireball::Fireball(Level* level)
-    : Entity(level, true), mOwner()
+Fireball::Fireball(Level* level) : Entity(level, true), mOwner()
 {
     _init();
     setSize(1.0f, 1.0f);
 }
 
 Fireball::Fireball(Level* level, double x, double y, double z, double xd, double yd, double zd)
-    : Entity(level, true), mOwner()
+    : Entity(level, true),
+      mOwner()
 {
     _init();
     setSize(1.0f, 1.0f);
@@ -53,7 +53,8 @@ Fireball::Fireball(Level* level, double x, double y, double z, double xd, double
 }
 
 Fireball::Fireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd)
-    : Entity(level, true), mOwner()
+    : Entity(level, true),
+      mOwner()
 {
     _init();
     mOwner = owner;

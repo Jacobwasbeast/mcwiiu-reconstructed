@@ -11,8 +11,7 @@ class HitResult;
 class ProjectileUtil
 {
 public:
-    static HitResult* forwardsRaycast(const boost::shared_ptr<Entity>& entity,
-                                      bool checkEntities,
+    static HitResult* forwardsRaycast(const boost::shared_ptr<Entity>& entity, bool checkEntities,
                                       const std::vector<boost::shared_ptr<Entity> >* ignoredEntities,
                                       const std::vector<unsigned long long>* ignoredEntityTypes);
 

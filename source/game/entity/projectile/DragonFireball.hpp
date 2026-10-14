@@ -18,10 +18,8 @@ public:
     static const double SPLASH_RANGE;
 
     DragonFireball(Level* level);
-    DragonFireball(Level* level, boost::shared_ptr<LivingEntity> owner,
-                   double xd, double yd, double zd);
-    DragonFireball(Level* level, double x, double y, double z,
-                   double xd, double yd, double zd);
+    DragonFireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd);
+    DragonFireball(Level* level, double x, double y, double z, double xd, double yd, double zd);
 
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void onHit(const HitResult* result);

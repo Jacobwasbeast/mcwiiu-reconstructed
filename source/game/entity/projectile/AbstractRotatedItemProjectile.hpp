@@ -63,8 +63,8 @@ public:
     virtual not_null_ptr<ItemInstance> getPickupItem() = 0;
     virtual void checkDespawn();
     virtual float getWaterInertia();
-    virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot,
-        float offset, float velocity, float inaccuracy);
+    virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset,
+                                   float velocity, float inaccuracy);
     virtual void shoot(double x, double y, double z, float velocity, float inaccuracy);
 
     void setFlag(int flag, bool value);

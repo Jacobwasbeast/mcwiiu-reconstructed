@@ -5,8 +5,7 @@
 
 static const int ARROW_INFINITY_DESCRIPTION_ID = static_cast<int>(IDS_ENCHANTMENT_ARROW_INFINITE);
 
-ArrowInfiniteEnchantment::ArrowInfiniteEnchantment(const Rarity* rarity,
-                                                   arrayWithLength<const EquipmentSlot*> slots)
+ArrowInfiniteEnchantment::ArrowInfiniteEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::BOW, slots)
 {
     setDescriptionId(ARROW_INFINITY_DESCRIPTION_ID);
