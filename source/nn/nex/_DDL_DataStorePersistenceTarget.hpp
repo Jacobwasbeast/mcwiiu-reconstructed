@@ -15,8 +15,10 @@ class Message;
 class _DDL_DataStorePersistenceTarget : public RootObject
 {
 public:
+    static const uint16_t NO_PERSISTENCE_SLOT_ID = 0xFFFF;
+
     _DDL_DataStorePersistenceTarget()
-        : m_uiStructureVersion(0)
+        : m_uiStructureVersion(0), m_uiOwnerId(0), m_uiPersistenceSlotId(NO_PERSISTENCE_SLOT_ID)
     {
     }
 

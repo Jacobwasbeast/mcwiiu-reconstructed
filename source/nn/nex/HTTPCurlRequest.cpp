@@ -120,8 +120,8 @@ bool HTTPCurlRequest::Reset(void* pShare, HTTPMethod method, const HTTPURL& rURL
     Clear();
     curl_easy_reset(m_pHandle);
     SetOption(CURLOPT_SHARE, pShare);
-    int iNoProgress = 1;
-    SetOption(CURLOPT_NOPROGRESS, iNoProgress);
+    int iNoSignal = 1;
+    SetOption(CURLOPT_NOSIGNAL, iNoSignal);
     SetHeaderWriter(CurlHeaderWriter, &m_headers);
     if (SetMethod(method) && SetUrl(rURL))
     {

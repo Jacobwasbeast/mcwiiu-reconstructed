@@ -13,6 +13,11 @@ class DataStorePrepareGetParam : public _DDL_DataStorePrepareGetParam
 public:
     DataStorePrepareGetParam()
     {
+        m_uiDataId = 0;
+        m_uiLockId = 0;
+        m_PersistenceTarget = DataStorePersistenceTarget();
+        m_uiAccessPassword = 0;
+        m_ExtraData.clear();
     }
 
     virtual ~DataStorePrepareGetParam()

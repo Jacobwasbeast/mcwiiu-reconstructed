@@ -224,10 +224,7 @@ void SecureEndPoint::SetEncryptionKey(const Key& rKey)
 Key& SecureEndPoint::GetEncryptionKey()
 {
     if (m_pAssociatedEndPoint == 0)
-    {
-        static Key s_emptyKey;
-        return s_emptyKey;
-    }
+        return *static_cast<Key*>(0);
 
     return m_pAssociatedEndPoint->GetEncryptionKey();
 }

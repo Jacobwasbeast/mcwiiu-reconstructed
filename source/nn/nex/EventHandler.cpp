@@ -6,6 +6,8 @@
 #include "nn/nex/SystemError.hpp"
 #include "nn/nex/Time.hpp"
 
+#include <cstring>
+
 namespace nn
 {
 namespace nex
@@ -21,7 +23,7 @@ unsigned int s_nextEvent = 0;
 
 EventHandler::EventHandler(unsigned short maxEvents)
 {
-    m_ppSignaled = new volatile bool*();
+    m_ppSignaled = new (RootObject::operator new(sizeof(volatile bool*))) volatile bool*[1]();
     m_maxEvents = maxEvents;
     *m_ppSignaled = SpecialNewArray<bool>(maxEvents, L"", 0);
 
@@ -30,8 +32,7 @@ EventHandler::EventHandler(unsigned short maxEvents)
 
     m_pEvents = SpecialNewArray<Event*>(m_maxEvents, L"", 0);
 
-    for (unsigned short slot = 0; slot < m_maxEvents; ++slot)
-        m_pEvents[slot] = 0;
+    memset(m_pEvents, 0, m_maxEvents * sizeof(Event*));
 
     m_nbEvents = 0;
 }
@@ -128,22 +129,19 @@ unsigned short EventHandler::GetSignaledEvent() const
 
 bool EventHandler::WaitForBoolEvent(unsigned int timeout, Event** ppEvent, bool bTimeOutAllowed) const
 {
-    const uint64_t started = Time::GetTime();
+    const Time started = Time::GetTime();
+    unsigned short signaled;
 
     for (;;)
     {
-        const unsigned short signaled = GetSignaledEvent();
+        signaled = GetSignaledEvent();
 
         if (signaled != NO_SIGNALED_EVENT)
-        {
-            m_pEvents[signaled]->Reset();
-            *ppEvent = m_pEvents[signaled];
-            return true;
-        }
+            break;
 
         if (timeout != 0xffffffffu)
         {
-            if (Time::GetTime() - started >= timeout)
+            if (static_cast<int64_t>(Time::GetTime() - started) >= timeout)
             {
                 if (!bTimeOutAllowed)
                 {
@@ -158,6 +156,10 @@ bool EventHandler::WaitForBoolEvent(unsigned int timeout, Event** ppEvent, bool 
 
         Platform::Sleep(1);
     }
+
+    m_pEvents[signaled]->Reset();
+    *ppEvent = m_pEvents[signaled];
+    return true;
 }
 
 bool EventHandler::WaitForEventOrTimeOut(unsigned int timeout, Event** ppEvent) const

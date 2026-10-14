@@ -1,5 +1,7 @@
 #include "nn/nex/ProtocolCallContext.hpp"
 #include "nn/nex/Credentials.hpp"
+#include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/Scheduler.hpp"
 
 namespace nn
 {
@@ -18,10 +20,13 @@ ProtocolCallContext::ProtocolCallContext(Credentials* pCredentials)
 
 ProtocolCallContext::~ProtocolCallContext()
 {
+    if (GetState() == CallInProgress)
+    {
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+        if (GetState() == CallInProgress)
+            Cancel(CallCanceled);
+    }
     SetCredentials(0);
-    m_completionFlag = 0;
-    m_completionResult = 0;
-    m_returnValues.clear();
 }
 
 void ProtocolCallContext::SetCredentials(Credentials* pCredentials)

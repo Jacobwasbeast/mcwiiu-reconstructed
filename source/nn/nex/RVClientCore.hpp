@@ -46,7 +46,7 @@ public:
         return static_cast<RVClientCore*>(pInstance);
     }
 
-    static RVClientCore* AcquireInstance();
+    static void AcquireInstance();
     static void ReleaseInstance();
 
     unsigned int RegisterServerProtocol(unsigned short uiProtocolID, ServerProtocol* pProtocol);
@@ -81,8 +81,6 @@ private:
         Time m_timeBase;
         Time m_epochTime;
     };
-
-    static RVClientCore* s_pInstance;
 
     ProtocolRegistry* m_pProtocolRegistry;
     PseudoSingleton m_instanceControl;

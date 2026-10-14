@@ -1,7 +1,10 @@
 #include "nn/nex/RVClientCore.hpp"
 
+#include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/DateTime.hpp"
 #include "nn/nex/GlobalNotificationEventManager.hpp"
+#include "nn/nex/InstanceControl.hpp"
+#include "nn/nex/Scheduler.hpp"
 #include "nn/nex/ServerProtocol.hpp"
 #include "nn/nex/Time.hpp"
 
@@ -9,8 +12,6 @@ namespace nn
 {
 namespace nex
 {
-
-RVClientCore* RVClientCore::s_pInstance = 0;
 
 RVClientCore::RVClientCore()
     : RefCountedObject()
@@ -32,22 +33,29 @@ RVClientCore::~RVClientCore()
     Core::ReleaseInstance();
 }
 
-RVClientCore* RVClientCore::AcquireInstance()
+void RVClientCore::AcquireInstance()
 {
-    if (s_pInstance == 0)
-        s_pInstance = new RVClientCore;
-    return s_pInstance;
+    Core::AcquireInstance();
+    ScopedCS lock(&g_instanceTableCriticalSection);
+    if (GetInstance() == 0)
+        new RVClientCore;
+    else
+        GetInstance()->AddRef();
 }
 
 void RVClientCore::ReleaseInstance()
 {
-    delete s_pInstance;
-    s_pInstance = 0;
+    {
+        ScopedCS lock(&g_instanceTableCriticalSection);
+        GetInstance()->ReleaseRef();
+    }
+    Core::ReleaseInstance();
 }
 
 unsigned int RVClientCore::RegisterServerProtocol(unsigned short uiProtocolID,
                                                   ServerProtocol* pProtocol)
 {
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_serverProtocols.find(uiProtocolID) != m_serverProtocols.end())
         return 0;
     m_serverProtocols[uiProtocolID] = pProtocol;
@@ -66,6 +74,7 @@ void RVClientCore::UnregisterGlobalNotificationEventManager(NotificationEventMan
 
 unsigned int RVClientCore::UnregisterServerProtocol(unsigned short uiProtocolID)
 {
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     ServerProtocolMap::iterator entry = m_serverProtocols.find(uiProtocolID);
     if (entry != m_serverProtocols.end())
         m_serverProtocols.erase(entry);
@@ -74,6 +83,7 @@ unsigned int RVClientCore::UnregisterServerProtocol(unsigned short uiProtocolID)
 
 ServerProtocol* RVClientCore::GetServerProtocol(unsigned short uiProtocolID)
 {
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     ServerProtocolMap::iterator entry = m_serverProtocols.find(uiProtocolID);
     if (entry == m_serverProtocols.end())
         return 0;

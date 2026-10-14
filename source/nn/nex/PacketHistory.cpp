@@ -128,7 +128,6 @@ unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pCha
     }
     if (uiSize == uiStartSize)
         return 0;
-    const unsigned int uiBundled = bundle.size();
     ByteStream* pPacked = new ByteStream();
     PRUDPMessageSelector& rSelector = Network::GetInstance()->GetMessageSelector();
     PacketBundleChain::iterator bundled = bundle.begin();
@@ -151,7 +150,7 @@ unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pCha
         *pStream << *pPacked->GetBuffer();
     }
     delete pPacked;
-    return uiBundled;
+    return bundle.size();
 }
 
 }

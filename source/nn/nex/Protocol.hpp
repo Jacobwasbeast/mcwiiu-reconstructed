@@ -106,6 +106,7 @@ public:
 
 protected:
     friend class ClientProtocol;
+    friend class ProtocolRequestBroker;
 
     unsigned short m_uiProtocolID;
     EndPoint* m_pOutgoingConnection;

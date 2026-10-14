@@ -32,7 +32,7 @@ bool WorkerThreads::Start(unsigned int nbWorkers)
     {
         String name;
 
-        name.Format(L"WorkerThread ID:%d", index + 1);
+        name.Format(L"WorkerThread ID %d", index + 1);
 
         Worker* pWorker = new Worker(name);
 

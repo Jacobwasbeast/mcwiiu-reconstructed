@@ -15,13 +15,15 @@ struct ACTNexAuthenticationResult
     {
         TOKEN_LENGTH = 516,
         PASSWORD_LENGTH = 68,
-        HOST_LENGTH = 16
+        HOST_LENGTH = 16,
+        RESERVED_LENGTH = 2
     };
 
     char token[TOKEN_LENGTH];
     char password[PASSWORD_LENGTH];
     char host[HOST_LENGTH];
     unsigned short port;
+    char reserved[RESERVED_LENGTH];
 };
 
 namespace nn

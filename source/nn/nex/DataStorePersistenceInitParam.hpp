@@ -13,6 +13,8 @@ class DataStorePersistenceInitParam : public _DDL_DataStorePersistenceInitParam
 public:
     DataStorePersistenceInitParam()
     {
+        m_uiPersistenceSlotId = NO_PERSISTENCE_SLOT_ID;
+        m_bDeleteLastObject = true;
     }
 
     static const uint16_t NO_PERSISTENCE_SLOT_ID = 0xFFFF;

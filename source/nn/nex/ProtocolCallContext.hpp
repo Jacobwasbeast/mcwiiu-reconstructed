@@ -1,9 +1,8 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLCALLCONTEXT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLCALLCONTEXT_HPP
 
-#include <vector>
-
 #include "nn/nex/CallContext.hpp"
+#include "nn/nex/qVector.hpp"
 
 namespace nn
 {
@@ -31,10 +30,11 @@ public:
 
 protected:
     friend class AccountManagementClient;
+    friend class JobManageAccount;
 
     virtual void BeginTransition(State state, qResult result, bool publishResult);
 
-    std::vector<void*> m_returnValues;
+    qVector<void*> m_returnValues;
     bool* m_completionFlag;
     qResult* m_completionResult;
     Credentials* m_credentials;

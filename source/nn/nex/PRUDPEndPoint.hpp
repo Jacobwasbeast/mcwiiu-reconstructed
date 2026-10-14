@@ -156,7 +156,6 @@ private:
     unsigned int m_uiKeepAliveTimeout;
     _ConnectionState m_connectionState;
     bool m_bPeerConnected;
-    bool m_bUnknown9d;
     unsigned int m_uiSignaledFaultError;
     RTT m_rtt;
     Time m_lastSendTime;

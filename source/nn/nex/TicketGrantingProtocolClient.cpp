@@ -274,7 +274,7 @@ TicketGrantingProtocolClient::TicketGrantingProtocolClient(unsigned short uiProt
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::AcquireInstance()->GetProtocolRegistry()->RegisterProtocol(
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
         uiProtocolID, new TicketGrantingProtocolClient());
 }
 

@@ -132,12 +132,7 @@ void JobManageAccount::CompleteJobImpl(CallContext::State state, qResult result)
     CallContext* pCallContext =
         Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
     if (pCallContext != 0)
-    {
-        if (state == CallContext::CallSucceeded)
-            pCallContext->SignalSuccess(result);
-        else
-            pCallContext->SignalFailure(result);
-    }
+        pCallContext->SetStateImpl(state, result, true);
 }
 
 void JobManageAccount::PasswordInitialHash()
@@ -230,6 +225,7 @@ void JobManageAccount::CallCreateAccount()
     m_callContext.Reset();
     ResumeOnCallCompletion(&m_callContext,
         new Step(static_cast<Step::Function>(&JobManageAccount::CompleteJob), L""));
+    m_callContext.m_completionResult = m_pResult;
     if (m_pProtocolClient->CallCreateAccount(&m_callContext, m_pResult, m_name, m_key.ToString(),
             m_uiGroups, m_email))
     {
@@ -282,6 +278,7 @@ void JobManageAccount::CallChangePassword()
     m_callContext.Reset();
     ResumeOnCallCompletion(&m_callContext,
         new Step(static_cast<Step::Function>(&JobManageAccount::CompleteJob), L""));
+    m_callContext.m_completionFlag = m_pSuccess;
     if (m_pProtocolClient->CallChangePassword(&m_callContext, m_pSuccess, m_key.ToString()))
     {
         if (m_callContext.GetState() == CallContext::CallInProgress)

@@ -1,16 +1,20 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLREQUESTBROKER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLREQUESTBROKER_HPP
 
+#include <functional>
+#include <map>
+#include <utility>
+
+#include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/ProtocolRequestBrokerInterface.hpp"
-#include "nn/nex/ProtocolRegistry.hpp"
-#include <stdint.h>
+#include "nn/nex/SingleThreadCallPolicy.hpp"
 
 namespace nn { namespace nex {
 
 class ProtocolRequestBroker : public ProtocolRequestBrokerInterface
 {
 public:
-    ProtocolRequestBroker(); /* address-zero declaration in the Wii U image */
+    ProtocolRequestBroker(ProtocolRequestBroker* pParentBroker);
     virtual ~ProtocolRequestBroker();
 
     virtual void ProcessMessage(CallProtocolMethodOperation*, EndPoint*, Buffer*);
@@ -28,27 +32,39 @@ public:
     virtual qResult DispatchThreadSafeLocalRMC(Message*, ClientProtocol*, ServerProtocol*, EndPoint*);
     void PeerDisconnected(EndPoint*);
     void FaultDetection(EndPoint*, unsigned int);
-
-    ProtocolRegistry& GetRegistry();
-
-protected:
-    void ProcessMessageCore(CallProtocolMethodOperation*, EndPoint*, Buffer*);
-    void DispatchCallToProtocol(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
-    void ProcessLocalCallRequest(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
     Operation* GetCurrentOperation();
     void TraceProtocols(unsigned long long);
     static bool SystemStateIsValid(bool);
-    uint32_t m_field44;
-    uint32_t m_field48;
-    uint32_t m_field4c;
-    uint32_t m_field50;
-    uint32_t m_field54;
-    uint32_t m_field58;
+
+private:
+    enum
+    {
+        RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u)
+    };
+
+    enum
+    {
+        NO_RESPONSE_PROTOCOL_ID = 1
+    };
+
+    enum
+    {
+        PROTOCOL_FLAG_THREAD_SAFE_RMC = 2
+    };
+
+    void ProcessMessageCore(CallProtocolMethodOperation*, EndPoint*, Buffer*);
+    void DispatchCallToProtocol(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
+    void ProcessLocalCallRequest(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
+
+    typedef std::pair<const unsigned short, Protocol*> ProtocolEntry;
+    typedef std::map<unsigned short, Protocol*, std::less<unsigned short>,
+                     MemAllocator<ProtocolEntry> > ProtocolMap;
+
+    ProtocolMap m_clientProtocols;
+    ProtocolMap m_serverProtocols;
     EndPoint* m_pCurrentEndPoint;
     ProtocolRequestBroker* m_pParentBroker;
-    uint32_t m_field64;
-    unsigned char m_padding68[84];
-    uint32_t m_fieldbc;
+    SingleThreadCallPolicy m_callPolicy;
 };
 
 }}

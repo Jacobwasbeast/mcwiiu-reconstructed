@@ -126,6 +126,7 @@ private:
     friend class JobTicketManagerAcquireTicket;
     friend class JobWaitForNotification;
     friend class JobWaitForProbes;
+    friend class JobManageAccount;
     class InternalData
     {
     public:

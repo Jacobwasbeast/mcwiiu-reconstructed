@@ -57,7 +57,8 @@ qResult JobRetrieveGameAuthToken::Initialize(unsigned int uiCallId, unsigned int
     m_password = rPassword;
     m_pKey = pKey;
     *pToken = L"normaltoken";
-    if (strncmp(s_acCachedKey, "", CACHED_KEY_CAPACITY) != 0)
+    if (s_uiCachedPrincipalId == uiPrincipalId &&
+        strncmp(s_acCachedKey, "", CACHED_KEY_CAPACITY) != 0)
     {
         *m_pKey = s_acCachedKey;
         SetStep(Step(static_cast<Step::Function>(&JobRetrieveGameAuthToken::StepDummyToComplete), L""));

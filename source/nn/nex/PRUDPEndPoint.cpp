@@ -439,17 +439,21 @@ void PRUDPEndPoint::Dispatch(PacketIn* pPacket, Time)
 
 void PRUDPEndPoint::HandlerDispatch(Buffer* pBuffer, PacketIn* pPacket)
 {
-    if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_HISTORY_BUNDLE) == 0)
+    if (pPacket->m_uiTypeAndFlags & PACKET_FLAG_HISTORY_BUNDLE)
     {
-        if (m_pEventHandler == 0)
-            return;
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+        PRUDPUserProtocol* pUserProtocol = PRUDPUserProtocol::GetInstance();
+        if (pUserProtocol != 0)
+        {
+            pUserProtocol->Receive(
+                this, pBuffer, pPacket->m_uiTypeAndFlags, pPacket->m_uiSubStreamID);
+        }
+    }
+    else if (m_pEventHandler != 0)
+    {
         ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         m_pEventHandler->Receive(this, pBuffer, pPacket->m_uiSubStreamID);
-        return;
     }
-    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    PRUDPUserProtocol::GetInstance()->Receive(
-        this, pBuffer, pPacket->m_uiTypeAndFlags, pPacket->m_uiSubStreamID);
 }
 
 void PRUDPEndPoint::InitUnreliableSeq(PacketOut* pPacket)
@@ -1559,7 +1563,7 @@ qResult PRUDPEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
         pTimeout->SetRelativeExpirationTime(uiTimeout);
         m_pConnectPacket->m_address = *m_stationURL.GetInetAddress();
         SendReliable(m_pConnectPacket);
-        m_bUnknown9d = !PeerIsConnected();
+        m_bFaultIgnored = !PeerIsConnected();
     }
     else
     {
@@ -1568,7 +1572,7 @@ qResult PRUDPEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
             g_terminateImmediatelyTimeout));
         m_pConnectPacket->m_address = *m_stationURL.GetInetAddress();
         SendReliable(m_pConnectPacket);
-        m_bUnknown9d = !PeerIsConnected();
+        m_bFaultIgnored = !PeerIsConnected();
     }
     if (pCallback != 0)
         return qResult(RESULT_SUCCESS);

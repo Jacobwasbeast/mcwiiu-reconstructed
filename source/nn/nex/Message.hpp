@@ -44,6 +44,7 @@ protected:
     friend class ClientProtocol;
     friend class AnyDataAdapter;
     friend class ServerProtocol;
+    friend class ProtocolRequestBroker;
 
     qResult m_Result;
     unsigned long long m_uiBufferState;

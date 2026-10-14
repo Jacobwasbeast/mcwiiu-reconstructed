@@ -8,7 +8,9 @@
 #include "nn/nex/Message.hpp"
 #include "nn/nex/ParticipantDetails.hpp"
 #include "nn/nex/ProtocolCallContext.hpp"
+#include "nn/nex/ProtocolRegistry.hpp"
 #include "nn/nex/ProtocolRequestBrokerInterface.hpp"
+#include "nn/nex/RVClientCore.hpp"
 #include "nn/nex/Scheduler.hpp"
 
 namespace nn { namespace nex {
@@ -29,8 +31,11 @@ ProtoReturnFunction s_ProtoReturn[METHOD_COUNT];
 MatchMakingProtocolExtClient::MatchMakingProtocolExtClient(unsigned short protocol_id)
     : ClientProtocol(1)
 {
-    if (protocol_id != 0)
-        SetProtocolID(protocol_id);
+    if (protocol_id == 0)
+        return;
+    SetProtocolID(protocol_id);
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
+        protocol_id, new MatchMakingProtocolExtClient());
 }
 
 void MatchMakingProtocolExtClient::ExtractCallSpecificResults(Message* pMessage,

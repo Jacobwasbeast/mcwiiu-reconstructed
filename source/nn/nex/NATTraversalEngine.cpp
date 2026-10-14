@@ -298,13 +298,11 @@ void NATTraversalEngine::ProcessRequestProbe(const StationURL& rStationURL)
             return;
 
         bool bRelayFastProbe = false;
-        if (!m_bUseRelayServer)
-        {
-            NATProperties properties = RootTransport::GetInstance()->GetNATProperties();
-            if (properties.GetNATMapping() == NAT_MAPPING_ENDPOINT_DEPENDENT &&
-                (!m_pendingURLs.empty() || !m_activeProbes.empty()))
-                bRelayFastProbe = true;
-        }
+        if (!m_bUseRelayServer &&
+            RootTransport::GetInstance()->GetNATProperties().GetNATMapping() ==
+                NAT_MAPPING_ENDPOINT_DEPENDENT &&
+            (m_pendingURLs.size() != 0 || m_pCheckAndRelayJob != 0))
+            bRelayFastProbe = true;
 
         if (bRelayFastProbe)
         {

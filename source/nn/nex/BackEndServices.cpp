@@ -25,6 +25,16 @@
 #include "nn/nex/SecureStream.hpp"
 #include "nn/nex/StreamManager.hpp"
 
+namespace
+{
+
+void CallOperationOnCompletion(nn::nex::CallContext*, const nn::nex::UserContext*)
+{
+    nn::nex::ScopedCS lock(&nn::nex::Scheduler::GetInstance()->GetCriticalSection());
+}
+
+}
+
 namespace nn
 {
 namespace nex
@@ -46,11 +56,6 @@ enum
     NOTIFICATION_PROTOCOL_FLAG = 8,
     DEFAULT_LOGIN_TIMEOUT = 30000
 };
-
-void CallOperationOnCompletion(CallContext*, const UserContext*)
-{
-    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-}
 
 }
 
