@@ -2,7 +2,7 @@
 
 void GameRuleSaveInterface::startTag(ConsoleGameRules::EGameRuleType type)
 {
-    Partials partial = { mPartials.size(), type, 0, 0, 0, 0, false, false };
+    Partials partial = {mPartials.size(), type, 0, 0, 0, 0, false, false};
     mPartials.push_back(partial);
 }
 

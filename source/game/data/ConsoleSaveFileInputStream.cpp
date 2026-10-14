@@ -1,16 +1,15 @@
 #include "game/data/ConsoleSaveFileInputStream.hpp"
 
-ConsoleSaveFileInputStream::ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile,
-                                                       const ConsoleSavePath& path)
+ConsoleSaveFileInputStream::ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile, const ConsoleSavePath& path)
 {
     mSaveFile = saveFile;
     mFileEntry = mSaveFile->createFile(path);
     mSaveFile->setFilePointer(mFileEntry, 0, NULL, 0);
 }
 
-ConsoleSaveFileInputStream::ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile,
-                                                       FileEntry* fileEntry)
-    : mFileEntry(fileEntry), mSaveFile(saveFile)
+ConsoleSaveFileInputStream::ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile, FileEntry* fileEntry)
+    : mFileEntry(fileEntry),
+      mSaveFile(saveFile)
 {
     mSaveFile->setFilePointer(mFileEntry, 0, NULL, 0);
 }

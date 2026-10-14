@@ -13,7 +13,8 @@
 
 static const std::wstring PLAYER_DIR = L"players/";
 
-void ConsoleSaveFileConverter::ProcessSimpleFile(ConsoleSaveFile* saveFileIn, FileEntry* entryIn, ConsoleSaveFile* saveFileOut, FileEntry* entryOut)
+void ConsoleSaveFileConverter::ProcessSimpleFile(ConsoleSaveFile* saveFileIn, FileEntry* entryIn,
+                                                 ConsoleSaveFile* saveFileOut, FileEntry* entryOut)
 {
     unsigned int bytesRead = 0;
     unsigned int bytesWritten = 0;
@@ -29,7 +30,8 @@ void ConsoleSaveFileConverter::ProcessSimpleFile(ConsoleSaveFile* saveFileIn, Fi
     delete[] buffer;
 }
 
-void ConsoleSaveFileConverter::ProcessStandardRegionFile(ConsoleSaveFile* saveFileIn, File regionFileIn, ConsoleSaveFile* saveFileOut, File regionFileOut)
+void ConsoleSaveFileConverter::ProcessStandardRegionFile(ConsoleSaveFile* saveFileIn, File regionFileIn,
+                                                         ConsoleSaveFile* saveFileOut, File regionFileOut)
 {
     RegionFile sourceRegion(saveFileIn, &regionFileIn);
     RegionFile destRegion(saveFileOut, &regionFileOut);
@@ -64,7 +66,8 @@ void ConsoleSaveFileConverter::ProcessStandardRegionFile(ConsoleSaveFile* saveFi
     }
 }
 
-void ConsoleSaveFileConverter::ConvertSave(ConsoleSaveFile* saveFileIn, ConsoleSaveFile* saveFileOut, ProgressListener* progressListener)
+void ConsoleSaveFileConverter::ConvertSave(ConsoleSaveFile* saveFileIn, ConsoleSaveFile* saveFileOut,
+                                           ProgressListener* progressListener)
 {
     ConsoleSavePath levelDatPath(L"level.dat");
 

@@ -55,14 +55,8 @@ public:
         unsigned char getDataSize(int plane);
         unsigned int getData(int plane, int index);
         unsigned int getValuesInPlane(int plane, char (&values)[16]);
-        void setDataOffset(int plane, unsigned short offset)
-        {
-            offsets[plane].offset = offset;
-        }
-        unsigned short getDataOffset(int plane)
-        {
-            return offsets[plane].offset;
-        }
+        void setDataOffset(int plane, unsigned short offset) { offsets[plane].offset = offset; }
+        unsigned short getDataOffset(int plane) { return offsets[plane].offset; }
         unsigned char* getDataPointer(int plane)
         {
             unsigned char* data = NULL;
@@ -92,14 +86,18 @@ public:
     void write(DataOutputStream* stream);
     void read(DataInputStream* stream);
     bool isSameAs(SparseDataStorage* other);
-    unsigned int getValuesInPlane(arrayWithLength<unsigned char> values, unsigned int plane, int count, char (&unique)[16]);
+    unsigned int getValuesInPlane(arrayWithLength<unsigned char> values, unsigned int plane, int count,
+                                  char (&unique)[16]);
     void setData(arrayWithLength<unsigned char> values, unsigned int plane, bool compressed);
     void getData(arrayWithLength<unsigned char> values, unsigned int plane, int offset, int count);
     void increasePlaneBitdepth(int plane);
     void set(int x, int y, int z, int value);
-    bool testSetDataRegion(arrayWithLength<unsigned char> values, int x, int y, int z, int width, int height, int depth, int value, bool* changed);
-    void setDataRegion(arrayWithLength<unsigned char> values, int x, int y, int z, int width, int height, int depth, int value, void* oldData, void* newData);
-    void getDataRegion(arrayWithLength<unsigned char> values, int x, int y, int z, int width, int height, int depth, int value);
+    bool testSetDataRegion(arrayWithLength<unsigned char> values, int x, int y, int z, int width, int height, int depth,
+                           int value, bool* changed);
+    void setDataRegion(arrayWithLength<unsigned char> values, int x, int y, int z, int width, int height, int depth,
+                       int value, void* oldData, void* newData);
+    void getDataRegion(arrayWithLength<unsigned char> values, int x, int y, int z, int width, int height, int depth,
+                       int value);
     bool isCompressed();
 
 private:

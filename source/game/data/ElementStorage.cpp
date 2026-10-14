@@ -17,16 +17,21 @@ static OSFastMutex sElementLocks[128];
 static OSFastMutex sThreadCountLock;
 
 ElementStorage::ElementStorage(bool threaded)
-    : HierarchicalElementStorage(), mFrameLastUpdated(0), mCriticalSectionIndex(getCriticalSectionIndex(threaded))
+    : HierarchicalElementStorage(),
+      mFrameLastUpdated(0),
+      mCriticalSectionIndex(getCriticalSectionIndex(threaded))
 {
 }
 
 ElementStorage::ElementStorage(bool threaded, ElementStorage* other)
-    : HierarchicalElementStorage(other), mFrameLastUpdated(0), mCriticalSectionIndex(getCriticalSectionIndex(threaded))
+    : HierarchicalElementStorage(other),
+      mFrameLastUpdated(0),
+      mCriticalSectionIndex(getCriticalSectionIndex(threaded))
 {
 }
 
-ElementStorage::ElementStorage(bool threaded, arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, unsigned int headroom)
+ElementStorage::ElementStorage(bool threaded, arrayWithLength<unsigned char> blocks,
+                               arrayWithLength<unsigned char> data, unsigned int headroom)
     : HierarchicalElementStorage()
 {
     _Init(blocks, data, headroom);
@@ -42,7 +47,8 @@ ElementStorage::ElementStorage(bool threaded, arrayWithLength<unsigned short> el
     mCriticalSectionIndex = getCriticalSectionIndex(threaded);
 }
 
-ElementStorage::ElementStorage(bool threaded, CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks, SparseDataStorage* data, SparseDataStorage* extraData)
+ElementStorage::ElementStorage(bool threaded, CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks,
+                               SparseDataStorage* data, SparseDataStorage* extraData)
     : HierarchicalElementStorage()
 {
     _Init(blocks, extraBlocks, data, extraData);
@@ -81,8 +87,8 @@ void ElementStorage::removeCompressionHeadroom()
 
 bool ElementStorage::shouldLockForRead(ThreadStorage* storage)
 {
-    if (!storage->mHasTempData || (storage->mBlockReadLock && sMainThreadStorageCount > 1) ||
-        sRenderThreadStorageCount > 1)
+    if (!storage->mHasTempData || (storage->mBlockReadLock && sMainThreadStorageCount > 1)
+        || sRenderThreadStorageCount > 1)
         return true;
     return false;
 }
@@ -138,7 +144,8 @@ void ElementStorage::setData(arrayWithLength<unsigned short> elements, arrayWith
     releaseWriteLock();
 }
 
-void ElementStorage::getData(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, int minSlice, int maxSlice)
+void ElementStorage::getData(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, int minSlice,
+                             int maxSlice)
 {
     getReadLock(0x66);
     HierarchicalElementStorage::getData(blocks, data, minSlice, maxSlice);
@@ -167,7 +174,8 @@ void ElementStorage::getData(arrayWithLength<unsigned short> elements, int minSl
     }
 }
 
-void ElementStorage::getData(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, int minSlice, int maxSlice)
+void ElementStorage::getData(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements,
+                             int minSlice, int maxSlice)
 {
     getReadLock(0x66);
     HierarchicalElementStorage::getData(elements, extraElements, minSlice, maxSlice);
@@ -213,7 +221,8 @@ unsigned short ElementStorage::getExtraElement(unsigned int x, unsigned int y, u
     return extraElement;
 }
 
-void ElementStorage::getElementAndExtraElement_NoLock(unsigned int x, unsigned int y, unsigned int z, unsigned short* element, unsigned short* extraElement)
+void ElementStorage::getElementAndExtraElement_NoLock(unsigned int x, unsigned int y, unsigned int z,
+                                                      unsigned short* element, unsigned short* extraElement)
 {
     unsigned short value = HierarchicalElementStorage::get(x, y, z, 0);
     if ((value & 0x8000) != 0)
@@ -230,7 +239,8 @@ void ElementStorage::getElementAndExtraElement_NoLock(unsigned int x, unsigned i
     }
 }
 
-void ElementStorage::getElementAndExtraElement(unsigned int x, unsigned int y, unsigned int z, unsigned short* element, unsigned short* extraElement)
+void ElementStorage::getElementAndExtraElement(unsigned int x, unsigned int y, unsigned int z, unsigned short* element,
+                                               unsigned short* extraElement)
 {
     getReadLock(0x69);
     getElementAndExtraElement_NoLock(x, y, z, element, extraElement);
@@ -279,15 +289,19 @@ void ElementStorage::setExtraElement(unsigned int x, unsigned int y, unsigned in
     releaseWriteLock();
 }
 
-int ElementStorage::setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset, void (*changedCallback)(int, int, int, void*, int), void* callbackData, int callbackValue)
+int ElementStorage::setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1,
+                                  int offset, void (*changedCallback)(int, int, int, void*, int), void* callbackData,
+                                  int callbackValue)
 {
     getWriteLock(5);
-    int result = HierarchicalElementStorage::setDataRegion(data, x0, y0, z0, x1, y1, z1, offset, changedCallback, callbackData, callbackValue);
+    int result = HierarchicalElementStorage::setDataRegion(data, x0, y0, z0, x1, y1, z1, offset, changedCallback,
+                                                           callbackData, callbackValue);
     releaseWriteLock();
     return result;
 }
 
-int ElementStorage::getDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset)
+int ElementStorage::getDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1,
+                                  int offset)
 {
     getReadLock(0x6b);
     int result = HierarchicalElementStorage::getDataRegion(data, x0, y0, z0, x1, y1, z1, offset);
@@ -353,8 +367,9 @@ void ElementStorage::CreateNewThreadStorage(eHESThreadId threadId)
     storage->mThreadId = threadId;
     storage->mReadLocks = 0;
     storage->mBlockReadLock = threadId == eHESThreadId_Server || threadId == eHESThreadId_ServerPostUpdate;
-    storage->mDataLock = storage->mThreadId == eHESThreadId_NetworkGame || storage->mThreadId == eHESThreadId_Main ||
-        (storage->mThreadId >= eHESThreadId_GameModeTransition && storage->mThreadId <= eHESThreadId_ClientChunkStorage);
+    storage->mDataLock = storage->mThreadId == eHESThreadId_NetworkGame || storage->mThreadId == eHESThreadId_Main
+                         || (storage->mThreadId >= eHESThreadId_GameModeTransition
+                             && storage->mThreadId <= eHESThreadId_ClientChunkStorage);
     storage->mHasTempData = storage->mBlockReadLock || storage->mDataLock;
     TlsSetValue(sElementThreadStorageIndex, storage);
     if (storage->mHasTempData)

@@ -38,9 +38,8 @@ static const std::wstring PLAYER_DIR = L"players/";
 const std::wstring DirectoryLevelStorage::NETHER_FOLDER = L"DIM-1";
 const std::wstring DirectoryLevelStorage::ENDER_FOLDER = L"DIM1/";
 
-DirectoryLevelStorage::DirectoryLevelStorage(ConsoleSaveFile* saveFile, File folder,
-                                             const std::wstring& levelId, bool createIfMissing,
-                                             DataFixerUpper* fixer)
+DirectoryLevelStorage::DirectoryLevelStorage(ConsoleSaveFile* saveFile, File folder, const std::wstring& levelId,
+                                             bool createIfMissing, DataFixerUpper* fixer)
     : mFolder(L""),
       mPlayerDir(PLAYER_DIR),
       mDataDir(std::wstring(L"data/")),
@@ -77,7 +76,8 @@ void DirectoryLevelStorage::dontSaveMapMappingForPlayer(PlayerUID uid)
         return;
 
     boost::unordered_map<long long, short>& mappings = it->second.mMappings;
-    for (boost::unordered_map<long long, short>::iterator mapping = mappings.begin(); mapping != mappings.end(); ++mapping)
+    for (boost::unordered_map<long long, short>::iterator mapping = mappings.begin(); mapping != mappings.end();
+         ++mapping)
     {
         short id = mapping->second;
         mUsedMappings.data[id / 8] &= ~(1 << (id % 8));
@@ -155,7 +155,8 @@ void DirectoryLevelStorage::deleteMapFilesForPlayer(PlayerUID uid)
         return;
 
     boost::unordered_map<long long, short>& mappings = it->second.mMappings;
-    for (boost::unordered_map<long long, short>::iterator mapping = mappings.begin(); mapping != mappings.end(); ++mapping)
+    for (boost::unordered_map<long long, short>::iterator mapping = mappings.begin(); mapping != mappings.end();
+         ++mapping)
     {
         std::wstring name = std::wstring(L"map_") + _toString<short>(mapping->second);
         ConsoleSavePath file = getDataFile(name);
@@ -189,7 +190,8 @@ void DirectoryLevelStorage::clearOldPlayerFiles()
         for (unsigned int i = MAX_PLAYER_DATA_SAVES; i < files->size(); ++i)
         {
             FileEntry* file = files->at(i);
-            std::wstring xuidString = replaceAll(replaceAll(file->m_fileName, std::wstring(mPlayerDir), L""), L".dat", L"");
+            std::wstring xuidString = replaceAll(replaceAll(file->m_fileName, std::wstring(mPlayerDir), L""), L".dat",
+                                                 L"");
             PlayerUID xuid(xuidString);
             deleteMapFilesForPlayer(xuid);
             mSaveFile->deleteFile(files->at(i));
@@ -359,8 +361,7 @@ ChunkStorage* DirectoryLevelStorage::createChunkStorage(Dimension* dimension)
     return new OldChunkStorage(mFolder, true);
 }
 
-void DirectoryLevelStorage::saveLevelData(LevelData* levelData,
-                                          std::vector<boost::shared_ptr<Player> >* players)
+void DirectoryLevelStorage::saveLevelData(LevelData* levelData, std::vector<boost::shared_ptr<Player> >* players)
 {
     CompoundTag* dataTag = levelData->createTag(players);
     CompoundTag* root = new CompoundTag();
@@ -499,9 +500,9 @@ void DirectoryLevelStorage::PlayerMappings::writeMappings(DataOutputStream* outp
 
 void DirectoryLevelStorage::PlayerMappings::addMapping(int id, int centreX, int centreZ, int dimension, int scale)
 {
-    long long index = ((long long)(centreZ & COORDINATE_MASK) << (HIGH_WORD_SHIFT + COORDINATE_Z_SHIFT)) |
-                      ((long long)(centreX & COORDINATE_MASK) << COORDINATE_X_SHIFT) |
-                      (long long)((scale & SCALE_MASK) << SCALE_SHIFT) | (long long)(dimension & DIMENSION_MASK);
+    long long index = ((long long)(centreZ & COORDINATE_MASK) << (HIGH_WORD_SHIFT + COORDINATE_Z_SHIFT))
+                      | ((long long)(centreX & COORDINATE_MASK) << COORDINATE_X_SHIFT)
+                      | (long long)((scale & SCALE_MASK) << SCALE_SHIFT) | (long long)(dimension & DIMENSION_MASK);
     mMappings[index] = id;
 }
 
@@ -518,9 +519,9 @@ void DirectoryLevelStorage::PlayerMappings::readMappings(DataInputStream* input)
 
 bool DirectoryLevelStorage::PlayerMappings::getMapping(int& id, int centreX, int centreZ, int dimension, int scale)
 {
-    long long index = ((long long)(centreZ & COORDINATE_MASK) << (HIGH_WORD_SHIFT + COORDINATE_Z_SHIFT)) |
-                      ((long long)(centreX & COORDINATE_MASK) << COORDINATE_X_SHIFT) |
-                      (long long)((scale & SCALE_MASK) << SCALE_SHIFT) | (long long)(dimension & DIMENSION_MASK);
+    long long index = ((long long)(centreZ & COORDINATE_MASK) << (HIGH_WORD_SHIFT + COORDINATE_Z_SHIFT))
+                      | ((long long)(centreX & COORDINATE_MASK) << COORDINATE_X_SHIFT)
+                      | (long long)((scale & SCALE_MASK) << SCALE_SHIFT) | (long long)(dimension & DIMENSION_MASK);
     boost::unordered_map<long long, short>::iterator it = mMappings.find(index);
     if (it != mMappings.end())
     {

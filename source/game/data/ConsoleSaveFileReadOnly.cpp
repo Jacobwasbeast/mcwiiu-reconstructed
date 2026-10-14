@@ -18,7 +18,8 @@ void __debugbreak();
 static void* sSaveData = NULL;
 static unsigned int sSaveDataPages = 0;
 
-ConsoleSaveFileReadOnly::ConsoleSaveFileReadOnly(const std::wstring& filename, void* data, unsigned int dataSize, bool resetData, ESavePlatform platform)
+ConsoleSaveFileReadOnly::ConsoleSaveFileReadOnly(const std::wstring& filename, void* data, unsigned int dataSize,
+                                                 bool resetData, ESavePlatform platform)
     : ConsoleSaveFileCommon()
 {
     if (sSaveData == NULL)
@@ -28,8 +29,8 @@ ConsoleSaveFileReadOnly::ConsoleSaveFileReadOnly(const std::wstring& filename, v
     unsigned int saveDataSize = dataSize;
     bool deleteBaseSaveData = false;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if (data == NULL && options != NULL && options->requiresBaseSave() &&
-        (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
+    if (data == NULL && options != NULL && options->requiresBaseSave()
+        && (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
         deleteBaseSaveData = true;
     else if (data == NULL || saveDataSize == 0)
         saveDataSize = gStorage->GetSaveSize();
@@ -112,7 +113,8 @@ void ConsoleSaveFileReadOnly::setFilePointer(FileEntry* entry, long distanceToMo
     ReleaseSaveAccess();
 }
 
-bool ConsoleSaveFileReadOnly::writeFile(FileEntry* entry, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten)
+bool ConsoleSaveFileReadOnly::writeFile(FileEntry* entry, const void* buffer, unsigned int bytesToWrite,
+                                        unsigned int* bytesWritten)
 {
     return _writeFile(entry, buffer, bytesToWrite, bytesWritten);
 }
@@ -122,7 +124,8 @@ bool ConsoleSaveFileReadOnly::zeroFile(FileEntry* entry, unsigned int bytesToZer
     return _zeroFile(entry, bytesToZero, bytesWritten);
 }
 
-bool ConsoleSaveFileReadOnly::readFile(FileEntry* entry, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead)
+bool ConsoleSaveFileReadOnly::readFile(FileEntry* entry, void* buffer, unsigned int bytesToRead,
+                                       unsigned int* bytesRead)
 {
     return _readFile(entry, buffer, bytesToRead, bytesRead);
 }

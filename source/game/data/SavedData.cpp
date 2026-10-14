@@ -1,8 +1,6 @@
 #include "game/data/SavedData.hpp"
 
-SavedData::SavedData(const std::wstring& id)
-    : id(id),
-      dirty(false)
+SavedData::SavedData(const std::wstring& id) : id(id), dirty(false)
 {
 }
 

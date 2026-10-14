@@ -11,11 +11,13 @@
 #include "game/world/LevelData.hpp"
 
 DirectoryLevelStorageSource::DirectoryLevelStorageSource(File file, DataFixerUpper* fixer)
-    : mBaseDir(file), mFixer(fixer)
+    : mBaseDir(file),
+      mFixer(fixer)
 {
 }
 
-LevelData* DirectoryLevelStorageSource::getLevelData(ConsoleSaveFile* saveFile, const ConsoleSavePath& path, DataFixerUpper* fixer)
+LevelData* DirectoryLevelStorageSource::getLevelData(ConsoleSaveFile* saveFile, const ConsoleSavePath& path,
+                                                     DataFixerUpper* fixer)
 {
     ConsoleSaveFileInputStream input(saveFile, path);
     CompoundTag* root = NbtIo::readCompressed(&input);
@@ -104,9 +106,12 @@ void DirectoryLevelStorageSource::deleteLevel(const std::wstring& levelId)
     level._delete();
 }
 
-boost::shared_ptr<LevelStorage> DirectoryLevelStorageSource::selectLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId, bool bCreateIfMissing)
+boost::shared_ptr<LevelStorage> DirectoryLevelStorageSource::selectLevel(ConsoleSaveFile* saveFile,
+                                                                         const std::wstring& levelId,
+                                                                         bool bCreateIfMissing)
 {
-    return boost::shared_ptr<LevelStorage>(new DirectoryLevelStorage(saveFile, mBaseDir, levelId, bCreateIfMissing, mFixer));
+    return boost::shared_ptr<LevelStorage>(
+        new DirectoryLevelStorage(saveFile, mBaseDir, levelId, bCreateIfMissing, mFixer));
 }
 
 bool DirectoryLevelStorageSource::isConvertible(ConsoleSaveFile* saveFile, const std::wstring& levelId)
@@ -119,7 +124,8 @@ bool DirectoryLevelStorageSource::requiresConversion(ConsoleSaveFile* saveFile, 
     return false;
 }
 
-bool DirectoryLevelStorageSource::convertLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId, ProgressListener* progressListener)
+bool DirectoryLevelStorageSource::convertLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId,
+                                               ProgressListener* progressListener)
 {
     return false;
 }

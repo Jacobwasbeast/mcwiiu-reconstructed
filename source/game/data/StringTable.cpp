@@ -62,11 +62,12 @@ std::wstring StringTable::FindLanguage(bool& found, long long& count)
     gApp.getLocale(localeNames);
 
     std::wstring selected = L"";
-    for (std::vector<std::wstring>::iterator localeName = localeNames.begin(); localeName != localeNames.end() && !found; ++localeName)
+    for (std::vector<std::wstring>::iterator localeName = localeNames.begin();
+         localeName != localeNames.end() && !found; ++localeName)
     {
         count = 0;
-        for (std::vector<std::pair<std::wstring, int> >::iterator entry = m_entries.begin();
-             entry != m_entries.end(); ++entry)
+        for (std::vector<std::pair<std::wstring, int> >::iterator entry = m_entries.begin(); entry != m_entries.end();
+             ++entry)
         {
             if (entry->first == *localeName)
             {
@@ -171,7 +172,8 @@ void StringTable::ReadAllFromStream(DataInputStream* stream)
     }
     else if (m_languages.empty())
     {
-        for (std::vector<std::pair<std::wstring, int> >::iterator entry = m_entries.begin(); entry != m_entries.end(); ++entry)
+        for (std::vector<std::pair<std::wstring, int> >::iterator entry = m_entries.begin(); entry != m_entries.end();
+             ++entry)
             ReadLanguageFromStream(stream);
     }
     if (found)
@@ -371,6 +373,8 @@ void StringTable::Reset()
     m_languages.clear();
     m_ids.clear();
     m_keys.clear();
-    if (m_strings != NULL) m_strings->clear();
-    if (m_stringsById != NULL) m_stringsById->clear();
+    if (m_strings != NULL)
+        m_strings->clear();
+    if (m_stringsById != NULL)
+        m_stringsById->clear();
 }

@@ -19,22 +19,9 @@
 
 static const int NUM_TAG_TYPES = 12;
 
-static const wchar_t* TAG_TYPE_NAMES[NUM_TAG_TYPES + 1] =
-{
-    L"TAG_End",
-    L"TAG_Byte",
-    L"TAG_Short",
-    L"TAG_Int",
-    L"TAG_Long",
-    L"TAG_Float",
-    L"TAG_Double",
-    L"TAG_Byte_Array",
-    L"TAG_String",
-    L"TAG_List",
-    L"TAG_Compound",
-    L"TAG_Int_Array",
-    L"UNKNOWN"
-};
+static const wchar_t* TAG_TYPE_NAMES[NUM_TAG_TYPES + 1] = {
+    L"TAG_End",        L"TAG_Byte",   L"TAG_Short", L"TAG_Int",      L"TAG_Long",      L"TAG_Float", L"TAG_Double",
+    L"TAG_Byte_Array", L"TAG_String", L"TAG_List",  L"TAG_Compound", L"TAG_Int_Array", L"UNKNOWN"};
 
 Tag::Tag()
 {

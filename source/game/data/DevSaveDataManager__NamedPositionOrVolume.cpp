@@ -7,7 +7,8 @@ DevSaveDataManager::NamedPositionOrVolume::NamedPositionOrVolume(std::string nam
     mIsVolume = false;
 }
 
-DevSaveDataManager::NamedPositionOrVolume::NamedPositionOrVolume(std::string name, const BlockPos& from, const BlockPos& to)
+DevSaveDataManager::NamedPositionOrVolume::NamedPositionOrVolume(std::string name, const BlockPos& from,
+                                                                 const BlockPos& to)
 {
     mName = name;
     mPositions[0] = from;

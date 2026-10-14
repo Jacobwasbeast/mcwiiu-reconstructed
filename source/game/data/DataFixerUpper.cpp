@@ -6,9 +6,7 @@
 #include "game/core/SharedConstants.hpp"
 #include "game/data/DataFix.hpp"
 
-DataFixerUpper::DataFixerUpper(int version)
-    : mWalkers(11)
-    , mFixes(11)
+DataFixerUpper::DataFixerUpper(int version) : mWalkers(11), mFixes(11)
 {
     mVersion = version;
 }

@@ -60,7 +60,8 @@ public:
         void setData(unsigned int section, unsigned short value);
         unsigned short getData(unsigned int section);
 
-        void setTypeAndOffset(unsigned int section, unsigned short sectionType, unsigned short offset, bool hasTwoIndices);
+        void setTypeAndOffset(unsigned int section, unsigned short sectionType, unsigned short offset,
+                              bool hasTwoIndices);
         void setType(unsigned int section, unsigned short sectionType);
         void setOffset(unsigned int section, unsigned short offset);
 
@@ -130,7 +131,8 @@ public:
 
         Palettiser(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data);
         Palettiser(arrayWithLength<unsigned short> elements);
-        Palettiser(CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks, SparseDataStorage* data, SparseDataStorage* extraData);
+        Palettiser(CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks, SparseDataStorage* data,
+                   SparseDataStorage* extraData);
 
         void initialiseSection(unsigned int sectionBaseIndex);
         void createHeadroom(unsigned int extraEntries);
@@ -161,14 +163,17 @@ public:
 
     void _Init(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, unsigned int headroom);
     void _Init(arrayWithLength<unsigned short> elements, unsigned int headroom);
-    void _Init(CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks, SparseDataStorage* data, SparseDataStorage* extraData);
+    void _Init(CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks, SparseDataStorage* data,
+               SparseDataStorage* extraData);
 
     void setData(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data);
     void setData(arrayWithLength<unsigned short> elements);
 
-    void getData(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, int minSlice, int maxSlice);
+    void getData(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, int minSlice,
+                 int maxSlice);
     void getData(arrayWithLength<unsigned short> elements, int minSlice, int maxSlice);
-    void getData(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, int minSlice, int maxSlice);
+    void getData(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, int minSlice,
+                 int maxSlice);
 
     unsigned short get(unsigned int x, unsigned int y, unsigned int z, bool* isUniformSection);
     unsigned short getExtraElement(unsigned int x, unsigned int y, unsigned int z);
@@ -176,7 +181,8 @@ public:
     void set(unsigned int x, unsigned int y, unsigned int z, unsigned short value);
     void setExtraElement(unsigned int x, unsigned int y, unsigned int z, unsigned short value);
 
-    int setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset, void (*changedCallback)(int, int, int, void*, int), void* callbackData, int callbackValue);
+    int setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset,
+                      void (*changedCallback)(int, int, int, void*, int), void* callbackData, int callbackValue);
     int getDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset);
 
     bool isRenderChunkEmpty(int baseY, int* highestNonEmptyY);
@@ -215,19 +221,27 @@ private:
     void initWithPalettiser(Palettiser& palettiser, unsigned int headroom);
 
     void ExtendSubchunkData(unsigned int subChunk);
-    void UpdateSectionDataSize(unsigned int subChunk, unsigned int section, unsigned int sectionType, bool hasTwoIndices);
+    void UpdateSectionDataSize(unsigned int subChunk, unsigned int section, unsigned int sectionType,
+                               bool hasTwoIndices);
     void ReduceSubchunkDataTo(unsigned int subChunk, unsigned int pages);
     void ReduceSubchunkStorage();
     void checkSubChunkStorageRequirements(unsigned int subChunk);
 
     void set_subChunkEmpty(unsigned int x, unsigned int y, unsigned int z, unsigned short value, bool isExtra);
-    void set_section0Bit(unsigned int x, unsigned int y, unsigned int z, unsigned short value, unsigned int section, SubChunkHeader* header, unsigned int subChunkOffset, bool isExtra);
-    void set_sectionRaw(unsigned int x, unsigned int y, unsigned int z, unsigned short value, unsigned int section, SubChunkHeader* header, unsigned int subChunkOffset, bool isExtra);
-    void set_sectionPalettised(unsigned int x, unsigned int y, unsigned int z, unsigned short value, unsigned int section, SubChunkHeader* header, unsigned int subChunkOffset, unsigned short planeCount, bool isExtra);
+    void set_section0Bit(unsigned int x, unsigned int y, unsigned int z, unsigned short value, unsigned int section,
+                         SubChunkHeader* header, unsigned int subChunkOffset, bool isExtra);
+    void set_sectionRaw(unsigned int x, unsigned int y, unsigned int z, unsigned short value, unsigned int section,
+                        SubChunkHeader* header, unsigned int subChunkOffset, bool isExtra);
+    void set_sectionPalettised(unsigned int x, unsigned int y, unsigned int z, unsigned short value,
+                               unsigned int section, SubChunkHeader* header, unsigned int subChunkOffset,
+                               unsigned short planeCount, bool isExtra);
 
-    unsigned int getSingleEntryPaletteValue(PalettisedSectionReference& sectionRef, unsigned int subChunk, unsigned int section, bool isExtra);
-    void removeSingleEntryPaletteSection(PalettisedSectionReference& sectionRef, unsigned int subChunk, unsigned int section, unsigned short value);
-    void checkForSingleEntryPalette(PalettisedSectionReference& sectionRef, unsigned int subChunk, unsigned int section, bool hasTwoIndices);
+    unsigned int getSingleEntryPaletteValue(PalettisedSectionReference& sectionRef, unsigned int subChunk,
+                                            unsigned int section, bool isExtra);
+    void removeSingleEntryPaletteSection(PalettisedSectionReference& sectionRef, unsigned int subChunk,
+                                         unsigned int section, unsigned short value);
+    void checkForSingleEntryPalette(PalettisedSectionReference& sectionRef, unsigned int subChunk, unsigned int section,
+                                    bool hasTwoIndices);
 
     SubChunkInfo mSubChunkInfo;
     unsigned char* mData;

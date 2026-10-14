@@ -20,15 +20,14 @@ void deleteElements(const std::vector<T*, std::allocator<T*> >& elements);
 template <class T>
 void deleteElements(const std::vector<T*, std::allocator<T*> >& elements)
 {
-    for (typename std::vector<T*, std::allocator<T*> >::const_iterator it = elements.begin(),
-         end = elements.end(); it != end; ++it)
+    for (typename std::vector<T*, std::allocator<T*> >::const_iterator it = elements.begin(), end = elements.end();
+         it != end; ++it)
     {
         delete *it;
     }
 }
 
-ListTag::ListTag(int type)
-    : mList(), mType(type)
+ListTag::ListTag(int type) : mList(), mType(type)
 {
 }
 
@@ -337,7 +336,8 @@ bool ListTag::equals(Tag* other)
                 {
                     bool found = false;
 
-                    for (std::vector<Tag*>::iterator otherIt = list->mList.begin(); otherIt != list->mList.end(); ++otherIt)
+                    for (std::vector<Tag*>::iterator otherIt = list->mList.begin(); otherIt != list->mList.end();
+                         ++otherIt)
                     {
                         if ((*it)->equals(*otherIt))
                         {

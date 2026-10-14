@@ -1,7 +1,6 @@
 #include "game/data/SavedDataMemoryStorage.hpp"
 
-SavedDataMemoryStorage::SavedDataMemoryStorage()
-    : SavedDataStorage(0)
+SavedDataMemoryStorage::SavedDataMemoryStorage() : SavedDataStorage(0)
 {
 }
 

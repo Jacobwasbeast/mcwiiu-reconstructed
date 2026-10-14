@@ -17,8 +17,10 @@ public:
 
     virtual FileEntry* createFile(const ConsoleSavePath& path) = 0;
     virtual void deleteFile(FileEntry* entry) = 0;
-    virtual void setFilePointer(FileEntry* entry, long distanceToMove, int* distanceToMoveHigh, unsigned int moveMethod) = 0;
-    virtual bool writeFile(FileEntry* entry, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten) = 0;
+    virtual void setFilePointer(FileEntry* entry, long distanceToMove, int* distanceToMoveHigh,
+                                unsigned int moveMethod) = 0;
+    virtual bool writeFile(FileEntry* entry, const void* buffer, unsigned int bytesToWrite,
+                           unsigned int* bytesWritten) = 0;
     virtual bool zeroFile(FileEntry* entry, unsigned int bytesToZero, unsigned int* bytesWritten) = 0;
     virtual bool readFile(FileEntry* entry, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead) = 0;
     virtual bool closeHandle(FileEntry* entry) = 0;

@@ -65,7 +65,9 @@ bool ByteArrayTag::equals(Tag* other)
     if (Tag::equals(other))
     {
         ByteArrayTag* otherArray = static_cast<ByteArrayTag*>(other);
-        return (mData.data == NULL && otherArray->mData.data == NULL) || (mData.data != NULL && mData.length == otherArray->mData.length && std::memcmp(mData.data, otherArray->mData.data, mData.length) == 0);
+        return (mData.data == NULL && otherArray->mData.data == NULL)
+               || (mData.data != NULL && mData.length == otherArray->mData.length
+                   && std::memcmp(mData.data, otherArray->mData.data, mData.length) == 0);
     }
     return false;
 }

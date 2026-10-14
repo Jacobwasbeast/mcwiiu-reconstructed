@@ -23,8 +23,7 @@ public:
     McRegionLevelStorageSource(File file, DataFixerUpper* fixer);
 
     virtual std::wstring getName();
-    virtual boost::shared_ptr<LevelStorage> selectLevel(ConsoleSaveFile* saveFile,
-                                                        const std::wstring& levelId,
+    virtual boost::shared_ptr<LevelStorage> selectLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId,
                                                         bool bCreateIfMissing);
     virtual std::vector<LevelSummary*>* getLevelList();
     virtual void clearAll();
@@ -34,10 +33,9 @@ public:
                               ProgressListener* progressListener);
 
 private:
-    void eraseFolders(std::vector<File*>* folders, int current, int total,
-                      ProgressListener* progressListener);
-    void convertRegions(File& regionFile, std::vector<ChunkFile*>* chunks, int current,
-                        int total, ProgressListener* progressListener);
+    void eraseFolders(std::vector<File*>* folders, int current, int total, ProgressListener* progressListener);
+    void convertRegions(File& regionFile, std::vector<ChunkFile*>* chunks, int current, int total,
+                        ProgressListener* progressListener);
 };
 
 #endif

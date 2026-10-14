@@ -63,7 +63,10 @@ unsigned char SparseDataStorage::Array256_1Bit::get(unsigned char index)
 
 void SparseDataStorage::Array256_2Bit::init()
 {
-    palette[0] = -1; palette[1] = -1; palette[2] = -1; palette[3] = -1;
+    palette[0] = -1;
+    palette[1] = -1;
+    palette[2] = -1;
+    palette[3] = -1;
 }
 
 unsigned int SparseDataStorage::Array256_2Bit::set(unsigned char index, unsigned char value)
@@ -134,7 +137,9 @@ unsigned char SparseDataStorage::Array256_2Bit::get(unsigned char index)
 void SparseDataStorage::PlaneOffsets::initPlane(int plane, void* data)
 {
     if (offsets[plane].type != 0)
-        setDataOffset(plane, static_cast<unsigned int>(static_cast<unsigned char*>(data) - reinterpret_cast<unsigned char*>(this)) >> 2);
+        setDataOffset(
+            plane,
+            static_cast<unsigned int>(static_cast<unsigned char*>(data) - reinterpret_cast<unsigned char*>(this)) >> 2);
     switch (offsets[plane].type)
     {
     case 1:
@@ -159,16 +164,19 @@ unsigned int SparseDataStorage::PlaneOffsets::setData(int plane, int index, int 
             result = 0;
         break;
     case 1:
-        result = reinterpret_cast<Array256_1Bit*>(getDataPointer(plane))->set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
+        result = reinterpret_cast<Array256_1Bit*>(getDataPointer(plane))
+                     ->set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
         break;
     case 2:
-        result = reinterpret_cast<Array256_2Bit*>(getDataPointer(plane))->set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
+        result = reinterpret_cast<Array256_2Bit*>(getDataPointer(plane))
+                     ->set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
         break;
     case 3:
     {
         unsigned char* nibbles = getDataPointer(plane);
         const unsigned char position = static_cast<unsigned char>(index);
-        nibbles[position >> 1] = static_cast<unsigned char>((nibbles[position >> 1] & ~(15 << ((index & 1) << 2))) | (value << ((index & 1) << 2)));
+        nibbles[position >> 1] = static_cast<unsigned char>((nibbles[position >> 1] & ~(15 << ((index & 1) << 2)))
+                                                            | (value << ((index & 1) << 2)));
         result = 1;
         break;
     }
@@ -192,7 +200,10 @@ unsigned char SparseDataStorage::PlaneOffsets::getDataSizeFromType(int type)
     }
     return 0;
 }
-unsigned char SparseDataStorage::PlaneOffsets::getDataSize(int plane) { return getDataSizeFromType(offsets[plane].type); }
+unsigned char SparseDataStorage::PlaneOffsets::getDataSize(int plane)
+{
+    return getDataSizeFromType(offsets[plane].type);
+}
 unsigned int SparseDataStorage::PlaneOffsets::getData(int plane, int index)
 {
     const unsigned int type = offsets[plane].type;
@@ -300,8 +311,7 @@ void SparseDataStorage::updateDataAndCount(PlaneOffsets* offsets, int size)
         previous = dataAndCount.bits;
         oldData = reinterpret_cast<unsigned char*>(previous & DATA_POINTER_MASK);
         current = InterlockedCompareExchangeRelease64(&dataAndCount.bits, replacement, previous);
-    }
-    while (current != previous);
+    } while (current != previous);
     queueForDelete(oldData, oldSize);
 }
 unsigned int SparseDataStorage::get(int x, int y, int z)
@@ -407,8 +417,7 @@ void SparseDataStorage::tick()
         data = sPendingDeleteLists[index].Pop();
         if (data != NULL)
             freePlaneOffsets(static_cast<PlaneOffsets*>(static_cast<void*>(data)), 0);
-    }
-    while (data != NULL);
+    } while (data != NULL);
     sPendingDeleteList = (sPendingDeleteList + 1) % 3;
 }
 void SparseDataStorage::write(DataOutputStream* stream)
@@ -475,7 +484,8 @@ void SparseDataStorage::read(DataInputStream* stream)
             continue;
         }
         destination->offsets[plane].type = 3;
-        destination->setDataOffset(plane, static_cast<unsigned int>(payload - reinterpret_cast<unsigned char*>(destination)) >> 2);
+        destination->setDataOffset(
+            plane, static_cast<unsigned int>(payload - reinterpret_cast<unsigned char*>(destination)) >> 2);
         const unsigned char* source = &encoded[0x80 + directory * 0x80];
         for (int group = 0; group < 16; ++group)
             for (int pair = 0; pair < 8; ++pair)

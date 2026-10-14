@@ -342,8 +342,10 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
             }
         }
 
-        long long newDataAndCount = ((long long)planeCount << PLANE_COUNT_SHIFT) | ((long long)newData & DATA_POINTER_MASK);
-        long long returnedDataAndCount = InterlockedCompareExchangeRelease64(&mDataAndCount, newDataAndCount, lastDataAndCount);
+        long long newDataAndCount = ((long long)planeCount << PLANE_COUNT_SHIFT)
+                                    | ((long long)newData & DATA_POINTER_MASK);
+        long long returnedDataAndCount = InterlockedCompareExchangeRelease64(&mDataAndCount, newDataAndCount,
+                                                                             lastDataAndCount);
         if (returnedDataAndCount == lastDataAndCount)
         {
             queueForDelete(oldData, oldSize);
@@ -409,7 +411,8 @@ void SparseLightStorage::setAllBright()
     updateDataAndCount((unsigned int)newData);
 }
 
-int SparseLightStorage::setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset)
+int SparseLightStorage::setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1,
+                                      int z1, int offset)
 {
     int planePairs = (y1 - y0) / 2;
     int y = y0 & ~1;
@@ -452,7 +455,8 @@ int SparseLightStorage::setDataRegion(arrayWithLength<unsigned char> data, int x
     return (int)(current - source);
 }
 
-int SparseLightStorage::getDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset)
+int SparseLightStorage::getDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1,
+                                      int z1, int offset)
 {
     unsigned char* destination = data.data + offset;
     unsigned char* current = destination;
@@ -571,7 +575,8 @@ unsigned int SparseLightStorage::compress()
             }
         }
 
-        long long newDataAndCount = ((long long)planeCount << PLANE_COUNT_SHIFT) | ((long long)newData & DATA_POINTER_MASK);
+        long long newDataAndCount = ((long long)planeCount << PLANE_COUNT_SHIFT)
+                                    | ((long long)newData & DATA_POINTER_MASK);
         if (InterlockedCompareExchangeRelease64(&mDataAndCount, newDataAndCount, lastDataAndCount) != lastDataAndCount)
         {
             queueForDelete(newData, size);
@@ -634,8 +639,7 @@ void SparseLightStorage::tick()
         data = pending.Pop();
 
         free(data);
-    }
-    while (data != NULL);
+    } while (data != NULL);
 
     sPendingDeleteList = (sPendingDeleteList + 1) % PENDING_DELETE_LIST_COUNT;
 }
@@ -646,7 +650,8 @@ void SparseLightStorage::write(DataOutputStream* out)
 
     out->writeInt(planeCount);
 
-    arrayWithLength<unsigned char> data((unsigned char*)(mDataAndCount & DATA_POINTER_MASK), planeCount * PLANE_BYTES + PLANE_BYTES);
+    arrayWithLength<unsigned char> data((unsigned char*)(mDataAndCount & DATA_POINTER_MASK),
+                                        planeCount * PLANE_BYTES + PLANE_BYTES);
 
     out->write(data);
 }

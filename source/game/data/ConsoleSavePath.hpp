@@ -6,15 +6,9 @@
 class ConsoleSavePath
 {
 public:
-    ConsoleSavePath(const std::wstring& path)
-        : m_path(path)
-    {
-    }
+    ConsoleSavePath(const std::wstring& path) : m_path(path) {}
 
-    std::wstring getPath() const
-    {
-        return m_path;
-    }
+    std::wstring getPath() const { return m_path; }
 
 private:
     std::wstring m_path;

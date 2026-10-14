@@ -7,7 +7,7 @@ class ConsoleSaveFileOriginal : public ConsoleSaveFileCommon
 {
 public:
     ConsoleSaveFileOriginal(const std::wstring& filename, void* data, unsigned int dataSize, bool resetData,
-        ESavePlatform platform);
+                            ESavePlatform platform);
     virtual ~ConsoleSaveFileOriginal();
 
     static int SaveSaveDataCallback(void* context, bool success);
@@ -15,9 +15,8 @@ public:
     virtual FileEntry* createFile(const ConsoleSavePath& path);
     virtual void deleteFile(FileEntry* entry);
     virtual void setFilePointer(FileEntry* entry, long distanceToMove, int* distanceToMoveHigh,
-        unsigned int moveMethod);
-    virtual bool writeFile(FileEntry* entry, const void* buffer, unsigned int bytesToWrite,
-        unsigned int* bytesWritten);
+                                unsigned int moveMethod);
+    virtual bool writeFile(FileEntry* entry, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten);
     virtual bool zeroFile(FileEntry* entry, unsigned int bytesToZero, unsigned int* bytesWritten);
     virtual bool readFile(FileEntry* entry, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead);
     virtual void Flush(bool bForce, bool bBlocking);

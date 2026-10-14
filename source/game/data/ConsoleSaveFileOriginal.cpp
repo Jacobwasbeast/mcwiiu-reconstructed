@@ -25,7 +25,7 @@ static unsigned int s_saveDataSize = 0;
 extern C4JStorage* gStorage;
 
 ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, void* data, unsigned int dataSize,
-    bool resetData, ESavePlatform platform)
+                                                 bool resetData, ESavePlatform platform)
     : ConsoleSaveFileCommon()
 {
     if (s_saveData == NULL)
@@ -35,8 +35,8 @@ ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, v
     unsigned int saveDataSize = dataSize;
     bool deleteBaseSaveData = false;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if (data == NULL && options != NULL && options->requiresBaseSave() &&
-        (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
+    if (data == NULL && options != NULL && options->requiresBaseSave()
+        && (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
         deleteBaseSaveData = true;
     else if (data == NULL || saveDataSize == 0)
         saveDataSize = gStorage->GetSaveSize();
@@ -126,7 +126,7 @@ void ConsoleSaveFileOriginal::setFilePointer(FileEntry* entry, long distanceToMo
 }
 
 bool ConsoleSaveFileOriginal::writeFile(FileEntry* entry, const void* buffer, unsigned int bytesToWrite,
-    unsigned int* bytesWritten)
+                                        unsigned int* bytesWritten)
 {
     return _writeFile(entry, buffer, bytesToWrite, bytesWritten);
 }
@@ -136,7 +136,8 @@ bool ConsoleSaveFileOriginal::zeroFile(FileEntry* entry, unsigned int bytesToZer
     return _zeroFile(entry, bytesToZero, bytesWritten);
 }
 
-bool ConsoleSaveFileOriginal::readFile(FileEntry* entry, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead)
+bool ConsoleSaveFileOriginal::readFile(FileEntry* entry, void* buffer, unsigned int bytesToRead,
+                                       unsigned int* bytesRead)
 {
     return _readFile(entry, buffer, bytesToRead, bytesRead);
 }
@@ -151,8 +152,7 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
     QueryPerformanceFrequency(&frequency);
     unsigned int fileSize = mFileHeader.GetFileSize();
     unsigned int compressedSize = fileSize + 8;
-    unsigned char* compressedData = static_cast<unsigned char*>(
-        gStorage->AllocateSaveData(compressedSize));
+    unsigned char* compressedData = static_cast<unsigned char*>(gStorage->AllocateSaveData(compressedSize));
 
     if (compressedData == NULL)
     {
@@ -163,8 +163,7 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
         QueryPerformanceCounter(&end);
         PIXEndNamedEvent();
         compressedSize += 8;
-        compressedData = static_cast<unsigned char*>(
-            gStorage->AllocateSaveData(compressedSize));
+        compressedData = static_cast<unsigned char*>(gStorage->AllocateSaveData(compressedSize));
     }
 
     if (compressedData != NULL)

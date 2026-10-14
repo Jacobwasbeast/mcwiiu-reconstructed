@@ -27,32 +27,15 @@ void McRegionLevelStorageSource::clearAll()
 {
 }
 
-boost::shared_ptr<LevelStorage> McRegionLevelStorageSource::selectLevel(
-    ConsoleSaveFile* saveFile, const std::wstring& levelId, bool bCreateIfMissing)
+boost::shared_ptr<LevelStorage> McRegionLevelStorageSource::selectLevel(ConsoleSaveFile* saveFile,
+                                                                        const std::wstring& levelId,
+                                                                        bool bCreateIfMissing)
 {
-    return boost::shared_ptr<LevelStorage>(new McRegionLevelStorage(
-        saveFile, mBaseDir, levelId, bCreateIfMissing, mFixer));
+    return boost::shared_ptr<LevelStorage>(
+        new McRegionLevelStorage(saveFile, mBaseDir, levelId, bCreateIfMissing, mFixer));
 }
 
-bool McRegionLevelStorageSource::isConvertible(ConsoleSaveFile* saveFile,
-                                               const std::wstring& levelId)
-{
-    LevelData* levelData = getDataTagFor(saveFile, levelId);
-    if (levelData == 0)
-    {
-        return false;
-    }
-    if (levelData->getVersion() != 0)
-    {
-        delete levelData;
-        return false;
-    }
-    delete levelData;
-    return true;
-}
-
-bool McRegionLevelStorageSource::requiresConversion(ConsoleSaveFile* saveFile,
-                                                    const std::wstring& levelId)
+bool McRegionLevelStorageSource::isConvertible(ConsoleSaveFile* saveFile, const std::wstring& levelId)
 {
     LevelData* levelData = getDataTagFor(saveFile, levelId);
     if (levelData == 0)
@@ -68,15 +51,30 @@ bool McRegionLevelStorageSource::requiresConversion(ConsoleSaveFile* saveFile,
     return true;
 }
 
-bool McRegionLevelStorageSource::convertLevel(ConsoleSaveFile* saveFile,
-                                              const std::wstring& levelId,
+bool McRegionLevelStorageSource::requiresConversion(ConsoleSaveFile* saveFile, const std::wstring& levelId)
+{
+    LevelData* levelData = getDataTagFor(saveFile, levelId);
+    if (levelData == 0)
+    {
+        return false;
+    }
+    if (levelData->getVersion() != 0)
+    {
+        delete levelData;
+        return false;
+    }
+    delete levelData;
+    return true;
+}
+
+bool McRegionLevelStorageSource::convertLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId,
                                               ProgressListener* progressListener)
 {
     return true;
 }
 
-void McRegionLevelStorageSource::eraseFolders(std::vector<File*>* folders, int current,
-                                              int total, ProgressListener* progressListener)
+void McRegionLevelStorageSource::eraseFolders(std::vector<File*>* folders, int current, int total,
+                                              ProgressListener* progressListener)
 {
     File* folder;
     std::vector<File*>::iterator end;

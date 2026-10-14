@@ -17,8 +17,7 @@
 
 static const unsigned int SAVE_PAGE_SIZE = 0x1000;
 
-ConsoleSaveFileCommon::ConsoleSaveFileCommon()
-    : mFileHeader()
+ConsoleSaveFileCommon::ConsoleSaveFileCommon() : mFileHeader()
 {
     InitializeCriticalSectionAndSpinCount(&mSaveAccessMutex, 0x1400);
     mFilename = L"";
@@ -29,7 +28,8 @@ ConsoleSaveFileCommon::~ConsoleSaveFileCommon()
     DeleteCriticalSection(&mSaveAccessMutex);
 }
 
-void ConsoleSaveFileCommon::_initSaveFromData(const std::wstring& filename, unsigned int dataSize, void* data, ESavePlatform platform)
+void ConsoleSaveFileCommon::_initSaveFromData(const std::wstring& filename, unsigned int dataSize, void* data,
+                                              ESavePlatform platform)
 {
     mFilename = filename;
     AllocInitialQuota(dataSize);
@@ -77,7 +77,8 @@ void ConsoleSaveFileCommon::_initSaveFromData(const std::wstring& filename, unsi
         else
         {
             Compression::getCompression()->SetDecompressionType(platform);
-            int result = Compression::getCompression()->Decompress(uncompressedData, &uncompressedSize, compressedHeader + 2, dataSize - 8);
+            int result = Compression::getCompression()->Decompress(uncompressedData, &uncompressedSize,
+                                                                   compressedHeader + 2, dataSize - 8);
             Compression::getCompression()->SetDecompressionType(eSavePlatform_WIIU);
             if (result == 0)
                 std::memcpy(mData, uncompressedData, uncompressedSize);
@@ -124,7 +125,8 @@ void ConsoleSaveFileCommon::_deleteFile(FileEntry* entry)
 void ConsoleSaveFileCommon::MoveDataBeyond(FileEntry* entry, unsigned int size)
 {
     ReAlloc(mFileHeader.GetFileSize() + size);
-    unsigned char* dataStart = static_cast<unsigned char*>(mData) + entry->m_data.m_startOffset + entry->m_data.m_fileSize;
+    unsigned char* dataStart = static_cast<unsigned char*>(mData) + entry->m_data.m_startOffset
+                               + entry->m_data.m_fileSize;
     unsigned char* source = static_cast<unsigned char*>(mData) + mFileHeader.GetStartOfNextData();
     unsigned char* destination = source + size;
     unsigned char* destinationEnd = destination;
@@ -166,8 +168,7 @@ void ConsoleSaveFileCommon::MoveDataBeyond(FileEntry* entry, unsigned int size)
             if (destination + previousCount <= destinationEnd)
                 std::memcpy(destination, previousBuffer, previousCount);
             previousCount = count;
-        }
-        while (count != 0);
+        } while (count != 0);
     }
     mFileHeader.AdjustStartOffsets(entry, size, false);
 }
@@ -252,21 +253,67 @@ bool ConsoleSaveFileCommon::doesFileExist(ConsoleSavePath path)
     return result;
 }
 
-unsigned int ConsoleSaveFileCommon::getSizeOnDisk() { return mFileHeader.GetFileSize(); }
-std::wstring ConsoleSaveFileCommon::getFilename() { return mFilename; }
-std::vector<FileEntry*>* ConsoleSaveFileCommon::getFilesWithPrefix(const std::wstring& prefix) { return mFileHeader.getFilesWithPrefix(prefix); }
-short ConsoleSaveFileCommon::getSaveVersion() { return mFileHeader.m_saveVersion; }
-short ConsoleSaveFileCommon::getOriginalSaveVersion() { return mFileHeader.m_originalSaveVersion; }
-void ConsoleSaveFileCommon::LockSaveAccess() { EnterCriticalSection(&mSaveAccessMutex); }
-void ConsoleSaveFileCommon::ReleaseSaveAccess() { LeaveCriticalSection(&mSaveAccessMutex); }
-ESavePlatform ConsoleSaveFileCommon::getSavePlatform() { return mFileHeader.m_savePlatform; }
-bool ConsoleSaveFileCommon::isSaveEndianDifferent() { return mFileHeader.m_saveEndian != eByteOrder_BigEndian; }
-void ConsoleSaveFileCommon::setLocalPlatform() { mFileHeader.m_saveEndian = eByteOrder_BigEndian; mFileHeader.m_savePlatform = eSavePlatform_WIIU; }
-void ConsoleSaveFileCommon::setPlatform(ESavePlatform platform) { mFileHeader.m_savePlatform = platform; }
-ByteOrder ConsoleSaveFileCommon::getSaveEndian() { return mFileHeader.m_saveEndian; }
-ByteOrder ConsoleSaveFileCommon::getLocalEndian() { return eByteOrder_BigEndian; }
-void ConsoleSaveFileCommon::setEndian(ByteOrder endian) { mFileHeader.m_saveEndian = endian; }
-bool ConsoleSaveFileCommon::isLocalEndianDifferent(ESavePlatform platform) { return getLocalEndian() != FileHeader::getEndian(platform); }
+unsigned int ConsoleSaveFileCommon::getSizeOnDisk()
+{
+    return mFileHeader.GetFileSize();
+}
+std::wstring ConsoleSaveFileCommon::getFilename()
+{
+    return mFilename;
+}
+std::vector<FileEntry*>* ConsoleSaveFileCommon::getFilesWithPrefix(const std::wstring& prefix)
+{
+    return mFileHeader.getFilesWithPrefix(prefix);
+}
+short ConsoleSaveFileCommon::getSaveVersion()
+{
+    return mFileHeader.m_saveVersion;
+}
+short ConsoleSaveFileCommon::getOriginalSaveVersion()
+{
+    return mFileHeader.m_originalSaveVersion;
+}
+void ConsoleSaveFileCommon::LockSaveAccess()
+{
+    EnterCriticalSection(&mSaveAccessMutex);
+}
+void ConsoleSaveFileCommon::ReleaseSaveAccess()
+{
+    LeaveCriticalSection(&mSaveAccessMutex);
+}
+ESavePlatform ConsoleSaveFileCommon::getSavePlatform()
+{
+    return mFileHeader.m_savePlatform;
+}
+bool ConsoleSaveFileCommon::isSaveEndianDifferent()
+{
+    return mFileHeader.m_saveEndian != eByteOrder_BigEndian;
+}
+void ConsoleSaveFileCommon::setLocalPlatform()
+{
+    mFileHeader.m_saveEndian = eByteOrder_BigEndian;
+    mFileHeader.m_savePlatform = eSavePlatform_WIIU;
+}
+void ConsoleSaveFileCommon::setPlatform(ESavePlatform platform)
+{
+    mFileHeader.m_savePlatform = platform;
+}
+ByteOrder ConsoleSaveFileCommon::getSaveEndian()
+{
+    return mFileHeader.m_saveEndian;
+}
+ByteOrder ConsoleSaveFileCommon::getLocalEndian()
+{
+    return eByteOrder_BigEndian;
+}
+void ConsoleSaveFileCommon::setEndian(ByteOrder endian)
+{
+    mFileHeader.m_saveEndian = endian;
+}
+bool ConsoleSaveFileCommon::isLocalEndianDifferent(ESavePlatform platform)
+{
+    return getLocalEndian() != FileHeader::getEndian(platform);
+}
 
 void ConsoleSaveFileCommon::ConvertRegionFile(File regionFile)
 {
@@ -358,4 +405,7 @@ int ConsoleSaveFileCommon::fjCountSavedChunks(int dimension)
     }
     return savedChunks;
 }
-bool ConsoleSaveFileCommon::fjHasRegionFile(const File& file) { return mFileHeader.fileExists(file.getPath()); }
+bool ConsoleSaveFileCommon::fjHasRegionFile(const File& file)
+{
+    return mFileHeader.fileExists(file.getPath());
+}

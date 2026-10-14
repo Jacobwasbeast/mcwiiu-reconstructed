@@ -12,7 +12,8 @@ ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFi
 }
 
 ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFile, FileEntry* fileEntry)
-    : m_saveFile(saveFile), m_fileEntry(fileEntry)
+    : m_saveFile(saveFile),
+      m_fileEntry(fileEntry)
 {
     saveFile->setFilePointer(fileEntry, 0, NULL, 0);
 }

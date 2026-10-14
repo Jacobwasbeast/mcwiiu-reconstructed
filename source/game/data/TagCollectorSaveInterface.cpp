@@ -1,6 +1,7 @@
 #include "game/data/TagCollectorSaveInterface.hpp"
 
-TagCollectorSaveInterface::TagCollectorSaveInterface(boost::unordered_set<int>* tagTypes, boost::unordered_set<int>* attributes)
+TagCollectorSaveInterface::TagCollectorSaveInterface(boost::unordered_set<int>* tagTypes,
+                                                     boost::unordered_set<int>* attributes)
     : mTagTypes(tagTypes),
       mAttributes(attributes)
 {

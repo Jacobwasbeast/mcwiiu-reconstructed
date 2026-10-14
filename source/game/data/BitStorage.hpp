@@ -9,7 +9,7 @@ public:
 
     void set(unsigned int index, unsigned int value);
     unsigned int get(unsigned int index);
-    unsigned int *getRaw();
+    unsigned int* getRaw();
     unsigned int getSize();
     unsigned int getBits();
 };

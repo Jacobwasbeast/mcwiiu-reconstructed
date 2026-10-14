@@ -12,9 +12,8 @@
 #include "game/world/chunk/McRegionChunkStorage.hpp"
 #include "game/core/MemSect.hpp"
 
-McRegionLevelStorage::McRegionLevelStorage(ConsoleSaveFile* saveFile, File folder,
-                                           const std::wstring& levelId, bool createIfMissing,
-                                           DataFixerUpper* fixer)
+McRegionLevelStorage::McRegionLevelStorage(ConsoleSaveFile* saveFile, File folder, const std::wstring& levelId,
+                                           bool createIfMissing, DataFixerUpper* fixer)
     : DirectoryLevelStorage(saveFile, folder, levelId, createIfMissing, fixer)
 {
     gRegionFileCache._clear();
@@ -76,8 +75,7 @@ ChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimension)
     return new McRegionChunkStorage(mSaveFile, L"", mFixer);
 }
 
-void McRegionLevelStorage::saveLevelData(LevelData* levelData,
-                                         std::vector<boost::shared_ptr<Player> >* players)
+void McRegionLevelStorage::saveLevelData(LevelData* levelData, std::vector<boost::shared_ptr<Player> >* players)
 {
     levelData->setVersion(19132);
     MemSect(38);

@@ -66,7 +66,9 @@ bool IntArrayTag::equals(Tag* other)
     if (Tag::equals(other))
     {
         IntArrayTag* otherArray = (IntArrayTag*)other;
-        return (mData.data == NULL && otherArray->mData.data == NULL) || (mData.data != NULL && mData.length == otherArray->mData.length && memcmp(mData.data, otherArray->mData.data, mData.length * sizeof(int)) == 0);
+        return (mData.data == NULL && otherArray->mData.data == NULL)
+               || (mData.data != NULL && mData.length == otherArray->mData.length
+                   && memcmp(mData.data, otherArray->mData.data, mData.length * sizeof(int)) == 0);
     }
     return false;
 }

@@ -54,8 +54,8 @@ public:
         boost::unordered_map<long long, short> mMappings;
     };
 
-    DirectoryLevelStorage(ConsoleSaveFile* saveFile, File folder, const std::wstring& levelId,
-                          bool createIfMissing, DataFixerUpper* fixer);
+    DirectoryLevelStorage(ConsoleSaveFile* saveFile, File folder, const std::wstring& levelId, bool createIfMissing,
+                          DataFixerUpper* fixer);
     virtual ~DirectoryLevelStorage();
     void initiateSession();
 

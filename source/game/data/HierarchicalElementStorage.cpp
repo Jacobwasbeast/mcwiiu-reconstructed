@@ -12,15 +12,9 @@ static int sTotalSubChunkBytes = 0;
 static unsigned char* sTempData = 0;
 static int sPalettisedChunkCount = 0;
 
-static const unsigned int sSectionTypeSizes[8] =
-{
-    0, 3, 6, 10, 16, 0, 0, 32
-};
+static const unsigned int sSectionTypeSizes[8] = {0, 3, 6, 10, 16, 0, 0, 32};
 
-static const unsigned int sSectionTypeSizesTwoIndices[8] =
-{
-    0, 5, 10, 16, 24, 0, 0, 64
-};
+static const unsigned int sSectionTypeSizesTwoIndices[8] = {0, 5, 10, 16, 24, 0, 0, 64};
 
 unsigned short HierarchicalElementStorage::swapBytes(unsigned short value)
 {
@@ -71,7 +65,8 @@ void HierarchicalElementStorage::freeData(void* data)
     free(data);
 }
 
-void HierarchicalElementStorage::SubChunkInfo::setSizeAndOffset(unsigned int subChunk, unsigned short size, unsigned short offset)
+void HierarchicalElementStorage::SubChunkInfo::setSizeAndOffset(unsigned int subChunk, unsigned short size,
+                                                                unsigned short offset)
 {
     mOffsets[subChunk] = swapBytes(offset);
     mSizes[subChunk] = (unsigned char)size;
@@ -166,7 +161,8 @@ unsigned short HierarchicalElementStorage::SubChunkHeader::getData(unsigned int 
     return (unsigned short)(swapBytes(mSections[section]) & 0xFFF);
 }
 
-void HierarchicalElementStorage::SubChunkHeader::setTypeAndOffset(unsigned int section, unsigned short sectionType, unsigned short offset, bool hasTwoIndices)
+void HierarchicalElementStorage::SubChunkHeader::setTypeAndOffset(unsigned int section, unsigned short sectionType,
+                                                                  unsigned short offset, bool hasTwoIndices)
 {
     unsigned short packed = (unsigned short)((sectionType << 13) | offset);
 
@@ -180,7 +176,9 @@ void HierarchicalElementStorage::SubChunkHeader::setTypeAndOffset(unsigned int s
 
 void HierarchicalElementStorage::SubChunkHeader::setType(unsigned int section, unsigned short sectionType)
 {
-    mSections[section] = (unsigned short)((mSections[section] & swapBytes(0xFFF)) | (mSections[section] & swapBytes(0x1000)) | swapBytes((unsigned short)((sectionType & 7) << 13)));
+    mSections[section] = (unsigned short)((mSections[section] & swapBytes(0xFFF))
+                                          | (mSections[section] & swapBytes(0x1000))
+                                          | swapBytes((unsigned short)((sectionType & 7) << 13)));
 }
 
 unsigned short HierarchicalElementStorage::SubChunkHeader::getType(unsigned int section)
@@ -213,7 +211,8 @@ unsigned short HierarchicalElementStorage::SubChunkHeader::getOffset(unsigned in
 
         if (previousType != SECTION_TYPE_UNIFORM)
         {
-            return (unsigned short)((swapBytes(mSections[section]) & 0xFFF) + SectionTypeToSize(previousType, getHasTwoIndices(section)));
+            return (unsigned short)((swapBytes(mSections[section]) & 0xFFF)
+                                    + SectionTypeToSize(previousType, getHasTwoIndices(section)));
         }
     }
 
@@ -240,10 +239,12 @@ int HierarchicalElementStorage::SubChunkHeader::getUsedSize()
 {
     unsigned int lastSection = SECTIONS_PER_SUBCHUNK - 1;
 
-    return (int)(SectionTypeToSize(getType(lastSection), getHasTwoIndices(lastSection)) + getOffset(lastSection) + SUBCHUNK_HEADER_BYTES / 4);
+    return (int)(SectionTypeToSize(getType(lastSection), getHasTwoIndices(lastSection)) + getOffset(lastSection)
+                 + SUBCHUNK_HEADER_BYTES / 4);
 }
 
-HierarchicalElementStorage::PalettisedSectionReference::PalettisedSectionReference(SubChunkHeader* header, unsigned int section)
+HierarchicalElementStorage::PalettisedSectionReference::PalettisedSectionReference(SubChunkHeader* header,
+                                                                                   unsigned int section)
 {
     unsigned int offset = header->getOffset(section);
 
@@ -275,7 +276,8 @@ unsigned short HierarchicalElementStorage::PalettisedSectionReference::getPalett
     return swapBytes(mPalette[paletteIndex]);
 }
 
-void HierarchicalElementStorage::PalettisedSectionReference::setPaletteEntry(unsigned int paletteIndex, unsigned short value)
+void HierarchicalElementStorage::PalettisedSectionReference::setPaletteEntry(unsigned int paletteIndex,
+                                                                             unsigned short value)
 {
     mPalette[paletteIndex] = swapBytes(value);
 }
@@ -328,7 +330,8 @@ void HierarchicalElementStorage::RawSectionReference::setExtraElement(unsigned i
     mElements[ELEMENTS_PER_SECTION + elementIndex] = swapBytes(value);
 }
 
-HierarchicalElementStorage::Palettiser::Palettiser(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data)
+HierarchicalElementStorage::Palettiser::Palettiser(arrayWithLength<unsigned char> blocks,
+                                                   arrayWithLength<unsigned char> data)
 {
     if (blocks.length == 16 * 16 * 128)
     {
@@ -363,7 +366,8 @@ HierarchicalElementStorage::Palettiser::Palettiser(arrayWithLength<unsigned shor
     mElements = elements;
 }
 
-HierarchicalElementStorage::Palettiser::Palettiser(CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks, SparseDataStorage* data, SparseDataStorage* extraData)
+HierarchicalElementStorage::Palettiser::Palettiser(CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks,
+                                                   SparseDataStorage* data, SparseDataStorage* extraData)
 {
     mSourceType = SOURCE_BLOCK_STORAGE;
     mBlockStorage = blocks;
@@ -374,7 +378,8 @@ HierarchicalElementStorage::Palettiser::Palettiser(CompressedBlockStorage* block
 
 unsigned short HierarchicalElementStorage::Palettiser::getElement(unsigned int elementIndex)
 {
-    if ((mSourceType == SOURCE_ELEMENT_ARRAY_HALF_HEIGHT || mSourceType == SOURCE_BLOCK_ARRAYS_HALF_HEIGHT) && elementIndex >= 0x8000)
+    if ((mSourceType == SOURCE_ELEMENT_ARRAY_HALF_HEIGHT || mSourceType == SOURCE_BLOCK_ARRAYS_HALF_HEIGHT)
+        && elementIndex >= 0x8000)
     {
         return 0;
     }
@@ -403,10 +408,14 @@ unsigned short HierarchicalElementStorage::Palettiser::getElement(unsigned int e
 
         if ((elementIndex & 0x8000) == 0)
         {
-            return (unsigned short)(block | mDataStorage->get((elementIndex >> 11) & 0xF, elementIndex & 0x7F, (elementIndex >> 7) & 0xF));
+            return (unsigned short)(block
+                                    | mDataStorage->get((elementIndex >> 11) & 0xF, elementIndex & 0x7F,
+                                                        (elementIndex >> 7) & 0xF));
         }
 
-        return (unsigned short)(block | mExtraDataStorage->get((elementIndex >> 11) & 0xF, elementIndex & 0x7F, (elementIndex >> 7) & 0xF));
+        return (unsigned short)(block
+                                | mExtraDataStorage->get((elementIndex >> 11) & 0xF, elementIndex & 0x7F,
+                                                         (elementIndex >> 7) & 0xF));
     }
 
     return 0;
@@ -420,17 +429,20 @@ void HierarchicalElementStorage::Palettiser::initialiseSection(unsigned int sect
     {
         if ((sectionBaseIndex & 0x8000) == 0)
         {
-            mBlockStorage->getDataSection(mSectionBlocks, (sectionBaseIndex >> 13) & 3, (sectionBaseIndex >> 2) & 0x1F, (sectionBaseIndex >> 9) & 3);
+            mBlockStorage->getDataSection(mSectionBlocks, (sectionBaseIndex >> 13) & 3, (sectionBaseIndex >> 2) & 0x1F,
+                                          (sectionBaseIndex >> 9) & 3);
         }
         else
         {
-            mExtraBlockStorage->getDataSection(mSectionBlocks, (sectionBaseIndex >> 13) & 3, (sectionBaseIndex >> 2) & 0x1F, (sectionBaseIndex >> 9) & 3);
+            mExtraBlockStorage->getDataSection(mSectionBlocks, (sectionBaseIndex >> 13) & 3,
+                                               (sectionBaseIndex >> 2) & 0x1F, (sectionBaseIndex >> 9) & 3);
         }
     }
 
     for (unsigned int element = 0; element < ELEMENTS_PER_SECTION; ++element)
     {
-        sectionBaseIndex = (sectionBaseIndex & 0xE67C) | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3);
+        sectionBaseIndex = (sectionBaseIndex & 0xE67C) | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                           | (element & 3);
         unsigned short value = getElement(sectionBaseIndex);
 
         unsigned int paletteCount = mPaletteCount;
@@ -496,7 +508,8 @@ bool HierarchicalElementStorage::Palettiser::didPalettise()
     return mPaletteCount != 0;
 }
 
-bool HierarchicalElementStorage::Palettiser::writeSection(SubChunkHeader* header, unsigned int section, unsigned short& offset)
+bool HierarchicalElementStorage::Palettiser::writeSection(SubChunkHeader* header, unsigned int section,
+                                                          unsigned short& offset)
 {
     if (mPaletteCount == 1 && CanEncodeElementAs0Bit(mPalette[0]))
     {
@@ -531,7 +544,8 @@ bool HierarchicalElementStorage::Palettiser::writeSection(SubChunkHeader* header
 
     for (unsigned int entry = 0; entry < paletteSize; ++entry)
     {
-        sectionRef.setPaletteEntry(entry, entry < mPaletteCount ? mPalette[entry] : (unsigned short)UNUSED_PALETTE_ENTRY);
+        sectionRef.setPaletteEntry(entry,
+                                   entry < mPaletteCount ? mPalette[entry] : (unsigned short)UNUSED_PALETTE_ENTRY);
     }
 
     unsigned char* planeData = sectionRef.getPlaneData();
@@ -625,7 +639,8 @@ void HierarchicalElementStorage::initWithPalettiser(Palettiser& palettiser, unsi
 
         for (unsigned int section = 0; section < SECTIONS_PER_SUBCHUNK; ++section)
         {
-            unsigned int sectionBaseIndex = (subChunkBaseIndex & 0x99F3) | ((section & 0x30) << 9) | ((section & 0xC) << 7) | ((section & 3) << 2);
+            unsigned int sectionBaseIndex = (subChunkBaseIndex & 0x99F3) | ((section & 0x30) << 9)
+                                            | ((section & 0xC) << 7) | ((section & 3) << 2);
 
             palettiser.initialiseSection(sectionBaseIndex);
 
@@ -649,7 +664,8 @@ void HierarchicalElementStorage::initWithPalettiser(Palettiser& palettiser, unsi
 
                 for (unsigned int element = 0; element < ELEMENTS_PER_SECTION; ++element)
                 {
-                    unsigned int elementIndex = (sectionBaseIndex & 0xE67C) | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3);
+                    unsigned int elementIndex = (sectionBaseIndex & 0xE67C) | ((element & 0x30) << 7)
+                                                | ((element & 0xC) << 5) | (element & 3);
                     sectionRef.setElement(element, palettiser.getElement(elementIndex));
                 }
 
@@ -676,7 +692,8 @@ void HierarchicalElementStorage::initWithPalettiser(Palettiser& palettiser, unsi
     memcpy(mData, tempData, mSubChunkCount * SUBCHUNK_PAGE_BYTES);
 }
 
-void HierarchicalElementStorage::_Init(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, unsigned int headroom)
+void HierarchicalElementStorage::_Init(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data,
+                                       unsigned int headroom)
 {
     ++sPalettisedChunkCount;
 
@@ -698,7 +715,8 @@ void HierarchicalElementStorage::_Init(arrayWithLength<unsigned short> elements,
     initWithPalettiser(palettiser, headroom);
 }
 
-void HierarchicalElementStorage::_Init(CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks, SparseDataStorage* data, SparseDataStorage* extraData)
+void HierarchicalElementStorage::_Init(CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks,
+                                       SparseDataStorage* data, SparseDataStorage* extraData)
 {
     mData = NULL;
     mSubChunkCount = 0;
@@ -729,7 +747,8 @@ void HierarchicalElementStorage::ExtendSubchunkData(unsigned int subChunk)
 
     memcpy(newData, mData, keptBytes);
     memset(newData + keptBytes, 0, SUBCHUNK_PAGE_BYTES);
-    memcpy(newData + keptBytes + SUBCHUNK_PAGE_BYTES, mData + keptBytes, (mSubChunkCount - endPage) * SUBCHUNK_PAGE_BYTES);
+    memcpy(newData + keptBytes + SUBCHUNK_PAGE_BYTES, mData + keptBytes,
+           (mSubChunkCount - endPage) * SUBCHUNK_PAGE_BYTES);
 
     mSubChunkInfo.incSize(subChunk, 1);
 
@@ -744,7 +763,8 @@ void HierarchicalElementStorage::ExtendSubchunkData(unsigned int subChunk)
     sTotalSubChunkBytes += SUBCHUNK_PAGE_BYTES;
 }
 
-void HierarchicalElementStorage::UpdateSectionDataSize(unsigned int subChunk, unsigned int section, unsigned int sectionType, bool hasTwoIndices)
+void HierarchicalElementStorage::UpdateSectionDataSize(unsigned int subChunk, unsigned int section,
+                                                       unsigned int sectionType, bool hasTwoIndices)
 {
     unsigned int newSize = SectionTypeToSize(sectionType, hasTwoIndices);
     unsigned int subChunkPages = mSubChunkInfo.getSize(subChunk);
@@ -771,7 +791,8 @@ void HierarchicalElementStorage::UpdateSectionDataSize(unsigned int subChunk, un
             unsigned char* moveFrom = (unsigned char*)(header + 1) + nextOffset * 4;
 
             memmove(moveFrom + growBy * 4, moveFrom, (usedData - nextOffset) * 4);
-            header->setTypeAndOffset(section, (unsigned short)sectionType, (unsigned short)(nextOffset - oldSize), hasTwoIndices);
+            header->setTypeAndOffset(section, (unsigned short)sectionType, (unsigned short)(nextOffset - oldSize),
+                                     hasTwoIndices);
 
             for (unsigned int following = section + 1; following < SECTIONS_PER_SUBCHUNK; ++following)
             {
@@ -823,7 +844,8 @@ void HierarchicalElementStorage::ReduceSubchunkDataTo(unsigned int subChunk, uns
     unsigned int removedPages = currentPages - pages;
     unsigned int tailPage = subChunkOffset + pages + removedPages;
 
-    memmove(mData + (subChunkOffset + pages) * SUBCHUNK_PAGE_BYTES, mData + tailPage * SUBCHUNK_PAGE_BYTES, (usedPages - tailPage) * SUBCHUNK_PAGE_BYTES);
+    memmove(mData + (subChunkOffset + pages) * SUBCHUNK_PAGE_BYTES, mData + tailPage * SUBCHUNK_PAGE_BYTES,
+            (usedPages - tailPage) * SUBCHUNK_PAGE_BYTES);
 
     mSubChunkInfo.decSize(subChunk, (unsigned short)removedPages);
 
@@ -844,7 +866,8 @@ void HierarchicalElementStorage::ReduceSubchunkStorage()
         memcpy(newData, mData, usedPages * SUBCHUNK_PAGE_BYTES);
         freeData(mData);
         mData = newData;
-        sTotalSubChunkBytes = sTotalSubChunkBytes - mSubChunkCount * SUBCHUNK_PAGE_BYTES + usedPages * SUBCHUNK_PAGE_BYTES;
+        sTotalSubChunkBytes = sTotalSubChunkBytes - mSubChunkCount * SUBCHUNK_PAGE_BYTES
+                              + usedPages * SUBCHUNK_PAGE_BYTES;
         mSubChunkCount = usedPages;
     }
 }
@@ -941,8 +964,7 @@ void HierarchicalElementStorage::removeCompressionHeadroom()
 
                     paletteIndex <<= 1;
                 }
-            }
-            while (section != 0);
+            } while (section != 0);
 
             if (emptySections == SECTIONS_PER_SUBCHUNK)
             {
@@ -950,13 +972,13 @@ void HierarchicalElementStorage::removeCompressionHeadroom()
             }
             else
             {
-                unsigned int pages = ((unsigned int)header->getUsedSize() * 4 + (SUBCHUNK_PAGE_BYTES - 1)) / SUBCHUNK_PAGE_BYTES;
+                unsigned int pages = ((unsigned int)header->getUsedSize() * 4 + (SUBCHUNK_PAGE_BYTES - 1))
+                                     / SUBCHUNK_PAGE_BYTES;
 
                 ReduceSubchunkDataTo(subChunk, pages);
             }
         }
-    }
-    while (subChunk != 0);
+    } while (subChunk != 0);
 
     ReduceSubchunkStorage();
 }
@@ -1074,8 +1096,7 @@ int HierarchicalElementStorage::getHighestNonEmptyY()
         {
             break;
         }
-    }
-    while (baseY >= 0);
+    } while (baseY >= 0);
 
     if (highestNonEmptyY >= 0)
     {
@@ -1085,7 +1106,8 @@ int HierarchicalElementStorage::getHighestNonEmptyY()
     return 0;
 }
 
-void HierarchicalElementStorage::getData(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, int minSlice, int maxSlice)
+void HierarchicalElementStorage::getData(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data,
+                                         int minSlice, int maxSlice)
 {
     if ((blocks.length == 16 * 16 * 128 || data.length == (16 * 16 * 128) / 2) && maxSlice > 32)
     {
@@ -1139,7 +1161,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned char> blocks, 
 
                     for (unsigned int element = 0; element < ELEMENTS_PER_SECTION; ++element)
                     {
-                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3);
+                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                             | (element & 3);
 
                         if (writeBlocks)
                         {
@@ -1165,7 +1188,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned char> blocks, 
 
                     for (unsigned int element = 0; element < ELEMENTS_PER_SECTION; ++element)
                     {
-                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3);
+                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                             | (element & 3);
                         unsigned short value = sectionRef.getElement(element);
 
                         if (writeBlocks)
@@ -1205,7 +1229,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned char> blocks, 
                         }
 
                         unsigned short value = sectionRef.getPaletteEntry(paletteIndex);
-                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3);
+                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                             | (element & 3);
 
                         if (writeBlocks)
                         {
@@ -1268,7 +1293,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
 
                     for (unsigned int element = 0; element < ELEMENTS_PER_SECTION; ++element)
                     {
-                        elements.data[sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3)] = value;
+                        elements.data[sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                      | (element & 3)] = value;
                     }
                 }
                 else if (planeCount == SECTION_TYPE_RAW)
@@ -1277,7 +1303,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
 
                     for (unsigned int element = 0; element < ELEMENTS_PER_SECTION; ++element)
                     {
-                        elements.data[sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3)] = sectionRef.getElement(element);
+                        elements.data[sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                      | (element & 3)] = sectionRef.getElement(element);
                     }
                 }
                 else
@@ -1301,7 +1328,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
                             paletteBit <<= 1;
                         }
 
-                        elements.data[sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3)] = sectionRef.getPaletteEntry(paletteIndex);
+                        elements.data[sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                      | (element & 3)] = sectionRef.getPaletteEntry(paletteIndex);
                     }
                 }
             }
@@ -1309,7 +1337,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
     }
 }
 
-void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, int minSlice, int maxSlice)
+void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> elements,
+                                         arrayWithLength<unsigned short> extraElements, int minSlice, int maxSlice)
 {
     for (int slice = minSlice; slice < maxSlice; ++slice)
     {
@@ -1345,7 +1374,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
 
                     for (unsigned int element = 0; element < ELEMENTS_PER_SECTION; ++element)
                     {
-                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3);
+                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                             | (element & 3);
                         elements.data[index] = value;
                         extraElements.data[index] = 0;
                     }
@@ -1356,7 +1386,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
 
                     for (unsigned int element = 0; element < ELEMENTS_PER_SECTION; ++element)
                     {
-                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3);
+                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                             | (element & 3);
                         elements.data[index] = sectionRef.getElement(element);
                         extraElements.data[index] = sectionRef.getExtraElement(element);
                     }
@@ -1387,7 +1418,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
                                 paletteIndex |= paletteBit;
                             }
 
-                            if (extraPlaneData != NULL && (extraPlaneData[plane * SECTION_PLANE_BYTES + (element >> 3)] & bit) != 0)
+                            if (extraPlaneData != NULL
+                                && (extraPlaneData[plane * SECTION_PLANE_BYTES + (element >> 3)] & bit) != 0)
                             {
                                 extraPaletteIndex |= paletteBit;
                             }
@@ -1402,7 +1434,8 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
                             extraValue = sectionRef.getPaletteEntry(extraPaletteIndex);
                         }
 
-                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3);
+                        unsigned int index = sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5)
+                                             | (element & 3);
                         elements.data[index] = sectionRef.getPaletteEntry(paletteIndex);
                         extraElements.data[index] = extraValue;
                     }
@@ -1533,7 +1566,8 @@ unsigned short HierarchicalElementStorage::getExtraElement(unsigned int x, unsig
     return sectionRef.getPaletteEntry(paletteIndex);
 }
 
-void HierarchicalElementStorage::set_subChunkEmpty(unsigned int x, unsigned int y, unsigned int z, unsigned short value, bool isExtra)
+void HierarchicalElementStorage::set_subChunkEmpty(unsigned int x, unsigned int y, unsigned int z, unsigned short value,
+                                                   bool isExtra)
 {
     ExtendSubchunkData(y >> 4);
 
@@ -1574,7 +1608,9 @@ void HierarchicalElementStorage::set_subChunkEmpty(unsigned int x, unsigned int 
     }
 }
 
-void HierarchicalElementStorage::set_section0Bit(unsigned int x, unsigned int y, unsigned int z, unsigned short value, unsigned int section, SubChunkHeader* header, unsigned int subChunkOffset, bool isExtra)
+void HierarchicalElementStorage::set_section0Bit(unsigned int x, unsigned int y, unsigned int z, unsigned short value,
+                                                 unsigned int section, SubChunkHeader* header,
+                                                 unsigned int subChunkOffset, bool isExtra)
 {
     unsigned short existing = header->getData(section);
 
@@ -1652,7 +1688,9 @@ void HierarchicalElementStorage::set_section0Bit(unsigned int x, unsigned int y,
     }
 }
 
-void HierarchicalElementStorage::set_sectionRaw(unsigned int x, unsigned int y, unsigned int z, unsigned short value, unsigned int section, SubChunkHeader* header, unsigned int subChunkOffset, bool isExtra)
+void HierarchicalElementStorage::set_sectionRaw(unsigned int x, unsigned int y, unsigned int z, unsigned short value,
+                                                unsigned int section, SubChunkHeader* header,
+                                                unsigned int subChunkOffset, bool isExtra)
 {
     if (isExtra && !header->getHasTwoIndices(section))
     {
@@ -1681,7 +1719,9 @@ void HierarchicalElementStorage::set_sectionRaw(unsigned int x, unsigned int y, 
     }
 }
 
-unsigned int HierarchicalElementStorage::getSingleEntryPaletteValue(PalettisedSectionReference& sectionRef, unsigned int subChunk, unsigned int section, bool isExtra)
+unsigned int HierarchicalElementStorage::getSingleEntryPaletteValue(PalettisedSectionReference& sectionRef,
+                                                                    unsigned int subChunk, unsigned int section,
+                                                                    bool isExtra)
 {
     unsigned int planeCount = sectionRef.getPlaneCount();
     unsigned char* planeData = isExtra ? sectionRef.getExtraPlaneData() : sectionRef.getPlaneData();
@@ -1717,7 +1757,9 @@ unsigned int HierarchicalElementStorage::getSingleEntryPaletteValue(PalettisedSe
     return sectionRef.getPaletteEntry(paletteIndex);
 }
 
-void HierarchicalElementStorage::removeSingleEntryPaletteSection(PalettisedSectionReference& sectionRef, unsigned int subChunk, unsigned int section, unsigned short value)
+void HierarchicalElementStorage::removeSingleEntryPaletteSection(PalettisedSectionReference& sectionRef,
+                                                                 unsigned int subChunk, unsigned int section,
+                                                                 unsigned short value)
 {
     UpdateSectionDataSize(subChunk, section, SECTION_TYPE_UNIFORM, false);
 
@@ -1757,7 +1799,9 @@ void HierarchicalElementStorage::checkSubChunkStorageRequirements(unsigned int s
     }
 }
 
-void HierarchicalElementStorage::checkForSingleEntryPalette(PalettisedSectionReference& sectionRef, unsigned int subChunk, unsigned int section, bool hasTwoIndices)
+void HierarchicalElementStorage::checkForSingleEntryPalette(PalettisedSectionReference& sectionRef,
+                                                            unsigned int subChunk, unsigned int section,
+                                                            bool hasTwoIndices)
 {
     bool removedSecondIndex = false;
 
@@ -1791,7 +1835,10 @@ void HierarchicalElementStorage::checkForSingleEntryPalette(PalettisedSectionRef
     }
 }
 
-void HierarchicalElementStorage::set_sectionPalettised(unsigned int x, unsigned int y, unsigned int z, unsigned short value, unsigned int section, SubChunkHeader* header, unsigned int subChunkOffset, unsigned short planeCount, bool isExtra)
+void HierarchicalElementStorage::set_sectionPalettised(unsigned int x, unsigned int y, unsigned int z,
+                                                       unsigned short value, unsigned int section,
+                                                       SubChunkHeader* header, unsigned int subChunkOffset,
+                                                       unsigned short planeCount, bool isExtra)
 {
     unsigned int subChunk = y >> 4;
     bool addedSecondIndex = false;
@@ -1918,7 +1965,8 @@ void HierarchicalElementStorage::set_sectionPalettised(unsigned int x, unsigned 
 
             if (hasTwoIndices)
             {
-                extraElements[element] = addedSecondIndex ? (unsigned short)0 : getExtraElement(elementX, elementY, elementZ);
+                extraElements[element] = addedSecondIndex ? (unsigned short)0
+                                                          : getExtraElement(elementX, elementY, elementZ);
             }
         }
 
@@ -2097,7 +2145,10 @@ void HierarchicalElementStorage::setExtraElement(unsigned int x, unsigned int y,
     }
 }
 
-int HierarchicalElementStorage::setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset, void (*changedCallback)(int, int, int, void*, int), void* callbackData, int callbackValue)
+int HierarchicalElementStorage::setDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1,
+                                              int y1, int z1, int offset,
+                                              void (*changedCallback)(int, int, int, void*, int), void* callbackData,
+                                              int callbackValue)
 {
     unsigned short* elements = (unsigned short*)(data.data + offset);
     unsigned short* source = elements + (x1 - x0) * (y1 - y0) * (z1 - z0);
@@ -2153,7 +2204,8 @@ int HierarchicalElementStorage::setDataRegion(arrayWithLength<unsigned char> dat
     return (int)((unsigned char*)source - (unsigned char*)elements);
 }
 
-int HierarchicalElementStorage::getDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset)
+int HierarchicalElementStorage::getDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1,
+                                              int y1, int z1, int offset)
 {
     unsigned short* destination = (unsigned short*)(data.data + offset);
     unsigned short* elements = destination;
@@ -2185,7 +2237,8 @@ int HierarchicalElementStorage::getDataRegion(arrayWithLength<unsigned char> dat
     return (int)((unsigned char*)destination - (unsigned char*)elements);
 }
 
-bool HierarchicalElementStorage::sectionContainsElementData(int x, int y, int z, unsigned short value, unsigned short mask)
+bool HierarchicalElementStorage::sectionContainsElementData(int x, int y, int z, unsigned short value,
+                                                            unsigned short mask)
 {
     int subChunk = y / (int)SUBCHUNK_COUNT;
 

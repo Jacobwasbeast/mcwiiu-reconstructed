@@ -107,8 +107,8 @@ void SavedDataStorage::set(const std::wstring& id, boost::shared_ptr<SavedData> 
         boost::unordered_map<std::wstring, boost::shared_ptr<SavedData> >::iterator it = mSavedData.find(id);
         if (it != mSavedData.end())
         {
-            std::vector<boost::shared_ptr<SavedData> >::iterator existing =
-                std::find(mAllSavedData.begin(), mAllSavedData.end(), it->second);
+            std::vector<boost::shared_ptr<SavedData> >::iterator existing = std::find(mAllSavedData.begin(),
+                                                                                      mAllSavedData.end(), it->second);
             if (existing != mAllSavedData.end())
             {
                 mAllSavedData.erase(existing);
