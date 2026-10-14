@@ -66,7 +66,7 @@ Result LatencyEmulator::Read(common::Packet* packet)
 {
     if (packet == 0)
         return ResultInvalidArgument();
-    if (m_packetInput != 0)
+    if (m_packetInput == 0)
         return cResultInvalidState;
     if (m_entries.isEmpty())
         return cResultDataNotReady;

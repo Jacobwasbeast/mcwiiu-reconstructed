@@ -1,10 +1,12 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/transport/PacketHandler.hpp"
 #include "nn/pia/transport/ProtocolEvent.hpp"
 #include "nn/pia/transport/ReliableSlidingWindow.hpp"
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
+#include "nn/pia/transport/StationPacketHandler.hpp"
 #include "platform/wiiu/pead.hpp"
 #include <new>
 
@@ -21,9 +23,9 @@ ReliableProtocol::ReliableProtocol()
       m_localStationId(0),
       m_field20(0),
       m_field24(0),
-      m_field28(0),
-      m_field2c(0),
-      m_field30(0)
+      m_dispatchIndex(0),
+      m_throughputLimit(0),
+      m_sendBudget(0)
 {
     if (g_piaWatermarkManager != 0)
     {
@@ -54,8 +56,8 @@ void ReliableProtocol::Finalize()
     m_field14 = 0xfd;
     m_localStationId = 0;
     m_field20 = 0;
-    m_field2c = 0;
-    m_field30 = 0;
+    m_throughputLimit = 0;
+    m_sendBudget = 0;
     if (m_field24 != 0)
     {
         unsigned char* array = m_field24;
@@ -119,8 +121,8 @@ Result ReliableProtocol::Initialize(unsigned int a1, unsigned int a2)
         }
     }
 
-    m_field30 = 0;
-    m_field2c = 0x0fffffff;
+    m_sendBudget = 0;
+    m_throughputLimit = 0x0fffffff;
     g_reliableProtocolResendParam1 = a1;
     g_reliableProtocolResendParam2 = a2;
     return 0;
@@ -142,9 +144,9 @@ Result ReliableProtocol::StartupWithStationAddress(const common::StationAddress&
         return 0x10c07;
 
     m_field14 = stationIndex;
-    m_field30 = 0;
+    m_sendBudget = 0;
     m_localStationId = station->m_stationId;
-    m_field28 = 0;
+    m_dispatchIndex = 0;
     g_reliableProtocolSendFailCount = 0;
     return 0;
 }
@@ -155,7 +157,7 @@ void ReliableProtocol::CleanupWithStationAddress()
     {
         m_field14 = 0xfd;
         m_localStationId = 0;
-        m_field30 = 0;
+        m_sendBudget = 0;
         int count = static_cast<int>(m_field20) - 1;
         for (int i = 0; i != count; ++i)
         {
@@ -163,6 +165,74 @@ void ReliableProtocol::CleanupWithStationAddress()
                 reinterpret_cast<ReliableSlidingWindow*>(m_field24)[i].Cleanup();
         }
     }
+}
+
+Result ReliableProtocol::Dispatch()
+{
+    if (m_field14 == cStationIndexInvalid)
+        return 0;
+
+    if (m_throughputLimit != 0)
+    {
+        if (m_sendBudget <= static_cast<unsigned int>(mStationPacketHandler->GetPayloadSizeLimit()))
+            m_sendBudget += m_throughputLimit;
+        else
+            m_sendBudget = mStationPacketHandler->GetPayloadSizeLimit() + m_throughputLimit;
+    }
+    else
+        m_sendBudget = 0;
+
+    PacketHandler::Iterator& iterator = mStationPacketHandler->GetIterator(GetProtocolId());
+    for (iterator.BeginIteration(); !iterator.IsEndIteration(); iterator.NextIteration())
+    {
+        ProtocolMessageReader* reader = iterator.GetMessageReader();
+        StationIndex stationIndex = g_piaTransport->ConvertToStationIndexUnsafe(reader->m_header.m_source);
+        if (stationIndex < 0 || stationIndex >= static_cast<int>(m_field20) || stationIndex == m_field14)
+            continue;
+
+        ReliableSlidingWindow* window = GetSlidingWindow(stationIndex);
+        if (!window->IsInCommunication())
+            continue;
+
+        Result result = window->AnalyzeProtocolMessage(*reader);
+        if (result == 0 && g_piaWatermarkManager != 0)
+        {
+            unsigned int sendCount = window->m_sendBuffer.m_count;
+            g_piaWatermarkManager->GetWatermark(3)->Update(sendCount);
+            if (g_piaWatermarkManager != 0)
+            {
+                unsigned int receiveCount = window->m_receiveBuffer.m_count;
+                g_piaWatermarkManager->GetWatermark(4)->Update(receiveCount);
+            }
+        }
+    }
+
+    unsigned int windowNum = m_field20 - 1;
+    unsigned int startIndex = m_dispatchIndex + 1;
+    if (startIndex >= windowNum)
+        startIndex = 0;
+    m_dispatchIndex = startIndex;
+
+    unsigned int sentSize = 0;
+    for (unsigned int i = m_dispatchIndex; i < windowNum; ++i)
+    {
+        if (reinterpret_cast<ReliableSlidingWindow*>(m_field24)[i].IsInCommunication())
+        {
+            reinterpret_cast<ReliableSlidingWindow*>(m_field24)[i].Dispatch(
+                static_cast<StationPacketHandler*>(GetStationPacketHandler()), &sentSize, m_sendBudget);
+            m_sendBudget -= sentSize;
+        }
+    }
+    for (unsigned int i = 0; i < m_dispatchIndex; ++i)
+    {
+        if (reinterpret_cast<ReliableSlidingWindow*>(m_field24)[i].IsInCommunication())
+        {
+            reinterpret_cast<ReliableSlidingWindow*>(m_field24)[i].Dispatch(
+                static_cast<StationPacketHandler*>(GetStationPacketHandler()), &sentSize, m_sendBudget);
+            m_sendBudget -= sentSize;
+        }
+    }
+    return 0;
 }
 
 Result ReliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
@@ -359,6 +429,16 @@ bool ReliableProtocol::IsInCommunication(StationIndex stationIndex) const
 bool ReliableProtocol::IsInCommunication(unsigned long long stationId) const
 {
     return IsInCommunication(Conv2StationIndex(stationId));
+}
+
+void ReliableProtocol::SetThroughputLimit(unsigned int limit)
+{
+    m_throughputLimit = limit;
+}
+
+void ReliableProtocol::RegisterResendTimeCallback(int (*callback)(int, int))
+{
+    ReliableSlidingWindow::RegisterResendTimeCallback(callback);
 }
 
 }}}

@@ -41,11 +41,11 @@ public:
     struct MeasurementData
     {
         common::StationAddress address;
-        unsigned int reserved;
-        StatUnit values[16];
         unsigned int time;
+        StatUnit values[16];
+        unsigned int updateTime;
 
-        MeasurementData();
+        MeasurementData() : time(0) { Clear(); }
         void Clear();
         unsigned int UpdateTime(unsigned int now);
         void AddValue(unsigned int now, unsigned int value);
@@ -62,6 +62,7 @@ public:
         unsigned int time;
         unsigned short sequence;
 
+        ResponseData() : time(0), sequence(0) {}
     };
 
     template <class T>
@@ -78,36 +79,11 @@ public:
         common::CriticalSection& GetCriticalSection() { return mCritical; }
         bool IsInitialized() const { return mData != 0; }
     private:
-        static const common::StationAddress& AddressOf(const T& value) { return value.address; }
-        static unsigned int EntryTime(const T& value) { return value.time; }
-        static void SetTime(T& value, unsigned int now) { value.time = now; }
         static void Refresh(MeasurementData& value, unsigned int now) { value.UpdateTime(now); }
         static void Refresh(ResponseData& value, unsigned int now) { value.time = now; }
-        static void InitializeValue(MeasurementData& value, const common::StationAddress& address, unsigned int)
-        {
-            value.address = address;
-            value.Clear();
-        }
-        static void InitializeValue(ResponseData& value, const common::StationAddress& address, unsigned int now)
-        {
-            value.address = address;
-            value.time = now;
-            value.sequence = 0;
-        }
         static void Reset(MeasurementData& value) { value.Clear(); }
-        static void Reset(ResponseData& value)
-        {
-            value.address.Clear();
-            value.time = 0;
-            value.sequence = 0;
-        }
-        static int Compare(const void* lhs, const void* rhs)
-        {
-            const common::StationAddress& address = *static_cast<const common::StationAddress*>(lhs);
-            const T& value = *static_cast<const T*>(rhs);
-            return common::StationAddress::Compare(address, AddressOf(value));
-        }
-        pead::PtrArrayImpl mValues;
+        static void Reset(ResponseData& value) { value.sequence = 0; }
+        pead::PtrArray<T> mValues;
         T* mData;
         common::CriticalSection mCritical;
     };

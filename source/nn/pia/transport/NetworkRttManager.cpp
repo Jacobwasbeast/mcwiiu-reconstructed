@@ -1,7 +1,12 @@
 #include "nn/pia/transport/NetworkRttManager.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
+
+#ifdef __ghs__
+#include <ppc_ghs.h>
+#endif
 
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/common/Memory.hpp"
@@ -25,53 +30,56 @@ enum
 NetworkRttManager* NetworkRttManager::sInstance = 0;
 static unsigned char* sStorage = 0;
 
+static inline float FastSqrt(float value)
+{
+#ifdef __ghs__
+    const float guess = __FRSQRTEF(value);
+    return __FNMSUBS(guess * guess, value, 3.0F) * (guess * 0.5F) * value;
+#else
+    return std::sqrt(value);
+#endif
+}
+
 template <class T>
 NetworkRttManager::DataBuffer<T>::DataBuffer()
-    : mValues(), mData(0), mCritical(-1)
+    : mData(0), mCritical(-1)
 {
 }
 
 template <class T>
 void NetworkRttManager::DataBuffer<T>::Initialize(unsigned int capacity, pead::Heap* heap)
 {
-    Finalize();
-    if (capacity == 0) return;
-    if (!heap) heap = common::HeapManager::GetHeap();
-    mData = static_cast<T*>(pead::allocateFromSeadHeap(sizeof(T) * capacity, heap));
-    if (!mData)
+    if (capacity == 0)
     {
         mData = 0;
         return;
     }
-    for (unsigned int i = 0; i < capacity; ++i)
-    {
-        new (&mData[i]) T();
-    }
+    mData = common::NewArray<T>(capacity);
     mValues.allocBuffer(static_cast<int>(capacity), heap, 4);
 }
 
 template <class T>
 void NetworkRttManager::DataBuffer<T>::Finalize()
 {
-    mValues.freeBuffer();
     if (mData)
     {
-        const unsigned int recordCount = pead::getArraySize(mData) / sizeof(T);
-        for (unsigned int i = 0; i < recordCount; ++i) mData[i].~T();
-        pead::freeToSeadHeap(mData);
+        mValues.freeBuffer();
+        common::DeleteArray(mData);
+        mData = 0;
     }
-    mData = 0;
 }
 
 template <class T>
 T* NetworkRttManager::DataBuffer<T>::Get(const common::StationAddress& address)
 {
-    const int result = mValues.binarySearch(&address, &Compare);
-    if (result >= 0)
+    if (mValues.isBufferReady())
     {
-        const unsigned int recordCount = pead::getArraySize(mData) / sizeof(T);
-        for (unsigned int i = 0; i < recordCount; ++i)
-            if (AddressOf(mData[i]) == address) return &mData[i];
+        const int index = mValues.binarySearch(&address, &CompareFunc);
+        if (index >= 0)
+        {
+            T* value = mValues.at(index);
+            return value;
+        }
     }
     return 0;
 }
@@ -79,47 +87,48 @@ T* NetworkRttManager::DataBuffer<T>::Get(const common::StationAddress& address)
 template <class T>
 T* NetworkRttManager::DataBuffer<T>::Assign(const common::StationAddress& address, unsigned int now)
 {
-    T* existing = Get(address);
-    if (existing)
-    {
-        Refresh(*existing, now);
-        return existing;
-    }
-    if (!mData)
+    if (!mValues.isBufferReady())
         return 0;
-    const unsigned int recordCount = pead::getArraySize(mData) / sizeof(T);
-    unsigned int activeCount = 0;
-    for (unsigned int i = 0; i < recordCount; ++i)
-        if (mValues.binarySearch(&AddressOf(mData[i]), &Compare) >= 0) ++activeCount;
-    if (activeCount >= recordCount)
+    const int index = mValues.binarySearch(&address, &CompareFunc);
+    if (index >= 0)
     {
-        unsigned int oldest = 0;
-        while (mValues.binarySearch(&AddressOf(mData[oldest]), &Compare) < 0) ++oldest;
-        unsigned int oldestAge = now - EntryTime(mData[oldest]);
-        for (unsigned int i = oldest + 1; i < recordCount; ++i)
-        {
-            if (mValues.binarySearch(&AddressOf(mData[i]), &Compare) < 0) continue;
-            const unsigned int age = now - EntryTime(mData[i]);
-            if (age > oldestAge) { oldest = i; oldestAge = age; }
-        }
-        T* value = &mData[oldest];
-        const int oldIndex = mValues.binarySearch(&AddressOf(*value), &Compare);
-        if (oldIndex >= 0) mValues.erase(oldIndex, 1);
-        Reset(*value);
-        InitializeValue(*value, address, now);
-        const int insertion = mValues.binarySearch(&address, &Compare);
-        const int position = insertion < 0 ? -insertion - 1 : insertion;
-        mValues.insert(position, value);
+        T* value = mValues.at(index);
+        Refresh(*value, now);
         return value;
     }
-    unsigned int freeIndex = 0;
-    while (freeIndex < recordCount && mValues.binarySearch(&AddressOf(mData[freeIndex]), &Compare) >= 0) ++freeIndex;
-    T* value = &mData[freeIndex];
+    T* value;
+    if (mValues.size() < mValues.maxSize())
+    {
+        value = &mData[mValues.size()];
+    }
+    else
+    {
+        int oldest = 0;
+        unsigned int oldestAge = now - mValues.unsafeAt(0)->time;
+        for (int i = 1; i < mValues.size(); ++i)
+        {
+            const unsigned int age = now - mValues.at(i)->time;
+            if (age > oldestAge)
+            {
+                oldest = i;
+                oldestAge = age;
+            }
+        }
+        value = mValues.at(oldest);
+        mValues.erase(oldest, 1);
+    }
+    value->address = address;
+    value->time = now;
     Reset(*value);
-    InitializeValue(*value, address, now);
-    const int insertion = mValues.binarySearch(&address, &Compare);
-    const int position = insertion < 0 ? -insertion - 1 : insertion;
-    mValues.insert(position, value);
+    for (int i = 0; i < mValues.size(); ++i)
+    {
+        if (address < mValues.at(i)->address)
+        {
+            mValues.insert(i, value);
+            return value;
+        }
+    }
+    mValues.pushBack(value);
     return value;
 }
 
@@ -147,28 +156,23 @@ void NetworkRttManager::StatUnit::AddValue(unsigned int value)
     ++count;
 }
 
-NetworkRttManager::MeasurementData::MeasurementData() : reserved(0)
-{
-    Clear();
-}
-
 void NetworkRttManager::MeasurementData::Clear()
 {
     for (unsigned int i = 0; i < 16; ++i)
         values[i].Clear();
-    time = 0;
+    updateTime = 0;
 }
 
 unsigned int NetworkRttManager::MeasurementData::UpdateTime(unsigned int now)
 {
     const unsigned int current = now >> 8;
-    const unsigned int previous = time >> 8;
+    const unsigned int previous = updateTime >> 8;
     if (current != previous)
     {
         if (current - previous >= 16)
         {
             Clear();
-            time = now;
+            updateTime = now;
             return current;
         }
         const unsigned int slot = current & 15;
@@ -186,7 +190,7 @@ unsigned int NetworkRttManager::MeasurementData::UpdateTime(unsigned int now)
                 values[i].Clear();
         }
     }
-    time = now;
+    updateTime = now;
     return current;
 }
 
@@ -228,7 +232,7 @@ int NetworkRttManager::MeasurementData::GetStdDev() const
         const float n = static_cast<float>(count);
         const float mean = static_cast<float>(total) / n;
         const float variance = static_cast<float>(squares) / n - mean * mean;
-        if (variance > 0.0f) return static_cast<unsigned int>(std::sqrt(variance));
+        if (variance > 0.0f) return static_cast<unsigned int>(FastSqrt(variance));
     }
     return 0;
 }
@@ -240,7 +244,7 @@ int NetworkRttManager::MeasurementData::GetCount() const
 
 unsigned int NetworkRttManager::MeasurementData::GetLatest() const
 {
-    const unsigned int current = (time >> 8) & 15;
+    const unsigned int current = (updateTime >> 8) & 15;
     for (int i = current; i >= 0; --i)
     {
         if (values[i].count != 0) return values[i].latest;
@@ -279,7 +283,7 @@ void NetworkRttManager::MeasurementData::GetValues(StatValues* output) const
         if (variance <= 0.0f)
             output->standardDeviation = 0;
         else
-            output->standardDeviation = static_cast<unsigned int>(std::sqrt(variance));
+            output->standardDeviation = static_cast<unsigned int>(FastSqrt(variance));
         output->count = count;
         output->latest = GetLatest();
     }

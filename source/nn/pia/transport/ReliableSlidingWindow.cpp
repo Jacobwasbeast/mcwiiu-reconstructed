@@ -537,4 +537,9 @@ void ReliableSlidingWindow::Trace(unsigned long long) const
 {
 }
 
+void ReliableSlidingWindow::RegisterResendTimeCallback(int (*callback)(int, int))
+{
+    s_resendTimeCallback = callback;
+}
+
 }}}

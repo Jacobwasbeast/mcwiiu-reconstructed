@@ -189,6 +189,7 @@ public:
                    unsigned long long localStationId, unsigned long long remoteStationId);
     Result AnalyzeProtocolMessage(const ProtocolMessageReader& reader);
     Result Dispatch(StationPacketHandler* handler, unsigned int* size, unsigned int limit);
+    static void RegisterResendTimeCallback(int (*callback)(int, int));
 
     ProtocolId m_protocolId;
     unsigned long long m_localStationId;

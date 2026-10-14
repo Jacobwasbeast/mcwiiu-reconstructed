@@ -35,7 +35,7 @@ public:
     bool m_isTerminator;
     common::StationAddress m_stationAddress;
     unsigned char m_sendingPassId;
-    bool m_field39;
+    unsigned char m_field39;
     bool m_field3a;
 };
 
