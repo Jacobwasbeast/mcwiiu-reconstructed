@@ -158,7 +158,8 @@ bool Create(const CreateArg& args)
     findExport(&sMuteAllSound, "SwkbdMuteAllSound__3RplFb");
     findExport(&sSetVersion, "SwkbdSetVersion__3RplFi");
 
-    unsigned char* frameworkBuffer = static_cast<unsigned char*>(MEMAllocFromExpHeap(sHeapHandle, GetWorkMemorySize(args.unk_0x08) - sRplAcquireBufferSize));
+    unsigned char* frameworkBuffer = static_cast<unsigned char*>(
+        MEMAllocFromExpHeap(sHeapHandle, GetWorkMemorySize(args.unk_0x08) - sRplAcquireBufferSize));
     if (frameworkBuffer == NULL)
     {
         OSReport("SWKBD: Create failed. framework_buffer == NULL");
