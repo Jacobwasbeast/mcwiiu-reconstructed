@@ -5,7 +5,12 @@
 
 struct _udp_packet;
 
-namespace nn { namespace pia { namespace chat {
+namespace nn
+{
+namespace pia
+{
+namespace chat
+{
 
 class AudioStream
 {
@@ -67,6 +72,8 @@ public:
     long long m_SkewCheckTick;
 };
 
-}}}
+}
+}
+}
 
 #endif

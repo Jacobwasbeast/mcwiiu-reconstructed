@@ -8,31 +8,36 @@
 
 namespace
 {
-    const unsigned int kSequenceNumberRange = 0x10000;
-    const unsigned int kSequenceForwardWindow = 3000;
-    const unsigned int kSequenceBackwardWindow = 0xff9d;
-    const unsigned int kSequenceLateThreshold = 0xff9c;
-    const int kSequenceGapLimit = 100;
-    const unsigned int kSkewSampleCountMax = 16;
-    const long long kSkewAverageWeight = 31;
-    const long long kSkewAverageDivisor = 32;
-    const long long kJitterAverageShift = 4;
-    const long long kJitterBufferScale = 3;
-    const unsigned int kJitterThresholdMsec = 100;
-    const unsigned int kEarlyPacketCountMin = 10;
-    const unsigned long long kEarlyResyncMsec = 5000;
-    const long long kTimestampWrapTicks = static_cast<long long>(VCT_TIMESTAMP_TICK_SCALE) << 32;
-    const long long kTimestampWrapMargin = 60LL << 32;
+const unsigned int kSequenceNumberRange = 0x10000;
+const unsigned int kSequenceForwardWindow = 3000;
+const unsigned int kSequenceBackwardWindow = 0xff9d;
+const unsigned int kSequenceLateThreshold = 0xff9c;
+const int kSequenceGapLimit = 100;
+const unsigned int kSkewSampleCountMax = 16;
+const long long kSkewAverageWeight = 31;
+const long long kSkewAverageDivisor = 32;
+const long long kJitterAverageShift = 4;
+const long long kJitterBufferScale = 3;
+const unsigned int kJitterThresholdMsec = 100;
+const unsigned int kEarlyPacketCountMin = 10;
+const unsigned long long kEarlyResyncMsec = 5000;
+const long long kTimestampWrapTicks = static_cast<long long>(VCT_TIMESTAMP_TICK_SCALE) << 32;
+const long long kTimestampWrapMargin = 60LL << 32;
 
-    long long s_skewCheckInterval = 0;
-    int s_skewCheckInitialized = 0;
-    long long s_skewLimit = 0;
-    long long s_jitterOffsetLimit = 0;
-    long long s_baseJitterOffset = 0;
-    unsigned int s_stableFrameThreshold = 0;
+long long s_skewCheckInterval = 0;
+int s_skewCheckInitialized = 0;
+long long s_skewLimit = 0;
+long long s_jitterOffsetLimit = 0;
+long long s_baseJitterOffset = 0;
+unsigned int s_stableFrameThreshold = 0;
 }
 
-namespace nn { namespace pia { namespace chat {
+namespace nn
+{
+namespace pia
+{
+namespace chat
+{
 
 AudioStream::AudioStream()
 {
@@ -243,15 +248,15 @@ int AudioStream::CalcJitterAndSkew(_udp_packet* pPacket)
         long long llJitter = llDelay - m_PreviousDelay;
         m_PreviousDelay = llDelay;
         llJitter = llJitter < 0 ? -llJitter : llJitter;
-        if (llJitter > (llFrameTicks + m_JitterAverage) * 2 +
-                           static_cast<unsigned long long>(OSTimerClockSpeed) * kJitterThresholdMsec / 1000)
+        if (llJitter > (llFrameTicks + m_JitterAverage) * 2
+                           + static_cast<unsigned long long>(OSTimerClockSpeed) * kJitterThresholdMsec / 1000)
         {
             m_JitterHoldCount = llJitter / llFrameTicks + 2;
         }
         if (m_JitterHoldCount <= 0)
         {
-            m_Info.m_JitterAverage = m_JitterAverage =
-                m_JitterAverage + ((llJitter - m_JitterAverage) >> kJitterAverageShift);
+            m_Info.m_JitterAverage = m_JitterAverage = m_JitterAverage
+                                                       + ((llJitter - m_JitterAverage) >> kJitterAverageShift);
         }
     }
 
@@ -360,8 +365,7 @@ void AudioStream::UpdateSkew(long long llTick)
     if (s_skewCheckInitialized == 0)
     {
         s_skewCheckInitialized = 1;
-        s_skewCheckInterval =
-            static_cast<long long>(static_cast<unsigned long long>(OSTimerClockSpeed) * 900);
+        s_skewCheckInterval = static_cast<long long>(static_cast<unsigned long long>(OSTimerClockSpeed) * 900);
     }
 
     if (m_SkewCheckTick != 0)
@@ -381,17 +385,19 @@ void AudioStream::MakeStreamParams(unsigned int uiFrameMilliseconds)
 {
     const long long llFrameTicks = VCTi_GetAudioFrameTicks();
 
-    s_skewLimit = static_cast<long long>(
-        static_cast<unsigned long long>(uiFrameMilliseconds - 2) * OSTimerClockSpeed / 1000);
+    s_skewLimit = static_cast<long long>(static_cast<unsigned long long>(uiFrameMilliseconds - 2) * OSTimerClockSpeed
+                                         / 1000);
 
     const long long llHeadroom = static_cast<long long>(OSTimerClockSpeed) - s_skewLimit;
-    s_jitterOffsetLimit = llHeadroom -
-        static_cast<long long>(static_cast<unsigned long long>(OSTimerClockSpeed) * 30 / 1000);
+    s_jitterOffsetLimit = llHeadroom
+                          - static_cast<long long>(static_cast<unsigned long long>(OSTimerClockSpeed) * 30 / 1000);
 
     s_stableFrameThreshold = (1000 / uiFrameMilliseconds) * 5;
 
-    s_baseJitterOffset = llFrameTicks +
-        static_cast<long long>(static_cast<unsigned long long>(OSTimerClockSpeed) * 0x53 / 1000);
+    s_baseJitterOffset = llFrameTicks
+                         + static_cast<long long>(static_cast<unsigned long long>(OSTimerClockSpeed) * 0x53 / 1000);
 }
 
-}}}
+}
+}
+}

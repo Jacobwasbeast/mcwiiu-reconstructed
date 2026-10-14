@@ -5,34 +5,34 @@
 
 namespace
 {
-    const unsigned int AUDIO_QUEUE_MAX = 15;
+const unsigned int AUDIO_QUEUE_MAX = 15;
 
-    unsigned int audioQueueCounts[AUDIO_QUEUE_MAX] = { 0 };
-    _udp_packet* audioQueueHeads[AUDIO_QUEUE_MAX] = { 0 };
-    _udp_packet* audioQueueTails[AUDIO_QUEUE_MAX] = { 0 };
+unsigned int audioQueueCounts[AUDIO_QUEUE_MAX] = {0};
+_udp_packet* audioQueueHeads[AUDIO_QUEUE_MAX] = {0};
+_udp_packet* audioQueueTails[AUDIO_QUEUE_MAX] = {0};
 
-    void flushQueue(unsigned int streamIndex)
+void flushQueue(unsigned int streamIndex)
+{
+    if (audioQueueHeads[streamIndex] != 0)
     {
-        if (audioQueueHeads[streamIndex] != 0)
+        _udp_packet** ppHead = &audioQueueHeads[streamIndex];
+        _udp_packet* packet = *ppHead;
+        do
         {
-            _udp_packet** ppHead = &audioQueueHeads[streamIndex];
-            _udp_packet* packet = *ppHead;
-            do
+            _udp_packet* freed = packet;
+            packet = packet->m_pNext;
+            *ppHead = packet;
+            if (packet != 0)
             {
-                _udp_packet* freed = packet;
-                packet = packet->m_pNext;
-                *ppHead = packet;
-                if (packet != 0)
-                {
-                    packet->m_pPrevious = 0;
-                }
-                vct_free_packet_buffer(freed);
-                packet = *ppHead;
-            } while (packet != 0);
-        }
-        audioQueueTails[streamIndex] = 0;
-        audioQueueCounts[streamIndex] = 0;
+                packet->m_pPrevious = 0;
+            }
+            vct_free_packet_buffer(freed);
+            packet = *ppHead;
+        } while (packet != 0);
     }
+    audioQueueTails[streamIndex] = 0;
+    audioQueueCounts[streamIndex] = 0;
+}
 }
 
 void vct_init_audio_queue(unsigned int uiStreamIndex)

@@ -38,25 +38,27 @@ void updateFunctionalBits(unsigned int bits, bool enabled)
 
 }
 
-namespace nn { namespace pia { namespace chat {
+namespace nn
+{
+namespace pia
+{
+namespace chat
+{
 
 namespace
 {
-    const int kAlreadyInitializedResult = 0x10c02;
-    const int kInvalidParameterResult = 0x10c07;
-    const int kAllocationFailureResult = 0x10c01;
-    const int kNotInitializedResult = 0x10c0c;
-    const int kProcessingFailureResult = 0xc0b;
-    const unsigned int kWorkspaceSize = 0x251c0;
-    const int16_t noiseLevels[3] = { 6, 10, 14 };
-    const int16_t agcParameters[5][2] =
-        { { 0, 0 }, { 10, -14 }, { 14, -18 }, { 17, -21 }, { 19, -23 } };
+const int kAlreadyInitializedResult = 0x10c02;
+const int kInvalidParameterResult = 0x10c07;
+const int kAllocationFailureResult = 0x10c01;
+const int kNotInitializedResult = 0x10c0c;
+const int kProcessingFailureResult = 0xc0b;
+const unsigned int kWorkspaceSize = 0x251c0;
+const int16_t noiseLevels[3] = {6, 10, 14};
+const int16_t agcParameters[5][2] = {{0, 0}, {10, -14}, {14, -18}, {17, -21}, {19, -23}};
 
 }
 
-HandsFree::HandsFree()
-    : m_handle(0), m_ecMode(1), m_noiseSuppressorLevel(1),
-      m_agcLevel(1), m_workspace(0)
+HandsFree::HandsFree() : m_handle(0), m_ecMode(1), m_noiseSuppressorLevel(1), m_agcLevel(1), m_workspace(0)
 {
     memset(&m_config, 0, sizeof(m_config));
 }
@@ -80,13 +82,11 @@ void HandsFree::Finalize()
     }
 }
 
-Result HandsFree::Initialize(TMC_HF_EC_MODE ecMode,
-                          int noiseSuppressorLevel, int agcLevel)
+Result HandsFree::Initialize(TMC_HF_EC_MODE ecMode, int noiseSuppressorLevel, int agcLevel)
 {
     if (m_handle != 0)
         return kAlreadyInitializedResult;
-    if (!isValidEcMode(ecMode) || !isValidNsLevel(noiseSuppressorLevel) ||
-        !isValidAgcLevel(agcLevel))
+    if (!isValidEcMode(ecMode) || !isValidNsLevel(noiseSuppressorLevel) || !isValidAgcLevel(agcLevel))
         return kInvalidParameterResult;
 
     m_workspace = common::NewArray<unsigned int>(kWorkspaceSize / sizeof(unsigned int));
@@ -118,13 +118,11 @@ Result HandsFree::Initialize(TMC_HF_EC_MODE ecMode,
     return 0;
 }
 
-Result HandsFree::Process(short* output, const short* inputLeft,
-                       const short* inputRight, const short* inputReference)
+Result HandsFree::Process(short* output, const short* inputLeft, const short* inputRight, const short* inputReference)
 {
     if (m_handle == 0)
         return kNotInitializedResult;
-    if (output == 0 || inputLeft == 0 || inputRight == 0 ||
-        inputReference == 0)
+    if (output == 0 || inputLeft == 0 || inputRight == 0 || inputReference == 0)
         return kInvalidParameterResult;
 
     uint32_t frames = VCT_GetAudioFrameLength() >> 3;
@@ -132,9 +130,8 @@ Result HandsFree::Process(short* output, const short* inputLeft,
     uint32_t inputOffset = 0;
     while (frames-- != 0)
     {
-        const uint32_t result = TMC_HF_Proc(
-            m_handle, inputLeft + outputOffset, inputRight + inputOffset,
-            inputReference + inputOffset, output + outputOffset);
+        const uint32_t result = TMC_HF_Proc(m_handle, inputLeft + outputOffset, inputRight + inputOffset,
+                                            inputReference + inputOffset, output + outputOffset);
         if (result != 0)
             return kProcessingFailureResult;
         inputOffset += 256;
@@ -143,4 +140,6 @@ Result HandsFree::Process(short* output, const short* inputLeft,
     return 0;
 }
 
-}}}
+}
+}
+}

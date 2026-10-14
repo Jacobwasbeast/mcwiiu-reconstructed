@@ -3,19 +3,25 @@
 namespace
 {
 
-const signed char g_adpcm_delta_3[8] = {-1,-1,1,2,-1,-1,1,2};
-const signed char g_adpcm_delta_2[4] = {-1,1,-1,1};
-const signed char g_adpcm_delta_4[16] = {-1,-1,-1,-1,2,4,6,8,-1,-1,-1,-1,2,4,6,8};
+const signed char g_adpcm_delta_3[8] = {-1, -1, 1, 2, -1, -1, 1, 2};
+const signed char g_adpcm_delta_2[4] = {-1, 1, -1, 1};
+const signed char g_adpcm_delta_4[16] = {-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8};
 const short g_adpcm_steps[] = {
-    7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,72,79,86,95,104,114,125,137,150,164,180,197,216,237,259,284,311,341,374,410,449,492,539,591,648,711,779,854,936,1026,1125,1232,1352,1482,1625,1782,1955,2142,2349,2571,2822,3095,3395,3721,4085,4481,4912,5382,5900,6470,7099,7790,8547,9384,10300,11300,12400,13600,14900,16400,18000,19700,21600,23700,26000,28500,31300,32767
-};
+    7,     8,     9,     10,    11,    12,    13,    14,    16,    17,    19,    21,   23,   25,   28,    31,
+    34,    37,    41,    45,    50,    55,    60,    66,    72,    79,    86,    95,   104,  114,  125,   137,
+    150,   164,   180,   197,   216,   237,   259,   284,   311,   341,   374,   410,  449,  492,  539,   591,
+    648,   711,   779,   854,   936,   1026,  1125,  1232,  1352,  1482,  1625,  1782, 1955, 2142, 2349,  2571,
+    2822,  3095,  3395,  3721,  4085,  4481,  4912,  5382,  5900,  6470,  7099,  7790, 8547, 9384, 10300, 11300,
+    12400, 13600, 14900, 16400, 18000, 19700, 21600, 23700, 26000, 28500, 31300, 32767};
 
 typedef nn::pia::chat::Adpcm::State AdpcmState;
 
 inline int adpcm_clip(int value)
 {
-    if (value < -32768) return -32768;
-    if (value > 32767) return 32767;
+    if (value < -32768)
+        return -32768;
+    if (value > 32767)
+        return 32767;
     return value;
 }
 
@@ -25,12 +31,16 @@ inline int adpcm_clip(int value)
         int sample = (STATE)->sample; \
         int step = g_adpcm_steps[idx]; \
         int diff = ((CODE) & 1) ? step : 0; \
-        if ((CODE) & 2) sample -= diff; \
-        else sample += diff; \
+        if ((CODE) & 2) \
+            sample -= diff; \
+        else \
+            sample += diff; \
         sample = adpcm_clip(sample); \
         idx += g_adpcm_delta_2[CODE]; \
-        if (idx < 0) idx = 0; \
-        else if (idx > 88) idx = 88; \
+        if (idx < 0) \
+            idx = 0; \
+        else if (idx > 88) \
+            idx = 88; \
         (STATE)->sample = sample; \
         (STATE)->index = idx; \
         (OUT) = sample; \
@@ -42,14 +52,20 @@ inline int adpcm_clip(int value)
         int sample = (STATE)->sample; \
         int step = g_adpcm_steps[idx]; \
         int diff = step >> 2; \
-        if ((CODE) & 2) diff += step; \
-        if ((CODE) & 1) diff += step >> 1; \
-        if ((CODE) & 4) sample -= diff; \
-        else sample += diff; \
+        if ((CODE) & 2) \
+            diff += step; \
+        if ((CODE) & 1) \
+            diff += step >> 1; \
+        if ((CODE) & 4) \
+            sample -= diff; \
+        else \
+            sample += diff; \
         sample = adpcm_clip(sample); \
         idx += g_adpcm_delta_3[(CODE) & 7]; \
-        if (idx < 0) idx = 0; \
-        else if (idx > 88) idx = 88; \
+        if (idx < 0) \
+            idx = 0; \
+        else if (idx > 88) \
+            idx = 88; \
         (STATE)->sample = sample; \
         (STATE)->index = idx; \
         (OUT) = sample; \
@@ -61,15 +77,22 @@ inline int adpcm_clip(int value)
         int sample = (STATE)->sample; \
         int step = g_adpcm_steps[idx]; \
         int diff = step >> 3; \
-        if ((CODE) & 4) diff += step; \
-        if ((CODE) & 2) diff += step >> 1; \
-        if ((CODE) & 1) diff += step >> 2; \
-        if ((CODE) & 8) sample -= diff; \
-        else sample += diff; \
+        if ((CODE) & 4) \
+            diff += step; \
+        if ((CODE) & 2) \
+            diff += step >> 1; \
+        if ((CODE) & 1) \
+            diff += step >> 2; \
+        if ((CODE) & 8) \
+            sample -= diff; \
+        else \
+            sample += diff; \
         sample = adpcm_clip(sample); \
         idx += g_adpcm_delta_4[CODE]; \
-        if (idx < 0) idx = 0; \
-        else if (idx > 88) idx = 88; \
+        if (idx < 0) \
+            idx = 0; \
+        else if (idx > 88) \
+            idx = 88; \
         (STATE)->sample = sample; \
         (STATE)->index = idx; \
         (OUT) = sample; \
@@ -85,14 +108,18 @@ inline int adpcm_clip(int value)
             (CODE) = 2; \
         } \
         int quant = g_adpcm_steps[(STATE)->index]; \
-        if (error >= quant) (CODE) |= 1; \
+        if (error >= quant) \
+            (CODE) |= 1; \
         int diff = ((CODE) & 1) ? quant : 0; \
-        if ((CODE) & 2) diff = -diff; \
+        if ((CODE) & 2) \
+            diff = -diff; \
         int sample = (STATE)->sample + diff; \
         sample = adpcm_clip(sample); \
         int idx = (STATE)->index + g_adpcm_delta_2[CODE]; \
-        if (idx < 0) idx = 0; \
-        else if (idx > 88) idx = 88; \
+        if (idx < 0) \
+            idx = 0; \
+        else if (idx > 88) \
+            idx = 88; \
         (STATE)->sample = sample; \
         (STATE)->index = idx; \
     }
@@ -112,16 +139,22 @@ inline int adpcm_clip(int value)
             error -= quant; \
             (CODE) |= 2; \
         } \
-        if (error >= (quant >> 1)) (CODE) |= 1; \
+        if (error >= (quant >> 1)) \
+            (CODE) |= 1; \
         int diff = quant >> 2; \
-        if ((CODE) & 2) diff += quant; \
-        if ((CODE) & 1) diff += quant >> 1; \
-        if ((CODE) & 4) diff = -diff; \
+        if ((CODE) & 2) \
+            diff += quant; \
+        if ((CODE) & 1) \
+            diff += quant >> 1; \
+        if ((CODE) & 4) \
+            diff = -diff; \
         int sample = (STATE)->sample + diff; \
         sample = adpcm_clip(sample); \
         int idx = (STATE)->index + g_adpcm_delta_3[(CODE) & 7]; \
-        if (idx < 0) idx = 0; \
-        else if (idx > 88) idx = 88; \
+        if (idx < 0) \
+            idx = 0; \
+        else if (idx > 88) \
+            idx = 88; \
         (STATE)->sample = sample; \
         (STATE)->index = idx; \
     }
@@ -147,17 +180,24 @@ inline int adpcm_clip(int value)
             error -= half; \
             (CODE) |= 2; \
         } \
-        if (error >= (quant >> 2)) (CODE) |= 1; \
+        if (error >= (quant >> 2)) \
+            (CODE) |= 1; \
         int diff = quant >> 3; \
-        if ((CODE) & 4) diff += quant; \
-        if ((CODE) & 2) diff += half; \
-        if ((CODE) & 1) diff += quant >> 2; \
-        if ((CODE) & 8) diff = -diff; \
+        if ((CODE) & 4) \
+            diff += quant; \
+        if ((CODE) & 2) \
+            diff += half; \
+        if ((CODE) & 1) \
+            diff += quant >> 2; \
+        if ((CODE) & 8) \
+            diff = -diff; \
         int sample = (STATE)->sample + diff; \
         sample = adpcm_clip(sample); \
         int idx = (STATE)->index + g_adpcm_delta_4[CODE]; \
-        if (idx < 0) idx = 0; \
-        else if (idx > 88) idx = 88; \
+        if (idx < 0) \
+            idx = 0; \
+        else if (idx > 88) \
+            idx = 88; \
         (STATE)->sample = sample; \
         (STATE)->index = idx; \
     }
@@ -275,7 +315,8 @@ void nn::pia::chat::Adpcm::Decode(const unsigned char* pData, short* pOut, unsig
     }
 }
 
-void nn::pia::chat::Adpcm::Encode(unsigned char* pOut, const short* pAudio, unsigned int uiSize, State* pState, VCTCodec codec)
+void nn::pia::chat::Adpcm::Encode(unsigned char* pOut, const short* pAudio, unsigned int uiSize, State* pState,
+                                  VCTCodec codec)
 {
     State* header = reinterpret_cast<State*>(pOut);
     header->sample = pState->sample;

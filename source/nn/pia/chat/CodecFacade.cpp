@@ -9,26 +9,23 @@
 
 namespace
 {
-    const int G711_SEGMENT_COUNT = 8;
-    const int G711_BIAS = 0x84;
-    const int G711_CLIP = 0x1fdf;
+const int G711_SEGMENT_COUNT = 8;
+const int G711_BIAS = 0x84;
+const int G711_CLIP = 0x1fdf;
 
-    const int s_ulawSegmentEnd[G711_SEGMENT_COUNT] =
-    {
-        0x3f, 0x7f, 0xff, 0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff
-    };
+const int s_ulawSegmentEnd[G711_SEGMENT_COUNT] = {0x3f, 0x7f, 0xff, 0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff};
 
-    inline unsigned int search(int iValue, const int* pTable, unsigned int uiSize)
+inline unsigned int search(int iValue, const int* pTable, unsigned int uiSize)
+{
+    for (unsigned int index = 0; index < uiSize; ++index)
     {
-        for (unsigned int index = 0; index < uiSize; ++index)
+        if (iValue <= *pTable++)
         {
-            if (iValue <= *pTable++)
-            {
-                return index;
-            }
+            return index;
         }
-        return uiSize;
     }
+    return uiSize;
+}
 }
 
 namespace nn
@@ -41,8 +38,7 @@ namespace chat
 CodecFacade* g_codecFacade = NULL;
 unsigned char* g_codecStorage = NULL;
 
-CodecFacade::CodecFacade()
-    : m_state(0)
+CodecFacade::CodecFacade() : m_state(0)
 {
 }
 
@@ -90,8 +86,7 @@ void CodecFacade::Finalize()
 {
 }
 
-void CodecFacade::Decode(const unsigned char* pData, short* pOut, unsigned int uiSize,
-                         VCTCodec codec)
+void CodecFacade::Decode(const unsigned char* pData, short* pOut, unsigned int uiSize, VCTCodec codec)
 {
     switch (codec)
     {
@@ -111,8 +106,7 @@ void CodecFacade::Decode(const unsigned char* pData, short* pOut, unsigned int u
     }
 }
 
-void CodecFacade::Encode(unsigned char* pOut, const short* pAudio, unsigned int uiSize,
-                         void* pState, VCTCodec codec)
+void CodecFacade::Encode(unsigned char* pOut, const short* pAudio, unsigned int uiSize, void* pState, VCTCodec codec)
 {
     switch (codec)
     {
@@ -168,8 +162,8 @@ void vct_encode_g711_ulaw(unsigned char* pOut, const short* pAudio, unsigned int
         }
         else
         {
-            pOut[index] = static_cast<unsigned char>(
-                ((uiSegment << 4) | ((iSample >> (uiSegment + 1)) & 0x0f)) ^ ucMask);
+            pOut[index] = static_cast<unsigned char>(((uiSegment << 4) | ((iSample >> (uiSegment + 1)) & 0x0f))
+                                                     ^ ucMask);
         }
     }
 }
@@ -179,8 +173,7 @@ void vct_decode_g711_ulaw(const unsigned char* pData, short* pOut, unsigned int 
     for (unsigned int index = 0; index < uiCount; ++index)
     {
         const unsigned int uiValue = ~static_cast<unsigned int>(pData[index]);
-        const int iMagnitude =
-            static_cast<int>(((uiValue & 0x0f) * 8 + G711_BIAS) << ((uiValue >> 4) & 0x07));
+        const int iMagnitude = static_cast<int>(((uiValue & 0x0f) * 8 + G711_BIAS) << ((uiValue >> 4) & 0x07));
         if ((uiValue & 0x80) != 0)
         {
             pOut[index] = static_cast<short>(G711_BIAS - iMagnitude);

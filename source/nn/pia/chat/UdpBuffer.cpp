@@ -7,29 +7,29 @@
 
 namespace
 {
-    const unsigned int PACKET_BUFFER_COUNT_MIN = 4;
-    const unsigned int PACKET_BUFFER_COUNT_RANGE = 0x165;
-    const unsigned long PACKET_BUFFER_ALIGNMENT_MASK = 0x1f;
+const unsigned int PACKET_BUFFER_COUNT_MIN = 4;
+const unsigned int PACKET_BUFFER_COUNT_RANGE = 0x165;
+const unsigned long PACKET_BUFFER_ALIGNMENT_MASK = 0x1f;
 
-    _udp_packet* packetBuffer = 0;
-    _udp_packet* freePacketBuffer = 0;
-    unsigned int packetCount = 0;
-    unsigned int packetBufferSize = 0;
+_udp_packet* packetBuffer = 0;
+_udp_packet* freePacketBuffer = 0;
+unsigned int packetCount = 0;
+unsigned int packetBufferSize = 0;
 
-    void initImpl()
+void initImpl()
+{
+    std::memset(packetBuffer, 0, packetBufferSize);
+    for (unsigned int index = 0; index < packetCount - 1; ++index)
     {
-        std::memset(packetBuffer, 0, packetBufferSize);
-        for (unsigned int index = 0; index < packetCount - 1; ++index)
-        {
-            packetBuffer[index].m_pNextFree = &packetBuffer[index + 1];
-        }
-        packetBuffer[packetCount - 1].m_pNextFree = 0;
-        freePacketBuffer = packetBuffer;
+        packetBuffer[index].m_pNextFree = &packetBuffer[index + 1];
     }
+    packetBuffer[packetCount - 1].m_pNextFree = 0;
+    freePacketBuffer = packetBuffer;
+}
 
-    void trace_udp_packet(unsigned long long, const _udp_packet&)
-    {
-    }
+void trace_udp_packet(unsigned long long, const _udp_packet&)
+{
+}
 }
 
 int vct_init_packet_buffer(void* pBuffer, unsigned int uiSize)
@@ -37,9 +37,8 @@ int vct_init_packet_buffer(void* pBuffer, unsigned int uiSize)
     unsigned int uiCount;
     OSFastMutex_Lock(&g_vctPacketBufferMutex);
 
-    if (pBuffer == 0 ||
-        (reinterpret_cast<unsigned long>(pBuffer) & PACKET_BUFFER_ALIGNMENT_MASK) != 0 ||
-        (uiCount = uiSize / sizeof(_udp_packet)) - PACKET_BUFFER_COUNT_MIN >= PACKET_BUFFER_COUNT_RANGE)
+    if (pBuffer == 0 || (reinterpret_cast<unsigned long>(pBuffer) & PACKET_BUFFER_ALIGNMENT_MASK) != 0
+        || (uiCount = uiSize / sizeof(_udp_packet)) - PACKET_BUFFER_COUNT_MIN >= PACKET_BUFFER_COUNT_RANGE)
     {
         OSFastMutex_Unlock(&g_vctPacketBufferMutex);
         return 0;

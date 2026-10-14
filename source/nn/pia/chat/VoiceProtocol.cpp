@@ -67,14 +67,8 @@ void unlock_()
 class ProtocolLock
 {
 public:
-    ProtocolLock()
-    {
-        lock_();
-    }
-    ~ProtocolLock()
-    {
-        unlock_();
-    }
+    ProtocolLock() { lock_(); }
+    ~ProtocolLock() { unlock_(); }
 };
 
 bool isOpus(nn::pia::chat::Codec codec)
@@ -84,7 +78,7 @@ bool isOpus(nn::pia::chat::Codec codec)
 
 TMC_HF_EC_MODE convertEcMode(nn::pia::chat::EcMode mode)
 {
-    static const unsigned int conversion[4] = { 0, 1, 2, 0 };
+    static const unsigned int conversion[4] = {0, 1, 2, 0};
     return static_cast<TMC_HF_EC_MODE>(conversion[static_cast<unsigned int>(mode)]);
 }
 
@@ -300,8 +294,8 @@ void VoiceProtocol::destroyProtocols()
 }
 Result VoiceProtocol::setupProtocols(unsigned char maxPlayers, unsigned int dataSize)
 {
-    const int created = __N_22_chat_VoiceProtocol_cpp_bf22a0fe::createProtocol(
-        &m_pUnreliableProtocol, &m_unreliableProtocolId, maxPlayers);
+    const int created = __N_22_chat_VoiceProtocol_cpp_bf22a0fe::createProtocol(&m_pUnreliableProtocol,
+                                                                               &m_unreliableProtocolId, maxPlayers);
     if (created != 0)
         return created;
     const int initialized = m_pUnreliableProtocol->Initialize(dataSize);
@@ -355,8 +349,7 @@ Result VoiceProtocol::RemoveConferenceClient(StationIndex stationIndex)
     }
 }
 
-Result VoiceProtocol::Send(const short* pData, unsigned int uiSamples,
-                           const short* pLeft, const short* pRight)
+Result VoiceProtocol::Send(const short* pData, unsigned int uiSamples, const short* pLeft, const short* pRight)
 {
     if (m_handsFree == 0)
         return cResultNotInitialized;
@@ -392,8 +385,7 @@ unsigned short VoiceProtocol::GetProtocolType() const
     return cProtocolType;
 }
 
-Result VoiceProtocol::Receive(void* pData, unsigned int uiSize,
-                              StationIndex* pStationIndex)
+Result VoiceProtocol::Receive(void* pData, unsigned int uiSize, StationIndex* pStationIndex)
 {
     if (pData == 0)
         return ResultInvalidArgument();
@@ -409,8 +401,7 @@ Result VoiceProtocol::Receive(void* pData, unsigned int uiSize,
         if (result == 0)
         {
             for (int i = 0; i < m_setting.sampleRate; ++i)
-                pStationIndex[i] = static_cast<StationIndex>(
-                    convertCid(cids[i]));
+                pStationIndex[i] = static_cast<StationIndex>(convertCid(cids[i]));
         }
     }
     if (result == 0)
@@ -488,8 +479,8 @@ int VoiceProtocol::SendMultiDataCallbackImpl(unsigned int bitmap, const void* pD
 {
     transport::Transport* pTransport = transport::g_piaTransport;
     common::dump(cTraceFlagVoiceData, pData, uiSize);
-    transport::UnreliableProtocol* pProtocol =
-        pTransport->m_protocolManager.GetProtocol<transport::UnreliableProtocol>(m_unreliableProtocolId);
+    transport::UnreliableProtocol* pProtocol = pTransport->m_protocolManager.GetProtocol<transport::UnreliableProtocol>(
+        m_unreliableProtocolId);
     Result result = pProtocol->SendToMulti(bitmap, pData, uiSize);
     if (result == 0)
         m_sentDataSize += uiSize * pead::BitFlagUtil::countOnBit(bitmap);
@@ -542,8 +533,8 @@ void VoiceProtocol::initializeVct()
     config.m_Unknown0C = 0;
     config.m_Cid = ConvertID_Pia2VCT(static_cast<unsigned short>(m_stationIndex));
     config.m_Codec = m_setting.codec;
-    config.m_Flags = VCT_CONFIG_FLAG_VAD | VCT_CONFIG_FLAG_HPF | VCT_CONFIG_FLAG_SPARE_PACKET |
-                     VCT_CONFIG_FLAG_QUALITY_ALERT | VCT_CONFIG_FLAG_DROP_RECOVER;
+    config.m_Flags = VCT_CONFIG_FLAG_VAD | VCT_CONFIG_FLAG_HPF | VCT_CONFIG_FLAG_SPARE_PACKET
+                     | VCT_CONFIG_FLAG_QUALITY_ALERT | VCT_CONFIG_FLAG_DROP_RECOVER;
     config.m_BufferSize = m_setting.bufferSize;
     config.m_pAudioBuffer = m_audioBuffer;
     config.m_AudioBufferSize = calcAudioBufferSize(m_setting.sampleRate);

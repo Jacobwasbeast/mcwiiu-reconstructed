@@ -5,7 +5,12 @@
 #include "nn/pia/Common.hpp"
 #include "vendor/TmcHandsFree.hpp"
 
-namespace nn { namespace pia { namespace chat {
+namespace nn
+{
+namespace pia
+{
+namespace chat
+{
 
 class HandsFree
 {
@@ -14,10 +19,8 @@ public:
     ~HandsFree();
 
     void Finalize();
-    Result Initialize(TMC_HF_EC_MODE ecMode, int noiseSuppressorLevel,
-                   int agcLevel);
-    Result Process(short* output, const short* inputLeft,
-                const short* inputRight, const short* inputReference);
+    Result Initialize(TMC_HF_EC_MODE ecMode, int noiseSuppressorLevel, int agcLevel);
+    Result Process(short* output, const short* inputLeft, const short* inputRight, const short* inputReference);
 
     void EnableEchoCanceller(bool enabled);
     bool IsEnableEchoCanceller() const;
@@ -53,6 +56,8 @@ private:
     TmcConfig m_config;
 };
 
-}}}
+}
+}
+}
 
 #endif

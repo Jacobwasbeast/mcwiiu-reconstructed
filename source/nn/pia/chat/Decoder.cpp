@@ -7,14 +7,19 @@
 
 namespace
 {
-    const unsigned int DECODER_QUEUE_MAX = 15;
+const unsigned int DECODER_QUEUE_MAX = 15;
 
-    _udp_packet* s_decoderHead = NULL;
-    _udp_packet* s_decoderTail = NULL;
-    unsigned int s_decoderCounts[DECODER_QUEUE_MAX] = { 0 };
+_udp_packet* s_decoderHead = NULL;
+_udp_packet* s_decoderTail = NULL;
+unsigned int s_decoderCounts[DECODER_QUEUE_MAX] = {0};
 }
 
-namespace nn { namespace pia { namespace chat {
+namespace nn
+{
+namespace pia
+{
+namespace chat
+{
 
 void Decoder::Init()
 {
@@ -179,4 +184,6 @@ void Decoder::Unlock()
     OSFastMutex_Unlock(&g_vctDecoderMutex);
 }
 
-}}}
+}
+}
+}
