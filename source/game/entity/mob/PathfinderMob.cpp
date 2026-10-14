@@ -105,12 +105,10 @@ void PathfinderMob::tickLeash()
         restrictTo(BlockPos(static_cast<int>(holder->mX), static_cast<int>(holder->mY), static_cast<int>(holder->mZ)), 5);
         float distance = distanceTo(holder);
 
-        boost::shared_ptr<TamableAnimal> tamable;
-        const boost::shared_ptr<Entity>& self = shared_from_this();
-        if (self != NULL && eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, self->GetType()))
-        {
-            tamable = boost::dynamic_pointer_cast<TamableAnimal>(shared_from_this());
-        }
+        boost::shared_ptr<TamableAnimal> tamable
+            = eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, shared_from_this()->GetType())
+                  ? boost::dynamic_pointer_cast<TamableAnimal>(shared_from_this())
+                  : boost::shared_ptr<TamableAnimal>();
 
         if (tamable != NULL && tamable->isSitting())
         {
@@ -118,30 +116,29 @@ void PathfinderMob::tickLeash()
             {
                 dropLeash(true, true);
             }
+            return;
+        }
+
+        onLeashDistance(distance);
+        if (distance > 10.0f)
+        {
+            dropLeash(true, true);
+            mGoalSelector.disableControlFlag(1);
+        }
+        else if (distance > 6.0f)
+        {
+            double x = (holder->mX - mX) / distance;
+            double y = (holder->mY - mY) / distance;
+            double z = (holder->mZ - mZ) / distance;
+            mXd += x * std::fabs(x) * 0.4;
+            mYd += y * std::fabs(y) * 0.4;
+            mZd += z * std::fabs(z) * 0.4;
         }
         else
         {
-            onLeashDistance(distance);
-            if (distance > 10.0f)
-            {
-                dropLeash(true, true);
-                mGoalSelector.disableControlFlag(1);
-            }
-            else if (distance > 6.0f)
-            {
-                double x = (holder->mX - mX) / distance;
-                double y = (holder->mY - mY) / distance;
-                double z = (holder->mZ - mZ) / distance;
-                mXd += x * std::fabs(x) * 0.4;
-                mYd += y * std::fabs(y) * 0.4;
-                mZd += z * std::fabs(z) * 0.4;
-            }
-            else
-            {
-                mGoalSelector.enableControlFlag(1);
-                Vec3* offset = Vec3::newTemp(holder->mX - mX, holder->mY - mY, holder->mZ - mZ)->normalize()->scale(std::max(distance - 2.0f, 0.0f));
-                getNavigation()->moveTo(mX + offset->x, mY + offset->y, mZ + offset->z, followLeashSpeed());
-            }
+            mGoalSelector.enableControlFlag(1);
+            Vec3* offset = Vec3::newTemp(holder->mX - mX, holder->mY - mY, holder->mZ - mZ)->normalize()->scale(std::max(distance - 2.0f, 0.0f));
+            getNavigation()->moveTo(mX + offset->x, mY + offset->y, mZ + offset->z, followLeashSpeed());
         }
     }
 }

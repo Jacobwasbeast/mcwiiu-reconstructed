@@ -144,28 +144,30 @@ int MobEffectInstance::getDescriptionId()
 bool MobEffectInstance::compareTo(const MobEffectInstance* other) const
 {
     bool equal = false;
-    if (getDuration() > 0x7d93 && other->getDuration() > 0x7d93)
+    bool ambient;
+    bool otherAmbient;
+    if (getDuration() > 32147 && other->getDuration() > 32147)
     {
-        if (isAmbient() != other->isAmbient())
-        {
-            return false;
-        }
-        if (getEffect()->getColor() == other->getEffect()->getColor())
-        {
-            equal = true;
-        }
-        return equal;
+        ambient = isAmbient();
+        otherAmbient = other->isAmbient();
     }
-    bool ambient = isAmbient();
-    if (ambient == other->isAmbient())
+    else
     {
-        if (getDuration() == other->getDuration())
+        ambient = isAmbient();
+        otherAmbient = other->isAmbient();
+        if (!ambient || !otherAmbient)
         {
-            if (getEffect()->getColor() == other->getEffect()->getColor())
+            if (ambient == otherAmbient && getDuration() == other->getDuration()
+                && getEffect()->getColor() == other->getEffect()->getColor())
             {
                 equal = true;
             }
+            return equal;
         }
+    }
+    if (ambient == otherAmbient && getEffect()->getColor() == other->getEffect()->getColor())
+    {
+        equal = true;
     }
     return equal;
 }

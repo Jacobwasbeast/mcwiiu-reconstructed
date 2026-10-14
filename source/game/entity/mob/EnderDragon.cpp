@@ -995,7 +995,7 @@ void EnderDragon::aiStep()
         const float xOffset = (mRandom->nextFloat() - 0.5f) * 8.0f;
         const float yOffset = (mRandom->nextFloat() - 0.5f) * 4.0f;
         const float zOffset = (mRandom->nextFloat() - 0.5f) * 8.0f;
-        mLevel->addParticle(PARTICLE_HUGE_EXPLOSION, mX + xOffset, mY + 2.0 + yOffset, mZ + zOffset, 0.0, 0.0, 0.0,
+        mLevel->addParticle(PARTICLE_LARGE_EXPLODE, mX + xOffset, mY + 2.0 + yOffset, mZ + zOffset, 0.0, 0.0, 0.0,
                             arrayWithLength<int>());
         return;
     }
@@ -1341,8 +1341,8 @@ void EnderDragon::aiStep()
                                       mWing1->mBoundingBox->grow(4.0, 2.0, 4.0)->move(0.0, -2.0, 0.0), NULL));
         knockBack(mLevel->getEntities(shared_from_this(),
                                       mWing2->mBoundingBox->grow(4.0, 2.0, 4.0)->move(0.0, -2.0, 0.0), NULL));
-        hurt(mLevel->getEntities(shared_from_this(), mNeck->mBoundingBox->grow(1.0, 1.0, 1.0), NULL));
-        hurt(mLevel->getEntities(shared_from_this(), mHead->mBoundingBox->grow(1.0, 1.0, 1.0), NULL));
+        hurt(mLevel->getEntities(shared_from_this(), mNeck->mBoundingBox->grow(1.0, 1.0, 1.0), &nearbyEntities));
+        hurt(mLevel->getEntities(shared_from_this(), mHead->mBoundingBox->grow(1.0, 1.0, 1.0), &nearbyEntities));
     }
 
     double bodyLatency[3];

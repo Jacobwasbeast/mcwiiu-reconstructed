@@ -95,15 +95,14 @@ public:
     enum EEntityLocation
     {
         ENTITY_LOCATION_FEET,
-        ENTITY_LOCATION_MIDDLE,
-        ENTITY_LOCATION_CENTER,
-        ENTITY_LOCATION_MOUNT,
-        ENTITY_LOCATION_LEASH,
-        ENTITY_LOCATION_NAME_TAG,
-        ENTITY_LOCATION_SADDLE,
-        ENTITY_LOCATION_CHEST_LEFT,
-        ENTITY_LOCATION_CHEST_RIGHT,
-        ENTITY_LOCATION_EYES
+        ENTITY_LOCATION_BODY,
+        ENTITY_LOCATION_WEAPON_ATTACH_POINT,
+        ENTITY_LOCATION_HEAD,
+        ENTITY_LOCATION_DROP_ATTACH_POINT,
+        ENTITY_LOCATION_EXPLOSION_POINT,
+        ENTITY_LOCATION_EYES,
+        ENTITY_LOCATION_BREATHING_POINT,
+        ENTITY_LOCATION_MOUTH
     };
 
     Entity(Level* level, bool createEntityData);
@@ -248,7 +247,7 @@ public:
     virtual bool ShouldRenderShadow();
     virtual bool canFly();
     virtual Vec3* getAttachPos(EEntityLocation location, float partialTicks);
-    virtual unsigned int getMaxAirSupply();
+    virtual int getMaxAirSupply();
     virtual void setAirSupply(int airSupply);
     virtual void thunderHit(const LightningBolt* lightningBolt);
     virtual void onAboveBubbleCol(bool down);

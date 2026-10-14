@@ -198,8 +198,8 @@ void Entity::freeSmallId(int smallId)
         return;
     }
 
-    int word = smallId >> 5;
-    unsigned int mask = 0x80000000U >> (smallId & 31);
+    int word = smallId / 32;
+    unsigned int mask = 0x80000000U >> (smallId % 32);
 
     sSmallIdsInUse[word] &= ~mask;
     sSmallIdsWandering[word] &= ~mask;
@@ -218,20 +218,24 @@ void Entity::tickExtraWandering()
         return;
     }
 
+    int smallId = 0;
+
+    if (sWanderingCount != 0)
+    {
+        smallId = (sWanderingIds[sWanderingCount - 1] + 1) % 2048;
+    }
+
     sWanderingCount = 0;
 
-    for (int smallId = 0; smallId < 2048; smallId++)
+    for (int i = 0; i < 2048 && sWanderingCount < 3; i++)
     {
-        if ((sSmallIdsWandering[smallId >> 5] & (0x80000000U >> (smallId & 31))) != 0)
+        if ((sSmallIdsWandering[smallId / 32] & (0x80000000U >> (smallId % 32))) != 0)
         {
             sWanderingIds[sWanderingCount] = smallId;
             sWanderingCount++;
-
-            if (sWanderingCount > 2)
-            {
-                return;
-            }
         }
+
+        smallId = (smallId + 1) % 2048;
     }
 }
 
@@ -249,15 +253,15 @@ void Entity::considerForExtraWandering(bool consider)
         return;
     }
 
-    unsigned int mask = 0x80000000U >> (smallId & 31);
+    unsigned int mask = 0x80000000U >> (smallId % 32);
 
     if (consider)
     {
-        sSmallIdsWandering[smallId >> 5] |= mask;
+        sSmallIdsWandering[smallId / 32] |= mask;
     }
     else
     {
-        sSmallIdsWandering[smallId >> 5] &= ~mask;
+        sSmallIdsWandering[smallId / 32] &= ~mask;
     }
 }
 
@@ -752,13 +756,13 @@ void Entity::tick()
         setSharedFlag(FLAG_GLOWING, isGlowing());
     }
 
-    if (getDamageNearbyMobs())
+    if (mLevel->mIsClientSide && getDamageNearbyMobs())
     {
         DamageNearbyMobs();
 
         mAutoSpinAttackTicks++;
 
-        if (mAutoSpinAttackTicks > 19 || (mAutoSpinAttackTicks > 5 && mOnGround))
+        if (mAutoSpinAttackTicks >= 20 || (mAutoSpinAttackTicks > 5 && mOnGround))
         {
             setDamageNearbyMobs(false);
             stopSpinAttack();
@@ -1505,10 +1509,14 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
         }
     }
 
-    BlockPos landingPos(Mth::floor(mX), Mth::floor(mY - 0.2f), Mth::floor(mZ));
-    Block* landingBlock = mLevel->getBlock(landingPos);
+    int landingX = Mth::floor(mX);
+    int landingY = Mth::floor(mY - 0.2f);
+    int landingZ = Mth::floor(mZ);
 
     PIXBeginNamedEvent(0.0f, "Falling check");
+
+    BlockPos landingPos(landingX, landingY, landingZ);
+    Block* landingBlock = mLevel->getBlock(landingPos);
 
     if (landingBlock->mMaterial == Material::AIR)
     {
@@ -1932,7 +1940,7 @@ bool Entity::updateInWaterState()
                 mBoundingBox->grow(0.0, -0.4000000059604645, 0.0)->shrink(0.001, 0.001, 0.001),
                 Material::WATER, shared_from_this()))
         {
-            if (!isInLiquid(Material::WATER, getAttachPos(ENTITY_LOCATION_EYES, 0.0f)))
+            if (!isInLiquid(Material::WATER, getAttachPos(ENTITY_LOCATION_FEET, 0.0f)))
             {
                 inWater = false;
             }
@@ -2547,7 +2555,7 @@ int Entity::getAirSupply()
     return mEntityData->get(DATA_AIR_SUPPLY_ID);
 }
 
-unsigned int Entity::getMaxAirSupply()
+int Entity::getMaxAirSupply()
 {
     return 300;
 }
@@ -3195,6 +3203,18 @@ void Entity::addPassenger(boost::shared_ptr<Entity> passenger)
     }
 }
 
+struct weakPtrEqualsShared
+{
+    weakPtrEqualsShared(boost::shared_ptr<Entity> shared) : mShared(shared) {}
+
+    bool operator()(boost::weak_ptr<Entity> weak)
+    {
+        return weak.lock() == mShared;
+    }
+
+    boost::shared_ptr<Entity> mShared;
+};
+
 void Entity::removePassenger(boost::shared_ptr<Entity> passenger)
 {
     if (passenger)
@@ -3202,29 +3222,22 @@ void Entity::removePassenger(boost::shared_ptr<Entity> passenger)
         passenger->getVehicle();
     }
 
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin();
-         it != mPassengers.end(); )
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin(); it != mPassengers.end(); ++it)
     {
-        if (it->lock())
+        if (!it->lock())
         {
-            ++it;
-        }
-        else
-        {
-            it = mPassengers.erase(it);
+            mPassengers.erase(it);
+            break;
         }
     }
 
     if (passenger)
     {
-        for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin();
-             it != mPassengers.end(); ++it)
+        std::vector<boost::weak_ptr<Entity> >::iterator it =
+            std::find_if(mPassengers.begin(), mPassengers.end(), weakPtrEqualsShared(passenger));
+        if (it != mPassengers.end())
         {
-            if (it->lock() == passenger)
-            {
-                mPassengers.erase(it);
-                break;
-            }
+            mPassengers.erase(it);
         }
 
         passenger->mBoardingCooldown = 60;
@@ -3543,18 +3556,27 @@ Vec3* Entity::getAttachPos(EEntityLocation location, float partialTicks)
 {
     switch (location)
     {
-        case ENTITY_LOCATION_MIDDLE:
-        case ENTITY_LOCATION_CENTER:
+        case ENTITY_LOCATION_FEET:
+        case ENTITY_LOCATION_EXPLOSION_POINT:
+            return getPos(partialTicks);
+
+        case ENTITY_LOCATION_BODY:
+        case ENTITY_LOCATION_WEAPON_ATTACH_POINT:
             return mBoundingBox->getCenter();
 
-        case ENTITY_LOCATION_MOUNT:
-        case ENTITY_LOCATION_LEASH:
-        case ENTITY_LOCATION_SADDLE:
-        case ENTITY_LOCATION_CHEST_LEFT:
-        case ENTITY_LOCATION_CHEST_RIGHT:
+        case ENTITY_LOCATION_HEAD:
             return getPos(partialTicks)->add(
-                Vec3::newTemp(0.0, getEyeHeight(), 0.0)
-                    ->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
+                Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
+
+        case ENTITY_LOCATION_EYES:
+            return getPos(partialTicks)->add(
+                Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
+
+        case ENTITY_LOCATION_DROP_ATTACH_POINT:
+        case ENTITY_LOCATION_BREATHING_POINT:
+        case ENTITY_LOCATION_MOUTH:
+            return getPos(partialTicks)->add(
+                Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
 
         default:
             return getPos(partialTicks);

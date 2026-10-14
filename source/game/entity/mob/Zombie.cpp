@@ -262,8 +262,10 @@ void Zombie::aiStep()
         }
     }
     Monster::aiStep();
-    float scale = isBaby() ? 0.5f : 1.0f;
-    internalSetSize(scale);
+    if (isBaby())
+        internalSetSize(0.5f);
+    else
+        internalSetSize(1.0f);
 }
 
 bool Zombie::hurt(const DamageSource* source, float damage)
@@ -415,7 +417,7 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
 
     if (mLevel->getDifficulty() == Difficulty::NORMAL || mLevel->getDifficulty() == Difficulty::HARD)
     {
-        if (eTYPE_DERIVED_FROM(EntityType::VILLAGER, entity->GetType()) && mLevel->canCreateMore(EntityType::ZOMBIE, Level::eSpawnType_Egg) &&
+        if (entity->GetType() == EntityType::VILLAGER && mLevel->canCreateMore(EntityType::ZOMBIE, Level::eSpawnType_Egg) &&
             (mLevel->getDifficulty() == Difficulty::HARD || !mRandom->nextBoolean()))
         {
             boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);

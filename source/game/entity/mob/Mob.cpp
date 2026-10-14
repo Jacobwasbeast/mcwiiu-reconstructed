@@ -712,19 +712,18 @@ void Mob::aiStep()
 
 const EquipmentSlot* Mob::getEquipmentSlotForItem(not_null_ptr<ItemInstance> item)
 {
-    if (Block::byItem(item->getItem()) == Blocks::carved_pumpkin || item->getItem() == Items::skull)
-        return EquipmentSlot::HEAD;
+    if (Block::byItem(item->getItem()) != Blocks::carved_pumpkin && item->getItem() != Items::skull)
+    {
+        ArmorItem* armorItem = dynamic_cast<ArmorItem*>(item->getItem());
+        if (armorItem != NULL)
+        {
+            return armorItem->mSlot;
+        }
 
-    Item* heldItem = item->getItem();
+        return item->getItem() == Items::elytra ? EquipmentSlot::CHEST : EquipmentSlot::MAINHAND;
+    }
 
-    ArmorItem* armorItem = dynamic_cast<ArmorItem*>(heldItem);
-    if (armorItem != NULL)
-        return armorItem->getSlot();
-
-    if (heldItem == Items::elytra)
-        return EquipmentSlot::CHEST;
-
-    return EquipmentSlot::MAINHAND;
+    return EquipmentSlot::HEAD;
 }
 
 void Mob::pickUpItem(boost::shared_ptr<ItemEntity> entity)
@@ -952,32 +951,25 @@ float Mob::rotlerp(float from, float to, float max)
 
 void Mob::lookAt(boost::shared_ptr<Entity> entity, float maxHeadXRot, float maxHeadYRot)
 {
-    if (!entity)
-        return;
-
-    double dx = entity->mX - mX;
-    double dz = entity->mZ - mZ;
-    double dy;
+    double xd = entity->mX - mX;
+    double zd = entity->mZ - mZ;
+    double yd;
 
     if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-        if (living)
-            dy = (living->mY + living->getEyeHeight()) - (mY + getEyeHeight());
-        else
-            dy = entity->mY - mY;
+        yd = (living->mY + living->getEyeHeight()) - (mY + getEyeHeight());
     }
     else
     {
-        dy = (entity->mBoundingBox->mMinY + entity->mBoundingBox->mMaxY) * 0.5 - (mY + getEyeHeight());
+        yd = (entity->mBoundingBox->mMinY + entity->mBoundingBox->mMaxY) / 2.0 - (mY + getEyeHeight());
     }
 
-    double dist = Mth::sqrt(dx * dx + dz * dz);
-    const double radToDeg = 57.2957763671875;
-    float targetBodyRot = (float)(atan2(dz, dx) * radToDeg) - 90.0f;
-    float targetHeadRot = (float)(atan2(dy, dist) * radToDeg);
-    mYBodyRot = rotlerp(mYBodyRot, targetBodyRot, maxHeadXRot);
-    mYHeadRot = rotlerp(mYHeadRot, -targetHeadRot, maxHeadYRot);
+    double sd = Mth::sqrt(xd * xd + zd * zd);
+    float yRotD = (float)(atan2(zd, xd) * 57.2957763671875) - 90.0f;
+    float xRotD = (float)-(atan2(yd, sd) * 57.2957763671875);
+    mXRot = rotlerp(mXRot, xRotD, maxHeadYRot);
+    mYRot = rotlerp(mYRot, yRotD, maxHeadXRot);
 }
 
 bool Mob::checkSpawnRules()
@@ -1035,13 +1027,15 @@ NonNullList<not_null_ptr<ItemInstance> > Mob::getArmorSlots()
 
 void Mob::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item)
 {
-    if (slot == NULL || item.get() == NULL)
-        return;
-    playEquipSound(item);
-    if (slot->getType() == EquipmentSlot::HAND && slot->getIndex() < 2)
+    switch (slot->getType())
+    {
+    case EquipmentSlot::HAND:
         mHandItems[slot->getIndex()] = item;
-    else if (slot->getType() == EquipmentSlot::ARMOR && slot->getIndex() < 4)
+        break;
+    case EquipmentSlot::ARMOR:
         mArmorItems[slot->getIndex()] = item;
+        break;
+    }
 }
 
 not_null_ptr<ItemInstance> Mob::getItemSlot(const EquipmentSlot* slot)
@@ -1153,8 +1147,7 @@ void Mob::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
         return;
     }
 
-    float specialMultiplier = difficulty.getSpecialMultiplier();
-    if (mRandom->nextFloat() >= 0.15f * specialMultiplier)
+    if (mRandom->nextFloat() >= 0.15f * difficulty.getSpecialMultiplier())
         return;
 
     int tier = mRandom->nextInt(2);
@@ -1195,13 +1188,12 @@ void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance& difficu
 {
     float specialMultiplier = difficulty.getSpecialMultiplier();
 
-    not_null_ptr<ItemInstance> mainHand = getMainHandItem();
-    if (!mainHand->isEmpty() && mRandom->nextFloat() < 0.25f * specialMultiplier)
+    if (!getMainHandItem()->isEmpty() && mRandom->nextFloat() < 0.25f * specialMultiplier)
     {
-        mainHand = EnchantmentHelper::enchantItem(
-            mRandom, mainHand,
-            (int)(specialMultiplier * (float)mRandom->nextInt(18) + 5.0f), false);
-        setItemSlot(EquipmentSlot::MAINHAND, mainHand);
+        setItemSlot(EquipmentSlot::MAINHAND,
+                    EnchantmentHelper::enchantItem(mRandom, getMainHandItem(),
+                                                   (int)(specialMultiplier * (float)mRandom->nextInt(18) + 5.0f),
+                                                   false));
     }
 
     for (int i = 0; i < 6; ++i)
@@ -1211,16 +1203,11 @@ void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance& difficu
             continue;
 
         not_null_ptr<ItemInstance> item = getItemSlot(slot);
-        if (item->isEmpty())
-            continue;
-
-        if (mRandom->nextFloat() >= 0.5f * specialMultiplier)
-            continue;
-
-        item = EnchantmentHelper::enchantItem(
-            mRandom, item,
-            (int)(specialMultiplier * (float)mRandom->nextInt(18) + 5.0f), false);
-        setItemSlot(slot, item);
+        if (!item->isEmpty() && mRandom->nextFloat() < 0.5f * specialMultiplier)
+        {
+            setItemSlot(slot, EnchantmentHelper::enchantItem(
+                                  mRandom, item, (int)(specialMultiplier * (float)mRandom->nextInt(18) + 5.0f), false));
+        }
     }
 }
 
@@ -1348,34 +1335,48 @@ bool Mob::shouldRender(double distance)
 bool Mob::isValidSlotForItem(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item)
 {
     const EquipmentSlot* itemSlot = getEquipmentSlotForItem(item);
-    if (itemSlot == slot)
-        return true;
-    return (itemSlot == EquipmentSlot::MAINHAND && slot == EquipmentSlot::OFFHAND)
-        || (itemSlot == EquipmentSlot::OFFHAND && slot == EquipmentSlot::MAINHAND);
+    return itemSlot == slot || (itemSlot == EquipmentSlot::MAINHAND && slot == EquipmentSlot::OFFHAND)
+           || (itemSlot == EquipmentSlot::OFFHAND && slot == EquipmentSlot::MAINHAND);
 }
 
 bool Mob::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
 {
-    const EquipmentSlot* equipmentSlot = NULL;
+    const EquipmentSlot* equipmentSlot;
+
     if (slot == 98)
+    {
         equipmentSlot = EquipmentSlot::MAINHAND;
+    }
     else if (slot == 99)
+    {
         equipmentSlot = EquipmentSlot::OFFHAND;
+    }
+    else if (slot == EquipmentSlot::HEAD->getIndex() + 100)
+    {
+        equipmentSlot = EquipmentSlot::HEAD;
+    }
+    else if (slot == EquipmentSlot::CHEST->getIndex() + 100)
+    {
+        equipmentSlot = EquipmentSlot::CHEST;
+    }
+    else if (slot == EquipmentSlot::LEGS->getIndex() + 100)
+    {
+        equipmentSlot = EquipmentSlot::LEGS;
+    }
+    else if (slot == EquipmentSlot::FEET->getIndex() + 100)
+    {
+        equipmentSlot = EquipmentSlot::FEET;
+    }
     else
     {
-        for (int i = 2; i < 6; ++i)
-        {
-            if (slot == EquipmentSlot::SLOTS[i]->getIndex() + 100)
-            {
-                equipmentSlot = EquipmentSlot::SLOTS[i];
-                break;
-            }
-        }
+        return false;
     }
-    if (equipmentSlot == NULL || item.get() == NULL)
+
+    if (!item->isEmpty() && !isValidSlotForItem(equipmentSlot, item) && equipmentSlot != EquipmentSlot::HEAD)
+    {
         return false;
-    if (!item->isEmpty() && !isValidSlotForItem(equipmentSlot, item))
-        return false;
+    }
+
     setItemSlot(equipmentSlot, item);
     return true;
 }

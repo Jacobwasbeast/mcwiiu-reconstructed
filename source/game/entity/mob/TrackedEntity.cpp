@@ -153,14 +153,15 @@ int TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<S
     }
 
     bool canSee = canBySeenBy(player);
+    MinecraftServer* server = gMinecraftServer;
     if (!inRange)
     {
         INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
         if (networkPlayer != NULL)
         {
-            for (unsigned int i = 0; i < gMinecraftServer->getPlayers()->mPlayers.size(); ++i)
+            for (unsigned int i = 0; i < server->getPlayers()->mPlayers.size(); ++i)
             {
-                boost::shared_ptr<ServerPlayer>& other = gMinecraftServer->getPlayers()->mPlayers[i];
+                boost::shared_ptr<ServerPlayer>& other = server->getPlayers()->mPlayers[i];
                 if (other == player || other == mEntity || other->mDimension != player->mDimension)
                     continue;
                 INetworkPlayer* otherNetworkPlayer = other->mConnection->getNetworkPlayer();

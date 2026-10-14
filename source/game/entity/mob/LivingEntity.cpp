@@ -293,7 +293,7 @@ void LivingEntity::ResetThermalVariables()
 
 bool LivingEntity::isInterpolating() const
 {
-    return mLerpSteps != 0;
+    return mLerpSteps > 0;
 }
 
 double LivingEntity::getLerpToYRot() const
@@ -500,11 +500,10 @@ void LivingEntity::baseTick()
 
             if (distance < 0.0)
             {
-                double damagePerBlock = mLevel->getWorldBorder()->getDamagePerBlock();
-
-                if (damagePerBlock > 0.0)
+                if (mLevel->getWorldBorder()->getDamagePerBlock() > 0.0)
                 {
-                    hurt(DamageSource::IN_WALL, std::max(1.0f, (float)floor(-distance * damagePerBlock)));
+                    hurt(DamageSource::IN_WALL,
+                         std::max(1.0f, (float)floor(-distance * mLevel->getWorldBorder()->getDamagePerBlock())));
                 }
             }
         }
@@ -539,7 +538,7 @@ void LivingEntity::baseTick()
         {
             if (isUnderLiquid(Material::WATER) && generatesBubbles() && canCreateParticles())
             {
-                Vec3* eyePos = getAttachPos(ENTITY_LOCATION_EYES, 0.0f);
+                Vec3* eyePos = getAttachPos(ENTITY_LOCATION_BREATHING_POINT, 0.0f);
                 mLevel->addParticle(PARTICLE_BUBBLE, eyePos->x, eyePos->y, eyePos->z, mXd, mYd, mZd,
                                     arrayWithLength<int>());
             }
@@ -555,11 +554,11 @@ void LivingEntity::baseTick()
                 {
                     for (int i = 0; i < 8; ++i)
                     {
-                        mLevel->addParticle(PARTICLE_BUBBLE,
-                                            mX + (double)(mRandom->nextFloat() - mRandom->nextFloat()),
-                                            mY + (double)(mRandom->nextFloat() - mRandom->nextFloat()),
-                                            mZ + (double)(mRandom->nextFloat() - mRandom->nextFloat()),
-                                            mXd, mYd, mZd, arrayWithLength<int>());
+                        float xo = mRandom->nextFloat() - mRandom->nextFloat();
+                        float yo = mRandom->nextFloat() - mRandom->nextFloat();
+                        float zo = mRandom->nextFloat() - mRandom->nextFloat();
+                        mLevel->addParticle(PARTICLE_BUBBLE, mX + xo, mY + yo, mZ + zo, mXd, mYd, mZd,
+                                            arrayWithLength<int>());
                     }
                 }
 
@@ -572,19 +571,18 @@ void LivingEntity::baseTick()
             {
                 for (int i = 0; i < 8; ++i)
                 {
-                    Vec3* eyePos = getAttachPos(ENTITY_LOCATION_EYES, 0.0f);
+                    Vec3* eyePos = getAttachPos(ENTITY_LOCATION_BREATHING_POINT, 0.0f);
                     mLevel->addParticle(PARTICLE_BUBBLE,
-                                        (double)(float)(eyePos->x + mRandom->nextGaussianFloat()),
-                                        (double)(float)(eyePos->y + mRandom->nextGaussianFloat()),
-                                        (double)(float)(eyePos->z + mRandom->nextGaussianFloat()),
+                                        (float)eyePos->x + mRandom->nextGaussianFloat(),
+                                        (float)eyePos->y + mRandom->nextGaussianFloat(),
+                                        (float)eyePos->z + mRandom->nextGaussianFloat(),
                                         mXd, mYd, mZd, arrayWithLength<int>());
                 }
             }
 
-            if (!mLevel->mIsClientSide && isPassenger() && getVehicle()
-                && (getVehicle()->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY
-                && getVehicle()->GetType() != EntityType::DOLPHIN
-                && getVehicle()->GetType() != EntityType::SKELETON_HORSE)
+            if (!mLevel->mIsClientSide && isPassenger() && getVehicle()->instanceof(EntityType::LIVING_ENTITY)
+                && !getVehicle()->instanceof(EntityType::DOLPHIN)
+                && !getVehicle()->instanceof(EntityType::SKELETON_HORSE))
             {
                 stopRiding();
             }
@@ -613,7 +611,7 @@ void LivingEntity::baseTick()
         --mHurtTime;
     }
 
-    if (mInvulnerableTime > 0 && GetType() != EntityType::SERVER_PLAYER)
+    if (mInvulnerableTime > 0 && !instanceof(EntityType::SERVER_PLAYER))
     {
         --mInvulnerableTime;
     }
@@ -627,7 +625,7 @@ void LivingEntity::baseTick()
     {
         --mLastHurtByPlayerTime;
     }
-    else
+    else if (mLastHurtByPlayer != NULL)
     {
         mLastHurtByPlayer.reset();
     }
@@ -664,12 +662,13 @@ void LivingEntity::baseTick()
 
 void LivingEntity::onChangedBlock(const BlockPos& pos)
 {
-    boost::shared_ptr<LivingEntity> self = boost::static_pointer_cast<LivingEntity>(shared_from_this());
-    int level = EnchantmentHelper::getEnchantmentLevel(Enchantments::FROST_WALKER, self);
+    int level = EnchantmentHelper::getEnchantmentLevel(
+        Enchantments::FROST_WALKER, boost::static_pointer_cast<LivingEntity>(shared_from_this()));
 
     if (level > 0)
     {
-        FrostWalkerEnchantment::onEntityMoved(self, mLevel, pos, level);
+        FrostWalkerEnchantment::onEntityMoved(boost::static_pointer_cast<LivingEntity>(shared_from_this()), mLevel, pos,
+                                              level);
     }
 }
 
@@ -950,6 +949,7 @@ void LivingEntity::readAdditionalSaveData(CompoundTag* tag)
 
 void LivingEntity::tickEffects()
 {
+    unsigned int effectCount = mActiveEffects.size();
     boost::unordered_map<MobEffect*, MobEffectInstance*>::iterator it = mActiveEffects.begin();
 
     while (it != mActiveEffects.end())
@@ -966,7 +966,13 @@ void LivingEntity::tickEffects()
             {
                 it = mActiveEffects.erase(it);
                 onEffectRemoved(effectInstance);
+                --effectCount;
                 delete effectInstance;
+
+                if (mActiveEffects.size() != effectCount)
+                {
+                    break;
+                }
             }
         }
         else
@@ -1584,11 +1590,9 @@ void LivingEntity::breakItem(not_null_ptr<ItemInstance> itemInstance)
         offset = offset->yRot(-(mYRot * Mth::DEG_TO_RAD));
         offset = offset->add(mX, mY + (double)getEyeHeight(), mZ);
 
-        arrayWithLength<int> particleData(1, false);
-        particleData.data[0] = Item::VALIDgetId(itemInstance->getItem());
-
+        int particleData[1] = { Item::VALIDgetId(itemInstance->getItem()) };
         mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
-                            velocity->x, velocity->y + 0.05, velocity->z, particleData);
+                            velocity->x, velocity->y + 0.05, velocity->z, arrayWithLength<int>(particleData, 1));
     }
 }
 
@@ -1665,20 +1669,21 @@ void LivingEntity::knockback(boost::shared_ptr<Entity> attacker, float strength,
         strength = 0.1f;
     }
 
-    mXd = mXd * 0.5 - (x / horizontal) * (double)strength;
-    mYd = mYd * 0.5;
-    mZd = mZd * 0.5 - (z / horizontal) * (double)strength;
+    mXd *= 0.5;
+    mYd *= 0.5;
+    mZd *= 0.5;
+    mXd -= x / horizontal * strength;
+    mZd -= z / horizontal * strength;
 
     if (mOnGround)
     {
-        double lift = mYd + (double)strength;
+        mYd *= 0.5;
+        mYd += strength;
 
-        if (lift > 0.4000000059604645)
+        if (mYd > 0.4f)
         {
-            lift = 0.4000000059604645;
+            mYd = 0.4f;
         }
-
-        mYd = lift;
     }
 }
 
@@ -1768,7 +1773,7 @@ void LivingEntity::causeFallDamage(float fallDistance, float damageMultiplier)
     Entity::causeFallDamage(fallDistance, damageMultiplier);
 
     MobEffectInstance* jumpBoost = getEffect(MobEffects::JUMP);
-    float jumpReduction = jumpBoost == NULL ? 0.0f : (float)((double)jumpBoost->getAmplifier() + 1.0);
+    float jumpReduction = jumpBoost == NULL ? 0.0f : jumpBoost->getAmplifier() + 1.0f;
     int damage = (int)ceilf((fallDistance - 3.0f - jumpReduction) * damageMultiplier);
 
     if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && !TakeGlideCollisionDamage())
@@ -2248,7 +2253,7 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
         }
         else
         {
-            angle = 1.5707964f * (getMainArm() == HumanoidArm::LEFT ? -1.0f : 1.0f);
+            angle = 1.5707964f * (getMainArm() == HumanoidArm::RIGHT ? -1.0f : 1.0f);
         }
 
         double dirX = -(double)Mth::sin(-(mYRot * Mth::DEG_TO_RAD) - 3.1415927f + angle);
@@ -2773,7 +2778,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
 
                 if (mOnGround)
                 {
-                    moveSpeed = (float)(getSpeed() * (double)acceleration);
+                    moveSpeed = getSpeed() * acceleration;
                 }
             }
 
@@ -2822,14 +2827,14 @@ void LivingEntity::travel(float xxa, float yya, float zza)
             }
 
             mXd *= (double)waterSlowdown;
-            mYd *= 0.8;
+            mYd *= 0.8f;
             mZd *= (double)waterSlowdown;
 
             if (player == NULL)
             {
                 if (shouldApplyWaterGravity())
                 {
-                    mYd -= 0.02;
+                    mYd -= 0.02f;
                 }
             }
             else if (!isNoGravity() && !isSwimming())
@@ -2837,9 +2842,9 @@ void LivingEntity::travel(float xxa, float yya, float zza)
                 mYd -= 0.005;
             }
 
-            if (mHorizontalCollision && isFree(mXd, mYd + 0.6 - mY + oldY, mZd))
+            if (mHorizontalCollision && isFree(mXd, mYd + 0.6f - mY + oldY, mZd))
             {
-                mYd = 0.3;
+                mYd = 0.3f;
             }
 
             PIXEndNamedEvent();
@@ -2861,9 +2866,9 @@ void LivingEntity::travel(float xxa, float yya, float zza)
                 mYd -= 0.02;
             }
 
-            if (mHorizontalCollision && isFree(mXd, mYd + 0.6 - mY + oldY, mZd))
+            if (mHorizontalCollision && isFree(mXd, mYd + 0.6f - mY + oldY, mZd))
             {
-                mYd = 0.3;
+                mYd = 0.3f;
             }
 
             PIXEndNamedEvent();
@@ -2909,7 +2914,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
 
             if (!mOnGround)
             {
-                if (eTYPE_DERIVED_FROM(EntityType::WITHER_BOSS, GetType()))
+                if (GetType() == EntityType::WITHER_BOSS)
                 {
                     speed = mFlyingSpeed * acceleration;
                 }
@@ -2920,7 +2925,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
             }
             else
             {
-                speed = (float)(getSpeed() * (double)acceleration);
+                speed = getSpeed() * acceleration;
             }
 
             PIXEndNamedEvent();
@@ -2954,7 +2959,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
 
             if (mHorizontalCollision && onLadder())
             {
-                mYd = 0.20000000298023224;
+                mYd = 0.2;
             }
 
             PIXBeginNamedEvent(0.0f, "Update y delta");
@@ -3655,7 +3660,7 @@ void LivingEntity::updateFallFlying()
         {
             float health = getHealth();
 
-            if (hurt(DamageSource::FALL, health + 1.0f))
+            if (hurt(DamageSource::FLY_INTO_WALL, health + 1.0f))
             {
                 playSound(getFallDamageSound((int)(health + 1.0f)), 1.0f, 1.0f);
             }
@@ -3846,9 +3851,10 @@ void LivingEntity::pushEntities()
         }
     }
 
-    for (unsigned int i = 0; i < entities->size(); ++i)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        entities->at(i)->push(shared_from_this());
+        boost::shared_ptr<Entity> entity = *it;
+        entity->push(shared_from_this());
     }
 }
 
@@ -4073,14 +4079,9 @@ void LivingEntity::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     Entity::onSyncedDataUpdated(accessor);
 
-    if (DATA_LIVING_ENTITY_FLAGS != accessor || !mLevel->mIsClientSide)
+    if (DATA_LIVING_ENTITY_FLAGS->getId() == accessor->getId() && mLevel->mIsClientSide)
     {
-        return;
-    }
-
-    if (isUsingItem())
-    {
-        if (mUseItem->isEmpty())
+        if (isUsingItem() && mUseItem->isEmpty())
         {
             mUseItem = getItemInHand(getUsedItemHand());
 
@@ -4088,14 +4089,12 @@ void LivingEntity::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
             {
                 mUseItemRemaining = mUseItem->getUseDuration();
             }
-
-            return;
         }
-    }
-    else if (!mUseItem->isEmpty())
-    {
-        mUseItem = ItemInstance::EMPTY;
-        mUseItemRemaining = 0;
+        else if (!isUsingItem() && !mUseItem->isEmpty())
+        {
+            mUseItem = ItemInstance::EMPTY;
+            mUseItemRemaining = 0;
+        }
     }
 }
 
@@ -4108,8 +4107,7 @@ void LivingEntity::spawnItemUseParticles(not_null_ptr<ItemInstance> itemInstance
 
     if (itemInstance->getUseAnimation() == UseAnim_drink)
     {
-        playSound(SoundEvents::GENERIC_DRINK, 0.5f,
-                  (float)(mRandom->nextFloat() * 0.10000000149011612 + 0.8999999761581421));
+        playSound(SoundEvents::GENERIC_DRINK, 0.5f, mLevel->mRandom->nextFloat() * 0.1f + 0.9f);
     }
 
     if (itemInstance->getUseAnimation() != UseAnim_eat)
@@ -4130,24 +4128,19 @@ void LivingEntity::spawnItemUseParticles(not_null_ptr<ItemInstance> itemInstance
 
         if (itemInstance->isStackedByData())
         {
-            arrayWithLength<int> particleData(2, false);
-            particleData.data[0] = Item::getId(itemInstance->getItem());
-            particleData.data[1] = itemInstance->getAuxValue();
-
+            int particleData[2] = { Item::getId(itemInstance->getItem()), itemInstance->getAuxValue() };
             mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
-                                velocity->x, velocity->y + 0.05, velocity->z, particleData);
+                                velocity->x, velocity->y + 0.05, velocity->z, arrayWithLength<int>(particleData, 2));
         }
         else
         {
-            arrayWithLength<int> particleData(1, false);
-            particleData.data[0] = Item::getId(itemInstance->getItem());
-
+            int particleData[1] = { Item::getId(itemInstance->getItem()) };
             mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
-                                velocity->x, velocity->y + 0.05, velocity->z, particleData);
+                                velocity->x, velocity->y + 0.05, velocity->z, arrayWithLength<int>(particleData, 1));
         }
     }
 
-    playSound(SoundEvents::GENERIC_EAT, (float)(0.5 + 0.5 * (double)mRandom->nextInt(2)),
+    playSound(SoundEvents::GENERIC_EAT, 0.5f + 0.5f * (float)mRandom->nextInt(2),
               (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
 }
 
