@@ -31,6 +31,7 @@ testing. It is still being refined toward the original function by function.
 
 - [docs/overview.md](docs/overview.md) - what is here, what is not, and status
 - [docs/building.md](docs/building.md) - preparing game files, building the RPX and running it in Cemu
+- [docs/measuring.md](docs/measuring.md) - comparing your build with your copy of the original, function by function
 - [docs/architecture.md](docs/architecture.md) - directory layout and the platform seam
 - [docs/conventions.md](docs/conventions.md) - language level, naming and file rules
 - [docs/provenance.md](docs/provenance.md) - where the source comes from and contribution rules

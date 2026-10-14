@@ -43,7 +43,8 @@ families to Luna and Opus 5 workers.
   `build.py` builds the RPX with RedHills, and `package.py` lays it out as a
   title folder for Cemu. `tools/rpx/` and `tools/redhills/` link the image
   the way the original was linked; `tools/build/` holds the pinned library
-  list, the toolchain image and the few altered library files.
+  list, the toolchain image and the few altered library files;
+  `tools/measure/` compares a build with the original executable.
 
 ## What is not here
 
@@ -62,3 +63,6 @@ online features have not been tested.
 
 The reconstruction is still being refined toward the original function by
 function, and a behaviour difference you find is a bug worth reporting.
+`tools/measure/parity.py` compares your build with your copy of the
+original executable function by function; see `docs/measuring.md` for what
+it checks and the current result.
