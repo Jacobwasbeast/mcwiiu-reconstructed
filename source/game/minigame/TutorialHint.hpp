@@ -29,9 +29,8 @@ public:
         HINT_GAME_MODE = 9
     };
 
-    TutorialHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
-                 eHintType type, bool allowFade, bool repeatMessage,
-                 int minimumDisplayTime);
+    TutorialHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId, eHintType type, bool allowFade,
+                 bool repeatMessage, int minimumDisplayTime);
     virtual ~TutorialHint() {}
 
     virtual int startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state);

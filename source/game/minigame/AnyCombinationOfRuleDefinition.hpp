@@ -21,19 +21,14 @@ class AnyCombinationOfRuleDefinition : public GameRuleDefinition
 {
 public:
     AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent);
-    AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent,
-        AnyCombinationOfRuleDefinition* definition);
+    AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent, AnyCombinationOfRuleDefinition* definition);
 
-    AnyCombinationOfRuleDefinition* GetRandomLeafChild(const LayerMetadata& metadata,
-        Random& layerRandom, Random& random) const;
-    void GetPossibleLayerSizes(
-        std::vector<LayerAttributeChildRuleDefinition<LayerSize*>*>& sizes) const;
-    void GetPossibleLayerShapes(
-        std::vector<LayerAttributeChildRuleDefinition<LayerShape*>*>& shapes) const;
-    void GetPossibleLayerFills(
-        std::vector<LayerAttributeChildRuleDefinition<LayerFill*>*>& fills) const;
-    void GetPossibleLayerThemes(int passId,
-        std::vector<LayerAttributeChildRuleDefinition<LayerTheme*>*>& themes) const;
+    AnyCombinationOfRuleDefinition* GetRandomLeafChild(const LayerMetadata& metadata, Random& layerRandom,
+                                                       Random& random) const;
+    void GetPossibleLayerSizes(std::vector<LayerAttributeChildRuleDefinition<LayerSize*>*>& sizes) const;
+    void GetPossibleLayerShapes(std::vector<LayerAttributeChildRuleDefinition<LayerShape*>*>& shapes) const;
+    void GetPossibleLayerFills(std::vector<LayerAttributeChildRuleDefinition<LayerFill*>*>& fills) const;
+    void GetPossibleLayerThemes(int passId, std::vector<LayerAttributeChildRuleDefinition<LayerTheme*>*>& themes) const;
 
     virtual void getChildren(std::vector<GameRuleDefinition*>* children);
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);

@@ -7,13 +7,13 @@
 FoodMedal::FoodMedal(int name, float target, unsigned int weight, Item* item)
     : GameMedal(name, target, weight, OPERATOR_AT_LEAST, true, false)
 {
-    Item* items[] = { item };
+    Item* items[] = {item};
     mItems = new std::vector<Item*>(items, items + 1);
 }
 
 FoodMedal::FoodMedal(int name, float target, unsigned int weight, std::vector<Item*>* items)
-    : GameMedal(name, target, weight, OPERATOR_AT_LEAST, true, false)
-    , mItems(items)
+    : GameMedal(name, target, weight, OPERATOR_AT_LEAST, true, false),
+      mItems(items)
 {
 }
 

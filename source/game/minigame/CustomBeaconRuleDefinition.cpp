@@ -14,10 +14,7 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
-static const wchar_t* sBeamDirectionNames[7] =
-{
-    L"none", L"+y", L"-y", L"+x", L"-x", L"+z", L"-z"
-};
+static const wchar_t* sBeamDirectionNames[7] = {L"none", L"+y", L"-y", L"+x", L"-x", L"+z", L"-z"};
 
 CustomBeaconRuleDefinition::CustomBeaconRuleDefinition()
 {
@@ -35,7 +32,8 @@ CustomBeaconRuleDefinition::~CustomBeaconRuleDefinition()
 void CustomBeaconRuleDefinition::processCustomBeacon(ServerLevel* level)
 {
     BlockPos position(mPosition->getX(), mPosition->getY(), mPosition->getZ());
-    boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(level->getBlockEntity(position));
+    boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(
+        level->getBlockEntity(position));
     if (beacon && mDirection != BeaconBlockEntity::eBEAM_DIRECTION_NONE)
     {
         beacon->setBeamDirection(mDirection);
@@ -47,7 +45,8 @@ void CustomBeaconRuleDefinition::processCustomBeacon(ServerLevel* level)
 void CustomBeaconRuleDefinition::deactivateCustomBeacon(ServerLevel* level)
 {
     BlockPos position(mPosition->getX(), mPosition->getY(), mPosition->getZ());
-    boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(level->getBlockEntity(position));
+    boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(
+        level->getBlockEntity(position));
     if (beacon && mDirection != BeaconBlockEntity::eBEAM_DIRECTION_NONE)
     {
         beacon->setBeamDirection(BeaconBlockEntity::eBEAM_DIRECTION_NONE);
@@ -56,8 +55,7 @@ void CustomBeaconRuleDefinition::deactivateCustomBeacon(ServerLevel* level)
     }
 }
 
-void CustomBeaconRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
-                                                  unsigned int extraAttributeCount)
+void CustomBeaconRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, _toString(mPosition->getX()));

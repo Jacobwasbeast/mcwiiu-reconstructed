@@ -168,13 +168,14 @@ float GameMedal::totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue)
 }
 
 GameMedal::Condition::Condition(float target, EOperator op, bool bestOnly)
-    : mTarget(target)
-    , mBestOnly(bestOnly)
-    , mOperator(op)
+    : mTarget(target),
+      mBestOnly(bestOnly),
+      mOperator(op)
 {
 }
 
-int GameMedal::Condition::findBest(const GameMedal* medal, const std::vector<boost::shared_ptr<ServerPlayer> >* players, GameStats* gameStats) const
+int GameMedal::Condition::findBest(const GameMedal* medal, const std::vector<boost::shared_ptr<ServerPlayer> >* players,
+                                   GameStats* gameStats) const
 {
     int best = -1;
     double bestScore = 0.0;

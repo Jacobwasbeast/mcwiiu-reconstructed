@@ -10,7 +10,8 @@ DegradationSequenceRuleDefinition::DegradationSequenceRuleDefinition()
 
 DegradationSequenceRuleDefinition::~DegradationSequenceRuleDefinition()
 {
-    for (std::vector<DegradationRuleDefinition*>::iterator it = mDegradationRules.begin(); it != mDegradationRules.end(); ++it)
+    for (std::vector<DegradationRuleDefinition*>::iterator it = mDegradationRules.begin();
+         it != mDegradationRules.end(); ++it)
     {
         delete *it;
         *it = NULL;
@@ -25,7 +26,8 @@ ConsoleGameRules::EGameRuleType DegradationSequenceRuleDefinition::getActionType
 
 void DegradationSequenceRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
 {
-    for (std::vector<DegradationRuleDefinition*>::iterator it = mDegradationRules.begin(); it != mDegradationRules.end(); ++it)
+    for (std::vector<DegradationRuleDefinition*>::iterator it = mDegradationRules.begin();
+         it != mDegradationRules.end(); ++it)
     {
         children->push_back(*it);
     }

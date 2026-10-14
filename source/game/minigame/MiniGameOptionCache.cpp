@@ -18,7 +18,8 @@ MiniGameOptionCache::MiniGameOptionCache()
 {
 }
 
-void MiniGameOptionCache::updateCachedOptions(int playerIndex, EMiniGameId miniGameId, const MiniGamePlayerSettings& options)
+void MiniGameOptionCache::updateCachedOptions(int playerIndex, EMiniGameId miniGameId,
+                                              const MiniGamePlayerSettings& options)
 {
     PlayerUID playerUid(0);
     gProfile->GetXUID(playerIndex, &playerUid, true);

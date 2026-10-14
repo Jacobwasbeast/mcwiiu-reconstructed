@@ -7,7 +7,8 @@
 #include "game/core/StringUtils.hpp"
 #include "game/item/ItemInstance.hpp"
 
-std::wstring CompleteAllRuleDefinition::generateDescriptionString(const std::wstring& description, void* value, int count)
+std::wstring CompleteAllRuleDefinition::generateDescriptionString(const std::wstring& description, void* value,
+                                                                  int count)
 {
     const int* values = static_cast<const int*>(value);
     std::wstring text = description;
@@ -85,4 +86,3 @@ ConsoleGameRules::EGameRuleType CompleteAllRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_CompleteAll;
 }
-

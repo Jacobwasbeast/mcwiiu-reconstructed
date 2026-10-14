@@ -24,7 +24,9 @@ public:
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
     std::vector<const AllowInRuleDefinition*>* getLayers(const std::wstring& name);
     void sortChild(const AllowInRuleDefinition* child);
-    bool anyRulePermitsAction(const std::vector<const AllowInRuleDefinition*>& rules, const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset, const BlockPos& pos);
+    bool anyRulePermitsAction(const std::vector<const AllowInRuleDefinition*>& rules,
+                              const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset,
+                              const BlockPos& pos);
     bool canDestroy(const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset, const BlockPos& pos);
     bool canPlace(const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset, const BlockPos& pos);
     bool canUse(const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset, const BlockPos& pos);

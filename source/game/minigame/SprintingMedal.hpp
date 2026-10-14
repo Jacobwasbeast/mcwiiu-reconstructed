@@ -8,7 +8,6 @@ class PlayerStats;
 class SprintingMedal : public GameMedal
 {
 public:
-
     virtual float GetScore(PlayerStats* playerStats) const;
 };
 

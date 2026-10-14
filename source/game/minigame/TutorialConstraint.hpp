@@ -6,10 +6,7 @@ class Vec3;
 class TutorialConstraint
 {
 public:
-    TutorialConstraint(int messageId)
-        : messageId(messageId), deleteWhenRemoved(false), removalPending(false)
-    {
-    }
+    TutorialConstraint(int messageId) : messageId(messageId), deleteWhenRemoved(false), removalPending(false) {}
 
     virtual ~TutorialConstraint() {}
 
@@ -19,8 +16,8 @@ public:
     virtual bool isConstraintRestrictive(int playerId);
     virtual bool isMappingConstrained(int playerId, int mapping);
     virtual bool isXuiInputConstrained(int xuiInput);
-    virtual int canMoveToPosition(double oldX, double oldY, double oldZ, double newX, double newY,
-                                   double newZ, Vec3* clampedPosition, bool positionOnly);
+    virtual int canMoveToPosition(double oldX, double oldY, double oldZ, double newX, double newY, double newZ,
+                                  Vec3* clampedPosition, bool positionOnly);
 
     int messageId;
     bool deleteWhenRemoved;

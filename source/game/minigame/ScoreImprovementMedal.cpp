@@ -16,10 +16,10 @@ float ScoreImprovementMedal::GetScore(PlayerStats* playerStats) const
         if (miniGame->ArePointsActive())
         {
             int firstPoints = playerStats->getRoundStats(0)->mPoints + playerStats->getRoundStats(0)->mUnbankedPoints;
-            return static_cast<double>(static_cast<float>(static_cast<unsigned int>(
-                (playerStats->getRoundStats(finalRound)->mPoints
-                 + playerStats->getRoundStats(finalRound)->mUnbankedPoints)
-                - firstPoints)));
+            return static_cast<double>(
+                static_cast<float>(static_cast<unsigned int>((playerStats->getRoundStats(finalRound)->mPoints
+                                                              + playerStats->getRoundStats(finalRound)->mUnbankedPoints)
+                                                             - firstPoints)));
         }
 
         miniGame = CommonMasterGameMode::GetMiniGame();
@@ -40,8 +40,8 @@ float ScoreImprovementMedal::GetScore(PlayerStats* playerStats) const
 
             if (playerStats->getRoundStats(finalRound)->mReachedEnd)
             {
-                return static_cast<double>(static_cast<float>(static_cast<unsigned int>(
-                    firstScore - playerStats->getRoundStats(finalRound)->mLifeSpan)));
+                return static_cast<double>(static_cast<float>(
+                    static_cast<unsigned int>(firstScore - playerStats->getRoundStats(finalRound)->mLifeSpan)));
             }
         }
     }

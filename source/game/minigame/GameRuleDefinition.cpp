@@ -37,7 +37,8 @@ GameRuleDefinition::~GameRuleDefinition()
     }
 }
 
-GameRules_StringAttribute* GameRuleDefinition::addStringAttribute(ConsoleGameRules::EGameRuleAttr attribute, std::wstring* value)
+GameRules_StringAttribute* GameRuleDefinition::addStringAttribute(ConsoleGameRules::EGameRuleAttr attribute,
+                                                                  std::wstring* value)
 {
     GameRules_StringAttribute* newAttribute = new GameRules_StringAttribute(value);
     mAttributes[attribute] = newAttribute;
@@ -70,7 +71,8 @@ GameRules_HexAttribute* GameRuleDefinition::addHexAttribute(ConsoleGameRules::EG
     return newAttribute;
 }
 
-GameRules_UnsignedCharAttribute* GameRuleDefinition::addUnsignedCharAttribute(ConsoleGameRules::EGameRuleAttr attribute, unsigned char* value)
+GameRules_UnsignedCharAttribute* GameRuleDefinition::addUnsignedCharAttribute(ConsoleGameRules::EGameRuleAttr attribute,
+                                                                              unsigned char* value)
 {
     GameRules_UnsignedCharAttribute* newAttribute = new GameRules_UnsignedCharAttribute(value);
     mAttributes[attribute] = newAttribute;
@@ -84,7 +86,8 @@ GameRules_FloatAttribute* GameRuleDefinition::addFloatAttribute(ConsoleGameRules
     return newAttribute;
 }
 
-GameRules_DoubleAttribute* GameRuleDefinition::addDoubleAttribute(ConsoleGameRules::EGameRuleAttr attribute, double* value)
+GameRules_DoubleAttribute* GameRuleDefinition::addDoubleAttribute(ConsoleGameRules::EGameRuleAttr attribute,
+                                                                  double* value)
 {
     GameRules_DoubleAttribute* newAttribute = new GameRules_DoubleAttribute(value);
     mAttributes[attribute] = newAttribute;
@@ -98,14 +101,16 @@ GameRules_BoolAttribute* GameRuleDefinition::addBoolAttribute(ConsoleGameRules::
     return newAttribute;
 }
 
-GameRules_BlockAttribute* GameRuleDefinition::addBlockAttribute(ConsoleGameRules::EGameRuleAttr attribute, Block** value)
+GameRules_BlockAttribute* GameRuleDefinition::addBlockAttribute(ConsoleGameRules::EGameRuleAttr attribute,
+                                                                Block** value)
 {
     GameRules_BlockAttribute* newAttribute = new GameRules_BlockAttribute(value);
     mAttributes[attribute] = newAttribute;
     return newAttribute;
 }
 
-GameRules_BlockStateAttribute* GameRuleDefinition::addBlockStateAttribute(ConsoleGameRules::EGameRuleAttr attribute, const BlockState** value)
+GameRules_BlockStateAttribute* GameRuleDefinition::addBlockStateAttribute(ConsoleGameRules::EGameRuleAttr attribute,
+                                                                          const BlockState** value)
 {
     GameRules_BlockStateAttribute* newAttribute = new GameRules_BlockStateAttribute(value);
     mAttributes[attribute] = newAttribute;
@@ -117,7 +122,8 @@ void GameRuleDefinition::addAttribute(const std::wstring& name, const std::wstri
     int attributeId = IGameRuleAttribute::attributeIdFromName(name);
     ConsoleGameRules::EGameRuleAttr attribute = static_cast<ConsoleGameRules::EGameRuleAttr>(attributeId);
 
-    if (attributeId != -1 && attributeId < ConsoleGameRules::eGameRuleAttr_Count && mAttributes.find(attribute) != mAttributes.end())
+    if (attributeId != -1 && attributeId < ConsoleGameRules::eGameRuleAttr_Count
+        && mAttributes.find(attribute) != mAttributes.end())
     {
         mAttributes[attribute]->setValue(value);
     }
@@ -158,7 +164,8 @@ void GameRuleDefinition::write(DataOutputStream* output, boost::unordered_map<in
     write(&saveInterface);
 }
 
-void GameRuleDefinition::findDistinctTagsAndAttributes(boost::unordered_set<int>& tagTypes, boost::unordered_set<int>& attributes)
+void GameRuleDefinition::findDistinctTagsAndAttributes(boost::unordered_set<int>& tagTypes,
+                                                       boost::unordered_set<int>& attributes)
 {
     TagCollectorSaveInterface saveInterface(&tagTypes, &attributes);
     write(&saveInterface);
@@ -231,7 +238,8 @@ std::vector<GameRuleDefinition*>* GameRuleDefinition::enumerate()
     return definitions;
 }
 
-GameRule* GameRuleDefinition::generateNewGameRulesInstance(GameRulesInstance::EGameRulesInstanceType type, LevelRuleset* ruleset, Connection* connection)
+GameRule* GameRuleDefinition::generateNewGameRulesInstance(GameRulesInstance::EGameRulesInstanceType type,
+                                                           LevelRuleset* ruleset, Connection* connection)
 {
     GameRule* rule = new GameRulesInstance(ruleset, connection);
 
@@ -240,7 +248,8 @@ GameRule* GameRuleDefinition::generateNewGameRulesInstance(GameRulesInstance::EG
     return rule;
 }
 
-std::wstring GameRuleDefinition::generateDescriptionString(ConsoleGameRules::EGameRuleType type, const std::wstring& description, void* data, int count)
+std::wstring GameRuleDefinition::generateDescriptionString(ConsoleGameRules::EGameRuleType type,
+                                                           const std::wstring& description, void* data, int count)
 {
     std::wstring text = description;
 

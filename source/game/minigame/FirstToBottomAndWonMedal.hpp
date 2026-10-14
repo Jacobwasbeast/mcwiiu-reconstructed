@@ -8,7 +8,8 @@ class PlayerStats;
 class FirstToBottomAndWonMedal : public GameMedal
 {
 public:
-    FirstToBottomAndWonMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly, bool canMultiAward)
+    FirstToBottomAndWonMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly,
+                             bool canMultiAward)
         : GameMedal(name, target, weight, op, bestOnly, canMultiAward)
     {
     }

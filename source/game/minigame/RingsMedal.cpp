@@ -21,8 +21,7 @@ RingsMedal::RingsMedal(int name, unsigned int weight, eRingMedalAmount* amounts,
 
 bool RingsMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
 {
-    if (gApp.getLevelGenerationOptions() != NULL &&
-        gApp.getLevelGenerationOptions()->getRequiredGameRules() != NULL)
+    if (gApp.getLevelGenerationOptions() != NULL && gApp.getLevelGenerationOptions()->getRequiredGameRules() != NULL)
     {
         if (Minecraft::GetInstance()->GetMiniGame()->GetGameVariant() == MiniGameDef::eGlideVariant_ScoreAttack)
         {
@@ -51,7 +50,8 @@ bool RingsMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
                         switch (mAmounts[size])
                         {
                         case eRingAmountAll:
-                            if (roundStats->mBankedRings[size] + roundStats->mUnbankedRings[size] == targetAreaCounts[size])
+                            if (roundStats->mBankedRings[size] + roundStats->mUnbankedRings[size]
+                                == targetAreaCounts[size])
                                 matched = true;
                             break;
                         case eRingAmountSome:

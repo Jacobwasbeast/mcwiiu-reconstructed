@@ -14,13 +14,19 @@
 #include "game/world/generation/Player.hpp"
 #include "game/core/StringFormat.hpp"
 
-static const wchar_t* sBoostDirectionNames[8] = {
-    L"plus_x", L"minus_x", L"plus_z", L"minus_z", L"omni_plus_x", L"omni_minus_x", L"omni_plus_z", L"omni_minus_z"
-};
+static const wchar_t* sBoostDirectionNames[8] = {L"plus_x",      L"minus_x",      L"plus_z",      L"minus_z",
+                                                 L"omni_plus_x", L"omni_minus_x", L"omni_plus_z", L"omni_minus_z"};
 
 ThermalAreaRuleDefinition::ThermalAreaRuleDefinition()
-    : mLiftForceModifier(1.0), mStaticLift(0.0), mTargetHeight(0.0), mSpeedBoost(0.0), mBoostDirection(4),
-      mConditionType(0), mConditionValue0(0), mConditionValue1(0), mEnabled(true)
+    : mLiftForceModifier(1.0),
+      mStaticLift(0.0),
+      mTargetHeight(0.0),
+      mSpeedBoost(0.0),
+      mBoostDirection(4),
+      mConditionType(0),
+      mConditionValue0(0),
+      mConditionValue1(0),
+      mEnabled(true)
 {
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_liftForceModifier, &mLiftForceModifier);
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_staticLift, &mStaticLift);

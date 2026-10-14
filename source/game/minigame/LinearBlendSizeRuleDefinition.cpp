@@ -2,9 +2,7 @@
 
 #include "game/core/LinearBlendSize.hpp"
 
-LinearBlendSizeRuleDefinition::LinearBlendSizeRuleDefinition()
-    : mMaxSize(-1)
-    , mMinSize(-1)
+LinearBlendSizeRuleDefinition::LinearBlendSizeRuleDefinition() : mMaxSize(-1), mMinSize(-1)
 {
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_upper, &mMaxSize);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_lower, &mMinSize);

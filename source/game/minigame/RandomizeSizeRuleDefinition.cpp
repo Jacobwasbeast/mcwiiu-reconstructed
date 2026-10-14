@@ -2,9 +2,7 @@
 
 #include "game/util/RandomizeSize.hpp"
 
-RandomizeSizeRuleDefinition::RandomizeSizeRuleDefinition()
-    : mAmount(-1.0f)
-    , mChild(NULL)
+RandomizeSizeRuleDefinition::RandomizeSizeRuleDefinition() : mAmount(-1.0f), mChild(NULL)
 {
 }
 

@@ -64,7 +64,9 @@ void GrantPermissionsRuleDefinition::sortChild(const AllowInRuleDefinition* chil
     }
 }
 
-bool GrantPermissionsRuleDefinition::anyRulePermitsAction(const std::vector<const AllowInRuleDefinition*>& rules, const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset, const BlockPos& pos)
+bool GrantPermissionsRuleDefinition::anyRulePermitsAction(const std::vector<const AllowInRuleDefinition*>& rules,
+                                                          const boost::shared_ptr<Player>& player, Level* level,
+                                                          LevelRuleset* ruleset, const BlockPos& pos)
 {
     while (mUnsortedRules.size() > 0)
     {
@@ -80,7 +82,8 @@ bool GrantPermissionsRuleDefinition::anyRulePermitsAction(const std::vector<cons
         if (rule->mDataTag == 0 || (rule->mDataTag & teamMask) > 0)
         {
             const std::vector<std::wstring>& targetLayers = rule->getTargetLayers();
-            for (std::vector<std::wstring>::const_iterator layer = targetLayers.begin(); layer != targetLayers.end(); ++layer)
+            for (std::vector<std::wstring>::const_iterator layer = targetLayers.begin(); layer != targetLayers.end();
+                 ++layer)
             {
                 NamedAreaRuleDefinition* area = ruleset->getNamedAreaRule(*layer);
                 if (area != NULL && area->containsBlock(Block::getId(level->getBlock(pos)), pos))
@@ -93,17 +96,20 @@ bool GrantPermissionsRuleDefinition::anyRulePermitsAction(const std::vector<cons
     return false;
 }
 
-bool GrantPermissionsRuleDefinition::canDestroy(const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset, const BlockPos& pos)
+bool GrantPermissionsRuleDefinition::canDestroy(const boost::shared_ptr<Player>& player, Level* level,
+                                                LevelRuleset* ruleset, const BlockPos& pos)
 {
     return anyRulePermitsAction(mDestroyRules, player, level, ruleset, pos);
 }
 
-bool GrantPermissionsRuleDefinition::canPlace(const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset, const BlockPos& pos)
+bool GrantPermissionsRuleDefinition::canPlace(const boost::shared_ptr<Player>& player, Level* level,
+                                              LevelRuleset* ruleset, const BlockPos& pos)
 {
     return anyRulePermitsAction(mPlaceRules, player, level, ruleset, pos);
 }
 
-bool GrantPermissionsRuleDefinition::canUse(const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset, const BlockPos& pos)
+bool GrantPermissionsRuleDefinition::canUse(const boost::shared_ptr<Player>& player, Level* level,
+                                            LevelRuleset* ruleset, const BlockPos& pos)
 {
     return anyRulePermitsAction(mUseRules, player, level, ruleset, pos);
 }

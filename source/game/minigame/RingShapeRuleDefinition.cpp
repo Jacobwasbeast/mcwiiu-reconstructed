@@ -4,9 +4,7 @@
 #include "game/core/RingShape.hpp"
 #include "game/world/generation/LayerShapeRuleDefinition.hpp"
 
-RingShapeRuleDefinition::RingShapeRuleDefinition()
-    : mScale(0.75)
-    , mChild(NULL)
+RingShapeRuleDefinition::RingShapeRuleDefinition() : mScale(0.75), mChild(NULL)
 {
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_holeSize, &mScale)->setMin(0.0)->setMax(2.0);
 }

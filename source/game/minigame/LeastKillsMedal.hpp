@@ -8,7 +8,8 @@ class PlayerStats;
 class LeastKillsMedal : public MostKillsMedal
 {
 public:
-    LeastKillsMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly, bool canMultiAward)
+    LeastKillsMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly,
+                    bool canMultiAward)
         : MostKillsMedal(name, target, weight, op, bestOnly, canMultiAward)
     {
     }

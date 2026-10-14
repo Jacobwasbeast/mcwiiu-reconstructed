@@ -28,7 +28,8 @@ public:
 
         virtual ~Condition() {}
 
-        virtual int findBest(const GameMedal* medal, const std::vector<boost::shared_ptr<ServerPlayer> >* players, GameStats* gameStats) const;
+        virtual int findBest(const GameMedal* medal, const std::vector<boost::shared_ptr<ServerPlayer> >* players,
+                             GameStats* gameStats) const;
         virtual bool canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const;
         virtual float getScore(const GameMedal* medal, PlayerStats* playerStats) const;
 
@@ -38,7 +39,8 @@ public:
     };
 
     GameMedal(int name, unsigned int weight);
-    GameMedal(int name, float target, unsigned int weight, EOperator op, bool bestOnly = false, bool canMultiAward = false);
+    GameMedal(int name, float target, unsigned int weight, EOperator op, bool bestOnly = false,
+              bool canMultiAward = false);
 
     virtual ~GameMedal();
 

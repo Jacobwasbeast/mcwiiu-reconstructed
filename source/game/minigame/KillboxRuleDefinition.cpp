@@ -5,8 +5,7 @@
 #include "game/minigame/NamedAreaRuleDefinition.hpp"
 #include "game/util/AABB.hpp"
 
-KillboxRuleDefinition::KillboxRuleDefinition(AABB* legacyArea)
-    : mDeathMessageIDS(0)
+KillboxRuleDefinition::KillboxRuleDefinition(AABB* legacyArea) : mDeathMessageIDS(0)
 {
     if (legacyArea == NULL)
     {
@@ -29,12 +28,9 @@ ConsoleGameRules::EGameRuleType KillboxRuleDefinition::getActionType()
 
 void KillboxRuleDefinition::ConvertFromLegacy(AABB* legacyArea)
 {
-    updateWithPoints(static_cast<int>(legacyArea->mMinX),
-                     static_cast<int>(legacyArea->mMinY),
-                     static_cast<int>(legacyArea->mMinZ),
-                     static_cast<int>(legacyArea->mMaxX),
-                     static_cast<int>(legacyArea->mMaxY),
-                     static_cast<int>(legacyArea->mMaxZ));
+    updateWithPoints(static_cast<int>(legacyArea->mMinX), static_cast<int>(legacyArea->mMinY),
+                     static_cast<int>(legacyArea->mMinZ), static_cast<int>(legacyArea->mMaxX),
+                     static_cast<int>(legacyArea->mMaxY), static_cast<int>(legacyArea->mMaxZ));
 }
 
 void KillboxRuleDefinition::GetDeathMessageIDS(int& deathMessageIDS, std::wstring& deathMessage)

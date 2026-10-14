@@ -10,8 +10,7 @@ class DamageSourceMedal : public GameMedal
 {
 public:
     DamageSourceMedal(int name, float target, unsigned int weight, Scoreboard::EDamageSource source);
-    DamageSourceMedal(int name, float target, unsigned int weight,
-                      std::vector<Scoreboard::EDamageSource>* sources);
+    DamageSourceMedal(int name, float target, unsigned int weight, std::vector<Scoreboard::EDamageSource>* sources);
     virtual ~DamageSourceMedal();
 
     virtual float GetScore(PlayerStats* playerStats) const;

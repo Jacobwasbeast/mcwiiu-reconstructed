@@ -7,12 +7,10 @@
 
 namespace
 {
-const ConsoleGameRules::EGameRuleType BASIC_SHAPE_ACTION_TYPE =
-    ConsoleGameRules::eGameRuleType_BasicShape;
+const ConsoleGameRules::EGameRuleType BASIC_SHAPE_ACTION_TYPE = ConsoleGameRules::eGameRuleType_BasicShape;
 }
 
-BasicShapeRuleDefinition::BasicShapeRuleDefinition()
-    : mShape(L"")
+BasicShapeRuleDefinition::BasicShapeRuleDefinition() : mShape(L"")
 {
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_type, &mShape);
 }

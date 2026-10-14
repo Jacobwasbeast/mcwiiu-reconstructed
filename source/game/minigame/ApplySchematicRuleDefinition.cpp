@@ -100,17 +100,17 @@ void ApplySchematicRuleDefinition::processSchematic(AABB* chunkBox, LevelChunk* 
         box->mMaxY = box->mMaxY <= 256.0 ? box->mMaxY : 256.0;
 
         PIXBeginNamedEvent(0.0f, "Applying blocks and data");
-        mBlocksApplied += mSchematicFile->applyBlocksAndData(
-            chunk, mLocationBox, mRotation, ConsoleSchematicFile::eSchematicMirror_None);
+        mBlocksApplied += mSchematicFile->applyBlocksAndData(chunk, mLocationBox, mRotation,
+                                                             ConsoleSchematicFile::eSchematicMirror_None);
         PIXEndNamedEvent();
         PIXBeginNamedEvent(0.0f, "Applying block entities");
         mSchematicFile->applyBlockEntities(chunk, chunkBox, mLocationBox, mRotation,
-                                            ConsoleSchematicFile::eSchematicMirror_None, NULL);
+                                           ConsoleSchematicFile::eSchematicMirror_None, NULL);
         PIXEndNamedEvent();
 
-        int volume = static_cast<int>((mLocationBox->mMaxX - mLocationBox->mMinX) *
-                                      (mLocationBox->mMaxY - mLocationBox->mMinY) *
-                                      (mLocationBox->mMaxZ - mLocationBox->mMinZ));
+        int volume = static_cast<int>((mLocationBox->mMaxX - mLocationBox->mMinX)
+                                      * (mLocationBox->mMaxY - mLocationBox->mMinY)
+                                      * (mLocationBox->mMaxZ - mLocationBox->mMinZ));
         if (mBlocksApplied == volume && mLightingApplied == volume)
         {
             mComplete = true;
@@ -148,9 +148,9 @@ void ApplySchematicRuleDefinition::processSchematicLighting(AABB* chunkBox, Leve
         mLightingApplied += mSchematicFile->applyLighting(chunk, chunkBox, mLocationBox, mRotation);
         PIXEndNamedEvent();
 
-        int volume = static_cast<int>((mLocationBox->mMaxX - mLocationBox->mMinX) *
-                                      (mLocationBox->mMaxY - mLocationBox->mMinY) *
-                                      (mLocationBox->mMaxZ - mLocationBox->mMinZ));
+        int volume = static_cast<int>((mLocationBox->mMaxX - mLocationBox->mMinX)
+                                      * (mLocationBox->mMaxY - mLocationBox->mMinY)
+                                      * (mLocationBox->mMaxZ - mLocationBox->mMinZ));
         if (mBlocksApplied == volume && mLightingApplied == volume)
         {
             mComplete = true;
@@ -191,18 +191,19 @@ ConsoleGameRules::EGameRuleType ApplySchematicRuleDefinition::getActionType()
 }
 
 void ApplySchematicRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
-                                                    unsigned int extraAttributeCount)
+                                                   unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 5);
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_filename, mSchematicName);
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_x, _toString(mOrigin->x));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_y, _toString(mOrigin->y));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_z, _toString(mOrigin->z));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_rot,
-                                 (mRotation > ConsoleSchematicFile::eSchematicRotation_0 &&
-                                  static_cast<unsigned int>(mRotation) <= ConsoleSchematicFile::eSchematicRotation_270)
-                                     ? _toString(static_cast<int>(sRotationDegrees[mRotation]))
-                                     : _toString(0));
+    saveInterface->saveAttribute(
+        ConsoleGameRules::eGameRuleAttr_rot,
+        (mRotation > ConsoleSchematicFile::eSchematicRotation_0
+         && static_cast<unsigned int>(mRotation) <= ConsoleSchematicFile::eSchematicRotation_270)
+            ? _toString(static_cast<int>(sRotationDegrees[mRotation]))
+            : _toString(0));
 }
 
 void ApplySchematicRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)

@@ -8,36 +8,37 @@
 #include "game/util/Random.hpp"
 
 AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent)
-    : mParent(parent)
-    , mDefinition(NULL)
-    , mName()
-    , mFilter(L"AnyLayer")
-    , mCombinationVariations(NULL)
-    , mSizes(new LayerSizeRuleDefinition())
-    , mShapes(new LayerShapeRuleDefinition())
-    , mFills(new LayerFillRuleDefinition())
+    : mParent(parent),
+      mDefinition(NULL),
+      mName(),
+      mFilter(L"AnyLayer"),
+      mCombinationVariations(NULL),
+      mSizes(new LayerSizeRuleDefinition()),
+      mShapes(new LayerShapeRuleDefinition()),
+      mFills(new LayerFillRuleDefinition())
 {
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_name, &mName);
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_type, &mFilter);
 }
 
-AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(
-    LayerGenerationRuleDefinition* parent, AnyCombinationOfRuleDefinition* definition)
-    : mParent(parent)
-    , mDefinition(definition)
-    , mName()
-    , mFilter(L"AnyLayer")
-    , mCombinationVariations(NULL)
-    , mSizes(new LayerSizeRuleDefinition())
-    , mShapes(new LayerShapeRuleDefinition())
-    , mFills(new LayerFillRuleDefinition())
+AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent,
+                                                               AnyCombinationOfRuleDefinition* definition)
+    : mParent(parent),
+      mDefinition(definition),
+      mName(),
+      mFilter(L"AnyLayer"),
+      mCombinationVariations(NULL),
+      mSizes(new LayerSizeRuleDefinition()),
+      mShapes(new LayerShapeRuleDefinition()),
+      mFills(new LayerFillRuleDefinition())
 {
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_name, &mName);
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_type, &mFilter);
 }
 
-AnyCombinationOfRuleDefinition* AnyCombinationOfRuleDefinition::GetRandomLeafChild(
-    const LayerMetadata& metadata, Random& layerRandom, Random& random) const
+AnyCombinationOfRuleDefinition* AnyCombinationOfRuleDefinition::GetRandomLeafChild(const LayerMetadata& metadata,
+                                                                                   Random& layerRandom,
+                                                                                   Random& random) const
 {
     CombinationVariationsRuleDefinition* variations = mCombinationVariations;
     if (variations != NULL)
@@ -52,8 +53,7 @@ AnyCombinationOfRuleDefinition* AnyCombinationOfRuleDefinition::GetRandomLeafChi
             int layerIndex = layerRandom.nextInt(count);
             int randomIndex = random.nextInt(count);
             child = combinations->at(wholeLevel ? layerIndex : randomIndex);
-        }
-        while (LayerMetadata::getFilter(child->mFilter)(metadata) == false || child == NULL);
+        } while (LayerMetadata::getFilter(child->mFilter)(metadata) == false || child == NULL);
 
         AnyCombinationOfRuleDefinition* leaf = child->GetRandomLeafChild(metadata, layerRandom, random);
         return leaf;
@@ -112,8 +112,8 @@ void AnyCombinationOfRuleDefinition::GetPossibleLayerFills(
     }
 }
 
-void AnyCombinationOfRuleDefinition::GetPossibleLayerThemes(int passId,
-    std::vector<LayerAttributeChildRuleDefinition<LayerTheme*>*>& themes) const
+void AnyCombinationOfRuleDefinition::GetPossibleLayerThemes(
+    int passId, std::vector<LayerAttributeChildRuleDefinition<LayerTheme*>*>& themes) const
 {
     const AnyCombinationOfRuleDefinition* definition = this;
     while (definition != NULL)
@@ -135,8 +135,7 @@ void AnyCombinationOfRuleDefinition::GetPossibleLayerThemes(int passId,
             std::vector<GameRuleDefinition*>::reverse_iterator child = children.rbegin();
             for (; child != children.rend(); ++child)
             {
-                themes.insert(themes.begin(),
-                    static_cast<LayerAttributeChildRuleDefinition<LayerTheme*>*>(*child));
+                themes.insert(themes.begin(), static_cast<LayerAttributeChildRuleDefinition<LayerTheme*>*>(*child));
             }
         }
 

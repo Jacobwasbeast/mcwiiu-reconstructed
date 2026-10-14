@@ -61,9 +61,7 @@ GameRuleDefinition* SchematicThemeRuleDefinition::addChild(ConsoleGameRules::EGa
     return GameRuleDefinition::addChild(type);
 }
 
-SchematicThemeRuleDefinition::AssetRuleDef::AssetRuleDef()
-    : mFilename()
-    , mMinimumWidth(0)
+SchematicThemeRuleDefinition::AssetRuleDef::AssetRuleDef() : mFilename(), mMinimumWidth(0)
 {
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_filename, &mFilename);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mMinimumWidth)->setMin(0)->setMax(128);

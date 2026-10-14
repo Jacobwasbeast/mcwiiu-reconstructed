@@ -3,12 +3,19 @@
 #include "game/core/GameModeConstraints.hpp"
 
 TutorialTask::TutorialTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-                           std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
-                           bool allowFade, bool repeatMessage)
-    : descriptionId(descriptionId), promptId(-1), tutorial(tutorial),
-      preCompletionEnabled(preCompletionEnabled), activated(false), allowFade(allowFade),
-      repeatMessage(repeatMessage), showMinimumTime(showMinimumTime), completed(false),
-      shownForMinimumTime(false), constraintsEnabled(false)
+                           std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                           bool repeatMessage)
+    : descriptionId(descriptionId),
+      promptId(-1),
+      tutorial(tutorial),
+      preCompletionEnabled(preCompletionEnabled),
+      activated(false),
+      allowFade(allowFade),
+      repeatMessage(repeatMessage),
+      showMinimumTime(showMinimumTime),
+      completed(false),
+      shownForMinimumTime(false),
+      constraintsEnabled(false)
 {
     if (constraints != NULL)
     {
@@ -28,7 +35,8 @@ TutorialTask::~TutorialTask()
 {
     enableConstraints(false, false);
 
-    for (std::vector<TutorialConstraint*>::iterator constraint = constraints.begin(); constraint < constraints.end(); ++constraint)
+    for (std::vector<TutorialConstraint*>::iterator constraint = constraints.begin(); constraint < constraints.end();
+         ++constraint)
     {
         TutorialConstraint* currentConstraint = *constraint;
         if (currentConstraint->removalPending)

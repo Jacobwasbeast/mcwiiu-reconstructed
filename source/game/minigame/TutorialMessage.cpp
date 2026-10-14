@@ -2,10 +2,10 @@
 #include "game/core/L10N.hpp"
 
 TutorialMessage::TutorialMessage(int messageId, bool repeatMessage, unsigned char maxDisplayCount)
-    : m_messageId(messageId)
-    , m_maxDisplayCount(maxDisplayCount)
-    , m_displayCount(0)
-    , m_repeatMessage(repeatMessage)
+    : m_messageId(messageId),
+      m_maxDisplayCount(maxDisplayCount),
+      m_displayCount(0),
+      m_repeatMessage(repeatMessage)
 {
 }
 

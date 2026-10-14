@@ -2,8 +2,7 @@
 
 #include "game/core/StarShape.hpp"
 
-StarShapeRuleDefinition::StarShapeRuleDefinition()
-    : mPoints(5)
+StarShapeRuleDefinition::StarShapeRuleDefinition() : mPoints(5)
 {
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_points, &mPoints);
 }

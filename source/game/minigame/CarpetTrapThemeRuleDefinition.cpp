@@ -4,8 +4,7 @@
 #include "game/core/GameRules_IntAttribute.hpp"
 #include "game/world/generation/CarpetTrapLayerTheme.hpp"
 
-CarpetTrapThemeRuleDefinition::CarpetTrapThemeRuleDefinition()
-    : mCarpetColour(0)
+CarpetTrapThemeRuleDefinition::CarpetTrapThemeRuleDefinition() : mCarpetColour(0)
 {
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockAux, &mCarpetColour)->setMin(0)->setMax(15);
 

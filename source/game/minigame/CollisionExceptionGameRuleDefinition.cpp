@@ -2,8 +2,7 @@
 
 #include "game/world/block/Block.hpp"
 
-CollisionExceptionGameRuleDefinition::CollisionExceptionGameRuleDefinition()
-    : mBlockId(0)
+CollisionExceptionGameRuleDefinition::CollisionExceptionGameRuleDefinition() : mBlockId(0)
 {
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId);
 }

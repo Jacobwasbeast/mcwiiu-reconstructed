@@ -9,9 +9,9 @@ class MedalAdder
 {
 public:
     MedalAdder(int* nextMedalId, std::vector<const GameMedal*>* medals, std::vector<const GameMedal*>* allMedals)
-        : mNextMedalId(nextMedalId)
-        , mMedals(medals)
-        , mAllMedals(allMedals)
+        : mNextMedalId(nextMedalId),
+          mMedals(medals),
+          mAllMedals(allMedals)
     {
     }
 

@@ -5,10 +5,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/core/StringFormat.hpp"
 
-TargetAreaRuleDefinition::TargetAreaRuleDefinition()
-    : mPrimary(false),
-      mPointValue(0),
-      mLaps(0)
+TargetAreaRuleDefinition::TargetAreaRuleDefinition() : mPrimary(false), mPointValue(0), mLaps(0)
 {
     addBoolAttribute(ConsoleGameRules::eGameRuleAttr_primary, &mPrimary);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_laps, &mLaps);

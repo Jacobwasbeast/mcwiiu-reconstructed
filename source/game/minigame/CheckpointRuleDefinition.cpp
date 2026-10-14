@@ -76,10 +76,9 @@ GameRuleDefinition* CheckpointRuleDefinition::addChild(ConsoleGameRules::EGameRu
 
 void CheckpointRuleDefinition::setPlayerPosition(boost::shared_ptr<ServerPlayer> player)
 {
-    player->mConnection->teleport(static_cast<double>(mSpawnPoint->getX()),
-                                  static_cast<double>(mSpawnPoint->getY()),
-                                  static_cast<double>(mSpawnPoint->getZ()),
-                                  mSpawnPoint->getYRot(), mSpawnPoint->getXRot(), true, true);
+    player->mConnection->teleport(static_cast<double>(mSpawnPoint->getX()), static_cast<double>(mSpawnPoint->getY()),
+                                  static_cast<double>(mSpawnPoint->getZ()), mSpawnPoint->getYRot(),
+                                  mSpawnPoint->getXRot(), true, true);
     player->mXOld = static_cast<double>(mSpawnPoint->getX());
     player->mYOld = static_cast<double>(mSpawnPoint->getY());
     player->mZOld = static_cast<double>(mSpawnPoint->getZ());

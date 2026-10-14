@@ -17,8 +17,8 @@ class TutorialTask
 {
 public:
     TutorialTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-                 std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
-                 bool allowFade, bool repeatMessage);
+                 std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                 bool repeatMessage);
     virtual ~TutorialTask();
     virtual int getDescriptionId();
     virtual int getPromptId();
@@ -32,15 +32,13 @@ public:
     virtual bool hasBeenActivated();
     virtual bool AllowFade();
     virtual bool ShowMinimumTime();
-    virtual void useItemOn(Level* level, not_null_ptr<ItemInstance> item, const BlockPos& pos,
-                           bool cancelled);
+    virtual void useItemOn(Level* level, not_null_ptr<ItemInstance> item, const BlockPos& pos, bool cancelled);
     virtual void useItem(not_null_ptr<ItemInstance> item, bool cancelled);
     virtual void completeUsingItem(not_null_ptr<ItemInstance> item);
     virtual void handleUIInput(int input);
     virtual void onCrafted(not_null_ptr<ItemInstance> item);
     virtual void onEquip(not_null_ptr<ItemInstance> item);
-    virtual void onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
-                        unsigned int exactCount);
+    virtual void onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount, unsigned int exactCount);
     virtual void onTakeFromAnvil(not_null_ptr<ItemInstance> item);
     virtual void onStateChange(eTutorial_State state);
     virtual void onEffectChanged(MobEffect* effect, bool added);

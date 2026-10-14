@@ -426,8 +426,7 @@ public:
     virtual void changeTutorialState(eTutorial_State state, UIScene* scene);
     void setMessage(const std::wstring& message, int displayTime, int priority);
     void showTutorialPopup(bool show);
-    void useItemOn(Level* level, not_null_ptr<class ItemInstance> item,
-                           const BlockPos& pos, bool cancelled);
+    void useItemOn(Level* level, not_null_ptr<class ItemInstance> item, const BlockPos& pos, bool cancelled);
     void useItemOn(not_null_ptr<class ItemInstance> item, bool cancelled);
     void completeUsingItem(not_null_ptr<class ItemInstance> item);
     void startDestroyBlock(not_null_ptr<class ItemInstance> item, const BlockState* state);
@@ -439,8 +438,7 @@ public:
     void onCrafted(not_null_ptr<class ItemInstance> item);
     void onEquip(not_null_ptr<class ItemInstance> item);
     void onTakeFromAnvil(not_null_ptr<class ItemInstance> item);
-    void onTake(not_null_ptr<class ItemInstance> item, unsigned int itemCount,
-                        unsigned int exactCount);
+    void onTake(not_null_ptr<class ItemInstance> item, unsigned int itemCount, unsigned int exactCount);
     unsigned int onSelectedItemChanged(not_null_ptr<class ItemInstance> item);
     void onLookAt(const BlockState* state);
     void onLookAtSkull(Level* level, const BlockPos& pos, const BlockState* state);

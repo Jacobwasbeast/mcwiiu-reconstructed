@@ -11,7 +11,7 @@
 #include "game/world/block/UseBlockRuleDefinition.hpp"
 #include "game/world/generation/UpdatePlayerRuleDefinition.hpp"
 
-template<typename T> std::wstring _toString(T value);
+template <typename T> std::wstring _toString(T value);
 
 CompoundGameRuleDefinition::CompoundGameRuleDefinition()
 {
@@ -34,7 +34,8 @@ void CompoundGameRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* c
     }
 }
 
-void CompoundGameRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children, ConsoleGameRules::EGameRuleType type)
+void CompoundGameRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children,
+                                             ConsoleGameRules::EGameRuleType type)
 {
     for (std::vector<GameRuleDefinition*>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
     {
@@ -119,7 +120,8 @@ bool CompoundGameRuleDefinition::onUseBlock(GameRule* gameRule, int blockId, int
     {
         if (it->second.bIsGameRule)
         {
-            bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onUseBlock(it->second.pGameRule, blockId, x, y, z);
+            bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onUseBlock(it->second.pGameRule,
+                                                                                            blockId, x, y, z);
             if (!bTriggered && childTriggered)
             {
                 mCompletedChild = it->second.pGameRule->getGameRuleDefinition();
@@ -139,7 +141,8 @@ bool CompoundGameRuleDefinition::onCollectItem(GameRule* gameRule, not_null_ptr<
     {
         if (it->second.bIsGameRule)
         {
-            bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onCollectItem(it->second.pGameRule, item);
+            bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onCollectItem(it->second.pGameRule,
+                                                                                               item);
             if (!bTriggered && childTriggered)
             {
                 mCompletedChild = it->second.pGameRule->getGameRuleDefinition();

@@ -4,16 +4,12 @@
 #include "game/core/IGameRuleAttribute.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 
-template<typename T>
+template <typename T>
 std::wstring _toString(T value);
 
-DegradationRuleDefinition::DegradationRuleDefinition()
-    : mTargetLayer(L"[UNINTIALISED]"),
-      mSpeed(2)
+DegradationRuleDefinition::DegradationRuleDefinition() : mTargetLayer(L"[UNINTIALISED]"), mSpeed(2)
 {
-    addStringAttribute(
-        ConsoleGameRules::eGameRuleAttr_target,
-        &mTargetLayer);
+    addStringAttribute(ConsoleGameRules::eGameRuleAttr_target, &mTargetLayer);
 }
 
 DegradationRuleDefinition::~DegradationRuleDefinition()
@@ -24,9 +20,7 @@ void DegradationRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInter
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 1);
 
-    saveInterface->saveAttribute(
-        ConsoleGameRules::eGameRuleAttr_speed,
-        _toString(mSpeed));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_speed, _toString(mSpeed));
 }
 
 void DegradationRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)

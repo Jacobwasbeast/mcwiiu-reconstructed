@@ -9,7 +9,8 @@ class PlayerStats;
 class DamageDealtMedal : public GameMedal
 {
 public:
-    DamageDealtMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly, bool canMultiAward)
+    DamageDealtMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly,
+                     bool canMultiAward)
         : GameMedal(name, target, weight, op, bestOnly, canMultiAward)
     {
     }

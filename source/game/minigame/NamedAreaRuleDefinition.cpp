@@ -45,9 +45,8 @@ std::wstring NamedAreaRuleDefinition::getName()
 
 bool NamedAreaRuleDefinition::containsBlock(int blockId, const BlockPos& pos)
 {
-    return mArea->mMinX <= pos.x && pos.x <= mArea->mMaxX &&
-           mArea->mMinY <= pos.y && pos.y <= mArea->mMaxY &&
-           mArea->mMinZ <= pos.z && pos.z <= mArea->mMaxZ;
+    return mArea->mMinX <= pos.x && pos.x <= mArea->mMaxX && mArea->mMinY <= pos.y && pos.y <= mArea->mMaxY
+           && mArea->mMinZ <= pos.z && pos.z <= mArea->mMaxZ;
 }
 
 void NamedAreaRuleDefinition::onAttributesAdded()

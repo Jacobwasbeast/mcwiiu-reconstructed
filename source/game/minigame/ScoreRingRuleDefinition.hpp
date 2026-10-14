@@ -10,7 +10,8 @@ class ScoreRingRuleDefinition : public TargetAreaRuleDefinition
 {
 public:
     ScoreRingRuleDefinition();
-    ScoreRingRuleDefinition(int x, int y, int z, GlideRingGenerator::eGlideRingOrientation orientation, GlideRingGenerator::eGlideRingSize size);
+    ScoreRingRuleDefinition(int x, int y, int z, GlideRingGenerator::eGlideRingOrientation orientation,
+                            GlideRingGenerator::eGlideRingSize size);
 
     virtual ~ScoreRingRuleDefinition();
 

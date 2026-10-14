@@ -8,7 +8,8 @@ class PlayerStats;
 class DistanceMedal : public GameMedal
 {
 public:
-    DistanceMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly, bool canMultiAward)
+    DistanceMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly,
+                  bool canMultiAward)
         : GameMedal(name, target, weight, op, bestOnly, canMultiAward)
     {
     }

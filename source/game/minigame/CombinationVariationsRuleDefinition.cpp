@@ -3,8 +3,8 @@
 #include "game/minigame/AnyCombinationOfRuleDefinition.hpp"
 #include "game/world/generation/LayerGenerationRuleDefinition.hpp"
 
-CombinationVariationsRuleDefinition::CombinationVariationsRuleDefinition(
-    LayerGenerationRuleDefinition* parent, AnyCombinationOfRuleDefinition* definition)
+CombinationVariationsRuleDefinition::CombinationVariationsRuleDefinition(LayerGenerationRuleDefinition* parent,
+                                                                         AnyCombinationOfRuleDefinition* definition)
     : mParent(parent),
       mDefinition(definition),
       mForWholeLevel(false)
@@ -22,7 +22,7 @@ bool CombinationVariationsRuleDefinition::IsForWholeLevel() const
 }
 
 void CombinationVariationsRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
-    unsigned int extraAttributeCount)
+                                                          unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount);
 }
@@ -47,8 +47,7 @@ GameRuleDefinition* CombinationVariationsRuleDefinition::addChild(ConsoleGameRul
 {
     if (type == ConsoleGameRules::eGameRuleType_AnyCombinationOf)
     {
-        AnyCombinationOfRuleDefinition* child =
-            new AnyCombinationOfRuleDefinition(mParent, mDefinition);
+        AnyCombinationOfRuleDefinition* child = new AnyCombinationOfRuleDefinition(mParent, mDefinition);
         mCombinations.push_back(child);
         return child;
     }

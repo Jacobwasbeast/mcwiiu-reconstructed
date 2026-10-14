@@ -5,11 +5,16 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-TutorialHint::TutorialHint(eTutorial_Hint hintValue, Tutorial* tutorialValue, int description,
-                           eHintType hintType, bool allowFadeValue, bool repeatMessage,
-                           int minimumDisplayTime)
-    : type(hintType), descriptionId(description), tutorial(tutorialValue), hint(hintValue),
-      consecutiveTicks(0), lastBlock(NULL), active(true), fadeAllowed(allowFadeValue),
+TutorialHint::TutorialHint(eTutorial_Hint hintValue, Tutorial* tutorialValue, int description, eHintType hintType,
+                           bool allowFadeValue, bool repeatMessage, int minimumDisplayTime)
+    : type(hintType),
+      descriptionId(description),
+      tutorial(tutorialValue),
+      hint(hintValue),
+      consecutiveTicks(0),
+      lastBlock(NULL),
+      active(true),
+      fadeAllowed(allowFadeValue),
       minimumTime(minimumDisplayTime)
 {
     tutorialValue->addMessage(description, repeatMessage && hintType != HINT_CREATE_ITEM_SELECTED, 3);

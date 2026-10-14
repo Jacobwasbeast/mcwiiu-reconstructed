@@ -246,7 +246,8 @@ public:
     void cleanUp();
     const LootSetDef& getCurrentLootSet() const;
     bool HasLootGroup(const std::wstring& group) const;
-    bool PopulateContainers(const std::vector<boost::shared_ptr<Container> >* containers, const std::wstring& group) const;
+    bool PopulateContainers(const std::vector<boost::shared_ptr<Container> >* containers,
+                            const std::wstring& group) const;
     unsigned int EquipPlayers(std::vector<boost::shared_ptr<ServerPlayer> >* players) const;
     bool IsCustomGame() const;
     static bool IsCustomGame(EMiniGameId id, const MiniGamePlayerSettings& settings);
@@ -402,8 +403,11 @@ public:
     bool HasFeatureSnowballAwards() const;
     bool AllowsUGC() const;
     bool CanCraft() const;
-    static void addWeightedChestItem(std::vector<ChestItemsInfo>* items, not_null_ptr<ItemInstance> item, unsigned int minCount, unsigned int maxCount, unsigned int weight);
-    static void addChestItem(std::vector<ChestItemsInfo>* items, not_null_ptr<ItemInstance> item, unsigned int minStackCount, unsigned int maxStackCount, unsigned int minCount, unsigned int maxCount, unsigned int playersForMin);
+    static void addWeightedChestItem(std::vector<ChestItemsInfo>* items, not_null_ptr<ItemInstance> item,
+                                     unsigned int minCount, unsigned int maxCount, unsigned int weight);
+    static void addChestItem(std::vector<ChestItemsInfo>* items, not_null_ptr<ItemInstance> item,
+                             unsigned int minStackCount, unsigned int maxStackCount, unsigned int minCount,
+                             unsigned int maxCount, unsigned int playersForMin);
     unsigned int GetName() const;
     static unsigned int GetHostOptionStringId(eCustomGameModeHostOption option);
     void AddLabelForOption(std::vector<HtmlString>& labels, eCustomGameModeHostOption option, unsigned int value) const;
@@ -412,8 +416,10 @@ public:
     bool HasFeatureSeasonalMaps() const;
     bool HasFeatureKeepInventory() const;
     void SetGameSettingsFromMatchmakingFilter(LaunchMoreOptionsMenuInitData* data) const;
-    unsigned int CalculateMatchmakingData(bool joining, LaunchMoreOptionsMenuInitData* data, unsigned int** values, unsigned int** ids) const;
-    unsigned int CalculateJoiningMatchmakingData(LaunchMoreOptionsMenuInitData* data, unsigned int** values, unsigned int** ids) const;
+    unsigned int CalculateMatchmakingData(bool joining, LaunchMoreOptionsMenuInitData* data, unsigned int** values,
+                                          unsigned int** ids) const;
+    unsigned int CalculateJoiningMatchmakingData(LaunchMoreOptionsMenuInitData* data, unsigned int** values,
+                                                 unsigned int** ids) const;
     unsigned int CalculateHostingMatchmakingData(LaunchMoreOptionsMenuInitData* data, unsigned int** values) const;
     std::wstring GetMapSizeOverrideText(int value) const;
     std::wstring getTextureName() const;
@@ -426,7 +432,8 @@ public:
     static void ValidateMaxPlayersOptions();
     bool isCurrentVersion() const;
     static void ReplaceCustomGameModeById(EMiniGameId id, arrayWithLength<unsigned char> data, unsigned int crc);
-    static void UpdateServerSideMiniGameInfo(ArchiveFile* file, const std::wstring& name, EMiniGameId id, unsigned int crc);
+    static void UpdateServerSideMiniGameInfo(ArchiveFile* file, const std::wstring& name, EMiniGameId id,
+                                             unsigned int crc);
     static void UpdateServerSideMiniGameInfo(ArchiveFile* file);
     static bool ValidMiniGameId(EMiniGameId id);
     void getVersion(int& major, int& minor) const;

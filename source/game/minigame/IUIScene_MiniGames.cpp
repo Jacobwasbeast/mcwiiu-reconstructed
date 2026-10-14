@@ -3,11 +3,7 @@
 #include "game/core/IUIPartial_OnlineRestricted.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 
-IUIScene_MiniGames::Variant::Variant()
-    : mPlayLabel(-1)
-    , mDescription(-1)
-    , mPlayLabelAlt(-1)
-    , mDescriptionAlt(-1)
+IUIScene_MiniGames::Variant::Variant() : mPlayLabel(-1), mDescription(-1), mPlayLabelAlt(-1), mDescriptionAlt(-1)
 {
 }
 

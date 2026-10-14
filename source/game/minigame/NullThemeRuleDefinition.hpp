@@ -7,7 +7,6 @@
 class NullThemeRuleDefinition : public LayerAttributeChildRuleDefinition<LayerTheme*>
 {
 public:
-
     virtual ConsoleGameRules::EGameRuleType getActionType();
 
     virtual LayerTheme* Generate() const;

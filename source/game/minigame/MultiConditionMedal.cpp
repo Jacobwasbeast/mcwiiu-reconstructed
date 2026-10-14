@@ -37,7 +37,8 @@ MultiConditionMedal::MultiCondition::MultiCondition(float target, GameMedal::EOp
 {
 }
 
-bool MultiConditionMedal::MultiCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
+bool MultiConditionMedal::MultiCondition::canAward(const GameMedal* medal, const StatsUID& uid,
+                                                   GameStats* gameStats) const
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
     if (playerStats != NULL)
