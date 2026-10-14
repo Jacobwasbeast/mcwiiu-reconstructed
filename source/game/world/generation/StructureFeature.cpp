@@ -64,8 +64,8 @@ StructureFeature::~StructureFeature()
     }
 }
 
-void StructureFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX,
-                                  int originChunkZ, ChunkPrimer* primer)
+void StructureFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+                                  ChunkPrimer* primer)
 {
     restoreSavedData(level);
 
@@ -97,8 +97,8 @@ bool StructureFeature::postProcess(Level* level, Random& randomSource, ChunkPos*
          it != mStructureMap.end(); ++it)
     {
         StructureStart* start = it->second;
-        if (start->isValid() && start->isValidForPostProcess(chunkPos) &&
-            start->getBoundingBox()->intersects(minX, minZ, minX + 15, minZ + 15))
+        if (start->isValid() && start->isValidForPostProcess(chunkPos)
+            && start->getBoundingBox()->intersects(minX, minZ, minX + 15, minZ + 15))
         {
             BoundingBox box(minX, minZ, minX + 15, minZ + 15);
             start->postProcess(level, randomSource, &box);
@@ -147,8 +147,7 @@ StructureStart* StructureFeature::getStructureAt(const BlockPos& pos)
             if (start->getBoundingBox()->isInside(pos))
             {
                 std::vector<StructurePiece*>* pieces = start->getPieces();
-                for (std::vector<StructurePiece*>::iterator piece = pieces->begin();
-                     piece != pieces->end(); piece++)
+                for (std::vector<StructurePiece*>::iterator piece = pieces->begin(); piece != pieces->end(); piece++)
                 {
                     if ((*piece)->getBoundingBox()->isInside(pos))
                     {
@@ -205,22 +204,20 @@ void StructureFeature::restoreSavedData(Level* levelToRestore)
         levelToRestore->getSavedData(typeid(StructureFeatureSavedData), getFeatureName()));
     if (!mSavedData)
     {
-        mSavedData = boost::shared_ptr<StructureFeatureSavedData>(
-            new StructureFeatureSavedData(getFeatureName()));
+        mSavedData = boost::shared_ptr<StructureFeatureSavedData>(new StructureFeatureSavedData(getFeatureName()));
         levelToRestore->setSavedData(getFeatureName(), mSavedData);
     }
     else
     {
         CompoundTag* tags = mSavedData->getFullTag();
         boost::unordered_map<std::wstring, Tag*>* entries = tags->getAllTagsMap();
-        for (boost::unordered_map<std::wstring, Tag*>::iterator it = entries->begin();
-             it != entries->end(); it++)
+        for (boost::unordered_map<std::wstring, Tag*>::iterator it = entries->begin(); it != entries->end(); it++)
         {
             Tag* tag = it->second;
             if (tag->getId() == Tag::TAG_BYTE_ARRAY)
             {
-                StructureStart* start = StructureFeatureIO::loadStaticStart(
-                    static_cast<ByteArrayTag*>(tag), levelToRestore);
+                StructureStart* start = StructureFeatureIO::loadStaticStart(static_cast<ByteArrayTag*>(tag),
+                                                                            levelToRestore);
                 if (start != NULL)
                 {
                     mStructureMap[ChunkPos::asLong(start->getChunkX(), start->getChunkZ())] = start;
@@ -236,9 +233,10 @@ void StructureFeature::saveFeature(int chunkX, int chunkZ, StructureStart* start
     start->clearDirty();
 }
 
-BlockPos* StructureFeature::findNearestFeaturePositionBySpacing(
-    Level* levelToSearch, StructureFeature* feature, const BlockPos& pos, int spacing,
-    int separation, int salt, bool skipKnownStructures, int maxDistance, bool skipExistingChunks)
+BlockPos* StructureFeature::findNearestFeaturePositionBySpacing(Level* levelToSearch, StructureFeature* feature,
+                                                                const BlockPos& pos, int spacing, int separation,
+                                                                int salt, bool skipKnownStructures, int maxDistance,
+                                                                bool skipExistingChunks)
 {
     int centerX = pos.x >> 4;
     int centerZ = pos.z >> 4;

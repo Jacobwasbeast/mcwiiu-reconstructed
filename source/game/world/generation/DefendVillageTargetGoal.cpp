@@ -8,8 +8,7 @@
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
 
-DefendVillageTargetGoal::DefendVillageTargetGoal(VillagerGolem* golem)
-    : TargetGoal(golem, false, true)
+DefendVillageTargetGoal::DefendVillageTargetGoal(VillagerGolem* golem) : TargetGoal(golem, false, true)
 {
     mGolem = golem;
     setRequiredControlFlags(1);
@@ -23,8 +22,8 @@ bool DefendVillageTargetGoal::canUse()
         return false;
     }
 
-    mVillageAggressorTarget = boost::weak_ptr<LivingEntity>(village->getClosestAggressor(
-        boost::dynamic_pointer_cast<LivingEntity>(mGolem->shared_from_this())));
+    mVillageAggressorTarget = boost::weak_ptr<LivingEntity>(
+        village->getClosestAggressor(boost::dynamic_pointer_cast<LivingEntity>(mGolem->shared_from_this())));
 
     boost::shared_ptr<LivingEntity> target = mVillageAggressorTarget.lock();
     if (target != NULL && eTYPE_DERIVED_FROM(EntityType::CREEPER, target->GetType()))
@@ -52,4 +51,3 @@ void DefendVillageTargetGoal::start()
     mGolem->setTarget(mVillageAggressorTarget.lock());
     TargetGoal::start();
 }
-

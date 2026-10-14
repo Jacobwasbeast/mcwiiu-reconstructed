@@ -8,7 +8,9 @@
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/core/StringFormat.hpp"
-FlatLayerInfo::FlatLayerInfo() : mVersion(3), mBlockState(NULL), mHeight(0), mStart(0) {}
+FlatLayerInfo::FlatLayerInfo() : mVersion(3), mBlockState(NULL), mHeight(0), mStart(0)
+{
+}
 FlatLayerInfo::FlatLayerInfo(int height, Block* block)
 {
     _init(height, block);
@@ -30,17 +32,53 @@ FlatLayerInfo::FlatLayerInfo(int version, int height, Block* block, int data)
     mVersion = version;
     mBlockState = block->getBlockState(data);
 }
-unsigned int FlatLayerInfo::getStart() const { return (unsigned int)mStart; }
-const BlockState* FlatLayerInfo::getBlockState() const { return mBlockState; }
-unsigned int FlatLayerInfo::getHeight() const { return (unsigned int)mHeight; }
-int FlatLayerInfo::getEnd() const { return getStart() + getHeight() - 1; }
-void FlatLayerInfo::_init(int height, Block* block) { mHeight = height; mVersion = 3; mBlockState = block->defaultBlockState(); mStart = 0; }
-void FlatLayerInfo::setHeight(int height) { mHeight = height; }
-void FlatLayerInfo::setBlockState(const BlockState* state) { mBlockState = state; }
-Block* FlatLayerInfo::getBlock() const { return mBlockState->getBlock(); }
-int FlatLayerInfo::getId() const { return Block::getId(getBlock()); }
-int FlatLayerInfo::getData() const { return mBlockState->getBlock()->convertBlockStateToLegacyData(mBlockState); }
-void FlatLayerInfo::setStart(int start) { mStart = start; }
+unsigned int FlatLayerInfo::getStart() const
+{
+    return (unsigned int)mStart;
+}
+const BlockState* FlatLayerInfo::getBlockState() const
+{
+    return mBlockState;
+}
+unsigned int FlatLayerInfo::getHeight() const
+{
+    return (unsigned int)mHeight;
+}
+int FlatLayerInfo::getEnd() const
+{
+    return getStart() + getHeight() - 1;
+}
+void FlatLayerInfo::_init(int height, Block* block)
+{
+    mHeight = height;
+    mVersion = 3;
+    mBlockState = block->defaultBlockState();
+    mStart = 0;
+}
+void FlatLayerInfo::setHeight(int height)
+{
+    mHeight = height;
+}
+void FlatLayerInfo::setBlockState(const BlockState* state)
+{
+    mBlockState = state;
+}
+Block* FlatLayerInfo::getBlock() const
+{
+    return mBlockState->getBlock();
+}
+int FlatLayerInfo::getId() const
+{
+    return Block::getId(getBlock());
+}
+int FlatLayerInfo::getData() const
+{
+    return mBlockState->getBlock()->convertBlockStateToLegacyData(mBlockState);
+}
+void FlatLayerInfo::setStart(int start)
+{
+    mStart = start;
+}
 std::wstring FlatLayerInfo::toString()
 {
     std::wstring result;

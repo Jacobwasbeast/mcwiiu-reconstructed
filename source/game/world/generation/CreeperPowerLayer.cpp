@@ -17,8 +17,7 @@
 
 static ResourceLocation CREEPER_ARMOR_LOCATION(TN_ARMOR_POWER);
 
-CreeperPowerLayer::CreeperPowerLayer(CreeperRenderer* renderer)
-    : mRenderer(renderer), mOriginalModel(NULL)
+CreeperPowerLayer::CreeperPowerLayer(CreeperRenderer* renderer) : mRenderer(renderer), mOriginalModel(NULL)
 {
     mModel = new CreeperModel(2.0f);
 }
@@ -27,9 +26,8 @@ CreeperPowerLayer::~CreeperPowerLayer()
 {
 }
 
-void CreeperPowerLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                               float limbSwingAmount, float partialTicks, float ageInTicks,
-                               float netHeadYaw, float headPitch, float scale,
+void CreeperPowerLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                               float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                                bool bUseDisplayList)
 {
     boost::shared_ptr<Creeper> creeper = boost::dynamic_pointer_cast<Creeper>(entity);
@@ -56,8 +54,7 @@ void CreeperPowerLayer::render(boost::shared_ptr<LivingEntity>& entity, float li
     GlStateManager::blendFunc(1, 1);
 
     mModel->copyPropertiesFrom(mRenderer->getModel());
-    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                   headPitch, scale, bUseDisplayList);
+    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
 
     GlStateManager::matrixMode(2);
     GlStateManager::loadIdentity();

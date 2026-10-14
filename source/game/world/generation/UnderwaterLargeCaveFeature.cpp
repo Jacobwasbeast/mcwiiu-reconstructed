@@ -15,22 +15,12 @@
 
 bool UnderwaterLargeCaveFeature::isDiggable(int blockId)
 {
-    return blockId == BlockId::AIR ||
-           blockId == BlockId::STONE ||
-           blockId == BlockId::GRASS ||
-           blockId == BlockId::DIRT ||
-           blockId == BlockId::FLOWING_WATER ||
-           blockId == BlockId::WATER ||
-           blockId == BlockId::FLOWING_LAVA ||
-           blockId == BlockId::LAVA ||
-           blockId == BlockId::SAND ||
-           blockId == BlockId::GRAVEL ||
-           blockId == BlockId::SANDSTONE ||
-           blockId == BlockId::OBSIDIAN ||
-           blockId == BlockId::MYCELIUM ||
-           blockId == BlockId::STAINED_HARDENED_CLAY ||
-           blockId == BlockId::HARDENED_CLAY ||
-           blockId == BlockId::RED_SANDSTONE;
+    return blockId == BlockId::AIR || blockId == BlockId::STONE || blockId == BlockId::GRASS || blockId == BlockId::DIRT
+           || blockId == BlockId::FLOWING_WATER || blockId == BlockId::WATER || blockId == BlockId::FLOWING_LAVA
+           || blockId == BlockId::LAVA || blockId == BlockId::SAND || blockId == BlockId::GRAVEL
+           || blockId == BlockId::SANDSTONE || blockId == BlockId::OBSIDIAN || blockId == BlockId::MYCELIUM
+           || blockId == BlockId::STAINED_HARDENED_CLAY || blockId == BlockId::HARDENED_CLAY
+           || blockId == BlockId::RED_SANDSTONE;
 }
 
 void UnderwaterLargeCaveFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer)
@@ -49,10 +39,9 @@ void UnderwaterLargeCaveFeature::apply(Level* level, int chunkX, int chunkZ, Chu
     }
 }
 
-void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ,
-                                            ChunkPrimer* primer, double x, double y, double z,
-                                            float width, float yaw, float pitch, int originChunkX,
-                                            int originChunkZ, double scale)
+void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer,
+                                           double x, double y, double z, float width, float yaw, float pitch,
+                                           int originChunkX, int originChunkZ, double scale)
 {
     const float originX = static_cast<float>(chunkX * 16 + 8);
     const float originZ = static_cast<float>(chunkZ * 16 + 8);
@@ -99,35 +88,45 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
         {
             long long branchSeed = tunnelRandom.nextLong();
             float branchWidth = tunnelRandom.nextFloat() * 0.5F + 0.5F;
-            addTunnel(level, branchSeed, chunkX, chunkZ, primer, x, y, z, branchWidth, yaw - halfPi, pitch / 3.0F, step, length, 1.0);
+            addTunnel(level, branchSeed, chunkX, chunkZ, primer, x, y, z, branchWidth, yaw - halfPi, pitch / 3.0F, step,
+                      length, 1.0);
             branchSeed = tunnelRandom.nextLong();
             branchWidth = tunnelRandom.nextFloat() * 0.5F + 0.5F;
-            addTunnel(level, branchSeed, chunkX, chunkZ, primer, x, y, z, branchWidth, yaw + halfPi, pitch / 3.0F, step, length, 1.0);
+            addTunnel(level, branchSeed, chunkX, chunkZ, primer, x, y, z, branchWidth, yaw + halfPi, pitch / 3.0F, step,
+                      length, 1.0);
             return;
         }
-        if (!room && tunnelRandom.nextInt(4) == 0) continue;
+        if (!room && tunnelRandom.nextInt(4) == 0)
+            continue;
         const float dx = static_cast<float>(x) - originX;
         const float dz = static_cast<float>(z) - originZ;
         const float remaining = static_cast<float>(length - step);
         const float reach = width + 18.0F;
-        if (dx * dx + dz * dz - remaining * remaining > reach * reach) return;
-        if (x < originX - 16.0F - radius * 2.0F || z < originZ - 16.0F - radius * 2.0F ||
-            x > originX + 16.0F + radius * 2.0F || z > originZ + 16.0F + radius * 2.0F) continue;
+        if (dx * dx + dz * dz - remaining * remaining > reach * reach)
+            return;
+        if (x < originX - 16.0F - radius * 2.0F || z < originZ - 16.0F - radius * 2.0F
+            || x > originX + 16.0F + radius * 2.0F || z > originZ + 16.0F + radius * 2.0F)
+            continue;
         int minX = static_cast<int>(std::floor(x - radius)) - chunkX * 16 - 1;
         int maxX = static_cast<int>(std::floor(x + radius)) - chunkX * 16 + 1;
         const double bottom = std::floor(y - radiusY);
         const double top = std::floor(y + radiusY);
         int minZ = static_cast<int>(std::floor(z - radius)) - chunkZ * 16 - 1;
         int maxZ = static_cast<int>(std::floor(z + radius)) - chunkZ * 16 + 1;
-        if (minX < 0) minX = 0;
-        if (maxX > 16) maxX = 16;
+        if (minX < 0)
+            minX = 0;
+        if (maxX > 16)
+            maxX = 16;
         const int maxY = Mth::clamp(static_cast<int>(top) + 1, 1, 120);
         const int minY = Mth::clamp(static_cast<int>(bottom) - 1, 1, maxY);
-        if (minZ < 0) minZ = 0;
-        if (maxZ > 16) maxZ = 16;
+        if (minZ < 0)
+            minZ = 0;
+        if (maxZ > 16)
+            maxZ = 16;
         int magmaData = Blocks::magma->convertBlockStateToLegacyData(Blocks::magma->defaultBlockState());
         int obsidianData = Blocks::obsidian->convertBlockStateToLegacyData(Blocks::obsidian->defaultBlockState());
-        int flowingWaterData = Blocks::flowing_water->convertBlockStateToLegacyData(Blocks::flowing_water->defaultBlockState());
+        int flowingWaterData = Blocks::flowing_water->convertBlockStateToLegacyData(
+            Blocks::flowing_water->defaultBlockState());
         int waterData = Blocks::water->convertBlockStateToLegacyData(Blocks::water->defaultBlockState());
         int lavaData = Blocks::lava->convertBlockStateToLegacyData(Blocks::lava->defaultBlockState());
         bool found = false;
@@ -144,7 +143,8 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
                     const float yd = (localY + 0.5F - static_cast<float>(y)) / radiusY;
                     const int index = (localX << 11) | (localZ << 7) | localY;
                     const float yd2 = yd * yd;
-                    if (yd <= -0.7 || xd * xd + yd2 + zd * zd >= 1.0F || localY >= 0x3e || !isDiggable(primer->getBlockId(index)))
+                    if (yd <= -0.7 || xd * xd + yd2 + zd * zd >= 1.0F || localY >= 0x3e
+                        || !isDiggable(primer->getBlockId(index)))
                         continue;
                     if (!found && level != NULL && level->getBiome(startPos)->getBiomeType() != Biome::eBiomeType_Ocean)
                         return;
@@ -183,23 +183,25 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
                             primer->setBlockAndData(index - 0x80, BlockId::FLOWING_WATER, flowingWaterData);
                             water = true;
                         }
-                        if (!water) primer->setBlockAndData(index, BlockId::WATER, waterData);
+                        if (!water)
+                            primer->setBlockAndData(index, BlockId::WATER, waterData);
                     }
                 }
             }
         }
-        if (room) return;
+        if (room)
+            return;
     }
 }
 
-void UnderwaterLargeCaveFeature::addRoom(Level* level, long long seed, int chunkX, int chunkZ,
-                                          ChunkPrimer* primer, double x, double y, double z)
+void UnderwaterLargeCaveFeature::addRoom(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer,
+                                         double x, double y, double z)
 {
     addTunnel(level, seed, chunkX, chunkZ, primer, x, y, z, random.nextFloat() * 6.0F + 1.0F, 0.0F, 0.0F, -1, -1, 0.5);
 }
 
-void UnderwaterLargeCaveFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX,
-                                             int originChunkZ, ChunkPrimer* primer)
+void UnderwaterLargeCaveFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+                                            ChunkPrimer* primer)
 {
     int count = random.nextInt(40);
     count = random.nextInt(count + 1);
@@ -223,7 +225,8 @@ void UnderwaterLargeCaveFeature::addFeature(Level* level, int chunkX, int chunkZ
             const float pitch = (random.nextFloat() - 0.5f) * 2.0f * 0.125f;
             const float firstWidth = random.nextFloat();
             float tunnelWidth = firstWidth * 2.0f + random.nextFloat();
-            addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, tunnelWidth, yaw, pitch, 0, 0, 1.0);
+            addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, tunnelWidth, yaw, pitch, 0,
+                      0, 1.0);
         }
     }
 }

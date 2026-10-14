@@ -18,8 +18,8 @@
 #include "game/core/PIXNamedEvents.hpp"
 
 TumbleGenerator::TumbleGenerator(Random random, std::vector<LayerGenerator*>& layers)
-    : MapGenerator(random)
-    , mLayers(layers)
+    : MapGenerator(random),
+      mLayers(layers)
 {
 }
 
@@ -79,7 +79,8 @@ void TumbleGenerator::StartGeneration(Level* level)
     const int centreOffset = totalOffset / 2;
     unsigned int layerIndex = 0;
     for (std::vector<std::pair<LayerGenerator*, BlockTransaction*> >::iterator transaction = transactions.begin(),
-         transactionsEnd = transactions.end(); transaction != transactionsEnd; ++transaction)
+                                                                               transactionsEnd = transactions.end();
+         transaction != transactionsEnd; ++transaction)
     {
         LayerGenerator* generator = transaction->first;
         BlockTransaction* blockTransaction = transaction->second;
@@ -122,7 +123,8 @@ void TumbleGenerator::CleanUp(Level* level)
             BlockPos* position = positions->next();
             while (positions->hasNext())
             {
-                level->setBlockAndData(position->x, position->y, position->z, BlockId::AIR, 0, Block::UPDATE_CLIENTS | Block::UPDATE_LIGHT_IF_CHANGED);
+                level->setBlockAndData(position->x, position->y, position->z, BlockId::AIR, 0,
+                                       Block::UPDATE_CLIENTS | Block::UPDATE_LIGHT_IF_CHANGED);
                 dirtyChunks.insert(level->getChunkAt(position->x, position->z));
                 positions->next();
             }
@@ -135,7 +137,8 @@ void TumbleGenerator::CleanUp(Level* level)
     for (unsigned int index = 0; index < mAdditionalBlocks.size(); ++index)
     {
         BlockPos& additional = mAdditionalBlocks[index];
-        level->setBlockAndData(additional.x, additional.y, additional.z, BlockId::AIR, 0, Block::UPDATE_CLIENTS | Block::UPDATE_LIGHT_IF_CHANGED);
+        level->setBlockAndData(additional.x, additional.y, additional.z, BlockId::AIR, 0,
+                               Block::UPDATE_CLIENTS | Block::UPDATE_LIGHT_IF_CHANGED);
         dirtyChunks.insert(level->getChunkAt(additional.x, additional.z));
     }
     mAdditionalBlocks.clear();

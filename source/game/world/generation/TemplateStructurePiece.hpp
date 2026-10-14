@@ -20,13 +20,13 @@ class TemplateStructurePiece : public StructurePiece
 public:
     TemplateStructurePiece();
     TemplateStructurePiece(int genDepth);
-    TemplateStructurePiece(int genDepth, const StructureTemplate* templateObject,
-        const BlockPos& templatePosition, StructurePlaceSettings* placeSettings);
+    TemplateStructurePiece(int genDepth, const StructureTemplate* templateObject, const BlockPos& templatePosition,
+                           StructurePlaceSettings* placeSettings);
     virtual ~TemplateStructurePiece();
 
     void setBoundingBoxFromTemplate();
     void setup(const StructureTemplate* templateObject, const BlockPos& templatePosition,
-        StructurePlaceSettings* placeSettings);
+               StructurePlaceSettings* placeSettings);
 
     virtual void addAdditionalSaveData(DataOutputStream* output);
     virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
@@ -34,8 +34,8 @@ public:
     virtual void move(int x, int y, int z);
     virtual Rotation* getRotation();
 
-    virtual void handleDataMarker(const std::wstring& marker, const BlockPos& position,
-        Level* level, Random& random, BoundingBox* box) = 0;
+    virtual void handleDataMarker(const std::wstring& marker, const BlockPos& position, Level* level, Random& random,
+                                  BoundingBox* box) = 0;
 
     BlockPos getTemplatePosition();
     StructureTemplate* getStructureTemplate();

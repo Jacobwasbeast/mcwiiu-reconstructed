@@ -10,8 +10,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-FlowerFeature::FlowerFeature(FlowerBlock* block, FlowerBlock::Flower* flower)
-    : Feature(false)
+FlowerFeature::FlowerFeature(FlowerBlock* block, FlowerBlock::Flower* flower) : Feature(false)
 {
     setNextFlower(block, flower);
 }
@@ -57,8 +56,7 @@ bool FlowerFeature::place(Level* level, Random& random, const BlockPos& origin)
         const int zOffsetStart = random.nextInt(8);
         const int dz = zOffsetStart - random.nextInt(8);
         const BlockPos position = origin.offset(dx, dy, dz);
-        if (level->isEmptyBlock(position)
-            && (!level->mDimension->isHasCeiling() || position.y < 127)
+        if (level->isEmptyBlock(position) && (!level->mDimension->isHasCeiling() || position.y < 127)
             && mFlowerBlock->canSurvive(level, position, mState))
         {
             level->setBlock(position, mState, Block::UPDATE_CLIENTS, false);

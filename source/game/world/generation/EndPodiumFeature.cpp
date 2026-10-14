@@ -14,17 +14,14 @@
 
 const BlockPos EndPodiumFeature::END_PODIUM_LOCATION(0, 62, 0);
 
-EndPodiumFeature::EndPodiumFeature(bool active)
-    : Feature(false),
-      mActive(active)
+EndPodiumFeature::EndPodiumFeature(bool active) : Feature(false), mActive(active)
 {
 }
 
 bool EndPodiumFeature::place(Level* level, Random&, const BlockPos& origin)
 {
-    Iterator<MutableBlockPos*>* positions =
-        BlockPos::mutablesBetween(BlockPos(origin.x - 4, origin.y - 1, origin.z - 4),
-                                  BlockPos(origin.x + 4, origin.y + 32, origin.z + 4));
+    Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(
+        BlockPos(origin.x - 4, origin.y - 1, origin.z - 4), BlockPos(origin.x + 4, origin.y + 32, origin.z + 4));
 
     while (positions->hasNext())
     {

@@ -20,7 +20,9 @@ class AbstractArmorLayer : public RenderLayer
 public:
     AbstractArmorLayer(LivingEntityRenderer* renderer);
     virtual ~AbstractArmorLayer() {}
-    virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList);
+    virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                        float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                        bool bUseDisplayList);
     virtual bool colorsOnDamage();
     virtual void resetColor();
     virtual void setColor(float red, float green, float blue, float alpha);
@@ -31,8 +33,12 @@ public:
     bool usesInnerModel(const EquipmentSlot* slot);
     not_null_ptr<ItemInstance> getSlot(boost::shared_ptr<LivingEntity>& entity, const EquipmentSlot* slot);
     ResourceLocation* getArmorLocation(ArmorItem* armor, bool inner, bool overlay);
-    static void renderFoil(LivingEntityRenderer* renderer, boost::shared_ptr<LivingEntity>& entity, Model* model, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList);
-    void renderArmorPiece(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, const EquipmentSlot* slot, bool bUseDisplayList);
+    static void renderFoil(LivingEntityRenderer* renderer, boost::shared_ptr<LivingEntity>& entity, Model* model,
+                           float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks,
+                           float netHeadYaw, float headPitch, float scale, bool bUseDisplayList);
+    void renderArmorPiece(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                          float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                          const EquipmentSlot* slot, bool bUseDisplayList);
     ResourceLocation* getArmorLocation(ArmorItem* armor, bool inner);
 
 protected:

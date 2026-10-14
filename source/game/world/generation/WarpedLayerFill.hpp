@@ -13,8 +13,8 @@ class WarpedLayerFill : public LayerFill
 public:
     WarpedLayerFill(double noiseScale, int offset, int thickness);
 
-    virtual void ExtrudeLayer(Random& random, const Shape& shape, const Vec3i& origin,
-                              BlockTransaction* transaction, int* minY, int* maxY) const;
+    virtual void ExtrudeLayer(Random& random, const Shape& shape, const Vec3i& origin, BlockTransaction* transaction,
+                              int* minY, int* maxY) const;
 
     double mNoiseScale;
     int mOffset;

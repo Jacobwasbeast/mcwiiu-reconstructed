@@ -16,8 +16,7 @@
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
 
-VillageSiege::VillageSiege(Level* level)
-    : mVillage()
+VillageSiege::VillageSiege(Level* level) : mVillage()
 {
     mHasSetupSiege = false;
     mSiegeState = -1;
@@ -38,12 +37,10 @@ Vec3* VillageSiege::findRandomSpawnPos(const BlockPos& pos)
 
     for (int attempt = 0; attempt < 10; ++attempt)
     {
-        const BlockPos candidate = pos.offset(mLevel->mRandom->nextInt(16) - 8,
-                                              mLevel->mRandom->nextInt(6) - 3,
+        const BlockPos candidate = pos.offset(mLevel->mRandom->nextInt(16) - 8, mLevel->mRandom->nextInt(6) - 3,
                                               mLevel->mRandom->nextInt(16) - 8);
         if (village->isInside(candidate)
-            && NaturalMobSpawner::isSpawnPositionOk(Mob::SPAWN_PLACEMENT_TYPE_ON_GROUND, mLevel,
-                                                    candidate, 10, 10))
+            && NaturalMobSpawner::isSpawnPositionOk(Mob::SPAWN_PLACEMENT_TYPE_ON_GROUND, mLevel, candidate, 10, 10))
         {
             return Vec3::newTemp((double)candidate.x, (double)candidate.y, (double)candidate.z);
         }
@@ -56,16 +53,15 @@ bool VillageSiege::tryToSetupSiege()
 {
     MutableBlockPos spawnPos(mSpawnX, mSpawnY, mSpawnZ);
 
-    for (std::vector<boost::shared_ptr<Player> >::iterator it = mLevel->mPlayers.begin();
-         it != mLevel->mPlayers.end(); ++it)
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mLevel->mPlayers.begin(); it != mLevel->mPlayers.end();
+         ++it)
     {
         if ((*it)->isSpectator())
         {
             continue;
         }
 
-        boost::shared_ptr<Village> village =
-            mLevel->mVillages->getClosestVillage(BlockPos(*it), 1);
+        boost::shared_ptr<Village> village = mLevel->mVillages->getClosestVillage(BlockPos(*it), 1);
         mVillage = village;
 
         if (!village)
@@ -149,11 +145,9 @@ bool VillageSiege::trySpawn()
     boost::shared_ptr<Zombie> zombie;
     {
         zombie = boost::shared_ptr<Zombie>(new Zombie(mLevel));
-        zombie->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(zombie)), NULL,
-                                 std::wstring(L""));
+        zombie->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(zombie)), NULL, std::wstring(L""));
     }
-    zombie->moveTo(spawnPos->x, spawnPos->y, spawnPos->z,
-                   mLevel->mRandom->nextFloat() * 360.0f, 0.0f);
+    zombie->moveTo(spawnPos->x, spawnPos->y, spawnPos->z, mLevel->mRandom->nextFloat() * 360.0f, 0.0f);
     mLevel->addEntity(zombie);
 
     boost::shared_ptr<Village> village = mVillage.lock();

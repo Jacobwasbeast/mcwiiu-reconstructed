@@ -11,8 +11,8 @@ class Random;
 class MegaTreeFeature : public AbstractTreeFeature
 {
 public:
-    MegaTreeFeature(bool doBlockNotify, int baseHeight, int extraRandomHeight,
-                    const BlockState* trunkState, const BlockState* leafState);
+    MegaTreeFeature(bool doBlockNotify, int baseHeight, int extraRandomHeight, const BlockState* trunkState,
+                    const BlockState* leafState);
     virtual ~MegaTreeFeature() {}
 
     virtual int calcTreeHeigth(Random& random);

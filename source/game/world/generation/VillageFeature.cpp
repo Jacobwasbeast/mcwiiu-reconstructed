@@ -20,14 +20,12 @@
 
 std::vector<Biome*> VillageFeature::allowedBiomes;
 
-VillageFeature::VillageFeature(int size)
-    : StructureFeature()
+VillageFeature::VillageFeature(int size) : StructureFeature()
 {
     _init(size);
 }
 
-VillageFeature::VillageFeature(SuperflatConfig* config, int size)
-    : StructureFeature()
+VillageFeature::VillageFeature(SuperflatConfig* config, int size) : StructureFeature()
 {
     FlatGeneratorInfo generatorInfo(config, false);
     _init(size);
@@ -79,11 +77,10 @@ bool VillageFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
     chunkX = originalX;
     chunkZ = originalZ;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if ((options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Village, NULL)) ||
-        (chunkX == centerX && chunkZ == centerZ))
+    if ((options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Village, NULL))
+        || (chunkX == centerX && chunkZ == centerZ))
     {
-        if (level->getBiomeSource()->containsOnly(chunkX * 16 + 8, chunkZ * 16 + 8, 0,
-                                                  allowedBiomes))
+        if (level->getBiomeSource()->containsOnly(chunkX * 16 + 8, chunkZ * 16 + 8, 0, allowedBiomes))
         {
             return true;
         }
@@ -91,13 +88,11 @@ bool VillageFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
     return false;
 }
 
-BlockPos* VillageFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos,
-                                                       bool skipExistingChunks)
+BlockPos* VillageFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos, bool skipExistingChunks)
 {
     level = levelIn;
-    return StructureFeature::findNearestFeaturePositionBySpacing(
-        levelIn, this, pos, mSpacing, mSeparation, 10387312, false, 100,
-        skipExistingChunks);
+    return StructureFeature::findNearestFeaturePositionBySpacing(levelIn, this, pos, mSpacing, mSeparation, 10387312,
+                                                                 false, 100, skipExistingChunks);
 }
 
 StructureStart* VillageFeature::createStructureStart(int chunkX, int chunkZ)
@@ -106,15 +101,15 @@ StructureStart* VillageFeature::createStructureStart(int chunkX, int chunkZ)
     return new VillageStart(level, random, chunkX, chunkZ, mVillageSize, mSize);
 }
 
-VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int chunkX, int chunkZ,
-                                            int size, int distance)
-    : StructureStart(chunkX, chunkZ), mValid(false), mDistance(distance)
+VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int chunkX, int chunkZ, int size,
+                                           int distance)
+    : StructureStart(chunkX, chunkZ),
+      mValid(false),
+      mDistance(distance)
 {
-    std::list<VillagePieces::PieceWeight*>* pieceSet =
-        VillagePieces::createPieceSet(random, size);
+    std::list<VillagePieces::PieceWeight*>* pieceSet = VillagePieces::createPieceSet(random, size);
     VillagePieces::StartPiece* startPiece = new VillagePieces::StartPiece(
-        levelIn->getBiomeSource(), 0, random, chunkX * 16 + 2, chunkZ * 16 + 2,
-        pieceSet, size, levelIn);
+        levelIn->getBiomeSource(), 0, random, chunkX * 16 + 2, chunkZ * 16 + 2, pieceSet, size, levelIn);
     mPieces.push_back(startPiece);
     startPiece->addChildren(startPiece, &mPieces, random);
 
@@ -142,8 +137,7 @@ VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int c
 
     calculateBoundingBox();
     int nonRoadCount = 0;
-    for (std::vector<StructurePiece*>::iterator pieceIt = mPieces.begin();
-         pieceIt != mPieces.end(); ++pieceIt)
+    for (std::vector<StructurePiece*>::iterator pieceIt = mPieces.begin(); pieceIt != mPieces.end(); ++pieceIt)
     {
         if (dynamic_cast<VillagePieces::VillageRoadPiece*>(*pieceIt) == NULL)
             ++nonRoadCount;
@@ -151,8 +145,7 @@ VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int c
     mValid = nonRoadCount > 2;
 }
 
-VillageFeature::VillageStart::VillageStart()
-    : StructureStart(), mValid(false), mDistance(0)
+VillageFeature::VillageStart::VillageStart() : StructureStart(), mValid(false), mDistance(0)
 {
 }
 
@@ -163,8 +156,8 @@ StructureStart* VillageFeature::VillageStart::Create()
 
 bool VillageFeature::VillageStart::isValid()
 {
-    if (mBoundingBox->x0 < -mDistance / 2 || mBoundingBox->x1 > mDistance / 2 ||
-        mBoundingBox->z0 < -mDistance / 2 || mBoundingBox->z1 > mDistance / 2)
+    if (mBoundingBox->x0 < -mDistance / 2 || mBoundingBox->x1 > mDistance / 2 || mBoundingBox->z0 < -mDistance / 2
+        || mBoundingBox->z1 > mDistance / 2)
     {
         mValid = false;
     }

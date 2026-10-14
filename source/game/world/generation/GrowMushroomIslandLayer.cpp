@@ -3,8 +3,7 @@
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-GrowMushroomIslandLayer::GrowMushroomIslandLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+GrowMushroomIslandLayer::GrowMushroomIslandLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }

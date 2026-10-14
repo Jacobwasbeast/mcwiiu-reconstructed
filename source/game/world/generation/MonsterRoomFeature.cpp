@@ -52,8 +52,8 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
                 if ((y == -1 || y == 4) && !solid)
                     return false;
 
-                if ((x == xMin || x == xMax || z == zMin || z == zMax) && y == 0
-                    && level->isEmptyBlock(pos) && level->isEmptyBlock(pos.above()))
+                if ((x == xMin || x == xMax || z == zMin || z == zMax) && y == 0 && level->isEmptyBlock(pos)
+                    && level->isEmptyBlock(pos.above()))
                     ++openings;
             }
         }
@@ -79,9 +79,11 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
                              && level->getBlockState(pos)->getBlock() != Blocks::chest)
                     {
                         if (y == -1 && random.nextInt(4) != 0)
-                            level->setBlock(pos, Blocks::mossy_cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                            level->setBlock(pos, Blocks::mossy_cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS,
+                                            false);
                         else
-                            level->setBlock(pos, Blocks::cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                            level->setBlock(pos, Blocks::cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS,
+                                            false);
                     }
                 }
                 else if (level->getBlockState(pos)->getBlock() != Blocks::chest)
@@ -113,11 +115,14 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
             if (solidNeighbours != 1)
                 continue;
 
-            level->setBlock(pos, static_cast<ChestBlock*>(Blocks::chest)->reorient(level, pos, Blocks::chest->defaultBlockState()), Block::UPDATE_CLIENTS, false);
+            level->setBlock(
+                pos, static_cast<ChestBlock*>(Blocks::chest)->reorient(level, pos, Blocks::chest->defaultBlockState()),
+                Block::UPDATE_CLIENTS, false);
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
             if (eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
             {
-                boost::shared_ptr<ChestBlockEntity> chestEntity = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
+                boost::shared_ptr<ChestBlockEntity> chestEntity = boost::static_pointer_cast<ChestBlockEntity>(
+                    blockEntity);
                 chestEntity->setLootTable(&BuiltInLootTables::SIMPLE_DUNGEON, random.nextLong());
             }
             break;
@@ -128,8 +133,8 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(origin);
     if (eTYPE_DERIVED_FROM(BlockEntityType::MOB_SPAWNER, blockEntity->GetType()))
     {
-        boost::shared_ptr<MobSpawnerBlockEntity> spawnerBlockEntity =
-            boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);
+        boost::shared_ptr<MobSpawnerBlockEntity> spawnerBlockEntity = boost::static_pointer_cast<MobSpawnerBlockEntity>(
+            blockEntity);
         spawnerBlockEntity->getSpawner()->setEntityId(ResourceLocation(randomEntityId(random)));
     }
     return true;

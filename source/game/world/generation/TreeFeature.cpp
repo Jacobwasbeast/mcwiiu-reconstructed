@@ -37,9 +37,8 @@ TreeFeature::TreeFeature(bool doBlockNotify)
 {
 }
 
-TreeFeature::TreeFeature(bool doBlockNotify, int baseHeight,
-                         const BlockState* trunkState,
-                         const BlockState* leafState, bool hasVines)
+TreeFeature::TreeFeature(bool doBlockNotify, int baseHeight, const BlockState* trunkState, const BlockState* leafState,
+                         bool hasVines)
     : AbstractTreeFeature(doBlockNotify, baseHeight, trunkState, leafState, hasVines)
 {
 }
@@ -128,8 +127,7 @@ void TreeFeature::placeLeaf(Level* level, const MutableBlockPos& pos)
         setBlock(level, pos, mLeafState, Block::UPDATE_NONE);
 }
 
-void TreeFeature::addHangingVine(Level* level, const BlockPos& pos,
-                                 const BooleanProperty* property)
+void TreeFeature::addHangingVine(Level* level, const BlockPos& pos, const BooleanProperty* property)
 {
     BlockPos vinePos = pos;
     addVine(level, vinePos, property);
@@ -143,8 +141,7 @@ void TreeFeature::addHangingVine(Level* level, const BlockPos& pos,
     }
 }
 
-void TreeFeature::placeCocoa(Level* level, int age, const BlockPos& pos,
-                             const Direction* direction)
+void TreeFeature::placeCocoa(Level* level, int age, const BlockPos& pos, const Direction* direction)
 {
     setBlock(level, pos,
              Blocks::cocoa->defaultBlockState()
@@ -179,8 +176,8 @@ bool TreeFeature::place(Level* level, Random& random, const BlockPos& pos)
             int xOffset = x - pos.x;
             for (int z = pos.z - radius; z <= pos.z + radius; ++z)
             {
-                if (std::abs(xOffset) == radius && std::abs(z - pos.z) == radius &&
-                    (random.nextInt(2) == 0 || layer == 0))
+                if (std::abs(xOffset) == radius && std::abs(z - pos.z) == radius
+                    && (random.nextInt(2) == 0 || layer == 0))
                     continue;
                 leafPos.set(x, y, z);
                 placeLeaf(level, leafPos);

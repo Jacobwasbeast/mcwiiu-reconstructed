@@ -23,8 +23,7 @@
 static const BlockState* pineTrunkState = NULL;
 static const BlockState* pineLeafState = NULL;
 
-PineFeature::PineFeature()
-    : AbstractTreeFeature(false, 7, pineTrunkState, pineLeafState, false)
+PineFeature::PineFeature() : AbstractTreeFeature(false, 7, pineTrunkState, pineLeafState, false)
 {
 }
 

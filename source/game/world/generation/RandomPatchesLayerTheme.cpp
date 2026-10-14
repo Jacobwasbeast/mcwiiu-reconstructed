@@ -54,8 +54,8 @@ const BlockState* sanitiseBottomLayerBlocks(const BlockState* pState)
 }
 
 RandomPatchesLayerTheme::RandomPatchesLayerTheme(unsigned int uSeed, double dNoiseScale)
-    : m_uSeed(uSeed)
-    , m_dNoiseScale(dNoiseScale)
+    : m_uSeed(uSeed),
+      m_dNoiseScale(dNoiseScale)
 {
 }
 

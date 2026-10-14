@@ -12,29 +12,17 @@
 #include "game/world/generation/StructurePlaceSettings.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
 
-static const eMinecraftStructureTemplate FOSSILS[8] =
-{
-    eMinecraftStructureTemplate_Fossil_Spine01,
-    eMinecraftStructureTemplate_Fossil_Spine02,
-    eMinecraftStructureTemplate_Fossil_Spine03,
-    eMinecraftStructureTemplate_Fossil_Spine04,
-    eMinecraftStructureTemplate_Fossil_Skull01,
-    eMinecraftStructureTemplate_Fossil_Skull02,
-    eMinecraftStructureTemplate_Fossil_Skull03,
-    eMinecraftStructureTemplate_Fossil_Skull04
-};
+static const eMinecraftStructureTemplate FOSSILS[8] = {
+    eMinecraftStructureTemplate_Fossil_Spine01, eMinecraftStructureTemplate_Fossil_Spine02,
+    eMinecraftStructureTemplate_Fossil_Spine03, eMinecraftStructureTemplate_Fossil_Spine04,
+    eMinecraftStructureTemplate_Fossil_Skull01, eMinecraftStructureTemplate_Fossil_Skull02,
+    eMinecraftStructureTemplate_Fossil_Skull03, eMinecraftStructureTemplate_Fossil_Skull04};
 
-static const eMinecraftStructureTemplate FOSSILS_COAL[8] =
-{
-    eMinecraftStructureTemplate_Fossil_Spine01Coal,
-    eMinecraftStructureTemplate_Fossil_Spine02Coal,
-    eMinecraftStructureTemplate_Fossil_Spine03Coal,
-    eMinecraftStructureTemplate_Fossil_Spine04Coal,
-    eMinecraftStructureTemplate_Fossil_Skull01Coal,
-    eMinecraftStructureTemplate_Fossil_Skull02Coal,
-    eMinecraftStructureTemplate_Fossil_Skull03Coal,
-    eMinecraftStructureTemplate_Fossil_Skull04Coal
-};
+static const eMinecraftStructureTemplate FOSSILS_COAL[8] = {
+    eMinecraftStructureTemplate_Fossil_Spine01Coal, eMinecraftStructureTemplate_Fossil_Spine02Coal,
+    eMinecraftStructureTemplate_Fossil_Spine03Coal, eMinecraftStructureTemplate_Fossil_Spine04Coal,
+    eMinecraftStructureTemplate_Fossil_Skull01Coal, eMinecraftStructureTemplate_Fossil_Skull02Coal,
+    eMinecraftStructureTemplate_Fossil_Skull03Coal, eMinecraftStructureTemplate_Fossil_Skull04Coal};
 
 bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
@@ -61,8 +49,7 @@ bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
     {
         for (int z = 0; z < size.x; ++z)
         {
-            const int columnHeight = level->getHeightmapHeight(origin.x + x + xOffset,
-                                                                origin.z + z + zOffset);
+            const int columnHeight = level->getHeightmapHeight(origin.x + x + xOffset, origin.z + z + zOffset);
             if (columnHeight < height)
             {
                 height = columnHeight;

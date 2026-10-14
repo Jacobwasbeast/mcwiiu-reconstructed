@@ -3,8 +3,7 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/VillagerZombieModel.hpp"
 
-VillagerArmorLayer::VillagerArmorLayer(LivingEntityRenderer* renderer)
-    : HumanoidArmorLayer(renderer)
+VillagerArmorLayer::VillagerArmorLayer(LivingEntityRenderer* renderer) : HumanoidArmorLayer(renderer)
 {
     createArmorModels();
 }

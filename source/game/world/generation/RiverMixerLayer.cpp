@@ -4,8 +4,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/world/biome/Biome.hpp"
 
-RiverMixerLayer::RiverMixerLayer(long long seed,
-                                 boost::shared_ptr<Layer> biomeLayer,
+RiverMixerLayer::RiverMixerLayer(long long seed, boost::shared_ptr<Layer> biomeLayer,
                                  boost::shared_ptr<Layer> riverLayer)
     : Layer(seed)
 {
@@ -39,7 +38,8 @@ arrayWithLength<int> RiverMixerLayer::getArea(int x, int z, int width, int heigh
                 {
                     result.data[i] = Biome::FROZEN_RIVER->id;
                 }
-                else if (biomes.data[i] == Biome::MUSHROOM_ISLAND->id || biomes.data[i] == Biome::MUSHROOM_ISLAND_SHORE->id)
+                else if (biomes.data[i] == Biome::MUSHROOM_ISLAND->id
+                         || biomes.data[i] == Biome::MUSHROOM_ISLAND_SHORE->id)
                 {
                     result.data[i] = Biome::MUSHROOM_ISLAND->id;
                 }

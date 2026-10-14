@@ -28,12 +28,10 @@
 #include "game/world/generation/StructureManager.hpp"
 #include "game/world/generation/WoodlandMansionPieces.hpp"
 
-Rotation* fjGetSuitableRandomRotation(Random& random, LevelData* levelData, int chunkX,
-                                      int chunkZ)
+Rotation* fjGetSuitableRandomRotation(Random& random, LevelData* levelData, int chunkX, int chunkZ)
 {
     const int halfSize = levelData->getXZSize() / 2;
-    AABB* bounds = AABB::newTemp(BlockPos(Vec3i(-halfSize, 0, -halfSize)),
-                                 BlockPos(Vec3i(halfSize, 2, halfSize)));
+    AABB* bounds = AABB::newTemp(BlockPos(Vec3i(-halfSize, 0, -halfSize)), BlockPos(Vec3i(halfSize, 2, halfSize)));
     const int start = random.nextInt(4);
     for (int offset = 0; offset < 4; ++offset)
     {
@@ -43,8 +41,8 @@ Rotation* fjGetSuitableRandomRotation(Random& random, LevelData* levelData, int 
         BlockPos nearRight = origin.offset(rotation->fjRotate(Vec3i(-7, 1, 3)));
         BlockPos farLeft = origin.offset(rotation->fjRotate(Vec3i(0, 1, -3)));
         BlockPos farRight = origin.offset(rotation->fjRotate(Vec3i(0, 1, 3)));
-        if (bounds->contains(nearLeft) && bounds->contains(nearRight) &&
-            bounds->contains(farLeft) && bounds->contains(farRight))
+        if (bounds->contains(nearLeft) && bounds->contains(nearRight) && bounds->contains(farLeft)
+            && bounds->contains(farRight))
             return rotation;
     }
     return Rotation::VALUES[start];
@@ -64,12 +62,13 @@ void WoodlandMansionFeature::staticCtor()
         if (biome != NULL && biome->getScale() < 0.4f)
             gWoodlandMansionAllowedBiomes.push_back(biome);
     }
-    gWoodlandMansionBiomeRequirements = FjFeatureBiomeRequirements(
-        &gWoodlandMansionSpawnBiomes, 4, &gWoodlandMansionAllowedBiomes, 32);
+    gWoodlandMansionBiomeRequirements = FjFeatureBiomeRequirements(&gWoodlandMansionSpawnBiomes, 4,
+                                                                   &gWoodlandMansionAllowedBiomes, 32);
 }
 
 WoodlandMansionFeature::WoodlandMansionFeature(GenericOverworldLevelSource* source)
-    : StructureFeature(), mSource(source)
+    : StructureFeature(),
+      mSource(source)
 {
     mSpacing = 80;
     mSeparation = 6;
@@ -77,15 +76,14 @@ WoodlandMansionFeature::WoodlandMansionFeature(GenericOverworldLevelSource* sour
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
-WoodlandMansionFeature::WoodlandMansionFeature(GenericOverworldLevelSource* source,
-                                               SuperflatConfig* config)
-    : StructureFeature(), mSource(source)
+WoodlandMansionFeature::WoodlandMansionFeature(GenericOverworldLevelSource* source, SuperflatConfig* config)
+    : StructureFeature(),
+      mSource(source)
 {
     FlatGeneratorInfo info(config);
     mSeparation = std::max(info.getWoodlandMansionSeparation(), 6);
     mSpacing = std::max(mSeparation + 1, info.getWoodlandMansionSpacing());
-    mFeatureChunk = FjIsFeatureChunk(&gWoodlandMansionBiomeRequirements, 40, mSpacing,
-                                     mSeparation);
+    mFeatureChunk = FjIsFeatureChunk(&gWoodlandMansionBiomeRequirements, 40, mSpacing, mSeparation);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
@@ -98,11 +96,11 @@ bool WoodlandMansionFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWor
 {
     int sizeInChunks = level->getLevelData()->getXZSize();
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
-                                         ? &mReducedFeatureChunk : &mFeatureChunk;
+                                         ? &mReducedFeatureChunk
+                                         : &mFeatureChunk;
     ChunkPos center = featureChunk->getCenterChunk(chunkX, chunkZ);
     bool result = featureChunk->isFeatureChunk(*level->getRandomFor(center.x, center.z, 10387319),
-                                               level->getBiomeSource(), sizeInChunks, chunkX,
-                                               chunkZ);
+                                               level->getBiomeSource(), sizeInChunks, chunkX, chunkZ);
     if (result)
         gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)9, chunkX, chunkZ);
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
@@ -116,21 +114,18 @@ char WoodlandMansionFeature::fjIsFeatureChunk(BiomeSource*, long long, int, int,
     return false;
 }
 
-BlockPos* WoodlandMansionFeature::getNearestGeneratedFeature(Level* levelIn,
-                                                              const BlockPos& pos,
-                                                              bool skipExistingChunks)
+BlockPos* WoodlandMansionFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos,
+                                                             bool skipExistingChunks)
 {
     level = levelIn;
     BiomeSource* biomeSource = level->getBiomeSource();
     if (biomeSource->isFixedBiome() && biomeSource->getFixedBiome() != Biome::ROOFED_FOREST)
         return NULL;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if (options != NULL &&
-        canPlaceFeatureInChunk(false, eFeatureType_WoodlandMansion, pos.x >> 4, pos.z >> 4))
+    if (options != NULL && canPlaceFeatureInChunk(false, eFeatureType_WoodlandMansion, pos.x >> 4, pos.z >> 4))
         return options->getClosestFeature(eFeatureType_WoodlandMansion, pos);
-    return StructureFeature::findNearestFeaturePositionBySpacing(
-        levelIn, this, pos, mSpacing, mSeparation, 10387319, true, 100,
-        skipExistingChunks);
+    return StructureFeature::findNearestFeaturePositionBySpacing(levelIn, this, pos, mSpacing, mSeparation, 10387319,
+                                                                 true, 100, skipExistingChunks);
 }
 
 StructureStart* WoodlandMansionFeature::createStructureStart(int chunkX, int chunkZ)
@@ -138,16 +133,16 @@ StructureStart* WoodlandMansionFeature::createStructureStart(int chunkX, int chu
     return new WoodlandMansionStart(this, level, mSource, random, chunkX, chunkZ);
 }
 
-WoodlandMansionFeature::WoodlandMansionStart::WoodlandMansionStart(
-    WoodlandMansionFeature* feature, Level* levelIn, GenericOverworldLevelSource* source,
-    Random& randomIn, int chunkX, int chunkZ)
-    : StructureStart(chunkX, chunkZ), mFeature(feature)
+WoodlandMansionFeature::WoodlandMansionStart::WoodlandMansionStart(WoodlandMansionFeature* feature, Level* levelIn,
+                                                                   GenericOverworldLevelSource* source,
+                                                                   Random& randomIn, int chunkX, int chunkZ)
+    : StructureStart(chunkX, chunkZ),
+      mFeature(feature)
 {
     create(levelIn, source, randomIn, chunkX, chunkZ);
 }
 
-WoodlandMansionFeature::WoodlandMansionStart::WoodlandMansionStart()
-    : StructureStart()
+WoodlandMansionFeature::WoodlandMansionStart::WoodlandMansionStart() : StructureStart()
 {
 }
 
@@ -156,12 +151,10 @@ StructureStart* WoodlandMansionFeature::WoodlandMansionStart::Create()
     return new WoodlandMansionStart();
 }
 
-void WoodlandMansionFeature::WoodlandMansionStart::create(
-    Level* levelIn, GenericOverworldLevelSource* source, Random& randomIn,
-    int chunkX, int chunkZ)
+void WoodlandMansionFeature::WoodlandMansionStart::create(Level* levelIn, GenericOverworldLevelSource* source,
+                                                          Random& randomIn, int chunkX, int chunkZ)
 {
-    Rotation* rotation = fjGetSuitableRandomRotation(randomIn, levelIn->getLevelData(),
-                                                      chunkX, chunkZ);
+    Rotation* rotation = fjGetSuitableRandomRotation(randomIn, levelIn->getLevelData(), chunkX, chunkZ);
     arrayWithLength<unsigned short> elementIds(0x10000, true);
     ChunkPrimer primer(true, elementIds);
     source->prepareHeights(chunkX, chunkZ, &primer);
@@ -192,15 +185,14 @@ void WoodlandMansionFeature::WoodlandMansionStart::create(
     }
     BlockPos origin(chunkX * 16 + 8, minHeight + 1, chunkZ * 16 + 8);
     std::vector<WoodlandMansionPieces::WoodlandMansionPiece*> pieces;
-    WoodlandMansionPieces::generateMansion(
-        levelIn->getLevelStorage()->getStructureManager(), origin, rotation, pieces, randomIn);
+    WoodlandMansionPieces::generateMansion(levelIn->getLevelStorage()->getStructureManager(), origin, rotation, pieces,
+                                           randomIn);
     mPieces.insert(mPieces.empty() ? mPieces.begin() : mPieces.end() - 1, pieces.begin(), pieces.end());
     calculateBoundingBox();
     mValid = true;
 }
 
-void WoodlandMansionFeature::WoodlandMansionStart::postProcess(Level* levelIn, Random& randomIn,
-                                                                BoundingBox* box)
+void WoodlandMansionFeature::WoodlandMansionStart::postProcess(Level* levelIn, Random& randomIn, BoundingBox* box)
 {
     StructureStart::postProcess(levelIn, randomIn, box);
     int y = mBoundingBox->y0;
@@ -212,8 +204,7 @@ void WoodlandMansionFeature::WoodlandMansionStart::postProcess(Level* levelIn, R
             if (!levelIn->isEmptyBlock(pos) && mBoundingBox->isInside(pos))
             {
                 bool inPiece = false;
-                for (std::vector<StructurePiece*>::iterator it = mPieces.begin();
-                     it != mPieces.end(); ++it)
+                for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
                 {
                     if ((*it)->mBoundingBox->isInside(pos))
                     {
@@ -227,11 +218,11 @@ void WoodlandMansionFeature::WoodlandMansionStart::postProcess(Level* levelIn, R
                     for (int fillY = y - 1; fillY > 1; --fillY)
                     {
                         BlockPos fillPos(x, fillY, z);
-                        if (!levelIn->isEmptyBlock(fillPos) &&
-                            !levelIn->getBlockState(fillPos)->getMaterial()->isLiquid())
+                        if (!levelIn->isEmptyBlock(fillPos)
+                            && !levelIn->getBlockState(fillPos)->getMaterial()->isLiquid())
                             break;
-                        levelIn->setBlock(fillPos, Blocks::cobblestone->defaultBlockState(),
-                                          Block::UPDATE_CLIENTS, false);
+                        levelIn->setBlock(fillPos, Blocks::cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS,
+                                          false);
                     }
                 }
             }

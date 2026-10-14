@@ -12,13 +12,13 @@
 #include "game/world/biome/MesaBiome.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-MineShaftFeature::MineShaftFeature()
-    : StructureFeature(), mChance(0.004)
+MineShaftFeature::MineShaftFeature() : StructureFeature(), mChance(0.004)
 {
 }
 
 MineShaftFeature::MineShaftFeature(SuperflatConfig* config)
-    : StructureFeature(), mChance((float)config->maybeOption(0x23, 0, 1) / 1000.0f)
+    : StructureFeature(),
+      mChance((float)config->maybeOption(0x23, 0, 1) / 1000.0f)
 {
 }
 
@@ -34,13 +34,10 @@ bool MineShaftFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
     if (options != NULL)
         forced = options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Mineshaft, NULL);
 
-    return forced || (random.nextDouble() < mChance &&
-                      random.nextInt(80) < std::max(abs(chunkX), abs(chunkZ)));
+    return forced || (random.nextDouble() < mChance && random.nextInt(80) < std::max(abs(chunkX), abs(chunkZ)));
 }
 
-BlockPos* MineShaftFeature::getNearestGeneratedFeature(Level* levelIn,
-                                                        const BlockPos& pos,
-                                                        bool skipExistingChunks)
+BlockPos* MineShaftFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos, bool skipExistingChunks)
 {
     int chunkX = pos.x >> 4;
     int chunkZ = pos.z >> 4;

@@ -2,7 +2,8 @@
 #include <cmath>
 
 RainbowLayerTheme::RainbowLayerTheme(unsigned int seed, double noiseScale, const std::vector<const BlockState*>& blocks)
-    : RandomPatchesLayerTheme(seed, noiseScale), mBlocks(blocks)
+    : RandomPatchesLayerTheme(seed, noiseScale),
+      mBlocks(blocks)
 {
 }
 

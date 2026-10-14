@@ -22,8 +22,7 @@ bool SeaPickleFeature::place(Level* level, Random& random, const BlockPos& origi
     {
         BlockPos position = origin;
         while (!level->isSolidBlockingBlock(position)
-            && level->getBlockId(position.x, position.y, position.z) != BlockId::SEA_PICKLE
-            && position.y > 0)
+               && level->getBlockId(position.x, position.y, position.z) != BlockId::SEA_PICKLE && position.y > 0)
         {
             position = position.below();
         }
@@ -39,8 +38,7 @@ bool SeaPickleFeature::place(Level* level, Random& random, const BlockPos& origi
             const int dx = random.nextInt(6);
             BlockPos target = position.offset(dx, 0, dz);
             const int pickles = random.nextInt(0, 4);
-            while (!level->isEmptyWaterBlock(target)
-                && level->getBlockId(target.x, target.y, target.z) != BlockId::AIR)
+            while (!level->isEmptyWaterBlock(target) && level->getBlockId(target.x, target.y, target.z) != BlockId::AIR)
             {
                 target = target.above();
             }

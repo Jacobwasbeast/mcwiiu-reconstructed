@@ -16,16 +16,16 @@
 #include "game/world/block/StoneBlock.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-OreFeature::OreFeature(const BlockState* state, int numberOfBlocks)
-    : Feature(false), mBlockId(0), mBlockData(0)
+OreFeature::OreFeature(const BlockState* state, int numberOfBlocks) : Feature(false), mBlockId(0), mBlockData(0)
 {
     static NaturalStonePredicate naturalStonePredicate;
     _init(state, numberOfBlocks, &naturalStonePredicate);
 }
 
-OreFeature::OreFeature(const BlockState* state, int numberOfBlocks,
-                       const Predicate<const Biome::BlockPair&>* predicate)
-    : Feature(false), mBlockId(0), mBlockData(0)
+OreFeature::OreFeature(const BlockState* state, int numberOfBlocks, const Predicate<const Biome::BlockPair&>* predicate)
+    : Feature(false),
+      mBlockId(0),
+      mBlockData(0)
 {
     _init(state, numberOfBlocks, predicate);
 }
@@ -34,8 +34,7 @@ OreFeature::~OreFeature()
 {
 }
 
-void OreFeature::_init(const BlockState* state, int numberOfBlocks,
-                       const Predicate<const Biome::BlockPair&>* predicate)
+void OreFeature::_init(const BlockState* state, int numberOfBlocks, const Predicate<const Biome::BlockPair&>* predicate)
 {
     const int blockId = Block::getId(state->getBlock());
     const int blockData = state->getBlock()->convertBlockStateToLegacyData(state);
@@ -120,8 +119,10 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
         if (aboveSeaLevel)
         {
             PIXBeginNamedEvent(0.0f, "Early reject tests");
-            const bool reject = level->getHeightmap(lowerX, lowerZ) < lowerY && level->getHeightmap(upperX, lowerZ) < lowerY &&
-                                level->getHeightmap(lowerX, upperZ) < lowerY && level->getHeightmap(upperX, upperZ) < lowerY;
+            const bool reject = level->getHeightmap(lowerX, lowerZ) < lowerY
+                                && level->getHeightmap(upperX, lowerZ) < lowerY
+                                && level->getHeightmap(lowerX, upperZ) < lowerY
+                                && level->getHeightmap(upperX, upperZ) < lowerY;
             PIXEndNamedEvent();
             if (reject)
             {
@@ -175,7 +176,10 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
                                 Biome::BlockPair pair(element >> 4, element & 15);
                                 if (mPredicate->apply(pair))
                                 {
-                                    level->setBlockAndData(blockX, blockY, blockZ, mBlockId, mBlockData, Block::UPDATE_INVISIBLE | Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED | Block::UPDATE_CHUNK_ONLY);
+                                    level->setBlockAndData(blockX, blockY, blockZ, mBlockId, mBlockData,
+                                                           Block::UPDATE_INVISIBLE | Block::UPDATE_NO_OBSERVERS
+                                                               | Block::UPDATE_LIGHT_IF_CHANGED
+                                                               | Block::UPDATE_CHUNK_ONLY);
                                 }
                             }
                             PIXEndNamedEvent();

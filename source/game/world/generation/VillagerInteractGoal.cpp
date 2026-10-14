@@ -14,7 +14,8 @@
 #include "game/world/generation/Villager.hpp"
 
 VillagerInteractGoal::VillagerInteractGoal(Villager* villager)
-    : InteractGoal(villager, typeid(Villager), 3.0f, 0.02f), mInteractionDelay(0),
+    : InteractGoal(villager, typeid(Villager), 3.0f, 0.02f),
+      mInteractionDelay(0),
       mVillager(villager)
 {
 }
@@ -23,9 +24,9 @@ void VillagerInteractGoal::start()
 {
     InteractGoal::start();
 
-    if (mVillager->hasExcessFood() && mLookAt.lock() &&
-        eTYPE_DERIVED_FROM(EntityType::VILLAGER, mLookAt.lock()->GetType()) &&
-        boost::dynamic_pointer_cast<Villager>(mLookAt.lock())->wantsMoreFood())
+    if (mVillager->hasExcessFood() && mLookAt.lock()
+        && eTYPE_DERIVED_FROM(EntityType::VILLAGER, mLookAt.lock()->GetType())
+        && boost::dynamic_pointer_cast<Villager>(mLookAt.lock())->wantsMoreFood())
         mInteractionDelay = 10;
     else
         mInteractionDelay = 0;
@@ -47,22 +48,20 @@ void VillagerInteractGoal::tick()
         if (!item->isEmpty())
         {
             Item* itemType = item->getItem();
-            if ((itemType == Items::bread || itemType == Items::potato ||
-                 itemType == Items::carrot || itemType == Items::beetroot) &&
-                item->getCount() > 3)
+            if ((itemType == Items::bread || itemType == Items::potato || itemType == Items::carrot
+                 || itemType == Items::beetroot)
+                && item->getCount() > 3)
             {
                 int amount = item->getCount() / 2;
                 item->shrink(amount);
-                itemToThrow = not_null_ptr<ItemInstance>(
-                    new ItemInstance(itemType, amount, item->getAuxValue()));
+                itemToThrow = not_null_ptr<ItemInstance>(new ItemInstance(itemType, amount, item->getAuxValue()));
             }
             else if (itemType == Items::wheat && item->getCount() > 5)
             {
                 int amount = (item->getCount() / 2) / 3 * 3;
                 int loaves = amount / 3;
                 item->shrink(amount);
-                itemToThrow = not_null_ptr<ItemInstance>(
-                    new ItemInstance(Items::bread, loaves, 0));
+                itemToThrow = not_null_ptr<ItemInstance>(new ItemInstance(Items::bread, loaves, 0));
             }
         }
 
@@ -72,12 +71,8 @@ void VillagerInteractGoal::tick()
         if (!itemToThrow->isEmpty())
         {
             const double throwY = mVillager->mY - 0.3f + mVillager->getEyeHeight();
-            boost::shared_ptr<ItemEntity> entity(new ItemEntity(
-                mVillager->mLevel,
-                mVillager->mX,
-                throwY,
-                mVillager->mZ,
-                itemToThrow));
+            boost::shared_ptr<ItemEntity> entity(
+                new ItemEntity(mVillager->mLevel, mVillager->mX, throwY, mVillager->mZ, itemToThrow));
 
             float speed = 0.3f;
             float yaw = mVillager->mYHeadRot;
@@ -91,4 +86,3 @@ void VillagerInteractGoal::tick()
         }
     }
 }
-

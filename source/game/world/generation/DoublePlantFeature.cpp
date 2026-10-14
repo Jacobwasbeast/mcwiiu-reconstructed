@@ -6,8 +6,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 
-DoublePlantFeature::DoublePlantFeature()
-    : Feature(false)
+DoublePlantFeature::DoublePlantFeature() : Feature(false)
 {
 }
 
@@ -28,8 +27,7 @@ bool DoublePlantFeature::place(Level* level, Random& random, const BlockPos& ori
     {
         const BlockPos pos = origin.offset(random.nextInt(8) - random.nextInt(8), random.nextInt(4) - random.nextInt(4),
                                            random.nextInt(8) - random.nextInt(8));
-        if (level->isEmptyBlock(pos)
-            && ((!level->mDimension->isHasCeiling()) || pos.y < 126)
+        if (level->isEmptyBlock(pos) && ((!level->mDimension->isHasCeiling()) || pos.y < 126)
             && static_cast<DoublePlantBlock*>(Blocks::double_plant)->mayPlace(level, pos))
         {
             static_cast<DoublePlantBlock*>(Blocks::double_plant)->placeAt(level, pos, mNextPlantType, 2);

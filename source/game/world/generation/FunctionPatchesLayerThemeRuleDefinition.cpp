@@ -11,27 +11,14 @@ std::wstring _toString(T value);
 template <typename T>
 T _fromString(const std::wstring& value);
 
-static const std::wstring sFunctionNames[5] =
-{
-    L"grass",
-    L"hellfire",
-    L"snowlayer",
-    L"tnt",
-    L"carpet"
-};
+static const std::wstring sFunctionNames[5] = {L"grass", L"hellfire", L"snowlayer", L"tnt", L"carpet"};
 
-static const FunctionPatchesLayerTheme::BlockFunction sFunctions[] =
-{
-    FunctionPatchesLayerTheme::GRASS_PATCHES,
-    FunctionPatchesLayerTheme::HELLFIRE_PATCHES,
-    FunctionPatchesLayerTheme::SNOWLAYER_PATCHES,
-    FunctionPatchesLayerTheme::TNT_TRAPS,
-    FunctionPatchesLayerTheme::CARPET_TRAP
-};
+static const FunctionPatchesLayerTheme::BlockFunction sFunctions[] = {
+    FunctionPatchesLayerTheme::GRASS_PATCHES, FunctionPatchesLayerTheme::HELLFIRE_PATCHES,
+    FunctionPatchesLayerTheme::SNOWLAYER_PATCHES, FunctionPatchesLayerTheme::TNT_TRAPS,
+    FunctionPatchesLayerTheme::CARPET_TRAP};
 
-FunctionPatchesLayerThemeRuleDefinition::FunctionPatchesLayerThemeRuleDefinition()
-    : mFunction(-1)
-    , mNoiseScale(20.0)
+FunctionPatchesLayerThemeRuleDefinition::FunctionPatchesLayerThemeRuleDefinition() : mFunction(-1), mNoiseScale(20.0)
 {
 }
 
@@ -41,15 +28,14 @@ ConsoleGameRules::EGameRuleType FunctionPatchesLayerThemeRuleDefinition::getActi
 }
 
 void FunctionPatchesLayerThemeRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
-                                                               unsigned int extraAttributeCount)
+                                                              unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 2);
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_func, _toString(mFunction));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_scale, _toString(mNoiseScale));
 }
 
-void FunctionPatchesLayerThemeRuleDefinition::addAttribute(const std::wstring& name,
-                                                            const std::wstring& value)
+void FunctionPatchesLayerThemeRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
 {
     if (name.compare(L"func") == 0)
     {

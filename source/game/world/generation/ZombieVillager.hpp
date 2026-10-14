@@ -30,7 +30,7 @@ public:
     void startConverting(const std::wstring& player, int conversionTime);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                            const std::wstring& dataString);
+                                           const std::wstring& dataString);
     int getConversionProgress();
     virtual void tick();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);

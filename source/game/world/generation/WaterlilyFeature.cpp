@@ -18,8 +18,7 @@ bool WaterlilyFeature::place(Level* level, Random& random, const BlockPos& origi
         int x = origin.x + random.nextInt(8) - random.nextInt(8);
         int y = origin.y + random.nextInt(4) - random.nextInt(4);
         int z = origin.z + random.nextInt(8) - random.nextInt(8);
-        if (level->isEmptyBlock(BlockPos(x, y, z))
-            && Blocks::waterlily->mayPlace(level, BlockPos(x, y, z)))
+        if (level->isEmptyBlock(BlockPos(x, y, z)) && Blocks::waterlily->mayPlace(level, BlockPos(x, y, z)))
         {
             level->setBlock(BlockPos(x, y, z), Blocks::waterlily->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }

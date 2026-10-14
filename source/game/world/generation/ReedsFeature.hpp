@@ -10,7 +10,6 @@ class Random;
 class ReedsFeature : public Feature
 {
 public:
-
     virtual ~ReedsFeature();
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 };

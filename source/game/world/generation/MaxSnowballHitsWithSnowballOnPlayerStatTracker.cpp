@@ -4,8 +4,7 @@
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
 
-MaxSnowballHitsWithSnowballOnPlayerStatTracker::MaxSnowballHitsWithSnowballOnPlayerStatTracker(
-    const StatsUID& statsUID)
+MaxSnowballHitsWithSnowballOnPlayerStatTracker::MaxSnowballHitsWithSnowballOnPlayerStatTracker(const StatsUID& statsUID)
     : StatTracker<unsigned int>(statsUID, 0)
 {
     mSnowballHits[mPlayerUID] = 0;
@@ -19,7 +18,8 @@ void MaxSnowballHitsWithSnowballOnPlayerStatTracker::update(const DamageEvent* d
         StatsUID emptyPlayerUID;
         if (victim != emptyPlayerUID)
         {
-            boost::unordered_map<StatsUID, unsigned int, boost::hash<StatsUID>, std::equal_to<StatsUID> >::iterator found = mSnowballHits.find(victim);
+            boost::unordered_map<StatsUID, unsigned int, boost::hash<StatsUID>, std::equal_to<StatsUID> >::iterator
+                found = mSnowballHits.find(victim);
             if (found != mSnowballHits.end())
             {
                 ++mSnowballHits[victim];

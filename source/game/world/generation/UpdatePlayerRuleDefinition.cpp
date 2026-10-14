@@ -62,8 +62,7 @@ UpdatePlayerRuleDefinition::~UpdatePlayerRuleDefinition()
     delete mSpawnPosition;
 }
 
-double UpdatePlayerRuleDefinition::SanitisedYPos(double x, double y, double z,
-                                                  boost::shared_ptr<Player> player) const
+double UpdatePlayerRuleDefinition::SanitisedYPos(double x, double y, double z, boost::shared_ptr<Player> player) const
 {
     ServerLevel* level = gMinecraftServer->getLevel(0);
     double testY = y;
@@ -105,8 +104,7 @@ GameRuleDefinition* UpdatePlayerRuleDefinition::addChild(ConsoleGameRules::EGame
     return rule;
 }
 
-void UpdatePlayerRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
-                                                 unsigned int extraAttributeCount)
+void UpdatePlayerRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, _toString<int>(mSpawnPosition->getX()));
@@ -173,8 +171,7 @@ void UpdatePlayerRuleDefinition::postProcessPlayer(boost::shared_ptr<Player> pla
         {
             y = static_cast<double>(mSpawnPosition->getY());
         }
-        else if (Minecraft::InMiniGame(eMiniGameId_Lobby, true)
-                 || Minecraft::InMiniGame(eMiniGameId_Battle, true))
+        else if (Minecraft::InMiniGame(eMiniGameId_Lobby, true) || Minecraft::InMiniGame(eMiniGameId_Battle, true))
         {
             y = SanitisedYPos(x, mSpawnPosition->getY() + 0.5 + player->mBbHeight * 0.5f, z, player);
         }
@@ -192,8 +189,7 @@ void UpdatePlayerRuleDefinition::postProcessPlayer(boost::shared_ptr<Player> pla
     {
         xRot = mXRot;
     }
-    if (mSpawnPosition != NULL
-        || attributeHasValue(ConsoleGameRules::eGameRuleAttr_yRot)
+    if (mSpawnPosition != NULL || attributeHasValue(ConsoleGameRules::eGameRuleAttr_yRot)
         || attributeHasValue(ConsoleGameRules::eGameRuleAttr_xRot))
     {
         player->absMoveTo(x, y, z, yRot, xRot);

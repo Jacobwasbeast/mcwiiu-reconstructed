@@ -14,14 +14,14 @@
 
 static std::vector<Biome*> gRandomScatteredLargeFeatureBiomes;
 
-RandomScatteredLargeFeature::RandomScatteredLargeFeature()
-    : StructureFeature()
+RandomScatteredLargeFeature::RandomScatteredLargeFeature() : StructureFeature()
 {
     _init();
 }
 
 RandomScatteredLargeFeature::RandomScatteredLargeFeature(SuperflatConfig* config)
-    : StructureFeature(), mSwamphutEnemies()
+    : StructureFeature(),
+      mSwamphutEnemies()
 {
     _init();
     int spacing = (int)config->maybeOption(0x21, 0, (unsigned char)mSpacing);
@@ -97,8 +97,8 @@ bool RandomScatteredLargeFeature::isFeatureChunk(int chunkX, int chunkZ, bool fl
     chunkX = originalX;
     chunkZ = originalZ;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if ((options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_ScatteredFeature, NULL)) ||
-        (chunkX == regionX && chunkZ == regionZ))
+    if ((options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_ScatteredFeature, NULL))
+        || (chunkX == regionX && chunkZ == regionZ))
     {
         Biome* biome = level->getBiomeSource()->getBiome(BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
         for (std::vector<Biome*>::const_iterator it = gRandomScatteredLargeFeatureBiomes.begin();
@@ -113,15 +113,12 @@ bool RandomScatteredLargeFeature::isFeatureChunk(int chunkX, int chunkZ, bool fl
     return false;
 }
 
-BlockPos* RandomScatteredLargeFeature::getNearestGeneratedFeature(Level* levelIn,
-                                                                    const BlockPos& pos,
-                                                                    bool skipExistingChunks)
+BlockPos* RandomScatteredLargeFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos,
+                                                                  bool skipExistingChunks)
 {
     level = levelIn;
-    return StructureFeature::findNearestFeaturePositionBySpacing(levelIn, this, pos,
-                                                                    mSpacing, mSeparation,
-                                                                    0xDB1471, false, 100,
-                                                                    skipExistingChunks);
+    return StructureFeature::findNearestFeaturePositionBySpacing(levelIn, this, pos, mSpacing, mSeparation, 0xDB1471,
+                                                                 false, 100, skipExistingChunks);
 }
 
 StructureStart* RandomScatteredLargeFeature::createStructureStart(int chunkX, int chunkZ)
@@ -138,7 +135,8 @@ bool RandomScatteredLargeFeature::isSwamphut(const BlockPos& pos)
     }
     std::vector<StructurePiece*>::iterator first = start->mPieces.begin();
     ScatteredFeaturePieces::SwamplandHut* hut = first != start->mPieces.end() && *first != NULL
-        ? dynamic_cast<ScatteredFeaturePieces::SwamplandHut*>(*first) : NULL;
+                                                    ? dynamic_cast<ScatteredFeaturePieces::SwamplandHut*>(*first)
+                                                    : NULL;
     return hut != NULL;
 }
 
@@ -147,10 +145,8 @@ std::vector<Biome::MobSpawnerData*>* RandomScatteredLargeFeature::getSwamphutEne
     return &mSwamphutEnemies;
 }
 
-RandomScatteredLargeFeature::ScatteredFeatureStart::ScatteredFeatureStart(Level* levelIn,
-                                                                            Random& randomIn,
-                                                                            int chunkX,
-                                                                            int chunkZ)
+RandomScatteredLargeFeature::ScatteredFeatureStart::ScatteredFeatureStart(Level* levelIn, Random& randomIn, int chunkX,
+                                                                          int chunkZ)
     : StructureStart(chunkX, chunkZ)
 {
     Biome* biome = levelIn->getBiome(BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
@@ -175,8 +171,7 @@ RandomScatteredLargeFeature::ScatteredFeatureStart::ScatteredFeatureStart(Level*
     calculateBoundingBox();
 }
 
-RandomScatteredLargeFeature::ScatteredFeatureStart::ScatteredFeatureStart()
-    : StructureStart()
+RandomScatteredLargeFeature::ScatteredFeatureStart::ScatteredFeatureStart() : StructureStart()
 {
 }
 

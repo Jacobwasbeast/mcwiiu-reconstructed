@@ -1,30 +1,15 @@
 #include "game/world/generation/LayerMetadata.hpp"
 
-static const std::wstring FILTER_NAMES[LayerMetadata::eFilter_Count] =
-{
-    L"AnyLayer",
-    L"OnlyBottomLayer",
-    L"OnlyMiddleLayers",
-    L"OnlyTopLayer",
-    L"NotBottomLayer",
-    L"NotMiddleLayers",
-    L"NotTopLayer"
-};
+static const std::wstring FILTER_NAMES[LayerMetadata::eFilter_Count] = {
+    L"AnyLayer",       L"OnlyBottomLayer", L"OnlyMiddleLayers", L"OnlyTopLayer",
+    L"NotBottomLayer", L"NotMiddleLayers", L"NotTopLayer"};
 
-static const LayerMetadata::FilterFunc FILTER_FUNCS[LayerMetadata::eFilter_Count] =
-{
-    &LayerMetadata::AnyLayer,
-    &LayerMetadata::OnlyBottomLayer,
-    &LayerMetadata::OnlyMiddleLayers,
-    &LayerMetadata::OnlyTopLayer,
-    &LayerMetadata::NotBottomLayer,
-    &LayerMetadata::NotMiddleLayers,
-    &LayerMetadata::NotTopLayer
-};
+static const LayerMetadata::FilterFunc FILTER_FUNCS[LayerMetadata::eFilter_Count] = {
+    &LayerMetadata::AnyLayer,     &LayerMetadata::OnlyBottomLayer, &LayerMetadata::OnlyMiddleLayers,
+    &LayerMetadata::OnlyTopLayer, &LayerMetadata::NotBottomLayer,  &LayerMetadata::NotMiddleLayers,
+    &LayerMetadata::NotTopLayer};
 
-LayerMetadata::LayerMetadata()
-    : m_iLayerIndex(0)
-    , m_iBottomLayerIndex(0)
+LayerMetadata::LayerMetadata() : m_iLayerIndex(0), m_iBottomLayerIndex(0)
 {
 }
 

@@ -11,10 +11,7 @@ class Player;
 class PlayerSelector : public Predicate<boost::shared_ptr<Player> >
 {
 public:
-    PlayerSelector(Entity* entity)
-        : mEntity(entity)
-    {
-    }
+    PlayerSelector(Entity* entity) : mEntity(entity) {}
 
     virtual bool apply(boost::shared_ptr<Player> player) const;
     virtual ~PlayerSelector() {}

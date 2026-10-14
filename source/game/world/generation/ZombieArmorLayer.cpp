@@ -6,8 +6,8 @@
 #include "game/client/render/ZombieModel.hpp"
 
 ZombieArmorLayer::ZombieArmorLayer(LivingEntityRenderer* renderer, unsigned long long entityType)
-    : HumanoidArmorLayer(renderer)
-    , mEntityType(entityType)
+    : HumanoidArmorLayer(renderer),
+      mEntityType(entityType)
 {
     createArmorModels();
 }

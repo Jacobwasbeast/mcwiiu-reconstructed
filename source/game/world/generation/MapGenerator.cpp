@@ -2,8 +2,7 @@
 
 #include "game/core/System.hpp"
 
-MapGenerator::MapGenerator(Random random)
-    : mRandom(random)
+MapGenerator::MapGenerator(Random random) : mRandom(random)
 {
 }
 

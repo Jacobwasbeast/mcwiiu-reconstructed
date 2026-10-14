@@ -26,8 +26,7 @@ bool CoralHangFeature::canPlaceHangOn(Level* level, const BlockPos& pos)
     return false;
 }
 
-const Direction* CoralHangFeature::randomDirection(Level* level, Random& random,
-                                                    const BlockPos& pos)
+const Direction* CoralHangFeature::randomDirection(Level* level, Random& random, const BlockPos& pos)
 {
     arrayWithLength<const Direction*> faces = Direction::Plane::HORIZONTAL->getFaces();
     while (faces.length != 0)
@@ -91,9 +90,10 @@ bool CoralHangFeature::place(Level* level, Random& random, const BlockPos& origi
     }
 
     const BlockState* state = Blocks::coral_fan_hang->defaultBlockState()
-        ->setValue(CoralFanHang::VARIANT, random.nextInt(CoralFanHang::VARIANT->getValueCount()))
-        ->setValue(CoralFanHang::DEAD, random.nextBoolean())
-        ->setValue(CoralFanHang::DIRECTION, turnFacingIntoint(direction));
+                                  ->setValue(CoralFanHang::VARIANT,
+                                             random.nextInt(CoralFanHang::VARIANT->getValueCount()))
+                                  ->setValue(CoralFanHang::DEAD, random.nextBoolean())
+                                  ->setValue(CoralFanHang::DIRECTION, turnFacingIntoint(direction));
     if (level->reallyHasChunkAt(target))
     {
         setBlock(level, target, state, Block::UPDATE_NONE);

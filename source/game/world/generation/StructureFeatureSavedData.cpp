@@ -2,12 +2,11 @@
 
 #include "game/data/CompoundTag.hpp"
 
-template<typename T> std::wstring _toString(T value);
+template <typename T> std::wstring _toString(T value);
 
 static const std::wstring FEATURES_TAG = L"Features";
 
-StructureFeatureSavedData::StructureFeatureSavedData(const std::wstring& id)
-    : SavedData(id)
+StructureFeatureSavedData::StructureFeatureSavedData(const std::wstring& id) : SavedData(id)
 {
     mFullTag = new CompoundTag();
 }

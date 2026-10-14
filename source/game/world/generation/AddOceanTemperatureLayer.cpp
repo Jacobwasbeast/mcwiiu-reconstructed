@@ -4,8 +4,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/world/biome/Biome.hpp"
 
-AddOceanTemperatureLayer::AddOceanTemperatureLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+AddOceanTemperatureLayer::AddOceanTemperatureLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }

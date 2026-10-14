@@ -8,8 +8,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 
-ClayFeature::ClayFeature(int numberOfBlocks)
-    : Feature(false), mClay(Blocks::clay), mNumberOfBlocks(numberOfBlocks)
+ClayFeature::ClayFeature(int numberOfBlocks) : Feature(false), mClay(Blocks::clay), mNumberOfBlocks(numberOfBlocks)
 {
 }
 

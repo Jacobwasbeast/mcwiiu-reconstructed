@@ -18,7 +18,10 @@
 #include "game/world/generation/Player.hpp"
 
 MobNearestPlayerTargetGoal::MobNearestPlayerTargetGoal(Mob* mob)
-    : Goal(), mTargetSelector(this), mSorter(mob), mTarget()
+    : Goal(),
+      mTargetSelector(this),
+      mSorter(mob),
+      mTarget()
 {
     mMob = mob;
 }
@@ -38,8 +41,7 @@ bool MobNearestPlayerTargetGoal::canUse()
 {
     double followDistance = getFollowDistance();
     std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(
-        typeid(Player), mMob->mBoundingBox->grow(followDistance, 4.0, followDistance),
-        &mTargetSelector, false);
+        typeid(Player), mMob->mBoundingBox->grow(followDistance, 4.0, followDistance), &mTargetSelector, false);
 
     std::sort(entities->begin(), entities->end(), mSorter);
 
@@ -103,4 +105,3 @@ void MobNearestPlayerTargetGoal::stop()
     mMob->setTarget(boost::shared_ptr<LivingEntity>());
     Goal::start();
 }
-

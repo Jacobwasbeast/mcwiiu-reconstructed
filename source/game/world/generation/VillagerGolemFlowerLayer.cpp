@@ -15,8 +15,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
 
-VillagerGolemFlowerLayer::VillagerGolemFlowerLayer(VillagerGolemRenderer* renderer)
-    : mRenderer(renderer)
+VillagerGolemFlowerLayer::VillagerGolemFlowerLayer(VillagerGolemRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -24,8 +23,8 @@ VillagerGolemFlowerLayer::~VillagerGolemFlowerLayer()
 {
 }
 
-void VillagerGolemFlowerLayer::render(boost::shared_ptr<LivingEntity>& entity, float,
-                                      float, float, float, float, float, float, bool)
+void VillagerGolemFlowerLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float, float,
+                                      float, bool)
 {
     boost::shared_ptr<VillagerGolem> golem = boost::dynamic_pointer_cast<VillagerGolem>(entity);
 
@@ -37,7 +36,8 @@ void VillagerGolemFlowerLayer::render(boost::shared_ptr<LivingEntity>& entity, f
     GlStateManager::enableRescaleNormal();
     GlStateManager::pushMatrix();
 
-    GlStateManager::rotatef(180.0f * static_cast<VillagerGolemModel*>(mRenderer->getModel())->mArm1->mXRot / 3.1415927f + 5.0f,
+    GlStateManager::rotatef(180.0f * static_cast<VillagerGolemModel*>(mRenderer->getModel())->mArm1->mXRot / 3.1415927f
+                                + 5.0f,
                             1.0f, 0.0f, 0.0f);
     GlStateManager::translatef(-0.6875f, 1.25f, -0.9375f);
     GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);

@@ -10,8 +10,7 @@
 #include "game/world/block/KelpBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-KelpFeature::KelpFeature()
-    : Feature(false)
+KelpFeature::KelpFeature() : Feature(false)
 {
     for (int age = 0; age < 16; ++age)
     {
@@ -29,8 +28,7 @@ bool KelpFeature::place(Level* level, Random& random, const BlockPos& origin)
     {
         BlockPos position(origin);
         while (!level->isSolidBlockingBlock(position)
-            && level->getBlockId(position.x, position.y, position.z) != BlockId::KELP
-            && position.y > 0)
+               && level->getBlockId(position.x, position.y, position.z) != BlockId::KELP && position.y > 0)
         {
             position = position.below();
         }
@@ -47,7 +45,7 @@ bool KelpFeature::place(Level* level, Random& random, const BlockPos& origin)
             const int dx = random.nextGaussianInt(8);
             BlockPos candidate = position.offset(dx, 0, dz);
             while (!level->isEmptyWaterBlock(candidate)
-                && level->getBlockId(candidate.x, candidate.y, candidate.z) != BlockId::AIR)
+                   && level->getBlockId(candidate.x, candidate.y, candidate.z) != BlockId::AIR)
             {
                 candidate = candidate.above();
             }
@@ -70,14 +68,16 @@ bool KelpFeature::place(Level* level, Random& random, const BlockPos& origin)
                         if (Blocks::kelp->mayPlace(level, candidate))
                         {
                             int y;
-                            setBlock(level, candidate, mStates[age], Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
+                            setBlock(level, candidate, mStates[age],
+                                     Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
                             for (y = 1; y < growth; ++y)
                             {
                                 if (level->isEmptyWaterBlock(candidate.above(y))
                                     && Blocks::kelp->mayPlace(level, candidate.above(y)))
                                 {
                                     const BlockState* state = mStates[age + y];
-                                    setBlock(level, candidate.above(y), state, Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
+                                    setBlock(level, candidate.above(y), state,
+                                             Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
                                 }
                                 else
                                 {
@@ -97,5 +97,5 @@ bool KelpFeature::_canPlace(Level* level, const BlockPos& pos) const
 {
     int blockId = level->getBlockId(pos.x, pos.y, pos.z);
     return blockId == BlockId::DIRT || blockId == BlockId::SAND || blockId == BlockId::GRAVEL
-        || blockId == BlockId::KELP;
+           || blockId == BlockId::KELP;
 }

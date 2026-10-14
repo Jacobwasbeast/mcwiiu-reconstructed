@@ -11,8 +11,7 @@
 
 static ResourceLocation ENDER_DRAGON_EYES_LOCATION(TN_MOB_ENDERDRAGON_ENDER_EYES);
 
-EnderDragonEyesLayer::EnderDragonEyesLayer(EnderDragonRenderer* renderer)
-    : mRenderer(renderer)
+EnderDragonEyesLayer::EnderDragonEyesLayer(EnderDragonRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -20,7 +19,9 @@ EnderDragonEyesLayer::~EnderDragonEyesLayer()
 {
 }
 
-void EnderDragonEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
+void EnderDragonEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                  float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                                  bool bUseDisplayList)
 {
     mRenderer->bindTexture(&ENDER_DRAGON_EYES_LOCATION);
     GlStateManager::enableBlend();
@@ -35,7 +36,8 @@ void EnderDragonEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     boost::shared_ptr<Entity> renderEntity = entity;
-    mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
+    mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                                  bUseDisplayList);
     mRenderer->setLightColor(renderEntity);
 
     GlStateManager::disableBlend();

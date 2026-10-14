@@ -31,7 +31,8 @@ RoofTreeFeature::~RoofTreeFeature()
 
 void RoofTreeFeature::staticCtor()
 {
-    roofTreeTrunkState = Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
+    roofTreeTrunkState = Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT,
+                                                                     PlanksBlock::Variant::DARK_OAK);
     roofTreeLeafState = Blocks::leaves2->defaultBlockState()
                             ->setValue(NewLeafBlock::VARIANT, PlanksBlock::Variant::DARK_OAK)
                             ->setValue(LeafBlock::CHECK_DECAY, false);
@@ -182,8 +183,8 @@ bool RoofTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
     {
         for (int dz = -3; dz <= 4; ++dz)
         {
-            if ((dx != -3 || dz != -3) && (dx != -3 || dz != 4) && (dx != 4 || dz != -3)
-                && (dx != 4 || dz != 4) && (std::abs(dx) < 3 || std::abs(dz) < 3))
+            if ((dx != -3 || dz != -3) && (dx != -3 || dz != 4) && (dx != 4 || dz != -3) && (dx != 4 || dz != 4)
+                && (std::abs(dx) < 3 || std::abs(dz) < 3))
             {
                 placeLeafAt(level, x + dx, top, z + dz);
             }

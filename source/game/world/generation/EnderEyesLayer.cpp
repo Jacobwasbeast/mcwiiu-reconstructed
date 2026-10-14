@@ -11,8 +11,7 @@
 
 static ResourceLocation ENDER_EYES_LOCATION(TN_MOB_ENDERMAN_EYES);
 
-EnderEyesLayer::EnderEyesLayer(EndermanRenderer* renderer)
-    : mRenderer(renderer)
+EnderEyesLayer::EnderEyesLayer(EndermanRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -21,8 +20,8 @@ EnderEyesLayer::~EnderEyesLayer()
 }
 
 void EnderEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                            float partialTicks, float ageInTicks, float netHeadYaw, float headPitch,
-                            float scale, bool bUseDisplayList)
+                            float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                            bool bUseDisplayList)
 {
     mRenderer->bindTexture(&ENDER_EYES_LOCATION);
     GlStateManager::enableBlend();
@@ -37,8 +36,8 @@ void EnderEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbS
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     boost::shared_ptr<Entity> renderEntity = entity;
-    mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                                   headPitch, scale, bUseDisplayList);
+    mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                                  bUseDisplayList);
     mRenderer->setLightColor(renderEntity);
 
     GlStateManager::depthMask(true);

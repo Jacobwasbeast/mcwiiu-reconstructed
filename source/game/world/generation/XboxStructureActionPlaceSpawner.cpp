@@ -21,10 +21,10 @@ XboxStructureActionPlaceSpawner::~XboxStructureActionPlaceSpawner()
 }
 
 uint32_t XboxStructureActionPlaceSpawner::placeSpawnerInLevel(StructurePiece* structurePiece, Level* level,
-    BoundingBox* box)
+                                                              BoundingBox* box)
 {
     BlockPos pos(structurePiece->getWorldX(mEndX, mEndZ), structurePiece->getWorldY(mEndY),
-        structurePiece->getWorldZ(mEndX, mEndZ));
+                 structurePiece->getWorldZ(mEndX, mEndZ));
     if (box->isInside(pos))
     {
         if (level->getBlockEntity(pos))
@@ -34,8 +34,8 @@ uint32_t XboxStructureActionPlaceSpawner::placeSpawnerInLevel(StructurePiece* st
         }
 
         level->setBlock(pos, mBlock->defaultBlockState(), Block::UPDATE_ALL, false);
-        boost::shared_ptr<MobSpawnerBlockEntity> spawner =
-            boost::dynamic_pointer_cast<MobSpawnerBlockEntity>(level->getBlockEntity(pos));
+        boost::shared_ptr<MobSpawnerBlockEntity> spawner = boost::dynamic_pointer_cast<MobSpawnerBlockEntity>(
+            level->getBlockEntity(pos));
         if (spawner)
         {
             spawner->setEntityId(mEntityId);

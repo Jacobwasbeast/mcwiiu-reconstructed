@@ -54,10 +54,10 @@ public:
     void animateTick(int x, int y, int z);
     void animateTickDoWork();
     void removeAllPendingEntityRemovals();
-    void playLocalSound(const BlockPos& pos, const SoundEvent* sound, SoundSource::ESoundSource source,
-                        float volume, float pitch, bool distanceDelay, float range);
-    void MultiPlayerLevelInit(ClientPacketListener* connection, LevelSettings* settings,
-                              const Difficulty* difficulty, int seaLevel);
+    void playLocalSound(const BlockPos& pos, const SoundEvent* sound, SoundSource::ESoundSource source, float volume,
+                        float pitch, bool distanceDelay, float range);
+    void MultiPlayerLevelInit(ClientPacketListener* connection, LevelSettings* settings, const Difficulty* difficulty,
+                              int seaLevel);
     virtual void tick();
     void clearResetRegion(int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
     virtual ChunkSource* createChunkSource();
@@ -84,19 +84,15 @@ public:
     virtual void tickWeather(bool blockEvents);
     virtual int getChunkPollRange();
     virtual void tickClientSideBlocks(int x, int z, LevelChunk* chunk);
-    virtual void playSound(boost::shared_ptr<Player> player, double x, double y, double z,
-                           const SoundEvent* sound, SoundSource::ESoundSource source,
-                           float volume, float pitch, float range);
-    virtual void playLocalSound(double x, double y, double z, const SoundEvent* sound,
-                                SoundSource::ESoundSource source, float volume, float pitch,
-                                bool distanceDelay, float range);
-    virtual void createFireworks(double x, double y, double z, double xa, double ya, double za,
-                                 CompoundTag* fireworks);
+    virtual void playSound(boost::shared_ptr<Player> player, double x, double y, double z, const SoundEvent* sound,
+                           SoundSource::ESoundSource source, float volume, float pitch, float range);
+    virtual void playLocalSound(double x, double y, double z, const SoundEvent* sound, SoundSource::ESoundSource source,
+                                float volume, float pitch, bool distanceDelay, float range);
+    virtual void createFireworks(double x, double y, double z, double xa, double ya, double za, CompoundTag* fireworks);
     virtual void sendPacketToServer(boost::shared_ptr<Packet> packet);
     virtual void setDayTime(long long time);
     void dataReceivedForChunk(int x, int z);
-    void removeUnusedBlockEntitiesInRegion(int minX, int minY, int minZ,
-                                           int maxX, int maxY, int maxZ);
+    void removeUnusedBlockEntitiesInRegion(int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
     virtual Scoreboard* GetScoreboard();
     void DropChunksOutsideArea(int minX, int minZ, int maxX, int maxZ, bool force);
     void StopReloadChunk(int x, int z);

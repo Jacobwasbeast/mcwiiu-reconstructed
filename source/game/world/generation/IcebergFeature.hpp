@@ -24,12 +24,14 @@ public:
     int getEllipseC(int height, int totalHeight);
     double signedDistanceCircle(int x, int z, const BlockPos& origin, int radius, Random& random);
     void setIcebergBlock(const BlockPos& pos, Level* level, Random& random, int height, int totalHeight);
-    void generateIcebergBlock(Level* level, Random& random, const BlockPos& origin, int height, int x, int y, int z, int radius, int ellipseRadius);
+    void generateIcebergBlock(Level* level, Random& random, const BlockPos& origin, int height, int x, int y, int z,
+                              int radius, int ellipseRadius);
     bool isIcebergBlock(Block* block);
     bool belowIsAir(Level* level, const BlockPos& pos);
     void smooth(Level* level, const BlockPos& origin, int radius, int height);
     void removeFloatingSnowLayer(Level* level, const BlockPos& pos);
-    void carve(int radius, int y, const BlockPos& origin, Level* level, bool placeWater, double angle, const BlockPos& cutCentre);
+    void carve(int radius, int y, const BlockPos& origin, Level* level, bool placeWater, double angle,
+               const BlockPos& cutCentre);
     void generateCutOut(Random& random, Level* level, int radius, int height, const BlockPos& origin);
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
     void setLargestOffset(int largestOffset);

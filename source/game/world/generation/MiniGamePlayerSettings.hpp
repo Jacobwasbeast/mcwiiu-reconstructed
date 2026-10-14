@@ -9,33 +9,33 @@ class MiniGamePlayerSettings
 {
 public:
     MiniGamePlayerSettings()
-        : mHostOptions()
-        , mPlayerAbilities()
-        , mLivesPerRound(1)
-        , mLootSetId(0)
-        , mRandomLootSet(false)
-        , mTeamCount(0)
-        , mTeamMaxSize(1)
-        , mTeamBasedSpawn(false)
-        , mCheckpointBasedSpawn(false)
-        , mShowNametags(false)
-        , mTakeEverythingEnabled(true)
-        , mChestRefillEnabled(true)
-        , mCanTntDestroyBlocks()
-        , mMapSizeOverride()
-        , mRandomMapSize(false)
-        , mArenaSizeMultiplier()
-        , mLayerCount()
-        , mRoundCount(0)
-        , mSmallInventoryEnabled(true)
-        , mNaturalRegeneration(true)
-        , mFoodBalance(0)
-        , mSmallSkinsEnabled(true)
-        , mRoundLength(0)
-        , mMaxPlayers(8)
-        , mCentralSpawnDisabled(false)
-        , mTeamGame(false)
-        , mSpectatorParticipation(false)
+        : mHostOptions(),
+          mPlayerAbilities(),
+          mLivesPerRound(1),
+          mLootSetId(0),
+          mRandomLootSet(false),
+          mTeamCount(0),
+          mTeamMaxSize(1),
+          mTeamBasedSpawn(false),
+          mCheckpointBasedSpawn(false),
+          mShowNametags(false),
+          mTakeEverythingEnabled(true),
+          mChestRefillEnabled(true),
+          mCanTntDestroyBlocks(),
+          mMapSizeOverride(),
+          mRandomMapSize(false),
+          mArenaSizeMultiplier(),
+          mLayerCount(),
+          mRoundCount(0),
+          mSmallInventoryEnabled(true),
+          mNaturalRegeneration(true),
+          mFoodBalance(0),
+          mSmallSkinsEnabled(true),
+          mRoundLength(0),
+          mMaxPlayers(8),
+          mCentralSpawnDisabled(false),
+          mTeamGame(false),
+          mSpectatorParticipation(false)
     {
     }
     ~MiniGamePlayerSettings();

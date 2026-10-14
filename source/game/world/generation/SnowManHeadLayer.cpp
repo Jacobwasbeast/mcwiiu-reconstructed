@@ -14,8 +14,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/Blocks.hpp"
 
-SnowManHeadLayer::SnowManHeadLayer(SnowManRenderer* renderer)
-    : mRenderer(renderer)
+SnowManHeadLayer::SnowManHeadLayer(SnowManRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -23,7 +22,9 @@ SnowManHeadLayer::~SnowManHeadLayer()
 {
 }
 
-void SnowManHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
+void SnowManHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                              float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                              bool bUseDisplayList)
 {
     boost::shared_ptr<SnowMan> snowMan = boost::dynamic_pointer_cast<SnowMan>(entity);
 
@@ -41,12 +42,8 @@ void SnowManHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     GlStateManager::scalef(headScale, -headScale, -headScale);
 
     Minecraft::GetInstance()->getItemInHandRenderer()->renderItem(
-        snowMan,
-        not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carved_pumpkin, 1)),
-        ItemTransforms::NONE,
-        false,
-        0,
-        true);
+        snowMan, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carved_pumpkin, 1)), ItemTransforms::NONE, false,
+        0, true);
 
     GlStateManager::popMatrix();
 }

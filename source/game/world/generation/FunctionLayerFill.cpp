@@ -7,8 +7,7 @@
 #include "game/util/Vec3i.hpp"
 #include "game/world/block/BlockTransaction.hpp"
 
-FunctionLayerFill::FunctionLayerFill(int (*function)(float))
-    : mFunction(function)
+FunctionLayerFill::FunctionLayerFill(int (*function)(float)) : mFunction(function)
 {
 }
 
@@ -26,8 +25,8 @@ int FunctionLayerFill::ISLAND(float value)
     return 1;
 }
 
-void FunctionLayerFill::ExtrudeLayer(Random&, const Shape& shape, const Vec3i&,
-                                     BlockTransaction* transaction, int* minY, int* maxY) const
+void FunctionLayerFill::ExtrudeLayer(Random&, const Shape& shape, const Vec3i&, BlockTransaction* transaction,
+                                     int* minY, int* maxY) const
 {
     for (unsigned int x = 0; x < shape.width; ++x)
     {

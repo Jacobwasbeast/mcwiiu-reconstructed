@@ -17,7 +17,8 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 IUIScene_PlayerList::PlayerChange::PlayerChange(unsigned char smallIdValue, bool addedValue)
-    : smallId(smallIdValue), added(addedValue)
+    : smallId(smallIdValue),
+      added(addedValue)
 {
 }
 

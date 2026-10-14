@@ -89,8 +89,7 @@ bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
 
     Block* ground = level->getBlockState(origin.below())->getBlock();
-    if ((ground != Blocks::grass && ground != Blocks::dirt && ground != Blocks::farmland) ||
-        origin.y >= 255 - height)
+    if ((ground != Blocks::grass && ground != Blocks::dirt && ground != Blocks::farmland) || origin.y >= 255 - height)
     {
         PIXEndNamedEvent();
         return false;
@@ -120,8 +119,8 @@ bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
             int xOffset = x - origin.x;
             for (int z = origin.z - radius; z <= origin.z + radius; ++z)
             {
-                if (std::abs(xOffset) != radius || std::abs(z - origin.z) != radius ||
-                    (random.nextInt(2) != 0 && yOffset != 0))
+                if (std::abs(xOffset) != radius || std::abs(z - origin.z) != radius
+                    || (random.nextInt(2) != 0 && yOffset != 0))
                 {
                     leaves.set(x, y, z);
                     Material* material = level->getBlockState(leaves)->getMaterial();

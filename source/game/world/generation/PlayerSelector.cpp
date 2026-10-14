@@ -8,5 +8,6 @@
 
 bool PlayerSelector::apply(boost::shared_ptr<Player> player) const
 {
-    return mEntity->distanceToSqr(player) < 2500.0 && boost::static_pointer_cast<ServerPlayer>(player)->mGameMode->isSurvival();
+    return mEntity->distanceToSqr(player) < 2500.0
+           && boost::static_pointer_cast<ServerPlayer>(player)->mGameMode->isSurvival();
 }

@@ -55,11 +55,10 @@ public:
     void removeAll();
     CompoundTag* load(boost::shared_ptr<ServerPlayer> player);
     void validatePlayerSpawnPosition(boost::shared_ptr<ServerPlayer> player);
-    void updatePlayerGameMode(boost::shared_ptr<ServerPlayer> oldPlayer,
-                              boost::shared_ptr<ServerPlayer> newPlayer, Level* level);
+    void updatePlayerGameMode(boost::shared_ptr<ServerPlayer> oldPlayer, boost::shared_ptr<ServerPlayer> newPlayer,
+                              Level* level);
     int getMaxPlayers();
-    void updateEntireScoreboard(ServerScoreboard* scoreboard,
-                                boost::shared_ptr<ServerPlayer> player);
+    void updateEntireScoreboard(ServerScoreboard* scoreboard, boost::shared_ptr<ServerPlayer> player);
     void sendLevelInfo(boost::shared_ptr<ServerPlayer> player, ServerLevel* level);
     void changeDimension(boost::shared_ptr<ServerPlayer> player, ServerLevel* level);
     void add(boost::shared_ptr<ServerPlayer> player);
@@ -68,14 +67,12 @@ public:
     void setLevel(arrayWithLength<ServerLevel*> levels);
     int getMaxRange();
     void move(boost::shared_ptr<ServerPlayer> player);
-    boost::shared_ptr<ServerPlayer> getPlayerForLogin(
-        ServerConnectionListener* listener, const std::wstring& name,
-        PlayerUID uid, PlayerUID oldUid);
+    boost::shared_ptr<ServerPlayer> getPlayerForLogin(ServerConnectionListener* listener, const std::wstring& name,
+                                                      PlayerUID uid, PlayerUID oldUid);
     std::vector<boost::shared_ptr<ServerPlayer> >* getPlayers();
-    boost::shared_ptr<ServerPlayer> respawn(boost::shared_ptr<ServerPlayer> player,
-                                            int dimension, bool conqueredEnd);
-    void repositionAcrossDimension(boost::shared_ptr<Entity> entity, int lastDimension,
-                                   ServerLevel* oldLevel, ServerLevel* newLevel);
+    boost::shared_ptr<ServerPlayer> respawn(boost::shared_ptr<ServerPlayer> player, int dimension, bool conqueredEnd);
+    void repositionAcrossDimension(boost::shared_ptr<Entity> entity, int lastDimension, ServerLevel* oldLevel,
+                                   ServerLevel* newLevel);
     void sendAllPlayerInfo(boost::shared_ptr<ServerPlayer> player);
     void toggleDimension(boost::shared_ptr<ServerPlayer> player, int dimension);
     void tick();
@@ -84,17 +81,14 @@ public:
     void broadcastAll(boost::shared_ptr<Packet> packet, int dimension);
     boost::shared_ptr<ServerPlayer> getPlayer(PlayerUID uid);
     void broadcastToTeam(boost::shared_ptr<Player> source, boost::shared_ptr<Packet> packet);
-    void broadcastToAllExceptTeam(boost::shared_ptr<Player> source,
-                                  boost::shared_ptr<Packet> packet);
-    void broadcastPlaylistInfo(
-        std::vector<LevelRules::LevelRulesetGroup*>* groups);
+    void broadcastToAllExceptTeam(boost::shared_ptr<Player> source, boost::shared_ptr<Packet> packet);
+    void broadcastPlaylistInfo(std::vector<LevelRules::LevelRulesetGroup*>* groups);
     std::wstring getPlayerNames();
     boost::shared_ptr<ServerPlayer> getPlayerByName(const std::wstring& name);
     boost::shared_ptr<ServerPlayer> getPlayerFromStatsUID(const StatsUID& uid);
-    void broadcast(boost::shared_ptr<Player> source, double x, double y, double z,
-                   double radius, int dimension, boost::shared_ptr<Packet> packet);
-    void broadcast(double x, double y, double z, double radius, int dimension,
+    void broadcast(boost::shared_ptr<Player> source, double x, double y, double z, double radius, int dimension,
                    boost::shared_ptr<Packet> packet);
+    void broadcast(double x, double y, double z, double radius, int dimension, boost::shared_ptr<Packet> packet);
     int getPlayerCount();
     int getPlayerCount(ServerLevel* level);
     void kickPlayerByShortId(unsigned char id);

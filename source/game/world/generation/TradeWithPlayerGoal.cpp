@@ -7,8 +7,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/Villager.hpp"
 
-TradeWithPlayerGoal::TradeWithPlayerGoal(Villager* villager)
-    : Goal(), mVillager(villager)
+TradeWithPlayerGoal::TradeWithPlayerGoal(Villager* villager) : Goal(), mVillager(villager)
 {
     setRequiredControlFlags(5);
 }
@@ -53,4 +52,3 @@ void TradeWithPlayerGoal::stop()
 {
     mVillager->setTradingPlayer(boost::shared_ptr<Player>());
 }
-

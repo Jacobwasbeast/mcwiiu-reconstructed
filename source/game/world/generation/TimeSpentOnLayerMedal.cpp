@@ -4,10 +4,10 @@
 #include "game/server/MinecraftServer.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
-TimeSpentOnLayerMedal::TimeSpentOnLayerMedal(ELayerMedal layer, int name, float target,
-    unsigned int weight, GameMedal::EOperator op)
-    : GameMedal(name, target, weight, op, true, false)
-    , mLayer(layer)
+TimeSpentOnLayerMedal::TimeSpentOnLayerMedal(ELayerMedal layer, int name, float target, unsigned int weight,
+                                             GameMedal::EOperator op)
+    : GameMedal(name, target, weight, op, true, false),
+      mLayer(layer)
 {
 }
 

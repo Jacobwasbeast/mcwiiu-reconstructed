@@ -14,17 +14,11 @@
 #include "game/world/generation/SimplePatchesLayerThemeRuleDefinition.hpp"
 #include "game/world/generation/TerracottaLayerThemeRuleDefinition.hpp"
 
-static const std::wstring sPassNames[4] =
-{
-    L"Look",
-    L"Decorations",
-    L"Hazards",
-    L"Lights"
-};
+static const std::wstring sPassNames[4] = {L"Look", L"Decorations", L"Hazards", L"Lights"};
 
 LayerThemeRuleDefinition::LayerThemeRuleDefinition()
-    : LayerAttributeRuleDefinition<LayerTheme*>(ConsoleGameRules::eGameRuleType_LayerTheme, CreateFuncImpl)
-    , mPassId(0xFFFFFFFF)
+    : LayerAttributeRuleDefinition<LayerTheme*>(ConsoleGameRules::eGameRuleType_LayerTheme, CreateFuncImpl),
+      mPassId(0xFFFFFFFF)
 {
 }
 
@@ -70,7 +64,8 @@ void LayerThemeRuleDefinition::addAttribute(const std::wstring& name, const std:
     }
 }
 
-LayerAttributeChildRuleDefinition<LayerTheme*>* LayerThemeRuleDefinition::CreateFuncImpl(ConsoleGameRules::EGameRuleType type)
+LayerAttributeChildRuleDefinition<LayerTheme*>* LayerThemeRuleDefinition::CreateFuncImpl(
+    ConsoleGameRules::EGameRuleType type)
 {
     switch (type)
     {

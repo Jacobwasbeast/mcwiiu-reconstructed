@@ -10,8 +10,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 
-SpringFeature::SpringFeature(Block* block)
-    : Feature(false), mBlock(block)
+SpringFeature::SpringFeature(Block* block) : Feature(false), mBlock(block)
 {
 }
 
@@ -21,8 +20,7 @@ SpringFeature::~SpringFeature()
 
 bool SpringFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    if (gApp.getLevelGenerationOptions() != NULL
-        && gApp.getLevelGenerationOptions()->checkIntersects(origin, origin))
+    if (gApp.getLevelGenerationOptions() != NULL && gApp.getLevelGenerationOptions()->checkIntersects(origin, origin))
     {
         return false;
     }
@@ -40,8 +38,7 @@ bool SpringFeature::place(Level* level, Random& random, const BlockPos& origin)
         return false;
     }
 
-    if (level->getBlockId(x, y, z) != BlockId::AIR
-        && level->getBlockId(x, y, z) != BlockId::STONE)
+    if (level->getBlockId(x, y, z) != BlockId::AIR && level->getBlockId(x, y, z) != BlockId::STONE)
     {
         return false;
     }

@@ -13,8 +13,8 @@ public:
 
 private:
     bool isJungleCompatible(int biomeId);
-    void replaceIfNeighborOcean(arrayWithLength<int> parentArea, arrayWithLength<int> area,
-                                int x, int z, int width, int centre, int replacement);
+    void replaceIfNeighborOcean(arrayWithLength<int> parentArea, arrayWithLength<int> area, int x, int z, int width,
+                                int centre, int replacement);
     bool isMesa(int biomeId);
 };
 

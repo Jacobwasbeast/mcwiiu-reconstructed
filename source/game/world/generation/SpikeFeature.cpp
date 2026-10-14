@@ -15,8 +15,7 @@
 #include "game/world/block/Iterator.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 
-SpikeFeature::SpikeFeature()
-    : Feature(false)
+SpikeFeature::SpikeFeature() : Feature(false)
 {
     mSpike = NULL;
     mCrystalBeamTarget = NULL;
@@ -46,15 +45,15 @@ bool SpikeFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
 
     int radius = (int)mSpike->getRadius();
-    Iterator<MutableBlockPos*>* positions =
-        BlockPos::mutablesBetween(BlockPos(origin.x - radius, 1, origin.z - radius),
-                                  BlockPos(origin.x + radius, (int)mSpike->getHeight() + 10, origin.z + radius));
+    Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(
+        BlockPos(origin.x - radius, 1, origin.z - radius),
+        BlockPos(origin.x + radius, (int)mSpike->getHeight() + 10, origin.z + radius));
 
     while (positions->hasNext())
     {
         MutableBlockPos position = *positions->next();
-        if (position.distSqr((double)origin.x, (double)position.y, (double)origin.z) <= (double)(radius * radius + 1) &&
-            position.y < (int)mSpike->getHeight())
+        if (position.distSqr((double)origin.x, (double)position.y, (double)origin.z) <= (double)(radius * radius + 1)
+            && position.y < (int)mSpike->getHeight())
         {
             setBlock(level, position, Blocks::obsidian->defaultBlockState(), Block::UPDATE_NONE);
         }
@@ -97,8 +96,8 @@ bool SpikeFeature::place(Level* level, Random& random, const BlockPos& origin)
         crystal->setBeamTarget(NULL);
     }
     crystal->setInvulnerable(mCrystalInvulnerable);
-    crystal->moveTo((float)origin.x + 0.5f, (double)((int)mSpike->getHeight() + 1),
-                    (float)origin.z + 0.5f, random.nextFloat() * 360.0f, 0.0f);
+    crystal->moveTo((float)origin.x + 0.5f, (double)((int)mSpike->getHeight() + 1), (float)origin.z + 0.5f,
+                    random.nextFloat() * 360.0f, 0.0f);
     level->addEntity(boost::shared_ptr<Entity>(crystal));
 
     BlockPos bedrockPos(origin.x, (int)mSpike->getHeight(), origin.z);
@@ -140,10 +139,8 @@ SpikeFeature::EndSpike::EndSpike(int centerX, int centerZ, int radius, int heigh
       mRadius(radius),
       mHeight(height),
       mGuarded(guarded),
-      mTopBoundingBox(AABB::newPermanent((double)(centerX - radius), 0.0,
-                                         (double)(centerZ - radius),
-                                         (double)(centerX + radius), 256.0,
-                                         (double)(centerZ + radius)))
+      mTopBoundingBox(AABB::newPermanent((double)(centerX - radius), 0.0, (double)(centerZ - radius),
+                                         (double)(centerX + radius), 256.0, (double)(centerZ + radius)))
 {
 }
 
@@ -177,7 +174,7 @@ unsigned int SpikeFeature::EndSpike::getCenterZ()
     return (unsigned int)mCenterZ;
 }
 
- AABB* SpikeFeature::EndSpike::getTopBoundingBox()
+AABB* SpikeFeature::EndSpike::getTopBoundingBox()
 {
     return mTopBoundingBox;
 }

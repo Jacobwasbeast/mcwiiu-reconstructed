@@ -10,8 +10,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/VineBlock.hpp"
 
-VinesFeature::VinesFeature()
-    : Feature(false)
+VinesFeature::VinesFeature() : Feature(false)
 {
 }
 
@@ -30,10 +29,10 @@ bool VinesFeature::place(Level* level, Random& random, const BlockPos& origin)
                 if (Blocks::vine->mayPlace(level, position, direction))
                 {
                     const BlockState* state = Blocks::vine->defaultBlockState()
-                        ->setValue(VineBlock::NORTH, direction == Direction::SOUTH)
-                        ->setValue(VineBlock::EAST, direction == Direction::WEST)
-                        ->setValue(VineBlock::SOUTH, direction == Direction::NORTH)
-                        ->setValue(VineBlock::WEST, direction == Direction::EAST);
+                                                  ->setValue(VineBlock::NORTH, direction == Direction::SOUTH)
+                                                  ->setValue(VineBlock::EAST, direction == Direction::WEST)
+                                                  ->setValue(VineBlock::SOUTH, direction == Direction::NORTH)
+                                                  ->setValue(VineBlock::WEST, direction == Direction::EAST);
                     level->setBlock(position, state, Block::UPDATE_CLIENTS, false);
                     break;
                 }
@@ -41,8 +40,7 @@ bool VinesFeature::place(Level* level, Random& random, const BlockPos& origin)
         }
         else
         {
-            position = position.offset(random.nextInt(4) - random.nextInt(4), 0,
-                random.nextInt(4) - random.nextInt(4));
+            position = position.offset(random.nextInt(4) - random.nextInt(4), 0, random.nextInt(4) - random.nextInt(4));
         }
     }
 

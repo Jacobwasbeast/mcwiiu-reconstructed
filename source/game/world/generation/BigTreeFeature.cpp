@@ -17,7 +17,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 BigTreeFeature::FoliageCoords::FoliageCoords(const BlockPos& pos, int branchBase)
-    : BlockPos(pos.x, pos.y, pos.z), mBranchBase(branchBase)
+    : BlockPos(pos.x, pos.y, pos.z),
+      mBranchBase(branchBase)
 {
 }
 
@@ -27,9 +28,11 @@ int BigTreeFeature::FoliageCoords::getBranchBase()
 }
 
 BigTreeFeature::BigTreeFeature(bool doBlockNotify)
-    : AbstractTreeFeature(doBlockNotify, 5, Blocks::log->defaultBlockState(),
-                          Blocks::leaves->defaultBlockState(), false),
-      mRandom(), mBasePos(), mFoliageCoords()
+    : AbstractTreeFeature(doBlockNotify, 5, Blocks::log->defaultBlockState(), Blocks::leaves->defaultBlockState(),
+                          false),
+      mRandom(),
+      mBasePos(),
+      mFoliageCoords()
 {
     mHeightLimit = 0;
     mHeight = 0;
@@ -89,8 +92,7 @@ int BigTreeFeature::checkLine(const BlockPos& from, const BlockPos& to)
     for (int i = 0; i <= steps; ++i)
     {
         float step = (float)i;
-        BlockPos pos = from.offset((double)(step * dx + 0.5f), (double)(step * dy + 0.5f),
-                                   (double)(step * dz + 0.5f));
+        BlockPos pos = from.offset((double)(step * dx + 0.5f), (double)(step * dy + 0.5f), (double)(step * dz + 0.5f));
         if (!isFree(mLevel->getBlockState(pos)->getBlock()))
             return i;
     }
@@ -128,8 +130,12 @@ void BigTreeFeature::prepare()
             if (checkLine(cluster, cluster.above(mLeafDistanceLimit)) != -1)
                 continue;
 
-            double branchY = (double)cluster.y - (double)sqrtf((float)((mBasePos.x - cluster.x) * (mBasePos.x - cluster.x) + (mBasePos.z - cluster.z) * (mBasePos.z - cluster.z))) * mBranchSlope;
-            const BlockPos& branchBase = BlockPos(mBasePos.x, branchY > (double)trunkTop ? trunkTop : (int)branchY, mBasePos.z);
+            double branchY = (double)cluster.y
+                             - (double)sqrtf((float)((mBasePos.x - cluster.x) * (mBasePos.x - cluster.x)
+                                                     + (mBasePos.z - cluster.z) * (mBasePos.z - cluster.z)))
+                                   * mBranchSlope;
+            const BlockPos& branchBase = BlockPos(mBasePos.x, branchY > (double)trunkTop ? trunkTop : (int)branchY,
+                                                  mBasePos.z);
             if (checkLine(branchBase, cluster) == -1)
                 mFoliageCoords.push_back(FoliageCoords(cluster, branchBase.y));
         }
@@ -203,8 +209,7 @@ void BigTreeFeature::limb(const BlockPos& from, const BlockPos& to, Block* block
     for (int i = 0; i <= steps; ++i)
     {
         float step = (float)i;
-        BlockPos pos = from.offset((double)(step * dx + 0.5f), (double)(step * dy + 0.5f),
-                                   (double)(step * dz + 0.5f));
+        BlockPos pos = from.offset((double)(step * dx + 0.5f), (double)(step * dy + 0.5f), (double)(step * dz + 0.5f));
         LogBlock::LogAxis* axis = getLogAxis(from, pos);
         setBlock(mLevel, pos, block->defaultBlockState()->setValue(LogBlock::AXIS, axis), Block::UPDATE_NONE);
     }

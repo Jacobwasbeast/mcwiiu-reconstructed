@@ -11,8 +11,7 @@
 
 static ResourceLocation SPIDER_EYES_LOCATION(TN_MOB_SPIDER_EYES);
 
-SpiderEyesLayer::SpiderEyesLayer(SpiderRenderer* renderer)
-    : mRenderer(renderer)
+SpiderEyesLayer::SpiderEyesLayer(SpiderRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -21,8 +20,8 @@ SpiderEyesLayer::~SpiderEyesLayer()
 }
 
 void SpiderEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                             float partialTicks, float ageInTicks, float netHeadYaw, float headPitch,
-                             float scale, bool bUseDisplayList)
+                             float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                             bool bUseDisplayList)
 {
     mRenderer->bindTexture(&SPIDER_EYES_LOCATION);
     GlStateManager::enableBlend();
@@ -39,8 +38,8 @@ void SpiderEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     boost::shared_ptr<Entity> renderEntity(entity);
-    mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                                   scale, bUseDisplayList);
+    mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                                  bUseDisplayList);
 
     int lightColor = entity->getLightColor();
     GlStateManager::multiTexCoord2f((float)(lightColor % 65536), (float)(lightColor / 65536));

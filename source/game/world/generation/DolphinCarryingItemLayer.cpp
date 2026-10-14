@@ -12,7 +12,8 @@
 #include "game/world/block/Block.hpp"
 
 DolphinCarryingItemLayer::DolphinCarryingItemLayer(LivingEntityRenderer* renderer)
-    : mLivingEntityRenderer(renderer), mItemRenderer(Minecraft::GetInstance()->getItemRenderer())
+    : mLivingEntityRenderer(renderer),
+      mItemRenderer(Minecraft::GetInstance()->getItemRenderer())
 {
 }
 
@@ -48,8 +49,8 @@ void DolphinCarryingItemLayer::renderItemOnNose(const boost::shared_ptr<LivingEn
     GlStateManager::popMatrix();
 }
 
-void DolphinCarryingItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float,
-                                      float, float, bool)
+void DolphinCarryingItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float, float,
+                                      float, bool)
 {
     const bool rightHanded = entity->getMainArm() == HumanoidArm::RIGHT;
     not_null_ptr<ItemInstance> leftHandItem = rightHanded ? entity->getOffhandItem() : entity->getMainHandItem();

@@ -4,8 +4,7 @@
 #include "game/world/biome/Biome.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-RiverLayer::RiverLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+RiverLayer::RiverLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }

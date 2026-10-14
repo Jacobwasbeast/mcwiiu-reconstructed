@@ -2,8 +2,7 @@
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-AddEdgeLayer::AddEdgeLayer(long long seed, boost::shared_ptr<Layer> parentLayer, Mode mode)
-    : Layer(seed), mMode(mode)
+AddEdgeLayer::AddEdgeLayer(long long seed, boost::shared_ptr<Layer> parentLayer, Mode mode) : Layer(seed), mMode(mode)
 {
     parent = parentLayer;
 }

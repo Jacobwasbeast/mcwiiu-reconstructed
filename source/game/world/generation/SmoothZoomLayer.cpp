@@ -3,14 +3,12 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/System.hpp"
 
-SmoothZoomLayer::SmoothZoomLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+SmoothZoomLayer::SmoothZoomLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }
 
-boost::shared_ptr<Layer> SmoothZoomLayer::zoom(long long seed,
-    boost::shared_ptr<Layer> parent, int count)
+boost::shared_ptr<Layer> SmoothZoomLayer::zoom(long long seed, boost::shared_ptr<Layer> parent, int count)
 {
     boost::shared_ptr<Layer> layer = parent;
     for (int i = 0; i < count; ++i)

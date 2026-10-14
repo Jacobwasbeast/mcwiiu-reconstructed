@@ -13,8 +13,7 @@
 
 ResourceLocation ShulkerHeadLayer::SHULKER_LOCATION(TN_MOB_SHULKER_ENDERGOLEM);
 
-ShulkerHeadLayer::ShulkerHeadLayer(ShulkerRenderer* renderer)
-    : mRenderer(renderer)
+ShulkerHeadLayer::ShulkerHeadLayer(ShulkerRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -23,8 +22,8 @@ ShulkerHeadLayer::~ShulkerHeadLayer()
 }
 
 void ShulkerHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                              float partialTicks, float ageInTicks, float netHeadYaw, float headPitch,
-                              float scale, bool bUseDisplayList)
+                              float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                              bool bUseDisplayList)
 {
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
     GlStateManager::pushMatrix();

@@ -48,12 +48,11 @@ void BuriedTreasureFeature::staticCtor()
         }
     }
 
-    gBuriedTreasureBiomeRequirements = FjFeatureBiomeRequirements(
-        &gBuriedTreasureSpawnBiomes, 0, &gBuriedTreasureAllowedBiomes, 16);
+    gBuriedTreasureBiomeRequirements = FjFeatureBiomeRequirements(&gBuriedTreasureSpawnBiomes, 0,
+                                                                  &gBuriedTreasureAllowedBiomes, 16);
 }
 
-BuriedTreasureFeature::BuriedTreasureFeature(int)
-    : StructureFeature()
+BuriedTreasureFeature::BuriedTreasureFeature(int) : StructureFeature()
 {
     mFeatureChunk = FjIsFeatureChunk(&gBuriedTreasureBiomeRequirements, 40, 4, 2);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
@@ -64,13 +63,12 @@ std::wstring BuriedTreasureFeature::getFeatureName()
     return L"Buried Treasure";
 }
 
-BlockPos* BuriedTreasureFeature::getNearestGeneratedFeature(Level* levelIn,
-                                                              const BlockPos& pos,
-                                                              bool skipExistingChunks)
+BlockPos* BuriedTreasureFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos,
+                                                            bool skipExistingChunks)
 {
     level = levelIn;
-    return StructureFeature::findNearestFeaturePositionBySpacing(
-        levelIn, this, pos, 4, 2, BURIED_TREASURE_SALT, true, 100, skipExistingChunks);
+    return StructureFeature::findNearestFeaturePositionBySpacing(levelIn, this, pos, 4, 2, BURIED_TREASURE_SALT, true,
+                                                                 100, skipExistingChunks);
 }
 
 StructureStart* BuriedTreasureFeature::createStructureStart(int chunkX, int chunkZ)
@@ -82,28 +80,25 @@ bool BuriedTreasureFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorl
 {
     int sizeInChunks = level->getLevelData()->getXZSize();
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
-        ? &mReducedFeatureChunk : &mFeatureChunk;
+                                         ? &mReducedFeatureChunk
+                                         : &mFeatureChunk;
     ChunkPos center = featureChunk->getCenterChunk(chunkX, chunkZ);
-    bool result = featureChunk->isFeatureChunk(
-        *level->getRandomFor(center.x, center.z, BURIED_TREASURE_SALT), level->getBiomeSource(),
-        sizeInChunks, chunkX, chunkZ);
+    bool result = featureChunk->isFeatureChunk(*level->getRandomFor(center.x, center.z, BURIED_TREASURE_SALT),
+                                               level->getBiomeSource(), sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_BuriedTreasure, chunkX, chunkZ);
     if (result)
-        gApp.AddTerrainFeaturePosition(
-            static_cast<_eTerrainFeatureType>(BURIED_TREASURE_TERRAIN_FEATURE_ID), chunkX, chunkZ);
+        gApp.AddTerrainFeaturePosition(static_cast<_eTerrainFeatureType>(BURIED_TREASURE_TERRAIN_FEATURE_ID), chunkX,
+                                       chunkZ);
     return result;
 }
 
-BuriedTreasureFeature::BuriedTreasurePiece::BuriedTreasurePiece(int x, int z)
-    : TemplateStructurePiece(4)
+BuriedTreasureFeature::BuriedTreasurePiece::BuriedTreasurePiece(int x, int z) : TemplateStructurePiece(4)
 {
     setOrientation(Direction::NORTH);
     mBoundingBox = new BoundingBox(x, 64, z, x + 1, 73, z + 1);
 }
 
-bool BuriedTreasureFeature::BuriedTreasurePiece::postProcess(Level* levelIn,
-                                                               Random& randomIn,
-                                                               BoundingBox* box)
+bool BuriedTreasureFeature::BuriedTreasurePiece::postProcess(Level* levelIn, Random& randomIn, BoundingBox* box)
 {
     BlockPos origin(getWorldX(0, 0), getWorldY(1), getWorldZ(0, 0));
     if (!box->isInside(origin))
@@ -118,17 +113,14 @@ bool BuriedTreasureFeature::BuriedTreasurePiece::postProcess(Level* levelIn,
     boost::shared_ptr<BlockEntity> blockEntity = levelIn->getBlockEntity(origin);
     if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
     {
-        boost::shared_ptr<ChestBlockEntity> chest =
-            boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
-        chest->setLootTable(&BuiltInLootTables::BURIEDTREASURE,
-                            static_cast<long long>(randomIn.nextInt()));
+        boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
+        chest->setLootTable(&BuiltInLootTables::BURIEDTREASURE, static_cast<long long>(randomIn.nextInt()));
     }
     return true;
 }
 
-void BuriedTreasureFeature::BuriedTreasurePiece::handleDataMarker(
-    const std::wstring& marker, const BlockPos& position, Level* levelIn,
-    Random& randomIn, BoundingBox* box)
+void BuriedTreasureFeature::BuriedTreasurePiece::handleDataMarker(const std::wstring& marker, const BlockPos& position,
+                                                                  Level* levelIn, Random& randomIn, BoundingBox* box)
 {
     if (marker.find(L"Chest") != 0)
         return;
@@ -177,9 +169,10 @@ EStructurePiece BuriedTreasureFeature::BuriedTreasurePiece::GetType()
     return eStructurePiece_BuriedTreasurePiece;
 }
 
-BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart(
-    BuriedTreasureFeature* feature, Level* levelIn, Random&, int chunkX, int chunkZ)
-    : StructureStart(chunkX, chunkZ), mFeature(feature)
+BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart(BuriedTreasureFeature* feature, Level* levelIn, Random&,
+                                                                int chunkX, int chunkZ)
+    : StructureStart(chunkX, chunkZ),
+      mFeature(feature)
 {
     int z = chunkZ * 16;
     int x = chunkX * 16;
@@ -188,8 +181,7 @@ BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart(
     calculateBoundingBox();
 }
 
-BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart()
-    : StructureStart(0, 0)
+BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart() : StructureStart(0, 0)
 {
 }
 

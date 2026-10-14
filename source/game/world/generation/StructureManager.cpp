@@ -10,8 +10,7 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
 
-static const wchar_t* STRUCTURE_TEMPLATE_NAMES[eMinecraftStructureTemplate_Count] =
-{
+static const wchar_t* STRUCTURE_TEMPLATE_NAMES[eMinecraftStructureTemplate_Count] = {
     L"igloo/igloo_top",
     L"igloo/igloo_middle",
     L"igloo/igloo_bottom",
@@ -202,14 +201,14 @@ static const wchar_t* STRUCTURE_TEMPLATE_NAMES[eMinecraftStructureTemplate_Count
     L"coralcrust/outcropping6",
 };
 
-StructureManager::StructureManager(DataFixerUpper* fixer)
-    : templates(11), fixerUpper(fixer)
+StructureManager::StructureManager(DataFixerUpper* fixer) : templates(11), fixerUpper(fixer)
 {
 }
 
 StructureManager::~StructureManager()
 {
-    for (boost::unordered_map<int, const StructureTemplate*>::iterator it = templates.begin(); it != templates.end(); ++it)
+    for (boost::unordered_map<int, const StructureTemplate*>::iterator it = templates.begin(); it != templates.end();
+         ++it)
         delete it->second;
 }
 

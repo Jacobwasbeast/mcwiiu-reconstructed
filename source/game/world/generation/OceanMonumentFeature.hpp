@@ -51,13 +51,11 @@ public:
 
     static void staticCtor();
     virtual std::wstring getFeatureName();
-    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
-                                                  bool skipExistingChunks);
+    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos, bool skipExistingChunks);
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
 
-    static char fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks,
-                                 int chunkX, int chunkZ);
+    static char fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks, int chunkX, int chunkZ);
     std::vector<Biome::MobSpawnerData*>* getEnemies();
 
 private:

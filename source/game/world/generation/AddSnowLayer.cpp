@@ -3,8 +3,7 @@
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-AddSnowLayer::AddSnowLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+AddSnowLayer::AddSnowLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }

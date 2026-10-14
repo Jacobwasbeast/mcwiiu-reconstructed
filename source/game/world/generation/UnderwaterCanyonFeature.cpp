@@ -30,10 +30,9 @@ void UnderwaterCanyonFeature::apply(Level* level, int chunkX, int chunkZ, ChunkP
     }
 }
 
-void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ,
-                                        ChunkPrimer* primer, double x, double y, double z,
-                                        float thickness, float yaw, float pitch, int startIndex,
-                                        int endIndex, double yScale)
+void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer,
+                                        double x, double y, double z, float thickness, float yaw, float pitch,
+                                        int startIndex, int endIndex, double yScale)
 {
     MemSect(49);
     Random random(seed);
@@ -112,8 +111,10 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
                     maxZ = 16;
 
                 int magmaData = Blocks::magma->convertBlockStateToLegacyData(Blocks::magma->defaultBlockState());
-                int obsidianData = Blocks::obsidian->convertBlockStateToLegacyData(Blocks::obsidian->defaultBlockState());
-                int flowingWaterData = Blocks::flowing_water->convertBlockStateToLegacyData(Blocks::flowing_water->defaultBlockState());
+                int obsidianData = Blocks::obsidian->convertBlockStateToLegacyData(
+                    Blocks::obsidian->defaultBlockState());
+                int flowingWaterData = Blocks::flowing_water->convertBlockStateToLegacyData(
+                    Blocks::flowing_water->defaultBlockState());
                 int waterData = Blocks::water->convertBlockStateToLegacyData(Blocks::water->defaultBlockState());
                 bool carved = false;
                 for (int localX = minX; localX < maxX; ++localX)
@@ -153,7 +154,8 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
                                                 int neighbor = ((localX << 11) + 0x800) | (localZ << 7) | localY;
                                                 if (primer->getBlockId(neighbor) == BlockId::AIR)
                                                 {
-                                                    primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER, flowingWaterData);
+                                                    primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER,
+                                                                            flowingWaterData);
                                                     water = true;
                                                 }
                                             }
@@ -162,7 +164,8 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
                                                 int neighbor = ((localX << 11) - 0x800) | (localZ << 7) | localY;
                                                 if (primer->getBlockId(neighbor) == BlockId::AIR)
                                                 {
-                                                    primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER, flowingWaterData);
+                                                    primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER,
+                                                                            flowingWaterData);
                                                     water = true;
                                                 }
                                             }
@@ -171,7 +174,8 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
                                                 int neighbor = (localX << 11) | ((localZ << 7) + 0x80) | localY;
                                                 if (primer->getBlockId(neighbor) == BlockId::AIR)
                                                 {
-                                                    primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER, flowingWaterData);
+                                                    primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER,
+                                                                            flowingWaterData);
                                                     water = true;
                                                 }
                                             }
@@ -180,7 +184,8 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
                                                 int neighbor = (localX << 11) | ((localZ << 7) - 0x80) | localY;
                                                 if (primer->getBlockId(neighbor) == BlockId::AIR)
                                                 {
-                                                    primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER, flowingWaterData);
+                                                    primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER,
+                                                                            flowingWaterData);
                                                     water = true;
                                                 }
                                             }
@@ -201,8 +206,8 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
     }
 }
 
-void UnderwaterCanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX,
-                                         int originChunkZ, ChunkPrimer* primer)
+void UnderwaterCanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+                                         ChunkPrimer* primer)
 {
     if (random.nextInt(20) != 0)
         return;
@@ -221,6 +226,7 @@ void UnderwaterCanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, i
         float thickness = random.nextFloat() * 3.0F + firstWidth;
         if (random.nextFloat() < 0.05F)
             thickness *= 2.0F;
-        addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, thickness, yaw, pitch, 0, 0, 3.0);
+        addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, thickness, yaw, pitch, 0, 0,
+                  3.0);
     }
 }

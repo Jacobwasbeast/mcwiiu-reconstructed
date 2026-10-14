@@ -15,9 +15,9 @@
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/LargeCaveFeature.hpp"
 
-void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer,
-    double x, double y, double z, float thickness, float yaw, float pitch, int startIndex, int endIndex,
-    double yScale)
+void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x,
+                              double y, double z, float thickness, float yaw, float pitch, int startIndex, int endIndex,
+                              double yScale)
 {
     BlockPos origin(x, y, z);
     MemSect(49);
@@ -51,7 +51,8 @@ void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chun
 
     for (; startIndex < endIndex; ++startIndex)
     {
-        double horizontalRadius = 1.5 + (double)(Mth::sin((float)startIndex * 3.1415927F / (float)endIndex) * thickness);
+        double horizontalRadius = 1.5
+                                  + (double)(Mth::sin((float)startIndex * 3.1415927F / (float)endIndex) * thickness);
         double verticalRadius = horizontalRadius * yScale;
         horizontalRadius *= random.nextFloat() * 0.25 + 0.75;
         verticalRadius *= random.nextFloat() * 0.25 + 0.75;
@@ -147,8 +148,7 @@ void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chun
                     if (!LargeCaveFeature::canReplaceBlock(blockId, aboveBlockId))
                         continue;
 
-                    if (!carved && level != NULL
-                        && level->getBiome(origin)->getBiomeType() == Biome::eBiomeType_Ocean)
+                    if (!carved && level != NULL && level->getBiome(origin)->getBiomeType() == Biome::eBiomeType_Ocean)
                         return;
                     carved = true;
 
@@ -178,7 +178,7 @@ void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chun
 }
 
 void CanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
-    ChunkPrimer* primer)
+                               ChunkPrimer* primer)
 {
     if (random.nextInt(50) != 0)
         return;
@@ -192,7 +192,8 @@ void CanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originC
         float yaw = random.nextFloat() * 3.1415927F * 2.0F;
         float pitch = (random.nextFloat() - 0.5F) * 2.0F / 8.0F;
         float thickness = (random.nextFloat() * 2.0F + random.nextFloat()) * 2.0F;
-        addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, thickness, yaw, pitch, 0, 0, 3.0);
+        addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, thickness, yaw, pitch, 0, 0,
+                  3.0);
     }
     gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)4, x / 16, y / 16);
 }

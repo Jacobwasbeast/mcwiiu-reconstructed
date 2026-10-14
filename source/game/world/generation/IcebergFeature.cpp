@@ -14,8 +14,14 @@
 #include "game/world/block/Material.hpp"
 
 IcebergFeature::IcebergFeature()
-    : Feature(false), mSnowOnTop(false), mIsEllipse(false), mAngle(3.1415927410125732),
-      mEllipseRadius(0), mEllipseC(0), mLargestOffset(0), mIcebergState(NULL)
+    : Feature(false),
+      mSnowOnTop(false),
+      mIsEllipse(false),
+      mAngle(3.1415927410125732),
+      mEllipseRadius(0),
+      mEllipseC(0),
+      mLargestOffset(0),
+      mIcebergState(NULL)
 {
 }
 
@@ -74,7 +80,7 @@ void IcebergFeature::initEllipse(Random& random)
 double IcebergFeature::signedDistanceEllipse(int x, int z, const BlockPos& origin, int radius, int c, double angle)
 {
     return pow(((double)(x - origin.x) * cos(angle) - (double)(z - origin.z) * sin(angle)) / (double)radius, 2)
-        + pow(((double)(x - origin.x) * sin(angle) + (double)(z - origin.z) * cos(angle)) / (double)c, 2) - 1.0;
+           + pow(((double)(x - origin.x) * sin(angle) + (double)(z - origin.z) * cos(angle)) / (double)c, 2) - 1.0;
 }
 
 int IcebergFeature::getEllipseC(int height, int totalHeight)
@@ -95,8 +101,8 @@ void IcebergFeature::setIcebergBlock(const BlockPos& pos, Level* level, Random& 
 {
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
-    if (state->getMaterial() == Material::AIR || block == Blocks::snow || block == Blocks::ice
-        || block == Blocks::water || block == Blocks::flowing_water)
+    if (state->getMaterial() == Material::AIR || block == Blocks::snow || block == Blocks::ice || block == Blocks::water
+        || block == Blocks::flowing_water)
     {
         bool placeSnow = !mIsEllipse || random.nextDouble() > 0.05;
         int divisor = mIsEllipse ? 3 : 2;
@@ -109,12 +115,12 @@ void IcebergFeature::setIcebergBlock(const BlockPos& pos, Level* level, Random& 
     }
 }
 
-void IcebergFeature::generateIcebergBlock(Level* level, Random& random, const BlockPos& origin, int height, int x, int y, int z, int radius, int ellipseRadius)
+void IcebergFeature::generateIcebergBlock(Level* level, Random& random, const BlockPos& origin, int height, int x,
+                                          int y, int z, int radius, int ellipseRadius)
 {
     BlockPos centre(0, 0, 0);
-    double distance = mIsEllipse
-        ? signedDistanceEllipse(x, z, centre, ellipseRadius, getEllipseC(y, height), mAngle)
-        : signedDistanceCircle(x, z, centre, radius, random);
+    double distance = mIsEllipse ? signedDistanceEllipse(x, z, centre, ellipseRadius, getEllipseC(y, height), mAngle)
+                                 : signedDistanceCircle(x, z, centre, radius, random);
     if (distance < 0.0)
     {
         BlockPos pos = origin.offset(x, y, z);
@@ -181,7 +187,8 @@ void IcebergFeature::removeFloatingSnowLayer(Level* level, const BlockPos& pos)
         setBlock(level, pos.above(), Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
 }
 
-void IcebergFeature::carve(int radius, int y, const BlockPos& origin, Level* level, bool placeWater, double angle, const BlockPos& cutCentre)
+void IcebergFeature::carve(int radius, int y, const BlockPos& origin, Level* level, bool placeWater, double angle,
+                           const BlockPos& cutCentre)
 {
     int extent = radius + 1 + mEllipseRadius / 3;
     int c = std::min(radius - 3, 3) + mEllipseC / 2 - 1;
@@ -279,7 +286,9 @@ bool IcebergFeature::place(Level* level, Random& random, const BlockPos& origin)
         {
             for (int y = -1; y > -depth; --y)
             {
-                int ellipseRadius = mIsEllipse ? (int)ceilf((float)extent * (1.0f - pow((float)y, 2) / ((float)depth * 8.0f))) : extent;
+                int ellipseRadius = mIsEllipse
+                                        ? (int)ceilf((float)extent * (1.0f - pow((float)y, 2) / ((float)depth * 8.0f)))
+                                        : extent;
                 int layerRadius = heightDependentRadiusSteep(random, -y, depth, radius);
                 if (x < layerRadius)
                     generateIcebergBlock(level, random, pos, depth, x, y, z, layerRadius, ellipseRadius);

@@ -42,8 +42,8 @@ arrayWithLength<int> AddOceanEdgeLayer::getArea(int x, int z, int width, int hei
                 area[localX + localZ * width] = Biome::eBiomeIDs_Ocean;
             }
             else if (centre == Biome::eBiomeIDs_FrozenOcean
-                && (north == Biome::eBiomeIDs_WarmOcean || east == Biome::eBiomeIDs_WarmOcean
-                    || west == Biome::eBiomeIDs_WarmOcean || south == Biome::eBiomeIDs_WarmOcean))
+                     && (north == Biome::eBiomeIDs_WarmOcean || east == Biome::eBiomeIDs_WarmOcean
+                         || west == Biome::eBiomeIDs_WarmOcean || south == Biome::eBiomeIDs_WarmOcean))
             {
                 area[localX + localZ * width] = Biome::eBiomeIDs_Ocean;
             }

@@ -22,8 +22,7 @@
 #include "game/world/generation/Player.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
-CustomHeadLayer::CustomHeadLayer(ModelPart* head)
-    : mHead(head)
+CustomHeadLayer::CustomHeadLayer(ModelPart* head) : mHead(head)
 {
 }
 
@@ -31,7 +30,9 @@ CustomHeadLayer::~CustomHeadLayer()
 {
 }
 
-void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
+void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                             float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                             bool bUseDisplayList)
 {
     not_null_ptr<ItemInstance> headItem = entity->getItemSlot(EquipmentSlot::HEAD);
 
@@ -41,7 +42,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     }
 
     bool bSpectating = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
-        && boost::static_pointer_cast<Player>(entity)->isSpectator();
+                       && boost::static_pointer_cast<Player>(entity)->isSpectator();
 
     if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
@@ -76,7 +77,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     }
 
     bool bVillagerHead = eTYPE_DERIVED_FROM(EntityType::VILLAGER, entity->GetType())
-        || eTYPE_DERIVED_FROM(EntityType::ZOMBIE_VILLAGER, entity->GetType());
+                         || eTYPE_DERIVED_FROM(EntityType::ZOMBIE_VILLAGER, entity->GetType());
 
     if (entity->isBaby() && !eTYPE_DERIVED_FROM(EntityType::VILLAGER, entity->GetType()))
     {
@@ -117,13 +118,15 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         {
             GlStateManager::translatef(0.0f, (-0.5f - entity->getSkinAdjustments().mHeadY) * 0.0625f, 0.0f);
 
-            SkullBlockRenderer::instance->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, netHeadYaw + 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
+            SkullBlockRenderer::instance->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, netHeadYaw + 180.0f, headPitch,
+                                                      headItem->getAuxValue(), -1, limbSwing, true);
 
             GlStateManager::popMatrix();
         }
         else
         {
-            SkullBlockRenderer::instance->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
+            SkullBlockRenderer::instance->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, 180.0f, headPitch,
+                                                      headItem->getAuxValue(), -1, limbSwing, true);
 
             GlStateManager::popMatrix();
         }
@@ -141,7 +144,8 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
                 GlStateManager::translatef(0.0f, 0.1875f, 0.0f);
             }
 
-            minecraft->getItemInHandRenderer()->renderItem(entity, headItem, ItemTransforms::HEAD, false, 0, !Minecraft::InMiniGame(eMiniGameId_Glide, true));
+            minecraft->getItemInHandRenderer()->renderItem(entity, headItem, ItemTransforms::HEAD, false, 0,
+                                                           !Minecraft::InMiniGame(eMiniGameId_Glide, true));
         }
 
         GlStateManager::popMatrix();

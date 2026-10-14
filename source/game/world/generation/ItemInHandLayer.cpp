@@ -10,13 +10,12 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
 
-ItemInHandLayer::ItemInHandLayer(LivingEntityRenderer* renderer)
-    : mLivingEntityRenderer(renderer)
+ItemInHandLayer::ItemInHandLayer(LivingEntityRenderer* renderer) : mLivingEntityRenderer(renderer)
 {
 }
 
-void ItemInHandLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float, float,
-                             float, bool)
+void ItemInHandLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float, float, float,
+                             bool)
 {
     const bool rightMain = entity->getMainArm() == HumanoidArm::RIGHT;
     not_null_ptr<ItemInstance> leftHandItem(rightMain ? entity->getOffhandItem() : entity->getMainHandItem());

@@ -13,5 +13,6 @@ PlayerCountCondition::~PlayerCountCondition()
 
 bool PlayerCountCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
 {
-    return GameMedal::defaultCanAward(uid, gameStats, static_cast<float>(gameStats->GetPlayerStats()->size()), mTarget, mOperator);
+    return GameMedal::defaultCanAward(uid, gameStats, static_cast<float>(gameStats->GetPlayerStats()->size()), mTarget,
+                                      mOperator);
 }

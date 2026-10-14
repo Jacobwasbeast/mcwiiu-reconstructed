@@ -46,7 +46,8 @@ bool ReedsFeature::place(Level* level, Random& random, const BlockPos& origin)
             {
                 if (Blocks::reeds->canSurvive(level, position, NULL))
                 {
-                    level->setBlock(position.above(y), Blocks::reeds->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                    level->setBlock(position.above(y), Blocks::reeds->defaultBlockState(), Block::UPDATE_CLIENTS,
+                                    false);
                 }
             }
         }

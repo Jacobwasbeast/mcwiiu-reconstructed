@@ -24,16 +24,15 @@ public:
         BuriedTreasurePiece(int x, int z);
 
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
-        virtual void handleDataMarker(const std::wstring& marker, const BlockPos& position,
-                                      Level* level, Random& random, BoundingBox* box);
+        virtual void handleDataMarker(const std::wstring& marker, const BlockPos& position, Level* level,
+                                      Random& random, BoundingBox* box);
         virtual EStructurePiece GetType();
     };
 
     class BuriedTreasureStart : public StructureStart
     {
     public:
-        BuriedTreasureStart(BuriedTreasureFeature* feature, Level* level, Random& random,
-                            int chunkX, int chunkZ);
+        BuriedTreasureStart(BuriedTreasureFeature* feature, Level* level, Random& random, int chunkX, int chunkZ);
         BuriedTreasureStart();
 
         virtual EStructureStart GetType();
@@ -47,8 +46,7 @@ public:
 
     static void staticCtor();
     virtual std::wstring getFeatureName();
-    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
-                                                  bool skipExistingChunks);
+    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos, bool skipExistingChunks);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
 

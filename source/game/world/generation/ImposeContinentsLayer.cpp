@@ -5,22 +5,13 @@
 
 static const int CONTINENT_MAP_SIZE = 10;
 
-static const int CONTINENT_MAP[CONTINENT_MAP_SIZE][CONTINENT_MAP_SIZE] =
-{
-    { 1, 1, 1, 1, 0, 0, 0, 1, 1, 1 },
-    { 1, 1, 1, 0, 1, 1, 1, 0, 1, 1 },
-    { 1, 1, 0, 1, 1, 1, 1, 1, 0, 1 },
-    { 1, 0, 1, 1, 1, 1, 1, 1, 1, 0 },
-    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-    { 1, 0, 1, 1, 1, 1, 1, 1, 1, 0 },
-    { 1, 1, 0, 1, 1, 1, 1, 1, 0, 1 },
-    { 1, 1, 1, 0, 1, 1, 1, 0, 1, 1 }
-};
+static const int CONTINENT_MAP[CONTINENT_MAP_SIZE][CONTINENT_MAP_SIZE] = {
+    {1, 1, 1, 1, 0, 0, 0, 1, 1, 1}, {1, 1, 1, 0, 1, 1, 1, 0, 1, 1}, {1, 1, 0, 1, 1, 1, 1, 1, 0, 1},
+    {1, 0, 1, 1, 1, 1, 1, 1, 1, 0}, {0, 1, 1, 1, 1, 1, 1, 1, 1, 1}, {0, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {0, 1, 1, 1, 1, 1, 1, 1, 1, 1}, {1, 0, 1, 1, 1, 1, 1, 1, 1, 0}, {1, 1, 0, 1, 1, 1, 1, 1, 0, 1},
+    {1, 1, 1, 0, 1, 1, 1, 0, 1, 1}};
 
-ImposeContinentsLayer::ImposeContinentsLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+ImposeContinentsLayer::ImposeContinentsLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }

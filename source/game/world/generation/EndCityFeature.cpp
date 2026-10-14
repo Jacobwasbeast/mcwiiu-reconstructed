@@ -17,8 +17,7 @@
 #include "game/core/EndCityPieces.hpp"
 
 
-EndCityFeature::EndCityFeature(TheEndLevelSource* source)
-    : StructureFeature(), mSource(source)
+EndCityFeature::EndCityFeature(TheEndLevelSource* source) : StructureFeature(), mSource(source)
 {
 }
 
@@ -42,8 +41,7 @@ bool EndCityFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
     return chunkX == area->x && chunkZ == area->z && chunkRandom.nextDouble() < 0.33;
 }
 
-int EndCityFeature::getYPositionForFeature(int chunkX, int chunkZ,
-                                           TheEndLevelSource* source)
+int EndCityFeature::getYPositionForFeature(int chunkX, int chunkZ, TheEndLevelSource* source)
 {
     int seed = chunkX + chunkZ * 10387313;
     Random random(seed);
@@ -78,32 +76,29 @@ StructureStart* EndCityFeature::createStructureStart(int chunkX, int chunkZ)
     return new EndCityStart(level, mSource, random, chunkX, chunkZ);
 }
 
-BlockPos* EndCityFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos,
-                                                       bool skipExistingChunks)
+BlockPos* EndCityFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos, bool skipExistingChunks)
 {
     level = levelIn;
-    return StructureFeature::findNearestFeaturePositionBySpacing(
-        levelIn, this, pos, 10, 4, 10387313, true, 100, skipExistingChunks);
+    return StructureFeature::findNearestFeaturePositionBySpacing(levelIn, this, pos, 10, 4, 10387313, true, 100,
+                                                                 skipExistingChunks);
 }
 
-EndCityFeature::EndCityStart::EndCityStart(Level* levelIn, TheEndLevelSource* source,
-                                           Random& random, int chunkX, int chunkZ)
+EndCityFeature::EndCityStart::EndCityStart(Level* levelIn, TheEndLevelSource* source, Random& random, int chunkX,
+                                           int chunkZ)
     : StructureStart(chunkX, chunkZ)
 {
-    gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)8,
-                                       (chunkX * 16 + 8) / 16,
-                                       (chunkZ * 16 + 8) / 16);
+    gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)8, (chunkX * 16 + 8) / 16, (chunkZ * 16 + 8) / 16);
     create(levelIn, source, random, chunkX, chunkZ);
 }
 
-void EndCityFeature::EndCityStart::create(Level* levelIn, TheEndLevelSource* source,
-                                          Random& random, int chunkX, int chunkZ)
+void EndCityFeature::EndCityStart::create(Level* levelIn, TheEndLevelSource* source, Random& random, int chunkX,
+                                          int chunkZ)
 {
     Rotation* rotation = Rotation::getRandom(random);
     int y = EndCityFeature::getYPositionForFeature(chunkX, chunkZ, source);
     BlockPos position(chunkX * 16 + 8, y, chunkZ * 16 + 8);
-    EndCityPieces::startHouseTower(levelIn->getLevelStorage()->getStructureManager(), position,
-                                    rotation, mPieces, random);
+    EndCityPieces::startHouseTower(levelIn->getLevelStorage()->getStructureManager(), position, rotation, mPieces,
+                                   random);
     calculateBoundingBox();
     mValid = true;
 }

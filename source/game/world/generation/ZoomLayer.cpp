@@ -4,8 +4,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/System.hpp"
 
-ZoomLayer::ZoomLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+ZoomLayer::ZoomLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }

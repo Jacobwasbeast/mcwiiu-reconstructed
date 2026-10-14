@@ -2,8 +2,7 @@
 
 #include "game/core/PIXNamedEvents.hpp"
 
-FuzzyZoomLayer::FuzzyZoomLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : ZoomLayer(seed, parent)
+FuzzyZoomLayer::FuzzyZoomLayer(long long seed, boost::shared_ptr<Layer> parent) : ZoomLayer(seed, parent)
 {
     this->parent = parent;
 }

@@ -8,10 +8,11 @@
 #include "game/world/generation/LayerTheme.hpp"
 
 template <class T>
-LayerAttributeRuleDefinition<T>::LayerAttributeRuleDefinition(ConsoleGameRules::EGameRuleType actionType, CreateChildFunc createChild)
-    : mActionType(actionType)
-    , mWholeLevel(false)
-    , mCreateChild(createChild)
+LayerAttributeRuleDefinition<T>::LayerAttributeRuleDefinition(ConsoleGameRules::EGameRuleType actionType,
+                                                              CreateChildFunc createChild)
+    : mActionType(actionType),
+      mWholeLevel(false),
+      mCreateChild(createChild)
 {
 }
 
@@ -22,7 +23,8 @@ ConsoleGameRules::EGameRuleType LayerAttributeRuleDefinition<T>::getActionType()
 }
 
 template <class T>
-void LayerAttributeRuleDefinition<T>::writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount)
+void LayerAttributeRuleDefinition<T>::writeAttributes(GameRuleSaveInterface* saveInterface,
+                                                      unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 1);
 
@@ -79,4 +81,3 @@ template class LayerAttributeRuleDefinition<LayerFill*>;
 template class LayerAttributeRuleDefinition<LayerShape*>;
 template class LayerAttributeRuleDefinition<LayerSize*>;
 template class LayerAttributeRuleDefinition<LayerTheme*>;
-

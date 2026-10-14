@@ -6,8 +6,8 @@
 class TimeInLayerCentreMedal : public GameMedal
 {
 public:
-    TimeInLayerCentreMedal(int name, float target, unsigned int weight, GameMedal::EOperator op,
-        bool bestOnly, bool canMultiAward)
+    TimeInLayerCentreMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly,
+                           bool canMultiAward)
         : GameMedal(name, target, weight, op, bestOnly, canMultiAward)
     {
     }

@@ -31,25 +31,21 @@ namespace
 const double BLOCK_INTERACTION_TIME_BUCKET_MS = 10000.0;
 }
 
-PlayerStats::RoundStats::BlockInteractionInfo::BlockInteractionInfo()
-    : mCount(0)
-    , mByBlock()
-    , mByHeight()
-    , mByTime()
+PlayerStats::RoundStats::BlockInteractionInfo::BlockInteractionInfo() : mCount(0), mByBlock(), mByHeight(), mByTime()
 {
 }
 
 PlayerStats::PlayerStats(const StatsUID& statsUID)
-    : mStatsUID(statsUID)
-    , mName(L"")
-    , mAwardedMedal(NULL)
-    , mMedals()
-    , mMedalWeight(-1)
-    , mBlocksDestroyedFromBelow(0)
-    , mSnowballDirectHits(0)
-    , mHitsBySnowball(0)
-    , mTrackers()
-    , mRoundStats()
+    : mStatsUID(statsUID),
+      mName(L""),
+      mAwardedMedal(NULL),
+      mMedals(),
+      mMedalWeight(-1),
+      mBlocksDestroyedFromBelow(0),
+      mSnowballDirectHits(0),
+      mHitsBySnowball(0),
+      mTrackers(),
+      mRoundStats()
 {
     mDamageDealt = new DamageDealtStatTracker(mStatsUID);
     mTrackers.push_back(mDamageDealt);
@@ -66,15 +62,15 @@ PlayerStats::PlayerStats(const StatsUID& statsUID)
 
     for (int source = 0; source < DAMAGE_SOURCE_COUNT; ++source)
     {
-        mDamageTakenBySource[source] =
-            new DamageTakenBySourceStatTracker(mStatsUID, static_cast<Scoreboard::EDamageSource>(source));
+        mDamageTakenBySource[source] = new DamageTakenBySourceStatTracker(
+            mStatsUID, static_cast<Scoreboard::EDamageSource>(source));
         mTrackers.push_back(mDamageTakenBySource[source]);
     }
 
-    mWeaponDamage[WeaponDamageStatTracker::TRACKING_RECEIVED] =
-        new WeaponDamageStatTracker(mStatsUID, WeaponDamageStatTracker::TRACKING_RECEIVED);
-    mWeaponDamage[WeaponDamageStatTracker::TRACKING_DEALT] =
-        new WeaponDamageStatTracker(mStatsUID, WeaponDamageStatTracker::TRACKING_DEALT);
+    mWeaponDamage[WeaponDamageStatTracker::TRACKING_RECEIVED] = new WeaponDamageStatTracker(
+        mStatsUID, WeaponDamageStatTracker::TRACKING_RECEIVED);
+    mWeaponDamage[WeaponDamageStatTracker::TRACKING_DEALT] = new WeaponDamageStatTracker(
+        mStatsUID, WeaponDamageStatTracker::TRACKING_DEALT);
     mTrackers.push_back(mWeaponDamage[WeaponDamageStatTracker::TRACKING_RECEIVED]);
     mTrackers.push_back(mWeaponDamage[WeaponDamageStatTracker::TRACKING_DEALT]);
 
@@ -87,7 +83,8 @@ PlayerStats::~PlayerStats()
     for (std::vector<UntypedStatTracker*>::iterator tracker = mTrackers.begin(); tracker != mTrackers.end(); ++tracker)
         delete *tracker;
 
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         delete round->second;
 }
 
@@ -159,7 +156,8 @@ PlayerStats::RoundStats::~RoundStats()
     for (std::vector<UntypedStatTracker*>::iterator tracker = mTrackers.begin(); tracker != mTrackers.end(); ++tracker)
         delete *tracker;
 
-    for (std::vector<ContainerInfo*>::iterator container = mContainers.begin(); container != mContainers.end(); ++container)
+    for (std::vector<ContainerInfo*>::iterator container = mContainers.begin(); container != mContainers.end();
+         ++container)
         delete *container;
 }
 
@@ -181,7 +179,8 @@ void PlayerStats::updateTrackedStats(int round, const DamageEvent* damageEvent)
         (*tracker)->update(damageEvent);
 
     RoundStats* stats = getRoundStats(round);
-    for (std::vector<UntypedStatTracker*>::iterator tracker = stats->mTrackers.begin(); tracker != stats->mTrackers.end(); ++tracker)
+    for (std::vector<UntypedStatTracker*>::iterator tracker = stats->mTrackers.begin();
+         tracker != stats->mTrackers.end(); ++tracker)
         (*tracker)->update(damageEvent);
 }
 
@@ -191,7 +190,8 @@ unsigned int PlayerStats::getTotalRounds()
         return 1;
 
     unsigned int highestRound = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
     {
         if (highestRound < static_cast<unsigned int>(round->first))
             highestRound = round->first;
@@ -215,7 +215,7 @@ int PlayerStats::getTotalDistanceMoved(unsigned int round)
     if (stats == NULL)
         return 0;
     return stats->mClimbDistance + stats->mSneakDistance + stats->mSprintDistance + stats->mSwimDistance
-        + stats->mUnderwaterDistance + stats->mWalkDistance;
+           + stats->mUnderwaterDistance + stats->mWalkDistance;
 }
 
 float PlayerStats::getAllDamageTaken()
@@ -226,7 +226,8 @@ float PlayerStats::getAllDamageTaken()
 int PlayerStats::getTotalJumpCount()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mJumpCount;
     return total;
 }
@@ -234,7 +235,8 @@ int PlayerStats::getTotalJumpCount()
 int PlayerStats::getTotalDeaths()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mDeaths;
     return total;
 }
@@ -249,7 +251,8 @@ int PlayerStats::getDeaths(unsigned int round)
 int PlayerStats::getDeathsInAnyRound(int deaths)
 {
     int result = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
     {
         const int roundDeaths = round->second->mDeaths;
         if (Mth::abs(roundDeaths - deaths) < INT_MAX)
@@ -261,21 +264,24 @@ int PlayerStats::getDeathsInAnyRound(int deaths)
 int PlayerStats::getTotalKills()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mKills;
     return total;
 }
 
 void PlayerStats::getAllItems(std::map<int, int>& items)
 {
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         items.insert(round->second->mItems.begin(), round->second->mItems.end());
 }
 
 int PlayerStats::getTotalWalkDistance()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mWalkDistance;
     return total;
 }
@@ -283,7 +289,8 @@ int PlayerStats::getTotalWalkDistance()
 int PlayerStats::getTotalSprintDistance()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mSprintDistance;
     return total;
 }
@@ -291,7 +298,8 @@ int PlayerStats::getTotalSprintDistance()
 int PlayerStats::getTotalSneakDistance()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mSneakDistance;
     return total;
 }
@@ -299,7 +307,8 @@ int PlayerStats::getTotalSneakDistance()
 int PlayerStats::getTotalSwimDistance()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mSwimDistance;
     return total;
 }
@@ -307,7 +316,8 @@ int PlayerStats::getTotalSwimDistance()
 int PlayerStats::getTotalUnderwaterDistance()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mUnderwaterDistance;
     return total;
 }
@@ -315,14 +325,16 @@ int PlayerStats::getTotalUnderwaterDistance()
 int PlayerStats::getTotalClimbDistance()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mClimbDistance;
     return total;
 }
 
 void PlayerStats::getAllItemsUsed(std::vector<Item*>& items)
 {
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
     {
         std::vector<Item*>::iterator first = round->second->mItemsUsed.begin();
         std::vector<Item*>::iterator last = round->second->mItemsUsed.end();
@@ -333,7 +345,8 @@ void PlayerStats::getAllItemsUsed(std::vector<Item*>& items)
 int PlayerStats::getTotalRoundsWon()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
     {
         if (round->second->mWon)
             ++total;
@@ -351,7 +364,8 @@ bool PlayerStats::getRoundWon(unsigned int round)
 int PlayerStats::getTotalBlocksDestroyed()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mBlocksDestroyed.mCount;
     return total;
 }
@@ -359,7 +373,8 @@ int PlayerStats::getTotalBlocksDestroyed()
 int PlayerStats::getTotalSplashPotionsUsed()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mSplashPotionsUsed;
     return total;
 }
@@ -367,7 +382,8 @@ int PlayerStats::getTotalSplashPotionsUsed()
 int PlayerStats::getTotalPotionsUsed()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mPotionsUsed;
     return total;
 }
@@ -375,7 +391,8 @@ int PlayerStats::getTotalPotionsUsed()
 int PlayerStats::getTotalLifeSpan()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mLifeSpan;
     return total;
 }
@@ -391,7 +408,8 @@ unsigned int PlayerStats::getLifeSpan(unsigned int round)
 unsigned int PlayerStats::getBestLifeSpan(bool highest, bool reachedEndOnly)
 {
     unsigned int best = highest ? 0 : UINT_MAX;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
     {
         RoundStats* stats = round->second;
         if (highest)
@@ -416,7 +434,8 @@ unsigned int PlayerStats::getBestLifeSpan(bool highest, bool reachedEndOnly)
 int PlayerStats::getTotalPoints()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mPoints + round->second->mUnbankedPoints;
     return total;
 }
@@ -435,7 +454,8 @@ int PlayerStats::getPoints(unsigned int round)
 unsigned int PlayerStats::getBestPoints(bool highest, bool reachedEndOnly)
 {
     unsigned int best = highest ? 0 : UINT_MAX;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
     {
         RoundStats* stats = round->second;
         if (reachedEndOnly && !stats->mReachedEnd)
@@ -463,7 +483,8 @@ bool PlayerStats::getReachedEnd(unsigned int round)
 int PlayerStats::getTotalThermalsEntered()
 {
     int total = 0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
         total += round->second->mThermalsEntered;
     return total;
 }
@@ -506,7 +527,8 @@ bool PlayerStats::hasSpawnedAtAllCheckpointsInOneRound()
 double PlayerStats::getTopSpeed()
 {
     double topSpeed = 0.0;
-    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
+    for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end();
+         ++round)
     {
         const double speed = round->second->mTopSpeed;
         if (topSpeed < speed)

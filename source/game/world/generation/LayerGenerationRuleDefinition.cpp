@@ -19,8 +19,7 @@
 #include "game/util/AABB.hpp"
 #include "game/world/LayerGenerationRuleDefinition.hpp"
 
-LayerGenerationRuleDefinition::LayerGenerationRuleDefinition()
-    : mDefinition(NULL), mLayerHeight(10), mLayerDirection(1)
+LayerGenerationRuleDefinition::LayerGenerationRuleDefinition() : mDefinition(NULL), mLayerHeight(10), mLayerDirection(1)
 {
 }
 
@@ -40,8 +39,8 @@ GameRuleDefinition* LayerGenerationRuleDefinition::addChild(ConsoleGameRules::EG
     return mDefinition;
 }
 
-std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random& random,
-    const AABB* area, unsigned int layerCount, float scale) const
+std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random& random, const AABB* area,
+                                                                          unsigned int layerCount, float scale) const
 {
     std::vector<LayerGenerator*>* generators = new std::vector<LayerGenerator*>();
     int y;
@@ -73,8 +72,8 @@ std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random
             metadata.m_iBottomLayerIndex = static_cast<int>(layerCount - 1);
 
             Random wholeLevelRandom(layerRandom);
-            AnyCombinationOfRuleDefinition* definition =
-                mDefinition->GetRandomLeafChild(metadata, wholeLevelRandom, random);
+            AnyCombinationOfRuleDefinition* definition = mDefinition->GetRandomLeafChild(metadata, wholeLevelRandom,
+                                                                                         random);
             double blend = 0.0;
             if (layerCount > 1)
             {
@@ -83,20 +82,20 @@ std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random
 
             std::vector<LayerAttributeChildRuleDefinition<LayerSize*>*> sizes;
             definition->GetPossibleLayerSizes(sizes);
-            LayerAttributeChildRuleDefinition<LayerSize*>* sizeDefinition =
-                randomUsableElement(random, sizes, metadata);
+            LayerAttributeChildRuleDefinition<LayerSize*>* sizeDefinition = randomUsableElement(random, sizes,
+                                                                                                metadata);
             LayerSize* size = sizeDefinition->GetValue();
 
             std::vector<LayerAttributeChildRuleDefinition<LayerShape*>*> shapes;
             definition->GetPossibleLayerShapes(shapes);
-            LayerAttributeChildRuleDefinition<LayerShape*>* shapeDefinition =
-                randomUsableElement(random, shapes, metadata);
+            LayerAttributeChildRuleDefinition<LayerShape*>* shapeDefinition = randomUsableElement(random, shapes,
+                                                                                                  metadata);
             LayerShape* shape = shapeDefinition->GetValue();
 
             std::vector<LayerAttributeChildRuleDefinition<LayerFill*>*> fills;
             definition->GetPossibleLayerFills(fills);
-            LayerAttributeChildRuleDefinition<LayerFill*>* fillDefinition =
-                randomUsableElement(random, fills, metadata);
+            LayerAttributeChildRuleDefinition<LayerFill*>* fillDefinition = randomUsableElement(random, fills,
+                                                                                                metadata);
             LayerFill* fill = fillDefinition->GetValue();
 
             std::vector<const LayerTheme*> themes;
@@ -112,8 +111,8 @@ std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random
                     }
                     else
                     {
-                        LayerAttributeChildRuleDefinition<LayerTheme*>* themeDefinition =
-                            randomUsableElement(random, possibleThemes, metadata);
+                        LayerAttributeChildRuleDefinition<LayerTheme*>* themeDefinition = randomUsableElement(
+                            random, possibleThemes, metadata);
                         themes.push_back(themeDefinition->GetValue());
                         possibleThemes.clear();
                     }
@@ -122,7 +121,7 @@ std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random
 
             int halfSize = static_cast<int>(static_cast<float>(size->GetLayerSize(random, blend)) * scale * 0.5f);
             AABB* layerArea = AABB::newPermanent(origin.offset(Vec3i(-halfSize, -mLayerHeight, -halfSize)),
-                                                  origin.offset(Vec3i(halfSize, 0, halfSize)));
+                                                 origin.offset(Vec3i(halfSize, 0, halfSize)));
             generators->push_back(new LayerGenerator(layerArea, shape, fill, themes));
         }
         origin = origin.offset(layerStep);

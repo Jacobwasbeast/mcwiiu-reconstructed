@@ -263,8 +263,8 @@ void LocalPlayer::tick()
     {
         if (isPassenger())
         {
-            mPacketListener->send(boost::shared_ptr<Packet>(
-                new ServerboundMovePlayerPacket::Rot(mYRot, mXRot, mOnGround, false)));
+            mPacketListener->send(
+                boost::shared_ptr<Packet>(new ServerboundMovePlayerPacket::Rot(mYRot, mXRot, mOnGround, false)));
             mPacketListener->send(boost::shared_ptr<Packet>(
                 new ServerboundPlayerInputPacket(mXxa, mZza, mInput->mJumping, mInput->mSneaking)));
             boost::shared_ptr<Entity> rootVehicle = getRootVehicle();
@@ -284,8 +284,8 @@ void LocalPlayer::tick()
             double xa = newPos->x - mX;
             double ya = newPos->y - mY;
             double za = newPos->z - mZ;
-            std::vector<AABB*>* boxes =
-                mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox->expand(xa, ya, za), false, true, false);
+            std::vector<AABB*>* boxes = mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox->expand(xa, ya, za),
+                                                                  false, true, false);
             if (!mLevel->mIsClientSide
                 || mLevel->reallyHasChunk(static_cast<int>(std::floor(mX * 0.0625)),
                                           static_cast<int>(std::floor(mZ * 0.0625))))
@@ -340,10 +340,8 @@ bool LocalPlayer::isInWall()
         return false;
     }
 
-    if (!mTickCache.mCacheChanged &&
-        mInWallCacheX == mX && mInWallCacheY == mY && mInWallCacheZ == mZ &&
-        mInWallCacheYRot == mYRot && mInWallCacheXRot == mXRot &&
-        mInWallThirdPersonView == mThirdPersonView)
+    if (!mTickCache.mCacheChanged && mInWallCacheX == mX && mInWallCacheY == mY && mInWallCacheZ == mZ
+        && mInWallCacheYRot == mYRot && mInWallCacheXRot == mXRot && mInWallThirdPersonView == mThirdPersonView)
     {
         return mInWallCacheResult;
     }
@@ -381,8 +379,7 @@ bool LocalPlayer::isInWall()
             const BlockState* state = mLevel->getBlockState(mTickCache, lastPos);
             if (state->isViewBlocking())
             {
-                if (!Minecraft::InMiniGame(eMiniGameId_Any, true) ||
-                    gApp.ShouldCollideWith(state->getBlock()))
+                if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || gApp.ShouldCollideWith(state->getBlock()))
                 {
                     mInWallCacheResult = true;
                     return true;
@@ -422,8 +419,8 @@ bool LocalPlayer::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
     if (Entity::instanceof(vehicle, EntityType::MINECART))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
-        static_cast<ConsoleSoundEngine*>(mMinecraft->mSoundEngine)->play(
-            new RidingMinecartSoundInstance(player, boost::static_pointer_cast<Minecart>(vehicle)));
+        static_cast<ConsoleSoundEngine*>(mMinecraft->mSoundEngine)
+            ->play(new RidingMinecartSoundInstance(player, boost::static_pointer_cast<Minecart>(vehicle)));
     }
     if (Entity::instanceof(vehicle, EntityType::BOAT))
     {
@@ -484,7 +481,8 @@ void LocalPlayer::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     if (usingItem)
     {
         if (!mItemUsePending)
-            startUsingItem(offhand ? InteractionHand::eInteractionHand_OffHand : InteractionHand::eInteractionHand_MainHand);
+            startUsingItem(offhand ? InteractionHand::eInteractionHand_OffHand
+                                   : InteractionHand::eInteractionHand_MainHand);
     }
     else if (mItemUsePending)
     {
@@ -494,16 +492,17 @@ void LocalPlayer::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 
 void LocalPlayer::closeContainer()
 {
-    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundContainerClosePacket(mContainerMenu->m_containerId)));
+    mPacketListener->send(
+        boost::shared_ptr<Packet>(new ServerboundContainerClosePacket(mContainerMenu->m_containerId)));
     LocalPlayer::clientSideCloseContainer();
 }
 
 boost::shared_ptr<ItemEntity> LocalPlayer::drop(bool dropAll)
 {
-    ServerboundPlayerActionPacket::Action action =
-        dropAll ? ServerboundPlayerActionPacket::DROP_ALL_ITEMS : ServerboundPlayerActionPacket::DROP_ITEM;
-    mPacketListener->send(boost::shared_ptr<Packet>(
-        new ServerboundPlayerActionPacket(action, BlockPos::ZERO, Direction::DOWN, 0)));
+    ServerboundPlayerActionPacket::Action action = dropAll ? ServerboundPlayerActionPacket::DROP_ALL_ITEMS
+                                                           : ServerboundPlayerActionPacket::DROP_ITEM;
+    mPacketListener->send(
+        boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket(action, BlockPos::ZERO, Direction::DOWN, 0)));
     return boost::shared_ptr<ItemEntity>();
 }
 
@@ -571,11 +570,13 @@ int LocalPlayer::startBlockInteraction(InteractionObject& interaction)
     int result;
     if (interaction.getTypeId(false) == ClientboundContainerOpenPacket::WORKBENCH)
     {
-        result = (int)gApp.LoadCrafting3x3Menu(mUserIndex, boost::dynamic_pointer_cast<LocalPlayer>(shared_from_this()), (int)mX, (int)mY, (int)mZ);
+        result = (int)gApp.LoadCrafting3x3Menu(mUserIndex, boost::dynamic_pointer_cast<LocalPlayer>(shared_from_this()),
+                                               (int)mX, (int)mY, (int)mZ);
     }
     else if (interaction.getTypeId(false) == ClientboundContainerOpenPacket::ENCHANTMENT)
     {
-        result = (int)gApp.LoadEnchantingMenu(mUserIndex, mInventory, (int)mX, (int)mY, (int)mZ, mLevel, interaction.getDisplayName());
+        result = (int)gApp.LoadEnchantingMenu(mUserIndex, mInventory, (int)mX, (int)mY, (int)mZ, mLevel,
+                                              interaction.getDisplayName());
     }
     else if (interaction.getTypeId(false) == ClientboundContainerOpenPacket::REPAIR_TABLE)
     {
@@ -624,9 +625,10 @@ void LocalPlayer::serverAiStep()
     if (isControlledCamera())
     {
         float movement;
-        if (mAbilities.mFlying && mAbilities.mMayfly &&
-            (movement = std::sqrt(mInput->mMoveStrafe * mInput->mMoveStrafe +
-                                  mInput->mMoveForward * mInput->mMoveForward)) >= 0.1f)
+        if (mAbilities.mFlying && mAbilities.mMayfly
+            && (movement = std::sqrt(mInput->mMoveStrafe * mInput->mMoveStrafe
+                                     + mInput->mMoveForward * mInput->mMoveForward))
+                   >= 0.1f)
         {
             const float angle = std::atan2(mInput->mMoveForward, mInput->mMoveStrafe) * 57.295776f;
             const float heading = angle + mYRot;
@@ -704,8 +706,7 @@ void LocalPlayer::aiStep()
         if (mMinecraft->mScreen != NULL)
             mMinecraft->setScreen(NULL);
         if (mPortalEffectIntensity == 0.0f)
-            mMinecraft->mSoundEngine->playUI(SoundEvents::PORTAL_TRIGGER, 1.0f,
-                                             mRandom->nextFloat() * 0.4f + 0.8f);
+            mMinecraft->mSoundEngine->playUI(SoundEvents::PORTAL_TRIGGER, 1.0f, mRandom->nextFloat() * 0.4f + 0.8f);
         mPortalEffectIntensity = std::min(mPortalEffectIntensity + 0.0125f, 1.0f);
         mIsInsidePortal = false;
     }
@@ -719,8 +720,8 @@ void LocalPlayer::aiStep()
     mInput->tick(this);
 
     bool movingFreely = true;
-    if (mInput->mMoveForward < 0.8f && mInput->mMoveForward > -0.8f &&
-        mInput->mMoveStrafe < 0.8f && mInput->mMoveStrafe > -0.8f)
+    if (mInput->mMoveForward < 0.8f && mInput->mMoveForward > -0.8f && mInput->mMoveStrafe < 0.8f
+        && mInput->mMoveStrafe > -0.8f)
     {
         movingFreely = false;
     }
@@ -757,8 +758,8 @@ void LocalPlayer::aiStep()
     const bool foodAllowsSprinting = foodLevel > sprintLevel || canFly;
 
     bool forwardSprintInput = false;
-    if (!((!mOnGround && !isInWater()) || isSprinting() || !foodAllowsSprinting || isUsingItem() ||
-          hasEffect(MobEffects::BLINDNESS) || isPassenger()))
+    if (!((!mOnGround && !isInWater()) || isSprinting() || !foodAllowsSprinting || isUsingItem()
+          || hasEffect(MobEffects::BLINDNESS) || isPassenger()))
     {
         forwardSprintInput = g_pInput->ButtonDown(mUserIndex, EControllerActions_Sprint);
         const float forward = mInput->mMoveForward;
@@ -790,8 +791,7 @@ void LocalPlayer::aiStep()
     }
 
     bool stopForDirection = true;
-    if (mInput->mMoveForward >= 0.8f &&
-        std::fabs(mInput->getMoveVector()->x) <= 0.8f && foodAllowsSprinting)
+    if (mInput->mMoveForward >= 0.8f && std::fabs(mInput->getMoveVector()->x) <= 0.8f && foodAllowsSprinting)
         stopForDirection = false;
 
     bool keepSprintForInput = mInput->mMoveForward >= 0.8f && foodAllowsSprinting;
@@ -811,19 +811,17 @@ void LocalPlayer::aiStep()
     const BlockPos belowBlock(position->subtract(0.0, 1.1f, 0.0));
     Material* belowMaterial = mLevel->getBlockState(belowBlock)->getMaterial();
 
-    if (isInWater() && !mAbilities.mFlying && !isSwimming() &&
-        ((belowMaterial != Material::AIR && aboveMaterial != Material::AIR) ||
-         viewVector->y < -0.15f) &&
-        mLevel->mIsClientSide && isSprinting() && !stopForDirection && !isPassenger())
+    if (isInWater() && !mAbilities.mFlying && !isSwimming()
+        && ((belowMaterial != Material::AIR && aboveMaterial != Material::AIR) || viewVector->y < -0.15f)
+        && mLevel->mIsClientSide && isSprinting() && !stopForDirection && !isPassenger())
     {
         startSwimming();
     }
 
-    const bool stopSwimmingForBlocks = !keepSprintForInput &&
-        !aboveMaterial->blocksMotion() && !currentMaterial->blocksMotion();
+    const bool stopSwimmingForBlocks = !keepSprintForInput && !aboveMaterial->blocksMotion()
+                                       && !currentMaterial->blocksMotion();
     const bool stopSwimmingForView = belowMaterial == Material::AIR && viewAngle > 45.0f;
-    if ((!isInWater() || stopSwimmingForBlocks || stopSwimmingForView) &&
-        mLevel->mIsClientSide && isSwimming())
+    if ((!isInWater() || stopSwimmingForBlocks || stopSwimmingForView) && mLevel->mIsClientSide && isSwimming())
     {
         stopSwimming();
     }
@@ -872,16 +870,15 @@ void LocalPlayer::aiStep()
         const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         autoElytraRequested = miniGame->HasFeatureAutoElytraFly() && mFallDistance > 1.25f;
     }
-    if (!isSleeping() && autoElytraRequested && !wasJumping && !mOnGround &&
-        mYd < 0.0 &&
-        !isFallFlying() && !mAbilities.mFlying)
+    if (!isSleeping() && autoElytraRequested && !wasJumping && !mOnGround && mYd < 0.0 && !isFallFlying()
+        && !mAbilities.mFlying)
     {
         not_null_ptr<ItemInstance> chestItem = getItemSlot(EquipmentSlot::CHEST);
         if (chestItem->getItem() == Items::elytra && ElytraItem::isFlyEnabled(chestItem))
         {
             boost::shared_ptr<Entity> self = shared_from_this();
-            boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
-                self, ServerboundPlayerCommandPacket::START_FALL_FLYING));
+            boost::shared_ptr<Packet> packet(
+                new ServerboundPlayerCommandPacket(self, ServerboundPlayerCommandPacket::START_FALL_FLYING));
             mPacketListener->send(packet);
         }
     }
@@ -938,8 +935,7 @@ void LocalPlayer::aiStep()
     if (isRidingJumpable())
     {
         boost::shared_ptr<Entity> vehicle = getVehicle();
-        boost::shared_ptr<PlayerRideableJumping> rideable =
-            boost::dynamic_pointer_cast<PlayerRideableJumping>(vehicle);
+        boost::shared_ptr<PlayerRideableJumping> rideable = boost::dynamic_pointer_cast<PlayerRideableJumping>(vehicle);
 
         if (mRideJumpTicks < 0 && ++mRideJumpTicks == 0)
             mRideJumpScale = 0.0f;
@@ -1066,8 +1062,7 @@ void LocalPlayer::aiStep()
         {
             const double motionLength = Mth::sqrt(horizontalMotion);
             const double lookLength = Mth::sqrt(horizontalLook);
-            const double lengthProduct = static_cast<double>(
-                static_cast<float>(motionLength * lookLength));
+            const double lengthProduct = static_cast<double>(static_cast<float>(motionLength * lookLength));
             const double dot = (mXd * look->x + mZd * look->z) / lengthProduct;
             const double aligned = Mth::clamp(dot, 0.0, 1.0);
             const double cosine = Mth::clamp(dot, -1.0, 1.0);
@@ -1108,7 +1103,8 @@ void LocalPlayer::move(MoverType type, double xa, double ya, double za, bool col
 
 int LocalPlayer::openFireworks(int x, int y, int z)
 {
-    bool result = gApp.LoadFireworksMenu(mUserIndex, boost::static_pointer_cast<LocalPlayer>(shared_from_this()), x, y, z);
+    bool result = gApp.LoadFireworksMenu(mUserIndex, boost::static_pointer_cast<LocalPlayer>(shared_from_this()), x, y,
+                                         z);
     if (result)
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     return result;
@@ -1156,8 +1152,8 @@ void LocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> params)
                 && gProfile->GetAwardType(achievementId))
             {
                 gConsoleUIController.CloseUIScenes(mUserIndex, false);
-                gConsoleUIController.NavigateToScene(mUserIndex, EUIScene_PauseMenu, NULL,
-                                                     EUILayer_Scene, EUIGroup_PlayerDefault);
+                gConsoleUIController.NavigateToScene(mUserIndex, EUIScene_PauseMenu, NULL, EUILayer_Scene,
+                                                     EUIGroup_PlayerDefault);
             }
         }
 
@@ -1270,8 +1266,7 @@ void LocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> params)
     if (stat == helmetDyed || stat == chestplateDyed || stat == leggingsDyed || stat == bootsDyed)
     {
         unsigned char dyedPieces = (stats->getTotalValue(helmetDyed) != 0) + (stats->getTotalValue(chestplateDyed) != 0)
-                                   + (stats->getTotalValue(leggingsDyed) != 0)
-                                   + (stats->getTotalValue(bootsDyed) != 0);
+                                   + (stats->getTotalValue(leggingsDyed) != 0) + (stats->getTotalValue(bootsDyed) != 0);
         if (dyedPieces == 4)
             awardStat(GenericStats::tieDyeOutfit(), GenericStats::param_noArgs());
     }
@@ -1287,7 +1282,8 @@ void LocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> params)
         unsigned int colours = 0;
         for (int colour = 0; colour < 16; ++colour)
         {
-            if (stats->getTotalValue(gStats->get_itemsCollected(Item::VALIDgetId(Item::byBlock(Blocks::wool)), colour)) != 0)
+            if (stats->getTotalValue(gStats->get_itemsCollected(Item::VALIDgetId(Item::byBlock(Blocks::wool)), colour))
+                != 0)
                 ++colours;
         }
         if (colours >= 16)
@@ -1315,11 +1311,14 @@ void LocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> params)
 
 int LocalPlayer::GetThirdPersonView(bool firstPerson)
 {
-    if (IsSpectatingOtherPlayer() && !firstPerson) {
+    if (IsSpectatingOtherPlayer() && !firstPerson)
+    {
         return 1;
     }
-    if (mDRCTouching) {
-        if (isAlive()) {
+    if (mDRCTouching)
+    {
+        if (isAlive())
+        {
             return 2;
         }
     }
@@ -1586,9 +1585,9 @@ unsigned char LocalPlayer::handleMouseClick(int button)
                 if (swing(hand))
                 {
                     playSound(SoundEvents::PLAYER_ATTACK_WEAK, 0.6f, 1.0f);
-                    player->mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
-                        SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players, player->mX, player->mY,
-                        player->mZ, 0.6f, 1.0f)));
+                    player->mPacketListener->send(boost::shared_ptr<Packet>(
+                        new ClientboundSoundPacket(SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players,
+                                                   player->mX, player->mY, player->mZ, 0.6f, 1.0f)));
                 }
                 return 0;
             }
@@ -1608,9 +1607,9 @@ unsigned char LocalPlayer::handleMouseClick(int button)
                 if (swing(hand))
                 {
                     playSound(SoundEvents::PLAYER_ATTACK_WEAK, 0.6f, 1.0f);
-                    player->mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
-                        SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players, player->mX, player->mY,
-                        player->mZ, 0.6f, 1.0f)));
+                    player->mPacketListener->send(boost::shared_ptr<Packet>(
+                        new ClientboundSoundPacket(SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players,
+                                                   player->mX, player->mY, player->mZ, 0.6f, 1.0f)));
                 }
                 break;
             case HitResult::ENTITY:
@@ -1681,8 +1680,8 @@ unsigned char LocalPlayer::handleMouseClick(int button)
 
             for (int handIndex = 0; handIndex < 1; ++handIndex)
             {
-                const InteractionHand::EInteractionHand useHand =
-                    static_cast<InteractionHand::EInteractionHand>(handIndex);
+                const InteractionHand::EInteractionHand useHand = static_cast<InteractionHand::EInteractionHand>(
+                    handIndex);
                 not_null_ptr<ItemInstance> heldItem = player->getItemInHand(useHand);
 
                 if (hitResult != NULL)
@@ -1690,12 +1689,12 @@ unsigned char LocalPlayer::handleMouseClick(int button)
                     switch (hitResult->mType)
                     {
                     case HitResult::ENTITY:
-                        if (gameMode->interact(player, hitResult->mEntity, player->getItemInHand(useHand), useHand) ==
-                            InteractionResult::eInteractionResult_Success)
+                        if (gameMode->interact(player, hitResult->mEntity, player->getItemInHand(useHand), useHand)
+                            == InteractionResult::eInteractionResult_Success)
                             return 0;
-                        if (gameMode->interactAt(player, hitResult->mEntity, hitResult,
-                                                 player->getItemInHand(useHand), useHand) ==
-                            InteractionResult::eInteractionResult_Success)
+                        if (gameMode->interactAt(player, hitResult->mEntity, hitResult, player->getItemInHand(useHand),
+                                                 useHand)
+                            == InteractionResult::eInteractionResult_Success)
                             return 0;
                         break;
                     case HitResult::BLOCK:
@@ -1729,8 +1728,8 @@ unsigned char LocalPlayer::handleMouseClick(int button)
                 not_null_ptr<ItemInstance> item = getItemInHand(useHand);
                 if (!item->isEmpty())
                 {
-                    if (gameMode->useItem(player, mLevel, useHand, false) ==
-                        InteractionResult::eInteractionResult_Success)
+                    if (gameMode->useItem(player, mLevel, useHand, false)
+                        == InteractionResult::eInteractionResult_Success)
                     {
                         mMinecraft->mGameRenderer->mItemInHandRenderer->itemUsed(useHand);
                         return 0;
@@ -2036,8 +2035,7 @@ void LocalPlayer::updateProximityIndicator()
     {
         mElytraProximityWarning = false;
         AABB* searchBox = mBoundingBox->grow(2.0);
-        std::vector<AABB*>* collisions =
-            mLevel->getCollisionAABBs(shared_from_this(), searchBox, true, false, false);
+        std::vector<AABB*>* collisions = mLevel->getCollisionAABBs(shared_from_this(), searchBox, true, false, false);
         if (!collisions->empty())
         {
             AABB* closestBox = NULL;
@@ -2064,8 +2062,8 @@ void LocalPlayer::updateProximityIndicator()
         {
             Vec3* position = getPos(1.0f);
             std::vector<boost::shared_ptr<Player> >* nearby = mLevel->getNearbyPlayers(shared_from_this(), 3.0);
-            for (std::vector<boost::shared_ptr<Player> >::iterator end = nearby->end(), it = nearby->begin();
-                 it != end; ++it)
+            for (std::vector<boost::shared_ptr<Player> >::iterator end = nearby->end(), it = nearby->begin(); it != end;
+                 ++it)
             {
                 boost::shared_ptr<Player>& player = *it;
                 Vec3* direction = Vec3::newTemp(position->x - player->mX, 0.0, position->z - player->mZ);
@@ -2092,11 +2090,11 @@ unsigned long long LocalPlayer::sendPosition()
     if (sprinting != mWasSprinting)
     {
         if (sprinting)
-            mPacketListener->send(boost::shared_ptr<Packet>(
-                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::START_SPRINTING)));
+            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+                shared_from_this(), ServerboundPlayerCommandPacket::START_SPRINTING)));
         else
-            mPacketListener->send(boost::shared_ptr<Packet>(
-                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::STOP_SPRINTING)));
+            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+                shared_from_this(), ServerboundPlayerCommandPacket::STOP_SPRINTING)));
         mWasSprinting = sprinting;
     }
 
@@ -2104,11 +2102,11 @@ unsigned long long LocalPlayer::sendPosition()
     if (sneaking != mWasSneaking)
     {
         if (sneaking)
-            mPacketListener->send(boost::shared_ptr<Packet>(
-                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::PRESS_SHIFT_KEY)));
+            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+                shared_from_this(), ServerboundPlayerCommandPacket::PRESS_SHIFT_KEY)));
         else
-            mPacketListener->send(boost::shared_ptr<Packet>(
-                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::RELEASE_SHIFT_KEY)));
+            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+                shared_from_this(), ServerboundPlayerCommandPacket::RELEASE_SHIFT_KEY)));
         mWasSneaking = sneaking;
     }
 
@@ -2116,8 +2114,8 @@ unsigned long long LocalPlayer::sendPosition()
     if (swimming != mWasSwimming)
     {
         if (swimming)
-            mPacketListener->send(boost::shared_ptr<Packet>(
-                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::START_SWIMMING)));
+            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+                shared_from_this(), ServerboundPlayerCommandPacket::START_SWIMMING)));
         else
             mPacketListener->send(boost::shared_ptr<Packet>(
                 new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::STOP_SWIMMING)));
@@ -2128,11 +2126,11 @@ unsigned long long LocalPlayer::sendPosition()
     if (damagingNearbyMobs != mWasDamagingNearbyMobs)
     {
         if (damagingNearbyMobs)
-            mPacketListener->send(boost::shared_ptr<Packet>(
-                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::START_SPIN_ATTACK)));
+            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+                shared_from_this(), ServerboundPlayerCommandPacket::START_SPIN_ATTACK)));
         else
-            mPacketListener->send(boost::shared_ptr<Packet>(
-                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::STOP_SPIN_ATTACK)));
+            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+                shared_from_this(), ServerboundPlayerCommandPacket::STOP_SPIN_ATTACK)));
         mWasDamagingNearbyMobs = damagingNearbyMobs;
     }
 
@@ -2157,13 +2155,13 @@ unsigned long long LocalPlayer::sendPosition()
     {
         if (move && rot)
         {
-            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundMovePlayerPacket::PosRot(
-                mX, box->mMinY, mZ, mYRot, mXRot, mOnGround, flying)));
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundMovePlayerPacket::PosRot(mX, box->mMinY, mZ, mYRot, mXRot, mOnGround, flying)));
         }
         else if (move)
         {
-            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundMovePlayerPacket::Pos(
-                mX, box->mMinY, box->mMinY, mZ, mOnGround, flying)));
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundMovePlayerPacket::Pos(mX, box->mMinY, box->mMinY, mZ, mOnGround, flying)));
         }
         else if (rot)
         {
@@ -2208,8 +2206,8 @@ bool LocalPlayer::swing(InteractionHand::EInteractionHand hand)
 
 void LocalPlayer::respawn()
 {
-    mPacketListener->send(boost::shared_ptr<Packet>(
-        new ServerboundClientCommandPacket(ServerboundClientCommandPacket::PERFORM_RESPAWN)));
+    mPacketListener->send(
+        boost::shared_ptr<Packet>(new ServerboundClientCommandPacket(ServerboundClientCommandPacket::PERFORM_RESPAWN)));
 }
 
 void LocalPlayer::actuallyHurt(const DamageSource* source, float amount)
@@ -2261,9 +2259,8 @@ void LocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
 
     if (getHealth() <= 0.0f)
     {
-        telemetryManagerInstance->RecordPlayerDiedOrFailed(mUserIndex, (int)mX, (int)mY, (int)mZ, 0,
-                                                    source.playerWeaponId, source.causeOfDeathId,
-                                                    source.challenges);
+        telemetryManagerInstance->RecordPlayerDiedOrFailed(
+            mUserIndex, (int)mX, (int)mY, (int)mZ, 0, source.playerWeaponId, source.causeOfDeathId, source.challenges);
         if (gConsoleUIController.GetMenuDisplayed(mUserIndex))
         {
             gConsoleUIController.CloseUIScenes(mUserIndex, false);
@@ -2299,15 +2296,16 @@ float LocalPlayer::getJumpRidingScale()
 
 void LocalPlayer::sendRidingJump()
 {
-    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
-        shared_from_this(), ServerboundPlayerCommandPacket::RIDING_JUMP, static_cast<int>(getJumpRidingScale() * 100.0f))));
+    mPacketListener->send(boost::shared_ptr<Packet>(
+        new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::RIDING_JUMP,
+                                           static_cast<int>(getJumpRidingScale() * 100.0f))));
 }
 
 void LocalPlayer::sendOpenInventory()
 {
     boost::shared_ptr<Entity> entity = shared_from_this();
-    boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
-        entity, ServerboundPlayerCommandPacket::OPEN_INVENTORY));
+    boost::shared_ptr<Packet> packet(
+        new ServerboundPlayerCommandPacket(entity, ServerboundPlayerCommandPacket::OPEN_INVENTORY));
     mPacketListener->send(packet);
 }
 
@@ -2448,8 +2446,8 @@ InteractionHand::EInteractionHand LocalPlayer::getUsedItemHand()
 
 bool LocalPlayer::isRidingJumpable()
 {
-    boost::shared_ptr<PlayerRideableJumping> rideable =
-        boost::dynamic_pointer_cast<PlayerRideableJumping>(getVehicle());
+    boost::shared_ptr<PlayerRideableJumping> rideable = boost::dynamic_pointer_cast<PlayerRideableJumping>(
+        getVehicle());
     return isPassenger() && rideable && rideable->canJump();
 }
 
@@ -2574,8 +2572,8 @@ void LocalPlayer::mapPlayerChunk(unsigned int targetBlockId)
     int localZ = (int)std::floor(mZ) % 16;
     int localX = (int)std::floor(mX) % 16;
 
-    std::cout << "player in chunk (" << centerChunkX << "," << centerChunkZ << ") at ("
-              << mX << "," << mY << "," << mZ << ")\n";
+    std::cout << "player in chunk (" << centerChunkX << "," << centerChunkZ << ") at (" << mX << "," << mY << "," << mZ
+              << ")\n";
 
     for (int chunkZ = -1; chunkZ <= 1; ++chunkZ)
     {
@@ -2682,12 +2680,7 @@ void LocalPlayer::OnEquipArmor(not_null_ptr<ItemInstance> item)
 
     minecraft->mGui->ShowCharacterDisplay(mUserIndex);
 
-    static Item* ironArmor[4] = {
-        Items::ironBoots,
-        Items::ironLeggings,
-        Items::ironChestplate,
-        Items::ironHelmet
-    };
+    static Item* ironArmor[4] = {Items::ironBoots, Items::ironLeggings, Items::ironChestplate, Items::ironHelmet};
     int index = 0;
     for (int slot = 0; slot < 4; ++slot)
     {

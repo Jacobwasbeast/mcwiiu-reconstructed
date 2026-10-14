@@ -11,8 +11,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 
-SlimeOuterLayer::SlimeOuterLayer(SlimeRenderer* renderer)
-    : mRenderer(renderer)
+SlimeOuterLayer::SlimeOuterLayer(SlimeRenderer* renderer) : mRenderer(renderer)
 {
     SlimeModel* model = new SlimeModel(0);
     mModel = model;
@@ -23,9 +22,8 @@ SlimeOuterLayer::~SlimeOuterLayer()
 {
 }
 
-void SlimeOuterLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                             float limbSwingAmount, float partialTicks, float ageInTicks,
-                             float netHeadYaw, float headPitch, float scale,
+void SlimeOuterLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                             float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                              bool bUseDisplayList)
 {
     if (entity->isInvisible())
@@ -47,8 +45,7 @@ void SlimeOuterLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
 
     mModel->copyPropertiesFrom(mRenderer->getModel());
     boost::shared_ptr<Entity> renderEntity = entity;
-    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                   headPitch, scale, bUseDisplayList);
+    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
 
     GlStateManager::disableBlend();
     GlStateManager::disableNormalize();

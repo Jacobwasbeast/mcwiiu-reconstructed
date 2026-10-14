@@ -16,15 +16,13 @@ public:
     typedef LayerAttributeChildRuleDefinition<T>* (*CreateChildFunc)(ConsoleGameRules::EGameRuleType type);
 
     FilterRuleDefinition(CreateChildFunc createChild)
-        : mCreateChild(createChild)
-        , mChild(NULL)
-        , mVariant(-1)
-        , mFilter(LayerMetadata::eFilter_AnyLayer)
+        : mCreateChild(createChild),
+          mChild(NULL),
+          mVariant(-1),
+          mFilter(LayerMetadata::eFilter_AnyLayer)
     {
     }
-    virtual ~FilterRuleDefinition()
-    {
-    }
+    virtual ~FilterRuleDefinition() {}
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount);

@@ -21,8 +21,7 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 
-PlayersEnteredVolumeCondition::PlayersEnteredVolumeCondition(const XmlObject& object)
-    : IntegerCondition(object)
+PlayersEnteredVolumeCondition::PlayersEnteredVolumeCondition(const XmlObject& object) : IntegerCondition(object)
 {
     m_volumeName = object[std::wstring(L"volumeName")].maybeString();
     m_useTargetAreas = object[std::wstring(L"useTargetAreas")].maybeBool();
@@ -54,11 +53,14 @@ int PlayersEnteredVolumeCondition::GetValue(MasterGameMode* gameMode) const
                 for (std::vector<TargetAreaRuleDefinition*>::iterator area = areas.begin(); area != areas.end(); ++area)
                 {
                     TargetAreaRuleDefinition* targetArea = *area;
-                    if (targetArea->mPrimary && targetArea->mLaps <= static_cast<int>(gameMode->mGameStats.GetLapsCompleted(player->getSUID())))
+                    if (targetArea->mPrimary
+                        && targetArea->mLaps
+                               <= static_cast<int>(gameMode->mGameStats.GetLapsCompleted(player->getSUID())))
                     {
                         const bool atFinalCheckpoint =
-                            (*area)->getArea()->intersects(gameMode->GetSweptVolumeFromLastKnownPosition(player)) &&
-                            gameMode->mGameStats.GetLastCheckpointSequenceID(player->getSUID()) == gameMode->mFinalCheckpointSequenceID;
+                            (*area)->getArea()->intersects(gameMode->GetSweptVolumeFromLastKnownPosition(player))
+                            && gameMode->mGameStats.GetLastCheckpointSequenceID(player->getSUID())
+                                   == gameMode->mFinalCheckpointSequenceID;
                         if (atFinalCheckpoint)
                             ++entered;
                     }
@@ -66,7 +68,8 @@ int PlayersEnteredVolumeCondition::GetValue(MasterGameMode* gameMode) const
             }
             else
             {
-                AABB* area = gApp.getLevelGenerationOptions()->getRequiredGameRules()->getNamedArea(m_volumeName.otherwise(L""));
+                AABB* area = gApp.getLevelGenerationOptions()->getRequiredGameRules()->getNamedArea(
+                    m_volumeName.otherwise(L""));
                 if (area->intersects(gameMode->GetSweptVolumeFromLastKnownPosition(player)))
                     ++entered;
             }

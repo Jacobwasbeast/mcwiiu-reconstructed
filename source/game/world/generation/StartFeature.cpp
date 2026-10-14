@@ -6,10 +6,10 @@
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 
-template<typename T>
+template <typename T>
 std::wstring _toString(T value);
 
-template<typename T>
+template <typename T>
 T _fromString(const std::wstring& text);
 
 StartFeature::StartFeature()

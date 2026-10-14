@@ -9,9 +9,9 @@
 #include "game/world/block/BlockTransaction.hpp"
 
 BowlLayerFill::BowlLayerFill(int offset, float (*curve)(float), int thickness)
-    : mOffset(offset)
-    , mCurve(curve)
-    , mThickness(thickness)
+    : mOffset(offset),
+      mCurve(curve),
+      mThickness(thickness)
 {
 }
 
@@ -25,8 +25,8 @@ float BowlLayerFill::DOME(float value)
     return value;
 }
 
-void BowlLayerFill::ExtrudeLayer(Random&, const Shape& shape, const Vec3i&,
-                                 BlockTransaction* transaction, int* minY, int* maxY) const
+void BowlLayerFill::ExtrudeLayer(Random&, const Shape& shape, const Vec3i&, BlockTransaction* transaction, int* minY,
+                                 int* maxY) const
 {
     const float height = mOffset - 0.001f;
     for (unsigned int x = 0; x < shape.width; ++x)

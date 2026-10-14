@@ -28,7 +28,8 @@ XboxStructureActionGenerateBox::XboxStructureActionGenerateBox()
     addBoolAttribute(ConsoleGameRules::eGameRuleAttr_skipAir, &mExistingOnly);
 }
 
-uint32_t XboxStructureActionGenerateBox::generateBoxInLevel(StructurePiece* structurePiece, Level* level, BoundingBox* box)
+uint32_t XboxStructureActionGenerateBox::generateBoxInLevel(StructurePiece* structurePiece, Level* level,
+                                                            BoundingBox* box)
 {
     structurePiece->generateBox(level, box, mStartX, mStartY, mStartZ, mEndX, mEndY, mEndZ,
                                 mOuterBlock->defaultBlockState(), mInnerBlock->defaultBlockState(), mExistingOnly);

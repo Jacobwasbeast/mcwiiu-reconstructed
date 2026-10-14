@@ -71,24 +71,27 @@ FjFeatureBiomeRequirements* ShipwreckFeature::GetFJBiomeRequirements()
 {
     if (gShipwreckBiomeRequirements == NULL)
     {
-        gShipwreckBiomeRequirements = new FjFeatureBiomeRequirements(
-            GetSpawnBiomes(), 5, GetAllowedBiomes(), 10);
+        gShipwreckBiomeRequirements = new FjFeatureBiomeRequirements(GetSpawnBiomes(), 5, GetAllowedBiomes(), 10);
     }
     return gShipwreckBiomeRequirements;
 }
 
-ShipwreckFeature::ShipwreckFeature(GenericOverworldLevelSource* source,
-                                   OceanMonumentFeature* monument)
-    : StructureFeature(), mSource(source), mSpacing(10), mSeparation(5),
+ShipwreckFeature::ShipwreckFeature(GenericOverworldLevelSource* source, OceanMonumentFeature* monument)
+    : StructureFeature(),
+      mSource(source),
+      mSpacing(10),
+      mSeparation(5),
       mOceanMonument(monument)
 {
     mFeatureChunk = FjIsFeatureChunk(GetFJBiomeRequirements(), 20, mSpacing, mSeparation);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
-ShipwreckFeature::ShipwreckFeature(GenericOverworldLevelSource* source,
-                                   OceanMonumentFeature* monument, SuperflatConfig* config)
-    : StructureFeature(), mSource(source), mOceanMonument(monument)
+ShipwreckFeature::ShipwreckFeature(GenericOverworldLevelSource* source, OceanMonumentFeature* monument,
+                                   SuperflatConfig* config)
+    : StructureFeature(),
+      mSource(source),
+      mOceanMonument(monument)
 {
     FlatGeneratorInfo info(config);
     int separation = info.getShipwreckSeparation();
@@ -106,12 +109,11 @@ std::wstring ShipwreckFeature::getFeatureName()
     return L"Shipwreck";
 }
 
-BlockPos* ShipwreckFeature::getNearestGeneratedFeature(Level* sourceLevel, const BlockPos& pos,
-                                                        bool skipExistingChunks)
+BlockPos* ShipwreckFeature::getNearestGeneratedFeature(Level* sourceLevel, const BlockPos& pos, bool skipExistingChunks)
 {
     level = sourceLevel;
-    return StructureFeature::findNearestFeaturePositionBySpacing(
-        sourceLevel, this, pos, 10, 5, 0xdb1471, true, 100, skipExistingChunks);
+    return StructureFeature::findNearestFeaturePositionBySpacing(sourceLevel, this, pos, 10, 5, 0xdb1471, true, 100,
+                                                                 skipExistingChunks);
 }
 
 char ShipwreckFeature::fjIsFeatureChunk(BiomeSource*, long long, int, int, int)
@@ -130,11 +132,11 @@ bool ShipwreckFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 {
     int sizeInChunks = level->getLevelData()->getXZSize();
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
-                                         ? &mReducedFeatureChunk : &mFeatureChunk;
+                                         ? &mReducedFeatureChunk
+                                         : &mFeatureChunk;
     ChunkPos centerChunk = featureChunk->getCenterChunk(chunkX, chunkZ);
-    bool result = featureChunk->isFeatureChunk(
-        *level->getRandomFor(centerChunk.x, centerChunk.z, 0xdb1471), level->getBiomeSource(),
-        sizeInChunks, chunkX, chunkZ);
+    bool result = featureChunk->isFeatureChunk(*level->getRandomFor(centerChunk.x, centerChunk.z, 0xdb1471),
+                                               level->getBiomeSource(), sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_Shipwreck, chunkX, chunkZ);
     if (result && mOceanMonument != NULL)
     {
@@ -149,8 +151,8 @@ bool ShipwreckFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
     return result;
 }
 
-void ShipwreckFeature::ShipwreckStart::create(Level* level, GenericOverworldLevelSource* source,
-                                                Random& random, int chunkX, int chunkZ)
+void ShipwreckFeature::ShipwreckStart::create(Level* level, GenericOverworldLevelSource* source, Random& random,
+                                              int chunkX, int chunkZ)
 {
     int x = chunkX * 16 - 2;
     int z = chunkZ * 16 - 2;
@@ -167,15 +169,14 @@ void ShipwreckFeature::ShipwreckStart::create(Level* level, GenericOverworldLeve
     calculateBoundingBox();
 }
 
-ShipwreckFeature::ShipwreckStart::ShipwreckStart(Level* level, GenericOverworldLevelSource* source,
-                                                   Random& random, int chunkX, int chunkZ)
+ShipwreckFeature::ShipwreckStart::ShipwreckStart(Level* level, GenericOverworldLevelSource* source, Random& random,
+                                                 int chunkX, int chunkZ)
     : StructureStart(chunkX, chunkZ)
 {
     create(level, source, random, chunkX, chunkZ);
 }
 
-ShipwreckFeature::ShipwreckStart::ShipwreckStart()
-    : StructureStart(0, 0)
+ShipwreckFeature::ShipwreckStart::ShipwreckStart() : StructureStart(0, 0)
 {
 }
 

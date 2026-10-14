@@ -48,8 +48,7 @@ public:
     void _init(int size);
     virtual std::wstring getFeatureName();
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
-    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
-                                                 bool skipExistingChunks);
+    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos, bool skipExistingChunks);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
 
 private:

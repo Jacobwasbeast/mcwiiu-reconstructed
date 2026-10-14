@@ -113,18 +113,18 @@ public:
     class WoodlandMansionPiece : public TemplateStructurePiece
     {
     public:
-        WoodlandMansionPiece(StructureManager* manager, eMinecraftStructureTemplate type,
-            const BlockPos& position, Rotation* rotation);
-        WoodlandMansionPiece(StructureManager* manager, eMinecraftStructureTemplate type,
-            const BlockPos& position, Rotation* rotation, Mirror* mirror);
+        WoodlandMansionPiece(StructureManager* manager, eMinecraftStructureTemplate type, const BlockPos& position,
+                             Rotation* rotation);
+        WoodlandMansionPiece(StructureManager* manager, eMinecraftStructureTemplate type, const BlockPos& position,
+                             Rotation* rotation, Mirror* mirror);
         WoodlandMansionPiece();
         void loadTemplate(StructureManager* manager);
-        void _init(StructureManager* manager, eMinecraftStructureTemplate type,
-            const BlockPos& position, Rotation* rotation, Mirror* mirror);
+        void _init(StructureManager* manager, eMinecraftStructureTemplate type, const BlockPos& position,
+                   Rotation* rotation, Mirror* mirror);
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
-        virtual void handleDataMarker(const std::wstring& marker, const BlockPos& position,
-            Level* level, Random& random, BoundingBox* box);
+        virtual void handleDataMarker(const std::wstring& marker, const BlockPos& position, Level* level,
+                                      Random& random, BoundingBox* box);
         static StructurePiece* create();
         virtual EStructurePiece GetType();
         eMinecraftStructureTemplate mTemplateType;
@@ -140,30 +140,29 @@ public:
         void traverseTurn(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data);
         void traverseWallPiece(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data);
         void traverseInnerTurn(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data);
-        void traverseOuterWalls(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data,
-            SimpleGrid* grid, const Direction* direction, int startX, int startY, int endX, int endY);
-        void createRoof(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position,
-            Rotation* rotation, SimpleGrid* grid, SimpleGrid* upperGrid);
-        void addRoom1x1(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position,
-            Rotation* rotation, const Direction* direction, FloorRoomCollection* rooms);
-        void addRoom1x2(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position,
-            Rotation* rotation, const Direction* frontDirection, const Direction* sideDirection,
-            FloorRoomCollection* rooms, bool staircase);
-        void addRoom2x2(std::vector<WoodlandMansionPiece*>& pieces, BlockPos position,
-            Rotation* rotation, const Direction* frontDirection, const Direction* sideDirection,
-            FloorRoomCollection* rooms);
-        void addRoom2x2Secret(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position,
-            Rotation* rotation, FloorRoomCollection* rooms);
-        void createMansion(const BlockPos& position, Rotation* rotation,
-            std::vector<WoodlandMansionPiece*>& pieces, MansionGrid* grid);
+        void traverseOuterWalls(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data, SimpleGrid* grid,
+                                const Direction* direction, int startX, int startY, int endX, int endY);
+        void createRoof(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position, Rotation* rotation,
+                        SimpleGrid* grid, SimpleGrid* upperGrid);
+        void addRoom1x1(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position, Rotation* rotation,
+                        const Direction* direction, FloorRoomCollection* rooms);
+        void addRoom1x2(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position, Rotation* rotation,
+                        const Direction* frontDirection, const Direction* sideDirection, FloorRoomCollection* rooms,
+                        bool staircase);
+        void addRoom2x2(std::vector<WoodlandMansionPiece*>& pieces, BlockPos position, Rotation* rotation,
+                        const Direction* frontDirection, const Direction* sideDirection, FloorRoomCollection* rooms);
+        void addRoom2x2Secret(std::vector<WoodlandMansionPiece*>& pieces, const BlockPos& position, Rotation* rotation,
+                              FloorRoomCollection* rooms);
+        void createMansion(const BlockPos& position, Rotation* rotation, std::vector<WoodlandMansionPiece*>& pieces,
+                           MansionGrid* grid);
         StructureManager* mStructureManager;
         Random mRandom;
         int mStartX;
         int mStartY;
     };
 
-    static void generateMansion(StructureManager* manager, const BlockPos& position,
-        Rotation* rotation, std::vector<WoodlandMansionPiece*>& pieces, Random& random);
+    static void generateMansion(StructureManager* manager, const BlockPos& position, Rotation* rotation,
+                                std::vector<WoodlandMansionPiece*>& pieces, Random& random);
     static void loadStatic();
     static void main(std::basic_string<wchar_t> args);
 };

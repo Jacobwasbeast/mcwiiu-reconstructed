@@ -66,9 +66,13 @@ bool WoodlandMansionPieces::SimpleGrid::edgesTo(int x, int y, int value)
     return get(x - 1, y) == value || get(x + 1, y) == value || get(x, y + 1) == value || get(x, y - 1) == value;
 }
 
-WoodlandMansionPieces::FloorRoomCollection::~FloorRoomCollection() { }
+WoodlandMansionPieces::FloorRoomCollection::~FloorRoomCollection()
+{
+}
 
-WoodlandMansionPieces::FirstFloorRoomCollection::~FirstFloorRoomCollection() { }
+WoodlandMansionPieces::FirstFloorRoomCollection::~FirstFloorRoomCollection()
+{
+}
 eMinecraftStructureTemplate WoodlandMansionPieces::FirstFloorRoomCollection::get1x1(Random& random)
 {
     return static_cast<eMinecraftStructureTemplate>(eMinecraftStructureTemplate_Mansion_1x1A1 + random.nextInt(5));
@@ -104,7 +108,9 @@ eMinecraftStructureTemplate WoodlandMansionPieces::FirstFloorRoomCollection::get
     return eMinecraftStructureTemplate_Mansion_2x2S1;
 }
 
-WoodlandMansionPieces::SecondFloorRoomCollection::~SecondFloorRoomCollection() { }
+WoodlandMansionPieces::SecondFloorRoomCollection::~SecondFloorRoomCollection()
+{
+}
 eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::get1x1(Random& random)
 {
     return static_cast<eMinecraftStructureTemplate>(eMinecraftStructureTemplate_Mansion_1x1B1 + random.nextInt(5));
@@ -115,7 +121,8 @@ eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::ge
     return static_cast<eMinecraftStructureTemplate>(eMinecraftStructureTemplate_Mansion_1x1As1 + random.nextInt(4));
 }
 
-eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::get1x2SideEntrance(Random& random, bool staircase)
+eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::get1x2SideEntrance(Random& random,
+                                                                                                 bool staircase)
 {
     if (staircase)
         return eMinecraftStructureTemplate_Mansion_1x2CStairs;
@@ -123,7 +130,8 @@ eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::ge
     return static_cast<eMinecraftStructureTemplate>(eMinecraftStructureTemplate_Mansion_1x2C1 + index);
 }
 
-eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::get1x2FrontEntrance(Random& random, bool staircase)
+eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::get1x2FrontEntrance(Random& random,
+                                                                                                  bool staircase)
 {
     if (staircase)
         return eMinecraftStructureTemplate_Mansion_1x2DStairs;
@@ -146,10 +154,11 @@ eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::ge
     return eMinecraftStructureTemplate_Mansion_2x2S1;
 }
 
-WoodlandMansionPieces::ThirdFloorRoomCollection::~ThirdFloorRoomCollection() { }
+WoodlandMansionPieces::ThirdFloorRoomCollection::~ThirdFloorRoomCollection()
+{
+}
 
-WoodlandMansionPieces::MansionGrid::MansionGrid(Random& random)
-    : Random(), mFloorRooms()
+WoodlandMansionPieces::MansionGrid::MansionGrid(Random& random) : Random(), mFloorRooms()
 {
     Random::operator=(random);
     mEntranceX = 7;
@@ -200,7 +209,8 @@ WoodlandMansionPieces::MansionGrid::~MansionGrid()
     mFloorRooms = arrayWithLength<SimpleGrid*>();
 }
 
-void WoodlandMansionPieces::MansionGrid::recursiveCorridor(SimpleGrid* grid, int x, int y, const Direction* direction, int length)
+void WoodlandMansionPieces::MansionGrid::recursiveCorridor(SimpleGrid* grid, int x, int y, const Direction* direction,
+                                                           int length)
 {
     if (length > 0)
     {
@@ -214,10 +224,11 @@ void WoodlandMansionPieces::MansionGrid::recursiveCorridor(SimpleGrid* grid, int
             {
                 int nextX = x + direction->getStepX();
                 int nextY = y + direction->getStepZ();
-                if (grid->get(nextX + next->getStepX(), nextY + next->getStepZ()) == 0 &&
-                    grid->get(nextX + next->getStepX() * 2, nextY + next->getStepZ() * 2) == 0)
+                if (grid->get(nextX + next->getStepX(), nextY + next->getStepZ()) == 0
+                    && grid->get(nextX + next->getStepX() * 2, nextY + next->getStepZ() * 2) == 0)
                 {
-                    recursiveCorridor(grid, x + direction->getStepX() + next->getStepX(), y + direction->getStepZ() + next->getStepZ(), next, length - 1);
+                    recursiveCorridor(grid, x + direction->getStepX() + next->getStepX(),
+                                      y + direction->getStepZ() + next->getStepZ(), next, length - 1);
                     break;
                 }
             }
@@ -227,8 +238,10 @@ void WoodlandMansionPieces::MansionGrid::recursiveCorridor(SimpleGrid* grid, int
         const Direction* counterClockWise = direction->getCounterClockWise();
         grid->setIf(x + clockWise->getStepX(), y + clockWise->getStepZ(), 0, 2);
         grid->setIf(x + counterClockWise->getStepX(), y + counterClockWise->getStepZ(), 0, 2);
-        grid->setIf(x + direction->getStepX() + clockWise->getStepX(), y + direction->getStepZ() + clockWise->getStepZ(), 0, 2);
-        grid->setIf(x + direction->getStepX() + counterClockWise->getStepX(), y + direction->getStepZ() + counterClockWise->getStepZ(), 0, 2);
+        grid->setIf(x + direction->getStepX() + clockWise->getStepX(),
+                    y + direction->getStepZ() + clockWise->getStepZ(), 0, 2);
+        grid->setIf(x + direction->getStepX() + counterClockWise->getStepX(),
+                    y + direction->getStepZ() + counterClockWise->getStepZ(), 0, 2);
         grid->setIf(x + direction->getStepX() * 2, y + direction->getStepZ() * 2, 0, 2);
         grid->setIf(x + clockWise->getStepX() * 2, y + clockWise->getStepZ() * 2, 0, 2);
         grid->setIf(x + counterClockWise->getStepX() * 2, y + counterClockWise->getStepZ() * 2, 0, 2);
@@ -305,22 +318,22 @@ void WoodlandMansionPieces::MansionGrid::identifyRooms(SimpleGrid* grid, SimpleG
             int y0 = y;
             int y1 = y;
             int type = 0x10000;
-            if (rooms->get(x + 1, y) == 0 && rooms->get(x, y + 1) == 0 && rooms->get(x + 1, y + 1) == 0 &&
-                grid->get(x + 1, y) == 2 && grid->get(x, y + 1) == 2 && grid->get(x + 1, y + 1) == 2)
+            if (rooms->get(x + 1, y) == 0 && rooms->get(x, y + 1) == 0 && rooms->get(x + 1, y + 1) == 0
+                && grid->get(x + 1, y) == 2 && grid->get(x, y + 1) == 2 && grid->get(x + 1, y + 1) == 2)
             {
                 ++x1;
                 ++y1;
                 type = 0x40000;
             }
-            else if (rooms->get(x - 1, y) == 0 && rooms->get(x, y + 1) == 0 && rooms->get(x - 1, y + 1) == 0 &&
-                grid->get(x - 1, y) == 2 && grid->get(x, y + 1) == 2 && grid->get(x - 1, y + 1) == 2)
+            else if (rooms->get(x - 1, y) == 0 && rooms->get(x, y + 1) == 0 && rooms->get(x - 1, y + 1) == 0
+                     && grid->get(x - 1, y) == 2 && grid->get(x, y + 1) == 2 && grid->get(x - 1, y + 1) == 2)
             {
                 --x0;
                 ++y1;
                 type = 0x40000;
             }
-            else if (rooms->get(x - 1, y) == 0 && rooms->get(x, y - 1) == 0 && rooms->get(x - 1, y - 1) == 0 &&
-                grid->get(x - 1, y) == 2 && grid->get(x, y - 1) == 2 && grid->get(x - 1, y - 1) == 2)
+            else if (rooms->get(x - 1, y) == 0 && rooms->get(x, y - 1) == 0 && rooms->get(x - 1, y - 1) == 0
+                     && grid->get(x - 1, y) == 2 && grid->get(x, y - 1) == 2 && grid->get(x - 1, y - 1) == 2)
             {
                 --x0;
                 --y0;
@@ -390,7 +403,8 @@ bool WoodlandMansionPieces::MansionGrid::isRoomId(SimpleGrid*, int x, int y, int
     return (mFloorRooms.data[floor]->get(x, y) & 0xffff) == roomId;
 }
 
-const Direction* WoodlandMansionPieces::MansionGrid::get1x2RoomDirection(SimpleGrid* grid, int x, int y, int floor, int roomId)
+const Direction* WoodlandMansionPieces::MansionGrid::get1x2RoomDirection(SimpleGrid* grid, int x, int y, int floor,
+                                                                         int roomId)
 {
     arrayWithLength<const Direction*> faces = Direction::Plane::HORIZONTAL->getFaces();
     for (unsigned int i = 0; i < faces.length; ++i)
@@ -475,30 +489,37 @@ void WoodlandMansionPieces::MansionGrid::setupThirdFloor()
 }
 
 WoodlandMansionPieces::WoodlandMansionPiece::WoodlandMansionPiece(StructureManager* structureManager,
-    eMinecraftStructureTemplate templateType, const BlockPos& position, Rotation* rotation)
+                                                                  eMinecraftStructureTemplate templateType,
+                                                                  const BlockPos& position, Rotation* rotation)
     : TemplateStructurePiece(0)
 {
     _init(structureManager, templateType, position, rotation, Mirror::NONE);
 }
 
 WoodlandMansionPieces::WoodlandMansionPiece::WoodlandMansionPiece(StructureManager* structureManager,
-    eMinecraftStructureTemplate templateType, const BlockPos& position, Rotation* rotation, Mirror* mirror)
+                                                                  eMinecraftStructureTemplate templateType,
+                                                                  const BlockPos& position, Rotation* rotation,
+                                                                  Mirror* mirror)
     : TemplateStructurePiece(0)
 {
     _init(structureManager, templateType, position, rotation, mirror);
 }
 
-WoodlandMansionPieces::WoodlandMansionPiece::WoodlandMansionPiece() : TemplateStructurePiece() { }
+WoodlandMansionPieces::WoodlandMansionPiece::WoodlandMansionPiece() : TemplateStructurePiece()
+{
+}
 
 void WoodlandMansionPieces::WoodlandMansionPiece::loadTemplate(StructureManager* structureManager)
 {
     const StructureTemplate* structureTemplate = structureManager->getOrCreate(mTemplateType);
-    StructurePlaceSettings* settings = (new StructurePlaceSettings())->setIgnoreEntities(true)->setRotation(mRotation)->setMirror(mMirror);
+    StructurePlaceSettings* settings =
+        (new StructurePlaceSettings())->setIgnoreEntities(true)->setRotation(mRotation)->setMirror(mMirror);
     setup(structureTemplate, mTemplatePosition, settings);
 }
 
 void WoodlandMansionPieces::WoodlandMansionPiece::_init(StructureManager* structureManager,
-    eMinecraftStructureTemplate templateType, const BlockPos& position, Rotation* rotation, Mirror* mirror)
+                                                        eMinecraftStructureTemplate templateType,
+                                                        const BlockPos& position, Rotation* rotation, Mirror* mirror)
 {
     mTemplateType = templateType;
     mTemplatePosition = position;
@@ -515,7 +536,8 @@ void WoodlandMansionPieces::WoodlandMansionPiece::addAdditionalSaveData(DataOutp
     output->writeByte((unsigned char)mPlaceSettings->getMirror()->getType());
 }
 
-void WoodlandMansionPieces::WoodlandMansionPiece::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
+void WoodlandMansionPieces::WoodlandMansionPiece::readAdditionalSaveData(DataInputStream* input,
+                                                                         StructureManager* structureManager)
 {
     TemplateStructurePiece::readAdditionalSaveData(input, structureManager);
     mTemplateType = (eMinecraftStructureTemplate)input->readVarInt();
@@ -524,8 +546,8 @@ void WoodlandMansionPieces::WoodlandMansionPiece::readAdditionalSaveData(DataInp
     loadTemplate(structureManager);
 }
 
-void WoodlandMansionPieces::WoodlandMansionPiece::handleDataMarker(const std::wstring& marker,
-    const BlockPos& position, Level* level, Random& random, BoundingBox* box)
+void WoodlandMansionPieces::WoodlandMansionPiece::handleDataMarker(const std::wstring& marker, const BlockPos& position,
+                                                                   Level* level, Random& random, BoundingBox* box)
 {
     if (marker.find(L"Chest") == 0)
     {
@@ -585,32 +607,36 @@ WoodlandMansionPieces::MansionPiecePlacer::MansionPiecePlacer(StructureManager* 
     mRandom = random;
 }
 
-void WoodlandMansionPieces::MansionPiecePlacer::entrance(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data)
+void WoodlandMansionPieces::MansionPiecePlacer::entrance(std::vector<WoodlandMansionPiece*>& pieces,
+                                                         PlacementData& data)
 {
     BlockPos position = data.position.relative(data.rotation->rotate(Direction::WEST), 9);
-    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_Entrance,
-        position, data.rotation));
+    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_Entrance, position,
+                                              data.rotation));
     data.position = data.position.relative(data.rotation->rotate(Direction::SOUTH), 16);
 }
 
-void WoodlandMansionPieces::MansionPiecePlacer::traverseTurn(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data)
+void WoodlandMansionPieces::MansionPiecePlacer::traverseTurn(std::vector<WoodlandMansionPiece*>& pieces,
+                                                             PlacementData& data)
 {
     data.position = data.position.relative(data.rotation->rotate(Direction::SOUTH), -1);
     pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_WallCorner,
-        data.position, data.rotation));
+                                              data.position, data.rotation));
     data.position = data.position.relative(data.rotation->rotate(Direction::SOUTH), -7);
     data.position = data.position.relative(data.rotation->rotate(Direction::WEST), -6);
     data.rotation = data.rotation->getRotated(Rotation::CLOCKWISE_90);
 }
 
-void WoodlandMansionPieces::MansionPiecePlacer::traverseWallPiece(std::vector<WoodlandMansionPiece*>& pieces, PlacementData& data)
+void WoodlandMansionPieces::MansionPiecePlacer::traverseWallPiece(std::vector<WoodlandMansionPiece*>& pieces,
+                                                                  PlacementData& data)
 {
     BlockPos position = data.position.relative(data.rotation->rotate(Direction::EAST), 7);
     pieces.push_back(new WoodlandMansionPiece(mStructureManager, data.wallType, position, data.rotation));
     data.position = data.position.relative(data.rotation->rotate(Direction::SOUTH), 8);
 }
 
-void WoodlandMansionPieces::MansionPiecePlacer::traverseInnerTurn(std::vector<WoodlandMansionPiece*>&, PlacementData& data)
+void WoodlandMansionPieces::MansionPiecePlacer::traverseInnerTurn(std::vector<WoodlandMansionPiece*>&,
+                                                                  PlacementData& data)
 {
     data.position = data.position.relative(data.rotation->rotate(Direction::SOUTH), 6);
     data.position = data.position.relative(data.rotation->rotate(Direction::EAST), 8);
@@ -618,7 +644,9 @@ void WoodlandMansionPieces::MansionPiecePlacer::traverseInnerTurn(std::vector<Wo
 }
 
 void WoodlandMansionPieces::MansionPiecePlacer::traverseOuterWalls(std::vector<WoodlandMansionPiece*>& pieces,
-    PlacementData& data, SimpleGrid* grid, const Direction* direction, int startX, int startY, int endX, int endY)
+                                                                   PlacementData& data, SimpleGrid* grid,
+                                                                   const Direction* direction, int startX, int startY,
+                                                                   int endX, int endY)
 {
     int x = startX;
     int y = startY;
@@ -633,7 +661,7 @@ void WoodlandMansionPieces::MansionPiecePlacer::traverseOuterWalls(std::vector<W
                 traverseWallPiece(pieces, data);
         }
         else if (MansionGrid::isHouse(grid, x + current->getStepX() + current->getCounterClockWise()->getStepX(),
-                     y + current->getStepZ() + current->getCounterClockWise()->getStepZ()))
+                                      y + current->getStepZ() + current->getCounterClockWise()->getStepZ()))
         {
             traverseInnerTurn(pieces, data);
             x += current->getStepX();
@@ -651,7 +679,8 @@ void WoodlandMansionPieces::MansionPiecePlacer::traverseOuterWalls(std::vector<W
 }
 
 void WoodlandMansionPieces::MansionPiecePlacer::createRoof(std::vector<WoodlandMansionPiece*>& pieces,
-    const BlockPos& position, Rotation* rotation, SimpleGrid* grid, SimpleGrid* upperGrid)
+                                                           const BlockPos& position, Rotation* rotation,
+                                                           SimpleGrid* grid, SimpleGrid* upperGrid)
 {
     for (int y = 0; y < grid->mHeight; ++y)
     {
@@ -664,32 +693,35 @@ void WoodlandMansionPieces::MansionPiecePlacer::createRoof(std::vector<WoodlandM
                 continue;
 
             pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_Roof,
-                cell.above(3), rotation));
+                                                      cell.above(3), rotation));
             if (!MansionGrid::isHouse(grid, x + 1, y))
             {
                 BlockPos front = cell.relative(rotation->rotate(Direction::EAST), 6);
-                pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofFront,
-                    front, rotation));
+                pieces.push_back(new WoodlandMansionPiece(
+                    mStructureManager, eMinecraftStructureTemplate_Mansion_RoofFront, front, rotation));
             }
             if (!MansionGrid::isHouse(grid, x - 1, y))
             {
                 BlockPos front = cell.relative(rotation->rotate(Direction::EAST), 0);
                 front = front.relative(rotation->rotate(Direction::SOUTH), 7);
-                pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofFront,
-                    front, rotation->getRotated(Rotation::CLOCKWISE_180)));
+                pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                          eMinecraftStructureTemplate_Mansion_RoofFront, front,
+                                                          rotation->getRotated(Rotation::CLOCKWISE_180)));
             }
             if (!MansionGrid::isHouse(grid, x, y - 1))
             {
                 BlockPos front = cell.relative(rotation->rotate(Direction::WEST), 1);
-                pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofFront,
-                    front, rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
+                pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                          eMinecraftStructureTemplate_Mansion_RoofFront, front,
+                                                          rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
             }
             if (!MansionGrid::isHouse(grid, x, y + 1))
             {
                 BlockPos front = cell.relative(rotation->rotate(Direction::EAST), 6);
                 front = front.relative(rotation->rotate(Direction::SOUTH), 6);
-                pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofFront,
-                    front, rotation->getRotated(Rotation::CLOCKWISE_90)));
+                pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                          eMinecraftStructureTemplate_Mansion_RoofFront, front,
+                                                          rotation->getRotated(Rotation::CLOCKWISE_90)));
             }
         }
     }
@@ -709,29 +741,32 @@ void WoodlandMansionPieces::MansionPiecePlacer::createRoof(std::vector<WoodlandM
                 if (!MansionGrid::isHouse(grid, x + 1, y))
                 {
                     BlockPos wall = cell.relative(rotation->rotate(Direction::EAST), 7);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWall,
-                        wall, rotation));
+                    pieces.push_back(new WoodlandMansionPiece(
+                        mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWall, wall, rotation));
                 }
                 if (!MansionGrid::isHouse(grid, x - 1, y))
                 {
                     BlockPos wall = cell.relative(rotation->rotate(Direction::WEST), 1);
                     wall = wall.relative(rotation->rotate(Direction::SOUTH), 6);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWall,
-                        wall, rotation->getRotated(Rotation::CLOCKWISE_180)));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                              eMinecraftStructureTemplate_Mansion_SmallWall, wall,
+                                                              rotation->getRotated(Rotation::CLOCKWISE_180)));
                 }
                 if (!MansionGrid::isHouse(grid, x, y - 1))
                 {
                     BlockPos wall = cell.relative(rotation->rotate(Direction::WEST), 0);
                     wall = wall.relative(rotation->rotate(Direction::NORTH), 1);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWall,
-                        wall, rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                              eMinecraftStructureTemplate_Mansion_SmallWall, wall,
+                                                              rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
                 }
                 if (!MansionGrid::isHouse(grid, x, y + 1))
                 {
                     BlockPos wall = cell.relative(rotation->rotate(Direction::EAST), 6);
                     wall = wall.relative(rotation->rotate(Direction::SOUTH), 7);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWall,
-                        wall, rotation->getRotated(Rotation::CLOCKWISE_90)));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                              eMinecraftStructureTemplate_Mansion_SmallWall, wall,
+                                                              rotation->getRotated(Rotation::CLOCKWISE_90)));
                 }
                 if (!MansionGrid::isHouse(grid, x + 1, y))
                 {
@@ -739,15 +774,16 @@ void WoodlandMansionPieces::MansionPiecePlacer::createRoof(std::vector<WoodlandM
                     {
                         BlockPos corner = cell.relative(rotation->rotate(Direction::EAST), 7);
                         corner = corner.relative(rotation->rotate(Direction::NORTH), 2);
-                        pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWallCorner,
-                            corner, rotation));
+                        pieces.push_back(new WoodlandMansionPiece(
+                            mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWallCorner, corner, rotation));
                     }
                     if (!MansionGrid::isHouse(grid, x, y + 1))
                     {
                         BlockPos corner = cell.relative(rotation->rotate(Direction::EAST), 8);
                         corner = corner.relative(rotation->rotate(Direction::SOUTH), 7);
-                        pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWallCorner,
-                            corner, rotation->getRotated(Rotation::CLOCKWISE_90)));
+                        pieces.push_back(new WoodlandMansionPiece(
+                            mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWallCorner, corner,
+                            rotation->getRotated(Rotation::CLOCKWISE_90)));
                     }
                 }
                 if (!MansionGrid::isHouse(grid, x - 1, y))
@@ -756,15 +792,17 @@ void WoodlandMansionPieces::MansionPiecePlacer::createRoof(std::vector<WoodlandM
                     {
                         BlockPos corner = cell.relative(rotation->rotate(Direction::WEST), 2);
                         corner = corner.relative(rotation->rotate(Direction::NORTH), 1);
-                        pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWallCorner,
-                            corner, rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
+                        pieces.push_back(new WoodlandMansionPiece(
+                            mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWallCorner, corner,
+                            rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
                     }
                     if (!MansionGrid::isHouse(grid, x, y + 1))
                     {
                         BlockPos corner = cell.relative(rotation->rotate(Direction::WEST), 1);
                         corner = corner.relative(rotation->rotate(Direction::SOUTH), 8);
-                        pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWallCorner,
-                            corner, rotation->getRotated(Rotation::CLOCKWISE_180)));
+                        pieces.push_back(new WoodlandMansionPiece(
+                            mStructureManager, eMinecraftStructureTemplate_Mansion_SmallWallCorner, corner,
+                            rotation->getRotated(Rotation::CLOCKWISE_180)));
                     }
                 }
             }
@@ -787,26 +825,28 @@ void WoodlandMansionPieces::MansionPiecePlacer::createRoof(std::vector<WoodlandM
                 if (!MansionGrid::isHouse(grid, x, y + 1))
                 {
                     BlockPos corner = edge.relative(rotation->rotate(Direction::SOUTH), 6);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofCorner,
-                        corner, rotation));
+                    pieces.push_back(new WoodlandMansionPiece(
+                        mStructureManager, eMinecraftStructureTemplate_Mansion_RoofCorner, corner, rotation));
                 }
                 else if (MansionGrid::isHouse(grid, x + 1, y + 1))
                 {
                     BlockPos corner = edge.relative(rotation->rotate(Direction::SOUTH), 5);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofInnerCorner,
-                        corner, rotation));
+                    pieces.push_back(new WoodlandMansionPiece(
+                        mStructureManager, eMinecraftStructureTemplate_Mansion_RoofInnerCorner, corner, rotation));
                 }
                 if (!MansionGrid::isHouse(grid, x, y - 1))
                 {
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofCorner,
-                        edge, rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                              eMinecraftStructureTemplate_Mansion_RoofCorner, edge,
+                                                              rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
                 }
                 else if (MansionGrid::isHouse(grid, x + 1, y - 1))
                 {
                     BlockPos corner = cell.relative(rotation->rotate(Direction::EAST), 9);
                     corner = corner.relative(rotation->rotate(Direction::NORTH), 2);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofInnerCorner,
-                        corner, rotation->getRotated(Rotation::CLOCKWISE_90)));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                              eMinecraftStructureTemplate_Mansion_RoofInnerCorner,
+                                                              corner, rotation->getRotated(Rotation::CLOCKWISE_90)));
                 }
             }
             if (!MansionGrid::isHouse(grid, x - 1, y))
@@ -816,26 +856,30 @@ void WoodlandMansionPieces::MansionPiecePlacer::createRoof(std::vector<WoodlandM
                 if (!MansionGrid::isHouse(grid, x, y + 1))
                 {
                     BlockPos corner = edge.relative(rotation->rotate(Direction::SOUTH), 6);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofCorner,
-                        corner, rotation->getRotated(Rotation::CLOCKWISE_90)));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                              eMinecraftStructureTemplate_Mansion_RoofCorner, corner,
+                                                              rotation->getRotated(Rotation::CLOCKWISE_90)));
                 }
                 else if (MansionGrid::isHouse(grid, x - 1, y + 1))
                 {
                     BlockPos corner = edge.relative(rotation->rotate(Direction::SOUTH), 8);
                     corner = corner.relative(rotation->rotate(Direction::WEST), 3);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofInnerCorner,
-                        corner, rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
+                    pieces.push_back(
+                        new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofInnerCorner,
+                                                 corner, rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
                 }
                 if (!MansionGrid::isHouse(grid, x, y - 1))
                 {
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofCorner,
-                        edge, rotation->getRotated(Rotation::CLOCKWISE_180)));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                              eMinecraftStructureTemplate_Mansion_RoofCorner, edge,
+                                                              rotation->getRotated(Rotation::CLOCKWISE_180)));
                 }
                 else if (MansionGrid::isHouse(grid, x - 1, y - 1))
                 {
                     BlockPos corner = edge.relative(rotation->rotate(Direction::SOUTH), 1);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_RoofInnerCorner,
-                        corner, rotation->getRotated(Rotation::CLOCKWISE_180)));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
+                                                              eMinecraftStructureTemplate_Mansion_RoofInnerCorner,
+                                                              corner, rotation->getRotated(Rotation::CLOCKWISE_180)));
                 }
             }
         }
@@ -843,7 +887,8 @@ void WoodlandMansionPieces::MansionPiecePlacer::createRoof(std::vector<WoodlandM
 }
 
 void WoodlandMansionPieces::MansionPiecePlacer::addRoom1x1(std::vector<WoodlandMansionPiece*>& pieces,
-    const BlockPos& position, Rotation* rotation, const Direction* direction, FloorRoomCollection* rooms)
+                                                           const BlockPos& position, Rotation* rotation,
+                                                           const Direction* direction, FloorRoomCollection* rooms)
 {
     Rotation* roomRotation = Rotation::NONE;
     eMinecraftStructureTemplate room = rooms->get1x1(mRandom);
@@ -859,126 +904,120 @@ void WoodlandMansionPieces::MansionPiecePlacer::addRoom1x1(std::vector<WoodlandM
             room = rooms->get1x1Secret(mRandom);
     }
 
-    BlockPos offset = StructureTemplate::getZeroPositionWithTransform(BlockPos(1, 0, 0), Mirror::NONE, roomRotation, 7, 7);
+    BlockPos offset = StructureTemplate::getZeroPositionWithTransform(BlockPos(1, 0, 0), Mirror::NONE, roomRotation, 7,
+                                                                      7);
     roomRotation = roomRotation->getRotated(rotation);
     offset = offset.rotate(rotation);
     BlockPos roomPosition = position.offset(offset.x, 0, offset.z);
-    pieces.push_back(new WoodlandMansionPiece(mStructureManager, room,
-        roomPosition, roomRotation));
+    pieces.push_back(new WoodlandMansionPiece(mStructureManager, room, roomPosition, roomRotation));
 }
 
 void WoodlandMansionPieces::MansionPiecePlacer::addRoom1x2(std::vector<WoodlandMansionPiece*>& pieces,
-    const BlockPos& position, Rotation* rotation, const Direction* frontDirection, const Direction* sideDirection,
-    FloorRoomCollection* rooms, bool staircase)
+                                                           const BlockPos& position, Rotation* rotation,
+                                                           const Direction* frontDirection,
+                                                           const Direction* sideDirection, FloorRoomCollection* rooms,
+                                                           bool staircase)
 {
     if (sideDirection == Direction::EAST && frontDirection == Direction::SOUTH)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 1);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2SideEntrance(mRandom, staircase), roomPosition, rotation));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2SideEntrance(mRandom, staircase),
+                                                  roomPosition, rotation));
     }
     else if (sideDirection == Direction::EAST && frontDirection == Direction::NORTH)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 1);
         roomPosition = roomPosition.relative(rotation->rotate(Direction::SOUTH), 6);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2SideEntrance(mRandom, staircase), roomPosition, rotation,
-            Mirror::LEFT_RIGHT));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2SideEntrance(mRandom, staircase),
+                                                  roomPosition, rotation, Mirror::LEFT_RIGHT));
     }
     else if (sideDirection == Direction::WEST && frontDirection == Direction::NORTH)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 7);
         roomPosition = roomPosition.relative(rotation->rotate(Direction::SOUTH), 6);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2SideEntrance(mRandom, staircase), roomPosition,
-            rotation->getRotated(Rotation::CLOCKWISE_180)));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2SideEntrance(mRandom, staircase),
+                                                  roomPosition, rotation->getRotated(Rotation::CLOCKWISE_180)));
     }
     else if (sideDirection == Direction::WEST && frontDirection == Direction::SOUTH)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 7);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2SideEntrance(mRandom, staircase), roomPosition, rotation,
-            Mirror::FRONT_BACK));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2SideEntrance(mRandom, staircase),
+                                                  roomPosition, rotation, Mirror::FRONT_BACK));
     }
     else if (sideDirection == Direction::SOUTH && frontDirection == Direction::EAST)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 1);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2SideEntrance(mRandom, staircase), roomPosition,
-            rotation->getRotated(Rotation::CLOCKWISE_90), Mirror::LEFT_RIGHT));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2SideEntrance(mRandom, staircase),
+                                                  roomPosition, rotation->getRotated(Rotation::CLOCKWISE_90),
+                                                  Mirror::LEFT_RIGHT));
     }
     else if (sideDirection == Direction::SOUTH && frontDirection == Direction::WEST)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 7);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2SideEntrance(mRandom, staircase), roomPosition,
-            rotation->getRotated(Rotation::CLOCKWISE_90)));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2SideEntrance(mRandom, staircase),
+                                                  roomPosition, rotation->getRotated(Rotation::CLOCKWISE_90)));
     }
     else if (sideDirection == Direction::NORTH && frontDirection == Direction::WEST)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 7);
         roomPosition = roomPosition.relative(rotation->rotate(Direction::SOUTH), 6);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2SideEntrance(mRandom, staircase), roomPosition,
-            rotation->getRotated(Rotation::CLOCKWISE_90), Mirror::FRONT_BACK));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2SideEntrance(mRandom, staircase),
+                                                  roomPosition, rotation->getRotated(Rotation::CLOCKWISE_90),
+                                                  Mirror::FRONT_BACK));
     }
     else if (sideDirection == Direction::NORTH && frontDirection == Direction::EAST)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 1);
         roomPosition = roomPosition.relative(rotation->rotate(Direction::SOUTH), 6);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2SideEntrance(mRandom, staircase), roomPosition,
-            rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2SideEntrance(mRandom, staircase),
+                                                  roomPosition, rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
     }
     else if (sideDirection == Direction::SOUTH && frontDirection == Direction::NORTH)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 1);
         roomPosition = roomPosition.relative(rotation->rotate(Direction::NORTH), 8);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2FrontEntrance(mRandom, staircase), roomPosition, rotation));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2FrontEntrance(mRandom, staircase),
+                                                  roomPosition, rotation));
     }
     else if (sideDirection == Direction::NORTH && frontDirection == Direction::SOUTH)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 7);
         roomPosition = roomPosition.relative(rotation->rotate(Direction::SOUTH), 14);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2FrontEntrance(mRandom, staircase), roomPosition,
-            rotation->getRotated(Rotation::CLOCKWISE_180)));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2FrontEntrance(mRandom, staircase),
+                                                  roomPosition, rotation->getRotated(Rotation::CLOCKWISE_180)));
     }
     else if (sideDirection == Direction::WEST && frontDirection == Direction::EAST)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 15);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2FrontEntrance(mRandom, staircase), roomPosition,
-            rotation->getRotated(Rotation::CLOCKWISE_90)));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2FrontEntrance(mRandom, staircase),
+                                                  roomPosition, rotation->getRotated(Rotation::CLOCKWISE_90)));
     }
     else if (sideDirection == Direction::EAST && frontDirection == Direction::WEST)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::WEST), 7);
         roomPosition = roomPosition.relative(rotation->rotate(Direction::SOUTH), 6);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2FrontEntrance(mRandom, staircase), roomPosition,
-            rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2FrontEntrance(mRandom, staircase),
+                                                  roomPosition, rotation->getRotated(Rotation::COUNTERCLOCKWISE_90)));
     }
     else if (sideDirection == Direction::UP && frontDirection == Direction::EAST)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 15);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2Secret(mRandom), roomPosition,
-            rotation->getRotated(Rotation::CLOCKWISE_90)));
+        pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get1x2Secret(mRandom), roomPosition,
+                                                  rotation->getRotated(Rotation::CLOCKWISE_90)));
     }
     else if (sideDirection == Direction::UP && frontDirection == Direction::SOUTH)
     {
         BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 1);
         roomPosition = roomPosition.relative(rotation->rotate(Direction::NORTH), 0);
-        pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-            rooms->get1x2Secret(mRandom), roomPosition, rotation));
+        pieces.push_back(
+            new WoodlandMansionPiece(mStructureManager, rooms->get1x2Secret(mRandom), roomPosition, rotation));
     }
 }
 
 void WoodlandMansionPieces::MansionPiecePlacer::addRoom2x2(std::vector<WoodlandMansionPiece*>& pieces,
-    BlockPos position, Rotation* rotation, const Direction* frontDirection, const Direction* sideDirection,
-    FloorRoomCollection* rooms)
+                                                           BlockPos position, Rotation* rotation,
+                                                           const Direction* frontDirection,
+                                                           const Direction* sideDirection, FloorRoomCollection* rooms)
 {
     int east = 0;
     int south = 0;
@@ -1034,20 +1073,22 @@ void WoodlandMansionPieces::MansionPiecePlacer::addRoom2x2(std::vector<WoodlandM
 
     BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), east);
     roomPosition = roomPosition.relative(rotation->rotate(Direction::SOUTH), south);
-    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-        rooms->get2x2(mRandom), roomPosition, roomRotation, mirror));
+    pieces.push_back(
+        new WoodlandMansionPiece(mStructureManager, rooms->get2x2(mRandom), roomPosition, roomRotation, mirror));
 }
 
 void WoodlandMansionPieces::MansionPiecePlacer::addRoom2x2Secret(std::vector<WoodlandMansionPiece*>& pieces,
-    const BlockPos& position, Rotation* rotation, FloorRoomCollection* rooms)
+                                                                 const BlockPos& position, Rotation* rotation,
+                                                                 FloorRoomCollection* rooms)
 {
     BlockPos roomPosition = position.relative(rotation->rotate(Direction::EAST), 1);
-    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-        rooms->get2x2Secret(mRandom), roomPosition, rotation, Mirror::NONE));
+    pieces.push_back(new WoodlandMansionPiece(mStructureManager, rooms->get2x2Secret(mRandom), roomPosition, rotation,
+                                              Mirror::NONE));
 }
 
 void WoodlandMansionPieces::MansionPiecePlacer::createMansion(const BlockPos& position, Rotation* rotation,
-    std::vector<WoodlandMansionPiece*>& pieces, MansionGrid* grid)
+                                                              std::vector<WoodlandMansionPiece*>& pieces,
+                                                              MansionGrid* grid)
 {
     PlacementData groundFloor;
     groundFloor.position = position;
@@ -1079,8 +1120,10 @@ void WoodlandMansionPieces::MansionPiecePlacer::createMansion(const BlockPos& po
         {
             if (MansionGrid::isHouse(thirdFloorGrid, x, y))
             {
-                thirdFloor.position = thirdFloor.position.relative(rotation->rotate(Direction::SOUTH), 8 + (y - mStartY) * 8);
-                thirdFloor.position = thirdFloor.position.relative(rotation->rotate(Direction::EAST), (x - mStartX) * 8);
+                thirdFloor.position = thirdFloor.position.relative(rotation->rotate(Direction::SOUTH),
+                                                                   8 + (y - mStartY) * 8);
+                thirdFloor.position = thirdFloor.position.relative(rotation->rotate(Direction::EAST),
+                                                                   (x - mStartX) * 8);
                 traverseWallPiece(pieces, thirdFloor);
                 traverseOuterWalls(pieces, thirdFloor, thirdFloorGrid, Direction::SOUTH, x, y, x, y);
                 placedThirdFloor = true;
@@ -1091,27 +1134,20 @@ void WoodlandMansionPieces::MansionPiecePlacer::createMansion(const BlockPos& po
     createRoof(pieces, position.above(16), rotation, baseGrid, thirdFloorGrid);
     createRoof(pieces, position.above(27), rotation, thirdFloorGrid, NULL);
 
-    FloorRoomCollection* floorRooms[3] =
-    {
-        new FirstFloorRoomCollection(),
-        new SecondFloorRoomCollection(),
-        new ThirdFloorRoomCollection()
-    };
+    FloorRoomCollection* floorRooms[3] = {new FirstFloorRoomCollection(), new SecondFloorRoomCollection(),
+                                          new ThirdFloorRoomCollection()};
 
     for (int floor = 0; floor < 3; ++floor)
     {
         BlockPos floorPosition = position.above(8 * floor + (floor == 2 ? 3 : 0));
         SimpleGrid* rooms = grid->mFloorRooms.data[floor];
         SimpleGrid* floorGrid = floor == 2 ? thirdFloorGrid : baseGrid;
-        eMinecraftStructureTemplate corridorFloor = floor == 0
-            ? eMinecraftStructureTemplate_Mansion_CorridorFloor
-            : eMinecraftStructureTemplate_Mansion_CorridorFloor2;
-        eMinecraftStructureTemplate carpetSouth = floor == 0
-            ? eMinecraftStructureTemplate_Mansion_CarpetSouth
-            : eMinecraftStructureTemplate_Mansion_CarpetSouth2;
-        eMinecraftStructureTemplate carpetWest = floor == 0
-            ? eMinecraftStructureTemplate_Mansion_CarpetWest
-            : eMinecraftStructureTemplate_Mansion_CarpetWest2;
+        eMinecraftStructureTemplate corridorFloor = floor == 0 ? eMinecraftStructureTemplate_Mansion_CorridorFloor
+                                                               : eMinecraftStructureTemplate_Mansion_CorridorFloor2;
+        eMinecraftStructureTemplate carpetSouth = floor == 0 ? eMinecraftStructureTemplate_Mansion_CarpetSouth
+                                                             : eMinecraftStructureTemplate_Mansion_CarpetSouth2;
+        eMinecraftStructureTemplate carpetWest = floor == 0 ? eMinecraftStructureTemplate_Mansion_CarpetWest
+                                                            : eMinecraftStructureTemplate_Mansion_CarpetWest2;
 
         for (int y = 0; y < floorGrid->mHeight; ++y)
         {
@@ -1122,44 +1158,40 @@ void WoodlandMansionPieces::MansionPiecePlacer::createMansion(const BlockPos& po
 
                 BlockPos corridor = floorPosition.relative(rotation->rotate(Direction::SOUTH), 8 + (y - mStartY) * 8);
                 corridor = corridor.relative(rotation->rotate(Direction::EAST), (x - mStartX) * 8);
-                pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-                    corridorFloor, corridor, rotation));
+                pieces.push_back(new WoodlandMansionPiece(mStructureManager, corridorFloor, corridor, rotation));
 
                 if (floorGrid->get(x, y - 1) == 1 || (rooms->get(x, y - 1) & 0x800000) != 0)
                 {
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_CarpetNorth,
+                    pieces.push_back(new WoodlandMansionPiece(
+                        mStructureManager, eMinecraftStructureTemplate_Mansion_CarpetNorth,
                         corridor.relative(rotation->rotate(Direction::EAST), 1).above(), rotation));
                 }
                 if (floorGrid->get(x + 1, y) == 1 || (rooms->get(x + 1, y) & 0x800000) != 0)
                 {
                     BlockPos carpet = corridor.relative(rotation->rotate(Direction::SOUTH), 1);
                     carpet = carpet.relative(rotation->rotate(Direction::EAST), 5);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, eMinecraftStructureTemplate_Mansion_CarpetEast,
-                        carpet.above(), rotation));
+                    pieces.push_back(new WoodlandMansionPiece(
+                        mStructureManager, eMinecraftStructureTemplate_Mansion_CarpetEast, carpet.above(), rotation));
                 }
                 if (floorGrid->get(x, y + 1) == 1 || (rooms->get(x, y + 1) & 0x800000) != 0)
                 {
                     BlockPos carpet = corridor.relative(rotation->rotate(Direction::SOUTH), 5);
                     carpet = carpet.relative(rotation->rotate(Direction::WEST), 1);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-                        carpetSouth, carpet, rotation));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, carpetSouth, carpet, rotation));
                 }
                 if (floorGrid->get(x - 1, y) == 1 || (rooms->get(x - 1, y) & 0x800000) != 0)
                 {
                     BlockPos carpet = corridor.relative(rotation->rotate(Direction::WEST), 1);
                     carpet = carpet.relative(rotation->rotate(Direction::NORTH), 1);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-                        carpetWest, carpet, rotation));
+                    pieces.push_back(new WoodlandMansionPiece(mStructureManager, carpetWest, carpet, rotation));
                 }
             }
         }
 
-        eMinecraftStructureTemplate indoorsWall = floor == 0
-            ? eMinecraftStructureTemplate_Mansion_IndoorsWall
-            : eMinecraftStructureTemplate_Mansion_IndoorsWall2;
-        eMinecraftStructureTemplate indoorsDoor = floor == 0
-            ? eMinecraftStructureTemplate_Mansion_IndoorsDoor
-            : eMinecraftStructureTemplate_Mansion_IndoorsDoor2;
+        eMinecraftStructureTemplate indoorsWall = floor == 0 ? eMinecraftStructureTemplate_Mansion_IndoorsWall
+                                                             : eMinecraftStructureTemplate_Mansion_IndoorsWall2;
+        eMinecraftStructureTemplate indoorsDoor = floor == 0 ? eMinecraftStructureTemplate_Mansion_IndoorsDoor
+                                                             : eMinecraftStructureTemplate_Mansion_IndoorsDoor2;
         std::vector<const Direction*> doorDirections;
         for (int y = 0; y < floorGrid->mHeight; ++y)
         {
@@ -1196,30 +1228,30 @@ void WoodlandMansionPieces::MansionPiecePlacer::createMansion(const BlockPos& po
 
                 if (MansionGrid::isHouse(floorGrid, x - 1, y) && !grid->isRoomId(floorGrid, x - 1, y, floor, roomId))
                 {
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-                        door == Direction::WEST ? indoorsDoor : indoorsWall, room, rotation));
+                    pieces.push_back(new WoodlandMansionPiece(
+                        mStructureManager, door == Direction::WEST ? indoorsDoor : indoorsWall, room, rotation));
                 }
                 if (floorGrid->get(x + 1, y) == 1 && !staircaseLanding)
                 {
                     BlockPos wall = room.relative(rotation->rotate(Direction::EAST), 8);
-                    pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-                        door == Direction::EAST ? indoorsDoor : indoorsWall, wall, rotation));
+                    pieces.push_back(new WoodlandMansionPiece(
+                        mStructureManager, door == Direction::EAST ? indoorsDoor : indoorsWall, wall, rotation));
                 }
                 if (MansionGrid::isHouse(floorGrid, x, y + 1) && !grid->isRoomId(floorGrid, x, y + 1, floor, roomId))
                 {
                     BlockPos wall = room.relative(rotation->rotate(Direction::SOUTH), 7);
                     wall = wall.relative(rotation->rotate(Direction::EAST), 7);
                     pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-                        door == Direction::SOUTH ? indoorsDoor : indoorsWall, wall,
-                        rotation->getRotated(Rotation::CLOCKWISE_90)));
+                                                              door == Direction::SOUTH ? indoorsDoor : indoorsWall,
+                                                              wall, rotation->getRotated(Rotation::CLOCKWISE_90)));
                 }
                 if (floorGrid->get(x, y - 1) == 1 && !staircaseLanding)
                 {
                     BlockPos wall = room.relative(rotation->rotate(Direction::NORTH), 1);
                     wall = wall.relative(rotation->rotate(Direction::EAST), 7);
                     pieces.push_back(new WoodlandMansionPiece(mStructureManager,
-                        door == Direction::NORTH ? indoorsDoor : indoorsWall, wall,
-                        rotation->getRotated(Rotation::CLOCKWISE_90)));
+                                                              door == Direction::NORTH ? indoorsDoor : indoorsWall,
+                                                              wall, rotation->getRotated(Rotation::CLOCKWISE_90)));
                 }
 
                 if (type == 0x10000)
@@ -1235,7 +1267,8 @@ void WoodlandMansionPieces::MansionPiecePlacer::createMansion(const BlockPos& po
                 else if (type == 0x40000 && door != NULL && door != Direction::UP)
                 {
                     const Direction* roomDirection = door->getClockWise();
-                    if (!grid->isRoomId(floorGrid, x + roomDirection->getStepX(), y + roomDirection->getStepZ(), floor, roomId))
+                    if (!grid->isRoomId(floorGrid, x + roomDirection->getStepX(), y + roomDirection->getStepZ(), floor,
+                                        roomId))
                         roomDirection = roomDirection->getOpposite();
                     addRoom2x2(pieces, room, rotation, roomDirection, door, floorRooms[floor]);
                 }
@@ -1252,7 +1285,8 @@ void WoodlandMansionPieces::MansionPiecePlacer::createMansion(const BlockPos& po
 }
 
 void WoodlandMansionPieces::generateMansion(StructureManager* structureManager, const BlockPos& position,
-    Rotation* rotation, std::vector<WoodlandMansionPiece*>& pieces, Random& random)
+                                            Rotation* rotation, std::vector<WoodlandMansionPiece*>& pieces,
+                                            Random& random)
 {
     MansionGrid grid(random);
     MansionPiecePlacer placer(structureManager, random);

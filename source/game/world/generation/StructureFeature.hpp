@@ -37,14 +37,13 @@ public:
     StructureFeature();
     virtual ~StructureFeature();
 
-    virtual void addFeature(Level* level, int chunkX, int chunkZ, int originChunkX,
-                            int originChunkZ, ChunkPrimer* primer);
+    virtual void addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+                            ChunkPrimer* primer);
     virtual std::wstring getFeatureName() = 0;
     virtual bool postProcess(Level* level, Random& random, ChunkPos* chunkPos);
     virtual bool isIntersection(int x, int z);
     virtual bool isInsideFeature(const BlockPos& pos);
-    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
-                                                 bool skipExistingChunks) = 0;
+    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos, bool skipExistingChunks) = 0;
     virtual std::vector<BlockPos>* getGuesstimatedFeaturePositions();
     virtual void restoreSavedData(Level* level);
     virtual void saveFeature(int chunkX, int chunkZ, StructureStart* start);
@@ -53,9 +52,8 @@ public:
 
     StructureStart* getStructureAt(const BlockPos& pos);
     bool isInsideBoundingFeature(Level* level, const BlockPos& pos);
-    static BlockPos* findNearestFeaturePositionBySpacing(Level* level, StructureFeature* feature,
-                                                         const BlockPos& pos, int spacing,
-                                                         int separation, int salt,
+    static BlockPos* findNearestFeaturePositionBySpacing(Level* level, StructureFeature* feature, const BlockPos& pos,
+                                                         int spacing, int separation, int salt,
                                                          bool skipKnownStructures, int maxDistance,
                                                          bool skipExistingChunks);
     bool canPlaceFeatureInChunk(bool defaultValue, EFeatureTypes type, int chunkX, int chunkZ);

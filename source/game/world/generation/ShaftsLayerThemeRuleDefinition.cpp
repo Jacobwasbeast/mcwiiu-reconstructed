@@ -6,8 +6,8 @@
 #include "game/world/generation/ShaftsLayerTheme.hpp"
 
 ShaftsLayerThemeRuleDefinition::ShaftsLayerThemeRuleDefinition()
-    : GenericMultiBlockThemeRuleDefinition()
-    , mHeightOffset(0)
+    : GenericMultiBlockThemeRuleDefinition(),
+      mHeightOffset(0)
 {
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_startHeight, &mHeightOffset)->setMin(-9)->setMax(9);
 }

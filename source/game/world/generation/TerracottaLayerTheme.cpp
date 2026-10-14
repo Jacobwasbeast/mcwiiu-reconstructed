@@ -11,9 +11,9 @@
 
 Block* getColour(unsigned char colour);
 
-TerracottaLayerTheme::TerracottaLayerTheme(const Pattern& pattern,
-                                           TerracottaLayerThemeFunction function)
-    : mPattern(pattern), mFunction(function)
+TerracottaLayerTheme::TerracottaLayerTheme(const Pattern& pattern, TerracottaLayerThemeFunction function)
+    : mPattern(pattern),
+      mFunction(function)
 {
 }
 
@@ -37,13 +37,7 @@ unsigned int TerracottaLayerTheme::HASHED(int x, int z)
 
 unsigned char TerracottaLayerTheme::TARTAN(int x, int z)
 {
-    unsigned char values[5][5] = {
-        { 7, 1, 2, 1, 7 },
-        { 1, 1, 2, 1, 1 },
-        { 2, 2, 3, 2, 2 },
-        { 1, 1, 2, 1, 1 },
-        { 7, 1, 2, 1, 7 }
-    };
+    unsigned char values[5][5] = {{7, 1, 2, 1, 7}, {1, 1, 2, 1, 1}, {2, 2, 3, 2, 2}, {1, 1, 2, 1, 1}, {7, 1, 2, 1, 7}};
     unsigned char xIndex = (x + 1275u) % 5;
     unsigned char zIndex = (z + 1275u) % 5;
     return values[xIndex][zIndex];
@@ -72,8 +66,10 @@ void TerracottaLayerTheme::Apply(Random& random, BlockTransaction* transaction, 
         for (z = 0; z < transaction->mSize.z; ++z)
         {
             const Direction* direction = mPattern.values[(x % mPattern.size) * 4 + z % mPattern.size];
-            unsigned char colour = (unsigned char)(randomColour + mFunction(x / mPattern.size - xOffset, z / mPattern.size - zOffset));
-            const BlockState* state = getColour(colour)->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING, direction);
+            unsigned char colour =
+                (unsigned char)(randomColour + mFunction(x / mPattern.size - xOffset, z / mPattern.size - zOffset));
+            const BlockState* state = getColour(colour)->defaultBlockState()->setValue(
+                HorizontalDirectionalBlock::FACING, direction);
             for (y = 0; y < transaction->mSize.y; ++y)
             {
                 Vec3i position(x, y, z);

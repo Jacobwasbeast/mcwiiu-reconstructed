@@ -143,8 +143,8 @@ StructurePiece* VillagePieces::generatePieceFromSmallDoor(StartPiece* startPiece
                     || (weight == startPiece->mLastPieceWeight && startPiece->mPieceWeights->size() > 1))
                     break;
 
-                StructurePiece* piece =
-                    findAndCreatePieceFactory(startPiece, weight, pieces, random, x, y, z, direction, depth);
+                StructurePiece* piece = findAndCreatePieceFactory(startPiece, weight, pieces, random, x, y, z,
+                                                                  direction, depth);
                 if (piece != NULL)
                 {
                     ++weight->placeCount;
@@ -441,11 +441,13 @@ const BlockState* VillagePieces::VillagePiece::biomeBlock(const BlockState* stat
             return Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData());
         if (state->getBlock() == Blocks::oak_stairs)
         {
-            return Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING, state->getValue(StairBlock::FACING));
+            return Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                           state->getValue(StairBlock::FACING));
         }
         if (state->getBlock() == Blocks::stone_stairs)
         {
-            return Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING, state->getValue(StairBlock::FACING));
+            return Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                           state->getValue(StairBlock::FACING));
         }
         if (state->getBlock() == Blocks::grass_path)
             return Blocks::sandstone->defaultBlockState();
@@ -547,8 +549,7 @@ VillagePieces::Well::Well(StartPiece* startPiece, int depth, Random& random, int
         mBoundingBox = new BoundingBox(x, 64, z, x + 5, 78, z + 5);
 }
 
-VillagePieces::Well::Well()
-    : VillagePiece()
+VillagePieces::Well::Well() : VillagePiece()
 {
 }
 
@@ -671,8 +672,7 @@ EStructurePiece VillagePieces::StartPiece::GetType()
     return eStructurePiece_VillageStartPiece;
 }
 
-VillagePieces::StraightRoad::StraightRoad()
-    : VillageRoadPiece()
+VillagePieces::StraightRoad::StraightRoad() : VillageRoadPiece()
 {
 }
 
@@ -841,9 +841,7 @@ BoundingBox* VillagePieces::StraightRoad::findPieceBox(StartPiece* startPiece, s
     return NULL;
 }
 
-VillagePieces::SimpleHouse::SimpleHouse()
-    : VillagePiece(),
-      mIsRoofAccessible(false)
+VillagePieces::SimpleHouse::SimpleHouse() : VillagePiece(), mIsRoofAccessible(false)
 {
 }
 
@@ -879,8 +877,8 @@ bool VillagePieces::SimpleHouse::postProcess(Level* level, Random& random, Bound
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
-    const BlockState* stairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
+    const BlockState* stairsNorth = biomeBlock(
+        Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
     Random selectorRandom = random;
@@ -990,8 +988,7 @@ void VillagePieces::SimpleHouse::readAdditionalSaveData(DataInputStream* input, 
         mIsRoofAccessible = input->readBoolean();
 }
 
-VillagePieces::SmallTemple::SmallTemple()
-    : VillagePiece()
+VillagePieces::SmallTemple::SmallTemple() : VillagePiece()
 {
 }
 
@@ -1025,12 +1022,12 @@ bool VillagePieces::SmallTemple::postProcess(Level* level, Random& random, Bound
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    const BlockState* stairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
-    const BlockState* stairsWest =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
-    const BlockState* stairsEast =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST));
+    const BlockState* stairsNorth = biomeBlock(
+        Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
+    const BlockState* stairsWest = biomeBlock(
+        Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
+    const BlockState* stairsEast = biomeBlock(
+        Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST));
     Random selectorRandom = random;
 
     generateBox(level, box, 1, 1, 1, 3, 3, 7, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
@@ -1125,8 +1122,7 @@ EStructurePiece VillagePieces::SmallTemple::GetType()
     return eStructurePiece_SmallTemple;
 }
 
-VillagePieces::BookHouse::BookHouse()
-    : VillagePiece()
+VillagePieces::BookHouse::BookHouse() : VillagePiece()
 {
 }
 
@@ -1160,15 +1156,15 @@ bool VillagePieces::BookHouse::postProcess(Level* level, Random& random, Boundin
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    const BlockState* stairsNorth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
-    const BlockState* stairsSouth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH));
-    const BlockState* stairsEast =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST));
+    const BlockState* stairsNorth = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
+    const BlockState* stairsSouth = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH));
+    const BlockState* stairsEast = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST));
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
-    const BlockState* stoneStairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
+    const BlockState* stoneStairsNorth = biomeBlock(
+        Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
     Random selectorRandom = random;
 
@@ -1282,8 +1278,7 @@ EStructurePiece VillagePieces::BookHouse::GetType()
     return eStructurePiece_BookHouse;
 }
 
-VillagePieces::SmallHut::SmallHut()
-    : VillagePiece()
+VillagePieces::SmallHut::SmallHut() : VillagePiece()
 {
 }
 
@@ -1320,8 +1315,8 @@ bool VillagePieces::SmallHut::postProcess(Level* level, Random& random, Bounding
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
-    const BlockState* stairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
+    const BlockState* stairsNorth = biomeBlock(
+        Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
     Random selectorRandom = random;
@@ -1435,8 +1430,7 @@ void VillagePieces::SmallHut::readAdditionalSaveData(DataInputStream* input, Str
     }
 }
 
-VillagePieces::PigHouse::PigHouse()
-    : VillagePiece()
+VillagePieces::PigHouse::PigHouse() : VillagePiece()
 {
 }
 
@@ -1470,12 +1464,12 @@ bool VillagePieces::PigHouse::postProcess(Level* level, Random& random, Bounding
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    const BlockState* stairsNorth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
-    const BlockState* stairsSouth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH));
-    const BlockState* stairsWest =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
+    const BlockState* stairsNorth = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
+    const BlockState* stairsSouth = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH));
+    const BlockState* stairsWest = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
@@ -1582,8 +1576,7 @@ EStructurePiece VillagePieces::PigHouse::GetType()
     return eStructurePiece_PigHouse;
 }
 
-VillagePieces::TwoRoomHouse::TwoRoomHouse()
-    : VillagePiece()
+VillagePieces::TwoRoomHouse::TwoRoomHouse() : VillagePiece()
 {
 }
 
@@ -1618,14 +1611,14 @@ bool VillagePieces::TwoRoomHouse::postProcess(Level* level, Random& random, Boun
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    const BlockState* stairsNorth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
-    const BlockState* stairsSouth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH));
-    const BlockState* stairsEast =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST));
-    const BlockState* stairsWest =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
+    const BlockState* stairsNorth = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
+    const BlockState* stairsSouth = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH));
+    const BlockState* stairsEast = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST));
+    const BlockState* stairsWest = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     Random selectorRandom = random;
@@ -1771,8 +1764,7 @@ EStructurePiece VillagePieces::TwoRoomHouse::GetType()
     return eStructurePiece_TwoRoomHouse;
 }
 
-VillagePieces::Smithy::Smithy()
-    : VillagePiece()
+VillagePieces::Smithy::Smithy() : VillagePiece()
 {
 }
 
@@ -1807,13 +1799,13 @@ bool VillagePieces::Smithy::postProcess(Level* level, Random& random, BoundingBo
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    const BlockState* stairsNorth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
-    const BlockState* stairsWest =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
+    const BlockState* stairsNorth = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
+    const BlockState* stairsWest = biomeBlock(
+        Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
-    const BlockState* stoneStairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
+    const BlockState* stoneStairsNorth = biomeBlock(
+        Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
     Random selectorRandom = random;
@@ -1923,8 +1915,7 @@ void VillagePieces::Smithy::staticCtor()
 {
 }
 
-VillagePieces::Farmland::Farmland()
-    : VillagePiece()
+VillagePieces::Farmland::Farmland() : VillagePiece()
 {
     mCropA = NULL;
     mCropB = NULL;
@@ -1993,12 +1984,10 @@ void VillagePieces::Farmland::readAdditionalSaveData(DataInputStream* input, Str
     if (StructureFeatureIO::getVersion() == 1)
     {
         std::vector<int>::iterator first = mFirstInts.begin();
-        mCropA = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 1
-                     ? selectOldCrops(first[0])
-                     : Blocks::wheat;
-        mCropB = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 1
-                     ? selectOldCrops(first[1])
-                     : Blocks::wheat;
+        mCropA = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 1 ? selectOldCrops(first[0])
+                                                                                            : Blocks::wheat;
+        mCropB = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 1 ? selectOldCrops(first[1])
+                                                                                            : Blocks::wheat;
     }
     else
     {
@@ -2067,8 +2056,7 @@ EStructurePiece VillagePieces::Farmland::GetType()
     return eStructurePiece_Farmland;
 }
 
-VillagePieces::DoubleFarmland::DoubleFarmland()
-    : VillagePiece()
+VillagePieces::DoubleFarmland::DoubleFarmland() : VillagePiece()
 {
     mCropA = NULL;
     mCropB = NULL;
@@ -2143,18 +2131,14 @@ void VillagePieces::DoubleFarmland::readAdditionalSaveData(DataInputStream* inpu
     if (StructureFeatureIO::getVersion() == 1)
     {
         std::vector<int>::iterator first = mFirstInts.begin();
-        mCropA = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3
-                     ? selectOldCrops(first[0])
-                     : Blocks::wheat;
-        mCropB = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3
-                     ? selectOldCrops(first[1])
-                     : Blocks::wheat;
-        mCropC = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3
-                     ? selectOldCrops(first[2])
-                     : Blocks::wheat;
-        mCropD = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3
-                     ? selectOldCrops(first[3])
-                     : Blocks::wheat;
+        mCropA = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3 ? selectOldCrops(first[0])
+                                                                                            : Blocks::wheat;
+        mCropB = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3 ? selectOldCrops(first[1])
+                                                                                            : Blocks::wheat;
+        mCropC = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3 ? selectOldCrops(first[2])
+                                                                                            : Blocks::wheat;
+        mCropD = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3 ? selectOldCrops(first[3])
+                                                                                            : Blocks::wheat;
         return;
     }
 
@@ -2243,8 +2227,7 @@ EStructurePiece VillagePieces::DoubleFarmland::GetType()
     return eStructurePiece_DoubleFarmland;
 }
 
-VillagePieces::LightPost::LightPost()
-    : VillagePiece()
+VillagePieces::LightPost::LightPost() : VillagePiece()
 {
 }
 
@@ -2300,9 +2283,7 @@ EStructurePiece VillagePieces::LightPost::GetType()
     return eStructurePiece_LightPost;
 }
 
-VillagePieces::CobbleStoneSelector::CobbleStoneSelector(bool mossy, int type)
-    : mMossy(mossy),
-      mType(type)
+VillagePieces::CobbleStoneSelector::CobbleStoneSelector(bool mossy, int type) : mMossy(mossy), mType(type)
 {
     mNext = Blocks::cobblestone->defaultBlockState();
 }

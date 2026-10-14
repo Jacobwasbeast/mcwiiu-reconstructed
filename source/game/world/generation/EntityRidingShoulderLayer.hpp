@@ -22,8 +22,8 @@ public:
     class DataContainer
     {
     public:
-        DataContainer(std::wstring name, LivingEntityRenderer* renderer, Model* model,
-                      ResourceLocation texture, unsigned long long entityType);
+        DataContainer(std::wstring name, LivingEntityRenderer* renderer, Model* model, ResourceLocation texture,
+                      unsigned long long entityType);
 
         std::wstring mName;
         LivingEntityRenderer* mRenderer;
@@ -35,19 +35,17 @@ public:
     EntityRidingShoulderLayer(EntityRenderDispatcher* dispatcher);
     virtual ~EntityRidingShoulderLayer();
 
-    virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                        float limbSwingAmount, float partialTicks, float ageInTicks,
-                        float netHeadYaw, float headPitch, float scale,
+    virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                        float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                         bool useDisplayList);
     virtual bool colorsOnDamage();
     virtual void setupForTexturePack(TexturePack* texturePack);
 
-    DataContainer renderShoulder(boost::shared_ptr<LivingEntity>& entity, std::wstring name,
-                                 CompoundTag* tag, LivingEntityRenderer* renderer, Model* model,
-                                 ResourceLocation texture, unsigned long long entityType,
-                                 float limbSwing, float limbSwingAmount, float partialTicks,
-                                 float ageInTicks, float netHeadYaw, float headPitch,
-                                 float scale, bool left, bool useDisplayList);
+    DataContainer renderShoulder(boost::shared_ptr<LivingEntity>& entity, std::wstring name, CompoundTag* tag,
+                                 LivingEntityRenderer* renderer, Model* model, ResourceLocation texture,
+                                 unsigned long long entityType, float limbSwing, float limbSwingAmount,
+                                 float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                                 bool left, bool useDisplayList);
 
 private:
     EntityRenderDispatcher* mDispatcher;

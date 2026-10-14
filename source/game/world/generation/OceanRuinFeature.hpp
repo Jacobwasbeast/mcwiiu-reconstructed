@@ -18,7 +18,10 @@ class SuperflatConfig;
 struct OceanRuinConfiguration
 {
     OceanRuinConfiguration()
-        : biomeType(OceanRuin::eRuinType_Cold), smallProbability(0.0f), clusterProbability(0.0f), enabled(false)
+        : biomeType(OceanRuin::eRuinType_Cold),
+          smallProbability(0.0f),
+          clusterProbability(0.0f),
+          enabled(false)
     {
     }
 
@@ -39,10 +42,9 @@ public:
                        const OceanRuinConfiguration& configuration);
 
         std::vector<BlockPos>* allPositions(Random& random, int x, int z);
-        void addClusterRuins(Random& random, const Direction* direction, int x, int z,
-                             bool warm, std::vector<StructurePiece*>& pieces);
-        void create(Random& random, int chunkX, int chunkZ,
-                    const OceanRuinConfiguration& configuration);
+        void addClusterRuins(Random& random, const Direction* direction, int x, int z, bool warm,
+                             std::vector<StructurePiece*>& pieces);
+        void create(Random& random, int chunkX, int chunkZ, const OceanRuinConfiguration& configuration);
         virtual EStructureStart GetType();
 
     private:
@@ -55,8 +57,7 @@ public:
     static bool IsValidSpawnArea(Level* level, int x, int z, int radius);
 
     virtual std::wstring getFeatureName();
-    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
-                                                  bool skipExistingChunks);
+    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos, bool skipExistingChunks);
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
 

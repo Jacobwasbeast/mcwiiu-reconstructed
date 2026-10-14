@@ -3,8 +3,7 @@
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-IslandLayer::IslandLayer(long long seed)
-    : Layer(seed)
+IslandLayer::IslandLayer(long long seed) : Layer(seed)
 {
 }
 

@@ -10,14 +10,14 @@
 #include "game/world/block/BlockTransaction.hpp"
 
 WarpedLayerFill::WarpedLayerFill(double noiseScale, int offset, int thickness)
-    : mNoiseScale(noiseScale)
-    , mOffset(offset)
-    , mThickness(thickness)
+    : mNoiseScale(noiseScale),
+      mOffset(offset),
+      mThickness(thickness)
 {
 }
 
-void WarpedLayerFill::ExtrudeLayer(Random& random, const Shape& shape, const Vec3i&,
-                                   BlockTransaction* transaction, int* minY, int* maxY) const
+void WarpedLayerFill::ExtrudeLayer(Random& random, const Shape& shape, const Vec3i&, BlockTransaction* transaction,
+                                   int* minY, int* maxY) const
 {
     SimplexNoise noise(&random);
 
@@ -28,8 +28,7 @@ void WarpedLayerFill::ExtrudeLayer(Random& random, const Shape& shape, const Vec
             float value = shape.at(x, z);
             if (value >= 0.0f && value < 1.0)
             {
-                double noiseValue = noise.getValue((double)x / mNoiseScale,
-                                                    (double)z / mNoiseScale);
+                double noiseValue = noise.getValue((double)x / mNoiseScale, (double)z / mNoiseScale);
                 int startY = (int)std::floor(mOffset * (float)((noiseValue + 1.0) * 0.5));
                 int y = startY + 3;
                 Vec3i position(x, transaction->mSize.y, z);

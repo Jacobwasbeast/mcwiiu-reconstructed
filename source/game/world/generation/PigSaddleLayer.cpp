@@ -28,7 +28,9 @@ const ResourceLocation* PigSaddleLayer::getSaddleTextureLocation() const
     return &PIG_SADDLE_LOCATION;
 }
 
-void PigSaddleLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
+void PigSaddleLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                            float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                            bool bUseDisplayList)
 {
     boost::shared_ptr<Pig> pig = boost::dynamic_pointer_cast<Pig>(entity);
 

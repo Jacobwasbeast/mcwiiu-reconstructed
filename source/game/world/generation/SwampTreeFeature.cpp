@@ -26,8 +26,7 @@
 static const BlockState* swampTrunkState = NULL;
 static const BlockState* swampLeafState = NULL;
 
-SwampTreeFeature::SwampTreeFeature()
-    : AbstractTreeFeature(false, 5, swampTrunkState, swampLeafState, false)
+SwampTreeFeature::SwampTreeFeature() : AbstractTreeFeature(false, 5, swampTrunkState, swampLeafState, false)
 {
 }
 
@@ -39,15 +38,13 @@ void SwampTreeFeature::staticCtor()
                          ->setValue(LeafBlock::CHECK_DECAY, false);
 }
 
-void SwampTreeFeature::addVine(Level* level, const BlockPos& pos,
-                               const BooleanProperty* property)
+void SwampTreeFeature::addVine(Level* level, const BlockPos& pos, const BooleanProperty* property)
 {
     const BlockState* state = Blocks::vine->defaultBlockState()->setValue(property, true);
     BlockPos vinePos = pos;
     setBlock(level, vinePos, state, Block::UPDATE_NONE);
     vinePos = vinePos.below();
-    for (int length = 4; level->getBlockState(vinePos)->getBlock()->mMaterial == Material::AIR && length > 0;
-         --length)
+    for (int length = 4; level->getBlockState(vinePos)->getBlock()->mMaterial == Material::AIR && length > 0; --length)
     {
         setBlock(level, vinePos, state, Block::UPDATE_NONE);
         vinePos = vinePos.below();
@@ -138,8 +135,7 @@ bool SwampTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
             for (int z = origin.z - radius; z <= origin.z + radius; ++z)
             {
                 int zOffset = z - origin.z;
-                if (!(abs(xOffset) == radius && abs(zOffset) == radius)
-                    || (random.nextInt(2) != 0 && yOffset != 0))
+                if (!(abs(xOffset) == radius && abs(zOffset) == radius) || (random.nextInt(2) != 0 && yOffset != 0))
                 {
                     leafPos.set(x, y, z);
                     if (!level->getBlockState(leafPos)->isSolid())

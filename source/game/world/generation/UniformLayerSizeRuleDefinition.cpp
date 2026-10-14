@@ -3,8 +3,7 @@
 #include "game/core/GameRules_IntAttribute.hpp"
 #include "game/core/UniformSize.hpp"
 
-UniformLayerSizeRuleDefinition::UniformLayerSizeRuleDefinition()
-    : mSize(-1)
+UniformLayerSizeRuleDefinition::UniformLayerSizeRuleDefinition() : mSize(-1)
 {
     GameRules_IntAttribute* size = addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mSize);
     size->setMin(0)->setMax(254);

@@ -9,8 +9,8 @@ class BlockTransaction;
 class LayerFill
 {
 public:
-    virtual void ExtrudeLayer(Random& random, const Shape& shape, const Vec3i& origin,
-                              BlockTransaction* transaction, int* minY, int* maxY) const = 0;
+    virtual void ExtrudeLayer(Random& random, const Shape& shape, const Vec3i& origin, BlockTransaction* transaction,
+                              int* minY, int* maxY) const = 0;
 };
 
 class FunctionLayerFill : public LayerFill
@@ -21,8 +21,8 @@ public:
     static int UNIFORM(float value);
     static int ISLAND(float value);
 
-    virtual void ExtrudeLayer(Random& random, const Shape& shape, const Vec3i& origin,
-                              BlockTransaction* transaction, int* minY, int* maxY) const;
+    virtual void ExtrudeLayer(Random& random, const Shape& shape, const Vec3i& origin, BlockTransaction* transaction,
+                              int* minY, int* maxY) const;
 
 private:
     int (*mFunction)(float);

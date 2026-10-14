@@ -13,8 +13,8 @@ class Random;
 class AbstractTreeFeature : public Feature
 {
 public:
-    AbstractTreeFeature(bool doBlockNotify, int baseHeight, const BlockState* trunkState,
-                        const BlockState* leafState, bool hasVines);
+    AbstractTreeFeature(bool doBlockNotify, int baseHeight, const BlockState* trunkState, const BlockState* leafState,
+                        bool hasVines);
     virtual ~AbstractTreeFeature();
 
     bool isFree(Block* block);

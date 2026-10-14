@@ -5,27 +5,24 @@
 #include "game/world/biome/Biome.hpp"
 #include "game/world/biome/MesaBiome.hpp"
 
-ShoreLayer::ShoreLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
-    : Layer(seed)
+ShoreLayer::ShoreLayer(long long seed, boost::shared_ptr<Layer> parentLayer) : Layer(seed)
 {
     parent = parentLayer;
 }
 
 bool ShoreLayer::isJungleCompatible(int biomeId)
 {
-    if (Biome::getBiome(biomeId) != NULL
-        && Biome::getBiome(biomeId)->getBaseClass() == Biome::eBiomeBaseClass_Jungle)
+    if (Biome::getBiome(biomeId) != NULL && Biome::getBiome(biomeId)->getBaseClass() == Biome::eBiomeBaseClass_Jungle)
     {
         return true;
     }
 
     return biomeId == Biome::eBiomeIDs_JungleEdge || biomeId == Biome::eBiomeIDs_Jungle
-        || biomeId == Biome::eBiomeIDs_JungleHills || biomeId == Biome::eBiomeIDs_Forest
-        || biomeId == Biome::eBiomeIDs_Taiga || isOcean(biomeId);
+           || biomeId == Biome::eBiomeIDs_JungleHills || biomeId == Biome::eBiomeIDs_Forest
+           || biomeId == Biome::eBiomeIDs_Taiga || isOcean(biomeId);
 }
 
-void ShoreLayer::replaceIfNeighborOcean(arrayWithLength<int> parentArea,
-                                        arrayWithLength<int> area, int x, int z,
+void ShoreLayer::replaceIfNeighborOcean(arrayWithLength<int> parentArea, arrayWithLength<int> area, int x, int z,
                                         int width, int centre, int replacement)
 {
     if (isOcean(centre))
@@ -95,8 +92,8 @@ arrayWithLength<int> ShoreLayer::getArea(int x, int z, int width, int height)
                 int west = parentArea[localX + 1 - 1 + (localZ + 1) * (width + 2)];
                 int south = parentArea[localX + 1 + (localZ + 1 + 1) * (width + 2)];
 
-                if (!isJungleCompatible(north) || !isJungleCompatible(east)
-                    || !isJungleCompatible(west) || !isJungleCompatible(south))
+                if (!isJungleCompatible(north) || !isJungleCompatible(east) || !isJungleCompatible(west)
+                    || !isJungleCompatible(south))
                 {
                     area[localX + localZ * width] = Biome::JUNGLE_EDGE->id;
                 }
@@ -109,8 +106,7 @@ arrayWithLength<int> ShoreLayer::getArea(int x, int z, int width, int height)
                     area[localX + localZ * width] = centre;
                 }
             }
-            else if (centre == Biome::EXTREME_HILLS->id
-                     || centre == Biome::EXTREME_HILLS_PLUS_TREES->id
+            else if (centre == Biome::EXTREME_HILLS->id || centre == Biome::EXTREME_HILLS_PLUS_TREES->id
                      || centre == Biome::EXTREME_HILLS_EDGE->id)
             {
                 replaceIfNeighborOcean(parentArea, area, localX, localZ, width, centre, Biome::STONE_BEACH->id);

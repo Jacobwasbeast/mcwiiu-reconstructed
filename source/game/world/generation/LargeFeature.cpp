@@ -47,6 +47,7 @@ void LargeFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* prim
     }
 }
 
-void LargeFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ, ChunkPrimer* primer)
+void LargeFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+                              ChunkPrimer* primer)
 {
 }

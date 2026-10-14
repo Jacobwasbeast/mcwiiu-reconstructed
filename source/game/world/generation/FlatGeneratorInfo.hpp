@@ -118,6 +118,7 @@ public:
     FlatLayerInfo getLayerAtHeight(int height) const;
     void getSingleLayers(std::vector<FlatLayerInfo>& layers) const;
     bool operator==(const FlatGeneratorInfo& info) const;
+
 private:
     bool mOwnsConfig;
     SuperflatConfig* mConfig;

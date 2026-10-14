@@ -4,8 +4,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/world/biome/Biome.hpp"
 
-AddMushroomIslandLayer::AddMushroomIslandLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
-    : Layer(seed)
+AddMushroomIslandLayer::AddMushroomIslandLayer(long long seed, boost::shared_ptr<Layer> parentLayer) : Layer(seed)
 {
     parent = parentLayer;
 }
@@ -34,9 +33,8 @@ arrayWithLength<int> AddMushroomIslandLayer::getArea(int x, int z, int width, in
 
             initRandom((long long)(j + x), (long long)(i + z));
 
-            if (isShallowOcean(centre) && isShallowOcean(northWest)
-                && isShallowOcean(northEast) && isShallowOcean(southWest)
-                && isShallowOcean(southEast) && nextRandom(100) == 0)
+            if (isShallowOcean(centre) && isShallowOcean(northWest) && isShallowOcean(northEast)
+                && isShallowOcean(southWest) && isShallowOcean(southEast) && nextRandom(100) == 0)
             {
                 area[j + i * width] = Biome::MUSHROOM_ISLAND->id;
             }

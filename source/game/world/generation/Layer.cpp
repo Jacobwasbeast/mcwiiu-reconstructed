@@ -43,8 +43,7 @@ Layer::Layer(long long seed)
     baseSeed += seed;
 }
 
-arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long seed,
-                                                                   LevelType* levelType,
+arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long seed, LevelType* levelType,
                                                                    SuperflatConfig* levelTypeOptions,
                                                                    LevelData* levelData,
                                                                    BiomeSource::LayerOverrideSettings* overrideSettings)
@@ -104,7 +103,8 @@ arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long see
 
     if (levelType == LevelType::CUSTOMIZED && levelTypeOptions != NULL)
     {
-        CustomizableSourceSettings::Builder* builder = CustomizableSourceSettings::Builder::fromString(levelTypeOptions);
+        CustomizableSourceSettings::Builder* builder = CustomizableSourceSettings::Builder::fromString(
+            levelTypeOptions);
         CustomizableSourceSettings* settings = builder->build();
 
         biomeSize = settings->biomeSize;
@@ -173,12 +173,8 @@ arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long see
 
     if (levelData != NULL)
     {
-        biomeLayer = boost::shared_ptr<Layer>(new BiomeCacheLayer(1,
-                                                                 biomeLayer,
-                                                                 levelData->getXZSize(),
-                                                                 biomeScale,
-                                                                 biomeCentreXChunk,
-                                                                 biomeCentreZChunk));
+        biomeLayer = boost::shared_ptr<Layer>(new BiomeCacheLayer(1, biomeLayer, levelData->getXZSize(), biomeScale,
+                                                                  biomeCentreXChunk, biomeCentreZChunk));
     }
 
     boost::shared_ptr<Layer> resultBiomeLayer = biomeLayer;

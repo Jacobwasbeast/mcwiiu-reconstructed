@@ -8,9 +8,7 @@
 class RandomTowersLayerTheme : public RandomPatchesLayerTheme
 {
 public:
-    RandomTowersLayerTheme(unsigned int uSeed,
-                           double dNoiseScale,
-                           double dTowerThreshold,
+    RandomTowersLayerTheme(unsigned int uSeed, double dNoiseScale, double dTowerThreshold,
                            const std::vector<const BlockState*>& towerBlocks);
 
     virtual const BlockState* BlockAt(Random& random, float fNoise, int iHeightAboveSurface, bool bIsAir) const;

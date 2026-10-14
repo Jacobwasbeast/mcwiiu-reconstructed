@@ -6,9 +6,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
-SimplePatchesLayerTheme::SimplePatchesLayerTheme(unsigned int uSeed,
-                                                 double dNoiseScale,
-                                                 const BlockState* pPatchBlock,
+SimplePatchesLayerTheme::SimplePatchesLayerTheme(unsigned int uSeed, double dNoiseScale, const BlockState* pPatchBlock,
                                                  float fPatchThreshold)
     : RandomPatchesLayerTheme(uSeed, dNoiseScale),
       m_fPatchThreshold(fPatchThreshold),
@@ -16,7 +14,8 @@ SimplePatchesLayerTheme::SimplePatchesLayerTheme(unsigned int uSeed,
 {
 }
 
-const BlockState* SimplePatchesLayerTheme::BlockAt(Random& random, float fNoise, int iHeightAboveSurface, bool bIsAir) const
+const BlockState* SimplePatchesLayerTheme::BlockAt(Random& random, float fNoise, int iHeightAboveSurface,
+                                                   bool bIsAir) const
 {
     if (fNoise >= m_fPatchThreshold)
     {

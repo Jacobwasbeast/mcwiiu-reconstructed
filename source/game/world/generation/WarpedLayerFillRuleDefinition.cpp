@@ -4,10 +4,7 @@
 #include "game/core/GameRules_IntAttribute.hpp"
 #include "game/world/generation/WarpedLayerFill.hpp"
 
-WarpedLayerFillRuleDefinition::WarpedLayerFillRuleDefinition()
-    : mNoiseScale(10.0f)
-    , mOffset(4)
-    , mThickness(1)
+WarpedLayerFillRuleDefinition::WarpedLayerFillRuleDefinition() : mNoiseScale(10.0f), mOffset(4), mThickness(1)
 {
     addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale)->setMin(1.0f)->setMax(254.0f);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_dY, &mOffset)->setMin(0)->setMax(9);

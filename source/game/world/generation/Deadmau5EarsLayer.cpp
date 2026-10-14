@@ -10,8 +10,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/generation/Player.hpp"
 
-Deadmau5EarsLayer::Deadmau5EarsLayer(PlayerRenderer* renderer)
-    : mRenderer(renderer)
+Deadmau5EarsLayer::Deadmau5EarsLayer(PlayerRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -20,8 +19,8 @@ Deadmau5EarsLayer::~Deadmau5EarsLayer()
 }
 
 void Deadmau5EarsLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                               float partialTicks, float ageInTicks, float netHeadYaw, float headPitch,
-                               float scale, bool bUseDisplayList)
+                               float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                               bool bUseDisplayList)
 {
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
 

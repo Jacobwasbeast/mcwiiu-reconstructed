@@ -17,15 +17,13 @@
 
 static StructurePlaceSettings* DEFAULT_PLACE_SETTINGS = new StructurePlaceSettings();
 
-TemplateStructurePiece::TemplateStructurePiece()
-    : StructurePiece(), mTemplatePosition()
+TemplateStructurePiece::TemplateStructurePiece() : StructurePiece(), mTemplatePosition()
 {
     mPlaceSettings = DEFAULT_PLACE_SETTINGS->setIgnoreEntities(true)->setIgnoreBlock(Blocks::air);
     mTemplate = NULL;
 }
 
-TemplateStructurePiece::TemplateStructurePiece(int genDepth)
-    : StructurePiece(genDepth), mTemplatePosition()
+TemplateStructurePiece::TemplateStructurePiece(int genDepth) : StructurePiece(genDepth), mTemplatePosition()
 {
     mPlaceSettings = DEFAULT_PLACE_SETTINGS->setIgnoreEntities(true)->setIgnoreBlock(Blocks::air);
     mTemplate = NULL;
@@ -96,7 +94,7 @@ void TemplateStructurePiece::setBoundingBoxFromTemplate()
 }
 
 void TemplateStructurePiece::setup(const StructureTemplate* templateObject, const BlockPos& templatePosition,
-    StructurePlaceSettings* placeSettings)
+                                   StructurePlaceSettings* placeSettings)
 {
     mTemplate = const_cast<StructureTemplate*>(templateObject);
     setOrientation(Direction::NORTH);

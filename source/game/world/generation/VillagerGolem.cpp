@@ -54,16 +54,15 @@ const EntityDataAccessor<unsigned char>* VillagerGolem::DATA_PLAYER_CREATED_ID =
 
 bool villagerGolemTargetPredicate(boost::shared_ptr<Entity> entity)
 {
-    return entity && eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()) &&
-           EntitySelector::VISIBLE_ENEMY_SELECTOR->apply(entity) &&
-           !eTYPE_DERIVED_FROM(EntityType::CREEPER, entity->GetType());
+    return entity && eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType())
+           && EntitySelector::VISIBLE_ENEMY_SELECTOR->apply(entity)
+           && !eTYPE_DERIVED_FROM(EntityType::CREEPER, entity->GetType());
 }
 
 static Predicate<boost::shared_ptr<Entity> >* TARGET_SELECTOR =
     new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(villagerGolemTargetPredicate);
 
-VillagerGolem::VillagerGolem(Level* level)
-    : Golem(level)
+VillagerGolem::VillagerGolem(Level* level) : Golem(level)
 {
     fjDerivedCtorCalls();
     mVillageCheckTime = 0;
@@ -86,7 +85,7 @@ void VillagerGolem::addDataWalkers(DataFixerUpper* fixer)
 void VillagerGolem::staticCtor()
 {
     DATA_PLAYER_CREATED_ID = SynchedEntityData::defineId<unsigned char>(EntityType::VILLAGER_GOLEM, EntityType::GOLEM,
-                                                                          EntityDataSerializers::BYTE);
+                                                                        EntityDataSerializers::BYTE);
 }
 
 void VillagerGolem::registerGoals()
@@ -101,7 +100,8 @@ void VillagerGolem::registerGoals()
     mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new DefendVillageTargetGoal(this), true);
     mTargetSelector.addGoal(2, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Mob), 0, false, true, TARGET_SELECTOR, false, false), true);
+    mTargetSelector.addGoal(
+        3, new NearestAttackableTargetGoal(this, typeid(Mob), 0, false, true, TARGET_SELECTOR, false, false), true);
 }
 
 void VillagerGolem::defineSynchedData()
@@ -115,7 +115,8 @@ void VillagerGolem::customServerAiStep()
     if (--mVillageCheckTime < 1)
     {
         mVillageCheckTime = mRandom->nextInt(50) + 70;
-        boost::shared_ptr<Village> village = mLevel->mVillages->getClosestVillage(BlockPos(Mth::floor(mX), Mth::floor(mY), Mth::floor(mZ)), 32);
+        boost::shared_ptr<Village> village = mLevel->mVillages->getClosestVillage(
+            BlockPos(Mth::floor(mX), Mth::floor(mY), Mth::floor(mZ)), 32);
         mVillage = village;
         Village* closest = village.get();
         if (closest == NULL)
@@ -144,8 +145,8 @@ int VillagerGolem::decreaseAirSupply(int airSupply)
 
 void VillagerGolem::doPush(boost::shared_ptr<Entity> entity)
 {
-    if (eTYPE_DERIVED_FROM(EntityType::ENEMY, entity->GetType()) &&
-        !eTYPE_DERIVED_FROM(EntityType::CREEPER, entity->GetType()) && getRandom()->nextInt(20) == 0)
+    if (eTYPE_DERIVED_FROM(EntityType::ENEMY, entity->GetType())
+        && !eTYPE_DERIVED_FROM(EntityType::CREEPER, entity->GetType()) && getRandom()->nextInt(20) == 0)
         setTarget(boost::dynamic_pointer_cast<LivingEntity>(entity));
     LivingEntity::doPush(entity);
 }

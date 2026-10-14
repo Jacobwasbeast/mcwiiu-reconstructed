@@ -54,8 +54,7 @@ StructurePiece::StructurePiece()
 {
 }
 
-StructurePiece::StructurePiece(int genDepth)
-    : mGenDepth(genDepth)
+StructurePiece::StructurePiece(int genDepth) : mGenDepth(genDepth)
 {
     mBoundingBox = NULL;
     mOrientation = NULL;
@@ -90,7 +89,7 @@ void StructurePiece::setBoundingBox(BoundingBox* boundingBox)
 }
 
 void StructurePiece::fromOrientationSetRotationAndMirror(const Direction* orientation, Rotation*& rotation,
-    Mirror*& mirror)
+                                                         Mirror*& mirror)
 {
     if (orientation == NULL)
     {
@@ -366,7 +365,7 @@ void StructurePiece::generateAirBox(Level* level, BoundingBox* box, int x0, int 
 }
 
 void StructurePiece::generateBox(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1,
-    const BlockState* outerState, const BlockState* innerState, bool existingOnly)
+                                 const BlockState* outerState, const BlockState* innerState, bool existingOnly)
 {
     for (int y = y0; y <= y1; ++y)
     {
@@ -374,8 +373,7 @@ void StructurePiece::generateBox(Level* level, BoundingBox* box, int x0, int y0,
         {
             for (int z = z0; z <= z1; ++z)
             {
-                if (existingOnly
-                    && getBlock(level, x, y, z, box)->getBlock()->mMaterial == Material::AIR)
+                if (existingOnly && getBlock(level, x, y, z, box)->getBlock()->mMaterial == Material::AIR)
                 {
                     continue;
                 }
@@ -393,15 +391,15 @@ void StructurePiece::generateBox(Level* level, BoundingBox* box, int x0, int y0,
     }
 }
 
-void StructurePiece::generateBox(Level* level, BoundingBox* box, BoundingBox* fillBox,
-    const BlockState* outerState, const BlockState* innerState, bool existingOnly)
+void StructurePiece::generateBox(Level* level, BoundingBox* box, BoundingBox* fillBox, const BlockState* outerState,
+                                 const BlockState* innerState, bool existingOnly)
 {
-    generateBox(level, box, fillBox->x0, fillBox->y0, fillBox->z0, fillBox->x1, fillBox->y1, fillBox->z1,
-        outerState, innerState, existingOnly);
+    generateBox(level, box, fillBox->x0, fillBox->y0, fillBox->z0, fillBox->x1, fillBox->y1, fillBox->z1, outerState,
+                innerState, existingOnly);
 }
 
 void StructurePiece::generateBox(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1,
-    bool existingOnly, Random& random, BlockSelector* selector)
+                                 bool existingOnly, Random& random, BlockSelector* selector)
 {
     for (int y = y0; y <= y1; ++y)
     {
@@ -409,30 +407,28 @@ void StructurePiece::generateBox(Level* level, BoundingBox* box, int x0, int y0,
         {
             for (int z = z0; z <= z1; ++z)
             {
-                if (existingOnly
-                    && getBlock(level, x, y, z, box)->getBlock()->mMaterial == Material::AIR)
+                if (existingOnly && getBlock(level, x, y, z, box)->getBlock()->mMaterial == Material::AIR)
                 {
                     continue;
                 }
 
-                selector->next(random, x, y, z,
-                    y == y0 || y == y1 || x == x0 || x == x1 || z == z0 || z == z1);
+                selector->next(random, x, y, z, y == y0 || y == y1 || x == x0 || x == x1 || z == z0 || z == z1);
                 placeBlock(level, selector->getNext(), x, y, z, box);
             }
         }
     }
 }
 
-void StructurePiece::generateBox(Level* level, BoundingBox* box, BoundingBox* fillBox,
-    bool existingOnly, Random& random, BlockSelector* selector)
+void StructurePiece::generateBox(Level* level, BoundingBox* box, BoundingBox* fillBox, bool existingOnly,
+                                 Random& random, BlockSelector* selector)
 {
-    generateBox(level, box, fillBox->x0, fillBox->y0, fillBox->z0, fillBox->x1, fillBox->y1, fillBox->z1,
-        existingOnly, random, selector);
+    generateBox(level, box, fillBox->x0, fillBox->y0, fillBox->z0, fillBox->x1, fillBox->y1, fillBox->z1, existingOnly,
+                random, selector);
 }
 
-void StructurePiece::generateMaybeBox(Level* level, BoundingBox* box, Random& random, float chance,
-    int x0, int y0, int z0, int x1, int y1, int z1,
-    const BlockState* outerState, const BlockState* innerState, bool existingOnly, bool undergroundOnly)
+void StructurePiece::generateMaybeBox(Level* level, BoundingBox* box, Random& random, float chance, int x0, int y0,
+                                      int z0, int x1, int y1, int z1, const BlockState* outerState,
+                                      const BlockState* innerState, bool existingOnly, bool undergroundOnly)
 {
     for (int y = y0; y <= y1; ++y)
     {
@@ -445,8 +441,7 @@ void StructurePiece::generateMaybeBox(Level* level, BoundingBox* box, Random& ra
                     continue;
                 }
 
-                if (existingOnly
-                    && getBlock(level, x, y, z, box)->getBlock()->mMaterial == Material::AIR)
+                if (existingOnly && getBlock(level, x, y, z, box)->getBlock()->mMaterial == Material::AIR)
                 {
                     continue;
                 }
@@ -469,8 +464,8 @@ void StructurePiece::generateMaybeBox(Level* level, BoundingBox* box, Random& ra
     }
 }
 
-void StructurePiece::maybeGenerateBlock(Level* level, BoundingBox* box, Random& random, float chance,
-    int x, int y, int z, const BlockState* state)
+void StructurePiece::maybeGenerateBlock(Level* level, BoundingBox* box, Random& random, float chance, int x, int y,
+                                        int z, const BlockState* state)
 {
     if (random.nextFloat() < chance)
     {
@@ -478,8 +473,8 @@ void StructurePiece::maybeGenerateBlock(Level* level, BoundingBox* box, Random& 
     }
 }
 
-void StructurePiece::generateUpperHalfSphere(Level* level, BoundingBox* box, int x0, int y0, int z0,
-    int x1, int y1, int z1, const BlockState* state, bool excludeAir)
+void StructurePiece::generateUpperHalfSphere(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1,
+                                             int z1, const BlockState* state, bool excludeAir)
 {
     float zRadius = (float)(z1 - z0 + 1) * 0.5f;
     float zCentre = (float)z0 + zRadius;
@@ -499,8 +494,7 @@ void StructurePiece::generateUpperHalfSphere(Level* level, BoundingBox* box, int
             {
                 float dz = ((float)z - zCentre) / zRadius;
 
-                if (excludeAir
-                    && getBlock(level, x, y, z, box)->getBlock()->mMaterial == Material::AIR)
+                if (excludeAir && getBlock(level, x, y, z, box)->getBlock()->mMaterial == Material::AIR)
                 {
                     continue;
                 }
@@ -515,7 +509,8 @@ void StructurePiece::generateUpperHalfSphere(Level* level, BoundingBox* box, int
 }
 
 void StructurePiece::generateFullSphere(Level* level, BoundingBox* box, int centreX, int centreY, int centreZ,
-    int radius, const BlockState* shellState, const BlockState* innerState, bool existingOnly)
+                                        int radius, const BlockState* shellState, const BlockState* innerState,
+                                        bool existingOnly)
 {
     for (int y = centreY - radius; y <= centreY + radius; ++y)
     {
@@ -588,9 +583,8 @@ void StructurePiece::fillColumnDown(Level* level, const BlockState* state, int x
     }
 
     while ((level->isEmptyBlock(BlockPos(worldX, worldY, worldZ))
-               || level->getBlockState(BlockPos(worldX, worldY, worldZ))->getBlock()
-                      ->mMaterial->isLiquid())
-        && worldY > 1)
+            || level->getBlockState(BlockPos(worldX, worldY, worldZ))->getBlock()->mMaterial->isLiquid())
+           && worldY > 1)
     {
         level->setBlock(BlockPos(worldX, worldY, worldZ), state, Block::UPDATE_CLIENTS, false);
         --worldY;
@@ -598,7 +592,7 @@ void StructurePiece::fillColumnDown(Level* level, const BlockState* state, int x
 }
 
 void StructurePiece::fillBoxDown(Level* level, const BlockState* state, int x0, int z0, int x1, int z1, int y,
-    BoundingBox* box)
+                                 BoundingBox* box)
 {
     for (int x = x0; x < x1; ++x)
     {
@@ -610,14 +604,14 @@ void StructurePiece::fillBoxDown(Level* level, const BlockState* state, int x0, 
 }
 
 bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
-    ResourceLocation* lootTable)
+                                 ResourceLocation* lootTable)
 {
     BlockPos pos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
     return createChest(level, box, random, pos, lootTable, NULL);
 }
 
 bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random, const BlockPos& pos,
-    ResourceLocation* lootTable, const BlockState* state)
+                                 ResourceLocation* lootTable, const BlockState* state)
 {
     if (box->isInside(pos) && level->getBlockState(pos)->getBlock() != Blocks::chest)
     {
@@ -646,19 +640,20 @@ bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random,
 }
 
 bool StructurePiece::createDispenser(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
-    const Direction* facing, ResourceLocation* lootTable)
+                                     const Direction* facing, ResourceLocation* lootTable)
 {
     const BlockPos& pos = BlockPos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
     if (box->isInside(pos) && level->getBlockState(pos)->getBlock() != Blocks::dispenser)
     {
-        placeBlock(level, Blocks::dispenser->defaultBlockState()->setValue(DispenserBlock::FACING, facing), x, y, z, box);
+        placeBlock(level, Blocks::dispenser->defaultBlockState()->setValue(DispenserBlock::FACING, facing), x, y, z,
+                   box);
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
         bool isDispenser = eTYPE_DERIVED_FROM(BlockEntityType::DISPENSER, blockEntity->GetType());
         if (isDispenser)
         {
-            boost::shared_ptr<DispenserBlockEntity> dispenser =
-                boost::static_pointer_cast<DispenserBlockEntity>(blockEntity);
+            boost::shared_ptr<DispenserBlockEntity> dispenser = boost::static_pointer_cast<DispenserBlockEntity>(
+                blockEntity);
             dispenser->setLootTable(lootTable, random.nextInt());
         }
 
@@ -669,7 +664,8 @@ bool StructurePiece::createDispenser(Level* level, BoundingBox* box, Random& ran
 }
 
 void StructurePiece::addStructurePieceSaveData(DataOutputStream* output, std::vector<bool> firstBools,
-    std::vector<bool> secondBools, std::vector<int> firstInts, std::vector<int> secondInts)
+                                               std::vector<bool> secondBools, std::vector<int> firstInts,
+                                               std::vector<int> secondInts)
 {
     addBoolSaveData(output, firstBools);
     addBoolSaveData(output, secondBools);
@@ -678,7 +674,8 @@ void StructurePiece::addStructurePieceSaveData(DataOutputStream* output, std::ve
 }
 
 void StructurePiece::readStructurePieceSaveData(DataInputStream* input, std::vector<bool>& firstBools,
-    std::vector<bool>& secondBools, std::vector<int>& firstInts, std::vector<int>& secondInts)
+                                                std::vector<bool>& secondBools, std::vector<int>& firstInts,
+                                                std::vector<int>& secondInts)
 {
     firstBools = readBoolSaveData(input);
     secondBools = readBoolSaveData(input);
@@ -759,12 +756,13 @@ std::vector<int> StructurePiece::readIntSaveData(DataInputStream* input)
 }
 
 void StructurePiece::createDoor(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
-    const Direction* facing, DoorBlock* door)
+                                const Direction* facing, DoorBlock* door)
 {
     placeBlock(level, door->defaultBlockState()->setValue(DoorBlock::FACING, facing), x, y, z, box);
-    placeBlock(level,
-        door->defaultBlockState()->setValue(DoorBlock::FACING, facing)->setValue(DoorBlock::HALF, DoorBlock::UPPER),
-        x, y + 1, z, box);
+    placeBlock(
+        level,
+        door->defaultBlockState()->setValue(DoorBlock::FACING, facing)->setValue(DoorBlock::HALF, DoorBlock::UPPER), x,
+        y + 1, z, box);
 }
 
 void StructurePiece::move(int x, int y, int z)
@@ -802,8 +800,7 @@ bool StructurePiece::isDirty()
     return mDirty;
 }
 
-StructurePiece::BlockSelector::BlockSelector()
-    : mNext(Blocks::air->defaultBlockState())
+StructurePiece::BlockSelector::BlockSelector() : mNext(Blocks::air->defaultBlockState())
 {
 }
 

@@ -8,8 +8,8 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/PistonBaseBlock.hpp"
 
-PistonStructureResolver::PistonStructureResolver(Level* level, const BlockPos& pistonPos,
-                                                 const Direction* direction, bool extending)
+PistonStructureResolver::PistonStructureResolver(Level* level, const BlockPos& pistonPos, const Direction* direction,
+                                                 bool extending)
 {
     mLevel = level;
     mPistonPos = pistonPos;
@@ -33,8 +33,7 @@ void PistonStructureResolver::reorderListAtCollision(int collisionIndex, int dis
     before.insert(before.end(), mToPush.begin(), mToPush.begin() + distance);
     collided.insert(collided.end(), mToPush.begin() + mToPush.size() - collisionIndex,
                     mToPush.begin() + mToPush.size());
-    after.insert(after.end(), mToPush.begin() + distance,
-                 mToPush.begin() + mToPush.size() - collisionIndex);
+    after.insert(after.end(), mToPush.begin() + distance, mToPush.begin() + mToPush.size() - collisionIndex);
 
     mToPush.clear();
     mToPush.insert(mToPush.end(), before.begin(), before.end());
@@ -58,8 +57,7 @@ bool PistonStructureResolver::addBranchingBlocks(const BlockPos& pos)
                 }
             }
             it++;
-        }
-        while (it != Direction::VALUES.end());
+        } while (it != Direction::VALUES.end());
     }
     return true;
 }

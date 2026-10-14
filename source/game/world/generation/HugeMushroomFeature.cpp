@@ -11,13 +11,11 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-HugeMushroomFeature::HugeMushroomFeature(Block* block)
-    : Feature(true), mBlock(block)
+HugeMushroomFeature::HugeMushroomFeature(Block* block) : Feature(true), mBlock(block)
 {
 }
 
-HugeMushroomFeature::HugeMushroomFeature()
-    : Feature(false), mBlock(NULL)
+HugeMushroomFeature::HugeMushroomFeature() : Feature(false), mBlock(NULL)
 {
 }
 
@@ -131,7 +129,9 @@ bool HugeMushroomFeature::place(Level* level, Random& random, const BlockPos& or
                 {
                     const BlockPos& capPos = BlockPos(x, y, z);
                     if (!level->getBlockState(capPos)->isSolid())
-                        setBlock(level, capPos, block->defaultBlockState()->setValue(HugeMushroomBlock::VARIANT, variant), Block::UPDATE_NONE);
+                        setBlock(level, capPos,
+                                 block->defaultBlockState()->setValue(HugeMushroomBlock::VARIANT, variant),
+                                 Block::UPDATE_NONE);
                 }
             }
         }
@@ -140,7 +140,9 @@ bool HugeMushroomFeature::place(Level* level, Random& random, const BlockPos& or
     for (int y = 0; y < height; ++y)
     {
         if (!level->getBlockState(origin.above(y))->isSolid())
-            setBlock(level, origin.above(y), block->defaultBlockState()->setValue(HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::STEM), Block::UPDATE_NONE);
+            setBlock(level, origin.above(y),
+                     block->defaultBlockState()->setValue(HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::STEM),
+                     Block::UPDATE_NONE);
     }
     return true;
 }

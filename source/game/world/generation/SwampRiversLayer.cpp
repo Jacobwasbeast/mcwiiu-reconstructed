@@ -4,8 +4,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/world/biome/Biome.hpp"
 
-SwampRiversLayer::SwampRiversLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+SwampRiversLayer::SwampRiversLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }
@@ -29,8 +28,7 @@ arrayWithLength<int> SwampRiversLayer::getArea(int x, int z, int width, int heig
             {
                 area[j + i * width] = Biome::RIVER->id;
             }
-            else if ((centre == Biome::JUNGLE->id || centre == Biome::JUNGLE_HILLS->id)
-                     && nextRandom(8) == 0)
+            else if ((centre == Biome::JUNGLE->id || centre == Biome::JUNGLE_HILLS->id) && nextRandom(8) == 0)
             {
                 area[j + i * width] = Biome::RIVER->id;
             }

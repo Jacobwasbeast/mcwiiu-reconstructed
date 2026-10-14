@@ -21,8 +21,7 @@ static const BlockState* savannaTrunkState = NULL;
 static const BlockState* savannaLeafState = NULL;
 
 SavannaTreeFeature::SavannaTreeFeature(bool doBlockNotify)
-    : AbstractTreeFeature(doBlockNotify, 5,
-                         savannaTrunkState, savannaLeafState, false)
+    : AbstractTreeFeature(doBlockNotify, 5, savannaTrunkState, savannaLeafState, false)
 {
 }
 

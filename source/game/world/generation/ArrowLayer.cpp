@@ -18,8 +18,7 @@
 #include "game/entity/projectile/TippableArrow.hpp"
 #include "game/util/Random.hpp"
 
-ArrowLayer::ArrowLayer(LivingEntityRenderer* renderer)
-    : mRenderer(renderer)
+ArrowLayer::ArrowLayer(LivingEntityRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -27,13 +26,15 @@ ArrowLayer::~ArrowLayer()
 {
 }
 
-void ArrowLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float partialTicks, float, float, float, float scale, bool)
+void ArrowLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float partialTicks, float, float, float,
+                        float scale, bool)
 {
     int arrowCount = entity.get()->getArrowCount();
     if (arrowCount < 1)
         return;
 
-    boost::shared_ptr<Entity> arrow = boost::shared_ptr<TippableArrow>(new TippableArrow(entity.get()->mLevel, entity.get()->mX, entity.get()->mY, entity.get()->mZ));
+    boost::shared_ptr<Entity> arrow = boost::shared_ptr<TippableArrow>(
+        new TippableArrow(entity.get()->mLevel, entity.get()->mX, entity.get()->mY, entity.get()->mZ));
     Random random(entity.get()->getId());
     Lighting::turnOff();
 

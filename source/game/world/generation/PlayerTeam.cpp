@@ -2,8 +2,7 @@
 
 #include "game/core/Scoreboard.hpp"
 
-PlayerTeam::PlayerTeam(Scoreboard* pScoreboard, const std::wstring& name, unsigned int teamIndex)
-    : mPlayers(11)
+PlayerTeam::PlayerTeam(Scoreboard* pScoreboard, const std::wstring& name, unsigned int teamIndex) : mPlayers(11)
 {
     mScoreboard = pScoreboard;
     mName = name;
@@ -54,8 +53,7 @@ Team::Visibility PlayerTeam::getDeathMessageVisibility()
     return mDeathMessageVisibility;
 }
 
-boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >*
-PlayerTeam::getPlayers()
+boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >* PlayerTeam::getPlayers()
 {
     return &mPlayers;
 }

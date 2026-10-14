@@ -42,9 +42,10 @@ bool SeaAnemoneFeature::place(Level* level, Random& random, const BlockPos& orig
         }
         else
         {
-            const BlockState* state = Blocks::coral_fan->defaultBlockState()
-                                          ->setValue(CoralFan::VARIANT, random.nextInt(CoralFan::VARIANT->getValueCount()))
-                                          ->setValue(CoralFan::DIRECTION, random.nextInt(CoralFan::DIRECTION->getValueCount()));
+            const BlockState* state =
+                Blocks::coral_fan->defaultBlockState()
+                    ->setValue(CoralFan::VARIANT, random.nextInt(CoralFan::VARIANT->getValueCount()))
+                    ->setValue(CoralFan::DIRECTION, random.nextInt(CoralFan::DIRECTION->getValueCount()));
             setBlock(level, pos, state, Block::UPDATE_NONE);
         }
     }

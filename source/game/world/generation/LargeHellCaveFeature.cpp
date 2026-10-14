@@ -10,15 +10,14 @@ LargeHellCaveFeature::~LargeHellCaveFeature()
 {
 }
 
-void LargeHellCaveFeature::addRoom(long long seed, int chunkX, int chunkZ, ChunkPrimer* primer,
-                                   double x, double y, double z)
+void LargeHellCaveFeature::addRoom(long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y,
+                                   double z)
 {
-    addTunnel(seed, chunkX, chunkZ, primer, x, y, z,
-              1.0f + random.nextFloat() * 6.0f, 0.0f, 0.0f, -1, -1, 0.5);
+    addTunnel(seed, chunkX, chunkZ, primer, x, y, z, 1.0f + random.nextFloat() * 6.0f, 0.0f, 0.0f, -1, -1, 0.5);
 }
 
-void LargeHellCaveFeature::addFeature(Level*, int chunkX, int chunkZ,
-                                      int originChunkX, int originChunkZ, ChunkPrimer* primer)
+void LargeHellCaveFeature::addFeature(Level*, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+                                      ChunkPrimer* primer)
 {
     int count = random.nextInt(random.nextInt(random.nextInt(10) + 1) + 1);
     if (random.nextInt(5) != 0)
@@ -44,16 +43,15 @@ void LargeHellCaveFeature::addFeature(Level*, int chunkX, int chunkZ,
             const float yaw = random.nextFloat() * 3.1415927f * 2.0f;
             const float pitch = (random.nextFloat() - 0.5f) * 2.0f / 8.0f;
             float width = random.nextFloat() * 2.0f + random.nextFloat();
-            addTunnel(random.nextLong(), originChunkX, originChunkZ, primer, x, y, z,
-                      width * 2.0f, yaw, pitch, 0, 0, 0.5);
+            addTunnel(random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, width * 2.0f, yaw, pitch, 0, 0,
+                      0.5);
         }
     }
 }
 
-void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, ChunkPrimer* primer,
-                                     double x, double y, double z,
-                                     float width, float yaw, float pitch,
-                                     int start, int end, double verticalScale)
+void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y,
+                                     double z, float width, float yaw, float pitch, int start, int end,
+                                     double verticalScale)
 {
     const double centerX = (double)(chunkX * 16 + 8);
     const double centerZ = (double)(chunkZ * 16 + 8);
@@ -102,21 +100,18 @@ void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, Chu
         pitchDelta = pitchDelta * 0.9f;
         yawDelta = yawDelta * 0.75f;
         pitchDelta = pitchDelta
-            + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 2.0f;
-        yawDelta = yawDelta
-            + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 4.0f;
+                     + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 2.0f;
+        yawDelta = yawDelta + (tunnelRandom.nextFloat() - tunnelRandom.nextFloat()) * tunnelRandom.nextFloat() * 4.0f;
 
         if (!room && start == branchPoint && width > 1.0f)
         {
             long long leftSeed = tunnelRandom.nextLong();
             float leftWidth = tunnelRandom.nextFloat() * 0.5f + 0.5f;
             pitch = pitch / 3.0f;
-            addTunnel(leftSeed, chunkX, chunkZ, primer, x, y, z, leftWidth, yaw - 1.5707964f, pitch,
-                      start, end, 1.0);
+            addTunnel(leftSeed, chunkX, chunkZ, primer, x, y, z, leftWidth, yaw - 1.5707964f, pitch, start, end, 1.0);
             long long rightSeed = tunnelRandom.nextLong();
             float rightWidth = tunnelRandom.nextFloat() * 0.5f + 0.5f;
-            addTunnel(rightSeed, chunkX, chunkZ, primer, x, y, z, rightWidth, yaw + 1.5707964f, pitch,
-                      start, end, 1.0);
+            addTunnel(rightSeed, chunkX, chunkZ, primer, x, y, z, rightWidth, yaw + 1.5707964f, pitch, start, end, 1.0);
             return;
         }
 
@@ -208,12 +203,10 @@ void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, Chu
                             if (dy > -0.7 && dx * dx + dy * dy + dz * dz < 1.0)
                             {
                                 const BlockState* state = primer->getState(localX, localY, localZ);
-                                if (state->getBlock() == Blocks::netherrack
-                                    || state->getBlock() == Blocks::dirt
+                                if (state->getBlock() == Blocks::netherrack || state->getBlock() == Blocks::dirt
                                     || state->getBlock() == Blocks::grass)
                                 {
-                                    primer->setState(localX, localY, localZ,
-                                                     Blocks::air->defaultBlockState());
+                                    primer->setState(localX, localY, localZ, Blocks::air->defaultBlockState());
                                 }
                             }
                         }

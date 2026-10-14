@@ -14,14 +14,11 @@ static const int GLIDE_RING_CORNER_OFFSETS[3] = {-2, -3, 2};
 
 static TextureAtlasSprite* GLIDE_RING_ICONS[GlideRingGenerator::eGlideRingSize_Count];
 
-static const std::wstring GLIDE_RING_ICON_NAMES[GlideRingGenerator::eGlideRingSize_Count] =
-{
-    std::wstring(L"diamondRing"),
-    std::wstring(L"goldRing"),
-    std::wstring(L"emeraldRing")
-};
+static const std::wstring GLIDE_RING_ICON_NAMES[GlideRingGenerator::eGlideRingSize_Count] = {
+    std::wstring(L"diamondRing"), std::wstring(L"goldRing"), std::wstring(L"emeraldRing")};
 
-BlockPos GlideRingGenerator::GetNextPos(const BlockPos& centre, eGlideRingOrientation orientation, int firstMod, int secondMod)
+BlockPos GlideRingGenerator::GetNextPos(const BlockPos& centre, eGlideRingOrientation orientation, int firstMod,
+                                        int secondMod)
 {
     switch (orientation)
     {
@@ -84,7 +81,9 @@ int GlideRingGenerator::GetSecondMod(eGlideRingSize size, eGlideRingSection sect
     }
 }
 
-void GlideRingGenerator::GetSectionPositions(std::vector<BlockPos>& positions, const BlockPos& centre, eGlideRingSize size, eGlideRingSection section, eGlideRingOrientation orientation)
+void GlideRingGenerator::GetSectionPositions(std::vector<BlockPos>& positions, const BlockPos& centre,
+                                             eGlideRingSize size, eGlideRingSection section,
+                                             eGlideRingOrientation orientation)
 {
     int count = 3;
     if (section >= eGlideRingSection_LeftCorner && section <= eGlideRingSection_TopCorner)

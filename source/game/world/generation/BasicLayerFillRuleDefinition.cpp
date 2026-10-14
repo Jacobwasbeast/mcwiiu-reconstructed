@@ -3,16 +3,14 @@
 #include "game/core/IGameRuleAttribute.hpp"
 #include "game/world/generation/FunctionLayerFill.hpp"
 
-namespace BasicLayerFillRuleDefinitionConstants {
-const ConsoleGameRules::EGameRuleAttr LayerFillTypeAttribute =
-    ConsoleGameRules::eGameRuleAttr_type;
-const ConsoleGameRules::EGameRuleType BasicLayerFillActionType =
-    ConsoleGameRules::eGameRuleType_BasicLayerFill;
+namespace BasicLayerFillRuleDefinitionConstants
+{
+const ConsoleGameRules::EGameRuleAttr LayerFillTypeAttribute = ConsoleGameRules::eGameRuleAttr_type;
+const ConsoleGameRules::EGameRuleType BasicLayerFillActionType = ConsoleGameRules::eGameRuleType_BasicLayerFill;
 LayerFill* const NoGeneratedLayerFill = NULL;
 }
 
-BasicLayerFillRuleDefinition::BasicLayerFillRuleDefinition()
-    : mType(L"")
+BasicLayerFillRuleDefinition::BasicLayerFillRuleDefinition() : mType(L"")
 {
     addStringAttribute(BasicLayerFillRuleDefinitionConstants::LayerFillTypeAttribute, &mType);
 }

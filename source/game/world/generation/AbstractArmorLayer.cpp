@@ -19,11 +19,10 @@
 #include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation ENCHANT_LOCATION(TN_BLUR_MISC_GLINT);
-static std::wstring MATERIAL_NAMES[6] = { L"cloth", L"chain", L"iron", L"diamond", L"gold", L"turtle" };
+static std::wstring MATERIAL_NAMES[6] = {L"cloth", L"chain", L"iron", L"diamond", L"gold", L"turtle"};
 static std::map<std::wstring, ResourceLocation> sArmorLocations;
 
-AbstractArmorLayer::AbstractArmorLayer(LivingEntityRenderer* renderer)
-    : mRenderer(renderer)
+AbstractArmorLayer::AbstractArmorLayer(LivingEntityRenderer* renderer) : mRenderer(renderer)
 {
     mAlpha = 1.0f;
     mRed = 1.0f;
@@ -37,14 +36,18 @@ bool AbstractArmorLayer::usesInnerModel(const EquipmentSlot* slot)
     return slot == EquipmentSlot::LEGS;
 }
 
-not_null_ptr<ItemInstance> AbstractArmorLayer::getSlot(boost::shared_ptr<LivingEntity>& entity, const EquipmentSlot* slot)
+not_null_ptr<ItemInstance> AbstractArmorLayer::getSlot(boost::shared_ptr<LivingEntity>& entity,
+                                                       const EquipmentSlot* slot)
 {
     return entity.get()->getItemSlot(slot);
 }
 
 ResourceLocation* AbstractArmorLayer::getArmorLocation(ArmorItem* armor, bool inner, bool overlay)
 {
-    std::wstring key = (L"armor/" + MATERIAL_NAMES[armor->mRenderIndex]).append(L"_").append(_toString<int>(inner ? 2 : 1)).append(overlay ? L"_b" : L"");
+    std::wstring key = (L"armor/" + MATERIAL_NAMES[armor->mRenderIndex])
+                           .append(L"_")
+                           .append(_toString<int>(inner ? 2 : 1))
+                           .append(overlay ? L"_b" : L"");
     std::map<std::wstring, ResourceLocation>::iterator found = sArmorLocations.find(key);
     if (found == sArmorLocations.end())
     {
@@ -54,7 +57,10 @@ ResourceLocation* AbstractArmorLayer::getArmorLocation(ArmorItem* armor, bool in
     return &found->second;
 }
 
-void AbstractArmorLayer::renderFoil(LivingEntityRenderer* renderer, boost::shared_ptr<LivingEntity>& entity, Model* model, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
+void AbstractArmorLayer::renderFoil(LivingEntityRenderer* renderer, boost::shared_ptr<LivingEntity>& entity,
+                                    Model* model, float limbSwing, float limbSwingAmount, float partialTicks,
+                                    float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                                    bool bUseDisplayList)
 {
     Minecraft::GetInstance()->mGameRenderer->resetFogColor(true);
 
@@ -78,8 +84,8 @@ void AbstractArmorLayer::renderFoil(LivingEntityRenderer* renderer, boost::share
         GlStateManager::translatef(0.0f, ticks * (0.001f + (float)pass * 0.003f) * 20.0f, 0.0f);
         GlStateManager::matrixMode(0);
         boost::shared_ptr<Entity> renderEntity = entity;
-        model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                      scale, bUseDisplayList);
+        model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                      bUseDisplayList);
     }
 
     GlStateManager::matrixMode(2);
@@ -93,7 +99,9 @@ void AbstractArmorLayer::renderFoil(LivingEntityRenderer* renderer, boost::share
     Minecraft::GetInstance()->mGameRenderer->resetFogColor(false);
 }
 
-void AbstractArmorLayer::renderArmorPiece(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, const EquipmentSlot* slot, bool bUseDisplayList)
+void AbstractArmorLayer::renderArmorPiece(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
+                                          float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw,
+                                          float headPitch, float scale, const EquipmentSlot* slot, bool bUseDisplayList)
 {
     not_null_ptr<ItemInstance> itemInstance = getSlot(entity, slot);
     boost::shared_ptr<Entity> renderEntity = entity;
@@ -128,30 +136,34 @@ void AbstractArmorLayer::renderArmorPiece(boost::shared_ptr<LivingEntity>& entit
         int color = armor->getColor(itemInstance, 0);
         GlStateManager::color4f(mRed * ((float)((color >> 16) & 255) / 255.0f),
                                 mGreen * ((float)((color >> 8) & 255) / 255.0f),
-                                mBlue * ((float)(color & 255) / 255.0f),
-                                mAlpha);
-        model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                      scale, bUseDisplayList);
+                                mBlue * ((float)(color & 255) / 255.0f), mAlpha);
+        model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                      bUseDisplayList);
         mRenderer->bindTexture(getArmorLocation(armor, inner, true));
     }
 
     GlStateManager::color4f(mRed, mGreen, mBlue, mAlpha);
-    model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                  scale, bUseDisplayList);
+    model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
 
     if (!mColorSet && itemInstance.get()->isEnchanted())
     {
-        renderFoil(mRenderer, entity, model, limbSwing, limbSwingAmount, partialTicks, ageInTicks,
-                   netHeadYaw, headPitch, scale, true);
+        renderFoil(mRenderer, entity, model, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw,
+                   headPitch, scale, true);
     }
 }
 
-void AbstractArmorLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
+void AbstractArmorLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                                bool bUseDisplayList)
 {
-    renderArmorPiece(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EquipmentSlot::CHEST, bUseDisplayList);
-    renderArmorPiece(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EquipmentSlot::LEGS, bUseDisplayList);
-    renderArmorPiece(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EquipmentSlot::FEET, bUseDisplayList);
-    renderArmorPiece(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EquipmentSlot::HEAD, bUseDisplayList);
+    renderArmorPiece(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale,
+                     EquipmentSlot::CHEST, bUseDisplayList);
+    renderArmorPiece(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale,
+                     EquipmentSlot::LEGS, bUseDisplayList);
+    renderArmorPiece(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale,
+                     EquipmentSlot::FEET, bUseDisplayList);
+    renderArmorPiece(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale,
+                     EquipmentSlot::HEAD, bUseDisplayList);
 }
 
 bool AbstractArmorLayer::colorsOnDamage()

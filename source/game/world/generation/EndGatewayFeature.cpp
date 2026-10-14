@@ -12,9 +12,7 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-EndGatewayFeature::EndGatewayFeature(int portalNumber)
-    : Feature(false),
-      mPortalNumber(portalNumber)
+EndGatewayFeature::EndGatewayFeature(int portalNumber) : Feature(false), mPortalNumber(portalNumber)
 {
 }
 

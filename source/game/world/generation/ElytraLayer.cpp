@@ -20,8 +20,7 @@
 
 static ResourceLocation ELYTRA_LOCATION(TN_ITEM_ELYTRA);
 
-ElytraLayer::ElytraLayer(LivingEntityRenderer* renderer)
-    : mRenderer(renderer)
+ElytraLayer::ElytraLayer(LivingEntityRenderer* renderer) : mRenderer(renderer)
 {
     mElytraModel = new ElytraModel();
 }
@@ -32,8 +31,8 @@ ElytraLayer::~ElytraLayer()
 }
 
 void ElytraLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                         float partialTicks, float ageInTicks, float netHeadYaw, float headPitch,
-                         float scale, bool bUseDisplayList)
+                         float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                         bool bUseDisplayList)
 {
     boost::shared_ptr<LivingEntity> player = boost::static_pointer_cast<Player>(entity);
     boost::shared_ptr<Entity> renderEntity = player;
@@ -62,14 +61,13 @@ void ElytraLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwin
 
     mElytraModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, player,
                             _SkinAdjustments());
-    mElytraModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                         scale, bUseDisplayList);
+    mElytraModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                         bUseDisplayList);
 
     if (item->isEnchanted())
     {
-        AbstractArmorLayer::renderFoil(mRenderer, entity, mElytraModel, limbSwing, limbSwingAmount,
-                                       partialTicks, ageInTicks, netHeadYaw, headPitch, scale,
-                                       bUseDisplayList);
+        AbstractArmorLayer::renderFoil(mRenderer, entity, mElytraModel, limbSwing, limbSwingAmount, partialTicks,
+                                       ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
     }
 
     GlStateManager::disableBlend();

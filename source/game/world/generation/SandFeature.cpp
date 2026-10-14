@@ -14,7 +14,9 @@
 
 
 SandFeature::SandFeature(Block* block, int numberOfBlocks)
-    : Feature(false), mBlock(block), mNumberOfBlocks(numberOfBlocks)
+    : Feature(false),
+      mBlock(block),
+      mNumberOfBlocks(numberOfBlocks)
 {
 }
 

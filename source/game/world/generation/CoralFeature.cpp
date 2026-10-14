@@ -13,57 +13,64 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 
-CoralFeature::~CoralFeature() {}
+CoralFeature::~CoralFeature()
+{
+}
 
 const Direction* CoralFeature::_randomDirectionExcept(Random& random, const Direction* except)
 {
     if (except == Direction::NORTH)
     {
-        static const Direction* notNorth[3] = { Direction::EAST, Direction::SOUTH, Direction::WEST };
+        static const Direction* notNorth[3] = {Direction::EAST, Direction::SOUTH, Direction::WEST};
         return notNorth[random.nextInt(3)];
     }
     if (except == Direction::SOUTH)
     {
-        static const Direction* notSouth[3] = { Direction::EAST, Direction::NORTH, Direction::WEST };
+        static const Direction* notSouth[3] = {Direction::EAST, Direction::NORTH, Direction::WEST};
         return notSouth[random.nextInt(3)];
     }
     if (except == Direction::EAST)
     {
-        static const Direction* notEast[3] = { Direction::NORTH, Direction::SOUTH, Direction::WEST };
+        static const Direction* notEast[3] = {Direction::NORTH, Direction::SOUTH, Direction::WEST};
         return notEast[random.nextInt(3)];
     }
-    static const Direction* notWest[3] = { Direction::EAST, Direction::SOUTH, Direction::NORTH };
+    static const Direction* notWest[3] = {Direction::EAST, Direction::SOUTH, Direction::NORTH};
     return notWest[random.nextInt(3)];
 }
 
 const Direction* CoralFeature::_randomDirectionExcept(Random& random, const Direction* first, const Direction* second)
 {
-    if ((first == Direction::NORTH && second == Direction::EAST) || (first == Direction::EAST && second == Direction::NORTH))
+    if ((first == Direction::NORTH && second == Direction::EAST)
+        || (first == Direction::EAST && second == Direction::NORTH))
     {
-        static const Direction* southWest[2] = { Direction::SOUTH, Direction::WEST };
+        static const Direction* southWest[2] = {Direction::SOUTH, Direction::WEST};
         return southWest[random.nextInt(2)];
     }
-    if ((first == Direction::NORTH && second == Direction::SOUTH) || (first == Direction::SOUTH && second == Direction::NORTH))
+    if ((first == Direction::NORTH && second == Direction::SOUTH)
+        || (first == Direction::SOUTH && second == Direction::NORTH))
     {
-        static const Direction* eastWest[2] = { Direction::EAST, Direction::WEST };
+        static const Direction* eastWest[2] = {Direction::EAST, Direction::WEST};
         return eastWest[random.nextInt(2)];
     }
-    if ((first == Direction::NORTH && second == Direction::WEST) || (first == Direction::WEST && second == Direction::NORTH))
+    if ((first == Direction::NORTH && second == Direction::WEST)
+        || (first == Direction::WEST && second == Direction::NORTH))
     {
-        static const Direction* southEast[2] = { Direction::SOUTH, Direction::EAST };
+        static const Direction* southEast[2] = {Direction::SOUTH, Direction::EAST};
         return southEast[random.nextInt(2)];
     }
-    if ((first == Direction::EAST && second == Direction::SOUTH) || (first == Direction::SOUTH && second == Direction::EAST))
+    if ((first == Direction::EAST && second == Direction::SOUTH)
+        || (first == Direction::SOUTH && second == Direction::EAST))
     {
-        static const Direction* northWest[2] = { Direction::NORTH, Direction::WEST };
+        static const Direction* northWest[2] = {Direction::NORTH, Direction::WEST};
         return northWest[random.nextInt(2)];
     }
-    if ((first == Direction::EAST && second == Direction::WEST) || (first == Direction::WEST && second == Direction::EAST))
+    if ((first == Direction::EAST && second == Direction::WEST)
+        || (first == Direction::WEST && second == Direction::EAST))
     {
-        static const Direction* southNorth[2] = { Direction::SOUTH, Direction::NORTH };
+        static const Direction* southNorth[2] = {Direction::SOUTH, Direction::NORTH};
         return southNorth[random.nextInt(2)];
     }
-    static const Direction* northEast[2] = { Direction::NORTH, Direction::EAST };
+    static const Direction* northEast[2] = {Direction::NORTH, Direction::EAST};
     return northEast[random.nextInt(2)];
 }
 
@@ -95,9 +102,8 @@ bool CoralFeature::_setBlockOnSolid(Level* level, const BlockPos& pos, const Blo
     return false;
 }
 
-void CoralFeature::_starFormation(Level* level, Random& random, const BlockPos& pos,
-                                  const BlockState* state, float chance, int distance,
-                                  bool inverted)
+void CoralFeature::_starFormation(Level* level, Random& random, const BlockPos& pos, const BlockState* state,
+                                  float chance, int distance, bool inverted)
 {
     const int data = state->getValue(CoralBlock::VARIANT);
     if (!_setBlock(level, pos, state, data))
@@ -163,9 +169,8 @@ void CoralFeature::_starFormation(Level* level, Random& random, const BlockPos& 
     }
 }
 
-void CoralFeature::_starCorners(Level* level, Random& random, const BlockPos& pos,
-                                const BlockState* state, float chance, int distance,
-                                bool inverted)
+void CoralFeature::_starCorners(Level* level, Random& random, const BlockPos& pos, const BlockState* state,
+                                float chance, int distance, bool inverted)
 {
     const int data = state->getValue(CoralBlock::VARIANT);
     if (inverted)
@@ -227,8 +232,9 @@ void CoralFeature::_starCorners(Level* level, Random& random, const BlockPos& po
 }
 
 void CoralFeature::_buildPlantArm(Level* level, Random& random, const BlockPos& pos, const BlockState* state,
-    std::vector<BlockPos>& positions, std::vector<std::pair<BlockPos, const Direction*> >& sides,
-    const Direction* direction, bool lastArm)
+                                  std::vector<BlockPos>& positions,
+                                  std::vector<std::pair<BlockPos, const Direction*> >& sides,
+                                  const Direction* direction, bool lastArm)
 {
     const int data = state->getValue(CoralBlock::VARIANT);
     const int shape = lastArm ? random.nextInt(1, 3) : random.nextInt(3);
@@ -312,7 +318,7 @@ void CoralFeature::_buildPlantArm(Level* level, Random& random, const BlockPos& 
 }
 
 void CoralFeature::_buildPlantLike(Level* level, const BlockPos& pos, Random& random, std::vector<BlockPos>& positions,
-    std::vector<std::pair<BlockPos, const Direction*> >& sides, const BlockState* state)
+                                   std::vector<std::pair<BlockPos, const Direction*> >& sides, const BlockState* state)
 {
     const int data = state->getValue(CoralBlock::VARIANT);
     const int layers = random.nextInt(2) + 1;
@@ -326,7 +332,7 @@ void CoralFeature::_buildPlantLike(Level* level, const BlockPos& pos, Random& ra
         for (int distance = 1; distance < width / 2 + 1; ++distance)
         {
             _starFormation(level, random, base.above(layer), state,
-                (float)distance * 0.1f + 0.5f - (float)layer * 0.15f, layer, true);
+                           (float)distance * 0.1f + 0.5f - (float)layer * 0.15f, layer, true);
             if (layers == 2 && layer == 0)
                 _starCorners(level, random, base, state, 0.25f, distance, true);
         }
@@ -354,12 +360,12 @@ void CoralFeature::_buildPlantLike(Level* level, const BlockPos& pos, Random& ra
         if (!_setBlock(level, base.above(arm), state, data))
             return;
         _buildPlantArm(level, random, base.above(arm).relative(directions[arm]), state, positions, sides,
-            directions[arm], lastArm);
+                       directions[arm], lastArm);
     }
 }
 
 void CoralFeature::_buildSpire(Level* level, const BlockPos& pos, Random& random, std::vector<BlockPos>& positions,
-    std::vector<std::pair<BlockPos, const Direction*> >& sides, const BlockState* state)
+                               std::vector<std::pair<BlockPos, const Direction*> >& sides, const BlockState* state)
 {
     const int data = state->getValue(CoralBlock::VARIANT);
     const int size = random.nextInt(1, 3) * 2;
@@ -413,7 +419,7 @@ void CoralFeature::_buildSpire(Level* level, const BlockPos& pos, Random& random
 }
 
 void CoralFeature::_buildHand(Level* level, const BlockPos& pos, Random& random, std::vector<BlockPos>& positions,
-    std::vector<std::pair<BlockPos, const Direction*> >& sides, const BlockState* state)
+                              std::vector<std::pair<BlockPos, const Direction*> >& sides, const BlockState* state)
 {
     const int data = state->getValue(CoralBlock::VARIANT);
     const Direction* direction = Direction::from3DDataValue(random.nextInt(2, 6));
@@ -459,7 +465,7 @@ void CoralFeature::_buildHand(Level* level, const BlockPos& pos, Random& random,
     palm = palm.relative(direction);
     left = left.above().relative(direction);
     right = right.above().relative(direction);
-    BlockPos fingers[3] = { palm, left, right };
+    BlockPos fingers[3] = {palm, left, right};
     for (int finger = 0; finger < 3; ++finger)
     {
         const int length = finger == 0 ? random.nextInt(2, 4) : random.nextInt(4, 6);
@@ -481,7 +487,7 @@ void CoralFeature::_buildHand(Level* level, const BlockPos& pos, Random& random,
 }
 
 void CoralFeature::_buildSmallClump(Level* level, const BlockPos& pos, Random& random, std::vector<BlockPos>& positions,
-    std::vector<std::pair<BlockPos, const Direction*> >& sides, const BlockState* state)
+                                    std::vector<std::pair<BlockPos, const Direction*> >& sides, const BlockState* state)
 {
     const int data = state->getValue(CoralBlock::VARIANT);
     BlockPos corner(pos.x - 1, pos.y, pos.z - 1);
@@ -500,8 +506,8 @@ void CoralFeature::_buildSmallClump(Level* level, const BlockPos& pos, Random& r
     if (!level->isUnderWater(top.above(), state) || !_setBlock(level, top, state, data))
         return;
 
-    const BlockPos neighbours[4] = { BlockPos(top.x + 1, top.y, top.z), BlockPos(top.x - 1, top.y, top.z),
-                                     BlockPos(top.x, top.y, top.z + 1), BlockPos(top.x, top.y, top.z - 1) };
+    const BlockPos neighbours[4] = {BlockPos(top.x + 1, top.y, top.z), BlockPos(top.x - 1, top.y, top.z),
+                                    BlockPos(top.x, top.y, top.z + 1), BlockPos(top.x, top.y, top.z - 1)};
     for (int i = 0; i < 4; ++i)
     {
         if (random.nextInt(4) == 0 || level->isEmptyWaterBlock(neighbours[i].below()))
@@ -526,7 +532,7 @@ void CoralFeature::_buildSmallClump(Level* level, const BlockPos& pos, Random& r
 }
 
 void CoralFeature::_placeCoral(Level* level, const BlockPos& pos, Random& random, std::vector<BlockPos>& positions,
-    std::vector<std::pair<BlockPos, const Direction*> >& sides, int variant)
+                               std::vector<std::pair<BlockPos, const Direction*> >& sides, int variant)
 {
     const int shape = random.nextInt(3);
     TypedBoxed<int> variantValue(variant);
@@ -556,8 +562,8 @@ void CoralFeature::_placeTopDecorations(Level* level, const BlockPos& pos, Rando
         return;
 
     const BlockState* state = Blocks::coral_fan->defaultBlockState()
-        ->setValue(CoralFan::VARIANT, random.nextInt(5))
-        ->setValue(CoralFan::DIRECTION, random.nextInt(2));
+                                  ->setValue(CoralFan::VARIANT, random.nextInt(5))
+                                  ->setValue(CoralFan::DIRECTION, random.nextInt(2));
     setBlock(level, pos, state, Block::UPDATE_NONE);
 }
 

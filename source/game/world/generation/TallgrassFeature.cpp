@@ -10,8 +10,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-TallgrassFeature::TallgrassFeature(TallGrassBlock::Variant* variant)
-    : Feature(false)
+TallgrassFeature::TallgrassFeature(TallGrassBlock::Variant* variant) : Feature(false)
 {
     mState = Blocks::tallgrass->defaultBlockState()->setValue(TallGrassBlock::VARIANT, variant);
 }
@@ -40,8 +39,7 @@ bool TallgrassFeature::place(Level* level, Random& random, const BlockPos& origi
         const int zOffsetStart = random.nextInt(8);
         const int dz = zOffsetStart - random.nextInt(8);
         const BlockPos candidate = position.offset(dx, dy, dz);
-        if (level->isEmptyBlock(candidate) &&
-            Blocks::tallgrass->canSurvive(level, candidate, mState))
+        if (level->isEmptyBlock(candidate) && Blocks::tallgrass->canSurvive(level, candidate, mState))
         {
             level->setBlock(candidate, mState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
         }

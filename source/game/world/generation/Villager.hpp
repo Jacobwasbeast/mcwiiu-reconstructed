@@ -46,6 +46,7 @@ public:
         PriceRange();
         PriceRange(int min, int max);
         int getValue(Random* random);
+
     private:
         int mMin;
         int mMax;
@@ -54,14 +55,17 @@ public:
     class ItemListing
     {
     public:
-        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random) = 0;
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes,
+                                       Random* random) = 0;
     };
 
     class EmeraldForItems : public ItemListing
     {
     public:
         EmeraldForItems(Item* item, PriceRange price);
-        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes,
+                                       Random* random);
+
     private:
         Item* mItem;
         PriceRange mPrice;
@@ -72,7 +76,9 @@ public:
     public:
         ItemForEmeralds(Item* item, const PriceRange& price);
         ItemForEmeralds(const ItemInstance& item, const PriceRange& price);
-        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes,
+                                       Random* random);
+
     private:
         ItemInstance mItem;
         PriceRange mPrice;
@@ -82,7 +88,9 @@ public:
     {
     public:
         EnchantedItemForEmeralds(Item* item, const PriceRange& price);
-        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes,
+                                       Random* random);
+
     private:
         ItemInstance mItem;
         PriceRange mPrice;
@@ -91,8 +99,11 @@ public:
     class ItemAndEmeraldToItem : public ItemListing
     {
     public:
-        ItemAndEmeraldToItem(Item* firstItem, const PriceRange& firstPrice, Item* secondItem, const PriceRange& secondPrice);
-        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        ItemAndEmeraldToItem(Item* firstItem, const PriceRange& firstPrice, Item* secondItem,
+                             const PriceRange& secondPrice);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes,
+                                       Random* random);
+
     private:
         ItemInstance mFirstItem;
         PriceRange mFirstPrice;
@@ -104,14 +115,17 @@ public:
     {
     public:
         EnchantBookForEmeralds();
-        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes,
+                                       Random* random);
     };
 
     class TreasureMapForEmeralds : public ItemListing
     {
     public:
         TreasureMapForEmeralds(const PriceRange& price, std::wstring name, const MapDecoration::Type* icon);
-        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes,
+                                       Random* random);
+
     private:
         PriceRange mPrice;
         std::wstring mName;
@@ -151,7 +165,8 @@ public:
     bool hasFarmSeeds();
     SimpleContainer* getInventory();
     void addParticlesAroundSelf(const ParticleType* particle);
-    MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, bool randomProfession, const std::wstring& dataString);
+    MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, bool randomProfession,
+                                   const std::wstring& dataString);
 
     virtual unsigned long long GetType();
     virtual void defineSynchedData();
@@ -177,7 +192,8 @@ public:
     virtual void pickUpItem(boost::shared_ptr<ItemEntity> itemEntity);
     virtual bool removeWhenFarAway();
     virtual void customServerAiStep();
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& dataString);
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual void grewUp();

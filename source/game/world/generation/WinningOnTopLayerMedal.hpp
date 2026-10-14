@@ -8,7 +8,8 @@ class PlayerStats;
 class WinningOnTopLayerMedal : public GameMedal
 {
 public:
-    WinningOnTopLayerMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly, bool canMultiAward)
+    WinningOnTopLayerMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly,
+                           bool canMultiAward)
         : GameMedal(name, target, weight, op, bestOnly, canMultiAward)
     {
     }

@@ -17,13 +17,15 @@ unsigned int LargeCaveFeature::canReplaceBlock(int blockId, int data)
         && blockId != BlockId::HARDENED_CLAY && blockId != BlockId::STAINED_HARDENED_CLAY
         && blockId != BlockId::SANDSTONE && blockId != BlockId::RED_SANDSTONE && blockId != BlockId::MYCELIUM
         && blockId != BlockId::SNOW_LAYER
-        && ((blockId != BlockId::SAND && blockId != BlockId::GRAVEL)
-            || (block = Block::byId(data)) == NULL || block->getCraftingMaterial() == Material::WATER))
+        && ((blockId != BlockId::SAND && blockId != BlockId::GRAVEL) || (block = Block::byId(data)) == NULL
+            || block->getCraftingMaterial() == Material::WATER))
         return 0;
     return 1;
 }
 
-void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int chunkX, int chunkZ, double centerX, double centerY, double centerZ, bool hasWater, double radiusX, double radiusZ, ChunkPrimer* primer)
+void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY, int maxY, int minZ, int maxZ,
+                                     int chunkX, int chunkZ, double centerX, double centerY, double centerZ,
+                                     bool hasWater, double radiusX, double radiusZ, ChunkPrimer* primer)
 {
     BlockPos columnPos(0, 0, 0);
     int lavaData = Blocks::lava->convertBlockStateToLegacyData(Blocks::lava->defaultBlockState());
@@ -63,7 +65,8 @@ void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY,
                 if ((hasWater && blockId != BlockId::PACKED_ICE) || !canReplaceBlock(blockId, aboveBlockId))
                     continue;
 
-                if (!carved && level->getBiome(BlockPos(centerX, centerY, centerZ))->getBiomeType() == Biome::eBiomeType_Ocean)
+                if (!carved
+                    && level->getBiome(BlockPos(centerX, centerY, centerZ))->getBiomeType() == Biome::eBiomeType_Ocean)
                     return;
                 carved = true;
 
@@ -83,7 +86,7 @@ void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY,
                         Biome* columnBiome = level->getBiome(columnPos);
                         Block* topBlock = Block::byId(columnBiome->mTopBlock.blockId);
                         primer->setBlockAndData(index - 1, columnBiome->mTopBlock.blockId,
-                            topBlock->convertBlockStateToLegacyData(topBlock->defaultBlockState()));
+                                                topBlock->convertBlockStateToLegacyData(topBlock->defaultBlockState()));
                     }
                 }
             }
@@ -91,7 +94,9 @@ void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY,
     }
 }
 
-void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y, double z, float width, float yaw, float pitch, int start, int length, double scale)
+void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x,
+                                 double y, double z, float width, float yaw, float pitch, int start, int length,
+                                 double scale)
 {
     const double originX = chunkX * 16 + 8;
     const double originZ = chunkZ * 16 + 8;
@@ -141,32 +146,43 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
         {
             long long branchSeed = tunnelRandom.nextLong();
             float branchWidth = tunnelRandom.nextFloat() * 0.5f + 0.5f;
-            addTunnel(level, branchSeed, chunkX, chunkZ, primer, x, y, z, branchWidth, yaw - 1.5707964f, pitch / 3.0f, step, length, 1.0);
+            addTunnel(level, branchSeed, chunkX, chunkZ, primer, x, y, z, branchWidth, yaw - 1.5707964f, pitch / 3.0f,
+                      step, length, 1.0);
             branchSeed = tunnelRandom.nextLong();
             branchWidth = tunnelRandom.nextFloat() * 0.5f + 0.5f;
-            addTunnel(level, branchSeed, chunkX, chunkZ, primer, x, y, z, branchWidth, yaw + 1.5707964f, pitch / 3.0f, step, length, 1.0);
+            addTunnel(level, branchSeed, chunkX, chunkZ, primer, x, y, z, branchWidth, yaw + 1.5707964f, pitch / 3.0f,
+                      step, length, 1.0);
             return;
         }
-        if (!room && tunnelRandom.nextInt(4) == 0) continue;
+        if (!room && tunnelRandom.nextInt(4) == 0)
+            continue;
         const double dx = x - originX;
         const double dz = z - originZ;
         const double remaining = length - step;
         const double reach = width + 18.0f;
-        if (dx * dx + dz * dz - remaining * remaining > reach * reach) return;
-        if (x < originX - 16.0 - radius * 2.0 || z < originZ - 16.0 - radius * 2.0 ||
-            x > originX + 16.0 + radius * 2.0 || z > originZ + 16.0 + radius * 2.0) continue;
+        if (dx * dx + dz * dz - remaining * remaining > reach * reach)
+            return;
+        if (x < originX - 16.0 - radius * 2.0 || z < originZ - 16.0 - radius * 2.0 || x > originX + 16.0 + radius * 2.0
+            || z > originZ + 16.0 + radius * 2.0)
+            continue;
         int minX = Mth::floor(x - radius) - chunkX * 16 - 1;
         int maxX = Mth::floor(x + radius) - chunkX * 16 + 1;
         int minY = Mth::floor(y - verticalRadius) - 1;
         int maxY = Mth::floor(y + verticalRadius) + 1;
         int minZ = Mth::floor(z - radius) - chunkZ * 16 - 1;
         int maxZ = Mth::floor(z + radius) - chunkZ * 16 + 1;
-        if (minX < 0) minX = 0;
-        if (maxX > 16) maxX = 16;
-        if (minY < 1) minY = 1;
-        if (maxY > 120) maxY = 120;
-        if (minZ < 0) minZ = 0;
-        if (maxZ > 16) maxZ = 16;
+        if (minX < 0)
+            minX = 0;
+        if (maxX > 16)
+            maxX = 16;
+        if (minY < 1)
+            minY = 1;
+        if (maxY > 120)
+            maxY = 120;
+        if (minZ < 0)
+            minZ = 0;
+        if (maxZ > 16)
+            maxZ = 16;
         bool hasWater = false;
         for (int localX = minX; !hasWater && localX < maxX; ++localX)
         {
@@ -177,9 +193,11 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
                     if (localY >= 0 && localY < 128)
                     {
                         const int blockId = primer->getBlockId((localX << 11) | (localZ << 7) | localY);
-                        if (blockId == BlockId::FLOWING_WATER || blockId == BlockId::WATER) hasWater = true;
-                        if (localY != minY - 1 && localX != minX && localX != maxX - 1 &&
-                            localZ != minZ && localZ != maxZ - 1) localY = minY;
+                        if (blockId == BlockId::FLOWING_WATER || blockId == BlockId::WATER)
+                            hasWater = true;
+                        if (localY != minY - 1 && localX != minX && localX != maxX - 1 && localZ != minZ
+                            && localZ != maxZ - 1)
+                            localY = minY;
                     }
                 }
             }
@@ -187,24 +205,30 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
         Biome* biome = level->getBiome(BlockPos(originX, 0.0, originZ));
         if (!hasWater || (biome->getDepth() < -0.9f && biome->isSnowCovered()))
         {
-            if (level->getBiome(startPos)->getBiomeType() == Biome::eBiomeType_Ocean) return;
-            setCaveBlocks(level, minX, maxX, minY, maxY, minZ, maxZ, chunkX, chunkZ, x, y, z, hasWater, radius, verticalRadius, primer);
-            if (room) return;
+            if (level->getBiome(startPos)->getBiomeType() == Biome::eBiomeType_Ocean)
+                return;
+            setCaveBlocks(level, minX, maxX, minY, maxY, minZ, maxZ, chunkX, chunkZ, x, y, z, hasWater, radius,
+                          verticalRadius, primer);
+            if (room)
+                return;
         }
     }
 }
 
-void LargeCaveFeature::addRoom(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y, double z)
+void LargeCaveFeature::addRoom(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x,
+                               double y, double z)
 {
     addTunnel(level, seed, chunkX, chunkZ, primer, x, y, z, random.nextFloat() * 6.0f + 1.0f, 0.0f, 0.0f, -1, -1, 0.5);
 }
 
-void LargeCaveFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ, ChunkPrimer* primer)
+void LargeCaveFeature::addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+                                  ChunkPrimer* primer)
 {
     int count = random.nextInt(40);
     count = random.nextInt(count + 1);
     count = random.nextInt(count + 1);
-    if (random.nextInt(15) != 0) count = 0;
+    if (random.nextInt(15) != 0)
+        count = 0;
     for (int i = 0; i < count; ++i)
     {
         const double x = chunkX * 16 + random.nextInt(16);
@@ -227,7 +251,8 @@ void LargeCaveFeature::addFeature(Level* level, int chunkX, int chunkZ, int orig
                 const float firstScale = random.nextFloat();
                 tunnelWidth *= firstScale * random.nextFloat() * 3.0f + 1.0f;
             }
-            addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, tunnelWidth, yaw, pitch, 0, 0, 1.0);
+            addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, tunnelWidth, yaw, pitch, 0,
+                      0, 1.0);
         }
     }
 }

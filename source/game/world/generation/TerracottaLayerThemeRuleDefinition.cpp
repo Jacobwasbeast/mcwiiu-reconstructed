@@ -73,8 +73,8 @@ TerracottaLayerTheme::Pattern getPattern(const std::wstring& pattern)
 }
 
 TerracottaLayerThemeRuleDefinition::TerracottaLayerThemeRuleDefinition()
-    : mPattern(L"RANDOM:2")
-    , mColourFunction(L"UNIFORM")
+    : mPattern(L"RANDOM:2"),
+      mColourFunction(L"UNIFORM")
 {
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColourFunction);
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_pattern, &mPattern);

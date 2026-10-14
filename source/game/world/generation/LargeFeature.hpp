@@ -27,7 +27,8 @@ public:
     virtual ~LargeFeature();
 
     virtual void apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer);
-    virtual void addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ, ChunkPrimer* primer);
+    virtual void addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+                            ChunkPrimer* primer);
 
 protected:
     static long long setupChunkSeed(long long baseSeed, Random& random, int chunkX, int chunkZ);

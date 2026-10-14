@@ -9,7 +9,8 @@ float WinningOnTopLayerMedal::GetScore(PlayerStats* playerStats) const
     for (unsigned int round = 0; round < playerStats->getTotalRounds(); ++round)
     {
         PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-        if (roundStats->mDeathLayer != PlayerStats::RoundStats::LAYERS_UNUSED && roundStats->mWon && roundStats->mFinalLayer == 0)
+        if (roundStats->mDeathLayer != PlayerStats::RoundStats::LAYERS_UNUSED && roundStats->mWon
+            && roundStats->mFinalLayer == 0)
         {
             ++count;
         }

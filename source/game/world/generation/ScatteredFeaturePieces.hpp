@@ -50,6 +50,7 @@ public:
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
+
     private:
         bool mHasPlacedChest[4];
     };
@@ -64,6 +65,7 @@ public:
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
+
     private:
         bool mHasBasement;
         int mBasementDepth;
@@ -75,7 +77,7 @@ public:
         class MossStoneSelector : public StructurePiece::BlockSelector
         {
         public:
-                virtual void next(Random& random, int x, int y, int z, bool edge);
+            virtual void next(Random& random, int x, int y, int z, bool edge);
         };
 
         static MossStoneSelector* mStoneSelector;
@@ -88,6 +90,7 @@ public:
         static void staticCtor();
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
+
     private:
         bool mPlacedMainChest;
         bool mPlacedHiddenChest;
@@ -105,6 +108,7 @@ public:
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
+
     private:
         bool mHasWitch;
     };

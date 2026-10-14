@@ -227,6 +227,7 @@ private:
     bool mHandsBusy;
     bool mAutoJumpEnabled;
     int mAutoJumpTime;
+
 public:
     unsigned int mViewport;
 

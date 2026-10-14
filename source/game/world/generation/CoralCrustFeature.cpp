@@ -229,8 +229,7 @@ bool CoralCrustFeature::canOverwrite(Level* level, const BlockPos& pos)
     return level->getBlock(pos) != Blocks::coral_block;
 }
 
-void CoralCrustFeature::placeCoral(Level* level, const BlockPos& pos, Random& random,
-                                   std::vector<BlockPos>& positions,
+void CoralCrustFeature::placeCoral(Level* level, const BlockPos& pos, Random& random, std::vector<BlockPos>& positions,
                                    std::vector<std::pair<BlockPos, const Direction*> >& sides, int type)
 {
     const int shape = random.nextInt(4);
@@ -365,23 +364,23 @@ const Direction* CoralCrustFeature::randomDirectionExcept(Random& random, const 
     {
     default:
     {
-        const Direction* notWest[3] = { Direction::EAST, Direction::SOUTH, Direction::NORTH };
+        const Direction* notWest[3] = {Direction::EAST, Direction::SOUTH, Direction::NORTH};
         result = notWest[random.nextInt(3)];
         break;
     }
     case 2:
     {
-        const Direction* notNorth[3] = { Direction::EAST, Direction::SOUTH, Direction::WEST };
+        const Direction* notNorth[3] = {Direction::EAST, Direction::SOUTH, Direction::WEST};
         return notNorth[random.nextInt(3)];
     }
     case 3:
     {
-        const Direction* notSouth[3] = { Direction::EAST, Direction::NORTH, Direction::WEST };
+        const Direction* notSouth[3] = {Direction::EAST, Direction::NORTH, Direction::WEST};
         return notSouth[random.nextInt(3)];
     }
     case 5:
     {
-        const Direction* notEast[3] = { Direction::NORTH, Direction::SOUTH, Direction::WEST };
+        const Direction* notEast[3] = {Direction::NORTH, Direction::SOUTH, Direction::WEST};
         result = notEast[random.nextInt(3)];
         break;
     }
@@ -467,8 +466,7 @@ void CoralCrustFeature::placeCoralBase(Level* level, const BlockPos& pos, Random
     {
         placeTopDecorations(level, *it, random);
     }
-    for (std::vector<std::pair<BlockPos, const Direction*> >::iterator it = sides.begin(); it != sides.end();
-         ++it)
+    for (std::vector<std::pair<BlockPos, const Direction*> >::iterator it = sides.begin(); it != sides.end(); ++it)
     {
         placeSideDecorations(level, it->first, random, it->second);
     }
@@ -481,23 +479,14 @@ bool CoralCrustFeature::place(Level* level, Random& random, const BlockPos& orig
         return true;
     }
 
-    eMinecraftStructureTemplate crustTemplates[5] =
-    {
-        eMinecraftStructureTemplate_CoralCrust_Crust1,
-        eMinecraftStructureTemplate_CoralCrust_Crust2,
-        eMinecraftStructureTemplate_CoralCrust_Crust3,
-        eMinecraftStructureTemplate_CoralCrust_Crust4,
-        eMinecraftStructureTemplate_CoralCrust_Crust5
-    };
-    eMinecraftStructureTemplate cropTemplates[6] =
-    {
-        eMinecraftStructureTemplate_CoralCrust_Outcropping1,
-        eMinecraftStructureTemplate_CoralCrust_Outcropping2,
-        eMinecraftStructureTemplate_CoralCrust_Outcropping3,
-        eMinecraftStructureTemplate_CoralCrust_Outcropping4,
-        eMinecraftStructureTemplate_CoralCrust_Outcropping5,
-        eMinecraftStructureTemplate_CoralCrust_Outcropping6
-    };
+    eMinecraftStructureTemplate crustTemplates[5] = {
+        eMinecraftStructureTemplate_CoralCrust_Crust1, eMinecraftStructureTemplate_CoralCrust_Crust2,
+        eMinecraftStructureTemplate_CoralCrust_Crust3, eMinecraftStructureTemplate_CoralCrust_Crust4,
+        eMinecraftStructureTemplate_CoralCrust_Crust5};
+    eMinecraftStructureTemplate cropTemplates[6] = {
+        eMinecraftStructureTemplate_CoralCrust_Outcropping1, eMinecraftStructureTemplate_CoralCrust_Outcropping2,
+        eMinecraftStructureTemplate_CoralCrust_Outcropping3, eMinecraftStructureTemplate_CoralCrust_Outcropping4,
+        eMinecraftStructureTemplate_CoralCrust_Outcropping5, eMinecraftStructureTemplate_CoralCrust_Outcropping6};
 
     std::vector<BlockPos> positions;
     std::vector<int> types;
@@ -567,11 +556,10 @@ bool CoralCrustFeature::place(Level* level, Random& random, const BlockPos& orig
             Rotation* cropRotation = rotations[0];
             settings.setRotation(cropRotation);
             const int cropType = random.nextInt(6);
-            const StructureTemplate* structure =
-                level->getLevelStorage()->getStructureManager()->getOrCreate(cropTemplates[cropType]);
+            const StructureTemplate* structure = level->getLevelStorage()->getStructureManager()->getOrCreate(
+                cropTemplates[cropType]);
             structure->placeInWorld(level, position + getCropOffsetFromRot(cropRotation, cropType), &settings);
-            placeCoralBase(level, position + getCropOffsetFromRot(cropRotation, cropType), random, structure,
-                           settings);
+            placeCoralBase(level, position + getCropOffsetFromRot(cropRotation, cropType), random, structure, settings);
             return true;
         }
     }
@@ -580,19 +568,18 @@ bool CoralCrustFeature::place(Level* level, Random& random, const BlockPos& orig
         const int cropType = random.nextInt(6);
         Rotation* cropRotation = rotations[0];
         settings.setRotation(cropRotation);
-        const StructureTemplate* structure =
-            level->getLevelStorage()->getStructureManager()->getOrCreate(cropTemplates[cropType]);
+        const StructureTemplate* structure = level->getLevelStorage()->getStructureManager()->getOrCreate(
+            cropTemplates[cropType]);
         structure->placeInWorld(level, position + getCropOffsetFromRot(cropRotation, cropType), &settings);
-        placeCoralBase(level, position + getCropOffsetFromRot(cropRotation, cropType), random, structure,
-                       settings);
+        placeCoralBase(level, position + getCropOffsetFromRot(cropRotation, cropType), random, structure, settings);
         return true;
     }
 
     for (unsigned int i = 0; i < positions.size(); ++i)
     {
         settings.setRotation(rotations[i]);
-        const StructureTemplate* structure =
-            level->getLevelStorage()->getStructureManager()->getOrCreate(crustTemplates[types[i]]);
+        const StructureTemplate* structure = level->getLevelStorage()->getStructureManager()->getOrCreate(
+            crustTemplates[types[i]]);
         structure->placeInWorld(level, positions[i], &settings);
         placeCoralBase(level, positions[i], random, structure, settings);
     }

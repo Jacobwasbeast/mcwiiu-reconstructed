@@ -67,8 +67,8 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
                 boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(candidate);
                 if (eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
                 {
-                    boost::shared_ptr<ChestBlockEntity> chest =
-                        boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
+                    boost::shared_ptr<ChestBlockEntity> chest = boost::dynamic_pointer_cast<ChestBlockEntity>(
+                        blockEntity);
                     if (chest)
                     {
                         chest->setLootTable(&BuiltInLootTables::SPAWN_BONUS_CHEST, random.nextLong());

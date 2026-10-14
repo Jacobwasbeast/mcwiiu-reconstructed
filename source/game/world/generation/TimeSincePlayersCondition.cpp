@@ -6,8 +6,8 @@
 #include "game/core/XmlValue.hpp"
 
 TimeSincePlayersCondition::TimeSincePlayersCondition(const XmlObject& object)
-    : TimerBasedCondition(object)
-    , m_playerCount(0)
+    : TimerBasedCondition(object),
+      m_playerCount(0)
 {
     maybe<int> playerCount = object[L"playerCount"].maybeInt();
     if (playerCount.isSet())
@@ -20,8 +20,8 @@ TimeSincePlayersCondition::~TimeSincePlayersCondition()
 
 bool TimeSincePlayersCondition::IsSatisfied(MasterGameMode* gameMode) const
 {
-    return gameMode->HasTimer(static_cast<MasterGameMode::ETimerID>(GetTimerID())) &&
-           gameMode->GetTimerRemainingTime(static_cast<MasterGameMode::ETimerID>(GetTimerID())) <= 0;
+    return gameMode->HasTimer(static_cast<MasterGameMode::ETimerID>(GetTimerID()))
+           && gameMode->GetTimerRemainingTime(static_cast<MasterGameMode::ETimerID>(GetTimerID())) <= 0;
 }
 
 unsigned int TimeSincePlayersCondition::GetTimerID() const

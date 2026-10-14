@@ -23,8 +23,7 @@ public:
     virtual Visibility getNameTagVisibility();
     virtual unsigned int getTeamIndex();
     virtual Visibility getDeathMessageVisibility();
-    virtual boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >*
-        getPlayers();
+    virtual boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >* getPlayers();
 
     Scoreboard* GetScoreboard();
 

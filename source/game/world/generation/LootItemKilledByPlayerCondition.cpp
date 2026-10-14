@@ -3,8 +3,7 @@
 #include "game/core/LootTableContext.hpp"
 #include "game/util/Random.hpp"
 
-LootItemKilledByPlayerCondition::LootItemKilledByPlayerCondition(bool inverse)
-    : inverse(inverse)
+LootItemKilledByPlayerCondition::LootItemKilledByPlayerCondition(bool inverse) : inverse(inverse)
 {
 }
 

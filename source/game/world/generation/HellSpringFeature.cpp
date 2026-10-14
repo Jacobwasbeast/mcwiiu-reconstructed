@@ -9,7 +9,9 @@
 #include "game/world/block/Material.hpp"
 
 HellSpringFeature::HellSpringFeature(Block* block, bool insideRock)
-    : Feature(false), mBlock(block), mInsideRock(insideRock)
+    : Feature(false),
+      mBlock(block),
+      mInsideRock(insideRock)
 {
 }
 

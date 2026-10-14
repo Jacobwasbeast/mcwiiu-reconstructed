@@ -110,24 +110,25 @@ Villager::EmeraldForItems::EmeraldForItems(Item* item, PriceRange price)
     mPrice = price;
 }
 
-void Villager::EmeraldForItems::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes, Random* random)
+void Villager::EmeraldForItems::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes,
+                                                  Random* random)
 {
-    recipes->push_back(new MerchantRecipe(not_null_ptr<ItemInstance>(new ItemInstance(mItem, mPrice.getValue(random), 0)), Items::emerald));
+    recipes->push_back(new MerchantRecipe(
+        not_null_ptr<ItemInstance>(new ItemInstance(mItem, mPrice.getValue(random), 0)), Items::emerald));
 }
 
-Villager::ItemForEmeralds::ItemForEmeralds(Item* item, const PriceRange& price)
-    : mItem(item)
-{
-    mPrice = price;
-}
-
-Villager::ItemForEmeralds::ItemForEmeralds(const ItemInstance& item, const PriceRange& price)
-    : mItem(item)
+Villager::ItemForEmeralds::ItemForEmeralds(Item* item, const PriceRange& price) : mItem(item)
 {
     mPrice = price;
 }
 
-void Villager::ItemForEmeralds::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes, Random* random)
+Villager::ItemForEmeralds::ItemForEmeralds(const ItemInstance& item, const PriceRange& price) : mItem(item)
+{
+    mPrice = price;
+}
+
+void Villager::ItemForEmeralds::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes,
+                                                  Random* random)
 {
     int value = mPrice.getValue(random);
     not_null_ptr<ItemInstance> buy = ItemInstance::EMPTY;
@@ -147,13 +148,13 @@ void Villager::ItemForEmeralds::addMerchantRecipe(boost::shared_ptr<Merchant>, M
     recipes->push_back(new MerchantRecipe(buy, sell));
 }
 
-Villager::EnchantedItemForEmeralds::EnchantedItemForEmeralds(Item* item, const PriceRange& price)
-    : mItem(item)
+Villager::EnchantedItemForEmeralds::EnchantedItemForEmeralds(Item* item, const PriceRange& price) : mItem(item)
 {
     mPrice = price;
 }
 
-void Villager::EnchantedItemForEmeralds::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes, Random* random)
+void Villager::EnchantedItemForEmeralds::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes,
+                                                           Random* random)
 {
     not_null_ptr<ItemInstance> buy(new ItemInstance(Items::emerald, mPrice.getValue(random), 0));
     not_null_ptr<ItemInstance> sell(new ItemInstance(mItem.getItem(), 1, mItem.getAuxValue()));
@@ -161,33 +162,38 @@ void Villager::EnchantedItemForEmeralds::addMerchantRecipe(boost::shared_ptr<Mer
     recipes->push_back(new MerchantRecipe(buy, sell));
 }
 
-Villager::ItemAndEmeraldToItem::ItemAndEmeraldToItem(Item* firstItem, const PriceRange& firstPrice, Item* secondItem, const PriceRange& secondPrice)
-    : mFirstItem(firstItem), mSecondItem(secondItem)
+Villager::ItemAndEmeraldToItem::ItemAndEmeraldToItem(Item* firstItem, const PriceRange& firstPrice, Item* secondItem,
+                                                     const PriceRange& secondPrice)
+    : mFirstItem(firstItem),
+      mSecondItem(secondItem)
 {
     mFirstPrice = firstPrice;
     mSecondPrice = secondPrice;
 }
 
-void Villager::ItemAndEmeraldToItem::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes, Random* random)
+void Villager::ItemAndEmeraldToItem::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes,
+                                                       Random* random)
 {
     int firstCount = mFirstPrice.getValue(random);
     int secondCount = mSecondPrice.getValue(random);
     recipes->push_back(new MerchantRecipe(
         not_null_ptr<ItemInstance>(new ItemInstance(mFirstItem.getItem(), firstCount, mFirstItem.getAuxValue())),
         not_null_ptr<ItemInstance>(new ItemInstance(Items::emerald)),
-        not_null_ptr<ItemInstance>(new ItemInstance(mSecondItem.getItem(), secondCount, mSecondItem.getAuxValue())), 0, 7));
+        not_null_ptr<ItemInstance>(new ItemInstance(mSecondItem.getItem(), secondCount, mSecondItem.getAuxValue())), 0,
+        7));
 }
 
 Villager::EnchantBookForEmeralds::EnchantBookForEmeralds()
 {
 }
 
-void Villager::EnchantBookForEmeralds::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes, Random* random)
+void Villager::EnchantBookForEmeralds::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes,
+                                                         Random* random)
 {
     Enchantment* enchantment = Enchantment::enchantmentRegistry->getRandom(random);
     int level = Mth::nextInt(random, enchantment->getMinLevel(), enchantment->getMaxLevel());
-    not_null_ptr<ItemInstance> enchantedBook =
-        EnchantedBookItem::createForEnchantment(new EnchantmentInstance(enchantment, level));
+    not_null_ptr<ItemInstance> enchantedBook = EnchantedBookItem::createForEnchantment(
+        new EnchantmentInstance(enchantment, level));
     int cost = random->nextInt(level * 10 + 5) + 2 + level * 3;
 
     if (enchantment->isTreasureOnly())
@@ -205,14 +211,16 @@ void Villager::EnchantBookForEmeralds::addMerchantRecipe(boost::shared_ptr<Merch
                                           enchantedBook, 0, 7));
 }
 
-Villager::TreasureMapForEmeralds::TreasureMapForEmeralds(const PriceRange& price, std::wstring name, const MapDecoration::Type* icon)
+Villager::TreasureMapForEmeralds::TreasureMapForEmeralds(const PriceRange& price, std::wstring name,
+                                                         const MapDecoration::Type* icon)
 {
     mPrice = price;
     mName = name;
     mIcon = icon;
 }
 
-void Villager::TreasureMapForEmeralds::addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random)
+void Villager::TreasureMapForEmeralds::addMerchantRecipe(boost::shared_ptr<Merchant> merchant,
+                                                         MerchantRecipeList* recipes, Random* random)
 {
     int value = mPrice.getValue(random);
     Level* level = merchant->getLevel();
@@ -221,9 +229,8 @@ void Villager::TreasureMapForEmeralds::addMerchantRecipe(boost::shared_ptr<Merch
 
     if (target != NULL)
     {
-        not_null_ptr<ItemInstance> map = MapItem::setupNewMap(PlayerUID(0), level, 0,
-                                                             (double)target->x, (double)target->z,
-                                                             3, true, true);
+        not_null_ptr<ItemInstance> map = MapItem::setupNewMap(PlayerUID(0), level, 0, (double)target->x,
+                                                              (double)target->z, 3, true, true);
         MapItem::renderBiomePreviewMap(level, map);
         MapItemSavedData::addTargetDecoration(map, *target, L"+", mIcon);
 
@@ -233,7 +240,8 @@ void Villager::TreasureMapForEmeralds::addMerchantRecipe(boost::shared_ptr<Merch
         }
         else
         {
-            map->setTranslatableName(mName == LargeFeature::MANSION ? IDS_ITEM_FILLED_MAP_WOODLAND_MANSION : IDS_DESC_MAP);
+            map->setTranslatableName(mName == LargeFeature::MANSION ? IDS_ITEM_FILLED_MAP_WOODLAND_MANSION
+                                                                    : IDS_DESC_MAP);
         }
 
         recipes->push_back(new MerchantRecipe(not_null_ptr<ItemInstance>(new ItemInstance(Items::emerald, value)),
@@ -241,8 +249,7 @@ void Villager::TreasureMapForEmeralds::addMerchantRecipe(boost::shared_ptr<Merch
     }
 }
 
-Villager::Villager(Level* level)
-    : AgableMob(level)
+Villager::Villager(Level* level) : AgableMob(level)
 {
     _init(0);
 }
@@ -291,71 +298,47 @@ void Villager::staticCtor()
 {
     DATA_PROFESSION = SynchedEntityData::defineId(EntityType::VILLAGER, EntityType::AGABLE_MOB,
                                                   EntityDataSerializers::INT);
-    DATA_CAREER = SynchedEntityData::defineId(EntityType::VILLAGER, EntityType::AGABLE_MOB,
-                                              EntityDataSerializers::INT);
+    DATA_CAREER = SynchedEntityData::defineId(EntityType::VILLAGER, EntityType::AGABLE_MOB, EntityDataSerializers::INT);
     DATA_TRADING = SynchedEntityData::defineId(EntityType::VILLAGER, EntityType::AGABLE_MOB,
                                                EntityDataSerializers::INT);
 
     std::vector<std::vector<arrayWithLength<ItemListing*> > > profession;
     std::vector<arrayWithLength<ItemListing*> > career;
 
-    static ItemListing* farmerTier1[] =
-    {
-        new EmeraldForItems(Items::wheat, PriceRange(18, 22)),
-        new EmeraldForItems(Items::potato, PriceRange(15, 19)),
-        new EmeraldForItems(Items::carrot, PriceRange(15, 19)),
-        new ItemForEmeralds(Items::bread, PriceRange(-4, -2))
-    };
+    static ItemListing* farmerTier1[] = {
+        new EmeraldForItems(Items::wheat, PriceRange(18, 22)), new EmeraldForItems(Items::potato, PriceRange(15, 19)),
+        new EmeraldForItems(Items::carrot, PriceRange(15, 19)), new ItemForEmeralds(Items::bread, PriceRange(-4, -2))};
     career.push_back(arrayWithLength<ItemListing*>(farmerTier1, 4));
 
-    static ItemListing* farmerTier2[] =
-    {
-        new EmeraldForItems(Item::byBlock(Blocks::pumpkin), PriceRange(8, 13)),
-        new ItemForEmeralds(Items::pumpkinPie, PriceRange(-3, -2))
-    };
+    static ItemListing* farmerTier2[] = {new EmeraldForItems(Item::byBlock(Blocks::pumpkin), PriceRange(8, 13)),
+                                         new ItemForEmeralds(Items::pumpkinPie, PriceRange(-3, -2))};
     career.push_back(arrayWithLength<ItemListing*>(farmerTier2, 2));
 
-    static ItemListing* farmerTier3[] =
-    {
-        new EmeraldForItems(Item::byBlock(Blocks::melon_block), PriceRange(7, 12)),
-        new ItemForEmeralds(Items::apple, PriceRange(-7, -5))
-    };
+    static ItemListing* farmerTier3[] = {new EmeraldForItems(Item::byBlock(Blocks::melon_block), PriceRange(7, 12)),
+                                         new ItemForEmeralds(Items::apple, PriceRange(-7, -5))};
     career.push_back(arrayWithLength<ItemListing*>(farmerTier3, 2));
 
-    static ItemListing* farmerTier4[] =
-    {
-        new ItemForEmeralds(Items::cookie, PriceRange(-10, -6)),
-        new ItemForEmeralds(Items::cake, PriceRange(1, 1))
-    };
+    static ItemListing* farmerTier4[] = {new ItemForEmeralds(Items::cookie, PriceRange(-10, -6)),
+                                         new ItemForEmeralds(Items::cake, PriceRange(1, 1))};
     career.push_back(arrayWithLength<ItemListing*>(farmerTier4, 2));
     profession.push_back(career);
     career.clear();
 
-    static ItemListing* fishermanTier1[] =
-    {
-        new EmeraldForItems(Items::string, PriceRange(15, 20)),
-        new EmeraldForItems(Items::coal, PriceRange(16, 24)),
-        new ItemAndEmeraldToItem(Items::fish, PriceRange(6, 6), Items::cookedFish, PriceRange(6, 6))
-    };
+    static ItemListing* fishermanTier1[] = {
+        new EmeraldForItems(Items::string, PriceRange(15, 20)), new EmeraldForItems(Items::coal, PriceRange(16, 24)),
+        new ItemAndEmeraldToItem(Items::fish, PriceRange(6, 6), Items::cookedFish, PriceRange(6, 6))};
     career.push_back(arrayWithLength<ItemListing*>(fishermanTier1, 3));
 
-    static ItemListing* fishermanTier2[] =
-    {
-        new EnchantedItemForEmeralds(Items::fishingRod, PriceRange(7, 8))
-    };
+    static ItemListing* fishermanTier2[] = {new EnchantedItemForEmeralds(Items::fishingRod, PriceRange(7, 8))};
     career.push_back(arrayWithLength<ItemListing*>(fishermanTier2, 1));
     profession.push_back(career);
     career.clear();
 
-    static ItemListing* shepherdTier1[] =
-    {
-        new EmeraldForItems(Item::byBlock(Blocks::wool), PriceRange(16, 22)),
-        new ItemForEmeralds(Items::shears, PriceRange(3, 4))
-    };
+    static ItemListing* shepherdTier1[] = {new EmeraldForItems(Item::byBlock(Blocks::wool), PriceRange(16, 22)),
+                                           new ItemForEmeralds(Items::shears, PriceRange(3, 4))};
     career.push_back(arrayWithLength<ItemListing*>(shepherdTier1, 2));
 
-    static ItemListing* shepherdTier2[] =
-    {
+    static ItemListing* shepherdTier2[] = {
         new ItemForEmeralds(ItemInstance(Item::byBlock(Blocks::wool), 1, 0), PriceRange(1, 2)),
         new ItemForEmeralds(ItemInstance(Item::byBlock(Blocks::wool), 1, 1), PriceRange(1, 2)),
         new ItemForEmeralds(ItemInstance(Item::byBlock(Blocks::wool), 1, 2), PriceRange(1, 2)),
@@ -371,25 +354,18 @@ void Villager::staticCtor()
         new ItemForEmeralds(ItemInstance(Item::byBlock(Blocks::wool), 1, 12), PriceRange(1, 2)),
         new ItemForEmeralds(ItemInstance(Item::byBlock(Blocks::wool), 1, 13), PriceRange(1, 2)),
         new ItemForEmeralds(ItemInstance(Item::byBlock(Blocks::wool), 1, 14), PriceRange(1, 2)),
-        new ItemForEmeralds(ItemInstance(Item::byBlock(Blocks::wool), 1, 15), PriceRange(1, 2))
-    };
+        new ItemForEmeralds(ItemInstance(Item::byBlock(Blocks::wool), 1, 15), PriceRange(1, 2))};
     career.push_back(arrayWithLength<ItemListing*>(shepherdTier2, 16));
     profession.push_back(career);
     career.clear();
 
-    static ItemListing* fletcherTier1[] =
-    {
-        new EmeraldForItems(Items::string, PriceRange(15, 20)),
-        new ItemForEmeralds(Items::arrow, PriceRange(-12, -8))
-    };
+    static ItemListing* fletcherTier1[] = {new EmeraldForItems(Items::string, PriceRange(15, 20)),
+                                           new ItemForEmeralds(Items::arrow, PriceRange(-12, -8))};
     career.push_back(arrayWithLength<ItemListing*>(fletcherTier1, 2));
 
-    static ItemListing* fletcherTier2[] =
-    {
+    static ItemListing* fletcherTier2[] = {
         new ItemForEmeralds(Items::bow, PriceRange(2, 3)),
-        new ItemAndEmeraldToItem(Item::byBlock(Blocks::gravel), PriceRange(10, 10),
-                                 Items::flint, PriceRange(6, 10))
-    };
+        new ItemAndEmeraldToItem(Item::byBlock(Blocks::gravel), PriceRange(10, 10), Items::flint, PriceRange(6, 10))};
     career.push_back(arrayWithLength<ItemListing*>(fletcherTier2, 2));
     profession.push_back(career);
     career.clear();
@@ -397,72 +373,43 @@ void Villager::staticCtor()
     sTrades.push_back(profession);
     profession.clear();
 
-    static ItemListing* librarianTier1[] =
-    {
-        new EmeraldForItems(Items::paper, PriceRange(24, 36)),
-        new EnchantBookForEmeralds()
-    };
+    static ItemListing* librarianTier1[] = {new EmeraldForItems(Items::paper, PriceRange(24, 36)),
+                                            new EnchantBookForEmeralds()};
     career.push_back(arrayWithLength<ItemListing*>(librarianTier1, 2));
 
-    static ItemListing* librarianTier2[] =
-    {
-        new EmeraldForItems(Items::book, PriceRange(8, 10)),
-        new ItemForEmeralds(Items::compass, PriceRange(10, 12)),
-        new ItemForEmeralds(Item::byBlock(Blocks::bookshelf), PriceRange(3, 4))
-    };
+    static ItemListing* librarianTier2[] = {new EmeraldForItems(Items::book, PriceRange(8, 10)),
+                                            new ItemForEmeralds(Items::compass, PriceRange(10, 12)),
+                                            new ItemForEmeralds(Item::byBlock(Blocks::bookshelf), PriceRange(3, 4))};
     career.push_back(arrayWithLength<ItemListing*>(librarianTier2, 3));
 
-    static ItemListing* librarianTier3[] =
-    {
-        new EmeraldForItems(Items::writtenBook, PriceRange(2, 2)),
-        new ItemForEmeralds(Items::clock, PriceRange(10, 12)),
-        new ItemForEmeralds(Item::byBlock(Blocks::glass), PriceRange(-5, -3))
-    };
+    static ItemListing* librarianTier3[] = {new EmeraldForItems(Items::writtenBook, PriceRange(2, 2)),
+                                            new ItemForEmeralds(Items::clock, PriceRange(10, 12)),
+                                            new ItemForEmeralds(Item::byBlock(Blocks::glass), PriceRange(-5, -3))};
     career.push_back(arrayWithLength<ItemListing*>(librarianTier3, 3));
 
-    static ItemListing* librarianTier4[] =
-    {
-        new EnchantBookForEmeralds()
-    };
+    static ItemListing* librarianTier4[] = {new EnchantBookForEmeralds()};
     career.push_back(arrayWithLength<ItemListing*>(librarianTier4, 1));
 
-    static ItemListing* librarianTier5[] =
-    {
-        new EnchantBookForEmeralds()
-    };
+    static ItemListing* librarianTier5[] = {new EnchantBookForEmeralds()};
     career.push_back(arrayWithLength<ItemListing*>(librarianTier5, 1));
 
-    static ItemListing* librarianTier6[] =
-    {
-        new ItemForEmeralds(Items::nameTag, PriceRange(20, 22))
-    };
+    static ItemListing* librarianTier6[] = {new ItemForEmeralds(Items::nameTag, PriceRange(20, 22))};
     career.push_back(arrayWithLength<ItemListing*>(librarianTier6, 1));
     profession.push_back(career);
     career.clear();
 
-    static ItemListing* cartographerTier1[] =
-    {
-        new EmeraldForItems(Items::paper, PriceRange(24, 36))
-    };
+    static ItemListing* cartographerTier1[] = {new EmeraldForItems(Items::paper, PriceRange(24, 36))};
     career.push_back(arrayWithLength<ItemListing*>(cartographerTier1, 1));
 
-    static ItemListing* cartographerTier2[] =
-    {
-        new EmeraldForItems(Items::compass, PriceRange(1, 1))
-    };
+    static ItemListing* cartographerTier2[] = {new EmeraldForItems(Items::compass, PriceRange(1, 1))};
     career.push_back(arrayWithLength<ItemListing*>(cartographerTier2, 1));
 
-    static ItemListing* cartographerTier3[] =
-    {
-        new ItemForEmeralds(Items::map, PriceRange(7, 11))
-    };
+    static ItemListing* cartographerTier3[] = {new ItemForEmeralds(Items::map, PriceRange(7, 11))};
     career.push_back(arrayWithLength<ItemListing*>(cartographerTier3, 1));
 
-    static ItemListing* cartographerTier4[] =
-    {
+    static ItemListing* cartographerTier4[] = {
         new TreasureMapForEmeralds(PriceRange(12, 20), LargeFeature::MONUMENT, &MapDecoration::Type::TYPES[15]),
-        new TreasureMapForEmeralds(PriceRange(16, 28), LargeFeature::MANSION, &MapDecoration::Type::TYPES[14])
-    };
+        new TreasureMapForEmeralds(PriceRange(16, 28), LargeFeature::MANSION, &MapDecoration::Type::TYPES[14])};
     career.push_back(arrayWithLength<ItemListing*>(cartographerTier4, 2));
     profession.push_back(career);
     career.clear();
@@ -470,31 +417,20 @@ void Villager::staticCtor()
     sTrades.push_back(profession);
     profession.clear();
 
-    static ItemListing* clericTier1[] =
-    {
-        new EmeraldForItems(Items::rottenFlesh, PriceRange(36, 40)),
-        new EmeraldForItems(Items::goldIngot, PriceRange(8, 10))
-    };
+    static ItemListing* clericTier1[] = {new EmeraldForItems(Items::rottenFlesh, PriceRange(36, 40)),
+                                         new EmeraldForItems(Items::goldIngot, PriceRange(8, 10))};
     career.push_back(arrayWithLength<ItemListing*>(clericTier1, 2));
 
-    static ItemListing* clericTier2[] =
-    {
+    static ItemListing* clericTier2[] = {
         new ItemForEmeralds(Items::redstone, PriceRange(-4, -1)),
-        new ItemForEmeralds(ItemInstance(Items::dye, 1, DyeColor::BLUE->getItemData()), PriceRange(-2, -1))
-    };
+        new ItemForEmeralds(ItemInstance(Items::dye, 1, DyeColor::BLUE->getItemData()), PriceRange(-2, -1))};
     career.push_back(arrayWithLength<ItemListing*>(clericTier2, 2));
 
-    static ItemListing* clericTier3[] =
-    {
-        new ItemForEmeralds(Items::enderPearl, PriceRange(4, 7)),
-        new ItemForEmeralds(Item::byBlock(Blocks::glowstone), PriceRange(-3, -1))
-    };
+    static ItemListing* clericTier3[] = {new ItemForEmeralds(Items::enderPearl, PriceRange(4, 7)),
+                                         new ItemForEmeralds(Item::byBlock(Blocks::glowstone), PriceRange(-3, -1))};
     career.push_back(arrayWithLength<ItemListing*>(clericTier3, 2));
 
-    static ItemListing* clericTier4[] =
-    {
-        new ItemForEmeralds(Items::experienceBottle, PriceRange(3, 11))
-    };
+    static ItemListing* clericTier4[] = {new ItemForEmeralds(Items::experienceBottle, PriceRange(3, 11))};
     career.push_back(arrayWithLength<ItemListing*>(clericTier4, 1));
     profession.push_back(career);
     career.clear();
@@ -502,81 +438,51 @@ void Villager::staticCtor()
     sTrades.push_back(profession);
     profession.clear();
 
-    static ItemListing* armorerTier1[] =
-    {
-        new EmeraldForItems(Items::coal, PriceRange(16, 24)),
-        new ItemForEmeralds(Items::ironHelmet, PriceRange(4, 6))
-    };
+    static ItemListing* armorerTier1[] = {new EmeraldForItems(Items::coal, PriceRange(16, 24)),
+                                          new ItemForEmeralds(Items::ironHelmet, PriceRange(4, 6))};
     career.push_back(arrayWithLength<ItemListing*>(armorerTier1, 2));
 
-    static ItemListing* armorerTier2[] =
-    {
-        new EmeraldForItems(Items::ironIngot, PriceRange(7, 9)),
-        new ItemForEmeralds(Items::ironChestplate, PriceRange(10, 14))
-    };
+    static ItemListing* armorerTier2[] = {new EmeraldForItems(Items::ironIngot, PriceRange(7, 9)),
+                                          new ItemForEmeralds(Items::ironChestplate, PriceRange(10, 14))};
     career.push_back(arrayWithLength<ItemListing*>(armorerTier2, 2));
 
-    static ItemListing* armorerTier3[] =
-    {
-        new EmeraldForItems(Items::diamond, PriceRange(3, 4)),
-        new EnchantedItemForEmeralds(Items::diamondChestplate, PriceRange(16, 19))
-    };
+    static ItemListing* armorerTier3[] = {new EmeraldForItems(Items::diamond, PriceRange(3, 4)),
+                                          new EnchantedItemForEmeralds(Items::diamondChestplate, PriceRange(16, 19))};
     career.push_back(arrayWithLength<ItemListing*>(armorerTier3, 2));
 
-    static ItemListing* armorerTier4[] =
-    {
-        new ItemForEmeralds(Items::chainmailBoots, PriceRange(5, 7)),
-        new ItemForEmeralds(Items::chainmailLeggings, PriceRange(9, 11)),
-        new ItemForEmeralds(Items::chainmailHelmet, PriceRange(5, 7)),
-        new ItemForEmeralds(Items::chainmailChestplate, PriceRange(11, 15))
-    };
+    static ItemListing* armorerTier4[] = {new ItemForEmeralds(Items::chainmailBoots, PriceRange(5, 7)),
+                                          new ItemForEmeralds(Items::chainmailLeggings, PriceRange(9, 11)),
+                                          new ItemForEmeralds(Items::chainmailHelmet, PriceRange(5, 7)),
+                                          new ItemForEmeralds(Items::chainmailChestplate, PriceRange(11, 15))};
     career.push_back(arrayWithLength<ItemListing*>(armorerTier4, 4));
     profession.push_back(career);
     career.clear();
 
-    static ItemListing* weaponSmithTier1[] =
-    {
-        new EmeraldForItems(Items::coal, PriceRange(16, 24)),
-        new ItemForEmeralds(Items::ironAxe, PriceRange(6, 8))
-    };
+    static ItemListing* weaponSmithTier1[] = {new EmeraldForItems(Items::coal, PriceRange(16, 24)),
+                                              new ItemForEmeralds(Items::ironAxe, PriceRange(6, 8))};
     career.push_back(arrayWithLength<ItemListing*>(weaponSmithTier1, 2));
 
-    static ItemListing* weaponSmithTier2[] =
-    {
-        new EmeraldForItems(Items::ironIngot, PriceRange(7, 9)),
-        new EnchantedItemForEmeralds(Items::ironSword, PriceRange(9, 10))
-    };
+    static ItemListing* weaponSmithTier2[] = {new EmeraldForItems(Items::ironIngot, PriceRange(7, 9)),
+                                              new EnchantedItemForEmeralds(Items::ironSword, PriceRange(9, 10))};
     career.push_back(arrayWithLength<ItemListing*>(weaponSmithTier2, 2));
 
-    static ItemListing* weaponSmithTier3[] =
-    {
-        new EmeraldForItems(Items::diamond, PriceRange(3, 4)),
-        new EnchantedItemForEmeralds(Items::diamondSword, PriceRange(12, 15)),
-        new EnchantedItemForEmeralds(Items::diamondAxe, PriceRange(9, 12))
-    };
+    static ItemListing* weaponSmithTier3[] = {new EmeraldForItems(Items::diamond, PriceRange(3, 4)),
+                                              new EnchantedItemForEmeralds(Items::diamondSword, PriceRange(12, 15)),
+                                              new EnchantedItemForEmeralds(Items::diamondAxe, PriceRange(9, 12))};
     career.push_back(arrayWithLength<ItemListing*>(weaponSmithTier3, 3));
     profession.push_back(career);
     career.clear();
 
-    static ItemListing* toolSmithTier1[] =
-    {
-        new EmeraldForItems(Items::coal, PriceRange(16, 24)),
-        new EnchantedItemForEmeralds(Items::ironShovel, PriceRange(5, 7))
-    };
+    static ItemListing* toolSmithTier1[] = {new EmeraldForItems(Items::coal, PriceRange(16, 24)),
+                                            new EnchantedItemForEmeralds(Items::ironShovel, PriceRange(5, 7))};
     career.push_back(arrayWithLength<ItemListing*>(toolSmithTier1, 2));
 
-    static ItemListing* toolSmithTier2[] =
-    {
-        new EmeraldForItems(Items::ironIngot, PriceRange(7, 9)),
-        new EnchantedItemForEmeralds(Items::ironPickaxe, PriceRange(9, 11))
-    };
+    static ItemListing* toolSmithTier2[] = {new EmeraldForItems(Items::ironIngot, PriceRange(7, 9)),
+                                            new EnchantedItemForEmeralds(Items::ironPickaxe, PriceRange(9, 11))};
     career.push_back(arrayWithLength<ItemListing*>(toolSmithTier2, 2));
 
-    static ItemListing* toolSmithTier3[] =
-    {
-        new EmeraldForItems(Items::diamond, PriceRange(3, 4)),
-        new EnchantedItemForEmeralds(Items::diamondPickaxe, PriceRange(12, 15))
-    };
+    static ItemListing* toolSmithTier3[] = {new EmeraldForItems(Items::diamond, PriceRange(3, 4)),
+                                            new EnchantedItemForEmeralds(Items::diamondPickaxe, PriceRange(12, 15))};
     career.push_back(arrayWithLength<ItemListing*>(toolSmithTier3, 2));
     profession.push_back(career);
     career.clear();
@@ -584,40 +490,26 @@ void Villager::staticCtor()
     sTrades.push_back(profession);
     profession.clear();
 
-    static ItemListing* butcherTier1[] =
-    {
-        new EmeraldForItems(Items::porkchop, PriceRange(14, 18)),
-        new EmeraldForItems(Items::chicken, PriceRange(14, 18))
-    };
+    static ItemListing* butcherTier1[] = {new EmeraldForItems(Items::porkchop, PriceRange(14, 18)),
+                                          new EmeraldForItems(Items::chicken, PriceRange(14, 18))};
     career.push_back(arrayWithLength<ItemListing*>(butcherTier1, 2));
 
-    static ItemListing* butcherTier2[] =
-    {
-        new EmeraldForItems(Items::coal, PriceRange(16, 24)),
-        new ItemForEmeralds(Items::cookedPorkchop, PriceRange(-7, -5)),
-        new ItemForEmeralds(Items::cookedChicken, PriceRange(-8, -6))
-    };
+    static ItemListing* butcherTier2[] = {new EmeraldForItems(Items::coal, PriceRange(16, 24)),
+                                          new ItemForEmeralds(Items::cookedPorkchop, PriceRange(-7, -5)),
+                                          new ItemForEmeralds(Items::cookedChicken, PriceRange(-8, -6))};
     career.push_back(arrayWithLength<ItemListing*>(butcherTier2, 3));
     profession.push_back(career);
     career.clear();
 
-    static ItemListing* leatherworkerTier1[] =
-    {
-        new EmeraldForItems(Items::leather, PriceRange(9, 12)),
-        new ItemForEmeralds(Items::leatherLeggings, PriceRange(2, 4))
-    };
+    static ItemListing* leatherworkerTier1[] = {new EmeraldForItems(Items::leather, PriceRange(9, 12)),
+                                                new ItemForEmeralds(Items::leatherLeggings, PriceRange(2, 4))};
     career.push_back(arrayWithLength<ItemListing*>(leatherworkerTier1, 2));
 
-    static ItemListing* leatherworkerTier2[] =
-    {
-        new EnchantedItemForEmeralds(Items::leatherChestplate, PriceRange(7, 12))
-    };
+    static ItemListing* leatherworkerTier2[] = {
+        new EnchantedItemForEmeralds(Items::leatherChestplate, PriceRange(7, 12))};
     career.push_back(arrayWithLength<ItemListing*>(leatherworkerTier2, 1));
 
-    static ItemListing* leatherworkerTier3[] =
-    {
-        new ItemForEmeralds(Items::saddle, PriceRange(8, 10))
-    };
+    static ItemListing* leatherworkerTier3[] = {new ItemForEmeralds(Items::saddle, PriceRange(8, 10))};
     career.push_back(arrayWithLength<ItemListing*>(leatherworkerTier3, 1));
     profession.push_back(career);
     career.clear();
@@ -704,30 +596,45 @@ std::wstring Villager::getDisplayName()
     switch (getProfession())
     {
     case 0:
-        if (getCareer() == 1) name = L10N::GetString(IDS_VILLAGER_FARMER);
-        else if (getCareer() == 2) name = L10N::GetString(IDS_VILLAGER_FISHERMAN);
-        else if (getCareer() == 3) name = L10N::GetString(IDS_VILLAGER_SHEPHERD);
-        else if (getCareer() == 4) name = L10N::GetString(IDS_VILLAGER_FLETCHER);
-        else name = L10N::GetString(IDS_VILLAGER);
+        if (getCareer() == 1)
+            name = L10N::GetString(IDS_VILLAGER_FARMER);
+        else if (getCareer() == 2)
+            name = L10N::GetString(IDS_VILLAGER_FISHERMAN);
+        else if (getCareer() == 3)
+            name = L10N::GetString(IDS_VILLAGER_SHEPHERD);
+        else if (getCareer() == 4)
+            name = L10N::GetString(IDS_VILLAGER_FLETCHER);
+        else
+            name = L10N::GetString(IDS_VILLAGER);
         break;
     case 1:
-        if (getCareer() == 1) name = L10N::GetString(IDS_VILLAGER_LIBRARIAN);
-        else if (getCareer() == 2) name = L10N::GetString(IDS_VILLAGER_CARTOGRAPHER);
-        else name = L10N::GetString(IDS_VILLAGER);
+        if (getCareer() == 1)
+            name = L10N::GetString(IDS_VILLAGER_LIBRARIAN);
+        else if (getCareer() == 2)
+            name = L10N::GetString(IDS_VILLAGER_CARTOGRAPHER);
+        else
+            name = L10N::GetString(IDS_VILLAGER);
         break;
     case 2:
         name = L10N::GetString(IDS_VILLAGER_CLERIC);
         break;
     case 3:
-        if (getCareer() == 1) name = L10N::GetString(IDS_VILLAGER_ARMORER);
-        else if (getCareer() == 2) name = L10N::GetString(IDS_VILLAGER_WEAPONSMITH);
-        else if (getCareer() == 3) name = L10N::GetString(IDS_VILLAGER_TOOLSMITH);
-        else name = L10N::GetString(IDS_VILLAGER);
+        if (getCareer() == 1)
+            name = L10N::GetString(IDS_VILLAGER_ARMORER);
+        else if (getCareer() == 2)
+            name = L10N::GetString(IDS_VILLAGER_WEAPONSMITH);
+        else if (getCareer() == 3)
+            name = L10N::GetString(IDS_VILLAGER_TOOLSMITH);
+        else
+            name = L10N::GetString(IDS_VILLAGER);
         break;
     case 4:
-        if (getCareer() == 1) name = L10N::GetString(IDS_VILLAGER_BUTCHER);
-        else if (getCareer() == 2) name = L10N::GetString(IDS_VILLAGER_LEATHERWORKER);
-        else name = L10N::GetString(IDS_VILLAGER);
+        if (getCareer() == 1)
+            name = L10N::GetString(IDS_VILLAGER_BUTCHER);
+        else if (getCareer() == 2)
+            name = L10N::GetString(IDS_VILLAGER_LEATHERWORKER);
+        else
+            name = L10N::GetString(IDS_VILLAGER);
         break;
     case 5:
         name = L10N::GetString(IDS_VILLAGER_NITWIT);
@@ -797,7 +704,8 @@ void Villager::increaseMerchantCareer()
 
     for (unsigned int i = 0; i < listings.length; i++)
     {
-        listings.data[i]->addMerchantRecipe(boost::dynamic_pointer_cast<Merchant>(shared_from_this()), mOffers, mRandom);
+        listings.data[i]->addMerchantRecipe(boost::dynamic_pointer_cast<Merchant>(shared_from_this()), mOffers,
+                                            mRandom);
     }
 }
 
@@ -922,10 +830,10 @@ bool Villager::countFood(int multiplier)
 
         if (!item->isEmpty())
         {
-            if ((item->getItem() == Items::bread && item->getCount() >= multiplier * 3) ||
-                (item->getItem() == Items::potato && item->getCount() >= multiplier * 12) ||
-                (item->getItem() == Items::carrot && item->getCount() >= multiplier * 12) ||
-                (item->getItem() == Items::beetroot && item->getCount() >= multiplier * 12))
+            if ((item->getItem() == Items::bread && item->getCount() >= multiplier * 3)
+                || (item->getItem() == Items::potato && item->getCount() >= multiplier * 12)
+                || (item->getItem() == Items::carrot && item->getCount() >= multiplier * 12)
+                || (item->getItem() == Items::beetroot && item->getCount() >= multiplier * 12))
             {
                 return true;
             }
@@ -1139,8 +1047,8 @@ bool Villager::hurt(const DamageSource* source, float damage)
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
 
-        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()) &&
-            !boost::static_pointer_cast<Player>(attacker)->isAllowedToAttackAnimals())
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType())
+            && !boost::static_pointer_cast<Player>(attacker)->isAllowedToAttackAnimals())
         {
             return false;
         }
@@ -1149,8 +1057,8 @@ bool Villager::hurt(const DamageSource* source, float damage)
         {
             boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
 
-            if (arrow->mOwner != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, arrow->mOwner->GetType()) &&
-                !boost::static_pointer_cast<Player>(arrow->mOwner)->isAllowedToAttackAnimals())
+            if (arrow->mOwner != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, arrow->mOwner->GetType())
+                && !boost::static_pointer_cast<Player>(arrow->mOwner)->isAllowedToAttackAnimals())
             {
                 return false;
             }
@@ -1167,16 +1075,16 @@ unsigned int Villager::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     switch (itemId)
     {
     case ItemId::NAME_TAG:
+    {
+        if (!holder.m_pItemInstance->hasCustomHoverName())
         {
-            if (!holder.m_pItemInstance->hasCustomHoverName())
-            {
-                return IDS_NONE;
-            }
-
-            int differs = !hasCustomName() || holder.m_pItemInstance->getHoverName().compare(getCustomName()) != 0;
-
-            return differs ? IDS_TOOLTIPS_NAME : IDS_NONE;
+            return IDS_NONE;
         }
+
+        int differs = !hasCustomName() || holder.m_pItemInstance->getHoverName().compare(getCustomName()) != 0;
+
+        return differs ? IDS_TOOLTIPS_NAME : IDS_NONE;
+    }
     case ItemId::SPAWN_EGG:
         if (SpawnEggItem::fjGetType(holder.m_pItemInstance) == EntityType::VILLAGER)
         {
@@ -1385,8 +1293,8 @@ bool Villager::isWillingToBreed(bool consumeFood)
                 {
                     mInventory->removeItem(slot, 3);
                 }
-                else if ((item->getItem() == Items::potato || item->getItem() == Items::carrot) &&
-                         item->getCount() >= 12)
+                else if ((item->getItem() == Items::potato || item->getItem() == Items::carrot)
+                         && item->getCount() >= 12)
                 {
                     mInventory->removeItem(slot, 12);
                 }
@@ -1436,10 +1344,8 @@ void Villager::addParticlesAroundSelf(const ParticleType* particle)
         float xo = mRandom->nextFloat();
         float yo = mRandom->nextFloat();
         float zo = mRandom->nextFloat();
-        mLevel->addParticle(particle,
-                            mX + (double)(xo * mBbWidth * 2.0f) - (double)mBbWidth,
-                            mY + 1.0 + (double)(yo * mBbHeight),
-                            mZ + (double)(zo * mBbWidth * 2.0f) - (double)mBbWidth,
+        mLevel->addParticle(particle, mX + (double)(xo * mBbWidth * 2.0f) - (double)mBbWidth,
+                            mY + 1.0 + (double)(yo * mBbHeight), mZ + (double)(zo * mBbWidth * 2.0f) - (double)mBbWidth,
                             xd, yd, zd, params);
     }
 }
@@ -1499,9 +1405,8 @@ void Villager::thunderHit(const LightningBolt*)
 
 bool Villager::wantsItem(Item* item)
 {
-    return item == Items::bread || item == Items::potato || item == Items::carrot ||
-           item == Items::wheat || item == Items::wheatSeeds || item == Items::beetroot ||
-           item == Items::beetrootSeeds;
+    return item == Items::bread || item == Items::potato || item == Items::carrot || item == Items::wheat
+           || item == Items::wheatSeeds || item == Items::beetroot || item == Items::beetrootSeeds;
 }
 
 void Villager::pickUpItem(boost::shared_ptr<ItemEntity> itemEntity)
@@ -1529,9 +1434,9 @@ bool Villager::hasFarmSeeds()
     {
         not_null_ptr<ItemInstance> item = mInventory->getItem(slot);
 
-        if (!item->isEmpty() &&
-            (item->getItem() == Items::wheatSeeds || item->getItem() == Items::potato ||
-             item->getItem() == Items::carrot || item->getItem() == Items::beetrootSeeds))
+        if (!item->isEmpty()
+            && (item->getItem() == Items::wheatSeeds || item->getItem() == Items::potato
+                || item->getItem() == Items::carrot || item->getItem() == Items::beetrootSeeds))
         {
             return true;
         }

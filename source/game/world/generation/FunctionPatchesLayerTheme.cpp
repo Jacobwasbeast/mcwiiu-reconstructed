@@ -13,8 +13,8 @@
 #include "game/world/block/WoolCarpetBlock.hpp"
 
 FunctionPatchesLayerTheme::FunctionPatchesLayerTheme(unsigned int seed, double noiseScale, BlockFunction blockFunction)
-    : RandomPatchesLayerTheme(seed, noiseScale)
-    , mBlockFunction(blockFunction)
+    : RandomPatchesLayerTheme(seed, noiseScale),
+      mBlockFunction(blockFunction)
 {
 }
 
@@ -27,9 +27,8 @@ const BlockState* FunctionPatchesLayerTheme::GRASS_PATCHES(Random&, float noise,
 
     if (heightAboveSurface == ABOVE_SURFACE(1) || heightAboveSurface == ABOVE_SURFACE(2))
     {
-        DoublePlantBlock::Half* plantHalf = heightAboveSurface == ABOVE_SURFACE(2)
-            ? DoublePlantBlock::UPPER_HALF
-            : DoublePlantBlock::LOWER_HALF;
+        DoublePlantBlock::Half* plantHalf = heightAboveSurface == ABOVE_SURFACE(2) ? DoublePlantBlock::UPPER_HALF
+                                                                                   : DoublePlantBlock::LOWER_HALF;
         return Blocks::double_plant->defaultBlockState()
             ->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::GRASS)
             ->setValue(DoublePlantBlock::HALF, plantHalf);
@@ -125,7 +124,8 @@ const BlockState* FunctionPatchesLayerTheme::CARPET_TRAP(Random&, float noise, i
     return NULL;
 }
 
-const BlockState* FunctionPatchesLayerTheme::BlockAt(Random& random, float noise, int heightAboveSurface, bool isAir) const
+const BlockState* FunctionPatchesLayerTheme::BlockAt(Random& random, float noise, int heightAboveSurface,
+                                                     bool isAir) const
 {
     return mBlockFunction(random, noise, heightAboveSurface, isAir);
 }

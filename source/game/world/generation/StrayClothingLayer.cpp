@@ -18,8 +18,8 @@
 static ResourceLocation STRAY_CLOTHING_LOCATION(TN_MOB_SKELETON_STRAY_OVERLAY);
 
 StrayClothingLayer::StrayClothingLayer(LivingEntityRenderer* renderer)
-    : mModel(new SkeletonModel(0.25f, true))
-    , mOriginalModel(NULL)
+    : mModel(new SkeletonModel(0.25f, true)),
+      mOriginalModel(NULL)
 {
     mRenderer = renderer;
 }
@@ -28,10 +28,8 @@ StrayClothingLayer::~StrayClothingLayer()
 {
 }
 
-void StrayClothingLayer::render(boost::shared_ptr<LivingEntity>& entity,
-                                float limbSwing, float limbSwingAmount,
-                                float partialTicks, float ageInTicks,
-                                float netHeadYaw, float headPitch, float scale,
+void StrayClothingLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                                 bool bUseDisplayList)
 {
     mModel->copyPropertiesFrom(mRenderer->getModel());
@@ -40,8 +38,7 @@ void StrayClothingLayer::render(boost::shared_ptr<LivingEntity>& entity,
     mRenderer->bindTexture(&STRAY_CLOTHING_LOCATION);
 
     boost::shared_ptr<Entity> renderEntity = entity;
-    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                   headPitch, scale, bUseDisplayList);
+    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
 }
 
 bool StrayClothingLayer::colorsOnDamage()

@@ -4,11 +4,12 @@
 
 #include "game/util/Random.hpp"
 
-BasicPatchesLayerTheme::BasicPatchesLayerTheme(unsigned int seed, double noiseScale, int depth, const std::vector<const BlockState*>& blocks, float noiseThreshold)
-    : RandomPatchesLayerTheme(seed, noiseScale)
-    , mNoiseThreshold(noiseThreshold)
-    , mDepth(depth)
-    , mBlocks(blocks)
+BasicPatchesLayerTheme::BasicPatchesLayerTheme(unsigned int seed, double noiseScale, int depth,
+                                               const std::vector<const BlockState*>& blocks, float noiseThreshold)
+    : RandomPatchesLayerTheme(seed, noiseScale),
+      mNoiseThreshold(noiseThreshold),
+      mDepth(depth),
+      mBlocks(blocks)
 {
 }
 

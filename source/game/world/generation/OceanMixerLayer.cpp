@@ -3,7 +3,8 @@
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-OceanMixerLayer::OceanMixerLayer(long long seed, boost::shared_ptr<Layer> landLayer, boost::shared_ptr<Layer> oceanLayer)
+OceanMixerLayer::OceanMixerLayer(long long seed, boost::shared_ptr<Layer> landLayer,
+                                 boost::shared_ptr<Layer> oceanLayer)
     : Layer(seed),
       landLayer(landLayer),
       oceanLayer(oceanLayer)

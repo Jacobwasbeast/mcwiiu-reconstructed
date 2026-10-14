@@ -17,8 +17,7 @@
 
 static ResourceLocation WITHER_ARMOR_LOCATION(TN_MOB_WITHER_WITHER_ARMOR);
 
-WitherArmorLayer::WitherArmorLayer(WitherBossRenderer* renderer)
-    : mRenderer(renderer)
+WitherArmorLayer::WitherArmorLayer(WitherBossRenderer* renderer) : mRenderer(renderer)
 {
     mModel = new WitherBossModel(0.5f);
     mOriginalModel = mModel;
@@ -28,9 +27,8 @@ WitherArmorLayer::~WitherArmorLayer()
 {
 }
 
-void WitherArmorLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                              float limbSwingAmount, float partialTicks, float ageInTicks,
-                              float netHeadYaw, float headPitch, float scale,
+void WitherArmorLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                              float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                               bool bUseDisplayList)
 {
     boost::shared_ptr<WitherBoss> wither = boost::static_pointer_cast<WitherBoss>(entity);
@@ -58,8 +56,7 @@ void WitherArmorLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
 
     mModel->prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
     mModel->copyPropertiesFrom(mRenderer->getModel());
-    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                   headPitch, scale, bUseDisplayList);
+    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
 
     GlStateManager::matrixMode(2);
     GlStateManager::loadIdentity();

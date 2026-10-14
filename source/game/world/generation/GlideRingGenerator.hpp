@@ -52,7 +52,8 @@ private:
     static int GetFirstMod(eGlideRingSize size, eGlideRingSection section, int index);
     static int GetSecondMod(eGlideRingSize size, eGlideRingSection section, int index);
 
-    static void GetSectionPositions(std::vector<BlockPos>& positions, const BlockPos& centre, eGlideRingSize size, eGlideRingSection section, eGlideRingOrientation orientation);
+    static void GetSectionPositions(std::vector<BlockPos>& positions, const BlockPos& centre, eGlideRingSize size,
+                                    eGlideRingSection section, eGlideRingOrientation orientation);
 };
 
 #endif

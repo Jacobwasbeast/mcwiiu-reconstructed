@@ -4,8 +4,7 @@
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/SkeletonModel.hpp"
 
-SkeletonArmorLayer::SkeletonArmorLayer(LivingEntityRenderer* renderer)
-    : HumanoidArmorLayer(renderer)
+SkeletonArmorLayer::SkeletonArmorLayer(LivingEntityRenderer* renderer) : HumanoidArmorLayer(renderer)
 {
     createArmorModels();
 }

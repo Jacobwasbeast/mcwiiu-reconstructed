@@ -9,8 +9,7 @@
 #include "game/world/block/Material.hpp"
 
 MegaTreeFeature::MegaTreeFeature(bool doBlockNotify, int baseHeight, int extraRandomHeight,
-                                 const BlockState* trunkState,
-                                 const BlockState* leafState)
+                                 const BlockState* trunkState, const BlockState* leafState)
     : AbstractTreeFeature(doBlockNotify, baseHeight, trunkState, leafState, false),
       mExtraRandomHeight(extraRandomHeight)
 {
@@ -49,8 +48,7 @@ bool MegaTreeFeature::checkIsFree(Level* level, const BlockPos& pos, int height)
         {
             for (int z = -radius; z <= radius && free; ++z)
             {
-                if (pos.y + y < 0 || pos.y + y >= 256
-                    || !isFree(level->getBlockState(pos.offset(x, y, z))->getBlock()))
+                if (pos.y + y < 0 || pos.y + y >= 256 || !isFree(level->getBlockState(pos.offset(x, y, z))->getBlock()))
                 {
                     free = false;
                 }
@@ -92,8 +90,8 @@ void MegaTreeFeature::placeDoubleTrunkLeaves(Level* level, const BlockPos& pos, 
         for (int z = -radius; z <= radius + 1; ++z)
         {
             int z1 = z - 1;
-            if (xx + z * z <= radiusSquared || x1x1 + z1 * z1 <= radiusSquared
-                || xx + z1 * z1 <= radiusSquared || x1x1 + z * z <= radiusSquared)
+            if (xx + z * z <= radiusSquared || x1x1 + z1 * z1 <= radiusSquared || xx + z1 * z1 <= radiusSquared
+                || x1x1 + z * z <= radiusSquared)
             {
                 const BlockPos& leafPos = pos.offset(x, 0, z);
                 Material* material = level->getBlockState(leafPos)->getMaterial();

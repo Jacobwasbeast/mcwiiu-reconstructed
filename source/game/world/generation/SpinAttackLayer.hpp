@@ -16,9 +16,8 @@ public:
     SpinAttackLayer(LivingEntityRenderer* renderer);
     virtual ~SpinAttackLayer();
 
-    virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                        float limbSwingAmount, float partialTicks, float ageInTicks,
-                        float netHeadYaw, float headPitch, float scale,
+    virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                        float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                         bool bUseDisplayList);
     virtual bool colorsOnDamage();
 

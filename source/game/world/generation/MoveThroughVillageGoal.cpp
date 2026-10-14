@@ -41,8 +41,7 @@ void MoveThroughVillageGoal::updateVisited()
 
 bool MoveThroughVillageGoal::hasVisited(boost::shared_ptr<DoorInfo> door)
 {
-    for (std::vector<boost::weak_ptr<DoorInfo> >::iterator it = mVisited.begin();
-         it != mVisited.end();)
+    for (std::vector<boost::weak_ptr<DoorInfo> >::iterator it = mVisited.begin(); it != mVisited.end();)
     {
         boost::shared_ptr<DoorInfo> visited = it->lock();
         if (visited == NULL)
@@ -64,14 +63,14 @@ boost::shared_ptr<DoorInfo> MoveThroughVillageGoal::getNextDoorInfo(boost::share
     boost::shared_ptr<DoorInfo> result;
     int closestDistance = INT_MAX;
     std::vector<boost::shared_ptr<DoorInfo> >* doors = village->getDoorInfos();
-    for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = doors->begin();
-         it != doors->end(); it++)
+    for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = doors->begin(); it != doors->end(); it++)
     {
         boost::shared_ptr<DoorInfo> door = *it;
         int distance = door->distanceToSqr(Mth::floor(mMob->mX), Mth::floor(mMob->mY), Mth::floor(mMob->mZ));
         if (distance < closestDistance)
         {
-            if (hasVisited(door)) continue;
+            if (hasVisited(door))
+                continue;
             closestDistance = distance;
             result = door;
         }
@@ -85,8 +84,8 @@ bool MoveThroughVillageGoal::canUse()
     if (mOnlyAtNight && mMob->mLevel->isDay())
         return false;
 
-    boost::shared_ptr<Village> village =
-        mMob->mLevel->getVillages()->getClosestVillage(BlockPos(mMob->shared_from_this()), 0);
+    boost::shared_ptr<Village> village = mMob->mLevel->getVillages()->getClosestVillage(
+        BlockPos(mMob->shared_from_this()), 0);
     if (!village)
         return false;
 
@@ -108,9 +107,7 @@ bool MoveThroughVillageGoal::canUse()
 
     Vec3* position = RandomPos::getPosTowards(
         boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 10, 7,
-        Vec3::newTemp((double)doorInfo->getPos().x,
-                      (double)doorInfo->getPos().y,
-                      (double)doorInfo->getPos().z));
+        Vec3::newTemp((double)doorInfo->getPos().x, (double)doorInfo->getPos().y, (double)doorInfo->getPos().z));
     if (position == NULL)
         return false;
 
@@ -146,8 +143,6 @@ void MoveThroughVillageGoal::stop()
     if (!doorInfo)
         return;
 
-    if (mMob->getNavigation()->isDone() ||
-        mMob->distanceToSqr(doorInfo->getPos()) < 16.0)
+    if (mMob->getNavigation()->isDone() || mMob->distanceToSqr(doorInfo->getPos()) < 16.0)
         mVisited.push_back(mDoorInfo);
 }
-

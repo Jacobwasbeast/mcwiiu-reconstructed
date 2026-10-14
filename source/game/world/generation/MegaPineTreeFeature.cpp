@@ -28,8 +28,8 @@ void MegaPineTreeFeature::staticCtor()
         OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
     megaPineLeafState = Blocks::leaves->defaultBlockState()->setValue<PlanksBlock::Variant*>(
         OldLeafBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
-    megaPinePodzolState = Blocks::dirt->defaultBlockState()->setValue<DirtBlock::Variant*>(
-        DirtBlock::VARIANT, DirtBlock::Variant::PODZOL);
+    megaPinePodzolState = Blocks::dirt->defaultBlockState()->setValue<DirtBlock::Variant*>(DirtBlock::VARIANT,
+                                                                                           DirtBlock::Variant::PODZOL);
 }
 
 MegaPineTreeFeature::MegaPineTreeFeature(bool doBlockNotify, bool useHeight)
@@ -42,8 +42,7 @@ MegaPineTreeFeature::~MegaPineTreeFeature()
 {
 }
 
-void MegaPineTreeFeature::createCrown(Level* level, int x, int z, int y,
-                                      int radius, Random& random)
+void MegaPineTreeFeature::createCrown(Level* level, int x, int z, int y, int radius, Random& random)
 {
     int crownHeight = random.nextInt(5) + (mUseHeight ? mBaseHeight : 3);
     int previousRadius = 0;
@@ -53,14 +52,13 @@ void MegaPineTreeFeature::createCrown(Level* level, int x, int z, int y,
         int distance = y - layer;
         int layerRadius = radius + Mth::floor((float)distance / (float)crownHeight * 3.5f);
         placeDoubleTrunkLeaves(level, BlockPos(x, layer, z),
-                               layerRadius + (distance > 0 && layerRadius == previousRadius
-                                              && (layer & 1) == 0 ? 1 : 0));
+                               layerRadius
+                                   + (distance > 0 && layerRadius == previousRadius && (layer & 1) == 0 ? 1 : 0));
         previousRadius = layerRadius;
     }
 }
 
-bool MegaPineTreeFeature::place(Level* level, Random& random,
-                                const BlockPos& origin)
+bool MegaPineTreeFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     int height = calcTreeHeigth(random);
     if (!prepareTree(level, random, origin, height))
@@ -137,8 +135,7 @@ void MegaPineTreeFeature::placePodzolCircle(Level* level, const BlockPos& pos)
     }
 }
 
-void MegaPineTreeFeature::postPlaceTree(Level* level, Random& random,
-                                        const BlockPos& pos)
+void MegaPineTreeFeature::postPlaceTree(Level* level, Random& random, const BlockPos& pos)
 {
     PIXBeginNamedEvent(0.0f, "MegaPineTreeFeature::postPlaceTree");
 

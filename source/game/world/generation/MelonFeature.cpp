@@ -7,8 +7,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
-MelonFeature::MelonFeature()
-    : Feature(false)
+MelonFeature::MelonFeature() : Feature(false)
 {
 }
 
@@ -20,8 +19,7 @@ bool MelonFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     for (int i = 0; i < 64; ++i)
     {
-        BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                          random.nextInt(4) - random.nextInt(4),
+        BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8), random.nextInt(4) - random.nextInt(4),
                                           random.nextInt(8) - random.nextInt(8));
         if (Blocks::melon_block->mayPlace(level, position)
             && level->getBlockState(position.below())->getBlock() == Blocks::grass)

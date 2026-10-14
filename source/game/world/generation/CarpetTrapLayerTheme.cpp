@@ -6,12 +6,13 @@
 #include "game/world/block/Blocks.hpp"
 
 CarpetTrapLayerTheme::CarpetTrapLayerTheme(unsigned int uSeed, double dNoiseScale, int iCarpetColour)
-    : RandomPatchesLayerTheme(uSeed, dNoiseScale)
-    , m_iCarpetColour(iCarpetColour)
+    : RandomPatchesLayerTheme(uSeed, dNoiseScale),
+      m_iCarpetColour(iCarpetColour)
 {
 }
 
-const BlockState* CarpetTrapLayerTheme::BlockAt(Random& random, float fNoise, int iHeightAboveSurface, bool bIsAir) const
+const BlockState* CarpetTrapLayerTheme::BlockAt(Random& random, float fNoise, int iHeightAboveSurface,
+                                                bool bIsAir) const
 {
     if (fNoise <= 0.11f)
     {

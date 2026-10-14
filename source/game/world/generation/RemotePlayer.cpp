@@ -7,8 +7,7 @@
 #include "game/core/Mth.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-RemotePlayer::RemotePlayer(Level* level, const std::wstring& name)
-    : AbstractClientPlayer(level, name)
+RemotePlayer::RemotePlayer(Level* level, const std::wstring& name) : AbstractClientPlayer(level, name)
 {
     fjDerivedCtorCalls();
     mField0x880 = 0.0f;
@@ -26,9 +25,7 @@ bool RemotePlayer::hasPermission(EGameCommand)
 
 BlockPos RemotePlayer::getCommandSenderBlockPosition()
 {
-    return BlockPos((int)std::floor(mX + 0.5),
-                    (int)std::floor(mY + 0.5),
-                    (int)std::floor(mZ + 0.5));
+    return BlockPos((int)std::floor(mX + 0.5), (int)std::floor(mY + 0.5), (int)std::floor(mZ + 0.5));
 }
 
 bool RemotePlayer::hurt(const DamageSource*, float)

@@ -8,8 +8,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 
-IcePatchFeature::IcePatchFeature(int radius)
-    : Feature(false), mBlock(Blocks::packed_ice), mRadius(radius)
+IcePatchFeature::IcePatchFeature(int radius) : Feature(false), mBlock(Blocks::packed_ice), mRadius(radius)
 {
 }
 
@@ -36,8 +35,7 @@ bool IcePatchFeature::place(Level* level, Random& random, const BlockPos& origin
     {
         for (int z = position.z - radius; z <= position.z + radius; ++z)
         {
-            if ((x - position.x) * (x - position.x) + (z - position.z) * (z - position.z)
-                > radius * radius)
+            if ((x - position.x) * (x - position.x) + (z - position.z) * (z - position.z) > radius * radius)
             {
                 continue;
             }

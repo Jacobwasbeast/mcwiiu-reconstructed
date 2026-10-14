@@ -46,19 +46,22 @@
 #include "game/world/generation/StructureManager.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
 
-ScatteredFeaturePieces::JunglePyramidPiece::MossStoneSelector* ScatteredFeaturePieces::JunglePyramidPiece::mStoneSelector = NULL;
+ScatteredFeaturePieces::JunglePyramidPiece::MossStoneSelector*
+    ScatteredFeaturePieces::JunglePyramidPiece::mStoneSelector = NULL;
 
 void ScatteredFeaturePieces::loadStatic()
 {
-    StructureFeatureIO::setPieceId(eStructurePiece_DesertPyramidPiece, &ScatteredFeaturePieces::DesertPyramidPiece::Create, L"TeDP");
-    StructureFeatureIO::setPieceId(eStructurePiece_JunglePyramidPiece, &ScatteredFeaturePieces::JunglePyramidPiece::Create, L"TeJP");
-    StructureFeatureIO::setPieceId(eStructurePiece_SwamplandHut, &ScatteredFeaturePieces::SwamplandHut::Create, L"TeSH");
+    StructureFeatureIO::setPieceId(eStructurePiece_DesertPyramidPiece,
+                                   &ScatteredFeaturePieces::DesertPyramidPiece::Create, L"TeDP");
+    StructureFeatureIO::setPieceId(eStructurePiece_JunglePyramidPiece,
+                                   &ScatteredFeaturePieces::JunglePyramidPiece::Create, L"TeJP");
+    StructureFeatureIO::setPieceId(eStructurePiece_SwamplandHut, &ScatteredFeaturePieces::SwamplandHut::Create,
+                                   L"TeSH");
     StructureFeatureIO::setPieceId(eStructurePiece_Igloo, &ScatteredFeaturePieces::Igloo::Create, L"Iglu");
     StructureFeatureIO::setPieceId(eStructurePiece_OceanRuin, &OceanRuin::Create, L"OcRu");
 }
 
-ScatteredFeaturePieces::ScatteredFeaturePiece::ScatteredFeaturePiece()
-    : StructurePiece(), mPlaceSettings()
+ScatteredFeaturePieces::ScatteredFeaturePiece::ScatteredFeaturePiece() : StructurePiece(), mPlaceSettings()
 {
     mWidth = 0;
     mHeight = 0;
@@ -71,8 +74,9 @@ ScatteredFeaturePieces::ScatteredFeaturePiece::ScatteredFeaturePiece()
 }
 
 ScatteredFeaturePieces::ScatteredFeaturePiece::ScatteredFeaturePiece(Level* level, Random& random, int x, int y, int z,
-    int width, int height, int depth)
-    : StructurePiece(0), mPlaceSettings()
+                                                                     int width, int height, int depth)
+    : StructurePiece(0),
+      mPlaceSettings()
 {
     mWidth = width;
     mHeight = height;
@@ -132,7 +136,8 @@ void ScatteredFeaturePieces::ScatteredFeaturePiece::addAdditionalSaveData(DataOu
     mPlaceSettings.write(output);
 }
 
-void ScatteredFeaturePieces::ScatteredFeaturePiece::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
+void ScatteredFeaturePieces::ScatteredFeaturePiece::readAdditionalSaveData(DataInputStream* input,
+                                                                           StructureManager* structureManager)
 {
     mWidth = input->readInt();
     mHeight = input->readInt();
@@ -148,8 +153,8 @@ void ScatteredFeaturePieces::ScatteredFeaturePiece::readAdditionalSaveData(DataI
     mPlaceSettings.read(input);
 }
 
-bool ScatteredFeaturePieces::ScatteredFeaturePiece::updateAverageGroundHeight(Level* level, BoundingBox* box, int offset,
-    bool useSpawnHeight)
+bool ScatteredFeaturePieces::ScatteredFeaturePiece::updateAverageGroundHeight(Level* level, BoundingBox* box,
+                                                                              int offset, bool useSpawnHeight)
 {
     if (mHeightPosition >= 0)
         return true;
@@ -191,8 +196,7 @@ bool ScatteredFeaturePieces::ScatteredFeaturePiece::updateAverageGroundHeight(Le
     return true;
 }
 
-ScatteredFeaturePieces::DesertPyramidPiece::DesertPyramidPiece()
-    : ScatteredFeaturePiece()
+ScatteredFeaturePieces::DesertPyramidPiece::DesertPyramidPiece() : ScatteredFeaturePiece()
 {
     mHasPlacedChest[0] = false;
     mHasPlacedChest[1] = false;
@@ -218,7 +222,8 @@ void ScatteredFeaturePieces::DesertPyramidPiece::addAdditionalSaveData(DataOutpu
     output->writeBoolean(mHasPlacedChest[3]);
 }
 
-void ScatteredFeaturePieces::DesertPyramidPiece::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
+void ScatteredFeaturePieces::DesertPyramidPiece::readAdditionalSaveData(DataInputStream* input,
+                                                                        StructureManager* structureManager)
 {
     ScatteredFeaturePiece::readAdditionalSaveData(input, structureManager);
     if (StructureFeatureIO::getVersion() == 1)
@@ -243,37 +248,48 @@ bool ScatteredFeaturePieces::DesertPyramidPiece::postProcess(Level* level, Rando
     while (getWorldY(y) < 14)
         ++y;
 
-    generateBox(level, box, 0, y - 4, 0, mWidth - 1, y, mDepth - 1, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, 0, y - 4, 0, mWidth - 1, y, mDepth - 1, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
     for (int layer = 1; layer <= 9; ++layer)
     {
         generateBox(level, box, layer, layer + y, layer, mWidth - 1 - layer, layer + y, mDepth - 1 - layer,
-            Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
+                    Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
         generateBox(level, box, layer + 1, layer + y, layer + 1, mWidth - 2 - layer, layer + y, mDepth - 2 - layer,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+                    Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
     }
     fillBoxDown(level, Blocks::sandstone->defaultBlockState(), 0, 0, mWidth, mDepth, y - 5, box);
 
-    const BlockState* stairsNorth = Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH);
-    const BlockState* stairsSouth = Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH);
-    const BlockState* stairsEast = Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST);
-    const BlockState* stairsWest = Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST);
+    const BlockState* stairsNorth = Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                            Direction::NORTH);
+    const BlockState* stairsSouth = Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                            Direction::SOUTH);
+    const BlockState* stairsEast = Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                           Direction::EAST);
+    const BlockState* stairsWest = Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                           Direction::WEST);
     int orange = ~DyeColor::ORANGE->getItemData() & 0xf;
     int blue = ~DyeColor::BLUE->getItemData() & 0xf;
 
-    generateBox(level, box, 0, y, 0, 4, y + 9, 4, Blocks::sandstone->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 1, y + 10, 1, 3, y + 10, 3, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, 0, y, 0, 4, y + 9, 4, Blocks::sandstone->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 1, y + 10, 1, 3, y + 10, 3, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
     placeBlock(level, stairsNorth, 2, y + 10, 0, box);
     placeBlock(level, stairsSouth, 2, y + 10, 4, box);
     placeBlock(level, stairsEast, 0, y + 10, 2, box);
     placeBlock(level, stairsWest, 4, y + 10, 2, box);
-    generateBox(level, box, mWidth - 5, y, 0, mWidth - 1, y + 9, 4, Blocks::sandstone->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, mWidth - 4, y + 10, 1, mWidth - 2, y + 10, 3, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, mWidth - 5, y, 0, mWidth - 1, y + 9, 4, Blocks::sandstone->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, mWidth - 4, y + 10, 1, mWidth - 2, y + 10, 3, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
     placeBlock(level, stairsNorth, mWidth - 3, y + 10, 0, box);
     placeBlock(level, stairsSouth, mWidth - 3, y + 10, 4, box);
     placeBlock(level, stairsEast, mWidth - 5, y + 10, 2, box);
     placeBlock(level, stairsWest, mWidth - 1, y + 10, 2, box);
-    generateBox(level, box, 8, y, 0, 12, y + 4, 4, Blocks::sandstone->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 9, y + 1, 0, 11, y + 3, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 8, y, 0, 12, y + 4, 4, Blocks::sandstone->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 9, y + 1, 0, 11, y + 3, 4, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
     placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), 9, y + 1, 1, box);
     placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), 9, y + 2, 1, box);
     placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), 9, y + 3, 1, box);
@@ -281,65 +297,86 @@ bool ScatteredFeaturePieces::DesertPyramidPiece::postProcess(Level* level, Rando
     placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), 11, y + 3, 1, box);
     placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), 11, y + 2, 1, box);
     placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), 11, y + 1, 1, box);
-    generateBox(level, box, 4, y + 1, 1, 8, y + 3, 3, Blocks::sandstone->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 4, y + 1, 2, 8, y + 2, 2, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 12, y + 1, 1, 16, y + 3, 3, Blocks::sandstone->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 12, y + 1, 2, 16, y + 2, 2, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 5, y + 4, 5, mWidth - 6, y + 4, mDepth - 6, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
-    generateBox(level, box, 9, y + 4, 9, 11, y + 4, 11, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 4, y + 1, 1, 8, y + 3, 3, Blocks::sandstone->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 4, y + 1, 2, 8, y + 2, 2, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 12, y + 1, 1, 16, y + 3, 3, Blocks::sandstone->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 12, y + 1, 2, 16, y + 2, 2, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 5, y + 4, 5, mWidth - 6, y + 4, mDepth - 6, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, 9, y + 4, 9, 11, y + 4, 11, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
     generateBox(level, box, 8, y + 1, 8, 8, y + 3, 8,
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
     generateBox(level, box, 12, y + 1, 8, 12, y + 3, 8,
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
     generateBox(level, box, 8, y + 1, 12, 8, y + 3, 12,
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
     generateBox(level, box, 12, y + 1, 12, 12, y + 3, 12,
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
-    generateBox(level, box, 1, y + 1, 5, 4, y + 4, 11, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
-    generateBox(level, box, mWidth - 5, y + 1, 5, mWidth - 2, y + 4, 11, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
-    generateBox(level, box, 6, y + 7, 9, 6, y + 7, 11, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
-    generateBox(level, box, mWidth - 7, y + 7, 9, mWidth - 7, y + 7, 11, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
+    generateBox(level, box, 1, y + 1, 5, 4, y + 4, 11, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, mWidth - 5, y + 1, 5, mWidth - 2, y + 4, 11, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, 6, y + 7, 9, 6, y + 7, 11, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, mWidth - 7, y + 7, 9, mWidth - 7, y + 7, 11, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
     generateBox(level, box, 5, y + 5, 9, 5, y + 7, 11,
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
     generateBox(level, box, mWidth - 6, y + 5, 9, mWidth - 6, y + 7, 11,
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
     placeBlock(level, Blocks::air->defaultBlockState(), 5, y + 5, 10, box);
     placeBlock(level, Blocks::air->defaultBlockState(), 5, y + 6, 10, box);
     placeBlock(level, Blocks::air->defaultBlockState(), 6, y + 6, 10, box);
     placeBlock(level, Blocks::air->defaultBlockState(), mWidth - 6, y + 5, 10, box);
     placeBlock(level, Blocks::air->defaultBlockState(), mWidth - 6, y + 6, 10, box);
     placeBlock(level, Blocks::air->defaultBlockState(), mWidth - 7, y + 6, 10, box);
-    generateBox(level, box, 2, y + 4, 4, 2, y + 6, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, mWidth - 3, y + 4, 4, mWidth - 3, y + 6, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 2, y + 4, 4, 2, y + 6, 4, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, mWidth - 3, y + 4, 4, mWidth - 3, y + 6, 4, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
     placeBlock(level, stairsNorth, 2, y + 4, 5, box);
     placeBlock(level, stairsNorth, 2, y + 3, 4, box);
     placeBlock(level, stairsNorth, mWidth - 3, y + 4, 5, box);
     placeBlock(level, stairsNorth, mWidth - 3, y + 3, 4, box);
-    generateBox(level, box, 1, y + 1, 3, 2, y + 2, 3, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
-    generateBox(level, box, mWidth - 3, y + 1, 3, mWidth - 2, y + 2, 3, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, 1, y + 1, 3, 2, y + 2, 3, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, mWidth - 3, y + 1, 3, mWidth - 2, y + 2, 3, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
     placeBlock(level, Blocks::sandstone->defaultBlockState(), 1, y + 1, 2, box);
     placeBlock(level, Blocks::sandstone->defaultBlockState(), mWidth - 2, y + 1, 2, box);
     placeBlock(level, Blocks::stone_slab->getBlockState(StoneSlabBlock::Variant::SAND->getData()), 1, y + 2, 2, box);
-    placeBlock(level, Blocks::stone_slab->getBlockState(StoneSlabBlock::Variant::SAND->getData()), mWidth - 2, y + 2, 2, box);
+    placeBlock(level, Blocks::stone_slab->getBlockState(StoneSlabBlock::Variant::SAND->getData()), mWidth - 2, y + 2, 2,
+               box);
     placeBlock(level, stairsWest, 2, y + 1, 2, box);
     placeBlock(level, stairsEast, mWidth - 3, y + 1, 2, box);
-    generateBox(level, box, 4, y + 3, 5, 4, y + 3, 18, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
-    generateBox(level, box, mWidth - 5, y + 3, 5, mWidth - 5, y + 3, 17, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
-    generateBox(level, box, 3, y + 1, 5, 4, y + 2, 16, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, mWidth - 6, y + 1, 5, mWidth - 5, y + 2, 16, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 4, y + 3, 5, 4, y + 3, 18, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, mWidth - 5, y + 3, 5, mWidth - 5, y + 3, 17, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, 3, y + 1, 5, 4, y + 2, 16, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, mWidth - 6, y + 1, 5, mWidth - 5, y + 2, 16, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
 
     for (int z = 5; z <= 17; z += 2)
     {
         placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), 4, y + 1, z, box);
         placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::CHISELED->getData()), 4, y + 2, z, box);
-        placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), mWidth - 5, y + 1, z, box);
-        placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::CHISELED->getData()), mWidth - 5, y + 2, z, box);
+        placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), mWidth - 5, y + 1, z,
+                   box);
+        placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::CHISELED->getData()), mWidth - 5, y + 2, z,
+                   box);
     }
 
     placeBlock(level, Blocks::stained_hardened_clay->getBlockState(orange), 10, y, 7, box);
@@ -407,26 +444,29 @@ bool ScatteredFeaturePieces::DesertPyramidPiece::postProcess(Level* level, Rando
     }
 
     generateBox(level, box, 8, y + 4, 0, 12, y + 6, 0,
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
     placeBlock(level, Blocks::air->defaultBlockState(), 8, y + 6, 0, box);
     placeBlock(level, Blocks::air->defaultBlockState(), 12, y + 6, 0, box);
     placeBlock(level, Blocks::stained_hardened_clay->getBlockState(orange), 9, y + 5, 0, box);
     placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::CHISELED->getData()), 10, y + 5, 0, box);
     placeBlock(level, Blocks::stained_hardened_clay->getBlockState(orange), 11, y + 5, 0, box);
     generateBox(level, box, 8, y - 14, 8, 12, y - 11, 12,
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
     generateBox(level, box, 8, y - 10, 8, 12, y - 10, 12,
-        Blocks::sandstone->getBlockState(SandStoneBlock::CHISELED->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::CHISELED->getData()), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::CHISELED->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::CHISELED->getData()), false);
     generateBox(level, box, 8, y - 9, 8, 12, y - 9, 12,
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
-        Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
-    generateBox(level, box, 8, y - 8, 8, 12, y - 1, 12, Blocks::sandstone->defaultBlockState(), Blocks::sandstone->defaultBlockState(), false);
-    generateBox(level, box, 9, y - 11, 9, 11, y - 1, 11, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()),
+                Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData()), false);
+    generateBox(level, box, 8, y - 8, 8, 12, y - 1, 12, Blocks::sandstone->defaultBlockState(),
+                Blocks::sandstone->defaultBlockState(), false);
+    generateBox(level, box, 9, y - 11, 9, 11, y - 1, 11, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
     placeBlock(level, Blocks::stone_pressure_plate->defaultBlockState(), 10, y - 11, 10, box);
-    generateBox(level, box, 9, y - 13, 9, 11, y - 13, 11, Blocks::tnt->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 9, y - 13, 9, 11, y - 13, 11, Blocks::tnt->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
     placeBlock(level, Blocks::air->defaultBlockState(), 8, y - 11, 10, box);
     placeBlock(level, Blocks::air->defaultBlockState(), 8, y - 10, 10, box);
     placeBlock(level, Blocks::sandstone->getBlockState(SandStoneBlock::CHISELED->getData()), 7, y - 10, 10, box);
@@ -452,17 +492,25 @@ bool ScatteredFeaturePieces::DesertPyramidPiece::postProcess(Level* level, Rando
         {
             int x = direction->getStepX() * 2;
             int z = direction->getStepZ() * 2;
-            mHasPlacedChest[direction->get2DDataValue()] =
-                createChest(level, box, random, x + 10, y - 11, z + 10, &BuiltInLootTables::DESERT_PYRAMID);
+            mHasPlacedChest[direction->get2DDataValue()] = createChest(level, box, random, x + 10, y - 11, z + 10,
+                                                                       &BuiltInLootTables::DESERT_PYRAMID);
         }
     }
     return true;
 }
 
-StructurePiece* ScatteredFeaturePieces::DesertPyramidPiece::Create() { return new DesertPyramidPiece(); }
-EStructurePiece ScatteredFeaturePieces::DesertPyramidPiece::GetType() { return eStructurePiece_DesertPyramidPiece; }
+StructurePiece* ScatteredFeaturePieces::DesertPyramidPiece::Create()
+{
+    return new DesertPyramidPiece();
+}
+EStructurePiece ScatteredFeaturePieces::DesertPyramidPiece::GetType()
+{
+    return eStructurePiece_DesertPyramidPiece;
+}
 
-ScatteredFeaturePieces::Igloo::Igloo() : ScatteredFeaturePiece() {}
+ScatteredFeaturePieces::Igloo::Igloo() : ScatteredFeaturePiece()
+{
+}
 
 ScatteredFeaturePieces::Igloo::Igloo(Level* level, Random& random, int x, int z)
     : ScatteredFeaturePiece(level, random, x, 64, z, 7, 5, 8)
@@ -474,7 +522,8 @@ ScatteredFeaturePieces::Igloo::Igloo(Level* level, Random& random, int x, int z)
 
 bool ScatteredFeaturePieces::Igloo::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    if (!updateAverageGroundHeight(level, box, -1, true)) return false;
+    if (!updateAverageGroundHeight(level, box, -1, true))
+        return false;
 
     BlockPos origin(getWorldX(0, 0) + 2, getWorldY(0), getWorldZ(0, 0) + 2);
     mPlaceSettings.setBoundingBox(box);
@@ -500,12 +549,12 @@ bool ScatteredFeaturePieces::Igloo::postProcess(Level* level, Random& random, Bo
     for (int i = 0; i < basementDepth; ++i)
     {
         BlockPos connection = top->calculateConnectedPosition(&mPlaceSettings, BlockPos(3, -1 - i * 3, 5),
-            &mPlaceSettings, BlockPos(1, 2, 1));
+                                                              &mPlaceSettings, BlockPos(1, 2, 1));
         middle->placeInWorld(level, origin.offset(connection), &mPlaceSettings);
     }
 
     BlockPos connection = top->calculateConnectedPosition(&mPlaceSettings, BlockPos(3, -1 - basementDepth * 3, 5),
-        &mPlaceSettings, BlockPos(3, 5, 7));
+                                                          &mPlaceSettings, BlockPos(3, 5, 7));
     BlockPos bottomPos = origin.offset(connection);
     bottom->placeInWorld(level, bottomPos, &mPlaceSettings);
 
@@ -529,17 +578,29 @@ bool ScatteredFeaturePieces::Igloo::postProcess(Level* level, Random& random, Bo
 
 void ScatteredFeaturePieces::Igloo::addAdditionalSaveData(DataOutputStream* output)
 {
-    ScatteredFeaturePiece::addAdditionalSaveData(output); output->writeBoolean(mHasBasement); output->writeInt(mBasementDepth);
+    ScatteredFeaturePiece::addAdditionalSaveData(output);
+    output->writeBoolean(mHasBasement);
+    output->writeInt(mBasementDepth);
 }
 
 void ScatteredFeaturePieces::Igloo::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
 {
     ScatteredFeaturePiece::readAdditionalSaveData(input, structureManager);
-    if (StructureFeatureIO::getVersion() >= 3) { mHasBasement = input->readBoolean(); mBasementDepth = input->readInt(); }
+    if (StructureFeatureIO::getVersion() >= 3)
+    {
+        mHasBasement = input->readBoolean();
+        mBasementDepth = input->readInt();
+    }
 }
 
-StructurePiece* ScatteredFeaturePieces::Igloo::Create() { return new Igloo(); }
-EStructurePiece ScatteredFeaturePieces::Igloo::GetType() { return eStructurePiece_Igloo; }
+StructurePiece* ScatteredFeaturePieces::Igloo::Create()
+{
+    return new Igloo();
+}
+EStructurePiece ScatteredFeaturePieces::Igloo::GetType()
+{
+    return eStructurePiece_Igloo;
+}
 
 void ScatteredFeaturePieces::JunglePyramidPiece::MossStoneSelector::next(Random& random, int x, int y, int z, bool edge)
 {
@@ -549,8 +610,7 @@ void ScatteredFeaturePieces::JunglePyramidPiece::MossStoneSelector::next(Random&
         mNext = Blocks::mossy_cobblestone->defaultBlockState();
 }
 
-ScatteredFeaturePieces::JunglePyramidPiece::JunglePyramidPiece()
-    : ScatteredFeaturePiece()
+ScatteredFeaturePieces::JunglePyramidPiece::JunglePyramidPiece() : ScatteredFeaturePiece()
 {
 }
 
@@ -572,7 +632,8 @@ void ScatteredFeaturePieces::JunglePyramidPiece::addAdditionalSaveData(DataOutpu
     output->writeBoolean(mPlacedTrap2);
 }
 
-void ScatteredFeaturePieces::JunglePyramidPiece::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
+void ScatteredFeaturePieces::JunglePyramidPiece::readAdditionalSaveData(DataInputStream* input,
+                                                                        StructureManager* structureManager)
 {
     ScatteredFeaturePiece::readAdditionalSaveData(input, structureManager);
     mPlacedMainChest = input->readBoolean();
@@ -640,10 +701,14 @@ bool ScatteredFeaturePieces::JunglePyramidPiece::postProcess(Level* level, Rando
     generateBox(level, box, 7, 9, 10, 7, 9, 10, false, random, mStoneSelector);
     generateBox(level, box, 5, 9, 7, 6, 9, 7, false, random, mStoneSelector);
 
-    const BlockState* stairsEast = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST);
-    const BlockState* stairsWest = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST);
-    const BlockState* stairsSouth = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH);
-    const BlockState* stairsNorth = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH);
+    const BlockState* stairsEast = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                       Direction::EAST);
+    const BlockState* stairsWest = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                       Direction::WEST);
+    const BlockState* stairsSouth = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                        Direction::SOUTH);
+    const BlockState* stairsNorth = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                        Direction::NORTH);
     placeBlock(level, stairsNorth, 5, 9, 6, box);
     placeBlock(level, stairsNorth, 6, 9, 6, box);
     placeBlock(level, stairsSouth, 5, 9, 8, box);
@@ -684,8 +749,16 @@ bool ScatteredFeaturePieces::JunglePyramidPiece::postProcess(Level* level, Rando
     generateBox(level, box, 6, -3, 1, 6, -3, 1, false, random, mStoneSelector);
     generateBox(level, box, 6, -1, 1, 6, -1, 1, false, random, mStoneSelector);
 
-    placeBlock(level, Blocks::tripwire_hook->defaultBlockState()->setValue(TripWireHookBlock::FACING, Direction::EAST)->setValue(TripWireHookBlock::ATTACHED, true), 1, -3, 8, box);
-    placeBlock(level, Blocks::tripwire_hook->defaultBlockState()->setValue(TripWireHookBlock::FACING, Direction::WEST)->setValue(TripWireHookBlock::ATTACHED, true), 4, -3, 8, box);
+    placeBlock(level,
+               Blocks::tripwire_hook->defaultBlockState()
+                   ->setValue(TripWireHookBlock::FACING, Direction::EAST)
+                   ->setValue(TripWireHookBlock::ATTACHED, true),
+               1, -3, 8, box);
+    placeBlock(level,
+               Blocks::tripwire_hook->defaultBlockState()
+                   ->setValue(TripWireHookBlock::FACING, Direction::WEST)
+                   ->setValue(TripWireHookBlock::ATTACHED, true),
+               4, -3, 8, box);
     placeBlock(level, Blocks::tripwire->defaultBlockState()->setValue(TripWireBlock::ATTACHED, true), 2, -3, 8, box);
     placeBlock(level, Blocks::tripwire->defaultBlockState()->setValue(TripWireBlock::ATTACHED, true), 3, -3, 8, box);
     placeBlock(level, Blocks::redstone_wire->defaultBlockState(), 5, -3, 7, box);
@@ -699,14 +772,23 @@ bool ScatteredFeaturePieces::JunglePyramidPiece::postProcess(Level* level, Rando
     placeBlock(level, Blocks::mossy_cobblestone->defaultBlockState(), 3, -3, 1, box);
     if (!mPlacedTrap1)
     {
-        mPlacedTrap1 = createDispenser(level, box, random, 3, -2, 1, Direction::NORTH, &BuiltInLootTables::JUNGLE_TEMPLE_DISPENSER);
+        mPlacedTrap1 = createDispenser(level, box, random, 3, -2, 1, Direction::NORTH,
+                                       &BuiltInLootTables::JUNGLE_TEMPLE_DISPENSER);
         if (mPlacedTrap1)
             setDirty();
     }
 
     placeBlock(level, Blocks::vine->defaultBlockState()->setValue(VineBlock::SOUTH, true), 3, -2, 2, box);
-    placeBlock(level, Blocks::tripwire_hook->defaultBlockState()->setValue(TripWireHookBlock::FACING, Direction::NORTH)->setValue(TripWireHookBlock::ATTACHED, true), 7, -3, 1, box);
-    placeBlock(level, Blocks::tripwire_hook->defaultBlockState()->setValue(TripWireHookBlock::FACING, Direction::SOUTH)->setValue(TripWireHookBlock::ATTACHED, true), 7, -3, 5, box);
+    placeBlock(level,
+               Blocks::tripwire_hook->defaultBlockState()
+                   ->setValue(TripWireHookBlock::FACING, Direction::NORTH)
+                   ->setValue(TripWireHookBlock::ATTACHED, true),
+               7, -3, 1, box);
+    placeBlock(level,
+               Blocks::tripwire_hook->defaultBlockState()
+                   ->setValue(TripWireHookBlock::FACING, Direction::SOUTH)
+                   ->setValue(TripWireHookBlock::ATTACHED, true),
+               7, -3, 5, box);
     placeBlock(level, Blocks::tripwire->defaultBlockState()->setValue(TripWireBlock::ATTACHED, true), 7, -3, 2, box);
     placeBlock(level, Blocks::tripwire->defaultBlockState()->setValue(TripWireBlock::ATTACHED, true), 7, -3, 3, box);
     placeBlock(level, Blocks::tripwire->defaultBlockState()->setValue(TripWireBlock::ATTACHED, true), 7, -3, 4, box);
@@ -717,7 +799,8 @@ bool ScatteredFeaturePieces::JunglePyramidPiece::postProcess(Level* level, Rando
     placeBlock(level, Blocks::redstone_wire->defaultBlockState(), 9, -2, 4, box);
     if (!mPlacedTrap2)
     {
-        mPlacedTrap2 = createDispenser(level, box, random, 9, -2, 3, Direction::WEST, &BuiltInLootTables::JUNGLE_TEMPLE_DISPENSER);
+        mPlacedTrap2 = createDispenser(level, box, random, 9, -2, 3, Direction::WEST,
+                                       &BuiltInLootTables::JUNGLE_TEMPLE_DISPENSER);
         if (mPlacedTrap2)
             setDirty();
     }
@@ -746,7 +829,8 @@ bool ScatteredFeaturePieces::JunglePyramidPiece::postProcess(Level* level, Rando
     placeBlock(level, Blocks::stonebrick->getBlockState(StoneBrickBlock::CHISELED_META), 9, -2, 11, box);
     placeBlock(level, Blocks::stonebrick->getBlockState(StoneBrickBlock::CHISELED_META), 10, -2, 11, box);
 
-    const BlockState* lever = Blocks::lever->defaultBlockState()->setValue(LeverBlock::FACING, LeverBlock::LeverDirection::NORTH);
+    const BlockState* lever = Blocks::lever->defaultBlockState()->setValue(LeverBlock::FACING,
+                                                                           LeverBlock::LeverDirection::NORTH);
     placeBlock(level, lever, 8, -2, 12, box);
     placeBlock(level, lever, 9, -2, 12, box);
     placeBlock(level, lever, 10, -2, 12, box);
@@ -756,10 +840,16 @@ bool ScatteredFeaturePieces::JunglePyramidPiece::postProcess(Level* level, Rando
     placeBlock(level, Blocks::redstone_wire->defaultBlockState(), 8, -2, 9, box);
     placeBlock(level, Blocks::redstone_wire->defaultBlockState(), 8, -2, 10, box);
     placeBlock(level, Blocks::redstone_wire->defaultBlockState(), 10, -1, 9, box);
-    placeBlock(level, Blocks::sticky_piston->defaultBlockState()->setValue(PistonBaseBlock::FACING, Direction::UP), 9, -2, 8, box);
-    placeBlock(level, Blocks::sticky_piston->defaultBlockState()->setValue(PistonBaseBlock::FACING, Direction::WEST), 10, -2, 8, box);
-    placeBlock(level, Blocks::sticky_piston->defaultBlockState()->setValue(PistonBaseBlock::FACING, Direction::WEST), 10, -1, 8, box);
-    placeBlock(level, Blocks::unpowered_repeater->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::NORTH), 10, -2, 10, box);
+    placeBlock(level, Blocks::sticky_piston->defaultBlockState()->setValue(PistonBaseBlock::FACING, Direction::UP), 9,
+               -2, 8, box);
+    placeBlock(level, Blocks::sticky_piston->defaultBlockState()->setValue(PistonBaseBlock::FACING, Direction::WEST),
+               10, -2, 8, box);
+    placeBlock(level, Blocks::sticky_piston->defaultBlockState()->setValue(PistonBaseBlock::FACING, Direction::WEST),
+               10, -1, 8, box);
+    placeBlock(level,
+               Blocks::unpowered_repeater->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY,
+                                                                         Direction::NORTH),
+               10, -2, 10, box);
     if (!mPlacedHiddenChest)
     {
         mPlacedHiddenChest = createChest(level, box, random, 9, -3, 10, &BuiltInLootTables::JUNGLE_TEMPLE);
@@ -774,8 +864,14 @@ void ScatteredFeaturePieces::JunglePyramidPiece::staticCtor()
     mStoneSelector = new MossStoneSelector();
 }
 
-StructurePiece* ScatteredFeaturePieces::JunglePyramidPiece::Create() { return new JunglePyramidPiece(); }
-EStructurePiece ScatteredFeaturePieces::JunglePyramidPiece::GetType() { return eStructurePiece_JunglePyramidPiece; }
+StructurePiece* ScatteredFeaturePieces::JunglePyramidPiece::Create()
+{
+    return new JunglePyramidPiece();
+}
+EStructurePiece ScatteredFeaturePieces::JunglePyramidPiece::GetType()
+{
+    return eStructurePiece_JunglePyramidPiece;
+}
 
 ScatteredFeaturePieces::SwamplandHut::SwamplandHut() : ScatteredFeaturePiece()
 {
@@ -794,7 +890,8 @@ void ScatteredFeaturePieces::SwamplandHut::addAdditionalSaveData(DataOutputStrea
     output->writeBoolean(mHasWitch);
 }
 
-void ScatteredFeaturePieces::SwamplandHut::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
+void ScatteredFeaturePieces::SwamplandHut::readAdditionalSaveData(DataInputStream* input,
+                                                                  StructureManager* structureManager)
 {
     ScatteredFeaturePiece::readAdditionalSaveData(input, structureManager);
     mHasWitch = input->readBoolean();
@@ -805,24 +902,38 @@ bool ScatteredFeaturePieces::SwamplandHut::postProcess(Level* level, Random& ran
     if (!updateAverageGroundHeight(level, box, 0, true))
         return false;
 
-    generateBox(level, box, 1, 1, 1, 5, 1, 7, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
-    generateBox(level, box, 1, 4, 2, 5, 4, 7, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
-    generateBox(level, box, 2, 1, 0, 4, 1, 0, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
-    generateBox(level, box, 2, 2, 2, 3, 3, 2, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
-    generateBox(level, box, 1, 2, 3, 1, 3, 6, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
-    generateBox(level, box, 5, 2, 3, 5, 3, 6, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
-    generateBox(level, box, 2, 2, 7, 4, 3, 7, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
-    generateBox(level, box, 1, 0, 2, 1, 3, 2, Blocks::log->defaultBlockState(), Blocks::log->defaultBlockState(), false);
-    generateBox(level, box, 5, 0, 2, 5, 3, 2, Blocks::log->defaultBlockState(), Blocks::log->defaultBlockState(), false);
-    generateBox(level, box, 1, 0, 7, 1, 3, 7, Blocks::log->defaultBlockState(), Blocks::log->defaultBlockState(), false);
-    generateBox(level, box, 5, 0, 7, 5, 3, 7, Blocks::log->defaultBlockState(), Blocks::log->defaultBlockState(), false);
+    generateBox(level, box, 1, 1, 1, 5, 1, 7, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()),
+                Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
+    generateBox(level, box, 1, 4, 2, 5, 4, 7, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()),
+                Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
+    generateBox(level, box, 2, 1, 0, 4, 1, 0, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()),
+                Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
+    generateBox(level, box, 2, 2, 2, 3, 3, 2, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()),
+                Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
+    generateBox(level, box, 1, 2, 3, 1, 3, 6, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()),
+                Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
+    generateBox(level, box, 5, 2, 3, 5, 3, 6, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()),
+                Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
+    generateBox(level, box, 2, 2, 7, 4, 3, 7, Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()),
+                Blocks::planks->getBlockState(PlanksBlock::Variant::SPRUCE->getData()), false);
+    generateBox(level, box, 1, 0, 2, 1, 3, 2, Blocks::log->defaultBlockState(), Blocks::log->defaultBlockState(),
+                false);
+    generateBox(level, box, 5, 0, 2, 5, 3, 2, Blocks::log->defaultBlockState(), Blocks::log->defaultBlockState(),
+                false);
+    generateBox(level, box, 1, 0, 7, 1, 3, 7, Blocks::log->defaultBlockState(), Blocks::log->defaultBlockState(),
+                false);
+    generateBox(level, box, 5, 0, 7, 5, 3, 7, Blocks::log->defaultBlockState(), Blocks::log->defaultBlockState(),
+                false);
     placeBlock(level, Blocks::fence->defaultBlockState(), 2, 3, 2, box);
     placeBlock(level, Blocks::fence->defaultBlockState(), 3, 3, 7, box);
     placeBlock(level, Blocks::air->defaultBlockState(), 1, 3, 4, box);
     placeBlock(level, Blocks::air->defaultBlockState(), 5, 3, 4, box);
     placeBlock(level, Blocks::air->defaultBlockState(), 5, 3, 5, box);
 
-    placeBlock(level, Blocks::flower_pot->defaultBlockState()->setValue<const FlowerPotBlock::Contents*>(FlowerPotBlock::CONTENTS, FlowerPotBlock::Contents::MUSHROOM_RED), 1, 3, 5, box);
+    placeBlock(level,
+               Blocks::flower_pot->defaultBlockState()->setValue<const FlowerPotBlock::Contents*>(
+                   FlowerPotBlock::CONTENTS, FlowerPotBlock::Contents::MUSHROOM_RED),
+               1, 3, 5, box);
     BlockPos flowerPotPos(getWorldX(1, 5), getWorldY(3), getWorldZ(1, 5));
     {
         boost::shared_ptr<FlowerPotBlockEntity> flowerPot = boost::dynamic_pointer_cast<FlowerPotBlockEntity>(
@@ -836,10 +947,14 @@ bool ScatteredFeaturePieces::SwamplandHut::postProcess(Level* level, Random& ran
     placeBlock(level, Blocks::fence->defaultBlockState(), 1, 2, 1, box);
     placeBlock(level, Blocks::fence->defaultBlockState(), 5, 2, 1, box);
 
-    const BlockState* stairsNorth = Blocks::spruce_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH);
-    const BlockState* stairsEast = Blocks::spruce_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST);
-    const BlockState* stairsWest = Blocks::spruce_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST);
-    const BlockState* stairsSouth = Blocks::spruce_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH);
+    const BlockState* stairsNorth = Blocks::spruce_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                         Direction::NORTH);
+    const BlockState* stairsEast = Blocks::spruce_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                        Direction::EAST);
+    const BlockState* stairsWest = Blocks::spruce_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                        Direction::WEST);
+    const BlockState* stairsSouth = Blocks::spruce_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                         Direction::SOUTH);
     generateBox(level, box, 0, 4, 1, 6, 4, 1, stairsNorth, stairsNorth, false);
     generateBox(level, box, 0, 4, 2, 0, 4, 7, stairsEast, stairsEast, false);
     generateBox(level, box, 6, 4, 2, 6, 4, 7, stairsWest, stairsWest, false);
@@ -868,5 +983,11 @@ bool ScatteredFeaturePieces::SwamplandHut::postProcess(Level* level, Random& ran
     return true;
 }
 
-StructurePiece* ScatteredFeaturePieces::SwamplandHut::Create() { return new SwamplandHut(); }
-EStructurePiece ScatteredFeaturePieces::SwamplandHut::GetType() { return eStructurePiece_SwamplandHut; }
+StructurePiece* ScatteredFeaturePieces::SwamplandHut::Create()
+{
+    return new SwamplandHut();
+}
+EStructurePiece ScatteredFeaturePieces::SwamplandHut::GetType()
+{
+    return eStructurePiece_SwamplandHut;
+}

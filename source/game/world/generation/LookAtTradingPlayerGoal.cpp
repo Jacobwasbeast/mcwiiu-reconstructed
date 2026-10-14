@@ -7,7 +7,8 @@
 #include "game/world/generation/Villager.hpp"
 
 LookAtTradingPlayerGoal::LookAtTradingPlayerGoal(Villager* villager)
-    : LookAtPlayerGoal(villager, typeid(Player), 8.0f), mVillager(villager)
+    : LookAtPlayerGoal(villager, typeid(Player), 8.0f),
+      mVillager(villager)
 {
 }
 

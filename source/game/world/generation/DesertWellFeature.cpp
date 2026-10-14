@@ -29,8 +29,10 @@ void DesertWellFeature::staticCtor()
 {
     BlockStatePredicate* sandPredicate = BlockStatePredicate::forBlock(Blocks::sand);
     AbstractProperty<SandBlock::Variant*>* type = SandBlock::TYPE;
-    Predicate<SandBlock::Variant*>* isSand = new Predicates<SandBlock::Variant*>::EqualToValuePredicate(SandBlock::Variant::SAND);
-    gDesertWellSandPredicate = sandPredicate->where(type, new BlockStatePredicate::PredicateConversion<SandBlock::Variant*>(isSand));
+    Predicate<SandBlock::Variant*>* isSand = new Predicates<SandBlock::Variant*>::EqualToValuePredicate(
+        SandBlock::Variant::SAND);
+    gDesertWellSandPredicate = sandPredicate->where(
+        type, new BlockStatePredicate::PredicateConversion<SandBlock::Variant*>(isSand));
 }
 
 bool DesertWellFeature::place(Level* level, Random& random, const BlockPos& origin)

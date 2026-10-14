@@ -21,14 +21,12 @@ public:
     class WoodlandMansionStart : public StructureStart
     {
     public:
-        WoodlandMansionStart(WoodlandMansionFeature* feature, Level* level,
-                             GenericOverworldLevelSource* source, Random& random,
-                             int chunkX, int chunkZ);
+        WoodlandMansionStart(WoodlandMansionFeature* feature, Level* level, GenericOverworldLevelSource* source,
+                             Random& random, int chunkX, int chunkZ);
         WoodlandMansionStart();
 
         static StructureStart* Create();
-        void create(Level* level, GenericOverworldLevelSource* source, Random& random,
-                    int chunkX, int chunkZ);
+        void create(Level* level, GenericOverworldLevelSource* source, Random& random, int chunkX, int chunkZ);
         virtual void postProcess(Level* level, Random& random, BoundingBox* box);
         virtual bool isValid();
         virtual EStructureStart GetType();
@@ -44,10 +42,8 @@ public:
     static void staticCtor();
     virtual std::wstring getFeatureName();
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
-    static char fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks,
-                                 int chunkX, int chunkZ);
-    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
-                                                  bool skipExistingChunks);
+    static char fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks, int chunkX, int chunkZ);
+    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos, bool skipExistingChunks);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
 
 private:

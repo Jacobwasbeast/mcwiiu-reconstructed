@@ -17,12 +17,11 @@ public:
     class EndCityStart : public StructureStart
     {
     public:
-        EndCityStart(Level* level, TheEndLevelSource* source, Random& random,
-                     int chunkX, int chunkZ);
-        void create(Level* level, TheEndLevelSource* source, Random& random,
-                    int chunkX, int chunkZ);
+        EndCityStart(Level* level, TheEndLevelSource* source, Random& random, int chunkX, int chunkZ);
+        void create(Level* level, TheEndLevelSource* source, Random& random, int chunkX, int chunkZ);
         virtual bool isValid();
         virtual EStructureStart GetType();
+
     private:
         bool mValid;
     };
@@ -30,11 +29,10 @@ public:
     EndCityFeature(TheEndLevelSource* source);
     virtual std::wstring getFeatureName();
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
-    static int getYPositionForFeature(int chunkX, int chunkZ,
-                                      TheEndLevelSource* source);
+    static int getYPositionForFeature(int chunkX, int chunkZ, TheEndLevelSource* source);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
-    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
-                                                 bool skipExistingChunks);
+    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos, bool skipExistingChunks);
+
 private:
     TheEndLevelSource* mSource;
 };

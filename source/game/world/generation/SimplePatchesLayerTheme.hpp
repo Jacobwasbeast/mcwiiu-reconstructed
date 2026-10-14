@@ -6,9 +6,7 @@
 class SimplePatchesLayerTheme : public RandomPatchesLayerTheme
 {
 public:
-    SimplePatchesLayerTheme(unsigned int uSeed,
-                            double dNoiseScale,
-                            const BlockState* pPatchBlock,
+    SimplePatchesLayerTheme(unsigned int uSeed, double dNoiseScale, const BlockState* pPatchBlock,
                             float fPatchThreshold);
 
     virtual const BlockState* BlockAt(Random& random, float fNoise, int iHeightAboveSurface, bool bIsAir) const;

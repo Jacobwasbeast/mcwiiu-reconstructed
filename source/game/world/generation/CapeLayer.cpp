@@ -14,8 +14,7 @@
 #include "game/item/Items.hpp"
 #include "game/world/generation/Player.hpp"
 
-CapeLayer::CapeLayer(PlayerRenderer* renderer)
-    : mRenderer(renderer)
+CapeLayer::CapeLayer(PlayerRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -24,8 +23,8 @@ CapeLayer::~CapeLayer()
 }
 
 void CapeLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
-                       float partialTicks, float ageInTicks, float netHeadYaw, float headPitch,
-                       float scale, bool bUseDisplayList)
+                       float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                       bool bUseDisplayList)
 {
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
 
@@ -51,9 +50,12 @@ void CapeLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
     GlStateManager::pushMatrix();
     GlStateManager::translatef(0.0f, 0.0f, 0.125f);
 
-    double capeX = (player->mPrevChasingPosX + (player->mChasingPosX - player->mPrevChasingPosX) * partialTicks) - (player->mXo + (player->mX - player->mXo) * partialTicks);
-    double capeY = (player->mPrevChasingPosY + (player->mChasingPosY - player->mPrevChasingPosY) * partialTicks) - (player->mYo + (player->mY - player->mYo) * partialTicks);
-    double capeZ = (player->mPrevChasingPosZ + (player->mChasingPosZ - player->mPrevChasingPosZ) * partialTicks) - (player->mZo + (player->mZ - player->mZo) * partialTicks);
+    double capeX = (player->mPrevChasingPosX + (player->mChasingPosX - player->mPrevChasingPosX) * partialTicks)
+                   - (player->mXo + (player->mX - player->mXo) * partialTicks);
+    double capeY = (player->mPrevChasingPosY + (player->mChasingPosY - player->mPrevChasingPosY) * partialTicks)
+                   - (player->mYo + (player->mY - player->mYo) * partialTicks);
+    double capeZ = (player->mPrevChasingPosZ + (player->mChasingPosZ - player->mPrevChasingPosZ) * partialTicks)
+                   - (player->mZo + (player->mZ - player->mZo) * partialTicks);
     float bodyRot = player->mYBodyRotO + (player->mYBodyRot - player->mYBodyRotO) * partialTicks;
     double sinBody = Mth::sin(bodyRot * Mth::DEG_TO_RAD);
     double cosBody = -Mth::cos(bodyRot * Mth::DEG_TO_RAD);

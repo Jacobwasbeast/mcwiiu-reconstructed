@@ -14,8 +14,7 @@
 
 static ResourceLocation WOLF_COLLAR_LOCATION(TN_MOB_WOLF_COLLAR);
 
-WolfCollarLayer::WolfCollarLayer(WolfRenderer* renderer)
-    : mRenderer(renderer)
+WolfCollarLayer::WolfCollarLayer(WolfRenderer* renderer) : mRenderer(renderer)
 {
 }
 
@@ -23,9 +22,8 @@ WolfCollarLayer::~WolfCollarLayer()
 {
 }
 
-void WolfCollarLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                             float limbSwingAmount, float partialTicks, float ageInTicks,
-                             float netHeadYaw, float headPitch, float scale,
+void WolfCollarLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                             float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                              bool bUseDisplayList)
 {
     boost::shared_ptr<Wolf> wolf = boost::dynamic_pointer_cast<Wolf>(entity);
@@ -39,8 +37,8 @@ void WolfCollarLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     GlStateManager::color3f(colours.data[0], colours.data[1], colours.data[2]);
 
     boost::shared_ptr<Entity> renderEntity = wolf;
-    mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks,
-                                   netHeadYaw, headPitch, scale, bUseDisplayList);
+    mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                                  bUseDisplayList);
 }
 
 bool WolfCollarLayer::colorsOnDamage()

@@ -16,8 +16,8 @@ public:
     static float BOWL(float value);
     static float DOME(float value);
 
-    virtual void ExtrudeLayer(Random& random, const Shape& shape, const Vec3i& origin,
-                              BlockTransaction* transaction, int* minY, int* maxY) const;
+    virtual void ExtrudeLayer(Random& random, const Shape& shape, const Vec3i& origin, BlockTransaction* transaction,
+                              int* minY, int* maxY) const;
 
     int mOffset;
     float (*mCurve)(float);

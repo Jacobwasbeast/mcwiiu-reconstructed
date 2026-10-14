@@ -17,8 +17,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/Block.hpp"
 
-WitchItemLayer::WitchItemLayer(WitchRenderer* renderer)
-    : mWitchRenderer(renderer)
+WitchItemLayer::WitchItemLayer(WitchRenderer* renderer) : mWitchRenderer(renderer)
 {
 }
 
@@ -26,7 +25,8 @@ WitchItemLayer::~WitchItemLayer()
 {
 }
 
-void WitchItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float, float, float, bool)
+void WitchItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float, float, float,
+                            bool)
 {
     boost::shared_ptr<Witch> witch = boost::static_pointer_cast<Witch>(entity);
     not_null_ptr<ItemInstance> itemInstance = witch->getMainHandItem();

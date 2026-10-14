@@ -10,7 +10,8 @@ class BlockState;
 class BasicPatchesLayerTheme : public RandomPatchesLayerTheme
 {
 public:
-    BasicPatchesLayerTheme(unsigned int seed, double noiseScale, int depth, const std::vector<const BlockState*>& blocks, float noiseThreshold);
+    BasicPatchesLayerTheme(unsigned int seed, double noiseScale, int depth,
+                           const std::vector<const BlockState*>& blocks, float noiseThreshold);
     virtual const BlockState* BlockAt(Random& random, float noise, int heightAboveSurface, bool isAir) const;
 
 private:

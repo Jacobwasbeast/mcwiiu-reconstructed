@@ -10,8 +10,7 @@
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/core/NetherBridgePieces.hpp"
 
-NetherBridgeFeature::NetherBridgeFeature()
-    : StructureFeature()
+NetherBridgeFeature::NetherBridgeFeature() : StructureFeature()
 {
     mBridgeEnemies.push_back(new Biome::MobSpawnerData(10, EntityType::BLAZE, 2, 3));
     mBridgeEnemies.push_back(new Biome::MobSpawnerData(5, EntityType::PIG_ZOMBIE, 4, 4));
@@ -25,8 +24,7 @@ NetherBridgeFeature::NetherBridgeFeature()
 NetherBridgeFeature::~NetherBridgeFeature()
 {
     std::vector<Biome::MobSpawnerData*>::iterator end = mBridgeEnemies.end();
-    for (std::vector<Biome::MobSpawnerData*>::iterator it = mBridgeEnemies.begin();
-         it != end; ++it)
+    for (std::vector<Biome::MobSpawnerData*>::iterator it = mBridgeEnemies.begin(); it != end; ++it)
     {
         delete *it;
     }
@@ -70,8 +68,7 @@ StructureStart* NetherBridgeFeature::createStructureStart(int chunkX, int chunkZ
     return new NetherBridgeStart(level, random, chunkX, chunkZ);
 }
 
-BlockPos* NetherBridgeFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos,
-                                                            bool skipExistingChunks)
+BlockPos* NetherBridgeFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos, bool skipExistingChunks)
 {
     int chunkX = pos.x >> 4;
     int chunkZ = pos.z >> 4;
@@ -87,8 +84,8 @@ BlockPos* NetherBridgeFeature::getNearestGeneratedFeature(Level* levelIn, const 
                 {
                     int candidateX = chunkX + offsetX;
                     int candidateZ = chunkZ + offsetZ;
-                    if (isFeatureChunk(candidateX, candidateZ, false) &&
-                        (!skipExistingChunks || !levelIn->isChunkGeneratedAt(candidateX, candidateZ)))
+                    if (isFeatureChunk(candidateX, candidateZ, false)
+                        && (!skipExistingChunks || !levelIn->isChunkGeneratedAt(candidateX, candidateZ)))
                         return new BlockPos(candidateX * 16 + 8, 64, candidateZ * 16 + 8);
                 }
             }
@@ -98,12 +95,11 @@ BlockPos* NetherBridgeFeature::getNearestGeneratedFeature(Level* levelIn, const 
     return NULL;
 }
 
-NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart(Level* levelIn, Random& random,
-                                                           int chunkX, int chunkZ)
+NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart(Level* levelIn, Random& random, int chunkX, int chunkZ)
     : StructureStart(chunkX, chunkZ)
 {
-    NetherBridgePieces::StartPiece* startPiece = new NetherBridgePieces::StartPiece(
-        random, chunkX * 16 + 2, chunkZ * 16 + 2, levelIn);
+    NetherBridgePieces::StartPiece* startPiece = new NetherBridgePieces::StartPiece(random, chunkX * 16 + 2,
+                                                                                    chunkZ * 16 + 2, levelIn);
     mPieces.push_back(startPiece);
     startPiece->addChildren(startPiece, &mPieces, random);
 
@@ -121,8 +117,7 @@ NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart(Level* levelIn, Random
     moveInsideHeights(levelIn, random, 0x30, 0x46);
 }
 
-NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart()
-    : StructureStart()
+NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart() : StructureStart()
 {
 }
 

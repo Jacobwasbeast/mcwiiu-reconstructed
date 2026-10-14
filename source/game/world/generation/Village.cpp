@@ -25,14 +25,28 @@
 
 Village::Village()
 {
-    mBottom = BlockPos::ZERO; mCenter = BlockPos::ZERO;
-    mRadius = 0; mStable = 0; mTick = 0; mPopulation = 0; mGolems = 0; mNoBreedTimer = 0; mLevel = NULL;
+    mBottom = BlockPos::ZERO;
+    mCenter = BlockPos::ZERO;
+    mRadius = 0;
+    mStable = 0;
+    mTick = 0;
+    mPopulation = 0;
+    mGolems = 0;
+    mNoBreedTimer = 0;
+    mLevel = NULL;
 }
 
 Village::Village(Level* level)
 {
-    mBottom = BlockPos::ZERO; mCenter = BlockPos::ZERO;
-    mRadius = 0; mStable = 0; mTick = 0; mPopulation = 0; mGolems = 0; mNoBreedTimer = 0; mLevel = level;
+    mBottom = BlockPos::ZERO;
+    mCenter = BlockPos::ZERO;
+    mRadius = 0;
+    mStable = 0;
+    mTick = 0;
+    mPopulation = 0;
+    mGolems = 0;
+    mNoBreedTimer = 0;
+    mLevel = level;
 }
 
 Village::~Village()
@@ -47,8 +61,14 @@ Village::Aggressor::Aggressor(boost::shared_ptr<LivingEntity> entity, int timeSt
     mTimeStamp = timeStamp;
 }
 
-void Village::setLevel(Level* level) { mLevel = level; }
-int Village::getDoorCount() { return (int)mDoors.size(); }
+void Village::setLevel(Level* level)
+{
+    mLevel = level;
+}
+int Village::getDoorCount()
+{
+    return (int)mDoors.size();
+}
 
 bool Village::isInside(const BlockPos& pos)
 {
@@ -90,7 +110,8 @@ Vec3* Village::findRandomSpawnPos(const BlockPos& pos, int xSize, int ySize, int
     BlockPos size(xSize, ySize, zSize);
     for (int i = 0; i < 10; ++i)
     {
-        BlockPos candidate = pos.offset(mLevel->mRandom->nextInt(16) - 8, mLevel->mRandom->nextInt(6) - 3, mLevel->mRandom->nextInt(16) - 8);
+        BlockPos candidate = pos.offset(mLevel->mRandom->nextInt(16) - 8, mLevel->mRandom->nextInt(6) - 3,
+                                        mLevel->mRandom->nextInt(16) - 8);
         if (isInside(candidate) && canSpawnAt(size, candidate))
             return Vec3::newPermanent(candidate.x, candidate.y, candidate.z);
     }
@@ -124,7 +145,8 @@ void Village::calcInfo()
             maxDistance = std::max(maxDistance, distance);
         }
         int radius = (int)sqrtf((float)maxDistance) + 1;
-        if (radius < 32) radius = 32;
+        if (radius < 32)
+            radius = 32;
         mRadius = radius;
     }
 }
@@ -137,7 +159,8 @@ void Village::updateDoors()
     while (it != mDoors.end())
     {
         boost::shared_ptr<DoorInfo> door = *it;
-        if (resetBookings) door->resetBookingCount();
+        if (resetBookings)
+            door->resetBookingCount();
         if (!isDoor(door->getPos()) || std::abs(mTick - door->getTimeStamp()) > 1200)
         {
             mBottom = mBottom.offset(door->getPos().multiply(-1));
@@ -145,9 +168,11 @@ void Village::updateDoors()
             door->setRemoved(true);
             it = mDoors.erase(it);
         }
-        else ++it;
+        else
+            ++it;
     }
-    if (changed) calcInfo();
+    if (changed)
+        calcInfo();
 }
 
 void Village::updateAggressors()
@@ -161,24 +186,26 @@ void Village::updateAggressors()
             delete *it;
             it = mAggressors.erase(it);
         }
-        else ++it;
+        else
+            ++it;
     }
 }
 
 void Village::countPopulation()
 {
-    AABB* box = AABB::newTemp(mCenter.x - mRadius, mCenter.y - 4, mCenter.z - mRadius,
-                               mCenter.x + mRadius, mCenter.y + 4, mCenter.z + mRadius);
+    AABB* box = AABB::newTemp(mCenter.x - mRadius, mCenter.y - 4, mCenter.z - mRadius, mCenter.x + mRadius,
+                              mCenter.y + 4, mCenter.z + mRadius);
     std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Villager), box);
     mPopulation = (int)entities->size();
     delete entities;
-    if (mPopulation == 0) mPlayerStandings.clear();
+    if (mPopulation == 0)
+        mPlayerStandings.clear();
 }
 
 void Village::countGolem()
 {
-    AABB* box = AABB::newTemp(mCenter.x - mRadius, mCenter.y - 4, mCenter.z - mRadius,
-                               mCenter.x + mRadius, mCenter.y + 4, mCenter.z + mRadius);
+    AABB* box = AABB::newTemp(mCenter.x - mRadius, mCenter.y - 4, mCenter.z - mRadius, mCenter.x + mRadius,
+                              mCenter.y + 4, mCenter.z + mRadius);
     std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(VillagerGolem), box);
     mGolems = (int)entities->size();
     delete entities;
@@ -189,8 +216,10 @@ void Village::tick(int tick)
     mTick = tick;
     updateDoors();
     updateAggressors();
-    if (tick % 20 == 0) countPopulation();
-    if (tick % 30 == 0) countGolem();
+    if (tick % 20 == 0)
+        countPopulation();
+    if (tick % 30 == 0)
+        countGolem();
     if (mGolems < mPopulation / 10 && mDoors.size() > 20 && mLevel->mRandom->nextInt(7000) == 0)
     {
         Vec3* pos = findRandomSpawnPos(mCenter, 2, 4, 2);
@@ -204,11 +233,26 @@ void Village::tick(int tick)
     }
 }
 
-const BlockPos* Village::getCenter() { return &mCenter; }
-int Village::getRadius() { return mRadius; }
-int Village::getStableAge() { return mTick - mStable; }
-int Village::getPopulationSize() { return mPopulation; }
-std::vector<boost::shared_ptr<DoorInfo> >* Village::getDoorInfos() { return &mDoors; }
+const BlockPos* Village::getCenter()
+{
+    return &mCenter;
+}
+int Village::getRadius()
+{
+    return mRadius;
+}
+int Village::getStableAge()
+{
+    return mTick - mStable;
+}
+int Village::getPopulationSize()
+{
+    return mPopulation;
+}
+std::vector<boost::shared_ptr<DoorInfo> >* Village::getDoorInfos()
+{
+    return &mDoors;
+}
 
 boost::shared_ptr<DoorInfo> Village::getClosestDoorInfo(const BlockPos& pos)
 {
@@ -218,7 +262,11 @@ boost::shared_ptr<DoorInfo> Village::getClosestDoorInfo(const BlockPos& pos)
     {
         boost::shared_ptr<DoorInfo> door = *it;
         int current = door->distanceToSqr(pos);
-        if (current < distance) { result = door; distance = current; }
+        if (current < distance)
+        {
+            result = door;
+            distance = current;
+        }
     }
     return result;
 }
@@ -239,10 +287,18 @@ boost::shared_ptr<DoorInfo> Village::getBestDoorInfo(const BlockPos& pos)
         {
             BlockPos doorPos = door->getPos();
             const Direction* direction = door->getDirection();
-            if (mLevel->getBlockState(doorPos.relative(direction, 1))->getBlock()->isPathfindable(mLevel, doorPos.relative(direction, 1))
-                && mLevel->getBlockState(doorPos.relative(direction, -1))->getBlock()->isPathfindable(mLevel, doorPos.relative(direction, -1))
-                && mLevel->getBlockState(doorPos.above().relative(direction, 1))->getBlock()->isPathfindable(mLevel, doorPos.above().relative(direction, 1))
-                && mLevel->getBlockState(doorPos.above().relative(direction, -1))->getBlock()->isPathfindable(mLevel, doorPos.above().relative(direction, -1)))
+            if (mLevel->getBlockState(doorPos.relative(direction, 1))
+                    ->getBlock()
+                    ->isPathfindable(mLevel, doorPos.relative(direction, 1))
+                && mLevel->getBlockState(doorPos.relative(direction, -1))
+                       ->getBlock()
+                       ->isPathfindable(mLevel, doorPos.relative(direction, -1))
+                && mLevel->getBlockState(doorPos.above().relative(direction, 1))
+                       ->getBlock()
+                       ->isPathfindable(mLevel, doorPos.above().relative(direction, 1))
+                && mLevel->getBlockState(doorPos.above().relative(direction, -1))
+                       ->getBlock()
+                       ->isPathfindable(mLevel, doorPos.above().relative(direction, -1)))
             {
                 result = door;
                 score = current;
@@ -255,16 +311,21 @@ boost::shared_ptr<DoorInfo> Village::getBestDoorInfo(const BlockPos& pos)
 boost::shared_ptr<DoorInfo> Village::getDoorInfo(const BlockPos& pos)
 {
     int radius = mRadius;
-    if ((double)mCenter.distSqr(pos) > (double)(radius * radius)) return boost::shared_ptr<DoorInfo>();
+    if ((double)mCenter.distSqr(pos) > (double)(radius * radius))
+        return boost::shared_ptr<DoorInfo>();
     for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = mDoors.begin(); it != mDoors.end(); ++it)
     {
         boost::shared_ptr<DoorInfo> door = *it;
-        if (door->getPos().x == pos.x && door->getPos().z == pos.z && std::abs(door->getPos().y - pos.y) <= 1) return boost::shared_ptr<DoorInfo>(door);
+        if (door->getPos().x == pos.x && door->getPos().z == pos.z && std::abs(door->getPos().y - pos.y) <= 1)
+            return boost::shared_ptr<DoorInfo>(door);
     }
     return boost::shared_ptr<DoorInfo>();
 }
 
-bool Village::hasDoorInfo(const BlockPos& pos) { return getDoorInfo(pos).get() != NULL; }
+bool Village::hasDoorInfo(const BlockPos& pos)
+{
+    return getDoorInfo(pos).get() != NULL;
+}
 
 void Village::addDoorInfo(boost::shared_ptr<DoorInfo> door)
 {
@@ -274,7 +335,10 @@ void Village::addDoorInfo(boost::shared_ptr<DoorInfo> door)
     mStable = door->getTimeStamp();
 }
 
-bool Village::canRemove() { return mDoors.empty(); }
+bool Village::canRemove()
+{
+    return mDoors.empty();
+}
 
 void Village::addAggressor(boost::shared_ptr<LivingEntity> entity)
 {
@@ -317,7 +381,10 @@ int Village::getStanding(const std::wstring& name)
     return 0;
 }
 
-bool Village::isVeryBadStanding(std::wstring name) { return getStanding(name) <= -15; }
+bool Village::isVeryBadStanding(std::wstring name)
+{
+    return getStanding(name) <= -15;
+}
 
 boost::shared_ptr<LivingEntity> Village::getClosestBadStandingPlayer(boost::shared_ptr<LivingEntity> entity)
 {
@@ -333,7 +400,8 @@ boost::shared_ptr<LivingEntity> Village::getClosestBadStandingPlayer(boost::shar
             if (player)
             {
                 double current = player->distanceToSqr(entity);
-                if (current > distance) continue;
+                if (current > distance)
+                    continue;
                 result = player;
                 distance = current;
             }
@@ -351,8 +419,12 @@ int Village::modifyStanding(const std::wstring& name, int amount)
 
 void Village::readAdditionalSaveData(CompoundTag* tag)
 {
-    mPopulation = tag->getInt(L"PopSize"); mRadius = tag->getInt(L"Radius"); mGolems = tag->getInt(L"Golems");
-    mStable = tag->getInt(L"Stable"); mTick = tag->getInt(L"Tick"); mNoBreedTimer = tag->getInt(L"MTick");
+    mPopulation = tag->getInt(L"PopSize");
+    mRadius = tag->getInt(L"Radius");
+    mGolems = tag->getInt(L"Golems");
+    mStable = tag->getInt(L"Stable");
+    mTick = tag->getInt(L"Tick");
+    mNoBreedTimer = tag->getInt(L"MTick");
     mCenter = BlockPos(tag->getInt(L"CX"), tag->getInt(L"CY"), tag->getInt(L"CZ"));
     mBottom = BlockPos(tag->getInt(L"ACX"), tag->getInt(L"ACY"), tag->getInt(L"ACZ"));
     ListTag* doors = tag->getList(L"Doors", Tag::TAG_COMPOUND);
@@ -360,7 +432,9 @@ void Village::readAdditionalSaveData(CompoundTag* tag)
     for (i = 0; i < doors->size(); ++i)
     {
         CompoundTag* door = doors->getCompound(i);
-        boost::shared_ptr<DoorInfo> info(new DoorInfo(BlockPos(door->getInt(L"X"), door->getInt(L"Y"), door->getInt(L"Z")), door->getInt(L"IDX"), door->getInt(L"IDZ"), door->getInt(L"TS")));
+        boost::shared_ptr<DoorInfo> info(
+            new DoorInfo(BlockPos(door->getInt(L"X"), door->getInt(L"Y"), door->getInt(L"Z")), door->getInt(L"IDX"),
+                         door->getInt(L"IDZ"), door->getInt(L"TS")));
         mDoors.push_back(info);
     }
     ListTag* players = tag->getList(L"Players", Tag::TAG_COMPOUND);
@@ -373,33 +447,56 @@ void Village::readAdditionalSaveData(CompoundTag* tag)
 
 void Village::addAdditonalSaveData(CompoundTag* tag)
 {
-    tag->putInt(L"PopSize", mPopulation); tag->putInt(L"Radius", mRadius); tag->putInt(L"Golems", mGolems);
-    tag->putInt(L"Stable", mStable); tag->putInt(L"Tick", mTick); tag->putInt(L"MTick", mNoBreedTimer);
-    tag->putInt(L"CX", mCenter.x); tag->putInt(L"CY", mCenter.y); tag->putInt(L"CZ", mCenter.z);
-    tag->putInt(L"ACX", mBottom.x); tag->putInt(L"ACY", mBottom.y); tag->putInt(L"ACZ", mBottom.z);
+    tag->putInt(L"PopSize", mPopulation);
+    tag->putInt(L"Radius", mRadius);
+    tag->putInt(L"Golems", mGolems);
+    tag->putInt(L"Stable", mStable);
+    tag->putInt(L"Tick", mTick);
+    tag->putInt(L"MTick", mNoBreedTimer);
+    tag->putInt(L"CX", mCenter.x);
+    tag->putInt(L"CY", mCenter.y);
+    tag->putInt(L"CZ", mCenter.z);
+    tag->putInt(L"ACX", mBottom.x);
+    tag->putInt(L"ACY", mBottom.y);
+    tag->putInt(L"ACZ", mBottom.z);
     ListTag* doors = new ListTag();
     std::vector<boost::shared_ptr<DoorInfo> >::iterator it;
     for (it = mDoors.begin(); it != mDoors.end(); ++it)
     {
         boost::shared_ptr<DoorInfo> info = *it;
         CompoundTag* door = new CompoundTag();
-        door->putInt(L"X", info->getPos().x); door->putInt(L"Y", info->getPos().y); door->putInt(L"Z", info->getPos().z);
-        door->putInt(L"IDX", info->getInsideDx()); door->putInt(L"IDZ", info->getInsideDz()); door->putInt(L"TS", info->getTimeStamp());
+        door->putInt(L"X", info->getPos().x);
+        door->putInt(L"Y", info->getPos().y);
+        door->putInt(L"Z", info->getPos().z);
+        door->putInt(L"IDX", info->getInsideDx());
+        door->putInt(L"IDZ", info->getInsideDz());
+        door->putInt(L"TS", info->getTimeStamp());
         doors->add(door);
     }
     tag->put(L"Doors", doors);
     ListTag* players = new ListTag();
-    for (boost::unordered_map<std::wstring, int>::iterator player = mPlayerStandings.begin(); player != mPlayerStandings.end(); ++player)
+    for (boost::unordered_map<std::wstring, int>::iterator player = mPlayerStandings.begin();
+         player != mPlayerStandings.end(); ++player)
     {
-        CompoundTag* entry = new CompoundTag(); entry->putString(L"Name", player->first); entry->putInt(L"S", player->second); players->add(entry);
+        CompoundTag* entry = new CompoundTag();
+        entry->putString(L"Name", player->first);
+        entry->putInt(L"S", player->second);
+        players->add(entry);
     }
     tag->put(L"Players", players);
 }
 
-void Village::resetNoBreedTimer() { mNoBreedTimer = mTick; }
-bool Village::isBreedTimerOk() { return mNoBreedTimer == 0 || mTick - mNoBreedTimer >= 3600; }
+void Village::resetNoBreedTimer()
+{
+    mNoBreedTimer = mTick;
+}
+bool Village::isBreedTimerOk()
+{
+    return mNoBreedTimer == 0 || mTick - mNoBreedTimer >= 3600;
+}
 void Village::rewardAllPlayers(int amount)
 {
     boost::unordered_map<std::wstring, int>::iterator it;
-    for (it = mPlayerStandings.begin(); it != mPlayerStandings.end(); ++it) modifyStanding(it->first, amount);
+    for (it = mPlayerStandings.begin(); it != mPlayerStandings.end(); ++it)
+        modifyStanding(it->first, amount);
 }

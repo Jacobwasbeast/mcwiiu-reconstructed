@@ -9,22 +9,13 @@ template <class T>
 class LayerAttributeChildRuleDefinition : public GameRuleDefinition
 {
 public:
-    LayerAttributeChildRuleDefinition()
-        : mGeneratedValue(NULL)
-        , mWholeLevel(false)
-    {
-    }
+    LayerAttributeChildRuleDefinition() : mGeneratedValue(NULL), mWholeLevel(false) {}
 
-    virtual ~LayerAttributeChildRuleDefinition()
-    {
-    }
+    virtual ~LayerAttributeChildRuleDefinition() {}
 
     virtual T Generate() const = 0;
 
-    virtual bool CanUse(const LayerMetadata& metadata) const
-    {
-        return true;
-    }
+    virtual bool CanUse(const LayerMetadata& metadata) const { return true; }
 
     T GetValue()
     {

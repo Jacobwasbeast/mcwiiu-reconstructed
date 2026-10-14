@@ -3,8 +3,7 @@
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-AddIslandLayer::AddIslandLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
-    : Layer(seed)
+AddIslandLayer::AddIslandLayer(long long seed, boost::shared_ptr<Layer> parentLayer) : Layer(seed)
 {
     parent = parentLayer;
 }
@@ -33,8 +32,8 @@ arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height
             initRandom((long long)(j + x), (long long)(i + z));
 
             if (isShallowOcean(centre)
-                && (!isShallowOcean(northWest) || !isShallowOcean(northEast)
-                    || !isShallowOcean(southWest) || !isShallowOcean(southEast)))
+                && (!isShallowOcean(northWest) || !isShallowOcean(northEast) || !isShallowOcean(southWest)
+                    || !isShallowOcean(southEast)))
             {
                 int nonOceanCount = 1;
                 int selected = 1;
@@ -70,8 +69,8 @@ arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height
                 }
             }
             else if (!isShallowOcean(centre)
-                     && (isShallowOcean(northWest) || isShallowOcean(northEast)
-                         || isShallowOcean(southWest) || isShallowOcean(southEast)))
+                     && (isShallowOcean(northWest) || isShallowOcean(northEast) || isShallowOcean(southWest)
+                         || isShallowOcean(southEast)))
             {
                 if (nextRandom(5) == 0)
                 {

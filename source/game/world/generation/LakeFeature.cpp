@@ -15,8 +15,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/util/Random.hpp"
 
-LakeFeature::LakeFeature(Block* block)
-    : Feature(false), mBlock(block)
+LakeFeature::LakeFeature(Block* block) : Feature(false), mBlock(block)
 {
 }
 
@@ -74,13 +73,11 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
         {
             for (int y = 0; y < 8; ++y)
             {
-                bool edge = !fill[(x * 16 + z) * 8 + y]
-                    && ((x < 15 && fill[((x + 1) * 16 + z) * 8 + y])
-                        || (x > 0 && fill[((x - 1) * 16 + z) * 8 + y])
-                        || (z < 15 && fill[(x * 16 + z + 1) * 8 + y])
-                        || (z > 0 && fill[(x * 16 + (z - 1)) * 8 + y])
-                        || (y < 7 && fill[(x * 16 + z) * 8 + y + 1])
-                        || (y > 0 && fill[(x * 16 + z) * 8 + (y - 1)]));
+                bool edge =
+                    !fill[(x * 16 + z) * 8 + y]
+                    && ((x < 15 && fill[((x + 1) * 16 + z) * 8 + y]) || (x > 0 && fill[((x - 1) * 16 + z) * 8 + y])
+                        || (z < 15 && fill[(x * 16 + z + 1) * 8 + y]) || (z > 0 && fill[(x * 16 + (z - 1)) * 8 + y])
+                        || (y < 7 && fill[(x * 16 + z) * 8 + y + 1]) || (y > 0 && fill[(x * 16 + z) * 8 + (y - 1)]));
                 if (!edge)
                     continue;
 
@@ -100,7 +97,9 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
             for (int y = 0; y < 8; ++y)
             {
                 if (fill[(x * 16 + z) * 8 + y])
-                    level->setBlock(pos.offset(x, y, z), y >= 4 ? Blocks::air->defaultBlockState() : mBlock->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                    level->setBlock(pos.offset(x, y, z),
+                                    y >= 4 ? Blocks::air->defaultBlockState() : mBlock->defaultBlockState(),
+                                    Block::UPDATE_CLIENTS, false);
             }
         }
     }
@@ -136,16 +135,16 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
             {
                 for (int y = 0; y < 8; ++y)
                 {
-                    bool edge = !fill[(x * 16 + z) * 8 + y]
-                        && ((x < 15 && fill[((x + 1) * 16 + z) * 8 + y])
-                            || (x > 0 && fill[((x - 1) * 16 + z) * 8 + y])
-                            || (z < 15 && fill[(x * 16 + z + 1) * 8 + y])
-                            || (z > 0 && fill[(x * 16 + (z - 1)) * 8 + y])
+                    bool edge =
+                        !fill[(x * 16 + z) * 8 + y]
+                        && ((x < 15 && fill[((x + 1) * 16 + z) * 8 + y]) || (x > 0 && fill[((x - 1) * 16 + z) * 8 + y])
+                            || (z < 15 && fill[(x * 16 + z + 1) * 8 + y]) || (z > 0 && fill[(x * 16 + (z - 1)) * 8 + y])
                             || (y < 7 && fill[(x * 16 + z) * 8 + y + 1])
                             || (y > 0 && fill[(x * 16 + z) * 8 + (y - 1)]));
                     if (edge && (y < 4 || random.nextInt(2) != 0)
                         && level->getBlockState(pos.offset(x, y, z))->getMaterial()->isSolid())
-                        level->setBlock(pos.offset(x, y, z), Blocks::stone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                        level->setBlock(pos.offset(x, y, z), Blocks::stone->defaultBlockState(), Block::UPDATE_CLIENTS,
+                                        false);
                 }
             }
         }
@@ -158,7 +157,8 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
             for (int z = 0; z < 16; ++z)
             {
                 if (level->shouldFreezeIgnoreNeighbors(pos.offset(x, 4, z)))
-                    level->setBlock(pos.offset(x, 4, z), Blocks::ice->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                    level->setBlock(pos.offset(x, 4, z), Blocks::ice->defaultBlockState(), Block::UPDATE_CLIENTS,
+                                    false);
             }
         }
     }

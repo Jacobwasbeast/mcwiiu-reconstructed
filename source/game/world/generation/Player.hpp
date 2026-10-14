@@ -38,8 +38,6 @@ class Merchant;
 class MultiPlayerGameMode;
 
 
-
-
 class Achievement;
 class Block;
 class BlockPos;
@@ -73,13 +71,14 @@ enum EDefaultSkins
     eDefaultSkins_Skin0 = 1
 };
 
-class Player : public LivingEntity {
+class Player : public LivingEntity
+{
 public:
-
     friend class MultiPlayerGameMode;
     friend class ServerGamePacketListenerImpl;
 
-    enum EPlayerGamePrivileges {
+    enum EPlayerGamePrivileges
+    {
         ePlayerGamePrivilege_CannotMine = 0,
         ePlayerGamePrivilege_CannotBuild = 1,
         ePlayerGamePrivilege_CannotAttackPlayers = 3,
@@ -109,12 +108,14 @@ public:
     static std::vector<unsigned int> sDlcSkinIds;
 
 
-    class ChatVisiblity {
+    class ChatVisiblity
+    {
     public:
         ChatVisiblity(int id);
         int getId();
         static ChatVisiblity byId(int id);
         std::wstring getKey();
+
     private:
         int mId;
     };
@@ -136,10 +137,12 @@ public:
         BED_SLEEPING_NOT_SAFE = 5
     };
 
-    class PreventsMeFromSleeping : public Predicate<boost::shared_ptr<Entity> > {
+    class PreventsMeFromSleeping : public Predicate<boost::shared_ptr<Entity> >
+    {
     public:
         PreventsMeFromSleeping(boost::shared_ptr<Player> player);
         bool apply(boost::shared_ptr<Entity> entity) const;
+
     private:
         boost::shared_ptr<Player> mPlayer;
     };
@@ -482,7 +485,8 @@ public:
     void stopSpinAttack();
     void AdvanceTimerAchievement(TimerAchievements achievement, int32_t ticks);
     void SetLastAteKelp(bool ate);
-    void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams, uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams);
+    void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams, uint32_t numIntParams,
+                     std::wstring* stringParams, uint32_t numStringParams);
     uint64_t GetType();
     virtual uint64_t setCustomCape(uint32_t cape);
     virtual void handleCollectItem(not_null_ptr<ItemInstance> item);
@@ -501,7 +505,8 @@ public:
     void SetGlideCollisionDamage(bool enabled);
     double GetLiftForceModifier();
     void SetLiftForceModifier(double modifier);
-    virtual int32_t AutoEquip(not_null_ptr<ItemInstance>& item, not_null_ptr<ItemInstance>& replaced, bool& replacedExisting);
+    virtual int32_t AutoEquip(not_null_ptr<ItemInstance>& item, not_null_ptr<ItemInstance>& replaced,
+                              bool& replacedExisting);
     bool isPickable() { return !isSpectator(); }
     virtual void OnEquipArmor(not_null_ptr<ItemInstance> item);
     virtual void OnTakeFromAnvil(not_null_ptr<ItemInstance> item);
@@ -513,8 +518,6 @@ public:
     bool isAllowedToTeleport();
     double GetCollisionSize();
     void AdvanceAllTimerAchievements(int amount);
-
-
 };
 
 

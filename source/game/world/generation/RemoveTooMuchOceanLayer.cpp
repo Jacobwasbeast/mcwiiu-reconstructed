@@ -3,8 +3,7 @@
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-RemoveTooMuchOceanLayer::RemoveTooMuchOceanLayer(long long seed, boost::shared_ptr<Layer> parent)
-    : Layer(seed)
+RemoveTooMuchOceanLayer::RemoveTooMuchOceanLayer(long long seed, boost::shared_ptr<Layer> parent) : Layer(seed)
 {
     this->parent = parent;
 }
@@ -40,8 +39,8 @@ arrayWithLength<int> RemoveTooMuchOceanLayer::getArea(int x, int z, int width, i
 
             initRandom((long long)(j + x), (long long)(i + z));
 
-            if (isShallowOcean(centre) && isShallowOcean(north) && isShallowOcean(east)
-                && isShallowOcean(west) && isShallowOcean(south) && nextRandom(2) == 0)
+            if (isShallowOcean(centre) && isShallowOcean(north) && isShallowOcean(east) && isShallowOcean(west)
+                && isShallowOcean(south) && nextRandom(2) == 0)
             {
                 area[j + i * width] = 1;
             }

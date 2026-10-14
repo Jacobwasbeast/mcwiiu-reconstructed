@@ -11,9 +11,8 @@ bool HellFireFeature::place(Level* level, Random& random, const BlockPos& origin
 {
     for (int i = 0; i < 64; ++i)
     {
-        BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                         random.nextInt(4) - random.nextInt(4),
-                                         random.nextInt(8) - random.nextInt(8));
+        BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8), random.nextInt(4) - random.nextInt(4),
+                                          random.nextInt(8) - random.nextInt(8));
         if (level->isEmptyBlock(position))
         {
             if (level->getBlockState(position.below())->getBlock() == Blocks::netherrack)

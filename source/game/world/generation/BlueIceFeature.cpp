@@ -57,14 +57,11 @@ bool BlueIceFeature::place(Level* level, Random& random, const BlockPos& origin)
 
         if (spread >= 1)
         {
-            const BlockPos position = origin.offset(random.nextInt(spread) - random.nextInt(spread),
-                                                    verticalOffset,
+            const BlockPos position = origin.offset(random.nextInt(spread) - random.nextInt(spread), verticalOffset,
                                                     random.nextInt(spread) - random.nextInt(spread));
             const BlockState* state = level->getBlockState(position);
             Block* block = state->getBlock();
-            if (state->getMaterial() == Material::AIR
-                || block == Blocks::water
-                || block == Blocks::packed_ice
+            if (state->getMaterial() == Material::AIR || block == Blocks::water || block == Blocks::packed_ice
                 || block == Blocks::ice)
             {
                 int blueIceCount = 0;

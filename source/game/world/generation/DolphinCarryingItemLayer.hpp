@@ -22,8 +22,7 @@ public:
                         bool bUseDisplayList);
     virtual bool colorsOnDamage();
 
-    void renderItemOnNose(const boost::shared_ptr<LivingEntity>& entity,
-                          const not_null_ptr<ItemInstance>& item);
+    void renderItemOnNose(const boost::shared_ptr<LivingEntity>& entity, const not_null_ptr<ItemInstance>& item);
 
 private:
     LivingEntityRenderer* mLivingEntityRenderer;

@@ -8,8 +8,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 
-DeadBushFeature::DeadBushFeature(Block* block)
-    : Feature(false)
+DeadBushFeature::DeadBushFeature(Block* block) : Feature(false)
 {
 }
 

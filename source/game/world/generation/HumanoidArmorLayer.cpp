@@ -6,8 +6,7 @@
 #include "game/client/render/ModelPart.hpp"
 #include "game/core/EquipmentSlot.hpp"
 
-HumanoidArmorLayer::HumanoidArmorLayer(LivingEntityRenderer* renderer)
-    : AbstractArmorLayer(renderer)
+HumanoidArmorLayer::HumanoidArmorLayer(LivingEntityRenderer* renderer) : AbstractArmorLayer(renderer)
 {
     createArmorModels();
 }

@@ -11,8 +11,7 @@
 
 static ResourceLocation SPIN_ATTACK_LOCATION(TN_ITEM_TRIDENT_RIPTIDE);
 
-SpinAttackLayer::SpinAttackLayer(LivingEntityRenderer* renderer)
-    : mRenderer(renderer)
+SpinAttackLayer::SpinAttackLayer(LivingEntityRenderer* renderer) : mRenderer(renderer)
 {
     mModel = new SpinAttackModel();
 }
@@ -22,9 +21,8 @@ SpinAttackLayer::~SpinAttackLayer()
     delete mModel;
 }
 
-void SpinAttackLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                             float limbSwingAmount, float partialTicks, float ageInTicks,
-                             float netHeadYaw, float headPitch, float scale,
+void SpinAttackLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                             float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                              bool bUseDisplayList)
 {
     if (!entity->getDamageNearbyMobs())

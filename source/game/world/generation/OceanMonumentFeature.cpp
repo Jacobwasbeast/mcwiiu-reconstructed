@@ -46,25 +46,20 @@ void OceanMonumentFeature::staticCtor()
     gOceanMonumentAllowedBiomes.push_back(Biome::RIVER);
     gOceanMonumentAllowedBiomes.push_back(Biome::FROZEN_RIVER);
 
-    gOceanMonumentBiomeRequirements =
-        FjFeatureBiomeRequirements(&gOceanMonumentSpawnBiomes, 8,
-                                   &gOceanMonumentAllowedBiomes, 29);
-    gOceanMonumentEnemies.push_back(
-        new Biome::MobSpawnerData(1, EntityType::GUARDIAN, 2, 4));
+    gOceanMonumentBiomeRequirements = FjFeatureBiomeRequirements(&gOceanMonumentSpawnBiomes, 8,
+                                                                 &gOceanMonumentAllowedBiomes, 29);
+    gOceanMonumentEnemies.push_back(new Biome::MobSpawnerData(1, EntityType::GUARDIAN, 2, 4));
 }
 
-OceanMonumentFeature::OceanMonumentFeature()
-    : StructureFeature()
+OceanMonumentFeature::OceanMonumentFeature() : StructureFeature()
 {
     mSpacing = 32;
     mSeparation = 5;
-    mFeatureChunk = FjIsFeatureChunk(&gOceanMonumentBiomeRequirements, 40,
-                                     mSpacing, mSeparation);
+    mFeatureChunk = FjIsFeatureChunk(&gOceanMonumentBiomeRequirements, 40, mSpacing, mSeparation);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
-OceanMonumentFeature::OceanMonumentFeature(SuperflatConfig* config)
-    : StructureFeature()
+OceanMonumentFeature::OceanMonumentFeature(SuperflatConfig* config) : StructureFeature()
 {
     FlatGeneratorInfo generatorInfo(config);
     int separation = generatorInfo.getOceanMonuemntSeparation();
@@ -74,8 +69,7 @@ OceanMonumentFeature::OceanMonumentFeature(SuperflatConfig* config)
     separation = separation + 1;
     int spacing = generatorInfo.getOceanMonumentSpacing();
     mSpacing = spacing > separation ? spacing : separation;
-    mFeatureChunk = FjIsFeatureChunk(&gOceanMonumentBiomeRequirements, 40,
-                                     mSpacing, mSeparation);
+    mFeatureChunk = FjIsFeatureChunk(&gOceanMonumentBiomeRequirements, 40, mSpacing, mSeparation);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
@@ -91,14 +85,12 @@ std::wstring OceanMonumentFeature::getFeatureName()
 bool OceanMonumentFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 {
     int sizeInChunks = level->getLevelData()->getXZSize();
-    const FjIsFeatureChunk* featureChunk =
-        FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
-            ? &mReducedFeatureChunk
-            : &mFeatureChunk;
+    const FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
+                                               ? &mReducedFeatureChunk
+                                               : &mFeatureChunk;
     ChunkPos centerChunk = featureChunk->getCenterChunk(chunkX, chunkZ);
-    bool result = featureChunk->isFeatureChunk(
-        *level->getRandomFor(centerChunk.x, centerChunk.z, 0x9E7F71),
-        level->getBiomeSource(), sizeInChunks, chunkX, chunkZ);
+    bool result = featureChunk->isFeatureChunk(*level->getRandomFor(centerChunk.x, centerChunk.z, 0x9E7F71),
+                                               level->getBiomeSource(), sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_OceanMonument, chunkX, chunkZ);
     if (result)
     {
@@ -112,9 +104,7 @@ char OceanMonumentFeature::fjIsFeatureChunk(BiomeSource*, long long, int, int, i
     return false;
 }
 
-BlockPos* OceanMonumentFeature::getNearestGeneratedFeature(Level* levelIn,
-                                                            const BlockPos& pos,
-                                                            bool skipExistingChunks)
+BlockPos* OceanMonumentFeature::getNearestGeneratedFeature(Level* levelIn, const BlockPos& pos, bool skipExistingChunks)
 {
     level = levelIn;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
@@ -127,9 +117,8 @@ BlockPos* OceanMonumentFeature::getNearestGeneratedFeature(Level* levelIn,
             return options->getClosestFeature(eFeatureType_OceanMonument, pos);
         }
     }
-    return StructureFeature::findNearestFeaturePositionBySpacing(
-        levelIn, this, pos, mSpacing, mSeparation, 0x9E7F71, true, 100,
-        skipExistingChunks);
+    return StructureFeature::findNearestFeaturePositionBySpacing(levelIn, this, pos, mSpacing, mSeparation, 0x9E7F71,
+                                                                 true, 100, skipExistingChunks);
 }
 
 StructureStart* OceanMonumentFeature::createStructureStart(int chunkX, int chunkZ)
@@ -147,8 +136,7 @@ void OceanMonumentFeature::OceanMonumentStart::Init()
     mCreated = false;
 }
 
-void OceanMonumentFeature::OceanMonumentStart::create(Level* level, Random& random,
-                                                       int chunkX, int chunkZ)
+void OceanMonumentFeature::OceanMonumentStart::create(Level* level, Random& random, int chunkX, int chunkZ)
 {
     random.setSeed(level->getSeed());
     long long xSeed = random.nextLong();
@@ -164,9 +152,8 @@ void OceanMonumentFeature::OceanMonumentStart::create(Level* level, Random& rand
     if (options != NULL)
     {
         const Direction* featureDirection = NULL;
-        if (options->isFeatureChunk(chunkX, chunkZ, eFeatureType_OceanMonument,
-                                    &featureDirection) &&
-            featureDirection != NULL)
+        if (options->isFeatureChunk(chunkX, chunkZ, eFeatureType_OceanMonument, &featureDirection)
+            && featureDirection != NULL)
         {
             direction = featureDirection;
         }
@@ -177,22 +164,19 @@ void OceanMonumentFeature::OceanMonumentStart::create(Level* level, Random& rand
     mCreated = true;
 }
 
-OceanMonumentFeature::OceanMonumentStart::OceanMonumentStart(Level* level, Random& random,
-                                                              int chunkX, int chunkZ)
+OceanMonumentFeature::OceanMonumentStart::OceanMonumentStart(Level* level, Random& random, int chunkX, int chunkZ)
     : StructureStart(chunkX, chunkZ)
 {
     Init();
     create(level, random, chunkX, chunkZ);
 }
 
-OceanMonumentFeature::OceanMonumentStart::OceanMonumentStart()
-    : StructureStart()
+OceanMonumentFeature::OceanMonumentStart::OceanMonumentStart() : StructureStart()
 {
     Init();
 }
 
-void OceanMonumentFeature::OceanMonumentStart::postProcess(Level* level, Random& random,
-                                                            BoundingBox* box)
+void OceanMonumentFeature::OceanMonumentStart::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     if (!mCreated)
     {
@@ -204,8 +188,7 @@ void OceanMonumentFeature::OceanMonumentStart::postProcess(Level* level, Random&
 
 bool OceanMonumentFeature::OceanMonumentStart::isValidForPostProcess(ChunkPos* chunkPos)
 {
-    if (std::find(mProcessedChunks.begin(), mProcessedChunks.end(), *chunkPos) ==
-        mProcessedChunks.end())
+    if (std::find(mProcessedChunks.begin(), mProcessedChunks.end(), *chunkPos) == mProcessedChunks.end())
     {
         return StructureStart::isValidForPostProcess(chunkPos);
     }
@@ -223,8 +206,7 @@ void OceanMonumentFeature::OceanMonumentStart::addAdditionalSaveData(DataOutputS
 {
     StructureStart::addAdditionalSaveData(output);
     output->writeInt(mProcessedChunks.size());
-    for (std::vector<ChunkPos>::iterator it = mProcessedChunks.begin();
-         it != mProcessedChunks.end(); it++)
+    for (std::vector<ChunkPos>::iterator it = mProcessedChunks.begin(); it != mProcessedChunks.end(); it++)
     {
         output->writeInt(it->x);
         output->writeInt(it->z);

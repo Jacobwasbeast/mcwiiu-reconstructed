@@ -107,10 +107,26 @@ StructurePlaceSettings* StructurePlaceSettings::copy()
     return settings;
 }
 
-StructurePlaceSettings* StructurePlaceSettings::setMirror(Mirror* mirror) { mMirror = mirror; return this; }
-StructurePlaceSettings* StructurePlaceSettings::setRotation(Rotation* rotation) { mRotation = rotation; return this; }
-StructurePlaceSettings* StructurePlaceSettings::setIgnoreEntities(bool ignoreEntities) { mIgnoreEntities = ignoreEntities; return this; }
-StructurePlaceSettings* StructurePlaceSettings::setIgnoreBlock(Block* block) { mIgnoreBlock = block; return this; }
+StructurePlaceSettings* StructurePlaceSettings::setMirror(Mirror* mirror)
+{
+    mMirror = mirror;
+    return this;
+}
+StructurePlaceSettings* StructurePlaceSettings::setRotation(Rotation* rotation)
+{
+    mRotation = rotation;
+    return this;
+}
+StructurePlaceSettings* StructurePlaceSettings::setIgnoreEntities(bool ignoreEntities)
+{
+    mIgnoreEntities = ignoreEntities;
+    return this;
+}
+StructurePlaceSettings* StructurePlaceSettings::setIgnoreBlock(Block* block)
+{
+    mIgnoreBlock = block;
+    return this;
+}
 
 StructurePlaceSettings* StructurePlaceSettings::setBoundingBox(BoundingBox* box)
 {
@@ -119,11 +135,25 @@ StructurePlaceSettings* StructurePlaceSettings::setBoundingBox(BoundingBox* box)
     return this;
 }
 
-StructurePlaceSettings* StructurePlaceSettings::setRandom(Random* random) { mRandom = random; return this; }
-StructurePlaceSettings* StructurePlaceSettings::setIntegrity(float integrity) { mIntegrity = integrity; return this; }
+StructurePlaceSettings* StructurePlaceSettings::setRandom(Random* random)
+{
+    mRandom = random;
+    return this;
+}
+StructurePlaceSettings* StructurePlaceSettings::setIntegrity(float integrity)
+{
+    mIntegrity = integrity;
+    return this;
+}
 
-Mirror* StructurePlaceSettings::getMirror() const { return mMirror; }
-Rotation* StructurePlaceSettings::getRotation() const { return mRotation; }
+Mirror* StructurePlaceSettings::getMirror() const
+{
+    return mMirror;
+}
+Rotation* StructurePlaceSettings::getRotation() const
+{
+    return mRotation;
+}
 
 Random* StructurePlaceSettings::getRandom(const BlockPos* position, bool& generated)
 {
@@ -144,13 +174,21 @@ Random* StructurePlaceSettings::getRandom(const BlockPos* position, bool& genera
     }
     int x = position->x;
     int z = position->z;
-    return new Random(static_cast<int>(x * x * 4987142 + x * 5947611 + z * z * 4392871 + z * 389711
-        ^ 987234911));
+    return new Random(static_cast<int>(x * x * 4987142 + x * 5947611 + z * z * 4392871 + z * 389711 ^ 987234911));
 }
 
-float StructurePlaceSettings::getIntegrity() { return mIntegrity; }
-bool StructurePlaceSettings::isIgnoreEntities() { return mIgnoreEntities; }
-Block* StructurePlaceSettings::getIgnoreBlock() { return mIgnoreBlock; }
+float StructurePlaceSettings::getIntegrity()
+{
+    return mIntegrity;
+}
+bool StructurePlaceSettings::isIgnoreEntities()
+{
+    return mIgnoreEntities;
+}
+Block* StructurePlaceSettings::getIgnoreBlock()
+{
+    return mIgnoreBlock;
+}
 
 BoundingBox* StructurePlaceSettings::calculateBoundingBox(ChunkPos* chunkPos)
 {
@@ -158,8 +196,7 @@ BoundingBox* StructurePlaceSettings::calculateBoundingBox(ChunkPos* chunkPos)
     if (chunkPos != NULL)
     {
         delete mBoundingBox;
-        box = new BoundingBox(chunkPos->x * 16, 0, chunkPos->z * 16,
-                              chunkPos->x * 16 + 15, 255, chunkPos->z * 16 + 15);
+        box = new BoundingBox(chunkPos->x * 16, 0, chunkPos->z * 16, chunkPos->x * 16 + 15, 255, chunkPos->z * 16 + 15);
     }
     return box;
 }
@@ -176,7 +213,10 @@ BoundingBox* StructurePlaceSettings::getBoundingBox()
     return mBoundingBox;
 }
 
-bool StructurePlaceSettings::isIgnoreStructureBlocks() { return mIgnoreStructureBlocks; }
+bool StructurePlaceSettings::isIgnoreStructureBlocks()
+{
+    return mIgnoreStructureBlocks;
+}
 
 void StructurePlaceSettings::addSwapAuxValue(int blockId, int auxValue)
 {
@@ -188,18 +228,18 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
     Block* block = state->getBlock();
     int blockId = Block::getId(block);
     bool isStrippedLog = block == Blocks::stripped_log_oak || block == Blocks::stripped_log_birch
-        || block == Blocks::stripped_log_acacia || block == Blocks::stripped_log_dark_oak
-        || block == Blocks::stripped_log_jungle || block == Blocks::stripped_log_spruce;
+                         || block == Blocks::stripped_log_acacia || block == Blocks::stripped_log_dark_oak
+                         || block == Blocks::stripped_log_jungle || block == Blocks::stripped_log_spruce;
     bool isStairs = blockId == BlockId::OAK_STAIRS || blockId == BlockId::STONE_STAIRS
-        || blockId == BlockId::BRICK_STAIRS || blockId == BlockId::STONE_BRICK_STAIRS
-        || blockId == BlockId::NETHER_BRICK_STAIRS || blockId == BlockId::SANDSTONE_STAIRS
-        || blockId == BlockId::SPRUCE_STAIRS || blockId == BlockId::BIRCH_STAIRS
-        || blockId == BlockId::JUNGLE_STAIRS || blockId == BlockId::QUARTZ_STAIRS
-        || blockId == BlockId::ACACIA_STAIRS || blockId == BlockId::DARK_OAK_STAIRS
-        || blockId == BlockId::RED_SANDSTONE_STAIRS || blockId == BlockId::PURPUR_STAIRS;
+                    || blockId == BlockId::BRICK_STAIRS || blockId == BlockId::STONE_BRICK_STAIRS
+                    || blockId == BlockId::NETHER_BRICK_STAIRS || blockId == BlockId::SANDSTONE_STAIRS
+                    || blockId == BlockId::SPRUCE_STAIRS || blockId == BlockId::BIRCH_STAIRS
+                    || blockId == BlockId::JUNGLE_STAIRS || blockId == BlockId::QUARTZ_STAIRS
+                    || blockId == BlockId::ACACIA_STAIRS || blockId == BlockId::DARK_OAK_STAIRS
+                    || blockId == BlockId::RED_SANDSTONE_STAIRS || blockId == BlockId::PURPUR_STAIRS;
     bool isTrapdoor = blockId == BlockId::TRAPDOOR || blockId == BlockId::SPRUCE_TRAPDOOR
-        || blockId == BlockId::BIRCH_TRAPDOOR || blockId == BlockId::JUNGLE_TRAPDOOR
-        || blockId == BlockId::ACACIA_TRAPDOOR || blockId == BlockId::DARK_OAK_TRAPDOOR;
+                      || blockId == BlockId::BIRCH_TRAPDOOR || blockId == BlockId::JUNGLE_TRAPDOOR
+                      || blockId == BlockId::ACACIA_TRAPDOOR || blockId == BlockId::DARK_OAK_TRAPDOOR;
 
     if (blockId == BlockId::LOG || blockId == BlockId::LOG2)
     {
@@ -215,8 +255,7 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
         else
             state = Blocks::log2->getBlockState((data & 0xc) | (replacement - 4));
     }
-    else if (isStairs || block->mIsDoor || block->mIsFence || block->mIsFenceGate
-        || isTrapdoor || isStrippedLog)
+    else if (isStairs || block->mIsDoor || block->mIsFence || block->mIsFenceGate || isTrapdoor || isStrippedLog)
     {
         Block* stairs = Blocks::oak_stairs;
         Block* door = Blocks::wooden_door;
@@ -231,20 +270,20 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
             || blockId == BlockId::SPRUCE_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_SPRUCE)
             key = 1;
         else if (blockId == BlockId::BIRCH_STAIRS || blockId == BlockId::BIRCH_FENCE_GATE
-            || blockId == BlockId::BIRCH_FENCE || blockId == BlockId::BIRCH_DOOR
-            || blockId == BlockId::BIRCH_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_BIRCH)
+                 || blockId == BlockId::BIRCH_FENCE || blockId == BlockId::BIRCH_DOOR
+                 || blockId == BlockId::BIRCH_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_BIRCH)
             key = 2;
         else if (blockId == BlockId::JUNGLE_STAIRS || blockId == BlockId::JUNGLE_FENCE_GATE
-            || blockId == BlockId::JUNGLE_FENCE || blockId == BlockId::JUNGLE_DOOR
-            || blockId == BlockId::JUNGLE_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_JUNGLE)
+                 || blockId == BlockId::JUNGLE_FENCE || blockId == BlockId::JUNGLE_DOOR
+                 || blockId == BlockId::JUNGLE_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_JUNGLE)
             key = 3;
         else if (blockId == BlockId::ACACIA_STAIRS || blockId == BlockId::ACACIA_FENCE_GATE
-            || blockId == BlockId::ACACIA_FENCE || blockId == BlockId::ACACIA_DOOR
-            || blockId == BlockId::ACACIA_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_ACACIA)
+                 || blockId == BlockId::ACACIA_FENCE || blockId == BlockId::ACACIA_DOOR
+                 || blockId == BlockId::ACACIA_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_ACACIA)
             key = 4;
         else if (blockId == BlockId::DARK_OAK_STAIRS || blockId == BlockId::DARK_OAK_FENCE_GATE
-            || blockId == BlockId::DARK_OAK_FENCE || blockId == BlockId::DARK_OAK_DOOR
-            || blockId == BlockId::DARK_OAK_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_DARK_OAK)
+                 || blockId == BlockId::DARK_OAK_FENCE || blockId == BlockId::DARK_OAK_DOOR
+                 || blockId == BlockId::DARK_OAK_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_DARK_OAK)
             key = 5;
 
         if (mSwapAuxValues.find(key) == mSwapAuxValues.end())
@@ -337,5 +376,11 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
     return state;
 }
 
-void StructurePlaceSettings::placeWaterBelowSeaLevel(bool placeWater) { mPlaceWaterBelowSeaLevel = placeWater; }
-bool StructurePlaceSettings::isPlacingWaterBelowSeaLevel() const { return mPlaceWaterBelowSeaLevel; }
+void StructurePlaceSettings::placeWaterBelowSeaLevel(bool placeWater)
+{
+    mPlaceWaterBelowSeaLevel = placeWater;
+}
+bool StructurePlaceSettings::isPlacingWaterBelowSeaLevel() const
+{
+    return mPlaceWaterBelowSeaLevel;
+}

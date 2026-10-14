@@ -5,21 +5,14 @@
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/generation/BowlLayerFill.hpp"
 
-static const std::wstring CURVE_NAMES[2] =
-{
-    L"Dome",
-    L"Bowl"
-};
+static const std::wstring CURVE_NAMES[2] = {L"Dome", L"Bowl"};
 
-CurvedLayerFillRuleDefinition::CurvedLayerFillRuleDefinition()
-    : mCurve(eCurve_Dome)
-    , mOffset(4)
-    , mThickness(1)
+CurvedLayerFillRuleDefinition::CurvedLayerFillRuleDefinition() : mCurve(eCurve_Dome), mOffset(4), mThickness(1)
 {
 }
 
 void CurvedLayerFillRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
-                                                     unsigned int extraAttributeCount)
+                                                    unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_type, CURVE_NAMES[mCurve]);

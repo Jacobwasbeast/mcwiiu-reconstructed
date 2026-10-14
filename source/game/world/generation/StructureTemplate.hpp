@@ -36,7 +36,7 @@ public:
             bool operator()(const StructureBlockInfo* left, const StructureBlockInfo* right) const
             {
                 return (left->mPos.x << 16 | (left->mPos.z & 0xFFFF))
-                    < (right->mPos.x << 16 | (right->mPos.z & 0xFFFF));
+                       < (right->mPos.x << 16 | (right->mPos.z & 0xFFFF));
             }
         };
 
@@ -72,7 +72,9 @@ public:
     };
 
     typedef boost::unordered_map<const BlockPos, std::wstring, boost::hash<const BlockPos>,
-        std::equal_to<const BlockPos>, std::allocator<std::pair<const BlockPos, std::wstring> > > MarkerMap;
+                                 std::equal_to<const BlockPos>,
+                                 std::allocator<std::pair<const BlockPos, std::wstring> > >
+        MarkerMap;
 
     StructureTemplate();
     virtual ~StructureTemplate();
@@ -91,21 +93,22 @@ public:
     MarkerMap getMarkers(const BlockPos& pos, StructurePlaceSettings* settings) const;
 
     BlockPos calculateConnectedPosition(const StructurePlaceSettings* settings, const BlockPos& pos,
-        const StructurePlaceSettings* connectedSettings, const BlockPos& connectedPos) const;
+                                        const StructurePlaceSettings* connectedSettings,
+                                        const BlockPos& connectedPos) const;
 
     void placeEntities(Level* level, const BlockPos& pos, Mirror* mirror, Rotation* rotation,
-        BoundingBox* boundingBox) const;
+                       BoundingBox* boundingBox) const;
 
     void placeInWorld(Level* level, const BlockPos& pos, StructureProcessor* processor,
-        StructurePlaceSettings* settings, int flags) const;
+                      StructurePlaceSettings* settings, int flags) const;
     void placeInWorld(Level* level, const BlockPos& pos, StructurePlaceSettings* settings) const;
     void placeInWorldChunk(Level* level, const BlockPos& pos, StructurePlaceSettings* settings) const;
     void placeInWorld(Level* level, const BlockPos& pos, StructurePlaceSettings* settings, int flags) const;
 
     BlockPos getSize(Rotation* rotation) const;
 
-    static BlockPos getZeroPositionWithTransform(const BlockPos& pos, Mirror* mirror, Rotation* rotation,
-        int sizeX, int sizeZ);
+    static BlockPos getZeroPositionWithTransform(const BlockPos& pos, Mirror* mirror, Rotation* rotation, int sizeX,
+                                                 int sizeZ);
     BlockPos getZeroPositionWithTransform(const BlockPos& pos, Mirror* mirror, Rotation* rotation) const;
 
     static void addWalkers(DataFixerUpper* fixerUpper);

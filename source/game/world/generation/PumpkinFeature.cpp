@@ -21,8 +21,7 @@ bool PumpkinFeature::place(Level* level, Random& random, const BlockPos& origin)
     {
         BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8), random.nextInt(4) - random.nextInt(4),
                                           random.nextInt(8) - random.nextInt(8));
-        if (level->isEmptyBlock(position)
-            && level->getBlockState(position.below())->getBlock() == Blocks::grass
+        if (level->isEmptyBlock(position) && level->getBlockState(position.below())->getBlock() == Blocks::grass
             && Blocks::pumpkin->mayPlace(level, position))
         {
             level->setBlock(position,

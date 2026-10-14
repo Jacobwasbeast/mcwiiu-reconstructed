@@ -17,14 +17,12 @@
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 
-StrongholdFeature::StrongholdFeature()
-    : StructureFeature()
+StrongholdFeature::StrongholdFeature() : StructureFeature()
 {
     _init();
 }
 
-StrongholdFeature::StrongholdFeature(SuperflatConfig* config)
-    : StructureFeature()
+StrongholdFeature::StrongholdFeature(SuperflatConfig* config) : StructureFeature()
 {
     _init();
     FlatGeneratorInfo info(config);
@@ -83,18 +81,17 @@ void StrongholdFeature::generatePositions()
             double distance = 0.0;
             if (level->getOriginalSaveVersion() >= 5)
             {
-                distance = (positionRandom.nextDouble() + 1.25) *
-                    static_cast<double>(positionRandom.nextInt(4) + 3);
+                distance = (positionRandom.nextDouble() + 1.25) * static_cast<double>(positionRandom.nextInt(4) + 3);
             }
             else
             {
-                distance = (positionRandom.nextDouble() + 1.25) *
-                    (static_cast<double>(positionRandom.nextInt(7)) + 5.0);
+                distance = (positionRandom.nextDouble() + 1.25)
+                           * (static_cast<double>(positionRandom.nextInt(7)) + 5.0);
             }
             int x = Math::round(std::cos(angle) * distance);
             int z = Math::round(std::sin(angle) * distance);
-            BlockPos* biomePosition = level->getBiomeSource()->findBiome(
-                x * 16 + 8, z * 16 + 8, 112, mAllowedBiomes, &positionRandom);
+            BlockPos* biomePosition = level->getBiomeSource()->findBiome(x * 16 + 8, z * 16 + 8, 112, mAllowedBiomes,
+                                                                         &positionRandom);
             if (biomePosition != NULL)
             {
                 x = biomePosition->x >> 4;
@@ -112,18 +109,14 @@ void StrongholdFeature::generatePositions()
 
     if (!foundPosition)
     {
-        gApp.AddTerrainFeaturePosition(eTerrainFeatureType_Stronghold,
-                                      mPositions[0]->x, mPositions[0]->z);
+        gApp.AddTerrainFeaturePosition(eTerrainFeatureType_Stronghold, mPositions[0]->x, mPositions[0]->z);
     }
 }
 
-BlockPos* StrongholdFeature::getNearestGeneratedFeature(Level*,
-                                                        const BlockPos& pos,
-                                                        bool)
+BlockPos* StrongholdFeature::getNearestGeneratedFeature(Level*, const BlockPos& pos, bool)
 {
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if (options != NULL && canPlaceFeatureInChunk(false, eFeatureType_Stronghold,
-                                                   pos.x >> 4, pos.z >> 4))
+    if (options != NULL && canPlaceFeatureInChunk(false, eFeatureType_Stronghold, pos.x >> 4, pos.z >> 4))
     {
         return options->getClosestFeature(eFeatureType_Stronghold, pos);
     }
@@ -205,18 +198,17 @@ StructureStart* StrongholdFeature::createStructureStart(int chunkX, int chunkZ)
     {
         delete start;
         start = new StrongholdStart(level, random, chunkX, chunkZ);
-    } while (start->getPieces()->empty() ||
-             static_cast<StrongholdPieces::StartPiece*>(start->getPieces()->front())->mPortalRoom == NULL);
+    } while (start->getPieces()->empty()
+             || static_cast<StrongholdPieces::StartPiece*>(start->getPieces()->front())->mPortalRoom == NULL);
     return start;
 }
 
-StrongholdFeature::StrongholdStart::StrongholdStart(Level* sourceLevel, Random& sourceRandom,
-                                                     int chunkX, int chunkZ)
+StrongholdFeature::StrongholdStart::StrongholdStart(Level* sourceLevel, Random& sourceRandom, int chunkX, int chunkZ)
     : StructureStart(chunkX, chunkZ)
 {
     StrongholdPieces::resetPieces();
-    StrongholdPieces::StartPiece* piece = new StrongholdPieces::StartPiece(
-        0, sourceRandom, chunkX * 16 + 2, chunkZ * 16 + 2, sourceLevel);
+    StrongholdPieces::StartPiece* piece = new StrongholdPieces::StartPiece(0, sourceRandom, chunkX * 16 + 2,
+                                                                           chunkZ * 16 + 2, sourceLevel);
     mPieces.push_back(piece);
     piece->addChildren(piece, &mPieces, sourceRandom);
     std::vector<StructurePiece*>& pendingChildren = piece->mPendingChildren;
@@ -232,8 +224,7 @@ StrongholdFeature::StrongholdStart::StrongholdStart(Level* sourceLevel, Random& 
     moveBelowSeaLevel(sourceLevel, sourceRandom, 10);
 }
 
-StrongholdFeature::StrongholdStart::StrongholdStart()
-    : StructureStart()
+StrongholdFeature::StrongholdStart::StrongholdStart() : StructureStart()
 {
 }
 

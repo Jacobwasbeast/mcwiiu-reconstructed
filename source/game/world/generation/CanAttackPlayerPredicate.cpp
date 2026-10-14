@@ -8,8 +8,7 @@
 #include "game/world/generation/MobNearestPlayerTargetGoal.hpp"
 #include "game/world/generation/Player.hpp"
 
-CanAttackPlayerPredicate::CanAttackPlayerPredicate(MobNearestPlayerTargetGoal* goal)
-    : mGoal(goal)
+CanAttackPlayerPredicate::CanAttackPlayerPredicate(MobNearestPlayerTargetGoal* goal) : mGoal(goal)
 {
 }
 
@@ -51,7 +50,5 @@ bool CanAttackPlayerPredicate::apply(boost::shared_ptr<Entity> entity) const
         return false;
     }
 
-    return TargetGoal::canAttack(mGoal->mMob, boost::dynamic_pointer_cast<LivingEntity>(entity),
-                                 false, true);
+    return TargetGoal::canAttack(mGoal->mMob, boost::dynamic_pointer_cast<LivingEntity>(entity), false, true);
 }
-

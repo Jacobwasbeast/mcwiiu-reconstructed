@@ -131,39 +131,41 @@ public:
 
     virtual void generateAirBox(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1);
     virtual void generateBox(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1,
-        const BlockState* outerState, const BlockState* innerState, bool existingOnly);
-    virtual void generateBox(Level* level, BoundingBox* box, BoundingBox* fillBox,
-        const BlockState* outerState, const BlockState* innerState, bool existingOnly);
+                             const BlockState* outerState, const BlockState* innerState, bool existingOnly);
+    virtual void generateBox(Level* level, BoundingBox* box, BoundingBox* fillBox, const BlockState* outerState,
+                             const BlockState* innerState, bool existingOnly);
     virtual void generateBox(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1,
-        bool existingOnly, Random& random, BlockSelector* selector);
-    virtual void generateBox(Level* level, BoundingBox* box, BoundingBox* fillBox,
-        bool existingOnly, Random& random, BlockSelector* selector);
-    virtual void generateMaybeBox(Level* level, BoundingBox* box, Random& random, float chance,
-        int x0, int y0, int z0, int x1, int y1, int z1,
-        const BlockState* outerState, const BlockState* innerState, bool existingOnly, bool undergroundOnly);
-    virtual void maybeGenerateBlock(Level* level, BoundingBox* box, Random& random, float chance,
-        int x, int y, int z, const BlockState* state);
-    virtual void generateUpperHalfSphere(Level* level, BoundingBox* box, int x0, int y0, int z0,
-        int x1, int y1, int z1, const BlockState* state, bool excludeAir);
-    virtual void generateFullSphere(Level* level, BoundingBox* box, int centreX, int centreY, int centreZ,
-        int radius, const BlockState* shellState, const BlockState* innerState, bool existingOnly);
+                             bool existingOnly, Random& random, BlockSelector* selector);
+    virtual void generateBox(Level* level, BoundingBox* box, BoundingBox* fillBox, bool existingOnly, Random& random,
+                             BlockSelector* selector);
+    virtual void generateMaybeBox(Level* level, BoundingBox* box, Random& random, float chance, int x0, int y0, int z0,
+                                  int x1, int y1, int z1, const BlockState* outerState, const BlockState* innerState,
+                                  bool existingOnly, bool undergroundOnly);
+    virtual void maybeGenerateBlock(Level* level, BoundingBox* box, Random& random, float chance, int x, int y, int z,
+                                    const BlockState* state);
+    virtual void generateUpperHalfSphere(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1,
+                                         const BlockState* state, bool excludeAir);
+    virtual void generateFullSphere(Level* level, BoundingBox* box, int centreX, int centreY, int centreZ, int radius,
+                                    const BlockState* shellState, const BlockState* innerState, bool existingOnly);
     virtual void generateAirColumnUp(Level* level, int x, int y, int z, BoundingBox* box);
     virtual void generateAirBoxUp(Level* level, int x0, int z0, int x1, int z1, int y, BoundingBox* box);
     virtual void fillColumnDown(Level* level, const BlockState* state, int x, int y, int z, BoundingBox* box);
     virtual void fillBoxDown(Level* level, const BlockState* state, int x0, int z0, int x1, int z1, int y,
-        BoundingBox* box);
+                             BoundingBox* box);
 
     virtual bool createChest(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
-        ResourceLocation* lootTable);
+                             ResourceLocation* lootTable);
     virtual bool createChest(Level* level, BoundingBox* box, Random& random, const BlockPos& pos,
-        ResourceLocation* lootTable, const BlockState* state);
+                             ResourceLocation* lootTable, const BlockState* state);
     virtual bool createDispenser(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
-        const Direction* facing, ResourceLocation* lootTable);
+                                 const Direction* facing, ResourceLocation* lootTable);
 
     virtual void addStructurePieceSaveData(DataOutputStream* output, std::vector<bool> firstBools,
-        std::vector<bool> secondBools, std::vector<int> firstInts, std::vector<int> secondInts);
+                                           std::vector<bool> secondBools, std::vector<int> firstInts,
+                                           std::vector<int> secondInts);
     virtual void readStructurePieceSaveData(DataInputStream* input, std::vector<bool>& firstBools,
-        std::vector<bool>& secondBools, std::vector<int>& firstInts, std::vector<int>& secondInts);
+                                            std::vector<bool>& secondBools, std::vector<int>& firstInts,
+                                            std::vector<int>& secondInts);
     virtual void addBoolSaveData(DataOutputStream* output, std::vector<bool> values);
     virtual std::vector<bool> readBoolSaveData(DataInputStream* input);
     virtual void addIntSaveData(DataOutputStream* output, std::vector<int> values);
@@ -177,8 +179,7 @@ public:
 
     void setBoundingBox(BoundingBox* boundingBox);
 
-    static void fromOrientationSetRotationAndMirror(const Direction* orientation, Rotation*& rotation,
-        Mirror*& mirror);
+    static void fromOrientationSetRotationAndMirror(const Direction* orientation, Rotation*& rotation, Mirror*& mirror);
 
     void setOrientation(const Direction* orientation);
     const Direction* getOrientation();
@@ -194,8 +195,8 @@ public:
     int getWorldY(int y);
     int getWorldZ(int x, int z);
 
-    void createDoor(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
-        const Direction* facing, DoorBlock* door);
+    void createDoor(Level* level, BoundingBox* box, Random& random, int x, int y, int z, const Direction* facing,
+                    DoorBlock* door);
 
     void setRotation(Rotation* rotation);
 

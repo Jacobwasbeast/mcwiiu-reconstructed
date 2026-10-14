@@ -50,25 +50,26 @@ bool IceSpikeFeature::place(Level* level, Random& random, const BlockPos& origin
             {
                 float dz = (float)Mth::abs(z) - 0.25f;
                 if (((x == 0 && z == 0) || dx * dx + dz * dz <= radius * radius)
-                    && ((x != -extent && x != extent && z != -extent && z != extent)
-                        || random.nextFloat() <= 0.75f))
+                    && ((x != -extent && x != extent && z != -extent && z != extent) || random.nextFloat() <= 0.75f))
                 {
                     const BlockState* state = level->getBlockState(pos.offset(x, y, z));
                     Block* block = state->getBlock();
-                    if (state->getMaterial() == Material::AIR || block == Blocks::dirt
-                        || block == Blocks::snow || block == Blocks::ice)
+                    if (state->getMaterial() == Material::AIR || block == Blocks::dirt || block == Blocks::snow
+                        || block == Blocks::ice)
                     {
-                        setBlock(level, pos.offset(x, y, z), Blocks::packed_ice->defaultBlockState(), Block::UPDATE_NONE);
+                        setBlock(level, pos.offset(x, y, z), Blocks::packed_ice->defaultBlockState(),
+                                 Block::UPDATE_NONE);
                     }
 
                     if (y != 0 && extent > 1)
                     {
                         state = level->getBlockState(pos.offset(x, -y, z));
                         block = state->getBlock();
-                        if (state->getMaterial() == Material::AIR || block == Blocks::dirt
-                            || block == Blocks::snow || block == Blocks::ice)
+                        if (state->getMaterial() == Material::AIR || block == Blocks::dirt || block == Blocks::snow
+                            || block == Blocks::ice)
                         {
-                            setBlock(level, pos.offset(x, -y, z), Blocks::packed_ice->defaultBlockState(), Block::UPDATE_NONE);
+                            setBlock(level, pos.offset(x, -y, z), Blocks::packed_ice->defaultBlockState(),
+                                     Block::UPDATE_NONE);
                         }
                     }
                 }
@@ -101,9 +102,8 @@ bool IceSpikeFeature::place(Level* level, Random& random, const BlockPos& origin
             {
                 const BlockState* state = level->getBlockState(target);
                 Block* block = state->getBlock();
-                if (state->getMaterial() != Material::AIR && block != Blocks::dirt
-                    && block != Blocks::snow && block != Blocks::ice
-                    && block != Blocks::packed_ice)
+                if (state->getMaterial() != Material::AIR && block != Blocks::dirt && block != Blocks::snow
+                    && block != Blocks::ice && block != Blocks::packed_ice)
                 {
                     break;
                 }

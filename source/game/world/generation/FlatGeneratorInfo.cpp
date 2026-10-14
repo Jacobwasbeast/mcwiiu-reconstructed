@@ -49,26 +49,67 @@ FlatGeneratorInfo::FlatGeneratorInfo(SuperflatConfig* config, bool copy)
     }
 }
 
-FlatGeneratorInfo::~FlatGeneratorInfo() {}
+FlatGeneratorInfo::~FlatGeneratorInfo()
+{
+}
 
 SuperflatConfig* FlatGeneratorInfo::core() const
 {
     return mOwnsConfig ? mOwnedConfig.get() : mConfig;
 }
 
-bool FlatGeneratorInfo::hasCaves() { return core()->hasParam(0x25); }
-bool FlatGeneratorInfo::hasCanyons() { return core()->hasParam(0x26); }
-bool FlatGeneratorInfo::hasVillage() { return core()->hasParam(0x20); }
-bool FlatGeneratorInfo::hasBiomeSpecific() { return core()->hasParam(0x21); }
-bool FlatGeneratorInfo::hasMineshaft() { return core()->hasParam(0x23); }
-bool FlatGeneratorInfo::hasStronghold() { return core()->hasParam(0x22); }
-bool FlatGeneratorInfo::hasOceanMonument() { return core()->hasParam(0x24); }
-bool FlatGeneratorInfo::hasWoodlandMansion() { return core()->hasParam(0x27); }
-bool FlatGeneratorInfo::hasShipwrecks() { return core()->hasParam(0x28); }
-bool FlatGeneratorInfo::hasDecorations() { return core()->hasParam(0x30); }
-bool FlatGeneratorInfo::hasDungeons() { return core()->hasParam(0x31); }
-bool FlatGeneratorInfo::hasLakes() { return core()->hasParam(0x32); }
-bool FlatGeneratorInfo::hasLavaLakes() { return core()->hasParam(0x33); }
+bool FlatGeneratorInfo::hasCaves()
+{
+    return core()->hasParam(0x25);
+}
+bool FlatGeneratorInfo::hasCanyons()
+{
+    return core()->hasParam(0x26);
+}
+bool FlatGeneratorInfo::hasVillage()
+{
+    return core()->hasParam(0x20);
+}
+bool FlatGeneratorInfo::hasBiomeSpecific()
+{
+    return core()->hasParam(0x21);
+}
+bool FlatGeneratorInfo::hasMineshaft()
+{
+    return core()->hasParam(0x23);
+}
+bool FlatGeneratorInfo::hasStronghold()
+{
+    return core()->hasParam(0x22);
+}
+bool FlatGeneratorInfo::hasOceanMonument()
+{
+    return core()->hasParam(0x24);
+}
+bool FlatGeneratorInfo::hasWoodlandMansion()
+{
+    return core()->hasParam(0x27);
+}
+bool FlatGeneratorInfo::hasShipwrecks()
+{
+    return core()->hasParam(0x28);
+}
+bool FlatGeneratorInfo::hasDecorations()
+{
+    return core()->hasParam(0x30);
+}
+bool FlatGeneratorInfo::hasDungeons()
+{
+    return core()->hasParam(0x31);
+}
+bool FlatGeneratorInfo::hasLakes()
+{
+    return core()->hasParam(0x32);
+}
+bool FlatGeneratorInfo::hasLavaLakes()
+{
+    return core()->hasParam(0x33);
+}
 
 LargeCaveFeature* FlatGeneratorInfo::getCaves()
 {
@@ -127,8 +168,14 @@ ShipwreckFeature* FlatGeneratorInfo::getShipwreck(GenericOverworldLevelSource* s
 {
     return hasShipwrecks() ? new ShipwreckFeature(source, monument, core()) : 0;
 }
-LakeFeature* FlatGeneratorInfo::getLakes() { return hasLakes() ? new LakeFeature(Blocks::water) : 0; }
-LakeFeature* FlatGeneratorInfo::getLavaLakes() { return hasLavaLakes() ? new LakeFeature(Blocks::lava) : 0; }
+LakeFeature* FlatGeneratorInfo::getLakes()
+{
+    return hasLakes() ? new LakeFeature(Blocks::water) : 0;
+}
+LakeFeature* FlatGeneratorInfo::getLavaLakes()
+{
+    return hasLavaLakes() ? new LakeFeature(Blocks::lava) : 0;
+}
 
 int FlatGeneratorInfo::getLayerIndexAtHeight(int height) const
 {
@@ -164,23 +211,103 @@ void FlatGeneratorInfo::getLayers(const BlockState* (&states)[256]) const
     }
 }
 
-void FlatGeneratorInfo::getLayers(std::vector<FlatLayerInfo>& layers) const { layers = core()->layers; }
-void FlatGeneratorInfo::setDisplayname(int displayname) { core()->setDisplayname(std::wstring(L10N::GetString(displayname))); }
-void FlatGeneratorInfo::setBiome(int biome) { core()->setOption(0x10, 0, biome); }
+void FlatGeneratorInfo::getLayers(std::vector<FlatLayerInfo>& layers) const
+{
+    layers = core()->layers;
+}
+void FlatGeneratorInfo::setDisplayname(int displayname)
+{
+    core()->setDisplayname(std::wstring(L10N::GetString(displayname)));
+}
+void FlatGeneratorInfo::setBiome(int biome)
+{
+    core()->setOption(0x10, 0, biome);
+}
 
-void FlatGeneratorInfo::setVillage(bool enabled) { core()->removeParam(0x20); if (enabled) core()->addParam(0x20); }
-void FlatGeneratorInfo::setDungeons(bool enabled) { if (enabled) core()->addParam(0x31); else core()->removeParam(0x31); }
-void FlatGeneratorInfo::setDecorations(bool enabled) { if (enabled) core()->addParam(0x30); else core()->removeParam(0x30); }
-void FlatGeneratorInfo::setStronghold(bool enabled) { core()->removeParam(0x22); if (enabled) core()->addParam(0x22); }
-void FlatGeneratorInfo::setMineshaft(bool enabled) { core()->removeParam(0x23); if (enabled) core()->addParam(0x23); }
-void FlatGeneratorInfo::setLakes(bool enabled) { if (enabled) core()->addParam(0x32); else core()->removeParam(0x32); }
-void FlatGeneratorInfo::setLavaLakes(bool enabled) { if (enabled) core()->addParam(0x33); else core()->removeParam(0x33); }
-void FlatGeneratorInfo::setBiomeSpecific(bool enabled) { core()->removeParam(0x21); if (enabled) core()->addParam(0x21); }
-void FlatGeneratorInfo::setWoodlandMansion(bool enabled) { core()->removeParam(0x27); if (enabled) core()->addParam(0x27); }
-void FlatGeneratorInfo::setOceanMonument(bool enabled) { core()->removeParam(0x24); if (enabled) core()->addParam(0x24); }
-void FlatGeneratorInfo::setShipwrecks(bool enabled) { core()->removeParam(0x28); if (enabled) core()->addParam(0x28); }
-void FlatGeneratorInfo::setCaves(bool enabled) { if (enabled) core()->addParam(0x25); else core()->removeParam(0x25); }
-void FlatGeneratorInfo::setCanyons(bool enabled) { if (enabled) core()->addParam(0x26); else core()->removeParam(0x26); }
+void FlatGeneratorInfo::setVillage(bool enabled)
+{
+    core()->removeParam(0x20);
+    if (enabled)
+        core()->addParam(0x20);
+}
+void FlatGeneratorInfo::setDungeons(bool enabled)
+{
+    if (enabled)
+        core()->addParam(0x31);
+    else
+        core()->removeParam(0x31);
+}
+void FlatGeneratorInfo::setDecorations(bool enabled)
+{
+    if (enabled)
+        core()->addParam(0x30);
+    else
+        core()->removeParam(0x30);
+}
+void FlatGeneratorInfo::setStronghold(bool enabled)
+{
+    core()->removeParam(0x22);
+    if (enabled)
+        core()->addParam(0x22);
+}
+void FlatGeneratorInfo::setMineshaft(bool enabled)
+{
+    core()->removeParam(0x23);
+    if (enabled)
+        core()->addParam(0x23);
+}
+void FlatGeneratorInfo::setLakes(bool enabled)
+{
+    if (enabled)
+        core()->addParam(0x32);
+    else
+        core()->removeParam(0x32);
+}
+void FlatGeneratorInfo::setLavaLakes(bool enabled)
+{
+    if (enabled)
+        core()->addParam(0x33);
+    else
+        core()->removeParam(0x33);
+}
+void FlatGeneratorInfo::setBiomeSpecific(bool enabled)
+{
+    core()->removeParam(0x21);
+    if (enabled)
+        core()->addParam(0x21);
+}
+void FlatGeneratorInfo::setWoodlandMansion(bool enabled)
+{
+    core()->removeParam(0x27);
+    if (enabled)
+        core()->addParam(0x27);
+}
+void FlatGeneratorInfo::setOceanMonument(bool enabled)
+{
+    core()->removeParam(0x24);
+    if (enabled)
+        core()->addParam(0x24);
+}
+void FlatGeneratorInfo::setShipwrecks(bool enabled)
+{
+    core()->removeParam(0x28);
+    if (enabled)
+        core()->addParam(0x28);
+}
+void FlatGeneratorInfo::setCaves(bool enabled)
+{
+    if (enabled)
+        core()->addParam(0x25);
+    else
+        core()->removeParam(0x25);
+}
+void FlatGeneratorInfo::setCanyons(bool enabled)
+{
+    if (enabled)
+        core()->addParam(0x26);
+    else
+        core()->removeParam(0x26);
+}
 
 void FlatGeneratorInfo::insertLayer(int index, const FlatLayerInfo& layer)
 {
@@ -188,12 +315,36 @@ void FlatGeneratorInfo::insertLayer(int index, const FlatLayerInfo& layer)
     layers.insert(layers.begin() + index, layer);
     core()->updateLayers();
 }
-void FlatGeneratorInfo::addLayer(const FlatLayerInfo& layer) { insertLayer(0, layer); }
-void FlatGeneratorInfo::setDisplayname(const std::wstring& displayname) { core()->setDisplayname(displayname); }
-void FlatGeneratorInfo::setWoodlandMansion(int spacing, int separation) { setWoodlandMansion(true); core()->setOption(0x27, 0, spacing); core()->setOption(0x27, 1, separation); }
-void FlatGeneratorInfo::setOceanMonument(int spacing, int separation) { setOceanMonument(true); core()->setOption(0x24, 0, spacing); core()->setOption(0x24, 1, separation); }
-void FlatGeneratorInfo::setShipwrecks(int spacing, int separation) { setShipwrecks(true); core()->setOption(0x28, 0, spacing); core()->setOption(0x28, 1, separation); }
-void FlatGeneratorInfo::setBiome() { setBiome(Biome::PLAINS->id); }
+void FlatGeneratorInfo::addLayer(const FlatLayerInfo& layer)
+{
+    insertLayer(0, layer);
+}
+void FlatGeneratorInfo::setDisplayname(const std::wstring& displayname)
+{
+    core()->setDisplayname(displayname);
+}
+void FlatGeneratorInfo::setWoodlandMansion(int spacing, int separation)
+{
+    setWoodlandMansion(true);
+    core()->setOption(0x27, 0, spacing);
+    core()->setOption(0x27, 1, separation);
+}
+void FlatGeneratorInfo::setOceanMonument(int spacing, int separation)
+{
+    setOceanMonument(true);
+    core()->setOption(0x24, 0, spacing);
+    core()->setOption(0x24, 1, separation);
+}
+void FlatGeneratorInfo::setShipwrecks(int spacing, int separation)
+{
+    setShipwrecks(true);
+    core()->setOption(0x28, 0, spacing);
+    core()->setOption(0x28, 1, separation);
+}
+void FlatGeneratorInfo::setBiome()
+{
+    setBiome(Biome::PLAINS->id);
+}
 void FlatGeneratorInfo::setVillage(int size, int distance)
 {
     core()->removeParam(0x20);
@@ -201,19 +352,42 @@ void FlatGeneratorInfo::setVillage(int size, int distance)
     core()->setOption(0x20, 0, size);
     core()->setOption(0x20, 1, distance);
 }
-void FlatGeneratorInfo::setBiomeSpecific(int spacing) { setBiomeSpecific(true); core()->setOption(0x21, 0, spacing); }
-void FlatGeneratorInfo::setMineshaft(int chance) { setMineshaft(true); core()->setOption(0x23, 0, chance); }
-void FlatGeneratorInfo::setStronghold(int distance, int count) { setStronghold(true); core()->setOption(0x22, 0, distance); core()->setOption(0x22, 1, count); }
+void FlatGeneratorInfo::setBiomeSpecific(int spacing)
+{
+    setBiomeSpecific(true);
+    core()->setOption(0x21, 0, spacing);
+}
+void FlatGeneratorInfo::setMineshaft(int chance)
+{
+    setMineshaft(true);
+    core()->setOption(0x23, 0, chance);
+}
+void FlatGeneratorInfo::setStronghold(int distance, int count)
+{
+    setStronghold(true);
+    core()->setOption(0x22, 0, distance);
+    core()->setOption(0x22, 1, count);
+}
 
-void FlatGeneratorInfo::setEqualTo(SuperflatConfig* config) { *core() = *config; }
-int FlatGeneratorInfo::numLayers() const { return (int)core()->layers.size(); }
+void FlatGeneratorInfo::setEqualTo(SuperflatConfig* config)
+{
+    *core() = *config;
+}
+int FlatGeneratorInfo::numLayers() const
+{
+    return (int)core()->layers.size();
+}
 void FlatGeneratorInfo::setLayer(int index, const FlatLayerInfo& layer)
 {
     FlatLayerInfo* slot = &core()->layers[index];
     *slot = layer;
     core()->updateLayers();
 }
-void FlatGeneratorInfo::setLayers(const std::vector<FlatLayerInfo>& layers) { core()->layers = layers; core()->updateLayers(); }
+void FlatGeneratorInfo::setLayers(const std::vector<FlatLayerInfo>& layers)
+{
+    core()->layers = layers;
+    core()->updateLayers();
+}
 void FlatGeneratorInfo::remLayer(int index)
 {
     std::vector<FlatLayerInfo>& layers = core()->layers;
@@ -249,7 +423,10 @@ int FlatGeneratorInfo::getHeight() const
         height += it->getHeight();
     return height;
 }
-int FlatGeneratorInfo::getTopLayer() const { return numLayers() - 1; }
+int FlatGeneratorInfo::getTopLayer() const
+{
+    return numLayers() - 1;
+}
 
 int FlatGeneratorInfo::findTopNonAirLayer() const
 {
@@ -277,42 +454,94 @@ int FlatGeneratorInfo::findTopSolidLayer() const
     return -1;
 }
 
-int FlatGeneratorInfo::getBiome() { return core()->maybeOption(0x10, 0, Biome::PLAINS->id); }
-int FlatGeneratorInfo::getVillageSize() { return core()->maybeOption(0x20, 0, 1); }
-int FlatGeneratorInfo::getVillageDistance() { return core()->maybeOption(0x20, 1, 0x20); }
-int FlatGeneratorInfo::getMineshaftChance() { return core()->maybeOption(0x23, 0, 1); }
-int FlatGeneratorInfo::getStrongholdCount() { return core()->maybeOption(0x22, 1, 1); }
-int FlatGeneratorInfo::getStrongholdDistance() { return core()->maybeOption(0x22, 0, 0x20); }
-int FlatGeneratorInfo::getBiomeSpecificSpacing() { return core()->maybeOption(0x21, 0, 0x20); }
-int FlatGeneratorInfo::getOceanMonumentSpacing() { return core()->maybeOption(0x24, 0, 0x20); }
-int FlatGeneratorInfo::getOceanMonuemntSeparation() { return core()->maybeOption(0x24, 1, 5); }
-int FlatGeneratorInfo::getShipwreckSpacing() { return core()->maybeOption(0x28, 0, 0x20); }
-int FlatGeneratorInfo::getShipwreckSeparation() { return core()->maybeOption(0x28, 1, 5); }
-int FlatGeneratorInfo::getWoodlandMansionSpacing() { return core()->maybeOption(0x27, 0, 0x20); }
-int FlatGeneratorInfo::getWoodlandMansionSeparation() { return core()->maybeOption(0x27, 1, 5); }
+int FlatGeneratorInfo::getBiome()
+{
+    return core()->maybeOption(0x10, 0, Biome::PLAINS->id);
+}
+int FlatGeneratorInfo::getVillageSize()
+{
+    return core()->maybeOption(0x20, 0, 1);
+}
+int FlatGeneratorInfo::getVillageDistance()
+{
+    return core()->maybeOption(0x20, 1, 0x20);
+}
+int FlatGeneratorInfo::getMineshaftChance()
+{
+    return core()->maybeOption(0x23, 0, 1);
+}
+int FlatGeneratorInfo::getStrongholdCount()
+{
+    return core()->maybeOption(0x22, 1, 1);
+}
+int FlatGeneratorInfo::getStrongholdDistance()
+{
+    return core()->maybeOption(0x22, 0, 0x20);
+}
+int FlatGeneratorInfo::getBiomeSpecificSpacing()
+{
+    return core()->maybeOption(0x21, 0, 0x20);
+}
+int FlatGeneratorInfo::getOceanMonumentSpacing()
+{
+    return core()->maybeOption(0x24, 0, 0x20);
+}
+int FlatGeneratorInfo::getOceanMonuemntSeparation()
+{
+    return core()->maybeOption(0x24, 1, 5);
+}
+int FlatGeneratorInfo::getShipwreckSpacing()
+{
+    return core()->maybeOption(0x28, 0, 0x20);
+}
+int FlatGeneratorInfo::getShipwreckSeparation()
+{
+    return core()->maybeOption(0x28, 1, 5);
+}
+int FlatGeneratorInfo::getWoodlandMansionSpacing()
+{
+    return core()->maybeOption(0x27, 0, 0x20);
+}
+int FlatGeneratorInfo::getWoodlandMansionSeparation()
+{
+    return core()->maybeOption(0x27, 1, 5);
+}
 
 std::wstring FlatGeneratorInfo::generateDescription()
 {
     std::wstring description = L"";
-    description += formatwstr(L"%ls: %ls<br /><br />", L10N::GetString(IDS_BIOME), Biome::biomes[getBiome()]->getName(false).c_str());
+    description += formatwstr(L"%ls: %ls<br /><br />", L10N::GetString(IDS_BIOME),
+                              Biome::biomes[getBiome()]->getName(false).c_str());
     std::vector<FlatLayerInfo> layers;
     getLayers(layers);
     description += formatwstr(L"%ls:<br />", L10N::GetString(IDS_LAYERS));
     for (std::vector<FlatLayerInfo>::reverse_iterator it = layers.rbegin(); it != layers.rend(); ++it)
         description += formatwstr(L"- %ls %ls<br />", it->getHeightText().c_str(), it->getNameText().c_str());
     std::wstring features = L"";
-    if (hasVillage()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_VILLAGE));
-    if (hasCaves()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_CAVES));
-    if (hasCanyons()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_CANYONS));
-    if (hasMineshaft()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_MINESHAFT));
-    if (hasStronghold()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_STRONGHOLD));
-    if (hasBiomeSpecific()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_BIOMESPECIFIC));
-    if (hasDungeons()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_DUNGEON));
-    if (hasDecorations()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_DECORATION));
-    if (hasLakes()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_LAKES));
-    if (hasLavaLakes()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_LAVA_LAKES));
-    if (hasOceanMonument()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_OCEAN_MONUMENT));
-    if (hasWoodlandMansion()) features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_WOODLAND_MANSION));
+    if (hasVillage())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_VILLAGE));
+    if (hasCaves())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_CAVES));
+    if (hasCanyons())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_CANYONS));
+    if (hasMineshaft())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_MINESHAFT));
+    if (hasStronghold())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_STRONGHOLD));
+    if (hasBiomeSpecific())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_BIOMESPECIFIC));
+    if (hasDungeons())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_DUNGEON));
+    if (hasDecorations())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_DECORATION));
+    if (hasLakes())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_LAKES));
+    if (hasLavaLakes())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_LAVA_LAKES));
+    if (hasOceanMonument())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_OCEAN_MONUMENT));
+    if (hasWoodlandMansion())
+        features += formatwstr(L"- %ls<br />", L10N::GetString(IDS_PARAM_WOODLAND_MANSION));
     if (!features.empty())
     {
         description += formatwstr(L"<br />%ls:<br />", L10N::GetString(IDS_FEATURES));

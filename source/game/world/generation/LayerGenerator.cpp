@@ -15,12 +15,12 @@
 
 LayerGenerator::LayerGenerator(AABB* area, const LayerShape* shape, const LayerFill* fill,
                                const std::vector<const LayerTheme*>& themes)
-    : mShape(shape)
-    , mFill(fill)
-    , mThemes(themes)
-    , mArea(area)
-    , mCoreWorldMinY(1000)
-    , mCoreWorldMaxY(0)
+    : mShape(shape),
+      mFill(fill),
+      mThemes(themes),
+      mArea(area),
+      mCoreWorldMinY(1000),
+      mCoreWorldMaxY(0)
 {
 }
 
@@ -43,8 +43,7 @@ BlockTransaction* LayerGenerator::Generate(Random& random, Level*)
 {
     PIXBeginNamedEvent(0.0f, "LayerGenerator::Setup");
     BlockTransaction* transaction = BlockTransaction::CreateTransaction(
-        BlockPos(mArea->mMinX, mArea->mMinY, mArea->mMinZ),
-        BlockPos(mArea->mMaxX, mArea->mMaxY, mArea->mMaxZ));
+        BlockPos(mArea->mMinX, mArea->mMinY, mArea->mMinZ), BlockPos(mArea->mMaxX, mArea->mMaxY, mArea->mMaxZ));
     Shape shape(transaction->mSize.x, transaction->mSize.z);
     PIXEndNamedEvent();
 
@@ -53,8 +52,7 @@ BlockTransaction* LayerGenerator::Generate(Random& random, Level*)
     PIXEndNamedEvent();
 
     PIXBeginNamedEvent(0.0f, "LayerGenerator::ApplyFill");
-    mFill->ExtrudeLayer(random, shape, transaction->mSize, transaction,
-                        &mCoreWorldMinY, &mCoreWorldMaxY);
+    mFill->ExtrudeLayer(random, shape, transaction->mSize, transaction, &mCoreWorldMinY, &mCoreWorldMaxY);
     PIXEndNamedEvent();
 
     PIXBeginNamedEvent(0.0f, "LayerGenerator::ApplyThemes");

@@ -14,15 +14,13 @@
 
 static const std::wstring VILLAGES_FILE_ID = L"villages";
 
-Villages::Villages(const std::wstring& id)
-    : SavedData(id)
+Villages::Villages(const std::wstring& id) : SavedData(id)
 {
     mTick = 0;
     mLevel = NULL;
 }
 
-Villages::Villages(Level* level)
-    : SavedData(VILLAGES_FILE_ID)
+Villages::Villages(Level* level) : SavedData(VILLAGES_FILE_ID)
 {
     mTick = 0;
     mLevel = level;
@@ -82,7 +80,8 @@ boost::shared_ptr<DoorInfo> Villages::getDoorInfo(const BlockPos& pos)
     for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = mDoorInfos.begin(); it != mDoorInfos.end(); ++it)
     {
         boost::shared_ptr<DoorInfo> doorInfo = *it;
-        if (doorInfo->getPos().x == pos.x && doorInfo->getPos().z == pos.z && std::abs(doorInfo->getPos().y - pos.y) <= 1)
+        if (doorInfo->getPos().x == pos.x && doorInfo->getPos().z == pos.z
+            && std::abs(doorInfo->getPos().y - pos.y) <= 1)
             return boost::shared_ptr<DoorInfo>(doorInfo);
     }
 

@@ -8,7 +8,8 @@ class LargeHellCaveFeature : public LargeFeature
 public:
     virtual ~LargeHellCaveFeature();
 
-    virtual void addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ, ChunkPrimer* primer);
+    virtual void addFeature(Level* level, int chunkX, int chunkZ, int originChunkX, int originChunkZ,
+                            ChunkPrimer* primer);
 
 protected:
     void addTunnel(long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y, double z,

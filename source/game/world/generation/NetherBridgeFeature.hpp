@@ -31,8 +31,7 @@ public:
     std::vector<Biome::MobSpawnerData*>* getBridgeEnemies();
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
-    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
-                                                 bool skipExistingChunks);
+    virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos, bool skipExistingChunks);
     void clearCachedBuildings();
 
 private:

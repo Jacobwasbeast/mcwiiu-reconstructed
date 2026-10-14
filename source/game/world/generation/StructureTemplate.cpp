@@ -150,9 +150,11 @@ StructureTemplate::MarkerMap StructureTemplate::getMarkers(const BlockPos& pos, 
 }
 
 BlockPos StructureTemplate::calculateConnectedPosition(const StructurePlaceSettings* settings, const BlockPos& pos,
-    const StructurePlaceSettings* connectedSettings, const BlockPos& connectedPos) const
+                                                       const StructurePlaceSettings* connectedSettings,
+                                                       const BlockPos& connectedPos) const
 {
-    return calculateRelativePosition(settings, pos).subtract(calculateRelativePosition(connectedSettings, connectedPos));
+    return calculateRelativePosition(settings, pos)
+        .subtract(calculateRelativePosition(connectedSettings, connectedPos));
 }
 
 Vec3* StructureTemplate::transform(Vec3* pos, Mirror* mirror, Rotation* rotation)
@@ -195,7 +197,7 @@ Vec3* StructureTemplate::transform(Vec3* pos, Mirror* mirror, Rotation* rotation
 }
 
 void StructureTemplate::placeEntities(Level* level, const BlockPos& pos, Mirror* mirror, Rotation* rotation,
-    BoundingBox* boundingBox) const
+                                      BoundingBox* boundingBox) const
 {
     for (std::vector<StructureEntityInfo*>::const_iterator it = mEntities.begin(); it != mEntities.end(); it++)
     {
@@ -210,7 +212,8 @@ void StructureTemplate::placeEntities(Level* level, const BlockPos& pos, Mirror*
 
         CompoundTag* nbt = entityInfo->mNbt;
 
-        Vec3* entityPos = transform(entityInfo->mPos, mirror, rotation)->add((double)pos.x, (double)pos.y, (double)pos.z);
+        Vec3* entityPos =
+            transform(entityInfo->mPos, mirror, rotation)->add((double)pos.x, (double)pos.y, (double)pos.z);
 
         ListTag* posTag = new ListTag();
         posTag->add(new DoubleTag(entityPos->x));
@@ -235,10 +238,10 @@ void StructureTemplate::placeEntities(Level* level, const BlockPos& pos, Mirror*
 }
 
 void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, StructureProcessor* processor,
-    StructurePlaceSettings* settings, int flags) const
+                                     StructurePlaceSettings* settings, int flags) const
 {
-    if ((mBlocks.empty() && (settings->isIgnoreEntities() || mEntities.empty()))
-        || mSize.x < 1 || mSize.y < 1 || mSize.z < 1)
+    if ((mBlocks.empty() && (settings->isIgnoreEntities() || mEntities.empty())) || mSize.x < 1 || mSize.y < 1
+        || mSize.z < 1)
     {
         delete processor;
         return;
@@ -255,7 +258,8 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
 
         BlockPos blockPos = calculateRelativePosition(settings, templateInfo->mPos).offset(pos);
 
-        StructureBlockInfo* blockInfo = processor != NULL ? processor->processBlock(level, blockPos, templateInfo) : templateInfo;
+        StructureBlockInfo* blockInfo = processor != NULL ? processor->processBlock(level, blockPos, templateInfo)
+                                                          : templateInfo;
 
         if (lastColumn.x != blockPos.x || lastColumn.z != blockPos.z)
         {
@@ -298,7 +302,8 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
             }
             else if (block->canContainLiquid(state))
             {
-                level->setExtraBlock(blockPos, Blocks::flowing_water->defaultBlockState(), Block::UPDATE_INVISIBLE, false);
+                level->setExtraBlock(blockPos, Blocks::flowing_water->defaultBlockState(), Block::UPDATE_INVISIBLE,
+                                     false);
             }
         }
 
@@ -318,7 +323,7 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
         }
 
         if (level->setBlockAndData(blockPos.x, blockPos.y, blockPos.z, Block::getId(block),
-                block->convertBlockStateToLegacyData(state), flags)
+                                   block->convertBlockStateToLegacyData(state), flags)
             && blockInfo->mNbt != NULL)
         {
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(blockPos);
@@ -385,7 +390,8 @@ void StructureTemplate::placeInWorldChunk(Level* level, const BlockPos& pos, Str
     placeInWorld(level, pos, settings);
 }
 
-void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, StructurePlaceSettings* settings, int flags) const
+void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, StructurePlaceSettings* settings,
+                                     int flags) const
 {
     placeInWorld(level, pos, new BlockRotProcessor(settings, pos), settings, flags);
 }
@@ -404,7 +410,7 @@ BlockPos StructureTemplate::getSize(Rotation* rotation) const
 }
 
 BlockPos StructureTemplate::getZeroPositionWithTransform(const BlockPos& pos, Mirror* mirror, Rotation* rotation,
-    int sizeX, int sizeZ)
+                                                         int sizeX, int sizeZ)
 {
     --sizeX;
     --sizeZ;
@@ -489,7 +495,8 @@ void StructureTemplate::load(CompoundTag* tag)
 
         unsigned int paletteIndex = (unsigned int)blockTag->getInt(BLOCK_STATE_TAG);
 
-        const BlockState* state = paletteIndex < mPalette.size() ? mPalette.at(paletteIndex) : Blocks::air->defaultBlockState();
+        const BlockState* state = paletteIndex < mPalette.size() ? mPalette.at(paletteIndex)
+                                                                 : Blocks::air->defaultBlockState();
 
         CompoundTag* blockNbt = blockTag->contains(BLOCK_NBT_TAG) ? blockTag->getCompound(BLOCK_NBT_TAG)->copy() : NULL;
 

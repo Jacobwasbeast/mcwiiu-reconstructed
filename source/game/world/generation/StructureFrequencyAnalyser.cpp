@@ -8,15 +8,11 @@
 #include "game/world/generation/WoodlandMansionFeature.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-int countFeaturesInArea(char (*isFeatureChunk)(BiomeSource*, long long, int, int, int),
-                        BiomeSource* biomeSource,
-                        long long seed,
-                        int sizeInChunks);
+int countFeaturesInArea(char (*isFeatureChunk)(BiomeSource*, long long, int, int, int), BiomeSource* biomeSource,
+                        long long seed, int sizeInChunks);
 
-int countFeaturesInArea(char (*isFeatureChunk)(BiomeSource*, long long, int, int, int),
-                        BiomeSource* biomeSource,
-                        long long seed,
-                        int sizeInChunks)
+int countFeaturesInArea(char (*isFeatureChunk)(BiomeSource*, long long, int, int, int), BiomeSource* biomeSource,
+                        long long seed, int sizeInChunks)
 {
     int featureCount = 0;
     int halfSizeInChunks = sizeInChunks / 2;
@@ -49,11 +45,11 @@ static int _standardTests(void*)
     return 0;
 }
 
-StructureFrequencyAnalyser::StructureFrequencyAnalyser(int sizeInChunks,
-                                                       bool printResults,
-                                                       bool printAverages)
-    : mSizeInChunks(sizeInChunks), mAreaInChunks(sizeInChunks * sizeInChunks),
-      mPrintResults(printResults), mPrintAverages(printAverages)
+StructureFrequencyAnalyser::StructureFrequencyAnalyser(int sizeInChunks, bool printResults, bool printAverages)
+    : mSizeInChunks(sizeInChunks),
+      mAreaInChunks(sizeInChunks * sizeInChunks),
+      mPrintResults(printResults),
+      mPrintAverages(printAverages)
 {
 }
 
@@ -72,24 +68,13 @@ void StructureFrequencyAnalyser::run(unsigned int seedCount)
         results.seed = layerOverrideSettings.GetSeed();
 
         BiomeSource biomeSource(results.seed, LevelType::DEFAULT, NULL, &layerOverrideSettings);
-        biomeSource.getBiomeBlock(biomes,
-                                  -halfWidthInBlocks,
-                                  -halfWidthInBlocks,
-                                  widthInBlocks,
-                                  widthInBlocks,
-                                  false);
+        biomeSource.getBiomeBlock(biomes, -halfWidthInBlocks, -halfWidthInBlocks, widthInBlocks, widthInBlocks, false);
 
-        results.woodlandMansions = countFeaturesInArea(WoodlandMansionFeature::fjIsFeatureChunk,
-                                                       &biomeSource,
-                                                       results.seed,
-                                                       mSizeInChunks);
-        results.oceanMonuments = countFeaturesInArea(OceanMonumentFeature::fjIsFeatureChunk,
-                                                     &biomeSource,
-                                                     results.seed,
+        results.woodlandMansions = countFeaturesInArea(WoodlandMansionFeature::fjIsFeatureChunk, &biomeSource,
+                                                       results.seed, mSizeInChunks);
+        results.oceanMonuments = countFeaturesInArea(OceanMonumentFeature::fjIsFeatureChunk, &biomeSource, results.seed,
                                                      mSizeInChunks);
-        results.shipwrecks = countFeaturesInArea(ShipwreckFeature::fjIsFeatureChunk,
-                                                 &biomeSource,
-                                                 results.seed,
+        results.shipwrecks = countFeaturesInArea(ShipwreckFeature::fjIsFeatureChunk, &biomeSource, results.seed,
                                                  mSizeInChunks);
         mResults.push_back(results);
     }

@@ -8,7 +8,8 @@
 #include "game/world/generation/RandomPatchesLayerTheme.hpp"
 
 ShaftsLayerTheme::ShaftsLayerTheme(int heightOffset, const std::vector<const BlockState*>& states)
-    : mHeightOffset(heightOffset), mStates(states)
+    : mHeightOffset(heightOffset),
+      mStates(states)
 {
 }
 

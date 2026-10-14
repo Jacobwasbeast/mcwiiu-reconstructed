@@ -30,8 +30,7 @@
 const EntityDataAccessor<bool>* ZombieVillager::DATA_CONVERTING_ID = NULL;
 const EntityDataAccessor<int>* ZombieVillager::DATA_PROFESSION_ID = NULL;
 
-ZombieVillager::ZombieVillager(Level* level)
-    : Zombie(level, false)
+ZombieVillager::ZombieVillager(Level* level) : Zombie(level, false)
 {
     fjDerivedCtorCalls();
     mConversionTime = 0;
@@ -51,9 +50,9 @@ void ZombieVillager::setProfession(int profession)
 void ZombieVillager::staticCtor()
 {
     DATA_CONVERTING_ID = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE_VILLAGER, EntityType::ZOMBIE,
-                                                            EntityDataSerializers::BOOLEAN);
+                                                           EntityDataSerializers::BOOLEAN);
     DATA_PROFESSION_ID = SynchedEntityData::defineId<int>(EntityType::ZOMBIE_VILLAGER, EntityType::ZOMBIE,
-                                                           EntityDataSerializers::INT);
+                                                          EntityDataSerializers::INT);
 }
 
 void ZombieVillager::defineSynchedData()
@@ -104,8 +103,7 @@ void ZombieVillager::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
     setProfession(tag->getInt(std::wstring(L"Profession")));
-    if (tag->contains(std::wstring(L"ConversionTime"), 99) &&
-        tag->getInt(std::wstring(L"ConversionTime")) >= 0)
+    if (tag->contains(std::wstring(L"ConversionTime"), 99) && tag->getInt(std::wstring(L"ConversionTime")) >= 0)
     {
         startConverting(tag->contains(std::wstring(L"ConversionPlayer"))
                             ? tag->getString(std::wstring(L"ConversionPlayer"))
@@ -115,7 +113,7 @@ void ZombieVillager::readAdditionalSaveData(CompoundTag* tag)
 }
 
 MobGroupData* ZombieVillager::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                                const std::wstring& dataString)
+                                               const std::wstring& dataString)
 {
     setProfession(mLevel->mRandom->nextInt(6));
     return Zombie::finalizeMobSpawn(difficulty, data, std::wstring(L""));
@@ -231,7 +229,8 @@ void ZombieVillager::finishConversion()
             player->awardStat(GenericStats::zombieDoctor(), GenericStats::param_zombieDoctor());
     }
     villager->addEffect(new MobEffectInstance(MobEffects::CONFUSION, 200, 0), boost::shared_ptr<Entity>());
-    mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_ZOMBIE_CONVERTED, BlockPos((int)mX, (int)mY, (int)mZ), 0);
+    mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_ZOMBIE_CONVERTED,
+                       BlockPos((int)mX, (int)mY, (int)mZ), 0);
 }
 
 float ZombieVillager::getVoicePitch()

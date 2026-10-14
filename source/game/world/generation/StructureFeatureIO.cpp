@@ -36,10 +36,13 @@ void StructureFeatureIO::staticCtor()
     setStartId(eStructureStart_Village, VillageFeature::VillageStart::Create, LargeFeature::VILLAGE);
     setStartId(eStructureStart_NetherBridge, NetherBridgeFeature::NetherBridgeStart::Create, LargeFeature::FORTRESS);
     setStartId(eStructureStart_Stronghold, StrongholdFeature::StrongholdStart::Create, LargeFeature::STRONGHOLD);
-    setStartId(eStructureStart_ScatteredFeature, RandomScatteredLargeFeature::ScatteredFeatureStart::Create, LargeFeature::TEMPLE);
+    setStartId(eStructureStart_ScatteredFeature, RandomScatteredLargeFeature::ScatteredFeatureStart::Create,
+               LargeFeature::TEMPLE);
     setStartId(eStructureStart_OceanMonument, OceanMonumentFeature::OceanMonumentStart::Create, LargeFeature::MONUMENT);
-    setStartId(eStructureStart_WoodlandMansion, WoodlandMansionFeature::WoodlandMansionStart::Create, LargeFeature::MANSION);
-    setStartId(eStructureStart_BuriedTreasure, BuriedTreasureFeature::BuriedTreasureStart::Create, LargeFeature::BURIED_TREASURE);
+    setStartId(eStructureStart_WoodlandMansion, WoodlandMansionFeature::WoodlandMansionStart::Create,
+               LargeFeature::MANSION);
+    setStartId(eStructureStart_BuriedTreasure, BuriedTreasureFeature::BuriedTreasureStart::Create,
+               LargeFeature::BURIED_TREASURE);
     setStartId(eStructureStart_Shipwreck, ShipwreckFeature::ShipwreckStart::Create, LargeFeature::SHIPWRECK);
 
     MineShaftPieces::loadStatic();

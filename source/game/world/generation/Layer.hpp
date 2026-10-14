@@ -13,11 +13,9 @@ class SuperflatConfig;
 class Layer
 {
 public:
-    static arrayWithLength<boost::shared_ptr<Layer> > getDefaultLayers(long long seed,
-                                                                       LevelType* levelType,
-                                                                       SuperflatConfig* levelTypeOptions,
-                                                                       LevelData* levelData,
-                                                                       BiomeSource::LayerOverrideSettings* overrideSettings);
+    static arrayWithLength<boost::shared_ptr<Layer> > getDefaultLayers(
+        long long seed, LevelType* levelType, SuperflatConfig* levelTypeOptions, LevelData* levelData,
+        BiomeSource::LayerOverrideSettings* overrideSettings);
 
     Layer(long long seed);
     virtual ~Layer() {}

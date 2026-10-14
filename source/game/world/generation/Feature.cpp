@@ -4,8 +4,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 
-Feature::Feature(bool doBlockNotify)
-    : mDoBlockNotify(doBlockNotify)
+Feature::Feature(bool doBlockNotify) : mDoBlockNotify(doBlockNotify)
 {
 }
 

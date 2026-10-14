@@ -24,8 +24,7 @@ std::wstring _toString(T value);
 template <typename T>
 T _fromString(const std::wstring& value);
 
-ConsoleGenerateStructure::ConsoleGenerateStructure()
-    : StructurePiece(0)
+ConsoleGenerateStructure::ConsoleGenerateStructure() : StructurePiece(0)
 {
     mZ = 0;
     mY = 0;
@@ -40,21 +39,20 @@ ConsoleGameRules::EGameRuleType ConsoleGenerateStructure::getActionType()
     return ConsoleGameRules::eGameRuleType_GenerateStructure;
 }
 
-void ConsoleGenerateStructure::writeAttributes(GameRuleSaveInterface* saveInterface,
-                                                unsigned int extraAttributeCount)
+void ConsoleGenerateStructure::writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 5);
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_x, _toString(mX));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_y, _toString(mY));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_z, _toString(mZ));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_orientation, _toString<const Direction*>(getOrientation()));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_orientation,
+                                 _toString<const Direction*>(getOrientation()));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_dimension, _toString(mDimension));
 }
 
 void ConsoleGenerateStructure::getChildren(std::vector<GameRuleDefinition*>* children)
 {
-    for (std::vector<ConsoleGenerateStructureAction*>::iterator it = mActions.begin();
-         it != mActions.end(); ++it)
+    for (std::vector<ConsoleGenerateStructureAction*>::iterator it = mActions.begin(); it != mActions.end(); ++it)
     {
         children->push_back(*it);
     }
@@ -126,8 +124,7 @@ bool ConsoleGenerateStructure::postProcess(Level* level, Random& random, Boundin
 {
     if (level->mDimension->getType() == DimensionType::getById(mDimension))
     {
-        for (std::vector<ConsoleGenerateStructureAction*>::iterator it = mActions.begin();
-             it != mActions.end(); it++)
+        for (std::vector<ConsoleGenerateStructureAction*>::iterator it = mActions.begin(); it != mActions.end(); it++)
         {
             ConsoleGenerateStructureAction* action = *it;
             switch (action->getActionType())
@@ -160,8 +157,7 @@ BoundingBox* ConsoleGenerateStructure::getBoundingBox()
         int maxX = 1;
         int maxY = 1;
         int maxZ = 1;
-        for (std::vector<ConsoleGenerateStructureAction*>::iterator it = mActions.begin();
-             it != mActions.end(); ++it)
+        for (std::vector<ConsoleGenerateStructureAction*>::iterator it = mActions.begin(); it != mActions.end(); ++it)
         {
             ConsoleGenerateStructureAction* action = *it;
             maxX = std::max(maxX, static_cast<int>(action->getEndX()));

@@ -34,8 +34,8 @@ class MultiplayerLocalPlayer;
 class MultiPlayerGameMode : public GameMode
 {
 public:
-    MultiPlayerGameMode(int playerId, ClientPacketListener* connection, int userIndex,
-                        bool primaryPlayer, bool splitScreen);
+    MultiPlayerGameMode(int playerId, ClientPacketListener* connection, int userIndex, bool primaryPlayer,
+                        bool splitScreen);
     virtual ~MultiPlayerGameMode();
 
     GameModeConstraints* getGameModeConstraints();
@@ -45,27 +45,23 @@ public:
     void ensureHasSentCarriedItem();
     virtual bool _destroyBlock(const BlockPos& pos);
     bool GetTutorialsEnabled();
-    InteractionResult::EInteractionResult useItemOn(boost::shared_ptr<Player> player, Level* level,
-                                                     const BlockPos& pos, const Direction* direction,
-                                                     Vec3* hit, InteractionHand::EInteractionHand hand,
-                                                     bool simulate, bool* used);
+    InteractionResult::EInteractionResult useItemOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
+                                                    const Direction* direction, Vec3* hit,
+                                                    InteractionHand::EInteractionHand hand, bool simulate, bool* used);
     bool hasMissTime();
     void attack(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> target);
-    InteractionResult::EInteractionResult interact(boost::shared_ptr<Player> player,
-                                                    boost::shared_ptr<Entity> target,
-                                                    not_null_ptr<ItemInstance> item,
-                                                    InteractionHand::EInteractionHand hand);
-    InteractionResult::EInteractionResult interactAt(boost::shared_ptr<Player> player,
-                                                      boost::shared_ptr<Entity> target,
-                                                      const HitResult* hit,
-                                                      not_null_ptr<ItemInstance> item,
-                                                      InteractionHand::EInteractionHand hand);
+    InteractionResult::EInteractionResult interact(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> target,
+                                                   not_null_ptr<ItemInstance> item,
+                                                   InteractionHand::EInteractionHand hand);
+    InteractionResult::EInteractionResult interactAt(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> target,
+                                                     const HitResult* hit, not_null_ptr<ItemInstance> item,
+                                                     InteractionHand::EInteractionHand hand);
     bool hasInfiniteItems();
     void handlePickItem(const boost::shared_ptr<ItemInstance>& item);
     bool isInputAllowed(int mapping);
     bool destroyBlock(const BlockPos& pos);
-    static void creativeDestroyBlock(Minecraft* minecraft, MultiPlayerGameMode* mode,
-                                     const BlockPos& pos, const Direction* direction);
+    static void creativeDestroyBlock(Minecraft* minecraft, MultiPlayerGameMode* mode, const BlockPos& pos,
+                                     const Direction* direction);
     bool sameDestroyTarget(const BlockPos& pos);
     bool continueDestroyBlock(const BlockPos& pos, const Direction* direction);
     void stopDestroyBlock();
@@ -84,35 +80,31 @@ public:
     virtual bool startDestroyBlock(const BlockPos& pos, const Direction* direction);
     bool canHurtPlayer();
     virtual void tick();
-    virtual InteractionResult::EInteractionResult useItem(boost::shared_ptr<Player> player,
-                                                            Level* level,
-                                                            InteractionHand::EInteractionHand hand,
-                                                            bool simulate);
+    virtual InteractionResult::EInteractionResult useItem(boost::shared_ptr<Player> player, Level* level,
+                                                          InteractionHand::EInteractionHand hand, bool simulate);
     virtual void SetGameType(const GameType* gameType);
     virtual const GameType* GetGameType();
 
     void setLocalMode(const GameType* gameType);
     virtual InteractionResult::EInteractionResult _useItemOn(boost::shared_ptr<Player> player, Level* level,
-                                                      const BlockPos& pos, const Direction* direction,
-                                                      Vec3* hit, InteractionHand::EInteractionHand hand,
-                                                      bool simulate, bool* used);
+                                                             const BlockPos& pos, const Direction* direction, Vec3* hit,
+                                                             InteractionHand::EInteractionHand hand, bool simulate,
+                                                             bool* used);
     double getPickRange();
-    void handleTakeAllInvenetory(int containerId, int slot, int button,
-                                                             int mode, boost::shared_ptr<Player> player);
+    void handleTakeAllInvenetory(int containerId, int slot, int button, int mode, boost::shared_ptr<Player> player);
     boost::shared_ptr<ItemInstance> handleInventoryMouseClick(int containerId, int slot, int button,
-                                                               ClickType::eClickType clickType,
-                                                               boost::shared_ptr<Player> player);
+                                                              ClickType::eClickType clickType,
+                                                              boost::shared_ptr<Player> player);
     void handleInventoryButtonClick(int containerId, int button);
     void handleCreativeModeItemAdd(not_null_ptr<ItemInstance> item, int slot);
     void handleCreativeModeItemDrop(not_null_ptr<ItemInstance> item);
     bool hasExperience();
     bool hasFarPickRange();
-    virtual not_null_ptr<ItemInstance> handleCraftItem(int recipe, int category,
-                                                       boost::shared_ptr<Player> player);
-    virtual boost::shared_ptr<ItemInstance> handleStackedCraftItem(
-        std::vector<std::pair<int, int> >& recipes, int category, boost::shared_ptr<Player> player);
-    virtual boost::shared_ptr<ItemInstance> handleCustomCraftItem(
-        std::vector<int>& recipes, boost::shared_ptr<Player> player);
+    virtual not_null_ptr<ItemInstance> handleCraftItem(int recipe, int category, boost::shared_ptr<Player> player);
+    virtual boost::shared_ptr<ItemInstance> handleStackedCraftItem(std::vector<std::pair<int, int> >& recipes,
+                                                                   int category, boost::shared_ptr<Player> player);
+    virtual boost::shared_ptr<ItemInstance> handleCustomCraftItem(std::vector<int>& recipes,
+                                                                  boost::shared_ptr<Player> player);
     void handleDebugOptions(unsigned int option, boost::shared_ptr<Player> player);
 
     virtual const MiniGameDef* GetMiniGame();

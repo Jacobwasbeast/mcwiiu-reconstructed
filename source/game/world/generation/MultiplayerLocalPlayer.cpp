@@ -38,7 +38,8 @@
 #include "game/network/ServerboundContainerClosePacket.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
 
-MultiplayerLocalPlayer::MultiplayerLocalPlayer(Minecraft* minecraft, Level* level, User* user, ClientPacketListener* packetListener)
+MultiplayerLocalPlayer::MultiplayerLocalPlayer(Minecraft* minecraft, Level* level, User* user,
+                                               ClientPacketListener* packetListener)
     : LocalPlayer(minecraft, level, user, level->mDimension->getType()->getId())
 {
     LivingEntity::fjDerivedCtorCalls();
@@ -147,8 +148,8 @@ void MultiplayerLocalPlayer::tick()
 boost::shared_ptr<ItemEntity> MultiplayerLocalPlayer::drop()
 {
     {
-        boost::shared_ptr<Packet> packet(new ServerboundPlayerActionPacket(
-            ServerboundPlayerActionPacket::DROP_ITEM, BlockPos(0, 0, 0), Direction::DOWN, 0));
+        boost::shared_ptr<Packet> packet(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket::DROP_ITEM,
+                                                                           BlockPos(0, 0, 0), Direction::DOWN, 0));
         mPacketListener->send(packet);
     }
     return boost::shared_ptr<ItemEntity>();
@@ -163,8 +164,8 @@ void MultiplayerLocalPlayer::respawn()
 {
     if (mPacketListener == NULL)
         return;
-    boost::shared_ptr<Packet> packet(new ServerboundClientCommandPacket(
-        ServerboundClientCommandPacket::PERFORM_RESPAWN));
+    boost::shared_ptr<Packet> packet(
+        new ServerboundClientCommandPacket(ServerboundClientCommandPacket::PERFORM_RESPAWN));
     mPacketListener->send(packet);
 }
 
@@ -252,7 +253,8 @@ void MultiplayerLocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
 
 void MultiplayerLocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> params)
 {
-    if (stat != 0 && !stat->isAwardedFromServer()) {
+    if (stat != 0 && !stat->isAwardedFromServer())
+    {
         LocalPlayer::awardStat(stat, params);
         return;
     }
@@ -261,7 +263,8 @@ void MultiplayerLocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char
 
 void MultiplayerLocalPlayer::awardStatFromServer(Stat* stat, arrayWithLength<unsigned char> params)
 {
-    if (stat != 0 && stat->isAwardedFromServer()) {
+    if (stat != 0 && stat->isAwardedFromServer())
+    {
         LocalPlayer::awardStat(stat, params);
         return;
     }
@@ -281,14 +284,15 @@ void MultiplayerLocalPlayer::onSlimeBlockBounce()
 
 void MultiplayerLocalPlayer::sendRidingJump()
 {
-    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
-        shared_from_this(), ServerboundPlayerCommandPacket::RIDING_JUMP, static_cast<int>(getJumpRidingScale() * 100.0f))));
+    mPacketListener->send(boost::shared_ptr<Packet>(
+        new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::RIDING_JUMP,
+                                           static_cast<int>(getJumpRidingScale() * 100.0f))));
 }
 
 void MultiplayerLocalPlayer::sendOpenInventory()
 {
-    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
-        shared_from_this(), ServerboundPlayerCommandPacket::OPEN_INVENTORY)));
+    mPacketListener->send(boost::shared_ptr<Packet>(
+        new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::OPEN_INVENTORY)));
 }
 
 bool MultiplayerLocalPlayer::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
@@ -343,8 +347,8 @@ bool MultiplayerLocalPlayer::startRiding(boost::shared_ptr<Entity> vehicle, bool
 
 void MultiplayerLocalPlayer::StopSleeping()
 {
-    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
-        shared_from_this(), ServerboundPlayerCommandPacket::STOP_SLEEPING)));
+    mPacketListener->send(boost::shared_ptr<Packet>(
+        new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::STOP_SLEEPING)));
 }
 
 void MultiplayerLocalPlayer::setAndBroadcastCustomSkin(unsigned int skin)
@@ -365,6 +369,7 @@ void MultiplayerLocalPlayer::setAndBroadcastCustomCape(unsigned int cape)
     if (mCustomCape == oldCape)
         return;
 
-    mPacketListener->send(boost::shared_ptr<Packet>(new TextureChangePacket(
-        shared_from_this(), TextureChangePacket::eTextureChangeType_Cape, GameSettings::GetPlayerCapeName(mUserIndex))));
+    mPacketListener->send(boost::shared_ptr<Packet>(
+        new TextureChangePacket(shared_from_this(), TextureChangePacket::eTextureChangeType_Cape,
+                                GameSettings::GetPlayerCapeName(mUserIndex))));
 }

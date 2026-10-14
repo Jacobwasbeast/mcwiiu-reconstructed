@@ -1,7 +1,6 @@
 #include "game/world/generation/PercentagePlayersVotedCondition.hpp"
 
-PercentagePlayersVotedCondition::PercentagePlayersVotedCondition(const XmlObject& object)
-    : IntegerCondition(object)
+PercentagePlayersVotedCondition::PercentagePlayersVotedCondition(const XmlObject& object) : IntegerCondition(object)
 {
 }
 

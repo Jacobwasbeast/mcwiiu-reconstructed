@@ -58,11 +58,9 @@ PlayerUID::PlayerUID(std::wstring uidString)
 std::wstring PlayerUID::UuidString() const
 {
     wchar_t text[40];
-    swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-             uuid.data[0], uuid.data[1], uuid.data[2], uuid.data[3],
-             uuid.data[4], uuid.data[5], uuid.data[6], uuid.data[7],
-             uuid.data[8], uuid.data[9], uuid.data[10], uuid.data[11],
-             uuid.data[12], uuid.data[13], uuid.data[14], uuid.data[15]);
+    swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", uuid.data[0], uuid.data[1],
+             uuid.data[2], uuid.data[3], uuid.data[4], uuid.data[5], uuid.data[6], uuid.data[7], uuid.data[8],
+             uuid.data[9], uuid.data[10], uuid.data[11], uuid.data[12], uuid.data[13], uuid.data[14], uuid.data[15]);
     return std::wstring(text);
 }
 
@@ -73,17 +71,15 @@ std::wstring PlayerUID::toString() const
         return UuidString();
     if ((flags & FlagMiiPrincipal) != 0)
     {
-        swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-                 mii.createId[0], mii.createId[1], mii.createId[2], mii.createId[3],
-                 mii.createId[4], mii.createId[5], mii.createId[6], mii.createId[7],
-                 mii.createId[8], mii.createId[9], mii.principalIdBytes[0],
-                 mii.principalIdBytes[1], mii.principalIdBytes[2], mii.principalIdBytes[3]);
+        swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", mii.createId[0],
+                 mii.createId[1], mii.createId[2], mii.createId[3], mii.createId[4], mii.createId[5], mii.createId[6],
+                 mii.createId[7], mii.createId[8], mii.createId[9], mii.principalIdBytes[0], mii.principalIdBytes[1],
+                 mii.principalIdBytes[2], mii.principalIdBytes[3]);
     }
     else
     {
-        swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-                 mii.createId[0], mii.createId[1], mii.createId[2], mii.createId[3],
-                 mii.createId[4], mii.createId[5], mii.createId[6], mii.createId[7],
+        swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", mii.createId[0], mii.createId[1],
+                 mii.createId[2], mii.createId[3], mii.createId[4], mii.createId[5], mii.createId[6], mii.createId[7],
                  mii.createId[8], mii.createId[9]);
     }
     return std::wstring(text);
@@ -96,8 +92,7 @@ bool PlayerUID::operator==(const PlayerUID& other) const
         return false;
     if (uuidType != 0)
         return uuid == other.uuid;
-    return mii.principalId == other.mii.principalId &&
-           std::memcmp(this, &other, 10) == 0;
+    return mii.principalId == other.mii.principalId && std::memcmp(this, &other, 10) == 0;
 }
 
 bool PlayerUID::operator!=(const PlayerUID& other) const
