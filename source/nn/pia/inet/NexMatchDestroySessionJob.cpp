@@ -139,7 +139,7 @@ NexMatchDestroySessionJob::ExecuteResult NexMatchDestroySessionJob::UnregisterBu
     }
     SelectStep(m_currentStep, static_cast<ExecuteResult (session::DestroySessionJob::*)()>(&NexMatchDestroySessionJob::WaitUnregisterBufferMatchmakeSession),
                "NexMatchDestroySessionJob::WaitUnregisterBufferMatchmakeSession");
-    return MakeExecuteResult(cExecuteKindNextStep);
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 NexMatchDestroySessionJob::ExecuteResult NexMatchDestroySessionJob::WaitUnregisterBufferMatchmakeSession()

@@ -225,7 +225,7 @@ Result InetOutputStream::Write(const common::Packet& packet)
         Result lastResult = 0;
         for (unsigned int index = 0; index < transport::cStationNumMax; ++index)
         {
-            if (index == localIndex || ((packet.m_stationBitmap >> index) & 1) == 0)
+            if (index == localIndex || (packet.m_stationBitmap >> index) == 0)
                 continue;
             transport::Station* station =
                 transport::StationManager::s_pInstance->GetStation(static_cast<StationIndex>(index));

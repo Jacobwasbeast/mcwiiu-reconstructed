@@ -174,6 +174,7 @@ public:
 
 private:
     friend class NexMatchJointSessionJob;
+    friend class NexMatchMeshLayerController;
 
     typedef nn::nex::qList<nn::nex::MatchmakeSessionSearchCriteria> SearchCriteriaList;
     typedef std::list<nn::nex::ResultRange, nn::nex::MemAllocator<nn::nex::ResultRange> > ResultRangeList;

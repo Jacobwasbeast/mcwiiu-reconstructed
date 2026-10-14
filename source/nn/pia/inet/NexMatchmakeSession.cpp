@@ -1523,6 +1523,35 @@ Result NexMatchmakeSession::ReflectSettingToMatchmakeSession(const nn::pia::sess
         NexFacade::ConvertInetAddressToNexInetAddress(createSetting->GetOverrideIpAddress(), m_inetAddress);
         m_matchmakeParam->m_Parameters[nn::nex::String(s_overrideIpAddressKey)] = nn::nex::Variant(m_inetAddress->GetAddressStr());
     }
+    for (unsigned int i = 0; i < NexCreateSessionSetting::cAdditionalScoreBasedParameterValueNum; ++i) {
+        const ParamVariant* value = createSetting->GetAdditionalScoreBasedParameterValue(i);
+        const common::String* key = createSetting->GetAdditionalScoreBasedParameterValueKey(i);
+        if (key == 0 || key->GetStringLength() == 0) {
+            continue;
+        }
+        switch (value->m_type) {
+        case ParamVariant::cType_UInt64:
+            m_matchmakeParam->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value->m_uint64Value);
+            break;
+        case ParamVariant::cType_Int64:
+            m_matchmakeParam->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value->m_int64Value);
+            break;
+        case ParamVariant::cType_UInt32:
+            m_matchmakeParam->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value->m_uint32Value);
+            break;
+        case ParamVariant::cType_Int32:
+            m_matchmakeParam->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value->m_int32Value);
+            break;
+        case ParamVariant::cType_Bool:
+            m_matchmakeParam->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value->m_boolValue);
+            break;
+        case ParamVariant::cType_Double:
+            m_matchmakeParam->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value->m_doubleValue);
+            break;
+        default:
+            break;
+        }
+    }
     if (createSetting->GetAdditionalScoreBasedParameterStringKey(0) != 0 && createSetting->GetAdditionalScoreBasedParameterString(0) != 0) {
         m_matchmakeParam->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(createSetting->GetAdditionalScoreBasedParameterStringKey(0)->GetBuffer()))] = nn::nex::Variant(static_cast<const wchar_t*>(createSetting->GetAdditionalScoreBasedParameterString(0)->GetBuffer()));
     }
@@ -3200,7 +3229,7 @@ bool NexMatchmakeSession::WaitJoinMatchmakeSessionWithTeam()
             return true;
         }
         if (result.Equals(cNexResultNotParticipatedGathering)) {
-            m_callContext->SignalFailure(transport::cResultInvalidState);
+            m_callContext->SignalFailure(cResultOwnerOffline);
             m_callContext = 0;
             m_idList7c->clear();
             m_foundSession->Reset();
@@ -4051,7 +4080,6 @@ bool NexMatchmakeSession::WaitRandomMatchmakeSessionWithTeam(unsigned int* gathe
         *found = m_matchmakeOwner;
         *gatheringId = m_foundSession->m_uiValue1;
         m_sessionInfo.Clear();
-        CopyMatchmakeSessionToSessionInfo(m_foundSession, &m_sessionInfo);
         SessionParticipantInfo* participantInfo = const_cast<SessionParticipantInfo*>(static_cast<NexMatchMeshLayerController*>(session::g_piaSession->m_meshLayerController)->GetSessionParticipantInfo(m_foundSession->m_uiValue1));
         if (participantInfo != 0) {
             participantInfo->RemoveObsoleteEntry();

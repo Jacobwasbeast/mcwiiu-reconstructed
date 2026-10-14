@@ -241,10 +241,9 @@ const common::String* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterS
 bool NexUpdateSessionSetting::IsSetScoreBaseParam() const
 {
     bool isSet = m_isSetRatingValue | m_isSetDisconnectionRate | m_isSetViolationRate | m_isSetCountryCode | m_isSetUpdateGeoIp;
-    const common::String* key = m_additionalScoreBasedParameterValueKey;
-    for (unsigned int index = 0; index < 3; ++index, ++key)
+    for (unsigned int index = 0; index < 3; ++index)
     {
-        if (key->GetStringLength() > 0)
+        if (m_additionalScoreBasedParameterValueKey[index].GetStringLength() > 0)
             isSet = true;
     }
     if (m_additionalScoreBasedParameterStringKey.GetStringLength() > 0)

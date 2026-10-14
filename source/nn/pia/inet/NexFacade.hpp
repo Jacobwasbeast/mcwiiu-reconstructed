@@ -120,6 +120,7 @@ private:
     friend class InetOutputStream;
     friend class InetProcessHostMigrationJob;
     friend class MonitoringDataSender;
+    friend class NexMatchMeshLayerController;
     friend class NexNatRelay;
     friend class NexNatServerAddressResolveJob;
     friend class NexNotificationDataJob;

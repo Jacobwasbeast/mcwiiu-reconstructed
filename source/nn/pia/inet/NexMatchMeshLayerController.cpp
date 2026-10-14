@@ -3,14 +3,20 @@
 #include <coreinit/memory.h>
 
 #include "nn/nex/NgsBridgeInterface.hpp"
+#include "nn/nex/NgsFacade.hpp"
 #include "nn/nex/qResult.hpp"
 #include "nn/pia/NetworkFactory.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/inet/NexFacade.hpp"
 #include "nn/pia/inet/NexMatchmakeSession.hpp"
+#include "nn/pia/inet/NexNatRelay.hpp"
+#include "nn/pia/inet/NexSessionStartupSetting.hpp"
 #include "nn/pia/common/Scheduler.hpp"
 #include "nn/pia/common/Memory.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
+#include "nn/pia/common/Crypto.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
+#include "nn/pia/session/Mesh.hpp"
 #include "nn/pia/session/JointSessionJob.hpp"
 #include "nn/nex/NotificationEvent.hpp"
 #include "platform/wiiu/pead.hpp"
@@ -42,8 +48,22 @@ enum
     cParticipationTextStationIdOffset = 2,
     cStationIdTextLength = 16,
     cMatchmakeStatusJointSessionProcessing = 3,
-    cExpiredParticipantTimeoutMsec = 500
+    cExpiredParticipantTimeoutMsec = 500,
+    cPayloadSizeMin = 576,
+    cPayloadSizeMax = 1364,
+    cNgsInterfaceIndexInvalid = 0xff,
+    cRelayGatheringIdSize = 4,
+    cPlayerNameTraceFlag = 0x4000000
 };
+
+const unsigned int cByteMaskEven = 0xff00ff00;
+const unsigned int cByteMaskOdd = 0x00ff00ff;
+
+inline unsigned int SwapU32(unsigned int value)
+{
+    unsigned int swapped = ((value & cByteMaskEven) >> 8) | ((value & cByteMaskOdd) << 8);
+    return (swapped << 16) | (swapped >> 16);
+}
 
 }
 
@@ -577,9 +597,91 @@ NexMatchMeshLayerController::~NexMatchMeshLayerController()
     }
 }
 
-Result NexMatchMeshLayerController::Startup(const session::Session::StartupSetting& setting)
+Result NexMatchMeshLayerController::Startup(const session::Session::StartupSetting& baseSetting)
 {
-    return MeshLayerController::Startup(setting);
+    const NexSessionStartupSetting& setting = static_cast<const NexSessionStartupSetting&>(baseSetting);
+    if (setting.m_payloadSize > cPayloadSizeMax)
+        return ResultInvalidArgument();
+    if (setting.m_payloadSize < cPayloadSizeMin)
+        return ResultInvalidArgument();
+
+    const bool playerInfoValid = session::g_piaMesh->CheckPlayerInfo(setting.m_playerInfo[0]) == 0;
+    m_payloadSize = setting.m_payloadSize;
+    common::g_sessionBeginMonitoringContent.m_metric25 = static_cast<unsigned short>(setting.m_payloadSize);
+    m_registeredPlayerInfo = false;
+    m_playerInfoSize = 0;
+    ResetPlayerInfo();
+    m_ngsInterface = 0;
+    m_fielde0 = 0;
+    if (playerInfoValid)
+    {
+        transport::Station::PlayerInfo& playerInfo = m_playerInfo[m_playerInfoSize];
+        const transport::Station::PlayerInfo& sourceInfo = setting.m_playerInfo[m_playerInfoSize];
+        m_registeredPlayerInfo = true;
+        playerInfo.m_name.Copy(sourceInfo.m_name);
+        playerInfo.m_language = sourceInfo.m_language;
+        playerInfo.m_field70 = sourceInfo.m_field70;
+        playerInfo.m_field78 = sourceInfo.m_field78;
+        m_playerInfo[m_playerInfoSize].m_name.Trace(cPlayerNameTraceFlag);
+        ++m_playerInfoSize;
+    }
+    if (m_playerInfoSize == 0)
+    {
+        if (setting.m_recentPlayRecordEnabled && session::g_piaMesh->IsRecentPlayRecordEnabled())
+            return ResultInvalidArgument();
+        m_playerInfoSize = 1;
+    }
+    m_playersCountedAsParticipants = setting.m_playersCountedAsParticipants;
+    m_skipBandwidthCheck = setting.m_field99;
+    m_hostMigrationEnabled = setting.m_hostMigrationEnabled;
+    m_bandwidthCheckMeasurementTime = setting.m_bandwidthCheckMeasurementTime;
+    m_bandwidthCheckMeasurementCount = setting.m_bandwidthCheckMeasurementCount;
+    m_cryptoSetting.m_mode = common::Crypto::cModeAesGcm;
+    m_bandwidthCheckIpPacketSize = setting.m_bandwidthCheckIpPacketSize;
+    m_recentPlayRecordEnabled = setting.m_recentPlayRecordEnabled;
+
+    if (NexFacade::GetInstance() == 0)
+        return ResultInvalidState();
+    m_nexFacadeNgsInterface = NexFacade::GetInstance()->m_ngsBridge;
+    if (m_nexFacadeNgsInterface == 0)
+        return ResultInvalidState();
+
+    m_ngsInterfaceIndexBoundNexFacade = cNgsInterfaceIndexInvalid;
+    nex::NgsFacade* ngsFacade = static_cast<nex::NgsFacade*>(setting.m_field94);
+    if (m_playersCountedAsParticipants && ngsFacade != 0)
+    {
+        if (m_playerInfoSize != 1 && ngsFacade->GetCredentials() == 0)
+            return ResultInvalidArgument();
+        if (m_nexFacadeNgsInterface != ngsFacade->GetNgsBridge())
+            return ResultInvalidArgument();
+        m_ngsInterface = ngsFacade->GetNgsBridge();
+    }
+    else
+    {
+        m_ngsInterface = m_nexFacadeNgsInterface;
+    }
+    m_fielde0 = m_ngsInterface->GetPrincipalID();
+    m_ngsInterfaceIndexBoundNexFacade = 0;
+
+    session::Session* piaSession = session::g_piaSession;
+    const Result result =
+        static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex])->Initialize();
+    if (result != 0)
+        return ResultInvalidState();
+    NexMatchmakeSession* bufferMatchmakeSession =
+        static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]);
+    if (bufferMatchmakeSession != 0)
+    {
+        const Result bufferResult = bufferMatchmakeSession->Initialize();
+        if (bufferResult != 0)
+            return ResultInvalidState();
+    }
+
+    m_nexFacadeNgsInterface->RegisterNotificationEventHandler(m_notificationEventHandler);
+    Result::ClearNexNetworkErrorCode();
+    common::g_sessionBeginMonitoringContent.m_metric159 = playerInfoValid;
+    common::g_sessionBeginMonitoringContent.m_metric160 = m_playersCountedAsParticipants;
+    return MeshLayerController::Startup(baseSetting);
 }
 
 void NexMatchMeshLayerController::MeshCleanup()
@@ -591,7 +693,24 @@ void NexMatchMeshLayerController::MeshCleanup()
 
 Result NexMatchMeshLayerController::MeshStartup(session::IMatchmakeSession* matchmakeSession, bool skipBandwidthCheck)
 {
-    return MeshLayerController::MeshStartup(matchmakeSession, skipBandwidthCheck);
+    const unsigned char* sessionKey = static_cast<NexMatchmakeSession*>(matchmakeSession)->m_matchmakeSessionKey;
+    if (m_cryptoSetting.m_mode != common::Crypto::cModeNone)
+        OSBlockMove(m_cryptoSetting.m_key, sessionKey, sizeof(m_cryptoSetting.m_key), FALSE);
+    const Result result = MeshLayerController::MeshStartup(matchmakeSession, skipBandwidthCheck);
+    if (result == 0)
+    {
+        unsigned int relayGatheringId = 0;
+        unsigned char relaySignatureKey[NexNatRelay::cSignatureKeySize];
+        unsigned char* gatheringIdBytes = reinterpret_cast<unsigned char*>(&relayGatheringId);
+        for (unsigned int index = 0; index < cRelayGatheringIdSize; ++index)
+            gatheringIdBytes[index] = *sessionKey++;
+        relayGatheringId = SwapU32(relayGatheringId);
+        for (unsigned int index = 0; index < NexNatRelay::cSignatureKeySize; ++index)
+            relaySignatureKey[index] = *sessionKey++;
+        NexFacade::GetInstance()->m_natRelay->SetRelayGatheringId(relayGatheringId);
+        NexFacade::GetInstance()->m_natRelay->SetRelayServerSignatureKey(relaySignatureKey);
+    }
+    return result;
 }
 
 Result NexMatchMeshLayerController::StartNatSession()
