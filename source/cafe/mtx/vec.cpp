@@ -2,6 +2,11 @@
 
 #include <math.h>
 
+#ifdef __ghs__
+#include <ppc_ghs.h>
+#include <ppc_ps.h>
+#endif
+
 extern "C"
 {
 void ASM_VECAdd(const Vec* a, const Vec* b, Vec* ab)
@@ -13,6 +18,18 @@ void ASM_VECAdd(const Vec* a, const Vec* b, Vec* ab)
 
 void ASM_VECCrossProduct(const Vec* a, const Vec* b, Vec* axb)
 {
+#ifdef __ghs__
+    f32x2 bxy = __PSQ_L(&b->x, 0, 0);
+    f32x2 az = __PS_FDUP(a->z);
+    f32x2 axy = __PSQ_L(&a->x, 0, 0);
+    f32x2 byx = __PS_MERGE10(bxy, bxy);
+    f32x2 bz = __PS_FDUP(b->z);
+    f32x2 xz = __PS_MSUB(axy, bz, __PS_MUL(bxy, az));
+    f32x2 yx = __PS_MSUB(axy, byx, __PS_MULS0(bxy, axy));
+
+    __PSQ_ST(&axb->x, __PS_MERGE11(xz, xz), 1, 0);
+    __PSQ_ST(&axb->y, __PS_NEG(__PS_MERGE01(xz, yx)), 0, 0);
+#else
     Vec vTmp;
 
     vTmp.x = (a->y * b->z) - (a->z * b->y);
@@ -21,6 +38,7 @@ void ASM_VECCrossProduct(const Vec* a, const Vec* b, Vec* axb)
     axb->x = vTmp.x;
     axb->y = vTmp.y;
     axb->z = vTmp.z;
+#endif
 }
 
 f32 ASM_VECDistance(const Vec* a, const Vec* b)
@@ -43,6 +61,17 @@ f32 ASM_VECMag(const Vec* v)
 
 void ASM_VECNormalize(const Vec* src, Vec* unit)
 {
+#ifdef __ghs__
+    f32x2 xy = __PSQ_L(&src->x, 0, 0);
+    f32x2 xySq = __PS_MUL(xy, xy);
+    f32x2 z1 = __PSQ_L(&src->z, 1, 0);
+    f32x2 mag = __PS_SUM0(__PS_MADD(z1, z1, xySq), z1, xySq);
+    f32 rsqrt = __FRSQRTEF(mag[0]);
+
+    rsqrt = __FNMSUBS(rsqrt * rsqrt, mag[0], 3.0F) * (rsqrt * 0.5F);
+    __PSQ_ST(&unit->x, __PS_MULS0F(xy, rsqrt), 0, 0);
+    __PSQ_ST(&unit->z, __PS_MULS0F(z1, rsqrt), 1, 0);
+#else
     f32 mag;
 
     mag = (src->z * src->z) + ((src->x * src->x) + (src->y * src->y));
@@ -51,6 +80,7 @@ void ASM_VECNormalize(const Vec* src, Vec* unit)
     unit->x = src->x * mag;
     unit->y = src->y * mag;
     unit->z = src->z * mag;
+#endif
 }
 
 void ASM_VECScale(const Vec* src, Vec* dst, f32 scale)

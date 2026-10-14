@@ -2,10 +2,43 @@
 
 #include <math.h>
 
+#ifdef __ghs__
+#include <ppc_ps.h>
+#endif
+
 extern "C"
 {
 void ASM_MTXConcat(const Mtx a, const Mtx b, Mtx ab)
 {
+#ifdef __ghs__
+    static const f32 Unit01[2] = {0.0F, 1.0F};
+    f32x2 b00 = __PSQ_L(&b[0][0], 0, 0);
+    f32x2 b02 = __PSQ_L(&b[0][2], 0, 0);
+    f32x2 b10 = __PSQ_L(&b[1][0], 0, 0);
+    f32x2 b12 = __PSQ_L(&b[1][2], 0, 0);
+    f32x2 b20 = __PSQ_L(&b[2][0], 0, 0);
+    f32x2 b22 = __PSQ_L(&b[2][2], 0, 0);
+    f32x2 unit01 = __PSQ_L(Unit01, 0, 0);
+    u32 i;
+
+    for (i = 0; i < 3; i++)
+    {
+        f32x2 a00 = __PSQ_L(&a[i][0], 0, 0);
+        f32x2 a02 = __PSQ_L(&a[i][2], 0, 0);
+        f32x2 m00;
+        f32x2 m02;
+
+        m00 = __PS_MULS0(b00, a00);
+        m02 = __PS_MULS0(b02, a00);
+        m00 = __PS_MADDS1(b10, a00, m00);
+        m02 = __PS_MADDS1(b12, a00, m02);
+        m00 = __PS_MADDS0(b20, a02, m00);
+        m02 = __PS_MADDS0(b22, a02, m02);
+        m02 = __PS_MADDS1(unit01, a02, m02);
+        __PSQ_ST(&ab[i][0], m00, 0, 0);
+        __PSQ_ST(&ab[i][2], m02, 0, 0);
+    }
+#else
     Mtx mTmp;
     MtxPtr m;
 
@@ -37,6 +70,7 @@ void ASM_MTXConcat(const Mtx a, const Mtx b, Mtx ab)
     {
         ASM_MTXCopy(mTmp, ab);
     }
+#endif
 }
 
 void ASM_MTXConcatArray(const Mtx a, const Mtx* srcBase, Mtx* dstBase, u32 count)
@@ -681,15 +715,15 @@ void C_MTXLookAt(Mtx m, const Vec* camPos, const Vec* camUp, const Vec* target)
     m[0][0] = vRight.x;
     m[0][1] = vRight.y;
     m[0][2] = vRight.z;
-    m[0][3] = -((camPos->z * vRight.z) + ((camPos->x * vRight.x) + (camPos->y * vRight.y)));
+    m[0][3] = -(camPos->x * vRight.x + camPos->y * vRight.y + camPos->z * vRight.z);
     m[1][0] = vUp.x;
     m[1][1] = vUp.y;
     m[1][2] = vUp.z;
-    m[1][3] = -((camPos->z * vUp.z) + ((camPos->x * vUp.x) + (camPos->y * vUp.y)));
+    m[1][3] = -(camPos->x * vUp.x + camPos->y * vUp.y + camPos->z * vUp.z);
     m[2][0] = vLook.x;
     m[2][1] = vLook.y;
     m[2][2] = vLook.z;
-    m[2][3] = -((camPos->z * vLook.z) + ((camPos->x * vLook.x) + (camPos->y * vLook.y)));
+    m[2][3] = -(camPos->x * vLook.x + camPos->y * vLook.y + camPos->z * vLook.z);
 }
 
 void C_MTXReflect(Mtx m, const Vec* p, const Vec* n)

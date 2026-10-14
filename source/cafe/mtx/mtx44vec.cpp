@@ -2,10 +2,33 @@
 
 #include <math.h>
 
+#ifdef __ghs__
+#include <ppc_ps.h>
+#endif
+
 extern "C"
 {
 void ASM_MTX44MultVec(const Mtx44 m, const Vec* src, Vec* dst)
 {
+#ifdef __ghs__
+    f32x2 xy = __PSQ_L(&src->x, 0, 0);
+    f32x2 z1 = __PSQ_L(&src->z, 1, 0);
+    f32x2 w;
+    f32x2 vx;
+    f32x2 vy;
+    f32x2 vz;
+
+    w = __PS_MADD(z1, __PSQ_L(&m[3][2], 0, 0), __PS_MUL(xy, __PSQ_L(&m[3][0], 0, 0)));
+    w = __PS_SUM0(w, w, w);
+    w = __PS_DIV(__PS_MERGE11(z1, z1), __PS_MERGE00(w, w));
+    vx = __PS_MADD(z1, __PSQ_L(&m[0][2], 0, 0), __PS_MUL(xy, __PSQ_L(&m[0][0], 0, 0)));
+    vy = __PS_MADD(z1, __PSQ_L(&m[1][2], 0, 0), __PS_MUL(xy, __PSQ_L(&m[1][0], 0, 0)));
+    vz = __PS_MADD(z1, __PSQ_L(&m[2][2], 0, 0), __PS_MUL(xy, __PSQ_L(&m[2][0], 0, 0)));
+    vx = __PS_SUM1(vy, __PS_SUM0(vx, vx, vx), vy);
+    vz = __PS_SUM0(vz, vz, vz);
+    __PSQ_ST(&dst->x, __PS_MUL(vx, w), 0, 0);
+    __PSQ_ST(&dst->z, __PS_MUL(vz, w), 1, 0);
+#else
     Vec vTmp;
     f32 w;
 
@@ -18,6 +41,7 @@ void ASM_MTX44MultVec(const Mtx44 m, const Vec* src, Vec* dst)
     dst->x = vTmp.x * w;
     dst->y = vTmp.y * w;
     dst->z = vTmp.z * w;
+#endif
 }
 
 void ASM_MTX44MultVecArray(const Mtx44 m, const Vec* srcBase, Vec* dstBase, u32 count)
@@ -61,6 +85,20 @@ void ASM_MTX44MultVecArraySR(const Mtx44 m, const Vec* srcBase, Vec* dstBase, u3
 
 void ASM_MTX44MultVecSR(const Mtx44 m, const Vec* src, Vec* dst)
 {
+#ifdef __ghs__
+    f32x2 xy = __PSQ_L(&src->x, 0, 0);
+    f32x2 z1 = __PSQ_L(&src->z, 1, 0);
+    f32x2 vx = __PS_MUL(__PSQ_L(&m[0][0], 0, 0), xy);
+    f32x2 vy = __PS_MUL(__PSQ_L(&m[1][0], 0, 0), xy);
+    f32x2 vz = __PS_MUL(__PSQ_L(&m[2][0], 0, 0), xy);
+
+    vx = __PS_SUM0(vx, vx, vx);
+    vy = __PS_SUM0(vy, vy, vy);
+    vz = __PS_SUM0(vz, vz, vz);
+    __PSQ_ST(&dst->x, __PS_MADD(__PSQ_L(&m[0][2], 0, 0), z1, vx), 1, 0);
+    __PSQ_ST(&dst->y, __PS_MADD(__PSQ_L(&m[1][2], 0, 0), z1, vy), 1, 0);
+    __PSQ_ST(&dst->z, __PS_MADD(__PSQ_L(&m[2][2], 0, 0), z1, vz), 1, 0);
+#else
     Vec vTmp;
 
     vTmp.x = (m[0][2] * src->z) + ((m[0][0] * src->x) + (m[0][1] * src->y));
@@ -69,5 +107,6 @@ void ASM_MTX44MultVecSR(const Mtx44 m, const Vec* src, Vec* dst)
     dst->x = vTmp.x;
     dst->y = vTmp.y;
     dst->z = vTmp.z;
+#endif
 }
 }

@@ -2,6 +2,11 @@
 
 #include <math.h>
 
+#ifdef __ghs__
+#include <ppc_ghs.h>
+#include <ppc_ps.h>
+#endif
+
 extern "C"
 {
 void ASM_MTX34To44(const Mtx src, Mtx44 dst)
@@ -26,6 +31,36 @@ void ASM_MTX34To44(const Mtx src, Mtx44 dst)
 
 void ASM_MTX44Concat(const Mtx44 a, const Mtx44 b, Mtx44 ab)
 {
+#ifdef __ghs__
+    f32x2 b00 = __PSQ_L(&b[0][0], 0, 0);
+    f32x2 b02 = __PSQ_L(&b[0][2], 0, 0);
+    f32x2 b10 = __PSQ_L(&b[1][0], 0, 0);
+    f32x2 b12 = __PSQ_L(&b[1][2], 0, 0);
+    f32x2 b20 = __PSQ_L(&b[2][0], 0, 0);
+    f32x2 b22 = __PSQ_L(&b[2][2], 0, 0);
+    f32x2 b30 = __PSQ_L(&b[3][0], 0, 0);
+    f32x2 b32 = __PSQ_L(&b[3][2], 0, 0);
+    u32 i;
+
+    for (i = 0; i < 4; i++)
+    {
+        f32x2 a00 = __PSQ_L(&a[i][0], 0, 0);
+        f32x2 a02 = __PSQ_L(&a[i][2], 0, 0);
+        f32x2 m00;
+        f32x2 m02;
+
+        m00 = __PS_MULS0(b00, a00);
+        m02 = __PS_MULS0(b02, a00);
+        m00 = __PS_MADDS1(b10, a00, m00);
+        m02 = __PS_MADDS1(b12, a00, m02);
+        m00 = __PS_MADDS0(b20, a02, m00);
+        m02 = __PS_MADDS0(b22, a02, m02);
+        m00 = __PS_MADDS1(b30, a02, m00);
+        m02 = __PS_MADDS1(b32, a02, m02);
+        __PSQ_ST(&ab[i][0], m00, 0, 0);
+        __PSQ_ST(&ab[i][2], m02, 0, 0);
+    }
+#else
     Mtx44 mTmp;
     Mtx44Ptr m;
 
@@ -62,6 +97,7 @@ void ASM_MTX44Concat(const Mtx44 a, const Mtx44 b, Mtx44 ab)
     {
         ASM_MTX44Copy(mTmp, ab);
     }
+#endif
 }
 
 void ASM_MTX44Copy(const Mtx44 src, Mtx44 dst)
@@ -1193,6 +1229,49 @@ void PSMTX44Transpose(const Mtx44 src, Mtx44 xPose)
 
 void _ASM_MTX44RotAxisRadInternal(Mtx44 m, const Vec* axis, f32 s, f32 c)
 {
+#ifdef __ghs__
+    f32x2 xy = __PSQ_L(&axis->x, 0, 0);
+    f32x2 zz = __PS_FDUP(axis->z);
+    f32x2 xySq = __PS_MUL(xy, xy);
+    f32x2 mag = __PS_SUM0(__PS_MADD(zz, zz, xySq), zz, xySq);
+    f32 t = 1.0F - c;
+    f32 rsqrt = __FRSQRTEF(mag[0]);
+    f32x2 zero = __PS_FDUP(0.0F);
+    f32x2 cc = __PS_FDUP(c);
+    f32x2 txy;
+    f32x2 sxy;
+    f32x2 nsxy;
+    f32x2 tz;
+    f32x2 txyX;
+    f32x2 txyY;
+    f32x2 txyZ;
+    f32 m01;
+    f32 m10;
+
+    rsqrt = __FNMSUBS(rsqrt * rsqrt, mag[0], 3.0F) * (rsqrt * 0.5F);
+    xy = __PS_MULS0F(xy, rsqrt);
+    zz = __PS_MULS0F(zz, rsqrt);
+    txy = __PS_MULS0F(xy, t);
+    sxy = __PS_MULS0F(xy, s);
+    tz = __PS_MULS0F(zz, t);
+    txyY = __PS_MULS1(txy, xy);
+    txyX = __PS_MULS0(txy, xy);
+    txyZ = __PS_MULS0(txy, zz);
+    m01 = __FNMSUBS(zz[0], s, txyY[0]);
+    m10 = __FMADDS(zz[0], s, txyY[0]);
+    nsxy = __PS_NEG(sxy);
+
+    __PSQ_ST(&m[0][0], __PS_SUM0(txyX, __PS_FDUP(m01), cc), 0, 0);
+    __PSQ_ST(&m[0][2], __PS_SUM0(txyZ, zero, sxy), 0, 0);
+    __PSQ_ST(&m[1][0], __PS_SUM1(cc, __PS_FDUP(m10), txyY), 0, 0);
+    __PSQ_ST(&m[1][2], __PS_SUM0(nsxy, zero, txyZ), 0, 0);
+    __PSQ_ST(&m[2][0], __PS_SUM1(sxy, __PS_SUM0(txyZ, txyZ, nsxy), txyZ), 0, 0);
+    __PSQ_ST(&m[2][2], __PS_SUM0(__PS_MULS0(tz, zz), zero, cc), 0, 0);
+    m[3][0] = 0.0f;
+    m[3][1] = 0.0f;
+    m[3][2] = 0.0f;
+    m[3][3] = 1.0f;
+#else
     Vec vN;
     f32 t;
     f32 x;
@@ -1233,5 +1312,6 @@ void _ASM_MTX44RotAxisRadInternal(Mtx44 m, const Vec* axis, f32 s, f32 c)
     m[3][1] = 0.0f;
     m[3][2] = 0.0f;
     m[3][3] = 1.0f;
+#endif
 }
 }
