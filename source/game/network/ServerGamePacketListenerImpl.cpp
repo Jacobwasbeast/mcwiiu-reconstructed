@@ -197,7 +197,9 @@ void ServerGamePacketListenerImpl::setShowOnMaps(bool show)
 
 bool ServerGamePacketListenerImpl::isLocal()
 {
-    return mConnection->m_socket != 0 && mConnection->m_socket->mLocal;
+    if (mConnection->getSocket() == 0)
+        return false;
+    return mConnection->getSocket()->isLocal();
 }
 
 uint32_t ServerGamePacketListenerImpl::countDelayedPackets()
@@ -285,7 +287,7 @@ void ServerGamePacketListenerImpl::tick()
         ++mAboveGroundTickCount;
         if (mAboveGroundTickCount > 80)
         {
-            disconnect(DisconnectPacket::eDisconnectReason_KeepAliveTimeout);
+            disconnect(DisconnectPacket::eDisconnectReason_NoFlying);
             return;
         }
     }
@@ -295,12 +297,13 @@ void ServerGamePacketListenerImpl::tick()
         mClientIsFloating = false;
     }
 
-    boost::shared_ptr<Entity> vehicle = mPlayer->getRootVehicle();
-    mLastVehicle = vehicle;
-    if (!vehicle || vehicle == mPlayer || vehicle->getControllingPassenger() != mPlayer)
+    mLastVehicle = mPlayer->getRootVehicle();
+    boost::shared_ptr<Entity> vehicle = mLastVehicle.lock();
+    if (vehicle == mPlayer || vehicle->getControllingPassenger() != mPlayer)
     {
-        mAboveGroundVehicleTickCount = 0;
+        mLastVehicle.reset();
         mClientVehicleIsFloating = false;
+        mAboveGroundVehicleTickCount = 0;
     }
     else
     {
@@ -311,20 +314,12 @@ void ServerGamePacketListenerImpl::tick()
         mVehicleLastGoodY = vehicle->mY;
         mVehicleLastGoodZ = vehicle->mZ;
 
-        bool stillControllingVehicle = false;
-        if (mClientVehicleIsFloating)
-        {
-            boost::shared_ptr<Entity> checkVehicle = mPlayer->getRootVehicle();
-            if (checkVehicle->getControllingPassenger() == mPlayer)
-                stillControllingVehicle = true;
-        }
-
-        if (stillControllingVehicle)
+        if (mClientVehicleIsFloating && mPlayer->getRootVehicle()->getControllingPassenger() == mPlayer)
         {
             ++mAboveGroundVehicleTickCount;
             if (mAboveGroundVehicleTickCount > 80)
             {
-                disconnect(DisconnectPacket::eDisconnectReason_KeepAliveTimeout);
+                disconnect(DisconnectPacket::eDisconnectReason_NoFlying);
                 return;
             }
         }
@@ -697,8 +692,7 @@ void ServerGamePacketListenerImpl::handleTeleportToEntityPacket(
 
         oldLevel->removeEntityImmediately(mPlayer);
         mPlayer->mRemoved = false;
-        mPlayer->teleportTo(target->mX, target->mY, target->mZ,
-                            target->mYRot, target->mXRot);
+        mPlayer->moveTo(target->mX, target->mY, target->mZ, target->mYRot, target->mXRot);
 
         if (mPlayer->isAlive())
         {
@@ -797,13 +791,17 @@ void ServerGamePacketListenerImpl::handlePlayerCommand(boost::shared_ptr<Serverb
     }
     case ServerboundPlayerCommandPacket::START_FALL_FLYING:
     {
-        not_null_ptr<ItemInstance> chest = mPlayer->getItemSlot(EquipmentSlot::CHEST);
         if (!mPlayer->mOnGround && mPlayer->mYd < 0.0 && !mPlayer->isFallFlying() &&
-            !mPlayer->isInWater() && chest->getItem() == Items::elytra &&
-            ElytraItem::isFlyEnabled(chest))
-            mPlayer->startFallFlying();
-        if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureAutoElytraFly())
+            !mPlayer->isInWater())
+        {
+            not_null_ptr<ItemInstance> chest = mPlayer->getItemSlot(EquipmentSlot::CHEST);
+            if (chest->getItem() == Items::elytra && ElytraItem::isFlyEnabled(chest))
+                mPlayer->startFallFlying();
+        }
+        else if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureAutoElytraFly())
+        {
             mPlayer->stopFallFlying();
+        }
         break;
     }
     case ServerboundPlayerCommandPacket::START_SWIMMING:
@@ -1553,14 +1551,14 @@ void ServerGamePacketListenerImpl::handleGameMode(boost::shared_ptr<GameModePack
     {
         GameModePacket::FollowData data;
         packet->ReadPacket(data);
-        mServer->mMasterGameMode->OnFollow(mPlayer, data.follow, data.teleport);
+        gMinecraftServer->mMasterGameMode->OnFollow(mPlayer, data.follow, data.teleport);
         break;
     }
     case GameModePacket::eMessage_StartSpectating:
-        mServer->mMasterGameMode->OnStartSpectating(mPlayer);
+        gMinecraftServer->mMasterGameMode->OnStartSpectating(mPlayer);
         break;
     case GameModePacket::eMessage_FinishedLoadingLocally:
-        mServer->mMasterGameMode->PlayerFinishedLoadingLocally();
+        gMinecraftServer->mMasterGameMode->PlayerFinishedLoadingLocally();
         break;
     }
 }

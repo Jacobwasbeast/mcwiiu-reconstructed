@@ -92,7 +92,7 @@ public:
                           EMiniGameId eMiniGameId, unsigned int uiWorldId, unsigned int* puiAttributes) = 0;
     virtual int JoinGame(FriendSessionInfo* pSessionInfo, int iUserIndex, int iUserIndexMask,
                          bool bMatchmaking) = 0;
-    virtual bool FindAndJoinGame(int iUserIndexMask, int iSearchFlags, EMiniGameId eMiniGameId,
+    virtual int FindAndJoinGame(int iUserIndexMask, int iSearchFlags, EMiniGameId eMiniGameId,
                                  unsigned int uiAttributeCount, unsigned int* puiAttributeValues,
                                  unsigned int* puiAttributeIds) = 0;
     virtual void CancelJoinGame();

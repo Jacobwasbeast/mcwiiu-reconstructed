@@ -36,6 +36,7 @@ public:
     void sendAndQuit();
     int countDelayedPackets();
     void* getRemoteAddress();
+    Socket* getSocket() { return m_socket; }
     static int runClose(void*);
     static int runSendAndQuit(void*);
 private:

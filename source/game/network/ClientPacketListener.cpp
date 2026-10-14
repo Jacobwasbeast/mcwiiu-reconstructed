@@ -718,24 +718,31 @@ boost::shared_ptr<Entity> ClientPacketListener::getEntity(int entityId)
 void ClientPacketListener::checkDeferredEntityLinkPackets(int entityId)
 {
     EnterCriticalSection(&s_deferredLinkMutex);
-    for (std::vector<DeferredEntityLinkPacket>::iterator it = s_deferredLinks.begin();
-         it != s_deferredLinks.end();)
+    if (!s_deferredLinks.empty())
     {
-        if (it->mPacket == 0)
+        for (unsigned int i = 0; i < s_deferredLinks.size(); i++)
         {
-            it = s_deferredLinks.erase(it);
-            continue;
+            DeferredEntityLinkPacket* deferred = &s_deferredLinks[i];
+            bool remove = false;
+            int deltaTime = GetTickCount() - deferred->mTick;
+            if (deltaTime < 1000)
+            {
+                if (deferred->mPacket->getDestId() == entityId)
+                {
+                    handleEntityLinkPacket(deferred->mPacket);
+                    remove = true;
+                }
+            }
+            else
+            {
+                remove = true;
+            }
+            if (remove)
+            {
+                s_deferredLinks.erase(s_deferredLinks.begin() + i);
+                i--;
+            }
         }
-        const unsigned int age = GetTickCount() - it->mTick;
-        if (age < 1000 && it->mPacket->getDestId() == entityId)
-        {
-            handleEntityLinkPacket(it->mPacket);
-            it = s_deferredLinks.erase(it);
-        }
-        else if (age >= 1000)
-            it = s_deferredLinks.erase(it);
-        else
-            ++it;
     }
     LeaveCriticalSection(&s_deferredLinkMutex);
 }
@@ -978,35 +985,37 @@ void ClientPacketListener::handleAddEntity(boost::shared_ptr<ClientboundAddEntit
 
 void ClientPacketListener::handleAddExperienceOrb(boost::shared_ptr<ClientboundAddExperienceOrbPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
-        return;
-    MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
-    if (level == 0)
-        return;
-    const double scale = 0.03125;
-    boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(level,
-                                                            static_cast<double>(packet->getX()) * scale,
-                                                            static_cast<double>(packet->getY()) * scale,
-                                                            static_cast<double>(packet->getZ()) * scale,
-                                                            packet->getValue()));
-    orb->setId(packet->getId());
-    level->putEntity(packet->getId(), orb);
+    int x = packet->getX();
+    int y = packet->getY();
+    int z = packet->getZ();
+    boost::shared_ptr<Entity> entity(new ExperienceOrb(m_level, x / 32.0, y / 32.0, z / 32.0, packet->getValue()));
+    entity->mXp = x;
+    entity->mYp = y;
+    entity->mZp = z;
+    entity->mYRot = 0.0f;
+    entity->mXRot = 0.0f;
+    entity->setId(packet->getId());
+    m_level->putEntity(packet->getId(), entity);
 }
 
 void ClientPacketListener::handleAddGlobalEntity(boost::shared_ptr<ClientboundAddGlobalEntityPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
-        return;
-    MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
-    if (level == 0 || packet->getType() != 1)
-        return;
-    const double scale = 0.03125;
-    const double x = static_cast<double>(packet->getX()) * scale;
-    const double y = static_cast<double>(packet->getY()) * scale;
-    const double z = static_cast<double>(packet->getZ()) * scale;
-    boost::shared_ptr<LightningBolt> entity(new LightningBolt(level, x, y, z, false));
-    entity->setId(packet->getId());
-    level->addGlobalEntity(entity);
+    double x = packet->getX() / 32.0;
+    double y = packet->getY() / 32.0;
+    double z = packet->getZ() / 32.0;
+    boost::shared_ptr<Entity> entity;
+    if (packet->getType() == 1)
+        entity = boost::shared_ptr<Entity>(new LightningBolt(m_level, x, y, z, false));
+    if (entity != NULL)
+    {
+        entity->mXp = packet->getX();
+        entity->mYp = packet->getY();
+        entity->mZp = packet->getZ();
+        entity->mYRot = 0.0f;
+        entity->mXRot = 0.0f;
+        entity->setId(packet->getId());
+        m_level->addGlobalEntity(entity);
+    }
 }
 
 void ClientPacketListener::handleAddPainting(boost::shared_ptr<ClientboundAddPaintingPacket> packet)
@@ -1585,7 +1594,7 @@ void ClientPacketListener::onDisconnect(DisconnectPacket::eDisconnectReason reas
     if (CGameNetworkManager::sInstance.IsHost() &&
         (reason == DisconnectPacket::eDisconnectReason_TimedOut ||
          reason == DisconnectPacket::eDisconnectReason_SendQueueOverflow) &&
-        IsPrimaryPlayer())
+        IsPrimaryPlayer() && !MinecraftServer::s_saveOnExitAnswered)
     {
         int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
         gConsoleUIController.RequestErrorMessage(
@@ -2558,7 +2567,7 @@ void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginP
     if (!IsPrimaryPlayer())
     {
         int parameter = IDS_CONFIRM_OK;
-        int title = secondaryMessageVariant ? 0x4d669d55 : static_cast<int>(0xf9885affu);
+        int title = secondaryMessageVariant ? STRING_JOIN_CONTENT_PRIVILEGE_TOO_RESTRICTIVE : static_cast<int>(STRING_JOIN_FRIENDS_OF_HOST_ONLY);
         gConsoleUIController.RequestErrorMessage(IDS_CANTJOIN_TITLE, title, &parameter, 1,
                                                  m_playerId, 0, 0, 0, true);
         gApp.SetAction(m_playerId, eXuiAction_RemoveLocalPlayerNoStats, 0);
@@ -2570,14 +2579,14 @@ void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginP
     if (secondaryMessageVariant != 0)
     {
         if (contentCheckResult == 0)
-            reason = DisconnectPacket::eDisconnectReason_NoMultiplayerPrivilege;
+            reason = DisconnectPacket::eDisconnectReason_NoFriendsInGame;
         else if (friendCheckResult != 0)
             reason = static_cast<DisconnectPacket::eDisconnectReason>(restrictionResult != 0 ? 0x16 : 0x18);
         else
-            reason = DisconnectPacket::eDisconnectReason_NotFriendsWithHost;
+            reason = DisconnectPacket::eDisconnectReason_ContentRestrictedSingleLocal;
     }
     else
-        reason = DisconnectPacket::eDisconnectReason_NoOnlinePrivilege;
+        reason = DisconnectPacket::eDisconnectReason_FriendsOfHostOnly;
     gApp.SetDisconnectReason(reason);
     gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_ExitWorld, reinterpret_cast<void*>(1));
 }
@@ -3435,7 +3444,7 @@ void ClientPacketListener::handleSetCamera(boost::shared_ptr<ClientboundSetCamer
 
 void ClientPacketListener::handleSetBorder(boost::shared_ptr<ClientboundSetBorderPacket> packet)
 {
-    if (m_level != 0 && packet != 0 && m_level->getWorldBorder() != 0)
+    if (m_level != NULL)
         packet->applyChanges(m_level->getWorldBorder());
 }
 
@@ -3658,6 +3667,8 @@ void ClientPacketListener::handleTextureAndGeometry(boost::shared_ptr<TextureAnd
     unsigned int size = 0;
     gApp.GetMemFileDetails(packet->textureName, &data, &size);
     DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(gApp.mDLCManager.getSkinFile(packet->textureName));
+    if (size == 0)
+        return;
     if (skinFile != NULL)
     {
         send(boost::shared_ptr<TextureAndGeometryPacket>(
@@ -3763,10 +3774,10 @@ void ClientPacketListener::handleUpdateGameRuleProgressPacket(boost::shared_ptr<
         {
             Tutorial* tutorial = m_minecraft->mGameModes[m_playerId]->getTutorial();
             if (tutorial != 0)
-                tutorial->setMessage(description, packet->mAuxValue, packet->mDataTag);
+                tutorial->setMessage(description, packet->mItemId, packet->mAuxValue);
         }
     }
-    if (packet->mDataTag > 0 && packet->mDataTag < 33)
+    if (packet->mDataTag > 0 && packet->mDataTag <= 32)
         GameSettings::SetSpecialTutorialCompletionFlag(m_playerId, packet->mDataTag - 1);
     delete[] packet->mPayload.data;
 }
@@ -3837,87 +3848,69 @@ void ClientPacketListener::handleScoreboardPacket(boost::shared_ptr<ScoreboardPa
 
 void ClientPacketListener::handleClientboundSetPlayerTeamPacket(boost::shared_ptr<ClientboundSetPlayerTeamPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
+    if (m_level == NULL)
         return;
     Scoreboard* scoreboard = m_level->GetScoreboard();
-    if (scoreboard == 0)
-        return;
-    PlayerTeam* team = 0;
-    const int method = packet->getMethod();
-    if (method == 0)
+    PlayerTeam* team;
+    if (packet->getMethod() == 0)
         team = scoreboard->addPlayerTeam(packet->getName());
     else
         team = scoreboard->getPlayerTeam(packet->getName());
-    if (team == 0)
-        return;
-    if (method == 0 || method == 2)
+    if (packet->getMethod() == 0 || packet->getMethod() == 2)
     {
         team->unpackOptions(packet->getOptions());
         team->setNameTagVisibility(static_cast<Team::Visibility>(packet->getNameTagVisibility()));
     }
-    if (method == 0 || method == 3)
+    if (packet->getMethod() == 0 || packet->getMethod() == 3)
     {
-        std::vector<PlayerUID>* players = packet->getPlayers();
-        if (players != 0)
-        {
-            for (std::vector<PlayerUID>::iterator it = players->begin(); it != players->end(); ++it)
-                scoreboard->addPlayerToTeam(*it, team);
-        }
+        for (unsigned int i = 0; i < packet->getPlayers()->size(); i++)
+            scoreboard->addPlayerToTeam((*packet->getPlayers())[i], team);
     }
-    if (method == 4)
+    if (packet->getMethod() == 4)
     {
-        std::vector<PlayerUID>* players = packet->getPlayers();
-        if (players != 0)
-        {
-            for (std::vector<PlayerUID>::iterator it = players->begin(); it != players->end(); ++it)
-                scoreboard->removePlayerFromTeam(*it, team);
-        }
+        for (unsigned int i = 0; i < packet->getPlayers()->size(); i++)
+            scoreboard->removePlayerFromTeam((*packet->getPlayers())[i], team);
     }
-    if (method == 1)
+    if (packet->getMethod() == 1)
         scoreboard->removePlayerTeam(team);
 }
 
 
 void ClientPacketListener::handleParticleEvent(boost::shared_ptr<ClientboundLevelParticlesPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
+    if (m_level == 0)
         return;
-    const ParticleType* type = packet->getType();
-    if (type == 0)
-        return;
-    const double x = packet->getX();
-    const double y = packet->getY();
-    const double z = packet->getZ();
-    const int count = packet->getCount();
-    if (count == 0)
+    double xa = packet->getXAux();
+    double ya = packet->getYAux();
+    double za = packet->getZAux();
+    if (packet->getCount() == 0)
     {
-        double xa = 0.0;
-        double ya = 0.0;
-        double za = 0.0;
-        if (packet->getHasAux() == 0)
+        if (!packet->getHasAux())
         {
-            xa = static_cast<double>(packet->getMaxSpeed()) * packet->getXDist();
-            ya = static_cast<double>(packet->getMaxSpeed()) * packet->getYDist();
-            za = static_cast<double>(packet->getMaxSpeed()) * packet->getZDist();
+            xa = packet->getMaxSpeed() * packet->getXDist();
+            ya = packet->getMaxSpeed() * packet->getYDist();
+            za = packet->getMaxSpeed() * packet->getZDist();
         }
-        m_level->addParticle(type, packet->isOverrideLimiter(), x, y, z, xa, ya, za, packet->getParams());
-        return;
+        m_level->addParticle(packet->getType(), packet->isOverrideLimiter(), packet->getX(), packet->getY(),
+                             packet->getZ(), xa, ya, za, packet->getParams());
     }
-    for (int i = 0; i < count; ++i)
+    else
     {
-        const double px = x + (m_random.nextGaussian() * packet->getXDist());
-        const double py = y + (m_random.nextGaussian() * packet->getYDist());
-        const double pz = z + (m_random.nextGaussian() * packet->getZDist());
-        double xa = m_random.nextGaussian() * packet->getMaxSpeed();
-        double ya = m_random.nextGaussian() * packet->getMaxSpeed();
-        double za = m_random.nextGaussian() * packet->getMaxSpeed();
-        if (packet->getHasAux() != 0)
+        for (int i = 0; i < packet->getCount(); ++i)
         {
-            xa = packet->getXAux();
-            ya = packet->getYAux();
-            za = packet->getZAux();
+            const double xVariance = m_random.nextGaussian() * packet->getXDist();
+            const double yVariance = m_random.nextGaussian() * packet->getYDist();
+            const double zVariance = m_random.nextGaussian() * packet->getZDist();
+            if (!packet->getHasAux())
+            {
+                xa = m_random.nextGaussian() * packet->getMaxSpeed();
+                ya = m_random.nextGaussian() * packet->getMaxSpeed();
+                za = m_random.nextGaussian() * packet->getMaxSpeed();
+            }
+            m_level->addParticle(packet->getType(), packet->isOverrideLimiter(), packet->getX() + xVariance,
+                                 packet->getY() + yVariance, packet->getZ() + zVariance, xa, ya, za,
+                                 packet->getParams());
         }
-        m_level->addParticle(type, packet->isOverrideLimiter(), px, py, pz, xa, ya, za, packet->getParams());
     }
 }
 
@@ -3966,8 +3959,6 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
 {
     switch (packet->GetMessage())
     {
-    case GameModePacket::eMessage_Follow:
-    case GameModePacket::eMessage_StartSpectating:
     case GameModePacket::eMessage_SetCamera:
     {
         GameModePacket::SetCameraData data;
@@ -4044,7 +4035,6 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             master->SetServerIsWaitingOnChunkLoading();
         }
         break;
-    case GameModePacket::eMessage_FinishedLoadingLocally:
     case GameModePacket::eMessage_RoundStart:
         if (IsPrimaryPlayer())
         {
@@ -4058,7 +4048,6 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
             Minecraft::GetInstance()->getLevel(0)->getDifficulty()->getId(), gApp.GetLocalPlayerCount(),
             CGameNetworkManager::sInstance.GetOnlinePlayerCount());
         break;
-    case GameModePacket::eMessage_SendTeamInvite:
     case GameModePacket::eMessage_SyncTeamInvite:
     {
         GameModePacket::SyncTeamInviteData data;
@@ -4073,8 +4062,6 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
         m_minecraft->mLocalPlayers[m_playerId]->GetLocalGameMode()->RemoveTeamInvite(data.teamId);
         break;
     }
-    case GameModePacket::eMessage_AcceptTeamInvite:
-    case GameModePacket::eMessage_Unnamed12:
     case GameModePacket::eMessage_AddAreaBounds:
     {
         GameModePacket::AddAreaBoundsData data;
@@ -4098,7 +4085,6 @@ void ClientPacketListener::handleGameMode(boost::shared_ptr<GameModePacket> pack
     case GameModePacket::eMessage_ClearAreaBounds:
         m_minecraft->mGameModes[m_playerId]->getGameModeConstraints()->ClearAllAreaConstraints();
         break;
-    case GameModePacket::eMessage_LeaveTeam:
     case GameModePacket::eMessage_ChangeCustomGameMode:
     {
         ClientMasterGameMode* master = m_minecraft->GetClientMasterGameMode();
@@ -4315,20 +4301,18 @@ void ClientPacketListener::handleMapSelectInfo(boost::shared_ptr<MapSelectInfoPa
 
 void ClientPacketListener::handlePlayerReady(boost::shared_ptr<PlayerReadyPacket> packet)
 {
-    if (packet != 0 && Minecraft::GetInstance()->GetClientMasterGameMode() != 0)
-        Minecraft::GetInstance()->GetClientMasterGameMode()->SetPlayerReady(packet->mPlayerId, packet->mReady);
+    ClientMasterGameMode* masterGameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
+    masterGameMode->SetPlayerReady(packet->mPlayerId, packet->mReady);
 }
 
 void ClientPacketListener::handlePowerup(boost::shared_ptr<ClientboundPowerupPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || packet->getPowerupTime() <= 0 ||
-        m_playerId < 0 || m_playerId >= 4)
-        return;
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (player != 0)
-        PowerupItems::ActivateTimedPowerup(player,
+    if (packet->getPowerupTime() > 0)
+    {
+        PowerupItems::ActivateTimedPowerup(m_minecraft->mLocalPlayers[m_playerId],
             static_cast<PowerupItems::eGlide_Timed_Powerup_ID>(packet->getPowerupID()),
             packet->getPowerupTime());
+    }
 }
 
 void ClientPacketListener::handleVote(boost::shared_ptr<VotePacket> packet)

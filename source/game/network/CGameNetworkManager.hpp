@@ -39,7 +39,7 @@ public:
     void HandleInviteWhenInMenus(int userIndex, const nn::fp::FriendPresence* presence);
     void ProcessInvite(unsigned int userIndex, unsigned int flags, nn::fp::FriendPresence* presence);
     void GameInviteReceived(int userIndex, nn::fp::FriendPresence* presence);
-    bool TickInvitePending();
+    void TickInvitePending();
     void DoWork();
     bool IsHost();
     static int ServerThreadProc(void* data);
@@ -83,7 +83,7 @@ public:
     void ForceFriendsSessionRefresh();
     void ClearFriendsSessions();
     int JoinGame(FriendSessionInfo* info, int userIndex, bool matchmaking);
-    bool FindAndJoinGame(int userIndex, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributes, unsigned int* ids);
+    int FindAndJoinGame(int userIndex, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributes, unsigned int* ids);
     static void CancelJoinGame(void* data);
     bool LeaveGame(bool error);
     void UpdateAndSetGameSessionData(INetworkPlayer* player);
@@ -117,8 +117,8 @@ public:
     void StateChange_AnyToJoining(bool error);
     void StateChange_JoiningToIdle(CPlatformNetworkManager::eJoinFailedReason reason);
     void StateChange_AnyToStarting();
-    void StateChange_AnyToEnding(bool error, bool endSession);
-    Socket* CreateSocket(INetworkPlayer* player, bool local);
+    void StateChange_AnyToEnding(bool wasPlaying, bool endSession);
+    void CreateSocket(INetworkPlayer* player, bool localPlayer);
     void CloseConnection(INetworkPlayer* player);
     void PlayerJoining(INetworkPlayer* player);
     void PlayerLeaving(INetworkPlayer* player);
@@ -165,13 +165,13 @@ private:
     int m_pendingInviteUserIndex;
     unsigned int m_pendingInviteUserMask;
     nn::fp::FriendPresence* m_pendingInvitePresence;
-    int m_unknown18;
-    unsigned char m_pendingInvitePresenceData[0x38];
+    int m_deferredInviteUserIndex;
+    unsigned char m_deferredInvitePresence[0x38];
     bool m_networkThreadRunning;
     bool m_disconnectError;
     bool m_unknownState;
     bool m_publicJoinable;
-    void* m_inviteInfo;
+    nn::fp::FriendPresence* m_inviteInfo;
     std::vector<ClientPacketListener*> m_connections;
     OSFastMutex m_connectionsMutex;
     unsigned char m_trailingPadding[4];

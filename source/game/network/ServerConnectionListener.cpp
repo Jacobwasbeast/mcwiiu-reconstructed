@@ -59,7 +59,7 @@ void ServerConnectionListener::tick()
 
     if (m_tickCount++ == 600)
     {
-        disconnect(DisconnectPacket::eDisconnectReason_LoginTimeout);
+        disconnect(DisconnectPacket::eDisconnectReason_LoginTooLong);
     }
     else
     {
@@ -148,7 +148,7 @@ void ServerConnectionListener::handleLogin(boost::shared_ptr<ClientboundLoginPac
 
     if (m_server->getPlayers()->isXuidBanned(packet->mPlayerUID2))
     {
-        disconnect(DisconnectPacket::eDisconnectReason_LoginRejected);
+        disconnect(DisconnectPacket::eDisconnectReason_BannedByHost);
         return;
     }
 

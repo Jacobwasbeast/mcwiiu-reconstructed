@@ -201,6 +201,7 @@ public:
 
 private:
     friend class ClientPacketListener;
+    friend class ClientMasterGameMode;
     friend class CombatTracker;
     friend class GameStats;
     friend class MasterGameMode;
