@@ -22,10 +22,8 @@ std::wstring SplashPotionItem::getName(not_null_ptr<ItemInstance> itemInstance)
     return PotionUtils::getPotion(itemInstance)->getName(Potion::SPLASH);
 }
 
-void SplashPotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                       boost::shared_ptr<Player> player,
-                                       std::vector<HtmlString>* lines,
-                                       bool)
+void SplashPotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                       std::vector<HtmlString>* lines, bool)
 {
     PotionUtils::addPotionTooltip(itemInstance, lines, 0.75f, player);
 }
@@ -35,8 +33,7 @@ InteractionResultHolder SplashPotionItem::use(Level* level, boost::shared_ptr<Pl
 {
     bool instabuild = player->mAbilities.mInstabuild;
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    not_null_ptr<ItemInstance> thrownItem = instabuild
-        ? itemInstance->copy() : itemInstance->split(1);
+    not_null_ptr<ItemInstance> thrownItem = instabuild ? itemInstance->copy() : itemInstance->split(1);
     if (!instabuild)
     {
         itemInstance->shrink(1);

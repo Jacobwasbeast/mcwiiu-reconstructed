@@ -16,21 +16,15 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
 
-EndCrystalItem::EndCrystalItem()
-    : Item()
+EndCrystalItem::EndCrystalItem() : Item()
 {
     setIconName(std::wstring(L"end_crystal"));
 }
 
-InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Player> player,
-                                                             Level* level,
-                                                             const BlockPos& pos,
-                                                             InteractionHand::EInteractionHand hand,
-                                                             const Direction* direction,
-                                                             float hitX,
-                                                             float hitY,
-                                                             float hitZ,
-                                                             bool simulate)
+InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                            const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                            const Direction* direction, float hitX, float hitY,
+                                                            float hitZ, bool simulate)
 {
     const BlockState* state = level->getBlockState(pos);
     if (state->getBlock() != Blocks::obsidian && state->getBlock() != Blocks::bedrock)
@@ -47,9 +41,10 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
 
     BlockPos aboveAbovePos = abovePos.above();
     bool blocked = !level->isEmptyBlock(abovePos)
-        && !level->getBlockState(abovePos)->getBlock()->mayReplaceWithPlace(level, abovePos);
-    blocked = blocked | (!level->isEmptyBlock(aboveAbovePos)
-        && !level->getBlockState(aboveAbovePos)->getBlock()->mayReplaceWithPlace(level, aboveAbovePos));
+                   && !level->getBlockState(abovePos)->getBlock()->mayReplaceWithPlace(level, abovePos);
+    blocked = blocked
+              | (!level->isEmptyBlock(aboveAbovePos)
+                 && !level->getBlockState(aboveAbovePos)->getBlock()->mayReplaceWithPlace(level, aboveAbovePos));
     if (blocked)
     {
         return InteractionResult::eInteractionResult_Fail;
@@ -71,8 +66,7 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
         {
             if (level->canCreateMore(EntityType::ENDER_CRYSTAL, Level::eSpawnType_Egg))
             {
-                boost::shared_ptr<EnderCrystal> crystal(
-                    new EnderCrystal(level, pos.x + 0.5f, pos.y + 1, pos.z + 0.5f));
+                boost::shared_ptr<EnderCrystal> crystal(new EnderCrystal(level, pos.x + 0.5f, pos.y + 1, pos.z + 0.5f));
                 crystal->setShowBottom(false);
                 level->addEntity(crystal);
 

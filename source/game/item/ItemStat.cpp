@@ -1,8 +1,6 @@
 #include "game/item/ItemStat.hpp"
 
-ItemStat::ItemStat(int id, const std::wstring& name, int itemId)
-    : Stat(id, name),
-      itemId(itemId)
+ItemStat::ItemStat(int id, const std::wstring& name, int itemId) : Stat(id, name), itemId(itemId)
 {
 }
 

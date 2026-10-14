@@ -18,14 +18,9 @@ class SkullItem : public Item
 public:
     SkullItem();
 
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
                                                         bool simulate);
     virtual int getLevelDataForAuxValue(int auxValue);
     virtual int getDescriptionId(int auxValue);

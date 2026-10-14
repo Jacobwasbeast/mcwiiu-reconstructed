@@ -5,9 +5,7 @@
 #include "game/item/TridentChannelingEnchantment.hpp"
 #include "game/item/TridentLoyaltyEnchantment.hpp"
 
-TridentRiptideEnchantment::TridentRiptideEnchantment(
-    const Rarity* rarity,
-    arrayWithLength<const EquipmentSlot*> slots)
+TridentRiptideEnchantment::TridentRiptideEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::TRIDENT, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_RIPTIDE);
@@ -34,9 +32,9 @@ int TridentRiptideEnchantment::getMaxLevel()
 
 bool TridentRiptideEnchantment::checkCompatibility(const Enchantment* other) const
 {
-    if (other != NULL &&
-        (dynamic_cast<const TridentChannelingEnchantment*>(other) != NULL ||
-         dynamic_cast<const TridentLoyaltyEnchantment*>(other) != NULL))
+    if (other != NULL
+        && (dynamic_cast<const TridentChannelingEnchantment*>(other) != NULL
+            || dynamic_cast<const TridentLoyaltyEnchantment*>(other) != NULL))
     {
         return false;
     }

@@ -30,7 +30,8 @@ public:
     static std::vector<MobEffectInstance*>* getMobEffects(not_null_ptr<ItemInstance> item);
     static bool hasEffect(not_null_ptr<ItemInstance> item, MobEffect* effect);
     static Potion* getPotion(not_null_ptr<ItemInstance> item);
-    static void addPotionTooltip(not_null_ptr<ItemInstance> item, std::vector<HtmlString>* lines, float durationFactor, boost::shared_ptr<Player> player);
+    static void addPotionTooltip(not_null_ptr<ItemInstance> item, std::vector<HtmlString>* lines, float durationFactor,
+                                 boost::shared_ptr<Player> player);
     static bool isFoil(not_null_ptr<ItemInstance> item);
     static std::vector<MobEffectInstance*>* getAllEffects(Potion* potion, std::vector<MobEffectInstance*>* effects);
     static std::vector<MobEffectInstance*>* getCustomEffects(CompoundTag* tag);
@@ -39,8 +40,10 @@ public:
     static int getColor(const not_null_ptr<ItemInstance>& item);
     static int getColor(Potion* potion);
     static std::wstring getPotionID(not_null_ptr<ItemInstance> item);
-    static not_null_ptr<ItemInstance> setCustomEffects(not_null_ptr<ItemInstance> item, std::vector<MobEffectInstance*>* effects);
-    static not_null_ptr<ItemInstance> setPotionAndCustomEffects(not_null_ptr<ItemInstance> target, not_null_ptr<ItemInstance> source);
+    static not_null_ptr<ItemInstance> setCustomEffects(not_null_ptr<ItemInstance> item,
+                                                       std::vector<MobEffectInstance*>* effects);
+    static not_null_ptr<ItemInstance> setPotionAndCustomEffects(not_null_ptr<ItemInstance> target,
+                                                                not_null_ptr<ItemInstance> source);
     static void setPotionName(not_null_ptr<ItemInstance> item, const std::wstring& name);
 
 private:

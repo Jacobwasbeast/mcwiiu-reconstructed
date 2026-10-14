@@ -14,13 +14,13 @@ class DistributeItemsWorldPositionAccess : public WorldPositionRuleDefinition
 public:
     static BlockPos getPosition(const WorldPositionRuleDefinition* position)
     {
-        const DistributeItemsWorldPositionAccess* access = static_cast<const DistributeItemsWorldPositionAccess*>(position);
+        const DistributeItemsWorldPositionAccess* access = static_cast<const DistributeItemsWorldPositionAccess*>(
+            position);
         return BlockPos(access->mX, access->mY, access->mZ);
     }
 };
 
-DistributeItemsRuleDefinition::DistributeItemsRuleDefinition()
-    : GameRuleDefinition()
+DistributeItemsRuleDefinition::DistributeItemsRuleDefinition() : GameRuleDefinition()
 {
     mLootGroup.assign(L"");
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_id, &mLootGroup);
@@ -58,7 +58,8 @@ GameRuleDefinition* DistributeItemsRuleDefinition::addChild(ConsoleGameRules::EG
     return rule;
 }
 
-std::vector<boost::shared_ptr<Container> > DistributeItemsRuleDefinition::getContainers(Level* level, const std::vector<WorldPositionRuleDefinition*>& positions)
+std::vector<boost::shared_ptr<Container> > DistributeItemsRuleDefinition::getContainers(
+    Level* level, const std::vector<WorldPositionRuleDefinition*>& positions)
 {
     std::vector<boost::shared_ptr<Container> > containers;
 

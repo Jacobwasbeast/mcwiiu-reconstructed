@@ -1,7 +1,8 @@
 #include "game/item/FishingSpeedEnchantment.hpp"
 #include "game/core/StringIds.hpp"
 
-FishingSpeedEnchantment::FishingSpeedEnchantment(const Rarity* rarity, const EnchantmentCategory* category, arrayWithLength<const EquipmentSlot*> slots)
+FishingSpeedEnchantment::FishingSpeedEnchantment(const Rarity* rarity, const EnchantmentCategory* category,
+                                                 arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, category, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_FISHING_SPEED);

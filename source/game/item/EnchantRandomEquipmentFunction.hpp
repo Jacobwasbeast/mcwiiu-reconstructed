@@ -15,14 +15,14 @@ class EnchantRandomEquipmentFunction : public LootItemFunction
 {
 public:
     EnchantRandomEquipmentFunction(std::vector<LootItemCondition*>* conditions, float chance)
-        : LootItemFunction(conditions), chance(chance)
+        : LootItemFunction(conditions),
+          chance(chance)
     {
     }
 
     virtual ~EnchantRandomEquipmentFunction();
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                             Random* random,
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
                                              LootTableContext& context);
 
 protected:

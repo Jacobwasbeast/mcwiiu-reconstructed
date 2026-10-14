@@ -19,8 +19,7 @@ class SetItemCountFunction : public LootItemFunction
 public:
     SetItemCountFunction(std::vector<LootItemCondition*>* conditions, RandomValueBounds count);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                             Random* random,
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
                                              LootTableContext& context);
 
 protected:

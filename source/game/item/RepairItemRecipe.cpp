@@ -6,8 +6,7 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 
-RepairItemRecipe::RepairItemRecipe()
-    : Recipe()
+RepairItemRecipe::RepairItemRecipe() : Recipe()
 {
 }
 
@@ -28,9 +27,8 @@ bool RepairItemRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCont
             if (items.size() > 1)
             {
                 not_null_ptr<ItemInstance> first = items[0];
-                if (item->getItem() != first->getItem() ||
-                    first->getCount() != 1 || item->getCount() != 1 ||
-                    !first->getItem()->canBeDepleted())
+                if (item->getItem() != first->getItem() || first->getCount() != 1 || item->getCount() != 1
+                    || !first->getItem()->canBeDepleted())
                 {
                     return false;
                 }
@@ -53,9 +51,8 @@ not_null_ptr<ItemInstance> RepairItemRecipe::assemble(boost::shared_ptr<Crafting
             if (items.size() > 1)
             {
                 not_null_ptr<ItemInstance> first = items[0];
-                if (item->getItem() != first->getItem() ||
-                    first->getCount() != 1 || item->getCount() != 1 ||
-                    !first->getItem()->canBeDepleted())
+                if (item->getItem() != first->getItem() || first->getCount() != 1 || item->getCount() != 1
+                    || !first->getItem()->canBeDepleted())
                 {
                     return ItemInstance::EMPTY;
                 }
@@ -67,9 +64,8 @@ not_null_ptr<ItemInstance> RepairItemRecipe::assemble(boost::shared_ptr<Crafting
     {
         not_null_ptr<ItemInstance> first = items[0];
         not_null_ptr<ItemInstance> second = items[1];
-        if (first->getItem() == second->getItem() &&
-            first->getCount() == 1 && second->getCount() == 1 &&
-            first->getItem()->canBeDepleted())
+        if (first->getItem() == second->getItem() && first->getCount() == 1 && second->getCount() == 1
+            && first->getItem()->canBeDepleted())
         {
             Item* item = first->getItem();
             int damage = item->getMaxDamage() - first->getDamageValue();
@@ -101,10 +97,11 @@ ItemInstance* RepairItemRecipe::getIngredientItem(int column, int row)
     return ItemInstance::EMPTY.get();
 }
 
-NonNullList<not_null_ptr<ItemInstance> > RepairItemRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > RepairItemRecipe::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    NonNullList<not_null_ptr<ItemInstance> > result =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     for (unsigned int i = 0; i < result.size(); i++)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);

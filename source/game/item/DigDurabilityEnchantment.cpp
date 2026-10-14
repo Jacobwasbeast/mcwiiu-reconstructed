@@ -6,8 +6,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 
-DigDurabilityEnchantment::DigDurabilityEnchantment(const Rarity* rarity,
-                                                   arrayWithLength<const EquipmentSlot*> slots)
+DigDurabilityEnchantment::DigDurabilityEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::BREAKABLE, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_DURABILITY);
@@ -39,8 +38,7 @@ bool DigDurabilityEnchantment::canEnchant(not_null_ptr<ItemInstance> item)
     return Enchantment::canEnchant(item);
 }
 
-bool DigDurabilityEnchantment::shouldIgnoreDurabilityDrop(not_null_ptr<ItemInstance> item,
-                                                          int level, Random* random)
+bool DigDurabilityEnchantment::shouldIgnoreDurabilityDrop(not_null_ptr<ItemInstance> item, int level, Random* random)
 {
     Item* held = item->getItem();
     if (held != 0 && dynamic_cast<ArmorItem*>(held) != 0 && random->nextFloat() < 0.6f)

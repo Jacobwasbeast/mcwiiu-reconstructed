@@ -13,13 +13,11 @@ class TutorialConstraint;
 class CraftTask : public TutorialTask
 {
 public:
-    CraftTask(Item* item, int auxValue, int requiredCount, Tutorial* tutorial,
-              int descriptionId, bool preCompletionEnabled,
-              std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
+    CraftTask(Item* item, int auxValue, int requiredCount, Tutorial* tutorial, int descriptionId,
+              bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
               bool allowFade, bool repeatMessage);
-    CraftTask(Item** items, int* auxValues, int itemCount, int requiredCount,
-              Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-              std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
+    CraftTask(Item** items, int* auxValues, int itemCount, int requiredCount, Tutorial* tutorial, int descriptionId,
+              bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
               bool allowFade, bool repeatMessage);
     virtual ~CraftTask();
 

@@ -16,10 +16,12 @@ public:
     FireworkChargeItem();
     static Tag* getExplosionTagField(not_null_ptr<ItemInstance> item, const std::wstring& name);
     static void appendHoverText(CompoundTag* tag, std::vector<HtmlString>* lines);
-    virtual void appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player, std::vector<HtmlString>* lines, bool advanced);
+    virtual void appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player,
+                                 std::vector<HtmlString>* lines, bool advanced);
     virtual TextureAtlasSprite* getLayerIcon(int auxValue, int layer, not_null_ptr<ItemInstance> item);
     virtual bool hasMultipleSpriteLayers();
     virtual void registerIcons(IconRegister* iconRegister);
+
 private:
     TextureAtlasSprite* mOverlayIcon;
 };

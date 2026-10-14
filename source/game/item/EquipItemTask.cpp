@@ -2,11 +2,11 @@
 
 #include "game/item/ItemInstance.hpp"
 
-EquipItemTask::EquipItemTask(Item* item, int auxValue, Tutorial* tutorial, int descriptionId,
-                             bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
-                             bool showMinimumTime, bool allowFade, bool repeatMessage)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
-                   showMinimumTime, allowFade, repeatMessage),
+EquipItemTask::EquipItemTask(Item* item, int auxValue, Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
+                             std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                             bool repeatMessage)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime, allowFade,
+                   repeatMessage),
       mItem(item),
       mAuxValue(auxValue)
 {

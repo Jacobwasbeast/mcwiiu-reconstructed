@@ -3,15 +3,11 @@
 #include "game/core/Mth.hpp"
 #include "game/item/Item.hpp"
 
-ItemCooldowns::CooldownInstance::CooldownInstance(int startTime, int endTime)
-    : mStartTime(startTime)
-    , mEndTime(endTime)
+ItemCooldowns::CooldownInstance::CooldownInstance(int startTime, int endTime) : mStartTime(startTime), mEndTime(endTime)
 {
 }
 
-ItemCooldowns::ItemCooldowns()
-    : mCooldowns()
-    , mTickCount(0)
+ItemCooldowns::ItemCooldowns() : mCooldowns(), mTickCount(0)
 {
 }
 

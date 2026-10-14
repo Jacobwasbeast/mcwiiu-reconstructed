@@ -1,7 +1,6 @@
 #include "game/item/DataItem.hpp"
 
-DataItem::DataItem()
-    : mDirty(true)
+DataItem::DataItem() : mDirty(true)
 {
 }
 
@@ -24,4 +23,3 @@ bool DataItem::isDirty()
 {
     return mDirty;
 }
-

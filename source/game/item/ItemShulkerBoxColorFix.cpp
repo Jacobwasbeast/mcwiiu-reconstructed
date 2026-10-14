@@ -5,25 +5,13 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 
-static const std::wstring SHULKER_BOX_IDS[16] =
-{
-    L"minecraft:white_shulker_box",
-    L"minecraft:orange_shulker_box",
-    L"minecraft:magenta_shulker_box",
-    L"minecraft:light_blue_shulker_box",
-    L"minecraft:yellow_shulker_box",
-    L"minecraft:lime_shulker_box",
-    L"minecraft:pink_shulker_box",
-    L"minecraft:gray_shulker_box",
-    L"minecraft:silver_shulker_box",
-    L"minecraft:cyan_shulker_box",
-    L"minecraft:purple_shulker_box",
-    L"minecraft:blue_shulker_box",
-    L"minecraft:brown_shulker_box",
-    L"minecraft:green_shulker_box",
-    L"minecraft:red_shulker_box",
-    L"minecraft:black_shulker_box"
-};
+static const std::wstring SHULKER_BOX_IDS[16] = {
+    L"minecraft:white_shulker_box",      L"minecraft:orange_shulker_box", L"minecraft:magenta_shulker_box",
+    L"minecraft:light_blue_shulker_box", L"minecraft:yellow_shulker_box", L"minecraft:lime_shulker_box",
+    L"minecraft:pink_shulker_box",       L"minecraft:gray_shulker_box",   L"minecraft:silver_shulker_box",
+    L"minecraft:cyan_shulker_box",       L"minecraft:purple_shulker_box", L"minecraft:blue_shulker_box",
+    L"minecraft:brown_shulker_box",      L"minecraft:green_shulker_box",  L"minecraft:red_shulker_box",
+    L"minecraft:black_shulker_box"};
 
 ItemShulkerBoxColorFix::~ItemShulkerBoxColorFix()
 {

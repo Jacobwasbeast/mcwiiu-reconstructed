@@ -14,7 +14,8 @@ public:
 
     ItemTransform(Vector3f rotation, Vector3f translation, Vector3f scale, bool clampValues);
 
-    static ItemTransform* deserialize(float rotationX, float rotationY, float rotationZ, float translationX, float translationY, float translationZ, float scaleX, float scaleY, float scaleZ);
+    static ItemTransform* deserialize(float rotationX, float rotationY, float rotationZ, float translationX,
+                                      float translationY, float translationZ, float scaleX, float scaleY, float scaleZ);
 };
 
 #endif

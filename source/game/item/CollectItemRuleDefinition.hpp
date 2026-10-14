@@ -11,7 +11,6 @@ class ItemInstance;
 class CollectItemRuleDefinition : public GameRuleDefinition
 {
 public:
-
     CollectItemRuleDefinition();
     virtual ~CollectItemRuleDefinition();
 

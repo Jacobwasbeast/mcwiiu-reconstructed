@@ -12,9 +12,9 @@ class TutorialConstraint;
 class EquipItemTask : public TutorialTask
 {
 public:
-    EquipItemTask(Item* item, int auxValue, Tutorial* tutorial, int descriptionId,
-                  bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
-                  bool showMinimumTime, bool allowFade, bool repeatMessage);
+    EquipItemTask(Item* item, int auxValue, Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
+                  std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                  bool repeatMessage);
 
     virtual bool isCompleted();
     virtual void onEquip(not_null_ptr<ItemInstance> item);

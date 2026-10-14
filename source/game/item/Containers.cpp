@@ -21,10 +21,8 @@ void Containers::dropItemStack(Level* level, double x, double y, double z, not_n
         not_null_ptr<ItemInstance> split = itemInstance->split(RANDOM.nextInt(21) + 10);
         split->set4JData(itemInstance->get4JData());
 
-        boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(level,
-            x + (double)xOffset,
-            y + (double)yOffset,
-            z + (double)zOffset, split));
+        boost::shared_ptr<ItemEntity> itemEntity(
+            new ItemEntity(level, x + (double)xOffset, y + (double)yOffset, z + (double)zOffset, split));
         const float speed = 0.05f;
         itemEntity->mXd = (float)RANDOM.nextGaussian() * speed;
         itemEntity->mYd = (float)RANDOM.nextGaussian() * speed + 0.2f;

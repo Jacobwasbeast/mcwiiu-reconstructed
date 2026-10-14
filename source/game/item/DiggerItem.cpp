@@ -16,8 +16,7 @@ DiggerItem::DiggerItem(float attackDamage, float attackSpeed, const Item::Tier* 
     _init(attackDamage, attackSpeed, blocks);
 }
 
-DiggerItem::DiggerItem(const Item::Tier* tier, arrayWithLength<Block*> blocks)
-    : mTier(tier)
+DiggerItem::DiggerItem(const Item::Tier* tier, arrayWithLength<Block*> blocks) : mTier(tier)
 {
     _init(0.0f, 0.0f, blocks);
 }
@@ -45,19 +44,15 @@ float DiggerItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const
     return 1.0f;
 }
 
-bool DiggerItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
-                           boost::shared_ptr<LivingEntity> target,
+bool DiggerItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<LivingEntity> target,
                            boost::shared_ptr<LivingEntity> attacker)
 {
     itemInstance->hurtAndBreak(2, attacker);
     return true;
 }
 
-bool DiggerItem::mineBlock(not_null_ptr<ItemInstance> itemInstance,
-                           Level* level,
-                           const BlockState* state,
-                           const BlockPos& pos,
-                           boost::shared_ptr<LivingEntity> entity)
+bool DiggerItem::mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state,
+                           const BlockPos& pos, boost::shared_ptr<LivingEntity> entity)
 {
     if (!level->mIsClientSide && state->getDestroySpeed(level, pos) != 0.0)
     {
@@ -106,10 +101,10 @@ boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* DiggerItem::getDefaultA
 
     if (slot == EquipmentSlot::MAINHAND)
     {
-        (*modifiers)[SharedMonsterAttributes::ATTACK_DAMAGE->getId()] =
-            new AttributeModifier(eMODIFIER_ID_BaseAttackDamage, attackDamage, 0);
-        (*modifiers)[SharedMonsterAttributes::ATTACK_SPEED->getId()] =
-            new AttributeModifier(eMODIFIER_ID_BaseAttackSpeed, mAttackSpeed, 0);
+        (*modifiers)[SharedMonsterAttributes::ATTACK_DAMAGE->getId()] = new AttributeModifier(
+            eMODIFIER_ID_BaseAttackDamage, attackDamage, 0);
+        (*modifiers)[SharedMonsterAttributes::ATTACK_SPEED->getId()] = new AttributeModifier(
+            eMODIFIER_ID_BaseAttackSpeed, mAttackSpeed, 0);
     }
 
     return modifiers;

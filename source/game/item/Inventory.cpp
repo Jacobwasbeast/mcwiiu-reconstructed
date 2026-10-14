@@ -32,9 +32,7 @@
 
 const int Inventory::INVENTORY_SIZE = 36;
 
-Inventory::Inventory(Player* player)
-    : m_auxiliaryItem(ItemInstance::EMPTY),
-      m_carried(ItemInstance::EMPTY)
+Inventory::Inventory(Player* player) : m_auxiliaryItem(ItemInstance::EMPTY), m_carried(ItemInstance::EMPTY)
 {
     m_items = NonNullList<not_null_ptr<ItemInstance> >::withSize(INVENTORY_SIZE, ItemInstance::EMPTY);
     m_armor = NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY);
@@ -91,24 +89,18 @@ int Inventory::getSelectionSize()
     return 9;
 }
 
-bool Inventory::isSameItem(not_null_ptr<ItemInstance> first,
-                           not_null_ptr<ItemInstance> second,
-                           bool ignoreTags)
+bool Inventory::isSameItem(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second, bool ignoreTags)
 {
     return first->getItem() == second->getItem()
-        && (!first->isStackedByData() || first->getAuxValue() == second->getAuxValue())
-        && (ignoreTags || ItemInstance::tagMatches(first, second));
+           && (!first->isStackedByData() || first->getAuxValue() == second->getAuxValue())
+           && (ignoreTags || ItemInstance::tagMatches(first, second));
 }
 
-bool Inventory::hasRemainingSpaceForItem(not_null_ptr<ItemInstance> first,
-                                         not_null_ptr<ItemInstance> second,
+bool Inventory::hasRemainingSpaceForItem(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second,
                                          bool ignoreTags)
 {
-    return !first->isEmpty()
-        && isSameItem(first, second, ignoreTags)
-        && first->isStackable()
-        && first->getCount() < first->getMaxStackSize()
-        && first->getCount() < getMaxStackSize();
+    return !first->isEmpty() && isSameItem(first, second, ignoreTags) && first->isStackable()
+           && first->getCount() < first->getMaxStackSize() && first->getCount() < getMaxStackSize();
 }
 
 int Inventory::getFreeSlot()
@@ -210,11 +202,8 @@ int Inventory::findSlotMatchingUnusedItem(not_null_ptr<ItemInstance> item)
     for (int slot = 0; slot < static_cast<int>(m_items.size()); ++slot)
     {
         not_null_ptr<ItemInstance> current = m_items[slot];
-        if (!m_items[slot]->isEmpty()
-            && isSameItem(item, m_items[slot], true)
-            && !m_items[slot]->isDamaged()
-            && !current->isEnchanted()
-            && !current->hasCustomHoverName())
+        if (!m_items[slot]->isEmpty() && isSameItem(item, m_items[slot], true) && !m_items[slot]->isDamaged()
+            && !current->isEnchanted() && !current->hasCustomHoverName())
         {
             return slot;
         }
@@ -261,8 +250,7 @@ int Inventory::clearInventory(Item* item, int auxValue, int count, CompoundTag* 
         {
             continue;
         }
-        int amount = count < 1 ? current->getCount()
-                               : std::min(current->getCount(), count - removed);
+        int amount = count < 1 ? current->getCount() : std::min(current->getCount(), count - removed);
         removed += amount;
         if (count != 0)
         {
@@ -288,8 +276,7 @@ int Inventory::clearInventory(Item* item, int auxValue, int count, CompoundTag* 
         {
             return removed;
         }
-        int amount = count < 1 ? m_carried->getCount()
-                               : std::min(m_carried->getCount(), count - removed);
+        int amount = count < 1 ? m_carried->getCount() : std::min(m_carried->getCount(), count - removed);
         removed += amount;
         if (count != 0)
         {
@@ -382,8 +369,8 @@ void Inventory::tick()
         {
             if (!(*compartment)[slot]->isEmpty())
             {
-                (*compartment)[slot]->inventoryTick(
-                    m_player->mLevel, m_player->shared_from_this(), slot, m_selected == static_cast<int>(slot));
+                (*compartment)[slot]->inventoryTick(m_player->mLevel, m_player->shared_from_this(), slot,
+                                                    m_selected == static_cast<int>(slot));
             }
         }
     }
@@ -406,8 +393,7 @@ bool Inventory::add(int slot, not_null_ptr<ItemInstance> item)
             {
                 count = item->getCount();
                 item->setCount(addResource(item));
-            }
-            while (!item->isEmpty() && item->getCount() < count);
+            } while (!item->isEmpty() && item->getCount() < count);
         }
         else
         {
@@ -415,8 +401,7 @@ bool Inventory::add(int slot, not_null_ptr<ItemInstance> item)
             {
                 count = item->getCount();
                 item->setCount(addResource(slot, item));
-            }
-            while (!item->isEmpty() && item->getCount() < count);
+            } while (!item->isEmpty() && item->getCount() < count);
         }
         if (item->getCount() == count && m_player->mAbilities.mInstabuild)
         {
@@ -425,9 +410,9 @@ bool Inventory::add(int slot, not_null_ptr<ItemInstance> item)
         }
         if (item->getCount() < count)
         {
-            m_player->awardStat(GenericStats::itemsCollected(original),
-                                GenericStats::param_itemsCollected(original->getItem(), original->getAuxValue(),
-                                                                   original->getCount()));
+            m_player->awardStat(
+                GenericStats::itemsCollected(original),
+                GenericStats::param_itemsCollected(original->getItem(), original->getAuxValue(), original->getCount()));
             if (original->getItem() == Items::leather)
             {
                 m_player->awardStat(GenericStats::killCow(), GenericStats::param_noArgs());
@@ -737,11 +722,10 @@ void Inventory::hurtArmor(float damage)
     }
     for (unsigned int slot = 0; slot < m_armor.size(); ++slot)
     {
-        if (!m_armor[slot]->isEmpty()
-            && dynamic_cast<ArmorItem*>(m_armor[slot]->getItem()) != NULL)
+        if (!m_armor[slot]->isEmpty() && dynamic_cast<ArmorItem*>(m_armor[slot]->getItem()) != NULL)
         {
-            m_armor[slot]->hurtAndBreak(
-                static_cast<int>(damage), boost::static_pointer_cast<LivingEntity>(m_player->shared_from_this()));
+            m_armor[slot]->hurtAndBreak(static_cast<int>(damage),
+                                        boost::static_pointer_cast<LivingEntity>(m_player->shared_from_this()));
             if (m_armor[slot]->getCount() == 0)
             {
                 m_armor[slot] = ItemInstance::EMPTY;
@@ -800,7 +784,8 @@ bool Inventory::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(BlockPos(m_player->getPos(1.0f)), *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
+    if (player->distanceAsIfHitscanned(BlockPos(m_player->getPos(1.0f)), *player->mBoundingBox)
+        > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
     {
         return false;
     }
@@ -833,12 +818,10 @@ void Inventory::replaceWith_NONRECURSIVE(boost::shared_ptr<Inventory> inventory)
 {
     for (int compartment = 0; compartment < 3; ++compartment)
     {
-        unsigned int size = std::min(m_compartments[compartment].size(),
-                                     inventory->m_compartments[compartment].size());
+        unsigned int size = std::min(m_compartments[compartment].size(), inventory->m_compartments[compartment].size());
         for (unsigned int slot = 0; slot < size; ++slot)
         {
-            m_compartments[compartment][slot] =
-                inventory->m_compartments[compartment][slot]->copy();
+            m_compartments[compartment][slot] = inventory->m_compartments[compartment][slot]->copy();
         }
     }
 }

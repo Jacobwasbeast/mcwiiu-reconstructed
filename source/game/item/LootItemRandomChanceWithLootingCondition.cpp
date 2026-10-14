@@ -10,8 +10,10 @@
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/util/Random.hpp"
 
-LootItemRandomChanceWithLootingCondition::LootItemRandomChanceWithLootingCondition(float chanceValue, float lootingMultiplierValue)
-    : chance(chanceValue), lootingMultiplier(lootingMultiplierValue)
+LootItemRandomChanceWithLootingCondition::LootItemRandomChanceWithLootingCondition(float chanceValue,
+                                                                                   float lootingMultiplierValue)
+    : chance(chanceValue),
+      lootingMultiplier(lootingMultiplierValue)
 {
 }
 
@@ -20,7 +22,10 @@ bool LootItemRandomChanceWithLootingCondition::applies(Random* random, LootTable
     int lootingLevel = 0;
 
     if ((context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity())
-        && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, (context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity())->GetType()))
+        && eTYPE_DERIVED_FROM(
+            EntityType::LIVING_ENTITY,
+            (context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity())
+                ->GetType()))
     {
         lootingLevel = EnchantmentHelper::getMobLooting(boost::dynamic_pointer_cast<LivingEntity>(
             context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity()));

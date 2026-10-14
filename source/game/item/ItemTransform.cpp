@@ -2,8 +2,8 @@
 
 #include "game/core/Mth.hpp"
 
-ItemTransform* ItemTransform::NO_TRANSFORM =
-    new ItemTransform(Vector3f(0.0f, 0.0f, 0.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f(1.0f, 1.0f, 1.0f), false);
+ItemTransform* ItemTransform::NO_TRANSFORM = new ItemTransform(Vector3f(0.0f, 0.0f, 0.0f), Vector3f(0.0f, 0.0f, 0.0f),
+                                                               Vector3f(1.0f, 1.0f, 1.0f), false);
 
 ItemTransform::ItemTransform(Vector3f rotation, Vector3f translation, Vector3f scale, bool clampValues)
 {

@@ -38,8 +38,7 @@ void PickaxeItem::staticCtor()
     BLOCKS.data[25] = Blocks::stone_pressure_plate;
 }
 
-PickaxeItem::PickaxeItem(const Item::Tier* tier)
-    : DiggerItem(2.0f, -2.8f, tier, BLOCKS)
+PickaxeItem::PickaxeItem(const Item::Tier* tier) : DiggerItem(2.0f, -2.8f, tier, BLOCKS)
 {
 }
 
@@ -52,15 +51,14 @@ bool PickaxeItem::canDestroySpecial(const BlockState* state)
         return mTier->getLevel() == 3;
     }
 
-    if (block == Blocks::diamond_block || block == Blocks::diamond_ore ||
-        block == Blocks::emerald_ore || block == Blocks::emerald_block ||
-        block == Blocks::gold_block || block == Blocks::gold_ore)
+    if (block == Blocks::diamond_block || block == Blocks::diamond_ore || block == Blocks::emerald_ore
+        || block == Blocks::emerald_block || block == Blocks::gold_block || block == Blocks::gold_ore)
     {
         return mTier->getLevel() >= 2;
     }
 
-    if (block == Blocks::iron_block || block == Blocks::iron_ore ||
-        block == Blocks::lapis_block || block == Blocks::lapis_ore)
+    if (block == Blocks::iron_block || block == Blocks::iron_ore || block == Blocks::lapis_block
+        || block == Blocks::lapis_ore)
     {
         return mTier->getLevel() >= 1;
     }
@@ -83,8 +81,7 @@ float PickaxeItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, cons
 {
     Material* material = state->getMaterial();
 
-    if (material == Material::METAL || material == Material::HEAVY_METAL ||
-        material == Material::STONE)
+    if (material == Material::METAL || material == Material::HEAVY_METAL || material == Material::STONE)
     {
         return mSpeed;
     }

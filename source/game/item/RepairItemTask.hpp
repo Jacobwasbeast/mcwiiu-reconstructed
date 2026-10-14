@@ -13,9 +13,9 @@ class ItemInstance;
 class RepairItemTask : public TutorialTask
 {
 public:
-    RepairItemTask(Item* item, int auxValue, Tutorial* tutorial, int descriptionId,
-                   bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
-                   bool showMinimumTime, bool allowFade, bool repeatMessage);
+    RepairItemTask(Item* item, int auxValue, Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
+                   std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                   bool repeatMessage);
 
     virtual bool isCompleted();
     virtual void onTakeFromAnvil(not_null_ptr<ItemInstance> itemInstance);

@@ -4,8 +4,7 @@
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/Enchantments.hpp"
 
-UntouchingEnchantment::UntouchingEnchantment(const Rarity* rarity,
-                                             arrayWithLength<const EquipmentSlot*> slots)
+UntouchingEnchantment::UntouchingEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::DIGGER, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_UNTOUCHING);

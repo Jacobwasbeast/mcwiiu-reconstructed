@@ -18,8 +18,7 @@ class SmeltItemFunction : public LootItemFunction
 public:
     SmeltItemFunction(std::vector<LootItemCondition*>* conditions);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                             Random* random,
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
                                              LootTableContext& context);
 };
 

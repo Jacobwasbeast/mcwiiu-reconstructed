@@ -19,8 +19,7 @@ class SetItemDataFunction : public LootItemFunction
 public:
     SetItemDataFunction(std::vector<LootItemCondition*>* conditions, RandomValueBounds value);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                             Random* random,
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
                                              LootTableContext& context);
 
 protected:

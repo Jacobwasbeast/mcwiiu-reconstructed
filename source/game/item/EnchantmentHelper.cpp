@@ -49,8 +49,7 @@ void EnchantmentHelper::DoPostDamageIteration::doEnchantment(Enchantment* enchan
     enchantment->doPostAttack(mAttacker, mTarget, level);
 }
 
-int EnchantmentHelper::getItemEnchantmentLevel(const Enchantment* enchantment,
-                                               const not_null_ptr<ItemInstance>& item)
+int EnchantmentHelper::getItemEnchantmentLevel(const Enchantment* enchantment, const not_null_ptr<ItemInstance>& item)
 {
     if (item->isEmpty())
     {
@@ -78,11 +77,9 @@ int EnchantmentHelper::getItemEnchantmentLevel(const Enchantment* enchantment,
     return 0;
 }
 
-boost::unordered_map<Enchantment*, int>* EnchantmentHelper::getEnchantments(
-    const not_null_ptr<ItemInstance>& item)
+boost::unordered_map<Enchantment*, int>* EnchantmentHelper::getEnchantments(const not_null_ptr<ItemInstance>& item)
 {
-    boost::unordered_map<Enchantment*, int>* enchantments =
-        new boost::unordered_map<Enchantment*, int>();
+    boost::unordered_map<Enchantment*, int>* enchantments = new boost::unordered_map<Enchantment*, int>();
 
     ListTag* tags;
     if (item->getItem() == Items::enchantedBook)
@@ -149,8 +146,7 @@ void EnchantmentHelper::setEnchantments(boost::unordered_map<Enchantment*, int>*
     }
 }
 
-int EnchantmentHelper::getEnchantmentLevel(Enchantment* enchantment,
-                                           const boost::shared_ptr<LivingEntity>& entity)
+int EnchantmentHelper::getEnchantmentLevel(Enchantment* enchantment, const boost::shared_ptr<LivingEntity>& entity)
 {
     if (entity.get() == NULL)
     {
@@ -164,9 +160,7 @@ int EnchantmentHelper::getEnchantmentLevel(Enchantment* enchantment,
     }
 
     int level = 0;
-    for (std::vector<boost::weak_ptr<ItemInstance> >::const_iterator it = items.begin();
-         it != items.end();
-         ++it)
+    for (std::vector<boost::weak_ptr<ItemInstance> >::const_iterator it = items.begin(); it != items.end(); ++it)
     {
         int itemLevel = getItemEnchantmentLevel(enchantment, not_null_ptr<ItemInstance>(it->lock()));
         if (level < itemLevel)
@@ -178,8 +172,7 @@ int EnchantmentHelper::getEnchantmentLevel(Enchantment* enchantment,
     return level;
 }
 
-void EnchantmentHelper::runIterationOnItem(EnchantmentIterationMethod& method,
-                                           const not_null_ptr<ItemInstance>& item)
+void EnchantmentHelper::runIterationOnItem(EnchantmentIterationMethod& method, const not_null_ptr<ItemInstance>& item)
 {
     if (item->isEmpty())
     {
@@ -213,8 +206,7 @@ void EnchantmentHelper::runIterationOnInventory(EnchantmentIterationMethod& meth
     }
 }
 
-int EnchantmentHelper::getDamageProtection(NonNullList<not_null_ptr<ItemInstance> > items,
-                                           const DamageSource* source)
+int EnchantmentHelper::getDamageProtection(NonNullList<not_null_ptr<ItemInstance> > items, const DamageSource* source)
 {
     sDamageProtectionIteration.mProtection = 0;
     sDamageProtectionIteration.mSource = source;
@@ -247,8 +239,7 @@ void EnchantmentHelper::doPostHurtEffects(const boost::shared_ptr<LivingEntity>&
         runIterationOnInventory(sPostHurtIteration, slots);
     }
 
-    if (attacker.get() != NULL
-        && eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
+    if (attacker.get() != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
     {
         runIterationOnItem(sPostHurtIteration, target->getMainHandItem());
     }
@@ -340,9 +331,8 @@ bool EnchantmentHelper::hasChanneling(const not_null_ptr<ItemInstance>& item)
     return getItemEnchantmentLevel(Enchantments::CHANNELING, item) > 0;
 }
 
-boost::shared_ptr<ItemInstance> EnchantmentHelper::getRandomItemWith(
-    Enchantment* enchantment,
-    const boost::shared_ptr<LivingEntity>& entity)
+boost::shared_ptr<ItemInstance> EnchantmentHelper::getRandomItemWith(Enchantment* enchantment,
+                                                                     const boost::shared_ptr<LivingEntity>& entity)
 {
     std::vector<boost::weak_ptr<ItemInstance> > items = enchantment->getSlotItems(entity);
     if (items.empty())
@@ -373,10 +363,7 @@ boost::shared_ptr<ItemInstance> EnchantmentHelper::getRandomItemWith(
     return items.at(entity->getRandom()->nextInt(static_cast<int>(items.size()))).lock();
 }
 
-int EnchantmentHelper::getEnchantmentCost(Random* random,
-                                          int slot,
-                                          int level,
-                                          const not_null_ptr<ItemInstance>& item)
+int EnchantmentHelper::getEnchantmentCost(Random* random, int slot, int level, const not_null_ptr<ItemInstance>& item)
 {
     if (item->getItem()->getEnchantmentValue() < 1)
     {
@@ -411,27 +398,19 @@ int EnchantmentHelper::getEnchantmentCost(Random* random,
 }
 
 std::vector<EnchantmentInstance*>* EnchantmentHelper::getAvailableEnchantmentResults(
-    int cost,
-    const not_null_ptr<ItemInstance>& item,
-    bool treasure)
+    int cost, const not_null_ptr<ItemInstance>& item, bool treasure)
 {
     Item* itemType = item->getItem();
     std::vector<EnchantmentInstance*>* results = new std::vector<EnchantmentInstance*>();
 
     bool isBook = item->getItem() == Items::book;
 
-    const boost::unordered_map<Enchantment*,
-                               ResourceLocation,
-                               boost::hash<Enchantment*>,
-                               std::equal_to<Enchantment*> >& registry =
-        Enchantment::enchantmentRegistry->mInverseRegistry;
+    const boost::unordered_map<Enchantment*, ResourceLocation, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >&
+        registry = Enchantment::enchantmentRegistry->mInverseRegistry;
 
-    for (boost::unordered_map<Enchantment*,
-                              ResourceLocation,
-                              boost::hash<Enchantment*>,
+    for (boost::unordered_map<Enchantment*, ResourceLocation, boost::hash<Enchantment*>,
                               std::equal_to<Enchantment*> >::const_iterator it = registry.begin();
-         it != registry.end();
-         ++it)
+         it != registry.end(); ++it)
     {
         Enchantment* enchantment = it->first;
 
@@ -458,9 +437,8 @@ std::vector<EnchantmentInstance*>* EnchantmentHelper::getAvailableEnchantmentRes
     return results;
 }
 
-void EnchantmentHelper::filterCompatibleEnchantments(
-    std::vector<EnchantmentInstance*>* enchantments,
-    const EnchantmentInstance* selected)
+void EnchantmentHelper::filterCompatibleEnchantments(std::vector<EnchantmentInstance*>* enchantments,
+                                                     const EnchantmentInstance* selected)
 {
     std::vector<EnchantmentInstance*>::iterator it = enchantments->begin();
     while (it != enchantments->end())
@@ -476,11 +454,9 @@ void EnchantmentHelper::filterCompatibleEnchantments(
     }
 }
 
-std::vector<EnchantmentInstance*>* EnchantmentHelper::selectEnchantment(
-    Random* random,
-    const not_null_ptr<ItemInstance>& item,
-    int level,
-    bool treasure)
+std::vector<EnchantmentInstance*>* EnchantmentHelper::selectEnchantment(Random* random,
+                                                                        const not_null_ptr<ItemInstance>& item,
+                                                                        int level, bool treasure)
 {
     std::vector<EnchantmentInstance*>* selected = new std::vector<EnchantmentInstance*>();
 
@@ -492,12 +468,9 @@ std::vector<EnchantmentInstance*>* EnchantmentHelper::selectEnchantment(
 
     int spread = enchantmentValue / 4;
     int cost = level + 1 + random->nextInt(spread + 1) + random->nextInt(spread + 1);
-    cost = Mth::clamp(Math::round(static_cast<float>(cost)
-                                      * (random->nextFloat() + random->nextFloat() - 1.0f)
-                                      * 0.15f
+    cost = Mth::clamp(Math::round(static_cast<float>(cost) * (random->nextFloat() + random->nextFloat() - 1.0f) * 0.15f
                                   + static_cast<float>(cost)),
-                      1,
-                      2147483647);
+                      1, 2147483647);
 
     std::vector<EnchantmentInstance*>* available = getAvailableEnchantmentResults(cost, item, treasure);
     if (!available->empty())
@@ -525,9 +498,7 @@ std::vector<EnchantmentInstance*>* EnchantmentHelper::selectEnchantment(
     return selected;
 }
 
-not_null_ptr<ItemInstance> EnchantmentHelper::enchantItem(Random* random,
-                                                          not_null_ptr<ItemInstance> item,
-                                                          int level,
+not_null_ptr<ItemInstance> EnchantmentHelper::enchantItem(Random* random, not_null_ptr<ItemInstance> item, int level,
                                                           bool treasure)
 {
     std::vector<EnchantmentInstance*>* selected = selectEnchantment(random, item, level, treasure);
@@ -540,9 +511,7 @@ not_null_ptr<ItemInstance> EnchantmentHelper::enchantItem(Random* random,
 
     if (selected != NULL)
     {
-        for (std::vector<EnchantmentInstance*>::iterator it = selected->begin();
-             it != selected->end();
-             ++it)
+        for (std::vector<EnchantmentInstance*>::iterator it = selected->begin(); it != selected->end(); ++it)
         {
             EnchantmentInstance* instance = *it;
 

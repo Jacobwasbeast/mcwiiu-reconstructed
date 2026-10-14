@@ -34,8 +34,7 @@
 
 static const std::wstring TAG_ENTITY = L"EntityTag";
 
-SpawnEggItem::SpawnEggItem()
-    : Item()
+SpawnEggItem::SpawnEggItem() : Item()
 {
     setMaxStackSize(64);
     setStackedByData(true);
@@ -82,8 +81,7 @@ std::wstring SpawnEggItem::getName(not_null_ptr<ItemInstance> itemInstance)
 double SpawnEggItem::getYOffset(Level* level, const BlockPos& pos)
 {
     AABB* box = AABB::newPermanent(pos)->expand(0.0, -1.0, 0.0);
-    std::vector<AABB*>* collisions =
-        level->getCollisionAABBs(boost::shared_ptr<Entity>(), box, false, false, false);
+    std::vector<AABB*>* collisions = level->getCollisionAABBs(boost::shared_ptr<Entity>(), box, false, false, false);
     if (collisions->empty())
     {
         return 0.0;
@@ -229,9 +227,8 @@ boost::shared_ptr<Entity> SpawnEggItem::canSpawn(const ResourceLocation& entityT
     return entity;
 }
 
-boost::shared_ptr<Entity> SpawnEggItem::getMob(Level* level, const ResourceLocation& entityType,
-                                                double x, double y, double z, int* error,
-                                                const std::wstring& customName)
+boost::shared_ptr<Entity> SpawnEggItem::getMob(Level* level, const ResourceLocation& entityType, double x, double y,
+                                               double z, int* error, const std::wstring& customName)
 {
     if (entityType.toString().compare(L"") == 0 || EntityIO::sSpawnInfo.find(entityType) == EntityIO::sSpawnInfo.end())
         return boost::shared_ptr<Entity>();
@@ -253,9 +250,8 @@ boost::shared_ptr<Entity> SpawnEggItem::getMob(Level* level, const ResourceLocat
     return entity;
 }
 
-boost::shared_ptr<Entity> SpawnEggItem::spawnMobAt(Level* level, const ResourceLocation& entityType,
-                                                   double x, double y, double z, int* error,
-                                                   const std::wstring& customName)
+boost::shared_ptr<Entity> SpawnEggItem::spawnMobAt(Level* level, const ResourceLocation& entityType, double x, double y,
+                                                   double z, int* error, const std::wstring& customName)
 {
     boost::shared_ptr<Entity> entity = getMob(level, entityType, x, y, z, error, customName);
     if (entity && eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
@@ -267,8 +263,7 @@ boost::shared_ptr<Entity> SpawnEggItem::spawnMobAt(Level* level, const ResourceL
     return entity;
 }
 
-void SpawnEggItem::updateCustomEntityTag(Level*, boost::shared_ptr<Player>,
-                                         not_null_ptr<ItemInstance>,
+void SpawnEggItem::updateCustomEntityTag(Level*, boost::shared_ptr<Player>, not_null_ptr<ItemInstance>,
                                          boost::shared_ptr<Entity>)
 {
 }
@@ -318,10 +313,10 @@ void SpawnEggItem::DisplaySpawnError(boost::shared_ptr<Player> player, int error
     }
 }
 
-InteractionResult::EInteractionResult SpawnEggItem::useOn(boost::shared_ptr<Player> player,
-                       Level* level, const BlockPos& pos,
-                       InteractionHand::EInteractionHand hand, const Direction* direction,
-                       float hitX, float hitY, float hitZ, bool simulate)
+InteractionResult::EInteractionResult SpawnEggItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                          const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                          const Direction* direction, float hitX, float hitY,
+                                                          float hitZ, bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (level->mIsClientSide)
@@ -381,7 +376,7 @@ InteractionResult::EInteractionResult SpawnEggItem::useOn(boost::shared_ptr<Play
 }
 
 InteractionResultHolder SpawnEggItem::use(Level* level, boost::shared_ptr<Player> player,
-                                           InteractionHand::EInteractionHand hand)
+                                          InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     HitResult* hitResult = Item::getPlayerPOVHitResult(level, player, true);
@@ -429,8 +424,8 @@ InteractionResultHolder SpawnEggItem::use(Level* level, boost::shared_ptr<Player
     }
 
     int error;
-    boost::shared_ptr<Entity> entity =
-        spawnMobAt(level, getNamedIdFrom(itemInstance), pos.x, pos.y, pos.z, &error, L"");
+    boost::shared_ptr<Entity> entity = spawnMobAt(level, getNamedIdFrom(itemInstance), pos.x, pos.y, pos.z, &error,
+                                                  L"");
     if (entity)
     {
         if (eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()) && itemInstance->hasCustomHoverName())
@@ -441,8 +436,7 @@ InteractionResultHolder SpawnEggItem::use(Level* level, boost::shared_ptr<Player
         updateCustomEntityTag(level, player, itemInstance, entity);
         if (!player->mAbilities.mInstabuild)
             itemInstance->shrink(1);
-        player->awardStat(GenericStats::itemsUsed(this),
-                          GenericStats::param_itemsUsed(player, itemInstance));
+        player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
         delete hitResult;
         return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
     }
@@ -451,8 +445,7 @@ InteractionResultHolder SpawnEggItem::use(Level* level, boost::shared_ptr<Player
     return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
 }
 
-void SpawnEggItem::addSpawnEntity(not_null_ptr<ItemInstance> itemInstance,
-                                  const ResourceLocation& entityType)
+void SpawnEggItem::addSpawnEntity(not_null_ptr<ItemInstance> itemInstance, const ResourceLocation& entityType)
 {
     CompoundTag* tag = itemInstance->hasTag() ? itemInstance->getTag() : new CompoundTag();
     CompoundTag* entityTag = new CompoundTag();
@@ -466,8 +459,7 @@ bool SpawnEggItem::hasMultipleSpriteLayers()
     return true;
 }
 
-TextureAtlasSprite* SpawnEggItem::getLayerIcon(int auxValue, int layer,
-                                               not_null_ptr<ItemInstance> itemInstance)
+TextureAtlasSprite* SpawnEggItem::getLayerIcon(int auxValue, int layer, not_null_ptr<ItemInstance> itemInstance)
 {
     if (layer > 0)
     {
@@ -492,8 +484,7 @@ unsigned long long SpawnEggItem::fjGetType(const not_null_ptr<ItemInstance>& ite
     return 0;
 }
 
-bool SpawnEggItem::TestUse(Level* level, boost::shared_ptr<Player> player,
-                           InteractionHand::EInteractionHand hand)
+bool SpawnEggItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
     HitResult* hitResult = Item::getPlayerPOVHitResult(level, player, true);
     const BlockPos& pos = hitResult->getBlockPos();
@@ -507,8 +498,7 @@ bool SpawnEggItem::TestUse(Level* level, boost::shared_ptr<Player> player,
 
 unsigned int SpawnEggItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (TestUse((Level*)tooltipData.m_pLevel,
-                (boost::shared_ptr<Player>&)tooltipData.m_pPlayer,
+    if (TestUse((Level*)tooltipData.m_pLevel, (boost::shared_ptr<Player>&)tooltipData.m_pPlayer,
                 InteractionHand::eInteractionHand_MainHand))
     {
         return IDS_TOOLTIPS_PLACE;

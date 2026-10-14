@@ -12,8 +12,7 @@ static const std::wstring TAG_STORED_ENCHANTMENTS = L"StoredEnchantments";
 const wchar_t* TAG_ENCH_ID = L"id";
 const wchar_t* TAG_ENCH_LEVEL = L"lvl";
 
-EnchantedBookItem::EnchantedBookItem()
-    : Item()
+EnchantedBookItem::EnchantedBookItem() : Item()
 {
 }
 
@@ -47,10 +46,8 @@ const Rarity* EnchantedBookItem::getRarity(not_null_ptr<ItemInstance> itemInstan
     return Rarity::UNCOMMON;
 }
 
-void EnchantedBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                        boost::shared_ptr<Player> player,
-                                        std::vector<HtmlString>* lines,
-                                        bool advanced)
+void EnchantedBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                        std::vector<HtmlString>* lines, bool advanced)
 {
     Item::appendHoverText(itemInstance, player, lines, advanced);
     ListTag* enchantments = getEnchantments(itemInstance);
@@ -69,8 +66,7 @@ void EnchantedBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
     }
 }
 
-void EnchantedBookItem::addEnchantment(not_null_ptr<ItemInstance> itemInstance,
-                                       EnchantmentInstance* instance)
+void EnchantedBookItem::addEnchantment(not_null_ptr<ItemInstance> itemInstance, EnchantmentInstance* instance)
 {
     ListTag* enchantments = getEnchantments(itemInstance);
     bool add = true;
@@ -108,8 +104,7 @@ not_null_ptr<ItemInstance> EnchantedBookItem::createForEnchantment(EnchantmentIn
     return item;
 }
 
-void EnchantedBookItem::createForEnchantment(Enchantment* enchantment,
-                                             std::vector<not_null_ptr<ItemInstance> >* items)
+void EnchantedBookItem::createForEnchantment(Enchantment* enchantment, std::vector<not_null_ptr<ItemInstance> >* items)
 {
     for (int level = enchantment->getMinLevel(); level <= enchantment->getMaxLevel(); ++level)
     {

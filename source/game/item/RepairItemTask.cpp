@@ -2,13 +2,13 @@
 
 #include "game/item/ItemInstance.hpp"
 
-RepairItemTask::RepairItemTask(Item* itemValue, int auxValueValue, Tutorial* tutorial,
-                               int descriptionId, bool preCompletionEnabled,
-                               std::vector<TutorialConstraint*>* constraints,
+RepairItemTask::RepairItemTask(Item* itemValue, int auxValueValue, Tutorial* tutorial, int descriptionId,
+                               bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
                                bool showMinimumTime, bool allowFade, bool repeatMessage)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
-                   showMinimumTime, allowFade, repeatMessage),
-      item(itemValue), auxValue(auxValueValue)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime, allowFade,
+                   repeatMessage),
+      item(itemValue),
+      auxValue(auxValueValue)
 {
 }
 

@@ -20,8 +20,7 @@ public:
     class CompassItem_ItemPropertyFunction : public ItemPropertyFunction
     {
     public:
-        virtual float call(not_null_ptr<ItemInstance> itemInstance,
-                           Level* level,
+        virtual float call(not_null_ptr<ItemInstance> itemInstance, Level* level,
                            boost::shared_ptr<LivingEntity> entity);
 
     private:

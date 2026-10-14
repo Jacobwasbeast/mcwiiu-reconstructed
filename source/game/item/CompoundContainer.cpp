@@ -6,7 +6,7 @@
 #include "game/item/Inventory.hpp"
 
 CompoundContainer::CompoundContainer(int id, boost::shared_ptr<LockableContainer> first,
-    boost::shared_ptr<LockableContainer> second)
+                                     boost::shared_ptr<LockableContainer> second)
 {
     mId = id;
     if (first == NULL)
@@ -222,7 +222,7 @@ int CompoundContainer::getTypeId(bool large)
 }
 
 AbstractContainerMenu* CompoundContainer::createMenu(boost::shared_ptr<Inventory> inventory,
-    boost::shared_ptr<Player> player)
+                                                     boost::shared_ptr<Player> player)
 {
     return new ChestMenu(inventory, shared_from_this(), player);
 }

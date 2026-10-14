@@ -15,8 +15,9 @@ public:
     DoorItem(Block* block);
     static void place(Level* level, const BlockPos& pos, const Direction* direction, Block* block, bool hingeRight);
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
-        const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction,
-        float hitX, float hitY, float hitZ, bool simulate);
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate);
     Block* mBlock;
 };
 

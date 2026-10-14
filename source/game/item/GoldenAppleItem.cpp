@@ -44,8 +44,7 @@ int GoldenAppleItem::getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance
     return getUseDescriptionId(itemInstance->getAuxValue());
 }
 
-void GoldenAppleItem::addEatEffect(not_null_ptr<ItemInstance> itemInstance,
-                                   Level* level,
+void GoldenAppleItem::addEatEffect(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                    boost::shared_ptr<Player> player)
 {
     if (!level->mIsClientSide)
@@ -53,21 +52,16 @@ void GoldenAppleItem::addEatEffect(not_null_ptr<ItemInstance> itemInstance,
         if (itemInstance->getAuxValue() > 0)
         {
             player->awardStat(GenericStats::overpowered(), GenericStats::param_overpowered());
-            player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 600, 4),
-                              boost::shared_ptr<Entity>());
+            player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 600, 4), boost::shared_ptr<Entity>());
             player->addEffect(new MobEffectInstance(MobEffects::DAMAGE_RESISTANCE, 6000, 0),
                               boost::shared_ptr<Entity>());
-            player->addEffect(new MobEffectInstance(MobEffects::FIRE_RESISTANCE, 6000, 0),
-                              boost::shared_ptr<Entity>());
-            player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 3),
-                              boost::shared_ptr<Entity>());
+            player->addEffect(new MobEffectInstance(MobEffects::FIRE_RESISTANCE, 6000, 0), boost::shared_ptr<Entity>());
+            player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 3), boost::shared_ptr<Entity>());
         }
         else
         {
-            player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 100, 1),
-                              boost::shared_ptr<Entity>());
-            player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 0),
-                              boost::shared_ptr<Entity>());
+            player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 100, 1), boost::shared_ptr<Entity>());
+            player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 0), boost::shared_ptr<Entity>());
         }
     }
 }

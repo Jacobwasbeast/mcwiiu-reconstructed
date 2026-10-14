@@ -14,14 +14,14 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
-ShearsItem::ShearsItem()
-    : Item()
+ShearsItem::ShearsItem() : Item()
 {
     setMaxStackSize(1);
     setMaxDamage(238);
 }
 
-bool ShearsItem::mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state, const BlockPos& pos, boost::shared_ptr<LivingEntity> entity)
+bool ShearsItem::mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state,
+                           const BlockPos& pos, boost::shared_ptr<LivingEntity> entity)
 {
     if (!level->mIsClientSide)
     {
@@ -30,13 +30,8 @@ bool ShearsItem::mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level
 
     Block* block = state->getBlock();
 
-    if (state->getMaterial() == Material::LEAVES
-        || block == Blocks::web
-        || block == Blocks::tallgrass
-        || block == Blocks::vine
-        || block == Blocks::tripwire
-        || block == Blocks::wool
-        || block == Blocks::sea_grass)
+    if (state->getMaterial() == Material::LEAVES || block == Blocks::web || block == Blocks::tallgrass
+        || block == Blocks::vine || block == Blocks::tripwire || block == Blocks::wool || block == Blocks::sea_grass)
     {
         return true;
     }
@@ -67,7 +62,10 @@ float ShearsItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const
     return Item::getDestroySpeed(itemInstance, state);
 }
 
-InteractionResult::EInteractionResult ShearsItem::useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY, float hitZ, bool simulate)
+InteractionResult::EInteractionResult ShearsItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
@@ -89,18 +87,12 @@ InteractionResult::EInteractionResult ShearsItem::useOn(boost::shared_ptr<Player
         {
             Block* carvedPumpkin = Blocks::carved_pumpkin;
             int data = getLevelDataForAuxValue(itemInstance->getAuxValue());
-            const BlockState* carvedState = carvedPumpkin->getStateForPlacement(
-                level, pos, direction, hitX, hitY, hitZ, data, player);
-            level->playSound(player,
-                             pos,
-                             SoundEvents::PUMPKIN_CARVE,
-                             SoundSource::eSoundSource_Players,
-                             1.0f,
-                             1.0f,
+            const BlockState* carvedState = carvedPumpkin->getStateForPlacement(level, pos, direction, hitX, hitY, hitZ,
+                                                                                data, player);
+            level->playSound(player, pos, SoundEvents::PUMPKIN_CARVE, SoundSource::eSoundSource_Players, 1.0f, 1.0f,
                              16.0f);
             level->setBlock(pos, carvedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
-            Block::popResource(level, pos,
-                               not_null_ptr<ItemInstance>(new ItemInstance(Items::pumpkinSeeds, 1, 0)));
+            Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::pumpkinSeeds, 1, 0)));
             itemInstance->hurtAndBreak(1, player);
         }
 

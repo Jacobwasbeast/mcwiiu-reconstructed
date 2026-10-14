@@ -16,16 +16,12 @@ class Random;
 class EmptyLootItem : public LootPoolEntry
 {
 public:
-    EmptyLootItem(int weight,
-                  int quality,
-                  std::vector<LootItemCondition*>* conditions,
-                  LootTableEntry* entry)
+    EmptyLootItem(int weight, int quality, std::vector<LootItemCondition*>* conditions, LootTableEntry* entry)
         : LootPoolEntry(weight, quality, conditions, entry)
     {
     }
 
-    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                                 Random* random,
+    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random,
                                  LootTableContext& context);
 };
 

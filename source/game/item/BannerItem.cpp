@@ -26,8 +26,7 @@
 #include "game/world/block/WallBannerBlock.hpp"
 #include "game/world/generation/Player.hpp"
 
-BannerItem::BannerItem()
-    : BlockItem(Blocks::standing_banner)
+BannerItem::BannerItem() : BlockItem(Blocks::standing_banner)
 {
     mMaxStackSize = 16;
     setStackedByData(true);
@@ -43,14 +42,9 @@ const DyeColor* BannerItem::getColor(const not_null_ptr<ItemInstance>& itemInsta
     return DyeColor::byItemData(itemInstance->getAuxValue() & 15);
 }
 
-InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
+InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
                                                         bool simulate)
 {
     BlockPos placePos = pos;
@@ -74,8 +68,7 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
 
     placePos = placePos.relative(direction);
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (!player->mayUseItemAt(placePos, direction, itemInstance)
-        || !Blocks::standing_banner->mayPlace(level, placePos))
+    if (!player->mayUseItemAt(placePos, direction, itemInstance) || !Blocks::standing_banner->mayPlace(level, placePos))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
@@ -95,15 +88,12 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
         int rotation = Mth::floor((double)((player->mYRot + 180.0f) * 16.0f / 360.0f) + 0.5) & 15;
         level->setBlock(placePos,
                         Blocks::standing_banner->defaultBlockState()->setValue(StandingBannerBlock::ROTATION, rotation),
-                        Block::UPDATE_ALL,
-                        false);
+                        Block::UPDATE_ALL, false);
     }
     else
     {
-        level->setBlock(placePos,
-                        Blocks::wall_banner->defaultBlockState()->setValue(BannerBlock::FACING, direction),
-                        Block::UPDATE_ALL,
-                        false);
+        level->setBlock(placePos, Blocks::wall_banner->defaultBlockState()->setValue(BannerBlock::FACING, direction),
+                        Block::UPDATE_ALL, false);
     }
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
@@ -111,8 +101,7 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
     {
         const SoundType* soundType = mBlock->getSoundType();
         level->playSound(boost::shared_ptr<Player>(), placePos, soundType->getPlaceSound(),
-                         SoundSource::eSoundSource_Blocks,
-                         (soundType->getVolume() + 1.0f) * 0.5f,
+                         SoundSource::eSoundSource_Blocks, (soundType->getVolume() + 1.0f) * 0.5f,
                          soundType->getPitch() * 0.8f, 16.0f);
 
         boost::static_pointer_cast<BannerBlockEntity>(blockEntity)->setItemValues(itemInstance, false);
@@ -132,7 +121,7 @@ std::wstring BannerItem::getName(not_null_ptr<ItemInstance> itemInstance)
 }
 
 void BannerItem::appendHoverTextFromBannerBlockEntityTag(not_null_ptr<ItemInstance> itemInstance,
-                                                          std::vector<HtmlString>* lines)
+                                                         std::vector<HtmlString>* lines)
 {
     CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(BLOCK_ENTITY_TAG));
     if (tag == NULL || !tag->contains(BannerBlockEntity::TAG_PATTERNS))
@@ -154,10 +143,8 @@ void BannerItem::appendHoverTextFromBannerBlockEntityTag(not_null_ptr<ItemInstan
     }
 }
 
-void BannerItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                 boost::shared_ptr<Player> player,
-                                 std::vector<HtmlString>* lines,
-                                 bool advanced)
+void BannerItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                 std::vector<HtmlString>* lines, bool advanced)
 {
     appendHoverTextFromBannerBlockEntityTag(itemInstance, lines);
 }

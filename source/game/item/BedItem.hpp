@@ -20,18 +20,11 @@ class BedItem : public Item
 {
 public:
     BedItem();
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
                                                         bool simulate);
-    virtual TextureAtlasSprite* getLayerIcon(int auxValue,
-                                              int layer,
-                                              not_null_ptr<ItemInstance> itemInstance);
+    virtual TextureAtlasSprite* getLayerIcon(int auxValue, int layer, not_null_ptr<ItemInstance> itemInstance);
     virtual bool hasMultipleSpriteLayers();
     virtual void registerIcons(IconRegister* iconRegister);
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);

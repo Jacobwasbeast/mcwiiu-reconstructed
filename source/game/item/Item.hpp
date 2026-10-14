@@ -80,12 +80,9 @@ public:
         int mOrdinal;
     };
 
-    static MappedRegistry<ResourceLocation,
-                          Item*,
-                          boost::hash<ResourceLocation>,
-                          std::equal_to<ResourceLocation>,
-                          boost::hash<Item*>,
-                          std::equal_to<Item*> > itemRegistry;
+    static MappedRegistry<ResourceLocation, Item*, boost::hash<ResourceLocation>, std::equal_to<ResourceLocation>,
+                          boost::hash<Item*>, std::equal_to<Item*> >
+        itemRegistry;
 
     static boost::unordered_map<Block*, Item*> BLOCK_TO_ITEM;
 
@@ -95,39 +92,26 @@ public:
     virtual bool verifyTagAfterLoad(CompoundTag* tag);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual ~Item() {}
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                       Level* level,
-                       const BlockPos& pos,
-                       InteractionHand::EInteractionHand hand,
-                       const Direction* direction,
-                       float hitX,
-                       float hitY,
-                       float hitZ,
-                       bool simulate);
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate);
     virtual float getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state);
     virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
-                                                       Level* level,
+    virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                        boost::shared_ptr<LivingEntity> entity);
     virtual int getMaxStackSize();
     virtual int getLevelDataForAuxValue(int auxValue);
-    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
-                           boost::shared_ptr<LivingEntity> target,
+    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<LivingEntity> target,
                            boost::shared_ptr<LivingEntity> attacker);
-    virtual bool mineBlock(not_null_ptr<ItemInstance> itemInstance,
-                           Level* level,
-                           const BlockState* state,
-                           const BlockPos& pos,
-                           boost::shared_ptr<LivingEntity> entity);
+    virtual bool mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state,
+                           const BlockPos& pos, boost::shared_ptr<LivingEntity> entity);
     virtual int getAttackDamage(boost::shared_ptr<Entity> entity);
     virtual bool canDestroySpecial(const BlockState* state);
-    virtual bool interactEnemy(not_null_ptr<ItemInstance> itemInstance,
-                               boost::shared_ptr<Player> player,
-                               boost::shared_ptr<LivingEntity> target,
-                               InteractionHand::EInteractionHand hand);
+    virtual bool interactEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                               boost::shared_ptr<LivingEntity> target, InteractionHand::EInteractionHand hand);
     virtual bool isHandEquipped();
     virtual bool isMirroredArt();
     virtual int getDescriptionId(int auxValue);
@@ -136,23 +120,16 @@ public:
     virtual int getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual bool shouldOverrideMultiplayerNBT();
     virtual int getColor(not_null_ptr<ItemInstance> itemInstance, int layer);
-    virtual void inventoryTick(not_null_ptr<ItemInstance> itemInstance,
-                               Level* level,
-                               boost::shared_ptr<Entity> entity,
-                               int slot,
-                               bool selected);
+    virtual void inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<Entity> entity,
+                               int slot, bool selected);
     virtual void onCraftedBy(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<Player> player);
     virtual bool isComplex();
     virtual int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;
     virtual int getUseDuration(not_null_ptr<ItemInstance> itemInstance);
-    virtual void releaseUsing(not_null_ptr<ItemInstance> itemInstance,
-                              Level* level,
-                              boost::shared_ptr<LivingEntity> entity,
-                              int timeLeft);
-    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                 boost::shared_ptr<Player> player,
-                                 std::vector<HtmlString>* lines,
-                                 bool advanced);
+    virtual void releaseUsing(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                              boost::shared_ptr<LivingEntity> entity, int timeLeft);
+    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                 std::vector<HtmlString>* lines, bool advanced);
     virtual std::wstring getName(not_null_ptr<ItemInstance> itemInstance);
     virtual bool isFoil(not_null_ptr<ItemInstance> itemInstance);
     virtual const Rarity* getRarity(not_null_ptr<ItemInstance> itemInstance);
@@ -265,9 +242,7 @@ protected:
 
     int mMaterialData;
     Material* mMaterial;
-    SimpleRegistry<ResourceLocation,
-                   const ItemPropertyFunction*,
-                   boost::hash<ResourceLocation>,
+    SimpleRegistry<ResourceLocation, const ItemPropertyFunction*, boost::hash<ResourceLocation>,
                    std::equal_to<ResourceLocation> >* mProperties;
     int mMaxStackSize;
     int mMaxDamage;

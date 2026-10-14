@@ -16,12 +16,9 @@ class EnderpearlItem : public Item
 {
 public:
     EnderpearlItem();
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual bool TestUse(Level* level,
-                         boost::shared_ptr<Player> player,
-                         InteractionHand::EInteractionHand hand);
+    virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
 };
 

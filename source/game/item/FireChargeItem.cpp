@@ -15,20 +15,14 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
-FireChargeItem::FireChargeItem()
-    : Item(), mIcon2(NULL)
+FireChargeItem::FireChargeItem() : Item(), mIcon2(NULL)
 {
 }
 
-InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Player> player,
-                                                              Level* level,
-                                                              const BlockPos& pos,
-                                                              InteractionHand::EInteractionHand hand,
-                                                              const Direction* direction,
-                                                              float hitX,
-                                                              float hitY,
-                                                              float hitZ,
-                                                              bool simulate)
+InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                            const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                            const Direction* direction, float hitX, float hitY,
+                                                            float hitZ, bool simulate)
 {
     if (level->mIsClientSide && !simulate)
     {
@@ -48,13 +42,9 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
     {
         if (level->getBlockState(target)->getMaterial() == Material::AIR)
         {
-            level->playSound(boost::shared_ptr<Player>(),
-                             target,
-                             SoundEvents::FIREBALL_SHOOT,
-                             SoundSource::eSoundSource_Blocks,
-                             1.0f,
-                             (random->nextFloat() - random->nextFloat()) * 0.2f + 1.0f,
-                             16.0f);
+            level->playSound(boost::shared_ptr<Player>(), target, SoundEvents::FIREBALL_SHOOT,
+                             SoundSource::eSoundSource_Blocks, 1.0f,
+                             (random->nextFloat() - random->nextFloat()) * 0.2f + 1.0f, 16.0f);
             level->setBlockAndUpdate(target, Blocks::fire->defaultBlockState());
         }
         if (!player->mAbilities.mInstabuild)
@@ -64,8 +54,8 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
     }
     else
     {
-        return level->getBlockState(target)->getBlock()->mMaterial == Material::AIR &&
-                       Blocks::fire->mayPlace(level, target)
+        return level->getBlockState(target)->getBlock()->mMaterial == Material::AIR
+                       && Blocks::fire->mayPlace(level, target)
                    ? InteractionResult::eInteractionResult_Pass
                    : InteractionResult::eInteractionResult_Fail;
     }

@@ -20,8 +20,7 @@ EnchantRandomlyFunction::EnchantRandomlyFunction(std::vector<LootItemCondition*>
 }
 
 not_null_ptr<ItemInstance> EnchantRandomlyFunction::apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                                          Random* random,
-                                                          LootTableContext& context)
+                                                          Random* random, LootTableContext& context)
 {
     not_null_ptr<ItemInstance> result = itemInstance;
 
@@ -36,21 +35,15 @@ not_null_ptr<ItemInstance> EnchantRandomlyFunction::apply(const not_null_ptr<Ite
     {
         possibleEnchantments.clear();
 
-        const boost::unordered_map<Enchantment*,
-                                   ResourceLocation,
-                                   boost::hash<Enchantment*>,
+        const boost::unordered_map<Enchantment*, ResourceLocation, boost::hash<Enchantment*>,
                                    std::equal_to<Enchantment*> >& registry =
             Enchantment::enchantmentRegistry->mInverseRegistry;
 
-        for (boost::unordered_map<Enchantment*,
-                                  ResourceLocation,
-                                  boost::hash<Enchantment*>,
+        for (boost::unordered_map<Enchantment*, ResourceLocation, boost::hash<Enchantment*>,
                                   std::equal_to<Enchantment*> >::const_iterator it = registry.begin();
-             it != registry.end();
-             ++it)
+             it != registry.end(); ++it)
         {
-            if (result->getItem() == Items::book ||
-                (it->first != NULL && it->first->canEnchant(result)))
+            if (result->getItem() == Items::book || (it->first != NULL && it->first->canEnchant(result)))
             {
                 possibleEnchantments.push_back(it->first);
             }

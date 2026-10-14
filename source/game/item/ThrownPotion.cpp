@@ -46,8 +46,7 @@ double SPLASH_RANGE_SQUARED = 16.0;
 const double ThrownPotion::SPLASH_RANGE = 4.0;
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ThrownPotion::DATA_ITEM = NULL;
 
-ThrownPotion::ThrownPotion(Level* level)
-    : ThrowableProjectile(level)
+ThrownPotion::ThrownPotion(Level* level) : ThrowableProjectile(level)
 {
     _init();
 }
@@ -97,16 +96,17 @@ void ThrownPotion::dowseFire(const BlockPos& pos, const Direction* direction)
 
 bool ThrownPotion::isWaterSensitiveEntity(const boost::shared_ptr<Entity>& entity)
 {
-    return eTYPE_DERIVED_FROM(EntityType::ENDER_MAN, entity->GetType()) || eTYPE_DERIVED_FROM(EntityType::BLAZE, entity->GetType())
-        || eTYPE_DERIVED_FROM(EntityType::SNOW_MAN, entity->GetType());
+    return eTYPE_DERIVED_FROM(EntityType::ENDER_MAN, entity->GetType())
+           || eTYPE_DERIVED_FROM(EntityType::BLAZE, entity->GetType())
+           || eTYPE_DERIVED_FROM(EntityType::SNOW_MAN, entity->GetType());
 }
 
 void ThrownPotion::applyWater()
 {
     AABB* area = mBoundingBox->grow(4.0, 2.0, 4.0);
     WATER_SENSITIVE* predicate = new WATER_SENSITIVE();
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(typeid(LivingEntity), area, predicate, false);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(LivingEntity), area,
+                                                                                   predicate, false);
     delete predicate;
 
     if (!entities->empty())
@@ -139,8 +139,7 @@ void ThrownPotion::makeAreaOfEffectCloud(const not_null_ptr<ItemInstance>& item,
     if (mobEffects->size() == 1)
     {
         MobEffectInstance* effectInstance = mobEffects->at(0);
-        int lingeringDuration = miniGame->getLingeringDuration(
-            effectInstance->durationEffectId, cloud->getDuration());
+        int lingeringDuration = miniGame->getLingeringDuration(effectInstance->durationEffectId, cloud->getDuration());
         cloud->setDuration(lingeringDuration);
     }
 
@@ -168,14 +167,14 @@ void ThrownPotion::applySplash(const HitResult* result, std::vector<MobEffectIns
 {
     if (mLevel == NULL || mBoundingBox == NULL || effects == NULL)
         return;
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(4.0, 2.0, 4.0));
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(LivingEntity),
+                                                                                   mBoundingBox->grow(4.0, 2.0, 4.0));
     if (entities == NULL)
         return;
     boost::shared_ptr<Entity> source = shared_from_this();
     boost::shared_ptr<LivingEntity> owner = getOwner();
-    for (std::vector<boost::shared_ptr<Entity> >::iterator entityIt = entities->begin();
-         entityIt != entities->end(); ++entityIt)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator entityIt = entities->begin(); entityIt != entities->end();
+         ++entityIt)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(*entityIt);
         if (!living || !living->isAffectedByPotions())
@@ -186,8 +185,8 @@ void ThrownPotion::applySplash(const HitResult* result, std::vector<MobEffectIns
         double scale = -(std::sqrt(distance) * 0.25 - 1.0);
         if (result != NULL && result->mEntity == *entityIt)
             scale = 1.0;
-        for (std::vector<MobEffectInstance*>::iterator effectIt = effects->begin();
-             effectIt != effects->end(); ++effectIt)
+        for (std::vector<MobEffectInstance*>::iterator effectIt = effects->begin(); effectIt != effects->end();
+             ++effectIt)
         {
             MobEffectInstance* effectInstance = *effectIt;
             if (effectInstance == NULL || effectInstance->getEffect() == NULL)
@@ -195,19 +194,17 @@ void ThrownPotion::applySplash(const HitResult* result, std::vector<MobEffectIns
             MobEffect* effect = effectInstance->getEffect();
             if (effect->isInstantenous())
             {
-                effect->applyInstantenousEffect(source, owner, living,
-                                                 effectInstance->getAmplifier(), scale);
+                effect->applyInstantenousEffect(source, owner, living, effectInstance->getAmplifier(), scale);
             }
             else
             {
                 int duration = static_cast<int>(scale * (effectInstance->getDuration() - 0.0) * 0.75 + 0.5);
                 if (duration > 20)
                 {
-                    living->addEffect(new MobEffectInstance(effect, duration,
-                                                             effectInstance->getAmplifier()), source);
+                    living->addEffect(new MobEffectInstance(effect, duration, effectInstance->getAmplifier()), source);
 
-                    if (effect == MobEffects::POISON && eTYPE_DERIVED_FROM(EntityType::WITCH, living->GetType()) && owner != NULL
-                        && eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType()))
+                    if (effect == MobEffects::POISON && eTYPE_DERIVED_FROM(EntityType::WITCH, living->GetType())
+                        && owner != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType()))
                     {
                         boost::static_pointer_cast<ServerPlayer>(owner)->awardStat(
                             GenericStats::tasteOfYourOwnMedicine(), GenericStats::param_tasteOfYourOwnMedicine());
@@ -266,7 +263,9 @@ bool ThrownPotion::onHit(const HitResult* result)
     }
 
     bool hasInstant = potion->hasInstantEffects();
-    mLevel->levelEvent(hasInstant ? LevelEvent::PARTICLES_INSTANT_POTION_SPLASH : LevelEvent::PARTICLES_SPELL_POTION_SPLASH, BlockPos(this), PotionUtils::getColor(item));
+    mLevel->levelEvent(hasInstant ? LevelEvent::PARTICLES_INSTANT_POTION_SPLASH
+                                  : LevelEvent::PARTICLES_SPELL_POTION_SPLASH,
+                       BlockPos(this), PotionUtils::getColor(item));
     delete effects;
     remove();
     return true;

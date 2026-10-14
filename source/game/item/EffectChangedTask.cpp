@@ -1,11 +1,11 @@
 #include "game/item/EffectChangedTask.hpp"
 
-EffectChangedTask::EffectChangedTask(Tutorial* tutorial, int descriptionId, MobEffect* effect,
-                                     bool effectRemoved, bool preCompletionEnabled,
-                                     bool showMinimumTime, bool allowFade, bool repeatMessage)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, showMinimumTime,
-                   allowFade, repeatMessage),
-      effect(effect), effectRemoved(effectRemoved)
+EffectChangedTask::EffectChangedTask(Tutorial* tutorial, int descriptionId, MobEffect* effect, bool effectRemoved,
+                                     bool preCompletionEnabled, bool showMinimumTime, bool allowFade,
+                                     bool repeatMessage)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, showMinimumTime, allowFade, repeatMessage),
+      effect(effect),
+      effectRemoved(effectRemoved)
 {
 }
 

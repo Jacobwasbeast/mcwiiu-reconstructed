@@ -27,14 +27,9 @@ SignItem::SignItem()
     mMaxStackSize = 16;
 }
 
-InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> player,
-                                                      Level* level,
-                                                      const BlockPos& pos,
-                                                      InteractionHand::EInteractionHand hand,
-                                                      const Direction* direction,
-                                                      float hitX,
-                                                      float hitY,
-                                                      float hitZ,
+InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                      const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                      const Direction* direction, float hitX, float hitY, float hitZ,
                                                       bool simulate)
 {
     BlockPos signPos = pos;
@@ -60,8 +55,7 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
 
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
-    if (!player->mayUseItemAt(signPos, direction, itemInstance)
-        || !Blocks::standing_sign->mayPlace(level, signPos))
+    if (!player->mayUseItemAt(signPos, direction, itemInstance) || !Blocks::standing_sign->mayPlace(level, signPos))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
@@ -83,15 +77,12 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
             int rotation = Mth::absFloor((double)((player->mYRot + 180.0f) * 16.0f / 360.0f) + 0.5) & 15;
             level->setBlock(signPos,
                             Blocks::standing_sign->defaultBlockState()->setValue(StandingSignBlock::ROTATION, rotation),
-                            Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
-                            false);
+                            Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
         }
         else
         {
-            level->setBlock(signPos,
-                            Blocks::wall_sign->defaultBlockState()->setValue(WallSignBlock::FACING, direction),
-                            Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
-                            false);
+            level->setBlock(signPos, Blocks::wall_sign->defaultBlockState()->setValue(WallSignBlock::FACING, direction),
+                            Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
         }
 
         itemInstance->shrink(1);

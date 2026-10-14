@@ -1,7 +1,6 @@
 #include "game/item/SimpleFoiledItem.hpp"
 
-SimpleFoiledItem::SimpleFoiledItem()
-    : Item()
+SimpleFoiledItem::SimpleFoiledItem() : Item()
 {
 }
 

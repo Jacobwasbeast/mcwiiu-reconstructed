@@ -8,9 +8,8 @@ class MobEffect;
 class EffectChangedTask : public TutorialTask
 {
 public:
-    EffectChangedTask(Tutorial* tutorial, int descriptionId, MobEffect* effect,
-                      bool effectRemoved, bool preCompletionEnabled,
-                      bool showMinimumTime, bool allowFade, bool repeatMessage);
+    EffectChangedTask(Tutorial* tutorial, int descriptionId, MobEffect* effect, bool effectRemoved,
+                      bool preCompletionEnabled, bool showMinimumTime, bool allowFade, bool repeatMessage);
 
     virtual bool isCompleted();
     virtual void onEffectChanged(MobEffect* effect, bool added);

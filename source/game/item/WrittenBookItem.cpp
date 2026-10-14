@@ -33,8 +33,7 @@ const std::wstring WrittenBookItem::TAG_OWNER_UUID = L"ownerUUID";
 const std::wstring WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER = L"createdByRestrictedPlayer";
 const std::wstring WrittenBookItem::TAG_CREATED_BY_HOST = L"createdByHost";
 
-WrittenBookItem::WrittenBookItem()
-    : Item()
+WrittenBookItem::WrittenBookItem() : Item()
 {
     setMaxStackSize(1);
 }
@@ -96,8 +95,8 @@ std::wstring WrittenBookItem::getName(not_null_ptr<ItemInstance> itemInstance)
         if (tag->contains(TAG_CREATED_BY_HOST) && tag->getByte(TAG_CREATED_BY_HOST) == 0)
             createdByHost = false;
 
-        if ((chatCensored || createdByRestrictedPlayer) && !ownedByLocalPlayer &&
-            (!CGameNetworkManager::sInstance.IsHost() || !createdByHost))
+        if ((chatCensored || createdByRestrictedPlayer) && !ownedByLocalPlayer
+            && (!CGameNetworkManager::sInstance.IsHost() || !createdByHost))
         {
             return Item::getName(itemInstance);
         }
@@ -109,10 +108,8 @@ std::wstring WrittenBookItem::getName(not_null_ptr<ItemInstance> itemInstance)
     return Item::getName(itemInstance);
 }
 
-void WrittenBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                      boost::shared_ptr<Player> player,
-                                      std::vector<HtmlString>* lines,
-                                      bool advanced)
+void WrittenBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                      std::vector<HtmlString>* lines, bool advanced)
 {
     if (itemInstance->hasTag())
     {
@@ -135,8 +132,7 @@ void WrittenBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
     }
 }
 
-void WrittenBookItem::resolveBookComponents(not_null_ptr<ItemInstance> itemInstance,
-                                            boost::shared_ptr<Player> player)
+void WrittenBookItem::resolveBookComponents(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player)
 {
     if (itemInstance->getTag() == NULL)
     {
@@ -169,12 +165,11 @@ void WrittenBookItem::resolveBookComponents(not_null_ptr<ItemInstance> itemInsta
 
     boost::shared_ptr<ServerPlayer> serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
     Slot* slot = player->mContainerMenu->getSlotFor(player->mInventory, player->mInventory->m_selected);
-    serverPlayer->mConnection->send(
-        boost::shared_ptr<ClientboundContainerSetSlotPacket>(new ClientboundContainerSetSlotPacket(0, slot->mIndex, itemInstance)));
+    serverPlayer->mConnection->send(boost::shared_ptr<ClientboundContainerSetSlotPacket>(
+        new ClientboundContainerSetSlotPacket(0, slot->mIndex, itemInstance)));
 }
 
-InteractionResultHolder WrittenBookItem::use(Level* level,
-                                             boost::shared_ptr<Player> player,
+InteractionResultHolder WrittenBookItem::use(Level* level, boost::shared_ptr<Player> player,
                                              InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
@@ -188,9 +183,7 @@ InteractionResultHolder WrittenBookItem::use(Level* level,
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 
-bool WrittenBookItem::TestUse(Level* level,
-                              boost::shared_ptr<Player> player,
-                              InteractionHand::EInteractionHand hand)
+bool WrittenBookItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
     return true;
 }
@@ -207,5 +200,6 @@ bool WrittenBookItem::isFoil(not_null_ptr<ItemInstance> itemInstance)
 
 bool WrittenBookItem::HasBookTags(not_null_ptr<ItemInstance> itemInstance)
 {
-    return itemInstance->hasTag() && (itemInstance->getTag()->contains(TAG_PAGES) || itemInstance->getTag()->contains(TAG_TITLE));
+    return itemInstance->hasTag()
+           && (itemInstance->getTag()->contains(TAG_PAGES) || itemInstance->getTag()->contains(TAG_TITLE));
 }

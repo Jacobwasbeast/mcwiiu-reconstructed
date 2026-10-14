@@ -17,9 +17,7 @@ public:
     virtual ~AddItemRuleDefinition() {}
 
     not_null_ptr<ItemInstance> getItem();
-    static bool addItemToContainer(boost::shared_ptr<Container> container,
-                                   not_null_ptr<ItemInstance> item,
-                                   int slot,
+    static bool addItemToContainer(boost::shared_ptr<Container> container, not_null_ptr<ItemInstance> item, int slot,
                                    bool randomSlot);
     bool addItemToContainer(boost::shared_ptr<Container> container, int slot);
 

@@ -59,19 +59,15 @@ float SwordItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const 
     return 1.0f;
 }
 
-bool SwordItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
-                          boost::shared_ptr<LivingEntity> target,
+bool SwordItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<LivingEntity> target,
                           boost::shared_ptr<LivingEntity> attacker)
 {
     itemInstance->hurtAndBreak(1, attacker);
     return true;
 }
 
-bool SwordItem::mineBlock(not_null_ptr<ItemInstance> itemInstance,
-                          Level* level,
-                          const BlockState* state,
-                          const BlockPos& pos,
-                          boost::shared_ptr<LivingEntity> entity)
+bool SwordItem::mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state,
+                          const BlockPos& pos, boost::shared_ptr<LivingEntity> entity)
 {
     if (static_cast<double>(state->getDestroySpeed(level, pos)) != 0.0)
     {
@@ -96,8 +92,7 @@ int SwordItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)
     return 72000;
 }
 
-InteractionResultHolder SwordItem::use(Level* level,
-                                       boost::shared_ptr<Player> player,
+InteractionResultHolder SwordItem::use(Level* level, boost::shared_ptr<Player> player,
                                        InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);

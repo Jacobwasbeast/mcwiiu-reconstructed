@@ -50,17 +50,17 @@ public:
     void buildRecipeIngredientsArray();
     static void staticCtor();
     void addCustomRecipe(Recipe* recipe, ERecipeCategory category);
-    not_null_ptr<ItemInstance> getItemFor(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level, Recipe* recipe, ERecipeCategory category);
-    eAward hasAchievementAttachedToRecipe(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level, Recipe* recipe, ERecipeCategory category);
-    NonNullList<not_null_ptr<ItemInstance> > getRemainingItemsFor(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level, ERecipeCategory category);
+    not_null_ptr<ItemInstance> getItemFor(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level,
+                                          Recipe* recipe, ERecipeCategory category);
+    eAward hasAchievementAttachedToRecipe(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level,
+                                          Recipe* recipe, ERecipeCategory category);
+    NonNullList<not_null_ptr<ItemInstance> > getRemainingItemsFor(
+        boost::shared_ptr<CraftingContainer> craftingContainer, Level* level, ERecipeCategory category);
     std::vector<Recipe*>* getRecipes(ERecipeCategory category);
     not_null_ptr<ItemInstance> getItemForRecipe(Recipe* recipe);
     Recipe::INGREDIENTS_REQUIRED* getRecipeIngredientsArray(ERecipeCategory category);
     void _init();
-    static Recipes* getInstance()
-    {
-        return mInstance;
-    }
+    static Recipes* getInstance() { return mInstance; }
 
     static ToolRecipies* mToolRecipies;
     static WeaponRecipies* mWeaponRecipies;

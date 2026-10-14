@@ -12,12 +12,12 @@ class TutorialConstraint;
 class UseItemTask : public TutorialTask
 {
 public:
-    UseItemTask(Item* item, Tutorial* tutorial, int descriptionId,
-                bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
-                bool showMinimumTime, bool allowFade, bool repeatMessage);
-    UseItemTask(Item** items, int itemCount, Tutorial* tutorial, int descriptionId,
-                bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
-                bool showMinimumTime, bool allowFade, bool repeatMessage);
+    UseItemTask(Item* item, Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
+                std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                bool repeatMessage);
+    UseItemTask(Item** items, int itemCount, Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
+                std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                bool repeatMessage);
     virtual ~UseItemTask();
 
     virtual bool isCompleted();

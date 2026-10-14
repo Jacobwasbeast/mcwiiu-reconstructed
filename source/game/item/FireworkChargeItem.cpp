@@ -12,21 +12,19 @@
 
 namespace
 {
-    const int SHAPE_NAME_IDS[5] = {
-        IDS_FIREWORKS_CHARGE_TYPE_0, IDS_FIREWORKS_CHARGE_TYPE_1, IDS_FIREWORKS_CHARGE_TYPE_2,
-        IDS_FIREWORKS_CHARGE_TYPE_3, IDS_FIREWORKS_CHARGE_TYPE_4
-    };
+const int SHAPE_NAME_IDS[5] = {IDS_FIREWORKS_CHARGE_TYPE_0, IDS_FIREWORKS_CHARGE_TYPE_1, IDS_FIREWORKS_CHARGE_TYPE_2,
+                               IDS_FIREWORKS_CHARGE_TYPE_3, IDS_FIREWORKS_CHARGE_TYPE_4};
 
-    const int COLOUR_NAME_IDS[16] = {
-        IDS_FIREWORKS_CHARGE_BLACK, IDS_FIREWORKS_CHARGE_RED, IDS_FIREWORKS_CHARGE_GREEN, IDS_FIREWORKS_CHARGE_BROWN,
-        IDS_FIREWORKS_CHARGE_BLUE, IDS_FIREWORKS_CHARGE_PURPLE, IDS_FIREWORKS_CHARGE_CYAN, IDS_FIREWORKS_CHARGE_SILVER,
-        IDS_FIREWORKS_CHARGE_GRAY, IDS_FIREWORKS_CHARGE_PINK, IDS_FIREWORKS_CHARGE_LIME, IDS_FIREWORKS_CHARGE_YELLOW,
-        IDS_FIREWORKS_CHARGE_LIGHT_BLUE, IDS_FIREWORKS_CHARGE_MAGENTA, IDS_FIREWORKS_CHARGE_ORANGE, IDS_FIREWORKS_CHARGE_WHITE
-    };
+const int COLOUR_NAME_IDS[16] = {
+    IDS_FIREWORKS_CHARGE_BLACK,      IDS_FIREWORKS_CHARGE_RED,     IDS_FIREWORKS_CHARGE_GREEN,
+    IDS_FIREWORKS_CHARGE_BROWN,      IDS_FIREWORKS_CHARGE_BLUE,    IDS_FIREWORKS_CHARGE_PURPLE,
+    IDS_FIREWORKS_CHARGE_CYAN,       IDS_FIREWORKS_CHARGE_SILVER,  IDS_FIREWORKS_CHARGE_GRAY,
+    IDS_FIREWORKS_CHARGE_PINK,       IDS_FIREWORKS_CHARGE_LIME,    IDS_FIREWORKS_CHARGE_YELLOW,
+    IDS_FIREWORKS_CHARGE_LIGHT_BLUE, IDS_FIREWORKS_CHARGE_MAGENTA, IDS_FIREWORKS_CHARGE_ORANGE,
+    IDS_FIREWORKS_CHARGE_WHITE};
 }
 
-FireworkChargeItem::FireworkChargeItem()
-    : Item()
+FireworkChargeItem::FireworkChargeItem() : Item()
 {
 }
 
@@ -53,7 +51,8 @@ void FireworkChargeItem::appendHoverText(CompoundTag* tag, std::vector<HtmlStrin
     }
     else
     {
-        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_TYPE)), eMinecraftColour_NOTSET, false, false, 0));
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_TYPE)), eMinecraftColour_NOTSET,
+                                    false, false, 0));
     }
 
     arrayWithLength<int> colours = tag->getIntArray(FireworksItem::TAG_E_COLORS);
@@ -120,16 +119,19 @@ void FireworkChargeItem::appendHoverText(CompoundTag* tag, std::vector<HtmlStrin
 
     if (tag->getBoolean(FireworksItem::TAG_E_TRAIL))
     {
-        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_TRAIL)), eMinecraftColour_NOTSET, false, false, 0));
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_TRAIL)), eMinecraftColour_NOTSET,
+                                    false, false, 0));
     }
 
     if (tag->getBoolean(FireworksItem::TAG_E_FLICKER))
     {
-        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_FLICKER)), eMinecraftColour_NOTSET, false, false, 0));
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_FLICKER)),
+                                    eMinecraftColour_NOTSET, false, false, 0));
     }
 }
 
-void FireworkChargeItem::appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player, std::vector<HtmlString>* lines, bool advanced)
+void FireworkChargeItem::appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player,
+                                         std::vector<HtmlString>* lines, bool advanced)
 {
     if (item->hasTag())
     {

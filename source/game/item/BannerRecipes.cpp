@@ -47,8 +47,8 @@ ItemInstance* BannerRecipes::createOutputItem(int color, const std::wstring& pat
 
 void BannerRecipes::addRecipes(Recipes* recipes)
 {
-    for (std::vector<const DyeColor*>::const_iterator colorIt = DyeColor::COLORS.begin(); colorIt != DyeColor::COLORS.end();
-         ++colorIt)
+    for (std::vector<const DyeColor*>::const_iterator colorIt = DyeColor::COLORS.begin();
+         colorIt != DyeColor::COLORS.end(); ++colorIt)
     {
         const DyeColor* color = *colorIt;
         ItemInstance* result = BannerItem::makeBanner(color, NULL);
@@ -102,8 +102,8 @@ void BannerRecipes::addRecipes(Recipes* recipes)
             {
                 arrayWithLength<std::wstring> rows = pattern->getPatterns();
                 ItemInstance* output = createOutputItem(dye, hashname);
-                recipes->addShapedRecipe(output, Recipes::eRecipeCategory_Banners, L"sssczczbg",
-                                         rows.data[0].c_str(), rows.data[1].c_str(), rows.data[2].c_str(), L'#',
+                recipes->addShapedRecipe(output, Recipes::eRecipeCategory_Banners, L"sssczczbg", rows.data[0].c_str(),
+                                         rows.data[1].c_str(), rows.data[2].c_str(), L'#',
                                          new ItemInstance(Items::dye, 1, dye), L'*',
                                          BannerItem::makeBanner(DyeColor::WHITE, NULL), pattern->getAtlasIndex(),
                                          pattern->getCraftingMenuTab());
@@ -116,7 +116,8 @@ BannerRecipes::BannerAddPatternRecipe::~BannerAddPatternRecipe()
 {
 }
 
-const BannerPattern* BannerRecipes::BannerAddPatternRecipe::matchPatterns(boost::shared_ptr<CraftingContainer> craftingContainer)
+const BannerPattern* BannerRecipes::BannerAddPatternRecipe::matchPatterns(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
     for (std::vector<const BannerPattern*>::iterator patternIt = BannerPattern::PATTERNS.begin();
          patternIt != BannerPattern::PATTERNS.end(); patternIt++)
@@ -157,7 +158,8 @@ const BannerPattern* BannerRecipes::BannerAddPatternRecipe::matchPatterns(boost:
                 if (!foundPatternItem || !foundDye)
                     matches = false;
             }
-            else if (craftingContainer->getContainerSize() == pattern->getPatterns().length * pattern->getPatterns().data[0].size())
+            else if (craftingContainer->getContainerSize()
+                     == pattern->getPatterns().length * pattern->getPatterns().data[0].size())
             {
                 int color = -1;
                 for (unsigned int i = 0; i < craftingContainer->getContainerSize() && matches; ++i)
@@ -167,7 +169,8 @@ const BannerPattern* BannerRecipes::BannerAddPatternRecipe::matchPatterns(boost:
                     not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
                     if (item->isEmpty() || item->getItem() == Items::banner)
                     {
-                        if (pattern->getPatterns().data[row].at(column) != L' ' && pattern->getPatterns().data[row].at(column) != L'*')
+                        if (pattern->getPatterns().data[row].at(column) != L' '
+                            && pattern->getPatterns().data[row].at(column) != L'*')
                             matches = false;
                         continue;
                     }
@@ -179,7 +182,8 @@ const BannerPattern* BannerRecipes::BannerAddPatternRecipe::matchPatterns(boost:
                         matches = false;
                         break;
                     }
-                    if (pattern->getPatterns().data[row].at(column) == L' ' || pattern->getPatterns().data[row].at(column) == L'*')
+                    if (pattern->getPatterns().data[row].at(column) == L' '
+                        || pattern->getPatterns().data[row].at(column) == L'*')
                     {
                         matches = false;
                         break;
@@ -198,7 +202,8 @@ const BannerPattern* BannerRecipes::BannerAddPatternRecipe::matchPatterns(boost:
     }
     return NULL;
 }
-bool BannerRecipes::BannerAddPatternRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
+bool BannerRecipes::BannerAddPatternRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer,
+                                                    Level* level)
 {
     bool foundBanner = false;
     unsigned int i;
@@ -219,7 +224,8 @@ bool BannerRecipes::BannerAddPatternRecipe::matches(boost::shared_ptr<CraftingCo
     return matchPatterns(craftingContainer) != NULL;
 }
 
-not_null_ptr<ItemInstance> BannerRecipes::BannerAddPatternRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
+not_null_ptr<ItemInstance> BannerRecipes::BannerAddPatternRecipe::assemble(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
     not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
     const BannerPattern* pattern = matchPatterns(craftingContainer);
@@ -283,9 +289,11 @@ ItemInstance* BannerRecipes::BannerAddPatternRecipe::getIngredientItem(int colum
     return ItemInstance::EMPTY.get();
 }
 
-NonNullList<not_null_ptr<ItemInstance> > BannerRecipes::BannerAddPatternRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > BannerRecipes::BannerAddPatternRecipe::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     for (unsigned int i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
@@ -363,7 +371,8 @@ bool BannerRecipes::BannerDuplicateRecipe::matches(boost::shared_ptr<CraftingCon
     return !patternedBanner->isEmpty() && !plainBanner->isEmpty();
 }
 
-not_null_ptr<ItemInstance> BannerRecipes::BannerDuplicateRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
+not_null_ptr<ItemInstance> BannerRecipes::BannerDuplicateRecipe::assemble(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
     for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
@@ -396,10 +405,11 @@ ItemInstance* BannerRecipes::BannerDuplicateRecipe::getIngredientItem(int column
     return ItemInstance::EMPTY.get();
 }
 
-NonNullList<not_null_ptr<ItemInstance> > BannerRecipes::BannerDuplicateRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > BannerRecipes::BannerDuplicateRecipe::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    NonNullList<not_null_ptr<ItemInstance> > result =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
@@ -407,7 +417,8 @@ NonNullList<not_null_ptr<ItemInstance> > BannerRecipes::BannerDuplicateRecipe::g
         {
             if (item->getItem()->hasCraftingRemainingItem())
             {
-                result.set(i, not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
+                result.set(i,
+                           not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
             }
             else if (item->hasTag() && BannerBlockEntity::getPatternCount(item) > 0)
             {

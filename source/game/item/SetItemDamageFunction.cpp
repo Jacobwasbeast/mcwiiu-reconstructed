@@ -11,7 +11,8 @@ SetItemDamageFunction::SetItemDamageFunction(std::vector<LootItemCondition*>* co
     this->damage = damage;
 }
 
-not_null_ptr<ItemInstance> SetItemDamageFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context)
+not_null_ptr<ItemInstance> SetItemDamageFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
+                                                        LootTableContext& context)
 {
     if (itemInstance->isDamageableItem())
     {

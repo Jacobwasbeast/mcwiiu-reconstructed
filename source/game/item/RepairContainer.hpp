@@ -7,8 +7,7 @@
 
 class AnvilMenu;
 
-class RepairContainer : public SimpleContainer,
-                        public boost::enable_shared_from_this<RepairContainer>
+class RepairContainer : public SimpleContainer, public boost::enable_shared_from_this<RepairContainer>
 {
 public:
     RepairContainer(AnvilMenu* menu, int id, bool hasCustomName, int size);

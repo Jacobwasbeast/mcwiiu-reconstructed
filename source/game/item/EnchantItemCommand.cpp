@@ -23,8 +23,7 @@ int EnchantItemCommand::getPermissionLevel()
     return 2;
 }
 
-void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender,
-                                 arrayWithLength<unsigned char> data)
+void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data)
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
@@ -77,8 +76,8 @@ void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender,
             for (int i = 0; i < enchantmentTags->size(); ++i)
             {
                 int existingId = enchantmentTags->getCompound(i)->getShort(ItemInstance::TAG_ENCH_ID);
-                if (Enchantment::byId(existingId) != NULL &&
-                    !Enchantment::byId(existingId)->isCompatibleWith(enchantment))
+                if (Enchantment::byId(existingId) != NULL
+                    && !Enchantment::byId(existingId)->isCompatibleWith(enchantment))
                 {
                     return;
                 }
@@ -90,13 +89,12 @@ void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender,
 
     std::wstring stringParams[1];
     stringParams[0] = L"commands.enchant.success";
-    logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_Text,
-                   NULL, 0, stringParams, 1);
+    logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_Text, NULL, 0, stringParams, 1);
     sender->setCommandStats(CommandStats::AFFECTED_ITEMS, 1);
 }
 
-boost::shared_ptr<GameCommandPacket> EnchantItemCommand::preparePacket(
-    boost::shared_ptr<Player> player, int enchantmentId, int level)
+boost::shared_ptr<GameCommandPacket> EnchantItemCommand::preparePacket(boost::shared_ptr<Player> player,
+                                                                       int enchantmentId, int level)
 {
     if (player.get() == NULL)
     {

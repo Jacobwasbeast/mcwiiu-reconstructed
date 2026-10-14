@@ -17,12 +17,9 @@ class ExperienceBottleItem : public Item
 public:
     ExperienceBottleItem();
     virtual bool isFoil(not_null_ptr<ItemInstance> itemInstance);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual bool TestUse(Level* level,
-                         boost::shared_ptr<Player> player,
-                         InteractionHand::EInteractionHand hand);
+    virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
 };
 

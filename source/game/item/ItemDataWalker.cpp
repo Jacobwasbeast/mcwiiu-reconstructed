@@ -2,8 +2,7 @@
 
 #include "game/data/DataFixers.hpp"
 
-ItemDataWalker::ItemDataWalker(unsigned long long type, const std::wstring& itemName)
-    : KeyedDataWalker(type)
+ItemDataWalker::ItemDataWalker(unsigned long long type, const std::wstring& itemName) : KeyedDataWalker(type)
 {
     mItemNames.push_back(itemName);
 }

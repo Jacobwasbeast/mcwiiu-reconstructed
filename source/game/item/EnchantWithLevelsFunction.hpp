@@ -17,12 +17,10 @@ class not_null_ptr;
 class EnchantWithLevelsFunction : public LootItemFunction
 {
 public:
-    EnchantWithLevelsFunction(std::vector<LootItemCondition*>* conditions,
-                              RandomValueBounds levels,
+    EnchantWithLevelsFunction(std::vector<LootItemCondition*>* conditions, RandomValueBounds levels,
                               bool allowTreasure);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                             Random* random,
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
                                              LootTableContext& context);
 
 protected:

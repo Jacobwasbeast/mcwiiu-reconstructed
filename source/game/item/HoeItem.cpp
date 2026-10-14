@@ -24,8 +24,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-HoeItem::HoeItem(const Item::Tier* tier)
-    : Item()
+HoeItem::HoeItem(const Item::Tier* tier) : Item()
 {
     mMaxStackSize = 1;
     mTier = tier;
@@ -33,14 +32,10 @@ HoeItem::HoeItem(const Item::Tier* tier)
     mAttackDamage = 1.0f + tier->getAttackDamageBonus();
 }
 
-void HoeItem::setBlock(not_null_ptr<ItemInstance> itemInstance,
-                       boost::shared_ptr<Player> player,
-                       Level* level,
-                       const BlockPos& pos,
-                       const BlockState* state)
+void HoeItem::setBlock(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player, Level* level,
+                       const BlockPos& pos, const BlockState* state)
 {
-    level->playSound(player, pos, SoundEvents::HOE_TILL, SoundSource::eSoundSource_Blocks,
-                     1.0f, 1.0f, 16.0f);
+    level->playSound(player, pos, SoundEvents::HOE_TILL, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
     if (!level->mIsClientSide)
     {
         level->setBlock(pos, state, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
@@ -48,15 +43,10 @@ void HoeItem::setBlock(not_null_ptr<ItemInstance> itemInstance,
     }
 }
 
-InteractionResult::EInteractionResult HoeItem::useOn(boost::shared_ptr<Player> player,
-                                                      Level* level,
-                                                      const BlockPos& pos,
-                                                      InteractionHand::EInteractionHand hand,
-                                                      const Direction* direction,
-                                                      float hitX,
-                                                      float hitY,
-                                                      float hitZ,
-                                                      bool simulate)
+InteractionResult::EInteractionResult HoeItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                     const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                     const Direction* direction, float hitX, float hitY, float hitZ,
+                                                     bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
@@ -68,8 +58,7 @@ InteractionResult::EInteractionResult HoeItem::useOn(boost::shared_ptr<Player> p
     Block* block = state->getBlock();
     Block* replacement = NULL;
     InteractionResult::EInteractionResult result = InteractionResult::eInteractionResult_Pass;
-    if (direction != Direction::DOWN
-        && level->getBlockState(pos.above())->getBlock()->mMaterial == Material::AIR)
+    if (direction != Direction::DOWN && level->getBlockState(pos.above())->getBlock()->mMaterial == Material::AIR)
     {
         if (block == Blocks::grass || block == Blocks::grass_path)
         {
@@ -99,8 +88,7 @@ InteractionResult::EInteractionResult HoeItem::useOn(boost::shared_ptr<Player> p
     return result;
 }
 
-bool HoeItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
-                        boost::shared_ptr<LivingEntity> target,
+bool HoeItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<LivingEntity> target,
                         boost::shared_ptr<LivingEntity> attacker)
 {
     const int durability = 1;
@@ -121,8 +109,7 @@ const Item::Tier* HoeItem::getTier()
 boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* HoeItem::getDefaultAttributeModifiers(
     const EquipmentSlot* slot)
 {
-    boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* modifiers =
-        Item::getDefaultAttributeModifiers(slot);
+    boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* modifiers = Item::getDefaultAttributeModifiers(slot);
     double attackDamage = 0.0;
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
@@ -131,10 +118,10 @@ boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* HoeItem::getDefaultAttr
     }
     if (slot == EquipmentSlot::MAINHAND)
     {
-        (*modifiers)[SharedMonsterAttributes::ATTACK_DAMAGE->getId()] =
-            new AttributeModifier(eMODIFIER_ID_BaseAttackDamage, attackDamage, 0);
-        (*modifiers)[SharedMonsterAttributes::ATTACK_SPEED->getId()] =
-            new AttributeModifier(eMODIFIER_ID_BaseAttackSpeed, mAttackDamage - 4.0f, 0);
+        (*modifiers)[SharedMonsterAttributes::ATTACK_DAMAGE->getId()] = new AttributeModifier(
+            eMODIFIER_ID_BaseAttackDamage, attackDamage, 0);
+        (*modifiers)[SharedMonsterAttributes::ATTACK_SPEED->getId()] = new AttributeModifier(
+            eMODIFIER_ID_BaseAttackSpeed, mAttackDamage - 4.0f, 0);
     }
     return modifiers;
 }

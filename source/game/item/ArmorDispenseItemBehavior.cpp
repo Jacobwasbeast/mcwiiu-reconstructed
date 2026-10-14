@@ -8,8 +8,8 @@ ArmorDispenseItemBehavior::~ArmorDispenseItemBehavior()
 }
 
 not_null_ptr<ItemInstance> ArmorDispenseItemBehavior::execute(BlockSource* blockSource,
-                                                               not_null_ptr<ItemInstance> itemInstance,
-                                                               eOUTCOME& outcome)
+                                                              not_null_ptr<ItemInstance> itemInstance,
+                                                              eOUTCOME& outcome)
 {
     const not_null_ptr<ItemInstance> result = ArmorItem::dispenseArmor(blockSource, itemInstance, outcome);
 

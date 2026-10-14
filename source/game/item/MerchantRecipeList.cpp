@@ -7,13 +7,11 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/MerchantRecipe.hpp"
 
-MerchantRecipeList::MerchantRecipeList()
-    : std::vector<MerchantRecipe*>()
+MerchantRecipeList::MerchantRecipeList() : std::vector<MerchantRecipe*>()
 {
 }
 
-MerchantRecipeList::MerchantRecipeList(CompoundTag* tag)
-    : std::vector<MerchantRecipe*>()
+MerchantRecipeList::MerchantRecipeList(CompoundTag* tag) : std::vector<MerchantRecipe*>()
 {
     load(tag);
 }
@@ -35,25 +33,23 @@ void MerchantRecipeList::load(CompoundTag* tag)
     }
 }
 
-bool MerchantRecipeList::isRequiredItem(not_null_ptr<ItemInstance> supplied,
-                                        not_null_ptr<ItemInstance> required)
+bool MerchantRecipeList::isRequiredItem(not_null_ptr<ItemInstance> supplied, not_null_ptr<ItemInstance> required)
 {
     return ItemInstance::isSame(supplied, required);
 }
 
-MerchantRecipe* MerchantRecipeList::getRecipeFor(not_null_ptr<ItemInstance> first,
-                                                 not_null_ptr<ItemInstance> second,
+MerchantRecipe* MerchantRecipeList::getRecipeFor(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second,
                                                  int hint)
 {
     if (hint > 0 && hint < std::vector<MerchantRecipe*>::size())
     {
         MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(hint);
-        if (isRequiredItem(first, recipe->getBuyAItem()) &&
-            ((second->isEmpty() && !recipe->hasSecondaryBuyItem()) ||
-             (recipe->hasSecondaryBuyItem() && isRequiredItem(second, recipe->getBuyAItem()))))
+        if (isRequiredItem(first, recipe->getBuyAItem())
+            && ((second->isEmpty() && !recipe->hasSecondaryBuyItem())
+                || (recipe->hasSecondaryBuyItem() && isRequiredItem(second, recipe->getBuyAItem()))))
         {
-            if (first->getCount() >= recipe->getBuyAItem()->getCount() &&
-                (!recipe->hasSecondaryBuyItem() || second->getCount() >= recipe->getBuyBItem()->getCount()))
+            if (first->getCount() >= recipe->getBuyAItem()->getCount()
+                && (!recipe->hasSecondaryBuyItem() || second->getCount() >= recipe->getBuyBItem()->getCount()))
             {
                 return recipe;
             }
@@ -64,11 +60,10 @@ MerchantRecipe* MerchantRecipeList::getRecipeFor(not_null_ptr<ItemInstance> firs
     for (unsigned int index = 0; index < std::vector<MerchantRecipe*>::size(); ++index)
     {
         MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(index);
-        if (isRequiredItem(first, recipe->getBuyAItem()) &&
-            first->getCount() >= recipe->getBuyAItem()->getCount() &&
-            ((!recipe->hasSecondaryBuyItem() && second->isEmpty()) ||
-             (recipe->hasSecondaryBuyItem() && isRequiredItem(second, recipe->getBuyBItem()) &&
-              second->getCount() >= recipe->getBuyBItem()->getCount())))
+        if (isRequiredItem(first, recipe->getBuyAItem()) && first->getCount() >= recipe->getBuyAItem()->getCount()
+            && ((!recipe->hasSecondaryBuyItem() && second->isEmpty())
+                || (recipe->hasSecondaryBuyItem() && isRequiredItem(second, recipe->getBuyBItem())
+                    && second->getCount() >= recipe->getBuyBItem()->getCount())))
         {
             return recipe;
         }
@@ -104,13 +99,13 @@ MerchantRecipe* MerchantRecipeList::getMatchingRecipeFor(not_null_ptr<ItemInstan
     for (unsigned int index = 0; index < std::vector<MerchantRecipe*>::size(); ++index)
     {
         MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(index);
-        if (first->getItem() == recipe->getBuyAItem()->getItem() &&
-            first->getCount() >= recipe->getBuyAItem()->getCount() &&
-            result->getItem() == recipe->getSellItem()->getItem())
+        if (first->getItem() == recipe->getBuyAItem()->getItem()
+            && first->getCount() >= recipe->getBuyAItem()->getCount()
+            && result->getItem() == recipe->getSellItem()->getItem())
         {
-            if (!recipe->hasSecondaryBuyItem() ||
-                (!second->isEmpty() && second->getItem() == recipe->getBuyBItem()->getItem() &&
-                 second->getCount() >= recipe->getBuyBItem()->getCount()))
+            if (!recipe->hasSecondaryBuyItem()
+                || (!second->isEmpty() && second->getItem() == recipe->getBuyBItem()->getItem()
+                    && second->getCount() >= recipe->getBuyBItem()->getCount()))
             {
                 return recipe;
             }

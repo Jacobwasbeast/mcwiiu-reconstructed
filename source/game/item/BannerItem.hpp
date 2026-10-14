@@ -25,20 +25,13 @@ public:
     BannerItem();
     virtual ~BannerItem();
 
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
                                                         bool simulate);
     virtual int getColor(not_null_ptr<ItemInstance> itemInstance, int layer);
-    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                 boost::shared_ptr<Player> player,
-                                 std::vector<HtmlString>* lines,
-                                 bool advanced);
+    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                 std::vector<HtmlString>* lines, bool advanced);
     virtual std::wstring getName(not_null_ptr<ItemInstance> itemInstance);
 
     static const DyeColor* getColor(const not_null_ptr<ItemInstance>& itemInstance);

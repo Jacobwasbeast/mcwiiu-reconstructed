@@ -32,10 +32,8 @@ DebugFourjItem::DebugFourjItem()
     mLootTables[21] = BuiltInLootTables::WOODLAND_MANSION;
 }
 
-bool DebugFourjItem::interactEnemy(not_null_ptr<ItemInstance>,
-                                   boost::shared_ptr<Player> player,
-                                   boost::shared_ptr<LivingEntity> target,
-                                   InteractionHand::EInteractionHand)
+bool DebugFourjItem::interactEnemy(not_null_ptr<ItemInstance>, boost::shared_ptr<Player> player,
+                                   boost::shared_ptr<LivingEntity> target, InteractionHand::EInteractionHand)
 {
     if (!player->mLevel->mIsClientSide)
     {
@@ -51,15 +49,9 @@ bool DebugFourjItem::interactEnemy(not_null_ptr<ItemInstance>,
     return false;
 }
 
-InteractionResult::EInteractionResult DebugFourjItem::useOn(boost::shared_ptr<Player>,
-                                                             Level*,
-                                                             const BlockPos&,
-                                                             InteractionHand::EInteractionHand,
-                                                             const Direction*,
-                                                             float,
-                                                             float,
-                                                             float,
-                                                             bool)
+InteractionResult::EInteractionResult DebugFourjItem::useOn(boost::shared_ptr<Player>, Level*, const BlockPos&,
+                                                            InteractionHand::EInteractionHand, const Direction*, float,
+                                                            float, float, bool)
 {
     return InteractionResult::eInteractionResult_Pass;
 }

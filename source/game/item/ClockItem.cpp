@@ -8,16 +8,10 @@
 #include "game/world/block/ClockItem_ItemPropertyFunction.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-static const std::wstring CLOCK_ICON_NAMES[4] =
-{
-    std::wstring(L"clockP0"),
-    std::wstring(L"clockP1"),
-    std::wstring(L"clockP2"),
-    std::wstring(L"clockP3")
-};
+static const std::wstring CLOCK_ICON_NAMES[4] = {std::wstring(L"clockP0"), std::wstring(L"clockP1"),
+                                                 std::wstring(L"clockP2"), std::wstring(L"clockP3")};
 
-ClockItem::ClockItem()
-    : Item()
+ClockItem::ClockItem() : Item()
 {
     addProperty(ResourceLocation(L"time"), new ClockItem_ItemPropertyFunction());
     memset(mIcons, 0, sizeof(mIcons));

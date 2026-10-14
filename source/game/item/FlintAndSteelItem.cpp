@@ -14,22 +14,17 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/PortalBlock.hpp"
 
-FlintAndSteelItem::FlintAndSteelItem()
-    : Item()
+FlintAndSteelItem::FlintAndSteelItem() : Item()
 {
     mMaxStackSize = 1;
     setMaxDamage(0x40);
 }
 
-InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr<Player> player,
-                                                                Level* level,
-                                                                const BlockPos& pos,
-                                                                InteractionHand::EInteractionHand hand,
-                                                                const Direction* direction,
-                                                                float hitX,
-                                                                float hitY,
-                                                                float hitZ,
-                                                                bool simulate)
+InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                               const BlockPos& pos,
+                                                               InteractionHand::EInteractionHand hand,
+                                                               const Direction* direction, float hitX, float hitY,
+                                                               float hitZ, bool simulate)
 {
     BlockPos firePos = pos;
     firePos = firePos.relative(direction);
@@ -48,14 +43,10 @@ InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr
             {
                 player->awardStat(GenericStats::InToTheNether(), GenericStats::param_InToTheNether());
             }
-            level->playSound(player,
-                             firePos,
-                             SoundEvents::FLINTANDSTEEL_USE,
-                             SoundSource::eSoundSource_Blocks,
-                             1.0f,
-                             random->nextFloat() * 0.4f + 0.8f,
-                             16.0f);
-            level->setBlock(firePos, Blocks::fire->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+            level->playSound(player, firePos, SoundEvents::FLINTANDSTEEL_USE, SoundSource::eSoundSource_Blocks, 1.0f,
+                             random->nextFloat() * 0.4f + 0.8f, 16.0f);
+            level->setBlock(firePos, Blocks::fire->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
+                            false);
         }
         itemInstance->hurtAndBreak(1, player);
     }

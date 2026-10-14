@@ -13,12 +13,12 @@ class Player;
 class EnchantItemCommand : public Command
 {
 public:
-
     virtual EGameCommand getId();
     virtual int getPermissionLevel();
     virtual void execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data);
 
-    static boost::shared_ptr<GameCommandPacket> preparePacket(boost::shared_ptr<Player> player, int enchantmentId, int level);
+    static boost::shared_ptr<GameCommandPacket> preparePacket(boost::shared_ptr<Player> player, int enchantmentId,
+                                                              int level);
 };
 
 #endif

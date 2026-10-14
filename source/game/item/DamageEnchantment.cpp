@@ -14,16 +14,15 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 
-static const int MIN_COST[3] = { 1, 5, 5 };
-static const int LEVEL_COST[3] = { 11, 8, 8 };
-static const int LEVEL_COST_SPAN[3] = { 20, 20, 20 };
-static const int DESCRIPTION_IDS[3] = {
-    (int)IDS_ENCHANTMENT_DAMAGE_ALL, IDS_ENCHANTMENT_DAMAGE_UNDEAD, IDS_ENCHANTMENT_DAMAGE_ARTHROPODS
-};
+static const int MIN_COST[3] = {1, 5, 5};
+static const int LEVEL_COST[3] = {11, 8, 8};
+static const int LEVEL_COST_SPAN[3] = {20, 20, 20};
+static const int DESCRIPTION_IDS[3] = {(int)IDS_ENCHANTMENT_DAMAGE_ALL, IDS_ENCHANTMENT_DAMAGE_UNDEAD,
+                                       IDS_ENCHANTMENT_DAMAGE_ARTHROPODS};
 
-DamageEnchantment::DamageEnchantment(const Rarity* rarity, int type,
-                                     arrayWithLength<const EquipmentSlot*> slots)
-    : Enchantment(rarity, EnchantmentCategory::WEAPON, slots), mType(type)
+DamageEnchantment::DamageEnchantment(const Rarity* rarity, int type, arrayWithLength<const EquipmentSlot*> slots)
+    : Enchantment(rarity, EnchantmentCategory::WEAPON, slots),
+      mType(type)
 {
 }
 
@@ -42,8 +41,7 @@ int DamageEnchantment::getMaxCost(int level)
     return getMinCost(level) + LEVEL_COST_SPAN[mType];
 }
 
-float DamageEnchantment::getDamageBonus(
-    int level, const boost::shared_ptr<LivingEntity>& target)
+float DamageEnchantment::getDamageBonus(int level, const boost::shared_ptr<LivingEntity>& target)
 {
     EMobType mobType = MOB_TYPE_UNDEFINED;
     if (target != NULL)
@@ -56,8 +54,7 @@ float DamageEnchantment::getDamageBonus(
         return 1.0f + std::max(0.0f, level - 1.0f) * 0.5f;
     }
 
-    if ((mType == 1 && mobType == MOB_TYPE_UNDEAD) ||
-        (mType == 2 && mobType == MOB_TYPE_ARTHROPOD))
+    if ((mType == 1 && mobType == MOB_TYPE_UNDEAD) || (mType == 2 && mobType == MOB_TYPE_ARTHROPOD))
     {
         return level * 2.5f;
     }
@@ -86,20 +83,18 @@ bool DamageEnchantment::canEnchant(not_null_ptr<ItemInstance> itemInstance)
     return Enchantment::canEnchant(itemInstance);
 }
 
-void DamageEnchantment::doPostAttack(boost::shared_ptr<LivingEntity> attacker,
-                                     boost::shared_ptr<Entity> target, int level)
+void DamageEnchantment::doPostAttack(boost::shared_ptr<LivingEntity> attacker, boost::shared_ptr<Entity> target,
+                                     int level)
 {
     if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
     {
-        boost::shared_ptr<LivingEntity> livingTarget =
-            boost::static_pointer_cast<LivingEntity>(target);
+        boost::shared_ptr<LivingEntity> livingTarget = boost::static_pointer_cast<LivingEntity>(target);
 
         if (mType == 2 && livingTarget->getMobType() == MOB_TYPE_ARTHROPOD)
         {
             int duration = attacker->getRandom()->nextInt(level * 10) + 20;
-            livingTarget->addEffect(
-                new MobEffectInstance(MobEffects::MOVEMENT_SLOWDOWN, duration, 3),
-                boost::shared_ptr<Entity>());
+            livingTarget->addEffect(new MobEffectInstance(MobEffects::MOVEMENT_SLOWDOWN, duration, 3),
+                                    boost::shared_ptr<Entity>());
         }
     }
 }

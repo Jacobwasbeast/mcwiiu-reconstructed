@@ -18,17 +18,13 @@ class ShieldItem : public Item
 public:
     ShieldItem();
 
-    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                 boost::shared_ptr<Player> player,
-                                 std::vector<HtmlString>* lines,
-                                 bool advanced);
+    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                 std::vector<HtmlString>* lines, bool advanced);
     virtual int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;
     virtual int getUseDuration(not_null_ptr<ItemInstance> itemInstance);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual bool isValidRepairItem(not_null_ptr<ItemInstance> itemInstance,
-                                   not_null_ptr<ItemInstance> repairItem);
+    virtual bool isValidRepairItem(not_null_ptr<ItemInstance> itemInstance, not_null_ptr<ItemInstance> repairItem);
 };
 
 #endif

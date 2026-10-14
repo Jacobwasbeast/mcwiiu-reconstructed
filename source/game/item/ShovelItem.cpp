@@ -31,8 +31,7 @@ void ShovelItem::staticCtor()
     BLOCKS.data[11] = Blocks::concrete_powder;
 }
 
-ShovelItem::ShovelItem(const Item::Tier* tier)
-    : DiggerItem(1.0f, -3.0f, tier, BLOCKS)
+ShovelItem::ShovelItem(const Item::Tier* tier) : DiggerItem(1.0f, -3.0f, tier, BLOCKS)
 {
 }
 
@@ -46,15 +45,10 @@ bool ShovelItem::canDestroySpecial(const BlockState* state)
     return false;
 }
 
-InteractionResult::EInteractionResult ShovelItem::useOn(boost::shared_ptr<Player> player,
-                                                          Level* level,
-                                                          const BlockPos& pos,
-                                                          InteractionHand::EInteractionHand hand,
-                                                          const Direction* direction,
-                                                          float hitX,
-                                                          float hitY,
-                                                          float hitZ,
-                                                          bool simulate)
+InteractionResult::EInteractionResult ShovelItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
@@ -71,13 +65,7 @@ InteractionResult::EInteractionResult ShovelItem::useOn(boost::shared_ptr<Player
 
     if (!simulate)
     {
-        level->playSound(player,
-                         pos,
-                         SoundEvents::SHOVEL_FLATTEN,
-                         SoundSource::eSoundSource_Blocks,
-                         1.0f,
-                         1.0f,
-                         16.0f);
+        level->playSound(player, pos, SoundEvents::SHOVEL_FLATTEN, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
         if (!level->mIsClientSide)
         {
             const BlockState* pathState = Blocks::grass_path->defaultBlockState();

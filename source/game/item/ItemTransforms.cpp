@@ -51,8 +51,8 @@ ItemTransform* ItemTransforms::getTransform(TransformType type) const
 }
 
 ItemTransforms* ItemTransforms::set_thirdperson_righthand(float rotationX, float rotationY, float rotationZ,
-                                                           float translationX, float translationY, float translationZ,
-                                                           float scaleX, float scaleY, float scaleZ)
+                                                          float translationX, float translationY, float translationZ,
+                                                          float scaleX, float scaleY, float scaleZ)
 {
     mThirdPersonRightHand = ItemTransform::deserialize(rotationX, rotationY, rotationZ, translationX, translationY,
                                                        translationZ, scaleX, scaleY, scaleZ);
@@ -60,8 +60,8 @@ ItemTransforms* ItemTransforms::set_thirdperson_righthand(float rotationX, float
 }
 
 ItemTransforms* ItemTransforms::set_thirdperson_lefthand(float rotationX, float rotationY, float rotationZ,
-                                                          float translationX, float translationY, float translationZ,
-                                                          float scaleX, float scaleY, float scaleZ)
+                                                         float translationX, float translationY, float translationZ,
+                                                         float scaleX, float scaleY, float scaleZ)
 {
     mThirdPersonLeftHand = ItemTransform::deserialize(rotationX, rotationY, rotationZ, translationX, translationY,
                                                       translationZ, scaleX, scaleY, scaleZ);
@@ -69,13 +69,13 @@ ItemTransforms* ItemTransforms::set_thirdperson_lefthand(float rotationX, float 
 }
 
 ItemTransforms* ItemTransforms::set_thirdperson_hands(float rotationX, float rotationY, float rotationZ,
-                                                       float translationX, float translationY, float translationZ,
-                                                       float scaleX, float scaleY, float scaleZ)
+                                                      float translationX, float translationY, float translationZ,
+                                                      float scaleX, float scaleY, float scaleZ)
 {
-    set_thirdperson_righthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
-                              scaleY, scaleZ);
-    set_thirdperson_lefthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
-                          scaleY, scaleZ);
+    set_thirdperson_righthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX, scaleY,
+                              scaleZ);
+    set_thirdperson_lefthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX, scaleY,
+                             scaleZ);
     return this;
 }
 
@@ -127,26 +127,30 @@ ItemTransforms* ItemTransforms::getArmourStandTransforms(const ItemInstance* ite
     {
     case 390:
     {
-        static ItemTransforms* transforms =
-            (new ItemTransforms(*GetDefaultTransforms()))->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.75f, 1.0f, 0.55f, 0.55f, 0.55f);
+        static ItemTransforms* transforms = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.75f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
         return transforms;
     }
     case 371:
     {
-        static ItemTransforms* transforms =
-            (new ItemTransforms(*GetDefaultTransforms()))->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.2f, 1.0f, 0.55f, 0.55f, 0.55f);
+        static ItemTransforms* transforms = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.2f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
         return transforms;
     }
     case 452:
     {
-        static ItemTransforms* transforms =
-            (new ItemTransforms(*GetDefaultTransforms()))->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 0.65f, 1.0f, 0.55f, 0.55f, 0.55f);
+        static ItemTransforms* transforms = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 0.65f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
         return transforms;
     }
     case 378:
     {
-        static ItemTransforms* transforms =
-            (new ItemTransforms(*GetDefaultTransforms()))->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.32f, 1.0f, 0.55f, 0.55f, 0.55f);
+        static ItemTransforms* transforms = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.32f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
         return transforms;
     }
     case 281:
@@ -154,8 +158,9 @@ ItemTransforms* ItemTransforms::getArmourStandTransforms(const ItemInstance* ite
     case 413:
     case 436:
     {
-        static ItemTransforms* transforms =
-            (new ItemTransforms(*GetDefaultTransforms()))->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.7f, 1.0f, 0.55f, 0.55f, 0.55f);
+        static ItemTransforms* transforms = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.7f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
         return transforms;
     }
     case 111:
@@ -206,8 +211,9 @@ ItemTransforms* ItemTransforms::getArmourStandTransforms(const ItemInstance* ite
     case 461:
     case 462:
     {
-        static ItemTransforms* transforms =
-            (new ItemTransforms(*GetDefaultTransforms()))->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.85f, 1.0f, 0.55f, 0.55f, 0.55f);
+        static ItemTransforms* transforms = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.85f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
         return transforms;
     }
     case 288:
@@ -238,8 +244,9 @@ ItemTransforms* ItemTransforms::getArmourStandTransforms(const ItemInstance* ite
     case 447:
     case 448:
     {
-        static ItemTransforms* transforms =
-            (new ItemTransforms(*GetDefaultTransforms()))->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.3f, 1.0f, 0.55f, 0.55f, 0.55f);
+        static ItemTransforms* transforms = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.3f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
         return transforms;
     }
     case 265:
@@ -255,8 +262,9 @@ ItemTransforms* ItemTransforms::getArmourStandTransforms(const ItemInstance* ite
     case 405:
     case 435:
     {
-        static ItemTransforms* transforms =
-            (new ItemTransforms(*GetDefaultTransforms()))->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.5f, 1.0f, 0.55f, 0.55f, 0.55f);
+        static ItemTransforms* transforms = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.5f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
         return transforms;
     }
     case 355:
@@ -269,8 +277,9 @@ ItemTransforms* ItemTransforms::getArmourStandTransforms(const ItemInstance* ite
     case 419:
     case 453:
     {
-        static ItemTransforms* transforms =
-            (new ItemTransforms(*GetDefaultTransforms()))->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.2f, 1.0f, 0.55f, 0.55f, 0.55f);
+        static ItemTransforms* transforms = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.2f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
         return transforms;
     }
     default:
@@ -279,8 +288,8 @@ ItemTransforms* ItemTransforms::getArmourStandTransforms(const ItemInstance* ite
 }
 
 ItemTransforms* ItemTransforms::set_firstperson_lefthand(float rotationX, float rotationY, float rotationZ,
-                                                          float translationX, float translationY, float translationZ,
-                                                          float scaleX, float scaleY, float scaleZ)
+                                                         float translationX, float translationY, float translationZ,
+                                                         float scaleX, float scaleY, float scaleZ)
 {
     mFirstPersonLeftHand = ItemTransform::deserialize(rotationX, rotationY, rotationZ, translationX, translationY,
                                                       translationZ, scaleX, scaleY, scaleZ);
@@ -288,8 +297,8 @@ ItemTransforms* ItemTransforms::set_firstperson_lefthand(float rotationX, float 
 }
 
 ItemTransforms* ItemTransforms::set_firstperson_righthand(float rotationX, float rotationY, float rotationZ,
-                                                           float translationX, float translationY, float translationZ,
-                                                           float scaleX, float scaleY, float scaleZ)
+                                                          float translationX, float translationY, float translationZ,
+                                                          float scaleX, float scaleY, float scaleZ)
 {
     mFirstPersonRightHand = ItemTransform::deserialize(rotationX, rotationY, rotationZ, translationX, translationY,
                                                        translationZ, scaleX, scaleY, scaleZ);
@@ -330,8 +339,8 @@ ItemTransforms* ItemTransforms::set_gui(float rotationX, float rotationY, float 
                                         float translationY, float translationZ, float scaleX, float scaleY,
                                         float scaleZ)
 {
-    mGui = ItemTransform::deserialize(rotationX, rotationY, rotationZ, translationX, translationY, translationZ,
-                                      scaleX, scaleY, scaleZ);
+    mGui = ItemTransform::deserialize(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
+                                      scaleY, scaleZ);
     return this;
 }
 
@@ -345,13 +354,13 @@ ItemTransforms* ItemTransforms::set_head(float rotationX, float rotationY, float
 }
 
 ItemTransforms* ItemTransforms::set_firstperson_hands(float rotationX, float rotationY, float rotationZ,
-                                                       float translationX, float translationY, float translationZ,
-                                                       float scaleX, float scaleY, float scaleZ)
+                                                      float translationX, float translationY, float translationZ,
+                                                      float scaleX, float scaleY, float scaleZ)
 {
-    set_firstperson_righthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
-                              scaleY, scaleZ);
-    set_firstperson_lefthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
-                          scaleY, scaleZ);
+    set_firstperson_righthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX, scaleY,
+                              scaleZ);
+    set_firstperson_lefthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX, scaleY,
+                             scaleZ);
     return this;
 }
 
@@ -382,12 +391,12 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
     }
     case 397:
     {
-        static ItemTransforms* skull =
-            (new ItemTransforms())
-                ->set_gui(30.0f, 45.0f, 0.0f, 0.0f, 3.0f, 0.0f, 1.0f, 1.0f, 1.0f)
-                ->set_fixed(0.0f, 180.0f, 0.0f, 0.0f, 4.0f, 0.0f, 1.0f, 1.0f, 1.0f)
-                ->set_ground(0.0f, 0.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.5f, 0.5f, 0.5f)
-                ->set_thirdperson_hands(45.0f, 45.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.5f, 0.5f, 0.5f);
+        static ItemTransforms* skull = (new ItemTransforms())
+                                           ->set_gui(30.0f, 45.0f, 0.0f, 0.0f, 3.0f, 0.0f, 1.0f, 1.0f, 1.0f)
+                                           ->set_fixed(0.0f, 180.0f, 0.0f, 0.0f, 4.0f, 0.0f, 1.0f, 1.0f, 1.0f)
+                                           ->set_ground(0.0f, 0.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.5f, 0.5f, 0.5f)
+                                           ->set_thirdperson_hands(45.0f, 45.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.5f, 0.5f,
+                                                                   0.5f);
         if (item->getAuxValue() == 5)
         {
             static ItemTransforms* dragonHead =
@@ -530,16 +539,17 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
         if (renderShape == BLOCK_RENDER_WALL)
         {
             static ItemTransforms* transforms = (new ItemTransforms(*blockTransforms))
-                                                    ->set_gui(30.0f, 135.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.55f, 0.55f, 0.55f)
+                                                    ->set_gui(30.0f, 135.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.55f, 0.55f,
+                                                              0.55f)
                                                     ->set_fixed(0.0f, 90.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f);
             return transforms;
         }
         if (renderShape == BLOCK_RENDER_FENCE)
         {
-            static ItemTransforms* transforms =
-                (new ItemTransforms(*blockTransforms))
-                    ->set_gui(30.0f, 135.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.625f, 0.625f, 0.625f)
-                    ->set_fixed(0.0f, 90.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f);
+            static ItemTransforms* transforms = (new ItemTransforms(*blockTransforms))
+                                                    ->set_gui(30.0f, 135.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.625f, 0.625f,
+                                                              0.625f)
+                                                    ->set_fixed(0.0f, 90.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f);
             return transforms;
         }
         if (renderShape == BLOCK_RENDER_FENCE_GATE)
@@ -569,9 +579,9 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
         }
         if (renderShape == BLOCK_RENDER_END_ROD)
         {
-            static ItemTransforms* transforms =
-                (new ItemTransforms(*blockTransforms))
-                    ->set_thirdperson_hands(30.0f, 45.0f, 0.0f, 0.0f, 2.0f, 1.0f, 0.375f, 0.375f, 0.375f);
+            static ItemTransforms* transforms = (new ItemTransforms(*blockTransforms))
+                                                    ->set_thirdperson_hands(30.0f, 45.0f, 0.0f, 0.0f, 2.0f, 1.0f,
+                                                                            0.375f, 0.375f, 0.375f);
             return transforms;
         }
         if (renderShape == BLOCK_RENDER_CONDUIT)
@@ -599,9 +609,9 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
             || block == Blocks::birch_button || block == Blocks::dark_oak_button || block == Blocks::jungle_button
             || block == Blocks::spruce_button)
         {
-            static ItemTransforms* button =
-                (new ItemTransforms(*blockTransforms))
-                    ->set_thirdperson_hands(75.0f, 45.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.375f, 0.375f, 0.375f);
+            static ItemTransforms* button = (new ItemTransforms(*blockTransforms))
+                                                ->set_thirdperson_hands(75.0f, 45.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.375f,
+                                                                        0.375f, 0.375f);
             return button;
         }
 
@@ -617,9 +627,9 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
             || block == Blocks::green_glazed_terracotta || block == Blocks::red_glazed_terracotta
             || block == Blocks::black_glazed_terracotta || block == Blocks::observer)
         {
-            static ItemTransforms* facingBlock =
-                (new ItemTransforms(*blockTransforms))
-                    ->set_firstperson_hands(0.0f, 135.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.4f, 0.4f, 0.4f);
+            static ItemTransforms* facingBlock = (new ItemTransforms(*blockTransforms))
+                                                     ->set_firstperson_hands(0.0f, 135.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.4f,
+                                                                             0.4f, 0.4f);
             return facingBlock;
         }
         return blockTransforms;

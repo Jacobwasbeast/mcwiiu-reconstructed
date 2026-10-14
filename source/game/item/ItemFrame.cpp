@@ -36,8 +36,7 @@ ItemFrame::ItemFrame(Level* level) : HangingEntity(level)
     _init();
 }
 
-ItemFrame::ItemFrame(Level* level, const BlockPos& pos, const Direction* direction)
-    : HangingEntity(level, pos)
+ItemFrame::ItemFrame(Level* level, const BlockPos& pos, const Direction* direction) : HangingEntity(level, pos)
 {
     Entity::fjDerivedCtorCalls();
     _init();
@@ -60,8 +59,10 @@ void ItemFrame::addDataWalkers(DataFixerUpper* fixer)
 
 void ItemFrame::staticCtor()
 {
-    DATA_ITEM = SynchedEntityData::defineId(EntityType::ITEM_FRAME, EntityType::HANGING_ENTITY, EntityDataSerializers::ITEM_INSTANCE);
-    DATA_ROTATION = SynchedEntityData::defineId(EntityType::ITEM_FRAME, EntityType::HANGING_ENTITY, EntityDataSerializers::INT);
+    DATA_ITEM = SynchedEntityData::defineId(EntityType::ITEM_FRAME, EntityType::HANGING_ENTITY,
+                                            EntityDataSerializers::ITEM_INSTANCE);
+    DATA_ROTATION = SynchedEntityData::defineId(EntityType::ITEM_FRAME, EntityType::HANGING_ENTITY,
+                                                EntityDataSerializers::INT);
 }
 
 void ItemFrame::_init()
@@ -161,7 +162,8 @@ void ItemFrame::removeFramedMap(not_null_ptr<ItemInstance> item)
         Item* type = item->getItem();
         if (type == Items::filledMap)
         {
-            boost::shared_ptr<MapItemSavedData> data = static_cast<MapItem*>(Items::filledMap)->getSavedData(item, mLevel);
+            boost::shared_ptr<MapItemSavedData> data =
+                static_cast<MapItem*>(Items::filledMap)->getSavedData(item, mLevel);
             boost::shared_ptr<ItemFrame> frame = item->getFrame();
             if (frame)
             {
@@ -297,12 +299,14 @@ bool ItemFrame::fjTryAwardMapRoom(const boost::shared_ptr<Player>& player)
         BlockPos adjacentPos = mPos.relative(direction->getCounterClockWise(), 0).relative(Direction::UP, 0);
         {
             boost::shared_ptr<ItemFrame> adjacent = fjGetItemFrameForPos(mLevel, adjacentPos);
-            if (adjacent && adjacent->getDirection() == getDirection() && adjacent->getItem()->getItem() == Items::filledMap)
+            if (adjacent && adjacent->getDirection() == getDirection()
+                && adjacent->getItem()->getItem() == Items::filledMap)
             {
-                boost::shared_ptr<MapItemSavedData> data = static_cast<MapItem*>(Items::filledMap)->getSavedData(adjacent->getItem(), mLevel);
+                boost::shared_ptr<MapItemSavedData> data =
+                    static_cast<MapItem*>(Items::filledMap)->getSavedData(adjacent->getItem(), mLevel);
                 if (data->mDimension == 0 && data->mScale == 3 && data->fjIsCompletelyExplored())
                 {
-                    MapRoomMatch candidate = { true, 0, 0, 0 };
+                    MapRoomMatch candidate = {true, 0, 0, 0};
                     candidate.xCenter = data->mXCenter;
                     candidate.zCenter = data->mZCenter;
                     candidate.rotation = adjacent->getRotation() % 4;

@@ -54,15 +54,10 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
 
         if (added)
         {
-            player->mLevel->playSound(boost::shared_ptr<Player>(),
-                                      player->mX,
-                                      player->mY,
-                                      player->mZ,
-                                      SoundEvents::ITEM_PICKUP,
-                                      SoundSource::eSoundSource_Players,
-                                      0.2f,
-                                      ((player->getRandom()->nextFloat() - player->getRandom()->nextFloat()) * 0.7f + 1.0f) * 2.0f,
-                                      16.0f);
+            player->mLevel->playSound(
+                boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::ITEM_PICKUP,
+                SoundSource::eSoundSource_Players, 0.2f,
+                ((player->getRandom()->nextFloat() - player->getRandom()->nextFloat()) * 0.7f + 1.0f) * 2.0f, 16.0f);
 
             player->mInventoryMenu->broadcastChanges();
         }
@@ -105,7 +100,8 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
     }
 }
 
-boost::shared_ptr<GameCommandPacket> GiveItemCommand::preparePacket(boost::shared_ptr<Player> player, int itemId, int count, int data, const std::wstring& playerName)
+boost::shared_ptr<GameCommandPacket> GiveItemCommand::preparePacket(boost::shared_ptr<Player> player, int itemId,
+                                                                    int count, int data, const std::wstring& playerName)
 {
     if (!player)
     {

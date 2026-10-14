@@ -7,7 +7,8 @@
 
 class Item;
 
-class Items {
+class Items
+{
 public:
     static void staticCtor();
 

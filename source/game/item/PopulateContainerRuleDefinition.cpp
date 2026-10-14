@@ -7,8 +7,7 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-PopulateContainerRuleDefinition::PopulateContainerRuleDefinition()
-    : GameRuleDefinition()
+PopulateContainerRuleDefinition::PopulateContainerRuleDefinition() : GameRuleDefinition()
 {
     mX = 0;
     mY = 0;
@@ -24,7 +23,8 @@ PopulateContainerRuleDefinition::~PopulateContainerRuleDefinition()
     {
         delete *it;
     }
-    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end();
+         ++it)
     {
         delete *it;
     }
@@ -39,7 +39,8 @@ void PopulateContainerRuleDefinition::GetPos(int& x, int& y, int& z)
 
 void PopulateContainerRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
 {
-    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end();
+         ++it)
     {
         children->push_back(*it);
     }
@@ -68,16 +69,19 @@ GameRuleDefinition* PopulateContainerRuleDefinition::addChild(ConsoleGameRules::
 bool PopulateContainerRuleDefinition::evaluateRule(Level* level, LevelRuleset* ruleset, const MiniGameDef& miniGameDef)
 {
     (void)miniGameDef;
-    boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(level->getBlockEntity(BlockPos(mX, mY, mZ)));
+    boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(
+        level->getBlockEntity(BlockPos(mX, mY, mZ)));
     if (container)
     {
         container->clearContent();
-        for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+        for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin();
+             it != mRandomItemSets.end(); ++it)
         {
             (*it)->populateContainer(container, ruleset);
         }
         int slot = 0;
-        for (std::vector<AddItemRuleDefinition*>::iterator it = mAddItems.begin(); it != mAddItems.end() && slot < container->getContainerSize(); ++it, ++slot)
+        for (std::vector<AddItemRuleDefinition*>::iterator it = mAddItems.begin();
+             it != mAddItems.end() && slot < container->getContainerSize(); ++it, ++slot)
         {
             AddItemRuleDefinition* addItem = *it;
             addItem->addItemToContainer(container, slot);

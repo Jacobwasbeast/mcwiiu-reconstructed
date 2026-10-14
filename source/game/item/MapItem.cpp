@@ -36,21 +36,19 @@
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
 
-MapItem::MapItem()
-    : ComplexItem()
+MapItem::MapItem() : ComplexItem()
 {
     setStackedByData(true);
 }
 
-not_null_ptr<ItemInstance> MapItem::setupNewMap(PlayerUID uid, Level* level, int dimension,
-                                                double x, double z, unsigned char scale,
-                                                bool trackingPosition, bool unlimitedTracking)
+not_null_ptr<ItemInstance> MapItem::setupNewMap(PlayerUID uid, Level* level, int dimension, double x, double z,
+                                                unsigned char scale, bool trackingPosition, bool unlimitedTracking)
 {
     int mapId = level->getAuxValueForMap(uid, dimension, BlockPos((int)x, 0, (int)z), (int)scale);
     not_null_ptr<ItemInstance> itemInstance(new ItemInstance(Items::filledMap, 1, mapId));
     std::wstring name = L"map_" + _toString(itemInstance->getAuxValue());
-    boost::shared_ptr<MapItemSavedData> data =
-        boost::static_pointer_cast<MapItemSavedData>(level->getSavedData(typeid(MapItemSavedData), name));
+    boost::shared_ptr<MapItemSavedData> data = boost::static_pointer_cast<MapItemSavedData>(
+        level->getSavedData(typeid(MapItemSavedData), name));
     if (!data)
     {
         data = boost::shared_ptr<MapItemSavedData>(new MapItemSavedData(name));
@@ -77,8 +75,8 @@ boost::shared_ptr<MapItemSavedData> MapItem::getSavedData(int mapId, Level* leve
     MemSect(0x1f);
     std::wstring name = std::wstring(L"map_") + _toString(mapId);
     MemSect(0);
-    boost::shared_ptr<MapItemSavedData> data =
-        boost::static_pointer_cast<MapItemSavedData>(level->getSavedData(typeid(MapItemSavedData), name));
+    boost::shared_ptr<MapItemSavedData> data = boost::static_pointer_cast<MapItemSavedData>(
+        level->getSavedData(typeid(MapItemSavedData), name));
     if (!data && !level->mIsClientSide)
     {
         name = std::wstring(L"map_") + _toString(mapId);
@@ -124,8 +122,8 @@ void MapItem::update(Level* level, boost::shared_ptr<Entity> entity, boost::shar
     if (level->mDimension->isHasCeiling())
         radius /= 2;
 
-    boost::shared_ptr<MapItemSavedData::HoldingPlayer> holding =
-        data->getHoldingPlayer(boost::static_pointer_cast<Player>(entity));
+    boost::shared_ptr<MapItemSavedData::HoldingPlayer> holding = data->getHoldingPlayer(
+        boost::static_pointer_cast<Player>(entity));
     ++holding->mStep;
 
     MutableBlockPos pos(0, 0, 0);
@@ -163,14 +161,14 @@ void MapItem::update(Level* level, boost::shared_ptr<Entity> entity, boost::shar
                 hash = hash * hash * 31287121 + hash * 11;
                 if (((unsigned int)hash >> 20 & 1) == 0)
                 {
-                    const BlockState* state =
-                        Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT);
+                    const BlockState* state = Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT,
+                                                                                          DirtBlock::Variant::DIRT);
                     counts[const_cast<BlockState*>(state)->getMapColor(level, pos)->id] += 10;
                 }
                 else
                 {
-                    const BlockState* state =
-                        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::STONE);
+                    const BlockState* state = Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT,
+                                                                                           StoneBlock::Variant::STONE);
                     counts[const_cast<BlockState*>(state)->getMapColor(level, pos)->id] += 100;
                 }
                 height = 100.0;
@@ -199,7 +197,8 @@ void MapItem::update(Level* level, boost::shared_ptr<Entity> entity, boost::shar
                                 int depthY = y - 4;
                                 while (depthY > 0)
                                 {
-                                    const BlockState* below = chunk->getBlockState(sampleX + localX, depthY, sampleZ + localZ);
+                                    const BlockState* below = chunk->getBlockState(sampleX + localX, depthY,
+                                                                                   sampleZ + localZ);
                                     depthY -= 4;
                                     waterDepth += 4;
                                     if (depthY <= 0 || !below->getMaterial()->isLiquid())
@@ -288,8 +287,8 @@ void MapItem::renderBiomePreviewMap(Level* level, const not_null_ptr<ItemInstanc
     arrayWithLength<Biome*> biomes;
     BiomeSource* biomeSource = level->getBiomeSource();
     int size = scale * 128;
-    biomeSource->getBiomeBlock(biomes, (xCenter / scale - 64) * scale,
-                               (zCenter / scale - 64) * scale, size, size, false);
+    biomeSource->getBiomeBlock(biomes, (xCenter / scale - 64) * scale, (zCenter / scale - 64) * scale, size, size,
+                               false);
 
     int worldX = xCenter - size / 2;
     int worldZ = zCenter - size / 2;
@@ -417,8 +416,8 @@ void MapItem::renderBiomePreviewMap(Level* level, const not_null_ptr<ItemInstanc
     delete[] biomes.data;
 }
 
-void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* level,
-                            boost::shared_ptr<Entity> entity, int slot, bool selected)
+void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<Entity> entity,
+                            int slot, bool selected)
 {
     if (level->mIsClientSide)
     {
@@ -430,8 +429,8 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
     if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        int newMapId = level->getAuxValueForMap(player->mXuid, data->mDimension, data->mXCenter,
-                                                data->mZCenter, data->mScale);
+        int newMapId = level->getAuxValueForMap(player->mXuid, data->mDimension, data->mXCenter, data->mZCenter,
+                                                data->mScale);
         if (newMapId != itemInstance->getAuxValue())
         {
             boost::shared_ptr<MapItemSavedData> newData = getSavedData(newMapId, level);
@@ -460,8 +459,8 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
     }
 }
 
-boost::shared_ptr<Packet> MapItem::getUpdatePacket(not_null_ptr<ItemInstance> itemInstance,
-                                                   Level* level, boost::shared_ptr<Player> player)
+boost::shared_ptr<Packet> MapItem::getUpdatePacket(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                                                   boost::shared_ptr<Player> player)
 {
     return getSavedData(itemInstance, level)->getUpdatePacket(itemInstance, level, player);
 }
@@ -471,14 +470,12 @@ void MapItem::scaleMap(not_null_ptr<ItemInstance> itemInstance, Level* level, in
     boost::shared_ptr<MapItemSavedData> oldData =
         static_cast<MapItem*>(Items::filledMap)->getSavedData(itemInstance, level);
     itemInstance->setAuxValue(level->getFreeAuxValueFor(L"map"));
-    boost::shared_ptr<MapItemSavedData> data(
-        new MapItemSavedData(L"map_" + _toString(itemInstance->getAuxValue())));
+    boost::shared_ptr<MapItemSavedData> data(new MapItemSavedData(L"map_" + _toString(itemInstance->getAuxValue())));
     if (oldData)
     {
         data->mScale = Mth::clamp(oldData->mScale + scale, 0, 4);
         data->mTrackingPosition = oldData->mTrackingPosition;
-        data->setOrigin(static_cast<double>(oldData->mXCenter), static_cast<double>(oldData->mZCenter),
-                        data->mScale);
+        data->setOrigin(static_cast<double>(oldData->mXCenter), static_cast<double>(oldData->mZCenter), data->mScale);
         data->mDimension = oldData->mDimension;
         data->setDirty();
         level->setSavedData(L"map_" + _toString(itemInstance->getAuxValue()), data);
@@ -490,8 +487,7 @@ void MapItem::enableMapTracking(not_null_ptr<ItemInstance> itemInstance, Level* 
     boost::shared_ptr<MapItemSavedData> oldData =
         static_cast<MapItem*>(Items::filledMap)->getSavedData(itemInstance, level);
     itemInstance->setAuxValue(level->getFreeAuxValueFor(L"map"));
-    boost::shared_ptr<MapItemSavedData> data(
-        new MapItemSavedData(L"map_" + _toString(itemInstance->getAuxValue())));
+    boost::shared_ptr<MapItemSavedData> data(new MapItemSavedData(L"map_" + _toString(itemInstance->getAuxValue())));
     if (oldData)
     {
         data->mTrackingPosition = true;
@@ -504,8 +500,7 @@ void MapItem::enableMapTracking(not_null_ptr<ItemInstance> itemInstance, Level* 
     }
 }
 
-void MapItem::onCraftedBy(not_null_ptr<ItemInstance> itemInstance, Level* level,
-                          boost::shared_ptr<Player> player)
+void MapItem::onCraftedBy(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<Player> player)
 {
     CompoundTag* tag = itemInstance->getTag();
     if (!tag)

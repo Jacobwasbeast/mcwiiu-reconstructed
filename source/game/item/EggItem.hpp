@@ -16,8 +16,7 @@ class EggItem : public Item
 public:
     EggItem();
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
 };
 

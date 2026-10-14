@@ -16,15 +16,10 @@ class ShovelItem : public DiggerItem
 public:
     ShovelItem(const Item::Tier* tier);
 
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                         Level* level,
-                                                         const BlockPos& pos,
-                                                         InteractionHand::EInteractionHand hand,
-                                                         const Direction* direction,
-                                                         float hitX,
-                                                         float hitY,
-                                                         float hitZ,
-                                                         bool simulate);
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate);
     virtual bool canDestroySpecial(const BlockState* state);
 
     static void staticCtor();

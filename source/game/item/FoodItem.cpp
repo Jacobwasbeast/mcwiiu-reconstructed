@@ -19,13 +19,19 @@
 #include "game/world/generation/Player.hpp"
 
 FoodItem::FoodItem(int nutrition, float saturationModifier, bool isMeat)
-    : Item(), mNutrition(nutrition), mSaturationModifier(saturationModifier), mIsMeat(isMeat)
+    : Item(),
+      mNutrition(nutrition),
+      mSaturationModifier(saturationModifier),
+      mIsMeat(isMeat)
 {
     _init();
 }
 
 FoodItem::FoodItem(int nutrition, bool isMeat)
-    : Item(), mNutrition(nutrition), mSaturationModifier(0.6f), mIsMeat(isMeat)
+    : Item(),
+      mNutrition(nutrition),
+      mSaturationModifier(0.6f),
+      mIsMeat(isMeat)
 {
     _init();
 }
@@ -38,8 +44,7 @@ void FoodItem::_init()
     mEatEffect = NULL;
 }
 
-not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
-                                                     Level* level,
+not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                      boost::shared_ptr<LivingEntity> entity)
 {
     if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
@@ -60,15 +65,8 @@ not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> 
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             player->getFoodData()->eat(this, itemInstance);
-            level->playSound(boost::shared_ptr<Player>(),
-                             player->mX,
-                             player->mY,
-                             player->mZ,
-                             SoundEvents::PLAYER_BURP,
-                             SoundSource::eSoundSource_Players,
-                             0.5f,
-                             level->mRandom->nextFloat() * 0.1f + 0.9f,
-                             16.0f);
+            level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::PLAYER_BURP,
+                             SoundSource::eSoundSource_Players, 0.5f, level->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
             addEatEffect(itemInstance, level, player);
         }
 
@@ -108,7 +106,8 @@ int FoodItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) con
     return UseAnim_eat;
 }
 
-InteractionResultHolder FoodItem::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
+InteractionResultHolder FoodItem::use(Level* level, boost::shared_ptr<Player> player,
+                                      InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (player->canEat(mCanAlwaysEat))

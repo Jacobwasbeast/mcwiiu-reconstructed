@@ -13,25 +13,13 @@ public:
 
     static NonNullList<T> withSize(unsigned int size, const T& defaultValue);
 
-    unsigned int size() const
-    {
-        return items.length;
-    }
+    unsigned int size() const { return items.length; }
 
-    T& operator[](unsigned int index)
-    {
-        return items.data[index];
-    }
+    T& operator[](unsigned int index) { return items.data[index]; }
 
-    const T& operator[](unsigned int index) const
-    {
-        return items.data[index];
-    }
+    const T& operator[](unsigned int index) const { return items.data[index]; }
 
-    void set(unsigned int index, const T& value)
-    {
-        items.data[index] = value;
-    }
+    void set(unsigned int index, const T& value) { items.data[index] = value; }
 
     void clear()
     {
@@ -45,11 +33,7 @@ public:
     T defaultValue;
 
 private:
-    NonNullList(arrayWithLength<T> array, const T& defaultValue)
-        : items(array),
-          defaultValue(defaultValue)
-    {
-    }
+    NonNullList(arrayWithLength<T> array, const T& defaultValue) : items(array), defaultValue(defaultValue) {}
 };
 
 template <class T>

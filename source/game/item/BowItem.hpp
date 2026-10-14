@@ -22,15 +22,12 @@ public:
     BowItem();
 
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
     virtual int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;
     virtual int getUseDuration(not_null_ptr<ItemInstance> itemInstance);
-    virtual void releaseUsing(not_null_ptr<ItemInstance> itemInstance,
-                              Level* level,
-                              boost::shared_ptr<LivingEntity> entity,
-                              int timeLeft);
+    virtual void releaseUsing(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                              boost::shared_ptr<LivingEntity> entity, int timeLeft);
     virtual int getEnchantmentValue();
     virtual void registerIcons(IconRegister* iconRegister);
     virtual int GetOverrideCount();
@@ -40,14 +37,11 @@ public:
     bool isValidProjectile(not_null_ptr<ItemInstance> itemInstance);
     not_null_ptr<ItemInstance> findProjectile(boost::shared_ptr<Player> player);
 
-    InteractionResultHolder fjUseWithProjectile(Level* level,
-                                                boost::shared_ptr<Player> player,
+    InteractionResultHolder fjUseWithProjectile(Level* level, boost::shared_ptr<Player> player,
                                                 InteractionHand::EInteractionHand hand,
                                                 not_null_ptr<ItemInstance> projectile);
-    void fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstance,
-                                      Level* level,
-                                      boost::shared_ptr<LivingEntity> entity,
-                                      int timeLeft,
+    void fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                                      boost::shared_ptr<LivingEntity> entity, int timeLeft,
                                       not_null_ptr<ItemInstance> projectile);
 
     TextureAtlasSprite* getDrawnIcon(int stage);

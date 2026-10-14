@@ -32,9 +32,9 @@ bool ArmorDyeRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContai
         HorseArmorItem* horseArmorItem = dynamic_cast<HorseArmorItem*>(item->getItem());
         if (armorItem != NULL || horseArmorItem != NULL)
         {
-            if (((armorItem != NULL && armorItem->getMaterial() == ArmorItem::ArmorMaterial::LEATHER) ||
-                 (horseArmorItem != NULL && horseArmorItem->isDyeable())) &&
-                armor->isEmpty())
+            if (((armorItem != NULL && armorItem->getMaterial() == ArmorItem::ArmorMaterial::LEATHER)
+                 || (horseArmorItem != NULL && horseArmorItem->isDyeable()))
+                && armor->isEmpty())
             {
                 armor = item;
             }
@@ -78,14 +78,14 @@ not_null_ptr<ItemInstance> ArmorDyeRecipe::assembleDyedArmor(boost::shared_ptr<C
                 continue;
             }
 
-            if (dynamic_cast<ArmorItem*>(item->getItem()) != NULL ||
-                dynamic_cast<HorseArmorItem*>(item->getItem()) != NULL)
+            if (dynamic_cast<ArmorItem*>(item->getItem()) != NULL
+                || dynamic_cast<HorseArmorItem*>(item->getItem()) != NULL)
             {
                 armorItem = dynamic_cast<ArmorItem*>(item->getItem());
                 horseArmorItem = dynamic_cast<HorseArmorItem*>(item->getItem());
-                if (!((armorItem != NULL && armorItem->getMaterial() == ArmorItem::ArmorMaterial::LEATHER) ||
-                      (horseArmorItem != NULL && horseArmorItem->isDyeable())) ||
-                    !armor->isEmpty())
+                if (!((armorItem != NULL && armorItem->getMaterial() == ArmorItem::ArmorMaterial::LEATHER)
+                      || (horseArmorItem != NULL && horseArmorItem->isDyeable()))
+                    || !armor->isEmpty())
                 {
                     return ItemInstance::EMPTY;
                 }
@@ -123,16 +123,17 @@ not_null_ptr<ItemInstance> ArmorDyeRecipe::assembleDyedArmor(boost::shared_ptr<C
             }
             else if (item->getItem() == Items::dye)
             {
-                arrayWithLength<const float> colors = DyeColor::byItemData(item->getAuxValue())->getTextureDiffuseColors();
+                arrayWithLength<const float> colors =
+                    DyeColor::byItemData(item->getAuxValue())->getTextureDiffuseColors();
                 int colorRed = static_cast<int>(colors.data[0] * 255.0f);
                 int colorGreen = static_cast<int>(colors.data[1] * 255.0f);
                 int colorBlue = static_cast<int>(colors.data[2] * 255.0f);
                 const int& darkerChannel = std::max(colorGreen, colorBlue);
-            int brightest = colorRed;
-            if (brightest < darkerChannel)
-            {
-                brightest = darkerChannel;
-            }
+                int brightest = colorRed;
+                if (brightest < darkerChannel)
+                {
+                    brightest = darkerChannel;
+                }
                 red += colorRed;
                 green += colorGreen;
                 blue += colorBlue;
@@ -201,10 +202,11 @@ ItemInstance* ArmorDyeRecipe::getIngredientItem(int, int)
     return ItemInstance::EMPTY.get();
 }
 
-NonNullList<not_null_ptr<ItemInstance> > ArmorDyeRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > ArmorDyeRecipe::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    NonNullList<not_null_ptr<ItemInstance> > result =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
 
     for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {

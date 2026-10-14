@@ -20,24 +20,16 @@ SnowballItem::SnowballItem() : Item()
     mMaxStackSize = 16;
 }
 
-InteractionResultHolder SnowballItem::use(Level* level,
-                                           boost::shared_ptr<Player> player,
-                                           InteractionHand::EInteractionHand hand)
+InteractionResultHolder SnowballItem::use(Level* level, boost::shared_ptr<Player> player,
+                                          InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
     if (!player->mAbilities.mInstabuild)
         itemInstance->shrink(1);
 
-    level->playSound(boost::shared_ptr<Player>(),
-                     player->mX,
-                     player->mY,
-                     player->mZ,
-                     SoundEvents::SNOWBALL_THROW,
-                     SoundSource::eSoundSource_Neutral,
-                     0.5f,
-                     0.4f / (random->nextFloat() * 0.4f + 0.8f),
-                     16.0f);
+    level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::SNOWBALL_THROW,
+                     SoundSource::eSoundSource_Neutral, 0.5f, 0.4f / (random->nextFloat() * 0.4f + 0.8f), 16.0f);
 
     if (!level->mIsClientSide)
     {

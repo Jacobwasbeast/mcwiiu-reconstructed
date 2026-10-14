@@ -39,24 +39,20 @@
 
 DispenseItemBehavior* ArmorItem::DISPENSE_ITEM_BEHAVIOR = new ArmorDispenseItemBehavior();
 
-static const int HEALTH_PER_SLOT[4] = { 13, 15, 16, 11 };
+static const int HEALTH_PER_SLOT[4] = {13, 15, 16, 11};
 
-static const eMODIFIER_ID ARMOR_MODIFIER_ID_PER_SLOT[4] = { eMODIFIER_ID_ArmorFeet,
-                                                            eMODIFIER_ID_ArmorLegs,
-                                                            eMODIFIER_ID_ArmorChest,
-                                                            eMODIFIER_ID_ArmorHead };
+static const eMODIFIER_ID ARMOR_MODIFIER_ID_PER_SLOT[4] = {eMODIFIER_ID_ArmorFeet, eMODIFIER_ID_ArmorLegs,
+                                                           eMODIFIER_ID_ArmorChest, eMODIFIER_ID_ArmorHead};
 
-static int LEATHER_SLOT_PROTECTIONS[4] = { 1, 2, 3, 1 };
-static int CHAIN_SLOT_PROTECTIONS[4] = { 1, 4, 5, 2 };
-static int IRON_SLOT_PROTECTIONS[4] = { 2, 5, 6, 2 };
-static int GOLD_SLOT_PROTECTIONS[4] = { 1, 3, 5, 2 };
-static int DIAMOND_SLOT_PROTECTIONS[4] = { 3, 6, 8, 3 };
-static int TURTLE_SLOT_PROTECTIONS[4] = { 2, 5, 6, 2 };
+static int LEATHER_SLOT_PROTECTIONS[4] = {1, 2, 3, 1};
+static int CHAIN_SLOT_PROTECTIONS[4] = {1, 4, 5, 2};
+static int IRON_SLOT_PROTECTIONS[4] = {2, 5, 6, 2};
+static int GOLD_SLOT_PROTECTIONS[4] = {1, 3, 5, 2};
+static int DIAMOND_SLOT_PROTECTIONS[4] = {3, 6, 8, 3};
+static int TURTLE_SLOT_PROTECTIONS[4] = {2, 5, 6, 2};
 
-static std::wstring OVERLAY_ICON_NAME_PER_SLOT[4] = { L"bootsCloth_overlay",
-                                                       L"leggingsCloth_overlay",
-                                                       L"chestplateCloth_overlay",
-                                                       L"helmetCloth_overlay" };
+static std::wstring OVERLAY_ICON_NAME_PER_SLOT[4] = {L"bootsCloth_overlay", L"leggingsCloth_overlay",
+                                                     L"chestplateCloth_overlay", L"helmetCloth_overlay"};
 
 const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::LEATHER;
 const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::CHAIN;
@@ -65,12 +61,8 @@ const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::GOLD;
 const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::DIAMOND;
 const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::TURTLE;
 
-ArmorItem::ArmorMaterial::ArmorMaterial(std::wstring name,
-                                        int durabilityMultiplier,
-                                        int* slotProtections,
-                                        int enchantmentValue,
-                                        const SoundEvent* equipSound,
-                                        float toughness)
+ArmorItem::ArmorMaterial::ArmorMaterial(std::wstring name, int durabilityMultiplier, int* slotProtections,
+                                        int enchantmentValue, const SoundEvent* equipSound, float toughness)
 {
     mName = name;
     mDurabilityMultiplier = durabilityMultiplier;
@@ -137,22 +129,19 @@ const SoundEvent* ArmorItem::ArmorMaterial::getEquipSound() const
 
 void ArmorItem::staticCtor()
 {
-    ArmorMaterial::LEATHER = new ArmorMaterial(
-        L"leather", 5, LEATHER_SLOT_PROTECTIONS, 15, SoundEvents::ARMOR_EQUIP_LEATHER, 0.0f);
-    ArmorMaterial::CHAIN = new ArmorMaterial(
-        L"chainmail", 15, CHAIN_SLOT_PROTECTIONS, 12, SoundEvents::ARMOR_EQUIP_CHAIN, 0.0f);
-    ArmorMaterial::IRON = new ArmorMaterial(
-        L"iron", 15, IRON_SLOT_PROTECTIONS, 9, SoundEvents::ARMOR_EQUIP_IRON, 0.0f);
-    ArmorMaterial::GOLD = new ArmorMaterial(
-        L"gold", 7, GOLD_SLOT_PROTECTIONS, 25, SoundEvents::ARMOR_EQUIP_GOLD, 0.0f);
-    ArmorMaterial::DIAMOND = new ArmorMaterial(
-        L"diamond", 33, DIAMOND_SLOT_PROTECTIONS, 10, SoundEvents::ARMOR_EQUIP_DIAMOND, 2.0f);
-    ArmorMaterial::TURTLE = new ArmorMaterial(
-        L"turtle", 25, TURTLE_SLOT_PROTECTIONS, 9, SoundEvents::ARMOR_EQUIP_TURTLE, 0.0f);
+    ArmorMaterial::LEATHER = new ArmorMaterial(L"leather", 5, LEATHER_SLOT_PROTECTIONS, 15,
+                                               SoundEvents::ARMOR_EQUIP_LEATHER, 0.0f);
+    ArmorMaterial::CHAIN = new ArmorMaterial(L"chainmail", 15, CHAIN_SLOT_PROTECTIONS, 12,
+                                             SoundEvents::ARMOR_EQUIP_CHAIN, 0.0f);
+    ArmorMaterial::IRON = new ArmorMaterial(L"iron", 15, IRON_SLOT_PROTECTIONS, 9, SoundEvents::ARMOR_EQUIP_IRON, 0.0f);
+    ArmorMaterial::GOLD = new ArmorMaterial(L"gold", 7, GOLD_SLOT_PROTECTIONS, 25, SoundEvents::ARMOR_EQUIP_GOLD, 0.0f);
+    ArmorMaterial::DIAMOND = new ArmorMaterial(L"diamond", 33, DIAMOND_SLOT_PROTECTIONS, 10,
+                                               SoundEvents::ARMOR_EQUIP_DIAMOND, 2.0f);
+    ArmorMaterial::TURTLE = new ArmorMaterial(L"turtle", 25, TURTLE_SLOT_PROTECTIONS, 9,
+                                              SoundEvents::ARMOR_EQUIP_TURTLE, 0.0f);
 }
 
-not_null_ptr<ItemInstance> ArmorItem::dispenseArmor(BlockSource* blockSource,
-                                                    not_null_ptr<ItemInstance> itemInstance,
+not_null_ptr<ItemInstance> ArmorItem::dispenseArmor(BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance,
                                                     DefaultDispenseItemBehavior::eOUTCOME& outcome)
 {
     BlockPos pos = blockSource->getPos().relative(blockSource->getBlockState()->getValue(DispenserBlock::FACING));
@@ -160,12 +149,12 @@ not_null_ptr<ItemInstance> ArmorItem::dispenseArmor(BlockSource* blockSource,
     AABB* area = AABB::newTemp(pos.x, pos.y, pos.z, pos.x + 1, pos.y + 1, pos.z + 1);
 
     Predicate<boost::shared_ptr<Entity> >* canWearArmour = new MobCanWearArmourEntitySelector(itemInstance);
-    const Predicate<boost::shared_ptr<Entity> >* selectors[2] = { EntitySelector::NO_SPECTATORS, canWearArmour };
+    const Predicate<boost::shared_ptr<Entity> >* selectors[2] = {EntitySelector::NO_SPECTATORS, canWearArmour};
     Predicate<boost::shared_ptr<Entity> >* selector = new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
         Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, selectors, 2);
 
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        blockSource->getWorld()->getEntitiesOfClass(typeid(LivingEntity), area, selector, false);
+    std::vector<boost::shared_ptr<Entity> >* entities = blockSource->getWorld()->getEntitiesOfClass(
+        typeid(LivingEntity), area, selector, false);
 
     delete canWearArmour;
     delete selector;
@@ -302,8 +291,7 @@ bool ArmorItem::isValidRepairItem(not_null_ptr<ItemInstance> itemInstance, not_n
     return Item::isValidRepairItem(itemInstance, repairItem);
 }
 
-InteractionResultHolder ArmorItem::use(Level* level,
-                                       boost::shared_ptr<Player> player,
+InteractionResultHolder ArmorItem::use(Level* level, boost::shared_ptr<Player> player,
                                        InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInHand = player->getItemInHand(hand);
@@ -371,10 +359,10 @@ boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* ArmorItem::getDefaultAt
 
     if (slot == mSlot)
     {
-        (*modifiers)[SharedMonsterAttributes::ARMOR->getId()] =
-            new AttributeModifier(ARMOR_MODIFIER_ID_PER_SLOT[slot->getIndex()], (double)mDefense, 0);
-        (*modifiers)[SharedMonsterAttributes::ARMOR_TOUGHNESS->getId()] =
-            new AttributeModifier(ARMOR_MODIFIER_ID_PER_SLOT[slot->getIndex()], (double)mToughness, 0);
+        (*modifiers)[SharedMonsterAttributes::ARMOR->getId()] = new AttributeModifier(
+            ARMOR_MODIFIER_ID_PER_SLOT[slot->getIndex()], (double)mDefense, 0);
+        (*modifiers)[SharedMonsterAttributes::ARMOR_TOUGHNESS->getId()] = new AttributeModifier(
+            ARMOR_MODIFIER_ID_PER_SLOT[slot->getIndex()], (double)mToughness, 0);
     }
 
     return modifiers;

@@ -7,8 +7,7 @@
 #include "game/util/Random.hpp"
 
 EnchantWithLevelsFunction::EnchantWithLevelsFunction(std::vector<LootItemCondition*>* conditions,
-                                                     RandomValueBounds levels,
-                                                     bool allowTreasure)
+                                                     RandomValueBounds levels, bool allowTreasure)
     : LootItemFunction(conditions)
 {
     this->levels = levels;
@@ -16,8 +15,7 @@ EnchantWithLevelsFunction::EnchantWithLevelsFunction(std::vector<LootItemConditi
 }
 
 not_null_ptr<ItemInstance> EnchantWithLevelsFunction::apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                                            Random* random,
-                                                            LootTableContext& context)
+                                                            Random* random, LootTableContext& context)
 {
     return EnchantmentHelper::enchantItem(random, itemInstance, levels.getInt(random), allowTreasure);
 }

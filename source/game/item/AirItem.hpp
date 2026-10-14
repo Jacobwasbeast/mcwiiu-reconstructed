@@ -19,10 +19,8 @@ public:
     AirItem(Block* block);
 
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
-    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                 boost::shared_ptr<Player> player,
-                                 std::vector<HtmlString>* lines,
-                                 bool advanced);
+    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                 std::vector<HtmlString>* lines, bool advanced);
 
 private:
     Block* mBlock;

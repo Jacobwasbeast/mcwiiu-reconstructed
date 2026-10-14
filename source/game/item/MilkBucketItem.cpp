@@ -13,12 +13,11 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-not_null_ptr<ItemInstance> MilkBucketItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
-                                                           Level* level,
+not_null_ptr<ItemInstance> MilkBucketItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                            boost::shared_ptr<LivingEntity> entity)
 {
-    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
-        !boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+        && !boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild)
     {
         itemInstance->shrink(1);
     }
@@ -32,8 +31,7 @@ not_null_ptr<ItemInstance> MilkBucketItem::finishUsingItem(not_null_ptr<ItemInst
     {
         boost::static_pointer_cast<Player>(entity)->awardStat(
             gStats->get_itemsUsed(Item::VALIDgetId(this)),
-                          GenericStats::param_itemsUsed(boost::static_pointer_cast<Player>(entity),
-                                                        itemInstance));
+            GenericStats::param_itemsUsed(boost::static_pointer_cast<Player>(entity), itemInstance));
     }
 
     if (itemInstance->isEmpty())
@@ -54,8 +52,7 @@ int MilkBucketItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstanc
     return UseAnim_drink;
 }
 
-InteractionResultHolder MilkBucketItem::use(Level* level,
-                                            boost::shared_ptr<Player> player,
+InteractionResultHolder MilkBucketItem::use(Level* level, boost::shared_ptr<Player> player,
                                             InteractionHand::EInteractionHand hand)
 {
     player->startUsingItem(hand);

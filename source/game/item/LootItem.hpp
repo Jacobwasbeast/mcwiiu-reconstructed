@@ -17,15 +17,10 @@ class Random;
 class LootItem : public LootPoolEntry
 {
 public:
-    LootItem(Item* item,
-             int weight,
-             int quality,
-             std::vector<LootItemFunction*>* functions,
-             std::vector<LootItemCondition*>* conditions,
-             LootTableEntry* entry);
+    LootItem(Item* item, int weight, int quality, std::vector<LootItemFunction*>* functions,
+             std::vector<LootItemCondition*>* conditions, LootTableEntry* entry);
 
-    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                                 Random* random,
+    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random,
                                  LootTableContext& context);
 
 private:

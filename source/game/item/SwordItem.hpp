@@ -27,17 +27,12 @@ public:
 
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual float getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
-                           boost::shared_ptr<LivingEntity> target,
+    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<LivingEntity> target,
                            boost::shared_ptr<LivingEntity> attacker);
-    virtual bool mineBlock(not_null_ptr<ItemInstance> itemInstance,
-                           Level* level,
-                           const BlockState* state,
-                           const BlockPos& pos,
-                           boost::shared_ptr<LivingEntity> entity);
+    virtual bool mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state,
+                           const BlockPos& pos, boost::shared_ptr<LivingEntity> entity);
     virtual bool canDestroySpecial(const BlockState* state);
     virtual bool isHandEquipped();
     virtual int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;

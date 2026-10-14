@@ -9,8 +9,7 @@ class ItemInstance;
 class TakeItemHint : public TutorialHint
 {
 public:
-    TakeItemHint(eTutorial_Hint hint, Tutorial* tutorial, int* itemIds,
-                 unsigned int itemCount, int descriptionId);
+    TakeItemHint(eTutorial_Hint hint, Tutorial* tutorial, int* itemIds, unsigned int itemCount, int descriptionId);
     virtual ~TakeItemHint();
 
     virtual unsigned int onTake(not_null_ptr<ItemInstance> item);

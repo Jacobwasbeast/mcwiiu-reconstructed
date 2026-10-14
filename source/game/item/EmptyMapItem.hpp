@@ -10,8 +10,7 @@ class EmptyMapItem : public ComplexItem
 public:
     EmptyMapItem();
 
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
 };

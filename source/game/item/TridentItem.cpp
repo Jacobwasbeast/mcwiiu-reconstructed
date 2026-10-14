@@ -50,10 +50,8 @@ int TridentItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)
     return 72000;
 }
 
-void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
-                               Level* level,
-                               boost::shared_ptr<LivingEntity> entity,
-                               int timeLeft)
+void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                               boost::shared_ptr<LivingEntity> entity, int timeLeft)
 {
     bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
 
@@ -95,33 +93,18 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
 
         if (riptide >= 3)
         {
-            level->playSound(player,
-                             BlockPos(player),
-                             SoundEvents::TRIDENT_RIPTIDE_3,
-                             SoundSource::eSoundSource_Players,
-                             1.0f,
-                             1.0f,
-                             16.0f);
+            level->playSound(player, BlockPos(player), SoundEvents::TRIDENT_RIPTIDE_3,
+                             SoundSource::eSoundSource_Players, 1.0f, 1.0f, 16.0f);
         }
         else if (riptide == 2)
         {
-            level->playSound(player,
-                             BlockPos(player),
-                             SoundEvents::TRIDENT_RIPTIDE_2,
-                             SoundSource::eSoundSource_Players,
-                             1.0f,
-                             1.0f,
-                             16.0f);
+            level->playSound(player, BlockPos(player), SoundEvents::TRIDENT_RIPTIDE_2,
+                             SoundSource::eSoundSource_Players, 1.0f, 1.0f, 16.0f);
         }
         else
         {
-            level->playSound(player,
-                             BlockPos(player),
-                             SoundEvents::TRIDENT_RIPTIDE_1,
-                             SoundSource::eSoundSource_Players,
-                             1.0f,
-                             1.0f,
-                             16.0f);
+            level->playSound(player, BlockPos(player), SoundEvents::TRIDENT_RIPTIDE_1,
+                             SoundSource::eSoundSource_Players, 1.0f, 1.0f, 16.0f);
         }
     }
     else
@@ -139,11 +122,7 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
 
             boost::shared_ptr<ThrownTrident> trident(new ThrownTrident(level, player, itemInstance));
 
-            trident->shootFromRotation(player,
-                                       player->mXRot,
-                                       player->mYHeadRot,
-                                       0.0f,
-                                       2.5f + (float)riptide * 0.5f,
+            trident->shootFromRotation(player, player->mXRot, player->mYHeadRot, 0.0f, 2.5f + (float)riptide * 0.5f,
                                        1.0f);
 
             if (player->mAbilities.mInstabuild)
@@ -161,30 +140,22 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
             player->mInventory->removeItem(itemInstance);
         }
 
-        level->playSound(player,
-                         player->mX,
-                         player->mY,
-                         player->mZ,
-                         SoundEvents::TRIDENT_THROW,
-                         SoundSource::eSoundSource_Players,
-                         1.0f,
-                         1.0f / (random->nextFloat() * 0.4f + 1.2f) + 0.5f,
+        level->playSound(player, player->mX, player->mY, player->mZ, SoundEvents::TRIDENT_THROW,
+                         SoundSource::eSoundSource_Players, 1.0f, 1.0f / (random->nextFloat() * 0.4f + 1.2f) + 0.5f,
                          16.0f);
     }
 
     player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
 }
 
-InteractionResultHolder TridentItem::use(Level* level,
-                                         boost::shared_ptr<Player> player,
+InteractionResultHolder TridentItem::use(Level* level, boost::shared_ptr<Player> player,
                                          InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
     int riptide = EnchantmentHelper::getEnchantmentLevel(Enchantments::RIPTIDE, player);
 
-    if ((riptide > 0 && !player->isInWaterOrRain())
-        || itemInstance->getDamageValue() >= itemInstance->getMaxDamage())
+    if ((riptide > 0 && !player->isInWaterOrRain()) || itemInstance->getDamageValue() >= itemInstance->getMaxDamage())
     {
         return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
     }
@@ -194,8 +165,7 @@ InteractionResultHolder TridentItem::use(Level* level,
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 
-bool TridentItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
-                            boost::shared_ptr<LivingEntity> target,
+bool TridentItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<LivingEntity> target,
                             boost::shared_ptr<LivingEntity> attacker)
 {
     itemInstance->hurtAndBreak(1, attacker);
@@ -203,11 +173,8 @@ bool TridentItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
     return true;
 }
 
-bool TridentItem::mineBlock(not_null_ptr<ItemInstance> itemInstance,
-                            Level* level,
-                            const BlockState* state,
-                            const BlockPos& pos,
-                            boost::shared_ptr<LivingEntity> entity)
+bool TridentItem::mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state,
+                            const BlockPos& pos, boost::shared_ptr<LivingEntity> entity)
 {
     if (state->getDestroySpeed(level, pos) != 0.0)
     {

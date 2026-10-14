@@ -4,8 +4,7 @@
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/Enchantments.hpp"
 
-LootBonusEnchantment::LootBonusEnchantment(const Rarity* rarity,
-                                           const EnchantmentCategory* category,
+LootBonusEnchantment::LootBonusEnchantment(const Rarity* rarity, const EnchantmentCategory* category,
                                            arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, category, slots)
 {

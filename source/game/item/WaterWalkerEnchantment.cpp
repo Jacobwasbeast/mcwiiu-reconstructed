@@ -4,9 +4,7 @@
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/Enchantments.hpp"
 
-WaterWalkerEnchantment::WaterWalkerEnchantment(
-    const Rarity* rarity,
-    arrayWithLength<const EquipmentSlot*> slots)
+WaterWalkerEnchantment::WaterWalkerEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ARMOR_FEET, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_DEPTH_STRIDER);

@@ -12,8 +12,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/generation/StructurePiece.hpp"
 
-PlaceContainerRuleDefinition::PlaceContainerRuleDefinition()
-    : XboxStructureActionPlaceBlock()
+PlaceContainerRuleDefinition::PlaceContainerRuleDefinition() : XboxStructureActionPlaceBlock()
 {
     mBlock = Blocks::chest;
     mChance = 1.0f;
@@ -27,14 +26,14 @@ PlaceContainerRuleDefinition::~PlaceContainerRuleDefinition()
     {
         delete *it;
     }
-    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end();
+         ++it)
     {
         delete *it;
     }
 }
 
-bool PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const BlockPos& pos,
-                                                           LevelRuleset* ruleset)
+bool PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const BlockPos& pos, LevelRuleset* ruleset)
 {
     if (level->getBlockEntity(pos))
     {
@@ -68,11 +67,9 @@ bool PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const Blo
     return false;
 }
 
-bool PlaceContainerRuleDefinition::placeContainerInChunk(StructurePiece* structurePiece, Level* level,
-                                                           BoundingBox* box)
+bool PlaceContainerRuleDefinition::placeContainerInChunk(StructurePiece* structurePiece, Level* level, BoundingBox* box)
 {
-    BlockPos pos(structurePiece->getWorldX(mEndX, mEndZ),
-                 structurePiece->getWorldY(mEndY),
+    BlockPos pos(structurePiece->getWorldX(mEndX, mEndZ), structurePiece->getWorldY(mEndY),
                  structurePiece->getWorldZ(mEndX, mEndZ));
     if (box->isInside(pos))
     {
@@ -105,8 +102,7 @@ GameRuleDefinition* PlaceContainerRuleDefinition::addChild(ConsoleGameRules::EGa
     return child;
 }
 
-bool PlaceContainerRuleDefinition::evaluateRule(Level* level, LevelRuleset* ruleset,
-                                                 const MiniGameDef& miniGameDef)
+bool PlaceContainerRuleDefinition::evaluateRule(Level* level, LevelRuleset* ruleset, const MiniGameDef& miniGameDef)
 {
     (void)miniGameDef;
     return placeContainerInLevel(level, BlockPos(mEndX, mEndY, mEndZ), ruleset);

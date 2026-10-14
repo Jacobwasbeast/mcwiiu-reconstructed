@@ -14,8 +14,7 @@ ChorusFruitItem::ChorusFruitItem(int nutrition, float saturationModifier)
 {
 }
 
-not_null_ptr<ItemInstance> ChorusFruitItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
-                                                            Level* level,
+not_null_ptr<ItemInstance> ChorusFruitItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                             boost::shared_ptr<LivingEntity> entity)
 {
     not_null_ptr<ItemInstance> result = FoodItem::finishUsingItem(itemInstance, level, entity);
@@ -29,8 +28,7 @@ not_null_ptr<ItemInstance> ChorusFruitItem::finishUsingItem(not_null_ptr<ItemIns
         for (int attempt = 0; attempt < 16; ++attempt)
         {
             double x = entity->mX + (entity->getRandom()->nextDouble() - 0.5) * 16.0;
-            double y = Mth::clamp(entity->mY + (double)(entity->getRandom()->nextInt(16) - 8),
-                                  0.0,
+            double y = Mth::clamp(entity->mY + (double)(entity->getRandom()->nextInt(16) - 8), 0.0,
                                   (double)level->getHeight() - 1.0);
             double z = entity->mZ + (entity->getRandom()->nextDouble() - 0.5) * 16.0;
 
@@ -41,15 +39,8 @@ not_null_ptr<ItemInstance> ChorusFruitItem::finishUsingItem(not_null_ptr<ItemIns
 
             if (entity->randomTeleport(x, y, z))
             {
-                level->playSound(boost::shared_ptr<Player>(),
-                                 oldX,
-                                 oldY,
-                                 oldZ,
-                                 SoundEvents::CHORUS_FRUIT_TELEPORT,
-                                 SoundSource::eSoundSource_Players,
-                                 1.0f,
-                                 1.0f,
-                                 16.0f);
+                level->playSound(boost::shared_ptr<Player>(), oldX, oldY, oldZ, SoundEvents::CHORUS_FRUIT_TELEPORT,
+                                 SoundSource::eSoundSource_Players, 1.0f, 1.0f, 16.0f);
                 entity->playSound(SoundEvents::CHORUS_FRUIT_TELEPORT, 1.0f, 1.0f);
                 break;
             }

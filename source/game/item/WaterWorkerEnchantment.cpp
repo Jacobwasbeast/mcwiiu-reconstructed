@@ -2,8 +2,7 @@
 #include "game/core/StringIds.hpp"
 #include "game/item/EnchantmentCategory.hpp"
 
-WaterWorkerEnchantment::WaterWorkerEnchantment(const Rarity* rarity,
-    arrayWithLength<const EquipmentSlot*> slots)
+WaterWorkerEnchantment::WaterWorkerEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ARMOR_HEAD, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_WATER_WORKER);

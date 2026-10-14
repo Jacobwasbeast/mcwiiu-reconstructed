@@ -34,45 +34,40 @@ public:
     ItemTransforms();
     ItemTransforms(const ItemTransforms& other);
     ItemTransforms(ItemTransform* thirdPersonLeftHand, ItemTransform* thirdPersonRightHand,
-                   ItemTransform* firstPersonLeftHand, ItemTransform* firstPersonRightHand,
-                   ItemTransform* head, ItemTransform* gui, ItemTransform* ground,
-                   ItemTransform* fixed);
+                   ItemTransform* firstPersonLeftHand, ItemTransform* firstPersonRightHand, ItemTransform* head,
+                   ItemTransform* gui, ItemTransform* ground, ItemTransform* fixed);
 
     ItemTransform* getTransform(TransformType type) const;
-    ItemTransforms* set_thirdperson_righthand(float rotationX, float rotationY, float rotationZ,
-                                               float translationX, float translationY, float translationZ,
-                                               float scaleX, float scaleY, float scaleZ);
-    ItemTransforms* set_thirdperson_lefthand(float rotationX, float rotationY, float rotationZ,
-                                              float translationX, float translationY, float translationZ,
-                                              float scaleX, float scaleY, float scaleZ);
-    ItemTransforms* set_thirdperson_hands(float rotationX, float rotationY, float rotationZ,
-                                           float translationX, float translationY, float translationZ,
-                                           float scaleX, float scaleY, float scaleZ);
+    ItemTransforms* set_thirdperson_righthand(float rotationX, float rotationY, float rotationZ, float translationX,
+                                              float translationY, float translationZ, float scaleX, float scaleY,
+                                              float scaleZ);
+    ItemTransforms* set_thirdperson_lefthand(float rotationX, float rotationY, float rotationZ, float translationX,
+                                             float translationY, float translationZ, float scaleX, float scaleY,
+                                             float scaleZ);
+    ItemTransforms* set_thirdperson_hands(float rotationX, float rotationY, float rotationZ, float translationX,
+                                          float translationY, float translationZ, float scaleX, float scaleY,
+                                          float scaleZ);
 
     static ItemTransforms* GetDefaultTransforms();
     static ItemTransforms* getArmourStandTransforms(const ItemInstance* item, LivingEntity* entity);
 
-    ItemTransforms* set_firstperson_lefthand(float rotationX, float rotationY, float rotationZ,
-                                              float translationX, float translationY, float translationZ,
-                                              float scaleX, float scaleY, float scaleZ);
-    ItemTransforms* set_firstperson_righthand(float rotationX, float rotationY, float rotationZ,
-                                               float translationX, float translationY, float translationZ,
-                                               float scaleX, float scaleY, float scaleZ);
-    ItemTransforms* set_ground(float rotationX, float rotationY, float rotationZ,
-                               float translationX, float translationY, float translationZ,
-                               float scaleX, float scaleY, float scaleZ);
-    ItemTransforms* set_fixed(float rotationX, float rotationY, float rotationZ,
-                              float translationX, float translationY, float translationZ,
-                              float scaleX, float scaleY, float scaleZ);
-    ItemTransforms* set_gui(float rotationX, float rotationY, float rotationZ,
-                            float translationX, float translationY, float translationZ,
-                            float scaleX, float scaleY, float scaleZ);
-    ItemTransforms* set_head(float rotationX, float rotationY, float rotationZ,
-                             float translationX, float translationY, float translationZ,
-                             float scaleX, float scaleY, float scaleZ);
-    ItemTransforms* set_firstperson_hands(float rotationX, float rotationY, float rotationZ,
-                                           float translationX, float translationY, float translationZ,
-                                           float scaleX, float scaleY, float scaleZ);
+    ItemTransforms* set_firstperson_lefthand(float rotationX, float rotationY, float rotationZ, float translationX,
+                                             float translationY, float translationZ, float scaleX, float scaleY,
+                                             float scaleZ);
+    ItemTransforms* set_firstperson_righthand(float rotationX, float rotationY, float rotationZ, float translationX,
+                                              float translationY, float translationZ, float scaleX, float scaleY,
+                                              float scaleZ);
+    ItemTransforms* set_ground(float rotationX, float rotationY, float rotationZ, float translationX,
+                               float translationY, float translationZ, float scaleX, float scaleY, float scaleZ);
+    ItemTransforms* set_fixed(float rotationX, float rotationY, float rotationZ, float translationX, float translationY,
+                              float translationZ, float scaleX, float scaleY, float scaleZ);
+    ItemTransforms* set_gui(float rotationX, float rotationY, float rotationZ, float translationX, float translationY,
+                            float translationZ, float scaleX, float scaleY, float scaleZ);
+    ItemTransforms* set_head(float rotationX, float rotationY, float rotationZ, float translationX, float translationY,
+                             float translationZ, float scaleX, float scaleY, float scaleZ);
+    ItemTransforms* set_firstperson_hands(float rotationX, float rotationY, float rotationZ, float translationX,
+                                          float translationY, float translationZ, float scaleX, float scaleY,
+                                          float scaleZ);
 
     static ItemTransforms* getTransforms(const ItemInstance* item, LivingEntity* entity);
     static void apply(ItemTransform* transform, bool leftHand);

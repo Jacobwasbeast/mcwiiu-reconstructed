@@ -26,23 +26,16 @@ public:
     TridentItem();
 
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
-                           boost::shared_ptr<LivingEntity> target,
+    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<LivingEntity> target,
                            boost::shared_ptr<LivingEntity> attacker);
-    virtual bool mineBlock(not_null_ptr<ItemInstance> itemInstance,
-                           Level* level,
-                           const BlockState* state,
-                           const BlockPos& pos,
-                           boost::shared_ptr<LivingEntity> entity);
+    virtual bool mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state,
+                           const BlockPos& pos, boost::shared_ptr<LivingEntity> entity);
     virtual int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;
     virtual int getUseDuration(not_null_ptr<ItemInstance> itemInstance);
-    virtual void releaseUsing(not_null_ptr<ItemInstance> itemInstance,
-                              Level* level,
-                              boost::shared_ptr<LivingEntity> entity,
-                              int timeLeft);
+    virtual void releaseUsing(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                              boost::shared_ptr<LivingEntity> entity, int timeLeft);
     virtual int getEnchantmentValue();
     virtual boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* getDefaultAttributeModifiers(
         const EquipmentSlot* slot);

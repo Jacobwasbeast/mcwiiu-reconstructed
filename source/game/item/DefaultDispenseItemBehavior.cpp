@@ -88,12 +88,12 @@ void DefaultDispenseItemBehavior::playSound(BlockSource* blockSource, eOUTCOME o
     }
 }
 
-void DefaultDispenseItemBehavior::playAnimation(BlockSource* blockSource, const Direction* direction,
-                                                eOUTCOME outcome)
+void DefaultDispenseItemBehavior::playAnimation(BlockSource* blockSource, const Direction* direction, eOUTCOME outcome)
 {
     if (outcome != eOUTCOME_Failure)
     {
-        blockSource->getWorld()->levelEvent(LevelEvent::PARTICLES_SHOOT, blockSource->getPos(), getLevelEventDataFrom(direction));
+        blockSource->getWorld()->levelEvent(LevelEvent::PARTICLES_SHOOT, blockSource->getPos(),
+                                            getLevelEventDataFrom(direction));
     }
 }
 

@@ -13,8 +13,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 
-ThornsEnchantment::ThornsEnchantment(
-    const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
+ThornsEnchantment::ThornsEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ARMOR, slots)
 {
     setDescriptionId((int)IDS_ENCHANTMENT_THORNS);
@@ -66,13 +65,11 @@ int ThornsEnchantment::getDamage(int level, Random* random)
     return random->nextInt(4) + 1;
 }
 
-void ThornsEnchantment::doPostHurt(boost::shared_ptr<LivingEntity> target,
-                                   boost::shared_ptr<Entity> attacker,
+void ThornsEnchantment::doPostHurt(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<Entity> attacker,
                                    int level)
 {
     Random* random = target->getRandom();
-    boost::shared_ptr<ItemInstance> item =
-        EnchantmentHelper::getRandomItemWith(Enchantments::THORNS, target);
+    boost::shared_ptr<ItemInstance> item = EnchantmentHelper::getRandomItemWith(Enchantments::THORNS, target);
 
     if (!item->isEmpty())
     {

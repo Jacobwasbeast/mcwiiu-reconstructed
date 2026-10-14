@@ -4,8 +4,8 @@
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/TridentRiptideEnchantment.hpp"
 
-TridentChannelingEnchantment::TridentChannelingEnchantment(
-    const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
+TridentChannelingEnchantment::TridentChannelingEnchantment(const Rarity* rarity,
+                                                           arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::TRIDENT, slots)
 {
     setDescriptionId((int)IDS_ENCHANTMENT_CHANNELING);

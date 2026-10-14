@@ -13,8 +13,7 @@
 #include "game/world/block/ElytraItem_ItemPropertyFunction.hpp"
 #include "game/world/block/DispenserBlock.hpp"
 
-ElytraItem::ElytraItem()
-    : Item()
+ElytraItem::ElytraItem() : Item()
 {
     mMaxStackSize = 1;
     setMaxDamage(0x1B0);
@@ -37,8 +36,7 @@ bool ElytraItem::isValidRepairItem(not_null_ptr<ItemInstance>, not_null_ptr<Item
     return repairItem->getItem() == Items::phantomMembrane;
 }
 
-InteractionResultHolder ElytraItem::use(Level*,
-                                        boost::shared_ptr<Player> player,
+InteractionResultHolder ElytraItem::use(Level*, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInHand = player->getItemInHand(hand);

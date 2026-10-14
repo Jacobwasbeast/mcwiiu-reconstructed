@@ -4,8 +4,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/EnchantmentCategory.hpp"
 
-TridentImpalerEnchantment::TridentImpalerEnchantment(const Rarity* rarity,
-                                                     arrayWithLength<const EquipmentSlot*> slots)
+TridentImpalerEnchantment::TridentImpalerEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::TRIDENT, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_IMPALER);
@@ -30,8 +29,7 @@ int TridentImpalerEnchantment::getMaxLevel()
     return 5;
 }
 
-float TridentImpalerEnchantment::getDamageBonus(int level,
-                                                const boost::shared_ptr<LivingEntity>& target)
+float TridentImpalerEnchantment::getDamageBonus(int level, const boost::shared_ptr<LivingEntity>& target)
 {
     if (target && target->isInWaterOrRain())
     {

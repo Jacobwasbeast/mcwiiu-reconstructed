@@ -3,8 +3,7 @@
 
 #include "game/item/EnchantmentCategory.hpp"
 
-MendingEnchantment::MendingEnchantment(const Rarity* rarity,
-                                       arrayWithLength<const EquipmentSlot*> slots)
+MendingEnchantment::MendingEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::BREAKABLE, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_MENDING);

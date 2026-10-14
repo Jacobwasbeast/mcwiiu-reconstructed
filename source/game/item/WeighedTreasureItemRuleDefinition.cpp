@@ -22,8 +22,8 @@ WeighedTreasure* WeighedTreasureItemRuleDefinition::getItem()
     not_null_ptr<ItemInstance> item = treasure->getItem();
     item->set4JData(m4JData);
 
-    for (std::vector<AddEnchantmentRuleDefinition*>::iterator it = mEnchantments.begin();
-         it != mEnchantments.end(); ++it)
+    for (std::vector<AddEnchantmentRuleDefinition*>::iterator it = mEnchantments.begin(); it != mEnchantments.end();
+         ++it)
     {
         (*it)->enchantItem(item);
     }

@@ -10,20 +10,15 @@
 #include "game/item/LootItemFunction.hpp"
 #include "game/util/Random.hpp"
 
-LootItem::LootItem(Item* item,
-                   int weight,
-                   int quality,
-                   std::vector<LootItemFunction*>* functions,
-                   std::vector<LootItemCondition*>* conditions,
-                   LootTableEntry* entry)
+LootItem::LootItem(Item* item, int weight, int quality, std::vector<LootItemFunction*>* functions,
+                   std::vector<LootItemCondition*>* conditions, LootTableEntry* entry)
     : LootPoolEntry(weight, quality, conditions, entry),
       mItem(item),
       mFunctions(functions)
 {
 }
 
-uint32_t LootItem::_createItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                               Random* random,
+uint32_t LootItem::_createItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random,
                                LootTableContext& context)
 {
     not_null_ptr<ItemInstance> itemInstance(new ItemInstance(mItem));

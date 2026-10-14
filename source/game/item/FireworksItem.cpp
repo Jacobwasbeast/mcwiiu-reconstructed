@@ -30,20 +30,14 @@ const std::wstring FireworksItem::TAG_E_FLICKER(L"Flicker");
 const std::wstring FireworksItem::TAG_E_COLORS(L"Colors");
 const std::wstring FireworksItem::TAG_E_FADECOLORS(L"FadeColors");
 
-FireworksItem::FireworksItem()
-    : Item()
+FireworksItem::FireworksItem() : Item()
 {
 }
 
-InteractionResult::EInteractionResult FireworksItem::useOn(boost::shared_ptr<Player> player,
-                                                            Level* level,
-                                                            const BlockPos& pos,
-                                                            InteractionHand::EInteractionHand hand,
-                                                            const Direction* direction,
-                                                            float hitX,
-                                                            float hitY,
-                                                            float hitZ,
-                                                            bool simulate)
+InteractionResult::EInteractionResult FireworksItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                           const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                           const Direction* direction, float hitX, float hitY,
+                                                           float hitZ, bool simulate)
 {
     if (!level->mIsClientSide)
     {
@@ -51,19 +45,15 @@ InteractionResult::EInteractionResult FireworksItem::useOn(boost::shared_ptr<Pla
 
         if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
         {
-            boost::shared_ptr<FireworksRocketEntity> rocket(
-                new FireworksRocketEntity(level, player, itemInstance));
+            boost::shared_ptr<FireworksRocketEntity> rocket(new FireworksRocketEntity(level, player, itemInstance));
             level->addEntity(rocket);
             player->getCooldowns()->addCooldown(this, 10);
         }
         else
         {
             boost::shared_ptr<FireworksRocketEntity> rocket(
-                new FireworksRocketEntity(level,
-                                          static_cast<float>(pos.x) + hitX,
-                                          static_cast<float>(pos.y) + hitY,
-                                          static_cast<float>(pos.z) + hitZ,
-                                          itemInstance));
+                new FireworksRocketEntity(level, static_cast<float>(pos.x) + hitX, static_cast<float>(pos.y) + hitY,
+                                          static_cast<float>(pos.z) + hitZ, itemInstance));
             level->addEntity(rocket);
 
             if (!player->mAbilities.mInstabuild)
@@ -76,8 +66,7 @@ InteractionResult::EInteractionResult FireworksItem::useOn(boost::shared_ptr<Pla
     return InteractionResult::eInteractionResult_Success;
 }
 
-InteractionResultHolder FireworksItem::use(Level* level,
-                                           boost::shared_ptr<Player> player,
+InteractionResultHolder FireworksItem::use(Level* level, boost::shared_ptr<Player> player,
                                            InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
@@ -85,8 +74,7 @@ InteractionResultHolder FireworksItem::use(Level* level,
     {
         if (!level->mIsClientSide)
         {
-            boost::shared_ptr<FireworksRocketEntity> rocket(
-                new FireworksRocketEntity(level, player, itemInstance));
+            boost::shared_ptr<FireworksRocketEntity> rocket(new FireworksRocketEntity(level, player, itemInstance));
             level->addEntity(rocket);
             player->getCooldowns()->addCooldown(this, 10);
         }
@@ -101,8 +89,7 @@ InteractionResultHolder FireworksItem::use(Level* level,
     {
         if (!level->mIsClientSide)
         {
-            boost::shared_ptr<FireworksRocketEntity> rocket(
-                new FireworksRocketEntity(level, itemInstance, player));
+            boost::shared_ptr<FireworksRocketEntity> rocket(new FireworksRocketEntity(level, itemInstance, player));
             level->addEntity(rocket);
             if (!player->mAbilities.mInstabuild)
             {
@@ -117,10 +104,8 @@ InteractionResultHolder FireworksItem::use(Level* level,
     }
 }
 
-void FireworksItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                    boost::shared_ptr<Player> player,
-                                    std::vector<HtmlString>* lines,
-                                    bool advanced)
+void FireworksItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                    std::vector<HtmlString>* lines, bool advanced)
 {
     if (!itemInstance->hasTag())
     {
@@ -135,8 +120,8 @@ void FireworksItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 
     if (fireworks->contains(TAG_FLIGHT, 99))
     {
-        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_ITEM_FIREWORKS_FLIGHT)) + L" " +
-                                        _toString(static_cast<int>(fireworks->getByte(TAG_FLIGHT))),
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_ITEM_FIREWORKS_FLIGHT)) + L" "
+                                        + _toString(static_cast<int>(fireworks->getByte(TAG_FLIGHT))),
                                     eMinecraftColour_NOTSET, false, false, 0));
     }
 

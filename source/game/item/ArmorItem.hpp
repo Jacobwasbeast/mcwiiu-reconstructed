@@ -37,12 +37,8 @@ public:
         static const ArmorMaterial* DIAMOND;
         static const ArmorMaterial* TURTLE;
 
-        ArmorMaterial(std::wstring name,
-                      int durabilityMultiplier,
-                      int* slotProtections,
-                      int enchantmentValue,
-                      const SoundEvent* equipSound,
-                      float toughness);
+        ArmorMaterial(std::wstring name, int durabilityMultiplier, int* slotProtections, int enchantmentValue,
+                      const SoundEvent* equipSound, float toughness);
         ~ArmorMaterial();
 
         int getDefenseForSlot(const EquipmentSlot* slot) const;
@@ -67,8 +63,7 @@ public:
 
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
     virtual int getColor(not_null_ptr<ItemInstance> itemInstance, int layer);
     virtual int getEnchantmentValue();
@@ -82,8 +77,7 @@ public:
 
     static void staticCtor();
 
-    static not_null_ptr<ItemInstance> dispenseArmor(BlockSource* blockSource,
-                                                    not_null_ptr<ItemInstance> itemInstance,
+    static not_null_ptr<ItemInstance> dispenseArmor(BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance,
                                                     DefaultDispenseItemBehavior::eOUTCOME& outcome);
     static bool isDurabilityDrainedArmor(AttributeModifier* modifier);
     static TextureAtlasSprite* getEmptyIcon(int slotIndex);

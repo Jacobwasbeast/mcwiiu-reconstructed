@@ -2,12 +2,11 @@
 
 #include "game/item/ItemInstance.hpp"
 
-CraftTask::CraftTask(Item* item, int auxValue, int requiredCount, Tutorial* tutorial,
-                     int descriptionId, bool preCompletionEnabled,
-                     std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
+CraftTask::CraftTask(Item* item, int auxValue, int requiredCount, Tutorial* tutorial, int descriptionId,
+                     bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
                      bool allowFade, bool repeatMessage)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
-                   showMinimumTime, allowFade, repeatMessage)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime, allowFade,
+                   repeatMessage)
 {
     craftedCount = 0;
     itemCount = 1;
@@ -18,12 +17,11 @@ CraftTask::CraftTask(Item* item, int auxValue, int requiredCount, Tutorial* tuto
     auxValues[0] = auxValue;
 }
 
-CraftTask::CraftTask(Item** inputItems, int* inputAuxValues, int itemCount, int requiredCount,
-                     Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-                     std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
-                     bool allowFade, bool repeatMessage)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
-                   showMinimumTime, allowFade, repeatMessage)
+CraftTask::CraftTask(Item** inputItems, int* inputAuxValues, int itemCount, int requiredCount, Tutorial* tutorial,
+                     int descriptionId, bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
+                     bool showMinimumTime, bool allowFade, bool repeatMessage)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime, allowFade,
+                   repeatMessage)
 {
     int index;
     this->itemCount = itemCount;
@@ -49,8 +47,7 @@ void CraftTask::onCrafted(not_null_ptr<ItemInstance> item)
     int index;
     for (index = 0; index < itemCount; ++index)
     {
-        if (items[index] == item->getItem() &&
-            (auxValues[index] == -1 || auxValues[index] == item->getAuxValue()))
+        if (items[index] == item->getItem() && (auxValues[index] == -1 || auxValues[index] == item->getAuxValue()))
         {
             ++craftedCount;
             if (craftedCount < requiredCount)

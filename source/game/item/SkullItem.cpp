@@ -21,14 +21,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const int SKULL_DESCRIPTION_IDS[] = {
-    IDS_ITEM_SKULL_SKELETON,
-    IDS_ITEM_SKULL_WITHER,
-    IDS_ITEM_SKULL_ZOMBIE,
-    IDS_ITEM_SKULL_CHARACTER,
-    IDS_ITEM_SKULL_CREEPER,
-    IDS_ITEM_SKULL_DRAGON
-};
+static const int SKULL_DESCRIPTION_IDS[] = {IDS_ITEM_SKULL_SKELETON,  IDS_ITEM_SKULL_WITHER,  IDS_ITEM_SKULL_ZOMBIE,
+                                            IDS_ITEM_SKULL_CHARACTER, IDS_ITEM_SKULL_CREEPER, IDS_ITEM_SKULL_DRAGON};
 
 SkullItem::SkullItem()
 {
@@ -36,15 +30,10 @@ SkullItem::SkullItem()
     setStackedByData(true);
 }
 
-InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
-                                                        bool simulate)
+InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                       const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                       const Direction* direction, float hitX, float hitY, float hitZ,
+                                                       bool simulate)
 {
     if (direction == Direction::DOWN)
     {
@@ -62,8 +51,7 @@ InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player>
     }
 
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (!player->mayUseItemAt(placePos, direction, itemInstance)
-        || !Blocks::skull->mayPlace(level, placePos))
+    if (!player->mayUseItemAt(placePos, direction, itemInstance) || !Blocks::skull->mayPlace(level, placePos))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
@@ -75,10 +63,8 @@ InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player>
 
     if (!simulate)
     {
-        level->setBlock(placePos,
-                        Blocks::skull->defaultBlockState()->setValue(SkullBlock::FACING, direction),
-                        Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
-                        false);
+        level->setBlock(placePos, Blocks::skull->defaultBlockState()->setValue(SkullBlock::FACING, direction),
+                        Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
 
         int rotation = 0;
         if (direction == Direction::UP)
@@ -90,8 +76,7 @@ InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player>
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
         if (eTYPE_DERIVED_FROM(BlockEntityType::SKULL, blockEntity->GetType()))
         {
-            boost::shared_ptr<SkullBlockEntity> skull =
-                boost::static_pointer_cast<SkullBlockEntity>(blockEntity);
+            boost::shared_ptr<SkullBlockEntity> skull = boost::static_pointer_cast<SkullBlockEntity>(blockEntity);
             skull->setSkullType(itemInstance->getAuxValue(), L"");
             skull->setRotation(rotation);
             static_cast<SkullBlock*>(Blocks::skull)->checkMobSpawn(level, placePos, skull, player);

@@ -44,30 +44,22 @@ public:
     bool supportsEntityType(const unsigned long long& type, int& variant) const;
     void addBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_null_ptr<ItemInstance> itemInstance);
     not_null_ptr<ItemInstance> createResultItem(not_null_ptr<ItemInstance> itemInstance,
-                                                boost::shared_ptr<Player> player,
-                                                Item* item,
+                                                boost::shared_ptr<Player> player, Item* item,
                                                 boost::shared_ptr<Entity> entity);
-    not_null_ptr<ItemInstance> collectFish(boost::shared_ptr<Player> player,
-                                           boost::shared_ptr<Entity> entity,
+    not_null_ptr<ItemInstance> collectFish(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity,
                                            boost::shared_ptr<ItemInstance> itemInstance);
-    InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                Level* level,
-                                                const BlockPos& pos,
-                                                InteractionHand::EInteractionHand hand,
-                                                const Direction* direction,
-                                                float hitX,
-                                                float hitY,
-                                                float hitZ,
-                                                bool simulate);
+    InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
+                                                InteractionHand::EInteractionHand hand, const Direction* direction,
+                                                float hitX, float hitY, float hitZ, bool simulate);
     HitResult* ScanForHitResultEntities(boost::shared_ptr<Player> player, Level* level, const HitResult* result);
     HitResult* GetPlayerHitResult(boost::shared_ptr<Player> player, Level* level, bool useLiquids);
     bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     bool isFishBucketNameCensored(const std::wstring& name, const std::wstring& owner, bool restricted, bool host);
     bool readBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_null_ptr<ItemInstance> itemInstance);
-    bool emptyBucket(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, not_null_ptr<ItemInstance> itemInstance);
+    bool emptyBucket(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
+                     not_null_ptr<ItemInstance> itemInstance);
     InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
-    not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
-                                               Level* level,
+    not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                boost::shared_ptr<LivingEntity> entity);
     int getUseDuration(not_null_ptr<ItemInstance> itemInstance);
     int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;

@@ -8,10 +8,7 @@
 class ItemInstanceClonerBuilder : public UIScene_CreativeMenu::ItemBuilder
 {
 public:
-    ItemInstanceClonerBuilder(const ItemInstance& item)
-        : mItem(item)
-    {
-    }
+    ItemInstanceClonerBuilder(const ItemInstance& item) : mItem(item) {}
 
     virtual not_null_ptr<ItemInstance> build() const;
 

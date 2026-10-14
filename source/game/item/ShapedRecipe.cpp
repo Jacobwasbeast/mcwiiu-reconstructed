@@ -34,10 +34,11 @@ ItemInstance* ShapedRecipe::getIngredientItem(int column, int row)
     return mIngredients[column + row * mWidth];
 }
 
-NonNullList<not_null_ptr<ItemInstance> > ShapedRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > ShapedRecipe::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    NonNullList<not_null_ptr<ItemInstance> > result =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     for (unsigned int i = 0; i < result.size(); i++)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
@@ -90,8 +91,8 @@ bool ShapedRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContaine
             {
                 return false;
             }
-            if (ingredient->getAuxValue() != -1 && ingredient->getAuxValue() != item->getAuxValue() &&
-                (ingredient->getAuxValue() != 0 || !item->isDamageableItem()))
+            if (ingredient->getAuxValue() != -1 && ingredient->getAuxValue() != item->getAuxValue()
+                && (ingredient->getAuxValue() != 0 || !item->isDamageableItem()))
             {
                 return false;
             }

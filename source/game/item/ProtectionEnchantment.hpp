@@ -36,8 +36,7 @@ public:
         int mLevelCostSpan;
     };
 
-    ProtectionEnchantment(const Rarity* rarity, const Type* type,
-                          arrayWithLength<const EquipmentSlot*> slots);
+    ProtectionEnchantment(const Rarity* rarity, const Type* type, arrayWithLength<const EquipmentSlot*> slots);
 
     virtual int getMaxLevel();
     virtual int getMinCost(int level);
@@ -45,10 +44,8 @@ public:
     virtual int getDamageProtection(int level, const DamageSource* damageSource);
     virtual bool checkCompatibility(const Enchantment* other) const;
     virtual int getDescriptionId();
-    static int getFireAfterDampener(const boost::shared_ptr<LivingEntity>& entity,
-                                    int damage);
-    static double getExplosionKnockbackAfterDampener(
-        const boost::shared_ptr<LivingEntity>& entity, double knockback);
+    static int getFireAfterDampener(const boost::shared_ptr<LivingEntity>& entity, int damage);
+    static double getExplosionKnockbackAfterDampener(const boost::shared_ptr<LivingEntity>& entity, double knockback);
     virtual ~ProtectionEnchantment();
 
 private:

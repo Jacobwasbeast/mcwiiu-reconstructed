@@ -24,13 +24,9 @@ public:
     FireworksRecipe();
     virtual ~FireworksRecipe();
 
-    static void updatePossibleRecipes(boost::shared_ptr<CraftingContainer> craftingContainer,
-                                      bool* hasPaper,
-                                      bool* hasGunpowder,
-                                      bool* hasFireworkCharge);
-    static bool isValidIngredient(not_null_ptr<ItemInstance> item,
-                                  bool hasPaper,
-                                  bool hasGunpowder,
+    static void updatePossibleRecipes(boost::shared_ptr<CraftingContainer> craftingContainer, bool* hasPaper,
+                                      bool* hasGunpowder, bool* hasFireworkCharge);
+    static bool isValidIngredient(not_null_ptr<ItemInstance> item, bool hasPaper, bool hasGunpowder,
                                   bool hasFireworkCharge);
     void setResultItem(not_null_ptr<ItemInstance> item);
     static void CreateNewThreadStorage();
@@ -42,12 +38,12 @@ public:
     virtual int size();
     virtual ItemInstance* getResultItem();
     virtual ItemInstance* getIngredientItem(int column, int row);
-    virtual NonNullList<not_null_ptr<ItemInstance> > getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer);
+    virtual NonNullList<not_null_ptr<ItemInstance> > getRemainingItems(
+        boost::shared_ptr<CraftingContainer> craftingContainer);
     virtual _eGroupType getGroup();
     virtual bool recipeRequires(int itemId);
     virtual void recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired);
     virtual boost::shared_ptr<CraftingContainer> generateExpectedCraftSlots();
-
 };
 
 #endif

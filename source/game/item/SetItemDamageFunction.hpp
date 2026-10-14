@@ -19,7 +19,8 @@ class SetItemDamageFunction : public LootItemFunction
 public:
     SetItemDamageFunction(std::vector<LootItemCondition*>* conditions, RandomValueBounds damage);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context);
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
+                                             LootTableContext& context);
 
 protected:
     RandomValueBounds damage;

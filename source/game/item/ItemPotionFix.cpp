@@ -5,9 +5,19 @@
 #include "game/item/Potion.hpp"
 #include "game/item/PotionUtils.hpp"
 #include "game/item/Items.hpp"
-namespace { std::wstring blankPotionName; std::wstring missingPotionName; std::wstring potionNames[128]; }
-ItemPotionFix::~ItemPotionFix() {}
-int ItemPotionFix::getVersion() { return 102; }
+namespace
+{
+std::wstring blankPotionName;
+std::wstring missingPotionName;
+std::wstring potionNames[128];
+}
+ItemPotionFix::~ItemPotionFix()
+{
+}
+int ItemPotionFix::getVersion()
+{
+    return 102;
+}
 CompoundTag* ItemPotionFix::fix(CompoundTag* tag)
 {
     if (CheckID(tag, L"minecraft:potion"))

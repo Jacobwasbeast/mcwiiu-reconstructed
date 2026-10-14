@@ -6,8 +6,7 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 
-ShapelessRecipe::ShapelessRecipe(ItemInstance* result,
-                                 std::vector<ItemInstance*>* ingredients,
+ShapelessRecipe::ShapelessRecipe(ItemInstance* result, std::vector<ItemInstance*>* ingredients,
                                  Recipe::_eGroupType group)
     : Recipe(),
       mGroup(group),
@@ -30,10 +29,11 @@ ItemInstance* ShapelessRecipe::getIngredientItem(int column, int row)
     return ItemInstance::EMPTY.get();
 }
 
-NonNullList<not_null_ptr<ItemInstance> > ShapelessRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > ShapelessRecipe::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    NonNullList<not_null_ptr<ItemInstance> > result =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     for (unsigned int i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
@@ -65,10 +65,9 @@ bool ShapelessRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
                 for (std::vector<ItemInstance*>::iterator it = remaining.begin(); it != end; ++it)
                 {
                     ItemInstance* ingredient = *it;
-                    if (item->getItem() == ingredient->getItem() &&
-                        (ingredient->getAuxValue() == -1 ||
-                         item->getAuxValue() == ingredient->getAuxValue() ||
-                         (ingredient->getAuxValue() == 0 && ingredient->isDamageableItem())))
+                    if (item->getItem() == ingredient->getItem()
+                        && (ingredient->getAuxValue() == -1 || item->getAuxValue() == ingredient->getAuxValue()
+                            || (ingredient->getAuxValue() == 0 && ingredient->isDamageableItem())))
                     {
                         found = true;
                         remaining.erase(it);
@@ -192,7 +191,8 @@ boost::shared_ptr<CraftingContainer> ShapelessRecipe::generateExpectedCraftSlots
 {
     boost::shared_ptr<CraftingContainer> container(new CraftingContainer(NULL, 3, 3));
     unsigned int slot = 0;
-    for (std::vector<ItemInstance*>::const_iterator ingredient = mIngredients->begin(); ingredient != mIngredients->end(); ++ingredient)
+    for (std::vector<ItemInstance*>::const_iterator ingredient = mIngredients->begin();
+         ingredient != mIngredients->end(); ++ingredient)
     {
         ItemInstance* item = *ingredient;
         if (item != NULL && !item->isEmpty())

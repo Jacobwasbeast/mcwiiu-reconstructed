@@ -4,14 +4,12 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 
-BowlFoodItem::BowlFoodItem(int nutrition)
-    : FoodItem(nutrition, false)
+BowlFoodItem::BowlFoodItem(int nutrition) : FoodItem(nutrition, false)
 {
     setMaxStackSize(1);
 }
 
-not_null_ptr<ItemInstance> BowlFoodItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
-                                                         Level* level,
+not_null_ptr<ItemInstance> BowlFoodItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                          boost::shared_ptr<LivingEntity> entity)
 {
     FoodItem::finishUsingItem(itemInstance, level, entity);

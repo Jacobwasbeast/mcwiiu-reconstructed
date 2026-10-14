@@ -24,13 +24,14 @@
 #include "game/world/generation/StructureFeatureIO.hpp"
 
 MinecartContainer::MinecartContainer(Level* level, double x, double y, double z)
-    : Minecart(level, x, y, z), LockableContainer(), mItems()
+    : Minecart(level, x, y, z),
+      LockableContainer(),
+      mItems()
 {
     _init();
 }
 
-MinecartContainer::MinecartContainer(Level* level)
-    : Minecart(level), LockableContainer(), mItems()
+MinecartContainer::MinecartContainer(Level* level) : Minecart(level), LockableContainer(), mItems()
 {
     _init();
 }
@@ -160,7 +161,8 @@ bool MinecartContainer::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(BlockPos(Vec3::newTemp(mX, mY, mZ)), *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
+    if (player->distanceAsIfHitscanned(BlockPos(Vec3::newTemp(mX, mY, mZ)), *player->mBoundingBox)
+        > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
     {
         return false;
     }
@@ -235,7 +237,8 @@ void MinecartContainer::destroy(const DamageSource* source)
     Minecart::destroy(source);
     if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
     {
-        Containers::dropContents(mLevel, shared_from_this(), boost::static_pointer_cast<MinecartContainer>(shared_from_this()));
+        Containers::dropContents(mLevel, shared_from_this(),
+                                 boost::static_pointer_cast<MinecartContainer>(shared_from_this()));
     }
 }
 
@@ -249,7 +252,8 @@ void MinecartContainer::remove()
 {
     if (mDropContentsWhenDead)
     {
-        Containers::dropContents(mLevel, shared_from_this(), boost::static_pointer_cast<MinecartContainer>(shared_from_this()));
+        Containers::dropContents(mLevel, shared_from_this(),
+                                 boost::static_pointer_cast<MinecartContainer>(shared_from_this()));
     }
     Entity::remove();
 }

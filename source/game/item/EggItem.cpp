@@ -20,8 +20,7 @@ EggItem::EggItem() : Item()
     mMaxStackSize = 16;
 }
 
-InteractionResultHolder EggItem::use(Level* level,
-                                     boost::shared_ptr<Player> player,
+InteractionResultHolder EggItem::use(Level* level, boost::shared_ptr<Player> player,
                                      InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
@@ -31,15 +30,8 @@ InteractionResultHolder EggItem::use(Level* level,
         itemInstance->shrink(1);
     }
 
-    level->playSound(boost::shared_ptr<Player>(),
-                     player->mX,
-                     player->mY,
-                     player->mZ,
-                     SoundEvents::EGG_THROW,
-                     SoundSource::eSoundSource_Players,
-                     0.5f,
-                     0.4f / (random->nextFloat() * 0.4f + 0.8f),
-                     16.0f);
+    level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::EGG_THROW,
+                     SoundSource::eSoundSource_Players, 0.5f, 0.4f / (random->nextFloat() * 0.4f + 0.8f), 16.0f);
 
     if (!level->mIsClientSide)
     {

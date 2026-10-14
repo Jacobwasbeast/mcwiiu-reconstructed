@@ -20,15 +20,9 @@ public:
     static void DoDropTNT(boost::shared_ptr<Player> player);
     static void DoGainPoint(boost::shared_ptr<Player> player);
     static bool IsDebuff(eGlide_Timed_Powerup_ID powerupId);
-    static void BroadcastTimedPowerup(boost::shared_ptr<Player> player,
-                                      eGlide_Timed_Powerup_ID powerupId,
-                                      int time);
-    static void ActivateTimedPowerup(boost::shared_ptr<Player> player,
-                                     eGlide_Timed_Powerup_ID powerupId,
-                                     int time);
-    static void DoTimedPowerup(boost::shared_ptr<Player> player,
-                               eGlide_Timed_Powerup_ID powerupId,
-                               int time);
+    static void BroadcastTimedPowerup(boost::shared_ptr<Player> player, eGlide_Timed_Powerup_ID powerupId, int time);
+    static void ActivateTimedPowerup(boost::shared_ptr<Player> player, eGlide_Timed_Powerup_ID powerupId, int time);
+    static void DoTimedPowerup(boost::shared_ptr<Player> player, eGlide_Timed_Powerup_ID powerupId, int time);
     static void DoSetInvulnerable(boost::shared_ptr<Player> player, int time);
     static void UsePowerupItem(boost::shared_ptr<Player> player, int itemId);
 };

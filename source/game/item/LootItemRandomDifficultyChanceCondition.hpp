@@ -9,9 +9,7 @@ class Random;
 class LootItemRandomDifficultyChanceCondition : public LootItemCondition
 {
 public:
-    LootItemRandomDifficultyChanceCondition(float peacefulChance,
-                                            float easyChance,
-                                            float normalChance,
+    LootItemRandomDifficultyChanceCondition(float peacefulChance, float easyChance, float normalChance,
                                             float hardChance);
 
     virtual bool applies(Random* random, LootTableContext& context);

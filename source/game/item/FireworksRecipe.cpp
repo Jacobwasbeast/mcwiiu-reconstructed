@@ -21,8 +21,7 @@ FireworksRecipe::ThreadStorage::ThreadStorage()
     mResultItem = ItemInstance::EMPTY;
 }
 
-FireworksRecipe::FireworksRecipe()
-    : Recipe()
+FireworksRecipe::FireworksRecipe() : Recipe()
 {
 }
 
@@ -30,10 +29,8 @@ FireworksRecipe::~FireworksRecipe()
 {
 }
 
-void FireworksRecipe::updatePossibleRecipes(boost::shared_ptr<CraftingContainer> craftingContainer,
-                                            bool* hasPaper,
-                                            bool* hasGunpowder,
-                                            bool* hasFireworkCharge)
+void FireworksRecipe::updatePossibleRecipes(boost::shared_ptr<CraftingContainer> craftingContainer, bool* hasPaper,
+                                            bool* hasGunpowder, bool* hasFireworkCharge)
 {
     *hasPaper = false;
     *hasGunpowder = false;
@@ -77,8 +74,8 @@ void FireworksRecipe::updatePossibleRecipes(boost::shared_ptr<CraftingContainer>
         {
             ++effects;
         }
-        else if (item->getItem() == Items::fireCharge || item->getItem() == Items::feather ||
-                 item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
+        else if (item->getItem() == Items::fireCharge || item->getItem() == Items::feather
+                 || item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
         {
             ++shapes;
         }
@@ -123,9 +120,7 @@ void FireworksRecipe::updatePossibleRecipes(boost::shared_ptr<CraftingContainer>
     *hasFireworkCharge = true;
 }
 
-bool FireworksRecipe::isValidIngredient(not_null_ptr<ItemInstance> item,
-                                        bool hasPaper,
-                                        bool hasGunpowder,
+bool FireworksRecipe::isValidIngredient(not_null_ptr<ItemInstance> item, bool hasPaper, bool hasGunpowder,
                                         bool hasFireworkCharge)
 {
     bool valid = false;
@@ -146,9 +141,9 @@ bool FireworksRecipe::isValidIngredient(not_null_ptr<ItemInstance> item,
     {
         valid = hasPaper;
     }
-    else if (item->getItem() == Items::glowstoneDust || item->getItem() == Items::diamond ||
-             item->getItem() == Items::fireCharge || item->getItem() == Items::feather ||
-             item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
+    else if (item->getItem() == Items::glowstoneDust || item->getItem() == Items::diamond
+             || item->getItem() == Items::fireCharge || item->getItem() == Items::feather
+             || item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
     {
         valid = hasGunpowder;
     }
@@ -232,8 +227,8 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
         {
             ++effects;
         }
-        else if (item->getItem() == Items::fireCharge || item->getItem() == Items::feather ||
-                 item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
+        else if (item->getItem() == Items::fireCharge || item->getItem() == Items::feather
+                 || item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
         {
             ++shapes;
         }
@@ -433,11 +428,12 @@ ItemInstance* FireworksRecipe::getIngredientItem(int column, int row)
     return ItemInstance::EMPTY.get();
 }
 
-NonNullList<not_null_ptr<ItemInstance> > FireworksRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > FireworksRecipe::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
     unsigned int slot;
-    NonNullList<not_null_ptr<ItemInstance> > remaining =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > remaining = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
 
     for (slot = 0; slot < remaining.size(); ++slot)
     {
@@ -445,7 +441,8 @@ NonNullList<not_null_ptr<ItemInstance> > FireworksRecipe::getRemainingItems(boos
 
         if (item->getItem()->hasCraftingRemainingItem())
         {
-            remaining.set(slot, not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
+            remaining.set(slot,
+                          not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
         }
     }
 

@@ -26,18 +26,16 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-BottleItem::BottleItem()
-    : Item()
+BottleItem::BottleItem() : Item()
 {
 }
 
 not_null_ptr<ItemInstance> BottleItem::turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
-                                    boost::shared_ptr<Player> player,
-                                    not_null_ptr<ItemInstance> result)
+                                                          boost::shared_ptr<Player> player,
+                                                          not_null_ptr<ItemInstance> result)
 {
     itemInstance->shrink(1);
-    player->awardStat(GenericStats::itemsUsed(this),
-                      GenericStats::param_itemsUsed(player, itemInstance));
+    player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
 
     if (itemInstance->isEmpty())
         return result;
@@ -49,20 +47,18 @@ not_null_ptr<ItemInstance> BottleItem::turnBottleIntoItem(not_null_ptr<ItemInsta
     return itemInstance;
 }
 
-InteractionResultHolder BottleItem::use(Level* level,
-                                        boost::shared_ptr<Player> player,
+InteractionResultHolder BottleItem::use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand)
 {
     AreaEffectCloud_Predicate predicate;
     AABB* area = player->mBoundingBox->grow(2.0);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(AreaEffectCloud), area, &predicate, false);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(AreaEffectCloud), area,
+                                                                                  &predicate, false);
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
     if (!entities->empty())
     {
-        boost::shared_ptr<AreaEffectCloud> cloud =
-            boost::static_pointer_cast<AreaEffectCloud>(entities->at(0));
+        boost::shared_ptr<AreaEffectCloud> cloud = boost::static_pointer_cast<AreaEffectCloud>(entities->at(0));
         cloud->setRadius(cloud->getRadius() - 0.5f);
         delete entities;
         player->awardStat(GenericStats::youNeedAMint(), GenericStats::param_youNeedAMint());
@@ -95,8 +91,8 @@ InteractionResultHolder BottleItem::use(Level* level,
             }
             if (level->getBlockState(pos)->getMaterial() == Material::WATER)
             {
-                level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::BOTTLE_FILL,
-                                 SoundSource::eSoundSource_Neutral, 1.0f, 1.0f, 16.0f);
+                level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ,
+                                 SoundEvents::BOTTLE_FILL, SoundSource::eSoundSource_Neutral, 1.0f, 1.0f, 16.0f);
                 delete hit;
                 not_null_ptr<ItemInstance> result(new ItemInstance(Items::potion));
                 PotionUtils::setPotion(result, Potions::WATER);
@@ -110,9 +106,7 @@ InteractionResultHolder BottleItem::use(Level* level,
     return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
 }
 
-bool BottleItem::TestUse(Level* level,
-                         boost::shared_ptr<Player> player,
-                         InteractionHand::EInteractionHand hand)
+bool BottleItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
     AreaEffectCloud_Predicate predicate;
     AABB* area = player->mBoundingBox->grow(2.0);

@@ -23,22 +23,13 @@ class HoeItem : public Item
 public:
     HoeItem(const Item::Tier* tier);
 
-    void setBlock(not_null_ptr<ItemInstance> itemInstance,
-                  boost::shared_ptr<Player> player,
-                  Level* level,
-                  const BlockPos& pos,
-                  const BlockState* state);
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                         Level* level,
-                                                         const BlockPos& pos,
-                                                         InteractionHand::EInteractionHand hand,
-                                                         const Direction* direction,
-                                                         float hitX,
-                                                         float hitY,
-                                                         float hitZ,
-                                                         bool simulate);
-    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
-                           boost::shared_ptr<LivingEntity> target,
+    void setBlock(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player, Level* level,
+                  const BlockPos& pos, const BlockState* state);
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate);
+    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<LivingEntity> target,
                            boost::shared_ptr<LivingEntity> attacker);
     virtual bool isHandEquipped();
     const Item::Tier* getTier();

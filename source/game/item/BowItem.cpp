@@ -32,12 +32,8 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const std::wstring BOW_PULL_ICON_NAMES[3] =
-{
-    std::wstring(L"bow_pull_0"),
-    std::wstring(L"bow_pull_1"),
-    std::wstring(L"bow_pull_2")
-};
+static const std::wstring BOW_PULL_ICON_NAMES[3] = {std::wstring(L"bow_pull_0"), std::wstring(L"bow_pull_1"),
+                                                    std::wstring(L"bow_pull_2")};
 
 BowItem::BowItem()
 {
@@ -106,10 +102,8 @@ float BowItem::getPowerForTime(int charge)
     return power;
 }
 
-void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstance,
-                                           Level* level,
-                                           boost::shared_ptr<LivingEntity> entity,
-                                           int timeLeft,
+void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                                           boost::shared_ptr<LivingEntity> entity, int timeLeft,
                                            not_null_ptr<ItemInstance> projectile)
 {
     bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
@@ -122,7 +116,7 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
 
     bool infiniteAmmo = player->mAbilities.mInstabuild
-        || EnchantmentHelper::getItemEnchantmentLevel(Enchantments::INFINITY_ARROWS, itemInstance) > 0;
+                        || EnchantmentHelper::getItemEnchantmentLevel(Enchantments::INFINITY_ARROWS, itemInstance) > 0;
 
     if (projectile->isEmpty() && !infiniteAmmo)
     {
@@ -146,8 +140,8 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
     if (!level->mIsClientSide)
     {
         ArrowItem* arrowItem = dynamic_cast<ArrowItem*>(projectile->getItem()) != NULL
-            ? static_cast<ArrowItem*>(projectile->getItem())
-            : static_cast<ArrowItem*>(Items::arrow);
+                                   ? static_cast<ArrowItem*>(projectile->getItem())
+                                   : static_cast<ArrowItem*>(Items::arrow);
 
         boost::shared_ptr<Arrow> arrow = arrowItem->createArrow(level, projectile, player);
         arrow->shootFromRotation(player, player->mXRot, player->mYHeadRot, 0.0f, power * 3.0f, 1.0f);
@@ -182,8 +176,7 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
 
         if (creativeArrow
             || (player->mAbilities.mInstabuild
-                && (projectile->getItem() == Items::spectralArrow
-                    || projectile->getItem() == Items::tippedArrow)))
+                && (projectile->getItem() == Items::spectralArrow || projectile->getItem() == Items::tippedArrow)))
         {
             arrow->setPickup(AbstractRotatedItemProjectile::ePickup_CreativeOnly);
         }
@@ -191,14 +184,8 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
         level->addEntity(arrow);
     }
 
-    level->playSound(boost::shared_ptr<Player>(),
-                     player->mX,
-                     player->mY,
-                     player->mZ,
-                     SoundEvents::ARROW_SHOOT,
-                     SoundSource::eSoundSource_Players,
-                     1.0f,
-                     1.0f / (random->nextFloat() * 0.4f + 1.2f) + power * 0.5f,
+    level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::ARROW_SHOOT,
+                     SoundSource::eSoundSource_Players, 1.0f, 1.0f / (random->nextFloat() * 0.4f + 1.2f) + power * 0.5f,
                      16.0f);
 
     if (!creativeArrow && !player->mAbilities.mInstabuild)
@@ -211,14 +198,11 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
         }
     }
 
-    player->awardStat(GenericStats::itemsUsed(this),
-                      GenericStats::param_itemsUsed(player, itemInstance));
+    player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
 }
 
-void BowItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
-                           Level* level,
-                           boost::shared_ptr<LivingEntity> entity,
-                           int timeLeft)
+void BowItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                           boost::shared_ptr<LivingEntity> entity, int timeLeft)
 {
     bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
 
@@ -244,8 +228,7 @@ int BowItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) cons
     return UseAnim_bow;
 }
 
-InteractionResultHolder BowItem::fjUseWithProjectile(Level* level,
-                                                     boost::shared_ptr<Player> player,
+InteractionResultHolder BowItem::fjUseWithProjectile(Level* level, boost::shared_ptr<Player> player,
                                                      InteractionHand::EInteractionHand hand,
                                                      not_null_ptr<ItemInstance> projectile)
 {
@@ -263,8 +246,7 @@ InteractionResultHolder BowItem::fjUseWithProjectile(Level* level,
     return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
 }
 
-InteractionResultHolder BowItem::use(Level* level,
-                                     boost::shared_ptr<Player> player,
+InteractionResultHolder BowItem::use(Level* level, boost::shared_ptr<Player> player,
                                      InteractionHand::EInteractionHand hand)
 {
     return fjUseWithProjectile(level, player, hand, findProjectile(player));
@@ -327,8 +309,7 @@ TextureAtlasSprite* BowItem::GetOverrideCountIcon(not_null_ptr<ItemInstance> ite
 
 unsigned int BowItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pPlayer->mAbilities.mInstabuild
-        || tooltipData.m_pPlayer->mInventory->hasResource(Items::arrow)
+    if (tooltipData.m_pPlayer->mAbilities.mInstabuild || tooltipData.m_pPlayer->mInventory->hasResource(Items::arrow)
         || tooltipData.m_pPlayer->mInventory->hasResource(Items::tippedArrow))
     {
         return tooltipData.m_pPlayer->isUsingItem() ? IDS_TOOLTIPS_RELEASE_BOW : IDS_TOOLTIPS_DRAW_BOW;

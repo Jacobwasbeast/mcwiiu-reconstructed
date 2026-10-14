@@ -2,24 +2,22 @@
 
 #include "game/item/ItemInstance.hpp"
 
-UseItemTask::UseItemTask(Item* item, Tutorial* tutorial, int descriptionId,
-                         bool preCompletionEnabled,
-                         std::vector<TutorialConstraint*>* constraints,
-                         bool showMinimumTime, bool allowFade, bool repeatMessage)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
-                   showMinimumTime, allowFade, repeatMessage)
+UseItemTask::UseItemTask(Item* item, Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
+                         std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                         bool repeatMessage)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime, allowFade,
+                   repeatMessage)
 {
     itemCount = 1;
     items = new Item*[1];
     items[0] = item;
 }
 
-UseItemTask::UseItemTask(Item** itemsValue, int itemCountValue, Tutorial* tutorial,
-                         int descriptionId, bool preCompletionEnabled,
-                         std::vector<TutorialConstraint*>* constraints,
-                         bool showMinimumTime, bool allowFade, bool repeatMessage)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
-                   showMinimumTime, allowFade, repeatMessage)
+UseItemTask::UseItemTask(Item** itemsValue, int itemCountValue, Tutorial* tutorial, int descriptionId,
+                         bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
+                         bool allowFade, bool repeatMessage)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime, allowFade,
+                   repeatMessage)
 {
     itemCount = itemCountValue;
     items = new Item*[itemCount];

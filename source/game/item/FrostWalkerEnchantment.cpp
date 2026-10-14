@@ -20,8 +20,7 @@
 #include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
 
-FrostWalkerEnchantment::FrostWalkerEnchantment(const Rarity* rarity,
-                                               arrayWithLength<const EquipmentSlot*> slots)
+FrostWalkerEnchantment::FrostWalkerEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ARMOR_FEET, slots)
 {
     setDescriptionId((int)IDS_ENCHANTMENT_FROST_WALKER);
@@ -47,8 +46,8 @@ int FrostWalkerEnchantment::getMaxLevel()
     return 2;
 }
 
-void FrostWalkerEnchantment::onEntityMoved(const boost::shared_ptr<LivingEntity>& entity,
-                                           Level* level, const BlockPos& pos, int levelValue)
+void FrostWalkerEnchantment::onEntityMoved(const boost::shared_ptr<LivingEntity>& entity, Level* level,
+                                           const BlockPos& pos, int levelValue)
 {
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
     if (!entity->mOnGround || (player && player->mAbilities.mFlying))
@@ -71,8 +70,7 @@ void FrostWalkerEnchantment::onEntityMoved(const boost::shared_ptr<LivingEntity>
             if (level->getBlockState(abovePos)->getBlock() == Blocks::air)
             {
                 const BlockState* state = level->getBlockState(current);
-                if (state->getMaterial() == Material::WATER
-                    && state->getValue(LiquidBlock::LEVEL) == 0)
+                if (state->getMaterial() == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0)
                 {
                     bool canPlace = level->mayPlace(Blocks::frosted_ice, current, false, Direction::DOWN,
                                                     boost::shared_ptr<Entity>());

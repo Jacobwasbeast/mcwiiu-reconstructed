@@ -8,8 +8,7 @@
 
 static const std::wstring TAG_GENERATION = L"generation";
 
-BookCloningRecipe::BookCloningRecipe()
-    : Recipe()
+BookCloningRecipe::BookCloningRecipe() : Recipe()
 {
 }
 
@@ -80,8 +79,8 @@ not_null_ptr<ItemInstance> BookCloningRecipe::assemble(boost::shared_ptr<Craftin
         }
     }
 
-    if (writtenBook->isEmpty() || !writtenBook->hasTag() || writableBooks < 1 ||
-        WrittenBookItem::getGeneration(writtenBook) >= 2)
+    if (writtenBook->isEmpty() || !writtenBook->hasTag() || writableBooks < 1
+        || WrittenBookItem::getGeneration(writtenBook) >= 2)
     {
         return ItemInstance::EMPTY;
     }
@@ -112,10 +111,11 @@ ItemInstance* BookCloningRecipe::getIngredientItem(int column, int row)
     return ItemInstance::EMPTY.get();
 }
 
-NonNullList<not_null_ptr<ItemInstance> > BookCloningRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > BookCloningRecipe::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    NonNullList<not_null_ptr<ItemInstance> > result =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     for (unsigned int i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);

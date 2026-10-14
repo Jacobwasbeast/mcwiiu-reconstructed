@@ -20,14 +20,10 @@ class BottleItem : public Item
 public:
     BottleItem();
     not_null_ptr<ItemInstance> turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
-                            boost::shared_ptr<Player> player,
-                            not_null_ptr<ItemInstance> result);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+                                                  boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> result);
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual bool TestUse(Level* level,
-                         boost::shared_ptr<Player> player,
-                         InteractionHand::EInteractionHand hand);
+    virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual TextureAtlasSprite* getIcon(int auxValue);
     virtual void registerIcons(IconRegister* iconRegister);

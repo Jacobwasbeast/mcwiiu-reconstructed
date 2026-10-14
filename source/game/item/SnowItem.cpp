@@ -15,22 +15,16 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-SnowItem::SnowItem(Block* block)
-    : BlockItem(block)
+SnowItem::SnowItem(Block* block) : BlockItem(block)
 {
     setMaxDamage(0);
     setStackedByData(true);
 }
 
-InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
-                                                        bool simulate)
+InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                      const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                      const Direction* direction, float hitX, float hitY, float hitZ,
+                                                      bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (itemInstance->isEmpty() || !player->mayUseItemAt(pos, direction, itemInstance))
@@ -63,10 +57,8 @@ InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> 
                     && level->setBlock(placePos, snowState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
                 {
                     const SoundType* soundType = mBlock->getSoundType();
-                    level->playSound(player, placePos, soundType->getPlaceSound(),
-                                     SoundSource::eSoundSource_Blocks,
-                                     (soundType->getVolume() + 1.0f) * 0.5f,
-                                     soundType->getPitch() * 0.8f, 16.0f);
+                    level->playSound(player, placePos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
+                                     (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, 16.0f);
                     itemInstance->shrink(1);
                     return InteractionResult::eInteractionResult_Success;
                 }

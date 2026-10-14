@@ -29,8 +29,7 @@ unsigned int FishingRodItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipD
     return IDS_TOOLTIPS_USE;
 }
 
-InteractionResultHolder FishingRodItem::use(Level* level,
-                                            boost::shared_ptr<Player> player,
+InteractionResultHolder FishingRodItem::use(Level* level, boost::shared_ptr<Player> player,
                                             InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
@@ -38,27 +37,13 @@ InteractionResultHolder FishingRodItem::use(Level* level,
     {
         itemInstance->hurtAndBreak(player->mFishing->retrieve(), player);
         player->swing(hand);
-        level->playSound(boost::shared_ptr<Player>(),
-                         player->mX,
-                         player->mY,
-                         player->mZ,
-                         SoundEvents::BOBBER_RETRIEVE,
-                         SoundSource::eSoundSource_Neutral,
-                         1.0f,
-                         0.4f / (random->nextFloat() * 0.4f + 0.8f),
-                         16.0f);
+        level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::BOBBER_RETRIEVE,
+                         SoundSource::eSoundSource_Neutral, 1.0f, 0.4f / (random->nextFloat() * 0.4f + 0.8f), 16.0f);
     }
     else
     {
-        level->playSound(boost::shared_ptr<Player>(),
-                         player->mX,
-                         player->mY,
-                         player->mZ,
-                         SoundEvents::BOBBER_THROW,
-                         SoundSource::eSoundSource_Neutral,
-                         0.5f,
-                         0.4f / (random->nextFloat() * 0.4f + 0.8f),
-                         16.0f);
+        level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::BOBBER_THROW,
+                         SoundSource::eSoundSource_Neutral, 0.5f, 0.4f / (random->nextFloat() * 0.4f + 0.8f), 16.0f);
         if (!level->mIsClientSide)
         {
             boost::shared_ptr<FishingHook> hook(new FishingHook(level, player));
@@ -77,8 +62,7 @@ InteractionResultHolder FishingRodItem::use(Level* level,
             level->addEntity(entity);
         }
         player->swing(hand);
-        player->awardStat(GenericStats::itemsUsed(this),
-                          GenericStats::param_itemsUsed(player, itemInstance));
+        player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
     }
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
@@ -109,10 +93,8 @@ TextureAtlasSprite* FishingRodItem::getEmptyIcon()
     return mEmptyIcon;
 }
 
-float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
-    not_null_ptr<ItemInstance> itemInstance,
-    Level* level,
-    boost::shared_ptr<LivingEntity> entity)
+float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                                                                boost::shared_ptr<LivingEntity> entity)
 {
     float result = 0.0f;
     if (entity)
@@ -123,8 +105,7 @@ float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
         {
             inOffhand = false;
         }
-        if ((inMainHand || inOffhand)
-            && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
+        if ((inMainHand || inOffhand) && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             if (player->mFishing)

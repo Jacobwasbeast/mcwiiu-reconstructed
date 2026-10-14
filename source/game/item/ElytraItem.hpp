@@ -20,8 +20,7 @@ class ElytraItem : public Item
 public:
     ElytraItem();
 
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
     virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
@@ -29,8 +28,7 @@ public:
     virtual TextureAtlasSprite* getLayerIcon(int auxValue, int layer, not_null_ptr<ItemInstance> itemInstance);
     virtual TextureAtlasSprite* getIcon(not_null_ptr<ItemInstance> itemInstance);
     virtual int GetArmorType();
-    virtual bool isValidRepairItem(not_null_ptr<ItemInstance> itemInstance,
-                                   not_null_ptr<ItemInstance> repairItem);
+    virtual bool isValidRepairItem(not_null_ptr<ItemInstance> itemInstance, not_null_ptr<ItemInstance> repairItem);
 
     static bool isFlyEnabled(not_null_ptr<ItemInstance> itemInstance);
 

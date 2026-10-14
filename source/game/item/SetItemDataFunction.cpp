@@ -5,15 +5,13 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/util/Random.hpp"
 
-SetItemDataFunction::SetItemDataFunction(std::vector<LootItemCondition*>* conditions,
-                                         RandomValueBounds value)
+SetItemDataFunction::SetItemDataFunction(std::vector<LootItemCondition*>* conditions, RandomValueBounds value)
     : LootItemFunction(conditions)
 {
     this->value = value;
 }
 
-not_null_ptr<ItemInstance> SetItemDataFunction::apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                                      Random* random,
+not_null_ptr<ItemInstance> SetItemDataFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
                                                       LootTableContext& context)
 {
     if (!itemInstance->isDamageableItem())

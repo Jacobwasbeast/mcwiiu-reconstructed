@@ -14,4 +14,3 @@ int EnchantmentSlot::getMaxStackSize()
 {
     return 1;
 }
-

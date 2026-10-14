@@ -10,8 +10,7 @@ class Rarity;
 class LootBonusEnchantment : public Enchantment
 {
 public:
-    LootBonusEnchantment(const Rarity* rarity,
-                         const EnchantmentCategory* category,
+    LootBonusEnchantment(const Rarity* rarity, const EnchantmentCategory* category,
                          arrayWithLength<const EquipmentSlot*> slots);
     virtual ~LootBonusEnchantment();
 

@@ -10,11 +10,7 @@
 #include "game/network/Connection.hpp"
 #include "game/network/UpdateGameRuleProgressPacket.hpp"
 
-CollectItemRuleDefinition::CollectItemRuleDefinition()
-    : GameRuleDefinition()
-    , mIcon(0)
-    , mAuxValue(0)
-    , mGoal(0)
+CollectItemRuleDefinition::CollectItemRuleDefinition() : GameRuleDefinition(), mIcon(0), mAuxValue(0), mGoal(0)
 {
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_itemId, &mIcon);
     addUnsignedCharAttribute(ConsoleGameRules::eGameRuleAttr_auxValue, &mAuxValue);
@@ -62,8 +58,8 @@ void CollectItemRuleDefinition::populateGameRule(GameRulesInstance::EGameRulesIn
 bool CollectItemRuleDefinition::onCollectItem(GameRule* gameRule, not_null_ptr<ItemInstance> item)
 {
     bool collected = false;
-    if (Item::getId(item->getItem()) == mIcon && item->getAuxValue() == mAuxValue &&
-        item->get4JData() == mDataTag && !getComplete(gameRule))
+    if (Item::getId(item->getItem()) == mIcon && item->getAuxValue() == mAuxValue && item->get4JData() == mDataTag
+        && !getComplete(gameRule))
     {
         GameRule::_ValueType value = gameRule->getParameter(L"iQuantity");
         value.iValue += item->getCount();
@@ -75,8 +71,8 @@ bool CollectItemRuleDefinition::onCollectItem(GameRule* gameRule, not_null_ptr<I
             setComplete(gameRule, true);
             if (gameRule->mConnection != 0)
             {
-                boost::shared_ptr<Packet> packet(new UpdateGameRuleProgressPacket(
-                    getActionType(), mDescriptionName, mIcon, mAuxValue, mDataTag, 0, 0));
+                boost::shared_ptr<Packet> packet(new UpdateGameRuleProgressPacket(getActionType(), mDescriptionName,
+                                                                                  mIcon, mAuxValue, mDataTag, 0, 0));
                 gameRule->mConnection->send(packet);
             }
         }

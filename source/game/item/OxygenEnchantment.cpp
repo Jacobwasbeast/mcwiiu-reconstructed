@@ -3,8 +3,7 @@
 
 #include "game/item/EnchantmentCategory.hpp"
 
-OxygenEnchantment::OxygenEnchantment(const Rarity* rarity,
-                                     arrayWithLength<const EquipmentSlot*> slots)
+OxygenEnchantment::OxygenEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ARMOR_HEAD, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_OXYGEN);

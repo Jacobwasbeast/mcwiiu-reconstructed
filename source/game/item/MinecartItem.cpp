@@ -20,22 +20,16 @@
 #include "game/world/block/DispenserBlock.hpp"
 #include "game/world/generation/Player.hpp"
 
-MinecartItem::MinecartItem(const Minecart::Type* type)
-    : mMinecartType(type)
+MinecartItem::MinecartItem(const Minecart::Type* type) : mMinecartType(type)
 {
     mMaxStackSize = 1;
     DispenserBlock::DISPENSER_REGISTRY.add(this, new MinecartDispenseBehavior());
 }
 
-InteractionResult::EInteractionResult MinecartItem::useOn(boost::shared_ptr<Player> player,
-                                                           Level* level,
-                                                           const BlockPos& pos,
-                                                           InteractionHand::EInteractionHand hand,
-                                                           const Direction* direction,
-                                                           float hitX,
-                                                           float hitY,
-                                                           float hitZ,
-                                                           bool simulate)
+InteractionResult::EInteractionResult MinecartItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                          const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                          const Direction* direction, float hitX, float hitY,
+                                                          float hitZ, bool simulate)
 {
     const BlockState* state = level->getBlockState(pos);
     if (!BaseRailBlock::isRail(state))
@@ -53,9 +47,10 @@ InteractionResult::EInteractionResult MinecartItem::useOn(boost::shared_ptr<Play
     {
         if (!level->mIsClientSide)
         {
-            BaseRailBlock::RailShape* shape = state->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
-                ? state->getValue(static_cast<BaseRailBlock*>(state->getBlock())->getShapeProperty())
-                : BaseRailBlock::RailShape::NORTH_SOUTH;
+            BaseRailBlock::RailShape* shape =
+                state->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
+                    ? state->getValue(static_cast<BaseRailBlock*>(state->getBlock())->getShapeProperty())
+                    : BaseRailBlock::RailShape::NORTH_SOUTH;
             double yOffset = 0.0;
             if (shape->isAscending())
             {
@@ -63,13 +58,11 @@ InteractionResult::EInteractionResult MinecartItem::useOn(boost::shared_ptr<Play
             }
 
             boost::shared_ptr<Minecart> minecart = Minecart::createMinecart(
-                level, (double)pos.x + 0.5, (double)pos.y + 0.0625 + yOffset,
-                (double)pos.z + 0.5, mMinecartType);
+                level, (double)pos.x + 0.5, (double)pos.y + 0.0625 + yOffset, (double)pos.z + 0.5, mMinecartType);
 
             if (itemInstance->hasCustomHoverName())
             {
-                minecart->setCustomName(itemInstance->getHoverName(),
-                                        itemInstance->getOwnerUUID(),
+                minecart->setCustomName(itemInstance->getHoverName(), itemInstance->getOwnerUUID(),
                                         itemInstance->wasCreatedByRestrictedPlayer());
             }
 
@@ -91,8 +84,9 @@ MinecartItem::MinecartDispenseBehavior::~MinecartDispenseBehavior()
 {
 }
 
-not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
-    BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance, eOUTCOME& outcome)
+not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(BlockSource* blockSource,
+                                                                           not_null_ptr<ItemInstance> itemInstance,
+                                                                           eOUTCOME& outcome)
 {
     const Direction* direction = blockSource->getBlockState()->getValue(DispenserBlock::FACING);
     Level* level = blockSource->getWorld();
@@ -103,8 +97,9 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
     const BlockState* state = level->getBlockState(position);
 
     BaseRailBlock::RailShape* shape = state->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
-        ? state->getValue(static_cast<BaseRailBlock*>(state->getBlock())->getShapeProperty())
-        : BaseRailBlock::RailShape::NORTH_SOUTH;
+                                          ? state->getValue(
+                                                static_cast<BaseRailBlock*>(state->getBlock())->getShapeProperty())
+                                          : BaseRailBlock::RailShape::NORTH_SOUTH;
 
     if ((unsigned int)level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) >= 250)
     {
@@ -120,9 +115,10 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
     else if (state->getMaterial() == Material::AIR && BaseRailBlock::isRail(level->getBlockState(position.below())))
     {
         const BlockState* belowState = level->getBlockState(position.below());
-        BaseRailBlock::RailShape* belowShape = belowState->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
-            ? belowState->getValue(static_cast<BaseRailBlock*>(belowState->getBlock())->getShapeProperty())
-            : BaseRailBlock::RailShape::NORTH_SOUTH;
+        BaseRailBlock::RailShape* belowShape =
+            belowState->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
+                ? belowState->getValue(static_cast<BaseRailBlock*>(belowState->getBlock())->getShapeProperty())
+                : BaseRailBlock::RailShape::NORTH_SOUTH;
         railOffset = direction == Direction::DOWN || !belowShape->isAscending() ? -0.9 : -0.4;
     }
     else
@@ -133,13 +129,12 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
 
     outcome = eOUTCOME_Success;
     MinecartItem* minecartItem = static_cast<MinecartItem*>(itemInstance->getItem());
-    boost::shared_ptr<Minecart> minecart =
-        Minecart::createMinecart(level, x, y + railOffset, z, minecartItem->mMinecartType);
+    boost::shared_ptr<Minecart> minecart = Minecart::createMinecart(level, x, y + railOffset, z,
+                                                                    minecartItem->mMinecartType);
 
     if (itemInstance->hasCustomHoverName())
     {
-        minecart->setCustomName(itemInstance->getHoverName(),
-                                itemInstance->getOwnerUUID(),
+        minecart->setCustomName(itemInstance->getHoverName(), itemInstance->getOwnerUUID(),
                                 itemInstance->wasCreatedByRestrictedPlayer());
     }
 

@@ -32,7 +32,6 @@ public:
     public:
         virtual bool apply(not_null_ptr<ItemInstance> itemInstance) const;
         virtual ~PredicateItemInstance();
-
     };
 
     template <class T>
@@ -40,7 +39,9 @@ public:
     {
     public:
         Mix(T* from, Predicate<not_null_ptr<ItemInstance> >* ingredient, T* result)
-            : from(from), ingredient(ingredient), result(result)
+            : from(from),
+              ingredient(ingredient),
+              result(result)
         {
         }
 

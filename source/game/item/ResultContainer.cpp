@@ -3,8 +3,7 @@
 #include "game/item/ContainerHelper.hpp"
 #include "game/item/ItemInstance.hpp"
 
-ResultContainer::ResultContainer()
-    : items(NonNullList<not_null_ptr<ItemInstance> >::withSize(1, ItemInstance::EMPTY))
+ResultContainer::ResultContainer() : items(NonNullList<not_null_ptr<ItemInstance> >::withSize(1, ItemInstance::EMPTY))
 {
 }
 

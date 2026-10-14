@@ -17,8 +17,7 @@ public:
     virtual ~ComplexItem() {}
 
     virtual bool isComplex();
-    virtual boost::shared_ptr<Packet> getUpdatePacket(not_null_ptr<ItemInstance> itemInstance,
-                                                      Level* level,
+    virtual boost::shared_ptr<Packet> getUpdatePacket(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                       boost::shared_ptr<Player> player);
 };
 

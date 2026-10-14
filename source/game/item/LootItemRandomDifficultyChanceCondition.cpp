@@ -4,10 +4,8 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/util/Random.hpp"
 
-LootItemRandomDifficultyChanceCondition::LootItemRandomDifficultyChanceCondition(float peacefulChance,
-                                                                                 float easyChance,
-                                                                                 float normalChance,
-                                                                                 float hardChance)
+LootItemRandomDifficultyChanceCondition::LootItemRandomDifficultyChanceCondition(float peacefulChance, float easyChance,
+                                                                                 float normalChance, float hardChance)
 {
     chances[Difficulty::PEACEFUL->getId()] = peacefulChance;
     chances[Difficulty::EASY->getId()] = easyChance;

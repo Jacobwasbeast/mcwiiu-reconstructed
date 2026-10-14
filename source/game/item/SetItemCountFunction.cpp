@@ -11,8 +11,7 @@ SetItemCountFunction::SetItemCountFunction(std::vector<LootItemCondition*>* cond
     this->count = count;
 }
 
-not_null_ptr<ItemInstance> SetItemCountFunction::apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                                       Random* random,
+not_null_ptr<ItemInstance> SetItemCountFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
                                                        LootTableContext& context)
 {
     itemInstance->setCount(count.getInt(random));

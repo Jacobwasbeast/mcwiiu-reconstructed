@@ -9,8 +9,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 
-AddItemRuleDefinition::AddItemRuleDefinition()
-    : GameRuleDefinition()
+AddItemRuleDefinition::AddItemRuleDefinition() : GameRuleDefinition()
 {
     m4JData = 0;
     mData = 0;
@@ -27,48 +26,60 @@ AddItemRuleDefinition::AddItemRuleDefinition()
 not_null_ptr<ItemInstance> AddItemRuleDefinition::getItem()
 {
     not_null_ptr<ItemInstance> itemInstance = ItemInstance::EMPTY;
-    if (Item::byId(mItemId) != NULL) {
+    if (Item::byId(mItemId) != NULL)
+    {
         int maxStackSize = Item::byId(mItemId)->getMaxStackSize();
         int count = mCount;
-        if (maxStackSize < count) {
+        if (maxStackSize < count)
+        {
             count = maxStackSize;
         }
         itemInstance = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(mItemId), count, mData));
         itemInstance->set4JData(m4JData);
         std::vector<AddEnchantmentRuleDefinition*>::iterator it;
-        for (it = mEnchantments.begin(); it != mEnchantments.end(); ++it) {
+        for (it = mEnchantments.begin(); it != mEnchantments.end(); ++it)
+        {
             (*it)->enchantItem(itemInstance);
         }
     }
     return itemInstance;
 }
 
-bool AddItemRuleDefinition::addItemToContainer(boost::shared_ptr<Container> container,
-                                               not_null_ptr<ItemInstance> item,
-                                               int slot,
-                                               bool randomSlot)
+bool AddItemRuleDefinition::addItemToContainer(boost::shared_ptr<Container> container, not_null_ptr<ItemInstance> item,
+                                               int slot, bool randomSlot)
 {
     Random random;
     bool added = false;
-    if (slot >= 0 && static_cast<unsigned int>(slot) < container->getContainerSize()) {
+    if (slot >= 0 && static_cast<unsigned int>(slot) < container->getContainerSize())
+    {
         container->setItem(slot, item);
         added = true;
-    } else if (boost::dynamic_pointer_cast<Inventory>(container)) {
+    }
+    else if (boost::dynamic_pointer_cast<Inventory>(container))
+    {
         added = boost::dynamic_pointer_cast<Inventory>(container)->add(item);
-    } else if (randomSlot) {
-        if (!container->isFull()) {
+    }
+    else if (randomSlot)
+    {
+        if (!container->isFull())
+        {
             unsigned int index;
-            do {
+            do
+            {
                 index = static_cast<unsigned int>(random.nextInt(static_cast<int>(container->getContainerSize())));
             } while (!container->getItem(index)->isEmpty());
             container->setItem(index, item);
         }
         added = false;
-    } else {
+    }
+    else
+    {
         unsigned int index;
-        for (index = 0; index < container->getContainerSize(); ++index) {
+        for (index = 0; index < container->getContainerSize(); ++index)
+        {
             bool empty = container->getItem(index)->isEmpty();
-            if (empty) {
+            if (empty)
+            {
                 container->setItem(index, item);
                 added = true;
                 break;
@@ -82,9 +93,11 @@ bool AddItemRuleDefinition::addItemToContainer(boost::shared_ptr<Container> cont
 {
     bool added = false;
     not_null_ptr<ItemInstance> item = getItem();
-    if (!item->isEmpty()) {
+    if (!item->isEmpty())
+    {
         int targetSlot = slot;
-        if (mSlot >= 0 && static_cast<unsigned int>(mSlot) < container->getContainerSize()) {
+        if (mSlot >= 0 && static_cast<unsigned int>(mSlot) < container->getContainerSize())
+        {
             targetSlot = mSlot;
         }
         added = addItemToContainer(container, item, targetSlot, false);
@@ -95,7 +108,8 @@ bool AddItemRuleDefinition::addItemToContainer(boost::shared_ptr<Container> cont
 void AddItemRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
 {
     std::vector<AddEnchantmentRuleDefinition*>::iterator it;
-    for (it = mEnchantments.begin(); it != mEnchantments.end(); ++it) {
+    for (it = mEnchantments.begin(); it != mEnchantments.end(); ++it)
+    {
         children->push_back(*it);
     }
 }
@@ -108,7 +122,8 @@ ConsoleGameRules::EGameRuleType AddItemRuleDefinition::getActionType()
 GameRuleDefinition* AddItemRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
     GameRuleDefinition* rule = NULL;
-    if (type == ConsoleGameRules::eGameRuleType_AddEnchantment) {
+    if (type == ConsoleGameRules::eGameRuleType_AddEnchantment)
+    {
         rule = new AddEnchantmentRuleDefinition();
         mEnchantments.push_back(static_cast<AddEnchantmentRuleDefinition*>(rule));
     }

@@ -15,7 +15,8 @@ not_null_ptr<ItemInstance> ContainerHelper::takeItem(NonNullList<not_null_ptr<It
     return item;
 }
 
-not_null_ptr<ItemInstance> ContainerHelper::removeItem(NonNullList<not_null_ptr<ItemInstance> > items, unsigned int slot, unsigned int count)
+not_null_ptr<ItemInstance> ContainerHelper::removeItem(NonNullList<not_null_ptr<ItemInstance> > items,
+                                                       unsigned int slot, unsigned int count)
 {
     if (slot >= items.size() || items[slot]->isEmpty())
     {
@@ -25,7 +26,8 @@ not_null_ptr<ItemInstance> ContainerHelper::removeItem(NonNullList<not_null_ptr<
     return split;
 }
 
-CompoundTag* ContainerHelper::saveAllItems(CompoundTag* tag, NonNullList<not_null_ptr<ItemInstance> > items, bool saveEmpty)
+CompoundTag* ContainerHelper::saveAllItems(CompoundTag* tag, NonNullList<not_null_ptr<ItemInstance> > items,
+                                           bool saveEmpty)
 {
     ListTag* list = new ListTag();
     for (unsigned int slot = 0; slot < items.size(); ++slot)

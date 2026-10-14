@@ -3,9 +3,8 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 
-CompleteUsingItemTask::CompleteUsingItemTask(Tutorial* tutorial, int descriptionId,
-                                             Item** items, unsigned int itemCount,
-                                             bool preCompletionEnabled)
+CompleteUsingItemTask::CompleteUsingItemTask(Tutorial* tutorial, int descriptionId, Item** items,
+                                             unsigned int itemCount, bool preCompletionEnabled)
     : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, false, true, true)
 {
     this->items = new Item*[itemCount];

@@ -40,8 +40,7 @@ void AxeItem::staticCtor()
     BLOCKS.data[21] = Blocks::spruce_pressure_plate;
 }
 
-AxeItem::AxeItem(const Item::Tier* tier)
-    : DiggerItem(tier, BLOCKS)
+AxeItem::AxeItem(const Item::Tier* tier) : DiggerItem(tier, BLOCKS)
 {
     mAttackDamage = 3.0f + tier->getAttackDamageBonus();
 }
@@ -58,8 +57,9 @@ float AxeItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const Bl
 }
 
 InteractionResult::EInteractionResult AxeItem::useOn(boost::shared_ptr<Player> player, Level* level,
-    const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction,
-    float hitX, float hitY, float hitZ, bool simulate)
+                                                     const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                     const Direction* direction, float hitX, float hitY, float hitZ,
+                                                     bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))

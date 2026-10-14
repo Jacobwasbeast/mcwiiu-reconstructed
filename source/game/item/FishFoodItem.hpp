@@ -15,11 +15,10 @@ public:
     {
     public:
         Type(int id, unsigned int name, unsigned int description, unsigned int cookedName,
-             unsigned int cookedDescription, int nutrition, float saturation,
-             int cookedNutrition, float cookedSaturation,
-             const std::wstring& icon, const std::wstring& cookedIcon);
-        Type(int id, unsigned int name, unsigned int description, int nutrition,
-             float saturation, const std::wstring& icon);
+             unsigned int cookedDescription, int nutrition, float saturation, int cookedNutrition,
+             float cookedSaturation, const std::wstring& icon, const std::wstring& cookedIcon);
+        Type(int id, unsigned int name, unsigned int description, int nutrition, float saturation,
+             const std::wstring& icon);
 
         static Type* getById(int id);
 
@@ -63,8 +62,7 @@ public:
     virtual ~FishFoodItem();
     virtual int getNutrition(not_null_ptr<ItemInstance> itemInstance);
     virtual float getSaturationModifier(not_null_ptr<ItemInstance> itemInstance);
-    virtual void addEatEffect(not_null_ptr<ItemInstance> itemInstance, Level* level,
-                              boost::shared_ptr<Player> player);
+    virtual void addEatEffect(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<Player> player);
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual int getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual TextureAtlasSprite* getIcon(int auxValue);

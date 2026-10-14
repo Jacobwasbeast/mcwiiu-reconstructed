@@ -2,7 +2,8 @@
 
 #include "game/core/LootItemCondition.hpp"
 
-bool LootItemConditions::allApply(const std::vector<LootItemCondition*>* conditions, Random* random, LootTableContext& context)
+bool LootItemConditions::allApply(const std::vector<LootItemCondition*>* conditions, Random* random,
+                                  LootTableContext& context)
 {
     if (conditions == 0)
     {

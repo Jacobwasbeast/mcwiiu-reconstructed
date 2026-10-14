@@ -13,13 +13,11 @@ std::vector<PotionBrewing::Mix<Item>*> PotionBrewing::containerMixes;
 std::vector<PotionBrewing::ItemInstancePredicate*> PotionBrewing::containerPredicates;
 PotionBrewing::PredicateItemInstance* PotionBrewing::containerPredicate = new PotionBrewing::PredicateItemInstance();
 
-PotionBrewing::ItemInstancePredicate::ItemInstancePredicate(Item* item)
-    : mItem(item), mAuxValue(-1)
+PotionBrewing::ItemInstancePredicate::ItemInstancePredicate(Item* item) : mItem(item), mAuxValue(-1)
 {
 }
 
-PotionBrewing::ItemInstancePredicate::ItemInstancePredicate(Item* item, int auxValue)
-    : mItem(item), mAuxValue(auxValue)
+PotionBrewing::ItemInstancePredicate::ItemInstancePredicate(Item* item, int auxValue) : mItem(item), mAuxValue(auxValue)
 {
 }
 
@@ -137,7 +135,8 @@ not_null_ptr<ItemInstance> PotionBrewing::mix(not_null_ptr<ItemInstance> ingredi
             Mix<Item>* containerMix = containerMixes.at(i);
             if (containerMix->from == itemType && containerMix->ingredient->apply(ingredient))
             {
-                return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(containerMix->result)), potion);
+                return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(containerMix->result)),
+                                              potion);
             }
         }
         i = 0;
@@ -147,7 +146,8 @@ not_null_ptr<ItemInstance> PotionBrewing::mix(not_null_ptr<ItemInstance> ingredi
             Mix<Potion>* potionMix = potionMixes.at(i);
             if (potionMix->from == potion && potionMix->ingredient->apply(ingredient))
             {
-                return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(itemType)), potionMix->result);
+                return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(itemType)),
+                                              potionMix->result);
             }
         }
     }
@@ -193,11 +193,9 @@ void PotionBrewing::StaticCtor()
     addContainer(new ItemInstancePredicate(Items::splashPotion));
     addContainer(new ItemInstancePredicate(Items::lingeringPotion));
 
-    addContainerRecipe(static_cast<PotionItem*>(Items::potion),
-                       new ItemInstancePredicate(Items::gunpowder),
+    addContainerRecipe(static_cast<PotionItem*>(Items::potion), new ItemInstancePredicate(Items::gunpowder),
                        static_cast<PotionItem*>(Items::splashPotion));
-    addContainerRecipe(static_cast<PotionItem*>(Items::splashPotion),
-                       new ItemInstancePredicate(Items::dragonBreath),
+    addContainerRecipe(static_cast<PotionItem*>(Items::splashPotion), new ItemInstancePredicate(Items::dragonBreath),
                        static_cast<PotionItem*>(Items::lingeringPotion));
 
     addMix(Potions::WATER, speckledMelon, Potions::MUNDANE);

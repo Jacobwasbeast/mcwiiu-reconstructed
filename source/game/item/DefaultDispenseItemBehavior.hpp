@@ -24,17 +24,15 @@ public:
 
     virtual ~DefaultDispenseItemBehavior() {}
 
-    virtual not_null_ptr<ItemInstance> dispense(BlockSource* blockSource,
-                                                not_null_ptr<ItemInstance> itemInstance);
-    virtual not_null_ptr<ItemInstance> execute(BlockSource* blockSource,
-                                               not_null_ptr<ItemInstance> itemInstance,
+    virtual not_null_ptr<ItemInstance> dispense(BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance);
+    virtual not_null_ptr<ItemInstance> execute(BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance,
                                                eOUTCOME& outcome);
     virtual void playSound(BlockSource* blockSource, eOUTCOME outcome);
     virtual void playAnimation(BlockSource* blockSource, const Direction* direction, eOUTCOME outcome);
     virtual int getLevelEventDataFrom(const Direction* direction);
 
-    static void spawnItem(Level* level, not_null_ptr<ItemInstance> itemInstance, int power,
-                          const Direction* direction, Position* position);
+    static void spawnItem(Level* level, not_null_ptr<ItemInstance> itemInstance, int power, const Direction* direction,
+                          Position* position);
 };
 
 #endif

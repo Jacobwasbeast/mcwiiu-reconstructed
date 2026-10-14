@@ -13,8 +13,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/Level.hpp"
 
-CarrotOnAStickItem::CarrotOnAStickItem()
-    : Item()
+CarrotOnAStickItem::CarrotOnAStickItem() : Item()
 {
     setMaxStackSize(1);
     setMaxDamage(0x19);
@@ -30,8 +29,7 @@ bool CarrotOnAStickItem::isMirroredArt()
     return true;
 }
 
-bool CarrotOnAStickItem::TestUse(Level*, boost::shared_ptr<Player> player,
-                                  InteractionHand::EInteractionHand hand)
+bool CarrotOnAStickItem::TestUse(Level*, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (player->isPassenger() && eTYPE_DERIVED_FROM(EntityType::PIG, player->getVehicle()->GetType()))
@@ -46,19 +44,16 @@ bool CarrotOnAStickItem::TestUse(Level*, boost::shared_ptr<Player> player,
     return false;
 }
 
-InteractionResultHolder CarrotOnAStickItem::use(Level* level,
-                                                boost::shared_ptr<Player> player,
+InteractionResultHolder CarrotOnAStickItem::use(Level* level, boost::shared_ptr<Player> player,
                                                 InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
     if (level->mIsClientSide)
     {
-        return InteractionResultHolder(
-            TestUse(level, player, hand)
-                ? InteractionResult::eInteractionResult_Success
-                : InteractionResult::eInteractionResult_Pass,
-            itemInstance);
+        return InteractionResultHolder(TestUse(level, player, hand) ? InteractionResult::eInteractionResult_Success
+                                                                    : InteractionResult::eInteractionResult_Pass,
+                                       itemInstance);
     }
 
     if (player->isPassenger() && eTYPE_DERIVED_FROM(EntityType::PIG, player->getVehicle()->GetType()))
@@ -70,22 +65,19 @@ InteractionResultHolder CarrotOnAStickItem::use(Level* level,
 
             if (!itemInstance->isEmpty())
             {
-                return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
-                                               itemInstance);
+                return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
             }
 
             not_null_ptr<ItemInstance> replacement(new ItemInstance(Items::fishingRod));
             replacement->setTag(itemInstance->getTag());
-            return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
-                                           replacement);
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Success, replacement);
         }
     }
 
     Player* awardee = player.operator->();
     Stat* stat = gStats->get_itemsUsed(VALIDgetId(this));
     awardee->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
-    return InteractionResultHolder(InteractionResult::eInteractionResult_Pass,
-                                   itemInstance);
+    return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
 }
 
 unsigned int CarrotOnAStickItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)

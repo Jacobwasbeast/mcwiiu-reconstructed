@@ -21,12 +21,9 @@ class SplashPotionItem : public PotionItem
 public:
     virtual unsigned int getPotionType() const;
     virtual std::wstring getName(not_null_ptr<ItemInstance> itemInstance);
-    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                  boost::shared_ptr<Player> player,
-                                  std::vector<HtmlString>* lines,
-                                  bool advanced);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                 std::vector<HtmlString>* lines, bool advanced);
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual int getUseDuration(not_null_ptr<ItemInstance> itemInstance);

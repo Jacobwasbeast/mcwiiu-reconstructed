@@ -13,12 +13,10 @@ class Inventory;
 class ItemInstance;
 class Player;
 
-class CompoundContainer : public LockableContainer,
-                          public boost::enable_shared_from_this<CompoundContainer>
+class CompoundContainer : public LockableContainer, public boost::enable_shared_from_this<CompoundContainer>
 {
 public:
-    CompoundContainer(int id, boost::shared_ptr<LockableContainer> first,
-        boost::shared_ptr<LockableContainer> second);
+    CompoundContainer(int id, boost::shared_ptr<LockableContainer> first, boost::shared_ptr<LockableContainer> second);
     virtual ~CompoundContainer();
 
     virtual unsigned int getContainerSize();
@@ -48,8 +46,7 @@ public:
     virtual LockCode* getLockKeyCode();
     virtual void unlock();
     virtual int getTypeId(bool large);
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-        boost::shared_ptr<Player> player);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
 
 private:
     int mId;

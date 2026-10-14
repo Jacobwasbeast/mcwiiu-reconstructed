@@ -61,52 +61,38 @@ const wchar_t* ItemInstance::TAG_HIDE_FLAGS = L"HideFlags";
 #include "game/world/block/Blocks.hpp"
 const not_null_ptr<ItemInstance> ItemInstance::EMPTY(new ItemInstance(static_cast<Item*>(NULL)));
 
-ItemInstance::ItemInstance(Block* block)
-    : mFrame(),
-      mCensorshipInfo()
+ItemInstance::ItemInstance(Block* block) : mFrame(), mCensorshipInfo()
 {
     _init(Item::byBlock(block), 1, 0);
 }
 
-ItemInstance::ItemInstance(Block* block, int count)
-    : mFrame(),
-      mCensorshipInfo()
+ItemInstance::ItemInstance(Block* block, int count) : mFrame(), mCensorshipInfo()
 {
     Item* item = Item::byBlock(block);
     _init(item, count, block->convertBlockStateToLegacyData(block->defaultBlockState()));
 }
 
-ItemInstance::ItemInstance(Block* block, int count, int auxValue)
-    : mFrame(),
-      mCensorshipInfo()
+ItemInstance::ItemInstance(Block* block, int count, int auxValue) : mFrame(), mCensorshipInfo()
 {
     _init(Item::byBlock(block), count, auxValue);
 }
 
-ItemInstance::ItemInstance(Item* item)
-    : mFrame(),
-      mCensorshipInfo()
+ItemInstance::ItemInstance(Item* item) : mFrame(), mCensorshipInfo()
 {
     _init(item, 1, 0);
 }
 
-ItemInstance::ItemInstance(Item* item, int count)
-    : mFrame(),
-      mCensorshipInfo()
+ItemInstance::ItemInstance(Item* item, int count) : mFrame(), mCensorshipInfo()
 {
     _init(item, count, 0);
 }
 
-ItemInstance::ItemInstance(Item* item, int count, int auxValue)
-    : mFrame(),
-      mCensorshipInfo()
+ItemInstance::ItemInstance(Item* item, int count, int auxValue) : mFrame(), mCensorshipInfo()
 {
     _init(item, count, auxValue);
 }
 
-ItemInstance::ItemInstance(CompoundTag* tag)
-    : mFrame(),
-      mCensorshipInfo()
+ItemInstance::ItemInstance(CompoundTag* tag) : mFrame(), mCensorshipInfo()
 {
     _init(NULL, 0, 0);
     mItem = Item::byString(tag->getString(L"id"));
@@ -208,7 +194,8 @@ void ItemInstance::_init(Item* item, int count, int auxValue)
     mCount = count;
     mPopTime = 0;
     mAuxValue = auxValue;
-    mCensorshipInfo = boost::shared_ptr<CensoredString>(new CensoredString(IDS_STRINGVERIFY_AWAITING_APPROVAL, IDS_STRINGVERIFY_CENSORED));
+    mCensorshipInfo = boost::shared_ptr<CensoredString>(
+        new CensoredString(IDS_STRINGVERIFY_AWAITING_APPROVAL, IDS_STRINGVERIFY_CENSORED));
     mCanBreak = 0;
     mBreakBlock = 0;
     updateEmptyCacheFlag();
@@ -285,7 +272,8 @@ bool ItemInstance::TestUse(Level* level, boost::shared_ptr<Player> player, Inter
     return getItem()->TestUse(level, player, hand);
 }
 
-InteractionResultHolder ItemInstance::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
+InteractionResultHolder ItemInstance::use(Level* level, boost::shared_ptr<Player> player,
+                                          InteractionHand::EInteractionHand hand)
 {
     return getItem()->use(level, player, hand);
 }
@@ -564,7 +552,8 @@ std::wstring ItemInstance::toString()
 {
     std::wostringstream stream;
     stream.setf(std::ios::dec, std::ios::basefield);
-    stream << mCount << L"x" << getItem()->getDescription(not_null_ptr<ItemInstance>(shared_from_this())) << L"@" << mAuxValue;
+    stream << mCount << L"x" << getItem()->getDescription(not_null_ptr<ItemInstance>(shared_from_this())) << L"@"
+           << mAuxValue;
     return stream.str();
 }
 
@@ -596,14 +585,14 @@ void ItemInstance::onCraftedBy(Level* level, boost::shared_ptr<Player> player, i
     if (craftSlots != NULL)
     {
         Recipes* recipes = Recipes::getInstance();
-        if (recipes->hasAchievementAttachedToRecipe(craftSlots, player->mLevel, NULL,
-                                                    Recipes::eRecipeCategory_Crafting) == eAward_ChangeOfSheets)
+        if (recipes->hasAchievementAttachedToRecipe(craftSlots, player->mLevel, NULL, Recipes::eRecipeCategory_Crafting)
+            == eAward_ChangeOfSheets)
         {
             player->awardStat(GenericStats::changeOfSheets(), GenericStats::param_changeOfSheets());
         }
 
-        NonNullList<not_null_ptr<ItemInstance> > remainingItems =
-            recipes->getRemainingItemsFor(craftSlots, player->mLevel, Recipes::eRecipeCategory_Crafting);
+        NonNullList<not_null_ptr<ItemInstance> > remainingItems = recipes->getRemainingItemsFor(
+            craftSlots, player->mLevel, Recipes::eRecipeCategory_Crafting);
         bool pickaxeRemains = false;
         bool hoeRemains = false;
         bool swordRemains = false;
@@ -864,7 +853,8 @@ boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* ItemInstance::getAttrib
         return getItem()->getDefaultAttributeModifiers(slot);
     }
 
-    boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* modifiers = new boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>();
+    boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* modifiers =
+        new boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>();
     ListTag* entries = mTag->getList(L"AttributeModifiers", Tag::TAG_COMPOUND);
     for (int i = 0; i < entries->size(); ++i)
     {
@@ -939,8 +929,8 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
     {
         for (int index = 0; index < 6; ++index)
         {
-            boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* modifiers =
-                getAttributeModifiers(EquipmentSlot::SLOTS[index]);
+            boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* modifiers = getAttributeModifiers(
+                EquipmentSlot::SLOTS[index]);
             if (!modifiers->empty())
             {
                 lines->push_back(HtmlString(L"", eMinecraftColour_NOTSET, false, false, 0));
@@ -956,7 +946,8 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
     }
 
     if (hasTag() && getTag()->getBoolean(TAG_UNBREAKABLE) && (hideFlags & 0x04) == 0)
-        lines->push_back(HtmlString(L10N::GetString(IDS_ITEM_UNBREAKABLE), eMinecraftColour_HTMLColor_9, false, false, 0));
+        lines->push_back(
+            HtmlString(L10N::GetString(IDS_ITEM_UNBREAKABLE), eMinecraftColour_HTMLColor_9, false, false, 0));
 
     if (hasTag() && mTag->contains(TAG_CAN_DESTROY, Tag::TAG_LIST) && (hideFlags & 0x08) == 0)
     {
@@ -1008,9 +999,9 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
         lines->push_back(HtmlString(key.toString(), eMinecraftColour_HTMLColor_dark_7, false, false, 0));
         if (hasTag())
         {
-            lines->push_back(HtmlString(L"NBT: " + _toString<unsigned int>(getTag()->getAllTagsMap()->size())
-                                            + L" tag(s)",
-                                        eMinecraftColour_HTMLColor_dark_7, false, false, 0));
+            lines->push_back(
+                HtmlString(L"NBT: " + _toString<unsigned int>(getTag()->getAllTagsMap()->size()) + L" tag(s)",
+                           eMinecraftColour_HTMLColor_dark_7, false, false, 0));
         }
     }
     return lines;

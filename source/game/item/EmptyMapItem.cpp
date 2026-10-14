@@ -8,19 +8,17 @@
 #include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/world/generation/Player.hpp"
 
-EmptyMapItem::EmptyMapItem()
-    : ComplexItem()
+EmptyMapItem::EmptyMapItem() : ComplexItem()
 {
 }
 
-InteractionResultHolder EmptyMapItem::use(Level* level,
-                                          boost::shared_ptr<Player> player,
+InteractionResultHolder EmptyMapItem::use(Level* level, boost::shared_ptr<Player> player,
                                           InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
-    not_null_ptr<ItemInstance> map = MapItem::setupNewMap(player->mXuid, level, player->mDimension,
-                                                          player->mX, player->mZ, 3, true, false);
+    not_null_ptr<ItemInstance> map = MapItem::setupNewMap(player->mXuid, level, player->mDimension, player->mX,
+                                                          player->mZ, 3, true, false);
     itemInstance->shrink(1);
 
     if (itemInstance->isEmpty())
@@ -33,8 +31,7 @@ InteractionResultHolder EmptyMapItem::use(Level* level,
         player->drop(map, false);
     }
 
-    player->awardStat(GenericStats::itemsUsed(this),
-                      GenericStats::param_itemsUsed(player, itemInstance));
+    player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
 
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }

@@ -23,31 +23,22 @@ std::wstring LingeringPotionItem::getName(not_null_ptr<ItemInstance> itemInstanc
     return PotionUtils::getPotion(itemInstance)->getName(Potion::LINGERING);
 }
 
-void LingeringPotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                          boost::shared_ptr<Player> player,
-                                          std::vector<HtmlString>* lines,
-                                          bool)
+void LingeringPotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                          std::vector<HtmlString>* lines, bool)
 {
     PotionUtils::addPotionTooltip(itemInstance, lines, 0.25f, player);
 }
 
-InteractionResultHolder LingeringPotionItem::use(Level* level,
-                                                  boost::shared_ptr<Player> player,
-                                                  InteractionHand::EInteractionHand hand)
+InteractionResultHolder LingeringPotionItem::use(Level* level, boost::shared_ptr<Player> player,
+                                                 InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    not_null_ptr<ItemInstance> thrownItem = player->mAbilities.mInstabuild
-        ? itemInstance->copy() : itemInstance->split(1);
+    not_null_ptr<ItemInstance> thrownItem = player->mAbilities.mInstabuild ? itemInstance->copy()
+                                                                           : itemInstance->split(1);
 
-    level->playSound(boost::shared_ptr<Player>(),
-                     player->mX,
-                     player->mY,
-                     player->mZ,
-                     SoundEvents::LINGERINGPOTION_THROW,
-                     SoundSource::eSoundSource_Neutral,
-                     0.5f,
-                      0.4f / (Item::random->nextFloat() * 0.4f + 0.8f),
-                     16.0f);
+    level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ,
+                     SoundEvents::LINGERINGPOTION_THROW, SoundSource::eSoundSource_Neutral, 0.5f,
+                     0.4f / (Item::random->nextFloat() * 0.4f + 0.8f), 16.0f);
 
     if (!level->mIsClientSide)
     {
@@ -56,8 +47,7 @@ InteractionResultHolder LingeringPotionItem::use(Level* level,
         level->addEntity(potion);
     }
 
-    player->awardStat(GenericStats::itemsUsed(this),
-                      GenericStats::param_itemsUsed(player, itemInstance));
+    player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
 
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }

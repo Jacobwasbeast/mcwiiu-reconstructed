@@ -7,16 +7,13 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 
-SaddleItem::SaddleItem()
-    : Item()
+SaddleItem::SaddleItem() : Item()
 {
     mMaxStackSize = 1;
 }
 
-bool SaddleItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
-                               boost::shared_ptr<Player> player,
-                               boost::shared_ptr<LivingEntity> target,
-                               InteractionHand::EInteractionHand hand)
+bool SaddleItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                               boost::shared_ptr<LivingEntity> target, InteractionHand::EInteractionHand hand)
 {
     if (target && eTYPE_DERIVED_FROM(EntityType::PIG, target->GetType()))
     {
@@ -24,10 +21,8 @@ bool SaddleItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
         if (!pig->hasSaddle() && !pig->isBaby())
         {
             pig->setSaddle(true);
-            pig->mLevel->playSound(player, pig->mX, pig->mY, pig->mZ,
-                                   SoundEvents::PIG_SADDLE,
-                                   SoundSource::eSoundSource_Neutral,
-                                   0.5f, 1.0f, 16.0f);
+            pig->mLevel->playSound(player, pig->mX, pig->mY, pig->mZ, SoundEvents::PIG_SADDLE,
+                                   SoundSource::eSoundSource_Neutral, 0.5f, 1.0f, 16.0f);
             itemInstance->shrink(1);
         }
         return true;

@@ -26,14 +26,10 @@ public:
 
     virtual ~DiggerItem() {}
     virtual float getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state);
-    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
-                           boost::shared_ptr<LivingEntity> target,
+    virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<LivingEntity> target,
                            boost::shared_ptr<LivingEntity> attacker);
-    virtual bool mineBlock(not_null_ptr<ItemInstance> itemInstance,
-                           Level* level,
-                           const BlockState* state,
-                           const BlockPos& pos,
-                           boost::shared_ptr<LivingEntity> entity);
+    virtual bool mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state,
+                           const BlockPos& pos, boost::shared_ptr<LivingEntity> entity);
     virtual bool isHandEquipped();
     virtual int getEnchantmentValue();
     virtual bool isValidRepairItem(not_null_ptr<ItemInstance> itemInstance, not_null_ptr<ItemInstance> repairItem);

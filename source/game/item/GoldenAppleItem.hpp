@@ -19,8 +19,7 @@ public:
     virtual const Rarity* getRarity(not_null_ptr<ItemInstance> itemInstance);
     virtual int getUseDescriptionId(int auxValue);
     virtual int getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance);
-    virtual void addEatEffect(not_null_ptr<ItemInstance> itemInstance, Level* level,
-                              boost::shared_ptr<Player> player);
+    virtual void addEatEffect(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<Player> player);
 };
 
 #endif

@@ -7,14 +7,12 @@
 #include "game/item/WrittenBookItem.hpp"
 #include "game/world/generation/Player.hpp"
 
-WritableBookItem::WritableBookItem()
-    : Item()
+WritableBookItem::WritableBookItem() : Item()
 {
     setMaxStackSize(1);
 }
 
-InteractionResultHolder WritableBookItem::use(Level* level,
-                                              boost::shared_ptr<Player> player,
+InteractionResultHolder WritableBookItem::use(Level* level, boost::shared_ptr<Player> player,
                                               InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
@@ -22,9 +20,7 @@ InteractionResultHolder WritableBookItem::use(Level* level,
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 
-bool WritableBookItem::TestUse(Level* level,
-                               boost::shared_ptr<Player> player,
-                               InteractionHand::EInteractionHand hand)
+bool WritableBookItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
     return true;
 }

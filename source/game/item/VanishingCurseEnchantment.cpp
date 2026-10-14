@@ -3,8 +3,7 @@
 
 #include "game/item/EnchantmentCategory.hpp"
 
-VanishingCurseEnchantment::VanishingCurseEnchantment(const Rarity* rarity,
-                                                     arrayWithLength<const EquipmentSlot*> slots)
+VanishingCurseEnchantment::VanishingCurseEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::ALL, slots)
 {
     setDescriptionId((int)IDS_ENCHANTMENT_CURSE_OF_VANISHING);

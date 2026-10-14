@@ -73,9 +73,7 @@ not_null_ptr<ItemInstance> MapCloningRecipe::assemble(boost::shared_ptr<Crafting
     {
         return ItemInstance::EMPTY;
     }
-    not_null_ptr<ItemInstance> result(new ItemInstance(Items::filledMap,
-                                                        emptyMaps + 1,
-                                                        filledMap->getAuxValue()));
+    not_null_ptr<ItemInstance> result(new ItemInstance(Items::filledMap, emptyMaps + 1, filledMap->getAuxValue()));
     if (filledMap->hasTag())
     {
         result->setTag(filledMap->getTag()->copy());
@@ -101,9 +99,8 @@ ItemInstance* MapCloningRecipe::getIngredientItem(int column, int row)
 NonNullList<not_null_ptr<ItemInstance> > MapCloningRecipe::getRemainingItems(
     boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    NonNullList<not_null_ptr<ItemInstance> > result =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(),
-                                                           ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     unsigned int i;
     for (i = 0; i < result.size(); ++i)
     {

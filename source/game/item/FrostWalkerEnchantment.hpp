@@ -16,8 +16,8 @@ public:
     virtual int getMaxCost(int level);
     virtual bool isTreasureOnly();
     virtual int getMaxLevel();
-    static void onEntityMoved(const boost::shared_ptr<LivingEntity>& entity, Level* level,
-                              const BlockPos& pos, int levelValue);
+    static void onEntityMoved(const boost::shared_ptr<LivingEntity>& entity, Level* level, const BlockPos& pos,
+                              int levelValue);
     virtual bool checkCompatibility(const Enchantment* other) const;
 };
 

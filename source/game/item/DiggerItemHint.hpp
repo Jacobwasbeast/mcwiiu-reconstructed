@@ -12,8 +12,7 @@ class ItemInstance;
 class DiggerItemHint : public TutorialHint
 {
 public:
-    DiggerItemHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
-                   Item** items, unsigned int itemCount);
+    DiggerItemHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId, Item** items, unsigned int itemCount);
     virtual ~DiggerItemHint();
 
     virtual int startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state);

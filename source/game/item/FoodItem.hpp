@@ -22,11 +22,13 @@ public:
     FoodItem(int nutrition, bool isMeat);
     virtual ~FoodItem() {}
     void _init();
-    virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<LivingEntity> entity);
+    virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
+                                                       boost::shared_ptr<LivingEntity> entity);
     virtual void addEatEffect(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<Player> player);
     virtual int getUseDuration(not_null_ptr<ItemInstance> itemInstance);
     virtual int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;
-    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
+                                        InteractionHand::EInteractionHand hand);
     bool canEat(boost::shared_ptr<Player> player);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual int getNutrition(not_null_ptr<ItemInstance> itemInstance);

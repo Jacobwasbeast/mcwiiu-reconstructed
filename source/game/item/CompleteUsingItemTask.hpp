@@ -9,8 +9,8 @@ class ItemInstance;
 class CompleteUsingItemTask : public TutorialTask
 {
 public:
-    CompleteUsingItemTask(Tutorial* tutorial, int descriptionId, Item** items,
-                          unsigned int itemCount, bool preCompletionEnabled);
+    CompleteUsingItemTask(Tutorial* tutorial, int descriptionId, Item** items, unsigned int itemCount,
+                          bool preCompletionEnabled);
     virtual ~CompleteUsingItemTask();
 
     virtual bool isCompleted();

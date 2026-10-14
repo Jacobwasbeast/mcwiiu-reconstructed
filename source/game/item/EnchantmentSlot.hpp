@@ -12,10 +12,7 @@ class ItemInstance;
 class EnchantmentSlot : public Slot
 {
 public:
-    EnchantmentSlot(boost::shared_ptr<Container> container, int index, int x, int y)
-        : Slot(container, index, x, y)
-    {
-    }
+    EnchantmentSlot(boost::shared_ptr<Container> container, int index, int x, int y) : Slot(container, index, x, y) {}
 
     virtual bool mayPlace(not_null_ptr<ItemInstance> itemInstance);
     virtual int getMaxStackSize();

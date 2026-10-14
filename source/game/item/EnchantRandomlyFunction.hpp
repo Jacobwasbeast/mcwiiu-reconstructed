@@ -14,12 +14,10 @@ class ItemInstance;
 class EnchantRandomlyFunction : public LootItemFunction
 {
 public:
-    EnchantRandomlyFunction(std::vector<LootItemCondition*>* conditions,
-                            const std::vector<Enchantment*>& enchantments);
+    EnchantRandomlyFunction(std::vector<LootItemCondition*>* conditions, const std::vector<Enchantment*>& enchantments);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                              Random* random,
-                                              LootTableContext& context);
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
+                                             LootTableContext& context);
 
 private:
     std::vector<Enchantment*> enchantments;

@@ -14,9 +14,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-DoorItem::DoorItem(Block* block)
-    : Item(),
-      mBlock(block)
+DoorItem::DoorItem(Block* block) : Item(), mBlock(block)
 {
 }
 
@@ -28,14 +26,15 @@ void DoorItem::place(Level* level, const BlockPos& pos, const Direction* directi
     const BlockState* counterClockwiseState = level->getBlockState(counterClockwise);
     const BlockState* clockwiseAboveState = level->getBlockState(clockwise.above());
     const BlockState* counterClockwiseAboveState = level->getBlockState(counterClockwise.above());
-    int counterClockwiseSupport = counterClockwiseState->getBlock()->isSolidBlockingCubeAndNotSignalSource(counterClockwiseState)
+    int counterClockwiseSupport =
+        counterClockwiseState->getBlock()->isSolidBlockingCubeAndNotSignalSource(counterClockwiseState)
         + counterClockwiseAboveState->getBlock()->isSolidBlockingCubeAndNotSignalSource(counterClockwiseAboveState);
     int clockwiseSupport = clockwiseState->getBlock()->isSolidBlockingCubeAndNotSignalSource(clockwiseState)
-        + clockwiseAboveState->getBlock()->isSolidBlockingCubeAndNotSignalSource(clockwiseAboveState);
+                           + clockwiseAboveState->getBlock()->isSolidBlockingCubeAndNotSignalSource(
+                               clockwiseAboveState);
     bool counterClockwiseDoor = counterClockwiseState->getBlock() == block
-        || counterClockwiseAboveState->getBlock() == block;
-    bool clockwiseDoor = clockwiseState->getBlock() == block
-        || clockwiseAboveState->getBlock() == block;
+                                || counterClockwiseAboveState->getBlock() == block;
+    bool clockwiseDoor = clockwiseState->getBlock() == block || clockwiseAboveState->getBlock() == block;
     if ((counterClockwiseDoor && !clockwiseDoor) || clockwiseSupport > counterClockwiseSupport)
     {
         hingeRight = true;
@@ -59,9 +58,9 @@ void DoorItem::place(Level* level, const BlockPos& pos, const Direction* directi
 }
 
 InteractionResult::EInteractionResult DoorItem::useOn(boost::shared_ptr<Player> player, Level* level,
-                                                       const BlockPos& pos, InteractionHand::EInteractionHand hand,
-                                                       const Direction* direction, float hitX, float hitY, float hitZ,
-                                                       bool simulate)
+                                                      const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                      const Direction* direction, float hitX, float hitY, float hitZ,
+                                                      bool simulate)
 {
     if (direction != Direction::UP)
     {
@@ -75,8 +74,7 @@ InteractionResult::EInteractionResult DoorItem::useOn(boost::shared_ptr<Player> 
     }
 
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (!player->mayUseItemAt(placePos, direction, itemInstance) ||
-        !mBlock->mayPlace(level, placePos))
+    if (!player->mayUseItemAt(placePos, direction, itemInstance) || !mBlock->mayPlace(level, placePos))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
@@ -92,8 +90,8 @@ InteractionResult::EInteractionResult DoorItem::useOn(boost::shared_ptr<Player> 
     const Direction* facing = Direction::fromYRot((double)player->mYRot);
     int stepX = facing->getStepX();
     int stepZ = facing->getStepZ();
-    bool hingeRight = (stepX < 0 && hitZ < 0.5f) || (stepX > 0 && hitZ > 0.5f) ||
-        (stepZ < 0 && hitX > 0.5f) || (stepZ > 0 && hitX < 0.5f);
+    bool hingeRight = (stepX < 0 && hitZ < 0.5f) || (stepX > 0 && hitZ > 0.5f) || (stepZ < 0 && hitX > 0.5f)
+                      || (stepZ > 0 && hitX < 0.5f);
 
     place(level, placePos, facing, mBlock, hingeRight);
 

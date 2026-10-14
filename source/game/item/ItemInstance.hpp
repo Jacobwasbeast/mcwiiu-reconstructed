@@ -64,7 +64,9 @@ public:
     void grow(int amount);
     void shrink(int amount);
     not_null_ptr<ItemInstance> split(int amount);
-    InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float x, float y, float z, bool flag);
+    InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
+                                                InteractionHand::EInteractionHand hand, const Direction* direction,
+                                                float x, float y, float z, bool flag);
     float getDestroySpeed(const BlockState* state);
     bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
@@ -86,15 +88,18 @@ public:
     void hurtEnemy(boost::shared_ptr<LivingEntity> entity, boost::shared_ptr<Player> player);
     void mineBlock(Level* level, const BlockState* state, const BlockPos& pos, boost::shared_ptr<Player> player);
     bool canDestroySpecial(const BlockState* state);
-    bool interactEnemy(boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> entity, InteractionHand::EInteractionHand hand);
+    bool interactEnemy(boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> entity,
+                       InteractionHand::EInteractionHand hand);
     ItemInstance* copy_not_shared() const;
     static bool tagMatches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second);
     bool matches(const not_null_ptr<ItemInstance>& other, bool compareAuxValue);
-    static bool matches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second, bool compareAuxValue);
+    static bool matches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second,
+                        bool compareAuxValue);
     bool sameItem(const not_null_ptr<ItemInstance>& other);
     static bool isSame(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second);
     bool sameItemIgnoreDurability(const not_null_ptr<ItemInstance>& other);
-    static bool isSameIgnoreDurability(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second);
+    static bool isSameIgnoreDurability(const not_null_ptr<ItemInstance>& first,
+                                       const not_null_ptr<ItemInstance>& second);
     bool sameItemWithTags(const not_null_ptr<ItemInstance>& other, std::vector<std::wstring>* tags);
     bool sameItem_not_shared(ItemInstance* other);
     int getUseDescriptionId();
@@ -163,6 +168,7 @@ public:
     static const wchar_t* TAG_CAN_PLACE_ON;
     static const wchar_t* TAG_HIDE_FLAGS;
     static const not_null_ptr<ItemInstance> EMPTY;
+
 private:
     int mCount;
     int mPopTime;

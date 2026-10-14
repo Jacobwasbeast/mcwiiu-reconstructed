@@ -26,13 +26,8 @@ enum
     eArmorShape_Count = 4
 };
 
-static std::wstring armorRecipeShapes[eArmorShape_Count][4] =
-{
-    { L"XXX", L"X X", L"" },
-    { L"X X", L"XXX", L"XXX", L"" },
-    { L"XXX", L"X X", L"X X", L"" },
-    { L"X X", L"X X", L"" }
-};
+static std::wstring armorRecipeShapes[eArmorShape_Count][4] = {
+    {L"XXX", L"X X", L""}, {L"X X", L"XXX", L"XXX", L""}, {L"XXX", L"X X", L"X X", L""}, {L"X X", L"X X", L""}};
 
 void ArmorRecipes::_init()
 {
@@ -95,13 +90,13 @@ void ArmorRecipes::addRecipes(Recipes* recipes)
                 }
 
                 recipes->addShapedRecipe(new ItemInstance(target), types, armorRecipeShapes[armor - 1], L'X',
-                    ingredient->object, L'A');
+                                         ingredient->object, L'A');
             }
         }
     }
 
     recipes->addShapedRecipe(new ItemInstance(Items::leatherHorseArmor), L"ssscig", L"~ ~", L"~~~", L"~ ~", L'~',
-        Items::leather, L'A');
+                             Items::leather, L'A');
 }
 
 int ArmorRecipes::GetArmorType(Item* item)

@@ -7,8 +7,7 @@
 class WaterWalkerEnchantment : public Enchantment
 {
 public:
-    WaterWalkerEnchantment(const Rarity* rarity,
-                           arrayWithLength<const EquipmentSlot*> slots);
+    WaterWalkerEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots);
     virtual ~WaterWalkerEnchantment();
     virtual int getMinCost(int level);
     virtual int getMaxCost(int level);

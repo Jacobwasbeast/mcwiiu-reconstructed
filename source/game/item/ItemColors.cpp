@@ -73,10 +73,10 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
     public:
         int getColor(const not_null_ptr<ItemInstance>& item, int)
         {
-            DoublePlantBlock::Variant* variant =
-                DoublePlantBlock::Variant::byData(item->getAuxValue());
+            DoublePlantBlock::Variant* variant = DoublePlantBlock::Variant::byData(item->getAuxValue());
             return (variant == gDoublePlantGrass || variant == gDoublePlantFern)
-                ? static_cast<int>(GrassColor::get(0.5, 1.0)) : -1;
+                       ? static_cast<int>(GrassColor::get(0.5, 1.0))
+                       : -1;
         }
     };
     class FilledMap_ItemColor : public ItemColor
@@ -116,8 +116,10 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
             return static_cast<int>((red << 16) | (green << 8) | blue);
         }
     };
-    class Grass_ItemColor : public ItemColor {
+    class Grass_ItemColor : public ItemColor
+    {
         BlockColors* colors;
+
     public:
         explicit Grass_ItemColor(BlockColors* value) : colors(value) {}
         int getColor(const not_null_ptr<ItemInstance>& item, int layer)
@@ -130,7 +132,10 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
     class LeatherHorseArmor_ItemColor : public ItemColor
     {
     public:
-        int getColor(const not_null_ptr<ItemInstance>& item, int layer) { return item->getItem()->getColor(item, layer); }
+        int getColor(const not_null_ptr<ItemInstance>& item, int layer)
+        {
+            return item->getItem()->getColor(item, layer);
+        }
     };
     class Potion_ItemColor : public ItemColor
     {
@@ -161,7 +166,8 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
                 }
                 else if (info->secondaryColour != 0)
                 {
-                    return static_cast<int>(Minecraft::GetInstance()->getColourTable()->getColour(info->secondaryColour));
+                    return static_cast<int>(
+                        Minecraft::GetInstance()->getColourTable()->getColour(info->secondaryColour));
                 }
             }
             return -1;
@@ -189,27 +195,28 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
     };
 
     ItemColors* colors = new ItemColors();
-    Item* armor[] = { Items::leatherHelmet, Items::leatherChestplate, Items::leatherLeggings, Items::leatherBoots };
+    Item* armor[] = {Items::leatherHelmet, Items::leatherChestplate, Items::leatherLeggings, Items::leatherBoots};
     colors->registerColor(new Armor_ItemColor(), arrayWithLength<Item*>(armor, 4));
-    Block* doublePlant[] = { Blocks::double_plant };
+    Block* doublePlant[] = {Blocks::double_plant};
     colors->registerColor(new DoublePlant_ItemColor(), arrayWithLength<Block*>(doublePlant, 1));
-    Item* firework[] = { Items::fireworkCharge };
+    Item* firework[] = {Items::fireworkCharge};
     colors->registerColor(new FireworkCharge_ItemColor(), arrayWithLength<Item*>(firework, 1));
-    Item* potions[] = { Items::potion, Items::splashPotion, Items::lingeringPotion };
+    Item* potions[] = {Items::potion, Items::splashPotion, Items::lingeringPotion};
     colors->registerColor(new Potion_ItemColor(), arrayWithLength<Item*>(potions, 3));
-    Item* spawnEgg[] = { Items::spawnEgg };
+    Item* spawnEgg[] = {Items::spawnEgg};
     colors->registerColor(new SpawnEgg_ItemColor(), arrayWithLength<Item*>(spawnEgg, 1));
-    Block* foliage[] = { Blocks::grass, Blocks::tallgrass, Blocks::vine, Blocks::leaves, Blocks::leaves2, Blocks::waterlily };
+    Block* foliage[] = {Blocks::grass,  Blocks::tallgrass, Blocks::vine,
+                        Blocks::leaves, Blocks::leaves2,   Blocks::waterlily};
     colors->registerColor(new Grass_ItemColor(blockColors), arrayWithLength<Block*>(foliage, 6));
-    Item* tippedArrow[] = { Items::tippedArrow };
+    Item* tippedArrow[] = {Items::tippedArrow};
     colors->registerColor(new TippedArrow_ItemColor(), arrayWithLength<Item*>(tippedArrow, 1));
-    Item* filledMap[] = { Items::filledMap };
+    Item* filledMap[] = {Items::filledMap};
     colors->registerColor(new FilledMap_ItemColor(), arrayWithLength<Item*>(filledMap, 1));
-    Item* bed[] = { Items::bed };
+    Item* bed[] = {Items::bed};
     colors->registerColor(new Bed_ItemColor(), arrayWithLength<Item*>(bed, 1));
-    Item* horseArmor[] = { Items::leatherHorseArmor };
+    Item* horseArmor[] = {Items::leatherHorseArmor};
     colors->registerColor(new LeatherHorseArmor_ItemColor(), arrayWithLength<Item*>(horseArmor, 1));
-    Block* tallGrass[] = { Blocks::tallgrass };
+    Block* tallGrass[] = {Blocks::tallgrass};
     colors->registerColor(new TallGrass_ItemColor(), arrayWithLength<Block*>(tallGrass, 1));
     return colors;
 }

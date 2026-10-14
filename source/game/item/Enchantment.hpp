@@ -30,7 +30,9 @@ class MappedRegistry;
 class Enchantment
 {
 public:
-    static MappedRegistry<ResourceLocation, Enchantment*, boost::hash<ResourceLocation>, std::equal_to<ResourceLocation>, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >* enchantmentRegistry;
+    static MappedRegistry<ResourceLocation, Enchantment*, boost::hash<ResourceLocation>,
+                          std::equal_to<ResourceLocation>, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >*
+        enchantmentRegistry;
 
     Enchantment(const Rarity* rarity, const EnchantmentCategory* category, arrayWithLength<const EquipmentSlot*> slots);
 

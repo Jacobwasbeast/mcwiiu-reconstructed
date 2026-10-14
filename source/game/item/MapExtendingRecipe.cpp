@@ -42,9 +42,8 @@ bool MapExtendingRecipe::isExplorationMap(const boost::shared_ptr<MapItemSavedDa
         for (it = data->mDecorations.begin(); it != data->mDecorations.end(); ++it)
         {
             const MapDecoration::Type* type = it->second.getType();
-            if (type == &MapDecoration::Type::TYPES[14] ||
-                type == &MapDecoration::Type::TYPES[15] ||
-                type == &MapDecoration::Type::TYPES[20])
+            if (type == &MapDecoration::Type::TYPES[14] || type == &MapDecoration::Type::TYPES[15]
+                || type == &MapDecoration::Type::TYPES[20])
             {
                 return true;
             }

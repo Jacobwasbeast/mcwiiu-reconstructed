@@ -13,16 +13,19 @@
 #include "game/util/Math.hpp"
 #include "game/util/Random.hpp"
 
-LootingEnchantFunction::LootingEnchantFunction(std::vector<LootItemCondition*>* conditions, RandomValueBounds count, int limit)
+LootingEnchantFunction::LootingEnchantFunction(std::vector<LootItemCondition*>* conditions, RandomValueBounds count,
+                                               int limit)
     : LootItemFunction(conditions)
 {
     this->count = count;
     this->limit = limit;
 }
 
-not_null_ptr<ItemInstance> LootingEnchantFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context)
+not_null_ptr<ItemInstance> LootingEnchantFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
+                                                         LootTableContext& context)
 {
-    boost::shared_ptr<Entity> killer = context.mDamageSource != NULL ? context.mDamageSource->getEntity() : boost::shared_ptr<Entity>();
+    boost::shared_ptr<Entity> killer = context.mDamageSource != NULL ? context.mDamageSource->getEntity()
+                                                                     : boost::shared_ptr<Entity>();
 
     if (killer != NULL && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, killer->GetType()))
     {

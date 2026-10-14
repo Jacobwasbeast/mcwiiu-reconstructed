@@ -24,31 +24,23 @@
 #include "game/world/generation/Player.hpp"
 
 static const unsigned int BED_DESCRIPTION_IDS[16] = {
-    IDS_TILE_BED_WHITE, IDS_TILE_BED_ORANGE, IDS_TILE_BED_MAGENTA, IDS_TILE_BED_LIGHT_BLUE,
-    IDS_TILE_BED_YELLOW, IDS_TILE_BED_LIME, IDS_TILE_BED_PINK, IDS_TILE_BED_GRAY,
-    IDS_TILE_BED_SILVER, IDS_TILE_BED_CYAN, IDS_TILE_BED_PURPLE, IDS_TILE_BED_BLUE,
-    IDS_TILE_BED_BROWN, IDS_TILE_BED_GREEN, IDS_TILE_BED_RED, IDS_TILE_BED_BLACK
-};
+    IDS_TILE_BED_WHITE,  IDS_TILE_BED_ORANGE, IDS_TILE_BED_MAGENTA, IDS_TILE_BED_LIGHT_BLUE,
+    IDS_TILE_BED_YELLOW, IDS_TILE_BED_LIME,   IDS_TILE_BED_PINK,    IDS_TILE_BED_GRAY,
+    IDS_TILE_BED_SILVER, IDS_TILE_BED_CYAN,   IDS_TILE_BED_PURPLE,  IDS_TILE_BED_BLUE,
+    IDS_TILE_BED_BROWN,  IDS_TILE_BED_GREEN,  IDS_TILE_BED_RED,     IDS_TILE_BED_BLACK};
 
 static const std::wstring BED_OVERLAY_ICON_NAME = L"bed_overlay";
 
-BedItem::BedItem()
-    : Item(),
-      mBedIcon(NULL)
+BedItem::BedItem() : Item(), mBedIcon(NULL)
 {
     setMaxDamage(0);
     setStackedByData(true);
 }
 
-InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> player,
-                                                       Level* level,
-                                                       const BlockPos& pos,
-                                                       InteractionHand::EInteractionHand hand,
-                                                       const Direction* direction,
-                                                       float hitX,
-                                                       float hitY,
-                                                       float hitZ,
-                                                       bool simulate)
+InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                     const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                     const Direction* direction, float hitX, float hitY, float hitZ,
+                                                     bool simulate)
 {
     if (direction != Direction::UP)
     {
@@ -79,8 +71,7 @@ InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> p
     bool footFree = level->isEmptyBlock(footPos) || level->isEmptyWaterBlock(footPos) || footReplaceable;
     bool headFree = level->isEmptyBlock(headPos) || level->isEmptyWaterBlock(headPos) || headReplaceable;
 
-    if (!footFree || !headFree
-        || !level->getBlockState(footPos.below())->isTopSolidBlocking()
+    if (!footFree || !headFree || !level->getBlockState(footPos.below())->isTopSolidBlocking()
         || !level->getBlockState(headPos.below())->isTopSolidBlocking())
     {
         return InteractionResult::eInteractionResult_Fail;
@@ -93,30 +84,23 @@ InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> p
                                           ->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facing)
                                           ->setValue<const BedBlock::Part*>(BedBlock::PART, &gBedFoot);
         level->setBlock(footPos, footState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
-        level->setBlock(headPos,
-                        footState->setValue<const BedBlock::Part*>(BedBlock::PART, &gBedHead),
-                        Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
-                        false);
+        level->setBlock(headPos, footState->setValue<const BedBlock::Part*>(BedBlock::PART, &gBedHead),
+                        Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
 
-        player->awardStat(GenericStats::blocksPlaced(Blocks::bed),
-                          GenericStats::param_blocksPlaced(headState, 1));
+        player->awardStat(GenericStats::blocksPlaced(Blocks::bed), GenericStats::param_blocksPlaced(headState, 1));
 
         const SoundType* soundType = footState->getBlock()->getSoundType();
-        level->playSound(boost::shared_ptr<Player>(),
-                         footPos,
-                         soundType->getPlaceSound(),
-                         SoundSource::eSoundSource_Blocks,
-                         (soundType->getVolume() + 1.0f) * 0.5f,
-                         soundType->getPitch() * 0.8f,
-                         16.0f);
+        level->playSound(boost::shared_ptr<Player>(), footPos, soundType->getPlaceSound(),
+                         SoundSource::eSoundSource_Blocks, (soundType->getVolume() + 1.0f) * 0.5f,
+                         soundType->getPitch() * 0.8f, 16.0f);
 
         boost::shared_ptr<BlockEntity> headEntity = level->getBlockEntity(headPos);
 
         if (eTYPE_DERIVED_FROM(BlockEntityType::BED, headEntity->GetType()))
         {
             boost::static_pointer_cast<BedBlockEntity>(headEntity)->setItemValues(itemInstance);
-            boost::static_pointer_cast<BedBlockEntity>(headEntity)->setColor(
-                DyeColor::byBlockData(itemInstance->getAuxValue()));
+            boost::static_pointer_cast<BedBlockEntity>(headEntity)
+                ->setColor(DyeColor::byBlockData(itemInstance->getAuxValue()));
         }
 
         boost::shared_ptr<BlockEntity> footEntity = level->getBlockEntity(footPos);
@@ -124,8 +108,8 @@ InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> p
         if (eTYPE_DERIVED_FROM(BlockEntityType::BED, footEntity->GetType()))
         {
             boost::static_pointer_cast<BedBlockEntity>(footEntity)->setItemValues(itemInstance);
-            boost::static_pointer_cast<BedBlockEntity>(footEntity)->setColor(
-                DyeColor::byBlockData(itemInstance->getAuxValue()));
+            boost::static_pointer_cast<BedBlockEntity>(footEntity)
+                ->setColor(DyeColor::byBlockData(itemInstance->getAuxValue()));
         }
 
         level->blockUpdated(footPos, block, false);

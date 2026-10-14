@@ -19,7 +19,8 @@ class LootingEnchantFunction : public LootItemFunction
 public:
     LootingEnchantFunction(std::vector<LootItemCondition*>* conditions, RandomValueBounds count, int limit);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context);
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
+                                             LootTableContext& context);
 
 protected:
     RandomValueBounds count;

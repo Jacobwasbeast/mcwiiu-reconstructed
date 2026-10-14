@@ -8,9 +8,8 @@ class ArmorDispenseItemBehavior : public DefaultDispenseItemBehavior
 public:
     virtual ~ArmorDispenseItemBehavior();
 
-    virtual not_null_ptr<ItemInstance> execute(BlockSource* blockSource,
-                                                not_null_ptr<ItemInstance> itemInstance,
-                                                eOUTCOME& outcome);
+    virtual not_null_ptr<ItemInstance> execute(BlockSource* blockSource, not_null_ptr<ItemInstance> itemInstance,
+                                               eOUTCOME& outcome);
 };
 
 #endif

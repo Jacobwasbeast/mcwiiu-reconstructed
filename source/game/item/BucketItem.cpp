@@ -48,45 +48,72 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 static const int TROPICAL_FISH_COLOR_NAMES[15] = {
-    static_cast<int>(IDS_DESC_TROPICAL_COLOR_WHITE), IDS_DESC_TROPICAL_COLOR_ORANGE, IDS_DESC_TROPICAL_COLOR_MAGENTA, IDS_DESC_TROPICAL_COLOR_SKY, static_cast<int>(IDS_DESC_TROPICAL_COLOR_YELLOW),
-    IDS_DESC_TROPICAL_COLOR_LIME, static_cast<int>(IDS_DESC_TROPICAL_COLOR_ROSE), static_cast<int>(IDS_DESC_TROPICAL_COLOR_GRAY), static_cast<int>(IDS_DESC_TROPICAL_COLOR_SILVER),
-    static_cast<int>(IDS_DESC_TROPICAL_COLOR_TEAL), static_cast<int>(IDS_DESC_TROPICAL_COLOR_PLUM), IDS_DESC_TROPICAL_COLOR_BLUE, static_cast<int>(IDS_DESC_TROPICAL_COLOR_BROWN),
-    IDS_DESC_TROPICAL_COLOR_GREEN, IDS_DESC_TROPICAL_COLOR_RED,
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_WHITE),
+    IDS_DESC_TROPICAL_COLOR_ORANGE,
+    IDS_DESC_TROPICAL_COLOR_MAGENTA,
+    IDS_DESC_TROPICAL_COLOR_SKY,
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_YELLOW),
+    IDS_DESC_TROPICAL_COLOR_LIME,
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_ROSE),
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_GRAY),
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_SILVER),
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_TEAL),
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_PLUM),
+    IDS_DESC_TROPICAL_COLOR_BLUE,
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_BROWN),
+    IDS_DESC_TROPICAL_COLOR_GREEN,
+    IDS_DESC_TROPICAL_COLOR_RED,
 };
 
 static const int TROPICAL_FISH_PATTERN_NAMES[24] = {
-    0x1AC7A9D7, 0x0D35BF83, 0x14328023, 0x0CC5A1D0, static_cast<int>(0x86347D6E), static_cast<int>(0xBDBA78AC),
-    static_cast<int>(0x8C4ED0B3), 0x1918A669, static_cast<int>(0x9983DE84), static_cast<int>(0x947BF784),
-    static_cast<int>(0xC1AD361F), static_cast<int>(0xF13321A2), 0x2189FC84, static_cast<int>(0x9717CFF0),
-    static_cast<int>(0xA9D36B90), 0x1D2AD27B, 0x54FEB165, static_cast<int>(0xAEEAEA77),
-    static_cast<int>(0xACD88200), static_cast<int>(0xF10D126A), 0x2ADC42EF, static_cast<int>(0x8AD673EF),
-    0x75F6484C, 0x340BB259,
+    0x1AC7A9D7,
+    0x0D35BF83,
+    0x14328023,
+    0x0CC5A1D0,
+    static_cast<int>(0x86347D6E),
+    static_cast<int>(0xBDBA78AC),
+    static_cast<int>(0x8C4ED0B3),
+    0x1918A669,
+    static_cast<int>(0x9983DE84),
+    static_cast<int>(0x947BF784),
+    static_cast<int>(0xC1AD361F),
+    static_cast<int>(0xF13321A2),
+    0x2189FC84,
+    static_cast<int>(0x9717CFF0),
+    static_cast<int>(0xA9D36B90),
+    0x1D2AD27B,
+    0x54FEB165,
+    static_cast<int>(0xAEEAEA77),
+    static_cast<int>(0xACD88200),
+    static_cast<int>(0xF10D126A),
+    0x2ADC42EF,
+    static_cast<int>(0x8AD673EF),
+    0x75F6484C,
+    0x340BB259,
 };
 
-static const unsigned int values[22][5] = {
-        { 1, 7, 1, 1, IDS_DESC_TROPICAL_SCHOOL_ANEMONE },
-        { 7, 7, 1, 0, IDS_DESC_TROPICAL_SCHOOL_BLACKTANG },
-        { 7, 3, 0, 1, IDS_DESC_TROPICAL_SCHOOL_BLUEDORY },
-        { 0, 7, 0, 4, IDS_DESC_TROPICAL_SCHOOL_BUTTERFLYFISH },
-        { 11, 7, 0, 1, IDS_DESC_TROPICAL_SCHOOL_CHICHLID },
-        { 1, 0, 0, 0, IDS_DESC_TROPICAL_SCHOOL_CLOWNFISH },
-        { 6, 3, 0, 5, IDS_DESC_TROPICAL_SCHOOL_COTTON_CANDY_BETTA },
-        { 10, 4, 1, 3, IDS_DESC_TROPICAL_SCHOOL_DOTTYBACK },
-        { 0, 14, 1, 5, IDS_DESC_TROPICAL_SCHOOL_EMPEROR_RED_SNAPPER },
-        { 0, 4, 0, 5, IDS_DESC_TROPICAL_SCHOOL_GOATFISH },
-        { 0, 7, 1, 2, IDS_DESC_TROPICAL_SCHOOL_MOORISH_IDOL },
-        { 0, 1, 1, 5, IDS_DESC_TROPICAL_SCHOOL_ORNATE_BUTTERFLY },
-        { 9, 6, 0, 3, IDS_DESC_TROPICAL_SCHOOL_PARROTFISH },
-        { 5, 3, 0, 4, IDS_DESC_TROPICAL_SCHOOL_QUEEN_ANGEL_FISH },
-        { 14, 0, 1, 4, IDS_DESC_TROPICAL_SCHOOL_RED_CICHLID },
-        { 7, 14, 0, 2, IDS_DESC_TROPICAL_SCHOOL_RED_LIPPED_BLENNY },
-        { 14, 0, 1, 3, IDS_DESC_TROPICAL_SCHOOL_RED_SNAPPER },
-        { 0, 4, 1, 0, IDS_DESC_TROPICAL_SCHOOL_THREADFIN },
-        { 14, 0, 0, 1, IDS_DESC_TROPICAL_SCHOOL_TOMATO_CLOWN },
-        { 7, 0, 0, 1, IDS_DESC_TROPICAL_SCHOOL_TRIGGERFISH },
-        { 4, 4, 1, 1, IDS_DESC_TROPICAL_SCHOOL_YELLOW_TANG },
-        { 0, 3, 9, 4, IDS_DESC_TROPICAL_SCHOOL_YELLOWTAIL_PARROT }
-};
+static const unsigned int values[22][5] = {{1, 7, 1, 1, IDS_DESC_TROPICAL_SCHOOL_ANEMONE},
+                                           {7, 7, 1, 0, IDS_DESC_TROPICAL_SCHOOL_BLACKTANG},
+                                           {7, 3, 0, 1, IDS_DESC_TROPICAL_SCHOOL_BLUEDORY},
+                                           {0, 7, 0, 4, IDS_DESC_TROPICAL_SCHOOL_BUTTERFLYFISH},
+                                           {11, 7, 0, 1, IDS_DESC_TROPICAL_SCHOOL_CHICHLID},
+                                           {1, 0, 0, 0, IDS_DESC_TROPICAL_SCHOOL_CLOWNFISH},
+                                           {6, 3, 0, 5, IDS_DESC_TROPICAL_SCHOOL_COTTON_CANDY_BETTA},
+                                           {10, 4, 1, 3, IDS_DESC_TROPICAL_SCHOOL_DOTTYBACK},
+                                           {0, 14, 1, 5, IDS_DESC_TROPICAL_SCHOOL_EMPEROR_RED_SNAPPER},
+                                           {0, 4, 0, 5, IDS_DESC_TROPICAL_SCHOOL_GOATFISH},
+                                           {0, 7, 1, 2, IDS_DESC_TROPICAL_SCHOOL_MOORISH_IDOL},
+                                           {0, 1, 1, 5, IDS_DESC_TROPICAL_SCHOOL_ORNATE_BUTTERFLY},
+                                           {9, 6, 0, 3, IDS_DESC_TROPICAL_SCHOOL_PARROTFISH},
+                                           {5, 3, 0, 4, IDS_DESC_TROPICAL_SCHOOL_QUEEN_ANGEL_FISH},
+                                           {14, 0, 1, 4, IDS_DESC_TROPICAL_SCHOOL_RED_CICHLID},
+                                           {7, 14, 0, 2, IDS_DESC_TROPICAL_SCHOOL_RED_LIPPED_BLENNY},
+                                           {14, 0, 1, 3, IDS_DESC_TROPICAL_SCHOOL_RED_SNAPPER},
+                                           {0, 4, 1, 0, IDS_DESC_TROPICAL_SCHOOL_THREADFIN},
+                                           {14, 0, 0, 1, IDS_DESC_TROPICAL_SCHOOL_TOMATO_CLOWN},
+                                           {7, 0, 0, 1, IDS_DESC_TROPICAL_SCHOOL_TRIGGERFISH},
+                                           {4, 4, 1, 1, IDS_DESC_TROPICAL_SCHOOL_YELLOW_TANG},
+                                           {0, 3, 9, 4, IDS_DESC_TROPICAL_SCHOOL_YELLOWTAIL_PARROT}};
 
 int BucketItem::getSchoolName(int a, int b, int c, int d)
 {
@@ -104,8 +131,7 @@ int BucketItem::getSchoolName(int a, int b, int c, int d)
     return -1;
 }
 
-BucketItem::BucketItem(BucketFillType fillType)
-    : Item()
+BucketItem::BucketItem(BucketFillType fillType) : Item()
 {
     mMaxStackSize = 1;
     mFillType = fillType;
@@ -184,8 +210,7 @@ void BucketItem::addBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_n
 }
 
 not_null_ptr<ItemInstance> BucketItem::createResultItem(not_null_ptr<ItemInstance> itemInstance,
-                                                        boost::shared_ptr<Player> player,
-                                                        Item* item,
+                                                        boost::shared_ptr<Player> player, Item* item,
                                                         boost::shared_ptr<Entity> entity)
 {
     not_null_ptr<ItemInstance> result(new ItemInstance(item));
@@ -210,8 +235,7 @@ not_null_ptr<ItemInstance> BucketItem::createResultItem(not_null_ptr<ItemInstanc
     return itemInstance;
 }
 
-not_null_ptr<ItemInstance> BucketItem::collectFish(boost::shared_ptr<Player> player,
-                                                   boost::shared_ptr<Entity> entity,
+not_null_ptr<ItemInstance> BucketItem::collectFish(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity,
                                                    boost::shared_ptr<ItemInstance> itemInstance)
 {
     int variant = 0;
@@ -249,9 +273,10 @@ not_null_ptr<ItemInstance> BucketItem::collectFish(boost::shared_ptr<Player> pla
     return itemInstance;
 }
 
-InteractionResult::EInteractionResult BucketItem::useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand, const Direction* direction,
-                                                        float hitX, float hitY, float hitZ, bool simulate)
+InteractionResult::EInteractionResult BucketItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate)
 {
     if (simulate)
     {
@@ -303,8 +328,7 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
 
         float unit = 1.0f;
         Vec3* viewVector = player->getViewVector(unit);
-        Vec3* rayEnd = eyePosition->add(viewVector->x * entityReach,
-                                        viewVector->y * entityReach,
+        Vec3* rayEnd = eyePosition->add(viewVector->x * entityReach, viewVector->y * entityReach,
                                         viewVector->z * entityReach);
 
         boost::shared_ptr<Entity> pointedEntity;
@@ -326,8 +350,7 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
                 ->grow(unit, unit, unit),
             sPickPredicate, NULL);
 
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-             it != entities->end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
             boost::shared_ptr<Entity> candidate = *it;
 
@@ -436,7 +459,7 @@ bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interac
         Block* liquidBlock = level->getLiquidBlock(pos);
         const AABB* shape = block->getClipAABB(block->defaultBlockState(), level, pos);
         bool liquid = block->defaultBlockState()->getMaterial()->isLiquid()
-            || liquidBlock->defaultBlockState()->getMaterial()->isLiquid();
+                      || liquidBlock->defaultBlockState()->getMaterial()->isLiquid();
         if (shape == NULL && !liquid && !block->canContainLiquid(block->defaultBlockState()))
         {
             delete hitResult;
@@ -516,7 +539,8 @@ bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interac
     return false;
 }
 
-bool BucketItem::isFishBucketNameCensored(const std::wstring& name, const std::wstring& owner, bool restricted, bool host)
+bool BucketItem::isFishBucketNameCensored(const std::wstring& name, const std::wstring& owner, bool restricted,
+                                          bool host)
 {
     bool censored = !gApp.IsUUIDLocal(owner) && (gApp.IsConsoleChatCensored() || restricted);
     bool hidden = !host && censored;
@@ -551,7 +575,8 @@ bool BucketItem::readBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_
     return result;
 }
 
-bool BucketItem::emptyBucket(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, not_null_ptr<ItemInstance> itemInstance)
+bool BucketItem::emptyBucket(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
+                             not_null_ptr<ItemInstance> itemInstance)
 {
     if (mBlock != Blocks::air)
     {
@@ -580,7 +605,7 @@ bool BucketItem::emptyBucket(boost::shared_ptr<Player> player, Level* level, con
             else
             {
                 bool waterlog = level->getBlock(pos)->canContainLiquid(state) && material != Material::AIR
-                    && mBlock != Blocks::flowing_lava;
+                                && mBlock != Blocks::flowing_lava;
                 if (!level->mIsClientSide && (notSolid || replaceable) && !material->isLiquid() && waterBlocking
                     && !containsLiquid)
                 {
@@ -599,16 +624,16 @@ bool BucketItem::emptyBucket(boost::shared_ptr<Player> player, Level* level, con
                 {
                     if (waterlog)
                     {
-                        level->setExtraBlock(pos, mBlock->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
-                                             false);
+                        level->setExtraBlock(pos, mBlock->defaultBlockState(),
+                                             Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
                     }
                     else
                     {
                         if (block->waterSpreadCausesSpawn())
                             block->spawnResources(level, pos, state, 0);
                         if (material == Material::AIR || notSolid)
-                            level->setBlock(pos, mBlock->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
-                                            false);
+                            level->setBlock(pos, mBlock->defaultBlockState(),
+                                            Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
                     }
                 }
             }
@@ -635,8 +660,8 @@ bool BucketItem::emptyBucket(boost::shared_ptr<Player> player, Level* level, con
                     break;
                 }
                 int error = 0;
-                boost::shared_ptr<Entity> fish =
-                    SpawnEggItem::spawnMobAt(level, EntityIO::getKey(fishType), pos.x + 0.5, pos.y, pos.z + 0.5, &error, L"");
+                boost::shared_ptr<Entity> fish = SpawnEggItem::spawnMobAt(level, EntityIO::getKey(fishType),
+                                                                          pos.x + 0.5, pos.y, pos.z + 0.5, &error, L"");
                 if (fish != NULL)
                 {
                     if (error == 0)
@@ -653,7 +678,8 @@ bool BucketItem::emptyBucket(boost::shared_ptr<Player> player, Level* level, con
     return false;
 }
 
-InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
+InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> player,
+                                        InteractionHand::EInteractionHand hand)
 {
     if (mFillType == MILK)
     {
@@ -682,7 +708,7 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
         Block* liquidBlock = level->getLiquidBlock(pos);
         const AABB* shape = block->getClipAABB(block->defaultBlockState(), level, pos);
         bool liquid = block->defaultBlockState()->getMaterial()->isLiquid()
-            || liquidBlock->defaultBlockState()->getMaterial()->isLiquid();
+                      || liquidBlock->defaultBlockState()->getMaterial()->isLiquid();
         if (shape == NULL && !liquid && !block->canContainLiquid(block->defaultBlockState()))
         {
             delete hitResult;
@@ -717,7 +743,7 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
             const BlockState* liquidAbove = level->getLiquidBlock(pos.above())->defaultBlockState();
             Block* blockAbove = level->getBlock(pos.above());
             bool waterSourceAbove = liquidAbove->getMaterial() == Material::WATER
-                && liquidAbove->getValue(LiquidBlock::LEVEL) == 0;
+                                    && liquidAbove->getValue(LiquidBlock::LEVEL) == 0;
 
             bool removeLiquid = true;
             if ((blockAbove->defaultBlockState()->isSolid() || waterSourceAbove) && liquidMaterial == Material::WATER)
@@ -748,24 +774,24 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
                 || (liquidMaterial == Material::WATER && liquidState->getValue(LiquidBlock::LEVEL) == 0))
             {
                 if (liquidMaterial == Material::WATER && removeLiquid)
-                    level->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
-                                         false);
+                    level->setExtraBlock(pos, Blocks::air->defaultBlockState(),
+                                         Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
                 if ((material == Material::WATER || material == Material::BUBBLE_COLUMN) && removeLiquid)
                     level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
                                     false);
                 player->playSound(SoundEvents::BUCKET_FILL, 1.0f, 1.0f);
                 delete hitResult;
-                return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
-                                               createResultItem(itemInstance, player, Items::waterBucket,
-                                                                boost::shared_ptr<Entity>()));
+                return InteractionResultHolder(
+                    InteractionResult::eInteractionResult_Success,
+                    createResultItem(itemInstance, player, Items::waterBucket, boost::shared_ptr<Entity>()));
             }
 
             if ((material == Material::LAVA && state->getValue(LiquidBlock::LEVEL) == 0)
                 || (liquidMaterial == Material::LAVA && liquidState->getValue(LiquidBlock::LEVEL) == 0))
             {
                 if (liquidMaterial == Material::LAVA)
-                    level->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
-                                         false);
+                    level->setExtraBlock(pos, Blocks::air->defaultBlockState(),
+                                         Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
                 if (material == Material::LAVA)
                     level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
                                     false);
@@ -773,9 +799,9 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
                 if (level->mDimension->getType() == DimensionType::NETHER)
                     player->awardStat(GenericStats::netherLavaCollected(), GenericStats::param_noArgs());
                 delete hitResult;
-                return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
-                                               createResultItem(itemInstance, player, Items::lavaBucket,
-                                                                boost::shared_ptr<Entity>()));
+                return InteractionResultHolder(
+                    InteractionResult::eInteractionResult_Success,
+                    createResultItem(itemInstance, player, Items::lavaBucket, boost::shared_ptr<Entity>()));
             }
 
             return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
@@ -795,7 +821,8 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
 
             BlockPos placePos = pos;
             if (!fishIntoWater
-                && (!level->getBlock(pos)->canContainLiquid(level->getBlockState(pos)) || mBlock != Blocks::flowing_water))
+                && (!level->getBlock(pos)->canContainLiquid(level->getBlockState(pos))
+                    || mBlock != Blocks::flowing_water))
             {
                 placePos = pos.relative(hitResult->mDirection);
             }

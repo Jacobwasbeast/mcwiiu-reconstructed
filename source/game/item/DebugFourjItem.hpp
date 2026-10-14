@@ -17,18 +17,11 @@ class DebugFourjItem : public Item
 public:
     DebugFourjItem();
 
-    virtual bool interactEnemy(not_null_ptr<ItemInstance> itemInstance,
-                               boost::shared_ptr<Player> player,
-                               boost::shared_ptr<LivingEntity> target,
-                               InteractionHand::EInteractionHand hand);
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
+    virtual bool interactEnemy(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                               boost::shared_ptr<LivingEntity> target, InteractionHand::EInteractionHand hand);
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
                                                         bool simulate);
 
 private:

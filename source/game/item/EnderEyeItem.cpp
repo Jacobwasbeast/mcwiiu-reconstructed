@@ -35,15 +35,14 @@ EnderEyeItem::EnderEyeItem() : Item()
 }
 
 InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Player> player, Level* level,
-                                                            const BlockPos& pos, InteractionHand::EInteractionHand hand,
-                                                            const Direction* direction, float hitX, float hitY,
-                                                            float hitZ, bool simulate)
+                                                          const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                          const Direction* direction, float hitX, float hitY,
+                                                          float hitZ, bool simulate)
 {
     const BlockState* state = level->getBlockState(pos);
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance)
-        || state->getBlock() != Blocks::end_portal_frame
-        || state->getValue(EndPortalFrameBlock::EYE))
+        || state->getBlock() != Blocks::end_portal_frame || state->getValue(EndPortalFrameBlock::EYE))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
@@ -76,7 +75,8 @@ InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Play
         {
             for (int z = 0; z < 3; ++z)
             {
-                level->setBlock(origin.offset(x, 0, z), Blocks::end_portal->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                level->setBlock(origin.offset(x, 0, z), Blocks::end_portal->defaultBlockState(), Block::UPDATE_CLIENTS,
+                                false);
             }
         }
         level->globalLevelEvent(1038, origin.offset(1, 0, 1), 0);
@@ -108,7 +108,7 @@ bool EnderEyeItem::TestUse(Level* level, boost::shared_ptr<Player> player, Inter
 }
 
 InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player> player,
-                                           InteractionHand::EInteractionHand hand)
+                                          InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     HitResult* hit = getPlayerPOVHitResult(level, player, false);
@@ -126,7 +126,8 @@ InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player
     player->startUsingItem(hand);
     if (!level->mIsClientSide)
     {
-        BlockPos* target = static_cast<ServerLevel*>(level)->getChunkSource()->findNearestMapFeature(level, LargeFeature::STRONGHOLD, BlockPos(player), false);
+        BlockPos* target = static_cast<ServerLevel*>(level)->getChunkSource()->findNearestMapFeature(
+            level, LargeFeature::STRONGHOLD, BlockPos(player), false);
         if (target != NULL)
         {
             boost::shared_ptr<EyeOfEnderSignal> signal(
@@ -134,15 +135,14 @@ InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player
             signal->signalTo(*target);
             level->addEntity(signal);
             level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ,
-                             SoundEvents::ENDEREYE_LAUNCH, SoundSource::eSoundSource_Neutral,
-                             0.5f, 0.4f / (random->nextFloat() * 0.4f + 0.8f), 16.0f);
+                             SoundEvents::ENDEREYE_LAUNCH, SoundSource::eSoundSource_Neutral, 0.5f,
+                             0.4f / (random->nextFloat() * 0.4f + 0.8f), 16.0f);
             level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_ENDER_EYE_LAUNCH, BlockPos(player), 0);
             if (!player->mAbilities.mInstabuild)
             {
                 itemInstance->shrink(1);
             }
-            player->awardStat(GenericStats::itemsUsed(this),
-                              GenericStats::param_itemsUsed(player, itemInstance));
+            player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
             delete target;
             return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
         }

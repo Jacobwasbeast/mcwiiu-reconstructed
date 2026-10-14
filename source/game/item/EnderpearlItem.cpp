@@ -17,9 +17,8 @@ EnderpearlItem::EnderpearlItem() : Item()
     mMaxStackSize = 16;
 }
 
-InteractionResultHolder EnderpearlItem::use(Level* level,
-                                             boost::shared_ptr<Player> player,
-                                             InteractionHand::EInteractionHand hand)
+InteractionResultHolder EnderpearlItem::use(Level* level, boost::shared_ptr<Player> player,
+                                            InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
@@ -28,15 +27,8 @@ InteractionResultHolder EnderpearlItem::use(Level* level,
         itemInstance->shrink(1);
     }
 
-    level->playSound(boost::shared_ptr<Player>(),
-                     player->mX,
-                     player->mY,
-                     player->mZ,
-                     SoundEvents::ENDERPEARL_THROW,
-                     SoundSource::eSoundSource_Neutral,
-                     0.5f,
-                     0.4f / (random->nextFloat() * 0.4f + 0.8f),
-                     16.0f);
+    level->playSound(boost::shared_ptr<Player>(), player->mX, player->mY, player->mZ, SoundEvents::ENDERPEARL_THROW,
+                     SoundSource::eSoundSource_Neutral, 0.5f, 0.4f / (random->nextFloat() * 0.4f + 0.8f), 16.0f);
 
     if (!level->mIsClientSide)
     {
@@ -51,9 +43,7 @@ InteractionResultHolder EnderpearlItem::use(Level* level,
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 
-bool EnderpearlItem::TestUse(Level*,
-                             boost::shared_ptr<Player>,
-                             InteractionHand::EInteractionHand)
+bool EnderpearlItem::TestUse(Level*, boost::shared_ptr<Player>, InteractionHand::EInteractionHand)
 {
     return true;
 }

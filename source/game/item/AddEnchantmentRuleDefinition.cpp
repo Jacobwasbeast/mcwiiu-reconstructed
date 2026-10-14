@@ -9,14 +9,13 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 
-AddEnchantmentRuleDefinition::AddEnchantmentRuleDefinition()
-    : GameRuleDefinition()
+AddEnchantmentRuleDefinition::AddEnchantmentRuleDefinition() : GameRuleDefinition()
 {
     mLevel = 0;
     mEnchantmentId = 0;
 
-    GameRules_IntAttribute* enchantmentAttribute =
-        addIntAttribute(ConsoleGameRules::eGameRuleAttr_enchantmentId, &mEnchantmentId);
+    GameRules_IntAttribute* enchantmentAttribute = addIntAttribute(ConsoleGameRules::eGameRuleAttr_enchantmentId,
+                                                                   &mEnchantmentId);
     enchantmentAttribute->setMin(0)->setMax(0xff);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_enchantmentLevel, &mLevel)->setMin(0);
 }

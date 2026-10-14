@@ -11,5 +11,5 @@ bool AreaEffectCloud_Predicate::apply(boost::shared_ptr<Entity> entity) const
     boost::shared_ptr<AreaEffectCloud> cloud = boost::dynamic_pointer_cast<AreaEffectCloud>(entity);
 
     return cloud && cloud->isAlive() && cloud->getOwner()
-        && eTYPE_DERIVED_FROM(EntityType::ENDER_DRAGON, cloud->getOwner()->GetType());
+           && eTYPE_DERIVED_FROM(EntityType::ENDER_DRAGON, cloud->getOwner()->GetType());
 }

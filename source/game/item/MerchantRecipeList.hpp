@@ -22,8 +22,7 @@ public:
     bool isRequiredItem(not_null_ptr<ItemInstance> supplied, not_null_ptr<ItemInstance> required);
     MerchantRecipe* getRecipeFor(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second, int hint);
     bool addIfNewOrBetter(MerchantRecipe* recipe);
-    MerchantRecipe* getMatchingRecipeFor(not_null_ptr<ItemInstance> first,
-                                         not_null_ptr<ItemInstance> second,
+    MerchantRecipe* getMatchingRecipeFor(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second,
                                          not_null_ptr<ItemInstance> result);
     void writeToStream(DataOutputStream* stream);
     void push_back(MerchantRecipe* recipe);

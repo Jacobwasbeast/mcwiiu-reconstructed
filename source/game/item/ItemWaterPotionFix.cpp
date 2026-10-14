@@ -17,8 +17,8 @@ CompoundTag* ItemWaterPotionFix::fix(CompoundTag* tag)
 {
     const std::wstring id = tag->getString(L"id");
 
-    if (id == L"minecraft:potion" || id == L"minecraft:splash_potion" ||
-        id == L"minecraft:lingering_potion" || id == L"minecraft:tipped_arrow")
+    if (id == L"minecraft:potion" || id == L"minecraft:splash_potion" || id == L"minecraft:lingering_potion"
+        || id == L"minecraft:tipped_arrow")
     {
         CompoundTag* itemTag = tag->getCompound(L"tag");
 

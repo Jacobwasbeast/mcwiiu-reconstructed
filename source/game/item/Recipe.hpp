@@ -48,12 +48,7 @@ public:
         unsigned short missingSlotMask[4];
     };
 
-    Recipe()
-        : mBaseItemType(0),
-          mAchievementId(-1),
-          mDisplayInSimpleCrafting(true)
-    {
-    }
+    Recipe() : mBaseItemType(0), mAchievementId(-1), mDisplayInSimpleCrafting(true) {}
 
     virtual ~Recipe() {}
     virtual bool matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level) = 0;
@@ -61,7 +56,8 @@ public:
     virtual int size() = 0;
     virtual ItemInstance* getResultItem() = 0;
     virtual ItemInstance* getIngredientItem(int column, int row) = 0;
-    virtual NonNullList<not_null_ptr<ItemInstance> > getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer) = 0;
+    virtual NonNullList<not_null_ptr<ItemInstance> > getRemainingItems(
+        boost::shared_ptr<CraftingContainer> craftingContainer) = 0;
     virtual _eGroupType getGroup() = 0;
     virtual bool recipeRequires(int itemId) = 0;
     virtual void recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired) = 0;

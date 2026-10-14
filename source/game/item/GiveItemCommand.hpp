@@ -15,12 +15,12 @@ class Player;
 class GiveItemCommand : public Command
 {
 public:
-
     virtual EGameCommand getId();
     virtual int getPermissionLevel();
     virtual void execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data);
 
-    static boost::shared_ptr<GameCommandPacket> preparePacket(boost::shared_ptr<Player> player, int itemId, int count, int data, const std::wstring& playerName);
+    static boost::shared_ptr<GameCommandPacket> preparePacket(boost::shared_ptr<Player> player, int itemId, int count,
+                                                              int data, const std::wstring& playerName);
 };
 
 #endif

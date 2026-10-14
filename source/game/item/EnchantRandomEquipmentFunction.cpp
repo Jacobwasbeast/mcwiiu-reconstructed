@@ -13,14 +13,15 @@ EnchantRandomEquipmentFunction::~EnchantRandomEquipmentFunction()
 }
 
 not_null_ptr<ItemInstance> EnchantRandomEquipmentFunction::apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                                                 Random* random,
-                                                                 LootTableContext& context)
+                                                                 Random* random, LootTableContext& context)
 {
     float specialMultiplier = context.mLevel->getSpecialMultiplier(context.mThisEntity.lock()->mDimension);
 
     if (random->nextFloat() < chance * specialMultiplier)
     {
-        EnchantmentHelper::enchantItem(random, itemInstance, static_cast<int>(specialMultiplier * static_cast<float>(random->nextInt(18)) + 5.0f), true);
+        EnchantmentHelper::enchantItem(
+            random, itemInstance, static_cast<int>(specialMultiplier * static_cast<float>(random->nextInt(18)) + 5.0f),
+            true);
     }
 
     return itemInstance;

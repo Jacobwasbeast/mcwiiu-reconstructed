@@ -7,8 +7,7 @@ class BowlFoodItem : public FoodItem
 {
 public:
     BowlFoodItem(int nutrition);
-    virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
-                                                       Level* level,
+    virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                        boost::shared_ptr<LivingEntity> entity);
 };
 

@@ -4,8 +4,7 @@
 #include "game/core/IconRegister.hpp"
 #include "game/item/ItemInstance.hpp"
 
-CoalItem::CoalItem()
-    : Item()
+CoalItem::CoalItem() : Item()
 {
     setStackedByData(true);
     setMaxDamage(0);

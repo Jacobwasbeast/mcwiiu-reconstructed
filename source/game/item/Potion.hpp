@@ -24,9 +24,12 @@ public:
     static Potion* byId(int id);
     static int getId(Potion* potion);
     static Potion* byName(const std::wstring& name);
-    Potion(int nameId, int useDescriptionId, int splashNameId, int lingeringNameId, int arrowNameId, int arrowUseDescriptionId);
-    Potion(MobEffectInstance* effect, int nameId, int useDescriptionId, int splashNameId, int lingeringNameId, int arrowNameId, int arrowUseDescriptionId);
-    Potion(const std::vector<MobEffectInstance*>& effects, int nameId, int useDescriptionId, int splashNameId, int lingeringNameId, int arrowNameId, int arrowUseDescriptionId);
+    Potion(int nameId, int useDescriptionId, int splashNameId, int lingeringNameId, int arrowNameId,
+           int arrowUseDescriptionId);
+    Potion(MobEffectInstance* effect, int nameId, int useDescriptionId, int splashNameId, int lingeringNameId,
+           int arrowNameId, int arrowUseDescriptionId);
+    Potion(const std::vector<MobEffectInstance*>& effects, int nameId, int useDescriptionId, int splashNameId,
+           int lingeringNameId, int arrowNameId, int arrowUseDescriptionId);
     std::wstring getName(EType type);
     std::vector<MobEffectInstance*>& getEffects();
     int getUseDescriptionId(EType type);

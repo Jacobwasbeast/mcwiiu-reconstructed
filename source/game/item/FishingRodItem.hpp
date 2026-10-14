@@ -20,15 +20,13 @@ public:
     class FishingRodItem_ItemPropertyFunction : public ItemPropertyFunction
     {
     public:
-        virtual float call(not_null_ptr<ItemInstance> itemInstance,
-                           Level* level,
+        virtual float call(not_null_ptr<ItemInstance> itemInstance, Level* level,
                            boost::shared_ptr<LivingEntity> entity);
     };
 
     FishingRodItem();
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual InteractionResultHolder use(Level* level,
-                                        boost::shared_ptr<Player> player,
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
     virtual bool isHandEquipped();
     virtual bool isMirroredArt();

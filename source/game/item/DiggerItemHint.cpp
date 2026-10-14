@@ -7,8 +7,8 @@
 #include "game/minigame/Tutorial.hpp"
 #include "game/world/block/BlockState.hpp"
 
-DiggerItemHint::DiggerItemHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
-                               Item** items, unsigned int itemCount)
+DiggerItemHint::DiggerItemHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId, Item** items,
+                               unsigned int itemCount)
     : TutorialHint(hint, tutorial, descriptionId, HINT_NONE, true, true, -1)
 {
     mItemCount = itemCount;
@@ -54,8 +54,7 @@ int DiggerItemHint::startDestroyBlock(not_null_ptr<ItemInstance> item, const Blo
     return -1;
 }
 
-unsigned int DiggerItemHint::attack(not_null_ptr<ItemInstance> item,
-                                    boost::shared_ptr<Entity> entity)
+unsigned int DiggerItemHint::attack(not_null_ptr<ItemInstance> item, boost::shared_ptr<Entity> entity)
 {
     if (!item->isEmpty())
     {

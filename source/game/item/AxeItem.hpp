@@ -17,8 +17,9 @@ class AxeItem : public DiggerItem
 public:
     AxeItem(const Item::Tier* tier);
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
-        const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction,
-        float hitX, float hitY, float hitZ, bool simulate);
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate);
     virtual float getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state);
     static void staticCtor();
 };

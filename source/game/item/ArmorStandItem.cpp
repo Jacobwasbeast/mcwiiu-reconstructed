@@ -17,8 +17,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/generation/Player.hpp"
 
-ArmorStandItem::ArmorStandItem()
-    : Item()
+ArmorStandItem::ArmorStandItem() : Item()
 {
 }
 
@@ -26,15 +25,10 @@ ArmorStandItem::~ArmorStandItem()
 {
 }
 
-InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Player> player,
-                                                            Level* level,
-                                                            const BlockPos& pos,
-                                                            InteractionHand::EInteractionHand hand,
-                                                            const Direction* direction,
-                                                            float hitX,
-                                                            float hitY,
-                                                            float hitZ,
-                                                            bool simulate)
+InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                            const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                            const Direction* direction, float hitX, float hitY,
+                                                            float hitZ, bool simulate)
 {
     if (direction == Direction::DOWN)
     {
@@ -42,8 +36,8 @@ InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Pl
     }
 
     BlockPos placePos = level->getBlockState(pos)->getBlock()->mayReplaceWithPlace(level, pos)
-        ? pos
-        : pos.relative(direction);
+                            ? pos
+                            : pos.relative(direction);
 
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
@@ -55,9 +49,9 @@ InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Pl
     BlockPos abovePos = placePos.above();
 
     bool blocked = !level->isEmptyBlock(placePos)
-        && !level->getBlockState(placePos)->getBlock()->mayReplaceWithPlace(level, placePos);
+                   && !level->getBlockState(placePos)->getBlock()->mayReplaceWithPlace(level, placePos);
     blocked |= !level->isEmptyBlock(abovePos)
-        && !level->getBlockState(abovePos)->getBlock()->mayReplaceWithPlace(level, abovePos);
+               && !level->getBlockState(abovePos)->getBlock()->mayReplaceWithPlace(level, abovePos);
 
     if (blocked)
     {
@@ -92,15 +86,8 @@ InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Pl
 
             SpawnEggItem::updateCustomEntityTag(level, player, itemInstance, armorStand);
             level->addEntity(armorStand);
-            level->playSound(boost::shared_ptr<Player>(),
-                             armorStand->mX,
-                             armorStand->mY,
-                             armorStand->mZ,
-                             SoundEvents::ARMORSTAND_PLACE,
-                             SoundSource::eSoundSource_Blocks,
-                             0.75f,
-                             0.8f,
-                             16.0f);
+            level->playSound(boost::shared_ptr<Player>(), armorStand->mX, armorStand->mY, armorStand->mZ,
+                             SoundEvents::ARMORSTAND_PLACE, SoundSource::eSoundSource_Blocks, 0.75f, 0.8f, 16.0f);
         }
         else
         {

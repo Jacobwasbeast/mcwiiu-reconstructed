@@ -18,16 +18,10 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-static const std::wstring COMPASS_ICON_NAMES[4] =
-{
-    std::wstring(L"compassP0"),
-    std::wstring(L"compassP1"),
-    std::wstring(L"compassP2"),
-    std::wstring(L"compassP3")
-};
+static const std::wstring COMPASS_ICON_NAMES[4] = {std::wstring(L"compassP0"), std::wstring(L"compassP1"),
+                                                   std::wstring(L"compassP2"), std::wstring(L"compassP3")};
 
-CompassItem::CompassItem()
-    : Item()
+CompassItem::CompassItem() : Item()
 {
     memset(mIcons, 0, sizeof(mIcons));
 
@@ -61,8 +55,7 @@ double CompassItem::CompassItem_ItemPropertyFunction::getFrameRotation(boost::sh
     return (double)Mth::wrapDegrees(frame->mDirection->get2DDataValue() * 90 + 180);
 }
 
-double CompassItem::CompassItem_ItemPropertyFunction::getSpawnToAngle(Level* level,
-                                                                     boost::shared_ptr<Entity> entity)
+double CompassItem::CompassItem_ItemPropertyFunction::getSpawnToAngle(Level* level, boost::shared_ptr<Entity> entity)
 {
     BlockPos spawn = level->getSharedSpawnPos();
 
@@ -87,8 +80,7 @@ double CompassItem::CompassItem_ItemPropertyFunction::wobble(Level* level, doubl
     return mRotation;
 }
 
-float CompassItem::CompassItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance,
-                                                          Level* level,
+float CompassItem::CompassItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                           boost::shared_ptr<LivingEntity> entity)
 {
     if (entity == NULL && !itemInstance->isFramed())
