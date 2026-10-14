@@ -9,17 +9,22 @@
 #include "nn/pia/NetworkFactory.hpp"
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia {
+namespace nn
+{
+namespace pia
+{
 
 
-namespace common {
+namespace common
+{
 
 class StationAddress;
 
 
 }
 
-namespace transport {
+namespace transport
+{
 
 class PacketHandler;
 class ProtocolEvent;
@@ -76,6 +81,7 @@ public:
     void SetPort(unsigned char port);
     PacketHandler* GetStationPacketHandler();
     ProtocolId GetProtocolId() const { return mProtocolId; }
+
 protected:
     friend class ProtocolManager;
     common::ListNode m_listNode;
@@ -93,7 +99,10 @@ class StationManager;
 class ReliableProtocol : public Protocol
 {
 public:
-    enum { cProtocolType = 0x7c };
+    enum
+    {
+        cProtocolType = 0x7c
+    };
 
     ReliableProtocol();
     virtual ~ReliableProtocol();
@@ -129,7 +138,8 @@ private:
 
 }
 
-namespace session {
+namespace session
+{
 
 class SessionStationInfo
 {
@@ -151,6 +161,7 @@ public:
 
 }
 
-}}
+}
+}
 
 #endif

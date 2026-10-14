@@ -3,7 +3,10 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia {
+namespace nn
+{
+namespace pia
+{
 
 
 enum ModuleType
@@ -28,6 +31,7 @@ public:
     static Result Unregister(ModuleType moduleType);
 };
 
-}}
+}
+}
 
 #endif

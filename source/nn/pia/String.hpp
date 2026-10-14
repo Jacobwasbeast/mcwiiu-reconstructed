@@ -6,19 +6,26 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class String
 {
 public:
-    enum EncodingType { EncodingType_Ascii = 1, EncodingType_Utf16 = 2 };
+    enum EncodingType
+    {
+        EncodingType_Ascii = 1,
+        EncodingType_Utf16 = 2
+    };
 
     String(const char* text);
     String(const wchar_t* text);
     String(const String& other);
-    virtual ~String()
-    {
-    }
+    virtual ~String() {}
     virtual Result Copy(const String& other);
     virtual void Clear();
     virtual void Trace(unsigned long long flag) const;
@@ -40,10 +47,7 @@ public:
     }
 
 protected:
-    String()
-        : m_text(0), m_bufferSize(0), m_bytes(0), m_encoding()
-    {
-    }
+    String() : m_text(0), m_bufferSize(0), m_bytes(0), m_encoding() {}
 
     const void* m_text;
     unsigned int m_bufferSize;
@@ -55,16 +59,13 @@ template <unsigned int LengthT>
 class FixedString : public String
 {
 public:
-    FixedString()
-        : String()
+    FixedString() : String()
     {
         m_bufferSize = LengthT * 4;
         Clear();
     }
 
-    virtual ~FixedString()
-    {
-    }
+    virtual ~FixedString() {}
 
     virtual void Clear()
     {
@@ -200,6 +201,8 @@ private:
     char m_buffer[LengthT * 4 + 1];
 };
 
-}}}
+}
+}
+}
 
 #endif

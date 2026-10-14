@@ -1,6 +1,11 @@
 #include "nn/pia/HeapManager.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 
 namespace
@@ -13,8 +18,7 @@ pead::Heap* g_heaps[21] = {};
 
 unsigned int HeapManager::convert(ModuleType moduleType)
 {
-    static const unsigned char moduleHeaps[18] =
-        { 0, 1, 3, 5, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
+    static const unsigned char moduleHeaps[18] = {0, 1, 3, 5, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
     unsigned int type = moduleType;
     if (type < cModuleType_Common)
         return 20;
@@ -45,8 +49,7 @@ void HeapManager::ClearCurrentHeap()
     g_currentHeap = 20;
 }
 
-void HeapManager::Setup(ModuleType moduleType, unsigned int size,
-                        const pead::SafeStringBase<char>& name)
+void HeapManager::Setup(ModuleType moduleType, unsigned int size, const pead::SafeStringBase<char>& name)
 {
     const unsigned int heapIndex = convert(moduleType);
     pead::Heap* parent = pead::HeapMgr::getRootHeap(0);
@@ -87,4 +90,6 @@ void HeapManager::Finalize()
     pead::HeapMgr::destroy();
 }
 
-}}}
+}
+}
+}

@@ -1,6 +1,11 @@
 #include "nn/pia/ListBase.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 
 void ListBase::Init()
@@ -42,8 +47,7 @@ bool ListBase::IsIncludeNode(const ListNode* node) const
 {
     if (node->prev == 0 || node->next == 0)
         return false;
-    for (const ListNode* current = mSentinel.next; current != &mSentinel;
-         current = current->next)
+    for (const ListNode* current = mSentinel.next; current != &mSentinel; current = current->next)
     {
         if (current == node)
             return true;
@@ -69,4 +73,6 @@ ListNode* ListBase::PopBackNode()
     return node;
 }
 
-}}}
+}
+}
+}

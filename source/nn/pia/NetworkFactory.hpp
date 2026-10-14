@@ -7,9 +7,13 @@
 
 #include <new>
 
-namespace nn { namespace pia {
+namespace nn
+{
+namespace pia
+{
 
-namespace common {
+namespace common
+{
 class IPacketInput;
 class IPacketOutput;
 class MonitoringDataSender;
@@ -17,14 +21,16 @@ class StepSequenceJob;
 class String;
 }
 
-namespace session {
+namespace session
+{
 class ICommunityInfoList;
 class IMatchmakeSession;
 class ISessionInfoList;
 class MeshLayerController;
 }
 
-namespace transport {
+namespace transport
+{
 
 class ConnectStationJob;
 class DisconnectStationJob;
@@ -81,6 +87,8 @@ public:
     virtual void DeleteMonitoringDataSender(common::MonitoringDataSender* sender);
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -2,7 +2,12 @@
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/common/Memory.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 StationIdTable::StationIdTable() : m_storage(0)
 {
@@ -37,8 +42,8 @@ Result StationIdTable::Initialize(unsigned int count)
     if (m_storage != 0)
         return static_cast<Result>(0x10c02);
 
-    m_storage = common::NewArray<unsigned long long>(
-        (sizeof(EntryList::Node) * count + sizeof(unsigned long long) - 1) / sizeof(unsigned long long));
+    m_storage = common::NewArray<unsigned long long>((sizeof(EntryList::Node) * count + sizeof(unsigned long long) - 1)
+                                                     / sizeof(unsigned long long));
     if (m_storage == 0)
         return static_cast<Result>(0x10c01);
     m_entries.Initialize(m_storage, count);
@@ -46,8 +51,7 @@ Result StationIdTable::Initialize(unsigned int count)
     return 0;
 }
 
-Result StationIdTable::Add(uint64_t stationId, StationIndex index,
-                            uint64_t uniqueId)
+Result StationIdTable::Add(uint64_t stationId, StationIndex index, uint64_t uniqueId)
 {
     if (m_entries.GetFreeNum() == 0)
         return static_cast<Result>(0xc10);
@@ -59,8 +63,7 @@ Result StationIdTable::Add(uint64_t stationId, StationIndex index,
     return 0;
 }
 
-StationIdTable::Entry* StationIdTable::FindByStationIdCore(
-    uint64_t stationId) const
+StationIdTable::Entry* StationIdTable::FindByStationIdCore(uint64_t stationId) const
 {
     for (common::ListNode* node = m_entries.Sentinel()->next; node != m_entries.Sentinel(); node = node->next)
     {
@@ -71,16 +74,14 @@ StationIdTable::Entry* StationIdTable::FindByStationIdCore(
     return 0;
 }
 
-void StationIdTable::SetJoinEventNotifiedByStationId(uint64_t stationId,
-                                                     bool notified)
+void StationIdTable::SetJoinEventNotifiedByStationId(uint64_t stationId, bool notified)
 {
     Entry* entry = FindByStationIdCore(stationId);
     if (entry != 0)
         entry->joinEventNotified = notified;
 }
 
-StationIdTable::Entry* StationIdTable::FindByStationIndexCore(
-    StationIndex index) const
+StationIdTable::Entry* StationIdTable::FindByStationIndexCore(StationIndex index) const
 {
     for (common::ListNode* node = m_entries.Sentinel()->next; node != m_entries.Sentinel(); node = node->next)
     {
@@ -91,23 +92,20 @@ StationIdTable::Entry* StationIdTable::FindByStationIndexCore(
     return 0;
 }
 
-void StationIdTable::SetJoinEventNotifiedByStationIndex(StationIndex index,
-                                                        bool notified)
+void StationIdTable::SetJoinEventNotifiedByStationIndex(StationIndex index, bool notified)
 {
     Entry* entry = FindByStationIndexCore(index);
     if (entry != 0)
         entry->joinEventNotified = notified;
 }
 
-uint8_t StationIdTable::IsJoinEventNotifiedByStationIndex(
-    StationIndex index) const
+uint8_t StationIdTable::IsJoinEventNotifiedByStationIndex(StationIndex index) const
 {
     Entry* entry = FindByStationIndexCore(index);
     return entry != 0 ? entry->joinEventNotified : 0;
 }
 
-uint8_t StationIdTable::IsJoinEventNotifiedByStationId(
-    uint64_t stationId) const
+uint8_t StationIdTable::IsJoinEventNotifiedByStationId(uint64_t stationId) const
 {
     Entry* entry = FindByStationIdCore(stationId);
     if (entry == 0)
@@ -132,8 +130,7 @@ Result StationIdTable::RemoveByStationId(uint64_t stationId)
     return RemoveCore(FindByStationIdCore(stationId));
 }
 
-StationIdTable::Entry* StationIdTable::FindByUniqueIdCore(
-    uint64_t uniqueId) const
+StationIdTable::Entry* StationIdTable::FindByUniqueIdCore(uint64_t uniqueId) const
 {
     for (common::ListNode* node = m_entries.Sentinel()->next; node != m_entries.Sentinel(); node = node->next)
     {
@@ -152,20 +149,17 @@ Result StationIdTable::Copy(Entry* destination, const Entry* source) const
     return 0;
 }
 
-Result StationIdTable::FindByStationIndex(Entry* entry,
-                                          StationIndex index) const
+Result StationIdTable::FindByStationIndex(Entry* entry, StationIndex index) const
 {
     return entry == 0 ? Result(cResultInvalidArgument) : Copy(entry, FindByStationIndexCore(index));
 }
 
-Result StationIdTable::FindByStationId(Entry* entry,
-                                       uint64_t stationId) const
+Result StationIdTable::FindByStationId(Entry* entry, uint64_t stationId) const
 {
     return entry == 0 ? Result(cResultInvalidArgument) : Copy(entry, FindByStationIdCore(stationId));
 }
 
-Result StationIdTable::FindByUniqueId(Entry* entry,
-                                      uint64_t uniqueId) const
+Result StationIdTable::FindByUniqueId(Entry* entry, uint64_t uniqueId) const
 {
     return entry == 0 ? Result(cResultInvalidArgument) : Copy(entry, FindByUniqueIdCore(uniqueId));
 }
@@ -173,8 +167,7 @@ Result StationIdTable::FindByUniqueId(Entry* entry,
 StationIndex StationIdTable::FindUnsafe(uint64_t stationId) const
 {
     Entry* entry = FindByStationIdCore(stationId);
-    return entry != 0 ? static_cast<StationIndex>(entry->stationIndex)
-                      : pia::cStationIndexInvalid;
+    return entry != 0 ? static_cast<StationIndex>(entry->stationIndex) : pia::cStationIndexInvalid;
 }
 
 unsigned int StationIdTable::GetEntryNum() const
@@ -197,4 +190,6 @@ void StationIdTable::Trace(uint64_t) const
 {
 }
 
-}}}
+}
+}
+}

@@ -22,18 +22,28 @@
 #include "nn/pia/HeapManager.hpp"
 #include "platform/wiiu/pead.hpp"
 #include <new>
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 Transport* g_piaTransport = 0;
 
-namespace {
+namespace
+{
 
-enum { cInvalidRtt = 65535 };
+enum
+{
+    cInvalidRtt = 65535
+};
 const unsigned int cInvalidHash = 4294967295u;
 
 }
 
-namespace {
+namespace
+{
 
 unsigned char* g_piaTransportStorage = 0;
 unsigned int g_sendLatencyEntryNum = 0;
@@ -97,12 +107,10 @@ void Transport::SetMonitoringNetworkRtt(bool isSessionBegin)
     unsigned long long principal = table->GetPrincipalIdByStation(minimumStation);
     common::SessionStateMonitoringContent& state = common::g_sessionStateMonitoringContent;
     common::SessionBeginMonitoringContent& begin = common::g_sessionBeginMonitoringContent;
-    unsigned int minimumHash = minimum < cInvalidRtt && principal != 0
-        ? common::hashWithMd5(principal) : cInvalidHash;
+    unsigned int minimumHash = minimum < cInvalidRtt && principal != 0 ? common::hashWithMd5(principal) : cInvalidHash;
     unsigned int previousHash = state.m_metric163;
     state.m_metric163 = minimumHash;
-    unsigned short minimumRtt = minimum < cInvalidRtt
-        ? static_cast<unsigned short>(minimum) : cInvalidRtt;
+    unsigned short minimumRtt = minimum < cInvalidRtt ? static_cast<unsigned short>(minimum) : cInvalidRtt;
     if (isSessionBegin)
     {
         begin.m_metric37 = minimumRtt;
@@ -113,10 +121,8 @@ void Transport::SetMonitoringNetworkRtt(bool isSessionBegin)
         state.m_metric162 = minimumRtt;
 
     principal = table->GetPrincipalIdByStation(maximumStation);
-    unsigned int maximumHash = maximum != 0 && principal != 0
-        ? common::hashWithMd5(principal) : cInvalidHash;
-    unsigned short maximumRtt = maximum != 0
-        ? static_cast<unsigned short>(maximum) : cInvalidRtt;
+    unsigned int maximumHash = maximum != 0 && principal != 0 ? common::hashWithMd5(principal) : cInvalidHash;
+    unsigned short maximumRtt = maximum != 0 ? static_cast<unsigned short>(maximum) : cInvalidRtt;
     if (isSessionBegin)
     {
         begin.m_metric40 = maximumHash;
@@ -130,10 +136,19 @@ void Transport::SetMonitoringNetworkRtt(bool isSessionBegin)
 }
 
 Transport::Transport()
-    : m_networkFactory(0), m_packetHandler(0), m_stationNum(0),
-      m_startedUp(false), m_connectionRouteRelay(false), m_connectionError(0), m_dispatchJob(0),
-      m_connectionState(0), m_relayRouteManager(0), m_analysisInterval(0),
-      m_dispatchCount(0), m_disconnectionEventListener(0), m_stationIdTable(0),
+    : m_networkFactory(0),
+      m_packetHandler(0),
+      m_stationNum(0),
+      m_startedUp(false),
+      m_connectionRouteRelay(false),
+      m_connectionError(0),
+      m_dispatchJob(0),
+      m_connectionState(0),
+      m_relayRouteManager(0),
+      m_analysisInterval(0),
+      m_dispatchCount(0),
+      m_disconnectionEventListener(0),
+      m_stationIdTable(0),
       m_transportStatus(static_cast<Result>(cResultInvalidState))
 {
     m_time.SetNow();
@@ -168,8 +183,7 @@ Result Transport::SetKeepAliveInterval(int interval)
 {
     if (m_networkFactory->IsStarConnection())
         return ResultInvalidState();
-    return static_cast<StationPacketHandler*>(m_packetHandler)
-        ->m_keepAliveSender.SetInterval(interval);
+    return static_cast<StationPacketHandler*>(m_packetHandler)->m_keepAliveSender.SetInterval(interval);
 }
 
 int Transport::GetKeepAliveInterval() const
@@ -218,8 +232,8 @@ Result Transport::GetLocalStationConnectionInfo(StationConnectionInfo* stationCo
 
 Result Transport::SetTransportStatus(Result transportStatus)
 {
-    if (transportStatus != 0 && transportStatus != static_cast<Result>(cResultInvalidState) &&
-        transportStatus != static_cast<Result>(cResultTransportUnavailable))
+    if (transportStatus != 0 && transportStatus != static_cast<Result>(cResultInvalidState)
+        && transportStatus != static_cast<Result>(cResultTransportUnavailable))
         return static_cast<Result>(cResultInvalidArgument);
     m_transportStatus = transportStatus;
     return 0;
@@ -314,31 +328,31 @@ Result Transport::initialize(const Setting& setting)
     m_protocolManager.Initialize(m_networkFactory);
     g_piaStationProtocolManager->Initialize(stationNum, factory->GetDefaultRttInitialPulseInterval());
     result = StationManager::s_pInstance->Initialize(factory, stationNum,
-                                             g_piaStationProtocolManager->GetStationProtocol(),
-                                             g_piaStationProtocolManager->GetRttProtocol());
+                                                     g_piaStationProtocolManager->GetStationProtocol(),
+                                                     g_piaStationProtocolManager->GetRttProtocol());
     if (result != 0)
         return result;
 
     result = g_stationConnectionInfoTable->Initialize(stationNum);
     result = g_piaResendingMessageManager->Initialize(stationNum << 1);
     result = IdentificationInfoTable::GetInstance()->Initialize(stationNum);
-    result = ThreadStreamManager::CreateInstance(factory, setting.m_sendPacketNum,
-                                                 setting.m_receivePacketNum,
+    result = ThreadStreamManager::CreateInstance(factory, setting.m_sendPacketNum, setting.m_receivePacketNum,
                                                  g_sendLatencyEntryNum, g_receiveLatencyEntryNum,
                                                  g_isPacketLossEnabled);
     ThreadStreamManager* threadStreamManager = g_piaThreadStreamManager;
     m_packetHandler = factory->CreatePacketHandler();
-    const bool isStationHandler = m_packetHandler != 0 &&
-        m_packetHandler->checkDerivedRuntimeTypeInfo(StationPacketHandler::getRuntimeTypeInfoStatic());
+    const bool isStationHandler = m_packetHandler != 0
+                                  && m_packetHandler->checkDerivedRuntimeTypeInfo(
+                                      StationPacketHandler::getRuntimeTypeInfoStatic());
     if (isStationHandler == m_networkFactory->IsStarConnection())
     {
         factory->DeletePacketHandler(m_packetHandler);
         m_packetHandler = 0;
         return cResultInvalidArgument;
     }
-    const bool isRelayHandler = m_packetHandler != 0 &&
-        m_packetHandler->checkDerivedRuntimeTypeInfo(
-            RelayStationPacketHandler::getRuntimeTypeInfoStatic());
+    const bool isRelayHandler = m_packetHandler != 0
+                                && m_packetHandler->checkDerivedRuntimeTypeInfo(
+                                    RelayStationPacketHandler::getRuntimeTypeInfoStatic());
     if (isRelayHandler != m_networkFactory->IsClientRelayConnectionPermitted())
     {
         factory->DeletePacketHandler(m_packetHandler);
@@ -347,10 +361,10 @@ Result Transport::initialize(const Setting& setting)
     }
 
     if (!m_networkFactory->IsStarConnection())
-        result = static_cast<StationPacketHandler*>(m_packetHandler)->Initialize(
-            threadStreamManager->m_packetOutput->GetMulticastDestinationNum(),
-            threadStreamManager->m_packetOutput->IsBroadcastSupported(),
-            factory->GetHeaderSize());
+        result = static_cast<StationPacketHandler*>(m_packetHandler)
+                     ->Initialize(threadStreamManager->m_packetOutput->GetMulticastDestinationNum(),
+                                  threadStreamManager->m_packetOutput->IsBroadcastSupported(),
+                                  factory->GetHeaderSize());
     else
         result = m_packetHandler->Initialize(factory->GetHeaderSize());
     if (result != 0)
@@ -438,56 +452,49 @@ Result Transport::Restartup(const common::CryptoSetting* cryptoSetting)
 {
     if (!m_connectionRouteRelay)
         return ResultInvalidState();
-    const unsigned int payloadSize = common::g_payloadSizeManager->m_mtuSize +
-        common::g_payloadSizeManager->m_payloadSizeLimit;
+    const unsigned int payloadSize = common::g_payloadSizeManager->m_mtuSize
+                                     + common::g_payloadSizeManager->m_payloadSizeLimit;
     Cleanup();
     const Result result = Startup(payloadSize, cryptoSetting);
     return result;
 }
 
-Result Transport::Startup(unsigned int payloadSize,
-                          const common::CryptoSetting* cryptoSetting)
+Result Transport::Startup(unsigned int payloadSize, const common::CryptoSetting* cryptoSetting)
 {
     if (IsInSetupMode() != 0)
         return static_cast<Result>(cResultInvalidState);
     if (m_startedUp)
         return static_cast<Result>(cResultInvalidState);
 
-    Result result = common::g_payloadSizeManager->SetMtuSize(
-        payloadSize - common::g_payloadSizeManager->m_payloadSizeLimit);
+    Result result = common::g_payloadSizeManager->SetMtuSize(payloadSize
+                                                             - common::g_payloadSizeManager->m_payloadSizeLimit);
     if (result != 0)
         return result;
 
     result = g_piaThreadStreamManager->Startup();
 
-    PacketStream::Writer* const writer =
-        &g_piaThreadStreamManager->m_sendThreadStream->m_writer;
-    PacketStream::Reader* const reader =
-        &g_piaThreadStreamManager->m_receiveThreadStream->m_reader;
+    PacketStream::Writer* const writer = &g_piaThreadStreamManager->m_sendThreadStream->m_writer;
+    PacketStream::Reader* const reader = &g_piaThreadStreamManager->m_receiveThreadStream->m_reader;
     common::IPacketInput* const packetInput = g_piaThreadStreamManager->m_packetInput;
     common::IPacketOutput* const packetOutput = g_piaThreadStreamManager->m_packetOutput;
 
     if (m_networkFactory->IsStarConnection())
     {
-        m_packetHandler->Startup(writer, reader, packetInput, packetOutput,
-                                 &m_localStationId, cryptoSetting);
+        m_packetHandler->Startup(writer, reader, packetInput, packetOutput, &m_localStationId, cryptoSetting);
     }
     else if (m_networkFactory->IsClientRelayConnectionPermitted())
     {
         static_cast<RelayStationPacketHandler*>(m_packetHandler)
-            ->Startup(writer, reader, packetInput, packetOutput, &m_localStationId,
-                      m_relayRouteManager, cryptoSetting);
+            ->Startup(writer, reader, packetInput, packetOutput, &m_localStationId, m_relayRouteManager, cryptoSetting);
     }
     else
     {
         static_cast<StationPacketHandler*>(m_packetHandler)
-            ->Startup(writer, reader, packetInput, packetOutput, &m_localStationId,
-                      cryptoSetting);
+            ->Startup(writer, reader, packetInput, packetOutput, &m_localStationId, cryptoSetting);
     }
 
     result = m_protocolManager.Startup(m_packetHandler);
-    result = g_piaResendingMessageManager->Startup(m_packetHandler,
-                                                   m_networkFactory->IsStarConnection());
+    result = g_piaResendingMessageManager->Startup(m_packetHandler, m_networkFactory->IsStarConnection());
     result = g_piaTransportAnalyzer->Startup();
     m_dispatchJob->Ready(false);
 
@@ -542,9 +549,8 @@ void Transport::updateTransportAnalyzer()
     TransportAnalyzer* const analyzer = g_piaTransportAnalyzer;
     if (analyzer == 0)
         return;
-    const int elapsedSeconds = static_cast<int>(
-        static_cast<long long>(m_time.m_tick - m_lastAnalysisTime.m_tick) /
-        common::TimeSpan::GetTicksPerSec().m_tick);
+    const int elapsedSeconds = static_cast<int>(static_cast<long long>(m_time.m_tick - m_lastAnalysisTime.m_tick)
+                                                / common::TimeSpan::GetTicksPerSec().m_tick);
     if (elapsedSeconds < m_analysisInterval || analyzer->Update() != 0)
         return;
 
@@ -553,8 +559,7 @@ void Transport::updateTransportAnalyzer()
     data.Print(m_keepAliveEnabled, m_monitoringEnabled);
 }
 
-Result Transport::ConvertToStationIndex(StationIndex* index,
-                                         uint64_t stationId) const
+Result Transport::ConvertToStationIndex(StationIndex* index, uint64_t stationId) const
 {
     if (index == 0)
         return static_cast<Result>(cResultInvalidArgument);
@@ -624,4 +629,6 @@ StationIndex Conv2StationIndex(uint64_t stationId)
         return static_cast<StationIndex>(cStationIndexInvalid);
     return index;
 }
-}}}
+}
+}
+}

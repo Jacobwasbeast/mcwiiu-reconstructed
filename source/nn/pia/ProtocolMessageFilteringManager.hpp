@@ -4,7 +4,12 @@
 #include <stdint.h>
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 
 class ProtocolMessageFilteringManager
@@ -31,6 +36,8 @@ private:
 
 extern ProtocolMessageFilteringManager* g_piaProtocolMessageFilteringManager;
 
-}}}
+}
+}
+}
 
 #endif

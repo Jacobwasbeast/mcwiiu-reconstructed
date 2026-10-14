@@ -4,16 +4,19 @@
 #include <cstdio>
 #include <cstring>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
-String::String(const char* text)
-    : m_bufferSize(0)
+String::String(const char* text) : m_bufferSize(0)
 {
     SetString(text, 0, EncodingType_Ascii);
 }
 
-String::String(const wchar_t* text)
-    : m_bufferSize(0)
+String::String(const wchar_t* text) : m_bufferSize(0)
 {
     SetString(text, 0, EncodingType_Utf16);
 }
@@ -199,7 +202,8 @@ unsigned int String::GetStringLength() const
         else if (m_encoding == EncodingType_Ascii)
         {
             const unsigned char* value = static_cast<const unsigned char*>(m_text);
-            while (*value != 0 && static_cast<int>(value - static_cast<const unsigned char*>(m_text)) < static_cast<int>(m_bytes))
+            while (*value != 0
+                   && static_cast<int>(value - static_cast<const unsigned char*>(m_text)) < static_cast<int>(m_bytes))
             {
                 unsigned int code = *value;
                 if (code - 1 < 0x7f)
@@ -271,4 +275,6 @@ void String::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

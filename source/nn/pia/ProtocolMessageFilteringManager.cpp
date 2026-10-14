@@ -7,8 +7,12 @@
 #include <new>
 #include "nn/pia/transport/TransportSupport.hpp"
 
-namespace nn { namespace pia { namespace transport {
-
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 
 ProtocolMessageFilteringManager* g_piaProtocolMessageFilteringManager = 0;
@@ -18,8 +22,7 @@ namespace
 unsigned char* g_filteringManagerStorage = 0;
 }
 
-ProtocolMessageFilteringManager::ProtocolMessageFilteringManager()
-    : m_types(), m_count(0)
+ProtocolMessageFilteringManager::ProtocolMessageFilteringManager() : m_types(), m_count(0)
 {
 }
 
@@ -56,8 +59,7 @@ void ProtocolMessageFilteringManager::DestroyInstance()
     }
 }
 
-unsigned int ProtocolMessageFilteringManager::IsFilteringEnabled(
-    unsigned char protocolType) const
+unsigned int ProtocolMessageFilteringManager::IsFilteringEnabled(unsigned char protocolType) const
 {
     for (int index = 0; index < m_count; ++index)
     {
@@ -67,8 +69,7 @@ unsigned int ProtocolMessageFilteringManager::IsFilteringEnabled(
     return 1;
 }
 
-unsigned int ProtocolMessageFilteringManager::AddNoFilteringProtocolType(
-    unsigned char protocolType)
+unsigned int ProtocolMessageFilteringManager::AddNoFilteringProtocolType(unsigned char protocolType)
 {
     if (m_count >= cNoFilteringProtocolTypeMax)
         return 0;
@@ -76,8 +77,7 @@ unsigned int ProtocolMessageFilteringManager::AddNoFilteringProtocolType(
     return 1;
 }
 
-unsigned int ProtocolMessageFilteringManager::RemoveNoFilteringProtocolType(
-    unsigned char protocolType)
+unsigned int ProtocolMessageFilteringManager::RemoveNoFilteringProtocolType(unsigned char protocolType)
 {
     if (m_count == 0)
         return 0;
@@ -96,4 +96,6 @@ unsigned int ProtocolMessageFilteringManager::RemoveNoFilteringProtocolType(
 }
 
 
-}}}
+}
+}
+}

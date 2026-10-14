@@ -1,6 +1,11 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_HPP
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 enum TransportResultCode
 {
@@ -34,7 +39,9 @@ enum TransportStationNum
     cStationNumLimit = 24
 };
 
-}}}
+}
+}
+}
 #include <stdint.h>
 #include "nn/pia.h"
 #include "nn/pia/ProtocolManager.hpp"
@@ -42,27 +49,42 @@ enum TransportStationNum
 #include "nn/pia/common/CryptoSetting.hpp"
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/Session.hpp"
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Job;
 class IPacketInput;
 class IPacketOutput;
-}}}
-namespace nn { namespace pia { namespace transport {
+}
+}
+}
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 class NetworkFactory;
 class PacketHandler;
 class RelayRouteManager;
-class Transport {
+class Transport
+{
 public:
     class Setting
     {
     public:
-        Setting(NetworkFactory* networkFactory, unsigned short stationNum,
-                unsigned int sendPacketNum, unsigned int receivePacketNum,
-                int analysisInterval, bool keepAliveEnabled, bool monitoringEnabled)
-            : m_networkFactory(networkFactory), m_stationNum(stationNum),
-              m_sendPacketNum(sendPacketNum), m_receivePacketNum(receivePacketNum),
-              m_analysisInterval(analysisInterval), m_keepAliveEnabled(keepAliveEnabled),
+        Setting(NetworkFactory* networkFactory, unsigned short stationNum, unsigned int sendPacketNum,
+                unsigned int receivePacketNum, int analysisInterval, bool keepAliveEnabled, bool monitoringEnabled)
+            : m_networkFactory(networkFactory),
+              m_stationNum(stationNum),
+              m_sendPacketNum(sendPacketNum),
+              m_receivePacketNum(receivePacketNum),
+              m_analysisInterval(analysisInterval),
+              m_keepAliveEnabled(keepAliveEnabled),
               m_monitoringEnabled(monitoringEnabled)
         {
         }
@@ -131,5 +153,7 @@ public:
 };
 extern Transport* g_piaTransport;
 StationIndex Conv2StationIndex(uint64_t);
-}}}
+}
+}
+}
 #endif

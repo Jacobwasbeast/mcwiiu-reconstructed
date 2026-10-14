@@ -5,12 +5,16 @@
 #include <new>
 #include <string.h>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 ProtocolManager* g_piaProtocolManager = 0;
 
-Protocol::Protocol()
-    : mProtocolId(ProtocolId::INVALID)
+Protocol::Protocol() : mProtocolId(ProtocolId::INVALID)
 {
 }
 
@@ -70,4 +74,6 @@ unsigned int Protocol::IsProtocolFilteringEnabled() const
     return 1;
 }
 
-}}}
+}
+}
+}

@@ -1,6 +1,9 @@
 #include "nn/pia/ModuleStackChecker.hpp"
 
-namespace nn { namespace pia {
+namespace nn
+{
+namespace pia
+{
 
 
 namespace
@@ -90,4 +93,5 @@ Result ModuleStackChecker::Unregister(ModuleType moduleType)
     return 0;
 }
 
-}}
+}
+}

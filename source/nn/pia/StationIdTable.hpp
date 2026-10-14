@@ -6,13 +6,25 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/PooledList.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class MeshEventListener;
 
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 
 class StationIdTable
@@ -65,6 +77,8 @@ public:
     uint32_t m_availableEntryNum;
 };
 
-}}}
+}
+}
+}
 
 #endif

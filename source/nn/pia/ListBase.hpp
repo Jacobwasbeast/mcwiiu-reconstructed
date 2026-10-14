@@ -3,7 +3,12 @@
 
 #include <stdint.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 
 struct ListNode
@@ -42,6 +47,8 @@ private:
     uint32_t mSize;
 };
 
-}}}
+}
+}
+}
 
 #endif
