@@ -3,7 +3,12 @@
 
 #include "nn/pia/session/JoinMeshJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class InetJoinMeshJob : public session::JoinMeshJob
 {
@@ -22,6 +27,8 @@ public:
     virtual void CleanupImpl();
 };
 
-}}}
+}
+}
+}
 
 #endif

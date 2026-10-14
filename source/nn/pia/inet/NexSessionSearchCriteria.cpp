@@ -14,7 +14,12 @@
 
 #include <cstring>
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 const wchar_t* s_scoreSettingIndexKey = L"@SI";
 const wchar_t* s_countryCodeKey = L"@NCC";
@@ -176,8 +181,8 @@ nn::pia::Result NexSessionSearchCriteria::SetAttribute(unsigned int index, unsig
     return 0;
 }
 
-nn::pia::Result NexSessionSearchCriteria::SetAttributeRange(
-    unsigned int index, unsigned int minimum, unsigned int maximum)
+nn::pia::Result NexSessionSearchCriteria::SetAttributeRange(unsigned int index, unsigned int minimum,
+                                                            unsigned int maximum)
 {
     if (index >= cAttributeNum)
         return transport::cResultInvalidArgument;
@@ -290,11 +295,8 @@ void NexSessionSearchCriteria::Reset()
 }
 
 nn::pia::Result NexSessionSearchCriteria::ConvertToNexMatchmakeSessionSearchCriteria(
-    nn::nex::MatchmakeSessionSearchCriteria* criteria,
-    nn::nex::InetAddress* address,
-    nn::nex::MatchmakeParam* param,
-    nn::nex::ResultRange* resultRange,
-    unsigned char method) const
+    nn::nex::MatchmakeSessionSearchCriteria* criteria, nn::nex::InetAddress* address, nn::nex::MatchmakeParam* param,
+    nn::nex::ResultRange* resultRange, unsigned char method) const
 {
     if (criteria != 0)
     {
@@ -346,11 +348,13 @@ nn::pia::Result NexSessionSearchCriteria::ConvertToNexMatchmakeSessionSearchCrit
         {
             param->m_Parameters.clear();
             if ((m_conditionMask & cConditionScoreBasedSettingIndex) != 0)
-                param->m_Parameters[nn::nex::String(s_scoreSettingIndexKey)] = nn::nex::Variant(m_scoreBasedSettingIndex);
+                param->m_Parameters[nn::nex::String(s_scoreSettingIndexKey)] = nn::nex::Variant(
+                    m_scoreBasedSettingIndex);
             if ((m_conditionMask & cConditionScoreBasedRatingValue) != 0)
                 param->m_Parameters[nn::nex::String(s_ratingValueKey)] = nn::nex::Variant(m_scoreBasedRatingValue);
             if ((m_conditionMask & cConditionScoreBasedDisconnectionRate) != 0)
-                param->m_Parameters[nn::nex::String(s_disconnectionRateKey)] = nn::nex::Variant(m_scoreBasedDisconnectionRate);
+                param->m_Parameters[nn::nex::String(s_disconnectionRateKey)] = nn::nex::Variant(
+                    m_scoreBasedDisconnectionRate);
             if ((m_conditionMask & cConditionScoreBasedViolationRate) != 0)
                 param->m_Parameters[nn::nex::String(s_violationRateKey)] = nn::nex::Variant(m_scoreBasedViolationRate);
             if ((m_conditionMask & cConditionScoreBasedGeoIp) != 0)
@@ -375,22 +379,28 @@ nn::pia::Result NexSessionSearchCriteria::ConvertToNexMatchmakeSessionSearchCrit
                 switch (value.m_type)
                 {
                 case ParamVariant::cType_UInt64:
-                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value.m_uint64Value);
+                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] =
+                        nn::nex::Variant(value.m_uint64Value);
                     break;
                 case ParamVariant::cType_Int64:
-                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value.m_int64Value);
+                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] =
+                        nn::nex::Variant(value.m_int64Value);
                     break;
                 case ParamVariant::cType_UInt32:
-                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value.m_uint32Value);
+                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] =
+                        nn::nex::Variant(value.m_uint32Value);
                     break;
                 case ParamVariant::cType_Int32:
-                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value.m_int32Value);
+                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] =
+                        nn::nex::Variant(value.m_int32Value);
                     break;
                 case ParamVariant::cType_Bool:
-                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value.m_boolValue);
+                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] =
+                        nn::nex::Variant(value.m_boolValue);
                     break;
                 case ParamVariant::cType_Double:
-                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(value.m_doubleValue);
+                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] =
+                        nn::nex::Variant(value.m_doubleValue);
                     break;
                 default:
                     break;
@@ -403,7 +413,8 @@ nn::pia::Result NexSessionSearchCriteria::ConvertToNexMatchmakeSessionSearchCrit
                 const common::String* text = GetAdditionalScoreBasedParameterString(0);
                 if (key != 0 && key->GetStringLength() > 0 && text != 0 && text->GetStringLength() > 0)
                 {
-                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] = nn::nex::Variant(static_cast<const wchar_t*>(text->GetBuffer()));
+                    param->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(key->GetBuffer()))] =
+                        nn::nex::Variant(static_cast<const wchar_t*>(text->GetBuffer()));
                 }
             }
 
@@ -437,7 +448,8 @@ nn::pia::Result NexSessionSearchCriteria::ConvertToNexMatchmakeSessionSearchCrit
             common::g_sessionBeginMonitoringContent.m_metric88 = static_cast<unsigned char>(m_maxParticipantRangeMax);
             common::g_sessionBeginMonitoringContent.m_metric92 = static_cast<unsigned char>(m_sessionType);
             common::g_sessionBeginMonitoringContent.m_metric93 = flags;
-            common::g_sessionBeginMonitoringContent.m_metric94 = static_cast<unsigned char>(m_randomSessionSelectionMethod);
+            common::g_sessionBeginMonitoringContent.m_metric94 = static_cast<unsigned char>(
+                m_randomSessionSelectionMethod);
             common::g_sessionBeginMonitoringContent.m_metric113 = m_scoreBasedGeoIpUsed;
             common::g_sessionBeginMonitoringContent.m_metric109 = m_scoreBasedRatingValue;
             common::g_sessionBeginMonitoringContent.m_metric111 = m_scoreBasedDisconnectionRate;
@@ -454,7 +466,8 @@ nn::pia::Result NexSessionSearchCriteria::ConvertToNexMatchmakeSessionSearchCrit
             common::g_sessionBeginMonitoringContent.m_metric99 = static_cast<unsigned char>(m_maxParticipantRangeMax);
             common::g_sessionBeginMonitoringContent.m_metric103 = static_cast<unsigned char>(m_sessionType);
             common::g_sessionBeginMonitoringContent.m_metric104 = flags;
-            common::g_sessionBeginMonitoringContent.m_metric105 = static_cast<unsigned char>(m_randomSessionSelectionMethod);
+            common::g_sessionBeginMonitoringContent.m_metric105 = static_cast<unsigned char>(
+                m_randomSessionSelectionMethod);
             common::g_sessionBeginMonitoringContent.m_metric118 = m_scoreBasedGeoIpUsed;
             common::g_sessionBeginMonitoringContent.m_metric114 = m_scoreBasedRatingValue;
             common::g_sessionBeginMonitoringContent.m_metric116 = m_scoreBasedDisconnectionRate;
@@ -496,9 +509,11 @@ nn::pia::Result NexSessionSearchCriteria::ConvertToNexMatchmakeSessionSearchCrit
                 }
             }
             if (method == cMonitoringMethodFirst)
-                common::g_sessionBeginMonitoringContent.m_metric89[i] = static_cast<unsigned char>(m_attributeListSize[i]);
+                common::g_sessionBeginMonitoringContent.m_metric89[i] = static_cast<unsigned char>(
+                    m_attributeListSize[i]);
             else if (method == cMonitoringMethodSecond)
-                common::g_sessionBeginMonitoringContent.m_metric100[i] = static_cast<unsigned char>(m_attributeListSize[i]);
+                common::g_sessionBeginMonitoringContent.m_metric100[i] = static_cast<unsigned char>(
+                    m_attributeListSize[i]);
         }
     }
 
@@ -515,4 +530,6 @@ unsigned int NexSessionSearchCriteria::IsValid() const
     return (m_conditionMask >> 4) & 1;
 }
 
-}}}
+}
+}
+}

@@ -3,16 +3,25 @@
 
 #include "nn/nex/NATRelayInterface.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 class CallContext;
 class InetAddress;
 class NATTraversalRelayClient;
 class ProtocolCallContext;
 class RelaySignatureKey;
 class StationURL;
-}}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NatRelayInterface;
 
@@ -49,6 +58,8 @@ private:
     nex::ProtocolCallContext* m_callContext;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -6,13 +6,19 @@
 #include "nn/pia/inet/NexCommunityInfo.hpp"
 #include "nn/pia/session/ICommunityInfoList.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexCommunityInfoList : public session::ICommunityInfoList
 {
 public:
     explicit NexCommunityInfoList(unsigned int maxSize)
-        : m_maxSize(maxSize), m_entries(common::NewArray<session::ICommunityInfo*>(maxSize))
+        : m_maxSize(maxSize),
+          m_entries(common::NewArray<session::ICommunityInfo*>(maxSize))
     {
         for (unsigned int index = 0; index < m_maxSize; ++index)
         {
@@ -50,6 +56,8 @@ private:
     session::ICommunityInfo** m_entries;
 };
 
-}}}
+}
+}
+}
 
 #endif

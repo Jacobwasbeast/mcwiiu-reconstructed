@@ -1,6 +1,11 @@
 #include "nn/pia/inet/MonitoringDataSendJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 MonitoringDataSendJob::MonitoringDataSendJob()
 {
@@ -25,4 +30,6 @@ void MonitoringDataSendJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

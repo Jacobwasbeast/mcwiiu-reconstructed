@@ -4,7 +4,12 @@
 
 #include <vector>
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -39,17 +44,26 @@ enum
 
 enum
 {
-    cScoreBasedParameterBaseMask = (1u << cFlagRatingValue) | (1u << cFlagDisconnectionRate) |
-                                   (1u << cFlagViolationRate) | (1u << cFlagCountryCode) |
-                                   (1u << cFlagUseGeoIp)
+    cScoreBasedParameterBaseMask = (1u << cFlagRatingValue) | (1u << cFlagDisconnectionRate)
+                                   | (1u << cFlagViolationRate) | (1u << cFlagCountryCode) | (1u << cFlagUseGeoIp)
 };
 }
 
 NexCreateSessionSetting::NexCreateSessionSetting()
-    : m_gameMode(0), m_sessionType(cSessionType_Normal), m_autoCloseSession(false),
-      m_applicationDataSize(0), m_openSession(false), m_selectionPriority(0), m_ratingValue(0),
-      m_violationRate(0), m_disconnectionRate(0), m_useGeoIp(false), m_extraParticipantNum(0),
-      m_communityId(0), m_matchmakeSessionOption(0), m_stateFlags(0)
+    : m_gameMode(0),
+      m_sessionType(cSessionType_Normal),
+      m_autoCloseSession(false),
+      m_applicationDataSize(0),
+      m_openSession(false),
+      m_selectionPriority(0),
+      m_ratingValue(0),
+      m_violationRate(0),
+      m_disconnectionRate(0),
+      m_useGeoIp(false),
+      m_extraParticipantNum(0),
+      m_communityId(0),
+      m_matchmakeSessionOption(0),
+      m_stateFlags(0)
 {
     m_overrideIpAddress.m_address = 0;
     m_overrideIpAddress.m_port = 0;
@@ -106,14 +120,12 @@ void NexCreateSessionSetting::Copy(const NexCreateSessionSetting& other)
     m_stateFlags = other.m_stateFlags;
     for (unsigned int index = 0; index < cAdditionalScoreBasedParameterValueNum; ++index)
     {
-        m_additionalScoreBasedParameterValueKey[index].Copy(
-            other.m_additionalScoreBasedParameterValueKey[index]);
+        m_additionalScoreBasedParameterValueKey[index].Copy(other.m_additionalScoreBasedParameterValueKey[index]);
         m_additionalScoreBasedParameterValue[index] = other.m_additionalScoreBasedParameterValue[index];
     }
     for (unsigned int index = 0; index < cAdditionalScoreBasedParameterStringNum; ++index)
     {
-        m_additionalScoreBasedParameterStringKey[index].Copy(
-            other.m_additionalScoreBasedParameterStringKey[index]);
+        m_additionalScoreBasedParameterStringKey[index].Copy(other.m_additionalScoreBasedParameterStringKey[index]);
         m_additionalScoreBasedParameterString[index].Copy(other.m_additionalScoreBasedParameterString[index]);
     }
     m_countryCode = other.m_countryCode;
@@ -414,30 +426,26 @@ bool NexCreateSessionSetting::IsSetScoreBasedParameter() const
     return (m_stateFlags & mask) != 0;
 }
 
-const common::String* NexCreateSessionSetting::GetAdditionalScoreBasedParameterValueKey(
-    unsigned int index) const
+const common::String* NexCreateSessionSetting::GetAdditionalScoreBasedParameterValueKey(unsigned int index) const
 {
     if (index >= cAdditionalScoreBasedParameterValueNum)
         return 0;
     return &m_additionalScoreBasedParameterValueKey[index];
 }
 
-const ParamVariant* NexCreateSessionSetting::GetAdditionalScoreBasedParameterValue(
-    unsigned int index) const
+const ParamVariant* NexCreateSessionSetting::GetAdditionalScoreBasedParameterValue(unsigned int index) const
 {
     return &m_additionalScoreBasedParameterValue[index];
 }
 
-const common::String* NexCreateSessionSetting::GetAdditionalScoreBasedParameterStringKey(
-    unsigned int index) const
+const common::String* NexCreateSessionSetting::GetAdditionalScoreBasedParameterStringKey(unsigned int index) const
 {
     if (index != 0)
         return 0;
     return &m_additionalScoreBasedParameterStringKey[0];
 }
 
-const common::String* NexCreateSessionSetting::GetAdditionalScoreBasedParameterString(
-    unsigned int index) const
+const common::String* NexCreateSessionSetting::GetAdditionalScoreBasedParameterString(unsigned int index) const
 {
     if (index != 0)
         return 0;
@@ -479,4 +487,6 @@ bool NexCreateSessionSetting::IsSetCommunityId() const
     return (m_stateFlags >> cFlagCommunityId & 1) != 0;
 }
 
-}}}
+}
+}
+}

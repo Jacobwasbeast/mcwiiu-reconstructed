@@ -6,10 +6,31 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
-namespace nn { namespace nex { template <typename T> class qList; class NotificationEvent; }}
-namespace nn { namespace pia { namespace common { class String; }}}
+namespace nn
+{
+namespace nex
+{
+template <typename T> class qList;
+class NotificationEvent;
+}
+}
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class String;
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexNotificationDataJob : public common::StepSequenceJob
 {
@@ -29,6 +50,8 @@ private:
     nex::ProtocolCallContext m_protocolCallContext;
 };
 
-}}}
+}
+}
+}
 
 #endif

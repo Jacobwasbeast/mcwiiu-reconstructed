@@ -3,7 +3,12 @@
 
 #include "nn/pia/session/SessionNetworkFactory.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexNetworkFactory : public session::SessionNetworkFactory
 {
@@ -89,6 +94,8 @@ public:
     virtual void DeleteMatchMeshLayerController(session::MeshLayerController* controller);
 };
 
-}}}
+}
+}
+}
 
 #endif

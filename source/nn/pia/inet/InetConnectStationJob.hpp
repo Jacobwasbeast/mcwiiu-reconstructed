@@ -8,7 +8,12 @@
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class InetConnectStationJob : public transport::ConnectStationJob
 {
@@ -39,6 +44,8 @@ private:
     int m_natTraversalStartRetryCount;
 };
 
-}}}
+}
+}
+}
 
 #endif

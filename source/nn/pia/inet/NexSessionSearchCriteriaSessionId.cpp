@@ -2,7 +2,12 @@
 
 #include "nn/pia/Transport.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -13,7 +18,9 @@ enum
 };
 }
 
-NexSessionSearchCriteriaSessionId::~NexSessionSearchCriteriaSessionId() {}
+NexSessionSearchCriteriaSessionId::~NexSessionSearchCriteriaSessionId()
+{
+}
 
 unsigned int NexSessionSearchCriteriaSessionId::GetSessionId() const
 {
@@ -34,4 +41,6 @@ nn::pia::Result NexSessionSearchCriteriaSessionId::SetResultRange(unsigned int, 
     return transport::cResultInvalidState;
 }
 
-}}}
+}
+}
+}

@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/session/CommunityManagementJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchmakeSession;
 
@@ -51,6 +56,8 @@ private:
     bool m_isAvailableCommunityOnly;
 };
 
-}}}
+}
+}
+}
 
 #endif

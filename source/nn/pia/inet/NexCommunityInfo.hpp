@@ -6,7 +6,12 @@
 #include "nn/pia/common/FixedString.hpp"
 #include "nn/pia/session/ICommunityInfo.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexCommunityInfo : public session::ICommunityInfo
 {
@@ -59,6 +64,8 @@ private:
     common::DateTime m_participationEndDate;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -4,20 +4,37 @@
 #include "nn/pia/common/IPacketInput.hpp"
 #include "nn/pia/common/SocketStreamBase.hpp"
 
-namespace nn { namespace pia { namespace common { class InetAddress; class Packet; }}}
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class InetAddress;
+class Packet;
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class InetInputStream : public common::SocketStreamBase, public common::IPacketInput
 {
 public:
-    enum { cIgnoreAddressNum = 2 };
+    enum
+    {
+        cIgnoreAddressNum = 2
+    };
 
     InetInputStream();
     virtual ~InetInputStream();
     virtual Result Read(common::Packet* packet);
-    virtual Result CalculateCryptoParameter(unsigned char* parameter, unsigned int size,
-                                            common::Packet* packet);
+    virtual Result CalculateCryptoParameter(unsigned char* parameter, unsigned int size, common::Packet* packet);
     static void AddIgnoreAddress(const common::InetAddress& address1, const common::InetAddress& address2);
 
 private:
@@ -26,6 +43,8 @@ private:
     static common::InetAddress s_ignoreAddresses[cIgnoreAddressNum];
 };
 
-}}}
+}
+}
+}
 
 #endif

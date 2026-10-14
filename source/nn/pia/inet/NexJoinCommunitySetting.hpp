@@ -4,7 +4,12 @@
 #include "nn/pia/String.hpp"
 #include "nn/pia/session/JoinCommunitySetting.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexJoinCommunitySetting : public session::JoinCommunitySetting
 {
@@ -20,6 +25,8 @@ private:
     common::FixedString<32> m_communityUserPassword;
 };
 
-}}}
+}
+}
+}
 
 #endif

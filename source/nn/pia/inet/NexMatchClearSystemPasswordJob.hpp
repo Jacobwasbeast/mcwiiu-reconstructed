@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/session/ClearMatchmakeSystemPasswordJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchmakeSession;
 
@@ -23,6 +28,8 @@ private:
     NexMatchmakeSession* m_matchmakeSession;
 };
 
-}}}
+}
+}
+}
 
 #endif

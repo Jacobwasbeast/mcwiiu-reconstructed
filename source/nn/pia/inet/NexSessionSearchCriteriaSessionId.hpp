@@ -3,7 +3,12 @@
 
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexSessionSearchCriteriaSessionId : public session::SessionSearchCriteria
 {
@@ -23,6 +28,8 @@ private:
     unsigned int m_sessionId;
 };
 
-}}}
+}
+}
+}
 
 #endif

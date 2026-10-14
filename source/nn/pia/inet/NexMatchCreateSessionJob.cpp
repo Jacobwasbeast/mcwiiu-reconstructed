@@ -12,7 +12,12 @@
 #include "nn/pia/session/CreateSessionSetting.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -39,7 +44,8 @@ enum
     cNotificationTimeoutMsec = 10000
 };
 
-inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchCreateSessionJob::*function)(), const char* name)
+inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchCreateSessionJob::*function)(),
+                       const char* name)
 {
     const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
@@ -47,7 +53,10 @@ inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMa
 }
 
 NexMatchCreateSessionJob::NexMatchCreateSessionJob()
-    : session::CreateSessionJob(), m_matchmakeSession(0), m_notificationDeadline(), m_isOpenSession(false),
+    : session::CreateSessionJob(),
+      m_matchmakeSession(0),
+      m_notificationDeadline(),
+      m_isOpenSession(false),
       m_createMatchmakeStartTime()
 {
 }
@@ -63,26 +72,31 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::LeaveJoinedMat
     {
     case session::Session::cStatusDisconnectedNetwork:
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         m_result = session::Session::cResultStatusUnknown6;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         m_result = session::Session::cResultStatusUnknown7;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         m_result = session::Session::cResultStatusUnknown8;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
     }
     if (m_joinedSessionIdNum == 0)
     {
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CreateMatchmakeSession, "NexMatchCreateSessionJob::CreateMatchmakeSession");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CreateMatchmakeSession,
+                   "NexMatchCreateSessionJob::CreateMatchmakeSession");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     const unsigned int sessionId = m_joinedSessionIds[m_joinedSessionIdNum - 1];
@@ -95,14 +109,16 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::LeaveJoinedMat
         if (result == cResultRequestFailed)
         {
             m_result = cResultRequestFailed;
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "NexMatchCreateSessionJob::CompleteFailure");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                       "NexMatchCreateSessionJob::CompleteFailure");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (m_joinedSessionIdNum != 0)
             --m_joinedSessionIdNum;
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitLeaveJoinedMatchmakeSession, "NexMatchCreateSessionJob::WaitLeaveJoinedMatchmakeSession");
+    SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitLeaveJoinedMatchmakeSession,
+               "NexMatchCreateSessionJob::WaitLeaveJoinedMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -113,32 +129,38 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitLeaveJoine
     {
     case session::Session::cStatusDisconnectedNetwork:
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         m_result = session::Session::cResultStatusUnknown6;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         m_result = session::Session::cResultStatusUnknown7;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         m_result = session::Session::cResultStatusUnknown8;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
     }
-    if (session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->WaitLeaveMatchmakeSession())
+    if (session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]
+            ->WaitLeaveMatchmakeSession())
     {
-        if (m_callContext.m_state == common::CallContext::cStateFailure &&
-            m_callContext.m_result != cResultRequestTimeout &&
-            m_callContext.m_result == session::Session::cResultStatusDisconnectedNetwork)
+        if (m_callContext.m_state == common::CallContext::cStateFailure
+            && m_callContext.m_result != cResultRequestTimeout
+            && m_callContext.m_result == session::Session::cResultStatusDisconnectedNetwork)
             m_result = m_callContext.m_result;
         if (m_joinedSessionIdNum != 0)
             --m_joinedSessionIdNum;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession, "NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession,
+                   "NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession");
     }
     return MakeExecuteResult(cExecuteKindNextStep);
 }
@@ -150,19 +172,23 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::CreateMatchmak
     {
     case session::Session::cStatusDisconnectedNetwork:
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         m_result = session::Session::cResultStatusUnknown6;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         m_result = session::Session::cResultStatusUnknown7;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         m_result = session::Session::cResultStatusUnknown8;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
@@ -182,7 +208,8 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::CreateMatchmak
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitCreateMatchmake, "NexMatchCreateSessionJob::WaitCreateMatchmake");
+    SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitCreateMatchmake,
+               "NexMatchCreateSessionJob::WaitCreateMatchmake");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -193,19 +220,23 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitCreateMatc
     {
     case session::Session::cStatusDisconnectedNetwork:
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         m_result = session::Session::cResultStatusUnknown6;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         m_result = session::Session::cResultStatusUnknown7;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         m_result = session::Session::cResultStatusUnknown8;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
@@ -216,7 +247,8 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitCreateMatc
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
             m_result = m_callContext.m_result;
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering, "NexMatchCreateSessionJob::UnregisterGathering");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering,
+                       "NexMatchCreateSessionJob::UnregisterGathering");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
@@ -224,11 +256,14 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitCreateMatc
             session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = sessionId;
             SetMatchmakeStatus(session::Session::cMatchmakeStatusSearching);
             session::g_piaSession->SetCurrentSessionOpenStatus(
-                m_isOpenSession ? session::Session::cSessionOpenStatusOpen : session::Session::cSessionOpenStatusParticipationClosed);
+                m_isOpenSession ? session::Session::cSessionOpenStatusOpen
+                                : session::Session::cSessionOpenStatusParticipationClosed);
             common::Time deadline;
-            deadline.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cNotificationTimeoutMsec + common::g_piaJobScheduler->m_dispatchTime.m_tick;
+            deadline.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cNotificationTimeoutMsec
+                              + common::g_piaJobScheduler->m_dispatchTime.m_tick;
             m_notificationDeadline = deadline;
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitNotification, "NexMatchCreateSessionJob::WaitNotification");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitNotification,
+                       "NexMatchCreateSessionJob::WaitNotification");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -242,19 +277,23 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitNotificati
     {
     case session::Session::cStatusDisconnectedNetwork:
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         m_result = session::Session::cResultStatusUnknown6;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         m_result = session::Session::cResultStatusUnknown7;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         m_result = session::Session::cResultStatusUnknown8;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
@@ -262,41 +301,48 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitNotificati
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
         m_result = cResultCancelled;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering, "NexMatchCreateSessionJob::UnregisterGathering");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering,
+                   "NexMatchCreateSessionJob::UnregisterGathering");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     if (m_notificationDeadline < common::g_piaJobScheduler->m_dispatchTime)
     {
         m_result = cResultRequestFailed;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering, "NexMatchCreateSessionJob::UnregisterGathering");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering,
+                   "NexMatchCreateSessionJob::UnregisterGathering");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
-    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(session::g_piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        session::g_piaSession->m_meshLayerController);
     nex::NgsBridgeInterface* ngsInterface = meshLayerController->GetNgsInterface(0);
-    if (ngsInterface != 0 &&
-        !meshLayerController->IsParticipated(session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex],
-                                             ngsInterface->GetPrincipalID()))
+    if (ngsInterface != 0
+        && !meshLayerController->IsParticipated(
+            session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex],
+            ngsInterface->GetPrincipalID()))
     {
         meshLayerController->Trace(cTraceFlagSession);
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     SelectStep(m_currentStep, &NexMatchCreateSessionJob::StartNatSession, "NexMatchCreateSessionJob::StartNatSession");
     common::g_sessionBeginMonitoringContent.m_metric80 = static_cast<unsigned int>(
-        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_createMatchmakeStartTime.m_tick) /
-        common::TimeSpan::GetTicksPerMSec().m_tick);
+        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_createMatchmakeStartTime.m_tick)
+        / common::TimeSpan::GetTicksPerMSec().m_tick);
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::StartNatSession()
 {
-    const Result result = static_cast<NexMatchMeshLayerController*>(session::g_piaSession->m_meshLayerController)->StartNatSession();
+    const Result result =
+        static_cast<NexMatchMeshLayerController*>(session::g_piaSession->m_meshLayerController)->StartNatSession();
     if (result != 0)
     {
         m_result = result;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering, "NexMatchCreateSessionJob::UnregisterGathering");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering,
+                   "NexMatchCreateSessionJob::UnregisterGathering");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
-    SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitStartNatSession, "NexMatchCreateSessionJob::WaitStartNatSession");
+    SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitStartNatSession,
+               "NexMatchCreateSessionJob::WaitStartNatSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -307,74 +353,86 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitStartNatSe
     {
     case session::Session::cStatusDisconnectedNetwork:
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         m_result = session::Session::cResultStatusUnknown6;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         m_result = session::Session::cResultStatusUnknown7;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         m_result = session::Session::cResultStatusUnknown8;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering, "NexMatchCreateSessionJob::UnregisterGathering");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering,
+                   "NexMatchCreateSessionJob::UnregisterGathering");
         m_result = cResultCancelled;
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     Result result = 0;
-    const ExecuteKind kind = static_cast<NexMatchMeshLayerController*>(session::g_piaSession->m_meshLayerController)->WaitStartNatSession(&result);
+    const ExecuteKind kind = static_cast<NexMatchMeshLayerController*>(session::g_piaSession->m_meshLayerController)
+                                 ->WaitStartNatSession(&result);
     if (kind == cExecuteKindContinue)
     {
         SelectStep(m_currentStep, &NexMatchCreateSessionJob::MeshStartup, "CreateSessionJob::MeshStartup");
     }
     else if (kind == cExecuteKindFinished)
     {
-        if (result == cResultNatServerAddressUnavailable || result == cResultPortDetectionFailed ||
-            result == cResultCancelled || result == transport::cResultInvalidState)
+        if (result == cResultNatServerAddressUnavailable || result == cResultPortDetectionFailed
+            || result == cResultCancelled || result == transport::cResultInvalidState)
         {
             m_result = result;
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering, "NexMatchCreateSessionJob::UnregisterGathering");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering,
+                       "NexMatchCreateSessionJob::UnregisterGathering");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (result == session::Session::cResultStatusDisconnectedNetwork)
         {
             SetConnectionStatus(session::Session::cConnectionStatusDisconnectedNetwork);
             m_result = result;
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "NexMatchCreateSessionJob::CompleteFailure");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                       "NexMatchCreateSessionJob::CompleteFailure");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (result == session::Session::cResultStatusUnknown6)
         {
             SetConnectionStatus(session::Session::cConnectionStatusUnknown4);
             m_result = result;
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "NexMatchCreateSessionJob::CompleteFailure");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                       "NexMatchCreateSessionJob::CompleteFailure");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (result == session::Session::cResultStatusUnknown7)
         {
             SetConnectionStatus(session::Session::cConnectionStatusUnknown5);
             m_result = result;
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "NexMatchCreateSessionJob::CompleteFailure");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                       "NexMatchCreateSessionJob::CompleteFailure");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (result == session::Session::cResultStatusUnknown8)
         {
             SetConnectionStatus(session::Session::cConnectionStatusUnknown6);
             m_result = result;
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "NexMatchCreateSessionJob::CompleteFailure");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                       "NexMatchCreateSessionJob::CompleteFailure");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         m_result = transport::cResultInvalidState;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering, "NexMatchCreateSessionJob::UnregisterGathering");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering,
+                   "NexMatchCreateSessionJob::UnregisterGathering");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     return MakeExecuteResult(kind);
@@ -387,19 +445,23 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::UnregisterGath
     {
     case session::Session::cStatusDisconnectedNetwork:
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         m_result = session::Session::cResultStatusUnknown6;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         m_result = session::Session::cResultStatusUnknown7;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         m_result = session::Session::cResultStatusUnknown8;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
@@ -409,7 +471,8 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::UnregisterGath
         &m_callContext, piaSession->m_sessionId[piaSession->m_currentSessionIndex]);
     if (result == 0)
     {
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitUnregisterGathering, "NexMatchCreateSessionJob::WaitUnregisterGathering");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitUnregisterGathering,
+                   "NexMatchCreateSessionJob::WaitUnregisterGathering");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     m_result = result;
@@ -424,24 +487,29 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitUnregister
     {
     case session::Session::cStatusDisconnectedNetwork:
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         m_result = session::Session::cResultStatusUnknown6;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         m_result = session::Session::cResultStatusUnknown7;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         m_result = session::Session::cResultStatusUnknown8;
-        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::inet::NexMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
     }
-    if (session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->WaitUnregisterMatchmakeSession())
+    if (session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]
+            ->WaitUnregisterMatchmakeSession())
     {
         session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
         if (m_callContext.m_state == common::CallContext::cStateFailure)
@@ -450,12 +518,14 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitUnregister
                 m_result = cResultRequestFailed;
             else if (m_callContext.m_result == cResultNexError)
                 m_result = cResultNexError;
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "NexMatchCreateSessionJob::CompleteFailure");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                       "NexMatchCreateSessionJob::CompleteFailure");
             return MakeExecuteResult(cExecuteKindContinue);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure, "NexMatchCreateSessionJob::CompleteFailure");
+            SelectStep(m_currentStep, &NexMatchCreateSessionJob::CompleteFailure,
+                       "NexMatchCreateSessionJob::CompleteFailure");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -478,7 +548,8 @@ Result NexMatchCreateSessionJob::StartupImpl(const session::CreateSessionSetting
     session::Session* piaSession = session::g_piaSession;
     if (piaSession->GetLocalPlayerCount() == 0)
         return transport::cResultInvalidState;
-    m_matchmakeSession = static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
+    m_matchmakeSession = static_cast<NexMatchmakeSession*>(
+        piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
     if (m_matchmakeSession == 0)
         return transport::cResultInvalidState;
     if (setting->GetMaxParticipantNum() == 0)
@@ -490,15 +561,16 @@ Result NexMatchCreateSessionJob::StartupImpl(const session::CreateSessionSetting
     m_matchmakeSession->ReflectCreateSetting(setting, piaSession->IsHostMigrationEnabled());
     m_isOpenSession = nexSetting->IsOpenSession();
     session::g_piaSession->m_fieldc2[session::g_piaSession->m_currentSessionIndex] = participantNum;
-    NexMatchMeshLayerController* meshLayerController =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     m_joinedSessionIdNum = 0;
     for (unsigned int index = 0; index < meshLayerController->GetSessionIdArraySize(); ++index)
     {
         if (meshLayerController->GetSessionId(index) != 0)
             m_joinedSessionIds[m_joinedSessionIdNum++] = meshLayerController->GetSessionId(index);
     }
-    SelectStep(m_currentStep, &NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession, "NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession");
+    SelectStep(m_currentStep, &NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession,
+               "NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession");
     common::g_sessionBeginMonitoringContent.m_metric137 = cMonitoringValueInvalid;
     common::g_sessionBeginMonitoringContent.m_metric138 = cMonitoringValueInvalid;
     return 0;
@@ -512,8 +584,11 @@ void NexMatchCreateSessionJob::SetNextStepAtWaitCreateMesh()
 NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::SetNextStepAtFailedCreateMesh(Result result)
 {
     m_result = result;
-    SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering, "NexMatchCreateSessionJob::UnregisterGathering");
+    SelectStep(m_currentStep, &NexMatchCreateSessionJob::UnregisterGathering,
+               "NexMatchCreateSessionJob::UnregisterGathering");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-}}}
+}
+}
+}

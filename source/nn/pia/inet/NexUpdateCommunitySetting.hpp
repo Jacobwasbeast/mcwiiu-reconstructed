@@ -5,7 +5,12 @@
 #include "nn/pia/common/DateTime.hpp"
 #include "nn/pia/session/UpdateCommunitySetting.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexUpdateCommunitySetting : public session::UpdateCommunitySetting
 {
@@ -70,6 +75,8 @@ private:
     unsigned int participationEndDateSet : 1;
 };
 
-}}}
+}
+}
+}
 
 #endif

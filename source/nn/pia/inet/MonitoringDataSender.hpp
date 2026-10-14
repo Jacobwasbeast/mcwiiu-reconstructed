@@ -6,7 +6,12 @@
 #include "nn/pia/inet/MonitoringDataSendJob.hpp"
 #include "nn/pia/inet/MonitoringServerAddressResolveJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class MonitoringDataProtocol;
 
@@ -83,6 +88,8 @@ private:
     MonitoringDataProtocol* m_protocol;
 };
 
-}}}
+}
+}
+}
 
 #endif

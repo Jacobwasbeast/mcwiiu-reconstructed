@@ -2,9 +2,15 @@
 #include <coreinit/memory.h>
 #include <cstring>
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
-namespace {
+namespace
+{
 enum
 {
     cResultInvalidArgument = 0x10c07,
@@ -12,11 +18,22 @@ enum
 };
 }
 
-NexSessionInfo::NexSessionInfo() : game_mode_(0), session_id_(0),
-    current_participant_num_(0), min_participant_num_(0), max_participant_num_(0),
-    opened_(false), user_password_enabled_(false), system_password_enabled_(false),
-    session_type_(cSessionType_Normal), auto_close_session_(false), host_principal_id_(0),
-    target_principal_id_(0), selection_priority_(0), started_time_(), community_id_(0)
+NexSessionInfo::NexSessionInfo()
+    : game_mode_(0),
+      session_id_(0),
+      current_participant_num_(0),
+      min_participant_num_(0),
+      max_participant_num_(0),
+      opened_(false),
+      user_password_enabled_(false),
+      system_password_enabled_(false),
+      session_type_(cSessionType_Normal),
+      auto_close_session_(false),
+      host_principal_id_(0),
+      target_principal_id_(0),
+      selection_priority_(0),
+      started_time_(),
+      community_id_(0)
 {
     OSBlockSet(application_data_, 0, sizeof(application_data_));
     application_data_size_ = 0;
@@ -204,7 +221,8 @@ void NexSessionInfo::SetOpen(bool open)
 
 void NexSessionInfo::SetAttribute(uint8_t index, uint32_t value)
 {
-    if (index < 6) attributes_[index] = value;
+    if (index < 6)
+        attributes_[index] = value;
 }
 
 void NexSessionInfo::SetApplicationData(const void* data, unsigned int size)
@@ -229,7 +247,8 @@ void NexSessionInfo::SetSystemPasswordEnabled(bool enabled)
 
 void NexSessionInfo::SetSessionType(SessionType sessionType, bool autoCloseSession)
 {
-    session_type_ = sessionType; auto_close_session_ = autoCloseSession;
+    session_type_ = sessionType;
+    auto_close_session_ = autoCloseSession;
 }
 
 void NexSessionInfo::SetHostPrincipalId(unsigned long long principalId)
@@ -257,4 +276,6 @@ void NexSessionInfo::SetCommunityId(uint32_t communityId)
     community_id_ = communityId;
 }
 
-}}}
+}
+}
+}

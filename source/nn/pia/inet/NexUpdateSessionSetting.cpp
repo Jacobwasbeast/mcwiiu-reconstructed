@@ -4,7 +4,12 @@
 #include <vector>
 #include "nn/nex/MemAllocator.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 NexUpdateSessionSetting::NexUpdateSessionSetting()
     : session::UpdateSessionSetting(),
@@ -208,30 +213,26 @@ const common::DateTime& NexUpdateSessionSetting::GetStartedTime() const
     return m_startedTime;
 }
 
-const common::String* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterValueKey(
-    unsigned int index) const
+const common::String* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterValueKey(unsigned int index) const
 {
     if (index >= 3)
         return 0;
     return &m_additionalScoreBasedParameterValueKey[index];
 }
 
-const ParamVariant* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterValue(
-    unsigned int index) const
+const ParamVariant* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterValue(unsigned int index) const
 {
     return &m_additionalScoreBasedParameterValue[index];
 }
 
-const common::String* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterStringKey(
-    unsigned int index) const
+const common::String* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterStringKey(unsigned int index) const
 {
     if (index != 0)
         return 0;
     return &m_additionalScoreBasedParameterStringKey;
 }
 
-const common::String* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterString(
-    unsigned int index) const
+const common::String* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterString(unsigned int index) const
 {
     if (index != 0)
         return 0;
@@ -240,7 +241,8 @@ const common::String* NexUpdateSessionSetting::GetAdditionalScoreBasedParameterS
 
 bool NexUpdateSessionSetting::IsSetScoreBaseParam() const
 {
-    bool isSet = m_isSetRatingValue | m_isSetDisconnectionRate | m_isSetViolationRate | m_isSetCountryCode | m_isSetUpdateGeoIp;
+    bool isSet = m_isSetRatingValue | m_isSetDisconnectionRate | m_isSetViolationRate | m_isSetCountryCode
+                 | m_isSetUpdateGeoIp;
     for (unsigned int index = 0; index < 3; ++index)
     {
         if (m_additionalScoreBasedParameterValueKey[index].GetStringLength() > 0)
@@ -349,4 +351,6 @@ bool NexUpdateSessionSetting::IsValid() const
     return true;
 }
 
-}}}
+}
+}
+}

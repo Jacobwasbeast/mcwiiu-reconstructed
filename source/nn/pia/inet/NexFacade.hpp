@@ -7,7 +7,10 @@
 #include "nn/nex/NotificationEvents.hpp"
 #include "nn/pia/inet/IFacade.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 class CallContext;
 class InetAddress;
 class MatchmakeExtensionClient;
@@ -21,15 +24,37 @@ class ProtocolCallContext;
 class StationURL;
 class UserContext;
 template <typename T> class qList;
-}}
+}
+}
 
-namespace nn { namespace pia {
-namespace common { class InetAddress; class Socket; class SocketStreamBase; }
-namespace nat { class NatTraverser; }
-namespace transport { class StationLocation; class StationConnectionInfo; }
-}}
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class InetAddress;
+class Socket;
+class SocketStreamBase;
+}
+namespace nat
+{
+class NatTraverser;
+}
+namespace transport
+{
+class StationLocation;
+class StationConnectionInfo;
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexNatRelay;
 class NexNotificationDataJob;
@@ -59,10 +84,7 @@ public:
     virtual bool IsBeginMonitoringDataAvailable() const;
     static Result CreateInstance();
     static void DestroyInstance();
-    static NexFacade* GetInstance()
-    {
-        return s_instance;
-    }
+    static NexFacade* GetInstance() { return s_instance; }
     Result Initialize();
     void Finalize();
     Result CreateProtocols();
@@ -92,9 +114,8 @@ public:
     void NotifyLeave(const transport::StationLocation& location, bool clearMonitoringData, bool relayLeave);
     bool IsTraversed(const transport::StationLocation& location) const;
     bool IsTraversed(unsigned int index) const;
-    bool PrepareNatTraversal(const transport::StationLocation& location,
-                             const transport::StationConnectionInfo& info, common::CallContext* context,
-                             bool relay, bool passive, StationIndex stationIndex);
+    bool PrepareNatTraversal(const transport::StationLocation& location, const transport::StationConnectionInfo& info,
+                             common::CallContext* context, bool relay, bool passive, StationIndex stationIndex);
     bool CheckLatestStationLocation(transport::StationLocation& location);
     void ResetProbeStatus(const transport::StationLocation& location, bool relay);
     void ReportNatTraversalResult(const transport::StationLocation& location, Result result, bool relay);
@@ -161,6 +182,8 @@ private:
     unsigned int m_localServiceConnectionId;
 };
 
-}}}
+}
+}
+}
 
 #endif

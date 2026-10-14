@@ -42,11 +42,23 @@
 #include "nn/pia/transport/MissingStationHandler.hpp"
 #include "nn/pia/transport/RelayStationPacketHandler.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
-namespace {
+namespace
+{
 
-enum { cMaxStationNum = 16, cHeaderSize = 28, cMtuSizeMax = 1364, cMtuSizeMin = 576 };
+enum
+{
+    cMaxStationNum = 16,
+    cHeaderSize = 28,
+    cMtuSizeMax = 1364,
+    cMtuSizeMin = 576
+};
 
 }
 
@@ -145,15 +157,13 @@ common::IPacketOutput* NexNetworkFactory::CreateOutputStream()
 void NexNetworkFactory::DeleteInputStream(common::IPacketInput* stream)
 {
     if (stream != 0)
-        transport::DestroyObject(static_cast<common::SocketStreamBase*>(
-            static_cast<InetInputStream*>(stream)));
+        transport::DestroyObject(static_cast<common::SocketStreamBase*>(static_cast<InetInputStream*>(stream)));
 }
 
 void NexNetworkFactory::DeleteOutputStream(common::IPacketOutput* stream)
 {
     if (stream != 0)
-        transport::DestroyObject(static_cast<common::SocketStreamBase*>(
-            static_cast<InetOutputStream*>(stream)));
+        transport::DestroyObject(static_cast<common::SocketStreamBase*>(static_cast<InetOutputStream*>(stream)));
 }
 
 transport::ConnectStationJob* NexNetworkFactory::CreateConnectStationJob()
@@ -455,4 +465,6 @@ void NexNetworkFactory::DeleteMatchMeshLayerController(session::MeshLayerControl
     transport::DestroyObject(controller);
 }
 
-}}}
+}
+}
+}

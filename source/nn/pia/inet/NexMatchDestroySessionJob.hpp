@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/session/DestroySessionJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchDestroySessionJob : public session::DestroySessionJob
 {
@@ -24,6 +29,8 @@ protected:
     virtual void SetNextStepAtMeshCleanup();
 };
 
-}}}
+}
+}
+}
 
 #endif

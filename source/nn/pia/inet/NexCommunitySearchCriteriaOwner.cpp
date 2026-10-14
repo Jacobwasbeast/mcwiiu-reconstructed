@@ -2,7 +2,12 @@
 
 #include "nn/pia/Transport.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 NexCommunitySearchCriteriaOwner::~NexCommunitySearchCriteriaOwner()
 {
@@ -31,4 +36,6 @@ void NexCommunitySearchCriteriaOwner::Reset()
     m_ownerPrincipalId = 0;
 }
 
-}}}
+}
+}
+}

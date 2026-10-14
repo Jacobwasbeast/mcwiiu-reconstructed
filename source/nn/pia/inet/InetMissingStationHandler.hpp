@@ -3,7 +3,12 @@
 
 #include "nn/pia/transport/MissingStationHandler.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class InetMissingStationHandler : public transport::MissingStationHandler
 {
@@ -12,6 +17,8 @@ public:
     virtual void Execute(transport::StationConnectionInfo* connectionInfo);
 };
 
-}}}
+}
+}
+}
 
 #endif

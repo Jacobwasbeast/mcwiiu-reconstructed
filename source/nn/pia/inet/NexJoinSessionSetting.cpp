@@ -1,9 +1,13 @@
 #include "nn/pia/inet/NexJoinSessionSetting.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
-NexJoinSessionSetting::NexJoinSessionSetting()
-    : session::JoinSessionSetting()
+NexJoinSessionSetting::NexJoinSessionSetting() : session::JoinSessionSetting()
 {
     m_extraParticipantNum = 0;
     m_matchmakeSessionOption = 0;
@@ -51,4 +55,6 @@ bool NexJoinSessionSetting::IsSetMatchmakeSessionOption() const
     return m_isSetMatchmakeSessionOption;
 }
 
-}}}
+}
+}
+}

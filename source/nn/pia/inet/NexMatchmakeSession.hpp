@@ -31,29 +31,52 @@
 #include "nn/pia/session/CommonMatchmakeSession.hpp"
 #include "nn/pia/session/ISessionInfoList.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class MatchmakeExtensionClient;
 class NgsBridgeInterface;
 
-}}
+}
+}
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class CreateSessionSetting;
 class JoinSessionSetting;
 class JoinRandomSessionSetting;
 class UpdateSessionSetting;
 
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class StationConnectionInfo;
 
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexCommunityInfo;
 class NexCreateCommunitySetting;
@@ -99,17 +122,26 @@ public:
     virtual unsigned int IsUpdatableSelectionPriority(unsigned char priority);
     virtual const session::ISessionInfo* GetSessionInfo() const;
     virtual session::ISessionInfo* GetSessionInfo();
-    virtual Result RandomMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int gatheringId);
+    virtual Result RandomMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext,
+                                                  unsigned long long* teamOwnerIds, unsigned short teamCount,
+                                                  unsigned int gatheringId);
     virtual bool WaitRandomMatchmakeSessionWithTeam(unsigned int* gatheringId, bool* found);
-    virtual Result FindSessionByOwner(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaOwner& criteria);
+    virtual Result FindSessionByOwner(nn::pia::common::CallContext* callContext,
+                                      const NexSessionSearchCriteriaOwner& criteria);
     virtual bool WaitFindSessionByOwner();
-    virtual Result FindSessionByParticipant(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaParticipant& criteria);
+    virtual Result FindSessionByParticipant(nn::pia::common::CallContext* callContext,
+                                            const NexSessionSearchCriteriaParticipant& criteria);
     virtual bool WaitFindSessionByParticipant();
-    virtual Result FindSessionBySessionId(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaSessionId& criteria);
+    virtual Result FindSessionBySessionId(nn::pia::common::CallContext* callContext,
+                                          const NexSessionSearchCriteriaSessionId& criteria);
     virtual bool WaitFindSessionBySessionId();
-    virtual Result CreateMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int gatheringId);
+    virtual Result CreateMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext,
+                                                  unsigned long long* teamOwnerIds, unsigned short teamCount,
+                                                  unsigned int gatheringId);
     virtual bool WaitCreateMatchmakeSessionWithTeam(unsigned int* gatheringId);
-    virtual Result JoinMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int teamIndex);
+    virtual Result JoinMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned int gatheringId,
+                                                unsigned long long* teamOwnerIds, unsigned short teamCount,
+                                                unsigned int teamIndex);
     virtual bool WaitJoinMatchmakeSessionWithTeam();
     virtual Result UpdateSessionSetting(nn::pia::common::CallContext* callContext, unsigned int gatheringId);
     virtual bool WaitUpdateSessionSetting();
@@ -119,14 +151,18 @@ public:
     static SessionType ConvertMatchmakeSystemTypeToSessionType(nn::nex::MatchmakeSystemType systemType);
     static nn::nex::MatchmakeSelectionMethod ConvertSelectionMethodToMatchmakeSelectionMethod(SelectionMethod method);
     static nn::nex::MatchmakeSystemType ConvertSessionTypeToMatchmakeSystemType(SessionType sessionType);
-    void CopyFoundPersistentGatheringToBrowsedCommunityInfoList(const nn::nex::PersistentGathering* gathering, NexCommunityInfo* communityInfo);
+    void CopyFoundPersistentGatheringToBrowsedCommunityInfoList(const nn::nex::PersistentGathering* gathering,
+                                                                NexCommunityInfo* communityInfo);
     void CopyMatchmakeSessionToSessionInfo(const nn::nex::MatchmakeSession* session, NexSessionInfo* sessionInfo);
     Result CreateCommunity(nn::pia::common::CallContext* callContext);
     Result Finalize();
     Result FindCommunityByGatheringId(nn::pia::common::CallContext* callContext);
-    Result FindCommunityByOwner(nn::pia::common::CallContext* callContext, unsigned long long ownerId, unsigned int offset, unsigned int size);
-    Result FindCommunityByParticipant(nn::pia::common::CallContext* callContext, unsigned long long participantId, unsigned int offset, unsigned int size);
-    Result FindOfficialCommunity(nn::pia::common::CallContext* callContext, bool isAvailableOnly, unsigned int offset, unsigned int size);
+    Result FindCommunityByOwner(nn::pia::common::CallContext* callContext, unsigned long long ownerId,
+                                unsigned int offset, unsigned int size);
+    Result FindCommunityByParticipant(nn::pia::common::CallContext* callContext, unsigned long long participantId,
+                                      unsigned int offset, unsigned int size);
+    Result FindOfficialCommunity(nn::pia::common::CallContext* callContext, bool isAvailableOnly, unsigned int offset,
+                                 unsigned int size);
     Result GenerateSystemPassword(nn::pia::common::CallContext* callContext, unsigned int gatheringId);
     unsigned int GetRandomMatchmakeScore() const;
     Result Initialize();
@@ -134,15 +170,18 @@ public:
     unsigned char IsProcessingJoinMatchmakeSession() const;
     unsigned char IsRandomMatchmakeScoreAvailable() const;
     Result JoinCommunity(nn::pia::common::CallContext* callContext);
-    Result MigrateMatchmakeSessionOwner(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned long long* candidateIds, unsigned short candidateCount);
-    Result ModifyAttribute(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned int index, unsigned int value);
+    Result MigrateMatchmakeSessionOwner(nn::pia::common::CallContext* callContext, unsigned int gatheringId,
+                                        unsigned long long* candidateIds, unsigned short candidateCount);
+    Result ModifyAttribute(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned int index,
+                           unsigned int value);
     Result ReflectCommunityIdList(const unsigned int* idList, unsigned int count);
     Result ReflectCreateCommunitySetting(const NexCreateCommunitySetting* setting);
     Result ReflectCreateSetting(const nn::pia::session::CreateSessionSetting* setting, bool hostMigrationEnabled);
     Result ReflectJoinCommunitySetting(const NexJoinCommunitySetting* setting);
     Result ReflectJoinRandomSetting(const nn::pia::session::JoinRandomSessionSetting* setting, bool isTeam);
     Result ReflectJoinSetting(const nn::pia::session::JoinSessionSetting* setting);
-    Result ReflectSettingToMatchmakeSession(const nn::pia::session::CreateSessionSetting* setting, bool hostMigrationEnabled);
+    Result ReflectSettingToMatchmakeSession(const nn::pia::session::CreateSessionSetting* setting,
+                                            bool hostMigrationEnabled);
     Result ReflectUpdateCommunitySetting(const NexUpdateCommunitySetting* setting);
     Result ReflectUpdateSetting(const nn::pia::session::UpdateSessionSetting* setting, bool isJointSession);
     void RegisterFindCommunityResult();
@@ -153,8 +192,10 @@ public:
     Result SetMatchmakeSessionKey(const nn::nex::qVector<unsigned char>& key);
     void SetTemporaryOwnerChangeEvent(unsigned int gatheringId, unsigned long long ownerId);
     void UnregisterSearchCriteria();
-    Result UpdateApplicationBuffer(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned char* buffer, unsigned int size);
-    Result UpdateAttributes(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned int* attributes);
+    Result UpdateApplicationBuffer(nn::pia::common::CallContext* callContext, unsigned int gatheringId,
+                                   unsigned char* buffer, unsigned int size);
+    Result UpdateAttributes(nn::pia::common::CallContext* callContext, unsigned int gatheringId,
+                            unsigned int* attributes);
     Result UpdateCommunity(nn::pia::common::CallContext* callContext);
     bool WaitClearSystemPassword();
     bool WaitCreateCommunity();
@@ -224,6 +265,8 @@ private:
     unsigned char m_matchmakeSessionKey[32];
 };
 
-}}}
+}
+}
+}
 
 #endif

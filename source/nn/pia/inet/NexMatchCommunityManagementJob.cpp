@@ -13,7 +13,12 @@
 #include "nn/pia/session/ICommunityInfoList.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -27,7 +32,8 @@ enum CommunityKeyType
     cCommunityKeyTypeOfficial = 4
 };
 
-inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchCommunityManagementJob::*function)(), const char* name)
+inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchCommunityManagementJob::*function)(),
+                       const char* name)
 {
     const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
@@ -35,7 +41,11 @@ inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMa
 }
 
 NexMatchCommunityManagementJob::NexMatchCommunityManagementJob()
-    : session::CommunityManagementJob(), m_communityId(0), m_principalId(0), m_resultRangeOffset(0), m_resultRangeSize(0),
+    : session::CommunityManagementJob(),
+      m_communityId(0),
+      m_principalId(0),
+      m_resultRangeOffset(0),
+      m_resultRangeSize(0),
       m_isAvailableCommunityOnly(true)
 {
 }
@@ -70,26 +80,32 @@ Result NexMatchCommunityManagementJob::BrowseCommunityStartupImpl(const session:
             return static_cast<Result>(transport::cResultInvalidArgument);
         m_matchmakeSession->ReflectCommunityIdList(communityIdCriteria->GetCommunityIdList(),
                                                    communityIdCriteria->GetCommunityIdListSize());
-        SelectStep(m_currentStep, &NexMatchCommunityManagementJob::FindCommunityByCommunityId, "NexMatchCommunityManagementJob::FindCommunityByCommunityId");
+        SelectStep(m_currentStep, &NexMatchCommunityManagementJob::FindCommunityByCommunityId,
+                   "NexMatchCommunityManagementJob::FindCommunityByCommunityId");
         break;
     }
     case cCommunityKeyTypeParticipant:
-        m_principalId = static_cast<const NexCommunitySearchCriteriaParticipant*>(criteria)->GetParticipantPrincipalId();
+        m_principalId =
+            static_cast<const NexCommunitySearchCriteriaParticipant*>(criteria)->GetParticipantPrincipalId();
         m_resultRangeOffset = criteria->GetResultRangeOffset();
         m_resultRangeSize = criteria->GetResultRangeSize();
-        SelectStep(m_currentStep, &NexMatchCommunityManagementJob::FindCommunityByParticipant, "NexMatchCommunityManagementJob::FindCommunityByParticipant");
+        SelectStep(m_currentStep, &NexMatchCommunityManagementJob::FindCommunityByParticipant,
+                   "NexMatchCommunityManagementJob::FindCommunityByParticipant");
         break;
     case cCommunityKeyTypeOwner:
         m_principalId = static_cast<const NexCommunitySearchCriteriaOwner*>(criteria)->GetOwnerPrincipalId();
         m_resultRangeOffset = criteria->GetResultRangeOffset();
         m_resultRangeSize = criteria->GetResultRangeSize();
-        SelectStep(m_currentStep, &NexMatchCommunityManagementJob::FindCommunityByOwner, "NexMatchCommunityManagementJob::FindCommunityByOwner");
+        SelectStep(m_currentStep, &NexMatchCommunityManagementJob::FindCommunityByOwner,
+                   "NexMatchCommunityManagementJob::FindCommunityByOwner");
         break;
     case cCommunityKeyTypeOfficial:
-        m_isAvailableCommunityOnly = static_cast<const NexCommunitySearchCriteriaOfficial*>(criteria)->IsAvailableCommunityOnly();
+        m_isAvailableCommunityOnly =
+            static_cast<const NexCommunitySearchCriteriaOfficial*>(criteria)->IsAvailableCommunityOnly();
         m_resultRangeOffset = criteria->GetResultRangeOffset();
         m_resultRangeSize = criteria->GetResultRangeSize();
-        SelectStep(m_currentStep, &NexMatchCommunityManagementJob::FindOfficialCommunity, "NexMatchCommunityManagementJob::FindOfficialCommunity");
+        SelectStep(m_currentStep, &NexMatchCommunityManagementJob::FindOfficialCommunity,
+                   "NexMatchCommunityManagementJob::FindOfficialCommunity");
         break;
     default:
         return static_cast<Result>(transport::cResultInvalidArgument);
@@ -103,10 +119,12 @@ Result NexMatchCommunityManagementJob::CreateCommunityStartupImpl(const session:
         session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]);
     if (m_matchmakeSession == 0)
         return static_cast<Result>(transport::cResultInvalidState);
-    const Result result = m_matchmakeSession->ReflectCreateCommunitySetting(static_cast<const NexCreateCommunitySetting*>(setting));
+    const Result result = m_matchmakeSession->ReflectCreateCommunitySetting(
+        static_cast<const NexCreateCommunitySetting*>(setting));
     if (result != 0)
         return result;
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::CreateCommunity, "NexMatchCommunityManagementJob::CreateCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::CreateCommunity,
+               "NexMatchCommunityManagementJob::CreateCommunity");
     return 0;
 }
 
@@ -116,10 +134,12 @@ Result NexMatchCommunityManagementJob::JoinCommunityStartupImpl(const session::J
         session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]);
     if (m_matchmakeSession == 0)
         return static_cast<Result>(transport::cResultInvalidState);
-    const Result result = m_matchmakeSession->ReflectJoinCommunitySetting(static_cast<const NexJoinCommunitySetting*>(setting));
+    const Result result = m_matchmakeSession->ReflectJoinCommunitySetting(
+        static_cast<const NexJoinCommunitySetting*>(setting));
     if (result != 0)
         return result;
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::JoinCommunity, "NexMatchCommunityManagementJob::JoinCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::JoinCommunity,
+               "NexMatchCommunityManagementJob::JoinCommunity");
     return 0;
 }
 
@@ -129,10 +149,12 @@ Result NexMatchCommunityManagementJob::UpdateCommunityStartupImpl(const session:
         session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]);
     if (m_matchmakeSession == 0)
         return static_cast<Result>(transport::cResultInvalidState);
-    const Result result = m_matchmakeSession->ReflectUpdateCommunitySetting(static_cast<const NexUpdateCommunitySetting*>(setting));
+    const Result result = m_matchmakeSession->ReflectUpdateCommunitySetting(
+        static_cast<const NexUpdateCommunitySetting*>(setting));
     if (result != 0)
         return result;
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::UpdateCommunity, "NexMatchCommunityManagementJob::UpdateCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::UpdateCommunity,
+               "NexMatchCommunityManagementJob::UpdateCommunity");
     return 0;
 }
 
@@ -143,7 +165,8 @@ Result NexMatchCommunityManagementJob::DestroyCommunityStartupImpl(unsigned int 
     if (m_matchmakeSession == 0)
         return static_cast<Result>(transport::cResultInvalidState);
     m_communityId = communityId;
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::DestroyCommunity, "NexMatchCommunityManagementJob::DestroyCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::DestroyCommunity,
+               "NexMatchCommunityManagementJob::DestroyCommunity");
     return 0;
 }
 
@@ -154,7 +177,8 @@ Result NexMatchCommunityManagementJob::LeaveCommunityStartupImpl(unsigned int co
     if (m_matchmakeSession == 0)
         return static_cast<Result>(transport::cResultInvalidState);
     m_communityId = communityId;
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::LeaveCommunity, "NexMatchCommunityManagementJob::LeaveCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::LeaveCommunity,
+               "NexMatchCommunityManagementJob::LeaveCommunity");
     return 0;
 }
 
@@ -167,7 +191,8 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Fi
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitFindCommunityByCommunityId, "NexMatchCommunityManagementJob::WaitFindCommunityByCommunityId");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitFindCommunityByCommunityId,
+               "NexMatchCommunityManagementJob::WaitFindCommunityByCommunityId");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -223,14 +248,16 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
 
 NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::FindCommunityByParticipant()
 {
-    const Result result = m_matchmakeSession->FindCommunityByParticipant(&m_callContext, m_principalId, m_resultRangeOffset, m_resultRangeSize);
+    const Result result = m_matchmakeSession->FindCommunityByParticipant(&m_callContext, m_principalId,
+                                                                         m_resultRangeOffset, m_resultRangeSize);
     if (result != 0)
     {
         m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitFindCommunityByParticipant, "NexMatchCommunityManagementJob::WaitFindCommunityByParticipant");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitFindCommunityByParticipant,
+               "NexMatchCommunityManagementJob::WaitFindCommunityByParticipant");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -286,14 +313,16 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
 
 NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::FindOfficialCommunity()
 {
-    const Result result = m_matchmakeSession->FindOfficialCommunity(&m_callContext, m_isAvailableCommunityOnly, m_resultRangeOffset, m_resultRangeSize);
+    const Result result = m_matchmakeSession->FindOfficialCommunity(&m_callContext, m_isAvailableCommunityOnly,
+                                                                    m_resultRangeOffset, m_resultRangeSize);
     if (result != 0)
     {
         m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitFindOfficialCommunity, "NexMatchCommunityManagementJob::WaitFindOfficialCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitFindOfficialCommunity,
+               "NexMatchCommunityManagementJob::WaitFindOfficialCommunity");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -349,14 +378,16 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
 
 NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::FindCommunityByOwner()
 {
-    const Result result = m_matchmakeSession->FindCommunityByOwner(&m_callContext, m_principalId, m_resultRangeOffset, m_resultRangeSize);
+    const Result result = m_matchmakeSession->FindCommunityByOwner(&m_callContext, m_principalId, m_resultRangeOffset,
+                                                                   m_resultRangeSize);
     if (result != 0)
     {
         m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitFindCommunityByOwner, "NexMatchCommunityManagementJob::WaitFindCommunityByOwner");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitFindCommunityByOwner,
+               "NexMatchCommunityManagementJob::WaitFindCommunityByOwner");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -449,7 +480,8 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Cr
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitCreateCommunity, "NexMatchCommunityManagementJob::WaitCreateCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitCreateCommunity,
+               "NexMatchCommunityManagementJob::WaitCreateCommunity");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -542,7 +574,8 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Jo
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitJoinCommunity, "NexMatchCommunityManagementJob::WaitJoinCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitJoinCommunity,
+               "NexMatchCommunityManagementJob::WaitJoinCommunity");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -635,7 +668,8 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::De
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitDestroyCommunity, "NexMatchCommunityManagementJob::WaitDestroyCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitDestroyCommunity,
+               "NexMatchCommunityManagementJob::WaitDestroyCommunity");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -728,7 +762,8 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Le
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitLeaveCommunity, "NexMatchCommunityManagementJob::WaitLeaveCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitLeaveCommunity,
+               "NexMatchCommunityManagementJob::WaitLeaveCommunity");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -821,7 +856,8 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Up
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitUpdateCommunity, "NexMatchCommunityManagementJob::WaitUpdateCommunity");
+    SelectStep(m_currentStep, &NexMatchCommunityManagementJob::WaitUpdateCommunity,
+               "NexMatchCommunityManagementJob::WaitUpdateCommunity");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -875,4 +911,6 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-}}}
+}
+}
+}

@@ -1,6 +1,11 @@
 #include "nn/pia/inet/NexSessionSearchCriteriaParticipant.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 NexSessionSearchCriteriaParticipant::~NexSessionSearchCriteriaParticipant()
 {
@@ -20,7 +25,8 @@ void NexSessionSearchCriteriaParticipant::Reset()
 {
     nn::pia::session::SessionSearchCriteria::Reset();
     m_keyType = nn::pia::session::SessionSearchCriteria::cKeyTypeParticipant;
-    for (unsigned int index = 0; index != 100; ++index) {
+    for (unsigned int index = 0; index != 100; ++index)
+    {
         principal_ids_[index] = 0;
     }
     principal_id_size_ = 0;
@@ -35,4 +41,6 @@ nn::pia::Result NexSessionSearchCriteriaParticipant::SetResultRange(uint32_t, ui
     return 0x10c08;
 }
 
-}}}
+}
+}
+}

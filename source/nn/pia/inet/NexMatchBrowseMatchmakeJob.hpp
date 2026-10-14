@@ -4,7 +4,12 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/session/BrowseMatchmakeJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchmakeSession;
 
@@ -34,6 +39,8 @@ private:
     Result m_startupResult;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -6,7 +6,12 @@
 #include "nn/pia/inet/NexFacade.hpp"
 #include "nn/pia/session/Mesh.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -22,7 +27,8 @@ enum
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, Step function, const char* name)
 {
-    const common::StepSequenceJob::Step step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 }
@@ -62,8 +68,8 @@ void InetCreateMeshJob::SetHostInfoToMonitoringDataImpl()
 {
     NexFacade* facade = NexFacade::GetInstance();
     if (facade && facade->m_matchmakeExtensionClient && facade->m_matchmakeExtensionClient->GetCredentials())
-        common::g_sessionBeginMonitoringContent.m_metric71 =
-            common::hashWithMd5(facade->m_matchmakeExtensionClient->GetCredentials()->GetPrincipalID());
+        common::g_sessionBeginMonitoringContent.m_metric71 = common::hashWithMd5(
+            facade->m_matchmakeExtensionClient->GetCredentials()->GetPrincipalID());
 }
 
 void InetCreateMeshJob::SetNextStepAtSetupLocalPlayerInfoImpl()
@@ -83,4 +89,6 @@ void InetCreateMeshJob::CleanupImpl()
 {
 }
 
-}}}
+}
+}
+}

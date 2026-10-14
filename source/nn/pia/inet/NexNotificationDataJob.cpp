@@ -6,9 +6,15 @@
 #include "nn/pia/String.hpp"
 #include "nn/pia/inet/NexFacade.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
-namespace {
+namespace
+{
 typedef common::Job::ExecuteResult (NexNotificationDataJob::*Step)();
 
 enum
@@ -26,13 +32,13 @@ enum
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, Step function, const char* name)
 {
-    const common::StepSequenceJob::Step step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 }
 
-NexNotificationDataJob::NexNotificationDataJob()
-    : common::StepSequenceJob(), m_callContext(0), m_protocolCallContext(0)
+NexNotificationDataJob::NexNotificationDataJob() : common::StepSequenceJob(), m_callContext(0), m_protocolCallContext(0)
 {
 }
 
@@ -40,9 +46,8 @@ NexNotificationDataJob::~NexNotificationDataJob()
 {
 }
 
-Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigned int type,
-                                       unsigned int param1, unsigned int param2,
-                                       const common::String& text)
+Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigned int type, unsigned int param1,
+                                       unsigned int param2, const common::String& text)
 {
     const void* buffer = text.GetBuffer();
     if (type - cFirstNotificationType >= cNotificationTypeCount)
@@ -55,13 +60,13 @@ Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigne
         return ResultInvalidState();
     m_protocolCallContext.Reset();
     if (!NexFacade::s_instance->m_matchmakeExtensionClient->UpdateNotificationData(
-            &m_protocolCallContext, type, param1, param2,
-            nex::String(static_cast<const wchar_t*>(buffer))))
+            &m_protocolCallContext, type, param1, param2, nex::String(static_cast<const wchar_t*>(buffer))))
         return cResultRequestFailed;
     m_callContext = callContext;
     callContext->InitiateCall();
     Reset(true);
-    SelectStep(m_currentStep, &NexNotificationDataJob::WaitUpdateNotificationData, "NexNotificationDataJob::WaitUpdateNotificationData");
+    SelectStep(m_currentStep, &NexNotificationDataJob::WaitUpdateNotificationData,
+               "NexNotificationDataJob::WaitUpdateNotificationData");
     return 0;
 }
 
@@ -77,13 +82,14 @@ Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigne
             types.push_back(cFirstNotificationType + index);
     }
     m_protocolCallContext.Reset();
-    if (!NexFacade::s_instance->m_matchmakeExtensionClient->GetFriendNotificationData(
-            &m_protocolCallContext, events, types))
+    if (!NexFacade::s_instance->m_matchmakeExtensionClient->GetFriendNotificationData(&m_protocolCallContext, events,
+                                                                                      types))
         return cResultRequestFailed;
     m_callContext = callContext;
     callContext->InitiateCall();
     Reset(true);
-    SelectStep(m_currentStep, &NexNotificationDataJob::WaitRetrieveNotificationData, "NexNotificationDataJob::WaitRetrieveNotificationData");
+    SelectStep(m_currentStep, &NexNotificationDataJob::WaitRetrieveNotificationData,
+               "NexNotificationDataJob::WaitRetrieveNotificationData");
     return 0;
 }
 
@@ -173,4 +179,6 @@ NexNotificationDataJob::ExecuteResult NexNotificationDataJob::WaitRetrieveNotifi
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-}}}
+}
+}
+}

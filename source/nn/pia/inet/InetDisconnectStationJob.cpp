@@ -9,7 +9,12 @@
 #include "nn/pia/transport/StationConnectionInfoTable.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -59,4 +64,6 @@ void InetDisconnectStationJob::ProcessDisconnection(transport::Station* station)
     }
 }
 
-}}}
+}
+}
+}

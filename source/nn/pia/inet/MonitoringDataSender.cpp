@@ -12,9 +12,15 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
-namespace {
+namespace
+{
 
 enum
 {
@@ -23,9 +29,7 @@ enum
     cStateContentAttributeMask = 4
 };
 
-const unsigned char s_ivTemplate[MonitoringDataSender::cIvSize] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0x5b, 0xd0, 0x85, 0xfa
-};
+const unsigned char s_ivTemplate[MonitoringDataSender::cIvSize] = {0, 0, 0, 0, 0, 0, 0, 0, 0x5b, 0xd0, 0x85, 0xfa};
 
 const unsigned char s_cryptoKeys[MonitoringDataSender::cCryptoKeyNum][MonitoringDataSender::cCryptoKeySize] = {
 #include "platform/wiiu/shaders/MonitoringCryptoKeys.inc"
@@ -42,10 +46,13 @@ MonitoringDataSender::MonitoringDataSender()
       m_sendSessionBeginReportRequested(false)
 {
     m_reportBuffer = pead::NewArray<unsigned char>(cReportBufferSize, common::HeapManager::GetHeap(), cBufferAlignment);
-    m_compressBuffer = pead::NewArray<unsigned char>(cCompressBufferSize, common::HeapManager::GetHeap(), cBufferAlignment);
-    m_compressWorkBuffer = pead::NewArray<unsigned char>(cCompressWorkBufferSize, common::HeapManager::GetHeap(), cBufferAlignment);
+    m_compressBuffer = pead::NewArray<unsigned char>(cCompressBufferSize, common::HeapManager::GetHeap(),
+                                                     cBufferAlignment);
+    m_compressWorkBuffer = pead::NewArray<unsigned char>(cCompressWorkBufferSize, common::HeapManager::GetHeap(),
+                                                         cBufferAlignment);
     transport::Transport* transport = transport::g_piaTransport;
-    m_protocolHandle = static_cast<unsigned short>(transport->m_protocolManager.CreateProtocol<MonitoringDataProtocol>(0));
+    m_protocolHandle = static_cast<unsigned short>(
+        transport->m_protocolManager.CreateProtocol<MonitoringDataProtocol>(0));
     m_protocol = transport->m_protocolManager.GetProtocol<MonitoringDataProtocol>(m_protocolHandle);
     m_serverAddress.m_address = 0;
     m_serverAddress.m_port = 0;
@@ -124,7 +131,8 @@ const unsigned char* MonitoringDataSender::GetCryptoKey(unsigned char index) con
     return s_cryptoKeys[index % cCryptoKeyNum];
 }
 
-MonitoringDataSender::MakeReportDataResult MonitoringDataSender::MakeReportData(DataType dataType, bool resetStateContent)
+MonitoringDataSender::MakeReportDataResult MonitoringDataSender::MakeReportData(DataType dataType,
+                                                                                bool resetStateContent)
 {
     unsigned int compressedSize = 0;
     Result result;
@@ -184,7 +192,8 @@ MonitoringDataSender::MakeReportDataResult MonitoringDataSender::MakeReportData(
     if (result == 0)
     {
         if (compressor.Deflate(m_reportBuffer + sizeof(common::MonitoringDataHeader),
-                               serializedSize - sizeof(common::MonitoringDataHeader)) == 0)
+                               serializedSize - sizeof(common::MonitoringDataHeader))
+            == 0)
         {
             unsigned int outputSize;
             compressedSize = compressor.FinishDeflate(&outputSize) == 0 ? static_cast<unsigned short>(outputSize) : 0;
@@ -259,4 +268,6 @@ unsigned int MonitoringDataSender::IsEnableMonitoring() const
     return 1;
 }
 
-}}}
+}
+}
+}

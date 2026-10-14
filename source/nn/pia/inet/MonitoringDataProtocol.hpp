@@ -3,14 +3,31 @@
 
 #include "nn/pia/Reconstruction.hpp"
 
-namespace nn { namespace pia { namespace common { class InetAddress; }}}
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class InetAddress;
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class MonitoringDataProtocol : public transport::Protocol
 {
 public:
-    enum { cProtocolType = 0xa4 };
+    enum
+    {
+        cProtocolType = 0xa4
+    };
 
     MonitoringDataProtocol();
     virtual ~MonitoringDataProtocol();
@@ -22,6 +39,8 @@ public:
     Result SendMonitoringData(common::InetAddress& address, unsigned char* data, unsigned int size);
 };
 
-}}}
+}
+}
+}
 
 #endif

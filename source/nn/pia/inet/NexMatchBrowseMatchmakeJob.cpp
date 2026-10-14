@@ -7,7 +7,12 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -24,7 +29,10 @@ enum
 }
 
 NexMatchBrowseMatchmakeJob::NexMatchBrowseMatchmakeJob()
-    : session::BrowseMatchmakeJob(), m_callContext(), m_matchmakeSession(0), m_startupResult(0)
+    : session::BrowseMatchmakeJob(),
+      m_callContext(),
+      m_matchmakeSession(0),
+      m_startupResult(0)
 {
 }
 
@@ -91,8 +99,7 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::BrowseMatc
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SetStep(&NexMatchBrowseMatchmakeJob::WaitBrowseMatchmake,
-            "NexMatchBrowseMatchmakeJob::WaitBrowseMatchmake");
+    SetStep(&NexMatchBrowseMatchmakeJob::WaitBrowseMatchmake, "NexMatchBrowseMatchmakeJob::WaitBrowseMatchmake");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -143,8 +150,7 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitBrowse
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SetStep(&session::BrowseMatchmakeJob::CompleteProcess,
-                    "session::BrowseMatchmakeJob::CompleteProcess");
+            SetStep(&session::BrowseMatchmakeJob::CompleteProcess, "session::BrowseMatchmakeJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -203,8 +209,7 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitFindSe
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SetStep(&session::BrowseMatchmakeJob::CompleteProcess,
-                    "session::BrowseMatchmakeJob::CompleteProcess");
+            SetStep(&session::BrowseMatchmakeJob::CompleteProcess, "session::BrowseMatchmakeJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -263,8 +268,7 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitFindSe
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SetStep(&session::BrowseMatchmakeJob::CompleteProcess,
-                    "session::BrowseMatchmakeJob::CompleteProcess");
+            SetStep(&session::BrowseMatchmakeJob::CompleteProcess, "session::BrowseMatchmakeJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -323,8 +327,7 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitFindSe
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SetStep(&session::BrowseMatchmakeJob::CompleteProcess,
-                    "session::BrowseMatchmakeJob::CompleteProcess");
+            SetStep(&session::BrowseMatchmakeJob::CompleteProcess, "session::BrowseMatchmakeJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -383,8 +386,7 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitReques
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SetStep(&session::BrowseMatchmakeJob::CompleteProcess,
-                    "session::BrowseMatchmakeJob::CompleteProcess");
+            SetStep(&session::BrowseMatchmakeJob::CompleteProcess, "session::BrowseMatchmakeJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -435,16 +437,16 @@ Result NexMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* match
     return 0;
 }
 
-Result NexMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmakeSession,
-                                               unsigned int sessionId)
+Result NexMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmakeSession, unsigned int sessionId)
 {
     m_matchmakeSession = static_cast<NexMatchmakeSession*>(matchmakeSession);
     m_startupResult = m_matchmakeSession->RequestSessionInfo(&m_callContext, sessionId);
     if (m_startupResult != 0 && m_startupResult != cResultRequestFailed)
         return m_startupResult;
-    SetStep(&NexMatchBrowseMatchmakeJob::WaitRequestSessionInfo,
-            "NexMatchBrowseMatchmakeJob::WaitRequestSessionInfo");
+    SetStep(&NexMatchBrowseMatchmakeJob::WaitRequestSessionInfo, "NexMatchBrowseMatchmakeJob::WaitRequestSessionInfo");
     return 0;
 }
 
-}}}
+}
+}
+}

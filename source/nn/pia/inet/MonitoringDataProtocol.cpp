@@ -1,6 +1,11 @@
 #include "nn/pia/inet/MonitoringDataProtocol.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 MonitoringDataProtocol::MonitoringDataProtocol()
 {
@@ -33,4 +38,6 @@ unsigned short MonitoringDataProtocol::GetProtocolType() const
     return cProtocolType;
 }
 
-}}}
+}
+}
+}

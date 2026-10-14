@@ -7,9 +7,15 @@
 #include "nn/pia/inet/NexFacade.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
-namespace {
+namespace
+{
 
 enum
 {
@@ -58,8 +64,7 @@ void NexNatRelayInterface::ReportNATTraversalResult(const unsigned int& connecti
     m_relayClient->CallReportNATTraversalResult(m_callContext, connectionId, succeeded, rtt);
 }
 
-void NexNatRelayInterface::ReportNATProperties(unsigned int mapping, unsigned int filtering,
-                                               unsigned int portIncrement)
+void NexNatRelayInterface::ReportNATProperties(unsigned int mapping, unsigned int filtering, unsigned int portIncrement)
 {
     if (m_callContext->GetState() == nex::CallContext::CallInProgress)
         m_callContext->Cancel(nex::CallContext::CallCanceled);
@@ -83,10 +88,9 @@ bool NexNatRelayInterface::GetRelaySignatureKey(nex::CallContext* callContext, n
             if (callContext->GetState() == nex::CallContext::CallInProgress)
                 callContext->Cancel(nex::CallContext::CallCanceled);
             callContext->Reset();
-            result = m_relayClient->CallGetRelaySignatureKey(static_cast<nex::ProtocolCallContext*>(callContext),
-                                                             &key->m_relayMode, &key->m_currentUTCTime,
-                                                             &key->m_relayAddress, &key->m_relayPort,
-                                                             &key->m_relayAddressType, &key->m_gameServerID);
+            result = m_relayClient->CallGetRelaySignatureKey(
+                static_cast<nex::ProtocolCallContext*>(callContext), &key->m_relayMode, &key->m_currentUTCTime,
+                &key->m_relayAddress, &key->m_relayPort, &key->m_relayAddressType, &key->m_gameServerID);
         }
         return result;
     }
@@ -96,4 +100,6 @@ bool NexNatRelayInterface::GetRelaySignatureKey(nex::CallContext* callContext, n
     }
 }
 
-}}}
+}
+}
+}

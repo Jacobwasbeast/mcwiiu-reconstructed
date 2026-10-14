@@ -6,7 +6,12 @@
 #include "nn/pia/inet/NexSessionSearchCriteria.hpp"
 #include "nn/pia/session/JoinRandomSessionSetting.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexJoinRandomSessionSetting : public session::JoinRandomSessionSetting
 {
@@ -37,6 +42,8 @@ private:
     bool m_matchmakeUniqueKeyword;
 };
 
-}}}
+}
+}
+}
 
 #endif

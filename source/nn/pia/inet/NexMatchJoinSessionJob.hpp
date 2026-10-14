@@ -5,7 +5,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/JoinSessionJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchJoinSessionJob : public session::JoinSessionJob
 {
@@ -55,6 +60,8 @@ private:
     bool m_isNgsInterfaceBound;
 };
 
-}}}
+}
+}
+}
 
 #endif

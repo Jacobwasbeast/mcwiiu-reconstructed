@@ -1,5 +1,10 @@
 #include "nn/pia/inet/NexJoinCommunitySetting.hpp"
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 const common::String& NexJoinCommunitySetting::GetCommunityUserPassword() const
 {
@@ -12,4 +17,6 @@ void NexJoinCommunitySetting::Reset()
     m_communityUserPassword.Clear();
 }
 
-}}}
+}
+}
+}

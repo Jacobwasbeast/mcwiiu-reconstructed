@@ -4,7 +4,12 @@
 #include "nn/pia.h"
 #include "nn/pia/session/CommunitySearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexCommunitySearchCriteriaParticipant : public session::CommunitySearchCriteria
 {
@@ -24,6 +29,8 @@ private:
     unsigned long long m_participantPrincipalId;
 };
 
-}}}
+}
+}
+}
 
 #endif

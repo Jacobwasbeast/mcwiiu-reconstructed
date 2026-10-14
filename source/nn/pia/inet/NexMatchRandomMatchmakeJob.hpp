@@ -4,7 +4,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/RandomMatchmakeJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchmakeSession;
 
@@ -58,6 +63,8 @@ private:
     bool m_ngsInterfaceAvailable;
 };
 
-}}}
+}
+}
+}
 
 #endif

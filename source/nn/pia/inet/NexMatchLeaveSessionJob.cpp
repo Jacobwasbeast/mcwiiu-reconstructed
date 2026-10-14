@@ -10,7 +10,12 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/session/StationIdStatusTable.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -49,12 +54,14 @@ void NexMatchLeaveSessionJob::SetNextStepAtWaitForcedTerminatingOfJointSessionJo
     m_sessionIdNum = session::g_piaSession->m_stationIdStatusTable->GetSessionIdArray(m_sessionIds);
     for (unsigned char i = 0; i < m_sessionIdNum; ++i)
         m_isSessionInfoRequested[i] = false;
-    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::GetMatchmakeSessionOwners), "NexMatchLeaveSessionJob::GetMatchmakeSessionOwners");
+    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::GetMatchmakeSessionOwners),
+               "NexMatchLeaveSessionJob::GetMatchmakeSessionOwners");
 }
 
 void NexMatchLeaveSessionJob::SetNextStepAtWaitHostMigratedTimeout()
 {
-    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::MigrateMatchmakeSessionOwner), "NexMatchLeaveSessionJob::MigrateMatchmakeSessionOwner");
+    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::MigrateMatchmakeSessionOwner),
+               "NexMatchLeaveSessionJob::MigrateMatchmakeSessionOwner");
 }
 
 void NexMatchLeaveSessionJob::ChooseNextStepByCheckingBufferMatchmakeSessions(const common::StepSequenceJob::Step& step)
@@ -62,10 +69,12 @@ void NexMatchLeaveSessionJob::ChooseNextStepByCheckingBufferMatchmakeSessions(co
     session::Session* piaSession = session::g_piaSession;
     if (piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0] != 0)
     {
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveBufferMatchmakeSession, "LeaveSessionJob::LeaveBufferMatchmakeSession");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveBufferMatchmakeSession,
+                   "LeaveSessionJob::LeaveBufferMatchmakeSession");
         return;
     }
-    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     if (meshLayerController != 0)
     {
         for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
@@ -81,7 +90,8 @@ void NexMatchLeaveSessionJob::ChooseNextStepByCheckingBufferMatchmakeSessions(co
             if (sessionId != session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
             {
                 session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex == 0] = sessionId;
-                SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveBufferMatchmakeSession, "LeaveSessionJob::LeaveBufferMatchmakeSession");
+                SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveBufferMatchmakeSession,
+                           "LeaveSessionJob::LeaveBufferMatchmakeSession");
                 return;
             }
         }
@@ -91,25 +101,32 @@ void NexMatchLeaveSessionJob::ChooseNextStepByCheckingBufferMatchmakeSessions(co
 
 void NexMatchLeaveSessionJob::SetNextStepAtWaitLeaveCurrentMatchmakeSession()
 {
-    const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchLeaveSessionJob::SendMonitoringData), "LeaveSessionJob::SendMonitoringData");
+    const common::StepSequenceJob::Step step(
+        static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchLeaveSessionJob::SendMonitoringData),
+        "LeaveSessionJob::SendMonitoringData");
     ChooseNextStepByCheckingBufferMatchmakeSessions(step);
 }
 
 void NexMatchLeaveSessionJob::SetNextStepAtLeaveCurrentMatchmakeSessionFailure()
 {
-    const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchLeaveSessionJob::SendMonitoringData), "LeaveSessionJob::SendMonitoringData");
+    const common::StepSequenceJob::Step step(
+        static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchLeaveSessionJob::SendMonitoringData),
+        "LeaveSessionJob::SendMonitoringData");
     ChooseNextStepByCheckingBufferMatchmakeSessions(step);
 }
 
 void NexMatchLeaveSessionJob::SetNextStepAtWaitLeaveBufferMatchmakeSession()
 {
-    const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchLeaveSessionJob::LeaveCurrentMatchmakeSession), "LeaveSessionJob::LeaveCurrentMatchmakeSession");
+    const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                                 &NexMatchLeaveSessionJob::LeaveCurrentMatchmakeSession),
+                                             "LeaveSessionJob::LeaveCurrentMatchmakeSession");
     ChooseNextStepByCheckingBufferMatchmakeSessions(step);
 }
 
 void NexMatchLeaveSessionJob::SetNextStepAtMeshCleanup()
 {
-    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions), "NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions");
+    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions),
+               "NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions");
 }
 
 bool NexMatchLeaveSessionJob::IsNeedSkipLeaveCurrentMatchmakeSession()
@@ -124,55 +141,67 @@ NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::LeaveMatchmakeSe
     {
     case session::Session::cStatusDisconnectedNetwork:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh, "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
     }
-    const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchLeaveSessionJob::LeaveCurrentMatchmakeSession), "LeaveSessionJob::LeaveCurrentMatchmakeSession");
+    const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                                 &NexMatchLeaveSessionJob::LeaveCurrentMatchmakeSession),
+                                             "LeaveSessionJob::LeaveCurrentMatchmakeSession");
     ChooseNextStepByCheckingBufferMatchmakeSessions(step);
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::WaitLeaveMatchmakeSessionCompanions()
 {
-    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]);
+    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(
+        session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]);
     switch (session::g_piaSession->GetStatus())
     {
     case session::Session::cStatusDisconnectedNetwork:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh, "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
     }
     if (!matchmakeSession->WaitLeaveMatchmakeSessionCompanion())
         return MakeExecuteResult(cExecuteKindNextStep);
-    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions), "NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions");
+    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions),
+               "NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -184,32 +213,39 @@ NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::GetMatchmakeSess
     {
     case session::Session::cStatusDisconnectedNetwork:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh, "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
     }
     for (unsigned char i = 0; i < m_sessionIdNum; ++i)
     {
-        if (m_sessionIds[i] == piaSession->m_sessionId[piaSession->m_currentSessionIndex] || m_isSessionInfoRequested[i])
+        if (m_sessionIds[i] == piaSession->m_sessionId[piaSession->m_currentSessionIndex]
+            || m_isSessionInfoRequested[i])
             continue;
         m_isSessionInfoRequested[i] = true;
-        NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
+        NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(
+            piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
         if (matchmakeSession->RequestSessionInfoWithoutPermission(&m_callContext, m_sessionIds[i]) == 0)
         {
-            SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::WaitGetMatchmakeSessionOwners), "NexMatchLeaveSessionJob::WaitGetMatchmakeSessionOwners");
+            SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::WaitGetMatchmakeSessionOwners),
+                       "NexMatchLeaveSessionJob::WaitGetMatchmakeSessionOwners");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
     }
@@ -220,24 +256,29 @@ NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::GetMatchmakeSess
 NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::WaitGetMatchmakeSessionOwners()
 {
     session::Session* piaSession = session::g_piaSession;
-    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
+    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(
+        piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
     switch (session::g_piaSession->GetStatus())
     {
     case session::Session::cStatusDisconnectedNetwork:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh, "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
@@ -245,9 +286,11 @@ NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::WaitGetMatchmake
     if (!matchmakeSession->WaitRequestSessionInfoWithoutPermission())
         return MakeExecuteResult(cExecuteKindNextStep);
     if (m_callContext.m_result != 0)
-        SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::GetMatchmakeSessionOwners), "NexMatchLeaveSessionJob::GetMatchmakeSessionOwners");
+        SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::GetMatchmakeSessionOwners),
+                   "NexMatchLeaveSessionJob::GetMatchmakeSessionOwners");
     piaSession->m_stationIdStatusTable->SetSessionHost(matchmakeSession->GetMatchmakeOwnerUniqueId(), true);
-    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::GetMatchmakeSessionOwners), "NexMatchLeaveSessionJob::GetMatchmakeSessionOwners");
+    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::GetMatchmakeSessionOwners),
+               "NexMatchLeaveSessionJob::GetMatchmakeSessionOwners");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -259,8 +302,8 @@ NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::MigrateMatchmake
         SetNextStepAtWaitLeaveMesh();
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    if (piaSession->m_matchmakeStatus != session::Session::cStatusDisconnectedSession &&
-        piaSession->m_matchmakeStatus != session::Session::cStatusBufferMatched)
+    if (piaSession->m_matchmakeStatus != session::Session::cStatusDisconnectedSession
+        && piaSession->m_matchmakeStatus != session::Session::cStatusBufferMatched)
     {
         SetNextStepAtWaitLeaveMesh();
         return MakeExecuteResult(cExecuteKindContinue);
@@ -273,14 +316,18 @@ NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::MigrateMatchmake
     {
         const transport::StationIdTable::Entry* entry = transport::StationIdTable::EntryList::ValueOf(node);
         unsigned int sessionId;
-        if (statusTable->GetSessionId(entry->stationId, &sessionId) &&
-            sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
+        if (statusTable->GetSessionId(entry->stationId, &sessionId)
+            && sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
             candidateIds[candidateNum++] = entry->stationId;
     }
-    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]);
-    if (matchmakeSession->MigrateMatchmakeSessionOwner(&m_callContext, piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0], candidateIds, candidateNum) == 0)
+    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(
+        piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]);
+    if (matchmakeSession->MigrateMatchmakeSessionOwner(
+            &m_callContext, piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0], candidateIds, candidateNum)
+        == 0)
     {
-        SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner), "NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner");
+        SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner),
+                   "NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     SetNextStepAtWaitLeaveMesh();
@@ -289,25 +336,30 @@ NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::MigrateMatchmake
 
 NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner()
 {
-    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex == 0]);
+    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(
+        session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex == 0]);
     unsigned int status = session::g_piaSession->GetStatus();
     switch (status)
     {
     case session::Session::cStatusDisconnectedNetwork:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown6:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh, "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::LeaveMesh,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::LeaveMesh");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown7:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     case session::Session::cStatusUnknown8:
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData, "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
+        SelectStep(m_currentStep, &NexMatchLeaveSessionJob::SendMonitoringData,
+                   "nn::pia::inet::NexMatchLeaveSessionJob::SendMonitoringData");
         return MakeExecuteResult(cExecuteKindContinue);
     default:
         break;
@@ -339,4 +391,6 @@ unsigned int NexMatchLeaveSessionJob::GetWaitHostMigrationTimeout() const
     return cWaitHostMigrationTimeoutMsec;
 }
 
-}}}
+}
+}
+}

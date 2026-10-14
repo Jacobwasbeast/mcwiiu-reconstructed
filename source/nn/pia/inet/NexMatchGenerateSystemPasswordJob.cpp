@@ -5,7 +5,12 @@
 #include "nn/pia/inet/NexMatchmakeSession.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -16,7 +21,8 @@ enum
     cResultCancelled = 0x6c05
 };
 
-inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchGenerateSystemPasswordJob::*function)(), const char* name)
+inline void SelectStep(common::StepSequenceJob::Step& slot,
+                       ExecuteResult (NexMatchGenerateSystemPasswordJob::*function)(), const char* name)
 {
     const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
@@ -24,7 +30,8 @@ inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMa
 }
 
 NexMatchGenerateSystemPasswordJob::NexMatchGenerateSystemPasswordJob()
-    : session::GenerateMatchmakeSystemPasswordJob(), m_matchmakeSession(0)
+    : session::GenerateMatchmakeSystemPasswordJob(),
+      m_matchmakeSession(0)
 {
 }
 
@@ -96,7 +103,8 @@ NexMatchGenerateSystemPasswordJob::ExecuteResult NexMatchGenerateSystemPasswordJ
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-NexMatchGenerateSystemPasswordJob::ExecuteResult NexMatchGenerateSystemPasswordJob::WaitGenerateMatchmakeSystemPassword()
+NexMatchGenerateSystemPasswordJob::ExecuteResult NexMatchGenerateSystemPasswordJob::
+    WaitGenerateMatchmakeSystemPassword()
 {
     const unsigned int status = session::g_piaSession->GetStatus();
     switch (status)
@@ -172,4 +180,6 @@ void NexMatchGenerateSystemPasswordJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

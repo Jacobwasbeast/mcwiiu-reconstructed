@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/session/UpdateSessionSettingJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchmakeSession;
 
@@ -41,6 +46,8 @@ private:
     bool m_isJointSession;
 };
 
-}}}
+}
+}
+}
 
 #endif

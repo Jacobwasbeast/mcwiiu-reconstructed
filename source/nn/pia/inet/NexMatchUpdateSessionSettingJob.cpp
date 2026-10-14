@@ -8,7 +8,12 @@
 #include "nn/pia/inet/NexUpdateSessionSetting.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -19,7 +24,8 @@ enum
     cResultCancelled = 0x6c05
 };
 
-inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchUpdateSessionSettingJob::*function)(), const char* name)
+inline void SelectStep(common::StepSequenceJob::Step& slot,
+                       ExecuteResult (NexMatchUpdateSessionSettingJob::*function)(), const char* name)
 {
     const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
@@ -27,7 +33,8 @@ inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMa
 }
 
 NexMatchUpdateSessionSettingJob::NexMatchUpdateSessionSettingJob()
-    : session::UpdateSessionSettingJob(), m_matchmakeSession(0)
+    : session::UpdateSessionSettingJob(),
+      m_matchmakeSession(0)
 {
 }
 
@@ -35,7 +42,8 @@ NexMatchUpdateSessionSettingJob::~NexMatchUpdateSessionSettingJob()
 {
 }
 
-Result NexMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, session::IMatchmakeSession* matchmakeSession,
+Result NexMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId,
+                                                    session::IMatchmakeSession* matchmakeSession,
                                                     const session::UpdateSessionSetting* setting, bool isJointSession)
 {
     if (sessionId == 0)
@@ -54,13 +62,15 @@ Result NexMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, sess
         std::memset(m_applicationData, 0, sizeof(m_applicationData));
         nexSetting->GetApplicationData(m_applicationData, sizeof(m_applicationData));
         m_applicationDataSize = nexSetting->GetApplicationDataSize();
-        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateApplicationData, "NexMatchUpdateSessionSettingJob::UpdateApplicationData");
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateApplicationData,
+                   "NexMatchUpdateSessionSettingJob::UpdateApplicationData");
     }
     else if (nexSetting->IsOnlyAllAttributesUpdated() && !m_isJointSession)
     {
         for (unsigned int index = 0; index < cAttributeNum; ++index)
             m_attributes[index] = nexSetting->GetAttribute(index);
-        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateAttributes, "NexMatchUpdateSessionSettingJob::UpdateAttributes");
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateAttributes,
+                   "NexMatchUpdateSessionSettingJob::UpdateAttributes");
     }
     else if (nexSetting->IsOnlyAttributeUpdated() && !m_isJointSession)
     {
@@ -69,7 +79,8 @@ Result NexMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, sess
             m_attributes[index] = nexSetting->GetAttribute(index);
             m_isAttributeUpdated[index] = nexSetting->IsAttributeUpdated(index);
         }
-        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::ModifyAttribute, "NexMatchUpdateSessionSettingJob::ModifyAttribute");
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::ModifyAttribute,
+                   "NexMatchUpdateSessionSettingJob::ModifyAttribute");
     }
     else
     {
@@ -87,7 +98,8 @@ Result NexMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, sess
             }
         }
         m_matchmakeSession->ReflectUpdateSetting(setting, m_isJointSession);
-        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateSessionSetting, "NexMatchUpdateSessionSettingJob::UpdateSessionSetting");
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateSessionSetting,
+                   "NexMatchUpdateSessionSettingJob::UpdateSessionSetting");
     }
     return 0;
 }
@@ -142,7 +154,8 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitUpdateSessionSetting, "NexMatchUpdateSessionSettingJob::WaitUpdateSessionSetting");
+    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitUpdateSessionSetting,
+               "NexMatchUpdateSessionSettingJob::WaitUpdateSessionSetting");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -207,7 +220,8 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
                 else if (m_sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0])
                     SetBufferSessionOpenStatus(session::Session::cSessionOpenStatusOpen);
             }
-            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess,
+                       "UpdateSessionSettingJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -266,17 +280,20 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
     if (index < cAttributeNum)
     {
         m_isAttributeUpdated[index] = false;
-        const Result result = m_matchmakeSession->ModifyAttribute(&m_callContext, m_sessionId, index, m_attributes[index]);
+        const Result result = m_matchmakeSession->ModifyAttribute(&m_callContext, m_sessionId, index,
+                                                                  m_attributes[index]);
         if (result != 0)
         {
             m_callerContext->SignalFailure(result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
-        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitModifyAttribute, "NexMatchUpdateSessionSettingJob::WaitModifyAttribute");
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitModifyAttribute,
+                   "NexMatchUpdateSessionSettingJob::WaitModifyAttribute");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
-    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess,
+               "UpdateSessionSettingJob::CompleteProcess");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -333,7 +350,8 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess,
+                       "UpdateSessionSettingJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -390,7 +408,8 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitUpdateAttributes, "NexMatchUpdateSessionSettingJob::WaitUpdateAttributes");
+    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitUpdateAttributes,
+               "NexMatchUpdateSessionSettingJob::WaitUpdateAttributes");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -447,7 +466,8 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess,
+                       "UpdateSessionSettingJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -497,14 +517,16 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    const Result result = m_matchmakeSession->UpdateApplicationBuffer(&m_callContext, m_sessionId, m_applicationData, m_applicationDataSize);
+    const Result result = m_matchmakeSession->UpdateApplicationBuffer(&m_callContext, m_sessionId, m_applicationData,
+                                                                      m_applicationDataSize);
     if (result != 0)
     {
         m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitUpdateApplicationData, "NexMatchUpdateSessionSettingJob::WaitUpdateApplicationData");
+    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitUpdateApplicationData,
+               "NexMatchUpdateSessionSettingJob::WaitUpdateApplicationData");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -561,7 +583,8 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess,
+                       "UpdateSessionSettingJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -581,4 +604,6 @@ void NexMatchUpdateSessionSettingJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

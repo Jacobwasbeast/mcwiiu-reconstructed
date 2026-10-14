@@ -15,7 +15,12 @@
 #include "nn/pia/session/Mesh.hpp"
 #include "nn/pia/session/StationIdStatusTable.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -143,8 +148,7 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveJoine
         if (result == cResultRequestFailed)
         {
             m_result = result;
-            setStep(&session::RandomMatchmakeJob::CompleteFailure,
-                    "NexMatchRandomMatchmakeJob::CompleteFailure");
+            setStep(&session::RandomMatchmakeJob::CompleteFailure, "NexMatchRandomMatchmakeJob::CompleteFailure");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (m_joinedSessionIdNum != 0)
@@ -358,8 +362,8 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitNotifi
     }
     setStep(&NexMatchRandomMatchmakeJob::StartNatSession, "NexMatchRandomMatchmakeJob::StartNatSession");
     common::g_sessionBeginMonitoringContent.m_metric80 = static_cast<unsigned int>(
-        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_natStartTime.m_tick) /
-        static_cast<long long>(common::TimeSpan::GetTicksPerMSec().m_tick));
+        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_natStartTime.m_tick)
+        / static_cast<long long>(common::TimeSpan::GetTicksPerMSec().m_tick));
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -421,8 +425,8 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitStartN
     }
     else if (kind == cExecuteKindFinished)
     {
-        if (result == cResultNatServerAddressUnavailable || result == cResultPortDetectionFailed ||
-            result == cResultCancelled || result == transport::cResultInvalidState)
+        if (result == cResultNatServerAddressUnavailable || result == cResultPortDetectionFailed
+            || result == cResultCancelled || result == transport::cResultInvalidState)
         {
             m_result = result;
             setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
@@ -495,8 +499,8 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveMatch
     if (bufferSessionId != 0)
     {
         m_callContext.Reset();
-        const Result result = session->m_matchmakeSession[bufferSessionIndex()]->LeaveMatchmakeSession(
-            &m_callContext, bufferSessionId);
+        const Result result = session->m_matchmakeSession[bufferSessionIndex()]->LeaveMatchmakeSession(&m_callContext,
+                                                                                                       bufferSessionId);
         if (result == 0)
         {
             setStep(&NexMatchRandomMatchmakeJob::WaitLeaveBufferMatchmakeSession,
@@ -598,8 +602,7 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitLeaveC
             m_result = cResultNexError;
     }
     session->m_sessionId[session->m_currentSessionIndex] = 0;
-    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
-            "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
+    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession, "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -638,8 +641,7 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitLeaveB
             m_result = cResultNexError;
     }
     session::g_piaSession->m_sessionId[bufferSessionIndex()] = 0;
-    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
-            "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
+    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession, "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -759,8 +761,7 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::CleanupFor
         else
             m_retryTime = timeAfter(cRetryIntervalMsec);
         m_waitingForRetryJoinMesh = true;
-        setStep(&NexMatchRandomMatchmakeJob::WaitForRetryJoinMesh,
-                "NexMatchRandomMatchmakeJob::WaitForRetryJoinMesh");
+        setStep(&NexMatchRandomMatchmakeJob::WaitForRetryJoinMesh, "NexMatchRandomMatchmakeJob::WaitForRetryJoinMesh");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     if (m_connectionInfoRetry)
@@ -768,8 +769,7 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::CleanupFor
         setStep(&NexMatchRandomMatchmakeJob::StartNatSession, "NexMatchRandomMatchmakeJob::StartNatSession");
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
-            "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
+    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession, "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -846,8 +846,8 @@ void NexMatchRandomMatchmakeJob::NoticeOwnerChangeEvent(unsigned int sessionId, 
         if (session::g_piaSession->GetMatchmakeSessionStationNum() <= cOwnerStationNumMax)
         {
             NexMatchMeshLayerController* controller = meshLayerController();
-            if (session::g_piaSession->GetMatchmakeSessionStationNum() != cOwnerStationNumMax ||
-                controller->IsParticipated(m_sessionId, m_ownerPrincipalId))
+            if (session::g_piaSession->GetMatchmakeSessionStationNum() != cOwnerStationNumMax
+                || controller->IsParticipated(m_sessionId, m_ownerPrincipalId))
             {
                 m_ownerPrincipalId = ownerId;
                 m_ownerChanged = true;
@@ -858,9 +858,9 @@ void NexMatchRandomMatchmakeJob::NoticeOwnerChangeEvent(unsigned int sessionId, 
         m_sessionInvalidated = true;
         return;
     }
-    if (!session::g_piaMesh->IsHostMigrationEnabled() ||
-        (!session::g_piaMesh->IsHostMigrationStarted() && !session::g_piaMesh->IsProcessingHostMigration()) ||
-        session::g_piaMesh->GetJoinMeshState() != cJoinMeshStateHostMigrating)
+    if (!session::g_piaMesh->IsHostMigrationEnabled()
+        || (!session::g_piaMesh->IsHostMigrationStarted() && !session::g_piaMesh->IsProcessingHostMigration())
+        || session::g_piaMesh->GetJoinMeshState() != cJoinMeshStateHostMigrating)
     {
         m_ownerChanged = true;
         if (m_waitingForRetryJoinMesh)
@@ -890,16 +890,15 @@ Result NexMatchRandomMatchmakeJob::StartupImpl(const session::JoinRandomSessionS
         return transport::cResultInvalidState;
     if (setting->GetSessionSearchCriteriaSize() > cSearchCriteriaNumMax)
         return transport::cResultInvalidArgument;
-    m_matchmakeSession = static_cast<NexMatchmakeSession*>(
-        session->m_matchmakeSession[session->m_currentSessionIndex]);
+    m_matchmakeSession = static_cast<NexMatchmakeSession*>(session->m_matchmakeSession[session->m_currentSessionIndex]);
     if (m_matchmakeSession == 0)
         return transport::cResultInvalidState;
-    const NexCreateSessionSetting* createSetting =
-        static_cast<const NexCreateSessionSetting*>(setting->GetCreateSessionSetting());
+    const NexCreateSessionSetting* createSetting = static_cast<const NexCreateSessionSetting*>(
+        setting->GetCreateSessionSetting());
     if (createSetting->GetMaxParticipantNum() == 0)
         return transport::cResultInvalidArgument;
-    const unsigned short participantNum =
-        createSetting->GetMaxParticipantNum() + createSetting->GetExtraParticipantNum();
+    const unsigned short participantNum = createSetting->GetMaxParticipantNum()
+                                          + createSetting->GetExtraParticipantNum();
     if (transport::g_piaTransport->m_stationNum < participantNum)
         return transport::cResultInvalidArgument;
     if (m_matchmakeSession->ReflectJoinRandomSetting(setting, session->IsHostMigrationEnabled()) != 0)
@@ -907,8 +906,7 @@ Result NexMatchRandomMatchmakeJob::StartupImpl(const session::JoinRandomSessionS
     m_isOpenSession = createSetting->IsOpenSession();
     session::g_piaSession->m_fieldc2[session::g_piaSession->m_currentSessionIndex] = participantNum;
     m_waitingForRetryJoinMesh = false;
-    NexMatchMeshLayerController* controller =
-        static_cast<NexMatchMeshLayerController*>(session->m_meshLayerController);
+    NexMatchMeshLayerController* controller = static_cast<NexMatchMeshLayerController*>(session->m_meshLayerController);
     m_joinedSessionIdNum = 0;
     for (unsigned int i = 0; i < controller->GetSessionIdArraySize(); ++i)
     {
@@ -956,8 +954,7 @@ void NexMatchRandomMatchmakeJob::SetNextStepAtWaitJoinMesh()
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::SetNextStepAtFailedCreateMesh(Result result)
 {
     m_result = result;
-    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
-            "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
+    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession, "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -993,10 +990,9 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::SetNextSte
             {
                 countRetry(monitoring.m_retryReasonACount);
             }
-            else if (!m_connectionInfoRetry &&
-                     (result == cResultNatTraversalFailed || result == cResultNatTraversalFailedEdmToEdm ||
-                      result == cResultNatTraversalFailedEdmToEim ||
-                      result == cResultNatTraversalFailedEimToEdm))
+            else if (!m_connectionInfoRetry
+                     && (result == cResultNatTraversalFailed || result == cResultNatTraversalFailedEdmToEdm
+                         || result == cResultNatTraversalFailedEdmToEim || result == cResultNatTraversalFailedEimToEdm))
             {
                 m_connectionInfoRetry = true;
                 countRetry(monitoring.m_connectionInfoRetryCount);
@@ -1015,16 +1011,16 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::SetNextSte
     }
     session::g_piaSession->m_postponeNotice = false;
     session::g_piaSession->m_stationIdStatusTable->ClearDisconnectedStationId();
-    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
-            "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
+    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession, "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::SetNextStepAtWaitLeaveMesh()
 {
-    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
-            "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
+    setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession, "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-}}}
+}
+}
+}

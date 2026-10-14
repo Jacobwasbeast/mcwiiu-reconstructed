@@ -7,12 +7,21 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/ProcessHostMigrationJob.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 class NotificationEventHandler;
 class ProtocolCallContext;
-}}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class InetProcessHostMigrationJob : public session::ProcessHostMigrationJob
 {
@@ -69,6 +78,8 @@ public:
     common::Time m_updateSessionHostTimeout;
 };
 
-}}}
+}
+}
+}
 
 #endif

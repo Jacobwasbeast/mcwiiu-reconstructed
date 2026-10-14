@@ -20,9 +20,15 @@
 #include "nn/pia/inet/NexFacade.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
-namespace {
+namespace
+{
 
 enum
 {
@@ -214,13 +220,12 @@ void NexNatRelay::RelayProbeRequest(const transport::StationLocation& source,
         destinationUrl.SetRelayPort(destination.m_stationAddress.m_inetAddress.m_port);
 
         bool found = false;
-        for (common::ListNode* node = m_relayTable.Sentinel()->next; node != m_relayTable.Sentinel();
-             node = node->next)
+        for (common::ListNode* node = m_relayTable.Sentinel()->next; node != m_relayTable.Sentinel(); node = node->next)
         {
             RelayEntry* entry = RelayTable::ValueOf(node);
             const common::InetAddress& entryAddress = entry->m_stationAddress;
-            if (entryAddress == source.m_stationAddress.m_inetAddress ||
-                entry->m_connectionId == static_cast<unsigned int>(source.m_field1c))
+            if (entryAddress == source.m_stationAddress.m_inetAddress
+                || entry->m_connectionId == static_cast<unsigned int>(source.m_field1c))
             {
                 found = true;
                 if (!entry->m_relayAddress.IsValid())
@@ -232,8 +237,8 @@ void NexNatRelay::RelayProbeRequest(const transport::StationLocation& source,
                 }
                 entry->m_stationAddress = source.m_stationAddress.m_inetAddress;
                 entry->m_connectionId = source.m_field1c;
-                entry->m_expireTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec +
-                                             common::g_piaJobScheduler->m_dispatchTime.m_tick;
+                entry->m_expireTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec
+                                             + common::g_piaJobScheduler->m_dispatchTime.m_tick;
             }
         }
         if (!found)
@@ -244,8 +249,8 @@ void NexNatRelay::RelayProbeRequest(const transport::StationLocation& source,
                 entry->m_stationAddress = source.m_stationAddress.m_inetAddress;
                 entry->m_relayAddress = destination.m_inetAddress;
                 entry->m_connectionId = source.m_field1c;
-                entry->m_expireTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec +
-                                             common::g_piaJobScheduler->m_dispatchTime.m_tick;
+                entry->m_expireTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec
+                                             + common::g_piaJobScheduler->m_dispatchTime.m_tick;
             }
         }
     }
@@ -281,8 +286,8 @@ void NexNatRelay::SetLocalCID(unsigned int connectionId)
 
 void NexNatRelay::RequestRelayServerSettingAsync()
 {
-    if (NexFacade::GetInstance()->m_started && NexFacade::GetInstance()->IsRelayServiceEnabled() &&
-        m_signatureKeyCallContext->GetState() != nex::CallContext::CallInProgress)
+    if (NexFacade::GetInstance()->m_started && NexFacade::GetInstance()->IsRelayServiceEnabled()
+        && m_signatureKeyCallContext->GetState() != nex::CallContext::CallInProgress)
     {
         m_relayServerAddress.m_address = 0;
         m_relayServerAddress.m_port = 0;
@@ -299,8 +304,8 @@ bool NexNatRelay::IsRequestRelayServerSettingCompleted() const
     if (NexFacade::GetInstance()->IsRelayServiceEnabled())
     {
         nex::CallContext::State state = m_signatureKeyCallContext->GetState();
-        return state == nex::CallContext::CallSucceeded || state == nex::CallContext::CallFailed ||
-               state == nex::CallContext::CallCanceled;
+        return state == nex::CallContext::CallSucceeded || state == nex::CallContext::CallFailed
+               || state == nex::CallContext::CallCanceled;
     }
     return true;
 }
@@ -395,8 +400,8 @@ unsigned int NexNatRelay::GetCurrentUTCEpochTime() const
 {
     if (NexFacade::GetInstance()->IsRelayServiceEnabled() && m_relayServerAddress.IsValid())
     {
-        long long elapsed = (common::g_piaJobScheduler->m_dispatchTime.m_tick - m_relayServerAddressTime.m_tick) /
-                            common::TimeSpan::GetTicksPerSec().m_tick;
+        long long elapsed = (common::g_piaJobScheduler->m_dispatchTime.m_tick - m_relayServerAddressTime.m_tick)
+                            / common::TimeSpan::GetTicksPerSec().m_tick;
         return static_cast<unsigned int>(m_relaySignatureKey->m_currentUTCTime.ToEpochTime() + elapsed);
     }
     return 0;
@@ -449,8 +454,8 @@ void NexNatRelay::UpdateRelayTable()
             }
             else
             {
-                entry->m_expireTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec +
-                                             common::g_piaJobScheduler->m_dispatchTime.m_tick;
+                entry->m_expireTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec
+                                             + common::g_piaJobScheduler->m_dispatchTime.m_tick;
             }
         }
         node = next;
@@ -469,8 +474,8 @@ bool NexNatRelay::RemoveRelayEntry(const transport::StationLocation& location)
     {
         RelayEntry* entry = RelayTable::ValueOf(node);
         const common::InetAddress& stationAddress = entry->m_stationAddress;
-        if (stationAddress == location.m_stationAddress.m_inetAddress ||
-            entry->m_connectionId == static_cast<unsigned int>(location.m_field1c))
+        if (stationAddress == location.m_stationAddress.m_inetAddress
+            || entry->m_connectionId == static_cast<unsigned int>(location.m_field1c))
         {
             m_relayTable.Destroy(entry);
             removed = true;
@@ -510,8 +515,7 @@ void NexNatRelay::Trace(unsigned long long)
     common::FixedString<32> relayAddress;
     common::FixedString<32> stationAddress;
     m_relayServerAddress.GetAddressString(&relayAddress);
-    for (common::ListNode* node = m_relayTable.Sentinel()->next; node != m_relayTable.Sentinel();
-         node = node->next)
+    for (common::ListNode* node = m_relayTable.Sentinel()->next; node != m_relayTable.Sentinel(); node = node->next)
     {
         relayAddress.Clear();
         stationAddress.Clear();
@@ -520,8 +524,8 @@ void NexNatRelay::Trace(unsigned long long)
     }
 }
 
-Result NexNatRelay::Pack(void* buffer, const void* payload, unsigned int payloadSize,
-                         const common::InetAddress& source, const common::InetAddress& destination)
+Result NexNatRelay::Pack(void* buffer, const void* payload, unsigned int payloadSize, const common::InetAddress& source,
+                         const common::InetAddress& destination)
 {
     unsigned char* header = static_cast<unsigned char*>(buffer);
     unsigned char* cursor = header;
@@ -611,4 +615,6 @@ const common::InetAddress& NexNatRelay::GetRelayServerAddress(const common::Inet
     return s_invalidAddress;
 }
 
-}}}
+}
+}
+}

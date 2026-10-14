@@ -8,12 +8,20 @@
 #include "nn/pia/session/UpdateSessionSetting.hpp"
 #include "nn/pia/inet/SessionType.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexUpdateSessionSetting : public session::UpdateSessionSetting
 {
 public:
-    enum { cAttributeNum = 6 };
+    enum
+    {
+        cAttributeNum = 6
+    };
 
     NexUpdateSessionSetting();
     virtual ~NexUpdateSessionSetting();
@@ -119,6 +127,8 @@ public:
     unsigned int m_nexModificationFlag;
 };
 
-}}}
+}
+}
+}
 
 #endif

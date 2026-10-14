@@ -3,14 +3,35 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace nex { class RelaySignatureKey; }}
+namespace nn
+{
+namespace nex
+{
+class RelaySignatureKey;
+}
+}
 
-namespace nn { namespace pia {
-namespace common { class InetAddress; }
-namespace transport { class StationLocation; }
-}}
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class InetAddress;
+}
+namespace transport
+{
+class StationLocation;
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NatRelayInterface
 {
@@ -40,11 +61,13 @@ public:
     virtual bool RemoveRelayEntry(const transport::StationLocation& location) = 0;
     virtual void Cleanup() = 0;
     virtual void Trace(unsigned long long value) = 0;
-    virtual Result Pack(void* buffer, const void* payload, unsigned int payloadSize,
-                        const common::InetAddress& source, const common::InetAddress& destination) = 0;
+    virtual Result Pack(void* buffer, const void* payload, unsigned int payloadSize, const common::InetAddress& source,
+                        const common::InetAddress& destination) = 0;
     virtual Result Unpack(void* buffer, int* size, common::InetAddress* source) = 0;
 };
 
-}}}
+}
+}
+}
 
 #endif

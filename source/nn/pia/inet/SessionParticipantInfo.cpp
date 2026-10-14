@@ -1,6 +1,11 @@
 #include "nn/pia/inet/SessionParticipantInfo.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -13,8 +18,7 @@ enum
 
 }
 
-SessionParticipantInfo::SessionParticipantInfo()
-    : m_sessionId(0)
+SessionParticipantInfo::SessionParticipantInfo() : m_sessionId(0)
 {
     m_participantList.Clear();
 }
@@ -37,9 +41,9 @@ void SessionParticipantInfo::RemoveObsoleteEntry()
     while (node != m_participantList.Sentinel())
     {
         ParticipantList::Node* participant = static_cast<ParticipantList::Node*>(node);
-        if (participant->value.m_participationCount < 0 &&
-            (participant->value.m_participationEvent == cParticipationEventDisconnect ||
-             participant->value.m_participationEvent == cParticipationEventEndParticipation))
+        if (participant->value.m_participationCount < 0
+            && (participant->value.m_participationEvent == cParticipationEventDisconnect
+                || participant->value.m_participationEvent == cParticipationEventEndParticipation))
             m_participantList.Free(participant);
         node = next;
         next = node->next;
@@ -48,4 +52,6 @@ void SessionParticipantInfo::RemoveObsoleteEntry()
         m_sessionId = 0;
 }
 
-}}}
+}
+}
+}

@@ -9,14 +9,23 @@
 #include "nn/pia/inet/SessionType.hpp"
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 class InetAddress;
 class MatchmakeParam;
 class MatchmakeSessionSearchCriteria;
 class ResultRange;
-}}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 extern const wchar_t* s_scoreSettingIndexKey;
 extern const wchar_t* s_countryCodeKey;
@@ -38,7 +47,12 @@ enum SelectionMethod
 class NexSessionSearchCriteria : public session::SessionSearchCriteria
 {
 public:
-    enum { cAttributeNum = 6, cAttributeListSize = 100, cParticipantNumUnset = 0xffff };
+    enum
+    {
+        cAttributeNum = 6,
+        cAttributeListSize = 100,
+        cParticipantNumUnset = 0xffff
+    };
 
     NexSessionSearchCriteria();
     virtual ~NexSessionSearchCriteria();
@@ -74,12 +88,11 @@ public:
         return &m_additionalScoreBasedParameterString[0];
     }
     void Copy(const NexSessionSearchCriteria& other);
-    nn::pia::Result ConvertToNexMatchmakeSessionSearchCriteria(
-        nn::nex::MatchmakeSessionSearchCriteria* criteria,
-        nn::nex::InetAddress* address,
-        nn::nex::MatchmakeParam* param,
-        nn::nex::ResultRange* resultRange,
-        unsigned char method) const;
+    nn::pia::Result ConvertToNexMatchmakeSessionSearchCriteria(nn::nex::MatchmakeSessionSearchCriteria* criteria,
+                                                               nn::nex::InetAddress* address,
+                                                               nn::nex::MatchmakeParam* param,
+                                                               nn::nex::ResultRange* resultRange,
+                                                               unsigned char method) const;
     virtual void Trace(unsigned long long value) const;
     virtual void Reset();
     unsigned int IsValid() const;
@@ -117,6 +130,8 @@ private:
     unsigned int m_conditionMask;
 };
 
-}}}
+}
+}
+}
 
 #endif

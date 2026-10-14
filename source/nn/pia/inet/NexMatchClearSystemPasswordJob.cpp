@@ -5,7 +5,12 @@
 #include "nn/pia/inet/NexMatchmakeSession.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -16,14 +21,16 @@ enum
     cResultCancelled = 0x6c05
 };
 
-inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchClearSystemPasswordJob::*function)(), const char* name)
+inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchClearSystemPasswordJob::*function)(),
+                       const char* name)
 {
     slot = common::StepSequenceJob::Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
 }
 }
 
 NexMatchClearSystemPasswordJob::NexMatchClearSystemPasswordJob()
-    : session::ClearMatchmakeSystemPasswordJob(), m_matchmakeSession(0)
+    : session::ClearMatchmakeSystemPasswordJob(),
+      m_matchmakeSession(0)
 {
 }
 
@@ -171,4 +178,6 @@ void NexMatchClearSystemPasswordJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

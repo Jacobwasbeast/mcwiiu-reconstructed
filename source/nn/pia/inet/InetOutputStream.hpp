@@ -6,9 +6,24 @@
 #include "nn/pia/common/SocketStreamBase.hpp"
 #include "nn/pia/Transport.hpp"
 
-namespace nn { namespace pia { namespace common { class InetAddress; class Packet; }}}
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class InetAddress;
+class Packet;
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class InetOutputStream : public common::SocketStreamBase, public common::IPacketOutput
 {
@@ -29,6 +44,8 @@ private:
     common::SockAddrIn m_stationAddresses[transport::cStationNumMax];
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -31,13 +31,9 @@ public:
         cNotificationTypeHostChanged = 110
     };
 
-    explicit NexNotificationEventHandler4Pia(nn::pia::inet::InetProcessHostMigrationJob* job) : m_job(job)
-    {
-    }
+    explicit NexNotificationEventHandler4Pia(nn::pia::inet::InetProcessHostMigrationJob* job) : m_job(job) {}
 
-    virtual ~NexNotificationEventHandler4Pia()
-    {
-    }
+    virtual ~NexNotificationEventHandler4Pia() {}
 
     virtual void ProcessNotificationEvent(const nn::nex::NotificationEvent& event)
     {
@@ -51,7 +47,12 @@ private:
 
 }
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -108,9 +109,14 @@ inline void setStep(common::StepSequenceJob::Step& slot, const common::StepSeque
 }
 
 InetProcessHostMigrationJob::InetProcessHostMigrationJob()
-    : session::ProcessHostMigrationJob(), m_callContext(), m_rankDecisionWaitTime(), m_reselectNewHostTime(),
-      m_reselectNewHostTimeMsec(cReselectNewHostTimeMsec), m_oldHostDisconnectionCheckTime(),
-      m_oldHostDisconnectionTimeout(), m_updateSessionHostTimeout()
+    : session::ProcessHostMigrationJob(),
+      m_callContext(),
+      m_rankDecisionWaitTime(),
+      m_reselectNewHostTime(),
+      m_reselectNewHostTimeMsec(cReselectNewHostTimeMsec),
+      m_oldHostDisconnectionCheckTime(),
+      m_oldHostDisconnectionTimeout(),
+      m_updateSessionHostTimeout()
 {
     m_protocolCallContext = common::NewObj<nex::ProtocolCallContext>();
     if (m_unknownBC)
@@ -118,7 +124,8 @@ InetProcessHostMigrationJob::InetProcessHostMigrationJob()
         m_stationUrlList = common::NewObj<nex::qList<nex::StationURL> >();
         OSBlockSet(m_rankDecisionMessageId, 0, sizeof(m_rankDecisionMessageId));
         m_waitTimeMsec = cMultiHostMigrationWaitTimeMsec;
-        void* buffer = pead::allocateFromSeadHeap(sizeof(NexNotificationEventHandler4Pia), common::HeapManager::GetHeap());
+        void* buffer = pead::allocateFromSeadHeap(sizeof(NexNotificationEventHandler4Pia),
+                                                  common::HeapManager::GetHeap());
         if (buffer == 0)
             m_notificationEventHandler = 0;
         else
@@ -185,8 +192,8 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::Automati
     m_newHostIndex = static_cast<StationIndex>(cStationIndexInvalid);
     for (int i = 0; i < cStationNumMax; ++i)
     {
-        if (session::g_piaMesh->GetHostStationIndex() != i &&
-            session::g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(i)))
+        if (session::g_piaMesh->GetHostStationIndex() != i
+            && session::g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(i)))
         {
             m_newHostIndex = static_cast<StationIndex>(i);
             break;
@@ -217,12 +224,12 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::Automati
         {
             setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::InetGetMatchMakingClientHost),
                                         "InetProcessHostMigrationJob::InetGetMatchMakingClientHost"));
-            m_oldHostDisconnectionCheckTime.m_tick =
-                common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                common::TimeSpan::GetTicksPerMSec().m_tick * cOldHostDisconnectionCheckIntervalMsec;
-            m_oldHostDisconnectionTimeout.m_tick =
-                common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                common::TimeSpan::GetTicksPerMSec().m_tick * cOldHostDisconnectionTimeoutMsec;
+            m_oldHostDisconnectionCheckTime.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick
+                                                     + common::TimeSpan::GetTicksPerMSec().m_tick
+                                                           * cOldHostDisconnectionCheckIntervalMsec;
+            m_oldHostDisconnectionTimeout.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick
+                                                   + common::TimeSpan::GetTicksPerMSec().m_tick
+                                                         * cOldHostDisconnectionTimeoutMsec;
         }
         else
         {
@@ -307,8 +314,8 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::WaitAfte
                                             "InetProcessHostMigrationJob::HostMigrationFailure"));
                 return MakeExecuteResult(cExecuteKindContinue);
             }
-            if (!piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner() ||
-                !piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]->IsMatchmakeOwner())
+            if (!piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner()
+                || !piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]->IsMatchmakeOwner())
             {
                 return MakeExecuteResult(cExecuteKindNextStep);
             }
@@ -336,8 +343,7 @@ int InetProcessHostMigrationJob::CalcTimeToWaitOtherClients(unsigned int rank, u
     if (rank == 0)
         return 0;
     const unsigned int halfNum = candidateNum >> 1;
-    const unsigned int unitTime =
-        m_rankDecisionWaitTimeMsec / (halfNum * (halfNum - 1) + halfNum + (candidateNum & 1));
+    const unsigned int unitTime = m_rankDecisionWaitTimeMsec / (halfNum * (halfNum - 1) + halfNum + (candidateNum & 1));
     if (rank < halfNum)
     {
         int unitCount = 0;
@@ -381,14 +387,13 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::InetSend
             ++candidateNum;
     }
     const int waitTimeMsec = CalcTimeToWaitOtherClients(rank, candidateNum);
-    m_rankDecisionWaitTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * waitTimeMsec +
-                                    common::g_piaJobScheduler->m_dispatchTime.m_tick;
-    m_waitDeadline.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * m_waitTimeMsec +
-                            common::g_piaJobScheduler->m_dispatchTime.m_tick;
+    m_rankDecisionWaitTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * waitTimeMsec
+                                    + common::g_piaJobScheduler->m_dispatchTime.m_tick;
+    m_waitDeadline.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * m_waitTimeMsec
+                            + common::g_piaJobScheduler->m_dispatchTime.m_tick;
     for (int i = 0; i < cStationNumMax; ++i)
     {
-        if (i != localStationIndex && i != m_oldHostIndex &&
-            mesh->IsValidStationIndex(static_cast<StationIndex>(i)))
+        if (i != localStationIndex && i != m_oldHostIndex && mesh->IsValidStationIndex(static_cast<StationIndex>(i)))
         {
             unsigned int messageId = 0;
             if (mesh->GetMeshProtocol()->SendMultiMigrationRankDecision(static_cast<StationIndex>(i),
@@ -530,12 +535,12 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::InetWait
         {
             if (!m_isRankingReceived && !isBecomingHost)
             {
-                m_oldHostDisconnectionCheckTime.m_tick =
-                    common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                    common::TimeSpan::GetTicksPerMSec().m_tick * cOldHostDisconnectionCheckIntervalMsec;
-                m_oldHostDisconnectionTimeout.m_tick =
-                    common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                    common::TimeSpan::GetTicksPerMSec().m_tick * cOldHostDisconnectionTimeoutMsec;
+                m_oldHostDisconnectionCheckTime.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick
+                                                         + common::TimeSpan::GetTicksPerMSec().m_tick
+                                                               * cOldHostDisconnectionCheckIntervalMsec;
+                m_oldHostDisconnectionTimeout.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick
+                                                       + common::TimeSpan::GetTicksPerMSec().m_tick
+                                                             * cOldHostDisconnectionTimeoutMsec;
                 setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::InetCheckOldHostDisconnection),
                                             "InetProcessHostMigrationJob::InetCheckOldHostDisconnection"));
                 return MakeExecuteResult(cExecuteKindNextStep);
@@ -559,9 +564,9 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::InetWait
     if (!isBecomingHost && relayRouteManager != 0)
     {
         StationIndex relayStation;
-        if (relayRouteManager->GetRelayRoute(session::g_piaMesh->GetLocalStationIndex(), m_oldHostIndex,
-                                             &relayStation) != 0 ||
-            relayStation != m_oldHostIndex)
+        if (relayRouteManager->GetRelayRoute(session::g_piaMesh->GetLocalStationIndex(), m_oldHostIndex, &relayStation)
+                != 0
+            || relayStation != m_oldHostIndex)
         {
             setStep(m_currentStep, Step(stepFunction(&ProcessHostMigrationJob::HostMigrationFailure),
                                         "InetProcessHostMigrationJob::HostMigrationFailure"));
@@ -593,8 +598,8 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::InetChec
         if (m_protocolCallContext->GetState() == nex::CallContext::CallInProgress)
             m_protocolCallContext->Cancel(nex::CallContext::CallCanceled);
         m_protocolCallContext->Reset();
-        if (!NexFacade::GetInstance()->m_matchmakeExtensionClient->GetSessionURLs(m_protocolCallContext,
-                                                                                  gatheringId, m_stationUrlList))
+        if (!NexFacade::GetInstance()->m_matchmakeExtensionClient->GetSessionURLs(m_protocolCallContext, gatheringId,
+                                                                                  m_stationUrlList))
         {
             setStep(m_currentStep, Step(stepFunction(&ProcessHostMigrationJob::HostMigrationFailure),
                                         "InetProcessHostMigrationJob::HostMigrationFailure"));
@@ -703,13 +708,13 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::InetWait
     if (principalId != 0)
     {
         const StationIndex hostIndex = GetStationIndexByPrincipalID(principalId);
-        if (hostIndex < cStationNumMax && m_oldHostIndex == hostIndex &&
-            common::g_piaJobScheduler->m_dispatchTime < m_oldHostDisconnectionTimeout &&
-            common::g_piaJobScheduler->m_dispatchTime < m_waitDeadline)
+        if (hostIndex < cStationNumMax && m_oldHostIndex == hostIndex
+            && common::g_piaJobScheduler->m_dispatchTime < m_oldHostDisconnectionTimeout
+            && common::g_piaJobScheduler->m_dispatchTime < m_waitDeadline)
         {
-            m_oldHostDisconnectionCheckTime.m_tick =
-                common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                common::TimeSpan::GetTicksPerMSec().m_tick * cOldHostDisconnectionCheckIntervalMsec;
+            m_oldHostDisconnectionCheckTime.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick
+                                                     + common::TimeSpan::GetTicksPerMSec().m_tick
+                                                           * cOldHostDisconnectionCheckIntervalMsec;
             setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::InetCheckOldHostDisconnection),
                                         "InetProcessHostMigrationJob::InetCheckOldHostDisconnection"));
             return MakeExecuteResult(cExecuteKindContinue);
@@ -774,7 +779,7 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::UpdateSe
     m_protocolCallContext->Reset();
     matchmakeSession->Reset();
     if (!matchmakeExtensionClient->FindMatchmakeSessionByGatheringIdDetail(m_protocolCallContext, gatheringId,
-                                                                            matchmakeSession))
+                                                                           matchmakeSession))
     {
         setStep(m_currentStep, Step(stepFunction(&ProcessHostMigrationJob::HostMigrationFailure),
                                     "InetProcessHostMigrationJob::HostMigrationFailure"));
@@ -790,8 +795,8 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::WaitUpda
     const nex::CallContext::State state = m_protocolCallContext->GetState();
     if (state == nex::CallContext::CallInProgress)
     {
-        if (session::g_piaMesh->CheckConnectionError() != cResultConnectionError &&
-            common::g_piaJobScheduler->m_dispatchTime < m_waitDeadline)
+        if (session::g_piaMesh->CheckConnectionError() != cResultConnectionError
+            && common::g_piaJobScheduler->m_dispatchTime < m_waitDeadline)
         {
             return MakeExecuteResult(cExecuteKindNextStep);
         }
@@ -816,14 +821,13 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::WaitUpda
             const session::Session::SessionOpenStatus openStatus =
                 matchmakeSession->m_bOpenParticipation ? session::Session::cSessionOpenStatusOpen
                                                        : session::Session::cSessionOpenStatusParticipationClosed;
-            if (gatheringId ==
-                session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
+            if (gatheringId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
             {
                 if (session::g_piaSession != 0)
                     session::g_piaSession->SetCurrentSessionOpenStatus(openStatus);
             }
-            else if (gatheringId ==
-                     session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex == 0])
+            else if (gatheringId
+                     == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex == 0])
             {
                 if (session::g_piaSession != 0)
                     session::g_piaSession->SetBufferSessionOpenStatus(openStatus);
@@ -855,8 +859,8 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::InetChec
     nex::ProtocolCallContext* protocolCallContext = m_protocolCallContext;
     if (protocolCallContext->GetState() == nex::CallContext::CallInProgress)
     {
-        if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError ||
-            m_waitDeadline <= common::g_piaJobScheduler->m_dispatchTime)
+        if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError
+            || m_waitDeadline <= common::g_piaJobScheduler->m_dispatchTime)
         {
             m_protocolCallContext->Cancel(nex::CallContext::CallCanceled);
             setStep(m_currentStep, Step(stepFunction(&ProcessHostMigrationJob::HostMigrationFailure),
@@ -1036,8 +1040,7 @@ unsigned int InetProcessHostMigrationJob::UpdateSessionHostAsync(unsigned int ga
     if (m_protocolCallContext->GetState() == nex::CallContext::CallInProgress)
         m_protocolCallContext->Cancel(nex::CallContext::CallCanceled);
     m_protocolCallContext->Reset();
-    if (!NexFacade::GetInstance()->m_matchmakeExtensionClient->UpdateSessionHost(m_protocolCallContext, id,
-                                                                                 true))
+    if (!NexFacade::GetInstance()->m_matchmakeExtensionClient->UpdateSessionHost(m_protocolCallContext, id, true))
     {
         return 0;
     }
@@ -1117,4 +1120,6 @@ unsigned int InetProcessHostMigrationJob::CheckWhetherReselectNewHost()
     return 1;
 }
 
-}}}
+}
+}
+}

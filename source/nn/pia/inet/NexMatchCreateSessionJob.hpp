@@ -5,7 +5,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/CreateSessionJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchmakeSession;
 
@@ -45,6 +50,8 @@ private:
     common::Time m_createMatchmakeStartTime;
 };
 
-}}}
+}
+}
+}
 
 #endif

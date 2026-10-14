@@ -1,10 +1,19 @@
 #include "nn/pia/inet/MonitoringServerAddressResolveJob.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 MonitoringServerAddressResolveJob::MonitoringServerAddressResolveJob()
-    : common::StepSequenceJob(), m_callContext(), m_monitoringServerId(0), m_address(0), m_sender(0)
+    : common::StepSequenceJob(),
+      m_callContext(),
+      m_monitoringServerId(0),
+      m_address(0),
+      m_sender(0)
 {
     m_callContext.Reset();
 }
@@ -26,4 +35,6 @@ void MonitoringServerAddressResolveJob::Cleanup()
     m_address = 0;
 }
 
-}}}
+}
+}
+}

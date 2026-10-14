@@ -21,7 +21,12 @@
 #include "nn/nex/NotificationEvent.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -68,7 +73,9 @@ inline unsigned int SwapU32(unsigned int value)
 }
 
 NexMatchMeshLayerController::NexNotificationEventHandler::NexNotificationEventHandler()
-    : m_unregisterGathering(false), m_sessionParticipantInfo(), m_ignoredSessionId()
+    : m_unregisterGathering(false),
+      m_sessionParticipantInfo(),
+      m_ignoredSessionId()
 {
     AllClearSessionId();
     AllClearIgnoredSessionId();
@@ -223,9 +230,9 @@ unsigned short NexMatchMeshLayerController::NexNotificationEventHandler::GetMatc
             for (const ParticipantNode* participantNode = static_cast<const ParticipantNode*>(end->next);
                  participantNode != end; participantNode = static_cast<const ParticipantNode*>(participantNode->next))
             {
-                if (participantNode->value.m_principalId != 0 &&
-                    participantNode->value.m_principalId == participantNode->value.m_stationId &&
-                    participantNode->value.m_participationCount > 0)
+                if (participantNode->value.m_principalId != 0
+                    && participantNode->value.m_principalId == participantNode->value.m_stationId
+                    && participantNode->value.m_participationCount > 0)
                     ++stationNum;
             }
         }
@@ -247,8 +254,8 @@ unsigned short NexMatchMeshLayerController::NexNotificationEventHandler::GetMatc
             for (const ParticipantNode* participantNode = static_cast<const ParticipantNode*>(end->next);
                  participantNode != end; participantNode = static_cast<const ParticipantNode*>(participantNode->next))
             {
-                if (participantNode->value.m_principalId != 0 && participantNode->value.m_participationCount > 0 &&
-                    participantNode->value.m_participantType == cParticipantTypePlayer)
+                if (participantNode->value.m_principalId != 0 && participantNode->value.m_participationCount > 0
+                    && participantNode->value.m_participantType == cParticipantTypePlayer)
                     ++participantNum;
             }
         }
@@ -278,9 +285,10 @@ bool NexMatchMeshLayerController::NexNotificationEventHandler::IsParticipated(un
     return participated;
 }
 
-void NexMatchMeshLayerController::NexNotificationEventHandler::AddParticipantPrincipalId(
-    unsigned int sessionId, unsigned long long principalId, unsigned long long stationId,
-    unsigned char participantType)
+void NexMatchMeshLayerController::NexNotificationEventHandler::AddParticipantPrincipalId(unsigned int sessionId,
+                                                                                         unsigned long long principalId,
+                                                                                         unsigned long long stationId,
+                                                                                         unsigned char participantType)
 {
     SessionParticipantInfo* info = GetSessionParticipantInfo(sessionId);
     if (info == 0)
@@ -299,12 +307,12 @@ void NexMatchMeshLayerController::NexNotificationEventHandler::AddParticipantPri
     {
         SessionParticipantInfo::ParticipantList::Node* participantNode =
             static_cast<SessionParticipantInfo::ParticipantList::Node*>(node);
-        if (static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick -
-                                   participantNode->value.m_updateTime.m_tick) >
-                common::TimeSpan::GetTicksPerMSec().m_tick * cExpiredParticipantTimeoutMsec &&
-            participantNode->value.m_participationCount < 0 &&
-            (participantNode->value.m_participationEvent == cParticipationEventDisconnect ||
-             participantNode->value.m_participationEvent == cParticipationEventEndParticipation))
+        if (static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick
+                                   - participantNode->value.m_updateTime.m_tick)
+                > common::TimeSpan::GetTicksPerMSec().m_tick * cExpiredParticipantTimeoutMsec
+            && participantNode->value.m_participationCount < 0
+            && (participantNode->value.m_participationEvent == cParticipationEventDisconnect
+                || participantNode->value.m_participationEvent == cParticipationEventEndParticipation))
             list.Free(participantNode);
         node = next;
         next = node->next;
@@ -366,12 +374,12 @@ void NexMatchMeshLayerController::NexNotificationEventHandler::RemoveParticipant
     {
         SessionParticipantInfo::ParticipantList::Node* participantNode =
             static_cast<SessionParticipantInfo::ParticipantList::Node*>(node);
-        if (static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick -
-                                   participantNode->value.m_updateTime.m_tick) >
-                common::TimeSpan::GetTicksPerMSec().m_tick * cExpiredParticipantTimeoutMsec &&
-            participantNode->value.m_participationCount < 0 &&
-            (participantNode->value.m_participationEvent == cParticipationEventDisconnect ||
-             participantNode->value.m_participationEvent == cParticipationEventEndParticipation))
+        if (static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick
+                                   - participantNode->value.m_updateTime.m_tick)
+                > common::TimeSpan::GetTicksPerMSec().m_tick * cExpiredParticipantTimeoutMsec
+            && participantNode->value.m_participationCount < 0
+            && (participantNode->value.m_participationEvent == cParticipationEventDisconnect
+                || participantNode->value.m_participationEvent == cParticipationEventEndParticipation))
             list.Free(participantNode);
         node = next;
         next = node->next;
@@ -381,8 +389,8 @@ void NexMatchMeshLayerController::NexNotificationEventHandler::RemoveParticipant
         SessionParticipantInfo::Participant* participant = SessionParticipantInfo::ParticipantList::ValueOf(node);
         if (participant->m_principalId == principalId)
         {
-            if (participationEvent == cParticipationEventEndParticipation &&
-                participant->m_participationEvent == cParticipationEventDisconnect)
+            if (participationEvent == cParticipationEventEndParticipation
+                && participant->m_participationEvent == cParticipationEventDisconnect)
             {
                 participant->m_participationEvent = participationEvent;
                 participant->m_updateTime = common::g_piaJobScheduler->m_dispatchTime;
@@ -412,10 +420,10 @@ void NexMatchMeshLayerController::NexNotificationEventHandler::ProcessNotificati
     const nex::NotificationEvent& event)
 {
     const unsigned int eventCategory = event.GetType() / cNotificationTypeCategoryUnit;
-    if (eventCategory != cNotificationTypeParticipation && eventCategory != cNotificationTypeOwnershipChange &&
-        eventCategory != cNotificationTypeGatheringUnregistered && eventCategory != cNotificationTypeHostChange &&
-        eventCategory != cNotificationTypeSystemPasswordChange &&
-        eventCategory != cNotificationTypeSystemPasswordClear && eventCategory != cNotificationTypeSwitchGathering)
+    if (eventCategory != cNotificationTypeParticipation && eventCategory != cNotificationTypeOwnershipChange
+        && eventCategory != cNotificationTypeGatheringUnregistered && eventCategory != cNotificationTypeHostChange
+        && eventCategory != cNotificationTypeSystemPasswordChange
+        && eventCategory != cNotificationTypeSystemPasswordClear && eventCategory != cNotificationTypeSwitchGathering)
         return;
 
     session::Session* piaSession = session::g_piaSession;
@@ -423,10 +431,10 @@ void NexMatchMeshLayerController::NexNotificationEventHandler::ProcessNotificati
     const unsigned int eventSubType = event.GetType() % cNotificationTypeCategoryUnit;
     const unsigned int sessionId = event.GetParam1();
     const unsigned long long principalId = event.GetParam2();
-    NexMatchmakeSession* currentSession =
-        static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
-    NexMatchmakeSession* bufferSession =
-        static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]);
+    NexMatchmakeSession* currentSession = static_cast<NexMatchmakeSession*>(
+        piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
+    NexMatchmakeSession* bufferSession = static_cast<NexMatchmakeSession*>(
+        piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]);
     const unsigned long long localPrincipalId = NexFacade::GetInstance()->GetLocalPrincipalId();
 
     if (!IsIgnoredSessionId(sessionId))
@@ -536,20 +544,19 @@ void NexMatchMeshLayerController::NexNotificationEventHandler::ProcessNotificati
     case cNotificationTypeSwitchGathering:
         if (principalId == localPrincipalId)
             SaveSessionId(sessionId);
-        if (principalId == localPrincipalId &&
-            piaSession->m_sessionId[piaSession->m_currentSessionIndex] != sessionId && bufferSession != 0 &&
-            piaSession->m_matchmakeStatus == cMatchmakeStatusJointSessionProcessing)
+        if (principalId == localPrincipalId && piaSession->m_sessionId[piaSession->m_currentSessionIndex] != sessionId
+            && bufferSession != 0 && piaSession->m_matchmakeStatus == cMatchmakeStatusJointSessionProcessing)
         {
             const unsigned int bufferSessionId = piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0];
             if (bufferSessionId == 0 || bufferSessionId == sessionId)
             {
                 session::g_piaSession->m_meshLayerController->SetBufferSessionId(sessionId);
             }
-            else if (piaSession->m_meshLayerController->GetJointSessionJobPtr() != 0 &&
-                     piaSession->m_meshLayerController->GetJointSessionJobPtr()->IsRunning())
+            else if (piaSession->m_meshLayerController->GetJointSessionJobPtr() != 0
+                     && piaSession->m_meshLayerController->GetJointSessionJobPtr()->IsRunning())
             {
-                session::JointSessionJob* jointSessionJob =
-                    static_cast<session::JointSessionJob*>(piaSession->m_meshLayerController->GetJointSessionJobPtr());
+                session::JointSessionJob* jointSessionJob = static_cast<session::JointSessionJob*>(
+                    piaSession->m_meshLayerController->GetJointSessionJobPtr());
                 jointSessionJob->m_failurePending = true;
                 jointSessionJob->m_pendingFailureResult = cResultOwnerChanged;
             }
@@ -557,8 +564,8 @@ void NexMatchMeshLayerController::NexNotificationEventHandler::ProcessNotificati
         break;
 
     case cNotificationTypeSystemPasswordChange:
-        if (sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex] ||
-            sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0])
+        if (sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex]
+            || sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0])
         {
             common::String password(static_cast<const wchar_t*>(event.m_StringParam));
             piaSession->SetSessionSystemPassword(password);
@@ -568,8 +575,8 @@ void NexMatchMeshLayerController::NexNotificationEventHandler::ProcessNotificati
         break;
 
     case cNotificationTypeSystemPasswordClear:
-        if (sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex] ||
-            sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0])
+        if (sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex]
+            || sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0])
         {
             piaSession->ResetSessionSystemPassword();
             session::Session::NoticeEventCallback(session::Session::cEventTypeSessionSystemPasswordClear,
@@ -582,8 +589,7 @@ void NexMatchMeshLayerController::NexNotificationEventHandler::ProcessNotificati
     }
 }
 
-NexMatchMeshLayerController::NexMatchMeshLayerController()
-    : m_nexFacadeNgsInterface(0)
+NexMatchMeshLayerController::NexMatchMeshLayerController() : m_nexFacadeNgsInterface(0)
 {
     m_notificationEventHandler = common::NewObj<NexNotificationEventHandler>();
 }
@@ -664,12 +670,13 @@ Result NexMatchMeshLayerController::Startup(const session::Session::StartupSetti
     m_ngsInterfaceIndexBoundNexFacade = 0;
 
     session::Session* piaSession = session::g_piaSession;
-    const Result result =
-        static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex])->Initialize();
+    const Result result = static_cast<NexMatchmakeSession*>(
+                              piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex])
+                              ->Initialize();
     if (result != 0)
         return ResultInvalidState();
-    NexMatchmakeSession* bufferMatchmakeSession =
-        static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]);
+    NexMatchmakeSession* bufferMatchmakeSession = static_cast<NexMatchmakeSession*>(
+        piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]);
     if (bufferMatchmakeSession != 0)
     {
         const Result bufferResult = bufferMatchmakeSession->Initialize();
@@ -764,10 +771,9 @@ bool NexMatchMeshLayerController::IsAllStationJoined(unsigned int sessionId)
     const common::ListNode* end = info->m_participantList.Sentinel();
     for (const common::ListNode* node = end->next; node != end; node = node->next)
     {
-        const SessionParticipantInfo::Participant* participant =
-            SessionParticipantInfo::ParticipantList::ValueOf(node);
-        if (participant->m_principalId == participant->m_stationId &&
-            stationIdTable->FindByUniqueIdCore(participant->m_principalId) == 0)
+        const SessionParticipantInfo::Participant* participant = SessionParticipantInfo::ParticipantList::ValueOf(node);
+        if (participant->m_principalId == participant->m_stationId
+            && stationIdTable->FindByUniqueIdCore(participant->m_principalId) == 0)
             return false;
     }
     return true;
@@ -779,7 +785,8 @@ void NexMatchMeshLayerController::Cleanup()
     m_notificationEventHandler->Cleanup();
     MeshLayerController::Cleanup();
     static_cast<NexMatchmakeSession*>(
-        session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex])->Finalize();
+        session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex])
+        ->Finalize();
     NexMatchmakeSession* otherMatchmakeSession = static_cast<NexMatchmakeSession*>(
         session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex == 0]);
     if (otherMatchmakeSession != 0)
@@ -923,4 +930,6 @@ void NexMatchMeshLayerController::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

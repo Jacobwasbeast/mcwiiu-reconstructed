@@ -33,9 +33,15 @@
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 #include "nn/pia/transport/StationConnectionInfoTable.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
-namespace {
+namespace
+{
 enum
 {
     cRandomPortRangeMin = 0xc000,
@@ -82,7 +88,8 @@ common::InetAddress s_noRelayServerAddress;
 NexFacade* NexFacade::s_instance = 0;
 unsigned char* NexFacade::s_instanceMemory = 0;
 
-namespace {
+namespace
+{
 const char* s_natServerHostName1 = "nncs1.app.nintendowifi.net";
 const char* s_natServerHostName2 = "nncs2.app.nintendowifi.net";
 common::SocketAddress s_natServerSocketAddress1;
@@ -125,35 +132,30 @@ Result NexFacade::Initialize()
 {
     void* socketMemory = pead::allocateFromSeadHeap(sizeof(common::Socket), common::HeapManager::GetHeap());
     m_socket = socketMemory != 0 ? ::new (socketMemory) common::Socket() : 0;
-    m_natRelayClientMemory =
-        common::NewArray<unsigned char>(sizeof(nex::NATTraversalRelayClient), cInstanceAlignment);
+    m_natRelayClientMemory = common::NewArray<unsigned char>(sizeof(nex::NATTraversalRelayClient), cInstanceAlignment);
     m_natRelayClient = 0;
-    m_matchmakeExtensionMemory =
-        common::NewArray<unsigned char>(sizeof(nex::MatchmakeExtensionClient), cInstanceAlignment);
+    m_matchmakeExtensionMemory = common::NewArray<unsigned char>(sizeof(nex::MatchmakeExtensionClient),
+                                                                 cInstanceAlignment);
     m_matchmakeExtensionClient = 0;
-    void* natTraverserMemory =
-        pead::allocateFromSeadHeap(sizeof(nat::NatTraverser), common::HeapManager::GetHeap());
+    void* natTraverserMemory = pead::allocateFromSeadHeap(sizeof(nat::NatTraverser), common::HeapManager::GetHeap());
     m_natTraverser = natTraverserMemory != 0 ? ::new (natTraverserMemory) nat::NatTraverser() : 0;
     void* natRelayMemory = pead::allocateFromSeadHeap(sizeof(NexNatRelay), common::HeapManager::GetHeap());
     m_natRelay = natRelayMemory != 0 ? ::new (natRelayMemory) NexNatRelay() : 0;
-    void* notificationDataJobMemory =
-        pead::allocateFromSeadHeap(sizeof(NexNotificationDataJob), common::HeapManager::GetHeap());
-    m_notificationDataJob = notificationDataJobMemory != 0 ?
-        ::new (notificationDataJobMemory) NexNotificationDataJob() : 0;
-    void* resolveJobMemory =
-        pead::allocateFromSeadHeap(sizeof(NexNatServerAddressResolveJob), common::HeapManager::GetHeap());
-    m_natServerAddressResolveJob = resolveJobMemory != 0 ?
-        ::new (resolveJobMemory) NexNatServerAddressResolveJob() : 0;
-    void* matchmakeSessionMemory =
-        pead::allocateFromSeadHeap(sizeof(nex::MatchmakeSession), common::HeapManager::GetHeap());
-    m_matchmakeSession = matchmakeSessionMemory != 0 ?
-        ::new (matchmakeSessionMemory) nex::MatchmakeSession() : 0;
+    void* notificationDataJobMemory = pead::allocateFromSeadHeap(sizeof(NexNotificationDataJob),
+                                                                 common::HeapManager::GetHeap());
+    m_notificationDataJob = notificationDataJobMemory != 0 ? ::new (notificationDataJobMemory) NexNotificationDataJob()
+                                                           : 0;
+    void* resolveJobMemory = pead::allocateFromSeadHeap(sizeof(NexNatServerAddressResolveJob),
+                                                        common::HeapManager::GetHeap());
+    m_natServerAddressResolveJob = resolveJobMemory != 0 ? ::new (resolveJobMemory) NexNatServerAddressResolveJob() : 0;
+    void* matchmakeSessionMemory = pead::allocateFromSeadHeap(sizeof(nex::MatchmakeSession),
+                                                              common::HeapManager::GetHeap());
+    m_matchmakeSession = matchmakeSessionMemory != 0 ? ::new (matchmakeSessionMemory) nex::MatchmakeSession() : 0;
     m_localStationUrl = common::NewObj<nex::StationURL>();
     m_publicStationUrl = common::NewObj<nex::StationURL>();
-    void* replaceUrlContextMemory =
-        pead::allocateFromSeadHeap(sizeof(nex::ProtocolCallContext), common::HeapManager::GetHeap());
-    m_replaceUrlContext = replaceUrlContextMemory != 0 ?
-        ::new (replaceUrlContextMemory) nex::ProtocolCallContext() : 0;
+    void* replaceUrlContextMemory = pead::allocateFromSeadHeap(sizeof(nex::ProtocolCallContext),
+                                                               common::HeapManager::GetHeap());
+    m_replaceUrlContext = replaceUrlContextMemory != 0 ? ::new (replaceUrlContextMemory) nex::ProtocolCallContext() : 0;
     return 0;
 }
 
@@ -365,8 +367,8 @@ unsigned int NexFacade::GetLocalServiceConnectionId() const
 
 bool NexFacade::IsBeginMonitoringDataAvailable() const
 {
-    return session::g_piaMesh == 0 ||
-           (!session::g_piaMesh->IsProcessedAtMeshBegin() && !session::g_piaMesh->IsProcessingLeaveMesh());
+    return session::g_piaMesh == 0
+           || (!session::g_piaMesh->IsProcessedAtMeshBegin() && !session::g_piaMesh->IsProcessingLeaveMesh());
 }
 
 const common::InetAddress& NexFacade::GetRelayServerAddress() const
@@ -380,9 +382,9 @@ bool NexFacade::IsStartNatSessionCompleted() const
 {
     if (m_asyncProcess != 1)
         return false;
-    return m_natSessionContext.m_state == common::CallContext::cStateSuccess ||
-           m_natSessionContext.m_state == common::CallContext::cStateFailure ||
-           m_natSessionContext.m_state == common::CallContext::cStateCancelled;
+    return m_natSessionContext.m_state == common::CallContext::cStateSuccess
+           || m_natSessionContext.m_state == common::CallContext::cStateFailure
+           || m_natSessionContext.m_state == common::CallContext::cStateCancelled;
 }
 
 Result NexFacade::GetStartNatSessionResult() const
@@ -490,9 +492,8 @@ void NexFacade::ClearPersistentGatheringCodeKey()
     nex::MatchmakeExtensionClient::ClearPersistentGatheringCodeKey();
 }
 
-Result NexFacade::UpdateNotificationDataAsync(nex::NotificationEvents::NotificationEvents type,
-                                              unsigned int param1, unsigned int param2,
-                                              const common::String& text)
+Result NexFacade::UpdateNotificationDataAsync(nex::NotificationEvents::NotificationEvents type, unsigned int param1,
+                                              unsigned int param2, const common::String& text)
 {
     if (m_ngsBridge == 0)
         return cResultInvalidState;
@@ -507,8 +508,7 @@ Result NexFacade::UpdateNotificationDataAsync(nex::NotificationEvents::Notificat
     return 0;
 }
 
-Result NexFacade::RetrieveNotificationDataAsync(unsigned char typeMask,
-                                                nex::qList<nex::NotificationEvent>* events)
+Result NexFacade::RetrieveNotificationDataAsync(unsigned char typeMask, nex::qList<nex::NotificationEvent>* events)
 {
     if (m_ngsBridge == 0)
         return cResultInvalidState;
@@ -610,15 +610,13 @@ void NexFacade::CompleteStartNatSession()
     Result result = m_socket->Open();
     if (result != 0)
     {
-        m_natSessionContext.SignalFailure(result == cResultDisconnected ? result :
-                                                                          Result(cResultPortDetectionFailed));
+        m_natSessionContext.SignalFailure(result == cResultDisconnected ? result : Result(cResultPortDetectionFailed));
         return;
     }
     result = m_socket->Bind(port, false);
     if (result != 0)
     {
-        m_natSessionContext.SignalFailure(result == cResultDisconnected ? result :
-                                                                          Result(cResultPortDetectionFailed));
+        m_natSessionContext.SignalFailure(result == cResultDisconnected ? result : Result(cResultPortDetectionFailed));
         return;
     }
     result = m_outputStream->ImportSocket(m_socket);
@@ -713,8 +711,7 @@ void NexFacade::CompleteStartNatSession()
         m_replaceUrlContext->RegisterCompletionCallback(ReplaceURLCompletionCallback, nex::UserContext(), true);
         ngsBridge->ReplaceURL(m_replaceUrlContext, *m_localStationUrl, *m_publicStationUrl);
     }
-    info.m_stationLocation.m_principalId =
-        s_instance->m_matchmakeExtensionClient->GetCredentials()->GetPrincipalID();
+    info.m_stationLocation.m_principalId = s_instance->m_matchmakeExtensionClient->GetCredentials()->GetPrincipalID();
     info.m_localStationLocation.m_principalId =
         s_instance->m_matchmakeExtensionClient->GetCredentials()->GetPrincipalID();
     const unsigned int connectionId = transport::g_piaTransport->GenerateConnectionId();
@@ -927,14 +924,13 @@ bool NexFacade::IsTraversed(unsigned int index) const
 }
 
 bool NexFacade::PrepareNatTraversal(const transport::StationLocation& location,
-                                    const transport::StationConnectionInfo& info,
-                                    common::CallContext* context, bool relay, bool passive,
-                                    StationIndex stationIndex)
+                                    const transport::StationConnectionInfo& info, common::CallContext* context,
+                                    bool relay, bool passive, StationIndex stationIndex)
 {
     if (m_natTraverser == 0)
         return false;
     return m_natTraverser->PrepareNatTraversal(location, info, context, relay, passive,
-                                                 stationIndex == cStationIndexSentinelFE);
+                                               stationIndex == cStationIndexSentinelFE);
 }
 
 bool NexFacade::CheckLatestStationLocation(transport::StationLocation& location)
@@ -1030,4 +1026,6 @@ Result NexFacade::ConvertNexStationUrlToStationConnectionInfo(const nex::qList<n
     return 0;
 }
 
-}}}
+}
+}
+}

@@ -5,7 +5,12 @@
 #include "nn/pia/String.hpp"
 #include "nn/pia/session/JoinSessionSetting.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexJoinSessionSetting : public session::JoinSessionSetting
 {
@@ -37,6 +42,8 @@ public:
     bool m_isOthersBlockListUsed;
 };
 
-}}}
+}
+}
+}
 
 #endif

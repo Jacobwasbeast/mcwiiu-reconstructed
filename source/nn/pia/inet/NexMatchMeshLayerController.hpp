@@ -8,10 +8,31 @@
 #include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace nex { class NgsBridgeInterface; class NotificationEvent; }}
-namespace nn { namespace pia { namespace session { class IMatchmakeSession; }}}
+namespace nn
+{
+namespace nex
+{
+class NgsBridgeInterface;
+class NotificationEvent;
+}
+}
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
+class IMatchmakeSession;
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchMeshLayerController : public session::MeshLayerController
 {
@@ -61,9 +82,7 @@ public:
         class IgnoredSessionIdBuffer
         {
         public:
-            IgnoredSessionIdBuffer() : m_num(0), m_head(0)
-            {
-            }
+            IgnoredSessionIdBuffer() : m_num(0), m_head(0) {}
 
             unsigned int m_num;
             unsigned int m_head;
@@ -115,6 +134,8 @@ private:
     NexNotificationEventHandler* m_notificationEventHandler;
 };
 
-}}}
+}
+}
+}
 
 #endif

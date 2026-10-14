@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 struct DebugSetting
 {
@@ -39,6 +44,8 @@ unsigned char IsInSetupMode();
 DebugSetting* GetDebugSetting();
 void EmbedModuleInfo();
 
-}}}
+}
+}
+}
 
 #endif

@@ -21,7 +21,12 @@
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -224,36 +229,34 @@ inline unsigned int bufferSessionIndex()
 
 inline void unregisterBufferSearchCriteria()
 {
-    static_cast<NexMatchmakeSession*>(
-        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()])->UnregisterSearchCriteria();
+    static_cast<NexMatchmakeSession*>(session::g_piaSession->m_matchmakeSession[bufferSessionIndex()])
+        ->UnregisterSearchCriteria();
 }
 
 inline bool isElapsed(const common::Time& start, int msec)
 {
-    return static_cast<long long>(
-               common::g_piaJobScheduler->m_dispatchTime.m_tick - start.m_tick) >=
-           common::TimeSpan::GetTicksPerMSec().m_tick * msec;
+    return static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - start.m_tick)
+           >= common::TimeSpan::GetTicksPerMSec().m_tick * msec;
 }
 
 inline void setDeadline(common::Time& deadline, int msec)
 {
-    deadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                      common::TimeSpan::GetTicksPerMSec().m_tick * msec;
+    deadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick
+                      + common::TimeSpan::GetTicksPerMSec().m_tick * msec;
 }
 
 inline common::Time deadlineAfter(int msec)
 {
     common::Time deadline;
-    deadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                      common::TimeSpan::GetTicksPerMSec().m_tick * msec;
+    deadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick
+                      + common::TimeSpan::GetTicksPerMSec().m_tick * msec;
     return deadline;
 }
 
 inline common::Time timeBefore(int msec)
 {
     common::Time time;
-    time.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick -
-                  common::TimeSpan::GetTicksPerMSec().m_tick * msec;
+    time.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick - common::TimeSpan::GetTicksPerMSec().m_tick * msec;
     return time;
 }
 
@@ -266,36 +269,40 @@ inline void countRetry(unsigned char& counter)
 }
 }
 
-#define NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(result)                                                  \
-    m_sessionDisconnectDetected = true;                                                                 \
-    m_fieldc8 = cFailurePointSessionStatus;                                                             \
-    m_failureResult = result;                                                                           \
-    RecordMonitoringDataWhenProcessFailure();                                                           \
-    session::g_piaSession->m_meshLayerController->MeshCleanup();                                        \
-    setStep(&NexMatchJointSessionJob::ProcessFailure, "NexMatchJointSessionJob::ProcessFailure");       \
+#define NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(result) \
+    m_sessionDisconnectDetected = true; \
+    m_fieldc8 = cFailurePointSessionStatus; \
+    m_failureResult = result; \
+    RecordMonitoringDataWhenProcessFailure(); \
+    session::g_piaSession->m_meshLayerController->MeshCleanup(); \
+    setStep(&NexMatchJointSessionJob::ProcessFailure, "NexMatchJointSessionJob::ProcessFailure"); \
     return MakeExecuteResult(cExecuteKindContinue)
 
-#define NEX_MATCH_JOINT_SESSION_CHECK_STATUS()                                                          \
-    {                                                                                                   \
-        const unsigned int status = session::g_piaSession->GetStatus();                                 \
-        switch (status)                                                                                 \
-        {                                                                                               \
-        case session::Session::cStatusDisconnectedNetwork:                                              \
+#define NEX_MATCH_JOINT_SESSION_CHECK_STATUS() \
+    { \
+        const unsigned int status = session::g_piaSession->GetStatus(); \
+        switch (status) \
+        { \
+        case session::Session::cStatusDisconnectedNetwork: \
             NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusDisconnectedNetwork); \
-        case session::Session::cStatusUnknown6:                                                         \
-            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown6);            \
-        case session::Session::cStatusUnknown7:                                                         \
-            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown7);            \
-        case session::Session::cStatusUnknown8:                                                         \
-            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown8);            \
-        default:                                                                                        \
-            break;                                                                                      \
-        }                                                                                               \
+        case session::Session::cStatusUnknown6: \
+            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown6); \
+        case session::Session::cStatusUnknown7: \
+            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown7); \
+        case session::Session::cStatusUnknown8: \
+            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown8); \
+        default: \
+            break; \
+        } \
     }
 
 NexMatchJointSessionJob::NexMatchJointSessionJob()
-    : session::JointSessionJob(), m_stationConnectionInfo(), m_failureResult(0),
-      m_jointSessionState(0), m_field1ee(1), m_sessionIdNum(0)
+    : session::JointSessionJob(),
+      m_stationConnectionInfo(),
+      m_failureResult(0),
+      m_jointSessionState(0),
+      m_field1ee(1),
+      m_sessionIdNum(0)
 {
     for (unsigned char i = 0; i < cStationNumMax; ++i)
     {
@@ -374,13 +381,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CallSessionEvent
 
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -389,7 +398,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CallSessionEvent
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -399,24 +410,32 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CallSessionEvent
         m_failureResult = cResultInvalidState;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_processType == session::Session::cProcessTypeDestroyJointSession)
     {
         m_field60 = cProcessStepAnswerToInvitation;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendAnswerToDestroyInvitation), "NexMatchJointSessionJob::SendAnswerToDestroyInvitation"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::SendAnswerToDestroyInvitation),
+                            "NexMatchJointSessionJob::SendAnswerToDestroyInvitation"));
     }
     else if (m_field9c == 0)
     {
         m_field60 = cProcessStepAnswerToInvitation;
         m_jointSessionState = cJointSessionStateAnswerToInvitation;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendAnswerToInvitation), "NexMatchJointSessionJob::SendAnswerToInvitation"));
+        SetCurrentStep(Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendAnswerToInvitation),
+            "NexMatchJointSessionJob::SendAnswerToInvitation"));
     }
     else
     {
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::CloseMatchmakeSession), "NexMatchJointSessionJob::CloseMatchmakeSession"));
+        SetCurrentStep(Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::CloseMatchmakeSession),
+            "NexMatchJointSessionJob::CloseMatchmakeSession"));
     }
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -425,8 +444,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CloseMatchmakeSe
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -464,8 +483,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CloseMatchmakeSe
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    if (IsMigrateJointSessionToSession() &&
-        piaSession->m_matchmakeSession[bufferSessionIndex()]->IsMatchmakeOwner())
+    if (IsMigrateJointSessionToSession() && piaSession->m_matchmakeSession[bufferSessionIndex()]->IsMatchmakeOwner())
     {
         setStep(&NexMatchJointSessionJob::CloseJointSessionParticipation,
                 "NexMatchJointSessionJob::CloseJointSessionParticipation");
@@ -502,8 +520,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCloseMatchma
     }
 
     session::g_piaSession->SetCurrentSessionOpenStatus(session::Session::cSessionOpenStatusParticipationClosed);
-    if (IsMigrateJointSessionToSession() &&
-        piaSession->m_matchmakeSession[bufferSessionIndex()]->IsMatchmakeOwner())
+    if (IsMigrateJointSessionToSession() && piaSession->m_matchmakeSession[bufferSessionIndex()]->IsMatchmakeOwner())
     {
         setStep(&NexMatchJointSessionJob::CloseJointSessionParticipation,
                 "NexMatchJointSessionJob::CloseJointSessionParticipation");
@@ -522,13 +539,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CloseJointSessio
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -537,7 +556,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CloseJointSessio
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -553,30 +574,40 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CloseJointSessio
             m_fieldc8 = cFailurePointCloseJointSessionParticipation;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+            SetCurrentStep(Step(
+                static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCloseJointSessionParticipation), "NexMatchJointSessionJob::WaitCloseJointSessionParticipation"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::WaitCloseJointSessionParticipation),
+                            "NexMatchJointSessionJob::WaitCloseJointSessionParticipation"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_processType == session::Session::cProcessTypeDestroyJointSession)
     {
         setDeadline(m_time188, cDestroyInvitationTimeoutMsec);
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendDestroyInvitation), "NexMatchJointSessionJob::SendDestroyInvitation"));
+        SetCurrentStep(Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendDestroyInvitation),
+            "NexMatchJointSessionJob::SendDestroyInvitation"));
     }
     else if (session::g_piaSession->IsHostMigrationEnabled())
     {
         m_sessionIdNum = session::g_piaSession->m_stationIdStatusTable->GetSessionIdArray(m_sessionIds);
         for (unsigned char i = 0; i < m_sessionIdNum; ++i)
             m_sessionInfoRequested[i] = false;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::GetMatchmakeSessionOwners), "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::GetMatchmakeSessionOwners),
+                            "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
     }
     else
     {
         m_jointSessionState = cJointSessionStateCallSessionEvent;
         setDeadline(m_time188, cInvitationAsCompanionTimeoutMsec);
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendInvitationAsCompanion), "NexMatchJointSessionJob::SendInvitationAsCompanion"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::SendInvitationAsCompanion),
+                            "NexMatchJointSessionJob::SendInvitationAsCompanion"));
     }
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -597,7 +628,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCloseJointSe
             m_failureResult = m_callContext.m_result;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -605,20 +638,26 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCloseJointSe
     if (m_processType == session::Session::cProcessTypeDestroyJointSession)
     {
         setDeadline(m_time188, cDestroyInvitationTimeoutMsec);
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendDestroyInvitation), "NexMatchJointSessionJob::SendDestroyInvitation"));
+        SetCurrentStep(Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendDestroyInvitation),
+            "NexMatchJointSessionJob::SendDestroyInvitation"));
     }
     else if (session::g_piaSession->IsHostMigrationEnabled())
     {
         m_sessionIdNum = session::g_piaSession->m_stationIdStatusTable->GetSessionIdArray(m_sessionIds);
         for (unsigned char i = 0; i < m_sessionIdNum; ++i)
             m_sessionInfoRequested[i] = false;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::GetMatchmakeSessionOwners), "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::GetMatchmakeSessionOwners),
+                            "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
     }
     else
     {
         m_jointSessionState = cJointSessionStateCallSessionEvent;
         setDeadline(m_time188, cInvitationAsCompanionTimeoutMsec);
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendInvitationAsCompanion), "NexMatchJointSessionJob::SendInvitationAsCompanion"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::SendInvitationAsCompanion),
+                            "NexMatchJointSessionJob::SendInvitationAsCompanion"));
     }
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -627,8 +666,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendInvitationAs
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -648,8 +687,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendInvitationAs
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -689,8 +728,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendInvitationAs
     if (stationIdNum > 1)
     {
         Result sendResult = piaSession->m_sessionProtocol->SendInvitationAsCompanion(
-            static_cast<unsigned char>(m_processType), stationIds, stationIdNum,
-            piaSession->m_localStationId, 0, 0);
+            static_cast<unsigned char>(m_processType), stationIds, stationIdNum, piaSession->m_localStationId, 0, 0);
         if (sendResult != cResultSendBufferFull)
         {
             if (sendResult == cResultNoInvitationTarget)
@@ -698,8 +736,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendInvitationAs
                 unsigned short connectedStationNum = 0;
                 for (unsigned short i = 0; i < stationIdNum; ++i)
                 {
-                    if (stationIds[i] != piaSession->m_localStationId &&
-                        piaSession->m_stationIdStatusTable->CheckConnectStatus(stationIds[i]))
+                    if (stationIds[i] != piaSession->m_localStationId
+                        && piaSession->m_stationIdStatusTable->CheckConnectStatus(stationIds[i]))
                     {
                         ++connectedStationNum;
                     }
@@ -733,8 +771,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendInvitationAs
     piaSession->m_stationIdStatusTable->SetSendInvitationStatus(m_leaveStationId, true);
     m_time148 = common::g_piaJobScheduler->m_dispatchTime;
     setDeadline(m_time180, cAnswerToInvitationTimeoutMsec);
-    setStep(&NexMatchJointSessionJob::WaitForAnswerToInvitation,
-            "NexMatchJointSessionJob::WaitForAnswerToInvitation");
+    setStep(&NexMatchJointSessionJob::WaitForAnswerToInvitation, "NexMatchJointSessionJob::WaitForAnswerToInvitation");
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -742,13 +779,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendInvitation
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -757,14 +796,16 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendInvitation
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -787,8 +828,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendInvitation
             ++stationIdNum;
             session::StationIdStatusTable::AnswerStatus answerStatus =
                 piaSession->m_stationIdStatusTable->CheckAnswerStatus(*StationIdList::ValueOf(node));
-            bool invitationSent =
-                piaSession->m_stationIdStatusTable->CheckSendInvitationStatus(*StationIdList::ValueOf(node));
+            bool invitationSent = piaSession->m_stationIdStatusTable->CheckSendInvitationStatus(
+                *StationIdList::ValueOf(node));
             if (answerStatus == session::StationIdStatusTable::cAnswerStatusNone && !invitationSent)
             {
                 pendingStationIds[pendingStationIdNum] = *StationIdList::ValueOf(node);
@@ -800,8 +841,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendInvitation
     if (pendingStationIdNum != 0)
     {
         Result sendResult = piaSession->m_sessionProtocol->SendInvitationAsCompanion(
-            static_cast<unsigned char>(m_processType), stationIds, stationIdNum,
-            piaSession->m_localStationId, pendingStationIds, pendingStationIdNum);
+            static_cast<unsigned char>(m_processType), stationIds, stationIdNum, piaSession->m_localStationId,
+            pendingStationIds, pendingStationIdNum);
         if (sendResult != cResultSendBufferFull && sendResult != 0)
         {
             if (sendResult == cResultNoInvitationTarget)
@@ -816,13 +857,17 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendInvitation
             }
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+            SetCurrentStep(Step(
+                static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
     }
 
     m_time148 = common::g_piaJobScheduler->m_dispatchTime;
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitForAnswerToInvitation), "NexMatchJointSessionJob::WaitForAnswerToInvitation"));
+    SetCurrentStep(Step(
+        static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitForAnswerToInvitation),
+        "NexMatchJointSessionJob::WaitForAnswerToInvitation"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -830,13 +875,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -845,14 +892,16 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -871,8 +920,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
             piaSession->m_stationIdStatusTable->CheckAnswerStatus(*StationIdList::ValueOf(node));
         if (answerStatus == session::StationIdStatusTable::cAnswerStatusNone)
         {
-            if (piaSession->m_stationIdStatusTable->CheckConnectStatus(*StationIdList::ValueOf(node)) &&
-                !answerTimedOut)
+            if (piaSession->m_stationIdStatusTable->CheckConnectStatus(*StationIdList::ValueOf(node))
+                && !answerTimedOut)
             {
                 allAnswered = false;
             }
@@ -883,7 +932,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
             m_failureResult = cResultOwnerChanged;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+            SetCurrentStep(Step(
+                static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
     }
@@ -892,7 +943,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
     {
         if (isElapsed(m_time148, cResendInvitationIntervalMsec))
         {
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::ResendInvitationAsCompanion), "NexMatchJointSessionJob::ResendInvitationAsCompanion"));
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                    &NexMatchJointSessionJob::ResendInvitationAsCompanion),
+                                "NexMatchJointSessionJob::ResendInvitationAsCompanion"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
@@ -904,28 +957,38 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
     {
     case session::Session::cProcessTypeCreateJointSession:
         m_jointSessionState = cJointSessionStateStartMatchmake;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartCreateMatchmakeSession), "NexMatchJointSessionJob::StartCreateMatchmakeSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::StartCreateMatchmakeSession),
+                            "NexMatchJointSessionJob::StartCreateMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     case session::Session::cProcessTypeJoinJointSession:
         m_jointSessionState = cJointSessionStateStartMatchmake;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartJoinMatchmakeSession), "NexMatchJointSessionJob::StartJoinMatchmakeSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::StartJoinMatchmakeSession),
+                            "NexMatchJointSessionJob::StartJoinMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     case session::Session::cProcessTypeJoinRandomJointSession:
         m_jointSessionState = cJointSessionStateStartMatchmake;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartRandomMatchmake), "NexMatchJointSessionJob::StartRandomMatchmake"));
+        SetCurrentStep(Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartRandomMatchmake),
+            "NexMatchJointSessionJob::StartRandomMatchmake"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     case session::Session::cProcessTypeDestroyJointSession:
     case session::Session::cProcessTypeLeaveJointSession:
         m_jointSessionState = cJointSessionStateSendLeaveMeshCompanion;
         setDeadline(m_time170, cLeaveMeshCompanionTimeoutMsec);
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendLeaveMeshCompanion), "NexMatchJointSessionJob::SendLeaveMeshCompanion"));
+        SetCurrentStep(Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendLeaveMeshCompanion),
+            "NexMatchJointSessionJob::SendLeaveMeshCompanion"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     default:
         m_fieldc8 = cFailurePointInvalidProcessType;
         m_failureResult = cResultInvalidState;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 }
@@ -935,13 +998,14 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartRandomMatch
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
     Result result = session::g_piaMesh->CheckConnectionError();
-    if (result != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (result != 0 || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -950,14 +1014,16 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartRandomMatch
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -979,8 +1045,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartRandomMatch
     for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
         const unsigned long long stationId = *StationIdList::ValueOf(node);
-        if (stationId != m_leaveStationId &&
-            piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId))
+        if (stationId != m_leaveStationId && piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId))
         {
             companionStationIds[companionStationIdNum] = stationId;
             ++companionStationIdNum;
@@ -996,11 +1061,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartRandomMatch
         m_fieldc8 = cFailurePointRandomMatchmake;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitRandomMatchmake), "NexMatchJointSessionJob::WaitRandomMatchmake"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitRandomMatchmake),
+             "NexMatchJointSessionJob::WaitRandomMatchmake"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -1052,8 +1121,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartCreateMatch
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
     Result result = session::g_piaMesh->CheckConnectionError();
-    if (result != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (result != 0 || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -1073,8 +1141,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartCreateMatch
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -1096,8 +1164,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartCreateMatch
     for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
         const unsigned long long stationId = *StationIdList::ValueOf(node);
-        if (stationId != m_leaveStationId &&
-            piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId))
+        if (stationId != m_leaveStationId && piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId))
         {
             companionStationIds[companionStationIdNum] = stationId;
             ++companionStationIdNum;
@@ -1127,8 +1194,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateMatchm
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
     unsigned int sessionId = 0;
-    if (!static_cast<NexMatchmakeSession*>(
-             session::g_piaSession->m_matchmakeSession[bufferSessionIndex()])
+    if (!static_cast<NexMatchmakeSession*>(session::g_piaSession->m_matchmakeSession[bufferSessionIndex()])
              ->WaitCreateMatchmakeSessionWithTeam(&sessionId))
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 
@@ -1138,19 +1204,23 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateMatchm
         m_failureResult = m_callContext.m_result;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     m_field98 = sessionId;
     session::g_piaSession->m_sessionId[bufferSessionIndex()] = sessionId;
-    session::g_piaSession->SetBufferSessionOpenStatus(
-        m_field1ee != 0 ? session::Session::cSessionOpenStatusOpen
-                        : session::Session::cSessionOpenStatusParticipationClosed);
+    session::g_piaSession->SetBufferSessionOpenStatus(m_field1ee != 0
+                                                          ? session::Session::cSessionOpenStatusOpen
+                                                          : session::Session::cSessionOpenStatusParticipationClosed);
     common::g_sessionBeginMonitoringContent.m_metric75 = m_field98;
 
     m_time1a0 = deadlineAfter(cNotificationTimeoutMsec);
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitNotification), "NexMatchJointSessionJob::WaitNotification"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitNotification),
+             "NexMatchJointSessionJob::WaitNotification"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -1159,8 +1229,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartJoinMatchma
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
     Result result = session::g_piaMesh->CheckConnectionError();
-    if (result != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (result != 0 || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -1180,8 +1249,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartJoinMatchma
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -1203,8 +1272,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartJoinMatchma
     for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
         const unsigned long long stationId = *StationIdList::ValueOf(node);
-        if (stationId != m_leaveStationId &&
-            piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId))
+        if (stationId != m_leaveStationId && piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId))
         {
             companionStationIds[companionStationIdNum] = stationId;
             ++companionStationIdNum;
@@ -1212,8 +1280,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartJoinMatchma
     }
 
     result = matchmakeSession->JoinMatchmakeSessionWithTeam(
-        &m_callContext, m_field98, companionStationIds,
-        static_cast<unsigned short>(companionStationIdNum),
+        &m_callContext, m_field98, companionStationIds, static_cast<unsigned short>(companionStationIdNum),
         session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex]);
     if (result != 0)
     {
@@ -1225,8 +1292,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartJoinMatchma
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    setStep(&NexMatchJointSessionJob::WaitJoinMatchmakeSession,
-            "NexMatchJointSessionJob::WaitJoinMatchmakeSession");
+    setStep(&NexMatchJointSessionJob::WaitJoinMatchmakeSession, "NexMatchJointSessionJob::WaitJoinMatchmakeSession");
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -1234,8 +1300,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinMatchmak
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (!static_cast<NexMatchmakeSession*>(
-             session::g_piaSession->m_matchmakeSession[bufferSessionIndex()])
+    if (!static_cast<NexMatchmakeSession*>(session::g_piaSession->m_matchmakeSession[bufferSessionIndex()])
              ->WaitJoinMatchmakeSessionWithTeam())
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 
@@ -1270,19 +1335,18 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitNotification
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    NexMatchMeshLayerController* meshLayerController =
-        static_cast<NexMatchMeshLayerController*>(session::g_piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        session::g_piaSession->m_meshLayerController);
     nex::NgsBridgeInterface* ngsInterface = meshLayerController->GetNgsInterface(0);
-    if (ngsInterface != 0 &&
-        !meshLayerController->IsParticipated(m_field98, ngsInterface->GetPrincipalID()))
+    if (ngsInterface != 0 && !meshLayerController->IsParticipated(m_field98, ngsInterface->GetPrincipalID()))
     {
         meshLayerController->Trace(cTraceJointSessionLevel);
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     common::g_sessionBeginMonitoringContent.m_metric80 = static_cast<unsigned int>(
-        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_fieldc0) /
-        common::TimeSpan::GetTicksPerMSec().m_tick);
+        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_fieldc0)
+        / common::TimeSpan::GetTicksPerMSec().m_tick);
     setStep(&NexMatchJointSessionJob::SendNextSessionId, "NexMatchJointSessionJob::SendNextSessionId");
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -1291,13 +1355,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1306,14 +1372,16 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -1328,7 +1396,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
     {
         m_leaveStationId = m_field1c0;
         m_field9c = 0;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendPreparedForMigrateSession), "NexMatchJointSessionJob::SendPreparedForMigrateSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::SendPreparedForMigrateSession),
+                            "NexMatchJointSessionJob::SendPreparedForMigrateSession"));
         m_field1b8 = 0;
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
@@ -1355,11 +1425,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
         NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(
             piaSession->m_matchmakeSession[bufferSessionIndex()]);
         Result sendResult = piaSession->m_sessionProtocol->SendNextSessionId(
-            static_cast<unsigned char>(m_processType),
-            piaSession->m_sessionId[piaSession->m_currentSessionIndex], m_field98,
-            matchmakeSession->GetMatchmakeOwnerUniqueId(), matchmakeSession->m_matchmakeSessionKey,
-            sizeof(matchmakeSession->m_matchmakeSessionKey), companionStationIds,
-            companionStationIdNum);
+            static_cast<unsigned char>(m_processType), piaSession->m_sessionId[piaSession->m_currentSessionIndex],
+            m_field98, matchmakeSession->GetMatchmakeOwnerUniqueId(), matchmakeSession->m_matchmakeSessionKey,
+            sizeof(matchmakeSession->m_matchmakeSessionKey), companionStationIds, companionStationIdNum);
         if (sendResult != cResultSendBufferFull)
         {
             if (sendResult == cResultNoInvitationTarget)
@@ -1367,8 +1435,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
                 unsigned short connectedStationNum = 0;
                 for (unsigned short i = 0; i < companionStationIdNum; ++i)
                 {
-                    if (companionStationIds[i] != piaSession->m_localStationId &&
-                        piaSession->m_stationIdStatusTable->CheckConnectStatus(companionStationIds[i]))
+                    if (companionStationIds[i] != piaSession->m_localStationId
+                        && piaSession->m_stationIdStatusTable->CheckConnectStatus(companionStationIds[i]))
                     {
                         ++connectedStationNum;
                     }
@@ -1379,7 +1447,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
                     m_failureResult = cResultCommunicationFailed;
                     unregisterBufferSearchCriteria();
                     RecordMonitoringDataWhenProcessFailure();
-                    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+                    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                            &NexMatchJointSessionJob::StartLeaveMesh),
+                                        "NexMatchJointSessionJob::StartLeaveMesh"));
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                 }
             }
@@ -1389,7 +1459,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
                 m_fieldc8 = cFailurePointSendError;
                 unregisterBufferSearchCriteria();
                 RecordMonitoringDataWhenProcessFailure();
-                SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+                SetCurrentStep(Step(
+                    static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                    "NexMatchJointSessionJob::StartLeaveMesh"));
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
         }
@@ -1401,7 +1473,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
     piaSession->m_stationIdStatusTable->SetSendInvitationStatus(piaSession->m_localStationId, true);
     m_time150 = common::g_piaJobScheduler->m_dispatchTime;
     m_time180 = deadlineAfter(cCompanionPrepareTimeoutMsec);
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStationPrepared), "NexMatchJointSessionJob::WaitCompanionStationPrepared"));
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                            &NexMatchJointSessionJob::WaitCompanionStationPrepared),
+                        "NexMatchJointSessionJob::WaitCompanionStationPrepared"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -1409,13 +1483,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1424,14 +1500,16 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -1446,7 +1524,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
         m_leaveStationId = m_field1c0;
         m_field9c = 0;
         m_field1b8 = 0;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendPreparedForMigrateSession), "NexMatchJointSessionJob::SendPreparedForMigrateSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::SendPreparedForMigrateSession),
+                            "NexMatchJointSessionJob::SendPreparedForMigrateSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -1456,10 +1536,10 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
     for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
         const unsigned long long stationId = *StationIdList::ValueOf(node);
-        if (piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId) &&
-            piaSession->m_stationIdStatusTable->CheckPrepareStatus(stationId) ==
-                session::StationIdStatusTable::cPrepareStatusNone &&
-            !piaSession->m_stationIdStatusTable->CheckSendInvitationStatus(stationId))
+        if (piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId)
+            && piaSession->m_stationIdStatusTable->CheckPrepareStatus(stationId)
+                   == session::StationIdStatusTable::cPrepareStatusNone
+            && !piaSession->m_stationIdStatusTable->CheckSendInvitationStatus(stationId))
         {
             companionStationIds[companionStationIdNum] = stationId;
             ++companionStationIdNum;
@@ -1471,9 +1551,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
         NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(
             piaSession->m_matchmakeSession[bufferSessionIndex()]);
         Result sendResult = piaSession->m_sessionProtocol->SendNextSessionId(
-            static_cast<unsigned char>(m_processType),
-            piaSession->m_sessionId[piaSession->m_currentSessionIndex], m_field98,
-            matchmakeSession->GetMatchmakeOwnerUniqueId(), matchmakeSession->m_matchmakeSessionKey,
+            static_cast<unsigned char>(m_processType), piaSession->m_sessionId[piaSession->m_currentSessionIndex],
+            m_field98, matchmakeSession->GetMatchmakeOwnerUniqueId(), matchmakeSession->m_matchmakeSessionKey,
             sizeof(matchmakeSession->m_matchmakeSessionKey), companionStationIds,
             static_cast<unsigned short>(companionStationIdNum));
         if (sendResult != cResultSendBufferFull && sendResult != 0)
@@ -1484,20 +1563,26 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
                 m_failureResult = cResultCommunicationFailed;
                 unregisterBufferSearchCriteria();
                 RecordMonitoringDataWhenProcessFailure();
-                SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+                SetCurrentStep(Step(
+                    static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                    "NexMatchJointSessionJob::StartLeaveMesh"));
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
             m_failureResult = sendResult;
             m_fieldc8 = cFailurePointSendError;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+            SetCurrentStep(Step(
+                static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
     }
 
     m_time150 = common::g_piaJobScheduler->m_dispatchTime;
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStationPrepared), "NexMatchJointSessionJob::WaitCompanionStationPrepared"));
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                            &NexMatchJointSessionJob::WaitCompanionStationPrepared),
+                        "NexMatchJointSessionJob::WaitCompanionStationPrepared"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -1505,13 +1590,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1520,14 +1607,16 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -1542,7 +1631,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
         m_leaveStationId = m_field1c0;
         m_field9c = 0;
         m_field1b8 = 0;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendPreparedForMigrateSession), "NexMatchJointSessionJob::SendPreparedForMigrateSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::SendPreparedForMigrateSession),
+                            "NexMatchJointSessionJob::SendPreparedForMigrateSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -1556,29 +1647,32 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
     for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
         const unsigned long long stationId = *StationIdList::ValueOf(node);
-        if (piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId) &&
-            piaSession->m_stationIdStatusTable->CheckPrepareStatus(stationId) !=
-                session::StationIdStatusTable::cPrepareStatusNotPrepared)
+        if (piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId)
+            && piaSession->m_stationIdStatusTable->CheckPrepareStatus(stationId)
+                   != session::StationIdStatusTable::cPrepareStatusNotPrepared)
         {
             companionStationIds[companionStationIdNum] = stationId;
             ++companionStationIdNum;
         }
     }
 
-    if (piaSession->m_stationIdStatusTable->CheckAllPrepareStatus(
-            companionStationIds, companionStationIdNum) ==
-            session::StationIdStatusTable::cPrepareCheckPending &&
-        !prepareTimedOut)
+    if (piaSession->m_stationIdStatusTable->CheckAllPrepareStatus(companionStationIds, companionStationIdNum)
+            == session::StationIdStatusTable::cPrepareCheckPending
+        && !prepareTimedOut)
     {
         if (isElapsed(m_time150, cNextSessionIdResendIntervalMsec))
         {
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::ResendNextSessionId), "NexMatchJointSessionJob::ResendNextSessionId"));
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                    &NexMatchJointSessionJob::ResendNextSessionId),
+                                "NexMatchJointSessionJob::ResendNextSessionId"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendLeaveMeshCompanion), "NexMatchJointSessionJob::SendLeaveMeshCompanion"));
+    SetCurrentStep(Step(
+        static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendLeaveMeshCompanion),
+        "NexMatchJointSessionJob::SendLeaveMeshCompanion"));
     m_jointSessionState = cJointSessionStateSendLeaveMeshCompanion;
     m_time170 = deadlineAfter(cLeaveMeshCompanionTimeoutMsec);
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
@@ -1588,8 +1682,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendLeaveMeshCom
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -1609,8 +1703,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendLeaveMeshCom
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -1623,23 +1717,18 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendLeaveMeshCom
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 
     session::Session* piaSession = session::g_piaSession;
-    if (m_processType == session::Session::cProcessTypeDestroyJointSession &&
-        piaSession->IsJointSessionHost())
+    if (m_processType == session::Session::cProcessTypeDestroyJointSession && piaSession->IsJointSessionHost())
     {
         bool otherSessionStationRemains = false;
-        session::StationIdStatusTable* stationIdStatusTable =
-            session::g_piaSession->m_stationIdStatusTable;
-        const common::ListNode* entrySentinel =
-            transport::g_piaTransport->m_stationIdTable->m_entries.Sentinel();
-        for (const common::ListNode* node = entrySentinel->next; node != entrySentinel;
-             node = node->next)
+        session::StationIdStatusTable* stationIdStatusTable = session::g_piaSession->m_stationIdStatusTable;
+        const common::ListNode* entrySentinel = transport::g_piaTransport->m_stationIdTable->m_entries.Sentinel();
+        for (const common::ListNode* node = entrySentinel->next; node != entrySentinel; node = node->next)
         {
-            const unsigned long long stationId =
-                transport::StationIdTable::EntryList::ValueOf(node)->stationId;
+            const unsigned long long stationId = transport::StationIdTable::EntryList::ValueOf(node)->stationId;
             unsigned int stationSessionId;
-            if (!stationIdStatusTable->CheckConnectStatus(stationId) &&
-                stationIdStatusTable->GetSessionId(stationId, &stationSessionId) &&
-                stationSessionId != piaSession->m_sessionId[piaSession->m_currentSessionIndex])
+            if (!stationIdStatusTable->CheckConnectStatus(stationId)
+                && stationIdStatusTable->GetSessionId(stationId, &stationSessionId)
+                && stationSessionId != piaSession->m_sessionId[piaSession->m_currentSessionIndex])
             {
                 otherSessionStationRemains = true;
                 break;
@@ -1675,8 +1764,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendLeaveMeshCom
                 unsigned short connectedStationNum = 0;
                 for (unsigned short i = 0; i < companionStationIdNum; ++i)
                 {
-                    if (companionStationIds[i] != piaSession->m_localStationId &&
-                        piaSession->m_stationIdStatusTable->CheckConnectStatus(companionStationIds[i]))
+                    if (companionStationIds[i] != piaSession->m_localStationId
+                        && piaSession->m_stationIdStatusTable->CheckConnectStatus(companionStationIds[i]))
                     {
                         ++connectedStationNum;
                     }
@@ -1687,8 +1776,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendLeaveMeshCom
                     m_failureResult = cResultCommunicationFailed;
                     unregisterBufferSearchCriteria();
                     RecordMonitoringDataWhenProcessFailure();
-                    setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                            "NexMatchJointSessionJob::StartLeaveMesh");
+                    setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                 }
             }
@@ -1698,8 +1786,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendLeaveMeshCom
                 m_fieldc8 = cFailurePointSendError;
                 unregisterBufferSearchCriteria();
                 RecordMonitoringDataWhenProcessFailure();
-                setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                        "NexMatchJointSessionJob::StartLeaveMesh");
+                setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
         }
@@ -1720,8 +1807,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitUntilCompani
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -1746,17 +1833,16 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitUntilCompani
         for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
         {
             const unsigned long long stationId = *StationIdList::ValueOf(node);
-            if (piaSession->m_stationIdStatusTable->CheckAnswerStatus(stationId) ==
-                    session::StationIdStatusTable::cAnswerStatusNone &&
-                piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId))
+            if (piaSession->m_stationIdStatusTable->CheckAnswerStatus(stationId)
+                    == session::StationIdStatusTable::cAnswerStatusNone
+                && piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId))
             {
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
         }
     }
 
-    setStep(&NexMatchJointSessionJob::StartLeavePreviousMesh,
-            "NexMatchJointSessionJob::StartLeavePreviousMesh");
+    setStep(&NexMatchJointSessionJob::StartLeavePreviousMesh, "NexMatchJointSessionJob::StartLeavePreviousMesh");
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindWait, cLeaveMeshWaitIntervalMsec);
 }
 
@@ -1764,8 +1850,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendAnswerToInvi
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -1784,8 +1870,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendAnswerToInvi
     }
 
     session::Session* piaSession = session::g_piaSession;
-    Result sendResult = piaSession->m_sessionProtocol->SendAnswerToInvitation(
-        static_cast<unsigned char>(m_processType), m_leaveStationId, true);
+    Result sendResult = piaSession->m_sessionProtocol->SendAnswerToInvitation(static_cast<unsigned char>(m_processType),
+                                                                              m_leaveStationId, true);
     if (sendResult == cResultSendBufferFull)
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 
@@ -1825,8 +1911,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitNextSessionI
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -1914,8 +2000,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::GetNextMatchmake
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -1954,8 +2040,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMatch
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    session::IMatchmakeSession* matchmakeSession =
-        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
+    session::IMatchmakeSession* matchmakeSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     if (!matchmakeSession->WaitRequestSessionInfo())
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 
@@ -1969,8 +2054,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMatch
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    session::g_piaSession->m_fieldc2[bufferSessionIndex()] =
-        static_cast<unsigned char>(matchmakeSession->GetSessionInfo()->GetMaxParticipantNum());
+    session::g_piaSession->m_fieldc2[bufferSessionIndex()] = static_cast<unsigned char>(
+        matchmakeSession->GetSessionInfo()->GetMaxParticipantNum());
     setStep(&NexMatchJointSessionJob::SendPreparedForMigrateSession,
             "NexMatchJointSessionJob::SendPreparedForMigrateSession");
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
@@ -1987,9 +2072,8 @@ void NexMatchJointSessionJob::PrepareBecomingToLeader()
     {
         const transport::StationIdTable::Entry* entry = transport::StationIdTable::EntryList::ValueOf(node);
         unsigned int sessionId;
-        if (statusTable->CheckConnectStatus(entry->stationId) &&
-            statusTable->GetSessionId(entry->stationId, &sessionId) &&
-            sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
+        if (statusTable->CheckConnectStatus(entry->stationId) && statusTable->GetSessionId(entry->stationId, &sessionId)
+            && sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
         {
             unsigned long long* companionStationId = m_companionStationIdList.Alloc();
             if (companionStationId != 0)
@@ -2007,13 +2091,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2022,7 +2108,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2039,7 +2127,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
             m_failureResult = cResultCommunicationFailed;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+            SetCurrentStep(Step(
+                static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         piaSession->m_stationIdStatusTable->SetPrepareStatus(piaSession->m_localStationId, true);
@@ -2048,7 +2138,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
         m_jointSessionState = cJointSessionStateWaitLeaderLeavesMesh;
         m_field9f = 0;
         m_field60 = cProcessStepWaitLeaderLeavesMesh;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitUntilLeaderLeavesMesh), "NexMatchJointSessionJob::WaitUntilLeaderLeavesMesh"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::WaitUntilLeaderLeavesMesh),
+                            "NexMatchJointSessionJob::WaitUntilLeaderLeavesMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -2058,7 +2150,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2068,7 +2162,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2080,7 +2176,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
     {
         PrepareBecomingToLeader();
         m_field98 = piaSession->m_sessionId[bufferSessionIndex()];
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendNextSessionId), "NexMatchJointSessionJob::SendNextSessionId"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendNextSessionId),
+                 "NexMatchJointSessionJob::SendNextSessionId"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2088,7 +2186,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
     m_field98 = 0;
     session::g_piaSession->m_sessionId[bufferSessionIndex()] = 0;
     m_field60 = cProcessStepWaitNextSessionId;
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitNextSessionId), "NexMatchJointSessionJob::WaitNextSessionId"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitNextSessionId),
+             "NexMatchJointSessionJob::WaitNextSessionId"));
     m_jointSessionState = cJointSessionStateWaitNextSessionId;
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
@@ -2117,8 +2217,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitUntilLeaderL
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    setStep(&NexMatchJointSessionJob::StartLeavePreviousMesh,
-            "NexMatchJointSessionJob::StartLeavePreviousMesh");
+    setStep(&NexMatchJointSessionJob::StartLeavePreviousMesh, "NexMatchJointSessionJob::StartLeavePreviousMesh");
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -2149,8 +2248,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeavePrevio
         leaveResult = mesh->LeaveMeshAsync();
         m_field5c = cLeaveMeshTypeLeave;
     }
-    else if (IsMigrateSessionToJointSession() ||
-             m_processType == session::Session::cProcessTypeDestroyJointSession)
+    else if (IsMigrateSessionToJointSession() || m_processType == session::Session::cProcessTypeDestroyJointSession)
     {
         leaveResult = mesh->DestroyMeshAsync();
         m_field5c = cLeaveMeshTypeDestroy;
@@ -2179,8 +2277,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeavePrevio
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
-    setStep(&NexMatchJointSessionJob::WaitLeavePreviousMesh,
-            "NexMatchJointSessionJob::WaitLeavePreviousMesh");
+    setStep(&NexMatchJointSessionJob::WaitLeavePreviousMesh, "NexMatchJointSessionJob::WaitLeavePreviousMesh");
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -2192,8 +2289,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitLeavePreviou
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -2304,8 +2401,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CallDestroySessi
 
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -2341,8 +2438,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendDestroyInvit
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -2362,8 +2459,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendDestroyInvit
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -2396,8 +2493,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendDestroyInvit
             stationIds[stationIdNum++] = *StationIdList::ValueOf(node);
 
         Result sendResult = piaSession->m_sessionProtocol->SendDestroyInvitation(
-            static_cast<unsigned char>(m_processType), stationIds, stationIdNum,
-            piaSession->m_localStationId, 0, 0);
+            static_cast<unsigned char>(m_processType), stationIds, stationIdNum, piaSession->m_localStationId, 0, 0);
         if (sendResult != cResultSendBufferFull)
         {
             if (sendResult == cResultNoInvitationTarget)
@@ -2405,8 +2501,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendDestroyInvit
                 unsigned short connectedNum = 0;
                 for (unsigned short i = 0; i < stationIdNum; ++i)
                 {
-                    if (stationIds[i] != piaSession->m_localStationId &&
-                        piaSession->m_stationIdStatusTable->CheckConnectStatus(stationIds[i]))
+                    if (stationIds[i] != piaSession->m_localStationId
+                        && piaSession->m_stationIdStatusTable->CheckConnectStatus(stationIds[i]))
                         ++connectedNum;
                 }
                 if (connectedNum != 0)
@@ -2447,8 +2543,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendDestroyInv
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -2468,8 +2564,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendDestroyInv
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -2488,8 +2584,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendDestroyInv
     {
         unsigned long long stationId = *StationIdList::ValueOf(node);
         StationIndex stationIndex = cStationIndexInvalid;
-        if (piaSession->m_stationIdStatusTable->GetStationIndex(stationId, &stationIndex) &&
-            session::g_piaMesh->IsValidStationIndex(stationIndex))
+        if (piaSession->m_stationIdStatusTable->GetStationIndex(stationId, &stationIndex)
+            && session::g_piaMesh->IsValidStationIndex(stationIndex))
         {
             stationIds[stationIdNum++] = stationId;
             session::StationIdStatusTable::AnswerStatus answerStatus =
@@ -2503,8 +2599,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendDestroyInv
     if (resendStationIdNum != 0)
     {
         Result sendResult = piaSession->m_sessionProtocol->SendDestroyInvitation(
-            static_cast<unsigned char>(m_processType), stationIds, stationIdNum,
-            piaSession->m_localStationId, resendStationIds, resendStationIdNum);
+            static_cast<unsigned char>(m_processType), stationIds, stationIdNum, piaSession->m_localStationId,
+            resendStationIds, resendStationIdNum);
         if (sendResult != cResultSendBufferFull && sendResult != 0)
         {
             if (sendResult == cResultNoInvitationTarget)
@@ -2535,8 +2631,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToD
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -2556,8 +2652,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToD
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -2573,8 +2669,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToD
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
         unsigned long long stationId = *StationIdList::ValueOf(node);
-        session::StationIdStatusTable::AnswerStatus answer =
-            piaSession->m_stationIdStatusTable->CheckAnswerStatus(stationId);
+        session::StationIdStatusTable::AnswerStatus answer = piaSession->m_stationIdStatusTable->CheckAnswerStatus(
+            stationId);
         if (answer == session::StationIdStatusTable::cAnswerStatusNone)
         {
             if (piaSession->m_stationIdStatusTable->CheckConnectStatus(stationId) && !answerTimedOut)
@@ -2605,8 +2701,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToD
     PrepareBecomingToLeader();
     m_jointSessionState = cJointSessionStateCallSessionEvent;
     m_time188 = deadlineAfter(cInvitationAsCompanionTimeoutMsec);
-    setStep(&NexMatchJointSessionJob::SendInvitationAsCompanion,
-            "NexMatchJointSessionJob::SendInvitationAsCompanion");
+    setStep(&NexMatchJointSessionJob::SendInvitationAsCompanion, "NexMatchJointSessionJob::SendInvitationAsCompanion");
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -2614,13 +2709,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendAnswerToDest
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2629,7 +2726,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendAnswerToDest
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2645,20 +2744,26 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendAnswerToDest
         m_failureResult = cResultCommunicationFailed;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
     {
         PrepareBecomingToLeader();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::CloseMatchmakeSession), "NexMatchJointSessionJob::CloseMatchmakeSession"));
+        SetCurrentStep(Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::CloseMatchmakeSession),
+            "NexMatchJointSessionJob::CloseMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
     m_time160 = common::g_piaJobScheduler->m_dispatchTime;
     m_field60 = cProcessStepAnswerToInvitation;
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitForInvitationAsCompanion), "NexMatchJointSessionJob::WaitForInvitationAsCompanion"));
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                            &NexMatchJointSessionJob::WaitForInvitationAsCompanion),
+                        "NexMatchJointSessionJob::WaitForInvitationAsCompanion"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -2666,8 +2771,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForInvitatio
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -2687,8 +2792,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForInvitatio
 
     session::Session* piaSession = session::g_piaSession;
     unsigned int hostSessionId;
-    if (!piaSession->m_stationIdStatusTable->GetSessionId(piaSession->GetJointSessionHostStationId(),
-                                                          &hostSessionId))
+    if (!piaSession->m_stationIdStatusTable->GetSessionId(piaSession->GetJointSessionHostStationId(), &hostSessionId))
         hostSessionId = 0;
 
     if (isElapsed(m_time160, cInvitationAsCompanionWaitTimeoutMsec))
@@ -2722,9 +2826,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForInvitatio
                     "NexMatchJointSessionJob::SendInvitationAsCompanion");
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
-        if (session::g_piaSession->m_stationIdStatusTable->GetSessionId(m_field1c0, &hostSessionId) &&
-            hostSessionId != piaSession->m_sessionId[piaSession->m_currentSessionIndex] &&
-            piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
+        if (session::g_piaSession->m_stationIdStatusTable->GetSessionId(m_field1c0, &hostSessionId)
+            && hostSessionId != piaSession->m_sessionId[piaSession->m_currentSessionIndex]
+            && piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
         {
             PrepareBecomingToLeader();
             m_jointSessionState = cJointSessionStateCallSessionEvent;
@@ -2738,8 +2842,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForInvitatio
     if (m_leaveStationId != 0)
     {
         m_field60 = cProcessStepAnswerToInvitation;
-        setStep(&NexMatchJointSessionJob::SendAnswerToInvitation,
-                "NexMatchJointSessionJob::SendAnswerToInvitation");
+        setStep(&NexMatchJointSessionJob::SendAnswerToInvitation, "NexMatchJointSessionJob::SendAnswerToInvitation");
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
@@ -2756,12 +2859,13 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeavePrevio
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    session::IMatchmakeSession* matchmakeSession =
-        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
+    session::IMatchmakeSession* matchmakeSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     unsigned int sessionId = session::g_piaSession->m_sessionId[bufferSessionIndex()];
     Result leaveResult;
     if (!session::g_piaSession->IsHostMigrationEnabled() && matchmakeSession->IsMatchmakeOwner())
@@ -2777,7 +2881,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeavePrevio
 
     if (leaveResult == 0)
     {
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitLeavePreviousMatchmakeSession), "NexMatchJointSessionJob::WaitLeavePreviousMatchmakeSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::WaitLeavePreviousMatchmakeSession),
+                            "NexMatchJointSessionJob::WaitLeavePreviousMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -2785,7 +2891,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeavePrevio
     m_fieldc8 = cFailurePointLeavePreviousMatchmakeSession;
     unregisterBufferSearchCriteria();
     RecordMonitoringDataWhenProcessFailure();
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+             "NexMatchJointSessionJob::StartLeaveMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -2795,16 +2903,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitLeavePreviou
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         m_jointSessionState = cJointSessionStateFinished;
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindFinished);
     }
 
-    session::IMatchmakeSession* matchmakeSession =
-        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
+    session::IMatchmakeSession* matchmakeSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     if (m_field1eb == 0)
     {
         if (!matchmakeSession->WaitLeaveMatchmakeSession())
@@ -2832,14 +2939,20 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitMeshRestart(
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_time198 < common::g_piaJobScheduler->m_dispatchTime)
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::MeshRestart), "NexMatchJointSessionJob::MeshRestart"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::MeshRestart),
+                 "NexMatchJointSessionJob::MeshRestart"));
     if (m_field9c != 0)
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::MeshRestart), "NexMatchJointSessionJob::MeshRestart"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::MeshRestart),
+                 "NexMatchJointSessionJob::MeshRestart"));
     session::g_piaMesh->GetMonitoringDataSender()->SetSendSessionBeginReportRequested(false);
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
@@ -2867,14 +2980,18 @@ void NexMatchJointSessionJob::CheckJoinedOnlyCompanion()
     else
     {
         const common::ListNode* participantSentinel = participantInfo->m_participantList.Sentinel();
-        for (const common::ListNode* participantNode = participantSentinel->next; participantNode != participantSentinel; participantNode = participantNode->next)
+        for (const common::ListNode* participantNode = participantSentinel->next;
+             participantNode != participantSentinel; participantNode = participantNode->next)
         {
-            const SessionParticipantInfo::Participant* participant = SessionParticipantInfo::ParticipantList::ValueOf(participantNode);
+            const SessionParticipantInfo::Participant* participant = SessionParticipantInfo::ParticipantList::ValueOf(
+                participantNode);
             bool isCompanion = false;
             const common::ListNode* companionSentinel = m_companionStationIdList.Sentinel();
-            for (const common::ListNode* companionNode = companionSentinel->next; companionNode != companionSentinel; companionNode = companionNode->next)
+            for (const common::ListNode* companionNode = companionSentinel->next; companionNode != companionSentinel;
+                 companionNode = companionNode->next)
             {
-                if (participant->m_principalId == *StationIdList::ValueOf(companionNode) && participant->m_participationCount > 0)
+                if (participant->m_principalId == *StationIdList::ValueOf(companionNode)
+                    && participant->m_participationCount > 0)
                 {
                     isCompanion = true;
                     break;
@@ -2916,10 +3033,10 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::MeshRestart()
     if (IsMigrateSessionToJointSession())
     {
         NexFacade::GetInstance()->UpdateGatheringID(piaSession->m_sessionId[bufferSessionIndex()]);
-        NexMatchMeshLayerController* meshLayerController =
-            static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
-        if (!meshLayerController->CheckSessionId(piaSession->m_sessionId[piaSession->m_currentSessionIndex]) ||
-            !meshLayerController->CheckSessionId(piaSession->m_sessionId[bufferSessionIndex()]))
+        NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+            piaSession->m_meshLayerController);
+        if (!meshLayerController->CheckSessionId(piaSession->m_sessionId[piaSession->m_currentSessionIndex])
+            || !meshLayerController->CheckSessionId(piaSession->m_sessionId[bufferSessionIndex()]))
         {
             m_fieldc8 = cFailurePointSessionIdMismatch;
             m_failureResult = cResultOwnerChanged;
@@ -2930,13 +3047,13 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::MeshRestart()
         }
 
         matchmakeSession = piaSession->m_matchmakeSession[bufferSessionIndex()];
-        m_field9d = matchmakeSession->IsMatchmakeOwner() &&
-                    piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner();
+        m_field9d = matchmakeSession->IsMatchmakeOwner()
+                    && piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner();
         if (matchmakeSession->IsMatchmakeOwner())
         {
             m_field1d8 = 0;
-            if (m_field1ed == 0 ||
-                !piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
+            if (m_field1ed == 0
+                || !piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
             {
                 m_time178 = deadlineAfter(cRetryJoinIntervalHostMsec);
                 if (++m_field1e9 > cConnectionInfoRetryMax)
@@ -2944,8 +3061,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::MeshRestart()
                     m_failureResult = cResultOwnerChanged;
                     unregisterBufferSearchCriteria();
                     RecordMonitoringDataWhenProcessFailure();
-                    setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                            "NexMatchJointSessionJob::StartLeaveMesh");
+                    setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                 }
                 setStep(&NexMatchJointSessionJob::WaitStartRetryJoinMesh,
@@ -2960,9 +3076,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::MeshRestart()
             unsigned long long ownerUniqueId = matchmakeSession->GetMatchmakeOwnerUniqueId();
             m_field1d8 = 0;
             unsigned int ownerSessionId;
-            if (piaSession->m_stationIdStatusTable->GetSessionId(ownerUniqueId, &ownerSessionId) &&
-                piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner() &&
-                ownerSessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
+            if (piaSession->m_stationIdStatusTable->GetSessionId(ownerUniqueId, &ownerSessionId)
+                && piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner()
+                && ownerSessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
             {
                 if (!piaSession->m_meshLayerController->IsParticipated(
                         piaSession->m_sessionId[piaSession->m_currentSessionIndex], ownerUniqueId))
@@ -2971,8 +3087,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::MeshRestart()
                     m_failureResult = cResultOwnerChanged;
                     unregisterBufferSearchCriteria();
                     RecordMonitoringDataWhenProcessFailure();
-                    setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                            "NexMatchJointSessionJob::StartLeaveMesh");
+                    setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                 }
                 if (m_field1ed == 0)
@@ -2983,8 +3098,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::MeshRestart()
                         m_failureResult = cResultOwnerChanged;
                         unregisterBufferSearchCriteria();
                         RecordMonitoringDataWhenProcessFailure();
-                        setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                                "NexMatchJointSessionJob::StartLeaveMesh");
+                        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
                         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                     }
                     setStep(&NexMatchJointSessionJob::WaitStartRetryJoinMesh,
@@ -3049,8 +3163,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::MeshRestart()
                         m_failureResult = cResultRequestFailed;
                         unregisterBufferSearchCriteria();
                         RecordMonitoringDataWhenProcessFailure();
-                        setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                                "NexMatchJointSessionJob::StartLeaveMesh");
+                        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
                         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                     }
                 }
@@ -3080,8 +3193,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::MeshRestart()
     else
     {
         m_jointSessionState = cJointSessionStateCreateNextMesh;
-        setStep(&NexMatchJointSessionJob::StartCreateNextMesh,
-                "NexMatchJointSessionJob::StartCreateNextMesh");
+        setStep(&NexMatchJointSessionJob::StartCreateNextMesh, "NexMatchJointSessionJob::StartCreateNextMesh");
     }
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -3095,7 +3207,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartCreateNextM
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3107,12 +3221,16 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartCreateNextM
         m_fieldc8 = cFailurePointCreateNextMesh;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     session::g_piaMesh->SetSkipReport(true);
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCreateNextMesh), "NexMatchJointSessionJob::WaitCreateNextMesh"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCreateNextMesh),
+             "NexMatchJointSessionJob::WaitCreateNextMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -3122,8 +3240,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateNextMe
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -3140,7 +3258,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateNextMe
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3151,7 +3271,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateNextMe
         m_fieldc8 = cFailurePointCreateNextMesh;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3166,10 +3288,12 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateNextMe
         transport::g_piaTransport->m_stationIdTable->SetAvailableEntryNum(
             session::g_piaSession->m_fieldc2[session::g_piaSession->m_currentSessionIndex]);
     }
-    session::g_piaSession->m_stationIdStatusTable->SetMigrationCompleteStatus(
-        session::g_piaSession->m_localStationId, true);
+    session::g_piaSession->m_stationIdStatusTable->SetMigrationCompleteStatus(session::g_piaSession->m_localStationId,
+                                                                              true);
     session::g_piaSession->m_disconnectStatus = 1;
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation),
+             "NexMatchJointSessionJob::WaitCompanionStation"));
     m_jointSessionState = cJointSessionStateWaitCompanionStation;
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -3191,8 +3315,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartGetNextMesh
     if (IsMigrateSessionToJointSession())
         matchmakeSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     else
-        matchmakeSession =
-            session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex];
+        matchmakeSession = session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex];
 
     transport::StationConnectionInfo emptyConnectionInfo;
     m_stationConnectionInfo.SetStationConnectionInfo(emptyConnectionInfo);
@@ -3218,8 +3341,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -3233,8 +3356,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
     if (IsMigrateSessionToJointSession())
         matchmakeSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     else
-        matchmakeSession =
-            session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex];
+        matchmakeSession = session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex];
 
     if (!matchmakeSession->WaitGetStationConnectionInfo(&m_stationConnectionInfo))
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
@@ -3244,7 +3366,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3261,7 +3385,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
                 m_failureResult = cResultOwnerChanged;
                 unregisterBufferSearchCriteria();
                 RecordMonitoringDataWhenProcessFailure();
-                SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+                SetCurrentStep(Step(
+                    static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                    "NexMatchJointSessionJob::StartLeaveMesh"));
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
         }
@@ -3273,7 +3399,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
             else
                 matchmakeSession->SetMatchmakeOwnerUniqueId(hostPrincipalId);
         }
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartJoinNextMesh), "NexMatchJointSessionJob::StartJoinNextMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartJoinNextMesh),
+                 "NexMatchJointSessionJob::StartJoinNextMesh"));
         m_jointSessionState = cJointSessionStateJoinNextMesh;
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
@@ -3284,18 +3412,22 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
         m_failureResult = m_callContext.m_result;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    NexMatchMeshLayerController* meshLayerController =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     if (++m_field1e9 > cConnectionInfoRetryMax)
     {
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3307,7 +3439,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
             m_failureResult = cResultOwnerChanged;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+            SetCurrentStep(Step(
+                static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         if (m_field1d8 == 0)
@@ -3316,7 +3450,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
         }
         else if (piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
         {
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::MeshRestart), "NexMatchJointSessionJob::MeshRestart"));
+            SetCurrentStep(
+                Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::MeshRestart),
+                     "NexMatchJointSessionJob::MeshRestart"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         else
@@ -3332,7 +3468,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
             m_failureResult = cResultOwnerChanged;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+            SetCurrentStep(Step(
+                static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         if (m_field1c8 != 0)
@@ -3340,7 +3478,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
         else
             m_time178 = deadlineAfter(cRetryJoinIntervalHostMsec);
     }
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitStartRetryJoinMesh), "NexMatchJointSessionJob::WaitStartRetryJoinMesh"));
+    SetCurrentStep(Step(
+        static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitStartRetryJoinMesh),
+        "NexMatchJointSessionJob::WaitStartRetryJoinMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -3353,7 +3493,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartJoinNextMes
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3365,12 +3507,16 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartJoinNextMes
         m_fieldc8 = cFailurePointJoinMeshOther;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     session::g_piaMesh->SetSkipReport(true);
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitJoinNextMesh), "NexMatchJointSessionJob::WaitJoinNextMesh"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitJoinNextMesh),
+             "NexMatchJointSessionJob::WaitJoinNextMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -3380,8 +3526,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinNextMesh
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -3406,8 +3552,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinNextMesh
             session::g_piaMesh->CancelJoinMeshAsync();
         }
 
-        if ((IsMigrateSessionToJointSession() && m_field1d8 != 0) ||
-            (IsMigrateJointSessionToSession() && m_field1c8 != 0))
+        if ((IsMigrateSessionToJointSession() && m_field1d8 != 0)
+            || (IsMigrateJointSessionToSession() && m_field1c8 != 0))
         {
             session::g_piaMesh->CancelJoinMeshAsync();
             if (m_field1e8 != cJoinMeshRetryMax)
@@ -3421,10 +3567,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinNextMesh
     Result joinResult = session::g_piaMesh->GetJoinMeshResult();
     if (joinResult != 0)
     {
-        if (joinResult == cResultJoinMesh643F || joinResult == cResultJoinMesh6445 ||
-            joinResult == cResultJoinMesh6444 || joinResult == cResultJoinMesh6443 ||
-            joinResult == cResultJoinMesh6439 || joinResult == cResultJoinMesh644A ||
-            (joinResult == cResultJoinMesh6C05 && m_failurePending == 0))
+        if (joinResult == cResultJoinMesh643F || joinResult == cResultJoinMesh6445 || joinResult == cResultJoinMesh6444
+            || joinResult == cResultJoinMesh6443 || joinResult == cResultJoinMesh6439
+            || joinResult == cResultJoinMesh644A || (joinResult == cResultJoinMesh6C05 && m_failurePending == 0))
         {
             countRetry(common::g_sessionBeginMonitoringContent.m_joinRetryCount);
             ++m_field1e8;
@@ -3433,23 +3578,22 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinNextMesh
                 session::g_piaSession->m_fieldc0 = 1;
                 session::g_piaSession->m_disconnectStatus = 0;
                 session::g_piaMesh->Cleanup();
-                if (IsMigrateSessionToJointSession() && m_field1d8 != 0 &&
-                    session->m_matchmakeSession[session->m_currentSessionIndex]->IsMatchmakeOwner())
+                if (IsMigrateSessionToJointSession() && m_field1d8 != 0
+                    && session->m_matchmakeSession[session->m_currentSessionIndex]->IsMatchmakeOwner())
                 {
                     countRetry(common::g_sessionBeginMonitoringContent.m_ownerChangeRetryCount);
-                    setStep(&NexMatchJointSessionJob::MeshRestart,
-                            "NexMatchJointSessionJob::MeshRestart");
+                    setStep(&NexMatchJointSessionJob::MeshRestart, "NexMatchJointSessionJob::MeshRestart");
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                 }
                 if (m_sessionInfoRetry == 0)
                 {
                     m_time178 = deadlineAfter(cRetryJoinIntervalMsec);
-                    if (joinResult == cResultJoinMesh6439 || joinResult == cResultJoinMesh643F ||
-                        joinResult == cResultJoinMesh6442 || joinResult == cResultJoinMesh6445 ||
-                        joinResult == cResultJoinMesh6443 || joinResult == cResultJoinMesh6444 ||
-                        joinResult == cResultJoinMesh6467 || joinResult == cResultJoinMesh646A ||
-                        joinResult == cResultJoinMesh6468 || joinResult == cResultJoinMesh6469 ||
-                        joinResult == cResultJoinMesh644A)
+                    if (joinResult == cResultJoinMesh6439 || joinResult == cResultJoinMesh643F
+                        || joinResult == cResultJoinMesh6442 || joinResult == cResultJoinMesh6445
+                        || joinResult == cResultJoinMesh6443 || joinResult == cResultJoinMesh6444
+                        || joinResult == cResultJoinMesh6467 || joinResult == cResultJoinMesh646A
+                        || joinResult == cResultJoinMesh6468 || joinResult == cResultJoinMesh6469
+                        || joinResult == cResultJoinMesh644A)
                     {
                         countRetry(common::g_sessionBeginMonitoringContent.m_retryReasonACount);
                     }
@@ -3517,8 +3661,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinNextMesh
         m_failureResult = joinResult;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                "NexMatchJointSessionJob::StartLeaveMesh");
+        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3526,8 +3669,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinNextMesh
         m_fielda3 = 1;
     session->m_stationIdStatusTable->SetMigrationCompleteStatus(session->m_localStationId, true);
     session::g_piaSession->m_disconnectStatus = 1;
-    setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-            "NexMatchJointSessionJob::WaitCompanionStation");
+    setStep(&NexMatchJointSessionJob::WaitCompanionStation, "NexMatchJointSessionJob::WaitCompanionStation");
     m_jointSessionState = cJointSessionStateWaitCompanionStation;
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -3548,8 +3690,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitStartRetryJo
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -3589,8 +3731,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -3610,8 +3752,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -3622,8 +3764,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
 
     if (m_companionStationIdList.GetNodeNum() < cCompanionStationNumMin)
     {
-        setStep(&NexMatchJointSessionJob::WaitHostStationId,
-                "NexMatchJointSessionJob::WaitHostStationId");
+        setStep(&NexMatchJointSessionJob::WaitHostStationId, "NexMatchJointSessionJob::WaitHostStationId");
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -3638,8 +3779,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    NexMatchMeshLayerController* controller =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* controller = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     if (!controller->CheckSessionId(piaSession->m_sessionId[piaSession->m_currentSessionIndex]))
     {
         m_fieldc8 = cFailurePointSessionIdMismatch;
@@ -3652,8 +3793,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
 
     if (IsMigrateSessionToJointSession())
     {
-        if (!controller->CheckSessionId(piaSession->m_sessionId[piaSession->m_currentSessionIndex]) ||
-            !controller->CheckSessionId(piaSession->m_sessionId[bufferSessionIndex()]))
+        if (!controller->CheckSessionId(piaSession->m_sessionId[piaSession->m_currentSessionIndex])
+            || !controller->CheckSessionId(piaSession->m_sessionId[bufferSessionIndex()]))
         {
             m_fieldc8 = cFailurePointSessionIdMismatch;
             m_failureResult = cResultOwnerChanged;
@@ -3673,8 +3814,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    if (!piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner() &&
-        piaSession->m_localStationId == piaSession->m_hostStationId)
+    if (!piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner()
+        && piaSession->m_localStationId == piaSession->m_hostStationId)
     {
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
@@ -3699,8 +3840,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
 
     transport::StationIdTable::Entry ownerEntry;
     if (transport::g_piaTransport->m_stationIdTable->FindByUniqueId(
-            &ownerEntry,
-            piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId()) != 0)
+            &ownerEntry, piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId())
+        != 0)
     {
         m_fieldc8 = cFailurePointNoOwnerEntry;
         m_failureResult = cResultOwnerChanged;
@@ -3757,8 +3898,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitUntilCompani
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    setStep(&NexMatchJointSessionJob::SendCompletionInvitation,
-            "NexMatchJointSessionJob::SendCompletionInvitation");
+    setStep(&NexMatchJointSessionJob::SendCompletionInvitation, "NexMatchJointSessionJob::SendCompletionInvitation");
     m_jointSessionState = cJointSessionStateSendCompletionInvitation;
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -3767,13 +3907,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3782,7 +3924,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3793,25 +3937,31 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (piaSession->m_stationIdStatusTable->CheckConnectStatus(m_leaveStationId))
     {
-        if (piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId() !=
-            m_leaveStationId)
+        if (piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId()
+            != m_leaveStationId)
         {
             if (session::g_piaMesh->GetProcessHostMigrationJobPtr()->m_started)
             {
                 m_time158 = common::g_piaJobScheduler->m_dispatchTime;
-                SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
+                SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                        &NexMatchJointSessionJob::WaitCompanionStation),
+                                    "NexMatchJointSessionJob::WaitCompanionStation"));
                 m_jointSessionState = cJointSessionStateWaitCompanionStation;
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
             }
             m_time158 = timeBefore(cCompanionRewaitElapsedMsec);
             m_jointSessionState = cJointSessionStateWaitCompanionStation;
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                    &NexMatchJointSessionJob::WaitCompanionStation),
+                                "NexMatchJointSessionJob::WaitCompanionStation"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
 
@@ -3826,7 +3976,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
             m_failureResult = cResultCommunicationFailed;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+            SetCurrentStep(Step(
+                static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
 
@@ -3834,7 +3986,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_field60 = cProcessStepWaitCompletionInvitation;
         m_completionDeadline = deadlineAfter(cCompletionTimeoutMsec);
         m_jointSessionState = cJointSessionStateWaitCompletionInvitation;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompletionInvitation), "NexMatchJointSessionJob::WaitCompletionInvitation"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::WaitCompletionInvitation),
+                            "NexMatchJointSessionJob::WaitCompletionInvitation"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -3844,7 +3998,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3854,7 +4010,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
+        SetCurrentStep(
+            Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh),
+                 "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3865,13 +4023,17 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
     if (session::g_piaMesh->GetProcessHostMigrationJobPtr()->m_started)
     {
         m_time158 = common::g_piaJobScheduler->m_dispatchTime;
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
+        SetCurrentStep(Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation),
+            "NexMatchJointSessionJob::WaitCompanionStation"));
         m_jointSessionState = cJointSessionStateWaitCompanionStation;
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
     m_time158 = timeBefore(cCompanionRewaitElapsedMsec);
     m_jointSessionState = cJointSessionStateWaitCompanionStation;
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation),
+             "NexMatchJointSessionJob::WaitCompanionStation"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -3879,8 +4041,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionIn
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -3900,8 +4062,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionIn
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -3924,8 +4086,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionIn
     }
 
     Result sendResult = piaSession->m_sessionProtocol->SendCompletionInvitation(
-        static_cast<unsigned char>(m_processType), stationIds, stationIdNum,
-        piaSession->m_localStationId, 0, 0);
+        static_cast<unsigned char>(m_processType), stationIds, stationIdNum, piaSession->m_localStationId, 0, 0);
     if (sendResult != 0 && sendResult == session::Session::cResultStatusDisconnectedNetwork)
     {
         m_fieldc8 = cFailurePointSessionStatus;
@@ -3950,8 +4111,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToC
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -3971,8 +4132,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToC
 
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
-            m_callerContext->m_state > common::CallContext::cStateCancelled)
+        if (m_callerContext->m_state < common::CallContext::cStateSuccess
+            || m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalCancel();
         m_callerContext = 0;
         unregisterBufferSearchCriteria();
@@ -3996,9 +4157,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToC
     common::ListNode* sentinel = m_companionStationIdList.Sentinel();
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
-        if (piaSession->m_stationIdStatusTable->CheckAnswerStatus(*StationIdList::ValueOf(node)) ==
-                session::StationIdStatusTable::cAnswerStatusNone &&
-            piaSession->m_stationIdStatusTable->CheckConnectStatus(*StationIdList::ValueOf(node)))
+        if (piaSession->m_stationIdStatusTable->CheckAnswerStatus(*StationIdList::ValueOf(node))
+                == session::StationIdStatusTable::cAnswerStatusNone
+            && piaSession->m_stationIdStatusTable->CheckConnectStatus(*StationIdList::ValueOf(node)))
         {
             allAnswered = false;
         }
@@ -4006,8 +4167,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToC
     if (!allAnswered)
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 
-    setStep(&NexMatchJointSessionJob::WaitHostStationId,
-            "NexMatchJointSessionJob::WaitHostStationId");
+    setStep(&NexMatchJointSessionJob::WaitHostStationId, "NexMatchJointSessionJob::WaitHostStationId");
     m_fielda0 = 1;
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -4016,8 +4176,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompletionIn
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -4038,28 +4198,25 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompletionIn
     session::Session* piaSession = session::g_piaSession;
     if (piaSession->m_stationIdStatusTable->CheckConnectStatus(m_leaveStationId))
     {
-        if (piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId() ==
-            m_leaveStationId)
+        if (piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId()
+            == m_leaveStationId)
         {
             if (m_fielda0 == 0)
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
-            setStep(&NexMatchJointSessionJob::WaitHostStationId,
-                    "NexMatchJointSessionJob::WaitHostStationId");
+            setStep(&NexMatchJointSessionJob::WaitHostStationId, "NexMatchJointSessionJob::WaitHostStationId");
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
 
         if (session::g_piaMesh->GetProcessHostMigrationJobPtr()->m_started)
         {
             m_time158 = common::g_piaJobScheduler->m_dispatchTime;
-            setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-                    "NexMatchJointSessionJob::WaitCompanionStation");
+            setStep(&NexMatchJointSessionJob::WaitCompanionStation, "NexMatchJointSessionJob::WaitCompanionStation");
             m_jointSessionState = cJointSessionStateWaitCompanionStation;
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
         m_time158 = timeBefore(cCompanionRewaitElapsedMsec);
         m_jointSessionState = cJointSessionStateWaitCompanionStation;
-        setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-                "NexMatchJointSessionJob::WaitCompanionStation");
+        setStep(&NexMatchJointSessionJob::WaitCompanionStation, "NexMatchJointSessionJob::WaitCompanionStation");
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -4090,14 +4247,12 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompletionIn
     if (session::g_piaMesh->GetProcessHostMigrationJobPtr()->m_started)
     {
         m_time158 = common::g_piaJobScheduler->m_dispatchTime;
-        setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-                "NexMatchJointSessionJob::WaitCompanionStation");
+        setStep(&NexMatchJointSessionJob::WaitCompanionStation, "NexMatchJointSessionJob::WaitCompanionStation");
         m_jointSessionState = cJointSessionStateWaitCompanionStation;
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
     m_time158 = timeBefore(cCompanionRewaitElapsedMsec);
-    setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-            "NexMatchJointSessionJob::WaitCompanionStation");
+    setStep(&NexMatchJointSessionJob::WaitCompanionStation, "NexMatchJointSessionJob::WaitCompanionStation");
     m_jointSessionState = cJointSessionStateWaitCompanionStation;
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -4106,8 +4261,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostStationI
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -4130,11 +4285,10 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostStationI
 
     session::Session* piaSession = session::g_piaSession;
     StationIndex hostStationIndex = session::g_piaMesh->GetHostStationIndex();
-    session::IMatchmakeSession* currentSession =
-        piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex];
+    session::IMatchmakeSession* currentSession = piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex];
     session::IMatchmakeSession* bufferSession = piaSession->m_matchmakeSession[bufferSessionIndex()];
-    NexMatchMeshLayerController* controller =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* controller = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     transport::StationIdTable::Entry entry;
     unsigned long long principalId;
     unsigned long long ownerStationId;
@@ -4182,8 +4336,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostStationI
     }
     else
     {
-        if (!controller->CheckSessionId(piaSession->m_sessionId[piaSession->m_currentSessionIndex]) ||
-            !controller->CheckSessionId(piaSession->m_sessionId[bufferSessionIndex()]))
+        if (!controller->CheckSessionId(piaSession->m_sessionId[piaSession->m_currentSessionIndex])
+            || !controller->CheckSessionId(piaSession->m_sessionId[bufferSessionIndex()]))
         {
             m_fieldc8 = cFailurePointSessionIdMismatch;
             m_failureResult = cResultOwnerChanged;
@@ -4204,8 +4358,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostStationI
         if (!piaSession->m_stationIdStatusTable->CheckConnectStatus(hostStationId))
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 
-        if (transport::g_piaTransport->m_stationIdTable->FindByUniqueId(
-                &entry, currentSession->GetMatchmakeOwnerUniqueId()) != 0)
+        if (transport::g_piaTransport->m_stationIdTable->FindByUniqueId(&entry,
+                                                                        currentSession->GetMatchmakeOwnerUniqueId())
+            != 0)
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         ownerStationId = entry.stationId;
         if (!piaSession->m_stationIdStatusTable->CheckConnectStatus(ownerStationId))
@@ -4246,8 +4401,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostStationI
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
 
-            if (piaSession->m_sessionOpenStatus[bufferSessionIndex()] ==
-                session::Session::cSessionOpenStatusClosed)
+            if (piaSession->m_sessionOpenStatus[bufferSessionIndex()] == session::Session::cSessionOpenStatusClosed)
             {
                 setStep(&NexMatchJointSessionJob::UpdateJointSessionOpenStatus,
                         "NexMatchJointSessionJob::UpdateJointSessionOpenStatus");
@@ -4266,23 +4420,22 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostStationI
                 if (currentSession->GetMatchmakeOwnerUniqueId() != hostStationId)
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
-            else if (ownerStationId == piaSession->m_localStationId &&
-                     !static_cast<NexMatchmakeSession*>(currentSession)->IsMatchmakeHost())
+            else if (ownerStationId == piaSession->m_localStationId
+                     && !static_cast<NexMatchmakeSession*>(currentSession)->IsMatchmakeHost())
             {
-                currentSession->UpdateMatchmakeSessionHost(
-                    piaSession->m_sessionId[piaSession->m_currentSessionIndex]);
+                currentSession->UpdateMatchmakeSessionHost(piaSession->m_sessionId[piaSession->m_currentSessionIndex]);
             }
         }
     }
 
-    if (ownerStationId != piaSession->m_hostStationId &&
-        piaSession->m_stationIdStatusTable->CheckConnectStatus(piaSession->m_hostStationId))
+    if (ownerStationId != piaSession->m_hostStationId
+        && piaSession->m_stationIdStatusTable->CheckConnectStatus(piaSession->m_hostStationId))
     {
         unsigned int meshHostSessionId = 0;
         unsigned int ownerSessionId = 0;
-        if (!piaSession->m_stationIdStatusTable->GetSessionId(piaSession->m_hostStationId, &meshHostSessionId) ||
-            !piaSession->m_stationIdStatusTable->GetSessionId(ownerStationId, &ownerSessionId) ||
-            meshHostSessionId == ownerSessionId)
+        if (!piaSession->m_stationIdStatusTable->GetSessionId(piaSession->m_hostStationId, &meshHostSessionId)
+            || !piaSession->m_stationIdStatusTable->GetSessionId(ownerStationId, &ownerSessionId)
+            || meshHostSessionId == ownerSessionId)
         {
             m_fieldc8 = cFailurePointSameSessionId;
             m_failureResult = cResultOwnerChanged;
@@ -4299,8 +4452,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostStationI
 
 NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::UpdateJointSessionOpenStatus()
 {
-    session::IMatchmakeSession* bufferSession =
-        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
+    session::IMatchmakeSession* bufferSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     if (bufferSession->RequestSessionInfo(&m_callContext, m_field98) != 0)
     {
         m_failureResult = cResultOwnerChanged;
@@ -4317,8 +4469,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::UpdateJointSessi
 
 NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitUpdateJointSessionOpenStatus()
 {
-    session::IMatchmakeSession* bufferSession =
-        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
+    session::IMatchmakeSession* bufferSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     if (!bufferSession->WaitRequestSessionInfo())
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 
@@ -4343,8 +4494,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ProcessComplete(
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -4392,8 +4543,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::GetMatchmakeSess
 
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    if (session::g_piaMesh->CheckConnectionError() != 0 ||
-        session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
+    if (session::g_piaMesh->CheckConnectionError() != 0
+        || session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedSession)
     {
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
@@ -4413,13 +4564,12 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::GetMatchmakeSess
 
     for (unsigned char i = 0; i < m_sessionIdNum; ++i)
     {
-        if (m_sessionIds[i] != piaSession->m_sessionId[piaSession->m_currentSessionIndex] &&
-            !m_sessionInfoRequested[i])
+        if (m_sessionIds[i] != piaSession->m_sessionId[piaSession->m_currentSessionIndex] && !m_sessionInfoRequested[i])
         {
             m_sessionInfoRequested[i] = true;
             Result requestResult = static_cast<NexMatchmakeSession*>(
-                piaSession->m_matchmakeSession[bufferSessionIndex()])
-                ->RequestSessionInfoWithoutPermission(&m_callContext, m_sessionIds[i]);
+                                       piaSession->m_matchmakeSession[bufferSessionIndex()])
+                                       ->RequestSessionInfoWithoutPermission(&m_callContext, m_sessionIds[i]);
             if (requestResult == 0)
             {
                 setStep(&NexMatchJointSessionJob::WaitGetMatchmakeSessionOwners,
@@ -4431,8 +4581,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::GetMatchmakeSess
 
     m_jointSessionState = cJointSessionStateCallSessionEvent;
     setDeadline(m_time188, cInvitationAsCompanionTimeoutMsec);
-    setStep(&NexMatchJointSessionJob::SendInvitationAsCompanion,
-            "NexMatchJointSessionJob::SendInvitationAsCompanion");
+    setStep(&NexMatchJointSessionJob::SendInvitationAsCompanion, "NexMatchJointSessionJob::SendInvitationAsCompanion");
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -4449,10 +4598,14 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetMatchmake
 
     if (m_callContext.m_result != 0)
     {
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::GetMatchmakeSessionOwners), "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::GetMatchmakeSessionOwners),
+                            "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
     }
     piaSession->m_stationIdStatusTable->SetSessionHost(matchmakeSession->GetMatchmakeOwnerUniqueId(), true);
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::GetMatchmakeSessionOwners), "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
+    SetCurrentStep(Step(
+        static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::GetMatchmakeSessionOwners),
+        "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -4467,7 +4620,9 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveMesh()
     if (mesh->CheckConnectionError() == cResultConnectionError)
     {
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession),
+                            "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -4491,11 +4646,15 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveMesh()
     if (leaveResult != 0)
     {
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession),
+                            "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitLeaveMesh), "NexMatchJointSessionJob::WaitLeaveMesh"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitLeaveMesh),
+             "NexMatchJointSessionJob::WaitLeaveMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -4534,8 +4693,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitLeaveMesh()
     if (m_field5c == cLeaveMeshTypeLeaveWithHostMigration && leaveResult == 0)
     {
         setDeadline(m_time1a8, cHostMigratedTimeoutMsec);
-        setStep(&NexMatchJointSessionJob::WaitHostMigrated,
-                "NexMatchJointSessionJob::WaitHostMigrated");
+        setStep(&NexMatchJointSessionJob::WaitHostMigrated, "NexMatchJointSessionJob::WaitHostMigrated");
     }
     else
     {
@@ -4552,31 +4710,39 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostMigrated
     session::Session* piaSession = session::g_piaSession;
     if (m_time1a8 <= common::g_piaJobScheduler->m_dispatchTime)
     {
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession),
+                            "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
-    if (m_jointSessionState >= cJointSessionStateLeavePreviousMesh &&
-        m_jointSessionState <= cJointSessionStateJoinNextMesh)
+    if (m_jointSessionState >= cJointSessionStateLeavePreviousMesh
+        && m_jointSessionState <= cJointSessionStateJoinNextMesh)
     {
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession),
+                            "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
     if (static_cast<NexMatchMeshLayerController*>(session::g_piaSession->m_meshLayerController)
             ->GetMatchmakeSessionTotalStations(
-                session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex]) >
-        cHostMigrationStationNumThreshold)
+                session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
+        > cHostMigrationStationNumThreshold)
     {
         if (!piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
         {
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                    &NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession),
+                                "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                            &NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession),
+                        "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -4622,8 +4788,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitLeaveCurrent
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
     session::Session* piaSession = session::g_piaSession;
-    session::IMatchmakeSession* matchmakeSession =
-        piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex];
+    session::IMatchmakeSession* matchmakeSession = piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex];
     if (m_field1eb == 0)
     {
         if (!matchmakeSession->WaitLeaveMatchmakeSession())
@@ -4635,8 +4800,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitLeaveCurrent
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    if (m_callContext.m_state == common::CallContext::cStateFailure &&
-        m_callContext.m_result == cResultRequestFailed)
+    if (m_callContext.m_state == common::CallContext::cStateFailure && m_callContext.m_result == cResultRequestFailed)
     {
         m_failureResult = m_callContext.m_result;
     }
@@ -4654,8 +4818,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveBuffer
     unsigned int bufferSessionId = piaSession->m_sessionId[bufferSessionIndex()];
     if (bufferSessionId != 0)
     {
-        session::IMatchmakeSession* matchmakeSession =
-            session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
+        session::IMatchmakeSession* matchmakeSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
         m_callContext.Reset();
         Result leaveResult;
         if (!session::g_piaSession->IsHostMigrationEnabled() && matchmakeSession->IsMatchmakeOwner())
@@ -4670,15 +4833,17 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveBuffer
         }
         if (leaveResult == 0)
         {
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession), "NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession"));
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                    &NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession),
+                                "NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         if (leaveResult == cResultRequestFailed)
             m_failureResult = leaveResult;
     }
 
-    NexMatchMeshLayerController* meshLayerController =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     if (meshLayerController != 0)
     {
         for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
@@ -4694,8 +4859,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveBuffer
             if (sessionId != piaSession->m_sessionId[piaSession->m_currentSessionIndex])
             {
                 session::g_piaSession->m_sessionId[bufferSessionIndex()] = sessionId;
-                session::IMatchmakeSession* matchmakeSession =
-                    piaSession->m_matchmakeSession[bufferSessionIndex()];
+                session::IMatchmakeSession* matchmakeSession = piaSession->m_matchmakeSession[bufferSessionIndex()];
                 m_callContext.Reset();
                 Result leaveResult;
                 if (!session::g_piaSession->IsHostMigrationEnabled() && matchmakeSession->IsMatchmakeOwner())
@@ -4710,14 +4874,18 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveBuffer
                 }
                 if (leaveResult == 0)
                 {
-                    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession), "NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession"));
+                    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                            &NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession),
+                                        "NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession"));
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                 }
             }
         }
     }
 
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::ProcessFailure), "NexMatchJointSessionJob::ProcessFailure"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::ProcessFailure),
+             "NexMatchJointSessionJob::ProcessFailure"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -4725,8 +4893,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitLeaveBufferM
 {
     NEX_MATCH_JOINT_SESSION_CHECK_STATUS()
 
-    session::IMatchmakeSession* matchmakeSession =
-        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
+    session::IMatchmakeSession* matchmakeSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     if (m_field1eb == 0)
     {
         if (!matchmakeSession->WaitLeaveMatchmakeSession())
@@ -4738,8 +4905,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitLeaveBufferM
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    if (m_callContext.m_state == common::CallContext::cStateFailure &&
-        m_callContext.m_result == cResultRequestFailed)
+    if (m_callContext.m_state == common::CallContext::cStateFailure && m_callContext.m_result == cResultRequestFailed)
     {
         m_failureResult = m_callContext.m_result;
     }
@@ -4890,21 +5056,21 @@ Result NexMatchJointSessionJob::StartupJoinRandomJointSessionImpl(const session:
         return cResultInvalidState;
 
     m_field1ec = 0;
-    NexMatchMeshLayerController* meshLayerController =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     if (meshLayerController != 0)
     {
         for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
         {
-            if (meshLayerController->GetSessionId(i) != 0 &&
-                piaSession->m_sessionId[piaSession->m_currentSessionIndex] != meshLayerController->GetSessionId(i))
+            if (meshLayerController->GetSessionId(i) != 0
+                && piaSession->m_sessionId[piaSession->m_currentSessionIndex] != meshLayerController->GetSessionId(i))
                 m_field1ec = 1;
         }
     }
     CleanupMonitoringData();
 
-    const NexCreateSessionSetting* createSetting =
-        static_cast<const NexCreateSessionSetting*>(setting->GetCreateSessionSetting());
+    const NexCreateSessionSetting* createSetting = static_cast<const NexCreateSessionSetting*>(
+        setting->GetCreateSessionSetting());
     if (createSetting->GetMaxParticipantNum() == 0)
         return cResultInvalidArgument;
     const unsigned short maxParticipantNum = createSetting->GetMaxParticipantNum();
@@ -4914,11 +5080,12 @@ Result NexMatchJointSessionJob::StartupJoinRandomJointSessionImpl(const session:
 
     m_field1ee = createSetting->IsOpenSession();
     if (static_cast<NexMatchmakeSession*>(matchmakeSession)
-            ->ReflectJoinRandomSetting(setting, piaSession->IsHostMigrationEnabled()) != 0)
+            ->ReflectJoinRandomSetting(setting, piaSession->IsHostMigrationEnabled())
+        != 0)
         return cResultInvalidArgument;
 
-    session::g_piaSession->m_fieldc2[bufferSessionIndex()] =
-        static_cast<unsigned char>(maxParticipantNum + extraParticipantNum);
+    session::g_piaSession->m_fieldc2[bufferSessionIndex()] = static_cast<unsigned char>(maxParticipantNum
+                                                                                        + extraParticipantNum);
     if (m_companionStationIdList.GetNodeNum() != 0)
         m_companionStationIdList.Clear();
     const common::ListNode* sentinel = transport::g_piaTransport->m_stationIdTable->m_entries.Sentinel();
@@ -4954,14 +5121,14 @@ Result NexMatchJointSessionJob::StartupCreateJointSessionImpl(const session::Cre
         return cResultInvalidState;
 
     m_field1ec = 0;
-    NexMatchMeshLayerController* meshLayerController =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     if (meshLayerController != 0)
     {
         for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
         {
-            if (meshLayerController->GetSessionId(i) != 0 &&
-                piaSession->m_sessionId[piaSession->m_currentSessionIndex] != meshLayerController->GetSessionId(i))
+            if (meshLayerController->GetSessionId(i) != 0
+                && piaSession->m_sessionId[piaSession->m_currentSessionIndex] != meshLayerController->GetSessionId(i))
                 m_field1ec = 1;
         }
     }
@@ -4979,8 +5146,8 @@ Result NexMatchJointSessionJob::StartupCreateJointSessionImpl(const session::Cre
     static_cast<NexMatchmakeSession*>(matchmakeSession)
         ->ReflectCreateSetting(setting, piaSession->IsHostMigrationEnabled());
 
-    session::g_piaSession->m_fieldc2[bufferSessionIndex()] =
-        static_cast<unsigned char>(maxParticipantNum + extraParticipantNum);
+    session::g_piaSession->m_fieldc2[bufferSessionIndex()] = static_cast<unsigned char>(maxParticipantNum
+                                                                                        + extraParticipantNum);
     if (m_companionStationIdList.GetNodeNum() != 0)
         m_companionStationIdList.Clear();
     const common::ListNode* sentinel = transport::g_piaTransport->m_stationIdTable->m_entries.Sentinel();
@@ -5016,14 +5183,14 @@ Result NexMatchJointSessionJob::StartupJoinJointSessionImpl(const session::JoinS
         return cResultInvalidState;
 
     m_field1ec = 0;
-    NexMatchMeshLayerController* meshLayerController =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     if (meshLayerController != 0)
     {
         for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
         {
-            if (meshLayerController->GetSessionId(i) != 0 &&
-                piaSession->m_sessionId[piaSession->m_currentSessionIndex] != meshLayerController->GetSessionId(i))
+            if (meshLayerController->GetSessionId(i) != 0
+                && piaSession->m_sessionId[piaSession->m_currentSessionIndex] != meshLayerController->GetSessionId(i))
                 m_field1ec = 1;
         }
     }
@@ -5062,15 +5229,15 @@ Result NexMatchJointSessionJob::StartupLeaveJointSessionImpl()
         return cResultInvalidState;
 
     m_field1ec = 0;
-    NexMatchMeshLayerController* meshLayerController =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     if (meshLayerController != 0)
     {
         bool otherSessionFound = false;
         for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
         {
-            if (meshLayerController->GetSessionId(i) != 0 &&
-                piaSession->m_sessionId[bufferSessionIndex()] != meshLayerController->GetSessionId(i))
+            if (meshLayerController->GetSessionId(i) != 0
+                && piaSession->m_sessionId[bufferSessionIndex()] != meshLayerController->GetSessionId(i))
             {
                 otherSessionFound = true;
                 break;
@@ -5090,8 +5257,8 @@ Result NexMatchJointSessionJob::StartupLeaveJointSessionImpl()
         if (stationIdStatusTable->CheckConnectStatus(entry->stationId))
         {
             unsigned int sessionId;
-            if (stationIdStatusTable->GetSessionId(entry->stationId, &sessionId) &&
-                sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
+            if (stationIdStatusTable->GetSessionId(entry->stationId, &sessionId)
+                && sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
             {
                 unsigned long long* companionStationId = m_companionStationIdList.Alloc();
                 if (companionStationId != 0)
@@ -5119,15 +5286,15 @@ Result NexMatchJointSessionJob::StartupDestroyJointSessionImpl()
         return cResultInvalidState;
 
     m_field1ec = 0;
-    NexMatchMeshLayerController* meshLayerController =
-        static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+    NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+        piaSession->m_meshLayerController);
     if (meshLayerController != 0)
     {
         bool otherSessionFound = false;
         for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
         {
-            if (meshLayerController->GetSessionId(i) != 0 &&
-                piaSession->m_sessionId[bufferSessionIndex()] != meshLayerController->GetSessionId(i))
+            if (meshLayerController->GetSessionId(i) != 0
+                && piaSession->m_sessionId[bufferSessionIndex()] != meshLayerController->GetSessionId(i))
             {
                 otherSessionFound = true;
                 break;
@@ -5164,7 +5331,11 @@ Result NexMatchJointSessionJob::StartupDestroyJointSessionImpl()
     return 0;
 }
 
-Result NexMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::ProcessType processType, session::SessionProtocol::MessageType messageType, const unsigned long long* stationIds, unsigned short stationIdNum, unsigned long long senderStationId)
+Result NexMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::ProcessType processType,
+                                                          session::SessionProtocol::MessageType messageType,
+                                                          const unsigned long long* stationIds,
+                                                          unsigned short stationIdNum,
+                                                          unsigned long long senderStationId)
 {
     session::Session* piaSession = session::g_piaSession;
     bool senderIncluded = false;
@@ -5191,15 +5362,15 @@ Result NexMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::Proc
             return cResultInvalidState;
 
         m_field1ec = 0;
-        NexMatchMeshLayerController* meshLayerController =
-            static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+        NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+            piaSession->m_meshLayerController);
         if (meshLayerController != 0)
         {
             bool otherSessionFound = false;
             for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
             {
-                if (meshLayerController->GetSessionId(i) != 0 &&
-                    piaSession->m_sessionId[bufferSessionIndex()] != meshLayerController->GetSessionId(i))
+                if (meshLayerController->GetSessionId(i) != 0
+                    && piaSession->m_sessionId[bufferSessionIndex()] != meshLayerController->GetSessionId(i))
                 {
                     otherSessionFound = true;
                     break;
@@ -5220,8 +5391,8 @@ Result NexMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::Proc
                 if (stationIdStatusTable->CheckConnectStatus(entry->stationId))
                 {
                     unsigned int sessionId;
-                    if (stationIdStatusTable->GetSessionId(entry->stationId, &sessionId) &&
-                        sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
+                    if (stationIdStatusTable->GetSessionId(entry->stationId, &sessionId)
+                        && sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
                     {
                         unsigned long long* companionStationId = m_companionStationIdList.Alloc();
                         if (companionStationId != 0)
@@ -5243,15 +5414,15 @@ Result NexMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::Proc
             return cResultInvalidState;
 
         m_field1ec = 0;
-        NexMatchMeshLayerController* meshLayerController =
-            static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+        NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+            piaSession->m_meshLayerController);
         if (meshLayerController != 0)
         {
             bool otherSessionFound = false;
             for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
             {
-                if (meshLayerController->GetSessionId(i) != 0 &&
-                    piaSession->m_sessionId[bufferSessionIndex()] != meshLayerController->GetSessionId(i))
+                if (meshLayerController->GetSessionId(i) != 0
+                    && piaSession->m_sessionId[bufferSessionIndex()] != meshLayerController->GetSessionId(i))
                 {
                     otherSessionFound = true;
                     break;
@@ -5275,14 +5446,15 @@ Result NexMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::Proc
             return cResultInvalidState;
 
         m_field1ec = 0;
-        NexMatchMeshLayerController* meshLayerController =
-            static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
+        NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(
+            piaSession->m_meshLayerController);
         if (meshLayerController != 0)
         {
             for (unsigned int i = 0; i < meshLayerController->GetSessionIdArraySize(); ++i)
             {
-                if (meshLayerController->GetSessionId(i) != 0 &&
-                    piaSession->m_sessionId[piaSession->m_currentSessionIndex] != meshLayerController->GetSessionId(i))
+                if (meshLayerController->GetSessionId(i) != 0
+                    && piaSession->m_sessionId[piaSession->m_currentSessionIndex]
+                           != meshLayerController->GetSessionId(i))
                     m_field1ec = 1;
             }
         }
@@ -5305,18 +5477,24 @@ Result NexMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::Proc
     return 0;
 }
 
-Result NexMatchJointSessionJob::ReceiveNextSessionIdImpl(session::Session::ProcessType processType, unsigned int sessionId, const unsigned char* applicationData, unsigned char applicationDataSize, unsigned long long senderStationId)
+Result NexMatchJointSessionJob::ReceiveNextSessionIdImpl(session::Session::ProcessType processType,
+                                                         unsigned int sessionId, const unsigned char* applicationData,
+                                                         unsigned char applicationDataSize,
+                                                         unsigned long long senderStationId)
 {
-    session::IMatchmakeSession* matchmakeSession =
-        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
+    session::IMatchmakeSession* matchmakeSession = session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     if (matchmakeSession != 0)
     {
-        static_cast<NexMatchmakeSession*>(matchmakeSession)->SetMatchmakeSessionKey(applicationData, applicationDataSize);
+        static_cast<NexMatchmakeSession*>(matchmakeSession)
+            ->SetMatchmakeSessionKey(applicationData, applicationDataSize);
     }
     return 0;
 }
 
-Result NexMatchJointSessionJob::ReceiveLeaveInvitationImpl(session::Session::ProcessType processType, const unsigned long long* stationIds, unsigned short stationIdNum, unsigned long long senderStationId)
+Result NexMatchJointSessionJob::ReceiveLeaveInvitationImpl(session::Session::ProcessType processType,
+                                                           const unsigned long long* stationIds,
+                                                           unsigned short stationIdNum,
+                                                           unsigned long long senderStationId)
 {
     m_jointSessionState = cJointSessionStatePassiveProcess;
     session::Session* piaSession = session::g_piaSession;
@@ -5346,14 +5524,16 @@ Result NexMatchJointSessionJob::ReceiveLeaveInvitationImpl(session::Session::Pro
     return 0;
 }
 
-Result NexMatchJointSessionJob::ReceiveLeaveMeshInvitationImpl(session::Session::ProcessType processType, unsigned long long senderStationId)
+Result NexMatchJointSessionJob::ReceiveLeaveMeshInvitationImpl(session::Session::ProcessType processType,
+                                                               unsigned long long senderStationId)
 {
     m_jointSessionState = cJointSessionStateLeaveMeshInvitationReceived;
     m_field9f = 1;
     return 0;
 }
 
-Result NexMatchJointSessionJob::ReceiveCompletionResponseImpl(session::Session::ProcessType processType, unsigned long long senderStationId)
+Result NexMatchJointSessionJob::ReceiveCompletionResponseImpl(session::Session::ProcessType processType,
+                                                              unsigned long long senderStationId)
 {
     m_fielda0 = 1;
     return 0;
@@ -5410,9 +5590,8 @@ void NexMatchJointSessionJob::NoticeLeaveEventImpl(unsigned int sessionId, unsig
 
 void NexMatchJointSessionJob::NoticeUnregisterEventImpl(unsigned int sessionId)
 {
-    if ((IsMigrateSessionToJointSession() &&
-         sessionId == session::g_piaSession->m_sessionId[bufferSessionIndex()]) ||
-        sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
+    if ((IsMigrateSessionToJointSession() && sessionId == session::g_piaSession->m_sessionId[bufferSessionIndex()])
+        || sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
     {
         m_pendingFailureResult = cResultOwnerChanged;
         m_failurePending = 1;
@@ -5444,4 +5623,6 @@ void NexMatchJointSessionJob::CleanupImpl()
     }
 }
 
-}}}
+}
+}
+}

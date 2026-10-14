@@ -10,7 +10,12 @@
 #include "nn/pia/transport/StationConnectionInfoTable.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -33,7 +38,8 @@ enum
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, Step function, const char* name)
 {
-    const common::StepSequenceJob::Step step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 }
@@ -100,8 +106,8 @@ InetJoinMeshJob::ExecuteResult InetJoinMeshJob::StartBandwidthCheck()
     for (unsigned short index = 2; index <= m_stationCount; ++index)
     {
         station = transport::g_stationConnectionInfoTable->GetStation(m_stationInfos[m_stationCount - index]);
-        if (station && station->GetStationIndex() != cStationIndexInvalid &&
-            station->GetStationIndex() != static_cast<unsigned int>(session::g_piaMesh->GetLocalStationIndex()))
+        if (station && station->GetStationIndex() != cStationIndexInvalid
+            && station->GetStationIndex() != static_cast<unsigned int>(session::g_piaMesh->GetLocalStationIndex()))
             break;
     }
     if (station)
@@ -122,7 +128,8 @@ InetJoinMeshJob::ExecuteResult InetJoinMeshJob::WaitBandwidthCheck()
         protocol->CancelSend();
         if (session::g_piaMesh->IsHostMigrationEnabled() && session::g_piaMesh->IsHost())
         {
-            SelectStep(m_currentStep, &JoinMeshJob::LeaveMeshWithHostMigration, "InetJoinMeshJob::LeaveMeshWithHostMigration");
+            SelectStep(m_currentStep, &JoinMeshJob::LeaveMeshWithHostMigration,
+                       "InetJoinMeshJob::LeaveMeshWithHostMigration");
             return MakeExecuteResult(cExecuteKindContinue);
         }
         SelectStep(m_currentStep, &JoinMeshJob::LeaveMesh, "InetJoinMeshJob::LeaveMesh");
@@ -155,7 +162,8 @@ InetJoinMeshJob::ExecuteResult InetJoinMeshJob::WaitCheckHostConnection()
     {
         if (session::g_piaMesh->IsHostMigrationEnabled() && session::g_piaMesh->IsHost())
         {
-            SelectStep(m_currentStep, &JoinMeshJob::LeaveMeshWithHostMigration, "InetJoinMeshJob::LeaveMeshWithHostMigration");
+            SelectStep(m_currentStep, &JoinMeshJob::LeaveMeshWithHostMigration,
+                       "InetJoinMeshJob::LeaveMeshWithHostMigration");
             return MakeExecuteResult(cExecuteKindContinue);
         }
         SelectStep(m_currentStep, &JoinMeshJob::LeaveMesh, "InetJoinMeshJob::LeaveMesh");
@@ -167,7 +175,8 @@ InetJoinMeshJob::ExecuteResult InetJoinMeshJob::WaitCheckHostConnection()
         return MakeExecuteResult(cExecuteKindNextStep);
     if (session::g_piaMesh->GetKickoutManageJobPtr()->IsRunning())
         return MakeExecuteResult(cExecuteKindNextStep);
-    transport::Station* host = transport::StationManager::s_pInstance->GetStation(session::g_piaMesh->GetHostStationIndex());
+    transport::Station* host = transport::StationManager::s_pInstance->GetStation(
+        session::g_piaMesh->GetHostStationIndex());
     if (host && host->m_field20 == cConnectedStationState)
     {
         SelectStep(m_currentStep, &JoinMeshJob::CompleteProcess, "InetJoinMeshJob::CompleteProcess");
@@ -182,7 +191,8 @@ InetJoinMeshJob::ExecuteResult InetJoinMeshJob::WaitCheckKickoutJob()
     {
         if (session::g_piaMesh->IsHostMigrationEnabled() && session::g_piaMesh->IsHost())
         {
-            SelectStep(m_currentStep, &JoinMeshJob::LeaveMeshWithHostMigration, "InetJoinMeshJob::LeaveMeshWithHostMigration");
+            SelectStep(m_currentStep, &JoinMeshJob::LeaveMeshWithHostMigration,
+                       "InetJoinMeshJob::LeaveMeshWithHostMigration");
             return MakeExecuteResult(cExecuteKindContinue);
         }
         SelectStep(m_currentStep, &JoinMeshJob::LeaveMesh, "InetJoinMeshJob::LeaveMesh");
@@ -222,4 +232,6 @@ void InetJoinMeshJob::CleanupImpl()
 {
 }
 
-}}}
+}
+}
+}

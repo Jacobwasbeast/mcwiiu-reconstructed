@@ -1,6 +1,11 @@
 #include "nn/pia/inet/NexCommunityInfoList.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 NexCommunityInfoList::~NexCommunityInfoList()
 {
@@ -9,12 +14,30 @@ NexCommunityInfoList::~NexCommunityInfoList()
     common::DeleteArray(m_entries);
 }
 
-session::ICommunityInfo* const* NexCommunityInfoList::Begin() const { return m_entries; }
-session::ICommunityInfo** NexCommunityInfoList::Begin() { return m_entries; }
-session::ICommunityInfo* const* NexCommunityInfoList::End() const { return m_entries + m_size; }
-session::ICommunityInfo** NexCommunityInfoList::End() { return m_entries + m_size; }
-unsigned int NexCommunityInfoList::GetSize() const { return m_size; }
-unsigned int NexCommunityInfoList::GetMaxSize() const { return m_maxSize; }
+session::ICommunityInfo* const* NexCommunityInfoList::Begin() const
+{
+    return m_entries;
+}
+session::ICommunityInfo** NexCommunityInfoList::Begin()
+{
+    return m_entries;
+}
+session::ICommunityInfo* const* NexCommunityInfoList::End() const
+{
+    return m_entries + m_size;
+}
+session::ICommunityInfo** NexCommunityInfoList::End()
+{
+    return m_entries + m_size;
+}
+unsigned int NexCommunityInfoList::GetSize() const
+{
+    return m_size;
+}
+unsigned int NexCommunityInfoList::GetMaxSize() const
+{
+    return m_maxSize;
+}
 
 void NexCommunityInfoList::Clear()
 {
@@ -23,4 +46,6 @@ void NexCommunityInfoList::Clear()
         m_entries[index]->Clear();
 }
 
-}}}
+}
+}
+}

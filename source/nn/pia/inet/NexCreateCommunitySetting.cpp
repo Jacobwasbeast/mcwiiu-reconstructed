@@ -4,7 +4,12 @@
 #include <coreinit/memory.h>
 #include <vector>
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -76,4 +81,6 @@ void NexCreateCommunitySetting::Reset()
     m_stateFlags = 0;
 }
 
-}}}
+}
+}
+}

@@ -8,17 +8,35 @@
 #include "nn/pia/inet/NatRelayInterface.hpp"
 #include "nn/pia/inet/NexNatRelayInterface.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 class InetAddress;
 class ProtocolCallContext;
 class RelaySignatureKey;
 class StationURL;
 template <typename T> class qList;
-}}
+}
+}
 
-namespace nn { namespace pia { namespace transport { class StationLocation; }}}
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
+class StationLocation;
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexNatRelay : public NatRelayInterface
 {
@@ -63,8 +81,8 @@ public:
     virtual bool RemoveRelayEntry(const transport::StationLocation& location);
     virtual void Cleanup();
     virtual void Trace(unsigned long long value);
-    virtual Result Pack(void* buffer, const void* payload, unsigned int payloadSize,
-                        const common::InetAddress& source, const common::InetAddress& destination);
+    virtual Result Pack(void* buffer, const void* payload, unsigned int payloadSize, const common::InetAddress& source,
+                        const common::InetAddress& destination);
     virtual Result Unpack(void* buffer, int* size, common::InetAddress* source);
     const common::InetAddress& GetRelayServerAddress(const common::InetAddress& stationAddress) const;
 
@@ -87,6 +105,8 @@ private:
     common::FixedPooledList<RelayEntry, cRelayEntryNum> m_relayTable;
 };
 
-}}}
+}
+}
+}
 
 #endif

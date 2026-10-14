@@ -4,7 +4,12 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class MonitoringDataSender;
 
@@ -23,6 +28,8 @@ private:
     MonitoringDataSender* m_sender;
 };
 
-}}}
+}
+}
+}
 
 #endif

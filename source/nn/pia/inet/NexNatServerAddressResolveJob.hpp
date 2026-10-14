@@ -6,7 +6,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexNatServerAddressResolveJob : public common::StepSequenceJob
 {
@@ -28,6 +33,8 @@ private:
     Result m_result;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -3,7 +3,12 @@
 #include "nn/pia/inet/NexFacade.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -23,4 +28,6 @@ void InetMissingStationHandler::Execute(transport::StationConnectionInfo* connec
     connectionInfo->Trace(cTraceStation);
 }
 
-}}}
+}
+}
+}

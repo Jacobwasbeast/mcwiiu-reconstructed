@@ -6,7 +6,12 @@
 #include "nn/pia/String.hpp"
 #include "nn/pia/session/CreateCommunitySetting.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexCreateCommunitySetting : public session::CreateCommunitySetting
 {
@@ -54,6 +59,8 @@ private:
     unsigned int m_stateFlags;
 };
 
-}}}
+}
+}
+}
 
 #endif

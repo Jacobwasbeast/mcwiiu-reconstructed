@@ -12,12 +12,16 @@
 #include "nn/pia/inet/NexFacade.hpp"
 #include "nn/pia/inet/NexNatRelay.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 common::InetAddress InetInputStream::s_ignoreAddresses[cIgnoreAddressNum];
 
-InetInputStream::InetInputStream()
-    : common::SocketStreamBase(), common::IPacketInput()
+InetInputStream::InetInputStream() : common::SocketStreamBase(), common::IPacketInput()
 {
     for (unsigned int index = 0; index < cIgnoreAddressNum; ++index)
     {
@@ -84,8 +88,7 @@ Result InetInputStream::Read(common::Packet* packet)
     return readFromSocket(packet);
 }
 
-Result InetInputStream::CalculateCryptoParameter(unsigned char* parameter, unsigned int size,
-                                                 common::Packet* packet)
+Result InetInputStream::CalculateCryptoParameter(unsigned char* parameter, unsigned int size, common::Packet* packet)
 {
     if (size < 12)
         return ResultInvalidArgument();
@@ -104,4 +107,6 @@ void InetInputStream::AddIgnoreAddress(const common::InetAddress& address1, cons
     s_ignoreAddresses[1] = address2;
 }
 
-}}}
+}
+}
+}

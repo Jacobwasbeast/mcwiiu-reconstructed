@@ -4,7 +4,12 @@
 #include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class SessionParticipantInfo
 {
@@ -36,6 +41,8 @@ public:
     common::FixedPooledList<Participant, cParticipantNum> m_participantList;
 };
 
-}}}
+}
+}
+}
 
 #endif

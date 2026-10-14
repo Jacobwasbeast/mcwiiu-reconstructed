@@ -12,7 +12,12 @@
 #include "nn/pia/transport/StationConnectionInfoTable.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -31,8 +36,7 @@ enum
 };
 }
 
-InetOutputStream::InetOutputStream()
-    : common::SocketStreamBase(), common::IPacketOutput()
+InetOutputStream::InetOutputStream() : common::SocketStreamBase(), common::IPacketOutput()
 {
 }
 
@@ -54,10 +58,11 @@ Result InetOutputStream::OnStationConnectionEvent()
         const int index = (*station)->GetStationIndex();
         if (index > transport::cStationNumMax - 1)
             continue;
-        if (NexFacade::GetInstance() != 0 && NexFacade::GetInstance()->IsRelayServiceEnabled() &&
-            NexFacade::GetInstance()->m_natRelay != 0 &&
-            NexFacade::GetInstance()->m_natRelay->GetRelayServerAddress((*station)->m_stationAddress.m_inetAddress)
-                .IsValid())
+        if (NexFacade::GetInstance() != 0 && NexFacade::GetInstance()->IsRelayServiceEnabled()
+            && NexFacade::GetInstance()->m_natRelay != 0
+            && NexFacade::GetInstance()
+                   ->m_natRelay->GetRelayServerAddress((*station)->m_stationAddress.m_inetAddress)
+                   .IsValid())
             continue;
         const common::InetAddress& inetAddress = (*station)->m_stationAddress.m_inetAddress;
         common::SocketAddress address;
@@ -67,8 +72,7 @@ Result InetOutputStream::OnStationConnectionEvent()
     return 0;
 }
 
-Result InetOutputStream::CalculateCryptoParameter(unsigned char* parameter, unsigned int size,
-                                                  common::Packet* packet)
+Result InetOutputStream::CalculateCryptoParameter(unsigned char* parameter, unsigned int size, common::Packet* packet)
 {
     if (size < 12)
         return transport::cResultInvalidArgument;
@@ -191,9 +195,9 @@ Result InetOutputStream::Write(const common::Packet& packet)
     if (address.IsValid())
     {
         Result result;
-        if (NexFacade::GetInstance() != 0 && NexFacade::GetInstance()->IsRelayServiceEnabled() &&
-            NexFacade::GetInstance()->m_natRelay != 0 &&
-            NexFacade::GetInstance()->m_natRelay->GetRelayServerAddress(address).IsValid())
+        if (NexFacade::GetInstance() != 0 && NexFacade::GetInstance()->IsRelayServiceEnabled()
+            && NexFacade::GetInstance()->m_natRelay != 0
+            && NexFacade::GetInstance()->m_natRelay->GetRelayServerAddress(address).IsValid())
             result = SendToRelay(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600);
         else
             result = SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600);
@@ -217,8 +221,8 @@ Result InetOutputStream::Write(const common::Packet& packet)
         }
     }
 
-    if (NexFacade::GetInstance() != 0 && NexFacade::GetInstance()->IsRelayServiceEnabled() &&
-        NexFacade::GetInstance()->m_natRelay != 0)
+    if (NexFacade::GetInstance() != 0 && NexFacade::GetInstance()->IsRelayServiceEnabled()
+        && NexFacade::GetInstance()->m_natRelay != 0)
     {
         const transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
         const unsigned int localIndex = localStation != 0 ? localStation->GetStationIndex() : cStationIndexInvalid;
@@ -227,11 +231,13 @@ Result InetOutputStream::Write(const common::Packet& packet)
         {
             if (index == localIndex || (packet.m_stationBitmap >> index) == 0)
                 continue;
-            transport::Station* station =
-                transport::StationManager::s_pInstance->GetStation(static_cast<StationIndex>(index));
+            transport::Station* station = transport::StationManager::s_pInstance->GetStation(
+                static_cast<StationIndex>(index));
             if (station == 0)
                 continue;
-            if (!NexFacade::GetInstance()->m_natRelay->GetRelayServerAddress(station->m_stationAddress.m_inetAddress).IsValid())
+            if (!NexFacade::GetInstance()
+                     ->m_natRelay->GetRelayServerAddress(station->m_stationAddress.m_inetAddress)
+                     .IsValid())
                 continue;
             Result result = SendToRelay(packet.m_packetData.m_data, packet.m_size,
                                         station->m_stationAddress.m_inetAddress, 0);
@@ -258,4 +264,6 @@ unsigned int InetOutputStream::IsBroadcastSupported() const
     return false;
 }
 
-}}}
+}
+}
+}

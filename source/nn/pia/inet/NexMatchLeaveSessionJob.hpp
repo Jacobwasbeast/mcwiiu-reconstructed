@@ -4,7 +4,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/session/LeaveSessionJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchLeaveSessionJob : public session::LeaveSessionJob
 {
@@ -42,6 +47,8 @@ private:
     bool m_isSessionInfoRequested[cSessionIdMax];
 };
 
-}}}
+}
+}
+}
 
 #endif

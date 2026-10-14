@@ -3,7 +3,12 @@
 
 #include <stdint.h>
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexMatchmakeSession;
 class NexSessionSearchCriteria;
@@ -44,6 +49,8 @@ private:
     unsigned int m_type;
 };
 
-}}}
+}
+}
+}
 
 #endif

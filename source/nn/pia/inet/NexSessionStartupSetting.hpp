@@ -5,7 +5,12 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/transport/Station.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class NexSessionStartupSetting : public session::Session::StartupSetting
 {
@@ -40,6 +45,8 @@ public:
     bool m_recentPlayRecordEnabled;
 };
 
-}}}
+}
+}
+}
 
 #endif

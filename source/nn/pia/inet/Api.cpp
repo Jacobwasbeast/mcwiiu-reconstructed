@@ -7,7 +7,12 @@
 #include "nn/pia/Transport.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 namespace
 {
@@ -117,4 +122,6 @@ void EmbedModuleInfo()
     SetModuleId("[SDK+Nintendo:PIA_INET_5_9_0]");
 }
 
-}}}
+}
+}
+}

@@ -3,7 +3,12 @@
 
 #include "nn/pia/transport/DisconnectStationJob.hpp"
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class InetDisconnectStationJob : public transport::DisconnectStationJob
 {
@@ -14,6 +19,8 @@ public:
     virtual void ProcessDisconnection(transport::Station* station);
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -1,22 +1,39 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_IFACADE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_IFACADE_HPP
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 class InetAddress;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 class StationLocation;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
 class IFacade
 {
 public:
-    virtual ~IFacade()
-    {
-    }
+    virtual ~IFacade() {}
 
     virtual unsigned int GetRandomPortRangeMin() const = 0;
     virtual unsigned int GetRandomPortRangeMax() const = 0;
@@ -29,6 +46,8 @@ public:
     virtual bool IsBeginMonitoringDataAvailable() const = 0;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -4,9 +4,16 @@
 #include <cstring>
 #include <vector>
 
-namespace nn { namespace pia { namespace inet {
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
 
-NexUpdateCommunitySetting::~NexUpdateCommunitySetting() {}
+NexUpdateCommunitySetting::~NexUpdateCommunitySetting()
+{
+}
 
 void NexUpdateCommunitySetting::Reset()
 {
@@ -22,16 +29,45 @@ void NexUpdateCommunitySetting::Reset()
     description.Clear();
 }
 
-void NexUpdateCommunitySetting::Trace(unsigned long long) const {}
-unsigned int NexUpdateCommunitySetting::GetCommunityId() const { return communityId; }
-unsigned short NexUpdateCommunitySetting::GetMinParticipantNum() const { return minParticipantNum; }
-unsigned short NexUpdateCommunitySetting::GetMaxParticipantNum() const { return maxParticipantNum; }
-unsigned int NexUpdateCommunitySetting::GetAttribute(unsigned int index) const { return index < 6 ? attributes[index] : 0; }
-const common::String& NexUpdateCommunitySetting::GetDescription() const { return description; }
-const common::String& NexUpdateCommunitySetting::GetCommunityUserPassword() const { return communityUserPassword; }
-bool NexUpdateCommunitySetting::IsSetCommunityUserPassword() const { return communityUserPasswordSet; }
-const common::DateTime& NexUpdateCommunitySetting::GetParticipaitonStartDate() const { return participationStartDate; }
-const common::DateTime& NexUpdateCommunitySetting::GetParticipaitonEndDate() const { return participationEndDate; }
+void NexUpdateCommunitySetting::Trace(unsigned long long) const
+{
+}
+unsigned int NexUpdateCommunitySetting::GetCommunityId() const
+{
+    return communityId;
+}
+unsigned short NexUpdateCommunitySetting::GetMinParticipantNum() const
+{
+    return minParticipantNum;
+}
+unsigned short NexUpdateCommunitySetting::GetMaxParticipantNum() const
+{
+    return maxParticipantNum;
+}
+unsigned int NexUpdateCommunitySetting::GetAttribute(unsigned int index) const
+{
+    return index < 6 ? attributes[index] : 0;
+}
+const common::String& NexUpdateCommunitySetting::GetDescription() const
+{
+    return description;
+}
+const common::String& NexUpdateCommunitySetting::GetCommunityUserPassword() const
+{
+    return communityUserPassword;
+}
+bool NexUpdateCommunitySetting::IsSetCommunityUserPassword() const
+{
+    return communityUserPasswordSet;
+}
+const common::DateTime& NexUpdateCommunitySetting::GetParticipaitonStartDate() const
+{
+    return participationStartDate;
+}
+const common::DateTime& NexUpdateCommunitySetting::GetParticipaitonEndDate() const
+{
+    return participationEndDate;
+}
 void NexUpdateCommunitySetting::CopyApplicationDataToVector(void* vector) const
 {
     typedef std::vector<unsigned char, nn::nex::MemAllocator<unsigned char> > ByteVector;
@@ -41,6 +77,11 @@ void NexUpdateCommunitySetting::CopyApplicationDataToVector(void* vector) const
     for (unsigned int index = 0; index < applicationDataSize; ++index)
         bytes->push_back(applicationData[index]);
 }
-bool NexUpdateCommunitySetting::IsValid() const { return true; }
+bool NexUpdateCommunitySetting::IsValid() const
+{
+    return true;
+}
 
-}}}
+}
+}
+}
