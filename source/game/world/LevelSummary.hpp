@@ -9,7 +9,8 @@ class LevelData;
 class LevelSummary
 {
 public:
-    LevelSummary(LevelData* levelData, const std::wstring& levelId, const std::wstring& levelName, long long sizeOnDisk, bool requiresConversion);
+    LevelSummary(LevelData* levelData, const std::wstring& levelId, const std::wstring& levelName, long long sizeOnDisk,
+                 bool requiresConversion);
 
     std::wstring getLevelId();
     std::wstring getLevelName();

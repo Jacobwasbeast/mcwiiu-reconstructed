@@ -27,6 +27,7 @@ public:
     bool hasHelpText();
     LevelType* setSelectableByUser(bool selectableByUser);
     bool isSelectable();
+
 private:
     static LevelType* levelTypes[16];
     void _init(int id, const std::wstring& generatorName, int version);

@@ -81,8 +81,8 @@ const DimensionType* NetherDimension::getType() const
 
 int NetherDimension::getXZSize()
 {
-    float quotient = static_cast<float>(mLevel->getLevelData()->getXZSize()) /
-                     static_cast<float>(mLevel->getLevelData()->getHellScale());
+    float quotient = static_cast<float>(mLevel->getLevelData()->getXZSize())
+                     / static_cast<float>(mLevel->getLevelData()->getHellScale());
     float result = ceilf(quotient);
     return static_cast<int>(result);
 }
@@ -96,11 +96,11 @@ AABB* NetherDimension::getPlayerConstraints(const BlockPos& pos)
 
 int NetherDimension::getBlockLightColour()
 {
-    return static_cast<int>(Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_BlockLight_HellDimension));
+    return static_cast<int>(
+        Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_BlockLight_HellDimension));
 }
 
-NetherDimension::NetherDimensionWorldBorder::NetherDimensionWorldBorder(Level* level)
-    : WorldBorder(level)
+NetherDimension::NetherDimensionWorldBorder::NetherDimensionWorldBorder(Level* level) : WorldBorder(level)
 {
 }
 

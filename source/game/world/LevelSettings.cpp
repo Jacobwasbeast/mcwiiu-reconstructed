@@ -2,11 +2,9 @@
 #include "game/world/LevelData.hpp"
 #include "game/core/SuperflatConfig.hpp"
 
-LevelSettings::LevelSettings(long long seed, const GameType* gameType,
-    bool generateMapFeatures, bool hardcore, bool allowCommands,
-    LevelType* levelType, int xzSize, int hellScale, int cloudHeight,
-    bool modernEnd, unsigned char biomeScale, int biomeCentreXChunk,
-    int biomeCentreZChunk)
+LevelSettings::LevelSettings(long long seed, const GameType* gameType, bool generateMapFeatures, bool hardcore,
+                             bool allowCommands, LevelType* levelType, int xzSize, int hellScale, int cloudHeight,
+                             bool modernEnd, unsigned char biomeScale, int biomeCentreXChunk, int biomeCentreZChunk)
     : mSeed(seed),
       mGameType(gameType),
       mGenerateMapFeatures(generateMapFeatures),
@@ -16,27 +14,22 @@ LevelSettings::LevelSettings(long long seed, const GameType* gameType,
       mLevelType(levelType),
       mStartingBonusItems(false)
 {
-    _init(seed, gameType, generateMapFeatures, hardcore, allowCommands,
-          levelType, xzSize, hellScale, cloudHeight, modernEnd, biomeScale,
-          biomeCentreXChunk, biomeCentreZChunk);
+    _init(seed, gameType, generateMapFeatures, hardcore, allowCommands, levelType, xzSize, hellScale, cloudHeight,
+          modernEnd, biomeScale, biomeCentreXChunk, biomeCentreZChunk);
 }
 
 LevelSettings::LevelSettings(LevelData* levelData)
 {
-    _init(levelData->getSeed(), levelData->getGameType(),
-          levelData->isGenerateMapFeatures(), levelData->isHardcore(),
-          levelData->useNewSeaLevel(), levelData->getGeneratorType(),
-          levelData->getXZSize(), levelData->getHellScale(),
+    _init(levelData->getSeed(), levelData->getGameType(), levelData->isGenerateMapFeatures(), levelData->isHardcore(),
+          levelData->useNewSeaLevel(), levelData->getGeneratorType(), levelData->getXZSize(), levelData->getHellScale(),
           levelData->getCloudHeight(), levelData->getModernEnd(),
-          static_cast<unsigned char>(levelData->getBiomeScale()),
-          levelData->getBiomeCentreXChunk(), levelData->getBiomeCentreZChunk());
+          static_cast<unsigned char>(levelData->getBiomeScale()), levelData->getBiomeCentreXChunk(),
+          levelData->getBiomeCentreZChunk());
 }
 
-void LevelSettings::_init(long long seed, const GameType* gameType,
-    bool generateMapFeatures, bool hardcore, bool allowCommands,
-    LevelType* levelType, int xzSize, int hellScale, int cloudHeight,
-    bool modernEnd, unsigned char biomeScale, int biomeCentreXChunk,
-    int biomeCentreZChunk)
+void LevelSettings::_init(long long seed, const GameType* gameType, bool generateMapFeatures, bool hardcore,
+                          bool allowCommands, LevelType* levelType, int xzSize, int hellScale, int cloudHeight,
+                          bool modernEnd, unsigned char biomeScale, int biomeCentreXChunk, int biomeCentreZChunk)
 {
     mGenerateMapFeatures = generateMapFeatures;
     mGameType = gameType;

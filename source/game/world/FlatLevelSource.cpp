@@ -161,7 +161,8 @@ bool FlatLevelSource::isFlat()
 
 LevelChunk* FlatLevelSource::createChunk(int chunkX, int chunkZ)
 {
-    unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(mElementIds.length * sizeof(unsigned short), 0xFFFFFFFF, 0x1000, 4));
+    unsigned short* elementIds = static_cast<unsigned short*>(
+        XPhysicalAlloc(mElementIds.length * sizeof(unsigned short), 0xFFFFFFFF, 0x1000, 4));
     arrayWithLength<unsigned short> elements(elementIds, mElementIds.length);
     XMemCpy(elementIds, mElementIds.data, elements.length * sizeof(unsigned short));
     ChunkPrimer primer(false, elements);
@@ -217,8 +218,8 @@ void FlatLevelSource::postProcess(int chunkX, int chunkZ)
     mPopulationRandom.setSeed(mLevel->getSeed());
     long long xSeed = mPopulationRandom.nextLong() / 2 * 2 + 1;
     long long zSeed = mPopulationRandom.nextLong() / 2 * 2 + 1;
-    mPopulationRandom.setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed) ^
-                              mLevel->getSeed());
+    mPopulationRandom.setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed)
+                              ^ mLevel->getSeed());
 
     ChunkPos chunkPos(chunkX, chunkZ);
     for (StructureMap::iterator feature = mStructureFeatures.begin(); feature != mStructureFeatures.end(); ++feature)
@@ -226,8 +227,8 @@ void FlatLevelSource::postProcess(int chunkX, int chunkZ)
         bool generated = feature->second->postProcess(mLevel, mPopulationRandom, &chunkPos);
         if (dynamic_cast<VillageFeature*>(feature->second) != NULL)
         {
-            bool allowed = std::find(VillageFeature::allowedBiomes.begin(), VillageFeature::allowedBiomes.end(), biome) !=
-                           VillageFeature::allowedBiomes.end();
+            bool allowed = std::find(VillageFeature::allowedBiomes.begin(), VillageFeature::allowedBiomes.end(), biome)
+                           != VillageFeature::allowedBiomes.end();
             villageGenerated = villageGenerated || (generated && allowed);
         }
     }
@@ -255,8 +256,7 @@ void FlatLevelSource::postProcess(int chunkX, int chunkZ)
         for (int index = 0; index < 8; ++index)
         {
             MonsterRoomFeature feature = MonsterRoomFeature();
-            BlockPos pos = origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                         mPopulationRandom.nextInt(128),
+            BlockPos pos = origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128),
                                          mPopulationRandom.nextInt(16) + 8);
             feature.place(mLevel, mPopulationRandom, pos);
         }
@@ -278,15 +278,16 @@ bool FlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
 std::vector<Biome::MobSpawnerData*>* FlatLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
 {
     Biome* biome = mLevel->getBiome(pos);
-    if (mOceanMonument != NULL && category == MobCategory::MONSTER &&
-        mOceanMonument->isInsideBoundingFeature(mLevel, pos))
+    if (mOceanMonument != NULL && category == MobCategory::MONSTER
+        && mOceanMonument->isInsideBoundingFeature(mLevel, pos))
     {
         return mOceanMonument->getEnemies();
     }
     return biome->getMobs(category);
 }
 
-BlockPos* FlatLevelSource::findNearestMapFeature(Level* level, const std::wstring& featureName, const BlockPos& pos, bool findUnexplored)
+BlockPos* FlatLevelSource::findNearestMapFeature(Level* level, const std::wstring& featureName, const BlockPos& pos,
+                                                 bool findUnexplored)
 {
     if (LargeFeature::STRONGHOLD == featureName)
     {
@@ -300,63 +301,72 @@ BlockPos* FlatLevelSource::findNearestMapFeature(Level* level, const std::wstrin
     {
         if (mStructureFeatures.find(LargeFeature::STRONGHOLD) != mStructureFeatures.end())
         {
-            return mStructureFeatures.find(LargeFeature::STRONGHOLD)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+            return mStructureFeatures.find(LargeFeature::STRONGHOLD)
+                ->second->getNearestGeneratedFeature(level, pos, findUnexplored);
         }
     }
     if (LargeFeature::SHIPWRECK == featureName)
     {
         if (mStructureFeatures.find(LargeFeature::SHIPWRECK) != mStructureFeatures.end())
         {
-            return mStructureFeatures.find(LargeFeature::SHIPWRECK)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+            return mStructureFeatures.find(LargeFeature::SHIPWRECK)
+                ->second->getNearestGeneratedFeature(level, pos, findUnexplored);
         }
     }
     if (LargeFeature::MANSION == featureName)
     {
         if (mStructureFeatures.find(LargeFeature::MANSION) != mStructureFeatures.end())
         {
-            return mStructureFeatures.find(LargeFeature::MANSION)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+            return mStructureFeatures.find(LargeFeature::MANSION)
+                ->second->getNearestGeneratedFeature(level, pos, findUnexplored);
         }
     }
     if (LargeFeature::MONUMENT == featureName)
     {
         if (mStructureFeatures.find(LargeFeature::MONUMENT) != mStructureFeatures.end())
         {
-            return mStructureFeatures.find(LargeFeature::MONUMENT)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+            return mStructureFeatures.find(LargeFeature::MONUMENT)
+                ->second->getNearestGeneratedFeature(level, pos, findUnexplored);
         }
     }
     if (LargeFeature::VILLAGE == featureName)
     {
         if (mStructureFeatures.find(LargeFeature::VILLAGE) != mStructureFeatures.end())
         {
-            return mStructureFeatures.find(LargeFeature::VILLAGE)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+            return mStructureFeatures.find(LargeFeature::VILLAGE)
+                ->second->getNearestGeneratedFeature(level, pos, findUnexplored);
         }
     }
     if (LargeFeature::MINESHAFT == featureName)
     {
         if (mStructureFeatures.find(LargeFeature::MINESHAFT) != mStructureFeatures.end())
         {
-            return mStructureFeatures.find(LargeFeature::MINESHAFT)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+            return mStructureFeatures.find(LargeFeature::MINESHAFT)
+                ->second->getNearestGeneratedFeature(level, pos, findUnexplored);
         }
     }
     if (LargeFeature::TEMPLE == featureName)
     {
         if (mStructureFeatures.find(LargeFeature::TEMPLE) != mStructureFeatures.end())
         {
-            return mStructureFeatures.find(LargeFeature::TEMPLE)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+            return mStructureFeatures.find(LargeFeature::TEMPLE)
+                ->second->getNearestGeneratedFeature(level, pos, findUnexplored);
         }
     }
     if (LargeFeature::BURIED_TREASURE == featureName)
     {
         if (mStructureFeatures.find(LargeFeature::BURIED_TREASURE) != mStructureFeatures.end())
         {
-            return mStructureFeatures.find(LargeFeature::BURIED_TREASURE)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+            return mStructureFeatures.find(LargeFeature::BURIED_TREASURE)
+                ->second->getNearestGeneratedFeature(level, pos, findUnexplored);
         }
     }
     if (LargeFeature::RUIN == featureName)
     {
         if (mStructureFeatures.find(LargeFeature::RUIN) != mStructureFeatures.end())
         {
-            return mStructureFeatures.find(LargeFeature::RUIN)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+            return mStructureFeatures.find(LargeFeature::RUIN)
+                ->second->getNearestGeneratedFeature(level, pos, findUnexplored);
         }
     }
     return NULL;

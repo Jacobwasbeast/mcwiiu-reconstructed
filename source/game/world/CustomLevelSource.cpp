@@ -42,38 +42,47 @@ std::vector<Biome::MobSpawnerData*>* CustomLevelSource::getMobsAt(MobCategory*, 
 
 bool CustomLevelSource::isPosInFeature(Level*, const std::wstring& feature, const BlockPos& pos)
 {
-    if (!mGenerateStructures) return false;
+    if (!mGenerateStructures)
+        return false;
     if (LargeFeature::STRONGHOLD == feature)
     {
-        if (mStronghold != NULL) return mStronghold->isInsideFeature(pos);
+        if (mStronghold != NULL)
+            return mStronghold->isInsideFeature(pos);
     }
     if (LargeFeature::SHIPWRECK == feature)
     {
-        if (mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
+        if (mShipwreck != NULL)
+            return mShipwreck->isInsideFeature(pos);
     }
     if (LargeFeature::MANSION == feature)
     {
-        if (mMansion != NULL) return mMansion->isInsideFeature(pos);
+        if (mMansion != NULL)
+            return mMansion->isInsideFeature(pos);
     }
     if (LargeFeature::MONUMENT == feature)
     {
-        if (mMonument != NULL) return mMonument->isInsideFeature(pos);
+        if (mMonument != NULL)
+            return mMonument->isInsideFeature(pos);
     }
     if (LargeFeature::VILLAGE == feature)
     {
-        if (mVillage != NULL) return mVillage->isInsideFeature(pos);
+        if (mVillage != NULL)
+            return mVillage->isInsideFeature(pos);
     }
     if (LargeFeature::MINESHAFT == feature)
     {
-        if (mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
+        if (mMineshaft != NULL)
+            return mMineshaft->isInsideFeature(pos);
     }
     if (LargeFeature::TEMPLE == feature)
     {
-        if (mTemple != NULL) return mTemple->isInsideFeature(pos);
+        if (mTemple != NULL)
+            return mTemple->isInsideFeature(pos);
     }
     if (LargeFeature::RUIN == feature)
     {
-        if (mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
+        if (mOceanRuin != NULL)
+            return mOceanRuin->isInsideFeature(pos);
     }
     return false;
 }

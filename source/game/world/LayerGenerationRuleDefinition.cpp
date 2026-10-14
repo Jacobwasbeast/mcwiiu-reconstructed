@@ -12,8 +12,7 @@
 class LayerFill;
 
 template <class T>
-T* randomUsableElement(Random& random, std::vector<T*>& definitions,
-                       const LayerMetadata& metadata)
+T* randomUsableElement(Random& random, std::vector<T*>& definitions, const LayerMetadata& metadata)
 {
     T* definition;
     do
@@ -26,22 +25,14 @@ T* randomUsableElement(Random& random, std::vector<T*>& definitions,
     return definition;
 }
 
-template LayerAttributeChildRuleDefinition<LayerSize*>*
-randomUsableElement(
-    Random&, std::vector<LayerAttributeChildRuleDefinition<LayerSize*>*>&,
-    const LayerMetadata&);
+template LayerAttributeChildRuleDefinition<LayerSize*>* randomUsableElement(
+    Random&, std::vector<LayerAttributeChildRuleDefinition<LayerSize*>*>&, const LayerMetadata&);
 
-template LayerAttributeChildRuleDefinition<LayerShape*>*
-randomUsableElement(
-    Random&, std::vector<LayerAttributeChildRuleDefinition<LayerShape*>*>&,
-    const LayerMetadata&);
+template LayerAttributeChildRuleDefinition<LayerShape*>* randomUsableElement(
+    Random&, std::vector<LayerAttributeChildRuleDefinition<LayerShape*>*>&, const LayerMetadata&);
 
-template LayerAttributeChildRuleDefinition<LayerFill*>*
-randomUsableElement(
-    Random&, std::vector<LayerAttributeChildRuleDefinition<LayerFill*>*>&,
-    const LayerMetadata&);
+template LayerAttributeChildRuleDefinition<LayerFill*>* randomUsableElement(
+    Random&, std::vector<LayerAttributeChildRuleDefinition<LayerFill*>*>&, const LayerMetadata&);
 
-template LayerAttributeChildRuleDefinition<LayerTheme*>*
-randomUsableElement(
-    Random&, std::vector<LayerAttributeChildRuleDefinition<LayerTheme*>*>&,
-    const LayerMetadata&);
+template LayerAttributeChildRuleDefinition<LayerTheme*>* randomUsableElement(
+    Random&, std::vector<LayerAttributeChildRuleDefinition<LayerTheme*>*>&, const LayerMetadata&);

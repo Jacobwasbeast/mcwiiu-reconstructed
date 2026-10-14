@@ -256,7 +256,8 @@ LevelData::LevelData(CompoundTag* tag)
     if (tag->contains(L"BiomeScale"))
     {
         mBiomeScale = tag->getInt(L"BiomeScale");
-        if (mBiomeScale > 2) mBiomeScale = 0;
+        if (mBiomeScale > 2)
+            mBiomeScale = 0;
         mBiomeCentreXChunk = tag->getInt(L"BiomeCentreXChunk");
         mBiomeCentreZChunk = tag->getInt(L"BiomeCentreZChunk");
     }
@@ -270,19 +271,49 @@ LevelData::LevelData(CompoundTag* tag)
 }
 
 LevelData::LevelData(LevelSettings* settings, const std::wstring& name)
-    : mSeed(settings->getSeed()), mGeneratorType(settings->getLevelType()),
-      mGeneratorOptions(settings->getLevelTypeOptions()), mXSpawn(0), mYSpawn(0), mZSpawn(0),
-      mGameTime(-1), mDayTime(-1),
-      mLastPlayed(0), mSizeOnDisk(0), mLoadedPlayerTag(0), mLevelName(name), mVersion(0), mClearWeatherTime(0),
-      mRaining(false), mRainTime(0), mThundering(false), mThunderTime(0), mGameType(settings->getGameType()),
-      mGenerateMapFeatures(settings->isGenerateMapFeatures()), mHardcore(settings->isHardcore()),
-      mAllowCommands(settings->getAllowCommands()), mInitialized(false), mDifficulty(0), mDifficultyLocked(false),
-      mCloudHeight(settings->getCloudHeight()), mUseNewSeaLevel(settings->useNewSeaLevel()),
+    : mSeed(settings->getSeed()),
+      mGeneratorType(settings->getLevelType()),
+      mGeneratorOptions(settings->getLevelTypeOptions()),
+      mXSpawn(0),
+      mYSpawn(0),
+      mZSpawn(0),
+      mGameTime(-1),
+      mDayTime(-1),
+      mLastPlayed(0),
+      mSizeOnDisk(0),
+      mLoadedPlayerTag(0),
+      mLevelName(name),
+      mVersion(0),
+      mClearWeatherTime(0),
+      mRaining(false),
+      mRainTime(0),
+      mThundering(false),
+      mThunderTime(0),
+      mGameType(settings->getGameType()),
+      mGenerateMapFeatures(settings->isGenerateMapFeatures()),
+      mHardcore(settings->isHardcore()),
+      mAllowCommands(settings->getAllowCommands()),
+      mInitialized(false),
+      mDifficulty(0),
+      mDifficultyLocked(false),
+      mCloudHeight(settings->getCloudHeight()),
+      mUseNewSeaLevel(settings->useNewSeaLevel()),
       mHasBeenInCreative(settings->getGameType() == GameType::CREATIVE),
-      mSpawnBonusChest(settings->hasStartingBonusItems()), mXZSize(0), mHellScale(0), mModernEnd(false),
-      mSpawnXStronghold(0), mSpawnYStronghold(0), mSpawnZStronghold(0), mHasStronghold(false),
-      mXStrongholdEndPortal(0), mZStrongholdEndPortal(0), mHasStrongholdEndPortal(false), mBiomeScale(0),
-      mBiomeCentreXChunk(0), mBiomeCentreZChunk(0), mGameRules()
+      mSpawnBonusChest(settings->hasStartingBonusItems()),
+      mXZSize(0),
+      mHellScale(0),
+      mModernEnd(false),
+      mSpawnXStronghold(0),
+      mSpawnYStronghold(0),
+      mSpawnZStronghold(0),
+      mHasStronghold(false),
+      mXStrongholdEndPortal(0),
+      mZStrongholdEndPortal(0),
+      mHasStrongholdEndPortal(false),
+      mBiomeScale(0),
+      mBiomeCentreXChunk(0),
+      mBiomeCentreZChunk(0),
+      mGameRules()
 {
     int xzSize = settings->getXZSize();
     int hellScale = settings->getHellScale();
@@ -467,54 +498,199 @@ void LevelData::setTagData(CompoundTag* tag)
     tag->putInt(L"BiomeCentreZChunk", mBiomeCentreZChunk);
 }
 
-long long LevelData::getSeed() { return mSeed; }
-int LevelData::getXSpawn() { return mXSpawn; }
-int LevelData::getYSpawn() { return mYSpawn; }
-int LevelData::getZSpawn() { return mZSpawn; }
-int LevelData::getXStronghold() { return mSpawnXStronghold; }
-int LevelData::getZStronghold() { return mSpawnZStronghold; }
-int LevelData::getXStrongholdEndPortal() { return mXStrongholdEndPortal; }
-int LevelData::getZStrongholdEndPortal() { return mZStrongholdEndPortal; }
-long long LevelData::getGameTime() { return mGameTime; }
-long long LevelData::getDayTime() { return mDayTime; }
-long long LevelData::getSizeOnDisk() { return mSizeOnDisk; }
-CompoundTag* LevelData::getLoadedPlayerTag() { return 0; }
-void LevelData::setSeed(long long value) { mSeed = value; }
-void LevelData::setXSpawn(int value) { mXSpawn = value; }
-void LevelData::setYSpawn(int value) { mYSpawn = value; }
-void LevelData::setZSpawn(int value) { mZSpawn = value; }
-void LevelData::setHasStronghold() { mHasStronghold = true; }
-bool LevelData::getHasStronghold() { return mHasStronghold; }
-void LevelData::setXStronghold(int value) { mSpawnXStronghold = value; }
-void LevelData::setZStronghold(int value) { mSpawnZStronghold = value; }
-void LevelData::setHasStrongholdEndPortal() { mHasStrongholdEndPortal = true; }
-bool LevelData::getHasStrongholdEndPortal() { return mHasStrongholdEndPortal; }
-void LevelData::setXStrongholdEndPortal(int value) { mXStrongholdEndPortal = value; }
-void LevelData::setZStrongholdEndPortal(int value) { mZStrongholdEndPortal = value; }
-void LevelData::setGameTime(long long value) { mGameTime = value; }
-void LevelData::setDayTime(long long value) { mDayTime = value; }
-void LevelData::setSizeOnDisk(long long value) { mSizeOnDisk = value; }
-void LevelData::setLoadedPlayerTag(CompoundTag* tag) {}
-void LevelData::setSpawn(const BlockPos& pos) { mXSpawn = pos.x; mYSpawn = pos.y; mZSpawn = pos.z; }
-std::wstring LevelData::getLevelName() { return mLevelName; }
-void LevelData::setLevelName(const std::wstring& name) { mLevelName = name; }
-int LevelData::getVersion() { return mVersion; }
-void LevelData::setVersion(int value) { mVersion = value; }
-long long LevelData::getLastPlayed() { return mLastPlayed; }
-int LevelData::getClearWeatherTime() { return mClearWeatherTime; }
-void LevelData::setClearWeatherTime(int value) { mClearWeatherTime = value; }
-bool LevelData::isThundering() { return mThundering; }
-void LevelData::setThundering(bool value) { mThundering = value; }
-int LevelData::getThunderTime() { return mThunderTime; }
-void LevelData::setThunderTime(int value) { mThunderTime = value; }
-bool LevelData::isRaining() { return mRaining; }
-void LevelData::setRaining(bool value) { mRaining = value; }
-int LevelData::getRainTime() { return mRainTime; }
-void LevelData::setRainTime(int value) { mRainTime = value; }
-const GameType* LevelData::getGameType() { return mGameType; }
-bool LevelData::isGenerateMapFeatures() { return mGenerateMapFeatures; }
-void LevelData::setGenerateMapFeatures(bool value) { mGenerateMapFeatures = value; }
-bool LevelData::getSpawnBonusChest() { return mSpawnBonusChest; }
+long long LevelData::getSeed()
+{
+    return mSeed;
+}
+int LevelData::getXSpawn()
+{
+    return mXSpawn;
+}
+int LevelData::getYSpawn()
+{
+    return mYSpawn;
+}
+int LevelData::getZSpawn()
+{
+    return mZSpawn;
+}
+int LevelData::getXStronghold()
+{
+    return mSpawnXStronghold;
+}
+int LevelData::getZStronghold()
+{
+    return mSpawnZStronghold;
+}
+int LevelData::getXStrongholdEndPortal()
+{
+    return mXStrongholdEndPortal;
+}
+int LevelData::getZStrongholdEndPortal()
+{
+    return mZStrongholdEndPortal;
+}
+long long LevelData::getGameTime()
+{
+    return mGameTime;
+}
+long long LevelData::getDayTime()
+{
+    return mDayTime;
+}
+long long LevelData::getSizeOnDisk()
+{
+    return mSizeOnDisk;
+}
+CompoundTag* LevelData::getLoadedPlayerTag()
+{
+    return 0;
+}
+void LevelData::setSeed(long long value)
+{
+    mSeed = value;
+}
+void LevelData::setXSpawn(int value)
+{
+    mXSpawn = value;
+}
+void LevelData::setYSpawn(int value)
+{
+    mYSpawn = value;
+}
+void LevelData::setZSpawn(int value)
+{
+    mZSpawn = value;
+}
+void LevelData::setHasStronghold()
+{
+    mHasStronghold = true;
+}
+bool LevelData::getHasStronghold()
+{
+    return mHasStronghold;
+}
+void LevelData::setXStronghold(int value)
+{
+    mSpawnXStronghold = value;
+}
+void LevelData::setZStronghold(int value)
+{
+    mSpawnZStronghold = value;
+}
+void LevelData::setHasStrongholdEndPortal()
+{
+    mHasStrongholdEndPortal = true;
+}
+bool LevelData::getHasStrongholdEndPortal()
+{
+    return mHasStrongholdEndPortal;
+}
+void LevelData::setXStrongholdEndPortal(int value)
+{
+    mXStrongholdEndPortal = value;
+}
+void LevelData::setZStrongholdEndPortal(int value)
+{
+    mZStrongholdEndPortal = value;
+}
+void LevelData::setGameTime(long long value)
+{
+    mGameTime = value;
+}
+void LevelData::setDayTime(long long value)
+{
+    mDayTime = value;
+}
+void LevelData::setSizeOnDisk(long long value)
+{
+    mSizeOnDisk = value;
+}
+void LevelData::setLoadedPlayerTag(CompoundTag* tag)
+{
+}
+void LevelData::setSpawn(const BlockPos& pos)
+{
+    mXSpawn = pos.x;
+    mYSpawn = pos.y;
+    mZSpawn = pos.z;
+}
+std::wstring LevelData::getLevelName()
+{
+    return mLevelName;
+}
+void LevelData::setLevelName(const std::wstring& name)
+{
+    mLevelName = name;
+}
+int LevelData::getVersion()
+{
+    return mVersion;
+}
+void LevelData::setVersion(int value)
+{
+    mVersion = value;
+}
+long long LevelData::getLastPlayed()
+{
+    return mLastPlayed;
+}
+int LevelData::getClearWeatherTime()
+{
+    return mClearWeatherTime;
+}
+void LevelData::setClearWeatherTime(int value)
+{
+    mClearWeatherTime = value;
+}
+bool LevelData::isThundering()
+{
+    return mThundering;
+}
+void LevelData::setThundering(bool value)
+{
+    mThundering = value;
+}
+int LevelData::getThunderTime()
+{
+    return mThunderTime;
+}
+void LevelData::setThunderTime(int value)
+{
+    mThunderTime = value;
+}
+bool LevelData::isRaining()
+{
+    return mRaining;
+}
+void LevelData::setRaining(bool value)
+{
+    mRaining = value;
+}
+int LevelData::getRainTime()
+{
+    return mRainTime;
+}
+void LevelData::setRainTime(int value)
+{
+    mRainTime = value;
+}
+const GameType* LevelData::getGameType()
+{
+    return mGameType;
+}
+bool LevelData::isGenerateMapFeatures()
+{
+    return mGenerateMapFeatures;
+}
+void LevelData::setGenerateMapFeatures(bool value)
+{
+    mGenerateMapFeatures = value;
+}
+bool LevelData::getSpawnBonusChest()
+{
+    return mSpawnBonusChest;
+}
 void LevelData::setGameType(const GameType* type)
 {
     mGameType = type;
@@ -525,38 +701,93 @@ void LevelData::setGameType(const GameType* type)
     }
     mHasBeenInCreative = hasBeenInCreative;
 }
-bool LevelData::useNewSeaLevel() { return mUseNewSeaLevel; }
-bool LevelData::getHasBeenInCreative() { return mHasBeenInCreative; }
-void LevelData::setHasBeenInCreative(bool value) { mHasBeenInCreative = value; }
-LevelType* LevelData::getGeneratorType() { return mGeneratorType; }
+bool LevelData::useNewSeaLevel()
+{
+    return mUseNewSeaLevel;
+}
+bool LevelData::getHasBeenInCreative()
+{
+    return mHasBeenInCreative;
+}
+void LevelData::setHasBeenInCreative(bool value)
+{
+    mHasBeenInCreative = value;
+}
+LevelType* LevelData::getGeneratorType()
+{
+    return mGeneratorType;
+}
 void LevelData::setGeneratorType(LevelType* type)
 {
     mHasBeenInCreative = mHasBeenInCreative || type == LevelType::FLAT;
     mGeneratorType = type;
 }
-SuperflatConfig* LevelData::getGeneratorOptions() { return mGeneratorOptions; }
-void LevelData::setGeneratorOptions(SuperflatConfig* options) { mGeneratorOptions = options; }
-bool LevelData::isHardcore() { return mHardcore; }
-void LevelData::setHardcore(bool value) { mHardcore = value; }
-bool LevelData::getAllowCommands() { return mAllowCommands; }
-void LevelData::setAllowCommands(bool value) { mAllowCommands = value; }
-bool LevelData::isInitialized() { return mInitialized; }
-void LevelData::setInitialized(bool value) { mInitialized = value; }
-GameRules* LevelData::getGameRules() { return &mGameRules; }
-const Difficulty* LevelData::getDifficulty() { return mDifficulty; }
+SuperflatConfig* LevelData::getGeneratorOptions()
+{
+    return mGeneratorOptions;
+}
+void LevelData::setGeneratorOptions(SuperflatConfig* options)
+{
+    mGeneratorOptions = options;
+}
+bool LevelData::isHardcore()
+{
+    return mHardcore;
+}
+void LevelData::setHardcore(bool value)
+{
+    mHardcore = value;
+}
+bool LevelData::getAllowCommands()
+{
+    return mAllowCommands;
+}
+void LevelData::setAllowCommands(bool value)
+{
+    mAllowCommands = value;
+}
+bool LevelData::isInitialized()
+{
+    return mInitialized;
+}
+void LevelData::setInitialized(bool value)
+{
+    mInitialized = value;
+}
+GameRules* LevelData::getGameRules()
+{
+    return &mGameRules;
+}
+const Difficulty* LevelData::getDifficulty()
+{
+    return mDifficulty;
+}
 void LevelData::setDifficulty(const Difficulty* difficulty)
 {
     mDifficulty = difficulty;
     gApp.SetGameHostOption(eGameHostOption_Difficulty, difficulty->getId());
 }
-int LevelData::getCloudHeight() { return mCloudHeight; }
-void LevelData::setCloudHeight(int value) { mCloudHeight = value; }
-bool LevelData::isDifficultyLocked() { return mDifficultyLocked; }
-void LevelData::setDifficultyLocked(bool value) { mDifficultyLocked = value; }
+int LevelData::getCloudHeight()
+{
+    return mCloudHeight;
+}
+void LevelData::setCloudHeight(int value)
+{
+    mCloudHeight = value;
+}
+bool LevelData::isDifficultyLocked()
+{
+    return mDifficultyLocked;
+}
+void LevelData::setDifficultyLocked(bool value)
+{
+    mDifficultyLocked = value;
+}
 CompoundTag* LevelData::getDimensionData(const DimensionType* dimension)
 {
     boost::unordered_map<const DimensionType*, CompoundTag*>::iterator it = mDimensionData.find(dimension);
-    if (it == mDimensionData.end()) return new CompoundTag();
+    if (it == mDimensionData.end())
+        return new CompoundTag();
     return it->second;
 }
 void LevelData::setDimensionData(const DimensionType* dimension, CompoundTag* tag)
@@ -568,10 +799,31 @@ void LevelData::setDimensionData(const DimensionType* dimension, CompoundTag* ta
     }
     mDimensionData[dimension] = tag;
 }
-int LevelData::getXZSize() { return mXZSize; }
-int LevelData::getHellScale() { return mHellScale; }
-void LevelData::setModernEnd() { mModernEnd = true; }
-bool LevelData::getModernEnd() { return mModernEnd; }
-unsigned char LevelData::getBiomeScale() { return mBiomeScale; }
-int LevelData::getBiomeCentreXChunk() { return mBiomeCentreXChunk; }
-int LevelData::getBiomeCentreZChunk() { return mBiomeCentreZChunk; }
+int LevelData::getXZSize()
+{
+    return mXZSize;
+}
+int LevelData::getHellScale()
+{
+    return mHellScale;
+}
+void LevelData::setModernEnd()
+{
+    mModernEnd = true;
+}
+bool LevelData::getModernEnd()
+{
+    return mModernEnd;
+}
+unsigned char LevelData::getBiomeScale()
+{
+    return mBiomeScale;
+}
+int LevelData::getBiomeCentreXChunk()
+{
+    return mBiomeCentreXChunk;
+}
+int LevelData::getBiomeCentreZChunk()
+{
+    return mBiomeCentreZChunk;
+}

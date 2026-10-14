@@ -24,18 +24,18 @@ CompoundTag* LEVELDATA_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int 
             {
                 if (((CompoundTag*)entities->get(i))->contains(Entity::RIDING_TAG, Tag::TAG_LIST))
                 {
-                    ListTag* passengers = ((CompoundTag*)entities->get(i))->getList(Entity::RIDING_TAG, Tag::TAG_COMPOUND);
+                    ListTag* passengers =
+                        ((CompoundTag*)entities->get(i))->getList(Entity::RIDING_TAG, Tag::TAG_COMPOUND);
 
                     for (int j = 0; j < passengers->size(); j++)
                     {
-                        passengers->set(j,
-                            fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                                passengers->getCompound(j), version));
+                        passengers->set(
+                            j, fixer->update(DataFixTypes::eDataFixTypes_Entity, passengers->getCompound(j), version));
                     }
                 }
 
-                entities->set(i,
-                    fixer->update(DataFixTypes::eDataFixTypes_Entity, (CompoundTag*)entities->get(i), version));
+                entities->set(
+                    i, fixer->update(DataFixTypes::eDataFixTypes_Entity, (CompoundTag*)entities->get(i), version));
             }
         }
 
@@ -45,9 +45,8 @@ CompoundTag* LEVELDATA_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int 
 
             for (int i = 0; i < tileEntities->size(); i++)
             {
-                tileEntities->set(i,
-                    fixer->update(DataFixTypes::eDataFixTypes_BlockEntity,
-                        (CompoundTag*)tileEntities->get(i), version));
+                tileEntities->set(i, fixer->update(DataFixTypes::eDataFixTypes_BlockEntity,
+                                                   (CompoundTag*)tileEntities->get(i), version));
             }
         }
     }

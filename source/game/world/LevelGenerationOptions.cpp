@@ -29,10 +29,10 @@
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 #include "platform/wiiu/WiiU_FileCache.hpp"
 
-template<typename T>
+template <typename T>
 std::wstring _toString(T value);
 
-template<typename T>
+template <typename T>
 T _fromString(const std::wstring& value);
 
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
@@ -68,7 +68,8 @@ LevelGenerationOptions::~LevelGenerationOptions()
     clearSchematics();
     delete mSpawnPos;
 
-    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end();
+         ++it)
     {
         delete *it;
     }
@@ -370,7 +371,8 @@ LevelRuleset* LevelGenerationOptions::getRequiredGameRules()
 
 void LevelGenerationOptions::reset_start()
 {
-    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end();
+         ++it)
     {
         (*it)->reset();
     }
@@ -381,8 +383,8 @@ void LevelGenerationOptions::loadGameRulesHeaders(DLCPack* pack, StringTable* ta
     int headerCount = pack->getDLCItemsCount(DLCManager::eDLCType_GameRulesHeader);
     for (int i = 0; i < headerCount; ++i)
     {
-        DLCGameRulesHeader* header =
-            static_cast<DLCGameRulesHeader*>(pack->getFile(DLCManager::eDLCType_GameRulesHeader, i, true, true));
+        DLCGameRulesHeader* header = static_cast<DLCGameRulesHeader*>(
+            pack->getFile(DLCManager::eDLCType_GameRulesHeader, i, true, true));
         if (header->m_levelGenerationOptions != options || header->getGrfPath().empty())
             continue;
 
@@ -438,8 +440,7 @@ void LevelGenerationOptions::loadBaseSaveData()
         int mountIndex = static_cast<int>(mPack->GetDLCMountIndex());
         if (mountIndex >= 0)
         {
-            if (gStorage->MountInstalledDLC(gProfile->GetPrimaryPad(), mountIndex, packMounted, this, "WPACK")
-                == 0x3e5)
+            if (gStorage->MountInstalledDLC(gProfile->GetPrimaryPad(), mountIndex, packMounted, this, "WPACK") == 0x3e5)
             {
                 mPackMountPending = true;
                 return;
@@ -582,7 +583,8 @@ void LevelGenerationOptions::getChildren(std::vector<GameRuleDefinition*>* child
         children->push_back(*it);
     }
 
-    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end();
+         ++it)
     {
         if (!(*it)->isComplete())
         {
@@ -676,7 +678,8 @@ void LevelGenerationOptions::addAttribute(const std::wstring& name, const std::w
 
     if (name == L"flatworld")
     {
-        if (value == L"true") mUseFlatWorld = true;
+        if (value == L"true")
+            mUseFlatWorld = true;
         return;
     }
     if (name == L"saveName")
@@ -717,12 +720,14 @@ void LevelGenerationOptions::addAttribute(const std::wstring& name, const std::w
     }
     if (name == L"texturePackRequired")
     {
-        if (value == L"false") setRequiresTexturePack(false);
+        if (value == L"false")
+            setRequiresTexturePack(false);
         return;
     }
     if (name == L"isTutorial")
     {
-        if (value == L"true") setSrc(eSrc_Tutorial);
+        if (value == L"true")
+            setSrc(eSrc_Tutorial);
         return;
     }
     if (name == L"baseSaveName")
@@ -823,7 +828,8 @@ void LevelGenerationOptions::processSchematics(LevelChunk* chunk)
     int minZ = chunk->z * 16;
     AABB* chunkBox = AABB::newTemp(minX, 0.0, minZ, minX + 16, 256.0, minZ + 16);
 
-    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end();
+         ++it)
     {
         (*it)->processSchematic(chunkBox, chunk);
     }
@@ -853,7 +859,8 @@ void LevelGenerationOptions::processSchematicsLighting(LevelChunk* chunk)
     int minZ = chunk->z * 16;
     AABB* chunkBox = AABB::newTemp(minX, 0.0, minZ, minX + 16, 256.0, minZ + 16);
 
-    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end();
+         ++it)
     {
         (*it)->processSchematicLighting(chunkBox, chunk);
     }
@@ -867,15 +874,18 @@ bool LevelGenerationOptions::checkIntersects(const BlockPos& min, const BlockPos
 
     if (!mMinYCalculated)
     {
-        for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+        for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin();
+             it != mSchematicRules.end(); ++it)
         {
             int minY = (*it)->getMinY();
-            if (minY < mMinY) mMinY = minY;
+            if (minY < mMinY)
+                mMinY = minY;
         }
         for (std::vector<ConsoleGenerateStructure*>::iterator it = mStructures.begin(); it != mStructures.end(); ++it)
         {
             int minY = (*it)->getMinY();
-            if (minY < mMinY) mMinY = minY;
+            if (minY < mMinY)
+                mMinY = minY;
         }
         mMinYCalculated = true;
     }
@@ -886,7 +896,8 @@ bool LevelGenerationOptions::checkIntersects(const BlockPos& min, const BlockPos
     }
 
     bool intersects = false;
-    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end();
+         ++it)
     {
         intersects = (*it)->checkIntersects(min, max);
         if (intersects)
@@ -920,7 +931,8 @@ bool LevelGenerationOptions::isCRCValid()
     return mCRCValid;
 }
 
-ConsoleSchematicFile* LevelGenerationOptions::loadSchematicFile(const std::wstring& name, unsigned char* data, unsigned int size)
+ConsoleSchematicFile* LevelGenerationOptions::loadSchematicFile(const std::wstring& name, unsigned char* data,
+                                                                unsigned int size)
 {
     SchematicFileMap::iterator found = mSchematicFiles.find(name);
     if (found != mSchematicFiles.end())
@@ -961,7 +973,8 @@ void LevelGenerationOptions::getBiomeOverride(int biome, Biome::BlockPair* top, 
     }
 }
 
-bool LevelGenerationOptions::isFeatureChunk(int chunkX, int chunkZ, StructureFeature::EFeatureTypes type, const Direction** direction)
+bool LevelGenerationOptions::isFeatureChunk(int chunkX, int chunkZ, StructureFeature::EFeatureTypes type,
+                                            const Direction** direction)
 {
     bool found = false;
     for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it)
@@ -1037,7 +1050,8 @@ void LevelGenerationOptions::copyStringToTable(const std::wstring& value, String
 LevelGenerationOptions::SchematicFileMap* LevelGenerationOptions::getUnfinishedSchematicFiles()
 {
     boost::unordered_set<std::wstring> names;
-    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end();
+         ++it)
     {
         if (!(*it)->isComplete())
         {

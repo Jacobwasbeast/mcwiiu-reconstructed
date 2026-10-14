@@ -30,10 +30,9 @@ int aaDistance(int x, int z, const ChunkPos* pos)
     return std::max(std::abs(x - pos->x), std::abs(z - pos->z));
 }
 
-ChunkPos TheEndDimension::AREAS[2] = { ChunkPos(0, 0), ChunkPos(0, 25) };
+ChunkPos TheEndDimension::AREAS[2] = {ChunkPos(0, 0), ChunkPos(0, 25)};
 
-TheEndDimension::TheEndDimension()
-    : Dimension(), mDragonFight(NULL), mModernEnd(true)
+TheEndDimension::TheEndDimension() : Dimension(), mDragonFight(NULL), mModernEnd(true)
 {
     const int size = getXZSize();
     mChunkData = new char[size * size];
@@ -61,9 +60,9 @@ void TheEndDimension::init()
     mBiomeSource = new FixedBiomeSource(Biome::THE_END, 0.5f);
     CompoundTag* data = mLevel->getLevelData()->getDimensionData(DimensionType::THE_END);
     mModernEnd = mLevel->getLevelData()->getModernEnd();
-    mDragonFight = !mLevel->mIsClientSide ? new EndDragonFight(static_cast<ServerLevel*>(mLevel),
-                                                               data->getCompound(L"DragonFight"))
-                                          : NULL;
+    mDragonFight = !mLevel->mIsClientSide
+                       ? new EndDragonFight(static_cast<ServerLevel*>(mLevel), data->getCompound(L"DragonFight"))
+                       : NULL;
     gApp.SetExtraGameData(eGameExtraData_ModernEnd, mModernEnd);
 }
 
@@ -97,10 +96,22 @@ Vec3* TheEndDimension::getFogColor(float celestialAngle, float timeOfDay)
     return Vec3::newTemp(red, green, blue);
 }
 
-bool TheEndDimension::hasGround() { return false; }
-bool TheEndDimension::mayRespawn() const { return false; }
-bool TheEndDimension::isNaturalDimension() { return false; }
-float TheEndDimension::getCloudHeight() { return 8.0f; }
+bool TheEndDimension::hasGround()
+{
+    return false;
+}
+bool TheEndDimension::mayRespawn() const
+{
+    return false;
+}
+bool TheEndDimension::isNaturalDimension()
+{
+    return false;
+}
+float TheEndDimension::getCloudHeight()
+{
+    return 8.0f;
+}
 
 bool TheEndDimension::isValidSpawn(int x, int z) const
 {
@@ -115,8 +126,14 @@ BlockPos* TheEndDimension::getSpawnPos() const
     return mModernEnd ? &modernSpawnPos : &legacySpawnPos;
 }
 
-int TheEndDimension::getSpawnYPosition() { return 50; }
-bool TheEndDimension::isFoggyAt(int x, int z) { return false; }
+int TheEndDimension::getSpawnYPosition()
+{
+    return 50;
+}
+bool TheEndDimension::isFoggyAt(int x, int z)
+{
+    return false;
+}
 
 const DimensionType* TheEndDimension::getType() const
 {
@@ -152,12 +169,13 @@ AABB* TheEndDimension::getPlayerConstraints(const BlockPos& pos)
     if (mModernEnd)
     {
         BlockPos origin = closestAreaToPoint(pos.x >> 4, pos.z >> 4)->getWorldPosition();
-        return AABB::newTemp(-96.0, -std::numeric_limits<double>::max(), -96.0,
-                             96.0, std::numeric_limits<double>::max(), 96.0)->move(origin);
+        return AABB::newTemp(-96.0, -std::numeric_limits<double>::max(), -96.0, 96.0,
+                             std::numeric_limits<double>::max(), 96.0)
+            ->move(origin);
     }
     AABB* bounds = Dimension::getPlayerConstraints(pos);
-    return bounds->set(bounds->mMinX, -std::numeric_limits<double>::max(), bounds->mMinZ,
-                       bounds->mMaxX, std::numeric_limits<double>::max(), bounds->mMaxZ);
+    return bounds->set(bounds->mMinX, -std::numeric_limits<double>::max(), bounds->mMinZ, bounds->mMaxX,
+                       std::numeric_limits<double>::max(), bounds->mMaxZ);
 }
 
 bool TheEndDimension::containsChunk(int x, int z)
@@ -181,6 +199,6 @@ bool TheEndDimension::containsChunk(int x, int z)
 
 int TheEndDimension::getBlockLightColour()
 {
-    return static_cast<int>(Minecraft::GetInstance()->getColourTable()->getColour(
-        eMinecraftColour_BlockLight_EndDimension));
+    return static_cast<int>(
+        Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_BlockLight_EndDimension));
 }

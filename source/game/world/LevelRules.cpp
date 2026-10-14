@@ -8,12 +8,8 @@
 #include "game/world/LevelRuleset.hpp"
 
 
-static const int g_mapRuleOrder[27] =
-{
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    19, 18, 16, 17, 15, 14, 13, 12, 10,
-    11, 9, 4, 8, 6, 3, 2, 1, 0
-};
+static const int g_mapRuleOrder[27] = {0,  0,  0,  0,  0,  0, 0, 0, 0, 19, 18, 16, 17, 15,
+                                       14, 13, 12, 10, 11, 9, 4, 8, 6, 3,  2,  1,  0};
 
 LevelRules::LevelRules()
 {
@@ -35,7 +31,8 @@ void LevelRules::removeLevelRule(LevelRuleset* ruleset)
     for (std::vector<LevelRulesetGroup*>::iterator group = m_ruleGroups.begin(); group != m_ruleGroups.end();)
     {
         std::vector<LevelRuleset*>::iterator member;
-        while ((member = std::find((*group)->rulesets.begin(), (*group)->rulesets.end(), ruleset)) != (*group)->rulesets.end())
+        while ((member = std::find((*group)->rulesets.begin(), (*group)->rulesets.end(), ruleset))
+               != (*group)->rulesets.end())
         {
             (*group)->rulesets.erase(member);
         }
@@ -116,8 +113,8 @@ void LevelRules::getRulesByType(ELevelRuleType type, std::vector<LevelRulesetGro
             bool available = true;
             if (requirePurchase)
             {
-                available = ruleset->getGenerationOptions()->mPack->hasPurchasedPack() ||
-                            gApp.mDLCManager.IsMiniGameTemporarilyFree(static_cast<int>(type));
+                available = ruleset->getGenerationOptions()->mPack->hasPurchasedPack()
+                            || gApp.mDLCManager.IsMiniGameTemporarilyFree(static_cast<int>(type));
             }
             if (available)
             {

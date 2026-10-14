@@ -44,7 +44,8 @@ public:
     virtual unsigned short getElement(int x, int y, int z) = 0;
     virtual int getBlockData(int x, int y, int z) = 0;
     virtual unsigned short getExtraElement(int x, int y, int z) = 0;
-    virtual void getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement) = 0;
+    virtual void getElementAndExtraElement(int x, int y, int z, unsigned short* element,
+                                           unsigned short* extraElement) = 0;
     virtual Block* getBlock(const BlockPos& pos) = 0;
     virtual void getBlockAndExtraBlock(const BlockPos& pos, Block** block, Block** extraBlock) = 0;
     virtual bool isSolidRender(const BlockPos& pos) = 0;

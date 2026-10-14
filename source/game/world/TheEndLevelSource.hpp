@@ -28,20 +28,18 @@ public:
     double fjIslandProximity(int x, int z);
     bool fjIslandCheck(int x, int z);
     float getIslandHeightValue(int x, int z, int xOffset, int zOffset);
-    arrayWithLength<double> getHeights(arrayWithLength<double> values, int x, int y, int z,
-                                       int xSize, int ySize, int zSize);
+    arrayWithLength<double> getHeights(arrayWithLength<double> values, int x, int y, int z, int xSize, int ySize,
+                                       int zSize);
     void prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer);
     void buildSurfaces(ChunkPrimer* primer);
     virtual LevelChunk* createChunk(int chunkX, int chunkZ);
     virtual void postProcess(int chunkX, int chunkZ);
     virtual bool postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
-    virtual std::vector<Biome::MobSpawnerData*>* getMobsAt(MobCategory* category,
-                                                           const BlockPos& pos);
-    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature,
-                                             const BlockPos& pos, bool findUnexplored);
+    virtual std::vector<Biome::MobSpawnerData*>* getMobsAt(MobCategory* category, const BlockPos& pos);
+    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos,
+                                            bool findUnexplored);
     virtual void recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ);
-    virtual bool isPosInFeature(Level* level, const std::wstring& feature,
-                                const BlockPos& pos);
+    virtual bool isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos);
     bool isIslandChunk(int x, int z);
 
 private:

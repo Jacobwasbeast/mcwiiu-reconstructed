@@ -125,7 +125,8 @@ LevelChunk* NetherFlatLevelSource::createChunk(int chunkX, int chunkZ)
     mRandom->setSeed(static_cast<long long>(chunkX) * 341873128712LL + static_cast<long long>(chunkZ) * 132897987541LL);
 
     unsigned int elementCount = 32768;
-    unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(elementCount * sizeof(unsigned short), 0xFFFFFFFF, 0x1000, 4));
+    unsigned short* elementIds = static_cast<unsigned short*>(
+        XPhysicalAlloc(elementCount * sizeof(unsigned short), 0xFFFFFFFF, 0x1000, 4));
     XMemSet128(elementIds, 0, elementCount * sizeof(unsigned short));
     ChunkPrimer primer(false, arrayWithLength<unsigned short>(elementIds, elementCount));
 
@@ -149,8 +150,8 @@ void NetherFlatLevelSource::postProcess(int chunkX, int chunkZ)
     mPopulationRandom->setSeed(mLevel->getSeed());
     const long long xSeed = mPopulationRandom->nextLong() / 2LL * 2LL + 1LL;
     const long long zSeed = mPopulationRandom->nextLong() / 2LL * 2LL + 1LL;
-    mPopulationRandom->setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed) ^
-                               mLevel->getSeed());
+    mPopulationRandom->setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed)
+                               ^ mLevel->getSeed());
 
     int count = mPopulationRandom->nextInt(mPopulationRandom->nextInt(10) + 1) + 1;
     for (int i = 0; i < count; ++i)

@@ -7,7 +7,6 @@ class LayerMetadata;
 class Random;
 
 template <class T>
-T* randomUsableElement(Random& random, std::vector<T*>& definitions,
-                       const LayerMetadata& metadata);
+T* randomUsableElement(Random& random, std::vector<T*>& definitions, const LayerMetadata& metadata);
 
 #endif

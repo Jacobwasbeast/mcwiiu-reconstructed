@@ -23,8 +23,7 @@
 
 const float Dimension::MOON_BRIGHTNESS_PER_PHASE[8] = {1.0f, 0.75f, 0.5f, 0.25f, 0.0f, 0.25f, 0.5f, 0.75f};
 
-Dimension::Dimension()
-    : mUltraWarm(0), mHasCeiling(0), mBrightnessRamp(new float[16])
+Dimension::Dimension() : mUltraWarm(0), mHasCeiling(0), mBrightnessRamp(new float[16])
 {
     mHasSkyLight = 0;
     mSeaLevel = 0;
@@ -87,7 +86,8 @@ ChunkGenerator* Dimension::createRandomLevelGenerator() const
     if (mLevelType == LevelType::FLAT)
         return new FlatLevelSource(mLevel, mLevel->getSeed(), levelData->isGenerateMapFeatures(), mSuperflatConfig);
     if (mLevelType == LevelType::CUSTOMIZED)
-        return new OverworldLevelSource(mLevel, mLevel->getSeed(), levelData->isGenerateMapFeatures(), mSuperflatConfig);
+        return new OverworldLevelSource(mLevel, mLevel->getSeed(), levelData->isGenerateMapFeatures(),
+                                        mSuperflatConfig);
     return new OverworldLevelSource(mLevel, mLevel->getSeed(), levelData->isGenerateMapFeatures(), mSuperflatConfig);
 }
 
@@ -113,8 +113,10 @@ bool Dimension::isValidSpawn(int x, int z) const
 float Dimension::getTimeOfDay(long long time, float partialTick) const
 {
     float value = ((float)(int)(time % 24000) + partialTick) / 24000.0f - 0.25f;
-    if (value < 0.0f) value += 1.0f;
-    if (value > 1.0f) value -= 1.0f;
+    if (value < 0.0f)
+        value += 1.0f;
+    if (value > 1.0f)
+        value -= 1.0f;
     float cosine = cosf(value * 3.1415927f);
     return value + (-((cosine + 1.0f) * 0.5f - 1.0f) - value) / 3.0f;
 }
@@ -125,7 +127,10 @@ int Dimension::getMoonPhase(long long time) const
     return (phase + 8) % 8;
 }
 
-bool Dimension::isNaturalDimension() { return true; }
+bool Dimension::isNaturalDimension()
+{
+    return true;
+}
 
 float* Dimension::getSunriseColor(float celestialAngle, float timeOfDay)
 {
@@ -153,23 +158,54 @@ Vec3* Dimension::getFogColor(float celestialAngle, float timeOfDay)
 {
     float brightness = Mth::clamp(Mth::cos(celestialAngle * 6.2831855f) * 2.0f + 0.5f, 0.0f, 1.0f);
     float redGreenScale = brightness * 0.94f + 0.06f;
-    return Vec3::newTemp(0.7529412f * redGreenScale,
-                         0.84705883f * redGreenScale,
-                         brightness * 0.91f + 0.09f);
+    return Vec3::newTemp(0.7529412f * redGreenScale, 0.84705883f * redGreenScale, brightness * 0.91f + 0.09f);
 }
 
-bool Dimension::mayRespawn() const { return true; }
+bool Dimension::mayRespawn() const
+{
+    return true;
+}
 
-float Dimension::getCloudHeight() { return (float)mLevel->getCloudHeight(); }
-bool Dimension::hasGround() { return true; }
-BlockPos* Dimension::getSpawnPos() const { return NULL; }
-int Dimension::getSpawnYPosition() { return mLevelType == LevelType::FLAT ? 4 : 64; }
-bool Dimension::isFoggyAt(int x, int z) { return false; }
-WorldBorder* Dimension::createWorldBorder(Level* level) { return new WorldBorder(level); }
-void Dimension::saveData() { return; }
-void Dimension::tick() { return; }
-bool Dimension::canUnloadChunk(int x, int z) { return true; }
-int Dimension::getXZSize() { return mXZSize; }
+float Dimension::getCloudHeight()
+{
+    return (float)mLevel->getCloudHeight();
+}
+bool Dimension::hasGround()
+{
+    return true;
+}
+BlockPos* Dimension::getSpawnPos() const
+{
+    return NULL;
+}
+int Dimension::getSpawnYPosition()
+{
+    return mLevelType == LevelType::FLAT ? 4 : 64;
+}
+bool Dimension::isFoggyAt(int x, int z)
+{
+    return false;
+}
+WorldBorder* Dimension::createWorldBorder(Level* level)
+{
+    return new WorldBorder(level);
+}
+void Dimension::saveData()
+{
+    return;
+}
+void Dimension::tick()
+{
+    return;
+}
+bool Dimension::canUnloadChunk(int x, int z)
+{
+    return true;
+}
+int Dimension::getXZSize()
+{
+    return mXZSize;
+}
 
 AABB* Dimension::getPlayerConstraints(const BlockPos& pos)
 {
@@ -186,9 +222,7 @@ bool Dimension::inPlayerConstraints(const BlockPos& pos)
     int maxX = (int)bounds->mMaxX - (bounds->mMaxX < (double)(int)bounds->mMaxX ? 3 : 2);
     int maxY = (int)bounds->mMaxY - (bounds->mMaxY < (double)(int)bounds->mMaxY ? 2 : 1);
     int maxZ = (int)bounds->mMaxZ - (bounds->mMaxZ < (double)(int)bounds->mMaxZ ? 3 : 2);
-    return pos.x >= minX && pos.x <= maxX &&
-           pos.y >= minY && pos.y <= maxY &&
-           pos.z >= minZ && pos.z <= maxZ;
+    return pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY && pos.z >= minZ && pos.z <= maxZ;
 }
 
 bool Dimension::containsChunk(int x, int z)
@@ -202,12 +236,39 @@ int Dimension::getBlockLightColour()
     return (int)Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_BlockLight_OverworldDimension);
 }
 
-double Dimension::getClearColorScale() { return mLevelType == LevelType::FLAT ? 1.0 : 0.03125; }
-BiomeSource* Dimension::getBiomeSource() { return mBiomeSource; }
-unsigned char Dimension::isUltraWarm() { return mUltraWarm; }
-unsigned char Dimension::isHasCeiling() { return mHasCeiling; }
-unsigned char Dimension::isHasSkyLight() { return mHasSkyLight; }
-float* Dimension::getBrightnessRamp() { return mBrightnessRamp; }
-void Dimension::onPlayerJoin(const boost::shared_ptr<ServerPlayer>& player) { (void)player; }
-void Dimension::onPlayerLeave(const boost::shared_ptr<ServerPlayer>& player) { (void)player; }
-int Dimension::getSeaLevel() { return mSeaLevel; }
+double Dimension::getClearColorScale()
+{
+    return mLevelType == LevelType::FLAT ? 1.0 : 0.03125;
+}
+BiomeSource* Dimension::getBiomeSource()
+{
+    return mBiomeSource;
+}
+unsigned char Dimension::isUltraWarm()
+{
+    return mUltraWarm;
+}
+unsigned char Dimension::isHasCeiling()
+{
+    return mHasCeiling;
+}
+unsigned char Dimension::isHasSkyLight()
+{
+    return mHasSkyLight;
+}
+float* Dimension::getBrightnessRamp()
+{
+    return mBrightnessRamp;
+}
+void Dimension::onPlayerJoin(const boost::shared_ptr<ServerPlayer>& player)
+{
+    (void)player;
+}
+void Dimension::onPlayerLeave(const boost::shared_ptr<ServerPlayer>& player)
+{
+    (void)player;
+}
+int Dimension::getSeaLevel()
+{
+    return mSeaLevel;
+}

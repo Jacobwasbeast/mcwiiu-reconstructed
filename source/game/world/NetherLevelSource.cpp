@@ -171,7 +171,8 @@ void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* prime
         {
             const bool sand = mRandom.nextDouble() * 0.2 + sandBuffer.data[x + z * 16] > 0.0;
             const bool gravel = mRandom.nextDouble() * 0.2 + gravelBuffer.data[x + z * 16] > 0.0;
-            const int runDepth = static_cast<int>(depthBuffer.data[x + z * 16] / 3.0 + 3.0 + mRandom.nextDouble() * 0.25);
+            const int runDepth = static_cast<int>(depthBuffer.data[x + z * 16] / 3.0 + 3.0
+                                                  + mRandom.nextDouble() * 0.25);
 
             int run = -1;
             const BlockState* top = Blocks::netherrack->defaultBlockState();
@@ -262,7 +263,8 @@ void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* prime
                                     }
                                     if (primer->getState((x * 16 + z) * 128 + wartY)->getBlock() != Blocks::bedrock)
                                     {
-                                        primer->setState((x * 16 + z) * 128 + wartY, Blocks::nether_wart->defaultBlockState());
+                                        primer->setState((x * 16 + z) * 128 + wartY,
+                                                         Blocks::nether_wart->defaultBlockState());
                                     }
                                 }
                             }
@@ -312,8 +314,8 @@ void NetherLevelSource::lightChunk(LevelChunk* chunk)
     chunk->recalcHeightmap();
 }
 
-arrayWithLength<double> NetherLevelSource::getHeights(arrayWithLength<double> buffer, int x, int y, int z,
-                                                       int xSize, int ySize, int zSize)
+arrayWithLength<double> NetherLevelSource::getHeights(arrayWithLength<double> buffer, int x, int y, int z, int xSize,
+                                                      int ySize, int zSize)
 {
     if (buffer.data == NULL)
     {
@@ -417,7 +419,8 @@ LevelChunk* NetherLevelSource::createChunk(int chunkX, int chunkZ)
     mRandom.setSeed(static_cast<long long>(chunkX) * 341873128712LL + static_cast<long long>(chunkZ) * 132897987541LL);
 
     unsigned int elementCount = 32768;
-    unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(elementCount * sizeof(unsigned short), 0xFFFFFFFF, 0x1000, 4));
+    unsigned short* elementIds = static_cast<unsigned short*>(
+        XPhysicalAlloc(elementCount * sizeof(unsigned short), 0xFFFFFFFF, 0x1000, 4));
     XMemSet128(elementIds, 0, elementCount * sizeof(unsigned short));
     ChunkPrimer primer(false, arrayWithLength<unsigned short>(elementIds, elementCount));
 
@@ -446,54 +449,73 @@ void NetherLevelSource::postProcess(int chunkX, int chunkZ)
     mPopulationRandom.setSeed(mLevel->getSeed());
     const long long xScale = mPopulationRandom.nextLong() / 2 * 2 + 1;
     const long long zScale = mPopulationRandom.nextLong() / 2 * 2 + 1;
-    mPopulationRandom.setSeed((static_cast<long long>(chunkZ) * xScale + static_cast<long long>(chunkZ) * zScale) ^ mLevel->getSeed());
+    mPopulationRandom.setSeed((static_cast<long long>(chunkZ) * xScale + static_cast<long long>(chunkZ) * zScale)
+                              ^ mLevel->getSeed());
 
     mNetherBridgeFeature->postProcess(mLevel, mPopulationRandom, &chunkPos);
 
     for (int i = 0; i < 8; ++i)
     {
-        mLavaSpringOpen->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(120) + 4, mPopulationRandom.nextInt(16) + 8));
+        mLavaSpringOpen->place(mLevel, mPopulationRandom,
+                               origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(120) + 4,
+                                             mPopulationRandom.nextInt(16) + 8));
     }
 
     for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1) + 1; ++i)
     {
-        mFireFeature->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(120) + 4, mPopulationRandom.nextInt(16) + 8));
+        mFireFeature->place(mLevel, mPopulationRandom,
+                            origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(120) + 4,
+                                          mPopulationRandom.nextInt(16) + 8));
     }
 
     for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1); ++i)
     {
-        mLightGemFeature->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(120) + 4, mPopulationRandom.nextInt(16) + 8));
+        mLightGemFeature->place(mLevel, mPopulationRandom,
+                                origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(120) + 4,
+                                              mPopulationRandom.nextInt(16) + 8));
     }
 
     for (int i = 0; i < 10; ++i)
     {
-        mHellPortalFeature->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128), mPopulationRandom.nextInt(16) + 8));
+        mHellPortalFeature->place(mLevel, mPopulationRandom,
+                                  origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128),
+                                                mPopulationRandom.nextInt(16) + 8));
     }
 
     if (mPopulationRandom.nextBoolean())
     {
-        mBrownMushroom->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128), mPopulationRandom.nextInt(16) + 8));
+        mBrownMushroom->place(mLevel, mPopulationRandom,
+                              origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128),
+                                            mPopulationRandom.nextInt(16) + 8));
     }
 
     if (mPopulationRandom.nextBoolean())
     {
-        mRedMushroom->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128), mPopulationRandom.nextInt(16) + 8));
+        mRedMushroom->place(mLevel, mPopulationRandom,
+                            origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128),
+                                          mPopulationRandom.nextInt(16) + 8));
     }
 
     for (int i = 0; i < 16; ++i)
     {
-        mQuartzOre->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16), mPopulationRandom.nextInt(108) + 10, mPopulationRandom.nextInt(16)));
+        mQuartzOre->place(mLevel, mPopulationRandom,
+                          origin.offset(mPopulationRandom.nextInt(16), mPopulationRandom.nextInt(108) + 10,
+                                        mPopulationRandom.nextInt(16)));
     }
 
     const int magmaLevel = mLevel->getSeaLevel() / 2 - 4;
     for (int i = 0; i < 4; ++i)
     {
-        mMagmaOre->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16), magmaLevel + mPopulationRandom.nextInt(10), mPopulationRandom.nextInt(16)));
+        mMagmaOre->place(mLevel, mPopulationRandom,
+                         origin.offset(mPopulationRandom.nextInt(16), magmaLevel + mPopulationRandom.nextInt(10),
+                                       mPopulationRandom.nextInt(16)));
     }
 
     for (int i = 0; i < 16; ++i)
     {
-        mLavaSpring->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16), mPopulationRandom.nextInt(108) + 10, mPopulationRandom.nextInt(16)));
+        mLavaSpring->place(mLevel, mPopulationRandom,
+                           origin.offset(mPopulationRandom.nextInt(16), mPopulationRandom.nextInt(108) + 10,
+                                         mPopulationRandom.nextInt(16)));
     }
 
     biome->decorate(mLevel, mPopulationRandom, BlockPos(chunkX * 16, 0, chunkZ * 16));
@@ -527,8 +549,8 @@ std::vector<Biome::MobSpawnerData*>* NetherLevelSource::getMobsAt(MobCategory* c
     return mLevel->getBiome(pos)->getMobs(category);
 }
 
-BlockPos* NetherLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature,
-                                                    const BlockPos& pos, bool findUnexplored)
+BlockPos* NetherLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos,
+                                                   bool findUnexplored)
 {
     if (LargeFeature::FORTRESS == feature && mNetherBridgeFeature != NULL)
     {

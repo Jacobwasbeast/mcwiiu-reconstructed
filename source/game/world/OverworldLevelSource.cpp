@@ -43,7 +43,8 @@
 #include "game/core/XMem.hpp"
 
 
-OverworldLevelSource::OverworldLevelSource(Level* level, long long seed, bool generateStructures, SuperflatConfig* config)
+OverworldLevelSource::OverworldLevelSource(Level* level, long long seed, bool generateStructures,
+                                           SuperflatConfig* config)
     : mRandom(),
       mPopulationRandom()
 {
@@ -140,17 +141,24 @@ float OverworldLevelSource::getHeightFalloff(int x, int z, int* distance)
 {
     int radius = (mLevelSize << 4) / 2;
     int west = x + radius;
-    if (west < 0) west = 0;
+    if (west < 0)
+        west = 0;
     int east = radius - x - 1;
-    if (east < 0) east = 0;
+    if (east < 0)
+        east = 0;
     int north = z + radius;
-    if (north < 0) north = 0;
+    if (north < 0)
+        north = 0;
     int south = radius - z - 1;
-    if (south < 0) south = 0;
+    if (south < 0)
+        south = 0;
     int edgeDistance = west;
-    if (east < edgeDistance) edgeDistance = east;
-    if (north < edgeDistance) edgeDistance = north;
-    if (south < edgeDistance) edgeDistance = south;
+    if (east < edgeDistance)
+        edgeDistance = east;
+    if (north < edgeDistance)
+        edgeDistance = north;
+    if (south < edgeDistance)
+        edgeDistance = south;
     float falloff = 0.0f;
     if (edgeDistance < 32)
     {
@@ -176,8 +184,7 @@ void OverworldLevelSource::getHeights(int x, int y, int z, arrayWithLength<Biome
     dr = mDepthNoise->getRegion(dr, x, z, 5, 5, mSettings->depthNoiseScaleX, mSettings->depthNoiseScaleZ,
                                 mSettings->depthNoiseScaleExponent);
     pnr = mMainNoise->getRegion(pnr, x, y, z, 5, 17, 5, coordinateScale / mSettings->mainNoiseScaleX,
-                                heightScale / mSettings->mainNoiseScaleY,
-                                coordinateScale / mSettings->mainNoiseScaleZ);
+                                heightScale / mSettings->mainNoiseScaleY, coordinateScale / mSettings->mainNoiseScaleZ);
     ar = mMinLimitNoise->getRegion(ar, x, y, z, 5, 17, 5, coordinateScale, heightScale, coordinateScale);
     br = mMaxLimitNoise->getRegion(br, x, y, z, 5, 17, 5, coordinateScale, heightScale, coordinateScale);
 
@@ -197,10 +204,8 @@ void OverworldLevelSource::getHeights(int x, int y, int z, arrayWithLength<Biome
                 for (int offsetZ = -2; offsetZ <= 2; ++offsetZ)
                 {
                     Biome* biome = biomes.data[sampleX + offsetX + 2 + (sampleZ + offsetZ + 2) * 10];
-                    float depth = biome->getDepth() * mSettings->biomeDepthWeight
-                                  + mSettings->biomeDepthOffset;
-                    float scale = biome->getScale() * mSettings->biomeScaleWeight
-                                  + mSettings->biomeScaleOffset;
+                    float depth = biome->getDepth() * mSettings->biomeDepthWeight + mSettings->biomeDepthOffset;
+                    float scale = biome->getScale() * mSettings->biomeScaleWeight + mSettings->biomeScaleOffset;
                     if (mGeneratorType == LevelType::AMPLIFIED && depth > 0.0f)
                     {
                         depth = depth * 2.0f + 1.0f;
@@ -247,8 +252,8 @@ void OverworldLevelSource::getHeights(int x, int y, int z, arrayWithLength<Biome
                 depthValue /= 8.0;
             }
 
-            double centerHeight = (depthValue * 0.2 + biomeDepth) * mSettings->baseSize
-                                  * 0.125 * 4.0 + mSettings->baseSize;
+            double centerHeight = (depthValue * 0.2 + biomeDepth) * mSettings->baseSize * 0.125 * 4.0
+                                  + mSettings->baseSize;
 
             for (int sampleY = 0; sampleY < 17; ++sampleY)
             {
@@ -374,13 +379,13 @@ void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* p
     delete[] biomes.data;
 }
 
-void OverworldLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer,
-                                         arrayWithLength<Biome*> biomes)
+void OverworldLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer, arrayWithLength<Biome*> biomes)
 {
     arrayWithLength<double> surfaceDepths(256, true);
     PIXBeginNamedEvent(0.0f, "Getting noise region");
     const double noiseScale = 0.0625;
-    surfaceDepths = mSurfaceNoise->getRegion(surfaceDepths, chunkX * 16, chunkZ * 16, 16, 16, noiseScale, noiseScale, 1.0);
+    surfaceDepths = mSurfaceNoise->getRegion(surfaceDepths, chunkX * 16, chunkZ * 16, 16, 16, noiseScale, noiseScale,
+                                             1.0);
     PIXEndNamedEvent();
     for (int x = 0; x < 16; ++x)
     {
@@ -398,8 +403,7 @@ void OverworldLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* pr
 
 LevelChunk* OverworldLevelSource::createChunk(int chunkX, int chunkZ)
 {
-    mRandom.setSeed(static_cast<long long>(chunkX) * 341873128712LL
-                    + static_cast<long long>(chunkZ) * 132897987541LL);
+    mRandom.setSeed(static_cast<long long>(chunkX) * 341873128712LL + static_cast<long long>(chunkZ) * 132897987541LL);
     PIXBeginNamedEvent(0.0f, "Setting up primer");
     unsigned short* elements = static_cast<unsigned short*>(XPhysicalAlloc(0x10000, 0xFFFFFFFF, 0x1000, 4));
     XMemSet128(elements, 0, 0x10000);
@@ -515,8 +519,8 @@ void OverworldLevelSource::lightChunk(LevelChunk* chunk)
 
 bool OverworldLevelSource::isWater(const BlockPos& pos)
 {
-    return mLevel->getBlockState(pos)->getBlock() == mOceanBlock->getBlock() &&
-           mLevel->getBlockState(pos)->getValue(LiquidBlock::LEVEL) < 7;
+    return mLevel->getBlockState(pos)->getBlock() == mOceanBlock->getBlock()
+           && mLevel->getBlockState(pos)->getValue(LiquidBlock::LEVEL) < 7;
 }
 
 void OverworldLevelSource::calcWaterDepths(int chunkX, int chunkZ)
@@ -550,17 +554,21 @@ void OverworldLevelSource::calcWaterDepths(int chunkX, int chunkZ)
                                 depth = 7;
                             BlockPos pos = center.offset(dx, 0, dz);
                             const BlockState* state = mLevel->getBlockState(pos);
-                            if (state->getBlock() == mOceanBlock->getBlock() && state->getValue(LiquidBlock::LEVEL) < depth)
+                            if (state->getBlock() == mOceanBlock->getBlock()
+                                && state->getValue(LiquidBlock::LEVEL) < depth)
                             {
-                                mLevel->setBlock(pos, state->setValue(LiquidBlock::LEVEL, depth), Block::UPDATE_ALL, false);
+                                mLevel->setBlock(pos, state->setValue(LiquidBlock::LEVEL, depth), Block::UPDATE_ALL,
+                                                 false);
                             }
                         }
                     }
 
-                    mLevel->setBlock(center, mOceanBlock->setValue(LiquidBlock::LEVEL, 7), Block::UPDATE_CLIENTS, false);
+                    mLevel->setBlock(center, mOceanBlock->setValue(LiquidBlock::LEVEL, 7), Block::UPDATE_CLIENTS,
+                                     false);
                     for (BlockPos pos = center.below(); pos.y >= 0; pos = pos.below())
                     {
-                        mLevel->setBlock(pos, mOceanBlock->setValue(LiquidBlock::LEVEL, 8), Block::UPDATE_CLIENTS, false);
+                        mLevel->setBlock(pos, mOceanBlock->setValue(LiquidBlock::LEVEL, 8), Block::UPDATE_CLIENTS,
+                                         false);
                     }
                 }
             }
@@ -576,38 +584,45 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
     mPopulationRandom.setSeed(mLevel->getSeed());
     long long oddX = mPopulationRandom.nextLong() / 2LL * 2LL + 1LL;
     long long oddZ = mPopulationRandom.nextLong() / 2LL * 2LL + 1LL;
-    mPopulationRandom.setSeed((static_cast<long long>(chunkX) * oddX
-                               + static_cast<long long>(chunkZ) * oddZ) ^ mLevel->getSeed());
+    mPopulationRandom.setSeed((static_cast<long long>(chunkX) * oddX + static_cast<long long>(chunkZ) * oddZ)
+                              ^ mLevel->getSeed());
     ChunkPos chunkPos(chunkX, chunkZ);
     bool villageGenerated = false;
     PIXBeginNamedEvent(0.0f, "Structure postprocessing");
     if (mGenerateStructures)
     {
-        if (mSettings->useMineShafts) mMineshaft->postProcess(mLevel, mPopulationRandom, &chunkPos);
-        if (mSettings->useVillages) villageGenerated = mVillage->postProcess(mLevel, mPopulationRandom, &chunkPos);
-        if (mSettings->useStrongholds) mStronghold->postProcess(mLevel, mPopulationRandom, &chunkPos);
-        if (mSettings->useTemples) mTemple->postProcess(mLevel, mPopulationRandom, &chunkPos);
-        if (mSettings->useMonuments) mMonument->postProcess(mLevel, mPopulationRandom, &chunkPos);
-        if (mSettings->useOceanRuins) mOceanRuin->postProcess(mLevel, mPopulationRandom, &chunkPos);
-        if (mSettings->useMansions) mMansion->postProcess(mLevel, mPopulationRandom, &chunkPos);
-        if (mSettings->useBuriedTreasure) mBuriedTreasure->postProcess(mLevel, mPopulationRandom, &chunkPos);
-        if (mSettings->useShipwrecks) mShipwreck->postProcess(mLevel, mPopulationRandom, &chunkPos);
+        if (mSettings->useMineShafts)
+            mMineshaft->postProcess(mLevel, mPopulationRandom, &chunkPos);
+        if (mSettings->useVillages)
+            villageGenerated = mVillage->postProcess(mLevel, mPopulationRandom, &chunkPos);
+        if (mSettings->useStrongholds)
+            mStronghold->postProcess(mLevel, mPopulationRandom, &chunkPos);
+        if (mSettings->useTemples)
+            mTemple->postProcess(mLevel, mPopulationRandom, &chunkPos);
+        if (mSettings->useMonuments)
+            mMonument->postProcess(mLevel, mPopulationRandom, &chunkPos);
+        if (mSettings->useOceanRuins)
+            mOceanRuin->postProcess(mLevel, mPopulationRandom, &chunkPos);
+        if (mSettings->useMansions)
+            mMansion->postProcess(mLevel, mPopulationRandom, &chunkPos);
+        if (mSettings->useBuriedTreasure)
+            mBuriedTreasure->postProcess(mLevel, mPopulationRandom, &chunkPos);
+        if (mSettings->useShipwrecks)
+            mShipwreck->postProcess(mLevel, mPopulationRandom, &chunkPos);
     }
     PIXEndNamedEvent();
     PIXBeginNamedEvent(0.0f, "Lakes");
-    if (biome != Biome::DESERT && biome != Biome::DESERT_HILLS && mSettings->useWaterLakes
-        && !villageGenerated && mPopulationRandom.nextInt(mSettings->waterLakeChance) == 0)
+    if (biome != Biome::DESERT && biome != Biome::DESERT_HILLS && mSettings->useWaterLakes && !villageGenerated
+        && mPopulationRandom.nextInt(mSettings->waterLakeChance) == 0)
     {
         const int x = mPopulationRandom.nextInt(16) + 8;
         const int y = mPopulationRandom.nextInt(128);
         const int z = mPopulationRandom.nextInt(16) + 8;
-        LakeFeature(Blocks::water).place(mLevel, mPopulationRandom,
-            origin.offset(x, y, z));
+        LakeFeature(Blocks::water).place(mLevel, mPopulationRandom, origin.offset(x, y, z));
     }
     PIXEndNamedEvent();
     PIXBeginNamedEvent(0.0f, "Lava");
-    if (!villageGenerated && mPopulationRandom.nextInt(mSettings->lavaLakeChance / 10) == 0
-        && mSettings->useLavaLakes)
+    if (!villageGenerated && mPopulationRandom.nextInt(mSettings->lavaLakeChance / 10) == 0 && mSettings->useLavaLakes)
     {
         const int x = mPopulationRandom.nextInt(16) + 8;
         const int y = mPopulationRandom.nextInt(mPopulationRandom.nextInt(120) + 8);
@@ -636,8 +651,8 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
     biome->decorate(mLevel, mPopulationRandom, BlockPos(chunkX * 16, 0, chunkZ * 16));
     PIXEndNamedEvent();
     PIXBeginNamedEvent(0.0f, "Post process mobs");
-    NaturalMobSpawner::spawnMobsForChunkGeneration(mLevel, biome, chunkX * 16 + 8, chunkZ * 16 + 8,
-                                                    16, 16, &mPopulationRandom);
+    NaturalMobSpawner::spawnMobsForChunkGeneration(mLevel, biome, chunkX * 16 + 8, chunkZ * 16 + 8, 16, 16,
+                                                   &mPopulationRandom);
     PIXEndNamedEvent();
     PIXBeginNamedEvent(0.0f, "Update ice and snow");
     origin = origin.offset(8, 0, 8);
@@ -663,14 +678,12 @@ bool OverworldLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
     return false;
 }
 
-std::vector<Biome::MobSpawnerData*>* OverworldLevelSource::getMobsAt(MobCategory* category,
-                                                                    const BlockPos& pos)
+std::vector<Biome::MobSpawnerData*>* OverworldLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
 {
     Biome* biome = mLevel->getBiome(pos);
     if (mGenerateStructures)
     {
-        if ((category == MobCategory::MONSTER || category == MobCategory::SLIME)
-            && mTemple->isSwamphut(pos))
+        if ((category == MobCategory::MONSTER || category == MobCategory::SLIME) && mTemple->isSwamphut(pos))
         {
             return mTemple->getSwamphutEnemies();
         }
@@ -685,44 +698,73 @@ std::vector<Biome::MobSpawnerData*>* OverworldLevelSource::getMobsAt(MobCategory
 
 bool OverworldLevelSource::isPosInFeature(Level*, const std::wstring& feature, const BlockPos& pos)
 {
-    if (!mGenerateStructures) return false;
-    if (LargeFeature::STRONGHOLD == feature && mStronghold != NULL) return mStronghold->isInsideFeature(pos);
-    if (LargeFeature::SHIPWRECK == feature && mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
-    if (LargeFeature::MANSION == feature && mMansion != NULL) return mMansion->isInsideFeature(pos);
-    if (LargeFeature::MONUMENT == feature && mMonument != NULL) return mMonument->isInsideFeature(pos);
-    if (LargeFeature::VILLAGE == feature && mVillage != NULL) return mVillage->isInsideFeature(pos);
-    if (LargeFeature::MINESHAFT == feature && mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
-    if (LargeFeature::TEMPLE == feature && mTemple != NULL) return mTemple->isInsideFeature(pos);
-    if (LargeFeature::RUIN.compare(feature) == 0 && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
+    if (!mGenerateStructures)
+        return false;
+    if (LargeFeature::STRONGHOLD == feature && mStronghold != NULL)
+        return mStronghold->isInsideFeature(pos);
+    if (LargeFeature::SHIPWRECK == feature && mShipwreck != NULL)
+        return mShipwreck->isInsideFeature(pos);
+    if (LargeFeature::MANSION == feature && mMansion != NULL)
+        return mMansion->isInsideFeature(pos);
+    if (LargeFeature::MONUMENT == feature && mMonument != NULL)
+        return mMonument->isInsideFeature(pos);
+    if (LargeFeature::VILLAGE == feature && mVillage != NULL)
+        return mVillage->isInsideFeature(pos);
+    if (LargeFeature::MINESHAFT == feature && mMineshaft != NULL)
+        return mMineshaft->isInsideFeature(pos);
+    if (LargeFeature::TEMPLE == feature && mTemple != NULL)
+        return mTemple->isInsideFeature(pos);
+    if (LargeFeature::RUIN.compare(feature) == 0 && mOceanRuin != NULL)
+        return mOceanRuin->isInsideFeature(pos);
     return false;
 }
 
-BlockPos* OverworldLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature,
-                                                       const BlockPos& pos, bool takeBlock)
+BlockPos* OverworldLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos,
+                                                      bool takeBlock)
 {
-    if (!mGenerateStructures) return NULL;
-    if (LargeFeature::STRONGHOLD == feature && mStronghold != NULL) return mStronghold->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (LargeFeature::SHIPWRECK == feature && mShipwreck != NULL) return mShipwreck->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (LargeFeature::MANSION == feature && mMansion != NULL) return mMansion->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (LargeFeature::MONUMENT == feature && mMonument != NULL) return mMonument->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (LargeFeature::VILLAGE == feature && mVillage != NULL) return mVillage->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (LargeFeature::MINESHAFT == feature && mMineshaft != NULL) return mMineshaft->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (LargeFeature::TEMPLE == feature && mTemple != NULL) return mTemple->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (LargeFeature::BURIED_TREASURE == feature && mBuriedTreasure != NULL) return mBuriedTreasure->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (LargeFeature::RUIN == feature && mOceanRuin != NULL) return mOceanRuin->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (!mGenerateStructures)
+        return NULL;
+    if (LargeFeature::STRONGHOLD == feature && mStronghold != NULL)
+        return mStronghold->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::SHIPWRECK == feature && mShipwreck != NULL)
+        return mShipwreck->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::MANSION == feature && mMansion != NULL)
+        return mMansion->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::MONUMENT == feature && mMonument != NULL)
+        return mMonument->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::VILLAGE == feature && mVillage != NULL)
+        return mVillage->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::MINESHAFT == feature && mMineshaft != NULL)
+        return mMineshaft->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::TEMPLE == feature && mTemple != NULL)
+        return mTemple->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::BURIED_TREASURE == feature && mBuriedTreasure != NULL)
+        return mBuriedTreasure->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::RUIN == feature && mOceanRuin != NULL)
+        return mOceanRuin->getNearestGeneratedFeature(level, pos, takeBlock);
     return NULL;
 }
 
 void OverworldLevelSource::recreateLogicStructuresForChunk(LevelChunk*, int chunkX, int chunkZ)
 {
-    if (!mGenerateStructures) return;
-    if (mSettings->useMineShafts) mMineshaft->apply(mLevel, chunkX, chunkZ, NULL);
-    if (mSettings->useVillages) mVillage->apply(mLevel, chunkX, chunkZ, NULL);
-    if (mSettings->useStrongholds) mStronghold->apply(mLevel, chunkX, chunkZ, NULL);
-    if (mSettings->useTemples) mTemple->apply(mLevel, chunkX, chunkZ, NULL);
-    if (mSettings->useMonuments) mMonument->apply(mLevel, chunkX, chunkZ, NULL);
-    if (mSettings->useMansions) mMansion->apply(mLevel, chunkX, chunkZ, NULL);
-    if (mSettings->useShipwrecks) mShipwreck->apply(mLevel, chunkX, chunkZ, NULL);
-    if (mSettings->useBuriedTreasure) mBuriedTreasure->apply(mLevel, chunkX, chunkZ, NULL);
-    if (mSettings->useOceanRuins) mOceanRuin->apply(mLevel, chunkX, chunkZ, NULL);
+    if (!mGenerateStructures)
+        return;
+    if (mSettings->useMineShafts)
+        mMineshaft->apply(mLevel, chunkX, chunkZ, NULL);
+    if (mSettings->useVillages)
+        mVillage->apply(mLevel, chunkX, chunkZ, NULL);
+    if (mSettings->useStrongholds)
+        mStronghold->apply(mLevel, chunkX, chunkZ, NULL);
+    if (mSettings->useTemples)
+        mTemple->apply(mLevel, chunkX, chunkZ, NULL);
+    if (mSettings->useMonuments)
+        mMonument->apply(mLevel, chunkX, chunkZ, NULL);
+    if (mSettings->useMansions)
+        mMansion->apply(mLevel, chunkX, chunkZ, NULL);
+    if (mSettings->useShipwrecks)
+        mShipwreck->apply(mLevel, chunkX, chunkZ, NULL);
+    if (mSettings->useBuriedTreasure)
+        mBuriedTreasure->apply(mLevel, chunkX, chunkZ, NULL);
+    if (mSettings->useOceanRuins)
+        mOceanRuin->apply(mLevel, chunkX, chunkZ, NULL);
 }

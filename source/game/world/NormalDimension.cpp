@@ -3,8 +3,7 @@
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 
-NormalDimension::NormalDimension()
-    : Dimension()
+NormalDimension::NormalDimension() : Dimension()
 {
     mSeaLevel = 63;
 }

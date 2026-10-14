@@ -32,7 +32,7 @@
 #include "platform/wiiu/WiiU_FileCache.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
-template<typename T> T _fromString(const std::wstring& value);
+template <typename T> T _fromString(const std::wstring& value);
 std::string formatstr(const char* format, ...);
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
 void __debugbreak();
@@ -56,8 +56,8 @@ LevelRuleset::~LevelRuleset()
     {
         delete *namedArea;
     }
-    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin();
-         it != mRandomItemSets.end(); ++it)
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end();
+         ++it)
     {
         delete *it;
     }
@@ -71,7 +71,8 @@ LevelRuleset::~LevelRuleset()
 RandomItemSetRuleDefinition* LevelRuleset::getRandomItemSet(const std::wstring& name)
 {
     RandomItemSetRuleDefinition* itemSet = NULL;
-    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end();
+         ++it)
     {
         if ((*it)->getId() == name)
         {
@@ -108,7 +109,8 @@ void LevelRuleset::getChildren(std::vector<GameRuleDefinition*>* children)
     {
         children->push_back(*it);
     }
-    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end();
+         ++it)
     {
         children->push_back(*it);
     }
@@ -324,7 +326,8 @@ void LevelRuleset::getActiveChunkAreas(std::vector<NamedAreaRuleDefinition*>* ar
 {
     for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
     {
-        if ((*it)->getActionType() == ConsoleGameRules::eGameRuleType_ActiveChunkArea || (*it)->getName() == L"ActiveArea")
+        if ((*it)->getActionType() == ConsoleGameRules::eGameRuleType_ActiveChunkArea
+            || (*it)->getName() == L"ActiveArea")
         {
             areas->push_back(*it);
         }
@@ -376,12 +379,12 @@ void LevelRuleset::getRingsWithinArea(std::vector<TargetAreaRuleDefinition*>* ri
     {
         TargetAreaRuleDefinition* rule = static_cast<TargetAreaRuleDefinition*>(*it);
         ConsoleGameRules::EGameRuleType type = rule->getActionType();
-        if ((type == ConsoleGameRules::eGameRuleType_TargetArea ||
-             type == ConsoleGameRules::eGameRuleType_ScoreRing) && !rule->mPrimary)
+        if ((type == ConsoleGameRules::eGameRuleType_TargetArea || type == ConsoleGameRules::eGameRuleType_ScoreRing)
+            && !rule->mPrimary)
         {
             AABB* ringArea = rule->getArea()->grow(1.0, 1.0, 1.0);
-            if (area->intersects(ringArea->mMinX, ringArea->mMinY, ringArea->mMinZ,
-                                 ringArea->mMaxX, ringArea->mMaxY, ringArea->mMaxZ))
+            if (area->intersects(ringArea->mMinX, ringArea->mMinY, ringArea->mMinZ, ringArea->mMaxX, ringArea->mMaxY,
+                                 ringArea->mMaxZ))
             {
                 rings->push_back(rule);
             }
@@ -415,7 +418,8 @@ void LevelRuleset::getPlayerBoundsVolumes(std::vector<NamedAreaRuleDefinition*>*
 {
     for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
     {
-        if ((*it)->getActionType() == ConsoleGameRules::eGameRuleType_PlayerBoundsVolume || (*it)->getName() == L"MaxPlayerBounds")
+        if ((*it)->getActionType() == ConsoleGameRules::eGameRuleType_PlayerBoundsVolume
+            || (*it)->getName() == L"MaxPlayerBounds")
         {
             areas->push_back(*it);
         }
@@ -478,10 +482,8 @@ void LevelRuleset::getChildren(std::vector<GameRuleDefinition*>* children, Conso
     {
         children->push_back(rule);
     }
-    if ((type > ConsoleGameRules::eGameRuleType_LevelRules &&
-         type < ConsoleGameRules::eGameRuleType_BlockLayer) ||
-        type == ConsoleGameRules::eGameRuleType_Powerup ||
-        type == ConsoleGameRules::eGameRuleType_ActiveViewArea)
+    if ((type > ConsoleGameRules::eGameRuleType_LevelRules && type < ConsoleGameRules::eGameRuleType_BlockLayer)
+        || type == ConsoleGameRules::eGameRuleType_Powerup || type == ConsoleGameRules::eGameRuleType_ActiveViewArea)
     {
         for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
         {
@@ -490,7 +492,8 @@ void LevelRuleset::getChildren(std::vector<GameRuleDefinition*>* children, Conso
     }
     if (type == ConsoleGameRules::eGameRuleType_RandomItemSet)
     {
-        for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+        for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin();
+             it != mRandomItemSets.end(); ++it)
         {
             children->push_back(*it);
         }
@@ -528,8 +531,8 @@ void LevelRuleset::WriteRulesetXMLData()
     {
         (*it)->WriteXMLData(xml);
     }
-    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin();
-         it != mRandomItemSets.end(); ++it)
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end();
+         ++it)
     {
         (*it)->WriteXMLData(xml);
     }
@@ -555,8 +558,8 @@ void LevelRuleset::WriteRulesetXMLData()
     xml += "</LevelRules>\n";
 
     std::wstring path = gApp.GetDebugRootPath() + L"LevelRules.xml";
-    int file = CreateFileA(wstringtofilename(path, s_levelRulesFileName), GENERIC_WRITE, 0, NULL,
-                           CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS, 0);
+    int file = CreateFileA(wstringtofilename(path, s_levelRulesFileName), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                           FILE_FLAG_RANDOM_ACCESS, 0);
     if (file == INVALID_HANDLE_VALUE)
     {
         __debugbreak();

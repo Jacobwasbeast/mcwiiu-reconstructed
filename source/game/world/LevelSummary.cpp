@@ -2,7 +2,8 @@
 
 #include "game/world/LevelData.hpp"
 
-LevelSummary::LevelSummary(LevelData* levelData, const std::wstring& levelId, const std::wstring& levelName, long long sizeOnDisk, bool requiresConversion)
+LevelSummary::LevelSummary(LevelData* levelData, const std::wstring& levelId, const std::wstring& levelName,
+                           long long sizeOnDisk, bool requiresConversion)
 {
     mLevelId = levelId;
     mLevelName = levelName;

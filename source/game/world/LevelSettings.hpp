@@ -7,11 +7,10 @@ class SuperflatConfig;
 class LevelSettings
 {
 public:
-    LevelSettings(long long, const GameType*, bool, bool, bool, LevelType*, int, int, int, bool,
-                  unsigned char, int, int);
+    LevelSettings(long long, const GameType*, bool, bool, bool, LevelType*, int, int, int, bool, unsigned char, int,
+                  int);
     explicit LevelSettings(LevelData*);
-    void _init(long long, const GameType*, bool, bool, bool, LevelType*, int, int, int, bool, unsigned char,
-               int, int);
+    void _init(long long, const GameType*, bool, bool, bool, LevelType*, int, int, int, bool, unsigned char, int, int);
     void enableStartingBonusItems();
     void enableSinglePlayerCommands();
     void setLevelTypeOptions(SuperflatConfig*);

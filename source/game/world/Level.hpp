@@ -73,6 +73,7 @@ class Level : public LevelSource
     friend class GenerationWriteTask;
     friend class VillageSiege;
     friend class VillagerGolem;
+
 public:
     enum ESPAWN_TYPE
     {
@@ -148,11 +149,12 @@ public:
     bool canSeeSky(const BlockPos& pos);
     int getEmissionCached(unsigned int* cache, Block* block, const BlockPos& pos);
     int getExpectedLight(unsigned int* cache, const BlockPos& pos, LightLayer::variety layer, bool ignoreEmission);
-    int getBlockingCached(unsigned int* cache, LightLayer::variety layer, Block* block, Block* extraBlock, const BlockPos& pos);
+    int getBlockingCached(unsigned int* cache, LightLayer::variety layer, Block* block, Block* extraBlock,
+                          const BlockPos& pos);
     void initCachePartial(unsigned int* cache, int x, int y, int z);
     void initCacheComplete(unsigned int* cache, int x, int y, int z);
-    void setBrightnessCached(unsigned int* cache, unsigned long long* dirty, LightLayer::variety layer,
-                             int x, int y, int z, int brightness);
+    void setBrightnessCached(unsigned int* cache, unsigned long long* dirty, LightLayer::variety layer, int x, int y,
+                             int z, int brightness);
     void setBlocksDirty(const BlockPos& from, const BlockPos& to);
     void flushCache(unsigned int* cache, unsigned long long dirty, LightLayer::variety layer);
     bool checkLight(LightLayer::variety layer, const BlockPos& pos, bool onlyLoadedChunks, bool skipCentre);
@@ -163,7 +165,8 @@ public:
     void updateNeighborsAt(const BlockPos& pos, Block* block, bool updateObservers);
     void updateNeighborsOfNeighborsAt(const BlockPos& pos, Block* block);
     void blockUpdated(const BlockPos& pos, Block* block, bool updateObservers);
-    virtual bool internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockState* state, int flags, bool forceUpdate);
+    virtual bool internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockState* state, int flags,
+                                  bool forceUpdate);
     virtual bool setData(const BlockPos& pos, int data, int flags, bool forceUpdate);
     virtual bool setData(int x, int y, int z, int data, int flags, bool forceUpdate);
     bool setBlockAndData(int x, int y, int z, int blockId, int data, int flags);
@@ -172,7 +175,8 @@ public:
     void levelEvent(int type, const BlockPos& pos, int data);
     virtual bool destroyBlock(const BlockPos& pos, bool dropResources);
     virtual bool setBlockAndUpdate(const BlockPos& pos, const BlockState* state);
-    virtual void sendBlockUpdated(const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int flags, bool immediate);
+    virtual void sendBlockUpdated(const BlockPos& pos, const BlockState* oldState, const BlockState* newState,
+                                  int flags, bool immediate);
     void playMusic(double x, double y, double z, const std::wstring& sound, float volume);
     Vec3* getSkyColor(boost::shared_ptr<Entity> entity, float partialTick);
     Vec3* getFogColor(boost::shared_ptr<Entity> entity, float partialTick);
@@ -217,18 +221,30 @@ public:
     Block* getBlock(const BlockPos& pos);
     bool isSolidRender(const BlockPos& pos);
     bool isDay();
-    HitResult* clip(Vec3* from, Vec3* to, bool stopOnLiquid, bool ignoreBlocksWithoutShape, bool returnLastUncollidableBlock, bool testUseBlocks, boost::unordered_set<Block*, boost::hash<Block*>, std::equal_to<Block*>, std::allocator<Block*> >* alwaysClipBlocks, bool clipExtraBlocks);
+    HitResult* clip(Vec3* from, Vec3* to, bool stopOnLiquid, bool ignoreBlocksWithoutShape,
+                    bool returnLastUncollidableBlock, bool testUseBlocks,
+                    boost::unordered_set<Block*, boost::hash<Block*>, std::equal_to<Block*>, std::allocator<Block*> >*
+                        alwaysClipBlocks,
+                    bool clipExtraBlocks);
     HitResult* clip(Vec3* from, Vec3* to);
     HitResult* clip(Vec3* from, Vec3* to, bool stopOnLiquid);
-    void playSoundToAllPlayers(const BlockPos& pos, const SoundEvent* sound, SoundSource::ESoundSource source, float volume, float pitch, float range);
-    virtual void playSound(boost::shared_ptr<Player> player, const BlockPos& pos, const SoundEvent* sound, SoundSource::ESoundSource source, float volume, float pitch, float range);
-    virtual void playSound(boost::shared_ptr<Player> player, double x, double y, double z, const SoundEvent* sound, SoundSource::ESoundSource source, float volume, float pitch, float range);
-    virtual void playLocalSound(double x, double y, double z, const SoundEvent* sound, SoundSource::ESoundSource source, float volume, float pitch, bool distanceDelay, float range);
+    void playSoundToAllPlayers(const BlockPos& pos, const SoundEvent* sound, SoundSource::ESoundSource source,
+                               float volume, float pitch, float range);
+    virtual void playSound(boost::shared_ptr<Player> player, const BlockPos& pos, const SoundEvent* sound,
+                           SoundSource::ESoundSource source, float volume, float pitch, float range);
+    virtual void playSound(boost::shared_ptr<Player> player, double x, double y, double z, const SoundEvent* sound,
+                           SoundSource::ESoundSource source, float volume, float pitch, float range);
+    virtual void playLocalSound(double x, double y, double z, const SoundEvent* sound, SoundSource::ESoundSource source,
+                                float volume, float pitch, bool distanceDelay, float range);
     void playStreamingMusic(const BlockPos& pos, const SoundEvent* sound, bool playing);
-    void addParticle(ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
-    void addParticle(const ParticleType* type, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
-    void addAlwaysVisibleParticle(ePARTICLE_TYPE type, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
-    void addParticle(const ParticleType* type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
+    void addParticle(ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya,
+                     double za, arrayWithLength<int> params);
+    void addParticle(const ParticleType* type, double x, double y, double z, double xa, double ya, double za,
+                     arrayWithLength<int> params);
+    void addAlwaysVisibleParticle(ePARTICLE_TYPE type, double x, double y, double z, double xa, double ya, double za,
+                                  arrayWithLength<int> params);
+    void addParticle(const ParticleType* type, bool overrideLimiter, double x, double y, double z, double xa, double ya,
+                     double za, arrayWithLength<int> params);
     virtual bool addGlobalEntity(boost::shared_ptr<Entity> entity);
     virtual bool addEntity(boost::shared_ptr<Entity> entity);
     virtual void entityAdded(boost::shared_ptr<Entity> entity);
@@ -244,14 +260,15 @@ public:
     void removeListener(LevelListener* listener);
     bool isInsideWorldBorder(boost::shared_ptr<Entity> entity);
     bool internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box, bool stopOnFirst,
-        std::vector<AABB*>* collisions, bool noEntities, bool includePlayerConstraints, bool forParticles);
+                                   std::vector<AABB*>* collisions, bool noEntities, bool includePlayerConstraints,
+                                   bool forParticles);
     std::vector<boost::shared_ptr<Entity> >* getEntities(boost::shared_ptr<Entity> excluded, const AABB* box,
-        const Predicate<boost::shared_ptr<Entity> >* predicate,
-        std::vector<boost::shared_ptr<Entity> >* entities);
+                                                         const Predicate<boost::shared_ptr<Entity> >* predicate,
+                                                         std::vector<boost::shared_ptr<Entity> >* entities);
     std::vector<boost::shared_ptr<Entity> >* getEntities(boost::shared_ptr<Entity> excluded, const AABB* box,
-        std::vector<boost::shared_ptr<Entity> >* entities);
-    std::vector<AABB*>* getCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box,
-        bool noEntities, bool includePlayerConstraints, bool forParticles);
+                                                         std::vector<boost::shared_ptr<Entity> >* entities);
+    std::vector<AABB*>* getCollisionAABBs(boost::shared_ptr<Entity> entity, const AABB* box, bool noEntities,
+                                          bool includePlayerConstraints, bool forParticles);
     bool hasBlockCubes(const AABB* box);
     bool checkAndHandleWater(AABB* box, Material* material, boost::shared_ptr<Entity> entity);
     float getTimeOfDay(float partialTick);
@@ -342,8 +359,9 @@ public:
     virtual std::vector<TickNextTickData>* fetchTicksInArea(BoundingBox* box, bool runAll);
     std::vector<boost::shared_ptr<Player> >* getPlayers(unsigned long long flags,
                                                         const Predicate<boost::shared_ptr<Player> >* predicate);
-    std::vector<boost::shared_ptr<Entity> >* getEntitiesOfClass(const std::type_info& type,
-        const AABB* box, const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers);
+    std::vector<boost::shared_ptr<Entity> >* getEntitiesOfClass(const std::type_info& type, const AABB* box,
+                                                                const Predicate<boost::shared_ptr<Entity> >* predicate,
+                                                                bool excludeInvisiblePlayers);
     std::vector<boost::shared_ptr<Entity> >* getEntitiesOfClass(const std::type_info& type, const AABB* box);
     bool hasEntitiesOfClass(const std::type_info& type, const AABB* box,
                             const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers);
@@ -359,24 +377,24 @@ public:
     bool mayPlace(Block* block, const BlockPos& pos, bool replaceable, const Direction* direction,
                   boost::shared_ptr<Entity> entity);
     boost::shared_ptr<Player> getNearestPlayerPredicate(boost::shared_ptr<Entity> entity, double distance,
-        const Predicate<boost::shared_ptr<Entity> >* predicate);
+                                                        const Predicate<boost::shared_ptr<Entity> >* predicate);
     boost::shared_ptr<Player> getNearestPlayerPredicate(double x, double y, double z, double distance,
-        const Predicate<boost::shared_ptr<Entity> >* predicate);
-    boost::shared_ptr<Player> getNearestPlayer(double x, double y, double z, double distance,
-                                               bool includeCreative, double maxYDistance);
+                                                        const Predicate<boost::shared_ptr<Entity> >* predicate);
+    boost::shared_ptr<Player> getNearestPlayer(double x, double y, double z, double distance, bool includeCreative,
+                                               double maxYDistance);
     std::vector<boost::shared_ptr<Player> >* getNearbyPlayers(boost::shared_ptr<Entity> entity, double distance);
     bool hasNearPlayer(double x, double y, double z, double distance);
     boost::shared_ptr<Player> getNearestPlayer(double x, double z, double distance);
     boost::shared_ptr<Player> getNearestAttackablePlayer(double x, double y, double z, double distance,
-        double maxYDistance, const RangeModifier* modifier,
-        const Predicate<boost::shared_ptr<Entity> >* predicate);
+                                                         double maxYDistance, const RangeModifier* modifier,
+                                                         const Predicate<boost::shared_ptr<Entity> >* predicate);
     boost::shared_ptr<Player> getNearestAttackablePlayer(const BlockPos& pos, double distance, double angle);
     boost::shared_ptr<Player> getPlayerByName(const std::wstring& name);
     boost::shared_ptr<Player> getPlayerByUUID(const std::wstring& uuid);
-    arrayWithLength<unsigned char> getBlocksAndData(int minX, int minY, int minZ, int maxX, int maxY,
-        int maxZ, bool includeLight);
+    arrayWithLength<unsigned char> getBlocksAndData(int minX, int minY, int minZ, int maxX, int maxY, int maxZ,
+                                                    bool includeLight);
     void setBlocksAndData(int minX, int minY, int minZ, int maxX, int maxY, int maxZ,
-        arrayWithLength<unsigned char> data, bool includeLight);
+                          arrayWithLength<unsigned char> data, bool includeLight);
     void setFromRawData(int x, int z, arrayWithLength<unsigned char> data);
     virtual void disconnect(bool save);
     void checkSession();
@@ -439,10 +457,11 @@ public:
     bool hasSignal(const BlockPos& pos, const Direction* direction);
     bool hasNeighborSignal(const BlockPos& pos);
     int getBestNeighborSignal(const BlockPos& pos);
-    boost::shared_ptr<Player> getNearestPlayer(boost::shared_ptr<Entity> entity, double distance, bool includeCreative, double maxYDistance);
+    boost::shared_ptr<Player> getNearestPlayer(boost::shared_ptr<Entity> entity, double distance, bool includeCreative,
+                                               double maxYDistance);
     boost::shared_ptr<Player> getNearestPlayer(boost::shared_ptr<Entity> entity, double distance, double maxYDistance);
     boost::shared_ptr<Player> getNearestPlayerNotCreative(boost::shared_ptr<Entity> entity, double distance,
-        double maxYDistance);
+                                                          double maxYDistance);
     void setGameTime(long long value);
     long long getGameTime();
     long long getDayTime();
@@ -460,8 +479,9 @@ public:
     void decrementUnsavedChunkCount();
     void gatherStats();
     boost::shared_ptr<Player> getNearestAttackablePlayer(boost::shared_ptr<Entity> entity, double distance,
-                                                          double angle);
+                                                         double angle);
     int mSeaLevel;
+
 protected:
     OSFastMutex mEntityMutex;
     std::vector<boost::shared_ptr<Entity> > mEntities;
@@ -479,10 +499,12 @@ public:
 
 protected:
     boost::unordered_map<int, boost::shared_ptr<Entity>, IntKeyHash2, IntKeyEq> mEntityMap;
+
 private:
     int mCloudColour;
     int mSkyDarken;
     bool mForceTimeUpdate;
+
 protected:
     int mRandValue;
     LootTables* mLootTables;
@@ -491,15 +513,20 @@ protected:
     float mRainLevel;
     float mOldThunderLevel;
     float mThunderLevel;
+
 private:
     int mSkyFlashTime;
+
 public:
     Random* mRandom;
+
 public:
     bool mIsNew;
     Dimension* mDimension;
+
 private:
     PathNavigationListener* mPathListener;
+
 public:
     std::vector<LevelListener*> mListeners;
 
@@ -510,10 +537,13 @@ protected:
     bool mFindingSpawn;
     SavedDataStorage* mSavedDataStorage;
     boost::shared_ptr<Villages> mVillages;
+
 public:
     bool mIsClientSide;
+
 protected:
     CustomSet mChunksToPoll;
+
 private:
     bool mSpawnEnemies;
     bool mSpawnFriendlies;
@@ -529,9 +559,11 @@ private:
     std::vector<AABB*> mCollisionBoxes;
     unsigned int* mLightUpdateQueue;
     std::vector<boost::shared_ptr<Entity> > mEntityQueryResult;
+
 protected:
     LevelChunk** mChunkCache;
     int mChunkCacheSize;
+
 private:
     OSFastMutex mLightMutex;
     int mAmbientTickCountdown;
