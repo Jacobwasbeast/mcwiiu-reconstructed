@@ -68,6 +68,14 @@ long InterlockedCompareExchangeRelease(volatile long* destination, long exchange
         __DCBST(word, 0);
     } while (!__STWCX(word, 0, static_cast<unsigned int>(exchange)));
     return static_cast<long>(previous);
+#elif defined(__powerpc__) || defined(__PPC__)
+    unsigned int previous;
+    __asm__ __volatile__(
+        "1:\n\tlwarx %0, 0, %1\n\tcmplw %0, %2\n\tbne- 2f\n\tdcbst 0, %1\n\tstwcx. %3, 0, %1\n\tbne- 1b\n2:"
+        : "=&r"(previous)
+        : "r"(destination), "r"(comparand), "r"(exchange)
+        : "cr0", "memory");
+    return static_cast<long>(previous);
 #else
     uint32_t previous = 0;
     OSCompareAndSwapAtomicEx(reinterpret_cast<volatile uint32_t*>(destination), static_cast<uint32_t>(comparand),

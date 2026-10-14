@@ -1219,6 +1219,14 @@ public:
             __DCBST(&mValue, 0);
         } while (!__STWCX(&mValue, 0, previous + 1));
         return previous;
+#elif defined(__powerpc__) || defined(__PPC__)
+        unsigned int previous;
+        unsigned int next;
+        __asm__ __volatile__("1:\n\tlwarx %0, 0, %2\n\tdcbst 0, %2\n\taddi %1, %0, 1\n\tstwcx. %1, 0, %2\n\tbne- 1b"
+                             : "=&b"(previous), "=&r"(next)
+                             : "r"(&mValue)
+                             : "cr0", "memory");
+        return previous;
 #else
         return static_cast<unsigned int>(OSAddAtomic(reinterpret_cast<volatile int32_t*>(&mValue), 1));
 #endif
@@ -1232,6 +1240,14 @@ public:
             previous = __LWARX(&mValue, 0);
             __DCBST(&mValue, 0);
         } while (!__STWCX(&mValue, 0, previous | mask));
+        return previous;
+#elif defined(__powerpc__) || defined(__PPC__)
+        unsigned int previous;
+        unsigned int next;
+        __asm__ __volatile__("1:\n\tlwarx %0, 0, %2\n\tdcbst 0, %2\n\tor %1, %0, %3\n\tstwcx. %1, 0, %2\n\tbne- 1b"
+                             : "=&r"(previous), "=&r"(next)
+                             : "r"(&mValue), "r"(mask)
+                             : "cr0", "memory");
         return previous;
 #else
         uint32_t previous;
@@ -1250,6 +1266,14 @@ public:
             previous = __LWARX(&mValue, 0);
             __DCBST(&mValue, 0);
         } while (!__STWCX(&mValue, 0, previous & mask));
+        return previous;
+#elif defined(__powerpc__) || defined(__PPC__)
+        unsigned int previous;
+        unsigned int next;
+        __asm__ __volatile__("1:\n\tlwarx %0, 0, %2\n\tdcbst 0, %2\n\tand %1, %0, %3\n\tstwcx. %1, 0, %2\n\tbne- 1b"
+                             : "=&r"(previous), "=&r"(next)
+                             : "r"(&mValue), "r"(mask)
+                             : "cr0", "memory");
         return previous;
 #else
         uint32_t previous;
@@ -1275,6 +1299,15 @@ public:
         } while (!__STWCX(&mValue, 0, desired));
         *original = previous;
         return true;
+#elif defined(__powerpc__) || defined(__PPC__)
+        unsigned int previous;
+        __asm__ __volatile__(
+            "1:\n\tlwarx %0, 0, %1\n\tcmplw %0, %2\n\tbne- 2f\n\tdcbst 0, %1\n\tstwcx. %3, 0, %1\n\tbne- 1b\n2:"
+            : "=&r"(previous)
+            : "r"(&mValue), "r"(expected), "r"(desired)
+            : "cr0", "memory");
+        *original = previous;
+        return previous == expected;
 #else
         uint32_t previous;
         BOOL exchanged = OSCompareAndSwapAtomicEx(&mValue, expected, desired, &previous);
