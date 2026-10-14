@@ -16,6 +16,8 @@ enum VCTCodec
     VCT_CODEC_6
 };
 
+const unsigned int VCT_TIMESTAMP_TICK_SCALE = 64;
+
 struct _udp_packet;
 struct VCTAudioPacket;
 

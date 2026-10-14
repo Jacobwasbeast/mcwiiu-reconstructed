@@ -2536,14 +2536,8 @@ extern "C" int AIL_API_set_sample_processor(_SAMPLE* pSample, int iStage, int iP
         uIndex = SAMPLE_STAGE_DECODER;
     }
 
-    unsigned int uLast = uIndex;
-    if (iStage == SAMPLE_STAGE_ALL)
-    {
-        uLast = SAMPLE_STAGE_COUNT - 1;
-    }
-
     SampleStage* pStage;
-    while (true)
+    do
     {
         pStage = &pSample->stages[uIndex];
         if (pStage->filter.active != 0)
@@ -2578,13 +2572,13 @@ extern "C" int AIL_API_set_sample_processor(_SAMPLE* pSample, int iStage, int iP
             }
         }
 
-        if (uIndex == uLast)
+        if (iStage != SAMPLE_STAGE_ALL)
         {
             break;
         }
 
         ++uIndex;
-    }
+    } while (uIndex < SAMPLE_STAGE_COUNT);
 
     int iPrevious = pStage->filter.provider;
     pStage->filter.provider = iProvider;

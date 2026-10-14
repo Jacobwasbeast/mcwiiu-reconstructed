@@ -912,7 +912,7 @@ static inline void MIX_merge_nearest(const void** ppSource, unsigned int* pFract
     *pFraction = uFraction;
 }
 
-template <class Mixer>
+template <class Mixer, bool bResumeChecksSource>
 static inline void MIX_merge_filtered(const void** ppSource, unsigned int* pFraction,
                                       const void* pSourceEnd, void** ppDestination,
                                       void* pDestinationEnd, int* pLeftValue, int* pRightValue,
@@ -933,6 +933,7 @@ static inline void MIX_merge_filtered(const void** ppSource, unsigned int* pFrac
     int iCurrentLeft;
     int iCurrentRight;
     int iState;
+    bool bCheckSource;
 
     if (((unsigned int)iStep & MIX_STEP_INTEGER_MASK) != 0)
     {
@@ -945,6 +946,8 @@ static inline void MIX_merge_filtered(const void** ppSource, unsigned int* pFrac
         {
             goto consume;
         }
+
+        bCheckSource = bResumeChecksSource || iState != MIX_STATE_PRODUCE;
 
         if (iState == MIX_STATE_PRODUCE)
         {
@@ -973,11 +976,12 @@ static inline void MIX_merge_filtered(const void** ppSource, unsigned int* pFrac
             uPosition &= MIX_FRACTION_MASK;
 
         produce:
-            if (pSource >= (const unsigned char*)pSourceEnd)
+            if (bCheckSource && pSource >= (const unsigned char*)pSourceEnd)
             {
                 goto save;
             }
 
+            bCheckSource = true;
             Mixer::Load(pSource, &iCurrentLeft, &iCurrentRight);
             pSource += Mixer::SOURCE_BYTES;
             Mixer::Filtered(pDestination,
@@ -1488,9 +1492,9 @@ void Merge_DestMono_SrcStereo_Src16_Copy16_DownFiltered(
     const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
     int* pRightValue)
 {
-    MIX_merge_filtered<MixStereoMonoCopy>(ppSource, pFraction, pSourceEnd, (void**)ppDestination,
-                                          pDestinationEnd, pLeftValue, pRightValue, iStep,
-                                          iScaleLeft, iScaleRight);
+    MIX_merge_filtered<MixStereoMonoCopy, true>(ppSource, pFraction, pSourceEnd,
+                                                (void**)ppDestination, pDestinationEnd, pLeftValue,
+                                                pRightValue, iStep, iScaleLeft, iScaleRight);
 }
 
 void Merge_DestStereo_SrcStereo_Src16_Copy16_DownFiltered(
@@ -1498,9 +1502,10 @@ void Merge_DestStereo_SrcStereo_Src16_Copy16_DownFiltered(
     const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
     int* pRightValue)
 {
-    MIX_merge_filtered<MixStereoStereoCopy>(ppSource, pFraction, pSourceEnd,
-                                            (void**)ppDestination, pDestinationEnd, pLeftValue,
-                                            pRightValue, iStep, iScaleLeft, iScaleRight);
+    MIX_merge_filtered<MixStereoStereoCopy, false>(ppSource, pFraction, pSourceEnd,
+                                                   (void**)ppDestination, pDestinationEnd,
+                                                   pLeftValue, pRightValue, iStep, iScaleLeft,
+                                                   iScaleRight);
 }
 
 extern "C" void MSS_mixer_merge(void* pSource, unsigned int* pFraction,
@@ -1557,15 +1562,15 @@ extern "C" void MSS_mixer_merge(void* pSource, unsigned int* pFraction,
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER:
-        MIX_merge_filtered<MixMonoMonoFixed>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                             pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                             iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoMonoFixed, true>(ppSource, pFraction, pSourceEnd, ppDestination,
+                                                   pDestinationEnd, pLeftValue, pRightValue, uStep,
+                                                   iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixMonoStereoFixed>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                               pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                               iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoStereoFixed, true>(ppSource, pFraction, pSourceEnd, ppDestination,
+                                                     pDestinationEnd, pLeftValue, pRightValue,
+                                                     uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO:
@@ -1579,16 +1584,17 @@ extern "C" void MSS_mixer_merge(void* pSource, unsigned int* pFraction,
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO:
-        MIX_merge_filtered<MixStereoMonoFixed>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                               pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                               iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixStereoMonoFixed, true>(ppSource, pFraction, pSourceEnd, ppDestination,
+                                                     pDestinationEnd, pLeftValue, pRightValue,
+                                                     uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO |
         MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixStereoStereoFixed>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                 pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                                 iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixStereoStereoFixed, false>(ppSource, pFraction, pSourceEnd,
+                                                        ppDestination, pDestinationEnd, pLeftValue,
+                                                        pRightValue, uStep, iScaleLeft,
+                                                        iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_SRC_16:
@@ -1631,15 +1637,15 @@ extern "C" void MSS_mixer_merge(void* pSource, unsigned int* pFraction,
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER:
-        MIX_merge_filtered<MixMonoMonoVolume>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                              pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                              iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoMonoVolume, true>(ppSource, pFraction, pSourceEnd, ppDestination,
+                                                    pDestinationEnd, pLeftValue, pRightValue, uStep,
+                                                    iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixMonoStereoVolume>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                                iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoStereoVolume, true>(ppSource, pFraction, pSourceEnd,
+                                                      ppDestination, pDestinationEnd, pLeftValue,
+                                                      pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO:
@@ -1654,16 +1660,17 @@ extern "C" void MSS_mixer_merge(void* pSource, unsigned int* pFraction,
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO:
-        MIX_merge_filtered<MixStereoMonoVolume>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                                iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixStereoMonoVolume, false>(ppSource, pFraction, pSourceEnd,
+                                                       ppDestination, pDestinationEnd, pLeftValue,
+                                                       pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO |
         MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixStereoStereoVolume>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                  pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                                  iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixStereoStereoVolume, false>(ppSource, pFraction, pSourceEnd,
+                                                         ppDestination, pDestinationEnd, pLeftValue,
+                                                         pRightValue, uStep, iScaleLeft,
+                                                         iScaleRight);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_SRC_16:
@@ -1706,15 +1713,15 @@ extern "C" void MSS_mixer_merge(void* pSource, unsigned int* pFraction,
         return;
 
     case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER:
-        MIX_merge_filtered<MixMonoMonoCopy>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                            pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                            iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoMonoCopy, true>(ppSource, pFraction, pSourceEnd, ppDestination,
+                                                  pDestinationEnd, pLeftValue, pRightValue, uStep,
+                                                  iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixMonoStereoCopy>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                              pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                              iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoStereoCopy, true>(ppSource, pFraction, pSourceEnd, ppDestination,
+                                                    pDestinationEnd, pLeftValue, pRightValue, uStep,
+                                                    iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO:

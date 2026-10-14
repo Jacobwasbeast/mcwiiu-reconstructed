@@ -1371,7 +1371,10 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
         default:
             break;
         }
+    }
 
+    if (bFailed == 0)
+    {
         AIL_set_speaker_configuration(pDriver, &speakers[0].fX, iConfigCount,
                                       MILES_SPEAKER_FALLOFF_POWER);
         AIL_set_speaker_reverb_levels(pDriver, NULL, NULL, NULL, 0);
@@ -1381,10 +1384,7 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
         pDriver->masterVolume = MILES_UNITY;
         pDriver->buses[0].sendLevel = MILES_UNITY;
         pDriver->buses[0].returnGain = MILES_UNITY;
-    }
 
-    if (bFailed == 0)
-    {
         pDriver->samples = static_cast<_SAMPLE*>(
             AIL_mem_alloc_lock_info(pDriver->sampleCount * sizeof(_SAMPLE), MILES_DRIVER_FILE, 727));
 
@@ -1394,7 +1394,10 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
             AIL_mem_free_lock(pDriver->buses[0].buffer);
             bFailed = 1;
         }
+    }
 
+    if (bFailed == 0)
+    {
         pDriver->sampleStatus = static_cast<int*>(
             AIL_mem_alloc_lock_info(pDriver->sampleCount * sizeof(int), MILES_DRIVER_FILE, 738));
 
@@ -1405,7 +1408,10 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
             AIL_mem_free_lock(pDriver->buses[0].buffer);
             bFailed = 1;
         }
+    }
 
+    if (bFailed == 0)
+    {
         memset(pDriver->samples, 0, pDriver->sampleCount * sizeof(_SAMPLE));
 
         for (iSample = 0; iSample < pDriver->sampleCount; iSample++)

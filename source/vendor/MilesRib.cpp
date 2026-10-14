@@ -779,12 +779,12 @@ extern "C" int RIB_request_interface_entry(unsigned int uProvider, const char* p
 extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_CALLBACK pMain,
                                                          const char* pLibraryName)
 {
-    PVLIST_ENTRY* pProvider;
     unsigned int uProvider;
     unsigned int uIndex;
+    int bFound;
 
-    pProvider = NULL;
     uProvider = 0;
+    bFound = 0;
 
     if (RIB_num_users != 0)
     {
@@ -794,33 +794,33 @@ extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_CALLBACK pMain
                 RIB_providers.pBase[uIndex].pMain == pMain)
             {
                 uProvider = uIndex;
-                pProvider = &RIB_providers.pBase[uProvider];
+                bFound = 1;
                 break;
             }
         }
     }
 
-    if (pProvider == NULL)
+    if (!bFound)
     {
         uProvider = RIB_alloc_provider_handle(NULL);
-        pProvider = &RIB_providers.pBase[uProvider];
-        pProvider->pMain = pMain;
+        RIB_providers.pBase[uProvider].pMain = pMain;
     }
 
-    pProvider->iReferenceCount = pProvider->iReferenceCount + 1;
+    RIB_providers.pBase[uProvider].iReferenceCount++;
 
-    if (pProvider->iReferenceCount == 1)
+    if (RIB_providers.pBase[uProvider].iReferenceCount == 1)
     {
-        if (pProvider->pMain(uProvider, 1, RIB_alloc_provider_handle, RIB_register_interface,
-                             RIB_unregister_interface) == 0)
+        if (RIB_providers.pBase[uProvider].pMain(uProvider, 1, RIB_alloc_provider_handle,
+                                                 RIB_register_interface,
+                                                 RIB_unregister_interface) == 0)
         {
             RIB_free_provider_handle(uProvider);
             uProvider = 0;
         }
         else
         {
-            pProvider->pUserData = NULL;
-            strcpy(pProvider->szName, pLibraryName);
+            RIB_providers.pBase[uProvider].pUserData = NULL;
+            strcpy(RIB_providers.pBase[uProvider].szName, pLibraryName);
         }
     }
 

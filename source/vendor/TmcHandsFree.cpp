@@ -1241,16 +1241,16 @@ void TMC_HF_FUNC_012(float* state, float* signal)
         state[3] = delay2;
         const float input = signal[i];
         state[0] = input;
-        signal[i] = 0.6495000123977661f * delay4
-                  + 0.6495000123977661f * delay3
-                  + -0.16930000483989716f * delay5
-                  + -0.16930000483989716f * delay2
-                  + 0.051100000739097595f * delay6
-                  + 0.051100000739097595f * delay1
-                  + 0.007499999832361937f * delay7
-                  + 0.007499999832361937f * delay0
+        signal[i] = -0.03880000114440918f * delay8
                   + -0.03880000114440918f * input
-                  + -0.03880000114440918f * delay8;
+                  + 0.007499999832361937f * delay0
+                  + 0.007499999832361937f * delay7
+                  + 0.051100000739097595f * delay1
+                  + 0.051100000739097595f * delay6
+                  + -0.16930000483989716f * delay2
+                  + -0.16930000483989716f * delay5
+                  + 0.6495000123977661f * delay3
+                  + 0.6495000123977661f * delay4;
     }
 }
 
@@ -1264,11 +1264,11 @@ void TMC_HF_FUNC_013(float* state, const short* source, float* destination,
         const float input = static_cast<float>(static_cast<int>(source[i]));
         state[3] = previousInput;
         state[2] = input;
-        destination[i] = olderInput * 0.9272469282150269f
-                       + previousInput * -1.8544940948486328f
-                       + input * 0.92724609375f
+        destination[i] = state[1] * -0.911376953125f
                        + state[0] * 1.906005859375f
-                       + state[1] * -0.911376953125f;
+                       + input * 0.92724609375f
+                       + previousInput * -1.8544940948486328f
+                       + olderInput * 0.9272469282150269f;
         state[1] = state[0];
         state[0] = destination[i];
     }
@@ -1373,8 +1373,8 @@ void TMC_HF_FUNC_010(void* state, const float* input, float* spectrum,
         if (i < 0x20)
         {
             const float* pair = spectrum + i * 4;
-            power = pair[3] * pair[3] + pair[2] * pair[2]
-                  + pair[0] * pair[0] + pair[1] * pair[1];
+            power = pair[1] * pair[1] + pair[0] * pair[0]
+                  + pair[2] * pair[2] + pair[3] * pair[3];
         }
         else
         {
@@ -1775,14 +1775,14 @@ void TMC_HF_FUNC_015(void* handle, float* state, float* spectrumA,
     for (i = 0; i < 0x20; ++i)
     {
         const float gain = noiseGain[i];
-        const float value = noiseState[i] * gain * gain;
+        const float value = noiseState[i] * (gain * gain);
         bandThreshold[i * 2] = value;
         bandThreshold[i * 2 + 1] = value;
     }
     for (i = 0; i < 0x10; ++i)
     {
         const float gain = noiseGain[i + 0x20];
-        const float value = noiseState[i + 0x20] * gain * gain;
+        const float value = noiseState[i + 0x20] * (gain * gain);
         bandThreshold[0x40 + i * 4] = value;
         bandThreshold[0x40 + i * 4 + 1] = value;
         bandThreshold[0x40 + i * 4 + 2] = value;
@@ -1960,7 +1960,7 @@ void TMC_HF_FUNC_002(void* handle, float* state, float* levels, float* mix,
         const float realPart = spectrumB[i * 2];
         const float imagPart = spectrumB[i * 2 + 1];
         levels[2] = levels[2] * 0.9950000047683716f
-                  + (realPart * realPart + imagPart * imagPart)
+                  + (imagPart * imagPart + realPart * realPart)
                     * 0.004999999888241291f;
     }
     for (i = 0; i < 0x100; ++i)
@@ -1979,10 +1979,11 @@ void TMC_HF_FUNC_002(void* handle, float* state, float* levels, float* mix,
 
     for (i = 0; i < 0x80; ++i)
     {
-        const float realPart = spectrumA[i * 2] * 256.0f * 0.5f;
-        const float imagPart = spectrumA[i * 2 + 1] * 256.0f * 0.5f;
+        const float realPart = spectrumA[i * 2];
+        const float imagPart = spectrumA[i * 2 + 1];
         levels[3] = levels[3] * 0.9950000047683716f
-                  + (realPart * realPart + imagPart * imagPart)
+                  + (realPart * 256.0f * 0.5f * realPart * 256.0f * 0.5f
+                     + imagPart * 256.0f * 0.5f * imagPart * 256.0f * 0.5f)
                     * 0.004999999888241291f;
     }
 
@@ -1998,10 +1999,11 @@ void TMC_HF_FUNC_002(void* handle, float* state, float* levels, float* mix,
 
     for (i = 0; i < 0x80; ++i)
     {
-        const float realPart = spectrumA[i * 2] * 256.0f * 0.5f;
-        const float imagPart = spectrumA[i * 2 + 1] * 256.0f * 0.5f;
+        const float realPart = spectrumA[i * 2];
+        const float imagPart = spectrumA[i * 2 + 1];
         levels[0] = levels[0] * 0.9950000047683716f
-                  + (realPart * realPart + imagPart * imagPart)
+                  + (realPart * 256.0f * 0.5f * realPart * 256.0f * 0.5f
+                     + imagPart * 256.0f * 0.5f * imagPart * 256.0f * 0.5f)
                     * 0.004999999888241291f;
     }
 
@@ -2205,60 +2207,38 @@ void TMC_HF_FUNC_003(void* handle, const short* micHistory,
                         farSpectrumMic[band * 150 + i] * 0.5f
                         + farSpectrumRef[band * 150 + i] * 0.5f;
                 }
-                double longReal = 0.0;
-                double longImag = 0.0;
+                float longReal = 0.0f;
+                float longImag = 0.0f;
                 for (i = 0; i < 0x4b; ++i)
                 {
-                    longImag = static_cast<double>(static_cast<float>(
-                        static_cast<double>(longBandTaps[i * 2])
-                        * static_cast<double>(windowedReference[i * 2 + 1])
-                        + static_cast<double>(static_cast<float>(
-                            static_cast<double>(longBandTaps[i * 2 + 1])
-                            * static_cast<double>(windowedReference[i * 2])
-                            + longImag))));
-                    longReal = -static_cast<double>(static_cast<float>(
-                        static_cast<double>(longBandTaps[i * 2 + 1])
-                        * static_cast<double>(windowedReference[i * 2 + 1])
-                        - static_cast<double>(static_cast<float>(
-                            static_cast<double>(longBandTaps[i * 2])
-                            * static_cast<double>(windowedReference[i * 2])
-                            + longReal))));
+                    longImag = longImag
+                             + longBandTaps[i * 2 + 1] * windowedReference[i * 2]
+                             + longBandTaps[i * 2] * windowedReference[i * 2 + 1];
+                    longReal = longReal
+                             + longBandTaps[i * 2] * windowedReference[i * 2]
+                             - longBandTaps[i * 2 + 1] * windowedReference[i * 2 + 1];
                 }
-                longEcho[band * 2] =
-                    static_cast<float>(longReal * 3.0517578125e-05);
-                longEcho[band * 2 + 1] =
-                    static_cast<float>(longImag * 3.0517578125e-05);
+                longEcho[band * 2] = longReal * 3.0517578125e-05f;
+                longEcho[band * 2 + 1] = longImag * 3.0517578125e-05f;
             }
 
-            double shortReal = 0.0;
-            double shortImag = 0.0;
+            float shortReal = 0.0f;
+            float shortImag = 0.0f;
             for (i = 0; i < 10; ++i)
             {
-                shortReal = -static_cast<double>(
-                    shortBandTaps[i * 4 + 3] * delayedRef[i * 2 + 1]
-                    - (shortBandTaps[i * 4 + 2] * delayedRef[i * 2]
-                       + -static_cast<float>(
-                           static_cast<double>(shortBandTaps[i * 4 + 1])
-                           * static_cast<double>(delayedMic[i * 2 + 1])
-                           - static_cast<double>(static_cast<float>(
-                               static_cast<double>(shortBandTaps[i * 4])
-                               * static_cast<double>(delayedMic[i * 2])
-                               + shortReal)))));
-                shortImag = static_cast<double>(
-                    shortBandTaps[i * 4 + 2] * delayedRef[i * 2 + 1]
-                    + shortBandTaps[i * 4 + 3] * delayedRef[i * 2]
-                    + static_cast<float>(
-                        static_cast<double>(shortBandTaps[i * 4])
-                        * static_cast<double>(delayedMic[i * 2 + 1])
-                        + static_cast<double>(static_cast<float>(
-                            static_cast<double>(shortBandTaps[i * 4 + 1])
-                            * static_cast<double>(delayedMic[i * 2])
-                            + shortImag))));
+                shortImag = shortImag
+                          + shortBandTaps[i * 4 + 1] * delayedMic[i * 2]
+                          + shortBandTaps[i * 4] * delayedMic[i * 2 + 1]
+                          + shortBandTaps[i * 4 + 3] * delayedRef[i * 2]
+                          + shortBandTaps[i * 4 + 2] * delayedRef[i * 2 + 1];
+                shortReal = shortReal
+                          + shortBandTaps[i * 4] * delayedMic[i * 2]
+                          - shortBandTaps[i * 4 + 1] * delayedMic[i * 2 + 1]
+                          + shortBandTaps[i * 4 + 2] * delayedRef[i * 2]
+                          - shortBandTaps[i * 4 + 3] * delayedRef[i * 2 + 1];
             }
-            shortEcho[band * 2] =
-                static_cast<float>(shortReal * 3.0517578125e-05);
-            shortEcho[band * 2 + 1] =
-                static_cast<float>(shortImag * 3.0517578125e-05);
+            shortEcho[band * 2] = shortReal * 3.0517578125e-05f;
+            shortEcho[band * 2 + 1] = shortImag * 3.0517578125e-05f;
 
             if (longBand)
             {
@@ -2270,8 +2250,7 @@ void TMC_HF_FUNC_003(void* handle, const short* micHistory,
             nearResidual[band * 2] =
                 windowedNear[band * 2] - shortEcho[band * 2];
             nearResidual[band * 2 + 1] =
-                windowedNear[band * 2 + 1]
-                - static_cast<float>(shortImag * 3.0517578125e-05);
+                windowedNear[band * 2 + 1] - shortEcho[band * 2 + 1];
 
             if (longBand)
             {
@@ -2304,60 +2283,45 @@ void TMC_HF_FUNC_003(void* handle, const short* micHistory,
                 }
             }
 
-            double longNorm = 0.0;
+            float longNorm = 0.0f;
             if (longBand)
             {
-                double accumulator = 0.0;
+                float accumulator = 0.0f;
                 for (i = 0; i < 0x4b; ++i)
                 {
-                    accumulator = -static_cast<double>(
-                        windowedReference[i * 2 + 1] * windowedMic[i * 2 + 1]
-                        - static_cast<float>(
-                            static_cast<double>(windowedReference[i * 2])
-                            * static_cast<double>(windowedMic[i * 2])
-                            + accumulator));
+                    accumulator = accumulator
+                                + windowedReference[i * 2] * windowedMic[i * 2]
+                                - windowedReference[i * 2 + 1] * windowedMic[i * 2 + 1];
                 }
-                longNorm = fabs(static_cast<double>(static_cast<float>(
-                    static_cast<double>(static_cast<float>(
-                        accumulator * 0.125)) * 1.52587890625e-05 + 1.0)));
+                longNorm = fabsf(accumulator * 0.125f * 1.52587890625e-05f + 1.0f);
             }
 
-            double shortAccumulator = 0.0;
+            float shortAccumulator = 0.0f;
             for (i = 0; i < 10; ++i)
             {
-                shortAccumulator = -static_cast<double>(
-                    delayedRef[i * 2 + 1] * bandVector[i * 4 + 3]
-                    - (delayedRef[i * 2] * bandVector[i * 4 + 2]
-                       + -(delayedMic[i * 2 + 1] * bandVector[i * 4 + 1]
-                           - static_cast<float>(
-                               static_cast<double>(delayedMic[i * 2])
-                               * static_cast<double>(bandVector[i * 4])
-                               + shortAccumulator))));
+                shortAccumulator = shortAccumulator
+                                 + delayedMic[i * 2] * bandVector[i * 4]
+                                 - delayedMic[i * 2 + 1] * bandVector[i * 4 + 1]
+                                 + delayedRef[i * 2] * bandVector[i * 4 + 2]
+                                 - delayedRef[i * 2 + 1] * bandVector[i * 4 + 3];
             }
-            const double shortNorm = fabs(static_cast<double>(
-                static_cast<float>(static_cast<double>(static_cast<float>(
-                    shortAccumulator * 0.125)) * 1.52587890625e-05 + 1.0)));
+            const float shortNorm =
+                fabsf(shortAccumulator * 0.125f * 1.52587890625e-05f + 1.0f);
 
-            if (longBand && 1.0 < longNorm)
+            if (longBand && 1.0f < longNorm)
             {
                 for (i = 0; i < 0x4b; ++i)
                 {
-                    windowedMic[i * 2] = static_cast<float>(
-                        static_cast<double>(windowedMic[i * 2]) / longNorm);
-                    windowedMic[i * 2 + 1] = static_cast<float>(
-                        static_cast<double>(windowedMic[i * 2 + 1])
-                        / longNorm);
+                    windowedMic[i * 2] = windowedMic[i * 2] / longNorm;
+                    windowedMic[i * 2 + 1] = windowedMic[i * 2 + 1] / longNorm;
                 }
             }
-            if (1.0 < shortNorm)
+            if (1.0f < shortNorm)
             {
                 for (i = 0; i < 0x14; ++i)
                 {
-                    bandVector[i * 2] = static_cast<float>(
-                        static_cast<double>(bandVector[i * 2]) / shortNorm);
-                    bandVector[i * 2 + 1] = static_cast<float>(
-                        static_cast<double>(bandVector[i * 2 + 1])
-                        / shortNorm);
+                    bandVector[i * 2] = bandVector[i * 2] / shortNorm;
+                    bandVector[i * 2 + 1] = bandVector[i * 2 + 1] / shortNorm;
                 }
             }
 
@@ -2417,8 +2381,7 @@ void TMC_HF_FUNC_003(void* handle, const short* micHistory,
                     frameHits[strongest] =
                         static_cast<short>(frameHits[strongest] + 1);
                 }
-                if (fabs(static_cast<double>(
-                        static_cast<float>(shortAccumulator * 0.125)))
+                if (fabs(static_cast<double>(shortAccumulator * 0.125f))
                     <= static_cast<double>(static_cast<int>(frameLimit)))
                 {
                     if (stepSize[band] < 0.5f)
@@ -2440,40 +2403,27 @@ void TMC_HF_FUNC_003(void* handle, const short* micHistory,
 
             if (*levelTracker < 12.0f)
             {
-                double refreshReal = 0.0;
-                double refreshImag = 0.0;
+                float refreshReal = 0.0f;
+                float refreshImag = 0.0f;
                 for (i = 0; i < 10; ++i)
                 {
-                    refreshReal = -static_cast<double>(
-                        shortBandTaps[i * 4 + 3] * delayedRef[i * 2 + 1]
-                        - (shortBandTaps[i * 4 + 2] * delayedRef[i * 2]
-                           + -static_cast<float>(
-                               static_cast<double>(shortBandTaps[i * 4 + 1])
-                               * static_cast<double>(delayedMic[i * 2 + 1])
-                               - static_cast<double>(static_cast<float>(
-                                   static_cast<double>(shortBandTaps[i * 4])
-                                   * static_cast<double>(delayedMic[i * 2])
-                                   + refreshReal)))));
-                    refreshImag = static_cast<double>(
-                        shortBandTaps[i * 4 + 2] * delayedRef[i * 2 + 1]
-                        + shortBandTaps[i * 4 + 3] * delayedRef[i * 2]
-                        + static_cast<float>(
-                            static_cast<double>(shortBandTaps[i * 4])
-                            * static_cast<double>(delayedMic[i * 2 + 1])
-                            + static_cast<double>(static_cast<float>(
-                                static_cast<double>(shortBandTaps[i * 4 + 1])
-                                * static_cast<double>(delayedMic[i * 2])
-                                + refreshImag))));
+                    refreshImag = refreshImag
+                                + shortBandTaps[i * 4 + 1] * delayedMic[i * 2]
+                                + shortBandTaps[i * 4] * delayedMic[i * 2 + 1]
+                                + shortBandTaps[i * 4 + 3] * delayedRef[i * 2]
+                                + shortBandTaps[i * 4 + 2] * delayedRef[i * 2 + 1];
+                    refreshReal = refreshReal
+                                + shortBandTaps[i * 4] * delayedMic[i * 2]
+                                - shortBandTaps[i * 4 + 1] * delayedMic[i * 2 + 1]
+                                + shortBandTaps[i * 4 + 2] * delayedRef[i * 2]
+                                - shortBandTaps[i * 4 + 3] * delayedRef[i * 2 + 1];
                 }
-                shortEcho[band * 2] =
-                    static_cast<float>(refreshReal * 3.0517578125e-05);
-                shortEcho[band * 2 + 1] =
-                    static_cast<float>(refreshImag * 3.0517578125e-05);
+                shortEcho[band * 2] = refreshReal * 3.0517578125e-05f;
+                shortEcho[band * 2 + 1] = refreshImag * 3.0517578125e-05f;
                 nearResidual[band * 2] =
                     windowedNear[band * 2] - shortEcho[band * 2];
                 nearResidual[band * 2 + 1] =
-                    windowedNear[band * 2 + 1]
-                    - static_cast<float>(refreshImag * 3.0517578125e-05);
+                    windowedNear[band * 2 + 1] - shortEcho[band * 2 + 1];
             }
         }
 

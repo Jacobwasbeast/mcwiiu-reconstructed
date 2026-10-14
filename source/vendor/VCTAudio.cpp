@@ -20,6 +20,8 @@ namespace
 
 const unsigned int VCT_STREAM_MAX = 15;
 const unsigned int VCT_CONFERENCE_CID_MAX = 16;
+const int VCT_PCM_SAMPLE_MAX = 32767;
+const int VCT_PCM_SAMPLE_MIN = -32768;
 const unsigned int VCT_AUDIO_SIGNATURE = 0x5f564354;
 const unsigned int VCT_AUDIO_PACKET_TYPE = 0x40;
 const unsigned int VCT_RESET_PACKET_TYPE = 0x41;
@@ -37,7 +39,6 @@ const unsigned int VCT_VAD_STATUS_SILENT = 0;
 const unsigned int VCT_VAD_STATUS_SPEECH_START = 1;
 const unsigned int VCT_VAD_STATUS_SPEECH_END = 3;
 const int VCT_SEND_TARGET_INDEX_MAX = 15;
-const unsigned int VCT_TIMESTAMP_TICK_SCALE = 64;
 const unsigned int VCT_PLAY_GUARD_MICROSECONDS = 100;
 const unsigned int VCT_PACKET_HEADER_SIZE = 12;
 const unsigned int VCT_PACKET_BYTES_PER_MILLISECOND = 8;
@@ -262,18 +263,76 @@ nn::pia::Result VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale)
 
 void vct_mix_audio(const short* pLeft, const short* pRight, short* pOut, unsigned int uiSize)
 {
-    for (unsigned int uiSample = 0; uiSample < (uiSize >> 1); ++uiSample)
+    for (unsigned int uiSample = 0; uiSample < (uiSize >> 1); uiSample += 4)
     {
-        int iMixed = static_cast<int>(pLeft[uiSample]) + static_cast<int>(pRight[uiSample]);
-        if (iMixed >= 0x8000)
         {
-            iMixed = 0x7fff;
+            int iMixed = pLeft[uiSample] + pRight[uiSample];
+            int iClamped;
+            if (iMixed > VCT_PCM_SAMPLE_MAX)
+            {
+                iClamped = VCT_PCM_SAMPLE_MAX;
+            }
+            else if (iMixed < VCT_PCM_SAMPLE_MIN)
+            {
+                iClamped = VCT_PCM_SAMPLE_MIN;
+            }
+            else
+            {
+                iClamped = iMixed;
+            }
+            pOut[uiSample] = static_cast<short>(iClamped);
         }
-        else if (iMixed < -0x8000)
         {
-            iMixed = -0x8000;
+            int iMixed = pLeft[uiSample + 1] + pRight[uiSample + 1];
+            int iClamped;
+            if (iMixed > VCT_PCM_SAMPLE_MAX)
+            {
+                iClamped = VCT_PCM_SAMPLE_MAX;
+            }
+            else if (iMixed < VCT_PCM_SAMPLE_MIN)
+            {
+                iClamped = VCT_PCM_SAMPLE_MIN;
+            }
+            else
+            {
+                iClamped = iMixed;
+            }
+            pOut[uiSample + 1] = static_cast<short>(iClamped);
         }
-        pOut[uiSample] = static_cast<short>(iMixed);
+        {
+            int iMixed = pLeft[uiSample + 2] + pRight[uiSample + 2];
+            int iClamped;
+            if (iMixed > VCT_PCM_SAMPLE_MAX)
+            {
+                iClamped = VCT_PCM_SAMPLE_MAX;
+            }
+            else if (iMixed < VCT_PCM_SAMPLE_MIN)
+            {
+                iClamped = VCT_PCM_SAMPLE_MIN;
+            }
+            else
+            {
+                iClamped = iMixed;
+            }
+            pOut[uiSample + 2] = static_cast<short>(iClamped);
+        }
+        {
+            int iMixed = pLeft[uiSample + 3] + pRight[uiSample + 3];
+            int iClamped;
+            if (iMixed > VCT_PCM_SAMPLE_MAX)
+            {
+                iClamped = VCT_PCM_SAMPLE_MAX;
+            }
+            else if (iMixed < VCT_PCM_SAMPLE_MIN)
+            {
+                iClamped = VCT_PCM_SAMPLE_MIN;
+            }
+            else
+            {
+                iClamped = iMixed;
+            }
+            pOut[uiSample + 3] = static_cast<short>(iClamped);
+        }
     }
 }
 
@@ -611,7 +670,7 @@ unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData,
     const unsigned char ucType = pHeader->m_Type;
     if (ucType == 0x41)
     {
-        pStream->m_SequenceUninitialized = 1;
+        pStream->m_SkewSampleCount = 1;
         pStream->m_audioState = pHeader->m_Sequence;
         pStream->m_BaseSendTick = 0;
         return 0;
