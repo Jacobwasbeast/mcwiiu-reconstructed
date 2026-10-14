@@ -196,7 +196,7 @@ Result VoiceProtocol::Initialize(const Setting& setting)
         return cResultNotInitialized;
     if (g_voiceProtocolInstance != 0)
         return cResultAlreadyInitialized;
-    if (nn::pia::transport::g_piaProtocolManager == 0)
+    if (nn::pia::transport::g_piaTransport == 0)
         return cResultInvalidState;
     if (!allocProc(setting.sampleRate))
         return cResultAllocationFailure;

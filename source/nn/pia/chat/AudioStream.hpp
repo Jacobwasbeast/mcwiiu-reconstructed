@@ -48,12 +48,12 @@ public:
     long long m_SkewLatest;
     unsigned long long m_DropMeasureStartTick;
     unsigned int m_DropFrequency;
-    unsigned int m_JitterSampleCount;
-    long long m_SkewSampleTimestamp;
+    unsigned int m_EarlyPacketCount;
+    unsigned long long m_EarlyBaseSendTick;
     long long m_JitterAverage;
     long long m_JitterBufferTicks;
     long long m_JitterBufferMinimum;
-    long long m_PreviousArrivalTick;
+    long long m_PreviousDelay;
     int m_JitterHoldCount;
     unsigned int m_StableFrameCount;
     short m_LastRecoveredSample;
