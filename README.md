@@ -26,3 +26,22 @@ Docker. See `docs/building.md`.
 - [docs/architecture.md](docs/architecture.md) - directory layout and the platform seam
 - [docs/conventions.md](docs/conventions.md) - language level, naming and file rules
 - [docs/provenance.md](docs/provenance.md) - where the source comes from and contribution rules
+
+## License
+
+The reconstructed source and the tooling in this repository are released
+under the GNU General Public License, version 3 or (at your option) any later
+version. See `LICENSE`.
+
+The license covers what this repository contributes. It grants no rights to
+Minecraft: Wii U Edition itself, its assets, or the trademarks of Mojang,
+Microsoft, 4J Studios or Nintendo, and this project is not affiliated with or
+endorsed by any of them. Building it needs your own copy of the game.
+
+Files from other projects keep their own licenses:
+`tools/build/third_party/rapidxml/` (Boost Software License 1.0), the altered
+libpng and curl files in `tools/build/overrides/` (the libpng and curl
+licenses), and the libraries `tools/build/deps.py` downloads, listed in
+`docs/building.md`. `source/nn/ffl` is a submodule holding aboood40091's FFL
+decompilation, which its author publishes without a license, together with
+this project's changes to it; it is not covered by this repository's license.
