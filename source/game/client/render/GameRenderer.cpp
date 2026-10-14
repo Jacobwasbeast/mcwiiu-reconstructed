@@ -653,7 +653,7 @@ void GameRenderer::tickRain()
         return;
 
     const float rainIntensity = rainLevel / static_cast<float>(mMinecraft->mLevelRenderer->activePlayers() + 1);
-    mRandom.setSeed(static_cast<long long>(mTickCount) * 312987231LL);
+    mRandom.setSeed(mTickCount * 312987231);
     boost::shared_ptr<Entity> camera = getCamera();
     const BlockPos cameraPos(camera);
 
@@ -1637,10 +1637,8 @@ void GameRenderer::updateLightTexture(float partialTick)
 
         for (int lightIndex = 0; lightIndex < 0x100; ++lightIndex)
         {
-            const unsigned int blockLight =
-                static_cast<unsigned int>(lightIndex >> 4)
-                + ((lightIndex < 0 && (lightIndex & 0xf) != 0) ? 1u : 0u);
-            const unsigned int skyLight = lightIndex & 0xfu;
+            const int blockLight = lightIndex / 16;
+            const int skyLight = lightIndex % 16;
 
             float blockBrightness =
                 level->mDimension->getBrightnessRamp()[blockLight] * (skyDarken * 0.95f + 0.05f);
@@ -1674,7 +1672,7 @@ void GameRenderer::updateLightTexture(float partialTick)
                 blue = blue * keep + blue * 0.6f * flashAmount;
             }
 
-            if (level->mDimension->getType() == DimensionType::NETHER)
+            if (level->mDimension->getType() == DimensionType::THE_END)
             {
                 red = redLight * 0.75f + 0.22f;
                 green = greenLight * 0.75f + 0.28f;
@@ -2206,6 +2204,13 @@ void GameRenderer::prepareAndRenderClouds(LevelRenderer* levelRenderer, float pa
     GlStateManager::popMatrix();
 }
 
+static const int FULL_BRIGHT_LIGHT = 0xF000F0;
+static const int COLUMN_SEED_X_SQUARED = 3121;
+static const int COLUMN_SEED_X = 45238971;
+static const int COLUMN_SEED_Z_SQUARED = 418711;
+static const int COLUMN_SEED_Z = 13761;
+static ResourceLocation sRainTexture(TN_ENVIRONMENT_RAIN);
+static ResourceLocation sSnowTexture(TN_ENVIRONMENT_SNOW);
 static ResourceLocation sThermalTexture(TN_ENVIRONMENT_THERMAL_1);
 static ResourceLocation sThermalTintedTexture(TN_ENVIRONMENT_THERMAL_2);
 static ResourceLocation sBoostArrowTexture(TN_ENVIRONMENT_BOOSTARROW);
@@ -2263,7 +2268,7 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
     for (std::vector<ThermalAreaRuleDefinition*>::iterator it = thermalAreas.begin(); it != thermalAreas.end(); ++it)
     {
         ThermalAreaRuleDefinition* rule = *it;
-        if (!rule->isEnabled() || !rule->getConditionsMet(mMinecraft->mCameraEntity))
+        if (!rule->isEnabled() || !rule->getConditionsMet(mMinecraft->mPlayer))
         {
             continue;
         }
@@ -2347,8 +2352,9 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
 
             const int seedX = static_cast<int>(area->mMinX + 0.03125);
             const int seedZ = static_cast<int>(area->mMinZ + 0.03125);
-            mRandom.setSeed(static_cast<long long>((seedX * seedX * 0xC31 + seedX * 0x2B24ABB)
-                                                   ^ (seedZ * seedZ * 0x66397 + seedZ * 0x35C1)));
+            mRandom.setSeed(static_cast<long long>(
+                (seedX * seedX * COLUMN_SEED_X_SQUARED + seedX * COLUMN_SEED_X)
+                ^ (seedZ * seedZ * COLUMN_SEED_Z_SQUARED + seedZ * COLUMN_SEED_Z)));
             const float time = static_cast<float>(static_cast<int>(mTickCount)) + partialTick;
             const double scroll = mRandom.nextDouble() + time * 0.033333335f;
             builder->begin();
@@ -2373,7 +2379,7 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
             const float blue = static_cast<float>(colour & 0xFF) / 255.0f;
 
             const int lightColor = mMinecraft->mLevel->getLightColor(BlockPos(area->mMinX, area->mMinY, area->mMinZ), 0, -1);
-            const int light = (lightColor * 3 + 0xF000F0) / 4;
+            const int light = (lightColor * 3 + FULL_BRIGHT_LIGHT) / 4;
             const bool forwards = boostDirection == 1 || boostDirection == 3 || boostDirection == 5 || boostDirection == 7;
             const float scrollStep = forwards ? 1.0f : -1.0f;
             const bool headAtStart = boostDirection == 0 || boostDirection == 2 || (boostDirection >= 4 && boostDirection <= 7);
@@ -2497,8 +2503,9 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
             const double segments = static_cast<double>(Math::round(perimeter / 3.059999942779541));
             const int seedX = static_cast<int>(area->mMinX);
             const int seedZ = static_cast<int>(area->mMinZ);
-            mRandom.setSeed(static_cast<long long>((seedX * seedX * 0xC31 + seedX * 0x2B24ABB)
-                                                   ^ (seedZ * seedZ * 0x66397 + seedZ * 0x35C1)));
+            mRandom.setSeed(static_cast<long long>(
+                (seedX * seedX * COLUMN_SEED_X_SQUARED + seedX * COLUMN_SEED_X)
+                ^ (seedZ * seedZ * COLUMN_SEED_Z_SQUARED + seedZ * COLUMN_SEED_Z)));
             const float segmentLength = static_cast<float>(perimeter / segments);
             const float time = static_cast<float>(static_cast<int>(mTickCount)) + partialTick;
             double u = mRandom.nextDouble() + time * 0.011111111f;
@@ -2532,7 +2539,7 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
             const float blue = static_cast<float>(colour & 0xFF) / 255.0f;
 
             const int lightColor = mMinecraft->mLevel->getLightColor(BlockPos(area->mMinX, area->mMinY, area->mMinZ), 0, -1);
-            const int light = (lightColor * 3 + 0xF000F0) / 4;
+            const int light = (lightColor * 3 + FULL_BRIGHT_LIGHT) / 4;
             const double vSpan = ((area->mMaxY - area->mMinY) * 0.0625 + vStart) - vStart;
             const float height = static_cast<float>(static_cast<int>(area->mMaxY - area->mMinY));
 
@@ -2765,6 +2772,7 @@ void GameRenderer::renderGhostPath(float partialTick, boost::shared_ptr<Entity> 
             colours.clear();
             alphas.clear();
             positions.clear();
+            --i;
         }
     }
 
@@ -2810,11 +2818,8 @@ void GameRenderer::renderSnowAndRain(float partialTick)
     const float alphaRef = 0.01f;
     GlStateManager::alphaFunc(4, alphaRef);
 
-    static ResourceLocation snowLocation(TN_ENVIRONMENT_RAIN);
-    static ResourceLocation rainLocation(TN_ENVIRONMENT_SNOW);
-
     MemSect(0x1f);
-    mMinecraft->mTextures->bindTexture(&rainLocation);
+    mMinecraft->mTextures->bindTexture(&sSnowTexture);
     MemSect(0);
 
     const double cameraOldX = camera->mXOld;
@@ -2844,12 +2849,12 @@ void GameRenderer::renderSnowAndRain(float partialTick)
     int precipitationMode = -1;
     const int startBlockX = cameraBlockX - renderRadius;
     const int startBlockZ = cameraBlockZ - renderRadius;
-    int xSeedAccumulator = startBlockX * startBlockX * 0x2b24abb;
+    int xSeedAccumulator = startBlockX * COLUMN_SEED_X;
 
     for (int blockX = startBlockX; blockX <= cameraBlockX + renderRadius; blockX += columnStep)
     {
-        const int xInnerSeed = blockX * blockX * 0xc31;
-        int zSeedAccumulator = startBlockZ * 0x35c1;
+        const int xInnerSeed = blockX * blockX * COLUMN_SEED_X_SQUARED;
+        int zSeedAccumulator = startBlockZ * COLUMN_SEED_Z;
 
         for (int blockZ = startBlockZ; blockZ <= cameraBlockZ + renderRadius; blockZ += columnStep)
         {
@@ -2861,7 +2866,7 @@ void GameRenderer::renderSnowAndRain(float partialTick)
             Biome* biome = level->getBiome(samplePos);
             if (!tumbleWeather && !biome->hasRain() && !biome->hasSnow())
             {
-                zSeedAccumulator += columnStep * 0x35c1;
+                zSeedAccumulator += columnStep * COLUMN_SEED_Z;
                 continue;
             }
 
@@ -2882,12 +2887,12 @@ void GameRenderer::renderSnowAndRain(float partialTick)
             const int renderY = topY < cameraBlockY ? cameraBlockY : topY;
             if (minY == maxY)
             {
-                zSeedAccumulator += columnStep * 0x35c1;
+                zSeedAccumulator += columnStep * COLUMN_SEED_Z;
                 continue;
             }
 
-            const int zInnerSeed = blockZ * blockZ * 0x66397;
-            mRandom.setSeed(((xInnerSeed + xSeedAccumulator) ^ (zInnerSeed + zSeedAccumulator)) >> 31);
+            const int zInnerSeed = blockZ * blockZ * COLUMN_SEED_Z_SQUARED;
+            mRandom.setSeed(static_cast<long long>((xInnerSeed + xSeedAccumulator) ^ (zInnerSeed + zSeedAccumulator)));
 
             const float temperature = biome->getTemperature(BlockPos(blockX, minY, blockZ));
             if (!tumbleWeather)
@@ -2899,7 +2904,7 @@ void GameRenderer::renderSnowAndRain(float partialTick)
                     if (precipitationMode < 0)
                     {
                         precipitationMode = 0;
-                        mMinecraft->mTextures->bindTexture(&snowLocation);
+                        mMinecraft->mTextures->bindTexture(&sRainTexture);
                         builder->begin();
                         builder->offset(negCameraX, negCameraY, negCameraZ);
                     }
@@ -2907,7 +2912,7 @@ void GameRenderer::renderSnowAndRain(float partialTick)
                     {
                         builder->end();
                         precipitationMode = 0;
-                        mMinecraft->mTextures->bindTexture(&snowLocation);
+                        mMinecraft->mTextures->bindTexture(&sRainTexture);
                         builder->begin();
                         builder->offset(negCameraX, negCameraY, negCameraZ);
                     }
@@ -2928,8 +2933,6 @@ void GameRenderer::renderSnowAndRain(float partialTick)
                     builder->tex2(level->getLightColor(lightPos, 0, -1));
                     builder->color(1.0f, 1.0f, 1.0f, alpha);
 
-                    const float xBase = static_cast<float>(blockX - cameraBlockX) + 0.5f;
-                    const float zBase = static_cast<float>(blockZ - cameraBlockZ) + 0.5f;
                     const float yMin = static_cast<float>(minY);
                     const float yMax = static_cast<float>(maxY);
                     const float minYPhaseBase = static_cast<float>(
@@ -2940,16 +2943,16 @@ void GameRenderer::renderSnowAndRain(float partialTick)
                         static_cast<double>(minYPhaseBase) + dropPhase);
                     const float vBottom = static_cast<float>(
                         static_cast<double>(maxYPhaseBase) + dropPhase);
-                    const float uLeft = xBase - offsetX;
-                    const float uRight = xBase + offsetX;
-                    const float vFront = zBase - offsetZ;
-                    const float vBack = zBase + offsetZ;
+                    const float xLeft = blockX - offsetX + 0.5;
+                    const float xRight = blockX + offsetX + 0.5;
+                    const float zFront = blockZ - offsetZ + 0.5;
+                    const float zBack = blockZ + offsetZ + 0.5;
 
-                    builder->vertexUV(uLeft, yMin, vFront, 0.0f, vTop);
-                    builder->vertexUV(uRight, yMin, vBack, 1.0f, vTop);
+                    builder->vertexUV(xLeft, yMin, zFront, 0.0f, vTop);
+                    builder->vertexUV(xRight, yMin, zBack, 1.0f, vTop);
                     builder->color(1.0f, 1.0f, 1.0f, 1.0f);
-                    builder->vertexUV(uRight, yMax, vBack, 1.0f, vBottom);
-                    builder->vertexUV(uLeft, yMax, vFront, 0.0f, vBottom);
+                    builder->vertexUV(xRight, yMax, zBack, 1.0f, vBottom);
+                    builder->vertexUV(xLeft, yMax, zFront, 0.0f, vBottom);
                     continue;
                 }
             }
@@ -2961,7 +2964,7 @@ void GameRenderer::renderSnowAndRain(float partialTick)
                     builder->end();
                 }
                 precipitationMode = 1;
-                mMinecraft->mTextures->bindTexture(&rainLocation);
+                mMinecraft->mTextures->bindTexture(&sSnowTexture);
                 builder->begin();
             }
 
@@ -2986,17 +2989,17 @@ void GameRenderer::renderSnowAndRain(float partialTick)
             builder->offset(negCameraX, negCameraY, negCameraZ);
 
             BlockPos lightPos(blockX, renderY, blockZ);
-            builder->tex2(level->getLightColor(lightPos, 0, -1));
+            builder->tex2((level->getLightColor(lightPos, 0, -1) * 3 + FULL_BRIGHT_LIGHT) / 4);
             const float alpha =
                 (-(dist * dist - 1.0f) * 0.3f + 0.5f) * rainLevel * rainLevel;
             builder->color(1.0f, 1.0f, 1.0f, alpha);
 
-            const float xBase = static_cast<float>(blockX - cameraBlockX) + 0.5f;
-            const float zBase = static_cast<float>(blockZ - cameraBlockZ) + 0.5f;
+            const float xLeft = blockX - offsetX + 0.5;
+            const float xRight = blockX + offsetX + 0.5;
             const float yMin = static_cast<float>(minY);
             const float yMax = static_cast<float>(maxY);
-            const float vFront = zBase - offsetZ;
-            const float vBack = zBase + offsetZ;
+            const float zFront = blockZ - offsetZ + 0.5;
+            const float zBack = blockZ + offsetZ + 0.5;
             const float minYPhaseBase = static_cast<float>(
                 static_cast<double>(static_cast<float>(minY)) * 0.25);
             const float maxYPhaseBase = static_cast<float>(
@@ -3006,16 +3009,16 @@ void GameRenderer::renderSnowAndRain(float partialTick)
             const float vBottom = static_cast<float>(
                 static_cast<double>(maxYPhaseBase) + static_cast<double>(rainScroll) + rainOffsetB);
 
-            builder->vertexUV(xBase - offsetX, yMin, vFront, static_cast<float>(rainOffsetA), vTop);
-            builder->vertexUV(xBase + offsetX, yMin, vBack, static_cast<float>(1.0 + rainOffsetA), vTop);
-            builder->vertexUV(xBase + offsetX, yMax, vBack, static_cast<float>(1.0 + rainOffsetA), vBottom);
-            builder->vertexUV(xBase - offsetX, yMax, vFront, static_cast<float>(rainOffsetA), vBottom);
-            builder->offset(1.0f, 1.0f, 1.0f);
+            builder->vertexUV(xLeft, yMin, zFront, static_cast<float>(rainOffsetA), vTop);
+            builder->vertexUV(xRight, yMin, zBack, static_cast<float>(1.0 + rainOffsetA), vTop);
+            builder->vertexUV(xRight, yMax, zBack, static_cast<float>(1.0 + rainOffsetA), vBottom);
+            builder->vertexUV(xLeft, yMax, zFront, static_cast<float>(rainOffsetA), vBottom);
+            builder->offset(0.0f, 0.0f, 0.0f);
 
-            zSeedAccumulator += columnStep * 0x35c1;
+            zSeedAccumulator += columnStep * COLUMN_SEED_Z;
         }
 
-        xSeedAccumulator += columnStep * 0x2b24abb;
+        xSeedAccumulator += columnStep * COLUMN_SEED_X;
     }
 
     if (precipitationMode >= 0)
@@ -3097,7 +3100,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
         culler->prepare(cameraEntity->mX, cameraEntity->mY, cameraEntity->mZ);
         levelRenderer->renderEntities(cameraEntity, culler, partialTick);
 
-        InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_Entities);
+        InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_Particles);
         turnOnLightLayer(partialTick);
         particleEngine->renderLit(cameraEntity, partialTick, 1);
         Lighting::turnOff();
@@ -3117,7 +3120,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
             }
         }
 
-        InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_Entities);
+        InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_Particles);
     }
 
     InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_TerrainTransparent);

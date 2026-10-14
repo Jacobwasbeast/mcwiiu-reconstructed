@@ -3999,6 +3999,8 @@ bool BlockRenderer::tesselateWaterInWorld(const BlockState* state, const BlockPo
             builder->vertexUV(x0, y + height[first], z0, u0, vFirst + vInset);
         }
     }
+    mMinY = 0.0f;
+    mMaxY = 1.0f;
     return rendered;
 }
 
@@ -4340,8 +4342,10 @@ bool BlockRenderer::tessellateCoralFanHangInWorld(const BlockState* state, const
     float v1 = (float)texture->getV1(true);
 
     int direction = state->getValue(CoralFanHang::DIRECTION);
+    const float farEdge = 0.95f;
+    const float nearEdge = 1.0f - farEdge;
     float rootHeight = 0.5f;
-    double tipHeight = 0.65f;
+    float tipHeight = 0.65f;
     if (direction == 0)
     {
         if (mLevelSource->getBlockState(position.east())->getBlock() != Blocks::coral_block)
@@ -4351,9 +4355,9 @@ bool BlockRenderer::tessellateCoralFanHangInWorld(const BlockState* state, const
         }
         float rootX = (float)position.x + 0.99f;
         float tipX = (float)(rootX - 0.65f);
-        float z0 = (float)position.z + 0.05f;
-        float z1 = (float)position.z + 0.95f;
-        float tipY = (float)((float)position.y + tipHeight);
+        float z0 = (float)position.z + nearEdge;
+        float z1 = (float)position.z + farEdge;
+        float tipY = (float)position.y + tipHeight;
         float rootY = (float)position.y + rootHeight;
         builder->vertexUV(tipX, tipY, z0, u0, v0);
         builder->vertexUV(rootX, rootY, z0, u0, v1);
@@ -4373,9 +4377,9 @@ bool BlockRenderer::tessellateCoralFanHangInWorld(const BlockState* state, const
         }
         float rootX = (float)position.x + 0.01f;
         float tipX = (float)(rootX + 0.65f);
-        float z0 = (float)position.z + 0.05f;
-        float z1 = (float)position.z + 0.95f;
-        float tipY = (float)((float)position.y + tipHeight);
+        float z0 = (float)position.z + nearEdge;
+        float z1 = (float)position.z + farEdge;
+        float tipY = (float)position.y + tipHeight;
         float rootY = (float)position.y + rootHeight;
         builder->vertexUV(tipX, tipY, z0, u0, v0);
         builder->vertexUV(rootX, rootY, z0, u0, v1);
@@ -4393,11 +4397,11 @@ bool BlockRenderer::tessellateCoralFanHangInWorld(const BlockState* state, const
             tipHeight = 0.85f;
             rootHeight = 0.75f;
         }
-        float x0 = (float)position.x + 0.95f;
+        float x0 = (float)position.x + farEdge;
         float rootZ = (float)position.z + 0.99f;
         float tipZ = (float)(rootZ - 0.65f);
-        float x1 = (float)position.x + 0.05f;
-        float tipY = (float)((float)position.y + tipHeight);
+        float x1 = (float)position.x + nearEdge;
+        float tipY = (float)position.y + tipHeight;
         float rootY = (float)position.y + rootHeight;
         builder->vertexUV(x0, tipY, tipZ, u0, v0);
         builder->vertexUV(x0, rootY, rootZ, u0, v1);
@@ -4415,11 +4419,11 @@ bool BlockRenderer::tessellateCoralFanHangInWorld(const BlockState* state, const
             tipHeight = 0.85f;
             rootHeight = 0.75f;
         }
-        float x0 = (float)position.x + 0.95f;
+        float x0 = (float)position.x + farEdge;
         float rootZ = (float)position.z + 0.01f;
         float tipZ = (float)(rootZ + 0.65f);
-        float x1 = (float)position.x + 0.05f;
-        float tipY = (float)((float)position.y + tipHeight);
+        float x1 = (float)position.x + nearEdge;
+        float tipY = (float)position.y + tipHeight;
         float rootY = (float)position.y + rootHeight;
         builder->vertexUV(x0, tipY, tipZ, u0, v0);
         builder->vertexUV(x0, rootY, rootZ, u0, v1);
@@ -8253,8 +8257,9 @@ bool BlockRenderer::tessellateSeagrassInWorld(const BlockState* state, const Blo
     float y = (float)pos.y - 0.0625f;
     float z = (float)pos.z;
 
-    Block* belowBlock = mLevelSource->getBlock(pos.below());
-    BlockPos seedPos = Block::getId(belowBlock) == BlockId::SEA_GRASS ? pos.below() : pos;
+    BlockPos seedPos = pos;
+    if (Block::getId(mLevelSource->getBlock(pos.below())) == BlockId::SEA_GRASS)
+        seedPos = pos.below();
     Random random(seedPos.getRandomSeed());
     bool swap = random.nextBoolean();
 
@@ -8266,13 +8271,10 @@ bool BlockRenderer::tessellateSeagrassInWorld(const BlockState* state, const Blo
     float uA = swap ? u1 : u0;
     float uB = swap ? u0 : u1;
 
-    float x0 = x + 0.25f;
     float x1 = x + 0.75f;
-    float z0 = z + 0.25f;
-    float z1 = z + 0.75f;
+    float x0 = x + 0.25f;
     float yTop = y + 1.0f;
     float zFull1 = z + 1.0f;
-    float xFull1 = x + 1.0f;
 
     builder->vertexUV(x0, yTop, z, uA, v0);
     builder->vertexUV(x0, y, z, uA, v1);
@@ -8283,6 +8285,19 @@ bool BlockRenderer::tessellateSeagrassInWorld(const BlockState* state, const Blo
     builder->vertexUV(x1, y, z, uB, v1);
     builder->vertexUV(x1, yTop, z, uB, v0);
 
+    builder->vertexUV(x0, yTop, zFull1, uB, v0);
+    builder->vertexUV(x0, y, zFull1, uB, v1);
+    builder->vertexUV(x0, y, z, uA, v1);
+    builder->vertexUV(x0, yTop, z, uA, v0);
+    builder->vertexUV(x1, yTop, z, uB, v0);
+    builder->vertexUV(x1, y, z, uB, v1);
+    builder->vertexUV(x1, y, zFull1, uA, v1);
+    builder->vertexUV(x1, yTop, zFull1, uA, v0);
+
+    float z0 = z + 0.25f;
+    float xFull1 = x + 1.0f;
+    float z1 = z + 0.75f;
+
     builder->vertexUV(x, yTop, z0, uA, v0);
     builder->vertexUV(x, y, z0, uA, v1);
     builder->vertexUV(xFull1, y, z0, uB, v1);
@@ -8291,6 +8306,15 @@ bool BlockRenderer::tessellateSeagrassInWorld(const BlockState* state, const Blo
     builder->vertexUV(xFull1, y, z1, uA, v1);
     builder->vertexUV(x, y, z1, uB, v1);
     builder->vertexUV(x, yTop, z1, uB, v0);
+
+    builder->vertexUV(xFull1, yTop, z0, uB, v0);
+    builder->vertexUV(xFull1, y, z0, uB, v1);
+    builder->vertexUV(x, y, z0, uA, v1);
+    builder->vertexUV(x, yTop, z0, uA, v0);
+    builder->vertexUV(x, yTop, z1, uB, v0);
+    builder->vertexUV(x, y, z1, uB, v1);
+    builder->vertexUV(xFull1, y, z1, uA, v1);
+    builder->vertexUV(xFull1, yTop, z1, uA, v0);
 
     return true;
 }
@@ -8432,27 +8456,26 @@ bool BlockRenderer::tessellateIndividualSeaPickleInWorld(const BlockState* state
 bool BlockRenderer::tessellateSeaPickleInWorld(const BlockState* state, const BlockPos& pos)
 {
     unsigned int count = state->getValue(SeaPickle::COUNT);
-    if (count == 0)
+    switch (count)
     {
+    case 0:
         tessellateIndividualSeaPickleInWorld(state, pos, 0.375, Vec3::newTemp(0.5, 0.0, 0.5));
-    }
-    else if (count == 1)
-    {
+        break;
+    case 1:
         tessellateIndividualSeaPickleInWorld(state, pos, 0.375, Vec3::newTemp(0.35f, 0.0, 0.35f));
         tessellateIndividualSeaPickleInWorld(state, pos, 0.245f, Vec3::newTemp(0.65f, 0.0, 0.65f));
-    }
-    else if (count < 3)
-    {
+        break;
+    case 2:
         tessellateIndividualSeaPickleInWorld(state, pos, 0.245f, Vec3::newTemp(0.5, 0.0, 0.7f));
-        tessellateIndividualSeaPickleInWorld(state, pos, 0.435f, Vec3::newTemp(0.3f, 0.0, 0.3f));
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.375 + 0.06f, Vec3::newTemp(0.3f, 0.0, 0.3f));
         tessellateIndividualSeaPickleInWorld(state, pos, 0.375, Vec3::newTemp(0.6f, 0.0, 0.35f));
-    }
-    else if (count == 3)
-    {
+        break;
+    case 3:
         tessellateIndividualSeaPickleInWorld(state, pos, 0.375, Vec3::newTemp(0.29f, 0.0, 0.31f));
         tessellateIndividualSeaPickleInWorld(state, pos, 0.245f, Vec3::newTemp(0.71f, 0.0, 0.76f));
-        tessellateIndividualSeaPickleInWorld(state, pos, 0.305f, Vec3::newTemp(0.69f, 0.0, 0.27f));
-        tessellateIndividualSeaPickleInWorld(state, pos, 0.435f, Vec3::newTemp(0.25, 0.0, 0.67f));
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.375 - 0.07f, Vec3::newTemp(0.69f, 0.0, 0.27f));
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.375 + 0.06f, Vec3::newTemp(0.25, 0.0, 0.67f));
+        break;
     }
     return true;
 }

@@ -1098,6 +1098,21 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
 
     PIXEndNamedEvent();
 
+
+    PIXBeginNamedEvent(0.0f, "Render %d global entities", (int)mLevels[userIndex]->mGlobalEntities.size());
+    std::vector<boost::shared_ptr<Entity> >::iterator globalEnd = mLevels[userIndex]->mGlobalEntities.end();
+    for (std::vector<boost::shared_ptr<Entity> >::iterator globalIt = mLevels[userIndex]->mGlobalEntities.begin();
+         globalIt != globalEnd; ++globalIt)
+    {
+        boost::shared_ptr<Entity> globalEntity = *globalIt;
+        ++mCountEntitiesRendered;
+        if (globalEntity->shouldRender(camZ, camY, camZ))
+        {
+            mEntityRenderDispatcher->render(globalEntity, partialTick, false);
+        }
+    }
+    PIXEndNamedEvent();
+
     InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_Entities);
     PIXBeginNamedEvent(0.0f, "Render %d entities", (int)sortedIndices.size());
 
@@ -1159,7 +1174,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
             }
         }
 
-        if (!(0.0 <= entity->mY && entity->mY < 256.0))
+        if (entity->mY >= 0.0 && entity->mY < 256.0)
         {
             BlockPos entityBlockPos((int)floor(entity->mX), 0, (int)floor(entity->mZ));
             if (!mLevels[userIndex]->hasChunkAt(entityBlockPos))
@@ -1246,20 +1261,30 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
 
     PIXBeginNamedEvent(0.0f, "Clear out block entities");
 
-    for (ChunkBlockEntityMap::iterator bucketIt = mBlockEntities.begin(); bucketIt != mBlockEntities.end(); ++bucketIt)
+    for (ChunkBlockEntityMap::iterator bucketIt = mBlockEntities.begin(); bucketIt != mBlockEntities.end(); )
     {
         std::vector<boost::shared_ptr<BlockEntity> >& bucket = bucketIt->second;
-        for (unsigned int bucketIndex = 0; bucketIndex < bucket.size(); )
+        for (std::vector<boost::shared_ptr<BlockEntity> >::iterator blockEntityIt = bucket.begin();
+             blockEntityIt != bucket.end(); )
         {
-            if (bucket[bucketIndex]->shouldRemoveForRender())
+            if ((*blockEntityIt)->shouldRemoveForRender())
             {
-                bucket[bucketIndex]->setRenderRemoveStage(0);
-                bucket.erase(bucket.begin() + bucketIndex);
+                (*blockEntityIt)->setRenderRemoveStage(0);
+                blockEntityIt = bucket.erase(blockEntityIt);
             }
             else
             {
-                ++bucketIndex;
+                ++blockEntityIt;
             }
+        }
+
+        if (bucket.empty())
+        {
+            bucketIt = mBlockEntities.erase(bucketIt);
+        }
+        else
+        {
+            ++bucketIt;
         }
     }
 
@@ -2363,8 +2388,6 @@ unsigned int LevelRenderer::updateDirtyChunks(unsigned int* count)
     return 0;
 }
 
-static ResourceLocation sHitOverlayLocation(TN_BLOCK_ATLAS);
-
 void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult* hit, int pass, not_null_ptr<ItemInstance> item, float partialTick)
 {
     GlStateManager::enableBlend();
@@ -2387,7 +2410,7 @@ void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult*
             float alpha = phase2 * 0.2f + 0.5f;
 
             GlStateManager::color4f(rgb, rgb, rgb, alpha);
-            mTextures->bindTexture(&sHitOverlayLocation);
+            mTextures->bindTexture(&BLOCKS_LOCATION);
         }
     }
 
@@ -2401,11 +2424,13 @@ void LevelRenderer::renderDestroyAnimation(Tesselator* tesselator, boost::shared
     double camY = (player->mY - player->mYOld) * partialTick + player->mYOld;
     double camZ = (player->mZ - player->mZOld) * partialTick + player->mZOld;
     int userIndex = mMinecraft->mPlayer->mUserIndex;
+    if (mDestroyingBlocks.empty())
+        return;
 
     BufferBuilder* builder = tesselator->getBuilder();
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(8, 2);
-    mTextures->bindTexture(&sHitOverlayLocation);
+    mTextures->bindTexture(&BLOCKS_LOCATION);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 0.5f);
     GlStateManager::pushMatrix();
     GlStateManager::disableAlphaTest();
@@ -2420,11 +2445,10 @@ void LevelRenderer::renderDestroyAnimation(Tesselator* tesselator, boost::shared
          entry != mDestroyingBlocks.end(); ++entry)
     {
         BlockDestructionProgress* progress = entry->second;
-        BlockPos pos = progress->getPos();
-        double dx = (double)pos.x - camX;
-        double dy = (double)pos.y - camY;
-        double dz = (double)pos.z - camZ;
-        Block* block = mLevels[userIndex]->getBlockState(pos)->getBlock();
+        double dx = progress->getPos().x - camX;
+        double dy = progress->getPos().y - camY;
+        double dz = progress->getPos().z - camZ;
+        Block* block = mLevels[userIndex]->getBlockState(progress->getPos())->getBlock();
         if (block == Blocks::chest || block == Blocks::ender_chest || block == Blocks::trapped_chest ||
             block == Blocks::standing_sign || block == Blocks::skull || block == Blocks::wall_sign)
         {
@@ -2433,11 +2457,11 @@ void LevelRenderer::renderDestroyAnimation(Tesselator* tesselator, boost::shared
 
         if (dx * dx + dy * dy + dz * dz < 1024.0)
         {
-            const BlockState* state = mMinecraft->mLevel->getBlockState(pos);
+            int rendererIndex = mMinecraft->mPlayer->mUserIndex;
+            const BlockState* state = mMinecraft->mLevel->getBlockState(progress->getPos());
             state->getBlock();
-
-            mBlockRenderers[userIndex]->tesselateInWorldFixedTexture(
-                mMinecraft->mLevel->getBlockState(pos), pos, mDestroyStages[progress->getProgress()]);
+            mBlockRenderers[rendererIndex]->tesselateInWorldFixedTexture(
+                state, progress->getPos(), mDestroyStages[progress->getProgress()]);
         }
     }
 
@@ -3289,6 +3313,9 @@ Particle* LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, 
     if (camera == NULL || mMinecraft->mParticleEngine == NULL)
         return NULL;
 
+    if (Mth::isNaN(x) || Mth::isNaN(y) || Mth::isNaN(z))
+        return NULL;
+
     if (level == NULL)
         level = mLevels[mMinecraft->mPlayer->mUserIndex];
 
@@ -3366,26 +3393,29 @@ void LevelRenderer::globalLevelEvent(int type, const BlockPos& pos, int data)
     if (type != 1023 && type != 1028 && type != 1038)
         return;
 
-    double dx = pos.x - mMinecraft->getCameraEntity()->mX;
-    double dy = pos.y - mMinecraft->getCameraEntity()->mY;
-    double dz = pos.z - mMinecraft->getCameraEntity()->mZ;
-    double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
-    double x = mMinecraft->getCameraEntity()->mX;
-    double y = mMinecraft->getCameraEntity()->mY;
-    double z = mMinecraft->getCameraEntity()->mZ;
-    if (distance > 0.0)
+    if (mMinecraft->getCameraEntity())
     {
-        x += dx / distance * 2.0;
-        y += dy / distance * 2.0;
-        z += dz / distance * 2.0;
-    }
+        double dx = pos.x - mMinecraft->getCameraEntity()->mX;
+        double dy = pos.y - mMinecraft->getCameraEntity()->mY;
+        double dz = pos.z - mMinecraft->getCameraEntity()->mZ;
+        double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+        double x = mMinecraft->getCameraEntity()->mX;
+        double y = mMinecraft->getCameraEntity()->mY;
+        double z = mMinecraft->getCameraEntity()->mZ;
+        if (distance > 0.0)
+        {
+            x += dx / distance * 2.0;
+            y += dy / distance * 2.0;
+            z += dz / distance * 2.0;
+        }
 
-    if (type == 1023)
-        level->playLocalSound(x, y, z, SoundEvents::WITHER_SPAWN, SoundSource::eSoundSource_Hostile, 1.0f, 1.0f, false, 16.0f);
-    else if (type == 1038)
-        level->playLocalSound(x, y, z, SoundEvents::END_PORTAL_SPAWN, SoundSource::eSoundSource_Hostile, 1.0f, 1.0f, false, 16.0f);
-    else if (type == 1028)
-        level->playLocalSound(x, y, z, SoundEvents::ENDERDRAGON_DEATH, SoundSource::eSoundSource_Hostile, 5.0f, 1.0f, false, 16.0f);
+        if (type == 1023)
+            level->playLocalSound(x, y, z, SoundEvents::WITHER_SPAWN, SoundSource::eSoundSource_Hostile, 1.0f, 1.0f, false, 16.0f);
+        else if (type == 1038)
+            level->playLocalSound(x, y, z, SoundEvents::END_PORTAL_SPAWN, SoundSource::eSoundSource_Hostile, 1.0f, 1.0f, false, 16.0f);
+        else if (type == 1028)
+            level->playLocalSound(x, y, z, SoundEvents::ENDERDRAGON_DEATH, SoundSource::eSoundSource_Hostile, 5.0f, 1.0f, false, 16.0f);
+    }
 }
 
 void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const BlockPos& pos, int data)

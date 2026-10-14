@@ -67,7 +67,7 @@ public:
     float mCameraYRot;
     float mCameraXRot;
     Options* mOptions;
-    bool mRenderName;
+    bool mRenderingGuiPlayer;
     bool mRenderLeash;
     double mCameraX;
     double mCameraY;

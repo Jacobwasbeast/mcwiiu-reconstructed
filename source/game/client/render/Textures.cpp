@@ -643,11 +643,13 @@ arrayWithLength<int> Textures::loadTexturePixels(BufferedImage* image)
 
 arrayWithLength<int> Textures::loadTexturePixels(_TEXTURE_NAME textureName, const std::wstring& name)
 {
-    arrayWithLength<int>& pixels = mTexturePixels[name];
-    if (pixels.length != 0) return pixels;
+    arrayWithLength<int> cached = mTexturePixels[name];
+    if (cached.data != NULL) return cached;
+    arrayWithLength<int> pixels;
     BufferedImage* image = readImage(textureName, name);
     pixels = loadTexturePixels(image);
     delete image;
+    mTexturePixels[name] = pixels;
     return pixels;
 }
 

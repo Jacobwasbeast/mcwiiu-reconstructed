@@ -226,7 +226,7 @@ EntityRenderDispatcher::EntityRenderDispatcher(Textures* textures, ItemRenderer*
     mPlayerRenderers[EPLAYER_MODEL_SLIM] = new PlayerRenderer(this, false, true);
     mPlayerRenderers[EPLAYER_MODEL_SLIM_64] = new PlayerRenderer(this, true, true);
     GlStateManager::disableLighting();
-    mRenderName = false;
+    mRenderingGuiPlayer = false;
     mRenderLeash = false;
     mSolidRendering = false;
 }

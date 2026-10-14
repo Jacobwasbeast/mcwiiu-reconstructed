@@ -30,101 +30,84 @@ void LightningBoltRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 1);
 
-    Random random(lightningBolt->mSeed);
     double xOffsets[8];
     double zOffsets[8];
     double xOffset = 0.0;
     double zOffset = 0.0;
-    int index;
-    for (index = 7; index >= 0; --index)
+    Random random(lightningBolt->mSeed);
+    for (int index = 7; index >= 0; --index)
     {
         xOffsets[index] = xOffset;
         zOffsets[index] = zOffset;
-        xOffset += (double)(random.nextInt(11) - 5) * 0.1;
-        zOffset += (double)(random.nextInt(11) - 5) * 0.1;
+        xOffset += (double)(random.nextInt(11) - 5);
+        zOffset += (double)(random.nextInt(11) - 5);
     }
-    double initialXOffset = (double)(random.nextInt(11) - 5) * 0.1;
-    double initialZOffset = (double)(random.nextInt(11) - 5) * 0.1;
 
-    int branch;
-    for (branch = 0; branch < 4; ++branch)
+    for (int layer = 0; layer < 4; ++layer)
     {
-        double branchX = x + 0.5;
-        double branchZ = z + 0.5;
-        double width = 0.1 + (double)branch * 0.2;
-        int top = 7;
-        int bottom = 0;
-        if (branch > 0)
+        Random branchRandom(lightningBolt->mSeed);
+        for (int branch = 0; branch < 3; ++branch)
         {
-            top = 7 - branch;
-            bottom = 5 - branch;
-        }
-
-        double previousX = branchX + xOffsets[top] - initialXOffset;
-        double previousZ = branchZ + zOffsets[top] - initialZOffset;
-        int segment;
-        for (segment = top; segment >= bottom; --segment)
-        {
-            double nextX = previousX;
-            double nextZ = previousZ;
-            if (branch == 0)
+            int top = 7;
+            int bottom = 0;
+            if (branch > 0)
             {
-                nextX += (double)(random.nextInt(11) - 5) * 0.1;
-                nextZ += (double)(random.nextInt(11) - 5) * 0.1;
-            }
-            else
-            {
-                nextX += (double)(random.nextInt(31) - 15) * 0.1;
-                nextZ += (double)(random.nextInt(31) - 15) * 0.1;
+                top = 7 - branch;
+                bottom = 5 - branch;
             }
 
-            builder->begin(1);
-            builder->color(0.45F, 0.45F, 0.45F, 0.3F);
-            double upperWidth = width * ((double)segment * 0.1 + 1.0);
-            double lowerWidth = branch == 0 ? width * ((double)(segment - 1) * 0.1 + 1.0) : width;
-            double x0 = x + 0.5 - upperWidth;
-            double x1 = x + 0.5 + upperWidth;
-            double z0 = z + 0.5 - upperWidth;
-            double z1 = z + 0.5 + upperWidth;
-            double x2 = x + 0.5 - lowerWidth;
-            double x3 = x + 0.5 + lowerWidth;
-            double z2 = z + 0.5 - lowerWidth;
-            double z3 = z + 0.5 + lowerWidth;
-            double y0 = y + (double)segment;
-            double y1 = y + (double)(segment + 1);
+            double currentX = xOffsets[top] - xOffset;
+            double currentZ = zOffsets[top] - zOffset;
+            for (int segment = top; segment >= bottom; --segment)
+            {
+                double previousX = currentX;
+                double previousZ = currentZ;
+                if (branch == 0)
+                {
+                    currentX += (double)(branchRandom.nextInt(11) - 5);
+                    currentZ += (double)(branchRandom.nextInt(11) - 5);
+                }
+                else
+                {
+                    currentX += (double)(branchRandom.nextInt(31) - 15);
+                    currentZ += (double)(branchRandom.nextInt(31) - 15);
+                }
 
-            builder->vertex((float)(x2 + nextX - x - 0.5), (float)y0,
-                            (float)(z2 + nextZ - z - 0.5));
-            builder->vertex((float)(x0 + previousX - x - 0.5), (float)y1,
-                            (float)(z0 + previousZ - z - 0.5));
-            builder->vertex((float)(x3 + nextX - x - 0.5), (float)y0,
-                            (float)(z3 + nextZ - z - 0.5));
-            builder->vertex((float)(x1 + previousX - x - 0.5), (float)y1,
-                            (float)(z1 + previousZ - z - 0.5));
-            builder->vertex((float)(x3 + nextX - x - 0.5), (float)y0,
-                            (float)(z2 + nextZ - z - 0.5));
-            builder->vertex((float)(x1 + previousX - x - 0.5), (float)y1,
-                            (float)(z0 + previousZ - z - 0.5));
-            builder->vertex((float)(x2 + nextX - x - 0.5), (float)y0,
-                            (float)(z3 + nextZ - z - 0.5));
-            builder->vertex((float)(x0 + previousX - x - 0.5), (float)y1,
-                            (float)(z1 + previousZ - z - 0.5));
-            builder->vertex((float)(x2 + nextX - x - 0.5), (float)y0,
-                            (float)(z2 + nextZ - z - 0.5));
-            builder->vertex((float)(x0 + previousX - x - 0.5), (float)y1,
-                            (float)(z0 + previousZ - z - 0.5));
-            builder->vertex((float)(x3 + nextX - x - 0.5), (float)y0,
-                            (float)(z3 + nextZ - z - 0.5));
-            builder->vertex((float)(x1 + previousX - x - 0.5), (float)y1,
-                            (float)(z1 + previousZ - z - 0.5));
-            builder->vertex((float)(x3 + nextX - x - 0.5), (float)y0,
-                            (float)(z2 + nextZ - z - 0.5));
-            builder->vertex((float)(x1 + previousX - x - 0.5), (float)y1,
-                            (float)(z0 + previousZ - z - 0.5));
-            builder->end();
+                builder->begin(1);
+                builder->color(0.45F, 0.45F, 0.45F, 0.3F);
 
-            previousX = nextX;
-            previousZ = nextZ;
+                double upperWidth = 0.1 + (double)layer * 0.2;
+                if (branch == 0)
+                    upperWidth *= (double)segment * 0.1 + 1.0;
+
+                double lowerWidth = 0.1 + (double)layer * 0.2;
+                if (branch == 0)
+                    lowerWidth *= (double)(segment - 1) * 0.1 + 1.0;
+
+                for (int corner = 0; corner < 5; ++corner)
+                {
+                    double upperX = x + 0.5 - upperWidth;
+                    double upperZ = z + 0.5 - upperWidth;
+                    if (corner == 1 || corner == 2)
+                        upperX += upperWidth * 2.0;
+                    if (corner == 2 || corner == 3)
+                        upperZ += upperWidth * 2.0;
+
+                    double lowerX = x + 0.5 - lowerWidth;
+                    double lowerZ = z + 0.5 - lowerWidth;
+                    if (corner == 1 || corner == 2)
+                        lowerX += lowerWidth * 2.0;
+                    if (corner == 2 || corner == 3)
+                        lowerZ += lowerWidth * 2.0;
+
+                    builder->vertex((float)(lowerX + currentX), (float)(y + (double)(segment * 16)),
+                                    (float)(lowerZ + currentZ));
+                    builder->vertex((float)(upperX + previousX), (float)(y + (double)((segment + 1) * 16)),
+                                    (float)(upperZ + previousZ));
+                }
+
+                builder->end();
+            }
         }
     }
 

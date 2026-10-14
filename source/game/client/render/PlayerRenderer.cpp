@@ -296,7 +296,7 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
     }
 
     mSpecialRenderActive = player->isFallFlying() && Minecraft::InMiniGame(eMiniGameId_Glide, true)
-        && !Minecraft::GetInstance()->getEntityRenderDispatcher()->mRenderName && !suppressSpecialRender;
+        && !Minecraft::GetInstance()->getEntityRenderDispatcher()->mRenderingGuiPlayer && !suppressSpecialRender;
     if (mSpecialRenderActive)
     {
         mSpecialRenderAlpha = Mth::clamp((float)(x * x + y * y + z * z) * 0.5f, 0.0f, 1.0f);

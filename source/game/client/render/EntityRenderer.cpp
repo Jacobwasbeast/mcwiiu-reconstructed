@@ -312,21 +312,18 @@ void EntityRenderer::postRender(boost::shared_ptr<Entity>& entity, double x, dou
 {
     if (mDispatcher->mOptions != NULL)
     {
-        if (!mDispatcher->mRenderHitBoxes && renderShadowFlag && Minecraft::useFancyGraphics()
+        if (!mDispatcher->mRenderingGuiPlayer && renderShadowFlag && mDispatcher->mOptions->mFancyGraphics
             && mShadowRadius > 0.0F && !entity->isInvisible() && mDispatcher->shouldRenderShadow())
         {
             double distance = mDispatcher->distanceToSqr(entity->mX, entity->mY, entity->mZ);
-            float alpha = (float)(1.0 - distance / 256.0) * mShadowStrength;
+            float alpha = (float)((1.0 - distance / 256.0) * mShadowStrength);
             if (alpha > 0.0F)
                 renderShadow(entity, x, y, z, alpha, partialTick);
         }
 
         if (entity->displayFireAnimation())
         {
-            bool spectator = false;
-            if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
-                spectator = boost::static_pointer_cast<Player>(entity)->isSpectator();
-            if (!spectator)
+            if (!(eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) && boost::static_pointer_cast<Player>(entity)->isSpectator()))
                 renderFlame(entity, x, y, z, partialTick);
         }
     }
@@ -432,7 +429,7 @@ Model* EntityRenderer::getModel()
 
 std::wstring EntityRenderer::getModelName()
 {
-    return L"void";
+    return L"";
 }
 
 Model* EntityRenderer::createModel(const ModelDefinition&)
