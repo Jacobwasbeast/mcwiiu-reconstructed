@@ -56,7 +56,7 @@ std::wstring CompoundContainer::getCustomName()
     {
         return mSecond->getName();
     }
-    return std::wstring(L"container");
+    return std::wstring(L"");
 }
 
 bool CompoundContainer::hasCustomName()

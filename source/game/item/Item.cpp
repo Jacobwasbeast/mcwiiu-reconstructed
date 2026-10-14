@@ -504,20 +504,20 @@ int Item::SpongeBlockNameResolver(not_null_ptr<ItemInstance> itemInstance)
 {
     if (Blocks::sponge->getBlockState(itemInstance->getAuxValue())->getValue(SpongeBlock::WET))
     {
-        return -256870266;
+        return IDS_TILE_SPONGE_WET;
     }
 
-    return -1164450345;
+    return IDS_TILE_SPONGE;
 }
 
 int Item::SpongeBlockDescResolver(not_null_ptr<ItemInstance> itemInstance)
 {
     if (Blocks::sponge->getBlockState(itemInstance->getAuxValue())->getValue(SpongeBlock::WET))
     {
-        return -118885941;
+        return IDS_DESC_SPONGE_WET;
     }
 
-    return 1450677978;
+    return IDS_DESC_SPONGE;
 }
 
 int Item::SandstoneBlockNameResolver(not_null_ptr<ItemInstance> itemInstance)

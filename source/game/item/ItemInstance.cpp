@@ -1077,7 +1077,7 @@ void ItemInstance::enchant(Enchantment* enchantment, int level)
     ListTag* enchantments = mTag->getList(TAG_ENCH, Tag::TAG_COMPOUND);
     CompoundTag* entry = new CompoundTag();
     entry->putShort(TAG_ENCH_ID, static_cast<short>(Enchantment::getId(enchantment)));
-    entry->putShort(TAG_ENCH_LEVEL, static_cast<short>(level));
+    entry->putShort(TAG_ENCH_LEVEL, static_cast<unsigned char>(level));
     enchantments->add(entry);
 }
 
