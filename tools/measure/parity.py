@@ -1058,7 +1058,7 @@ def main():
     compared = identical + differing
     print()
     print('Virtual function tables the original constructors install: %d of %d identical (%.1f%%), %d of %d '
-          'slots (%.1f%%); %d base class tables the rebuilt executable never installs, not compared'
+          'slots (%.2f%%); %d base class tables the rebuilt executable never installs, not compared'
           % (identical, compared, 100.0 * identical / max(compared, 1), slot_match, slot_total,
              100.0 * slot_match / max(slot_total, 1), absent))
     if args.report:
