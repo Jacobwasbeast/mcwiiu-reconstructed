@@ -126,6 +126,34 @@ static inline unsigned int CountLeadingZeros(unsigned int uValue)
 {
     return __CLZ32(uValue);
 }
+#elif defined(__powerpc__) || defined(__PPC__)
+static inline void FullBarrier()
+{
+    __asm__ __volatile__("sync" : : : "memory");
+}
+
+static inline void AcquireBarrier()
+{
+    __asm__ __volatile__("lwsync" : : : "memory");
+}
+
+static inline int AddAtomic(volatile int* pTarget, int iValue)
+{
+    int iPrevious;
+    int iNext;
+    __asm__ __volatile__("1:\n\tlwarx %0, 0, %2\n\tdcbst 0, %2\n\tadd %1, %0, %3\n\tstwcx. %1, 0, %2\n\tbne- 1b"
+                         : "=&r"(iPrevious), "=&r"(iNext)
+                         : "r"(pTarget), "r"(iValue)
+                         : "cr0", "memory");
+    return iPrevious;
+}
+
+static inline unsigned int CountLeadingZeros(unsigned int uValue)
+{
+    unsigned int uCount;
+    __asm__("cntlzw %0, %1" : "=r"(uCount) : "r"(uValue));
+    return uCount;
+}
 #else
 static inline void FullBarrier()
 {

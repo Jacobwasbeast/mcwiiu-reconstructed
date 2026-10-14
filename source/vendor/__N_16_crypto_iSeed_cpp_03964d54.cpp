@@ -6,6 +6,8 @@
 
 #ifdef __ghs__
 #include <ppc_ghs.h>
+#elif defined(__powerpc__) || defined(__PPC__)
+#include <coreinit/time.h>
 #else
 #include <time.h>
 #endif
@@ -35,6 +37,22 @@ uint64_t __N_16_crypto_iSeed_cpp_03964d54::GetTicks()
 {
     uint32_t upper = __MFTBU();
     int lower = __MFTB();
+    return lower | (static_cast<uint64_t>(upper) << 32);
+}
+#elif defined(__powerpc__) || defined(__PPC__)
+uint64_t __N_16_crypto_iSeed_cpp_03964d54::rdtsc()
+{
+    const uint64_t timeBase = static_cast<uint64_t>(OSGetSystemTime());
+    const uint32_t upper = static_cast<uint32_t>(timeBase >> 32);
+    const int lower = static_cast<int>(static_cast<uint32_t>(timeBase));
+    return (static_cast<uint64_t>(upper) << 32) | lower;
+}
+
+uint64_t __N_16_crypto_iSeed_cpp_03964d54::GetTicks()
+{
+    const uint64_t timeBase = static_cast<uint64_t>(OSGetSystemTime());
+    const uint32_t upper = static_cast<uint32_t>(timeBase >> 32);
+    const int lower = static_cast<int>(static_cast<uint32_t>(timeBase));
     return lower | (static_cast<uint64_t>(upper) << 32);
 }
 #else
