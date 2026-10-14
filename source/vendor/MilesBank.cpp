@@ -52,8 +52,8 @@ union BankHeaderBuffer
 
 inline EnvironmentRecord* NextRecord(EnvironmentRecord* record, int dataWords)
 {
-    return reinterpret_cast<EnvironmentRecord*>(reinterpret_cast<char*>(record) +
-                                                (dataWords + 1) * sizeof(unsigned int));
+    return reinterpret_cast<EnvironmentRecord*>(reinterpret_cast<char*>(record)
+                                                + (dataWords + 1) * sizeof(unsigned int));
 }
 
 inline void EvaluatePair(EnvironmentPreset* environment, EnvironmentPair* pair, PresetEvalFunc evaluate)
@@ -66,8 +66,7 @@ inline void EvaluatePair(EnvironmentPreset* environment, EnvironmentPair* pair, 
 
 inline SoundBank::AssetEntry* Relocate(SoundBankImage* bank, SoundBank::AssetEntry* offset)
 {
-    return reinterpret_cast<SoundBank::AssetEntry*>(reinterpret_cast<char*>(bank) +
-                                                    reinterpret_cast<int>(offset));
+    return reinterpret_cast<SoundBank::AssetEntry*>(reinterpret_cast<char*>(bank) + reinterpret_cast<int>(offset));
 }
 }
 
@@ -163,21 +162,19 @@ extern "C" SoundBank* AIL_open_soundbank(const char* fileName, const char* bankN
     bank->presets = Relocate(bank, bank->presets);
     if (bank->settings != NULL)
     {
-        bank->settings = reinterpret_cast<EventSettings*>(reinterpret_cast<char*>(bank) +
-                                                          reinterpret_cast<int>(bank->settings));
+        bank->settings = reinterpret_cast<EventSettings*>(reinterpret_cast<char*>(bank)
+                                                          + reinterpret_cast<int>(bank->settings));
         AIL_set_event_settings(bank->settings);
     }
 
     const size_t pathLength = strlen(fileName);
-    bank->path = static_cast<char*>(
-        AIL_mem_alloc_lock_info(pathLength + 1, HLBANK_FILE, BANK_PATH_ALLOC_LINE));
+    bank->path = static_cast<char*>(AIL_mem_alloc_lock_info(pathLength + 1, HLBANK_FILE, BANK_PATH_ALLOC_LINE));
     memcpy(bank->path, fileName, pathLength + 1);
     bank->pathLength = pathLength;
     return reinterpret_cast<SoundBank*>(bank);
 }
 
-extern "C" int AIL_get_event_contents(SoundBank* bank, const char* name,
-                                      const unsigned char** contents)
+extern "C" int AIL_get_event_contents(SoundBank* bank, const char* name, const unsigned char** contents)
 {
     SoundBankImage* image = reinterpret_cast<SoundBankImage*>(bank);
     if (image == NULL || contents == NULL || name == NULL || image->magic != SOUND_BANK_MAGIC)
@@ -205,8 +202,8 @@ extern "C" int AIL_resolve_raw_environment_preset(void* preset, PresetEvalFunc e
         return 0;
     }
 
-    EnvironmentRecord* end = reinterpret_cast<EnvironmentRecord*>(
-        reinterpret_cast<char*>(environment) + environment->size);
+    EnvironmentRecord* end = reinterpret_cast<EnvironmentRecord*>(reinterpret_cast<char*>(environment)
+                                                                  + environment->size);
     int dataWords;
     EnvironmentRecord* record = environment->records;
     while (record != end)
@@ -251,8 +248,8 @@ extern "C" int AIL_apply_raw_environment_preset(_DIG_DRIVER* driver, void* prese
         return 0;
     }
 
-    EnvironmentRecord* end = reinterpret_cast<EnvironmentRecord*>(
-        reinterpret_cast<char*>(environment) + environment->size);
+    EnvironmentRecord* end = reinterpret_cast<EnvironmentRecord*>(reinterpret_cast<char*>(environment)
+                                                                  + environment->size);
     int dataWords;
     EnvironmentRecord* record = environment->records;
     while (record != end)
@@ -295,8 +292,7 @@ extern "C" int AIL_apply_raw_environment_preset(_DIG_DRIVER* driver, void* prese
             AIL_set_3D_doppler_factor(driver, record->pairs[0].value.real);
             break;
         case ENVIRONMENT_SPEAKER_RADIUS:
-            AIL_set_speaker_configuration(driver, NULL, ENVIRONMENT_SPEAKER_COUNT,
-                                          record->pairs[0].value.real);
+            AIL_set_speaker_configuration(driver, NULL, ENVIRONMENT_SPEAKER_COUNT, record->pairs[0].value.real);
             break;
         default:
             break;
@@ -336,8 +332,8 @@ extern "C" int AIL_unapply_raw_environment_preset(_DIG_DRIVER* driver, void* pre
     }
 
     EnvironmentRecord* record = environment->records;
-    EnvironmentRecord* end = reinterpret_cast<EnvironmentRecord*>(
-        reinterpret_cast<char*>(environment) + environment->size);
+    EnvironmentRecord* end = reinterpret_cast<EnvironmentRecord*>(reinterpret_cast<char*>(environment)
+                                                                  + environment->size);
     while (record != end)
     {
         int dataWords = 2;
@@ -347,13 +343,12 @@ extern "C" int AIL_unapply_raw_environment_preset(_DIG_DRIVER* driver, void* pre
             AIL_set_room_type(driver, ENVIRONMENT_ROOM_BUS, 0);
             break;
         case ENVIRONMENT_MASTER_REVERB:
-            AIL_set_digital_master_reverb(driver, ENVIRONMENT_ROOM_BUS, DEFAULT_REVERB_TIME,
-                                          DEFAULT_REVERB_PREDELAY, DEFAULT_REVERB_DAMPING);
+            AIL_set_digital_master_reverb(driver, ENVIRONMENT_ROOM_BUS, DEFAULT_REVERB_TIME, DEFAULT_REVERB_PREDELAY,
+                                          DEFAULT_REVERB_DAMPING);
             dataWords = 6;
             break;
         case ENVIRONMENT_MASTER_REVERB_LEVELS:
-            AIL_set_digital_master_reverb_levels(driver, ENVIRONMENT_ROOM_BUS, DEFAULT_REVERB_DRY,
-                                                 DEFAULT_REVERB_WET);
+            AIL_set_digital_master_reverb_levels(driver, ENVIRONMENT_ROOM_BUS, DEFAULT_REVERB_DRY, DEFAULT_REVERB_WET);
             dataWords = 4;
             break;
         case ENVIRONMENT_MASTER_VOLUME:
@@ -366,8 +361,7 @@ extern "C" int AIL_unapply_raw_environment_preset(_DIG_DRIVER* driver, void* pre
             AIL_set_3D_doppler_factor(driver, DEFAULT_DOPPLER_FACTOR);
             break;
         case ENVIRONMENT_SPEAKER_RADIUS:
-            AIL_set_speaker_configuration(driver, NULL, ENVIRONMENT_SPEAKER_COUNT,
-                                          DEFAULT_SPEAKER_RADIUS);
+            AIL_set_speaker_configuration(driver, NULL, ENVIRONMENT_SPEAKER_COUNT, DEFAULT_SPEAKER_RADIUS);
             break;
         default:
             break;

@@ -16,7 +16,7 @@ static unsigned int s_vadClampGain = 0x31;
 static unsigned int s_vadEnableInvalidation = 0;
 static unsigned short s_vadActiveGain = 0x15e;
 static unsigned short s_vadInactiveGain = 0x118;
-static VADState s_vad = { 0, 5, 0x2d0, false };
+static VADState s_vad = {0, 5, 0x2d0, false};
 
 static unsigned int s_vadBss[4];
 

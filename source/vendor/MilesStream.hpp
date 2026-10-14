@@ -70,8 +70,7 @@ void background(unsigned int uTimer);
 int stream_align(_STREAM* pStream, int iPosition);
 
 extern "C" float AIL_API_stream_filled_percent(_STREAM* pStream);
-extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileName,
-                                        int iStreamMemory);
+extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileName, int iStreamMemory);
 extern "C" void AIL_API_close_stream(_STREAM* pStream);
 extern "C" int AIL_API_stream_status(_STREAM* pStream);
 extern "C" void AIL_API_set_stream_position(_STREAM* pStream, int iPosition);

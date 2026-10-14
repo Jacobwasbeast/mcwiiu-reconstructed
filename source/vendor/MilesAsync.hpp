@@ -11,17 +11,28 @@ struct MilesProfileSite
 };
 
 typedef const char* (*MilesProfileDescribeFunc)(MilesProfile* pProfile, void* pObject);
-typedef void (*MilesProfileZoneEnterFunc)(MilesProfile* pProfile, unsigned int uZone, unsigned int uParent, unsigned long long uTimeStamp, unsigned int uFlags, const char* pFile, int iLine, MilesProfileSite* pSite, const char* pFormat, ...);
-typedef void (*MilesProfileZoneLeaveFunc)(MilesProfile* pProfile, unsigned long long uTimeStamp, unsigned int uFlags, const char* pFile, int iLine);
-typedef void (*MilesProfileThreadNameFunc)(MilesProfile* pProfile, unsigned int uThreadId, MilesProfileSite* pSite, const char* pFormat, ...);
-typedef void (*MilesProfileLockNameFunc)(MilesProfile* pProfile, void* pLock, MilesProfileSite* pSite, const char* pFormat, ...);
-typedef void (*MilesProfileLockStateFunc)(MilesProfile* pProfile, void* pLock, unsigned int uState, const char* pFile, int iLine, MilesProfileSite* pSite, const char* pFormat, ...);
-typedef void (*MilesProfileAllocFunc)(MilesProfile* pProfile, void* pBlock, unsigned int uFlags, int iSize, const char* pFile, int iLine, MilesProfileSite* pSite, const char* pFormat, ...);
-typedef void (*MilesProfileFreeFunc)(MilesProfile* pProfile, void* pBlock, const char* pFile, int iLine, MilesProfileSite* pSite);
+typedef void (*MilesProfileZoneEnterFunc)(MilesProfile* pProfile, unsigned int uZone, unsigned int uParent,
+                                          unsigned long long uTimeStamp, unsigned int uFlags, const char* pFile,
+                                          int iLine, MilesProfileSite* pSite, const char* pFormat, ...);
+typedef void (*MilesProfileZoneLeaveFunc)(MilesProfile* pProfile, unsigned long long uTimeStamp, unsigned int uFlags,
+                                          const char* pFile, int iLine);
+typedef void (*MilesProfileThreadNameFunc)(MilesProfile* pProfile, unsigned int uThreadId, MilesProfileSite* pSite,
+                                           const char* pFormat, ...);
+typedef void (*MilesProfileLockNameFunc)(MilesProfile* pProfile, void* pLock, MilesProfileSite* pSite,
+                                         const char* pFormat, ...);
+typedef void (*MilesProfileLockStateFunc)(MilesProfile* pProfile, void* pLock, unsigned int uState, const char* pFile,
+                                          int iLine, MilesProfileSite* pSite, const char* pFormat, ...);
+typedef void (*MilesProfileAllocFunc)(MilesProfile* pProfile, void* pBlock, unsigned int uFlags, int iSize,
+                                      const char* pFile, int iLine, MilesProfileSite* pSite, const char* pFormat, ...);
+typedef void (*MilesProfileFreeFunc)(MilesProfile* pProfile, void* pBlock, const char* pFile, int iLine,
+                                     MilesProfileSite* pSite);
 typedef unsigned int (*MilesProfileCallStackFunc)(MilesProfile* pProfile, unsigned int uSkip, unsigned int uFlags);
-typedef void (*MilesProfileMessageFunc)(MilesProfile* pProfile, unsigned int uContext, unsigned int uFlags, MilesProfileSite* pSite, const char* pFormat, ...);
+typedef void (*MilesProfileMessageFunc)(MilesProfile* pProfile, unsigned int uContext, unsigned int uFlags,
+                                        MilesProfileSite* pSite, const char* pFormat, ...);
 
-typedef void (*MilesProfilePlotFunc)(MilesProfile* pProfile, unsigned long long uContext, unsigned int uType, unsigned int uFlags, double dValue, MilesProfileSite* pSite, const char* pFormat, ...);
+typedef void (*MilesProfilePlotFunc)(MilesProfile* pProfile, unsigned long long uContext, unsigned int uType,
+                                     unsigned int uFlags, double dValue, MilesProfileSite* pSite, const char* pFormat,
+                                     ...);
 
 struct MilesProfile
 {

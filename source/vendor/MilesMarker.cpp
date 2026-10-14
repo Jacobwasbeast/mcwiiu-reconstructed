@@ -9,8 +9,7 @@ static const unsigned int MILES_MARKER_NOT_FOUND = 0xFFFFFFFF;
 
 extern "C" int AIL_stricmp(const char* pFirst, const char* pSecond);
 
-extern "C" unsigned int AIL_find_marker_in_list(const MilesMarkerList* pList, const char* pName,
-                                                unsigned int* puType)
+extern "C" unsigned int AIL_find_marker_in_list(const MilesMarkerList* pList, const char* pName, unsigned int* puType)
 {
     const MilesMarkerEntry* pEntry;
     int iRemaining;
@@ -21,8 +20,7 @@ extern "C" unsigned int AIL_find_marker_in_list(const MilesMarkerList* pList, co
 
         for (iRemaining = pList->iCount; iRemaining != 0; iRemaining--)
         {
-            if (AIL_stricmp(reinterpret_cast<const char*>(pList) + pEntry->uNameOffset, pName) ==
-                0)
+            if (AIL_stricmp(reinterpret_cast<const char*>(pList) + pEntry->uNameOffset, pName) == 0)
             {
                 *puType = pEntry->uType;
                 return pEntry->uIndex;
@@ -55,6 +53,6 @@ extern "C" const MilesMarkerList* AIL_get_marker_list(SoundBank* pBank, const ch
         return NULL;
     }
 
-    return reinterpret_cast<const MilesMarkerList*>(reinterpret_cast<char*>(pHeader) +
-                                                    pEntry->value + offsetof(SoundBankHeader, name));
+    return reinterpret_cast<const MilesMarkerList*>(reinterpret_cast<char*>(pHeader) + pEntry->value
+                                                    + offsetof(SoundBankHeader, name));
 }

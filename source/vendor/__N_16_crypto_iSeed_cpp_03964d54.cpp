@@ -80,15 +80,33 @@ void __N_16_crypto_iSeed_cpp_03964d54::Stir()
     a = g_seed[0];
     b = g_seed[1];
     c = g_seed[2];
-    a -= b; a -= c; a ^= c >> 13;
-    b -= c; b -= a; b ^= a << 8;
-    c -= a; c -= b; c ^= b >> 13;
-    a -= b; a -= c; a ^= c >> 12;
-    b -= c; b -= a; b ^= a << 16;
-    c -= a; c -= b; c ^= b >> 5;
-    a -= b; a -= c; a ^= c >> 3;
-    b -= c; b -= a; b ^= a << 10;
-    c -= a; c -= b; c ^= b >> 15;
+    a -= b;
+    a -= c;
+    a ^= c >> 13;
+    b -= c;
+    b -= a;
+    b ^= a << 8;
+    c -= a;
+    c -= b;
+    c ^= b >> 13;
+    a -= b;
+    a -= c;
+    a ^= c >> 12;
+    b -= c;
+    b -= a;
+    b ^= a << 16;
+    c -= a;
+    c -= b;
+    c ^= b >> 5;
+    a -= b;
+    a -= c;
+    a ^= c >> 3;
+    b -= c;
+    b -= a;
+    b ^= a << 10;
+    c -= a;
+    c -= b;
+    c ^= b >> 15;
     g_seed[0] = a;
     g_seed[1] = b;
     g_seed[2] = c;
@@ -101,7 +119,7 @@ void __N_16_crypto_iSeed_cpp_03964d54::Stir()
     g_seed[1] = static_cast<uint32_t>(mixed);
 }
 
-uint32_t __N_16_crypto_iSeed_cpp_03964d54::AddToSeed(unsigned char *data, unsigned int length)
+uint32_t __N_16_crypto_iSeed_cpp_03964d54::AddToSeed(unsigned char* data, unsigned int length)
 {
     unsigned int index;
 
@@ -115,7 +133,7 @@ uint32_t __N_16_crypto_iSeed_cpp_03964d54::AddToSeed(unsigned char *data, unsign
     return 1;
 }
 
-uint32_t nn::crypto::detail::GetSeed(unsigned char *data, unsigned int length)
+uint32_t nn::crypto::detail::GetSeed(unsigned char* data, unsigned int length)
 {
     unsigned int offset;
     unsigned int copySize;
@@ -127,9 +145,9 @@ uint32_t nn::crypto::detail::GetSeed(unsigned char *data, unsigned int length)
         {
             __N_16_crypto_iSeed_cpp_03964d54::Stir();
             ticks = __N_16_crypto_iSeed_cpp_03964d54::GetTicks();
-            __N_16_crypto_iSeed_cpp_03964d54::AddToSeed(reinterpret_cast<unsigned char *>(&ticks), sizeof(ticks));
+            __N_16_crypto_iSeed_cpp_03964d54::AddToSeed(reinterpret_cast<unsigned char*>(&ticks), sizeof(ticks));
             ticks = __N_16_crypto_iSeed_cpp_03964d54::rdtsc();
-            __N_16_crypto_iSeed_cpp_03964d54::AddToSeed(reinterpret_cast<unsigned char *>(&ticks), sizeof(ticks));
+            __N_16_crypto_iSeed_cpp_03964d54::AddToSeed(reinterpret_cast<unsigned char*>(&ticks), sizeof(ticks));
             ++g_getSeedCount;
         }
         copySize = length;

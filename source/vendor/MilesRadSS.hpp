@@ -20,7 +20,8 @@ typedef int (*RADSS_SET_ON_OFF_FUNCTION)(_RadSoundSystem* pSystem, int iOn);
 typedef int (*RADSS_CLOSE_FUNCTION)(_RadSoundSystem* pSystem);
 typedef int (*RADSS_LOCK_FUNCTION)(_RadSoundSystem* pSystem, void** ppBuffer, unsigned int uBytes);
 typedef int (*RADSS_UNLOCK_FUNCTION)(_RadSoundSystem* pSystem);
-typedef unsigned int (*RADSS_GET_PROPERTY_FUNCTION)(_RadSoundSystem* pSystem, RADSS_PROPERTY property, unsigned int* puValue);
+typedef unsigned int (*RADSS_GET_PROPERTY_FUNCTION)(_RadSoundSystem* pSystem, RADSS_PROPERTY property,
+                                                    unsigned int* puValue);
 typedef void (*RADSS_VOLUME_FUNCTION)(_RadSoundSystem* pSystem, float fFirst, float fSecond);
 typedef void (*RADSS_CHANNEL_ROUTE_FUNCTION)(_RadSoundSystem* pSystem, short* pRouting, int iCount);
 

@@ -84,17 +84,15 @@ static const char MIX_INTERFACE_NAME[] = "MSS mixer services";
 
 static const unsigned int MIX_PROVIDER_VERSION = 0x130;
 
-static const RIB_INTERFACE_ENTRY MIX_interface[] = {
-    { 0, "PROVIDER_property", (void*)MSS_mixer_property, 0 },
-    { 0, "MIXER_startup", (void*)MSS_mixer_startup, 0 },
-    { 0, "MIXER_startup", (void*)MSS_mixer_startup, 0 },
-    { 0, "MIXER_shutdown", (void*)MSS_mixer_shutdown, 0 },
-    { 0, "MIXER_flush", (void*)MSS_mixer_flush, 0 },
-    { 0, "MIXER_merge", (void*)MSS_mixer_merge, 0 },
-    { 0, "MIXER_copy", (void*)MSS_mixer_copy, 0 },
-    { 0, "MIXER_mc_copy", (void*)MSS_mixer_mc_copy, 0 },
-    { 0, "MIXER_adpcm_decode", (void*)MSS_mixer_adpcm_decode, 0 }
-};
+static const RIB_INTERFACE_ENTRY MIX_interface[] = {{0, "PROVIDER_property", (void*)MSS_mixer_property, 0},
+                                                    {0, "MIXER_startup", (void*)MSS_mixer_startup, 0},
+                                                    {0, "MIXER_startup", (void*)MSS_mixer_startup, 0},
+                                                    {0, "MIXER_shutdown", (void*)MSS_mixer_shutdown, 0},
+                                                    {0, "MIXER_flush", (void*)MSS_mixer_flush, 0},
+                                                    {0, "MIXER_merge", (void*)MSS_mixer_merge, 0},
+                                                    {0, "MIXER_copy", (void*)MSS_mixer_copy, 0},
+                                                    {0, "MIXER_mc_copy", (void*)MSS_mixer_mc_copy, 0},
+                                                    {0, "MIXER_adpcm_decode", (void*)MSS_mixer_adpcm_decode, 0}};
 
 int MSS_mixer_property(unsigned int uProperty, void* pBefore, const void*, void*)
 {
@@ -152,8 +150,8 @@ static inline int MIX_load_le32(const void* pSource)
     return iValue;
 #else
     const unsigned char* pBytes = (const unsigned char*)pSource;
-    return (int)((unsigned int)pBytes[0] | ((unsigned int)pBytes[1] << 8) |
-                 ((unsigned int)pBytes[2] << 16) | ((unsigned int)pBytes[3] << 24));
+    return (int)((unsigned int)pBytes[0] | ((unsigned int)pBytes[1] << 8) | ((unsigned int)pBytes[2] << 16)
+                 | ((unsigned int)pBytes[3] << 24));
 #endif
 }
 
@@ -216,8 +214,8 @@ static inline void MIX_store_word(short* pOutput, int iValue)
     *pOutput = (short)iValue;
 }
 
-extern "C" void MSS_mixer_mc_copy(void* pChannelList, int iChannelCount, void* pDestination,
-                                  unsigned int uFlags, unsigned int uFrames, int iStride)
+extern "C" void MSS_mixer_mc_copy(void* pChannelList, int iChannelCount, void* pDestination, unsigned int uFlags,
+                                  unsigned int uFrames, int iStride)
 {
     MIX_COPY_CHANNEL* pChannels = (MIX_COPY_CHANNEL*)pChannelList;
     int iChannel;
@@ -287,8 +285,8 @@ extern "C" void MSS_mixer_mc_copy(void* pChannelList, int iChannelCount, void* p
     }
 }
 
-extern "C" void MSS_mixer_copy(void* pSource, unsigned int uLength, unsigned short* pDestination,
-                               unsigned int uFlags, int iSuppressSwap)
+extern "C" void MSS_mixer_copy(void* pSource, unsigned int uLength, unsigned short* pDestination, unsigned int uFlags,
+                               int iSuppressSwap)
 {
     MIX_COPY_CHANNEL stereo;
     MIX_COPY_CHANNEL mono;
@@ -302,8 +300,7 @@ extern "C" void MSS_mixer_copy(void* pSource, unsigned int uLength, unsigned sho
         stereo.iChannels = MIX_CHANNELS_STEREO;
         stereo.iDestinationOffset = 0;
 
-        MSS_mixer_mc_copy(&stereo, 1, pDestination, uFlags,
-                          (unsigned int)((int)uLength / 8), MIX_CHANNELS_STEREO);
+        MSS_mixer_mc_copy(&stereo, 1, pDestination, uFlags, (unsigned int)((int)uLength / 8), MIX_CHANNELS_STEREO);
     }
     else
     {
@@ -312,8 +309,7 @@ extern "C" void MSS_mixer_copy(void* pSource, unsigned int uLength, unsigned sho
         mono.iChannels = 1;
         mono.iDestinationOffset = 0;
 
-        MSS_mixer_mc_copy(&mono, 1, pDestination, uFlags,
-                          (unsigned int)((int)uLength / 4), 1);
+        MSS_mixer_mc_copy(&mono, 1, pDestination, uFlags, (unsigned int)((int)uLength / 4), 1);
     }
 
     if (iSuppressSwap == 0 && (uFlags & MIX_COPY_FLAG_16BIT) != 0)
@@ -347,29 +343,18 @@ struct MixMonoMonoFixed
         *piRight = 0;
     }
 
-    static inline int Weight(int, int iStep)
-    {
-        return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int, int iStep) { return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1; }
 
-    static inline void Blend(Unit* pDestination, int iLeft, int, int, int)
-    {
-        *pDestination += iLeft * MIX_SCALE_UNITY;
-    }
+    static inline void Blend(Unit* pDestination, int iLeft, int, int, int) { *pDestination += iLeft * MIX_SCALE_UNITY; }
 
     static inline void Filtered(Unit* pDestination, int iLeft, int, int iWeightLeft, int)
     {
         *pDestination += iLeft * iWeightLeft;
     }
 
-    static inline int LoadRight(const int*)
-    {
-        return 0;
-    }
+    static inline int LoadRight(const int*) { return 0; }
 
-    static inline void SaveRight(int*, int)
-    {
-    }
+    static inline void SaveRight(int*, int) {}
 };
 
 struct MixMonoStereoFixed
@@ -391,10 +376,7 @@ struct MixMonoStereoFixed
         *piRight = 0;
     }
 
-    static inline int Weight(int, int iStep)
-    {
-        return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int, int iStep) { return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1; }
 
     static inline void Blend(Unit* pDestination, int iLeft, int, int, int)
     {
@@ -408,14 +390,9 @@ struct MixMonoStereoFixed
         pDestination[1] += iLeft * iWeightLeft;
     }
 
-    static inline int LoadRight(const int*)
-    {
-        return 0;
-    }
+    static inline int LoadRight(const int*) { return 0; }
 
-    static inline void SaveRight(int*, int)
-    {
-    }
+    static inline void SaveRight(int*, int) {}
 };
 
 struct MixStereoMonoFixed
@@ -427,8 +404,7 @@ struct MixStereoMonoFixed
 
     static inline void Mix(Unit* pDestination, const unsigned char* pSource, int, int)
     {
-        *pDestination += ((short)MIX_load_le32(pSource) + (MIX_load_le32(pSource) >> 16)) *
-                         MIX_SCALE_UNITY;
+        *pDestination += ((short)MIX_load_le32(pSource) + (MIX_load_le32(pSource) >> 16)) * MIX_SCALE_UNITY;
     }
 
     static inline void Load(const unsigned char* pSource, int* piLeft, int* piRight)
@@ -438,30 +414,18 @@ struct MixStereoMonoFixed
         *piRight = 0;
     }
 
-    static inline int Weight(int, int iStep)
-    {
-        return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int, int iStep) { return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1; }
 
-    static inline void Blend(Unit* pDestination, int iLeft, int, int, int)
-    {
-        *pDestination += iLeft * MIX_SCALE_UNITY;
-    }
+    static inline void Blend(Unit* pDestination, int iLeft, int, int, int) { *pDestination += iLeft * MIX_SCALE_UNITY; }
 
     static inline void Filtered(Unit* pDestination, int iLeft, int, int iWeightLeft, int)
     {
         *pDestination += iLeft * iWeightLeft;
     }
 
-    static inline int LoadRight(const int*)
-    {
-        return 0;
-    }
+    static inline int LoadRight(const int*) { return 0; }
 
-    static inline void SaveRight(int* piRight, int)
-    {
-        *piRight = 0;
-    }
+    static inline void SaveRight(int* piRight, int) { *piRight = 0; }
 };
 
 struct MixStereoStereoFixed
@@ -484,10 +448,7 @@ struct MixStereoStereoFixed
         *piRight = iPair >> MIX_FRACTION_BITS;
     }
 
-    static inline int Weight(int, int iStep)
-    {
-        return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int, int iStep) { return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1; }
 
     static inline void Blend(Unit* pDestination, int iLeft, int iRight, int, int)
     {
@@ -495,22 +456,15 @@ struct MixStereoStereoFixed
         pDestination[1] += iRight * MIX_SCALE_UNITY;
     }
 
-    static inline void Filtered(Unit* pDestination, int iLeft, int iRight, int iWeightLeft,
-                                int)
+    static inline void Filtered(Unit* pDestination, int iLeft, int iRight, int iWeightLeft, int)
     {
         pDestination[0] += iLeft * iWeightLeft;
         pDestination[1] += iRight * iWeightLeft;
     }
 
-    static inline int LoadRight(const int* piRight)
-    {
-        return *piRight;
-    }
+    static inline int LoadRight(const int* piRight) { return *piRight; }
 
-    static inline void SaveRight(int* piRight, int iRight)
-    {
-        *piRight = iRight;
-    }
+    static inline void SaveRight(int* piRight, int iRight) { *piRight = iRight; }
 };
 
 struct MixMonoMonoVolume
@@ -531,10 +485,7 @@ struct MixMonoMonoVolume
         *piRight = 0;
     }
 
-    static inline int Weight(int iScale, int iStep)
-    {
-        return (iScale << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int iScale, int iStep) { return (iScale << MIX_FRACTION_BITS) / iStep - 1; }
 
     static inline void Blend(Unit* pDestination, int iLeft, int, int iScaleLeft, int)
     {
@@ -546,14 +497,9 @@ struct MixMonoMonoVolume
         *pDestination += iLeft * iWeightLeft;
     }
 
-    static inline int LoadRight(const int*)
-    {
-        return 0;
-    }
+    static inline int LoadRight(const int*) { return 0; }
 
-    static inline void SaveRight(int*, int)
-    {
-    }
+    static inline void SaveRight(int*, int) {}
 };
 
 struct MixMonoStereoVolume
@@ -563,8 +509,7 @@ struct MixMonoStereoVolume
     static const int SOURCE_BYTES = MIX_SOURCE_MONO_BYTES;
     static const int NEAREST_SHIFT = MIX_RESAMPLE_MONO_SHIFT;
 
-    static inline void Mix(Unit* pDestination, const unsigned char* pSource, int iScaleLeft,
-                           int iScaleRight)
+    static inline void Mix(Unit* pDestination, const unsigned char* pSource, int iScaleLeft, int iScaleRight)
     {
         pDestination[1] += MIX_load_le16(pSource) * iScaleRight;
         pDestination[0] += MIX_load_le16(pSource) * iScaleLeft;
@@ -576,10 +521,7 @@ struct MixMonoStereoVolume
         *piRight = 0;
     }
 
-    static inline int Weight(int iScale, int iStep)
-    {
-        return (iScale << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int iScale, int iStep) { return (iScale << MIX_FRACTION_BITS) / iStep - 1; }
 
     static inline void Blend(Unit* pDestination, int iLeft, int, int iScaleLeft, int iScaleRight)
     {
@@ -587,22 +529,15 @@ struct MixMonoStereoVolume
         pDestination[0] += iLeft * iScaleLeft;
     }
 
-    static inline void Filtered(Unit* pDestination, int iLeft, int, int iWeightLeft,
-                                int iWeightRight)
+    static inline void Filtered(Unit* pDestination, int iLeft, int, int iWeightLeft, int iWeightRight)
     {
         pDestination[0] += iLeft * iWeightLeft;
         pDestination[1] += iLeft * iWeightRight;
     }
 
-    static inline int LoadRight(const int*)
-    {
-        return 0;
-    }
+    static inline int LoadRight(const int*) { return 0; }
 
-    static inline void SaveRight(int* piRight, int)
-    {
-        *piRight = 0;
-    }
+    static inline void SaveRight(int* piRight, int) { *piRight = 0; }
 };
 
 struct MixStereoMonoVolume
@@ -612,11 +547,9 @@ struct MixStereoMonoVolume
     static const int SOURCE_BYTES = MIX_SOURCE_STEREO_BYTES;
     static const int NEAREST_SHIFT = MIX_RESAMPLE_STEREO_SHIFT;
 
-    static inline void Mix(Unit* pDestination, const unsigned char* pSource, int iScaleLeft,
-                           int iScaleRight)
+    static inline void Mix(Unit* pDestination, const unsigned char* pSource, int iScaleLeft, int iScaleRight)
     {
-        *pDestination += (short)MIX_load_le32(pSource) * iScaleLeft +
-                         (MIX_load_le32(pSource) >> 16) * iScaleRight;
+        *pDestination += (short)MIX_load_le32(pSource) * iScaleLeft + (MIX_load_le32(pSource) >> 16) * iScaleRight;
     }
 
     static inline void Load(const unsigned char* pSource, int* piLeft, int* piRight)
@@ -626,32 +559,21 @@ struct MixStereoMonoVolume
         *piRight = iPair >> MIX_FRACTION_BITS;
     }
 
-    static inline int Weight(int iScale, int iStep)
-    {
-        return (iScale << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int iScale, int iStep) { return (iScale << MIX_FRACTION_BITS) / iStep - 1; }
 
-    static inline void Blend(Unit* pDestination, int iLeft, int iRight, int iScaleLeft,
-                             int iScaleRight)
+    static inline void Blend(Unit* pDestination, int iLeft, int iRight, int iScaleLeft, int iScaleRight)
     {
         *pDestination += iLeft * iScaleLeft + iRight * iScaleRight;
     }
 
-    static inline void Filtered(Unit* pDestination, int iLeft, int iRight, int iWeightLeft,
-                                int iWeightRight)
+    static inline void Filtered(Unit* pDestination, int iLeft, int iRight, int iWeightLeft, int iWeightRight)
     {
         *pDestination += iLeft * iWeightLeft + iRight * iWeightRight;
     }
 
-    static inline int LoadRight(const int* piRight)
-    {
-        return *piRight;
-    }
+    static inline int LoadRight(const int* piRight) { return *piRight; }
 
-    static inline void SaveRight(int* piRight, int iRight)
-    {
-        *piRight = iRight;
-    }
+    static inline void SaveRight(int* piRight, int iRight) { *piRight = iRight; }
 };
 
 struct MixStereoStereoVolume
@@ -661,8 +583,7 @@ struct MixStereoStereoVolume
     static const int SOURCE_BYTES = MIX_SOURCE_STEREO_BYTES;
     static const int NEAREST_SHIFT = MIX_RESAMPLE_STEREO_SHIFT;
 
-    static inline void Mix(Unit* pDestination, const unsigned char* pSource, int iScaleLeft,
-                           int iScaleRight)
+    static inline void Mix(Unit* pDestination, const unsigned char* pSource, int iScaleLeft, int iScaleRight)
     {
         pDestination[0] += (short)MIX_load_le32(pSource) * iScaleLeft;
         pDestination[1] += (MIX_load_le32(pSource) >> 16) * iScaleRight;
@@ -675,34 +596,23 @@ struct MixStereoStereoVolume
         *piRight = iPair >> MIX_FRACTION_BITS;
     }
 
-    static inline int Weight(int iScale, int iStep)
-    {
-        return (iScale << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int iScale, int iStep) { return (iScale << MIX_FRACTION_BITS) / iStep - 1; }
 
-    static inline void Blend(Unit* pDestination, int iLeft, int iRight, int iScaleLeft,
-                             int iScaleRight)
+    static inline void Blend(Unit* pDestination, int iLeft, int iRight, int iScaleLeft, int iScaleRight)
     {
         pDestination[0] += iLeft * iScaleLeft;
         pDestination[1] += iRight * iScaleRight;
     }
 
-    static inline void Filtered(Unit* pDestination, int iLeft, int iRight, int iWeightLeft,
-                                int iWeightRight)
+    static inline void Filtered(Unit* pDestination, int iLeft, int iRight, int iWeightLeft, int iWeightRight)
     {
         pDestination[0] += iLeft * iWeightLeft;
         pDestination[1] += iRight * iWeightRight;
     }
 
-    static inline int LoadRight(const int* piRight)
-    {
-        return *piRight;
-    }
+    static inline int LoadRight(const int* piRight) { return *piRight; }
 
-    static inline void SaveRight(int* piRight, int iRight)
-    {
-        *piRight = iRight;
-    }
+    static inline void SaveRight(int* piRight, int iRight) { *piRight = iRight; }
 };
 
 struct MixMonoMonoCopy
@@ -723,29 +633,18 @@ struct MixMonoMonoCopy
         *piRight = 0;
     }
 
-    static inline int Weight(int, int iStep)
-    {
-        return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int, int iStep) { return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1; }
 
-    static inline void Blend(Unit* pDestination, int iLeft, int, int, int)
-    {
-        MIX_store_le16(pDestination, iLeft);
-    }
+    static inline void Blend(Unit* pDestination, int iLeft, int, int, int) { MIX_store_le16(pDestination, iLeft); }
 
     static inline void Filtered(Unit* pDestination, int iLeft, int, int iWeightLeft, int)
     {
         MIX_store_le16(pDestination, (iLeft * iWeightLeft) >> MIX_ACCUMULATOR_SHIFT);
     }
 
-    static inline int LoadRight(const int*)
-    {
-        return 0;
-    }
+    static inline int LoadRight(const int*) { return 0; }
 
-    static inline void SaveRight(int*, int)
-    {
-    }
+    static inline void SaveRight(int*, int) {}
 };
 
 struct MixMonoStereoCopy
@@ -767,10 +666,7 @@ struct MixMonoStereoCopy
         *piRight = 0;
     }
 
-    static inline int Weight(int, int iStep)
-    {
-        return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int, int iStep) { return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1; }
 
     static inline void Blend(Unit* pDestination, int iLeft, int, int, int)
     {
@@ -784,14 +680,9 @@ struct MixMonoStereoCopy
         MIX_store_le16(pDestination + 1, (iLeft * iWeightLeft) >> MIX_ACCUMULATOR_SHIFT);
     }
 
-    static inline int LoadRight(const int*)
-    {
-        return 0;
-    }
+    static inline int LoadRight(const int*) { return 0; }
 
-    static inline void SaveRight(int*, int)
-    {
-    }
+    static inline void SaveRight(int*, int) {}
 };
 
 struct MixStereoMonoCopy
@@ -803,8 +694,7 @@ struct MixStereoMonoCopy
 
     static inline void Mix(Unit* pDestination, const unsigned char* pSource, int, int)
     {
-        MIX_store_le16(pDestination,
-                       ((short)MIX_load_le32(pSource) + (MIX_load_le32(pSource) >> 16)) >> 1);
+        MIX_store_le16(pDestination, ((short)MIX_load_le32(pSource) + (MIX_load_le32(pSource) >> 16)) >> 1);
     }
 
     static inline void Load(const unsigned char* pSource, int* piLeft, int* piRight)
@@ -814,30 +704,18 @@ struct MixStereoMonoCopy
         *piRight = 0;
     }
 
-    static inline int Weight(int, int iStep)
-    {
-        return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int, int iStep) { return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1; }
 
-    static inline void Blend(Unit* pDestination, int iLeft, int, int, int)
-    {
-        MIX_store_le16(pDestination, iLeft);
-    }
+    static inline void Blend(Unit* pDestination, int iLeft, int, int, int) { MIX_store_le16(pDestination, iLeft); }
 
     static inline void Filtered(Unit* pDestination, int iLeft, int, int iWeightLeft, int)
     {
         MIX_store_le16(pDestination, (iLeft * iWeightLeft) >> MIX_ACCUMULATOR_SHIFT);
     }
 
-    static inline int LoadRight(const int*)
-    {
-        return 0;
-    }
+    static inline int LoadRight(const int*) { return 0; }
 
-    static inline void SaveRight(int* piRight, int)
-    {
-        *piRight = 0;
-    }
+    static inline void SaveRight(int* piRight, int) { *piRight = 0; }
 };
 
 struct MixStereoStereoCopy
@@ -860,10 +738,7 @@ struct MixStereoStereoCopy
         *piRight = iPair >> MIX_FRACTION_BITS;
     }
 
-    static inline int Weight(int, int iStep)
-    {
-        return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1;
-    }
+    static inline int Weight(int, int iStep) { return (MIX_SCALE_UNITY << MIX_FRACTION_BITS) / iStep - 1; }
 
     static inline void Blend(Unit* pDestination, int iLeft, int iRight, int, int)
     {
@@ -877,21 +752,14 @@ struct MixStereoStereoCopy
         MIX_store_le16(pDestination + 1, (iRight * iWeightLeft) >> MIX_ACCUMULATOR_SHIFT);
     }
 
-    static inline int LoadRight(const int* piRight)
-    {
-        return *piRight;
-    }
+    static inline int LoadRight(const int* piRight) { return *piRight; }
 
-    static inline void SaveRight(int* piRight, int iRight)
-    {
-        *piRight = iRight;
-    }
+    static inline void SaveRight(int* piRight, int iRight) { *piRight = iRight; }
 };
 
 template <class Mixer>
-static inline void MIX_merge_nearest(const void** ppSource, unsigned int* pFraction,
-                                     const void* pSourceEnd, void** ppDestination,
-                                     void* pDestinationEnd, int iStep, int iScaleLeft,
+static inline void MIX_merge_nearest(const void** ppSource, unsigned int* pFraction, const void* pSourceEnd,
+                                     void** ppDestination, void* pDestinationEnd, int iStep, int iScaleLeft,
                                      int iScaleRight)
 {
     typedef typename Mixer::Unit Unit;
@@ -913,9 +781,8 @@ static inline void MIX_merge_nearest(const void** ppSource, unsigned int* pFract
 }
 
 template <class Mixer, bool bResumeChecksSource>
-static inline void MIX_merge_filtered(const void** ppSource, unsigned int* pFraction,
-                                      const void* pSourceEnd, void** ppDestination,
-                                      void* pDestinationEnd, int* pLeftValue, int* pRightValue,
+static inline void MIX_merge_filtered(const void** ppSource, unsigned int* pFraction, const void* pSourceEnd,
+                                      void** ppDestination, void* pDestinationEnd, int* pLeftValue, int* pRightValue,
                                       int iStep, int iScaleLeft, int iScaleRight)
 {
     typedef typename Mixer::Unit Unit;
@@ -984,10 +851,9 @@ static inline void MIX_merge_filtered(const void** ppSource, unsigned int* pFrac
             bCheckSource = true;
             Mixer::Load(pSource, &iCurrentLeft, &iCurrentRight);
             pSource += Mixer::SOURCE_BYTES;
-            Mixer::Filtered(pDestination,
-                            ((iCurrentLeft * (int)uPosition) >> MIX_FRACTION_BITS) + iLeft,
-                            ((iCurrentRight * (int)uPosition) >> MIX_FRACTION_BITS) + iRight,
-                            iWeightLeft, iWeightRight);
+            Mixer::Filtered(pDestination, ((iCurrentLeft * (int)uPosition) >> MIX_FRACTION_BITS) + iLeft,
+                            ((iCurrentRight * (int)uPosition) >> MIX_FRACTION_BITS) + iRight, iWeightLeft,
+                            iWeightRight);
             pDestination += Mixer::DEST_UNITS;
             iLeft = iCurrentLeft;
             iRight = iCurrentRight;
@@ -1021,12 +887,10 @@ static inline void MIX_merge_filtered(const void** ppSource, unsigned int* pFrac
             do
             {
                 Mixer::Blend(pDestination,
-                             (((iLeft - iPreviousLeft) * (int)(uFraction >> MIX_BLEND_SHIFT)) >>
-                              MIX_BLEND_BITS) +
-                                 iPreviousLeft,
-                             (((iRight - iPreviousRight) * (int)(uFraction >> MIX_BLEND_SHIFT)) >>
-                              MIX_BLEND_BITS) +
-                                 iPreviousRight,
+                             (((iLeft - iPreviousLeft) * (int)(uFraction >> MIX_BLEND_SHIFT)) >> MIX_BLEND_BITS)
+                                 + iPreviousLeft,
+                             (((iRight - iPreviousRight) * (int)(uFraction >> MIX_BLEND_SHIFT)) >> MIX_BLEND_BITS)
+                                 + iPreviousRight,
                              iScaleLeft, iScaleRight);
                 pDestination += Mixer::DEST_UNITS;
 
@@ -1066,10 +930,10 @@ done:
     Mixer::SaveRight(pRightValue, iRight);
 }
 
-void Merge_DestMono_SrcMono_Src16_NoVolume_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestMono_SrcMono_Src16_NoVolume_NoResample(int** ppDestination, void* pDestinationEnd, const void** ppSource,
+                                                      unsigned int* pFraction, const void* pSourceEnd, int iStep,
+                                                      int iScaleLeft, int iScaleRight, int* pLeftValue,
+                                                      int* pRightValue)
 {
     int* pDestination = (int*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1098,10 +962,10 @@ void Merge_DestMono_SrcMono_Src16_NoVolume_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestStereo_SrcMono_Src16_NoVolume_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestStereo_SrcMono_Src16_NoVolume_NoResample(int** ppDestination, void* pDestinationEnd,
+                                                        const void** ppSource, unsigned int* pFraction,
+                                                        const void* pSourceEnd, int iStep, int iScaleLeft,
+                                                        int iScaleRight, int* pLeftValue, int* pRightValue)
 {
     int* pDestination = (int*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1132,10 +996,10 @@ void Merge_DestStereo_SrcMono_Src16_NoVolume_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestMono_SrcStereo_Src16_NoVolume_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestMono_SrcStereo_Src16_NoVolume_NoResample(int** ppDestination, void* pDestinationEnd,
+                                                        const void** ppSource, unsigned int* pFraction,
+                                                        const void* pSourceEnd, int iStep, int iScaleLeft,
+                                                        int iScaleRight, int* pLeftValue, int* pRightValue)
 {
     int* pDestination = (int*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1143,8 +1007,7 @@ void Merge_DestMono_SrcStereo_Src16_NoVolume_NoResample(
 
     do
     {
-        *pDestination +=
-            ((short)MIX_load_le32(pSource) + (MIX_load_le32(pSource) >> 16)) * MIX_SCALE_UNITY;
+        *pDestination += ((short)MIX_load_le32(pSource) + (MIX_load_le32(pSource) >> 16)) * MIX_SCALE_UNITY;
         pDestination += MIX_DEST_MONO;
 
         if (pDestination >= (int*)pDestinationEnd)
@@ -1165,10 +1028,10 @@ void Merge_DestMono_SrcStereo_Src16_NoVolume_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestStereo_SrcStereo_Src16_NoVolume_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestStereo_SrcStereo_Src16_NoVolume_NoResample(int** ppDestination, void* pDestinationEnd,
+                                                          const void** ppSource, unsigned int* pFraction,
+                                                          const void* pSourceEnd, int iStep, int iScaleLeft,
+                                                          int iScaleRight, int* pLeftValue, int* pRightValue)
 {
     int* pDestination = (int*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1199,10 +1062,9 @@ void Merge_DestStereo_SrcStereo_Src16_NoVolume_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestMono_SrcMono_Src16_Volume_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestMono_SrcMono_Src16_Volume_NoResample(int** ppDestination, void* pDestinationEnd, const void** ppSource,
+                                                    unsigned int* pFraction, const void* pSourceEnd, int iStep,
+                                                    int iScaleLeft, int iScaleRight, int* pLeftValue, int* pRightValue)
 {
     int* pDestination = (int*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1231,10 +1093,10 @@ void Merge_DestMono_SrcMono_Src16_Volume_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestStereo_SrcMono_Src16_Volume_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestStereo_SrcMono_Src16_Volume_NoResample(int** ppDestination, void* pDestinationEnd, const void** ppSource,
+                                                      unsigned int* pFraction, const void* pSourceEnd, int iStep,
+                                                      int iScaleLeft, int iScaleRight, int* pLeftValue,
+                                                      int* pRightValue)
 {
     const unsigned char* pSource = (const unsigned char*)*ppSource;
     int* pDestination = (int*)*ppDestination;
@@ -1265,10 +1127,10 @@ void Merge_DestStereo_SrcMono_Src16_Volume_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestMono_SrcStereo_Src16_Volume_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestMono_SrcStereo_Src16_Volume_NoResample(int** ppDestination, void* pDestinationEnd, const void** ppSource,
+                                                      unsigned int* pFraction, const void* pSourceEnd, int iStep,
+                                                      int iScaleLeft, int iScaleRight, int* pLeftValue,
+                                                      int* pRightValue)
 {
     int* pDestination = (int*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1276,8 +1138,7 @@ void Merge_DestMono_SrcStereo_Src16_Volume_NoResample(
 
     do
     {
-        *pDestination += (short)MIX_load_le32(pSource) * iScaleLeft +
-                         (MIX_load_le32(pSource) >> 16) * iScaleRight;
+        *pDestination += (short)MIX_load_le32(pSource) * iScaleLeft + (MIX_load_le32(pSource) >> 16) * iScaleRight;
         pDestination += MIX_DEST_MONO;
 
         if (pDestination >= (int*)pDestinationEnd)
@@ -1298,10 +1159,10 @@ void Merge_DestMono_SrcStereo_Src16_Volume_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestStereo_SrcStereo_Src16_Volume_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestStereo_SrcStereo_Src16_Volume_NoResample(int** ppDestination, void* pDestinationEnd,
+                                                        const void** ppSource, unsigned int* pFraction,
+                                                        const void* pSourceEnd, int iStep, int iScaleLeft,
+                                                        int iScaleRight, int* pLeftValue, int* pRightValue)
 {
     int* pDestination = (int*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1332,10 +1193,9 @@ void Merge_DestStereo_SrcStereo_Src16_Volume_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestMono_SrcMono_Src16_Copy16_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestMono_SrcMono_Src16_Copy16_NoResample(int** ppDestination, void* pDestinationEnd, const void** ppSource,
+                                                    unsigned int* pFraction, const void* pSourceEnd, int iStep,
+                                                    int iScaleLeft, int iScaleRight, int* pLeftValue, int* pRightValue)
 {
     short* pDestination = (short*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1364,10 +1224,10 @@ void Merge_DestMono_SrcMono_Src16_Copy16_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestStereo_SrcMono_Src16_Copy16_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestStereo_SrcMono_Src16_Copy16_NoResample(int** ppDestination, void* pDestinationEnd, const void** ppSource,
+                                                      unsigned int* pFraction, const void* pSourceEnd, int iStep,
+                                                      int iScaleLeft, int iScaleRight, int* pLeftValue,
+                                                      int* pRightValue)
 {
     const unsigned char* pSource = (const unsigned char*)*ppSource;
     short* pDestination = (short*)*ppDestination;
@@ -1398,10 +1258,10 @@ void Merge_DestStereo_SrcMono_Src16_Copy16_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestMono_SrcStereo_Src16_Copy16_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestMono_SrcStereo_Src16_Copy16_NoResample(int** ppDestination, void* pDestinationEnd, const void** ppSource,
+                                                      unsigned int* pFraction, const void* pSourceEnd, int iStep,
+                                                      int iScaleLeft, int iScaleRight, int* pLeftValue,
+                                                      int* pRightValue)
 {
     short* pDestination = (short*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1409,8 +1269,7 @@ void Merge_DestMono_SrcStereo_Src16_Copy16_NoResample(
 
     do
     {
-        MIX_store_le16(pDestination,
-                        ((short)MIX_load_le32(pSource) + (MIX_load_le32(pSource) >> 16)) >> 1);
+        MIX_store_le16(pDestination, ((short)MIX_load_le32(pSource) + (MIX_load_le32(pSource) >> 16)) >> 1);
         pDestination += MIX_DEST_MONO;
 
         if (pDestination >= (short*)pDestinationEnd)
@@ -1431,10 +1290,10 @@ void Merge_DestMono_SrcStereo_Src16_Copy16_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestStereo_SrcStereo_Src16_Copy16_NoResample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestStereo_SrcStereo_Src16_Copy16_NoResample(int** ppDestination, void* pDestinationEnd,
+                                                        const void** ppSource, unsigned int* pFraction,
+                                                        const void* pSourceEnd, int iStep, int iScaleLeft,
+                                                        int iScaleRight, int* pLeftValue, int* pRightValue)
 {
     short* pDestination = (short*)*ppDestination;
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1464,10 +1323,10 @@ void Merge_DestStereo_SrcStereo_Src16_Copy16_NoResample(
     *ppSource = pSource;
 }
 
-void Merge_DestStereo_SrcStereo_Src16_Copy16_Resample(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestStereo_SrcStereo_Src16_Copy16_Resample(int** ppDestination, void* pDestinationEnd, const void** ppSource,
+                                                      unsigned int* pFraction, const void* pSourceEnd, int iStep,
+                                                      int iScaleLeft, int iScaleRight, int* pLeftValue,
+                                                      int* pRightValue)
 {
     unsigned int uFraction = *pFraction;
     short* pDestination = (short*)*ppDestination;
@@ -1487,32 +1346,29 @@ void Merge_DestStereo_SrcStereo_Src16_Copy16_Resample(
     *pFraction = uFraction;
 }
 
-void Merge_DestMono_SrcStereo_Src16_Copy16_DownFiltered(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestMono_SrcStereo_Src16_Copy16_DownFiltered(int** ppDestination, void* pDestinationEnd,
+                                                        const void** ppSource, unsigned int* pFraction,
+                                                        const void* pSourceEnd, int iStep, int iScaleLeft,
+                                                        int iScaleRight, int* pLeftValue, int* pRightValue)
 {
-    MIX_merge_filtered<MixStereoMonoCopy, true>(ppSource, pFraction, pSourceEnd,
-                                                (void**)ppDestination, pDestinationEnd, pLeftValue,
-                                                pRightValue, iStep, iScaleLeft, iScaleRight);
+    MIX_merge_filtered<MixStereoMonoCopy, true>(ppSource, pFraction, pSourceEnd, (void**)ppDestination, pDestinationEnd,
+                                                pLeftValue, pRightValue, iStep, iScaleLeft, iScaleRight);
 }
 
-void Merge_DestStereo_SrcStereo_Src16_Copy16_DownFiltered(
-    int** ppDestination, void* pDestinationEnd, const void** ppSource, unsigned int* pFraction,
-    const void* pSourceEnd, int iStep, int iScaleLeft, int iScaleRight, int* pLeftValue,
-    int* pRightValue)
+void Merge_DestStereo_SrcStereo_Src16_Copy16_DownFiltered(int** ppDestination, void* pDestinationEnd,
+                                                          const void** ppSource, unsigned int* pFraction,
+                                                          const void* pSourceEnd, int iStep, int iScaleLeft,
+                                                          int iScaleRight, int* pLeftValue, int* pRightValue)
 {
-    MIX_merge_filtered<MixStereoStereoCopy, false>(ppSource, pFraction, pSourceEnd,
-                                                   (void**)ppDestination, pDestinationEnd,
-                                                   pLeftValue, pRightValue, iStep, iScaleLeft,
+    MIX_merge_filtered<MixStereoStereoCopy, false>(ppSource, pFraction, pSourceEnd, (void**)ppDestination,
+                                                   pDestinationEnd, pLeftValue, pRightValue, iStep, iScaleLeft,
                                                    iScaleRight);
 }
 
-extern "C" void MSS_mixer_merge(void* pSource, unsigned int* pFraction,
-                                unsigned short* pSourceEnd, void** ppDestination,
-                                unsigned short* pDestinationEnd, int* pLeftValue,
-                                int* pRightValue, unsigned int uStep, int iScaleLeft,
-                                int iScaleRight, unsigned int uOperation)
+extern "C" void MSS_mixer_merge(void* pSource, unsigned int* pFraction, unsigned short* pSourceEnd,
+                                void** ppDestination, unsigned short* pDestinationEnd, int* pLeftValue,
+                                int* pRightValue, unsigned int uStep, int iScaleLeft, int iScaleRight,
+                                unsigned int uOperation)
 {
     const void** ppSource = (const void**)pSource;
 
@@ -1525,228 +1381,210 @@ extern "C" void MSS_mixer_merge(void* pSource, unsigned int* pFraction,
     {
     case MIX_OP_SRC_16:
     case MIX_OP_SRC_16 | MIX_OP_FILTER:
-        Merge_DestMono_SrcMono_Src16_NoVolume_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestMono_SrcMono_Src16_NoVolume_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                         pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                         pRightValue);
         return;
 
     case MIX_OP_SRC_16 | MIX_OP_DEST_STEREO:
     case MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_DEST_STEREO:
-        Merge_DestStereo_SrcMono_Src16_NoVolume_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestStereo_SrcMono_Src16_NoVolume_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                           pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                           pRightValue);
         return;
 
     case MIX_OP_SRC_16 | MIX_OP_SRC_STEREO:
     case MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO:
-        Merge_DestMono_SrcStereo_Src16_NoVolume_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestMono_SrcStereo_Src16_NoVolume_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                           pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                           pRightValue);
         return;
 
     case MIX_OP_SRC_16 | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
     case MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
-        Merge_DestStereo_SrcStereo_Src16_NoVolume_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestStereo_SrcStereo_Src16_NoVolume_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                             pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                             pRightValue);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16:
-        MIX_merge_nearest<MixMonoMonoFixed>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                            pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixMonoMonoFixed>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                            iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_DEST_STEREO:
-        MIX_merge_nearest<MixMonoStereoFixed>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                              pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixMonoStereoFixed>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                              iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER:
-        MIX_merge_filtered<MixMonoMonoFixed, true>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                   pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                                   iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoMonoFixed, true>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd,
+                                                   pLeftValue, pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixMonoStereoFixed, true>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                     pDestinationEnd, pLeftValue, pRightValue,
-                                                     uStep, iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoStereoFixed, true>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd,
+                                                     pLeftValue, pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO:
-        MIX_merge_nearest<MixStereoMonoFixed>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                              pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixStereoMonoFixed>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                              iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
-        MIX_merge_nearest<MixStereoStereoFixed>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixStereoStereoFixed>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                                iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO:
-        MIX_merge_filtered<MixStereoMonoFixed, true>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                     pDestinationEnd, pLeftValue, pRightValue,
-                                                     uStep, iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixStereoMonoFixed, true>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd,
+                                                     pLeftValue, pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
-    case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO |
-        MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixStereoStereoFixed, false>(ppSource, pFraction, pSourceEnd,
-                                                        ppDestination, pDestinationEnd, pLeftValue,
-                                                        pRightValue, uStep, iScaleLeft,
-                                                        iScaleRight);
+    case MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
+        MIX_merge_filtered<MixStereoStereoFixed, false>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd,
+                                                        pLeftValue, pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_SRC_16:
     case MIX_OP_VOLUME | MIX_OP_SRC_16 | MIX_OP_FILTER:
-        Merge_DestMono_SrcMono_Src16_Volume_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestMono_SrcMono_Src16_Volume_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                       pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                       pRightValue);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_SRC_16 | MIX_OP_DEST_STEREO:
     case MIX_OP_VOLUME | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_DEST_STEREO:
-        Merge_DestStereo_SrcMono_Src16_Volume_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestStereo_SrcMono_Src16_Volume_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                         pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                         pRightValue);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO:
     case MIX_OP_VOLUME | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO:
-        Merge_DestMono_SrcStereo_Src16_Volume_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestMono_SrcStereo_Src16_Volume_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                         pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                         pRightValue);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
-    case MIX_OP_VOLUME | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO |
-        MIX_OP_DEST_STEREO:
-        Merge_DestStereo_SrcStereo_Src16_Volume_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+    case MIX_OP_VOLUME | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
+        Merge_DestStereo_SrcStereo_Src16_Volume_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                           pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                           pRightValue);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16:
-        MIX_merge_nearest<MixMonoMonoVolume>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                             pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixMonoMonoVolume>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                             iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_DEST_STEREO:
-        MIX_merge_nearest<MixMonoStereoVolume>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                               pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixMonoStereoVolume>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                               iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER:
-        MIX_merge_filtered<MixMonoMonoVolume, true>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                    pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                                    iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoMonoVolume, true>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd,
+                                                    pLeftValue, pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixMonoStereoVolume, true>(ppSource, pFraction, pSourceEnd,
-                                                      ppDestination, pDestinationEnd, pLeftValue,
-                                                      pRightValue, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoStereoVolume, true>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd,
+                                                      pLeftValue, pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO:
-        MIX_merge_nearest<MixStereoMonoVolume>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                               pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixStereoMonoVolume>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                               iScaleLeft, iScaleRight);
         return;
 
-    case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO |
-        MIX_OP_DEST_STEREO:
-        MIX_merge_nearest<MixStereoStereoVolume>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                 pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+    case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
+        MIX_merge_nearest<MixStereoStereoVolume>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                                 iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO:
-        MIX_merge_filtered<MixStereoMonoVolume, false>(ppSource, pFraction, pSourceEnd,
-                                                       ppDestination, pDestinationEnd, pLeftValue,
-                                                       pRightValue, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixStereoMonoVolume, false>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd,
+                                                       pLeftValue, pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
-    case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO |
-        MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixStereoStereoVolume, false>(ppSource, pFraction, pSourceEnd,
-                                                         ppDestination, pDestinationEnd, pLeftValue,
-                                                         pRightValue, uStep, iScaleLeft,
+    case MIX_OP_VOLUME | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
+        MIX_merge_filtered<MixStereoStereoVolume, false>(ppSource, pFraction, pSourceEnd, ppDestination,
+                                                         pDestinationEnd, pLeftValue, pRightValue, uStep, iScaleLeft,
                                                          iScaleRight);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_SRC_16:
     case MIX_OP_COPY16 | MIX_OP_SRC_16 | MIX_OP_FILTER:
-        Merge_DestMono_SrcMono_Src16_Copy16_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestMono_SrcMono_Src16_Copy16_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                       pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                       pRightValue);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_SRC_16 | MIX_OP_DEST_STEREO:
     case MIX_OP_COPY16 | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_DEST_STEREO:
-        Merge_DestStereo_SrcMono_Src16_Copy16_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestStereo_SrcMono_Src16_Copy16_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                         pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                         pRightValue);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO:
     case MIX_OP_COPY16 | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO:
-        Merge_DestMono_SrcStereo_Src16_Copy16_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestMono_SrcStereo_Src16_Copy16_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                         pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                         pRightValue);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
-    case MIX_OP_COPY16 | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO |
-        MIX_OP_DEST_STEREO:
-        Merge_DestStereo_SrcStereo_Src16_Copy16_NoResample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+    case MIX_OP_COPY16 | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
+        Merge_DestStereo_SrcStereo_Src16_Copy16_NoResample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                           pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                           pRightValue);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16:
-        MIX_merge_nearest<MixMonoMonoCopy>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                           pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixMonoMonoCopy>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                           iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_DEST_STEREO:
-        MIX_merge_nearest<MixMonoStereoCopy>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                             pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixMonoStereoCopy>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                             iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER:
-        MIX_merge_filtered<MixMonoMonoCopy, true>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                  pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                                  iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoMonoCopy, true>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd,
+                                                  pLeftValue, pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_DEST_STEREO:
-        MIX_merge_filtered<MixMonoStereoCopy, true>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                                    pDestinationEnd, pLeftValue, pRightValue, uStep,
-                                                    iScaleLeft, iScaleRight);
+        MIX_merge_filtered<MixMonoStereoCopy, true>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd,
+                                                    pLeftValue, pRightValue, uStep, iScaleLeft, iScaleRight);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO:
-        MIX_merge_nearest<MixStereoMonoCopy>(ppSource, pFraction, pSourceEnd, ppDestination,
-                                             pDestinationEnd, uStep, iScaleLeft, iScaleRight);
+        MIX_merge_nearest<MixStereoMonoCopy>(ppSource, pFraction, pSourceEnd, ppDestination, pDestinationEnd, uStep,
+                                             iScaleLeft, iScaleRight);
         return;
 
-    case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO |
-        MIX_OP_DEST_STEREO:
-        Merge_DestStereo_SrcStereo_Src16_Copy16_Resample(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+    case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
+        Merge_DestStereo_SrcStereo_Src16_Copy16_Resample((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                         pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                         pRightValue);
         return;
 
     case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO:
-        Merge_DestMono_SrcStereo_Src16_Copy16_DownFiltered(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+        Merge_DestMono_SrcStereo_Src16_Copy16_DownFiltered((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                           pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                           pRightValue);
         return;
 
-    case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO |
-        MIX_OP_DEST_STEREO:
-        Merge_DestStereo_SrcStereo_Src16_Copy16_DownFiltered(
-            (int**)ppDestination, pDestinationEnd, ppSource, pFraction, pSourceEnd, uStep,
-            iScaleLeft, iScaleRight, pLeftValue, pRightValue);
+    case MIX_OP_COPY16 | MIX_OP_RESAMPLE | MIX_OP_SRC_16 | MIX_OP_FILTER | MIX_OP_SRC_STEREO | MIX_OP_DEST_STEREO:
+        Merge_DestStereo_SrcStereo_Src16_Copy16_DownFiltered((int**)ppDestination, pDestinationEnd, ppSource, pFraction,
+                                                             pSourceEnd, uStep, iScaleLeft, iScaleRight, pLeftValue,
+                                                             pRightValue);
         return;
 
     default:
@@ -1773,65 +1611,54 @@ static const int MIX_ADPCM_LAST_INDEX = MIX_ADPCM_STEP_COUNT - 1;
 static const int MIX_ADPCM_DELTA_UNIT = 1 << MIX_ADPCM_DELTA_SHIFT;
 
 #define MIX_ADPCM_MAGNITUDE(step, nibble) \
-    (((step) >> 3) + (((nibble) & 4) ? (step) : 0) + \
-     (((nibble) & 2) ? ((step) >> 1) : 0) + (((nibble) & 1) ? ((step) >> 2) : 0))
+    (((step) >> 3) + (((nibble) & 4) ? (step) : 0) + (((nibble) & 2) ? ((step) >> 1) : 0) \
+     + (((nibble) & 1) ? ((step) >> 2) : 0))
 
 #define MIX_ADPCM_CLAMP_INDEX(index) \
     (((index) < 0) ? 0 : (((index) > MIX_ADPCM_LAST_INDEX) ? MIX_ADPCM_LAST_INDEX : (index)))
 
-#define MIX_ADPCM_NEXT(index, adjust) \
-    (MIX_ADPCM_CLAMP_INDEX((index) + (adjust)) * (1 << MIX_ADPCM_STEP_SHIFT))
+#define MIX_ADPCM_NEXT(index, adjust) (MIX_ADPCM_CLAMP_INDEX((index) + (adjust)) * (1 << MIX_ADPCM_STEP_SHIFT))
 
 #define MIX_ADPCM_RISE(step, index, nibble, adjust) \
-    ((unsigned int)(MIX_ADPCM_MAGNITUDE(step, nibble) * MIX_ADPCM_DELTA_UNIT) | \
-     (unsigned int)MIX_ADPCM_NEXT(index, adjust))
+    ((unsigned int)(MIX_ADPCM_MAGNITUDE(step, nibble) * MIX_ADPCM_DELTA_UNIT) \
+     | (unsigned int)MIX_ADPCM_NEXT(index, adjust))
 
 #define MIX_ADPCM_FALL(step, index, nibble, adjust) \
-    ((unsigned int)(-MIX_ADPCM_MAGNITUDE(step, nibble) * MIX_ADPCM_DELTA_UNIT) | \
-     (unsigned int)MIX_ADPCM_NEXT(index, adjust))
+    ((unsigned int)(-MIX_ADPCM_MAGNITUDE(step, nibble) * MIX_ADPCM_DELTA_UNIT) \
+     | (unsigned int)MIX_ADPCM_NEXT(index, adjust))
 
 #define MIX_ADPCM_ROW(step, index) \
-    MIX_ADPCM_RISE(step, index, 0, -1), MIX_ADPCM_RISE(step, index, 1, -1), \
-        MIX_ADPCM_RISE(step, index, 2, -1), MIX_ADPCM_RISE(step, index, 3, -1), \
-        MIX_ADPCM_RISE(step, index, 4, 2), MIX_ADPCM_RISE(step, index, 5, 4), \
-        MIX_ADPCM_RISE(step, index, 6, 6), MIX_ADPCM_RISE(step, index, 7, 8), \
-        MIX_ADPCM_FALL(step, index, 0, -1), MIX_ADPCM_FALL(step, index, 1, -1), \
-        MIX_ADPCM_FALL(step, index, 2, -1), MIX_ADPCM_FALL(step, index, 3, -1), \
-        MIX_ADPCM_FALL(step, index, 4, 2), MIX_ADPCM_FALL(step, index, 5, 4), \
-        MIX_ADPCM_FALL(step, index, 6, 6), MIX_ADPCM_FALL(step, index, 7, 8)
+    MIX_ADPCM_RISE(step, index, 0, -1), MIX_ADPCM_RISE(step, index, 1, -1), MIX_ADPCM_RISE(step, index, 2, -1), \
+        MIX_ADPCM_RISE(step, index, 3, -1), MIX_ADPCM_RISE(step, index, 4, 2), MIX_ADPCM_RISE(step, index, 5, 4), \
+        MIX_ADPCM_RISE(step, index, 6, 6), MIX_ADPCM_RISE(step, index, 7, 8), MIX_ADPCM_FALL(step, index, 0, -1), \
+        MIX_ADPCM_FALL(step, index, 1, -1), MIX_ADPCM_FALL(step, index, 2, -1), MIX_ADPCM_FALL(step, index, 3, -1), \
+        MIX_ADPCM_FALL(step, index, 4, 2), MIX_ADPCM_FALL(step, index, 5, 4), MIX_ADPCM_FALL(step, index, 6, 6), \
+        MIX_ADPCM_FALL(step, index, 7, 8)
 
 static unsigned int MIX_ADPCM_TABLE[] = {
-    MIX_ADPCM_ROW(7, 0), MIX_ADPCM_ROW(8, 1), MIX_ADPCM_ROW(9, 2),
-    MIX_ADPCM_ROW(10, 3), MIX_ADPCM_ROW(11, 4), MIX_ADPCM_ROW(12, 5),
-    MIX_ADPCM_ROW(13, 6), MIX_ADPCM_ROW(14, 7), MIX_ADPCM_ROW(16, 8),
-    MIX_ADPCM_ROW(17, 9), MIX_ADPCM_ROW(19, 10), MIX_ADPCM_ROW(21, 11),
-    MIX_ADPCM_ROW(23, 12), MIX_ADPCM_ROW(25, 13), MIX_ADPCM_ROW(28, 14),
-    MIX_ADPCM_ROW(31, 15), MIX_ADPCM_ROW(34, 16), MIX_ADPCM_ROW(37, 17),
-    MIX_ADPCM_ROW(41, 18), MIX_ADPCM_ROW(45, 19), MIX_ADPCM_ROW(50, 20),
-    MIX_ADPCM_ROW(55, 21), MIX_ADPCM_ROW(60, 22), MIX_ADPCM_ROW(66, 23),
-    MIX_ADPCM_ROW(73, 24), MIX_ADPCM_ROW(80, 25), MIX_ADPCM_ROW(88, 26),
-    MIX_ADPCM_ROW(97, 27), MIX_ADPCM_ROW(107, 28), MIX_ADPCM_ROW(118, 29),
-    MIX_ADPCM_ROW(130, 30), MIX_ADPCM_ROW(143, 31), MIX_ADPCM_ROW(157, 32),
-    MIX_ADPCM_ROW(173, 33), MIX_ADPCM_ROW(190, 34), MIX_ADPCM_ROW(209, 35),
-    MIX_ADPCM_ROW(230, 36), MIX_ADPCM_ROW(253, 37), MIX_ADPCM_ROW(279, 38),
-    MIX_ADPCM_ROW(307, 39), MIX_ADPCM_ROW(337, 40), MIX_ADPCM_ROW(371, 41),
-    MIX_ADPCM_ROW(408, 42), MIX_ADPCM_ROW(449, 43), MIX_ADPCM_ROW(494, 44),
-    MIX_ADPCM_ROW(544, 45), MIX_ADPCM_ROW(598, 46), MIX_ADPCM_ROW(658, 47),
-    MIX_ADPCM_ROW(724, 48), MIX_ADPCM_ROW(796, 49), MIX_ADPCM_ROW(876, 50),
-    MIX_ADPCM_ROW(963, 51), MIX_ADPCM_ROW(1060, 52), MIX_ADPCM_ROW(1166, 53),
-    MIX_ADPCM_ROW(1282, 54), MIX_ADPCM_ROW(1411, 55), MIX_ADPCM_ROW(1552, 56),
-    MIX_ADPCM_ROW(1707, 57), MIX_ADPCM_ROW(1878, 58), MIX_ADPCM_ROW(2066, 59),
-    MIX_ADPCM_ROW(2272, 60), MIX_ADPCM_ROW(2499, 61), MIX_ADPCM_ROW(2749, 62),
-    MIX_ADPCM_ROW(3024, 63), MIX_ADPCM_ROW(3327, 64), MIX_ADPCM_ROW(3660, 65),
-    MIX_ADPCM_ROW(4026, 66), MIX_ADPCM_ROW(4428, 67), MIX_ADPCM_ROW(4871, 68),
-    MIX_ADPCM_ROW(5358, 69), MIX_ADPCM_ROW(5894, 70), MIX_ADPCM_ROW(6484, 71),
-    MIX_ADPCM_ROW(7132, 72), MIX_ADPCM_ROW(7845, 73), MIX_ADPCM_ROW(8630, 74),
-    MIX_ADPCM_ROW(9493, 75), MIX_ADPCM_ROW(10442, 76), MIX_ADPCM_ROW(11487, 77),
-    MIX_ADPCM_ROW(12635, 78), MIX_ADPCM_ROW(13899, 79), MIX_ADPCM_ROW(15289, 80),
-    MIX_ADPCM_ROW(16818, 81), MIX_ADPCM_ROW(18500, 82), MIX_ADPCM_ROW(20350, 83),
-    MIX_ADPCM_ROW(22385, 84), MIX_ADPCM_ROW(24623, 85), MIX_ADPCM_ROW(27086, 86),
-    MIX_ADPCM_ROW(29794, 87), MIX_ADPCM_ROW(32767, 88)
-};
+    MIX_ADPCM_ROW(7, 0),      MIX_ADPCM_ROW(8, 1),      MIX_ADPCM_ROW(9, 2),      MIX_ADPCM_ROW(10, 3),
+    MIX_ADPCM_ROW(11, 4),     MIX_ADPCM_ROW(12, 5),     MIX_ADPCM_ROW(13, 6),     MIX_ADPCM_ROW(14, 7),
+    MIX_ADPCM_ROW(16, 8),     MIX_ADPCM_ROW(17, 9),     MIX_ADPCM_ROW(19, 10),    MIX_ADPCM_ROW(21, 11),
+    MIX_ADPCM_ROW(23, 12),    MIX_ADPCM_ROW(25, 13),    MIX_ADPCM_ROW(28, 14),    MIX_ADPCM_ROW(31, 15),
+    MIX_ADPCM_ROW(34, 16),    MIX_ADPCM_ROW(37, 17),    MIX_ADPCM_ROW(41, 18),    MIX_ADPCM_ROW(45, 19),
+    MIX_ADPCM_ROW(50, 20),    MIX_ADPCM_ROW(55, 21),    MIX_ADPCM_ROW(60, 22),    MIX_ADPCM_ROW(66, 23),
+    MIX_ADPCM_ROW(73, 24),    MIX_ADPCM_ROW(80, 25),    MIX_ADPCM_ROW(88, 26),    MIX_ADPCM_ROW(97, 27),
+    MIX_ADPCM_ROW(107, 28),   MIX_ADPCM_ROW(118, 29),   MIX_ADPCM_ROW(130, 30),   MIX_ADPCM_ROW(143, 31),
+    MIX_ADPCM_ROW(157, 32),   MIX_ADPCM_ROW(173, 33),   MIX_ADPCM_ROW(190, 34),   MIX_ADPCM_ROW(209, 35),
+    MIX_ADPCM_ROW(230, 36),   MIX_ADPCM_ROW(253, 37),   MIX_ADPCM_ROW(279, 38),   MIX_ADPCM_ROW(307, 39),
+    MIX_ADPCM_ROW(337, 40),   MIX_ADPCM_ROW(371, 41),   MIX_ADPCM_ROW(408, 42),   MIX_ADPCM_ROW(449, 43),
+    MIX_ADPCM_ROW(494, 44),   MIX_ADPCM_ROW(544, 45),   MIX_ADPCM_ROW(598, 46),   MIX_ADPCM_ROW(658, 47),
+    MIX_ADPCM_ROW(724, 48),   MIX_ADPCM_ROW(796, 49),   MIX_ADPCM_ROW(876, 50),   MIX_ADPCM_ROW(963, 51),
+    MIX_ADPCM_ROW(1060, 52),  MIX_ADPCM_ROW(1166, 53),  MIX_ADPCM_ROW(1282, 54),  MIX_ADPCM_ROW(1411, 55),
+    MIX_ADPCM_ROW(1552, 56),  MIX_ADPCM_ROW(1707, 57),  MIX_ADPCM_ROW(1878, 58),  MIX_ADPCM_ROW(2066, 59),
+    MIX_ADPCM_ROW(2272, 60),  MIX_ADPCM_ROW(2499, 61),  MIX_ADPCM_ROW(2749, 62),  MIX_ADPCM_ROW(3024, 63),
+    MIX_ADPCM_ROW(3327, 64),  MIX_ADPCM_ROW(3660, 65),  MIX_ADPCM_ROW(4026, 66),  MIX_ADPCM_ROW(4428, 67),
+    MIX_ADPCM_ROW(4871, 68),  MIX_ADPCM_ROW(5358, 69),  MIX_ADPCM_ROW(5894, 70),  MIX_ADPCM_ROW(6484, 71),
+    MIX_ADPCM_ROW(7132, 72),  MIX_ADPCM_ROW(7845, 73),  MIX_ADPCM_ROW(8630, 74),  MIX_ADPCM_ROW(9493, 75),
+    MIX_ADPCM_ROW(10442, 76), MIX_ADPCM_ROW(11487, 77), MIX_ADPCM_ROW(12635, 78), MIX_ADPCM_ROW(13899, 79),
+    MIX_ADPCM_ROW(15289, 80), MIX_ADPCM_ROW(16818, 81), MIX_ADPCM_ROW(18500, 82), MIX_ADPCM_ROW(20350, 83),
+    MIX_ADPCM_ROW(22385, 84), MIX_ADPCM_ROW(24623, 85), MIX_ADPCM_ROW(27086, 86), MIX_ADPCM_ROW(29794, 87),
+    MIX_ADPCM_ROW(32767, 88)};
 
 static inline unsigned int MIX_adpcm_entry(unsigned int uStep)
 {
@@ -1846,8 +1673,7 @@ static inline int MIX_adpcm_clamp(int iSample)
     return (int)(uBiased & ~((int)uBiased >> 31)) + MIX_SAMPLE_MIN;
 }
 
-extern "C" void DecodeADPCM_MONO(void** ppDestination, const void** ppSource,
-                                 int iDestinationLength, int iSourceLength,
+extern "C" void DecodeADPCM_MONO(void** ppDestination, const void** ppSource, int iDestinationLength, int iSourceLength,
                                  MIX_ADPCM_STATE* pState)
 {
     const unsigned char* pSource = (const unsigned char*)*ppSource;
@@ -1883,8 +1709,7 @@ extern "C" void DecodeADPCM_MONO(void** ppDestination, const void** ppSource,
             pSource += MIX_ADPCM_HEADER_BYTES;
             iSample = (short)uStep;
             MIX_store_le16(pDestination, uStep);
-            uStep = ((uStep >> MIX_ADPCM_INDEX_SHIFT) & MIX_ADPCM_INDEX_MASK)
-                    << MIX_ADPCM_STEP_SHIFT;
+            uStep = ((uStep >> MIX_ADPCM_INDEX_SHIFT) & MIX_ADPCM_INDEX_MASK) << MIX_ADPCM_STEP_SHIFT;
             pDestination++;
         }
 
@@ -1917,8 +1742,8 @@ extern "C" void DecodeADPCM_MONO(void** ppDestination, const void** ppSource,
                 uStep = MIX_adpcm_entry(uStep);
                 iSample = MIX_adpcm_clamp(iSample + ((int)uStep >> MIX_ADPCM_DELTA_SHIFT));
                 uWord >>= MIX_ADPCM_NIBBLE_BITS;
-                uStep = (uStep & MIX_ADPCM_INDEX_BITS_MASK) |
-                        ((uWord & MIX_ADPCM_NIBBLE_MASK) << MIX_ADPCM_NIBBLE_SHIFT);
+                uStep = (uStep & MIX_ADPCM_INDEX_BITS_MASK)
+                        | ((uWord & MIX_ADPCM_NIBBLE_MASK) << MIX_ADPCM_NIBBLE_SHIFT);
                 MIX_store_le16(pDestination, iSample);
                 pDestination++;
                 uNibbles--;
@@ -1946,9 +1771,8 @@ extern "C" void DecodeADPCM_MONO(void** ppDestination, const void** ppSource,
     *ppSource = pSource;
 }
 
-extern "C" void DecodeADPCM_MONO_8(void** ppDestination, const void** ppSource,
-                                   int iDestinationLength, int iSourceLength,
-                                   MIX_ADPCM_STATE* pState)
+extern "C" void DecodeADPCM_MONO_8(void** ppDestination, const void** ppSource, int iDestinationLength,
+                                   int iSourceLength, MIX_ADPCM_STATE* pState)
 {
     const unsigned char* pSource = (const unsigned char*)*ppSource;
     const unsigned char* pSourceEnd = pSource + iSourceLength;
@@ -1983,8 +1807,7 @@ extern "C" void DecodeADPCM_MONO_8(void** ppDestination, const void** ppSource,
             pSource += MIX_ADPCM_HEADER_BYTES;
             iSample = (short)uStep;
             *pDestination = (uStep >> MIX_BYTE_SHIFT) + MIX_BYTE_SIGN;
-            uStep = ((uStep >> MIX_ADPCM_INDEX_SHIFT) & MIX_ADPCM_INDEX_MASK)
-                    << MIX_ADPCM_STEP_SHIFT;
+            uStep = ((uStep >> MIX_ADPCM_INDEX_SHIFT) & MIX_ADPCM_INDEX_MASK) << MIX_ADPCM_STEP_SHIFT;
             pDestination++;
         }
 
@@ -2017,8 +1840,8 @@ extern "C" void DecodeADPCM_MONO_8(void** ppDestination, const void** ppSource,
                 uStep = MIX_adpcm_entry(uStep);
                 iSample = MIX_adpcm_clamp(iSample + ((int)uStep >> MIX_ADPCM_DELTA_SHIFT));
                 uWord >>= MIX_ADPCM_NIBBLE_BITS;
-                uStep = (uStep & MIX_ADPCM_INDEX_BITS_MASK) |
-                        ((uWord & MIX_ADPCM_NIBBLE_MASK) << MIX_ADPCM_NIBBLE_SHIFT);
+                uStep = (uStep & MIX_ADPCM_INDEX_BITS_MASK)
+                        | ((uWord & MIX_ADPCM_NIBBLE_MASK) << MIX_ADPCM_NIBBLE_SHIFT);
                 *pDestination = (iSample >> MIX_BYTE_SHIFT) + MIX_BYTE_SIGN;
                 pDestination++;
                 uNibbles--;
@@ -2046,9 +1869,8 @@ extern "C" void DecodeADPCM_MONO_8(void** ppDestination, const void** ppSource,
     *ppSource = pSource;
 }
 
-extern "C" void DecodeADPCM_STEREO(void** ppDestination, const void** ppSource,
-                                   int iDestinationLength, int iSourceLength,
-                                   MIX_ADPCM_STATE* pState)
+extern "C" void DecodeADPCM_STEREO(void** ppDestination, const void** ppSource, int iDestinationLength,
+                                   int iSourceLength, MIX_ADPCM_STATE* pState)
 {
     const unsigned char* pSource = (const unsigned char*)*ppSource;
     const unsigned char* pSourceEnd = pSource + iSourceLength;
@@ -2091,12 +1913,10 @@ extern "C" void DecodeADPCM_STEREO(void** ppDestination, const void** ppSource,
             pSource += MIX_ADPCM_HEADER_BYTES * 2;
             iSampleLeft = (short)uHeaderLeft;
             iSampleRight = (short)uHeaderRight;
-            uStepLeft = ((uHeaderLeft >> MIX_ADPCM_INDEX_SHIFT) & MIX_ADPCM_INDEX_MASK)
-                        << MIX_ADPCM_STEP_SHIFT;
-            uStepRight = ((uHeaderRight >> MIX_ADPCM_INDEX_SHIFT) & MIX_ADPCM_INDEX_MASK)
-                         << MIX_ADPCM_STEP_SHIFT;
-            MIX_store_le32(pDestination, (iSampleRight << MIX_ADPCM_CHANNEL_BITS) |
-                                             (iSampleLeft & MIX_ADPCM_CHANNEL_MASK));
+            uStepLeft = ((uHeaderLeft >> MIX_ADPCM_INDEX_SHIFT) & MIX_ADPCM_INDEX_MASK) << MIX_ADPCM_STEP_SHIFT;
+            uStepRight = ((uHeaderRight >> MIX_ADPCM_INDEX_SHIFT) & MIX_ADPCM_INDEX_MASK) << MIX_ADPCM_STEP_SHIFT;
+            MIX_store_le32(pDestination,
+                           (iSampleRight << MIX_ADPCM_CHANNEL_BITS) | (iSampleLeft & MIX_ADPCM_CHANNEL_MASK));
             pDestination++;
         }
 
@@ -2130,18 +1950,16 @@ extern "C" void DecodeADPCM_STEREO(void** ppDestination, const void** ppSource,
 
                 uEntryLeft = MIX_adpcm_entry(uStepLeft);
                 uEntryRight = MIX_adpcm_entry(uStepRight);
-                iSampleLeft =
-                    MIX_adpcm_clamp(iSampleLeft + ((int)uEntryLeft >> MIX_ADPCM_DELTA_SHIFT));
-                iSampleRight =
-                    MIX_adpcm_clamp(iSampleRight + ((int)uEntryRight >> MIX_ADPCM_DELTA_SHIFT));
+                iSampleLeft = MIX_adpcm_clamp(iSampleLeft + ((int)uEntryLeft >> MIX_ADPCM_DELTA_SHIFT));
+                iSampleRight = MIX_adpcm_clamp(iSampleRight + ((int)uEntryRight >> MIX_ADPCM_DELTA_SHIFT));
                 uWordLeft >>= MIX_ADPCM_NIBBLE_BITS;
                 uWordRight >>= MIX_ADPCM_NIBBLE_BITS;
-                uStepLeft = (uEntryLeft & MIX_ADPCM_INDEX_BITS_MASK) |
-                            ((uWordLeft & MIX_ADPCM_NIBBLE_MASK) << MIX_ADPCM_NIBBLE_SHIFT);
-                uStepRight = (uEntryRight & MIX_ADPCM_INDEX_BITS_MASK) |
-                             ((uWordRight & MIX_ADPCM_NIBBLE_MASK) << MIX_ADPCM_NIBBLE_SHIFT);
-                MIX_store_le32(pDestination, (iSampleRight << MIX_ADPCM_CHANNEL_BITS) |
-                                                 (iSampleLeft & MIX_ADPCM_CHANNEL_MASK));
+                uStepLeft = (uEntryLeft & MIX_ADPCM_INDEX_BITS_MASK)
+                            | ((uWordLeft & MIX_ADPCM_NIBBLE_MASK) << MIX_ADPCM_NIBBLE_SHIFT);
+                uStepRight = (uEntryRight & MIX_ADPCM_INDEX_BITS_MASK)
+                             | ((uWordRight & MIX_ADPCM_NIBBLE_MASK) << MIX_ADPCM_NIBBLE_SHIFT);
+                MIX_store_le32(pDestination,
+                               (iSampleRight << MIX_ADPCM_CHANNEL_BITS) | (iSampleLeft & MIX_ADPCM_CHANNEL_MASK));
                 pDestination++;
                 uNibbles--;
             } while (uNibbles != 0);
@@ -2164,33 +1982,31 @@ extern "C" void DecodeADPCM_STEREO(void** ppDestination, const void** ppSource,
     pState->uStep = (uStepRight << MIX_ADPCM_CHANNEL_BITS) | (uStepLeft & MIX_ADPCM_CHANNEL_MASK);
     pState->iBlockLeft = (int)(pBlockEnd - pSource);
     pState->uWordLeft = uWordLeft;
-    pState->iSample =
-        (iSampleRight << MIX_ADPCM_CHANNEL_BITS) | (iSampleLeft & MIX_ADPCM_CHANNEL_MASK);
+    pState->iSample = (iSampleRight << MIX_ADPCM_CHANNEL_BITS) | (iSampleLeft & MIX_ADPCM_CHANNEL_MASK);
     *ppDestination = pDestination;
     *ppSource = pSource;
 }
 
-extern "C" void MSS_mixer_adpcm_decode(unsigned int* ppDestination, unsigned int* ppSource,
-                                       int iDestinationLength, int iSourceLength,
-                                       unsigned int uOperation, int* pState)
+extern "C" void MSS_mixer_adpcm_decode(unsigned int* ppDestination, unsigned int* ppSource, int iDestinationLength,
+                                       int iSourceLength, unsigned int uOperation, int* pState)
 {
     if ((uOperation & MIX_OP_SRC_16) != 0)
     {
         if ((uOperation & MIX_OP_SRC_STEREO) != 0)
         {
-            DecodeADPCM_STEREO((void**)ppDestination, (const void**)ppSource, iDestinationLength,
-                               iSourceLength, (MIX_ADPCM_STATE*)pState);
+            DecodeADPCM_STEREO((void**)ppDestination, (const void**)ppSource, iDestinationLength, iSourceLength,
+                               (MIX_ADPCM_STATE*)pState);
         }
         else
         {
-            DecodeADPCM_MONO((void**)ppDestination, (const void**)ppSource, iDestinationLength,
-                             iSourceLength, (MIX_ADPCM_STATE*)pState);
+            DecodeADPCM_MONO((void**)ppDestination, (const void**)ppSource, iDestinationLength, iSourceLength,
+                             (MIX_ADPCM_STATE*)pState);
         }
     }
     else
     {
-        DecodeADPCM_MONO_8((void**)ppDestination, (const void**)ppSource, iDestinationLength,
-                           iSourceLength, (MIX_ADPCM_STATE*)pState);
+        DecodeADPCM_MONO_8((void**)ppDestination, (const void**)ppSource, iDestinationLength, iSourceLength,
+                           (MIX_ADPCM_STATE*)pState);
     }
 }
 
@@ -2206,15 +2022,14 @@ static inline int MIX_hex_digit(char cDigit)
     return iValue;
 }
 
-#define MIX_HEX_DIGIT(cValue, cDigit)                                                       \
-    cValue = (cDigit) - '0';                                                                \
-    if (cValue > 9)                                                                         \
-    {                                                                                       \
-        cValue -= 'a' - '0' - 10;                                                           \
+#define MIX_HEX_DIGIT(cValue, cDigit) \
+    cValue = (cDigit) - '0'; \
+    if (cValue > 9) \
+    { \
+        cValue -= 'a' - '0' - 10; \
     }
 
-int copy_event_step(const unsigned char** ppEvent, char** ppOutput, char* pOutputEnd,
-                    const char* pFormat, ...)
+int copy_event_step(const unsigned char** ppEvent, char** ppOutput, char* pOutputEnd, const char* pFormat, ...)
 {
     va_list pArguments;
     MilesEventString* pString;
@@ -2294,8 +2109,7 @@ int copy_event_step(const unsigned char** ppEvent, char** ppOutput, char* pOutpu
             (*ppEvent)++;
             MIX_HEX_DIGIT(iFourth, **ppEvent);
             *ppEvent += 2;
-            *va_arg(pArguments, short*) =
-                (short)((iFirst << 12) + (iSecond << 8) + (iThird << 4) + iFourth);
+            *va_arg(pArguments, short*) = (short)((iFirst << 12) + (iSecond << 8) + (iThird << 4) + iFourth);
             break;
 
         case 'f':
@@ -2343,10 +2157,8 @@ static const unsigned char* MIX_event_terminator(const unsigned char* pCursor)
     return NULL;
 }
 
-extern "C" const unsigned char* AIL_next_event_step(const unsigned char* pEvent,
-                                                    EVENT_STEP_INFO** ppStep,
-                                                    EVENT_STEP_INFO* pBuffer,
-                                                    unsigned int uBufferSize)
+extern "C" const unsigned char* AIL_next_event_step(const unsigned char* pEvent, EVENT_STEP_INFO** ppStep,
+                                                    EVENT_STEP_INFO* pBuffer, unsigned int uBufferSize)
 {
     MilesEventStep* pStep = (MilesEventStep*)pBuffer;
     const unsigned char* pCursor = pEvent;
@@ -2393,28 +2205,23 @@ extern "C" const unsigned char* AIL_next_event_step(const unsigned char* pEvent,
 
     case 1:
         iResult = copy_event_step(
-            &pCursor, &pOutput, pOutputEnd, "ssssssssd4d1d1uuc1c1sfffffd1d1", &pStep->start.text0,
-            &pStep->start.text1, &pStep->start.text2, &pStep->start.text3, &pStep->start.text4,
-            &pStep->start.text5, &pStep->start.text6, &pStep->start.text7, &pStep->start.iValue,
-            &pStep->start.bValue0, &pStep->start.bValue1, &pStep->start.uValue0,
-            &pStep->start.uValue1, &pStep->start.bValue2, &pStep->start.bValue3,
-            &pStep->start.text8, &pStep->start.fValue[0], &pStep->start.fValue[1],
-            &pStep->start.fValue[2], &pStep->start.fValue[3], &pStep->start.fValue[4],
-            &pStep->start.bValue4, &pStep->start.bValue5);
+            &pCursor, &pOutput, pOutputEnd, "ssssssssd4d1d1uuc1c1sfffffd1d1", &pStep->start.text0, &pStep->start.text1,
+            &pStep->start.text2, &pStep->start.text3, &pStep->start.text4, &pStep->start.text5, &pStep->start.text6,
+            &pStep->start.text7, &pStep->start.iValue, &pStep->start.bValue0, &pStep->start.bValue1,
+            &pStep->start.uValue0, &pStep->start.uValue1, &pStep->start.bValue2, &pStep->start.bValue3,
+            &pStep->start.text8, &pStep->start.fValue[0], &pStep->start.fValue[1], &pStep->start.fValue[2],
+            &pStep->start.fValue[3], &pStep->start.fValue[4], &pStep->start.bValue4, &pStep->start.bValue5);
         break;
 
     case 2:
-        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "sssssc1d1fd1",
-                                  &pStep->second.text0, &pStep->second.text1,
-                                  &pStep->second.text2, &pStep->second.text3,
-                                  &pStep->second.text4, &pStep->second.bValue1,
-                                  &pStep->second.bValue2, &pStep->second.fValue,
-                                  &pStep->second.bValue0);
+        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "sssssc1d1fd1", &pStep->second.text0,
+                                  &pStep->second.text1, &pStep->second.text2, &pStep->second.text3,
+                                  &pStep->second.text4, &pStep->second.bValue1, &pStep->second.bValue2,
+                                  &pStep->second.fValue, &pStep->second.bValue0);
         break;
 
     case 3:
-        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "sd1", &pStep->third.text0,
-                                  &pStep->third.bValue);
+        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "sd1", &pStep->third.text0, &pStep->third.bValue);
         break;
 
     case 4:
@@ -2513,14 +2320,12 @@ extern "C" const unsigned char* AIL_next_event_step(const unsigned char* pEvent,
         return MIX_event_terminator(pCursor);
 
     case 7:
-        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "ss", &pStep->seventh.text1,
-                                  &pStep->seventh.text0);
+        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "ss", &pStep->seventh.text1, &pStep->seventh.text0);
         break;
 
     case 8:
-        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "sssd1", &pStep->eighth.text1,
-                                  &pStep->eighth.text0, &pStep->eighth.text2,
-                                  &pStep->eighth.bValue);
+        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "sssd1", &pStep->eighth.text1, &pStep->eighth.text0,
+                                  &pStep->eighth.text2, &pStep->eighth.bValue);
         break;
 
     case 9:
@@ -2544,10 +2349,9 @@ extern "C" const unsigned char* AIL_next_event_step(const unsigned char* pEvent,
         return AIL_next_event_step(pCursor, ppStep, pBuffer, uBufferSize);
 
     case 10:
-        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "ssfsd1d1d1",
-                                  &pStep->ramp.text0, &pStep->ramp.text1, &pStep->ramp.fValue,
-                                  &pStep->ramp.text2, &pStep->ramp.bValue0,
-                                  &pStep->ramp.bValue1, &pStep->ramp.bValue2);
+        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "ssfsd1d1d1", &pStep->ramp.text0, &pStep->ramp.text1,
+                                  &pStep->ramp.fValue, &pStep->ramp.text2, &pStep->ramp.bValue0, &pStep->ramp.bValue1,
+                                  &pStep->ramp.bValue2);
         break;
 
     case 11:
@@ -2608,7 +2412,6 @@ extern "C" const unsigned char* AIL_next_event_step(const unsigned char* pEvent,
                 pCursor += iPoint + 1;
                 uPoint = (uPoint + 1) & 0xff;
             } while (uPoint < pStep->blend.uPointCount);
-
         }
 
         *ppStep = pBuffer;
@@ -2625,18 +2428,16 @@ extern "C" const unsigned char* AIL_next_event_step(const unsigned char* pEvent,
         break;
 
     case 15:
-        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "ssssd4d4d4c4d4",
-                                  &pStep->wave.text0, &pStep->wave.text1, &pStep->wave.text2,
-                                  &pStep->wave.text3, &pStep->wave.iValue0, &pStep->wave.iValue1,
-                                  &pStep->wave.iValue2, &pStep->wave.iValue3,
+        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "ssssd4d4d4c4d4", &pStep->wave.text0,
+                                  &pStep->wave.text1, &pStep->wave.text2, &pStep->wave.text3, &pStep->wave.iValue0,
+                                  &pStep->wave.iValue1, &pStep->wave.iValue2, &pStep->wave.iValue3,
                                   &pStep->wave.iValue4);
         break;
 
     case 16:
-        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "sffd4d4fff",
-                                  &pStep->last.text0, &pStep->last.fValue0, &pStep->last.fValue1,
-                                  &pStep->last.iValue0, &pStep->last.iValue1,
-                                  &pStep->last.fValue2, &pStep->last.fValue3,
+        iResult = copy_event_step(&pCursor, &pOutput, pOutputEnd, "sffd4d4fff", &pStep->last.text0,
+                                  &pStep->last.fValue0, &pStep->last.fValue1, &pStep->last.iValue0,
+                                  &pStep->last.iValue1, &pStep->last.fValue2, &pStep->last.fValue3,
                                   &pStep->last.fValue4);
         break;
 
@@ -2660,15 +2461,14 @@ extern "C" int get_system_speaker_configuration(unsigned int* puConfiguration)
     return 1;
 }
 
-extern "C" int MIX_RIB_MAIN(unsigned int uProvider, int iUpDown,
-                            RIB_ALLOC_PROVIDER_HANDLE_CALLBACK,
+extern "C" int MIX_RIB_MAIN(unsigned int uProvider, int iUpDown, RIB_ALLOC_PROVIDER_HANDLE_CALLBACK,
                             RIB_REGISTER_INTERFACE_CALLBACK pRegisterInterface,
                             RIB_UNREGISTER_INTERFACE_CALLBACK pUnregisterInterface)
 {
     if (iUpDown != 0)
     {
-        pRegisterInterface(uProvider, MIX_INTERFACE_NAME,
-                           (int)(sizeof(MIX_interface) / sizeof(MIX_interface[0])), MIX_interface);
+        pRegisterInterface(uProvider, MIX_INTERFACE_NAME, (int)(sizeof(MIX_interface) / sizeof(MIX_interface[0])),
+                           MIX_interface);
     }
     else
     {

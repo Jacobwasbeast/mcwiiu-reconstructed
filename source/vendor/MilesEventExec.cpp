@@ -17,8 +17,8 @@
 #include <string.h>
 
 extern "C" unsigned int AIL_us_count();
-extern "C" const unsigned char* AIL_next_event_step(const unsigned char* data, EVENT_STEP_INFO** step,
-                                                    void* buffer, unsigned int bufferSize);
+extern "C" const unsigned char* AIL_next_event_step(const unsigned char* data, EVENT_STEP_INFO** step, void* buffer,
+                                                    unsigned int bufferSize);
 
 
 namespace
@@ -48,8 +48,7 @@ const int BUS_MAIN = 0;
 const int BUS_FIRST_AUXILIARY = 1;
 const int SAMPLE_BUS_COUNT_START = 0;
 const char EVENT_EXEC_FILE[] = "C:\\devel\\projects\\mss\\src\\sdk\\shared\\mileseventexec.cpp";
-const char ADDITIONAL_SYSTEMS_ERROR[] =
-    "Additional event systems are addded via AIL_add_event_system.";
+const char ADDITIONAL_SYSTEMS_ERROR[] = "Additional event systems are addded via AIL_add_event_system.";
 const char OUT_OF_MEMORY_ERROR[] = "OOM allocating event system memory";
 const char COMMAND_HANDLE_ERROR[] = "Failed to set handle for command buffer.";
 const char DRC_BUS_PREFIX[] = "drc";
@@ -144,8 +143,7 @@ Handle* Var_GetRootFromContext(void* context)
         return NULL;
     }
 
-    SoundInstanceData* instance =
-        static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[instanceIndex]));
+    SoundInstanceData* instance = static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[instanceIndex]));
     return &instance->m_context;
 }
 
@@ -179,8 +177,8 @@ EventSystem* EventSystem_Allocate(_DIG_DRIVER* driver)
     return eventSystem;
 }
 
-extern "C" unsigned int MilesStartupEventSystemInternal(_DIG_DRIVER* driver, int queueBytes,
-                                                        int memoryAddress, int memoryBytes)
+extern "C" unsigned int MilesStartupEventSystemInternal(_DIG_DRIVER* driver, int queueBytes, int memoryAddress,
+                                                        int memoryBytes)
 {
     void* memory = reinterpret_cast<void*>(memoryAddress);
     if (g_eventSystemList != NULL)
@@ -257,9 +255,8 @@ extern "C" unsigned int MilesStartupEventSystemInternal(_DIG_DRIVER* driver, int
 }
 
 extern "C" int MilesEnumerateSoundInstancesInternal(EventSystem* eventSystem, unsigned int* cursor,
-                                                    unsigned int typeMask, const char* labels,
-                                                    int eventIndex, int eventSerial,
-                                                    SoundInstanceInfo* info)
+                                                    unsigned int typeMask, const char* labels, int eventIndex,
+                                                    int eventSerial, SoundInstanceInfo* info)
 {
     if (eventSystem == NULL)
     {
@@ -267,8 +264,7 @@ extern "C" int MilesEnumerateSoundInstancesInternal(EventSystem* eventSystem, un
     }
 
     int systemIndex = 0;
-    for (EventSystem* candidate = g_eventSystemList; eventSystem != candidate;
-         candidate = candidate->m_next)
+    for (EventSystem* candidate = g_eventSystemList; eventSystem != candidate; candidate = candidate->m_next)
     {
         ++systemIndex;
     }
@@ -306,14 +302,14 @@ extern "C" int MilesEnumerateSoundInstancesInternal(EventSystem* eventSystem, un
             const unsigned int soundLow = static_cast<unsigned int>(instance->m_eventId);
             const unsigned int selectionHigh = instance->m_selection >> 32;
             const unsigned int selectionLow = static_cast<unsigned int>(instance->m_selection);
-            if ((static_cast<unsigned int>(instance->m_state) & typeMask) != 0 &&
-                ((eventIndex == 0 && eventSerial == 0) ||
-                 (serialHigh == static_cast<unsigned int>(eventIndex) &&
-                  serialLow == static_cast<unsigned int>(eventSerial)) ||
-                 (soundHigh == static_cast<unsigned int>(eventIndex) &&
-                  soundLow == static_cast<unsigned int>(eventSerial)) ||
-                 (selectionHigh == static_cast<unsigned int>(eventIndex) &&
-                  selectionLow == static_cast<unsigned int>(eventSerial))))
+            if ((static_cast<unsigned int>(instance->m_state) & typeMask) != 0
+                && ((eventIndex == 0 && eventSerial == 0)
+                    || (serialHigh == static_cast<unsigned int>(eventIndex)
+                        && serialLow == static_cast<unsigned int>(eventSerial))
+                    || (soundHigh == static_cast<unsigned int>(eventIndex)
+                        && soundLow == static_cast<unsigned int>(eventSerial))
+                    || (selectionHigh == static_cast<unsigned int>(eventIndex)
+                        && selectionLow == static_cast<unsigned int>(eventSerial))))
             {
                 break;
             }
@@ -346,8 +342,7 @@ extern "C" int MilesEnumerateSoundInstancesInternal(EventSystem* eventSystem, un
     if (instance->m_selectionOffset != -1)
     {
         const SelectionRecord* record = reinterpret_cast<const SelectionRecord*>(
-            static_cast<const unsigned char*>(Handle_Get(instance->m_initBlock)) +
-            instance->m_selectionOffset);
+            static_cast<const unsigned char*>(Handle_Get(instance->m_initBlock)) + instance->m_selectionOffset);
         info->m_selectionData = record->data;
         info->m_selectionSize = record->dataSize;
         if (record->isPointer != 0)
@@ -360,8 +355,7 @@ extern "C" int MilesEnumerateSoundInstancesInternal(EventSystem* eventSystem, un
     return 1;
 }
 
-int ExecuteCacheSounds(const EVENT_STEP_INFO* step, EventSystem* eventSystem,
-                       unsigned long long eventId, int load)
+int ExecuteCacheSounds(const EVENT_STEP_INFO* step, EventSystem* eventSystem, unsigned long long eventId, int load)
 {
     const CacheStep& cache = step->m_data.m_cache;
     char path[SOUND_ENTRY_PATH_SIZE];
@@ -550,16 +544,16 @@ extern "C" void AIL_set_event_settings(const EventSettings* settings)
         const char* presetName = reinterpret_cast<const char*>(base + bus->presetOffset);
         const unsigned int flags = bus->flags;
 
-        const Handle nodeHandle =
-            Handle_AllocateInfo(strlen(name) + BUS_NODE_HEADER_SIZE, EVENT_EXEC_FILE, SETTINGS_BUS_NODE_LINE);
+        const Handle nodeHandle = Handle_AllocateInfo(strlen(name) + BUS_NODE_HEADER_SIZE, EVENT_EXEC_FILE,
+                                                      SETTINGS_BUS_NODE_LINE);
         BusNode* node = static_cast<BusNode*>(Handle_Get(nodeHandle));
         if (node == NULL)
         {
             continue;
         }
 
-        const Handle presetHandle =
-            Handle_AllocateInfo(strlen(presetName) + 1, EVENT_EXEC_FILE, SETTINGS_BUS_PRESET_LINE);
+        const Handle presetHandle = Handle_AllocateInfo(strlen(presetName) + 1, EVENT_EXEC_FILE,
+                                                        SETTINGS_BUS_PRESET_LINE);
         char* presetText = static_cast<char*>(Handle_Get(presetHandle));
         if (presetText == NULL)
         {
@@ -607,8 +601,8 @@ extern "C" void AIL_set_event_settings(const EventSettings* settings)
             }
         }
 
-        if (AIL_strnicmp(node->m_name, DRC_BUS_PREFIX, DRC_BUS_PREFIX_LENGTH) == 0 &&
-            (node->m_name[3] == '\0' || node->m_name[3] == ','))
+        if (AIL_strnicmp(node->m_name, DRC_BUS_PREFIX, DRC_BUS_PREFIX_LENGTH) == 0
+            && (node->m_name[3] == '\0' || node->m_name[3] == ','))
         {
             node->m_sample->outputToDRC = true;
         }
@@ -622,8 +616,8 @@ extern "C" void AIL_set_event_settings(const EventSettings* settings)
         const char* name = reinterpret_cast<const char*>(base + cursor[0]);
         const int size = cursor[1];
         cursor += 2;
-        const Handle variableHandle =
-            Handle_AllocateInfo(strlen(name) + CURVE_VARIABLE_HEADER_SIZE, EVENT_EXEC_FILE, SETTINGS_CURVE_VARIABLE_LINE);
+        const Handle variableHandle = Handle_AllocateInfo(strlen(name) + CURVE_VARIABLE_HEADER_SIZE, EVENT_EXEC_FILE,
+                                                          SETTINGS_CURVE_VARIABLE_LINE);
         const Handle curveHandle = Handle_AllocateInfo(size, EVENT_EXEC_FILE, SETTINGS_CURVE_DATA_LINE);
         EventSystemVariable* variable = static_cast<EventSystemVariable*>(Handle_Get(variableHandle));
         int* curve = static_cast<int*>(Handle_Get(curveHandle));
@@ -650,8 +644,7 @@ extern "C" void AIL_set_event_settings(const EventSettings* settings)
     const EventSettingsVariable* variable = reinterpret_cast<const EventSettingsVariable*>(cursor);
     for (int variableIndex = 0; variableIndex < settings->variableCount; ++variableIndex, ++variable)
     {
-        Var_SetInstance(&g_eventSystemList->m_variables,
-                        reinterpret_cast<const char*>(base + variable->nameOffset),
+        Var_SetInstance(&g_eventSystemList->m_variables, reinterpret_cast<const char*>(base + variable->nameOffset),
                         const_cast<float*>(&variable->value), 1);
     }
 }
@@ -695,8 +688,7 @@ const char FAILED_EVICT_REASON[] = "FailedEvict";
 const int SUFFIX_FORMAT_DIGIT = 2;
 const unsigned char SILENCE_DATA[SILENCE_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-void ReleaseSound(EventSystem* eventSystem, _SAMPLE* sample, _STREAM* stream, bool external,
-                  Handle sound)
+void ReleaseSound(EventSystem* eventSystem, _SAMPLE* sample, _STREAM* stream, bool external, Handle sound)
 {
     if (external)
     {
@@ -715,9 +707,9 @@ void ReleaseSound(EventSystem* eventSystem, _SAMPLE* sample, _STREAM* stream, bo
 }
 }
 
-int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const char* name,
-                int nameLength, void* initBlock, unsigned int initBlockSize,
-                unsigned long long serial, unsigned long long selection, signed char blendIndex)
+int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const char* name, int nameLength,
+                void* initBlock, unsigned int initBlockSize, unsigned long long serial, unsigned long long selection,
+                signed char blendIndex)
 {
     const PlayStep& play = step->m_data.m_play;
     int delay = play.m_delayMinimum;
@@ -742,8 +734,8 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
 
     char soundName[SOUND_NAME_SIZE];
     soundName[0] = '\0';
-    const InitRecord* const initEnd = reinterpret_cast<const InitRecord*>(
-        static_cast<const char*>(initBlock) + initBlockSize);
+    const InitRecord* const initEnd = reinterpret_cast<const InitRecord*>(static_cast<const char*>(initBlock)
+                                                                          + initBlockSize);
     if (nameLength != 0)
     {
         strncpy(soundName, name, nameLength);
@@ -798,8 +790,7 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
     SoundLimitEntry* labelLimit = IsLabelLimited(eventSystem, labelQuery);
     while (labelLimit != NULL)
     {
-        if (EvictSound(eventSystem, soundId, play.m_limitPolicy, play.m_priority, labelLimit, NULL,
-                       NULL) == 0)
+        if (EvictSound(eventSystem, soundId, play.m_limitPolicy, play.m_priority, labelLimit, NULL, NULL) == 0)
         {
             Audition_SoundLimited(soundId, reinterpret_cast<LimitEntry*>(labelLimit)->m_query);
             return 1;
@@ -829,10 +820,9 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
         const int count = eventSystem->m_instances.Count();
         for (int index = 0; index < count; ++index)
         {
-            SoundInstanceData* other =
-                static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
-            if (other->m_nameLength == nameLength &&
-                AIL_stricmp(static_cast<const char*>(Handle_Get(other->m_name)), soundName) == 0)
+            SoundInstanceData* other = static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
+            if (other->m_nameLength == nameLength
+                && AIL_stricmp(static_cast<const char*>(Handle_Get(other->m_name)), soundName) == 0)
             {
                 ++matches;
             }
@@ -845,8 +835,7 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
 
         if (info.m_maxInstances <= matches)
         {
-            if (EvictSound(eventSystem, soundId, play.m_limitPolicy, play.m_priority, NULL, NULL,
-                           soundName) == 0)
+            if (EvictSound(eventSystem, soundId, play.m_limitPolicy, play.m_priority, NULL, NULL, soundName) == 0)
             {
                 Audition_SoundLimited(soundId, FAILED_EVICT_REASON);
                 return 1;
@@ -892,8 +881,8 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
                 }
             }
 
-            sample = reinterpret_cast<_SAMPLE*>(g_externalSampleOpen(soundName, path, eventSystem->m_driver,
-                                                                    selectionData, selectionSize));
+            sample = reinterpret_cast<_SAMPLE*>(
+                g_externalSampleOpen(soundName, path, eventSystem->m_driver, selectionData, selectionSize));
             external = sample != NULL;
         }
 
@@ -936,8 +925,7 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
                         return 0;
                     }
 
-                    if (cachedEntry->m_data == NULL || cachedEntry->m_loadSlot != 0 ||
-                        cachedEntry->m_loadFailed != 0)
+                    if (cachedEntry->m_data == NULL || cachedEntry->m_loadSlot != 0 || cachedEntry->m_loadFailed != 0)
                     {
                         unsigned int initFlags = SAMPLE_INIT_MONO;
                         if (info.m_channels < SAMPLE_CHANNEL_MAXIMUM_SIMPLE && info.m_channelMask == -1)
@@ -975,8 +963,7 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
                             flags |= SOUND_INSTANCE_FLAG_WAITING_FOR_STREAM;
                         }
                     }
-                    else if (AIL_set_named_sample_file(sample, path, cachedEntry->m_data,
-                                                       cachedEntry->m_size, 0) == 0)
+                    else if (AIL_set_named_sample_file(sample, path, cachedEntry->m_data, cachedEntry->m_size, 0) == 0)
                     {
                         ErrorHandler(ERROR_TYPE_NO_PROVIDER, soundId, soundName);
                         AIL_release_sample_handle(sample);
@@ -1033,8 +1020,7 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
     if (eventSystem->m_instances.PushEmpty() == 0)
     {
         ReleaseSound(eventSystem, sample, stream, external, cachedSound);
-        ErrorHandler(ERROR_TYPE_OUT_OF_EVENT_SYSTEM_MEMORY, soundId,
-                     soundName[0] != '\0' ? soundName : SILENCE_NAME);
+        ErrorHandler(ERROR_TYPE_OUT_OF_EVENT_SYSTEM_MEMORY, soundId, soundName[0] != '\0' ? soundName : SILENCE_NAME);
         return 0;
     }
 
@@ -1057,7 +1043,8 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
             }
             else if (record->tag == INIT_RECORD_SELECTION)
             {
-                instance->m_selectionOffset = reinterpret_cast<const char*>(record) - static_cast<const char*>(initBlock);
+                instance->m_selectionOffset = reinterpret_cast<const char*>(record)
+                                              - static_cast<const char*>(initBlock);
             }
             else if (record->tag == INIT_RECORD_VARIABLE)
             {
@@ -1079,15 +1066,19 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
             memcpy(initCopy, initBlock, initBlockSize);
             instance->m_initBlockSize = initBlockSize;
             if (Handle_AllocStringInfo(&instance->m_name, &instance->m_nameLength, soundName, EVENT_EXEC_FILE,
-                                       INSTANCE_NAME_LINE) != 0 &&
-                Handle_AllocStringInfo(&instance->m_labels, NULL, play.m_labels, EVENT_EXEC_FILE,
-                                       INSTANCE_LABELS_LINE) != 0 &&
-                (play.m_completionEventLength == 0 ||
-                 Handle_AllocStringInfo(&instance->m_self, NULL, play.m_completionEvent, EVENT_EXEC_FILE,
-                                        INSTANCE_COMPLETION_LINE) != 0) &&
-                (play.m_presetLength == 0 || play.m_presetPersistent == 0 ||
-                 Handle_AllocStringInfo(&instance->m_preset, NULL, play.m_preset, EVENT_EXEC_FILE,
-                                        INSTANCE_PRESET_LINE) != 0))
+                                       INSTANCE_NAME_LINE)
+                    != 0
+                && Handle_AllocStringInfo(&instance->m_labels, NULL, play.m_labels, EVENT_EXEC_FILE,
+                                          INSTANCE_LABELS_LINE)
+                       != 0
+                && (play.m_completionEventLength == 0
+                    || Handle_AllocStringInfo(&instance->m_self, NULL, play.m_completionEvent, EVENT_EXEC_FILE,
+                                              INSTANCE_COMPLETION_LINE)
+                           != 0)
+                && (play.m_presetLength == 0 || play.m_presetPersistent == 0
+                    || Handle_AllocStringInfo(&instance->m_preset, NULL, play.m_preset, EVENT_EXEC_FILE,
+                                              INSTANCE_PRESET_LINE)
+                           != 0))
             {
                 built = true;
                 if ((play.m_modeFlags & MODE_MASK) == MODE_BLEND)
@@ -1139,8 +1130,7 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
 
         Handle_Free(instanceHandle);
         eventSystem->m_instances.Pop();
-        ErrorHandler(ERROR_TYPE_OUT_OF_EVENT_SYSTEM_MEMORY, soundId,
-                     soundName[0] != '\0' ? soundName : SILENCE_NAME);
+        ErrorHandler(ERROR_TYPE_OUT_OF_EVENT_SYSTEM_MEMORY, soundId, soundName[0] != '\0' ? soundName : SILENCE_NAME);
         ReleaseSound(eventSystem, sample, stream, external, cachedSound);
         return 0;
     }
@@ -1198,9 +1188,9 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
             float value = minimum;
             if (maximum - minimum > RANGE_EPSILON)
             {
-                value = (maximum - minimum) * (static_cast<float>(HorribleRand() & RANDOM_UNIT_MASK) /
-                                               RANDOM_UNIT_DIVISOR) +
-                        minimum;
+                value = (maximum - minimum)
+                            * (static_cast<float>(HorribleRand() & RANDOM_UNIT_MASK) / RANDOM_UNIT_DIVISOR)
+                        + minimum;
             }
 
             Var_SetInstance(&instance->m_context, variableName, &value, 1);
@@ -1214,8 +1204,8 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
         }
     }
 
-    Persist_Apply(eventSystem, reinterpret_cast<SoundInstance*>(instance), sample, play.m_labels,
-                  play.m_labelsLength, 0);
+    Persist_Apply(eventSystem, reinterpret_cast<SoundInstance*>(instance), sample, play.m_labels, play.m_labelsLength,
+                  0);
     if (play.m_presetLength != 0)
     {
         void* preset = Container_GetPreset(play.m_preset);
@@ -1238,14 +1228,16 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
     {
         int markerType = 0;
         if (FindMarker(eventSystem, reinterpret_cast<SoundInstance*>(instance), sampleState->m_markerList,
-                       play.m_loopEndMarker, &instance->m_loopEnd, &markerType) != 0)
+                       play.m_loopEndMarker, &instance->m_loopEnd, &markerType)
+            != 0)
         {
             if (markerType == MARKER_TYPE_MILLISECONDS)
             {
                 if (instance->m_loopEnd != 0)
                 {
-                    instance->m_loopEnd = static_cast<unsigned long long>(static_cast<unsigned int>(instance->m_loopEnd)) *
-                                          static_cast<unsigned int>(info.m_sampleRate) / 1000;
+                    instance->m_loopEnd = static_cast<unsigned long long>(
+                                              static_cast<unsigned int>(instance->m_loopEnd))
+                                          * static_cast<unsigned int>(info.m_sampleRate) / 1000;
                 }
 
                 markerType = MARKER_TYPE_CONVERTED;
@@ -1260,7 +1252,8 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
         int markerIndex = 0;
         int markerType = 0;
         if (FindMarker(eventSystem, reinterpret_cast<SoundInstance*>(instance), sampleState->m_markerList,
-                       play.m_loopStartMarker, &markerIndex, &markerType) != 0)
+                       play.m_loopStartMarker, &markerIndex, &markerType)
+            != 0)
         {
             if (markerIndex == -1)
             {
@@ -1269,8 +1262,9 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
 
             if (markerType == MARKER_TYPE_MILLISECONDS)
             {
-                instance->m_loopStart = static_cast<unsigned long long>(static_cast<unsigned int>(instance->m_loopStart)) *
-                                        static_cast<unsigned int>(info.m_sampleRate) / 1000;
+                instance->m_loopStart = static_cast<unsigned long long>(
+                                            static_cast<unsigned int>(instance->m_loopStart))
+                                        * static_cast<unsigned int>(info.m_sampleRate) / 1000;
                 markerType = MARKER_TYPE_CONVERTED;
             }
 
@@ -1285,7 +1279,8 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
     if (play.m_positionMarkerLength != 0)
     {
         if (FindMarker(eventSystem, reinterpret_cast<SoundInstance*>(instance), sampleState->m_markerList,
-                       play.m_positionMarker, &instance->m_startPosition, &instance->m_startPositionType) != 0)
+                       play.m_positionMarker, &instance->m_startPosition, &instance->m_startPositionType)
+            != 0)
         {
             if (instance->m_startPositionType == MARKER_TYPE_SAMPLES)
             {
@@ -1298,8 +1293,9 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
             else if (instance->m_startPositionType == MARKER_TYPE_CONVERTED)
             {
                 instance->m_startPositionType = 1;
-                instance->m_startPosition = static_cast<unsigned long long>(static_cast<unsigned int>(instance->m_startPosition)) *
-                                            1000 / static_cast<unsigned int>(info.m_sampleRate);
+                instance->m_startPosition = static_cast<unsigned long long>(
+                                                static_cast<unsigned int>(instance->m_startPosition))
+                                            * 1000 / static_cast<unsigned int>(info.m_sampleRate);
             }
         }
     }
@@ -1380,9 +1376,9 @@ const int CONTROL_MARKER_SAMPLES = 1;
 
 static inline bool InstanceMatchesTarget(const SoundInstanceData* instance, unsigned long long target)
 {
-    return instance->m_state != SOUND_STATE_FINISHED &&
-           ((target == 0) || instance->m_serial == target || instance->m_eventId == target ||
-            instance->m_selection == target);
+    return instance->m_state != SOUND_STATE_FINISHED
+           && ((target == 0) || instance->m_serial == target || instance->m_eventId == target
+               || instance->m_selection == target);
 }
 
 static bool SameHandle(const Handle& first, const Handle& second)
@@ -1402,7 +1398,7 @@ static void FreeNodeList(Handle* head)
 }
 
 static void PlayStepSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event,
-                    const unsigned char* stepKey)
+                           const unsigned char* stepKey)
 {
     const PlayStep& play = step->m_data.m_play;
     unsigned int pickMask = 0;
@@ -1550,16 +1546,16 @@ static void PlayStepSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem
         if (play.m_selectorLength != 0)
         {
             MilesSetVarIInternal(eventSystem, play.m_selector, newState);
-            StartSingle(step, eventSystem, chosen, chosenLength, event->data, event->dataSize,
-                        event->serial, event->selection, -1);
+            StartSingle(step, eventSystem, chosen, chosenLength, event->data, event->dataSize, event->serial,
+                        event->selection, -1);
             return;
         }
 
         StateVar_Set(eventSystem, const_cast<unsigned char*>(stepKey), newState);
     }
 
-    StartSingle(step, eventSystem, chosen, chosenLength, event->data, event->dataSize, event->serial,
-                event->selection, -1);
+    StartSingle(step, eventSystem, chosen, chosenLength, event->data, event->dataSize, event->serial, event->selection,
+                -1);
 }
 
 static void PlayStepBlend(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
@@ -1592,8 +1588,9 @@ static void PlayStepBlend(const EVENT_STEP_INFO* step, EventSystem* eventSystem,
             break;
         }
 
-        if (StartSingle(step, eventSystem, cursor, length - 1, event->data, event->dataSize,
-                        event->serial, event->selection, index) == 0)
+        if (StartSingle(step, eventSystem, cursor, length - 1, event->data, event->dataSize, event->serial,
+                        event->selection, index)
+            == 0)
         {
             break;
         }
@@ -1605,7 +1602,7 @@ static void PlayStepBlend(const EVENT_STEP_INFO* step, EventSystem* eventSystem,
 }
 
 static void ControlBus(const ControlStep& control, EventSystem* eventSystem, const char* busName,
-                unsigned long long serial)
+                       unsigned long long serial)
 {
     if (control.m_presetLength == 0)
     {
@@ -1652,11 +1649,11 @@ static void ControlBus(const ControlStep& control, EventSystem* eventSystem, con
 }
 
 static void ControlInstance(const ControlStep& control, EventSystem* eventSystem, SoundInstanceData* instance,
-                     unsigned long long serial)
+                            unsigned long long serial)
 {
     _SAMPLE* sample = instance->m_sample;
-    if (control.m_labelsLength != 0 &&
-        DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(instance->m_labels)), control.m_labels) == 0)
+    if (control.m_labelsLength != 0
+        && DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(instance->m_labels)), control.m_labels) == 0)
     {
         return;
     }
@@ -1713,7 +1710,8 @@ static void ControlInstance(const ControlStep& control, EventSystem* eventSystem
     if (control.m_loopEndMarkerLength != 0)
     {
         if (FindMarker(eventSystem, reinterpret_cast<SoundInstance*>(instance), sampleState->m_markerList,
-                       control.m_loopEndMarker, &loopEnd, &loopEndType) == 0)
+                       control.m_loopEndMarker, &loopEnd, &loopEndType)
+            == 0)
         {
             loopEnd = LOOP_POINT_UNCHANGED;
         }
@@ -1722,7 +1720,8 @@ static void ControlInstance(const ControlStep& control, EventSystem* eventSystem
     if (control.m_loopStartMarkerLength != 0)
     {
         if (FindMarker(eventSystem, reinterpret_cast<SoundInstance*>(instance), sampleState->m_markerList,
-                       control.m_loopStartMarker, &loopStart, &loopStartType) == 0)
+                       control.m_loopStartMarker, &loopStart, &loopStartType)
+            == 0)
         {
             loopStart = LOOP_POINT_UNCHANGED;
         }
@@ -1731,7 +1730,8 @@ static void ControlInstance(const ControlStep& control, EventSystem* eventSystem
     if (control.m_positionMarkerLength != 0)
     {
         if (FindMarker(eventSystem, reinterpret_cast<SoundInstance*>(instance), sampleState->m_markerList,
-                       control.m_positionMarker, &position, &positionType) == 0)
+                       control.m_positionMarker, &position, &positionType)
+            == 0)
         {
             position = LOOP_POINT_UNCHANGED;
         }
@@ -1739,37 +1739,37 @@ static void ControlInstance(const ControlStep& control, EventSystem* eventSystem
 
     _MILESBANKSOUNDINFO info;
     info.m_sampleRate = 0;
-    if (loopEndType == CONTROL_MARKER_MILLISECONDS || loopStartType == CONTROL_MARKER_MILLISECONDS ||
-        positionType == CONTROL_MARKER_CONVERTED)
+    if (loopEndType == CONTROL_MARKER_MILLISECONDS || loopStartType == CONTROL_MARKER_MILLISECONDS
+        || positionType == CONTROL_MARKER_CONVERTED)
     {
         Container_GetSound(static_cast<const char*>(Handle_Get(instance->m_name)), NULL, &info);
         if (loopEndType == CONTROL_MARKER_MILLISECONDS)
         {
             loopEndType = CONTROL_MARKER_CONVERTED;
-            loopEnd = static_cast<unsigned long long>(static_cast<unsigned int>(loopEnd)) *
-                      static_cast<unsigned int>(info.m_sampleRate) / 1000;
+            loopEnd = static_cast<unsigned long long>(static_cast<unsigned int>(loopEnd))
+                      * static_cast<unsigned int>(info.m_sampleRate) / 1000;
         }
 
         if (loopStartType == CONTROL_MARKER_MILLISECONDS)
         {
             loopStartType = CONTROL_MARKER_CONVERTED;
-            loopStart = static_cast<unsigned long long>(static_cast<unsigned int>(loopStart)) *
-                        static_cast<unsigned int>(info.m_sampleRate) / 1000;
+            loopStart = static_cast<unsigned long long>(static_cast<unsigned int>(loopStart))
+                        * static_cast<unsigned int>(info.m_sampleRate) / 1000;
         }
 
         if (positionType == CONTROL_MARKER_CONVERTED)
         {
             positionType = CONTROL_MARKER_MILLISECONDS;
-            position = static_cast<unsigned long long>(static_cast<unsigned int>(position)) * 1000 /
-                       static_cast<unsigned int>(info.m_sampleRate);
+            position = static_cast<unsigned long long>(static_cast<unsigned int>(position)) * 1000
+                       / static_cast<unsigned int>(info.m_sampleRate);
         }
     }
 
     _STREAM* stream = instance->m_stream;
     if (stream != NULL)
     {
-        if ((loopStart != LOOP_POINT_UNCHANGED || loopEnd != LOOP_POINT_UNCHANGED) &&
-            loopStartType == CONTROL_MARKER_SAMPLES && loopEndType == CONTROL_MARKER_SAMPLES)
+        if ((loopStart != LOOP_POINT_UNCHANGED || loopEnd != LOOP_POINT_UNCHANGED)
+            && loopStartType == CONTROL_MARKER_SAMPLES && loopEndType == CONTROL_MARKER_SAMPLES)
         {
             AIL_set_stream_loop_block(stream, loopStart, loopEnd);
         }
@@ -1855,8 +1855,8 @@ static void ControlInstance(const ControlStep& control, EventSystem* eventSystem
 
             if (control.m_presetPersistent != 0)
             {
-                instance->m_preset =
-                    Handle_AllocateInfo(control.m_presetLength + 1, EVENT_EXEC_FILE, CONTROL_PRESET_LINE);
+                instance->m_preset = Handle_AllocateInfo(control.m_presetLength + 1, EVENT_EXEC_FILE,
+                                                         CONTROL_PRESET_LINE);
                 char* text = static_cast<char*>(Handle_Get(instance->m_preset));
                 if (text == NULL)
                 {
@@ -1897,8 +1897,8 @@ static void StepControl(const EVENT_STEP_INFO* step, EventSystem* eventSystem, Q
         Audition_Control(event->serial, control.m_labels, control.m_action, event->context);
     }
 
-    if (control.m_labelsLength == BUS_CONTROL_NAME_LENGTH &&
-        strncmp(control.m_labels, BUS_NAME_PREFIX, BUS_NAME_PREFIX_LENGTH) == 0)
+    if (control.m_labelsLength == BUS_CONTROL_NAME_LENGTH
+        && strncmp(control.m_labels, BUS_NAME_PREFIX, BUS_NAME_PREFIX_LENGTH) == 0)
     {
         ControlBus(control, eventSystem, control.m_labels, event->serial);
         return;
@@ -1907,8 +1907,7 @@ static void StepControl(const EVENT_STEP_INFO* step, EventSystem* eventSystem, Q
     const int count = eventSystem->m_instances.Count();
     for (int index = 0; index < count; ++index)
     {
-        SoundInstanceData* instance =
-            static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
+        SoundInstanceData* instance = static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
         if (InstanceMatchesTarget(instance, event->context))
         {
             ControlInstance(control, eventSystem, instance, event->serial);
@@ -1951,8 +1950,8 @@ static void StepEnvironment(const EVENT_STEP_INFO* step, EventSystem* eventSyste
         eventSystem->m_environment = Handle();
     }
 
-    eventSystem->m_environment =
-        Handle_AllocateInfo(environment.m_nameLength + 1, EVENT_EXEC_FILE, ENVIRONMENT_NAME_LINE);
+    eventSystem->m_environment = Handle_AllocateInfo(environment.m_nameLength + 1, EVENT_EXEC_FILE,
+                                                     ENVIRONMENT_NAME_LINE);
     char* text = static_cast<char*>(Handle_Get(eventSystem->m_environment));
     if (text == NULL)
     {
@@ -1980,13 +1979,11 @@ static void StepRamp(const EVENT_STEP_INFO* step, EventSystem* eventSystem, Queu
     const int count = eventSystem->m_instances.Count();
     for (int index = 0; index < count; ++index)
     {
-        SoundInstanceData* instance =
-            static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
-        if (InstanceMatchesTarget(instance, event->context) &&
-            DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(instance->m_labels)), ramp.m_labels) != 0)
+        SoundInstanceData* instance = static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
+        if (InstanceMatchesTarget(instance, event->context)
+            && DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(instance->m_labels)), ramp.m_labels) != 0)
         {
-            Audition_AddRamp(instance->m_eventId, ramp.m_target, ramp.m_name, ramp.m_labels, 0,
-                             event->serial);
+            Audition_AddRamp(instance->m_eventId, ramp.m_target, ramp.m_name, ramp.m_labels, 0, event->serial);
             if (Ramp_Add(&instance->m_ramps, eventSystem, step) == 0)
             {
                 return;
@@ -2068,11 +2065,11 @@ static void StepLimitSelect(const EVENT_STEP_INFO* step, EventSystem* eventSyste
                 const int count = eventSystem->m_instances.Count();
                 for (int index = 0; index < count; ++index)
                 {
-                    SoundInstanceData* instance =
-                        static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
-                    if (instance->m_state != SOUND_STATE_FINISHED &&
-                        DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(instance->m_labels)),
-                                           entry->m_query) != 0)
+                    SoundInstanceData* instance = static_cast<SoundInstanceData*>(
+                        Handle_Get(eventSystem->m_instances[index]));
+                    if (instance->m_state != SOUND_STATE_FINISHED
+                        && DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(instance->m_labels)), entry->m_query)
+                               != 0)
                     {
                         ++entry->m_count;
                     }
@@ -2207,8 +2204,8 @@ static void UpdateSoundLoads(EventSystem* eventSystem)
         LoadedSound* sound = static_cast<LoadedSound*>(Handle_Get(eventSystem->m_sounds[index]));
         char path[SOUND_ENTRY_PATH_SIZE];
         _MILESBANKSOUNDINFO info;
-        if (sound->m_loadSlot == 0 && sound->m_data == NULL && sound->m_loadFailed == 0 &&
-            Container_GetSound(static_cast<const char*>(Handle_Get(sound->m_name)), path, &info) != 0)
+        if (sound->m_loadSlot == 0 && sound->m_data == NULL && sound->m_loadFailed == 0
+            && Container_GetSound(static_cast<const char*>(Handle_Get(sound->m_name)), path, &info) != 0)
         {
             int slot = 0;
             while (slot < SOUND_LOAD_SLOT_COUNT && g_soundLoadBusy[slot] != 0)
@@ -2277,8 +2274,8 @@ static void ReloadAllSounds(EventSystem* eventSystem)
     const int instanceCount = eventSystem->m_instances.Count();
     for (int index = 0; index < instanceCount; ++index)
     {
-        DestroySoundInstance(eventSystem, reinterpret_cast<SoundInstance*>(
-                                              Handle_Get(eventSystem->m_instances[index])));
+        DestroySoundInstance(eventSystem,
+                             reinterpret_cast<SoundInstance*>(Handle_Get(eventSystem->m_instances[index])));
     }
 
     PODHandleArray<Handle> sounds;
@@ -2311,8 +2308,7 @@ static void FinishCompletedSounds(EventSystem* eventSystem)
     const int count = eventSystem->m_instances.Count();
     for (int index = 0; index < count; ++index)
     {
-        SoundInstanceData* instance =
-            static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
+        SoundInstanceData* instance = static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
         if (instance->m_state != SOUND_STATE_PLAYING || instance->m_paused != 0)
         {
             continue;
@@ -2338,8 +2334,7 @@ static void FinishCompletedSounds(EventSystem* eventSystem)
         if (completionEvent != NULL)
         {
             const unsigned long long completion = AIL_enqueue_event_from_init_block(
-                completionEvent, Handle_Get(instance->m_initBlock), instance->m_initBlockSize,
-                instance->m_serial);
+                completionEvent, Handle_Get(instance->m_initBlock), instance->m_initBlockSize, instance->m_serial);
             Audition_CompletionEvent(completion, instance->m_eventId);
         }
 
@@ -2374,8 +2369,7 @@ extern "C" int MilesBeginEventQueueProcessingInternal()
 
     const unsigned long long queueStart = Queue_EnumCreate();
     unsigned long long queueCursor = queueStart;
-    for (QueuedEvent* event = reinterpret_cast<QueuedEvent*>(Queue_EnumNext(&queueCursor, NULL));
-         event != NULL;
+    for (QueuedEvent* event = reinterpret_cast<QueuedEvent*>(Queue_EnumNext(&queueCursor, NULL)); event != NULL;
          event = reinterpret_cast<QueuedEvent*>(Queue_EnumNext(&queueCursor, reinterpret_cast< ::QueuedEvent*>(event))))
     {
         EventSystem* eventSystem = event->eventSystem;
@@ -2472,8 +2466,8 @@ extern "C" int MilesBeginEventQueueProcessingInternal()
             case EVENT_STEP_ENQUEUE:
                 if (step->m_data.m_name.m_nameLength != 0)
                 {
-                    AIL_enqueue_event_from_init_block(step->m_data.m_name.m_name, event->data,
-                                                      event->dataSize, event->serial);
+                    AIL_enqueue_event_from_init_block(step->m_data.m_name.m_name, event->data, event->dataSize,
+                                                      event->serial);
                 }
 
                 break;
@@ -2611,8 +2605,8 @@ static void UpdateBuses(EventSystem* eventSystem)
         Ramp* ramp = static_cast<Ramp*>(Handle_Get(eventSystem->m_ramps));
         while (ramp != NULL)
         {
-            if (strncmp(ramp->m_labels, BUS_NAME_PREFIX, BUS_NAME_PREFIX_LENGTH) == 0 &&
-                ramp->m_labels[BUS_NAME_PREFIX_LENGTH] - '0' == bus->m_index)
+            if (strncmp(ramp->m_labels, BUS_NAME_PREFIX, BUS_NAME_PREFIX_LENGTH) == 0
+                && ramp->m_labels[BUS_NAME_PREFIX_LENGTH] - '0' == bus->m_index)
             {
                 const float value = Ramp_GetCurrentValue(eventSystem, ramp, 1);
                 switch (ramp->m_target)
@@ -2692,11 +2686,12 @@ static void UpdateLfos(EventSystem* eventSystem, float elapsed)
         switch (lfo->m_mode)
         {
         case LFO_SINE:
-            value = lfo->m_flip != 0
-                        ? 1.0f + sinf(static_cast<float>(lfo->m_inverted) * LFO_HALF_TURN +
-                                      LFO_FULL_TURN * lfo->m_time / period)
-                        : 0.0f + sinf(static_cast<float>(lfo->m_inverted) * LFO_HALF_TURN +
-                                      LFO_FULL_TURN * lfo->m_time / period);
+            value = lfo->m_flip != 0 ? 1.0f
+                                           + sinf(static_cast<float>(lfo->m_inverted) * LFO_HALF_TURN
+                                                  + LFO_FULL_TURN * lfo->m_time / period)
+                                     : 0.0f
+                                           + sinf(static_cast<float>(lfo->m_inverted) * LFO_HALF_TURN
+                                                  + LFO_FULL_TURN * lfo->m_time / period);
             break;
         case LFO_TRIANGLE:
             value = (lfo->m_time + lfo->m_time) / period;
@@ -2773,19 +2768,19 @@ static float EvaluateTween(const TweenNode* tween, int segment)
     default:
         return fraction * (tween->m_values[segment + 1] - tween->m_values[segment]) + tween->m_values[segment];
     case TWEEN_CURVE_DECELERATE:
-        return (1.0f - (1.0f - fraction) * (1.0f - fraction)) *
-                   (tween->m_values[segment + 1] - tween->m_values[segment]) +
-               tween->m_values[segment];
+        return (1.0f - (1.0f - fraction) * (1.0f - fraction))
+                   * (tween->m_values[segment + 1] - tween->m_values[segment])
+               + tween->m_values[segment];
     case TWEEN_CURVE_ACCELERATE:
-        return fraction * fraction * (tween->m_values[segment + 1] - tween->m_values[segment]) +
-               tween->m_values[segment];
+        return fraction * fraction * (tween->m_values[segment + 1] - tween->m_values[segment])
+               + tween->m_values[segment];
     case TWEEN_CURVE_SMOOTHSTEP:
-        {
-            const float offset = fraction - 0.5f;
-            return (offset * offset * offset * TWEEN_CUBIC_SCALE + 0.5f) *
-                       (tween->m_values[segment + 1] - tween->m_values[segment]) +
-                   tween->m_values[segment];
-        }
+    {
+        const float offset = fraction - 0.5f;
+        return (offset * offset * offset * TWEEN_CUBIC_SCALE + 0.5f)
+                   * (tween->m_values[segment + 1] - tween->m_values[segment])
+               + tween->m_values[segment];
+    }
     }
 }
 
@@ -2958,8 +2953,8 @@ static void UpdatePlayingInstance(EventSystem* eventSystem, SoundInstanceData* i
     Blend_Apply(reinterpret_cast<SoundInstance*>(instance), &blendVolume, &blendPitch);
     ApplyInstancePreset(instance);
     const char* labels = static_cast<const char*>(Handle_Get(instance->m_labels));
-    Persist_Apply(eventSystem, reinterpret_cast<SoundInstance*>(instance), instance->m_sample, labels,
-                  strlen(labels), 1);
+    Persist_Apply(eventSystem, reinterpret_cast<SoundInstance*>(instance), instance->m_sample, labels, strlen(labels),
+                  1);
     Ramp_ApplyAll(eventSystem, reinterpret_cast<SoundInstance*>(instance), elapsed);
     if (instance->m_fadeRate != 0.0f)
     {
@@ -3100,9 +3095,8 @@ static bool AttachSoundData(EventSystem* eventSystem, SoundInstanceData* instanc
     {
         _MILESBANKSOUNDINFO info;
         Container_GetSound(static_cast<const char*>(Handle_Get(instance->m_name)), NULL, &info);
-        const unsigned long long frames =
-            static_cast<unsigned long long>(static_cast<unsigned int>(position)) *
-            static_cast<unsigned int>(info.m_sampleRate) / MILLISECOND_DIVISOR;
+        const unsigned long long frames = static_cast<unsigned long long>(static_cast<unsigned int>(position))
+                                          * static_cast<unsigned int>(info.m_sampleRate) / MILLISECOND_DIVISOR;
         position = (info.m_channels * static_cast<int>(frames) * POSITION_BYTES_PER_UNIT) >> POSITION_BYTES_SHIFT;
     }
 
@@ -3202,8 +3196,7 @@ static void UpdateInstances(EventSystem* eventSystem, float elapsed, int auditin
     int index = 0;
     while (index < count)
     {
-        SoundInstanceData* instance =
-            static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
+        SoundInstanceData* instance = static_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
         if (auditing != 0)
         {
             if (instance->m_sample->is3D != 0)

@@ -74,10 +74,8 @@ struct _AILSOUNDINFO
     const void* initial;
 };
 
-extern "C" unsigned int RIB_find_file_dec_provider(const char* pInterfaceName,
-                                                   const char* pInputAttribute,
-                                                   unsigned int uInputValue,
-                                                   const char* pOutputAttribute,
+extern "C" unsigned int RIB_find_file_dec_provider(const char* pInterfaceName, const char* pInputAttribute,
+                                                   unsigned int uInputValue, const char* pOutputAttribute,
                                                    const char* pOutputValue);
 extern "C" void FLT_call_premix_processors(_DIG_DRIVER* pDriver);
 extern "C" int FLT_call_postmix_processors(_DIG_DRIVER* pDriver, short* pBuffer);
@@ -88,9 +86,9 @@ extern "C" void SS_start_DIG_driver_playback(_SAMPLE* pSample);
 void SS_start_playback(_SAMPLE* pSample);
 int nibbles_per_sample(int iFormat);
 void set_lp_info(LOWPASS_INFO* pInfo, int iFirst, int iSecond, int iThird);
-unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppSource,
-                           void* pSourceEnd, void** ppDestination, void* pDestinationEnd,
-                           int* piLeft, int* piRight, int iLeftStep, int iRightStep, int iCount);
+unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppSource, void* pSourceEnd,
+                           void** ppDestination, void* pDestinationEnd, int* piLeft, int* piRight, int iLeftStep,
+                           int iRightStep, int iCount);
 unsigned int SS_limiter(_MSS_BB* pBuffers, int iCount, int iSamples, int iPrevious);
 int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination, int iSize);
 
@@ -99,19 +97,18 @@ extern "C" void AIL_API_end_sample(_SAMPLE* pSample);
 extern "C" void AIL_end_sample(_SAMPLE* pSample);
 extern "C" void SS_update_driver_reverb_state(_DIG_DRIVER* pDriver);
 extern "C" int AIL_process_WAV_image(_AILSOUNDINFO* pInfo, _SAMPLE* pSample);
-extern "C" void SS_set_speaker_configuration(SpeakerState* pState, const float* pPositions,
-                                             unsigned int uProvided, unsigned int uSpeakers);
-extern "C" float SS_default_falloff_function_callback(_SAMPLE* pSample, float fDistance,
-                                                      float fRolloffFactor, float fMinimumDistance,
-                                                      float fMaximumDistance);
-extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned int uCount,
-                                               _SAMPLE* pSample, float* pLevels);
+extern "C" void SS_set_speaker_configuration(SpeakerState* pState, const float* pPositions, unsigned int uProvided,
+                                             unsigned int uSpeakers);
+extern "C" float SS_default_falloff_function_callback(_SAMPLE* pSample, float fDistance, float fRolloffFactor,
+                                                      float fMinimumDistance, float fMaximumDistance);
+extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned int uCount, _SAMPLE* pSample,
+                                               float* pLevels);
 extern "C" void AIL_request_EOB_ASI_reset(_SAMPLE* pSample, int iBuffer, int iPosition);
 extern "C" int AIL_allocate_reverb_buffers(_DIG_DRIVER* pDriver, int iBus);
 extern "C" unsigned int SS_granularity(_SAMPLE* pSample);
 extern "C" int AIL_set_sample_loop_samples(_SAMPLE* pSample, int iLoopStart, int iLoopEnd);
-extern "C" void* SS_execute_filter_chain(_SAMPLE* pSample, void* pSource, void* pDestination,
-                                         unsigned int uBytes, int iChannel, void* pFinal);
+extern "C" void* SS_execute_filter_chain(_SAMPLE* pSample, void* pSource, void* pDestination, unsigned int uBytes,
+                                         int iChannel, void* pFinal);
 extern "C" void SS_flush(_DIG_DRIVER* pDriver, int iBus);
 extern "C" void SS_copy(_DIG_DRIVER* pDriver, int iBus, short* pDestination);
 extern "C" unsigned int SS_stream_to_buffer(_SAMPLE* pSample, short* pDestination, int iSize);
@@ -125,37 +122,30 @@ extern "C" void AIL_set_sample_3D_distances(_SAMPLE* pSample, float fMaximum, fl
 extern "C" void AIL_set_sample_playback_rate_factor(_SAMPLE* pSample, float fFactor);
 extern "C" int AIL_find_filter(const char* pName, int* piProvider);
 
-extern "C" void AIL_API_set_sample_speaker_scale_factors(_SAMPLE* pSample, const int* pSpeakers,
-                                                         const float* pScales, int iCount);
-extern "C" void AIL_API_sample_speaker_scale_factors(_SAMPLE* pSample, int* pSpeakers,
-                                                     float* pScales, int iCount);
-extern "C" void AIL_API_sample_channel_levels(_SAMPLE* pSample, int* pSources, int* pDestinations,
-                                              float* pLevels, int iCount);
-extern "C" void AIL_API_set_sample_channel_levels(_SAMPLE* pSample, const int* pSources,
-                                                  const int* pDestinations, const float* pLevels,
-                                                  int iCount);
+extern "C" void AIL_API_set_sample_speaker_scale_factors(_SAMPLE* pSample, const int* pSpeakers, const float* pScales,
+                                                         int iCount);
+extern "C" void AIL_API_sample_speaker_scale_factors(_SAMPLE* pSample, int* pSpeakers, float* pScales, int iCount);
+extern "C" void AIL_API_sample_channel_levels(_SAMPLE* pSample, int* pSources, int* pDestinations, float* pLevels,
+                                              int iCount);
+extern "C" void AIL_API_set_sample_channel_levels(_SAMPLE* pSample, const int* pSources, const int* pDestinations,
+                                                  const float* pLevels, int iCount);
 extern "C" void AIL_API_set_sample_reverb_levels(_SAMPLE* pSample, float fFirst, float fSecond);
 extern "C" void AIL_API_set_sample_low_pass_cut_off(_SAMPLE* pSample, int iChannel, float fCutOff);
-extern "C" void AIL_API_set_sample_51_volume_pan(_SAMPLE* pSample, float fVolume, float fPan,
-                                                 float fFade, float fCenter, float fLowFrequency);
+extern "C" void AIL_API_set_sample_51_volume_pan(_SAMPLE* pSample, float fVolume, float fPan, float fFade,
+                                                 float fCenter, float fLowFrequency);
 extern "C" int AIL_API_sample_processor(_SAMPLE* pSample, int iStage);
 extern "C" int AIL_API_set_sample_processor(_SAMPLE* pSample, int iStage, int iProvider);
-extern "C" int AIL_API_install_bus_compressor(_DIG_DRIVER* pDriver, int iBus, int iStage,
-                                              int iInputBus);
+extern "C" int AIL_API_install_bus_compressor(_DIG_DRIVER* pDriver, int iBus, int iStage, int iInputBus);
 extern "C" int AIL_API_open_filter(unsigned int uProvider, _DIG_DRIVER* pDriver);
 extern "C" int AIL_API_sample_channel_count(_SAMPLE* pSample, unsigned int* puMask);
 extern "C" int AIL_API_sample_playback_rate(_SAMPLE* pSample);
 extern "C" void AIL_API_set_sample_playback_rate(_SAMPLE* pSample, int iRate);
-extern "C" void AIL_API_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, float fOuterAngle,
-                                           float fOuterVolume);
-extern "C" void AIL_API_set_sample_3D_orientation(_SAMPLE* pSample, float fForwardX,
-                                                  float fForwardY, float fForwardZ, float fUpX,
-                                                  float fUpY, float fUpZ);
-extern "C" void AIL_API_set_sample_3D_velocity(_SAMPLE* pSample, float fDirectionX,
-                                               float fDirectionY, float fDirectionZ,
-                                               float fMagnitude);
-extern "C" void AIL_API_set_sample_3D_velocity_vector(_SAMPLE* pSample, float fX, float fY,
-                                                      float fZ);
+extern "C" void AIL_API_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, float fOuterAngle, float fOuterVolume);
+extern "C" void AIL_API_set_sample_3D_orientation(_SAMPLE* pSample, float fForwardX, float fForwardY, float fForwardZ,
+                                                  float fUpX, float fUpY, float fUpZ);
+extern "C" void AIL_API_set_sample_3D_velocity(_SAMPLE* pSample, float fDirectionX, float fDirectionY,
+                                               float fDirectionZ, float fMagnitude);
+extern "C" void AIL_API_set_sample_3D_velocity_vector(_SAMPLE* pSample, float fX, float fY, float fZ);
 extern "C" void AIL_API_set_sample_occlusion(_SAMPLE* pSample, float fOcclusion);
 extern "C" void AIL_API_set_sample_exclusion(_SAMPLE* pSample, float fExclusion);
 extern "C" void AIL_API_set_sample_obstruction(_SAMPLE* pSample, float fObstruction);
@@ -167,8 +157,7 @@ unsigned char* assign_ptr(unsigned char** ppCursor, unsigned int uSize);
 unsigned int assign_chan_ptrs(_SAMPLE* pSample, unsigned char* pBuffer, int iKeepLevelArrays);
 void clear_last_sample(_SAMPLE* pSample);
 void free_channel_buffers(_SAMPLE* pSample);
-void set_user_channel_defaults(int iSpeakerConfig, int iChannelCount, float** ppLevels,
-                               signed char* pChannelMap);
+void set_user_channel_defaults(int iSpeakerConfig, int iChannelCount, float** ppLevels, signed char* pChannelMap);
 int SP_ASI_DECODER_callback(unsigned int uUser, void* pDestination, int iCount, int iOffset);
 
 extern int AIL_debug_enabled;

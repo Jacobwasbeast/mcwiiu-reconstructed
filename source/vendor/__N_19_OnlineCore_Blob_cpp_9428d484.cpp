@@ -23,7 +23,8 @@ void closesocket(int handle)
     socketclose(handle);
 }
 
-nn::nex::String __N_19_OnlineCore_Blob_cpp_9428d484::_Copy(const wchar_t* first, unsigned int firstLength, const wchar_t* second, unsigned int secondLength)
+nn::nex::String __N_19_OnlineCore_Blob_cpp_9428d484::_Copy(const wchar_t* first, unsigned int firstLength,
+                                                           const wchar_t* second, unsigned int secondLength)
 {
     nn::nex::String result;
     result.Reserve(firstLength + secondLength + 1);
@@ -96,8 +97,7 @@ int __N_19_OnlineCore_Blob_cpp_9428d484::Utf8ToUnicode(const char* input, wchar_
             ++input;
             --remaining;
             ++written;
-            *cursor++ = static_cast<wchar_t>(first * 0x40 +
-                *reinterpret_cast<const unsigned char*>(input) - 0x3080);
+            *cursor++ = static_cast<wchar_t>(first * 0x40 + *reinterpret_cast<const unsigned char*>(input) - 0x3080);
         }
         else if (value - 0xe0 < 0x10)
         {
@@ -106,14 +106,13 @@ int __N_19_OnlineCore_Blob_cpp_9428d484::Utf8ToUnicode(const char* input, wchar_
             input += 2;
             --remaining;
             ++written;
-            *cursor++ = static_cast<wchar_t>(first * 0x1000 + *second * 0x40 +
-                *reinterpret_cast<const unsigned char*>(input) - 0x2080);
+            *cursor++ = static_cast<wchar_t>(first * 0x1000 + *second * 0x40
+                                             + *reinterpret_cast<const unsigned char*>(input) - 0x2080);
         }
         else
             invalid = true;
         ++input;
-    }
-    while (!invalid);
+    } while (!invalid);
     *output = 0;
     return -1;
 }
@@ -135,7 +134,22 @@ int __N_19_OnlineCore_Blob_cpp_9428d484::GetNeededUtf8BufferSize(const wchar_t* 
     return size;
 }
 
-void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvFromCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const nn::nex::SocketDriver::InetAddress*, const unsigned int*) {}
-void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultSendToCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const nn::nex::SocketDriver::InetAddress&, const unsigned int*) {}
-void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const unsigned int*) {}
-void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultSendCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const unsigned int*) {}
+void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvFromCallback(nn::nex::SocketDriver::_Result, const unsigned char*,
+                                                                  unsigned int,
+                                                                  const nn::nex::SocketDriver::InetAddress*,
+                                                                  const unsigned int*)
+{
+}
+void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultSendToCallback(nn::nex::SocketDriver::_Result, const unsigned char*,
+                                                                unsigned int, const nn::nex::SocketDriver::InetAddress&,
+                                                                const unsigned int*)
+{
+}
+void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvCallback(nn::nex::SocketDriver::_Result, const unsigned char*,
+                                                              unsigned int, const unsigned int*)
+{
+}
+void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultSendCallback(nn::nex::SocketDriver::_Result, const unsigned char*,
+                                                              unsigned int, const unsigned int*)
+{
+}

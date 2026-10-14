@@ -88,8 +88,8 @@ static const unsigned int RR_FILE_READ_ALIGNMENT = 64;
 
 static const char RR_FILE_OPEN_MODE[] = "r";
 
-static const unsigned char rrThreadCoreAffinity[3] = { 0x01, 0x02, 0x04 };
-static const unsigned char rrThreadPriorityLevel[5] = { 0x1F, 0x18, 0x10, 0x08, 0x00 };
+static const unsigned char rrThreadCoreAffinity[3] = {0x01, 0x02, 0x04};
+static const unsigned char rrThreadPriorityLevel[5] = {0x1F, 0x18, 0x10, 0x08, 0x00};
 
 static long long rrThreadIdCounter;
 static unsigned int rrThreadSlots[RR_THREAD_SLOT_WORDS];
@@ -117,8 +117,7 @@ static inline int AddAtomic(volatile int* pTarget, int iValue)
     {
         uPrevious = __LWARX((unsigned int*)pTarget, 0);
         __DCBST((unsigned int*)pTarget, 0);
-    }
-    while (!__STWCX((unsigned int*)pTarget, 0, uPrevious + iValue));
+    } while (!__STWCX((unsigned int*)pTarget, 0, uPrevious + iValue));
 
     return (int)uPrevious;
 }
@@ -169,8 +168,8 @@ extern "C" int Platform_OpenFile(MilesFile* pFile, const char* pFileName)
         return 0;
     }
 
-    if (FSOpenFile(MilesFsClient, MilesFsCmdBlock, pFileName, RR_FILE_OPEN_MODE, &uHandle,
-                   FS_ERROR_FLAG_NOT_FOUND) != 0)
+    if (FSOpenFile(MilesFsClient, MilesFsCmdBlock, pFileName, RR_FILE_OPEN_MODE, &uHandle, FS_ERROR_FLAG_NOT_FOUND)
+        != 0)
     {
         return 0;
     }
@@ -210,10 +209,10 @@ extern "C" int Platform_ReadFile(MilesFile* pFile, void* pBuffer, unsigned int u
         return 0;
     }
 
-    pAligned = (unsigned char*)(((size_t)pBuffer + (RR_FILE_READ_ALIGNMENT - 1)) &
-                                ~(size_t)(RR_FILE_READ_ALIGNMENT - 1));
-    pBounce = (unsigned char*)(((size_t)ucScratch + (RR_FILE_READ_ALIGNMENT - 1)) &
-                               ~(size_t)(RR_FILE_READ_ALIGNMENT - 1));
+    pAligned = (unsigned char*)(((size_t)pBuffer + (RR_FILE_READ_ALIGNMENT - 1))
+                                & ~(size_t)(RR_FILE_READ_ALIGNMENT - 1));
+    pBounce = (unsigned char*)(((size_t)ucScratch + (RR_FILE_READ_ALIGNMENT - 1))
+                               & ~(size_t)(RR_FILE_READ_ALIGNMENT - 1));
     uHandle = pFile->uHandle;
     uHead = (unsigned int)(pAligned - (unsigned char*)pBuffer);
 
@@ -224,8 +223,7 @@ extern "C" int Platform_ReadFile(MilesFile* pFile, void* pBuffer, unsigned int u
             uHead = uBytes;
         }
 
-        iRead = FSReadFile(MilesFsClient, MilesFsCmdBlock, pBounce, 1, uHead, uHandle, 0,
-                           FS_ERROR_FLAG_NONE);
+        iRead = FSReadFile(MilesFsClient, MilesFsCmdBlock, pBounce, 1, uHead, uHandle, 0, FS_ERROR_FLAG_NONE);
         if (iRead < 0)
         {
             return 0;
@@ -246,8 +244,7 @@ extern "C" int Platform_ReadFile(MilesFile* pFile, void* pBuffer, unsigned int u
         return (int)uHead;
     }
 
-    iRead = FSReadFile(MilesFsClient, MilesFsCmdBlock, pAligned, 1, uBytes, uHandle, 0,
-                       FS_ERROR_FLAG_NONE);
+    iRead = FSReadFile(MilesFsClient, MilesFsCmdBlock, pAligned, 1, uBytes, uHandle, 0, FS_ERROR_FLAG_NONE);
     if (iRead < 0)
     {
         return 0;
@@ -263,8 +260,7 @@ extern "C" void Platform_SeekFromBeginning(MilesFile* pFile, unsigned int uPosit
         return;
     }
 
-    FSSetPosFile(MilesFsClient, MilesFsCmdBlock, pFile->uHandle, uPosition + pFile->uBaseOffset,
-                 FS_ERROR_FLAG_NONE);
+    FSSetPosFile(MilesFsClient, MilesFsCmdBlock, pFile->uHandle, uPosition + pFile->uBaseOffset, FS_ERROR_FLAG_NONE);
 }
 
 void TlsSetValue(int iIndex, void* pValue)
@@ -338,17 +334,15 @@ static void thread_cleanup(rriThread* pNative)
     uExitCode = pNative->uExitCode;
     pNative->uExitCode = 0xFFFFFFFF;
 
-    if (rrAtomicCmpXchg32(puThread, 0, (unsigned int)pOSThread) == (unsigned int)pOSThread &&
-        pOSThread != NULL)
+    if (rrAtomicCmpXchg32(puThread, 0, (unsigned int)pOSThread) == (unsigned int)pOSThread && pOSThread != NULL)
     {
         rrAtomicAddExchange32(&rrThreadCount, -1);
 
         do
         {
             uSlots = rrThreadSlots[pNative->uSlot >> 5];
-        }
-        while (rrAtomicCmpXchg32(&rrThreadSlots[pNative->uSlot >> 5],
-                                 uSlots & ~(1 << (pNative->uSlot & 31)), uSlots) != uSlots);
+        } while (rrAtomicCmpXchg32(&rrThreadSlots[pNative->uSlot >> 5], uSlots & ~(1 << (pNative->uSlot & 31)), uSlots)
+                 != uSlots);
 
         pCurrent = rrThreadCurrent();
         if (pCurrent != NULL && (rriThread*)pCurrent->pNative == pNative)
@@ -387,8 +381,7 @@ static int wiiu_shim(int, void* pArgument)
     do
     {
         uState = pNative->uState;
-    }
-    while (rrAtomicCmpXchg32(&pNative->uState, uState & ~RR_THREAD_STATE_RUNNING, uState) != uState);
+    } while (rrAtomicCmpXchg32(&pNative->uState, uState & ~RR_THREAD_STATE_RUNNING, uState) != uState);
 
     if (uState == RR_THREAD_STATE_RUNNING_DETACHED)
     {
@@ -401,8 +394,8 @@ static int wiiu_shim(int, void* pArgument)
     return iResult;
 }
 
-extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStackSize,
-                              void* pUserData, unsigned int uFlags, const char* pName)
+extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStackSize, void* pUserData,
+                              unsigned int uFlags, const char* pName)
 {
     rriThread* pNative;
     long long lId;
@@ -440,16 +433,13 @@ extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStac
 
     if ((uFlags & RR_THREAD_FLAG_USER_MEMORY) != 0)
     {
-        pNative->pOSThread =
-            (OSThread*)(((size_t)pThread + RR_THREAD_NATIVE_OFFSET) &
-                        ~(size_t)(RR_THREAD_STACK_ALIGNMENT - 1));
+        pNative->pOSThread = (OSThread*)(((size_t)pThread + RR_THREAD_NATIVE_OFFSET)
+                                         & ~(size_t)(RR_THREAD_STACK_ALIGNMENT - 1));
         pStack = (unsigned char*)pNative->pOSThread + sizeof(OSThread) + RR_THREAD_STACK_ALIGNMENT;
         pNative->pStack = pStack;
-        uStackSize = (unsigned int)(iStackSize + ((size_t)pNative - (size_t)pStack)) &
-                     ~(RR_THREAD_STACK_ALIGNMENT - 1);
-        iCreated = OSCreateThread(pNative->pOSThread, (OSThreadEntryPointFn)wiiu_shim, 0,
-                                  (char*)pThread, pStack + uStackSize, uStackSize,
-                                  OSGetThreadPriority(OSGetCurrentThread()),
+        uStackSize = (unsigned int)(iStackSize + ((size_t)pNative - (size_t)pStack)) & ~(RR_THREAD_STACK_ALIGNMENT - 1);
+        iCreated = OSCreateThread(pNative->pOSThread, (OSThreadEntryPointFn)wiiu_shim, 0, (char*)pThread,
+                                  pStack + uStackSize, uStackSize, OSGetThreadPriority(OSGetCurrentThread()),
                                   (OSThreadAttributes)0);
     }
     else
@@ -457,9 +447,8 @@ extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStac
         pNative->pOSThread = (OSThread*)MEMAllocFromDefaultHeapEx(sizeof(OSThread), 8);
         pStack = (unsigned char*)MEMAllocFromDefaultHeapEx((unsigned int)iStackSize, 8);
         pNative->pStack = pStack;
-        iCreated = OSCreateThread(pNative->pOSThread, (OSThreadEntryPointFn)wiiu_shim, 0,
-                                  (char*)pThread, pStack + iStackSize, iStackSize,
-                                  OSGetThreadPriority(OSGetCurrentThread()),
+        iCreated = OSCreateThread(pNative->pOSThread, (OSThreadEntryPointFn)wiiu_shim, 0, (char*)pThread,
+                                  pStack + iStackSize, iStackSize, OSGetThreadPriority(OSGetCurrentThread()),
                                   (OSThreadAttributes)0);
     }
 
@@ -479,9 +468,7 @@ extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStac
         do
         {
             uSlots = rrThreadSlots[iSlot >> 5];
-        }
-        while (rrAtomicCmpXchg32(&rrThreadSlots[iSlot >> 5],
-                                 uSlots & ~(1 << (iSlot & 31)), uSlots) != uSlots);
+        } while (rrAtomicCmpXchg32(&rrThreadSlots[iSlot >> 5], uSlots & ~(1 << (iSlot & 31)), uSlots) != uSlots);
 
         return 0;
     }
@@ -785,8 +772,8 @@ extern "C" void rrSemaphoreIncrement(rrSemaphore* pSemaphore, int iCount)
 }
 
 #ifdef __ghs__
-extern "C" BOOL OSCompareAndSwapAtomicEx(volatile uint32_t* pTarget, uint32_t uComparand,
-                                         uint32_t uNewValue, uint32_t* puPrevious)
+extern "C" BOOL OSCompareAndSwapAtomicEx(volatile uint32_t* pTarget, uint32_t uComparand, uint32_t uNewValue,
+                                         uint32_t* puPrevious)
 {
     unsigned int* pWord = const_cast<unsigned int*>(pTarget);
     unsigned int uPrevious;
@@ -872,8 +859,7 @@ extern "C" unsigned int rrAtomicCmpXchg32(volatile unsigned int* pTarget, unsign
     return uPrevious;
 }
 
-extern "C" unsigned long long rrAtomicCmpXchg64(volatile unsigned long long* pTarget,
-                                                unsigned long long uNewValue,
+extern "C" unsigned long long rrAtomicCmpXchg64(volatile unsigned long long* pTarget, unsigned long long uNewValue,
                                                 unsigned long long uComparand)
 {
     unsigned long long uPrevious;

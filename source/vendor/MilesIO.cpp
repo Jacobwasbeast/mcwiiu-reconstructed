@@ -567,17 +567,15 @@ extern "C" void Audition_DefragStart()
         g_milesAuditionDefragStartCallback();
 }
 
-extern "C" void Audition_Event(const char* name, unsigned long long serial,
-                               unsigned long long context, int fromBank, const void* initBlock,
-                               int initBlockSize)
+extern "C" void Audition_Event(const char* name, unsigned long long serial, unsigned long long context, int fromBank,
+                               const void* initBlock, int initBlockSize)
 {
     if (g_milesAuditionEventCallback)
         g_milesAuditionEventCallback(name, serial, context, fromBank, initBlock, initBlockSize);
 }
 
-extern "C" void Audition_Sound(float volume, float pitch, unsigned long long serial,
-                               unsigned long long soundId, const char* name, const char* labels,
-                               int delay)
+extern "C" void Audition_Sound(float volume, float pitch, unsigned long long serial, unsigned long long soundId,
+                               const char* name, const char* labels, int delay)
 {
     if (g_milesAuditionSoundCallback)
         g_milesAuditionSoundCallback(volume, pitch, serial, soundId, name, labels, delay);
@@ -607,8 +605,7 @@ extern "C" void Audition_SoundLimited(unsigned long long soundId, const char* li
         g_milesAuditionSoundLimitedCallback(soundId, limit);
 }
 
-extern "C" void Audition_Control(unsigned long long serial, const char* name, int action,
-                                 unsigned long long context)
+extern "C" void Audition_Control(unsigned long long serial, const char* name, int action, unsigned long long context)
 {
     if (g_milesAuditionControlCallback)
         g_milesAuditionControlCallback(serial, name, action, context);
@@ -668,20 +665,18 @@ extern "C" void Audition_HandleSystemLoad(int used, int total)
         g_milesAuditionHandleSystemLoadCallback(used, total);
 }
 
-extern "C" void Audition_VarState(const char* name, unsigned long long soundId, int isInteger,
-                                  const void* value)
+extern "C" void Audition_VarState(const char* name, unsigned long long soundId, int isInteger, const void* value)
 {
     if (g_milesAuditionVarStateCallback)
         g_milesAuditionVarStateCallback(name, soundId, isInteger, value);
 }
 
-extern "C" void Audition_SoundState(float volume, float lowPass, float blendVolume,
-                                    float blendPitch, float levelA, float levelB, float rate,
-                                    float levelC, unsigned long long soundId)
+extern "C" void Audition_SoundState(float volume, float lowPass, float blendVolume, float blendPitch, float levelA,
+                                    float levelB, float rate, float levelC, unsigned long long soundId)
 {
     if (g_milesAuditionSoundStateCallback)
-        g_milesAuditionSoundStateCallback(volume, lowPass, blendVolume, blendPitch, levelA, levelB,
-                                          rate, levelC, soundId);
+        g_milesAuditionSoundStateCallback(volume, lowPass, blendVolume, blendPitch, levelA, levelB, rate, levelC,
+                                          soundId);
 }
 
 extern "C" void Audition_ClearState()
@@ -690,15 +685,14 @@ extern "C" void Audition_ClearState()
         g_milesAuditionClearStateCallback();
 }
 
-extern "C" void Audition_CompletionEvent(unsigned long long completionEvent,
-                                         unsigned long long soundId)
+extern "C" void Audition_CompletionEvent(unsigned long long completionEvent, unsigned long long soundId)
 {
     if (g_milesAuditionCompletionEventCallback)
         g_milesAuditionCompletionEventCallback(completionEvent, soundId);
 }
 
-extern "C" void Audition_AddRamp(unsigned long long soundId, int target, const char* name,
-                                 const char* labels, int global, unsigned long long eventId)
+extern "C" void Audition_AddRamp(unsigned long long soundId, int target, const char* name, const char* labels,
+                                 int global, unsigned long long eventId)
 {
     if (g_milesAuditionAddRampCallback)
         g_milesAuditionAddRampCallback(soundId, target, name, labels, global, eventId);

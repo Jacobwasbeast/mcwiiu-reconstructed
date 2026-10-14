@@ -27,8 +27,7 @@ typedef void* (*MilesContainerGetPresetCallback)(const char* name);
 typedef void (*MilesAuditionAsyncQueuedCallback)(unsigned long long eventId, int auditionId, const char* name);
 typedef void (*MilesAuditionAsyncLoadCallback)(int auditionId, int size);
 typedef void (*MilesAuditionAsyncCancelCallback)(int auditionId);
-typedef void (*MilesAuditionSetPersistCallback)(unsigned long long eventId, const char* name,
-                                                const char* preset);
+typedef void (*MilesAuditionSetPersistCallback)(unsigned long long eventId, const char* name, const char* preset);
 typedef void (*MilesAuditionRampStateCallback)(const char* name, unsigned long long eventId, int target);
 typedef int (*MilesAuditionStatusCallback)();
 typedef int (*MilesAuditionPumpCallback)();
@@ -37,12 +36,10 @@ typedef int (*MilesAuditionOpenCompleteCallback)(SoundBank* bank);
 typedef void (*MilesAuditionCloseBankCallback)(SoundBank* bank);
 typedef void (*MilesAuditionSuppressCallback)(int suppress);
 typedef void (*MilesAuditionFrameCallback)();
-typedef void (*MilesAuditionEventCallback)(const char* name, unsigned long long serial,
-                                           unsigned long long context, int fromBank,
-                                           const void* initBlock, int initBlockSize);
+typedef void (*MilesAuditionEventCallback)(const char* name, unsigned long long serial, unsigned long long context,
+                                           int fromBank, const void* initBlock, int initBlockSize);
 typedef void (*MilesAuditionSoundCallback)(float volume, float pitch, unsigned long long serial,
-                                           unsigned long long soundId, const char* name,
-                                           const char* labels, int delay);
+                                           unsigned long long soundId, const char* name, const char* labels, int delay);
 typedef void (*MilesAuditionSoundIdCallback)(unsigned long long soundId);
 typedef void (*MilesAuditionSoundFlagsCallback)(unsigned long long soundId, unsigned char flags);
 typedef void (*MilesAuditionSoundLimitedCallback)(unsigned long long soundId, const char* limit);
@@ -52,23 +49,19 @@ typedef void (*MilesAuditionSoundBusCallback)(unsigned long long soundId, int bu
 typedef void (*MilesAuditionAsyncErrorCallback)(int auditionId);
 typedef void (*MilesAuditionAsyncCompleteCallback)(int auditionId, int size);
 typedef void (*MilesAuditionListenerPositionCallback)(float x, float y, float z);
-typedef void (*MilesAuditionSoundPositionCallback)(float x, float y, float z,
-                                                   unsigned long long soundId);
+typedef void (*MilesAuditionSoundPositionCallback)(float x, float y, float z, unsigned long long soundId);
 typedef void (*MilesAuditionSendCPUCallback)(_DIG_DRIVER* driver);
 typedef void (*MilesAuditionCountCallback)(int count);
 typedef void (*MilesAuditionHandleSystemLoadCallback)(int used, int total);
-typedef void (*MilesAuditionVarStateCallback)(const char* name, unsigned long long soundId,
-                                              int isInteger, const void* value);
-typedef void (*MilesAuditionSoundStateCallback)(float volume, float lowPass, float blendVolume,
-                                                float blendPitch, float levelA, float levelB,
-                                                float rate, float levelC,
+typedef void (*MilesAuditionVarStateCallback)(const char* name, unsigned long long soundId, int isInteger,
+                                              const void* value);
+typedef void (*MilesAuditionSoundStateCallback)(float volume, float lowPass, float blendVolume, float blendPitch,
+                                                float levelA, float levelB, float rate, float levelC,
                                                 unsigned long long soundId);
 typedef void (*MilesAuditionClearStateCallback)();
-typedef void (*MilesAuditionCompletionEventCallback)(unsigned long long completionEvent,
-                                                     unsigned long long soundId);
-typedef void (*MilesAuditionAddRampCallback)(unsigned long long soundId, int target,
-                                             const char* name, const char* labels, int global,
-                                             unsigned long long eventId);
+typedef void (*MilesAuditionCompletionEventCallback)(unsigned long long completionEvent, unsigned long long soundId);
+typedef void (*MilesAuditionAddRampCallback)(unsigned long long soundId, int target, const char* name,
+                                             const char* labels, int global, unsigned long long eventId);
 
 typedef void (*MilesContainerFreeAllCallback)();
 typedef void* (*MilesContainerGetEnvironmentCallback)(const char* name);
@@ -167,18 +160,15 @@ extern "C" void Audition_Suppress(int suppress);
 extern "C" void Audition_FrameStart();
 extern "C" void Audition_FrameEnd();
 extern "C" void Audition_DefragStart();
-extern "C" void Audition_Event(const char* name, unsigned long long serial,
-                               unsigned long long context, int fromBank, const void* initBlock,
-                               int initBlockSize);
-extern "C" void Audition_Sound(float volume, float pitch, unsigned long long serial,
-                               unsigned long long soundId, const char* name, const char* labels,
-                               int delay);
+extern "C" void Audition_Event(const char* name, unsigned long long serial, unsigned long long context, int fromBank,
+                               const void* initBlock, int initBlockSize);
+extern "C" void Audition_Sound(float volume, float pitch, unsigned long long serial, unsigned long long soundId,
+                               const char* name, const char* labels, int delay);
 extern "C" void Audition_SoundComplete(unsigned long long soundId);
 extern "C" void Audition_SoundPlaying(unsigned long long soundId);
 extern "C" void Audition_SoundFlags(unsigned long long soundId, unsigned char flags);
 extern "C" void Audition_SoundLimited(unsigned long long soundId, const char* limit);
-extern "C" void Audition_Control(unsigned long long serial, const char* name, int action,
-                                 unsigned long long context);
+extern "C" void Audition_Control(unsigned long long serial, const char* name, int action, unsigned long long context);
 extern "C" void Audition_SoundBus(unsigned long long soundId, int bus);
 extern "C" void Audition_AsyncError(int auditionId);
 extern "C" void Audition_AsyncComplete(int auditionId, int size);
@@ -188,16 +178,13 @@ extern "C" void Audition_SendCPU(_DIG_DRIVER* driver);
 extern "C" void Audition_UpdateDataCount(int count);
 extern "C" void Audition_SendCount(int count);
 extern "C" void Audition_HandleSystemLoad(int used, int total);
-extern "C" void Audition_VarState(const char* name, unsigned long long soundId, int isInteger,
-                                  const void* value);
-extern "C" void Audition_SoundState(float volume, float lowPass, float blendVolume,
-                                    float blendPitch, float levelA, float levelB, float rate,
-                                    float levelC, unsigned long long soundId);
+extern "C" void Audition_VarState(const char* name, unsigned long long soundId, int isInteger, const void* value);
+extern "C" void Audition_SoundState(float volume, float lowPass, float blendVolume, float blendPitch, float levelA,
+                                    float levelB, float rate, float levelC, unsigned long long soundId);
 extern "C" void Audition_ClearState();
-extern "C" void Audition_CompletionEvent(unsigned long long completionEvent,
-                                         unsigned long long soundId);
-extern "C" void Audition_AddRamp(unsigned long long soundId, int target, const char* name,
-                                 const char* labels, int global, unsigned long long eventId);
+extern "C" void Audition_CompletionEvent(unsigned long long completionEvent, unsigned long long soundId);
+extern "C" void Audition_AddRamp(unsigned long long soundId, int target, const char* name, const char* labels,
+                                 int global, unsigned long long eventId);
 extern "C" void Audition_AsyncQueued(unsigned long long eventId, int auditionId, const char* name);
 extern "C" void Audition_AsyncLoad(int auditionId, int size);
 extern "C" void Audition_AsyncCancel(int auditionId);

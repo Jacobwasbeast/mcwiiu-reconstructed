@@ -6,7 +6,7 @@
 
 template <typename T>
 nn::pia::Result __N_22_chat_VoiceProtocol_cpp_bf22a0fe::createProtocol(T** protocol, unsigned short* protocolId,
-    unsigned char port)
+                                                                       unsigned char port)
 {
     if (*protocolId != 0)
         return nn::pia::transport::cResultInvalidState;
@@ -53,6 +53,6 @@ nn::pia::chat::Codec __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertCodec(VCTCod
 
 nn::pia::chat::EcMode __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertEcMode(TMC_HF_EC_MODE mode)
 {
-    static const unsigned int conversion[3] = { 0, 1, 2 };
+    static const unsigned int conversion[3] = {0, 1, 2};
     return (nn::pia::chat::EcMode)conversion[(unsigned int)mode];
 }

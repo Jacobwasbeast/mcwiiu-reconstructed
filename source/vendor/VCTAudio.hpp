@@ -166,12 +166,11 @@ nn::pia::Result VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale);
 int VCTi_SendMulti(unsigned int uiCidMask, const void* pData, unsigned int uiSize);
 VCTAudioPacket* vct_prepare_send_buffer();
 int vct_flush_send_buffer();
-unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData,
-                              unsigned int uiDataSize, long long llReceiveTick);
+unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData, unsigned int uiDataSize,
+                              long long llReceiveTick);
 int vct_decode_audio_buffer();
 nn::pia::Result VCT_ReceiveAudio(void* pData, unsigned int uiSize, unsigned short* pCids);
-int VCTi_ReceiveAudioData(void* pData, unsigned int uiSize, unsigned int uiStreamIndex,
-                          unsigned short* pCid);
+int VCTi_ReceiveAudioData(void* pData, unsigned int uiSize, unsigned int uiStreamIndex, unsigned short* pCid);
 void vct_mix_audio(const short* pLeft, const short* pRight, short* pOut, unsigned int uiSize);
 
 nn::pia::chat::AudioStream* vct_get_audio_stream(unsigned int uiStreamIndex);

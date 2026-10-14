@@ -39,8 +39,7 @@ void Handle_Init(void* pMemory, int iSize)
     HandleHeapBase = static_cast<unsigned char*>(pMemory);
     HandleHeapSize = iSize;
     HandleHeapStart = reinterpret_cast<unsigned char*>(
-        (reinterpret_cast<size_t>(HandleHeapBase) + HANDLE_START_ALIGNMENT) &
-        HANDLE_START_ALIGNMENT_MASK);
+        (reinterpret_cast<size_t>(HandleHeapBase) + HANDLE_START_ALIGNMENT) & HANDLE_START_ALIGNMENT_MASK);
 
     if (HandleHeapStart - sizeof(int) < HandleHeapBase)
     {
@@ -74,9 +73,8 @@ void Handle_Defrag()
     {
         if (iTag == HANDLE_TAG_FREE)
         {
-            pBlock = reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(pBlock) +
-                                            (static_cast<unsigned int>(pBlock[1]) &
-                                             HANDLE_BLOCK_SIZE_MASK));
+            pBlock = reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(pBlock)
+                                            + (static_cast<unsigned int>(pBlock[1]) & HANDLE_BLOCK_SIZE_MASK));
         }
         else
         {
@@ -85,13 +83,12 @@ void Handle_Defrag()
 
             if (static_cast<unsigned char*>(pEntry->data) != pCursor)
             {
-                memmove(pCursor - sizeof(int), static_cast<unsigned char*>(pEntry->data) - sizeof(int),
-                        uBlockSize);
+                memmove(pCursor - sizeof(int), static_cast<unsigned char*>(pEntry->data) - sizeof(int), uBlockSize);
                 reinterpret_cast<HandleEntry*>(HandleTableEnd)[iTag].data = pCursor;
             }
 
-            pBlock = reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(pBlock) +
-                                            (uBlockSize & HANDLE_BLOCK_SIZE_MASK));
+            pBlock = reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(pBlock)
+                                            + (uBlockSize & HANDLE_BLOCK_SIZE_MASK));
             pCursor = pCursor + uBlockSize;
         }
 

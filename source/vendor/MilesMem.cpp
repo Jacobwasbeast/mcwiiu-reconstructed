@@ -109,8 +109,7 @@ extern "C" void AIL_debug_log(const char* pFormat, ...)
         pMessageFormat = pFormat + 1;
     }
 
-    vsnprintf(pText, (sizeof(szBuffer) - 1) - (size_t)(pText - szBuffer), pMessageFormat,
-              arguments);
+    vsnprintf(pText, (sizeof(szBuffer) - 1) - (size_t)(pText - szBuffer), pMessageFormat, arguments);
     va_end(arguments);
 
     szBuffer[sizeof(szBuffer) - 1] = '\0';
@@ -140,9 +139,8 @@ extern "C" void AIL_debug_log(const char* pFormat, ...)
     {
         if (*pFormat == '@' && AIL_debug_depth == 1)
         {
-            sprintf(szTimestamp, "[%.02d:%.02d:%.02d.%.03d] ", (int)uHours,
-                    (int)((uElapsed / 60000) % 60), (int)((uElapsed / 1000) % 60),
-                    (int)(uElapsed % 1000));
+            sprintf(szTimestamp, "[%.02d:%.02d:%.02d.%.03d] ", (int)uHours, (int)((uElapsed / 60000) % 60),
+                    (int)((uElapsed / 1000) % 60), (int)(uElapsed % 1000));
             memcpy(szBuffer, szTimestamp, AIL_LOG_PREFIX_LENGTH);
         }
         else
@@ -195,8 +193,7 @@ extern "C" void* AIL_mem_alloc_lock_info(int iSize, const char* pOwnerName, int 
 
     if (ShouldLog() != 0)
     {
-        AIL_debug_log("@AIL_mem_alloc_lock(%ld) from: %s, line: %d ", iSize, pOwnerName,
-                      iOwnerLine);
+        AIL_debug_log("@AIL_mem_alloc_lock(%ld) from: %s, line: %d ", iSize, pOwnerName, iOwnerLine);
     }
 
     pBlock = AIL_API_mem_alloc_lock((unsigned int)iSize);
@@ -204,8 +201,8 @@ extern "C" void* AIL_mem_alloc_lock_info(int iSize, const char* pOwnerName, int 
     if (MSS_profile != NULL)
     {
         uCallStack = MSS_profile->pCallStack(MSS_profile, 0, 0);
-        MSS_profile->pAlloc(MSS_profile, pBlock, 0, iSize, pOwnerName, iOwnerLine, &MSS_alloc_site,
-                            "Miles alloc: %t", uCallStack);
+        MSS_profile->pAlloc(MSS_profile, pBlock, 0, iSize, pOwnerName, iOwnerLine, &MSS_alloc_site, "Miles alloc: %t",
+                            uCallStack);
     }
 
     if (ShouldLog() != 0)
@@ -349,17 +346,15 @@ void Handle_Free(Handle handle)
         return;
     }
 
-    if (*reinterpret_cast<unsigned int*>(static_cast<unsigned char*>(entry->data) + size) !=
-            HANDLE_GUARD &&
-        HandleBreakOnError != 0)
+    if (*reinterpret_cast<unsigned int*>(static_cast<unsigned char*>(entry->data) + size) != HANDLE_GUARD
+        && HandleBreakOnError != 0)
     {
         __debugbreak();
     }
 
     entry->generation = 0;
     reinterpret_cast<int*>(entry->data)[-1] = HANDLE_TAG_FREE;
-    *static_cast<unsigned int*>(entry->data) =
-        (size + HANDLE_BLOCK_OVERHEAD) & HANDLE_BLOCK_ALIGNMENT_MASK;
+    *static_cast<unsigned int*>(entry->data) = (size + HANDLE_BLOCK_OVERHEAD) & HANDLE_BLOCK_ALIGNMENT_MASK;
 
     if (index == HandleCount)
     {
@@ -391,8 +386,8 @@ extern "C" void AIL_API_end_sample(_SAMPLE* pSample)
         return;
     }
 
-    if (pSample->driver->sampleStatus[pSample->index] == SAMPLE_STATUS_FREE ||
-        pSample->driver->sampleStatus[pSample->index] == SAMPLE_STATUS_DONE)
+    if (pSample->driver->sampleStatus[pSample->index] == SAMPLE_STATUS_FREE
+        || pSample->driver->sampleStatus[pSample->index] == SAMPLE_STATUS_DONE)
     {
         return;
     }
@@ -463,8 +458,7 @@ extern "C" void AIL_end_sample(_SAMPLE* pSample)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_end_sample(0x%lX)", pSample);
     }
@@ -482,16 +476,14 @@ extern "C" int AIL_sample_3D_position(_SAMPLE* pSample, float* pX, float* pY, fl
 
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_sample_3D_position(0x%lX,0x%lX,0x%lX,0x%lX)", pSample, pX, pY, pZ);
     }
 
     iResult = AIL_API_sample_3D_position(pSample, pX, pY, pZ);
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         outresint(iResult);
     }
@@ -504,11 +496,9 @@ extern "C" void AIL_listener_3D_position(_LISTENER* pListener, float* pX, float*
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_listener_3D_position(0x%lX,0x%lX,0x%lX,0x%lX)", pListener, pX, pY,
-                      pZ);
+        AIL_debug_log("@AIL_listener_3D_position(0x%lX,0x%lX,0x%lX,0x%lX)", pListener, pX, pY, pZ);
     }
 
     AIL_API_listener_3D_position(pListener, pX, pY, pZ);
@@ -614,13 +604,11 @@ PresetPair* PresetPairs(int* record)
     return reinterpret_cast<PresetPair*>(record + 1);
 }
 
-void ResolvePair(PresetHeader* header, void* instance, PresetEvalFunc evaluate, PresetPair* pair,
-                 int flags)
+void ResolvePair(PresetHeader* header, void* instance, PresetEvalFunc evaluate, PresetPair* pair, int flags)
 {
     if (pair->expression != 0)
     {
-        evaluate(instance, reinterpret_cast<char*>(header) + pair->expression, PRESET_NO_INDEX,
-                 &pair->value, flags);
+        evaluate(instance, reinterpret_cast<char*>(header) + pair->expression, PRESET_NO_INDEX, &pair->value, flags);
     }
 }
 
@@ -682,8 +670,7 @@ extern "C" void* AIL_find_sound_preset(SoundBank* bank, const char* name)
     return reinterpret_cast<char*>(header) + entry->value;
 }
 
-extern "C" int AIL_sound_asset_info(SoundBank* bank, const char* name, char* path,
-                                    _MILESBANKSOUNDINFO* info)
+extern "C" int AIL_sound_asset_info(SoundBank* bank, const char* name, char* path, _MILESBANKSOUNDINFO* info)
 {
     SoundBankHeader* header = reinterpret_cast<SoundBankHeader*>(bank);
     SoundBank::AssetEntry* entry = reinterpret_cast<SoundBank::AssetEntry*>(
@@ -766,22 +753,22 @@ extern "C" float evaluate_graph(float position, const GraphPoint* points, unsign
                         inY = current->y - next->y;
                     }
 
-                    const float inSlope =
-                        width * ((next->y - (next->y - inY / GRAPH_TANGENT_DIVISOR)) /
-                                 (next->x - (next->x - inX / GRAPH_TANGENT_DIVISOR)));
-                    const float outSlope =
-                        ((current->y + outY / GRAPH_TANGENT_DIVISOR) - current->y) /
-                        ((current->x + outX / GRAPH_TANGENT_DIVISOR) - current->x);
+                    const float inSlope = width
+                                          * ((next->y - (next->y - inY / GRAPH_TANGENT_DIVISOR))
+                                             / (next->x - (next->x - inX / GRAPH_TANGENT_DIVISOR)));
+                    const float outSlope = ((current->y + outY / GRAPH_TANGENT_DIVISOR) - current->y)
+                                           / ((current->x + outX / GRAPH_TANGENT_DIVISOR) - current->x);
                     const float outScaled = width * outSlope;
                     const float offset = position - current->x;
                     const float inverseSquare = PRESET_UNIT / (width * width);
-                    return offset *
-                               (offset * (((((height + height + height) - outScaled) - outScaled) - inSlope) *
-                                              inverseSquare +
-                                          offset * ((((outScaled + inSlope) - height) - height) * inverseSquare /
-                                                    width)) +
-                                outSlope) +
-                           current->y;
+                    return offset
+                               * (offset
+                                      * (((((height + height + height) - outScaled) - outScaled) - inSlope)
+                                             * inverseSquare
+                                         + offset
+                                               * ((((outScaled + inSlope) - height) - height) * inverseSquare / width))
+                                  + outSlope)
+                           + current->y;
                 }
 
                 return current->y;
@@ -859,8 +846,7 @@ extern "C" int AIL_resolve_raw_sound_preset(void* preset, void* instance, Preset
             record += 11;
             break;
         case PRESET_FALLOFF:
-            record += (record[4] + record[5] + record[3]) * PRESET_FALLOFF_POINT_WORDS +
-                      PRESET_FALLOFF_HEADER_WORDS;
+            record += (record[4] + record[5] + record[3]) * PRESET_FALLOFF_POINT_WORDS + PRESET_FALLOFF_HEADER_WORDS;
             break;
         case PRESET_PROCESSOR:
         {
@@ -869,8 +855,8 @@ extern "C" int AIL_resolve_raw_sound_preset(void* preset, void* instance, Preset
             {
                 if (entries[index].expression != 0)
                 {
-                    evaluate(instance, reinterpret_cast<char*>(header) + entries[index].expression,
-                             PRESET_NO_INDEX, &entries[index].value, 1);
+                    evaluate(instance, reinterpret_cast<char*>(header) + entries[index].expression, PRESET_NO_INDEX,
+                             &entries[index].value, 1);
                 }
             }
             record += record[3] * PRESET_PROCESSOR_ENTRY_WORDS + PRESET_PROCESSOR_HEADER_WORDS;
@@ -933,39 +919,35 @@ extern "C" int AIL_apply_raw_sound_preset(_SAMPLE* sample, void* preset)
             }
             break;
         case PRESET_POSITION:
-            AIL_set_sample_3D_position(sample, pairs[0].value.number, pairs[1].value.number,
-                                       pairs[2].value.number);
+            AIL_set_sample_3D_position(sample, pairs[0].value.number, pairs[1].value.number, pairs[2].value.number);
             words = 7;
             break;
         case PRESET_CONE:
-            AIL_set_sample_3D_cone(
-                sample, pairs[0].value.number, pairs[1].value.number,
-                pow(PRESET_DECIBEL_BASE, pairs[2].value.number / PRESET_DECIBELS_PER_DECADE));
+            AIL_set_sample_3D_cone(sample, pairs[0].value.number, pairs[1].value.number,
+                                   pow(PRESET_DECIBEL_BASE, pairs[2].value.number / PRESET_DECIBELS_PER_DECADE));
             words = 7;
             break;
         case PRESET_DISTANCES:
-            AIL_set_sample_3D_distances(sample, pairs[1].value.number, pairs[0].value.number,
-                                        pairs[2].value.integer);
+            AIL_set_sample_3D_distances(sample, pairs[1].value.number, pairs[0].value.number, pairs[2].value.integer);
             words = 7;
             break;
         case PRESET_ORIENTATION:
-            AIL_set_sample_3D_orientation(sample, pairs[0].value.number, pairs[1].value.number,
-                                          pairs[2].value.number, pairs[3].value.number,
-                                          pairs[4].value.number, pairs[5].value.number);
+            AIL_set_sample_3D_orientation(sample, pairs[0].value.number, pairs[1].value.number, pairs[2].value.number,
+                                          pairs[3].value.number, pairs[4].value.number, pairs[5].value.number);
             words = 13;
             break;
         case PRESET_VELOCITY:
-            AIL_set_sample_3D_velocity(sample, pairs[0].value.number, pairs[1].value.number,
-                                       pairs[2].value.number, pairs[3].value.number);
+            AIL_set_sample_3D_velocity(sample, pairs[0].value.number, pairs[1].value.number, pairs[2].value.number,
+                                       pairs[3].value.number);
             words = 9;
             break;
         case PRESET_VALUE:
             sample->presetValue = pairs[0].value.number;
             break;
         case PRESET_REVERB:
-            AIL_set_sample_reverb_levels(
-                sample, pow(PRESET_DECIBEL_BASE, pairs[1].value.number / PRESET_DECIBELS_PER_DECADE),
-                pow(PRESET_DECIBEL_BASE, pairs[0].value.number / PRESET_DECIBELS_PER_DECADE));
+            AIL_set_sample_reverb_levels(sample,
+                                         pow(PRESET_DECIBEL_BASE, pairs[1].value.number / PRESET_DECIBELS_PER_DECADE),
+                                         pow(PRESET_DECIBEL_BASE, pairs[0].value.number / PRESET_DECIBELS_PER_DECADE));
             words = 5;
             break;
         case PRESET_LOW_PASS:
@@ -993,24 +975,19 @@ extern "C" int AIL_apply_raw_sound_preset(_SAMPLE* sample, void* preset)
             break;
         case PRESET_VOLUME_PAN:
         {
-            float volume =
-                pow(pow(PRESET_DECIBEL_BASE, pairs[0].value.number / PRESET_DECIBELS_PER_DECADE),
-                    PRESET_VOLUME_EXPONENT);
-            float fade =
-                pow(pow(PRESET_DECIBEL_BASE, pairs[3].value.number / PRESET_DECIBELS_PER_DECADE),
-                    PRESET_VOLUME_EXPONENT);
-            float center =
-                pow(pow(PRESET_DECIBEL_BASE, pairs[4].value.number / PRESET_DECIBELS_PER_DECADE),
-                    PRESET_VOLUME_EXPONENT);
-            AIL_set_sample_51_volume_pan(sample, volume, pairs[1].value.number, pairs[2].value.number,
-                                         fade, center);
+            float volume = pow(pow(PRESET_DECIBEL_BASE, pairs[0].value.number / PRESET_DECIBELS_PER_DECADE),
+                               PRESET_VOLUME_EXPONENT);
+            float fade = pow(pow(PRESET_DECIBEL_BASE, pairs[3].value.number / PRESET_DECIBELS_PER_DECADE),
+                             PRESET_VOLUME_EXPONENT);
+            float center = pow(pow(PRESET_DECIBEL_BASE, pairs[4].value.number / PRESET_DECIBELS_PER_DECADE),
+                               PRESET_VOLUME_EXPONENT);
+            AIL_set_sample_51_volume_pan(sample, volume, pairs[1].value.number, pairs[2].value.number, fade, center);
             words = 11;
             break;
         }
         case PRESET_FALLOFF:
             FalloffGraph_Set(sample, record[1], reinterpret_cast<FalloffGraph*>(record + 1));
-            words = (record[4] + record[5] + record[3]) * PRESET_FALLOFF_POINT_WORDS +
-                    PRESET_FALLOFF_HEADER_WORDS;
+            words = (record[4] + record[5] + record[3]) * PRESET_FALLOFF_POINT_WORDS + PRESET_FALLOFF_HEADER_WORDS;
             break;
         case PRESET_PROCESSOR:
         {
@@ -1034,8 +1011,8 @@ extern "C" int AIL_apply_raw_sound_preset(_SAMPLE* sample, void* preset)
 
             if (AIL_sample_processor(sample, stage) != provider)
             {
-                if (sample->reverbBus != SAMPLE_REVERB_BUS_COMPRESSOR ||
-                    strcmp(filterName, PRESET_COMPRESSOR_FILTER) != 0)
+                if (sample->reverbBus != SAMPLE_REVERB_BUS_COMPRESSOR
+                    || strcmp(filterName, PRESET_COMPRESSOR_FILTER) != 0)
                 {
                     AIL_set_sample_processor(sample, stage, provider);
                 }
@@ -1062,8 +1039,8 @@ extern "C" int AIL_apply_raw_sound_preset(_SAMPLE* sample, void* preset)
                     unsigned int inputBus = 0;
                     for (int index = 0; index < count; ++index)
                     {
-                        if (strcmp(reinterpret_cast<char*>(header) + entries[index].nameOffset,
-                                   PRESET_COMPRESSOR_INPUT) == 0)
+                        if (strcmp(reinterpret_cast<char*>(header) + entries[index].nameOffset, PRESET_COMPRESSOR_INPUT)
+                            == 0)
                         {
                             inputBus = static_cast<unsigned int>(entries[index].value.number);
                         }
@@ -1092,11 +1069,11 @@ extern "C" int AIL_apply_raw_sound_preset(_SAMPLE* sample, void* preset)
         case PRESET_CHANNEL_LEVEL:
         {
             const unsigned int packed = record[1];
-            if ((packed & PRESET_CHANNEL_MASK) < PRESET_CHANNEL_LIMIT &&
-                (packed >> PRESET_CHANNEL_SHIFT) < PRESET_CHANNEL_LIMIT)
+            if ((packed & PRESET_CHANNEL_MASK) < PRESET_CHANNEL_LIMIT
+                && (packed >> PRESET_CHANNEL_SHIFT) < PRESET_CHANNEL_LIMIT)
             {
-                levels[(packed & PRESET_CHANNEL_MASK) * PRESET_CHANNEL_LIMIT +
-                       (packed >> PRESET_CHANNEL_SHIFT)] = pairs[1].value.number;
+                levels[(packed & PRESET_CHANNEL_MASK) * PRESET_CHANNEL_LIMIT + (packed >> PRESET_CHANNEL_SHIFT)] =
+                    pairs[1].value.number;
             }
             words = PRESET_CHANNEL_LEVEL_WORDS;
             break;
@@ -1145,8 +1122,7 @@ extern "C" int AIL_unapply_raw_sound_preset(_SAMPLE* sample, void* preset)
             words = 7;
             break;
         case PRESET_CONE:
-            AIL_set_sample_3D_cone(sample, PRESET_DEFAULT_CONE_ANGLE, PRESET_DEFAULT_CONE_ANGLE,
-                                   PRESET_UNIT);
+            AIL_set_sample_3D_cone(sample, PRESET_DEFAULT_CONE_ANGLE, PRESET_DEFAULT_CONE_ANGLE, PRESET_UNIT);
             words = 7;
             break;
         case PRESET_DISTANCES:
@@ -1154,8 +1130,8 @@ extern "C" int AIL_unapply_raw_sound_preset(_SAMPLE* sample, void* preset)
             words = 7;
             break;
         case PRESET_ORIENTATION:
-            AIL_set_sample_3D_orientation(sample, PRESET_UNIT, PRESET_ZERO, PRESET_ZERO, PRESET_ZERO,
-                                          PRESET_UNIT, PRESET_ZERO);
+            AIL_set_sample_3D_orientation(sample, PRESET_UNIT, PRESET_ZERO, PRESET_ZERO, PRESET_ZERO, PRESET_UNIT,
+                                          PRESET_ZERO);
             words = 13;
             break;
         case PRESET_VELOCITY:
@@ -1185,14 +1161,12 @@ extern "C" int AIL_unapply_raw_sound_preset(_SAMPLE* sample, void* preset)
             AIL_set_sample_playback_rate_factor(sample, PRESET_UNIT);
             break;
         case PRESET_VOLUME_PAN:
-            AIL_set_sample_51_volume_pan(sample, PRESET_UNIT, PRESET_HALF, PRESET_HALF, PRESET_UNIT,
-                                         PRESET_UNIT);
+            AIL_set_sample_51_volume_pan(sample, PRESET_UNIT, PRESET_HALF, PRESET_HALF, PRESET_UNIT, PRESET_UNIT);
             words = 11;
             break;
         case PRESET_FALLOFF:
             FalloffGraph_Set(sample, record[1], NULL);
-            words = (record[4] + record[5] + record[3]) * PRESET_FALLOFF_POINT_WORDS +
-                    PRESET_FALLOFF_HEADER_WORDS;
+            words = (record[4] + record[5] + record[3]) * PRESET_FALLOFF_POINT_WORDS + PRESET_FALLOFF_HEADER_WORDS;
             break;
         case PRESET_PROCESSOR:
             if (record[2] != 0)
@@ -1292,30 +1266,29 @@ const unsigned int SPEAKER_TRAIT_SIDE = 0x10;
 const unsigned int SPEAKER_TRAIT_CENTER = 0x20;
 const unsigned int SPEAKER_TRAIT_TOP = 0x40;
 const unsigned int SPEAKER_TRAIT_LOW_FREQUENCY = 0x80;
-const unsigned int SPEAKER_TRAIT_SHARED = SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_RIGHT |
-                                          SPEAKER_TRAIT_CENTER | SPEAKER_TRAIT_TOP |
-                                          SPEAKER_TRAIT_LOW_FREQUENCY;
+const unsigned int SPEAKER_TRAIT_SHARED = SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_CENTER
+                                          | SPEAKER_TRAIT_TOP | SPEAKER_TRAIT_LOW_FREQUENCY;
 const unsigned int SPEAKER_TRAIT_SIDES = SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_RIGHT;
 
-const unsigned char SPEAKER_TRAITS[SPEAKER_ID_COUNT] = {
-    SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_FRONT,
-    SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_FRONT,
-    SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_CENTER,
-    SPEAKER_TRAIT_LOW_FREQUENCY,
-    SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_BACK,
-    SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_BACK,
-    SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_CENTER,
-    SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_CENTER,
-    SPEAKER_TRAIT_BACK | SPEAKER_TRAIT_CENTER,
-    SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_SIDE,
-    SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_SIDE,
-    SPEAKER_TRAIT_TOP | SPEAKER_TRAIT_CENTER,
-    SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_TOP,
-    SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_CENTER | SPEAKER_TRAIT_TOP,
-    SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_TOP,
-    SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_BACK | SPEAKER_TRAIT_TOP,
-    SPEAKER_TRAIT_BACK | SPEAKER_TRAIT_CENTER | SPEAKER_TRAIT_TOP,
-    SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_BACK | SPEAKER_TRAIT_TOP};
+const unsigned char SPEAKER_TRAITS[SPEAKER_ID_COUNT] = {SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_FRONT,
+                                                        SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_FRONT,
+                                                        SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_CENTER,
+                                                        SPEAKER_TRAIT_LOW_FREQUENCY,
+                                                        SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_BACK,
+                                                        SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_BACK,
+                                                        SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_CENTER,
+                                                        SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_FRONT
+                                                            | SPEAKER_TRAIT_CENTER,
+                                                        SPEAKER_TRAIT_BACK | SPEAKER_TRAIT_CENTER,
+                                                        SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_SIDE,
+                                                        SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_SIDE,
+                                                        SPEAKER_TRAIT_TOP | SPEAKER_TRAIT_CENTER,
+                                                        SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_TOP,
+                                                        SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_CENTER | SPEAKER_TRAIT_TOP,
+                                                        SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_FRONT | SPEAKER_TRAIT_TOP,
+                                                        SPEAKER_TRAIT_LEFT | SPEAKER_TRAIT_BACK | SPEAKER_TRAIT_TOP,
+                                                        SPEAKER_TRAIT_BACK | SPEAKER_TRAIT_CENTER | SPEAKER_TRAIT_TOP,
+                                                        SPEAKER_TRAIT_RIGHT | SPEAKER_TRAIT_BACK | SPEAKER_TRAIT_TOP};
 
 const unsigned int SAMPLE_FORMAT_16_BITS = 1;
 const unsigned int SAMPLE_FORMAT_STEREO = 2;
@@ -1371,8 +1344,8 @@ const int LOOP_MODE_ASI = 1;
 const int LOOP_MODE_STREAMING = 2;
 }
 
-extern "C" void AIL_API_set_sample_speaker_scale_factors(_SAMPLE* pSample, const int* pSpeakers,
-                                                         const float* pScales, int iCount)
+extern "C" void AIL_API_set_sample_speaker_scale_factors(_SAMPLE* pSample, const int* pSpeakers, const float* pScales,
+                                                         int iCount)
 {
     if (pSample == NULL || pSpeakers == NULL || pScales == NULL || iCount == 0)
     {
@@ -1390,8 +1363,7 @@ extern "C" void AIL_API_set_sample_speaker_scale_factors(_SAMPLE* pSample, const
     }
 }
 
-extern "C" void AIL_API_sample_speaker_scale_factors(_SAMPLE* pSample, int* pSpeakers,
-                                                     float* pScales, int iCount)
+extern "C" void AIL_API_sample_speaker_scale_factors(_SAMPLE* pSample, int* pSpeakers, float* pScales, int iCount)
 {
     if (pSample == NULL || pSpeakers == NULL || pScales == NULL || iCount == 0)
     {
@@ -1409,8 +1381,8 @@ extern "C" void AIL_API_sample_speaker_scale_factors(_SAMPLE* pSample, int* pSpe
     }
 }
 
-extern "C" void AIL_API_sample_channel_levels(_SAMPLE* pSample, int* pSources, int* pDestinations,
-                                              float* pLevels, int iCount)
+extern "C" void AIL_API_sample_channel_levels(_SAMPLE* pSample, int* pSources, int* pDestinations, float* pLevels,
+                                              int iCount)
 {
     if (pSample == NULL || pSources == NULL || pDestinations == NULL || pLevels == NULL)
     {
@@ -1452,9 +1424,8 @@ extern "C" void AIL_API_sample_channel_levels(_SAMPLE* pSample, int* pSources, i
     }
 }
 
-extern "C" void AIL_API_set_sample_channel_levels(_SAMPLE* pSample, const int* pSources,
-                                                  const int* pDestinations, const float* pLevels,
-                                                  int iCount)
+extern "C" void AIL_API_set_sample_channel_levels(_SAMPLE* pSample, const int* pSources, const int* pDestinations,
+                                                  const float* pLevels, int iCount)
 {
     if (pSample == NULL)
     {
@@ -1470,8 +1441,7 @@ extern "C" void AIL_API_set_sample_channel_levels(_SAMPLE* pSample, const int* p
 
     if (pSources == NULL || pDestinations == NULL || pLevels == NULL)
     {
-        set_user_channel_defaults(iConfig, pSample->channelCount, pSample->levels,
-                                  pSample->channelMap);
+        set_user_channel_defaults(iConfig, pSample->channelCount, pSample->levels, pSample->channelMap);
         return;
     }
 
@@ -1502,9 +1472,8 @@ extern "C" void AIL_API_set_sample_channel_levels(_SAMPLE* pSample, const int* p
     {
         for (int iOutput = 0; iOutput < pDriver->outputCount; ++iOutput)
         {
-            if (pDriver->outputs[iOutput].chans > 1 &&
-                (pSample->levels[iOutput * 2 + 1][0] > 0.0f ||
-                 pSample->levels[iOutput * 2][1] > 0.0f))
+            if (pDriver->outputs[iOutput].chans > 1
+                && (pSample->levels[iOutput * 2 + 1][0] > 0.0f || pSample->levels[iOutput * 2][1] > 0.0f))
             {
                 pSample->userLevels = 1;
             }
@@ -1605,8 +1574,8 @@ extern "C" void AIL_API_set_sample_low_pass_cut_off(_SAMPLE* pSample, int iChann
     }
 }
 
-extern "C" void AIL_API_set_sample_51_volume_pan(_SAMPLE* pSample, float fVolume, float fPan,
-                                                 float fFade, float fCenter, float fLowFrequency)
+extern "C" void AIL_API_set_sample_51_volume_pan(_SAMPLE* pSample, float fVolume, float fPan, float fFade,
+                                                 float fCenter, float fLowFrequency)
 {
     if (pSample == NULL)
     {
@@ -1678,8 +1647,7 @@ extern "C" int AIL_API_sample_processor(_SAMPLE* pSample, int iStage)
     return pSample->stages[iStage].filter.provider;
 }
 
-extern "C" int AIL_API_install_bus_compressor(_DIG_DRIVER* pDriver, int iBus, int iStage,
-                                              int iInputBus)
+extern "C" int AIL_API_install_bus_compressor(_DIG_DRIVER* pDriver, int iBus, int iStage, int iInputBus)
 {
     _SAMPLE** ppBuses = pDriver->busSamples;
     if (ppBuses[iBus] == NULL || ppBuses[iInputBus] == NULL)
@@ -1696,8 +1664,7 @@ extern "C" int AIL_API_install_bus_compressor(_DIG_DRIVER* pDriver, int iBus, in
     }
 
     AIL_set_sample_processor(ppBuses[iBus], iStage, iProvider);
-    ppBuses[iBus]->compressorLink = (iStage << BUS_COMPRESSOR_STAGE_SHIFT) |
-                                    BUS_COMPRESSOR_LINK_FLAGS;
+    ppBuses[iBus]->compressorLink = (iStage << BUS_COMPRESSOR_STAGE_SHIFT) | BUS_COMPRESSOR_LINK_FLAGS;
     ppBuses[iInputBus]->compressorSources = ppBuses[iInputBus]->compressorSources | (1 << iBus);
     return 1;
 }
@@ -1747,8 +1714,7 @@ extern "C" void AIL_API_set_sample_playback_rate(_SAMPLE* pSample, int iRate)
     pSample->playbackRate = iRate;
 }
 
-extern "C" void AIL_API_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, float fOuterAngle,
-                                           float fOuterVolume)
+extern "C" void AIL_API_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, float fOuterAngle, float fOuterVolume)
 {
     if (pSample == NULL)
     {
@@ -1767,17 +1733,15 @@ extern "C" void AIL_API_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, 
     pSample->coneEnabled = iEnabled;
 }
 
-extern "C" void AIL_API_set_sample_3D_orientation(_SAMPLE* pSample, float fForwardX,
-                                                  float fForwardY, float fForwardZ, float fUpX,
-                                                  float fUpY, float fUpZ)
+extern "C" void AIL_API_set_sample_3D_orientation(_SAMPLE* pSample, float fForwardX, float fForwardY, float fForwardZ,
+                                                  float fUpX, float fUpY, float fUpZ)
 {
     if (pSample == NULL)
     {
         return;
     }
 
-    float fLength = static_cast<float>(
-        sqrt(fForwardZ * fForwardZ + (fForwardY * fForwardY + fForwardX * fForwardX)));
+    float fLength = static_cast<float>(sqrt(fForwardZ * fForwardZ + (fForwardY * fForwardY + fForwardX * fForwardX)));
     if (fLength > DIRECTION_EPSILON)
     {
         fForwardY = fForwardY / fLength;
@@ -1801,8 +1765,7 @@ extern "C" void AIL_API_set_sample_3D_orientation(_SAMPLE* pSample, float fForwa
     pSample->forwardY = fForwardY;
 }
 
-extern "C" void AIL_API_set_sample_3D_velocity_vector(_SAMPLE* pSample, float fX, float fY,
-                                                      float fZ)
+extern "C" void AIL_API_set_sample_3D_velocity_vector(_SAMPLE* pSample, float fX, float fY, float fZ)
 {
     if (pSample == NULL)
     {
@@ -1814,12 +1777,11 @@ extern "C" void AIL_API_set_sample_3D_velocity_vector(_SAMPLE* pSample, float fX
     pSample->velocityZ = fZ;
 }
 
-extern "C" void AIL_API_set_sample_3D_velocity(_SAMPLE* pSample, float fDirectionX,
-                                               float fDirectionY, float fDirectionZ,
-                                               float fMagnitude)
+extern "C" void AIL_API_set_sample_3D_velocity(_SAMPLE* pSample, float fDirectionX, float fDirectionY,
+                                               float fDirectionZ, float fMagnitude)
 {
-    AIL_API_set_sample_3D_velocity_vector(pSample, fDirectionX * fMagnitude,
-                                          fDirectionY * fMagnitude, fDirectionZ * fMagnitude);
+    AIL_API_set_sample_3D_velocity_vector(pSample, fDirectionX * fMagnitude, fDirectionY * fMagnitude,
+                                          fDirectionZ * fMagnitude);
 }
 
 extern "C" void AIL_API_set_sample_obstruction(_SAMPLE* pSample, float fObstruction)
@@ -1884,8 +1846,7 @@ extern "C" int AIL_find_filter(const char* pName, int* piProvider)
     while (RIB_enumerate_providers(PIPELINE_FILTER_INTERFACE, &uIndex, &uProvider) != 0)
     {
         RIB_request_interface(uProvider, PIPELINE_FILTER_INTERFACE, 2, entries);
-        if (pProperty(RIB_PROVIDER_NAME, &pPipelineName, 0, 0) != 0 &&
-            strcmp(pPipelineName, pName) == 0)
+        if (pProperty(RIB_PROVIDER_NAME, &pPipelineName, 0, 0) != 0 && strcmp(pPipelineName, pName) == 0)
         {
             if (piProvider != NULL)
             {
@@ -1899,8 +1860,7 @@ extern "C" int AIL_find_filter(const char* pName, int* piProvider)
     while (RIB_enumerate_providers(VOICE_FILTER_INTERFACE, &uIndex, &uProvider) != 0)
     {
         RIB_request_interface(uProvider, VOICE_FILTER_INTERFACE, 2, entries);
-        if (pProperty(RIB_PROVIDER_NAME, &pVoiceName, 0, 0) != 0 &&
-            strcmp(pVoiceName, pName) == 0)
+        if (pProperty(RIB_PROVIDER_NAME, &pVoiceName, 0, 0) != 0 && strcmp(pVoiceName, pName) == 0)
         {
             if (piProvider != NULL)
             {
@@ -1940,26 +1900,21 @@ extern "C" int AIL_API_open_filter(unsigned int uProvider, _DIG_DRIVER* pDriver)
     unsigned int uSampleStateSizeToken = RIB_ENTRY_NOT_FOUND;
     unsigned int uDriverStateSizeToken = RIB_ENTRY_NOT_FOUND;
 
-    RIB_INTERFACE_ENTRY startupEntries[4] = {
-        {RIB_FUNCTION, "PROVIDER_property", &pFilter->property, 0},
-        {RIB_PROPERTY, "Flags", &uFlagsToken, 0},
-        {RIB_FUNCTION, "FLT_startup", &pFilter->startup, 0},
-        {RIB_FUNCTION, "FLT_error", &pFilter->error, 0}};
-    RIB_INTERFACE_ENTRY driverEntries[3] = {
-        {RIB_FUNCTION, "FLT_shutdown", &pFilter->shutdown, 0},
-        {RIB_FUNCTION, "FLT_open_driver", &pFilter->openDriver, 0},
-        {RIB_FUNCTION, "FLT_close_driver", &pFilter->closeDriver, 0}};
-    RIB_INTERFACE_ENTRY mixEntries[2] = {
-        {RIB_FUNCTION, "FLT_premix_process", &pFilter->premixProcess, 0},
-        {RIB_FUNCTION, "FLT_postmix_process", &pFilter->postmixProcess, 0}};
-    RIB_INTERFACE_ENTRY sizeEntries[2] = {
-        {RIB_PROPERTY, "Sample_state_size", &uSampleStateSizeToken, 0},
-        {RIB_PROPERTY, "Driver_state_size", &uDriverStateSizeToken, 0}};
-    RIB_INTERFACE_ENTRY sampleEntries[4] = {
-        {RIB_FUNCTION, "FLTSMP_open_sample", &pFilter->openSample, 0},
-        {RIB_FUNCTION, "FLTSMP_close_sample", &pFilter->closeSample, 0},
-        {RIB_FUNCTION, "FLTSMP_sample_process", &pFilter->sampleProcess, 0},
-        {RIB_FUNCTION, "FLTSMP_sample_property", &pFilter->sampleProperty, 0}};
+    RIB_INTERFACE_ENTRY startupEntries[4] = {{RIB_FUNCTION, "PROVIDER_property", &pFilter->property, 0},
+                                             {RIB_PROPERTY, "Flags", &uFlagsToken, 0},
+                                             {RIB_FUNCTION, "FLT_startup", &pFilter->startup, 0},
+                                             {RIB_FUNCTION, "FLT_error", &pFilter->error, 0}};
+    RIB_INTERFACE_ENTRY driverEntries[3] = {{RIB_FUNCTION, "FLT_shutdown", &pFilter->shutdown, 0},
+                                            {RIB_FUNCTION, "FLT_open_driver", &pFilter->openDriver, 0},
+                                            {RIB_FUNCTION, "FLT_close_driver", &pFilter->closeDriver, 0}};
+    RIB_INTERFACE_ENTRY mixEntries[2] = {{RIB_FUNCTION, "FLT_premix_process", &pFilter->premixProcess, 0},
+                                         {RIB_FUNCTION, "FLT_postmix_process", &pFilter->postmixProcess, 0}};
+    RIB_INTERFACE_ENTRY sizeEntries[2] = {{RIB_PROPERTY, "Sample_state_size", &uSampleStateSizeToken, 0},
+                                          {RIB_PROPERTY, "Driver_state_size", &uDriverStateSizeToken, 0}};
+    RIB_INTERFACE_ENTRY sampleEntries[4] = {{RIB_FUNCTION, "FLTSMP_open_sample", &pFilter->openSample, 0},
+                                            {RIB_FUNCTION, "FLTSMP_close_sample", &pFilter->closeSample, 0},
+                                            {RIB_FUNCTION, "FLTSMP_sample_process", &pFilter->sampleProcess, 0},
+                                            {RIB_FUNCTION, "FLTSMP_sample_property", &pFilter->sampleProperty, 0}};
 
     int iStartup = RIB_request_interface(uProvider, PIPELINE_FILTER_INTERFACE, 4, startupEntries);
     int iDriver = RIB_request_interface(uProvider, PIPELINE_FILTER_INTERFACE, 3, driverEntries);
@@ -2004,12 +1959,10 @@ extern "C" int AIL_API_open_filter(unsigned int uProvider, _DIG_DRIVER* pDriver)
     void* pDriverState = NULL;
     if (pFilter->driverStateSize != 0)
     {
-        pDriverState = AIL_mem_alloc_lock_info(pFilter->driverStateSize, MILES_FILTER_FILE,
-                                               FILTER_DRIVER_STATE_LINE);
+        pDriverState = AIL_mem_alloc_lock_info(pFilter->driverStateSize, MILES_FILTER_FILE, FILTER_DRIVER_STATE_LINE);
     }
 
-    pFilter->driverState = pFilter->openDriver(MSS_alloc_info, MSS_free_info, 0, pDriver,
-                                               pDriverState);
+    pFilter->driverState = pFilter->openDriver(MSS_alloc_info, MSS_free_info, 0, pDriver, pDriverState);
     InMilesMutex();
 
     if (pFilter->driverState != NULL)
@@ -2043,14 +1996,12 @@ unsigned int assign_chan_ptrs(_SAMPLE* pSample, unsigned char* pBuffer, int iKee
 {
     int iChannels = pSample->channelCount;
     unsigned char* pCursor = reinterpret_cast<unsigned char*>(
-        (reinterpret_cast<unsigned int>(pBuffer) + CHANNEL_BUFFER_ALIGNMENT - 1) &
-        ~(CHANNEL_BUFFER_ALIGNMENT - 1));
+        (reinterpret_cast<unsigned int>(pBuffer) + CHANNEL_BUFFER_ALIGNMENT - 1) & ~(CHANNEL_BUFFER_ALIGNMENT - 1));
     unsigned int uRows = (pSample->driver->speakerConfig + 1) & ~1u;
     float* pScratch[CHANNEL_SCRATCH_ROWS];
     int* pScratchInt[CHANNEL_SCRATCH_ROWS];
 
-    pSample->channelStates =
-        reinterpret_cast<ChannelState*>(assign_ptr(&pCursor, iChannels * sizeof(ChannelState)));
+    pSample->channelStates = reinterpret_cast<ChannelState*>(assign_ptr(&pCursor, iChannels * sizeof(ChannelState)));
 
     float** ppPreviousLevels = pSample->levels;
     int** ppPreviousC = pSample->levelsC;
@@ -2127,8 +2078,7 @@ void clear_last_sample(_SAMPLE* pSample)
     pSample->resampleFraction = 0;
 }
 
-void set_user_channel_defaults(int iSpeakerConfig, int iChannelCount, float** ppLevels,
-                               signed char* pChannelMap)
+void set_user_channel_defaults(int iSpeakerConfig, int iChannelCount, float** ppLevels, signed char* pChannelMap)
 {
     if (iSpeakerConfig == 0)
     {
@@ -2219,8 +2169,7 @@ void set_user_channel_defaults(int iSpeakerConfig, int iChannelCount, float** pp
                 int iAssigned = 0;
                 for (int iOther = 0; iOther < SPEAKER_ID_COUNT; ++iOther)
                 {
-                    if ((SPEAKER_TRAITS[iOther] & uShared) != 0 &&
-                        pSpeakers[iOther] != SPEAKER_UNMAPPED)
+                    if ((SPEAKER_TRAITS[iOther] & uShared) != 0 && pSpeakers[iOther] != SPEAKER_UNMAPPED)
                     {
                         ++iAssigned;
                         ppLevels[pSpeakers[iOther]][iSource] = 1.0f;
@@ -2233,8 +2182,7 @@ void set_user_channel_defaults(int iSpeakerConfig, int iChannelCount, float** pp
                     int iOther = 0;
                     while (true)
                     {
-                        if ((uTraits & SPEAKER_TRAIT_LOW_FREQUENCY) == 0 &&
-                            pSpeakers[iOther] != SPEAKER_UNMAPPED)
+                        if ((uTraits & SPEAKER_TRAIT_LOW_FREQUENCY) == 0 && pSpeakers[iOther] != SPEAKER_UNMAPPED)
                         {
                             ppLevels[pSpeakers[iOther]][iSource] = 1.0f;
                         }
@@ -2312,8 +2260,7 @@ extern "C" int SS_set_sample_type(_SAMPLE* pSample, unsigned int uFlags, int iCh
         iChannels = 1;
     }
 
-    if (uFormat != pSample->channelFlags ||
-        iChannelMask != pSample->channelMask || iChannels != pSample->channelCount)
+    if (uFormat != pSample->channelFlags || iChannelMask != pSample->channelMask || iChannels != pSample->channelCount)
     {
         pSample->channelFlags = uFormat;
         pSample->channelCount = iChannels;
@@ -2384,8 +2331,8 @@ extern "C" int SS_set_sample_type(_SAMPLE* pSample, unsigned int uFlags, int iCh
 
                 if (bHasGap)
                 {
-                    pMap = static_cast<signed char*>(AIL_mem_alloc_lock_info(
-                        CHANNEL_MAP_LENGTH, MILES_WAVEFILE_FILE, CHANNEL_MAP_LINE));
+                    pMap = static_cast<signed char*>(
+                        AIL_mem_alloc_lock_info(CHANNEL_MAP_LENGTH, MILES_WAVEFILE_FILE, CHANNEL_MAP_LINE));
                     memset(pMap, -1, CHANNEL_MAP_LENGTH);
 
                     int iNext = 0;
@@ -2410,8 +2357,7 @@ extern "C" int SS_set_sample_type(_SAMPLE* pSample, unsigned int uFlags, int iCh
                 }
             }
 
-            set_user_channel_defaults(pSample->driver->speakerConfig, pSample->channelCount,
-                                      pSample->levels, pMap);
+            set_user_channel_defaults(pSample->driver->speakerConfig, pSample->channelCount, pSample->levels, pMap);
         }
 
         if ((uFormat & SAMPLE_FORMAT_ADPCM) != 0)
@@ -2458,7 +2404,8 @@ int SP_ASI_DECODER_callback(unsigned int uUser, void* pDestination, int iCount, 
     if (pSample->loopMode == LOOP_MODE_ASI && pSample->loopState != 1)
     {
         unsigned int uLoopEnd = pSample->loopEnd;
-        if (uLoopEnd != ALL_BITS_SET && uLoopEnd < static_cast<unsigned int>(pSample->buffers[pSample->currentBuffer].size))
+        if (uLoopEnd != ALL_BITS_SET
+            && uLoopEnd < static_cast<unsigned int>(pSample->buffers[pSample->currentBuffer].size))
         {
             uEnd = uLoopEnd;
         }
@@ -2619,12 +2566,11 @@ extern "C" int AIL_API_set_sample_processor(_SAMPLE* pSample, int iStage, int iP
                     void* pState = NULL;
                     if (pInstance->sampleStateSize != 0)
                     {
-                        pState = AIL_mem_alloc_lock_info(pInstance->sampleStateSize,
-                                                         MILES_WAVEFILE_FILE, FILTER_STATE_LINE);
+                        pState = AIL_mem_alloc_lock_info(pInstance->sampleStateSize, MILES_WAVEFILE_FILE,
+                                                         FILTER_STATE_LINE);
                     }
 
-                    filter.handles[iChannel] =
-                        pInstance->openSample(pInstance->driverState, pSample, pState);
+                    filter.handles[iChannel] = pInstance->openSample(pInstance->driverState, pSample, pState);
                     if (filter.handles[iChannel] == NULL)
                     {
                         pStage->filter.provider = 0;
@@ -2643,46 +2589,39 @@ extern "C" int AIL_API_set_sample_processor(_SAMPLE* pSample, int iStage, int iP
     }
 
     DecoderStage& decoder = pStage->decoder;
-    RIB_INTERFACE_ENTRY streamEntries[4] = {
-        {RIB_FUNCTION, "ASI_stream_property", &decoder.property, 0},
-        {RIB_FUNCTION, "ASI_stream_open", &decoder.open, 0},
-        {RIB_FUNCTION, "ASI_stream_seek", &decoder.seek, 0},
-        {RIB_FUNCTION, "ASI_stream_close", &decoder.close, 0}};
-    RIB_INTERFACE_ENTRY inputEntries[3] = {
-        {RIB_FUNCTION, "ASI_stream_process", &decoder.process, 0},
-        {RIB_PROPERTY, "Input bit rate", &decoder.inputBitRate, 0},
-        {RIB_PROPERTY, "Input sample rate", &decoder.inputSampleRate, 0}};
-    RIB_INTERFACE_ENTRY inputFormatEntries[4] = {
-        {RIB_PROPERTY, "Input sample width", &decoder.inputSampleWidth, 0},
-        {RIB_PROPERTY, "Input channels", &decoder.inputChannels, 0},
-        {RIB_PROPERTY, "Output bit rate", &decoder.outputBitRate, 0},
-        {RIB_PROPERTY, "Output sample rate", &decoder.outputSampleRate, 0}};
-    RIB_INTERFACE_ENTRY outputEntries[4] = {
-        {RIB_PROPERTY, "Output sample width", &decoder.outputSampleWidth, 0},
-        {RIB_PROPERTY, "Output channels", &decoder.outputChannels, 0},
-        {RIB_PROPERTY, "Output reservoir", &decoder.outputReservoir, 0},
-        {RIB_PROPERTY, "Position", &decoder.position, 0}};
+    RIB_INTERFACE_ENTRY streamEntries[4] = {{RIB_FUNCTION, "ASI_stream_property", &decoder.property, 0},
+                                            {RIB_FUNCTION, "ASI_stream_open", &decoder.open, 0},
+                                            {RIB_FUNCTION, "ASI_stream_seek", &decoder.seek, 0},
+                                            {RIB_FUNCTION, "ASI_stream_close", &decoder.close, 0}};
+    RIB_INTERFACE_ENTRY inputEntries[3] = {{RIB_FUNCTION, "ASI_stream_process", &decoder.process, 0},
+                                           {RIB_PROPERTY, "Input bit rate", &decoder.inputBitRate, 0},
+                                           {RIB_PROPERTY, "Input sample rate", &decoder.inputSampleRate, 0}};
+    RIB_INTERFACE_ENTRY inputFormatEntries[4] = {{RIB_PROPERTY, "Input sample width", &decoder.inputSampleWidth, 0},
+                                                 {RIB_PROPERTY, "Input channels", &decoder.inputChannels, 0},
+                                                 {RIB_PROPERTY, "Output bit rate", &decoder.outputBitRate, 0},
+                                                 {RIB_PROPERTY, "Output sample rate", &decoder.outputSampleRate, 0}};
+    RIB_INTERFACE_ENTRY outputEntries[4] = {{RIB_PROPERTY, "Output sample width", &decoder.outputSampleWidth, 0},
+                                            {RIB_PROPERTY, "Output channels", &decoder.outputChannels, 0},
+                                            {RIB_PROPERTY, "Output reservoir", &decoder.outputReservoir, 0},
+                                            {RIB_PROPERTY, "Position", &decoder.position, 0}};
     RIB_INTERFACE_ENTRY progressEntries[4] = {
         {RIB_PROPERTY, "Percent done", &decoder.percentDone, 0},
         {RIB_PROPERTY, "Minimum input block size", &decoder.minimumInputBlockSize, 0},
         {RIB_PROPERTY, "Raw source sample rate", &decoder.rawSourceSampleRate, 0},
         {RIB_PROPERTY, "Raw source sample width", &decoder.rawSourceSampleWidth, 0}};
-    RIB_INTERFACE_ENTRY requestEntries[4] = {
-        {RIB_PROPERTY, "Raw source channels", &decoder.rawSourceChannels, 0},
-        {RIB_PROPERTY, "Requested sample rate", &decoder.requestedSampleRate, 0},
-        {RIB_PROPERTY, "Requested sample width", &decoder.requestedSampleWidth, 0},
-        {RIB_PROPERTY, "Requested channels", &decoder.requestedChannels, 0}};
-    RIB_INTERFACE_ENTRY layoutEntries[4] = {
-        {RIB_PROPERTY, "Output channel mask", &decoder.outputChannelMask, 0},
-        {RIB_PROPERTY, "Stream seek position", &decoder.streamSeekPosition, 0},
-        {RIB_PROPERTY, "Data offset", &decoder.dataOffset, 0},
-        {RIB_PROPERTY, "Data length", &decoder.dataLength, 0}};
-    RIB_INTERFACE_ENTRY seekEntries[5] = {
-        {RIB_PROPERTY, "Exact seek", &decoder.exactSeek, 0},
-        {RIB_PROPERTY, "Exact get position", &decoder.exactGetPosition, 0},
-        {RIB_PROPERTY, "Seek table lookup", &decoder.seekTableLookup, 0},
-        {RIB_PROPERTY, "Set Looping Samples", &decoder.setLoopingSamples, 0},
-        {RIB_PROPERTY, "Clear Loop Meta", &decoder.clearLoopMeta, 0}};
+    RIB_INTERFACE_ENTRY requestEntries[4] = {{RIB_PROPERTY, "Raw source channels", &decoder.rawSourceChannels, 0},
+                                             {RIB_PROPERTY, "Requested sample rate", &decoder.requestedSampleRate, 0},
+                                             {RIB_PROPERTY, "Requested sample width", &decoder.requestedSampleWidth, 0},
+                                             {RIB_PROPERTY, "Requested channels", &decoder.requestedChannels, 0}};
+    RIB_INTERFACE_ENTRY layoutEntries[4] = {{RIB_PROPERTY, "Output channel mask", &decoder.outputChannelMask, 0},
+                                            {RIB_PROPERTY, "Stream seek position", &decoder.streamSeekPosition, 0},
+                                            {RIB_PROPERTY, "Data offset", &decoder.dataOffset, 0},
+                                            {RIB_PROPERTY, "Data length", &decoder.dataLength, 0}};
+    RIB_INTERFACE_ENTRY seekEntries[5] = {{RIB_PROPERTY, "Exact seek", &decoder.exactSeek, 0},
+                                          {RIB_PROPERTY, "Exact get position", &decoder.exactGetPosition, 0},
+                                          {RIB_PROPERTY, "Seek table lookup", &decoder.seekTableLookup, 0},
+                                          {RIB_PROPERTY, "Set Looping Samples", &decoder.setLoopingSamples, 0},
+                                          {RIB_PROPERTY, "Clear Loop Meta", &decoder.clearLoopMeta, 0}};
 
     unsigned int uProfile = RIB_ENTRY_NOT_FOUND;
     RIB_INTERFACE_ENTRY profileEntry = {RIB_PROPERTY, "Profile index", &uProfile, 0};
@@ -2772,8 +2711,8 @@ extern "C" int AIL_API_set_sample_processor(_SAMPLE* pSample, int iStage, int iP
         if (uOutputMask != uMask || uSampleChannels != uOutputChannels)
         {
             iResult = SS_set_sample_type(pSample,
-                                         (uOutputChannels << SAMPLE_FORMAT_CHANNEL_SHIFT) |
-                                             SAMPLE_FORMAT_MULTICHANNEL | SAMPLE_FORMAT_16_BITS,
+                                         (uOutputChannels << SAMPLE_FORMAT_CHANNEL_SHIFT) | SAMPLE_FORMAT_MULTICHANNEL
+                                             | SAMPLE_FORMAT_16_BITS,
                                          uOutputMask);
             if (iResult == 0)
             {
@@ -2865,9 +2804,7 @@ const int WAV_FACT_SAMPLES_OFFSET = 8;
 const int WAV_BITS_PER_BYTE = 8;
 const int WAV_IMA_ADPCM_BITS = 4;
 const int WAV_IMA_ADPCM_HEADER_BASE = 4;
-const unsigned char WAV_SUBTYPE_PCM[WAV_SUBTYPE_SIZE] = {1, 0, 0, 0, 0, 0,
-                                                        16, 0, 128, 0, 0, 170,
-                                                        0, 56, 155, 113};
+const unsigned char WAV_SUBTYPE_PCM[WAV_SUBTYPE_SIZE] = {1, 0, 0, 0, 0, 0, 16, 0, 128, 0, 0, 170, 0, 56, 155, 113};
 
 const unsigned int BINK_AUDIO_TAG = 0x42434631;
 const int BINK_AUDIO_SIZE_OFFSET = 0x10;
@@ -3002,9 +2939,8 @@ struct VocBlocks
 
 unsigned int ReadLittleEndian32(const unsigned char* pBytes)
 {
-    return (static_cast<unsigned int>(pBytes[3]) << 24) |
-           (static_cast<unsigned int>(pBytes[2]) << 16) |
-           (static_cast<unsigned int>(pBytes[1]) << 8) | static_cast<unsigned int>(pBytes[0]);
+    return (static_cast<unsigned int>(pBytes[3]) << 24) | (static_cast<unsigned int>(pBytes[2]) << 16)
+           | (static_cast<unsigned int>(pBytes[1]) << 8) | static_cast<unsigned int>(pBytes[0]);
 }
 
 unsigned int ReadLittleEndian16(const unsigned char* pBytes)
@@ -3014,8 +2950,8 @@ unsigned int ReadLittleEndian16(const unsigned char* pBytes)
 
 const unsigned char* NextWavChunk(const unsigned char* pChunk)
 {
-    return pChunk + ReadLittleEndian32(pChunk + WAV_CHUNK_SIZE_OFFSET) +
-           (pChunk[WAV_CHUNK_SIZE_OFFSET] & 1) + WAV_CHUNK_HEADER_SIZE;
+    return pChunk + ReadLittleEndian32(pChunk + WAV_CHUNK_SIZE_OFFSET) + (pChunk[WAV_CHUNK_SIZE_OFFSET] & 1)
+           + WAV_CHUNK_HEADER_SIZE;
 }
 
 VocBlocks* VocState(_SAMPLE* pSample)
@@ -3065,14 +3001,14 @@ extern "C" int AIL_API_WAV_info(const void* pData, _AILSOUNDINFO* pInfo)
         const unsigned char* pFile = static_cast<const unsigned char*>(pData);
         const unsigned char* pEnd = pFile + ReadLittleEndian32(pFile + WAV_CHUNK_SIZE_OFFSET);
         if (AIL_strnicmp(reinterpret_cast<const char*>(pFile + WAV_RIFF_TYPE_OFFSET), WAV_RIFF_TYPE,
-                         WAV_SIGNATURE_LENGTH) == 0)
+                         WAV_SIGNATURE_LENGTH)
+            == 0)
         {
             const unsigned char* pFirst = pFile + WAV_HEADER_SIZE;
             pInfo->channelMask = ALL_BITS_SET;
             const unsigned char* pFormat = pFirst;
             bool bFound = true;
-            while (AIL_strnicmp(reinterpret_cast<const char*>(pFormat), WAV_FORMAT_CHUNK,
-                                WAV_SIGNATURE_LENGTH) != 0)
+            while (AIL_strnicmp(reinterpret_cast<const char*>(pFormat), WAV_FORMAT_CHUNK, WAV_SIGNATURE_LENGTH) != 0)
             {
                 pFormat = NextWavChunk(pFormat);
                 if (pFormat >= pEnd)
@@ -3091,8 +3027,8 @@ extern "C" int AIL_API_WAV_info(const void* pData, _AILSOUNDINFO* pInfo)
                 pInfo->blockSize = ReadLittleEndian16(pFormat + WAV_BLOCK_ALIGN_OFFSET);
 
                 const unsigned char* pDataChunk = pFirst;
-                while (AIL_strnicmp(reinterpret_cast<const char*>(pDataChunk), WAV_DATA_CHUNK,
-                                    WAV_SIGNATURE_LENGTH) != 0)
+                while (AIL_strnicmp(reinterpret_cast<const char*>(pDataChunk), WAV_DATA_CHUNK, WAV_SIGNATURE_LENGTH)
+                       != 0)
                 {
                     pDataChunk = NextWavChunk(pDataChunk);
                     if (pDataChunk >= pEnd)
@@ -3108,8 +3044,7 @@ extern "C" int AIL_API_WAV_info(const void* pData, _AILSOUNDINFO* pInfo)
 
                 if (static_cast<unsigned int>(pInfo->format) == WAV_FORMAT_EXTENSIBLE)
                 {
-                    if (ReadLittleEndian16(pFormat + WAV_EXTENSION_SIZE_OFFSET) <
-                        WAV_EXTENSION_SIZE_MINIMUM)
+                    if (ReadLittleEndian16(pFormat + WAV_EXTENSION_SIZE_OFFSET) < WAV_EXTENSION_SIZE_MINIMUM)
                     {
                         strcpy(AIL_error, WAV_NOT_EXTENSIBLE_ERROR);
                         return 0;
@@ -3144,23 +3079,20 @@ extern "C" int AIL_API_WAV_info(const void* pData, _AILSOUNDINFO* pInfo)
                 }
 
                 unsigned int uBits = pInfo->bits;
-                if (static_cast<unsigned int>(pInfo->format) == WAV_FORMAT_IMA_ADPCM &&
-                    uBits == WAV_IMA_ADPCM_BITS)
+                if (static_cast<unsigned int>(pInfo->format) == WAV_FORMAT_IMA_ADPCM && uBits == WAV_IMA_ADPCM_BITS)
                 {
                     const unsigned char* pFact = pFirst;
-                    while (AIL_strnicmp(reinterpret_cast<const char*>(pFact), WAV_FACT_CHUNK,
-                                        WAV_SIGNATURE_LENGTH) != 0)
+                    while (AIL_strnicmp(reinterpret_cast<const char*>(pFact), WAV_FACT_CHUNK, WAV_SIGNATURE_LENGTH)
+                           != 0)
                     {
                         pFact = NextWavChunk(pFact);
                         if (pFact >= pEnd)
                         {
                             unsigned int uAlign = pInfo->blockSize;
-                            unsigned int uHeader =
-                                WAV_IMA_ADPCM_HEADER_BASE << (pInfo->channels / 2);
+                            unsigned int uHeader = WAV_IMA_ADPCM_HEADER_BASE << (pInfo->channels / 2);
                             pInfo->initial = pInfo->data;
-                            pInfo->samples = (((pInfo->dataLength + uAlign) - 1) / uAlign) *
-                                             ((((uAlign - uHeader) * WAV_BITS_PER_BYTE) / uHeader) +
-                                              1);
+                            pInfo->samples = (((pInfo->dataLength + uAlign) - 1) / uAlign)
+                                             * ((((uAlign - uHeader) * WAV_BITS_PER_BYTE) / uHeader) + 1);
                             return 1;
                         }
                     }
@@ -3232,9 +3164,8 @@ void SS_start_playback(_SAMPLE* pSample)
     SS_start_DIG_driver_playback(pSample);
 }
 
-extern "C" float SS_default_falloff_function_callback(_SAMPLE* pSample, float fDistance,
-                                                      float fRolloffFactor, float fMinimumDistance,
-                                                      float fMaximumDistance)
+extern "C" float SS_default_falloff_function_callback(_SAMPLE* pSample, float fDistance, float fRolloffFactor,
+                                                      float fMinimumDistance, float fMaximumDistance)
 {
     if (pSample != NULL && pSample->presetValue != ZERO)
     {
@@ -3289,11 +3220,10 @@ extern "C" int AIL_allocate_reverb_buffers(_DIG_DRIVER* pDriver, int iBus)
     int iFourthLine = static_cast<int>(fRate * REVERB_LINE_SECONDS_D) * 4;
     int iFifthLine = static_cast<int>(fRate * REVERB_LINE_SECONDS_E) * 4;
     int iSixthLine = static_cast<int>(fRate * REVERB_LINE_SECONDS_F) * 4;
-    int iLength =
-        static_cast<int>((static_cast<float>(AIL_preference[PREFERENCE_REVERB_MILLISECONDS]) /
-                          MILLISECONDS_PER_SECOND) *
-                         fRate * REVERB_BYTES_PER_SAMPLE) +
-        uChunk - 1;
+    int iLength = static_cast<int>(
+                      (static_cast<float>(AIL_preference[PREFERENCE_REVERB_MILLISECONDS]) / MILLISECONDS_PER_SECOND)
+                      * fRate * REVERB_BYTES_PER_SAMPLE)
+                  + uChunk - 1;
     iLength = (iLength / uChunk) * uChunk;
     pBus->length = iLength;
 
@@ -3305,8 +3235,7 @@ extern "C" int AIL_allocate_reverb_buffers(_DIG_DRIVER* pDriver, int iBus)
     unsigned int uFifthSize = (iFifthLine + REVERB_ALIGNMENT - 1) & uMask;
     unsigned int uSixthSize = (iSixthLine + REVERB_ALIGNMENT - 1) & uMask;
     unsigned int uDelaySize = (iLength + REVERB_ALIGNMENT - 1) & uMask;
-    unsigned int uTotal = uDelaySize + uSecondSize + uFirstSize + uThirdSize + uFourthSize +
-                          uFifthSize + uSixthSize;
+    unsigned int uTotal = uDelaySize + uSecondSize + uFirstSize + uThirdSize + uFourthSize + uFifthSize + uSixthSize;
     pBus->bufferBytes = uTotal;
     pBus->buffer = static_cast<unsigned char*>(
         AIL_mem_alloc_lock_info(uTotal, MILES_WAVEFILE_FILE, REVERB_ALLOCATION_LINE));
@@ -3325,19 +3254,17 @@ extern "C" int AIL_allocate_reverb_buffers(_DIG_DRIVER* pDriver, int iBus)
     reverb.starts[1] = reinterpret_cast<float*>(pLines + uSecondSize);
     reverb.starts[2] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize);
     reverb.starts[3] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize);
-    reverb.starts[4] =
-        reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize + uFourthSize);
-    reverb.starts[5] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize +
-                                                uFourthSize + uFifthSize);
+    reverb.starts[4] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize + uFourthSize);
+    reverb.starts[5] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize + uFourthSize
+                                                + uFifthSize);
     reverb.ends[0] = reinterpret_cast<float*>(pLines + iSecondLine);
     reverb.ends[1] = reinterpret_cast<float*>(pLines + uSecondSize + iFirstLine);
     reverb.ends[2] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + iThirdLine);
-    reverb.ends[3] =
-        reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize + iFourthLine);
-    reverb.ends[4] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize +
-                                              uFourthSize + iFifthLine);
-    reverb.ends[5] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize +
-                                              uFourthSize + uFifthSize + iSixthLine);
+    reverb.ends[3] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize + iFourthLine);
+    reverb.ends[4] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize + uFourthSize
+                                              + iFifthLine);
+    reverb.ends[5] = reinterpret_cast<float*>(pLines + uSecondSize + uFirstSize + uThirdSize + uFourthSize + uFifthSize
+                                              + iSixthLine);
     for (int iLine = 0; iLine < DRIVER_REVERB_POINTER_COUNT; ++iLine)
     {
         reverb.lines[iLine] = reverb.starts[iLine];
@@ -3373,8 +3300,7 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
     if (AIL_strnicmp(pText, CREATIVE_VOC_SIGNATURE, CREATIVE_SIGNATURE_LENGTH) == 0)
     {
         VocBlocks* pVoc = VocState(pSample);
-        unsigned short usHeaderSize =
-            *reinterpret_cast<const unsigned short*>(pBytes + VOC_HEADER_SIZE_OFFSET);
+        unsigned short usHeaderSize = *reinterpret_cast<const unsigned short*>(pBytes + VOC_HEADER_SIZE_OFFSET);
         pSample->vocMarker = iBlock;
         unsigned char* pBlock = static_cast<unsigned char*>(const_cast<void*>(pFile)) + usHeaderSize;
         pVoc->current = pBlock;
@@ -3391,10 +3317,8 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
                 {
                     int iLength = AIL_VOC_block_len(pBlock);
                     AIL_set_sample_address(pSample, pBlock + VOC_SOUND_DATA_HEADER, iLength - 2);
-                    AIL_set_sample_playback_rate(pSample,
-                                                 VOC_RATE_NUMERATOR / (VOC_RATE_BASE - pBlock[4]));
-                    if (SS_set_sample_type(pSample, SAMPLE_FORMAT_MONO_8,
-                                           SAMPLE_CHANNEL_MASK_ALL) == 0)
+                    AIL_set_sample_playback_rate(pSample, VOC_RATE_NUMERATOR / (VOC_RATE_BASE - pBlock[4]));
+                    if (SS_set_sample_type(pSample, SAMPLE_FORMAT_MONO_8, SAMPLE_CHANNEL_MASK_ALL) == 0)
                     {
                         return 0;
                     }
@@ -3413,17 +3337,14 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
                     break;
                 }
 
-                pSample->vocMarkerFound =
-                    (pSample->vocMarker == *reinterpret_cast<const short*>(pBlock + 4));
-                pBlock = pBlock + AIL_VOC_block_len(pBlock) +
-                         VOC_BLOCK_HEADER_SIZE;
+                pSample->vocMarkerFound = (pSample->vocMarker == *reinterpret_cast<const short*>(pBlock + 4));
+                pBlock = pBlock + AIL_VOC_block_len(pBlock) + VOC_BLOCK_HEADER_SIZE;
                 pVoc->current = pBlock;
                 continue;
             case VOC_BLOCK_REPEAT:
                 pVoc->repeat = pBlock;
                 pSample->vocRepeatCount = *reinterpret_cast<const unsigned short*>(pBlock + 4);
-                pBlock = pBlock + AIL_VOC_block_len(pBlock) +
-                         VOC_BLOCK_HEADER_SIZE;
+                pBlock = pBlock + AIL_VOC_block_len(pBlock) + VOC_BLOCK_HEADER_SIZE;
                 pVoc->current = pBlock;
                 continue;
             case VOC_BLOCK_END_REPEAT:
@@ -3439,8 +3360,7 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
                 }
 
                 unsigned char* pRepeat = pVoc->repeat;
-                pBlock = pRepeat + AIL_VOC_block_len(pRepeat) +
-                         VOC_BLOCK_HEADER_SIZE;
+                pBlock = pRepeat + AIL_VOC_block_len(pRepeat) + VOC_BLOCK_HEADER_SIZE;
                 pVoc->current = pBlock;
                 continue;
             }
@@ -3452,63 +3372,50 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
 
                 if (pBlock[7] == 0)
                 {
-                    if (SS_set_sample_type(pSample, SAMPLE_FORMAT_MONO_8,
-                                           SAMPLE_CHANNEL_MASK_ALL) == 0)
+                    if (SS_set_sample_type(pSample, SAMPLE_FORMAT_MONO_8, SAMPLE_CHANNEL_MASK_ALL) == 0)
                     {
                         return 0;
                     }
 
                     AIL_set_sample_playback_rate(
-                        pSample,
-                        VOC_EXTENDED_MONO_NUMERATOR /
-                            (VOC_EXTENDED_RATE_BASE -
-                             *reinterpret_cast<const unsigned short*>(pBlock + 4)));
+                        pSample, VOC_EXTENDED_MONO_NUMERATOR
+                                     / (VOC_EXTENDED_RATE_BASE - *reinterpret_cast<const unsigned short*>(pBlock + 4)));
                 }
                 else
                 {
-                    if (SS_set_sample_type(pSample, SAMPLE_FORMAT_STEREO_8,
-                                           SAMPLE_CHANNEL_MASK_ALL) == 0)
+                    if (SS_set_sample_type(pSample, SAMPLE_FORMAT_STEREO_8, SAMPLE_CHANNEL_MASK_ALL) == 0)
                     {
                         return 0;
                     }
 
                     AIL_set_sample_playback_rate(
-                        pSample,
-                        VOC_EXTENDED_STEREO_NUMERATOR /
-                            (VOC_EXTENDED_RATE_BASE -
-                             *reinterpret_cast<const unsigned short*>(pBlock + 4)));
+                        pSample, VOC_EXTENDED_STEREO_NUMERATOR
+                                     / (VOC_EXTENDED_RATE_BASE - *reinterpret_cast<const unsigned short*>(pBlock + 4)));
                 }
 
-                pBlock = pBlock + AIL_VOC_block_len(pBlock) +
-                         VOC_BLOCK_HEADER_SIZE;
-                AIL_set_sample_address(pSample, pBlock + VOC_SOUND_DATA_HEADER,
-                                       AIL_VOC_block_len(pBlock) - 2);
+                pBlock = pBlock + AIL_VOC_block_len(pBlock) + VOC_BLOCK_HEADER_SIZE;
+                AIL_set_sample_address(pSample, pBlock + VOC_SOUND_DATA_HEADER, AIL_VOC_block_len(pBlock) - 2);
                 iDone = 1;
                 break;
             case VOC_BLOCK_NEW_DATA:
                 if (pSample->vocMarkerFound != 0)
                 {
-                    AIL_set_sample_address(
-                        pSample, pBlock + VOC_NEW_DATA_HEADER,
-                        AIL_VOC_block_len(pBlock) -
-                            VOC_NEW_DATA_TRAILER);
-                    AIL_set_sample_playback_rate(
-                        pSample, *reinterpret_cast<const unsigned int*>(pBlock + 4));
+                    AIL_set_sample_address(pSample, pBlock + VOC_NEW_DATA_HEADER,
+                                           AIL_VOC_block_len(pBlock) - VOC_NEW_DATA_TRAILER);
+                    AIL_set_sample_playback_rate(pSample, *reinterpret_cast<const unsigned int*>(pBlock + 4));
                     if (pBlock[9] == 1)
                     {
                         int iCodec = *reinterpret_cast<const short*>(pBlock + 10);
                         if (iCodec == VOC_CODEC_PCM)
                         {
-                            if (SS_set_sample_type(pSample, SAMPLE_FORMAT_MONO_8,
-                                                   SAMPLE_CHANNEL_MASK_ALL) == 0)
+                            if (SS_set_sample_type(pSample, SAMPLE_FORMAT_MONO_8, SAMPLE_CHANNEL_MASK_ALL) == 0)
                             {
                                 return 0;
                             }
                         }
                         else if (iCodec == VOC_CODEC_ADPCM)
                         {
-                            if (SS_set_sample_type(pSample, SAMPLE_FORMAT_MONO_16,
-                                                   SAMPLE_CHANNEL_MASK_ALL) == 0)
+                            if (SS_set_sample_type(pSample, SAMPLE_FORMAT_MONO_16, SAMPLE_CHANNEL_MASK_ALL) == 0)
                             {
                                 return 0;
                             }
@@ -3519,16 +3426,14 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
                         int iCodec = *reinterpret_cast<const short*>(pBlock + 10);
                         if (iCodec == VOC_CODEC_PCM)
                         {
-                            if (SS_set_sample_type(pSample, SAMPLE_FORMAT_STEREO_8,
-                                                   SAMPLE_CHANNEL_MASK_ALL) == 0)
+                            if (SS_set_sample_type(pSample, SAMPLE_FORMAT_STEREO_8, SAMPLE_CHANNEL_MASK_ALL) == 0)
                             {
                                 return 0;
                             }
                         }
                         else if (iCodec == VOC_CODEC_ADPCM)
                         {
-                            if (SS_set_sample_type(pSample, SAMPLE_FORMAT_STEREO_16,
-                                                   SAMPLE_CHANNEL_MASK_ALL) == 0)
+                            if (SS_set_sample_type(pSample, SAMPLE_FORMAT_STEREO_16, SAMPLE_CHANNEL_MASK_ALL) == 0)
                             {
                                 return 0;
                             }
@@ -3541,8 +3446,7 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
                 break;
             }
 
-            pBlock = pBlock + AIL_VOC_block_len(pBlock) +
-                     VOC_BLOCK_HEADER_SIZE;
+            pBlock = pBlock + AIL_VOC_block_len(pBlock) + VOC_BLOCK_HEADER_SIZE;
             pVoc->current = pBlock;
             if (iDone != 0)
             {
@@ -3611,8 +3515,7 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
         return 0;
     }
 
-    if (info.format == WAV_FORMAT_PCM ||
-        (info.format == WAV_FORMAT_IMA_ADPCM && info.bits == WAV_IMA_ADPCM_BITS))
+    if (info.format == WAV_FORMAT_PCM || (info.format == WAV_FORMAT_IMA_ADPCM && info.bits == WAV_IMA_ADPCM_BITS))
     {
         if (AIL_process_WAV_image(&info, pSample) != 0)
         {
@@ -3622,8 +3525,8 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
         return 0;
     }
 
-    uProvider = RIB_find_file_dec_provider(ASI_CODEC_INTERFACE_NAME, INPUT_WAVE_TAG, info.format,
-                                           OUTPUT_FILE_TYPES, RAW_EXTENSION);
+    uProvider = RIB_find_file_dec_provider(ASI_CODEC_INTERFACE_NAME, INPUT_WAVE_TAG, info.format, OUTPUT_FILE_TYPES,
+                                           RAW_EXTENSION);
     if (uProvider == 0)
     {
         AIL_set_error(UNSUPPORTED_WAVE_ERROR);
@@ -3639,8 +3542,8 @@ extern "C" int AIL_API_set_sample_file(_SAMPLE* pSample, const void* pFile, int 
     return 1;
 }
 
-extern "C" int AIL_API_set_named_sample_file(_SAMPLE* pSample, const char* pFileName,
-                                             const void* pFile, int iSize, int iBlock)
+extern "C" int AIL_API_set_named_sample_file(_SAMPLE* pSample, const char* pFileName, const void* pFile, int iSize,
+                                             int iBlock)
 {
     if (pSample == NULL || pFile == NULL)
     {
@@ -3649,14 +3552,12 @@ extern "C" int AIL_API_set_named_sample_file(_SAMPLE* pSample, const char* pFile
 
     const unsigned char* pBytes = static_cast<const unsigned char*>(pFile);
     size_t uNameLength;
-    if (pBytes[0] == 'I' && pBytes[1] == 'D' && pBytes[2] == '3' &&
-        pBytes[3] < ID3_VERSION_LIMIT && pBytes[4] < ID3_VERSION_LIMIT &&
-        pBytes[6] < ID3_SYNCSAFE_LIMIT && pBytes[7] < ID3_SYNCSAFE_LIMIT &&
-        pBytes[8] < ID3_SYNCSAFE_LIMIT && pBytes[9] < ID3_SYNCSAFE_LIMIT)
+    if (pBytes[0] == 'I' && pBytes[1] == 'D' && pBytes[2] == '3' && pBytes[3] < ID3_VERSION_LIMIT
+        && pBytes[4] < ID3_VERSION_LIMIT && pBytes[6] < ID3_SYNCSAFE_LIMIT && pBytes[7] < ID3_SYNCSAFE_LIMIT
+        && pBytes[8] < ID3_SYNCSAFE_LIMIT && pBytes[9] < ID3_SYNCSAFE_LIMIT)
     {
         pFileName = MP3_EXTENSION;
-        int iTagSize = ((pBytes[9] | (pBytes[8] << 7)) | (pBytes[7] << 14) | (pBytes[6] << 21)) +
-                       ID3_HEADER_SIZE;
+        int iTagSize = ((pBytes[9] | (pBytes[8] << 7)) | (pBytes[7] << 14) | (pBytes[6] << 21)) + ID3_HEADER_SIZE;
         pBytes = pBytes + iTagSize;
         iSize = iSize - iTagSize;
         uNameLength = strlen(pFileName);
@@ -3687,9 +3588,8 @@ extern "C" int AIL_API_set_named_sample_file(_SAMPLE* pSample, const char* pFile
         size_t uLength = strlen(pFileName);
         if (uLength > MP3_EXTENSION_LENGTH - 1)
         {
-            if (AIL_stricmp(pFileName + (uLength - MP3_EXTENSION_LENGTH), WAV_EXTENSION) == 0 ||
-                AIL_stricmp(pFileName + (strlen(pFileName) - MP3_EXTENSION_LENGTH),
-                            VOC_EXTENSION) == 0)
+            if (AIL_stricmp(pFileName + (uLength - MP3_EXTENSION_LENGTH), WAV_EXTENSION) == 0
+                || AIL_stricmp(pFileName + (strlen(pFileName) - MP3_EXTENSION_LENGTH), VOC_EXTENSION) == 0)
             {
                 return AIL_set_sample_file(pSample, pBytes, iBlock);
             }
@@ -3715,8 +3615,7 @@ extern "C" int AIL_API_set_named_sample_file(_SAMPLE* pSample, const char* pFile
     return 1;
 }
 
-extern "C" int AIL_API_set_digital_driver_processor(_DIG_DRIVER* pDriver, int iStage,
-                                                    int iProvider)
+extern "C" int AIL_API_set_digital_driver_processor(_DIG_DRIVER* pDriver, int iStage, int iProvider)
 {
     if (pDriver == NULL)
     {
@@ -3726,8 +3625,7 @@ extern "C" int AIL_API_set_digital_driver_processor(_DIG_DRIVER* pDriver, int iS
     int iIndex = 0;
     if (iStage != SAMPLE_PROCESSOR_ALL)
     {
-        if (iStage == DRIVER_PROCESSOR_PROVIDER_FIRST ||
-            iStage == DRIVER_PROCESSOR_PROVIDER_SECOND)
+        if (iStage == DRIVER_PROCESSOR_PROVIDER_FIRST || iStage == DRIVER_PROCESSOR_PROVIDER_SECOND)
         {
             DriverProcessor* pSelected = &pDriver->processors[iStage];
             int iPrevious = pSelected->provider;
@@ -3788,8 +3686,7 @@ extern "C" int AIL_API_set_digital_driver_processor(_DIG_DRIVER* pDriver, int iS
         entry.pEntryName = pEntryName;
         entry.pToken = &pProcessor->function;
         entry.uSubType = 0;
-        RIB_request_interface(pProcessor->provider, MIXER_SERVICES_INTERFACE,
-                              DRIVER_PROCESSOR_ENTRY_COUNT, &entry);
+        RIB_request_interface(pProcessor->provider, MIXER_SERVICES_INTERFACE, DRIVER_PROCESSOR_ENTRY_COUNT, &entry);
         pProcessor->active = 1;
     }
 
@@ -3820,8 +3717,8 @@ extern "C" _SAMPLE* AIL_API_allocate_bus(_DIG_DRIVER* pDriver)
     int iSpeakers = pDriver->speakerConfig;
     if (iSpeakers > 2)
     {
-        iInitialised = AIL_init_sample(pSample, (iSpeakers << SAMPLE_FORMAT_CHANNEL_SHIFT) |
-                                                    SAMPLE_FORMAT_MULTICHANNEL_16);
+        iInitialised = AIL_init_sample(pSample,
+                                       (iSpeakers << SAMPLE_FORMAT_CHANNEL_SHIFT) | SAMPLE_FORMAT_MULTICHANNEL_16);
     }
     else if (iSpeakers > 1)
     {
@@ -3842,8 +3739,7 @@ extern "C" _SAMPLE* AIL_API_allocate_bus(_DIG_DRIVER* pDriver)
     pDriver->busSamples[iBus] = pSample;
     pSample->reverbBus = SAMPLE_NO_REVERB_BUS;
     unsigned char* pBuffer = static_cast<unsigned char*>(AIL_mem_alloc_lock_info(
-        pDriver->framesPerBuffer * pSample->channelCount * 2, MILES_WAVEFILE_FILE,
-        BUS_BUFFER_LINE));
+        pDriver->framesPerBuffer * pSample->channelCount * 2, MILES_WAVEFILE_FILE, BUS_BUFFER_LINE));
     if (pBuffer == NULL)
     {
         AIL_set_error(BUS_BUFFER_ERROR);
@@ -4092,11 +3988,11 @@ extern "C" int AIL_API_init_sample(_SAMPLE* pSample, unsigned int uFormat)
 
         _DIG_DRIVER* pDriver = pSample->driver;
         if (AIL_set_sample_processor(pSample, SAMPLE_STAGE_MERGE,
-                                     pDriver->processors[DRIVER_PROCESSOR_PROVIDER_SECOND]
-                                         .provider) != -1 &&
-            AIL_set_sample_processor(pSample, SAMPLE_STAGE_FILTER_FIRST,
-                                     pDriver->processors[DRIVER_PROCESSOR_PROVIDER_FIRST]
-                                         .provider) != -1)
+                                     pDriver->processors[DRIVER_PROCESSOR_PROVIDER_SECOND].provider)
+                != -1
+            && AIL_set_sample_processor(pSample, SAMPLE_STAGE_FILTER_FIRST,
+                                        pDriver->processors[DRIVER_PROCESSOR_PROVIDER_FIRST].provider)
+                   != -1)
         {
             pSample->userLevels = 0;
             pSample->driver->sampleStatus[pSample->index] = SAMPLE_STATUS_DONE;
@@ -4139,8 +4035,7 @@ extern "C" void AIL_API_set_sample_adpcm_block_size(_SAMPLE* pSample, unsigned i
     pSample->adpcmBlockSize = uBlockSize;
 }
 
-extern "C" void AIL_API_set_sample_address(_SAMPLE* pSample, const void* pStart,
-                                           unsigned int uLength)
+extern "C" void AIL_API_set_sample_address(_SAMPLE* pSample, const void* pStart, unsigned int uLength)
 {
     if (pSample == NULL)
     {
@@ -4203,8 +4098,7 @@ extern "C" void AIL_API_set_sample_playback_delay(_SAMPLE* pSample, int iDelay)
     pSample->playbackDelay = iDelay << SAMPLE_DELAY_SHIFT;
 }
 
-extern "C" void AIL_API_sample_volume_levels(_SAMPLE* pSample, float* pLeftLevel,
-                                             float* pRightLevel)
+extern "C" void AIL_API_sample_volume_levels(_SAMPLE* pSample, float* pLeftLevel, float* pRightLevel)
 {
     if (pSample == NULL)
     {
@@ -4223,8 +4117,7 @@ extern "C" void AIL_API_sample_volume_levels(_SAMPLE* pSample, float* pLeftLevel
 }
 
 extern "C" void AIL_API_set_speaker_reverb_levels(_DIG_DRIVER* pDriver, const float* pWetLevels,
-                                                  const float* pDryLevels, const int* pSpeakers,
-                                                  int iCount)
+                                                  const float* pDryLevels, const int* pSpeakers, int iCount)
 {
     if (pDriver == NULL || pDriver->speakerConfig == 0)
     {
@@ -4276,8 +4169,7 @@ extern "C" void AIL_API_set_speaker_reverb_levels(_DIG_DRIVER* pDriver, const fl
     }
 }
 
-extern "C" void AIL_API_set_speaker_configuration(_DIG_DRIVER* pDriver,
-                                                  const float* pSpeakerPositions, int iChannels,
+extern "C" void AIL_API_set_speaker_configuration(_DIG_DRIVER* pDriver, const float* pSpeakerPositions, int iChannels,
                                                   float fAzimuth)
 {
     if (pDriver == NULL)
@@ -4291,8 +4183,7 @@ extern "C" void AIL_API_set_speaker_configuration(_DIG_DRIVER* pDriver,
     }
 
     pDriver->speakers.panExponent = fAzimuth;
-    SS_set_speaker_configuration(&pDriver->speakers, pSpeakerPositions, iChannels,
-                                 pDriver->speakerConfig);
+    SS_set_speaker_configuration(&pDriver->speakers, pSpeakerPositions, iChannels, pDriver->speakerConfig);
 }
 
 extern "C" unsigned int SS_granularity(_SAMPLE* pSample)
@@ -4433,8 +4324,7 @@ extern "C" int AIL_set_sample_loop_samples(_SAMPLE* pSample, int iLoopStart, int
             int iResult[2];
             iRequest[0] = iLoopStart;
             iRequest[1] = iLoopEnd;
-            if (decoder.property(decoder.stream, decoder.setLoopingSamples, 0, iRequest,
-                                 iResult) != 0)
+            if (decoder.property(decoder.stream, decoder.setLoopingSamples, 0, iRequest, iResult) != 0)
             {
                 if (iResult[0] == SAMPLE_LOOP_CURRENT)
                 {
@@ -4468,8 +4358,7 @@ extern "C" int AIL_set_sample_loop_samples(_SAMPLE* pSample, int iLoopStart, int
         iStart = SAMPLE_LOOP_CURRENT;
     }
 
-    AIL_set_sample_loop_block(pSample, iStart,
-                              ((iEnd + (uGranularity >> 1)) / uGranularity) * uGranularity);
+    AIL_set_sample_loop_block(pSample, iStart, ((iEnd + (uGranularity >> 1)) / uGranularity) * uGranularity);
     return 1;
 }
 
@@ -4538,8 +4427,8 @@ extern "C" void AIL_API_set_digital_master_volume_level(_DIG_DRIVER* pDriver, fl
     pDriver->masterVolume = fLevel;
 }
 
-extern "C" void AIL_API_set_digital_master_reverb_levels(_DIG_DRIVER* pDriver, int iBus,
-                                                         float fWetLevel, float fDryLevel)
+extern "C" void AIL_API_set_digital_master_reverb_levels(_DIG_DRIVER* pDriver, int iBus, float fWetLevel,
+                                                         float fDryLevel)
 {
     if (pDriver == NULL)
     {
@@ -4574,10 +4463,9 @@ extern "C" void AIL_API_set_digital_master_reverb(_DIG_DRIVER* pDriver, int iBus
     pBus->tail = static_cast<int>(fTail);
     SS_update_driver_reverb_state(pDriver);
 
-    unsigned int uPredelay =
-        (static_cast<int>(fReverbPredelay * static_cast<float>(pDriver->outputRate)) * 4 +
-         REVERB_ALIGNMENT - 1) &
-        ~(REVERB_ALIGNMENT - 1);
+    unsigned int uPredelay = (static_cast<int>(fReverbPredelay * static_cast<float>(pDriver->outputRate)) * 4
+                              + REVERB_ALIGNMENT - 1)
+                             & ~(REVERB_ALIGNMENT - 1);
     if (pBus->length <= static_cast<int>(uPredelay))
     {
         uPredelay = pBus->length - 1;
@@ -4605,9 +4493,8 @@ extern "C" void AIL_API_set_digital_master_reverb(_DIG_DRIVER* pDriver, int iBus
         float fScale = ONE / (static_cast<float>(sqrt(REVERB_SQRT_ARGUMENT)) * fTangent + ONE + fSquare);
         reverb.lowPass[0] = fScale;
         reverb.lowPass[1] = ((ONE - fSquare) + (ONE - fSquare)) * fScale;
-        reverb.lowPass[2] =
-            (-(static_cast<float>(sqrt(REVERB_SQRT_ARGUMENT)) * fTangent - ONE) + fSquare) *
-            reverb.lowPass[0];
+        reverb.lowPass[2] = (-(static_cast<float>(sqrt(REVERB_SQRT_ARGUMENT)) * fTangent - ONE) + fSquare)
+                            * reverb.lowPass[0];
     }
     else
     {
@@ -4620,23 +4507,23 @@ extern "C" void AIL_API_set_digital_master_reverb(_DIG_DRIVER* pDriver, int iBus
 void set_lp_info(LOWPASS_INFO* pInfo, int iFirst, int iSecond, int iThird)
 {
     unsigned int uHistoryA = static_cast<unsigned int>(pInfo->historyA) << FIXED_POINT_SHIFT;
-    int iPreviousA = static_cast<int>(uHistoryA | (static_cast<unsigned int>(pInfo->historyA) >> FIXED_POINT_SHIFT)) >> FIXED_POINT_SHIFT;
+    int iPreviousA = static_cast<int>(uHistoryA | (static_cast<unsigned int>(pInfo->historyA) >> FIXED_POINT_SHIFT))
+                     >> FIXED_POINT_SHIFT;
     unsigned int uHistoryB = static_cast<unsigned int>(pInfo->historyB) << FIXED_POINT_SHIFT;
     pInfo->coefficientA = (pInfo->coefficientA << FIXED_POINT_SHIFT) | (iFirst & WORD_MASK_16);
     unsigned int uNewB = static_cast<unsigned int>(
-        (((pInfo->sampleA + pInfo->sampleB * 3) * iFirst - iSecond * iPreviousA) -
-         iThird *
-             (static_cast<int>(uHistoryB | (static_cast<unsigned int>(pInfo->historyB) >> FIXED_POINT_SHIFT)) >>
-              FIXED_POINT_SHIFT)) >>
-        LOW_PASS_COEFFICIENT_SHIFT);
+        (((pInfo->sampleA + pInfo->sampleB * 3) * iFirst - iSecond * iPreviousA)
+         - iThird
+               * (static_cast<int>(uHistoryB | (static_cast<unsigned int>(pInfo->historyB) >> FIXED_POINT_SHIFT))
+                  >> FIXED_POINT_SHIFT))
+        >> LOW_PASS_COEFFICIENT_SHIFT);
     pInfo->coefficientB = (pInfo->coefficientB << FIXED_POINT_SHIFT) | (iSecond & WORD_MASK_16);
     pInfo->coefficientC = (pInfo->coefficientC << FIXED_POINT_SHIFT) | (iThird & WORD_MASK_16);
     pInfo->historyB = uHistoryB | (uNewB & WORD_MASK_16);
-    pInfo->historyA =
-        uHistoryA | (((((pInfo->sampleA * 3 + pInfo->sampleB) * iFirst - iSecond * uNewB) -
-                       iThird * iPreviousA) >>
-                      LOW_PASS_COEFFICIENT_SHIFT) &
-                     WORD_MASK_16);
+    pInfo->historyA = uHistoryA
+                      | (((((pInfo->sampleA * 3 + pInfo->sampleB) * iFirst - iSecond * uNewB) - iThird * iPreviousA)
+                          >> LOW_PASS_COEFFICIENT_SHIFT)
+                         & WORD_MASK_16);
     int iMode = LOW_PASS_MODE_ACTIVE;
     if (pInfo->mode != 0)
     {
@@ -4659,8 +4546,8 @@ extern "C" void AIL_API_start_sample(_SAMPLE* pSample)
         return;
     }
 
-    if ((iStatus == SAMPLE_STATUS_PLAYING || iStatus == SAMPLE_STATUS_PLAYING_RELEASED) &&
-        pSample->loopMode == LOOP_MODE_STREAMING)
+    if ((iStatus == SAMPLE_STATUS_PLAYING || iStatus == SAMPLE_STATUS_PLAYING_RELEASED)
+        && pSample->loopMode == LOOP_MODE_STREAMING)
     {
         return;
     }
@@ -4689,8 +4576,7 @@ extern "C" void AIL_API_start_sample(_SAMPLE* pSample)
         if (pSample->loopMode == LOOP_MODE_ASI && pDecoder->streamSeekPosition != RIB_ENTRY_NOT_FOUND)
         {
             int* pPosition = &pSample->buffers[pSample->currentBuffer].position;
-            pDecoder->property(pDecoder->stream, pDecoder->streamSeekPosition, 0, pPosition,
-                               pPosition);
+            pDecoder->property(pDecoder->stream, pDecoder->streamSeekPosition, 0, pPosition, pPosition);
         }
     }
 
@@ -4751,8 +4637,8 @@ extern "C" void AIL_API_resume_sample(_SAMPLE* pSample)
     SS_start_playback(pSample);
 }
 
-extern "C" AIL_FALLOFF_CALLBACK AIL_API_register_falloff_function_callback(
-    _SAMPLE* pSample, AIL_FALLOFF_CALLBACK pCallback)
+extern "C" AIL_FALLOFF_CALLBACK AIL_API_register_falloff_function_callback(_SAMPLE* pSample,
+                                                                           AIL_FALLOFF_CALLBACK pCallback)
 {
     if (pSample == NULL)
     {
@@ -4769,8 +4655,7 @@ extern "C" AIL_FALLOFF_CALLBACK AIL_API_register_falloff_function_callback(
     return pPrevious;
 }
 
-extern "C" int AIL_API_minimum_sample_buffer_size(_DIG_DRIVER* pDriver, int iPlaybackRate,
-                                                  int iFormat)
+extern "C" int AIL_API_minimum_sample_buffer_size(_DIG_DRIVER* pDriver, int iPlaybackRate, int iFormat)
 {
     int iNibbles = nibbles_per_sample(iFormat);
     int iGranularity = iNibbles / 2;
@@ -4780,26 +4665,25 @@ extern "C" int AIL_API_minimum_sample_buffer_size(_DIG_DRIVER* pDriver, int iPla
     }
 
     int iOutputRate = pDriver->outputRate;
-    int iSize = (((pDriver->fillBytes * iNibbles) /
-                  (pDriver->speakerConfig * pDriver->bufferCount * 2)) *
-                 iPlaybackRate) /
-                iOutputRate;
+    int iSize = (((pDriver->fillBytes * iNibbles) / (pDriver->speakerConfig * pDriver->bufferCount * 2))
+                 * iPlaybackRate)
+                / iOutputRate;
     iSize = iSize + (iSize * AIL_preference[PREFERENCE_RESAMPLING_TOLERANCE]) / 32768;
-    if (iOutputRate != iPlaybackRate && iOutputRate != iPlaybackRate * 2 &&
-        iOutputRate != iPlaybackRate * 4)
+    if (iOutputRate != iPlaybackRate && iOutputRate != iPlaybackRate * 2 && iOutputRate != iPlaybackRate * 4)
     {
         iSize = iSize + 4;
     }
 
-    int iMinimum = ((iSize + BUFFER_SIZE_ROUNDING) & ~BUFFER_SIZE_ROUNDING) *
-                   AIL_preference[PREFERENCE_MINIMUM_BUFFER_MARGIN];
+    int iMinimum = ((iSize + BUFFER_SIZE_ROUNDING) & ~BUFFER_SIZE_ROUNDING)
+                   * AIL_preference[PREFERENCE_MINIMUM_BUFFER_MARGIN];
     return iMinimum - iMinimum % iGranularity;
 }
 
 extern "C" int AIL_API_set_sample_buffer_count(_SAMPLE* pSample, int iCount)
 {
-    if (pSample == NULL || static_cast<unsigned int>(iCount - SAMPLE_MINIMUM_BUFFER_COUNT) >=
-                               static_cast<unsigned int>(SAMPLE_MAXIMUM_BUFFER_COUNT - 1))
+    if (pSample == NULL
+        || static_cast<unsigned int>(iCount - SAMPLE_MINIMUM_BUFFER_COUNT)
+               >= static_cast<unsigned int>(SAMPLE_MAXIMUM_BUFFER_COUNT - 1))
     {
         return 0;
     }
@@ -4823,8 +4707,7 @@ extern "C" int AIL_API_set_sample_buffer_count(_SAMPLE* pSample, int iCount)
     return 1;
 }
 
-extern "C" int AIL_API_load_sample_buffer(_SAMPLE* pSample, int iBuffer, const void* pData,
-                                          unsigned int uLength)
+extern "C" int AIL_API_load_sample_buffer(_SAMPLE* pSample, int iBuffer, const void* pData, unsigned int uLength)
 {
     if (pSample == NULL || pSample->bufferCount <= iBuffer)
     {
@@ -4845,8 +4728,7 @@ extern "C" int AIL_API_load_sample_buffer(_SAMPLE* pSample, int iBuffer, const v
         pBuffer->data = static_cast<const unsigned char*>(pData);
         pBuffer->size = uLength;
         pBuffer->position = 0;
-        if (uLength != 0 &&
-            pSample->driver->sampleStatus[pSample->index] != SAMPLE_STATUS_PLAYING)
+        if (uLength != 0 && pSample->driver->sampleStatus[pSample->index] != SAMPLE_STATUS_PLAYING)
         {
             pSample->loopMode = LOOP_MODE_STREAMING;
         }
@@ -4945,8 +4827,7 @@ extern "C" void AIL_API_set_sample_ms_position(_SAMPLE* pSample, unsigned int uM
     }
 
     unsigned int uFlags = pSample->channelFlags;
-    int iSamplesPerSecond =
-        static_cast<int>(static_cast<float>(pSample->playbackRate) * pSample->playbackRateFactor);
+    int iSamplesPerSecond = static_cast<int>(static_cast<float>(pSample->playbackRate) * pSample->playbackRateFactor);
     unsigned int uBytesPerSecond;
     int iPosition;
     if ((uFlags & SAMPLE_FORMAT_ADPCM) == 0)
@@ -4966,13 +4847,13 @@ extern "C" void AIL_API_set_sample_ms_position(_SAMPLE* pSample, unsigned int uM
     else
     {
         unsigned int uHeader = ADPCM_BLOCK_HEADER_MONO << ((uFlags >> 1) & 1);
-        uBytesPerSecond = static_cast<unsigned int>(iSamplesPerSecond * pSample->adpcmBlockSize) /
-                          ((((pSample->adpcmBlockSize - uHeader) * ADPCM_BITS_PER_BYTE) / uHeader) + 1);
+        uBytesPerSecond = static_cast<unsigned int>(iSamplesPerSecond * pSample->adpcmBlockSize)
+                          / ((((pSample->adpcmBlockSize - uHeader) * ADPCM_BITS_PER_BYTE) / uHeader) + 1);
     }
 
-    iPosition = static_cast<int>((static_cast<float>(uBytesPerSecond) *
-                                  static_cast<float>(static_cast<int>(uMilliseconds))) /
-                                 MILLISECONDS_PER_SECOND);
+    iPosition = static_cast<int>(
+        (static_cast<float>(uBytesPerSecond) * static_cast<float>(static_cast<int>(uMilliseconds)))
+        / MILLISECONDS_PER_SECOND);
     AIL_set_sample_position(pSample, iPosition);
 }
 
@@ -4997,8 +4878,8 @@ inline float DistanceOf(float fX, float fY, float fZ)
 }
 }
 
-extern "C" void SS_set_speaker_configuration(SpeakerState* pState, const float* pPositions,
-                                             unsigned int uProvided, unsigned int uSpeakers)
+extern "C" void SS_set_speaker_configuration(SpeakerState* pState, const float* pPositions, unsigned int uProvided,
+                                             unsigned int uSpeakers)
 {
     if (static_cast<int>(uSpeakers) < static_cast<int>(uProvided))
     {
@@ -5036,14 +4917,11 @@ extern "C" void SS_set_speaker_configuration(SpeakerState* pState, const float* 
         fZ = fZ / fLength;
         int iRegular = pState->speakerCount++;
         pState->speakerChannels[iRegular] = iSpeaker;
-        float fLocalX = fZ * pState->listenerFace[0] + fX * pState->listenerCross[0] +
-                        fY * pState->listenerUp[0];
+        float fLocalX = fZ * pState->listenerFace[0] + fX * pState->listenerCross[0] + fY * pState->listenerUp[0];
         pState->speakerDirections[iRegular][0] = fLocalX;
-        float fLocalY = fZ * pState->listenerFace[1] + fX * pState->listenerCross[1] +
-                        fY * pState->listenerUp[1];
+        float fLocalY = fZ * pState->listenerFace[1] + fX * pState->listenerCross[1] + fY * pState->listenerUp[1];
         pState->speakerDirections[iRegular][1] = fLocalY;
-        float fLocalZ = fZ * pState->listenerFace[2] + fX * pState->listenerCross[2] +
-                        fY * pState->listenerUp[2];
+        float fLocalZ = fZ * pState->listenerFace[2] + fX * pState->listenerCross[2] + fY * pState->listenerUp[2];
         pState->speakerDirections[iRegular][2] = fLocalZ;
         SpeakerDirection* pDirection = &pState->directions[pState->directionCount];
         pDirection->x = fLocalX;
@@ -5107,8 +4985,8 @@ extern "C" void SS_set_speaker_configuration(SpeakerState* pState, const float* 
     }
 }
 
-extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned int uCount,
-                                               _SAMPLE* pSample, float* pLevels)
+extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned int uCount, _SAMPLE* pSample,
+                                               float* pLevels)
 {
     float fWeights[PATH_WEIGHT_CAPACITY];
     float fAccumulators[LEVEL_CHANNEL_CAPACITY];
@@ -5139,17 +5017,16 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
             double dX = pEnd[0] - pStart[0];
             double dY = pEnd[1] - pStart[1];
             double dZ = pEnd[2] - pStart[2];
-            double dLengthSquared = static_cast<float>(
-                dZ * dZ + static_cast<float>(dX * dX + static_cast<float>(dY * dY)));
+            double dLengthSquared = static_cast<float>(dZ * dZ
+                                                       + static_cast<float>(dX * dX + static_cast<float>(dY * dY)));
             if (dLengthSquared > SPEAKER_DIRECTION_EPSILON)
             {
                 const float* pListener = pSpeakers->listenerPosition;
                 double dT = static_cast<float>(
-                    (static_cast<float>(pListener[2] - pStart[2]) * dZ +
-                     static_cast<float>(static_cast<float>(pListener[0] - pStart[0]) * dX +
-                                        static_cast<float>(
-                                            static_cast<float>(pListener[1] - pStart[1]) * dY))) /
-                    dLengthSquared);
+                    (static_cast<float>(pListener[2] - pStart[2]) * dZ
+                     + static_cast<float>(static_cast<float>(pListener[0] - pStart[0]) * dX
+                                          + static_cast<float>(static_cast<float>(pListener[1] - pStart[1]) * dY)))
+                    / dLengthSquared);
                 if (dT < ZERO)
                 {
                     dT = ZERO;
@@ -5163,9 +5040,8 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
                 pCandidate[0] = pListener[0] - static_cast<float>(dX * dT + pStart[0]);
                 pCandidate[1] = pListener[1] - static_cast<float>(dY * dT + pStart[1]);
                 pCandidate[2] = pListener[2] - static_cast<float>(dZ * dT + pStart[2]);
-                float fCandidateSquared = pCandidate[2] * pCandidate[2] +
-                                          pCandidate[0] * pCandidate[0] +
-                                          pCandidate[1] * pCandidate[1];
+                float fCandidateSquared = pCandidate[2] * pCandidate[2] + pCandidate[0] * pCandidate[0]
+                                          + pCandidate[1] * pCandidate[1];
                 if (fBest < ZERO || fCandidateSquared < fBest)
                 {
                     fBest = fCandidateSquared;
@@ -5197,8 +5073,8 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
         }
 
         fDistance = sqrtf(fBest);
-        if (fDistance < pSample->minimumDistance && pSample->falloffPointCounts[0] == 0 &&
-            pSample->falloffPointCounts[3] == 0)
+        if (fDistance < pSample->minimumDistance && pSample->falloffPointCounts[0] == 0
+            && pSample->falloffPointCounts[3] == 0)
         {
             fExclusion = ONE - fDistance / pSample->minimumDistance;
         }
@@ -5248,8 +5124,7 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
         if (pSpeakers->active != 0)
         {
             pSample->distanceVolume = ZERO;
-            for (unsigned int uChannel = 0; static_cast<int>(uChannel) < static_cast<int>(uCount);
-                 ++uChannel)
+            for (unsigned int uChannel = 0; static_cast<int>(uChannel) < static_cast<int>(uCount); ++uChannel)
             {
                 pLevels[uChannel] = ZERO;
             }
@@ -5260,26 +5135,20 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
 
     if (pSample->falloffPointCounts[1] != 0)
     {
-        pSample->falloffVolume = static_cast<float>(
-            evaluate_graph(fDistance,
-                           reinterpret_cast<const GraphPoint*>(pSample->falloffPoints[1]),
-                           pSample->falloffPointCounts[1]));
+        pSample->falloffVolume = static_cast<float>(evaluate_graph(
+            fDistance, reinterpret_cast<const GraphPoint*>(pSample->falloffPoints[1]), pSample->falloffPointCounts[1]));
     }
 
     if (pSample->falloffPointCounts[2] != 0)
     {
-        pSample->falloffLowPass = static_cast<float>(
-            evaluate_graph(fDistance,
-                           reinterpret_cast<const GraphPoint*>(pSample->falloffPoints[2]),
-                           pSample->falloffPointCounts[2]));
+        pSample->falloffLowPass = static_cast<float>(evaluate_graph(
+            fDistance, reinterpret_cast<const GraphPoint*>(pSample->falloffPoints[2]), pSample->falloffPointCounts[2]));
     }
 
     if (pSample->falloffPointCounts[3] != 0)
     {
-        pSample->falloffExclusion = static_cast<float>(
-            evaluate_graph(fDistance,
-                           reinterpret_cast<const GraphPoint*>(pSample->falloffPoints[3]),
-                           pSample->falloffPointCounts[3]));
+        pSample->falloffExclusion = static_cast<float>(evaluate_graph(
+            fDistance, reinterpret_cast<const GraphPoint*>(pSample->falloffPoints[3]), pSample->falloffPointCounts[3]));
     }
 
     pSample->distanceVolume = ONE;
@@ -5307,12 +5176,9 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
     }
     else
     {
-        float fDecibels = static_cast<float>(
-            evaluate_graph(fDistance,
-                           reinterpret_cast<const GraphPoint*>(pSample->falloffPoints[0]),
-                           pSample->falloffPointCounts[0]));
-        double dLinear = pow(DISTANCE_GRAPH_BASE,
-                             static_cast<double>(fDecibels / DISTANCE_GRAPH_DECIBELS));
+        float fDecibels = static_cast<float>(evaluate_graph(
+            fDistance, reinterpret_cast<const GraphPoint*>(pSample->falloffPoints[0]), pSample->falloffPointCounts[0]));
+        double dLinear = pow(DISTANCE_GRAPH_BASE, static_cast<double>(fDecibels / DISTANCE_GRAPH_DECIBELS));
         fGain = static_cast<float>(dLinear);
         if (fGain <= DISTANCE_GRAPH_SILENCE)
         {
@@ -5327,8 +5193,8 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
 
     if (pSample->coneEnabled != 0)
     {
-        double dDot = -pSample->forwardZ * fDirections[0][2] + -pSample->forwardX * fDirections[0][0] +
-                      -pSample->forwardY * fDirections[0][1];
+        double dDot = -pSample->forwardZ * fDirections[0][2] + -pSample->forwardX * fDirections[0][0]
+                      + -pSample->forwardY * fDirections[0][1];
         float fAngle;
         bool bOutside;
         if (dDot <= ANGLE_ALIGNED_DOT)
@@ -5353,17 +5219,15 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
             fGain = static_cast<float>(fGain * pSample->coneOuterVolume);
             pSample->distanceVolume = fGain;
         }
-        else if (pSample->coneInner <= fAngle &&
-                 static_cast<float>(pSample->coneOuter - pSample->coneInner) >
-                     SPEAKER_DIRECTION_EPSILON)
+        else if (pSample->coneInner <= fAngle
+                 && static_cast<float>(pSample->coneOuter - pSample->coneInner) > SPEAKER_DIRECTION_EPSILON)
         {
             float fRange = static_cast<float>(pSample->coneOuter - pSample->coneInner);
             fGain = static_cast<float>(
-                fGain * static_cast<float>(
-                            static_cast<float>(ONE - pSample->coneOuterVolume) *
-                                static_cast<float>(static_cast<float>(pSample->coneOuter - fAngle) /
-                                                   fRange) +
-                            pSample->coneOuterVolume));
+                fGain
+                * static_cast<float>(static_cast<float>(ONE - pSample->coneOuterVolume)
+                                         * static_cast<float>(static_cast<float>(pSample->coneOuter - fAngle) / fRange)
+                                     + pSample->coneOuterVolume));
             pSample->distanceVolume = fGain;
         }
     }
@@ -5384,13 +5248,11 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
             sqrt(static_cast<double>(ONE / static_cast<float>(static_cast<int>(uCount)))));
         for (int iLow = 0; iLow < pSpeakers->lowFrequencyCount; ++iLow)
         {
-            fAccumulators[pSpeakers->lowFrequencySpeakers[iLow]] =
-                static_cast<float>(fGain * fShare);
+            fAccumulators[pSpeakers->lowFrequencySpeakers[iLow]] = static_cast<float>(fGain * fShare);
         }
 
         float fExclusionScale = ONE - fExclusion;
-        for (unsigned int uCandidate = 0; static_cast<int>(uCandidate) < static_cast<int>(uCandidates);
-             ++uCandidate)
+        for (unsigned int uCandidate = 0; static_cast<int>(uCandidate) < static_cast<int>(uCandidates); ++uCandidate)
         {
             float fWeight = fWeights[uCandidate] / fWeights[0];
             const float* pEmitter = fDirections[uCandidate];
@@ -5398,8 +5260,7 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
             for (int iDirection = 0; iDirection < pSpeakers->directionCount; ++iDirection)
             {
                 const SpeakerDirection& direction = pSpeakers->directions[iDirection];
-                float fDot = direction.z * pEmitter[2] + direction.x * pEmitter[0] +
-                             direction.y * pEmitter[1];
+                float fDot = direction.z * pEmitter[2] + direction.x * pEmitter[0] + direction.y * pEmitter[1];
                 float fTerm;
                 if (fDot > ANGLE_ALIGNED_DOT)
                 {
@@ -5412,10 +5273,9 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
                 else
                 {
                     float fRadians = static_cast<float>(acos(fDot));
-                    fTerm = -(fExclusionScale *
-                                  static_cast<float>(PI_CONSTANT -
-                                                     static_cast<float>(PI_CONSTANT - fRadians)) -
-                              PI_CONSTANT);
+                    fTerm = -(fExclusionScale
+                                  * static_cast<float>(PI_CONSTANT - static_cast<float>(PI_CONSTANT - fRadians))
+                              - PI_CONSTANT);
                 }
 
                 fAngleTerms[iDirection] = fTerm;
@@ -5425,14 +5285,13 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
             for (int iDirection = 0; iDirection < pSpeakers->directionCount; ++iDirection)
             {
                 const SpeakerDirection& direction = pSpeakers->directions[iDirection];
-                double dAmplitude = sqrt(pow(static_cast<double>(fAngleTerms[iDirection]),
-                                             static_cast<double>(pSpeakers->panExponent)) /
-                                         fTotal);
+                double dAmplitude = sqrt(
+                    pow(static_cast<double>(fAngleTerms[iDirection]), static_cast<double>(pSpeakers->panExponent))
+                    / fTotal);
                 for (int iMember = 0; iMember < direction.memberCount; ++iMember)
                 {
                     int iChannel = pSpeakers->speakerChannels[direction.members[iMember]];
-                    float fContribution =
-                        fWeight * static_cast<float>(dAmplitude) * direction.gains[iMember];
+                    float fContribution = fWeight * static_cast<float>(dAmplitude) * direction.gains[iMember];
                     if (iChannel != -1)
                     {
                         fAccumulators[iChannel] = fAccumulators[iChannel] + fContribution;
@@ -5444,14 +5303,12 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
                             const SpeakerDirection& spread = pSpeakers->directions[iOther];
                             for (int iSpread = 0; iSpread < spread.memberCount; ++iSpread)
                             {
-                                int iSpreadChannel =
-                                    pSpeakers->speakerChannels[spread.members[iSpread]];
+                                int iSpreadChannel = pSpeakers->speakerChannels[spread.members[iSpread]];
                                 if (iSpreadChannel != -1)
                                 {
                                     fAccumulators[iSpreadChannel] =
-                                        fAccumulators[iSpreadChannel] +
-                                        fContribution /
-                                            static_cast<float>(pSpeakers->directionCount * 2);
+                                        fAccumulators[iSpreadChannel]
+                                        + fContribution / static_cast<float>(pSpeakers->directionCount * 2);
                                 }
                             }
                         }
@@ -5460,8 +5317,8 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
             }
         }
 
-        float fNormaliser = static_cast<float>(sqrt(static_cast<double>(pSpeakers->panExponent))) *
-                            static_cast<float>(uCandidates);
+        float fNormaliser = static_cast<float>(sqrt(static_cast<double>(pSpeakers->panExponent)))
+                            * static_cast<float>(uCandidates);
         for (int iChannel = 0; iChannel < static_cast<int>(uCount); ++iChannel)
         {
             double dLevel = fAccumulators[iChannel] / fNormaliser;
@@ -5485,8 +5342,8 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
         for (int iChannel = 0; iChannel < static_cast<int>(uCount); ++iChannel)
         {
             pLevels[iChannel] = static_cast<float>(
-                fGain * static_cast<float>(sqrt(static_cast<double>(
-                            ONE / static_cast<float>(static_cast<int>(uCount))))));
+                fGain
+                * static_cast<float>(sqrt(static_cast<double>(ONE / static_cast<float>(static_cast<int>(uCount))))));
         }
     }
 
@@ -5510,13 +5367,13 @@ extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned
 
     if (fSpeed > SPEAKER_DIRECTION_EPSILON)
     {
-        float fRadial = static_cast<float>(
-                            fSpeed * static_cast<float>(
-                                         fDirections[0][2] * fVelocityZ +
-                                         static_cast<float>(fDirections[0][0] * fVelocityX +
-                                                            static_cast<float>(fDirections[0][1] *
-                                                                               fVelocityY)))) *
-                        pSpeakers->distanceFactor * pSpeakers->dopplerFactor;
+        float fRadial =
+            static_cast<float>(
+                fSpeed
+                * static_cast<float>(fDirections[0][2] * fVelocityZ
+                                     + static_cast<float>(fDirections[0][0] * fVelocityX
+                                                          + static_cast<float>(fDirections[0][1] * fVelocityY))))
+            * pSpeakers->distanceFactor * pSpeakers->dopplerFactor;
         float fScale = DOPPLER_MINIMUM_SCALE;
         if (DOPPLER_THRESHOLD < fRadial)
         {
@@ -5609,10 +5466,9 @@ struct ProfilePlot
 };
 
 typedef void (*ProfileTickFunc)(MilesProfile* pProfile);
-typedef void (*ProfileZoneFunc)(MilesProfile* pProfile, const unsigned long long* pStart,
-                                unsigned int uHigh, unsigned int uLow, int iCount, int iFlags,
-                                const char* pFile, int iLine, MilesProfileSite* pSite,
-                                const char* pLabel);
+typedef void (*ProfileZoneFunc)(MilesProfile* pProfile, const unsigned long long* pStart, unsigned int uHigh,
+                                unsigned int uLow, int iCount, int iFlags, const char* pFile, int iLine,
+                                MilesProfileSite* pSite, const char* pLabel);
 
 const char PROFILE_ADPCM_LABEL[] = "ADCPM decompression";
 const char PROFILE_DEINTERLACE_LABEL[] = "Input deinterlace";
@@ -5666,10 +5522,9 @@ const ProfileEntry PROFILE_ENTRIES[] = {
 const int PROFILE_ENTRY_COUNT = sizeof(PROFILE_ENTRIES) / sizeof(PROFILE_ENTRIES[0]);
 
 const ProfilePlot PROFILE_PLOTS[] = {
-    {0, PROFILE_PLOT_ADPCM},   {1, PROFILE_PLOT_DEINTERLACE}, {2, PROFILE_PLOT_MIX},
-    {3, PROFILE_PLOT_REVERB},  {4, PROFILE_PLOT_CONVERSION},  {5, PROFILE_PLOT_LOW_PASS},
-    {6, PROFILE_PLOT_FILTERS}, {7, PROFILE_PLOT_OTHER},       {8, PROFILE_PLOT_BINK},
-    {9, PROFILE_PLOT_MP3},     {10, PROFILE_PLOT_OGG}};
+    {0, PROFILE_PLOT_ADPCM},      {1, PROFILE_PLOT_DEINTERLACE}, {2, PROFILE_PLOT_MIX},     {3, PROFILE_PLOT_REVERB},
+    {4, PROFILE_PLOT_CONVERSION}, {5, PROFILE_PLOT_LOW_PASS},    {6, PROFILE_PLOT_FILTERS}, {7, PROFILE_PLOT_OTHER},
+    {8, PROFILE_PLOT_BINK},       {9, PROFILE_PLOT_MP3},         {10, PROFILE_PLOT_OGG}};
 const int PROFILE_PLOT_COUNT = sizeof(PROFILE_PLOTS) / sizeof(PROFILE_PLOTS[0]);
 
 const unsigned int TIME_BASE_RETRY_LIMIT = 500;
@@ -5767,14 +5622,13 @@ inline short ConvertOutputSample(int iValue)
         iScaled = OUTPUT_SAMPLE_CLIPPED_HIGH;
     }
 
-    return static_cast<short>((static_cast<unsigned short>(iScaled) >> 8) |
-                              (static_cast<unsigned char>(iScaled) << 8));
+    return static_cast<short>((static_cast<unsigned short>(iScaled) >> 8) | (static_cast<unsigned char>(iScaled) << 8));
 }
 }
 
-unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppSource,
-                           void* pSourceEnd, void** ppDestination, void* pDestinationEnd,
-                           int* piLeft, int* piRight, int iLeftStep, int iRightStep, int iCount)
+unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppSource, void* pSourceEnd,
+                           void** ppDestination, void* pDestinationEnd, int* piLeft, int* piRight, int iLeftStep,
+                           int iRightStep, int iCount)
 {
     const unsigned char* pSource = static_cast<const unsigned char*>(*ppSource);
     int* pDestination = static_cast<int*>(*ppDestination);
@@ -5795,17 +5649,15 @@ unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppS
     {
         if (iStereoDestination == 0)
         {
-            if ((reinterpret_cast<unsigned int>(pDestination + iCount) & MIX_DESTINATION_ALIGNMENT) !=
-                0)
+            if ((reinterpret_cast<unsigned int>(pDestination + iCount) & MIX_DESTINATION_ALIGNMENT) != 0)
             {
-                iCount = iCount + ((MIX_ALIGNMENT_BYTES - (reinterpret_cast<unsigned int>(pDestination + iCount) &
-                                            MIX_DESTINATION_ALIGNMENT)) >>
-                                   2);
+                iCount = iCount
+                         + ((MIX_ALIGNMENT_BYTES
+                             - (reinterpret_cast<unsigned int>(pDestination + iCount) & MIX_DESTINATION_ALIGNMENT))
+                            >> 2);
                 if (pDestinationLimit < pDestination + iCount)
                 {
-                    iCount = (reinterpret_cast<int>(pDestinationLimit) -
-                              reinterpret_cast<int>(pDestination)) /
-                             4;
+                    iCount = (reinterpret_cast<int>(pDestinationLimit) - reinterpret_cast<int>(pDestination)) / 4;
                 }
 
                 int iSourceFrames = (pSourceLimit - pSource) / 2;
@@ -5831,15 +5683,12 @@ unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppS
         else
         {
             uFlags = uFlags | MIX_FLAG_STEREO_DESTINATION;
-            if ((reinterpret_cast<unsigned int>(pDestination + iCount * 2) &
-                 MIX_DESTINATION_PAIR_ALIGNMENT) != 0)
+            if ((reinterpret_cast<unsigned int>(pDestination + iCount * 2) & MIX_DESTINATION_PAIR_ALIGNMENT) != 0)
             {
                 iCount = iCount + 1;
                 if (pDestinationLimit < pDestination + 2)
                 {
-                    iCount = (reinterpret_cast<int>(pDestinationLimit) -
-                              reinterpret_cast<int>(pDestination)) /
-                             8;
+                    iCount = (reinterpret_cast<int>(pDestinationLimit) - reinterpret_cast<int>(pDestination)) / 8;
                 }
 
                 int iSourceFrames = (pSourceLimit - pSource) / 2;
@@ -5876,17 +5725,15 @@ unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppS
         uFlags = uFlags | MIX_FLAG_STEREO_SOURCE;
         if (iStereoDestination == 0)
         {
-            if ((reinterpret_cast<unsigned int>(pDestination + iCount) & MIX_DESTINATION_ALIGNMENT) !=
-                0)
+            if ((reinterpret_cast<unsigned int>(pDestination + iCount) & MIX_DESTINATION_ALIGNMENT) != 0)
             {
-                iCount = iCount + ((MIX_ALIGNMENT_BYTES - (reinterpret_cast<unsigned int>(pDestination + iCount) &
-                                            MIX_DESTINATION_ALIGNMENT)) >>
-                                   2);
+                iCount = iCount
+                         + ((MIX_ALIGNMENT_BYTES
+                             - (reinterpret_cast<unsigned int>(pDestination + iCount) & MIX_DESTINATION_ALIGNMENT))
+                            >> 2);
                 if (pDestinationLimit < pDestination + iCount)
                 {
-                    iCount = (reinterpret_cast<int>(pDestinationLimit) -
-                              reinterpret_cast<int>(pDestination)) /
-                             4;
+                    iCount = (reinterpret_cast<int>(pDestinationLimit) - reinterpret_cast<int>(pDestination)) / 4;
                 }
 
                 int iSourceFrames = (pSourceLimit - pSource) / 4;
@@ -5908,8 +5755,8 @@ unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppS
 
             for (int iFrame = 0; iFrame < iCount; ++iFrame)
             {
-                *pDestination = *pDestination + ReadSample(pSource) * (iLeft >> MIX_VOLUME_SHIFT) +
-                                ReadSample(pSource + 2) * (iRight >> MIX_VOLUME_SHIFT);
+                *pDestination = *pDestination + ReadSample(pSource) * (iLeft >> MIX_VOLUME_SHIFT)
+                                + ReadSample(pSource + 2) * (iRight >> MIX_VOLUME_SHIFT);
                 ++pDestination;
                 pSource += 4;
                 iLeft = iLeft + iLeftStep;
@@ -5919,15 +5766,12 @@ unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppS
         else
         {
             uFlags = uFlags | MIX_FLAG_STEREO_DESTINATION;
-            if ((reinterpret_cast<unsigned int>(pDestination + iCount * 2) &
-                 MIX_DESTINATION_ALIGNMENT) != 0)
+            if ((reinterpret_cast<unsigned int>(pDestination + iCount * 2) & MIX_DESTINATION_ALIGNMENT) != 0)
             {
                 iCount = iCount + 1;
                 if (pDestinationLimit < pDestination + 2)
                 {
-                    iCount = (reinterpret_cast<int>(pDestinationLimit) -
-                              reinterpret_cast<int>(pDestination)) /
-                             8;
+                    iCount = (reinterpret_cast<int>(pDestinationLimit) - reinterpret_cast<int>(pDestination)) / 8;
                 }
 
                 int iSourceFrames = (pSourceLimit - pSource) / 4;
@@ -5950,8 +5794,7 @@ unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppS
             for (int iFrame = 0; iFrame < iCount; ++iFrame)
             {
                 pDestination[0] = pDestination[0] + ReadSample(pSource) * (iLeft >> MIX_VOLUME_SHIFT);
-                pDestination[1] =
-                    pDestination[1] + ReadSample(pSource + 2) * (iRight >> MIX_VOLUME_SHIFT);
+                pDestination[1] = pDestination[1] + ReadSample(pSource + 2) * (iRight >> MIX_VOLUME_SHIFT);
                 pDestination += 2;
                 pSource += 4;
                 iLeft = iLeft + iLeftStep;
@@ -5967,8 +5810,8 @@ unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppS
     return uFlags;
 }
 
-extern "C" void* SS_execute_filter_chain(_SAMPLE* pSample, void* pSource, void* pDestination,
-                                         unsigned int uBytes, int iChannel, void* pFinal)
+extern "C" void* SS_execute_filter_chain(_SAMPLE* pSample, void* pSource, void* pDestination, unsigned int uBytes,
+                                         int iChannel, void* pFinal)
 {
     int iStages[SAMPLE_FILTER_STAGE_COUNT];
     int iActive = 0;
@@ -6032,7 +5875,7 @@ extern "C" void SS_flush(_DIG_DRIVER* pDriver, int iBus)
     for (int iOutput = 0; iOutput < pDriver->outputCount; ++iOutput)
     {
         pDriver->processors[DRIVER_PROCESSOR_FLUSH].function.flush(pDriver->outputs[iOutput].buffer,
-                                                                    pDriver->outputs[iOutput].bytes);
+                                                                   pDriver->outputs[iOutput].bytes);
     }
 
     if (iBus <= FINAL_BUS)
@@ -6042,11 +5885,10 @@ extern "C" void SS_flush(_DIG_DRIVER* pDriver, int iBus)
             DriverBus* pBus = &pDriver->buses[iBus];
             if (pBus->update != 0)
             {
-                pDriver->processors[DRIVER_PROCESSOR_FLUSH].function.flush(
-                    pBus->buffer + pBus->writeOffset, pBus->chunkBytes);
-                if (static_cast<unsigned int>((pDriver->sharedState - pBus->updateValue) *
-                                              pDriver->fillPeriod) >
-                    pBus->tail * BUS_TAIL_SCALE + BUS_TAIL_MARGIN)
+                pDriver->processors[DRIVER_PROCESSOR_FLUSH].function.flush(pBus->buffer + pBus->writeOffset,
+                                                                           pBus->chunkBytes);
+                if (static_cast<unsigned int>((pDriver->sharedState - pBus->updateValue) * pDriver->fillPeriod)
+                    > pBus->tail * BUS_TAIL_SCALE + BUS_TAIL_MARGIN)
                 {
                     pBus->update = 0;
                 }
@@ -6073,8 +5915,7 @@ unsigned int SS_limiter(_MSS_BB* pBuffers, int iCount, int iSamples, int iPrevio
         int iPeak = 0;
         for (int iBuffer = 0; iBuffer < iCount; ++iBuffer)
         {
-            int* pFirst = reinterpret_cast<int*>(pBuffers[iBuffer].buffer) +
-                          iOffset * pBuffers[iBuffer].chans;
+            int* pFirst = reinterpret_cast<int*>(pBuffers[iBuffer].buffer) + iOffset * pBuffers[iBuffer].chans;
             int* pEnd = pFirst + pBuffers[iBuffer].chans * LIMITER_CHUNK_FRAMES;
             if (pFirst + iSamples * pBuffers[iBuffer].chans < pEnd)
             {
@@ -6099,9 +5940,8 @@ unsigned int SS_limiter(_MSS_BB* pBuffers, int iCount, int iSamples, int iPrevio
         int iLevel = LIMITER_UNITY;
         if (iPeak > LIMITER_THRESHOLD)
         {
-            iLevel = (((iPeak - LIMITER_THRESHOLD) >> LIMITER_PEAK_SHIFT) * LIMITER_SLOPE) /
-                         LIMITER_DIVISOR +
-                     LIMITER_UNITY;
+            iLevel = (((iPeak - LIMITER_THRESHOLD) >> LIMITER_PEAK_SHIFT) * LIMITER_SLOPE) / LIMITER_DIVISOR
+                     + LIMITER_UNITY;
             if (iLevel < 0)
             {
                 iLevel = 0;
@@ -6116,8 +5956,7 @@ unsigned int SS_limiter(_MSS_BB* pBuffers, int iCount, int iSamples, int iPrevio
 
         if (iDifference > LIMITER_SMOOTHING_LIMIT - 1)
         {
-            iLevel = (static_cast<int>(iLevel << 14) >> 15) +
-                     (static_cast<int>(iPrevious << 14) >> 15);
+            iLevel = (static_cast<int>(iLevel << 14) >> 15) + (static_cast<int>(iPrevious << 14) >> 15);
         }
 
         iPrevious = iLevel;
@@ -6125,8 +5964,7 @@ unsigned int SS_limiter(_MSS_BB* pBuffers, int iCount, int iSamples, int iPrevio
         {
             for (int iBuffer = 0; iBuffer < iCount; ++iBuffer)
             {
-                int* pFirst = reinterpret_cast<int*>(pBuffers[iBuffer].buffer) +
-                              iOffset * pBuffers[iBuffer].chans;
+                int* pFirst = reinterpret_cast<int*>(pBuffers[iBuffer].buffer) + iOffset * pBuffers[iBuffer].chans;
                 int* pEnd = pFirst + pBuffers[iBuffer].chans * LIMITER_CHUNK_FRAMES;
                 if (pFirst + iSamples * pBuffers[iBuffer].chans < pEnd)
                 {
@@ -6204,9 +6042,9 @@ extern "C" void SS_copy(_DIG_DRIVER* pDriver, int iBus, short* pDestination)
                     reverb.state[0] = fFiltered;
                     fFiltered = fSum + fOldState + reverb.state[1];
                     reverb.state[1] = fOldState;
-                    float fFeed = -(reverb.lowPass[2] * reverb.state[3] -
-                                    -(reverb.lowPass[1] * reverb.state[2] - fFiltered)) +
-                                  REVERB_DENORMAL_BIAS;
+                    float fFeed = -(reverb.lowPass[2] * reverb.state[3]
+                                    - -(reverb.lowPass[1] * reverb.state[2] - fFiltered))
+                                  + REVERB_DENORMAL_BIAS;
                     reverb.state[3] = reverb.state[2];
                     reverb.state[2] = fFeed;
                     float fFirst = *reverb.lines[0];
@@ -6242,8 +6080,7 @@ extern "C" void SS_copy(_DIG_DRIVER* pDriver, int iBus, short* pDestination)
                     }
 
                     float fFinalIn = *reverb.lines[5];
-                    float fLeft = reverb.coefficients[5] * fFinalIn +
-                                  fAllPassOut * REVERB_LEFT_FEEDBACK;
+                    float fLeft = reverb.coefficients[5] * fFinalIn + fAllPassOut * REVERB_LEFT_FEEDBACK;
                     *reverb.lines[5] = fLeft;
                     fLeft = reverb.coefficients[5] * fLeft - fFinalIn;
                     if (reverb.lines[5] + 1 < reverb.ends[5])
@@ -6263,14 +6100,12 @@ extern "C" void SS_copy(_DIG_DRIVER* pDriver, int iBus, short* pDestination)
                         {
                             int* pStereo = reinterpret_cast<int*>(output.buffer + iStereo);
                             pStereo[0] = pStereo[0] + iLeftValue;
-                            pStereo[1] =
-                                pStereo[1] +
-                                static_cast<int>(
-                                    -(reverb.coefficients[5] *
-                                          (reverb.coefficients[5] * fFinalIn +
-                                           fAllPassOut * REVERB_RIGHT_FEEDBACK) -
-                                      fFinalIn) *
-                                    pDriver->reverbSendA[output.speaker + 1]);
+                            pStereo[1] = pStereo[1]
+                                         + static_cast<int>(-(reverb.coefficients[5]
+                                                                  * (reverb.coefficients[5] * fFinalIn
+                                                                     + fAllPassOut * REVERB_RIGHT_FEEDBACK)
+                                                              - fFinalIn)
+                                                            * pDriver->reverbSendA[output.speaker + 1]);
                         }
                         else
                         {
@@ -6311,9 +6146,8 @@ extern "C" void SS_copy(_DIG_DRIVER* pDriver, int iBus, short* pDestination)
         _SAMPLE* pSample = pDriver->busSamples[iBus];
         if (pSample->limiterEnabled != 0)
         {
-            pSample->limiterLevel =
-                SS_limiter(pDriver->outputs, pDriver->outputCount, pDriver->framesPerBuffer,
-                           pSample->limiterLevel);
+            pSample->limiterLevel = SS_limiter(pDriver->outputs, pDriver->outputCount, pDriver->framesPerBuffer,
+                                               pSample->limiterLevel);
         }
 
         int iOutputs = pDriver->outputCount;
@@ -6365,8 +6199,8 @@ extern "C" void SS_copy(_DIG_DRIVER* pDriver, int iBus, short* pDestination)
         for (int iSource = 0; iSource < DRIVER_BUS_COUNT && uSources != 0; ++iSource)
         {
             _SAMPLE* pSourceSample = pDriver->busSamples[iSource];
-            if ((uSources & 1) != 0 && pSourceSample->compressorLink != 0 &&
-                pSourceSample->busPeak < static_cast<unsigned int>(iPeak))
+            if ((uSources & 1) != 0 && pSourceSample->compressorLink != 0
+                && pSourceSample->busPeak < static_cast<unsigned int>(iPeak))
             {
                 pSourceSample->busPeak = iPeak;
             }
@@ -6380,8 +6214,8 @@ extern "C" void SS_copy(_DIG_DRIVER* pDriver, int iBus, short* pDestination)
 
     if (pDriver->limiterEnabled != 0)
     {
-        pDriver->limiterLevel = SS_limiter(pDriver->outputs, pDriver->outputCount,
-                                           pDriver->framesPerBuffer, pDriver->limiterLevel);
+        pDriver->limiterLevel = SS_limiter(pDriver->outputs, pDriver->outputCount, pDriver->framesPerBuffer,
+                                           pDriver->limiterLevel);
     }
 
     StartTimer(&pDriver->timers[TIMER_FILTERS]);
@@ -6399,14 +6233,14 @@ extern "C" void SS_copy(_DIG_DRIVER* pDriver, int iBus, short* pDestination)
     StartTimer(&pDriver->timers[TIMER_FINAL_COPY]);
     if (pDriver->speakerConfig < 3)
     {
-        pDriver->processors[DRIVER_PROCESSOR_COPY].function.copy(
-            pDriver->outputs[0].buffer, pDriver->outputs[0].bytes, pDestination, pDriver->flags, 1);
+        pDriver->processors[DRIVER_PROCESSOR_COPY].function.copy(pDriver->outputs[0].buffer, pDriver->outputs[0].bytes,
+                                                                 pDestination, pDriver->flags, 1);
     }
     else
     {
         pDriver->processors[DRIVER_PROCESSOR_MULTICHANNEL_COPY].function.multiChannelCopy(
-            pDriver->outputs, pDriver->outputCount, pDestination, pDriver->flags,
-            pDriver->framesPerBuffer, pDriver->hardwareChannels);
+            pDriver->outputs, pDriver->outputCount, pDestination, pDriver->flags, pDriver->framesPerBuffer,
+            pDriver->hardwareChannels);
     }
 
     StopTimer(&pDriver->timers[TIMER_FINAL_COPY]);
@@ -6426,8 +6260,7 @@ extern "C" unsigned int SS_stream_to_buffer(_SAMPLE* pSample, short* pDestinatio
     if (pDriver->speakerConfig > 0 && pSample->is3D != 0)
     {
         float fPrevious = pSample->falloffLowPass;
-        SS_calculate_3D_channel_levels(&pDriver->speakers, pDriver->speakerConfig, pSample,
-                                       pSample->speakerLevelsA);
+        SS_calculate_3D_channel_levels(&pDriver->speakers, pDriver->speakerConfig, pSample, pSample->speakerLevelsA);
         if (pSample->falloffVolume != NO_FALLOFF_RESULT)
         {
             pSample->exclusion = pSample->falloffVolume;
@@ -6443,10 +6276,9 @@ extern "C" unsigned int SS_stream_to_buffer(_SAMPLE* pSample, short* pDestinatio
     int iLastResult = -1;
     if (pSample->playbackDelay != 0)
     {
-        unsigned long long uDelay = static_cast<unsigned long long>(static_cast<unsigned int>(iSize)) *
-                                    static_cast<unsigned int>(pSample->playbackDelay);
-        iPosition = static_cast<unsigned int>(uDelay / static_cast<unsigned int>(pDriver->fillPeriod)) &
-                    ALIGN_16_MASK;
+        unsigned long long uDelay = static_cast<unsigned long long>(static_cast<unsigned int>(iSize))
+                                    * static_cast<unsigned int>(pSample->playbackDelay);
+        iPosition = static_cast<unsigned int>(uDelay / static_cast<unsigned int>(pDriver->fillPeriod)) & ALIGN_16_MASK;
         pSample->playbackDelay = 0;
     }
 
@@ -6455,8 +6287,8 @@ extern "C" unsigned int SS_stream_to_buffer(_SAMPLE* pSample, short* pDestinatio
     {
         SampleBuffer* pBuffer = &pSample->buffers[pSample->currentBuffer];
         int iRemaining = pBuffer->size - pBuffer->position;
-        if (pSample->loopState != 1 && pSample->loopEnd != SAMPLE_LOOP_TO_END &&
-            pSample->loopEnd < static_cast<unsigned int>(pBuffer->size))
+        if (pSample->loopState != 1 && pSample->loopEnd != SAMPLE_LOOP_TO_END
+            && pSample->loopEnd < static_cast<unsigned int>(pBuffer->size))
         {
             iRemaining = pSample->loopEnd - pBuffer->position;
         }
@@ -6469,8 +6301,7 @@ extern "C" unsigned int SS_stream_to_buffer(_SAMPLE* pSample, short* pDestinatio
             }
 
             iPosition = SS_merge(pSample, iRemaining, iPosition, pDestination, iSize);
-            if ((iPosition == 0 && iLastResult == 0) ||
-                ((iLastResult = iPosition), iSize <= iPosition))
+            if ((iPosition == 0 && iLastResult == 0) || ((iLastResult = iPosition), iSize <= iPosition))
             {
                 bFinished = true;
             }
@@ -6521,8 +6352,7 @@ extern "C" unsigned int SS_stream_to_buffer(_SAMPLE* pSample, short* pDestinatio
                 pSample->resetB = 0;
             }
 
-            reset_asi(pSample, SAMPLE_LOOP_CURRENT,
-                      pSample->buffers[pSample->currentBuffer].position);
+            reset_asi(pSample, SAMPLE_LOOP_CURRENT, pSample->buffers[pSample->currentBuffer].position);
             if (pSample->loopState != 0)
             {
                 --pSample->loopState;
@@ -6624,20 +6454,18 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
     {
         unsigned int uFrames = pDriver->fillBytes / (pDriver->hardwareChannels << 1);
         unsigned long long uFrameStart =
-            static_cast<unsigned long long>(static_cast<unsigned int>(pDriver->sharedState)) *
-            uFrames;
+            static_cast<unsigned long long>(static_cast<unsigned int>(pDriver->sharedState)) * uFrames;
         unsigned long long uFrameEnd = uFrameStart + uFrames;
         for (int iIndex = 0; iIndex < pDriver->sampleCount; ++iIndex)
         {
             _SAMPLE* pSample = &pDriver->samples[iIndex];
             int iStatus = pDriver->sampleStatus[iIndex];
-            if ((iStatus == SAMPLE_STATUS_DONE || iStatus == SAMPLE_STATUS_STOPPED) &&
-                (pSample->reverbBus == SAMPLE_NO_REVERB_BUS ||
-                 (pSample->phaseMask & (1 << (pDriver->phase & SAMPLE_PHASE_MASK))) != 0))
+            if ((iStatus == SAMPLE_STATUS_DONE || iStatus == SAMPLE_STATUS_STOPPED)
+                && (pSample->reverbBus == SAMPLE_NO_REVERB_BUS
+                    || (pSample->phaseMask & (1 << (pDriver->phase & SAMPLE_PHASE_MASK))) != 0))
             {
-                unsigned long long uTarget =
-                    (static_cast<unsigned long long>(pSample->startTimeHigh) << 32) |
-                    pSample->startTimeLow;
+                unsigned long long uTarget = (static_cast<unsigned long long>(pSample->startTimeHigh) << 32)
+                                             | pSample->startTimeLow;
                 if (uTarget != 0 && uTarget < uFrameEnd)
                 {
                     unsigned int uDelta = 0;
@@ -6646,11 +6474,10 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
                         uDelta = pSample->startTimeLow - static_cast<unsigned int>(uFrameStart);
                     }
 
-                    pSample->playbackDelay =
-                        pSample->playbackDelay +
-                        static_cast<int>((static_cast<unsigned long long>(uDelta) *
-                                          SAMPLE_START_DELAY_UNITS) /
-                                         static_cast<long long>(pDriver->outputRate));
+                    pSample->playbackDelay = pSample->playbackDelay
+                                             + static_cast<int>(
+                                                 (static_cast<unsigned long long>(uDelta) * SAMPLE_START_DELAY_UNITS)
+                                                 / static_cast<long long>(pDriver->outputRate));
                     --pDriver->pendingStarts;
                     unsigned char ucPhase = pSample->phaseMask;
                     pSample->startTimeHigh = 0;
@@ -6666,11 +6493,11 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
     {
         _SAMPLE* pSample = &pDriver->samples[iIndex];
         DecoderStage& decoder = pSample->stages[SAMPLE_STAGE_DECODER].decoder;
-        if (pDriver->sampleStatus[iIndex] == SAMPLE_STATUS_PLAYING &&
-            pSample->buffers[0].position == 0 && pSample->loopMode == LOOP_MODE_ASI &&
-            (pSample->reverbBus == SAMPLE_NO_REVERB_BUS || pSample->fadeSamples != 0 ||
-             (pSample->phaseMask & (1 << (pDriver->phase & SAMPLE_PHASE_MASK))) != 0) &&
-            decoder.active != 0)
+        if (pDriver->sampleStatus[iIndex] == SAMPLE_STATUS_PLAYING && pSample->buffers[0].position == 0
+            && pSample->loopMode == LOOP_MODE_ASI
+            && (pSample->reverbBus == SAMPLE_NO_REVERB_BUS || pSample->fadeSamples != 0
+                || (pSample->phaseMask & (1 << (pDriver->phase & SAMPLE_PHASE_MASK))) != 0)
+            && decoder.active != 0)
         {
             decoder.process(decoder.stream, NULL, 0);
             SampleBuffer* pBuffer = &pSample->buffers[pSample->currentBuffer];
@@ -6714,9 +6541,9 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
         for (int iIndex = 0; iIndex < pDriver->sampleCount; ++iIndex)
         {
             _SAMPLE* pSample = &pDriver->samples[iIndex];
-            if (pDriver->sampleStatus[iIndex] != SAMPLE_STATUS_PLAYING ||
-                !(pSample->reverbBus == SAMPLE_NO_REVERB_BUS || pSample->fadeSamples != 0 ||
-                  (pSample->phaseMask & (1 << (pDriver->phase & SAMPLE_PHASE_MASK))) != 0))
+            if (pDriver->sampleStatus[iIndex] != SAMPLE_STATUS_PLAYING
+                || !(pSample->reverbBus == SAMPLE_NO_REVERB_BUS || pSample->fadeSamples != 0
+                     || (pSample->phaseMask & (1 << (pDriver->phase & SAMPLE_PHASE_MASK))) != 0))
             {
                 continue;
             }
@@ -6740,8 +6567,8 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
             }
 
             unsigned int uBytes = pDriver->fillBytes;
-            unsigned long long uPlayed =
-                (static_cast<unsigned long long>(pSample->playedHigh) << 32) | pSample->playedLow;
+            unsigned long long uPlayed = (static_cast<unsigned long long>(pSample->playedHigh) << 32)
+                                         | pSample->playedLow;
             uPlayed = uPlayed + static_cast<long long>(static_cast<int>(uBytes));
             pSample->playedHigh = static_cast<unsigned int>(uPlayed >> 32);
             pSample->playedLow = static_cast<unsigned int>(uPlayed);
@@ -6773,14 +6600,13 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
             {
                 int iStage = pSample->compressorLink >> 16;
                 FilterStage& filter = pSample->stages[iStage].filter;
-                if (filter.active != 0 && filter.instance != NULL &&
-                    (filter.instance->flags & FILTER_SAMPLE_PROPERTY_FLAG) != 0)
+                if (filter.active != 0 && filter.instance != NULL
+                    && (filter.instance->flags & FILTER_SAMPLE_PROPERTY_FLAG) != 0)
                 {
                     for (int iChannel = 0; iChannel < pSample->channelCount; ++iChannel)
                     {
-                        filter.instance->sampleProperty(filter.handles[iChannel],
-                                                        pSample->compressorLink & WORD_MASK_16, 0,
-                                                        &pSample->busPeak, 0);
+                        filter.instance->sampleProperty(
+                            filter.handles[iChannel], pSample->compressorLink & WORD_MASK_16, 0, &pSample->busPeak, 0);
                     }
                 }
             }
@@ -6808,8 +6634,8 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
             }
         }
 
-        if (iCurrentBus < DRIVER_BUS_COUNT && pDriver->busActive[iCurrentBus] == 0 &&
-            pDriver->buses[iCurrentBus].update == 0)
+        if (iCurrentBus < DRIVER_BUS_COUNT && pDriver->busActive[iCurrentBus] == 0
+            && pDriver->buses[iCurrentBus].update == 0)
         {
             _SAMPLE* pBusSample = pDriver->busSamples[iCurrentBus];
             if (pDriver->sampleStatus[pBusSample->index] == SAMPLE_STATUS_PLAYING)
@@ -6825,11 +6651,10 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
         {
             SS_copy(pDriver, iCurrentBus, reinterpret_cast<short*>(pDriver->busBuffers[iCurrentBus]));
             _SAMPLE* pBusSample = pDriver->busSamples[iCurrentBus];
-            AIL_API_load_sample_buffer(pBusSample, SAMPLE_BUFFER_CURRENT,
-                                       pDriver->busBuffers[iCurrentBus],
+            AIL_API_load_sample_buffer(pBusSample, SAMPLE_BUFFER_CURRENT, pDriver->busBuffers[iCurrentBus],
                                        pDriver->framesPerBuffer * pBusSample->channelCount * 2);
-            if (pDriver->busActive[iCurrentBus] != 0 &&
-                pDriver->sampleStatus[pBusSample->index] != SAMPLE_STATUS_PLAYING)
+            if (pDriver->busActive[iCurrentBus] != 0
+                && pDriver->sampleStatus[pBusSample->index] != SAMPLE_STATUS_PLAYING)
             {
                 AIL_API_resume_sample(pBusSample);
             }
@@ -6879,18 +6704,17 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
             if (bReport && MSS_profile != NULL)
             {
                 reinterpret_cast<ProfileZoneFunc>(MSS_profile->pFunctionBC)(
-                    MSS_profile, &uProfileStart, timer.high, timer.low, iCount, entry.flags,
-                    MILES_WAVEFILE_FILE, entry.line, &PROFILE_SITES[entry.timer], entry.label);
+                    MSS_profile, &uProfileStart, timer.high, timer.low, iCount, entry.flags, MILES_WAVEFILE_FILE,
+                    entry.line, &PROFILE_SITES[entry.timer], entry.label);
             }
         }
 
         for (int iPlot = 0; iPlot < PROFILE_PLOT_COUNT && MSS_profile != NULL; ++iPlot)
         {
-            MSS_profile->pPlot(MSS_profile, 0, PROFILE_PLOT_FLAGS, 0,
-                               static_cast<float>(static_cast<unsigned int>(
-                                   pDriver->profileCounts[PROFILE_PLOTS[iPlot].count])),
-                               &PROFILE_PLOT_SITES[PROFILE_PLOTS[iPlot].count],
-                               PROFILE_PLOTS[iPlot].label);
+            MSS_profile->pPlot(
+                MSS_profile, 0, PROFILE_PLOT_FLAGS, 0,
+                static_cast<float>(static_cast<unsigned int>(pDriver->profileCounts[PROFILE_PLOTS[iPlot].count])),
+                &PROFILE_PLOT_SITES[PROFILE_PLOTS[iPlot].count], PROFILE_PLOTS[iPlot].label);
         }
 
         if (MSS_profile != NULL)
@@ -6901,8 +6725,7 @@ extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination)
 
     unsigned long long uEnd = rrGetTime();
     unsigned long long uElapsed = uEnd - uStart;
-    unsigned long long uTotal =
-        (static_cast<unsigned long long>(pDriver->fillTimeHigh) << 32) | pDriver->fillTimeLow;
+    unsigned long long uTotal = (static_cast<unsigned long long>(pDriver->fillTimeHigh) << 32) | pDriver->fillTimeLow;
     uTotal = uTotal + uElapsed;
     pDriver->fillTimeHigh = static_cast<unsigned int>(uTotal >> 32);
     pDriver->fillTimeLow = static_cast<unsigned int>(uTotal);
@@ -6985,21 +6808,15 @@ const int MIX_LEVEL_COUNT = 7;
 const int OUTPUT_LEVEL_COLUMNS = 10;
 
 const int OUTPUT_LEVEL_SOURCES[SPEAKER_CONFIG_COUNT][OUTPUT_LEVEL_COLUMNS] = {
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 1, 6, 0, 0, 0, 0, 0, 0, 0},
-    {0, 1, 4, 5, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 1, 2, 3, 4, 5, 0, 0, 0, 0},
-    {0, 1, 2, 3, 4, 5, 6, 0, 0, 0},
-    {0, 1, 2, 3, 4, 5, 4, 5, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 6, 0, 0, 0, 0, 0, 0, 0}, {0, 1, 4, 5, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 2, 3, 4, 5, 0, 0, 0, 0}, {0, 1, 2, 3, 4, 5, 6, 0, 0, 0}, {0, 1, 2, 3, 4, 5, 4, 5, 0, 0},
     {0, 1, 2, 3, 4, 5, 6, 4, 5, 0}};
 
 inline unsigned short EncodeSample(int iValue)
 {
-    return static_cast<unsigned short>((static_cast<unsigned short>(iValue) >> 8) |
-                                       (static_cast<unsigned char>(iValue) << 8));
+    return static_cast<unsigned short>((static_cast<unsigned short>(iValue) >> 8)
+                                       | (static_cast<unsigned char>(iValue) << 8));
 }
 
 inline int ClampSample(int iValue)
@@ -7035,12 +6852,12 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
     }
 
     unsigned int uFormat = pSample->channelFlags;
-    int iSource16 = (uFormat & (SAMPLE_FORMAT_16_BITS | SAMPLE_FORMAT_ADPCM)) != 0 ||
-                    pSample->stages[SAMPLE_STAGE_DECODER].decoder.active != 0;
-    int iPerChannel = (uFormat & SAMPLE_FORMAT_MULTICHANNEL) != 0 ||
-                      ((uFormat & SAMPLE_FORMAT_STEREO) != 0 &&
-                       (pSample->is3D != 0 || iFilterActive != 0 || pSample->userLevels != 0) &&
-                       pDestination == NULL);
+    int iSource16 = (uFormat & (SAMPLE_FORMAT_16_BITS | SAMPLE_FORMAT_ADPCM)) != 0
+                    || pSample->stages[SAMPLE_STAGE_DECODER].decoder.active != 0;
+    int iPerChannel = (uFormat & SAMPLE_FORMAT_MULTICHANNEL) != 0
+                      || ((uFormat & SAMPLE_FORMAT_STEREO) != 0
+                          && (pSample->is3D != 0 || iFilterActive != 0 || pSample->userLevels != 0)
+                          && pDestination == NULL);
 
     unsigned int uFlags = 0;
     int iFrameBytes = 1;
@@ -7055,8 +6872,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
     }
     else
     {
-        if (pDestination == NULL && (pDriver->flags & DRIVER_FLAG_STEREO_OR_MULTICHANNEL) != 0 &&
-            (uFormat & SAMPLE_FORMAT_STEREO) != 0 && iFilterActive == 0)
+        if (pDestination == NULL && (pDriver->flags & DRIVER_FLAG_STEREO_OR_MULTICHANNEL) != 0
+            && (uFormat & SAMPLE_FORMAT_STEREO) != 0 && iFilterActive == 0)
         {
             iFrameBytes = 2;
             uFlags = MIX_FLAG_STEREO_SOURCE | MIX_FLAG_STEREO_DESTINATION;
@@ -7078,8 +6895,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
     unsigned int uFraction;
     if (pDestination != NULL)
     {
-        pDriver->outputRate = static_cast<int>(static_cast<float>(pSample->playbackRate) *
-                                               pSample->playbackRateFactor * pSample->levelC);
+        pDriver->outputRate = static_cast<int>(static_cast<float>(pSample->playbackRate) * pSample->playbackRateFactor
+                                               * pSample->levelC);
         uFraction = 0;
         pSample->resampleFraction = 0;
     }
@@ -7091,8 +6908,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
             fRate = fRate * pSample->dopplerScale;
         }
 
-        iStep = static_cast<int>(static_cast<float>(pSample->playbackRate) * fRate *
-                                 MERGE_UNITY_FLOAT / static_cast<float>(pDriver->outputRate));
+        iStep = static_cast<int>(static_cast<float>(pSample->playbackRate) * fRate * MERGE_UNITY_FLOAT
+                                 / static_cast<float>(pDriver->outputRate));
         int iTolerance = pSample->resampleTolerance;
         if (iStep <= iTolerance + MERGE_UNITY && MERGE_UNITY - iTolerance <= iStep)
         {
@@ -7131,9 +6948,9 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
     unsigned int uRemainder = MERGE_UNITY - (uFraction & MERGE_FRACTION_MASK);
     if (pDestination == NULL && (uFlags & MERGE_FLAG_RESAMPLE) != 0 && iPerChannel)
     {
-        unsigned long long uDividend =
-            (static_cast<unsigned long long>(pDriver->framesPerBuffer) << MERGE_FRACTION_SHIFT) +
-            uRemainder - (iStep >> 1);
+        unsigned long long uDividend = (static_cast<unsigned long long>(pDriver->framesPerBuffer)
+                                        << MERGE_FRACTION_SHIFT)
+                                       + uRemainder - (iStep >> 1);
         int iMaximumFrames = static_cast<int>(static_cast<long long>(uDividend) / iStep);
         if (static_cast<int>(uFrames) > iMaximumFrames)
         {
@@ -7142,16 +6959,14 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         }
     }
 
-    unsigned long long uSpan = static_cast<unsigned long long>(uFrames) *
-                                   static_cast<unsigned int>(iStep) +
-                               MERGE_FRACTION_MASK - uRemainder;
-    int iSourceBytes = static_cast<int>(static_cast<unsigned int>(uSpan >> MERGE_FRACTION_SHIFT)) *
-                       iFrameBytes;
+    unsigned long long uSpan = static_cast<unsigned long long>(uFrames) * static_cast<unsigned int>(iStep)
+                               + MERGE_FRACTION_MASK - uRemainder;
+    int iSourceBytes = static_cast<int>(static_cast<unsigned int>(uSpan >> MERGE_FRACTION_SHIFT)) * iFrameBytes;
     if ((uFraction & MERGE_FRACTION_FLAGS) != 0)
     {
-        iSourceBytes -= ((iStep >> MERGE_FRACTION_SHIFT) -
-                         ((uFraction >> MERGE_FRACTION_SHIFT) & MERGE_FRACTION_INTEGER_MASK)) *
-                        iFrameBytes;
+        iSourceBytes -= ((iStep >> MERGE_FRACTION_SHIFT)
+                         - ((uFraction >> MERGE_FRACTION_SHIFT) & MERGE_FRACTION_INTEGER_MASK))
+                        * iFrameBytes;
     }
     else
     {
@@ -7178,8 +6993,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         pSourceEnd = pSource + iAvailable;
         if ((pSample->channelFlags & SAMPLE_FORMAT_ADPCM) == 0)
         {
-            if (iSourceBytes > 0 ||
-                (iSourceBytes = iFrameBytes, (uFraction & MERGE_FRACTION_MASK) + iStep >= MERGE_UNITY))
+            if (iSourceBytes > 0
+                || (iSourceBytes = iFrameBytes, (uFraction & MERGE_FRACTION_MASK) + iStep >= MERGE_UNITY))
             {
                 if (iAvailable < iSourceBytes)
                 {
@@ -7222,8 +7037,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
 
                 unsigned char* pEncoded = pSource;
                 pDriver->processors[DRIVER_PROCESSOR_ADPCM_DECODE].function.adpcmDecode(
-                    reinterpret_cast<void**>(&pDecoded), reinterpret_cast<void**>(&pEncoded),
-                    iDecodeBytes, iAvailable, uDecodeFlags, &pSample->adpcmBlockSize);
+                    reinterpret_cast<void**>(&pDecoded), reinterpret_cast<void**>(&pEncoded), iDecodeBytes, iAvailable,
+                    uDecodeFlags, &pSample->adpcmBlockSize);
                 StopTimer(&pDriver->timers[TIMER_ADPCM]);
                 iSourceBytes = static_cast<int>(pDecoded - pScratch);
                 pBuffer = &pSample->buffers[pSample->currentBuffer];
@@ -7261,8 +7076,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
             }
 
             iSourceBytes = pSample->stages[SAMPLE_STAGE_DECODER].decoder.process(
-                pSample->stages[SAMPLE_STAGE_DECODER].decoder.stream, pScratch + iHistoryBytes,
-                iDecodeBytes);
+                pSample->stages[SAMPLE_STAGE_DECODER].decoder.stream, pScratch + iHistoryBytes, iDecodeBytes);
             StopTimer(&pDriver->timers[MERGE_DECODER_TIMER_BASE + iType]);
             iSourceBytes += iHistoryBytes;
         }
@@ -7275,15 +7089,13 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                 return 0;
             }
         }
-        else if (pBuffer->position == pBuffer->size &&
-                 pSample->stages[SAMPLE_STAGE_DECODER].decoder.outputReservoir !=
-                     RIB_ENTRY_NOT_FOUND)
+        else if (pBuffer->position == pBuffer->size
+                 && pSample->stages[SAMPLE_STAGE_DECODER].decoder.outputReservoir != RIB_ENTRY_NOT_FOUND)
         {
             int iReservoir = -1;
             pSample->stages[SAMPLE_STAGE_DECODER].decoder.property(
                 pSample->stages[SAMPLE_STAGE_DECODER].decoder.stream,
-                pSample->stages[SAMPLE_STAGE_DECODER].decoder.outputReservoir, &iReservoir, NULL,
-                NULL);
+                pSample->stages[SAMPLE_STAGE_DECODER].decoder.outputReservoir, &iReservoir, NULL, NULL);
             if (iReservoir > 0)
             {
                 pBuffer->position = pBuffer->size - 1;
@@ -7309,9 +7121,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
 
     unsigned int uNextRemainder = MERGE_UNITY - (pSample->resampleFraction & MERGE_FRACTION_MASK);
     unsigned int uSourceFrames = iSourceBytes / iFrameBytes + 1;
-    unsigned long long uSourceSpan =
-        (static_cast<unsigned long long>(uSourceFrames) << MERGE_FRACTION_SHIFT) +
-        uNextRemainder - (iStep >> 1);
+    unsigned long long uSourceSpan = (static_cast<unsigned long long>(uSourceFrames) << MERGE_FRACTION_SHIFT)
+                                     + uNextRemainder - (iStep >> 1);
     int iFramesForSource = static_cast<int>(static_cast<long long>(uSourceSpan) / iStep);
     int iDestinationLimit = (iFramesForSource + 1) << iShift;
     if (iDestinationLimit < iDestBytes)
@@ -7392,9 +7203,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
             }
             else
             {
-                float fRatio = (fLimit * static_cast<float>(pSample->playbackRate) *
-                                pSample->playbackRateFactor) /
-                               static_cast<float>(pDriver->outputRate);
+                float fRatio = (fLimit * static_cast<float>(pSample->playbackRate) * pSample->playbackRateFactor)
+                               / static_cast<float>(pDriver->outputRate);
                 float fApplied = LOW_PASS_MAXIMUM_RATIO;
                 if (fRatio <= LOW_PASS_MAXIMUM_RATIO)
                 {
@@ -7423,12 +7233,10 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                     }
                     else
                     {
-                        float fTangent =
-                            ONE / static_cast<float>(
-                                      tan(static_cast<double>(LOW_PASS_PI * fApplied * HALF)));
-                        float fNumerator =
-                            LOW_PASS_COEFFICIENT_SCALE /
-                            (fTangent * fTangent + (LOW_PASS_SQRT_TWO * fTangent + ONE));
+                        float fTangent = ONE
+                                         / static_cast<float>(tan(static_cast<double>(LOW_PASS_PI * fApplied * HALF)));
+                        float fNumerator = LOW_PASS_COEFFICIENT_SCALE
+                                           / (fTangent * fTangent + (LOW_PASS_SQRT_TWO * fTangent + ONE));
                         int iFirst = static_cast<int>(fNumerator);
                         if (fNumerator != ZERO)
                         {
@@ -7437,20 +7245,17 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                 sqrt(static_cast<double>(LOW_PASS_FOUR / fScale - LOW_PASS_TWO)));
                             float fOffset = (fRoot - LOW_PASS_SQRT_TWO) * HALF;
                             float fComplement = ONE - fOffset * fOffset;
-                            int iSecond = static_cast<int>((fComplement + fComplement) * fScale *
-                                                           LOW_PASS_COEFFICIENT_SCALE);
-                            int iThird = static_cast<int>(
-                                (-(LOW_PASS_SQRT_TWO * fOffset - ONE) + fOffset * fOffset) *
-                                fScale * LOW_PASS_COEFFICIENT_SCALE);
+                            int iSecond = static_cast<int>((fComplement + fComplement) * fScale
+                                                           * LOW_PASS_COEFFICIENT_SCALE);
+                            int iThird = static_cast<int>((-(LOW_PASS_SQRT_TWO * fOffset - ONE) + fOffset * fOffset)
+                                                          * fScale * LOW_PASS_COEFFICIENT_SCALE);
                             if (uMode != 0)
                             {
                                 pChannelState->limitB = iFirst;
-                                pChannelState->pendingCoefficients =
-                                    (iThird << LOW_PASS_PHASE_SHIFT) |
-                                    (iSecond & LOW_PASS_COUNT_MASK);
+                                pChannelState->pendingCoefficients = (iThird << LOW_PASS_PHASE_SHIFT)
+                                                                     | (iSecond & LOW_PASS_COUNT_MASK);
                             }
-                            else if (iFirst !=
-                                     static_cast<short>(pChannelState->lowPassInfo.coefficientA))
+                            else if (iFirst != static_cast<short>(pChannelState->lowPassInfo.coefficientA))
                             {
                                 set_lp_info(&pChannelState->lowPassInfo, iFirst, iSecond, iThird);
                             }
@@ -7478,8 +7283,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
     float fFade = ONE;
     if (pSample->fadeSamples != 0)
     {
-        fFade = static_cast<float>(pSample->fadePosition) /
-                static_cast<float>(pSample->fadeSamples);
+        fFade = static_cast<float>(pSample->fadePosition) / static_cast<float>(pSample->fadeSamples);
         if (fFade < ZERO)
         {
             fFade = fFade + ONE;
@@ -7510,9 +7314,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         fBusSend = pDriver->buses[iReverbBus].sendLevel;
     }
 
-    float fWet = pDriver->masterVolume * fBusSend * pSample->volumeCurve * fReverbSecond *
-                 pSample->levelD * pSample->levelB * pSample->levelA * fFade *
-                 (ONE - pSample->exclusion);
+    float fWet = pDriver->masterVolume * fBusSend * pSample->volumeCurve * fReverbSecond * pSample->levelD
+                 * pSample->levelB * pSample->levelA * fFade * (ONE - pSample->exclusion);
     if (pSample->automaticWetAttenuation != 0 && pSample->falloffPointCounts[1] == 0)
     {
         fWet = fWet * pSample->distanceVolume;
@@ -7545,8 +7348,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         fReturn = pDriver->buses[iReverbBus].returnGain;
     }
 
-    float fDry = pDriver->masterVolume * fReturn * pSample->levelD * pSample->reverbFirst *
-                 (ONE - pSample->obstruction) * pSample->levelA * fFade;
+    float fDry = pDriver->masterVolume * fReturn * pSample->levelD * pSample->reverbFirst * (ONE - pSample->obstruction)
+                 * pSample->levelA * fFade;
     float aMixLevels[MIX_LEVEL_COUNT];
     aMixLevels[MIX_LEVEL_PAN_A] = pSample->panLevelA * fDry;
     aMixLevels[MIX_LEVEL_PAN_B] = pSample->panLevelB * fDry;
@@ -7557,8 +7360,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         aMixLevels[MIX_LEVEL_F] = pSample->mixLevel1 * fDry;
         aMixLevels[MIX_LEVEL_C] = pSample->mixLevel2 * fDry;
         aMixLevels[MIX_LEVEL_D] = pSample->mixLevel3 * fDry;
-        aMixLevels[MIX_LEVEL_AVERAGE] =
-            (aMixLevels[MIX_LEVEL_E] + aMixLevels[MIX_LEVEL_F]) * HALF;
+        aMixLevels[MIX_LEVEL_AVERAGE] = (aMixLevels[MIX_LEVEL_E] + aMixLevels[MIX_LEVEL_F]) * HALF;
     }
 
     unsigned int uInitialFraction = pSample->resampleFraction;
@@ -7587,8 +7389,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
             unsigned short* pPacked = reinterpret_cast<unsigned short*>(pSource);
             if (iSource16)
             {
-                const unsigned short* pFrame =
-                    reinterpret_cast<const unsigned short*>(pInterleaved) + iChannel;
+                const unsigned short* pFrame = reinterpret_cast<const unsigned short*>(pInterleaved) + iChannel;
                 for (int iFrame = 0; iFrame < iSourceFrames; ++iFrame)
                 {
                     *pPacked++ = *pFrame;
@@ -7600,8 +7401,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                 const unsigned char* pFrame = pInterleaved + iChannel;
                 for (int iFrame = 0; iFrame < iSourceFrames; ++iFrame)
                 {
-                    *pPacked++ =
-                        static_cast<unsigned short>((*pFrame + MERGE_BYTE_BIAS) & BYTE_MASK_8);
+                    *pPacked++ = static_cast<unsigned short>((*pFrame + MERGE_BYTE_BIAS) & BYTE_MASK_8);
                     pFrame += iStride;
                 }
             }
@@ -7663,16 +7463,13 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                     fLevelLeft = ZERO;
                 }
 
-                bool bDrcOutput =
-                    pSample->outputToDRC && pDriver->speakerConfig == MERGE_OUTPUT_DRC_CONFIG;
+                bool bDrcOutput = pSample->outputToDRC && pDriver->speakerConfig == MERGE_OUTPUT_DRC_CONFIG;
                 if (bDrcOutput && iLeftRow <= MERGE_DRC_DOWNMIX_ROW)
                 {
                     pSample->levelsB[iLeftRow][iChannel] = static_cast<int>(
-                        MERGE_VOLUME_SCALE * fLeft * pSample->speakerScales[iLeftRow] * ZERO +
-                        HALF);
+                        MERGE_VOLUME_SCALE * fLeft * pSample->speakerScales[iLeftRow] * ZERO + HALF);
                     pSample->levelsB[iLeftRow + 1][iChannel] = static_cast<int>(
-                        MERGE_VOLUME_SCALE * fRight * pSample->speakerScales[iRightRow] * ZERO +
-                        HALF);
+                        MERGE_VOLUME_SCALE * fRight * pSample->speakerScales[iRightRow] * ZERO + HALF);
                 }
                 else
                 {
@@ -7683,21 +7480,15 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         if (pSample->is3D != 0)
                         {
                             const float* pLevels = pSample->speakerLevelsA;
-                            fLevelLeft =
-                                (pLevels[0] + pLevels[4] + pLevels[2] * HALF) / MERGE_THREE;
-                            fLevelRight =
-                                (pLevels[1] + pLevels[5] + pLevels[2] * HALF) / MERGE_THREE;
+                            fLevelLeft = (pLevels[0] + pLevels[4] + pLevels[2] * HALF) / MERGE_THREE;
+                            fLevelRight = (pLevels[1] + pLevels[5] + pLevels[2] * HALF) / MERGE_THREE;
                         }
                     }
 
                     pSample->levelsB[iLeftRow][iChannel] = static_cast<int>(
-                        MERGE_VOLUME_SCALE * fLeft * pSample->speakerScales[iLeftRow] *
-                            fLevelLeft +
-                        HALF);
+                        MERGE_VOLUME_SCALE * fLeft * pSample->speakerScales[iLeftRow] * fLevelLeft + HALF);
                     pSample->levelsB[iLeftRow + 1][iChannel] = static_cast<int>(
-                        MERGE_VOLUME_SCALE * fRight * pSample->speakerScales[iRightRow] *
-                            fLevelRight +
-                        HALF);
+                        MERGE_VOLUME_SCALE * fRight * pSample->speakerScales[iRightRow] * fLevelRight + HALF);
                 }
 
                 if (pSample->levelsB[iLeftRow][iChannel] >= MERGE_VOLUME_MAXIMUM)
@@ -7710,11 +7501,10 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                     pSample->levelsB[iLeftRow + 1][iChannel] = MERGE_VOLUME_MAXIMUM;
                 }
 
-                if (pSample->levelsB[iLeftRow][iChannel] == 0 && pSample->levelsB[iLeftRow + 1][iChannel] == 0 &&
-                    pSample->levelsC[iLeftRow][iChannel] == 0 && pSample->levelsC[iLeftRow + 1][iChannel] == 0 &&
-                    pSample->reverbSecond * pDriver->buses[pSample->reverbBus].sendLevel *
-                            pSample->levelD <
-                        LEVEL_EPSILON)
+                if (pSample->levelsB[iLeftRow][iChannel] == 0 && pSample->levelsB[iLeftRow + 1][iChannel] == 0
+                    && pSample->levelsC[iLeftRow][iChannel] == 0 && pSample->levelsC[iLeftRow + 1][iChannel] == 0
+                    && pSample->reverbSecond * pDriver->buses[pSample->reverbBus].sendLevel * pSample->levelD
+                           < LEVEL_EPSILON)
                 {
                     ++iSilent;
                 }
@@ -7768,8 +7558,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                 int iFrames = iDestBytes >> iShift;
                 unsigned char* pData;
                 unsigned int uBytes;
-                if ((uFlags & MIX_FLAG_16_BITS) == 0 || (uFlags & MERGE_FLAG_RESAMPLE) != 0 ||
-                    (uStereo != 0 && (iFilterActive != 0)))
+                if ((uFlags & MIX_FLAG_16_BITS) == 0 || (uFlags & MERGE_FLAG_RESAMPLE) != 0
+                    || (uStereo != 0 && (iFilterActive != 0)))
                 {
                     pData = pDriver->mix.buffer;
                     int iConvertBytes = iFrames << 1;
@@ -7782,9 +7572,9 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                     MarkProfileSample(pSample, MERGE_PROFILE_CONVERSION);
                     StartTimer(&pDriver->timers[TIMER_CONVERSION]);
                     unsigned char* pConverted = pData;
-                    pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pSource, &pSample->resampleFraction, pSourceEnd,
-                                reinterpret_cast<void**>(&pConverted), pData + iConvertBytes,
-                                piLeft, piRight, iStep, 0, 0, uFlags | MERGE_FLAG_CONVERT);
+                    pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(
+                        &pSource, &pSample->resampleFraction, pSourceEnd, reinterpret_cast<void**>(&pConverted),
+                        pData + iConvertBytes, piLeft, piRight, iStep, 0, 0, uFlags | MERGE_FLAG_CONVERT);
                     StopTimer(&pDriver->timers[TIMER_CONVERSION]);
                     uBytes = static_cast<unsigned int>(pConverted - pData);
                 }
@@ -7840,21 +7630,20 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                     int iPreviousHistory = info.historyA;
                                     int iSample = ReadSample(pInput);
                                     int iSum = iSample + info.sampleA * 2 + info.sampleB;
-                                    int iNew = ((iSum * static_cast<short>(info.coefficientA) -
-                                                 static_cast<short>(info.coefficientB) *
-                                                     static_cast<short>(info.historyA)) -
-                                                static_cast<short>(info.coefficientC) *
-                                                    static_cast<short>(info.historyB)) >>
-                                               LOW_PASS_COEFFICIENT_SHIFT;
+                                    int iNew =
+                                        ((iSum * static_cast<short>(info.coefficientA)
+                                          - static_cast<short>(info.coefficientB) * static_cast<short>(info.historyA))
+                                         - static_cast<short>(info.coefficientC) * static_cast<short>(info.historyB))
+                                        >> LOW_PASS_COEFFICIENT_SHIFT;
                                     int iOld;
                                     if (iPhase < LOW_PASS_PHASE_FADE_IN)
                                     {
-                                        iOld = ((iSum * (info.coefficientA >> LOW_PASS_PHASE_SHIFT) -
-                                                 (info.coefficientB >> LOW_PASS_PHASE_SHIFT) *
-                                                     (info.historyA >> LOW_PASS_PHASE_SHIFT)) -
-                                                (info.coefficientC >> LOW_PASS_PHASE_SHIFT) *
-                                                    (info.historyB >> LOW_PASS_PHASE_SHIFT)) >>
-                                               LOW_PASS_COEFFICIENT_SHIFT;
+                                        iOld = ((iSum * (info.coefficientA >> LOW_PASS_PHASE_SHIFT)
+                                                 - (info.coefficientB >> LOW_PASS_PHASE_SHIFT)
+                                                       * (info.historyA >> LOW_PASS_PHASE_SHIFT))
+                                                - (info.coefficientC >> LOW_PASS_PHASE_SHIFT)
+                                                      * (info.historyB >> LOW_PASS_PHASE_SHIFT))
+                                               >> LOW_PASS_COEFFICIENT_SHIFT;
                                         iOld = ClampSample(iOld);
                                     }
                                     else
@@ -7867,18 +7656,16 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                     info.historyB = iPreviousHistory;
                                     info.sampleA = iSample;
                                     info.historyA = static_cast<int>(
-                                        (static_cast<unsigned int>(iOld) << LOW_PASS_PHASE_SHIFT) |
-                                        (static_cast<unsigned int>(iNew) & LOW_PASS_COUNT_MASK));
+                                        (static_cast<unsigned int>(iOld) << LOW_PASS_PHASE_SHIFT)
+                                        | (static_cast<unsigned int>(iNew) & LOW_PASS_COUNT_MASK));
                                     int iBlended;
                                     if (iPhase == LOW_PASS_PHASE_FADE_OUT)
                                     {
-                                        iBlended = (iOld * iNewWeight + iNew * iBlend) >>
-                                                   LOW_PASS_BLEND_SHIFT;
+                                        iBlended = (iOld * iNewWeight + iNew * iBlend) >> LOW_PASS_BLEND_SHIFT;
                                     }
                                     else
                                     {
-                                        iBlended = (iNew * iNewWeight + iOld * iBlend) >>
-                                                   LOW_PASS_BLEND_SHIFT;
+                                        iBlended = (iNew * iNewWeight + iOld * iBlend) >> LOW_PASS_BLEND_SHIFT;
                                     }
 
                                     *pOutput = EncodeSample(iBlended);
@@ -7931,8 +7718,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                     {
                                         set_lp_info(&finished, sState.limitB,
                                                     static_cast<short>(sState.pendingCoefficients),
-                                                    sState.pendingCoefficients >>
-                                                        LOW_PASS_PHASE_SHIFT);
+                                                    sState.pendingCoefficients >> LOW_PASS_PHASE_SHIFT);
                                     }
 
                                     sState.limitB = LOW_PASS_NO_PENDING;
@@ -7974,11 +7760,9 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                     int iSample = ReadSample(pInput);
                                     int iPreviousSample = info.sampleA;
                                     int iFiltered = ClampSample(
-                                        ((iSample + info.sampleA * 2 + info.sampleB) *
-                                             info.coefficientA -
-                                         info.coefficientB * info.historyA -
-                                         info.coefficientC * info.historyB) >>
-                                        LOW_PASS_COEFFICIENT_SHIFT);
+                                        ((iSample + info.sampleA * 2 + info.sampleB) * info.coefficientA
+                                         - info.coefficientB * info.historyA - info.coefficientC * info.historyB)
+                                        >> LOW_PASS_COEFFICIENT_SHIFT);
                                     info.sampleB = iPreviousSample;
                                     info.sampleA = iSample;
                                     info.historyB = info.historyA;
@@ -8020,8 +7804,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         pFinal = pDestinationBytes + iOffset;
                     }
 
-                    pFiltered = static_cast<unsigned char*>(SS_execute_filter_chain(
-                        pSample, pFiltered, pDriver->mix.buffer, uBytes, iChannel, pFinal));
+                    pFiltered = static_cast<unsigned char*>(
+                        SS_execute_filter_chain(pSample, pFiltered, pDriver->mix.buffer, uBytes, iChannel, pFinal));
                     StopTimer(&pDriver->timers[TIMER_FILTERS]);
                 }
 
@@ -8035,8 +7819,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         int iReverbLeft = iReverbLevel;
                         int iReverbRight = iReverbLevel;
                         unsigned char* pReverbCursor;
-                        unsigned char* pReverbEnd =
-                            pReverbDestination + pDriver->buses[0].chunkBytes;
+                        unsigned char* pReverbEnd = pReverbDestination + pDriver->buses[0].chunkBytes;
                         if (pDriver->outputs[0].chans < 2)
                         {
                             pReverbCursor = pReverbDestination + iOffset;
@@ -8048,16 +7831,15 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
 
                         unsigned int uReverbFlags = slow_ramp_mix(
                             uStereo != 0, 0, reinterpret_cast<void**>(&pMixSource), pFilteredEnd,
-                            reinterpret_cast<void**>(&pReverbCursor), pReverbEnd, &iReverbLeft,
-                            &iReverbRight, 0, 0, 0);
+                            reinterpret_cast<void**>(&pReverbCursor), pReverbEnd, &iReverbLeft, &iReverbRight, 0, 0, 0);
                         MarkProfileSample(pSample, MERGE_PROFILE_REVERB);
                         StartTimer(&pDriver->timers[TIMER_REVERB]);
                         unsigned int uReverbFraction = 0;
                         int iReverbState = 0;
-                        pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pMixSource, &uReverbFraction, pFilteredEnd,
-                                    reinterpret_cast<void**>(&pReverbCursor), pReverbEnd,
-                                    &iReverbState, &iReverbState, MERGE_UNITY, iReverbLevel,
-                                    iReverbLevel, uReverbFlags);
+                        pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(
+                            &pMixSource, &uReverbFraction, pFilteredEnd, reinterpret_cast<void**>(&pReverbCursor),
+                            pReverbEnd, &iReverbState, &iReverbState, MERGE_UNITY, iReverbLevel, iReverbLevel,
+                            uReverbFlags);
                         StopTimer(&pDriver->timers[TIMER_REVERB]);
                     }
 
@@ -8089,11 +7871,10 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         unsigned int uDestinationStereo = output.chans >= 2 ? 1 : 0;
                         int iDestinationShift = uDestinationStereo + MERGE_SHIFT_MONO;
                         int iRightCurrent = pSample->levelsC[iLeftRow + 1][iChannel];
-                        int iDestinationFrames =
-                            static_cast<int>(pEnd - pCursor) >> iDestinationShift;
+                        int iDestinationFrames = static_cast<int>(pEnd - pCursor) >> iDestinationShift;
                         int iRightTarget = pSample->levelsB[iLeftRow + 1][iChannel];
-                        if ((iLeftTarget != iLeftCurrent || iRightTarget != iRightCurrent) &&
-                            pSample->levelsD[iOutput][iChannel] == 0)
+                        if ((iLeftTarget != iLeftCurrent || iRightTarget != iRightCurrent)
+                            && pSample->levelsD[iOutput][iChannel] == 0)
                         {
                             pSample->levelsD[iOutput][iChannel] = pSample->rampLength;
                         }
@@ -8111,10 +7892,9 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         }
 
                         unsigned int uMixFlags = slow_ramp_mix(
-                            uStereo != 0, uDestinationStereo, reinterpret_cast<void**>(&pMixSource),
-                            pFilteredEnd, reinterpret_cast<void**>(&pCursor), pEnd, &iLeftCurrent,
-                            &iRightCurrent, iLeftTarget - iLeftCurrent,
-                            iRightTarget - iRightCurrent, iCount);
+                            uStereo != 0, uDestinationStereo, reinterpret_cast<void**>(&pMixSource), pFilteredEnd,
+                            reinterpret_cast<void**>(&pCursor), pEnd, &iLeftCurrent, &iRightCurrent,
+                            iLeftTarget - iLeftCurrent, iRightTarget - iRightCurrent, iCount);
                         pSample->levelsD[iOutput][iChannel] -= iCount;
                         if (pSample->levelsD[iOutput][iChannel] == 0)
                         {
@@ -8133,10 +7913,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         {
                             if (iLeftTarget == 0 && iRightTarget == 0)
                             {
-                                int iRemainingDestination =
-                                    static_cast<int>(pEnd - pCursor) >> iDestinationShift;
-                                int iRemainingSource =
-                                    static_cast<int>(pFilteredEnd - pMixSource) >> iSourceShift;
+                                int iRemainingDestination = static_cast<int>(pEnd - pCursor) >> iDestinationShift;
+                                int iRemainingSource = static_cast<int>(pFilteredEnd - pMixSource) >> iSourceShift;
                                 if (iRemainingSource < iRemainingDestination)
                                 {
                                     iRemainingDestination = iRemainingSource;
@@ -8146,8 +7924,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                             }
                             else
                             {
-                                float fLeftPeak =
-                                    static_cast<float>(iLeftTarget) * MERGE_VOLUME_UNIT;
+                                float fLeftPeak = static_cast<float>(iLeftTarget) * MERGE_VOLUME_UNIT;
                                 float fPeak = pSample->volume;
                                 if (pSample->volume < fLeftPeak)
                                 {
@@ -8155,8 +7932,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                     fPeak = fLeftPeak;
                                 }
 
-                                float fRightPeak =
-                                    static_cast<float>(iRightTarget) * MERGE_VOLUME_UNIT;
+                                float fRightPeak = static_cast<float>(iRightTarget) * MERGE_VOLUME_UNIT;
                                 if (fPeak < fRightPeak)
                                 {
                                     pSample->volume = fRightPeak;
@@ -8166,21 +7942,19 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                 StartTimer(&pDriver->timers[TIMER_MIX]);
                                 unsigned int uRampFraction = 0;
                                 int iRampState = 0;
-                                pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pMixSource, &uRampFraction, pFilteredEnd,
-                                            reinterpret_cast<void**>(&pCursor), pEnd, &iRampState,
-                                            &iRampState, MERGE_UNITY, iLeftTarget, iRightTarget,
-                                            uMixFlags);
+                                pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(
+                                    &pMixSource, &uRampFraction, pFilteredEnd, reinterpret_cast<void**>(&pCursor), pEnd,
+                                    &iRampState, &iRampState, MERGE_UNITY, iLeftTarget, iRightTarget, uMixFlags);
                                 StopTimer(&pDriver->timers[TIMER_MIX]);
                                 if (pMixSource != pFilteredEnd && pCursor != pEnd)
                                 {
                                     unsigned int uSecondFraction = 0;
                                     int iSecondState = 0;
                                     StartTimer(&pDriver->timers[TIMER_MIX]);
-                                    pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pMixSource, &uSecondFraction, pFilteredEnd,
-                                                reinterpret_cast<void**>(&pCursor), pEnd,
-                                                &iSecondState, &iSecondState, MERGE_UNITY,
-                                                iLeftTarget, iRightTarget,
-                                                uMixFlags | MIX_FLAG_LOW_VOLUME);
+                                    pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(
+                                        &pMixSource, &uSecondFraction, pFilteredEnd, reinterpret_cast<void**>(&pCursor),
+                                        pEnd, &iSecondState, &iSecondState, MERGE_UNITY, iLeftTarget, iRightTarget,
+                                        uMixFlags | MIX_FLAG_LOW_VOLUME);
                                     StopTimer(&pDriver->timers[TIMER_MIX]);
                                 }
                             }
@@ -8204,9 +7978,10 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                 unsigned char* pCursor = pDestinationBytes + iOffset;
                 MarkProfileSample(pSample, MERGE_PROFILE_MIX);
                 StartTimer(&pDriver->timers[TIMER_MIX]);
-                pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pSource, &pSample->resampleFraction, pSourceEnd, reinterpret_cast<void**>(&pCursor),
-                            pDestinationBytes + iOffset + iDestBytes, piLeft, piRight, iStep, 0, 0,
-                            (uFlags & ~MIX_FLAG_STEREO_DESTINATION) | MERGE_FLAG_CONVERT);
+                pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(
+                    &pSource, &pSample->resampleFraction, pSourceEnd, reinterpret_cast<void**>(&pCursor),
+                    pDestinationBytes + iOffset + iDestBytes, piLeft, piRight, iStep, 0, 0,
+                    (uFlags & ~MIX_FLAG_STEREO_DESTINATION) | MERGE_FLAG_CONVERT);
                 StopTimer(&pDriver->timers[TIMER_MIX]);
                 iEndOffset = static_cast<int>(pCursor - pDestinationBytes);
             }

@@ -86,8 +86,8 @@ void LockQueue()
     {
         if (MSS_profile != NULL)
         {
-            MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 1, MILES_ASYNC_FILE, 126,
-                                    &MilesAsyncQueueLockWaitSite, MILES_ASYNC_MUTEX_BLOCK_NAME);
+            MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 1, MILES_ASYNC_FILE, 126, &MilesAsyncQueueLockWaitSite,
+                                    MILES_ASYNC_MUTEX_BLOCK_NAME);
         }
 
         rrMutexLock(&MilesAsyncQueueMutex);
@@ -100,9 +100,8 @@ void LockQueue()
 
     if (MSS_profile != NULL)
     {
-        MSS_profile->pLockState(MSS_profile, &MilesAsyncQueueMutex, MILES_LOCK_STATE_ACQUIRED,
-                                MILES_ASYNC_FILE, 130, &MilesAsyncQueueLockSite,
-                                MILES_ASYNC_MUTEX_NAME);
+        MSS_profile->pLockState(MSS_profile, &MilesAsyncQueueMutex, MILES_LOCK_STATE_ACQUIRED, MILES_ASYNC_FILE, 130,
+                                &MilesAsyncQueueLockSite, MILES_ASYNC_MUTEX_NAME);
     }
 }
 
@@ -110,9 +109,8 @@ void UnlockQueue()
 {
     if (MSS_profile != NULL)
     {
-        MSS_profile->pLockState(MSS_profile, &MilesAsyncQueueMutex, MILES_LOCK_STATE_RELEASED,
-                                MILES_ASYNC_FILE, 136, &MilesAsyncQueueUnlockSite,
-                                MILES_ASYNC_MUTEX_NAME);
+        MSS_profile->pLockState(MSS_profile, &MilesAsyncQueueMutex, MILES_LOCK_STATE_RELEASED, MILES_ASYNC_FILE, 136,
+                                &MilesAsyncQueueUnlockSite, MILES_ASYNC_MUTEX_NAME);
     }
 
     rrMutexUnlock(&MilesAsyncQueueMutex);
@@ -175,8 +173,8 @@ int InternalCancelOrWait(MilesAsyncRead* pRead, unsigned int uTimeoutMillisecond
 
     if (MSS_profile != NULL)
     {
-        MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 1, MILES_ASYNC_FILE, 208,
-                                &MilesAsyncWaitSite, MILES_ASYNC_WAIT_NAME);
+        MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 1, MILES_ASYNC_FILE, 208, &MilesAsyncWaitSite,
+                                MILES_ASYNC_WAIT_NAME);
     }
 
     rrSemaphoreDecrementOrWait(&MilesAsyncWaitSemaphores[0], MILES_ASYNC_WAIT_INFINITE);
@@ -308,8 +306,7 @@ void set_status(MilesAsyncRead* pRead, int iStatus)
 
     pRead->iStatus = iStatus;
 
-    if ((iStatus & MILES_ASYNC_FINISHED_MASK) != 0 && pRead->pBuffer != NULL &&
-        pRead->iBufferOwned != 0)
+    if ((iStatus & MILES_ASYNC_FINISHED_MASK) != 0 && pRead->pBuffer != NULL && pRead->iBufferOwned != 0)
     {
         pRead->iBufferOwned = 0;
         AIL_mem_free_lock(pRead->pBuffer);
@@ -388,8 +385,8 @@ static int ThreadProc(void*)
                 }
             }
 
-            if (pRequest->pPriorityCallback != NULL &&
-                pRequest->pPriorityCallback(pRequest->pPriorityUserData) < MILES_ASYNC_PRIORITY_THRESHOLD)
+            if (pRequest->pPriorityCallback != NULL
+                && pRequest->pPriorityCallback(pRequest->pPriorityUserData) < MILES_ASYNC_PRIORITY_THRESHOLD)
             {
                 pSelected = pRequest;
                 break;
@@ -449,10 +446,10 @@ static int ThreadProc(void*)
                         pOwnerName = MILES_ASYNC_UNKNOWN_OWNER;
                     }
 
-                    MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 0, MILES_ASYNC_FILE, 450,
-                                            &MilesAsyncFileOpenSite, "File open: %s (%s line: %d)",
-                                            MSS_profile->pDescribe(MSS_profile, pSelected),
-                                            pOwnerName, pSelected->iOwnerLine);
+                    MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 0, MILES_ASYNC_FILE, 450, &MilesAsyncFileOpenSite,
+                                            "File open: %s (%s line: %d)",
+                                            MSS_profile->pDescribe(MSS_profile, pSelected), pOwnerName,
+                                            pSelected->iOwnerLine);
                 }
 
                 if (AIL_file_open(pSelected->szFileName, &pSelected->uFileHandle) == 0)
@@ -485,9 +482,8 @@ static int ThreadProc(void*)
             {
                 if (pSelected->pBuffer == NULL)
                 {
-                    pSelected->pBuffer = AIL_mem_alloc_lock_info(
-                        pSelected->iLength + pSelected->iBufferOffset, pSelected->pOwnerName,
-                        pSelected->iOwnerLine);
+                    pSelected->pBuffer = AIL_mem_alloc_lock_info(pSelected->iLength + pSelected->iBufferOffset,
+                                                                 pSelected->pOwnerName, pSelected->iOwnerLine);
 
                     if (pSelected->pBuffer == NULL)
                     {
@@ -509,12 +505,10 @@ static int ThreadProc(void*)
                             pOwnerName = MILES_ASYNC_UNKNOWN_OWNER;
                         }
 
-                        MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 0, MILES_ASYNC_FILE, 494,
-                                                &MilesAsyncFileSeekSite,
+                        MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 0, MILES_ASYNC_FILE, 494, &MilesAsyncFileSeekSite,
                                                 "File seek: %s to %d (%s line: %d)",
-                                                MSS_profile->pDescribe(MSS_profile, pSelected),
-                                                pSelected->lOffset, pOwnerName,
-                                                pSelected->iOwnerLine);
+                                                MSS_profile->pDescribe(MSS_profile, pSelected), pSelected->lOffset,
+                                                pOwnerName, pSelected->iOwnerLine);
                     }
 
                     AIL_file_seek(pSelected->uFileHandle, (int)pSelected->lOffset, 0);
@@ -542,16 +536,14 @@ static int ThreadProc(void*)
                         pOwnerName = MILES_ASYNC_UNKNOWN_OWNER;
                     }
 
-                    MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 0, MILES_ASYNC_FILE, 507,
-                                            &MilesAsyncFileReadSite,
+                    MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 0, MILES_ASYNC_FILE, 507, &MilesAsyncFileReadSite,
                                             "File read: %s bytes: %d (%s line: %d)",
-                                            MSS_profile->pDescribe(MSS_profile, pSelected),
-                                            iChunkSize, pOwnerName, pSelected->iOwnerLine);
+                                            MSS_profile->pDescribe(MSS_profile, pSelected), iChunkSize, pOwnerName,
+                                            pSelected->iOwnerLine);
                 }
 
                 iBytesRead = AIL_file_read(pSelected->uFileHandle,
-                                           (char*)pSelected->pBuffer + pSelected->iBytesRead +
-                                               pSelected->iBufferOffset,
+                                           (char*)pSelected->pBuffer + pSelected->iBytesRead + pSelected->iBufferOffset,
                                            iChunkSize);
 
                 if (MSS_profile != NULL)
@@ -568,9 +560,9 @@ static int ThreadProc(void*)
                     continue;
                 }
 
-                if ((pSelected->iBytesRead >> 31 != pSelected->iLengthHigh ||
-                     pSelected->iBytesRead != pSelected->iLength) &&
-                    iBytesRead == iChunkSize)
+                if ((pSelected->iBytesRead >> 31 != pSelected->iLengthHigh
+                     || pSelected->iBytesRead != pSelected->iLength)
+                    && iBytesRead == iChunkSize)
                 {
                     pLastServiced = pSelected;
                     continue;
@@ -584,8 +576,8 @@ static int ThreadProc(void*)
 
         if (MSS_profile != NULL)
         {
-            MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 2, MILES_ASYNC_FILE, 607,
-                                    &MilesAsyncWaitSite, MILES_ASYNC_WAIT_NAME);
+            MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 2, MILES_ASYNC_FILE, 607, &MilesAsyncWaitSite,
+                                    MILES_ASYNC_WAIT_NAME);
         }
 
         rrSemaphoreDecrementOrWait(&MilesAsyncWorkSemaphore, MILES_ASYNC_WAIT_INFINITE);
@@ -612,23 +604,21 @@ int MilesAsyncStartup_default()
 
         if (MSS_profile != NULL)
         {
-            MSS_profile->pLockName(MSS_profile, &MilesAsyncQueueMutex,
-                                   &MilesAsyncQueueMutexNameSite, MILES_ASYNC_MUTEX_NAME);
+            MSS_profile->pLockName(MSS_profile, &MilesAsyncQueueMutex, &MilesAsyncQueueMutexNameSite,
+                                   MILES_ASYNC_MUTEX_NAME);
         }
 
         rrSemaphoreCreate(&MilesAsyncWorkSemaphore, 0, 0x200);
-        rrSemaphoreCreate(&MilesAsyncWaitSemaphores[0], MILES_ASYNC_WAIT_SLOTS,
-                          MILES_ASYNC_WAIT_SLOTS);
+        rrSemaphoreCreate(&MilesAsyncWaitSemaphores[0], MILES_ASYNC_WAIT_SLOTS, MILES_ASYNC_WAIT_SLOTS);
 
         for (iSlot = 0; iSlot < MILES_ASYNC_WAIT_SLOTS; iSlot++)
         {
             rrSemaphoreCreate(&MilesAsyncWaitSemaphores[iSlot + 1], 0, 0x80);
         }
 
-        MilesAsyncThread = (rrThread*)AIL_mem_alloc_lock_info(MILES_ASYNC_THREAD_BLOCK_SIZE,
-                                                              MILES_ASYNC_FILE, 663);
-        rrThreadCreate(MilesAsyncThread, ThreadProc, MILES_ASYNC_THREAD_STACK_SIZE, NULL,
-                       MILES_ASYNC_THREAD_FLAGS, "MSSAsync");
+        MilesAsyncThread = (rrThread*)AIL_mem_alloc_lock_info(MILES_ASYNC_THREAD_BLOCK_SIZE, MILES_ASYNC_FILE, 663);
+        rrThreadCreate(MilesAsyncThread, ThreadProc, MILES_ASYNC_THREAD_STACK_SIZE, NULL, MILES_ASYNC_THREAD_FLAGS,
+                       "MSSAsync");
         rrThreadSetPriority(MilesAsyncThread, MILES_ASYNC_THREAD_PRIORITY);
         rrThreadSetCPUCore(MilesAsyncThread, MILES_ASYNC_THREAD_CORE);
     }

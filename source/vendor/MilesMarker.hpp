@@ -16,8 +16,7 @@ struct MilesMarkerList
     MilesMarkerEntry entries[1];
 };
 
-extern "C" unsigned int AIL_find_marker_in_list(const MilesMarkerList* pList, const char* pName,
-                                                unsigned int* puType);
+extern "C" unsigned int AIL_find_marker_in_list(const MilesMarkerList* pList, const char* pName, unsigned int* puType);
 extern "C" const MilesMarkerList* AIL_get_marker_list(SoundBank* pBank, const char* pName);
 
 #endif

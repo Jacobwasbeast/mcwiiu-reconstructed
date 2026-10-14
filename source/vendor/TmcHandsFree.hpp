@@ -9,8 +9,7 @@ enum TMC_HF_EC_MODE
 };
 
 extern "C" void* TMC_HF_Init(void* config);
-extern "C" unsigned int TMC_HF_Proc(void* handle, const short* inputLeft,
-                                    const short* inputRight,
+extern "C" unsigned int TMC_HF_Proc(void* handle, const short* inputLeft, const short* inputRight,
                                     const short* inputReference, short* output);
 extern "C" unsigned int TMC_HF_Close(void* handle);
 

@@ -158,8 +158,8 @@ extern "C" void InMilesMutex()
     {
         if (MSS_profile != NULL)
         {
-            MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 1, MILES_GENERIC_FILE, 88,
-                                    &MSS_api_lock_wait_site, MILES_MUTEX_BLOCK_NAME);
+            MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 1, MILES_GENERIC_FILE, 88, &MSS_api_lock_wait_site,
+                                    MILES_MUTEX_BLOCK_NAME);
         }
 
         rrMutexLock(&MSS_api_mutex);
@@ -174,8 +174,8 @@ extern "C" void InMilesMutex()
 
     if (MSS_profile != NULL)
     {
-        MSS_profile->pLockState(MSS_profile, &MSS_api_mutex, MILES_LOCK_STATE_ACQUIRED,
-                                MILES_GENERIC_FILE, 92, &MSS_api_lock_site, MILES_MUTEX_NAME);
+        MSS_profile->pLockState(MSS_profile, &MSS_api_mutex, MILES_LOCK_STATE_ACQUIRED, MILES_GENERIC_FILE, 92,
+                                &MSS_api_lock_site, MILES_MUTEX_NAME);
     }
 }
 
@@ -188,8 +188,8 @@ extern "C" void OutMilesMutex()
 
     if (MSS_profile != NULL)
     {
-        MSS_profile->pLockState(MSS_profile, &MSS_api_mutex, MILES_LOCK_STATE_RELEASED,
-                                MILES_GENERIC_FILE, 100, &MSS_api_unlock_site, MILES_MUTEX_NAME);
+        MSS_profile->pLockState(MSS_profile, &MSS_api_mutex, MILES_LOCK_STATE_RELEASED, MILES_GENERIC_FILE, 100,
+                                &MSS_api_unlock_site, MILES_MUTEX_NAME);
     }
 
     rrMutexUnlock(&MSS_api_mutex);
@@ -251,8 +251,7 @@ extern "C" void AIL_API_startup()
 
     if (MSS_profile != NULL)
     {
-        MSS_profile->pLockName(MSS_profile, &MSS_api_mutex, &MSS_api_mutex_name_site,
-                               MILES_MUTEX_LABEL);
+        MSS_profile->pLockName(MSS_profile, &MSS_api_mutex, &MSS_api_mutex_name_site, MILES_MUTEX_LABEL);
     }
 
     RIB_load_static_provider_library(MIX_RIB_MAIN, MILES_MIXER_LIBRARY);
@@ -260,8 +259,7 @@ extern "C" void AIL_API_startup()
     uIndex = MILES_ENUMERATE_FIRST;
     while (RIB_enumerate_providers(MILES_MIXER_INTERFACE, &uIndex, &uProvider) != 0)
     {
-        if (RIB_request_interface_entry(uProvider, MILES_MIXER_INTERFACE, 0,
-                                        MILES_MIXER_STARTUP, &pMixerStartup) == 0)
+        if (RIB_request_interface_entry(uProvider, MILES_MIXER_INTERFACE, 0, MILES_MIXER_STARTUP, &pMixerStartup) == 0)
         {
             pMixerStartup();
         }
@@ -270,8 +268,7 @@ extern "C" void AIL_API_startup()
     uIndex = MILES_ENUMERATE_FIRST;
     while (RIB_enumerate_providers(MILES_CODEC_INTERFACE, &uIndex, &uProvider) != 0)
     {
-        if (RIB_request_interface_entry(uProvider, MILES_CODEC_INTERFACE, 0,
-                                        MILES_CODEC_STARTUP, &pCodecStartup) == 0)
+        if (RIB_request_interface_entry(uProvider, MILES_CODEC_INTERFACE, 0, MILES_CODEC_STARTUP, &pCodecStartup) == 0)
         {
             iResult = pCodecStartup();
             if (iResult != 0 && iResult != MSS_PROVIDER_ALREADY_STARTED)
@@ -286,8 +283,8 @@ extern "C" void AIL_API_startup()
     uIndex = MILES_ENUMERATE_FIRST;
     while (RIB_enumerate_providers(MILES_FILTER_INTERFACE, &uIndex, &uProvider) != 0)
     {
-        if (RIB_request_interface_entry(uProvider, MILES_FILTER_INTERFACE, 0,
-                                        MILES_FILTER_STARTUP, &pFilterStartup) == 0)
+        if (RIB_request_interface_entry(uProvider, MILES_FILTER_INTERFACE, 0, MILES_FILTER_STARTUP, &pFilterStartup)
+            == 0)
         {
             iResult = pFilterStartup();
             if (iResult != 0 && iResult != MSS_PROVIDER_ALREADY_STARTED)
@@ -315,13 +312,11 @@ static int ThreadProc(void*)
     {
         if (MSS_profile != NULL)
         {
-            MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, MILES_ZONE_FLAGS_BLOCKED,
-                                    MILES_GENERIC_FILE, 466, &TimerWaitSite,
-                                    MILES_TIMER_WAIT_NAME);
+            MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, MILES_ZONE_FLAGS_BLOCKED, MILES_GENERIC_FILE, 466,
+                                    &TimerWaitSite, MILES_TIMER_WAIT_NAME);
         }
 
-        if (rrSemaphoreDecrementOrWait(&TimerSemaphore,
-                                       AIL_preference[MILES_PREFERENCE_TIMER_WAIT]) != 0)
+        if (rrSemaphoreDecrementOrWait(&TimerSemaphore, AIL_preference[MILES_PREFERENCE_TIMER_WAIT]) != 0)
         {
             if (MSS_profile != NULL)
             {
@@ -340,9 +335,8 @@ static int ThreadProc(void*)
         {
             if (MSS_profile != NULL)
             {
-                MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, MILES_ZONE_FLAGS_BLOCKED,
-                                        MILES_GENERIC_FILE, 476, &TimerMutexBlockSite,
-                                        MILES_MUTEX_BLOCK_NAME);
+                MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, MILES_ZONE_FLAGS_BLOCKED, MILES_GENERIC_FILE, 476,
+                                        &TimerMutexBlockSite, MILES_MUTEX_BLOCK_NAME);
             }
 
             if (rrMutexLockTimeout(&MSS_api_mutex, MILES_TIMER_LOCK_WAIT_MILLISECONDS) != 0)
@@ -365,14 +359,13 @@ static int ThreadProc(void*)
 
         if (MSS_profile != NULL)
         {
-            MSS_profile->pLockState(MSS_profile, &MSS_api_mutex, MILES_LOCK_STATE_ACQUIRED,
-                                    MILES_GENERIC_FILE, 487, &TimerLockSite, MILES_MUTEX_NAME);
+            MSS_profile->pLockState(MSS_profile, &MSS_api_mutex, MILES_LOCK_STATE_ACQUIRED, MILES_GENERIC_FILE, 487,
+                                    &TimerLockSite, MILES_MUTEX_NAME);
 
             if (MSS_profile != NULL)
             {
-                MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, MILES_ZONE_FLAGS_NONE,
-                                        MILES_GENERIC_FILE, 488, &TimerBackgroundSite,
-                                        MILES_BACKGROUND_NAME);
+                MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, MILES_ZONE_FLAGS_NONE, MILES_GENERIC_FILE, 488,
+                                        &TimerBackgroundSite, MILES_BACKGROUND_NAME);
             }
         }
 
@@ -396,8 +389,7 @@ static int ThreadProc(void*)
 
             for (iTimer = 0; iTimer < TimerCount; iTimer++)
             {
-                if (TimerTable[iTimer].iStatus == MILES_TIMER_RUNNING &&
-                    uNow >= TimerTable[iTimer].uNextTime)
+                if (TimerTable[iTimer].iStatus == MILES_TIMER_RUNNING && uNow >= TimerTable[iTimer].uNextTime)
                 {
                     do
                     {
@@ -424,9 +416,8 @@ static int ThreadProc(void*)
 
             if (MSS_profile != NULL)
             {
-                MSS_profile->pLockState(MSS_profile, &MSS_api_mutex, MILES_LOCK_STATE_RELEASED,
-                                        MILES_GENERIC_FILE, 491, &TimerUnlockSite,
-                                        MILES_MUTEX_NAME);
+                MSS_profile->pLockState(MSS_profile, &MSS_api_mutex, MILES_LOCK_STATE_RELEASED, MILES_GENERIC_FILE, 491,
+                                        &TimerUnlockSite, MILES_MUTEX_NAME);
             }
         }
 
@@ -465,8 +456,8 @@ extern "C" void AIL_API_shutdown()
 
     while (RIB_enumerate_providers(MILES_FILTER_INTERFACE, &uIndex, &uProvider) != 0)
     {
-        if (RIB_request_interface_entry(uProvider, MILES_FILTER_INTERFACE, 0,
-                                        MILES_FILTER_SHUTDOWN, &pFilterShutdown) == 0)
+        if (RIB_request_interface_entry(uProvider, MILES_FILTER_INTERFACE, 0, MILES_FILTER_SHUTDOWN, &pFilterShutdown)
+            == 0)
         {
             pFilterShutdown();
         }
@@ -476,8 +467,8 @@ extern "C" void AIL_API_shutdown()
 
     while (RIB_enumerate_providers(MILES_CODEC_INTERFACE, &uIndex, &uProvider) != 0)
     {
-        if (RIB_request_interface_entry(uProvider, MILES_CODEC_INTERFACE, 0, MILES_CODEC_SHUTDOWN,
-                                        &pCodecShutdown) == 0)
+        if (RIB_request_interface_entry(uProvider, MILES_CODEC_INTERFACE, 0, MILES_CODEC_SHUTDOWN, &pCodecShutdown)
+            == 0)
         {
             pCodecShutdown();
         }
@@ -487,8 +478,8 @@ extern "C" void AIL_API_shutdown()
 
     while (RIB_enumerate_providers(MILES_MIXER_INTERFACE, &uIndex, &uProvider) != 0)
     {
-        if (RIB_request_interface_entry(uProvider, MILES_MIXER_INTERFACE, 0, MILES_MIXER_SHUTDOWN,
-                                        &pMixerShutdown) == 0)
+        if (RIB_request_interface_entry(uProvider, MILES_MIXER_INTERFACE, 0, MILES_MIXER_SHUTDOWN, &pMixerShutdown)
+            == 0)
         {
             pMixerShutdown();
         }
@@ -562,8 +553,8 @@ extern "C" int AIL_API_register_timer(AIL_TIMER_CALLBACK pCallback)
         }
 
         TimerCount = AIL_preference[MILES_PREFERENCE_TIMER_COUNT];
-        TimerTable = static_cast<MilesTimer*>(AIL_mem_alloc_lock_info(
-            TimerCount * sizeof(MilesTimer), MILES_GENERIC_FILE, 721));
+        TimerTable = static_cast<MilesTimer*>(
+            AIL_mem_alloc_lock_info(TimerCount * sizeof(MilesTimer), MILES_GENERIC_FILE, 721));
 
         if (TimerTable == NULL)
         {
@@ -580,8 +571,8 @@ extern "C" int AIL_API_register_timer(AIL_TIMER_CALLBACK pCallback)
         rrSemaphoreCreate(&TimerSemaphore, 0, MILES_TIMER_SEMAPHORE_MAXIMUM);
         TimerThread = static_cast<rrThread*>(
             AIL_mem_alloc_lock_info(MILES_TIMER_THREAD_BLOCK_SIZE, MILES_GENERIC_FILE, 764));
-        rrThreadCreate(TimerThread, ThreadProc, MILES_TIMER_THREAD_STACK_SIZE, NULL,
-                       MILES_TIMER_THREAD_FLAGS, MILES_TIMER_THREAD_LABEL);
+        rrThreadCreate(TimerThread, ThreadProc, MILES_TIMER_THREAD_STACK_SIZE, NULL, MILES_TIMER_THREAD_FLAGS,
+                       MILES_TIMER_THREAD_LABEL);
         rrThreadSetPriority(TimerThread, MILES_TIMER_THREAD_PRIORITY);
         rrThreadSetPriority(TimerThread, MILES_TIMER_THREAD_PRIORITY);
         rrThreadSetCPUCore(TimerThread, MILES_TIMER_THREAD_CORE);
@@ -715,8 +706,7 @@ extern "C" void AIL_API_mem_free_lock(void* pBlock)
     }
 }
 
-extern "C" void* MSS_alloc_info(unsigned int uSize, unsigned int, const char* pOwnerName,
-                                int iOwnerLine)
+extern "C" void* MSS_alloc_info(unsigned int uSize, unsigned int, const char* pOwnerName, int iOwnerLine)
 {
     return AIL_mem_alloc_lock_info(uSize, pOwnerName, iOwnerLine);
 }
@@ -775,11 +765,11 @@ void SS_serve(unsigned int uDriver)
         if (SS_serve_nesting == 1)
         {
             iBufferCount = AIL_preference[MILES_PREFERENCE_BUFFER_COUNT];
-            iThreshold = ((iBufferCount * AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS] -
-                           AIL_preference[MILES_PREFERENCE_BUFFER_RESERVE] *
-                               AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS]) *
-                          (pDriver->hardwareChannels * pDriver->outputRate) * 2) /
-                         1000;
+            iThreshold = ((iBufferCount * AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS]
+                           - AIL_preference[MILES_PREFERENCE_BUFFER_RESERVE]
+                                 * AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS])
+                          * (pDriver->hardwareChannels * pDriver->outputRate) * 2)
+                         / 1000;
             pOutput = pDriver->output;
 
             iReady = pOutput->pGetReadyBytes(pOutput);
@@ -944,10 +934,8 @@ extern "C" void AIL_API_close_digital_driver(_DIG_DRIVER* pDriver)
     AIL_mem_free_lock(pDriver);
 }
 
-extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFrequency, int,
-                                                            unsigned int uSpeakerConfig,
-                                                            unsigned int uFlags,
-                                                            RADSS_OPEN_DRIVER_CALLBACK pOutput)
+extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFrequency, int, unsigned int uSpeakerConfig,
+                                                            unsigned int uFlags, RADSS_OPEN_DRIVER_CALLBACK pOutput)
 {
     _DIG_DRIVER* pDriver;
     _DIG_DRIVER* pNext;
@@ -970,8 +958,7 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
     int bFailed;
 
     bFailed = 0;
-    pDriver = static_cast<_DIG_DRIVER*>(
-        AIL_mem_alloc_lock_info(DIG_DRIVER_SIZE, MILES_DRIVER_FILE, 181));
+    pDriver = static_cast<_DIG_DRIVER*>(AIL_mem_alloc_lock_info(DIG_DRIVER_SIZE, MILES_DRIVER_FILE, 181));
 
     if (pDriver == NULL)
     {
@@ -1006,8 +993,8 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
     {
         uSystemConfiguration = MSS_MC_USE_SYSTEM_CONFIG;
 
-        if (get_system_speaker_configuration(&uSystemConfiguration) == 0 ||
-            uSystemConfiguration == MSS_MC_USE_SYSTEM_CONFIG)
+        if (get_system_speaker_configuration(&uSystemConfiguration) == 0
+            || uSystemConfiguration == MSS_MC_USE_SYSTEM_CONFIG)
         {
             AIL_set_error("Could not retrieve system speaker config.");
             AIL_mem_free_lock(pDriver);
@@ -1122,14 +1109,13 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
 
     if (pDriver->hardwareChannels != 0)
     {
-        iBufferTime = AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS] *
-                      AIL_preference[MILES_PREFERENCE_BUFFER_COUNT];
+        iBufferTime = AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS]
+                      * AIL_preference[MILES_PREFERENCE_BUFFER_COUNT];
         pDriver->fillBytes =
-            (((AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS] * uFrequency) /
-                  MILES_MILLISECONDS_PER_SECOND +
-              MILES_SAMPLE_ALIGNMENT_ROUND) &
-             MILES_SAMPLE_ALIGNMENT_MASK) *
-            uChannels * 2;
+            (((AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS] * uFrequency) / MILES_MILLISECONDS_PER_SECOND
+              + MILES_SAMPLE_ALIGNMENT_ROUND)
+             & MILES_SAMPLE_ALIGNMENT_MASK)
+            * uChannels * 2;
     }
 
     if (pOutput == NULL)
@@ -1137,8 +1123,7 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
         pOutput = AIL_get_default_output();
     }
 
-    iResult = pOutput(pSystem, iBufferTime, pDriver->outputRate, pDriver->hardwareChannels,
-                      pDriver->fillBytes, 0);
+    iResult = pOutput(pSystem, iBufferTime, pDriver->outputRate, pDriver->hardwareChannels, pDriver->fillBytes, 0);
 
     if (iResult == 0)
     {
@@ -1150,8 +1135,8 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
 
     if (pDriver->hardwareChannels == 0)
     {
-        pDriver->fillPeriod = (unsigned long long)pDriver->framesPerBuffer *
-                                   MILES_SAMPLE_BUFFER_SAMPLE_SCALE / pDriver->outputRate;
+        pDriver->fillPeriod = (unsigned long long)pDriver->framesPerBuffer * MILES_SAMPLE_BUFFER_SAMPLE_SCALE
+                              / pDriver->outputRate;
         uSpeakers = pDriver->speakerConfig;
     }
     else
@@ -1169,11 +1154,10 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
 
         pSystem->pSetMemory(pSystem, pDriver->outputMemory);
 
-        pDriver->framesPerBuffer = (static_cast<int>(pDriver->fillBytes) /
-                                      pDriver->bufferCount) /
-                                     pDriver->hardwareChannels;
-        pDriver->fillPeriod = (unsigned long long)pDriver->framesPerBuffer *
-                                   MILES_SAMPLE_BUFFER_SAMPLE_SCALE / pDriver->outputRate;
+        pDriver->framesPerBuffer = (static_cast<int>(pDriver->fillBytes) / pDriver->bufferCount)
+                                   / pDriver->hardwareChannels;
+        pDriver->fillPeriod = (unsigned long long)pDriver->framesPerBuffer * MILES_SAMPLE_BUFFER_SAMPLE_SCALE
+                              / pDriver->outputRate;
         uSpeakers = pDriver->speakerConfig;
     }
 
@@ -1201,11 +1185,10 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
             pDriver->outputs[iBuffer].chans = 2;
         }
 
-        pDriver->outputs[iBuffer].bytes = pDriver->outputs[iBuffer].chans *
-                                                pDriver->framesPerBuffer *
-                                                MILES_BUILD_BUFFER_SAMPLE_BYTES;
-        pDriver->outputs[iBuffer].buffer = static_cast<unsigned char*>(AIL_mem_alloc_lock_info(
-            pDriver->outputs[iBuffer].bytes, MILES_DRIVER_FILE, 445));
+        pDriver->outputs[iBuffer].bytes = pDriver->outputs[iBuffer].chans * pDriver->framesPerBuffer
+                                          * MILES_BUILD_BUFFER_SAMPLE_BYTES;
+        pDriver->outputs[iBuffer].buffer = static_cast<unsigned char*>(
+            AIL_mem_alloc_lock_info(pDriver->outputs[iBuffer].bytes, MILES_DRIVER_FILE, 445));
         pDriver->outputs[iBuffer].speaker = iFirstChannel;
         iFirstChannel = iFirstChannel + pDriver->outputs[iBuffer].chans;
 
@@ -1222,8 +1205,8 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
 
     if (bFailed == 0)
     {
-        pDriver->interleaveBuffer = static_cast<unsigned char*>(AIL_mem_alloc_lock_info(
-            pDriver->framesPerBuffer * 2 + MILES_SCRATCH_PADDING, MILES_DRIVER_FILE, 507));
+        pDriver->interleaveBuffer = static_cast<unsigned char*>(
+            AIL_mem_alloc_lock_info(pDriver->framesPerBuffer * 2 + MILES_SCRATCH_PADDING, MILES_DRIVER_FILE, 507));
         pDriver->mix.chans = MILES_REVERB_BUILD_CHANNELS;
         pDriver->mix.bytes = pDriver->framesPerBuffer * MILES_REVERB_BUILD_SAMPLE_BYTES;
         pDriver->mix.buffer = static_cast<unsigned char*>(AIL_mem_alloc_lock_info(
@@ -1375,8 +1358,7 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
 
     if (bFailed == 0)
     {
-        AIL_set_speaker_configuration(pDriver, &speakers[0].fX, iConfigCount,
-                                      MILES_SPEAKER_FALLOFF_POWER);
+        AIL_set_speaker_configuration(pDriver, &speakers[0].fX, iConfigCount, MILES_SPEAKER_FALLOFF_POWER);
         AIL_set_speaker_reverb_levels(pDriver, NULL, NULL, NULL, 0);
 
         pDriver->sampleCount = AIL_get_preference(MILES_PREFERENCE_SAMPLE_COUNT);
@@ -1481,8 +1463,7 @@ extern "C" _DIG_DRIVER* AIL_API_open_generic_digital_driver(unsigned int uFreque
         AIL_set_digital_driver_processor(pDriver, 5, uProvider);
 
         AIL_set_timer_frequency(pDriver->timer,
-                                MILES_MILLISECONDS_PER_SECOND /
-                                    AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS]);
+                                MILES_MILLISECONDS_PER_SECOND / AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS]);
         AIL_set_timer_user(pDriver->timer, static_cast<unsigned int>(reinterpret_cast<uintptr_t>(pDriver)));
         AIL_start_timer(pDriver->timer);
 

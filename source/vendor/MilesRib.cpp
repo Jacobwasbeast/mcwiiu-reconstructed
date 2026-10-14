@@ -149,8 +149,7 @@ static ILIST_ENTRY* IL_alloc(InterfaceList* pList)
         iNewCount = iOldCount + RIB_INTERFACE_GROW_COUNT;
         pOldBase = pList->pBase;
 
-        pNewBase = (ILIST_ENTRY*)AIL_mem_alloc_lock_info(iNewCount * (int)sizeof(ILIST_ENTRY),
-                                                        MILES_RIB_FILE, 354);
+        pNewBase = (ILIST_ENTRY*)AIL_mem_alloc_lock_info(iNewCount * (int)sizeof(ILIST_ENTRY), MILES_RIB_FILE, 354);
         if (pNewBase == NULL)
         {
             return NULL;
@@ -283,16 +282,16 @@ static ILIST_ENTRY* IL_lookup(InterfaceList* pList, INTERFACE_DESCRIPTOR* pDescr
     {
         if (*pDescriptor->pInterfaceName == '\0')
         {
-            iMatch = pDescriptor->uType == pEntry->descriptor.uType &&
-                     pDescriptor->uProvider == pEntry->descriptor.uProvider &&
-                     strcmp(pDescriptor->pEntryName, pEntry->descriptor.pEntryName) == 0;
+            iMatch = pDescriptor->uType == pEntry->descriptor.uType
+                     && pDescriptor->uProvider == pEntry->descriptor.uProvider
+                     && strcmp(pDescriptor->pEntryName, pEntry->descriptor.pEntryName) == 0;
         }
         else
         {
-            iMatch = pDescriptor->uType == pEntry->descriptor.uType &&
-                     pDescriptor->uProvider == pEntry->descriptor.uProvider &&
-                     strcmp(pDescriptor->pInterfaceName, pEntry->descriptor.pInterfaceName) == 0 &&
-                     strcmp(pDescriptor->pEntryName, pEntry->descriptor.pEntryName) == 0;
+            iMatch = pDescriptor->uType == pEntry->descriptor.uType
+                     && pDescriptor->uProvider == pEntry->descriptor.uProvider
+                     && strcmp(pDescriptor->pInterfaceName, pEntry->descriptor.pInterfaceName) == 0
+                     && strcmp(pDescriptor->pEntryName, pEntry->descriptor.pEntryName) == 0;
         }
 
         if (iMatch)
@@ -354,8 +353,7 @@ static PVLIST_ENTRY* PL_alloc(ProviderList* pList)
         iNewCount = iOldCount + RIB_PROVIDER_GROW_COUNT;
         pOldBase = pList->pBase;
 
-        pNewBase = (PVLIST_ENTRY*)AIL_mem_alloc_lock_info(iNewCount * (int)sizeof(PVLIST_ENTRY),
-                                                          MILES_RIB_FILE, 523);
+        pNewBase = (PVLIST_ENTRY*)AIL_mem_alloc_lock_info(iNewCount * (int)sizeof(PVLIST_ENTRY), MILES_RIB_FILE, 523);
         if (pNewBase == NULL)
         {
             return NULL;
@@ -526,8 +524,7 @@ static ILIST_ENTRY* IL_find_provider(unsigned int uProvider)
 
     for (i = 0; i < RIB_interfaces.iCount; i++)
     {
-        if (RIB_interfaces.pBase[i].iIndex != -1 &&
-            uProvider == RIB_interfaces.pBase[i].descriptor.uProvider)
+        if (RIB_interfaces.pBase[i].iIndex != -1 && uProvider == RIB_interfaces.pBase[i].descriptor.uProvider)
         {
             return &RIB_interfaces.pBase[i];
         }
@@ -536,8 +533,8 @@ static ILIST_ENTRY* IL_find_provider(unsigned int uProvider)
     return NULL;
 }
 
-extern "C" int RIB_register_interface(unsigned int uProvider, const char* pInterfaceName,
-                                      int iEntryCount, const RIB_INTERFACE_ENTRY* pEntries)
+extern "C" int RIB_register_interface(unsigned int uProvider, const char* pInterfaceName, int iEntryCount,
+                                      const RIB_INTERFACE_ENTRY* pEntries)
 {
     INTERFACE_DESCRIPTOR descriptor;
     ILIST_ENTRY* pRegistered;
@@ -555,8 +552,7 @@ extern "C" int RIB_register_interface(unsigned int uProvider, const char* pInter
     {
         uVersion = 0;
 
-        if (pEntries->uType != 0 ||
-            strcmp(pEntries->pEntryName, RIB_PROVIDER_PROPERTY_ENTRY) != 0)
+        if (pEntries->uType != 0 || strcmp(pEntries->pEntryName, RIB_PROVIDER_PROPERTY_ENTRY) != 0)
         {
             AIL_set_error(RIB_OBSOLETE_MESSAGE);
             return RIB_NOT_FOUND;
@@ -614,8 +610,8 @@ extern "C" int RIB_register_interface(unsigned int uProvider, const char* pInter
     return RIB_NOERR;
 }
 
-extern "C" int RIB_unregister_interface(unsigned int uProvider, const char* pInterfaceName,
-                                        int iEntryCount, const RIB_INTERFACE_ENTRY* pEntries)
+extern "C" int RIB_unregister_interface(unsigned int uProvider, const char* pInterfaceName, int iEntryCount,
+                                        const RIB_INTERFACE_ENTRY* pEntries)
 {
     INTERFACE_DESCRIPTOR descriptor;
     ILIST_ENTRY* pEntry;
@@ -664,9 +660,8 @@ extern "C" int RIB_unregister_interface(unsigned int uProvider, const char* pInt
             {
                 pNextEntry = pEntry->pSetNext;
 
-                if (pEntry->iIndex != -1 && pEntry->descriptor.uProvider == uProvider &&
-                    (pInterfaceName == NULL ||
-                     strcmp(pInterfaceName, pEntry->descriptor.pInterfaceName) == 0))
+                if (pEntry->iIndex != -1 && pEntry->descriptor.uProvider == uProvider
+                    && (pInterfaceName == NULL || strcmp(pInterfaceName, pEntry->descriptor.pInterfaceName) == 0))
                 {
                     IL_dealloc(&RIB_interfaces, pEntry);
                 }
@@ -679,8 +674,8 @@ extern "C" int RIB_unregister_interface(unsigned int uProvider, const char* pInt
     return RIB_NOERR;
 }
 
-extern "C" int RIB_request_interface(unsigned int uProvider, const char* pInterfaceName,
-                                     int iEntryCount, const RIB_INTERFACE_ENTRY* pEntries)
+extern "C" int RIB_request_interface(unsigned int uProvider, const char* pInterfaceName, int iEntryCount,
+                                     const RIB_INTERFACE_ENTRY* pEntries)
 {
     INTERFACE_DESCRIPTOR descriptor;
     ILIST_ENTRY* pRegistered;
@@ -692,9 +687,8 @@ extern "C" int RIB_request_interface(unsigned int uProvider, const char* pInterf
 
     for (i = 0; i < RIB_interfaces.iCount; i++)
     {
-        if (RIB_interfaces.pBase[i].iIndex != -1 &&
-            RIB_interfaces.pBase[i].descriptor.uProvider == uProvider &&
-            strcmp(pInterfaceName, RIB_interfaces.pBase[i].descriptor.pInterfaceName) == 0)
+        if (RIB_interfaces.pBase[i].iIndex != -1 && RIB_interfaces.pBase[i].descriptor.uProvider == uProvider
+            && strcmp(pInterfaceName, RIB_interfaces.pBase[i].descriptor.pInterfaceName) == 0)
         {
             pRegistered = &RIB_interfaces.pBase[i];
             break;
@@ -751,9 +745,8 @@ extern "C" int RIB_request_interface(unsigned int uProvider, const char* pInterf
     return RIB_ERROR;
 }
 
-extern "C" int RIB_request_interface_entry(unsigned int uProvider, const char* pInterfaceName,
-                                           unsigned int uEntryType, const char* pEntryName,
-                                           void* pEntry)
+extern "C" int RIB_request_interface_entry(unsigned int uProvider, const char* pInterfaceName, unsigned int uEntryType,
+                                           const char* pEntryName, void* pEntry)
 {
     INTERFACE_DESCRIPTOR descriptor;
     ILIST_ENTRY* pFound;
@@ -776,8 +769,7 @@ extern "C" int RIB_request_interface_entry(unsigned int uProvider, const char* p
     return RIB_NOERR;
 }
 
-extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_CALLBACK pMain,
-                                                         const char* pLibraryName)
+extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_CALLBACK pMain, const char* pLibraryName)
 {
     unsigned int uProvider;
     unsigned int uIndex;
@@ -790,8 +782,7 @@ extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_CALLBACK pMain
     {
         for (uIndex = 0; uIndex < (unsigned int)RIB_providers.iCount; uIndex++)
         {
-            if (uIndex != 0 && RIB_providers.pBase[uIndex].iIndex != -1 &&
-                RIB_providers.pBase[uIndex].pMain == pMain)
+            if (uIndex != 0 && RIB_providers.pBase[uIndex].iIndex != -1 && RIB_providers.pBase[uIndex].pMain == pMain)
             {
                 uProvider = uIndex;
                 bFound = 1;
@@ -810,9 +801,9 @@ extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_CALLBACK pMain
 
     if (RIB_providers.pBase[uProvider].iReferenceCount == 1)
     {
-        if (RIB_providers.pBase[uProvider].pMain(uProvider, 1, RIB_alloc_provider_handle,
-                                                 RIB_register_interface,
-                                                 RIB_unregister_interface) == 0)
+        if (RIB_providers.pBase[uProvider].pMain(uProvider, 1, RIB_alloc_provider_handle, RIB_register_interface,
+                                                 RIB_unregister_interface)
+            == 0)
         {
             RIB_free_provider_handle(uProvider);
             uProvider = 0;
@@ -833,9 +824,7 @@ extern "C" void RIB_free_provider_library(unsigned int uProvider)
 
     if (uProvider == 0)
     {
-        for (uIndex = 0;
-             RIB_num_users != 0 && uIndex < (unsigned int)RIB_providers.iCount;
-             uIndex++)
+        for (uIndex = 0; RIB_num_users != 0 && uIndex < (unsigned int)RIB_providers.iCount; uIndex++)
         {
             PVLIST_ENTRY* pProvider = &RIB_providers.pBase[uIndex];
 
@@ -853,8 +842,7 @@ extern "C" void RIB_free_provider_library(unsigned int uProvider)
         {
             if (RIB_providers.pBase[uProvider].pMain != NULL)
             {
-                RIB_providers.pBase[uProvider].pMain(uProvider, 0, RIB_alloc_provider_handle,
-                                                     RIB_register_interface,
+                RIB_providers.pBase[uProvider].pMain(uProvider, 0, RIB_alloc_provider_handle, RIB_register_interface,
                                                      RIB_unregister_interface);
             }
 
@@ -863,8 +851,7 @@ extern "C" void RIB_free_provider_library(unsigned int uProvider)
     }
 }
 
-extern "C" int RIB_enumerate_providers(const char* pInterfaceName, unsigned int* puIndex,
-                                       unsigned int* puProvider)
+extern "C" int RIB_enumerate_providers(const char* pInterfaceName, unsigned int* puIndex, unsigned int* puProvider)
 {
     unsigned int uLocalIndex;
     unsigned int uProvider;
@@ -894,8 +881,7 @@ extern "C" int RIB_enumerate_providers(const char* pInterfaceName, unsigned int*
 
             for (iSet = 0; iSet < RIB_INTERFACE_SET_COUNT && iFound == 0; iSet++)
             {
-                for (pEntry = RIB_interfaces.pSet[iSet]; pEntry != NULL;
-                     pEntry = pEntry->pSetNext)
+                for (pEntry = RIB_interfaces.pSet[iSet]; pEntry != NULL; pEntry = pEntry->pSetNext)
                 {
                     if (pEntry->iIndex != -1 && pEntry->descriptor.uProvider == uProvider)
                     {
@@ -921,11 +907,10 @@ extern "C" int RIB_enumerate_providers(const char* pInterfaceName, unsigned int*
         {
             for (iSet = 0; iSet < RIB_INTERFACE_SET_COUNT; iSet++)
             {
-                for (pEntry = RIB_interfaces.pSet[iSet]; pEntry != NULL;
-                     pEntry = pEntry->pSetNext)
+                for (pEntry = RIB_interfaces.pSet[iSet]; pEntry != NULL; pEntry = pEntry->pSetNext)
                 {
-                    if (pEntry->iIndex != -1 && pEntry->descriptor.uProvider == uProvider &&
-                        strcmp(pInterfaceName, pEntry->descriptor.pInterfaceName) == 0)
+                    if (pEntry->iIndex != -1 && pEntry->descriptor.uProvider == uProvider
+                        && strcmp(pInterfaceName, pEntry->descriptor.pInterfaceName) == 0)
                     {
                         *puIndex = uProvider;
                         *puProvider = uProvider;
@@ -973,8 +958,8 @@ extern "C" int match_suffix(char* pFilterList, char* pFileName)
             return 0;
         }
 
-        if (iSuffixLength <= iPatternLength &&
-            AIL_stricmp(pFilterList + (iPatternLength - iSuffixLength), pSuffix) == 0)
+        if (iSuffixLength <= iPatternLength
+            && AIL_stricmp(pFilterList + (iPatternLength - iSuffixLength), pSuffix) == 0)
         {
             return 1;
         }
@@ -988,8 +973,7 @@ extern "C" int match_suffix(char* pFilterList, char* pFileName)
     }
 }
 
-extern "C" unsigned int RIB_find_file_provider(const char* pInterfaceName,
-                                               const char* pAttributeName,
+extern "C" unsigned int RIB_find_file_provider(const char* pInterfaceName, const char* pAttributeName,
                                                const char* pFileName)
 {
     ILIST_ENTRY* pEntry;
@@ -1019,9 +1003,9 @@ extern "C" unsigned int RIB_find_file_provider(const char* pInterfaceName,
 
             pProperty = (RIB_PROVIDER_PROPERTY_CALLBACK)pEntry->descriptor.pToken;
 
-            if (RIB_request_interface_entry(pEntry->descriptor.uProvider,
-                                            pEntry->descriptor.pInterfaceName, RIB_PROPERTY,
-                                            pAttributeName, &uAttribute) != 0)
+            if (RIB_request_interface_entry(pEntry->descriptor.uProvider, pEntry->descriptor.pInterfaceName,
+                                            RIB_PROPERTY, pAttributeName, &uAttribute)
+                != 0)
             {
                 continue;
             }
@@ -1039,9 +1023,8 @@ extern "C" unsigned int RIB_find_file_provider(const char* pInterfaceName,
     return 0;
 }
 
-extern "C" unsigned int RIB_find_file_dec_provider(const char* pInterfaceName,
-                                                   const char* pInputAttribute, unsigned int uInputValue,
-                                                   const char* pOutputAttribute,
+extern "C" unsigned int RIB_find_file_dec_provider(const char* pInterfaceName, const char* pInputAttribute,
+                                                   unsigned int uInputValue, const char* pOutputAttribute,
                                                    const char* pOutputValue)
 {
     ILIST_ENTRY* pEntry;
@@ -1073,16 +1056,16 @@ extern "C" unsigned int RIB_find_file_dec_provider(const char* pInterfaceName,
 
             pProperty = (RIB_PROVIDER_PROPERTY_CALLBACK)pEntry->descriptor.pToken;
 
-            if (RIB_request_interface_entry(pEntry->descriptor.uProvider,
-                                            pEntry->descriptor.pInterfaceName, RIB_PROPERTY,
-                                            pInputAttribute, &uIdAttribute) != 0)
+            if (RIB_request_interface_entry(pEntry->descriptor.uProvider, pEntry->descriptor.pInterfaceName,
+                                            RIB_PROPERTY, pInputAttribute, &uIdAttribute)
+                != 0)
             {
                 continue;
             }
 
-            if (RIB_request_interface_entry(pEntry->descriptor.uProvider,
-                                            pEntry->descriptor.pInterfaceName, RIB_PROPERTY,
-                                            pOutputAttribute, &uExtensionAttribute) != 0)
+            if (RIB_request_interface_entry(pEntry->descriptor.uProvider, pEntry->descriptor.pInterfaceName,
+                                            RIB_PROPERTY, pOutputAttribute, &uExtensionAttribute)
+                != 0)
             {
                 continue;
             }

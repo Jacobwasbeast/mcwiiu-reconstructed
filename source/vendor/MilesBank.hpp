@@ -70,8 +70,7 @@ struct SoundBankImage
 
 extern "C" SoundBank* AIL_open_soundbank(const char* fileName, const char* bankName);
 extern "C" void AIL_close_soundbank(SoundBank* bank);
-extern "C" int AIL_get_event_contents(SoundBank* bank, const char* name,
-                                      const unsigned char** contents);
+extern "C" int AIL_get_event_contents(SoundBank* bank, const char* name, const unsigned char** contents);
 extern "C" void* AIL_find_environment_preset(SoundBank* bank, const char* name);
 extern "C" int AIL_resolve_raw_environment_preset(void* preset, PresetEvalFunc evaluate);
 extern "C" int AIL_apply_raw_environment_preset(_DIG_DRIVER* driver, void* preset);

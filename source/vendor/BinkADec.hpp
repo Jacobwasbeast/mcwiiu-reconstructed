@@ -5,10 +5,8 @@
 
 struct BINKAUDIODECOMP;
 
-typedef void* (*BCF_ALLOC_CALLBACK)(unsigned int uSize, unsigned int uUser, const char* pFile,
-                                    unsigned int uLine);
-typedef void (*BCF_FREE_CALLBACK)(void* pBlock, unsigned int uUser, const char* pFile,
-                                  unsigned int uLine);
+typedef void* (*BCF_ALLOC_CALLBACK)(unsigned int uSize, unsigned int uUser, const char* pFile, unsigned int uLine);
+typedef void (*BCF_FREE_CALLBACK)(void* pBlock, unsigned int uUser, const char* pFile, unsigned int uLine);
 typedef int (*BCF_FETCH_CALLBACK)(unsigned int uUser, void* pDestination, int iBytes, int iOffset);
 
 static const unsigned int BCF_MAX_STREAMS = 4;
@@ -70,18 +68,16 @@ struct BcfStream
 int PROVIDER_property(unsigned int uProperty, void* pBefore, const void* pNewValue, void* pAfter);
 const char* ASI_error();
 int ASI_startup();
-int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned int uUser,
-                    BCF_FETCH_CALLBACK pFetch, unsigned int uTotalSize);
+int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned int uUser, BCF_FETCH_CALLBACK pFetch,
+                    unsigned int uTotalSize);
 int ASI_stream_close(int iStream);
 void decode_bink_buffer(BcfStream* pStream);
 void FindFrameBoundary(int iStream);
 void SeekStreamForward(BcfStream* pStream, int iBytes);
 int ASI_stream_process(int iStream, void* pBuffer, int iBytes);
 int ASI_stream_seek(int iStream, int iPosition);
-void SeekTableLookup(BcfStream* pStream, unsigned int uSample, int* piOffset, int* piRemainder,
-                     int* piBase);
-int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
-                        const void* pNewValue, void* pAfter);
+void SeekTableLookup(BcfStream* pStream, unsigned int uSample, int* piOffset, int* piRemainder, int* piBase);
+int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore, const void* pNewValue, void* pAfter);
 int ASI_shutdown();
 
 extern "C" int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,

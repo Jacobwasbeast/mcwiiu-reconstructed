@@ -9,7 +9,8 @@ MilesEventErrorCallback g_milesEventErrorCallback = 0;
 MilesEventErrorCallback g_milesAuditionErrorCallback = 0;
 MilesAuditionSoundEvictedCallback g_milesAuditionSoundEvictedCallback = 0;
 
-namespace {
+namespace
+{
 const unsigned int RIB_PROPERTY = 1;
 }
 
@@ -21,8 +22,7 @@ extern "C" void MilesSetEventErrorCallbackInternal(MilesEventErrorCallback callb
 extern "C" void MilesSetEventErrorCallback(MilesEventErrorCallback callback)
 {
     ++AIL_debug_depth;
-    if (AIL_debug_enabled && (AIL_debug_depth == 1 || AIL_debug_nested) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled && (AIL_debug_depth == 1 || AIL_debug_nested) && AIL_API_background() == 0)
         AIL_debug_log("AIL_set_event_error_callback(0x%lX)", callback);
     InMilesMutex();
     MilesSetEventErrorCallbackInternal(callback);
@@ -36,8 +36,7 @@ extern "C" void Audition_Error(long long context, const char* text)
         g_milesAuditionErrorCallback(context, text);
 }
 
-extern "C" void Audition_SoundEvicted(unsigned long long instanceId, unsigned long long eventId,
-                                      unsigned int policy)
+extern "C" void Audition_SoundEvicted(unsigned long long instanceId, unsigned long long eventId, unsigned int policy)
 {
     if (g_milesAuditionSoundEvictedCallback)
         g_milesAuditionSoundEvictedCallback(instanceId, eventId, policy);
@@ -87,16 +86,13 @@ void ErrorHandler(ErrorType type, unsigned long long context, const char* text)
     Audition_Error(static_cast<long long>(context), text);
 }
 
-extern "C" void AIL_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, float fOuterAngle,
-                                       float fOuterVolume)
+extern "C" void AIL_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, float fOuterAngle, float fOuterVolume)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_set_sample_3D_cone(0x%lX,%f,%f,%f)", pSample, fInnerAngle, fOuterAngle,
-                      fOuterVolume);
+        AIL_debug_log("@AIL_set_sample_3D_cone(0x%lX,%f,%f,%f)", pSample, fInnerAngle, fOuterAngle, fOuterVolume);
     }
 
     InMilesMutex();
@@ -106,16 +102,15 @@ extern "C" void AIL_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, floa
     AIL_debug_depth = AIL_debug_depth - 1;
 }
 
-extern "C" void AIL_set_sample_3D_orientation(_SAMPLE* pSample, float fForwardX, float fForwardY,
-                                              float fForwardZ, float fUpX, float fUpY, float fUpZ)
+extern "C" void AIL_set_sample_3D_orientation(_SAMPLE* pSample, float fForwardX, float fForwardY, float fForwardZ,
+                                              float fUpX, float fUpY, float fUpZ)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_set_sample_3D_orientation(0x%lX,%f,%f,%f,%f,%f,%f)", pSample,
-                      fForwardX, fForwardY, fForwardZ, fUpX, fUpY, fUpZ);
+        AIL_debug_log("@AIL_set_sample_3D_orientation(0x%lX,%f,%f,%f,%f,%f,%f)", pSample, fForwardX, fForwardY,
+                      fForwardZ, fUpX, fUpY, fUpZ);
     }
 
     InMilesMutex();
@@ -125,16 +120,15 @@ extern "C" void AIL_set_sample_3D_orientation(_SAMPLE* pSample, float fForwardX,
     AIL_debug_depth = AIL_debug_depth - 1;
 }
 
-extern "C" void AIL_set_sample_3D_velocity(_SAMPLE* pSample, float fDirectionX, float fDirectionY,
-                                           float fDirectionZ, float fMagnitude)
+extern "C" void AIL_set_sample_3D_velocity(_SAMPLE* pSample, float fDirectionX, float fDirectionY, float fDirectionZ,
+                                           float fMagnitude)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_set_sample_3D_velocity(0x%lX,%f,%f,%f,%f)", pSample, fDirectionX,
-                      fDirectionY, fDirectionZ, fMagnitude);
+        AIL_debug_log("@AIL_set_sample_3D_velocity(0x%lX,%f,%f,%f,%f)", pSample, fDirectionX, fDirectionY, fDirectionZ,
+                      fMagnitude);
     }
 
     InMilesMutex();
@@ -148,8 +142,7 @@ extern "C" void AIL_set_sample_occlusion(_SAMPLE* pSample, float fOcclusion)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_set_sample_occlusion(0x%lX,%s)", pSample, fOcclusion);
     }
@@ -165,8 +158,7 @@ extern "C" void AIL_set_sample_exclusion(_SAMPLE* pSample, float fExclusion)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_set_sample_exclusion(0x%lX,%f)", pSample, fExclusion);
     }
@@ -182,8 +174,7 @@ extern "C" void AIL_set_sample_obstruction(_SAMPLE* pSample, float fObstruction)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_set_sample_obstruction(0x%lX,%f)", pSample, fObstruction);
     }
@@ -195,19 +186,17 @@ extern "C" void AIL_set_sample_obstruction(_SAMPLE* pSample, float fObstruction)
     AIL_debug_depth = AIL_debug_depth - 1;
 }
 
-extern "C" int AIL_sample_stage_property(_SAMPLE* pSample, int iStage, const char* pName,
-                                         int iChannel, void* pBefore, const void* pNewValue,
-                                         void* pAfter)
+extern "C" int AIL_sample_stage_property(_SAMPLE* pSample, int iStage, const char* pName, int iChannel, void* pBefore,
+                                         const void* pNewValue, void* pAfter)
 {
     int iResult = 0;
 
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_sample_stage_property(0x%lX,%ld,%s,%ld,0x%lX,0x%lX,0x%lX)", pSample,
-                      iStage, pName, iChannel, pBefore, pNewValue, pAfter);
+        AIL_debug_log("@AIL_sample_stage_property(0x%lX,%ld,%s,%ld,0x%lX,0x%lX,0x%lX)", pSample, iStage, pName,
+                      iChannel, pBefore, pNewValue, pAfter);
     }
 
     InMilesMutex();
@@ -216,19 +205,18 @@ extern "C" int AIL_sample_stage_property(_SAMPLE* pSample, int iStage, const cha
     {
         FilterSamplePropertyFunc pProperty;
         unsigned int uToken;
-        if (pSample->stages[iStage].filter.active != 0 &&
-            pSample->stages[iStage].filter.instance != NULL &&
-            (pProperty = pSample->stages[iStage].filter.instance->sampleProperty) != NULL &&
-            RIB_request_interface_entry(pSample->stages[iStage].filter.provider,
-                                        "Pipeline filter sample services", RIB_PROPERTY, pName,
-                                        &uToken) == 0)
+        if (pSample->stages[iStage].filter.active != 0 && pSample->stages[iStage].filter.instance != NULL
+            && (pProperty = pSample->stages[iStage].filter.instance->sampleProperty) != NULL
+            && RIB_request_interface_entry(pSample->stages[iStage].filter.provider, "Pipeline filter sample services",
+                                           RIB_PROPERTY, pName, &uToken)
+                   == 0)
         {
             if (iChannel == -1)
             {
                 for (int iIndex = 0; iIndex < pSample->channelCount; ++iIndex)
                 {
-                    iResult = pProperty(pSample->stages[iStage].filter.handles[iIndex], uToken,
-                                        pBefore, pNewValue, pAfter);
+                    iResult = pProperty(pSample->stages[iStage].filter.handles[iIndex], uToken, pBefore, pNewValue,
+                                        pAfter);
                 }
             }
             else
@@ -243,8 +231,8 @@ extern "C" int AIL_sample_stage_property(_SAMPLE* pSample, int iStage, const cha
                 }
                 if (iChannel != -1)
                 {
-                    iResult = pProperty(pSample->stages[iStage].filter.handles[iChannel], uToken,
-                                        pBefore, pNewValue, pAfter);
+                    iResult = pProperty(pSample->stages[iStage].filter.handles[iChannel], uToken, pBefore, pNewValue,
+                                        pAfter);
                 }
             }
         }
@@ -252,8 +240,7 @@ extern "C" int AIL_sample_stage_property(_SAMPLE* pSample, int iStage, const cha
 
     OutMilesMutex();
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         outresint(iResult);
     }

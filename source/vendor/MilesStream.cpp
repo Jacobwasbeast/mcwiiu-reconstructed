@@ -18,14 +18,12 @@ extern "C" void AIL_init_sample(_SAMPLE* pSample, int iFormat);
 extern "C" void AIL_set_sample_playback_rate(_SAMPLE* pSample, int iRate);
 extern "C" int SS_set_sample_type(_SAMPLE* pSample, unsigned int uFlags, int iChannelMask);
 extern "C" void AIL_set_sample_adpcm_block_size(_SAMPLE* pSample, unsigned int uBlockSize);
-extern "C" int AIL_minimum_sample_buffer_size(_DIG_DRIVER* pDriver, int iRate,
-                                              unsigned int uFormat);
+extern "C" int AIL_minimum_sample_buffer_size(_DIG_DRIVER* pDriver, int iRate, unsigned int uFormat);
 extern "C" void AIL_set_sample_address(_SAMPLE* pSample, const void* pStart, unsigned int uLength);
 extern "C" int AIL_set_sample_processor(_SAMPLE* pSample, int iStage, int iProvider);
 extern "C" int AIL_set_sample_buffer_count(_SAMPLE* pSample, int iCount);
 extern "C" int AIL_sample_buffer_available(_SAMPLE* pSample);
-extern "C" int AIL_load_sample_buffer(_SAMPLE* pSample, int iBuffer, const void* pData,
-                                      unsigned int uLength);
+extern "C" int AIL_load_sample_buffer(_SAMPLE* pSample, int iBuffer, const void* pData, unsigned int uLength);
 extern "C" void AIL_set_sample_position(_SAMPLE* pSample, unsigned int uPosition);
 extern "C" unsigned int AIL_sample_position(_SAMPLE* pSample);
 extern "C" unsigned int AIL_sample_status(_SAMPLE* pSample);
@@ -132,8 +130,7 @@ static int StreamCounter = 0;
 static MilesProfileSite StreamPercentSite;
 
 #define LITTLE_ENDIAN_32(uValue) \
-    (((uValue) << 24) | (((uValue) >> 8 & 0xff) << 16) | (((uValue) >> 16 & 0xff) << 8) | \
-     ((uValue) >> 24))
+    (((uValue) << 24) | (((uValue) >> 8 & 0xff) << 16) | (((uValue) >> 16 & 0xff) << 8) | ((uValue) >> 24))
 #define LITTLE_ENDIAN_HIGH_16(uValue) ((((uValue) >> 16 & 0xff) << 8) | ((uValue) >> 24))
 #define LITTLE_ENDIAN_LOW_16(uValue) ((((uValue) & 0xff) << 8) | ((uValue) >> 8 & 0xff))
 
@@ -226,10 +223,9 @@ int start_IOs_if_we_can(_STREAM* pStream)
     uLoaded = AIL_API_sample_loaded_len(pStream->sample);
     if (pStream->preload == 0)
     {
-        if (uLoaded != 0 && pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
-            pStream->error == 0 &&
-            ((int)uLoaded > pStream->startRemaining ||
-             (unsigned int)pStream->readPosition >= (unsigned int)pStream->dataLength))
+        if (uLoaded != 0 && pStream->playStatus == STREAM_PLAY_FLAG_PLAYING && pStream->error == 0
+            && ((int)uLoaded > pStream->startRemaining
+                || (unsigned int)pStream->readPosition >= (unsigned int)pStream->dataLength))
         {
             pStream->startRemaining = 0;
             AIL_start_sample(pStream->sample);
@@ -241,8 +237,8 @@ int start_IOs_if_we_can(_STREAM* pStream)
         {
             if (MSS_profile != NULL)
             {
-                MSS_profile->pPlot(MSS_profile, 0, 5, 0, fPercent, &StreamPercentSite,
-                                   STREAM_PERCENT_FORMAT, pStream->id);
+                MSS_profile->pPlot(MSS_profile, 0, 5, 0, fPercent, &StreamPercentSite, STREAM_PERCENT_FORMAT,
+                                   pStream->id);
                 fPercent = pStream->fillPercent;
             }
 
@@ -255,8 +251,7 @@ int start_IOs_if_we_can(_STREAM* pStream)
     do
     {
         _SAMPLE* pSample = pStream->sample;
-        if (pStream->readStatus[iBuffer] != 0 ||
-            pSample->buffers[iBuffer].position != pSample->buffers[iBuffer].size)
+        if (pStream->readStatus[iBuffer] != 0 || pSample->buffers[iBuffer].position != pSample->buffers[iBuffer].size)
         {
             break;
         }
@@ -280,8 +275,8 @@ int start_IOs_if_we_can(_STREAM* pStream)
             unsigned int uSectorOffset = (iPosition + pStream->dataStart) & SECTOR_MASK;
             if (uSectorOffset != 0 && pStream->preload == 0 && uSectorOffset < uToRead)
             {
-                if (uToRead - uSectorOffset > SECTOR_MINIMUM_READ &&
-                    uSectorOffset % AIL_API_sample_granularity(pStream->sample) == 0)
+                if (uToRead - uSectorOffset > SECTOR_MINIMUM_READ
+                    && uSectorOffset % AIL_API_sample_granularity(pStream->sample) == 0)
                 {
                     uToRead = uToRead - uSectorOffset;
                 }
@@ -416,23 +411,20 @@ void background(unsigned int uTimer)
             {
                 int iLoad = pStream->loadBuffer;
                 handle_asyncs(pStream, 0);
-                if (pStream->endOfData == STREAM_END_PENDING &&
-                    pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
-                    pStream->bufferLength[iLoad] == 0)
+                if (pStream->endOfData == STREAM_END_PENDING && pStream->playStatus == STREAM_PLAY_FLAG_PLAYING
+                    && pStream->bufferLength[iLoad] == 0)
                 {
                     if (AIL_sample_buffer_available(pStream->sample) != 0)
                     {
-                        AIL_load_sample_buffer(pStream->sample, pStream->loadBuffer,
-                                               pStream->buffers[0], 0);
+                        AIL_load_sample_buffer(pStream->sample, pStream->loadBuffer, pStream->buffers[0], 0);
                         pStream->loadBuffer = pStream->loadBuffer + 1;
                         if (pStream->loadBuffer >= STREAM_BUFFER_COUNT)
                         {
                             pStream->loadBuffer = 0;
                         }
 
-                        if (pStream->startRemaining != 0 &&
-                            pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
-                            pStream->error == 0)
+                        if (pStream->startRemaining != 0 && pStream->playStatus == STREAM_PLAY_FLAG_PLAYING
+                            && pStream->error == 0)
                         {
                             pStream->startRemaining = 0;
                             AIL_start_sample(pStream->sample);
@@ -446,9 +438,8 @@ void background(unsigned int uTimer)
                     }
                 }
 
-                if ((pStream->bufferLength[iLoad] == 0 &&
-                     pStream->endOfData != STREAM_END_PENDING) ||
-                    pStream->playStatus != STREAM_PLAY_FLAG_PLAYING)
+                if ((pStream->bufferLength[iLoad] == 0 && pStream->endOfData != STREAM_END_PENDING)
+                    || pStream->playStatus != STREAM_PLAY_FLAG_PLAYING)
                 {
                     break;
                 }
@@ -460,8 +451,7 @@ void background(unsigned int uTimer)
 
                 if (pStream->preload != 0)
                 {
-                    AIL_set_sample_address(pStream->sample, pStream->buffers[iLoad],
-                                           pStream->bufferLength[iLoad]);
+                    AIL_set_sample_address(pStream->sample, pStream->buffers[iLoad], pStream->bufferLength[iLoad]);
                     if (pStream->preloadSeek != 0)
                     {
                         AIL_set_sample_position(pStream->sample, pStream->preloadSeek);
@@ -487,8 +477,7 @@ void background(unsigned int uTimer)
                     {
                         pStream->bufferLength[iLoad] = pStream->resetASI[iLoad] - 1;
                         pStream->resetASI[iLoad] = 0;
-                        AIL_request_EOB_ASI_reset(pStream->sample, iLoad,
-                                                  pStream->resetPosition[iLoad]);
+                        AIL_request_EOB_ASI_reset(pStream->sample, iLoad, pStream->resetPosition[iLoad]);
                     }
 
                     AIL_load_sample_buffer(pStream->sample, iLoad, pStream->buffers[iLoad],
@@ -496,16 +485,15 @@ void background(unsigned int uTimer)
                     pStream->sample->lastBuffer = pStream->loadBuffer;
                     pStream->readStatus[iLoad] = 0;
                     OutMilesMutex();
-                    if (pStream->startRemaining <= pStream->bufferLength[iLoad] &&
-                        pStream->playStatus == STREAM_PLAY_FLAG_PLAYING && pStream->error == 0)
+                    if (pStream->startRemaining <= pStream->bufferLength[iLoad]
+                        && pStream->playStatus == STREAM_PLAY_FLAG_PLAYING && pStream->error == 0)
                     {
                         pStream->startRemaining = 0;
                         AIL_start_sample(pStream->sample);
                     }
                     else
                     {
-                        pStream->startRemaining =
-                            pStream->startRemaining - pStream->bufferLength[iLoad];
+                        pStream->startRemaining = pStream->startRemaining - pStream->bufferLength[iLoad];
                     }
 
                     pStream->bufferLength[iLoad] = 0;
@@ -518,8 +506,8 @@ void background(unsigned int uTimer)
             }
 
             pNext = pStream->next;
-            if (pStream->callbackPending != 0 && pStream->callback != NULL &&
-                AIL_sample_status(pStream->sample) != SAMPLE_STATUS_PLAYING)
+            if (pStream->callbackPending != 0 && pStream->callback != NULL
+                && AIL_sample_status(pStream->sample) != SAMPLE_STATUS_PLAYING)
             {
                 pStream->callbackPending = 0;
                 pStream->callback(pStream);
@@ -537,8 +525,7 @@ void background(unsigned int uTimer)
     OutMilesMutex();
 }
 
-extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileName,
-                                        int iStreamMemory)
+extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileName, int iStreamMemory)
 {
     _STREAM* pStream;
     unsigned int uProvider;
@@ -580,8 +567,7 @@ extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileN
         return NULL;
     }
 
-    pStream = static_cast<_STREAM*>(
-        AIL_mem_alloc_lock_info(sizeof(_STREAM), MILES_STREAM_FILE, STREAM_STRUCT_LINE));
+    pStream = static_cast<_STREAM*>(AIL_mem_alloc_lock_info(sizeof(_STREAM), MILES_STREAM_FILE, STREAM_STRUCT_LINE));
     if (pStream == NULL)
     {
         AIL_set_error(OUT_OF_MEMORY_ERROR);
@@ -729,12 +715,11 @@ extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileN
                 pStream->blockOriented = 1;
             }
 
-            if (uFormatTag != WAVE_FORMAT_PCM && uFormatTag != WAVE_FORMAT_EXTENSIBLE &&
-                (uFormatTag != WAVE_FORMAT_IMA_ADPCM || uBits != 4))
+            if (uFormatTag != WAVE_FORMAT_PCM && uFormatTag != WAVE_FORMAT_EXTENSIBLE
+                && (uFormatTag != WAVE_FORMAT_IMA_ADPCM || uBits != 4))
             {
-                uProvider = RIB_find_file_dec_provider(ASI_CODEC_INTERFACE, INPUT_WAVE_TAG,
-                                                       uFormatTag, OUTPUT_FILE_TYPES,
-                                                       RAW_FILE_TYPE);
+                uProvider = RIB_find_file_dec_provider(ASI_CODEC_INTERFACE, INPUT_WAVE_TAG, uFormatTag,
+                                                       OUTPUT_FILE_TYPES, RAW_FILE_TYPE);
                 if (uProvider != 0)
                 {
                     bScan = true;
@@ -808,8 +793,7 @@ extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileN
 
     if (bScan)
     {
-        while (bId3First ||
-               (iBytes = AIL_file_read(pStream->fileHandle, probe, ASI_PROBE_SIZE)) != 0)
+        while (bId3First || (iBytes = AIL_file_read(pStream->fileHandle, probe, ASI_PROBE_SIZE)) != 0)
         {
             if (!bId3First)
             {
@@ -825,56 +809,53 @@ extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileN
                 if (pDecoder->stream != NULL)
                 {
                     pStream->blockSize = 1;
-                    pDecoder->property(pDecoder->stream, pDecoder->minimumInputBlockSize,
-                                       &pStream->blockSize, NULL, NULL);
+                    pDecoder->property(pDecoder->stream, pDecoder->minimumInputBlockSize, &pStream->blockSize, NULL,
+                                       NULL);
                     AIL_file_seek(pStream->fileHandle, pStream->dataStart, SEEK_FROM_START);
                     if (pStream->asi->dataOffset != PROPERTY_NOT_FOUND)
                     {
                         pStream->dataStart = -1;
-                        pStream->asi->property(pStream->asi->stream, pStream->asi->dataOffset,
-                                               &pStream->dataStart, NULL, NULL);
+                        pStream->asi->property(pStream->asi->stream, pStream->asi->dataOffset, &pStream->dataStart,
+                                               NULL, NULL);
                         AIL_file_seek(pStream->fileHandle, pStream->dataStart, SEEK_FROM_START);
                     }
 
                     if (pStream->asi->dataLength != PROPERTY_NOT_FOUND)
                     {
                         pStream->dataLength = -1;
-                        pStream->asi->property(pStream->asi->stream, pStream->asi->dataLength,
-                                               &pStream->dataLength, NULL, NULL);
+                        pStream->asi->property(pStream->asi->stream, pStream->asi->dataLength, &pStream->dataLength,
+                                               NULL, NULL);
                     }
 
                     pStream->asi->seek(pStream->asi->stream, 0);
                     if (pStream->asi->streamSeekPosition != PROPERTY_NOT_FOUND)
                     {
                         iSeekExtra = 0;
-                        pStream->asi->property(pStream->asi->stream,
-                                               pStream->asi->streamSeekPosition, NULL, &iSeekExtra,
-                                               &iSeekExtra);
+                        pStream->asi->property(pStream->asi->stream, pStream->asi->streamSeekPosition, NULL,
+                                               &iSeekExtra, &iSeekExtra);
                         if (iSeekExtra != 0)
                         {
-                            AIL_file_seek(pStream->fileHandle, pStream->dataStart + iSeekExtra,
-                                          SEEK_FROM_START);
+                            AIL_file_seek(pStream->fileHandle, pStream->dataStart + iSeekExtra, SEEK_FROM_START);
                         }
                     }
 
                     pStream->sampleRate = -1;
-                    pStream->asi->property(pStream->asi->stream, pStream->asi->outputSampleRate,
-                                           &pStream->sampleRate, NULL, NULL);
+                    pStream->asi->property(pStream->asi->stream, pStream->asi->outputSampleRate, &pStream->sampleRate,
+                                           NULL, NULL);
                     pStream->dataRate = -1;
-                    pStream->asi->property(pStream->asi->stream, pStream->asi->inputBitRate,
-                                           &pStream->dataRate, NULL, NULL);
+                    pStream->asi->property(pStream->asi->stream, pStream->asi->inputBitRate, &pStream->dataRate, NULL,
+                                           NULL);
                     pStream->dataRate = (unsigned int)pStream->dataRate >> 3;
                     uAsiChannels = 0xFFFFFFFF;
-                    pStream->asi->property(pStream->asi->stream, pStream->asi->outputChannels,
-                                           &uAsiChannels, NULL, NULL);
+                    pStream->asi->property(pStream->asi->stream, pStream->asi->outputChannels, &uAsiChannels, NULL,
+                                           NULL);
                     iAsiBits = -1;
-                    pStream->asi->property(pStream->asi->stream, pStream->asi->outputSampleWidth,
-                                           &iAsiBits, NULL, NULL);
+                    pStream->asi->property(pStream->asi->stream, pStream->asi->outputSampleWidth, &iAsiBits, NULL,
+                                           NULL);
                     iAsiMask = -1;
                     if (pStream->asi->outputChannelMask != PROPERTY_NOT_FOUND)
                     {
-                        pStream->asi->property(pStream->asi->stream,
-                                               pStream->asi->outputChannelMask, &iAsiMask, NULL,
+                        pStream->asi->property(pStream->asi->stream, pStream->asi->outputChannelMask, &iAsiMask, NULL,
                                                NULL);
                     }
 
@@ -903,9 +884,8 @@ extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileN
                         {
                             if (uAsiChannels > 2)
                             {
-                                pStream->format = pStream->format |
-                                                  uAsiChannels << FORMAT_CHANNEL_SHIFT |
-                                                  FORMAT_MULTICHANNEL;
+                                pStream->format = pStream->format | uAsiChannels << FORMAT_CHANNEL_SHIFT
+                                                  | FORMAT_MULTICHANNEL;
                                 pStream->channelMask = iAsiMask;
                             }
 
@@ -929,18 +909,15 @@ extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileN
             bId3Checked = true;
             AIL_file_seek(pStream->fileHandle, pStream->dataStart, SEEK_FROM_START);
             iBytes = AIL_file_read(pStream->fileHandle, id3Header, ID3_HEADER_SIZE);
-            if (iBytes == 0 || id3Header[0] != 'I' || id3Header[1] != 'D' ||
-                id3Header[2] != '3' || id3Header[3] > ID3_MAXIMUM_VERSION_BYTE ||
-                id3Header[4] > ID3_MAXIMUM_VERSION_BYTE || id3Header[6] > ID3_MAXIMUM_SIZE_BYTE ||
-                id3Header[7] > ID3_MAXIMUM_SIZE_BYTE || id3Header[8] > ID3_MAXIMUM_SIZE_BYTE ||
-                id3Header[9] > ID3_MAXIMUM_SIZE_BYTE)
+            if (iBytes == 0 || id3Header[0] != 'I' || id3Header[1] != 'D' || id3Header[2] != '3'
+                || id3Header[3] > ID3_MAXIMUM_VERSION_BYTE || id3Header[4] > ID3_MAXIMUM_VERSION_BYTE
+                || id3Header[6] > ID3_MAXIMUM_SIZE_BYTE || id3Header[7] > ID3_MAXIMUM_SIZE_BYTE
+                || id3Header[8] > ID3_MAXIMUM_SIZE_BYTE || id3Header[9] > ID3_MAXIMUM_SIZE_BYTE)
             {
                 break;
             }
 
-            iPosition = (id3Header[9] | id3Header[8] << 7 | id3Header[7] << 14 |
-                         id3Header[6] << 21) +
-                        ID3_TAG_OVERHEAD;
+            iPosition = (id3Header[9] | id3Header[8] << 7 | id3Header[7] << 14 | id3Header[6] << 21) + ID3_TAG_OVERHEAD;
             pStream->dataStart = iPosition;
             pStream->dataLength = pStream->dataLength - iPosition;
             AIL_file_seek(pStream->fileHandle, iPosition, SEEK_FROM_START);
@@ -985,8 +962,8 @@ extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileN
         minimumEntry.pEntryName = MINIMUM_INPUT_STREAM_SIZE;
         minimumEntry.pToken = &uMinimumToken;
         minimumEntry.uSubType = 0;
-        RIB_request_interface(pStream->sample->stages[DECODER_STAGE].decoder.provider,
-                              ASI_STREAM_INTERFACE, 1, &minimumEntry);
+        RIB_request_interface(pStream->sample->stages[DECODER_STAGE].decoder.provider, ASI_STREAM_INTERFACE, 1,
+                              &minimumEntry);
         iAsiMinimum = 0;
         pStream->asi->property(pStream->asi->stream, uMinimumToken, &iAsiMinimum, NULL, NULL);
         iBufferSize = pStream->bufferSize;
@@ -1044,9 +1021,9 @@ extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileN
             pStream->startThreshold = pStream->bufferSize * 7;
         }
 
-        pStream->buffers[0] = static_cast<unsigned char*>(AIL_mem_alloc_lock_info(
-            pStream->bufferSize * STREAM_BUFFER_COUNT + BUFFER_PADDING * STREAM_BUFFER_COUNT,
-            MILES_STREAM_FILE, STREAM_BUFFERS_LINE));
+        pStream->buffers[0] = static_cast<unsigned char*>(
+            AIL_mem_alloc_lock_info(pStream->bufferSize * STREAM_BUFFER_COUNT + BUFFER_PADDING * STREAM_BUFFER_COUNT,
+                                    MILES_STREAM_FILE, STREAM_BUFFERS_LINE));
         if (pStream->buffers[0] == NULL)
         {
             AIL_set_error(OUT_OF_MEMORY_ERROR);
@@ -1062,8 +1039,7 @@ extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileN
 
         for (int iIndex = 1; iIndex < STREAM_BUFFER_COUNT; ++iIndex)
         {
-            pStream->buffers[iIndex] =
-                pStream->buffers[iIndex - 1] + pStream->bufferSize + BUFFER_PADDING;
+            pStream->buffers[iIndex] = pStream->buffers[iIndex - 1] + pStream->bufferSize + BUFFER_PADDING;
         }
     }
 
@@ -1171,11 +1147,10 @@ extern "C" int AIL_API_stream_status(_STREAM* pStream)
                 return SAMPLE_STATUS_STOPPED;
             }
 
-            if (pStream->endOfData == 0 || AIL_API_sample_loaded_len(pStream->sample) != 0 ||
-                ((pStream->bufferLength[pStream->loadBuffer] != 0 ||
-                  pStream->endOfData == STREAM_END_PENDING) &&
-                 pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
-                 pStream->readStatus[pStream->loadBuffer] != 0))
+            if (pStream->endOfData == 0 || AIL_API_sample_loaded_len(pStream->sample) != 0
+                || ((pStream->bufferLength[pStream->loadBuffer] != 0 || pStream->endOfData == STREAM_END_PENDING)
+                    && pStream->playStatus == STREAM_PLAY_FLAG_PLAYING
+                    && pStream->readStatus[pStream->loadBuffer] != 0))
             {
                 return SAMPLE_STATUS_PLAYING;
             }
@@ -1266,13 +1241,12 @@ extern "C" void AIL_API_set_stream_position(_STREAM* pStream, int iPosition)
     pStream->sample->resetB = 0;
     pStream->sample->resetA = 0;
     int iBuffer = pStream->sample->currentBuffer;
-    if (pStream->sample->currentBuffer != pStream->sample->lastBuffer ||
-        pStream->sample->starved == 0)
+    if (pStream->sample->currentBuffer != pStream->sample->lastBuffer || pStream->sample->starved == 0)
     {
         do
         {
-            if (pStream->bufferStart[iBuffer] <= iPosition &&
-                iPosition - pStream->bufferStart[iBuffer] < pStream->sample->buffers[iBuffer].size)
+            if (pStream->bufferStart[iBuffer] <= iPosition
+                && iPosition - pStream->bufferStart[iBuffer] < pStream->sample->buffers[iBuffer].size)
             {
                 while (pStream->sample->currentBuffer != iBuffer)
                 {
@@ -1493,10 +1467,10 @@ extern "C" void AIL_API_set_stream_ms_position(_STREAM* pStream, unsigned int uM
         if ((pStream->format & FORMAT_ADPCM) != 0)
         {
             unsigned int uHeader = 4 << ((pStream->format >> 1) & 1);
-            iPosition = (int)(((float)((unsigned int)(pStream->sampleRate * pStream->blockSize) /
-                                       (((pStream->blockSize - uHeader) * 8) / uHeader + 1)) *
-                               (float)(int)uMilliseconds) /
-                              MILLISECONDS_PER_SECOND);
+            iPosition = (int)(((float)((unsigned int)(pStream->sampleRate * pStream->blockSize)
+                                       / (((pStream->blockSize - uHeader) * 8) / uHeader + 1))
+                               * (float)(int)uMilliseconds)
+                              / MILLISECONDS_PER_SECOND);
         }
         else
         {
@@ -1504,8 +1478,7 @@ extern "C" void AIL_API_set_stream_ms_position(_STREAM* pStream, unsigned int uM
             if (decoder.active != 0 && decoder.exactSeek != 0)
             {
                 iLocation = 0;
-                if (decoder.property(decoder.stream, decoder.exactSeek, NULL, &uMilliseconds,
-                                     &iLocation) == 1)
+                if (decoder.property(decoder.stream, decoder.exactSeek, NULL, &uMilliseconds, &iLocation) == 1)
                 {
                     AIL_set_stream_position(pStream, iLocation);
                     return;
@@ -1514,9 +1487,8 @@ extern "C" void AIL_API_set_stream_ms_position(_STREAM* pStream, unsigned int uM
 
             if (pStream->blockOriented != 0)
             {
-                iPosition = (int)(((float)(unsigned int)pStream->dataRate *
-                                   (float)(int)uMilliseconds) /
-                                  MILLISECONDS_PER_SECOND);
+                iPosition = (int)(((float)(unsigned int)pStream->dataRate * (float)(int)uMilliseconds)
+                                  / MILLISECONDS_PER_SECOND);
             }
             else
             {
@@ -1526,11 +1498,10 @@ extern "C" void AIL_API_set_stream_ms_position(_STREAM* pStream, unsigned int uM
                     iSampleBytes = 2;
                 }
 
-                iPosition = (int)(((float)(unsigned int)(pStream->sampleRate *
-                                                         pStream->sample->channelCount *
-                                                         iSampleBytes) *
-                                   (float)(int)uMilliseconds) /
-                                  MILLISECONDS_PER_SECOND);
+                iPosition =
+                    (int)(((float)(unsigned int)(pStream->sampleRate * pStream->sample->channelCount * iSampleBytes)
+                           * (float)(int)uMilliseconds)
+                          / MILLISECONDS_PER_SECOND);
             }
         }
 

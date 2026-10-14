@@ -280,8 +280,8 @@ struct SoundInstanceInfo
 };
 
 typedef void (*ExternalSampleReleaseFunc)(_SAMPLE* sample);
-typedef int (*ExternalSampleOpenFunc)(const char* name, char* path, _DIG_DRIVER* driver,
-                                      const void* initBlock, int initBlockSize);
+typedef int (*ExternalSampleOpenFunc)(const char* name, char* path, _DIG_DRIVER* driver, const void* initBlock,
+                                      int initBlockSize);
 
 extern unsigned long long g_soundSerial;
 extern unsigned long long g_randomState;
@@ -300,11 +300,10 @@ extern EventSystem* g_soundLoadOwners[SOUND_LOAD_SLOT_COUNT];
 int Handle_AllocStringInfo(Handle* handle, int* length, const char* text, const char* file, int line);
 unsigned int HorribleRand();
 Handle* Var_GetRootFromContext(void* context);
-int ExecuteCacheSounds(const EVENT_STEP_INFO* step, EventSystem* eventSystem,
-                       unsigned long long eventId, int load);
-int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const char* name,
-                int nameLength, void* initBlock, unsigned int initBlockSize,
-                unsigned long long serial, unsigned long long selection, signed char blendIndex);
+int ExecuteCacheSounds(const EVENT_STEP_INFO* step, EventSystem* eventSystem, unsigned long long eventId, int load);
+int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const char* name, int nameLength,
+                void* initBlock, unsigned int initBlockSize, unsigned long long serial, unsigned long long selection,
+                signed char blendIndex);
 EventSystem* EventSystem_Allocate(_DIG_DRIVER* driver);
 
 void Handle_Init(void* memory, int size);
@@ -315,11 +314,10 @@ void Handle_MemStats(int* used, int* total);
 extern "C" void AIL_set_event_settings(const EventSettings* settings);
 extern "C" void MilesSetVarIInternal(void* context, const char* name, int value);
 extern "C" int MilesEnumerateSoundInstancesInternal(EventSystem* eventSystem, unsigned int* cursor,
-                                                    unsigned int typeMask, const char* labels,
-                                                    int eventIndex, int eventSerial,
-                                                    SoundInstanceInfo* info);
-extern "C" unsigned int MilesStartupEventSystemInternal(_DIG_DRIVER* driver, int queueBytes,
-                                                        int memoryAddress, int memoryBytes);
+                                                    unsigned int typeMask, const char* labels, int eventIndex,
+                                                    int eventSerial, SoundInstanceInfo* info);
+extern "C" unsigned int MilesStartupEventSystemInternal(_DIG_DRIVER* driver, int queueBytes, int memoryAddress,
+                                                        int memoryBytes);
 extern "C" int MilesBeginEventQueueProcessingInternal();
 extern "C" int MilesCompleteEventQueueProcessingInternal();
 

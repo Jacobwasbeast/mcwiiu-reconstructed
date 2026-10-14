@@ -8,19 +8,40 @@
 #include "vendor/TmcHandsFree.hpp"
 #include "vendor/VCTAudio.hpp"
 
-namespace nn { namespace pia {
-namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 StationIndex Conv2StationIndex(unsigned long long stationId);
 unsigned char IsInitialized();
 }
-namespace chat {
+namespace chat
+{
 
 class HandsFree;
 
-enum Codec { CODEC_0 = 0, CODEC_1, CODEC_2, CODEC_3, CODEC_4, CODEC_5, CODEC_6 };
-enum EcMode { EC_MODE_0 = 0, EC_MODE_1, EC_MODE_2, EC_MODE_3 };
+enum Codec
+{
+    CODEC_0 = 0,
+    CODEC_1,
+    CODEC_2,
+    CODEC_3,
+    CODEC_4,
+    CODEC_5,
+    CODEC_6
+};
+enum EcMode
+{
+    EC_MODE_0 = 0,
+    EC_MODE_1,
+    EC_MODE_2,
+    EC_MODE_3
+};
 
-struct AudioInfo {
+struct AudioInfo
+{
     unsigned int m_Unknown0;
     unsigned int m_Unknown1;
     unsigned int m_Unknown2;
@@ -32,17 +53,14 @@ struct AudioInfo {
 class VoiceProtocol : public nn::pia::transport::Protocol
 {
 public:
-    enum { cProtocolType = 0x78 };
+    enum
+    {
+        cProtocolType = 0x78
+    };
 
-    struct Setting {
-        Setting()
-            : codec(CODEC_4),
-              bufferSize(0x90),
-              maxPlayers(10),
-              dataSize(0x20),
-              sampleRate(0x10)
-        {
-        }
+    struct Setting
+    {
+        Setting() : codec(CODEC_4), bufferSize(0x90), maxPlayers(10), dataSize(0x20), sampleRate(0x10) {}
 
         Codec codec;
         unsigned int bufferSize;
@@ -65,8 +83,7 @@ public:
     Result AddConferenceClient(unsigned long long stationId);
     Result RemoveConferenceClient(StationIndex stationIndex);
     Result RemoveConferenceClient(unsigned long long stationId);
-    Result Send(const short* pData, unsigned int uiSamples,
-                const short* pLeft, const short* pRight);
+    Result Send(const short* pData, unsigned int uiSamples, const short* pLeft, const short* pRight);
     Result Receive(void* pData, unsigned int uiSize, StationIndex* pStationIndex);
     void Finalize();
     Result GetAudioInfo(StationIndex stationIndex, AudioInfo* audioInfo) const;
@@ -81,7 +98,10 @@ public:
     static int SendMultiDataCallback(unsigned int bitmap, const void* pData, unsigned int uiSize);
 
 private:
-    enum { cSendBufferSampleCount = 1536 };
+    enum
+    {
+        cSendBufferSampleCount = 1536
+    };
 
     int calcAudioBufferSize(unsigned short sampleRate) const;
     bool allocProc(unsigned short sampleRate);
@@ -115,7 +135,8 @@ unsigned char IsInitialized();
 unsigned int ConvertID_Pia2VCT(unsigned int stationIndex);
 unsigned int ConvertID_VCT2Pia(unsigned int connectionId);
 }
-}}
+}
+}
 
 extern nn::pia::chat::VoiceProtocol* g_voiceProtocolInstance;
 

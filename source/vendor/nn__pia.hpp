@@ -3,11 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn {
-namespace pia {
+namespace nn
+{
+namespace pia
+{
 
-void Assert(const char* expression, const char* file, unsigned int line,
-            const char* message, ...);
+void Assert(const char* expression, const char* file, unsigned int line, const char* message, ...);
 void EmbedMiddlewareInfo();
 
 }

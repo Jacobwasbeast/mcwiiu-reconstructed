@@ -56,8 +56,8 @@ static const unsigned int BCF_BLOCK_SAMPLES = 8;
 static const unsigned int BCF_BLOCK_BYTES = 16;
 static const unsigned int BCF_BLOCK_SHIFT = 4;
 static const unsigned int BCF_RECIPROCAL_COUNT = 10;
-static const unsigned short BCF_RECIPROCALS[BCF_RECIPROCAL_COUNT] = {
-    0, 0, 0x8000, 0x5556, 0x4000, 0x3334, 0x2AAB, 0x2493, 0x2000, 0};
+static const unsigned short BCF_RECIPROCALS[BCF_RECIPROCAL_COUNT] = {0,      0,      0x8000, 0x5556, 0x4000,
+                                                                     0x3334, 0x2AAB, 0x2493, 0x2000, 0};
 static const unsigned int BCF_VISITED_BYTES = 256;
 static const unsigned int BCF_WORK_FLOAT_COUNT = 4100;
 
@@ -132,8 +132,8 @@ static inline unsigned int BcfLoadLE16(const void* pSource)
 static inline unsigned int BcfLoadLE32(const void* pSource)
 {
     const unsigned char* pBytes = (const unsigned char*)pSource;
-    return (unsigned int)pBytes[0] | ((unsigned int)pBytes[1] << 8) |
-           ((unsigned int)pBytes[2] << 16) | ((unsigned int)pBytes[3] << 24);
+    return (unsigned int)pBytes[0] | ((unsigned int)pBytes[1] << 8) | ((unsigned int)pBytes[2] << 16)
+           | ((unsigned int)pBytes[3] << 24);
 }
 
 static inline unsigned int BcfLoadLE16(const void* pSource)
@@ -202,8 +202,8 @@ int ASI_startup()
     return 0;
 }
 
-int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned int uUser,
-                    BCF_FETCH_CALLBACK pFetch, unsigned int uTotalSize)
+int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned int uUser, BCF_FETCH_CALLBACK pFetch,
+                    unsigned int uTotalSize)
 {
     BcfHeader header;
     unsigned int auStreamBytes[BCF_MAX_STREAMS];
@@ -277,21 +277,16 @@ int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned
     for (iStream = 0; iStream < iStreamCount; ++iStream)
     {
         auStreamChannels[iStream] = (header.ucChannels - iStream * 2 >= 2) ? 2 : 1;
-        auStreamBytes[iStream] =
-            BinkAudioDecompressMemoryLE(header.usSampleRate, auStreamChannels[iStream], 1);
+        auStreamBytes[iStream] = BinkAudioDecompressMemoryLE(header.usSampleRate, auStreamChannels[iStream], 1);
         uDecoderBytes = uDecoderBytes + auStreamBytes[iStream];
     }
 
-    uInputOffset = (uSeekCount * 4 + BCF_SEEK_TABLE_OFFSET + 4 + BCF_STATE_ALIGNMENT_MASK) &
-                   ~BCF_STATE_ALIGNMENT_MASK;
-    uDecoderOffset = (uInputOffset + header.uMaxFrameBytes * 2 + BCF_STATE_ALIGNMENT_MASK) &
-                     ~BCF_STATE_ALIGNMENT_MASK;
-    uOutputOffset = (uDecoderOffset + uDecoderBytes + BCF_STATE_ALIGNMENT_MASK) &
-                    ~BCF_STATE_ALIGNMENT_MASK;
+    uInputOffset = (uSeekCount * 4 + BCF_SEEK_TABLE_OFFSET + 4 + BCF_STATE_ALIGNMENT_MASK) & ~BCF_STATE_ALIGNMENT_MASK;
+    uDecoderOffset = (uInputOffset + header.uMaxFrameBytes * 2 + BCF_STATE_ALIGNMENT_MASK) & ~BCF_STATE_ALIGNMENT_MASK;
+    uOutputOffset = (uDecoderOffset + uDecoderBytes + BCF_STATE_ALIGNMENT_MASK) & ~BCF_STATE_ALIGNMENT_MASK;
     pBlock = static_cast<unsigned char*>(
-        pAlloc((uOutputOffset + uOutputCapacity + BCF_STATE_ALIGNMENT_MASK) &
-                   ~BCF_STATE_ALIGNMENT_MASK,
-               uUser, BCFDEC_FILE, BCFDEC_ALLOC_LINE));
+        pAlloc((uOutputOffset + uOutputCapacity + BCF_STATE_ALIGNMENT_MASK) & ~BCF_STATE_ALIGNMENT_MASK, uUser,
+               BCFDEC_FILE, BCFDEC_ALLOC_LINE));
 
     if (pBlock == NULL)
     {
@@ -324,8 +319,8 @@ int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned
             uChunkEntries = BCF_SEEK_CHUNK_ENTRIES;
         }
 
-        if (pStream->pFetch(uUser, ausSeekChunk, uChunkEntries * BCF_SEEK_ENTRY_BYTES,
-                            BCF_FETCH_SEQUENTIAL) != uChunkEntries * BCF_SEEK_ENTRY_BYTES)
+        if (pStream->pFetch(uUser, ausSeekChunk, uChunkEntries * BCF_SEEK_ENTRY_BYTES, BCF_FETCH_SEQUENTIAL)
+            != uChunkEntries * BCF_SEEK_ENTRY_BYTES)
         {
             pFree(pStream, pStream->uUser, BCFDEC_FILE, BCFDEC_SEEK_FAIL_LINE);
             return 0;
@@ -339,9 +334,8 @@ int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned
     }
 
     pStream->pSeekOffsets[uSeekCount] = uOffset;
-    pStream->uDurationMs = (unsigned int)(((unsigned long long)pStream->header.uTotalSamples *
-                                           BCF_MILLISECONDS) /
-                                          pStream->header.usSampleRate);
+    pStream->uDurationMs = (unsigned int)(((unsigned long long)pStream->header.uTotalSamples * BCF_MILLISECONDS)
+                                          / pStream->header.usSampleRate);
     pStream->uStreamCount = iStreamCount;
     pStream->uSamplesRemaining = BCF_SAMPLES_UNLIMITED;
     pStream->uStreamPosition = pStream->uDataOffset;
@@ -731,8 +725,7 @@ void decode_bink_buffer(BcfStream* pStream)
     unsigned char* pStreamOutput = pOutput;
     const unsigned char* pFrame = pStream->pInput + pStream->uInputPosition;
     const void* pPayload = pFrame + BCF_FRAME_HEADER_BYTES;
-    const unsigned char* pPayloadEnd =
-        pFrame + BCF_FRAME_HEADER_BYTES + BcfLoadLE16(pFrame + 2);
+    const unsigned char* pPayloadEnd = pFrame + BCF_FRAME_HEADER_BYTES + BcfLoadLE16(pFrame + 2);
     unsigned int uSkipSamples = pStream->uSkipSamples;
     unsigned int uDecoded = 0;
     unsigned int uChannelBytes = 0;
@@ -761,9 +754,8 @@ void decode_bink_buffer(BcfStream* pStream)
         {
             pStream->uSkipSamples = uSkipSamples;
             uStreamBytes = 0;
-            BinkAudioDecompressLE(pStream->apDecoders[uStream], pStreamOutput, &uStreamBytes,
-                                  pPayload, &pPayload, pPayloadEnd, afWork,
-                                  reinterpret_cast<int*>(&pStream->uSkipSamples));
+            BinkAudioDecompressLE(pStream->apDecoders[uStream], pStreamOutput, &uStreamBytes, pPayload, &pPayload,
+                                  pPayloadEnd, afWork, reinterpret_cast<int*>(&pStream->uSkipSamples));
             if (static_cast<const unsigned char*>(pPayload) > pPayloadEnd)
             {
                 pStream->iNeedSync = 1;
@@ -776,9 +768,8 @@ void decode_bink_buffer(BcfStream* pStream)
                 return;
             }
 
-            if (pStream->uLoopEndOffset == 0 ||
-                (pStream->uStreamPosition + pStream->uInputPosition - pStream->uInputFill) <
-                    pStream->uLoopEndOffset)
+            if (pStream->uLoopEndOffset == 0
+                || (pStream->uStreamPosition + pStream->uInputPosition - pStream->uInputFill) < pStream->uLoopEndOffset)
             {
                 uSamples = pStream->uSamplesRemaining;
             }
@@ -828,8 +819,8 @@ void decode_bink_buffer(BcfStream* pStream)
                 uSamples = uChannelBytes >> 1;
                 for (uChannel = 0; uChannel < uChannels; ++uChannel)
                 {
-                    pSourceSamples = reinterpret_cast<const unsigned short*>(
-                        abVisited + uChannel * (uChannelBytes & ~1u));
+                    pSourceSamples = reinterpret_cast<const unsigned short*>(abVisited
+                                                                             + uChannel * (uChannelBytes & ~1u));
                     pDestinationSamples = reinterpret_cast<unsigned short*>(pOutput) + uChannel;
                     for (uSample = 0; uSample < uSamples; ++uSample)
                     {
@@ -855,23 +846,20 @@ void decode_bink_buffer(BcfStream* pStream)
                             while (uNext != uIndex)
                             {
                                 pBlocks[uPrevious] = pBlocks[uNext];
-                                abVisited[uPrevious >> 3] =
-                                    abVisited[uPrevious >> 3] | aucBits[uPrevious & 7];
+                                abVisited[uPrevious >> 3] = abVisited[uPrevious >> 3] | aucBits[uPrevious & 7];
                                 uPrevious = uNext;
                                 uQuotient = (uNext * BCF_RECIPROCALS[uChannels]) >> 16;
                                 uNext = (uNext - uQuotient * uChannels) * uBlocks + uQuotient;
                             }
 
                             pBlocks[uPrevious] = saved;
-                            abVisited[uPrevious >> 3] =
-                                abVisited[uPrevious >> 3] | aucBits[uPrevious & 7];
+                            abVisited[uPrevious >> 3] = abVisited[uPrevious >> 3] | aucBits[uPrevious & 7];
                         }
 
                         ++uIndex;
                     }
 
-                    BcfTransposeBlock(reinterpret_cast<unsigned short*>(pBlocks + uGroup * uChannels),
-                                      uChannels);
+                    BcfTransposeBlock(reinterpret_cast<unsigned short*>(pBlocks + uGroup * uChannels), uChannels);
                 }
             }
         }
@@ -953,8 +941,8 @@ void FindFrameBoundary(int iStream)
                 {
                     if (uIndex + uLength + BCF_FRAME_OVERHEAD_BYTES <= uFill)
                     {
-                        if ((BcfLoadLE32(pFrame + BCF_FRAME_HEADER_BYTES + uLength) & BCF_SYNC_LENGTH_MASK) ==
-                            BCF_FRAME_SYNC)
+                        if ((BcfLoadLE32(pFrame + BCF_FRAME_HEADER_BYTES + uLength) & BCF_SYNC_LENGTH_MASK)
+                            == BCF_FRAME_SYNC)
                         {
                             memmove(pBuffer, pFrame, uFill - uIndex);
                             pStream->iNeedSync = 0;
@@ -1009,8 +997,8 @@ void FindFrameBoundary(int iStream)
             if (uWindow <= uPayload)
             {
                 uNext = ((uCandidate & BCF_SYNC_LENGTH_MASK) + uPayload) - uWindow;
-                if (uNext + BCF_FRAME_HEADER_BYTES < uFill &&
-                    (BcfLoadLE32(pBuffer + uNext) & BCF_SYNC_LENGTH_MASK) == BCF_FRAME_SYNC)
+                if (uNext + BCF_FRAME_HEADER_BYTES < uFill
+                    && (BcfLoadLE32(pBuffer + uNext) & BCF_SYNC_LENGTH_MASK) == BCF_FRAME_SYNC)
                 {
                     memmove(pBuffer, pBuffer + (uPayload - BCF_FRAME_HEADER_BYTES), uFill - uPayload);
                     pStream->iNeedSync = 0;
@@ -1093,8 +1081,7 @@ int ASI_stream_process(int iStream, void* pBuffer, int iBytes)
 
                         if (pEntry + 1 == pEnd)
                         {
-                            SeekStreamForward(pStream, pStream->header.uFileBytes -
-                                                           pStream->uStreamPosition);
+                            SeekStreamForward(pStream, pStream->header.uFileBytes - pStream->uStreamPosition);
                             pStream->iSeekPending = 0;
                             break;
                         }
@@ -1193,25 +1180,23 @@ int ASI_stream_process(int iStream, void* pBuffer, int iBytes)
                 uRoom = 0;
             }
 
-            if ((pStream->uPendingSeek != 0 || pStream->uPendingSkip != 0) &&
-                (uLimit = ((uNeeded + uPosition) - uFill) - BCF_FRAME_TRAILER_BYTES,
-                 uLimit < uRoom))
+            if ((pStream->uPendingSeek != 0 || pStream->uPendingSkip != 0)
+                && (uLimit = ((uNeeded + uPosition) - uFill) - BCF_FRAME_TRAILER_BYTES, uLimit < uRoom))
             {
                 uRoom = uLimit;
             }
 
             if (uRoom != 0)
             {
-                iRead = pStream->pFetch(pStream->uUser, pStream->pInput + uFill, uRoom,
-                                        BCF_FETCH_SEQUENTIAL);
+                iRead = pStream->pFetch(pStream->uUser, pStream->pInput + uFill, uRoom, BCF_FETCH_SEQUENTIAL);
                 uPosition = pStream->uInputPosition;
                 uFill = pStream->uInputFill + iRead;
                 pStream->uInputFill = uFill;
                 pStream->uStreamPosition = pStream->uStreamPosition + iRead;
             }
 
-            if ((uRoom != 0 && (int)(uNeeded - BCF_FRAME_TRAILER_BYTES) > (int)(uFill - uPosition)) ||
-                uFill == uPosition)
+            if ((uRoom != 0 && (int)(uNeeded - BCF_FRAME_TRAILER_BYTES) > (int)(uFill - uPosition))
+                || uFill == uPosition)
             {
                 if (pStream->iResyncPending == 0)
                 {
@@ -1244,8 +1229,7 @@ int ASI_stream_process(int iStream, void* pBuffer, int iBytes)
                 {
                     bResync = pStream->iResyncPending != 0;
                 }
-                else if (pFrameEnd < pStream->pInput + uFill &&
-                         BcfLoadLE16(pFrameEnd) != BCF_FRAME_SYNC)
+                else if (pFrameEnd < pStream->pInput + uFill && BcfLoadLE16(pFrameEnd) != BCF_FRAME_SYNC)
                 {
                     pStream->iNeedSync = 1;
                     bResync = pStream->iResyncPending != 0;
@@ -1319,8 +1303,7 @@ int ASI_stream_seek(int iStream, int iPosition)
     return 0;
 }
 
-void SeekTableLookup(BcfStream* pStream, unsigned int uSample, int* piOffset, int* piRemainder,
-                     int* piBase)
+void SeekTableLookup(BcfStream* pStream, unsigned int uSample, int* piOffset, int* piRemainder, int* piBase)
 {
     unsigned int uFrame = BCF_SEEK_UNIT_SHORT;
     unsigned int uEntry;
@@ -1369,8 +1352,7 @@ void SeekTableLookup(BcfStream* pStream, unsigned int uSample, int* piOffset, in
     }
 }
 
-int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
-                        const void* pNewValue, void* pAfter)
+int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore, const void* pNewValue, void* pAfter)
 {
     BcfStream* pStream = reinterpret_cast<BcfStream*>(iStream);
     unsigned int* puBefore = static_cast<unsigned int*>(pBefore);
@@ -1397,9 +1379,9 @@ int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
     int iRemaining;
     float fIndex;
 
-    if (uProperty != ASI_STREAM_SEEK_POSITION && uProperty != ASI_EXACT_SEEK &&
-        uProperty != ASI_EXACT_GET_POSITION && uProperty != ASI_SEEK_TABLE_LOOKUP &&
-        uProperty != ASI_SET_LOOPING_SAMPLES && uProperty != ASI_CLEAR_LOOP_META)
+    if (uProperty != ASI_STREAM_SEEK_POSITION && uProperty != ASI_EXACT_SEEK && uProperty != ASI_EXACT_GET_POSITION
+        && uProperty != ASI_SEEK_TABLE_LOOKUP && uProperty != ASI_SET_LOOPING_SAMPLES
+        && uProperty != ASI_CLEAR_LOOP_META)
     {
         if (pBefore == NULL)
         {
@@ -1415,8 +1397,8 @@ int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
     switch (uProperty)
     {
     case ASI_INPUT_BIT_RATE:
-        *puBefore = (unsigned int)(((unsigned long long)pStream->uFileBytes * BCF_BITRATE_SCALE) /
-                                   pStream->uDurationMs);
+        *puBefore = (unsigned int)(((unsigned long long)pStream->uFileBytes * BCF_BITRATE_SCALE)
+                                   / pStream->uDurationMs);
         return 1;
     case ASI_INPUT_SAMPLE_RATE:
     case ASI_OUTPUT_SAMPLE_RATE:
@@ -1448,8 +1430,8 @@ int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
     case ASI_PERCENT_DONE:
         if (pStream->uStreamPosition != 0 && pStream->uFileBytes != 0)
         {
-            *static_cast<float*>(pBefore) = ((float)pStream->uStreamPosition * BCF_PERCENT_SCALE) /
-                                            (float)pStream->uFileBytes;
+            *static_cast<float*>(pBefore) = ((float)pStream->uStreamPosition * BCF_PERCENT_SCALE)
+                                            / (float)pStream->uFileBytes;
             return 1;
         }
 
@@ -1471,11 +1453,9 @@ int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
 
         break;
     case ASI_EXACT_SEEK:
-        if (pStream->header.uSeekCount != 0 && pStream->uSeekGranularity != 0 && puNew != NULL &&
-            puAfter != NULL)
+        if (pStream->header.uSeekCount != 0 && pStream->uSeekGranularity != 0 && puNew != NULL && puAfter != NULL)
         {
-            uSample = (unsigned int)(((unsigned long long)*puNew * pStream->header.usSampleRate) /
-                                     BCF_MILLISECONDS);
+            uSample = (unsigned int)(((unsigned long long)*puNew * pStream->header.usSampleRate) / BCF_MILLISECONDS);
             iStartOffset = 0;
             iStartRemainder = 0;
             SeekTableLookup(pStream, uSample, &iStartOffset, &iStartRemainder, NULL);
@@ -1570,19 +1550,17 @@ int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
                 }
             }
 
-            fIndex = (float)uLow + (float)(uBuffered - pStream->pSeekOffsets[uLow]) /
-                                       (float)(pStream->pSeekOffsets[uLow + 1] -
-                                               pStream->pSeekOffsets[uLow]);
-            uMilliseconds = (unsigned int)(((double)fIndex * 1000.0 *
-                                            (double)(uUnit * uChannels * 2)) /
-                                           (double)(int)(uChannels * uSampleRate * 2));
+            fIndex = (float)uLow
+                     + (float)(uBuffered - pStream->pSeekOffsets[uLow])
+                           / (float)(pStream->pSeekOffsets[uLow + 1] - pStream->pSeekOffsets[uLow]);
+            uMilliseconds = (unsigned int)(((double)fIndex * 1000.0 * (double)(uUnit * uChannels * 2))
+                                           / (double)(int)(uChannels * uSampleRate * 2));
             if ((uTarget & BCF_PENDING_FLAG) != 0)
             {
                 uPendingMilliseconds =
-                    (unsigned int)(((unsigned long long)(pStream->uOutputBytes -
-                                                          pStream->uOutputPosition) *
-                                    BCF_MILLISECONDS) /
-                                   (uChannels * uSampleRate * 2));
+                    (unsigned int)(((unsigned long long)(pStream->uOutputBytes - pStream->uOutputPosition)
+                                    * BCF_MILLISECONDS)
+                                   / (uChannels * uSampleRate * 2));
                 if (uMilliseconds > uPendingMilliseconds)
                 {
                     *puAfter = uMilliseconds - uPendingMilliseconds;
@@ -1599,11 +1577,9 @@ int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
         *puAfter = 0;
         return 1;
     case ASI_SEEK_TABLE_LOOKUP:
-        if (pStream->header.uSeekCount != 0 && pStream->uSeekGranularity != 0 && puNew != NULL &&
-            puAfter != NULL)
+        if (pStream->header.uSeekCount != 0 && pStream->uSeekGranularity != 0 && puNew != NULL && puAfter != NULL)
         {
-            uSample = (unsigned int)(((unsigned long long)*puNew * pStream->header.usSampleRate) /
-                                     BCF_MILLISECONDS);
+            uSample = (unsigned int)(((unsigned long long)*puNew * pStream->header.usSampleRate) / BCF_MILLISECONDS);
             SeekTableLookup(pStream, uSample, reinterpret_cast<int*>(puAfter), NULL,
                             reinterpret_cast<int*>(puAfter) + 1);
             return 1;
@@ -1611,8 +1587,7 @@ int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
 
         break;
     case ASI_SET_LOOPING_SAMPLES:
-        if (pStream->header.uSeekCount != 0 && pStream->uSeekGranularity != 0 && puNew != NULL &&
-            puAfter != NULL)
+        if (pStream->header.uSeekCount != 0 && pStream->uSeekGranularity != 0 && puNew != NULL && puAfter != NULL)
         {
             uStart = puNew[0];
             uEnd = puNew[1];
@@ -1642,8 +1617,7 @@ int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
 
             pStream->uLoopEndOffset = iEndOffset;
             pStream->uLoopEndRemainder = iEndRemainder;
-            SeekTableLookup(pStream, uEnd + uUnit * pStream->uSeekGranularity, &iEndOffset, NULL,
-                            NULL);
+            SeekTableLookup(pStream, uEnd + uUnit * pStream->uSeekGranularity, &iEndOffset, NULL, NULL);
             puAfter[1] = iEndOffset;
             return 1;
         }
@@ -1674,22 +1648,19 @@ int ASI_stream_property(int iStream, unsigned int uProperty, void* pBefore,
     return 0;
 }
 
-int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,
-                      RIB_ALLOC_PROVIDER_HANDLE_CALLBACK pAllocProviderHandle,
+int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown, RIB_ALLOC_PROVIDER_HANDLE_CALLBACK pAllocProviderHandle,
                       RIB_REGISTER_INTERFACE_CALLBACK pRegisterInterface,
                       RIB_UNREGISTER_INTERFACE_CALLBACK pUnregisterInterface)
 {
     const RIB_INTERFACE_ENTRY codecProviderEntries[4] = {
         {RIB_FUNCTION, "PROVIDER_property", reinterpret_cast<void*>(PROVIDER_property), 0},
-        {RIB_PROPERTY, "Name", reinterpret_cast<void*>(RIB_PROVIDER_NAME),
-         RIB_READ_ONLY | RIB_ENTRY_STRING},
-        {RIB_PROPERTY, "Version", reinterpret_cast<void*>(RIB_PROVIDER_VERSION),
-         RIB_READ_ONLY | RIB_ENTRY_HEXADECIMAL},
+        {RIB_PROPERTY, "Name", reinterpret_cast<void*>(RIB_PROVIDER_NAME), RIB_READ_ONLY | RIB_ENTRY_STRING},
+        {RIB_PROPERTY, "Version", reinterpret_cast<void*>(RIB_PROVIDER_VERSION), RIB_READ_ONLY | RIB_ENTRY_HEXADECIMAL},
         {RIB_PROPERTY, "Input file types", reinterpret_cast<void*>(ASI_INPUT_FILE_TYPES),
          RIB_READ_ONLY | RIB_ENTRY_STRING}};
     const RIB_INTERFACE_ENTRY codecTypeEntries[4] = {
-        {RIB_PROPERTY, "Editor-supported input file types",
-         reinterpret_cast<void*>(ASI_EDITOR_INPUT_FILE_TYPES), RIB_READ_ONLY | RIB_ENTRY_STRING},
+        {RIB_PROPERTY, "Editor-supported input file types", reinterpret_cast<void*>(ASI_EDITOR_INPUT_FILE_TYPES),
+         RIB_READ_ONLY | RIB_ENTRY_STRING},
         {RIB_PROPERTY, "Output file types", reinterpret_cast<void*>(ASI_OUTPUT_FILE_TYPES),
          RIB_READ_ONLY | RIB_ENTRY_STRING},
         {RIB_PROPERTY, "Profile index", reinterpret_cast<void*>(ASI_PROFILE_PROPERTY),
@@ -1727,17 +1698,12 @@ int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
         {RIB_PROPERTY, "Output reservoir", reinterpret_cast<void*>(ASI_OUTPUT_RESERVOIR),
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
-        {RIB_PROPERTY, "Position", reinterpret_cast<void*>(ASI_POSITION),
-         RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
-        {RIB_PROPERTY, "Set Looping Samples", reinterpret_cast<void*>(ASI_SET_LOOPING_SAMPLES),
-         RIB_ENTRY_DECIMAL}};
+        {RIB_PROPERTY, "Position", reinterpret_cast<void*>(ASI_POSITION), RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
+        {RIB_PROPERTY, "Set Looping Samples", reinterpret_cast<void*>(ASI_SET_LOOPING_SAMPLES), RIB_ENTRY_DECIMAL}};
     const RIB_INTERFACE_ENTRY streamSeekEntries[6] = {
-        {RIB_PROPERTY, "Percent done", reinterpret_cast<void*>(ASI_PERCENT_DONE),
-         RIB_READ_ONLY | RIB_ENTRY_PERCENT},
-        {RIB_PROPERTY, "Stream seek position", reinterpret_cast<void*>(ASI_STREAM_SEEK_POSITION),
-         RIB_ENTRY_DECIMAL},
-        {RIB_PROPERTY, "Exact seek", reinterpret_cast<void*>(ASI_EXACT_SEEK),
-         RIB_READ_ONLY | RIB_ENTRY_CUSTOM},
+        {RIB_PROPERTY, "Percent done", reinterpret_cast<void*>(ASI_PERCENT_DONE), RIB_READ_ONLY | RIB_ENTRY_PERCENT},
+        {RIB_PROPERTY, "Stream seek position", reinterpret_cast<void*>(ASI_STREAM_SEEK_POSITION), RIB_ENTRY_DECIMAL},
+        {RIB_PROPERTY, "Exact seek", reinterpret_cast<void*>(ASI_EXACT_SEEK), RIB_READ_ONLY | RIB_ENTRY_CUSTOM},
         {RIB_PROPERTY, "Exact get position", reinterpret_cast<void*>(ASI_EXACT_GET_POSITION),
          RIB_READ_ONLY | RIB_ENTRY_CUSTOM},
         {RIB_PROPERTY, "Seek table lookup", reinterpret_cast<void*>(ASI_SEEK_TABLE_LOOKUP),

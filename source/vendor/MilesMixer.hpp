@@ -165,10 +165,10 @@ extern "C" void MSS_mixer_startup();
 extern "C" void MSS_mixer_shutdown();
 extern "C" void MSS_mixer_flush(void* pDestination, int iLength);
 
-extern "C" void MSS_mixer_merge(void*, unsigned int*, unsigned short*, void**, unsigned short*,
-                                int*, int*, unsigned int, int, int, unsigned int);
-extern "C" void MSS_mixer_copy(void* pSource, unsigned int uLength, unsigned short* pDestination,
-                               unsigned int uFlags, int iSuppressSwap);
+extern "C" void MSS_mixer_merge(void*, unsigned int*, unsigned short*, void**, unsigned short*, int*, int*,
+                                unsigned int, int, int, unsigned int);
+extern "C" void MSS_mixer_copy(void* pSource, unsigned int uLength, unsigned short* pDestination, unsigned int uFlags,
+                               int iSuppressSwap);
 extern "C" void MSS_mixer_mc_copy(void*, int, void*, unsigned int, unsigned int, int);
 extern "C" void MSS_mixer_adpcm_decode(unsigned int*, unsigned int*, int, int, unsigned int, int*);
 
@@ -177,10 +177,8 @@ extern "C" int MIX_RIB_MAIN(unsigned int uProvider, int iUpDown,
                             RIB_REGISTER_INTERFACE_CALLBACK pRegisterInterface,
                             RIB_UNREGISTER_INTERFACE_CALLBACK pUnregisterInterface);
 
-extern "C" const unsigned char* AIL_next_event_step(const unsigned char* pEvent,
-                                                    EVENT_STEP_INFO** ppStep,
-                                                    EVENT_STEP_INFO* pBuffer,
-                                                    unsigned int uBufferSize);
+extern "C" const unsigned char* AIL_next_event_step(const unsigned char* pEvent, EVENT_STEP_INFO** ppStep,
+                                                    EVENT_STEP_INFO* pBuffer, unsigned int uBufferSize);
 extern "C" int get_system_speaker_configuration(unsigned int* puConfiguration);
 
 #endif

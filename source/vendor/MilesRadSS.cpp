@@ -46,12 +46,10 @@ static const char RADSS_NO_VOICES[] = "Couldn't acquire voices.";
 
 static unsigned int RadSS_defaultMode = 0;
 
-static int RADSS_AXOpenDriver(_RadSoundSystem* pSystem, unsigned int uLatencyMilliseconds,
-                              unsigned int uRate, unsigned int uChannels, unsigned int uLockBytes,
-                              unsigned int uMode);
+static int RADSS_AXOpenDriver(_RadSoundSystem* pSystem, unsigned int uLatencyMilliseconds, unsigned int uRate,
+                              unsigned int uChannels, unsigned int uLockBytes, unsigned int uMode);
 
-static void ClearBuffer(RadSS_WiiUPrivate* pPrivate, int iChannels, unsigned int uOffset,
-                        unsigned int uCount)
+static void ClearBuffer(RadSS_WiiUPrivate* pPrivate, int iChannels, unsigned int uOffset, unsigned int uCount)
 {
     unsigned int uBufferBytes;
     unsigned int uChunk;
@@ -73,11 +71,8 @@ static void ClearBuffer(RadSS_WiiUPrivate* pPrivate, int iChannels, unsigned int
 
         for (iChannel = 0; iChannel < iChannels; iChannel++)
         {
-            memset(static_cast<unsigned char*>(pPrivate->pChannelBuffers[iChannel]) + uOffset, 0,
-                   uChunk);
-            DCFlushRangeNoSync(static_cast<unsigned char*>(pPrivate->pChannelBuffers[iChannel]) +
-                                   uOffset,
-                               uChunk);
+            memset(static_cast<unsigned char*>(pPrivate->pChannelBuffers[iChannel]) + uOffset, 0, uChunk);
+            DCFlushRangeNoSync(static_cast<unsigned char*>(pPrivate->pChannelBuffers[iChannel]) + uOffset, uChunk);
         }
 
         uCount = uCount - uChunk;
@@ -282,8 +277,8 @@ static void RADSS_AXSetMem(_RadSoundSystem* pSystem, void* pMemory)
 
     ClearBuffer(&pSystem->priv, pSystem->ucChannels, 0, pSystem->priv.uBufferBytes);
 
-    pSystem->priv.pRouting =
-        reinterpret_cast<short*>(static_cast<unsigned char*>(pMemory) + pSystem->priv.uStagingBytes);
+    pSystem->priv.pRouting = reinterpret_cast<short*>(static_cast<unsigned char*>(pMemory)
+                                                      + pSystem->priv.uStagingBytes);
     pSystem->priv.uWriteOffset = pSystem->priv.uChunkBytes;
 }
 
@@ -317,8 +312,7 @@ static void RADSS_AXChannelRoute(_RadSoundSystem* pSystem, short* pRouting, int 
         {
             for (iRow = 0; iRow < RADSS_ROUTING_STRIDE; iRow++)
             {
-                pSystem->priv.pRouting[iRow * RADSS_ROUTING_STRIDE + iVoice] =
-                    pRouting[iRow * iChannels + iVoice];
+                pSystem->priv.pRouting[iRow * RADSS_ROUTING_STRIDE + iVoice] = pRouting[iRow * iChannels + iVoice];
             }
         }
     }
@@ -342,30 +336,22 @@ static void RADSS_AXChannelRoute(_RadSoundSystem* pSystem, short* pRouting, int 
 
     for (iVoice = 0; iVoice < iChannels; iVoice++)
     {
-        tvMix[0].bus[0].volume =
-            (pSystem->priv.pRouting[0 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeFirst) >>
-            RADSS_VOLUME_SHIFT;
-        tvMix[1].bus[0].volume =
-            (pSystem->priv.pRouting[1 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeSecond) >>
-            RADSS_VOLUME_SHIFT;
-        tvMix[4].bus[0].volume =
-            (pSystem->priv.pRouting[2 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeCenter) >>
-            RADSS_VOLUME_SHIFT;
-        tvMix[5].bus[0].volume =
-            (pSystem->priv.pRouting[3 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeCenter) >>
-            RADSS_VOLUME_SHIFT;
-        tvMix[2].bus[0].volume =
-            (pSystem->priv.pRouting[4 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeFirst) >>
-            RADSS_VOLUME_SHIFT;
-        tvMix[3].bus[0].volume =
-            (pSystem->priv.pRouting[5 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeSecond) >>
-            RADSS_VOLUME_SHIFT;
-        drcMix[0].bus[0].volume =
-            (pSystem->priv.pRouting[6 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeFirst) >>
-            RADSS_VOLUME_SHIFT;
-        drcMix[1].bus[0].volume =
-            (pSystem->priv.pRouting[7 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeSecond) >>
-            RADSS_VOLUME_SHIFT;
+        tvMix[0].bus[0].volume = (pSystem->priv.pRouting[0 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeFirst)
+                                 >> RADSS_VOLUME_SHIFT;
+        tvMix[1].bus[0].volume = (pSystem->priv.pRouting[1 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeSecond)
+                                 >> RADSS_VOLUME_SHIFT;
+        tvMix[4].bus[0].volume = (pSystem->priv.pRouting[2 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeCenter)
+                                 >> RADSS_VOLUME_SHIFT;
+        tvMix[5].bus[0].volume = (pSystem->priv.pRouting[3 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeCenter)
+                                 >> RADSS_VOLUME_SHIFT;
+        tvMix[2].bus[0].volume = (pSystem->priv.pRouting[4 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeFirst)
+                                 >> RADSS_VOLUME_SHIFT;
+        tvMix[3].bus[0].volume = (pSystem->priv.pRouting[5 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeSecond)
+                                 >> RADSS_VOLUME_SHIFT;
+        drcMix[0].bus[0].volume = (pSystem->priv.pRouting[6 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeFirst)
+                                  >> RADSS_VOLUME_SHIFT;
+        drcMix[1].bus[0].volume = (pSystem->priv.pRouting[7 * RADSS_ROUTING_STRIDE + iVoice] * uVolumeSecond)
+                                  >> RADSS_VOLUME_SHIFT;
 
         AXSetVoiceDeviceMix(pSystem->priv.pVoices[iVoice], AX_DEVICE_TYPE_TV, 0, tvMix);
         AXSetVoiceDeviceMix(pSystem->priv.pVoices[iVoice], AX_DEVICE_TYPE_DRC, 0, drcMix);
@@ -384,8 +370,7 @@ static void RADSS_AXVolume(_RadSoundSystem* pSystem, float fFirst, float fSecond
     if ((ucFlags & RADSS_FLAG_ROUTED) == 0)
     {
         memset(pSystem->priv.pRouting, 0, RADSS_AX_ROUTING_BYTES);
-        InitRouting(pSystem->priv.ucFlags & RADSS_FLAG_MODE_MASK, pSystem->ucChannels,
-                    pSystem->priv.pRouting);
+        InitRouting(pSystem->priv.ucFlags & RADSS_FLAG_MODE_MASK, pSystem->ucChannels, pSystem->priv.pRouting);
         ucFlags = pSystem->priv.ucFlags;
     }
 
@@ -412,7 +397,8 @@ static int RADSS_AXSetOnOff(_RadSoundSystem* pSystem, int iOn)
         sVolumeSecond = pSystem->priv.sVolumeSecond;
 
         if (RADSS_AXOpenDriver(pSystem, pSystem->priv.usLatency, pSystem->usRate, pSystem->ucChannels,
-                               pSystem->priv.uStagingBytes, ucFlags & RADSS_FLAG_MODE_MASK) == 0)
+                               pSystem->priv.uStagingBytes, ucFlags & RADSS_FLAG_MODE_MASK)
+            == 0)
         {
             return 0;
         }
@@ -503,8 +489,8 @@ static int RADSS_AXUnlock(_RadSoundSystem* pSystem)
 
         for (uChannel = 0; uChannel < uChannels; uChannel++)
         {
-            pDestination = reinterpret_cast<short*>(
-                static_cast<unsigned char*>(pSystem->priv.pChannelBuffers[uChannel]) + uOffset);
+            pDestination = reinterpret_cast<short*>(static_cast<unsigned char*>(pSystem->priv.pChannelBuffers[uChannel])
+                                                    + uOffset);
 
             for (uSample = 0; uSample < uSamples; uSample++)
             {
@@ -516,8 +502,8 @@ static int RADSS_AXUnlock(_RadSoundSystem* pSystem)
 
         uOffset = uOffset + uChunk;
         uRemaining = uRemaining - uChunk;
-        pSource = reinterpret_cast<const short*>(reinterpret_cast<const unsigned char*>(pSource) +
-                                                 ((uChunk * uChannels) & 0xFFFFFFFE));
+        pSource = reinterpret_cast<const short*>(reinterpret_cast<const unsigned char*>(pSource)
+                                                 + ((uChunk * uChannels) & 0xFFFFFFFE));
 
         if (uOffset == pSystem->priv.uBufferBytes)
         {
@@ -527,8 +513,7 @@ static int RADSS_AXUnlock(_RadSoundSystem* pSystem)
 
     pSystem->priv.uWriteOffset = uOffset;
 
-    if ((pSystem->priv.ucFlags & RADSS_FLAG_PLAYING) == 0 && pSystem->ucPaused == 0 &&
-        pSystem->ucEnabled != 0)
+    if ((pSystem->priv.ucFlags & RADSS_FLAG_PLAYING) == 0 && pSystem->ucPaused == 0 && pSystem->ucEnabled != 0)
     {
         for (uChannel = 0; uChannel < uChannels; uChannel++)
         {
@@ -555,9 +540,8 @@ static unsigned int RADSS_AXGetProperty(_RadSoundSystem*, RADSS_PROPERTY propert
     return 0;
 }
 
-static int RADSS_AXOpenDriver(_RadSoundSystem* pSystem, unsigned int uLatencyMilliseconds,
-                              unsigned int uRate, unsigned int uChannels, unsigned int uLockBytes,
-                              unsigned int uMode)
+static int RADSS_AXOpenDriver(_RadSoundSystem* pSystem, unsigned int uLatencyMilliseconds, unsigned int uRate,
+                              unsigned int uChannels, unsigned int uLockBytes, unsigned int uMode)
 {
     short routing[RADSS_AX_ROUTING_ENTRIES] = {};
     AXVoiceDeviceMixData tvMix[RADSS_TV_MIX_COUNT] = {};
@@ -633,13 +617,11 @@ static int RADSS_AXOpenDriver(_RadSoundSystem* pSystem, unsigned int uLatencyMil
 
     pSystem->priv.ucChunkCount = (unsigned char)uChunkMilliseconds;
 
-    pSystem->priv.uFreshTicks =
-        (unsigned long long)uChunks * (OSGetSystemInfo()->busClockSpeed >> 2) /
-            RADSS_MILLISECONDS_PER_SECOND / RADSS_FRESH_TICK_DIVISOR +
-        1;
-    pSystem->priv.uPollTicks = (unsigned long long)(uChunkMilliseconds * uChunks) *
-                           (OSGetSystemInfo()->busClockSpeed >> 2) /
-                           RADSS_MILLISECONDS_PER_SECOND;
+    pSystem->priv.uFreshTicks = (unsigned long long)uChunks * (OSGetSystemInfo()->busClockSpeed >> 2)
+                                    / RADSS_MILLISECONDS_PER_SECOND / RADSS_FRESH_TICK_DIVISOR
+                                + 1;
+    pSystem->priv.uPollTicks = (unsigned long long)(uChunkMilliseconds * uChunks)
+                               * (OSGetSystemInfo()->busClockSpeed >> 2) / RADSS_MILLISECONDS_PER_SECOND;
 
     uBufferBytes = uChunkMilliseconds * uChunkSamples;
     pSystem->priv.uChunkBytes = uChunkSamples << 1;

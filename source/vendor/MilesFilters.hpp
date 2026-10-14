@@ -17,20 +17,12 @@ extern "C" void AIL_API_close_filter(FLT_INSTANCE* pFilter);
 extern "C" void AIL_API_set_room_type(_DIG_DRIVER* pDriver, int iBus, int iRoomType);
 extern "C" void AIL_API_set_3D_rolloff_factor(_DIG_DRIVER* pDriver, float fFactor);
 extern "C" void AIL_API_set_3D_doppler_factor(_DIG_DRIVER* pDriver, float fFactor);
-extern "C" void AIL_API_set_listener_3D_position(_DIG_DRIVER* pDriver, float fX, float fY,
-                                                 float fZ);
-extern "C" void AIL_API_set_listener_3D_orientation(_DIG_DRIVER* pDriver, float fFaceX,
-                                                    float fFaceY, float fFaceZ, float fUpX,
-                                                    float fUpY, float fUpZ);
-extern "C" void AIL_API_set_sample_3D_volume_falloff(_SAMPLE* pSample,
-                                                     const FalloffGraphPoint* pPoints,
-                                                     int iCount);
-extern "C" void AIL_API_set_sample_3D_lowpass_falloff(_SAMPLE* pSample,
-                                                      const FalloffGraphPoint* pPoints,
-                                                      int iCount);
-extern "C" void AIL_API_set_sample_3D_exclusion_falloff(_SAMPLE* pSample,
-                                                        const FalloffGraphPoint* pPoints,
-                                                        int iCount);
+extern "C" void AIL_API_set_listener_3D_position(_DIG_DRIVER* pDriver, float fX, float fY, float fZ);
+extern "C" void AIL_API_set_listener_3D_orientation(_DIG_DRIVER* pDriver, float fFaceX, float fFaceY, float fFaceZ,
+                                                    float fUpX, float fUpY, float fUpZ);
+extern "C" void AIL_API_set_sample_3D_volume_falloff(_SAMPLE* pSample, const FalloffGraphPoint* pPoints, int iCount);
+extern "C" void AIL_API_set_sample_3D_lowpass_falloff(_SAMPLE* pSample, const FalloffGraphPoint* pPoints, int iCount);
+extern "C" void AIL_API_set_sample_3D_exclusion_falloff(_SAMPLE* pSample, const FalloffGraphPoint* pPoints, int iCount);
 extern "C" void AIL_API_set_sample_3D_position(_SAMPLE* pSample, float fX, float fY, float fZ);
 extern "C" void AIL_API_set_sample_3D_distances(_SAMPLE* pSample, float fMaximum, float fMinimum,
                                                 int iAutomaticWetAttenuation);

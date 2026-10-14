@@ -49,8 +49,10 @@ extern "C" void rrAtomicMemoryBarrierFull();
 extern "C" unsigned int rrAtomicLoadAcquire32(const volatile unsigned int* pTarget);
 extern "C" unsigned long long rrAtomicLoadAcquire64(const volatile unsigned long long* pTarget);
 extern "C" void rrAtomicStoreRelease32(volatile unsigned int* pTarget, unsigned int uValue);
-extern "C" unsigned int rrAtomicCmpXchg32(volatile unsigned int* pTarget, unsigned int uNewValue, unsigned int uComparand);
-extern "C" unsigned long long rrAtomicCmpXchg64(volatile unsigned long long* pTarget, unsigned long long uNewValue, unsigned long long uComparand);
+extern "C" unsigned int rrAtomicCmpXchg32(volatile unsigned int* pTarget, unsigned int uNewValue,
+                                          unsigned int uComparand);
+extern "C" unsigned long long rrAtomicCmpXchg64(volatile unsigned long long* pTarget, unsigned long long uNewValue,
+                                                unsigned long long uComparand);
 extern "C" int rrAtomicAddExchange32(volatile int* pTarget, int iValue);
 extern "C" long long rrAtomicAddExchange64(volatile long long* pTarget, long long lValue);
 
@@ -68,7 +70,8 @@ extern "C" int rrSemaphoreDecrementOrWait(rrSemaphore* pSemaphore, unsigned int 
 extern "C" void rrThreadSleep(unsigned int uMilliseconds);
 
 extern "C" rrThread* rrThreadCurrent();
-extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStackSize, void* pUserData, unsigned int uFlags, const char* pName);
+extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStackSize, void* pUserData,
+                              unsigned int uFlags, const char* pName);
 extern "C" void rrThreadSetPriority(rrThread* pThread, unsigned int uPriority);
 extern "C" void rrThreadSetCPUCore(rrThread* pThread, unsigned int uCore);
 extern "C" int rrThreadWaitDone(rrThread* pThread, unsigned int uTimeoutMilliseconds, unsigned int* puExitCode);
