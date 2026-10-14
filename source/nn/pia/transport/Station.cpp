@@ -15,7 +15,12 @@
 
 #include <new>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 namespace
 {
@@ -26,11 +31,24 @@ enum
 }
 
 Station::Station()
-    : m_field0(0), m_stationAddress(), m_field10(0xfd), m_stationId(0),
-      m_field20(0), m_reliableSlidingWindow(0), m_field28(0), m_rttProtocol(0),
-      m_connectStationJob(0), m_disconnectStationJob(0), m_processConnectionRequestJob(0),
-      m_sequenceIdController(), m_field54(0), m_field55(0), m_field56(1),
-      m_lastSendTime(), m_lastReceiveTime(), m_field68(0)
+    : m_field0(0),
+      m_stationAddress(),
+      m_field10(0xfd),
+      m_stationId(0),
+      m_field20(0),
+      m_reliableSlidingWindow(0),
+      m_field28(0),
+      m_rttProtocol(0),
+      m_connectStationJob(0),
+      m_disconnectStationJob(0),
+      m_processConnectionRequestJob(0),
+      m_sequenceIdController(),
+      m_field54(0),
+      m_field55(0),
+      m_field56(1),
+      m_lastSendTime(),
+      m_lastReceiveTime(),
+      m_field68(0)
 {
     void* memory = pead::allocateFromSeadHeap(sizeof(ReliableSlidingWindow), common::HeapManager::GetHeap());
     if (memory != 0)
@@ -119,7 +137,7 @@ void Station::SetStationIdAndIndex(unsigned long long id, StationIndex index)
 }
 
 void Station::helperStartupCleanup(bool startup, unsigned long long id, StationIndex index,
-                                  const common::StationAddress& address, StationState state)
+                                   const common::StationAddress& address, StationState state)
 {
     m_field0 = startup;
     if (startup)
@@ -263,4 +281,6 @@ Station::PlayerInfo::~PlayerInfo()
 {
 }
 
-}}}
+}
+}
+}

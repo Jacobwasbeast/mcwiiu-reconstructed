@@ -8,7 +8,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class LatencyEmulator
 {
@@ -17,8 +22,7 @@ public:
     {
     public:
         Entry() {}
-        Entry(const common::Packet& packet, const common::Time& dispatchTime)
-            : m_dispatchTime(dispatchTime)
+        Entry(const common::Packet& packet, const common::Time& dispatchTime) : m_dispatchTime(dispatchTime)
         {
             m_packet.CopyFrom(packet);
         }
@@ -67,6 +71,8 @@ private:
     Result readDispatch();
 };
 
-}}}
+}
+}
+}
 
 #endif

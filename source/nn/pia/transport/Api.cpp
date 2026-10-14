@@ -5,7 +5,12 @@
 #include "nn/pia/Transport.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 unsigned char g_piaTransportInitialized = 0;
 unsigned char g_piaTransportInSetupMode = 0;
@@ -73,4 +78,6 @@ unsigned char IsInSetupMode()
     return g_piaTransportInSetupMode;
 }
 
-}}}
+}
+}
+}

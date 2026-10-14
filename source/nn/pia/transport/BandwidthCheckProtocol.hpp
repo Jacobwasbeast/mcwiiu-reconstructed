@@ -6,9 +6,23 @@
 #include "nn/pia/common/StationAddress.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace inet { class InetJoinMeshJob; }}}
+namespace nn
+{
+namespace pia
+{
+namespace inet
+{
+class InetJoinMeshJob;
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class BandwidthCheckProtocol : public Protocol
 {
@@ -26,7 +40,10 @@ public:
         virtual unsigned int GetSerializedSize() const;
     };
 
-    enum { cProtocolType = 0x54 };
+    enum
+    {
+        cProtocolType = 0x54
+    };
 
     enum SenderState
     {
@@ -126,6 +143,8 @@ private:
     bool m_receiverActive;
 };
 
-}}}
+}
+}
+}
 
 #endif

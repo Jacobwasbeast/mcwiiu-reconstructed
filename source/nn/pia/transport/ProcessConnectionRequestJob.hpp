@@ -6,7 +6,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ProcessConnectionRequestJob : public common::StepSequenceJob
 {
@@ -40,6 +45,8 @@ private:
     bool m_isRelayConnection;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -9,10 +9,17 @@
 #include "nn/pia/common/Packet.hpp"
 #include "nn/pia/transport/ProtocolMessageReader.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 PacketAnalyzer::PacketAnalyzer(const char* name, unsigned int headerSize)
-    : PacketAnalysisData(), m_criticalSection(-1), m_startedUp(false),
+    : PacketAnalysisData(),
+      m_criticalSection(-1),
+      m_startedUp(false),
       m_headerSize(headerSize)
 {
     const unsigned int length = common::minimum<unsigned int>(strlen(name), cNameLengthMax - 1);
@@ -24,21 +31,28 @@ PacketAnalyzer::~PacketAnalyzer()
 {
 }
 
-}}}
+}
+}
+}
 
 namespace
 {
-    nn::pia::common::Time getTime()
-    {
-        if (nn::pia::transport::g_piaTransport != 0)
-            return nn::pia::transport::g_piaTransport->m_time;
-        nn::pia::common::Time time;
-        time.SetNow();
-        return time;
-    }
+nn::pia::common::Time getTime()
+{
+    if (nn::pia::transport::g_piaTransport != 0)
+        return nn::pia::transport::g_piaTransport->m_time;
+    nn::pia::common::Time time;
+    time.SetNow();
+    return time;
+}
 }
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 Result PacketAnalyzer::Startup()
 {
@@ -61,8 +75,7 @@ void PacketAnalyzer::Cleanup()
     m_startedUp = false;
 }
 
-Result PacketAnalyzer::UpdatePacketAnalysisData(
-    const common::Packet& packet, bool isRelay, bool isSingleCount)
+Result PacketAnalyzer::UpdatePacketAnalysisData(const common::Packet& packet, bool isRelay, bool isSingleCount)
 {
     if (!m_startedUp)
         return static_cast<Result>(0x10c08);
@@ -71,8 +84,8 @@ Result PacketAnalyzer::UpdatePacketAnalysisData(
 
     m_criticalSection.Lock();
     unsigned int offset = 0;
-    const unsigned int count = (isRelay && !isSingleCount) ?
-        static_cast<unsigned int>(packet.GetPacketNumInNetwork()) : 1;
+    const unsigned int count = (isRelay && !isSingleCount) ? static_cast<unsigned int>(packet.GetPacketNumInNetwork())
+                                                           : 1;
     while (offset < packet.m_size - common::Packet::cHeaderSize)
     {
         ProtocolMessageReader reader;
@@ -111,8 +124,7 @@ void PacketAnalyzer::ClearPacketAnalysisData()
     m_criticalSection.Unlock();
 }
 
-Result PacketAnalyzer::GetPacketAnalysisData(
-    PacketAnalysisData* packetAnalysisData) const
+Result PacketAnalyzer::GetPacketAnalysisData(PacketAnalysisData* packetAnalysisData) const
 {
     if (packetAnalysisData == 0)
         return static_cast<Result>(0x10c07);
@@ -122,9 +134,11 @@ Result PacketAnalyzer::GetPacketAnalysisData(
     m_criticalSection.Unlock();
 
     const common::Time now = getTime();
-    packetAnalysisData->m_passedMilliSecond = static_cast<unsigned int>(
-        (now - m_startTime).m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
+    packetAnalysisData->m_passedMilliSecond = static_cast<unsigned int>((now - m_startTime).m_tick
+                                                                        / common::TimeSpan::GetTicksPerMSec().m_tick);
     return 0;
 }
 
-}}}
+}
+}
+}

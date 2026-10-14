@@ -8,14 +8,26 @@
 #include "nn/pia/transport/ProtocolMessageWriter.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 class Packet;
 class Time;
 class IPacketInput;
 class IPacketOutput;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class PacketAnalyzer;
 class PacketAnalysisData;
@@ -23,7 +35,11 @@ class PacketAnalysisData;
 class PacketHandler
 {
 public:
-    enum { cPacketHeaderSize = 36, cPayloadSizeMax = 1436 };
+    enum
+    {
+        cPacketHeaderSize = 36,
+        cPayloadSizeMax = 1436
+    };
 
     class Iterator
     {
@@ -71,24 +87,19 @@ public:
     Iterator& GetIterator(const ProtocolId& protocolId);
     Iterator& GetIterator(unsigned char protocolType);
     Result Initialize(unsigned int maxProtocolNum);
-    Result Startup(PacketStream::Writer* writer, PacketStream::Reader* reader,
-                   common::IPacketInput* packetInput, common::IPacketOutput* packetOutput,
-                   unsigned long long* stationId,
+    Result Startup(PacketStream::Writer* writer, PacketStream::Reader* reader, common::IPacketInput* packetInput,
+                   common::IPacketOutput* packetOutput, unsigned long long* stationId,
                    const common::CryptoSetting* cryptoSetting);
     Result UpdateSetting(const common::CryptoSetting* cryptoSetting);
     int GetPayloadSizeLimit() const;
-    Result GetPacketAnalysisData(PacketAnalysisData* send, PacketAnalysisData* unicast,
-                                 PacketAnalysisData* broadcast, PacketAnalysisData* receive) const;
+    Result GetPacketAnalysisData(PacketAnalysisData* send, PacketAnalysisData* unicast, PacketAnalysisData* broadcast,
+                                 PacketAnalysisData* receive) const;
     void ClearPacketAnalysisData();
-    ProtocolMessageWriter* AssignByStationAddress(const ProtocolId& protocolId,
-                                                 const common::StationAddress& address,
-                                                 unsigned int size, bool isPriority,
-                                                 bool field602);
-    common::Packet* AssignPacket(const common::StationAddress& address, bool isPriority,
-                                  bool field602);
+    ProtocolMessageWriter* AssignByStationAddress(const ProtocolId& protocolId, const common::StationAddress& address,
+                                                  unsigned int size, bool isPriority, bool field602);
+    common::Packet* AssignPacket(const common::StationAddress& address, bool isPriority, bool field602);
     unsigned char* AssignPacketPayload(common::Packet* packet, unsigned int size);
-    bool IsBundleCandidate(const common::Packet* packet, bool field602,
-                           unsigned int sizeLimit, bool field604);
+    bool IsBundleCandidate(const common::Packet* packet, bool field602, unsigned int sizeLimit, bool field604);
     Result Commit();
     ProtocolMessageWriter* ReserveMessageWriter();
 
@@ -129,6 +140,8 @@ inline void PacketHandler::Iterator::NextIteration()
     m_handler->NextIteration();
 }
 
-}}}
+}
+}
+}
 
 #endif

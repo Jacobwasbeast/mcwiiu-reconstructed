@@ -5,12 +5,16 @@
 
 #include <new>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 common::Packet* PacketStream::Accessor::Get(int index)
 {
-    unsigned int packetIndex = static_cast<unsigned int>(index) +
-        static_cast<unsigned int>(m_field04);
+    unsigned int packetIndex = static_cast<unsigned int>(index) + static_cast<unsigned int>(m_field04);
     if (static_cast<int>(packetIndex) >= m_packetStream->m_packets.size())
         packetIndex -= m_packetStream->m_packets.size();
     return m_packetStream->m_packets.get(packetIndex);
@@ -127,4 +131,6 @@ void PacketStream::Trace(unsigned long long value) const
 {
 }
 
-}}}
+}
+}
+}

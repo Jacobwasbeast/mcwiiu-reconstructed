@@ -5,11 +5,23 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/transport/PacketAnalysisData.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 class Packet;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class PacketAnalyzer : public PacketAnalysisData
 {
@@ -18,8 +30,7 @@ public:
     ~PacketAnalyzer();
     Result Startup();
     void Cleanup();
-    Result UpdatePacketAnalysisData(const common::Packet& packet, bool isRelay,
-                                    bool isSingleCount);
+    Result UpdatePacketAnalysisData(const common::Packet& packet, bool isRelay, bool isSingleCount);
     void ClearPacketAnalysisData();
     Result GetPacketAnalysisData(PacketAnalysisData* packetAnalysisData) const;
     void Trace(unsigned long long value) const;
@@ -30,6 +41,8 @@ public:
     unsigned int m_headerSize;
 };
 
-}}}
+}
+}
+}
 
 #endif

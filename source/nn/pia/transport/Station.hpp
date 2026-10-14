@@ -7,7 +7,12 @@
 #include "nn/pia/String.hpp"
 #include "nn/pia/transport/SequenceIdController.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class NetworkFactory;
 class StationProtocol;
@@ -109,6 +114,8 @@ struct Station::PlayerInfo
     unsigned long long m_field78;
 };
 
-}}}
+}
+}
+}
 
 #endif

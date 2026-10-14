@@ -5,7 +5,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/transport/TransportAnalysisData.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class TransportAnalyzer
 {
@@ -32,6 +37,8 @@ public:
 
 extern TransportAnalyzer* g_piaTransportAnalyzer;
 
-}}}
+}
+}
+}
 
 #endif

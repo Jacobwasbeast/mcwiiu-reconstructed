@@ -17,28 +17,28 @@
 
 #include <new>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
-namespace {
+namespace
+{
 
 inline unsigned int readU32(const unsigned char* buffer)
 {
-    return (static_cast<unsigned int>(buffer[0]) << 24) |
-           (static_cast<unsigned int>(buffer[1]) << 16) |
-           (static_cast<unsigned int>(buffer[2]) << 8) |
-           static_cast<unsigned int>(buffer[3]);
+    return (static_cast<unsigned int>(buffer[0]) << 24) | (static_cast<unsigned int>(buffer[1]) << 16)
+           | (static_cast<unsigned int>(buffer[2]) << 8) | static_cast<unsigned int>(buffer[3]);
 }
 
 inline unsigned long long readU64(const unsigned char* buffer)
 {
-    return (static_cast<unsigned long long>(buffer[0]) << 56) |
-           (static_cast<unsigned long long>(buffer[1]) << 48) |
-           (static_cast<unsigned long long>(buffer[2]) << 40) |
-           (static_cast<unsigned long long>(buffer[3]) << 32) |
-           (static_cast<unsigned long long>(buffer[4]) << 24) |
-           (static_cast<unsigned long long>(buffer[5]) << 16) |
-           (static_cast<unsigned long long>(buffer[6]) << 8) |
-           static_cast<unsigned long long>(buffer[7]);
+    return (static_cast<unsigned long long>(buffer[0]) << 56) | (static_cast<unsigned long long>(buffer[1]) << 48)
+           | (static_cast<unsigned long long>(buffer[2]) << 40) | (static_cast<unsigned long long>(buffer[3]) << 32)
+           | (static_cast<unsigned long long>(buffer[4]) << 24) | (static_cast<unsigned long long>(buffer[5]) << 16)
+           | (static_cast<unsigned long long>(buffer[6]) << 8) | static_cast<unsigned long long>(buffer[7]);
 }
 
 inline void writeU32(unsigned char* buffer, unsigned int value)
@@ -66,8 +66,12 @@ const unsigned int cDataSerializedSize = 16;
 }
 
 RttProtocol::RttProtocol()
-    : Protocol(), m_stationIndex(cStationIndexInvalid), m_stationId(0),
-      m_rttCalculators(0), m_stationCount(0), m_isBroadcastSupported(0)
+    : Protocol(),
+      m_stationIndex(cStationIndexInvalid),
+      m_stationId(0),
+      m_rttCalculators(0),
+      m_stationCount(0),
+      m_isBroadcastSupported(0)
 {
 }
 
@@ -147,8 +151,8 @@ Result RttProtocol::send(StationIndex stationIndex, const Data& data)
 
     unsigned int size = 0;
     data.Serialize(m_data, &size);
-    ProtocolMessageWriter* writer = handler->AssignByStationIndex(
-        GetProtocolId(), stationIndex, size, false, false, true);
+    ProtocolMessageWriter* writer = handler->AssignByStationIndex(GetProtocolId(), stationIndex, size, false, false,
+                                                                  true);
     if (writer == 0)
         return 0;
     writer->SetPayload(m_data);
@@ -190,8 +194,7 @@ void RttProtocol::process(const ProtocolMessageReader* reader)
 {
     Data data;
     data.Deserialize(reader->m_message + ProtocolMessageReader::cMessageHeaderSize);
-    Station* station = StationManager::s_pInstance->GetStationByStationIdWithoutConvert(
-        reader->m_header.m_source);
+    Station* station = StationManager::s_pInstance->GetStationByStationIdWithoutConvert(reader->m_header.m_source);
     if (station == 0)
         return;
     const StationIndex stationIndex = static_cast<StationIndex>(station->m_field10);
@@ -210,8 +213,8 @@ void RttProtocol::process(const ProtocolMessageReader* reader)
     {
         common::Time now;
         now.SetNow();
-        const int rtt = static_cast<int>(static_cast<long long>(now.m_tick - data.m_timestamp) /
-                                         common::TimeSpan::GetTicksPerMSec().m_tick);
+        const int rtt = static_cast<int>(static_cast<long long>(now.m_tick - data.m_timestamp)
+                                         / common::TimeSpan::GetTicksPerMSec().m_tick);
         if (stationIndex >= 0 && stationIndex < m_stationCount)
             m_rttCalculators[stationIndex].Update(rtt);
     }
@@ -256,8 +259,8 @@ Result RttProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
 {
     if (m_stationIndex == cStationIndexInvalid)
         return 0x10c08;
-    const StationIndex stationIndex =
-        static_cast<StationIndex>(StationManager::s_pInstance->GetStation(event.m_stationAddress)->m_field10);
+    const StationIndex stationIndex = static_cast<StationIndex>(
+        StationManager::s_pInstance->GetStation(event.m_stationAddress)->m_field10);
     if (stationIndex < 0 || m_stationCount <= stationIndex)
         return 0x10c07;
     if (stationIndex == m_stationIndex)
@@ -360,4 +363,6 @@ unsigned int RttProtocol::Data::GetSerializedSize() const
     return cDataSerializedSize;
 }
 
-}}}
+}
+}
+}

@@ -5,14 +5,24 @@
 #include "nn/pia/Transport.hpp"
 #include <new>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 TransportThreadStream::TransportThreadStream()
     : PacketStream(),
       m_threadDelegate(this, &TransportThreadStream::ThreadFunc),
-      m_thread(0), m_event(false), m_threadState(cThreadStateQuit),
-      m_sleepMilliSecond(5), m_lastResult(0), m_latencyEmulator(0),
-      m_packetLossRatio(0), m_isPacketLossEnabled(false)
+      m_thread(0),
+      m_event(false),
+      m_threadState(cThreadStateQuit),
+      m_sleepMilliSecond(5),
+      m_lastResult(0),
+      m_latencyEmulator(0),
+      m_packetLossRatio(0),
+      m_isPacketLossEnabled(false)
 {
 }
 
@@ -20,10 +30,8 @@ TransportThreadStream::~TransportThreadStream()
 {
 }
 
-Result TransportThreadStream::InitializeCore(const char* name, int priority,
-                                             unsigned int packetNum,
-                                             unsigned int latencyEntryNum,
-                                             bool isPacketLossEnabled,
+Result TransportThreadStream::InitializeCore(const char* name, int priority, unsigned int packetNum,
+                                             unsigned int latencyEntryNum, bool isPacketLossEnabled,
                                              unsigned int streamIndex)
 {
     if (m_threadState != cThreadStateQuit)
@@ -35,17 +43,16 @@ Result TransportThreadStream::InitializeCore(const char* name, int priority,
     }
     else
     {
-        void* storage = pead::allocateFromSeadHeap(sizeof(LatencyEmulator),
-                                                  common::HeapManager::GetHeap());
+        void* storage = pead::allocateFromSeadHeap(sizeof(LatencyEmulator), common::HeapManager::GetHeap());
         m_latencyEmulator = storage != 0 ? new (storage) LatencyEmulator(latencyEntryNum) : 0;
     }
     m_isPacketLossEnabled = isPacketLossEnabled;
     pead::Heap* heap = common::HeapManager::GetHeap();
-    void* storage = pead::allocateFromSeadHeap(sizeof(pead::DelegateThread),
-                                              common::HeapManager::GetHeap());
-    m_thread = storage != 0 ? new (storage) pead::DelegateThread(
-        pead::SafeStringBase<char>(name), &m_threadDelegate, heap, priority,
-        pead::MessageQueue::cNoBlock, 0x7fffffff, 0x2000, 0x20) : 0;
+    void* storage = pead::allocateFromSeadHeap(sizeof(pead::DelegateThread), common::HeapManager::GetHeap());
+    m_thread = storage != 0 ? new (storage)
+                                  pead::DelegateThread(pead::SafeStringBase<char>(name), &m_threadDelegate, heap,
+                                                       priority, pead::MessageQueue::cNoBlock, 0x7fffffff, 0x2000, 0x20)
+                            : 0;
     m_thread->setAffinity(pead::CoreIdMask(1 << pead::CoreInfo::getCurrentCoreId().value()));
     PacketStream::Initialize(packetNum, streamIndex);
     m_threadState = cThreadStateStop;
@@ -98,8 +105,7 @@ void TransportThreadStream::ChangeState(ThreadState threadState)
         }
         if (m_threadState == threadState)
             return;
-    }
-    while (threadState != cThreadStateRun);
+    } while (threadState != cThreadStateRun);
 }
 
 Result TransportThreadStream::Startup()
@@ -215,4 +221,6 @@ bool TransportThreadStream::isDropPacket()
     return false;
 }
 
-}}}
+}
+}
+}

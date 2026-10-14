@@ -7,7 +7,12 @@
 #include "nn/pia/String.hpp"
 #include "nn/pia/transport/Station.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class IdentificationInfo
 {
@@ -69,6 +74,8 @@ private:
     common::CriticalSection m_criticalSection;
 };
 
-}}}
+}
+}
+}
 
 #endif

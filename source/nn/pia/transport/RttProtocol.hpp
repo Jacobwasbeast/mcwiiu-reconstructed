@@ -5,10 +5,19 @@
 #include "nn/pia/common/ISerializable.hpp"
 #include "nn/pia/transport/RttCalculator.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 class StationAddress;
-}}
-namespace pia { namespace transport {
+}
+}
+namespace pia
+{
+namespace transport
+{
 
 class ProtocolEvent;
 class ProtocolMessageReader;
@@ -19,9 +28,7 @@ public:
     class Data : public common::ISerializable
     {
     public:
-        virtual ~Data()
-        {
-        }
+        virtual ~Data() {}
 
         virtual Result Serialize(unsigned char* buffer, unsigned int* size) const;
         virtual Result Deserialize(const unsigned char* buffer);
@@ -32,7 +39,10 @@ public:
         unsigned long long m_timestamp;
     };
 
-    enum { cProtocolType = 0x58 };
+    enum
+    {
+        cProtocolType = 0x58
+    };
 
     RttProtocol();
     virtual ~RttProtocol();
@@ -68,9 +78,10 @@ private:
     RttCalculator* m_rttCalculators;
     unsigned short m_stationCount;
     unsigned char m_isBroadcastSupported;
-
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -6,7 +6,12 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ProtocolMessageAccessor
 {
@@ -20,9 +25,7 @@ public:
             cResultInvalidArgument = 0x10c07
         };
 
-        virtual ~Header()
-        {
-        }
+        virtual ~Header() {}
 
         virtual Result Serialize(unsigned char* buffer, unsigned int* size) const
         {
@@ -107,10 +110,7 @@ public:
             return 0;
         }
 
-        virtual unsigned int GetSerializedSize() const
-        {
-            return cSerializedSize;
-        }
+        virtual unsigned int GetSerializedSize() const { return cSerializedSize; }
 
         unsigned char m_flags;
         unsigned short m_messageSize;
@@ -121,6 +121,8 @@ public:
     };
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -3,14 +3,22 @@
 
 #include "nn/pia.h"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class PacketHandler;
 
 class ResendingMessageManager
 {
 public:
-    enum { cWorkBufferSize = 0x584 };
+    enum
+    {
+        cWorkBufferSize = 0x584
+    };
 
     ResendingMessageManager();
     ~ResendingMessageManager();
@@ -21,20 +29,16 @@ public:
     Result Startup(PacketHandler* packetHandler, bool isRelay);
     void Cleanup();
     Result Dispatch();
-    Result SetSendMessageCommon(unsigned int* ackId, const unsigned char* message,
-                                unsigned int messageSize, ProtocolId protocolId,
-                                bool isRelay, long long timeout, unsigned int* index);
-    Result SetSendMessageByStationAddress(unsigned int* ackId, const unsigned char* message,
-                                          unsigned int messageSize,
-                                          const common::StationAddress& stationAddress,
-                                          ProtocolId protocolId, long long timeout);
-    Result SetSendMessageByStationIndex(unsigned int* ackId, const unsigned char* message,
-                                        unsigned int messageSize, StationIndex stationIndex,
-                                        ProtocolId protocolId, bool isRelay,
+    Result SetSendMessageCommon(unsigned int* ackId, const unsigned char* message, unsigned int messageSize,
+                                ProtocolId protocolId, bool isRelay, long long timeout, unsigned int* index);
+    Result SetSendMessageByStationAddress(unsigned int* ackId, const unsigned char* message, unsigned int messageSize,
+                                          const common::StationAddress& stationAddress, ProtocolId protocolId,
+                                          long long timeout);
+    Result SetSendMessageByStationIndex(unsigned int* ackId, const unsigned char* message, unsigned int messageSize,
+                                        StationIndex stationIndex, ProtocolId protocolId, bool isRelay,
                                         long long timeout);
     bool CheckNowResending(unsigned int ackId) const;
-    unsigned int ExtractAckIdFromMessage(const unsigned char* message,
-                                         unsigned int messageSize) const;
+    unsigned int ExtractAckIdFromMessage(const unsigned char* message, unsigned int messageSize) const;
     bool StopResending(unsigned int ackId);
     void Trace(unsigned long long value) const;
 
@@ -56,6 +60,8 @@ public:
 
 extern ResendingMessageManager* g_piaResendingMessageManager;
 
-}}}
+}
+}
+}
 
 #endif

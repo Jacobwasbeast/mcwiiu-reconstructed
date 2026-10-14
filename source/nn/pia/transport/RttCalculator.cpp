@@ -1,12 +1,16 @@
 #include "nn/pia/transport/RttCalculator.hpp"
 #include <algorithm>
 #include "nn/pia/Transport.hpp"
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 int RttCalculator::s_pulseInterval = 2000;
 int RttCalculator::s_initialPulseInterval = 2000;
 
-RttCalculator::RttCalculator()
-    : m_started(0), m_lastRtt(-1), m_rttMin(-1), m_rttMax(-1), m_latestMedian()
+RttCalculator::RttCalculator() : m_started(0), m_lastRtt(-1), m_rttMin(-1), m_rttMax(-1), m_latestMedian()
 {
     m_latestMedian.m_count = 0;
     m_latestMedian.m_index = 0;
@@ -31,14 +35,16 @@ int RttCalculator::GetRtt(unsigned int count) const
         count = m_latestMedian.m_count;
 
     int values[9];
-    for (unsigned int i = 0; i < count; ++i) {
+    for (unsigned int i = 0; i < count; ++i)
+    {
         const unsigned int index = (m_latestMedian.m_index + m_latestMedian.m_count - i - 1) % 9;
         values[i] = m_latestMedian.m_values[index];
     }
     std::sort(values, values + count);
 
     const unsigned int middle = count / 2;
-    if ((count & 1u) == 0) {
+    if ((count & 1u) == 0)
+    {
         const int sum = values[middle - 1] + values[middle];
         return (sum >> 1) + ((sum < 0 && (sum & 1)) ? 1 : 0);
     }
@@ -126,4 +132,6 @@ Result RttCalculator::SetPulseInterval(int interval)
     s_pulseInterval = interval;
     return 0;
 }
-}}}
+}
+}
+}

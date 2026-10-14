@@ -3,7 +3,12 @@
 #include <cstdarg>
 #include <cstdio>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 namespace
 {
@@ -22,4 +27,6 @@ void AnalysisPrinter::Write(const char* format, ...)
         g_printCallback(g_analysisBuffer);
 }
 
-}}}
+}
+}
+}

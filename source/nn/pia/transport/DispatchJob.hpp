@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/Job.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class DispatchJob : public common::Job
 {
@@ -12,6 +17,8 @@ public:
     virtual ExecuteResult ExecuteCore();
 };
 
-}}}
+}
+}
+}
 
 #endif

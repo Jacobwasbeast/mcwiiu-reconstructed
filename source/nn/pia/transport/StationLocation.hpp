@@ -3,9 +3,23 @@
 
 #include "nn/pia/common/StationAddress.hpp"
 
-namespace nn { namespace pia { namespace common { class String; }} }
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class String;
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class StationLocation
 {
@@ -19,8 +33,7 @@ public:
     bool operator==(const StationLocation& other) const;
     void GetLocationString(common::String* string) const;
     virtual unsigned int GetSerializedSize() const;
-    virtual Result Serialize(unsigned char* buffer, unsigned int* size,
-                                     unsigned int maxSize) const;
+    virtual Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;
     virtual Result Deserialize(const unsigned char* buffer);
     virtual void Trace(unsigned long long value) const;
 
@@ -38,6 +51,8 @@ public:
     common::InetAddress m_inetAddress;
 };
 
-}}}
+}
+}
+}
 
 #endif

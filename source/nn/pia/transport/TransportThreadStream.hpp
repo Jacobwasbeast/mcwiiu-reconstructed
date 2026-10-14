@@ -4,7 +4,12 @@
 #include "nn/pia/transport/PacketStream.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class LatencyEmulator;
 
@@ -21,9 +26,8 @@ public:
     };
 
     TransportThreadStream();
-    Result InitializeCore(const char* name, int priority, unsigned int packetNum,
-                          unsigned int latencyEntryNum, bool isPacketLossEnabled,
-                          unsigned int streamIndex);
+    Result InitializeCore(const char* name, int priority, unsigned int packetNum, unsigned int latencyEntryNum,
+                          bool isPacketLossEnabled, unsigned int streamIndex);
     void FinalizeCore();
     Result Startup();
     void Cleanup();
@@ -54,6 +58,8 @@ protected:
     bool isDropPacket();
 };
 
-}}}
+}
+}
+}
 
 #endif

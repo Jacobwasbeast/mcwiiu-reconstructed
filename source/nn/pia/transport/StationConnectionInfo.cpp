@@ -2,11 +2,14 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/Transport.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
-StationConnectionInfo::StationConnectionInfo()
-    : m_stationLocation(),
-      m_localStationLocation()
+StationConnectionInfo::StationConnectionInfo() : m_stationLocation(), m_localStationLocation()
 {
 }
 
@@ -36,8 +39,7 @@ StationConnectionInfo& StationConnectionInfo::operator=(const StationConnectionI
 
 bool StationConnectionInfo::operator==(const StationConnectionInfo& other) const
 {
-    if (m_stationLocation == other.m_stationLocation &&
-        m_localStationLocation == other.m_localStationLocation)
+    if (m_stationLocation == other.m_stationLocation && m_localStationLocation == other.m_localStationLocation)
     {
         return true;
     }
@@ -49,8 +51,7 @@ unsigned int StationConnectionInfo::GetSerializedSize() const
     return m_stationLocation.GetSerializedSize() + m_localStationLocation.GetSerializedSize();
 }
 
-Result StationConnectionInfo::Serialize(unsigned char* buffer, unsigned int* size,
-                                         unsigned int maxSize) const
+Result StationConnectionInfo::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
     if (buffer == 0)
         return ResultInvalidArgument();
@@ -62,13 +63,11 @@ Result StationConnectionInfo::Serialize(unsigned char* buffer, unsigned int* siz
     unsigned char* cursor = buffer;
     unsigned int written;
     Result result;
-    result = m_stationLocation.Serialize(cursor, &written,
-                                         m_stationLocation.GetSerializedSize());
+    result = m_stationLocation.Serialize(cursor, &written, m_stationLocation.GetSerializedSize());
     cursor += m_stationLocation.GetSerializedSize();
     if (result != 0)
         return result;
-    result = m_localStationLocation.Serialize(cursor, &written,
-                                              m_localStationLocation.GetSerializedSize());
+    result = m_localStationLocation.Serialize(cursor, &written, m_localStationLocation.GetSerializedSize());
     cursor += m_localStationLocation.GetSerializedSize();
     if (result != 0)
         return result;
@@ -100,7 +99,7 @@ unsigned int StationConnectionInfo::GetStreamlinedSerializedSize() const
 }
 
 Result StationConnectionInfo::StreamlinedSerialize(unsigned char* buffer, unsigned int* size,
-                                                    unsigned int maxSize) const
+                                                   unsigned int maxSize) const
 {
     if (buffer == 0)
         return ResultInvalidArgument();
@@ -112,13 +111,13 @@ Result StationConnectionInfo::StreamlinedSerialize(unsigned char* buffer, unsign
     unsigned char* cursor = buffer;
     unsigned int written;
     Result result;
-    result = m_stationLocation.m_stationAddress.m_inetAddress
-                 .Serialize(cursor, &written, common::InetAddress::cSerializedSize);
+    result = m_stationLocation.m_stationAddress.m_inetAddress.Serialize(cursor, &written,
+                                                                        common::InetAddress::cSerializedSize);
     cursor += common::InetAddress::cSerializedSize;
     if (result != 0)
         return result;
-    result = m_localStationLocation.m_stationAddress.m_inetAddress
-                 .Serialize(cursor, &written, common::InetAddress::cSerializedSize);
+    result = m_localStationLocation.m_stationAddress.m_inetAddress.Serialize(cursor, &written,
+                                                                             common::InetAddress::cSerializedSize);
     cursor += common::InetAddress::cSerializedSize;
     if (result != 0)
         return result;
@@ -161,26 +160,23 @@ void StationConnectionInfo::Trace(unsigned long long) const
 {
 }
 
-unsigned int StationConnectionInfo::LittleMembersSerialize(unsigned char* buffer,
-                                                            const StationLocation& location) const
+unsigned int StationConnectionInfo::LittleMembersSerialize(unsigned char* buffer, const StationLocation& location) const
 {
     unsigned char* cursor = buffer;
     common::serializeU64(cursor, location.m_principalId);
     cursor += 8;
     common::serializeU32(cursor, location.m_field25);
     cursor += 4;
-    common::serializeU32(cursor, (location.m_field18 & 0x3fffffU)
-        | ((location.m_field20 & 3U) << 22) | (location.m_field21 << 24));
+    common::serializeU32(cursor, (location.m_field18 & 0x3fffffU) | ((location.m_field20 & 3U) << 22)
+                                     | (location.m_field21 << 24));
     cursor += 4;
-    common::serializeU32(cursor, (location.m_field1c & 0x3fffffU)
-        | ((location.m_field23 & 3U) << 24) | ((location.m_field24 & 3U) << 26)
-        | (location.m_field22 << 28));
+    common::serializeU32(cursor, (location.m_field1c & 0x3fffffU) | ((location.m_field23 & 3U) << 24)
+                                     | ((location.m_field24 & 3U) << 26) | (location.m_field22 << 28));
     cursor += 4;
     return cursor - buffer;
 }
 
-unsigned int StationConnectionInfo::LittleMembersDeserialize(StationLocation* location,
-                                                              const unsigned char* buffer)
+unsigned int StationConnectionInfo::LittleMembersDeserialize(StationLocation* location, const unsigned char* buffer)
 {
     const unsigned char* cursor = buffer;
     location->m_principalId = common::deserializeU64(cursor);
@@ -201,4 +197,6 @@ unsigned int StationConnectionInfo::LittleMembersDeserialize(StationLocation* lo
     return cursor - buffer;
 }
 
-}}}
+}
+}
+}

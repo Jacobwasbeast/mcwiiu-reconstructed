@@ -3,16 +3,32 @@
 
 #include "nn/pia/Reconstruction.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 class Packet;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ProtocolMessageWriter
 {
 public:
-    enum { cMessageBufferNumMax = 31, cMessageHeaderSize = 24 };
+    enum
+    {
+        cMessageBufferNumMax = 31,
+        cMessageHeaderSize = 24
+    };
 
     class MessageBuffer
     {
@@ -27,11 +43,10 @@ public:
     ProtocolMessageWriter();
     ~ProtocolMessageWriter();
     void SetSource(unsigned long long source);
-    void Reset(const ProtocolId& protocolId, unsigned int messageSize, bool isReliable,
-               bool isPriority);
+    void Reset(const ProtocolId& protocolId, unsigned int messageSize, bool isReliable, bool isPriority);
     void Commit();
-    void AddMessageBuffer(common::Packet* packet, void* buffer,
-                          unsigned long long destinationStationId, bool field10, bool field11);
+    void AddMessageBuffer(common::Packet* packet, void* buffer, unsigned long long destinationStationId, bool field10,
+                          bool field11);
     void SetPayload(const void* payload);
     void SetPayload(const void* payload, unsigned int offset, unsigned int size);
     void WriteU8(unsigned char value, unsigned int offset);
@@ -51,6 +66,8 @@ public:
     unsigned char m_priority;
 };
 
-}}}
+}
+}
+}
 
 #endif

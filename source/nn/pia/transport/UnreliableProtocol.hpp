@@ -4,11 +4,23 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/ListBase.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 class StationAddress;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ProtocolEvent;
 class ReceivedDataContainer;
@@ -48,8 +60,7 @@ public:
 
     Result Initialize(unsigned int count);
     void Finalize();
-    Result Receive(unsigned long long* stationId, void* buffer, unsigned int* size,
-                   unsigned int bufferSize);
+    Result Receive(unsigned long long* stationId, void* buffer, unsigned int* size, unsigned int bufferSize);
     bool IsInCommunication() const;
     Result Send(StationIndex stationIndex, const void* data, unsigned int size);
     Result Send(unsigned long long stationId, const void* data, unsigned int size);
@@ -64,6 +75,8 @@ private:
     unsigned int m_stationIndex;
 };
 
-}}}
+}
+}
+}
 
 #endif

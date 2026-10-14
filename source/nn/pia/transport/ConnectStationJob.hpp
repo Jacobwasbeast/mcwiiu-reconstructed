@@ -4,7 +4,16 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
-namespace nn { namespace pia { namespace common { class CallContext; } namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class CallContext;
+}
+namespace transport
+{
 
 class Station;
 class StationConnectionInfo;
@@ -14,14 +23,14 @@ class ConnectStationJob : public common::StepSequenceJob
 public:
     ConnectStationJob();
     virtual ~ConnectStationJob();
-    Result Startup(common::CallContext* context, Station* station,
-                   const StationConnectionInfo& info, bool secure, int timeoutMsec);
-    Result StartupRelayConnection(common::CallContext* context, Station* station,
-                                  const StationConnectionInfo& info, bool secure, int timeoutMsec);
+    Result Startup(common::CallContext* context, Station* station, const StationConnectionInfo& info, bool secure,
+                   int timeoutMsec);
+    Result StartupRelayConnection(common::CallContext* context, Station* station, const StationConnectionInfo& info,
+                                  bool secure, int timeoutMsec);
     void Cleanup();
     void Trace(unsigned long long value) const;
-    virtual Result StartupImpl(common::CallContext* context, Station* station,
-                               const StationConnectionInfo& info, bool secure);
+    virtual Result StartupImpl(common::CallContext* context, Station* station, const StationConnectionInfo& info,
+                               bool secure);
     virtual void CleanupImpl();
     virtual bool CheckErrorOccurredImpl();
     bool CheckContextCallCancelled();
@@ -49,6 +58,8 @@ protected:
     unsigned char m_connectionRejection;
 };
 
-}}}
+}
+}
+}
 
 #endif

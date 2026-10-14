@@ -5,26 +5,36 @@
 #include "nn/pia/transport/ReceiveThreadStream.hpp"
 #include "nn/pia/transport/SendThreadStream.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 class IPacketInput;
 class IPacketOutput;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class NetworkFactory;
 
 class ThreadStreamManager
 {
 public:
-    ThreadStreamManager(NetworkFactory* networkFactory, unsigned int sendPacketNum,
-                        unsigned int receivePacketNum, unsigned int sendLatencyEntryNum,
-                        unsigned int receiveLatencyEntryNum, bool isPacketLossEnabled);
+    ThreadStreamManager(NetworkFactory* networkFactory, unsigned int sendPacketNum, unsigned int receivePacketNum,
+                        unsigned int sendLatencyEntryNum, unsigned int receiveLatencyEntryNum,
+                        bool isPacketLossEnabled);
     static Result CreateInstance(NetworkFactory* networkFactory, unsigned int sendPacketNum,
-                                 unsigned int receivePacketNum,
-                                 unsigned int sendLatencyEntryNum,
-                                 unsigned int receiveLatencyEntryNum,
-                                 bool isPacketLossEnabled);
+                                 unsigned int receivePacketNum, unsigned int sendLatencyEntryNum,
+                                 unsigned int receiveLatencyEntryNum, bool isPacketLossEnabled);
     static void DestroyInstance();
     Result Startup();
     void Cleanup();
@@ -63,6 +73,8 @@ public:
 
 extern ThreadStreamManager* g_piaThreadStreamManager;
 
-}}}
+}
+}
+}
 
 #endif

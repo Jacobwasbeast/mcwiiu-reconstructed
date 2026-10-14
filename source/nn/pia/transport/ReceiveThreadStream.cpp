@@ -8,7 +8,12 @@
 #include "nn/pia/transport/NetworkRttManager.hpp"
 #include "nn/pia/Transport.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 namespace
 {
@@ -23,8 +28,7 @@ enum
 };
 }
 
-ReceiveThreadStream::ReceiveThreadStream()
-    : TransportThreadStream(), m_packetInput(0), m_receiveDataSize(0)
+ReceiveThreadStream::ReceiveThreadStream() : TransportThreadStream(), m_packetInput(0), m_receiveDataSize(0)
 {
 }
 
@@ -32,10 +36,8 @@ ReceiveThreadStream::~ReceiveThreadStream()
 {
 }
 
-Result ReceiveThreadStream::Initialize(common::IPacketInput* packetInput,
-                                       unsigned int packetNum, int priority,
-                                       unsigned int latencyEntryNum,
-                                       bool isPacketLossEnabled)
+Result ReceiveThreadStream::Initialize(common::IPacketInput* packetInput, unsigned int packetNum, int priority,
+                                       unsigned int latencyEntryNum, bool isPacketLossEnabled)
 {
     if (m_packetInput != 0)
         return cResultAlreadyInitialized;
@@ -45,8 +47,7 @@ Result ReceiveThreadStream::Initialize(common::IPacketInput* packetInput,
     if (g_piaWatermarkManager != 0)
         g_piaWatermarkManager->GetWatermark(cWatermarkReceiveThreadStream)->SetName("ReceiveThreadStream buffer num");
 
-    Result result = InitializeCore("Pia ReceiveThreadStream", priority, packetNum,
-                                   latencyEntryNum, isPacketLossEnabled,
+    Result result = InitializeCore("Pia ReceiveThreadStream", priority, packetNum, latencyEntryNum, isPacketLossEnabled,
                                    cWatermarkReceiveThreadStream);
     if (result != 0)
         return result;
@@ -119,4 +120,6 @@ Result ReceiveThreadStream::ProcessOne()
     return 0;
 }
 
-}}}
+}
+}
+}

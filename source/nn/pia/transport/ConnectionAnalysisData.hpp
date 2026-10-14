@@ -1,12 +1,20 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_CONNECTION_ANALYSIS_DATA_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_CONNECTION_ANALYSIS_DATA_HPP
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ConnectionAnalysisData
 {
 public:
-    enum { cStationNumMax = 32 };
+    enum
+    {
+        cStationNumMax = 32
+    };
 
     class Entry
     {
@@ -29,6 +37,8 @@ public:
     unsigned int m_passedMilliSecond;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -8,7 +8,12 @@
 #include "nn/pia/transport/NetworkRttManager.hpp"
 #include "nn/pia/Transport.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 namespace
 {
@@ -18,8 +23,7 @@ enum
 };
 }
 
-SendThreadStream::SendThreadStream()
-    : TransportThreadStream(), m_packetOutput(0), m_sendDataSize(0)
+SendThreadStream::SendThreadStream() : TransportThreadStream(), m_packetOutput(0), m_sendDataSize(0)
 {
 }
 
@@ -27,10 +31,8 @@ SendThreadStream::~SendThreadStream()
 {
 }
 
-Result SendThreadStream::Initialize(common::IPacketOutput* packetOutput,
-                                    unsigned int packetNum, int priority,
-                                    unsigned int latencyEntryNum,
-                                    bool isPacketLossEnabled)
+Result SendThreadStream::Initialize(common::IPacketOutput* packetOutput, unsigned int packetNum, int priority,
+                                    unsigned int latencyEntryNum, bool isPacketLossEnabled)
 {
     if (m_packetOutput != 0)
         return cResultAlreadyInitialized;
@@ -40,8 +42,7 @@ Result SendThreadStream::Initialize(common::IPacketOutput* packetOutput,
     if (g_piaWatermarkManager != 0)
         g_piaWatermarkManager->GetWatermark(cWatermarkSendThreadStream)->SetName("SendThreadStream buffer num");
 
-    Result result = InitializeCore("Pia SendThreadStream", priority, packetNum,
-                                   latencyEntryNum, isPacketLossEnabled,
+    Result result = InitializeCore("Pia SendThreadStream", priority, packetNum, latencyEntryNum, isPacketLossEnabled,
                                    cWatermarkSendThreadStream);
     if (result != 0)
         return result;
@@ -105,4 +106,6 @@ Result SendThreadStream::ProcessOne()
     return result;
 }
 
-}}}
+}
+}
+}

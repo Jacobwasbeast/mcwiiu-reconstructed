@@ -8,7 +8,12 @@
 
 #include <new>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 ThreadStreamManager* g_piaThreadStreamManager = 0;
 
@@ -25,30 +30,29 @@ unsigned char* s_threadStreamManagerStorage = 0;
 }
 
 ThreadStreamManager::ThreadStreamManager(NetworkFactory* networkFactory, unsigned int sendPacketNum,
-                                         unsigned int receivePacketNum,
-                                         unsigned int sendLatencyEntryNum,
-                                         unsigned int receiveLatencyEntryNum,
-                                         bool isPacketLossEnabled)
-    : m_packetInput(0), m_packetOutput(0), m_receiveThreadStream(0), m_sendThreadStream(0)
+                                         unsigned int receivePacketNum, unsigned int sendLatencyEntryNum,
+                                         unsigned int receiveLatencyEntryNum, bool isPacketLossEnabled)
+    : m_packetInput(0),
+      m_packetOutput(0),
+      m_receiveThreadStream(0),
+      m_sendThreadStream(0)
 {
     m_packetInput = networkFactory->CreateInputStream();
     m_receiveThreadStream = common::NewObj<ReceiveThreadStream>();
-    m_receiveThreadStream->Initialize(m_packetInput, receivePacketNum, cThreadPriority,
-                                      receiveLatencyEntryNum, isPacketLossEnabled);
+    m_receiveThreadStream->Initialize(m_packetInput, receivePacketNum, cThreadPriority, receiveLatencyEntryNum,
+                                      isPacketLossEnabled);
     m_receiveThreadStream->m_sleepMilliSecond = cThreadSleepMilliSecond;
 
     m_packetOutput = networkFactory->CreateOutputStream();
     m_sendThreadStream = common::NewObj<SendThreadStream>();
-    m_sendThreadStream->Initialize(m_packetOutput, sendPacketNum, cThreadPriority,
-                                   sendLatencyEntryNum, isPacketLossEnabled);
+    m_sendThreadStream->Initialize(m_packetOutput, sendPacketNum, cThreadPriority, sendLatencyEntryNum,
+                                   isPacketLossEnabled);
     m_sendThreadStream->m_sleepMilliSecond = cThreadSleepMilliSecond;
 }
 
 Result ThreadStreamManager::CreateInstance(NetworkFactory* networkFactory, unsigned int sendPacketNum,
-                                           unsigned int receivePacketNum,
-                                           unsigned int sendLatencyEntryNum,
-                                           unsigned int receiveLatencyEntryNum,
-                                           bool isPacketLossEnabled)
+                                           unsigned int receivePacketNum, unsigned int sendLatencyEntryNum,
+                                           unsigned int receiveLatencyEntryNum, bool isPacketLossEnabled)
 {
     if (networkFactory == 0)
         return cResultInvalidArgument;
@@ -57,14 +61,13 @@ Result ThreadStreamManager::CreateInstance(NetworkFactory* networkFactory, unsig
     if (g_piaThreadStreamManager != 0)
         return cResultAlreadyExists;
 
-    s_threadStreamManagerStorage =
-        common::NewArray<unsigned char>(sizeof(ThreadStreamManager), cInstanceAlignment);
+    s_threadStreamManagerStorage = common::NewArray<unsigned char>(sizeof(ThreadStreamManager), cInstanceAlignment);
     if (s_threadStreamManagerStorage == 0)
         return cResultOutOfMemory;
 
-    g_piaThreadStreamManager = new (s_threadStreamManagerStorage) ThreadStreamManager(
-        networkFactory, sendPacketNum, receivePacketNum, sendLatencyEntryNum,
-        receiveLatencyEntryNum, isPacketLossEnabled);
+    g_piaThreadStreamManager = new (s_threadStreamManagerStorage)
+        ThreadStreamManager(networkFactory, sendPacketNum, receivePacketNum, sendLatencyEntryNum,
+                            receiveLatencyEntryNum, isPacketLossEnabled);
     return 0;
 }
 
@@ -248,4 +251,6 @@ ThreadStreamManager::~ThreadStreamManager()
     }
 }
 
-}}}
+}
+}
+}

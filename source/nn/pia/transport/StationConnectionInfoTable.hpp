@@ -5,7 +5,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class StationConnectionInfoTable
 {
@@ -47,6 +52,8 @@ private:
 
 extern StationConnectionInfoTable* g_stationConnectionInfoTable;
 
-}}}
+}
+}
+}
 
 #endif

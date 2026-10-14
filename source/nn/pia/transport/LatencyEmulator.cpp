@@ -3,7 +3,12 @@
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 bool LatencyEmulator::allocateBuffer(unsigned int entryNum)
 {
@@ -28,7 +33,11 @@ void LatencyEmulator::init(unsigned int entryNum)
 }
 
 LatencyEmulator::LatencyEmulator(unsigned int entryNum)
-    : m_entries(), m_packetInput(0), m_packetOutput(0), m_criticalSection(-1), m_random()
+    : m_entries(),
+      m_packetInput(0),
+      m_packetOutput(0),
+      m_criticalSection(-1),
+      m_random()
 {
     init(entryNum);
 }
@@ -178,4 +187,6 @@ void LatencyEmulator::SetLatency(int minimumLatency, int maximumLatency)
     m_criticalSection.Unlock();
 }
 
-}}}
+}
+}
+}

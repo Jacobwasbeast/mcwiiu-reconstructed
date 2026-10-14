@@ -3,7 +3,12 @@
 #include "nn/pia/common/TimeSpan.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 KeepAliveSender::KeepAliveSender() : m_interval(1000), m_enabled(true)
 {
@@ -38,12 +43,10 @@ unsigned int KeepAliveSender::Update(unsigned int stationBitmap, const common::T
     const long long intervalTicks = common::TimeSpan::GetTicksPerMSec().m_tick * intervalMsec;
     const unsigned long long threshold = time.m_tick - intervalTicks;
     unsigned int expired = 0;
-    for (Station** it = manager->m_stations.data;
-         it != manager->m_stations.data + manager->m_stations.size; ++it)
+    for (Station** it = manager->m_stations.data; it != manager->m_stations.data + manager->m_stations.size; ++it)
     {
         Station* station = *it;
-        if (station == localStation || station->m_field20 != 5 ||
-            station->m_field10 >= StationManager::cStationNumMax)
+        if (station == localStation || station->m_field20 != 5 || station->m_field10 >= StationManager::cStationNumMax)
             continue;
         const unsigned int bit = 1u << station->m_field10;
         if ((stationBitmap & bit) != 0)
@@ -54,4 +57,6 @@ unsigned int KeepAliveSender::Update(unsigned int stationBitmap, const common::T
     return expired;
 }
 
-}}} 
+}
+}
+}

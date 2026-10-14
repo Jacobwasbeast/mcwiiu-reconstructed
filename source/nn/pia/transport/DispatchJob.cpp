@@ -2,7 +2,12 @@
 
 #include "nn/pia/Transport.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 DispatchJob::ExecuteResult DispatchJob::ExecuteCore()
 {
@@ -10,4 +15,6 @@ DispatchJob::ExecuteResult DispatchJob::ExecuteCore()
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-}}}
+}
+}
+}

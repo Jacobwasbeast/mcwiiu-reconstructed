@@ -12,15 +12,20 @@
 #include "nn/pia/transport/StationPacketHandler.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 ResendingMessageManager* g_piaResendingMessageManager = 0;
 
 namespace
 {
 unsigned char* g_resendingMessageManagerStorage = 0;
-const unsigned long long cResendInterval =
-    static_cast<unsigned long long>(common::TimeSpan::GetTicksPerMSec().m_tick) * 500;
+const unsigned long long cResendInterval = static_cast<unsigned long long>(common::TimeSpan::GetTicksPerMSec().m_tick)
+                                           * 500;
 }
 
 ResendingMessageManager::ResendingMessageManager()
@@ -43,13 +48,11 @@ Result ResendingMessageManager::CreateInstance()
     if (g_piaResendingMessageManager != 0)
         return cResultAlreadyExists;
 
-    g_resendingMessageManagerStorage =
-        common::NewArray<unsigned char>(sizeof(ResendingMessageManager), 8);
+    g_resendingMessageManagerStorage = common::NewArray<unsigned char>(sizeof(ResendingMessageManager), 8);
     if (g_resendingMessageManagerStorage == 0)
         return cResultOutOfMemory;
 
-    g_piaResendingMessageManager =
-        new (g_resendingMessageManagerStorage) ResendingMessageManager();
+    g_piaResendingMessageManager = new (g_resendingMessageManagerStorage) ResendingMessageManager();
     return 0;
 }
 
@@ -146,8 +149,7 @@ Result ResendingMessageManager::Dispatch()
     {
         if (m_ackIds[index] == 0)
             continue;
-        if (m_timeouts[index] != 0 &&
-            currentTime >= m_timeouts[index])
+        if (m_timeouts[index] != 0 && currentTime >= m_timeouts[index])
         {
             m_ackIds[index] = 0;
             m_timeouts[index] = 0;
@@ -160,14 +162,14 @@ Result ResendingMessageManager::Dispatch()
         ProtocolMessageWriter* writer;
         if (m_stationIndices[index] < 32)
         {
-            writer = static_cast<StationPacketHandler*>(m_packetHandler)->AssignByStationIndex(
-                m_protocolIds[index], m_stationIndices[index],
-                m_messageSizes[index], false, false, m_isRelays[index]);
+            writer = static_cast<StationPacketHandler*>(m_packetHandler)
+                         ->AssignByStationIndex(m_protocolIds[index], m_stationIndices[index], m_messageSizes[index],
+                                                false, false, m_isRelays[index]);
         }
         else
         {
-            writer = m_packetHandler->AssignByStationAddress(m_protocolIds[index],
-                m_stationAddresses[index], m_messageSizes[index], false, false);
+            writer = m_packetHandler->AssignByStationAddress(m_protocolIds[index], m_stationAddresses[index],
+                                                             m_messageSizes[index], false, false);
         }
         if (writer != 0)
         {
@@ -179,15 +181,11 @@ Result ResendingMessageManager::Dispatch()
     return 0;
 }
 
-Result ResendingMessageManager::SetSendMessageCommon(unsigned int* ackId,
-                                                     const unsigned char* message,
-                                                     unsigned int messageSize,
-                                                     ProtocolId protocolId,
-                                                     bool isRelay, long long timeout,
-                                                     unsigned int* index)
+Result ResendingMessageManager::SetSendMessageCommon(unsigned int* ackId, const unsigned char* message,
+                                                     unsigned int messageSize, ProtocolId protocolId, bool isRelay,
+                                                     long long timeout, unsigned int* index)
 {
-    const unsigned int payloadSizeLimit =
-        static_cast<unsigned int>(m_packetHandler->GetPayloadSizeLimit());
+    const unsigned int payloadSizeLimit = static_cast<unsigned int>(m_packetHandler->GetPayloadSizeLimit());
     if (messageSize > payloadSizeLimit - 4U)
         return cResultInvalidArgument;
 
@@ -229,13 +227,13 @@ Result ResendingMessageManager::SetSendMessageCommon(unsigned int* ackId,
     return 0;
 }
 
-Result ResendingMessageManager::SetSendMessageByStationAddress(
-    unsigned int* ackId, const unsigned char* message, unsigned int messageSize,
-    const common::StationAddress& stationAddress, ProtocolId protocolId, long long timeout)
+Result ResendingMessageManager::SetSendMessageByStationAddress(unsigned int* ackId, const unsigned char* message,
+                                                               unsigned int messageSize,
+                                                               const common::StationAddress& stationAddress,
+                                                               ProtocolId protocolId, long long timeout)
 {
     unsigned int index = 0;
-    Result result = SetSendMessageCommon(ackId, message, messageSize, protocolId, true, timeout,
-                                         &index);
+    Result result = SetSendMessageCommon(ackId, message, messageSize, protocolId, true, timeout, &index);
     if (result != 0)
         return result;
 
@@ -244,16 +242,15 @@ Result ResendingMessageManager::SetSendMessageByStationAddress(
     return 0;
 }
 
-Result ResendingMessageManager::SetSendMessageByStationIndex(
-    unsigned int* ackId, const unsigned char* message, unsigned int messageSize,
-    StationIndex stationIndex, ProtocolId protocolId, bool isRelay, long long timeout)
+Result ResendingMessageManager::SetSendMessageByStationIndex(unsigned int* ackId, const unsigned char* message,
+                                                             unsigned int messageSize, StationIndex stationIndex,
+                                                             ProtocolId protocolId, bool isRelay, long long timeout)
 {
     if (m_isRelay)
         return cResultInvalidState;
 
     unsigned int index = 0;
-    Result result = SetSendMessageCommon(ackId, message, messageSize, protocolId, isRelay, timeout,
-                                         &index);
+    Result result = SetSendMessageCommon(ackId, message, messageSize, protocolId, isRelay, timeout, &index);
     if (result != 0)
         return result;
 
@@ -308,4 +305,6 @@ void ResendingMessageManager::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

@@ -4,7 +4,12 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/common/Packet.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class PacketStream
 {
@@ -15,17 +20,12 @@ public:
         class Iterator
         {
         public:
-            Iterator(const Accessor* accessor, int index) : m_accessor(accessor), m_index(index)
-            {
-            }
+            Iterator(const Accessor* accessor, int index) : m_accessor(accessor), m_index(index) {}
             bool operator==(const Iterator& other) const
             {
                 return m_accessor == other.m_accessor ? m_index == other.m_index : false;
             }
-            bool operator!=(const Iterator& other) const
-            {
-                return !(*this == other);
-            }
+            bool operator!=(const Iterator& other) const { return !(*this == other); }
             Iterator& operator++()
             {
                 ++m_index;
@@ -33,28 +33,16 @@ public:
                     m_index = 0;
                 return *this;
             }
-            common::Packet* operator->() const
-            {
-                return m_accessor->m_packetStream->m_packets.get(m_index);
-            }
-            common::Packet& operator*() const
-            {
-                return *operator->();
-            }
+            common::Packet* operator->() const { return m_accessor->m_packetStream->m_packets.get(m_index); }
+            common::Packet& operator*() const { return *operator->(); }
 
         private:
             const Accessor* m_accessor;
             int m_index;
         };
 
-        Iterator Begin() const
-        {
-            return Iterator(this, m_field04);
-        }
-        Iterator End() const
-        {
-            return Iterator(this, m_field08);
-        }
+        Iterator Begin() const { return Iterator(this, m_field04); }
+        Iterator End() const { return Iterator(this, m_field08); }
         common::Packet* Get(int index);
         void Reset(int position)
         {
@@ -98,6 +86,8 @@ public:
     unsigned int m_field28;
 };
 
-}}}
+}
+}
+}
 
 #endif

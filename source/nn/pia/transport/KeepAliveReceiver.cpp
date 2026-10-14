@@ -2,7 +2,12 @@
 
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 KeepAliveReceiver::KeepAliveReceiver() : m_enabled(true)
 {
@@ -28,4 +33,6 @@ void KeepAliveReceiver::Update(unsigned int stationBitmap, const common::Time& t
     }
 }
 
-}}}
+}
+}
+}

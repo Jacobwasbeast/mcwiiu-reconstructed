@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class TransportAnalyzer;
 
@@ -34,6 +39,8 @@ private:
     unsigned int m_missingSequenceCount;
 };
 
-}}}
+}
+}
+}
 
 #endif

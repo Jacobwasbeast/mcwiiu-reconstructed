@@ -8,7 +8,12 @@
 #include <cstring>
 #include <new>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 StationConnectionInfoTable* g_stationConnectionInfoTable = 0;
 
@@ -23,8 +28,12 @@ unsigned long long PrincipalId(const StationConnectionInfo& info)
 }
 
 StationConnectionInfoTable::StationConnectionInfoTable()
-    : m_localStationConnectionInfo(), m_hostStationConnectionInfo(), m_hostStationAddress(),
-      m_infos(0), m_count(0), m_criticalSection(-1)
+    : m_localStationConnectionInfo(),
+      m_hostStationConnectionInfo(),
+      m_hostStationAddress(),
+      m_infos(0),
+      m_count(0),
+      m_criticalSection(-1)
 {
 }
 
@@ -35,9 +44,12 @@ StationConnectionInfoTable::~StationConnectionInfoTable()
 
 Result StationConnectionInfoTable::CreateInstance()
 {
-    if (IsInitialized() == 0) return 0x10c0c;
-    if (IsInSetupMode() == 0) return 0x10c08;
-    if (g_stationConnectionInfoTable != 0) return 0x10c0f;
+    if (IsInitialized() == 0)
+        return 0x10c0c;
+    if (IsInSetupMode() == 0)
+        return 0x10c08;
+    if (g_stationConnectionInfoTable != 0)
+        return 0x10c0f;
 
     g_stationConnectionInfoTableStorage = common::NewArray<unsigned char>(sizeof(StationConnectionInfoTable), 8);
     if (g_stationConnectionInfoTableStorage == 0)
@@ -73,25 +85,28 @@ void StationConnectionInfoTable::Finalize()
 
 Result StationConnectionInfoTable::Initialize(unsigned int count)
 {
-    if (count > 32) return 0x10c07;
+    if (count > 32)
+        return 0x10c07;
     m_count = count;
     m_infos = common::NewArray<StationConnectionInfo>(count);
     std::memset(m_stations, 0, sizeof(m_stations));
     return 0;
 }
 
-Result StationConnectionInfoTable::AddToTable(const Station* station,
-                                               const StationConnectionInfo& info)
+Result StationConnectionInfoTable::AddToTable(const Station* station, const StationConnectionInfo& info)
 {
-    if (station == 0) return 0x10c07;
+    if (station == 0)
+        return 0x10c07;
     info.Trace(0x8000);
     m_criticalSection.Lock();
     unsigned int index = 0;
-    while (index < m_count && m_stations[index] != station) ++index;
+    while (index < m_count && m_stations[index] != station)
+        ++index;
     if (index == m_count)
     {
         index = 0;
-        while (index < m_count && m_stations[index] != 0) ++index;
+        while (index < m_count && m_stations[index] != 0)
+            ++index;
         if (index == m_count)
         {
             m_criticalSection.Unlock();
@@ -104,10 +119,10 @@ Result StationConnectionInfoTable::AddToTable(const Station* station,
     return 0;
 }
 
-Result StationConnectionInfoTable::GetStationConnectionInfo(
-    const Station* station, StationConnectionInfo* info) const
+Result StationConnectionInfoTable::GetStationConnectionInfo(const Station* station, StationConnectionInfo* info) const
 {
-    if (station == 0 || info == 0) return 0x10c07;
+    if (station == 0 || info == 0)
+        return 0x10c07;
     m_criticalSection.Lock();
     for (unsigned int i = 0; i < m_count; ++i)
         if (m_stations[i] == station)
@@ -121,10 +136,11 @@ Result StationConnectionInfoTable::GetStationConnectionInfo(
     return 0x2c09;
 }
 
-Result StationConnectionInfoTable::GetStationConnectionInfo(
-    unsigned long long principalId, StationConnectionInfo* info) const
+Result StationConnectionInfoTable::GetStationConnectionInfo(unsigned long long principalId,
+                                                            StationConnectionInfo* info) const
 {
-    if (info == 0) return 0x10c07;
+    if (info == 0)
+        return 0x10c07;
     common::ScopedLock lock(m_criticalSection);
     for (unsigned int i = 0; i < m_count; ++i)
         if (m_infos[i].m_stationLocation.m_principalId == principalId)
@@ -151,8 +167,7 @@ Station* StationConnectionInfoTable::GetStation(const common::StationAddress& ad
 {
     common::ScopedLock lock(m_criticalSection);
     for (unsigned int i = 0; i < m_count; ++i)
-        if (m_infos[i].m_stationLocation.m_stationAddress.m_inetAddress.m_address ==
-            address.m_inetAddress.m_address)
+        if (m_infos[i].m_stationLocation.m_stationAddress.m_inetAddress.m_address == address.m_inetAddress.m_address)
         {
             m_infos[i].m_stationLocation.Trace(0x4008000);
             Station* station = m_stations[i];
@@ -187,16 +202,15 @@ Station* StationConnectionInfoTable::GetStation(unsigned long long principalId) 
     return 0;
 }
 
-Station* StationConnectionInfoTable::GetReconnectingStation(
-    const StationConnectionInfo& info) const
+Station* StationConnectionInfoTable::GetReconnectingStation(const StationConnectionInfo& info) const
 {
     m_criticalSection.Lock();
     for (unsigned int i = 0; i < m_count; ++i)
     {
         const StationConnectionInfo& candidate = m_infos[i];
-        if (candidate.m_stationLocation.m_field18 != 0 &&
-            candidate.m_stationLocation.m_principalId == info.m_stationLocation.m_principalId &&
-            info.m_stationLocation.m_field18 != candidate.m_stationLocation.m_field18)
+        if (candidate.m_stationLocation.m_field18 != 0
+            && candidate.m_stationLocation.m_principalId == info.m_stationLocation.m_principalId
+            && info.m_stationLocation.m_field18 != candidate.m_stationLocation.m_field18)
         {
             Station* station = m_stations[i];
             m_criticalSection.Unlock();
@@ -207,15 +221,14 @@ Station* StationConnectionInfoTable::GetReconnectingStation(
     return 0;
 }
 
-unsigned int StationConnectionInfoTable::GetStationIndexByPrincipalID(
-    unsigned long long principalId) const
+unsigned int StationConnectionInfoTable::GetStationIndexByPrincipalID(unsigned long long principalId) const
 {
     m_criticalSection.Lock();
     for (unsigned int i = 0; i < m_count; ++i)
     {
         Station* station = m_stations[i];
-        if (m_infos[i].m_stationLocation.m_principalId == principalId && station != 0 &&
-            static_cast<int>(station->m_field10) < 0x20)
+        if (m_infos[i].m_stationLocation.m_principalId == principalId && station != 0
+            && static_cast<int>(station->m_field10) < 0x20)
         {
             const unsigned int result = static_cast<unsigned int>(station->m_field10);
             m_criticalSection.Unlock();
@@ -228,7 +241,8 @@ unsigned int StationConnectionInfoTable::GetStationIndexByPrincipalID(
 
 unsigned long long StationConnectionInfoTable::GetPrincipalIdByStation(const Station* station) const
 {
-    if (station == 0) return 0;
+    if (station == 0)
+        return 0;
     common::ScopedLock lock(m_criticalSection);
     for (unsigned int i = 0; i < m_count; ++i)
         if (m_stations[i] == station)
@@ -241,7 +255,8 @@ unsigned long long StationConnectionInfoTable::GetPrincipalIdByStation(const Sta
 
 void StationConnectionInfoTable::EraseFromTable(const Station* station)
 {
-    if (station == 0) return;
+    if (station == 0)
+        return;
     common::ScopedLock lock(m_criticalSection);
     for (unsigned int i = 0; i < m_count; ++i)
         if (m_stations[i] == station)
@@ -261,4 +276,6 @@ void StationConnectionInfoTable::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class KeepAliveReceiver
 {
@@ -16,6 +21,8 @@ public:
     bool m_enabled;
 };
 
-}}}
+}
+}
+}
 
 #endif

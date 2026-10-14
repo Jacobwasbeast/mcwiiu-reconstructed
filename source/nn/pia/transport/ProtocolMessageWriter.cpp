@@ -4,10 +4,14 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
-ProtocolMessageWriter::ProtocolMessageWriter()
-    : m_source(0), m_protocolId(ProtocolId::INVALID)
+ProtocolMessageWriter::ProtocolMessageWriter() : m_source(0), m_protocolId(ProtocolId::INVALID)
 {
 }
 
@@ -20,8 +24,8 @@ void ProtocolMessageWriter::SetSource(unsigned long long source)
     m_source = source;
 }
 
-void ProtocolMessageWriter::Reset(const ProtocolId& protocolId, unsigned int messageSize,
-                                  bool isReliable, bool isPriority)
+void ProtocolMessageWriter::Reset(const ProtocolId& protocolId, unsigned int messageSize, bool isReliable,
+                                  bool isPriority)
 {
     m_messageSize = messageSize;
     m_protocolId = protocolId;
@@ -33,8 +37,7 @@ void ProtocolMessageWriter::Reset(const ProtocolId& protocolId, unsigned int mes
 }
 
 void ProtocolMessageWriter::AddMessageBuffer(common::Packet* packet, void* buffer,
-                                             unsigned long long destinationStationId,
-                                             bool field10, bool field11)
+                                             unsigned long long destinationStationId, bool field10, bool field11)
 {
     MessageBuffer& messageBuffer = m_messageBuffers[m_messageBufferNum];
     messageBuffer.m_packet = packet;
@@ -49,8 +52,8 @@ void ProtocolMessageWriter::Commit()
 {
     MessageBuffer& firstBuffer = m_messageBuffers[0];
     ProtocolMessageAccessor::Header header;
-    header.m_flags = static_cast<unsigned char>(firstBuffer.m_field10 |
-        (firstBuffer.m_field11 ? 2 : 0) | (m_isReliable ? 4 : 0) | (m_isPriority ? 8 : 0));
+    header.m_flags = static_cast<unsigned char>(firstBuffer.m_field10 | (firstBuffer.m_field11 ? 2 : 0)
+                                                | (m_isReliable ? 4 : 0) | (m_isPriority ? 8 : 0));
     header.m_messageSize = static_cast<unsigned short>(m_messageSize);
     header.m_destination = firstBuffer.m_destinationStationId;
     header.m_source = m_source;
@@ -64,9 +67,8 @@ void ProtocolMessageWriter::Commit()
     {
         MessageBuffer& messageBuffer = m_messageBuffers[index];
         OSBlockMove(messageBuffer.m_buffer, firstBuffer.m_buffer, copySize, FALSE);
-        header.m_flags = static_cast<unsigned char>(messageBuffer.m_field10 |
-            (messageBuffer.m_field11 ? 2 : 0) | (m_isReliable ? 4 : 0) |
-            (m_isPriority ? 8 : 0));
+        header.m_flags = static_cast<unsigned char>(messageBuffer.m_field10 | (messageBuffer.m_field11 ? 2 : 0)
+                                                    | (m_isReliable ? 4 : 0) | (m_isPriority ? 8 : 0));
         header.m_destination = messageBuffer.m_destinationStationId;
         header.Serialize(static_cast<unsigned char*>(messageBuffer.m_buffer), &serializedSize);
     }
@@ -84,21 +86,19 @@ void ProtocolMessageWriter::Commit()
 
 void ProtocolMessageWriter::SetPayload(const void* payload)
 {
-    OSBlockMove(static_cast<unsigned char*>(m_messageBuffers[0].m_buffer) + cMessageHeaderSize,
-                payload, m_messageSize, FALSE);
+    OSBlockMove(static_cast<unsigned char*>(m_messageBuffers[0].m_buffer) + cMessageHeaderSize, payload, m_messageSize,
+                FALSE);
 }
 
-void ProtocolMessageWriter::SetPayload(const void* payload, unsigned int offset,
-                                       unsigned int size)
+void ProtocolMessageWriter::SetPayload(const void* payload, unsigned int offset, unsigned int size)
 {
-    OSBlockMove(static_cast<unsigned char*>(m_messageBuffers[0].m_buffer) + cMessageHeaderSize + offset,
-                payload, size, FALSE);
+    OSBlockMove(static_cast<unsigned char*>(m_messageBuffers[0].m_buffer) + cMessageHeaderSize + offset, payload, size,
+                FALSE);
 }
 
 void ProtocolMessageWriter::WriteU8(unsigned char value, unsigned int offset)
 {
-    unsigned char* buffer =
-        static_cast<unsigned char*>(m_messageBuffers[0].m_buffer) + cMessageHeaderSize + offset;
+    unsigned char* buffer = static_cast<unsigned char*>(m_messageBuffers[0].m_buffer) + cMessageHeaderSize + offset;
     buffer[0] = value;
 }
 
@@ -128,4 +128,6 @@ void ProtocolMessageWriter::WriteU64(unsigned long long value, unsigned int offs
     cursor[7] = static_cast<unsigned char>(value & 0xff);
 }
 
-}}}
+}
+}
+}

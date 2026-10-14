@@ -4,16 +4,32 @@
 #include "nn/pia/common/StationAddress.hpp"
 #include "nn/pia/transport/ProtocolMessageAccessor.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 class Packet;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ProtocolMessageReader
 {
 public:
-    enum { cMessageHeaderSize = 24, cTerminatorMark = 0xff };
+    enum
+    {
+        cMessageHeaderSize = 24,
+        cTerminatorMark = 0xff
+    };
 
     ProtocolMessageReader();
     ~ProtocolMessageReader();
@@ -39,6 +55,8 @@ public:
     bool m_field3a;
 };
 
-}}}
+}
+}
+}
 
 #endif

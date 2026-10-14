@@ -13,7 +13,12 @@
 #include "nn/pia/common/common.hpp"
 #include "nn/pia/transport/TransportSupport.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 static const unsigned long long cTraceCategoryRtt = 0x8000;
 static const unsigned long long cTraceCategoryRttDetail = 0x40000;
@@ -41,8 +46,8 @@ static inline float FastSqrt(float value)
 }
 
 template <class T>
-NetworkRttManager::DataBuffer<T>::DataBuffer()
-    : mData(0), mCritical(-1)
+NetworkRttManager::DataBuffer<T>::DataBuffer() : mData(0),
+                                                 mCritical(-1)
 {
 }
 
@@ -135,7 +140,10 @@ T* NetworkRttManager::DataBuffer<T>::Assign(const common::StationAddress& addres
 template class NetworkRttManager::DataBuffer<NetworkRttManager::MeasurementData>;
 template class NetworkRttManager::DataBuffer<NetworkRttManager::ResponseData>;
 
-NetworkRttManager::StatUnit::StatUnit() { Clear(); }
+NetworkRttManager::StatUnit::StatUnit()
+{
+    Clear();
+}
 
 void NetworkRttManager::StatUnit::Clear()
 {
@@ -211,7 +219,8 @@ unsigned int NetworkRttManager::MeasurementData::GetAverage() const
         count += unit->count;
     }
     unsigned int average = 0;
-    if (count != 0) average = total / count;
+    if (count != 0)
+        average = total / count;
     return average;
 }
 
@@ -232,14 +241,18 @@ int NetworkRttManager::MeasurementData::GetStdDev() const
         const float n = static_cast<float>(count);
         const float mean = static_cast<float>(total) / n;
         const float variance = static_cast<float>(squares) / n - mean * mean;
-        if (variance > 0.0f) return static_cast<unsigned int>(FastSqrt(variance));
+        if (variance > 0.0f)
+            return static_cast<unsigned int>(FastSqrt(variance));
     }
     return 0;
 }
 
 int NetworkRttManager::MeasurementData::GetCount() const
 {
-    int count = 0; for (unsigned int i = 0; i < 16; ++i) count += values[i].count; return count;
+    int count = 0;
+    for (unsigned int i = 0; i < 16; ++i)
+        count += values[i].count;
+    return count;
 }
 
 unsigned int NetworkRttManager::MeasurementData::GetLatest() const
@@ -247,11 +260,13 @@ unsigned int NetworkRttManager::MeasurementData::GetLatest() const
     const unsigned int current = (updateTime >> 8) & 15;
     for (int i = current; i >= 0; --i)
     {
-        if (values[i].count != 0) return values[i].latest;
+        if (values[i].count != 0)
+            return values[i].latest;
     }
     for (int i = 15; i > static_cast<int>(current); --i)
     {
-        if (values[i].count != 0) return values[i].latest;
+        if (values[i].count != 0)
+            return values[i].latest;
     }
     return 0;
 }
@@ -293,16 +308,23 @@ NetworkRttManager::NetworkRttManager()
 {
 }
 
-NetworkRttManager::~NetworkRttManager() { Finalize(); }
+NetworkRttManager::~NetworkRttManager()
+{
+    Finalize();
+}
 
 Result NetworkRttManager::CreateInstance()
 {
-    if (IsInitialized() == 0) return 0x10c0c;
-    if (IsInSetupMode() == 0) return 0x10c08;
-    if (sInstance) return 0x10c0f;
+    if (IsInitialized() == 0)
+        return 0x10c0c;
+    if (IsInSetupMode() == 0)
+        return 0x10c08;
+    if (sInstance)
+        return 0x10c0f;
     pead::Heap* heap = common::HeapManager::GetHeap();
     sStorage = static_cast<unsigned char*>(pead::allocateFromSeadHeap(0x80, heap, 8));
-    if (!sStorage) return ResultAllocationFailed;
+    if (!sStorage)
+        return ResultAllocationFailed;
     sInstance = new (sStorage) NetworkRttManager();
     return sInstance ? 0 : ResultAllocationFailed;
 }
@@ -329,7 +351,8 @@ void NetworkRttManager::DestroyInstance()
 
 Result NetworkRttManager::InitializeImpl(unsigned int measurementCapacity, unsigned int responseCapacity)
 {
-    if (mMeasurements.IsInitialized() || mResponses.IsInitialized()) return ResultAlreadyInitialized;
+    if (mMeasurements.IsInitialized() || mResponses.IsInitialized())
+        return ResultAlreadyInitialized;
     pead::Heap* heap = common::HeapManager::GetHeap();
     mMeasurements.Initialize(measurementCapacity, heap);
     mResponses.Initialize(responseCapacity, heap);
@@ -340,7 +363,8 @@ Result NetworkRttManager::InitializeImpl(unsigned int measurementCapacity, unsig
 void NetworkRttManager::WriteToPacket(common::Packet* packet)
 {
     const unsigned int now = GetElapsedMilliseconds();
-    packet->m_packetData.m_header.m_rttResponseFlag = mMeasurements.IsInitialized() ? static_cast<unsigned short>(now) : 0;
+    packet->m_packetData.m_header.m_rttResponseFlag = mMeasurements.IsInitialized() ? static_cast<unsigned short>(now)
+                                                                                    : 0;
     const common::StationAddress& destination = packet->m_field5f4;
     unsigned short measurement = 0;
     if (destination.IsValid())
@@ -354,7 +378,8 @@ void NetworkRttManager::WriteToPacket(common::Packet* packet)
             if (delay < 10000)
             {
                 measurement = static_cast<unsigned short>(response->sequence + delay);
-                if (measurement == 0) measurement = 0xffff;
+                if (measurement == 0)
+                    measurement = 0xffff;
             }
         }
         lock.Unlock();
@@ -394,7 +419,8 @@ void NetworkRttManager::ReadFromPacket(const common::Packet* packet)
         lock.Lock();
         MeasurementData* value = mMeasurements.Assign(source, now);
         source.Trace(cTraceCategoryRttDetail);
-        if (value) value->AddValue(now, rtt);
+        if (value)
+            value->AddValue(now, rtt);
         lock.Unlock();
     }
 }
@@ -489,4 +515,6 @@ int NetworkRttManager::CompareFunc(const MeasurementData* value, const common::S
     return common::StationAddress::Compare(value->address, *address);
 }
 
-}}}
+}
+}
+}

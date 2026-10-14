@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/StationAddress.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ProtocolEvent
 {
@@ -12,6 +17,8 @@ public:
     common::StationAddress m_stationAddress;
 };
 
-}}}
+}
+}
+}
 
 #endif

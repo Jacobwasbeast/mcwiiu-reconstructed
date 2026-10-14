@@ -2,10 +2,14 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
-StationLocation::StationLocation()
-    : m_stationAddress(), m_inetAddress()
+StationLocation::StationLocation() : m_stationAddress(), m_inetAddress()
 {
     m_principalId = 0;
     m_field18 = 0;
@@ -19,8 +23,7 @@ StationLocation::StationLocation()
     m_field26 = 0;
 }
 
-StationLocation::StationLocation(const StationLocation& other)
-    : m_stationAddress(), m_inetAddress()
+StationLocation::StationLocation(const StationLocation& other) : m_stationAddress(), m_inetAddress()
 {
     SetStationLocation(other);
 }
@@ -59,13 +62,11 @@ void StationLocation::SetStationAddress(const common::StationAddress& address)
 
 bool StationLocation::operator==(const StationLocation& other) const
 {
-    if (m_stationAddress == other.m_stationAddress &&
-        m_principalId == other.m_principalId &&
-        m_field18 == other.m_field18 && m_field1c == other.m_field1c &&
-        m_field25 == other.m_field25 && m_field20 == other.m_field20 &&
-        m_field21 == other.m_field21 && m_field22 == other.m_field22 &&
-        m_field23 == other.m_field23 && m_field24 == other.m_field24 &&
-        m_field26 == other.m_field26 && m_inetAddress == other.m_inetAddress)
+    if (m_stationAddress == other.m_stationAddress && m_principalId == other.m_principalId
+        && m_field18 == other.m_field18 && m_field1c == other.m_field1c && m_field25 == other.m_field25
+        && m_field20 == other.m_field20 && m_field21 == other.m_field21 && m_field22 == other.m_field22
+        && m_field23 == other.m_field23 && m_field24 == other.m_field24 && m_field26 == other.m_field26
+        && m_inetAddress == other.m_inetAddress)
     {
         return true;
     }
@@ -77,8 +78,7 @@ unsigned int StationLocation::GetSerializedSize() const
     return m_stationAddress.GetSerializedSize() + 0x1d;
 }
 
-Result StationLocation::Serialize(unsigned char* buffer, unsigned int* size,
-                                           unsigned int maxSize) const
+Result StationLocation::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
     if (buffer == 0 || size == 0)
         return 0x10c07;
@@ -133,4 +133,6 @@ void StationLocation::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

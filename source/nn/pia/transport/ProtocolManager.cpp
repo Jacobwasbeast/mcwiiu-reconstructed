@@ -7,10 +7,14 @@
 
 #include <stddef.h>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
-ProtocolManager::ProtocolManager()
-    : m_networkFactory(0), m_protocols()
+ProtocolManager::ProtocolManager() : m_networkFactory(0), m_protocols()
 {
     m_protocols.SetOffset(offsetof(Protocol, m_listNode));
     m_started = 0;
@@ -143,61 +147,68 @@ void ProtocolManager::CleanupProtocols()
     }
 }
 
-}}}
+}
+}
+}
 
 namespace
 {
-    unsigned int g_piaProtocolTypeMask = 0;
+unsigned int g_piaProtocolTypeMask = 0;
 
-    unsigned int getProtocolTypeBit(unsigned short protocolType)
+unsigned int getProtocolTypeBit(unsigned short protocolType)
+{
+    switch (protocolType)
     {
-        switch (protocolType)
-        {
-        case 0x14:
-            return 2;
-        case 0x18:
-            return 4;
-        case 0x1c:
-            return 8;
-        case 0x34:
-            return 0x10;
-        case 0x58:
-            return 0x20;
-        case 0x64:
-            return 0x40;
-        case 0x68:
-            return 0x80;
-        case 0x7c:
-            return 0x100;
-        case 0x84:
-            return 0x200;
-        case 0xa4:
-            return 0x400;
-        case 0x6c:
-            return 0x1000;
-        case 0x74:
-            return 0x4000;
-        case 0x78:
-            return 0x8000;
-        case 0x94:
-            return 0x10000;
-        case 0x44:
-            return 0x20000;
-        case 0x54:
-            return 0x40000;
-        case 0x24:
-            return 0x80000;
-        case 0x28:
-            return 0x100000;
-        case 0x2c:
-            return 0x200000;
-        default:
-            return 0;
-        }
+    case 0x14:
+        return 2;
+    case 0x18:
+        return 4;
+    case 0x1c:
+        return 8;
+    case 0x34:
+        return 0x10;
+    case 0x58:
+        return 0x20;
+    case 0x64:
+        return 0x40;
+    case 0x68:
+        return 0x80;
+    case 0x7c:
+        return 0x100;
+    case 0x84:
+        return 0x200;
+    case 0xa4:
+        return 0x400;
+    case 0x6c:
+        return 0x1000;
+    case 0x74:
+        return 0x4000;
+    case 0x78:
+        return 0x8000;
+    case 0x94:
+        return 0x10000;
+    case 0x44:
+        return 0x20000;
+    case 0x54:
+        return 0x40000;
+    case 0x24:
+        return 0x80000;
+    case 0x28:
+        return 0x100000;
+    case 0x2c:
+        return 0x200000;
+    default:
+        return 0;
     }
 }
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 unsigned short ProtocolManager::CreateProtocolImpl(Protocol* protocol, ProtocolId id)
 {
@@ -274,4 +285,6 @@ void ProtocolManager::Finalize()
     }
 }
 
-}}}
+}
+}
+}

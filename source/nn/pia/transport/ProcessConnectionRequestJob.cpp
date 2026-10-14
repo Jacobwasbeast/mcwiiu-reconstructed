@@ -14,8 +14,14 @@
 #include "nn/pia/transport/StationManager.hpp"
 #include "nn/pia/transport/StationProtocol.hpp"
 
-namespace nn { namespace pia { namespace transport {
-namespace {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
+namespace
+{
 typedef common::Job::ExecuteResult (ProcessConnectionRequestJob::*Step)();
 
 enum
@@ -25,13 +31,13 @@ enum
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, Step function, const char* name)
 {
-    const common::StepSequenceJob::Step step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 }
 
-ProcessConnectionRequestJob::ProcessConnectionRequestJob()
-    : m_deadline(), m_timeoutMsec(10000)
+ProcessConnectionRequestJob::ProcessConnectionRequestJob() : m_deadline(), m_timeoutMsec(10000)
 {
     m_callContext = common::NewObj<common::CallContext>();
     m_responseAckIds[0] = 0;
@@ -60,8 +66,8 @@ bool ProcessConnectionRequestJob::Startup(Station* station, int timeoutMsec, boo
     {
         ConnectStationJob* connectJob = m_station->m_connectStationJob;
         StationConnectionInfo info;
-        if (g_stationConnectionInfoTable->GetStationConnectionInfo(m_station, &info) == 0 &&
-            connectJob->Startup(m_callContext, m_station, info, true, timeoutMsec) == 0)
+        if (g_stationConnectionInfoTable->GetStationConnectionInfo(m_station, &info) == 0
+            && connectJob->Startup(m_callContext, m_station, info, true, timeoutMsec) == 0)
             connectJob->Ready(false);
     }
     else if (m_station->m_field20 == 3 || !secure)
@@ -92,8 +98,8 @@ bool ProcessConnectionRequestJob::StartupRelayConnection(Station* station, int t
     {
         ConnectStationJob* connectJob = m_station->m_connectStationJob;
         StationConnectionInfo info;
-        if (g_stationConnectionInfoTable->GetStationConnectionInfo(m_station, &info) == 0 &&
-            connectJob->StartupRelayConnection(m_callContext, m_station, info, true, timeoutMsec) == 0)
+        if (g_stationConnectionInfoTable->GetStationConnectionInfo(m_station, &info) == 0
+            && connectJob->StartupRelayConnection(m_callContext, m_station, info, true, timeoutMsec) == 0)
             connectJob->Ready(false);
     }
     else if (m_station->m_field20 == 3 || !secure)
@@ -138,7 +144,8 @@ ProcessConnectionRequestJob::ExecuteResult ProcessConnectionRequestJob::WaitInve
         break;
     }
     const int remainingMsec = static_cast<int>(
-        (m_station->m_connectStationJob->m_connectionDeadline - m_deadline).m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
+        (m_station->m_connectStationJob->m_connectionDeadline - m_deadline).m_tick
+        / common::TimeSpan::GetTicksPerMSec().m_tick);
     if (remainingMsec > 0)
         m_deadline = m_station->m_connectStationJob->m_connectionDeadline;
     SelectStep(m_currentStep, &ProcessConnectionRequestJob::SendConnectionResponse,
@@ -169,29 +176,33 @@ ProcessConnectionRequestJob::ExecuteResult ProcessConnectionRequestJob::SendConn
     if (g_stationConnectionInfoTable->GetStationConnectionInfo(m_station, &info) != 0)
         return MakeExecuteResult(cExecuteKindFinished);
 
-    if (common::g_payloadSizeManager->m_mtuSize -
-            (common::g_payloadSizeManager->m_signatureSize + cResponseOverheadSize) < cResponseDataSize)
+    if (common::g_payloadSizeManager->m_mtuSize
+            - (common::g_payloadSizeManager->m_signatureSize + cResponseOverheadSize)
+        < cResponseDataSize)
     {
         bool failed = false;
         for (int i = 0; i < cResponseMessageNum; ++i)
         {
             unsigned char buffer[cDividedResponseDataSize] = {};
-            m_station->m_field28->MakeConnectionResponseData(buffer, static_cast<unsigned char>(i + 1), principalId,
-                                                             static_cast<unsigned int>(info.m_stationLocation.m_field18), m_isRelayConnection);
+            m_station->m_field28->MakeConnectionResponseData(
+                buffer, static_cast<unsigned char>(i + 1), principalId,
+                static_cast<unsigned int>(info.m_stationLocation.m_field18), m_isRelayConnection);
             m_responseAckIds[i] = 0;
             const StationProtocol* protocol = m_station->m_field28;
             if (m_isRelayConnection)
             {
                 if (g_piaResendingMessageManager->SetSendMessageByStationIndex(
                         &m_responseAckIds[i], buffer, cDividedResponseDataSize, m_station->GetStationIndex(),
-                        protocol->GetProtocolId(), true, m_deadline.m_tick) != 0)
+                        protocol->GetProtocolId(), true, m_deadline.m_tick)
+                    != 0)
                     failed = true;
             }
             else
             {
                 if (g_piaResendingMessageManager->SetSendMessageByStationAddress(
                         &m_responseAckIds[i], buffer, cDividedResponseDataSize, m_station->m_stationAddress,
-                        protocol->GetProtocolId(), m_deadline.m_tick) != 0)
+                        protocol->GetProtocolId(), m_deadline.m_tick)
+                    != 0)
                     failed = true;
             }
         }
@@ -215,7 +226,8 @@ ProcessConnectionRequestJob::ExecuteResult ProcessConnectionRequestJob::SendConn
     else
     {
         unsigned char buffer[cResponseDataSize] = {};
-        m_station->m_field28->MakeConnectionResponseData(buffer, 0, principalId, static_cast<unsigned int>(info.m_stationLocation.m_field18), m_isRelayConnection);
+        m_station->m_field28->MakeConnectionResponseData(
+            buffer, 0, principalId, static_cast<unsigned int>(info.m_stationLocation.m_field18), m_isRelayConnection);
         const StationProtocol* protocol = m_station->m_field28;
         Result result;
         if (m_isRelayConnection)
@@ -227,8 +239,8 @@ ProcessConnectionRequestJob::ExecuteResult ProcessConnectionRequestJob::SendConn
         else
         {
             result = g_piaResendingMessageManager->SetSendMessageByStationAddress(
-                &m_responseAckIds[0], buffer, cResponseDataSize, m_station->m_stationAddress,
-                protocol->GetProtocolId(), m_deadline.m_tick);
+                &m_responseAckIds[0], buffer, cResponseDataSize, m_station->m_stationAddress, protocol->GetProtocolId(),
+                m_deadline.m_tick);
         }
         if (result != 0)
         {
@@ -265,8 +277,7 @@ ProcessConnectionRequestJob::ExecuteResult ProcessConnectionRequestJob::WaitResp
         }
         return MakeExecuteResult(cExecuteKindNextStep);
     }
-    if (!m_isRelayConnection && g_piaTransport->m_relayRouteManager != NULL &&
-        m_station->GetStationIndex() <= 31)
+    if (!m_isRelayConnection && g_piaTransport->m_relayRouteManager != NULL && m_station->GetStationIndex() <= 31)
     {
         if (StationManager::s_pInstance->m_localStation->GetStationIndex() <= 31)
         {
@@ -303,4 +314,6 @@ void ProcessConnectionRequestJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

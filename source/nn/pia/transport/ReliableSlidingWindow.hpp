@@ -5,7 +5,12 @@
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/common/ISerializable.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class StationPacketHandler;
 class ProtocolMessageReader;
@@ -13,14 +18,16 @@ class ProtocolMessageReader;
 class ReliableSlidingWindow
 {
 public:
-    enum { cHeaderSize = 24, cPayloadSizeMax = 1384 };
+    enum
+    {
+        cHeaderSize = 24,
+        cPayloadSizeMax = 1384
+    };
 
     class MessageHeader : public common::ISerializable
     {
     public:
-        virtual ~MessageHeader()
-        {
-        }
+        virtual ~MessageHeader() {}
 
         virtual Result Serialize(unsigned char* buffer, unsigned int* size) const
         {
@@ -82,32 +89,24 @@ public:
             cursor += sizeof(m_flags);
             m_size = static_cast<unsigned short>(cursor[0] << 8 | cursor[1]);
             cursor += sizeof(m_size);
-            m_field08 = static_cast<unsigned int>(cursor[0]) << 24 |
-                static_cast<unsigned int>(cursor[1]) << 16 |
-                static_cast<unsigned int>(cursor[2]) << 8 | cursor[3];
+            m_field08 = static_cast<unsigned int>(cursor[0]) << 24 | static_cast<unsigned int>(cursor[1]) << 16
+                        | static_cast<unsigned int>(cursor[2]) << 8 | cursor[3];
             cursor += sizeof(m_field08);
-            m_sequenceId = static_cast<unsigned int>(cursor[0]) << 24 |
-                static_cast<unsigned int>(cursor[1]) << 16 |
-                static_cast<unsigned int>(cursor[2]) << 8 | cursor[3];
+            m_sequenceId = static_cast<unsigned int>(cursor[0]) << 24 | static_cast<unsigned int>(cursor[1]) << 16
+                           | static_cast<unsigned int>(cursor[2]) << 8 | cursor[3];
             cursor += sizeof(m_sequenceId);
-            m_field10 = static_cast<unsigned int>(cursor[0]) << 24 |
-                static_cast<unsigned int>(cursor[1]) << 16 |
-                static_cast<unsigned int>(cursor[2]) << 8 | cursor[3];
+            m_field10 = static_cast<unsigned int>(cursor[0]) << 24 | static_cast<unsigned int>(cursor[1]) << 16
+                        | static_cast<unsigned int>(cursor[2]) << 8 | cursor[3];
             cursor += sizeof(m_field10);
-            m_field18 = static_cast<unsigned long long>(cursor[0]) << 56 |
-                static_cast<unsigned long long>(cursor[1]) << 48 |
-                static_cast<unsigned long long>(cursor[2]) << 40 |
-                static_cast<unsigned long long>(cursor[3]) << 32 |
-                static_cast<unsigned long long>(cursor[4]) << 24 |
-                static_cast<unsigned long long>(cursor[5]) << 16 |
-                static_cast<unsigned long long>(cursor[6]) << 8 | cursor[7];
+            m_field18 =
+                static_cast<unsigned long long>(cursor[0]) << 56 | static_cast<unsigned long long>(cursor[1]) << 48
+                | static_cast<unsigned long long>(cursor[2]) << 40 | static_cast<unsigned long long>(cursor[3]) << 32
+                | static_cast<unsigned long long>(cursor[4]) << 24 | static_cast<unsigned long long>(cursor[5]) << 16
+                | static_cast<unsigned long long>(cursor[6]) << 8 | cursor[7];
             return 0;
         }
 
-        virtual unsigned int GetSerializedSize() const
-        {
-            return cHeaderSize;
-        }
+        virtual unsigned int GetSerializedSize() const { return cHeaderSize; }
 
         unsigned short m_flags;
         unsigned short m_size;
@@ -185,8 +184,8 @@ public:
     Result PopData(void* buffer, unsigned int* size, unsigned int bufferSize);
     Result PushData(const void* data, unsigned int size);
     unsigned int CanPushData(unsigned int size);
-    Result Startup(StationPacketHandler* handler, unsigned short protocolId,
-                   unsigned long long localStationId, unsigned long long remoteStationId);
+    Result Startup(StationPacketHandler* handler, unsigned short protocolId, unsigned long long localStationId,
+                   unsigned long long remoteStationId);
     Result AnalyzeProtocolMessage(const ProtocolMessageReader& reader);
     Result Dispatch(StationPacketHandler* handler, unsigned int* size, unsigned int limit);
     static void RegisterResendTimeCallback(int (*callback)(int, int));
@@ -212,6 +211,8 @@ private:
 };
 
 
-}}}
+}
+}
+}
 
 #endif

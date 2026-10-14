@@ -11,9 +11,17 @@
 #include "nn/pia/common/TimeSpan.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace pead { class Heap; }
+namespace pead
+{
+class Heap;
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class NetworkRttManager
 {
@@ -78,6 +86,7 @@ public:
         void Unlock() { mCritical.Unlock(); }
         common::CriticalSection& GetCriticalSection() { return mCritical; }
         bool IsInitialized() const { return mData != 0; }
+
     private:
         static void Refresh(MeasurementData& value, unsigned int now) { value.UpdateTime(now); }
         static void Refresh(ResponseData& value, unsigned int now) { value.time = now; }
@@ -113,13 +122,16 @@ private:
     {
         common::Time now;
         now.SetNow();
-        return static_cast<unsigned int>(static_cast<long long>(now.m_tick - mStartTime.m_tick) / common::TimeSpan::GetTicksPerMSec().m_tick);
+        return static_cast<unsigned int>(static_cast<long long>(now.m_tick - mStartTime.m_tick)
+                                         / common::TimeSpan::GetTicksPerMSec().m_tick);
     }
     DataBuffer<ResponseData> mResponses;
     DataBuffer<MeasurementData> mMeasurements;
     common::Time mStartTime;
 };
 
-}}}
+}
+}
+}
 
 #endif

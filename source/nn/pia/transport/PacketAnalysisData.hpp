@@ -3,12 +3,21 @@
 
 #include "nn/pia/Reconstruction.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class PacketAnalysisData
 {
 public:
-    enum { cEntryNumMax = 32, cNameLengthMax = 32 };
+    enum
+    {
+        cEntryNumMax = 32,
+        cNameLengthMax = 32
+    };
 
     class Entry
     {
@@ -39,6 +48,8 @@ public:
     unsigned long long m_totalPacketSize;
 };
 
-}}}
+}
+}
+}
 
 #endif

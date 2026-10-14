@@ -2,7 +2,12 @@
 
 #include "nn/pia/transport/AnalysisPrinter.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 void TransportAnalysisData::Print(bool isDetail, bool skipIntermediate) const
 {
@@ -17,4 +22,6 @@ void TransportAnalysisData::Print(bool isDetail, bool skipIntermediate) const
     AnalysisPrinter::Write("[Analysis] ------ DispatchCount:%d ------", m_dispatchCount);
 }
 
-}}}
+}
+}
+}

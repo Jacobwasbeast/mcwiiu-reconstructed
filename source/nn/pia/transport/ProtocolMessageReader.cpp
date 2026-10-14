@@ -2,10 +2,14 @@
 
 #include "nn/pia/common/Packet.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
-ProtocolMessageReader::ProtocolMessageReader()
-    : m_message(0), m_header(), m_isTerminator(false)
+ProtocolMessageReader::ProtocolMessageReader() : m_message(0), m_header(), m_isTerminator(false)
 {
 }
 
@@ -83,4 +87,6 @@ void ProtocolMessageReader::Trace(unsigned long long value) const
 {
 }
 
-}}}
+}
+}
+}

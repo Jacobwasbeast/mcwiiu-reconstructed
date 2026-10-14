@@ -3,20 +3,31 @@
 
 #include "nn/pia/transport/TransportThreadStream.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 class IPacketOutput;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class SendThreadStream : public TransportThreadStream
 {
 public:
     SendThreadStream();
     virtual ~SendThreadStream();
-    Result Initialize(common::IPacketOutput* packetOutput, unsigned int packetNum,
-                      int priority, unsigned int latencyEntryNum,
-                      bool isPacketLossEnabled);
+    Result Initialize(common::IPacketOutput* packetOutput, unsigned int packetNum, int priority,
+                      unsigned int latencyEntryNum, bool isPacketLossEnabled);
     void Finalize();
     void SetMonitoringData();
     void Trace(unsigned long long value) const;
@@ -28,6 +39,8 @@ public:
     unsigned long long m_sendDataSize;
 };
 
-}}}
+}
+}
+}
 
 #endif

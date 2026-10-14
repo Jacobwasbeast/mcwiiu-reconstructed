@@ -1,8 +1,14 @@
 #include "nn/pia/transport/SequenceIdController.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
-namespace {
+namespace
+{
 static short signed16(unsigned short bits)
 {
     if (bits <= 0x7fff)
@@ -63,8 +69,7 @@ bool SequenceIdController::CheckReceivedSequenceId(unsigned short sequenceId)
     if (distance < 1)
         return false;
 
-    const unsigned int wrapDistance =
-        (0x10000u - static_cast<unsigned int>(m_lastReceivedSequence)) & 0xffffu;
+    const unsigned int wrapDistance = (0x10000u - static_cast<unsigned int>(m_lastReceivedSequence)) & 0xffffu;
     if (wrapDistance != 0 && static_cast<int>(wrapDistance) < distance)
         distance = static_cast<int>(signed16(static_cast<unsigned short>(delta - 1)));
 
@@ -76,15 +81,15 @@ bool SequenceIdController::CheckReceivedSequenceId(unsigned short sequenceId)
         if (next < 0x10000u)
         {
             m_profileBase = static_cast<unsigned short>(next);
-            m_profileLost = static_cast<unsigned short>(
-                static_cast<unsigned int>(m_profileLost) + static_cast<unsigned int>(distance) - 1u);
+            m_profileLost = static_cast<unsigned short>(static_cast<unsigned int>(m_profileLost)
+                                                        + static_cast<unsigned int>(distance) - 1u);
         }
         else
         {
             m_profileEnabled = false;
             m_profileBase = 0xffff;
-            m_profileLost = static_cast<unsigned short>(
-                static_cast<unsigned int>(m_profileLost) - static_cast<unsigned int>(base) - 1u);
+            m_profileLost = static_cast<unsigned short>(static_cast<unsigned int>(m_profileLost)
+                                                        - static_cast<unsigned int>(base) - 1u);
         }
     }
 
@@ -114,4 +119,6 @@ void SequenceIdController::Cleanup()
 {
 }
 
-}}}
+}
+}
+}

@@ -4,7 +4,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class KeepAliveSender
 {
@@ -19,6 +24,8 @@ public:
     bool m_enabled;
 };
 
-}}}
+}
+}
+}
 
 #endif

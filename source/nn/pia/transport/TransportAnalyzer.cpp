@@ -17,7 +17,12 @@
 #include "nn/pia/transport/TransportSupport.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 TransportAnalyzer* g_piaTransportAnalyzer = 0;
 
@@ -26,8 +31,7 @@ namespace
 unsigned char* g_transportAnalyzerStorage = 0;
 }
 
-TransportAnalyzer::TransportAnalyzer()
-    : m_startedUp(false)
+TransportAnalyzer::TransportAnalyzer() : m_startedUp(false)
 {
 }
 
@@ -113,8 +117,9 @@ Result TransportAnalyzer::Update()
         return result;
 
     PacketHandler* handler = g_piaTransport->m_packetHandler;
-    result = handler->GetPacketAnalysisData(&m_analysisData.m_packetAnalysisData,
-        &m_analysisData.m_receivedPacketAnalysisData, &m_analysisData.m_sentPacketAnalysisData, &m_analysisData.m_retransmittedPacketAnalysisData);
+    result = handler->GetPacketAnalysisData(
+        &m_analysisData.m_packetAnalysisData, &m_analysisData.m_receivedPacketAnalysisData,
+        &m_analysisData.m_sentPacketAnalysisData, &m_analysisData.m_retransmittedPacketAnalysisData);
     if (result != 0)
         return result;
 
@@ -185,7 +190,8 @@ Result TransportAnalyzer::UpdateConnectionAnalysisData()
         now.SetNow();
         elapsed = now - m_startTime;
     }
-    m_analysisData.m_connectionAnalysisData.m_passedMilliSecond = elapsed.m_tick / common::TimeSpan::GetTicksPerMSec().m_tick;
+    m_analysisData.m_connectionAnalysisData.m_passedMilliSecond = elapsed.m_tick
+                                                                  / common::TimeSpan::GetTicksPerMSec().m_tick;
     return 0;
 }
 
@@ -247,12 +253,14 @@ void TransportAnalyzer::SetMonitoringData()
         const unsigned int lostPacketNum = sequence->m_missingSequenceCount;
         unsigned short lossRate = 0xffff;
         if (sendPacketNum != 0)
-            lossRate = static_cast<unsigned short>(static_cast<unsigned long long>(lostPacketNum) * 10000 / sendPacketNum);
+            lossRate = static_cast<unsigned short>(static_cast<unsigned long long>(lostPacketNum) * 10000
+                                                   / sendPacketNum);
 
         unsigned long long principalId;
         const Result principalResult = (*station)->GetPrincipalId(&principalId);
         if (principalResult != 0)
-            common::g_sessionStateMonitoringContent.m_metric100[stationNum] = common::hashWithMd5(0xffffffffffffffffULL);
+            common::g_sessionStateMonitoringContent.m_metric100[stationNum] = common::hashWithMd5(
+                0xffffffffffffffffULL);
         else
             common::g_sessionStateMonitoringContent.m_metric100[stationNum] = common::hashWithMd5(principalId);
         common::g_sessionStateMonitoringContent.m_metric115[stationNum] = static_cast<unsigned char>(stationIndex);
@@ -262,4 +270,6 @@ void TransportAnalyzer::SetMonitoringData()
     }
 }
 
-}}}
+}
+}
+}

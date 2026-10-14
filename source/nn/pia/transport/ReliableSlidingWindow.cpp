@@ -15,15 +15,26 @@
 #include <new>
 #include <string.h>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 float ReliableSlidingWindow::s_retransmissionTimeOutRate = 1.25f;
 unsigned int ReliableSlidingWindow::s_rttSamplingNum = 8;
 int (*ReliableSlidingWindow::s_resendTimeCallback)(int, int) = 0;
 
-namespace {
+namespace
+{
 
-enum { cProfiledStationNum = 4, cProfiledSizeMin = 102400, cResendCountReset = 65535 };
+enum
+{
+    cProfiledStationNum = 4,
+    cProfiledSizeMin = 102400,
+    cResendCountReset = 65535
+};
 const unsigned int cInitialSequence = 4294965295u;
 const unsigned long long cNeverResendTime = 18446744073709551615ULL;
 const unsigned long long cHighestReceivedBit = 9223372036854775808ULL;
@@ -35,8 +46,11 @@ unsigned short g_maximumResendCount;
 }
 
 template <typename T>
-ReliableSlidingWindow::Buffer<T>::Buffer()
-    : m_data(0), m_capacity(0), m_head(0), m_sequence(0), m_count(0)
+ReliableSlidingWindow::Buffer<T>::Buffer() : m_data(0),
+                                             m_capacity(0),
+                                             m_head(0),
+                                             m_sequence(0),
+                                             m_count(0)
 {
 }
 
@@ -110,8 +124,12 @@ template class ReliableSlidingWindow::Buffer<ReliableSlidingWindow::SendData>;
 template class ReliableSlidingWindow::Buffer<ReliableSlidingWindow::ReceiveData>;
 
 ReliableSlidingWindow::ReliableSlidingWindow()
-    : m_protocolId(ProtocolId::INVALID), m_localStationId(0), m_remoteStationId(0),
-      m_payloadLimit(0), m_byteCount(0), m_profileStart(0)
+    : m_protocolId(ProtocolId::INVALID),
+      m_localStationId(0),
+      m_remoteStationId(0),
+      m_payloadLimit(0),
+      m_byteCount(0),
+      m_profileStart(0)
 {
 }
 
@@ -142,8 +160,7 @@ Result ReliableSlidingWindow::Initialize(unsigned int sendCapacity, unsigned int
 }
 
 Result ReliableSlidingWindow::Startup(StationPacketHandler* handler, unsigned short protocolId,
-                                      unsigned long long localStationId,
-                                      unsigned long long remoteStationId)
+                                      unsigned long long localStationId, unsigned long long remoteStationId)
 {
     if (m_sendBuffer.m_capacity == 0)
         return cResultNotInitialized;
@@ -209,8 +226,7 @@ void ReliableSlidingWindow::MessageData::DeserializeHeader(const void* buffer)
     m_header.Deserialize(static_cast<const unsigned char*>(buffer));
 }
 
-void ReliableSlidingWindow::MessageData::CopyPayload(void* destination, const void* source,
-                                                     unsigned int size)
+void ReliableSlidingWindow::MessageData::CopyPayload(void* destination, const void* source, unsigned int size)
 {
     OSBlockMove(destination, static_cast<const unsigned char*>(source) + cHeaderSize, size, FALSE);
 }
@@ -229,8 +245,7 @@ Result ReliableSlidingWindow::AnalyzeProtocolMessage(const ProtocolMessageReader
 
     if (m_localStationId != 0)
     {
-        const int acknowledged =
-            static_cast<int>(message.m_header.m_field10 - m_sendBuffer.m_sequence);
+        const int acknowledged = static_cast<int>(message.m_header.m_field10 - m_sendBuffer.m_sequence);
         if (acknowledged >= 0)
         {
             if (m_sendBuffer.m_count < static_cast<unsigned int>(acknowledged))
@@ -259,14 +274,13 @@ Result ReliableSlidingWindow::AnalyzeProtocolMessage(const ProtocolMessageReader
 
     if (m_byteCount != 0 && m_sendBuffer.m_count == 0)
     {
-        const StationIndex stationIndex =
-            g_piaTransport->ConvertToStationIndexUnsafe(m_remoteStationId);
+        const StationIndex stationIndex = g_piaTransport->ConvertToStationIndexUnsafe(m_remoteStationId);
         if (stationIndex < cProfiledStationNum)
         {
             g_profileByteCount[stationIndex] = m_byteCount;
             g_profileDurationMs[stationIndex] = static_cast<unsigned int>(
-                static_cast<long long>(g_piaTransport->m_time.m_tick - m_profileStart) /
-                common::TimeSpan::GetTicksPerMSec().m_tick);
+                static_cast<long long>(g_piaTransport->m_time.m_tick - m_profileStart)
+                / common::TimeSpan::GetTicksPerMSec().m_tick);
         }
         m_byteCount = 0;
         m_profileStart = 0;
@@ -279,8 +293,7 @@ Result ReliableSlidingWindow::AnalyzeProtocolMessage(const ProtocolMessageReader
             return cResultDataSizeInvalid;
         if (payloadSize > cPayloadSizeMax)
             return cResultDataSizeInvalid;
-        const int offset =
-            static_cast<int>(message.m_header.m_sequenceId - m_receiveBuffer.m_sequence);
+        const int offset = static_cast<int>(message.m_header.m_sequenceId - m_receiveBuffer.m_sequence);
         if (offset < 0)
         {
             m_field68 = true;
@@ -324,8 +337,7 @@ void ReliableSlidingWindow::MessageData::SerializeHeader()
     m_header.Serialize(m_data, &size);
 }
 
-Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned int* size,
-                                       unsigned int limit)
+Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned int* size, unsigned int limit)
 {
     if (m_protocolId == ProtocolId::INVALID)
         return cResultInvalidState;
@@ -333,8 +345,7 @@ Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned i
 
     int rtt = -1;
     long long resendTime = m_retrySpan;
-    Station* station =
-        StationManager::s_pInstance->GetStationByStationIdWithoutConvert(m_remoteStationId);
+    Station* station = StationManager::s_pInstance->GetStationByStationIdWithoutConvert(m_remoteStationId);
     if (station != 0)
     {
         rtt = station->GetRtt(s_rttSamplingNum);
@@ -342,8 +353,7 @@ Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned i
             resendTime = m_time + m_retrySpan;
         else
         {
-            const int timeout =
-                static_cast<int>(static_cast<float>(rtt) * s_retransmissionTimeOutRate);
+            const int timeout = static_cast<int>(static_cast<float>(rtt) * s_retransmissionTimeOutRate);
             resendTime = static_cast<long long>(timeout) * pead::TickSpan::cFrequency / 1000 + m_time;
         }
     }
@@ -365,8 +375,8 @@ Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned i
                 *size = total;
             return 0;
         }
-        ProtocolMessageWriter* writer = handler->AssignByStationId(
-            ProtocolId(m_protocolId), m_remoteStationId, fragment->m_size, false, false, true);
+        ProtocolMessageWriter* writer = handler->AssignByStationId(ProtocolId(m_protocolId), m_remoteStationId,
+                                                                   fragment->m_size, false, false, true);
         if (writer == 0)
         {
             if (size != 0)
@@ -385,8 +395,7 @@ Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned i
         else
         {
             const int timeout = s_resendTimeCallback(rtt, fragment->m_field0c);
-            fragment->m_sendTime =
-                static_cast<long long>(timeout) * pead::TickSpan::cFrequency / 1000 + m_time;
+            fragment->m_sendTime = static_cast<long long>(timeout) * pead::TickSpan::cFrequency / 1000 + m_time;
         }
         m_field68 = false;
         if (g_maximumResendCount == cResendCountReset || g_maximumResendCount < fragment->m_field0c)
@@ -404,8 +413,8 @@ Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned i
                 *size = total;
             return 0;
         }
-        ProtocolMessageWriter* writer = handler->AssignByStationId(
-            ProtocolId(m_protocolId), m_remoteStationId, cHeaderSize, false, false, true);
+        ProtocolMessageWriter* writer = handler->AssignByStationId(ProtocolId(m_protocolId), m_remoteStationId,
+                                                                   cHeaderSize, false, false, true);
         if (writer == 0)
         {
             if (size != 0)
@@ -542,4 +551,6 @@ void ReliableSlidingWindow::RegisterResendTimeCallback(int (*callback)(int, int)
     s_resendTimeCallback = callback;
 }
 
-}}}
+}
+}
+}

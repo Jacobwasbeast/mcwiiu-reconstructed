@@ -4,7 +4,12 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/common/StationAddress.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ConnectStationJob;
 
@@ -32,9 +37,18 @@ public:
         cMessageTypeRelayConnectionResponse = 7
     };
 
-    enum { cProtocolType = 0x14 };
-    enum { cConnectionRequestHeaderSize = 17 };
-    enum { cStationIndexInvalid = 0xfd };
+    enum
+    {
+        cProtocolType = 0x14
+    };
+    enum
+    {
+        cConnectionRequestHeaderSize = 17
+    };
+    enum
+    {
+        cStationIndexInvalid = 0xfd
+    };
 
     StationProtocol();
     virtual ~StationProtocol();
@@ -49,24 +63,20 @@ public:
     bool isValidMessage(unsigned char messageType) const;
     void Clear();
     unsigned int GetConnectionRequestDataSize() const;
-    void MakeConnectionRequestData(unsigned char* buffer, unsigned char nonce,
-                                   unsigned long long principalId, unsigned int infoField,
-                                   unsigned char field55, bool relay, bool secure) const;
-    void MakeConnectionResponseData(unsigned char* buffer, unsigned char section,
-                                    unsigned long long principalId, unsigned int infoField,
-                                    bool relay) const;
+    void MakeConnectionRequestData(unsigned char* buffer, unsigned char nonce, unsigned long long principalId,
+                                   unsigned int infoField, unsigned char field55, bool relay, bool secure) const;
+    void MakeConnectionResponseData(unsigned char* buffer, unsigned char section, unsigned long long principalId,
+                                    unsigned int infoField, bool relay) const;
 
-    void SendDenyingConnectionResponse(const common::StationAddress& address,
-                                       unsigned char rejection, unsigned long long principalId,
-                                       unsigned int infoField);
+    void SendDenyingConnectionResponse(const common::StationAddress& address, unsigned char rejection,
+                                       unsigned long long principalId, unsigned int infoField);
     void SendAck(unsigned int value, StationIndex stationIndex);
     void SendAck(unsigned int value, const common::StationAddress& address);
     void ParseConnectionRequestCommon(const ReceivedMessageAccessor& message, bool relay);
     void ParseConnectionRequest(const ReceivedMessageAccessor& message);
     void ParseConnectionResponseCommon(const ReceivedMessageAccessor& message, bool relay);
     void ParseConnectionResponse(const ReceivedMessageAccessor& message);
-    unsigned int SendSimpleMessage(unsigned char messageType,
-                                    const common::StationAddress& address);
+    unsigned int SendSimpleMessage(unsigned char messageType, const common::StationAddress& address);
     void SendDisconnectionResponse(const common::StationAddress& address);
     void ParseDisconnectionRequest(const ReceivedMessageAccessor& message);
     void ParseDisconnectionResponse(const ReceivedMessageAccessor& message);
@@ -74,8 +84,7 @@ public:
     void ParseRelayConnectionRequest(const ReceivedMessageAccessor& message);
     void ParseRelayConnectionResponse(const ReceivedMessageAccessor& message);
     Result ParseHelper(const ReceivedMessageAccessor& message);
-    unsigned int SendSimpleMessage(unsigned char messageType, StationIndex stationIndex,
-                                   bool relay);
+    unsigned int SendSimpleMessage(unsigned char messageType, StationIndex stationIndex, bool relay);
     void SendDisconnectionRequest(StationIndex stationIndex, bool relay);
     void SendDisconnectionRequest(const common::StationAddress& address);
 
@@ -84,6 +93,8 @@ public:
     unsigned int m_reconnectionCount;
 };
 
-}}}
+}
+}
+}
 
 #endif

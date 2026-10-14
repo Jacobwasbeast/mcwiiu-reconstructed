@@ -3,7 +3,12 @@
 
 #include "nn/pia.h"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 Result Initialize();
 Result BeginSetup();
@@ -13,6 +18,8 @@ unsigned char IsInitialized();
 unsigned char IsInSetupMode();
 void EmbedModuleInfo();
 
-}}}
+}
+}
+}
 
 #endif

@@ -4,9 +4,23 @@
 #include "nn/pia/transport/StationLocation.hpp"
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common { class String; }}}
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class String;
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class StationConnectionInfo
 {
@@ -31,6 +45,8 @@ public:
     StationLocation m_localStationLocation;
 };
 
-}}}
+}
+}
+}
 
 #endif

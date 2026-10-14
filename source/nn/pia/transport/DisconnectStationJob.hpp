@@ -5,7 +5,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class Station;
 
@@ -37,6 +42,8 @@ public:
     bool m_waiting;
 };
 
-}}}
+}
+}
+}
 
 #endif

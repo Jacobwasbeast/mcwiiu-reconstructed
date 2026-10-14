@@ -4,12 +4,16 @@
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/common/Packet.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 const unsigned long long cStationIdUpperMask = 0xffffffff00000000ULL;
 
-RelayStationPacketHandler::RelayStationPacketHandler()
-    : m_relayRouteManager(0)
+RelayStationPacketHandler::RelayStationPacketHandler() : m_relayRouteManager(0)
 {
 }
 
@@ -30,8 +34,7 @@ RelayStationPacketHandler::~RelayStationPacketHandler()
 Result RelayStationPacketHandler::Initialize(unsigned int stationNum, bool isStarConnection,
                                              unsigned int maxProtocolNum)
 {
-    const Result result = StationPacketHandler::Initialize(stationNum, isStarConnection,
-                                                           maxProtocolNum);
+    const Result result = StationPacketHandler::Initialize(stationNum, isStarConnection, maxProtocolNum);
     if (result != 0)
         return result;
 
@@ -55,32 +58,28 @@ void RelayStationPacketHandler::Trace(unsigned long long value) const
 {
 }
 
-Result RelayStationPacketHandler::GetRelayRoute(const RelayRouteManager* manager,
-                                                ::nn::pia::StationIndex source,
-                                                ::nn::pia::StationIndex destination,
-                                                ::nn::pia::StationIndex* relay)
+Result RelayStationPacketHandler::GetRelayRoute(const RelayRouteManager* manager, ::nn::pia::StationIndex source,
+                                                ::nn::pia::StationIndex destination, ::nn::pia::StationIndex* relay)
 {
     return manager->GetRelayRoute(source, destination, relay);
 }
 
-Result RelayStationPacketHandler::GetDirectStationList(const RelayRouteManager* manager,
-                                                       ::nn::pia::StationIndex source,
+Result RelayStationPacketHandler::GetDirectStationList(const RelayRouteManager* manager, ::nn::pia::StationIndex source,
                                                        unsigned int* directBitmap)
 {
     return manager->GetDirectStationList(source, directBitmap);
 }
 
-Result RelayStationPacketHandler::GetDestStationList(const RelayRouteManager* manager,
-                                                     ::nn::pia::StationIndex source,
-                                                     ::nn::pia::StationIndex relay,
-                                                     unsigned int* destinationBitmap)
+Result RelayStationPacketHandler::GetDestStationList(const RelayRouteManager* manager, ::nn::pia::StationIndex source,
+                                                     ::nn::pia::StationIndex relay, unsigned int* destinationBitmap)
 {
     return manager->GetDestStationList(source, relay, destinationBitmap);
 }
 
-bool RelayStationPacketHandler::AssignRelayStationMessage(
-    ::nn::pia::StationIndex relayStation, unsigned int stationBitmap, unsigned int size,
-    unsigned int sizeLimit, bool isPriority, bool field602, bool field604)
+bool RelayStationPacketHandler::AssignRelayStationMessage(::nn::pia::StationIndex relayStation,
+                                                          unsigned int stationBitmap, unsigned int size,
+                                                          unsigned int sizeLimit, bool isPriority, bool field602,
+                                                          bool field604)
 {
     if (stationBitmap == 0)
         return true;
@@ -89,12 +88,11 @@ bool RelayStationPacketHandler::AssignRelayStationMessage(
         for (PacketStream::Accessor::Iterator it = m_writer->Begin(); it != m_writer->End(); ++it)
         {
             common::Packet* candidate = &*it;
-            if (IsBundleCandidate(candidate, field602, sizeLimit, field604) &&
-                candidate->m_stationIndex == relayStation)
+            if (IsBundleCandidate(candidate, field602, sizeLimit, field604)
+                && candidate->m_stationIndex == relayStation)
             {
                 void* payload = AssignPacketPayload(candidate, size);
-                m_protocolMessageWriter.AddMessageBuffer(candidate, payload, stationBitmap,
-                                                         true, true);
+                m_protocolMessageWriter.AddMessageBuffer(candidate, payload, stationBitmap, true, true);
                 m_keepAliveStationBitmap |= stationBitmap;
                 return true;
             }
@@ -106,8 +104,7 @@ bool RelayStationPacketHandler::AssignRelayStationMessage(
         common::StationAddress address;
         if (GetStationAddress(GetStationManager(), &address, relayStation) != 0)
             return false;
-        packet = AssignPacket(relayStation, relayBitmap, address,
-                              isPriority, field602, field604);
+        packet = AssignPacket(relayStation, relayBitmap, address, isPriority, field602, field604);
         if (packet == 0)
             return false;
     }
@@ -117,9 +114,9 @@ bool RelayStationPacketHandler::AssignRelayStationMessage(
     return true;
 }
 
-ProtocolMessageWriter* RelayStationPacketHandler::AssignSingle(
-    const ProtocolId& protocolId, ::nn::pia::StationIndex stationIndex,
-    unsigned int size, bool isPriority, bool field602, bool field604)
+ProtocolMessageWriter* RelayStationPacketHandler::AssignSingle(const ProtocolId& protocolId,
+                                                               ::nn::pia::StationIndex stationIndex, unsigned int size,
+                                                               bool isPriority, bool field602, bool field604)
 {
     if (m_writer == 0 || m_pendingWriter != 0)
         return 0;
@@ -141,28 +138,26 @@ ProtocolMessageWriter* RelayStationPacketHandler::AssignSingle(
             return 0;
         if (m_relayRouteManager != 0)
         {
-            if (GetRelayRoute(m_relayRouteManager,
-                              static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
-                              stationIndex, &relay) != 0)
+            if (GetRelayRoute(m_relayRouteManager, static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
+                              stationIndex, &relay)
+                != 0)
                 return 0;
             if (relay == m_localStationIndex || relay == 0xfd)
                 return 0;
             if (stationIndex != relay)
             {
-                AssignRelayStationMessage(relay, 1u << stationIndex, alignedSize, sizeLimit,
-                                          isPriority, field602, field604);
+                AssignRelayStationMessage(relay, 1u << stationIndex, alignedSize, sizeLimit, isPriority, field602,
+                                          field604);
                 return ReserveMessageWriter();
             }
         }
-        AssignDirectMessage(1u << stationIndex, alignedSize, sizeLimit, isPriority, field602,
-                            field604);
+        AssignDirectMessage(1u << stationIndex, alignedSize, sizeLimit, isPriority, field602, field604);
     }
     return ReserveMessageWriter();
 }
 
-ProtocolMessageWriter* RelayStationPacketHandler::AssignAll(
-    const ProtocolId& protocolId, unsigned int size, bool isPriority, bool field602,
-    bool field604)
+ProtocolMessageWriter* RelayStationPacketHandler::AssignAll(const ProtocolId& protocolId, unsigned int size,
+                                                            bool isPriority, bool field602, bool field604)
 {
     if (m_writer == 0 || m_pendingWriter != 0)
         return 0;
@@ -187,9 +182,9 @@ ProtocolMessageWriter* RelayStationPacketHandler::AssignAll(
     if (m_relayRouteManager != 0)
     {
         unsigned int directStations;
-        if (GetDirectStationList(m_relayRouteManager,
-                                 static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
-                                 &directStations) != 0)
+        if (GetDirectStationList(m_relayRouteManager, static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
+                                 &directStations)
+            != 0)
             return 0;
         directBitmap = directStations & participating;
         unsigned int remaining = participating & ~directBitmap;
@@ -200,19 +195,17 @@ ProtocolMessageWriter* RelayStationPacketHandler::AssignAll(
                 if ((remaining & (1u << station)) != 0)
                 {
                     ::nn::pia::StationIndex relay;
-                    if (GetRelayRoute(m_relayRouteManager,
-                                      static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
-                                      static_cast< ::nn::pia::StationIndex>(station),
-                                      &relay) == 0 &&
-                        relay != m_localStationIndex && relay != 0xfd)
+                    if (GetRelayRoute(m_relayRouteManager, static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
+                                      static_cast< ::nn::pia::StationIndex>(station), &relay)
+                            == 0
+                        && relay != m_localStationIndex && relay != 0xfd)
                     {
                         unsigned int relayedStations;
                         GetDestStationList(m_relayRouteManager,
-                                           static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
-                                           relay, &relayedStations);
+                                           static_cast< ::nn::pia::StationIndex>(m_localStationIndex), relay,
+                                           &relayedStations);
                         const unsigned int relayedBitmap = relayedStations & remaining;
-                        destinations[destinationNum].stationBitmap =
-                            pead::BitFlag<unsigned int>(relayedBitmap);
+                        destinations[destinationNum].stationBitmap = pead::BitFlag<unsigned int>(relayedBitmap);
                         remaining &= ~relayedBitmap;
                         destinations[destinationNum].relay = relay;
                         ++destinationNum;
@@ -231,23 +224,22 @@ ProtocolMessageWriter* RelayStationPacketHandler::AssignAll(
     m_protocolMessageWriter.Reset(protocolId, size, false, isPriority);
     AssignAllMessage(directBitmap, alignedSize, sizeLimit, isPriority, field602, field604);
     for (int i = 0; i < destinationNum; ++i)
-        AssignRelayStationMessage(destinations[i].relay, destinations[i].stationBitmap.getDirect(),
-                                  alignedSize, sizeLimit, isPriority, field602, field604);
+        AssignRelayStationMessage(destinations[i].relay, destinations[i].stationBitmap.getDirect(), alignedSize,
+                                  sizeLimit, isPriority, field602, field604);
     return ReserveMessageWriter();
 }
 
-ProtocolMessageWriter* RelayStationPacketHandler::AssignMulti(
-    const ProtocolId& protocolId, unsigned int stationBitmap, unsigned int size,
-    bool isPriority, bool field602, bool field604)
+ProtocolMessageWriter* RelayStationPacketHandler::AssignMulti(const ProtocolId& protocolId, unsigned int stationBitmap,
+                                                              unsigned int size, bool isPriority, bool field602,
+                                                              bool field604)
 {
-    return AssignMulti(protocolId, stationBitmap, size, isPriority, field602,
-                       m_localStationId, false, field604);
+    return AssignMulti(protocolId, stationBitmap, size, isPriority, field602, m_localStationId, false, field604);
 }
 
-ProtocolMessageWriter* RelayStationPacketHandler::AssignMulti(
-    const ProtocolId& protocolId, unsigned int stationBitmap, unsigned int size,
-    bool isPriority, bool field602, unsigned long long sourceId, bool isReliable,
-    bool field604)
+ProtocolMessageWriter* RelayStationPacketHandler::AssignMulti(const ProtocolId& protocolId, unsigned int stationBitmap,
+                                                              unsigned int size, bool isPriority, bool field602,
+                                                              unsigned long long sourceId, bool isReliable,
+                                                              bool field604)
 {
     if (m_writer == 0 || m_pendingWriter != 0)
         return 0;
@@ -273,15 +265,13 @@ ProtocolMessageWriter* RelayStationPacketHandler::AssignMulti(
             if ((stationBitmap & (1u << station)) != 0)
             {
                 ::nn::pia::StationIndex relay;
-                if (GetRelayRoute(m_relayRouteManager,
-                                  static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
-                                  static_cast< ::nn::pia::StationIndex>(station),
-                                  &relay) == 0 &&
-                    relay != m_localStationIndex && relay != 0xfd)
+                if (GetRelayRoute(m_relayRouteManager, static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
+                                  static_cast< ::nn::pia::StationIndex>(station), &relay)
+                        == 0
+                    && relay != m_localStationIndex && relay != 0xfd)
                 {
                     unsigned int relayedStations;
-                    GetDestStationList(m_relayRouteManager,
-                                       static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
+                    GetDestStationList(m_relayRouteManager, static_cast< ::nn::pia::StationIndex>(m_localStationIndex),
                                        relay, &relayedStations);
                     const unsigned int relayedBitmap = relayedStations & stationBitmap;
                     if (relayedBitmap == (1u << relay))
@@ -291,8 +281,7 @@ ProtocolMessageWriter* RelayStationPacketHandler::AssignMulti(
                     else
                     {
                         destinations[destinationNum].relay = relay;
-                        destinations[destinationNum].stationBitmap =
-                            pead::BitFlag<unsigned int>(relayedBitmap);
+                        destinations[destinationNum].stationBitmap = pead::BitFlag<unsigned int>(relayedBitmap);
                         ++destinationNum;
                     }
                     stationBitmap &= ~relayedBitmap;
@@ -310,8 +299,8 @@ ProtocolMessageWriter* RelayStationPacketHandler::AssignMulti(
     m_protocolMessageWriter.Reset(protocolId, size, isReliable, isPriority);
     AssignDirectMessage(directBitmap, alignedSize, sizeLimit, isPriority, field602, field604);
     for (int i = 0; i < destinationNum; ++i)
-        AssignRelayStationMessage(destinations[i].relay, destinations[i].stationBitmap.getDirect(),
-                                  alignedSize, sizeLimit, isPriority, field602, field604);
+        AssignRelayStationMessage(destinations[i].relay, destinations[i].stationBitmap.getDirect(), alignedSize,
+                                  sizeLimit, isPriority, field602, field604);
     return ReserveMessageWriter();
 }
 
@@ -323,10 +312,8 @@ void RelayStationPacketHandler::RelayMessage(const ProtocolMessageReader& reader
     if (stationBitmap != 0)
     {
         const ProtocolId protocolId = reader.m_header.m_protocolId;
-        ProtocolMessageWriter* writer = AssignMulti(protocolId, stationBitmap,
-                                                    reader.m_messageSize,
-                                                    (reader.m_header.m_flags >> 3) & 1,
-                                                    !reader.m_field3a,
+        ProtocolMessageWriter* writer = AssignMulti(protocolId, stationBitmap, reader.m_messageSize,
+                                                    (reader.m_header.m_flags >> 3) & 1, !reader.m_field3a,
                                                     reader.m_header.m_source, true, true);
         if (writer != 0)
         {
@@ -392,16 +379,12 @@ unsigned int RelayStationPacketHandler::CheckReceive(const ProtocolMessageReader
     return 0;
 }
 
-Result RelayStationPacketHandler::Startup(PacketStream::Writer* writer,
-                                          PacketStream::Reader* reader,
-                                          common::IPacketInput* packetInput,
-                                          common::IPacketOutput* packetOutput,
-                                          unsigned long long* stationId,
-                                          const RelayRouteManager* relayRouteManager,
+Result RelayStationPacketHandler::Startup(PacketStream::Writer* writer, PacketStream::Reader* reader,
+                                          common::IPacketInput* packetInput, common::IPacketOutput* packetOutput,
+                                          unsigned long long* stationId, const RelayRouteManager* relayRouteManager,
                                           const common::CryptoSetting* cryptoSetting)
 {
-    const Result result = StationPacketHandler::Startup(writer, reader, packetInput,
-                                                        packetOutput, stationId,
+    const Result result = StationPacketHandler::Startup(writer, reader, packetInput, packetOutput, stationId,
                                                         cryptoSetting);
     if (result != 0)
         return result;
@@ -410,4 +393,6 @@ Result RelayStationPacketHandler::Startup(PacketStream::Writer* writer,
     return 0;
 }
 
-}}}
+}
+}
+}

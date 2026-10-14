@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class RttProtocol;
 class StationProtocol;
@@ -28,6 +33,8 @@ private:
 
 extern StationProtocolManager* g_piaStationProtocolManager;
 
-}}}
+}
+}
+}
 
 #endif

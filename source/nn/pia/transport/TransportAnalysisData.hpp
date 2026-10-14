@@ -4,7 +4,12 @@
 #include "nn/pia/transport/ConnectionAnalysisData.hpp"
 #include "nn/pia/transport/PacketAnalysisData.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class TransportAnalysisData
 {
@@ -20,6 +25,8 @@ public:
     unsigned int m_dispatchCount;
 };
 
-}}}
+}
+}
+}
 
 #endif
