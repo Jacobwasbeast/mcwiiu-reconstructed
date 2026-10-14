@@ -15,6 +15,7 @@ public:
     void AddCubes(ModelPart* part, float scale) const;
     void SetupModelPart(ModelPart* part, ModelPart* parent, float scale) const;
     void readModelPart(DataInputStream* input, int hasCubeRotation);
+
 private:
     float mX;
     float mY;

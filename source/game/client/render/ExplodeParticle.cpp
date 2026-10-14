@@ -13,7 +13,8 @@ ExplodeParticle::ExplodeParticle(Level* level, double x, double y, double z, dou
     yd = ya + (double)((float)(Math::random() * 2.0 - 1.0) * 0.05f);
     zd = za + (double)((float)(Math::random() * 2.0 - 1.0) * 0.05f);
 
-    const unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_Explode);
+    const unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
+        eMinecraftColour_Particle_Explode);
     const float red = ((float)((colour >> 16) & 255)) / 255.0f;
     const float green = ((float)((colour >> 8) & 255)) / 255.0f;
     const float blue = ((float)(colour & 255)) / 255.0f;
@@ -30,8 +31,8 @@ uint64_t ExplodeParticle::GetType()
     return ParticleKind::EXPLODE;
 }
 
-void ExplodeParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
-                             float partialTicks, float xa, float ya, float za, float xa2, float za2)
+void ExplodeParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                             float xa, float ya, float za, float xa2, float za2)
 {
     float px = (float)((x - xo) * partialTicks + xo - Particle::xOff);
     float py = (float)((y - yo) * partialTicks + yo - Particle::yOff);
@@ -66,9 +67,8 @@ void ExplodeParticle::tick()
     }
 }
 
-Particle* ExplodeParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
-                                                    double z, double xa, double ya, double za,
-                                                    arrayWithLength<int> params)
+Particle* ExplodeParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                    double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new ExplodeParticle(level, x, y, z, xa, ya, za);
 }

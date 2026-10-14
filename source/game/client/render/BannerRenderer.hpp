@@ -22,9 +22,8 @@ public:
     static void getUV(int atlasIndex, bool layered, float& u, float& v);
     static void setupLayeredParams(const std::vector<const BannerPattern*>* patterns,
                                    const std::vector<const DyeColor*>* colors, bool layered);
-    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                        float partialTicks, int breakProgress, bool bTranslucent, float alpha,
-                        bool bUseDisplayList);
+    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float partialTicks,
+                        int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList);
 
 private:
     BannerModel* mModel;

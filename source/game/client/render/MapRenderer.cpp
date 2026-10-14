@@ -36,7 +36,10 @@ bool sortByTexture(const MapDecoration& left, const MapDecoration& right)
 }
 
 MapRenderer::MapRenderer(Font* font, Options* options, Textures* textures)
-    : mTextures(textures), mMapInstances(), mOptions(options), mFont(font)
+    : mTextures(textures),
+      mMapInstances(),
+      mOptions(options),
+      mFont(font)
 {
 }
 
@@ -67,8 +70,7 @@ void MapRenderer::reloadColours()
     gMapColoursLoaded = false;
 }
 
-MapRenderer::MapInstance* MapRenderer::getMapInstance(
-    const boost::shared_ptr<MapItemSavedData>& data)
+MapRenderer::MapInstance* MapRenderer::getMapInstance(const boost::shared_ptr<MapItemSavedData>& data)
 {
     boost::unordered_map<std::wstring, MapInstance*>::iterator found = mMapInstances.find(data->id);
     if (found == mMapInstances.end())
@@ -79,8 +81,7 @@ MapRenderer::MapInstance* MapRenderer::getMapInstance(
     return found->second;
 }
 
-void MapRenderer::render(const boost::shared_ptr<MapItemSavedData>& data,
-                         const boost::shared_ptr<Player>& player)
+void MapRenderer::render(const boost::shared_ptr<MapItemSavedData>& data, const boost::shared_ptr<Player>& player)
 {
     getMapInstance(data)->draw(player);
 }
@@ -116,9 +117,11 @@ boost::shared_ptr<MapItemSavedData> MapRenderer::getData(MapInstance* instance)
     return boost::shared_ptr<MapItemSavedData>();
 }
 
-MapRenderer::MapInstance::MapInstance(MapRenderer* renderer,
-                                      const boost::shared_ptr<MapItemSavedData>& data)
-    : mRenderer(renderer), mData(data), mTexture(-1), mTextureDirty(false)
+MapRenderer::MapInstance::MapInstance(MapRenderer* renderer, const boost::shared_ptr<MapItemSavedData>& data)
+    : mRenderer(renderer),
+      mData(data),
+      mTexture(-1),
+      mTextureDirty(false)
 {
     mPixels = arrayWithLength<int>(16384, true);
     for (int i = 0; i < 16384; i++)
@@ -171,8 +174,8 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
         std::vector<MapDecoration>::const_iterator it;
         for (it = decorations.begin(); it != decorations.end(); ++it)
         {
-            if ((!noOverlayRendering || it->renderOnFrame()) && it->visible &&
-                (noOverlayRendering || it->getType() != &MapDecoration::Type::TYPES[7]))
+            if ((!noOverlayRendering || it->renderOnFrame()) && it->visible
+                && (noOverlayRendering || it->getType() != &MapDecoration::Type::TYPES[7]))
             {
                 unsigned int img = it->getImg();
                 int hash = it->hashCode();
@@ -186,8 +189,8 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
                         texture = image;
                     }
                     GlStateManager::pushMatrix();
-                    GlStateManager::translatef((float)it->getX() / 2.0f + 64.0f,
-                                                (float)it->getY() / 2.0f + 64.0f, depth);
+                    GlStateManager::translatef((float)it->getX() / 2.0f + 64.0f, (float)it->getY() / 2.0f + 64.0f,
+                                               depth);
                     GlStateManager::rotatef((float)(it->getRot() * 360) / 16.0f, 0.0f, 0.0f, 1.0f);
                     GlStateManager::scalef(4.0f, 4.0f, 3.0f);
                     GlStateManager::translatef(-0.125f, 0.125f, 0.0f);
@@ -224,7 +227,7 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
         int z = (int)std::floor(player->mZ);
         std::wstring text = formatwstr(L"X: %d, Y: %d, Z: %d", x, y, z);
         mRenderer->mFont->draw(text, 0, 0,
-            (int)Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Map_Text));
+                               (int)Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Map_Text));
     }
     GlStateManager::popMatrix();
 }

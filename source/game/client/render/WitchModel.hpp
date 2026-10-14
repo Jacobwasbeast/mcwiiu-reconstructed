@@ -13,7 +13,8 @@ class WitchModel : public VillagerModel
 {
 public:
     WitchModel(float scale, const ModelDefinition& modelDefinition = ModelDefinition());
-    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
+    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual std::wstring getName() { return L"villager.witch"; }
     int getModelVersion();
 

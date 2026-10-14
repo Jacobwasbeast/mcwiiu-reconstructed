@@ -12,13 +12,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/FallingBlock.hpp"
 
-FallingDustParticle::FallingDustParticle(Level* level,
-                                         double x,
-                                         double y,
-                                         double z,
-                                         float red,
-                                         float green,
-                                         float blue)
+FallingDustParticle::FallingDustParticle(Level* level, double x, double y, double z, float red, float green, float blue)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     mRotSpeed = (random.nextFloat() - 0.5f) * 0.1f;
@@ -35,14 +29,8 @@ FallingDustParticle::FallingDustParticle(Level* level,
     roll = random.nextFloat() * 6.2831855f;
 }
 
-void FallingDustParticle::render(BufferBuilder* buffer,
-                                 const boost::shared_ptr<Entity>& camera,
-                                 float partialTicks,
-                                 float xa,
-                                 float ya,
-                                 float za,
-                                 float xa2,
-                                 float za2)
+void FallingDustParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                 float xa, float ya, float za, float xa2, float za2)
 {
     Particle::size = m_size * Mth::clamp(((float)age + partialTicks) / (float)lifetime * 32.0f, 0.0f, 1.0f);
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
@@ -83,21 +71,15 @@ uint64_t FallingDustParticle::GetType()
     return PARTICLE_TYPE_FALLING_DUST;
 }
 
-Particle* FallingDustParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                         Level* level,
-                                                         double x,
-                                                         double y,
-                                                         double z,
-                                                         double xa,
-                                                         double ya,
-                                                         double za,
-                                                         arrayWithLength<int> params)
+Particle* FallingDustParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                        double xa, double ya, double za, arrayWithLength<int> params)
 {
     const BlockState* state = Block::stateByIdWithData(params.data[0]);
     if (state->getBlock() != Blocks::air && state->getRenderShape() == BLOCK_RENDER_INVISIBLE)
         return NULL;
 
-    unsigned int colour = Minecraft::GetInstance()->getBlockColors()->getColor(state, (LevelSource*)level, BlockPos(x, y, z));
+    unsigned int colour = Minecraft::GetInstance()->getBlockColors()->getColor(state, (LevelSource*)level,
+                                                                               BlockPos(x, y, z));
     if (state->getBlock()->instanceof(EBLOCK_TYPE_FALLING))
         colour = static_cast<FallingBlock*>(state->getBlock())->getDustColor(state);
     float red = (float)(int)((colour >> 16) & 0xff) / 255.0f;

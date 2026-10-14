@@ -23,7 +23,8 @@
 #include "game/world/block/MaterialTable.hpp"
 
 DrownedModel::DrownedModel(const ModelDefinition& definition)
-    : ZombieModel(C4JRender::eVertexType_Entity, C4JRender::ePixelShaderType_EntityEmissiveAlpha, definition, 0.0f, 0.0f, 64, 64, false, false, true)
+    : ZombieModel(C4JRender::eVertexType_Entity, C4JRender::ePixelShaderType_EntityEmissiveAlpha, definition, 0.0f,
+                  0.0f, 64, 64, false, false, true)
 {
     init(0.0f, definition);
 }
@@ -149,11 +150,15 @@ void DrownedModel::init(float scale, const ModelDefinition& definition)
     }
 }
 
-void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                             float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                             _SkinAdjustments skinAdjustments)
 {
-    ZombieModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+    ZombieModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                           skinAdjustments);
 
-    float swimAmount = eTYPE_DERIVED_FROM(EntityType::DROWNED, entity->GetType()) && boost::static_pointer_cast<Drowned>(entity)->getSwimAmount(limbSwingAmount) != 0.0f;
+    float swimAmount = eTYPE_DERIVED_FROM(EntityType::DROWNED, entity->GetType())
+                       && boost::static_pointer_cast<Drowned>(entity)->getSwimAmount(limbSwingAmount) != 0.0f;
 
     float swing = Mth::sin(mAttackTime * 3.1415927f);
     float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f);
@@ -180,7 +185,8 @@ void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     }
 }
 
-void DrownedModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks)
+void DrownedModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                   float partialTicks)
 {
     mRightArmPose = eArmPose_Empty;
     mLeftArmPose = eArmPose_Empty;
@@ -212,4 +218,3 @@ void DrownedModel::setAllVisible(bool visible)
     mRightPants->mShow = visible;
     mJacket->mShow = visible;
 }
-

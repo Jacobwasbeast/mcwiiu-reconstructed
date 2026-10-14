@@ -5,21 +5,14 @@
 
 #include "game/core/Mth.hpp"
 
-SnowShovelParticle::SnowShovelParticle(Level* level, double x, double y, double z,
-                                       double xa, double ya, double za)
+SnowShovelParticle::SnowShovelParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, xa, ya, za)
 {
     init(level, x, y, z, xa, ya, za, 1.0f);
 }
 
-void SnowShovelParticle::render(BufferBuilder* buffer,
-                                const boost::shared_ptr<Entity>& camera,
-                                float partialTicks,
-                                float xa,
-                                float ya,
-                                float za,
-                                float xa2,
-                                float za2)
+void SnowShovelParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                float xa, float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime * 32.0f;
     progress = Mth::clamp(progress, 0.0f, 1.0f);
@@ -50,8 +43,7 @@ void SnowShovelParticle::tick()
     }
 }
 
-void SnowShovelParticle::init(Level* level, double x, double y, double z,
-                              double xa, double ya, double za, float scale)
+void SnowShovelParticle::init(Level* level, double x, double y, double z, double xa, double ya, double za, float scale)
 {
     xd *= 0.1;
     yd *= 0.1;
@@ -76,15 +68,8 @@ uint64_t SnowShovelParticle::GetType()
     return ParticleKind::SNOW_SHOVEL;
 }
 
-Particle* SnowShovelParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                        Level* level,
-                                                        double x,
-                                                        double y,
-                                                        double z,
-                                                        double xa,
-                                                        double ya,
-                                                        double za,
-                                                        arrayWithLength<int> params)
+Particle* SnowShovelParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                       double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new SnowShovelParticle(level, x, y, z, xa, ya, za);
 }

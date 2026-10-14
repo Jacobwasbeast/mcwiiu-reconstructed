@@ -6,8 +6,8 @@
 class SimpleAnimatedParticle : public Particle
 {
 public:
-    SimpleAnimatedParticle(Level* level, double x, double y, double z,
-                           int texture, int frameCount, float verticalSpeed);
+    SimpleAnimatedParticle(Level* level, double x, double y, double z, int texture, int frameCount,
+                           float verticalSpeed);
     virtual ~SimpleAnimatedParticle() {}
     void setColor(int color);
     void setFadeColor(int color);
@@ -16,6 +16,7 @@ public:
     virtual int getLightColor(float partialTicks);
     virtual float getBrightness(float partialTicks);
     void setBaseAirFriction(float friction);
+
 protected:
     int texture;
     int frameCount;

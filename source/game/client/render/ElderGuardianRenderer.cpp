@@ -6,15 +6,14 @@
 
 static ResourceLocation ELDER_GUARDIAN_LOCATION(TN_MOB_GUARDIAN_ELDER);
 
-ElderGuardianRenderer::ElderGuardianRenderer(EntityRenderDispatcher* dispatcher)
-    : GuardianRenderer(dispatcher)
+ElderGuardianRenderer::ElderGuardianRenderer(EntityRenderDispatcher* dispatcher) : GuardianRenderer(dispatcher)
 {
 }
 
 void ElderGuardianRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
 {
     GlStateManager::scalef(ElderGuardian::ELDER_SIZE_SCALE, ElderGuardian::ELDER_SIZE_SCALE,
-                          ElderGuardian::ELDER_SIZE_SCALE);
+                           ElderGuardian::ELDER_SIZE_SCALE);
 }
 
 const ResourceLocation* ElderGuardianRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

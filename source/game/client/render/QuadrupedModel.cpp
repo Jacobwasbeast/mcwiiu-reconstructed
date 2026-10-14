@@ -54,12 +54,10 @@ QuadrupedModel::QuadrupedModel(int legHeight, float scale, const ModelDefinition
     compileSkinnedDrawlist();
 }
 
-void QuadrupedModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                            float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                            bool useDisplayList)
+void QuadrupedModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                            float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
-              _SkinAdjustments());
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     if (mModelOverridden)
     {
@@ -126,9 +124,9 @@ void QuadrupedModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, 
     callSkinnedDrawlist();
 }
 
-void QuadrupedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
-                               float netHeadYaw, float headPitch, float scale,
-                               boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void QuadrupedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                               float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                               _SkinAdjustments skinAdjustments)
 {
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
     mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;

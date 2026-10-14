@@ -6,8 +6,7 @@
 static ResourceLocation TIPPABLE_ARROW_LOCATION(TN_ITEM_ARROWS);
 static ResourceLocation TIPPED_ARROW_LOCATION(TN_ITEM_TIPPED_ARROW);
 
-TippableArrowRenderer::TippableArrowRenderer(EntityRenderDispatcher* dispatcher)
-    : ArrowRenderer(dispatcher)
+TippableArrowRenderer::TippableArrowRenderer(EntityRenderDispatcher* dispatcher) : ArrowRenderer(dispatcher)
 {
 }
 

@@ -7,18 +7,15 @@
 class SuspendedParticle : public Particle
 {
 public:
-    SuspendedParticle(Level* level, double x, double y, double z,
-                      double xa, double ya, double za);
+    SuspendedParticle(Level* level, double x, double y, double z, double xa, double ya, double za);
     virtual void tick();
     virtual uint64_t GetType();
 
     class Provider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level,
-                                          double x, double y, double z,
-                                          double xa, double ya, double za,
-                                          arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 };
 

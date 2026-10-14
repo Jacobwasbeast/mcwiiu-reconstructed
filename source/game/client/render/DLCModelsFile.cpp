@@ -1,7 +1,6 @@
 #include "game/client/render/DLCModelsFile.hpp"
 
-DLCModelsFile::DLCModelsFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_Models, path)
+DLCModelsFile::DLCModelsFile(const std::wstring& path) : DLCFile(DLCManager::eDLCType_Models, path)
 {
 }
 

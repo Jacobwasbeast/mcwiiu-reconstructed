@@ -20,17 +20,19 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/FireBlock.hpp"
 
-FireballRenderer::FireballRenderer(EntityRenderDispatcher* dispatcher,
-                                   float scale)
-    : EntityRenderer(dispatcher), mScale(scale) {
+FireballRenderer::FireballRenderer(EntityRenderDispatcher* dispatcher, float scale)
+    : EntityRenderer(dispatcher),
+      mScale(scale)
+{
 }
 
-FireballRenderer::~FireballRenderer() {
+FireballRenderer::~FireballRenderer()
+{
 }
 
-void FireballRenderer::render(boost::shared_ptr<Entity>& entity, double x,
-                              double y, double z, float yaw,
-                              float partialTick) {
+void FireballRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                              float partialTick)
+{
     boost::shared_ptr<Fireball> fireball = boost::static_pointer_cast<Fireball>(entity);
 
     GlStateManager::pushMatrix();
@@ -53,7 +55,8 @@ void FireballRenderer::render(boost::shared_ptr<Entity>& entity, double x,
     float xo = 0.5F;
     float yo = 0.25F;
     GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
-    GlStateManager::rotatef((float)(mDispatcher->mOptions->mThirdPersonView == 2 ? -1 : 1) * -mDispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
+    GlStateManager::rotatef((float)(mDispatcher->mOptions->mThirdPersonView == 2 ? -1 : 1) * -mDispatcher->mCameraXRot,
+                            1.0F, 0.0F, 0.0F);
     if (mSolidRender)
         GlStateManager::enableColorMaterial();
 
@@ -71,8 +74,8 @@ void FireballRenderer::render(boost::shared_ptr<Entity>& entity, double x,
     EntityRenderer::render(entity, x, y, z, yaw, partialTick);
 }
 
-void FireballRenderer::renderFlame(boost::shared_ptr<Entity>& entity, double x,
-                                   double y, double z, float partialTick) {
+void FireballRenderer::renderFlame(boost::shared_ptr<Entity>& entity, double x, double y, double z, float partialTick)
+{
     GlStateManager::disableLighting();
     FireBlock* fire = static_cast<FireBlock*>(Blocks::fire);
     TextureAtlasSprite* sprite = fire->getTextureLayer(0);
@@ -107,7 +110,7 @@ void FireballRenderer::renderFlame(boost::shared_ptr<Entity>& entity, double x,
     GlStateManager::enableLighting();
 }
 
-const ResourceLocation* FireballRenderer::getTextureLocation(
-    boost::shared_ptr<Entity>& entity) {
+const ResourceLocation* FireballRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+{
     return &ITEM_LOCATION;
 }

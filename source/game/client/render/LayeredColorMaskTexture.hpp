@@ -13,8 +13,7 @@ class ResourceManager;
 class LayeredColorMaskTexture : public AbstractTexture
 {
 public:
-    LayeredColorMaskTexture(ResourceLocation* location,
-                            std::vector<std::wstring>* layerPaths,
+    LayeredColorMaskTexture(ResourceLocation* location, std::vector<std::wstring>* layerPaths,
                             const std::vector<const DyeColor*>* colors);
 
     virtual void load(ResourceManager* resourceManager);

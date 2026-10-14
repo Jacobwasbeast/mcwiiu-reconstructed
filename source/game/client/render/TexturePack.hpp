@@ -16,10 +16,7 @@ class Textures;
 class TexturePack
 {
 public:
-    TexturePack()
-        : m_bHasAudio(false)
-    {
-    }
+    TexturePack() : m_bHasAudio(false) {}
 
     virtual ~TexturePack() {}
 
@@ -41,13 +38,9 @@ public:
     virtual bool isTerrainUpdateCompatible() = 0;
     virtual DLCPack* getDLCPack();
     virtual std::wstring getPath(bool bTitleUpdate, const char* pFileName);
-    virtual std::wstring getAnimationString(const std::wstring& fileName,
-                                            const std::wstring& animationName,
-                                            const std::wstring& defaultString,
-                                            bool bCheckParentPack) = 0;
-    virtual BufferedImage* getImageResource(const std::wstring& fileName,
-                                            bool bSingleImage,
-                                            bool bTitleUpdate,
+    virtual std::wstring getAnimationString(const std::wstring& fileName, const std::wstring& animationName,
+                                            const std::wstring& defaultString, bool bCheckParentPack) = 0;
+    virtual BufferedImage* getImageResource(const std::wstring& fileName, bool bSingleImage, bool bTitleUpdate,
                                             const std::wstring& path) = 0;
     virtual void loadColourTable() = 0;
     virtual void loadMaterialTable() = 0;

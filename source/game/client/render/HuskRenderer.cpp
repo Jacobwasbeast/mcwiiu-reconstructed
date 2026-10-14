@@ -6,8 +6,7 @@
 
 static ResourceLocation HUSK_LOCATION(TN_MOB_ZOMBIE_HUSK);
 
-HuskRenderer::HuskRenderer(EntityRenderDispatcher* dispatcher)
-    : ZombieRenderer(dispatcher)
+HuskRenderer::HuskRenderer(EntityRenderDispatcher* dispatcher) : ZombieRenderer(dispatcher)
 {
 }
 

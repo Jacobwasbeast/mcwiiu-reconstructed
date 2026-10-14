@@ -37,7 +37,12 @@
 static ResourceLocation sShadowTexture(TN_CLAMP_MISC_SHADOW);
 
 EntityRenderer::EntityRenderer(EntityRenderDispatcher* dispatcher)
-    : mDispatcher(dispatcher), mShadowRadius(0.0F), mShadowStrength(1.0F), mSolidRender(false), mModel(NULL), mOriginalModel(NULL)
+    : mDispatcher(dispatcher),
+      mShadowRadius(0.0F),
+      mShadowStrength(1.0F),
+      mSolidRender(false),
+      mModel(NULL),
+      mOriginalModel(NULL)
 {
 }
 
@@ -46,8 +51,8 @@ bool EntityRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* cul
     AABB* box = entity->getBoundingBoxForCulling()->grow(0.5);
     if (box->hasNaN() || box->getSize() == 0.0)
     {
-        box = AABB::newTemp(entity->mX - 2.0, entity->mY - 2.0, entity->mZ - 2.0,
-                            entity->mX + 2.0, entity->mY + 2.0, entity->mZ + 2.0);
+        box = AABB::newTemp(entity->mX - 2.0, entity->mY - 2.0, entity->mZ - 2.0, entity->mX + 2.0, entity->mY + 2.0,
+                            entity->mZ + 2.0);
     }
 
     return entity->shouldRender(x, y, z) && (entity->mNoCulling || culler->isVisible(entity->mBoundingBox));
@@ -58,8 +63,8 @@ bool EntityRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* cul
     AABB* box = entity->getBoundingBoxForCulling()->grow(0.5);
     if (box->hasNaN() || box->getSize() == 0.0)
     {
-        box = AABB::newTemp(entity->mX - 2.0, entity->mY - 2.0, entity->mZ - 2.0,
-                            entity->mX + 2.0, entity->mY + 2.0, entity->mZ + 2.0);
+        box = AABB::newTemp(entity->mX - 2.0, entity->mY - 2.0, entity->mZ - 2.0, entity->mX + 2.0, entity->mY + 2.0,
+                            entity->mZ + 2.0);
     }
 
     return entity->shouldRender(distance) && (entity->mNoCulling || culler->isVisible(entity->mBoundingBox));
@@ -126,7 +131,8 @@ bool EntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
     return entity->shouldShowName() && entity->hasCustomName();
 }
 
-void EntityRenderer::renderNameTags(boost::shared_ptr<Entity>& entity, double x, double y, double z, const std::wstring& name, double, int color)
+void EntityRenderer::renderNameTags(boost::shared_ptr<Entity>& entity, double x, double y, double z,
+                                    const std::wstring& name, double, int color)
 {
     renderNameTag(entity, name, x, y, z, 64, color);
 }
@@ -220,7 +226,8 @@ void EntityRenderer::renderFlame(boost::shared_ptr<Entity>& entity, double x, do
     GlStateManager::enableLighting();
 }
 
-void EntityRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, double y, double z, float alpha, float partialTick)
+void EntityRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, double y, double z, float alpha,
+                                  float partialTick)
 {
     GlStateManager::disableLighting();
     GlStateManager::enableBlend();
@@ -308,7 +315,8 @@ void EntityRenderer::renderBlockShadow(const BlockState* state, double x, double
     builder->vertexUV((float)maxX, (float)minY, (float)minZ, maxU, minV);
 }
 
-void EntityRenderer::postRender(boost::shared_ptr<Entity>& entity, double x, double y, double z, float, float partialTick, bool renderShadowFlag)
+void EntityRenderer::postRender(boost::shared_ptr<Entity>& entity, double x, double y, double z, float,
+                                float partialTick, bool renderShadowFlag)
 {
     if (mDispatcher->mOptions != NULL)
     {
@@ -323,7 +331,8 @@ void EntityRenderer::postRender(boost::shared_ptr<Entity>& entity, double x, dou
 
         if (entity->displayFireAnimation())
         {
-            if (!(eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) && boost::static_pointer_cast<Player>(entity)->isSpectator()))
+            if (!(eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+                  && boost::static_pointer_cast<Player>(entity)->isSpectator()))
                 renderFlame(entity, x, y, z, partialTick);
         }
     }
@@ -334,7 +343,8 @@ Font* EntityRenderer::getFont()
     return mDispatcher->getFont();
 }
 
-void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std::wstring& name, double x, double y, double z, int maxDistance, int color)
+void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std::wstring& name, double x, double y,
+                                   double z, int maxDistance, int color)
 {
     boost::shared_ptr<Entity> camera = mDispatcher->mCamera;
     double distance = entity->distanceToSqr(camera);
@@ -376,10 +386,9 @@ void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std:
     }
 
     bool renderSneaking = sneaking && !Minecraft::InMiniGame(eMiniGameId_Any, true);
-    GameRenderer::renderNameTagInWorld(getFont(), displayName, (float)x, (float)y + yOffset, (float)z,
-                                       nameOffset, mDispatcher->mCameraYRot, mDispatcher->mCameraXRot,
-                                       mDispatcher->mOptions->mThirdPersonView == 2,
-                                       renderSneaking, color, alpha);
+    GameRenderer::renderNameTagInWorld(getFont(), displayName, (float)x, (float)y + yOffset, (float)z, nameOffset,
+                                       mDispatcher->mCameraYRot, mDispatcher->mCameraXRot,
+                                       mDispatcher->mOptions->mThirdPersonView == 2, renderSneaking, color, alpha);
 }
 
 bool EntityRenderer::hasSecondPass()

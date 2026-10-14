@@ -10,11 +10,10 @@
 
 static ResourceLocation PARTICLES_LOCATION(TN_MISC_EXPLOSION);
 
-AttackSweepParticle::AttackSweepParticle(Textures* textures, Level* level,
-                                         double x, double y, double z,
-                                         double xa, double ya, double za)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
-    , textures(textures)
+AttackSweepParticle::AttackSweepParticle(Textures* textures, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0),
+      textures(textures)
 {
     quadSize = (float)(1.0 - xa * 0.5);
     float colour = random.nextFloat() * 0.6f + 0.4f;
@@ -24,14 +23,8 @@ AttackSweepParticle::AttackSweepParticle(Textures* textures, Level* level,
     lifetime = 4;
 }
 
-void AttackSweepParticle::render(BufferBuilder* buffer,
-                                 const boost::shared_ptr<Entity>& camera,
-                                 float partialTicks,
-                                 float xa,
-                                 float ya,
-                                 float za,
-                                 float xa2,
-                                 float za2)
+void AttackSweepParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                 float xa, float ya, float za, float xa2, float za2)
 {
     int frame = (int)(((float)age + partialTicks) * 3.0f / (float)lifetime);
     if (frame > 7)
@@ -53,14 +46,10 @@ void AttackSweepParticle::render(BufferBuilder* buffer,
     Lighting::turnOff();
     buffer->begin(3);
     buffer->color(rCol, gCol, bCol);
-    buffer->vertexUV(px - xa * size - xa2 * size, py - ya * size * 0.5f,
-                     pz - za * size - za2 * size, u1, v1);
-    buffer->vertexUV(px - xa * size + xa2 * size, py + ya * size * 0.5f,
-                     pz - za * size + za2 * size, u1, v0);
-    buffer->vertexUV(px + xa * size + xa2 * size, py + ya * size * 0.5f,
-                     pz + za * size + za2 * size, u0, v0);
-    buffer->vertexUV(px + xa * size - xa2 * size, py - ya * size * 0.5f,
-                     pz + za * size - za2 * size, u0, v1);
+    buffer->vertexUV(px - xa * size - xa2 * size, py - ya * size * 0.5f, pz - za * size - za2 * size, u1, v1);
+    buffer->vertexUV(px - xa * size + xa2 * size, py + ya * size * 0.5f, pz - za * size + za2 * size, u1, v0);
+    buffer->vertexUV(px + xa * size + xa2 * size, py + ya * size * 0.5f, pz + za * size + za2 * size, u0, v0);
+    buffer->vertexUV(px + xa * size - xa2 * size, py - ya * size * 0.5f, pz + za * size - za2 * size, u0, v1);
     buffer->end();
     GlStateManager::enableLighting();
 }
@@ -90,11 +79,8 @@ uint64_t AttackSweepParticle::GetType()
     return ParticleKind::ATTACK_SWEEP;
 }
 
-Particle* AttackSweepParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                         double x, double y, double z,
-                                                         double xa, double ya, double za,
-                                                         arrayWithLength<int> params)
+Particle* AttackSweepParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                        double xa, double ya, double za, arrayWithLength<int> params)
 {
-    return new AttackSweepParticle(Minecraft::GetInstance()->mTextures, level,
-                                   x, y, z, xa, ya, za);
+    return new AttackSweepParticle(Minecraft::GetInstance()->mTextures, level, x, y, z, xa, ya, za);
 }

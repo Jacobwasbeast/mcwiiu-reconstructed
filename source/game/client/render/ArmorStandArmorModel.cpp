@@ -11,7 +11,8 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/Vec3.hpp"
 
-namespace {
+namespace
+{
 
 const float RADIANS_PER_DEGREE = 0.017453292f;
 
@@ -26,7 +27,9 @@ ArmorStandArmorModel::~ArmorStandArmorModel()
 {
 }
 
-void ArmorStandArmorModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void ArmorStandArmorModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                                     float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                                     _SkinAdjustments skinAdjustments)
 {
     if (eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity.get()->GetType()))
     {

@@ -62,13 +62,18 @@ public:
 
     HumanoidModel(const ModelDefinition& definition, bool armourModel);
     HumanoidModel(const ModelDefinition& definition, float scale, bool armourModel);
-    HumanoidModel(const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, bool skinned);
-    HumanoidModel(C4JRender::eVertexType vertexType, C4JRender::ePixelShaderType pixelShaderType, const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, bool skinned);
+    HumanoidModel(const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight,
+                  bool armourModel, bool createParts, bool skinned);
+    HumanoidModel(C4JRender::eVertexType vertexType, C4JRender::ePixelShaderType pixelShaderType,
+                  const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight,
+                  bool armourModel, bool createParts, bool skinned);
 
     virtual ~HumanoidModel() {}
 
-    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
-    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
+    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual ModelPart* AddOrRetrievePart(SKIN_BOX* skinBox, unsigned int armourFlags);
     virtual void copyPropertiesFrom(Model* model);
     virtual void render(HumanoidModel* model, float scale, bool useDisplayList);
@@ -77,9 +82,11 @@ public:
     virtual void setArmPose(const HumanoidArm* arm, eArmPose pose);
     virtual void setArmPose(boost::shared_ptr<Entity> entity, eArmPose pose, bool useAttackArm);
 
-    void _init(float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, const ModelDefinition& definition, bool skinned);
+    void _init(float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts,
+               const ModelDefinition& definition, bool skinned);
 
-    ModelPart* createModelPart(bool skinned, const std::wstring& name, const ModelDefinition& definition, ModelPart* parent, float scale);
+    ModelPart* createModelPart(bool skinned, const std::wstring& name, const ModelDefinition& definition,
+                               ModelPart* parent, float scale);
     ModelPart* createModelPart(bool skinned, int xTexOffs, int yTexOffs);
 
     void overrideAnim();
@@ -87,7 +94,8 @@ public:
 
     bool IsBodyPartDisabled(animbits bodyPart);
 
-    void setupBoneMatrices(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    void setupBoneMatrices(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                           float netHeadYaw, float headPitch, float scale, bool useDisplayList);
     void setupBoneMatrices(HumanoidModel* model, float scale, bool useDisplayList);
 
     const HumanoidArm* getAttackArm(boost::shared_ptr<Entity> entity);

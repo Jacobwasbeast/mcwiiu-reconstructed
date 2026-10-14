@@ -7,8 +7,7 @@
 class SpellParticle : public Particle
 {
 public:
-    SpellParticle(Level* level, double x, double y, double z,
-                  double xa, double ya, double za);
+    SpellParticle(Level* level, double x, double y, double z, double xa, double ya, double za);
     virtual uint64_t GetType();
     virtual void tick();
     virtual bool isTransparent();
@@ -17,55 +16,43 @@ public:
     class AmbientMobProvider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level,
-                                          double x, double y, double z,
-                                          double xa, double ya, double za,
-                                          arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 
     class InstantProvider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level,
-                                          double x, double y, double z,
-                                          double xa, double ya, double za,
-                                          arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 
     class MobProvider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level,
-                                          double x, double y, double z,
-                                          double xa, double ya, double za,
-                                          arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 
     class Provider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level,
-                                          double x, double y, double z,
-                                          double xa, double ya, double za,
-                                          arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 
     class WinningInstantProvider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level,
-                                          double x, double y, double z,
-                                          double xa, double ya, double za,
-                                          arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 
     class WitchProvider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level,
-                                          double x, double y, double z,
-                                          double xa, double ya, double za,
-                                          arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 
 private:

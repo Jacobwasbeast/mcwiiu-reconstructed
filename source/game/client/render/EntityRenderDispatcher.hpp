@@ -35,16 +35,15 @@ public:
     EntityRenderer* getRenderer(unsigned long long type);
     PlayerRenderer* getPlayerRenderer(EPlayerModelType modelType);
     EntityRenderer* getRenderer(boost::shared_ptr<Entity> entity);
-    void prepare(Level* level, Font* font, boost::shared_ptr<Entity> camera,
-                 boost::shared_ptr<Entity> player, Options* options, float partialTicks);
+    void prepare(Level* level, Font* font, boost::shared_ptr<Entity> camera, boost::shared_ptr<Entity> player,
+                 Options* options, float partialTicks);
     bool hasSecondPass(boost::shared_ptr<Entity>& entity);
     bool shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double x, double y, double z);
     bool shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double distance);
-    void renderHitbox(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                      float yaw, float partialTicks, int color);
-    void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                float yaw, float partialTicks, bool renderOutlines, bool itemFrame,
-                bool renderShadow, bool renderLeash);
+    void renderHitbox(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTicks,
+                      int color);
+    void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTicks,
+                bool renderOutlines, bool itemFrame, bool renderShadow, bool renderLeash);
     void render(boost::shared_ptr<Entity>& entity, float partialTicks, bool renderOutlines);
     void renderSecondPass(boost::shared_ptr<Entity>& entity, float partialTicks);
     void setupForTexturePack(TexturePack* texturePack);

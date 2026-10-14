@@ -18,9 +18,8 @@ void SpitParticle::tick()
     yd -= 0.04 * (double)gravity + 0.004;
 }
 
-Particle* SpitParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
-                                                  double z, double xa, double ya, double za,
-                                                  arrayWithLength<int> params)
+Particle* SpitParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                 double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new SpitParticle(level, x, y, z, xa, ya, za);
 }

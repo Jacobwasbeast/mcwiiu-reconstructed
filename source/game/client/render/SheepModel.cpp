@@ -7,7 +7,8 @@
 #include "game/core/Sheep.hpp"
 
 SheepModel::SheepModel(const ModelDefinition& modelDefinition)
-    : QuadrupedModel(12, 0.0f, modelDefinition), mHeadEatAngleScale(0.0f)
+    : QuadrupedModel(12, 0.0f, modelDefinition),
+      mHeadEatAngleScale(0.0f)
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
@@ -35,8 +36,8 @@ SheepModel::SheepModel(const ModelDefinition& modelDefinition)
     }
 }
 
-void SheepModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                 float limbSwingAmount, float partialTicks)
+void SheepModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                 float partialTicks)
 {
     Model::prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
 
@@ -45,12 +46,10 @@ void SheepModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float 
     mHeadEatAngleScale = sheep->getHeadEatAngleScale(partialTicks);
 }
 
-void SheepModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
-                           float netHeadYaw, float headPitch, float scale,
-                           boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void SheepModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                              scale, entity, _SkinAdjustments());
+    QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                              _SkinAdjustments());
     mHead->mXRot = mHeadEatAngleScale;
 }
-

@@ -14,11 +14,10 @@ class Textures;
 class AttackSweepParticle : public Particle
 {
 public:
-    AttackSweepParticle(Textures* textures, Level* level, double x, double y, double z,
-                        double xa, double ya, double za);
-    virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
-                        float partialTicks, float xa, float ya, float za,
-                        float xa2, float za2);
+    AttackSweepParticle(Textures* textures, Level* level, double x, double y, double z, double xa, double ya,
+                        double za);
+    virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                        float ya, float za, float xa2, float za2);
     virtual int getLightColor(float partialTicks);
     virtual void tick();
     virtual int getParticleTexture();
@@ -27,10 +26,8 @@ public:
     class Provider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level,
-                                         double x, double y, double z,
-                                         double xa, double ya, double za,
-                                         arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 
 private:

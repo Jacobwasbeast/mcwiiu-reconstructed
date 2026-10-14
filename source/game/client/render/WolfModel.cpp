@@ -105,8 +105,8 @@ void WolfModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float
     }
     callSkinnedDrawlist();
 }
-void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                float limbSwingAmount, float partialTicks)
+void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                float partialTicks)
 {
     boost::shared_ptr<Wolf> wolf = boost::dynamic_pointer_cast<Wolf>(entity);
 
@@ -156,9 +156,8 @@ void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float l
     mBody->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.16f);
     mTail->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.2f);
 }
-void WolfModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                          float headPitch, float scale, boost::shared_ptr<Entity> entity,
-                          _SkinAdjustments skinAdjustments)
+void WolfModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                          float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;

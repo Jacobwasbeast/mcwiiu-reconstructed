@@ -14,9 +14,8 @@ class EnderCrystalModel : public Model
 public:
     EnderCrystalModel(float scale, bool renderBase, const ModelDefinition& modelDefinition = ModelDefinition());
 
-    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                        bool useDisplayList);
+    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList);
 
     ModelPartSkin* mCube;
     ModelPartSkin* mGlass;

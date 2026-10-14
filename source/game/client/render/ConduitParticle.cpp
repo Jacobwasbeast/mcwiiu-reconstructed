@@ -1,13 +1,7 @@
 #include "game/client/render/ConduitParticle.hpp"
 #include "game/world/Level.hpp"
 
-ConduitParticle::ConduitParticle(Level* level,
-                                 double x,
-                                 double y,
-                                 double z,
-                                 double xa,
-                                 double ya,
-                                 double za,
+ConduitParticle::ConduitParticle(Level* level, double x, double y, double z, double xa, double ya, double za,
                                  arrayWithLength<int> params)
     : Particle(level, x, y, z, xa, ya, za),
       m_startX(x),
@@ -33,8 +27,7 @@ ConduitParticle::ConduitParticle(Level* level,
     hasPhysics = false;
     lifetime = (int)lifetimeValue;
 
-    uvs = TextureUVCoordinateSet::fromOldSystem(levelRandom->nextInt(4) * 3 + 0xd0
-                                                + levelRandom->nextInt(0, 3));
+    uvs = TextureUVCoordinateSet::fromOldSystem(levelRandom->nextInt(4) * 3 + 0xd0 + levelRandom->nextInt(0, 3));
 }
 
 void ConduitParticle::tick()
@@ -58,15 +51,8 @@ uint64_t ConduitParticle::GetType()
     return PARTICLE_TYPE_CONDUIT;
 }
 
-Particle* ConduitParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                     Level* level,
-                                                     double x,
-                                                     double y,
-                                                     double z,
-                                                     double xa,
-                                                     double ya,
-                                                     double za,
-                                                     arrayWithLength<int> params)
+Particle* ConduitParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                    double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new ConduitParticle(level, x, y, z, xa, ya, za, params);
 }

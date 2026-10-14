@@ -11,8 +11,7 @@
 
 static ResourceLocation ENDER_CRYSTAL_LOCATION(TN_MOB_ENDERDRAGON_CRYSTAL);
 
-EnderCrystalRenderer::EnderCrystalRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+EnderCrystalRenderer::EnderCrystalRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
     mModelBase = new EnderCrystalModel(0.0F, true);
     mModelNoBase = new EnderCrystalModel(0.0F, false);
@@ -23,8 +22,8 @@ EnderCrystalRenderer::~EnderCrystalRenderer()
 {
 }
 
-void EnderCrystalRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                  float yaw, float partialTick)
+void EnderCrystalRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                  float partialTick)
 {
     boost::shared_ptr<EnderCrystal> crystal = boost::static_pointer_cast<EnderCrystal>(entity);
     float age = (float)crystal->mTime + partialTick;
@@ -63,10 +62,9 @@ void EnderCrystalRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         double offsetY = targetY - crystal->mY;
         double offsetZ = targetZ - crystal->mZ;
         GlStateManager::multiTexCoord2f(0.0F, 0.0F);
-        EnderDragonRenderer::renderCrystalBeams(
-            x + offsetX, (y - 0.3) + (double)(animation * 0.4F) + offsetY,
-            z + offsetZ, partialTick, targetX, targetY, targetZ,
-            crystal->mTime, crystal->mX, crystal->mY, crystal->mZ);
+        EnderDragonRenderer::renderCrystalBeams(x + offsetX, (y - 0.3) + (double)(animation * 0.4F) + offsetY,
+                                                z + offsetZ, partialTick, targetX, targetY, targetZ, crystal->mTime,
+                                                crystal->mX, crystal->mY, crystal->mZ);
     }
 
     EntityRenderer::render(entity, x, y, z, yaw, partialTick);
@@ -77,17 +75,16 @@ const ResourceLocation* EnderCrystalRenderer::getTextureLocation(boost::shared_p
     return &ENDER_CRYSTAL_LOCATION;
 }
 
-bool EnderCrystalRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,
-                                        double x, double y, double z)
+bool EnderCrystalRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double x, double y, double z)
 {
     return EntityRenderer::shouldRender(entity, culler, x, y, z)
-        || boost::static_pointer_cast<EnderCrystal>(entity)->getBeamTarget() != NULL;
+           || boost::static_pointer_cast<EnderCrystal>(entity)->getBeamTarget() != NULL;
 }
 
 bool EnderCrystalRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double distance)
 {
     return EntityRenderer::shouldRender(entity, culler, distance)
-        || boost::static_pointer_cast<EnderCrystal>(entity)->getBeamTarget() != NULL;
+           || boost::static_pointer_cast<EnderCrystal>(entity)->getBeamTarget() != NULL;
 }
 
 Model* EnderCrystalRenderer::createModel(const ModelDefinition& definition)

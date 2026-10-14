@@ -16,14 +16,11 @@ public:
     virtual ~MobRenderer() {}
 
     virtual bool shouldShowName(boost::shared_ptr<Entity>& entity);
-    virtual bool shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,
-                              double x, double y, double z);
-    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                        float yaw, float partialTick);
+    virtual bool shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double x, double y, double z);
+    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);
     void setLightColor(boost::shared_ptr<Entity>& entity);
     double lerp(double first, double second, double fraction);
-    virtual void renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, double z,
-                             float yaw, float partialTick);
+    virtual void renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, double z, float yaw, float partialTick);
 };
 
 #endif

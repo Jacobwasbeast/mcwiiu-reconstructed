@@ -7,16 +7,15 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 
-HugeExplosionSeedParticle::HugeExplosionSeedParticle(Level* level, double x, double y, double z,
-                                                     double xa, double ya, double za)
+HugeExplosionSeedParticle::HugeExplosionSeedParticle(Level* level, double x, double y, double z, double xa, double ya,
+                                                     double za)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     lifetime = 8;
 }
 
 void HugeExplosionSeedParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
-                                       float partialTicks, float xa, float ya, float za,
-                                       float xa2, float za2)
+                                       float partialTicks, float xa, float ya, float za, float xa2, float za2)
 {
 }
 
@@ -51,10 +50,9 @@ uint64_t HugeExplosionSeedParticle::GetType()
     return ParticleKind::HUGE_EXPLOSION_SEED;
 }
 
-Particle* HugeExplosionSeedParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                               double x, double y, double z,
-                                                               double xa, double ya, double za,
-                                                               arrayWithLength<int> params)
+Particle* HugeExplosionSeedParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                              double z, double xa, double ya, double za,
+                                                              arrayWithLength<int> params)
 {
     return new HugeExplosionSeedParticle(level, x, y, z, xa, ya, za);
 }

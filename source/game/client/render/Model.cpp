@@ -17,15 +17,18 @@ Model::~Model()
 {
 }
 
-void Model::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void Model::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                   float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
 }
 
-void Model::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void Model::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                      float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
 }
 
-void Model::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks)
+void Model::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                            float partialTicks)
 {
 }
 

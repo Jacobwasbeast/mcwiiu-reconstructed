@@ -5,7 +5,9 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
 
-VillagerModel::VillagerModel(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& modelDefinition) : Model()
+VillagerModel::VillagerModel(float scale, float yOffset, int texWidth, int texHeight,
+                             const ModelDefinition& modelDefinition)
+    : Model()
 {
     _init(scale, yOffset, texWidth, texHeight, modelDefinition);
 }
@@ -15,7 +17,8 @@ VillagerModel::VillagerModel(float scale, const ModelDefinition& modelDefinition
     _init(scale, 0.0f, 64, 64, modelDefinition);
 }
 
-void VillagerModel::_init(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& modelDefinition)
+void VillagerModel::_init(float scale, float yOffset, int texWidth, int texHeight,
+                          const ModelDefinition& modelDefinition)
 {
     if (modelDefinition.DoesOverrideModel())
     {
@@ -65,7 +68,8 @@ void VillagerModel::_init(float scale, float yOffset, int texWidth, int texHeigh
     }
 }
 
-void VillagerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void VillagerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                           float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
     if (mYoung)
@@ -86,7 +90,9 @@ void VillagerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, f
     callSkinnedDrawlist();
 }
 
-void VillagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void VillagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                              float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                              _SkinAdjustments skinAdjustments)
 {
     mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
@@ -98,4 +104,3 @@ void VillagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
     mLeg0->mYRot = 0.0f;
     mLeg1->mYRot = 0.0f;
 }
-

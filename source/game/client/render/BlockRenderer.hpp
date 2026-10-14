@@ -55,23 +55,31 @@ public:
     TextureAtlasSprite* getTextureOrMissing(TextureAtlasSprite* texture);
     TextureAtlasSprite* getTexture(const BlockState* state, const Direction* direction);
     TextureAtlasSprite* getTexture(Block* block, const Direction* direction);
-    TextureAtlasSprite* getTexture(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    TextureAtlasSprite* getTexture(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                   const Direction* direction);
     void setShape(const AABB* shape);
     void setShape(float x0, float y0, float z0, float x1, float y1, float z1);
     bool hasFixedTexture();
-    void renderFaceDown(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0, float v0, float u1, float v1);
+    void renderFaceDown(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0,
+                        float v0, float u1, float v1);
     void renderFaceDown(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture);
-    void renderFaceUp(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0, float v0, float u1, float v1);
+    void renderFaceUp(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0,
+                      float v0, float u1, float v1);
     void renderFaceUp(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture);
-    void renderNorth(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0, float v0, float u1, float v1);
+    void renderNorth(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0,
+                     float v0, float u1, float v1);
     void renderNorth(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture);
-    void renderSouth(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0, float v0, float u1, float v1);
+    void renderSouth(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0,
+                     float v0, float u1, float v1);
     void renderSouth(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture);
-    void renderWest(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0, float v0, float u1, float v1);
+    void renderWest(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0,
+                    float v0, float u1, float v1);
     void renderWest(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture);
-    void renderEast(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0, float v0, float u1, float v1);
+    void renderEast(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture, float u0,
+                    float v0, float u1, float v1);
     void renderEast(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture);
-    void tesselateCrossTexture(TextureAtlasSprite* texture, TextureAtlasSprite* overlay, float x, float y, float z, float scale);
+    void tesselateCrossTexture(TextureAtlasSprite* texture, TextureAtlasSprite* overlay, float x, float y, float z,
+                               float scale);
     void tesselateCrossTexture(const BlockState* state, float x, float y, float z, float scale);
     void tesselateStemTexture(const BlockState* state, float height, float x, float y, float z);
     void tesselateRowTexture(const BlockState* state, float x, float y, float z);
@@ -82,8 +90,10 @@ public:
     float getShadeBrightness(LevelSource* levelSource, const BlockPos& pos);
     int blend(int c0, int c1, int c2, int c3);
     int blend(int c0, int c1, int c2, int c3, double w0, double w1, double w2, double w3);
-    void AOCalculate(Block* block, LevelSource* levelSource, const BlockPos& pos, Direction::EDirection direction, bool shade, int color, bool ownBrightness, float red, float green, float blue, bool tint);
-    bool tesselateBlockInWorldWithAmbienceOcclusionTexLighting(const BlockState* state, const BlockPos& pos, float red, float green, float blue, int lightColor, bool tint);
+    void AOCalculate(Block* block, LevelSource* levelSource, const BlockPos& pos, Direction::EDirection direction,
+                     bool shade, int color, bool ownBrightness, float red, float green, float blue, bool tint);
+    bool tesselateBlockInWorldWithAmbienceOcclusionTexLighting(const BlockState* state, const BlockPos& pos, float red,
+                                                               float green, float blue, int lightColor, bool tint);
     bool hasLightOverride();
     bool tesselateBlockInWorld(const BlockState* state, const BlockPos& pos, float red, float green, float blue);
     bool tesselateBlockInWorld(const BlockState* state, const BlockPos& pos);
@@ -120,7 +130,8 @@ public:
     bool tesselateKelpInWorld(const BlockState* state, const BlockPos& pos);
     bool tessellateCoralFanInWorld(const BlockState* state, const BlockPos& pos);
     bool tessellateCoralFanHangInWorld(const BlockState* state, const BlockPos& pos);
-    void tesselateStemDirTexture(const BlockState* state, const Direction* direction, float height, float x, float y, float z);
+    void tesselateStemDirTexture(const BlockState* state, const Direction* direction, float height, float x, float y,
+                                 float z);
     bool tesselateStemInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateLilypadInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateRowInWorld(const BlockState* state, const BlockPos& pos);
@@ -142,11 +153,14 @@ public:
     bool tesselateDiodeInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateRepeaterInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateComparatorInWorld(const BlockState* state, const BlockPos& pos);
-    bool tesselatePistonBaseInWorld(const BlockState* state, const BlockPos& pos, bool forceExtended, const BlockState* actualState);
+    bool tesselatePistonBaseInWorld(const BlockState* state, const BlockPos& pos, bool forceExtended,
+                                    const BlockState* actualState);
     void renderPistonArmUpDown(float x0, float x1, float y0, float y1, float z0, float z1, float shade, float length);
-    void renderPistonArmNorthSouth(float x0, float x1, float y0, float y1, float z0, float z1, float shade, float length);
+    void renderPistonArmNorthSouth(float x0, float x1, float y0, float y1, float z0, float z1, float shade,
+                                   float length);
     void renderPistonArmEastWest(float x0, float x1, float y0, float y1, float z0, float z1, float shade, float length);
-    bool tesselatePistonExtensionInWorld(const BlockState* state, const BlockPos& pos, bool fullArm, const BlockState* actualState);
+    bool tesselatePistonExtensionInWorld(const BlockState* state, const BlockPos& pos, bool fullArm,
+                                         const BlockState* actualState);
     bool tesselateThinFenceInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateVineInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateFenceGateInWorld(const BlockState* state, const BlockPos& pos);
@@ -165,14 +179,18 @@ public:
     void tesselateTurtleEgg(const BlockState* state, const BlockPos& pos, float x, float y, float z);
     bool tesselateTurtleEggInWorld(const BlockState* state, const BlockPos& pos);
     bool tessellateSeagrassInWorld(const BlockState* state, const BlockPos& pos);
-    bool tessellateIndividualSeaPickleInWorld(const BlockState* state, const BlockPos& pos, double height, const Vec3* offset);
+    bool tessellateIndividualSeaPickleInWorld(const BlockState* state, const BlockPos& pos, double height,
+                                              const Vec3* offset);
     bool tessellateSeaPickleInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateCommandBlockInWorld(const BlockState* state, const BlockPos& pos);
-    bool tesselateInWorld(const BlockState* state, const BlockPos& pos, const BlockState* actualState, boost::shared_ptr<BlockEntity> blockEntity);
+    bool tesselateInWorld(const BlockState* state, const BlockPos& pos, const BlockState* actualState,
+                          boost::shared_ptr<BlockEntity> blockEntity);
     void tesselateInWorldFixedTexture(const BlockState* state, const BlockPos& pos, TextureAtlasSprite* texture);
-    bool tesselateInWorldNoCulling(const BlockState* state, const BlockPos& pos, const BlockState* actualState, boost::shared_ptr<BlockEntity> blockEntity);
+    bool tesselateInWorldNoCulling(const BlockState* state, const BlockPos& pos, const BlockState* actualState,
+                                   boost::shared_ptr<BlockEntity> blockEntity);
     void tesselatePistonBaseForceExtended(const BlockState* state, const BlockPos& pos, const BlockState* actualState);
-    void tesselatePistonArmNoCulling(const BlockState* state, const BlockPos& pos, bool shortHead, const BlockState* actualState);
+    void tesselatePistonArmNoCulling(const BlockState* state, const BlockPos& pos, bool shortHead,
+                                     const BlockState* actualState);
     void renderBlock(const BlockState* state, Level* level, const BlockPos& pos);
     void renderCube(const BlockState* state, float scale);
 
@@ -188,8 +206,10 @@ private:
     bool mFlipTexture;
     bool mRenderAllFaces;
     bool mUseInventoryTint;
+
 public:
     bool mUseColor;
+
 private:
     float mMinX;
     float mMaxX;

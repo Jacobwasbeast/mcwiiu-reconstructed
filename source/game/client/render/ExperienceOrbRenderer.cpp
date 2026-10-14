@@ -15,8 +15,7 @@
 
 static ResourceLocation sExperienceOrbTexture(TN_ITEM_XPORB);
 
-ExperienceOrbRenderer::ExperienceOrbRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+ExperienceOrbRenderer::ExperienceOrbRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
     mShadowRadius = 0.15F;
     mShadowStrength = 0.75F;
@@ -26,8 +25,8 @@ ExperienceOrbRenderer::~ExperienceOrbRenderer()
 {
 }
 
-void ExperienceOrbRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                    float yaw, float partialTick)
+void ExperienceOrbRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                   float partialTick)
 {
     if (mSolidRender)
         return;

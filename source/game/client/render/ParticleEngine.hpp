@@ -50,8 +50,7 @@ public:
     void createTrackingEmitter(boost::shared_ptr<Entity> entity, const ParticleType* type);
     void createTrackingEmitter(boost::shared_ptr<Entity> entity, const ParticleType* type, int count);
     void add(Particle* particle);
-    Particle* createParticle(ePARTICLE_TYPE type, double x, double y, double z,
-                             double xa, double ya, double za,
+    Particle* createParticle(ePARTICLE_TYPE type, double x, double y, double z, double xa, double ya, double za,
                              arrayWithLength<int> parameters, Level* level);
     void tickParticle(Particle* particle);
     void tickParticleList(ParticleList* particles);

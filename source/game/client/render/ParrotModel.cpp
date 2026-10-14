@@ -11,8 +11,7 @@
 #include "game/core/Parrot.hpp"
 #include "game/entity/mob/Entity.hpp"
 
-ParrotModel::ParrotModel(const ModelDefinition& modelDefinition)
-    : Model(), mAnimationState(1)
+ParrotModel::ParrotModel(const ModelDefinition& modelDefinition) : Model(), mAnimationState(1)
 {
     if (modelDefinition.DoesOverrideModel())
     {
@@ -120,9 +119,8 @@ ParrotModel::ParrotModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-void ParrotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                         bool useDisplayList)
+void ParrotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                         float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     mBody->render(scale, useDisplayList, false);
     mWing0->render(scale, useDisplayList, false);
@@ -134,9 +132,8 @@ void ParrotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     callSkinnedDrawlist();
 }
 
-void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
-                            float netHeadYaw, float headPitch, float scale,
-                            boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                            float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
     mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
@@ -209,8 +206,8 @@ void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     }
 }
 
-void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                  float limbSwingAmount, float partialTicks)
+void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                  float partialTicks)
 {
     mFeather->mXRot = mFeatherDefaultXRot;
     mBody->mXRot = mBodyDefaultXRot;
@@ -279,4 +276,3 @@ void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
         }
     }
 }
-

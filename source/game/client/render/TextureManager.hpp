@@ -24,14 +24,12 @@ public:
     unsigned int createTextureID();
     void registerName(const std::wstring& name, Texture* texture);
     void registerTexture(Texture* texture);
-    Texture* createTexture(const std::wstring& name, int type, int width, int height,
-                           int wrap, int format, int minFilter, int magFilter, bool mipmap,
-                           BufferedImage* image);
+    Texture* createTexture(const std::wstring& name, int type, int width, int height, int wrap, int format,
+                           int minFilter, int magFilter, bool mipmap, BufferedImage* image);
     std::wstring getTextureNameFromPath(const std::wstring& path);
     bool isAnimation(const std::wstring& name, TexturePack* texturePack);
     std::vector<Texture*>* createTextures(const std::wstring& path, bool singleImage);
-    Texture* createTexture(const std::wstring& name, int type, int width, int height,
-                           int format, bool mipmap);
+    Texture* createTexture(const std::wstring& name, int type, int width, int height, int format, bool mipmap);
     Texture* getTexture(const std::wstring& name);
     void registerTexture(const ResourceLocation* location, LayeredColorMaskTexture* texture);
     void registerTexture(const ResourceLocation* location, Texture* texture);

@@ -28,8 +28,7 @@ Model* VillagerGolemRenderer::createModel(const ModelDefinition& definition)
     return new VillagerGolemModel(0.0F, -7.0F, definition);
 }
 
-void VillagerGolemRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity,
-                                           float ageInTicks, float rotationYaw,
+void VillagerGolemRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw,
                                            float partialTicks)
 {
     boost::shared_ptr<VillagerGolem> golem = boost::static_pointer_cast<VillagerGolem>(entity);

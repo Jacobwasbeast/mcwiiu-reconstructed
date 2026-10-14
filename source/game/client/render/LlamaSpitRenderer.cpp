@@ -9,7 +9,8 @@
 static ResourceLocation LLAMA_SPIT_LOCATION(TN_MOB_LLAMA_SPIT);
 
 LlamaSpitRenderer::LlamaSpitRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher), mSpitModel(new LlamaSpitModel())
+    : EntityRenderer(dispatcher),
+      mSpitModel(new LlamaSpitModel())
 {
 }
 
@@ -19,16 +20,14 @@ LlamaSpitRenderer::~LlamaSpitRenderer()
         delete mSpitModel;
 }
 
-void LlamaSpitRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                               float yaw, float partialTick)
+void LlamaSpitRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                               float partialTick)
 {
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x, (float)y + 0.15F, (float)z);
 
-    GlStateManager::rotatef(entity->mYRotO + (entity->mYRot - entity->mYRotO) * partialTick - 90.0F,
-                            0.0F, 1.0F, 0.0F);
-    GlStateManager::rotatef(entity->mXRotO + (entity->mXRot - entity->mXRotO) * partialTick,
-                            0.0F, 0.0F, 1.0F);
+    GlStateManager::rotatef(entity->mYRotO + (entity->mYRot - entity->mYRotO) * partialTick - 90.0F, 0.0F, 1.0F, 0.0F);
+    GlStateManager::rotatef(entity->mXRotO + (entity->mXRot - entity->mXRotO) * partialTick, 0.0F, 0.0F, 1.0F);
 
     bindTexture(entity);
 

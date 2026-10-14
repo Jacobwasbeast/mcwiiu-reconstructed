@@ -25,14 +25,10 @@ public:
         std::wstring mColours;
     };
 
-    class IndexedBlockDef : public GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition,
-                            public BlockStackGetter
+    class IndexedBlockDef : public GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition, public BlockStackGetter
     {
     public:
-        IndexedBlockDef()
-        {
-            addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColours);
-        }
+        IndexedBlockDef() { addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColours); }
         virtual void getStack(TextureTheme::BlockStack& stack);
     };
 
@@ -45,14 +41,10 @@ public:
         int mMinimumWidth;
     };
 
-    class MaskedShaftsThemeRuleDefinition : public ShaftsLayerThemeRuleDefinition,
-                                             public BlockStackGetter
+    class MaskedShaftsThemeRuleDefinition : public ShaftsLayerThemeRuleDefinition, public BlockStackGetter
     {
     public:
-        MaskedShaftsThemeRuleDefinition()
-        {
-            addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColours);
-        }
+        MaskedShaftsThemeRuleDefinition() { addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColours); }
         virtual void getStack(TextureTheme::BlockStack& stack);
     };
 

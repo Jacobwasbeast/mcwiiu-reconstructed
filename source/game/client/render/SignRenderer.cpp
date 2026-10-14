@@ -43,17 +43,16 @@ void SignRenderer::CensorString(std::wstring& text)
     if (text.compare(L" ") != 0)
     {
         unsigned int language = XGetLanguage();
-        if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN || language == XC_LANGUAGE_TCHINESE ||
-            language == XC_LANGUAGE_ZH_HANS)
+        if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN || language == XC_LANGUAGE_TCHINESE
+            || language == XC_LANGUAGE_ZH_HANS)
             text = L"Censored";
         else
             text = L10N::GetString(IDS_STRINGVERIFY_CENSORED);
     }
 }
 
-void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                          float partialTicks, int breakProgress, bool translucent, float alpha,
-                          bool useDisplayList)
+void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float partialTicks,
+                          int breakProgress, bool translucent, float alpha, bool useDisplayList)
 {
     boost::shared_ptr<SignBlockEntity> sign = boost::static_pointer_cast<SignBlockEntity>(blockEntity);
     Block* block = sign->getBlock();
@@ -155,8 +154,8 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
             for (int line = 0; line < 4; ++line)
             {
                 text = std::wstring(sign->mMessages[line]);
-                if ((mCensorText || sign->wasCreatedByRestrictedPlayer()) && !localCreator &&
-                    !(CGameNetworkManager::sInstance.IsHost() && sign->wasCreatedByHostPlayer()))
+                if ((mCensorText || sign->wasCreatedByRestrictedPlayer()) && !localCreator
+                    && !(CGameNetworkManager::sInstance.IsHost() && sign->wasCreatedByHostPlayer()))
                 {
                     CensorString(text);
                 }
@@ -165,8 +164,8 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
                     if (sign->IsCensored())
                         CensorString(text);
                 }
-                else if (mLanguage == XC_LANGUAGE_JAPANESE || mLanguage == XC_LANGUAGE_KOREAN || mLanguage == XC_LANGUAGE_TCHINESE ||
-                         mLanguage == XC_LANGUAGE_ZH_HANS)
+                else if (mLanguage == XC_LANGUAGE_JAPANESE || mLanguage == XC_LANGUAGE_KOREAN
+                         || mLanguage == XC_LANGUAGE_TCHINESE || mLanguage == XC_LANGUAGE_ZH_HANS)
                 {
                     text = L"Awaiting Approval";
                 }
@@ -178,8 +177,7 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
                 if (line == sign->mSelectedLine)
                     text = L"> " + text + L" <";
 
-                rendered &= font->drawNoBeginEndBuilder(text, -font->width(text) / 2,
-                                                        line * 10 - 20, (int)colour);
+                rendered &= font->drawNoBeginEndBuilder(text, -font->width(text) / 2, line * 10 - 20, (int)colour);
             }
             builder->end();
 

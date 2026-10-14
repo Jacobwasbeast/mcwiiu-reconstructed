@@ -8,8 +8,7 @@
 
 static ResourceLocation* DOLPHIN_LOCATION = new ResourceLocation(TN_MOB_DOLPHIN);
 
-DolphinRenderer::DolphinRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new DolphinModel(), 0.7F)
+DolphinRenderer::DolphinRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new DolphinModel(), 0.7F)
 {
     addLayer(new DolphinCarryingItemLayer(this));
 }

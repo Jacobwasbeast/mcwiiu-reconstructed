@@ -71,14 +71,14 @@ void DLCTexturePack::loadDescription()
 }
 
 DLCTexturePack::DLCTexturePack(unsigned int id, DLCPack* pack, TexturePack* parentPack)
-    : AbstractTexturePack(id, NULL, pack->getName(), parentPack)
-    , m_dlcPack(pack)
-    , m_loadedPack(NULL)
-    , m_uiLoaded(false)
-    , m_loadingData(false)
-    , m_hasData(false)
-    , m_hasValidData(false)
-    , m_archiveFile(NULL)
+    : AbstractTexturePack(id, NULL, pack->getName(), parentPack),
+      m_dlcPack(pack),
+      m_loadedPack(NULL),
+      m_uiLoaded(false),
+      m_loadingData(false),
+      m_hasData(false),
+      m_hasValidData(false),
+      m_archiveFile(NULL)
 {
     if (gApp.getLevelGenerationOptions() != NULL)
         gApp.getLevelGenerationOptions()->setLoadedData();
@@ -165,8 +165,7 @@ std::wstring DLCTexturePack::getPath(bool bTitleUpdate, const char* pFileName)
     return L"";
 }
 
-std::wstring DLCTexturePack::getAnimationString(const std::wstring& fileName,
-                                                const std::wstring& animationName,
+std::wstring DLCTexturePack::getAnimationString(const std::wstring& fileName, const std::wstring& animationName,
                                                 const std::wstring& defaultString)
 {
     std::wstring result = L"";
@@ -179,7 +178,8 @@ std::wstring DLCTexturePack::getAnimationString(const std::wstring& fileName,
     return result;
 }
 
-BufferedImage* DLCTexturePack::getImageResource(const std::wstring& fileName, bool bSingleImage, bool bTitleUpdate, const std::wstring& path)
+BufferedImage* DLCTexturePack::getImageResource(const std::wstring& fileName, bool bSingleImage, bool bTitleUpdate,
+                                                const std::wstring& path)
 {
     if (m_loadedPack != NULL)
         return new BufferedImage(m_loadedPack, L"/" + fileName, bSingleImage);
@@ -188,9 +188,11 @@ BufferedImage* DLCTexturePack::getImageResource(const std::wstring& fileName, bo
 
 void DLCTexturePack::loadMaterialTable()
 {
-    if (m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Material, L"entityMaterials.bin", true, true))
+    if (m_loadedPack != NULL
+        && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Material, L"entityMaterials.bin", true, true))
     {
-        DLCMaterialFile* file = static_cast<DLCMaterialFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Material, L"entityMaterials.bin", true, true));
+        DLCMaterialFile* file = static_cast<DLCMaterialFile*>(
+            m_loadedPack->getFile(DLCManager::eDLCType_Material, L"entityMaterials.bin", true, true));
         m_pMaterialTable = file->m_pMaterialTable;
         m_materialTableLoaded = false;
     }
@@ -205,9 +207,11 @@ void DLCTexturePack::loadMaterialTable()
 
 void DLCTexturePack::loadColourTable()
 {
-    if (m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_ColourTable, L"colours.col", true, true))
+    if (m_loadedPack != NULL
+        && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_ColourTable, L"colours.col", true, true))
     {
-        DLCColourTableFile* file = static_cast<DLCColourTableFile*>(m_loadedPack->getFile(DLCManager::eDLCType_ColourTable, L"colours.col", true, true));
+        DLCColourTableFile* file = static_cast<DLCColourTableFile*>(
+            m_loadedPack->getFile(DLCManager::eDLCType_ColourTable, L"colours.col", true, true));
         m_pColourTable = file->m_pColourTable;
         m_colourTableLoaded = false;
     }
@@ -249,10 +253,12 @@ bool DLCTexturePack::isLoadingData()
 
 void DLCTexturePack::loadCustomModels()
 {
-    if (m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Models, L"models.bin", true, true))
+    if (m_loadedPack != NULL
+        && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Models, L"models.bin", true, true))
     {
         m_customModels.clear();
-        DLCModelsFile* file = static_cast<DLCModelsFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Models, L"models.bin", true, true));
+        DLCModelsFile* file = static_cast<DLCModelsFile*>(
+            m_loadedPack->getFile(DLCManager::eDLCType_Models, L"models.bin", true, true));
         ByteArrayInputStream byteStream(file->getData());
         DataInputStream stream(&byteStream);
         int version = stream.readInt();
@@ -268,9 +274,11 @@ void DLCTexturePack::loadCustomModels()
 
 void DLCTexturePack::loadBehaviours()
 {
-    if (m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Behaviours, L"behaviours.bin", true, true))
+    if (m_loadedPack != NULL
+        && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Behaviours, L"behaviours.bin", true, true))
     {
-        DLCBehavioursFile* file = static_cast<DLCBehavioursFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Behaviours, L"behaviours.bin", true, true));
+        DLCBehavioursFile* file = static_cast<DLCBehavioursFile*>(
+            m_loadedPack->getFile(DLCManager::eDLCType_Behaviours, L"behaviours.bin", true, true));
         ByteArrayInputStream byteStream(file->getData());
         DataInputStream stream(&byteStream);
         stream.readInt();
@@ -310,11 +318,8 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
         else
         {
             if (!gApp.mDLCManager.readDLCDataFile(
-                    numItemsAdded,
-                    gApp.getFilePath(pack->m_dlcPack->GetPackId(), dataPath, true, L"TPACK:"),
-                    pack->m_loadedPack,
-                    pack->m_dlcPack->GetPackId(),
-                    false))
+                    numItemsAdded, gApp.getFilePath(pack->m_dlcPack->GetPackId(), dataPath, true, L"TPACK:"),
+                    pack->m_loadedPack, pack->m_dlcPack->GetPackId(), false))
             {
                 delete pack->m_loadedPack;
                 pack->m_loadedPack = NULL;
@@ -323,8 +328,7 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
             {
                 if (pack->m_loadedPack != NULL)
                 {
-                    File mediaArchive(gApp.getFilePath(
-                        pack->m_dlcPack->GetPackId(), L"media.arc", true, L"TPACK:"));
+                    File mediaArchive(gApp.getFilePath(pack->m_dlcPack->GetPackId(), L"media.arc", true, L"TPACK:"));
                     if (mediaArchive.exists())
                     {
                         delete pack->m_archiveFile;
@@ -333,18 +337,14 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
 
                     DLCPack* parentPack = pack->m_dlcPack->GetParentPack();
                     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-                    if (options != NULL &&
-                        options->getParentPackId() == pack->m_dlcPack->GetPackId() &&
-                        !options->hasLoadedData())
+                    if (options != NULL && options->getParentPackId() == pack->m_dlcPack->GetPackId()
+                        && !options->hasLoadedData())
                     {
-                        LevelGenerationOptions::loadGameRulesHeaders(parentPack,
-                                                                     pack->m_stringTable,
-                                                                     options);
+                        LevelGenerationOptions::loadGameRulesHeaders(parentPack, pack->m_stringTable, options);
                         if (options->requiresBaseSave() && !options->getBaseSavePath().empty())
                         {
-                            File baseSave(gApp.getFilePath(
-                                pack->m_dlcPack->GetPackId(), options->getBaseSavePath(),
-                                true, L"TPACK:"));
+                            File baseSave(gApp.getFilePath(pack->m_dlcPack->GetPackId(), options->getBaseSavePath(),
+                                                           true, L"TPACK:"));
                             options->setBaseSaveData(baseSave);
                         }
                     }
@@ -442,15 +442,11 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
                         }
 
                         Minecraft::GetInstance()->mSoundEngine->SetStreamingSounds(
-                            musicStart, musicStart + musicCount - 1,
-                            menuStart, menuStart + menuCount - 1,
-                            bossStart, bossStart + bossCount - 1,
-                            miniGameStart, miniGameStart + miniGameCount - 1,
-                            creditsStart, creditsStart + creditsCount - 1,
-                            miniGame1Start, miniGame1Start + miniGame1Count - 1,
-                            miniGame2Start, miniGame2Start + miniGame2Count - 1,
-                            miniGame3Start, miniGame3Start + miniGame3Count - 1,
-                            miniGame4Start, miniGame4Start + miniGame4Count - 1,
+                            musicStart, musicStart + musicCount - 1, menuStart, menuStart + menuCount - 1, bossStart,
+                            bossStart + bossCount - 1, miniGameStart, miniGameStart + miniGameCount - 1, creditsStart,
+                            creditsStart + creditsCount - 1, miniGame1Start, miniGame1Start + miniGame1Count - 1,
+                            miniGame2Start, miniGame2Start + miniGame2Count - 1, miniGame3Start,
+                            miniGame3Start + miniGame3Count - 1, miniGame4Start, miniGame4Start + miniGame4Count - 1,
                             nextStart);
                     }
                 }
@@ -477,9 +473,8 @@ void DLCTexturePack::loadData()
     int mountIndex = m_dlcPack->GetDLCMountIndex();
     if (mountIndex >= 0)
     {
-        int result = gStorage->MountInstalledDLC(gProfile->GetPrimaryPad(),
-                                                 (unsigned int)mountIndex,
-                                                 packMounted, this, "TPACK");
+        int result = gStorage->MountInstalledDLC(gProfile->GetPrimaryPad(), (unsigned int)mountIndex, packMounted, this,
+                                                 "TPACK");
         if (result != 0x3e5)
         {
             loadColourTable();

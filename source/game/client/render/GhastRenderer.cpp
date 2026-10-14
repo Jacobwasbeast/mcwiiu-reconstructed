@@ -9,8 +9,7 @@
 static ResourceLocation GHAST_LOCATION(TN_MOB_GHAST);
 static ResourceLocation GHAST_SHOOTING_LOCATION(TN_MOB_GHAST_FIRE);
 
-GhastRenderer::GhastRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new GhastModel(), 0.5F)
+GhastRenderer::GhastRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new GhastModel(), 0.5F)
 {
 }
 

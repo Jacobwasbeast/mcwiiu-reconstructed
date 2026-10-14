@@ -8,28 +8,15 @@ class BlockState;
 class TerrainDustParticle : public TerrainParticle
 {
 public:
-    TerrainDustParticle(Level* level,
-                        double x,
-                        double y,
-                        double z,
-                        double xa,
-                        double ya,
-                        double za,
+    TerrainDustParticle(Level* level, double x, double y, double z, double xa, double ya, double za,
                         const BlockState* state);
     virtual uint64_t GetType();
 
     class Provider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type,
-                                          Level* level,
-                                          double x,
-                                          double y,
-                                          double z,
-                                          double xa,
-                                          double ya,
-                                          double za,
-                                          arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 };
 

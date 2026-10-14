@@ -10,7 +10,8 @@
 static ResourceLocation FANGS_LOCATION(TN_MOB_ILLAGER_FANGS);
 
 EvocationFangsRenderer::EvocationFangsRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher), mFangsModel(new EvocationFangsModel())
+    : EntityRenderer(dispatcher),
+      mFangsModel(new EvocationFangsModel())
 {
 }
 
@@ -19,8 +20,8 @@ EvocationFangsRenderer::~EvocationFangsRenderer()
     delete mFangsModel;
 }
 
-void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                    float yaw, float partialTick)
+void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                    float partialTick)
 {
     boost::shared_ptr<EvocationFangs> fangs = boost::static_pointer_cast<EvocationFangs>(entity);
     float progress = fangs->getAnimationProgress(partialTick);

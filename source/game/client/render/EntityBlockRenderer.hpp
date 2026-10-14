@@ -19,8 +19,7 @@ class EntityBlockRenderer
 public:
     EntityBlockRenderer();
 
-    void renderByItem(not_null_ptr<ItemInstance> item, float partialTicks,
-                      bool bTranslucent, bool bUseDisplayList);
+    void renderByItem(not_null_ptr<ItemInstance> item, float partialTicks, bool bTranslucent, bool bUseDisplayList);
 
     static EntityBlockRenderer* instance;
 

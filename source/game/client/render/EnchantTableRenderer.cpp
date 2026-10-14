@@ -21,9 +21,11 @@ EnchantTableRenderer::~EnchantTableRenderer()
     delete mBookModel;
 }
 
-void EnchantTableRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
+void EnchantTableRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+                                  int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
-    boost::shared_ptr<EnchantmentTableEntity> enchantmentTable = boost::static_pointer_cast<EnchantmentTableEntity>(blockEntity);
+    boost::shared_ptr<EnchantmentTableEntity> enchantmentTable = boost::static_pointer_cast<EnchantmentTableEntity>(
+        blockEntity);
 
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x + 0.5F, (float)y + 0.75F, (float)z + 0.5F);

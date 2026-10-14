@@ -19,8 +19,7 @@ public:
     ThrownItemRenderer(EntityRenderDispatcher* dispatcher, Item* item);
     virtual ~ThrownItemRenderer() {}
     void renderIcon(Tesselator* tesselator, TextureAtlasSprite* sprite);
-    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                        float yaw, float partialTick);
+    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual not_null_ptr<ItemInstance> getItem(boost::shared_ptr<Entity> entity);
 

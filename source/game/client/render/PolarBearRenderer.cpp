@@ -17,8 +17,8 @@ const ResourceLocation* PolarBearRenderer::getTextureLocation(boost::shared_ptr<
     return &POLAR_BEAR_LOCATION;
 }
 
-void PolarBearRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                               float yaw, float partialTick)
+void PolarBearRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                               float partialTick)
 {
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }

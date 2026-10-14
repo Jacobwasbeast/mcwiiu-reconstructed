@@ -41,15 +41,13 @@ const ResourceLocation* ZombieVillagerRenderer::getTextureLocation(boost::shared
     }
 }
 
-void ZombieVillagerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity,
-                                            float ageInTicks, float rotationYaw,
-                                            float partialTicks)
+void ZombieVillagerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
+                                            float rotationYaw, float partialTicks)
 {
     boost::shared_ptr<ZombieVillager> zombieVillager = boost::static_pointer_cast<ZombieVillager>(entity);
     if (zombieVillager->isConverting())
     {
-        rotationYaw += (float)(std::cos((double)zombieVillager->mTickCount * 3.25) *
-                               3.1415927410125732 * 0.25);
+        rotationYaw += (float)(std::cos((double)zombieVillager->mTickCount * 3.25) * 3.1415927410125732 * 0.25);
     }
 
     LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);

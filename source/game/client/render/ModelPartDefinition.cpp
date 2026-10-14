@@ -5,8 +5,17 @@
 #include "game/core/Mth.hpp"
 
 ModelPartDefinition::ModelPartDefinition()
-    : mX(0.0f), mY(0.0f), mZ(0.0f), mXRot(0.0f), mYRot(0.0f), mZRot(0.0f),
-      mCubeXRot(0.0f), mCubeYRot(0.0f), mCubeZRot(0.0f), mCubeCount(0), mCubes(0)
+    : mX(0.0f),
+      mY(0.0f),
+      mZ(0.0f),
+      mXRot(0.0f),
+      mYRot(0.0f),
+      mZRot(0.0f),
+      mCubeXRot(0.0f),
+      mCubeYRot(0.0f),
+      mCubeZRot(0.0f),
+      mCubeCount(0),
+      mCubes(0)
 {
 }
 
@@ -40,8 +49,8 @@ void ModelPartDefinition::AddCubes(ModelPart* part, float scale) const
     {
         const ModelPartCubeDefinition& cube = mCubes[i];
         float delta = cube.inflate + scale;
-        part->addBoxMapTex(cube.x, cube.y, cube.z, cube.width, cube.height, cube.depth,
-                           static_cast<int>(cube.texU), static_cast<int>(cube.texV), cube.mirror, delta);
+        part->addBoxMapTex(cube.x, cube.y, cube.z, cube.width, cube.height, cube.depth, static_cast<int>(cube.texU),
+                           static_cast<int>(cube.texV), cube.mirror, delta);
     }
 }
 

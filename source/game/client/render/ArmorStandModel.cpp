@@ -78,8 +78,8 @@ void ArmorStandModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
                                 float headPitch, float scale, boost::shared_ptr<Entity> entity,
                                 _SkinAdjustments skinAdjustments)
 {
-    ArmorStandArmorModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-                                    entity, skinAdjustments);
+    ArmorStandArmorModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                                    skinAdjustments);
 
     bool isArmorStand = eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity.get()->GetType());
     if (isArmorStand)
@@ -109,11 +109,9 @@ void ArmorStandModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
 }
 
 void ArmorStandModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                             float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                             bool useDisplayList)
+                             float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    setupBoneMatrices(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-                      useDisplayList);
+    setupBoneMatrices(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, useDisplayList);
     GlStateManager::pushMatrix();
 
     if (mYoung)

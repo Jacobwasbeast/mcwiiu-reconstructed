@@ -46,8 +46,8 @@ private:
 
 public:
     Font(Options* options, const std::wstring& name, Textures* textures, bool anaglyph,
-         ResourceLocation* textureLocation, int columns, int rows, int characterWidth,
-         int characterHeight, unsigned short* characterMap);
+         ResourceLocation* textureLocation, int columns, int rows, int characterWidth, int characterHeight,
+         unsigned short* characterMap);
 
     bool CharacterExists(wchar_t character);
     int MapCharacter(wchar_t character);

@@ -5,8 +5,15 @@
 #include "game/core/IntBuffer.hpp"
 
 OffsettedRenderList::OffsettedRenderList()
-    : x(0), y(0), z(0), cameraX(0.0f), cameraY(0.0f), cameraZ(0.0f),
-      glListBuffer(new IntBuffer(65536)), valid(false), bufferUploaded(false)
+    : x(0),
+      y(0),
+      z(0),
+      cameraX(0.0f),
+      cameraY(0.0f),
+      cameraZ(0.0f),
+      glListBuffer(new IntBuffer(65536)),
+      valid(false),
+      bufferUploaded(false)
 {
 }
 

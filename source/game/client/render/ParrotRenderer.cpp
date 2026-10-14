@@ -13,15 +13,11 @@
 #include "game/world/generation/Player.hpp"
 
 ResourceLocation PARROT_LOCATIONS[5] = {
-    ResourceLocation(TN_MOB_PARROT_PARROT_RED_BLUE),
-    ResourceLocation(TN_MOB_PARROT_PARROT_BLUE),
-    ResourceLocation(TN_MOB_PARROT_PARROT_GREEN),
-    ResourceLocation(TN_MOB_PARROT_PARROT_YELLOW_BLUE),
-    ResourceLocation(TN_MOB_PARROT_PARROT_GREY)
-};
+    ResourceLocation(TN_MOB_PARROT_PARROT_RED_BLUE), ResourceLocation(TN_MOB_PARROT_PARROT_BLUE),
+    ResourceLocation(TN_MOB_PARROT_PARROT_GREEN), ResourceLocation(TN_MOB_PARROT_PARROT_YELLOW_BLUE),
+    ResourceLocation(TN_MOB_PARROT_PARROT_GREY)};
 
-ParrotRenderer::ParrotRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new ParrotModel(), 0.3F)
+ParrotRenderer::ParrotRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new ParrotModel(), 0.3F)
 {
 }
 
@@ -32,8 +28,7 @@ const ResourceLocation* ParrotRenderer::getSpectateTextureLocation(boost::shared
 
 const ResourceLocation* ParrotRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         return getSpectateTextureLocation(boost::static_pointer_cast<MultiplayerLocalPlayer>(entity));
     }
@@ -65,8 +60,7 @@ float ParrotRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float part
         return getCustomBob(boost::static_pointer_cast<Parrot>(entity), partialTicks);
     }
 
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         return getCustomBob(boost::static_pointer_cast<Player>(entity), partialTicks);
     }

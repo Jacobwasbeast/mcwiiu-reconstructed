@@ -16,7 +16,8 @@ class TridentModel : public Model
 public:
     TridentModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
-    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList);
     virtual std::wstring getName() { return L"trident"; }
 
     ModelPartSkin* mPole;

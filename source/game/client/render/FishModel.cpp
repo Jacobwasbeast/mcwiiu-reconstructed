@@ -355,13 +355,12 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
     compileSkinnedDrawlist();
 }
 
-void FishModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                       float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                       bool useDisplayList)
+void FishModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                       float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     boost::shared_ptr<Fish> fish = boost::static_pointer_cast<Fish>(entity);
-    setupAnim(Mth::Lerp(fish->mSwimRotationOld, fish->mSwimRotation, 0.05f), limbSwingAmount, ageInTicks,
-              netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
+    setupAnim(Mth::Lerp(fish->mSwimRotationOld, fish->mSwimRotation, 0.05f), limbSwingAmount, ageInTicks, netHeadYaw,
+              headPitch, scale, entity, _SkinAdjustments());
     if (fish->mSwimFlag)
     {
         GlStateManager::pushMatrix();
@@ -378,9 +377,8 @@ void FishModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float
     }
 }
 
-void FishModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                          float headPitch, float scale, boost::shared_ptr<Entity> entity,
-                          _SkinAdjustments skinAdjustments)
+void FishModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                          float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     float swing = Mth::cos(limbSwing * Mth::DEG_TO_RAD * mAnimationScale);
     switch (mFishType)
@@ -406,8 +404,8 @@ void FishModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTic
     }
 }
 
-void FishModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                float limbSwingAmount, float partialTicks)
+void FishModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                float partialTicks)
 {
     if (!entity->isInWater())
     {

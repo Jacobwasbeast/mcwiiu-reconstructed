@@ -5,7 +5,13 @@
 #include <cmath>
 
 ViewportCuller::Face::Face(double x, double y, double z, float yaw, float pitch)
-    : mX(x), mY(y), mZ(z), mNormalX(0.0), mNormalY(0.0), mNormalZ(0.0), mDistance(0.0)
+    : mX(x),
+      mY(y),
+      mZ(z),
+      mNormalX(0.0),
+      mNormalY(0.0),
+      mNormalZ(0.0),
+      mDistance(0.0)
 {
     double yawRadians = (double)yaw * 0.017453292519943295;
     double pitchRadians = (double)pitch * 0.017453292519943295;
@@ -135,7 +141,9 @@ ViewportCuller::~ViewportCuller()
 }
 
 ViewportCuller::ViewportCuller(boost::shared_ptr<LivingEntity> entity, double partialTicks, float fov)
-    : mXOff(0.0), mYOff(0.0), mZOff(0.0)
+    : mXOff(0.0),
+      mYOff(0.0),
+      mZOff(0.0)
 {
     double angle = (double)fov * 0.5;
     mFaces[0] = Face(0.0, 0.0, 0.0, (float)-angle, 0.0f);
@@ -148,12 +156,8 @@ ViewportCuller::ViewportCuller(boost::shared_ptr<LivingEntity> entity, double pa
 
 bool ViewportCuller::isVisible(AABB* boundingBox)
 {
-    return cubeInFrustum(boundingBox->mMinX,
-                         boundingBox->mMinY,
-                         boundingBox->mMinZ,
-                         boundingBox->mMaxX,
-                         boundingBox->mMaxY,
-                         boundingBox->mMaxZ);
+    return cubeInFrustum(boundingBox->mMinX, boundingBox->mMinY, boundingBox->mMinZ, boundingBox->mMaxX,
+                         boundingBox->mMaxY, boundingBox->mMaxZ);
 }
 
 double ViewportCuller::_max(double x, double y, double z)

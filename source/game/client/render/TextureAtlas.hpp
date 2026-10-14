@@ -15,14 +15,12 @@
 class TextureAtlas : public IconRegister
 {
 public:
-    TextureAtlas(int iconType, const std::wstring& name, const std::wstring& path,
-                 BufferedImage* image, bool singleImage);
+    TextureAtlas(int iconType, const std::wstring& name, const std::wstring& path, BufferedImage* image,
+                 bool singleImage);
 
     void addIcon(bool singleImage, int x, int y, const std::wstring& name);
-    void addIconWithName(bool singleImage, int x, int y, const std::wstring& name,
-                         const std::wstring& spriteName);
-    void addIconSize(bool singleImage, int x, int y, const std::wstring& name,
-                     int width, int height);
+    void addIconWithName(bool singleImage, int x, int y, const std::wstring& name, const std::wstring& spriteName);
+    void addIconSize(bool singleImage, int x, int y, const std::wstring& name, int width, int height);
     void loadUVs();
     void makeTextureAnimated(TexturePack* pack, TextureAtlasSprite* sprite);
     void stitch();

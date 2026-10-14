@@ -15,10 +15,10 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-Font::Font(Options* options, const std::wstring& name, Textures* textures, bool,
-           ResourceLocation* textureLocation, int columns, int rows, int characterWidth,
-           int characterHeight, unsigned short* characterMap)
-    : mTextures(textures), mCharacterMap()
+Font::Font(Options* options, const std::wstring& name, Textures* textures, bool, ResourceLocation* textureLocation,
+           int columns, int rows, int characterWidth, int characterHeight, unsigned short* characterMap)
+    : mTextures(textures),
+      mCharacterMap()
 {
     const int characterCount = columns * rows;
     mCharWidths = new float[characterCount];
@@ -57,7 +57,8 @@ Font::Font(Options* options, const std::wstring& name, Textures* textures, bool,
             bool emptyColumn = true;
             for (int y = 0; y < mCharacterHeight && emptyColumn; ++y)
             {
-                const int pixel = pixels.data[(column * mCharacterWidth + x) + (row * mCharacterHeight + y) * imageWidth];
+                const int pixel =
+                    pixels.data[(column * mCharacterWidth + x) + (row * mCharacterHeight + y) * imageWidth];
                 if ((pixel >> 24) != 0)
                     emptyColumn = false;
             }
@@ -274,8 +275,8 @@ unsigned int Font::draw(const std::wstring& text, int x, int y, int color, bool 
     {
         if (darken)
             color = (color & 0xFCFCFC) >> 2 | (color & 0xFF000000);
-        GlStateManager::color4f((color >> 16 & 255) / 255.0f, (color >> 8 & 255) / 255.0f,
-                                (color & 255) / 255.0f, (color >> 24 & 255) / 255.0f);
+        GlStateManager::color4f((color >> 16 & 255) / 255.0f, (color >> 8 & 255) / 255.0f, (color & 255) / 255.0f,
+                                (color >> 24 & 255) / 255.0f);
         mX = static_cast<float>(x);
         mY = static_cast<float>(y);
         return draw(text, darken, useBuilder);

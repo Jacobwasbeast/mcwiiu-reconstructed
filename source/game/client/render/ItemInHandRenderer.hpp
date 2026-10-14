@@ -33,7 +33,8 @@ public:
     ItemInHandRenderer(Minecraft*);
     unsigned long long renderItem3D(Tesselator*, float, float, float, float, int, int, float, eItemRenderMode);
     void Reset();
-    void renderItem(boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>, ItemTransforms::TransformType, bool, int, bool);
+    void renderItem(boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>, ItemTransforms::TransformType, bool,
+                    int, bool);
     bool isTransparentBlock(Block*);
     void enableLight(float, float);
     void setLightValue(boost::shared_ptr<AbstractClientPlayer>);
@@ -59,6 +60,7 @@ public:
     void CalculateNewHandHeights(bool);
     void tick();
     void itemUsed(InteractionHand::EInteractionHand);
+
 private:
     Minecraft* mMinecraft;
     not_null_ptr<ItemInstance> mMainHandItem;

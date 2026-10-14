@@ -16,9 +16,8 @@ public:
     SignRenderer();
     virtual ~SignRenderer();
 
-    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                        float partialTicks, int breakProgress, bool translucent, float alpha,
-                        bool useDisplayList);
+    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float partialTicks,
+                        int breakProgress, bool translucent, float alpha, bool useDisplayList);
 
     void CensorString(std::wstring& text);
     void tick();

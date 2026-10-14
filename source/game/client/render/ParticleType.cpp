@@ -18,7 +18,8 @@ const ParticleType* PARTICLE_LARGE_SMOKE = new ParticleType("largesmoke", ePARTI
 const ParticleType* PARTICLE_SPELL = new ParticleType("spell", ePARTICLE_SPELL, false, 0);
 const ParticleType* PARTICLE_INSTANT_SPELL = new ParticleType("instantSpell", ePARTICLE_INSTANT_SPELL, false, 0);
 const ParticleType* PARTICLE_MOB_SPELL = new ParticleType("mobSpell", ePARTICLE_MOB_SPELL, false, 0);
-const ParticleType* PARTICLE_MOB_SPELL_AMBIENT = new ParticleType("mobSpellAmbient", ePARTICLE_MOB_SPELL_AMBIENT, false, 0);
+const ParticleType* PARTICLE_MOB_SPELL_AMBIENT = new ParticleType("mobSpellAmbient", ePARTICLE_MOB_SPELL_AMBIENT, false,
+                                                                  0);
 const ParticleType* PARTICLE_WITCH_MAGIC = new ParticleType("witchMagic", ePARTICLE_WITCH_MAGIC, false, 0);
 const ParticleType* PARTICLE_DRIP_WATER = new ParticleType("dripWater", ePARTICLE_DRIP_WATER, false, 0);
 const ParticleType* PARTICLE_DRIP_LAVA = new ParticleType("dripLava", ePARTICLE_DRIP_LAVA, false, 0);
@@ -28,7 +29,8 @@ const ParticleType* PARTICLE_TOWN_AURA = new ParticleType("townaura", ePARTICLE_
 const ParticleType* PARTICLE_NOTE = new ParticleType("note", ePARTICLE_NOTE, false, 0);
 const ParticleType* PARTICLE_PORTAL = new ParticleType("portal", ePARTICLE_PORTAL, false, 0);
 const ParticleType* PARTICLE_END_PORTAL = new ParticleType("endportal", ePARTICLE_END_PORTAL, false, 0);
-const ParticleType* PARTICLE_ENCHANTMENT_TABLE = new ParticleType("enchantmenttable", ePARTICLE_ENCHANTMENT_TABLE, false, 0);
+const ParticleType* PARTICLE_ENCHANTMENT_TABLE = new ParticleType("enchantmenttable", ePARTICLE_ENCHANTMENT_TABLE,
+                                                                  false, 0);
 const ParticleType* PARTICLE_ENDER = new ParticleType("ender", ePARTICLE_ENDER, false, 0);
 const ParticleType* PARTICLE_FLAME = new ParticleType("flame", ePARTICLE_FLAME, false, 0);
 const ParticleType* PARTICLE_LAVA = new ParticleType("lava", ePARTICLE_LAVA, false, 0);
@@ -48,7 +50,8 @@ const ParticleType* PARTICLE_TAKE = new ParticleType("take", ePARTICLE_TAKE, fal
 const ParticleType* PARTICLE_MOB_APPEARANCE = new ParticleType("mobappearance", ePARTICLE_MOB_APPEARANCE, true, 0);
 const ParticleType* PARTICLE_DRAGON_BREATH = new ParticleType("dragonbreath", ePARTICLE_DRAGON_BREATH, false, 0);
 const ParticleType* PARTICLE_END_ROD = new ParticleType("endRod", ePARTICLE_END_ROD, false, 0);
-const ParticleType* PARTICLE_DAMAGE_INDICATOR = new ParticleType("damageIndicator", ePARTICLE_DAMAGE_INDICATOR, true, 0);
+const ParticleType* PARTICLE_DAMAGE_INDICATOR = new ParticleType("damageIndicator", ePARTICLE_DAMAGE_INDICATOR, true,
+                                                                 0);
 const ParticleType* PARTICLE_SWEEP_ATTACK = new ParticleType("sweepAttack", ePARTICLE_SWEEP_ATTACK, true, 0);
 const ParticleType* PARTICLE_FALLING_DUST = new ParticleType("fallingdust", ePARTICLE_FALLING_DUST, false, 1);
 const ParticleType* PARTICLE_TOTEM = new ParticleType("totem", ePARTICLE_TOTEM, false, 0);
@@ -58,7 +61,8 @@ const ParticleType* PARTICLE_BUBBLE_POP = new ParticleType("bubble_pop", ePARTIC
 const ParticleType* PARTICLE_CURRENT_DOWN = new ParticleType("current_down", ePARTICLE_CURRENT_DOWN, false, 0);
 const ParticleType* PARTICLE_CONDUIT = new ParticleType("conduit", ePARTICLE_CONDUIT, false, 0);
 const ParticleType* PARTICLE_CHEST_REFILL = new ParticleType("chestrefill", ePARTICLE_CHEST_REFILL, false, 0);
-const ParticleType* PARTICLE_WINNING_INSTANT_SPELL = new ParticleType("instantSpell", ePARTICLE_WINNING_INSTANT_SPELL, false, 0);
+const ParticleType* PARTICLE_WINNING_INSTANT_SPELL = new ParticleType("instantSpell", ePARTICLE_WINNING_INSTANT_SPELL,
+                                                                      false, 0);
 
 static boost::unordered_map<ePARTICLE_TYPE, const ParticleType*> sParticleTypes;
 

@@ -7,13 +7,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/util/AABB.hpp"
 
-NetherPortalParticle::NetherPortalParticle(Level* level,
-                                           double x,
-                                           double y,
-                                           double z,
-                                           double xa,
-                                           double ya,
-                                           double za)
+NetherPortalParticle::NetherPortalParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, xa, ya, za)
 {
     xd = xa;
@@ -39,14 +33,8 @@ NetherPortalParticle::NetherPortalParticle(Level* level,
     setMiscTex(random.nextInt(8));
 }
 
-void NetherPortalParticle::render(BufferBuilder* buffer,
-                                  const boost::shared_ptr<Entity>& camera,
-                                  float partialTicks,
-                                  float xa,
-                                  float ya,
-                                  float za,
-                                  float xa2,
-                                  float za2)
+void NetherPortalParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                  float xa, float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     progress = 1.0f - progress;
@@ -107,15 +95,9 @@ uint64_t NetherPortalParticle::GetType()
     return ParticleKind::NETHER_PORTAL;
 }
 
-Particle* NetherPortalParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                          Level* level,
-                                                          double x,
-                                                          double y,
-                                                          double z,
-                                                          double xa,
-                                                          double ya,
-                                                          double za,
-                                                          arrayWithLength<int> params)
+Particle* NetherPortalParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                         double z, double xa, double ya, double za,
+                                                         arrayWithLength<int> params)
 {
     return new NetherPortalParticle(level, x, y, z, xa, ya, za);
 }

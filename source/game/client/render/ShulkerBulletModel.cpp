@@ -18,14 +18,17 @@ ShulkerBulletModel::ShulkerBulletModel(const ModelDefinition& modelDefinition)
     mBase->compile(0.0625f);
 }
 
-void ShulkerBulletModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void ShulkerBulletModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                                float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     mBase->render(scale, useDisplayList, false);
 }
 
-void ShulkerBulletModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void ShulkerBulletModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                                   float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                                   _SkinAdjustments skinAdjustments)
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 

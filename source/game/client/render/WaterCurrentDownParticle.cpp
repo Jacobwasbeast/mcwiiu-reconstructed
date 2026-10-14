@@ -43,12 +43,10 @@ void WaterCurrentDownParticle::tick()
     Block* block = level->getBlock(pos);
     Block* blockBelow = level->getBlock(pos.below());
     bool survives = block->ParticlesSurviveWithin()
-        || (blockBelow->ParticlesSurviveWithin() && state->getMaterial() == Material::AIR);
+                    || (blockBelow->ParticlesSurviveWithin() && state->getMaterial() == Material::AIR);
 
     Material* material = level->getBlockState(BlockPos(x, y, z))->getMaterial();
-    if (material != Material::WATER
-        && material != Material::BUBBLE_COLUMN
-        && !survives)
+    if (material != Material::WATER && material != Material::BUBBLE_COLUMN && !survives)
     {
         remove();
     }
@@ -91,9 +89,8 @@ uint64_t WaterCurrentDownParticle::GetType()
     return PARTICLE_TYPE_CURRENT_DOWN;
 }
 
-Particle* WaterCurrentDownParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                             double x, double y, double z,
-                                                             double xa, double ya, double za,
+Particle* WaterCurrentDownParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                             double z, double xa, double ya, double za,
                                                              arrayWithLength<int> params)
 {
     return new WaterCurrentDownParticle(level, x, y, z);

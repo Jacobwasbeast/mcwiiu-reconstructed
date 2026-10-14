@@ -11,9 +11,11 @@
 
 #include <algorithm>
 
-void MobSpawnerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
+void MobSpawnerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+                                int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
-    boost::shared_ptr<MobSpawnerBlockEntity> spawnerBlockEntity = boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);
+    boost::shared_ptr<MobSpawnerBlockEntity> spawnerBlockEntity = boost::static_pointer_cast<MobSpawnerBlockEntity>(
+        blockEntity);
 
     render(spawnerBlockEntity->getSpawner(), x, y, z, a);
 
@@ -41,7 +43,8 @@ void MobSpawnerRenderer::render(BaseMobSpawner* pSpawner, double x, double y, do
 
         GlStateManager::translatef(0.0F, 0.4F, 0.0F);
 
-        GlStateManager::rotatef((float)(pSpawner->getoSpin() + (pSpawner->getSpin() - pSpawner->getoSpin()) * a) * 10.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager::rotatef(
+            (float)(pSpawner->getoSpin() + (pSpawner->getSpin() - pSpawner->getoSpin()) * a) * 10.0F, 0.0F, 1.0F, 0.0F);
 
         GlStateManager::translatef(0.0F, -0.4F, 0.0F);
         GlStateManager::rotatef(-30.0F, 1.0F, 0.0F, 0.0F);
@@ -49,6 +52,7 @@ void MobSpawnerRenderer::render(BaseMobSpawner* pSpawner, double x, double y, do
 
         entity->moveTo(x, y, z, 0.0F, 0.0F);
 
-        Minecraft::GetInstance()->getEntityRenderDispatcher()->render(entity, 0.0, 0.0, 0.0, 0.0F, a, false, false, true, false);
+        Minecraft::GetInstance()->getEntityRenderDispatcher()->render(entity, 0.0, 0.0, 0.0, 0.0F, a, false, false,
+                                                                      true, false);
     }
 }

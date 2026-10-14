@@ -3,8 +3,7 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 
-LargeChestModel::LargeChestModel(const ModelDefinition& modelDefinition)
-    : ChestModel(ModelDefinition())
+LargeChestModel::LargeChestModel(const ModelDefinition& modelDefinition) : ChestModel(ModelDefinition())
 {
     mLid = (new ModelPart(this, 0, 0))->setTexSize(128, 64);
     mLid->addBox(0.0f, -5.0f, -14.0f, 30, 5, 14, 0.0f);
@@ -28,4 +27,3 @@ LargeChestModel::LargeChestModel(const ModelDefinition& modelDefinition)
     mLock->compile(0.0625f);
     mBottom->compile(0.0625f);
 }
-

@@ -40,8 +40,8 @@ Model* VillagerRenderer::getModel()
     return LivingEntityRenderer::getModel();
 }
 
-void VillagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                              float yaw, float partialTick)
+void VillagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                              float partialTick)
 {
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 

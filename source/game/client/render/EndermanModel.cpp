@@ -15,9 +15,9 @@
 #include "game/world/block/MaterialTable.hpp"
 
 EndermanModel::EndermanModel(float scale, const ModelDefinition& definition)
-    : HumanoidModel(definition, 0.0f, -14.0f, 64, 32, false, true, true)
-    , mModelParts(NULL)
-    , mNumModelParts(0)
+    : HumanoidModel(definition, 0.0f, -14.0f, 64, 32, false, true, true),
+      mModelParts(NULL),
+      mNumModelParts(0)
 {
     mCarrying = false;
     mCreepy = false;
@@ -117,22 +117,31 @@ void EndermanModel::createInvisibleModelParts(float scale, const ModelDefinition
     {
         mHasOverriddenParts = true;
 
-        mModelParts[eModelPart_InvisibleHead] = new ModelPartSkin(this, L"head", definition, NULL, 0.0f, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleHat] = new ModelPartSkin(this, L"hat", definition, NULL, 0.0f, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleBody] = new ModelPartSkin(this, L"body", definition, NULL, 0.0f, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleRightArm] = new ModelPartSkin(this, L"rightArm", definition, NULL, 0.0f, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleLeftArm] = new ModelPartSkin(this, L"leftArm", definition, NULL, 0.0f, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleRightLeg] = new ModelPartSkin(this, L"rightLeg", definition, NULL, 0.0f, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleLeftLeg] = new ModelPartSkin(this, L"leftLeg", definition, NULL, 0.0f, &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleHead] = new ModelPartSkin(this, L"head", definition, NULL, 0.0f,
+                                                                  &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleHat] = new ModelPartSkin(this, L"hat", definition, NULL, 0.0f,
+                                                                 &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleBody] = new ModelPartSkin(this, L"body", definition, NULL, 0.0f,
+                                                                  &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleRightArm] = new ModelPartSkin(this, L"rightArm", definition, NULL, 0.0f,
+                                                                      &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleLeftArm] = new ModelPartSkin(this, L"leftArm", definition, NULL, 0.0f,
+                                                                     &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleRightLeg] = new ModelPartSkin(this, L"rightLeg", definition, NULL, 0.0f,
+                                                                      &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleLeftLeg] = new ModelPartSkin(this, L"leftLeg", definition, NULL, 0.0f,
+                                                                     &mInvisibleParts);
 
         if (definition.hasModelPart(L"rightItem"))
         {
-            mModelParts[eModelPart_InvisibleLeftItem] = new ModelPartSkin(this, L"rightItem", definition, mRightArm, 0.0f, &mInvisibleParts);
+            mModelParts[eModelPart_InvisibleLeftItem] = new ModelPartSkin(this, L"rightItem", definition, mRightArm,
+                                                                          0.0f, &mInvisibleParts);
         }
 
         if (definition.hasModelPart(L"leftItem"))
         {
-            mModelParts[eModelPart_InvisibleRightItem] = new ModelPartSkin(this, L"leftItem", definition, mLeftArm, 0.0f, &mInvisibleParts);
+            mModelParts[eModelPart_InvisibleRightItem] = new ModelPartSkin(this, L"leftItem", definition, mLeftArm,
+                                                                           0.0f, &mInvisibleParts);
         }
     }
     else
@@ -176,9 +185,12 @@ void EndermanModel::createInvisibleModelParts(float scale, const ModelDefinition
     builder->useDefaultShaders();
 }
 
-void EndermanModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void EndermanModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                              float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                              _SkinAdjustments skinAdjustments)
 {
-    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                             skinAdjustments);
 
     mHead->mShow = true;
 
@@ -265,7 +277,8 @@ void EndermanModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
     }
 }
 
-void EndermanModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void EndermanModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                           float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     if (!entity->isInvisible())
     {
@@ -303,4 +316,3 @@ void EndermanModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, f
         callSkinnedDrawlist();
     }
 }
-

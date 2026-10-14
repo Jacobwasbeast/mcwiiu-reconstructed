@@ -61,8 +61,8 @@ void SheepRenderer::setColourState(boost::shared_ptr<Sheep> sheep, float partial
     }
 }
 
-void SheepRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                           float yaw, float partialTick)
+void SheepRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                           float partialTick)
 {
     if (mFurModel->hasOverriddenParts())
     {
@@ -72,14 +72,14 @@ void SheepRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }
 
-void SheepRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                 float limbSwingAmount, float partialTick, float ageInTicks,
-                                 float netHeadYaw, float headPitch, float scale, bool overlay)
+void SheepRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                 float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                                 bool overlay)
 {
     if (!mFurModel->hasOverriddenParts())
     {
-        LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, partialTick,
-                                           ageInTicks, netHeadYaw, headPitch, scale, overlay);
+        LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw,
+                                           headPitch, scale, overlay);
     }
 }
 

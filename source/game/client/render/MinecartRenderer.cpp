@@ -17,15 +17,14 @@
 
 static ResourceLocation MINECART_LOCATION(TN_ITEM_CART);
 
-MinecartRenderer::MinecartRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+MinecartRenderer::MinecartRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
     mShadowRadius = 0.5F;
     mModel = new MinecartModel();
 }
 
-void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                              float yaw, float partialTick)
+void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                              float partialTick)
 {
     boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
     GlStateManager::pushMatrix();
@@ -73,8 +72,8 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
         damage = 0.0F;
     if (hurtTime > 0.0F)
     {
-        GlStateManager::rotatef(Mth::sin(hurtTime) * hurtTime * damage / 10.0F * minecart->getHurtDir(),
-                                 1.0F, 0.0F, 0.0F);
+        GlStateManager::rotatef(Mth::sin(hurtTime) * hurtTime * damage / 10.0F * minecart->getHurtDir(), 1.0F, 0.0F,
+                                0.0F);
     }
 
     int displayOffset = minecart->getDisplayOffset();
@@ -98,8 +97,7 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     }
 
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
-    static_cast<MinecartModel*>(mModel)->render(entity, 0.0F, 0.0F, -0.1F, 0.0F, 0.0F,
-                                                0.0625F, true);
+    static_cast<MinecartModel*>(mModel)->render(entity, 0.0F, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, true);
     GlStateManager::popMatrix();
 
     if (mSolidRender)
@@ -116,8 +114,7 @@ const ResourceLocation* MinecartRenderer::getTextureLocation(boost::shared_ptr<E
     return &MINECART_LOCATION;
 }
 
-void MinecartRenderer::renderMinecartContents(boost::shared_ptr<Minecart>, float,
-                                              const BlockState* state)
+void MinecartRenderer::renderMinecartContents(boost::shared_ptr<Minecart>, float, const BlockState* state)
 {
     GlStateManager::pushMatrix();
     Minecraft::GetInstance()->getBlockRenderer()->renderSingleBlock(state, 1.0F, 1.0F, true);

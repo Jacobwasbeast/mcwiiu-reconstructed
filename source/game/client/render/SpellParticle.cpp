@@ -4,10 +4,8 @@
 #include "game/util/Math.hpp"
 #include "game/world/Level.hpp"
 
-SpellParticle::SpellParticle(Level* level, double x, double y, double z,
-                             double xa, double ya, double za)
-    : Particle(level, x, y, z, (0.5 - Math::random()) * 128.0, Math::random() * 255.0,
-               (0.5 - Math::random()) * 128.0)
+SpellParticle::SpellParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
+    : Particle(level, x, y, z, (0.5 - Math::random()) * 128.0, Math::random() * 255.0, (0.5 - Math::random()) * 128.0)
 {
     yd *= static_cast<double>(0.2f);
     if (xa == 0.0 && za == 0.0)
@@ -62,28 +60,23 @@ uint64_t SpellParticle::GetType()
     return ParticleKind::SPELL;
 }
 
-Particle* SpellParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                   double x, double y, double z,
-                                                   double xa, double ya, double za,
-                                                   arrayWithLength<int> params)
+Particle* SpellParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                  double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new SpellParticle(level, x, y, z, xa, ya, za);
 }
 
-Particle* SpellParticle::MobProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                      double x, double y, double z,
-                                                      double xa, double ya, double za,
-                                                      arrayWithLength<int> params)
+Particle* SpellParticle::MobProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                     double xa, double ya, double za, arrayWithLength<int> params)
 {
     SpellParticle* particle = new SpellParticle(level, x, y, z, xa, ya, za);
     particle->setColor((float)xa, (float)ya, (float)za);
     return particle;
 }
 
-Particle* SpellParticle::AmbientMobProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                             double x, double y, double z,
-                                                             double xa, double ya, double za,
-                                                             arrayWithLength<int> params)
+Particle* SpellParticle::AmbientMobProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                            double z, double xa, double ya, double za,
+                                                            arrayWithLength<int> params)
 {
     SpellParticle* particle = new SpellParticle(level, x, y, z, xa, ya, za);
     particle->setAlpha(0.15f);
@@ -91,27 +84,24 @@ Particle* SpellParticle::AmbientMobProvider::createParticle(ePARTICLE_TYPE type,
     return particle;
 }
 
-Particle* SpellParticle::InstantProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                          double x, double y, double z,
-                                                          double xa, double ya, double za,
-                                                          arrayWithLength<int> params)
+Particle* SpellParticle::InstantProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                         double z, double xa, double ya, double za,
+                                                         arrayWithLength<int> params)
 {
     SpellParticle* particle = new SpellParticle(level, x, y, z, xa, ya, za);
     particle->setBaseTex(0x90);
     return particle;
 }
 
-Particle* SpellParticle::WinningInstantProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                                 double x, double y, double z,
-                                                                 double xa, double ya, double za,
-                                                                 arrayWithLength<int> params)
+Particle* SpellParticle::WinningInstantProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                                double z, double xa, double ya, double za,
+                                                                arrayWithLength<int> params)
 {
     SpellParticle* particle = new SpellParticle(level, x, y, z, xa, ya, za);
     particle->setBaseTex(0x90);
     if (params.length == 4)
     {
-        particle->setColor((float)params.data[0] / 255.0f,
-                           (float)params.data[1] / 255.0f,
+        particle->setColor((float)params.data[0] / 255.0f, (float)params.data[1] / 255.0f,
                            (float)params.data[2] / 255.0f);
         particle->setAlpha((float)params.data[3] / 255.0f);
         delete[] params.data;
@@ -121,10 +111,8 @@ Particle* SpellParticle::WinningInstantProvider::createParticle(ePARTICLE_TYPE t
     return particle;
 }
 
-Particle* SpellParticle::WitchProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                        double x, double y, double z,
-                                                        double xa, double ya, double za,
-                                                        arrayWithLength<int> params)
+Particle* SpellParticle::WitchProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                       double xa, double ya, double za, arrayWithLength<int> params)
 {
     SpellParticle* particle = new SpellParticle(level, x, y, z, xa, ya, za);
     particle->setBaseTex(0x90);

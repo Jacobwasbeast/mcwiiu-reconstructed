@@ -11,12 +11,11 @@
 
 static ResourceLocation ENDER_CHEST_LOCATION(TN_ITEM_ENDERCHEST);
 
-void EnderChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                                float a, int breakProgress, bool bTranslucent, float alpha,
-                                bool bUseDisplayList)
+void EnderChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+                                int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
-    boost::shared_ptr<EnderChestBlockEntity> enderChest =
-        boost::static_pointer_cast<EnderChestBlockEntity>(blockEntity);
+    boost::shared_ptr<EnderChestBlockEntity> enderChest = boost::static_pointer_cast<EnderChestBlockEntity>(
+        blockEntity);
     int data = 0;
 
     if (enderChest->hasLevel())
@@ -77,8 +76,7 @@ void EnderChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
         GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
     }
 
-    float openness = enderChest->mOpenOld +
-        (enderChest->mOpen - enderChest->mOpenOld) * a;
+    float openness = enderChest->mOpenOld + (enderChest->mOpen - enderChest->mOpenOld) * a;
     openness = 1.0F - openness;
     openness = 1.0F - openness * openness * openness;
 

@@ -1,7 +1,6 @@
 #include "game/client/render/AreaEffectCloudRenderer.hpp"
 
-AreaEffectCloudRenderer::AreaEffectCloudRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+AreaEffectCloudRenderer::AreaEffectCloudRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
 }
 

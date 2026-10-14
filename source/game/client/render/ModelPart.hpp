@@ -19,7 +19,8 @@ public:
     ModelPart(Model* model, int xTexOffs, int yTexOffs);
     ModelPart(Model* model, int xTexOffs, int yTexOffs, int texWidth, int texHeight);
     ModelPart(Model* model, const std::wstring& name);
-    ModelPart(Model* model, const std::wstring& name, const ModelDefinition& definition, ModelPart* parent, float scale);
+    ModelPart(Model* model, const std::wstring& name, const ModelDefinition& definition, ModelPart* parent,
+              float scale);
 
     virtual ~ModelPart() {}
 
@@ -59,8 +60,10 @@ public:
     void addBox(float x, float y, float z, int width, int height, int depth, float delta);
     ModelPart* addBox(std::wstring id, float x, float y, float z, int width, int height, int depth);
     ModelPart* addBoxWithMask(float x, float y, float z, int width, int height, int depth, int faceMask);
-    void addBoxMapTex(float x, float y, float z, int width, int height, int depth, int xTexOffs, int yTexOffs, float delta);
-    void addBoxMapTex(float x, float y, float z, int width, int height, int depth, int xTexOffs, int yTexOffs, bool mirror, float delta);
+    void addBoxMapTex(float x, float y, float z, int width, int height, int depth, int xTexOffs, int yTexOffs,
+                      float delta);
+    void addBoxMapTex(float x, float y, float z, int width, int height, int depth, int xTexOffs, int yTexOffs,
+                      bool mirror, float delta);
     void addHumanoidBox(float x, float y, float z, int width, int height, int depth, float delta);
 
     void translateTo(float scale);

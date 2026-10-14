@@ -16,12 +16,16 @@ class ModelPart;
 class VillagerGolemModel : public Model
 {
 public:
-    VillagerGolemModel(float scale = 0.0F, float yOffset = -7.0F, const ModelDefinition& modelDefinition = ModelDefinition());
+    VillagerGolemModel(float scale = 0.0F, float yOffset = -7.0F,
+                       const ModelDefinition& modelDefinition = ModelDefinition());
 
 
-    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
-    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
-    virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks);
+    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
+    virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                 float partialTicks);
     virtual std::wstring getName() { return L"irongolem"; }
 
     float triangleWave(float time, float period);

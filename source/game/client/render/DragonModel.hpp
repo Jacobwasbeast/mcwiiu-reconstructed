@@ -15,8 +15,10 @@ public:
     DragonModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
 
-    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
-    virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks);
+    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                 float partialTicks);
     virtual std::wstring getName() { return L"dragon"; }
 
     float rotWrap(double angle);

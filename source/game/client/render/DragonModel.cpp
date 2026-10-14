@@ -107,7 +107,8 @@ DragonModel::DragonModel(const ModelDefinition& modelDefinition)
             mWing1YRot = mWing->mYRot;
         }
 
-        MaterialShaders shaders = Minecraft::GetInstance()->getMaterialTable()->getMaterialShadersFor(eMinecraftEntityMaterial_EnderDragon);
+        MaterialShaders shaders = Minecraft::GetInstance()->getMaterialTable()->getMaterialShadersFor(
+            eMinecraftEntityMaterial_EnderDragon);
         builder->setVertexAndPixelShader(C4JRender::eVertexType_Default, shaders.mPixelShaderType);
 
         mHead->compile(0.0625f);
@@ -273,7 +274,8 @@ DragonModel::DragonModel(const ModelDefinition& modelDefinition)
     }
 }
 
-void DragonModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks)
+void DragonModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                  float partialTicks)
 {
     mPartialTicks = partialTicks;
 }
@@ -293,7 +295,8 @@ float DragonModel::rotWrap(double angle)
     return (float)angle;
 }
 
-void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                         float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     GlStateManager::pushMatrix();
 
@@ -339,7 +342,8 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
         float wobble = Mth::cos((float)i * 0.45f + flapAngle) * 0.15f;
 
         mNeck[i]->mYRot = rotWrap(dragon->getHeadPartYRotDiff(i, headOffsets, partOffsets)) * Mth::DEG_TO_RAD * 1.5f;
-        float neckPitch = (float)dragon->getHeadPartYOffset(i, headOffsets, partOffsets) * Mth::DEG_TO_RAD * 1.5f * 5.0f;
+        float neckPitch = (float)dragon->getHeadPartYOffset(i, headOffsets, partOffsets) * Mth::DEG_TO_RAD * 1.5f
+                          * 5.0f;
         float neckXRot = wobble + neckPitch;
         ModelPart* neck = mNeck[i];
         neck->mXRot = neckXRot;
@@ -477,7 +481,8 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
         float tailYRot = (rotWrap(partOffsets.data[0] - headOffsets.data[0]) * 1.5f + tailYRotOffset) * Mth::DEG_TO_RAD;
         ModelPart* tail = mTail[i];
-        float tailXRot = tailWobble + (float)(partOffsets.data[1] - headOffsets.data[1]) * Mth::DEG_TO_RAD * 1.5f * 5.0f;
+        float tailXRot = tailWobble
+                         + (float)(partOffsets.data[1] - headOffsets.data[1]) * Mth::DEG_TO_RAD * 1.5f * 5.0f;
         tail->mYRot = tailYRot;
         tail->mXRot = tailXRot;
         tail->mZRot = rotWrap(partOffsets.data[0] - bodyYaw) * Mth::DEG_TO_RAD * 1.5f;
@@ -497,4 +502,3 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
     callSkinnedDrawlist();
 }
-

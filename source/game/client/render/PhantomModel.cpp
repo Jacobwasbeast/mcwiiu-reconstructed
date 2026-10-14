@@ -12,7 +12,9 @@
 #include "game/world/block/MaterialTable.hpp"
 
 PhantomModel::PhantomModel(const ModelDefinition& modelDefinition)
-    : mPhantomParts(NULL), mNumPhantomParts(0), mInvisibleParts()
+    : mPhantomParts(NULL),
+      mNumPhantomParts(0),
+      mInvisibleParts()
 {
     mTexHeight = 64;
     mTexWidth = 64;
@@ -120,12 +122,16 @@ void PhantomModel::createInvisibleModelParts(const ModelDefinition& modelDefinit
         mHasOverriddenParts = true;
         mPhantomParts[8] = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, &mInvisibleParts);
         mPhantomParts[9] = new ModelPartSkin(this, L"wing0", modelDefinition, mPhantomParts[8], 0.0f, &mInvisibleParts);
-        mPhantomParts[10] = new ModelPartSkin(this, L"wingtip0", modelDefinition, mPhantomParts[9], 0.0f, &mInvisibleParts);
-        mPhantomParts[11] = new ModelPartSkin(this, L"wing1", modelDefinition, mPhantomParts[8], 0.0f, &mInvisibleParts);
-        mPhantomParts[12] = new ModelPartSkin(this, L"wingtip1", modelDefinition, mPhantomParts[11], 0.0f, &mInvisibleParts);
+        mPhantomParts[10] = new ModelPartSkin(this, L"wingtip0", modelDefinition, mPhantomParts[9], 0.0f,
+                                              &mInvisibleParts);
+        mPhantomParts[11] = new ModelPartSkin(this, L"wing1", modelDefinition, mPhantomParts[8], 0.0f,
+                                              &mInvisibleParts);
+        mPhantomParts[12] = new ModelPartSkin(this, L"wingtip1", modelDefinition, mPhantomParts[11], 0.0f,
+                                              &mInvisibleParts);
         mPhantomParts[13] = new ModelPartSkin(this, L"head", modelDefinition, mPhantomParts[8], 0.0f, &mInvisibleParts);
         mPhantomParts[14] = new ModelPartSkin(this, L"tail", modelDefinition, mPhantomParts[8], 0.0f, &mInvisibleParts);
-        mPhantomParts[15] = new ModelPartSkin(this, L"tailtip", modelDefinition, mPhantomParts[14], 0.0f, &mInvisibleParts);
+        mPhantomParts[15] = new ModelPartSkin(this, L"tailtip", modelDefinition, mPhantomParts[14], 0.0f,
+                                              &mInvisibleParts);
     }
     else
     {
@@ -174,12 +180,10 @@ void PhantomModel::createInvisibleModelParts(const ModelDefinition& modelDefinit
     builder->useDefaultShaders();
 }
 
-void PhantomModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                          float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                          bool useDisplayList)
+void PhantomModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                          float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
-              _SkinAdjustments());
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     if (entity->isInvisible())
     {
@@ -207,4 +211,3 @@ void PhantomModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     mPhantomParts[6]->mXRot = -(5.0f + Mth::cos(angle * 2.0f) * 5.0f) * Mth::DEG_TO_RAD;
     mPhantomParts[7]->mXRot = -(5.0f + Mth::cos(angle * 2.0f) * 5.0f) * Mth::DEG_TO_RAD;
 }
-

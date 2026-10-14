@@ -8,8 +8,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 
-TntMinecartRenderer::TntMinecartRenderer(EntityRenderDispatcher* dispatcher)
-    : MinecartRenderer(dispatcher)
+TntMinecartRenderer::TntMinecartRenderer(EntityRenderDispatcher* dispatcher) : MinecartRenderer(dispatcher)
 {
 }
 
@@ -46,8 +45,7 @@ void TntMinecartRenderer::renderMinecartContents(boost::shared_ptr<Minecart> min
         GlStateManager::disableLighting();
         GlStateManager::enableBlend();
         GlStateManager::blendFunc(4, 6);
-        GlStateManager::color4f(1.0F, 1.0F, 1.0F,
-                                (1.0F - (((float)fuse - partialTick) + 1.0F) / 100.0F) * 0.8F);
+        GlStateManager::color4f(1.0F, 1.0F, 1.0F, (1.0F - (((float)fuse - partialTick) + 1.0F) / 100.0F) * 0.8F);
         GlStateManager::pushMatrix();
         blockRenderer->renderSingleBlock(Blocks::tnt->defaultBlockState(), 1.0F, 1.0F, true);
         GlStateManager::popMatrix();

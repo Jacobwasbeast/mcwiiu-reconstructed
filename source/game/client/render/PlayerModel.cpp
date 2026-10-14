@@ -118,7 +118,8 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
     compileSkinnedDrawlist();
 }
 
-void PlayerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void PlayerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                         float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupBoneMatrices(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, useDisplayList);
 
@@ -153,8 +154,8 @@ void PlayerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
             bool fallFlying = false;
             if (entity)
             {
-                fallFlying = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()) &&
-                             boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
+                fallFlying = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
+                             && boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
             }
 
             if (entity && entity->isSneaking() && !fallFlying)
@@ -245,9 +246,11 @@ void PlayerModel::copyModelPartsExceptHead()
     Model::copyModelPart(mRightArm, mRightShoulder);
 }
 
-void PlayerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void PlayerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                            float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                             skinAdjustments);
 
     if (mIs64x64)
     {
@@ -256,8 +259,8 @@ void PlayerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
         bool fallFlying = false;
         if (entity)
         {
-            fallFlying = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()) &&
-                         boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
+            fallFlying = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
+                         && boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
         }
 
         if (entity && entity->isSneaking() && !fallFlying)
@@ -499,15 +502,18 @@ ModelPart* PlayerModel::AddOrRetrievePart(SKIN_BOX* skinBox, unsigned int skinId
 
     if (mSkinAdjustments.mXMLVersion >= 3)
     {
-        part->addBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth, skinBox->delta);
+        part->addBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth,
+                     skinBox->delta);
     }
     else if (mSkinAdjustments.mXMLVersion != 0)
     {
-        part->addBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth, delta);
+        part->addBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth,
+                     delta);
     }
     else
     {
-        part->addHumanoidBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth, 0.0f);
+        part->addHumanoidBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height,
+                             (int)skinBox->depth, 0.0f);
     }
 
     return part;

@@ -31,8 +31,8 @@ protected:
     Font* getFont();
     Level* getLevel();
 
-    void renderNameTag(boost::shared_ptr<BlockEntity> blockEntity, std::wstring name, double x, double y,
-                       double z, int maxDistance);
+    void renderNameTag(boost::shared_ptr<BlockEntity> blockEntity, std::wstring name, double x, double y, double z,
+                       int maxDistance);
 
     void bindTexture(ResourceLocation* pResourceLocation);
     void bindTexture(const std::wstring& texturePath, ResourceLocation* pResourceLocation);

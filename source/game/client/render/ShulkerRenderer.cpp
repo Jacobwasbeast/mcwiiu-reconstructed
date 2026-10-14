@@ -18,13 +18,13 @@
 
 static ResourceLocation SHULKER_LOCATION(TN_MOB_SHULKER_ENDERGOLEM);
 
-ShulkerRenderer::ShulkerRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new ShulkerModel(), 0.0F)
+ShulkerRenderer::ShulkerRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new ShulkerModel(), 0.0F)
 {
     addLayer(new ShulkerHeadLayer(this));
 }
 
-void ShulkerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
+void ShulkerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                             float partialTick)
 {
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
     int interpolation = shulker->getClientSideTeleportInterpolation();
@@ -68,7 +68,8 @@ const ResourceLocation* ShulkerRenderer::getTextureLocation(boost::shared_ptr<En
     return &SHULKER_LOCATION;
 }
 
-void ShulkerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float bodyRot, float partialTick)
+void ShulkerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float bodyRot,
+                                     float partialTick)
 {
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
     LivingEntityRenderer::setupRotations(entity, ageInTicks, bodyRot, partialTick);
@@ -111,13 +112,17 @@ void ShulkerRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
     GlStateManager::scalef(0.999F, 0.999F, 0.999F);
 }
 
-void ShulkerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool overlay)
+void ShulkerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                   float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                                   bool overlay)
 {
     if (!mModel->hasOverriddenParts())
-        LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw, headPitch, scale, overlay);
+        LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw,
+                                           headPitch, scale, overlay);
 }
 
-void ShulkerRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale)
+void ShulkerRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                  float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
     bool visible = isVisible(entity);
     bool translucent = !visible && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
@@ -130,7 +135,9 @@ void ShulkerRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float
         boost::shared_ptr<Entity> renderEntity = entity;
         if (!bindTexture(renderEntity))
             return;
-        static_cast<ShulkerModel*>(getModel(entity))->renderWhenInvisible(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
+        static_cast<ShulkerModel*>(getModel(entity))
+            ->renderWhenInvisible(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                                  true);
     }
 }
 

@@ -237,7 +237,8 @@ float AbstractHorseModel::rotlerp(float from, float to, float delta)
     return from + delta * difference;
 }
 
-void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks)
+void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
+                                         float limbSwingAmount, float partialTicks)
 {
     Model::prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
 
@@ -293,7 +294,7 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
     float notAnim = 1.0f - maxAnim;
 
     mNeck->mXRot = notAnim * (mouthAnim * bob * 0.05f + mNeck->mXRot)
-        + (standAnim * (headPitch + 0.2617994f) + eatAnim * (bob * 0.05f + EATING_HEAD_X_ROT));
+                   + (standAnim * (headPitch + 0.2617994f) + eatAnim * (bob * 0.05f + EATING_HEAD_X_ROT));
     mNeck->mYRot = standAnim * netHeadYaw * Mth::DEG_TO_RAD + notAnim * mNeck->mYRot;
     mNeck->mY = notAnim * mNeck->mY + (standAnim * -4.0f + eatAnim * 8.0f);
     mNeck->mZ = notAnim * mNeck->mZ + (eatAnim * -10.0f - standAnim);
@@ -357,7 +358,8 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
     }
 }
 
-void AbstractHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void AbstractHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                                float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(entity);
 
@@ -446,4 +448,3 @@ void AbstractHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwi
         callSkinnedDrawlist();
     }
 }
-

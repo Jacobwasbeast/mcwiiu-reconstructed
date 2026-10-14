@@ -8,8 +8,7 @@
 #include "game/core/PolarBear.hpp"
 #include "game/entity/mob/Entity.hpp"
 
-PolarBearModel::PolarBearModel(const ModelDefinition& modelDefinition)
-    : QuadrupedModel(12, 0.0f, modelDefinition)
+PolarBearModel::PolarBearModel(const ModelDefinition& modelDefinition) : QuadrupedModel(12, 0.0f, modelDefinition)
 {
     if (!modelDefinition.DoesOverrideModel())
     {
@@ -62,12 +61,10 @@ PolarBearModel::PolarBearModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-void PolarBearModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                            float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                            bool useDisplayList)
+void PolarBearModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                            float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-              entity, _SkinAdjustments());
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     if (mYoung)
     {
@@ -102,12 +99,12 @@ void PolarBearModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, 
     }
 }
 
-void PolarBearModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
-                               float netHeadYaw, float headPitch, float scale,
-                               boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void PolarBearModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                               float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                               _SkinAdjustments skinAdjustments)
 {
-    QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                              scale, entity, _SkinAdjustments());
+    QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                              _SkinAdjustments());
 
     float partialTicks = ageInTicks - entity->mTickCount;
     float standingScale = boost::static_pointer_cast<PolarBear>(entity)->getStandingAnimationScale(partialTicks);
@@ -128,4 +125,3 @@ void PolarBearModel::setupAnim(float limbSwing, float limbSwingAmount, float age
     mHead->mZ = -16.0f * standingScaleComplement + -3.0f * standingScaleSquared;
     mHead->mXRot += standingAngle * 0.15f;
 }
-

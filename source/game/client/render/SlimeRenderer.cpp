@@ -12,8 +12,7 @@
 
 static ResourceLocation SLIME_LOCATION(TN_MOB_SLIME);
 
-SlimeRenderer::SlimeRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new SlimeModel(16), 0.25f)
+SlimeRenderer::SlimeRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new SlimeModel(16), 0.25f)
 {
     addLayer(new SlimeOuterLayer(this));
 }
@@ -23,8 +22,8 @@ const ResourceLocation* SlimeRenderer::getTextureLocation(boost::shared_ptr<Enti
     return &SLIME_LOCATION;
 }
 
-void SlimeRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                           float yaw, float partialTick)
+void SlimeRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                           float partialTick)
 {
     boost::shared_ptr<Slime> slime = boost::static_pointer_cast<Slime>(entity);
     mShadowRadius = 0.25f * static_cast<float>(slime->getSize());

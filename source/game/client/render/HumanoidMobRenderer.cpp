@@ -8,8 +8,7 @@
 
 static ResourceLocation HUMANOID_LOCATION(TN_MOB_STEVE);
 
-HumanoidMobRenderer::HumanoidMobRenderer(EntityRenderDispatcher* dispatcher, HumanoidModel* model,
-                                         float shadowRadius)
+HumanoidMobRenderer::HumanoidMobRenderer(EntityRenderDispatcher* dispatcher, HumanoidModel* model, float shadowRadius)
     : MobRenderer(dispatcher, model, shadowRadius)
 {
     addLayer(new ItemInHandLayer(this));

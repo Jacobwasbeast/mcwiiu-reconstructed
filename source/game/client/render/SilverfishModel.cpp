@@ -7,27 +7,11 @@
 
 #include <cstdlib>
 
-const int SilverfishModel::BODY_PART_TEX_OFFS[BODY_PART_COUNT][2] =
-{
-    { 0, 0 },
-    { 0, 4 },
-    { 0, 9 },
-    { 0, 16 },
-    { 0, 22 },
-    { 11, 0 },
-    { 13, 4 }
-};
+const int SilverfishModel::BODY_PART_TEX_OFFS[BODY_PART_COUNT][2] = {{0, 0},  {0, 4},  {0, 9}, {0, 16},
+                                                                     {0, 22}, {11, 0}, {13, 4}};
 
-const int SilverfishModel::BODY_PART_SIZES[BODY_PART_COUNT][3] =
-{
-    { 3, 2, 2 },
-    { 4, 3, 2 },
-    { 6, 4, 3 },
-    { 3, 3, 3 },
-    { 2, 2, 3 },
-    { 2, 1, 2 },
-    { 1, 1, 2 }
-};
+const int SilverfishModel::BODY_PART_SIZES[BODY_PART_COUNT][3] = {{3, 2, 2}, {4, 3, 2}, {6, 4, 3}, {3, 3, 3},
+                                                                  {2, 2, 3}, {2, 1, 2}, {1, 1, 2}};
 
 SilverfishModel::SilverfishModel(const ModelDefinition& modelDefinition)
 {
@@ -97,7 +81,8 @@ SilverfishModel::~SilverfishModel()
     }
 }
 
-void SilverfishModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void SilverfishModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                             float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -114,12 +99,16 @@ void SilverfishModel::render(boost::shared_ptr<Entity>& entity, float limbSwing,
     callSkinnedDrawlist();
 }
 
-void SilverfishModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void SilverfishModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                                float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                                _SkinAdjustments skinAdjustments)
 {
     for (unsigned int i = 0; i < mBodyParts.length; ++i)
     {
-        mBodyParts.data[i]->mYRot = Mth::cos(ageInTicks * 0.9f + (float)i * 0.15f * 3.1415927f) * 3.1415927f * 0.05f * (float)(1 + abs((int)i - 2));
-        mBodyParts.data[i]->mX = Mth::sin(ageInTicks * 0.9f + (float)i * 0.15f * 3.1415927f) * 3.1415927f * 0.2f * (float)abs((int)i - 2);
+        mBodyParts.data[i]->mYRot = Mth::cos(ageInTicks * 0.9f + (float)i * 0.15f * 3.1415927f) * 3.1415927f * 0.05f
+                                    * (float)(1 + abs((int)i - 2));
+        mBodyParts.data[i]->mX = Mth::sin(ageInTicks * 0.9f + (float)i * 0.15f * 3.1415927f) * 3.1415927f * 0.2f
+                                 * (float)abs((int)i - 2);
     }
 
     mBodyLayers.data[0]->mYRot = mBodyParts.data[2]->mYRot;
@@ -130,4 +119,3 @@ void SilverfishModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
     mBodyLayers.data[2]->mYRot = mBodyParts.data[1]->mYRot;
     mBodyLayers.data[2]->mX = mBodyParts.data[1]->mX;
 }
-

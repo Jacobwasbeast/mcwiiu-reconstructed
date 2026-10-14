@@ -20,7 +20,8 @@ static ResourceLocation WOLF_ANGRY_LOCATION(TN_MOB_WOLF_ANGRY);
 static ResourceLocation WOLF_TAME_LOCATION(TN_MOB_WOLF_TAME);
 
 WolfRenderer::WolfRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
-    : MobRenderer(dispatcher, model, shadowRadius), mCollarLayer(new WolfCollarLayer(this))
+    : MobRenderer(dispatcher, model, shadowRadius),
+      mCollarLayer(new WolfCollarLayer(this))
 {
     addLayer(mCollarLayer);
 }
@@ -31,8 +32,7 @@ float WolfRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partia
     return wolf->getTailAngle();
 }
 
-void WolfRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                          float yaw, float partialTick)
+void WolfRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
 {
     boost::shared_ptr<Wolf> wolf = boost::static_pointer_cast<Wolf>(entity);
     if (mModel->hasOverriddenParts() && wolf->isTame())

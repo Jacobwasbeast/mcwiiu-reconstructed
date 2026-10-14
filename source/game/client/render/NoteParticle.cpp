@@ -8,21 +8,14 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 
-NoteParticle::NoteParticle(Level* level, double x, double y, double z,
-                           double xa, double ya, double za)
+NoteParticle::NoteParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     init(level, x, y, z, xa, ya, za, 2.0f);
 }
 
-void NoteParticle::render(BufferBuilder* buffer,
-                          const boost::shared_ptr<Entity>& camera,
-                          float partialTicks,
-                          float xa,
-                          float ya,
-                          float za,
-                          float xa2,
-                          float za2)
+void NoteParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                          float ya, float za, float xa2, float za2)
 {
     float progress = ((age + partialTicks) / lifetime) * 32.0f;
     progress = Mth::clamp(progress, 0.0f, 1.0f);
@@ -60,8 +53,7 @@ void NoteParticle::tick()
     }
 }
 
-void NoteParticle::init(Level* level, double x, double y, double z,
-                        double xa, double ya, double za, float factor)
+void NoteParticle::init(Level* level, double x, double y, double z, double xa, double ya, double za, float factor)
 {
     xd *= 0.01;
     yd *= 0.01;
@@ -87,10 +79,8 @@ uint64_t NoteParticle::GetType()
     return ParticleKind::NOTE;
 }
 
-Particle* NoteParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                  double x, double y, double z,
-                                                  double xa, double ya, double za,
-                                                  arrayWithLength<int> params)
+Particle* NoteParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                 double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new NoteParticle(level, x, y, z, xa, ya, za);
 }

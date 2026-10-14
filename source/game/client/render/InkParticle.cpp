@@ -11,8 +11,8 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
-InkParticle::InkParticle(Level* level, double x, double y, double z,
-                         double xa, double ya, double za, arrayWithLength<int> params)
+InkParticle::InkParticle(Level* level, double x, double y, double z, double xa, double ya, double za,
+                         arrayWithLength<int> params)
     : Particle(level, x, y, z, xa, ya, za)
 {
     mScale = 1.0f;
@@ -34,9 +34,8 @@ InkParticle::InkParticle(Level* level, double x, double y, double z,
     lifetime = (int)(scale * 12.0f / ((float)Math::random() * 0.8f + 0.2f));
 }
 
-void InkParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
-                         float partialTicks, float xa, float ya, float za,
-                         float xa2, float za2)
+void InkParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                         float ya, float za, float xa2, float za2)
 {
     float growth = Mth::clamp(((float)age + partialTicks) / (float)lifetime * 16.0f, 0.0f, 1.0f);
     size = (mEndSize - mStartSize) * growth + mStartSize;
@@ -75,10 +74,8 @@ uint64_t InkParticle::GetType()
     return ParticleKind::INK;
 }
 
-Particle* InkParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                double x, double y, double z,
-                                                double xa, double ya, double za,
-                                                arrayWithLength<int> params)
+Particle* InkParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new InkParticle(level, x, y, z, xa, ya, za, params);
 }

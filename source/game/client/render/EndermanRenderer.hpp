@@ -20,13 +20,11 @@ class EndermanRenderer : public MobRenderer
 public:
     EndermanRenderer(EntityRenderDispatcher* dispatcher);
 
-    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                        float yaw, float partialTick);
+    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void setupForTexturePack(TexturePack* pack);
-    virtual void renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                             float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                             float headPitch, float scale);
+    virtual void renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                             float ageInTicks, float netHeadYaw, float headPitch, float scale);
     virtual Model* createModel(const ModelDefinition& definition);
 
 private:

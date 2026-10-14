@@ -62,7 +62,8 @@ GhastModel::GhastModel(const ModelDefinition& modelDefinition)
     }
 }
 
-void GhastModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void GhastModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -81,11 +82,11 @@ void GhastModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
     callSkinnedDrawlist();
 }
 
-void GhastModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void GhastModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     for (int i = 0; i < 9; ++i)
     {
         mTentacles[i]->mXRot = 0.2f * Mth::sin(ageInTicks * 0.3f + (float)i) + 0.4f;
     }
 }
-

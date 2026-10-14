@@ -4,8 +4,7 @@
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/core/Mth.hpp"
 
-SquidModel::SquidModel(const ModelDefinition& definition)
-    : Model()
+SquidModel::SquidModel(const ModelDefinition& definition) : Model()
 {
     if (definition.DoesOverrideModel())
     {
@@ -52,17 +51,16 @@ SquidModel::SquidModel(const ModelDefinition& definition)
     }
 }
 
-void SquidModel::setupAnim(float, float, float ageInTicks, float, float, float,
-                           boost::shared_ptr<Entity>, _SkinAdjustments)
+void SquidModel::setupAnim(float, float, float ageInTicks, float, float, float, boost::shared_ptr<Entity>,
+                           _SkinAdjustments)
 {
     int i;
     for (i = 0; i < 8; ++i)
         mTentacles[i]->mXRot = ageInTicks;
 }
 
-void SquidModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                        bool useDisplayList)
+void SquidModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
     mBody->render(scale, useDisplayList, false);
@@ -70,4 +68,3 @@ void SquidModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
         mTentacles[i]->render(scale, useDisplayList, false);
     callSkinnedDrawlist();
 }
-

@@ -4,8 +4,7 @@
 
 static ResourceLocation SPECTRAL_ARROW_LOCATION(TN_ITEM_SPECTRAL_ARROW);
 
-SpectralArrowRenderer::SpectralArrowRenderer(EntityRenderDispatcher* dispatcher)
-    : ArrowRenderer(dispatcher)
+SpectralArrowRenderer::SpectralArrowRenderer(EntityRenderDispatcher* dispatcher) : ArrowRenderer(dispatcher)
 {
 }
 

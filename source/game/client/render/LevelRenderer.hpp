@@ -107,32 +107,45 @@ public:
     static int getGlobalIndexForChunk(int x, int y, int z, Level* level);
     bool getGlobalChunkFlag(int x, int y, int z, Level* level, unsigned char mask, unsigned char shift);
     unsigned int updateDirtyChunks(unsigned int* count);
-    void renderHit(boost::shared_ptr<Player> player, const HitResult* hit, int pass, not_null_ptr<ItemInstance> item, float partialTick);
+    void renderHit(boost::shared_ptr<Player> player, const HitResult* hit, int pass, not_null_ptr<ItemInstance> item,
+                   float partialTick);
     void renderDestroyAnimation(Tesselator* tesselator, boost::shared_ptr<Player> player, float partialTick);
     static void renderLineBox(const AABB* box, int color);
     void renderHitOutline(boost::shared_ptr<Player> player, const HitResult* hit, int pass, float partialTick);
     static void renderColoredLineBox(const AABB* box, int color, bool splitLargeFaces);
-    static void renderLine(std::vector<GameRenderer::PositionStruct>* positions, std::vector<int>* colors, std::vector<int>* alphas, float width);
+    static void renderLine(std::vector<GameRenderer::PositionStruct>* positions, std::vector<int>* colors,
+                           std::vector<int>* alphas, float width);
     static void renderColoredBox(const AABB* box, int color, int alpha);
     static void renderStringInWorld(boost::shared_ptr<Entity> entity, const std::wstring& text, Vec3* position);
-    static void renderStringOnPlane(boost::shared_ptr<Entity> entity, const std::wstring& text, Vec3* position, Vec3* axis);
-    static void renderDebugVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box, int color, bool depthTest, bool thickLines, bool solid, bool raiseText);
-    static void renderFancyTextDebugVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box, int color, bool depthTest, bool thickLines, bool solid);
-    static void renderDebugWireframeVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box, int color, bool depthTest, bool thickLines, bool solid, bool raiseText);
+    static void renderStringOnPlane(boost::shared_ptr<Entity> entity, const std::wstring& text, Vec3* position,
+                                    Vec3* axis);
+    static void renderDebugVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box,
+                                  int color, bool depthTest, bool thickLines, bool solid, bool raiseText);
+    static void renderFancyTextDebugVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box,
+                                           int color, bool depthTest, bool thickLines, bool solid);
+    static void renderDebugWireframeVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box,
+                                           int color, bool depthTest, bool thickLines, bool solid, bool raiseText);
     void setDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, Level* level);
-    void blockChanged(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int flags, bool immediate);
+    void blockChanged(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState,
+                      int flags, bool immediate);
     void blockLightChanged(const BlockPos& pos);
     void setBlocksDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, Level* level);
     void cull(Culler* culler, float partialTick);
     void notifyNearbyEntities(Level* level, const BlockPos& pos, bool playing);
     void playStreamingMusic(const SoundEvent* sound, const BlockPos& pos, bool playing);
-    void playSound(boost::shared_ptr<Player> player, const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch, float range);
-    void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
+    void playSound(boost::shared_ptr<Player> player, const SoundEvent* sound, SoundSource::ESoundSource source,
+                   double x, double y, double z, float volume, float pitch, float range);
+    void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa,
+                     double ya, double za, arrayWithLength<int> params);
     int calculateParticleLevel(Level* level, bool overrideLimiter);
-    Particle* addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
-    Particle* addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
-    void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
-    void addParticle(Level* level, const ParticleType* particle, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
+    Particle* addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z,
+                                  double xa, double ya, double za, arrayWithLength<int> params);
+    Particle* addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x,
+                                  double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
+    void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z,
+                     double xa, double ya, double za, arrayWithLength<int> params);
+    void addParticle(Level* level, const ParticleType* particle, double x, double y, double z, double xa, double ya,
+                     double za, arrayWithLength<int> params);
     void entityAdded(boost::shared_ptr<Entity> entity);
     void entityRemoved(boost::shared_ptr<Entity> entity);
     void globalLevelEvent(int type, const BlockPos& pos, int data);
@@ -156,7 +169,8 @@ public:
     void renderSameAsLast(int pass, double distance);
     static void renderColoredLineBox(const AABB* box, int a, int b, int c, int d, bool depth);
     static void renderLine(std::vector<Vec3*>* points, int color);
-    static void renderLine(std::vector<Vec3*>* points, std::vector<int>* colors, std::vector<int>* indices, float width);
+    static void renderLine(std::vector<Vec3*>* points, std::vector<int>* colors, std::vector<int>* indices,
+                           float width);
     void skyColorChanged();
     static unsigned int getGlobalChunkCountForOverworld();
 
@@ -213,8 +227,10 @@ private:
     std::vector<AABB*> mCameraInsideAreas;
     OSFastMutex mChunkMutex;
     unsigned char mChunkStatePadding[4];
+
 public:
     DestroyedBlockManager* mDestroyedBlocks;
+
 private:
     float mCloudOffset;
     unsigned char* mGlobalChunkFlags;

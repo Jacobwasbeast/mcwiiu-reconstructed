@@ -86,7 +86,8 @@ DolphinModel::~DolphinModel()
     delete mNose;
 }
 
-void DolphinModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void DolphinModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                          float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     if (mYoung)
     {
@@ -105,7 +106,9 @@ void DolphinModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
     callSkinnedDrawlist();
 }
 
-void DolphinModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void DolphinModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                             float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                             _SkinAdjustments skinAdjustments)
 {
     mBody->mXRot = headPitch * Mth::DEG_TO_RAD;
     mBody->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
@@ -124,4 +127,3 @@ void DolphinModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
         }
     }
 }
-

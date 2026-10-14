@@ -5,8 +5,7 @@
 #include "game/core/Mth.hpp"
 #include "game/util/Math.hpp"
 
-FlameParticle::FlameParticle(Level* level, double x, double y, double z,
-                             double xa, double ya, double za)
+FlameParticle::FlameParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, xa, ya, za)
 {
     xd = xd * 0.01f + xa;
@@ -29,10 +28,8 @@ void FlameParticle::move(double xa, double ya, double za)
     setLocationFromBoundingbox();
 }
 
-void FlameParticle::render(BufferBuilder* buffer,
-                           const boost::shared_ptr<Entity>& camera,
-                           float partialTicks, float xa, float ya, float za,
-                           float xa2, float za2)
+void FlameParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                           float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     size = mOriginalSize * (1.0f - progress * progress * 0.5f);
@@ -80,10 +77,8 @@ uint64_t FlameParticle::GetType()
     return ParticleKind::FLAME;
 }
 
-Particle* FlameParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                  double x, double y, double z,
-                                                  double xa, double ya, double za,
-                                                  arrayWithLength<int> params)
+Particle* FlameParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                  double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new FlameParticle(level, x, y, z, xa, ya, za);
 }

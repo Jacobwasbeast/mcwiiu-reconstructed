@@ -2,8 +2,7 @@
 
 #include "game/client/render/TextureUtil.hpp"
 
-AbstractTexture::AbstractTexture()
-    : id(-1), blur(false), mipmap(false), oldBlur(false), oldMipmap(false)
+AbstractTexture::AbstractTexture() : id(-1), blur(false), mipmap(false), oldBlur(false), oldMipmap(false)
 {
 }
 

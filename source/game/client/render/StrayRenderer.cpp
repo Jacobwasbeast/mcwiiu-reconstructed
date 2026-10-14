@@ -52,10 +52,10 @@ void StrayRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float 
             continue;
         }
 
-        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
-            boost::static_pointer_cast<Player>(entity)->isSpectator() &&
-            boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead() &&
-            (layer == NULL || dynamic_cast<StrayClothingLayer*>(layer) == NULL))
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+            && boost::static_pointer_cast<Player>(entity)->isSpectator()
+            && boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead()
+            && (layer == NULL || dynamic_cast<StrayClothingLayer*>(layer) == NULL))
         {
             continue;
         }

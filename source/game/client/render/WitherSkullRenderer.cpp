@@ -10,7 +10,8 @@ static ResourceLocation WITHER_SKULL_LOCATION(TN_MOB_WITHER_WITHER);
 static ResourceLocation WITHER_SKULL_INVULNERABLE_LOCATION(TN_MOB_WITHER_WITHER_INVULNERABLE);
 
 WitherSkullRenderer::WitherSkullRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher), mWitherSkullModel(new SkeletonHeadModel())
+    : EntityRenderer(dispatcher),
+      mWitherSkullModel(new SkeletonHeadModel())
 {
 }
 
@@ -28,8 +29,8 @@ float WitherSkullRenderer::rotlerp(float from, float to, float partialTick)
     return from + partialTick * rotation;
 }
 
-void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                 float yaw, float partialTick)
+void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                 float partialTick)
 {
     GlStateManager::pushMatrix();
     GlStateManager::disableCull();
@@ -50,8 +51,7 @@ void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
         GlStateManager::setupSolidRenderingTextureCombine(getTeamColor(entity));
     }
 
-    mWitherSkullModel->render(entity, 0.0F, 0.0F, 0.0F, interpolatedYaw,
-                              interpolatedPitch, scale, true);
+    mWitherSkullModel->render(entity, 0.0F, 0.0F, 0.0F, interpolatedYaw, interpolatedPitch, scale, true);
 
     if (mSolidRender)
     {

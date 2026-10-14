@@ -13,13 +13,8 @@ FireworksParticles::FireworksOverlayParticle::FireworksOverlayParticle(Level* le
 }
 
 void FireworksParticles::FireworksOverlayParticle::render(BufferBuilder* buffer,
-                                      const boost::shared_ptr<Entity>& camera,
-                                      float partialTicks,
-                                      float xa,
-                                      float ya,
-                                      float za,
-                                      float xa2,
-                                      float za2)
+                                                          const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                                          float xa, float ya, float za, float xa2, float za2)
 {
     (void)camera;
     float scale = 7.1f * (float)std::sin((age + partialTicks - 1.0f) * 0.25f * 3.1415927f);

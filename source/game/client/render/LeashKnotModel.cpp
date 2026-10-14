@@ -24,14 +24,17 @@ void LeashKnotModel::_init(int xTexOffs, int yTexOffs, int texWidth, int texHeig
     mKnot->setPos(0.0f, 0.0f, 0.0f);
 }
 
-void LeashKnotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void LeashKnotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                            float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     mKnot->render(scale, useDisplayList, false);
 }
 
-void LeashKnotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void LeashKnotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                               float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                               _SkinAdjustments skinAdjustments)
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 

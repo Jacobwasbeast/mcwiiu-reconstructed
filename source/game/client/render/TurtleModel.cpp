@@ -60,12 +60,10 @@ TurtleModel::TurtleModel(float scale, const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-void TurtleModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                         bool useDisplayList)
+void TurtleModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                         float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-              entity, _SkinAdjustments());
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     boost::shared_ptr<Turtle> turtle = boost::static_pointer_cast<Turtle>(entity);
     const bool show = !mYoung && turtle->hasEgg();
@@ -106,12 +104,11 @@ void TurtleModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     callSkinnedDrawlist();
 }
 
-void TurtleModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                            float headPitch, float scale, boost::shared_ptr<Entity> entity,
-                            _SkinAdjustments skinAdjustments)
+void TurtleModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                            float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                              scale, entity, _SkinAdjustments());
+    QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                              _SkinAdjustments());
 
     boost::shared_ptr<Turtle> turtle = boost::static_pointer_cast<Turtle>(entity);
     const float halfPi = 1.5707964f;

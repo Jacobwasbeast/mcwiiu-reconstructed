@@ -3,21 +3,14 @@
 
 #include "game/core/Mth.hpp"
 
-CritParticle::CritParticle(Level* level, double x, double y, double z,
-                           double xa, double ya, double za)
+CritParticle::CritParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, xa, ya, za)
 {
     _init(level, x, y, z, xa, ya, za, 1.0f);
 }
 
-void CritParticle::render(BufferBuilder* buffer,
-                          const boost::shared_ptr<Entity>& camera,
-                          float partialTicks,
-                          float xa,
-                          float ya,
-                          float za,
-                          float xa2,
-                          float za2)
+void CritParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                          float ya, float za, float xa2, float za2)
 {
     float fade = ((float)age + partialTicks) / (float)lifetime * 32.0f;
     fade = Mth::clamp(fade, 0.0f, 1.0f);
@@ -50,8 +43,7 @@ void CritParticle::tick()
     }
 }
 
-void CritParticle::_init(Level* level, double x, double y, double z,
-                         double xa, double ya, double za, float scale)
+void CritParticle::_init(Level* level, double x, double y, double z, double xa, double ya, double za, float scale)
 {
     xd *= 0.1f;
     yd *= 0.1f;
@@ -77,33 +69,26 @@ uint64_t CritParticle::GetType()
     return ParticleKind::CRIT;
 }
 
-Particle* CritParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                 double x, double y, double z,
-                                                 double xa, double ya, double za,
-                                                 arrayWithLength<int> params)
+Particle* CritParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                 double xa, double ya, double za, arrayWithLength<int> params)
 {
     CritParticle* particle = new CritParticle(level, x, y, z, xa, ya, za);
     particle->tick();
     return particle;
 }
 
-Particle* CritParticle::MagicProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                      double x, double y, double z,
-                                                      double xa, double ya, double za,
-                                                      arrayWithLength<int> params)
+Particle* CritParticle::MagicProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                      double xa, double ya, double za, arrayWithLength<int> params)
 {
     CritParticle* particle = new CritParticle(level, x, y, z, xa, ya, za);
     particle->tick();
-    particle->setColor(particle->getRedCol() * 0.3f,
-                       particle->getGreenCol() * 0.8f,
-                       particle->getBlueCol());
+    particle->setColor(particle->getRedCol() * 0.3f, particle->getGreenCol() * 0.8f, particle->getBlueCol());
     particle->setMiscTex(66);
     return particle;
 }
 
-Particle* CritParticle::DamageIndicatorProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                                double x, double y, double z,
-                                                                double xa, double ya, double za,
+Particle* CritParticle::DamageIndicatorProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                                double z, double xa, double ya, double za,
                                                                 arrayWithLength<int> params)
 {
     CritParticle* particle = new CritParticle(level, x, y, z, xa, ya, za);

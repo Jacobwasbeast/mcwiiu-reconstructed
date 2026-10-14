@@ -72,8 +72,7 @@ ResourceLocation particleTexture(TN_PARTICLES);
 template <typename T>
 std::wstring _toString(T value);
 
-ParticleEngine::ParticleList::ParticleList()
-    : particles(new Particle*[16384]), particleCount(0)
+ParticleEngine::ParticleList::ParticleList() : particles(new Particle*[16384]), particleCount(0)
 {
 }
 
@@ -120,8 +119,7 @@ bool ParticleEngine::ParticleList::empty()
     return particleCount == 0;
 }
 
-ParticleEngine::ParticleEngine(Level* level, Textures* textures)
-    : translucent(false), opaque(false)
+ParticleEngine::ParticleEngine(Level* level, Textures* textures) : translucent(false), opaque(false)
 {
     this->level = level;
     this->textures = textures;
@@ -207,8 +205,9 @@ void ParticleEngine::createTrackingEmitter(boost::shared_ptr<Entity> entity, con
 void ParticleEngine::add(Particle* particle)
 {
     int texture = particle->getParticleTexture();
-    int dimension = particle->getLevel()->mDimension->getType() == DimensionType::OVERWORLD ? 0
-        : (particle->getLevel()->mDimension->getType() == DimensionType::NETHER ? 1 : 2);
+    int dimension = particle->getLevel()->mDimension->getType() == DimensionType::OVERWORLD
+                        ? 0
+                        : (particle->getLevel()->mDimension->getType() == DimensionType::NETHER ? 1 : 2);
     int limit;
     bool lit = particle->getAlpha() == 1.0f;
     unsigned long long type = particle->GetType();
@@ -255,15 +254,14 @@ void ParticleEngine::add(Particle* particle)
     particles[dimension][texture][lit].push_back(particle);
 }
 
-Particle* ParticleEngine::createParticle(ePARTICLE_TYPE type, double x, double y, double z,
-                                         double xa, double ya, double za,
-                                         arrayWithLength<int> parameters, Level* level)
+Particle* ParticleEngine::createParticle(ePARTICLE_TYPE type, double x, double y, double z, double xa, double ya,
+                                         double za, arrayWithLength<int> parameters, Level* level)
 {
     ParticleProvider* provider = providers[type];
     if (provider != NULL)
     {
-        Particle* particle = provider->createParticle(type, level != NULL ? level : this->level,
-                                                      x, y, z, xa, ya, za, parameters);
+        Particle* particle = provider->createParticle(type, level != NULL ? level : this->level, x, y, z, xa, ya, za,
+                                                      parameters);
         if (particle != NULL)
         {
             add(particle);
@@ -453,8 +451,8 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
                     buffer->end();
                     buffer->begin();
                 }
-                particles[dimension][textureType][layer].at(i)->render(buffer, entity, partialTick, cosYaw, cosPitch, sinYaw,
-                    cameraYOff, cameraXOff);
+                particles[dimension][textureType][layer].at(i)->render(buffer, entity, partialTick, cosYaw, cosPitch,
+                                                                       sinYaw, cameraYOff, cameraXOff);
             }
             buffer->end();
         }
@@ -509,8 +507,7 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
         for (int i = 0; i < list.size(); ++i)
         {
             Particle* particle = list.at(i);
-            particle->render(builder, entity, partialTick, cosYaw, cosPitch, sinYaw,
-                cameraYOff, cameraXOff);
+            particle->render(builder, entity, partialTick, cosYaw, cosPitch, sinYaw, cameraYOff, cameraXOff);
         }
         GlStateManager::disableBlend();
         GlStateManager::depthMask(true);
@@ -535,7 +532,8 @@ void ParticleEngine::destroy(const BlockPos& pos, const BlockState* state)
                     const double yOffset = (y + 0.5) * 0.25;
                     const double zOffset = (z + 0.5) * 0.25;
                     TerrainParticle* particle = new TerrainParticle(level, pos.x + xOffset, pos.y + yOffset,
-                        pos.z + zOffset, xOffset - 0.5, yOffset - 0.5, zOffset - 0.5, state);
+                                                                    pos.z + zOffset, xOffset - 0.5, yOffset - 0.5,
+                                                                    zOffset - 0.5, state);
                     add(particle->init(pos));
                 }
             }

@@ -15,8 +15,8 @@
 static ResourceLocation FOOTPRINT_LOCATION(TN_MISC_FOOTPRINT);
 
 FootstepParticle::FootstepParticle(Textures* textures, Level* level, double x, double y, double z)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
-    , textures(textures)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0),
+      textures(textures)
 {
     xd = 0.0;
     yd = 0.0;
@@ -24,14 +24,8 @@ FootstepParticle::FootstepParticle(Textures* textures, Level* level, double x, d
     lifetime = 200;
 }
 
-void FootstepParticle::render(BufferBuilder* buffer,
-                              const boost::shared_ptr<Entity>& camera,
-                              float partialTicks,
-                              float xa,
-                              float ya,
-                              float za,
-                              float xa2,
-                              float za2)
+void FootstepParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                              float xa, float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     progress *= progress;
@@ -84,15 +78,8 @@ uint64_t FootstepParticle::GetType()
     return ParticleKind::FOOTSTEP;
 }
 
-Particle* FootstepParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                      Level* level,
-                                                      double x,
-                                                      double y,
-                                                      double z,
-                                                      double xa,
-                                                      double ya,
-                                                      double za,
-                                                      arrayWithLength<int> params)
+Particle* FootstepParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                     double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new FootstepParticle(Minecraft::GetInstance()->mTextures, level, x, y, z);
 }

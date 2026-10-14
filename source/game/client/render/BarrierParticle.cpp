@@ -27,14 +27,8 @@ int BarrierParticle::getParticleTexture()
     return 1;
 }
 
-void BarrierParticle::render(BufferBuilder* buffer,
-                             const boost::shared_ptr<Entity>& camera,
-                             float partialTicks,
-                             float xa,
-                             float ya,
-                             float za,
-                             float xa2,
-                             float za2)
+void BarrierParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                             float xa, float ya, float za, float xa2, float za2)
 {
     float u0 = sprite->getU0(false);
     float u1 = sprite->getU1(false);
@@ -59,15 +53,8 @@ uint64_t BarrierParticle::GetType()
     return ParticleKind::BARRIER;
 }
 
-Particle* BarrierParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                    Level* level,
-                                                    double x,
-                                                    double y,
-                                                    double z,
-                                                    double xa,
-                                                    double ya,
-                                                    double za,
-                                                    arrayWithLength<int> params)
+Particle* BarrierParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                    double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new BarrierParticle(level, x, y, z, Item::byBlock(Blocks::barrier));
 }

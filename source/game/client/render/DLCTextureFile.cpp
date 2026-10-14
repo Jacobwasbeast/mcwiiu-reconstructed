@@ -2,13 +2,13 @@
 
 #include <vector>
 
-template<typename T> std::wstring _toString(T value);
-template<typename T> T _fromString(const std::wstring& text);
+template <typename T> std::wstring _toString(T value);
+template <typename T> T _fromString(const std::wstring& text);
 std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
 
 DLCTextureFile::DLCTextureFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_Texture, path.substr(0, path.length() - 4))
-    , m_parameters()
+    : DLCFile(DLCManager::eDLCType_Texture, path.substr(0, path.length() - 4)),
+      m_parameters()
 {
     m_hasAnimation = false;
     m_disableMipMap = false;

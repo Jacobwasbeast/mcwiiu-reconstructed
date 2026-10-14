@@ -37,7 +37,8 @@ BookModel::BookModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-void BookModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void BookModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                       float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -52,7 +53,8 @@ void BookModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float
     callSkinnedDrawlist();
 }
 
-void BookModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void BookModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                          float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     float openAngle = (Mth::sin(limbSwing * 0.02f) * 0.1f + 1.25f) * netHeadYaw;
 

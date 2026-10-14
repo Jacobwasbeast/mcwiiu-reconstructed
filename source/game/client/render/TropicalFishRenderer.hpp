@@ -22,9 +22,8 @@ public:
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);
     virtual Model* getModel(boost::shared_ptr<LivingEntity>& entity);
-    virtual void renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                             float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                             float headPitch, float scale);
+    virtual void renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                             float ageInTicks, float netHeadYaw, float headPitch, float scale);
 
     void getRGB(int color, float& red, float& green, float& blue);
 

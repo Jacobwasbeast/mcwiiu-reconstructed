@@ -25,7 +25,8 @@ ArmorStandRenderer::ArmorStandRenderer(EntityRenderDispatcher* dispatcher)
     addLayer(new CustomHeadLayer(static_cast<ArmorStandModel*>(getModel())->mHead));
 }
 
-void ArmorStandRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
+void ArmorStandRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                float partialTick)
 {
     boost::shared_ptr<ArmorStand> armorStand = boost::static_pointer_cast<ArmorStand>(entity);
     if (armorStand.get()->isMarker())
@@ -44,7 +45,8 @@ const ResourceLocation* ArmorStandRenderer::getTextureLocation(boost::shared_ptr
     return &ARMOR_STAND_LOCATION;
 }
 
-void ArmorStandRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float, float rotationYaw, float partialTicks)
+void ArmorStandRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float, float rotationYaw,
+                                        float partialTicks)
 {
     boost::shared_ptr<ArmorStand> armorStand = boost::static_pointer_cast<ArmorStand>(entity);
     GlStateManager::rotatef(180.0f - rotationYaw, 0.0f, 1.0f, 0.0f);
@@ -60,8 +62,7 @@ void ArmorStandRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity,
 bool ArmorStandRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
 {
     return LivingEntityRenderer::shouldShowName(entity)
-        && (entity.get()->shouldShowName() || entity.get()->hasCustomName())
-        && entity == mDispatcher->mPlayer;
+           && (entity.get()->shouldShowName() || entity.get()->hasCustomName()) && entity == mDispatcher->mPlayer;
 }
 
 Model* ArmorStandRenderer::createModel(const ModelDefinition& definition)

@@ -6,21 +6,21 @@
 #include "game/core/Mth.hpp"
 #include "game/util/Math.hpp"
 
-DragonBreathParticle::DragonBreathParticle(Level* level, double x, double y, double z,
-                                           double xa, double ya, double za)
+DragonBreathParticle::DragonBreathParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     init(level, x, y, z, xa, ya, za, 1.0f);
 }
 
-void DragonBreathParticle::init(Level* level, double x, double y, double z,
-                                double xa, double ya, double za, float scale)
+void DragonBreathParticle::init(Level* level, double x, double y, double z, double xa, double ya, double za,
+                                float scale)
 {
     xd = xa;
     yd = ya;
     zd = za;
 
-    unsigned int start = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_DragonBreathMin);
+    unsigned int start = Minecraft::GetInstance()->getColourTable()->getColour(
+        eMinecraftColour_Particle_DragonBreathMin);
     unsigned int end = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_DragonBreathMax);
     double startRed = (double)((start >> 16) & 0xff) / 255.0;
     double startGreen = (double)((start >> 8) & 0xff) / 255.0;
@@ -39,17 +39,10 @@ void DragonBreathParticle::init(Level* level, double x, double y, double z,
     hasPhysics = true;
 }
 
-void DragonBreathParticle::render(BufferBuilder* buffer,
-                                  const boost::shared_ptr<Entity>& camera,
-                                  float partialTicks,
-                                  float xa,
-                                  float ya,
-                                  float za,
-                                  float xa2,
-                                  float za2)
+void DragonBreathParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                  float xa, float ya, float za, float xa2, float za2)
 {
-    size = baseSize * Mth::clamp(((float)age + partialTicks) / (float)lifetime * 32.0f,
-                                 0.0f, 1.0f);
+    size = baseSize * Mth::clamp(((float)age + partialTicks) / (float)lifetime * 32.0f, 0.0f, 1.0f);
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 
@@ -108,10 +101,9 @@ uint64_t DragonBreathParticle::GetType()
     return ParticleKind::DRAGON_BREATH;
 }
 
-Particle* DragonBreathParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                          double x, double y, double z,
-                                                          double xa, double ya, double za,
-                                                          arrayWithLength<int> params)
+Particle* DragonBreathParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                         double z, double xa, double ya, double za,
+                                                         arrayWithLength<int> params)
 {
     return new DragonBreathParticle(level, x, y, z, xa, ya, za);
 }

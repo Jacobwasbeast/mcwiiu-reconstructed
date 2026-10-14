@@ -7,14 +7,12 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation FISH_TEXTURES[3] = {
-    ResourceLocation(TN_MOB_FISH_COD),
-    ResourceLocation(TN_MOB_FISH_PUFFERFISH),
-    ResourceLocation(TN_MOB_FISH_SALMON)
-};
+static ResourceLocation FISH_TEXTURES[3] = {ResourceLocation(TN_MOB_FISH_COD), ResourceLocation(TN_MOB_FISH_PUFFERFISH),
+                                            ResourceLocation(TN_MOB_FISH_SALMON)};
 
 FishRenderer::FishRenderer(EntityRenderDispatcher* dispatcher, FishType fishType, float shadowRadius)
-    : MobRenderer(dispatcher, new FishModel(ModelDefinition(), fishType, 0), shadowRadius), mFishType(fishType)
+    : MobRenderer(dispatcher, new FishModel(ModelDefinition(), fishType, 0), shadowRadius),
+      mFishType(fishType)
 {
 }
 

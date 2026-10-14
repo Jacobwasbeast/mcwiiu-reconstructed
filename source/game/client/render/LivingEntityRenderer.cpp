@@ -39,7 +39,8 @@ float hermiteBlend(float amount)
 }
 
 LivingEntityRenderer::LivingEntityRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
-    : EntityRenderer(dispatcher), mLayers()
+    : EntityRenderer(dispatcher),
+      mLayers()
 {
     mModel = model;
     mShadowRadius = shadowRadius;
@@ -210,14 +211,14 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     model->mAttackTime = getAttackAnim(living, partialTick);
     model->mRiding = living->isPassenger() && living->getVehicle()->GetType() != EntityType::DOLPHIN;
     model->mYoung = living->isBaby();
-    model->mRidingDolphin = living->isPassenger() && eTYPE_DERIVED_FROM(EntityType::DOLPHIN, living->getVehicle()->GetType());
+    model->mRidingDolphin = living->isPassenger()
+                            && eTYPE_DERIVED_FROM(EntityType::DOLPHIN, living->getVehicle()->GetType());
 
     float bodyRot = rotlerp(living->mYBodyRotO, living->mYBodyRot, partialTick);
     float headRot = rotlerp(living->mYHeadRotO, living->mYHeadRot, partialTick);
     float netHeadYaw = headRot - bodyRot;
 
-    if (living->isPassenger() &&
-        eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, living->getVehicle()->GetType()))
+    if (living->isPassenger() && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, living->getVehicle()->GetType()))
     {
         boost::shared_ptr<LivingEntity> vehicle = boost::static_pointer_cast<LivingEntity>(living->getVehicle());
         bodyRot = rotlerp(vehicle->mYBodyRotO, vehicle->mYBodyRot, partialTick);
@@ -242,8 +243,8 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     float limbSwing = 0.0F;
     if (!living->isPassenger())
     {
-        limbSwingAmount = living->mAnimationSpeedOld +
-                          (living->mAnimationSpeed - living->mAnimationSpeedOld) * partialTick;
+        limbSwingAmount = living->mAnimationSpeedOld
+                          + (living->mAnimationSpeed - living->mAnimationSpeedOld) * partialTick;
         limbSwing = living->mAnimationPosition - living->mAnimationSpeed * (1.0F - partialTick);
         if (living->isBaby())
             limbSwing *= 3.0F;
@@ -261,7 +262,7 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     PIXEndNamedEvent();
 
     if (mSolidRender)
-{
+    {
         bool solidState = setupSolidState(living);
         PIXBeginNamedEvent(0.0F, "solidRender");
         GlStateManager::enableColorMaterial();
@@ -276,8 +277,8 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
 
         bool showLayers = true;
         const bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, living->GetType());
-        if (isPlayer && boost::static_pointer_cast<Player>(living)->isSpectator() &&
-            !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
+        if (isPlayer && boost::static_pointer_cast<Player>(living)->isSpectator()
+            && !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
         {
             showLayers = false;
         }
@@ -291,7 +292,7 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
             tearDownSolidState();
     }
     else
-{
+    {
         bool overlay = setupOverlayColor(living, partialTick);
         renderModel(living, limbSwing, limbSwingAmount, bob, netHeadYaw, headPitch, scale);
         if (overlay)
@@ -301,8 +302,8 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         PIXBeginNamedEvent(0.0F, "renderLayers");
         bool showLayers = true;
         const bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, living->GetType());
-        if (isPlayer && boost::static_pointer_cast<Player>(living)->isSpectator() &&
-            !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
+        if (isPlayer && boost::static_pointer_cast<Player>(living)->isSpectator()
+            && !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
         {
             showLayers = false;
         }
@@ -335,9 +336,8 @@ void LivingEntityRenderer::setupForTexturePack(TexturePack* pack)
     }
 }
 
-void LivingEntityRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                       float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                                       float headPitch, float scale)
+void LivingEntityRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                       float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
     bool visible = isVisible(entity);
     bool solid = !visible && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
@@ -386,8 +386,8 @@ void LivingEntityRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entit
         std::wstring name = entity->getName();
         if (name == L"Dinnerbone" || name == L"Grumm")
         {
-            bool flip = !eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) ||
-                        !boost::static_pointer_cast<Player>(entity)->isModelPartShown(PlayerModelPart::CAPE);
+            bool flip = !eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+                        || !boost::static_pointer_cast<Player>(entity)->isModelPartShown(PlayerModelPart::CAPE);
             if (flip)
 
             {
@@ -429,17 +429,17 @@ float LivingEntityRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, floa
     return (float)entity->mTickCount + partialTicks;
 }
 
-void LivingEntityRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                        float limbSwingAmount, float partialTick, float ageInTicks,
-                                        float netHeadYaw, float headPitch, float scale, bool overlay)
+void LivingEntityRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                        float partialTick, float ageInTicks, float netHeadYaw, float headPitch,
+                                        float scale, bool overlay)
 {
     for (std::vector<RenderLayer*>::iterator it = mLayers.begin(); it != mLayers.end(); ++it)
     {
         RenderLayer* layer = *it;
-        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
-            boost::static_pointer_cast<Player>(entity)->isSpectator() &&
-            boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead() &&
-            (layer == NULL || dynamic_cast<CustomHeadLayer*>(layer) == NULL))
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+            && boost::static_pointer_cast<Player>(entity)->isSpectator()
+            && boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead()
+            && (layer == NULL || dynamic_cast<CustomHeadLayer*>(layer) == NULL))
         {
             continue;
         }
@@ -480,8 +480,8 @@ void LivingEntityRenderer::renderName(boost::shared_ptr<Entity>& entity, double 
             std::wstring name = entity->getDisplayName();
             if (!name.empty())
             {
-                if (GameSettings::GetGameSettings(eGameSetting_DisplayHUD) == 0 ||
-                    Minecraft::GetInstance()->mOptions->mHideGui)
+                if (GameSettings::GetGameSettings(eGameSetting_DisplayHUD) == 0
+                    || Minecraft::GetInstance()->mOptions->mHideGui)
                     return;
 
                 GlStateManager::alphaFunc(4, 0.01f);
@@ -549,8 +549,8 @@ bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
                     {
                         bool result = visibleToPlayer;
                         if (playerTeam != NULL)
-                            result = entityTeam->isAlliedTo(playerTeam) &&
-                                     (entityTeam->canSeeFriendlyInvisibles() || visibleToPlayer);
+                            result = entityTeam->isAlliedTo(playerTeam)
+                                     && (entityTeam->canSeeFriendlyInvisibles() || visibleToPlayer);
                         return result;
                     }
                 }

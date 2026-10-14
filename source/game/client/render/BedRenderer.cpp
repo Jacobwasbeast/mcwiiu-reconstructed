@@ -24,9 +24,8 @@ BedRenderer::~BedRenderer()
 {
 }
 
-void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                         float partialTicks, int breakProgress, bool bTranslucent, float alpha,
-                         bool bUseDisplayList)
+void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float partialTicks,
+                         int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
     if (mModelVersion != mModel->modelVersion())
     {
@@ -114,8 +113,7 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
 
     ColourTable* colourTable = Minecraft::GetInstance()->getColourTable();
     int colourValue = colourTable->getColour(colour->getBedColor());
-    GlStateManager::color4f((float)((colourValue >> 16) & 0xff) / 255.0F,
-                            (float)((colourValue >> 8) & 0xff) / 255.0F,
+    GlStateManager::color4f((float)((colourValue >> 16) & 0xff) / 255.0F, (float)((colourValue >> 8) & 0xff) / 255.0F,
                             (float)(colourValue & 0xff) / 255.0F, alpha);
     mModel->render(bUseDisplayList);
     GlStateManager::popMatrix();

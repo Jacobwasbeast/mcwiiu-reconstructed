@@ -25,9 +25,8 @@ public:
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void setupForTexturePack(TexturePack* pack);
     virtual Model* createModel(const ModelDefinition& definition);
-    virtual void renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                             float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                             float headPitch, float scale);
+    virtual void renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                             float ageInTicks, float netHeadYaw, float headPitch, float scale);
 
 private:
     RenderLayer* mSpiderEyesLayer;

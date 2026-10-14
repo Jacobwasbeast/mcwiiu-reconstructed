@@ -9,12 +9,15 @@ SkeletonHeadModel::SkeletonHeadModel(const ModelDefinition& modelDefinition) : M
     _init(0, 35, 64, 64, modelDefinition);
 }
 
-SkeletonHeadModel::SkeletonHeadModel(int xTexOffs, int yTexOffs, int texWidth, int texHeight, const ModelDefinition& modelDefinition) : Model()
+SkeletonHeadModel::SkeletonHeadModel(int xTexOffs, int yTexOffs, int texWidth, int texHeight,
+                                     const ModelDefinition& modelDefinition)
+    : Model()
 {
     _init(xTexOffs, yTexOffs, texWidth, texHeight, modelDefinition);
 }
 
-void SkeletonHeadModel::_init(int xTexOffs, int yTexOffs, int texWidth, int texHeight, const ModelDefinition& modelDefinition)
+void SkeletonHeadModel::_init(int xTexOffs, int yTexOffs, int texWidth, int texHeight,
+                              const ModelDefinition& modelDefinition)
 {
     if (modelDefinition.DoesOverrideModel())
     {
@@ -32,18 +35,20 @@ void SkeletonHeadModel::_init(int xTexOffs, int yTexOffs, int texWidth, int texH
     }
 }
 
-void SkeletonHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void SkeletonHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                               float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     mHead->render(scale, useDisplayList, false);
 }
 
-void SkeletonHeadModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void SkeletonHeadModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                                  float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                                  _SkinAdjustments skinAdjustments)
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
     mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
 }
-

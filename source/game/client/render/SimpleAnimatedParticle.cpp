@@ -1,11 +1,16 @@
 #include "game/client/render/SimpleAnimatedParticle.hpp"
 
-SimpleAnimatedParticle::SimpleAnimatedParticle(Level* level, double x, double y,
-                                               double z, int texture,
-                                               int frameCount, float verticalSpeed)
-    : Particle(level, x, y, z), texture(texture), frameCount(frameCount),
-      verticalSpeed(verticalSpeed), baseAirFriction(0.91f), fadeRed(0.0f),
-      fadeGreen(0.0f), fadeBlue(0.0f), fading(false)
+SimpleAnimatedParticle::SimpleAnimatedParticle(Level* level, double x, double y, double z, int texture, int frameCount,
+                                               float verticalSpeed)
+    : Particle(level, x, y, z),
+      texture(texture),
+      frameCount(frameCount),
+      verticalSpeed(verticalSpeed),
+      baseAirFriction(0.91f),
+      fadeRed(0.0f),
+      fadeGreen(0.0f),
+      fadeBlue(0.0f),
+      fading(false)
 {
     setMiscTex(texture);
 }

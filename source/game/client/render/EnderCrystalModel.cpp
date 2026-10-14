@@ -4,8 +4,7 @@
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/core/GlStateManager.hpp"
 
-EnderCrystalModel::EnderCrystalModel(float, bool renderBase, const ModelDefinition&)
-    : Model()
+EnderCrystalModel::EnderCrystalModel(float, bool renderBase, const ModelDefinition&) : Model()
 {
     mGlass = new ModelPartSkin(this, L"glass");
     mGlass->texOffs(0, 0)->addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8);
@@ -26,9 +25,8 @@ EnderCrystalModel::EnderCrystalModel(float, bool renderBase, const ModelDefiniti
     compileSkinnedDrawlist();
 }
 
-void EnderCrystalModel::render(boost::shared_ptr<Entity>&, float, float limbSwingAmount,
-                               float ageInTicks, float, float, float scale,
-                               bool useDisplayList)
+void EnderCrystalModel::render(boost::shared_ptr<Entity>&, float, float limbSwingAmount, float ageInTicks, float, float,
+                               float scale, bool useDisplayList)
 {
     GlStateManager::pushMatrix();
     GlStateManager::scalef(2.0f, 2.0f, 2.0f);

@@ -9,8 +9,7 @@
 #include <boost/shared_ptr.hpp>
 #include <cstring>
 
-LightningBoltRenderer::LightningBoltRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+LightningBoltRenderer::LightningBoltRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
 }
 
@@ -18,8 +17,8 @@ LightningBoltRenderer::~LightningBoltRenderer()
 {
 }
 
-void LightningBoltRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                   float yaw, float partialTick)
+void LightningBoltRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                   float partialTick)
 {
     boost::shared_ptr<LightningBolt> lightningBolt = boost::static_pointer_cast<LightningBolt>(entity);
     Tesselator* tesselator = Tesselator::getInstance();

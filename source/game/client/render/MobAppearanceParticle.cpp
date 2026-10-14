@@ -50,8 +50,8 @@ bool MobAppearanceParticle::isAffected()
         MobEffect* slowdown = MobEffects::DIG_SLOWDOWN;
         if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, minecraft->getCameraEntity()->GetType()))
         {
-            boost::shared_ptr<LivingEntity> living =
-                boost::static_pointer_cast<LivingEntity>(minecraft->getCameraEntity());
+            boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(
+                minecraft->getCameraEntity());
             if (living && living->hasEffect(slowdown))
                 return true;
         }
@@ -59,14 +59,8 @@ bool MobAppearanceParticle::isAffected()
     return false;
 }
 
-void MobAppearanceParticle::render(BufferBuilder*,
-                                   const boost::shared_ptr<Entity>& camera,
-                                   float partialTicks,
-                                   float,
-                                   float,
-                                   float,
-                                   float,
-                                   float)
+void MobAppearanceParticle::render(BufferBuilder*, const boost::shared_ptr<Entity>& camera, float partialTicks, float,
+                                   float, float, float, float)
 {
     if (guardian == NULL || !isAffected())
         return;
@@ -93,8 +87,7 @@ void MobAppearanceParticle::render(BufferBuilder*,
     guardian->mYRot = guardian->mYRotO = 0.0f;
     guardian->mYHeadRot = guardian->mYHeadRotO = 0.0f;
     boost::shared_ptr<Entity> renderEntity = guardian;
-    dispatcher->render(renderEntity, 0.0, 0.0, 0.0, 0.0f, partialTicks,
-                       false, false, true, false);
+    dispatcher->render(renderEntity, 0.0, 0.0, 0.0, 0.0f, partialTicks, false, false, true, false);
     GlStateManager::popMatrix();
     GlStateManager::enableDepthTest();
 }
@@ -104,15 +97,8 @@ uint64_t MobAppearanceParticle::GetType()
     return ParticleKind::MOB_APPEARANCE;
 }
 
-Particle* MobAppearanceParticle::Provider::createParticle(ePARTICLE_TYPE,
-                                                          Level* level,
-                                                          double x,
-                                                          double y,
-                                                          double z,
-                                                          double,
-                                                          double,
-                                                          double,
-                                                          arrayWithLength<int>)
+Particle* MobAppearanceParticle::Provider::createParticle(ePARTICLE_TYPE, Level* level, double x, double y, double z,
+                                                          double, double, double, arrayWithLength<int>)
 {
     return new MobAppearanceParticle(level, x, y, z);
 }

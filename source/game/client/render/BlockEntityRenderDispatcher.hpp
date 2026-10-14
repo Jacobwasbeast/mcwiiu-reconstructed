@@ -32,13 +32,12 @@ public:
     void setLevel(Level* level);
     void prepare(Level* level, Textures* textures, Font* font, boost::shared_ptr<Entity> camera,
                  const HitResult* cameraHitResult, float partialTicks);
-    void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
-                int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList);
-    void render(boost::shared_ptr<BlockEntity> blockEntity, float partialTicks, int breakProgress,
-                bool bTranslucent);
-    void render(boost::shared_ptr<BlockEntity> blockEntity, float partialTicks);
-    void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+    void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, int breakProgress,
                 bool bTranslucent, float alpha, bool bUseDisplayList);
+    void render(boost::shared_ptr<BlockEntity> blockEntity, float partialTicks, int breakProgress, bool bTranslucent);
+    void render(boost::shared_ptr<BlockEntity> blockEntity, float partialTicks);
+    void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, bool bTranslucent,
+                float alpha, bool bUseDisplayList);
     void setupForTexturePack(TexturePack* texturePack);
 
     Font* mFont;

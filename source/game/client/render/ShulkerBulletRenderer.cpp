@@ -12,7 +12,8 @@
 static ResourceLocation SHULKER_BULLET_LOCATION(TN_MOB_SHULKER_SPARK);
 
 ShulkerBulletRenderer::ShulkerBulletRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher), mBulletModel(new ShulkerBulletModel())
+    : EntityRenderer(dispatcher),
+      mBulletModel(new ShulkerBulletModel())
 {
 }
 
@@ -30,8 +31,8 @@ float ShulkerBulletRenderer::rotlerp(float previousRotation, float rotation, flo
     return previousRotation + partialTick * difference;
 }
 
-void ShulkerBulletRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                   float yaw, float partialTick)
+void ShulkerBulletRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                   float partialTick)
 {
     boost::shared_ptr<ShulkerBullet> bullet = boost::static_pointer_cast<ShulkerBullet>(entity);
 

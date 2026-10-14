@@ -28,19 +28,23 @@ HumanoidModel::HumanoidModel(const ModelDefinition& definition, float scale, boo
     _init(scale, 0.0f, 64, 32, armourModel, true, definition, true);
 }
 
-HumanoidModel::HumanoidModel(const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, bool skinned)
+HumanoidModel::HumanoidModel(const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight,
+                             bool armourModel, bool createParts, bool skinned)
 {
     _init(scale, yOffset, texWidth, texHeight, armourModel, createParts, definition, skinned);
 }
 
-HumanoidModel::HumanoidModel(C4JRender::eVertexType vertexType, C4JRender::ePixelShaderType pixelShaderType, const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, bool skinned)
+HumanoidModel::HumanoidModel(C4JRender::eVertexType vertexType, C4JRender::ePixelShaderType pixelShaderType,
+                             const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight,
+                             bool armourModel, bool createParts, bool skinned)
 {
     Tesselator::getInstance()->getBuilder()->setVertexAndPixelShader(vertexType, pixelShaderType);
 
     _init(scale, yOffset, texWidth, texHeight, armourModel, createParts, definition, skinned);
 }
 
-ModelPart* HumanoidModel::createModelPart(bool skinned, const std::wstring& name, const ModelDefinition& definition, ModelPart* parent, float scale)
+ModelPart* HumanoidModel::createModelPart(bool skinned, const std::wstring& name, const ModelDefinition& definition,
+                                          ModelPart* parent, float scale)
 {
     if (skinned)
     {
@@ -60,7 +64,8 @@ ModelPart* HumanoidModel::createModelPart(bool skinned, int xTexOffs, int yTexOf
     return new ModelPart(this, xTexOffs, yTexOffs);
 }
 
-void HumanoidModel::_init(float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, const ModelDefinition& definition, bool skinned)
+void HumanoidModel::_init(float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts,
+                          const ModelDefinition& definition, bool skinned)
 {
     mTexWidth = texWidth;
     mTexHeight = texHeight;
@@ -329,7 +334,8 @@ ModelPart* HumanoidModel::AddOrRetrievePart(SKIN_BOX* skinBox, unsigned int unus
     part = new ModelPart(this, (int)skinBox->xTexOffs, (int)skinBox->yTexOffs);
     part->mShow = false;
     part->mMirror = skinBox->mirror != 0;
-    part->addHumanoidBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth, skinBox->delta);
+    part->addHumanoidBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height,
+                         (int)skinBox->depth, skinBox->delta);
     part->mArmourFlags = skinBox->armourFlags;
 
     parent->addChild(part);
@@ -402,7 +408,8 @@ void HumanoidModel::overrideRender(float scale, bool useDisplayList)
     GlStateManager::popMatrix();
 }
 
-void HumanoidModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void HumanoidModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                           float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupBoneMatrices(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, useDisplayList);
 
@@ -416,7 +423,9 @@ void HumanoidModel::render(HumanoidModel* model, float scale, bool useDisplayLis
     callSkinnedDrawlist();
 }
 
-void HumanoidModel::setupBoneMatrices(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void HumanoidModel::setupBoneMatrices(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                                      float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                                      bool useDisplayList)
 {
     float yTranslation = 0.0f;
 
@@ -473,7 +482,7 @@ void HumanoidModel::setupBoneMatrices(boost::shared_ptr<Entity>& entity, float l
         if (entity)
         {
             bool fallFlying = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
-                && boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
+                              && boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
 
             if (entity && entity->isSneaking() && !fallFlying)
             {
@@ -524,7 +533,9 @@ void HumanoidModel::setupBoneMatrices(HumanoidModel* model, float scale, bool us
     mHat->render(scale, useDisplayList, IsBodyPartDisabled(eAnimBit_Hat));
 }
 
-void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                              float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                              _SkinAdjustments skinAdjustments)
 {
     bool fallFlying = false;
 
@@ -533,10 +544,10 @@ void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
         mSwimAmount = entity->getSwimAmount(limbSwingAmount);
 
         fallFlying = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
-            && boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
+                     && boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
 
         bool fallFlyingDisabled = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
-            && boost::static_pointer_cast<LivingEntity>(entity)->isFallFlyingStateDisabled();
+                                  && boost::static_pointer_cast<LivingEntity>(entity)->isFallFlyingStateDisabled();
 
         mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
 
@@ -601,7 +612,7 @@ void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
         mLeftArm->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 2.0f * limbSwingAmount * 0.5f / speed;
     }
     else if (((skinAdjustments.mAnimFlags & (1u << eAnimBit_RightArmOverride)) != 0 || (fallFlying && mCrouching))
-        && mRightArmPose == eArmPose_Empty && mAttackTime == 0.0f)
+             && mRightArmPose == eArmPose_Empty && mAttackTime == 0.0f)
     {
         mRightArm->mXRot = -3.1415927f;
         mRightArm->mZRot = -0.3f;
@@ -716,13 +727,13 @@ void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
         break;
 
     case eArmPose_ThrowSpear:
-        {
-            float leftSpear = mLeftArm->mXRot * 0.5f - 3.1415927f;
+    {
+        float leftSpear = mLeftArm->mXRot * 0.5f - 3.1415927f;
 
-            mLeftArm->mYRot = 0.0f;
-            mLeftArm->mXRot = leftSpear * 0.8f + leftSpear * 0.2f * mSpearThrowProgress;
-        }
-        break;
+        mLeftArm->mYRot = 0.0f;
+        mLeftArm->mXRot = leftSpear * 0.8f + leftSpear * 0.2f * mSpearThrowProgress;
+    }
+    break;
 
     default:
         break;
@@ -745,13 +756,13 @@ void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
         break;
 
     case eArmPose_ThrowSpear:
-        {
-            float rightSpear = mRightArm->mXRot * 0.5f - 3.1415927f;
+    {
+        float rightSpear = mRightArm->mXRot * 0.5f - 3.1415927f;
 
-            mRightArm->mYRot = 0.0f;
-            mRightArm->mXRot = rightSpear * 0.8f + rightSpear * 0.2f * mSpearThrowProgress;
-        }
-        break;
+        mRightArm->mYRot = 0.0f;
+        mRightArm->mXRot = rightSpear * 0.8f + rightSpear * 0.2f * mSpearThrowProgress;
+    }
+    break;
 
     default:
         break;
@@ -791,7 +802,8 @@ void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
         attackArmPart->mYRot += mBody->mYRot + mBody->mYRot;
         attackArmPart->mZRot += Mth::sin(mAttackTime * 3.1415927f) * -0.4f;
 
-        if ((skinAdjustments.mAnimFlags & (1u << eAnimBit_RightArmOverride)) != 0 && mRightArmPose == eArmPose_Empty && mAttackTime == 0.0f)
+        if ((skinAdjustments.mAnimFlags & (1u << eAnimBit_RightArmOverride)) != 0 && mRightArmPose == eArmPose_Empty
+            && mAttackTime == 0.0f)
         {
             mRightArm->mZRot -= Mth::sin(mAttackTime * 3.1415927f) * -0.4f;
         }
@@ -921,7 +933,8 @@ void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
     mRightArm->mXRot += Mth::sin(ageInTicks * 0.067f) * 0.05f;
     mLeftArm->mXRot -= Mth::sin(ageInTicks * 0.067f) * 0.05f;
 
-    if ((skinAdjustments.mAnimFlags & (1u << eAnimBit_LegsStill)) == 0 && (skinAdjustments.mAnimFlags & (1u << eAnimBit_LegsInSync)) == 0)
+    if ((skinAdjustments.mAnimFlags & (1u << eAnimBit_LegsStill)) == 0
+        && (skinAdjustments.mAnimFlags & (1u << eAnimBit_LegsInSync)) == 0)
     {
         mLeftLeg->mXRot += Mth::sin(ageInTicks * 0.067f) * 0.05f;
     }
@@ -950,52 +963,73 @@ void HumanoidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
 
             if (strokePos < 14.0f)
             {
-                mLeftArm->mXRot = Mth::lerpRotateDegrees(mLeftArm->mXRot * Mth::RAD_TO_DEG, 0.0f * Mth::RAD_TO_DEG, mSwimAmount) * Mth::DEG_TO_RAD;
+                mLeftArm->mXRot = Mth::lerpRotateDegrees(mLeftArm->mXRot * Mth::RAD_TO_DEG, 0.0f * Mth::RAD_TO_DEG,
+                                                         mSwimAmount)
+                                  * Mth::DEG_TO_RAD;
                 mRightArm->mXRot = Mth::Lerp(mRightArm->mXRot, 0.0f, strokeAmount);
-                mLeftArm->mYRot = Mth::lerpRotateDegrees(mLeftArm->mYRot * Mth::RAD_TO_DEG, 3.1415927f * Mth::RAD_TO_DEG, mSwimAmount) * Mth::DEG_TO_RAD;
+                mLeftArm->mYRot = Mth::lerpRotateDegrees(mLeftArm->mYRot * Mth::RAD_TO_DEG,
+                                                         3.1415927f * Mth::RAD_TO_DEG, mSwimAmount)
+                                  * Mth::DEG_TO_RAD;
                 mRightArm->mYRot = Mth::Lerp(mRightArm->mYRot, 3.1415927f, strokeAmount);
 
                 float leftArmRoll = mLeftArm->mZRot;
                 float stroke = 1.8707964f * (quadraticArmUpdate(strokePos) / quadraticArmUpdate(14.0f));
 
-                mLeftArm->mZRot = Mth::lerpRotateDegrees(leftArmRoll * Mth::RAD_TO_DEG, (stroke + 3.1415927f) * Mth::RAD_TO_DEG, mSwimAmount) * Mth::DEG_TO_RAD;
+                mLeftArm->mZRot = Mth::lerpRotateDegrees(leftArmRoll * Mth::RAD_TO_DEG,
+                                                         (stroke + 3.1415927f) * Mth::RAD_TO_DEG, mSwimAmount)
+                                  * Mth::DEG_TO_RAD;
                 mRightArm->mZRot = Mth::Lerp(mRightArm->mZRot, 3.1415927f - stroke, strokeAmount);
             }
             else if (strokePos < 22.0f)
             {
                 float lift = 1.5707964f * (strokePos - 14.0f) * 0.125f;
 
-                mLeftArm->mXRot = Mth::lerpRotateDegrees(mLeftArm->mXRot * Mth::RAD_TO_DEG, lift * Mth::RAD_TO_DEG, mSwimAmount) * Mth::DEG_TO_RAD;
+                mLeftArm->mXRot = Mth::lerpRotateDegrees(mLeftArm->mXRot * Mth::RAD_TO_DEG, lift * Mth::RAD_TO_DEG,
+                                                         mSwimAmount)
+                                  * Mth::DEG_TO_RAD;
                 mRightArm->mXRot = Mth::Lerp(mRightArm->mXRot, lift, strokeAmount);
-                mLeftArm->mYRot = Mth::lerpRotateDegrees(mLeftArm->mYRot * Mth::RAD_TO_DEG, 3.1415927f * Mth::RAD_TO_DEG, mSwimAmount) * Mth::DEG_TO_RAD;
+                mLeftArm->mYRot = Mth::lerpRotateDegrees(mLeftArm->mYRot * Mth::RAD_TO_DEG,
+                                                         3.1415927f * Mth::RAD_TO_DEG, mSwimAmount)
+                                  * Mth::DEG_TO_RAD;
                 mRightArm->mYRot = Mth::Lerp(mRightArm->mYRot, 3.1415927f, strokeAmount);
 
                 float stroke = 1.8707964f * (strokePos - 14.0f) * 0.125f;
 
-                mLeftArm->mZRot = Mth::lerpRotateDegrees(mLeftArm->mZRot * Mth::RAD_TO_DEG, (5.012389f - stroke) * Mth::RAD_TO_DEG, mSwimAmount) * Mth::DEG_TO_RAD;
+                mLeftArm->mZRot = Mth::lerpRotateDegrees(mLeftArm->mZRot * Mth::RAD_TO_DEG,
+                                                         (5.012389f - stroke) * Mth::RAD_TO_DEG, mSwimAmount)
+                                  * Mth::DEG_TO_RAD;
                 mRightArm->mZRot = Mth::Lerp(mRightArm->mZRot, stroke + 1.2707963f, strokeAmount);
             }
             else if (strokePos < 26.0f)
             {
                 float drop = 1.5707964f - 1.5707964f * (strokePos - 22.0f) * 0.25f;
 
-                mLeftArm->mXRot = Mth::lerpRotateDegrees(mLeftArm->mXRot * Mth::RAD_TO_DEG, drop * Mth::RAD_TO_DEG, mSwimAmount) * Mth::DEG_TO_RAD;
+                mLeftArm->mXRot = Mth::lerpRotateDegrees(mLeftArm->mXRot * Mth::RAD_TO_DEG, drop * Mth::RAD_TO_DEG,
+                                                         mSwimAmount)
+                                  * Mth::DEG_TO_RAD;
                 mRightArm->mXRot = Mth::Lerp(mRightArm->mXRot, drop, strokeAmount);
-                mLeftArm->mYRot = Mth::lerpRotateDegrees(mLeftArm->mYRot * Mth::RAD_TO_DEG, 3.1415927f * Mth::RAD_TO_DEG, mSwimAmount) * Mth::DEG_TO_RAD;
+                mLeftArm->mYRot = Mth::lerpRotateDegrees(mLeftArm->mYRot * Mth::RAD_TO_DEG,
+                                                         3.1415927f * Mth::RAD_TO_DEG, mSwimAmount)
+                                  * Mth::DEG_TO_RAD;
                 mRightArm->mYRot = Mth::Lerp(mRightArm->mYRot, 3.1415927f, strokeAmount);
-                mLeftArm->mZRot = Mth::lerpRotateDegrees(mLeftArm->mZRot * Mth::RAD_TO_DEG, 3.1415927f * Mth::RAD_TO_DEG, mSwimAmount) * Mth::DEG_TO_RAD;
+                mLeftArm->mZRot = Mth::lerpRotateDegrees(mLeftArm->mZRot * Mth::RAD_TO_DEG,
+                                                         3.1415927f * Mth::RAD_TO_DEG, mSwimAmount)
+                                  * Mth::DEG_TO_RAD;
                 mRightArm->mZRot = Mth::Lerp(mRightArm->mZRot, 3.1415927f, strokeAmount);
             }
         }
 
         if ((skinAdjustments.mAnimFlags & (1u << eAnimBit_LegsStill)) == 0)
         {
-            float legRot = Mth::Lerp(mLeftLeg->mXRot, 0.0f * Mth::DEG_TO_RAD + Mth::cos(limbSwing * 0.34f + 3.1415927f) * 0.9f / 3.0f, mSwimAmount);
+            float legRot = Mth::Lerp(mLeftLeg->mXRot,
+                                     0.0f * Mth::DEG_TO_RAD + Mth::cos(limbSwing * 0.34f + 3.1415927f) * 0.9f / 3.0f,
+                                     mSwimAmount);
             mLeftLeg->mXRot = legRot;
 
             if ((skinAdjustments.mAnimFlags & (1u << eAnimBit_LegsInSync)) == 0)
             {
-                legRot = Mth::Lerp(mRightLeg->mXRot, 0.0f * Mth::DEG_TO_RAD + Mth::cos(limbSwing * 0.34f) * 0.9f / 3.0f, mSwimAmount);
+                legRot = Mth::Lerp(mRightLeg->mXRot, 0.0f * Mth::DEG_TO_RAD + Mth::cos(limbSwing * 0.34f) * 0.9f / 3.0f,
+                                   mSwimAmount);
             }
 
             mRightLeg->mXRot = legRot;

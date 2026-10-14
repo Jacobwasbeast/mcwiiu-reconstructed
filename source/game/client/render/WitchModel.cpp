@@ -59,9 +59,11 @@ WitchModel::WitchModel(float scale, const ModelDefinition& modelDefinition)
     }
 }
 
-void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments)
+void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments)
 {
-    VillagerModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
+    VillagerModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                             _SkinAdjustments());
     mNose->mXOffset = 0.0f;
     mNose->mYOffset = 0.0f;
     mNose->mZOffset = 0.0f;
@@ -76,4 +78,3 @@ void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
         mNose->mYOffset = 0.1875f;
     }
 }
-

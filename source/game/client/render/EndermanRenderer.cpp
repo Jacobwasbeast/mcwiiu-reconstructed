@@ -26,8 +26,8 @@ EndermanRenderer::EndermanRenderer(EntityRenderDispatcher* dispatcher)
     addLayer(new CarriedBlockLayer(this));
 }
 
-void EndermanRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                              float yaw, float partialTick)
+void EndermanRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                              float partialTick)
 {
     boost::shared_ptr<EnderMan> enderman = boost::static_pointer_cast<EnderMan>(entity);
     const BlockState* carried = enderman->getCarryingBlock();
@@ -62,9 +62,8 @@ void EndermanRenderer::setupForTexturePack(TexturePack* pack)
         addLayer(mEyesLayer);
 }
 
-void EndermanRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                   float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                                   float headPitch, float scale)
+void EndermanRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                   float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
     bool translucent = !isVisible(entity) && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
 
@@ -78,8 +77,7 @@ void EndermanRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, floa
     {
         GlStateManager::setProfile();
     }
-    getModel(entity)->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                             headPitch, scale, true);
+    getModel(entity)->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
     if (translucent)
     {
         GlStateManager::unsetProfile();

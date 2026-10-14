@@ -6,8 +6,7 @@
 #include "game/entity/mob/AbstractChestedHorse.hpp"
 #include "game/entity/mob/Entity.hpp"
 
-LlamaModel::LlamaModel(float scale, const ModelDefinition& modelDefinition)
-    : QuadrupedModel(15, scale, modelDefinition)
+LlamaModel::LlamaModel(float scale, const ModelDefinition& modelDefinition) : QuadrupedModel(15, scale, modelDefinition)
 {
     if (modelDefinition.DoesOverrideModel())
     {
@@ -80,15 +79,13 @@ LlamaModel::~LlamaModel()
     delete mChest2;
 }
 
-void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                        bool useDisplayList)
+void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     boost::shared_ptr<AbstractChestedHorse> horse = boost::static_pointer_cast<AbstractChestedHorse>(entity);
     bool chestVisible = !horse->isBaby() && horse->hasChest();
 
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-              entity, _SkinAdjustments());
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     if (mYoung)
     {
@@ -133,4 +130,3 @@ void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
 
     callSkinnedDrawlist();
 }
-

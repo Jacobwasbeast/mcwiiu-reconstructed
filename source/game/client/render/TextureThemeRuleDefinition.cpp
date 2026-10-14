@@ -8,13 +8,11 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/core/StringUtils.hpp"
 
-static const std::wstring gColourReplacements[16][2] =
-{
-    { L"white", L"0xFFFFFF" }, { L"silver", L"0xC0C0C0" }, { L"gray", L"0x808080" }, { L"black", L"0x000000" },
-    { L"red", L"0xFF0000" }, { L"maroon", L"0x800000" }, { L"yellow", L"0xFFFF00" }, { L"olive", L"0x808000" },
-    { L"lime", L"0x00FF00" }, { L"green", L"0x008000" }, { L"cyan", L"0x00FFFF" }, { L"teal", L"0x008080" },
-    { L"blue", L"0x0000FF" }, { L"navy", L"0x000080" }, { L"magenta", L"0xFF00FF" }, { L"purple", L"0x800080" }
-};
+static const std::wstring gColourReplacements[16][2] = {
+    {L"white", L"0xFFFFFF"}, {L"silver", L"0xC0C0C0"}, {L"gray", L"0x808080"},    {L"black", L"0x000000"},
+    {L"red", L"0xFF0000"},   {L"maroon", L"0x800000"}, {L"yellow", L"0xFFFF00"},  {L"olive", L"0x808000"},
+    {L"lime", L"0x00FF00"},  {L"green", L"0x008000"},  {L"cyan", L"0x00FFFF"},    {L"teal", L"0x008080"},
+    {L"blue", L"0x0000FF"},  {L"navy", L"0x000080"},   {L"magenta", L"0xFF00FF"}, {L"purple", L"0x800080"}};
 
 TextureThemeRuleDefinition::TextureThemeRuleDefinition()
 {
@@ -53,7 +51,8 @@ LayerTheme* TextureThemeRuleDefinition::Generate() const
         BufferedImage* image = new BufferedImage(file->getData(length), length);
         theme->addAsset(static_cast<unsigned int>(texture->mMinimumWidth), image);
     }
-    for (std::vector<BlockStackGetter*>::const_iterator it = mBlockStackGetters.begin(); it != mBlockStackGetters.end(); ++it)
+    for (std::vector<BlockStackGetter*>::const_iterator it = mBlockStackGetters.begin(); it != mBlockStackGetters.end();
+         ++it)
     {
         BlockStackGetter* getter = *it;
         TextureTheme::BlockStack stack;
@@ -114,8 +113,7 @@ void TextureThemeRuleDefinition::IndexedBlockDef::getStack(TextureTheme::BlockSt
     stack = TextureTheme::BlockStack(getBlockState(), 1, 0);
 }
 
-TextureThemeRuleDefinition::LayerTexture::LayerTexture()
-    : mMinimumWidth(0)
+TextureThemeRuleDefinition::LayerTexture::LayerTexture() : mMinimumWidth(0)
 {
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_name, &mFilename);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mMinimumWidth)->setMin(0)->setMax(128);

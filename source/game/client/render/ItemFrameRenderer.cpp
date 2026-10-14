@@ -67,8 +67,8 @@ void ItemFrameRenderer::drawBlockFrame(const boost::shared_ptr<ItemFrame>& itemF
         BufferBuilder* builder = tesselator->getBuilder();
         builder->begin();
         GlStateManager::newList(mBlockFrameDisplayList, 0);
-        const BlockState* state =
-            Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH);
+        const BlockState* state = Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT,
+                                                                                PlanksBlock::Variant::BIRCH);
         BlockRenderer* renderer = Minecraft::GetInstance()->mLevelRenderer->mBlockRenderers[0];
         renderer->setFixedShape(0.0625f, 0.0625f, 0.9375625f, 0.9375f, 0.9375f, 1.0f);
         renderer->setFixedTexture(mFrameIcon);
@@ -100,16 +100,16 @@ void ItemFrameRenderer::drawFrame(const boost::shared_ptr<ItemFrame>& itemFrame)
     {
         LevelRenderer* levelRenderer = Minecraft::GetInstance()->mLevelRenderer;
         BlockRenderer* renderer = levelRenderer->mBlockRenderers[0];
-        if (renderer == NULL && (renderer = levelRenderer->mBlockRenderers[1]) == NULL &&
-            (renderer = levelRenderer->mBlockRenderers[2]) == NULL)
+        if (renderer == NULL && (renderer = levelRenderer->mBlockRenderers[1]) == NULL
+            && (renderer = levelRenderer->mBlockRenderers[2]) == NULL)
             renderer = levelRenderer->mBlockRenderers[3];
         mFrameDisplayList = MemoryTracker::genLists(1);
         Tesselator* tesselator = Tesselator::getInstance();
         BufferBuilder* builder = tesselator->getBuilder();
         builder->begin();
         GlStateManager::newList(mFrameDisplayList, 0);
-        const BlockState* state =
-            Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH);
+        const BlockState* state = Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT,
+                                                                                PlanksBlock::Variant::BIRCH);
         renderer->setFixedShape(0.1875f, 0.1875f, 0.96875f, 0.8125f, 0.8125f, 1.0f);
         renderer->setFixedTexture(mFrameIcon);
         renderer->renderBlock(state, 1.0f, 1.0f, false, false);
@@ -152,7 +152,8 @@ void ItemFrameRenderer::drawItem(const boost::shared_ptr<ItemFrame>& itemFrame)
         GlStateManager::rotatef(180.0f, 0.0f, 0.0f, 1.0f);
         GlStateManager::scalef(0.0078125f, 0.0078125f, 0.0078125f);
         GlStateManager::translatef(-64.0f, -64.0f, 0.0f);
-        boost::shared_ptr<MapItemSavedData> data = static_cast<MapItem*>(Items::filledMap)->getSavedData(item, itemFrame->mLevel);
+        boost::shared_ptr<MapItemSavedData> data =
+            static_cast<MapItem*>(Items::filledMap)->getSavedData(item, itemFrame->mLevel);
         GlStateManager::translatef(0.0f, 0.0f, -1.0f);
         if (data)
             mMinecraft->mGameRenderer->getMapRenderer()->render(data, boost::shared_ptr<Player>());
@@ -166,7 +167,8 @@ void ItemFrameRenderer::drawItem(const boost::shared_ptr<ItemFrame>& itemFrame)
     GlStateManager::popMatrix();
 }
 
-void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
+void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                               float partialTick)
 {
     ++gHangingEntityRenderCount;
     PIXBeginNamedEvent(0.0f, "ItemFrameRenderer");
@@ -207,8 +209,8 @@ void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
 void ItemFrameRenderer::renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z)
 {
     boost::shared_ptr<ItemFrame> itemFrame = boost::static_pointer_cast<ItemFrame>(entity);
-    if (!(Minecraft::renderNames() && !itemFrame->getItem()->isEmpty() &&
-          itemFrame->getItem()->hasCustomHoverName() && mDispatcher->mPlayer.get() == itemFrame.get()))
+    if (!(Minecraft::renderNames() && !itemFrame->getItem()->isEmpty() && itemFrame->getItem()->hasCustomHoverName()
+          && mDispatcher->mPlayer.get() == itemFrame.get()))
         return;
     double distance = itemFrame->distanceToSqr(mDispatcher->mCamera);
     float maxDistance = itemFrame->isSneaking() ? 32.0f : 64.0f;

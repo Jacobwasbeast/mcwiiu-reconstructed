@@ -5,15 +5,15 @@
 #include "game/world/block/BlockColors.hpp"
 #include "game/world/block/BlockState.hpp"
 
-BlockRenderDispatcher::BlockRenderDispatcher(BlockColors* blockColors)
-    : mBlockRenderer(new BlockRenderer(blockColors))
+BlockRenderDispatcher::BlockRenderDispatcher(BlockColors* blockColors) : mBlockRenderer(new BlockRenderer(blockColors))
 {
 }
 
 void BlockRenderDispatcher::renderSingleBlock(const BlockState* state, float x, float y, bool color)
 {
     int renderShape = state->getRenderShape();
-    if (renderShape != BLOCK_RENDER_INVISIBLE && (BlockRenderer::canRender(renderShape) || renderShape == BLOCK_RENDER_CROSS))
+    if (renderShape != BLOCK_RENDER_INVISIBLE
+        && (BlockRenderer::canRender(renderShape) || renderShape == BLOCK_RENDER_CROSS))
     {
         mBlockRenderer->renderBlock(state, x, y, color, true);
     }

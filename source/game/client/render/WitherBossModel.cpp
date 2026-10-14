@@ -109,8 +109,8 @@ void WitherBossModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
     mHeads.data[0]->mXRot = headPitch * Mth::DEG_TO_RAD;
 }
 
-void WitherBossModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                      float limbSwingAmount, float partialTicks)
+void WitherBossModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                      float partialTicks)
 {
     boost::shared_ptr<WitherBoss> wither = boost::dynamic_pointer_cast<WitherBoss>(entity);
     mHeads.data[1]->mYRot = (wither->getHeadYRot(0) - entity->mYBodyRot) * Mth::DEG_TO_RAD;
@@ -118,4 +118,3 @@ void WitherBossModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, f
     mHeads.data[2]->mYRot = (wither->getHeadYRot(1) - entity->mYBodyRot) * Mth::DEG_TO_RAD;
     mHeads.data[2]->mXRot = wither->getHeadXRot(1) * Mth::DEG_TO_RAD;
 }
-

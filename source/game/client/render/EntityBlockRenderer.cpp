@@ -33,22 +33,21 @@ EntityBlockRenderer::EntityBlockRenderer()
     mConduitBlockEntity = boost::shared_ptr<ConduitBlockEntity>(new ConduitBlockEntity());
 }
 
-void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float partialTicks,
-                                       bool bTranslucent, bool bUseDisplayList)
+void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float partialTicks, bool bTranslucent,
+                                       bool bUseDisplayList)
 {
     Item* itemType = item->getItem();
 
     if (item->getItem() == Items::banner)
     {
         mBannerBlockEntity->setItemValues(item, false);
-        BlockEntityRenderDispatcher::instance->render(mBannerBlockEntity, 0.0, 0.0, 0.0,
-                                             0.0F, true, partialTicks, true);
+        BlockEntityRenderDispatcher::instance->render(mBannerBlockEntity, 0.0, 0.0, 0.0, 0.0F, true, partialTicks,
+                                                      true);
     }
     else if (itemType == Items::bed)
     {
         mBedBlockEntity->setItemValues(item);
-        BlockEntityRenderDispatcher::instance->render(mBedBlockEntity, 0.0, 0.0, 0.0,
-                                             0.0F, true, partialTicks, true);
+        BlockEntityRenderDispatcher::instance->render(mBedBlockEntity, 0.0, 0.0, 0.0, 0.0F, true, partialTicks, true);
     }
     else if (itemType == Items::skull)
     {
@@ -64,21 +63,18 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
     }
     else if (itemType == Item::byBlock(Blocks::ender_chest))
     {
-        BlockEntityRenderDispatcher::instance->render(mEnderChestBlockEntity, 0.0, 0.0, 0.0,
-                                             0.0F, bTranslucent, partialTicks,
-                                             bUseDisplayList);
+        BlockEntityRenderDispatcher::instance->render(mEnderChestBlockEntity, 0.0, 0.0, 0.0, 0.0F, bTranslucent,
+                                                      partialTicks, bUseDisplayList);
     }
     else if (itemType == Item::byBlock(Blocks::trapped_chest))
     {
-        BlockEntityRenderDispatcher::instance->render(mTrappedChestBlockEntity, 0.0, 0.0, 0.0,
-                                             0.0F, bTranslucent, partialTicks,
-                                             bUseDisplayList);
+        BlockEntityRenderDispatcher::instance->render(mTrappedChestBlockEntity, 0.0, 0.0, 0.0, 0.0F, bTranslucent,
+                                                      partialTicks, bUseDisplayList);
     }
     else if (itemType == Item::byBlock(Blocks::conduit))
     {
-        BlockEntityRenderDispatcher::instance->render(mConduitBlockEntity, 0.0, 0.0, 0.0,
-                                             0.0F, bTranslucent, partialTicks,
-                                             bUseDisplayList);
+        BlockEntityRenderDispatcher::instance->render(mConduitBlockEntity, 0.0, 0.0, 0.0, 0.0F, bTranslucent,
+                                                      partialTicks, bUseDisplayList);
     }
     else
     {
@@ -86,15 +82,13 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
         {
             *mShulkerBoxBlockEntity = ShulkerBoxBlockEntity(
                 static_cast<ShulkerBoxBlock*>(Block::byItem(itemType))->getDyeColor());
-            BlockEntityRenderDispatcher::instance->render(mShulkerBoxBlockEntity, 0.0, 0.0, 0.0,
-                                                 0.0F, bTranslucent, partialTicks,
-                                                 bUseDisplayList);
+            BlockEntityRenderDispatcher::instance->render(mShulkerBoxBlockEntity, 0.0, 0.0, 0.0, 0.0F, bTranslucent,
+                                                          partialTicks, bUseDisplayList);
         }
         else
         {
-            BlockEntityRenderDispatcher::instance->render(mChestBlockEntity, 0.0, 0.0, 0.0,
-                                                 0.0F, bTranslucent, partialTicks,
-                                                 bUseDisplayList);
+            BlockEntityRenderDispatcher::instance->render(mChestBlockEntity, 0.0, 0.0, 0.0, 0.0F, bTranslucent,
+                                                          partialTicks, bUseDisplayList);
         }
     }
 }

@@ -19,19 +19,14 @@ VindicationIllagerRenderer::VindicationIllagerRenderer(EntityRenderDispatcher* d
     class AnonymousItemInHandLayer : public ItemInHandLayer
     {
     public:
-        explicit AnonymousItemInHandLayer(VindicationIllagerRenderer* renderer)
-            : ItemInHandLayer(renderer)
-        {
-        }
-        virtual ~AnonymousItemInHandLayer()
-        {
-        }
+        explicit AnonymousItemInHandLayer(VindicationIllagerRenderer* renderer) : ItemInHandLayer(renderer) {}
+        virtual ~AnonymousItemInHandLayer() {}
         virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
                             float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                             bool bUseDisplayList)
         {
-            boost::shared_ptr<VindicationIllager> vindicationIllager =
-                boost::static_pointer_cast<VindicationIllager>(entity);
+            boost::shared_ptr<VindicationIllager> vindicationIllager = boost::static_pointer_cast<VindicationIllager>(
+                entity);
             if (vindicationIllager->isAgressive())
             {
                 ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw,
@@ -49,8 +44,8 @@ VindicationIllagerRenderer::VindicationIllagerRenderer(EntityRenderDispatcher* d
     addLayer(new AnonymousItemInHandLayer(this));
 }
 
-void VindicationIllagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                        float yaw, float partialTick)
+void VindicationIllagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                        float partialTick)
 {
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }

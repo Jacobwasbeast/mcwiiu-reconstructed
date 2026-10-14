@@ -120,9 +120,8 @@ void SpiderModel::createInvisibleModelParts(const ModelDefinition& modelDefiniti
     }
 }
 
-void SpiderModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                         bool useDisplayList)
+void SpiderModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                         float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
     if (entity->isInvisible())
@@ -142,9 +141,8 @@ void SpiderModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     }
 }
 
-void SpiderModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
-                            float netHeadYaw, float headPitch, float scale,
-                            boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void SpiderModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                            float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     mSpiderParts[0]->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mSpiderParts[0]->mXRot = headPitch * Mth::DEG_TO_RAD;
@@ -201,4 +199,3 @@ void SpiderModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     mSpiderParts[20] = mSpiderParts[9];
     mSpiderParts[21] = mSpiderParts[10];
 }
-

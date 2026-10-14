@@ -57,12 +57,10 @@ void OcelotModel::LoadOcelotModelDefinition(const ModelDefinition& modelDefiniti
     builder->useDefaultShaders();
 }
 
-void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                         bool useDisplayList)
+void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                         float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-              entity, _SkinAdjustments());
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     if (mYoung)
     {
@@ -126,9 +124,8 @@ void OcelotModel::render(OcelotModel* model, float scale, bool useDisplayList)
     mBody->render(scale, useDisplayList, false);
 }
 
-void OcelotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
-                            float netHeadYaw, float headPitch, float scale,
-                            boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void OcelotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                            float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     int pose = mPose;
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
@@ -157,8 +154,8 @@ void OcelotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     }
 }
 
-void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                  float limbSwingAmount, float partialTicks)
+void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                  float partialTicks)
 {
     boost::shared_ptr<Ocelot> ocelot = boost::dynamic_pointer_cast<Ocelot>(entity);
 

@@ -5,7 +5,8 @@
 
 #include <math.h>
 
-void SkiModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void SkiModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                      float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     for (unsigned int i = 0; i < mSkiParts.length; i++)
     {
@@ -15,7 +16,8 @@ void SkiModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float 
     callSkinnedDrawlist();
 }
 
-void SkiModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void SkiModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                         float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     mSkiParts.data[0]->mY = 24.2f;
     mSkiParts.data[0]->mXRot = 1.5707964f;

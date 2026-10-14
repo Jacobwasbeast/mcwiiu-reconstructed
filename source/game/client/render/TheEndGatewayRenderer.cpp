@@ -18,7 +18,8 @@ TheEndGatewayRenderer::~TheEndGatewayRenderer()
 {
 }
 
-void TheEndGatewayRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
+void TheEndGatewayRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+                                   int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
     GlStateManager::disableFog();
 
@@ -37,12 +38,13 @@ void TheEndGatewayRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, d
 
         int beamHeight = Mth::floor(percent * beamLength);
 
-        arrayWithLength<const float> colours = gateway->isSpawning()
-            ? DyeColor::MAGENTA->getTextureDiffuseColors()
-            : DyeColor::PURPLE->getTextureDiffuseColors();
+        arrayWithLength<const float> colours = gateway->isSpawning() ? DyeColor::MAGENTA->getTextureDiffuseColors()
+                                                                     : DyeColor::PURPLE->getTextureDiffuseColors();
 
-        BeaconRenderer::renderBeaconBeam(x, y, z, a, percent, (double)gateway->getLevel()->getGameTime(), 0, beamHeight, colours, 0.15, 0.175);
-        BeaconRenderer::renderBeaconBeam(x, y, z, a, percent, (double)gateway->getLevel()->getGameTime(), 0, -beamHeight, colours, 0.15, 0.175);
+        BeaconRenderer::renderBeaconBeam(x, y, z, a, percent, (double)gateway->getLevel()->getGameTime(), 0, beamHeight,
+                                         colours, 0.15, 0.175);
+        BeaconRenderer::renderBeaconBeam(x, y, z, a, percent, (double)gateway->getLevel()->getGameTime(), 0,
+                                         -beamHeight, colours, 0.15, 0.175);
     }
 
     TheEndPortalRenderer::render(blockEntity, x, y, z, a, breakProgress, bTranslucent, alpha, bUseDisplayList);

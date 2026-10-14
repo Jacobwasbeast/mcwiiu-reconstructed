@@ -15,10 +15,12 @@ class VillagerZombieModel : public HumanoidModel
 {
 public:
     VillagerZombieModel(const ModelDefinition& definition = ModelDefinition());
-    VillagerZombieModel(float scale, float yOffset, bool armourModel, const ModelDefinition& definition = ModelDefinition());
+    VillagerZombieModel(float scale, float yOffset, bool armourModel,
+                        const ModelDefinition& definition = ModelDefinition());
 
 
-    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
+    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual std::wstring getName() { return L"zombie.villager"; }
 
     void _init(float scale, float yOffset, bool armourModel, const ModelDefinition& definition);

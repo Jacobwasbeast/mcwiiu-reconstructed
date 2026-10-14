@@ -69,8 +69,7 @@ void DripParticle::tick()
     else
     {
         unsigned int start = colourTable->getColour(eMinecraftColour_Particle_DripLavaStart);
-        unsigned int end = Minecraft::GetInstance()->getColourTable()->getColour(
-            eMinecraftColour_Particle_DripLavaEnd);
+        unsigned int end = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_DripLavaEnd);
         float startRed = (float)((start >> 16) & 255) / 255.0f;
         float startGreen = (float)((start >> 8) & 255) / 255.0f;
         float startBlue = (float)(start & 255) / 255.0f;
@@ -108,8 +107,7 @@ void DripParticle::tick()
         if (material == Material::WATER)
         {
             remove();
-            level->addParticle(PARTICLE_SPLASH, x, y, z, 0.0, 0.0, 0.0,
-                               arrayWithLength<int>());
+            level->addParticle(PARTICLE_SPLASH, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
             xd *= 0.7f;
             zd *= 0.7f;
         }
@@ -143,18 +141,14 @@ uint64_t DripParticle::GetType()
     return ParticleKind::DRIP;
 }
 
-Particle* DripParticle::LavaProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                     double x, double y, double z,
-                                                     double xa, double ya, double za,
-                                                     arrayWithLength<int> params)
+Particle* DripParticle::LavaProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                     double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new DripParticle(level, x, y, z, Material::LAVA);
 }
 
-Particle* DripParticle::WaterProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                      double x, double y, double z,
-                                                      double xa, double ya, double za,
-                                                      arrayWithLength<int> params)
+Particle* DripParticle::WaterProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                      double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new DripParticle(level, x, y, z, Material::WATER);
 }

@@ -8,10 +8,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/MemoryTracker.hpp"
 
-ModelPartsSkinned::ModelPartsSkinned()
-    : mDisplayList(-1)
-    , mCompiled(false)
-    , mParts()
+ModelPartsSkinned::ModelPartsSkinned() : mDisplayList(-1), mCompiled(false), mParts()
 {
 }
 

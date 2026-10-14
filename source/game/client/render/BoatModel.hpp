@@ -20,12 +20,16 @@ public:
     BoatModel(const ModelDefinition& definition = ModelDefinition());
 
 
-    virtual void render(boost::shared_ptr<Entity>& entity, float partialTicks, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    virtual void render(boost::shared_ptr<Entity>& entity, float partialTicks, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList);
     virtual std::wstring getName() { return L"boat"; }
-    virtual void renderSecondPass(boost::shared_ptr<Entity> entity, float partialTicks, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    virtual void renderSecondPass(boost::shared_ptr<Entity> entity, float partialTicks, float limbSwingAmount,
+                                  float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                                  bool useDisplayList);
 
     ModelPartSkin* makePaddle(bool left);
-    void animatePaddle(ModelPartSkin* paddle, boost::shared_ptr<Boat> boat, int side, float scale, float partialTicks, bool useDisplayList);
+    void animatePaddle(ModelPartSkin* paddle, boost::shared_ptr<Boat> boat, int side, float scale, float partialTicks,
+                       bool useDisplayList);
 
     ModelPartSkin* mBottom;
     ModelPartSkin* mBack;

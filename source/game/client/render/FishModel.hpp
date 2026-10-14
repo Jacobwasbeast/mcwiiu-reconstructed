@@ -18,14 +18,12 @@ class FishModel : public Model
 public:
     FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishType fishType, int variant);
 
-    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                        bool useDisplayList);
-    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                           float headPitch, float scale, boost::shared_ptr<Entity> entity,
-                           _SkinAdjustments skinAdjustments);
-    virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                 float limbSwingAmount, float partialTicks);
+    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
+    virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                 float partialTicks);
     virtual std::wstring getName();
 
 private:

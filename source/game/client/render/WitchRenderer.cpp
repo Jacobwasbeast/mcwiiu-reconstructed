@@ -12,14 +12,13 @@
 
 static ResourceLocation WITCH_LOCATION(TN_MOB_WITCH);
 
-WitchRenderer::WitchRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new WitchModel(0.0F), 0.5F)
+WitchRenderer::WitchRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new WitchModel(0.0F), 0.5F)
 {
     addLayer(new WitchItemLayer(this));
 }
 
-void WitchRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                           float yaw, float partialTick)
+void WitchRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                           float partialTick)
 {
     boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
     {

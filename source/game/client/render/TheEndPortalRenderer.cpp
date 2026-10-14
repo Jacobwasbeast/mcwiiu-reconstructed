@@ -39,9 +39,11 @@ FloatBuffer* TheEndPortalRenderer::getBuffer(float x, float y, float z, float w)
     return mBuffer;
 }
 
-void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
+void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+                                  int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
-    boost::shared_ptr<TheEndPortalBlockEntity> portal = boost::static_pointer_cast<TheEndPortalBlockEntity>(blockEntity);
+    boost::shared_ptr<TheEndPortalBlockEntity> portal = boost::static_pointer_cast<TheEndPortalBlockEntity>(
+        blockEntity);
 
     GlStateManager::disableLighting();
 

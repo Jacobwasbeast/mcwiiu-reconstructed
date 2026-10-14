@@ -60,8 +60,7 @@ BlockEntityRenderDispatcher::BlockEntityRenderDispatcher()
     (*this)[BlockEntityType::FURNACE] = NULL;
     (*this)[BlockEntityType::BEACON] = new BeaconRenderer();
     (*this)[BlockEntityType::BANNER] = new BannerRenderer();
-    (*this)[BlockEntityType::SHULKER_BOX] =
-        new ShulkerBoxRenderer(new ShulkerModel());
+    (*this)[BlockEntityType::SHULKER_BOX] = new ShulkerBoxRenderer(new ShulkerModel());
     (*this)[BlockEntityType::BED] = new BedRenderer();
     (*this)[BlockEntityType::CONDUIT] = new ConduitRenderer();
 
@@ -126,8 +125,7 @@ void BlockEntityRenderDispatcher::setLevel(Level* level)
 }
 
 void BlockEntityRenderDispatcher::prepare(Level* level, Textures* textures, Font* font,
-                                          boost::shared_ptr<Entity> camera,
-                                          const HitResult* cameraHitResult,
+                                          boost::shared_ptr<Entity> camera, const HitResult* cameraHitResult,
                                           float partialTicks)
 {
     if (mLevel != level)
@@ -146,9 +144,9 @@ void BlockEntityRenderDispatcher::prepare(Level* level, Textures* textures, Font
     static_cast<SignRenderer*>((*this)[BlockEntityType::SIGN])->tick();
 }
 
-void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
-                                         double y, double z, float a, int breakProgress,
-                                         bool bTranslucent, float alpha, bool bUseDisplayList)
+void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
+                                         float a, int breakProgress, bool bTranslucent, float alpha,
+                                         bool bUseDisplayList)
 {
     BlockEntityRenderer* renderer = getRenderer(blockEntity);
     if (renderer != NULL)
@@ -157,20 +155,17 @@ void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEnt
             && eTYPE_DERIVED_FROM(BlockEntityType::BEACON, blockEntity->GetType()))
         {
             static_cast<BeaconRenderer*>(renderer)->renderSpecialBeamDirection(
-                blockEntity, x, y, z, mX, mY, mZ, a, breakProgress, bTranslucent, alpha,
-                bUseDisplayList);
+                blockEntity, x, y, z, mX, mY, mZ, a, breakProgress, bTranslucent, alpha, bUseDisplayList);
         }
         else
         {
-            renderer->render(blockEntity, x, y, z, a, breakProgress, bTranslucent, alpha,
-                             bUseDisplayList);
+            renderer->render(blockEntity, x, y, z, a, breakProgress, bTranslucent, alpha, bUseDisplayList);
         }
     }
 }
 
-void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity,
-                                         float partialTicks, int breakProgress,
-                                         bool bTranslucent)
+void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity, float partialTicks,
+                                         int breakProgress, bool bTranslucent)
 {
     if (blockEntity->distanceToSqr(mX, mY, mZ) < blockEntity->getViewDistance())
     {
@@ -184,21 +179,18 @@ void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEnt
             GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
         }
         BlockPos position = blockEntity->getBlockPos();
-        render(blockEntity, (double)position.x - xOff, (double)position.y - yOff,
-               (double)position.z - zOff, partialTicks, breakProgress, bTranslucent, 1.0f,
-               true);
+        render(blockEntity, (double)position.x - xOff, (double)position.y - yOff, (double)position.z - zOff,
+               partialTicks, breakProgress, bTranslucent, 1.0f, true);
     }
 }
 
-void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity,
-                                         float partialTicks)
+void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity, float partialTicks)
 {
     render(blockEntity, partialTicks, -1, true);
 }
 
-void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
-                                         double y, double z, float a, bool bTranslucent,
-                                         float alpha, bool bUseDisplayList)
+void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
+                                         float a, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
     render(blockEntity, x, y, z, a, -1, bTranslucent, alpha, bUseDisplayList);
 }

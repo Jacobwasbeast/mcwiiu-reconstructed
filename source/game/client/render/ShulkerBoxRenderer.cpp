@@ -22,8 +22,7 @@
 
 static ResourceLocation SHULKER_BOX_LOCATION(TN_MOB_SHULKER_ENDERGOLEM);
 
-ShulkerBoxRenderer::ShulkerBoxRenderer(ShulkerModel* model)
-    : mModel(model), mShulkerModel(model)
+ShulkerBoxRenderer::ShulkerBoxRenderer(ShulkerModel* model) : mModel(model), mShulkerModel(model)
 {
 }
 
@@ -58,8 +57,7 @@ void ShulkerBoxRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
                                 float partialTick, int breakProgress, bool translucent, float alpha,
                                 bool useDisplayList)
 {
-    boost::shared_ptr<ShulkerBoxBlockEntity> shulker =
-        boost::static_pointer_cast<ShulkerBoxBlockEntity>(blockEntity);
+    boost::shared_ptr<ShulkerBoxBlockEntity> shulker = boost::static_pointer_cast<ShulkerBoxBlockEntity>(blockEntity);
 
     const Direction* direction = Direction::UP;
     if (shulker->hasLevel())
@@ -133,8 +131,10 @@ void ShulkerBoxRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
             builder->setVertexAndPixelShader((C4JRender::eVertexType)0, (C4JRender::ePixelShaderType)0);
             static_cast<ShulkerModel*>(mModel)->mBase->render(0.0625F, false, false);
             GlStateManager::pushMatrix();
-            GlStateManager::translatef(0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
-            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick), 0.0F, 1.0F, 0.0F);
+            GlStateManager::translatef(
+                0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
+            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick),
+                                    0.0F, 1.0F, 0.0F);
             static_cast<ShulkerModel*>(mModel)->mLid->render(0.0625F, false, false);
             GlStateManager::popMatrix();
             builder->useDefaultShaders();
@@ -142,8 +142,10 @@ void ShulkerBoxRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
         else
         {
             static_cast<ShulkerModel*>(mModel)->mBase->render(0.0625F, useDisplayList, false);
-            GlStateManager::translatef(0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
-            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick), 0.0F, 1.0F, 0.0F);
+            GlStateManager::translatef(
+                0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
+            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick),
+                                    0.0F, 1.0F, 0.0F);
             static_cast<ShulkerModel*>(mModel)->mLid->render(0.0625F, useDisplayList, false);
         }
     }
@@ -151,16 +153,17 @@ void ShulkerBoxRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
     {
         const int colour = Minecraft::GetInstance()->getColourTable()->getColour(
             shulker->getColor()->getShulkerColor());
-        GlStateManager::color4f((float)((colour >> 16) & 0xFF) / 255.0F,
-                                (float)((colour >> 8) & 0xFF) / 255.0F,
+        GlStateManager::color4f((float)((colour >> 16) & 0xFF) / 255.0F, (float)((colour >> 8) & 0xFF) / 255.0F,
                                 (float)(colour & 0xFF) / 255.0F, alpha);
         if (mModel->hasOverriddenParts())
         {
             static_cast<ShulkerModel*>(mModel)->mHead->mShow = false;
             static_cast<ShulkerModel*>(mModel)->mBase->render(0.0625F, useDisplayList, false);
             GlStateManager::pushMatrix();
-            GlStateManager::translatef(0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
-            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick), 0.0F, 1.0F, 0.0F);
+            GlStateManager::translatef(
+                0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
+            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick),
+                                    0.0F, 1.0F, 0.0F);
             static_cast<ShulkerModel*>(mModel)->mLid->render(0.0625F, useDisplayList, false);
             GlStateManager::popMatrix();
             static_cast<ShulkerModel*>(mModel)->mHead->render(0.0625F, useDisplayList, false);
@@ -171,8 +174,10 @@ void ShulkerBoxRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
         {
             static_cast<ShulkerModel*>(mModel)->mBase->render(0.0625F, useDisplayList, false);
             GlStateManager::pushMatrix();
-            GlStateManager::translatef(0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
-            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick), 0.0F, 1.0F, 0.0F);
+            GlStateManager::translatef(
+                0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
+            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick),
+                                    0.0F, 1.0F, 0.0F);
             static_cast<ShulkerModel*>(mModel)->mLid->render(0.0625F, useDisplayList, false);
             GlStateManager::popMatrix();
             GlStateManager::color4f(1.0F, 1.0F, 1.0F, alpha);
@@ -181,8 +186,10 @@ void ShulkerBoxRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
             GlStateManager::translatef(0.0F, 0.5F, 0.0F);
             GlStateManager::matrixMode(0);
             static_cast<ShulkerModel*>(mModel)->mBase->render(0.0625F, useDisplayList, false);
-            GlStateManager::translatef(0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
-            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick), 0.0F, 1.0F, 0.0F);
+            GlStateManager::translatef(
+                0.0F, -shulker->getProgress(partialTick) * ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR, 0.0F);
+            GlStateManager::rotatef(ShulkerBoxBlockEntity::LID_ROTATION_DEGREES * shulker->getProgress(partialTick),
+                                    0.0F, 1.0F, 0.0F);
             static_cast<ShulkerModel*>(mModel)->mLid->render(0.0625F, useDisplayList, false);
             GlStateManager::matrixMode(2);
             GlStateManager::loadIdentity();

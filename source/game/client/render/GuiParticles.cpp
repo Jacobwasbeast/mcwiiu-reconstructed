@@ -1,7 +1,6 @@
 #include "game/client/render/GuiParticles.hpp"
 
-GuiParticles::GuiParticles(Minecraft* minecraft)
-    : mMinecraft(minecraft)
+GuiParticles::GuiParticles(Minecraft* minecraft) : mMinecraft(minecraft)
 {
 }
 

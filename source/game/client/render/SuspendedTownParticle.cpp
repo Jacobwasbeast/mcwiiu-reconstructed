@@ -1,8 +1,8 @@
 #include "game/client/render/SuspendedTownParticle.hpp"
 #include "game/core/EntityType.hpp"
 
-SuspendedTownParticle::SuspendedTownParticle(Level* level, double x, double y, double z,
-                                             double xa, double ya, double za)
+SuspendedTownParticle::SuspendedTownParticle(Level* level, double x, double y, double z, double xa, double ya,
+                                             double za)
     : Particle(level, x, y, z, xa, ya, za)
 {
     float brightness = random.nextFloat() * 0.1f + 0.2f;
@@ -42,20 +42,16 @@ uint64_t SuspendedTownParticle::GetType()
     return ParticleKind::SUSPENDED_TOWN;
 }
 
-Particle* SuspendedTownParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                           double x, double y, double z,
-                                                           double xa, double ya, double za,
-                                                           arrayWithLength<int> params)
+Particle* SuspendedTownParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                          double z, double xa, double ya, double za,
+                                                          arrayWithLength<int> params)
 {
     return new SuspendedTownParticle(level, x, y, z, xa, ya, za);
 }
 
-Particle* SuspendedTownParticle::HappyVillagerProvider::createParticle(ePARTICLE_TYPE type,
-                                                                        Level* level,
-                                                                        double x, double y,
-                                                                        double z, double xa,
-                                                                        double ya, double za,
-                                                                        arrayWithLength<int> params)
+Particle* SuspendedTownParticle::HappyVillagerProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x,
+                                                                       double y, double z, double xa, double ya,
+                                                                       double za, arrayWithLength<int> params)
 {
     SuspendedTownParticle* particle = new SuspendedTownParticle(level, x, y, z, xa, ya, za);
     particle->setMiscTex(0x52);

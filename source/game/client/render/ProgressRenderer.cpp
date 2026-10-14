@@ -9,13 +9,13 @@
 
 static OSFastMutex sProgressRendererMutex;
 
-ProgressRenderer::TextField::TextField(const TextField& other)
-    : active(other.active), id(other.id), text(other.text)
+ProgressRenderer::TextField::TextField(const TextField& other) : active(other.active), id(other.id), text(other.text)
 {
 }
 
 ProgressRenderer::ProgressRenderer(Minecraft* minecraft)
-    : mStatus(false, -1, std::wstring(L"")), mTitle(false, -1, std::wstring(L""))
+    : mStatus(false, -1, std::wstring(L"")),
+      mTitle(false, -1, std::wstring(L""))
 {
     mStartTime = static_cast<unsigned long long>(System::processTimeInMilliSecs());
     mNoAbort = false;

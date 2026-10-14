@@ -17,8 +17,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/FallingBlockEntity.hpp"
 
-FallingBlockRenderer::FallingBlockRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+FallingBlockRenderer::FallingBlockRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
     mShadowRadius = 0.5F;
 }
@@ -27,8 +26,8 @@ FallingBlockRenderer::~FallingBlockRenderer()
 {
 }
 
-void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                  float yaw, float partialTick)
+void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                  float partialTick)
 {
     boost::shared_ptr<FallingBlockEntity> fallingBlock = boost::static_pointer_cast<FallingBlockEntity>(entity);
     if (fallingBlock->getBlock() == NULL)
@@ -40,7 +39,8 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     Block* block = blockState->getBlock();
     BlockPos blockPos(fallingBlock);
     Level* level = fallingBlock->getLevel();
-    if (blockState == level->getBlockState(blockPos) || block->defaultBlockState()->getRenderShape() == BLOCK_RENDER_INVISIBLE)
+    if (blockState == level->getBlockState(blockPos)
+        || block->defaultBlockState()->getRenderShape() == BLOCK_RENDER_INVISIBLE)
         return;
 
     GlStateManager::pushMatrix();
@@ -56,11 +56,10 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     {
         blockRenderer->mLevelSource = level;
         builder->begin();
-        builder->offset((float)-(int)fallingBlock->mX - offset,
-                        (float)-(int)fallingBlock->mY,
+        builder->offset((float)-(int)fallingBlock->mX - offset, (float)-(int)fallingBlock->mY,
                         (float)-(int)fallingBlock->mZ - offset);
-        blockRenderer->tesselateAnvilInWorld(blockState,
-                                             BlockPos((int)fallingBlock->mX, (int)fallingBlock->mY, (int)fallingBlock->mZ));
+        blockRenderer->tesselateAnvilInWorld(
+            blockState, BlockPos((int)fallingBlock->mX, (int)fallingBlock->mY, (int)fallingBlock->mZ));
         builder->offset(0.0F, 0.0F, 0.0F);
         builder->end();
     }
@@ -68,12 +67,11 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     {
         blockRenderer->mLevelSource = level;
         builder->begin();
-        builder->offset((float)-(int)fallingBlock->mX - offset,
-                        (float)-(int)fallingBlock->mY,
+        builder->offset((float)-(int)fallingBlock->mX - offset, (float)-(int)fallingBlock->mY,
                         (float)-(int)fallingBlock->mZ - offset);
-        blockRenderer->tesselateInWorldNoCulling(blockState,
-                                                 BlockPos((int)fallingBlock->mX, (int)fallingBlock->mY, (int)fallingBlock->mZ),
-                                                 NULL, boost::shared_ptr<BlockEntity>());
+        blockRenderer->tesselateInWorldNoCulling(
+            blockState, BlockPos((int)fallingBlock->mX, (int)fallingBlock->mY, (int)fallingBlock->mZ), NULL,
+            boost::shared_ptr<BlockEntity>());
         builder->offset(0.0F, 0.0F, 0.0F);
         builder->end();
     }

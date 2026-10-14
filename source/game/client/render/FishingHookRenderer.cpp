@@ -19,8 +19,7 @@
 
 static ResourceLocation FISHING_HOOK_LOCATION(TN_PARTICLES);
 
-FishingHookRenderer::FishingHookRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+FishingHookRenderer::FishingHookRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
 }
 
@@ -28,8 +27,8 @@ FishingHookRenderer::~FishingHookRenderer()
 {
 }
 
-void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                 float yaw, float partialTick)
+void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                 float partialTick)
 {
     boost::shared_ptr<FishingHook> hook = boost::static_pointer_cast<FishingHook>(entity);
     boost::shared_ptr<Player> owner = hook->getOwner();
@@ -52,8 +51,9 @@ void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
     float xo = 0.5f;
     float yo = 0.5f;
     GlStateManager::rotatef(180.0f - mDispatcher->mCameraYRot, 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef(-((hook->getOwner()->GetThirdPersonView(false) == 2 ? -1.0f : 1.0f) * mDispatcher->mCameraXRot),
-                            1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(
+        -((hook->getOwner()->GetThirdPersonView(false) == 2 ? -1.0f : 1.0f) * mDispatcher->mCameraXRot), 1.0f, 0.0f,
+        0.0f);
     if (mSolidRender)
         GlStateManager::enableColorMaterial();
     builder->begin();

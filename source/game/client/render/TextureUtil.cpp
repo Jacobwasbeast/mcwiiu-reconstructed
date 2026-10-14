@@ -39,9 +39,8 @@ int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int**
         {
 #ifdef RECON_NATIVE
             const unsigned char* rgba = reinterpret_cast<const unsigned char*>(pixel);
-            *pixel = (static_cast<unsigned int>(rgba[3]) << 24) |
-                     (static_cast<unsigned int>(rgba[0]) << 16) |
-                     (static_cast<unsigned int>(rgba[1]) << 8) | rgba[2];
+            *pixel = (static_cast<unsigned int>(rgba[3]) << 24) | (static_cast<unsigned int>(rgba[0]) << 16)
+                     | (static_cast<unsigned int>(rgba[1]) << 8) | rgba[2];
 #else
             TextureUtil::ByteFlipRGBAToARGB(*pixel);
 #endif
@@ -132,11 +131,12 @@ void TextureUtil::copyToBuffer(arrayWithLength<int> pixels, int offset, int leng
     dataBuffer->position(0)->limit(length);
 }
 
-void TextureUtil::uploadImageChunked(int mipLevel, arrayWithLength<int> pixels, int width, int height, int xOffset, int yOffset, bool blur, bool clamp, bool mipmap)
+void TextureUtil::uploadImageChunked(int mipLevel, arrayWithLength<int> pixels, int width, int height, int xOffset,
+                                     int yOffset, bool blur, bool clamp, bool mipmap)
 {
     int rowsPerChunk = 4194304 / width;
 
-    for (int position = 0; position < width * height; )
+    for (int position = 0; position < width * height;)
     {
         int rows = std::min(rowsPerChunk, height - position / width);
         int count = width * rows;
@@ -158,7 +158,8 @@ void* TextureUtil::decodeJpeg(void* data, int length, int* width, int* height)
     int imageWidth;
     int imageHeight;
     int components;
-    unsigned char* pixels = stbi_load_from_memory((const unsigned char*)data, length, &imageWidth, &imageHeight, &components, 4);
+    unsigned char* pixels = stbi_load_from_memory((const unsigned char*)data, length, &imageWidth, &imageHeight,
+                                                  &components, 4);
 
     if (pixels != NULL)
     {
@@ -171,9 +172,9 @@ void* TextureUtil::decodeJpeg(void* data, int length, int* width, int* height)
             {
                 unsigned char* pixel = pixels + (y * imageWidth + x) * 4;
 #ifdef RECON_NATIVE
-                unsigned int colour = (static_cast<unsigned int>(pixel[0]) << 24) |
-                                      (static_cast<unsigned int>(pixel[1]) << 16) |
-                                      (static_cast<unsigned int>(pixel[2]) << 8) | pixel[3];
+                unsigned int colour = (static_cast<unsigned int>(pixel[0]) << 24)
+                                      | (static_cast<unsigned int>(pixel[1]) << 16)
+                                      | (static_cast<unsigned int>(pixel[2]) << 8) | pixel[3];
 #else
                 unsigned int colour = *(unsigned int*)pixel;
 #endif
@@ -189,7 +190,8 @@ void* TextureUtil::decodeJpeg(void* data, int length, int* width, int* height)
     return pixels;
 }
 
-void TextureUtil::insertZlibAlphaChannelData(void* pixels, int width, int height, void* compressedData, int compressedLength)
+void TextureUtil::insertZlibAlphaChannelData(void* pixels, int width, int height, void* compressedData,
+                                             int compressedLength)
 {
     unsigned char* alphaData = new unsigned char[width * height];
     unsigned long alphaLength = width * height;

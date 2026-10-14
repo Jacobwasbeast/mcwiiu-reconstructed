@@ -13,7 +13,8 @@
 #include "game/util/ResourceLocation.hpp"
 
 ThrownItemRenderer::ThrownItemRenderer(EntityRenderDispatcher* dispatcher, Item* item)
-    : EntityRenderer(dispatcher), mItem(item)
+    : EntityRenderer(dispatcher),
+      mItem(item)
 {
 }
 
@@ -35,8 +36,8 @@ void ThrownItemRenderer::renderIcon(Tesselator* tesselator, TextureAtlasSprite* 
     tesselator->end();
 }
 
-void ThrownItemRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                 float yaw, float partialTick)
+void ThrownItemRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                float partialTick)
 {
     not_null_ptr<ItemInstance> item = getItem(entity);
     Item* itemType = item->getItem();
@@ -59,9 +60,7 @@ void ThrownItemRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
     if (item->getItem()->hasMultipleSpriteLayers())
     {
         int color = Minecraft::GetInstance()->getItemColors()->getColor(item, 0);
-        GlStateManager::color3f(((color >> 16) & 255) / 255.0F,
-                                ((color >> 8) & 255) / 255.0F,
-                                (color & 255) / 255.0F);
+        GlStateManager::color3f(((color >> 16) & 255) / 255.0F, ((color >> 8) & 255) / 255.0F, (color & 255) / 255.0F);
         GlStateManager::pushMatrix();
         renderIcon(tesselator, item->getItem()->getLayerIcon(0, 0, item));
         GlStateManager::popMatrix();

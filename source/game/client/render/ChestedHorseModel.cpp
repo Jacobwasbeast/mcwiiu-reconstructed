@@ -7,7 +7,9 @@ ChestedHorseModel::ChestedHorseModel(const ModelDefinition& modelDefinition)
 {
 }
 
-void ChestedHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void ChestedHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                               float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    AbstractHorseModel::render(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, useDisplayList);
+    AbstractHorseModel::render(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                               useDisplayList);
 }

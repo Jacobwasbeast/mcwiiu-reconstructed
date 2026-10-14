@@ -42,8 +42,8 @@ const ResourceLocation* DrownedRenderer::getTextureLocation(boost::shared_ptr<En
     return &DROWNED_LOCATION;
 }
 
-void DrownedRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
-                                     float rotationYaw, float partialTicks)
+void DrownedRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw,
+                                     float partialTicks)
 {
     boost::shared_ptr<Drowned> drowned = boost::static_pointer_cast<Drowned>(entity);
     LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);

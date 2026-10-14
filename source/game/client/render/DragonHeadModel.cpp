@@ -55,7 +55,8 @@ DragonHeadModel::DragonHeadModel(float scale, const ModelDefinition& modelDefini
     mJaw->compile(0.0625f);
 }
 
-void DragonHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void DragonHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                             float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     mJaw->mXRot = (sin(limbSwing * 3.1415927f * 0.2f) + 1.0f) * 0.2f;
 

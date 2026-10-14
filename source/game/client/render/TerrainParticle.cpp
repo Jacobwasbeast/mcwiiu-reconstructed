@@ -11,13 +11,7 @@
 
 #include "game/core/Minecraft.hpp"
 
-TerrainParticle::TerrainParticle(Level* level,
-                                 double x,
-                                 double y,
-                                 double z,
-                                 double xa,
-                                 double ya,
-                                 double za,
+TerrainParticle::TerrainParticle(Level* level, double x, double y, double z, double xa, double ya, double za,
                                  const BlockState* state)
     : Particle(level, x, y, z, xa, ya, za)
 {
@@ -69,8 +63,7 @@ uint64_t TerrainParticle::GetType()
 
 void TerrainParticle::multiplyColor(const BlockPos* pos)
 {
-    unsigned int colour =
-        Minecraft::GetInstance()->getBlockColors()->getColor(blockState, level, pos, 0);
+    unsigned int colour = Minecraft::GetInstance()->getBlockColors()->getColor(blockState, level, pos, 0);
 
     rCol *= (float)(int)((colour >> 16) & 0xFF) / 255.0f;
     gCol *= (float)(int)((colour >> 8) & 0xFF) / 255.0f;
@@ -108,14 +101,8 @@ int TerrainParticle::getParticleTexture()
     return 1;
 }
 
-void TerrainParticle::render(BufferBuilder* buffer,
-                             const boost::shared_ptr<Entity>& camera,
-                             float partialTicks,
-                             float xa,
-                             float ya,
-                             float za,
-                             float xa2,
-                             float za2)
+void TerrainParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                             float xa, float ya, float za, float xa2, float za2)
 {
     float scale = 0.1f * size;
 
@@ -131,26 +118,10 @@ void TerrainParticle::render(BufferBuilder* buffer,
         buffer->color(rCol, gCol, bCol);
         buffer->tex2(light);
 
-        buffer->vertexUV(px - xa * scale - xa2 * scale,
-                         py - ya * scale,
-                         pz - za * scale - za2 * scale,
-                         uvs.u0,
-                         uvs.v1);
-        buffer->vertexUV(px - xa * scale + xa2 * scale,
-                         py + ya * scale,
-                         pz - za * scale + za2 * scale,
-                         uvs.u0,
-                         uvs.v0);
-        buffer->vertexUV(px + xa * scale + xa2 * scale,
-                         py + ya * scale,
-                         pz + za * scale + za2 * scale,
-                         uvs.u1,
-                         uvs.v0);
-        buffer->vertexUV(px + xa * scale - xa2 * scale,
-                         py - ya * scale,
-                         pz + za * scale - za2 * scale,
-                         uvs.u1,
-                         uvs.v1);
+        buffer->vertexUV(px - xa * scale - xa2 * scale, py - ya * scale, pz - za * scale - za2 * scale, uvs.u0, uvs.v1);
+        buffer->vertexUV(px - xa * scale + xa2 * scale, py + ya * scale, pz - za * scale + za2 * scale, uvs.u0, uvs.v0);
+        buffer->vertexUV(px + xa * scale + xa2 * scale, py + ya * scale, pz + za * scale + za2 * scale, uvs.u1, uvs.v0);
+        buffer->vertexUV(px + xa * scale - xa2 * scale, py - ya * scale, pz + za * scale - za2 * scale, uvs.u1, uvs.v1);
     }
 }
 
@@ -169,27 +140,11 @@ int TerrainParticle::getLightColor(float partialTicks)
 
 bool TerrainParticle::isSemiTransparent()
 {
-    return blockState->getBlock() == Blocks::stained_glass_pane ||
-           blockState->getBlock() == Blocks::stained_glass;
+    return blockState->getBlock() == Blocks::stained_glass_pane || blockState->getBlock() == Blocks::stained_glass;
 }
 
-Particle* TerrainParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                    Level* level,
-                                                    double x,
-                                                    double y,
-                                                    double z,
-                                                    double xa,
-                                                    double ya,
-                                                    double za,
-                                                    arrayWithLength<int> params)
+Particle* TerrainParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                    double xa, double ya, double za, arrayWithLength<int> params)
 {
-    return (new TerrainParticle(level,
-                                x,
-                                y,
-                                z,
-                                xa,
-                                ya,
-                                za,
-                                Block::stateByIdWithData(params.data[0])))
-        ->init();
+    return (new TerrainParticle(level, x, y, z, xa, ya, za, Block::stateByIdWithData(params.data[0])))->init();
 }

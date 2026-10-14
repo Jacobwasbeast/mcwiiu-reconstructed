@@ -48,7 +48,8 @@ SnowManModel::SnowManModel(const ModelDefinition& modelDefinition)
     }
 }
 
-void SnowManModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void SnowManModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                          float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -61,7 +62,9 @@ void SnowManModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
     callSkinnedDrawlist();
 }
 
-void SnowManModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void SnowManModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                             float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                             _SkinAdjustments skinAdjustments)
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -84,4 +87,3 @@ void SnowManModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     mArm2->mX = -cosBody * 5.0f;
     mArm2->mZ = sinBody * 5.0f;
 }
-

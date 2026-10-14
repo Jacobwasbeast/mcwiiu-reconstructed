@@ -128,7 +128,8 @@ void SkeletonModel::_init(float scale, bool armourModel, SkeletonType skeletonTy
     builder->useDefaultShaders();
 }
 
-void SkeletonModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks)
+void SkeletonModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                    float partialTicks)
 {
     mRightArmPose = eArmPose_Empty;
     mLeftArmPose = eArmPose_Empty;
@@ -150,9 +151,12 @@ void SkeletonModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, flo
     Model::prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
 }
 
-void SkeletonModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void SkeletonModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                              float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                              _SkinAdjustments skinAdjustments)
 {
-    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
+    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                             _SkinAdjustments());
 
     not_null_ptr<ItemInstance> mainHandItem = boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem();
     boost::shared_ptr<AbstractSkeleton> skeleton = boost::static_pointer_cast<AbstractSkeleton>(entity);
@@ -191,4 +195,3 @@ void SkeletonModel::translateToHandItem(float scale, const HumanoidArm* arm)
     part->translateTo(scale);
     part->mX -= side;
 }
-

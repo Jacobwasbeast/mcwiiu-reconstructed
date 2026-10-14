@@ -12,8 +12,7 @@ static ResourceLocation sOcelotTexture(TN_MOB_OZELOT);
 static ResourceLocation sRedOcelotTexture(TN_MOB_CAT_RED);
 static ResourceLocation sSiameseOcelotTexture(TN_MOB_CAT_SIAMESE);
 
-OcelotRenderer::OcelotRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new OcelotModel(), 0.4F)
+OcelotRenderer::OcelotRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new OcelotModel(), 0.4F)
 {
 }
 

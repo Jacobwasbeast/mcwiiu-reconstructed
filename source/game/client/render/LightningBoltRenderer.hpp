@@ -13,8 +13,7 @@ class LightningBoltRenderer : public EntityRenderer
 public:
     LightningBoltRenderer(EntityRenderDispatcher* dispatcher);
     virtual ~LightningBoltRenderer();
-    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                        float yaw, float partialTick);
+    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);
 };
 
 #endif

@@ -24,6 +24,7 @@ public:
         BlockStack(const BlockState* state, unsigned int count, int offset);
         BlockStack(std::vector<const BlockState*>& states, int offset);
         const BlockState* at(int index) const;
+
     private:
         int mOffset;
         std::vector<const BlockState*> mStates;

@@ -28,13 +28,10 @@ public:
     virtual bool hasFile(const std::wstring& fileName);
     virtual bool isTerrainUpdateCompatible();
     virtual std::wstring getPath(bool bTitleUpdate, const char* pFileName);
-    virtual std::wstring getAnimationString(const std::wstring& fileName,
-                                            const std::wstring& animationName,
+    virtual std::wstring getAnimationString(const std::wstring& fileName, const std::wstring& animationName,
                                             const std::wstring& defaultString);
-    virtual BufferedImage* getImageResource(const std::wstring& fileName,
-                                             bool bSingleImage,
-                                             bool bTitleUpdate,
-                                             const std::wstring& path);
+    virtual BufferedImage* getImageResource(const std::wstring& fileName, bool bSingleImage, bool bTitleUpdate,
+                                            const std::wstring& path);
     virtual void loadMaterialTable();
     virtual void loadColourTable();
     virtual void loadStructureManager();

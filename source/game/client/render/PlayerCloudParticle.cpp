@@ -8,13 +8,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-PlayerCloudParticle::PlayerCloudParticle(Level* level,
-                                         double x,
-                                         double y,
-                                         double z,
-                                         double xa,
-                                         double ya,
-                                         double za)
+PlayerCloudParticle::PlayerCloudParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     xd = xd * 0.1 + xa;
@@ -29,14 +23,8 @@ PlayerCloudParticle::PlayerCloudParticle(Level* level,
     lifetime = (int)std::floor(8.0 / (random.nextDouble() * 0.8 + 0.3) * 2.5);
 }
 
-void PlayerCloudParticle::render(BufferBuilder* buffer,
-                                 const boost::shared_ptr<Entity>& camera,
-                                 float partialTicks,
-                                 float xa,
-                                 float ya,
-                                 float za,
-                                 float xa2,
-                                 float za2)
+void PlayerCloudParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                 float xa, float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     size = baseSize * Mth::clamp(progress * 32.0f, 0.0f, 1.0f);
@@ -84,15 +72,8 @@ uint64_t PlayerCloudParticle::GetType()
     return ParticleKind::PLAYER_CLOUD;
 }
 
-Particle* PlayerCloudParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                         Level* level,
-                                                         double x,
-                                                         double y,
-                                                         double z,
-                                                         double xa,
-                                                         double ya,
-                                                         double za,
-                                                         arrayWithLength<int> params)
+Particle* PlayerCloudParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                        double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new PlayerCloudParticle(level, x, y, z, xa, ya, za);
 }

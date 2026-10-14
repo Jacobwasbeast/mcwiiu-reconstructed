@@ -9,15 +9,13 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 
-BreakingItemParticle::BreakingItemParticle(Level* level, double x, double y, double z,
-                                           Item* item, int meta)
+BreakingItemParticle::BreakingItemParticle(Level* level, double x, double y, double z, Item* item, int meta)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     _init(item, meta);
 }
 
-BreakingItemParticle::BreakingItemParticle(Level* level, double x, double y, double z,
-                                           double xa, double ya, double za,
+BreakingItemParticle::BreakingItemParticle(Level* level, double x, double y, double z, double xa, double ya, double za,
                                            Item* item, int meta)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
@@ -36,10 +34,8 @@ int BreakingItemParticle::getParticleTexture()
     return iconType != 0 ? 2 : 1;
 }
 
-void BreakingItemParticle::render(BufferBuilder* buffer,
-                                  const boost::shared_ptr<Entity>& camera,
-                                  float partialTicks, float xa, float ya, float za,
-                                  float xa2, float za2)
+void BreakingItemParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                  float xa, float ya, float za, float xa2, float za2)
 {
     float scale = 0.1f * size;
 
@@ -58,14 +54,10 @@ void BreakingItemParticle::render(BufferBuilder* buffer,
 
     buffer->color(rCol, gCol, bCol);
     buffer->tex2(light);
-    buffer->vertexUV(px - xa * scale - xa2 * scale, py - ya * scale,
-                     pz - za * scale - za2 * scale, uvs.u0, uvs.v1);
-    buffer->vertexUV(px - xa * scale + xa2 * scale, py + ya * scale,
-                     pz - za * scale + za2 * scale, uvs.u0, uvs.v0);
-    buffer->vertexUV(px + xa * scale + xa2 * scale, py + ya * scale,
-                     pz + za * scale + za2 * scale, uvs.u1, uvs.v0);
-    buffer->vertexUV(px + xa * scale - xa2 * scale, py - ya * scale,
-                     pz + za * scale - za2 * scale, uvs.u1, uvs.v1);
+    buffer->vertexUV(px - xa * scale - xa2 * scale, py - ya * scale, pz - za * scale - za2 * scale, uvs.u0, uvs.v1);
+    buffer->vertexUV(px - xa * scale + xa2 * scale, py + ya * scale, pz - za * scale + za2 * scale, uvs.u0, uvs.v0);
+    buffer->vertexUV(px + xa * scale + xa2 * scale, py + ya * scale, pz + za * scale + za2 * scale, uvs.u1, uvs.v0);
+    buffer->vertexUV(px + xa * scale - xa2 * scale, py - ya * scale, pz + za * scale - za2 * scale, uvs.u1, uvs.v1);
 }
 
 void BreakingItemParticle::_init(Item* item, int meta)
@@ -86,28 +78,24 @@ uint64_t BreakingItemParticle::GetType()
     return ParticleKind::BREAKING_ITEM;
 }
 
-Particle* BreakingItemParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                          double x, double y, double z,
-                                                          double xa, double ya, double za,
-                                                          arrayWithLength<int> params)
+Particle* BreakingItemParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                         double z, double xa, double ya, double za,
+                                                         arrayWithLength<int> params)
 {
     int meta = params.length > 1 ? params.data[1] : 0;
-    return new BreakingItemParticle(level, x, y, z, xa, ya, za,
-                                    Item::byId(params.data[0]), meta);
+    return new BreakingItemParticle(level, x, y, z, xa, ya, za, Item::byId(params.data[0]), meta);
 }
 
-Particle* BreakingItemParticle::SlimeProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                               double x, double y, double z,
-                                                               double xa, double ya, double za,
-                                                               arrayWithLength<int> params)
+Particle* BreakingItemParticle::SlimeProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                              double z, double xa, double ya, double za,
+                                                              arrayWithLength<int> params)
 {
     return new BreakingItemParticle(level, x, y, z, Items::slimeBall, 0);
 }
 
-Particle* BreakingItemParticle::SnowballProvider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                                  double x, double y, double z,
-                                                                  double xa, double ya, double za,
-                                                                  arrayWithLength<int> params)
+Particle* BreakingItemParticle::SnowballProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                                 double z, double xa, double ya, double za,
+                                                                 arrayWithLength<int> params)
 {
     return new BreakingItemParticle(level, x, y, z, Items::snowball, 0);
 }

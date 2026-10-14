@@ -12,10 +12,8 @@ public:
     class Provider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level,
-                                         double x, double y, double z,
-                                         double xa, double ya, double za,
-                                         arrayWithLength<int> params);
+        virtual Particle* createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa,
+                                         double ya, double za, arrayWithLength<int> params);
     };
 
     WaterCurrentDownParticle(Level* level, double x, double y, double z);

@@ -5,8 +5,7 @@
 
 static ResourceLocation CAVE_SPIDER_LOCATION(TN_MOB_CAVESPIDER);
 
-CaveSpiderRenderer::CaveSpiderRenderer(EntityRenderDispatcher* dispatcher)
-    : SpiderRenderer(dispatcher)
+CaveSpiderRenderer::CaveSpiderRenderer(EntityRenderDispatcher* dispatcher) : SpiderRenderer(dispatcher)
 {
     mShadowRadius *= 0.7F;
 }

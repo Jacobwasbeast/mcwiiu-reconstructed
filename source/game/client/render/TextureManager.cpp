@@ -71,9 +71,8 @@ void TextureManager::registerTexture(Texture* texture)
     m_textures.insert(std::pair<const int, Texture*>(texture->getManagerId(), texture));
 }
 
-Texture* TextureManager::createTexture(const std::wstring& name, int type, int width, int height,
-                                       int wrap, int format, int minFilter, int magFilter, bool mipmap,
-                                       BufferedImage* image)
+Texture* TextureManager::createTexture(const std::wstring& name, int type, int width, int height, int wrap, int format,
+                                       int minFilter, int magFilter, bool mipmap, BufferedImage* image)
 {
     Texture* texture = new Texture(name, type, width, height, wrap, format, minFilter, magFilter, image, mipmap);
     registerTexture(texture);
@@ -127,7 +126,8 @@ std::vector<Texture*>* TextureManager::createTextures(const std::wstring& path, 
         {
             BufferedImage* frameImage = image->getSubimage(0, frameHeight * frame, frameWidth, frameHeight);
             bool mipmap = singleImage || image->getData(1) != NULL;
-            Texture* frameTexture = createTexture(textureName, 2, frameWidth, frameHeight, 1, 0, 0, 0, mipmap, frameImage);
+            Texture* frameTexture = createTexture(textureName, 2, frameWidth, frameHeight, 1, 0, 0, 0, mipmap,
+                                                  frameImage);
             delete frameImage;
             textures->push_back(frameTexture);
         }
@@ -142,8 +142,8 @@ std::vector<Texture*>* TextureManager::createTextures(const std::wstring& path, 
     return textures;
 }
 
-Texture* TextureManager::createTexture(const std::wstring& name, int type, int width, int height,
-                                       int format, bool mipmap)
+Texture* TextureManager::createTexture(const std::wstring& name, int type, int width, int height, int format,
+                                       bool mipmap)
 {
     return createTexture(name, type, width, height, 1, format, 0, 0, mipmap, NULL);
 }

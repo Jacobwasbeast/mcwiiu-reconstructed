@@ -1,8 +1,7 @@
 #include "game/client/render/EndRodParticle.hpp"
 #include "game/core/EntityType.hpp"
 
-EndRodParticle::EndRodParticle(Level* level, double x, double y, double z,
-                               double xa, double ya, double za)
+EndRodParticle::EndRodParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : SimpleAnimatedParticle(level, x, y, z, 176, 8, -0.0005f)
 {
     xd = xa;
@@ -24,10 +23,8 @@ uint64_t EndRodParticle::GetType()
     return ParticleKind::END_ROD;
 }
 
-Particle* EndRodParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                    double x, double y, double z,
-                                                    double xa, double ya, double za,
-                                                    arrayWithLength<int> params)
+Particle* EndRodParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                   double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new EndRodParticle(level, x, y, z, xa, ya, za);
 }

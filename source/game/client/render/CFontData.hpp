@@ -23,6 +23,7 @@ public:
     float getAdvance(unsigned short glyphId);
     bool unicodeIsWhitespace(unsigned int unicode);
     bool glyphIsWhitespace(unsigned short glyphId);
+
 private:
     SFontData* m_fontData;
     boost::unordered_map<unsigned int, unsigned short> m_glyphIds;

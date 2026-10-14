@@ -20,8 +20,10 @@ public:
     class Provider : public ParticleProvider
     {
     public:
-        virtual Particle* createParticle(ePARTICLE_TYPE, Level*, double, double, double, double, double, double, arrayWithLength<int>);
+        virtual Particle* createParticle(ePARTICLE_TYPE, Level*, double, double, double, double, double, double,
+                                         arrayWithLength<int>);
     };
+
 private:
     float scale;
     double originX;

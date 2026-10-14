@@ -19,11 +19,10 @@
 
 static ResourceLocation* BANNER_LOCATION = new ResourceLocation(TN_ITEM_BANNER_BANNER_BASE);
 static int BANNER_PATTERN_TEXTURES[2] = {146, 147};
-static ResourceLocation* BANNER_PATTERN_LOCATION =
-    new ResourceLocation(arrayWithLength<int>(BANNER_PATTERN_TEXTURES, 2));
+static ResourceLocation* BANNER_PATTERN_LOCATION = new ResourceLocation(
+    arrayWithLength<int>(BANNER_PATTERN_TEXTURES, 2));
 
-BannerRenderer::BannerRenderer()
-    : BlockEntityRenderer()
+BannerRenderer::BannerRenderer() : BlockEntityRenderer()
 {
     mModel = new BannerModel();
 }
@@ -76,8 +75,7 @@ void BannerRenderer::setupLayeredParams(const std::vector<const BannerPattern*>*
     for (int i = 0; i < 16; ++i)
     {
         unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)(first + i));
-        gRenderer->SetLayeredColour(i, (float)((colour >> 16) & 0xff) / 255.0F,
-                                    (float)((colour >> 8) & 0xff) / 255.0F,
+        gRenderer->SetLayeredColour(i, (float)((colour >> 16) & 0xff) / 255.0F, (float)((colour >> 8) & 0xff) / 255.0F,
                                     (float)(colour & 0xff) / 255.0F);
     }
 
@@ -112,8 +110,7 @@ void BannerRenderer::setupLayeredParams(const std::vector<const BannerPattern*>*
 }
 
 void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                            float partialTicks, int breakProgress, bool bTranslucent, float alpha,
-                            bool bUseDisplayList)
+                            float partialTicks, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
     bool hasLevel = blockEntity->getLevel() != NULL;
     bool standing = !hasLevel || blockEntity->getBlock() == Blocks::standing_banner;

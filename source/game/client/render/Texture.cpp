@@ -8,14 +8,14 @@
 #include <cstring>
 #include <algorithm>
 
-Texture::Texture(const std::wstring& name, int type, int width, int height, int wrap, int format,
-                 int minFilter, int magFilter, BufferedImage* image, bool mipmap)
+Texture::Texture(const std::wstring& name, int type, int width, int height, int wrap, int format, int minFilter,
+                 int magFilter, BufferedImage* image, bool mipmap)
 {
     _init(name, type, width, height, 1, wrap, format, minFilter, magFilter, image, mipmap);
 }
 
-Texture::Texture(const std::wstring& name, int type, int width, int height, int depth, int wrap,
-                 int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap)
+Texture::Texture(const std::wstring& name, int type, int width, int height, int depth, int wrap, int format,
+                 int minFilter, int magFilter, BufferedImage* image, bool mipmap)
 {
     _init(name, type, width, height, depth, wrap, format, minFilter, magFilter, image, mipmap);
 }
@@ -36,8 +36,8 @@ Texture::~Texture()
         GlStateManager::deleteTexture((int)m_glId);
 }
 
-void Texture::_init(const std::wstring& name, int type, int width, int height, int depth, int wrap,
-                    int format, int minFilter, int magFilter, bool mipmap)
+void Texture::_init(const std::wstring& name, int type, int width, int height, int depth, int wrap, int format,
+                    int minFilter, int magFilter, bool mipmap)
 {
     m_name = name;
     m_type = type;
@@ -60,8 +60,10 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
     {
         int widthLevels = 1;
         int heightLevels = 1;
-        while ((8 << widthLevels) < width) ++widthLevels;
-        while ((8 << heightLevels) < height) ++heightLevels;
+        while ((8 << widthLevels) < width)
+            ++widthLevels;
+        while ((8 << heightLevels) < height)
+            ++heightLevels;
         if (heightLevels < widthLevels)
             widthLevels = heightLevels;
         if (5 < widthLevels)
@@ -85,8 +87,8 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
     m_managerId = TextureManager::getInstance()->createTextureID();
 }
 
-void Texture::_init(const std::wstring& name, int type, int width, int height, int depth, int wrap,
-                    int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap)
+void Texture::_init(const std::wstring& name, int type, int width, int height, int depth, int wrap, int format,
+                    int minFilter, int magFilter, BufferedImage* image, bool mipmap)
 {
     _init(name, type, width, height, depth, wrap, format, minFilter, magFilter, mipmap);
     if (image == NULL)
@@ -174,12 +176,14 @@ void Texture::transferFromImage(BufferedImage* image)
 {
     int imageWidth = (int)image->getWidth();
     int imageHeight = (int)image->getHeight();
-    if (imageWidth > m_width || imageHeight > m_height) return;
+    if (imageWidth > m_width || imageHeight > m_height)
+        return;
 
-    int argbOrder[4] = { 3, 0, 1, 2 };
-    int abgrOrder[4] = { 3, 2, 1, 0 };
+    int argbOrder[4] = {3, 0, 1, 2};
+    int abgrOrder[4] = {3, 2, 1, 0};
     int* order = argbOrder;
-    if (m_format == 1) order = abgrOrder;
+    if (m_format == 1)
+        order = abgrOrder;
 
     arrayWithLength<int> pixels(m_width * m_height, true);
     image->getRGB(0, 0, m_width, m_height, pixels, 0, imageWidth, 0);
@@ -247,26 +251,36 @@ void Texture::transferFromImage(BufferedImage* image)
                 {
                     for (int y = 0; y < levelHeight; ++y)
                     {
-                        unsigned int topLeft = m_data[level - 1]->getInt(((x * 2 + 0) + (y * 2 + 0) * previousWidth) * 4);
-                        unsigned int topRight = m_data[level - 1]->getInt(((x * 2 + 1) + (y * 2 + 0) * previousWidth) * 4);
-                        unsigned int bottomRight = m_data[level - 1]->getInt(((x * 2 + 1) + (y * 2 + 1) * previousWidth) * 4);
-                        unsigned int bottomLeft = m_data[level - 1]->getInt(((x * 2 + 0) + (y * 2 + 1) * previousWidth) * 4);
+                        unsigned int topLeft = m_data[level - 1]->getInt(((x * 2 + 0) + (y * 2 + 0) * previousWidth)
+                                                                         * 4);
+                        unsigned int topRight = m_data[level - 1]->getInt(((x * 2 + 1) + (y * 2 + 0) * previousWidth)
+                                                                          * 4);
+                        unsigned int bottomRight = m_data[level - 1]->getInt(((x * 2 + 1) + (y * 2 + 1) * previousWidth)
+                                                                             * 4);
+                        unsigned int bottomLeft = m_data[level - 1]->getInt(((x * 2 + 0) + (y * 2 + 1) * previousWidth)
+                                                                            * 4);
                         topLeft = (topLeft << 24) | (topLeft >> 8);
                         topRight = (topRight << 24) | (topRight >> 8);
                         bottomRight = (bottomRight << 24) | (bottomRight >> 8);
                         bottomLeft = (bottomLeft << 24) | (bottomLeft >> 8);
                         unsigned int packed;
-                        if (((topLeft & 0xff000000u) != 0xff000000u && (topLeft & 0xff000000u) != 0) ||
-                            ((topRight & 0xff000000u) != 0xff000000u && (topRight & 0xff000000u) != 0) ||
-                            ((bottomRight & 0xff000000u) != 0xff000000u && (bottomRight & 0xff000000u) != 0) ||
-                            ((bottomLeft & 0xff000000u) != 0xff000000u && (bottomLeft & 0xff000000u) != 0))
+                        if (((topLeft & 0xff000000u) != 0xff000000u && (topLeft & 0xff000000u) != 0)
+                            || ((topRight & 0xff000000u) != 0xff000000u && (topRight & 0xff000000u) != 0)
+                            || ((bottomRight & 0xff000000u) != 0xff000000u && (bottomRight & 0xff000000u) != 0)
+                            || ((bottomLeft & 0xff000000u) != 0xff000000u && (bottomLeft & 0xff000000u) != 0))
                         {
-                            int alpha = (int)((topLeft >> 24) + (topRight >> 24) + (bottomRight >> 24) + (bottomLeft >> 24)) >> 2;
-                            int red = (int)(((topLeft >> 16) & 0xff) + ((topRight >> 16) & 0xff) +
-                                            ((bottomRight >> 16) & 0xff) + ((bottomLeft >> 16) & 0xff)) >> 2;
-                            int green = (int)(((topLeft >> 8) & 0xff) + ((topRight >> 8) & 0xff) +
-                                              ((bottomRight >> 8) & 0xff) + ((bottomLeft >> 8) & 0xff)) >> 2;
-                            int blue = (int)((topLeft & 0xff) + (topRight & 0xff) + (bottomRight & 0xff) + (bottomLeft & 0xff)) >> 2;
+                            int alpha = (int)((topLeft >> 24) + (topRight >> 24) + (bottomRight >> 24)
+                                              + (bottomLeft >> 24))
+                                        >> 2;
+                            int red = (int)(((topLeft >> 16) & 0xff) + ((topRight >> 16) & 0xff)
+                                            + ((bottomRight >> 16) & 0xff) + ((bottomLeft >> 16) & 0xff))
+                                      >> 2;
+                            int green = (int)(((topLeft >> 8) & 0xff) + ((topRight >> 8) & 0xff)
+                                              + ((bottomRight >> 8) & 0xff) + ((bottomLeft >> 8) & 0xff))
+                                        >> 2;
+                            int blue = (int)((topLeft & 0xff) + (topRight & 0xff) + (bottomRight & 0xff)
+                                             + (bottomLeft & 0xff))
+                                       >> 2;
                             packed = (unsigned int)((alpha << 24) | (red << 16) | (green << 8) | blue);
                         }
                         else
@@ -275,7 +289,7 @@ void Texture::transferFromImage(BufferedImage* image)
                             unsigned int top = crispBlend((int)topLeft, (int)topRight);
                             packed = crispBlend((int)top, (int)bottom);
                         }
-                        
+
                         int destination = x * 4 + y * levelWidth * 4;
                         levelBytes[destination + order[0]] = (unsigned char)((packed >> 24) & 0xff);
                         levelBytes[destination + order[1]] = (unsigned char)((packed >> 16) & 0xff);
@@ -310,18 +324,23 @@ void Texture::transferFromImage(BufferedImage* image)
 void Texture::updateOnGPU()
 {
     m_data[0]->flip();
-    if (m_mipmap) {
-        for (int level = 1; level < m_mipLevels; ++level) {
+    if (m_mipmap)
+    {
+        for (int level = 1; level < m_mipLevels; ++level)
+        {
             if (m_data[level] == NULL)
                 break;
             m_data[level]->flip();
         }
     }
-    if (!m_gpuAllocated) {
+    if (!m_gpuAllocated)
+    {
         gRenderer->TextureSetTextureLevels(m_mipLevels);
         gRenderer->TextureData(m_width, m_height, m_data[0]->getBuffer(), 0, C4JRender::eTextureFormat_RGBA8);
-        if (m_mipmap) {
-            for (int level = 1; level < m_mipLevels; ++level) {
+        if (m_mipmap)
+        {
+            for (int level = 1; level < m_mipLevels; ++level)
+            {
                 int mipWidth = m_width >> level;
                 int mipHeight = m_height >> level;
                 gRenderer->TextureData(mipWidth, mipHeight, m_data[level]->getBuffer(), level,
@@ -330,10 +349,14 @@ void Texture::updateOnGPU()
         }
         m_gpuAllocated = true;
         m_updated = true;
-    } else {
+    }
+    else
+    {
         gRenderer->TextureDataUpdate(0, 0, m_width, m_height, m_data[0]->getBuffer(), 0);
-        if (m_mipmap && gRenderer->TextureGetTextureLevels() > 1) {
-            for (int level = 1; level < m_mipLevels; ++level) {
+        if (m_mipmap && gRenderer->TextureGetTextureLevels() > 1)
+        {
+            for (int level = 1; level < m_mipLevels; ++level)
+            {
                 int mipWidth = m_width >> level;
                 int mipHeight = m_height >> level;
                 gRenderer->TextureDataUpdate(0, 0, mipWidth, mipHeight, m_data[level]->getBuffer(), level);
@@ -343,11 +366,26 @@ void Texture::updateOnGPU()
     }
 }
 
-ByteBuffer* Texture::getData(unsigned int mipLevel) { return m_data[mipLevel]; }
-int Texture::getHeight() { return m_height; }
-int Texture::getWidth() { return m_width; }
-unsigned int Texture::getManagerId() { return m_managerId; }
-unsigned int Texture::getGlId() { return m_glId; }
+ByteBuffer* Texture::getData(unsigned int mipLevel)
+{
+    return m_data[mipLevel];
+}
+int Texture::getHeight()
+{
+    return m_height;
+}
+int Texture::getWidth()
+{
+    return m_width;
+}
+unsigned int Texture::getManagerId()
+{
+    return m_managerId;
+}
+unsigned int Texture::getGlId()
+{
+    return m_glId;
+}
 
 void Texture::blit(int x, int y, Texture* texture, bool flip)
 {
@@ -393,5 +431,6 @@ void Texture::bind(int textureUnit)
     GlStateManager::enableTexture();
     GlStateManager::activeTexture(textureUnit);
     GlStateManager::bindTexture((int)m_glId);
-    if (!m_updated) updateOnGPU();
+    if (!m_updated)
+        updateOnGPU();
 }

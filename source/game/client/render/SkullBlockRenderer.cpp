@@ -60,9 +60,9 @@ SkullBlockRenderer::~SkullBlockRenderer()
     delete mActiveDragonModel;
 }
 
-void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction* direction,
-                                     float rotation, float headPitch, int skullType,
-                                     int destroyStage, float animationTime, bool useDisplayList)
+void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction* direction, float rotation,
+                                     float headPitch, int skullType, int destroyStage, float animationTime,
+                                     bool useDisplayList)
 {
     Model* model = NULL;
     switch (skullType)
@@ -160,18 +160,17 @@ void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction*
     }
 }
 
-void SkullBlockRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y,
-                                double z, float partialTicks, int breakProgress,
-                                bool bTranslucent, float alpha, bool bUseDisplayList)
+void SkullBlockRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
+                                float partialTicks, int breakProgress, bool bTranslucent, float alpha,
+                                bool bUseDisplayList)
 {
     boost::shared_ptr<SkullBlockEntity> skull = boost::static_pointer_cast<SkullBlockEntity>(blockEntity);
     const Direction* direction = Direction::from3DDataValue(skull->getData() & 7);
     if (skull->isRenderReady())
     {
         float animationTime = skull->getMouthAnimation(partialTicks);
-        renderSkull((float)x, (float)y, (float)z, direction,
-                    (float)(skull->getRotation() * 360) * 0.0625F, 0.0F, skull->getSkullType(),
-                    breakProgress, animationTime, bUseDisplayList);
+        renderSkull((float)x, (float)y, (float)z, direction, (float)(skull->getRotation() * 360) * 0.0625F, 0.0F,
+                    skull->getSkullType(), breakProgress, animationTime, bUseDisplayList);
     }
 }
 
@@ -198,9 +197,11 @@ void SkullBlockRenderer::updateModel(int modelIndex, const std::wstring& modelNa
         mActiveSkeletonModels[modelIndex] = NULL;
     }
     if (pTexturePack->HasCustomModel(modelName))
-        mActiveSkeletonModels[modelIndex] = new SkeletonHeadModel(0, 0, 64, 32, *pTexturePack->GetCustomModel(modelName));
+        mActiveSkeletonModels[modelIndex] = new SkeletonHeadModel(0, 0, 64, 32,
+                                                                  *pTexturePack->GetCustomModel(modelName));
     else if (pTexturePack->HasCustomModel(originalModelName))
-        mActiveSkeletonModels[modelIndex] = new SkeletonHeadModel(0, 0, 64, 32, *pTexturePack->GetCustomModel(originalModelName));
+        mActiveSkeletonModels[modelIndex] = new SkeletonHeadModel(0, 0, 64, 32,
+                                                                  *pTexturePack->GetCustomModel(originalModelName));
     else
         mActiveSkeletonModels[modelIndex] = mSkeletonModels[modelIndex];
 }

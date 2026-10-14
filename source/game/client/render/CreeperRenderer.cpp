@@ -13,8 +13,7 @@
 
 static ResourceLocation CREEPER_LOCATION(TN_MOB_CREEPER);
 
-CreeperRenderer::CreeperRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new CreeperModel(), 0.5F)
+CreeperRenderer::CreeperRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new CreeperModel(), 0.5F)
 {
     addLayer(new CreeperPowerLayer(this));
 }
@@ -34,8 +33,7 @@ void CreeperRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float parti
     GlStateManager::scalef(horizontalScale, verticalScale, horizontalScale);
 }
 
-int CreeperRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity,
-                                     float, float partialTicks)
+int CreeperRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float, float partialTicks)
 {
     boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(entity);
     float step = creeper->getSwelling(partialTicks);

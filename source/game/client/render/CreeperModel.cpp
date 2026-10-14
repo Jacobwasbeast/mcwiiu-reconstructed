@@ -58,7 +58,8 @@ void CreeperModel::_init(float delta, const ModelDefinition& modelDefinition)
     }
 }
 
-void CreeperModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void CreeperModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                          float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -72,7 +73,9 @@ void CreeperModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
     callSkinnedDrawlist();
 }
 
-void CreeperModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void CreeperModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                             float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                             _SkinAdjustments skinAdjustments)
 {
     mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
@@ -82,4 +85,3 @@ void CreeperModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     mLeg2->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.4f * limbSwingAmount;
     mLeg3->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount;
 }
-

@@ -40,8 +40,8 @@ void SmokeParticle::init(Level* level, double x, double y, double z, double xa, 
     setMiscTex(7);
 }
 
-void SmokeParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
-                           float partialTicks, float xa, float ya, float za, float xa2, float za2)
+void SmokeParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                           float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime * 32.0f;
     progress = Mth::clamp(progress, 0.0f, 1.0f);

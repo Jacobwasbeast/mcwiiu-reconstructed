@@ -34,10 +34,10 @@ TridentModel::TridentModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-void TridentModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void TridentModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                          float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     mPole->render(0.0625f, useDisplayList, false);
 
     callSkinnedDrawlist();
 }
-

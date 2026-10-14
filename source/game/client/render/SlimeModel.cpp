@@ -45,7 +45,8 @@ SlimeModel::SlimeModel(int size, const ModelDefinition& modelDefinition)
     }
 }
 
-void SlimeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void SlimeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -61,4 +62,3 @@ void SlimeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
 
     callSkinnedDrawlist();
 }
-

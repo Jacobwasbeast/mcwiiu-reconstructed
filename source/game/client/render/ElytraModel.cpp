@@ -46,13 +46,14 @@ ElytraModel::ElytraModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-void ElytraModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void ElytraModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                         float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     GlStateManager::disableRescaleNormal();
     GlStateManager::disableCull();
 
-    if (Entity::instanceof(entity, EntityType::LIVING_ENTITY) &&
-        boost::static_pointer_cast<LivingEntity>(entity)->isBaby())
+    if (Entity::instanceof(entity, EntityType::LIVING_ENTITY)
+        && boost::static_pointer_cast<LivingEntity>(entity)->isBaby())
     {
         GlStateManager::pushMatrix();
         GlStateManager::scalef(0.5f, 0.5f, 0.5f);
@@ -74,7 +75,8 @@ void ElytraModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     }
 }
 
-void ElytraModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void ElytraModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                            float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
@@ -83,9 +85,8 @@ void ElytraModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     float y = 0.0f;
     float yRot = 0.0f;
 
-    if (!mOverrideAnim && entity.get() != NULL &&
-        eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()) &&
-        boost::dynamic_pointer_cast<LivingEntity>(entity)->isFallFlying())
+    if (!mOverrideAnim && entity.get() != NULL && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
+        && boost::dynamic_pointer_cast<LivingEntity>(entity)->isFallFlying())
     {
         float flyAmount = 1.0f;
 

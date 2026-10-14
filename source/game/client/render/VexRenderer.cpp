@@ -12,16 +12,14 @@
 static ResourceLocation VEX_LOCATION(TN_MOB_ILLAGER_VEX);
 static ResourceLocation VEX_CHARGING_LOCATION(TN_MOB_ILLAGER_VEX_CHARGING);
 
-VexRenderer::VexRenderer(EntityRenderDispatcher* dispatcher)
-    : HumanoidMobRenderer(dispatcher, new VexModel(), 0.3F)
+VexRenderer::VexRenderer(EntityRenderDispatcher* dispatcher) : HumanoidMobRenderer(dispatcher, new VexModel(), 0.3F)
 {
     mModelVersion = static_cast<VexModel*>(mModel)->getModelVersion();
 }
 
 const ResourceLocation* VexRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         return &VEX_LOCATION;
     }
@@ -33,8 +31,7 @@ const ResourceLocation* VexRenderer::getTextureLocation(boost::shared_ptr<Entity
     return &VEX_LOCATION;
 }
 
-void VexRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                         float yaw, float partialTick)
+void VexRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
 {
     VexModel* model = static_cast<VexModel*>(mModel);
     unsigned int modelVersion = model->getModelVersion();

@@ -18,7 +18,8 @@
 static ResourceLocation PAINTING_LOCATION(TN_ART_KZ);
 
 PaintingRenderer::PaintingRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher), mRandom(new Random())
+    : EntityRenderer(dispatcher),
+      mRandom(new Random())
 {
 }
 
@@ -47,7 +48,8 @@ void PaintingRenderer::setBrightness(boost::shared_ptr<Painting> painting, float
     GlStateManager::color3f(1.0F, 1.0F, 1.0F);
 }
 
-void PaintingRenderer::renderPainting(boost::shared_ptr<Painting> painting, int width, int height, int offsetX, int offsetY)
+void PaintingRenderer::renderPainting(boost::shared_ptr<Painting> painting, int width, int height, int offsetX,
+                                      int offsetY)
 {
     float xStart = -width * 0.5F;
     float yStart = -height * 0.5F;
@@ -115,8 +117,8 @@ void PaintingRenderer::renderPainting(boost::shared_ptr<Painting> painting, int 
     }
 }
 
-void PaintingRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                              float yaw, float partialTick)
+void PaintingRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                              float partialTick)
 {
     ++gHangingEntityRenderCount;
     boost::shared_ptr<Painting> painting = boost::static_pointer_cast<Painting>(entity);

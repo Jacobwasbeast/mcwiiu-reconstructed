@@ -20,10 +20,9 @@ public:
 
     void renderFoil(boost::shared_ptr<Entity>& entity);
     double lerp(double first, double second, double amount);
-    void renderLeash(boost::shared_ptr<ThrownTrident>& entity, double x, double y, double z,
-                     float yaw, float partialTick);
-    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                        float yaw, float partialTick);
+    void renderLeash(boost::shared_ptr<ThrownTrident>& entity, double x, double y, double z, float yaw,
+                     float partialTick);
+    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);
 };

@@ -16,20 +16,19 @@ HumanoidHeadModel::~HumanoidHeadModel()
 {
 }
 
-void HumanoidHeadModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
-                                  float netHeadYaw, float headPitch, float scale,
-                                  boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void HumanoidHeadModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                                  float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                                  _SkinAdjustments skinAdjustments)
 {
     SkeletonHeadModel::render(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
     mHat->render(scale, true, false);
 }
 
-void HumanoidHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing,
-                               float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                               float headPitch, float scale, bool useDisplayList)
+void HumanoidHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                               float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    SkeletonHeadModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-                                 entity, _SkinAdjustments());
+    SkeletonHeadModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                                 _SkinAdjustments());
     mHat->mYRot = mHead->mYRot;
     mHat->mXRot = mHead->mXRot;
 }

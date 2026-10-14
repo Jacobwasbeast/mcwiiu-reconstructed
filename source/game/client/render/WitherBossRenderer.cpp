@@ -45,8 +45,7 @@ void WitherBossRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float pa
 
     float horizontalScale = (1.0F + swelling * 0.4F) * scale;
     float verticalScale = (1.0F + swelling * 0.1F) / scale;
-    GlStateManager::scalef(horizontalScale * 2.0F, verticalScale * 2.0F,
-                           horizontalScale * 2.0F);
+    GlStateManager::scalef(horizontalScale * 2.0F, verticalScale * 2.0F, horizontalScale * 2.0F);
 }
 
 int WitherBossRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v)

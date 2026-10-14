@@ -99,7 +99,8 @@ GuardianModel::~GuardianModel()
     return;
 }
 
-void GuardianModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void GuardianModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                           float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -108,7 +109,9 @@ void GuardianModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, f
     callSkinnedDrawlist();
 }
 
-void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                              float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                              _SkinAdjustments skinAdjustments)
 {
     boost::shared_ptr<Guardian> guardian = boost::dynamic_pointer_cast<Guardian>(entity);
 
@@ -117,12 +120,12 @@ void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
     mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
 
-    float spikeXRot[12] = { 1.75f, 0.25f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.25f, 0.75f, 0.0f, 0.0f };
-    float spikeYRot[12] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.25f, 1.75f, 1.25f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f };
-    float spikeZRot[12] = { 0.0f, 0.0f, 0.25f, 1.75f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.75f, 1.25f };
-    float spikeX[12] = { 0.0f, 0.0f, 8.0f, -8.0f, -8.0f, 8.0f, 8.0f, -8.0f, 0.0f, 0.0f, 8.0f, -8.0f };
-    float spikeY[12] = { -8.0f, -8.0f, -8.0f, -8.0f, 0.0f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f, 8.0f, 8.0f };
-    float spikeZ[12] = { 8.0f, -8.0f, 0.0f, 0.0f, -8.0f, -8.0f, 8.0f, 8.0f, 8.0f, -8.0f, 0.0f, 0.0f };
+    float spikeXRot[12] = {1.75f, 0.25f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.25f, 0.75f, 0.0f, 0.0f};
+    float spikeYRot[12] = {0.0f, 0.0f, 0.0f, 0.0f, 0.25f, 1.75f, 1.25f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f};
+    float spikeZRot[12] = {0.0f, 0.0f, 0.25f, 1.75f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.75f, 1.25f};
+    float spikeX[12] = {0.0f, 0.0f, 8.0f, -8.0f, -8.0f, 8.0f, 8.0f, -8.0f, 0.0f, 0.0f, 8.0f, -8.0f};
+    float spikeY[12] = {-8.0f, -8.0f, -8.0f, -8.0f, 0.0f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f, 8.0f, 8.0f};
+    float spikeZ[12] = {8.0f, -8.0f, 0.0f, 0.0f, -8.0f, -8.0f, 8.0f, 8.0f, 8.0f, -8.0f, 0.0f, 0.0f};
 
     float spikeRetraction = (1.0f - guardian->getSpikesAnimation(partialTicks)) * 0.55f;
 
@@ -132,7 +135,8 @@ void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
         mSpikeParts[i]->mYRot = 3.1415927f * spikeYRot[i];
         mSpikeParts[i]->mZRot = 3.1415927f * spikeZRot[i];
         mSpikeParts[i]->mX = spikeX[i] * (Mth::cos(ageInTicks * 1.5f + (float)i) * 0.01f + 1.0f - spikeRetraction);
-        mSpikeParts[i]->mY = spikeY[i] * (Mth::cos(ageInTicks * 1.5f + (float)i) * 0.01f + 1.0f - spikeRetraction) + 16.0f;
+        mSpikeParts[i]->mY = spikeY[i] * (Mth::cos(ageInTicks * 1.5f + (float)i) * 0.01f + 1.0f - spikeRetraction)
+                             + 16.0f;
         mSpikeParts[i]->mZ = spikeZ[i] * (Mth::cos(ageInTicks * 1.5f + (float)i) * 0.01f + 1.0f - spikeRetraction);
     }
 
@@ -165,7 +169,10 @@ void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
 
         Vec3* viewVector = entity->getViewVector(0.0f);
         Vec3* look = Vec3::newTemp(viewVector->x, 0.0, viewVector->z);
-        Vec3* toTarget = Vec3::newTemp(eyePosition->x - targetEyePosition->x, 0.0, eyePosition->z - targetEyePosition->z)->normalize()->yRot(1.5707964f);
+        Vec3* toTarget = Vec3::newTemp(eyePosition->x - targetEyePosition->x, 0.0,
+                                       eyePosition->z - targetEyePosition->z)
+                             ->normalize()
+                             ->yRot(1.5707964f);
 
         double alignment = look->dot(toTarget);
         float eyeRotation = Mth::sqrt((float)Mth::abs(alignment));
@@ -188,4 +195,3 @@ void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
     mTailParts[2]->mY = 0.5f;
     mTailParts[2]->mZ = 6.0f;
 }
-

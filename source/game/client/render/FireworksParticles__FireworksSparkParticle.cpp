@@ -4,9 +4,9 @@
 #include "game/client/render/ParticleEngine.hpp"
 #include "game/core/BufferBuilder.hpp"
 
-FireworksParticles::FireworksSparkParticle::FireworksSparkParticle(
-    Level* level, double x, double y, double z, double xa, double ya,
-    double za, ParticleEngine* particleEngine)
+FireworksParticles::FireworksSparkParticle::FireworksSparkParticle(Level* level, double x, double y, double z,
+                                                                   double xa, double ya, double za,
+                                                                   ParticleEngine* particleEngine)
     : SimpleAnimatedParticle(level, x, y, z, 160, 8, -0.004f),
       particleEngine(particleEngine)
 {
@@ -35,9 +35,9 @@ void FireworksParticles::FireworksSparkParticle::setFlicker(bool flicker)
     this->flicker = flicker;
 }
 
-void FireworksParticles::FireworksSparkParticle::render(
-    BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
-    float partialTicks, float xa, float ya, float za, float xa2, float za2)
+void FireworksParticles::FireworksSparkParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
+                                                        float partialTicks, float xa, float ya, float za, float xa2,
+                                                        float za2)
 {
     if (!flicker || age < lifetime / 3 || ((age + lifetime) / 3 & 1) == 0)
     {
@@ -58,8 +58,7 @@ void FireworksParticles::FireworksSparkParticle::tick()
 
     if (trail && age < lifetime / 2 && (age + lifetime) % 10 == 0)
     {
-        FireworksParticles::FireworksSparkParticle* particle =
-            new FireworksParticles::FireworksSparkParticle(
+        FireworksParticles::FireworksSparkParticle* particle = new FireworksParticles::FireworksSparkParticle(
             level, x, y, z, 0.0, 0.0, 0.0, particleEngine);
         particle->Particle::setColor(rCol, gCol, bCol);
         particle->age = particle->lifetime / 2;

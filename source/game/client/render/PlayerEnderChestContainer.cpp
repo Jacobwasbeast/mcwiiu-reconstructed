@@ -7,8 +7,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/world/block/EnderChestBlockEntity.hpp"
 
-PlayerEnderChestContainer::PlayerEnderChestContainer()
-    : SimpleContainer(L"", 27)
+PlayerEnderChestContainer::PlayerEnderChestContainer() : SimpleContainer(L"", 27)
 {
     m_activeChest = boost::shared_ptr<EnderChestBlockEntity>();
 }
@@ -92,5 +91,6 @@ ListTag* PlayerEnderChestContainer::createTag()
 
 InteractionObject::NameData PlayerEnderChestContainer::GetNetworkNameData()
 {
-    return m_activeChest ? m_activeChest->GetNetworkNameData() : InteractionObject::NameData(getDisplayName(), L"", true, false);
+    return m_activeChest ? m_activeChest->GetNetworkNameData()
+                         : InteractionObject::NameData(getDisplayName(), L"", true, false);
 }

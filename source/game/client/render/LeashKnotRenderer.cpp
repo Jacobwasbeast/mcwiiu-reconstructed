@@ -7,8 +7,7 @@
 
 static ResourceLocation LEASH_KNOT_LOCATION(TN_ITEM_LEAD_KNOT);
 
-LeashKnotRenderer::LeashKnotRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+LeashKnotRenderer::LeashKnotRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
     mKnotModel = new LeashKnotModel();
 }
@@ -18,8 +17,8 @@ LeashKnotRenderer::~LeashKnotRenderer()
     delete mKnotModel;
 }
 
-void LeashKnotRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                               float yaw, float partialTick)
+void LeashKnotRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                               float partialTick)
 {
     GlStateManager::pushMatrix();
     GlStateManager::disableCull();

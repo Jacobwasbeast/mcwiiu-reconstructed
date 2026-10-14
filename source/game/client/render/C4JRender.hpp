@@ -119,9 +119,8 @@ public:
     virtual void AcquiredForeground() = 0;
     virtual void WiiUWaitDrawDone() = 0;
     virtual int GetFramesSinceBoot() = 0;
-    virtual void DrawVertices(ePrimitiveType primitiveType, int numVertices, void* vertices,
-                              eVertexType vertexType, ePixelShaderType pixelShaderType,
-                              unsigned char* layers) = 0;
+    virtual void DrawVertices(ePrimitiveType primitiveType, int numVertices, void* vertices, eVertexType vertexType,
+                              ePixelShaderType pixelShaderType, unsigned char* layers) = 0;
     virtual void CBuffLockStaticCreations() = 0;
     virtual int CBuffCreate(int count) = 0;
     virtual void CBuffDelete(int firstId, int count) = 0;

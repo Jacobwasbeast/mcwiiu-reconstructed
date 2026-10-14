@@ -38,8 +38,8 @@ void PistonHeadRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
                                 float partialTick, int breakProgress, bool bTranslucent, float alpha,
                                 bool bUseDisplayList)
 {
-    boost::shared_ptr<PistonMovingBlockEntity> movingBlock =
-        boost::static_pointer_cast<PistonMovingBlockEntity>(blockEntity);
+    boost::shared_ptr<PistonMovingBlockEntity> movingBlock = boost::static_pointer_cast<PistonMovingBlockEntity>(
+        blockEntity);
     if (movingBlock == NULL)
         return;
 
@@ -67,24 +67,25 @@ void PistonHeadRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
     builder->color(1.0F, 1.0F, 1.0F);
     onNewLevel(getLevel());
 
-    if (movedBlock == Blocks::piston_head && movingBlock->getProgress(partialTick) <= PistonBaseBlock::PLATFORM_THICKNESS)
+    if (movedBlock == Blocks::piston_head
+        && movingBlock->getProgress(partialTick) <= PistonBaseBlock::PLATFORM_THICKNESS)
     {
         const BlockState* headState = movedState->setValue(PistonHeadBlock::SHORT, true);
         mBlockRenderer->tesselatePistonArmNoCulling(headState, position, false, headState);
     }
     else if (movingBlock->isSourcePiston() && !movingBlock->isExtending())
     {
-        PistonHeadBlock::PistonType* pistonType =
-            movedBlock == Blocks::sticky_piston ? pistonTypeSticky : pistonTypeNormal;
-        const BlockState* headState = Blocks::piston_head->defaultBlockState()
-                                          ->setValue(PistonHeadBlock::TYPE, pistonType)
-                                          ->setValue(PistonHeadBlock::FACING, movedState->getValue(PistonBaseBlock::FACING))
-                                          ->setValue(PistonHeadBlock::SHORT, movingBlock->getProgress(partialTick) >= 0.5F);
-        mBlockRenderer->tesselatePistonArmNoCulling(headState, position,
-                                                    movingBlock->getProgress(partialTick) < 0.5F, headState);
+        PistonHeadBlock::PistonType* pistonType = movedBlock == Blocks::sticky_piston ? pistonTypeSticky
+                                                                                      : pistonTypeNormal;
+        const BlockState* headState =
+            Blocks::piston_head->defaultBlockState()
+                ->setValue(PistonHeadBlock::TYPE, pistonType)
+                ->setValue(PistonHeadBlock::FACING, movedState->getValue(PistonBaseBlock::FACING))
+                ->setValue(PistonHeadBlock::SHORT, movingBlock->getProgress(partialTick) >= 0.5F);
+        mBlockRenderer->tesselatePistonArmNoCulling(headState, position, movingBlock->getProgress(partialTick) < 0.5F,
+                                                    headState);
 
-        builder->offset((float)x - (float)position.x, (float)y - (float)position.y,
-                        (float)z - (float)position.z);
+        builder->offset((float)x - (float)position.x, (float)y - (float)position.y, (float)z - (float)position.z);
         movedState->setValue(PistonBaseBlock::EXTENDED, true);
         mBlockRenderer->tesselatePistonBaseForceExtended(movedState, position, movedState);
     }

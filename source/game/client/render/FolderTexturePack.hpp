@@ -12,10 +12,7 @@ class TexturePack;
 class FolderTexturePack : public AbstractTexturePack
 {
 public:
-    FolderTexturePack(unsigned int id,
-                      const std::wstring& name,
-                      File* folder,
-                      TexturePack* parentPack);
+    FolderTexturePack(unsigned int id, const std::wstring& name, File* folder, TexturePack* parentPack);
     virtual ~FolderTexturePack() {}
 
     virtual InputStream* getResourceImplementation(const std::wstring& fileName);

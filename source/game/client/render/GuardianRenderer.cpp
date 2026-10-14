@@ -34,8 +34,7 @@ Vec3* GuardianRenderer::getPosition(boost::shared_ptr<Entity>& entity, double yO
     return Vec3::newTemp(x, y, z);
 }
 
-bool GuardianRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,
-                                    double x, double y, double z)
+bool GuardianRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double x, double y, double z)
 {
     if (MobRenderer::shouldRender(entity, culler, x, y, z))
         return true;
@@ -58,8 +57,8 @@ bool GuardianRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* c
     return false;
 }
 
-void GuardianRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                              float yaw, float partialTick)
+void GuardianRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                              float partialTick)
 {
     boost::shared_ptr<Guardian> guardian = boost::static_pointer_cast<Guardian>(entity);
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
@@ -99,8 +98,7 @@ void GuardianRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
         builder->begin();
         float attackScaleSquared = attackScale * attackScale;
         int intensity = (int)(attackScaleSquared * 191.0f);
-        builder->color(intensity + 64, intensity + 32,
-                       128 - (int)(attackScaleSquared * 64.0f), 255);
+        builder->color(intensity + 64, intensity + 32, 128 - (int)(attackScaleSquared * 64.0f), 255);
 
         const double guardianRadius = 0.282;
         double guardianX0 = std::cos(time + 2.35619455575943) * guardianRadius;

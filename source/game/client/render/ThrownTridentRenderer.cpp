@@ -20,8 +20,7 @@
 
 static ResourceLocation TRIDENT_LOCATION(TN_ITEM_TRIDENT);
 
-ThrownTridentRenderer::ThrownTridentRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+ThrownTridentRenderer::ThrownTridentRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
     mModel = new TridentModel();
 }
@@ -81,8 +80,8 @@ void ThrownTridentRenderer::renderLeash(boost::shared_ptr<ThrownTrident>& entity
     double cosYaw = cos(ownerYaw);
     double sinYaw = sin(ownerYaw);
     double ownerX = lerp(owner->mXo, owner->mX, partialTick);
-    double ownerY = lerp(owner->mYo + owner->getEyeHeight() * 0.8,
-                         owner->mY + owner->getEyeHeight() * 0.8, partialTick);
+    double ownerY = lerp(owner->mYo + owner->getEyeHeight() * 0.8, owner->mY + owner->getEyeHeight() * 0.8,
+                         partialTick);
     double ownerZ = lerp(owner->mZo, owner->mZ, partialTick);
     double xFactor = cosYaw - sinYaw;
     double zFactor = sinYaw + cosYaw;
@@ -147,8 +146,8 @@ void ThrownTridentRenderer::renderLeash(boost::shared_ptr<ThrownTrident>& entity
     GlStateManager::enableCull();
 }
 
-void ThrownTridentRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                   float yaw, float partialTick)
+void ThrownTridentRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                   float partialTick)
 {
     if (eTYPE_DERIVED_FROM(EntityType::THROWN_TRIDENT, entity->GetType()))
     {
@@ -157,10 +156,10 @@ void ThrownTridentRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
         GlStateManager::pushMatrix();
         GlStateManager::disableLighting();
         GlStateManager::translatef((float)x, (float)y, (float)z);
-        GlStateManager::rotatef(entity->mYRotO + (entity->mYRot - entity->mYRotO) * partialTick - 90.0F,
-                                0.0F, 1.0F, 0.0F);
-        GlStateManager::rotatef(entity->mXRotO + (entity->mXRot - entity->mXRotO) * partialTick + 90.0F,
-                                0.0F, 0.0F, 1.0F);
+        GlStateManager::rotatef(entity->mYRotO + (entity->mYRot - entity->mYRotO) * partialTick - 90.0F, 0.0F, 1.0F,
+                                0.0F);
+        GlStateManager::rotatef(entity->mXRotO + (entity->mXRot - entity->mXRotO) * partialTick + 90.0F, 0.0F, 0.0F,
+                                1.0F);
         mModel->render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F, true);
         if (boost::static_pointer_cast<ThrownTrident>(entity)->isEnchanted())
             renderFoil(entity);

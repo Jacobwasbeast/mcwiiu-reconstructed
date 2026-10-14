@@ -11,8 +11,7 @@
 
 static ResourceLocation BAT_LOCATION(TN_MOB_BAT);
 
-BatRenderer::BatRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new BatModel(), 0.25F)
+BatRenderer::BatRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new BatModel(), 0.25F)
 {
 }
 
@@ -31,8 +30,8 @@ void BatRenderer::setupPosition(boost::shared_ptr<LivingEntity>& entity, double 
     LivingEntityRenderer::setupPosition(entity, x, y, z);
 }
 
-void BatRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
-                                 float rotationYaw, float partialTicks)
+void BatRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw,
+                                 float partialTicks)
 {
     if (eTYPE_DERIVED_FROM(EntityType::BAT, entity->GetType()) && boost::static_pointer_cast<Bat>(entity)->isResting())
         GlStateManager::translatef(0.0F, -0.1F, 0.0F);

@@ -28,9 +28,8 @@ public:
     virtual void setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw,
                                 float partialTicks);
 
-    static void renderCrystalBeams(double x, double y, double z, float partialTick,
-                                   double targetX, double targetY, double targetZ, int time,
-                                   double crystalX, double crystalY, double crystalZ);
+    static void renderCrystalBeams(double x, double y, double z, float partialTick, double targetX, double targetY,
+                                   double targetZ, int time, double crystalX, double crystalY, double crystalZ);
 
 private:
     DragonModel* mDragonModel;

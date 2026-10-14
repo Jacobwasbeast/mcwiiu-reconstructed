@@ -55,7 +55,8 @@ BlazeModel::BlazeModel(const ModelDefinition& modelDefinition)
     }
 }
 
-void BlazeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void BlazeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                        float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -69,7 +70,8 @@ void BlazeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
     callSkinnedDrawlist();
 }
 
-void BlazeModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void BlazeModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     float angle = ageInTicks * 3.1415927f * -0.1f;
 
@@ -104,4 +106,3 @@ void BlazeModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
     mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
 }
-

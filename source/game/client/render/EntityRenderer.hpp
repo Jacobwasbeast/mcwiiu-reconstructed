@@ -28,21 +28,27 @@ public:
     virtual void render(AABB* box, double x, double y, double z);
     virtual void renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z);
     virtual bool shouldShowName(boost::shared_ptr<Entity>& entity);
-    virtual void renderNameTags(boost::shared_ptr<Entity>& entity, double x, double y, double z, const std::wstring& name, double distance, int color);
+    virtual void renderNameTags(boost::shared_ptr<Entity>& entity, double x, double y, double z,
+                                const std::wstring& name, double distance, int color);
     virtual bool bindTexture(boost::shared_ptr<Entity>& entity);
     virtual void bindTexture(const ResourceLocation* location);
     virtual bool bindTexture(const std::wstring& path, int index);
     virtual bool bindTexture(const std::wstring& path, const std::wstring& alternate);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void renderFlame(boost::shared_ptr<Entity>& entity, double x, double y, double z, float partialTick);
-    virtual void renderShadow(boost::shared_ptr<Entity>& entity, double x, double y, double z, float alpha, float partialTick);
+    virtual void renderShadow(boost::shared_ptr<Entity>& entity, double x, double y, double z, float alpha,
+                              float partialTick);
     virtual Level* getLevel();
-    virtual void renderBlockShadow(const BlockState* state, double x, double y, double z, const BlockPos& pos, float alpha, float radius, double offsetX, double offsetY, double offsetZ);
-    virtual void postRender(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick, bool renderShadow);
+    virtual void renderBlockShadow(const BlockState* state, double x, double y, double z, const BlockPos& pos,
+                                   float alpha, float radius, double offsetX, double offsetY, double offsetZ);
+    virtual void postRender(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                            float partialTick, bool renderShadow);
     virtual Font* getFont();
-    virtual void renderNameTag(boost::shared_ptr<Entity>& entity, const std::wstring& name, double x, double y, double z, int maxDistance, int color);
+    virtual void renderNameTag(boost::shared_ptr<Entity>& entity, const std::wstring& name, double x, double y,
+                               double z, int maxDistance, int color);
     virtual bool hasSecondPass();
-    virtual void renderSecondPass(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);
+    virtual void renderSecondPass(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                  float partialTick);
     virtual void setupForTexturePack(TexturePack* pack);
     virtual void SetItemFrame(bool itemFrame);
     virtual Model* getModel();

@@ -8,8 +8,7 @@
 
 static ResourceLocation BLAZE_LOCATION(TN_MOB_FIRE);
 
-BlazeRenderer::BlazeRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new BlazeModel(), 0.5F)
+BlazeRenderer::BlazeRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new BlazeModel(), 0.5F)
 {
 }
 
@@ -18,8 +17,8 @@ const ResourceLocation* BlazeRenderer::getTextureLocation(boost::shared_ptr<Enti
     return &BLAZE_LOCATION;
 }
 
-void BlazeRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                           float yaw, float partialTick)
+void BlazeRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                           float partialTick)
 {
     if (mModel->hasOverriddenParts() && !entity->isOnFire())
     {

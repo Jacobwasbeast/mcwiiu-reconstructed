@@ -316,15 +316,13 @@ public:
     virtual void StateSetVertexTextureUV(float u, float v);
     virtual void StateSetTextureScaleUI(float scaleU, float scaleV, float offsetU, float offsetV);
     virtual void StateSetScalingGridUI(float left, float right, float top, float bottom, float innerLeft,
-                                       float innerRight, float innerTop, float innerBottom, float scaleU,
-                                       float scaleV);
+                                       float innerRight, float innerTop, float innerBottom, float scaleU, float scaleV);
     virtual void StateSetLightColour(int light, float red, float green, float blue);
     virtual void StateSetLightAmbientColour(float red, float green, float blue);
     virtual void StateSetLightDirection(int light, float x, float y, float z);
     virtual void StateSetLightEnable(int light, bool bEnable);
     virtual void StateSetViewport(C4JRender::eViewportType viewport);
-    virtual void StateGetScissorRect(unsigned int& left, unsigned int& top, unsigned int& right,
-                                     unsigned int& bottom);
+    virtual void StateGetScissorRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom);
     virtual void StateSetScissorRect(unsigned int left, unsigned int top, unsigned int right, unsigned int bottom);
     virtual void StateSetEnableViewportClipPlanes(bool bEnable);
     virtual void StateSetTexGenCol(int coordinate, float x, float y, float z, float w, bool bEyeLinear);

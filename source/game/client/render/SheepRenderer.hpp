@@ -23,11 +23,10 @@ public:
     virtual Model* getModel(boost::shared_ptr<LivingEntity>& entity);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     void setColourState(boost::shared_ptr<Sheep> sheep, float partialTicks);
-    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                        float yaw, float partialTick);
-    virtual void renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                              float limbSwingAmount, float partialTick, float ageInTicks,
-                              float netHeadYaw, float headPitch, float scale, bool overlay);
+    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);
+    virtual void renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                              float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                              bool overlay);
     virtual void setupForTexturePack(TexturePack* pack);
     virtual Model* createModel(const ModelDefinition& definition);
 

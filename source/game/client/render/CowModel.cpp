@@ -4,8 +4,7 @@
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
 
-CowModel::CowModel(const ModelDefinition& modelDefinition)
-    : QuadrupedModel(12, 0.0f, modelDefinition)
+CowModel::CowModel(const ModelDefinition& modelDefinition) : QuadrupedModel(12, 0.0f, modelDefinition)
 {
     if (modelDefinition.DoesOverrideModel())
     {
@@ -37,4 +36,3 @@ CowModel::CowModel(const ModelDefinition& modelDefinition)
         compileSkinnedDrawlist();
     }
 }
-

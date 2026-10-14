@@ -29,7 +29,8 @@
 #include "game/world/block/StainedGlassPaneBlock.hpp"
 
 ItemEntityRenderer::ItemEntityRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
-    : EntityRenderer(dispatcher), mRandom()
+    : EntityRenderer(dispatcher),
+      mRandom()
 {
     mItemRenderer = itemRenderer;
     mShadowRadius = 0.15F;
@@ -79,9 +80,9 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
         }
         else
         {
-            GlStateManager::rotatef(
-                (((float)entity->getAge() + partialTick) / 20.0F + entity->mBobOffs) * Mth::RAD_TO_DEG,
-                0.0F, 1.0F, 0.0F);
+            GlStateManager::rotatef((((float)entity->getAge() + partialTick) / 20.0F + entity->mBobOffs)
+                                        * Mth::RAD_TO_DEG,
+                                    0.0F, 1.0F, 0.0F);
         }
 
         float thickness = 0.0625F;
@@ -108,8 +109,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
                 bindTexture(&BLOCKS_LOCATION);
                 GlStateManager::color4f(red, green, blue, 1.0F);
                 Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
-                    tesselator, u0, v0, u1, v1,
-                    sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
+                    tesselator, u0, v0, u1, v1, sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
                     ItemInHandRenderer::ITEM_RENDER_MODE_GUI);
             }
             else if (item->getItem()->getIconType() == 0 && block != NULL)
@@ -117,8 +117,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
                 bindTexture(&BLOCKS_LOCATION);
                 GlStateManager::color4f(red, green, blue, 1.0F);
                 Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
-                    tesselator, u0, v0, u1, v1,
-                    sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
+                    tesselator, u0, v0, u1, v1, sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
                     ItemInHandRenderer::ITEM_RENDER_MODE_NONE);
             }
             else
@@ -126,8 +125,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
                 bindTexture(&ITEM_LOCATION);
                 GlStateManager::color4f(red, green, blue, 1.0F);
                 Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
-                    tesselator, u0, v0, u1, v1,
-                    sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
+                    tesselator, u0, v0, u1, v1, sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
                     ItemInHandRenderer::ITEM_RENDER_MODE_3D);
             }
             if (item->getItem()->isFoil(item))
@@ -164,8 +162,8 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
     }
 }
 
-void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                float, float partialTick)
+void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float,
+                                float partialTick)
 {
     boost::shared_ptr<ItemEntity> itemEntity = boost::static_pointer_cast<ItemEntity>(entity);
     bindTexture(entity);
@@ -211,9 +209,9 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
         || (item->getItem()->getIconType() == 0 && block != NULL
             && BlockRenderer::canRender(block->defaultBlockState()->getRenderShape())))
     {
-        GlStateManager::rotatef(
-            (((float)itemEntity->getAge() + partialTick) / 20.0F + itemEntity->mBobOffs) * 57.295776F,
-            0.0F, 1.0F, 0.0F);
+        GlStateManager::rotatef((((float)itemEntity->getAge() + partialTick) / 20.0F + itemEntity->mBobOffs)
+                                    * 57.295776F,
+                                0.0F, 1.0F, 0.0F);
 
         if (mItemFrame)
         {
@@ -307,8 +305,7 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
                 float green = (float)((colour >> 8) & 0xFF) / 255.0F;
                 float blue = (float)(colour & 0xFF) / 255.0F;
                 GlStateManager::color4f(red * 1.0, green * 1.0, blue * 1.0, 1.0F);
-                renderItemBillboard(itemEntity, sprite, count, partialTick,
-                                    red * 1.0, green * 1.0, blue * 1.0);
+                renderItemBillboard(itemEntity, sprite, count, partialTick, red * 1.0, green * 1.0, blue * 1.0);
             }
         }
     }
@@ -340,8 +337,7 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
             float green = (float)((colour >> 8) & 0xFF) / 255.0F;
             float blue = (float)(colour & 0xFF) / 255.0F;
             GlStateManager::color4f(red, green, blue, 1.0F);
-            renderItemBillboard(itemEntity, sprite, count, partialTick,
-                                red * 1.0, green * 1.0, blue * 1.0);
+            renderItemBillboard(itemEntity, sprite, count, partialTick, red * 1.0, green * 1.0, blue * 1.0);
         }
     }
 

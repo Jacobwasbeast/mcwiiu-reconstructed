@@ -63,7 +63,8 @@ LavaSlimeModel::LavaSlimeModel(const ModelDefinition& modelDefinition)
     }
 }
 
-void LavaSlimeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void LavaSlimeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                            float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -77,7 +78,8 @@ void LavaSlimeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, 
     callSkinnedDrawlist();
 }
 
-void LavaSlimeModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks)
+void LavaSlimeModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                     float partialTicks)
 {
     boost::shared_ptr<MagmaCube> magmaCube = boost::static_pointer_cast<MagmaCube>(entity);
 
@@ -93,4 +95,3 @@ void LavaSlimeModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, fl
         mBodyCubes[i]->mY = (float)(i - 4) * squish * 1.7f;
     }
 }
-

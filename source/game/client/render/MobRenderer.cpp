@@ -22,13 +22,12 @@ MobRenderer::MobRenderer(EntityRenderDispatcher* dispatcher, Model* model, float
 
 bool MobRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
 {
-    return LivingEntityRenderer::shouldShowName(entity) &&
-           (entity->shouldShowName() || boost::static_pointer_cast<Mob>(entity)->hasCustomName()) &&
-           entity.get() == mDispatcher->mPlayer.get();
+    return LivingEntityRenderer::shouldShowName(entity)
+           && (entity->shouldShowName() || boost::static_pointer_cast<Mob>(entity)->hasCustomName())
+           && entity.get() == mDispatcher->mPlayer.get();
 }
 
-bool MobRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,
-                               double x, double y, double z)
+bool MobRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double x, double y, double z)
 {
     if (EntityRenderer::shouldRender(entity, culler, x, y, z))
         return true;
@@ -41,8 +40,7 @@ bool MobRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler
     return false;
 }
 
-void MobRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                         float yaw, float partialTick)
+void MobRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
 {
     LivingEntityRenderer::render(entity, x, y, z, yaw, partialTick);
     if (!mSolidRender)
@@ -59,8 +57,7 @@ void MobRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
 void MobRenderer::setLightColor(boost::shared_ptr<Entity>& entity)
 {
     int lightColor = entity->getLightColor();
-    GlStateManager::multiTexCoord2f((float)(lightColor & 65535),
-                                    (float)(lightColor >> 16));
+    GlStateManager::multiTexCoord2f((float)(lightColor & 65535), (float)(lightColor >> 16));
 }
 
 double MobRenderer::lerp(double first, double second, double fraction)
@@ -68,8 +65,7 @@ double MobRenderer::lerp(double first, double second, double fraction)
     return (second - first) * fraction + first;
 }
 
-void MobRenderer::renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, double z,
-                              float yaw, float partialTick)
+void MobRenderer::renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, double z, float yaw, float partialTick)
 {
     boost::shared_ptr<Entity> holder = mob->getLeashHolder();
     if (!holder)
@@ -93,12 +89,12 @@ void MobRenderer::renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, d
     double cosPitch = std::cos(holderPitch * Mth::DEG_TO_RAD);
     double holderX = lerp(holder->mXo, holder->mX, partialTick) - cosYaw * 0.7 - sinYaw * 0.5 * cosPitch;
     double holderY = lerp(holder->mYo + holder->getEyeHeight() * 0.7, holder->mY + holder->getEyeHeight() * 0.7,
-                          partialTick) -
-                     sinPitch * 0.5 - 0.25;
+                          partialTick)
+                     - sinPitch * 0.5 - 0.25;
     double holderZ = lerp(holder->mZo, holder->mZ, partialTick) - sinYaw * 0.7 + cosYaw * 0.5 * cosPitch;
 
-    double bodyYaw = lerp((double)mob->mYBodyRotO, (double)mob->mYBodyRot, partialTick) * Mth::DEG_TO_RAD +
-                     1.5707963705062866;
+    double bodyYaw = lerp((double)mob->mYBodyRotO, (double)mob->mYBodyRot, partialTick) * Mth::DEG_TO_RAD
+                     + 1.5707963705062866;
     double offsetX = std::cos(bodyYaw) * (double)mob->mBbWidth * 0.4;
     double offsetZ = std::sin(bodyYaw) * (double)mob->mBbWidth * 0.4;
     double mobX = lerp(mob->mXo, mob->mX, partialTick) + offsetX;
@@ -118,8 +114,7 @@ void MobRenderer::renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, d
     const float lightRed = (float)((lightColour >> 16) & 255) / 255.0F;
     const float lightGreen = (float)((double)((lightColour >> 8) & 255) / 255.0);
     const float lightBlue = (float)((double)(lightColour & 255) / 255.0);
-    unsigned int darkColour = Minecraft::GetInstance()->getColourTable()->getColour(
-        eMinecraftColour_Leash_Dark_Colour);
+    unsigned int darkColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Leash_Dark_Colour);
     const float darkBlue = (float)((double)(darkColour & 255) / 255.0);
     const float darkGreen = (float)((double)((darkColour >> 8) & 255) / 255.0);
     const float darkRed = (float)((darkColour >> 16) & 255) / 255.0F;
@@ -132,8 +127,8 @@ void MobRenderer::renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, d
         builder->color(light ? lightRed : darkRed, light ? lightGreen : darkGreen, light ? lightBlue : darkBlue, 1.0F);
         const float fraction = (float)i / 24.0F;
         const double px = x + dx * (double)fraction;
-        const double py = y + dy * (double)(fraction * fraction + fraction) * 0.5 +
-                          (double)((24.0F - (float)i) / 18.0F + 0.125F);
+        const double py = y + dy * (double)(fraction * fraction + fraction) * 0.5
+                          + (double)((24.0F - (float)i) / 18.0F + 0.125F);
         const double pz = z + dz * (double)fraction;
         builder->vertex((float)px, (float)py, (float)pz);
         builder->vertex((float)(px + width), (float)(py + width), (float)pz);
@@ -147,8 +142,8 @@ void MobRenderer::renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, d
         builder->color(light ? lightRed : darkRed, light ? lightGreen : darkGreen, light ? lightBlue : darkBlue, 1.0F);
         const float fraction = (float)i / 24.0F;
         const double px = x + dx * (double)fraction;
-        const double py = y + dy * (double)(fraction * fraction + fraction) * 0.5 +
-                          (double)((24.0F - (float)i) / 18.0F + 0.125F);
+        const double py = y + dy * (double)(fraction * fraction + fraction) * 0.5
+                          + (double)((24.0F - (float)i) / 18.0F + 0.125F);
         const double pz = z + dz * (double)fraction;
         builder->vertex((float)px, (float)(py + width), (float)pz);
         builder->vertex((float)(px + width), (float)py, (float)(pz + width));

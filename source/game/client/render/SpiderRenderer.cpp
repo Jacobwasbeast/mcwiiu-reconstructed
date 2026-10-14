@@ -15,8 +15,7 @@
 
 static ResourceLocation SPIDER_LOCATION(TN_MOB_SPIDER);
 
-SpiderRenderer::SpiderRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new SpiderModel(), 1.0F)
+SpiderRenderer::SpiderRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new SpiderModel(), 1.0F)
 {
     mSpiderEyesLayer = new SpiderEyesLayer(this);
     addLayer(mSpiderEyesLayer);
@@ -45,9 +44,8 @@ void SpiderRenderer::setupForTexturePack(TexturePack* pack)
         addLayer(mSpiderEyesLayer);
 }
 
-void SpiderRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                 float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                                 float headPitch, float scale)
+void SpiderRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                 float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
     bool solid = !isVisible(entity) && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
 

@@ -14,8 +14,7 @@ static ResourceLocation sWhiteSplotchedRabbitTexture(TN_MOB_RABBIT_WHITE_SPLOTCH
 static ResourceLocation sToastRabbitTexture(TN_MOB_RABBIT_TOAST);
 static ResourceLocation sCaerbannogRabbitTexture(TN_MOB_RABBIT_CAERBANNOG);
 
-RabbitRenderer::RabbitRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new RabbitModel(), 0.3f)
+RabbitRenderer::RabbitRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new RabbitModel(), 0.3f)
 {
 }
 

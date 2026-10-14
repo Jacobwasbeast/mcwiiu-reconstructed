@@ -9,8 +9,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-SuspendedParticle::SuspendedParticle(Level* level, double x, double y, double z,
-                                     double xa, double ya, double za)
+SuspendedParticle::SuspendedParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y - 0.125, z, xa, ya, za)
 {
     unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_Suspend);
@@ -43,15 +42,8 @@ uint64_t SuspendedParticle::GetType()
     return ParticleKind::SUSPENDED;
 }
 
-Particle* SuspendedParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                       Level* level,
-                                                       double x,
-                                                       double y,
-                                                       double z,
-                                                       double xa,
-                                                       double ya,
-                                                       double za,
-                                                       arrayWithLength<int> params)
+Particle* SuspendedParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                      double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new SuspendedParticle(level, x, y, z, xa, ya, za);
 }

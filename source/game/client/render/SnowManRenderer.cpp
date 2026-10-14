@@ -8,8 +8,7 @@
 
 static ResourceLocation SNOWMAN_LOCATION(TN_MOB_SNOWMAN);
 
-SnowManRenderer::SnowManRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new SnowManModel(), 0.5f)
+SnowManRenderer::SnowManRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new SnowManModel(), 0.5f)
 {
     addLayer(new SnowManHeadLayer(this));
 }

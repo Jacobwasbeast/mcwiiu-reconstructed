@@ -86,7 +86,8 @@ BoatModel::BoatModel(const ModelDefinition& definition)
     mSecondPassBottom->compile(0.0625f);
 }
 
-void BoatModel::animatePaddle(ModelPartSkin* paddle, boost::shared_ptr<Boat> boat, int side, float scale, float partialTicks, bool useDisplayList)
+void BoatModel::animatePaddle(ModelPartSkin* paddle, boost::shared_ptr<Boat> boat, int side, float scale,
+                              float partialTicks, bool useDisplayList)
 {
     float rowingTime = boat->getRowingTime(side, partialTicks);
 
@@ -101,7 +102,8 @@ void BoatModel::animatePaddle(ModelPartSkin* paddle, boost::shared_ptr<Boat> boa
     paddle->render(scale, useDisplayList, false);
 }
 
-void BoatModel::render(boost::shared_ptr<Entity>& entity, float partialTicks, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void BoatModel::render(boost::shared_ptr<Entity>& entity, float partialTicks, float limbSwingAmount, float ageInTicks,
+                       float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     GlStateManager::rotatef(90.0f, 0.0f, 1.0f, 0.0f);
 
@@ -121,7 +123,8 @@ void BoatModel::render(boost::shared_ptr<Entity>& entity, float partialTicks, fl
     callSkinnedDrawlist();
 }
 
-void BoatModel::renderSecondPass(boost::shared_ptr<Entity> entity, float partialTicks, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void BoatModel::renderSecondPass(boost::shared_ptr<Entity> entity, float partialTicks, float limbSwingAmount,
+                                 float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     GlStateManager::rotatef(90.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::colorMask(false, false, false, false);

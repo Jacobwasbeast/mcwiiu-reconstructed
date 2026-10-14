@@ -13,8 +13,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 
-TntRenderer::TntRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+TntRenderer::TntRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
     mShadowRadius = 0.5f;
 }
@@ -23,8 +22,7 @@ TntRenderer::~TntRenderer()
 {
 }
 
-void TntRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                         float yaw, float partialTick)
+void TntRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
 {
     boost::shared_ptr<PrimedTnt> tnt = boost::static_pointer_cast<PrimedTnt>(entity);
     BlockRenderDispatcher* blockRenderer = Minecraft::GetInstance()->getBlockRenderer();

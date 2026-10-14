@@ -46,7 +46,7 @@ extern Renderer* gRenderer;
 ResourceLocation ItemRenderer::ENCHANT_GLINT_LOCATION(TN_BLUR_MISC_GLINT);
 
 static int sFoilList = -1;
-static const int sPotionStrengthBarWidths[] = { 3, 6, 9, 11 };
+static const int sPotionStrengthBarWidths[] = {3, 6, 9, 11};
 
 ItemRenderer::ItemRenderer(EntityRenderDispatcher* dispatcher, Textures* textures, ItemColors* itemColors)
     : EntityRenderer(dispatcher)
@@ -193,8 +193,9 @@ void ItemRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y,
     Block* block = Block::byItem(item->getItem());
     bool entityBlock = item->getItem() == Items::skull || item->getItem() == Items::banner || block == Blocks::conduit;
 
-    if (entityBlock || (item->getItem()->getIconType() == 0 && block != NULL &&
-                        BlockRenderer::canRender(block->defaultBlockState()->getRenderShape())))
+    if (entityBlock
+        || (item->getItem()->getIconType() == 0 && block != NULL
+            && BlockRenderer::canRender(block->defaultBlockState()->getRenderShape())))
     {
         GlStateManager::rotatef((((float)itemEntity->mAge + partialTicks) / 20.0F + itemEntity->mBobOffs) * 57.295776F,
                                 0.0F, 1.0F, 0.0F);
@@ -472,9 +473,11 @@ void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::s
 
     Block* block = Block::byItem(item->getItem());
     int blockId = Block::getId(block);
-    if (item->getItem() == Items::trident && transformType != ItemTransforms::GUI && transformType != ItemTransforms::FIXED)
+    if (item->getItem() == Items::trident && transformType != ItemTransforms::GUI
+        && transformType != ItemTransforms::FIXED)
     {
-        EntityRenderer* renderer = Minecraft::GetInstance()->getEntityRenderDispatcher()->getRenderer(EntityType::THROWN_TRIDENT);
+        EntityRenderer* renderer = Minecraft::GetInstance()->getEntityRenderDispatcher()->getRenderer(
+            EntityType::THROWN_TRIDENT);
         if (renderer != NULL)
         {
             GlStateManager::color4f(1.0F, 1.0F, 1.0F, alpha);
@@ -487,11 +490,11 @@ void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::s
                 static_cast<ThrownTridentRenderer*>(renderer)->renderFoil(tridentEntity);
         }
     }
-    else if (item->getItem() != Items::skull && item->getItem() != Items::banner && blockId != BlockId::CONDUIT &&
-             !(blockId >= BlockId::WHITE_SHULKER_BOX && blockId <= BlockId::BLACK_SHULKER_BOX))
+    else if (item->getItem() != Items::skull && item->getItem() != Items::banner && blockId != BlockId::CONDUIT
+             && !(blockId >= BlockId::WHITE_SHULKER_BOX && blockId <= BlockId::BLACK_SHULKER_BOX))
     {
-        if (item->getItem()->getIconType() == 0 && block != NULL &&
-            BlockRenderer::canRender(block->defaultBlockState()->getRenderShape()))
+        if (item->getItem()->getIconType() == 0 && block != NULL
+            && BlockRenderer::canRender(block->defaultBlockState()->getRenderShape()))
         {
             GlStateManager::translatef(0.5F, 0.5F, 0.5F);
             int id = Block::getId(block);
@@ -507,7 +510,8 @@ void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::s
                 GlStateManager::translatef(0.0F, 0.5F, 0.0F);
                 GlStateManager::rotatef(-90.0F, 0.0F, 1.0F, 0.0F);
             }
-            minecraft->getBlockRenderer()->renderSingleBlock(block->getBlockState(item->getAuxValue()), 1.0F, alpha, true);
+            minecraft->getBlockRenderer()->renderSingleBlock(block->getBlockState(item->getAuxValue()), 1.0F, alpha,
+                                                             true);
             if (block->hasInHandRenderOffset() && transformType != ItemTransforms::GUI)
                 GlStateManager::popMatrix();
             GlStateManager::disableBlend();
@@ -580,20 +584,19 @@ void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::s
             {
                 if (transformType == ItemTransforms::GUI || pane)
                     minecraft->getItemInHandRenderer()->renderItem3D(tesselator, u0, v0, u1, v1, icon->getSourceWidth(),
-                                                                      icon->getSourceHeight(), 0.0625F,
-                                                                      ItemInHandRenderer::ITEM_RENDER_MODE_GUI);
+                                                                     icon->getSourceHeight(), 0.0625F,
+                                                                     ItemInHandRenderer::ITEM_RENDER_MODE_GUI);
                 else
                     minecraft->getItemInHandRenderer()->renderItem3D(tesselator, u0, v0, u1, v1, icon->getSourceWidth(),
-                                                                      icon->getSourceHeight(), 0.0625F,
-                                                                      ItemInHandRenderer::ITEM_RENDER_MODE_NONE);
+                                                                     icon->getSourceHeight(), 0.0625F,
+                                                                     ItemInHandRenderer::ITEM_RENDER_MODE_NONE);
             }
             else
             {
-                minecraft->getItemInHandRenderer()->renderItem3D(tesselator, u0, v0, u1, v1, icon->getSourceWidth(),
-                                                                  icon->getSourceHeight(), 0.0625F,
-                                                                  transformType == ItemTransforms::GUI
-                                                                      ? ItemInHandRenderer::ITEM_RENDER_MODE_FLAT
-                                                                      : ItemInHandRenderer::ITEM_RENDER_MODE_3D);
+                minecraft->getItemInHandRenderer()->renderItem3D(
+                    tesselator, u0, v0, u1, v1, icon->getSourceWidth(), icon->getSourceHeight(), 0.0625F,
+                    transformType == ItemTransforms::GUI ? ItemInHandRenderer::ITEM_RENDER_MODE_FLAT
+                                                         : ItemInHandRenderer::ITEM_RENDER_MODE_3D);
             }
             if (item->hasFoil())
                 renderFoilLayer(tesselator);

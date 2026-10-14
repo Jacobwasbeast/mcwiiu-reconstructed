@@ -19,18 +19,15 @@ BeaconRenderer::~BeaconRenderer()
 {
 }
 
-void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double partialTicks,
-                                      double beamHeight, double gameTime, int startY, int endY,
-                                      arrayWithLength<const float> colors)
+void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double partialTicks, double beamHeight,
+                                      double gameTime, int startY, int endY, arrayWithLength<const float> colors)
 {
-    renderBeaconBeam(x, y, z, partialTicks, beamHeight, gameTime, startY, endY, colors,
-                     0.2, 0.25);
+    renderBeaconBeam(x, y, z, partialTicks, beamHeight, gameTime, startY, endY, colors, 0.2, 0.25);
 }
 
-void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double partialTicks,
-                                      double beamHeight, double gameTime, int startY, int endY,
-                                      arrayWithLength<const float> colors, double innerRadius,
-                                      double outerRadius)
+void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double partialTicks, double beamHeight,
+                                      double gameTime, int startY, int endY, arrayWithLength<const float> colors,
+                                      double innerRadius, double outerRadius)
 {
     int topY = startY + endY;
     GlStateManager::disableLighting();
@@ -112,10 +109,8 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
     GlStateManager::colorMask(true, true, true, true);
 }
 
-void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double partialTicks,
-                                      double beamHeight,
-                                      std::vector<BeaconBlockEntity::BeaconBeamSection>* sections,
-                                      double gameTime)
+void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double partialTicks, double beamHeight,
+                                      std::vector<BeaconBlockEntity::BeaconBeamSection>* sections, double gameTime)
 {
     bindTexture(&BEAM_LOCATION);
     if (beamHeight > 0.0)
@@ -129,8 +124,7 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
             arrayWithLength<const float> colors;
             colors.data = section.getColor();
             colors.length = 3;
-            renderBeaconBeam(x, y, z, partialTicks, beamHeight, gameTime, height,
-                             section.getHeight(), colors);
+            renderBeaconBeam(x, y, z, partialTicks, beamHeight, gameTime, height, section.getHeight(), colors);
             height += section.getHeight();
             ++index;
         }
@@ -138,20 +132,17 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
     }
 }
 
-void BeaconRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                            float a, int breakProgress, bool bTranslucent, float alpha,
-                            bool bUseDisplayList)
+void BeaconRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+                            int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
     boost::shared_ptr<BeaconBlockEntity> beacon = boost::static_pointer_cast<BeaconBlockEntity>(blockEntity);
     renderBeaconBeam(x, y, z, a, beacon->getAndUpdateClientSideScale(), beacon->getBeamSections(),
                      (double)beacon->getLevel()->getGameTime());
 }
 
-void BeaconRenderer::renderSpecialBeamDirection(boost::shared_ptr<BlockEntity> blockEntity, double x,
-                                                double y, double z, double xOffset, double yOffset,
-                                                double zOffset, float a,
-                                                int breakProgress, bool bTranslucent, float alpha,
-                                                bool bUseDisplayList)
+void BeaconRenderer::renderSpecialBeamDirection(boost::shared_ptr<BlockEntity> blockEntity, double x, double y,
+                                                double z, double xOffset, double yOffset, double zOffset, float a,
+                                                int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
     boost::shared_ptr<BeaconBlockEntity> beacon = boost::static_pointer_cast<BeaconBlockEntity>(blockEntity);
     BlockPos position = beacon->getBlockPos();

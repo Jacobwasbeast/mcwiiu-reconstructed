@@ -33,12 +33,13 @@ void IllusionIllagerRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
     GlStateManager::scalef(0.9375f, 0.9375f, 0.9375f);
 }
 
-void IllusionIllagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                     float yaw, float partialTick)
+void IllusionIllagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                     float partialTick)
 {
     if (entity->isInvisible())
     {
-        arrayWithLength<Vec3*> offsets = boost::static_pointer_cast<IllusionIllager>(entity)->getIllusionOffsets(partialTick);
+        arrayWithLength<Vec3*> offsets = boost::static_pointer_cast<IllusionIllager>(entity)->getIllusionOffsets(
+            partialTick);
         boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
         float bob = getBob(livingEntity, partialTick);
         for (unsigned int index = 0; index < offsets.length; ++index)
@@ -80,14 +81,16 @@ IllusionIllagerRenderer::IllusionIllagerRenderer_ItemInHandLayer::~IllusionIllag
 {
 }
 
-void IllusionIllagerRenderer::IllusionIllagerRenderer_ItemInHandLayer::render(
-    boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks,
-    float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
+void IllusionIllagerRenderer::IllusionIllagerRenderer_ItemInHandLayer::render(boost::shared_ptr<LivingEntity>& entity,
+                                                                              float limbSwing, float limbSwingAmount,
+                                                                              float partialTicks, float ageInTicks,
+                                                                              float netHeadYaw, float headPitch,
+                                                                              float scale, bool bUseDisplayList)
 {
-    if (boost::static_pointer_cast<IllusionIllager>(entity)->isCastingSpell() ||
-        boost::static_pointer_cast<IllusionIllager>(entity)->isAggressive())
-        ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw,
-                                headPitch, scale, bUseDisplayList);
+    if (boost::static_pointer_cast<IllusionIllager>(entity)->isCastingSpell()
+        || boost::static_pointer_cast<IllusionIllager>(entity)->isAggressive())
+        ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch,
+                                scale, bUseDisplayList);
 }
 
 void IllusionIllagerRenderer::IllusionIllagerRenderer_ItemInHandLayer::translateToHand(const HumanoidArm* arm)

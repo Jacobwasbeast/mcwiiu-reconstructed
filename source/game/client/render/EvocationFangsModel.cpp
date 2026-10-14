@@ -29,7 +29,8 @@ EvocationFangsModel::~EvocationFangsModel()
     delete mLowerJaw;
 }
 
-void EvocationFangsModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void EvocationFangsModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                                 float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     float openProgress = limbSwing * 2.0f;
 

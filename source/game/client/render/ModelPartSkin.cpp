@@ -8,14 +8,12 @@
 #include "game/core/Mth.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-ModelPartSkin::ModelPartSkin()
-    : ModelPart(), mBoneIndex(-1), mSkinnedParts(NULL)
+ModelPartSkin::ModelPartSkin() : ModelPart(), mBoneIndex(-1), mSkinnedParts(NULL)
 {
     mCompiled = true;
 }
 
-ModelPartSkin::ModelPartSkin(Model* model)
-    : ModelPart(model)
+ModelPartSkin::ModelPartSkin(Model* model) : ModelPart(model)
 {
     mBoneIndex = -1;
     mCompiled = true;
@@ -23,8 +21,7 @@ ModelPartSkin::ModelPartSkin(Model* model)
     mSkinnedParts->addModelPart(this);
 }
 
-ModelPartSkin::ModelPartSkin(Model* model, const std::wstring& name)
-    : ModelPart(model, name)
+ModelPartSkin::ModelPartSkin(Model* model, const std::wstring& name) : ModelPart(model, name)
 {
     mBoneIndex = -1;
     mCompiled = true;

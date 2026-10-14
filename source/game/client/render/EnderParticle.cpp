@@ -8,7 +8,10 @@
 #include "game/util/AABB.hpp"
 
 EnderParticle::EnderParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
-    : Particle(level, x, y, z, xa, ya, za), originX(x), originY(y), originZ(z)
+    : Particle(level, x, y, z, xa, ya, za),
+      originX(x),
+      originY(y),
+      originZ(z)
 {
     xd = xa;
     yd = ya;
@@ -21,13 +24,16 @@ EnderParticle::EnderParticle(Level* level, double x, double y, double z, double 
     gCol = (float)((colour >> 8) & 255) / 255.0f;
     bCol = (float)(colour & 255) / 255.0f;
     float colourScale = (float)(random.nextFloat() * 0.6f + 0.4f);
-    rCol *= colourScale; gCol *= colourScale; bCol *= colourScale;
+    rCol *= colourScale;
+    gCol *= colourScale;
+    bCol *= colourScale;
     scale = size = (float)(random.nextFloat() * 0.2f + 0.5f);
     lifetime = (int)(Math::random() * 10.0) + 40;
     hasPhysics = false;
     setMiscTex((int)(Math::random() * 8.0));
 }
-void EnderParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa, float ya, float za, float xa2, float za2)
+void EnderParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                           float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     progress = 1.0f - progress;
@@ -45,7 +51,8 @@ int EnderParticle::getLightColor(float partialTicks)
     int sky = light & 255;
     int block = (light >> 16) & 255;
     block += (int)(progress * 15.0f * 16.0f);
-    if (block > 240) block = 240;
+    if (block > 240)
+        block = 240;
     return sky | (block << 16);
 }
 float EnderParticle::getBrightness(float partialTicks)
@@ -68,15 +75,20 @@ void EnderParticle::tick()
     x = xd * progress + originX;
     y = yd * progress + originY + (1.0f - elapsed);
     z = zd * progress + originZ;
-    if (age++ >= lifetime) remove();
+    if (age++ >= lifetime)
+        remove();
 }
 void EnderParticle::move(double xa, double ya, double za)
 {
     setBoundingBox(getBoundingBox()->move(xa, ya, za));
     setLocationFromBoundingbox();
 }
-uint64_t EnderParticle::GetType() { return ParticleKind::ENDER; }
-Particle* EnderParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
+uint64_t EnderParticle::GetType()
+{
+    return ParticleKind::ENDER;
+}
+Particle* EnderParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                  double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new EnderParticle(level, x, y, z, xa, ya, za);
 }

@@ -37,9 +37,8 @@ void TropicalFishRenderer::getRGB(int color, float& red, float& green, float& bl
     blue = colors.data[2] * 255.0F / 255.0F;
 }
 
-void TropicalFishRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                       float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                                       float headPitch, float scale)
+void TropicalFishRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                       float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
     boost::shared_ptr<TropicalFish> fish = boost::static_pointer_cast<TropicalFish>(entity);
 
@@ -47,13 +46,13 @@ void TropicalFishRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
     {
         if (fish->getBaseVariant() == 0)
         {
-            mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                              scale, entity, _SkinAdjustments());
+            mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                              _SkinAdjustments());
         }
         else
         {
-            mModel2->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                               scale, entity, _SkinAdjustments());
+            mModel2->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                               _SkinAdjustments());
         }
     }
     else
@@ -77,13 +76,11 @@ void TropicalFishRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
         EntityRenderer::bindTexture(renderEntity);
         if (fish->getBaseVariant() == 0)
         {
-            mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                           headPitch, scale, true);
+            mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
         }
         else
         {
-            mModel2->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                            headPitch, scale, true);
+            mModel2->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
         }
 
         for (int layer = 1; layer < textureCount; ++layer)

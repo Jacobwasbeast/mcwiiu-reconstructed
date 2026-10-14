@@ -18,14 +18,19 @@ ZombieModel::ZombieModel(float scale, bool armourModel, const ModelDefinition& d
 {
 }
 
-ZombieModel::ZombieModel(C4JRender::eVertexType vertexType, C4JRender::ePixelShaderType pixelShaderType, const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, bool skinned)
-    : HumanoidModel(vertexType, pixelShaderType, definition, scale, yOffset, texWidth, texHeight, armourModel, createParts, skinned)
+ZombieModel::ZombieModel(C4JRender::eVertexType vertexType, C4JRender::ePixelShaderType pixelShaderType,
+                         const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight,
+                         bool armourModel, bool createParts, bool skinned)
+    : HumanoidModel(vertexType, pixelShaderType, definition, scale, yOffset, texWidth, texHeight, armourModel,
+                    createParts, skinned)
 {
 }
 
-void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                            float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                             skinAdjustments);
 
     bool aggressive = false;
 
@@ -61,4 +66,3 @@ void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     mRightArm->mXRot += Mth::sin(ageInTicks * 0.067f) * 0.05f;
     mLeftArm->mXRot -= Mth::sin(ageInTicks * 0.067f) * 0.05f;
 }
-

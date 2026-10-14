@@ -10,8 +10,7 @@
 
 static ResourceLocation PHANTOM_LOCATION(TN_MOB_PHANTOM);
 
-PhantomRenderer::PhantomRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new PhantomModel(), 0.5F)
+PhantomRenderer::PhantomRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new PhantomModel(), 0.5F)
 {
 }
 
@@ -28,8 +27,8 @@ void PhantomRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float parti
     GlStateManager::translatef(0.0F, 1.3125F, 0.0F);
 }
 
-void PhantomRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
-                                     float rotationYaw, float partialTicks)
+void PhantomRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw,
+                                     float partialTicks)
 {
     LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
     GlStateManager::rotatef(entity->mXRot, 1.0F, 0.0F, 0.0F);
@@ -40,9 +39,8 @@ Model* PhantomRenderer::createModel(const ModelDefinition& definition)
     return new PhantomModel(definition);
 }
 
-void PhantomRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                  float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                                  float headPitch, float scale)
+void PhantomRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                  float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
     bool translucent = !isVisible(entity) && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
 
@@ -54,8 +52,7 @@ void PhantomRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float
         GlStateManager::setProfile();
 
     Model* model = getModel(entity);
-    model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-                  true);
+    model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
 
     if (translucent)
         GlStateManager::unsetProfile();

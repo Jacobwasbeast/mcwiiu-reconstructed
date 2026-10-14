@@ -2,8 +2,7 @@
 
 #include "game/core/GlStateManager.hpp"
 
-DefaultRenderer::DefaultRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+DefaultRenderer::DefaultRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
 }
 
@@ -11,8 +10,8 @@ DefaultRenderer::~DefaultRenderer()
 {
 }
 
-void DefaultRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                             float yaw, float partialTick)
+void DefaultRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                             float partialTick)
 {
     GlStateManager::pushMatrix();
     GlStateManager::popMatrix();

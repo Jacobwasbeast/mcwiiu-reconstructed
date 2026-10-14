@@ -44,7 +44,8 @@ ModelPart::ModelPart(Model* model, const std::wstring& name)
     construct(model, name);
 }
 
-ModelPart::ModelPart(Model* model, const std::wstring& name, const ModelDefinition& definition, ModelPart* parent, float scale)
+ModelPart::ModelPart(Model* model, const std::wstring& name, const ModelDefinition& definition, ModelPart* parent,
+                     float scale)
 {
     construct(model);
     setTexSize(definition.getTextureWidth(), definition.getTextureHeight());
@@ -200,8 +201,8 @@ void ModelPart::addChildAndAdjustPivots(ModelPart* child)
 
 void ModelPart::PrintCtorValues(const std::string& tag)
 {
-    std::printf("%s %f %f %f %f %f %f %d %d %d\n", tag.c_str(), mX, mY, mZ, mXRot, mYRot,
-                mZRot, mXTexOffs, mYTexOffs, mCubes.size());
+    std::printf("%s %f %f %f %f %f %f %d %d %d\n", tag.c_str(), mX, mY, mZ, mXRot, mYRot, mZRot, mXTexOffs, mYTexOffs,
+                mCubes.size());
 }
 
 bool ModelPart::hasYBeenOffset()
@@ -230,10 +231,9 @@ ModelPart* ModelPart::retrieveChild(SKIN_BOX* skinBox)
         for (cube = part->mCubes.begin(); cube != part->mCubes.end(); ++cube)
         {
             Cube* box = *cube;
-            if (box->mX0 == skinBox->x && box->mY0 == skinBox->y && box->mZ0 == skinBox->z &&
-                box->mX1 == skinBox->x + skinBox->width &&
-                box->mY1 == skinBox->y + skinBox->height &&
-                box->mZ1 == skinBox->z + skinBox->depth)
+            if (box->mX0 == skinBox->x && box->mY0 == skinBox->y && box->mZ0 == skinBox->z
+                && box->mX1 == skinBox->x + skinBox->width && box->mY1 == skinBox->y + skinBox->height
+                && box->mZ1 == skinBox->z + skinBox->depth)
             {
                 return part;
             }
@@ -259,19 +259,22 @@ ModelPart* ModelPart::retrieveChildWithSkinIdAndArmourFlags(unsigned int skinId,
 
 ModelPart* ModelPart::addBox(float x, float y, float z, int width, int height, int depth)
 {
-    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, 0.0f, mMirror, Cube::FACE_ALL, false, mCubeXRot, mCubeYRot, mCubeZRot));
+    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, 0.0f, mMirror, Cube::FACE_ALL,
+                              false, mCubeXRot, mCubeYRot, mCubeZRot));
     return this;
 }
 
 ModelPart* ModelPart::addBox(float x, float y, float z, int width, int height, int depth, bool mirror)
 {
-    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, 0.0f, mirror, Cube::FACE_ALL, false, mCubeXRot, mCubeYRot, mCubeZRot));
+    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, 0.0f, mirror, Cube::FACE_ALL,
+                              false, mCubeXRot, mCubeYRot, mCubeZRot));
     return this;
 }
 
 void ModelPart::addBox(float x, float y, float z, int width, int height, int depth, float delta)
 {
-    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, delta, mMirror, Cube::FACE_ALL, false, mCubeXRot, mCubeYRot, mCubeZRot));
+    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, delta, mMirror, Cube::FACE_ALL,
+                              false, mCubeXRot, mCubeYRot, mCubeZRot));
 }
 
 ModelPart* ModelPart::addBox(std::wstring id, float x, float y, float z, int width, int height, int depth)
@@ -281,29 +284,37 @@ ModelPart* ModelPart::addBox(std::wstring id, float x, float y, float z, int wid
     TexOffs* mapTex = mModel->getMapTex(id);
     texOffs(mapTex->mXTexOffs, mapTex->mYTexOffs);
 
-    mCubes.push_back((new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, 0.0f, mMirror, Cube::FACE_ALL, false, mCubeXRot, mCubeYRot, mCubeZRot))->setId(id));
+    mCubes.push_back((new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, 0.0f, mMirror, Cube::FACE_ALL,
+                               false, mCubeXRot, mCubeYRot, mCubeZRot))
+                         ->setId(id));
     return this;
 }
 
 ModelPart* ModelPart::addBoxWithMask(float x, float y, float z, int width, int height, int depth, int faceMask)
 {
-    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, 0.0f, mMirror, faceMask, false, mCubeXRot, mCubeYRot, mCubeZRot));
+    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, 0.0f, mMirror, faceMask, false,
+                              mCubeXRot, mCubeYRot, mCubeZRot));
     return this;
 }
 
-void ModelPart::addBoxMapTex(float x, float y, float z, int width, int height, int depth, int xTexOffs, int yTexOffs, float delta)
+void ModelPart::addBoxMapTex(float x, float y, float z, int width, int height, int depth, int xTexOffs, int yTexOffs,
+                             float delta)
 {
-    mCubes.push_back(new Cube(this, xTexOffs, yTexOffs, x, y, z, width, height, depth, delta, mMirror, Cube::FACE_ALL, false, mCubeXRot, mCubeYRot, mCubeZRot));
+    mCubes.push_back(new Cube(this, xTexOffs, yTexOffs, x, y, z, width, height, depth, delta, mMirror, Cube::FACE_ALL,
+                              false, mCubeXRot, mCubeYRot, mCubeZRot));
 }
 
-void ModelPart::addBoxMapTex(float x, float y, float z, int width, int height, int depth, int xTexOffs, int yTexOffs, bool mirror, float delta)
+void ModelPart::addBoxMapTex(float x, float y, float z, int width, int height, int depth, int xTexOffs, int yTexOffs,
+                             bool mirror, float delta)
 {
-    mCubes.push_back(new Cube(this, xTexOffs, yTexOffs, x, y, z, width, height, depth, delta, mirror, Cube::FACE_ALL, false, mCubeXRot, mCubeYRot, mCubeZRot));
+    mCubes.push_back(new Cube(this, xTexOffs, yTexOffs, x, y, z, width, height, depth, delta, mirror, Cube::FACE_ALL,
+                              false, mCubeXRot, mCubeYRot, mCubeZRot));
 }
 
 void ModelPart::addHumanoidBox(float x, float y, float z, int width, int height, int depth, float delta)
 {
-    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, delta, mMirror, Cube::FACE_ALL, true, mCubeXRot, mCubeYRot, mCubeZRot));
+    mCubes.push_back(new Cube(this, mXTexOffs, mYTexOffs, x, y, z, width, height, depth, delta, mMirror, Cube::FACE_ALL,
+                              true, mCubeXRot, mCubeYRot, mCubeZRot));
 }
 
 void ModelPart::render(float scale, bool useDisplayList, bool childrenOnly)

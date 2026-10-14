@@ -15,8 +15,7 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
 
-ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
-    : mSkinnedParts()
+ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition) : mSkinnedParts()
 {
     mTexWidth = 64;
     mTexHeight = 128;
@@ -86,13 +85,11 @@ void ShulkerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     }
 }
 
-void ShulkerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                          float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                          bool useDisplayList)
+void ShulkerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                          float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
-    const int colour = Minecraft::GetInstance()->getColourTable()->getColour(
-        shulker->getColor()->getShulkerColor());
+    const int colour = Minecraft::GetInstance()->getColourTable()->getColour(shulker->getColor()->getShulkerColor());
     if (mHasOverriddenParts)
     {
         GlStateManager::color3f((float)((colour >> 16) & 0xFF) / 255.0f, (float)((colour >> 8) & 0xFF) / 255.0f,
@@ -139,4 +136,3 @@ void ShulkerModel::renderWhenInvisible(boost::shared_ptr<Entity>& entity, float 
         GlStateManager::color3f(1.0f, 1.0f, 1.0f);
     }
 }
-

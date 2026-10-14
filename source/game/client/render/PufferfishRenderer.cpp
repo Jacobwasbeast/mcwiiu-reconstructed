@@ -18,8 +18,8 @@ PufferfishRenderer::PufferfishRenderer(EntityRenderDispatcher* dispatcher)
     mPuffState = Pufferfish::PUFFED_STATE_SMALL;
 }
 
-void PufferfishRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                float yaw, float partialTick)
+void PufferfishRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                float partialTick)
 {
     boost::shared_ptr<Pufferfish> pufferfish = boost::static_pointer_cast<Pufferfish>(entity);
     mPuffState = pufferfish->mPuffState;

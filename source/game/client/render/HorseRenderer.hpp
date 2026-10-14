@@ -20,9 +20,8 @@ public:
     virtual void bindTexture(const ResourceLocation* location);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);
-    virtual void renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                             float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                             float headPitch, float scale);
+    virtual void renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                             float ageInTicks, float netHeadYaw, float headPitch, float scale);
 };
 
 #endif

@@ -16,7 +16,8 @@ VillagerZombieModel::VillagerZombieModel(const ModelDefinition& definition)
     _init(0.0f, 0.0f, false, definition);
 }
 
-VillagerZombieModel::VillagerZombieModel(float scale, float yOffset, bool armourModel, const ModelDefinition& definition)
+VillagerZombieModel::VillagerZombieModel(float scale, float yOffset, bool armourModel,
+                                         const ModelDefinition& definition)
     : HumanoidModel(definition, scale, 0.0f, 64, armourModel ? 32 : 64, false, true, true)
 {
     _init(scale, yOffset, armourModel, definition);
@@ -88,9 +89,12 @@ void VillagerZombieModel::_init(float scale, float yOffset, bool armourModel, co
     compileSkinnedDrawlist();
 }
 
-void VillagerZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void VillagerZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                                    float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                                    _SkinAdjustments skinAdjustments)
 {
-    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
+    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                             _SkinAdjustments());
 
     boost::shared_ptr<Zombie> zombie = boost::static_pointer_cast<Zombie>(entity);
     float swing = Mth::sin(mAttackTime * 3.1415927f);
@@ -111,4 +115,3 @@ void VillagerZombieModel::setupAnim(float limbSwing, float limbSwingAmount, floa
     mRightArm->mXRot += Mth::sin(ageInTicks * 0.067f) * 0.05f;
     mLeftArm->mXRot -= Mth::sin(ageInTicks * 0.067f) * 0.05f;
 }
-

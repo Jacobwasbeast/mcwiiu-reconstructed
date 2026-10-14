@@ -11,8 +11,7 @@ static ResourceLocation LARGE_CHEST_LOCATION(TN_ITEM_LARGECHEST);
 static ResourceLocation TRAPPED_CHEST_LOCATION(TN_ITEM_TRAPPED);
 static ResourceLocation CHEST_LOCATION(TN_ITEM_CHEST);
 
-ChestRenderer::ChestRenderer()
-    : BlockEntityRenderer()
+ChestRenderer::ChestRenderer() : BlockEntityRenderer()
 {
     mChestModel = new ChestModel();
     mLargeChestModel = new LargeChestModel();
@@ -24,9 +23,8 @@ ChestRenderer::~ChestRenderer()
     delete mLargeChestModel;
 }
 
-void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                           float a, int breakProgress, bool bTranslucent, float alpha,
-                           bool bUseDisplayList)
+void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+                           int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
     boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
 
@@ -156,7 +154,8 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
     if (chest->mNorthNeighbour.lock())
     {
         float neighbourOpenness = chest->mNorthNeighbour.lock()->mOpenOld
-            + (chest->mNorthNeighbour.lock()->mOpen - chest->mNorthNeighbour.lock()->mOpenOld) * a;
+                                  + (chest->mNorthNeighbour.lock()->mOpen - chest->mNorthNeighbour.lock()->mOpenOld)
+                                        * a;
         if (neighbourOpenness > openness)
         {
             openness = neighbourOpenness;
@@ -166,7 +165,7 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
     if (chest->mWestNeighbour.lock())
     {
         float neighbourOpenness = chest->mWestNeighbour.lock()->mOpenOld
-            + (chest->mWestNeighbour.lock()->mOpen - chest->mWestNeighbour.lock()->mOpenOld) * a;
+                                  + (chest->mWestNeighbour.lock()->mOpen - chest->mWestNeighbour.lock()->mOpenOld) * a;
         if (neighbourOpenness > openness)
         {
             openness = neighbourOpenness;

@@ -12,11 +12,13 @@ class Entity;
 class ArmorStandArmorModel : public HumanoidModel
 {
 public:
-    ArmorStandArmorModel(float scale, int texWidth, int texHeight, const ModelDefinition& definition = ModelDefinition());
+    ArmorStandArmorModel(float scale, int texWidth, int texHeight,
+                         const ModelDefinition& definition = ModelDefinition());
 
     virtual ~ArmorStandArmorModel();
 
-    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
+    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                           float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
 };
 
 #endif

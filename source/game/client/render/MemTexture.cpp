@@ -1,7 +1,8 @@
 #include "game/client/render/MemTexture.hpp"
 #include "game/core/BufferedImage.hpp"
 
-MemTexture::MemTexture(const std::wstring& name, unsigned char* data, unsigned int length, MemTextureProcessor* processor)
+MemTexture::MemTexture(const std::wstring& name, unsigned char* data, unsigned int length,
+                       MemTextureProcessor* processor)
 {
     m_referenceCount = 1;
     m_textureId = -1;

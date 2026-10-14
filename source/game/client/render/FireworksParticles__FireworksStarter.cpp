@@ -18,10 +18,12 @@
 #include "game/item/FireworksItem.hpp"
 #include "game/util/Random.hpp"
 
-FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, double y, double z,
-                                   double xa, double ya, double za,
-                                   ParticleEngine* particleEngine, CompoundTag* fireworks)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0), life(0), twinkle(false)
+FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, double y, double z, double xa, double ya,
+                                                       double za, ParticleEngine* particleEngine,
+                                                       CompoundTag* fireworks)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0),
+      life(0),
+      twinkle(false)
 {
     xd = xa;
     yd = ya;
@@ -57,8 +59,8 @@ FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, d
 }
 
 void FireworksParticles::FireworksStarter::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
-                               float partialTicks, float xa, float ya, float za,
-                               float xa2, float za2)
+                                                  float partialTicks, float xa, float ya, float za, float xa2,
+                                                  float za2)
 {
 }
 
@@ -75,14 +77,12 @@ bool FireworksParticles::FireworksStarter::isFarAwayFromCamera()
     return true;
 }
 
-void FireworksParticles::FireworksStarter::createParticle(double px, double py, double pz,
-                                      double xa, double ya, double za,
-                                      arrayWithLength<int> colors,
-                                      arrayWithLength<int> fadeColors,
-                                      bool trail, bool flicker)
+void FireworksParticles::FireworksStarter::createParticle(double px, double py, double pz, double xa, double ya,
+                                                          double za, arrayWithLength<int> colors,
+                                                          arrayWithLength<int> fadeColors, bool trail, bool flicker)
 {
-    FireworksParticles::FireworksSparkParticle* particle =
-        new FireworksParticles::FireworksSparkParticle(level, px, py, pz, xa, ya, za, particleEngine);
+    FireworksParticles::FireworksSparkParticle* particle = new FireworksParticles::FireworksSparkParticle(
+        level, px, py, pz, xa, ya, za, particleEngine);
     particle->setTrail(trail);
     particle->setFlicker(flicker);
     particle->setColor(colors[random.nextInt(colors.length)]);
@@ -93,10 +93,8 @@ void FireworksParticles::FireworksStarter::createParticle(double px, double py, 
     particleEngine->add(particle);
 }
 
-void FireworksParticles::FireworksStarter::createParticleBall(double scale, int radius,
-                                          arrayWithLength<int> colors,
-                                          arrayWithLength<int> fadeColors,
-                                          bool trail, bool flicker)
+void FireworksParticles::FireworksStarter::createParticleBall(double scale, int radius, arrayWithLength<int> colors,
+                                                              arrayWithLength<int> fadeColors, bool trail, bool flicker)
 {
     const double spread = 0.5;
     const double originX = x;
@@ -112,9 +110,8 @@ void FireworksParticles::FireworksStarter::createParticleBall(double scale, int 
                 double ya = yy + (random.nextDouble() - random.nextDouble()) * spread;
                 double za = zz + (random.nextDouble() - random.nextDouble()) * spread;
                 double velocity = std::sqrt(xa * xa + ya * ya + za * za) / scale + random.nextGaussian() * 0.05;
-                createParticle(originX, originY, originZ,
-                               xa / velocity, ya / velocity, za / velocity,
-                               colors, fadeColors, trail, flicker);
+                createParticle(originX, originY, originZ, xa / velocity, ya / velocity, za / velocity, colors,
+                               fadeColors, trail, flicker);
                 if (yy != -radius && yy != radius && xx != -radius && xx != radius)
                     zz += radius * 2 - 1;
             }
@@ -122,16 +119,14 @@ void FireworksParticles::FireworksStarter::createParticleBall(double scale, int 
     }
 }
 
-void FireworksParticles::FireworksStarter::createParticleShape(double scale,
-                                           array2DWithLength<double> shape,
-                                           arrayWithLength<int> colors,
-                                           arrayWithLength<int> fadeColors,
-                                           bool trail, bool flicker, bool keepShape)
+void FireworksParticles::FireworksStarter::createParticleShape(double scale, array2DWithLength<double> shape,
+                                                               arrayWithLength<int> colors,
+                                                               arrayWithLength<int> fadeColors, bool trail,
+                                                               bool flicker, bool keepShape)
 {
     double firstX = shape.data[0]->data[0];
     double firstY = shape.data[0]->data[1];
-    createParticle(x, y, z, firstX * scale, firstY * scale, 0.0,
-                   colors, fadeColors, trail, flicker);
+    createParticle(x, y, z, firstX * scale, firstY * scale, 0.0, colors, fadeColors, trail, flicker);
     float initialAngle = random.nextFloat() * 3.1415927F;
     double rotationStep = keepShape ? 0.034 : 0.34;
     for (int plane = 0; plane < 3; ++plane)
@@ -151,8 +146,7 @@ void FireworksParticles::FireworksStarter::createParticleShape(double scale,
                 xd = xd * std::cos(angle);
                 for (double side = -1.0; side <= 1.0; side += 2.0)
                 {
-                    createParticle(x, y, z, xd * side, yd, zd * side,
-                                   colors, fadeColors, trail, flicker);
+                    createParticle(x, y, z, xd * side, yd, zd * side, colors, fadeColors, trail, flicker);
                 }
             }
             previousX = nextX;
@@ -162,8 +156,8 @@ void FireworksParticles::FireworksStarter::createParticleShape(double scale,
 }
 
 void FireworksParticles::FireworksStarter::createParticleBurst(arrayWithLength<int> colors,
-                                           arrayWithLength<int> fadeColors,
-                                           bool trail, bool flicker)
+                                                               arrayWithLength<int> fadeColors, bool trail,
+                                                               bool flicker)
 {
     double xVelocityBase = random.nextGaussian() * 0.05;
     double zVelocityBase = random.nextGaussian() * 0.05;
@@ -172,8 +166,7 @@ void FireworksParticles::FireworksStarter::createParticleBurst(arrayWithLength<i
         double xVelocity = xd * 0.5 + random.nextGaussian() * 0.15 + xVelocityBase;
         double zVelocity = zd * 0.5 + random.nextGaussian() * 0.15 + zVelocityBase;
         double yVelocity = yd * 0.5 + random.nextDouble() * 0.5;
-        createParticle(x, y, z, xVelocity, yVelocity, zVelocity,
-                       colors, fadeColors, trail, flicker);
+        createParticle(x, y, z, xVelocity, yVelocity, zVelocity, colors, fadeColors, trail, flicker);
     }
 }
 
@@ -227,10 +220,12 @@ void FireworksParticles::FireworksStarter::tick()
         }
         else if (type == 2)
         {
-            double starShape[6][2] = {
-                { 0.0, 1.0 }, { 0.3455, 0.309 }, { 0.9511, 0.309 },
-                { 0.3795918367346939, -0.12653061224489795 }, { 0.6122448979591837, -0.8040816326530612 },
-                { 0.0, -0.35918367346938773 } };
+            double starShape[6][2] = {{0.0, 1.0},
+                                      {0.3455, 0.309},
+                                      {0.9511, 0.309},
+                                      {0.3795918367346939, -0.12653061224489795},
+                                      {0.6122448979591837, -0.8040816326530612},
+                                      {0.0, -0.35918367346938773}};
             array2DWithLength<double> shape(6, 2);
             for (unsigned int point = 0; point < shape.length; ++point)
             {
@@ -246,9 +241,8 @@ void FireworksParticles::FireworksStarter::tick()
         }
         else if (type == 3)
         {
-            double creeperShape[12][2] = {
-                { 0.0, 0.2 }, { 0.2, 0.2 }, { 0.2, 0.6 }, { 0.6, 0.6 }, { 0.6, 0.2 }, { 0.2, 0.2 },
-                { 0.2, 0.0 }, { 0.4, 0.0 }, { 0.4, -0.6 }, { 0.2, -0.6 }, { 0.2, -0.4 }, { 0.0, -0.4 } };
+            double creeperShape[12][2] = {{0.0, 0.2}, {0.2, 0.2}, {0.2, 0.6},  {0.6, 0.6},  {0.6, 0.2},  {0.2, 0.2},
+                                          {0.2, 0.0}, {0.4, 0.0}, {0.4, -0.6}, {0.2, -0.6}, {0.2, -0.4}, {0.0, -0.4}};
             array2DWithLength<double> shape(12, 2);
             for (unsigned int point = 0; point < shape.length; ++point)
             {
@@ -284,10 +278,9 @@ void FireworksParticles::FireworksStarter::tick()
         if (twinkle)
         {
             const bool farAway = isFarAwayFromCamera();
-            level->playLocalSound(x, y, z,
-                                  farAway ? SoundEvents::FIREWORK_TWINKLE_FAR : SoundEvents::FIREWORK_TWINKLE,
-                                  SoundSource::eSoundSource_Ambient, 20.0f, 0.9f + random.nextFloat() * 0.15f,
-                                  true, 100.0f);
+            level->playLocalSound(x, y, z, farAway ? SoundEvents::FIREWORK_TWINKLE_FAR : SoundEvents::FIREWORK_TWINKLE,
+                                  SoundSource::eSoundSource_Ambient, 20.0f, 0.9f + random.nextFloat() * 0.15f, true,
+                                  100.0f);
         }
         remove();
     }

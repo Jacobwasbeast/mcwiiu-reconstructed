@@ -87,7 +87,8 @@ void EnderDragonRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, f
     GlStateManager::depthFunc(3);
 }
 
-void EnderDragonRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
+void EnderDragonRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                 float partialTick)
 {
     boost::shared_ptr<EnderDragon> dragon = boost::static_pointer_cast<EnderDragon>(entity);
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
@@ -96,12 +97,11 @@ void EnderDragonRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
         bindTexture(&END_CRYSTAL_BEAM_LOCATION);
         float animation = std::sin(((float)dragon->mNearestCrystal->mTickCount + partialTick) * 0.2f) * 0.5f + 0.5f;
         animation = (animation * animation + animation) * 0.2f;
-        renderCrystalBeams(x, y, z, partialTick,
-                           dragon->mX + (dragon->mXo - dragon->mX) * (double)(1.0f - partialTick),
+        renderCrystalBeams(x, y, z, partialTick, dragon->mX + (dragon->mXo - dragon->mX) * (double)(1.0f - partialTick),
                            dragon->mY + (dragon->mYo - dragon->mY) * (double)(1.0f - partialTick),
-                           dragon->mZ + (dragon->mZo - dragon->mZ) * (double)(1.0f - partialTick),
-                           dragon->mTickCount, dragon->mNearestCrystal->mX,
-                           animation + dragon->mNearestCrystal->mY, dragon->mNearestCrystal->mZ);
+                           dragon->mZ + (dragon->mZo - dragon->mZ) * (double)(1.0f - partialTick), dragon->mTickCount,
+                           dragon->mNearestCrystal->mX, animation + dragon->mNearestCrystal->mY,
+                           dragon->mNearestCrystal->mZ);
     }
 }
 
@@ -127,9 +127,9 @@ Model* EnderDragonRenderer::createModel(const ModelDefinition& definition)
     return new DragonModel(definition);
 }
 
-void EnderDragonRenderer::renderCrystalBeams(double x, double y, double z, float partialTick,
-                                             double targetX, double targetY, double targetZ, int time,
-                                             double crystalX, double crystalY, double crystalZ)
+void EnderDragonRenderer::renderCrystalBeams(double x, double y, double z, float partialTick, double targetX,
+                                             double targetY, double targetZ, int time, double crystalX, double crystalY,
+                                             double crystalZ)
 {
     float dx = (float)(crystalX - targetX);
     float dy = (float)(crystalY - 1.0 - targetY);

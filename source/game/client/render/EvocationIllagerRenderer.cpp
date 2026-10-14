@@ -48,14 +48,16 @@ EvocationIllagerRenderer::EvocationIllagerRenderer_ItemInHandLayer::~EvocationIl
 {
 }
 
-void EvocationIllagerRenderer::EvocationIllagerRenderer_ItemInHandLayer::render(
-    boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks,
-    float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
+void EvocationIllagerRenderer::EvocationIllagerRenderer_ItemInHandLayer::render(boost::shared_ptr<LivingEntity>& entity,
+                                                                                float limbSwing, float limbSwingAmount,
+                                                                                float partialTicks, float ageInTicks,
+                                                                                float netHeadYaw, float headPitch,
+                                                                                float scale, bool bUseDisplayList)
 {
     if (boost::static_pointer_cast<SpellcasterIllager>(entity)->isCastingSpell())
     {
-        ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw,
-                                headPitch, scale, bUseDisplayList);
+        ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch,
+                                scale, bUseDisplayList);
     }
 }
 

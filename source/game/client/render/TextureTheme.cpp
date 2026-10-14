@@ -12,13 +12,11 @@
 template <class T>
 T _fromHEXString(const std::wstring& text);
 
-TextureTheme::BlockStack::BlockStack()
-    : mOffset(0)
+TextureTheme::BlockStack::BlockStack() : mOffset(0)
 {
 }
 
-TextureTheme::BlockStack::BlockStack(const BlockState* state, unsigned int count, int offset)
-    : mOffset(offset)
+TextureTheme::BlockStack::BlockStack(const BlockState* state, unsigned int count, int offset) : mOffset(offset)
 {
     for (unsigned int i = 0; i < count; ++i)
         mStates.push_back(state);
@@ -27,8 +25,8 @@ TextureTheme::BlockStack::BlockStack(const BlockState* state, unsigned int count
 }
 
 TextureTheme::BlockStack::BlockStack(std::vector<const BlockState*>& states, int offset)
-    : mOffset(offset)
-    , mStates(states)
+    : mOffset(offset),
+      mStates(states)
 {
 }
 

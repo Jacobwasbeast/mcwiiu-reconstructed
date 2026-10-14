@@ -20,8 +20,8 @@ public:
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);
     virtual void setupPosition(boost::shared_ptr<LivingEntity>& entity, double x, double y, double z);
-    virtual void setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
-                                float rotationYaw, float partialTicks);
+    virtual void setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw,
+                                float partialTicks);
     virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
 };
 

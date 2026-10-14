@@ -3,21 +3,14 @@
 
 #include "game/core/Mth.hpp"
 
-HeartParticle::HeartParticle(Level* level, double x, double y, double z,
-                             double xa, double ya, double za)
+HeartParticle::HeartParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     init(level, x, y, z, xa, ya, za, 2.0f);
 }
 
-void HeartParticle::render(BufferBuilder* buffer,
-                           const boost::shared_ptr<Entity>& camera,
-                           float partialTicks,
-                           float xa,
-                           float ya,
-                           float za,
-                           float xa2,
-                           float za2)
+void HeartParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                           float ya, float za, float xa2, float za2)
 {
     float progress = ((age + partialTicks) / lifetime) * 32.0f;
     progress = Mth::clamp(progress, 0.0f, 1.0f);
@@ -54,8 +47,7 @@ void HeartParticle::tick()
     }
 }
 
-void HeartParticle::init(Level* level, double x, double y, double z,
-                         double xa, double ya, double za, float scale)
+void HeartParticle::init(Level* level, double x, double y, double z, double xa, double ya, double za, float scale)
 {
     xd *= 0.01f;
     yd *= 0.01f;
@@ -73,28 +65,15 @@ uint64_t HeartParticle::GetType()
     return ParticleKind::HEART;
 }
 
-Particle* HeartParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                  Level* level,
-                                                  double x,
-                                                  double y,
-                                                  double z,
-                                                  double xa,
-                                                  double ya,
-                                                  double za,
-                                                  arrayWithLength<int> params)
+Particle* HeartParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                  double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new HeartParticle(level, x, y, z, xa, ya, za);
 }
 
-Particle* HeartParticle::AngryVillagerProvider::createParticle(ePARTICLE_TYPE type,
-                                                                Level* level,
-                                                                double x,
-                                                                double y,
-                                                                double z,
-                                                                double xa,
-                                                                double ya,
-                                                                double za,
-                                                                arrayWithLength<int> params)
+Particle* HeartParticle::AngryVillagerProvider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                               double z, double xa, double ya, double za,
+                                                               arrayWithLength<int> params)
 {
     HeartParticle* particle = new HeartParticle(level, x, y + 0.5, z, xa, ya, za);
     particle->setMiscTex(81);

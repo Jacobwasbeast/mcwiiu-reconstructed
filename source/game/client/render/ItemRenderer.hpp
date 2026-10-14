@@ -28,25 +28,23 @@ public:
     virtual ~ItemRenderer();
     ItemColors* getItemColors();
     void renderFoilLayer(Tesselator* tesselator);
-    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float rot,
-                        float partialTicks);
+    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float rot, float partialTicks);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual const ResourceLocation* getTextureLocation(int iconType);
-    virtual void renderItemBillboard(boost::shared_ptr<ItemEntity>& entity, TextureAtlasSprite* sprite,
-                                     int count, float partialTicks, float red, float green, float blue);
+    virtual void renderItemBillboard(boost::shared_ptr<ItemEntity>& entity, TextureAtlasSprite* sprite, int count,
+                                     float partialTicks, float red, float green, float blue);
     void setupGuiItem(float x, float y, float scaleX, float scaleY, bool lighting);
     bool isGui3d(not_null_ptr<ItemInstance> item);
     void renderStatic(const not_null_ptr<ItemInstance>& item, boost::shared_ptr<LivingEntity> entity,
                       ItemTransforms::TransformType transformType, float alpha, bool leftHand,
                       TextureAtlasSprite* sprite);
-    void renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scaleX, float scaleY,
-                       float alpha, bool, TextureAtlasSprite* sprite);
+    void renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scaleX, float scaleY, float alpha, bool,
+                       TextureAtlasSprite* sprite);
     void renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float alpha);
     void renderGuiItem(not_null_ptr<ItemInstance> item, int x, int y);
     void renderAndDecorateItem(not_null_ptr<ItemInstance> item, float x, float y, float scaleX, float scaleY,
                                float alpha, bool, bool, bool lighting, TextureAtlasSprite* sprite);
-    void renderAndDecorateItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float alpha,
-                               bool foil);
+    void renderAndDecorateItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float alpha, bool foil);
     void renderAndDecorateItem(not_null_ptr<ItemInstance> item, int x, int y);
     void fillRect(Tesselator* tesselator, int x, int y, int width, int height, int rgb, int alpha);
     void renderGuiItemDecorations(Font* font, not_null_ptr<ItemInstance> item, int x, int y,

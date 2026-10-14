@@ -56,7 +56,8 @@ public:
     GameRenderer(Minecraft* minecraft, ResourceManager* resourceManager);
     ~GameRenderer();
 
-    static void renderNameTagInWorld(Font*, const std::wstring&, float, float, float, int, float, float, bool, bool, int, float);
+    static void renderNameTagInWorld(Font*, const std::wstring&, float, float, float, int, float, float, bool, bool,
+                                     int, float);
     unsigned int getLightTexture(int, Level*);
     static int runUpdate(void*);
     int getTickCount();

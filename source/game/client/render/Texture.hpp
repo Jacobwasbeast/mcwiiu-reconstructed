@@ -11,19 +11,19 @@ class ByteBuffer;
 class Texture
 {
 public:
-    Texture(const std::wstring& name, int type, int width, int height, int wrap, int format,
-            int minFilter, int magFilter, BufferedImage* image, bool mipmap);
-    Texture(const std::wstring& name, int type, int width, int height, int depth, int wrap,
-            int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap);
+    Texture(const std::wstring& name, int type, int width, int height, int wrap, int format, int minFilter,
+            int magFilter, BufferedImage* image, bool mipmap);
+    Texture(const std::wstring& name, int type, int width, int height, int depth, int wrap, int format, int minFilter,
+            int magFilter, BufferedImage* image, bool mipmap);
     ~Texture();
 
-    void _init(const std::wstring& name, int type, int width, int height, int depth, int wrap,
-               int format, int minFilter, int magFilter, bool mipmap);
+    void _init(const std::wstring& name, int type, int width, int height, int depth, int wrap, int format,
+               int minFilter, int magFilter, bool mipmap);
     void updateOnGPU();
     static unsigned int crispBlend(int first, int second);
     void transferFromImage(BufferedImage* image);
-    void _init(const std::wstring& name, int type, int width, int height, int depth, int wrap,
-               int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap);
+    void _init(const std::wstring& name, int type, int width, int height, int depth, int wrap, int format,
+               int minFilter, int magFilter, BufferedImage* image, bool mipmap);
     ByteBuffer* getData(unsigned int mipLevel);
     int getHeight();
     int getWidth();
@@ -31,8 +31,8 @@ public:
     unsigned int getManagerId();
     unsigned int getGlId();
     void bind(int textureUnit);
-    Texture(const std::wstring& name, int type, int width, int height, int depth, int wrap,
-            int format, int minFilter, int magFilter, bool mipmap);
+    Texture(const std::wstring& name, int type, int width, int height, int depth, int wrap, int format, int minFilter,
+            int magFilter, bool mipmap);
     Rect2i* getRect();
     void fill(const Rect2i* rect, int color);
     void writeAsBMP(const std::wstring& fileName) {}

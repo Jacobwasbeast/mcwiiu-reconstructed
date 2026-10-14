@@ -12,14 +12,15 @@
 
 static ResourceLocation EXPLOSION_LOCATION(TN_MISC_EXPLOSION);
 
-HugeExplosionParticle::HugeExplosionParticle(Textures* textures, Level* level, double x, double y, double z,
-                                             double xa, double ya, double za)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
-    , textureManager(textures)
+HugeExplosionParticle::HugeExplosionParticle(Textures* textures, Level* level, double x, double y, double z, double xa,
+                                             double ya, double za)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0),
+      textureManager(textures)
 {
     lifetime = random.nextInt(4) + 6;
 
-    const unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_HugeExplosion);
+    const unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
+        eMinecraftColour_Particle_HugeExplosion);
     const float red = (float)((colour >> 16) & 255) / 255.0f;
     const float green = (float)((colour >> 8) & 255) / 255.0f;
     const float blue = (float)(colour & 255) / 255.0f;
@@ -30,8 +31,8 @@ HugeExplosionParticle::HugeExplosionParticle(Textures* textures, Level* level, d
     size = 1.0f - (float)xa * 0.5f;
 }
 
-void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
-                                   float partialTicks, float xa, float ya, float za, float xa2, float za2)
+void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                   float xa, float ya, float za, float xa2, float za2)
 {
     const int frame = (int)(((float)age + partialTicks) * 15.0f / (float)lifetime);
     if (frame <= 15)
@@ -96,8 +97,8 @@ uint64_t HugeExplosionParticle::GetType()
 }
 
 Particle* HugeExplosionParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
-                                                           double z, double xa, double ya, double za,
-                                                           arrayWithLength<int> params)
+                                                          double z, double xa, double ya, double za,
+                                                          arrayWithLength<int> params)
 {
     return new HugeExplosionParticle(Minecraft::GetInstance()->mTextures, level, x, y, z, xa, ya, za);
 }

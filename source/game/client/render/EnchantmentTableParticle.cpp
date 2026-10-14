@@ -6,12 +6,12 @@
 #include "game/core/Minecraft.hpp"
 #include "game/util/Math.hpp"
 
-EnchantmentTableParticle::EnchantmentTableParticle(Level* level, double x, double y, double z,
-                                                   double xa, double ya, double za)
-    : Particle(level, x, y, z, xa, ya, za)
-    , mOriginX(x)
-    , mOriginY(y)
-    , mOriginZ(z)
+EnchantmentTableParticle::EnchantmentTableParticle(Level* level, double x, double y, double z, double xa, double ya,
+                                                   double za)
+    : Particle(level, x, y, z, xa, ya, za),
+      mOriginX(x),
+      mOriginY(y),
+      mOriginZ(z)
 {
     xd = xa;
     yd = ya;
@@ -88,10 +88,9 @@ uint64_t EnchantmentTableParticle::GetType()
     return ParticleKind::ENCHANTMENT_TABLE;
 }
 
-Particle* EnchantmentTableParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                              double x, double y, double z,
-                                                              double xa, double ya, double za,
-                                                              arrayWithLength<int> params)
+Particle* EnchantmentTableParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,
+                                                             double z, double xa, double ya, double za,
+                                                             arrayWithLength<int> params)
 {
     return new EnchantmentTableParticle(level, x, y, z, xa, ya, za);
 }

@@ -20,8 +20,8 @@ const ResourceLocation* TurtleRenderer::getTextureLocation(boost::shared_ptr<Ent
     return &TURTLE_LOCATION;
 }
 
-void TurtleRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                            float yaw, float partialTick)
+void TurtleRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                            float partialTick)
 {
     boost::shared_ptr<Turtle> turtle = boost::static_pointer_cast<Turtle>(entity);
     if (turtle->isBaby())

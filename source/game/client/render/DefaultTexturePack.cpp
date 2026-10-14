@@ -29,7 +29,8 @@ void DefaultTexturePack::loadIcon()
 {
     if (gApp.hasArchiveFile(std::wstring(L"Graphics\\TexturePackIcon.png"), false))
     {
-        arrayWithLength<unsigned char> iconData = gApp.getArchiveFile(std::wstring(L"Graphics\\TexturePackIcon.png"), false);
+        arrayWithLength<unsigned char> iconData = gApp.getArchiveFile(std::wstring(L"Graphics\\TexturePackIcon.png"),
+                                                                      false);
         m_pIconData = iconData.data;
         m_iconSize = iconData.length;
     }

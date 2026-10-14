@@ -60,7 +60,8 @@ ChickenModel::ChickenModel(const ModelDefinition& modelDefinition)
     }
 }
 
-void ChickenModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void ChickenModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                          float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -99,7 +100,9 @@ void ChickenModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
     callSkinnedDrawlist();
 }
 
-void ChickenModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void ChickenModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                             float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                             _SkinAdjustments skinAdjustments)
 {
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
     mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
@@ -114,4 +117,3 @@ void ChickenModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     mWing0->mZRot = ageInTicks;
     mWing1->mZRot = -ageInTicks;
 }
-

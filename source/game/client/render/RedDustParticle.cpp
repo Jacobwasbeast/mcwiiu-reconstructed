@@ -3,15 +3,13 @@
 
 #include "game/core/Mth.hpp"
 
-RedDustParticle::RedDustParticle(Level* level, double x, double y, double z,
-                                 float red, float green, float blue)
+RedDustParticle::RedDustParticle(Level* level, double x, double y, double z, float red, float green, float blue)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     init(level, x, y, z, 1.0f, red, green, blue);
 }
 
-void RedDustParticle::init(Level* level, double x, double y, double z,
-                           float alpha, float red, float green, float blue)
+void RedDustParticle::init(Level* level, double x, double y, double z, float alpha, float red, float green, float blue)
 {
     xd *= 0.1;
     yd *= 0.1;
@@ -32,10 +30,8 @@ void RedDustParticle::init(Level* level, double x, double y, double z,
     setMiscTex(7 - (age << 3) / lifetime);
 }
 
-void RedDustParticle::render(BufferBuilder* buffer,
-                             const boost::shared_ptr<Entity>& camera,
-                             float partialTicks, float xa, float ya, float za,
-                             float xa2, float za2)
+void RedDustParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                             float xa, float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime * 32.0f;
     progress = Mth::clamp(progress, 0.0f, 1.0f);
@@ -77,13 +73,8 @@ uint64_t RedDustParticle::GetType()
     return ParticleKind::RED_DUST;
 }
 
-Particle* RedDustParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                     Level* level,
-                                                     double x, double y,
-                                                     double z, double xa,
-                                                     double ya, double za,
-                                                     arrayWithLength<int> params)
+Particle* RedDustParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                    double xa, double ya, double za, arrayWithLength<int> params)
 {
-    return new RedDustParticle(level, x, y, z,
-                               (float)xa, (float)ya, (float)za);
+    return new RedDustParticle(level, x, y, z, (float)xa, (float)ya, (float)za);
 }

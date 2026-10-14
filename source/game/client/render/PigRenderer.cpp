@@ -13,8 +13,7 @@
 
 static ResourceLocation PIG_LOCATION(TN_MOB_PIG);
 
-PigRenderer::PigRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new PigModel(), 0.7F)
+PigRenderer::PigRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new PigModel(), 0.7F)
 {
     mSaddleLayer = new PigSaddleLayer(this);
     addLayer(mSaddleLayer);

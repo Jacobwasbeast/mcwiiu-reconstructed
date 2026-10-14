@@ -17,8 +17,7 @@ public:
     BlazeRenderer(EntityRenderDispatcher* dispatcher);
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
-    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                        float yaw, float partialTick);
+    virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);
     virtual Model* createModel(const ModelDefinition& definition);
 };
 

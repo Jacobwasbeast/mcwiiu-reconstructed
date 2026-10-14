@@ -6,8 +6,7 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/world/Level.hpp"
 
-LavaParticle::LavaParticle(Level* level, double x, double y, double z)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
+LavaParticle::LavaParticle(Level* level, double x, double y, double z) : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     xd *= 0.8;
     yd *= 0.8;
@@ -32,14 +31,8 @@ float LavaParticle::getBrightness(float partialTicks)
     return 1.0f;
 }
 
-void LavaParticle::render(BufferBuilder* buffer,
-                          const boost::shared_ptr<Entity>& camera,
-                          float partialTicks,
-                          float xa,
-                          float ya,
-                          float za,
-                          float xa2,
-                          float za2)
+void LavaParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                          float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     size = mOriginalSize * (1.0f - progress * progress);
@@ -77,10 +70,8 @@ uint64_t LavaParticle::GetType()
     return ParticleKind::LAVA;
 }
 
-Particle* LavaParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                 double x, double y, double z,
-                                                 double xa, double ya, double za,
-                                                 arrayWithLength<int> params)
+Particle* LavaParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                 double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new LavaParticle(level, x, y, z);
 }

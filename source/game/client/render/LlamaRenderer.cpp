@@ -8,14 +8,10 @@
 #include "game/world/generation/LlamaDecorLayer.hpp"
 
 static ResourceLocation LLAMA_TEXTURES[4] = {
-    ResourceLocation(TN_MOB_LLAMA_LLAMA_CREAMY),
-    ResourceLocation(TN_MOB_LLAMA_LLAMA_WHITE),
-    ResourceLocation(TN_MOB_LLAMA_LLAMA_BROWN),
-    ResourceLocation(TN_MOB_LLAMA_LLAMA_GRAY)
-};
+    ResourceLocation(TN_MOB_LLAMA_LLAMA_CREAMY), ResourceLocation(TN_MOB_LLAMA_LLAMA_WHITE),
+    ResourceLocation(TN_MOB_LLAMA_LLAMA_BROWN), ResourceLocation(TN_MOB_LLAMA_LLAMA_GRAY)};
 
-LlamaRenderer::LlamaRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new LlamaModel(0.0F), 0.7F)
+LlamaRenderer::LlamaRenderer(EntityRenderDispatcher* dispatcher) : MobRenderer(dispatcher, new LlamaModel(0.0F), 0.7F)
 {
     addLayer(new LlamaDecorLayer(this));
 }

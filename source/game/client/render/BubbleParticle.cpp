@@ -11,21 +11,13 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-BubbleParticle::BubbleParticle(Level* level,
-                               double x,
-                               double y,
-                               double z,
-                               double xa,
-                               double ya,
-                               double za,
+BubbleParticle::BubbleParticle(Level* level, double x, double y, double z, double xa, double ya, double za,
                                arrayWithLength<int> params)
     : Particle(level, x, y, z, xa, ya, za)
 {
     if (params.length == 4)
     {
-        setColor(params.data[0] / 255.0f,
-                 params.data[1] / 255.0f,
-                 params.data[2] / 255.0f);
+        setColor(params.data[0] / 255.0f, params.data[1] / 255.0f, params.data[2] / 255.0f);
         alpha = params.data[3] / 255.0f;
     }
 
@@ -73,12 +65,10 @@ void BubbleParticle::tick()
     Block* block = level->getBlock(pos);
     Block* blockBelow = level->getBlock(pos.below());
     bool survives = block->ParticlesSurviveWithin()
-        || (blockBelow->ParticlesSurviveWithin() && state->getMaterial() == Material::AIR);
+                    || (blockBelow->ParticlesSurviveWithin() && state->getMaterial() == Material::AIR);
 
     Material* material = level->getBlockState(BlockPos(x, y, z))->getMaterial();
-    if (material != Material::WATER
-        && material != Material::BUBBLE_COLUMN
-        && !survives)
+    if (material != Material::WATER && material != Material::BUBBLE_COLUMN && !survives)
     {
         lifetime = 0;
     }
@@ -126,15 +116,8 @@ uint64_t BubbleParticle::GetType()
     return ParticleKind::BUBBLE;
 }
 
-Particle* BubbleParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                   Level* level,
-                                                   double x,
-                                                   double y,
-                                                   double z,
-                                                   double xa,
-                                                   double ya,
-                                                   double za,
-                                                   arrayWithLength<int> params)
+Particle* BubbleParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                   double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new BubbleParticle(level, x, y, z, xa, ya, za, params);
 }

@@ -70,7 +70,8 @@ VillagerGolemModel::VillagerGolemModel(float scale, float yOffset, const ModelDe
     }
 }
 
-void VillagerGolemModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void VillagerGolemModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                                float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -89,7 +90,9 @@ float VillagerGolemModel::triangleWave(float time, float period)
     return (fabsf(fmodf(time, period) - period * 0.5f) - period * 0.25f) / (period * 0.25f);
 }
 
-void VillagerGolemModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void VillagerGolemModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                                   float headPitch, float scale, boost::shared_ptr<Entity> entity,
+                                   _SkinAdjustments skinAdjustments)
 {
     mHead->mYRot = netHeadYaw / 57.295776f;
     mHead->mXRot = headPitch / 57.295776f;
@@ -101,7 +104,8 @@ void VillagerGolemModel::setupAnim(float limbSwing, float limbSwingAmount, float
     mLeg1->mYRot = 0.0f;
 }
 
-void VillagerGolemModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks)
+void VillagerGolemModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
+                                         float limbSwingAmount, float partialTicks)
 {
     boost::shared_ptr<VillagerGolem> golem = boost::dynamic_pointer_cast<VillagerGolem>(entity);
 
@@ -128,4 +132,3 @@ void VillagerGolemModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
         }
     }
 }
-

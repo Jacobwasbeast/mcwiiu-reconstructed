@@ -128,17 +128,10 @@ void Particle::tick()
         xd *= 0.7f;
         zd *= 0.7f;
     }
-
 }
 
-void Particle::render(BufferBuilder* buffer,
-                      const boost::shared_ptr<Entity>& camera,
-                      float partialTicks,
-                      float xa,
-                      float ya,
-                      float za,
-                      float xa2,
-                      float za2)
+void Particle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                      float ya, float za, float xa2, float za2)
 {
     float halfSize = 0.1f * size;
 
@@ -156,18 +149,10 @@ void Particle::render(BufferBuilder* buffer,
 
     int light = getLightColor(partialTicks);
 
-    Vec3* corner0 = Vec3::newTemp(-xa * halfSize - xa2 * halfSize,
-                                  -ya * halfSize,
-                                  -za * halfSize - za2 * halfSize);
-    Vec3* corner1 = Vec3::newTemp(-xa * halfSize + xa2 * halfSize,
-                                  ya * halfSize,
-                                  -za * halfSize + za2 * halfSize);
-    Vec3* corner2 = Vec3::newTemp(xa * halfSize + xa2 * halfSize,
-                                  ya * halfSize,
-                                  za * halfSize + za2 * halfSize);
-    Vec3* corner3 = Vec3::newTemp(xa * halfSize - xa2 * halfSize,
-                                  -ya * halfSize,
-                                  za * halfSize - za2 * halfSize);
+    Vec3* corner0 = Vec3::newTemp(-xa * halfSize - xa2 * halfSize, -ya * halfSize, -za * halfSize - za2 * halfSize);
+    Vec3* corner1 = Vec3::newTemp(-xa * halfSize + xa2 * halfSize, ya * halfSize, -za * halfSize + za2 * halfSize);
+    Vec3* corner2 = Vec3::newTemp(xa * halfSize + xa2 * halfSize, ya * halfSize, za * halfSize + za2 * halfSize);
+    Vec3* corner3 = Vec3::newTemp(xa * halfSize - xa2 * halfSize, -ya * halfSize, za * halfSize - za2 * halfSize);
 
     if (roll != 0.0f)
     {
@@ -198,26 +183,10 @@ void Particle::render(BufferBuilder* buffer,
     buffer->color(rCol, gCol, bCol, alpha);
     buffer->tex2(light);
 
-    buffer->vertexUV(px + (float)corner0->x,
-                     py + (float)corner0->y,
-                     pz + (float)corner0->z,
-                     uvs.u1,
-                     uvs.v1);
-    buffer->vertexUV(px + (float)corner1->x,
-                     py + (float)corner1->y,
-                     pz + (float)corner1->z,
-                     uvs.u1,
-                     uvs.v0);
-    buffer->vertexUV(px + (float)corner2->x,
-                     py + (float)corner2->y,
-                     pz + (float)corner2->z,
-                     uvs.u0,
-                     uvs.v0);
-    buffer->vertexUV(px + (float)corner3->x,
-                     py + (float)corner3->y,
-                     pz + (float)corner3->z,
-                     uvs.u0,
-                     uvs.v1);
+    buffer->vertexUV(px + (float)corner0->x, py + (float)corner0->y, pz + (float)corner0->z, uvs.u1, uvs.v1);
+    buffer->vertexUV(px + (float)corner1->x, py + (float)corner1->y, pz + (float)corner1->z, uvs.u1, uvs.v0);
+    buffer->vertexUV(px + (float)corner2->x, py + (float)corner2->y, pz + (float)corner2->z, uvs.u0, uvs.v0);
+    buffer->vertexUV(px + (float)corner3->x, py + (float)corner3->y, pz + (float)corner3->z, uvs.u0, uvs.v1);
 }
 
 int Particle::getParticleTexture()
@@ -276,12 +245,7 @@ void Particle::setPos(double x, double y, double z)
 
     float halfWidth = bbWidth / 2.0f;
 
-    setBoundingBox(AABB::newTemp(x - halfWidth,
-                                 y,
-                                 z - halfWidth,
-                                 x + halfWidth,
-                                 y + bbHeight,
-                                 z + halfWidth));
+    setBoundingBox(AABB::newTemp(x - halfWidth, y, z - halfWidth, x + halfWidth, y + bbHeight, z + halfWidth));
 }
 
 void Particle::move(double xa, double ya, double za)
@@ -293,7 +257,8 @@ void Particle::move(double xa, double ya, double za)
     if (hasPhysics)
     {
         boost::shared_ptr<Entity> entity;
-        std::vector<AABB*>& boxes = *level->getCollisionAABBs(entity, getBoundingBox()->expand(xa, ya, za), false, false, true);
+        std::vector<AABB*>& boxes = *level->getCollisionAABBs(entity, getBoundingBox()->expand(xa, ya, za), false,
+                                                              false, true);
 
         std::vector<AABB*>::iterator box;
 
@@ -336,7 +301,6 @@ void Particle::move(double xa, double ya, double za)
     {
         zd = 0.0;
     }
-
 }
 
 int Particle::getLightColor(float partialTicks)
@@ -407,11 +371,7 @@ void Particle::setSize(float width, float height)
 
         AABB* box = getBoundingBox();
 
-        setBoundingBox(AABB::newTemp(box->mMinX,
-                                     box->mMinY,
-                                     box->mMinZ,
-                                     box->mMinX + width,
-                                     box->mMinY + height,
+        setBoundingBox(AABB::newTemp(box->mMinX, box->mMinY, box->mMinZ, box->mMinX + width, box->mMinY + height,
                                      box->mMinZ + width));
     }
 }

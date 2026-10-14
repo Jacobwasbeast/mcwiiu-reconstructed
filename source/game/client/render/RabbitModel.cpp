@@ -9,8 +9,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/Rabbit.hpp"
 
-RabbitModel::RabbitModel(const ModelDefinition& modelDefinition)
-    : Model()
+RabbitModel::RabbitModel(const ModelDefinition& modelDefinition) : Model()
 {
     mJumpRotation = 0.0f;
     mOldJumpRotation = 0.0f;
@@ -224,4 +223,3 @@ void RabbitModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     boost::shared_ptr<Rabbit> rabbit = boost::dynamic_pointer_cast<Rabbit>(entity);
     mJumpRotation = Mth::sin(rabbit->getJumpCompletion(partialTicks) * Mth::PI);
 }
-

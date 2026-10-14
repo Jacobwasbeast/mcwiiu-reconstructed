@@ -11,13 +11,12 @@
 
 static ResourceLocation ARROW_LOCATION(TN_ITEM_FIREWORK);
 
-ArrowRenderer::ArrowRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+ArrowRenderer::ArrowRenderer(EntityRenderDispatcher* dispatcher) : EntityRenderer(dispatcher)
 {
 }
 
-void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                           float yaw, float partialTick)
+void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                           float partialTick)
 {
     float yRot = entity.get()->mYRot;
     float xRot = entity.get()->mXRot;

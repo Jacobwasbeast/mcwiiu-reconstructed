@@ -88,7 +88,8 @@ BatModel::BatModel(const ModelDefinition& modelDefinition)
     }
 }
 
-void BatModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void BatModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                      float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
@@ -98,7 +99,8 @@ void BatModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float 
     callSkinnedDrawlist();
 }
 
-void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                         float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     boost::shared_ptr<Bat> bat = boost::dynamic_pointer_cast<Bat>(entity);
 
@@ -141,4 +143,3 @@ void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
         mLeftWingTip->mYRot = -mRightWing->mYRot * 0.5f;
     }
 }
-

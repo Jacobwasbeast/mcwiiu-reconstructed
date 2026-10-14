@@ -56,7 +56,8 @@ void VexModel::_init(float scale, const ModelDefinition& modelDefinition)
     }
 }
 
-void VexModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void VexModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                      float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupBoneMatrices(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, useDisplayList);
     mRightWing->render(scale, useDisplayList, false);
@@ -64,9 +65,11 @@ void VexModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float 
     callSkinnedDrawlist();
 }
 
-void VexModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void VexModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
+                         float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                             skinAdjustments);
 
     if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || !eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
@@ -102,4 +105,3 @@ unsigned int VexModel::getModelVersion()
 {
     return 23;
 }
-

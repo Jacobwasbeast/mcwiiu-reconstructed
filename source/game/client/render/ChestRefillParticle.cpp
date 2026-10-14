@@ -6,21 +6,14 @@
 #include "game/core/ColourTable.hpp"
 #include "game/core/Mth.hpp"
 
-ChestRefillParticle::ChestRefillParticle(Level* level, double x, double y, double z,
-                                         double xa, double ya, double za)
+ChestRefillParticle::ChestRefillParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, xa, ya, za)
 {
     _init(level, x, y, z, xa, ya, za, 1.0f);
 }
 
-void ChestRefillParticle::render(BufferBuilder* buffer,
-                                 const boost::shared_ptr<Entity>& camera,
-                                 float partialTicks,
-                                 float xa,
-                                 float ya,
-                                 float za,
-                                 float xa2,
-                                 float za2)
+void ChestRefillParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks,
+                                 float xa, float ya, float za, float xa2, float za2)
 {
     float scale = ((float)age + partialTicks) / (float)lifetime * 32.0f;
     scale = Mth::clamp(scale, 0.0f, 1.0f);
@@ -43,8 +36,8 @@ void ChestRefillParticle::tick()
     zd *= 0.8999999761581421;
 }
 
-void ChestRefillParticle::_init(Level* level, double x, double y, double z,
-                                double xa, double ya, double za, float scale)
+void ChestRefillParticle::_init(Level* level, double x, double y, double z, double xa, double ya, double za,
+                                float scale)
 {
     xd = xa;
     yd = ya;
@@ -64,21 +57,13 @@ uint64_t ChestRefillParticle::GetType()
     return type;
 }
 
-Particle* ChestRefillParticle::Provider::createParticle(ePARTICLE_TYPE type,
-                                                         Level* level,
-                                                         double x,
-                                                         double y,
-                                                         double z,
-                                                         double xa,
-                                                         double ya,
-                                                         double za,
-                                                         arrayWithLength<int> params)
+Particle* ChestRefillParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                        double xa, double ya, double za, arrayWithLength<int> params)
 {
     ChestRefillParticle* particle = new ChestRefillParticle(level, x, y, z, xa, ya, za);
     particle->tick();
     const int colour = static_cast<int>(gApp.GetHTMLColor(eMinecraftColour_HTMLColor_e));
-    particle->setColor(static_cast<float>(colour >> 4),
-                       static_cast<float>((colour >> 2) | 0xff),
+    particle->setColor(static_cast<float>(colour >> 4), static_cast<float>((colour >> 2) | 0xff),
                        static_cast<float>(colour | 0xff));
     return particle;
 }

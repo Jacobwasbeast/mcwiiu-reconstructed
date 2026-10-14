@@ -23,16 +23,14 @@ public:
     SkullBlockRenderer();
     virtual ~SkullBlockRenderer();
 
-    void renderSkull(float x, float y, float z, const Direction* direction, float rotation,
-                     float headPitch, int skullType, int destroyStage, float animationTime,
-                     bool useDisplayList);
-    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                        float partialTicks, int breakProgress, bool bTranslucent, float alpha,
-                        bool bUseDisplayList);
+    void renderSkull(float x, float y, float z, const Direction* direction, float rotation, float headPitch,
+                     int skullType, int destroyStage, float animationTime, bool useDisplayList);
+    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float partialTicks,
+                        int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList);
     virtual void init(BlockEntityRenderDispatcher* pDispatcher);
     bool dragonJawCheck();
-    void updateModel(int modelIndex, const std::wstring& modelName,
-                     const std::wstring& originalModelName, TexturePack* pTexturePack);
+    void updateModel(int modelIndex, const std::wstring& modelName, const std::wstring& originalModelName,
+                     TexturePack* pTexturePack);
     virtual void setupForTexturePack(TexturePack* pTexturePack);
 
 private:

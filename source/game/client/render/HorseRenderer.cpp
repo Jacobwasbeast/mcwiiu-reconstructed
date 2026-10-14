@@ -50,14 +50,13 @@ Model* HorseRenderer::createModel(const ModelDefinition& definition)
     return new AbstractHorseModel(true, definition);
 }
 
-void HorseRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                                float limbSwingAmount, float ageInTicks, float netHeadYaw,
-                                float headPitch, float scale)
+void HorseRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                                float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
     if (entity->isInvisible())
     {
-        mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                          scale, entity, _SkinAdjustments());
+        mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+                          _SkinAdjustments());
     }
     else
     {
@@ -82,8 +81,7 @@ void HorseRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float l
         }
 
         EntityRenderer::bindTexture(renderEntity);
-        mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                       headPitch, scale, true);
+        mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
 
         for (int layer = 1; layer < textureCount; ++layer)
         {

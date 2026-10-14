@@ -15,9 +15,8 @@ public:
     ChestRenderer();
     virtual ~ChestRenderer();
 
-    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                        float a, int breakProgress, bool bTranslucent, float alpha,
-                        bool bUseDisplayList);
+    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a,
+                        int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList);
 
 private:
     ChestModel* mChestModel;

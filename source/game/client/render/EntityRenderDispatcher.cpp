@@ -120,9 +120,16 @@ namespace
 {
 }
 EntityRenderDispatcher::EntityRenderDispatcher(Textures* textures, ItemRenderer* itemRenderer)
-    : boost::unordered_map<unsigned long long, EntityRenderer*>(), mPlayerRenderers(),
-      mX(0.0), mY(0.0), mZ(0.0), mTextures(textures), mCamera(), mPlayer(),
-      mRenderShadow(true), mRenderHitBoxes(false)
+    : boost::unordered_map<unsigned long long, EntityRenderer*>(),
+      mPlayerRenderers(),
+      mX(0.0),
+      mY(0.0),
+      mZ(0.0),
+      mTextures(textures),
+      mCamera(),
+      mPlayer(),
+      mRenderShadow(true),
+      mRenderHitBoxes(false)
 {
     GlStateManager::enableLighting();
     (*this)[EntityType::SPIDER] = new SpiderRenderer(this);
@@ -306,17 +313,15 @@ void EntityRenderDispatcher::prepare(Level* level, Font* font, boost::shared_ptr
         const BlockState* state = level->getBlockState(BlockPos(camera));
         if (state->getBlock() == Blocks::bed)
         {
-            mCameraYRot = (float)(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)
-                                      ->get2DDataValue() * 90 + 180);
+            mCameraYRot = (float)(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue() * 90
+                                  + 180);
             mCameraXRot = 0.0F;
         }
     }
     else
     {
-        mCameraYRot = Minecraft::GetInstance()->mPlayer->mYRotO
-            + (camera->mYRot - camera->mYRotO) * partialTicks;
-        mCameraXRot = Minecraft::GetInstance()->mPlayer->mXRotO
-            + (camera->mXRot - camera->mXRotO) * partialTicks;
+        mCameraYRot = Minecraft::GetInstance()->mPlayer->mYRotO + (camera->mYRot - camera->mYRotO) * partialTicks;
+        mCameraXRot = Minecraft::GetInstance()->mPlayer->mXRotO + (camera->mXRot - camera->mXRotO) * partialTicks;
     }
 
     if ((Minecraft::GetInstance()->mPlayer->GetType() & EntityType::PLAYER) == EntityType::PLAYER
@@ -336,8 +341,8 @@ bool EntityRenderDispatcher::hasSecondPass(boost::shared_ptr<Entity>& entity)
     return getRenderer(entity)->hasSecondPass();
 }
 
-bool EntityRenderDispatcher::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,
-                                          double x, double y, double z)
+bool EntityRenderDispatcher::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double x, double y,
+                                          double z)
 {
     EntityRenderer* renderer = getRenderer(entity);
     if (renderer != NULL && renderer->shouldRender(entity, culler, x, y, z))
@@ -353,8 +358,8 @@ bool EntityRenderDispatcher::shouldRender(boost::shared_ptr<Entity>& entity, Cul
     return false;
 }
 
-void EntityRenderDispatcher::renderHitbox(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                          float, float partialTicks, int color)
+void EntityRenderDispatcher::renderHitbox(boost::shared_ptr<Entity>& entity, double x, double y, double z, float,
+                                          float partialTicks, int color)
 {
     GlStateManager::depthMask(false);
     GlStateManager::disableTexture();
@@ -365,21 +370,16 @@ void EntityRenderDispatcher::renderHitbox(boost::shared_ptr<Entity>& entity, dou
 
     float halfWidth = entity->mBbWidth * 0.5F;
     AABB* box = entity->mBoundingBox;
-    LevelRenderer::renderLineBox(AABB::newTemp(box->mMinX - entity->mX + x,
-                                               box->mMinY - entity->mY + y,
-                                               box->mMinZ - entity->mZ + z,
-                                               box->mMaxX - entity->mX + x,
-                                               box->mMaxY - entity->mY + y,
-                                               box->mMaxZ - entity->mZ + z), color);
+    LevelRenderer::renderLineBox(AABB::newTemp(box->mMinX - entity->mX + x, box->mMinY - entity->mY + y,
+                                               box->mMinZ - entity->mZ + z, box->mMaxX - entity->mX + x,
+                                               box->mMaxY - entity->mY + y, box->mMaxZ - entity->mZ + z),
+                                 color);
 
     if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
-        LevelRenderer::renderLineBox(AABB::newTemp(x - halfWidth,
-                                                   y + entity->getEyeHeight() - 0.01F,
-                                                   z - halfWidth,
-                                                   x + halfWidth,
-                                                   y + entity->getEyeHeight() + 0.01F,
-                                                   z + halfWidth), 0xFFFFFF);
+        LevelRenderer::renderLineBox(AABB::newTemp(x - halfWidth, y + entity->getEyeHeight() - 0.01F, z - halfWidth,
+                                                   x + halfWidth, y + entity->getEyeHeight() + 0.01F, z + halfWidth),
+                                     0xFFFFFF);
     }
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
@@ -387,8 +387,7 @@ void EntityRenderDispatcher::renderHitbox(boost::shared_ptr<Entity>& entity, dou
     builder->begin(5);
     builder->color(0xFF);
     builder->vertex((float)x, (float)(y + entity->getEyeHeight()), (float)z);
-    builder->vertex((float)(x + look->x * 2.0),
-                    (float)(y + entity->getEyeHeight() + look->y * 2.0),
+    builder->vertex((float)(x + look->x * 2.0), (float)(y + entity->getEyeHeight() + look->y * 2.0),
                     (float)(z + look->z * 2.0));
     builder->end();
 
@@ -400,9 +399,9 @@ void EntityRenderDispatcher::renderHitbox(boost::shared_ptr<Entity>& entity, dou
     GlStateManager::depthMask(true);
 }
 
-void EntityRenderDispatcher::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                    float yaw, float partialTicks, bool renderOutlines, bool itemFrame,
-                                    bool renderShadow, bool renderLeash)
+void EntityRenderDispatcher::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
+                                    float partialTicks, bool renderOutlines, bool itemFrame, bool renderShadow,
+                                    bool renderLeash)
 {
     EntityRenderer* renderer = getRenderer(entity);
     if (renderer == NULL || mTextures == NULL)

@@ -3,8 +3,7 @@
 
 #include "game/util/Random.hpp"
 
-WakeParticle::WakeParticle(Level* level, double x, double y, double z,
-                           double xa, double ya, double za)
+WakeParticle::WakeParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     xd *= 0.3;
@@ -47,10 +46,8 @@ uint64_t WakeParticle::GetType()
     return ParticleKind::WAKE;
 }
 
-Particle* WakeParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                  double x, double y, double z,
-                                                  double xa, double ya, double za,
-                                                  arrayWithLength<int> params)
+Particle* WakeParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                 double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new WakeParticle(level, x, y, z, xa, ya, za);
 }

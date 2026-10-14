@@ -72,10 +72,8 @@ uint64_t WaterDropParticle::GetType()
     return ParticleKind::WATER_DROP;
 }
 
-Particle* WaterDropParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,
-                                                      double x, double y, double z,
-                                                      double xa, double ya, double za,
-                                                      arrayWithLength<int> params)
+Particle* WaterDropParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,
+                                                      double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new WaterDropParticle(level, x, y, z);
 }
