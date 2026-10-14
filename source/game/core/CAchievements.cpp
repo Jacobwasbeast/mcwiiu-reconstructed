@@ -10,10 +10,10 @@ int getSlotId(int iQuad);
 PlayerUID getPlayerUID(int iQuad, bool includeOffline);
 
 CAchievements::CAchievements(int iQuad)
-    : mIsSystemPlayer(getSlotId(iQuad) != 0)
-    , mSlotId((unsigned char)getSlotId(iQuad))
-    , mPlayerUID(getPlayerUID(iQuad, false))
-    , mDirty(false)
+    : mIsSystemPlayer(getSlotId(iQuad) != 0),
+      mSlotId((unsigned char)getSlotId(iQuad)),
+      mPlayerUID(getPlayerUID(iQuad, false)),
+      mDirty(false)
 {
     std::memset(mAwarded, 0, sizeof(mAwarded));
     mState = 0;
@@ -24,7 +24,7 @@ CAchievements::CAchievements(int iQuad)
     {
         std::wstring uid = mPlayerUID.toString();
         gProfileInstance->DebugPrintf("<CAchievements> Creating achievements for '%ls', iQuad=%i, slot=%i.\n",
-                              uid.c_str(), iQuad, mSlotId);
+                                      uid.c_str(), iQuad, mSlotId);
         std::sprintf(mFilename, "ach_%ls", uid.c_str());
         StartRead();
     }
@@ -32,8 +32,7 @@ CAchievements::CAchievements(int iQuad)
     {
         PlayerUID playerUID = getPlayerUID(iQuad, false);
         const char* guest = (playerUID.flags & 0x20000000u) != 0 ? "True" : "False";
-        gProfileInstance->DebugPrintf("<CAchievements> Non-system player quad %i, guest=%s.\n",
-                              iQuad, guest);
+        gProfileInstance->DebugPrintf("<CAchievements> Non-system player quad %i, guest=%s.\n", iQuad, guest);
     }
 }
 

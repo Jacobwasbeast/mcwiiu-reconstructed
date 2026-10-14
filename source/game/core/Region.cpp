@@ -56,7 +56,10 @@ Region::~Region()
     delete mChunks;
 }
 
-bool Region::isAllEmpty() { return mAllEmpty; }
+bool Region::isAllEmpty()
+{
+    return mAllEmpty;
+}
 
 boost::shared_ptr<BlockEntity> Region::getBlockEntity(const BlockPos& pos, LevelChunk::EntityCreationType type)
 {
@@ -75,7 +78,8 @@ int Region::getRawBrightness(const BlockPos& pos, bool useNeighbourBrightness)
     if (useNeighbourBrightness && getBlockState(pos)->doesPropagate())
     {
         int brightest = 0;
-        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); it++)
+        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
+             it != Direction::VALUES.end(); it++)
         {
             int value = getRawBrightness(pos.relative(*it), false);
             if (value > brightest)
@@ -122,7 +126,8 @@ int Region::getBrightnessPropagate(LightLayer::variety layer, const BlockPos& po
     if (getBlockState(target)->doesPropagate())
     {
         int brightest = 0;
-        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
+             ++it)
         {
             int value = getBrightness(layer, target.relative(*it));
             if (value > brightest)
@@ -357,9 +362,9 @@ bool Region::isSolidRender(const BlockPos& pos)
         return false;
     if (LeafBlock::isLeaves(state->getBlock()))
     {
-        int xOffsets[6] = { 1, -1, 0, 0, 0, 0 };
-        int yOffsets[6] = { 0, 0, 1, -1, 0, 0 };
-        int zOffsets[6] = { 0, 0, 0, 0, 1, -1 };
+        int xOffsets[6] = {1, -1, 0, 0, 0, 0};
+        int yOffsets[6] = {0, 0, 1, -1, 0, 0};
+        int zOffsets[6] = {0, 0, 0, 0, 1, -1};
         for (int i = 0; i < 6; ++i)
         {
             const BlockState* neighbour = mLevel->getBlockState(pos.offset(xOffsets[i], yOffsets[i], zOffsets[i]));
@@ -523,7 +528,8 @@ void Region::setCachedBlocksAndData(unsigned short* elements, int x, int y, int 
                 unsigned char data = 0;
                 if ((unsigned int)worldY < 256)
                 {
-                    unsigned short element = elements[((worldY << 8) & 0x8000) | (xi << 11) | (zi << 7) | (worldY & 0x7f)];
+                    unsigned short element =
+                        elements[((worldY << 8) & 0x8000) | (xi << 11) | (zi << 7) | (worldY & 0x7f)];
                     blockId = elementToBlockId(element);
                     data = elementToData(element);
                 }

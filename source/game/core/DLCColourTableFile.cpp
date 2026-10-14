@@ -5,8 +5,8 @@
 #include "game/core/ColourTable.hpp"
 
 DLCColourTableFile::DLCColourTableFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_ColourTable, path)
-    , m_pColourTable(NULL)
+    : DLCFile(DLCManager::eDLCType_ColourTable, path),
+      m_pColourTable(NULL)
 {
 }
 
@@ -20,7 +20,8 @@ DLCColourTableFile::~DLCColourTableFile()
 
 void DLCColourTableFile::addData(unsigned char* pData, unsigned int size)
 {
-    ColourTable* defaultColours = Minecraft::GetInstance()->mTexturePackRepository->defaultTexturePack->getColourTable();
+    ColourTable* defaultColours =
+        Minecraft::GetInstance()->mTexturePackRepository->defaultTexturePack->getColourTable();
     ColourTable* table = new ColourTable(defaultColours, pData, size);
     m_pColourTable = table;
 }

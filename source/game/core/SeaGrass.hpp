@@ -4,7 +4,7 @@
 #include "game/core/Bush.hpp"
 #include "game/world/block/BonemealableBlock.hpp"
 
-template<class T> class AbstractProperty;
+template <class T> class AbstractProperty;
 class AABB;
 class BlockPos;
 class BlockState;

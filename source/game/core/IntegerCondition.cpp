@@ -17,7 +17,10 @@ void IntegerCondition::_init(const XmlObject& object, EOperator op)
 {
     m_threshold = object[L"value"].maybeInt().otherwise(0);
 
-    m_option = object[L"value"].maybeString().fmap(GameModeOptions::parse).otherwise(static_cast<eCustomGameModeHostOption>(-1));
+    m_option = object[L"value"]
+                   .maybeString()
+                   .fmap(GameModeOptions::parse)
+                   .otherwise(static_cast<eCustomGameModeHostOption>(-1));
 
     m_operator = op;
 }
@@ -63,7 +66,7 @@ unsigned int IntegerCondition::GetThreshold(MasterGameMode* gameMode) const
 
 unsigned char IntegerCondition::GetMessage() const
 {
-    static const unsigned char messages[] = { 0x82, 0x83, 0x84, 0x85 };
+    static const unsigned char messages[] = {0x82, 0x83, 0x84, 0x85};
     unsigned int op = static_cast<unsigned int>(m_operator);
     if (op > EOperator_GreaterThanOrEquals)
         return 0x82;

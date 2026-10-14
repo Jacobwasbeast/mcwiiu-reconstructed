@@ -116,8 +116,8 @@ public:
     static const Direction* WEST;
     static const Direction* EAST;
 
-    Direction(int data3D, int oppositeIndex, int data2D, const std::wstring& name,
-              AxisDirection* axisDirection, Axis* axis, Vec3i* normal, unsigned char ordinal);
+    Direction(int data3D, int oppositeIndex, int data2D, const std::wstring& name, AxisDirection* axisDirection,
+              Axis* axis, Vec3i* normal, unsigned char ordinal);
     ~Direction();
     static void staticCtor();
 

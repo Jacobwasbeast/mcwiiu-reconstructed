@@ -53,28 +53,13 @@ const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_TIME = NULL;
 const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_DIR = NULL;
 const EntityDataAccessor<bool>* Minecart::DATA_ID_CUSTOM_DISPLAY = NULL;
 
-const int Minecart::EXITS[10][2][3] = {
-    {{0, 0, -1}, {0, 0, 1}},
-    {{-1, 0, 0}, {1, 0, 0}},
-    {{-1, -1, 0}, {1, 0, 0}},
-    {{-1, 0, 0}, {1, -1, 0}},
-    {{0, 0, -1}, {0, -1, 1}},
-    {{0, -1, -1}, {0, 0, 1}},
-    {{0, 0, 1}, {1, 0, 0}},
-    {{0, 0, 1}, {-1, 0, 0}},
-    {{0, 0, -1}, {-1, 0, 0}},
-    {{0, 0, -1}, {1, 0, 0}}
-};
+const int Minecart::EXITS[10][2][3] = {{{0, 0, -1}, {0, 0, 1}},  {{-1, 0, 0}, {1, 0, 0}},  {{-1, -1, 0}, {1, 0, 0}},
+                                       {{-1, 0, 0}, {1, -1, 0}}, {{0, 0, -1}, {0, -1, 1}}, {{0, -1, -1}, {0, 0, 1}},
+                                       {{0, 0, 1}, {1, 0, 0}},   {{0, 0, 1}, {-1, 0, 0}},  {{0, 0, -1}, {-1, 0, 0}},
+                                       {{0, 0, -1}, {1, 0, 0}}};
 
-std::wstring Minecart::Type::NAMES[7] = {
-    L"MinecartRideable",
-    L"MinecartChest",
-    L"MinecartFurnace",
-    L"MinecartTNT",
-    L"MinecartSpawner",
-    L"MinecartHopper",
-    L"MinecartCommandBlock"
-};
+std::wstring Minecart::Type::NAMES[7] = {L"MinecartRideable", L"MinecartChest",  L"MinecartFurnace",     L"MinecartTNT",
+                                         L"MinecartSpawner",  L"MinecartHopper", L"MinecartCommandBlock"};
 
 const Minecart::Type* Minecart::Type::RIDEABLE = new Minecart::Type(Minecart::Type::eType_Rideable);
 const Minecart::Type* Minecart::Type::CHEST = new Minecart::Type(Minecart::Type::eType_Chest);
@@ -85,14 +70,8 @@ const Minecart::Type* Minecart::Type::HOPPER = new Minecart::Type(Minecart::Type
 const Minecart::Type* Minecart::Type::COMMAND_BLOCK = new Minecart::Type(Minecart::Type::eType_CommandBlock);
 
 const Minecart::Type* Minecart::Type::VALUES[7] = {
-    Minecart::Type::RIDEABLE,
-    Minecart::Type::CHEST,
-    Minecart::Type::FURNACE,
-    Minecart::Type::TNT,
-    Minecart::Type::SPAWNER,
-    Minecart::Type::HOPPER,
-    Minecart::Type::COMMAND_BLOCK
-};
+    Minecart::Type::RIDEABLE, Minecart::Type::CHEST,  Minecart::Type::FURNACE,      Minecart::Type::TNT,
+    Minecart::Type::SPAWNER,  Minecart::Type::HOPPER, Minecart::Type::COMMAND_BLOCK};
 
 Minecart::Minecart(Level* level) : Entity(level, true)
 {
@@ -134,12 +113,18 @@ Minecart::~Minecart()
 
 void Minecart::staticCtor()
 {
-    DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::INT);
-    DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::INT);
-    DATA_ID_DAMAGE = SynchedEntityData::defineId<float>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::FLOAT);
-    DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::INT);
-    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::INT);
-    DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(EntityType::MINECART, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY,
+                                                         EntityDataSerializers::INT);
+    DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY,
+                                                        EntityDataSerializers::INT);
+    DATA_ID_DAMAGE = SynchedEntityData::defineId<float>(EntityType::MINECART, EntityType::ENTITY,
+                                                        EntityDataSerializers::FLOAT);
+    DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY,
+                                                             EntityDataSerializers::INT);
+    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<int>(EntityType::MINECART, EntityType::ENTITY,
+                                                              EntityDataSerializers::INT);
+    DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(EntityType::MINECART, EntityType::ENTITY,
+                                                               EntityDataSerializers::BOOLEAN);
 }
 
 void Minecart::_init()
@@ -448,7 +433,7 @@ void Minecart::tick()
             Material* material = mLevel->getBlockState(here)->getMaterial();
             Material* materialBelow = mLevel->getBlockState(here.below())->getMaterial();
             mInBubbleColumn = material == Material::BUBBLE_COLUMN
-                || (material == Material::AIR && materialBelow == Material::BUBBLE_COLUMN);
+                              || (material == Material::AIR && materialBelow == Material::BUBBLE_COLUMN);
             comeOffTrack();
         }
 
@@ -482,15 +467,16 @@ void Minecart::tick()
         if (getType() == Type::RIDEABLE)
         {
             PushableBySelector selector(shared_from_this());
-            std::vector<boost::shared_ptr<Entity> >* entities =
-                mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.2f, 0.0, 0.2f), &selector, NULL);
+            std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+                shared_from_this(), mBoundingBox->grow(0.2f, 0.0, 0.2f), &selector, NULL);
             std::vector<boost::shared_ptr<Entity> >::iterator itEnd = entities->end();
             for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != itEnd; ++it)
             {
                 boost::shared_ptr<Entity> entity = *it;
-                if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) || eTYPE_DERIVED_FROM(EntityType::VILLAGER_GOLEM, entity->GetType())
-                    || eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType()) || eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType())
-                    || isVehicle() || entity->isPassenger())
+                if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+                    || eTYPE_DERIVED_FROM(EntityType::VILLAGER_GOLEM, entity->GetType())
+                    || eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType())
+                    || eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType()) || isVehicle() || entity->isPassenger())
                 {
                     entity->push(shared_from_this());
                 }
@@ -502,8 +488,8 @@ void Minecart::tick()
         }
         else
         {
-            std::vector<boost::shared_ptr<Entity> >* entities =
-                mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.2f, 0.0, 0.2f), NULL);
+            std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+                shared_from_this(), mBoundingBox->grow(0.2f, 0.0, 0.2f), NULL);
             std::vector<boost::shared_ptr<Entity> >::iterator itEnd = entities->end();
             for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != itEnd; ++it)
             {

@@ -1,7 +1,7 @@
 #include "game/core/BossEvent.hpp"
 
-BossEvent::BossEvent(const std::wstring& id, int nameId, const std::wstring& name,
-                     BossBarColor color, BossBarOverlay overlay)
+BossEvent::BossEvent(const std::wstring& id, int nameId, const std::wstring& name, BossBarColor color,
+                     BossBarOverlay overlay)
     : id(id),
       name(name),
       nameId(nameId),

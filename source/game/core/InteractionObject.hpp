@@ -30,16 +30,12 @@ public:
         bool createdByRestrictedPlayer;
     };
 
-    InteractionObject()
-    {
-    }
+    InteractionObject() {}
 
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player) = 0;
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
+                                              boost::shared_ptr<Player> player) = 0;
     virtual int getTypeId(bool large) = 0;
-    virtual NameData GetNetworkNameData()
-    {
-        return NameData(getDisplayName(), L"", true, false);
-    }
+    virtual NameData GetNetworkNameData() { return NameData(getDisplayName(), L"", true, false); }
 };
 
 #endif

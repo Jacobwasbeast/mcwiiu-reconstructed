@@ -7,10 +7,7 @@
 class TridentCategory : public EnchantmentCategory
 {
 public:
-    virtual bool canEnchant(Item* item) const
-    {
-        return dynamic_cast<TridentItem*>(item) != NULL;
-    }
+    virtual bool canEnchant(Item* item) const { return dynamic_cast<TridentItem*>(item) != NULL; }
 };
 
 #endif

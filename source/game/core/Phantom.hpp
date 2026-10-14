@@ -19,9 +19,9 @@ public:
     class PlayerSelector : public Predicate<boost::shared_ptr<Player> >
     {
     public:
-        PlayerSelector(Phantom* phantom) : mPhantom(phantom) { }
+        PlayerSelector(Phantom* phantom) : mPhantom(phantom) {}
         virtual bool apply(boost::shared_ptr<Player> player) const;
-        virtual ~PlayerSelector() { }
+        virtual ~PlayerSelector() {}
 
     private:
         Phantom* mPhantom;

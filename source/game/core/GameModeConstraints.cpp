@@ -9,7 +9,9 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 GameModeConstraints::GameModeConstraints(int playerId)
-    : playerId(playerId), currentState(0), failedConstraintChanged(false)
+    : playerId(playerId),
+      currentState(0),
+      failedConstraintChanged(false)
 {
 }
 
@@ -24,8 +26,7 @@ GameModeConstraints::~GameModeConstraints()
 void GameModeConstraints::tick()
 {
     failedConstraintChanged = false;
-    for (DelayedConstraintMap::iterator entry = delayedConstraints.begin();
-         entry != delayedConstraints.end(); entry++)
+    for (DelayedConstraintMap::iterator entry = delayedConstraints.begin(); entry != delayedConstraints.end(); entry++)
     {
         DelayedConstraintList::iterator delayed = entry->second.begin();
         while (delayed < entry->second.end())
@@ -52,22 +53,18 @@ void GameModeConstraints::tick()
     FailedConstraintMap::iterator failed = failedConstraints.find(currentState);
     if (failed != failedConstraints.end())
     {
-        if (failed->second != NULL
-            && !failedConstraints[currentState]->isConstraintSatisfied(playerId))
+        if (failed->second != NULL && !failedConstraints[currentState]->isConstraintSatisfied(playerId))
             return;
-        if (failed->second != NULL
-            && failedConstraints[currentState]->isConstraintSatisfied(playerId))
+        if (failed->second != NULL && failedConstraints[currentState]->isConstraintSatisfied(playerId))
         {
             failedConstraintChanged = true;
             failedConstraints[currentState] = NULL;
         }
     }
-    for (ConstraintList::iterator it = constraints[currentState].begin();
-         it < constraints[currentState].end(); ++it)
+    for (ConstraintList::iterator it = constraints[currentState].begin(); it < constraints[currentState].end(); ++it)
     {
         TutorialConstraint* constraint = *it;
-        if (!constraint->isConstraintSatisfied(playerId)
-            && constraint->isConstraintRestrictive(playerId))
+        if (!constraint->isConstraintSatisfied(playerId) && constraint->isConstraintRestrictive(playerId))
         {
             failedConstraintChanged = true;
             failedConstraints[currentState] = constraint;
@@ -101,8 +98,8 @@ void GameModeConstraints::MoveDelayedConstraints(int oldState, int newState)
     {
         constraints[newState].push_back(delayed->first);
         delayedConstraints[newState].push_back(std::make_pair(delayed->first, delayed->second));
-        constraints[oldState].erase(std::find(constraints[oldState].begin(),
-                                               constraints[oldState].end(), delayed->first));
+        constraints[oldState].erase(
+            std::find(constraints[oldState].begin(), constraints[oldState].end(), delayed->first));
         delayed = delayedConstraints[oldState].erase(delayed);
     }
 }
@@ -143,8 +140,8 @@ void GameModeConstraints::RemoveConstraint(TutorialConstraint* constraint, bool 
     }
     if (std::find(constraints[currentState].begin(), constraints[currentState].end(), constraint)
         != constraints[currentState].end())
-        constraints[currentState].erase(std::find(constraints[currentState].begin(),
-                                                   constraints[currentState].end(), constraint));
+        constraints[currentState].erase(
+            std::find(constraints[currentState].begin(), constraints[currentState].end(), constraint));
     if (std::find(constraints[0].begin(), constraints[0].end(), constraint) != constraints[0].end())
         constraints[0].erase(std::find(constraints[0].begin(), constraints[0].end(), constraint));
 }
@@ -207,19 +204,17 @@ bool GameModeConstraints::HasGlobalConstraint(int state)
     return false;
 }
 
-int GameModeConstraints::canMoveToPosition(double oldX, double oldY, double oldZ, double newX,
-                                            double newY, double newZ, Vec3* clampedPosition)
+int GameModeConstraints::canMoveToPosition(double oldX, double oldY, double oldZ, double newX, double newY, double newZ,
+                                           Vec3* clampedPosition)
 {
     int canMove = 0;
-    for (ConstraintList::iterator it = constraints[currentState].begin();
-         it < constraints[currentState].end(); ++it)
+    for (ConstraintList::iterator it = constraints[currentState].begin(); it < constraints[currentState].end(); ++it)
     {
         TutorialConstraint* constraint = *it;
         if (constraint->getType() == 1 && constraint->isConstraintSatisfied(playerId))
             return canMove;
     }
-    for (ConstraintList::iterator it = constraints[currentState].begin();
-         it < constraints[currentState].end(); ++it)
+    for (ConstraintList::iterator it = constraints[currentState].begin(); it < constraints[currentState].end(); ++it)
     {
         TutorialConstraint* constraint = *it;
         if (constraint->getType() == 1 && !constraint->isConstraintSatisfied(playerId))
@@ -227,8 +222,7 @@ int GameModeConstraints::canMoveToPosition(double oldX, double oldY, double oldZ
             canMove = constraint->canMoveToPosition(oldX, oldY, oldZ, oldX, oldY, oldZ, NULL, true);
             if (!canMove)
             {
-                canMove = constraint->canMoveToPosition(oldX, oldY, oldZ, newX, newY, newZ,
-                                                        clampedPosition, false);
+                canMove = constraint->canMoveToPosition(oldX, oldY, oldZ, newX, newY, newZ, clampedPosition, false);
                 if (canMove)
                     break;
             }
@@ -247,8 +241,8 @@ bool GameModeConstraints::isInputAllowed(int mapping)
     if (!Minecraft::GetInstance()->mLocalPlayers[playerId]->isUnderLiquid(Material::WATER)
         && failedConstraints[currentState] == NULL)
     {
-        for (ConstraintList::iterator it = constraints[currentState].begin();
-             it < constraints[currentState].end(); ++it)
+        for (ConstraintList::iterator it = constraints[currentState].begin(); it < constraints[currentState].end();
+             ++it)
             if ((*it)->isMappingConstrained(playerId, mapping))
                 return false;
     }

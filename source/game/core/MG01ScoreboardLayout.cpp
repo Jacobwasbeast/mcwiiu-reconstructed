@@ -22,8 +22,7 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-MG01ScoreboardLayout::MG01ScoreboardLayout(EScoreboardType type)
-    : IScoreboardLayout()
+MG01ScoreboardLayout::MG01ScoreboardLayout(EScoreboardType type) : IScoreboardLayout()
 {
     m_type = type;
 }
@@ -101,8 +100,7 @@ void MG01ScoreboardLayout::Init(int value)
     ClearPlayersInfo();
 
     const unsigned int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
-        Minecraft::GetInstance()->mLocalPlayers[value];
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[value];
 
     for (unsigned int index = 0; index < playerCount; ++index)
     {
@@ -127,7 +125,8 @@ unsigned int MG01ScoreboardLayout::getNumberOfColumns()
     return 3;
 }
 
-not_null_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column, int row, const unsigned int& slot, const EScoreboardType& type)
+not_null_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column, int row, const unsigned int& slot,
+                                                                const EScoreboardType& type)
 {
     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
 
@@ -150,13 +149,12 @@ not_null_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column, int 
             ClientScoreboard* scoreboard =
                 Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
             const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-            const bool multiRoundOrMultiLife =
-                miniGame->HasMultipleRounds() || miniGame->GetLivesPerRound() != 1;
+            const bool multiRoundOrMultiLife = miniGame->HasMultipleRounds() || miniGame->GetLivesPerRound() != 1;
 
             if (slot < m_players.size() && m_players[slot] != 0)
             {
-                INetworkPlayer* networkPlayer =
-                    CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[slot]->smallId);
+                INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(
+                    m_players[slot]->smallId);
                 const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(networkPlayer);
 
                 if (row == 1)
@@ -176,9 +174,8 @@ not_null_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column, int 
                 }
                 else if (row == 4 && networkPlayer != 0 && scoreboard->HasStats(uid))
                 {
-                    not_null_ptr<ItemInstance> weapon = multiRoundOrMultiLife
-                        ? scoreboard->GetWeaknessWeapon(uid)
-                        : scoreboard->GetKillerWeapon(uid, -1);
+                    not_null_ptr<ItemInstance> weapon = multiRoundOrMultiLife ? scoreboard->GetWeaknessWeapon(uid)
+                                                                              : scoreboard->GetKillerWeapon(uid, -1);
                     if (!weapon->isEmpty())
                     {
                         item = weapon;
@@ -234,8 +231,7 @@ UIString MG01ScoreboardLayout::getLabel5(const StatsUID& uid)
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    if (!miniGame->HasMultipleRounds() && miniGame->GetLivesPerRound() == 1
-        && scoreboard->GetSurvived(uid, -1))
+    if (!miniGame->HasMultipleRounds() && miniGame->GetLivesPerRound() == 1 && scoreboard->GetSurvived(uid, -1))
     {
         if (!scoreboard->IsWinner(uid, -1))
         {
@@ -369,8 +365,8 @@ void MG01ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* b
     MG01PlayerInfo* info = static_cast<MG01PlayerInfo*>(baseInfo);
     IScoreboardLayout::BuildPlayerInfo(player, info);
 
-    boost::shared_ptr<AbstractClientPlayer> localPlayer =
-        Minecraft::GetInstance()->GetLocalPlayerByName(player->GetOnlineName());
+    boost::shared_ptr<AbstractClientPlayer> localPlayer = Minecraft::GetInstance()->GetLocalPlayerByName(
+        player->GetOnlineName());
     const bool localFlag = localPlayer != 0 && localPlayer->isAlive() && !localPlayer->isSpectator();
 
     const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
@@ -409,8 +405,7 @@ void MG01ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* b
         info->survived = scoreboard->GetSurvived(uid, -1);
     }
 
-    MultiPlayerGameMode* gameMode =
-        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLocalGameMode();
+    MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLocalGameMode();
     info->teamInvite = static_cast<unsigned char>(gameMode->IsTeamInvite(player->GetOnlineName()));
     info->colour = static_cast<short>(gApp.GetPlayerColour(info->smallId));
 }

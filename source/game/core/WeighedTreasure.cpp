@@ -20,20 +20,22 @@ WeighedTreasure::WeighedTreasure(not_null_ptr<ItemInstance> item, int minCount, 
     mMaxCount = maxCount;
 }
 
-not_null_ptr<ItemInstance> WeighedTreasure::getItem() { return mItem; }
+not_null_ptr<ItemInstance> WeighedTreasure::getItem()
+{
+    return mItem;
+}
 
 void WeighedTreasure::addChestItems(Random* random, arrayWithLength<WeighedTreasure*> treasures,
                                     boost::shared_ptr<Container> container, int score, bool bonus)
 {
     if (score > 0)
     {
-        arrayWithLength<WeighedRandomItem*> weighted(
-            reinterpret_cast<WeighedRandomItem**>(treasures.data), treasures.length);
+        arrayWithLength<WeighedRandomItem*> weighted(reinterpret_cast<WeighedRandomItem**>(treasures.data),
+                                                     treasures.length);
         do
         {
             WeighedTreasure* treasure = static_cast<WeighedTreasure*>(WeighedRandom::getRandomItem(random, weighted));
-            int count = treasure->mMinCount + random->nextInt(
-                treasure->mMaxCount - treasure->mMinCount + 1);
+            int count = treasure->mMinCount + random->nextInt(treasure->mMaxCount - treasure->mMinCount + 1);
             int maxStack = treasure->mItem->getMaxStackSize();
             if (count > maxStack)
             {
@@ -45,11 +47,11 @@ void WeighedTreasure::addChestItems(Random* random, arrayWithLength<WeighedTreas
                         item->setCount(1);
                         if (container->isFull())
                             return;
-                        unsigned int slot = static_cast<unsigned int>(random->nextInt(
-                            static_cast<int>(container->getContainerSize())));
+                        unsigned int slot = static_cast<unsigned int>(
+                            random->nextInt(static_cast<int>(container->getContainerSize())));
                         while (!container->getItem(slot)->isEmpty())
-                            slot = static_cast<unsigned int>(random->nextInt(
-                                static_cast<int>(container->getContainerSize())));
+                            slot = static_cast<unsigned int>(
+                                random->nextInt(static_cast<int>(container->getContainerSize())));
                         container->setItem(slot, item);
                     }
                 }
@@ -59,11 +61,11 @@ void WeighedTreasure::addChestItems(Random* random, arrayWithLength<WeighedTreas
                     {
                         not_null_ptr<ItemInstance> item = treasure->mItem->copy();
                         item->setCount(1);
-                        unsigned int slot = static_cast<unsigned int>(random->nextInt(
-                            static_cast<int>(container->getContainerSize())));
+                        unsigned int slot = static_cast<unsigned int>(
+                            random->nextInt(static_cast<int>(container->getContainerSize())));
                         while (!container->getItem(slot)->isEmpty())
-                            slot = static_cast<unsigned int>(random->nextInt(
-                                static_cast<int>(container->getContainerSize())));
+                            slot = static_cast<unsigned int>(
+                                random->nextInt(static_cast<int>(container->getContainerSize())));
                         container->setItem(slot, item);
                     }
                 }
@@ -76,20 +78,20 @@ void WeighedTreasure::addChestItems(Random* random, arrayWithLength<WeighedTreas
                 {
                     if (container->isFull())
                         return;
-                    unsigned int slot = static_cast<unsigned int>(random->nextInt(
-                        static_cast<int>(container->getContainerSize())));
+                    unsigned int slot = static_cast<unsigned int>(
+                        random->nextInt(static_cast<int>(container->getContainerSize())));
                     while (!container->getItem(slot)->isEmpty())
-                        slot = static_cast<unsigned int>(random->nextInt(
-                            static_cast<int>(container->getContainerSize())));
+                        slot = static_cast<unsigned int>(
+                            random->nextInt(static_cast<int>(container->getContainerSize())));
                     container->setItem(slot, item);
                 }
                 else
                 {
-                    unsigned int slot = static_cast<unsigned int>(random->nextInt(
-                        static_cast<int>(container->getContainerSize())));
+                    unsigned int slot = static_cast<unsigned int>(
+                        random->nextInt(static_cast<int>(container->getContainerSize())));
                     while (!container->getItem(slot)->isEmpty())
-                        slot = static_cast<unsigned int>(random->nextInt(
-                            static_cast<int>(container->getContainerSize())));
+                        slot = static_cast<unsigned int>(
+                            random->nextInt(static_cast<int>(container->getContainerSize())));
                     container->setItem(slot, item);
                 }
             }

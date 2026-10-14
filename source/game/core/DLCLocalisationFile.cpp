@@ -3,8 +3,8 @@
 #include "game/data/StringTable.hpp"
 
 DLCLocalisationFile::DLCLocalisationFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_Localisation, path)
-    , m_pStringTable(NULL)
+    : DLCFile(DLCManager::eDLCType_Localisation, path),
+      m_pStringTable(NULL)
 {
 }
 

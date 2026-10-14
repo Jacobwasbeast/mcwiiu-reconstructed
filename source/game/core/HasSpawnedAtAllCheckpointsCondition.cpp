@@ -12,8 +12,8 @@ HasSpawnedAtAllCheckpointsCondition::~HasSpawnedAtAllCheckpointsCondition()
 {
 }
 
-bool HasSpawnedAtAllCheckpointsCondition::canAward(
-    const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
+bool HasSpawnedAtAllCheckpointsCondition::canAward(const GameMedal* medal, const StatsUID& uid,
+                                                   GameStats* gameStats) const
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
     if (playerStats == NULL)

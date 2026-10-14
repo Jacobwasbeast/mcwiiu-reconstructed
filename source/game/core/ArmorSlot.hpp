@@ -9,11 +9,7 @@
 class ArmorSlot : public Slot
 {
 public:
-    ArmorSlot(const EquipmentSlot* equipmentSlot,
-              boost::shared_ptr<Container> container,
-              int index,
-              int x,
-              int y);
+    ArmorSlot(const EquipmentSlot* equipmentSlot, boost::shared_ptr<Container> container, int index, int x, int y);
 
     virtual int getMaxStackSize();
     virtual bool mayPlace(not_null_ptr<ItemInstance> item);

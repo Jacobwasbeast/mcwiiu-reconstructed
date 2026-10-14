@@ -3,12 +3,12 @@
 
 namespace NS_SystemChecker_CPP
 {
-    class VoidFunctor
-    {
-    public:
-        virtual ~VoidFunctor() {}
-        virtual void operator()() const = 0;
-    };
+class VoidFunctor
+{
+public:
+    virtual ~VoidFunctor() {}
+    virtual void operator()() const = 0;
+};
 }
 
 #endif

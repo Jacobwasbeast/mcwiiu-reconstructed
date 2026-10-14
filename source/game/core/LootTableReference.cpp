@@ -7,25 +7,20 @@
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-LootTableReference::LootTableReference(ResourceLocation location,
-                                       int weight,
-                                       int quality,
-                                       std::vector<LootItemCondition*>* conditions,
-                                       LootTableEntry* entry)
+LootTableReference::LootTableReference(ResourceLocation location, int weight, int quality,
+                                       std::vector<LootItemCondition*>* conditions, LootTableEntry* entry)
     : LootPoolEntry(weight, quality, conditions, entry)
 {
     mLootTable = location;
 }
 
-uint32_t LootTableReference::_createItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                                         Random* random,
+uint32_t LootTableReference::_createItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random,
                                          LootTableContext& context)
 {
     LootTable* lootTable = context.mLootTables->get(&mLootTable);
     if (lootTable != NULL)
     {
-        std::vector<not_null_ptr<ItemInstance> >* randomItems =
-            lootTable->getRandomItems(random, context);
+        std::vector<not_null_ptr<ItemInstance> >* randomItems = lootTable->getRandomItems(random, context);
         if (!randomItems->empty())
         {
             items->insert(items->end(), randomItems->begin(), randomItems->end());

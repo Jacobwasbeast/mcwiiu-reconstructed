@@ -1,8 +1,7 @@
 #include "game/core/IdsStringBuilder.hpp"
 #include "game/core/L10N.hpp"
 
-IdsStringBuilder::IdsStringBuilder(int id)
-    : id(id)
+IdsStringBuilder::IdsStringBuilder(int id) : id(id)
 {
 }
 

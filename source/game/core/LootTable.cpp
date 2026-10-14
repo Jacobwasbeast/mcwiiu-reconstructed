@@ -9,13 +9,11 @@
 
 LootTable* LootTable::EMPTY_LOOT_TABLE = new LootTable(NULL);
 
-LootTable::LootTable(std::vector<LootPool*>* pools)
-    : mPools(pools)
+LootTable::LootTable(std::vector<LootPool*>* pools) : mPools(pools)
 {
 }
 
-std::vector<not_null_ptr<ItemInstance> >* LootTable::getRandomItems(Random* random,
-                                                                     LootTableContext& context)
+std::vector<not_null_ptr<ItemInstance> >* LootTable::getRandomItems(Random* random, LootTableContext& context)
 {
     std::vector<not_null_ptr<ItemInstance> >* items = new std::vector<not_null_ptr<ItemInstance> >;
 
@@ -55,14 +53,11 @@ std::vector<int>* LootTable::getAvailableSlots(Container* container, Random* ran
     return slots;
 }
 
-void LootTable::shuffleAndSplitItems(std::vector<not_null_ptr<ItemInstance> >* items,
-                                     int maxSize,
-                                     Random* random)
+void LootTable::shuffleAndSplitItems(std::vector<not_null_ptr<ItemInstance> >* items, int maxSize, Random* random)
 {
     std::vector<not_null_ptr<ItemInstance> > splitItems;
 
-    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
-         it != items->end(); )
+    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin(); it != items->end();)
     {
         not_null_ptr<ItemInstance> item = *it;
         if (item->isEmpty())
@@ -129,9 +124,7 @@ void LootTable::fill(Container* container, Random* random, LootTableContext& con
     std::vector<int>* slots = getAvailableSlots(container, random);
     shuffleAndSplitItems(items, (int)slots->size(), random);
 
-    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
-         it != items->end();
-         ++it)
+    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin(); it != items->end(); ++it)
     {
         not_null_ptr<ItemInstance> item = *it;
 

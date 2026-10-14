@@ -31,6 +31,7 @@ class CommonMasterGameMode
     friend class PlayersEnteredVolumeCondition;
     friend class ServerGamePacketListenerImpl;
     friend class UIScene_MapVoteMenu;
+
 public:
     CommonMasterGameMode();
     virtual ~CommonMasterGameMode();
@@ -53,11 +54,14 @@ public:
     virtual unsigned int GetLastCheckpointID(const StatsUID& uid) = 0;
     virtual void OnProgressMade(const boost::shared_ptr<Player>& player, double progress);
     virtual void OnLapCompleted(const boost::shared_ptr<Player>& player);
-    virtual void OnCheckpointEnter(const boost::shared_ptr<Player>& player, unsigned int checkpoint, CheckpointRuleDefinition* rule);
-    virtual void OnTargetEnter(const boost::shared_ptr<Player>& player, unsigned int target, TargetAreaRuleDefinition* rule);
+    virtual void OnCheckpointEnter(const boost::shared_ptr<Player>& player, unsigned int checkpoint,
+                                   CheckpointRuleDefinition* rule);
+    virtual void OnTargetEnter(const boost::shared_ptr<Player>& player, unsigned int target,
+                               TargetAreaRuleDefinition* rule);
     virtual void OnPrimaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
     virtual void OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
-    virtual void OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup, PowerupRuleDefinition* rule);
+    virtual void OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup,
+                                PowerupRuleDefinition* rule);
     EMiniGameId GetNextGameMode() const;
     AABB* GetTeamArea(Team* team) const;
     Team* GetTeamAtPosition(double x, double y, double z, double margin) const;
@@ -81,12 +85,16 @@ public:
     void setCheckpoints(std::vector<CheckpointRuleDefinition*> checkpoints);
     double getTotalDistance();
     std::vector<double>* getCheckpointDistances();
-    void CheckProgress(boost::shared_ptr<Player> player, const std::vector<CheckpointRuleDefinition*>* rules, const std::vector<AABB*>* areas);
+    void CheckProgress(boost::shared_ptr<Player> player, const std::vector<CheckpointRuleDefinition*>* rules,
+                       const std::vector<AABB*>* areas);
     void CheckProgress(const std::vector<boost::shared_ptr<Player> >& players);
     void CheckCheckpoints(const std::vector<boost::shared_ptr<Player> >& players);
     void CheckTargets(const std::vector<boost::shared_ptr<Player> >& players);
     void CheckPowerups(const std::vector<boost::shared_ptr<Player> >& players);
-    template<class Rule> void CheckIntersectsNamedAreas(const std::vector<boost::shared_ptr<Player> >& players, std::vector<Rule*>& rules, void (CommonMasterGameMode::*callback)(const boost::shared_ptr<Player>&, unsigned int, Rule*));
+    template <class Rule> void CheckIntersectsNamedAreas(
+        const std::vector<boost::shared_ptr<Player> >& players, std::vector<Rule*>& rules,
+        void (CommonMasterGameMode::*callback)(const boost::shared_ptr<Player>&, unsigned int, Rule*));
+
 protected:
     friend class ClientPacketListener;
     LevelGenerationOptions* mNextLevelGenOptions;

@@ -27,13 +27,8 @@ enum
     eToolShape_Count = 4
 };
 
-static std::wstring toolRecipeShapes[eToolShape_Count][4] =
-{
-    { L"XXX", L" # ", L" # " },
-    { L"X", L"#", L"#" },
-    { L"XX", L"X#", L" #" },
-    { L"XX", L" #", L" #" }
-};
+static std::wstring toolRecipeShapes[eToolShape_Count][4] = {
+    {L"XXX", L" # ", L" # "}, {L"X", L"#", L"#"}, {L"XX", L"X#", L" #"}, {L"XX", L" #", L" #"}};
 
 void ToolRecipies::_init()
 {
@@ -98,7 +93,7 @@ void ToolRecipies::addRecipes(Recipes* recipes)
             }
 
             recipes->addShapedRecipe(new ItemInstance(target), types, toolRecipeShapes[tool - 1], L'#', Items::stick,
-                L'X', ingredient->object, L'T');
+                                     L'X', ingredient->object, L'T');
         }
     }
 

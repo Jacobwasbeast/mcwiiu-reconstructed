@@ -2,8 +2,7 @@
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 
-DLCCapeFile::DLCCapeFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_Cape, path)
+DLCCapeFile::DLCCapeFile(const std::wstring& path) : DLCFile(DLCManager::eDLCType_Cape, path)
 {
 }
 

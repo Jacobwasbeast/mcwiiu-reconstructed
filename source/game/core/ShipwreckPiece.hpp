@@ -16,8 +16,8 @@ class StructureManager;
 class ShipwreckPiece : public StructurePiece
 {
 public:
-    ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelSource, int x, int z,
-                   Random& random, const Direction* orientation);
+    ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelSource, int x, int z, Random& random,
+                   const Direction* orientation);
 
     static int GetNonUpsideDownShipwreckType(Random& random);
     static bool IsUpsideDownShipwreckType(int type);

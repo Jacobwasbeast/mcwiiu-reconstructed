@@ -40,8 +40,7 @@ public:
     virtual void defineSynchedData();
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
-                                           MobGroupData* data,
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                            const std::wstring& name);
     virtual ResourceLocation* getDefaultLootTable();
     virtual unsigned long long GetType();

@@ -27,13 +27,13 @@
 #include "game/item/ItemId.hpp"
 
 AbstractProperty<int>* SeaPickle::COUNT = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"count", 0, 3));
-AbstractProperty<int>* SeaPickle::FLANGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"flange", 0, 1));
+AbstractProperty<int>* SeaPickle::FLANGE = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"flange", 0, 1));
 
 static const AABB* SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0);
-const unsigned char LIGHT_EMISSION[4] = { 5, 9, 12, 15 };
+const unsigned char LIGHT_EMISSION[4] = {5, 9, 12, 15};
 
-SeaPickle::SeaPickle()
-    : Bush(Material::REPLACEABLE_PLANT)
+SeaPickle::SeaPickle() : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
     mFullBlock = false;
@@ -44,8 +44,7 @@ bool SeaPickle::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*
     return true;
 }
 
-bool SeaPickle::performBonemeal(bool simulate, Level* level, Random* random, const BlockPos& pos,
-                                const BlockState*)
+bool SeaPickle::performBonemeal(bool simulate, Level* level, Random* random, const BlockPos& pos, const BlockState*)
 {
     const BlockState* belowState = level->getBlockState(pos.below());
     Block* below = belowState->getBlock();
@@ -66,23 +65,27 @@ bool SeaPickle::performBonemeal(bool simulate, Level* level, Random* random, con
                 for (int y = yStart; y < yEnd; ++y)
                 {
                     BlockPos target(x + dx, y, pos.z - offset + i);
-                    if (!(target == pos) && random->nextInt(3) == 0 && level->isUnderWater(target, BlockId::SEA_PICKLE, 0))
+                    if (!(target == pos) && random->nextInt(3) == 0
+                        && level->isUnderWater(target, BlockId::SEA_PICKLE, 0))
                     {
                         Block* targetBelow = level->getBlock(target.below());
                         if (targetBelow == Blocks::coral_block)
                         {
-                            if (!targetBelow->defaultBlockState()->getValue(CoralBlock::DEAD) && level->isEmptyWaterBlock(target))
+                            if (!targetBelow->defaultBlockState()->getValue(CoralBlock::DEAD)
+                                && level->isEmptyWaterBlock(target))
                             {
                                 Block* existing = level->getBlock(target);
                                 int minCount = 0;
                                 int count;
-                                if (existing != Blocks::sea_pickle || (minCount = existing->defaultBlockState()->getValue(COUNT)) < 3)
+                                if (existing != Blocks::sea_pickle
+                                    || (minCount = existing->defaultBlockState()->getValue(COUNT)) < 3)
                                     count = random->nextInt(minCount, 3);
                                 else
                                     count = 3;
                                 if (!simulate)
                                 {
-                                    const BlockState* grown = Blocks::sea_pickle->defaultBlockState()->setValue(COUNT, count);
+                                    const BlockState* grown = Blocks::sea_pickle->defaultBlockState()->setValue(COUNT,
+                                                                                                                count);
                                     level->setBlock(target, grown, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
                                 }
                             }
@@ -193,9 +196,18 @@ const AABB* SeaPickle::getShape(const BlockState*, LevelSource*, const BlockPos&
     return SHAPE;
 }
 
-bool SeaPickle::mayReplaceWithPlace(LevelSource*, const BlockPos&) { return true; }
-bool SeaPickle::canContainLiquid(const BlockState*) const { return true; }
-bool SeaPickle::waterSpreadCausesSpawn() { return true; }
+bool SeaPickle::mayReplaceWithPlace(LevelSource*, const BlockPos&)
+{
+    return true;
+}
+bool SeaPickle::canContainLiquid(const BlockState*) const
+{
+    return true;
+}
+bool SeaPickle::waterSpreadCausesSpawn()
+{
+    return true;
+}
 
 std::wstring SeaPickle::getTileItemIconName()
 {
@@ -234,11 +246,14 @@ const BlockState* SeaPickle::getBlockState(int data)
 
 BlockStateDefinition* SeaPickle::createBlockStateDefinition()
 {
-    static const Property* properties[] = { COUNT, FLANGE };
+    static const Property* properties[] = {COUNT, FLANGE};
     return new BlockStateDefinition(this, properties, 2);
 }
 
-bool SeaPickle::isSilkTouchable() { return false; }
+bool SeaPickle::isSilkTouchable()
+{
+    return false;
+}
 
 bool SeaPickle::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state)
 {

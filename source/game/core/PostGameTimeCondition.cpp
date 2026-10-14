@@ -2,8 +2,7 @@
 
 #include "game/core/MasterGameMode.hpp"
 
-PostGameTimeCondition::PostGameTimeCondition(const XmlObject& object)
-    : TimerBasedCondition(object)
+PostGameTimeCondition::PostGameTimeCondition(const XmlObject& object) : TimerBasedCondition(object)
 {
 }
 

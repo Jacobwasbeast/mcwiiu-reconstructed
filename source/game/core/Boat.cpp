@@ -49,7 +49,7 @@ const EntityDataAccessor<int>* Boat::DATA_HURT_TIME = 0;
 const EntityDataAccessor<int>* Boat::DATA_HURT_DIR = 0;
 const EntityDataAccessor<float>* Boat::DATA_DAMAGE = 0;
 const EntityDataAccessor<int>* Boat::DATA_TYPE = 0;
-const EntityDataAccessor<bool>* Boat::DATA_ID_PADDLE[2] = { 0, 0 };
+const EntityDataAccessor<bool>* Boat::DATA_ID_PADDLE[2] = {0, 0};
 const EntityDataAccessor<int>* Boat::DATA_BUBBLE_TIME = 0;
 const EntityDataAccessor<bool>* Boat::DATA_SINKING = 0;
 
@@ -81,22 +81,19 @@ Boat::Boat(Level* level, double x, double y, double z) : Entity(level, true)
 
 void Boat::staticCtor()
 {
-    DATA_HURT_TIME = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY,
-                                                      EntityDataSerializers::INT);
-    DATA_HURT_DIR = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY,
-                                                     EntityDataSerializers::INT);
+    DATA_HURT_TIME = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_HURT_DIR = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY, EntityDataSerializers::INT);
     DATA_DAMAGE = SynchedEntityData::defineId<float>(EntityType::BOAT, EntityType::ENTITY,
-                                                      EntityDataSerializers::FLOAT);
-    DATA_TYPE = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY,
-                                                  EntityDataSerializers::INT);
+                                                     EntityDataSerializers::FLOAT);
+    DATA_TYPE = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY, EntityDataSerializers::INT);
     DATA_ID_PADDLE[0] = SynchedEntityData::defineId<bool>(EntityType::BOAT, EntityType::ENTITY,
                                                           EntityDataSerializers::BOOLEAN);
     DATA_ID_PADDLE[1] = SynchedEntityData::defineId<bool>(EntityType::BOAT, EntityType::ENTITY,
-                                                           EntityDataSerializers::BOOLEAN);
+                                                          EntityDataSerializers::BOOLEAN);
     DATA_BUBBLE_TIME = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY,
-                                                         EntityDataSerializers::INT);
+                                                        EntityDataSerializers::INT);
     DATA_SINKING = SynchedEntityData::defineId<bool>(EntityType::BOAT, EntityType::ENTITY,
-                                                      EntityDataSerializers::BOOLEAN);
+                                                     EntityDataSerializers::BOOLEAN);
 }
 
 void Boat::_init()
@@ -204,8 +201,8 @@ bool Boat::hurt(const DamageSource* source, float damage)
     if (isInvulnerableTo(source))
         return false;
 
-    if (source != NULL && dynamic_cast<const IndirectEntityDamageSource*>(source) != NULL
-        && source->getEntity() != NULL && hasPassenger(source->getEntity()))
+    if (source != NULL && dynamic_cast<const IndirectEntityDamageSource*>(source) != NULL && source->getEntity() != NULL
+        && hasPassenger(source->getEntity()))
     {
         return false;
     }
@@ -231,8 +228,8 @@ bool Boat::hurt(const DamageSource* source, float damage)
     markHurt();
 
     const bool creativePlayer = source->getEntity() != NULL
-        && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType())
-        && boost::static_pointer_cast<Player>(source->getEntity())->mAbilities.mInstabuild;
+                                && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType())
+                                && boost::static_pointer_cast<Player>(source->getEntity())->mAbilities.mInstabuild;
 
     if (creativePlayer || getDamage() > 40.0f)
     {
@@ -267,11 +264,8 @@ void Boat::onAboveBubbleCol(bool down)
 
     if (mLevel->mRandom->nextInt(4) == 0)
     {
-        mLevel->addParticle(PARTICLE_SPLASH,
-                            mX + static_cast<double>(mRandom->nextFloat()),
-                            mY + 0.7,
-                            mZ + static_cast<double>(mRandom->nextFloat()),
-                            0.0, 0.0, 0.0, arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_SPLASH, mX + static_cast<double>(mRandom->nextFloat()), mY + 0.7,
+                            mZ + static_cast<double>(mRandom->nextFloat()), 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
 }
 
@@ -714,15 +708,17 @@ void Boat::tick()
     if (isControlledByLocalInstance())
     {
         if (getPassengers()->empty()
-            || !eTYPE_DERIVED_FROM(EntityType::PLAYER, static_cast<const PassengerList*>(getPassengers())->at(0).lock()->GetType()))
+            || !eTYPE_DERIVED_FROM(EntityType::PLAYER,
+                                   static_cast<const PassengerList*>(getPassengers())->at(0).lock()->GetType()))
             setPaddleState(false, false);
 
         floatBoat();
         if (mLevel->mIsClientSide)
         {
             controlBoat();
-            boost::static_pointer_cast<LocalPlayer>(getControllingPassenger())->mPacketListener->send(
-                boost::shared_ptr<Packet>(new ServerboundPaddleBoatPacket(getPaddleState(0), getPaddleState(1))));
+            boost::static_pointer_cast<LocalPlayer>(getControllingPassenger())
+                ->mPacketListener->send(
+                    boost::shared_ptr<Packet>(new ServerboundPaddleBoatPacket(getPaddleState(0), getPaddleState(1))));
         }
         move(eMoverType_Self, mXd, mYd, mZd, false);
     }
@@ -742,8 +738,7 @@ void Boat::tick()
     {
         if (getPaddleState(i))
         {
-            if (!isSilent()
-                && std::fmod(mPaddlePositions[i], paddleCycle) <= paddleSplash
+            if (!isSilent() && std::fmod(mPaddlePositions[i], paddleCycle) <= paddleSplash
                 && std::fmod(mPaddlePositions[i] + paddleStroke, paddleCycle) >= paddleSplash)
             {
                 const SoundEvent* sound = getPaddleSound();
@@ -767,8 +762,8 @@ void Boat::tick()
     checkInsideBlocks();
 
     PushableBySelector selector(shared_from_this());
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.2f, -0.01f, 0.2f), &selector, NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+        shared_from_this(), mBoundingBox->grow(0.2f, -0.01f, 0.2f), &selector, NULL);
     if (!entities->empty())
     {
         const bool serverSide = !mLevel->mIsClientSide;
@@ -801,8 +796,8 @@ void Boat::tick()
 float Boat::getRowingTime(int paddle, float partialTicks)
 {
     if (getPaddleState(paddle))
-        return static_cast<float>(Mth::clampedLerp(mPaddlePositions[paddle] - 3.1415927f / 8.0f,
-                                                   mPaddlePositions[paddle], partialTicks));
+        return static_cast<float>(
+            Mth::clampedLerp(mPaddlePositions[paddle] - 3.1415927f / 8.0f, mPaddlePositions[paddle], partialTicks));
     return 0.0f;
 }
 

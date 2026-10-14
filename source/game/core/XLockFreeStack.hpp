@@ -10,15 +10,9 @@ template <class T>
 class XLockFreeStack
 {
 public:
-    XLockFreeStack()
-    {
-        InitializeCriticalSectionAndSpinCount(&m_lock, 5120);
-    }
+    XLockFreeStack() { InitializeCriticalSectionAndSpinCount(&m_lock, 5120); }
 
-    ~XLockFreeStack()
-    {
-        DeleteCriticalSection(&m_lock);
-    }
+    ~XLockFreeStack() { DeleteCriticalSection(&m_lock); }
 
     void Push(T* pItem)
     {

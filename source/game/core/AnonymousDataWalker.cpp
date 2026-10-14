@@ -21,7 +21,9 @@ CompoundTag* AnonymousDataWalker::walk(DataFixer* fixer, CompoundTag* tag, int v
 
             if (entityTag->contains(std::wstring(L"nbt"), 10))
             {
-                entityTag->put(std::wstring(L"nbt"), fixer->update(DataFixTypes::eDataFixTypes_Entity, entityTag->getCompound(std::wstring(L"nbt")), version));
+                entityTag->put(std::wstring(L"nbt"),
+                               fixer->update(DataFixTypes::eDataFixTypes_Entity,
+                                             entityTag->getCompound(std::wstring(L"nbt")), version));
             }
         }
     }
@@ -36,7 +38,9 @@ CompoundTag* AnonymousDataWalker::walk(DataFixer* fixer, CompoundTag* tag, int v
 
             if (blockTag->contains(std::wstring(L"nbt"), 10))
             {
-                blockTag->put(std::wstring(L"nbt"), fixer->update(DataFixTypes::eDataFixTypes_BlockEntity, blockTag->getCompound(std::wstring(L"nbt")), version));
+                blockTag->put(std::wstring(L"nbt"),
+                              fixer->update(DataFixTypes::eDataFixTypes_BlockEntity,
+                                            blockTag->getCompound(std::wstring(L"nbt")), version));
             }
         }
     }

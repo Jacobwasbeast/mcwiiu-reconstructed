@@ -12,20 +12,17 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-Snowball::Snowball(Level* level, boost::shared_ptr<LivingEntity> owner)
-    : ThrowableProjectile(level, owner)
+Snowball::Snowball(Level* level, boost::shared_ptr<LivingEntity> owner) : ThrowableProjectile(level, owner)
 {
     _init();
 }
 
-Snowball::Snowball(Level* level)
-    : ThrowableProjectile(level)
+Snowball::Snowball(Level* level) : ThrowableProjectile(level)
 {
     _init();
 }
 
-Snowball::Snowball(Level* level, double x, double y, double z)
-    : ThrowableProjectile(level, x, y, z)
+Snowball::Snowball(Level* level, double x, double y, double z) : ThrowableProjectile(level, x, y, z)
 {
     _init();
 }
@@ -56,8 +53,7 @@ bool Snowball::onHit(const HitResult* result)
 
                 if (eTYPE_DERIVED_FROM(EntityType::PLAYER, result->mEntity->GetType()))
                 {
-                    boost::shared_ptr<Player> player =
-                        boost::static_pointer_cast<Player>(result->mEntity);
+                    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(result->mEntity);
                     if (player && player->GetGameMode() != NULL)
                     {
                         player->GetGameMode()->RecordHitBySnowball();
@@ -107,8 +103,8 @@ void Snowball::handleEntityEvent(unsigned char event, int data)
         Vec3* position = fjGetParticleSpawnPos();
         for (int i = 0; i < 8; ++i)
         {
-            mLevel->addParticle(PARTICLE_SNOWBALL_POOF, position->x, position->y, position->z,
-                                0.0, 0.0, 0.0, arrayWithLength<int>());
+            mLevel->addParticle(PARTICLE_SNOWBALL_POOF, position->x, position->y, position->z, 0.0, 0.0, 0.0,
+                                arrayWithLength<int>());
         }
         return;
     }

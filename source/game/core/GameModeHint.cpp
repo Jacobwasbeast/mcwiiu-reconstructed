@@ -1,11 +1,9 @@
 #include "game/core/GameModeHint.hpp"
 
-GameModeHint::GameModeHint(eTutorial_Hint hint, Tutorial* tutorial,
-                           int descriptionId, eTutorial_GameMode* gameModesValue,
-                           unsigned int gameModeCountValue, bool allowFade,
+GameModeHint::GameModeHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
+                           eTutorial_GameMode* gameModesValue, unsigned int gameModeCountValue, bool allowFade,
                            int minimumDisplayTime)
-    : TutorialHint(hint, tutorial, descriptionId, HINT_GAME_MODE, true, allowFade,
-                   minimumDisplayTime)
+    : TutorialHint(hint, tutorial, descriptionId, HINT_GAME_MODE, true, allowFade, minimumDisplayTime)
 {
     gameModeCount = gameModeCountValue;
     gameModes = gameModesValue;

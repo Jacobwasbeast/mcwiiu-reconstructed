@@ -12,8 +12,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-FurnaceResultSlot::FurnaceResultSlot(boost::shared_ptr<Player> player,
-                                     boost::shared_ptr<Container> container,
+FurnaceResultSlot::FurnaceResultSlot(boost::shared_ptr<Player> player, boost::shared_ptr<Container> container,
                                      int index, int x, int y)
     : Slot(container, index, x, y)
 {
@@ -35,8 +34,7 @@ not_null_ptr<ItemInstance> FurnaceResultSlot::remove(int count)
     return Slot::remove(count);
 }
 
-not_null_ptr<ItemInstance> FurnaceResultSlot::onTake(boost::shared_ptr<Player> player,
-                                                     not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> FurnaceResultSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
 {
     checkTakeAchievements(item);
     Slot::onTake(player, item);
@@ -80,8 +78,7 @@ void FurnaceResultSlot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
                 int orbValue = ExperienceOrb::getExperienceValue(count);
                 count -= orbValue;
                 mPlayer->mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(
-                    new ExperienceOrb(mPlayer->mLevel, mPlayer->mX, mPlayer->mY + 0.5,
-                                      mPlayer->mZ + 0.5, orbValue)));
+                    new ExperienceOrb(mPlayer->mLevel, mPlayer->mX, mPlayer->mY + 0.5, mPlayer->mZ + 0.5, orbValue)));
             }
         }
     }

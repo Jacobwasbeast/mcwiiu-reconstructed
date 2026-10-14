@@ -32,8 +32,7 @@ MinecartFurnace::MinecartFurnace(Level* level) : Minecart(level)
     mPushX = mPushZ = 0.0;
 }
 
-MinecartFurnace::MinecartFurnace(Level* level, double x, double y, double z)
-    : Minecart(level, x, y, z)
+MinecartFurnace::MinecartFurnace(Level* level, double x, double y, double z) : Minecart(level, x, y, z)
 {
     fjDerivedCtorCalls();
     mFuel = 0;
@@ -47,8 +46,8 @@ Entity* MinecartFurnace::create(Level* level)
 
 void MinecartFurnace::staticCtor()
 {
-    DATA_HAS_FUEL = SynchedEntityData::defineId<bool>(EntityType::MINECART_FURNACE,
-        EntityType::MINECART, EntityDataSerializers::BOOLEAN);
+    DATA_HAS_FUEL = SynchedEntityData::defineId<bool>(EntityType::MINECART_FURNACE, EntityType::MINECART,
+                                                      EntityDataSerializers::BOOLEAN);
 }
 
 unsigned int MinecartFurnace::getContainerType()
@@ -204,7 +203,9 @@ void MinecartFurnace::readAdditionalSaveData(CompoundTag* tag)
 
 const BlockState* MinecartFurnace::getDefaultDisplayBlockState()
 {
-    return (hasFuel() ? Blocks::lit_furnace : Blocks::furnace)->defaultBlockState()->setValue(FurnaceBlock::FACING, Direction::NORTH);
+    return (hasFuel() ? Blocks::lit_furnace : Blocks::furnace)
+        ->defaultBlockState()
+        ->setValue(FurnaceBlock::FACING, Direction::NORTH);
 }
 
 unsigned long long MinecartFurnace::GetType()

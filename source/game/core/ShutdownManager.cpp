@@ -78,8 +78,7 @@ void ShutdownManager::WaitForSignalledToComplete()
                 allStopped = false;
             }
         }
-    }
-    while (!allStopped);
+    } while (!allStopped);
 }
 
 void ShutdownManager::MainThreadHandleShutdown()

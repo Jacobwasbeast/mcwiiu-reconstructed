@@ -19,8 +19,8 @@ class ShulkerBullet : public Entity
 public:
     ShulkerBullet(Level* level);
     ShulkerBullet(Level* level, double x, double y, double z, double xd, double yd, double zd);
-    ShulkerBullet(Level* level, boost::shared_ptr<LivingEntity> owner,
-                  boost::shared_ptr<Entity> target, const Direction::Axis* axis);
+    ShulkerBullet(Level* level, boost::shared_ptr<LivingEntity> owner, boost::shared_ptr<Entity> target,
+                  const Direction::Axis* axis);
 
     static Entity* create(Level* level);
     void init();

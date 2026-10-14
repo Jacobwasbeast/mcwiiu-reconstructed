@@ -7,11 +7,9 @@ Rotation* Rotation::CLOCKWISE_90 = new Rotation(L"rotate_90", Rotation::eTYPE_Cl
 Rotation* Rotation::CLOCKWISE_180 = new Rotation(L"rotate_180", Rotation::eTYPE_Clockwise180);
 Rotation* Rotation::COUNTERCLOCKWISE_90 = new Rotation(L"rotate_270", Rotation::eTYPE_CounterClockwise90);
 
-Rotation* Rotation::VALUES[4] = { NONE, CLOCKWISE_90, CLOCKWISE_180, COUNTERCLOCKWISE_90 };
+Rotation* Rotation::VALUES[4] = {NONE, CLOCKWISE_90, CLOCKWISE_180, COUNTERCLOCKWISE_90};
 
-Rotation::Rotation(const std::wstring& name, eTYPE type)
-    : name(name)
-    , type(type)
+Rotation::Rotation(const std::wstring& name, eTYPE type) : name(name), type(type)
 {
 }
 

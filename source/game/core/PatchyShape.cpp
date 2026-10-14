@@ -4,8 +4,7 @@
 #include "game/core/SimplexNoise.hpp"
 #include "game/util/Random.hpp"
 
-PatchyShape::PatchyShape(double scale)
-    : scale(scale)
+PatchyShape::PatchyShape(double scale) : scale(scale)
 {
 }
 

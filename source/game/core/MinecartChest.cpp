@@ -21,14 +21,12 @@
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-MinecartChest::MinecartChest(Level* level)
-    : MinecartContainer(level)
+MinecartChest::MinecartChest(Level* level) : MinecartContainer(level)
 {
     fjDerivedCtorCalls();
 }
 
-MinecartChest::MinecartChest(Level* level, double x, double y, double z)
-    : MinecartContainer(level, x, y, z)
+MinecartChest::MinecartChest(Level* level, double x, double y, double z) : MinecartContainer(level, x, y, z)
 {
     fjDerivedCtorCalls();
 }
@@ -48,7 +46,7 @@ unsigned int MinecartChest::getContainerSize()
 }
 
 AbstractContainerMenu* MinecartChest::createMenu(boost::shared_ptr<Inventory> inventory,
-                                                   boost::shared_ptr<Player> player)
+                                                 boost::shared_ptr<Player> player)
 {
     unpackLootTable(player);
 

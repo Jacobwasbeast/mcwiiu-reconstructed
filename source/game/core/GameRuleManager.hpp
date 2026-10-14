@@ -34,8 +34,11 @@ public:
     static unsigned int CRC(unsigned char* data, int length);
     unsigned int addLevelGenerationOptions(LevelGenerationOptions* options);
     void readAttributes(DataInputStream* input, std::vector<std::wstring>* names, GameRuleDefinition* definition);
-    void readChildren(DataInputStream* input, std::vector<std::wstring>* names, boost::unordered_map<int, ConsoleGameRules::EGameRuleType>* types, GameRuleDefinition* definition);
-    unsigned int readRuleFile(LevelGenerationOptions* options, unsigned char* data, unsigned int size, StringTable* table);
+    void readChildren(DataInputStream* input, std::vector<std::wstring>* names,
+                      boost::unordered_map<int, ConsoleGameRules::EGameRuleType>* types,
+                      GameRuleDefinition* definition);
+    unsigned int readRuleFile(LevelGenerationOptions* options, unsigned char* data, unsigned int size,
+                              StringTable* table);
     void loadGameRules(DLCPack* pack);
     void loadGameRules(LevelGenerationOptions* options, unsigned char* data, unsigned int size);
     LevelGenerationOptions* loadGameRules(unsigned char* data, unsigned int size);

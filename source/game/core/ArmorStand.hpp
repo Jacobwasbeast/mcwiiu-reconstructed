@@ -37,9 +37,8 @@ public:
     class Pose
     {
     public:
-        Pose(const Vec3* head, const Vec3* body, const Vec3* rightArm,
-             const Vec3* leftArm, const Vec3* rightLeg, const Vec3* leftLeg,
-             const Vec3* rightItem);
+        Pose(const Vec3* head, const Vec3* body, const Vec3* rightArm, const Vec3* leftArm, const Vec3* rightLeg,
+             const Vec3* leftLeg, const Vec3* rightItem);
         Pose();
 
         Vec3* head;
@@ -92,14 +91,11 @@ public:
     const EquipmentSlot* getClickedSlot(const Vec3* hit);
     bool isDisabled(const EquipmentSlot* slot);
     void swapItem(const boost::shared_ptr<Player>& player, const EquipmentSlot* slot,
-                  const not_null_ptr<ItemInstance>& item,
-                  InteractionHand::EInteractionHand hand);
+                  const not_null_ptr<ItemInstance>& item, InteractionHand::EInteractionHand hand);
     bool isShowArms();
-    InteractionResult::EInteractionResult interactAt(const boost::shared_ptr<Player>& player,
-                                                     Vec3* hit,
+    InteractionResult::EInteractionResult interactAt(const boost::shared_ptr<Player>& player, Vec3* hit,
                                                      InteractionHand::EInteractionHand hand);
-    EInteraction test_interactAt(boost::shared_ptr<Player> player, Vec3* hit,
-                                 not_null_ptr<ItemInstance> item,
+    EInteraction test_interactAt(boost::shared_ptr<Player> player, Vec3* hit, not_null_ptr<ItemInstance> item,
                                  InteractionHand::EInteractionHand hand);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual unsigned int GetHitTooltip(const EntityTooltipDataHolder& tooltipData);

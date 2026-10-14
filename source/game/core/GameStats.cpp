@@ -147,7 +147,8 @@ unsigned int GameStats::GetRoundTime()
     {
         if (mRoundEndTime > 0)
             return Math::round(static_cast<float>(mRoundEndTime - mRoundStartTime) / MILLISECONDS_PER_SECOND);
-        return Math::round(static_cast<float>(System::processTimeInMilliSecs() - mRoundStartTime) / MILLISECONDS_PER_SECOND);
+        return Math::round(static_cast<float>(System::processTimeInMilliSecs() - mRoundStartTime)
+                           / MILLISECONDS_PER_SECOND);
     }
     return 0;
 }
@@ -167,7 +168,8 @@ void GameStats::AwardMG01Medals(const std::vector<boost::shared_ptr<ServerPlayer
     mSecondPlace.reset();
     mThirdPlace.reset();
 
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end();
+         ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
         PlayerStats* stats = GetPlayerStats(player->getSUID());
@@ -253,20 +255,23 @@ bool GameStats::SORT_MG02_STATS(PlayerStats* first, PlayerStats* second)
         return true;
     if (static_cast<unsigned int>(first->getTotalRoundsWon()) >= static_cast<unsigned int>(second->getTotalRoundsWon()))
     {
-        if (static_cast<unsigned int>(first->getTotalBlocksDestroyed()) > static_cast<unsigned int>(second->getTotalBlocksDestroyed()))
+        if (static_cast<unsigned int>(first->getTotalBlocksDestroyed())
+            > static_cast<unsigned int>(second->getTotalBlocksDestroyed()))
             return true;
-        if (static_cast<unsigned int>(first->getTotalBlocksDestroyed()) < static_cast<unsigned int>(second->getTotalBlocksDestroyed()))
+        if (static_cast<unsigned int>(first->getTotalBlocksDestroyed())
+            < static_cast<unsigned int>(second->getTotalBlocksDestroyed()))
             return false;
     }
     return false;
 }
 
-boost::shared_ptr<ServerPlayer> GameStats::getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats, unsigned int index)
+boost::shared_ptr<ServerPlayer> GameStats::getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats,
+                                                                 unsigned int index)
 {
     if (index < stats.size())
     {
-        boost::shared_ptr<ServerPlayer> player =
-            (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerFromStatsUID(stats.at(index)->mStatsUID);
+        boost::shared_ptr<ServerPlayer> player = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)
+                                                     ->getPlayerFromStatsUID(stats.at(index)->mStatsUID);
         return player;
     }
     return boost::shared_ptr<ServerPlayer>();
@@ -281,7 +286,8 @@ void GameStats::AwardMG02Medals(const std::vector<boost::shared_ptr<ServerPlayer
     mRoundWinner.reset();
     const int livesPerRound = CommonMasterGameMode::GetMiniGame()->GetLivesPerRound();
 
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end();
+         ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
         PlayerStats* stats = GetPlayerStats(player->getSUID());
@@ -336,7 +342,8 @@ void GameStats::AwardMG02Medals(const std::vector<boost::shared_ptr<ServerPlayer
     }
 
     std::vector<PlayerStats*> ranking;
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end();
+         ++it)
     {
         PlayerStats* stats = GetPlayerStats((*it)->getSUID());
         if (stats != NULL)
@@ -356,7 +363,8 @@ bool GameStats::SORT_MG03_STATS_FALLBACK(PlayerStats* first, PlayerStats* second
     if (first->getBestPoints(true, false) != second->getBestPoints(true, false))
         return first->getBestPoints(true, false) > second->getBestPoints(true, false);
     if (first->getTotalRoundsWon() != second->getTotalRoundsWon())
-        return static_cast<unsigned int>(first->getTotalRoundsWon()) > static_cast<unsigned int>(second->getTotalRoundsWon());
+        return static_cast<unsigned int>(first->getTotalRoundsWon())
+               > static_cast<unsigned int>(second->getTotalRoundsWon());
     if (first->getTotalDeaths() != second->getTotalDeaths())
         return first->getTotalDeaths() < second->getTotalDeaths();
     return first < second;
@@ -401,7 +409,8 @@ void GameStats::AwardMG03Medals(const std::vector<boost::shared_ptr<ServerPlayer
     mRoundWinner.reset();
 
     std::vector<PlayerStats*> ranking;
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end();
+         ++it)
     {
         PlayerStats* stats = GetPlayerStats((*it)->getSUID());
         if (stats != NULL)
@@ -410,7 +419,8 @@ void GameStats::AwardMG03Medals(const std::vector<boost::shared_ptr<ServerPlayer
     if (ranking.empty())
         return;
 
-    const bool scoreAttack = Minecraft::GetInstance()->GetMiniGame()->GetGameVariant() == MiniGameDef::eGlideVariant_ScoreAttack;
+    const bool scoreAttack = Minecraft::GetInstance()->GetMiniGame()->GetGameVariant()
+                             == MiniGameDef::eGlideVariant_ScoreAttack;
     std::sort(ranking.begin(), ranking.end(), scoreAttack ? SORT_MG03_STATS_POINTS : SORT_MG03_STATS_TIME);
     mFirstPlace = getPlayerFromStatsVec(ranking, 0);
     mSecondPlace = getPlayerFromStatsVec(ranking, 1);
@@ -418,8 +428,8 @@ void GameStats::AwardMG03Medals(const std::vector<boost::shared_ptr<ServerPlayer
     mRoundWinner = mFirstPlace.lock();
     ranking.front()->getRoundStats(mCurrentRound)->mWon = true;
 
-    const bool roundScoreAttack =
-        Minecraft::GetInstance()->GetMiniGame()->GetGameVariant() == MiniGameDef::eGlideVariant_ScoreAttack;
+    const bool roundScoreAttack = Minecraft::GetInstance()->GetMiniGame()->GetGameVariant()
+                                  == MiniGameDef::eGlideVariant_ScoreAttack;
     std::sort(ranking.begin(), ranking.end(),
               roundScoreAttack ? SORT_MG03_STATS_POINTS_CURRENT_ROUND : SORT_MG03_STATS_TIME_CURRENT_ROUND);
     for (unsigned int position = 0; position < ranking.size(); ++position)
@@ -439,14 +449,15 @@ void GameStats::AwardMG04Medals(const std::vector<boost::shared_ptr<ServerPlayer
 
 void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer> >* players, bool newRound)
 {
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end();
+         ++it)
     {
         PlayerStats* stats = GetPlayerStats((*it)->getSUID());
         if (stats == NULL)
             continue;
         for (int category = 0; category < eTimeSpentCategory_Count; ++category)
-            stats->getRoundStats(mCurrentRound)->MedalTimestamp(static_cast<eTimeSpentCategory>(category), false,
-                                                               System::processTimeInMilliSecs());
+            stats->getRoundStats(mCurrentRound)
+                ->MedalTimestamp(static_cast<eTimeSpentCategory>(category), false, System::processTimeInMilliSecs());
     }
 
     MasterGameMode* gameMode = gMinecraftServer->mMasterGameMode;
@@ -455,7 +466,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
         Voteable* scoring = gameMode->mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring);
         if (scoring != NULL)
         {
-            for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+            for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin();
+                 it != players->end(); ++it)
             {
                 std::map<int, int> scoresGiven = scoring->getVotesFromPlayer((*it)->mPlayerIndex);
                 std::map<int, int> scoresReceived = scoring->getVotesToVoteable((*it)->getTeam()->getTeamIndex());
@@ -467,7 +479,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
                 }
                 for (std::map<int, int>::const_iterator vote = scoresGiven.begin(); vote != scoresGiven.end(); ++vote)
                     ++round->mScoresGiven[vote->second];
-                for (std::map<int, int>::const_iterator vote = scoresReceived.begin(); vote != scoresReceived.end(); ++vote)
+                for (std::map<int, int>::const_iterator vote = scoresReceived.begin(); vote != scoresReceived.end();
+                     ++vote)
                     ++round->mScoresReceived[vote->second];
             }
         }
@@ -479,13 +492,16 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
         std::vector<PlayerTeam*>* teams = level->GetServerScoreboard()->getPlayerTeams();
         for (std::vector<PlayerTeam*>::iterator teamIt = teams->begin(); teamIt != teams->end(); ++teamIt)
         {
-            boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >* members = (*teamIt)->getPlayers();
+            boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >* members =
+                (*teamIt)->getPlayers();
             AABB* area = gameMode->GetTeamArea(*teamIt);
             BlockPos pos(0, 0, 0);
-            for (boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >::iterator member = members->begin();
+            for (boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >::iterator member =
+                     members->begin();
                  member != members->end(); ++member)
             {
-                boost::shared_ptr<ServerPlayer> builder = boost::dynamic_pointer_cast<ServerPlayer>(level->getPlayer(*member));
+                boost::shared_ptr<ServerPlayer> builder = boost::dynamic_pointer_cast<ServerPlayer>(
+                    level->getPlayer(*member));
                 for (int x = static_cast<int>(area->mMinX); x < static_cast<int>(area->mMaxX); ++x)
                 {
                     for (int y = static_cast<int>(area->mMinY); y < static_cast<int>(area->mMaxY); ++y)
@@ -514,7 +530,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
             int winningVotes = Voteable::NO_VOTE;
             themes->getWinningVote(winningVotes);
             mWinningThemeChoice = gameMode->getThemeWordEnglish(gameMode->mChosenThemeWordId);
-            for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+            for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin();
+                 it != players->end(); ++it)
             {
                 PlayerStats::RoundStats* round = GetPlayerStats((*it)->getSUID())->getRoundStats(mCurrentRound);
                 int themeVote = Voteable::NO_VOTE;
@@ -553,8 +570,11 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
 
     if (Minecraft::InMiniGame(eMiniGameId_Build, true))
     {
-        const int roundSeconds = static_cast<unsigned int>(std::floor(static_cast<double>(static_cast<long long>(System::processTimeInMilliSecs() - mRoundStartTime))) / MILLISECONDS_PER_SECOND_EXACT);
-        for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+        const int roundSeconds = static_cast<unsigned int>(
+            std::floor(static_cast<double>(static_cast<long long>(System::processTimeInMilliSecs() - mRoundStartTime)))
+            / MILLISECONDS_PER_SECOND_EXACT);
+        for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end();
+             ++it)
             GetPlayerStats((*it)->getSUID())->getRoundStats(mCurrentRound)->mLifeSpan = roundSeconds;
     }
 
@@ -579,7 +599,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
                 ++winStreak;
 
             unsigned int bestRivalWins = 0;
-            for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+            for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin();
+                 it != players->end(); ++it)
             {
                 PlayerStats* stats = GetPlayerStats((*it)->getSUID());
                 if (*it != mRoundWinner && stats != NULL
@@ -606,7 +627,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
 
     if (newRound)
     {
-        for (std::vector<const GameMedal*>::const_iterator medalIt = medalPool.begin(); medalIt != medalPool.end(); ++medalIt)
+        for (std::vector<const GameMedal*>::const_iterator medalIt = medalPool.begin(); medalIt != medalPool.end();
+             ++medalIt)
         {
             const GameMedal* medal = *medalIt;
             if (!medal->BestOnly())
@@ -638,7 +660,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
                 continue;
 
             int totalWeight = 0;
-            for (std::vector<const GameMedal*>::iterator medalIt = stats->mMedals.begin(); medalIt != stats->mMedals.end(); ++medalIt)
+            for (std::vector<const GameMedal*>::iterator medalIt = stats->mMedals.begin();
+                 medalIt != stats->mMedals.end(); ++medalIt)
                 totalWeight += (*medalIt)->GetWeight();
             stats->mMedalWeight = totalWeight;
 
@@ -646,13 +669,13 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
             while (!stats->mMedals.empty() && stats->mAwardedMedal == NULL)
             {
                 int weight = 0;
-                for (std::vector<const GameMedal*>::iterator medalIt = stats->mMedals.begin(); medalIt != stats->mMedals.end();
-                     ++medalIt)
+                for (std::vector<const GameMedal*>::iterator medalIt = stats->mMedals.begin();
+                     medalIt != stats->mMedals.end(); ++medalIt)
                     weight += (*medalIt)->GetWeight();
 
                 int roll = random.nextInt(weight);
-                for (std::vector<const GameMedal*>::iterator medalIt = stats->mMedals.begin(); medalIt != stats->mMedals.end();
-                     ++medalIt)
+                for (std::vector<const GameMedal*>::iterator medalIt = stats->mMedals.begin();
+                     medalIt != stats->mMedals.end(); ++medalIt)
                 {
                     roll -= (*medalIt)->GetWeight();
                     if (roll < 0)
@@ -676,7 +699,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
         }
     }
 
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end();
+         ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
         if (GetPlayerStats(player->getSUID()) == NULL)
@@ -701,7 +725,8 @@ void GameStats::AddPlayerStats(const boost::shared_ptr<ServerPlayer>& player)
 
 void GameStats::AddPlayers(const std::vector<boost::shared_ptr<ServerPlayer> >* players)
 {
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end();
+         ++it)
         AddPlayerStats(*it);
 }
 
@@ -755,7 +780,8 @@ void GameStats::OnRoundEnd()
     ++mCurrentRound;
     mRoundWinner = boost::shared_ptr<ServerPlayer>();
 
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players =
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
@@ -804,10 +830,12 @@ unsigned int GameStats::GetMaxSnowballHitsOnAnyPlayer(const StatsUID& uid)
     return 0;
 }
 
-void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry, boost::shared_ptr<ClientboundChatPacket> deathMessage)
+void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry,
+                             boost::shared_ptr<ClientboundChatPacket> deathMessage)
 {
     const int tick = gMinecraftServer->tickCount;
-    const Scoreboard::EDamageSource damageSource = Scoreboard::GetDamageSource(entry->getSource()->GetBaseDamageSource());
+    const Scoreboard::EDamageSource damageSource = Scoreboard::GetDamageSource(
+        entry->getSource()->GetBaseDamageSource());
     boost::shared_ptr<Entity> attacker = entry->getSource()->getEntity();
 
     Scoreboard::Weapon weapon;
@@ -817,7 +845,8 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
     }
     else if (entry->getSource()->isMagic())
     {
-        weapon = Scoreboard::Weapon(Item::getId(Items::splashPotion), Scoreboard::GetPotionByDamageSource(damageSource));
+        weapon = Scoreboard::Weapon(Item::getId(Items::splashPotion),
+                                    Scoreboard::GetPotionByDamageSource(damageSource));
     }
     else if (attacker != NULL && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, attacker->GetType()))
     {
@@ -839,7 +868,8 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
         PlayerStats* victimStats = GetPlayerStats(boost::static_pointer_cast<ServerPlayer>(entity)->getSUID());
         if (victimStats != NULL)
         {
-            const DamageEvent* lastPlayerDamage = victimStats->getRoundStats(mCurrentRound)->mLastPlayerDamage->getValue();
+            const DamageEvent* lastPlayerDamage =
+                victimStats->getRoundStats(mCurrentRound)->mLastPlayerDamage->getValue();
             if (lastPlayerDamage != NULL && lastPlayerDamage->mAttackerEntity != NULL
                 && tick - lastPlayerDamage->mTime < entity->mFallTicks + LAST_PLAYER_DAMAGE_GRACE_TICKS)
                 attacker = lastPlayerDamage->mAttackerEntity;
@@ -879,7 +909,8 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
         case ClientboundChatPacket::eChatPacketMessage_DeathTridentItem:
         case ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagicItem:
             if (deathMessage->getFirstInt() == EntityType::SERVER_PLAYER && deathMessage->strings.size() > 1)
-                attacker = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerByName(deathMessage->strings[1]);
+                attacker = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)
+                               ->getPlayerByName(deathMessage->strings[1]);
             break;
         default:
             break;
@@ -922,7 +953,8 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
     {
         boost::shared_ptr<ServerPlayer> killer = boost::dynamic_pointer_cast<ServerPlayer>(attacker);
         if (killer != NULL && killer->isStarving() && killer != boost::dynamic_pointer_cast<ServerPlayer>(entity))
-            killer->awardStat(GenericStats::youWontLikeMeWhenImHungry(), GenericStats::param_youWontLikeMeWhenImHungry());
+            killer->awardStat(GenericStats::youWontLikeMeWhenImHungry(),
+                              GenericStats::param_youWontLikeMeWhenImHungry());
     }
 
     if (!CGameNetworkManager::sInstance.IsInPublicJoinableGame())
@@ -952,7 +984,8 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
 
         if (Minecraft::InMiniGame(eMiniGameId_Tumble, true)
             && GetMaxSnowballHitsOnAnyPlayer(attackingPlayer->getSUID()) == TENACIOUS_BALL_HITS)
-            attackingPlayer->awardStat(GenericStats::tenaciousBall(), GenericStats::param_tenaciousBall(TENACIOUS_BALL_HITS));
+            attackingPlayer->awardStat(GenericStats::tenaciousBall(),
+                                       GenericStats::param_tenaciousBall(TENACIOUS_BALL_HITS));
     }
 }
 
@@ -977,7 +1010,8 @@ void GameStats::RecordDeath(boost::shared_ptr<Entity> entity)
     PlayerStats* stats = GetPlayerStats(player->getSUID());
     if (stats != NULL)
     {
-        PlayerStats::RoundStats::PerLifeStats* lifeStats = stats->getRoundStats(mCurrentRound)->getLifeStats(deathCount);
+        PlayerStats::RoundStats::PerLifeStats* lifeStats =
+            stats->getRoundStats(mCurrentRound)->getLifeStats(deathCount);
         const DamageEvent* fatalDamage = GetPlayerFatalDamage(player->getSUID());
         MasterGameMode* gameMode = gMinecraftServer->mMasterGameMode;
         const unsigned int livesPerRound = CommonMasterGameMode::GetMiniGame()->GetLivesPerRound();
@@ -985,7 +1019,9 @@ void GameStats::RecordDeath(boost::shared_ptr<Entity> entity)
         if (CommonMasterGameMode::GetMiniGame()->GetId() != eMiniGameId_Glide
             && CommonMasterGameMode::GetMiniGame()->GetLivesPerRound() == mRoundDeathCount)
             stats->getRoundStats(mCurrentRound)->mLifeSpan =
-                static_cast<unsigned int>(std::floor(static_cast<double>(static_cast<long long>(System::processTimeInMilliSecs() - mRoundStartTime))) / MILLISECONDS_PER_SECOND_EXACT)
+                static_cast<unsigned int>(std::floor(static_cast<double>(static_cast<long long>(
+                                              System::processTimeInMilliSecs() - mRoundStartTime)))
+                                          / MILLISECONDS_PER_SECOND_EXACT)
                 - mRoundDeathCount * DEATH_TIME_PENALTY_SECONDS;
 
         ++stats->getRoundStats(mCurrentRound)->mDeaths;
@@ -1010,7 +1046,8 @@ void GameStats::RecordDeath(boost::shared_ptr<Entity> entity)
             killedByPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, fatalDamage->mAttackerEntity->GetType());
         if (killedByPlayer)
         {
-            boost::shared_ptr<ServerPlayer> killer = boost::static_pointer_cast<ServerPlayer>(fatalDamage->mAttackerEntity);
+            boost::shared_ptr<ServerPlayer> killer = boost::static_pointer_cast<ServerPlayer>(
+                fatalDamage->mAttackerEntity);
             lifeStats->mKillerName = killer->getNetworkName();
             stats->getRoundStats(mCurrentRound)->mFatalWeapon = fatalDamage->mWeapon;
 
@@ -1021,8 +1058,10 @@ void GameStats::RecordDeath(boost::shared_ptr<Entity> entity)
                 {
                     ++killerStats->getRoundStats(mCurrentRound)->mKills;
                     killer->getLevel()->GetServerScoreboard()->OnPlayerStatsChanged(killer->getSUID(), deathCount);
-                    if (Minecraft::InMiniGame(eMiniGameId_Tumble, true) && killerStats->getTotalKills() == SUCK_MY_SNOWBALLS_KILLS)
-                        killer->awardStat(GenericStats::suckMySnowballs(), GenericStats::param_suckMySnowballs(SUCK_MY_SNOWBALLS_KILLS));
+                    if (Minecraft::InMiniGame(eMiniGameId_Tumble, true)
+                        && killerStats->getTotalKills() == SUCK_MY_SNOWBALLS_KILLS)
+                        killer->awardStat(GenericStats::suckMySnowballs(),
+                                          GenericStats::param_suckMySnowballs(SUCK_MY_SNOWBALLS_KILLS));
                 }
             }
         }
@@ -1096,7 +1135,8 @@ void GameStats::RecordContainer(const StatsUID& uid, int type, int x, int y, int
     if (containerCount != containers.size())
         return;
 
-    boost::shared_ptr<ServerPlayer> player = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerFromStatsUID(uid);
+    boost::shared_ptr<ServerPlayer> player =
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerFromStatsUID(uid);
     if (player != NULL)
         player->awardStat(GenericStats::mine(), GenericStats::param_mine());
 }
@@ -1278,16 +1318,21 @@ bool GameStats::RecordLastCheckpoint(const StatsUID& uid, int checkpoint, int se
             stats->getRoundStats(mCurrentRound)->mPoints += stats->getRoundStats(mCurrentRound)->mUnbankedPoints;
             stats->getRoundStats(mCurrentRound)->mUnbankedPoints = 0;
             if (stats->getRoundStats(mCurrentRound)->mLastPointsAdded != 0)
-                stats->getRoundStats(mCurrentRound)->mLastBankedPoints = stats->getRoundStats(mCurrentRound)->mLastPointsAdded;
+                stats->getRoundStats(mCurrentRound)->mLastBankedPoints =
+                    stats->getRoundStats(mCurrentRound)->mLastPointsAdded;
             stats->getRoundStats(mCurrentRound)->mLastPointsAdded = 0;
 
-            for (unsigned int target = 0; target < stats->getRoundStats(mCurrentRound)->mUnbankedTargets.size(); ++target)
-                stats->getRoundStats(mCurrentRound)->mBankedTargets.push_back(stats->getRoundStats(mCurrentRound)->mUnbankedTargets.at(target));
+            for (unsigned int target = 0; target < stats->getRoundStats(mCurrentRound)->mUnbankedTargets.size();
+                 ++target)
+                stats->getRoundStats(mCurrentRound)
+                    ->mBankedTargets.push_back(stats->getRoundStats(mCurrentRound)->mUnbankedTargets.at(target));
             stats->getRoundStats(mCurrentRound)->mUnbankedTargets.clear();
 
             for (int ring = 0; ring < PlayerStats::RoundStats::RING_SIZE_COUNT; ++ring)
-                stats->getRoundStats(mCurrentRound)->mBankedRings[ring] += stats->getRoundStats(mCurrentRound)->mUnbankedRings[ring];
-            std::memset(stats->getRoundStats(mCurrentRound)->mUnbankedRings, 0, sizeof(stats->getRoundStats(mCurrentRound)->mUnbankedRings));
+                stats->getRoundStats(mCurrentRound)->mBankedRings[ring] +=
+                    stats->getRoundStats(mCurrentRound)->mUnbankedRings[ring];
+            std::memset(stats->getRoundStats(mCurrentRound)->mUnbankedRings, 0,
+                        sizeof(stats->getRoundStats(mCurrentRound)->mUnbankedRings));
         }
 
         if (static_cast<unsigned int>(checkpoint) < mFarthestCheckpointReached)
@@ -1339,21 +1384,24 @@ void GameStats::RecordThermalEntered(const StatsUID& uid)
         ++stats->getRoundStats(mCurrentRound)->mThermalsEntered;
 }
 
-bool GameStats::RecordProgress(const StatsUID& uid, double sequenceProgress, double nearestDistance, double progress, double speed)
+bool GameStats::RecordProgress(const StatsUID& uid, double sequenceProgress, double nearestDistance, double progress,
+                               double speed)
 {
     PlayerStats* stats = GetPlayerStats(uid);
     if (stats == NULL || stats->getRoundStats(mCurrentRound)->mProgress == progress)
         return false;
 
     const double previousProgress = stats->getRoundStats(mCurrentRound)->mProgress;
-    stats->getRoundStats(mCurrentRound)->MedalTimestamp(eTimeSpentCategory_GoingBackwards, progress < previousProgress,
-                                                        System::processTimeInMilliSecs() - mRoundStartTime);
+    stats->getRoundStats(mCurrentRound)
+        ->MedalTimestamp(eTimeSpentCategory_GoingBackwards, progress < previousProgress,
+                         System::processTimeInMilliSecs() - mRoundStartTime);
     stats->getRoundStats(mCurrentRound)->mSequenceProgress = sequenceProgress;
     stats->getRoundStats(mCurrentRound)->mNearestDistance = nearestDistance;
     stats->getRoundStats(mCurrentRound)->mProgress = progress;
     stats->getRoundStats(mCurrentRound)->mTopSpeed = std::max(stats->getRoundStats(mCurrentRound)->mTopSpeed, speed);
     if (!stats->getRoundStats(mCurrentRound)->mReachedEnd)
-        stats->getRoundStats(mCurrentRound)->mLifeSpan = static_cast<int>(System::processTimeInMilliSecs() - mRoundStartTime);
+        stats->getRoundStats(mCurrentRound)->mLifeSpan = static_cast<int>(System::processTimeInMilliSecs()
+                                                                          - mRoundStartTime);
     return true;
 }
 
@@ -1374,7 +1422,8 @@ void GameStats::RecordTimeSpentInPosition(bool pointsActive)
     for (StatsMap::iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
     {
         PlayerStats::RoundStats* round = it->second->getRoundStats(mCurrentRound);
-        const double value = pointsActive ? static_cast<unsigned int>(round->mPoints + round->mUnbankedPoints) : round->mProgress;
+        const double value = pointsActive ? static_cast<unsigned int>(round->mPoints + round->mUnbankedPoints)
+                                          : round->mProgress;
         if (value > highest)
         {
             leader = it->first;
@@ -1431,7 +1480,8 @@ boost::shared_ptr<ServerPlayer> GameStats::GetLeadingPlayer()
     boost::shared_ptr<ServerPlayer> leader;
     double leaderProgress = NO_PROGRESS;
 
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players =
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
@@ -1454,7 +1504,8 @@ boost::shared_ptr<ServerPlayer> GameStats::GetTrailingPlayer(const boost::shared
     boost::shared_ptr<ServerPlayer> trailer;
     double trailerProgress = NO_PROGRESS;
 
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players =
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;

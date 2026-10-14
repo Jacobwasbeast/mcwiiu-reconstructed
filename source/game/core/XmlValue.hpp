@@ -9,10 +9,7 @@
 class XmlValue : public XmlConstruct
 {
 public:
-    XmlValue(const maybe<std::wstring>& value)
-        : m_value(value)
-    {
-    }
+    XmlValue(const maybe<std::wstring>& value) : m_value(value) {}
 
     virtual ~XmlValue() {}
     virtual bool isString() const;

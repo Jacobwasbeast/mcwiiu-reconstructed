@@ -3,8 +3,7 @@
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/XmlObject.hpp"
 
-TimerBasedCondition::TimerBasedCondition(const XmlObject& object)
-    : TimeCondition(object)
+TimerBasedCondition::TimerBasedCondition(const XmlObject& object) : TimeCondition(object)
 {
 }
 

@@ -15,8 +15,7 @@
 
 static const EntityDataAccessor<unsigned char>* DATA_ID_SCALE = NULL;
 
-Salmon::Salmon(Level* level)
-    : Fish(level, true)
+Salmon::Salmon(Level* level) : Fish(level, true)
 {
     fjDerivedCtorCalls();
     SalmonWeightedRandomize();
@@ -33,7 +32,7 @@ Entity* Salmon::create(Level* level)
 void Salmon::staticCtor()
 {
     DATA_ID_SCALE = SynchedEntityData::defineId(EntityType::SALMON, EntityType::WATER_ANIMAL,
-                                                 EntityDataSerializers::BYTE);
+                                                EntityDataSerializers::BYTE);
 }
 
 void Salmon::setSalmonScale(SalmonScale scale)

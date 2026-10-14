@@ -9,8 +9,7 @@
 #include <string>
 
 
-GameRules_UnsignedCharAttribute::GameRules_UnsignedCharAttribute(unsigned char* value)
-    : mValue(value)
+GameRules_UnsignedCharAttribute::GameRules_UnsignedCharAttribute(unsigned char* value) : mValue(value)
 {
 }
 
@@ -25,7 +24,8 @@ void GameRules_UnsignedCharAttribute::setValue(const std::wstring& value)
     *mValue = _fromString<int>(value);
 }
 
-void GameRules_UnsignedCharAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)
+void GameRules_UnsignedCharAttribute::save(ConsoleGameRules::EGameRuleAttr attribute,
+                                           GameRuleSaveInterface* saveInterface)
 {
     saveInterface->saveAttribute(attribute, _toString<unsigned char>(*mValue));
 }

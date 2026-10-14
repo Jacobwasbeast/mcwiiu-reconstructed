@@ -24,7 +24,8 @@ public:
     std::wstring getName();
     unsigned int GetPackId();
     DLCFile* getSkinFile(const std::wstring& name);
-    bool doesPackContainFile(DLCManager::EDLCType type, const std::wstring& name, bool searchParent, bool searchChildren);
+    bool doesPackContainFile(DLCManager::EDLCType type, const std::wstring& name, bool searchParent,
+                             bool searchChildren);
     bool doesPackContainSkin(const std::wstring& name);
     bool hasPurchasedPack();
     bool IsCorrupt();

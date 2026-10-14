@@ -14,10 +14,9 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-ChangeStateConstraint::ChangeStateConstraint(Tutorial* tutorial, eTutorial_State targetState,
-                                             eTutorial_State* states, unsigned int numStates,
-                                             double x0, double y0, double z0, double x1, double y1,
-                                             double z1, bool insideArea, bool changeGameType,
+ChangeStateConstraint::ChangeStateConstraint(Tutorial* tutorial, eTutorial_State targetState, eTutorial_State* states,
+                                             unsigned int numStates, double x0, double y0, double z0, double x1,
+                                             double y1, double z1, bool insideArea, bool changeGameType,
                                              const GameType* gameType)
     : TutorialConstraint(-1)
 {
@@ -69,8 +68,8 @@ void ChangeStateConstraint::tick(int playerId)
         }
     }
 
-    if (!stateChanged && inMatchingState &&
-        area->contains(minecraft->mLocalPlayers[playerId]->getPos(1.0f)) == insideArea)
+    if (!stateChanged && inMatchingState
+        && area->contains(minecraft->mLocalPlayers[playerId]->getPos(1.0f)) == insideArea)
     {
         stateChanged = true;
         previousState = tutorial->currentState;
@@ -78,32 +77,29 @@ void ChangeStateConstraint::tick(int playerId)
 
         if (changeGameType && minecraft->mGameModes[playerId] != NULL)
         {
-            previousGameType = minecraft->mLocalPlayers[playerId]->mAbilities.mInstabuild
-                                   ? GameType::CREATIVE
-                                   : GameType::SURVIVAL;
+            previousGameType = minecraft->mLocalPlayers[playerId]->mAbilities.mInstabuild ? GameType::CREATIVE
+                                                                                          : GameType::SURVIVAL;
 
             unsigned int privileges = minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
                 Player::ePlayerGamePrivilege_All);
             Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_CreativeMode,
                                            gameType == GameType::CREATIVE);
 
-            if (minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
-                    Player::ePlayerGamePrivilege_All) != privileges)
+            if (minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All)
+                != privileges)
             {
                 boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[playerId];
 
-                if (player && player->mPacketListener != NULL &&
-                    player->mPacketListener->getNetworkPlayer() != NULL)
+                if (player && player->mPacketListener != NULL && player->mPacketListener->getNetworkPlayer() != NULL)
                 {
                     player->mPacketListener->send(boost::shared_ptr<PlayerInfoPacket>(
-                        new PlayerInfoPacket(player->mPacketListener->getNetworkPlayer()->GetSmallId(),
-                                             -1, privileges, player->GetGameType()->getId())));
+                        new PlayerInfoPacket(player->mPacketListener->getNetworkPlayer()->GetSmallId(), -1, privileges,
+                                             player->GetGameType()->getId())));
                 }
             }
         }
     }
-    else if (stateChanged &&
-             area->contains(minecraft->mLocalPlayers[playerId]->getPos(1.0f)) != insideArea)
+    else if (stateChanged && area->contains(minecraft->mLocalPlayers[playerId]->getPos(1.0f)) != insideArea)
     {
         stateChanged = false;
         tutorial->changeTutorialState(previousState, NULL);
@@ -115,17 +111,16 @@ void ChangeStateConstraint::tick(int playerId)
             Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_CreativeMode,
                                            previousGameType == GameType::CREATIVE);
 
-            if (minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
-                    Player::ePlayerGamePrivilege_All) != privileges)
+            if (minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All)
+                != privileges)
             {
                 boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[playerId];
 
-                if (player && player->mPacketListener != NULL &&
-                    player->mPacketListener->getNetworkPlayer() != NULL)
+                if (player && player->mPacketListener != NULL && player->mPacketListener->getNetworkPlayer() != NULL)
                 {
                     player->mPacketListener->send(boost::shared_ptr<PlayerInfoPacket>(
-                        new PlayerInfoPacket(player->mPacketListener->getNetworkPlayer()->GetSmallId(),
-                                             -1, privileges, player->GetGameType()->getId())));
+                        new PlayerInfoPacket(player->mPacketListener->getNetworkPlayer()->GetSmallId(), -1, privileges,
+                                             player->GetGameType()->getId())));
                 }
             }
         }

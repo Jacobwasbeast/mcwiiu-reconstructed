@@ -1,7 +1,6 @@
 #include "game/core/LastKillTimeCondition.hpp"
 
-LastKillTimeCondition::LastKillTimeCondition(const XmlObject& object)
-    : TimeCondition(object)
+LastKillTimeCondition::LastKillTimeCondition(const XmlObject& object) : TimeCondition(object)
 {
 }
 

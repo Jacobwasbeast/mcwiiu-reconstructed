@@ -24,7 +24,7 @@
 #include "platform/wiiu/CProfile.hpp"
 extern C4JStorage* gStorage;
 
-GameSettings* gGameSettings[4] = { NULL, NULL, NULL, NULL };
+GameSettings* gGameSettings[4] = {NULL, NULL, NULL, NULL};
 unsigned char gDefaultActionMappings[3][25];
 unsigned char gSecondaryActionMappings[3][25];
 extern CInput* g_pInput;
@@ -200,49 +200,74 @@ void DefineActions()
         }
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuX, EJoypadButton_Face3);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuY, EJoypadButton_Face4);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuUp, EJoypadButton_LeftStickUp | EJoypadButton_DPadUp);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuDown, EJoypadButton_LeftStickDown | EJoypadButton_DPadDown);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuLeft, EJoypadButton_LeftStickLeft | EJoypadButton_DPadLeft);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuRight, EJoypadButton_LeftStickRight | EJoypadButton_DPadRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuUp,
+                                                  EJoypadButton_LeftStickUp | EJoypadButton_DPadUp);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuDown,
+                                                  EJoypadButton_LeftStickDown | EJoypadButton_DPadDown);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuLeft,
+                                                  EJoypadButton_LeftStickLeft | EJoypadButton_DPadLeft);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuRight,
+                                                  EJoypadButton_LeftStickRight | EJoypadButton_DPadRight);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuPageUp, EJoypadButton_LeftTrigger);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuPageDown, EJoypadButton_RightTrigger);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuRightScroll, EJoypadButton_RightBumper);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuLeftScroll, EJoypadButton_LeftBumper);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuPageDown,
+                                                  EJoypadButton_RightTrigger);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuRightScroll,
+                                                  EJoypadButton_RightBumper);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuLeftScroll,
+                                                  EJoypadButton_LeftBumper);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuStart, EJoypadButton_Start);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuBack, EJoypadButton_Back);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickUp, EJoypadButton_RightStickLeft);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickDown, EJoypadButton_RightStickRight);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickLeft, EJoypadButton_RightStickUp);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickRight, EJoypadButton_RightStickDown);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickUp,
+                                                  EJoypadButton_RightStickLeft);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickDown,
+                                                  EJoypadButton_RightStickRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickLeft,
+                                                  EJoypadButton_RightStickUp);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickRight,
+                                                  EJoypadButton_RightStickDown);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Jump, EJoypadButton_Face2);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveForward, EJoypadButton_LeftStickUp);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveBackward, EJoypadButton_LeftStickDown);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveForward,
+                                                  EJoypadButton_LeftStickUp);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveBackward,
+                                                  EJoypadButton_LeftStickDown);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveLeft, EJoypadButton_LeftStickLeft);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveRight, EJoypadButton_LeftStickRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveRight,
+                                                  EJoypadButton_LeftStickRight);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookUp, EJoypadButton_RightStickUp);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookDown, EJoypadButton_RightStickDown);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookLeft, EJoypadButton_RightStickLeft);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookRight, EJoypadButton_RightStickRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookDown,
+                                                  EJoypadButton_RightStickDown);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookLeft,
+                                                  EJoypadButton_RightStickLeft);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookRight,
+                                                  EJoypadButton_RightStickRight);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Use, EJoypadButton_LeftTrigger);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Action, EJoypadButton_RightTrigger);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_CycleHeldItemRight, EJoypadButton_RightBumper);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_CycleHeldItemLeft, EJoypadButton_LeftBumper);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_CycleHeldItemRight,
+                                                  EJoypadButton_RightBumper);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_CycleHeldItemLeft,
+                                                  EJoypadButton_LeftBumper);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Inventory, EJoypadButton_Face4);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Pause, EJoypadButton_Start);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Drop, EJoypadButton_Face1);
         if (controller == 0)
         {
             g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_Sneak, EJoypadButton_RightStickPress);
-            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_ChangeCameraMode, EJoypadButton_LeftStickPress);
-            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuStickPress, EJoypadButton_LeftStickPress);
-            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuOtherStickPress, EJoypadButton_RightStickPress);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_ChangeCameraMode,
+                                                      EJoypadButton_LeftStickPress);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuStickPress,
+                                                      EJoypadButton_LeftStickPress);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuOtherStickPress,
+                                                      EJoypadButton_RightStickPress);
         }
         else
         {
             g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Sneak, EJoypadButton_DPadDown);
-            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_ChangeCameraMode, EJoypadButton_DPadUp);
-            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuStickPress, EJoypadButton_LeftStickPress);
-            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickPress, EJoypadButton_RightStickPress);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_ChangeCameraMode,
+                                                      EJoypadButton_DPadUp);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuStickPress,
+                                                      EJoypadButton_LeftStickPress);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickPress,
+                                                      EJoypadButton_RightStickPress);
         }
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Crafting, EJoypadButton_Face3);
         g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Scoreboard, EJoypadButton_Back);
@@ -372,9 +397,8 @@ void GameSettings::UpdateActionMapping(int profile, int scheme, bool swapPrimary
 {
     for (int action = 0; action < 25; ++action)
     {
-        unsigned char value = g_pInput->IsPadClassicController(profile)
-            ? gSecondaryActionMappings[scheme][action]
-            : gDefaultActionMappings[scheme][action];
+        unsigned char value = g_pInput->IsPadClassicController(profile) ? gSecondaryActionMappings[scheme][action]
+                                                                        : gDefaultActionMappings[scheme][action];
         if (swapPrimaryButtons)
         {
             if (value == 1)
@@ -392,18 +416,31 @@ uint32_t GameSettings::GetInputButton(unsigned int value)
         return 0;
     if (value > 2)
     {
-        static const unsigned int buttons[15] =
-        {
-            0, 0, 0, EJoypadButton_Face3, EJoypadButton_Face4, EJoypadButton_DPadLeft, EJoypadButton_DPadRight, EJoypadButton_DPadUp,
-            EJoypadButton_DPadDown, EJoypadButton_RightBumper, EJoypadButton_LeftBumper, EJoypadButton_RightTrigger, EJoypadButton_LeftTrigger, EJoypadButton_RightStickPress, EJoypadButton_LeftStickPress
-        };
+        static const unsigned int buttons[15] = {0,
+                                                 0,
+                                                 0,
+                                                 EJoypadButton_Face3,
+                                                 EJoypadButton_Face4,
+                                                 EJoypadButton_DPadLeft,
+                                                 EJoypadButton_DPadRight,
+                                                 EJoypadButton_DPadUp,
+                                                 EJoypadButton_DPadDown,
+                                                 EJoypadButton_RightBumper,
+                                                 EJoypadButton_LeftBumper,
+                                                 EJoypadButton_RightTrigger,
+                                                 EJoypadButton_LeftTrigger,
+                                                 EJoypadButton_RightStickPress,
+                                                 EJoypadButton_LeftStickPress};
         if (value > 14)
             return 0;
         return buttons[value];
     }
     return value;
 }
-uint32_t GameSettings::GetActionVal(unsigned char value) { return GetInputButton(value & 15) | GetInputButton((value >> 4) & 255); }
+uint32_t GameSettings::GetActionVal(unsigned char value)
+{
+    return GetInputButton(value & 15) | GetInputButton((value >> 4) & 255);
+}
 void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -412,12 +449,12 @@ void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
     case eGameSetting_MusicVolume:
         if (profile == gProfile->GetPrimaryPad())
             minecraft->mOptions->set(Options::Option::music,
-                static_cast<float>(gGameSettings[profile]->mMusicVolume) / 100.0f);
+                                     static_cast<float>(gGameSettings[profile]->mMusicVolume) / 100.0f);
         return;
     case eGameSetting_SoundVolume:
         if (profile == gProfile->GetPrimaryPad())
             minecraft->mOptions->set(Options::Option::sound,
-                static_cast<float>(gGameSettings[profile]->mSoundVolume) / 100.0f);
+                                     static_cast<float>(gGameSettings[profile]->mSoundVolume) / 100.0f);
         return;
     case eGameSetting_Gamma:
         if (profile == gProfile->GetPrimaryPad())
@@ -435,37 +472,38 @@ void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
         return;
     case eGameSetting_GameSensitivity:
         minecraft->mOptions->set(Options::Option::sensitivity,
-            static_cast<float>(gGameSettings[profile]->mGameSensitivity) / 100.0f);
+                                 static_cast<float>(gGameSettings[profile]->mGameSensitivity) / 100.0f);
         return;
     case eGameSetting_SouthPaw:
+    {
+        const bool swapAnalogSticks = (gGameSettings[profile]->mPackedSettings & 0x80) != 0;
+        if (!swapAnalogSticks)
         {
-            const bool swapAnalogSticks = (gGameSettings[profile]->mPackedSettings & 0x80) != 0;
-            if (!swapAnalogSticks)
-            {
-                g_pInput->SetJoypadStickAxisMap(profile, 0, 0);
-                g_pInput->SetJoypadStickAxisMap(profile, 1, 1);
-                g_pInput->SetJoypadStickAxisMap(profile, 2, 2);
-                g_pInput->SetJoypadStickAxisMap(profile, 3, 3);
-                g_pInput->SetJoypadStickTriggerMap(profile, 0, 0);
-                g_pInput->SetJoypadStickTriggerMap(profile, 1, 1);
-            }
-            else
-            {
-                g_pInput->SetJoypadStickAxisMap(profile, 0, 2);
-                g_pInput->SetJoypadStickAxisMap(profile, 1, 3);
-                g_pInput->SetJoypadStickAxisMap(profile, 2, 0);
-                g_pInput->SetJoypadStickAxisMap(profile, 3, 1);
-                g_pInput->SetJoypadStickTriggerMap(profile, 0, 1);
-                g_pInput->SetJoypadStickTriggerMap(profile, 1, 0);
-            }
+            g_pInput->SetJoypadStickAxisMap(profile, 0, 0);
+            g_pInput->SetJoypadStickAxisMap(profile, 1, 1);
+            g_pInput->SetJoypadStickAxisMap(profile, 2, 2);
+            g_pInput->SetJoypadStickAxisMap(profile, 3, 3);
+            g_pInput->SetJoypadStickTriggerMap(profile, 0, 0);
+            g_pInput->SetJoypadStickTriggerMap(profile, 1, 1);
         }
+        else
+        {
+            g_pInput->SetJoypadStickAxisMap(profile, 0, 2);
+            g_pInput->SetJoypadStickAxisMap(profile, 1, 3);
+            g_pInput->SetJoypadStickAxisMap(profile, 2, 0);
+            g_pInput->SetJoypadStickAxisMap(profile, 3, 1);
+            g_pInput->SetJoypadStickTriggerMap(profile, 0, 1);
+            g_pInput->SetJoypadStickTriggerMap(profile, 1, 0);
+        }
+    }
         return;
     case eGameSetting_SplitScreenVertical:
         if (profile == gProfile->GetPrimaryPad())
             minecraft->updatePlayerViewportAssignments();
         return;
     case eGameSetting_DisplayMii:
-        if (minecraft->mLevel != NULL && CGameNetworkManager::sInstance.IsHost() && profile == gProfile->GetPrimaryPad())
+        if (minecraft->mLevel != NULL && CGameNetworkManager::sInstance.IsHost()
+            && profile == gProfile->GetPrimaryPad())
         {
             gApp.SetGameHostOption(eGameHostOption_Gamertags, (gGameSettings[profile]->mPackedSettings >> 3) & 1);
             gApp.SetXuiServerAction(profile, eXuiServerAction_ServerSettingChanged, NULL);
@@ -479,16 +517,16 @@ void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
         }
         return;
     case eGameSetting_SplitscreenNicknames:
-        {
-            if (minecraft->mLocalPlayers[0])
-                gConsoleUIController.DisplayGamertag(0, minecraft->mLocalPlayers[0]->mViewport != 0);
-            if (minecraft->mLocalPlayers[1])
-                gConsoleUIController.DisplayGamertag(1, minecraft->mLocalPlayers[1]->mViewport != 0);
-            if (minecraft->mLocalPlayers[2])
-                gConsoleUIController.DisplayGamertag(2, minecraft->mLocalPlayers[2]->mViewport != 0);
-            if (minecraft->mLocalPlayers[3])
-                gConsoleUIController.DisplayGamertag(3, minecraft->mLocalPlayers[3]->mViewport != 0);
-        }
+    {
+        if (minecraft->mLocalPlayers[0])
+            gConsoleUIController.DisplayGamertag(0, minecraft->mLocalPlayers[0]->mViewport != 0);
+        if (minecraft->mLocalPlayers[1])
+            gConsoleUIController.DisplayGamertag(1, minecraft->mLocalPlayers[1]->mViewport != 0);
+        if (minecraft->mLocalPlayers[2])
+            gConsoleUIController.DisplayGamertag(2, minecraft->mLocalPlayers[2]->mViewport != 0);
+        if (minecraft->mLocalPlayers[3])
+            gConsoleUIController.DisplayGamertag(3, minecraft->mLocalPlayers[3]->mViewport != 0);
+    }
         return;
     case eGameSetting_InterfaceOpacity:
         gConsoleUIController.RefreshTooltips(static_cast<unsigned int>(profile));
@@ -498,27 +536,30 @@ void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
                                                (gGameSettings[profile]->mPackedSettings & 0x8000) != 0);
         return;
     case eGameSetting_ControlMappings:
+    {
+        const int scheme = static_cast<int>(GetGameSettings(profile, eGameSetting_ControlScheme));
+        const bool swapPrimaryButtons = GetGameSettings(profile, eGameSetting_SecondaryControls) != 0;
+        if (scheme > 0 || swapPrimaryButtons)
         {
-            const int scheme = static_cast<int>(GetGameSettings(profile, eGameSetting_ControlScheme));
-            const bool swapPrimaryButtons = GetGameSettings(profile, eGameSetting_SecondaryControls) != 0;
-            if (scheme > 0 || swapPrimaryButtons)
-            {
-                UpdateActionMapping(profile, scheme, swapPrimaryButtons);
-                SetGameSettings(profile, eGameSetting_ControlScheme, 0);
-                SetGameSettings(profile, eGameSetting_SecondaryControls, 0);
-            }
-            for (int action = 0; action < 25; ++action)
-            {
-                g_pInput->SetGameJoypadMaps(profile, static_cast<unsigned char>(EControllerActions_Jump + action),
-                    GetActionVal(GetActionMapping(profile, action)));
-            }
+            UpdateActionMapping(profile, scheme, swapPrimaryButtons);
+            SetGameSettings(profile, eGameSetting_ControlScheme, 0);
+            SetGameSettings(profile, eGameSetting_SecondaryControls, 0);
         }
+        for (int action = 0; action < 25; ++action)
+        {
+            g_pInput->SetGameJoypadMaps(profile, static_cast<unsigned char>(EControllerActions_Jump + action),
+                                        GetActionVal(GetActionMapping(profile, action)));
+        }
+    }
         return;
     default:
         return;
     }
 }
-void GameSettings::SetSettingsChanged(int profile) { gGameSettings[profile]->mChanged = 1; }
+void GameSettings::SetSettingsChanged(int profile)
+{
+    gGameSettings[profile]->mChanged = 1;
+}
 template <typename T>
 void setGameSettingsHelper(int profile, eGameSetting setting, unsigned char value, T* field, T mask, unsigned int shift)
 {
@@ -708,8 +749,8 @@ void GameSettings::SetCustomisableControllerMapping(int profile, GameSettings* s
     for (int action = 0; action < 25; ++action)
     {
         settings->mActionMappings[action] = g_pInput->IsPadClassicController(profile)
-            ? gSecondaryActionMappings[0][action]
-            : gDefaultActionMappings[0][action];
+                                                ? gSecondaryActionMappings[0][action]
+                                                : gDefaultActionMappings[0][action];
     }
 }
 void GameSettings::updateToLatestVersionFrom(unsigned short version, int profile)
@@ -805,15 +846,13 @@ int GameSettings::OldProfileVersionCallback(void*, unsigned char* data, unsigned
 }
 void GameSettings::SetDefaultControls(C4JStorage::PROFILESETTINGS* values, int profile, bool changed)
 {
-    SetGameSettings(profile, eGameSetting_InvertLook,
-        static_cast<unsigned char>(values->values[0] != 0));
+    SetGameSettings(profile, eGameSetting_InvertLook, static_cast<unsigned char>(values->values[0] != 0));
     SetGameSettings(profile, eGameSetting_SouthPaw, values->flags);
 
     for (int action = 0; action < 25; ++action)
     {
-        unsigned char value = g_pInput->IsPadClassicController(profile)
-            ? gSecondaryActionMappings[0][action]
-            : gDefaultActionMappings[0][action];
+        unsigned char value = g_pInput->IsPadClassicController(profile) ? gSecondaryActionMappings[0][action]
+                                                                        : gDefaultActionMappings[0][action];
         SetActionMapping(profile, action, value);
         g_pInput->SetGameJoypadMaps(profile, static_cast<unsigned char>(EControllerActions_Jump + action),
                                     GetActionVal(value));
@@ -998,8 +1037,8 @@ uint32_t GameSettings::IsAllowedSkin(int profile)
         bool smallSkinBlocked = false;
         const bool skinIsFree = skinFile->getParameterAsBool(DLCManager::eDLCParameterType_Free);
         const bool licensed = pack->hasPurchasedPack();
-        if (Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() &&
-            (skinFile->getSkinAdjustments().mGameFlags & 1) != 0)
+        if (Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins()
+            && (skinFile->getSkinAdjustments().mGameFlags & 1) != 0)
             smallSkinBlocked = true;
         if ((skinIsFree || licensed) && !smallSkinBlocked)
             return 1;
@@ -1099,8 +1138,8 @@ void GameSettings::ValidateFavoriteSkins(int profile)
     {
         bool isDefaultSkin = false;
         bool hasPurchasedPack = false;
-        DLCFile* skinFile = gApp.mDLCManager.getSkinFile(static_cast<int>(GetPlayerFavoriteSkin(profile, static_cast<int>(i))),
-                                                            isDefaultSkin, hasPurchasedPack);
+        DLCFile* skinFile = gApp.mDLCManager.getSkinFile(
+            static_cast<int>(GetPlayerFavoriteSkin(profile, static_cast<int>(i))), isDefaultSkin, hasPurchasedPack);
         if (isDefaultSkin || (skinFile != NULL && (hasPurchasedPack || static_cast<DLCSkinFile*>(skinFile)->isFree())))
         {
             gGameSettings[profile]->mFavoriteSkins[validCount] = gGameSettings[profile]->mFavoriteSkins[i];
@@ -1126,9 +1165,20 @@ void GameSettings::SetBattleMiniGameMapSelection(int profile, unsigned int value
     current->mChanged = 1;
     current->mBattleMiniGameMap = value;
 }
-uint32_t GameSettings::GetBattleMiniGameMapSelection(int profile) { return gGameSettings[profile]->mBattleMiniGameMap; }
-void GameSettings::SetGlideMiniGameMapSelection(int profile, unsigned int value) { GameSettings* current = gGameSettings[profile]; current->mChanged = 1; current->mGlideMiniGameMap = value; }
-uint32_t GameSettings::GetGlideMiniGameMapSelection(int profile) { return gGameSettings[profile]->mGlideMiniGameMap; }
+uint32_t GameSettings::GetBattleMiniGameMapSelection(int profile)
+{
+    return gGameSettings[profile]->mBattleMiniGameMap;
+}
+void GameSettings::SetGlideMiniGameMapSelection(int profile, unsigned int value)
+{
+    GameSettings* current = gGameSettings[profile];
+    current->mChanged = 1;
+    current->mGlideMiniGameMap = value;
+}
+uint32_t GameSettings::GetGlideMiniGameMapSelection(int profile)
+{
+    return gGameSettings[profile]->mGlideMiniGameMap;
+}
 uint32_t GameSettings::GetTumbleMiniGameMapSelection()
 {
     if (SharedConstants::IS_HALLOWEEN_SEASON)
@@ -1137,8 +1187,18 @@ uint32_t GameSettings::GetTumbleMiniGameMapSelection()
         return 4;
     return SharedConstants::IS_CHRISTMAS_SEASON ? 8 : 1;
 }
-void GameSettings::SetMinecraftLanguage(int profile, unsigned char value) { GameSettings* current = gGameSettings[profile]; current->mChanged = 1; current->mMinecraftLanguage = value; }
-void GameSettings::SetMinecraftLocale(int profile, unsigned char value) { GameSettings* current = gGameSettings[profile]; current->mChanged = 1; current->mMinecraftLocale = value; }
+void GameSettings::SetMinecraftLanguage(int profile, unsigned char value)
+{
+    GameSettings* current = gGameSettings[profile];
+    current->mChanged = 1;
+    current->mMinecraftLanguage = value;
+}
+void GameSettings::SetMinecraftLocale(int profile, unsigned char value)
+{
+    GameSettings* current = gGameSettings[profile];
+    current->mChanged = 1;
+    current->mMinecraftLocale = value;
+}
 void GameSettings::SetGameSettings(int profile, eCustomGameModeHostOption option, unsigned int value)
 {
     const MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(eMiniGameId_Battle, true);
@@ -1157,9 +1217,17 @@ uint32_t GameSettings::GetGameSettings(eGameSetting setting)
 {
     return GetGameSettings(gProfile->GetPrimaryPad(), setting);
 }
-uint32_t GameSettings::GetGameSettingsDebugMask(int, bool) { return 0; }
-uint32_t GameSettings::IsDebugSettingEnabled(eDebugSetting, int) { return 0; }
-void GameSettings::SetGameSettingsDebugMask(int, unsigned int) { }
+uint32_t GameSettings::GetGameSettingsDebugMask(int, bool)
+{
+    return 0;
+}
+uint32_t GameSettings::IsDebugSettingEnabled(eDebugSetting, int)
+{
+    return 0;
+}
+void GameSettings::SetGameSettingsDebugMask(int, unsigned int)
+{
+}
 uint32_t GameSettings::GetLoggingMask()
 {
     int profile = gProfile->GetPrimaryPad();

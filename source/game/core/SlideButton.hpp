@@ -9,8 +9,7 @@
 class SlideButton : public Button
 {
 public:
-    SlideButton(int id, int x, int y, const Options::Option* option,
-                const std::wstring& message, float value);
+    SlideButton(int id, int x, int y, const Options::Option* option, const std::wstring& message, float value);
 
     virtual int getYImage(bool hovered);
     virtual void renderBg(Minecraft* minecraft, int mouseX, int mouseY);

@@ -2,15 +2,13 @@
 
 #include <cstring>
 
-IntBuffer::IntBuffer(unsigned int capacity)
-    : Buffer(capacity)
+IntBuffer::IntBuffer(unsigned int capacity) : Buffer(capacity)
 {
     mBuffer = new int[capacity];
     std::memset(mBuffer, 0, capacity * sizeof(int));
 }
 
-IntBuffer::IntBuffer(unsigned int capacity, int* data)
-    : Buffer(capacity)
+IntBuffer::IntBuffer(unsigned int capacity, int* data) : Buffer(capacity)
 {
     mBuffer = data;
     mIsWrapped = true;

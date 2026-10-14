@@ -43,8 +43,14 @@ void WitherSkull::staticCtor()
     DATA_DANGEROUS = SynchedEntityData::defineId<bool>(EntityType::WITHER_SKULL, EntityType::FIREBALL,
                                                        EntityDataSerializers::BOOLEAN);
 }
-void WitherSkull::addDataWalkers(DataFixerUpper* fixer) { Fireball::addDataWalkers(fixer, EntityType::WITHER_SKULL); }
-bool WitherSkull::isOnFire() { return false; }
+void WitherSkull::addDataWalkers(DataFixerUpper* fixer)
+{
+    Fireball::addDataWalkers(fixer, EntityType::WITHER_SKULL);
+}
+bool WitherSkull::isOnFire()
+{
+    return false;
+}
 float WitherSkull::getBlockExplosionResistance(Explosion* explosion, Level* level, const BlockPos& pos)
 {
     float resistance = Entity::getBlockExplosionResistance(explosion, level, pos);
@@ -56,9 +62,18 @@ float WitherSkull::getBlockExplosionResistance(Explosion* explosion, Level* leve
     }
     return resistance;
 }
-bool WitherSkull::isPickable() { return isDangerous(); }
-bool WitherSkull::isDangerous() { return mEntityData->get(DATA_DANGEROUS); }
-void WitherSkull::setDangerous(bool dangerous) { mEntityData->set(DATA_DANGEROUS, dangerous, true); }
+bool WitherSkull::isPickable()
+{
+    return isDangerous();
+}
+bool WitherSkull::isDangerous()
+{
+    return mEntityData->get(DATA_DANGEROUS);
+}
+void WitherSkull::setDangerous(bool dangerous)
+{
+    mEntityData->set(DATA_DANGEROUS, dangerous, true);
+}
 float WitherSkull::getInertia()
 {
     if (isDangerous())
@@ -92,23 +107,30 @@ void WitherSkull::onHit(const HitResult* result)
             if (duration != 0)
             {
                 boost::dynamic_pointer_cast<LivingEntity>(result->mEntity)
-                    ->addEffect(new MobEffectInstance(MobEffects::WITHER, duration * 20, 1), boost::shared_ptr<Entity>());
+                    ->addEffect(new MobEffectInstance(MobEffects::WITHER, duration * 20, 1),
+                                boost::shared_ptr<Entity>());
             }
         }
     }
-    mLevel->explode(shared_from_this(), mX, mY, mZ, 1.0f, false, mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING),
-                    false, false, false, -1.0f);
+    mLevel->explode(shared_from_this(), mX, mY, mZ, 1.0f, false,
+                    mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING), false, false, false, -1.0f);
     remove();
 }
 void WitherSkull::defineSynchedData()
 {
     mEntityData->createDateItem(DATA_DANGEROUS, false);
 }
-bool WitherSkull::shouldBurn() { return false; }
+bool WitherSkull::shouldBurn()
+{
+    return false;
+}
 std::vector<unsigned long long>* WitherSkull::getEntityTypesToIgnoreCollisionsWith()
 {
     std::vector<unsigned long long>* types = new std::vector<unsigned long long>;
     types->push_back(GetType());
     return types;
 }
-unsigned long long WitherSkull::GetType() { return EntityType::WITHER_SKULL; }
+unsigned long long WitherSkull::GetType()
+{
+    return EntityType::WITHER_SKULL;
+}

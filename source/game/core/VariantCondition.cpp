@@ -4,7 +4,8 @@
 #include "game/minigame/MiniGameDef.hpp"
 
 VariantCondition::VariantCondition(EMiniGameVariantId variant)
-    : MultiConditionMedal::MultiCondition(-1.0f, GameMedal::OPERATOR_EQUAL, false), mVariant(variant)
+    : MultiConditionMedal::MultiCondition(-1.0f, GameMedal::OPERATOR_EQUAL, false),
+      mVariant(variant)
 {
 }
 

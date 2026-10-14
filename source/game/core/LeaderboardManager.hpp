@@ -79,9 +79,12 @@ public:
     virtual void CloseSession() = 0;
     virtual void DeleteSession() = 0;
     virtual bool WriteStats(unsigned int uiNumScores, RegisterScore* pScores) = 0;
-    virtual bool ReadStats_Friends(LeaderboardReadListener* pReadListener, int iUserIndex, EStatsType eStatsType, PlayerUID uid, unsigned int uiStartRank, unsigned int uiNumRows);
-    virtual bool ReadStats_MyScore(LeaderboardReadListener* pReadListener, int iUserIndex, EStatsType eStatsType, PlayerUID uid, unsigned int uiNumRows);
-    virtual bool ReadStats_TopRank(LeaderboardReadListener* pReadListener, int iUserIndex, EStatsType eStatsType, unsigned int uiStartRank, unsigned int uiNumRows);
+    virtual bool ReadStats_Friends(LeaderboardReadListener* pReadListener, int iUserIndex, EStatsType eStatsType,
+                                   PlayerUID uid, unsigned int uiStartRank, unsigned int uiNumRows);
+    virtual bool ReadStats_MyScore(LeaderboardReadListener* pReadListener, int iUserIndex, EStatsType eStatsType,
+                                   PlayerUID uid, unsigned int uiNumRows);
+    virtual bool ReadStats_TopRank(LeaderboardReadListener* pReadListener, int iUserIndex, EStatsType eStatsType,
+                                   unsigned int uiStartRank, unsigned int uiNumRows);
     virtual void FlushStats() = 0;
     virtual void CancelOperation() = 0;
     virtual bool isIdle() = 0;

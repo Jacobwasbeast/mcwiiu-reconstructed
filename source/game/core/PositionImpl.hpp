@@ -6,12 +6,7 @@
 class PositionImpl : public Position
 {
 public:
-    PositionImpl(double x, double y, double z)
-        : mX(x)
-        , mY(y)
-        , mZ(z)
-    {
-    }
+    PositionImpl(double x, double y, double z) : mX(x), mY(y), mZ(z) {}
 
     virtual double getX();
     virtual double getY();

@@ -8,10 +8,9 @@
 class ControllerTask : public TutorialTask
 {
 public:
-    ControllerTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-                   bool showMinimumTime, int* mappings, unsigned int mappingCount,
-                   int* completionIdValues, int completionIdValueCount, int* alternateMappings,
-                   unsigned int alternateMappingCount);
+    ControllerTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled, bool showMinimumTime,
+                   int* mappings, unsigned int mappingCount, int* completionIdValues, int completionIdValueCount,
+                   int* alternateMappings, unsigned int alternateMappingCount);
     virtual ~ControllerTask();
 
     unsigned int CompletionMaskIsValid();

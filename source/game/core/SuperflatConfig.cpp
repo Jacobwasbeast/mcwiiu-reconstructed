@@ -8,8 +8,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 
-SuperflatConfig::SuperflatConfig()
-    : mDisplayname(), mVersion(0), layers(), mOptions()
+SuperflatConfig::SuperflatConfig() : mDisplayname(), mVersion(0), layers(), mOptions()
 {
     clear();
 }
@@ -58,7 +57,8 @@ void SuperflatConfig::setOption(unsigned char parameter, unsigned char option, u
 
 void SuperflatConfig::removeParam(unsigned char parameter)
 {
-    boost::unordered_map<unsigned char, boost::unordered_map<unsigned char, unsigned char> >::iterator it = mOptions.find(parameter);
+    boost::unordered_map<unsigned char, boost::unordered_map<unsigned char, unsigned char> >::iterator it =
+        mOptions.find(parameter);
     if (it != mOptions.end())
     {
         mOptions.erase(it);
@@ -126,11 +126,14 @@ arrayWithLength<unsigned char> SuperflatConfig::toBlob()
         stream.writeByte((unsigned char)layer->getHeight());
     }
     stream.writeByte((unsigned char)mOptions.size());
-    for (boost::unordered_map<unsigned char, boost::unordered_map<unsigned char, unsigned char> >::iterator parameter = mOptions.begin(); parameter != mOptions.end(); ++parameter)
+    for (boost::unordered_map<unsigned char, boost::unordered_map<unsigned char, unsigned char> >::iterator parameter =
+             mOptions.begin();
+         parameter != mOptions.end(); ++parameter)
     {
         stream.writeByte(parameter->first);
         stream.writeByte((unsigned char)parameter->second.size());
-        for (boost::unordered_map<unsigned char, unsigned char>::iterator option = parameter->second.begin(); option != parameter->second.end(); ++option)
+        for (boost::unordered_map<unsigned char, unsigned char>::iterator option = parameter->second.begin();
+             option != parameter->second.end(); ++option)
         {
             stream.writeByte(option->first);
             stream.writeByte(option->second);

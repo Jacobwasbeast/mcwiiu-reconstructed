@@ -3,7 +3,8 @@
 
 class Achievement;
 
-class Achievements {
+class Achievements
+{
 public:
     static void staticCtor();
     static void init();

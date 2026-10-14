@@ -5,8 +5,7 @@
 #include "game/network/ClientboundBossEventPacket.hpp"
 
 LerpingBossEvent::LerpingBossEvent(boost::shared_ptr<ClientboundBossEventPacket> packet)
-    : BossEvent(packet->getId(), packet->getNameId(), packet->getName(), packet->getColor(),
-                packet->getOverlay())
+    : BossEvent(packet->getId(), packet->getNameId(), packet->getName(), packet->getColor(), packet->getOverlay())
 {
     this->targetPercent = packet->getPercent();
     this->percent = packet->getPercent();

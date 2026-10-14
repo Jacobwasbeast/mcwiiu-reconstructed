@@ -6,10 +6,7 @@
 class TeamsCondition : public IntegerCondition
 {
 public:
-    TeamsCondition(const XmlObject& object)
-        : IntegerCondition(object)
-    {
-    }
+    TeamsCondition(const XmlObject& object) : IntegerCondition(object) {}
 
     virtual ~TeamsCondition();
     virtual void AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const;

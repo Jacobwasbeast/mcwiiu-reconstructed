@@ -25,9 +25,7 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-MG03ScoreboardLayout::MG03ScoreboardLayout(EScoreboardType type)
-    : IScoreboardLayout()
-    , m_type(type)
+MG03ScoreboardLayout::MG03ScoreboardLayout(EScoreboardType type) : IScoreboardLayout(), m_type(type)
 {
 }
 
@@ -328,7 +326,8 @@ std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
     return L"";
 }
 
-not_null_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type)
+not_null_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value,
+                                                                const EScoreboardType& type)
 {
     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
     if (type == EScoreboardType_Scoreboard && row != -1)
@@ -366,8 +365,8 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* b
     MG03PlayerInfo* info = static_cast<MG03PlayerInfo*>(baseInfo);
     IScoreboardLayout::BuildPlayerInfo(player, info);
 
-    boost::shared_ptr<AbstractClientPlayer> localPlayer =
-        Minecraft::GetInstance()->GetLocalPlayerByName(player->GetOnlineName());
+    boost::shared_ptr<AbstractClientPlayer> localPlayer = Minecraft::GetInstance()->GetLocalPlayerByName(
+        player->GetOnlineName());
 
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     ClientMasterGameMode* gameMode = Minecraft::GetInstance()->GetClientMasterGameMode();

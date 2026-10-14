@@ -62,8 +62,10 @@ EnderMan::EnderMan(Level* level) : Monster(level)
 
 void EnderMan::staticCtor()
 {
-    DATA_CARRIED_BLOCK = SynchedEntityData::defineId<const BlockState*>(EntityType::ENDER_MAN, EntityType::MONSTER, EntityDataSerializers::BLOCK_STATE);
-    DATA_CREEPY = SynchedEntityData::defineId<bool>(EntityType::ENDER_MAN, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
+    DATA_CARRIED_BLOCK = SynchedEntityData::defineId<const BlockState*>(EntityType::ENDER_MAN, EntityType::MONSTER,
+                                                                        EntityDataSerializers::BLOCK_STATE);
+    DATA_CREEPY = SynchedEntityData::defineId<bool>(EntityType::ENDER_MAN, EntityType::MONSTER,
+                                                    EntityDataSerializers::BOOLEAN);
     sCarriableBlocks.insert(Blocks::grass);
     sCarriableBlocks.insert(Blocks::dirt);
     sCarriableBlocks.insert(Blocks::sand);
@@ -201,9 +203,8 @@ bool EnderMan::isLookingAtMe(boost::shared_ptr<Player> player)
         return false;
 
     Vec3* view = player->getViewVector(1.0f)->normalize();
-    Vec3* delta = Vec3::newTemp(mX - player->mX,
-                                     mBoundingBox->mMinY + getEyeHeight() - (player->mY + player->getEyeHeight()),
-                                     mZ - player->mZ);
+    Vec3* delta = Vec3::newTemp(
+        mX - player->mX, mBoundingBox->mMinY + getEyeHeight() - (player->mY + player->getEyeHeight()), mZ - player->mZ);
     const double distance = delta->length();
     Vec3* toEnderMan = delta->normalize();
     if (view->dot(toEnderMan) > 1.0 - 0.025 / distance)
@@ -264,8 +265,8 @@ void EnderMan::customServerAiStep()
         float brightness = (float)getBrightness();
         if (brightness > 0.5f)
         {
-            int shouldTeleport = mLevel->canSeeSky(BlockPos(shared_from_this())) &&
-                                  mRandom->nextFloat() * 30.0f < 2.0f * (brightness - 0.4f);
+            int shouldTeleport = mLevel->canSeeSky(BlockPos(shared_from_this()))
+                                 && mRandom->nextFloat() * 30.0f < 2.0f * (brightness - 0.4f);
             if (shouldTeleport)
             {
                 setTarget(boost::shared_ptr<LivingEntity>());
@@ -280,16 +281,26 @@ bool EnderMan::teleportTowards(boost::shared_ptr<Entity> entity)
 {
     Vec3* direction = Vec3::newTemp(mX - entity->mX,
                                     mBoundingBox->mMinY + mBbHeight / 2.0f - entity->mY + entity->getEyeHeight(),
-                                    mZ - entity->mZ)->normalize();
+                                    mZ - entity->mZ)
+                          ->normalize();
     double x = mX + (mRandom->nextDouble() - 0.5) * 8.0 - direction->x * 16.0;
     double y = mY + (mRandom->nextInt(16) - 8) - direction->y * 16.0;
     double z = mZ + (mRandom->nextDouble() - 0.5) * 8.0 - direction->z * 16.0;
     return teleport(x, y, z);
 }
 
-const SoundEvent* EnderMan::getAmbientSound() { return isCreepy() ? SoundEvents::ENDERMEN_SCREAM : SoundEvents::ENDERMEN_AMBIENT; }
-const SoundEvent* EnderMan::getHurtSound(const DamageSource*) { return SoundEvents::ENDERMEN_HURT; }
-const SoundEvent* EnderMan::getDeathSound() { return SoundEvents::ENDERMEN_DEATH; }
+const SoundEvent* EnderMan::getAmbientSound()
+{
+    return isCreepy() ? SoundEvents::ENDERMEN_SCREAM : SoundEvents::ENDERMEN_AMBIENT;
+}
+const SoundEvent* EnderMan::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::ENDERMEN_HURT;
+}
+const SoundEvent* EnderMan::getDeathSound()
+{
+    return SoundEvents::ENDERMEN_DEATH;
+}
 void EnderMan::dropEquipment(bool wasRecentlyHit, int lootingModifier)
 {
     Monster::dropEquipment(wasRecentlyHit, lootingModifier);
@@ -305,7 +316,10 @@ void EnderMan::dropEquipment(bool wasRecentlyHit, int lootingModifier)
         spawnAtLocation(not_null_ptr<ItemInstance>(stack), 0.0f);
     }
 }
-ResourceLocation* EnderMan::getDefaultLootTable() { return &BuiltInLootTables::ENDERMAN; }
+ResourceLocation* EnderMan::getDefaultLootTable()
+{
+    return &BuiltInLootTables::ENDERMAN;
+}
 
 bool EnderMan::hurt(const DamageSource* source, float damage)
 {
@@ -332,10 +346,17 @@ Entity* EnderMan::create(Level* level)
 {
     return new EnderMan(level);
 }
-unsigned long long EnderMan::GetType() { return EntityType::ENDER_MAN; }
+unsigned long long EnderMan::GetType()
+{
+    return EntityType::ENDER_MAN;
+}
 
-EnderMan::EndermanLeaveBlockGoal::EndermanLeaveBlockGoal(EnderMan* enderMan) : mEnderMan(enderMan) { }
-EnderMan::EndermanLeaveBlockGoal::~EndermanLeaveBlockGoal() { }
+EnderMan::EndermanLeaveBlockGoal::EndermanLeaveBlockGoal(EnderMan* enderMan) : mEnderMan(enderMan)
+{
+}
+EnderMan::EndermanLeaveBlockGoal::~EndermanLeaveBlockGoal()
+{
+}
 bool EnderMan::EndermanLeaveBlockGoal::canUse()
 {
     if (mEnderMan->getCarryingBlock() == NULL)
@@ -378,10 +399,14 @@ void EnderMan::EndermanLeaveBlockGoal::tick()
         mEnderMan->setCarryingBlock(NULL);
     }
 }
-std::wstring EnderMan::EndermanLeaveBlockGoal::getName() { return std::wstring(L"EndermanLeaveBlock"); }
+std::wstring EnderMan::EndermanLeaveBlockGoal::getName()
+{
+    return std::wstring(L"EndermanLeaveBlock");
+}
 
 EnderMan::EndermanLookForPlayerGoal::EndermanLookForPlayerGoal(EnderMan* enderMan)
-    : NearestAttackableTargetGoal(enderMan, typeid(Player), true, false, false), mEnderMan(enderMan)
+    : NearestAttackableTargetGoal(enderMan, typeid(Player), true, false, false),
+      mEnderMan(enderMan)
 {
 }
 
@@ -435,8 +460,8 @@ void EnderMan::EndermanLookForPlayerGoal::tick()
     boost::shared_ptr<Entity> target = NearestAttackableTargetGoal::mTarget.lock();
     if (target != NULL)
     {
-        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()) &&
-            mEnderMan->isLookingAtMe(boost::static_pointer_cast<Player>(target)))
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType())
+            && mEnderMan->isLookingAtMe(boost::static_pointer_cast<Player>(target)))
         {
             if (target->distanceToSqr(mEnderMan->shared_from_this()) < 16.0)
                 mEnderMan->teleport();
@@ -455,8 +480,12 @@ void EnderMan::EndermanLookForPlayerGoal::tick()
     Goal::tick();
 }
 
-EnderMan::EndermanTakeBlockGoal::EndermanTakeBlockGoal(EnderMan* enderMan) : mEnderMan(enderMan) { }
-EnderMan::EndermanTakeBlockGoal::~EndermanTakeBlockGoal() { }
+EnderMan::EndermanTakeBlockGoal::EndermanTakeBlockGoal(EnderMan* enderMan) : mEnderMan(enderMan)
+{
+}
+EnderMan::EndermanTakeBlockGoal::~EndermanTakeBlockGoal()
+{
+}
 bool EnderMan::EndermanTakeBlockGoal::canUse()
 {
     if (mEnderMan->getCarryingBlock() != NULL)
@@ -479,8 +508,7 @@ void EnderMan::EndermanTakeBlockGoal::tick()
     Block* block = state->getBlock();
     Vec3* from = Vec3::newTemp(std::floor(mEnderMan->mX) + 0.5, static_cast<float>(y) + 0.5f,
                                std::floor(mEnderMan->mZ) + 0.5);
-    Vec3* to = Vec3::newTemp(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
-                             static_cast<float>(z) + 0.5f);
+    Vec3* to = Vec3::newTemp(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f, static_cast<float>(z) + 0.5f);
     HitResult* hit = level->clip(from, to, false, true, false, false, NULL, false);
     bool hitMatchesPos = hit != NULL && hit->getBlockPos().equals(pos);
     bool carriable = sCarriableBlocks.find(block) != sCarriableBlocks.end();
@@ -492,4 +520,7 @@ void EnderMan::EndermanTakeBlockGoal::tick()
     if (hit != NULL)
         delete hit;
 }
-std::wstring EnderMan::EndermanTakeBlockGoal::getName() { return L"EndermanTakeBlock"; }
+std::wstring EnderMan::EndermanTakeBlockGoal::getName()
+{
+    return L"EndermanTakeBlock";
+}

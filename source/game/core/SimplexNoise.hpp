@@ -17,8 +17,10 @@ public:
     static double dot(int* grad, double x, double y, double z);
     double getValue(double x, double y);
     double getValue(double x, double y, double z);
-    void add(arrayWithLength<double> values, double x, double y, int xSize, int ySize, double xScale, double yScale, double noiseScale);
-    void add(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize, double xScale, double yScale, double zScale, double noiseScale);
+    void add(arrayWithLength<double> values, double x, double y, int xSize, int ySize, double xScale, double yScale,
+             double noiseScale);
+    void add(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize,
+             double xScale, double yScale, double zScale, double noiseScale);
 
     static int grad3[12][3];
     static double F2;

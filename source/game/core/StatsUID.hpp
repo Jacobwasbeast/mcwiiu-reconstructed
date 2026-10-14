@@ -10,9 +10,7 @@ class INetworkPlayer;
 class StatsUID : public PlayerUID
 {
 public:
-    StatsUID()
-    {
-    }
+    StatsUID() {}
 
     StatsUID(const PlayerUID& uid);
 

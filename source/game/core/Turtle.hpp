@@ -60,7 +60,8 @@ public:
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     bool isTravelling();
     virtual bool breathesWater();
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& dataString);
     virtual bool checkSpawnRules();
     virtual bool isPushedByWater();
     virtual bool isWaterMob();

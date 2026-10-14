@@ -14,7 +14,8 @@ FileOutputStream::FileOutputStream(const File& file)
     if (!file.exists() || !file.isDirectory())
     {
         char buffer[256];
-        mFile = CreateFileA(wstringtofilename(file.getPath(), buffer), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+        mFile = CreateFileA(wstringtofilename(file.getPath(), buffer), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
+                            FILE_ATTRIBUTE_NORMAL, 0);
     }
 }
 

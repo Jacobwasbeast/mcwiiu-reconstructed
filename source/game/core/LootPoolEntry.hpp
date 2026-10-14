@@ -15,24 +15,19 @@ class Random;
 class LootPoolEntry
 {
 public:
-    LootPoolEntry(int weight,
-                  int quality,
-                  std::vector<LootItemCondition*>* conditions,
-                  LootTableEntry* entry);
+    LootPoolEntry(int weight, int quality, std::vector<LootItemCondition*>* conditions, LootTableEntry* entry);
 
-    void createItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                    Random* random,
-                    LootTableContext& context);
+    void createItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random, LootTableContext& context);
     uint32_t getWeight(float luck);
 
-    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                                 Random* random,
+    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random,
                                  LootTableContext& context) = 0;
 
     std::vector<LootItemCondition*>* mConditions;
     LootTableEntry* mEntry;
     int mWeight;
     int mQuality;
+
 protected:
     LootPoolEntry() {}
 };

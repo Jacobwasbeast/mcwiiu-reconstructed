@@ -7,9 +7,8 @@
 class ChoiceTask : public TutorialTask
 {
 public:
-    ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool preCompletionEnabled,
-               int firstInput, int secondInput, eTutorial_CompletionAction completionAction,
-               ETelemetryChallenges telemetryChallenge);
+    ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool preCompletionEnabled, int firstInput,
+               int secondInput, eTutorial_CompletionAction completionAction, ETelemetryChallenges telemetryChallenge);
     virtual ~ChoiceTask() {}
 
     virtual int getPromptId();

@@ -23,7 +23,8 @@ public:
 
     unsigned int getWidth();
     unsigned int getHeight();
-    void getRGB(int x, int y, int width, int height, arrayWithLength<int> rgbArray, int offset, int scansize, int mipLevel);
+    void getRGB(int x, int y, int width, int height, arrayWithLength<int> rgbArray, int offset, int scansize,
+                int mipLevel);
     int* getData();
     int* getData(int mipLevel);
     void* getGraphics();

@@ -2,9 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-TotalThermalsEnteredCondition::TotalThermalsEnteredCondition(float target,
-                                                             GameMedal::EOperator op,
-                                                             bool bestOnly)
+TotalThermalsEnteredCondition::TotalThermalsEnteredCondition(float target, GameMedal::EOperator op, bool bestOnly)
     : MultiConditionMedal::MultiCondition(target, op, bestOnly)
 {
 }

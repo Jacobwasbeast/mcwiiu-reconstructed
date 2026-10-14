@@ -15,18 +15,12 @@ DecimalFormat* Stat::decimalFormat = new DecimalFormat(L"%0(3).2f");
 boost::unordered_map<int, Stat*>* Stat::statsById = new boost::unordered_map<int, Stat*>();
 std::vector<Stat*>* Stat::stats = new std::vector<Stat*>();
 
-Stat::Stat(int id, const std::wstring& name, StatFormatter* formatter)
-    : id(id),
-      name(name),
-      formatter(formatter)
+Stat::Stat(int id, const std::wstring& name, StatFormatter* formatter) : id(id), name(name), formatter(formatter)
 {
     _init();
 }
 
-Stat::Stat(int id, const std::wstring& name)
-    : id(id),
-      name(name),
-      formatter(defaultFormatter)
+Stat::Stat(int id, const std::wstring& name) : id(id), name(name), formatter(defaultFormatter)
 {
     _init();
 }
@@ -73,8 +67,7 @@ bool Stat::isArmourStat()
     return armourStat;
 }
 
-void Stat::handleParamBlob(boost::shared_ptr<LocalPlayer> player,
-                           arrayWithLength<unsigned char> params)
+void Stat::handleParamBlob(boost::shared_ptr<LocalPlayer> player, arrayWithLength<unsigned char> params)
 {
 }
 

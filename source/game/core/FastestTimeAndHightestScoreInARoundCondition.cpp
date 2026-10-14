@@ -18,9 +18,8 @@ FastestTimeAndHightestScoreInARoundCondition::~FastestTimeAndHightestScoreInARou
 {
 }
 
-bool FastestTimeAndHightestScoreInARoundCondition::canAward(const GameMedal* medal,
-                                                             const StatsUID& uid,
-                                                             GameStats* gameStats) const
+bool FastestTimeAndHightestScoreInARoundCondition::canAward(const GameMedal* medal, const StatsUID& uid,
+                                                            GameStats* gameStats) const
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
     if (playerStats == NULL)

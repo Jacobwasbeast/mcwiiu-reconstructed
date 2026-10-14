@@ -8,8 +8,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-Giant::Giant(Level* level)
-    : Monster(level)
+Giant::Giant(Level* level) : Monster(level)
 {
     fjDerivedCtorCalls();
     setSize(mBbWidth * 6.0f, mBbHeight * 6.0f);

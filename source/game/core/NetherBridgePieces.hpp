@@ -72,19 +72,18 @@ public:
         virtual void addAdditionalSaveData(DataOutputStream* output);
         int updatePieceWeight(std::list<PieceWeight*>* weights);
         StructurePiece* generatePiece(StartPiece* start, std::list<PieceWeight*>* weights,
-                                      std::vector<StructurePiece*>* pieces, Random& random,
-                                      int x, int y, int z, const Direction* direction, int depth);
+                                      std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                      const Direction* direction, int depth);
         StructurePiece* generateAndAddPiece(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random,
-                                            int x, int y, int z, const Direction* direction, int depth,
-                                            bool isCastle);
+                                            int x, int y, int z, const Direction* direction, int depth, bool isCastle);
         StructurePiece* generateChildForward(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random,
                                              int offsetX, int offsetY, bool isCastle);
         StructurePiece* generateChildLeft(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random,
                                           int offsetY, int offsetXZ, bool isCastle);
         StructurePiece* generateChildRight(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random,
                                            int offsetY, int offsetXZ, bool isCastle);
-        void generateLightPost(Level* level, Random& random, BoundingBox* box, int x, int y, int z,
-                               int xOffset, int zOffset);
+        void generateLightPost(Level* level, Random& random, BoundingBox* box, int x, int y, int z, int xOffset,
+                               int zOffset);
         void generateLightPostFacingRight(Level* level, Random& random, BoundingBox* box, int x, int y, int z);
         void generateLightPostFacingLeft(Level* level, Random& random, BoundingBox* box, int x, int y, int z);
         void generateLightPostFacingUp(Level* level, Random& random, BoundingBox* box, int x, int y, int z);

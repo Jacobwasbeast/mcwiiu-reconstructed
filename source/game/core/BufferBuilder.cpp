@@ -340,8 +340,8 @@ void BufferBuilder::vertexNoBounds(float x, float y, float z)
 
     if (mUseCompactVertices)
     {
-        unsigned short packedColor = (unsigned short)(((mColor >> 17) & 0x7C00) | ((mColor >> 14) & 0x03E0) |
-                                                      ((mColor >> 11) & 0x001F));
+        unsigned short packedColor = (unsigned short)(((mColor >> 17) & 0x7C00) | ((mColor >> 14) & 0x03E0)
+                                                      | ((mColor >> 11) & 0x001F));
         if ((mColor & 0xFF) == 0xFF)
         {
             packedColor = (unsigned short)(packedColor | 0x8000);
@@ -476,13 +476,10 @@ void BufferBuilder::vertexUVSkinned(float x, float y, float z, float u, float v,
     vertex(x, y, z);
 }
 
-void BufferBuilder::blockRainQuad(float x0, float y0, float z0, float u0, float v0,
-                                  float x1, float y1, float z1, float u1, float v1,
-                                  float x2, float y2, float z2, float u2, float v2,
-                                  float x3, float y3, float z3, float u3, float v3,
-                                  float red0, float green0, float blue0, float alpha0,
-                                  float red1, float green1, float blue1, float alpha1,
-                                  int brightness)
+void BufferBuilder::blockRainQuad(float x0, float y0, float z0, float u0, float v0, float x1, float y1, float z1,
+                                  float u1, float v1, float x2, float y2, float z2, float u2, float v2, float x3,
+                                  float y3, float z3, float u3, float v3, float red0, float green0, float blue0,
+                                  float alpha0, float red1, float green1, float blue1, float alpha1, int brightness)
 {
     mHasTexture = true;
     mHasBrightness = true;
@@ -495,8 +492,8 @@ void BufferBuilder::blockRainQuad(float x0, float y0, float z0, float u0, float 
     mRawBufferIndex += 32;
     mVertexCount += 4;
 
-    int color0 = ((int)(red0 * 255.0f) << 24) | ((int)(green0 * 255.0f) << 16) | ((int)(blue0 * 255.0f) << 8) |
-                 (int)(alpha0 * 255.0f);
+    int color0 = ((int)(red0 * 255.0f) << 24) | ((int)(green0 * 255.0f) << 16) | ((int)(blue0 * 255.0f) << 8)
+                 | (int)(alpha0 * 255.0f);
 
     mBounds.addVert(x0 + mXOffset, y0 + mYOffset, z0 + mZOffset);
     positions[0] = x0 + mXOffset;
@@ -516,8 +513,8 @@ void BufferBuilder::blockRainQuad(float x0, float y0, float z0, float u0, float 
     vertexData[13] = color0;
     vertexData[15] = brightness;
 
-    int color1 = ((int)(red1 * 255.0f) << 24) | ((int)(green1 * 255.0f) << 16) | ((int)(blue1 * 255.0f) << 8) |
-                 (int)(alpha1 * 255.0f);
+    int color1 = ((int)(red1 * 255.0f) << 24) | ((int)(green1 * 255.0f) << 16) | ((int)(blue1 * 255.0f) << 8)
+                 | (int)(alpha1 * 255.0f);
 
     mBounds.addVert(x2 + mXOffset, y2 + mYOffset, z2 + mZOffset);
     positions[16] = x2 + mXOffset;
@@ -642,8 +639,7 @@ void BufferBuilder::fixupVertexColor(int colorValue, int index)
 
 void BufferBuilder::fixupVertexColor(float red, float green, float blue, int index)
 {
-    int colorValue = ((int)(red * 255.0f) << 24) | ((int)(green * 255.0f) << 16) |
-                     ((int)(blue * 255.0f) << 8) | 255;
+    int colorValue = ((int)(red * 255.0f) << 24) | ((int)(green * 255.0f) << 16) | ((int)(blue * 255.0f) << 8) | 255;
     fixupVertexColor(colorValue, index);
 }
 
@@ -680,8 +676,7 @@ void BufferBuilder::fixupQuadColor(int colorValue)
 
 void BufferBuilder::fixupQuadColor(float red, float green, float blue)
 {
-    int colorValue = ((int)(red * 255.0f) << 24) | ((int)(green * 255.0f) << 16) |
-                     ((int)(blue * 255.0f) << 8) | 255;
+    int colorValue = ((int)(red * 255.0f) << 24) | ((int)(green * 255.0f) << 16) | ((int)(blue * 255.0f) << 8) | 255;
     fixupQuadColor(colorValue);
 }
 

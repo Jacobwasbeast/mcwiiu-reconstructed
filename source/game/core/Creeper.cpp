@@ -51,9 +51,12 @@ Creeper::Creeper(Level* level) : Monster(level)
 
 void Creeper::staticCtor()
 {
-    DATA_SWELL_DIR = SynchedEntityData::defineId<int>(EntityType::CREEPER, EntityType::MONSTER, EntityDataSerializers::INT);
-    DATA_IS_POWERED = SynchedEntityData::defineId<bool>(EntityType::CREEPER, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
-    DATA_IS_IGNITED = SynchedEntityData::defineId<bool>(EntityType::CREEPER, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
+    DATA_SWELL_DIR = SynchedEntityData::defineId<int>(EntityType::CREEPER, EntityType::MONSTER,
+                                                      EntityDataSerializers::INT);
+    DATA_IS_POWERED = SynchedEntityData::defineId<bool>(EntityType::CREEPER, EntityType::MONSTER,
+                                                        EntityDataSerializers::BOOLEAN);
+    DATA_IS_IGNITED = SynchedEntityData::defineId<bool>(EntityType::CREEPER, EntityType::MONSTER,
+                                                        EntityDataSerializers::BOOLEAN);
 }
 
 void Creeper::_init()
@@ -86,7 +89,8 @@ void Creeper::registerAttributes()
 
 int Creeper::getMaxFallDistance()
 {
-    if (!getTarget()) return 3;
+    if (!getTarget())
+        return 3;
     return (int)(getHealth() - 1.0f) + 3;
 }
 
@@ -94,7 +98,8 @@ void Creeper::causeFallDamage(float fallDistance, float damageMultiplier)
 {
     LivingEntity::causeFallDamage(fallDistance, damageMultiplier);
     mSwell += (int)(fallDistance * 1.5f);
-    if (mSwell > mMaxSwell - 5) mSwell = mMaxSwell - 5;
+    if (mSwell > mMaxSwell - 5)
+        mSwell = mMaxSwell - 5;
 }
 
 void Creeper::defineSynchedData()
@@ -118,7 +123,8 @@ bool Creeper::isIgnited()
 void Creeper::addAdditonalSaveData(CompoundTag* tag)
 {
     Mob::addAdditonalSaveData(tag);
-    if (mEntityData->get(DATA_IS_POWERED)) tag->putBoolean(L"powered", true);
+    if (mEntityData->get(DATA_IS_POWERED))
+        tag->putBoolean(L"powered", true);
     tag->putShort(L"Fuse", (short)mMaxSwell);
     tag->putByte(L"ExplosionRadius", (char)mExplosionRadius);
     tag->putBoolean(L"ignited", isIgnited());
@@ -133,9 +139,12 @@ void Creeper::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
     mEntityData->set(DATA_IS_POWERED, tag->getBoolean(L"powered"), true);
-    if (tag->contains(L"Fuse", Tag::TAG_ANY_NUMERIC)) mMaxSwell = tag->getShort(L"Fuse");
-    if (tag->contains(L"ExplosionRadius", Tag::TAG_ANY_NUMERIC)) mExplosionRadius = tag->getByte(L"ExplosionRadius");
-    if (tag->getBoolean(L"ignited")) ignite();
+    if (tag->contains(L"Fuse", Tag::TAG_ANY_NUMERIC))
+        mMaxSwell = tag->getShort(L"Fuse");
+    if (tag->contains(L"ExplosionRadius", Tag::TAG_ANY_NUMERIC))
+        mExplosionRadius = tag->getByte(L"ExplosionRadius");
+    if (tag->getBoolean(L"ignited"))
+        ignite();
 }
 
 int Creeper::getSwellDir()
@@ -175,8 +184,8 @@ void Creeper::explodeCreeper()
         bool mobGriefing = mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING);
         float power = isPowered() ? 2.0f : 1.0f;
         mDead = true;
-        mLevel->explode(shared_from_this(), mX, mY, mZ, (float)mExplosionRadius * power,
-                        false, mobGriefing, false, false, false, -1.0f);
+        mLevel->explode(shared_from_this(), mX, mY, mZ, (float)mExplosionRadius * power, false, mobGriefing, false,
+                        false, false, -1.0f);
         remove();
         spawnLingeringCloud();
     }
@@ -188,11 +197,14 @@ void Creeper::tick()
     mOldSwell = mSwell;
     if (isAlive())
     {
-        if (isIgnited()) setSwellDir(1);
+        if (isIgnited())
+            setSwellDir(1);
         int swellDir = getSwellDir();
-        if (swellDir > 0 && mSwell == 0) playSound(SoundEvents::CREEPER_PRIMED, 1.0f, 0.5f);
+        if (swellDir > 0 && mSwell == 0)
+            playSound(SoundEvents::CREEPER_PRIMED, 1.0f, 0.5f);
         mSwell += swellDir;
-        if (mSwell < 0) mSwell = 0;
+        if (mSwell < 0)
+            mSwell = 0;
         if (mSwell >= mMaxSwell)
         {
             mSwell = mMaxSwell;
@@ -203,15 +215,24 @@ void Creeper::tick()
     PIXEndNamedEvent();
 }
 
-const SoundEvent* Creeper::getHurtSound(const DamageSource* source) { return SoundEvents::CREEPER_HURT; }
-const SoundEvent* Creeper::getDeathSound() { return SoundEvents::CREEPER_DEATH; }
+const SoundEvent* Creeper::getHurtSound(const DamageSource* source)
+{
+    return SoundEvents::CREEPER_HURT;
+}
+const SoundEvent* Creeper::getDeathSound()
+{
+    return SoundEvents::CREEPER_DEATH;
+}
 
 bool Creeper::canDropMobsSkull()
 {
     return mDroppedSkulls < 1 && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT);
 }
 
-void Creeper::increaseDroppedSkulls() { ++mDroppedSkulls; }
+void Creeper::increaseDroppedSkulls()
+{
+    ++mDroppedSkulls;
+}
 
 void Creeper::die(const DamageSource* source)
 {
@@ -237,17 +258,18 @@ void Creeper::die(const DamageSource* source)
         }
     }
 
-    if (source->getDirectEntity() != NULL
-        && eTYPE_DERIVED_FROM(EntityType::ARROW, source->getDirectEntity()->GetType())
-        && source->getEntity() != NULL
-        && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
+    if (source->getDirectEntity() != NULL && eTYPE_DERIVED_FROM(EntityType::ARROW, source->getDirectEntity()->GetType())
+        && source->getEntity() != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
     {
         boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(source->getEntity());
         player->awardStat(GenericStats::archer(), GenericStats::param_archer());
     }
 }
 
-bool Creeper::doHurtTarget(boost::shared_ptr<Entity> target) { return true; }
+bool Creeper::doHurtTarget(boost::shared_ptr<Entity> target)
+{
+    return true;
+}
 
 bool Creeper::isPowered()
 {
@@ -259,7 +281,10 @@ float Creeper::getSwelling(float partialTicks)
     return ((float)mOldSwell + (float)(mSwell - mOldSwell) * partialTicks) / (float)(mMaxSwell - 2);
 }
 
-ResourceLocation* Creeper::getDefaultLootTable() { return &BuiltInLootTables::CREEPER; }
+ResourceLocation* Creeper::getDefaultLootTable()
+{
+    return &BuiltInLootTables::CREEPER;
+}
 
 void Creeper::thunderHit(const LightningBolt* lightning)
 {
@@ -269,7 +294,8 @@ void Creeper::thunderHit(const LightningBolt* lightning)
 
 unsigned int Creeper::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::FLINT_AND_STEEL) return IDS_TOOLTIPS_IGNITE;
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::FLINT_AND_STEEL)
+        return IDS_TOOLTIPS_IGNITE;
     return IDS_NONE;
 }
 
@@ -278,8 +304,8 @@ bool Creeper::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
     if (!item->isEmpty() && item->getItem() == Items::flintAndSteel)
     {
-        mLevel->playSound(player, mX + 0.5, mY + 0.5, mZ + 0.5, SoundEvents::FLINTANDSTEEL_USE,
-                          getSoundSource(), 1.0f, mRandom->nextFloat() * 0.4f + 0.8f, 16.0f);
+        mLevel->playSound(player, mX + 0.5, mY + 0.5, mZ + 0.5, SoundEvents::FLINTANDSTEEL_USE, getSoundSource(), 1.0f,
+                          mRandom->nextFloat() * 0.4f + 0.8f, 16.0f);
         player->swing(hand);
         if (!mLevel->mIsClientSide)
         {
@@ -291,7 +317,10 @@ bool Creeper::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
     return Mob::mobInteract(player, hand);
 }
 
-unsigned long long Creeper::GetType() { return EntityType::CREEPER; }
+unsigned long long Creeper::GetType()
+{
+    return EntityType::CREEPER;
+}
 
 Entity* Creeper::create(Level* level)
 {

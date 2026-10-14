@@ -1,7 +1,6 @@
 #include "game/core/AmbientCreature.hpp"
 
-AmbientCreature::AmbientCreature(Level* level)
-    : Mob(level)
+AmbientCreature::AmbientCreature(Level* level) : Mob(level)
 {
 }
 

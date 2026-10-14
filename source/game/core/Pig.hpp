@@ -50,8 +50,7 @@ public:
     virtual ResourceLocation* getDefaultLootTable();
     virtual bool removeWhenFarAway();
     virtual bool canBeControlledByRider();
-    virtual bool mobInteract(const boost::shared_ptr<Player>& player,
-                             InteractionHand::EInteractionHand hand);
+    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual bool isFood(const not_null_ptr<ItemInstance>& itemInstance);
 

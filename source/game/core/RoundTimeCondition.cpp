@@ -5,8 +5,7 @@
 #include "game/core/XmlObject.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 
-RoundTimeCondition::RoundTimeCondition(const XmlObject& object)
-    : TimerBasedCondition(object)
+RoundTimeCondition::RoundTimeCondition(const XmlObject& object) : TimerBasedCondition(object)
 {
 }
 

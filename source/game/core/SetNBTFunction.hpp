@@ -12,7 +12,8 @@ class SetNBTFunction : public LootItemFunction
 public:
     SetNBTFunction(std::vector<LootItemCondition*>* conditions, CompoundTag* tag);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context);
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
+                                             LootTableContext& context);
 
 private:
     CompoundTag* tag;

@@ -5,8 +5,10 @@
 
 namespace NS_JobConnectEndPoint_CPP
 {
-    void ConnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultConnect, const nn::nex::UserContext* pUserContext);
-    void DisconnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultDisconnect, const nn::nex::UserContext* pUserContext);
+void ConnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultConnect,
+                     const nn::nex::UserContext* pUserContext);
+void DisconnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultDisconnect,
+                        const nn::nex::UserContext* pUserContext);
 }
 
 #endif

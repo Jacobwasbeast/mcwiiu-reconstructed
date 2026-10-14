@@ -41,17 +41,11 @@ public:
         arrayWithLength<Boxed*> mResults;
     };
 
-    Product(std::vector<const std::vector<Boxed*>*>* iterables)
-        : mIterables(iterables)
-    {
-    }
+    Product(std::vector<const std::vector<Boxed*>*>* iterables) : mIterables(iterables) {}
 
     virtual ~Product();
 
-    ProductIterator* iterator()
-    {
-        return new ProductIterator(mIterables);
-    }
+    ProductIterator* iterator() { return new ProductIterator(mIterables); }
 
 private:
     std::vector<const std::vector<Boxed*>*>* mIterables;

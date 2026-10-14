@@ -41,6 +41,7 @@ public:
         virtual void stop();
         virtual void tick();
         virtual std::wstring getName() { return L"ShulkerAttack"; }
+
     private:
         Shulker* mShulker;
         int mAttackTime;
@@ -52,6 +53,7 @@ public:
         ShulkerBodyControl(Shulker* shulker);
         virtual ~ShulkerBodyControl();
         virtual void clientTick();
+
     private:
         Shulker* mShulker;
     };
@@ -72,6 +74,7 @@ public:
         virtual bool canUse();
         virtual AABB* getTargetSearchArea(double distance);
         virtual std::wstring getName() { return L"ShulkerNearestAttack"; }
+
     private:
         Shulker* mShulker;
     };
@@ -87,6 +90,7 @@ public:
         virtual void stop();
         virtual void tick();
         virtual std::wstring getName() { return L"ShulkerPeak"; }
+
     private:
         Shulker* mShulker;
         int mPeekTime;
@@ -95,7 +99,8 @@ public:
     Shulker(Level* level);
     static Entity* create(Level* level);
     static void staticCtor();
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& name);
     virtual void registerGoals();
     virtual bool makeStepSound();
     virtual SoundSource::ESoundSource getSoundSource();

@@ -2,8 +2,7 @@
 
 #include "game/core/Voteable.hpp"
 
-Voteables::Voteables()
-    : mVoteables(11)
+Voteables::Voteables() : mVoteables(11)
 {
     mVoteables = boost::unordered_map<int, Voteable*>(11);
 }

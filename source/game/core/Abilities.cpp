@@ -5,25 +5,21 @@
 #include "game/data/CompoundTag.hpp"
 
 Abilities::Abilities()
-    : mInvulnerable(false)
-    , mFlying(false)
-    , mMayfly(false)
-    , mInstabuild(false)
-    , mMayBuild(true)
-    , mFlyingSpeed(0.05f)
-    , mWalkingSpeed(0.1f)
+    : mInvulnerable(false),
+      mFlying(false),
+      mMayfly(false),
+      mInstabuild(false),
+      mMayBuild(true),
+      mFlyingSpeed(0.05f),
+      mWalkingSpeed(0.1f)
 {
 }
 
 bool Abilities::operator==(const Abilities& other) const
 {
-    return mInvulnerable == other.mInvulnerable
-        && mFlying == other.mFlying
-        && mMayfly == other.mMayfly
-        && mInstabuild == other.mInstabuild
-        && mMayBuild == other.mMayBuild
-        && mFlyingSpeed == other.mFlyingSpeed
-        && mWalkingSpeed == other.mWalkingSpeed;
+    return mInvulnerable == other.mInvulnerable && mFlying == other.mFlying && mMayfly == other.mMayfly
+           && mInstabuild == other.mInstabuild && mMayBuild == other.mMayBuild && mFlyingSpeed == other.mFlyingSpeed
+           && mWalkingSpeed == other.mWalkingSpeed;
 }
 
 void Abilities::addSaveData(CompoundTag* tag)

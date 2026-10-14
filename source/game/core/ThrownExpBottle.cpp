@@ -10,8 +10,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-ThrownExpBottle::ThrownExpBottle(Level* level)
-    : ThrowableProjectile(level)
+ThrownExpBottle::ThrownExpBottle(Level* level) : ThrowableProjectile(level)
 {
     _init();
 }
@@ -22,8 +21,7 @@ ThrownExpBottle::ThrownExpBottle(Level* level, boost::shared_ptr<LivingEntity> o
     _init();
 }
 
-ThrownExpBottle::ThrownExpBottle(Level* level, double x, double y, double z)
-    : ThrowableProjectile(level, x, y, z)
+ThrownExpBottle::ThrownExpBottle(Level* level, double x, double y, double z) : ThrowableProjectile(level, x, y, z)
 {
     _init();
 }
@@ -38,14 +36,14 @@ bool ThrownExpBottle::onHit(const HitResult* result)
     Projectile::onHit(result);
     if (!mLevel->mIsClientSide)
     {
-        mLevel->levelEvent(LevelEvent::PARTICLES_SPELL_POTION_SPLASH, BlockPos(shared_from_this()), PotionUtils::getColor(Potions::WATER));
+        mLevel->levelEvent(LevelEvent::PARTICLES_SPELL_POTION_SPLASH, BlockPos(shared_from_this()),
+                           PotionUtils::getColor(Potions::WATER));
         int experience = 3 + mLevel->mRandom->nextInt(5) + mLevel->mRandom->nextInt(5);
         while (experience > 0)
         {
             int value = ExperienceOrb::getExperienceValue(experience);
             experience -= value;
-            mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(new ExperienceOrb(
-                mLevel, mX, mY, mZ, value)));
+            mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(new ExperienceOrb(mLevel, mX, mY, mZ, value)));
         }
         remove();
     }

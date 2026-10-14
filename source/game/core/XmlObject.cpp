@@ -9,8 +9,7 @@
 
 XmlObject gXmlObjectNull(L"");
 
-XmlObject::XmlObject(const std::wstring& name)
-    : mName(name)
+XmlObject::XmlObject(const std::wstring& name) : mName(name)
 {
     m_children = std::vector<XmlChild>();
     m_attrs = std::vector<std::pair<std::wstring, std::wstring> >();
@@ -75,7 +74,8 @@ const XmlChild& XmlObject::operator[](int index) const
 
 XmlValue XmlObject::operator[](const std::wstring& name) const
 {
-    for (std::vector<std::pair<std::wstring, std::wstring> >::const_iterator attribute = m_attrs.begin(); attribute != m_attrs.end(); ++attribute)
+    for (std::vector<std::pair<std::wstring, std::wstring> >::const_iterator attribute = m_attrs.begin();
+         attribute != m_attrs.end(); ++attribute)
         if (equalsIgnoreCase(name, attribute->first))
             return XmlValue(maybe<std::wstring>(std::wstring(attribute->second)));
     return XmlValue(maybe<std::wstring>());
@@ -96,7 +96,8 @@ std::wstring XmlObject::toString(int indent, bool formatted) const
     std::wstring output(indent, L'\t');
     output += L"<";
     output += mName;
-    for (std::vector<std::pair<std::wstring, std::wstring> >::const_iterator attribute = m_attrs.begin(); attribute != m_attrs.end(); ++attribute)
+    for (std::vector<std::pair<std::wstring, std::wstring> >::const_iterator attribute = m_attrs.begin();
+         attribute != m_attrs.end(); ++attribute)
     {
         output += L" ";
         output += attribute->first;

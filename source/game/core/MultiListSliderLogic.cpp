@@ -7,12 +7,19 @@
 #include "game/ui/UIString.hpp"
 
 MultiListSliderLogic::MultiListSliderLogic()
-    : mLabelId(0), mDescriptionId(0), mOption(eCustomGameModeHostOption_NoSmallSkins), mMiniGameId(eMiniGameId_Lobby)
+    : mLabelId(0),
+      mDescriptionId(0),
+      mOption(eCustomGameModeHostOption_NoSmallSkins),
+      mMiniGameId(eMiniGameId_Lobby)
 {
 }
 
-MultiListSliderLogic::MultiListSliderLogic(int labelId, int descriptionId, EMiniGameId miniGameId, eCustomGameModeHostOption option)
-    : mLabelId(labelId), mDescriptionId(descriptionId), mOption(option), mMiniGameId(miniGameId)
+MultiListSliderLogic::MultiListSliderLogic(int labelId, int descriptionId, EMiniGameId miniGameId,
+                                           eCustomGameModeHostOption option)
+    : mLabelId(labelId),
+      mDescriptionId(descriptionId),
+      mOption(option),
+      mMiniGameId(miniGameId)
 {
 }
 

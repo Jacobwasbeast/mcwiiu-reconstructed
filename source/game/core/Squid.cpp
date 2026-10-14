@@ -225,7 +225,7 @@ void Squid::spawnInkParticles()
     for (int i = 0; i < count; ++i)
     {
         Vec3* direction = randomInkDir()->multiply(0.1, 0.1, 0.1);
-        int inkData[1] = { inkValue };
+        int inkData[1] = {inkValue};
         mLevel->addParticle(PARTICLE_INK, mX, mY, mZ, direction->x, direction->y, direction->z,
                             arrayWithLength<int>(inkData, 1));
     }
@@ -233,7 +233,7 @@ void Squid::spawnInkParticles()
     for (int i = 0; i < 5; ++i)
     {
         Vec3* direction = randomInkDir();
-        int bubbleData[4] = { 0, 1, 244, 1 };
+        int bubbleData[4] = {0, 1, 244, 1};
         mLevel->addParticle(PARTICLE_BUBBLE, mX, mY, mZ, direction->x, direction->y, direction->z,
                             arrayWithLength<int>(bubbleData, 4));
     }
@@ -327,4 +327,3 @@ void Squid::SquidRandomMovementGoal::tick()
         mSquid->setMovementVector(x, y, z);
     }
 }
-

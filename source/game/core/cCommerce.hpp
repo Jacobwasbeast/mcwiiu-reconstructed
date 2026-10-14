@@ -24,7 +24,8 @@ public:
     virtual bool OwnsBundleContainingPack(unsigned int packId);
     virtual unsigned int PurchaseDLCByPackID(unsigned int packId);
     virtual unsigned int HasPurchased(unsigned int index, bool* purchased, bool* available);
-    virtual unsigned int GetDLCProductInfo(cProductInfo** productInfo, unsigned int* count, unsigned int index, bool includeUnavailable);
+    virtual unsigned int GetDLCProductInfo(cProductInfo** productInfo, unsigned int* count, unsigned int index,
+                                           bool includeUnavailable);
     virtual unsigned int CheckForEmptyStore(int state);
     virtual unsigned int ProductListAvailable();
     virtual void GetProductTextureName(std::wstring& textureName, char* productName);

@@ -25,14 +25,13 @@ CompoundTag* ENTITIESONLY_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, i
 
                 for (int j = 0; j < passengers->size(); j++)
                 {
-                    passengers->set(j,
-                        fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                            passengers->getCompound(j), version));
+                    passengers->set(
+                        j, fixer->update(DataFixTypes::eDataFixTypes_Entity, passengers->getCompound(j), version));
                 }
             }
 
             entities->set(i,
-                fixer->update(DataFixTypes::eDataFixTypes_Entity, (CompoundTag*)entities->get(i), version));
+                          fixer->update(DataFixTypes::eDataFixTypes_Entity, (CompoundTag*)entities->get(i), version));
         }
     }
 
@@ -42,9 +41,8 @@ CompoundTag* ENTITIESONLY_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, i
 
         for (int i = 0; i < tileEntities->size(); i++)
         {
-            tileEntities->set(i,
-                fixer->update(DataFixTypes::eDataFixTypes_BlockEntity,
-                    (CompoundTag*)tileEntities->get(i), version));
+            tileEntities->set(
+                i, fixer->update(DataFixTypes::eDataFixTypes_BlockEntity, (CompoundTag*)tileEntities->get(i), version));
         }
     }
 

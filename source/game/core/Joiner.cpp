@@ -10,13 +10,11 @@ Joiner Joiner::on(wchar_t separator)
     return Joiner(separator);
 }
 
-Joiner::Joiner(const std::wstring& separator)
-    : mSeparator(separator)
+Joiner::Joiner(const std::wstring& separator) : mSeparator(separator)
 {
 }
 
-Joiner::Joiner(wchar_t separator)
-    : mSeparator(std::wstring() + separator)
+Joiner::Joiner(wchar_t separator) : mSeparator(std::wstring() + separator)
 {
 }
 

@@ -238,8 +238,8 @@ bool ProcedureCompoundTask::AllowFade()
     return result;
 }
 
-void ProcedureCompoundTask::useItemOn(Level* level, not_null_ptr<ItemInstance> item,
-                                      const BlockPos& pos, bool cancelled)
+void ProcedureCompoundTask::useItemOn(Level* level, not_null_ptr<ItemInstance> item, const BlockPos& pos,
+                                      bool cancelled)
 {
     for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
@@ -257,8 +257,7 @@ void ProcedureCompoundTask::useItem(not_null_ptr<ItemInstance> item, bool cancel
     }
 }
 
-void ProcedureCompoundTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
-                                   unsigned int exactCount)
+void ProcedureCompoundTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount, unsigned int exactCount)
 {
     for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {

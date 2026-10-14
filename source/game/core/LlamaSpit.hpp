@@ -24,8 +24,8 @@ public:
     static Entity* create(Level* level);
     void _init();
     virtual void shoot(double x, double y, double z, float velocity, float inaccuracy);
-    virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot,
-        float offset, float velocity, float inaccuracy);
+    virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset,
+                                   float velocity, float inaccuracy);
     boost::shared_ptr<Llama> getOwner();
     virtual bool onHit(const HitResult* result);
     void restoreOwnerFromSave();

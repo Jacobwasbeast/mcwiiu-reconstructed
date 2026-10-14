@@ -22,8 +22,7 @@ public:
         StateMap* build();
     };
 
-    StateMap(const Property* nameProperty, const std::wstring& suffix,
-        std::vector<const Property*> deletedProperties);
+    StateMap(const Property* nameProperty, const std::wstring& suffix, std::vector<const Property*> deletedProperties);
     virtual ModelResourceLocation* getLocation(const BlockState* state);
 
 private:

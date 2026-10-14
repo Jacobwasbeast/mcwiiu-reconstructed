@@ -6,9 +6,16 @@
 #include "game/core/File.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 class DataInputStream;
-class ArchiveFile : public File {
+class ArchiveFile : public File
+{
 public:
-    struct _MetaData { std::wstring name; unsigned int offset; unsigned int size; bool compressed; };
+    struct _MetaData
+    {
+        std::wstring name;
+        unsigned int offset;
+        unsigned int size;
+        bool compressed;
+    };
     ArchiveFile(File file);
     ArchiveFile(unsigned char* data, unsigned int size);
     ~ArchiveFile();
@@ -18,6 +25,7 @@ public:
     unsigned int getFileSize(const std::wstring& name);
     std::vector<std::wstring> getFileList();
     void dereferenceCachedData();
+
 private:
     unsigned char* m_data;
     bool m_cachedData;

@@ -7,10 +7,7 @@
 class BreakableCategory : public EnchantmentCategory
 {
 public:
-    virtual bool canEnchant(Item* item) const
-    {
-        return item->canBeDepleted();
-    }
+    virtual bool canEnchant(Item* item) const { return item->canBeDepleted(); }
 };
 
 #endif

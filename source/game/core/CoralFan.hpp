@@ -33,7 +33,8 @@ public:
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual bool canContainLiquid(const BlockState* state) const;
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual EBlockOffsetType getOffsetType();
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);

@@ -15,14 +15,20 @@ CompassAtlasSprite* CompassAtlasSprite::instance = NULL;
 
 CompassAtlasSprite::CompassAtlasSprite()
     : TextureAtlasSprite(L"compass", L"compass", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
-      mPlayerIndex(255), mParent(0), mAngle(0.0), mAngleDelta(0.0)
+      mPlayerIndex(255),
+      mParent(0),
+      mAngle(0.0),
+      mAngleDelta(0.0)
 {
     instance = this;
 }
 
 CompassAtlasSprite::CompassAtlasSprite(int playerIndex, CompassAtlasSprite* parent)
     : TextureAtlasSprite(L"compass", L"compass", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
-      mPlayerIndex(playerIndex), mParent(parent), mAngle(0.0), mAngleDelta(0.0)
+      mPlayerIndex(playerIndex),
+      mParent(parent),
+      mAngle(0.0),
+      mAngleDelta(0.0)
 {
 }
 

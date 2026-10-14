@@ -6,8 +6,7 @@
 
 #include <string>
 
-GameRules_StringAttribute::GameRules_StringAttribute(std::wstring* value)
-    : mValue(value)
+GameRules_StringAttribute::GameRules_StringAttribute(std::wstring* value) : mValue(value)
 {
 }
 

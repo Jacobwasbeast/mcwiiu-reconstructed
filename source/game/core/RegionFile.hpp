@@ -15,7 +15,11 @@ public:
     {
     public:
         ChunkBuffer(int x, RegionFile* region, int z, bool compressed)
-            : ByteArrayOutputStream(THREAD_STORAGE_SIZE), mRegion(region), mX(x), mZ(z), mCompressed(compressed)
+            : ByteArrayOutputStream(THREAD_STORAGE_SIZE),
+              mRegion(region),
+              mX(x),
+              mZ(z),
+              mCompressed(compressed)
         {
         }
         virtual void close();

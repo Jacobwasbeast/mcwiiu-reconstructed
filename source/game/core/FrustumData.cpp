@@ -43,14 +43,10 @@ bool FrustumData::cubeFullyInFrustum(double x0, double y0, double z0, double x1,
     {
         float* plane = frustum[i];
 
-        if (discriminant(plane, x0, y0, z0) <= 0.0 ||
-            discriminant(plane, x1, y0, z0) <= 0.0 ||
-            discriminant(plane, x0, y1, z0) <= 0.0 ||
-            discriminant(plane, x1, y1, z0) <= 0.0 ||
-            discriminant(plane, x0, y0, z1) <= 0.0 ||
-            discriminant(plane, x1, y0, z1) <= 0.0 ||
-            discriminant(plane, x0, y1, z1) <= 0.0 ||
-            discriminant(plane, x1, y1, z1) <= 0.0)
+        if (discriminant(plane, x0, y0, z0) <= 0.0 || discriminant(plane, x1, y0, z0) <= 0.0
+            || discriminant(plane, x0, y1, z0) <= 0.0 || discriminant(plane, x1, y1, z0) <= 0.0
+            || discriminant(plane, x0, y0, z1) <= 0.0 || discriminant(plane, x1, y0, z1) <= 0.0
+            || discriminant(plane, x0, y1, z1) <= 0.0 || discriminant(plane, x1, y1, z1) <= 0.0)
         {
             return false;
         }
@@ -65,14 +61,10 @@ bool FrustumData::cubeInFrustum(double x0, double y0, double z0, double x1, doub
     {
         float* plane = frustum[i];
 
-        if (discriminant(plane, x0, y0, z0) <= 0.0 &&
-            discriminant(plane, x1, y0, z0) <= 0.0 &&
-            discriminant(plane, x0, y1, z0) <= 0.0 &&
-            discriminant(plane, x1, y1, z0) <= 0.0 &&
-            discriminant(plane, x0, y0, z1) <= 0.0 &&
-            discriminant(plane, x1, y0, z1) <= 0.0 &&
-            discriminant(plane, x0, y1, z1) <= 0.0 &&
-            discriminant(plane, x1, y1, z1) <= 0.0)
+        if (discriminant(plane, x0, y0, z0) <= 0.0 && discriminant(plane, x1, y0, z0) <= 0.0
+            && discriminant(plane, x0, y1, z0) <= 0.0 && discriminant(plane, x1, y1, z0) <= 0.0
+            && discriminant(plane, x0, y0, z1) <= 0.0 && discriminant(plane, x1, y0, z1) <= 0.0
+            && discriminant(plane, x0, y1, z1) <= 0.0 && discriminant(plane, x1, y1, z1) <= 0.0)
         {
             return false;
         }
@@ -107,6 +99,6 @@ bool FrustumData::sphereInFrustum(float x, float y, float z, float radius)
 
 bool FrustumData::isVisible(AABB* boundingBox)
 {
-    return cubeInFrustum(boundingBox->mMinX, boundingBox->mMinY, boundingBox->mMinZ,
-        boundingBox->mMaxX, boundingBox->mMaxY, boundingBox->mMaxZ);
+    return cubeInFrustum(boundingBox->mMinX, boundingBox->mMinY, boundingBox->mMinZ, boundingBox->mMaxX,
+                         boundingBox->mMaxY, boundingBox->mMaxZ);
 }

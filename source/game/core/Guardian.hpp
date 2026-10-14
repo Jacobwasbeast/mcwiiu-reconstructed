@@ -105,8 +105,7 @@ public:
     virtual bool hurt(const DamageSource* source, float damage);
     virtual int getMaxHeadXRot();
     virtual void travel(float xxa, float yya, float zza);
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
-                                           MobGroupData* data,
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                            const std::wstring& dataString);
     virtual unsigned long long GetType();
 

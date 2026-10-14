@@ -4,7 +4,6 @@
 class AssetIndex
 {
 public:
-
     AssetIndex();
     ~AssetIndex();
 };

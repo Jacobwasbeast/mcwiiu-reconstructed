@@ -2,10 +2,7 @@
 
 #include <sstream>
 
-DLCFile::DLCFile(DLCManager::EDLCType type, const std::wstring& path)
-    : m_pPack(NULL)
-    , m_type(type)
-    , m_path(path)
+DLCFile::DLCFile(DLCManager::EDLCType type, const std::wstring& path) : m_pPack(NULL), m_type(type), m_path(path)
 {
     if (path.substr(0, 3) == L"dlc")
     {

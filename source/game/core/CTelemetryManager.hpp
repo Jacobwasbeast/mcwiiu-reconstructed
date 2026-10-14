@@ -137,8 +137,12 @@ class CTelemetryManager
 {
 public:
     CTelemetryManager()
-        : mUnknown0(0), mInitialiseTime(0.0f), mLevelStarted(false), mLevelStartTime(),
-          mMultiplayerInstanceId(0), mLevelInstanceId(0)
+        : mUnknown0(0),
+          mInitialiseTime(0.0f),
+          mLevelStarted(false),
+          mLevelStartTime(),
+          mMultiplayerInstanceId(0),
+          mLevelInstanceId(0)
     {
     }
     virtual ~CTelemetryManager();
@@ -150,47 +154,45 @@ public:
     virtual unsigned int RecordPlayerSessionExit(int playerId, int disconnectReason);
     virtual unsigned int RecordHeartBeat(int playerId);
     virtual unsigned int RecordLevelStart(int playerId, ESen_FriendOrMatch friendOrMatch,
-                                  ESen_CompeteOrCoop competeOrCoop, int difficultyLevel,
-                                  int localPlayerCount, int onlinePlayerCount);
+                                          ESen_CompeteOrCoop competeOrCoop, int difficultyLevel, int localPlayerCount,
+                                          int onlinePlayerCount);
     virtual unsigned int RecordLevelExit(int playerId, ESen_LevelExitStatus exitStatus);
     virtual unsigned int RecordLevelSaveOrCheckpoint(int playerId, int saveSlot, int saveSize);
     virtual unsigned int RecordLevelResume(int playerId, ESen_FriendOrMatch friendOrMatch,
-                                   ESen_CompeteOrCoop competeOrCoop, int difficultyLevel,
-                                   int localPlayerCount, int onlinePlayerCount,
-                                   int secondsPlayed);
+                                           ESen_CompeteOrCoop competeOrCoop, int difficultyLevel, int localPlayerCount,
+                                           int onlinePlayerCount, int secondsPlayed);
     virtual unsigned int RecordPauseOrInactive(int playerId);
     virtual unsigned int RecordUnpauseOrActive(int playerId);
     virtual unsigned int RecordMenuShown(int playerId, EUIScene scene, int previousScene);
     virtual unsigned int RecordAchievementUnlocked(int playerId, int achievementId, int gamerScore);
     virtual unsigned int RecordMediaShareUpload(int playerId, ESen_MediaDestination destination,
-                                        ESen_MediaType mediaType);
+                                                ESen_MediaType mediaType);
     virtual unsigned int RecordUpsellPresented(int playerId, ESen_UpsellID upsellId, int upsellContext);
     virtual unsigned int RecordUpsellResponded(int playerId, ESen_UpsellID upsellId, int upsellContext,
-                                       ESen_UpsellOutcome outcome);
+                                               ESen_UpsellOutcome outcome);
     virtual unsigned int RecordPlayerDiedOrFailed(int playerId, int locationX, int locationY, int locationZ,
-                                          int enemyTypeId, int playerWeaponId, int causeOfDeathId,
-                                          ETelemetryChallenges challenges);
+                                                  int enemyTypeId, int playerWeaponId, int causeOfDeathId,
+                                                  ETelemetryChallenges challenges);
     virtual unsigned int RecordEnemyKilledOrOvercome(int playerId, int locationX, int locationY, int locationZ,
-                                             int enemyTypeId, int playerWeaponId, int causeOfDeathId,
-                                             ETelemetryChallenges challenges);
+                                                     int enemyTypeId, int playerWeaponId, int causeOfDeathId,
+                                                     ETelemetryChallenges challenges);
     virtual unsigned int RecordTexturePackLoaded(int playerId, int texturePackId, bool isDefault);
     virtual unsigned int RecordSkinChanged(int playerId, int skinId);
     virtual unsigned int RecordBanLevel(int playerId);
     virtual unsigned int RecordUnBanLevel(int playerId);
     virtual unsigned int PrepareMiniGameHostOptions(int playerId, const LaunchMoreOptionsMenuInitData* initData,
-                                            TelemetryJoinMethod joinMethod);
+                                                    TelemetryJoinMethod joinMethod);
     virtual unsigned int RecordMiniGameHostOptions(int playerId, EMiniGameId miniGameId);
     virtual unsigned int RecordPlayerSettings(int playerId);
     virtual unsigned int RecordBlockPlaced(boost::shared_ptr<LocalPlayer> player, int blockId, int blockData,
-                                   unsigned long long position);
+                                           unsigned long long position);
     virtual unsigned int RecordBlockBroken(boost::shared_ptr<LocalPlayer> player, int blockId, int blockData,
-                                   unsigned long long position);
-    virtual unsigned int RecordItemAcquired(boost::shared_ptr<LocalPlayer> player, int itemId, int itemData,
-                                    int count, unsigned long long position, const Vec3* location);
+                                           unsigned long long position);
+    virtual unsigned int RecordItemAcquired(boost::shared_ptr<LocalPlayer> player, int itemId, int itemData, int count,
+                                            unsigned long long position, const Vec3* location);
     virtual unsigned int RecordItemUsed(boost::shared_ptr<LocalPlayer> player, int itemId, int itemData,
-                                unsigned long long position, int count, const Vec3* location);
-    virtual unsigned int RecordGameModeRoundStart(const std::wstring& gameModeName,
-                                          const std::wstring& roundName);
+                                        unsigned long long position, int count, const Vec3* location);
+    virtual unsigned int RecordGameModeRoundStart(const std::wstring& gameModeName, const std::wstring& roundName);
     virtual unsigned int RecordGameModeRoundFinished();
     virtual unsigned int RecordSavesInformation(int playerId, const SAVE_DETAILS* saves, unsigned int saveCount);
     virtual int GetMultiplayerInstanceID();

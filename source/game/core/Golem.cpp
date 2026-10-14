@@ -1,7 +1,6 @@
 #include "game/core/Golem.hpp"
 
-Golem::Golem(Level* level)
-    : PathfinderMob(level)
+Golem::Golem(Level* level) : PathfinderMob(level)
 {
 }
 

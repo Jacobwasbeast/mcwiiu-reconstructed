@@ -10,8 +10,7 @@
 #include <string>
 
 
-GameRules_FloatAttribute::GameRules_FloatAttribute(float* value)
-    : mValue(value)
+GameRules_FloatAttribute::GameRules_FloatAttribute(float* value) : mValue(value)
 {
     mHasMin = false;
     mHasMax = false;

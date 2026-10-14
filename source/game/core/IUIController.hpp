@@ -51,8 +51,8 @@ public:
     virtual void ShowTooltip(unsigned int playerId, unsigned int tooltipIndex, bool bShow) = 0;
     virtual void SetTooltips(unsigned int playerId, int tooltip0, int tooltip1, int tooltip2, int tooltip3,
                              int tooltip4, int tooltip5, int tooltip6, int tooltip7, int tooltip8, int tooltip9,
-                             int tooltip10, int tooltip11, int tooltip12, int tooltip13, int tooltip14,
-                             int tooltip15, bool bShow, bool bUseGlobalGroup) = 0;
+                             int tooltip10, int tooltip11, int tooltip12, int tooltip13, int tooltip14, int tooltip15,
+                             bool bShow, bool bUseGlobalGroup) = 0;
     virtual void EnableTooltip(unsigned int playerId, unsigned int tooltipIndex, bool bEnable) = 0;
     virtual void RefreshTooltips(unsigned int playerId) = 0;
     virtual void PlayUISFX(const SoundEvent* pSoundEvent) = 0;

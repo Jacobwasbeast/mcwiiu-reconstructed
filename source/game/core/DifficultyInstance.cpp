@@ -6,7 +6,8 @@ const float DifficultyInstance::LEVEL_TIME_OFFSET = -72000.0f;
 const float DifficultyInstance::LEVEL_TIME_RANGE = 1440000.0f;
 const float DifficultyInstance::INHABITED_TIME_RANGE = 3600000.0f;
 
-DifficultyInstance::DifficultyInstance(const Difficulty* difficulty, long long levelTime, long long inhabitedTime, float moonPhase)
+DifficultyInstance::DifficultyInstance(const Difficulty* difficulty, long long levelTime, long long inhabitedTime,
+                                       float moonPhase)
     : difficulty(difficulty),
       effectiveDifficulty(calculateDifficulty(difficulty, levelTime, inhabitedTime, moonPhase))
 {
@@ -21,7 +22,8 @@ const Difficulty* DifficultyInstance::getDifficulty() const
     return difficulty;
 }
 
-float DifficultyInstance::calculateDifficulty(const Difficulty* difficulty, long long levelTime, long long inhabitedTime, float moonPhase) const
+float DifficultyInstance::calculateDifficulty(const Difficulty* difficulty, long long levelTime,
+                                              long long inhabitedTime, float moonPhase) const
 {
     if (difficulty == Difficulty::PEACEFUL)
     {

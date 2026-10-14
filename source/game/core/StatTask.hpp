@@ -9,8 +9,7 @@ class Tutorial;
 class StatTask : public TutorialTask
 {
 public:
-    StatTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-             Stat* stat, int requiredValue);
+    StatTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled, Stat* stat, int requiredValue);
 
     virtual bool isCompleted();
 

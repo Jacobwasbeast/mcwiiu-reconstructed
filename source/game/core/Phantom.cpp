@@ -72,8 +72,7 @@ bool Phantom::checkSpawnRules()
     unsigned char hasSkyLight = mLevel->mDimension->isHasSkyLight();
     Random* random = mLevel->mRandom;
     PlayerSelector selector(this);
-    std::vector<boost::shared_ptr<Player> >* players =
-        mLevel->getPlayers(EntityType::PLAYER, &selector);
+    std::vector<boost::shared_ptr<Player> >* players = mLevel->getPlayers(EntityType::PLAYER, &selector);
     for (std::vector<boost::shared_ptr<Player> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<Player> player = *it;
@@ -115,16 +114,24 @@ void Phantom::aiStep()
     }
 }
 
-EMobType Phantom::getMobType() { return MOB_TYPE_UNDEAD; }
-bool Phantom::canFly() { return true; }
+EMobType Phantom::getMobType()
+{
+    return MOB_TYPE_UNDEAD;
+}
+bool Phantom::canFly()
+{
+    return true;
+}
 
 void Phantom::registerGoals()
 {
     mGoalSelector.addGoal(1, new SwoopAttackGoal(this, 1.0f, Goal::FloatRange(10.0f, 20.0f)), true);
-    mGoalSelector.addGoal(2, new CircleAroundAnchorGoal(this, 1.0f, Goal::FloatRange(12.0f, 18.0f), 250,
-                                                         Goal::FloatRange(20.0f, 40.0f), Goal::FloatRange(-4.0f, 5.0f), 350, 1.0f), true);
-    mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(this, typeid(Player), false,
-                                                                false, false), true);
+    mGoalSelector.addGoal(2,
+                          new CircleAroundAnchorGoal(this, 1.0f, Goal::FloatRange(12.0f, 18.0f), 250,
+                                                     Goal::FloatRange(20.0f, 40.0f), Goal::FloatRange(-4.0f, 5.0f), 350,
+                                                     1.0f),
+                          true);
+    mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(this, typeid(Player), false, false, false), true);
 }
 
 void Phantom::registerAttributes()
@@ -143,14 +150,28 @@ PathNavigation* Phantom::createNavigation(Level* level)
     return navigation;
 }
 
-const SoundEvent* Phantom::getAmbientSound() { return SoundEvents::PHANTOM_AMBIENT; }
-const SoundEvent* Phantom::getHurtSound(const DamageSource*) { return SoundEvents::PHANTOM_HURT; }
-const SoundEvent* Phantom::getDeathSound() { return SoundEvents::PHANTOM_DEATH; }
-ResourceLocation* Phantom::getDefaultLootTable() { return &BuiltInLootTables::PHANTOM; }
-unsigned long long Phantom::GetType() { return EntityType::PHANTOM; }
+const SoundEvent* Phantom::getAmbientSound()
+{
+    return SoundEvents::PHANTOM_AMBIENT;
+}
+const SoundEvent* Phantom::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::PHANTOM_HURT;
+}
+const SoundEvent* Phantom::getDeathSound()
+{
+    return SoundEvents::PHANTOM_DEATH;
+}
+ResourceLocation* Phantom::getDefaultLootTable()
+{
+    return &BuiltInLootTables::PHANTOM;
+}
+unsigned long long Phantom::GetType()
+{
+    return EntityType::PHANTOM;
+}
 
 bool Phantom::PlayerSelector::apply(boost::shared_ptr<Player> player) const
 {
     return mPhantom->distanceToSqr(player) < 10000.0;
 }
-

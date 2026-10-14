@@ -34,14 +34,12 @@ Entity* MinecartTNT::create(Level* level)
     return new MinecartTNT(level);
 }
 
-MinecartTNT::MinecartTNT(Level* level)
-    : Minecart(level)
+MinecartTNT::MinecartTNT(Level* level) : Minecart(level)
 {
     _init();
 }
 
-MinecartTNT::MinecartTNT(Level* level, double x, double y, double z)
-    : Minecart(level, x, y, z)
+MinecartTNT::MinecartTNT(Level* level, double x, double y, double z) : Minecart(level, x, y, z)
 {
     _init();
 }
@@ -76,8 +74,7 @@ void MinecartTNT::tick()
         if (mFuse > 0)
         {
             --mFuse;
-            mLevel->addParticle(PARTICLE_SMOKE, mX, mY + 0.5, mZ,
-                                0.0, 0.0, 0.0, arrayWithLength<int>());
+            mLevel->addParticle(PARTICLE_SMOKE, mX, mY + 0.5, mZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
         }
         else
         {
@@ -112,8 +109,8 @@ bool MinecartTNT::hurt(const DamageSource* source, float damage)
 void MinecartTNT::destroy(const DamageSource* source)
 {
     double speedSqr = mXd * mXd + mZd * mZd;
-    if (gApp.GetGameHostOption(eGameHostOption_TNT) != 0 &&
-        (source->isFire() || source->isExplosion() || speedSqr >= 0.01f))
+    if (gApp.GetGameHostOption(eGameHostOption_TNT) != 0
+        && (source->isFire() || source->isExplosion() || speedSqr >= 0.01f))
     {
         if (mFuse < 0)
         {
@@ -124,8 +121,8 @@ void MinecartTNT::destroy(const DamageSource* source)
     }
 
     Minecart::destroy(source);
-    if (gApp.GetGameHostOption(eGameHostOption_TNT) == 0 ||
-        (!source->isExplosion() && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS)))
+    if (gApp.GetGameHostOption(eGameHostOption_TNT) == 0
+        || (!source->isExplosion() && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS)))
     {
         spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tnt, 1)), 0.0f);
     }
@@ -140,8 +137,8 @@ void MinecartTNT::explode(double power)
             double radius = std::sqrt(power);
             if (radius > 5.0)
                 radius = 5.0;
-            mLevel->explode(shared_from_this(), mX, mY, mZ, (float)(mRandom->nextDouble() * 1.5 * radius + 4.0),
-                            false, true, false, false, false, -1.0f);
+            mLevel->explode(shared_from_this(), mX, mY, mZ, (float)(mRandom->nextDouble() * 1.5 * radius + 4.0), false,
+                            true, false, false, false, -1.0f);
             remove();
         }
         else
@@ -201,8 +198,8 @@ bool MinecartTNT::isPrimed()
 
 float MinecartTNT::getBlockExplosionResistance(Explosion* explosion, Level* level, const BlockPos& pos)
 {
-    if (isPrimed() && (BaseRailBlock::isRail(level->getBlock(pos)) || BaseRailBlock::isRail(level, pos.above())) &&
-        !isUnderLiquid(Material::WATER))
+    if (isPrimed() && (BaseRailBlock::isRail(level->getBlock(pos)) || BaseRailBlock::isRail(level, pos.above()))
+        && !isUnderLiquid(Material::WATER))
     {
         return 0.0f;
     }
@@ -211,8 +208,8 @@ float MinecartTNT::getBlockExplosionResistance(Explosion* explosion, Level* leve
 
 bool MinecartTNT::shouldBlockExplode(Explosion* explosion, Level* level, const BlockPos& pos, float radius)
 {
-    if (gApp.GetGameHostOption(eGameHostOption_TNT) == 0 || BaseRailBlock::isRail(level->getBlock(pos)) ||
-        BaseRailBlock::isRail(level, pos.above()))
+    if (gApp.GetGameHostOption(eGameHostOption_TNT) == 0 || BaseRailBlock::isRail(level->getBlock(pos))
+        || BaseRailBlock::isRail(level, pos.above()))
     {
         return false;
     }

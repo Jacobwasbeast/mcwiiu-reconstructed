@@ -7,8 +7,7 @@
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-WinnerCondition::WinnerCondition()
-    : MultiConditionMedal::MultiCondition(-1.0f, GameMedal::OPERATOR_EQUAL, false)
+WinnerCondition::WinnerCondition() : MultiConditionMedal::MultiCondition(-1.0f, GameMedal::OPERATOR_EQUAL, false)
 {
 }
 

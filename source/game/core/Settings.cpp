@@ -1,13 +1,13 @@
 #include "game/core/Settings.hpp"
 
-Settings::Settings()
-    : mSettings(11)
+Settings::Settings() : mSettings(11)
 {
 }
 
 Settings::~Settings()
 {
-    for (boost::unordered_map<EServerSetting, _SettingsValue*>::iterator it = mSettings.begin(); it != mSettings.end(); ++it)
+    for (boost::unordered_map<EServerSetting, _SettingsValue*>::iterator it = mSettings.begin(); it != mSettings.end();
+         ++it)
     {
         delete it->second;
     }

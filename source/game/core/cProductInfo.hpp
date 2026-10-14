@@ -7,7 +7,9 @@ public:
     cProductInfo();
     ~cProductInfo();
 
-    void Init(bool canPurchase, bool canDownload, unsigned int price, char* pName, char* pDescription, char* pPriceString, char* pProductIdString, char* pSKUId, char* pBanner, unsigned int packID, unsigned int sortIndex);
+    void Init(bool canPurchase, bool canDownload, unsigned int price, char* pName, char* pDescription,
+              char* pPriceString, char* pProductIdString, char* pSKUId, char* pBanner, unsigned int packID,
+              unsigned int sortIndex);
 
     bool CanPurchase();
     bool CanDownload();

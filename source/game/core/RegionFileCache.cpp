@@ -4,7 +4,7 @@
 #include "game/data/ConsoleSaveFile.hpp"
 #include "game/core/MemSect.hpp"
 
-template<typename T> std::wstring _toString(T value);
+template <typename T> std::wstring _toString(T value);
 
 RegionFileCache gRegionFileCache;
 
@@ -85,7 +85,8 @@ RegionFile* RegionFileCache::_getRegionFile(ConsoleSaveFile* saveFile, const std
     return regionFile;
 }
 
-DataInputStream* RegionFileCache::_getChunkDataInputStream(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z, bool* pbNewSaveFormat)
+DataInputStream* RegionFileCache::_getChunkDataInputStream(ConsoleSaveFile* saveFile, const std::wstring& folder, int x,
+                                                           int z, bool* pbNewSaveFormat)
 {
     RegionFile* regionFile = _getRegionFile(saveFile, folder, x, z);
 
@@ -97,7 +98,8 @@ DataInputStream* RegionFileCache::_getChunkDataInputStream(ConsoleSaveFile* save
     return regionFile->getChunkDataInputStream(x & 31, z & 31, pbNewSaveFormat);
 }
 
-DataOutputStream* RegionFileCache::_getChunkDataOutputStream(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z, bool bNewSaveFormat)
+DataOutputStream* RegionFileCache::_getChunkDataOutputStream(ConsoleSaveFile* saveFile, const std::wstring& folder,
+                                                             int x, int z, bool bNewSaveFormat)
 {
     RegionFile* regionFile = _getRegionFile(saveFile, folder, x, z);
 

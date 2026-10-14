@@ -22,38 +22,24 @@ const Direction* Direction::BY_3D_DATA[6];
 const Direction* Direction::BY_2D_DATA[4];
 boost::unordered_map<std::wstring, const Direction*> Direction::BY_NAME;
 
-Direction::AxisDirection* Direction::AxisDirection::POSITIVE =
-    new Direction::AxisDirection(1, "Towards positive", 0);
-Direction::AxisDirection* Direction::AxisDirection::NEGATIVE =
-    new Direction::AxisDirection(-1, "Towards negative", 1);
-Direction::AxisDirection* Direction::AxisDirection::VALUES[2] =
-{
-    Direction::AxisDirection::POSITIVE,
-    Direction::AxisDirection::NEGATIVE
-};
+Direction::AxisDirection* Direction::AxisDirection::POSITIVE = new Direction::AxisDirection(1, "Towards positive", 0);
+Direction::AxisDirection* Direction::AxisDirection::NEGATIVE = new Direction::AxisDirection(-1, "Towards negative", 1);
+Direction::AxisDirection* Direction::AxisDirection::VALUES[2] = {Direction::AxisDirection::POSITIVE,
+                                                                 Direction::AxisDirection::NEGATIVE};
 
 Direction::Plane* Direction::Plane::HORIZONTAL = new Direction::Plane();
 Direction::Plane* Direction::Plane::VERTICAL = new Direction::Plane();
-Direction::Plane* Direction::Plane::VALUES[2] =
-{
-    Direction::Plane::HORIZONTAL,
-    Direction::Plane::VERTICAL
-};
+Direction::Plane* Direction::Plane::VALUES[2] = {Direction::Plane::HORIZONTAL, Direction::Plane::VERTICAL};
 
 Direction::Axis* Direction::Axis::X;
 Direction::Axis* Direction::Axis::Y;
 Direction::Axis* Direction::Axis::Z;
-Direction::Axis* Direction::Axis::VALUES[3] =
-{
-    Direction::Axis::X,
-    Direction::Axis::Y,
-    Direction::Axis::Z
-};
+Direction::Axis* Direction::Axis::VALUES[3] = {Direction::Axis::X, Direction::Axis::Y, Direction::Axis::Z};
 
 boost::unordered_map<std::wstring, Direction::Axis*> Direction::Axis::BY_NAME;
 
-Direction::Direction(int data3D, int oppositeIndex, int data2D, const std::wstring& name,
-                     AxisDirection* axisDirection, Axis* axis, Vec3i* normal, unsigned char ordinal)
+Direction::Direction(int data3D, int oppositeIndex, int data2D, const std::wstring& name, AxisDirection* axisDirection,
+                     Axis* axis, Vec3i* normal, unsigned char ordinal)
 {
     this->data3D = data3D;
     this->oppositeIndex = oppositeIndex;
@@ -384,14 +370,14 @@ arrayWithLength<const Direction*> Direction::Plane::getFaces()
 {
     if (this == HORIZONTAL)
     {
-        static const Direction* horizontalFaces[4] = { NORTH, EAST, SOUTH, WEST };
+        static const Direction* horizontalFaces[4] = {NORTH, EAST, SOUTH, WEST};
 
         return arrayWithLength<const Direction*>(horizontalFaces, 4);
     }
 
     if (this == VERTICAL)
     {
-        static const Direction* verticalFaces[2] = { UP, DOWN };
+        static const Direction* verticalFaces[2] = {UP, DOWN};
 
         return arrayWithLength<const Direction*>(verticalFaces, 2);
     }

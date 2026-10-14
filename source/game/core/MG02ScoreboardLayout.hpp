@@ -37,7 +37,8 @@ public:
     virtual unsigned int getStatIcon5(const EScoreboardType& type);
     virtual unsigned int getTitleIcon(int column, const EScoreboardType& type);
     virtual std::wstring GetRowLabel(int row, const StatsUID& uid, const EScoreboardType& type);
-    virtual not_null_ptr<ItemInstance> getItemForSlot(int column, int row, const unsigned int& value, const EScoreboardType& type);
+    virtual not_null_ptr<ItemInstance> getItemForSlot(int column, int row, const unsigned int& value,
+                                                      const EScoreboardType& type);
     virtual unsigned char GetEndBarIcon(PlayerInfo* info);
     virtual void BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info);
     virtual PlayerInfo* CreatePlayerInfo();

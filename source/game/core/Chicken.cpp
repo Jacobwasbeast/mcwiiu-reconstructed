@@ -75,7 +75,7 @@ void Chicken::registerGoals()
 
 void Chicken::staticCtor()
 {
-    static Item* foodItems[] = { Items::wheatSeeds, Items::melonSeeds, Items::pumpkinSeeds, Items::beetrootSeeds };
+    static Item* foodItems[] = {Items::wheatSeeds, Items::melonSeeds, Items::pumpkinSeeds, Items::beetrootSeeds};
     FOOD_ITEMS = arrayWithLength<Item*>(foodItems, 4);
 }
 
@@ -149,7 +149,7 @@ boost::shared_ptr<AgableMob> Chicken::getBreedOffspring(boost::shared_ptr<Agable
 bool Chicken::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 {
     return std::find(FOOD_ITEMS.data, FOOD_ITEMS.data + FOOD_ITEMS.length, itemInstance->getItem())
-        != FOOD_ITEMS.data + FOOD_ITEMS.length;
+           != FOOD_ITEMS.data + FOOD_ITEMS.length;
 }
 
 void Chicken::readAdditionalSaveData(CompoundTag* tag)
@@ -162,7 +162,7 @@ void Chicken::readAdditionalSaveData(CompoundTag* tag)
 bool Chicken::canBeControlledByRider()
 {
     return Entity::instanceof(getControllingPassenger(), EntityType::ZOMBIE)
-        && boost::static_pointer_cast<Zombie>(getControllingPassenger())->isJockey();
+           && boost::static_pointer_cast<Zombie>(getControllingPassenger())->isJockey();
 }
 
 void Chicken::addAdditonalSaveData(CompoundTag* tag)

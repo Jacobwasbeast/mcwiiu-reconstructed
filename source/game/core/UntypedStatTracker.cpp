@@ -1,7 +1,6 @@
 #include "game/core/UntypedStatTracker.hpp"
 
-UntypedStatTracker::UntypedStatTracker(const StatsUID& statsUID)
-    : mStatsUID(statsUID)
+UntypedStatTracker::UntypedStatTracker(const StatsUID& statsUID) : mStatsUID(statsUID)
 {
 }
 

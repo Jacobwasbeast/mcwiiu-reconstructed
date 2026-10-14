@@ -17,8 +17,7 @@ class LootTableEntry : public LootPoolEntry
 public:
     LootTableEntry(LootTable* lootTable);
 
-    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                                 Random* random,
+    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random,
                                  LootTableContext& context);
 
 private:

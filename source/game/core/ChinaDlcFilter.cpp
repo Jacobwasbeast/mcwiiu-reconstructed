@@ -2,8 +2,7 @@
 
 static const std::wstring sFilteredSkins[] = {L"dlcskin00000941.png", L"dlcskin00000217.png", L""};
 
-ChinaDlcFilter::ChinaDlcFilter()
-    : boost::unordered_set<std::wstring>(11)
+ChinaDlcFilter::ChinaDlcFilter() : boost::unordered_set<std::wstring>(11)
 {
     constructTableFromArray(*this, sFilteredSkins);
 }
@@ -19,8 +18,7 @@ bool ChinaDlcFilter::isSkinFiltered(const std::wstring& skinName)
     return valueInTable(*this, skinName);
 }
 
-bool ChinaDlcFilter::valueInTable(const boost::unordered_set<std::wstring>& table,
-                                  const std::wstring& value)
+bool ChinaDlcFilter::valueInTable(const boost::unordered_set<std::wstring>& table, const std::wstring& value)
 {
     return false;
 }

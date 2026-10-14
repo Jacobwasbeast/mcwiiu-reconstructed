@@ -21,14 +21,12 @@ public:
     static const int FACE_BACK;
     static const int FACE_ALL;
 
-    Cube(ModelPart* parent, int texU, int texV, float x, float y, float z,
-         int width, int height, int depth, float inflate, bool mirror,
-         int faceMask, bool flip, float xRot, float yRot, float zRot);
+    Cube(ModelPart* parent, int texU, int texV, float x, float y, float z, int width, int height, int depth,
+         float inflate, bool mirror, int faceMask, bool flip, float xRot, float yRot, float zRot);
 
     arrayWithLength<Vertex*> VertexArray4(Vertex* a, Vertex* b, Vertex* c, Vertex* d);
-    void _init(ModelPart* parent, int texU, int texV, float x, float y, float z,
-               int width, int height, int depth, float inflate, bool mirror,
-               int faceMask, bool flip);
+    void _init(ModelPart* parent, int texU, int texV, float x, float y, float z, int width, int height, int depth,
+               float inflate, bool mirror, int faceMask, bool flip);
     void rotate_axis(float angle, double& x, double& y) const;
     void rotate(float x, float y, float z);
     void render(BufferBuilder* buffer, float scale);

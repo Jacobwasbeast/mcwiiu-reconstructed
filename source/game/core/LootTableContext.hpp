@@ -27,10 +27,7 @@ public:
     class Builder
     {
     public:
-        Builder(ServerLevel* level)
-        {
-            mLevel = level;
-        }
+        Builder(ServerLevel* level) { mLevel = level; }
 
         Builder* withLuck(float luck)
         {
@@ -58,11 +55,7 @@ public:
 
         LootTableContext build()
         {
-            return LootTableContext(mLuck,
-                                    mLevel,
-                                    mLevel->getLootTables(),
-                                    mThisEntity.lock(),
-                                    mKillerEntity.lock(),
+            return LootTableContext(mLuck, mLevel, mLevel->getLootTables(), mThisEntity.lock(), mKillerEntity.lock(),
                                     mDamageSource);
         }
 
@@ -73,10 +66,8 @@ public:
         const DamageSource* mDamageSource;
     };
 
-    LootTableContext(float luck, ServerLevel* level, LootTables* lootTables,
-                     boost::shared_ptr<Entity> thisEntity,
-                     boost::shared_ptr<Player> killerEntity,
-                     const DamageSource* damageSource);
+    LootTableContext(float luck, ServerLevel* level, LootTables* lootTables, boost::shared_ptr<Entity> thisEntity,
+                     boost::shared_ptr<Player> killerEntity, const DamageSource* damageSource);
 
     bool addVisitedTable(LootTable* lootTable);
     void removeVisitedTable(LootTable* lootTable);

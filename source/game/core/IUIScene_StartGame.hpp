@@ -33,8 +33,7 @@ public:
     virtual ~IUIScene_StartGame();
 
     virtual unsigned int mapElementsAndNames();
-    static bool SortTexturePacks(const TEXTUREPACKSORTSTRUCT& first,
-                                 const TEXTUREPACKSORTSTRUCT& second);
+    static bool SortTexturePacks(const TEXTUREPACKSORTSTRUCT& first, const TEXTUREPACKSORTSTRUCT& second);
     void UpdateTexturePackDescription(int packId);
     void OrganizeTexturePacks();
     void _init();
@@ -51,29 +50,21 @@ public:
     virtual void handleTimerComplete(int timerId);
     virtual void HandleDLCMountingComplete();
     void UpdateCurrentTexturePack(int slot);
-    static int TrialTexturePackWarningReturned(void* context, int userIndex,
-                                               C4JStorage::EMessageResult result);
-    static int UnlockTexturePackReturned(void* context, int userIndex,
-                                          C4JStorage::EMessageResult result);
-    static int TexturePackDialogReturned(void* context, int userIndex,
-                                          C4JStorage::EMessageResult result);
-    static int TexturePackDialogBattleMiniGameReturned(void* context, int userIndex,
-                                                        C4JStorage::EMessageResult result);
+    static int TrialTexturePackWarningReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
+    static int UnlockTexturePackReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
+    static int TexturePackDialogReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
+    static int TexturePackDialogBattleMiniGameReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
     void CheckPermissionsAndContinue(bool fromLoad);
-    static int WiiUDRCWarningReturned(void* context, int userIndex,
-                                       C4JStorage::EMessageResult result);
+    static int WiiUDRCWarningReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
     void StartSharedLaunchFlow();
     static int DeleteSaveDataReturned(void* context, bool deleted);
-    static int DeleteSaveDialogReturned(void* context, int userIndex,
-                                         C4JStorage::EMessageResult result);
+    static int DeleteSaveDialogReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
     static int LoadDataComplete(void* context);
     static int LoadSaveDataReturned(void* context, bool corrupt, bool complete);
-    static int CheckCreativeReturned(void* context, int userIndex,
-                                      C4JStorage::EMessageResult result);
+    static int CheckCreativeReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
     void LaunchGame();
     int getCurrentTextureSelectorIndex(int packId);
-    static int TrophyDialogReturned(void* context, int userIndex,
-                                     C4JStorage::EMessageResult result);
+    static int TrophyDialogReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
 
     virtual void checkStateAndStartGame() = 0;
     virtual unsigned int GetCustomGameModeID();

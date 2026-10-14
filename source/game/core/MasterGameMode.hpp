@@ -157,7 +157,8 @@ public:
     void CompleteTimer(ETimerID timer);
     void CheckReadyStates();
     static void OnGameChange(MasterGameMode* gameMode, void* context);
-    void AddTimer(ETimerID timer, TimerCallback callback, void* context, int duration, int announceEvery, int changeAnnounceAfter, int finalAnnounceEvery);
+    void AddTimer(ETimerID timer, TimerCallback callback, void* context, int duration, int announceEvery,
+                  int changeAnnounceAfter, int finalAnnounceEvery);
     void AddTimer(ETimerID timer, TimerCallback callback, void* context, MiniGameDef::TimerSpec specification);
     int GetTimerRemainingTime(ETimerID timer);
     void TimerCountdown(ETimerID timer, CountdownInfo* countdown);
@@ -267,11 +268,14 @@ public:
     virtual void setChosenThemeWordId(int wordId);
     virtual bool IsRoundPlaying() const;
     virtual Scoreboard* getScoreboard();
-    virtual void OnCheckpointEnter(const boost::shared_ptr<Player>& player, unsigned int checkpoint, CheckpointRuleDefinition* rule);
-    void PlayReachedEndSFX(const std::vector<boost::shared_ptr<ServerPlayer> >& players, boost::shared_ptr<ServerPlayer> winner);
+    virtual void OnCheckpointEnter(const boost::shared_ptr<Player>& player, unsigned int checkpoint,
+                                   CheckpointRuleDefinition* rule);
+    void PlayReachedEndSFX(const std::vector<boost::shared_ptr<ServerPlayer> >& players,
+                           boost::shared_ptr<ServerPlayer> winner);
     virtual void OnPrimaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
     virtual void OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
-    virtual void OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup, PowerupRuleDefinition* rule);
+    virtual void OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup,
+                                PowerupRuleDefinition* rule);
 
     void DebugPrintTimerStates();
     std::vector<AABB*>* getActiveViewAreas();

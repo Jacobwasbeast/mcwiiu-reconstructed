@@ -45,8 +45,7 @@ const EntityDataAccessor<bool>* Pig::DATA_SADDLE = NULL;
 const EntityDataAccessor<int>* Pig::DATA_BOOST_TIME = NULL;
 arrayWithLength<Item*> Pig::FOOD_ITEMS;
 
-Pig::Pig(Level* level)
-    : Animal(level), mBoosting(false), mBoostTime(0), mBoostTotalTime(0), mBoostStartTime(0)
+Pig::Pig(Level* level) : Animal(level), mBoosting(false), mBoostTime(0), mBoostTotalTime(0), mBoostStartTime(0)
 {
     fjDerivedCtorCalls();
     setSize(0.9f, 0.9f);
@@ -59,12 +58,11 @@ Entity* Pig::create(Level* level)
 
 void Pig::staticCtor()
 {
-    static Item* foodItems[] = { Items::carrot, Items::potato, Items::beetroot };
+    static Item* foodItems[] = {Items::carrot, Items::potato, Items::beetroot};
     FOOD_ITEMS = arrayWithLength<Item*>(foodItems, 3);
     DATA_SADDLE = SynchedEntityData::defineId<bool>(EntityType::PIG, EntityType::ANIMAL,
-                                                     EntityDataSerializers::BOOLEAN);
-    DATA_BOOST_TIME = SynchedEntityData::defineId<int>(EntityType::PIG, EntityType::ANIMAL,
-                                                        EntityDataSerializers::INT);
+                                                    EntityDataSerializers::BOOLEAN);
+    DATA_BOOST_TIME = SynchedEntityData::defineId<int>(EntityType::PIG, EntityType::ANIMAL, EntityDataSerializers::INT);
 }
 
 void Pig::registerGoals()
@@ -72,9 +70,9 @@ void Pig::registerGoals()
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
     mGoalSelector.addGoal(1, new PanicGoal(this, 1.25), true);
     mGoalSelector.addGoal(3, new BreedGoal(this, 1.0), true);
-    static Item* steeringItems[] = { Items::carrotOnAStick };
-    mGoalSelector.addGoal(4, new TemptGoal(this, 1.2, arrayWithLength<Item*>(steeringItems, 1), false, arrayWithLength<int>()),
-                          true);
+    static Item* steeringItems[] = {Items::carrotOnAStick};
+    mGoalSelector.addGoal(
+        4, new TemptGoal(this, 1.2, arrayWithLength<Item*>(steeringItems, 1), false, arrayWithLength<int>()), true);
     mGoalSelector.addGoal(4, new TemptGoal(this, 1.2, FOOD_ITEMS, false, arrayWithLength<int>()), true);
     mGoalSelector.addGoal(5, new FollowParentGoal(this, 1.1), true);
     mGoalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
@@ -171,25 +169,32 @@ void Pig::readAdditionalSaveData(CompoundTag* tag)
     setSaddle(tag->getBoolean(L"Saddle"));
 }
 
-const SoundEvent* Pig::getAmbientSound() { return SoundEvents::PIG_AMBIENT; }
-const SoundEvent* Pig::getHurtSound(const DamageSource*) { return SoundEvents::PIG_HURT; }
-const SoundEvent* Pig::getDeathSound() { return SoundEvents::PIG_DEATH; }
+const SoundEvent* Pig::getAmbientSound()
+{
+    return SoundEvents::PIG_AMBIENT;
+}
+const SoundEvent* Pig::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::PIG_HURT;
+}
+const SoundEvent* Pig::getDeathSound()
+{
+    return SoundEvents::PIG_DEATH;
+}
 
 void Pig::playStepSound(const BlockPos&, Block*)
 {
     playSound(SoundEvents::PIG_STEP, 0.15f, 1.0f);
 }
 
-bool Pig::mobInteract(const boost::shared_ptr<Player>& player,
-                      InteractionHand::EInteractionHand hand)
+bool Pig::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     if (!Animal::mobInteract(player, hand))
     {
         not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
         if (item->getItem() == Items::nameTag)
         {
-            item->interactEnemy(player,
-                                boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand);
+            item->interactEnemy(player, boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand);
             return true;
         }
         else if (hasSaddle() && !player->isVehicle() && !isLeashedToPlayer(player))
@@ -205,8 +210,7 @@ bool Pig::mobInteract(const boost::shared_ptr<Player>& player,
         }
         else if (item->getItem() == Items::saddle)
         {
-            item->interactEnemy(player,
-                                boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand);
+            item->interactEnemy(player, boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand);
             return true;
         }
         else
@@ -240,7 +244,10 @@ unsigned int Pig::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     return tooltip;
 }
 
-ResourceLocation* Pig::getDefaultLootTable() { return &BuiltInLootTables::PIG; }
+ResourceLocation* Pig::getDefaultLootTable()
+{
+    return &BuiltInLootTables::PIG;
+}
 
 void Pig::thunderHit(const LightningBolt* lightning)
 {
@@ -248,8 +255,7 @@ void Pig::thunderHit(const LightningBolt* lightning)
         return;
 
     boost::shared_ptr<PigZombie> pigZombie(new PigZombie(mLevel));
-    pigZombie->setItemSlot(EquipmentSlot::MAINHAND,
-                           not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenSword)));
+    pigZombie->setItemSlot(EquipmentSlot::MAINHAND, not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenSword)));
     pigZombie->moveTo(mX, mY, mZ, mYRot, mXRot);
     pigZombie->setNoAi(isNoAi());
 
@@ -268,13 +274,11 @@ void Pig::causeFallDamage(float fallDistance, float damageMultiplier)
     LivingEntity::causeFallDamage(fallDistance, damageMultiplier);
     if (fallDistance > 5.0f)
     {
-        std::set<boost::shared_ptr<Entity> >* passengers =
-            getIndirectPassengers(EntityType::PLAYER);
-        for (std::set<boost::shared_ptr<Entity> >::const_iterator it = passengers->begin();
-             it != passengers->end(); ++it)
+        std::set<boost::shared_ptr<Entity> >* passengers = getIndirectPassengers(EntityType::PLAYER);
+        for (std::set<boost::shared_ptr<Entity> >::const_iterator it = passengers->begin(); it != passengers->end();
+             ++it)
         {
-            boost::dynamic_pointer_cast<Player>(*it)->awardStat(
-                GenericStats::flyPig(), GenericStats::param_flyPig());
+            boost::dynamic_pointer_cast<Player>(*it)->awardStat(GenericStats::flyPig(), GenericStats::param_flyPig());
         }
         delete passengers;
     }
@@ -282,8 +286,8 @@ void Pig::causeFallDamage(float fallDistance, float damageMultiplier)
 
 void Pig::travel(float xxa, float yya, float zza)
 {
-    boost::shared_ptr<Entity> passenger = getPassengers()->empty()
-        ? boost::shared_ptr<Entity>() : getPassengers()->at(0).lock();
+    boost::shared_ptr<Entity> passenger = getPassengers()->empty() ? boost::shared_ptr<Entity>()
+                                                                   : getPassengers()->at(0).lock();
 
     if (!isVehicle() || !canBeControlledByRider())
     {
@@ -322,11 +326,9 @@ void Pig::travel(float xxa, float yya, float zza)
 
     if (isControlledByLocalInstance())
     {
-        float speed = static_cast<float>(
-            getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()) * 0.225f;
+        float speed = static_cast<float>(getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()) * 0.225f;
         if (mBoosting)
-            speed += (speed + speed)
-                * std::sin(static_cast<float>(mBoostTime) / mBoostTotalTime * 3.1415927f);
+            speed += (speed + speed) * std::sin(static_cast<float>(mBoostTime) / mBoostTotalTime * 3.1415927f);
         setSpeed(speed);
         LivingEntity::travel(0.0f, 0.0f, 1.0f);
     }
@@ -360,7 +362,10 @@ bool Pig::boost()
     return true;
 }
 
-bool Pig::testboost() { return !mBoosting; }
+bool Pig::testboost()
+{
+    return !mBoosting;
+}
 
 boost::shared_ptr<AgableMob> Pig::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
@@ -383,4 +388,7 @@ bool Pig::removeWhenFarAway()
     return Animal::removeWhenFarAway() && !hasSaddle();
 }
 
-unsigned long long Pig::GetType() { return EntityType::PIG; }
+unsigned long long Pig::GetType()
+{
+    return EntityType::PIG;
+}

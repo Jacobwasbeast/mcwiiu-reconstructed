@@ -22,7 +22,8 @@ PrimedTnt::PrimedTnt(Level* level) : Entity(level, true), mOwner()
 }
 
 PrimedTnt::PrimedTnt(Level* level, double x, double y, double z, boost::shared_ptr<LivingEntity> owner)
-    : Entity(level, true), mOwner()
+    : Entity(level, true),
+      mOwner()
 {
     _init();
     setPos(x, y, z);
@@ -85,16 +86,15 @@ bool PrimedTnt::isPickable()
 void PrimedTnt::explode()
 {
     const float radius = 4.0f;
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && !Minecraft::GetInstance()->GetMiniGame()->canTntDestroyBlocks())
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && !Minecraft::GetInstance()->GetMiniGame()->canTntDestroyBlocks())
     {
-        mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ,
-                        radius, false, false, true, false, false, -1.0f);
+        mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ, radius, false, false,
+                        true, false, false, -1.0f);
     }
     else
     {
-        mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ,
-                        radius, false, true, false, false, false, -1.0f);
+        mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ, radius, false, true,
+                        false, false, false, -1.0f);
     }
 }
 

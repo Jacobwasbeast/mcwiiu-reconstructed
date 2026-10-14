@@ -19,12 +19,12 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 MineShaftPieces::MineShaftPiece::MineShaftPiece(int genDepth, MineShaftFeature::MineShaftType type)
-    : StructurePiece(genDepth), mType(type)
+    : StructurePiece(genDepth),
+      mType(type)
 {
 }
 
-MineShaftPieces::MineShaftPiece::MineShaftPiece()
-    : StructurePiece()
+MineShaftPieces::MineShaftPiece::MineShaftPiece() : StructurePiece()
 {
 }
 
@@ -46,8 +46,7 @@ const BlockState* MineShaftPieces::MineShaftPiece::getFenceBlock()
     return Blocks::dark_oak_fence->defaultBlockState();
 }
 
-bool MineShaftPieces::MineShaftPiece::isSupportingBox(Level* level, BoundingBox* box,
-                                                       int x0, int x1, int y, int z)
+bool MineShaftPieces::MineShaftPiece::isSupportingBox(Level* level, BoundingBox* box, int x0, int x1, int y, int z)
 {
     for (int x = x0; x <= x1; ++x)
     {
@@ -62,8 +61,7 @@ void MineShaftPieces::MineShaftPiece::addAdditionalSaveData(DataOutputStream* ou
     output->writeInt(static_cast<int>(mType));
 }
 
-void MineShaftPieces::MineShaftPiece::readAdditionalSaveData(DataInputStream* input,
-                                                              StructureManager* structureManager)
+void MineShaftPieces::MineShaftPiece::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
 {
     if (StructureFeatureIO::getVersion() < 2)
         mType = MineShaftFeature::eMineShaftType_Normal;
@@ -71,14 +69,12 @@ void MineShaftPieces::MineShaftPiece::readAdditionalSaveData(DataInputStream* in
         mType = static_cast<MineShaftFeature::MineShaftType>(input->readInt());
 }
 
-MineShaftPieces::MineShaftCorridor::MineShaftCorridor()
-    : MineShaftPiece()
+MineShaftPieces::MineShaftCorridor::MineShaftCorridor() : MineShaftPiece()
 {
 }
 
 MineShaftPieces::MineShaftCorridor::MineShaftCorridor(int genDepth, Random& random, BoundingBox* box,
-                                                       const Direction* direction,
-                                                       MineShaftFeature::MineShaftType type)
+                                                      const Direction* direction, MineShaftFeature::MineShaftType type)
     : MineShaftPiece(genDepth, type)
 {
     setOrientation(direction);
@@ -99,9 +95,8 @@ MineShaftPieces::MineShaftCorridor::MineShaftCorridor(int genDepth, Random& rand
     }
 }
 
-BoundingBox* MineShaftPieces::MineShaftCorridor::findCorridorSize(std::vector<StructurePiece*>* pieces,
-                                                                   Random& random, int x, int y, int z,
-                                                                   const Direction* direction)
+BoundingBox* MineShaftPieces::MineShaftCorridor::findCorridorSize(std::vector<StructurePiece*>* pieces, Random& random,
+                                                                  int x, int y, int z, const Direction* direction)
 {
     BoundingBox* box = new BoundingBox(x, y, z, x, y + 2, z);
     int pieceLength = random.nextInt(3) + 2;
@@ -147,7 +142,7 @@ void MineShaftPieces::MineShaftCorridor::addAdditionalSaveData(DataOutputStream*
 }
 
 void MineShaftPieces::MineShaftCorridor::readAdditionalSaveData(DataInputStream* input,
-                                                                 StructureManager* structureManager)
+                                                                StructureManager* structureManager)
 {
     MineShaftPiece::readAdditionalSaveData(input, structureManager);
     mHasRails = input->readBoolean();
@@ -156,8 +151,8 @@ void MineShaftPieces::MineShaftCorridor::readAdditionalSaveData(DataInputStream*
     mNumSections = input->readInt();
 }
 
-void MineShaftPieces::MineShaftCorridor::addChildren(StructurePiece* startPiece,
-                                                     std::vector<StructurePiece*>* pieces, Random& random)
+void MineShaftPieces::MineShaftCorridor::addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces,
+                                                     Random& random)
 {
     int genDepth = getGenDepth();
     int roll = random.nextInt(4);
@@ -170,28 +165,28 @@ void MineShaftPieces::MineShaftCorridor::addChildren(StructurePiece* startPiece,
             BoundingBox* box = getBoundingBox();
             int yBase = box->y0 - 1;
             if (roll < 2)
-                generateAndAddPiece(startPiece, pieces, random, box->x0, yBase + random.nextInt(3),
-                                    box->z0 - 1, dir, genDepth);
+                generateAndAddPiece(startPiece, pieces, random, box->x0, yBase + random.nextInt(3), box->z0 - 1, dir,
+                                    genDepth);
             else if (roll == 2)
-                generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, yBase + random.nextInt(3),
-                                    box->z0, Direction::WEST, genDepth);
+                generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, yBase + random.nextInt(3), box->z0,
+                                    Direction::WEST, genDepth);
             else
-                generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, yBase + random.nextInt(3),
-                                    box->z0, Direction::EAST, genDepth);
+                generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, yBase + random.nextInt(3), box->z0,
+                                    Direction::EAST, genDepth);
         }
         else if (dataValue == 3)
         {
             BoundingBox* box = getBoundingBox();
             int yBase = box->y0 - 1;
             if (roll < 2)
-                generateAndAddPiece(startPiece, pieces, random, box->x0, yBase + random.nextInt(3),
-                                    box->z1 + 1, dir, genDepth);
+                generateAndAddPiece(startPiece, pieces, random, box->x0, yBase + random.nextInt(3), box->z1 + 1, dir,
+                                    genDepth);
             else if (roll == 2)
-                generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, yBase + random.nextInt(3),
-                                    box->z1 - 3, Direction::WEST, genDepth);
+                generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, yBase + random.nextInt(3), box->z1 - 3,
+                                    Direction::WEST, genDepth);
             else
-                generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, yBase + random.nextInt(3),
-                                    box->z1 - 3, Direction::EAST, genDepth);
+                generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, yBase + random.nextInt(3), box->z1 - 3,
+                                    Direction::EAST, genDepth);
         }
         else
         {
@@ -203,8 +198,8 @@ void MineShaftPieces::MineShaftCorridor::addChildren(StructurePiece* startPiece,
                 x = box->x0;
                 if (roll < 2)
                 {
-                    generateAndAddPiece(startPiece, pieces, random, x - 1, y + random.nextInt(3),
-                                        box->z0, dir, genDepth);
+                    generateAndAddPiece(startPiece, pieces, random, x - 1, y + random.nextInt(3), box->z0, dir,
+                                        genDepth);
                     goto rooms;
                 }
                 y += random.nextInt(3);
@@ -214,8 +209,8 @@ void MineShaftPieces::MineShaftCorridor::addChildren(StructurePiece* startPiece,
                 x = box->x1;
                 if (roll < 2)
                 {
-                    generateAndAddPiece(startPiece, pieces, random, x + 1, y + random.nextInt(3),
-                                        box->z0, dir, genDepth);
+                    generateAndAddPiece(startPiece, pieces, random, x + 1, y + random.nextInt(3), box->z0, dir,
+                                        genDepth);
                     goto rooms;
                 }
                 x -= 3;
@@ -241,15 +236,14 @@ rooms:
                 {
                     int pick = random.nextInt(5);
                     if (pick == 0)
-                        generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, box->y0, z0,
-                                            Direction::WEST, genDepth + 1);
+                        generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, box->y0, z0, Direction::WEST,
+                                            genDepth + 1);
                     else if (pick == 1)
-                        generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, box->y0, z0,
-                                            Direction::EAST, genDepth + 1);
+                        generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, box->y0, z0, Direction::EAST,
+                                            genDepth + 1);
                     z1 += 5;
                     z0 += 5;
-                }
-                while (z1 <= box->z1);
+                } while (z1 <= box->z1);
                 return;
             }
         }
@@ -263,22 +257,21 @@ rooms:
                 {
                     int pick = random.nextInt(5);
                     if (pick == 0)
-                        generateAndAddPiece(startPiece, pieces, random, x0, box->y0, box->z0 - 1,
-                                            Direction::NORTH, genDepth + 1);
+                        generateAndAddPiece(startPiece, pieces, random, x0, box->y0, box->z0 - 1, Direction::NORTH,
+                                            genDepth + 1);
                     else if (pick == 1)
-                        generateAndAddPiece(startPiece, pieces, random, x0, box->y0, box->z1 + 1,
-                                            Direction::SOUTH, genDepth + 1);
+                        generateAndAddPiece(startPiece, pieces, random, x0, box->y0, box->z1 + 1, Direction::SOUTH,
+                                            genDepth + 1);
                     x1 += 5;
                     x0 += 5;
-                }
-                while (x1 <= box->x1);
+                } while (x1 <= box->x1);
             }
         }
     }
 }
 
-bool MineShaftPieces::MineShaftCorridor::createChest(Level* level, BoundingBox* box, Random& random,
-                                                      int x, int y, int z, ResourceLocation* lootTable)
+bool MineShaftPieces::MineShaftCorridor::createChest(Level* level, BoundingBox* box, Random& random, int x, int y,
+                                                     int z, ResourceLocation* lootTable)
 {
     const BlockPos& position = BlockPos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
     if (static_cast<unsigned int>(level->countInstanceOf(EntityType::MINECART, false, NULL, NULL)) < 100u)
@@ -290,13 +283,13 @@ bool MineShaftPieces::MineShaftCorridor::createChest(Level* level, BoundingBox* 
                 if (level->getBlockState(position.below())->getBlock()->mMaterial != Material::AIR)
                 {
                     const BlockState* railState = Blocks::rail->defaultBlockState()->setValue(
-                        RailBlock::SHAPE, random.nextBoolean()
-                            ? BaseRailBlock::RailShape::NORTH_SOUTH : BaseRailBlock::RailShape::EAST_WEST);
+                        RailBlock::SHAPE, random.nextBoolean() ? BaseRailBlock::RailShape::NORTH_SOUTH
+                                                               : BaseRailBlock::RailShape::EAST_WEST);
                     placeBlock(level, railState, x, y, z, box);
 
-                    boost::shared_ptr<MinecartChest> minecart(new MinecartChest(
-                        level, (double)((float)position.x + 0.5f), (double)((float)position.y + 0.5f),
-                        (double)((float)position.z + 0.5f)));
+                    boost::shared_ptr<MinecartChest> minecart(
+                        new MinecartChest(level, (double)((float)position.x + 0.5f), (double)((float)position.y + 0.5f),
+                                          (double)((float)position.z + 0.5f)));
                     minecart->setLootTable(lootTable, random.nextLong());
                     level->addEntity(minecart);
                     return true;
@@ -307,8 +300,8 @@ bool MineShaftPieces::MineShaftCorridor::createChest(Level* level, BoundingBox* 
     return false;
 }
 
-void MineShaftPieces::MineShaftCorridor::placeSupport(Level* level, BoundingBox* box, int x0, int y0,
-                                                      int z, int y1, int x1, Random& random)
+void MineShaftPieces::MineShaftCorridor::placeSupport(Level* level, BoundingBox* box, int x0, int y0, int z, int y1,
+                                                      int x1, Random& random)
 {
     if (!isSupportingBox(level, box, x0, x1, y1, z))
         return;
@@ -332,8 +325,8 @@ void MineShaftPieces::MineShaftCorridor::placeSupport(Level* level, BoundingBox*
                        Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::SOUTH));
 }
 
-void MineShaftPieces::MineShaftCorridor::placeCobWeb(Level* level, BoundingBox* box, Random& random,
-                                                      float chance, int x, int y, int z)
+void MineShaftPieces::MineShaftCorridor::placeCobWeb(Level* level, BoundingBox* box, Random& random, float chance,
+                                                     int x, int y, int z)
 {
     if (!isAboveGround(level, x, y, z))
         maybeGenerateBlock(level, box, random, chance, x, y, z, Blocks::web->defaultBlockState());
@@ -341,13 +334,17 @@ void MineShaftPieces::MineShaftCorridor::placeCobWeb(Level* level, BoundingBox* 
 
 bool MineShaftPieces::MineShaftCorridor::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    if (edgesLiquid(level, box)) return false;
+    if (edgesLiquid(level, box))
+        return false;
     int zSpanMax = mNumSections * 5 - 1;
     const BlockState* planks = getPlanksBlock();
-    generateBox(level, box, 0, 0, 0, 2, 1, zSpanMax, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateMaybeBox(level, box, random, 0.8f, 0, 2, 0, 2, 2, zSpanMax, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false, false);
+    generateBox(level, box, 0, 0, 0, 2, 1, zSpanMax, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
+    generateMaybeBox(level, box, random, 0.8f, 0, 2, 0, 2, 2, zSpanMax, Blocks::air->defaultBlockState(),
+                     Blocks::air->defaultBlockState(), false, false);
     if (mHasSpiderWebs)
-        generateMaybeBox(level, box, random, 0.6f, 0, 0, 0, 2, 1, zSpanMax, Blocks::web->defaultBlockState(), Blocks::air->defaultBlockState(), false, true);
+        generateMaybeBox(level, box, random, 0.6f, 0, 0, 0, 2, 1, zSpanMax, Blocks::web->defaultBlockState(),
+                         Blocks::air->defaultBlockState(), false, true);
 
     for (int section = 0; section < mNumSections; ++section)
     {
@@ -435,23 +432,21 @@ EStructurePiece MineShaftPieces::MineShaftCorridor::GetType()
     return eStructurePiece_MineShaftCorridor;
 }
 
-MineShaftPieces::MineShaftCrossing::MineShaftCrossing()
-    : MineShaftPiece()
+MineShaftPieces::MineShaftCrossing::MineShaftCrossing() : MineShaftPiece()
 {
 }
 
 MineShaftPieces::MineShaftCrossing::MineShaftCrossing(int genDepth, Random& random, BoundingBox* box,
-                                                       const Direction* direction,
-                                                       MineShaftFeature::MineShaftType type)
-    : MineShaftPiece(genDepth, type), mDirection(direction)
+                                                      const Direction* direction, MineShaftFeature::MineShaftType type)
+    : MineShaftPiece(genDepth, type),
+      mDirection(direction)
 {
     mIsTwoFloored = box->getYSpan() > 3;
     mBoundingBox = box;
 }
 
-BoundingBox* MineShaftPieces::MineShaftCrossing::findCrossing(std::vector<StructurePiece*>* pieces,
-                                                              Random& random, int x, int y, int z,
-                                                              const Direction* direction)
+BoundingBox* MineShaftPieces::MineShaftCrossing::findCrossing(std::vector<StructurePiece*>* pieces, Random& random,
+                                                              int x, int y, int z, const Direction* direction)
 {
     BoundingBox* box = new BoundingBox(x, y, z, x, y + 2, z);
     if (random.nextInt(4) == 0)
@@ -502,15 +497,15 @@ void MineShaftPieces::MineShaftCrossing::addAdditionalSaveData(DataOutputStream*
 }
 
 void MineShaftPieces::MineShaftCrossing::readAdditionalSaveData(DataInputStream* input,
-                                                                 StructureManager* structureManager)
+                                                                StructureManager* structureManager)
 {
     MineShaftPiece::readAdditionalSaveData(input, structureManager);
     mIsTwoFloored = input->readBoolean();
     mDirection = Direction::from2DDataValue(input->readInt());
 }
 
-void MineShaftPieces::MineShaftCrossing::addChildren(StructurePiece* startPiece,
-                                                     std::vector<StructurePiece*>* pieces, Random& random)
+void MineShaftPieces::MineShaftCrossing::addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces,
+                                                     Random& random)
 {
     int genDepth = getGenDepth();
     int dir = mDirection->get3DDataValue();
@@ -548,18 +543,22 @@ void MineShaftPieces::MineShaftCrossing::addChildren(StructurePiece* startPiece,
     if (twoFloored)
     {
         if (random.nextBoolean())
-            generateAndAddPiece(startPiece, pieces, random, box->x0 + 1, box->y0 + 4, box->z0 - 1, Direction::NORTH, genDepth);
+            generateAndAddPiece(startPiece, pieces, random, box->x0 + 1, box->y0 + 4, box->z0 - 1, Direction::NORTH,
+                                genDepth);
         if (random.nextBoolean())
-            generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, box->y0 + 4, box->z0 + 1, Direction::WEST, genDepth);
+            generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, box->y0 + 4, box->z0 + 1, Direction::WEST,
+                                genDepth);
         if (random.nextBoolean())
-            generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, box->y0 + 4, box->z0 + 1, Direction::EAST, genDepth);
+            generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, box->y0 + 4, box->z0 + 1, Direction::EAST,
+                                genDepth);
         if (random.nextBoolean())
-            generateAndAddPiece(startPiece, pieces, random, box->x0 + 1, box->y0 + 4, box->z1 + 1, Direction::SOUTH, genDepth);
+            generateAndAddPiece(startPiece, pieces, random, box->x0 + 1, box->y0 + 4, box->z1 + 1, Direction::SOUTH,
+                                genDepth);
     }
 }
 
-void MineShaftPieces::MineShaftCrossing::placeSupportPillar(Level* level, BoundingBox* box,
-                                                             int x, int y0, int z, int y1)
+void MineShaftPieces::MineShaftCrossing::placeSupportPillar(Level* level, BoundingBox* box, int x, int y0, int z,
+                                                            int y1)
 {
     if (getBlock(level, x, y1 + 1, z, box)->getBlock()->mMaterial != Material::AIR)
         generateBox(level, box, x, y0, z, x, y1, z, getPlanksBlock(), Blocks::air->defaultBlockState(), false);
@@ -567,7 +566,8 @@ void MineShaftPieces::MineShaftCrossing::placeSupportPillar(Level* level, Boundi
 
 bool MineShaftPieces::MineShaftCrossing::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    if (edgesLiquid(level, box)) return false;
+    if (edgesLiquid(level, box))
+        return false;
 
     const BlockState* planks = getPlanksBlock();
     if (mIsTwoFloored)
@@ -584,9 +584,9 @@ bool MineShaftPieces::MineShaftCrossing::postProcess(Level* level, Random& rando
         generateBox(level, box, mBoundingBox->x0, mBoundingBox->y1 - 2, mBoundingBox->z0 + 1, mBoundingBox->x1,
                     mBoundingBox->y1, mBoundingBox->z1 - 1, Blocks::air->defaultBlockState(),
                     Blocks::air->defaultBlockState(), false);
-        generateBox(level, box, mBoundingBox->x0 + 1, mBoundingBox->y0 + 3, mBoundingBox->z0 + 1,
-                    mBoundingBox->x1 - 1, mBoundingBox->y0 + 3, mBoundingBox->z1 - 1,
-                    Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, mBoundingBox->x0 + 1, mBoundingBox->y0 + 3, mBoundingBox->z0 + 1, mBoundingBox->x1 - 1,
+                    mBoundingBox->y0 + 3, mBoundingBox->z1 - 1, Blocks::air->defaultBlockState(),
+                    Blocks::air->defaultBlockState(), false);
     }
     else
     {
@@ -626,15 +626,14 @@ EStructurePiece MineShaftPieces::MineShaftCrossing::GetType()
 }
 
 MineShaftPieces::MineShaftRoom::MineShaftRoom(int genDepth, Random& random, int x, int z,
-                                               MineShaftFeature::MineShaftType type)
+                                              MineShaftFeature::MineShaftType type)
     : MineShaftPiece(genDepth, type)
 {
     mBoundingBox = new BoundingBox(x, 50, z, x + 7 + random.nextInt(6), 54 + random.nextInt(6),
                                    z + 7 + random.nextInt(6));
 }
 
-MineShaftPieces::MineShaftRoom::MineShaftRoom()
-    : MineShaftPiece()
+MineShaftPieces::MineShaftRoom::MineShaftRoom() : MineShaftPiece()
 {
 }
 
@@ -644,28 +643,30 @@ MineShaftPieces::MineShaftRoom::~MineShaftRoom()
         delete *it;
 }
 
-void MineShaftPieces::MineShaftRoom::addChildren(StructurePiece* startPiece,
-                                                 std::vector<StructurePiece*>* pieces, Random& random)
+void MineShaftPieces::MineShaftRoom::addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces,
+                                                 Random& random)
 {
     int genDepth = getGenDepth();
     BoundingBox* box = getBoundingBox();
     int yRange = box->getYSpan() - 4;
-    if (yRange < 1) yRange = 1;
+    if (yRange < 1)
+        yRange = 1;
 
     int xAccum = 0;
     while (box->getXSpan() > 0)
     {
         int xRand = random.nextInt(box->getXSpan());
         xAccum += xRand;
-        if (box->getXSpan() < xAccum + 3) break;
+        if (box->getXSpan() < xAccum + 3)
+            break;
         int yRand = random.nextInt(yRange);
-        StructurePiece* piece = generateAndAddPiece(startPiece, pieces, random,
-            box->x0 + xAccum, box->y0 + yRand + 1, box->z0 - 1, Direction::NORTH, genDepth);
+        StructurePiece* piece = generateAndAddPiece(startPiece, pieces, random, box->x0 + xAccum, box->y0 + yRand + 1,
+                                                    box->z0 - 1, Direction::NORTH, genDepth);
         if (piece != NULL)
         {
             BoundingBox* childBox = piece->getBoundingBox();
-            mChildPieces.push_back(new BoundingBox(childBox->x0, childBox->y0, box->z0,
-                                                    childBox->x1, childBox->y1, box->z0 - 1));
+            mChildPieces.push_back(
+                new BoundingBox(childBox->x0, childBox->y0, box->z0, childBox->x1, childBox->y1, box->z0 - 1));
         }
         xAccum += 4;
     }
@@ -675,10 +676,11 @@ void MineShaftPieces::MineShaftRoom::addChildren(StructurePiece* startPiece,
     {
         int xRand = random.nextInt(box->getXSpan());
         xAccum += xRand;
-        if (box->getXSpan() < xAccum + 3) break;
+        if (box->getXSpan() < xAccum + 3)
+            break;
         int yRand = random.nextInt(yRange);
-        generateAndAddPiece(startPiece, pieces, random,
-            box->x0 + xAccum, box->y0 + yRand + 1, box->z1 + 1, Direction::SOUTH, genDepth);
+        generateAndAddPiece(startPiece, pieces, random, box->x0 + xAccum, box->y0 + yRand + 1, box->z1 + 1,
+                            Direction::SOUTH, genDepth);
         xAccum += 4;
     }
 
@@ -687,15 +689,16 @@ void MineShaftPieces::MineShaftRoom::addChildren(StructurePiece* startPiece,
     {
         int zRand = random.nextInt(box->getZSpan());
         zAccum += zRand;
-        if (box->getZSpan() < zAccum + 3) break;
+        if (box->getZSpan() < zAccum + 3)
+            break;
         int yRand = random.nextInt(yRange);
-        StructurePiece* piece = generateAndAddPiece(startPiece, pieces, random,
-            box->x0 - 1, box->y0 + yRand + 1, box->z0 + zAccum, Direction::WEST, genDepth);
+        StructurePiece* piece = generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, box->y0 + yRand + 1,
+                                                    box->z0 + zAccum, Direction::WEST, genDepth);
         if (piece != NULL)
         {
             BoundingBox* childBox = piece->getBoundingBox();
-            mChildPieces.push_back(new BoundingBox(box->x0, childBox->y0, childBox->z0,
-                                                    box->x0 + 1, childBox->y1, childBox->z1));
+            mChildPieces.push_back(
+                new BoundingBox(box->x0, childBox->y0, childBox->z0, box->x0 + 1, childBox->y1, childBox->z1));
         }
         zAccum += 4;
     }
@@ -705,15 +708,16 @@ void MineShaftPieces::MineShaftRoom::addChildren(StructurePiece* startPiece,
     {
         int zRand = random.nextInt(box->getZSpan());
         zAccum += zRand;
-        if (box->getZSpan() < zAccum + 3) return;
+        if (box->getZSpan() < zAccum + 3)
+            return;
         int yRand = random.nextInt(yRange);
-        StructurePiece* piece = generateAndAddPiece(startPiece, pieces, random,
-            box->x1 + 1, box->y0 + yRand + 1, box->z0 + zAccum, Direction::EAST, genDepth);
+        StructurePiece* piece = generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, box->y0 + yRand + 1,
+                                                    box->z0 + zAccum, Direction::EAST, genDepth);
         if (piece != NULL)
         {
             BoundingBox* childBox = piece->getBoundingBox();
-            mChildPieces.push_back(new BoundingBox(box->x1 - 1, childBox->y0, childBox->z0,
-                                                    box->x1, childBox->y1, childBox->z1));
+            mChildPieces.push_back(
+                new BoundingBox(box->x1 - 1, childBox->y0, childBox->z0, box->x1, childBox->y1, childBox->z1));
         }
         zAccum += 4;
     }
@@ -728,25 +732,24 @@ void MineShaftPieces::MineShaftRoom::move(int x, int y, int z)
 
 bool MineShaftPieces::MineShaftRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    if (edgesLiquid(level, box)) return false;
+    if (edgesLiquid(level, box))
+        return false;
 
-    generateBox(level, box, mBoundingBox->x0, mBoundingBox->y0, mBoundingBox->z0, mBoundingBox->x1,
-                mBoundingBox->y0, mBoundingBox->z1, Blocks::dirt->defaultBlockState(),
-                Blocks::air->defaultBlockState(), true);
+    generateBox(level, box, mBoundingBox->x0, mBoundingBox->y0, mBoundingBox->z0, mBoundingBox->x1, mBoundingBox->y0,
+                mBoundingBox->z1, Blocks::dirt->defaultBlockState(), Blocks::air->defaultBlockState(), true);
     int floor = mBoundingBox->y0;
     int roof = floor + 3;
     generateBox(level, box, mBoundingBox->x0, floor + 1, mBoundingBox->z0, mBoundingBox->x1,
-                mBoundingBox->y1 < roof ? mBoundingBox->y1 : roof, mBoundingBox->z1,
-                Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+                mBoundingBox->y1 < roof ? mBoundingBox->y1 : roof, mBoundingBox->z1, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
     for (std::list<BoundingBox*>::iterator it = mChildPieces.begin(); it != mChildPieces.end(); ++it)
     {
         BoundingBox* child = *it;
         generateBox(level, box, child->x0, child->y1 - 2, child->z0, child->x1, child->y1, child->z1,
                     Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
     }
-    generateUpperHalfSphere(level, box, mBoundingBox->x0, mBoundingBox->y0 + 4, mBoundingBox->z0,
-                            mBoundingBox->x1, mBoundingBox->y1, mBoundingBox->z1,
-                            Blocks::air->defaultBlockState(), false);
+    generateUpperHalfSphere(level, box, mBoundingBox->x0, mBoundingBox->y0 + 4, mBoundingBox->z0, mBoundingBox->x1,
+                            mBoundingBox->y1, mBoundingBox->z1, Blocks::air->defaultBlockState(), false);
     return true;
 }
 
@@ -758,8 +761,7 @@ void MineShaftPieces::MineShaftRoom::addAdditionalSaveData(DataOutputStream* out
         (*it)->write(output);
 }
 
-void MineShaftPieces::MineShaftRoom::readAdditionalSaveData(DataInputStream* input,
-                                                             StructureManager* structureManager)
+void MineShaftPieces::MineShaftRoom::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
 {
     MineShaftPiece::readAdditionalSaveData(input, structureManager);
     int count = input->readInt();
@@ -781,23 +783,20 @@ EStructurePiece MineShaftPieces::MineShaftRoom::GetType()
     return eStructurePiece_MineShaftRoom;
 }
 
-MineShaftPieces::MineShaftStairs::MineShaftStairs()
-    : MineShaftPiece()
+MineShaftPieces::MineShaftStairs::MineShaftStairs() : MineShaftPiece()
 {
 }
 
 MineShaftPieces::MineShaftStairs::MineShaftStairs(int genDepth, Random& random, BoundingBox* box,
-                                                  const Direction* direction,
-                                                  MineShaftFeature::MineShaftType type)
+                                                  const Direction* direction, MineShaftFeature::MineShaftType type)
     : MineShaftPiece(genDepth, type)
 {
     setOrientation(direction);
     mBoundingBox = box;
 }
 
-BoundingBox* MineShaftPieces::MineShaftStairs::findStairs(std::vector<StructurePiece*>* pieces,
-                                                          Random& random, int x, int y, int z,
-                                                          const Direction* direction)
+BoundingBox* MineShaftPieces::MineShaftStairs::findStairs(std::vector<StructurePiece*>* pieces, Random& random, int x,
+                                                          int y, int z, const Direction* direction)
 {
     BoundingBox* box = new BoundingBox(x, y - 5, z, x, y + 2, z);
     int dir = direction->get3DDataValue();
@@ -833,8 +832,8 @@ BoundingBox* MineShaftPieces::MineShaftStairs::findStairs(std::vector<StructureP
     return box;
 }
 
-void MineShaftPieces::MineShaftStairs::addChildren(StructurePiece* startPiece,
-                                                   std::vector<StructurePiece*>* pieces, Random& random)
+void MineShaftPieces::MineShaftStairs::addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces,
+                                                   Random& random)
 {
     int genDepth = getGenDepth();
     int dir = getOrientation()->get3DDataValue();
@@ -859,14 +858,22 @@ void MineShaftPieces::MineShaftStairs::addChildren(StructurePiece* startPiece,
 
 bool MineShaftPieces::MineShaftStairs::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    if (edgesLiquid(level, box)) return false;
-    generateBox(level, box, 0, 5, 0, 2, 7, 1, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 0, 0, 7, 2, 2, 8, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 0, 4, 2, 2, 7, 2, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 0, 3, 3, 2, 6, 3, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 0, 2, 4, 2, 5, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 0, 1, 5, 2, 4, 5, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 0, 1, 6, 2, 3, 6, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 5, 0, 2, 7, 1, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
+    generateBox(level, box, 0, 0, 7, 2, 2, 8, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
+    generateBox(level, box, 0, 4, 2, 2, 7, 2, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
+    generateBox(level, box, 0, 3, 3, 2, 6, 3, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
+    generateBox(level, box, 0, 2, 4, 2, 5, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
+    generateBox(level, box, 0, 1, 5, 2, 4, 5, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
+    generateBox(level, box, 0, 1, 6, 2, 3, 6, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
     return true;
 }
 
@@ -888,9 +895,9 @@ void MineShaftPieces::loadStatic()
     StructureFeatureIO::setPieceId(eStructurePiece_MineShaftStairs, &MineShaftStairs::Create, L"MSStairs");
 }
 
-StructurePiece* MineShaftPieces::createRandomShaftPiece(std::vector<StructurePiece*>* pieces, Random& random,
-                                                        int x, int y, int z, const Direction* direction,
-                                                        int genDepth, MineShaftFeature::MineShaftType type)
+StructurePiece* MineShaftPieces::createRandomShaftPiece(std::vector<StructurePiece*>* pieces, Random& random, int x,
+                                                        int y, int z, const Direction* direction, int genDepth,
+                                                        MineShaftFeature::MineShaftType type)
 {
     int choice = random.nextInt(100);
     BoundingBox* box = NULL;
@@ -909,16 +916,20 @@ StructurePiece* MineShaftPieces::createRandomShaftPiece(std::vector<StructurePie
 }
 
 StructurePiece* MineShaftPieces::generateAndAddPiece(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces,
-                                         Random& random, int x, int y, int z, const Direction* direction,
-                                         int genDepth)
+                                                     Random& random, int x, int y, int z, const Direction* direction,
+                                                     int genDepth)
 {
-    if (startPiece == NULL || pieces == NULL || genDepth >= 9) return NULL;
+    if (startPiece == NULL || pieces == NULL || genDepth >= 9)
+        return NULL;
     BoundingBox* parent = startPiece->getBoundingBox();
-    if (parent == NULL || x - parent->x0 >= 81 || z - parent->z0 >= 81) return NULL;
+    if (parent == NULL || x - parent->x0 >= 81 || z - parent->z0 >= 81)
+        return NULL;
     MineShaftPiece* shaft = dynamic_cast<MineShaftPiece*>(startPiece);
-    if (shaft == NULL) return NULL;
+    if (shaft == NULL)
+        return NULL;
     StructurePiece* piece = createRandomShaftPiece(pieces, random, x, y, z, direction, genDepth + 1, shaft->mType);
-    if (piece == NULL) return NULL;
+    if (piece == NULL)
+        return NULL;
     pieces->push_back(piece);
     piece->addChildren(startPiece, pieces, random);
     return piece;

@@ -35,6 +35,7 @@ public:
         virtual int getCastingInterval();
         virtual const SoundEvent* getSpellPrepareSound();
         virtual IllagerSpell* getSpell();
+
     private:
         int mTargetId;
     };
@@ -59,7 +60,8 @@ public:
     virtual void setAggressive(bool aggressive);
     virtual void registerGoals();
     virtual void registerAttributes();
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& dataString);
     virtual void defineSynchedData();
     virtual ResourceLocation* getDefaultLootTable();
     virtual AABB* getBoundingBoxForCulling();
@@ -73,6 +75,7 @@ public:
     virtual unsigned long long GetType();
     arrayWithLength<Vec3*> getIllusionOffsets(float partialTick);
     boost::shared_ptr<Arrow> getArrow(float distanceFactor);
+
 private:
     int mIllusionLevel;
     Vec3* mDisguisedPosition;

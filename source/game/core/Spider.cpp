@@ -44,7 +44,8 @@ Spider::Spider(Level* level) : Monster(level)
 
 Spider::Spider(Level* level, bool callDerivedConstructor) : Monster(level)
 {
-    if (callDerivedConstructor) fjDerivedCtorCalls();
+    if (callDerivedConstructor)
+        fjDerivedCtorCalls();
     setSize(1.4f, 0.9f);
     mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
@@ -57,7 +58,7 @@ Entity* Spider::create(Level* level)
 void Spider::staticCtor()
 {
     SPIDER_DATA_FLAGS = SynchedEntityData::defineId(EntityType::SPIDER, EntityType::MONSTER,
-                                                     EntityDataSerializers::BYTE);
+                                                    EntityDataSerializers::BYTE);
 }
 
 void Spider::addDataWalkers(DataFixerUpper* fixer)
@@ -98,7 +99,8 @@ void Spider::tick()
 {
     PIXBeginNamedEvent(0.0f, "Spider tick");
     Monster::tick();
-    if (!mLevel->mIsClientSide) setClimbing(mHorizontalCollision);
+    if (!mLevel->mIsClientSide)
+        setClimbing(mHorizontalCollision);
     PIXEndNamedEvent();
 }
 
@@ -109,23 +111,44 @@ void Spider::registerAttributes()
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.30000001192092896);
 }
 
-const SoundEvent* Spider::getAmbientSound() { return SoundEvents::SPIDER_AMBIENT; }
-const SoundEvent* Spider::getHurtSound(const DamageSource*) { return SoundEvents::SPIDER_HURT; }
-const SoundEvent* Spider::getDeathSound() { return SoundEvents::SPIDER_DEATH; }
+const SoundEvent* Spider::getAmbientSound()
+{
+    return SoundEvents::SPIDER_AMBIENT;
+}
+const SoundEvent* Spider::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::SPIDER_HURT;
+}
+const SoundEvent* Spider::getDeathSound()
+{
+    return SoundEvents::SPIDER_DEATH;
+}
 
 void Spider::playStepSound(const BlockPos&, Block*)
 {
     playSound(SoundEvents::SPIDER_STEP, 0.15f, 1.0f);
 }
 
-ResourceLocation* Spider::getDefaultLootTable() { return &BuiltInLootTables::SPIDER; }
-bool Spider::onLadder() { return isClimbing(); }
-void Spider::makeStuckInWeb() { }
-EMobType Spider::getMobType() { return MOB_TYPE_ARTHROPOD; }
+ResourceLocation* Spider::getDefaultLootTable()
+{
+    return &BuiltInLootTables::SPIDER;
+}
+bool Spider::onLadder()
+{
+    return isClimbing();
+}
+void Spider::makeStuckInWeb()
+{
+}
+EMobType Spider::getMobType()
+{
+    return MOB_TYPE_ARTHROPOD;
+}
 
 bool Spider::canBeAffected(MobEffectInstance* effect)
 {
-    if (effect->getEffect() == MobEffects::POISON) return false;
+    if (effect->getEffect() == MobEffects::POISON)
+        return false;
     return LivingEntity::canBeAffected(effect);
 }
 
@@ -141,8 +164,7 @@ void Spider::setClimbing(bool climbing)
     mEntityData->set(SPIDER_DATA_FLAGS, flags, true);
 }
 
-MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                       const std::wstring&)
+MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring&)
 {
     data = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 
@@ -150,8 +172,7 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
     {
         boost::shared_ptr<AbstractSkeleton> rider;
 
-        if (mLevel->canSeeSky(BlockPos(mX, mY, mZ)) && !mLevel->isDay()
-            && mLevel->mRandom->rollPercentageChance(80)
+        if (mLevel->canSeeSky(BlockPos(mX, mY, mZ)) && !mLevel->isDay() && mLevel->mRandom->rollPercentageChance(80)
             && (mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS
                 || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_MOUNTAINS
                 || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS_SPIKES
@@ -162,8 +183,7 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
         {
             rider = boost::shared_ptr<Stray>(new Stray(mLevel));
         }
-        else if (mLevel->mRandom->rollPercentageChance(80)
-                 && mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::HELL)
+        else if (mLevel->mRandom->rollPercentageChance(80) && mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::HELL)
         {
             rider = boost::shared_ptr<WitherSkeleton>(new WitherSkeleton(mLevel));
         }
@@ -181,8 +201,8 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
     if (data == NULL)
     {
         data = new SpiderEffectsGroupData();
-        if (mLevel->getDifficulty() == Difficulty::HARD &&
-            mLevel->mRandom->nextFloat() < 0.1f * difficulty.getSpecialMultiplier())
+        if (mLevel->getDifficulty() == Difficulty::HARD
+            && mLevel->mRandom->nextFloat() < 0.1f * difficulty.getSpecialMultiplier())
         {
             static_cast<SpiderEffectsGroupData*>(data)->setRandomEffect(mLevel->mRandom);
         }
@@ -198,11 +218,16 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
     return data;
 }
 
-float Spider::getEyeHeight() { return 0.65f; }
-unsigned long long Spider::GetType() { return EntityType::SPIDER; }
+float Spider::getEyeHeight()
+{
+    return 0.65f;
+}
+unsigned long long Spider::GetType()
+{
+    return EntityType::SPIDER;
+}
 
-Spider::SpiderAttackGoal::SpiderAttackGoal(Spider* spider)
-    : MeleeAttackGoal(spider, 1.0, true)
+Spider::SpiderAttackGoal::SpiderAttackGoal(Spider* spider) : MeleeAttackGoal(spider, 1.0, true)
 {
 }
 
@@ -222,8 +247,12 @@ double Spider::SpiderAttackGoal::getAttackReachSqr(boost::shared_ptr<LivingEntit
     return (double)(target->mBbWidth + 4.0f);
 }
 
-Spider::SpiderEffectsGroupData::SpiderEffectsGroupData() : mEffect(NULL) { }
-Spider::SpiderEffectsGroupData::~SpiderEffectsGroupData() { }
+Spider::SpiderEffectsGroupData::SpiderEffectsGroupData() : mEffect(NULL)
+{
+}
+Spider::SpiderEffectsGroupData::~SpiderEffectsGroupData()
+{
+}
 
 void Spider::SpiderEffectsGroupData::setRandomEffect(Random* random)
 {

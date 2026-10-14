@@ -20,7 +20,8 @@ public:
     virtual double getValue(double x, double y);
     double getValue(double x, double y, double z);
 
-    void add(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize, double xScale, double yScale, double zScale, double noiseScale);
+    void add(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize,
+             double xScale, double yScale, double zScale, double noiseScale);
 
     int* p;
     int pLength;

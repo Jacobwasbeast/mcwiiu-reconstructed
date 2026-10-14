@@ -25,7 +25,8 @@
 #include "game/server/ServerLevel.hpp"
 
 PortalForcer::PortalPosition::PortalPosition(const BlockPos& pos, long long updateTime)
-    : BlockPos(pos.x, pos.y, pos.z), lastUpdate(updateTime)
+    : BlockPos(pos.x, pos.y, pos.z),
+      lastUpdate(updateTime)
 {
 }
 
@@ -47,15 +48,17 @@ PortalForcer::~PortalForcer()
 
 bool PortalForcer::HasCachedPortal(const ChunkPos& chunkPos, BlockPos& portalPos)
 {
-    boost::unordered_map<ChunkPos, PortalPosition*, ChunkPosKeyHash, ChunkPosKeyEq>::iterator it = portalCache.find(chunkPos);
+    boost::unordered_map<ChunkPos, PortalPosition*, ChunkPosKeyHash, ChunkPosKeyEq>::iterator it = portalCache.find(
+        chunkPos);
     if (it != portalCache.end())
     {
         PortalPosition* cached = it->second;
         LevelChunk* chunk = level->getChunkLoadedOrUnloadedAt(cached->x, cached->z);
-        if (chunk != NULL && !chunk->isEmpty() &&
-            chunk->getBlockId(cached->x & 15, cached->y, cached->z & 15) != BlockId::PORTAL)
+        if (chunk != NULL && !chunk->isEmpty()
+            && chunk->getBlockId(cached->x & 15, cached->y, cached->z & 15) != BlockId::PORTAL)
         {
-            std::vector<ChunkPos>::iterator position = std::find(portalPositions.begin(), portalPositions.end(), chunkPos);
+            std::vector<ChunkPos>::iterator position = std::find(portalPositions.begin(), portalPositions.end(),
+                                                                 chunkPos);
             portalPositions.erase(position);
             delete portalCache[chunkPos];
             portalCache.erase(chunkPos);
@@ -183,7 +186,8 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
         portalPositions.push_back(chunkPos);
     }
 
-    BlockPattern::BlockPatternMatch* portal = static_cast<PortalBlock*>(Blocks::portal)->getPortalShape(level, portalPos);
+    BlockPattern::BlockPatternMatch* portal =
+        static_cast<PortalBlock*>(Blocks::portal)->getPortalShape(level, portalPos);
     bool negative = portal->getForwards()->getClockWise()->getAxisDirection() == Direction::AxisDirection::NEGATIVE;
     double x = (double)portalPos.x + 0.5;
     double z = (double)portalPos.z + 0.5;
@@ -196,22 +200,23 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
     {
         horizontal = (double)portal->getFrontTopLeft().x;
     }
-    double y = (double)(portal->getFrontTopLeft().y + 1) - entity->getPortalEntranceOffset()->y * (double)portal->getHeight();
+    double y = (double)(portal->getFrontTopLeft().y + 1)
+               - entity->getPortalEntranceOffset()->y * (double)portal->getHeight();
     if (negative)
     {
         horizontal += 1.0;
     }
     if (portal->getForwards()->getAxis() == Direction::Axis::X)
     {
-        z = (1.0 - entity->getPortalEntranceOffset()->x) * (double)portal->getWidth() *
-                (double)portal->getForwards()->getClockWise()->getAxisDirection()->getStep() +
-            horizontal;
+        z = (1.0 - entity->getPortalEntranceOffset()->x) * (double)portal->getWidth()
+                * (double)portal->getForwards()->getClockWise()->getAxisDirection()->getStep()
+            + horizontal;
     }
     else
     {
-        x = (1.0 - entity->getPortalEntranceOffset()->x) * (double)portal->getWidth() *
-                (double)portal->getForwards()->getClockWise()->getAxisDirection()->getStep() +
-            horizontal;
+        x = (1.0 - entity->getPortalEntranceOffset()->x) * (double)portal->getWidth()
+                * (double)portal->getForwards()->getClockWise()->getAxisDirection()->getStep()
+            + horizontal;
     }
 
     float diagonal = 1.0f;
@@ -241,8 +246,8 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
     double oldZd = entity->mZd;
     entity->mXd = oldXd * diagonal + oldZd * xFromZ;
     entity->mZd = oldXd * zFromX + oldZd * diagonal;
-    entity->mYRot = rotation - (float)(entity->getPortalEntranceForwards()->getOpposite()->get2DDataValue() * 90) +
-                    (float)(portal->getForwards()->get2DDataValue() * 90);
+    entity->mYRot = rotation - (float)(entity->getPortalEntranceForwards()->getOpposite()->get2DDataValue() * 90)
+                    + (float)(portal->getForwards()->get2DDataValue() * 90);
 
     if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType()))
     {
@@ -349,7 +354,9 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
                                 }
                                 if (yOffset < 0)
                                 {
-                                    if (!level->getBlockState(BlockPos(testX, lowest + yOffset, testZ))->getMaterial()->isSolid())
+                                    if (!level->getBlockState(BlockPos(testX, lowest + yOffset, testZ))
+                                             ->getMaterial()
+                                             ->isSolid())
                                     {
                                         blocked = true;
                                         break;
@@ -428,7 +435,9 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
                                 }
                                 if (yOffset < 0)
                                 {
-                                    if (!level->getBlockState(BlockPos(testX, lowest + yOffset, testZ))->getBlock()->mMaterial->isSolid())
+                                    if (!level->getBlockState(BlockPos(testX, lowest + yOffset, testZ))
+                                             ->getBlock()
+                                             ->mMaterial->isSolid())
                                     {
                                         blocked = true;
                                         break;
@@ -488,8 +497,7 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
     }
 
     Direction::Axis* portalAxis = xDirection == 0 ? Direction::Axis::Z : Direction::Axis::X;
-    const BlockState* portalState =
-        Blocks::portal->defaultBlockState()->setValue(PortalBlock::AXIS, portalAxis);
+    const BlockState* portalState = Blocks::portal->defaultBlockState()->setValue(PortalBlock::AXIS, portalAxis);
     for (int pass = 0; pass < 4; ++pass)
     {
         for (int width = 0; width < 4; ++width)
@@ -500,7 +508,8 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
             {
                 bool frame = width == 0 || width == 3 || yOffset == -1 || yOffset == 3;
                 level->setBlock(BlockPos(x, bestY + yOffset, z),
-                                frame ? Blocks::obsidian->defaultBlockState() : portalState, Block::UPDATE_CLIENTS, false);
+                                frame ? Blocks::obsidian->defaultBlockState() : portalState, Block::UPDATE_CLIENTS,
+                                false);
             }
         }
         for (int width = 0; width < 4; ++width)

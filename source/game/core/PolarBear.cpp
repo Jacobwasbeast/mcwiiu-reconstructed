@@ -37,8 +37,7 @@
 
 const EntityDataAccessor<bool>* PolarBear::DATA_STANDING = NULL;
 
-PolarBear::PolarBear(Level* level)
-    : Animal(level)
+PolarBear::PolarBear(Level* level) : Animal(level)
 {
     fjDerivedCtorCalls();
     setSize(1.3f, 1.4f);
@@ -55,7 +54,7 @@ Entity* PolarBear::create(Level* level)
 void PolarBear::staticCtor()
 {
     DATA_STANDING = SynchedEntityData::defineId<bool>(EntityType::POLAR_BEAR, EntityType::ANIMAL,
-                                                       EntityDataSerializers::BOOLEAN);
+                                                      EntityDataSerializers::BOOLEAN);
 }
 
 boost::shared_ptr<AgableMob> PolarBear::getBreedOffspring(boost::shared_ptr<AgableMob>)
@@ -143,19 +142,24 @@ void PolarBear::tick()
     if (mLevel->mIsClientSide)
     {
         mStandingScaleO = mStandingScale;
-        if (isStanding()) mStandingScale = Mth::clamp(mStandingScale + 1.0f, 0.0f, 6.0f);
-        else mStandingScale = Mth::clamp(mStandingScale - 1.0f, 0.0f, 6.0f);
+        if (isStanding())
+            mStandingScale = Mth::clamp(mStandingScale + 1.0f, 0.0f, 6.0f);
+        else
+            mStandingScale = Mth::clamp(mStandingScale - 1.0f, 0.0f, 6.0f);
     }
-    if (mWarningSoundTicks > 0) --mWarningSoundTicks;
+    if (mWarningSoundTicks > 0)
+        --mWarningSoundTicks;
 }
 
 bool PolarBear::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    EntityDamageSource* source =
-        DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
-    bool hurt = target->hurt(source, static_cast<float>(getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue()));
+    EntityDamageSource* source = DamageSource::CreateMobAttack(
+        boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
+    bool hurt = target->hurt(source,
+                             static_cast<float>(getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue()));
     delete source;
-    if (hurt) doEnchantDamageEffects(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()), target);
+    if (hurt)
+        doEnchantDamageEffects(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()), target);
     return hurt;
 }
 
@@ -201,7 +205,8 @@ bool PolarBear::checkSpawnRules()
     Biome* biome = mLevel->getBiome(pos);
     if (biome == Biome::FROZEN_OCEAN || biome == Biome::DEEP_FROZEN_OCEAN)
     {
-        return mLevel->getRawBrightness(pos, false) > 8 && mLevel->getBlockState(pos.below())->getBlock() == Blocks::ice;
+        return mLevel->getRawBrightness(pos, false) > 8
+               && mLevel->getBlockState(pos.below())->getBlock() == Blocks::ice;
     }
     return Animal::checkSpawnRules();
 }
@@ -226,14 +231,13 @@ PolarBear::PolarBearAttackPlayersGoal::PolarBearAttackPlayersGoal(PolarBear* pol
 
 bool PolarBear::PolarBearAttackPlayersGoal::canUse()
 {
-    if (mMob->mLevel->getDifficulty() != Difficulty::PEACEFUL && !mMob->isBaby() &&
-        NearestAttackableTargetGoal::canUse())
+    if (mMob->mLevel->getDifficulty() != Difficulty::PEACEFUL && !mMob->isBaby()
+        && NearestAttackableTargetGoal::canUse())
     {
-        std::vector<boost::shared_ptr<Entity> >* entities =
-            mMob->mLevel->getEntitiesOfClass(typeid(PolarBear), mMob->mBoundingBox->grow(8.0, 4.0, 8.0));
+        std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(
+            typeid(PolarBear), mMob->mBoundingBox->grow(8.0, 4.0, 8.0));
 
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-             it != entities->end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
             boost::shared_ptr<PolarBear> bear = boost::static_pointer_cast<PolarBear>(*it);
             if (bear->isBaby())
@@ -270,7 +274,7 @@ void PolarBear::PolarBearHurtByTargetGoal::start()
 }
 
 void PolarBear::PolarBearHurtByTargetGoal::alertOther(boost::shared_ptr<PathfinderMob> mob,
-                                                       boost::shared_ptr<LivingEntity> target)
+                                                      boost::shared_ptr<LivingEntity> target)
 {
     bool isPolarBear = eTYPE_DERIVED_FROM(EntityType::POLAR_BEAR, mob->GetType());
     if (isPolarBear)
@@ -295,14 +299,14 @@ bool PolarBear::PolarBearMeleeAttackGoal::canUse()
         if (target)
         {
             bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType());
-            if (isPlayer) return false;
+            if (isPlayer)
+                return false;
         }
     }
     return MeleeAttackGoal::canUse();
 }
 
-void PolarBear::PolarBearMeleeAttackGoal::checkAndPerformAttack(boost::shared_ptr<LivingEntity> target,
-                                                                 double distance)
+void PolarBear::PolarBearMeleeAttackGoal::checkAndPerformAttack(boost::shared_ptr<LivingEntity> target, double distance)
 {
     double reach = getAttackReachSqr(target);
     if (distance <= reach && mTicksUntilNextAttack < 1)
@@ -342,8 +346,7 @@ double PolarBear::PolarBearMeleeAttackGoal::getAttackReachSqr(boost::shared_ptr<
     return target->mBbWidth + 4.0f;
 }
 
-PolarBear::PolarBearPanicGoal::PolarBearPanicGoal(PolarBear* polarBear)
-    : PanicGoal(polarBear, 2.0)
+PolarBear::PolarBearPanicGoal::PolarBearPanicGoal(PolarBear* polarBear) : PanicGoal(polarBear, 2.0)
 {
 }
 

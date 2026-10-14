@@ -32,10 +32,11 @@ public:
         EndermanLeaveBlockGoal(EnderMan* enderMan);
         virtual ~EndermanLeaveBlockGoal();
         virtual bool canUse();
-        bool canPlaceBlock(Level* level, const BlockPos& pos, Block* block,
-                           const BlockState* oldState, const BlockState* newState);
+        bool canPlaceBlock(Level* level, const BlockPos& pos, Block* block, const BlockState* oldState,
+                           const BlockState* newState);
         virtual void tick();
         virtual std::wstring getName();
+
     private:
         EnderMan* mEnderMan;
     };
@@ -49,6 +50,7 @@ public:
         virtual void stop();
         virtual bool canContinueToUse();
         virtual void tick();
+
     private:
         boost::shared_ptr<Player> mPendingTarget;
         int mAggroTime;
@@ -64,6 +66,7 @@ public:
         virtual bool canUse();
         virtual void tick();
         virtual std::wstring getName();
+
     private:
         EnderMan* mEnderMan;
     };

@@ -236,8 +236,7 @@ public:
     static void rotatef(float angle, float x, float y, float z);
     static void rotated(double angle, double x, double y, double z);
     static void perspective(float fieldOfView, float aspect, float nearDistance, float farDistance);
-    static void ortho(double left, double right, double bottom, double top, double nearDistance,
-                      double farDistance);
+    static void ortho(double left, double right, double bottom, double top, double nearDistance, double farDistance);
     static void viewport(int x, int y, int width, int height);
     static void getMatrix(int mode, FloatBuffer* buffer);
     static void multMatrix(FloatBuffer* buffer);
@@ -319,8 +318,8 @@ public:
     static void deleteTexture(int texture);
     static void genTextures(IntBuffer* buffer);
     static void deleteTextures(IntBuffer* buffer);
-    static void texImage2D(int target, int level, int internalFormat, int width, int height, int border,
-                           int format, int type, ByteBuffer* pixels);
+    static void texImage2D(int target, int level, int internalFormat, int width, int height, int border, int format,
+                           int type, ByteBuffer* pixels);
     static void texParameteri(int target, int parameter, int value);
     static void texParameteri(int parameter, int value);
     static void texParameterf(int target, int parameter, float value);

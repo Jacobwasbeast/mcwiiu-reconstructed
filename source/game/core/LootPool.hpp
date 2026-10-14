@@ -16,22 +16,12 @@ class Random;
 class LootPool
 {
 public:
-    LootPool(std::vector<LootPoolEntry*>* entries,
-             std::vector<LootItemCondition*>* conditions,
-             RandomValueBounds rolls,
-             RandomValueBounds bonusRolls,
-             LootPoolTiers* tiers);
+    LootPool(std::vector<LootPoolEntry*>* entries, std::vector<LootItemCondition*>* conditions, RandomValueBounds rolls,
+             RandomValueBounds bonusRolls, LootPoolTiers* tiers);
 
-    void addTier(std::vector<not_null_ptr<ItemInstance> >* items,
-                 Random* random,
-                 LootTableContext& context,
-                 int tier);
-    void addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                       Random* random,
-                       LootTableContext& context);
-    void addRandomItems(std::vector<not_null_ptr<ItemInstance> >* items,
-                        Random* random,
-                        LootTableContext& context);
+    void addTier(std::vector<not_null_ptr<ItemInstance> >* items, Random* random, LootTableContext& context, int tier);
+    void addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random, LootTableContext& context);
+    void addRandomItems(std::vector<not_null_ptr<ItemInstance> >* items, Random* random, LootTableContext& context);
 
 private:
     std::vector<LootPoolEntry*>* mEntries;

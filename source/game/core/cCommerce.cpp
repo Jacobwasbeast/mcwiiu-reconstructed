@@ -125,7 +125,8 @@ unsigned int cCommerce::HasPurchased(unsigned int index, bool* purchased, bool* 
     return 0;
 }
 
-unsigned int cCommerce::GetDLCProductInfo(cProductInfo** productInfo, unsigned int* count, unsigned int index, bool includeUnavailable)
+unsigned int cCommerce::GetDLCProductInfo(cProductInfo** productInfo, unsigned int* count, unsigned int index,
+                                          bool includeUnavailable)
 {
     return 0;
 }
@@ -201,6 +202,3 @@ unsigned int cCommerce::AttemptLogIn()
 {
     return 1;
 }
-
-
-

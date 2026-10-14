@@ -44,16 +44,14 @@ public:
     virtual double getLevelZ();
     virtual bool suckInItems();
     virtual int getTypeId(bool large);
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
 
     void _init();
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual const Minecart::Type* getType();
     virtual const BlockState* getDefaultDisplayBlockState();
     virtual int getDefaultDisplayOffset();
-    virtual bool interact(const boost::shared_ptr<Player>& player,
-                          InteractionHand::EInteractionHand hand);
+    virtual bool interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual void activateMinecart(int x, int y, int z, bool powered);
     void setCooldown(int cooldown);
     bool isOnCooldown();

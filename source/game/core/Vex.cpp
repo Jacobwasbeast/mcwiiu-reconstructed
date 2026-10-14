@@ -27,8 +27,7 @@
 static const EntityDataAccessor<unsigned char>* DATA_FLAGS = NULL;
 static const int FLAG_IS_CHARGING = 1;
 
-Vex::Vex(Level* level)
-    : Monster(level), owner()
+Vex::Vex(Level* level) : Monster(level), owner()
 {
     fjDerivedCtorCalls();
     mFireImmune = true;
@@ -41,7 +40,10 @@ Vex::Vex(Level* level)
     mExperienceReward = 3;
 }
 
-Vex::~Vex() { delete boundOrigin; }
+Vex::~Vex()
+{
+    delete boundOrigin;
+}
 Entity* Vex::create(Level* level)
 {
     return new Vex(level);
@@ -49,7 +51,7 @@ Entity* Vex::create(Level* level)
 void Vex::staticCtor()
 {
     DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(EntityType::VEX, EntityType::MONSTER,
-                                                              EntityDataSerializers::BYTE);
+                                                            EntityDataSerializers::BYTE);
 }
 void Vex::move(MoverType operation, double x, double y, double z, bool force)
 {
@@ -96,17 +98,26 @@ void Vex::defineSynchedData()
     Mob::defineSynchedData();
     mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
 }
-void Vex::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, EntityType::VEX); }
-void Vex::setLimitedLife(int life) { limitedLife = life; hasLimitedLife = true; }
+void Vex::addDataWalkers(DataFixerUpper* fixer)
+{
+    Mob::addDataWalkers(fixer, EntityType::VEX);
+}
+void Vex::setLimitedLife(int life)
+{
+    limitedLife = life;
+    hasLimitedLife = true;
+}
 void Vex::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
     if (tag->contains(L"BoundX"))
     {
-        if (boundOrigin != 0) delete boundOrigin;
+        if (boundOrigin != 0)
+            delete boundOrigin;
         boundOrigin = new BlockPos(tag->getInt(L"BoundX"), tag->getInt(L"BoundY"), tag->getInt(L"BoundZ"));
     }
-    if (tag->contains(L"LifeTicks")) setLimitedLife(tag->getInt(L"LifeTicks"));
+    if (tag->contains(L"LifeTicks"))
+        setLimitedLife(tag->getInt(L"LifeTicks"));
 }
 void Vex::addAdditonalSaveData(CompoundTag* tag)
 {
@@ -117,17 +128,26 @@ void Vex::addAdditonalSaveData(CompoundTag* tag)
         tag->putInt(L"BoundY", boundOrigin->y);
         tag->putInt(L"BoundZ", boundOrigin->z);
     }
-    if (hasLimitedLife) tag->putInt(L"LifeTicks", limitedLife);
+    if (hasLimitedLife)
+        tag->putInt(L"LifeTicks", limitedLife);
 }
-boost::shared_ptr<Mob> Vex::getOwner() { return owner.lock(); }
-BlockPos* Vex::getBoundOrigin() { return boundOrigin; }
+boost::shared_ptr<Mob> Vex::getOwner()
+{
+    return owner.lock();
+}
+BlockPos* Vex::getBoundOrigin()
+{
+    return boundOrigin;
+}
 void Vex::setBoundOrigin(BlockPos* origin)
 {
     delete boundOrigin;
     boundOrigin = origin;
 }
 bool Vex::getVexFlag(int flag)
-{ return (mEntityData->get(DATA_FLAGS) & flag) != 0; }
+{
+    return (mEntityData->get(DATA_FLAGS) & flag) != 0;
+}
 void Vex::setVexFlag(int flag, bool value)
 {
     int flags = mEntityData->get(DATA_FLAGS);
@@ -137,18 +157,48 @@ void Vex::setVexFlag(int flag, bool value)
         flags &= ~flag;
     mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags), true);
 }
-bool Vex::isCharging() { return getVexFlag(FLAG_IS_CHARGING); }
-void Vex::setIsCharging(bool value) { setVexFlag(FLAG_IS_CHARGING, value); }
+bool Vex::isCharging()
+{
+    return getVexFlag(FLAG_IS_CHARGING);
+}
+void Vex::setIsCharging(bool value)
+{
+    setVexFlag(FLAG_IS_CHARGING, value);
+}
 void Vex::setOwner(const boost::shared_ptr<Mob>& owner)
-{ this->owner = owner; }
-const SoundEvent* Vex::getAmbientSound() { return SoundEvents::VEX_AMBIENT; }
-const SoundEvent* Vex::getDeathSound() { return SoundEvents::VEX_DEATH; }
-const SoundEvent* Vex::getHurtSound(const DamageSource*) { return SoundEvents::VEX_HURT; }
-ResourceLocation* Vex::getDefaultLootTable() { return &BuiltInLootTables::VEX; }
-ResourceLocation* Vex::getDefaultGearTable() { return &BuiltInLootTables::VEX_GEAR; }
-int Vex::getLightColor() { return 0xf000f0; }
-float Vex::getBrightness() { return 1.0f; }
-MobGroupData* Vex::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& reason)
+{
+    this->owner = owner;
+}
+const SoundEvent* Vex::getAmbientSound()
+{
+    return SoundEvents::VEX_AMBIENT;
+}
+const SoundEvent* Vex::getDeathSound()
+{
+    return SoundEvents::VEX_DEATH;
+}
+const SoundEvent* Vex::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::VEX_HURT;
+}
+ResourceLocation* Vex::getDefaultLootTable()
+{
+    return &BuiltInLootTables::VEX;
+}
+ResourceLocation* Vex::getDefaultGearTable()
+{
+    return &BuiltInLootTables::VEX_GEAR;
+}
+int Vex::getLightColor()
+{
+    return 0xf000f0;
+}
+float Vex::getBrightness()
+{
+    return 1.0f;
+}
+MobGroupData* Vex::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                    const std::wstring& reason)
 {
     populateDefaultEquipmentSlots(difficulty);
     populateDefaultEquipmentEnchantments(difficulty);
@@ -159,7 +209,10 @@ void Vex::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
     Mob::populateDefaultEquipmentSlots(difficulty);
     setDropChance(EquipmentSlot::MAINHAND, 0.0f);
 }
-unsigned long long Vex::GetType() { return EntityType::VEX; }
+unsigned long long Vex::GetType()
+{
+    return EntityType::VEX;
+}
 
 Vex::VexChargeAttackGoal::VexChargeAttackGoal(Vex* value) : Goal(), owner(value)
 {
@@ -177,7 +230,7 @@ bool Vex::VexChargeAttackGoal::canUse()
 bool Vex::VexChargeAttackGoal::canContinueToUse()
 {
     return owner->getMoveControl()->hasWanted() && owner->isCharging() && owner->getTarget() != 0
-        && owner->getTarget()->isAlive();
+           && owner->getTarget()->isAlive();
 }
 void Vex::VexChargeAttackGoal::start()
 {
@@ -187,7 +240,10 @@ void Vex::VexChargeAttackGoal::start()
     owner->setIsCharging(true);
     owner->playSound(SoundEvents::VEX_CHARGE, 1.0f, 1.0f);
 }
-void Vex::VexChargeAttackGoal::stop() { owner->setIsCharging(false); }
+void Vex::VexChargeAttackGoal::stop()
+{
+    owner->setIsCharging(false);
+}
 void Vex::VexChargeAttackGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = owner->getTarget();
@@ -206,10 +262,14 @@ void Vex::VexChargeAttackGoal::tick()
         }
     }
 }
-std::wstring Vex::VexChargeAttackGoal::getName() { return L"Vex Charging Attack"; }
+std::wstring Vex::VexChargeAttackGoal::getName()
+{
+    return L"Vex Charging Attack";
+}
 
-Vex::VexCopyOwnerTargetGoal::VexCopyOwnerTargetGoal(PathfinderMob* value)
-    : TargetGoal(value, false) {}
+Vex::VexCopyOwnerTargetGoal::VexCopyOwnerTargetGoal(PathfinderMob* value) : TargetGoal(value, false)
+{
+}
 bool Vex::VexCopyOwnerTargetGoal::canUse()
 {
     Vex* vex = static_cast<Vex*>(mMob);
@@ -222,16 +282,22 @@ void Vex::VexCopyOwnerTargetGoal::start()
     static_cast<Vex*>(mMob)->setTarget(owner->getTarget());
     TargetGoal::start();
 }
-std::wstring Vex::VexCopyOwnerTargetGoal::getName() { return L"Vex Copy Owner Target"; }
+std::wstring Vex::VexCopyOwnerTargetGoal::getName()
+{
+    return L"Vex Copy Owner Target";
+}
 
-Vex::VexMoveControl::VexMoveControl(Vex* value) : MoveControl(value) {}
+Vex::VexMoveControl::VexMoveControl(Vex* value) : MoveControl(value)
+{
+}
 Vex::VexMoveControl::~VexMoveControl()
 {
 }
 void Vex::VexMoveControl::tick()
 {
     Vex* vex = static_cast<Vex*>(mMob);
-    if (mOperation != MOVE_TO) return;
+    if (mOperation != MOVE_TO)
+        return;
     const double dx = mWantedX - vex->mX;
     const double dy = mWantedY - vex->mY;
     const double dz = mWantedZ - vex->mZ;
@@ -271,12 +337,18 @@ Vex::VexRandomMoveGoal::~VexRandomMoveGoal()
 {
 }
 bool Vex::VexRandomMoveGoal::canUse()
-{ return !owner->getMoveControl()->hasWanted() && owner->mRandom->nextInt(7) == 0; }
-bool Vex::VexRandomMoveGoal::canContinueToUse() { return false; }
+{
+    return !owner->getMoveControl()->hasWanted() && owner->mRandom->nextInt(7) == 0;
+}
+bool Vex::VexRandomMoveGoal::canContinueToUse()
+{
+    return false;
+}
 void Vex::VexRandomMoveGoal::tick()
 {
     const BlockPos* origin = owner->getBoundOrigin();
-    if (origin == 0) origin = new BlockPos(owner);
+    if (origin == 0)
+        origin = new BlockPos(owner);
     Level* level = owner->mLevel;
     Random* random = owner->mRandom;
     for (int attempt = 0; attempt != 3; ++attempt)
@@ -285,13 +357,15 @@ void Vex::VexRandomMoveGoal::tick()
                                                   random->nextInt(15) - 7);
         if (level->isEmptyBlock(candidate))
         {
-            owner->mMoveControl->setWantedPosition(candidate.x + 0.5, candidate.y + 0.5,
-                                                   candidate.z + 0.5, 0.25);
+            owner->mMoveControl->setWantedPosition(candidate.x + 0.5, candidate.y + 0.5, candidate.z + 0.5, 0.25);
             if (owner->getTarget() == NULL)
-                owner->getLookControl()->setLookAt(candidate.x + 0.5, candidate.y + 0.5,
-                                                   candidate.z + 0.5, 180.0f, 20.0f);
+                owner->getLookControl()->setLookAt(candidate.x + 0.5, candidate.y + 0.5, candidate.z + 0.5, 180.0f,
+                                                   20.0f);
             break;
         }
     }
 }
-std::wstring Vex::VexRandomMoveGoal::getName() { return L"Vex Random Move"; }
+std::wstring Vex::VexRandomMoveGoal::getName()
+{
+    return L"Vex Random Move";
+}

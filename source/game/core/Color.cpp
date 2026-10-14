@@ -7,8 +7,8 @@ Color::Color(int red, int green, int blue)
 
 Color::Color(float red, float green, float blue)
 {
-    this->value = 0xff000000 | (((int)(red * 255.0f) & 0xff) << 16) |
-        (((int)(green * 255.0f) & 0xff) << 8) | ((int)(blue * 255.0f) & 0xff);
+    this->value = 0xff000000 | (((int)(red * 255.0f) & 0xff) << 16) | (((int)(green * 255.0f) & 0xff) << 8)
+                  | ((int)(blue * 255.0f) & 0xff);
 }
 
 Color Color::getHSBColor(float hue, float saturation, float brightness)

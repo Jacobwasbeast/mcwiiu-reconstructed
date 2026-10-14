@@ -1,7 +1,6 @@
 #include "game/core/NotWinnerCondition.hpp"
 
-NotWinnerCondition::NotWinnerCondition()
-    : WinnerCondition()
+NotWinnerCondition::NotWinnerCondition() : WinnerCondition()
 {
 }
 

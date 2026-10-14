@@ -27,17 +27,13 @@ AbstractProperty<int>* Coral::VARIANT = static_cast<AbstractProperty<int>*>(Inte
 
 namespace
 {
-    std::wstring CORAL_ICON_NAMES[5] =
-    {
-        L"coral_plant_blue", L"coral_plant_pink", L"coral_plant_purple", L"coral_plant_red",
-        L"coral_plant_yellow"
-    };
+std::wstring CORAL_ICON_NAMES[5] = {L"coral_plant_blue", L"coral_plant_pink", L"coral_plant_purple", L"coral_plant_red",
+                                    L"coral_plant_yellow"};
 
-    const AABB* CORAL_SHAPE = AABB::newPermanent(0.1f, 0.0, 0.1f, 0.9f, 0.8f, 0.9f);
+const AABB* CORAL_SHAPE = AABB::newPermanent(0.1f, 0.0, 0.1f, 0.9f, 0.8f, 0.9f);
 }
 
-Coral::Coral()
-    : Bush(Material::REPLACEABLE_PLANT)
+Coral::Coral() : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
 
@@ -54,8 +50,7 @@ int Coral::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockSt
     return Blocks::grass->getColor(levelSource, pos, state);
 }
 
-const MaterialColor* Coral::getMapColor(const BlockState* state, LevelSource* levelSource,
-                                        const BlockPos& pos)
+const MaterialColor* Coral::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     return Blocks::grass->getMapColor(state, levelSource, pos);
 }
@@ -65,11 +60,9 @@ Item* Coral::getResource(const BlockState* state, Random* random, int lootBonus)
     return NULL;
 }
 
-not_null_ptr<ItemInstance> Coral::getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                       const BlockState* state)
+not_null_ptr<ItemInstance> Coral::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral, 1,
-                                                       convertBlockStateToLegacyData(state)));
+    return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral, 1, convertBlockStateToLegacyData(state)));
 }
 
 bool Coral::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
@@ -77,8 +70,8 @@ bool Coral::canSurvive(Level* level, const BlockPos& pos, const BlockState* stat
     return mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
 }
 
-void Coral::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                            Block* block, const BlockPos& fromPos)
+void Coral::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                            const BlockPos& fromPos)
 {
     if (level->mIsClientSide)
     {
@@ -145,7 +138,7 @@ const AABB* Coral::getShape(const BlockState* state, LevelSource* levelSource, c
 
 BlockStateDefinition* Coral::createBlockStateDefinition()
 {
-    static const Property* PROPERTIES[1] = { Coral::VARIANT };
+    static const Property* PROPERTIES[1] = {Coral::VARIANT};
 
     return new BlockStateDefinition(this, PROPERTIES, 1);
 }
@@ -171,7 +164,8 @@ bool Coral::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* stat
             }
 
             Block* block = state->getBlock();
-            bool onSlabTop = block->isSlabBlock() && !HalfSlabBlock::isBottomSlab(block->convertBlockStateToLegacyData(state));
+            bool onSlabTop = block->isSlabBlock()
+                             && !HalfSlabBlock::isBottomSlab(block->convertBlockStateToLegacyData(state));
 
             if (state->canProvideSupport(Direction::UP, BLOCK_SUPPORT_CENTER) || onSlabTop)
             {

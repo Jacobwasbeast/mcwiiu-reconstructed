@@ -1,7 +1,7 @@
 #include "game/core/XmlConstruct.hpp"
 #include "game/core/StringUtils.hpp"
 
-template<typename T> T _fromString(const std::wstring& text);
+template <typename T> T _fromString(const std::wstring& text);
 
 std::wstring XmlConstruct::asString() const
 {
@@ -149,4 +149,3 @@ maybe<float> XmlConstruct::maybeFloat() const
 {
     return isFloat() ? maybe<float>(asFloat()) : maybe<float>();
 }
-

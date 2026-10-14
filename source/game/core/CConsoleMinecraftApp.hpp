@@ -85,6 +85,7 @@ public:
     static uint32_t UpgradeTrialSessionStartedCallback(void*, int);
     void ShowPatchAvailableError();
     void PatchAvailableDialogTick();
+
 private:
     friend class ConsoleUIController;
     ImageFileBuffer m_saveThumbnail;

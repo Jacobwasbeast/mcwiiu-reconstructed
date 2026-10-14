@@ -5,8 +5,7 @@ const Rarity* Rarity::UNCOMMON = new Rarity(eMinecraftColour_HTMLColor_e, L"Unco
 const Rarity* Rarity::RARE = new Rarity(eMinecraftColour_HTMLColor_b, L"Rare", 2);
 const Rarity* Rarity::EPIC = new Rarity(eMinecraftColour_HTMLColor_5, L"Epic", 1);
 
-Rarity::Rarity(eMinecraftColour colour, const std::wstring& name, int weight)
-    : colour(colour)
+Rarity::Rarity(eMinecraftColour colour, const std::wstring& name, int weight) : colour(colour)
 {
     this->name = name;
     this->weight = weight;

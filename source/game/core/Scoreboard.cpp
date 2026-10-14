@@ -21,10 +21,7 @@
 #include "game/world/generation/PlayerList.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
 
-Scoreboard::Scoreboard()
-    : mTeamsByName(11),
-      mTeamsByPlayer(11),
-      mCurrentRound(0)
+Scoreboard::Scoreboard() : mTeamsByName(11), mTeamsByPlayer(11), mCurrentRound(0)
 {
 }
 
@@ -67,8 +64,7 @@ void Scoreboard::removePlayerTeam(PlayerTeam* pTeam)
     {
         mTeamsByName.erase(team);
 
-        typedef boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >
-            PlayerSet;
+        typedef boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> > PlayerSet;
 
         PlayerSet::const_iterator player;
 
@@ -140,7 +136,8 @@ std::vector<PlayerTeam*>* Scoreboard::getPlayerTeams()
     std::vector<PlayerTeam*>* pTeams = new std::vector<PlayerTeam*>;
     pTeams->reserve(mTeamsByName.size());
 
-    for (boost::unordered_map<std::wstring, PlayerTeam*>::iterator team = mTeamsByName.begin(); team != mTeamsByName.end(); ++team)
+    for (boost::unordered_map<std::wstring, PlayerTeam*>::iterator team = mTeamsByName.begin();
+         team != mTeamsByName.end(); ++team)
     {
         pTeams->push_back(team->second);
     }
@@ -150,7 +147,8 @@ std::vector<PlayerTeam*>* Scoreboard::getPlayerTeams()
 
 PlayerTeam* Scoreboard::getTeamByIndex(int index) const
 {
-    for (boost::unordered_map<std::wstring, PlayerTeam*>::const_iterator team = mTeamsByName.begin(); team != mTeamsByName.end(); ++team)
+    for (boost::unordered_map<std::wstring, PlayerTeam*>::const_iterator team = mTeamsByName.begin();
+         team != mTeamsByName.end(); ++team)
     {
         PlayerTeam* pTeam = team->second;
 
@@ -446,8 +444,7 @@ int Scoreboard::PlayerStats::getRecord(eIntArgIndex index, int round)
         return roundStats.mLastBankedCheckpointId;
 
     case eIntArg_CheckpointTime:
-        if (roundStats.mCheckpointTimes.find(roundStats.mLastCheckpointId)
-            != roundStats.mCheckpointTimes.end())
+        if (roundStats.mCheckpointTimes.find(roundStats.mLastCheckpointId) != roundStats.mCheckpointTimes.end())
         {
             return roundStats.mCheckpointTimes.at(roundStats.mLastCheckpointId);
         }
@@ -502,8 +499,7 @@ long long Scoreboard::PlayerStats::getRecord(eInt64ArgIndex index, int round)
     return 0;
 }
 
-void Scoreboard::PlayerStats::setRecord(eStringArgIndex index, int round, int life,
-                                        std::wstring value)
+void Scoreboard::PlayerStats::setRecord(eStringArgIndex index, int round, int life, std::wstring value)
 {
     _RoundStats& roundStats = mRoundStats[round];
 
@@ -744,39 +740,34 @@ bool Scoreboard::PlayerStats::isRecordSame(PlayerStats* pOther, int record, int 
 
     if (record < eBoolArg_Count)
     {
-        return getRecord((eBoolArgIndex)record, round)
-               == pOther->getRecord((eBoolArgIndex)record, round);
+        return getRecord((eBoolArgIndex)record, round) == pOther->getRecord((eBoolArgIndex)record, round);
     }
 
     record -= eBoolArg_Count;
 
     if (record < eFloatArg_Count)
     {
-        return getRecord((eFloatArgIndex)record, round)
-               == pOther->getRecord((eFloatArgIndex)record, round);
+        return getRecord((eFloatArgIndex)record, round) == pOther->getRecord((eFloatArgIndex)record, round);
     }
 
     record -= eFloatArg_Count;
 
     if (record < eIntArg_Count)
     {
-        return getRecord((eIntArgIndex)record, round)
-               == pOther->getRecord((eIntArgIndex)record, round);
+        return getRecord((eIntArgIndex)record, round) == pOther->getRecord((eIntArgIndex)record, round);
     }
 
     record -= eIntArg_Count;
 
     if (record < eInt64Arg_Count)
     {
-        return getRecord((eInt64ArgIndex)record, round)
-               == pOther->getRecord((eInt64ArgIndex)record, round);
+        return getRecord((eInt64ArgIndex)record, round) == pOther->getRecord((eInt64ArgIndex)record, round);
     }
 
     return false;
 }
 
-unsigned long long Scoreboard::PlayerStats::getChangedBitfield(PlayerStats* pOther, int round,
-                                                               int life)
+unsigned long long Scoreboard::PlayerStats::getChangedBitfield(PlayerStats* pOther, int round, int life)
 {
     unsigned long long changed = 0;
 
@@ -791,8 +782,7 @@ unsigned long long Scoreboard::PlayerStats::getChangedBitfield(PlayerStats* pOth
     return changed;
 }
 
-void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int round, int life,
-                                                   unsigned long long changed)
+void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int round, int life, unsigned long long changed)
 {
     for (unsigned long long record = 0; record < eRecord_Count; record++)
     {
@@ -823,8 +813,7 @@ void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int roun
 
         if (index < eStringArg_Count)
         {
-            setRecord((eStringArgIndex)index, round, life,
-                      pOther->getRecord((eStringArgIndex)index, round, life));
+            setRecord((eStringArgIndex)index, round, life, pOther->getRecord((eStringArgIndex)index, round, life));
             continue;
         }
 
@@ -840,8 +829,7 @@ void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int roun
 
         if (index < eFloatArg_Count)
         {
-            setRecord((eFloatArgIndex)index, round,
-                      pOther->getRecord((eFloatArgIndex)index, round));
+            setRecord((eFloatArgIndex)index, round, pOther->getRecord((eFloatArgIndex)index, round));
             continue;
         }
 
@@ -912,8 +900,7 @@ void Scoreboard::PlayerStats::readRecord(DataInputStream* pInput, int record, in
     }
 }
 
-void Scoreboard::PlayerStats::writeRecord(DataOutputStream* pOutput, int record, int round,
-                                          int life)
+void Scoreboard::PlayerStats::writeRecord(DataOutputStream* pOutput, int record, int round, int life)
 {
     if (record == eRecord_SUID)
     {

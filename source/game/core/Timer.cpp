@@ -66,7 +66,8 @@ void Timer::advanceTime()
         timePassed = 1.0;
     }
 
-    elapsedPartialTicks = (float)((double)elapsedPartialTicks + timePassed * (double)timerSpeed * (double)ticksPerSecond);
+    elapsedPartialTicks = (float)((double)elapsedPartialTicks
+                                  + timePassed * (double)timerSpeed * (double)ticksPerSecond);
     elapsedTicks = (int)elapsedPartialTicks;
     elapsedPartialTicks -= (float)elapsedTicks;
 

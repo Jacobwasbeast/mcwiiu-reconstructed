@@ -28,15 +28,14 @@ public:
     };
 
     OceanRuin();
-    OceanRuin(Level* level, Random& random, int x, int z, int width, int height, int depth,
-        bool isWarm, bool isLarge);
+    OceanRuin(Level* level, Random& random, int x, int z, int width, int height, int depth, bool isWarm, bool isLarge);
 
     eMinecraftStructureTemplate getBigWarmRuin(Random& random);
     eMinecraftStructureTemplate getSmallWarmRuin(Random& random);
     eMinecraftStructureTemplate getRuin(int index, bool large, ERuinType type);
     void updateChestReplacer(eMinecraftStructureTemplate structureTemplate);
     const StructureTemplate* placeRuin(Random& random, StructureManager* structureManager, Level* level,
-        const BlockPos& pos, StructurePlaceSettings& settings);
+                                       const BlockPos& pos, StructurePlaceSettings& settings);
     BlockPos adaptPosition(const BlockPos& pos, Mirror* mirror, Rotation* rotation, Level* level);
     void fillBelow(const BlockPos& pos, Mirror* mirror, Rotation* rotation, Level* level);
     virtual bool postProcess(Level* level, Random& random, BoundingBox* box);

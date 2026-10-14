@@ -5,29 +5,29 @@
 
 namespace NS_SystemChecker_CPP
 {
-    class SystemCheckFunctor : public VoidFunctor
+class SystemCheckFunctor : public VoidFunctor
+{
+public:
+    typedef void (*Handler)(const wchar_t* pExpression, const wchar_t* pFile, unsigned int uiLine);
+
+    SystemCheckFunctor(Handler pHandler, const wchar_t* pExpression, const wchar_t* pFile, unsigned int uiLine)
+        : m_pHandler(pHandler),
+          m_pExpression(pExpression),
+          m_pFile(pFile),
+          m_uiLine(uiLine)
     {
-    public:
-        typedef void (*Handler)(const wchar_t* pExpression, const wchar_t* pFile, unsigned int uiLine);
+    }
 
-        SystemCheckFunctor(Handler pHandler, const wchar_t* pExpression, const wchar_t* pFile, unsigned int uiLine)
-            : m_pHandler(pHandler)
-            , m_pExpression(pExpression)
-            , m_pFile(pFile)
-            , m_uiLine(uiLine)
-        {
-        }
+    virtual ~SystemCheckFunctor();
 
-        virtual ~SystemCheckFunctor();
+    virtual void operator()() const;
 
-        virtual void operator()() const;
-
-    private:
-        Handler m_pHandler;
-        const wchar_t* m_pExpression;
-        const wchar_t* m_pFile;
-        unsigned int m_uiLine;
-    };
+private:
+    Handler m_pHandler;
+    const wchar_t* m_pExpression;
+    const wchar_t* m_pFile;
+    unsigned int m_uiLine;
+};
 }
 
 #endif

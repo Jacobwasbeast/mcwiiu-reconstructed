@@ -4,10 +4,10 @@
 #include "game/entity/mob/LivingEntity.hpp"
 
 InsomniaComponent::InsomniaComponent(LivingEntity* entity, float daysUntilInsomnia)
-    : mEntity(entity)
-    , mInsomniaTimerTicks(0)
-    , mDaysUntilInsomnia(daysUntilInsomnia)
-    , mTicksUntilInsomnia((int)(daysUntilInsomnia * 24000.0f))
+    : mEntity(entity),
+      mInsomniaTimerTicks(0),
+      mDaysUntilInsomnia(daysUntilInsomnia),
+      mTicksUntilInsomnia((int)(daysUntilInsomnia * 24000.0f))
 {
 }
 

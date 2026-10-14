@@ -17,8 +17,7 @@
 #include "game/core/Wolf.hpp"
 #include "game/world/generation/Player.hpp"
 
-Stray::Stray(Level* level)
-    : AbstractSkeleton(level)
+Stray::Stray(Level* level) : AbstractSkeleton(level)
 {
     Mob::fjDerivedCtorCalls();
 }
@@ -79,7 +78,8 @@ boost::shared_ptr<Arrow> Stray::getArrow(float distanceFactor)
 {
     boost::shared_ptr<Arrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
     if (eTYPE_DERIVED_FROM(EntityType::TIPPABLE_ARROW, arrow->GetType()))
-        boost::static_pointer_cast<TippableArrow>(arrow)->addEffect(new MobEffectInstance(MobEffects::MOVEMENT_SLOWDOWN, 600));
+        boost::static_pointer_cast<TippableArrow>(arrow)->addEffect(
+            new MobEffectInstance(MobEffects::MOVEMENT_SLOWDOWN, 600));
     return arrow;
 }
 

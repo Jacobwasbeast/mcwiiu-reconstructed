@@ -13,20 +13,17 @@
 
 static const AABB* BUSH_SHAPE = AABB::newPermanent(0.3, 0.0, 0.3, 0.7, 0.6, 0.7);
 
-Bush::Bush()
-    : Block(Material::PLANT)
+Bush::Bush() : Block(Material::PLANT)
 {
     _init();
 }
 
-Bush::Bush(Material* material)
-    : Block(material)
+Bush::Bush(Material* material) : Block(material)
 {
     _init();
 }
 
-Bush::Bush(Material* material, const MaterialColor* materialColor)
-    : Block(material, materialColor)
+Bush::Bush(Material* material, const MaterialColor* materialColor) : Block(material, materialColor)
 {
     _init();
 }
@@ -43,12 +40,12 @@ bool Bush::mayPlace(Level* level, const BlockPos& pos)
 
 bool Bush::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return state->getBlock() == Blocks::grass
-        || state->getBlock() == Blocks::dirt
-        || state->getBlock() == Blocks::farmland;
+    return state->getBlock() == Blocks::grass || state->getBlock() == Blocks::dirt
+           || state->getBlock() == Blocks::farmland;
 }
 
-void Bush::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
+void Bush::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                           const BlockPos& fromPos)
 {
     if (!canSurvive(level, pos, state))
     {
@@ -111,7 +108,8 @@ int Bush::getRenderLayer()
     return 0;
 }
 
-EBlockFaceShape Bush::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
+EBlockFaceShape Bush::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                        const Direction* direction)
 {
     return BLOCK_FACE_UNDEFINED;
 }

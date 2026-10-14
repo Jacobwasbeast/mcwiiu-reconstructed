@@ -1,7 +1,6 @@
 #include "game/core/SpawnPositionSet.hpp"
 
-SpawnPositionSet::SpawnPositionSet()
-    : mType(0)
+SpawnPositionSet::SpawnPositionSet() : mType(0)
 {
     addUnsignedCharAttribute(ConsoleGameRules::eGameRuleAttr_method, &mType);
 }

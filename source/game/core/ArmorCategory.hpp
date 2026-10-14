@@ -7,10 +7,7 @@
 class ArmorCategory : public EnchantmentCategory
 {
 public:
-    virtual bool canEnchant(Item* item) const
-    {
-        return dynamic_cast<ArmorItem*>(item) != NULL;
-    }
+    virtual bool canEnchant(Item* item) const { return dynamic_cast<ArmorItem*>(item) != NULL; }
 };
 
 #endif

@@ -72,8 +72,8 @@ not_null_ptr<ItemInstance> ShulkerBoxColoring::assemble(boost::shared_ptr<Crafti
         }
     }
 
-    not_null_ptr<ItemInstance> result =
-        ShulkerBoxBlock::getColoredItemInstance(DyeColor::byItemData(dye->getAuxValue()));
+    not_null_ptr<ItemInstance> result = ShulkerBoxBlock::getColoredItemInstance(
+        DyeColor::byItemData(dye->getAuxValue()));
     if (shulkerBox->hasTag())
     {
         result->setTag(shulkerBox->getTag()->copy());
@@ -96,10 +96,11 @@ ItemInstance* ShulkerBoxColoring::getIngredientItem(int column, int row)
     return ItemInstance::EMPTY.get();
 }
 
-NonNullList<not_null_ptr<ItemInstance> > ShulkerBoxColoring::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+NonNullList<not_null_ptr<ItemInstance> > ShulkerBoxColoring::getRemainingItems(
+    boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    NonNullList<not_null_ptr<ItemInstance> > result =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+        craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     unsigned int slot;
     for (slot = 0; slot < result.size(); ++slot)
     {

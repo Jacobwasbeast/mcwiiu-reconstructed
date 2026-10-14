@@ -15,8 +15,7 @@
 #include "game/item/ItemId.hpp"
 #include "game/world/block/BlockId.hpp"
 
-Mule::Mule(Level* level)
-    : AbstractChestedHorse(level)
+Mule::Mule(Level* level) : AbstractChestedHorse(level)
 {
     fjDerivedCtorCalls();
 }
@@ -65,7 +64,8 @@ unsigned int Mule::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData
     {
         int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
         bool horseFood = itemId == BlockId::HAY_BLOCK || itemId == ItemId::APPLE || itemId == ItemId::WHEAT
-                         || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR || itemId == ItemId::GOLDEN_CARROT;
+                         || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR
+                         || itemId == ItemId::GOLDEN_CARROT;
 
         if (itemId == ItemId::SPAWN_EGG)
         {
@@ -116,8 +116,8 @@ unsigned int Mule::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData
                 return IDS_NONE;
             }
 
-            if ((tooltipData.m_pPlayer->isSneaking()
-                 && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed())
+            if ((tooltipData.m_pPlayer->isSneaking() && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer))
+                 && isTamed())
                 || (itemId == ItemId::SADDLE && !isSaddled()))
                 return IDS_TOOLTIPS_OPEN;
 

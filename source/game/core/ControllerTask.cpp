@@ -7,10 +7,9 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
 
-ControllerTask::ControllerTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-                               bool showMinimumTime, int* mappings, unsigned int mappingCount,
-                               int* completionIdValues, int completionIdValueCount,
-                               int* alternateMappings, unsigned int alternateMappingCount)
+ControllerTask::ControllerTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled, bool showMinimumTime,
+                               int* mappings, unsigned int mappingCount, int* completionIdValues,
+                               int completionIdValueCount, int* alternateMappings, unsigned int alternateMappingCount)
     : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, showMinimumTime, true, true)
 {
     unsigned int i;
@@ -72,16 +71,16 @@ bool ControllerTask::isCompleted()
     unsigned int mappingIndex = 0;
 
     if (useAlternateMappings
-        && GameSettings::GetGameSettings(minecraft->mPlayer->mUserIndex,
-                                         eGameSetting_SouthPaw) != 0)
+        && GameSettings::GetGameSettings(minecraft->mPlayer->mUserIndex, eGameSetting_SouthPaw) != 0)
     {
-        for (boost::unordered_map<int, bool>::iterator mapping = inputMappings.begin();
-             mapping != inputMappings.end(); ++mapping, ++mappingIndex)
+        for (boost::unordered_map<int, bool>::iterator mapping = inputMappings.begin(); mapping != inputMappings.end();
+             ++mapping, ++mappingIndex)
         {
             if (!mapping->second)
             {
-                if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
-                                       static_cast<unsigned char>(mapping->first), false) > 0)
+                if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex, static_cast<unsigned char>(mapping->first),
+                                       false)
+                    > 0)
                 {
                     mapping->second = true;
                     completionMask |= 1 << (mappingIndex & 0x3f);
@@ -100,8 +99,9 @@ bool ControllerTask::isCompleted()
         {
             if (!mapping->second)
             {
-                if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
-                                       static_cast<unsigned char>(mapping->first), false) > 0)
+                if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex, static_cast<unsigned char>(mapping->first),
+                                       false)
+                    > 0)
                 {
                     mapping->second = true;
                     completionMask |= 1 << (mappingIndex & 0x3f);

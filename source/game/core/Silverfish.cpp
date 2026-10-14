@@ -27,8 +27,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-Silverfish::Silverfish(Level* level)
-    : Monster(level), mWakeUpFriendsGoal(this)
+Silverfish::Silverfish(Level* level) : Monster(level), mWakeUpFriendsGoal(this)
 {
     fjDerivedCtorCalls();
     mCategories |= EntityCategory::eEntityCategory_Arthropod;
@@ -219,14 +218,18 @@ void Silverfish::SilverfishMergeWithStoneGoal::start()
     const BlockState* host = level->getBlockState(mergePos);
     if (MonsterEggBlock::isCompatibleHostBlock(host))
     {
-        level->setBlock(mergePos, Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::byHostBlock(host)), Block::UPDATE_ALL, false);
+        level->setBlock(mergePos,
+                        Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT,
+                                                                           MonsterEggBlock::Variant::byHostBlock(host)),
+                        Block::UPDATE_ALL, false);
         mMob->spawnAnim();
         mMob->remove();
     }
 }
 
 Silverfish::SilverfishWakeUpFriendsGoal::SilverfishWakeUpFriendsGoal(Silverfish* silverfish)
-    : Goal(), mSilverfish(silverfish)
+    : Goal(),
+      mSilverfish(silverfish)
 {
 }
 
@@ -269,7 +272,8 @@ void Silverfish::SilverfishWakeUpFriendsGoal::tick()
                     }
                     else
                     {
-                        level->setBlock(pos, state->getValue(MonsterEggBlock::VARIANT)->getHostBlockState(), Block::UPDATE_ALL, false);
+                        level->setBlock(pos, state->getValue(MonsterEggBlock::VARIANT)->getHostBlockState(),
+                                        Block::UPDATE_ALL, false);
                     }
                     if (random->nextBoolean())
                     {
@@ -280,4 +284,3 @@ void Silverfish::SilverfishWakeUpFriendsGoal::tick()
         }
     }
 }
-

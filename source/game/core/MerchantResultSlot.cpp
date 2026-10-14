@@ -7,8 +7,7 @@
 #include "game/world/generation/Player.hpp"
 
 MerchantResultSlot::MerchantResultSlot(Player* player, boost::shared_ptr<Merchant> merchant,
-                                       boost::shared_ptr<MerchantContainer> merchantContainer,
-                                       int slot, int x, int y)
+                                       boost::shared_ptr<MerchantContainer> merchantContainer, int slot, int x, int y)
     : Slot(merchantContainer, slot, x, y)
 {
     mPlayer = player;
@@ -43,17 +42,16 @@ void MerchantResultSlot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
     mRemoveCount = 0;
 }
 
-bool MerchantResultSlot::removePaymentItemsIfMatching(MerchantRecipe* recipe,
-                                                       not_null_ptr<ItemInstance> first,
-                                                       not_null_ptr<ItemInstance> second)
+bool MerchantResultSlot::removePaymentItemsIfMatching(MerchantRecipe* recipe, not_null_ptr<ItemInstance> first,
+                                                      not_null_ptr<ItemInstance> second)
 {
     not_null_ptr<ItemInstance> buyA = recipe->getBuyAItem();
     not_null_ptr<ItemInstance> buyB = recipe->getBuyBItem();
 
     if (first->getItem() == buyA->getItem() && first->getCount() >= buyA->getCount())
     {
-        if (!buyB->isEmpty() && !second->isEmpty() && buyB->getItem() == second->getItem() &&
-            second->getCount() >= buyB->getCount())
+        if (!buyB->isEmpty() && !second->isEmpty() && buyB->getItem() == second->getItem()
+            && second->getCount() >= buyB->getCount())
         {
             first->shrink(buyA->getCount());
             second->shrink(buyB->getCount());
@@ -69,8 +67,7 @@ bool MerchantResultSlot::removePaymentItemsIfMatching(MerchantRecipe* recipe,
     return false;
 }
 
-not_null_ptr<ItemInstance> MerchantResultSlot::onTake(boost::shared_ptr<Player> player,
-                                                      not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> MerchantResultSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
 {
     checkTakeAchievements(item);
 
@@ -79,8 +76,7 @@ not_null_ptr<ItemInstance> MerchantResultSlot::onTake(boost::shared_ptr<Player> 
     {
         not_null_ptr<ItemInstance> first = mMerchantContainer->getItem(0);
         not_null_ptr<ItemInstance> second = mMerchantContainer->getItem(1);
-        if (removePaymentItemsIfMatching(recipe, first, second) ||
-            removePaymentItemsIfMatching(recipe, second, first))
+        if (removePaymentItemsIfMatching(recipe, first, second) || removePaymentItemsIfMatching(recipe, second, first))
         {
             mMerchant->notifyTrade(recipe);
             mMerchantContainer->setItem(0, first);

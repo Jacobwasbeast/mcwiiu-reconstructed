@@ -2,10 +2,9 @@
 
 #include "game/core/DamageEvent.hpp"
 
-WeaponDamageStatTracker::WeaponDamageStatTracker(const StatsUID& statsUID,
-                                                 ETrackingType trackingType)
-    : StatTracker<Scoreboard::Weapon>(statsUID, Scoreboard::Weapon(0, NULL))
-    , mDamageByWeapon()
+WeaponDamageStatTracker::WeaponDamageStatTracker(const StatsUID& statsUID, ETrackingType trackingType)
+    : StatTracker<Scoreboard::Weapon>(statsUID, Scoreboard::Weapon(0, NULL)),
+      mDamageByWeapon()
 {
     mDamageByWeapon[mValue.GetKey()] = 0.0f;
     mTrackingType = trackingType;
@@ -13,9 +12,8 @@ WeaponDamageStatTracker::WeaponDamageStatTracker(const StatsUID& statsUID,
 
 void WeaponDamageStatTracker::update(const DamageEvent* damageEvent)
 {
-    const bool trackingDamage =
-        (mTrackingType == TRACKING_DEALT && isTracking(damageEvent->mVictim))
-        || (mTrackingType == TRACKING_RECEIVED && isTracking(damageEvent->mAttacker));
+    const bool trackingDamage = (mTrackingType == TRACKING_DEALT && isTracking(damageEvent->mVictim))
+                                || (mTrackingType == TRACKING_RECEIVED && isTracking(damageEvent->mAttacker));
     if (!trackingDamage)
     {
         return;

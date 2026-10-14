@@ -31,7 +31,7 @@ bool GameRules::getBoolean(int rule)
         return gApp.GetGameHostOption(eGameHostOption_NaturalRegeneration) != 0;
     case RULE_DAYLIGHT:
         return gApp.GetGameHostOption(eGameHostOption_DoDaylightCycle) != 0
-            && gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0;
+               && gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0;
     case RULE_SENDCOMMANDFEEDBACK:
         return true;
     case RULE_SHOWDEATHMESSAGES:

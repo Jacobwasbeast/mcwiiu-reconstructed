@@ -13,13 +13,8 @@ const float Mth::RAD_TO_DEG = 57.295776f;
 
 static const int ATAN_CACHE_SIZE = 40;
 
-static const int MULTIPLY_DE_BRUIJN_BIT_POSITION[32] =
-{
-    0, 1, 28, 2, 29, 14, 24, 3,
-    30, 22, 20, 15, 25, 17, 4, 8,
-    31, 27, 13, 23, 21, 19, 16, 7,
-    26, 12, 18, 6, 11, 5, 10, 9
-};
+static const int MULTIPLY_DE_BRUIJN_BIT_POSITION[32] = {0,  1,  28, 2,  29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4,  8,
+                                                        31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6,  11, 5,  10, 9};
 
 static float* sSinTable = NULL;
 static float* sAtanTable = NULL;
@@ -636,7 +631,8 @@ int Mth::hsvToRgb(float hue, float saturation, float value)
         break;
     }
 
-    return clamp((int)(red * 255.0f), 0, 255) << 16 | clamp((int)(green * 255.0f), 0, 255) << 8 | clamp((int)(blue * 255.0f), 0, 255);
+    return clamp((int)(red * 255.0f), 0, 255) << 16 | clamp((int)(green * 255.0f), 0, 255) << 8
+           | clamp((int)(blue * 255.0f), 0, 255);
 }
 
 template void Mth::shuffle<int>(std::vector<int>*, Random&);

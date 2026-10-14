@@ -50,8 +50,7 @@ const DyeColor* Shulker::DEFAULT_COLOR = NULL;
 AttributeModifier* Shulker::COVERED_ARMOR_MODIFIER =
     (new AttributeModifier(eMODIFIER_ID_ArmorBonus, 20.0, 0))->setSerialize(false);
 
-Shulker::ShulkerAttackGoal::ShulkerAttackGoal(Shulker* shulker)
-    : Goal(), mShulker(shulker)
+Shulker::ShulkerAttackGoal::ShulkerAttackGoal(Shulker* shulker) : Goal(), mShulker(shulker)
 {
     setRequiredControlFlags(3);
 }
@@ -96,12 +95,12 @@ void Shulker::ShulkerAttackGoal::tick()
         if (mAttackTime <= 0)
         {
             mAttackTime = mShulker->mRandom->nextInt(10) * 20 / 2 + 20;
-            boost::shared_ptr<Entity> bullet(new ShulkerBullet(mShulker->mLevel,
-                boost::static_pointer_cast<LivingEntity>(mShulker->shared_from_this()), target,
+            boost::shared_ptr<Entity> bullet(new ShulkerBullet(
+                mShulker->mLevel, boost::static_pointer_cast<LivingEntity>(mShulker->shared_from_this()), target,
                 mShulker->getAttachFace()->getAxis()));
             mShulker->mLevel->addEntity(bullet);
             mShulker->playSound(SoundEvents::SHULKER_SHOOT, 2.0f,
-                (mShulker->mRandom->nextFloat() - mShulker->mRandom->nextFloat()) * 0.2f + 1.0f);
+                                (mShulker->mRandom->nextFloat() - mShulker->mRandom->nextFloat()) * 0.2f + 1.0f);
         }
     }
     else
@@ -112,8 +111,7 @@ void Shulker::ShulkerAttackGoal::tick()
     Goal::tick();
 }
 
-Shulker::ShulkerBodyControl::ShulkerBodyControl(Shulker* shulker)
-    : BodyControl(shulker), mShulker(shulker)
+Shulker::ShulkerBodyControl::ShulkerBodyControl(Shulker* shulker) : BodyControl(shulker), mShulker(shulker)
 {
 }
 
@@ -149,7 +147,8 @@ AABB* Shulker::ShulkerDefenseAttackGoal::getTargetSearchArea(double distance)
 }
 
 Shulker::ShulkerNearestAttackGoal::ShulkerNearestAttackGoal(Shulker* shulker)
-    : NearestAttackableTargetGoal(shulker, typeid(Player), true, false, false), mShulker(shulker)
+    : NearestAttackableTargetGoal(shulker, typeid(Player), true, false, false),
+      mShulker(shulker)
 {
 }
 
@@ -171,8 +170,7 @@ AABB* Shulker::ShulkerNearestAttackGoal::getTargetSearchArea(double distance)
     return mMob->mBoundingBox->grow(distance, 4.0, distance);
 }
 
-Shulker::ShulkerPeekGoal::ShulkerPeekGoal(Shulker* shulker)
-    : Goal(), mShulker(shulker)
+Shulker::ShulkerPeekGoal::ShulkerPeekGoal(Shulker* shulker) : Goal(), mShulker(shulker)
 {
 }
 
@@ -207,8 +205,7 @@ void Shulker::ShulkerPeekGoal::tick()
     --mPeekTime;
 }
 
-Shulker::Shulker(Level* level)
-    : Golem(level), mOldPeekAmount(0.0f), mPeekAmount(0.0f), mOldAttachPosition(NULL)
+Shulker::Shulker(Level* level) : Golem(level), mOldPeekAmount(0.0f), mPeekAmount(0.0f), mOldAttachPosition(NULL)
 {
     fjDerivedCtorCalls();
     setSize(1.0f, 1.0f);
@@ -232,14 +229,19 @@ Entity* Shulker::create(Level* level)
 
 void Shulker::staticCtor()
 {
-    DATA_ATTACH_FACE = SynchedEntityData::defineId<const Direction*>(EntityType::SHULKER, EntityType::GOLEM, EntityDataSerializers::DIRECTION);
-    DATA_ATTACH_POSITION = SynchedEntityData::defineId<BlockPos*>(EntityType::SHULKER, EntityType::GOLEM, EntityDataSerializers::OPTIONAL_BLOCK_POS);
-    DATA_PEEK = SynchedEntityData::defineId<unsigned char>(EntityType::SHULKER, EntityType::GOLEM, EntityDataSerializers::BYTE);
-    DATA_COLOR = SynchedEntityData::defineId<unsigned char>(EntityType::SHULKER, EntityType::GOLEM, EntityDataSerializers::BYTE);
+    DATA_ATTACH_FACE = SynchedEntityData::defineId<const Direction*>(EntityType::SHULKER, EntityType::GOLEM,
+                                                                     EntityDataSerializers::DIRECTION);
+    DATA_ATTACH_POSITION = SynchedEntityData::defineId<BlockPos*>(EntityType::SHULKER, EntityType::GOLEM,
+                                                                  EntityDataSerializers::OPTIONAL_BLOCK_POS);
+    DATA_PEEK = SynchedEntityData::defineId<unsigned char>(EntityType::SHULKER, EntityType::GOLEM,
+                                                           EntityDataSerializers::BYTE);
+    DATA_COLOR = SynchedEntityData::defineId<unsigned char>(EntityType::SHULKER, EntityType::GOLEM,
+                                                            EntityDataSerializers::BYTE);
     DEFAULT_COLOR = DyeColor::PURPLE;
 }
 
-MobGroupData* Shulker::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
+MobGroupData* Shulker::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                        const std::wstring& name)
 {
     mYBodyRot = 180.0f;
     mYBodyRotO = 180.0f;
@@ -418,7 +420,8 @@ void Shulker::tick()
         if (!mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(getAttachFace()), false))
         {
             bool attached = false;
-            for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+            for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
+                 ++it)
             {
                 const Direction* direction = *it;
                 if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(direction), false))
@@ -428,7 +431,8 @@ void Shulker::tick()
                     break;
                 }
             }
-            if (!attached) teleportSomewhere();
+            if (!attached)
+                teleportSomewhere();
         }
 
         if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(getAttachFace()->getOpposite()), false))
@@ -553,12 +557,14 @@ bool Shulker::teleportSomewhere()
     BlockPos* origin = new BlockPos(this);
     for (int attempt = 0; attempt < 5; ++attempt)
     {
-        BlockPos candidate = origin->offset(8 - mRandom->nextInt(17), 8 - mRandom->nextInt(17), 8 - mRandom->nextInt(17));
+        BlockPos candidate = origin->offset(8 - mRandom->nextInt(17), 8 - mRandom->nextInt(17),
+                                            8 - mRandom->nextInt(17));
         if (candidate.y > 0 && mLevel->isEmptyBlock(candidate) && mLevel->isInsideWorldBorder(shared_from_this())
             && mLevel->getCollisionAABBs(shared_from_this(), AABB::newTemp(candidate), false, false, false)->empty())
         {
             bool attached = false;
-            for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+            for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
+                 ++it)
             {
                 const Direction* direction = *it;
                 if (mLevel->isSolidBlockingBlockInLoadedChunk(candidate.relative(direction), false))

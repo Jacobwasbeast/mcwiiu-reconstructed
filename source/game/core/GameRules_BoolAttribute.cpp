@@ -6,8 +6,7 @@
 
 #include <string>
 
-GameRules_BoolAttribute::GameRules_BoolAttribute(bool* value)
-    : mValue(value)
+GameRules_BoolAttribute::GameRules_BoolAttribute(bool* value) : mValue(value)
 {
 }
 

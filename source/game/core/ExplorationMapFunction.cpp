@@ -19,7 +19,8 @@
 
 ExplorationMapFunction::ExplorationMapFunction(std::vector<LootItemCondition*>* conditions,
                                                const std::wstring& destination)
-    : LootItemFunction(conditions), mDestination(destination)
+    : LootItemFunction(conditions),
+      mDestination(destination)
 {
 }
 
@@ -57,8 +58,8 @@ unsigned int ExplorationMapFunction::getTranslatableName(const std::wstring& des
     return IDS_DESC_MAP;
 }
 
-not_null_ptr<ItemInstance> ExplorationMapFunction::apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                                         Random*, LootTableContext& context)
+not_null_ptr<ItemInstance> ExplorationMapFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random*,
+                                                         LootTableContext& context)
 {
     boost::shared_ptr<Entity> entity = context.getEntity(LootTableContext::THIS);
     Level* level = entity ? entity->mLevel : context.mLevel;
@@ -75,10 +76,8 @@ not_null_ptr<ItemInstance> ExplorationMapFunction::apply(const not_null_ptr<Item
 
     const MapDecoration::Type* type = getType(mDestination);
     int scale = type == &MapDecoration::Type::TYPES[20] ? 1 : 2;
-    not_null_ptr<ItemInstance> map = MapItem::setupNewMap(PlayerUID(0), level, 0,
-                                                           (double)featurePosition->x,
-                                                           (double)featurePosition->z,
-                                                           (unsigned char)scale, true, true);
+    not_null_ptr<ItemInstance> map = MapItem::setupNewMap(PlayerUID(0), level, 0, (double)featurePosition->x,
+                                                          (double)featurePosition->z, (unsigned char)scale, true, true);
     MapItem::renderBiomePreviewMap(level, map);
     MapItemSavedData::addTargetDecoration(map, *featurePosition, L"+", type);
     map->setTranslatableName(getTranslatableName(mDestination));

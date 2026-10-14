@@ -26,8 +26,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
-GameMode::GameMode()
-    : mGameType(NULL)
+GameMode::GameMode() : mGameType(NULL)
 {
     mMinecraft = Minecraft::GetInstance();
 }
@@ -40,7 +39,7 @@ bool GameMode::isSurvival()
 bool GameMode::isCreative()
 {
     return mGameType->isCreative()
-        || (Minecraft::InMiniGame(eMiniGameId_Any, true) && GetPlayer()->mAbilities.mInstabuild);
+           || (Minecraft::InMiniGame(eMiniGameId_Any, true) && GetPlayer()->mAbilities.mInstabuild);
 }
 
 bool GameMode::isAdventure()
@@ -89,8 +88,7 @@ bool GameMode::MayDestroy(const BlockPos& pos)
             if (permissions != NULL)
             {
                 if (permissions->canDestroy(GetPlayer(), GetLevel(),
-                                            gApp.getLevelGenerationOptions()->getRequiredGameRules(),
-                                            pos))
+                                            gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos))
                     return !miniGame->EditActionsDisabled();
             }
             return miniGame->MayDestroy(Block::getId(GetLevel()->getBlock(pos)));
@@ -137,9 +135,10 @@ bool GameMode::MayPlace(const BlockPos& pos, BlockItem* item)
         GrantPermissionsRuleDefinition* permissions;
         bool canPlace = false;
         LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-        if (options != NULL && (ruleset = options->getRequiredGameRules()) != NULL &&
-            (permissions = static_cast<GrantPermissionsRuleDefinition*>(
-                 ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions))) != NULL)
+        if (options != NULL && (ruleset = options->getRequiredGameRules()) != NULL
+            && (permissions = static_cast<GrantPermissionsRuleDefinition*>(
+                    ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions)))
+                   != NULL)
         {
             canPlace = permissions->canPlace(GetPlayer(), GetLevel(),
                                              gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos);
@@ -163,9 +162,10 @@ bool GameMode::MayUse(const BlockPos& pos, Item* item)
         GrantPermissionsRuleDefinition* permissions;
         bool canUse = false;
         LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-        if (options != NULL && (ruleset = options->getRequiredGameRules()) != NULL &&
-            (permissions = static_cast<GrantPermissionsRuleDefinition*>(
-                 ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions))) != NULL)
+        if (options != NULL && (ruleset = options->getRequiredGameRules()) != NULL
+            && (permissions = static_cast<GrantPermissionsRuleDefinition*>(
+                    ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions)))
+                   != NULL)
         {
             canUse = permissions->canUse(GetPlayer(), GetLevel(),
                                          gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos);
@@ -290,10 +290,8 @@ void GameMode::OnMouseDown()
 {
 }
 
-void GameMode::RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingredients,
-                                              Inventory* inventory,
-                                              not_null_ptr<ItemInstance> result,
-                                              bool removeResult)
+void GameMode::RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingredients, Inventory* inventory,
+                                              not_null_ptr<ItemInstance> result, bool removeResult)
 {
     for (int ingredient = 0; ingredient < ingredients.numIngredients; ++ingredient)
     {
@@ -346,11 +344,9 @@ void GameMode::RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingr
                 }
             }
 
-            if (resource->isEmpty() && consumedItem != NULL
-                && consumedItem->hasCraftingRemainingItem())
+            if (resource->isEmpty() && consumedItem != NULL && consumedItem->hasCraftingRemainingItem())
             {
-                not_null_ptr<ItemInstance> remaining(
-                    new ItemInstance(consumedItem->getCraftingRemainingItem()));
+                not_null_ptr<ItemInstance> remaining(new ItemInstance(consumedItem->getCraftingRemainingItem()));
                 inventory->add(remaining);
             }
         }
@@ -358,15 +354,13 @@ void GameMode::RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingr
 }
 
 void GameMode::RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingredients,
-                                              boost::shared_ptr<Inventory> inventory,
-                                              not_null_ptr<ItemInstance> result,
+                                              boost::shared_ptr<Inventory> inventory, not_null_ptr<ItemInstance> result,
                                               bool removeResult)
 {
     RemoveRecipeItemsFromInventory(ingredients, inventory.get(), result, removeResult);
 }
 
-void GameMode::UpdateCraftAchievements(boost::shared_ptr<Player> player,
-                                       not_null_ptr<ItemInstance> item, eAward award)
+void GameMode::UpdateCraftAchievements(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item, eAward award)
 {
     switch (Item::VALIDgetId(item->getItem()))
     {
@@ -415,14 +409,12 @@ void GameMode::UpdateCraftAchievements(boost::shared_ptr<Player> player,
     player->awardStat(GenericStats::changeOfSheets(), GenericStats::param_changeOfSheets());
 }
 
-not_null_ptr<ItemInstance> GameMode::handleCraftItem(int recipe, int category,
-                                                         boost::shared_ptr<Player> player)
+not_null_ptr<ItemInstance> GameMode::handleCraftItem(int recipe, int category, boost::shared_ptr<Player> player)
 {
     Recipes* recipes = Recipes::getInstance();
-    Recipe::INGREDIENTS_REQUIRED& ingredients =
-        recipes->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(category))[recipe];
-    not_null_ptr<ItemInstance> result = ingredients.recipe->assemble(
-        boost::shared_ptr<CraftingContainer>());
+    Recipe::INGREDIENTS_REQUIRED& ingredients = recipes->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(category))[recipe];
+    not_null_ptr<ItemInstance> result = ingredients.recipe->assemble(boost::shared_ptr<CraftingContainer>());
     bool creativeDebug = gApp.DebugSettingsOn() && (player->mDebugOptions & 0x4000) != 0;
     result->onCraftedBy(player->mLevel, player, result->getCount());
 
@@ -434,17 +426,15 @@ not_null_ptr<ItemInstance> GameMode::handleCraftItem(int recipe, int category,
     return result;
 }
 
-boost::shared_ptr<ItemInstance> GameMode::handleStackedCraftItem(
-    std::vector<std::pair<int, int> >& recipeStack, int category,
-    boost::shared_ptr<Player> player)
+boost::shared_ptr<ItemInstance> GameMode::handleStackedCraftItem(std::vector<std::pair<int, int> >& recipeStack,
+                                                                 int category, boost::shared_ptr<Player> player)
 {
     Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
         static_cast<Recipes::ERecipeCategory>(category));
     not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
     bool firstRecipe = true;
 
-    for (std::vector<std::pair<int, int> >::iterator it = recipeStack.begin();
-         it != recipeStack.end(); ++it)
+    for (std::vector<std::pair<int, int> >::iterator it = recipeStack.begin(); it != recipeStack.end(); ++it)
     {
         Recipe::INGREDIENTS_REQUIRED& required = ingredients[it->first];
         not_null_ptr<ItemInstance> source = result;
@@ -497,8 +487,7 @@ boost::shared_ptr<ItemInstance> GameMode::handleStackedCraftItem(
         result->onCraftedBy(player->mLevel, player, result->getCount());
         bool creativeDebug = gApp.DebugSettingsOn() && (player->mDebugOptions & 0x4000) != 0;
         if (!creativeDebug)
-            RemoveRecipeItemsFromInventory(required, player->mInventory,
-                                           firstRecipe ? source : result,
+            RemoveRecipeItemsFromInventory(required, player->mInventory, firstRecipe ? source : result,
                                            !firstRecipe || !preserveSource);
         UpdateCraftAchievements(player, result, eAward_None);
         firstRecipe = false;
@@ -515,25 +504,24 @@ void GameMode::RemoveCustomRecipeItemsFromInventory(int slot, Inventory* invento
         inventory->removeItem(slot, 1);
 }
 
-void GameMode::RemoveCustomRecipeItemsFromInventory(int slot,
-                                                    boost::shared_ptr<Inventory> inventory)
+void GameMode::RemoveCustomRecipeItemsFromInventory(int slot, boost::shared_ptr<Inventory> inventory)
 {
     RemoveCustomRecipeItemsFromInventory(slot, inventory.get());
 }
 
-boost::shared_ptr<ItemInstance> GameMode::handleCustomCraftItem(
-    std::vector<int>& slots, boost::shared_ptr<Player> player)
+boost::shared_ptr<ItemInstance> GameMode::handleCustomCraftItem(std::vector<int>& slots,
+                                                                boost::shared_ptr<Player> player)
 {
     boost::shared_ptr<CraftingContainer> crafting(new CraftingContainer(NULL, 3, 3));
     for (unsigned int slot = 0; slot < slots.size(); ++slot)
         crafting->setItem(slot, player->mInventory->getItem(slots[slot]));
 
-    not_null_ptr<ItemInstance> result = Recipes::getInstance()->getItemFor(
-        crafting, player->mLevel, NULL, Recipes::eRecipeCategory_Crafting);
+    not_null_ptr<ItemInstance> result = Recipes::getInstance()->getItemFor(crafting, player->mLevel, NULL,
+                                                                           Recipes::eRecipeCategory_Crafting);
     bool creativeDebug = gApp.DebugSettingsOn() && (player->mDebugOptions & 0x4000) != 0;
     result->onCraftedBy(player->mLevel, player, result->getCount());
-    eAward award = Recipes::getInstance()->hasAchievementAttachedToRecipe(
-        crafting, player->mLevel, NULL, Recipes::eRecipeCategory_Crafting);
+    eAward award = Recipes::getInstance()->hasAchievementAttachedToRecipe(crafting, player->mLevel, NULL,
+                                                                          Recipes::eRecipeCategory_Crafting);
 
     if (!creativeDebug)
     {

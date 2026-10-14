@@ -3,16 +3,19 @@
 
 
 ByteArrayInputStream::ByteArrayInputStream(arrayWithLength<unsigned char> data)
-    : mBuffer(data), mCount(data.length), mMark(0), mPosition(0)
+    : mBuffer(data),
+      mCount(data.length),
+      mMark(0),
+      mPosition(0)
 {
 }
 
-ByteArrayInputStream::ByteArrayInputStream(arrayWithLength<unsigned char> data,
-                                           unsigned int offset,
+ByteArrayInputStream::ByteArrayInputStream(arrayWithLength<unsigned char> data, unsigned int offset,
                                            unsigned int length)
     : mBuffer(data),
       mCount(offset + length < data.length ? offset + length : data.length),
-      mMark(offset), mPosition(offset)
+      mMark(offset),
+      mPosition(offset)
 {
 }
 
@@ -40,9 +43,7 @@ int ByteArrayInputStream::read(arrayWithLength<unsigned char> data)
     return read(data, 0, data.length);
 }
 
-int ByteArrayInputStream::read(arrayWithLength<unsigned char> data,
-                              unsigned int offset,
-                              unsigned int length)
+int ByteArrayInputStream::read(arrayWithLength<unsigned char> data, unsigned int offset, unsigned int length)
 {
     int position = mPosition;
     if (position == (int)mCount)

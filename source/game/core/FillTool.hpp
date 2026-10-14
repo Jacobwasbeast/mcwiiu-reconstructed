@@ -19,7 +19,12 @@ class Player;
 class FillTool : public BlockPos
 {
 public:
-    enum EHandleDataType { HANDLE_DATA_NONE = 0, HANDLE_DATA_EDGE = 1, HANDLE_DATA_FILL = 2 };
+    enum EHandleDataType
+    {
+        HANDLE_DATA_NONE = 0,
+        HANDLE_DATA_EDGE = 1,
+        HANDLE_DATA_FILL = 2
+    };
     FillTool(ConsoleSchematicFile* schematic);
     ~FillTool();
     void Reset();

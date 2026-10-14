@@ -17,8 +17,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/block/Blocks.hpp"
 
-Donkey::Donkey(Level* level)
-    : AbstractChestedHorse(level)
+Donkey::Donkey(Level* level) : AbstractChestedHorse(level)
 {
     fjDerivedCtorCalls();
 }
@@ -88,7 +87,8 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
     {
         int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
         bool horseFood = itemId == BlockId::HAY_BLOCK || itemId == ItemId::APPLE || itemId == ItemId::WHEAT
-                         || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR || itemId == ItemId::GOLDEN_CARROT;
+                         || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR
+                         || itemId == ItemId::GOLDEN_CARROT;
         bool loveFood = itemId == ItemId::GOLDEN_CARROT || itemId == ItemId::GOLDEN_APPLE;
 
         if (itemId == ItemId::SPAWN_EGG)
@@ -139,8 +139,8 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
                 return IDS_NONE;
             }
 
-            if ((tooltipData.m_pPlayer->isSneaking()
-                 && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed())
+            if ((tooltipData.m_pPlayer->isSneaking() && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer))
+                 && isTamed())
                 || (itemId == ItemId::SADDLE && !isSaddled()))
                 return IDS_TOOLTIPS_OPEN;
 

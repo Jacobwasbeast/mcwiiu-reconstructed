@@ -58,10 +58,8 @@ void Pufferfish::damageNearbyMobs()
     if (mPuffState < PUFFED_STATE_LARGE)
         return;
 
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox->grow((double)mStingRange,
-                                                                    (double)mStingRange,
-                                                                    (double)mStingRange), NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+        shared_from_this(), mBoundingBox->grow((double)mStingRange, (double)mStingRange, (double)mStingRange), NULL);
     bool stung = false;
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
@@ -109,8 +107,8 @@ bool Pufferfish::validatePuffedTypes(boost::shared_ptr<Entity> entity)
 void Pufferfish::checkForDangerousMobs()
 {
     float radius = mPuffState == PUFFED_STATE_SMALL ? mSmallPuffRadius : mLargePuffRadius;
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox->grow((double)radius, (double)radius, (double)radius), NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+        shared_from_this(), mBoundingBox->grow((double)radius, (double)radius, (double)radius), NULL);
     bool foundDangerousMob = false;
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
@@ -119,8 +117,8 @@ void Pufferfish::checkForDangerousMobs()
             continue;
 
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        int isCreativePlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
-                               boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild;
+        int isCreativePlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+                               && boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild;
         if (isCreativePlayer)
             continue;
 
@@ -166,8 +164,8 @@ void Pufferfish::baseTick()
                 else
                 {
                     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.3);
-                    mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_BLOW_OUT, SoundSource::eSoundSource_Hostile,
-                                           0.6f, 1.0f, false, 16.0f);
+                    mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_BLOW_OUT,
+                                           SoundSource::eSoundSource_Hostile, 0.6f, 1.0f, false, 16.0f);
                 }
             }
         }

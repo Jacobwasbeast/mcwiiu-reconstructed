@@ -16,8 +16,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-Husk::Husk(Level* level)
-    : Zombie(level, false)
+Husk::Husk(Level* level) : Zombie(level, false)
 {
     fjDerivedCtorCalls();
 }
@@ -70,8 +69,7 @@ ResourceLocation* Husk::getDefaultLootTable()
 bool Husk::doHurtTarget(boost::shared_ptr<Entity> target)
 {
     bool hurt = Zombie::doHurtTarget(target);
-    if (hurt && getMainHandItem()->isEmpty() &&
-        eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
+    if (hurt && getMainHandItem()->isEmpty() && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
     {
         float difficulty = mLevel->getCurrentDifficultyAt(BlockPos(this)).getEffectiveDifficulty();
         boost::static_pointer_cast<LivingEntity>(target)->addEffect(

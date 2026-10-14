@@ -4,20 +4,15 @@
 
 #include <cmath>
 
-int SimplexNoise::grad3[12][3] =
-{
-    { 1, 1, 0 }, { -1, 1, 0 }, { 1, -1, 0 }, { -1, -1, 0 },
-    { 1, 0, 1 }, { -1, 0, 1 }, { 1, 0, -1 }, { -1, 0, -1 },
-    { 0, 1, 1 }, { 0, -1, 1 }, { 0, 1, -1 }, { 0, -1, -1 }
-};
+int SimplexNoise::grad3[12][3] = {{1, 1, 0},  {-1, 1, 0},  {1, -1, 0}, {-1, -1, 0}, {1, 0, 1},  {-1, 0, 1},
+                                  {1, 0, -1}, {-1, 0, -1}, {0, 1, 1},  {0, -1, 1},  {0, 1, -1}, {0, -1, -1}};
 
 double SimplexNoise::F2 = 0.5 * (std::sqrt(3.0) - 1.0);
 double SimplexNoise::G2 = (3.0 - std::sqrt(3.0)) / 6.0;
 const double SimplexNoise::F3 = 1.0 / 3.0;
 const double SimplexNoise::G3 = 1.0 / 6.0;
 
-SimplexNoise::SimplexNoise()
-    : p(NULL), pLength(0), pMask(0), xo(0.0), yo(0.0), zo(0.0)
+SimplexNoise::SimplexNoise() : p(NULL), pLength(0), pMask(0), xo(0.0), yo(0.0), zo(0.0)
 {
 }
 
@@ -163,28 +158,58 @@ double SimplexNoise::getValue(double x, double y, double z)
     {
         if (y0 >= z0)
         {
-            i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0;
+            i1 = 1;
+            j1 = 0;
+            k1 = 0;
+            i2 = 1;
+            j2 = 1;
+            k2 = 0;
         }
         else if (x0 >= z0)
         {
-            i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1;
+            i1 = 1;
+            j1 = 0;
+            k1 = 0;
+            i2 = 1;
+            j2 = 0;
+            k2 = 1;
         }
         else
         {
-            i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1;
+            i1 = 0;
+            j1 = 0;
+            k1 = 1;
+            i2 = 1;
+            j2 = 0;
+            k2 = 1;
         }
     }
     else if (y0 < z0)
     {
-        i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1;
+        i1 = 0;
+        j1 = 0;
+        k1 = 1;
+        i2 = 0;
+        j2 = 1;
+        k2 = 1;
     }
     else if (x0 < z0)
     {
-        i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1;
+        i1 = 0;
+        j1 = 1;
+        k1 = 0;
+        i2 = 0;
+        j2 = 1;
+        k2 = 1;
     }
     else
     {
-        i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0;
+        i1 = 0;
+        j1 = 1;
+        k1 = 0;
+        i2 = 1;
+        j2 = 1;
+        k2 = 0;
     }
 
     double x1 = x0 - i1 + G3;
@@ -256,7 +281,8 @@ double SimplexNoise::getValue(double x, double y, double z)
     return 32.0 * (n0 + n1 + n2 + n3);
 }
 
-void SimplexNoise::add(arrayWithLength<double> values, double x, double y, int xSize, int ySize, double xScale, double yScale, double noiseScale)
+void SimplexNoise::add(arrayWithLength<double> values, double x, double y, int xSize, int ySize, double xScale,
+                       double yScale, double noiseScale)
 {
     int index = 0;
     for (int yy = 0; yy < ySize; ++yy)
@@ -337,7 +363,8 @@ void SimplexNoise::add(arrayWithLength<double> values, double x, double y, int x
     }
 }
 
-void SimplexNoise::add(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize, double xScale, double yScale, double zScale, double noiseScale)
+void SimplexNoise::add(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize,
+                       double xScale, double yScale, double zScale, double noiseScale)
 {
     int index = 0;
     for (int zz = 0; zz < zSize; ++zz)

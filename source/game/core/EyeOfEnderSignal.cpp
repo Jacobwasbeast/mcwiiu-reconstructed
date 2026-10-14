@@ -16,8 +16,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-EyeOfEnderSignal::EyeOfEnderSignal(Level* level, double x, double y, double z)
-    : Entity(level, true)
+EyeOfEnderSignal::EyeOfEnderSignal(Level* level, double x, double y, double z) : Entity(level, true)
 {
     _init();
     mLife = 0;
@@ -25,8 +24,7 @@ EyeOfEnderSignal::EyeOfEnderSignal(Level* level, double x, double y, double z)
     setPos(x, y, z);
 }
 
-EyeOfEnderSignal::EyeOfEnderSignal(Level* level)
-    : Entity(level, true)
+EyeOfEnderSignal::EyeOfEnderSignal(Level* level) : Entity(level, true)
 {
     _init();
     setSize(0.25f, 0.25f);
@@ -170,9 +168,8 @@ void EyeOfEnderSignal::tick()
     }
     else
     {
-        mLevel->addParticle(PARTICLE_ENDER, mX - mXd * 0.25 + mRandom->nextDouble() * 0.6 - 0.3,
-                            mY - mYd * 0.25 - 0.5, mZ - mZd * 0.25 + mRandom->nextDouble() * 0.6 - 0.3, mXd, mYd, mZd,
-                            arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_ENDER, mX - mXd * 0.25 + mRandom->nextDouble() * 0.6 - 0.3, mY - mYd * 0.25 - 0.5,
+                            mZ - mZd * 0.25 + mRandom->nextDouble() * 0.6 - 0.3, mXd, mYd, mZd, arrayWithLength<int>());
     }
 
     if (mLevel->mIsClientSide)

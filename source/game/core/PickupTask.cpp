@@ -10,12 +10,15 @@
 
 PickupTask::PickupTask(Item** items, unsigned int itemCount, unsigned int requiredCount, int auxValue,
                        Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-                       std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
-                       bool allowFade, bool repeatMessage, MobEffect* effect)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime,
-                   allowFade, repeatMessage),
-      items(new Item*[itemCount]), itemCount(itemCount), requiredCount(requiredCount),
-      auxValue(auxValue), effect(effect)
+                       std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                       bool repeatMessage, MobEffect* effect)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime, allowFade,
+                   repeatMessage),
+      items(new Item*[itemCount]),
+      itemCount(itemCount),
+      requiredCount(requiredCount),
+      auxValue(auxValue),
+      effect(effect)
 {
     unsigned int i;
     for (i = 0; i < itemCount; ++i)
@@ -28,20 +31,18 @@ PickupTask::PickupTask(Item** items, unsigned int itemCount, unsigned int requir
 unsigned int PickupTask::hasPickedUpWoodBlock(not_null_ptr<ItemInstance> item)
 {
     Item* pickedUpItem = item->getItem();
-    if (pickedUpItem == Item::byBlock(Blocks::log) ||
-        pickedUpItem == Item::byBlock(Blocks::log2) ||
-        pickedUpItem == Item::byBlock(Blocks::stripped_log_dark_oak) ||
-        pickedUpItem == Item::byBlock(Blocks::stripped_log_acacia) ||
-        pickedUpItem == Item::byBlock(Blocks::stripped_log_birch) ||
-        pickedUpItem == Item::byBlock(Blocks::stripped_log_jungle) ||
-        pickedUpItem == Item::byBlock(Blocks::stripped_log_oak) ||
-        pickedUpItem == Item::byBlock(Blocks::stripped_log_spruce))
+    if (pickedUpItem == Item::byBlock(Blocks::log) || pickedUpItem == Item::byBlock(Blocks::log2)
+        || pickedUpItem == Item::byBlock(Blocks::stripped_log_dark_oak)
+        || pickedUpItem == Item::byBlock(Blocks::stripped_log_acacia)
+        || pickedUpItem == Item::byBlock(Blocks::stripped_log_birch)
+        || pickedUpItem == Item::byBlock(Blocks::stripped_log_jungle)
+        || pickedUpItem == Item::byBlock(Blocks::stripped_log_oak)
+        || pickedUpItem == Item::byBlock(Blocks::stripped_log_spruce))
         return true;
     return false;
 }
 
-void PickupTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
-                        unsigned int exactCount)
+void PickupTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount, unsigned int exactCount)
 {
     int i;
 
@@ -52,8 +53,7 @@ void PickupTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
 
         if (items[i] == Items::potion && effect != NULL)
         {
-            std::vector<MobEffectInstance*>& effects =
-                PotionUtils::getPotion(item->getTag())->getEffects();
+            std::vector<MobEffectInstance*>& effects = PotionUtils::getPotion(item->getTag())->getEffects();
             std::vector<MobEffectInstance*>::iterator effectInstance;
 
             for (effectInstance = effects.begin(); effectInstance != effects.end(); ++effectInstance)

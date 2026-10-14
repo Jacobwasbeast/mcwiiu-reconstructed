@@ -110,8 +110,8 @@ public:
     void renderChunkInfoMap();
     void renderLoadingScreen();
     void renderFpsMeter(long long frameStartTime);
-    void blit(int x, int y, int width, int height, int u, int v, int uWidth, int vHeight,
-              int textureWidth, int textureHeight);
+    void blit(int x, int y, int width, int height, int u, int v, int uWidth, int vHeight, int textureWidth,
+              int textureHeight);
     void checkGlError(const std::wstring& stage);
 
     void setScreen(Screen* screen);

@@ -80,7 +80,9 @@ public:
         int track;
         GhostRecord* record;
         GhostLoadSaveOperation(EOpType opType, int opTrack, GhostRecord* opRecord)
-            : type(opType), track(opTrack), record(opRecord)
+            : type(opType),
+              track(opTrack),
+              record(opRecord)
         {
         }
     };

@@ -24,8 +24,7 @@ static const unsigned int FILE_END = 2;
 static arrayWithLength<unsigned char> emptySector(SECTOR_BYTES, true);
 static unsigned int sThreadStorageIndex = TlsAlloc();
 
-RegionFile::RegionFile(ConsoleSaveFile* saveFile, File* file)
-    : mSaveFile(saveFile), mLastModified(0)
+RegionFile::RegionFile(ConsoleSaveFile* saveFile, File* file) : mSaveFile(saveFile), mLastModified(0)
 {
     mOffsets = new unsigned int[SECTOR_INTS];
     std::memset(mOffsets, 0, SECTOR_BYTES);

@@ -11,10 +11,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/core/Mth.hpp"
 
-BodyControl::BodyControl(LivingEntity* mob)
-    : mMob(mob)
-    , mHeadStableTime(0)
-    , mLastStableYHeadRot(0.0f)
+BodyControl::BodyControl(LivingEntity* mob) : mMob(mob), mHeadStableTime(0), mLastStableYHeadRot(0.0f)
 {
 }
 
@@ -37,8 +34,7 @@ float BodyControl::clamp(float base, float value, float maxDifference)
 
 void BodyControl::clientTick()
 {
-    if (mMob->GetType() == EntityType::WITHER_BOSS
-        && static_cast<WitherBoss*>(mMob)->IsChargeAttacking())
+    if (mMob->GetType() == EntityType::WITHER_BOSS && static_cast<WitherBoss*>(mMob)->IsChargeAttacking())
     {
         mMob->mYBodyRot = mMob->mYHeadRot;
         return;
@@ -82,8 +78,7 @@ void BodyControl::clientTick()
 
                 if (mHeadStableTime > 10)
                 {
-                    float stableScale = 1.0f
-                        - (float)(mHeadStableTime - 10) / 10.0f;
+                    float stableScale = 1.0f - (float)(mHeadStableTime - 10) / 10.0f;
 
                     if (stableScale < 0.0f)
                     {

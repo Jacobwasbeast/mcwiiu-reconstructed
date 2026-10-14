@@ -33,10 +33,7 @@ public:
     bool inOpenSet();
     void writeToStream(DataOutputStream* stream);
     static Node* createFromStream(DataInputStream* stream);
-    const BlockPathTypes* GetType()
-    {
-        return type;
-    }
+    const BlockPathTypes* GetType() { return type; }
     int hashCode();
     std::wstring toString();
 

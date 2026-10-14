@@ -15,8 +15,8 @@ class TextureManager;
 class PostChain
 {
 public:
-    PostChain(TextureManager* textureManager, ResourceManager* resourceManager,
-              RenderTarget* screenTarget, ResourceLocation* name);
+    PostChain(TextureManager* textureManager, ResourceManager* resourceManager, RenderTarget* screenTarget,
+              ResourceLocation* name);
 
     void updateOrthoMatrix();
     void destroy();

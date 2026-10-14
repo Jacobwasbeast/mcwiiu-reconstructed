@@ -7,8 +7,7 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-ClockAtlasSprite::ClockAtlasSprite()
-    : TextureAtlasSprite(L"clock", L"clock", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f)
+ClockAtlasSprite::ClockAtlasSprite() : TextureAtlasSprite(L"clock", L"clock", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f)
 {
     mLastTime = mRotation = 0.0;
     mPlayerIndex = 255;
@@ -27,7 +26,8 @@ void ClockAtlasSprite::cycleFrames()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     double time = 0.0;
-    if (mPlayerIndex >= 0 && mPlayerIndex < 4 && minecraft->mLevel != NULL && minecraft->mLocalPlayers[mPlayerIndex] != NULL)
+    if (mPlayerIndex >= 0 && mPlayerIndex < 4 && minecraft->mLevel != NULL
+        && minecraft->mLocalPlayers[mPlayerIndex] != NULL)
     {
         time = minecraft->mLocalPlayers[mPlayerIndex]->mLevel->getTimeOfDay(1.0f);
         if (!minecraft->mLocalPlayers[mPlayerIndex]->mLevel->mDimension->isNaturalDimension())

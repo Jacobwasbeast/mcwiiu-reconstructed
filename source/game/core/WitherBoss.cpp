@@ -152,23 +152,29 @@ void WitherBoss::addDataWalkers(DataFixerUpper* fixer)
 
 void WitherBoss::staticCtor()
 {
-    DATA_TARGET_A = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::INT);
-    DATA_TARGET_B = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::INT);
-    DATA_TARGET_C = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::INT);
+    DATA_TARGET_A = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER,
+                                                     EntityDataSerializers::INT);
+    DATA_TARGET_B = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER,
+                                                     EntityDataSerializers::INT);
+    DATA_TARGET_C = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER,
+                                                     EntityDataSerializers::INT);
 
     const EntityDataAccessor<int>* targets[3] = {DATA_TARGET_A, DATA_TARGET_B, DATA_TARGET_C};
     memcpy(DATA_TARGETS, targets, sizeof(DATA_TARGETS));
 
-    DATA_ID_INV = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::INT);
-    DATA_AERIAL_ATTACK = SynchedEntityData::defineId<bool>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
-    DATA_CHARGE_ATTACK = SynchedEntityData::defineId<bool>(EntityType::WITHER_BOSS, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
+    DATA_ID_INV = SynchedEntityData::defineId<int>(EntityType::WITHER_BOSS, EntityType::MONSTER,
+                                                   EntityDataSerializers::INT);
+    DATA_AERIAL_ATTACK = SynchedEntityData::defineId<bool>(EntityType::WITHER_BOSS, EntityType::MONSTER,
+                                                           EntityDataSerializers::BOOLEAN);
+    DATA_CHARGE_ATTACK = SynchedEntityData::defineId<bool>(EntityType::WITHER_BOSS, EntityType::MONSTER,
+                                                           EntityDataSerializers::BOOLEAN);
 }
 
 bool WitherBoss::canDestroy(Block* block)
 {
-    return block != Blocks::bedrock && block != Blocks::end_portal && block != Blocks::end_portal_frame &&
-           block != Blocks::command_block && block != Blocks::barrier && block != Blocks::structure_block &&
-           block != Blocks::structure_void && block != Blocks::piston_extension && block != Blocks::end_gateway;
+    return block != Blocks::bedrock && block != Blocks::end_portal && block != Blocks::end_portal_frame
+           && block != Blocks::command_block && block != Blocks::barrier && block != Blocks::structure_block
+           && block != Blocks::structure_void && block != Blocks::piston_extension && block != Blocks::end_gateway;
 }
 
 unsigned long long WitherBoss::GetType()
@@ -235,8 +241,8 @@ bool WitherBoss::hurt(const DamageSource* source, float damage)
     {
         if (eTYPE_DERIVED_FROM(EntityType::MOB, source->getEntity()->GetType()))
         {
-            boost::shared_ptr<Mob> attacker =
-                boost::static_pointer_cast<Mob>(mLevel->getEntity(source->getEntity()->getId()));
+            boost::shared_ptr<Mob> attacker = boost::static_pointer_cast<Mob>(
+                mLevel->getEntity(source->getEntity()->getId()));
             attacker->knockback(shared_from_this(), damage, mX - attacker->mX, mY - attacker->mY);
         }
     }
@@ -246,7 +252,8 @@ bool WitherBoss::hurt(const DamageSource* source, float damage)
 
     if (isPowered() && directEntity != NULL)
     {
-        if (eTYPE_DERIVED_FROM(EntityType::ARROW, directEntity->GetType()) || eTYPE_DERIVED_FROM(EntityType::THROWN_TRIDENT, directEntity->GetType()))
+        if (eTYPE_DERIVED_FROM(EntityType::ARROW, directEntity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::THROWN_TRIDENT, directEntity->GetType()))
             return false;
     }
 
@@ -284,7 +291,8 @@ bool WitherBoss::hurt(const DamageSource* source, float damage)
                 mChargeTimer = 1;
         }
 
-        if (mBossEvent != NULL && attacker != NULL && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, attacker->GetType()))
+        if (mBossEvent != NULL && attacker != NULL
+            && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, attacker->GetType()))
             mBossEvent->addPlayer(boost::static_pointer_cast<ServerPlayer>(attacker), (int)damage);
     }
     return hurt;
@@ -500,11 +508,12 @@ void WitherBoss::dropDeathLoot(bool hitByPlayer, int lootingLevel)
 
     if (!mLevel->mIsClientSide)
     {
-        std::vector<boost::shared_ptr<Entity> >* players =
-            mLevel->getEntitiesOfClass(typeid(Player), mBoundingBox->grow(50.0, 100.0, 50.0));
+        std::vector<boost::shared_ptr<Entity> >* players = mLevel->getEntitiesOfClass(
+            typeid(Player), mBoundingBox->grow(50.0, 100.0, 50.0));
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
         {
-            boost::static_pointer_cast<Player>(*it)->awardStat(GenericStats::killWither(), GenericStats::param_killWither());
+            boost::static_pointer_cast<Player>(*it)->awardStat(GenericStats::killWither(),
+                                                               GenericStats::param_killWither());
         }
         delete players;
     }
@@ -545,7 +554,8 @@ void WitherBoss::aiStep()
             if (!mLevel->mIsClientSide)
             {
                 mLevel->explode(shared_from_this(), mX, mY + getEyeHeight(), mZ, 7.0f, false,
-                                mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING), false, false, false, -1.0f);
+                                mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING), false, false, false,
+                                -1.0f);
                 LivingEntity::die(mDeathSource);
 
                 if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
@@ -596,7 +606,8 @@ void WitherBoss::aiStep()
                 setAerialAttack(true);
                 mShieldHealth = mInitialShieldHealth;
                 mLevel->explode(shared_from_this(), mX, mY + getEyeHeight(), mZ, 7.0f, false,
-                                mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING), false, false, false, -1.0f);
+                                mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING), false, false, false,
+                                -1.0f);
             }
             playSoundToAllPlayers(SoundEvents::WITHER_SPAWN, 1.0f, 1.0f);
         }
@@ -740,9 +751,9 @@ void WitherBoss::registerGoals()
     mGoalSelector.addGoal(7, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new WitherTargetHighestDamage(this), true);
     mTargetSelector.addGoal(2, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Mob), 0, false, false,
-                                                               LIVING_ENTITY_SELECTOR, true, false),
-                            true);
+    mTargetSelector.addGoal(
+        3, new NearestAttackableTargetGoal(this, typeid(Mob), 0, false, false, LIVING_ENTITY_SELECTOR, true, false),
+        true);
 }
 
 PathNavigation* WitherBoss::createNavigation(Level* level)
@@ -799,11 +810,12 @@ void WitherBoss::customServerAiStep()
             for (int i = 0; i < 3; ++i)
             {
                 int error;
-                boost::shared_ptr<Entity> entity =
-                    SpawnEggItem::spawnMobAt(mLevel, EntityIO::getKey(EntityType::WITHER_SKELETON), mX, mY, mZ, &error, L"");
+                boost::shared_ptr<Entity> entity = SpawnEggItem::spawnMobAt(
+                    mLevel, EntityIO::getKey(EntityType::WITHER_SKELETON), mX, mY, mZ, &error, L"");
                 if (entity != NULL)
                 {
-                    boost::shared_ptr<WitherSkeleton> witherSkeleton = boost::static_pointer_cast<WitherSkeleton>(entity);
+                    boost::shared_ptr<WitherSkeleton> witherSkeleton = boost::static_pointer_cast<WitherSkeleton>(
+                        entity);
                     if (error == 0)
                     {
                         witherSkeleton->setWitherParent(boost::static_pointer_cast<WitherBoss>(shared_from_this()));
@@ -843,8 +855,8 @@ void WitherBoss::customServerAiStep()
             mNextHeadUpdate[head - 1] = mTickCount + 10 + mRandom->nextInt(10);
 
             const Difficulty* difficulty = mLevel->getDifficulty();
-            if ((difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD) &&
-                ++mIdleHeadUpdates[head - 1] > 15)
+            if ((difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD)
+                && ++mIdleHeadUpdates[head - 1] > 15)
             {
                 float x = mRandom->nextFloat((float)mX - 10.0f, (float)mX + 10.0f);
                 float y = mRandom->nextFloat((float)mY - 5.0f, (float)mY + 5.0f);
@@ -859,8 +871,8 @@ void WitherBoss::customServerAiStep()
             {
                 boost::shared_ptr<Entity> target = mLevel->getEntity(targetId);
                 bool lostTarget = true;
-                if (target != NULL && target->isAlive() &&
-                    distanceToSqr(target) <= (double)(mTargetRange * mTargetRange) && canSee(target))
+                if (target != NULL && target->isAlive()
+                    && distanceToSqr(target) <= (double)(mTargetRange * mTargetRange) && canSee(target))
                 {
                     lostTarget = false;
                 }
@@ -886,8 +898,7 @@ void WitherBoss::customServerAiStep()
                     }
                     else
                     {
-                        const bool isLiving =
-                            eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType());
+                        const bool isLiving = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType());
                         if (isLiving && (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD))
                         {
                             performRangedAttack(head, boost::static_pointer_cast<LivingEntity>(target));
@@ -899,14 +910,14 @@ void WitherBoss::customServerAiStep()
             }
             else
             {
-                std::vector<boost::shared_ptr<Entity> >* players =
-                    mLevel->getEntitiesOfClass(typeid(Player), mBoundingBox->grow(mTargetRange, 8.0, mTargetRange));
+                std::vector<boost::shared_ptr<Entity> >* players = mLevel->getEntitiesOfClass(
+                    typeid(Player), mBoundingBox->grow(mTargetRange, 8.0, mTargetRange));
                 for (int attempt = 0; attempt < 10 && players != NULL && !players->empty(); ++attempt)
                 {
-                    boost::shared_ptr<Player> player =
-                        boost::static_pointer_cast<Player>(players->at(mRandom->nextInt(players->size())));
-                    if (player->hasCategory(EntityCategory::eEntityCategory_Player) &&
-                        !player->mAbilities.mInstabuild && getTarget() != player)
+                    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(
+                        players->at(mRandom->nextInt(players->size())));
+                    if (player->hasCategory(EntityCategory::eEntityCategory_Player) && !player->mAbilities.mInstabuild
+                        && getTarget() != player)
                     {
                         setAlternativeTarget(head, player->getId());
                         break;
@@ -948,15 +959,15 @@ void WitherBoss::customServerAiStep()
     if (mCharging)
     {
         destroyBlocks(mLevel, mBoundingBox, 2);
-        std::vector<boost::shared_ptr<Entity> >* mobs =
-            mLevel->getEntitiesOfClass(typeid(Mob), mBoundingBox->grow(1.0, 4.0, 1.0));
+        std::vector<boost::shared_ptr<Entity> >* mobs = mLevel->getEntitiesOfClass(typeid(Mob),
+                                                                                   mBoundingBox->grow(1.0, 4.0, 1.0));
         for (unsigned int i = 0; i < mobs->size(); ++i)
         {
             boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(mobs->at(i));
             if (mob != shared_from_this())
             {
-                DamageSource* source =
-                    DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+                DamageSource* source = DamageSource::CreateMobAttack(
+                    boost::static_pointer_cast<LivingEntity>(shared_from_this()));
                 mob->hurt(source, 15.0f);
                 delete source;
             }
@@ -976,8 +987,8 @@ void WitherBoss::customServerAiStep()
 
     if (mTickCount % 20 == 0)
     {
-        std::vector<boost::shared_ptr<Entity> >* players =
-            mLevel->getEntitiesOfClass(typeid(Player), mBoundingBox->grow(50.0, 50.0, 50.0));
+        std::vector<boost::shared_ptr<Entity> >* players = mLevel->getEntitiesOfClass(
+            typeid(Player), mBoundingBox->grow(50.0, 50.0, 50.0));
         delete players;
     }
 
@@ -1158,8 +1169,8 @@ void WitherBoss::setAlternativeTarget(int head, int target)
     {
         if (target != getId())
         {
-            if (getAlternativeTarget(0) == target || getAlternativeTarget(1) == target ||
-                getAlternativeTarget(2) == target)
+            if (getAlternativeTarget(0) == target || getAlternativeTarget(1) == target
+                || getAlternativeTarget(2) == target)
             {
                 return;
             }
@@ -1190,8 +1201,8 @@ void WitherBoss::generateParticles()
         for (int i = 0; i < 3; ++i)
         {
             mLevel->addParticle(PARTICLE_MOB_SPELL, mX + mRandom->nextGaussian() * 1.0,
-                                mY + (float)(mRandom->nextFloat() * 3.3f), mZ + mRandom->nextGaussian() * 1.0,
-                                0.7f, 0.7f, 0.9f, arrayWithLength<int>());
+                                mY + (float)(mRandom->nextFloat() * 3.3f), mZ + mRandom->nextGaussian() * 1.0, 0.7f,
+                                0.7f, 0.9f, arrayWithLength<int>());
         }
     }
 
@@ -1202,13 +1213,13 @@ void WitherBoss::generateParticles()
         double headY = getHeadY(head);
         double headZ = getHeadZ(head);
         mLevel->addParticle(PARTICLE_SMOKE, headX + mRandom->nextGaussian() * 0.3f,
-                            headY + mRandom->nextGaussian() * 0.3f, headZ + mRandom->nextGaussian() * 0.3f, 0.0,
-                            0.0, 0.0, arrayWithLength<int>());
+                            headY + mRandom->nextGaussian() * 0.3f, headZ + mRandom->nextGaussian() * 0.3f, 0.0, 0.0,
+                            0.0, arrayWithLength<int>());
         if (powered && mLevel->mRandom->nextInt(4) == 0)
         {
             mLevel->addParticle(PARTICLE_MOB_SPELL, headX + mRandom->nextGaussian() * 0.3f,
-                                headY + mRandom->nextGaussian() * 0.3f, headZ + mRandom->nextGaussian() * 0.3f,
-                                0.7f, 0.7f, 0.5, arrayWithLength<int>());
+                                headY + mRandom->nextGaussian() * 0.3f, headZ + mRandom->nextGaussian() * 0.3f, 0.7f,
+                                0.7f, 0.5, arrayWithLength<int>());
         }
     }
 }
@@ -1316,9 +1327,7 @@ void WitherBoss::destroyBlocks(Level* level, const AABB* area, int radius)
         playSound(SoundEvents::WITHER_BREAK_BLOCK, 1.0f, 1.0f);
 }
 
-WitherBoss::WitherDoNothingGoal::WitherDoNothingGoal(WitherBoss* wither)
-    : Goal(),
-      mWither(wither)
+WitherBoss::WitherDoNothingGoal::WitherDoNothingGoal(WitherBoss* wither) : Goal(), mWither(wither)
 {
     setRequiredControlFlags(7);
 }
@@ -1331,4 +1340,3 @@ bool WitherBoss::WitherDoNothingGoal::canUse()
 {
     return mWither->getInvulnerableTicks() > 0;
 }
-

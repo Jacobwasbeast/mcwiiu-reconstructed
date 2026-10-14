@@ -2,8 +2,7 @@
 
 #include "game/core/DamageEvent.hpp"
 
-KillsWithBowStatTracker::KillsWithBowStatTracker(const StatsUID& statsUID)
-    : StatTracker<unsigned int>(statsUID, 0)
+KillsWithBowStatTracker::KillsWithBowStatTracker(const StatsUID& statsUID) : StatTracker<unsigned int>(statsUID, 0)
 {
 }
 

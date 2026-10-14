@@ -7,7 +7,9 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 
-CanAttackPredicate::CanAttackPredicate(MobNearestMobTargetGoal* goal) : mGoal(goal) {}
+CanAttackPredicate::CanAttackPredicate(MobNearestMobTargetGoal* goal) : mGoal(goal)
+{
+}
 
 bool CanAttackPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
@@ -40,4 +42,3 @@ Predicate<boost::shared_ptr<Entity> >* CanAttackPredicate::copy() const
 {
     return new CanAttackPredicate(*this);
 }
-

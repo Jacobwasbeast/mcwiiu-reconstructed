@@ -66,7 +66,8 @@ public:
     const DyeColor* getOffspringColor(boost::shared_ptr<Animal> first, boost::shared_ptr<Animal> second);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual void ate();
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* group, const std::wstring& name);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* group,
+                                           const std::wstring& name);
     virtual float getEyeHeight();
     virtual unsigned long long GetType();
 

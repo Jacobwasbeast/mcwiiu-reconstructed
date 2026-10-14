@@ -17,7 +17,8 @@
 extern C_4JProfile* gProfile;
 extern C4JStorage* gStorage;
 
-boost::unordered_map<Stat*, boost::unordered_map<unsigned int, StatsCounter::LEADERBOARD_FLAG> > StatsCounter::statBoards;
+boost::unordered_map<Stat*, boost::unordered_map<unsigned int, StatsCounter::LEADERBOARD_FLAG> >
+    StatsCounter::statBoards;
 
 StatsCounter::StatsCounter()
 {
@@ -208,11 +209,10 @@ void StatsCounter::setupStatBoards()
 
 unsigned int StatsCounter::isLargeStat(Stat* stat)
 {
-    static Stat** largeStats[] = {
-        &Stats::walkOneM, &Stats::swimOneM, &Stats::fallOneM, &Stats::climbOneM,
-        &Stats::minecartOneM, &Stats::boatOneM, &Stats::pigOneM, &Stats::portalsUsed
-    };
-    for (Stat*** largeStat = largeStats; largeStat != largeStats + sizeof(largeStats) / sizeof(largeStats[0]); ++largeStat)
+    static Stat** largeStats[] = {&Stats::walkOneM,     &Stats::swimOneM, &Stats::fallOneM, &Stats::climbOneM,
+                                  &Stats::minecartOneM, &Stats::boatOneM, &Stats::pigOneM,  &Stats::portalsUsed};
+    for (Stat*** largeStat = largeStats; largeStat != largeStats + sizeof(largeStats) / sizeof(largeStats[0]);
+         ++largeStat)
     {
         if (**largeStat == stat)
         {
@@ -240,7 +240,8 @@ void StatsCounter::award(Stat* stat, ESubTypes subtype, unsigned int amount, boo
     {
         statIt->second[static_cast<unsigned int>(subtype)] += amount;
         gStats->get_timePlayed();
-        if (statIt->second[static_cast<unsigned int>(subtype)] < statIt->second[static_cast<unsigned int>(subtype)] - amount)
+        if (statIt->second[static_cast<unsigned int>(subtype)]
+            < statIt->second[static_cast<unsigned int>(subtype)] - amount)
         {
             statIt->second[static_cast<unsigned int>(subtype)] = UINT_MAX;
         }
@@ -259,8 +260,8 @@ void StatsCounter::award(Stat* stat, ESubTypes subtype, unsigned int amount, boo
         statBoards.find(stat);
     if (boardIt != statBoards.end())
     {
-        boost::unordered_map<unsigned int, LEADERBOARD_FLAG>::iterator flagIt =
-            boardIt->second.find(static_cast<unsigned int>(subtype));
+        boost::unordered_map<unsigned int, LEADERBOARD_FLAG>::iterator flagIt = boardIt->second.find(
+            static_cast<unsigned int>(subtype));
         if (flagIt != boardIt->second.end())
         {
             mLeaderboardPending[static_cast<unsigned int>(flagIt->second)] = true;

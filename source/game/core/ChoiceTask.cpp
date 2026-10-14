@@ -8,9 +8,8 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
 
-ChoiceTask::ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool preCompletionEnabled,
-                       int firstInput, int secondInput,
-                       eTutorial_CompletionAction completionAction,
+ChoiceTask::ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool preCompletionEnabled, int firstInput,
+                       int secondInput, eTutorial_CompletionAction completionAction,
                        ETelemetryChallenges telemetryChallenge)
     : TutorialTask(tutorial, descriptionId, false, NULL, true, false, false)
 {
@@ -54,7 +53,7 @@ void ChoiceTask::sendTelemetry()
     }
 
     telemetryManagerInstance->RecordEnemyKilledOrOvercome(minecraft->mPlayer->mUserIndex, 0, 0, 0, 0, 0, 0,
-                                                  telemetryChallenge);
+                                                          telemetryChallenge);
 }
 
 bool ChoiceTask::isCompleted()
@@ -81,14 +80,14 @@ bool ChoiceTask::isCompleted()
             return false;
         }
 
-        if (!firstChoice && g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
-                                               static_cast<unsigned char>(firstInput), false) > 0)
+        if (!firstChoice
+            && g_pInput->GetValue(minecraft->mPlayer->mUserIndex, static_cast<unsigned char>(firstInput), false) > 0)
         {
             firstChoice = true;
         }
 
-        if (!secondChoice && g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
-                                                static_cast<unsigned char>(secondInput), false) > 0)
+        if (!secondChoice
+            && g_pInput->GetValue(minecraft->mPlayer->mUserIndex, static_cast<unsigned char>(secondInput), false) > 0)
         {
             secondChoice = true;
         }

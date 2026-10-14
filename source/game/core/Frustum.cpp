@@ -49,22 +49,38 @@ void Frustum::calculateFrustum()
     _modl->flip()->limit(16);
     _modl->get(&modl);
 
-    clip.data[0] = modl.data[0] * proj.data[0] + modl.data[1] * proj.data[4] + modl.data[2] * proj.data[8] + modl.data[3] * proj.data[12];
-    clip.data[1] = modl.data[0] * proj.data[1] + modl.data[1] * proj.data[5] + modl.data[2] * proj.data[9] + modl.data[3] * proj.data[13];
-    clip.data[2] = modl.data[0] * proj.data[2] + modl.data[1] * proj.data[6] + modl.data[2] * proj.data[10] + modl.data[3] * proj.data[14];
-    clip.data[3] = modl.data[0] * proj.data[3] + modl.data[1] * proj.data[7] + modl.data[2] * proj.data[11] + modl.data[3] * proj.data[15];
-    clip.data[4] = modl.data[4] * proj.data[0] + modl.data[5] * proj.data[4] + modl.data[6] * proj.data[8] + modl.data[7] * proj.data[12];
-    clip.data[5] = modl.data[4] * proj.data[1] + modl.data[5] * proj.data[5] + modl.data[6] * proj.data[9] + modl.data[7] * proj.data[13];
-    clip.data[6] = modl.data[4] * proj.data[2] + modl.data[5] * proj.data[6] + modl.data[6] * proj.data[10] + modl.data[7] * proj.data[14];
-    clip.data[7] = modl.data[4] * proj.data[3] + modl.data[5] * proj.data[7] + modl.data[6] * proj.data[11] + modl.data[7] * proj.data[15];
-    clip.data[8] = modl.data[8] * proj.data[0] + modl.data[9] * proj.data[4] + modl.data[10] * proj.data[8] + modl.data[11] * proj.data[12];
-    clip.data[9] = modl.data[8] * proj.data[1] + modl.data[9] * proj.data[5] + modl.data[10] * proj.data[9] + modl.data[11] * proj.data[13];
-    clip.data[10] = modl.data[8] * proj.data[2] + modl.data[9] * proj.data[6] + modl.data[10] * proj.data[10] + modl.data[11] * proj.data[14];
-    clip.data[11] = modl.data[8] * proj.data[3] + modl.data[9] * proj.data[7] + modl.data[10] * proj.data[11] + modl.data[11] * proj.data[15];
-    clip.data[12] = modl.data[12] * proj.data[0] + modl.data[13] * proj.data[4] + modl.data[14] * proj.data[8] + modl.data[15] * proj.data[12];
-    clip.data[13] = modl.data[12] * proj.data[1] + modl.data[13] * proj.data[5] + modl.data[14] * proj.data[9] + modl.data[15] * proj.data[13];
-    clip.data[14] = modl.data[12] * proj.data[2] + modl.data[13] * proj.data[6] + modl.data[14] * proj.data[10] + modl.data[15] * proj.data[14];
-    clip.data[15] = modl.data[12] * proj.data[3] + modl.data[13] * proj.data[7] + modl.data[14] * proj.data[11] + modl.data[15] * proj.data[15];
+    clip.data[0] = modl.data[0] * proj.data[0] + modl.data[1] * proj.data[4] + modl.data[2] * proj.data[8]
+                   + modl.data[3] * proj.data[12];
+    clip.data[1] = modl.data[0] * proj.data[1] + modl.data[1] * proj.data[5] + modl.data[2] * proj.data[9]
+                   + modl.data[3] * proj.data[13];
+    clip.data[2] = modl.data[0] * proj.data[2] + modl.data[1] * proj.data[6] + modl.data[2] * proj.data[10]
+                   + modl.data[3] * proj.data[14];
+    clip.data[3] = modl.data[0] * proj.data[3] + modl.data[1] * proj.data[7] + modl.data[2] * proj.data[11]
+                   + modl.data[3] * proj.data[15];
+    clip.data[4] = modl.data[4] * proj.data[0] + modl.data[5] * proj.data[4] + modl.data[6] * proj.data[8]
+                   + modl.data[7] * proj.data[12];
+    clip.data[5] = modl.data[4] * proj.data[1] + modl.data[5] * proj.data[5] + modl.data[6] * proj.data[9]
+                   + modl.data[7] * proj.data[13];
+    clip.data[6] = modl.data[4] * proj.data[2] + modl.data[5] * proj.data[6] + modl.data[6] * proj.data[10]
+                   + modl.data[7] * proj.data[14];
+    clip.data[7] = modl.data[4] * proj.data[3] + modl.data[5] * proj.data[7] + modl.data[6] * proj.data[11]
+                   + modl.data[7] * proj.data[15];
+    clip.data[8] = modl.data[8] * proj.data[0] + modl.data[9] * proj.data[4] + modl.data[10] * proj.data[8]
+                   + modl.data[11] * proj.data[12];
+    clip.data[9] = modl.data[8] * proj.data[1] + modl.data[9] * proj.data[5] + modl.data[10] * proj.data[9]
+                   + modl.data[11] * proj.data[13];
+    clip.data[10] = modl.data[8] * proj.data[2] + modl.data[9] * proj.data[6] + modl.data[10] * proj.data[10]
+                    + modl.data[11] * proj.data[14];
+    clip.data[11] = modl.data[8] * proj.data[3] + modl.data[9] * proj.data[7] + modl.data[10] * proj.data[11]
+                    + modl.data[11] * proj.data[15];
+    clip.data[12] = modl.data[12] * proj.data[0] + modl.data[13] * proj.data[4] + modl.data[14] * proj.data[8]
+                    + modl.data[15] * proj.data[12];
+    clip.data[13] = modl.data[12] * proj.data[1] + modl.data[13] * proj.data[5] + modl.data[14] * proj.data[9]
+                    + modl.data[15] * proj.data[13];
+    clip.data[14] = modl.data[12] * proj.data[2] + modl.data[13] * proj.data[6] + modl.data[14] * proj.data[10]
+                    + modl.data[15] * proj.data[14];
+    clip.data[15] = modl.data[12] * proj.data[3] + modl.data[13] * proj.data[7] + modl.data[14] * proj.data[11]
+                    + modl.data[15] * proj.data[15];
 
     frustum[0][0] = clip.data[3] - clip.data[0];
     frustum[0][1] = clip.data[7] - clip.data[4];

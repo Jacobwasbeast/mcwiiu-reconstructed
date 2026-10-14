@@ -40,11 +40,9 @@
 #include "game/world/generation/VillagerGolem.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-static Predicate<boost::shared_ptr<Entity> >* DROWNED_TARGET_SELECTOR =
-    new UnderwaterOrInDarknessSelector();
+static Predicate<boost::shared_ptr<Entity> >* DROWNED_TARGET_SELECTOR = new UnderwaterOrInDarknessSelector();
 
-Drowned::Drowned(Level* level)
-    : Zombie(level, false)
+Drowned::Drowned(Level* level) : Zombie(level, false)
 {
     mMeleeAttackGoal = NULL;
     mRangedAttackGoal = NULL;
@@ -75,8 +73,7 @@ void Drowned::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)
     double dz = target->mZ - mZ;
     double distanceSqr = dx * dx + dz * dz;
     double distance = std::sqrt(distanceSqr);
-    trident->shoot(dx, dy + distance * 0.2f, dz, 1.6f,
-                   14.0f - (float)mLevel->getDifficulty()->getId() * 4.0f);
+    trident->shoot(dx, dy + distance * 0.2f, dz, 1.6f, 14.0f - (float)mLevel->getDifficulty()->getId() * 4.0f);
     playSound(SoundEvents::TRIDENT_THROW, 1.0f, 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
     mLevel->addEntity(trident);
 }
@@ -105,14 +102,14 @@ bool Drowned::breathesWater()
 
 bool Drowned::checkSpawnRules()
 {
-    return mLevel->getDifficulty() != Difficulty::PEACEFUL && !mLevel->containsAnysolidBlocking(mBoundingBox) &&
-           getWalkTargetValue(BlockPos(mX, mBoundingBox->mMinY, mZ)) >= 0.0f;
+    return mLevel->getDifficulty() != Difficulty::PEACEFUL && !mLevel->containsAnysolidBlocking(mBoundingBox)
+           && getWalkTargetValue(BlockPos(mX, mBoundingBox->mMinY, mZ)) >= 0.0f;
 }
 
 bool Drowned::checkSpawnObstruction()
 {
-    return mLevel->isUnobstructed(mBoundingBox, shared_from_this()) &&
-           mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty();
+    return mLevel->isUnobstructed(mBoundingBox, shared_from_this())
+           && mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty();
 }
 
 void Drowned::aiStep()
@@ -178,22 +175,31 @@ void Drowned::registerGoals()
     mGoalSelector.addGoal(2, new RestrictSunGoal(this), true);
     mGoalSelector.addGoal(2, new FleeSunGoal(this, 1.0), true);
     mGoalSelector.addGoal(3, mMeleeAttackGoal, false);
-    mGoalSelector.addGoal(4, new RemoveBlockGoal(Blocks::turtle_egg, this, 1.0, 16, 2, 1.6,
-                                                 SoundEvents::TURTLE_EGG_HATCH,
-                                                 SoundEvents::TURTLE_EGG_BREAK), true);
+    mGoalSelector.addGoal(4,
+                          new RemoveBlockGoal(Blocks::turtle_egg, this, 1.0, 16, 2, 1.6, SoundEvents::TURTLE_EGG_HATCH,
+                                              SoundEvents::TURTLE_EGG_BREAK),
+                          true);
     mGoalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new RandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
     mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
     mGoalSelector.addGoal(6, new MoveThroughVillageGoal(this, 1.0, false), true);
-    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), 10, true, false,
-                                                               DROWNED_TARGET_SELECTOR, false, false), true);
-    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Villager), 10, false, false,
-                                                               DROWNED_TARGET_SELECTOR, false, false), true);
-    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(VillagerGolem), 10, true, false,
-                                                               DROWNED_TARGET_SELECTOR, false, false), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Turtle), 10, true, false,
-                                                               Turtle::BABY_ON_LAND_SELECTOR, false, false), true);
+    mTargetSelector.addGoal(
+        2,
+        new NearestAttackableTargetGoal(this, typeid(Player), 10, true, false, DROWNED_TARGET_SELECTOR, false, false),
+        true);
+    mTargetSelector.addGoal(2,
+                            new NearestAttackableTargetGoal(this, typeid(Villager), 10, false, false,
+                                                            DROWNED_TARGET_SELECTOR, false, false),
+                            true);
+    mTargetSelector.addGoal(2,
+                            new NearestAttackableTargetGoal(this, typeid(VillagerGolem), 10, true, false,
+                                                            DROWNED_TARGET_SELECTOR, false, false),
+                            true);
+    mTargetSelector.addGoal(3,
+                            new NearestAttackableTargetGoal(this, typeid(Turtle), 10, true, false,
+                                                            Turtle::BABY_ON_LAND_SELECTOR, false, false),
+                            true);
 }
 
 const SoundEvent* Drowned::getAmbientSound()

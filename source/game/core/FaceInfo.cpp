@@ -7,10 +7,9 @@ FaceInfo* FaceInfo::DOWN = new FaceInfo(new FaceInfo::VertexInfo(WEST_FACE, DOWN
                                         new FaceInfo::VertexInfo(EAST_FACE, DOWN_FACE, NORTH_FACE),
                                         new FaceInfo::VertexInfo(EAST_FACE, DOWN_FACE, SOUTH_FACE));
 
-FaceInfo* FaceInfo::UP = new FaceInfo(new FaceInfo::VertexInfo(WEST_FACE, UP_FACE, NORTH_FACE),
-                                      new FaceInfo::VertexInfo(WEST_FACE, UP_FACE, SOUTH_FACE),
-                                      new FaceInfo::VertexInfo(EAST_FACE, UP_FACE, SOUTH_FACE),
-                                      new FaceInfo::VertexInfo(EAST_FACE, UP_FACE, NORTH_FACE));
+FaceInfo* FaceInfo::UP = new FaceInfo(
+    new FaceInfo::VertexInfo(WEST_FACE, UP_FACE, NORTH_FACE), new FaceInfo::VertexInfo(WEST_FACE, UP_FACE, SOUTH_FACE),
+    new FaceInfo::VertexInfo(EAST_FACE, UP_FACE, SOUTH_FACE), new FaceInfo::VertexInfo(EAST_FACE, UP_FACE, NORTH_FACE));
 
 FaceInfo* FaceInfo::NORTH = new FaceInfo(new FaceInfo::VertexInfo(EAST_FACE, UP_FACE, NORTH_FACE),
                                          new FaceInfo::VertexInfo(EAST_FACE, DOWN_FACE, NORTH_FACE),

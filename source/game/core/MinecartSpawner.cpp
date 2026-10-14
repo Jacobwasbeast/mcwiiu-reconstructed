@@ -16,15 +16,13 @@ Entity* MinecartSpawner::create(Level* level)
     return new MinecartSpawner(level);
 }
 
-MinecartSpawner::MinecartSpawner(Level* level)
-    : Minecart(level)
+MinecartSpawner::MinecartSpawner(Level* level) : Minecart(level)
 {
     Entity::fjDerivedCtorCalls();
     mSpawner = new MinecartMobSpawner(this);
 }
 
-MinecartSpawner::MinecartSpawner(Level* level, double x, double y, double z)
-    : Minecart(level, x, y, z)
+MinecartSpawner::MinecartSpawner(Level* level, double x, double y, double z) : Minecart(level, x, y, z)
 {
     Entity::fjDerivedCtorCalls();
     mSpawner = new MinecartMobSpawner(this);
@@ -87,7 +85,8 @@ unsigned long long MinecartSpawner::GetType()
 }
 
 MinecartSpawner::MinecartMobSpawner::MinecartMobSpawner(MinecartSpawner* minecart)
-    : BaseMobSpawner(), mMinecart(minecart)
+    : BaseMobSpawner(),
+      mMinecart(minecart)
 {
 }
 

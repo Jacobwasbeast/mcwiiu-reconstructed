@@ -7,15 +7,13 @@
 
 const EntityDataAccessor<unsigned char>* AbstractIllager::DATA_ILLAGER_FLAGS = NULL;
 
-AbstractIllager::AbstractIllager(Level* level)
-    : Monster(level)
+AbstractIllager::AbstractIllager(Level* level) : Monster(level)
 {
 }
 
 void AbstractIllager::staticCtor()
 {
-    DATA_ILLAGER_FLAGS = SynchedEntityData::defineId(EntityType::ABSTRACT_ILLAGER,
-                                                     EntityType::MONSTER,
+    DATA_ILLAGER_FLAGS = SynchedEntityData::defineId(EntityType::ABSTRACT_ILLAGER, EntityType::MONSTER,
                                                      EntityDataSerializers::BYTE);
 }
 

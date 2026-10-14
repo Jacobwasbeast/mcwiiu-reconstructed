@@ -24,8 +24,7 @@
 
 const EntityDataAccessor<unsigned char>* Bat::DATA_ID_FLAGS = NULL;
 
-Bat::Bat(Level* level)
-    : AmbientCreature(level)
+Bat::Bat(Level* level) : AmbientCreature(level)
 {
     fjDerivedCtorCalls();
     mTargetPosition = NULL;
@@ -42,7 +41,7 @@ Bat::~Bat()
 void Bat::staticCtor()
 {
     DATA_ID_FLAGS = SynchedEntityData::defineId(EntityType::BAT, EntityType::AMBIENT_CREATURE,
-                                                 EntityDataSerializers::BYTE);
+                                                EntityDataSerializers::BYTE);
 }
 
 void Bat::setResting(bool resting)
@@ -165,8 +164,8 @@ void Bat::customServerAiStep()
         delete mTargetPosition;
         mTargetPosition = NULL;
     }
-    if (mTargetPosition == NULL || mRandom->nextInt(30) == 0 ||
-        mTargetPosition->distSqr((int)mX, (int)mY, (int)mZ) < 4.0)
+    if (mTargetPosition == NULL || mRandom->nextInt(30) == 0
+        || mTargetPosition->distSqr((int)mX, (int)mY, (int)mZ) < 4.0)
     {
         delete mTargetPosition;
         mTargetPosition = new BlockPos((int)mX + mRandom->nextInt(7) - mRandom->nextInt(7),

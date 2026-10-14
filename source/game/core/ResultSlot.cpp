@@ -46,21 +46,18 @@ void ResultSlot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
 {
     if (mRemoveCount > 0)
     {
-        item->onCraftedBy(mPlayer->mLevel,
-                          boost::static_pointer_cast<Player>(mPlayer->shared_from_this()),
+        item->onCraftedBy(mPlayer->mLevel, boost::static_pointer_cast<Player>(mPlayer->shared_from_this()),
                           mRemoveCount);
     }
     mRemoveCount = 0;
 }
 
-not_null_ptr<ItemInstance> ResultSlot::onTake(boost::shared_ptr<Player> player,
-                                               not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> ResultSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
 {
     checkTakeAchievements(item);
 
-    NonNullList<not_null_ptr<ItemInstance> > remaining =
-        Recipes::getInstance()->getRemainingItemsFor(mCraftSlots, player->mLevel,
-                                                       Recipes::eRecipeCategory_Crafting);
+    NonNullList<not_null_ptr<ItemInstance> > remaining = Recipes::getInstance()->getRemainingItemsFor(
+        mCraftSlots, player->mLevel, Recipes::eRecipeCategory_Crafting);
     unsigned int index;
     for (index = 0; index < remaining.size(); ++index)
     {
@@ -77,8 +74,7 @@ not_null_ptr<ItemInstance> ResultSlot::onTake(boost::shared_ptr<Player> player,
             {
                 mCraftSlots->setItem(index, remainder);
             }
-            else if (ItemInstance::isSame(current, remainder) &&
-                     ItemInstance::tagMatches(current, remainder))
+            else if (ItemInstance::isSame(current, remainder) && ItemInstance::tagMatches(current, remainder))
             {
                 remainder->grow(current->getCount());
                 mCraftSlots->setItem(index, remainder);

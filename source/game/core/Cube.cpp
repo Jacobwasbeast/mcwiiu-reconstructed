@@ -15,11 +15,17 @@ const int Cube::FACE_FRONT = 16;
 const int Cube::FACE_BACK = 32;
 const int Cube::FACE_ALL = 63;
 
-Cube::Cube(ModelPart* parent, int texU, int texV, float x, float y, float z,
-           int width, int height, int depth, float inflate, bool mirror,
-           int faceMask, bool flip, float xRot, float yRot, float zRot)
-    : mX0(x), mY0(y), mZ0(z), mX1(x + (float)width), mY1(y + (float)height), mZ1(z + (float)depth),
-      mTexU(texU), mTexV(texV), mId()
+Cube::Cube(ModelPart* parent, int texU, int texV, float x, float y, float z, int width, int height, int depth,
+           float inflate, bool mirror, int faceMask, bool flip, float xRot, float yRot, float zRot)
+    : mX0(x),
+      mY0(y),
+      mZ0(z),
+      mX1(x + (float)width),
+      mY1(y + (float)height),
+      mZ1(z + (float)depth),
+      mTexU(texU),
+      mTexV(texV),
+      mId()
 {
     _init(parent, texU, texV, x, y, z, width, height, depth, inflate, mirror, faceMask, flip);
     rotate(xRot, yRot, zRot);
@@ -35,9 +41,8 @@ arrayWithLength<Vertex*> Cube::VertexArray4(Vertex* a, Vertex* b, Vertex* c, Ver
     return arrayWithLength<Vertex*>(vertices, 4);
 }
 
-void Cube::_init(ModelPart* parent, int texU, int texV, float x, float y, float z,
-                 int width, int height, int depth, float inflate, bool mirror,
-                 int faceMask, bool flip)
+void Cube::_init(ModelPart* parent, int texU, int texV, float x, float y, float z, int width, int height, int depth,
+                 float inflate, bool mirror, int faceMask, bool flip)
 {
     mVertices = arrayWithLength<Vertex*>(8, true);
     mPolygons = arrayWithLength<_Polygon*>(6, true);
@@ -54,9 +59,12 @@ void Cube::_init(ModelPart* parent, int texU, int texV, float x, float y, float 
     z1 += inflate;
 
     const float epsilon = 0.0009765625f;
-    if (x == x1) x1 += epsilon;
-    if (y == y1) y1 += epsilon;
-    if (z == z1) z1 += epsilon;
+    if (x == x1)
+        x1 += epsilon;
+    if (y == y1)
+        y1 += epsilon;
+    if (z == z1)
+        z1 += epsilon;
 
     if (mirror)
     {
@@ -85,25 +93,37 @@ void Cube::_init(ModelPart* parent, int texU, int texV, float x, float y, float 
 
     unsigned int polygonCount = 0;
     if (faceMask & 1)
-        mPolygons[polygonCount++] = new _Polygon(VertexArray4(l1, u1, u2, l2), texU + depth + width, texV + depth, texU + depth + width + depth, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(l1, u1, u2, l2), texU + depth + width, texV + depth,
+                                                 texU + depth + width + depth, texV + depth + height, parent->mTexWidth,
+                                                 parent->mTexHeight);
     if (faceMask & 2)
-        mPolygons[polygonCount++] = new _Polygon(VertexArray4(u0, l0, l3, u3), texU, texV + depth, texU + depth, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(u0, l0, l3, u3), texU, texV + depth, texU + depth,
+                                                 texV + depth + height, parent->mTexWidth, parent->mTexHeight);
     if (faceMask & 4)
-        mPolygons[polygonCount++] = new _Polygon(VertexArray4(l1, l0, u0, u1), texU + depth, texV, texU + depth + width, texV + depth, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(l1, l0, u0, u1), texU + depth, texV, texU + depth + width,
+                                                 texV + depth, parent->mTexWidth, parent->mTexHeight);
     if (flip)
     {
         if (faceMask & 8)
-            mPolygons[polygonCount++] = new _Polygon(VertexArray4(u2, u3, l3, l2), texU + depth + width, texV, texU + depth + width + width, texV + depth, parent->mTexWidth, parent->mTexHeight);
+            mPolygons[polygonCount++] = new _Polygon(VertexArray4(u2, u3, l3, l2), texU + depth + width, texV,
+                                                     texU + depth + width + width, texV + depth, parent->mTexWidth,
+                                                     parent->mTexHeight);
     }
     else
     {
         if (faceMask & 8)
-            mPolygons[polygonCount++] = new _Polygon(VertexArray4(u2, u3, l3, l2), texU + depth + width, texV + depth, texU + depth + width + width, texV, parent->mTexWidth, parent->mTexHeight);
+            mPolygons[polygonCount++] = new _Polygon(VertexArray4(u2, u3, l3, l2), texU + depth + width, texV + depth,
+                                                     texU + depth + width + width, texV, parent->mTexWidth,
+                                                     parent->mTexHeight);
     }
     if (faceMask & 16)
-        mPolygons[polygonCount++] = new _Polygon(VertexArray4(u1, u0, u3, u2), texU + depth, texV + depth, texU + depth + width, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(u1, u0, u3, u2), texU + depth, texV + depth,
+                                                 texU + depth + width, texV + depth + height, parent->mTexWidth,
+                                                 parent->mTexHeight);
     if (faceMask & 32)
-        mPolygons[polygonCount++] = new _Polygon(VertexArray4(l0, l1, l2, l3), texU + depth + width + depth, texV + depth, texU + depth + width + depth + width, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(l0, l1, l2, l3), texU + depth + width + depth,
+                                                 texV + depth, texU + depth + width + depth + width,
+                                                 texV + depth + height, parent->mTexWidth, parent->mTexHeight);
     mPolygons.length = polygonCount;
 
     if (mirror)
@@ -131,9 +151,12 @@ void Cube::rotate(float x, float y, float z)
     {
         for (unsigned int i = 0; i < mVertices.length; ++i)
         {
-            if (x != 0.0f) rotate_axis(x, mVertices.data[i]->position->y, mVertices.data[i]->position->z);
-            if (y != 0.0f) rotate_axis(y, mVertices.data[i]->position->y, mVertices.data[i]->position->z);
-            if (z != 0.0f) rotate_axis(z, mVertices.data[i]->position->y, mVertices.data[i]->position->z);
+            if (x != 0.0f)
+                rotate_axis(x, mVertices.data[i]->position->y, mVertices.data[i]->position->z);
+            if (y != 0.0f)
+                rotate_axis(y, mVertices.data[i]->position->y, mVertices.data[i]->position->z);
+            if (z != 0.0f)
+                rotate_axis(z, mVertices.data[i]->position->y, mVertices.data[i]->position->z);
         }
     }
 }

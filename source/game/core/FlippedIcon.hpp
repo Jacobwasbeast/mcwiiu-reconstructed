@@ -3,7 +3,8 @@
 
 #include "game/client/render/TextureAtlasSprite.hpp"
 
-class FlippedIcon : public TextureAtlasSprite {
+class FlippedIcon : public TextureAtlasSprite
+{
 public:
     FlippedIcon(TextureAtlasSprite* sprite, bool flipU, bool flipV);
     virtual unsigned int getX() const;
@@ -21,6 +22,7 @@ public:
     virtual unsigned int getSourceHeight() const;
     virtual unsigned int getFlags() const;
     virtual void setFlags(int);
+
 private:
     TextureAtlasSprite* mSprite;
     bool mFlipU;

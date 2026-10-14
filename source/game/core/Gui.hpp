@@ -29,14 +29,12 @@ public:
     void renderVignette(float partialTick, int width, int height);
     void renderPumpkin(int width, int height);
     void renderPortalOverlay(float portalTime, int width, int height);
-    void renderThermalOverlay(ThermalAreaRuleDefinition* rule, float partialTick, int width, int height,
-                              float alpha);
+    void renderThermalOverlay(ThermalAreaRuleDefinition* rule, float partialTick, int width, int height, float alpha);
     void render(float partialTick, bool hideGui, int width, int height);
     void renderSlot(int playerIndex, int x, int y, float partialTick);
     void tick();
     void clearMessages(int playerIndex);
-    void addMessage(const std::wstring& message, int playerIndex, bool overlay, bool filtered,
-                    bool append, bool force);
+    void addMessage(const std::wstring& message, int playerIndex, bool overlay, bool filtered, bool append, bool force);
     void clearSingleMessages();
     void clearSingleMessages(int playerIndex);
     void setSingleMessage(const std::wstring& message, int playerIndex, int duration);

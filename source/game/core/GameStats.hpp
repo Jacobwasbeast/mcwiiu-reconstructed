@@ -45,7 +45,8 @@ public:
     unsigned int GetRoundTime();
     void AwardMG01Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players);
     static bool SORT_MG02_STATS(PlayerStats* first, PlayerStats* second);
-    static boost::shared_ptr<ServerPlayer> getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats, unsigned int index);
+    static boost::shared_ptr<ServerPlayer> getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats,
+                                                                 unsigned int index);
     void AwardMG02Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players);
     static bool SORT_MG03_STATS_FALLBACK(PlayerStats* first, PlayerStats* second);
     static bool SORT_MG03_STATS_POINTS(PlayerStats* first, PlayerStats* second);
@@ -67,7 +68,8 @@ public:
     unsigned int GetDamageTakenThisRound(const StatsUID& uid);
     unsigned int GetKillsWithBowThisRound(const StatsUID& uid);
     unsigned int GetMaxSnowballHitsOnAnyPlayer(const StatsUID& uid);
-    void RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry, boost::shared_ptr<ClientboundChatPacket> deathMessage);
+    void RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry,
+                      boost::shared_ptr<ClientboundChatPacket> deathMessage);
     const DamageEvent* GetPlayerFatalDamage(const StatsUID& uid);
     void RecordDeath(boost::shared_ptr<Entity> entity);
     void ResetDeaths(const StatsUID& uid);
@@ -105,7 +107,8 @@ public:
     unsigned int GetLastCheckpointSequenceID(const StatsUID& uid);
     unsigned int GetLastBankedCheckpointID(const StatsUID& uid);
     void RecordThermalEntered(const StatsUID& uid);
-    bool RecordProgress(const StatsUID& uid, double sequenceProgress, double nearestDistance, double progress, double speed);
+    bool RecordProgress(const StatsUID& uid, double sequenceProgress, double nearestDistance, double progress,
+                        double speed);
     void RecordSpawnedAtCheckpoint(const StatsUID& uid, int checkpoint);
     void RecordTimeSpentInPosition(bool pointsActive);
     bool RecordEndZoneEntered(const StatsUID& uid);

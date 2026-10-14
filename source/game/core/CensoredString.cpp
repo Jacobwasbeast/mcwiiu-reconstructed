@@ -14,19 +14,34 @@ static const std::wstring NAMED_BY_RESTRICTED_KEY(L"CSnamedByRestricted");
 static const std::wstring CREATED_ON_HOST_KEY(L"CScreatedOnHost");
 
 CensoredString::CensoredString()
-    : boost::enable_shared_from_this<CensoredString>(), m_useLocalization(false), m_flags(0), m_pending(), m_censored(), m_uuid()
+    : boost::enable_shared_from_this<CensoredString>(),
+      m_useLocalization(false),
+      m_flags(0),
+      m_pending(),
+      m_censored(),
+      m_uuid()
 {
     _init(NULL, -1, -1);
 }
 
 CensoredString::CensoredString(int firstId, int secondId)
-    : boost::enable_shared_from_this<CensoredString>(), m_useLocalization(false), m_flags(0), m_pending(), m_censored(), m_uuid()
+    : boost::enable_shared_from_this<CensoredString>(),
+      m_useLocalization(false),
+      m_flags(0),
+      m_pending(),
+      m_censored(),
+      m_uuid()
 {
     _init(NULL, firstId, secondId);
 }
 
 CensoredString::CensoredString(TickAction* action, int firstId, int secondId)
-    : boost::enable_shared_from_this<CensoredString>(), m_useLocalization(false), m_flags(0), m_pending(), m_censored(), m_uuid()
+    : boost::enable_shared_from_this<CensoredString>(),
+      m_useLocalization(false),
+      m_flags(0),
+      m_pending(),
+      m_censored(),
+      m_uuid()
 {
     _init(action, firstId, secondId);
 }

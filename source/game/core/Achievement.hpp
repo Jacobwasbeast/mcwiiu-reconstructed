@@ -18,12 +18,10 @@ class ItemInstance;
 class Achievement : public Stat
 {
 public:
-    Achievement(int id, const std::wstring& name, int displayColumn, int displayRow,
-                Item* item, Achievement* parent);
-    Achievement(int id, const std::wstring& name, int displayColumn, int displayRow,
-                Block* block, Achievement* parent);
-    Achievement(int id, const std::wstring& name, int displayColumn, int displayRow,
-                not_null_ptr<ItemInstance> icon, Achievement* parent);
+    Achievement(int id, const std::wstring& name, int displayColumn, int displayRow, Item* item, Achievement* parent);
+    Achievement(int id, const std::wstring& name, int displayColumn, int displayRow, Block* block, Achievement* parent);
+    Achievement(int id, const std::wstring& name, int displayColumn, int displayRow, not_null_ptr<ItemInstance> icon,
+                Achievement* parent);
 
     virtual Achievement* postConstruct(bool addToList);
     virtual bool isAchievement();

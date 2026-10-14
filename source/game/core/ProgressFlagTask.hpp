@@ -16,8 +16,7 @@ public:
         eProgressFlagAction_Check
     };
 
-    ProgressFlagTask(Tutorial* tutorial, char* progressFlags, char flagMask,
-                     eProgressFlagAction flagAction)
+    ProgressFlagTask(Tutorial* tutorial, char* progressFlags, char flagMask, eProgressFlagAction flagAction)
         : TutorialTask(tutorial, -1, false, NULL, false, true, true),
           progressFlags(progressFlags),
           flagMask(flagMask),

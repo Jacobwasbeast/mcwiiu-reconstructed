@@ -37,8 +37,7 @@
 
 const EntityDataAccessor<int>* Slime::DATA_ID_SIZE = NULL;
 
-Slime::Slime(Level* level)
-    : Mob(level)
+Slime::Slime(Level* level) : Mob(level)
 {
     fjDerivedCtorCalls();
     _init();
@@ -53,8 +52,7 @@ unsigned long long Slime::GetType()
 
 void Slime::staticCtor()
 {
-    DATA_ID_SIZE = SynchedEntityData::defineId<int>(EntityType::SLIME, EntityType::MOB,
-                                                     EntityDataSerializers::INT);
+    DATA_ID_SIZE = SynchedEntityData::defineId<int>(EntityType::SLIME, EntityType::MOB, EntityDataSerializers::INT);
 }
 
 Entity* Slime::create(Level* level)
@@ -312,8 +310,8 @@ bool Slime::checkSpawnRules()
 {
     BlockPos pos(Mth::floor(mX), 0, Mth::floor(mZ));
     LevelChunk* chunk = mLevel->getChunkAt(pos);
-    if ((mLevel->getLevelData()->getGeneratorType() != LevelType::FLAT || mRandom->nextInt(4) == 1) &&
-        mLevel->getDifficulty() != Difficulty::PEACEFUL)
+    if ((mLevel->getLevelData()->getGeneratorType() != LevelType::FLAT || mRandom->nextInt(4) == 1)
+        && mLevel->getDifficulty() != Difficulty::PEACEFUL)
     {
         Biome* biome = mLevel->getBiome(pos);
         if (biome == Biome::SWAMPLAND && mY > 50.0 && mY < 70.0 && mRandom->nextFloat() < 0.5f)
@@ -354,7 +352,8 @@ void Slime::jumpFromGround()
     mHasImpulse = true;
 }
 
-MobGroupData* Slime::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString)
+MobGroupData* Slime::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                      const std::wstring& dataString)
 {
     int sizeIndex = mRandom->nextInt(3);
     if (sizeIndex < 2 && mRandom->nextFloat() < 0.5f * difficulty.getSpecialMultiplier())
@@ -369,8 +368,7 @@ const SoundEvent* Slime::getJumpSound()
     return isTiny() ? SoundEvents::SMALL_SLIME_JUMP : SoundEvents::SLIME_JUMP;
 }
 
-Slime::SlimeAttackGoal::SlimeAttackGoal(Slime* slime)
-    : mSlime(slime), mGrowTiredTimer(0)
+Slime::SlimeAttackGoal::SlimeAttackGoal(Slime* slime) : mSlime(slime), mGrowTiredTimer(0)
 {
     setRequiredControlFlags(2);
 }
@@ -386,8 +384,8 @@ bool Slime::SlimeAttackGoal::canUse()
         return false;
     if (!target->isAlive())
         return false;
-    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()) &&
-        boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType())
+        && boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
         return false;
     return true;
 }
@@ -405,8 +403,8 @@ bool Slime::SlimeAttackGoal::canContinueToUse()
         return false;
     if (!target->isAlive())
         return false;
-    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()) &&
-        boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType())
+        && boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
         return false;
     if (--mGrowTiredTimer <= 0)
         return false;
@@ -419,8 +417,7 @@ void Slime::SlimeAttackGoal::tick()
     static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setDirection(mSlime->mYRot, mSlime->isDealsDamage());
 }
 
-Slime::SlimeFloatGoal::SlimeFloatGoal(Slime* slime)
-    : mSlime(slime)
+Slime::SlimeFloatGoal::SlimeFloatGoal(Slime* slime) : mSlime(slime)
 {
     setRequiredControlFlags(5);
     static_cast<GroundPathNavigation*>(slime->getNavigation())->setCanFloat(true);
@@ -442,8 +439,7 @@ void Slime::SlimeFloatGoal::tick()
     static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setWantedMovement(1.2);
 }
 
-Slime::SlimeKeepOnJumpingGoal::SlimeKeepOnJumpingGoal(Slime* slime)
-    : mSlime(slime)
+Slime::SlimeKeepOnJumpingGoal::SlimeKeepOnJumpingGoal(Slime* slime) : mSlime(slime)
 {
     setRequiredControlFlags(5);
 }
@@ -463,7 +459,9 @@ void Slime::SlimeKeepOnJumpingGoal::tick()
 }
 
 Slime::SlimeMoveControl::SlimeMoveControl(Slime* slime)
-    : MoveControl(slime), mYRot(180.0f * slime->mYRot / Mth::PI), mSlime(slime)
+    : MoveControl(slime),
+      mYRot(180.0f * slime->mYRot / Mth::PI),
+      mSlime(slime)
 {
     mJumpDelay = 0;
     mWasOnGround = false;
@@ -497,7 +495,8 @@ void Slime::SlimeMoveControl::tick()
     mOperation = WAIT;
     if (mMob->mOnGround)
     {
-        mMob->setSpeed((float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
+        mMob->setSpeed(
+            (float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
         if (mJumpDelay-- <= 0)
         {
             int jumpDelay = mSlime->getJumpDelay();
@@ -508,7 +507,8 @@ void Slime::SlimeMoveControl::tick()
             if (mSlime->doPlayJumpSound())
             {
                 mSlime->playSound(mSlime->getJumpSound(), mSlime->getSoundVolume(),
-                                   ((mSlime->getRandom()->nextFloat() - mSlime->getRandom()->nextFloat()) * 0.2f + 1.0f) * 0.8f);
+                                  ((mSlime->getRandom()->nextFloat() - mSlime->getRandom()->nextFloat()) * 0.2f + 1.0f)
+                                      * 0.8f);
             }
         }
         else
@@ -519,12 +519,15 @@ void Slime::SlimeMoveControl::tick()
     }
     else
     {
-        mMob->setSpeed((float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
+        mMob->setSpeed(
+            (float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
     }
 }
 
 Slime::SlimeRandomDirectionGoal::SlimeRandomDirectionGoal(Slime* slime)
-    : mSlime(slime), mChosenDegrees(0.0f), mChosenTicks(0)
+    : mSlime(slime),
+      mChosenDegrees(0.0f),
+      mChosenTicks(0)
 {
     setRequiredControlFlags(2);
 }
@@ -535,8 +538,9 @@ Slime::SlimeRandomDirectionGoal::~SlimeRandomDirectionGoal()
 
 bool Slime::SlimeRandomDirectionGoal::canUse()
 {
-    return !mSlime->getTarget() && (mSlime->mOnGround || mSlime->isInWater() || mSlime->isInLava() ||
-                                   mSlime->hasEffect(MobEffects::LEVITATION));
+    return !mSlime->getTarget()
+           && (mSlime->mOnGround || mSlime->isInWater() || mSlime->isInLava()
+               || mSlime->hasEffect(MobEffects::LEVITATION));
 }
 
 void Slime::SlimeRandomDirectionGoal::tick()
@@ -548,4 +552,3 @@ void Slime::SlimeRandomDirectionGoal::tick()
     }
     static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setDirection(mChosenDegrees, false);
 }
-

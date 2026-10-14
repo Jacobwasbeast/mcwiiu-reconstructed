@@ -12,10 +12,9 @@ const eTutorial_State AREA_HINT_ANY_STATE = eTutorial_State_Completed;
 const eTutorial_State AREA_HINT_NO_COMPLETION_STATE = eTutorial_State_Invalid;
 }
 
-AreaHint::AreaHint(eTutorial_Hint hint, Tutorial* tutorial, eTutorial_State state,
-                   eTutorial_State completionState, int descriptionId,
-                   double x0, double y0, double z0, double x1, double y1,
-                   double z1, bool repeatMessage, bool insideArea)
+AreaHint::AreaHint(eTutorial_Hint hint, Tutorial* tutorial, eTutorial_State state, eTutorial_State completionState,
+                   int descriptionId, double x0, double y0, double z0, double x1, double y1, double z1,
+                   bool repeatMessage, bool insideArea)
     : TutorialHint(hint, tutorial, descriptionId, AREA_HINT_TYPE, repeatMessage, true, -1),
       area(AABB::newPermanent(x0, y0, z0, x1, y1, z1)),
       insideArea(insideArea),

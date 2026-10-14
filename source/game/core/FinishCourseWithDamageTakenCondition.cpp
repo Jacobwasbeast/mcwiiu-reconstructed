@@ -12,14 +12,13 @@ FinishCourseWithDamageTakenCondition::~FinishCourseWithDamageTakenCondition()
 {
 }
 
-bool FinishCourseWithDamageTakenCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
+bool FinishCourseWithDamageTakenCondition::canAward(const GameMedal* medal, const StatsUID& uid,
+                                                    GameStats* gameStats) const
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
     if (playerStats != NULL)
     {
-        for (unsigned int round = 0;
-             round < static_cast<unsigned int>(playerStats->getTotalRounds());
-             ++round)
+        for (unsigned int round = 0; round < static_cast<unsigned int>(playerStats->getTotalRounds()); ++round)
         {
             if (playerStats->getReachedEnd(round) != 0 && playerStats->getDamageTaken(round) == mTarget)
             {

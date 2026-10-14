@@ -92,7 +92,8 @@ void cDLCInfo::LoadLocalDLCImage(DLC_INFO* pDLCInfo)
 {
 }
 
-void cDLCInfo::DLC_RetrieveImageData(char* pBannerName, void** ppImageData, unsigned int* pImageSize, bool* pbFreeImageData)
+void cDLCInfo::DLC_RetrieveImageData(char* pBannerName, void** ppImageData, unsigned int* pImageSize,
+                                     bool* pbFreeImageData)
 {
     *pImageSize = 0;
     *ppImageData = NULL;

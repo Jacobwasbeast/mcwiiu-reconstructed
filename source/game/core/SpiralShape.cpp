@@ -1,9 +1,9 @@
 #include "game/core/SpiralShape.hpp"
 
 SpiralShape::SpiralShape(int minRadius, int maxRadius, double angle)
-    : minRadius(minRadius)
-    , maxRadius(maxRadius)
-    , angle(angle)
+    : minRadius(minRadius),
+      maxRadius(maxRadius),
+      angle(angle)
 {
 }
 

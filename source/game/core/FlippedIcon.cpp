@@ -2,7 +2,9 @@
 
 FlippedIcon::FlippedIcon(TextureAtlasSprite* sprite, bool flipU, bool flipV)
     : TextureAtlasSprite(L"", L"", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
-      mSprite(sprite), mFlipU(flipU), mFlipV(flipV)
+      mSprite(sprite),
+      mFlipU(flipU),
+      mFlipV(flipV)
 {
 }
 
@@ -82,4 +84,3 @@ void FlippedIcon::setFlags(int flags)
 {
     mSprite->setFlags(flags);
 }
-

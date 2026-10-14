@@ -20,16 +20,14 @@ SpellcasterIllager::IllagerSpell* gSpell3 = new SpellcasterIllager::IllagerSpell
 SpellcasterIllager::IllagerSpell* gSpell4 = new SpellcasterIllager::IllagerSpell(4, 0.3, 0.3, 0.8);
 SpellcasterIllager::IllagerSpell* gSpell5 = new SpellcasterIllager::IllagerSpell(5, 0.1, 0.1, 0.2);
 
-SpellcasterIllager::SpellcasterIllager(Level* level)
-    : AbstractIllager(level), mSpellTicks(0), mCurrentSpell(gSpell0)
+SpellcasterIllager::SpellcasterIllager(Level* level) : AbstractIllager(level), mSpellTicks(0), mCurrentSpell(gSpell0)
 {
 }
 
 void SpellcasterIllager::staticCtor()
 {
-    DATA_ID = SynchedEntityData::defineId<unsigned char>(EntityType::SPELLCASTER_ILLAGER,
-                                                          EntityType::ABSTRACT_ILLAGER,
-                                                          EntityDataSerializers::BYTE);
+    DATA_ID = SynchedEntityData::defineId<unsigned char>(EntityType::SPELLCASTER_ILLAGER, EntityType::ABSTRACT_ILLAGER,
+                                                         EntityDataSerializers::BYTE);
 }
 
 void SpellcasterIllager::defineSynchedData()
@@ -94,19 +92,17 @@ void SpellcasterIllager::tick()
         double red = spell->mX;
         double green = spell->mY;
         double blue = spell->mZ;
-        float angle = mYBodyRot * Mth::DEG_TO_RAD
-                      + Mth::cos((float)mTickCount * 0.6662f) * 0.25f;
+        float angle = mYBodyRot * Mth::DEG_TO_RAD + Mth::cos((float)mTickCount * 0.6662f) * 0.25f;
         float cosAngle = Mth::cos(angle);
         float sinAngle = Mth::sin(angle);
-        mLevel->addParticle(PARTICLE_MOB_SPELL, mX + cosAngle * 0.6, mY + 1.8, mZ + sinAngle * 0.6,
-                            red, green, blue, arrayWithLength<int>());
-        mLevel->addParticle(PARTICLE_MOB_SPELL, mX - cosAngle * 0.6, mY + 1.8, mZ - sinAngle * 0.6,
-                            red, green, blue, arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_MOB_SPELL, mX + cosAngle * 0.6, mY + 1.8, mZ + sinAngle * 0.6, red, green, blue,
+                            arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_MOB_SPELL, mX - cosAngle * 0.6, mY + 1.8, mZ - sinAngle * 0.6, red, green, blue,
+                            arrayWithLength<int>());
     }
 }
 
-SpellcasterIllager::IllagerSpell::IllagerSpell(int id, double x, double y, double z)
-    : mId(id), mX(x), mY(y), mZ(z)
+SpellcasterIllager::IllagerSpell::IllagerSpell(int id, double x, double y, double z) : mId(id), mX(x), mY(y), mZ(z)
 {
 }
 
@@ -130,7 +126,10 @@ SpellcasterIllager::IllagerSpell* SpellcasterIllager::IllagerSpell::byId(int id)
 }
 
 SpellcasterIllager::SpellcasterUseSpellGoal::SpellcasterUseSpellGoal(SpellcasterIllager* spellcaster)
-    : Goal(), mSpellcaster(spellcaster), mSpellWarmup(0), mNextAttackTickCount(0)
+    : Goal(),
+      mSpellcaster(spellcaster),
+      mSpellWarmup(0),
+      mNextAttackTickCount(0)
 {
     setRequiredControlFlags(3);
 }
@@ -176,8 +175,7 @@ void SpellcasterIllager::SpellcasterUseSpellGoal::tick()
 {
     if (mSpellcaster->getTarget())
     {
-        mSpellcaster->getLookControl()->setLookAt(mSpellcaster->getTarget(),
-                                                  (float)mSpellcaster->getMaxHeadYRot(),
+        mSpellcaster->getLookControl()->setLookAt(mSpellcaster->getTarget(), (float)mSpellcaster->getMaxHeadYRot(),
                                                   (float)mSpellcaster->getMaxHeadXRot());
     }
 
@@ -210,4 +208,3 @@ int SpellcasterIllager::SpellcasterUseSpellGoal::getCastWarmupTime()
 {
     return 20;
 }
-

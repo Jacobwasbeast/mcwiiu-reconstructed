@@ -23,7 +23,8 @@ public:
     public:
         explicit BoatDispenseBehavior(Boat::Type type);
         virtual ~BoatDispenseBehavior();
-        virtual not_null_ptr<ItemInstance> execute(BlockSource*, not_null_ptr<ItemInstance>, DefaultDispenseItemBehavior::eOUTCOME&);
+        virtual not_null_ptr<ItemInstance> execute(BlockSource*, not_null_ptr<ItemInstance>,
+                                                   DefaultDispenseItemBehavior::eOUTCOME&);
         virtual void playSound(BlockSource*, DefaultDispenseItemBehavior::eOUTCOME);
 
     private:
@@ -35,7 +36,8 @@ public:
     {
     public:
         virtual ~ShulkerBoxDispenseBehavior();
-        virtual not_null_ptr<ItemInstance> execute(BlockSource*, not_null_ptr<ItemInstance>, DefaultDispenseItemBehavior::eOUTCOME&);
+        virtual not_null_ptr<ItemInstance> execute(BlockSource*, not_null_ptr<ItemInstance>,
+                                                   DefaultDispenseItemBehavior::eOUTCOME&);
     };
 
     static void StaticCtor();

@@ -6,10 +6,7 @@
 class InputConstraint : public TutorialConstraint
 {
 public:
-    InputConstraint(int mapping)
-        : TutorialConstraint(-1), constrainedMapping(mapping)
-    {
-    }
+    InputConstraint(int mapping) : TutorialConstraint(-1), constrainedMapping(mapping) {}
 
     virtual ~InputConstraint();
 

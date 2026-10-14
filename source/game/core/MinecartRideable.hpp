@@ -19,8 +19,7 @@ public:
 
     static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* dataFixerUpper);
-    virtual bool interact(const boost::shared_ptr<Player>& player,
-                          InteractionHand::EInteractionHand hand);
+    virtual bool interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual void activateMinecart(int x, int y, int z, bool powered);
     virtual const Minecart::Type* getType();
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);

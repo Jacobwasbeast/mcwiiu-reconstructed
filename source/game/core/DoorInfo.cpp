@@ -1,13 +1,11 @@
 #include "game/core/DoorInfo.hpp"
 
-DoorInfo::DoorInfo(const BlockPos& pos, int dx, int dz, int timeStamp)
-    : BlockPos(), indoorPos()
+DoorInfo::DoorInfo(const BlockPos& pos, int dx, int dz, int timeStamp) : BlockPos(), indoorPos()
 {
     _init(pos, facingFromDelta(dx, dz), timeStamp);
 }
 
-DoorInfo::DoorInfo(const BlockPos& pos, const Direction* direction, int timeStamp)
-    : BlockPos(), indoorPos()
+DoorInfo::DoorInfo(const BlockPos& pos, const Direction* direction, int timeStamp) : BlockPos(), indoorPos()
 {
     _init(pos, direction, timeStamp);
 }

@@ -80,7 +80,8 @@ public:
     virtual bool canBeControlledByRider();
     virtual int handleEating(const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item);
     virtual bool isImmobile();
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& name);
     bool hasSwag();
     virtual const SoundEvent* getAngrySound();
     virtual const SoundEvent* getAmbientSound();

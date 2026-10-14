@@ -19,8 +19,7 @@ void AttributeModifier::_init(eMODIFIER_ID id, std::wstring name, double amount,
     this->serialize = true;
 }
 
-AttributeModifier::AttributeModifier(double amount, int operation)
-    : name()
+AttributeModifier::AttributeModifier(double amount, int operation) : name()
 {
     _init(eMODIFIER_ID_None, name, amount, operation);
 }
@@ -82,7 +81,8 @@ bool AttributeModifier::equals(AttributeModifier* other)
     return true;
 }
 
-HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player)
+HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_ptr<ItemInstance> item,
+                                           boost::shared_ptr<Player> player)
 {
     double amount = getAmount();
     bool baseValue = false;
@@ -151,7 +151,8 @@ HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_p
 
     if (percentage)
     {
-        swprintf(text, 256, L" %ls%d%ls %ls", sign.c_str(), (int)value, L"%", L10N::GetString(Attribute::getName(attributeId)));
+        swprintf(text, 256, L" %ls%d%ls %ls", sign.c_str(), (int)value, L"%",
+                 L10N::GetString(Attribute::getName(attributeId)));
     }
     else
     {

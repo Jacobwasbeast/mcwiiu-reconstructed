@@ -10,10 +10,12 @@
 #include "game/world/chunk/ChunkSource.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-GenerationWriteTask::GenerationWriteTask(Level* level, BlockTransaction* transaction,
-                                         const BlockPos& origin, int* changedBlocks)
-    : mLevel(level), mTransaction(transaction),
-      mChunks(transaction->getAffectedChunks(level, origin)), mOrigin(origin),
+GenerationWriteTask::GenerationWriteTask(Level* level, BlockTransaction* transaction, const BlockPos& origin,
+                                         int* changedBlocks)
+    : mLevel(level),
+      mTransaction(transaction),
+      mChunks(transaction->getAffectedChunks(level, origin)),
+      mOrigin(origin),
       mChangedBlocks(changedBlocks)
 {
 }
@@ -77,13 +79,14 @@ void GenerationWriteTask::doWork(long long endTime)
                         {
                             int block = mTransaction->getBlock(position);
                             unsigned short data = mTransaction->getData(position);
-                            if (block == BlockId::STRUCTURE_VOID) block = BlockId::AIR;
+                            if (block == BlockId::STRUCTURE_VOID)
+                                block = BlockId::AIR;
 
-                            bool countsAsChanged = block != BlockId::AIR && block != BlockId::VINE &&
-                                                   block != BlockId::TNT &&
-                                                   block != BlockId::STONE_PRESSURE_PLATE &&
-                                                   block != BlockId::FIRE && block != BlockId::TALLGRASS;
-                            if (mChangedBlocks != NULL && countsAsChanged) ++*mChangedBlocks;
+                            bool countsAsChanged = block != BlockId::AIR && block != BlockId::VINE
+                                                   && block != BlockId::TNT && block != BlockId::STONE_PRESSURE_PLATE
+                                                   && block != BlockId::FIRE && block != BlockId::TALLGRASS;
+                            if (mChangedBlocks != NULL && countsAsChanged)
+                                ++*mChangedBlocks;
                             mLevel->setBlockAndData(x, y, z, block, data, Block::UPDATE_CLIENTS);
                         }
                     }

@@ -46,124 +46,86 @@
 const EntityDataAccessor<unsigned char>* ArmorStand::DATA_FLAGS = NULL;
 const EntityDataAccessor<int>* ArmorStand::DATA_POSE = NULL;
 
-static ArmorStand::Pose POSE_DEFAULT(Vec3::newPermanent(0.0, 0.0, 0.0),
-                                     Vec3::newPermanent(0.0, 0.0, 0.0),
-                                     Vec3::newPermanent(-15.0, 0.0, 10.0),
-                                     Vec3::newPermanent(-10.0, 0.0, -10.0),
-                                     Vec3::newPermanent(1.0, 0.0, 1.0),
-                                     Vec3::newPermanent(-1.0, 0.0, -1.0),
+static ArmorStand::Pose POSE_DEFAULT(Vec3::newPermanent(0.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, 0.0),
+                                     Vec3::newPermanent(-15.0, 0.0, 10.0), Vec3::newPermanent(-10.0, 0.0, -10.0),
+                                     Vec3::newPermanent(1.0, 0.0, 1.0), Vec3::newPermanent(-1.0, 0.0, -1.0),
                                      Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_NONE(Vec3::newPermanent(0.0, 0.0, 0.0),
-                                  Vec3::newPermanent(0.0, 0.0, 0.0),
-                                  Vec3::newPermanent(0.0, 0.0, 0.0),
-                                  Vec3::newPermanent(0.0, 0.0, 0.0),
-                                  Vec3::newPermanent(0.0, 0.0, 0.0),
-                                  Vec3::newPermanent(0.0, 0.0, 0.0),
+static ArmorStand::Pose POSE_NONE(Vec3::newPermanent(0.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, 0.0),
+                                  Vec3::newPermanent(0.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, 0.0),
+                                  Vec3::newPermanent(0.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, 0.0),
                                   Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_SOLEMN(Vec3::newPermanent(15.0, 0.0, 0.0),
-                                    Vec3::newPermanent(0.0, 0.0, 2.0),
-                                    Vec3::newPermanent(-60.0, -20.0, -10.0),
-                                    Vec3::newPermanent(-30.0, 15.0, 15.0),
-                                    Vec3::newPermanent(1.0, 0.0, 1.0),
-                                    Vec3::newPermanent(-1.0, 0.0, -1.0),
+static ArmorStand::Pose POSE_SOLEMN(Vec3::newPermanent(15.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, 2.0),
+                                    Vec3::newPermanent(-60.0, -20.0, -10.0), Vec3::newPermanent(-30.0, 15.0, 15.0),
+                                    Vec3::newPermanent(1.0, 0.0, 1.0), Vec3::newPermanent(-1.0, 0.0, -1.0),
                                     Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_ATHENA(Vec3::newPermanent(-5.0, 0.0, 0.0),
-                                    Vec3::newPermanent(0.0, 0.0, 2.0),
-                                    Vec3::newPermanent(-60.0, 20.0, -10.0),
-                                    Vec3::newPermanent(10.0, 0.0, -5.0),
-                                    Vec3::newPermanent(3.0, 3.0, 3.0),
-                                    Vec3::newPermanent(-3.0, -3.0, -3.0),
+static ArmorStand::Pose POSE_ATHENA(Vec3::newPermanent(-5.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, 2.0),
+                                    Vec3::newPermanent(-60.0, 20.0, -10.0), Vec3::newPermanent(10.0, 0.0, -5.0),
+                                    Vec3::newPermanent(3.0, 3.0, 3.0), Vec3::newPermanent(-3.0, -3.0, -3.0),
                                     Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_BRANDISH(Vec3::newPermanent(-15.0, 0.0, 0.0),
-                                      Vec3::newPermanent(0.0, 0.0, -2.0),
-                                      Vec3::newPermanent(-110.0, 50.0, 0.0),
-                                      Vec3::newPermanent(20.0, 0.0, -10.0),
-                                      Vec3::newPermanent(-5.0, 3.0, 3.0),
-                                      Vec3::newPermanent(5.0, -3.0, -3.0),
+static ArmorStand::Pose POSE_BRANDISH(Vec3::newPermanent(-15.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, -2.0),
+                                      Vec3::newPermanent(-110.0, 50.0, 0.0), Vec3::newPermanent(20.0, 0.0, -10.0),
+                                      Vec3::newPermanent(-5.0, 3.0, 3.0), Vec3::newPermanent(5.0, -3.0, -3.0),
                                       Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_HONOR(Vec3::newPermanent(-15.0, 0.0, 0.0),
-                                   Vec3::newPermanent(0.0, 0.0, 0.0),
-                                   Vec3::newPermanent(-110.0, -35.0, 0.0),
-                                   Vec3::newPermanent(-110.0, 35.0, 0.0),
-                                   Vec3::newPermanent(-5.0, 3.0, 3.0),
-                                   Vec3::newPermanent(5.0, -3.0, -3.0),
+static ArmorStand::Pose POSE_HONOR(Vec3::newPermanent(-15.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, 0.0),
+                                   Vec3::newPermanent(-110.0, -35.0, 0.0), Vec3::newPermanent(-110.0, 35.0, 0.0),
+                                   Vec3::newPermanent(-5.0, 3.0, 3.0), Vec3::newPermanent(5.0, -3.0, -3.0),
                                    Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_ENTERTAIN(Vec3::newPermanent(-15.0, 0.0, 0.0),
-                                       Vec3::newPermanent(0.0, 0.0, 0.0),
-                                       Vec3::newPermanent(-110.0, 35.0, 0.0),
-                                       Vec3::newPermanent(-110.0, -35.0, 0.0),
-                                       Vec3::newPermanent(-5.0, 3.0, 3.0),
-                                       Vec3::newPermanent(5.0, -3.0, -3.0),
+static ArmorStand::Pose POSE_ENTERTAIN(Vec3::newPermanent(-15.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, 0.0),
+                                       Vec3::newPermanent(-110.0, 35.0, 0.0), Vec3::newPermanent(-110.0, -35.0, 0.0),
+                                       Vec3::newPermanent(-5.0, 3.0, 3.0), Vec3::newPermanent(5.0, -3.0, -3.0),
                                        Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_SALUTE(Vec3::newPermanent(0.0, 0.0, 0.0),
-                                    Vec3::newPermanent(0.0, 0.0, 0.0),
-                                    Vec3::newPermanent(-70.0, -40.0, 0.0),
-                                    Vec3::newPermanent(10.0, 0.0, -5.0),
-                                    Vec3::newPermanent(1.0, 0.0, 1.0),
-                                    Vec3::newPermanent(-1.0, 0.0, -1.0),
+static ArmorStand::Pose POSE_SALUTE(Vec3::newPermanent(0.0, 0.0, 0.0), Vec3::newPermanent(0.0, 0.0, 0.0),
+                                    Vec3::newPermanent(-70.0, -40.0, 0.0), Vec3::newPermanent(10.0, 0.0, -5.0),
+                                    Vec3::newPermanent(1.0, 0.0, 1.0), Vec3::newPermanent(-1.0, 0.0, -1.0),
                                     Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_RIDDLER(Vec3::newPermanent(16.0, 20.0, 0.0),
-                                     Vec3::newPermanent(0.0, 0.0, 0.0),
-                                     Vec3::newPermanent(246.0, 0.0, 89.0),
-                                     Vec3::newPermanent(4.0, 8.0, 237.0),
-                                     Vec3::newPermanent(8.0, 20.0, 4.0),
-                                     Vec3::newPermanent(-14.0, -18.0, -16.0),
+static ArmorStand::Pose POSE_RIDDLER(Vec3::newPermanent(16.0, 20.0, 0.0), Vec3::newPermanent(0.0, 0.0, 0.0),
+                                     Vec3::newPermanent(246.0, 0.0, 89.0), Vec3::newPermanent(4.0, 8.0, 237.0),
+                                     Vec3::newPermanent(8.0, 20.0, 4.0), Vec3::newPermanent(-14.0, -18.0, -16.0),
                                      Vec3::newPermanent(0.0, 180.0, 0.0));
 
-static ArmorStand::Pose POSE_ZOMBIE(Vec3::newPermanent(-10.0, 0.0, -5.0),
-                                    Vec3::newPermanent(0.0, 0.0, 0.0),
-                                    Vec3::newPermanent(-100.0, 0.0, 0.0),
-                                    Vec3::newPermanent(-105.0, 0.0, 0.0),
-                                    Vec3::newPermanent(-46.0, 0.0, 0.0),
-                                    Vec3::newPermanent(7.0, 0.0, 0.0),
+static ArmorStand::Pose POSE_ZOMBIE(Vec3::newPermanent(-10.0, 0.0, -5.0), Vec3::newPermanent(0.0, 0.0, 0.0),
+                                    Vec3::newPermanent(-100.0, 0.0, 0.0), Vec3::newPermanent(-105.0, 0.0, 0.0),
+                                    Vec3::newPermanent(-46.0, 0.0, 0.0), Vec3::newPermanent(7.0, 0.0, 0.0),
                                     Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_CANCAN_A(Vec3::newPermanent(-5.0, 18.0, 0.0),
-                                      Vec3::newPermanent(0.0, 22.0, 0.0),
-                                      Vec3::newPermanent(0.0, 84.0, 111.0),
-                                      Vec3::newPermanent(8.0, 0.0, -114.0),
-                                      Vec3::newPermanent(0.0, 23.0, -13.0),
-                                      Vec3::newPermanent(-111.0, 55.0, 0.0),
+static ArmorStand::Pose POSE_CANCAN_A(Vec3::newPermanent(-5.0, 18.0, 0.0), Vec3::newPermanent(0.0, 22.0, 0.0),
+                                      Vec3::newPermanent(0.0, 84.0, 111.0), Vec3::newPermanent(8.0, 0.0, -114.0),
+                                      Vec3::newPermanent(0.0, 23.0, -13.0), Vec3::newPermanent(-111.0, 55.0, 0.0),
                                       Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_CANCAN_B(Vec3::newPermanent(-10.0, -20.0, 0.0),
-                                      Vec3::newPermanent(0.0, -18.0, 0.0),
-                                      Vec3::newPermanent(8.0, 90.0, 111.0),
-                                      Vec3::newPermanent(0.0, 0.0, -112.0),
-                                      Vec3::newPermanent(-119.0, -42.0, 0.0),
-                                      Vec3::newPermanent(0.0, 0.0, 13.0),
+static ArmorStand::Pose POSE_CANCAN_B(Vec3::newPermanent(-10.0, -20.0, 0.0), Vec3::newPermanent(0.0, -18.0, 0.0),
+                                      Vec3::newPermanent(8.0, 90.0, 111.0), Vec3::newPermanent(0.0, 0.0, -112.0),
+                                      Vec3::newPermanent(-119.0, -42.0, 0.0), Vec3::newPermanent(0.0, 0.0, 13.0),
                                       Vec3::newPermanent(0.0, 0.0, 0.0));
 
-static ArmorStand::Pose POSE_HERO(Vec3::newPermanent(-4.0, 67.0, 0.0),
-                                  Vec3::newPermanent(0.0, 8.0, 0.0),
-                                  Vec3::newPermanent(-99.0, 63.0, 0.0),
-                                  Vec3::newPermanent(16.0, 32.0, -8.0),
-                                  Vec3::newPermanent(4.0, 63.0, 8.0),
-                                  Vec3::newPermanent(0.0, -75.0, -8.0),
+static ArmorStand::Pose POSE_HERO(Vec3::newPermanent(-4.0, 67.0, 0.0), Vec3::newPermanent(0.0, 8.0, 0.0),
+                                  Vec3::newPermanent(-99.0, 63.0, 0.0), Vec3::newPermanent(16.0, 32.0, -8.0),
+                                  Vec3::newPermanent(4.0, 63.0, 8.0), Vec3::newPermanent(0.0, -75.0, -8.0),
                                   Vec3::newPermanent(0.0, 0.0, 0.0));
 
-const ArmorStand::RidableMinecartEntitySelector* ArmorStand::IS_RIDEABLE_MINECART = new ArmorStand::RidableMinecartEntitySelector();
+const ArmorStand::RidableMinecartEntitySelector* ArmorStand::IS_RIDEABLE_MINECART =
+    new ArmorStand::RidableMinecartEntitySelector();
 
-static ArmorStand::Pose* POSES[13] = {
-    &POSE_DEFAULT, &POSE_NONE, &POSE_SOLEMN, &POSE_ATHENA, &POSE_BRANDISH, &POSE_HONOR, &POSE_ENTERTAIN,
-    &POSE_SALUTE, &POSE_RIDDLER, &POSE_ZOMBIE, &POSE_CANCAN_A, &POSE_CANCAN_B, &POSE_HERO
-};
+static ArmorStand::Pose* POSES[13] = {&POSE_DEFAULT,  &POSE_NONE,      &POSE_SOLEMN, &POSE_ATHENA,  &POSE_BRANDISH,
+                                      &POSE_HONOR,    &POSE_ENTERTAIN, &POSE_SALUTE, &POSE_RIDDLER, &POSE_ZOMBIE,
+                                      &POSE_CANCAN_A, &POSE_CANCAN_B,  &POSE_HERO};
 
-ArmorStand::Pose::Pose(const Vec3* headPose, const Vec3* bodyPose,
-                       const Vec3* rightArmPose, const Vec3* leftArmPose,
-                       const Vec3* rightLegPose, const Vec3* leftLegPose,
-                       const Vec3* rightItemPose)
-    : head(const_cast<Vec3*>(headPose)), body(const_cast<Vec3*>(bodyPose)),
-      leftArm(const_cast<Vec3*>(leftArmPose)), rightArm(const_cast<Vec3*>(rightArmPose)),
-      leftLeg(const_cast<Vec3*>(leftLegPose)), rightLeg(const_cast<Vec3*>(rightLegPose)),
+ArmorStand::Pose::Pose(const Vec3* headPose, const Vec3* bodyPose, const Vec3* rightArmPose, const Vec3* leftArmPose,
+                       const Vec3* rightLegPose, const Vec3* leftLegPose, const Vec3* rightItemPose)
+    : head(const_cast<Vec3*>(headPose)),
+      body(const_cast<Vec3*>(bodyPose)),
+      leftArm(const_cast<Vec3*>(leftArmPose)),
+      rightArm(const_cast<Vec3*>(rightArmPose)),
+      leftLeg(const_cast<Vec3*>(leftLegPose)),
+      rightLeg(const_cast<Vec3*>(rightLegPose)),
       rightItem(const_cast<Vec3*>(rightItemPose))
 {
 }
@@ -174,8 +136,7 @@ ArmorStand::ArmorStand(Level* level) : LivingEntity(level), mHandItems(), mArmor
     _init();
 }
 
-ArmorStand::ArmorStand(Level* level, double x, double y, double z)
-    : LivingEntity(level), mHandItems(), mArmorItems()
+ArmorStand::ArmorStand(Level* level, double x, double y, double z) : LivingEntity(level), mHandItems(), mArmorItems()
 {
     _init();
     setPos(x, y, z);
@@ -189,12 +150,10 @@ ArmorStand::~ArmorStand()
 
 void ArmorStand::staticCtor()
 {
-    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(EntityType::ARMOR_STAND,
-                                                             EntityType::LIVING_ENTITY,
-                                                             EntityDataSerializers::BYTE);
-    DATA_POSE = SynchedEntityData::defineId<int>(EntityType::ARMOR_STAND,
-                                                  EntityType::LIVING_ENTITY,
-                                                  EntityDataSerializers::INT);
+    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(EntityType::ARMOR_STAND, EntityType::LIVING_ENTITY,
+                                                            EntityDataSerializers::BYTE);
+    DATA_POSE = SynchedEntityData::defineId<int>(EntityType::ARMOR_STAND, EntityType::LIVING_ENTITY,
+                                                 EntityDataSerializers::INT);
 }
 
 void ArmorStand::addDataWalkers(DataFixerUpper* fixer)
@@ -303,19 +262,33 @@ bool ArmorStand::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
         return false;
     }
 
-    if (item->isEmpty() || Mob::isValidSlotForItem(equipmentSlot, item)
-        || equipmentSlot == EquipmentSlot::HEAD)
+    if (item->isEmpty() || Mob::isValidSlotForItem(equipmentSlot, item) || equipmentSlot == EquipmentSlot::HEAD)
     {
         setItemSlot(equipmentSlot, item);
         return true;
     }
     return false;
 }
-bool ArmorStand::isEffectiveAi() { return LivingEntity::isEffectiveAi() && !isNoGravity(); }
-bool ArmorStand::isSmall() { return (mEntityData->get(DATA_FLAGS) & 1) != 0; }
-bool ArmorStand::isNoBasePlate() { return (mEntityData->get(DATA_FLAGS) & 8) != 0; }
-bool ArmorStand::isMarker() { return (mEntityData->get(DATA_FLAGS) & 0x10) != 0; }
-int ArmorStand::getPoseIndex() { return mEntityData->get(DATA_POSE); }
+bool ArmorStand::isEffectiveAi()
+{
+    return LivingEntity::isEffectiveAi() && !isNoGravity();
+}
+bool ArmorStand::isSmall()
+{
+    return (mEntityData->get(DATA_FLAGS) & 1) != 0;
+}
+bool ArmorStand::isNoBasePlate()
+{
+    return (mEntityData->get(DATA_FLAGS) & 8) != 0;
+}
+bool ArmorStand::isMarker()
+{
+    return (mEntityData->get(DATA_FLAGS) & 0x10) != 0;
+}
+int ArmorStand::getPoseIndex()
+{
+    return mEntityData->get(DATA_POSE);
+}
 void ArmorStand::addAdditonalSaveData(CompoundTag* tag)
 {
     LivingEntity::addAdditonalSaveData(tag);
@@ -373,7 +346,10 @@ void ArmorStand::setMarker(bool marker)
     mEntityData->set(DATA_FLAGS, setBit(mEntityData->get(DATA_FLAGS), 0x10, marker), true);
     setSize(0.5f, 1.975f);
 }
-void ArmorStand::setPoseIndex(int pose) { mEntityData->set(DATA_POSE, pose, true); }
+void ArmorStand::setPoseIndex(int pose)
+{
+    mEntityData->set(DATA_POSE, pose, true);
+}
 void ArmorStand::readAdditionalSaveData(CompoundTag* tag)
 {
     LivingEntity::readAdditionalSaveData(tag);
@@ -409,7 +385,10 @@ void ArmorStand::readAdditionalSaveData(CompoundTag* tag)
         mLastSignal = pose->getInt(L"LastSignal");
     }
 }
-bool ArmorStand::isPushable(boost::shared_ptr<Entity> entity) { return false; }
+bool ArmorStand::isPushable(boost::shared_ptr<Entity> entity)
+{
+    return false;
+}
 const EquipmentSlot* ArmorStand::getClickedSlot(const Vec3* hit)
 {
     const EquipmentSlot* slot = EquipmentSlot::MAINHAND;
@@ -421,8 +400,7 @@ const EquipmentSlot* ArmorStand::getClickedSlot(const Vec3* hit)
     {
         slot = EquipmentSlot::FEET;
     }
-    else if (y >= 0.9 + (small ? 0.3 : 0.0) && y < 0.9 + (small ? 1.0 : 0.7)
-             && hasItemInSlot(EquipmentSlot::CHEST))
+    else if (y >= 0.9 + (small ? 0.3 : 0.0) && y < 0.9 + (small ? 1.0 : 0.7) && hasItemInSlot(EquipmentSlot::CHEST))
     {
         slot = EquipmentSlot::CHEST;
     }
@@ -443,17 +421,14 @@ bool ArmorStand::isDisabled(const EquipmentSlot* slot)
 }
 
 void ArmorStand::swapItem(const boost::shared_ptr<Player>& player, const EquipmentSlot* slot,
-                          const not_null_ptr<ItemInstance>& item,
-                          InteractionHand::EInteractionHand hand)
+                          const not_null_ptr<ItemInstance>& item, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> equipped = getItemSlot(slot);
-    if (!equipped->isEmpty()
-        && (mDisabledSlots & (1 << (slot->getFilterFlag() + 8))) != 0)
+    if (!equipped->isEmpty() && (mDisabledSlots & (1 << (slot->getFilterFlag() + 8))) != 0)
     {
         return;
     }
-    if (!equipped->isEmpty()
-        && (mDisabledSlots & (1 << (slot->getFilterFlag() + 16))) != 0)
+    if (!equipped->isEmpty() && (mDisabledSlots & (1 << (slot->getFilterFlag() + 16))) != 0)
     {
         return;
     }
@@ -496,9 +471,12 @@ void ArmorStand::swapItem(const boost::shared_ptr<Player>& player, const Equipme
     setItemSlot(slot, item);
     player->setItemInHand(hand, equipped);
 }
-bool ArmorStand::isShowArms() { return (mEntityData->get(DATA_FLAGS) & 4) != 0; }
-InteractionResult::EInteractionResult ArmorStand::interactAt(
-    const boost::shared_ptr<Player>& player, Vec3* hit, InteractionHand::EInteractionHand hand)
+bool ArmorStand::isShowArms()
+{
+    return (mEntityData->get(DATA_FLAGS) & 4) != 0;
+}
+InteractionResult::EInteractionResult ArmorStand::interactAt(const boost::shared_ptr<Player>& player, Vec3* hit,
+                                                             InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> heldItem = player->getItemInHand(hand);
 
@@ -630,8 +608,8 @@ unsigned int ArmorStand::GetHitTooltip(const EntityTooltipDataHolder& tooltipDat
 }
 void ArmorStand::playBrokenSound()
 {
-    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::ARMORSTAND_BREAK,
-                      getSoundSource(), 1.0f, 1.0f, 16.0f);
+    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::ARMORSTAND_BREAK, getSoundSource(), 1.0f,
+                      1.0f, 16.0f);
 }
 void ArmorStand::brokenByAnything()
 {
@@ -788,7 +766,8 @@ void ArmorStand::handleEntityEvent(unsigned char event, int data)
         LivingEntity::handleEntityEvent(event, data);
     }
 }
-bool ArmorStand::shouldRenderAtSqrDistance(double distanceSqr) {
+bool ArmorStand::shouldRenderAtSqrDistance(double distanceSqr)
+{
     double size = mBoundingBox->getSize();
     if (size != size || size == 0.0)
     {
@@ -802,11 +781,26 @@ void ArmorStand::setInvisible(bool invisible)
     mInvisible = invisible;
     Entity::setInvisible(invisible);
 }
-bool ArmorStand::isBaby() { return isSmall(); }
-void ArmorStand::kill() { remove(); }
-bool ArmorStand::ignoreExplosion() { return isInvisible(); }
-int ArmorStand::getPistonPushReaction() { return isMarker() ? 3 : Entity::getPistonPushReaction(); }
-bool ArmorStand::isAffectedByPotions() { return false; }
+bool ArmorStand::isBaby()
+{
+    return isSmall();
+}
+void ArmorStand::kill()
+{
+    remove();
+}
+bool ArmorStand::ignoreExplosion()
+{
+    return isInvisible();
+}
+int ArmorStand::getPistonPushReaction()
+{
+    return isMarker() ? 3 : Entity::getPistonPushReaction();
+}
+bool ArmorStand::isAffectedByPotions()
+{
+    return false;
+}
 void ArmorStand::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     if (accessor->getId() == DATA_FLAGS->getId())
@@ -815,27 +809,60 @@ void ArmorStand::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     }
     LivingEntity::onSyncedDataUpdated(accessor);
 }
-bool ArmorStand::attackable() { return false; }
-Vec3* ArmorStand::getHeadPose() { return POSES[getPoseIndex()]->head; }
-Vec3* ArmorStand::getBodyPose() { return POSES[getPoseIndex()]->body; }
-Vec3* ArmorStand::getLeftArmPose() { return POSES[getPoseIndex()]->leftArm; }
-Vec3* ArmorStand::getRightArmPose() { return POSES[getPoseIndex()]->rightArm; }
-Vec3* ArmorStand::getLeftLegPose() { return POSES[getPoseIndex()]->leftLeg; }
-Vec3* ArmorStand::getRightLegPose() { return POSES[getPoseIndex()]->rightLeg; }
-Vec3* ArmorStand::getRightItemPose() { return POSES[getPoseIndex()]->rightItem; }
+bool ArmorStand::attackable()
+{
+    return false;
+}
+Vec3* ArmorStand::getHeadPose()
+{
+    return POSES[getPoseIndex()]->head;
+}
+Vec3* ArmorStand::getBodyPose()
+{
+    return POSES[getPoseIndex()]->body;
+}
+Vec3* ArmorStand::getLeftArmPose()
+{
+    return POSES[getPoseIndex()]->leftArm;
+}
+Vec3* ArmorStand::getRightArmPose()
+{
+    return POSES[getPoseIndex()]->rightArm;
+}
+Vec3* ArmorStand::getLeftLegPose()
+{
+    return POSES[getPoseIndex()]->leftLeg;
+}
+Vec3* ArmorStand::getRightLegPose()
+{
+    return POSES[getPoseIndex()]->rightLeg;
+}
+Vec3* ArmorStand::getRightItemPose()
+{
+    return POSES[getPoseIndex()]->rightItem;
+}
 bool ArmorStand::isPickable()
 {
     return LivingEntity::isPickable() && !isMarker();
 }
-const HumanoidArm* ArmorStand::getMainArm() { return HumanoidArm::RIGHT; }
+const HumanoidArm* ArmorStand::getMainArm()
+{
+    return HumanoidArm::RIGHT;
+}
 float ArmorStand::tickHeadTurn(float bodyRot, float headTurnDelta)
 {
     mYBodyRotO = mYRotO;
     mYBodyRot = mYRot;
     return 0.0f;
 }
-double ArmorStand::getRidingHeight() { return isMarker() ? 0.0 : 0.1; }
-float ArmorStand::getEyeHeight() { return mBbHeight * (isBaby() ? 0.5f : 0.9f); }
+double ArmorStand::getRidingHeight()
+{
+    return isMarker() ? 0.0 : 0.1;
+}
+float ArmorStand::getEyeHeight()
+{
+    return mBbHeight * (isBaby() ? 0.5f : 0.9f);
+}
 void ArmorStand::travel(float xxa, float yya, float zza)
 {
     if (!isNoGravity())
@@ -893,7 +920,8 @@ void ArmorStand::tick()
     {
         BlockPos blockPos(getPos(0.0f));
         bool poseUpdated = false;
-        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
+             ++it)
         {
             const Direction* direction = *it;
             if (!direction->getAxis()->isVertical())
@@ -920,9 +948,18 @@ void ArmorStand::tick()
     mWasMarker = marker;
     PIXEndNamedEvent();
 }
-const SoundEvent* ArmorStand::getHurtSound(const DamageSource*) { return SoundEvents::ARMORSTAND_HIT; }
-const SoundEvent* ArmorStand::getDeathSound() { return SoundEvents::ARMORSTAND_BREAK; }
-const SoundEvent* ArmorStand::getFallDamageSound(int) { return SoundEvents::ARMORSTAND_FALL; }
+const SoundEvent* ArmorStand::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::ARMORSTAND_HIT;
+}
+const SoundEvent* ArmorStand::getDeathSound()
+{
+    return SoundEvents::ARMORSTAND_BREAK;
+}
+const SoundEvent* ArmorStand::getFallDamageSound(int)
+{
+    return SoundEvents::ARMORSTAND_FALL;
+}
 void ArmorStand::setSize(float width, float height)
 {
     double x = mX;
@@ -940,11 +977,13 @@ void ArmorStand::defineSynchedData()
     int pose = 0;
     mEntityData->createDateItem(DATA_POSE, pose);
 }
-void ArmorStand::doPush(boost::shared_ptr<Entity>) {}
+void ArmorStand::doPush(boost::shared_ptr<Entity>)
+{
+}
 void ArmorStand::pushEntities()
 {
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox, IS_RIDEABLE_MINECART, NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(), mBoundingBox,
+                                                                            IS_RIDEABLE_MINECART, NULL);
 
     if (entities == NULL || entities->empty())
     {
@@ -960,11 +999,24 @@ void ArmorStand::pushEntities()
         }
     }
 }
-void ArmorStand::updateInvisibilityStatus() { setInvisible(mInvisible); }
-bool ArmorStand::generatesBubbles() { return false; }
-void ArmorStand::setAirSupply(int airSupply) {}
-unsigned long long ArmorStand::GetType() { return EntityType::ARMOR_STAND; }
-void ArmorStand::thunderHit(const LightningBolt*) {}
+void ArmorStand::updateInvisibilityStatus()
+{
+    setInvisible(mInvisible);
+}
+bool ArmorStand::generatesBubbles()
+{
+    return false;
+}
+void ArmorStand::setAirSupply(int airSupply)
+{
+}
+unsigned long long ArmorStand::GetType()
+{
+    return EntityType::ARMOR_STAND;
+}
+void ArmorStand::thunderHit(const LightningBolt*)
+{
+}
 Entity* ArmorStand::create(Level* level)
 {
     return new ArmorStand(level);
@@ -973,7 +1025,7 @@ Entity* ArmorStand::create(Level* level)
 bool ArmorStand::RidableMinecartEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
     bool result = eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType())
-        && boost::static_pointer_cast<Minecart>(entity)->getType() == Minecart::Type::RIDEABLE;
+                  && boost::static_pointer_cast<Minecart>(entity)->getType() == Minecart::Type::RIDEABLE;
     return result;
 }
 

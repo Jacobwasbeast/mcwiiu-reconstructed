@@ -5,7 +5,14 @@
 #include "game/core/Compression.hpp"
 #include "game/core/NbtIo.hpp"
 #include "game/item/Item.hpp"
-namespace DataInputStreamInteractionHand { enum EInteractionHand { MAIN_HAND, OFF_HAND }; }
+namespace DataInputStreamInteractionHand
+{
+enum EInteractionHand
+{
+    MAIN_HAND,
+    OFF_HAND
+};
+}
 #define InteractionHand DataInputStreamInteractionHand
 #include "game/item/ItemInstance.hpp"
 #undef InteractionHand
@@ -159,7 +166,9 @@ long long DataInputStream::readLong()
 
     int high = (byte1 << 24) | ((byte2 & 0xFF) << 16) | ((byte3 & 0xFF) << 8) | (byte4 & 0xFF);
 
-    return ((long long)high << 32) | ((unsigned long long)(unsigned int)(byte5 & 0xFF) << 24) | ((unsigned long long)(unsigned int)(byte6 & 0xFF) << 16) | ((unsigned long long)(unsigned int)(byte7 & 0xFF) << 8) | (unsigned long long)(unsigned int)(byte8 & 0xFF);
+    return ((long long)high << 32) | ((unsigned long long)(unsigned int)(byte5 & 0xFF) << 24)
+           | ((unsigned long long)(unsigned int)(byte6 & 0xFF) << 16)
+           | ((unsigned long long)(unsigned int)(byte7 & 0xFF) << 8) | (unsigned long long)(unsigned int)(byte8 & 0xFF);
 }
 
 short DataInputStream::readShort()
@@ -270,7 +279,8 @@ int DataInputStream::readUTFChar()
 
                 result = -1;
 
-                if ((byte1 & 0xF0) == 0xE0 && (byte2 = mChildStream->read()) != -1 && (byte3 = mChildStream->read()) != -1 && (byte2 & 0xC0) == 0x80 && (byte3 & 0xC0) == 0x80)
+                if ((byte1 & 0xF0) == 0xE0 && (byte2 = mChildStream->read()) != -1
+                    && (byte3 = mChildStream->read()) != -1 && (byte2 & 0xC0) == 0x80 && (byte3 & 0xC0) == 0x80)
                 {
                     result = ((byte1 & 0x0F) << 12) | ((byte2 & 0x3F) << 6) | (byte3 & 0x3F);
                 }
@@ -337,8 +347,7 @@ int DataInputStream::readVarInt()
         {
             return -1;
         }
-    }
-    while ((byteValue & 0x80) != 0);
+    } while ((byteValue & 0x80) != 0);
 
     return value;
 }
@@ -362,8 +371,7 @@ long long DataInputStream::readVarLong()
         {
             return -1;
         }
-    }
-    while ((byteValue & 0x80) != 0);
+    } while ((byteValue & 0x80) != 0);
 
     return value;
 }

@@ -12,9 +12,8 @@ class ChangeStateConstraint : public TutorialConstraint
 {
 public:
     ChangeStateConstraint(Tutorial* tutorial, eTutorial_State targetState, eTutorial_State* states,
-                          unsigned int numStates, double x0, double y0, double z0, double x1,
-                          double y1, double z1, bool insideArea, bool changeGameType,
-                          const GameType* gameType);
+                          unsigned int numStates, double x0, double y0, double z0, double x1, double y1, double z1,
+                          bool insideArea, bool changeGameType, const GameType* gameType);
 
     virtual ~ChangeStateConstraint();
 

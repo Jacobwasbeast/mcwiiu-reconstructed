@@ -12,11 +12,10 @@
 #include <algorithm>
 #include <limits>
 
-static const unsigned short NO_VOTES_GIVEN[4] = { 0, 0, 0, 0 };
-static const unsigned short NO_VOTES_RECEIVED[4] = { 0, 0, 0, 0 };
+static const unsigned short NO_VOTES_GIVEN[4] = {0, 0, 0, 0};
+static const unsigned short NO_VOTES_RECEIVED[4] = {0, 0, 0, 0};
 
-static bool selectGlideWinner(const ClientScoreboard* scoreboard, bool usePoints,
-                              StatsUID* winner, int* winnerRound)
+static bool selectGlideWinner(const ClientScoreboard* scoreboard, bool usePoints, StatsUID* winner, int* winnerRound)
 {
     bool found = false;
     unsigned int best = usePoints ? 0u : 0xffffffffu;
@@ -35,23 +34,23 @@ static bool selectGlideWinner(const ClientScoreboard* scoreboard, bool usePoints
             {
                 continue;
             }
-            const unsigned int value = usePoints
-                ? static_cast<unsigned int>(stats.mScore + stats.mPlacement)
-                : static_cast<unsigned int>(stats.mTimeAlive);
+            const unsigned int value = usePoints ? static_cast<unsigned int>(stats.mScore + stats.mPlacement)
+                                                 : static_cast<unsigned int>(stats.mTimeAlive);
             if ((usePoints && best < value) || (!usePoints && value < best))
             {
                 found = true;
                 best = value;
-                if (winner != NULL) *winner = player->first;
-                if (winnerRound != NULL) *winnerRound = round->first;
+                if (winner != NULL)
+                    *winner = player->first;
+                if (winnerRound != NULL)
+                    *winnerRound = round->first;
             }
         }
     }
     return found;
 }
 
-ClientScoreboard::ClientScoreboard()
-    : Scoreboard(), mPlayerStats()
+ClientScoreboard::ClientScoreboard() : Scoreboard(), mPlayerStats()
 {
 }
 
@@ -74,8 +73,7 @@ void ClientScoreboard::SyncPlayerStats(const StatsUID& suid, PlayerStats* stats,
     }
 }
 
-void ClientScoreboard::UpdatePlayerStats(const StatsUID& suid, PlayerStats* stats,
-                                         int round, int life,
+void ClientScoreboard::UpdatePlayerStats(const StatsUID& suid, PlayerStats* stats, int round, int life,
                                          unsigned long long changed)
 {
     PlayerStatsMap::iterator found = mPlayerStats.find(suid);
@@ -99,8 +97,7 @@ ClientScoreboard::PlayerStats* ClientScoreboard::GetPlayerStats(const StatsUID& 
     return NULL;
 }
 
-Scoreboard::PlayerStats::_RoundStats* ClientScoreboard::GetPlayerRoundStats(const StatsUID& suid,
-                                                                             int round)
+Scoreboard::PlayerStats::_RoundStats* ClientScoreboard::GetPlayerRoundStats(const StatsUID& suid, int round)
 {
     if (round == -1)
     {
@@ -359,7 +356,8 @@ unsigned int ClientScoreboard::GetBestLifeSpan(const StatsUID& suid, int* round)
             if (it->second.mWinner && lifeSpan < best)
             {
                 best = lifeSpan;
-                if (round != NULL) *round = it->first;
+                if (round != NULL)
+                    *round = it->first;
             }
         }
     }
@@ -412,7 +410,8 @@ int ClientScoreboard::GetRoundsWon(const StatsUID& suid)
     if (player != NULL)
     {
         PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
-        for (; it != player->mRoundStats.end(); ++it) total += it->second.mActive;
+        for (; it != player->mRoundStats.end(); ++it)
+            total += it->second.mActive;
     }
     return total;
 }
@@ -484,7 +483,8 @@ unsigned int ClientScoreboard::GetBestPoints(const StatsUID& suid, int* round)
             if (it->second.mWinner && points > best)
             {
                 best = points;
-                if (round != NULL) *round = it->first;
+                if (round != NULL)
+                    *round = it->first;
             }
         }
     }
@@ -518,7 +518,8 @@ unsigned int ClientScoreboard::GetBestPoints()
 void ClientScoreboard::SetPersonalBest(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    if (stats != NULL) stats->mQuit = true;
+    if (stats != NULL)
+        stats->mQuit = true;
 }
 
 bool ClientScoreboard::IsPersonalBest(const StatsUID& suid, int round)
@@ -699,17 +700,15 @@ void ClientScoreboard::GetPlayersSortedByPosition(std::list<std::pair<std::wstri
             entry.order = stats->mActive ? activeOrder : stats->mBestTime;
             entry.tie = stats->mActive ? (unsigned int)stats->mPlacement : 0;
             std::list<PositionEntry>::iterator insert = entries.begin();
-            while (insert != entries.end() &&
-                   (insert->order < entry.order ||
-                    (insert->order == entry.order && insert->tie <= entry.tie)))
+            while (insert != entries.end()
+                   && (insert->order < entry.order || (insert->order == entry.order && insert->tie <= entry.tie)))
             {
                 ++insert;
             }
             entries.insert(insert, entry);
         }
     }
-    for (std::list<PositionEntry>::const_iterator entry = entries.begin();
-         entry != entries.end(); ++entry)
+    for (std::list<PositionEntry>::const_iterator entry = entries.begin(); entry != entries.end(); ++entry)
     {
         players.push_back(std::make_pair(entry->name, entry->placement));
     }
@@ -804,7 +803,8 @@ bool ClientScoreboard::GlideHasOverallWinner()
         PlayerStats::RoundStatsMap::iterator rit = player->mRoundStats.begin();
         for (; rit != player->mRoundStats.end(); ++rit)
         {
-            if (rit->second.mWinner) return true;
+            if (rit->second.mWinner)
+                return true;
         }
     }
     return false;

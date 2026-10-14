@@ -35,8 +35,8 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual int getArmPose();
     virtual void readAdditionalSaveData(CompoundTag* tag);
-    MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
-                                   MobGroupData* data, const std::wstring& reason);
+    MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                   const std::wstring& reason);
     virtual void customServerAiStep();
     virtual bool isAlliedTo(boost::shared_ptr<Entity> entity);
     void setCustomName(const std::wstring& name, const std::wstring& displayName, bool visible);

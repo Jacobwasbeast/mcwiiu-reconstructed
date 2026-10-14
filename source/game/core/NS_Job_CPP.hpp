@@ -5,7 +5,7 @@
 
 namespace NS_Job_CPP
 {
-    void InvokeCallbackOnCompletion(nn::nex::Job* pJob, const nn::nex::UserContext* pUserContext);
+void InvokeCallbackOnCompletion(nn::nex::Job* pJob, const nn::nex::UserContext* pUserContext);
 }
 
 #endif

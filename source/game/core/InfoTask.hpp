@@ -9,8 +9,8 @@
 class InfoTask : public TutorialTask
 {
 public:
-    InfoTask(Tutorial* tutorial, int descriptionId, int promptId, bool addConstraint,
-             int completionId, ETelemetryChallenges telemetryChallenge);
+    InfoTask(Tutorial* tutorial, int descriptionId, int promptId, bool addConstraint, int completionId,
+             ETelemetryChallenges telemetryChallenge);
 
     virtual int getPromptId();
     virtual bool isCompleted();

@@ -17,5 +17,6 @@ bool InputConstraint::isMappingConstrained(int playerId, int mapping)
     if (constrainedMapping == mapping || mapping < EControllerActions_Scoreboard)
         return true;
 
-    return (g_pInput->GetGameJoypadMaps(playerId, constrainedMapping) & g_pInput->GetGameJoypadMaps(playerId, mapping)) != 0;
+    return (g_pInput->GetGameJoypadMaps(playerId, constrainedMapping) & g_pInput->GetGameJoypadMaps(playerId, mapping))
+           != 0;
 }

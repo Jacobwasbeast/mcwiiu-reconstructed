@@ -53,8 +53,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/biome/Biome.hpp"
 
-Dolphin::Dolphin(Level* level)
-    : AgableWaterAnimal(level), mTreasureTime(0), mBlowholeCooldown(0), mTreasureGoal(NULL)
+Dolphin::Dolphin(Level* level) : AgableWaterAnimal(level), mTreasureTime(0), mBlowholeCooldown(0), mTreasureGoal(NULL)
 {
     fjDerivedCtorCalls();
     setSize(0.9f, 0.6f);
@@ -66,7 +65,8 @@ Dolphin::Dolphin(Level* level)
     mMaxFlockSize = mRandom->nextInt(2, 5);
 }
 
-MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
+MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                        const std::wstring& name)
 {
     setAirSupply(getMaxAirSupply());
     mXRot = 0.0f;
@@ -74,11 +74,26 @@ MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, Mo
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 
-int Dolphin::getMaxAirSupply() { return 4800; }
-float Dolphin::getEyeHeight() { return 0.3f; }
-int Dolphin::getAmbientSoundInterval() { return 120; }
-int Dolphin::getMaxHeadXRot() { return 1; }
-int Dolphin::getMaxHeadYRot() { return 1; }
+int Dolphin::getMaxAirSupply()
+{
+    return 4800;
+}
+float Dolphin::getEyeHeight()
+{
+    return 0.3f;
+}
+int Dolphin::getAmbientSoundInterval()
+{
+    return 120;
+}
+int Dolphin::getMaxHeadXRot()
+{
+    return 1;
+}
+int Dolphin::getMaxHeadYRot()
+{
+    return 1;
+}
 
 void Dolphin::aiStep()
 {
@@ -125,7 +140,10 @@ void Dolphin::tick()
     }
 }
 
-bool Dolphin::isPushedByWater() { return false; }
+bool Dolphin::isPushedByWater()
+{
+    return false;
+}
 bool Dolphin::isInSpawnableOcean()
 {
     Biome* biome = mLevel->getBiome(BlockPos(this));
@@ -138,19 +156,23 @@ bool Dolphin::isInSpawnableOcean()
 
 bool Dolphin::checkSpawnRules()
 {
-    return AgableWaterAnimal::checkSpawnRules() && mY > 45.0 &&
-           mY < (double)mLevel->getSeaLevel() && isInSpawnableOcean();
+    return AgableWaterAnimal::checkSpawnRules() && mY > 45.0 && mY < (double)mLevel->getSeaLevel()
+           && isInSpawnableOcean();
 }
 
-bool Dolphin::canBeLeashed(const boost::shared_ptr<Player>&) { return false; }
-ResourceLocation* Dolphin::getDefaultLootTable() { return &BuiltInLootTables::DOLPHIN; }
+bool Dolphin::canBeLeashed(const boost::shared_ptr<Player>&)
+{
+    return false;
+}
+ResourceLocation* Dolphin::getDefaultLootTable()
+{
+    return &BuiltInLootTables::DOLPHIN;
+}
 
 bool Dolphin::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    EntityDamageSource* source =
-        DamageSource::CreateMobAttack(boost::static_pointer_cast<Mob>(shared_from_this()));
-    bool hurtTarget = target->hurt(source,
-        (float)getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue());
+    EntityDamageSource* source = DamageSource::CreateMobAttack(boost::static_pointer_cast<Mob>(shared_from_this()));
+    bool hurtTarget = target->hurt(source, (float)getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue());
     delete source;
     if (hurtTarget)
     {
@@ -163,8 +185,7 @@ bool Dolphin::doHurtTarget(boost::shared_ptr<Entity> target)
 void Dolphin::positionRider(const boost::shared_ptr<Entity>& passenger)
 {
     const Direction* side = getDirection()->getCounterClockWise();
-    passenger->setPos(mX + side->getStepX() * 0.7 - getDirection()->getStepX(),
-                      mY + passenger->getRidingHeight() + 0.5,
+    passenger->setPos(mX + side->getStepX() * 0.7 - getDirection()->getStepX(), mY + passenger->getRidingHeight() + 0.5,
                       mZ + side->getStepZ() * 0.7 - getDirection()->getStepZ());
     bool isLiving = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, passenger->GetType());
     if (isLiving)
@@ -175,7 +196,8 @@ void Dolphin::positionRider(const boost::shared_ptr<Entity>& passenger)
 
 boost::shared_ptr<ItemEntity> Dolphin::drop(const not_null_ptr<ItemInstance>& item)
 {
-    if (item->isEmpty()) return boost::shared_ptr<ItemEntity>();
+    if (item->isEmpty())
+        return boost::shared_ptr<ItemEntity>();
     double itemY = mY - 0.3 + getEyeHeight();
     boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, itemY, mZ, item));
     itemEntity->setPickUpDelay(40);
@@ -205,7 +227,8 @@ bool Dolphin::isItemABribingFish(not_null_ptr<ItemInstance> item)
         if (item->getItem() == Items::fish)
         {
             FishFoodItem::Type* type = FishFoodItem::Type::getByItem(item);
-            if (type == FishFoodItem::Type::COD || type == FishFoodItem::Type::SALMON) bribing = true;
+            if (type == FishFoodItem::Type::COD || type == FishFoodItem::Type::SALMON)
+                bribing = true;
         }
     }
     return bribing;
@@ -225,7 +248,8 @@ void Dolphin::addAdditonalSaveData(CompoundTag* tag)
 
 void Dolphin::readAdditionalSaveData(CompoundTag* tag)
 {
-    if (tag->getBoolean(L"bribed")) mTreasureGoal->setBribed();
+    if (tag->getBoolean(L"bribed"))
+        mTreasureGoal->setBribed();
 }
 
 void Dolphin::registerGoals()
@@ -283,11 +307,10 @@ bool Dolphin::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
             const double xa = mRandom->nextGaussian() * 0.02;
             const double ya = mRandom->nextGaussian() * 0.02;
             const double za = mRandom->nextGaussian() * 0.02;
-            mLevel->addParticle(PARTICLE_ICON_CRACK,
-                                mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
+            mLevel->addParticle(PARTICLE_ICON_CRACK, mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                                 mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                                mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
-                                xa, ya, za, arrayWithLength<int>(&fishId, 1));
+                                mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth, xa, ya, za,
+                                arrayWithLength<int>(&fishId, 1));
         }
 
         if (!player->mAbilities.mInstabuild)
@@ -299,18 +322,43 @@ bool Dolphin::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
 
 bool Dolphin::canHoldItem(not_null_ptr<ItemInstance> item)
 {
-    if (item->getItem() == Items::egg && isBaby() && isPassenger()) return false;
+    if (item->getItem() == Items::egg && isBaby() && isPassenger())
+        return false;
     return Mob::canHoldItem(item);
 }
 
-bool Dolphin::canRide(boost::shared_ptr<Entity>) { return false; }
-const SoundEvent* Dolphin::getHurtSound(const DamageSource*) { return SoundEvents::DOLPHIN_HURT; }
-const SoundEvent* Dolphin::getDeathSound() { return SoundEvents::DOLPHIN_DEATH; }
-const SoundEvent* Dolphin::getAmbientSound() { return isInWater() ? SoundEvents::DOLPHIN_AMBIENT_WATER : SoundEvents::DOLPHIN_AMBIENT; }
-const SoundEvent* Dolphin::getSwimSound() { return SoundEvents::DOLPHIN_SWIM; }
-const SoundEvent* Dolphin::getSwimSplashSound() { return SoundEvents::DOLPHIN_SPLASH; }
-bool Dolphin::generatesBubbles() { return false; }
-unsigned long long Dolphin::GetType() { return EntityType::DOLPHIN; }
+bool Dolphin::canRide(boost::shared_ptr<Entity>)
+{
+    return false;
+}
+const SoundEvent* Dolphin::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::DOLPHIN_HURT;
+}
+const SoundEvent* Dolphin::getDeathSound()
+{
+    return SoundEvents::DOLPHIN_DEATH;
+}
+const SoundEvent* Dolphin::getAmbientSound()
+{
+    return isInWater() ? SoundEvents::DOLPHIN_AMBIENT_WATER : SoundEvents::DOLPHIN_AMBIENT;
+}
+const SoundEvent* Dolphin::getSwimSound()
+{
+    return SoundEvents::DOLPHIN_SWIM;
+}
+const SoundEvent* Dolphin::getSwimSplashSound()
+{
+    return SoundEvents::DOLPHIN_SPLASH;
+}
+bool Dolphin::generatesBubbles()
+{
+    return false;
+}
+unsigned long long Dolphin::GetType()
+{
+    return EntityType::DOLPHIN;
+}
 Entity* Dolphin::create(Level* level)
 {
     return new Dolphin(level);

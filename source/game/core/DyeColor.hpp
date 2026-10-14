@@ -30,9 +30,8 @@ public:
 
     static std::vector<const DyeColor*> COLORS;
 
-    DyeColor(int blockData, int itemData, const std::wstring& serializedName,
-             int name, int useName, int textureDiffuseColor,
-             eMinecraftColour fontColorFormat, eMinecraftColour shulkerColor,
+    DyeColor(int blockData, int itemData, const std::wstring& serializedName, int name, int useName,
+             int textureDiffuseColor, eMinecraftColour fontColorFormat, eMinecraftColour shulkerColor,
              eMinecraftColour bedColor);
     ~DyeColor();
 

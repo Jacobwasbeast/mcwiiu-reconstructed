@@ -31,8 +31,8 @@ unsigned int TimeCondition::GetThreshold(MasterGameMode* gameMode) const
     int threshold;
     if (m_option >= 0)
     {
-        threshold = static_cast<int>(CommonMasterGameMode::GetMiniGame()->HostOption_Time(
-            static_cast<eCustomGameModeHostOption>(m_option)));
+        threshold = static_cast<int>(
+            CommonMasterGameMode::GetMiniGame()->HostOption_Time(static_cast<eCustomGameModeHostOption>(m_option)));
     }
     else
     {
@@ -46,8 +46,8 @@ bool TimeCondition::IsSatisfied(MasterGameMode* gameMode) const
     int value;
     if (m_option >= 0)
     {
-        value = static_cast<int>(CommonMasterGameMode::GetMiniGame()->HostOption_Time(
-            static_cast<eCustomGameModeHostOption>(m_option)));
+        value = static_cast<int>(
+            CommonMasterGameMode::GetMiniGame()->HostOption_Time(static_cast<eCustomGameModeHostOption>(m_option)));
     }
     else
     {

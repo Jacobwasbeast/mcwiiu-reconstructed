@@ -22,38 +22,17 @@ const EntityDataAccessor<int>* TropicalFish::DATA_VARIANT = NULL;
 const EntityDataAccessor<int>* TropicalFish::DATA_COLOR = NULL;
 
 static const int TROPICAL_FISH_VARIANTS[22][4] = {
-    { 1, 1, 1, 7 },
-    { 1, 0, 7, 7 },
-    { 0, 1, 7, 3 },
-    { 0, 4, 0, 7 },
-    { 0, 1, 11, 7 },
-    { 0, 0, 1, 0 },
-    { 0, 5, 6, 3 },
-    { 1, 3, 10, 4 },
-    { 1, 5, 0, 14 },
-    { 0, 5, 0, 4 },
-    { 1, 2, 0, 7 },
-    { 1, 5, 0, 1 },
-    { 0, 3, 9, 6 },
-    { 0, 4, 5, 3 },
-    { 1, 4, 14, 0 },
-    { 0, 2, 7, 14 },
-    { 1, 3, 14, 0 },
-    { 1, 0, 0, 4 },
-    { 0, 1, 0, 0 },
-    { 0, 0, 14, 0 },
-    { 1, 1, 4, 4 },
-    { 0, 3, 0, 7 }
-};
-static int TROPICAL_FISH_BASE_TEXTURES[2] = { 0xD6, 0xDD };
-static int TROPICAL_FISH_PATTERN_A_TEXTURES[6] = { 0xD7,0xD8,0xD9,0xDA,0xDB,0xDC };
-static int TROPICAL_FISH_PATTERN_B_TEXTURES[6] = { 0xDE,0xDF,0xE0,0xE1,0xE2,0xE3 };
-static const std::wstring TROPICAL_FISH_BASE_HASHES[2] = { L"fba", L"fbb" };
-static const std::wstring TROPICAL_FISH_PATTERN_A_HASHES[6] = { L"pa1", L"pa2", L"pa3", L"pa4", L"pa5", L"pa6" };
-static const std::wstring TROPICAL_FISH_PATTERN_B_HASHES[6] = { L"pb1", L"pb2", L"pb3", L"pb4", L"pb5", L"pb6" };
+    {1, 1, 1, 7},  {1, 0, 7, 7}, {0, 1, 7, 3}, {0, 4, 0, 7},  {0, 1, 11, 7}, {0, 0, 1, 0}, {0, 5, 6, 3},  {1, 3, 10, 4},
+    {1, 5, 0, 14}, {0, 5, 0, 4}, {1, 2, 0, 7}, {1, 5, 0, 1},  {0, 3, 9, 6},  {0, 4, 5, 3}, {1, 4, 14, 0}, {0, 2, 7, 14},
+    {1, 3, 14, 0}, {1, 0, 0, 4}, {0, 1, 0, 0}, {0, 0, 14, 0}, {1, 1, 4, 4},  {0, 3, 0, 7}};
+static int TROPICAL_FISH_BASE_TEXTURES[2] = {0xD6, 0xDD};
+static int TROPICAL_FISH_PATTERN_A_TEXTURES[6] = {0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC};
+static int TROPICAL_FISH_PATTERN_B_TEXTURES[6] = {0xDE, 0xDF, 0xE0, 0xE1, 0xE2, 0xE3};
+static const std::wstring TROPICAL_FISH_BASE_HASHES[2] = {L"fba", L"fbb"};
+static const std::wstring TROPICAL_FISH_PATTERN_A_HASHES[6] = {L"pa1", L"pa2", L"pa3", L"pa4", L"pa5", L"pa6"};
+static const std::wstring TROPICAL_FISH_PATTERN_B_HASHES[6] = {L"pb1", L"pb2", L"pb3", L"pb4", L"pb5", L"pb6"};
 
-TropicalFish::TropicalFish(Level* level)
-    : Fish(level, true)
+TropicalFish::TropicalFish(Level* level) : Fish(level, true)
 {
     fjDerivedCtorCalls();
     mLayeredTextureHashName = L"";
@@ -78,8 +57,10 @@ Entity* TropicalFish::create(Level* level)
 
 void TropicalFish::staticCtor()
 {
-    DATA_VARIANT = SynchedEntityData::defineId(EntityType::TROPICAL_FISH, EntityType::WATER_ANIMAL, EntityDataSerializers::INT);
-    DATA_COLOR = SynchedEntityData::defineId(EntityType::TROPICAL_FISH, EntityType::WATER_ANIMAL, EntityDataSerializers::INT);
+    DATA_VARIANT = SynchedEntityData::defineId(EntityType::TROPICAL_FISH, EntityType::WATER_ANIMAL,
+                                               EntityDataSerializers::INT);
+    DATA_COLOR = SynchedEntityData::defineId(EntityType::TROPICAL_FISH, EntityType::WATER_ANIMAL,
+                                             EntityDataSerializers::INT);
 }
 
 void TropicalFish::clearLayeredTextureInfo()
@@ -99,9 +80,18 @@ void TropicalFish::tick()
     PIXEndNamedEvent();
 }
 
-int TropicalFish::getVariant() { return mEntityData->get(DATA_VARIANT); }
-int TropicalFish::getBaseVariant() { return mEntityData->get(DATA_VARIANT) & 1; }
-int TropicalFish::getMarkVariant() { return (mEntityData->get(DATA_VARIANT) >> 8 & 0xff) % 6; }
+int TropicalFish::getVariant()
+{
+    return mEntityData->get(DATA_VARIANT);
+}
+int TropicalFish::getBaseVariant()
+{
+    return mEntityData->get(DATA_VARIANT) & 1;
+}
+int TropicalFish::getMarkVariant()
+{
+    return (mEntityData->get(DATA_VARIANT) >> 8 & 0xff) % 6;
+}
 
 void TropicalFish::setVariant(int variant)
 {
@@ -109,10 +99,22 @@ void TropicalFish::setVariant(int variant)
     clearLayeredTextureInfo();
 }
 
-int TropicalFish::getColor() { return mEntityData->get(DATA_COLOR); }
-int TropicalFish::getColor1() { return (mEntityData->get(DATA_COLOR) & 0xff) % 15; }
-int TropicalFish::getColor2() { return (mEntityData->get(DATA_COLOR) >> 8 & 0xff) % 15; }
-void TropicalFish::setColor(int color) { mEntityData->set(DATA_COLOR, color, true); }
+int TropicalFish::getColor()
+{
+    return mEntityData->get(DATA_COLOR);
+}
+int TropicalFish::getColor1()
+{
+    return (mEntityData->get(DATA_COLOR) & 0xff) % 15;
+}
+int TropicalFish::getColor2()
+{
+    return (mEntityData->get(DATA_COLOR) >> 8 & 0xff) % 15;
+}
+void TropicalFish::setColor(int color)
+{
+    mEntityData->set(DATA_COLOR, color, true);
+}
 
 void TropicalFish::rebuildLayeredTextureInfo()
 {
@@ -135,18 +137,22 @@ void TropicalFish::rebuildLayeredTextureInfo()
         mLayeredTextureLayers.data[1] = TROPICAL_FISH_PATTERN_B_TEXTURES[markVariant];
     }
 
-    mLayeredTextureHashName = L"fish/" + TROPICAL_FISH_BASE_HASHES[baseVariant] + (baseVariant == 0 ? TROPICAL_FISH_PATTERN_A_HASHES[markVariant] : TROPICAL_FISH_PATTERN_B_HASHES[markVariant]);
+    mLayeredTextureHashName = L"fish/" + TROPICAL_FISH_BASE_HASHES[baseVariant]
+                              + (baseVariant == 0 ? TROPICAL_FISH_PATTERN_A_HASHES[markVariant]
+                                                  : TROPICAL_FISH_PATTERN_B_HASHES[markVariant]);
 }
 
 std::wstring TropicalFish::getLayeredTextureHashName()
 {
-    if (mLayeredTextureHashName.empty()) rebuildLayeredTextureInfo();
+    if (mLayeredTextureHashName.empty())
+        rebuildLayeredTextureInfo();
     return mLayeredTextureHashName;
 }
 
 arrayWithLength<int> TropicalFish::getLayeredTextureLayers()
 {
-    if (mLayeredTextureHashName.empty()) rebuildLayeredTextureInfo();
+    if (mLayeredTextureHashName.empty())
+        rebuildLayeredTextureInfo();
     return mLayeredTextureLayers;
 }
 
@@ -185,7 +191,8 @@ void TropicalFish::readAdditionalSaveData(CompoundTag* tag)
     setColor(tag->getInt(L"Color"));
 }
 
-MobGroupData* TropicalFish::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
+MobGroupData* TropicalFish::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                             const std::wstring& name)
 {
     mRandom = new Random();
     int baseVariant;
@@ -221,10 +228,23 @@ MobGroupData* TropicalFish::finalizeMobSpawn(const DifficultyInstance& difficult
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 
-ResourceLocation* TropicalFish::getDefaultLootTable() { return &BuiltInLootTables::TROPICALFISH; }
-unsigned long long TropicalFish::GetType() { return EntityType::TROPICAL_FISH; }
+ResourceLocation* TropicalFish::getDefaultLootTable()
+{
+    return &BuiltInLootTables::TROPICALFISH;
+}
+unsigned long long TropicalFish::GetType()
+{
+    return EntityType::TROPICAL_FISH;
+}
 
 TropicalFish::TropicalFishGroupData::TropicalFishGroupData(int baseVariant, int markVariant, int color1, int color2)
-    : mBaseVariant(baseVariant), mMarkVariant(markVariant), mColor1(color1), mColor2(color2) {}
+    : mBaseVariant(baseVariant),
+      mMarkVariant(markVariant),
+      mColor1(color1),
+      mColor2(color2)
+{
+}
 
-TropicalFish::TropicalFishGroupData::~TropicalFishGroupData() {}
+TropicalFish::TropicalFishGroupData::~TropicalFishGroupData()
+{
+}

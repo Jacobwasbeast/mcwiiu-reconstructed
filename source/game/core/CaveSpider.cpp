@@ -19,8 +19,7 @@
 #include "game/world/block/BlockPos.hpp"
 
 
-CaveSpider::CaveSpider(Level* level)
-    : Spider(level, false)
+CaveSpider::CaveSpider(Level* level) : Spider(level, false)
 {
     fjDerivedCtorCalls();
     setSize(0.7f, 0.5f);
@@ -64,8 +63,7 @@ bool CaveSpider::doHurtTarget(boost::shared_ptr<Entity> target)
             }
 
             boost::dynamic_pointer_cast<LivingEntity>(target)->addEffect(
-                new MobEffectInstance(MobEffects::POISON, duration * 20, 0),
-                boost::shared_ptr<Entity>());
+                new MobEffectInstance(MobEffects::POISON, duration * 20, 0), boost::shared_ptr<Entity>());
         }
 
         return true;
@@ -81,8 +79,7 @@ MobGroupData* CaveSpider::finalizeMobSpawn(const DifficultyInstance& difficulty,
     {
         boost::shared_ptr<AbstractSkeleton> rider;
 
-        if (mLevel->canSeeSky(BlockPos(mX, mY, mZ)) && !mLevel->isDay()
-            && mLevel->mRandom->rollPercentageChance(80)
+        if (mLevel->canSeeSky(BlockPos(mX, mY, mZ)) && !mLevel->isDay() && mLevel->mRandom->rollPercentageChance(80)
             && (mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS
                 || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_MOUNTAINS
                 || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS_SPIKES
@@ -93,8 +90,7 @@ MobGroupData* CaveSpider::finalizeMobSpawn(const DifficultyInstance& difficulty,
         {
             rider = boost::shared_ptr<Stray>(new Stray(mLevel));
         }
-        else if (mLevel->mRandom->rollPercentageChance(80)
-                 && mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::HELL)
+        else if (mLevel->mRandom->rollPercentageChance(80) && mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::HELL)
         {
             rider = boost::shared_ptr<WitherSkeleton>(new WitherSkeleton(mLevel));
         }

@@ -29,31 +29,175 @@ static const unsigned int FULL_LICENSE_MASK = 0xffffffffU;
 static unsigned int gGameRuleCRCTable[256];
 static bool gGameRuleCRCTableReady = false;
 
-const wchar_t* GameRuleManager::sAttributeNames[ConsoleGameRules::eGameRuleAttr_Count] = {
-    L"descriptionName", L"promptName", L"dataTag", L"enchantmentId", L"enchantmentLevel", L"itemId", L"quantity", L"auxValue", L"slot",
-    L"name", L"food", L"health", L"blockId", L"useCoords", L"seed", L"flatworld", L"filename", L"rot", L"data", L"block", L"entity",
-    L"facing", L"edgeBlock", L"fillBlock", L"skipAir", L"x", L"x0", L"x1", L"y", L"y0", L"y1", L"z", L"z0", L"z1", L"chunkX",
-    L"chunkZ", L"yRot", L"xRot", L"spawnX", L"spawnY", L"spawnZ", L"orientation", L"dimension", L"topblockId", L"biomeId", L"feature",
-    L"minCount", L"maxCount", L"weight", L"id", L"probability", L"method", L"hasBeenInCreative", L"cloudHeight", L"fogDistance", L"dayTime",
-    L"target", L"speed", L"dir", L"type", L"pass", L"for", L"random", L"blockAux", L"size", L"scale", L"freq", L"func", L"upper", L"lower",
-    L"dY", L"thickness", L"points", L"holeSize", L"variant", L"startHeight", L"pattern", L"colour", L"primary", L"laps", L"liftForceModifier",
-    L"staticLift", L"targetHeight", L"speedBoost", L"boostDirection", L"condition_type", L"condition_value_0", L"condition_value_1", L"beam_length",
-    L"beam_direction", L"string_IDS"
-};
+const wchar_t* GameRuleManager::sAttributeNames[ConsoleGameRules::eGameRuleAttr_Count] = {L"descriptionName",
+                                                                                          L"promptName",
+                                                                                          L"dataTag",
+                                                                                          L"enchantmentId",
+                                                                                          L"enchantmentLevel",
+                                                                                          L"itemId",
+                                                                                          L"quantity",
+                                                                                          L"auxValue",
+                                                                                          L"slot",
+                                                                                          L"name",
+                                                                                          L"food",
+                                                                                          L"health",
+                                                                                          L"blockId",
+                                                                                          L"useCoords",
+                                                                                          L"seed",
+                                                                                          L"flatworld",
+                                                                                          L"filename",
+                                                                                          L"rot",
+                                                                                          L"data",
+                                                                                          L"block",
+                                                                                          L"entity",
+                                                                                          L"facing",
+                                                                                          L"edgeBlock",
+                                                                                          L"fillBlock",
+                                                                                          L"skipAir",
+                                                                                          L"x",
+                                                                                          L"x0",
+                                                                                          L"x1",
+                                                                                          L"y",
+                                                                                          L"y0",
+                                                                                          L"y1",
+                                                                                          L"z",
+                                                                                          L"z0",
+                                                                                          L"z1",
+                                                                                          L"chunkX",
+                                                                                          L"chunkZ",
+                                                                                          L"yRot",
+                                                                                          L"xRot",
+                                                                                          L"spawnX",
+                                                                                          L"spawnY",
+                                                                                          L"spawnZ",
+                                                                                          L"orientation",
+                                                                                          L"dimension",
+                                                                                          L"topblockId",
+                                                                                          L"biomeId",
+                                                                                          L"feature",
+                                                                                          L"minCount",
+                                                                                          L"maxCount",
+                                                                                          L"weight",
+                                                                                          L"id",
+                                                                                          L"probability",
+                                                                                          L"method",
+                                                                                          L"hasBeenInCreative",
+                                                                                          L"cloudHeight",
+                                                                                          L"fogDistance",
+                                                                                          L"dayTime",
+                                                                                          L"target",
+                                                                                          L"speed",
+                                                                                          L"dir",
+                                                                                          L"type",
+                                                                                          L"pass",
+                                                                                          L"for",
+                                                                                          L"random",
+                                                                                          L"blockAux",
+                                                                                          L"size",
+                                                                                          L"scale",
+                                                                                          L"freq",
+                                                                                          L"func",
+                                                                                          L"upper",
+                                                                                          L"lower",
+                                                                                          L"dY",
+                                                                                          L"thickness",
+                                                                                          L"points",
+                                                                                          L"holeSize",
+                                                                                          L"variant",
+                                                                                          L"startHeight",
+                                                                                          L"pattern",
+                                                                                          L"colour",
+                                                                                          L"primary",
+                                                                                          L"laps",
+                                                                                          L"liftForceModifier",
+                                                                                          L"staticLift",
+                                                                                          L"targetHeight",
+                                                                                          L"speedBoost",
+                                                                                          L"boostDirection",
+                                                                                          L"condition_type",
+                                                                                          L"condition_value_0",
+                                                                                          L"condition_value_1",
+                                                                                          L"beam_length",
+                                                                                          L"beam_direction",
+                                                                                          L"string_IDS"};
 
-const wchar_t* GameRuleManager::sTagNames[ConsoleGameRules::eGameRuleType_Count] = {
-    L"", L"MapOptions", L"ApplySchematic", L"GenerateStructure", L"GenerateBox", L"PlaceBlock", L"PlaceContainer", L"PlaceSpawner",
-    L"BiomeOverride", L"StartFeature", L"AddItem", L"AddEnchantment", L"WeighedTreasureItem", L"RandomItemSet", L"DistributeItems",
-    L"WorldPosition", L"LevelRules", L"NamedArea", L"ActiveChunkArea", L"TargetArea", L"ScoreRing", L"ThermalArea", L"PlayerBoundsVolume",
-    L"Killbox", L"BlockLayer", L"UseBlock", L"CollectItem", L"CompleteAll", L"UpdatePlayer", L"OnGameStartSpawnPositions",
-    L"OnInitialiseWorld", L"SpawnPositionSet", L"PopulateContainer", L"DegradationSequence", L"RandomDissolveDegrade", L"DirectionalDegrade",
-    L"GrantPermissions", L"AllowIn", L"LayerGeneration", L"LayerAsset", L"AnyCombinationOf", L"CombinationDefinition", L"Variations", L"BlockDef",
-    L"LayerSize", L"UniformSize", L"RandomizeSize", L"LinearBlendSize", L"LayerShape", L"BasicShape", L"StarShape", L"PatchyShape",
-    L"RingShape", L"SpiralShape", L"LayerFill", L"BasicLayerFill", L"CurvedLayerFill", L"WarpedLayerFill", L"LayerTheme", L"NullTheme",
-    L"FilterTheme", L"ShaftsTheme", L"BasicPatchesTheme", L"BlockStackTheme", L"RainbowTheme", L"TerracottaTheme", L"FunctionPatchesTheme",
-    L"SimplePatchesTheme", L"CarpetTrapTheme", L"MushroomBlockTheme", L"TextureTheme", L"SchematicTheme", L"BlockCollisionException",
-    L"Powerup", L"Checkpoint", L"CustomBeacon", L"ActiveViewArea"
-};
+const wchar_t* GameRuleManager::sTagNames[ConsoleGameRules::eGameRuleType_Count] = {L"",
+                                                                                    L"MapOptions",
+                                                                                    L"ApplySchematic",
+                                                                                    L"GenerateStructure",
+                                                                                    L"GenerateBox",
+                                                                                    L"PlaceBlock",
+                                                                                    L"PlaceContainer",
+                                                                                    L"PlaceSpawner",
+                                                                                    L"BiomeOverride",
+                                                                                    L"StartFeature",
+                                                                                    L"AddItem",
+                                                                                    L"AddEnchantment",
+                                                                                    L"WeighedTreasureItem",
+                                                                                    L"RandomItemSet",
+                                                                                    L"DistributeItems",
+                                                                                    L"WorldPosition",
+                                                                                    L"LevelRules",
+                                                                                    L"NamedArea",
+                                                                                    L"ActiveChunkArea",
+                                                                                    L"TargetArea",
+                                                                                    L"ScoreRing",
+                                                                                    L"ThermalArea",
+                                                                                    L"PlayerBoundsVolume",
+                                                                                    L"Killbox",
+                                                                                    L"BlockLayer",
+                                                                                    L"UseBlock",
+                                                                                    L"CollectItem",
+                                                                                    L"CompleteAll",
+                                                                                    L"UpdatePlayer",
+                                                                                    L"OnGameStartSpawnPositions",
+                                                                                    L"OnInitialiseWorld",
+                                                                                    L"SpawnPositionSet",
+                                                                                    L"PopulateContainer",
+                                                                                    L"DegradationSequence",
+                                                                                    L"RandomDissolveDegrade",
+                                                                                    L"DirectionalDegrade",
+                                                                                    L"GrantPermissions",
+                                                                                    L"AllowIn",
+                                                                                    L"LayerGeneration",
+                                                                                    L"LayerAsset",
+                                                                                    L"AnyCombinationOf",
+                                                                                    L"CombinationDefinition",
+                                                                                    L"Variations",
+                                                                                    L"BlockDef",
+                                                                                    L"LayerSize",
+                                                                                    L"UniformSize",
+                                                                                    L"RandomizeSize",
+                                                                                    L"LinearBlendSize",
+                                                                                    L"LayerShape",
+                                                                                    L"BasicShape",
+                                                                                    L"StarShape",
+                                                                                    L"PatchyShape",
+                                                                                    L"RingShape",
+                                                                                    L"SpiralShape",
+                                                                                    L"LayerFill",
+                                                                                    L"BasicLayerFill",
+                                                                                    L"CurvedLayerFill",
+                                                                                    L"WarpedLayerFill",
+                                                                                    L"LayerTheme",
+                                                                                    L"NullTheme",
+                                                                                    L"FilterTheme",
+                                                                                    L"ShaftsTheme",
+                                                                                    L"BasicPatchesTheme",
+                                                                                    L"BlockStackTheme",
+                                                                                    L"RainbowTheme",
+                                                                                    L"TerracottaTheme",
+                                                                                    L"FunctionPatchesTheme",
+                                                                                    L"SimplePatchesTheme",
+                                                                                    L"CarpetTrapTheme",
+                                                                                    L"MushroomBlockTheme",
+                                                                                    L"TextureTheme",
+                                                                                    L"SchematicTheme",
+                                                                                    L"BlockCollisionException",
+                                                                                    L"Powerup",
+                                                                                    L"Checkpoint",
+                                                                                    L"CustomBeacon",
+                                                                                    L"ActiveViewArea"};
 
 GameRuleManager::GameRuleManager()
 {
@@ -144,10 +288,9 @@ void GameRuleManager::MakeCRCTable()
 
 unsigned int GameRuleManager::UpdateCRC(unsigned int crc, unsigned char* data, int length)
 {
-    static const unsigned char increments[56] = {
-        5,6,7,3,4,5,6,7,1,2,6,1,1,2,3,4,5,5,6,7,3,4,5,6,7,1,2,6,
-        1,1,2,3,4,5,5,6,7,3,4,5,6,7,7,5,4,7,5,4,7,5,4,7,6,5,4,3
-    };
+    static const unsigned char increments[56] = {5, 6, 7, 3, 4, 5, 6, 7, 1, 2, 6, 1, 1, 2, 3, 4, 5, 5, 6,
+                                                 7, 3, 4, 5, 6, 7, 1, 2, 6, 1, 1, 2, 3, 4, 5, 5, 6, 7, 3,
+                                                 4, 5, 6, 7, 7, 5, 4, 7, 5, 4, 7, 5, 4, 7, 6, 5, 4, 3};
     if (!gGameRuleCRCTableReady)
         MakeCRCTable();
     int n = 0;
@@ -181,7 +324,8 @@ unsigned int GameRuleManager::addLevelGenerationOptions(LevelGenerationOptions* 
     return generators->size() - 1;
 }
 
-void GameRuleManager::readAttributes(DataInputStream* input, std::vector<std::wstring>* names, GameRuleDefinition* definition)
+void GameRuleManager::readAttributes(DataInputStream* input, std::vector<std::wstring>* names,
+                                     GameRuleDefinition* definition)
 {
     unsigned int count = input->readInt();
     unsigned int i;
@@ -197,7 +341,9 @@ void GameRuleManager::readAttributes(DataInputStream* input, std::vector<std::ws
     definition->onAttributesAdded();
 }
 
-void GameRuleManager::readChildren(DataInputStream* input, std::vector<std::wstring>* names, boost::unordered_map<int, ConsoleGameRules::EGameRuleType>* types, GameRuleDefinition* definition)
+void GameRuleManager::readChildren(DataInputStream* input, std::vector<std::wstring>* names,
+                                   boost::unordered_map<int, ConsoleGameRules::EGameRuleType>* types,
+                                   GameRuleDefinition* definition)
 {
     unsigned int count = input->readInt();
     unsigned int i;
@@ -216,7 +362,8 @@ void GameRuleManager::readChildren(DataInputStream* input, std::vector<std::wstr
     }
 }
 
-unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsigned char* data, unsigned int size, StringTable* table)
+unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsigned char* data, unsigned int size,
+                                           StringTable* table)
 {
     arrayWithLength<unsigned char> inputData(data, size);
     ByteArrayInputStream bytes(inputData);
@@ -226,7 +373,8 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
     unsigned int expectedCRC = 0;
     if (version == 0)
     {
-        for (int i = 0; i < 14; ++i) input.readByte();
+        for (int i = 0; i < 14; ++i)
+            input.readByte();
     }
     else
     {
@@ -257,10 +405,12 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
             memcpy(expanded.data, compressed.data, expandedSize);
             break;
         case 1:
-            Compression::getCompression()->Decompress(expanded.data, &expanded.length, compressed.data, compressed.length);
+            Compression::getCompression()->Decompress(expanded.data, &expanded.length, compressed.data,
+                                                      compressed.length);
             break;
         default:
-            Compression::getCompression()->DecompressLZXRLE(expanded.data, &expanded.length, compressed.data, compressed.length);
+            Compression::getCompression()->DecompressLZXRLE(expanded.data, &expanded.length, compressed.data,
+                                                            compressed.length);
             break;
         }
         delete[] compressed.data;
@@ -302,8 +452,9 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
         int nameIndex = rules->readInt();
         ConsoleGameRules::EGameRuleType type = static_cast<ConsoleGameRules::EGameRuleType>(-1);
         boost::unordered_map<int, ConsoleGameRules::EGameRuleType>::iterator found = types.find(nameIndex);
-        if (found != types.end()) type = found->second;
-            GameRuleDefinition* definition = NULL;
+        if (found != types.end())
+            type = found->second;
+        GameRuleDefinition* definition = NULL;
         if (type == ConsoleGameRules::eGameRuleType_MapOptions)
         {
             addLevelGenerationOptions(options);
@@ -342,13 +493,15 @@ void GameRuleManager::loadGameRules(DLCPack* pack)
     StringTable* table = NULL;
     if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, std::wstring(L"languages.loc"), true, true))
     {
-        DLCLocalisationFile* localisation = static_cast<DLCLocalisationFile*>(pack->getFile(DLCManager::eDLCType_Localisation, std::wstring(L"languages.loc"), true, true));
+        DLCLocalisationFile* localisation = static_cast<DLCLocalisationFile*>(
+            pack->getFile(DLCManager::eDLCType_Localisation, std::wstring(L"languages.loc"), true, true));
         table = localisation->getStringTable();
     }
     int count = pack->getDLCItemsCount(DLCManager::eDLCType_GameRulesHeader);
     for (int i = 0; i < count; ++i)
     {
-        DLCGameRulesHeader* header = static_cast<DLCGameRulesHeader*>(pack->getFile(DLCManager::eDLCType_GameRulesHeader, i, true, true));
+        DLCGameRulesHeader* header = static_cast<DLCGameRulesHeader*>(
+            pack->getFile(DLCManager::eDLCType_GameRulesHeader, i, true, true));
         unsigned int size;
         unsigned char* data = header->getData(size);
         LevelGenerationOptions* options = new LevelGenerationOptions(pack);
@@ -379,7 +532,8 @@ void GameRuleManager::loadGameRules(LevelGenerationOptions* options, unsigned ch
     ByteArrayInputStream bytes(inputData);
     DataInputStream input(&bytes);
     input.readShort();
-    for (int i = 0; i < 8; ++i) input.readByte();
+    for (int i = 0; i < 8; ++i)
+        input.readByte();
     unsigned char decompressionType = input.readByte();
     unsigned int compressedSize = input.readInt();
     unsigned int expandedSize = input.readInt();
@@ -436,7 +590,8 @@ void GameRuleManager::writeRuleFile(DataOutputStream* output)
 {
     output->writeShort(2);
     output->writeByte(0);
-    for (int i = 0; i < 8; ++i) output->writeBoolean(false);
+    for (int i = 0; i < 8; ++i)
+        output->writeBoolean(false);
     boost::unordered_map<int, int> tags;
     {
         boost::unordered_set<int> tagTypes;
@@ -495,7 +650,8 @@ void GameRuleManager::saveGameRules(unsigned char** data, unsigned int* size)
     ByteArrayOutputStream bytes;
     DataOutputStream output(&bytes);
     output.writeShort(1);
-    for (int i = 0; i < 8; ++i) output.writeByte(0);
+    for (int i = 0; i < 8; ++i)
+        output.writeByte(0);
     output.writeByte(3);
     ByteArrayOutputStream rulesBytes;
     DataOutputStream rules(&rulesBytes);
@@ -520,7 +676,8 @@ void GameRuleManager::saveGameRules(unsigned char** data, unsigned int* size)
         writeRuleFile(&rules);
     }
     arrayWithLength<unsigned char> compressed(rulesBytes.mBuffer.length, false);
-    Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, rulesBytes.mBuffer.data, rulesBytes.mBuffer.length, NULL);
+    Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, rulesBytes.mBuffer.data,
+                                                  rulesBytes.mBuffer.length, NULL);
     output.writeInt(compressed.length);
     output.writeInt(rulesBytes.mBuffer.length);
     output.write(compressed);
@@ -596,6 +753,7 @@ LevelRuleset* GameRuleManager::getGameRuleDefinitions()
 
 const wchar_t* GameRuleManager::GetGameRulesString(const std::wstring& key)
 {
-    if (mGameRuleDefinitions != NULL && !key.empty()) return mGameRuleDefinitions->getString(key);
+    if (mGameRuleDefinitions != NULL && !key.empty())
+        return mGameRuleDefinitions->getString(key);
     return L"";
 }

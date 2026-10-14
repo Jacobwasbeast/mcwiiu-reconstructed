@@ -4,10 +4,7 @@
 
 #include "game/core/Shape.hpp"
 
-RingShape::RingShape(LayerShape* layer, float scale, float radius)
-    : scale(scale)
-    , radius(radius)
-    , layer(layer)
+RingShape::RingShape(LayerShape* layer, float scale, float radius) : scale(scale), radius(radius), layer(layer)
 {
 }
 

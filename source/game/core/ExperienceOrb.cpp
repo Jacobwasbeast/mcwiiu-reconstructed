@@ -21,8 +21,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
-ExperienceOrb::ExperienceOrb(Level* level, double x, double y, double z, int value)
-    : Entity(level, true)
+ExperienceOrb::ExperienceOrb(Level* level, double x, double y, double z, int value) : Entity(level, true)
 {
     _init();
     setSize(0.5f, 0.5f);
@@ -34,8 +33,7 @@ ExperienceOrb::ExperienceOrb(Level* level, double x, double y, double z, int val
     mValue = value;
 }
 
-ExperienceOrb::ExperienceOrb(Level* level)
-    : Entity(level, true)
+ExperienceOrb::ExperienceOrb(Level* level) : Entity(level, true)
 {
     _init();
     setSize(0.25f, 0.25f);
@@ -185,7 +183,10 @@ void ExperienceOrb::tick()
     float friction = 0.98f;
     if (mOnGround)
     {
-        friction = mLevel->getBlockState(BlockPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY) - 1, Mth::floor(mZ)))->getBlock()->mFriction * 0.98f;
+        friction = mLevel->getBlockState(BlockPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY) - 1, Mth::floor(mZ)))
+                       ->getBlock()
+                       ->mFriction
+                   * 0.98f;
     }
 
     mXd *= friction;
@@ -263,8 +264,7 @@ void ExperienceOrb::playerTouch(boost::shared_ptr<Player> player)
         player->mTakeXpDelay = 2;
         player->take(shared_from_this(), 1);
 
-        boost::shared_ptr<ItemInstance> item = EnchantmentHelper::getRandomItemWith(
-            Enchantments::MENDING, player);
+        boost::shared_ptr<ItemInstance> item = EnchantmentHelper::getRandomItemWith(Enchantments::MENDING, player);
         if (!item->isEmpty() && item->isDamaged())
         {
             int repaired = std::min(xpToDurability(mValue), item->getDamageValue());

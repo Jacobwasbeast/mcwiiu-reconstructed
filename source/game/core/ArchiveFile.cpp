@@ -16,7 +16,8 @@ ArchiveFile::ArchiveFile(File file)
     m_cachedData = false;
     m_data = NULL;
     File::operator=(file);
-    if (!file.exists()) gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load archive file", 0x54);
+    if (!file.exists())
+        gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load archive file", 0x54);
     FileInputStream input(file);
     DataInputStream stream(&input);
     _readHeader(&stream);
@@ -94,8 +95,8 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
     else
     {
         char filename[256];
-        int file = CreateFileA(wstringtofilename(getPath(), filename), GENERIC_READ, 0, NULL,
-                               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+        int file = CreateFileA(wstringtofilename(getPath(), filename), GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                               FILE_ATTRIBUTE_NORMAL, 0);
         if (file != INVALID_HANDLE_VALUE)
         {
             if (SetFilePointer(file, metadata->offset, NULL, 0) != 0)
@@ -119,8 +120,8 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
         }
         else
         {
-            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load archive %ls to find %ls", 0xFD,
-                                getPath().c_str(), name.c_str());
+            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load archive %ls to find %ls", 0xFD, getPath().c_str(),
+                                name.c_str());
         }
     }
     if (metadata->compressed && result.data != NULL)
@@ -141,7 +142,8 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
 
 unsigned int ArchiveFile::getFileSize(const std::wstring& name)
 {
-    if (!hasFile(name)) return static_cast<unsigned int>(-1);
+    if (!hasFile(name))
+        return static_cast<unsigned int>(-1);
     return m_files.at(name)->size;
 }
 
@@ -159,7 +161,8 @@ std::vector<std::wstring> ArchiveFile::getFileList()
 
 void ArchiveFile::dereferenceCachedData()
 {
-    if (m_cachedData && m_data != NULL) delete[] m_data;
+    if (m_cachedData && m_data != NULL)
+        delete[] m_data;
     m_data = NULL;
     m_cachedData = false;
 }

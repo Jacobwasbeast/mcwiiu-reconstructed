@@ -10,8 +10,8 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-InfoTask::InfoTask(Tutorial* tutorial, int descriptionId, int promptId, bool addConstraint,
-                   int completionId, ETelemetryChallenges telemetryChallenge)
+InfoTask::InfoTask(Tutorial* tutorial, int descriptionId, int promptId, bool addConstraint, int completionId,
+                   ETelemetryChallenges telemetryChallenge)
     : TutorialTask(tutorial, descriptionId, false, NULL, true, false, false),
       completedInputs()
 {
@@ -37,8 +37,8 @@ void InfoTask::sendTelemetry()
             tutorial->setCompleted(388);
         }
 
-        telemetryManagerInstance->RecordEnemyKilledOrOvercome(
-            minecraft->mPlayer->mUserIndex, 0, 0, 0, 0, 0, 0, telemetryChallenge);
+        telemetryManagerInstance->RecordEnemyKilledOrOvercome(minecraft->mPlayer->mUserIndex, 0, 0, 0, 0, 0, 0,
+                                                              telemetryChallenge);
     }
 }
 
@@ -64,8 +64,7 @@ bool InfoTask::isCompleted()
 
     if (gConsoleUIController.GetMenuDisplayed(tutorial->playerId))
     {
-        for (boost::unordered_map<int, bool>::iterator it = completedInputs.begin();
-             it != completedInputs.end(); ++it)
+        for (boost::unordered_map<int, bool>::iterator it = completedInputs.begin(); it != completedInputs.end(); ++it)
         {
             if (!it->second)
             {
@@ -76,13 +75,12 @@ bool InfoTask::isCompleted()
     }
     else
     {
-        for (boost::unordered_map<int, bool>::iterator it = completedInputs.begin();
-             it != completedInputs.end(); ++it)
+        for (boost::unordered_map<int, bool>::iterator it = completedInputs.begin(); it != completedInputs.end(); ++it)
         {
             if (!it->second)
             {
-                if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
-                                       static_cast<unsigned char>(it->first), false) > 0)
+                if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex, static_cast<unsigned char>(it->first), false)
+                    > 0)
                 {
                     it->second = true;
                     result = true;
@@ -124,8 +122,7 @@ void InfoTask::handleUIInput(int input)
 {
     if (activated)
     {
-        for (boost::unordered_map<int, bool>::iterator it = completedInputs.begin();
-             it != completedInputs.end(); ++it)
+        for (boost::unordered_map<int, bool>::iterator it = completedInputs.begin(); it != completedInputs.end(); ++it)
         {
             if (input == it->first)
             {

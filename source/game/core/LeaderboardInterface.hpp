@@ -14,9 +14,13 @@ public:
 
     void tick();
 
-    void ReadStats_Friends(LeaderboardReadListener* pReadListener, int iUserIndex, LeaderboardManager::EStatsType eStatsType, PlayerUID uid, unsigned int uiStartRank, unsigned int uiNumRows);
-    void ReadStats_MyScore(LeaderboardReadListener* pReadListener, int iUserIndex, LeaderboardManager::EStatsType eStatsType, PlayerUID uid, unsigned int uiNumRows);
-    void ReadStats_TopRank(LeaderboardReadListener* pReadListener, int iUserIndex, LeaderboardManager::EStatsType eStatsType, unsigned int uiStartRank, unsigned int uiNumRows);
+    void ReadStats_Friends(LeaderboardReadListener* pReadListener, int iUserIndex,
+                           LeaderboardManager::EStatsType eStatsType, PlayerUID uid, unsigned int uiStartRank,
+                           unsigned int uiNumRows);
+    void ReadStats_MyScore(LeaderboardReadListener* pReadListener, int iUserIndex,
+                           LeaderboardManager::EStatsType eStatsType, PlayerUID uid, unsigned int uiNumRows);
+    void ReadStats_TopRank(LeaderboardReadListener* pReadListener, int iUserIndex,
+                           LeaderboardManager::EStatsType eStatsType, unsigned int uiStartRank, unsigned int uiNumRows);
 
     void CancelOperation();
 

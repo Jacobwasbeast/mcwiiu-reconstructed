@@ -28,6 +28,7 @@ public:
     bool shouldBurn();
     std::vector<unsigned long long>* getEntityTypesToIgnoreCollisionsWith();
     unsigned long long GetType();
+
 private:
     static const EntityDataAccessor<bool>* DATA_DANGEROUS;
 };

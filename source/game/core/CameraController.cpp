@@ -142,14 +142,16 @@ double CameraController::MapTimeToCurveDistance(std::vector<double>& curveLength
     return ((double)mid + fraction) / 100.0;
 }
 
-void CameraController::insertNode(int index, double x, double y, double z, double xRot, double yRot, double zRot, float time)
+void CameraController::insertNode(int index, double x, double y, double z, double xRot, double yRot, double zRot,
+                                  float time)
 {
     Vec3* position = Vec3::newPermanent(x, y, z);
     if (index == 0)
     {
         SplineNode node(position, Vec3::newPermanent(xRot, yRot, zRot), time);
         mNodes.insert(mNodes.begin(), node);
-        Vec3* control = Vec3::newPermanent(position->add(mPlayer->calculateViewVector((float)xRot, (float)yRot)->multiply(4.0f)));
+        Vec3* control = Vec3::newPermanent(
+            position->add(mPlayer->calculateViewVector((float)xRot, (float)yRot)->multiply(4.0f)));
         SplineNode controlNode(control, Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f);
         std::vector<SplineNode>::iterator next = mNodes.begin();
         ++next;
@@ -161,7 +163,8 @@ void CameraController::insertNode(int index, double x, double y, double z, doubl
             if (controlLength > 4.0)
                 controlLength = 4.0;
             Vec3* nextPosition = nodes[2].position;
-            Vec3* nextControl = Vec3::newPermanent(nextPosition->add(nodes[3].position->vectorTo(nextPosition)->normalize()->multiply(controlLength)));
+            Vec3* nextControl = Vec3::newPermanent(
+                nextPosition->add(nodes[3].position->vectorTo(nextPosition)->normalize()->multiply(controlLength)));
             SplineNode nextControlNode(nextControl, Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f);
             mNodes.insert(mNodes.begin() + 2, nextControlNode);
             CalculateCurveLengths();
@@ -175,7 +178,8 @@ void CameraController::insertNode(int index, double x, double y, double z, doubl
         if (controlLength > 4.0)
             controlLength = 4.0;
         Vec3* firstControl = Vec3::newPermanent(position->add(direction->normalize()->multiply(controlLength)));
-        Vec3* secondControl = Vec3::newPermanent(position->add(firstControl->vectorTo(position)->normalize()->multiply(controlLength)));
+        Vec3* secondControl = Vec3::newPermanent(
+            position->add(firstControl->vectorTo(position)->normalize()->multiply(controlLength)));
         SplineNode firstControlNode(firstControl, Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f);
         mNodes.insert(mNodes.begin() + index, firstControlNode);
         SplineNode node(position, Vec3::newPermanent(xRot, yRot, zRot), time);

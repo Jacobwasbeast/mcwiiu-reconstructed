@@ -2,8 +2,7 @@
 
 #include "game/core/DamageEvent.hpp"
 
-TotalKillsStatTracker::TotalKillsStatTracker(const StatsUID& statsUID)
-    : StatTracker<unsigned int>(statsUID, 0)
+TotalKillsStatTracker::TotalKillsStatTracker(const StatsUID& statsUID) : StatTracker<unsigned int>(statsUID, 0)
 {
 }
 

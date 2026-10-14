@@ -1,7 +1,6 @@
 #include "game/core/ClientVoteables.hpp"
 
-ClientVoteables::ClientVoteables()
-    : Voteables()
+ClientVoteables::ClientVoteables() : Voteables()
 {
     init();
 }

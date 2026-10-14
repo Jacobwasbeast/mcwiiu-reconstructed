@@ -17,8 +17,8 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<bool>* BubbleColumnSegment::DRAG =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"drag"));
+AbstractProperty<bool>* BubbleColumnSegment::DRAG = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"drag"));
 
 static const int BLOCK_ID_AIR = 0;
 static const int BLOCK_ID_WATER = 9;
@@ -26,8 +26,7 @@ static const int BLOCK_ID_SOUL_SAND = 88;
 static const int BLOCK_ID_MAGMA = 213;
 static const int BLOCK_ID_BUBBLE_COLUMN_SEGMENT = 272;
 
-BubbleColumnSegment::BubbleColumnSegment(Material* material)
-    : Block(material)
+BubbleColumnSegment::BubbleColumnSegment(Material* material) : Block(material)
 {
     DerivedInit();
     registerDefaultState(defaultBlockState()->setValue(DRAG, true));
@@ -62,16 +61,12 @@ void BubbleColumnSegment::entityInside(Level* level, const BlockPos& pos, const 
             ServerLevel* serverLevel = static_cast<ServerLevel*>(level);
             for (int i = 0; i < 2; ++i)
             {
-                serverLevel->sendParticles(PARTICLE_SPLASH,
-                                           (double)((float)pos.x + level->mRandom->nextFloat()),
-                                           (double)(pos.y + 1),
-                                           (double)((float)pos.z + level->mRandom->nextFloat()),
-                                           1, 0.0, 0.0, 0.0, 1.0, arrayWithLength<int>());
-                serverLevel->sendParticles(PARTICLE_BUBBLE,
-                                           (double)((float)pos.x + level->mRandom->nextFloat()),
-                                           (double)(pos.y + 1),
-                                           (double)((float)pos.z + level->mRandom->nextFloat()),
-                                           1, 0.0, 0.01, 0.0, 0.2, arrayWithLength<int>());
+                serverLevel->sendParticles(PARTICLE_SPLASH, (double)((float)pos.x + level->mRandom->nextFloat()),
+                                           (double)(pos.y + 1), (double)((float)pos.z + level->mRandom->nextFloat()), 1,
+                                           0.0, 0.0, 0.0, 1.0, arrayWithLength<int>());
+                serverLevel->sendParticles(PARTICLE_BUBBLE, (double)((float)pos.x + level->mRandom->nextFloat()),
+                                           (double)(pos.y + 1), (double)((float)pos.z + level->mRandom->nextFloat()), 1,
+                                           0.0, 0.01, 0.0, 0.2, arrayWithLength<int>());
             }
         }
     }
@@ -192,17 +187,15 @@ void BubbleColumnSegment::animateTick(const BlockState* state, Level* level, con
         if (aboveState->getBlock() == Blocks::water || aboveState->getBlock() == Blocks::air
             || level->mRandom->nextInt(3) == 0)
         {
-            level->addAlwaysVisibleParticle(ePARTICLE_CURRENT_DOWN, pos.x + 0.3, pos.y + 0.8,
-                                            pos.z + 0.3, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            level->addAlwaysVisibleParticle(ePARTICLE_CURRENT_DOWN, pos.x + 0.3, pos.y + 0.8, pos.z + 0.3, 0.0, 0.0,
+                                            0.0, arrayWithLength<int>());
         }
 
         if (random->nextInt(200) == 0)
         {
             level->playLocalSound((double)pos.x, (double)pos.y, (double)pos.z,
-                                  SoundEvents::BUBBLE_COLUMN_WHIRLPOOL_AMBIENT,
-                                  SoundSource::eSoundSource_Blocks,
-                                  0.2f + random->nextFloat() * 0.2f,
-                                  0.9f + random->nextFloat() * 0.15f, false, 16.0f);
+                                  SoundEvents::BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, SoundSource::eSoundSource_Blocks,
+                                  0.2f + random->nextFloat() * 0.2f, 0.9f + random->nextFloat() * 0.15f, false, 16.0f);
         }
     }
     else
@@ -211,28 +204,25 @@ void BubbleColumnSegment::animateTick(const BlockState* state, Level* level, con
         if (aboveState->getBlock() == Blocks::water || aboveState->getBlock() == Blocks::air
             || level->mRandom->nextInt(4) == 0)
         {
-            level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE, pos.x + 0.5, (double)pos.y,
-                                            pos.z + 0.5, 0.0, 0.04, 0.0, arrayWithLength<int>());
-            level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE,
-                                            (double)((float)pos.x + random->nextFloat()),
+            level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE, pos.x + 0.5, (double)pos.y, pos.z + 0.5, 0.0, 0.04, 0.0,
+                                            arrayWithLength<int>());
+            level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE, (double)((float)pos.x + random->nextFloat()),
                                             (double)((float)pos.y + random->nextFloat()),
-                                            (double)((float)pos.z + random->nextFloat()),
-                                            0.0, 0.04, 0.0, arrayWithLength<int>());
+                                            (double)((float)pos.z + random->nextFloat()), 0.0, 0.04, 0.0,
+                                            arrayWithLength<int>());
         }
 
         if (random->nextInt(200) == 0)
         {
             level->playLocalSound((double)pos.x, (double)pos.y, (double)pos.z,
-                                  SoundEvents::BUBBLE_COLUMN_UPWARDS_AMBIENT,
-                                  SoundSource::eSoundSource_Blocks,
-                                  0.2f + random->nextFloat() * 0.2f,
-                                  0.9f + random->nextFloat() * 0.15f, false, 16.0f);
+                                  SoundEvents::BUBBLE_COLUMN_UPWARDS_AMBIENT, SoundSource::eSoundSource_Blocks,
+                                  0.2f + random->nextFloat() * 0.2f, 0.9f + random->nextFloat() * 0.15f, false, 16.0f);
         }
     }
 }
 
-void BubbleColumnSegment::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                          Block* block, const BlockPos& fromPos)
+void BubbleColumnSegment::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                          const BlockPos& fromPos)
 {
     level->addToTickNextTick(pos, this, getTickDelay(level));
 }
@@ -259,8 +249,7 @@ bool BubbleColumnSegment::canSurvive(Level* level, const BlockPos& pos, const Bl
         bool down = belowId == BLOCK_ID_MAGMA;
         if (down != getFlowDownward(level->getBlockState(pos)))
         {
-            const BlockState* bubbleState =
-                Blocks::bubble_column_segment->defaultBlockState()->setValue(DRAG, down);
+            const BlockState* bubbleState = Blocks::bubble_column_segment->defaultBlockState()->setValue(DRAG, down);
             level->setBlock(pos, bubbleState, Block::UPDATE_CLIENTS, false);
         }
 
@@ -342,6 +331,6 @@ EPistonPushReaction BubbleColumnSegment::getPistonPushReaction(const BlockState*
 
 BlockStateDefinition* BubbleColumnSegment::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { DRAG };
+    static const Property* properties[1] = {DRAG};
     return new BlockStateDefinition(this, properties, 1);
 }

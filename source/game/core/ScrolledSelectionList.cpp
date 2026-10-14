@@ -2,11 +2,26 @@
 
 #include "game/core/Button.hpp"
 
-ScrolledSelectionList::ScrolledSelectionList(Minecraft* minecraft, int width, int height, int top, int bottom, int slotHeight)
-    : minecraft(minecraft), width(width), height(height), top(top), bottom(bottom), right(width), left(0),
-      slotHeight(slotHeight), scrollUpButtonId(0), scrollDownButtonId(0), initialClickY(0.0f),
-      scrollMultiplier(0.0f), amountScrolled(0.0f), selectedElement(0), lastClicked(0),
-      renderSelection(false), renderHeaderEnabled(false), headerPadding(0)
+ScrolledSelectionList::ScrolledSelectionList(Minecraft* minecraft, int width, int height, int top, int bottom,
+                                             int slotHeight)
+    : minecraft(minecraft),
+      width(width),
+      height(height),
+      top(top),
+      bottom(bottom),
+      right(width),
+      left(0),
+      slotHeight(slotHeight),
+      scrollUpButtonId(0),
+      scrollDownButtonId(0),
+      initialClickY(0.0f),
+      scrollMultiplier(0.0f),
+      amountScrolled(0.0f),
+      selectedElement(0),
+      lastClicked(0),
+      renderSelection(false),
+      renderHeaderEnabled(false),
+      headerPadding(0)
 {
 }
 

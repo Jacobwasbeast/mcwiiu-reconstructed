@@ -39,8 +39,7 @@ ConsoleSchematicFile::PasteData::PasteData()
 {
 }
 
-ConsoleSchematicFile::ConsoleSchematicFile()
-    : mOrigin(0, 0, 0)
+ConsoleSchematicFile::ConsoleSchematicFile() : mOrigin(0, 0, 0)
 {
     mWidth = 0;
     mHeight = 0;
@@ -150,7 +149,8 @@ unsigned short ConsoleSchematicFile::rotateElementValue(unsigned short element, 
     return (unsigned short)Block::getElementId(state->rotate(blockRotation));
 }
 
-void ConsoleSchematicFile::chunkCoordToSchematicCoord(AABB* box, int x, int z, ESchematicRotation rotation, ESchematicMirror mirror, int& sx, int& sz)
+void ConsoleSchematicFile::chunkCoordToSchematicCoord(AABB* box, int x, int z, ESchematicRotation rotation,
+                                                      ESchematicMirror mirror, int& sx, int& sz)
 {
     switch (rotation)
     {
@@ -226,7 +226,8 @@ void ConsoleSchematicFile::chunkCoordToSchematicCoord(AABB* box, int x, int z, E
     }
 }
 
-void ConsoleSchematicFile::schematicCoordToChunkCoord(AABB* box, double x, double z, ESchematicRotation rotation, ESchematicMirror mirror, double& cx, double& cz)
+void ConsoleSchematicFile::schematicCoordToChunkCoord(AABB* box, double x, double z, ESchematicRotation rotation,
+                                                      ESchematicMirror mirror, double& cx, double& cz)
 {
     switch (rotation)
     {
@@ -302,10 +303,11 @@ void ConsoleSchematicFile::schematicCoordToChunkCoord(AABB* box, double x, doubl
     }
 }
 
-const Direction* ConsoleSchematicFile::HandleRotation(const Direction* direction, ESchematicMirror mirror, ESchematicRotation rotation)
+const Direction* ConsoleSchematicFile::HandleRotation(const Direction* direction, ESchematicMirror mirror,
+                                                      ESchematicRotation rotation)
 {
-    if ((mirror == eSchematicMirror_LeftRight && (direction == Direction::NORTH || direction == Direction::SOUTH)) ||
-        (mirror == eSchematicMirror_Both && (direction == Direction::EAST || direction == Direction::WEST)))
+    if ((mirror == eSchematicMirror_LeftRight && (direction == Direction::NORTH || direction == Direction::SOUTH))
+        || (mirror == eSchematicMirror_Both && (direction == Direction::EAST || direction == Direction::WEST)))
     {
         direction = direction->getOpposite();
     }
@@ -321,16 +323,27 @@ const Direction* ConsoleSchematicFile::HandleRotation(const Direction* direction
     return direction;
 }
 
-int ConsoleSchematicFile::calcBlockIdsSizeLegacy(int x, int y, int z) { return x * y * z; }
-int ConsoleSchematicFile::calcHalfByteDataSizeLegacy(int x, int y, int z) { return x * ((y + 1) / 2) * z; }
-int ConsoleSchematicFile::calcFullDataSizeLegacy(int x, int y, int z) { return calcBlockIdsSizeLegacy(x, y, z) + calcHalfByteDataSizeLegacy(x, y, z); }
-int ConsoleSchematicFile::calculateFullElementSize(int x, int y, int z) { return x * y * z; }
+int ConsoleSchematicFile::calcBlockIdsSizeLegacy(int x, int y, int z)
+{
+    return x * y * z;
+}
+int ConsoleSchematicFile::calcHalfByteDataSizeLegacy(int x, int y, int z)
+{
+    return x * ((y + 1) / 2) * z;
+}
+int ConsoleSchematicFile::calcFullDataSizeLegacy(int x, int y, int z)
+{
+    return calcBlockIdsSizeLegacy(x, y, z) + calcHalfByteDataSizeLegacy(x, y, z);
+}
+int ConsoleSchematicFile::calculateFullElementSize(int x, int y, int z)
+{
+    return x * y * z;
+}
 
 std::wstring ConsoleSchematicFile::formatFilenameWithExt(const std::wstring& filename)
 {
     wchar_t extension[] = L".sch";
-    if (filename.size() != 0 &&
-        std::wstring(filename, filename.size() - 4, filename.size()).compare(extension) != 0)
+    if (filename.size() != 0 && std::wstring(filename, filename.size() - 4, filename.size()).compare(extension) != 0)
     {
         return filename + extension;
     }
@@ -351,13 +364,15 @@ void ConsoleSchematicFile::save(DataOutputStream* output)
     output->writeInt(mDepth);
 
     arrayWithLength<unsigned char> compressed(mElements.length, true);
-    Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, mElements.data, mElements.length, 0);
+    Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, mElements.data, mElements.length,
+                                                  0);
     output->writeInt(compressed.length);
     output->write(compressed);
     delete[] compressed.data;
 
     arrayWithLength<unsigned char> extraCompressed(mExtraElements.length, true);
-    Compression::getCompression()->CompressLZXRLE(extraCompressed.data, &extraCompressed.length, mElements.data, mElements.length, 0);
+    Compression::getCompression()->CompressLZXRLE(extraCompressed.data, &extraCompressed.length, mElements.data,
+                                                  mElements.length, 0);
     output->writeInt(extraCompressed.length);
     output->write(extraCompressed);
     delete[] extraCompressed.data;
@@ -369,7 +384,8 @@ void ConsoleSchematicFile::save_tags(DataOutputStream* output)
     CompoundTag* root = new CompoundTag();
     ListTag* blockEntities = new ListTag();
     root->put(L"TileEntities", blockEntities);
-    for (std::vector<std::pair<BlockPos*, CompoundTag*> >::iterator it = mBlockEntities.begin(); it != mBlockEntities.end(); ++it)
+    for (std::vector<std::pair<BlockPos*, CompoundTag*> >::iterator it = mBlockEntities.begin();
+         it != mBlockEntities.end(); ++it)
     {
         blockEntities->add(it->second->copy());
     }
@@ -426,16 +442,20 @@ void ConsoleSchematicFile::load(DataInputStream* input)
                 mData = arrayWithLength<unsigned char>(legacySize, true);
                 if (compression == 1)
                 {
-                    Compression::getCompression()->DecompressRLE(data.data, &data.length, compressed.data, compressed.length);
+                    Compression::getCompression()->DecompressRLE(data.data, &data.length, compressed.data,
+                                                                 compressed.length);
                 }
                 else if (compression == 3)
                 {
-                    Compression::getCompression()->DecompressLZXRLE(data.data, &data.length, compressed.data, compressed.length);
+                    Compression::getCompression()->DecompressLZXRLE(data.data, &data.length, compressed.data,
+                                                                    compressed.length);
                 }
                 else
                 {
-                    Compression::getCompression()->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
-                    Compression::getCompression()->DecompressLZXRLE(data.data, &data.length, compressed.data, compressed.length);
+                    Compression::getCompression()->m_decompressionType = static_cast<Compression::ECompressionTypes>(
+                        compression);
+                    Compression::getCompression()->DecompressLZXRLE(data.data, &data.length, compressed.data,
+                                                                    compressed.length);
                     Compression::getCompression()->m_decompressionType = Compression::eCompressionTypes_Zlib;
                 }
                 delete[] compressed.data;
@@ -476,10 +496,12 @@ void ConsoleSchematicFile::load(DataInputStream* input)
             unsigned int count = calculateFullElementSize(mWidth, mHeight, mDepth);
             if (compression == 0)
             {
-                mElements = arrayWithLength<unsigned short>(reinterpret_cast<unsigned short*>(compressed.data), compressed.length);
+                mElements = arrayWithLength<unsigned short>(reinterpret_cast<unsigned short*>(compressed.data),
+                                                            compressed.length);
                 arrayWithLength<unsigned char> extra(static_cast<unsigned int>(input->readInt()), true);
                 input->read(extra);
-                mExtraElements = arrayWithLength<unsigned short>(reinterpret_cast<unsigned short*>(extra.data), extra.length);
+                mExtraElements = arrayWithLength<unsigned short>(reinterpret_cast<unsigned short*>(extra.data),
+                                                                 extra.length);
             }
             else
             {
@@ -488,16 +510,20 @@ void ConsoleSchematicFile::load(DataInputStream* input)
                 mData = arrayWithLength<unsigned char>(count, true);
                 if (compression == 1)
                 {
-                    Compression::getCompression()->DecompressRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
+                    Compression::getCompression()->DecompressRLE(mElements.data, &mElements.length, compressed.data,
+                                                                 compressed.length);
                 }
                 else if (compression == 3)
                 {
-                    Compression::getCompression()->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
+                    Compression::getCompression()->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data,
+                                                                    compressed.length);
                 }
                 else
                 {
-                    Compression::getCompression()->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
-                    Compression::getCompression()->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
+                    Compression::getCompression()->m_decompressionType = static_cast<Compression::ECompressionTypes>(
+                        compression);
+                    Compression::getCompression()->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data,
+                                                                    compressed.length);
                     Compression::getCompression()->m_decompressionType = Compression::eCompressionTypes_Zlib;
                 }
                 mElements.length >>= 1;
@@ -507,16 +533,20 @@ void ConsoleSchematicFile::load(DataInputStream* input)
                 mExtraElements = arrayWithLength<unsigned short>(count, true);
                 if (compression == 1)
                 {
-                    Compression::getCompression()->DecompressRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
+                    Compression::getCompression()->DecompressRLE(mExtraElements.data, &mExtraElements.length,
+                                                                 extra.data, extra.length);
                 }
                 else if (compression == 3)
                 {
-                    Compression::getCompression()->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
+                    Compression::getCompression()->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length,
+                                                                    extra.data, extra.length);
                 }
                 else
                 {
-                    Compression::getCompression()->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
-                    Compression::getCompression()->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
+                    Compression::getCompression()->m_decompressionType = static_cast<Compression::ECompressionTypes>(
+                        compression);
+                    Compression::getCompression()->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length,
+                                                                    extra.data, extra.length);
                     Compression::getCompression()->m_decompressionType = Compression::eCompressionTypes_Zlib;
                 }
                 mExtraElements.length >>= 1;
@@ -525,7 +555,8 @@ void ConsoleSchematicFile::load(DataInputStream* input)
         }
         mBlockEntities.clear();
 
-        CompoundTag* tags = Minecraft::GetInstance()->getFixerUpper()->updateData(DataFixTypes::eDataFixTypes_Chunk, NbtIo::read(input));
+        CompoundTag* tags = Minecraft::GetInstance()->getFixerUpper()->updateData(DataFixTypes::eDataFixTypes_Chunk,
+                                                                                  NbtIo::read(input));
         ListTag* tileEntities = tags->getList(L"TileEntities", Tag::TAG_COMPOUND);
         if (tileEntities != 0)
         {
@@ -573,14 +604,16 @@ void ConsoleSchematicFile::load(DataInputStream* input)
                 int z = tag->getInt(L"Z");
                 if (!tag->contains(L"X2"))
                 {
-                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(convWstringToString(tag->getString(L"Name")), BlockPos(x, y, z)));
+                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(
+                        convWstringToString(tag->getString(L"Name")), BlockPos(x, y, z)));
                 }
                 else
                 {
                     int x2 = tag->getInt(L"X2");
                     int y2 = tag->getInt(L"Y2");
                     int z2 = tag->getInt(L"Z2");
-                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(convWstringToString(tag->getString(L"Name")), BlockPos(x, y, z), BlockPos(x2, y2, z2)));
+                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(
+                        convWstringToString(tag->getString(L"Name")), BlockPos(x, y, z), BlockPos(x2, y2, z2)));
                 }
             }
         }
@@ -589,7 +622,9 @@ void ConsoleSchematicFile::load(DataInputStream* input)
     mUndoReady = true;
 }
 
-void ConsoleSchematicFile::setElements(arrayWithLength<unsigned short>& out, arrayWithLength<unsigned short> in, ESchematicRotation rotation, ESchematicMirror mirror, int x0, int y0, int z0, int x1, int y1, int z1, int& count, bool includeAir, bool includeSpecial)
+void ConsoleSchematicFile::setElements(arrayWithLength<unsigned short>& out, arrayWithLength<unsigned short> in,
+                                       ESchematicRotation rotation, ESchematicMirror mirror, int x0, int y0, int z0,
+                                       int x1, int y1, int z1, int& count, bool includeAir, bool includeSpecial)
 {
     bool hasLowY = false;
     bool hasHighY = false;
@@ -670,14 +705,16 @@ void ConsoleSchematicFile::setElements(arrayWithLength<unsigned short>& out, arr
                         unsigned short element = in.data[count];
                         if (CanPasteBlock(element, includeAir, includeSpecial))
                         {
-                            out.data[(unsigned int)(((x << 11) | (z << 7) | y) + 0x8000)] = rotateElementValue(element, rotation);
+                            out.data[(unsigned int)(((x << 11) | (z << 7) | y) + 0x8000)] = rotateElementValue(
+                                element, rotation);
                         }
                         --count;
                     }
                 }
                 else if (includeAir && includeSpecial && rotation == eSchematicRotation_0)
                 {
-                    System::arraycopy(in, count, &out, (unsigned int)(((x << 11) | (z << 7) | highYStart) + 0x8000), highCount);
+                    System::arraycopy(in, count, &out, (unsigned int)(((x << 11) | (z << 7) | highYStart) + 0x8000),
+                                      highCount);
                     count += highCount;
                 }
                 else
@@ -687,7 +724,8 @@ void ConsoleSchematicFile::setElements(arrayWithLength<unsigned short>& out, arr
                         unsigned short element = in.data[count];
                         if (CanPasteBlock(element, includeAir, includeSpecial))
                         {
-                            out.data[(unsigned int)(((x << 11) | (z << 7) | y) + 0x8000)] = rotateElementValue(element, rotation);
+                            out.data[(unsigned int)(((x << 11) | (z << 7) | y) + 0x8000)] = rotateElementValue(
+                                element, rotation);
                         }
                         ++count;
                     }
@@ -703,7 +741,10 @@ void ConsoleSchematicFile::setElements(arrayWithLength<unsigned short>& out, arr
     PIXEndNamedEvent();
 }
 
-void ConsoleSchematicFile::pasteIntoArray(arrayWithLength<unsigned char>& destination, arrayWithLength<unsigned char> source, arrayWithLength<unsigned short> elements, int elementIndex, int sourceIndex, int destinationIndex, bool swapNibbles, bool includeAir, bool includeSpecial)
+void ConsoleSchematicFile::pasteIntoArray(arrayWithLength<unsigned char>& destination,
+                                          arrayWithLength<unsigned char> source,
+                                          arrayWithLength<unsigned short> elements, int elementIndex, int sourceIndex,
+                                          int destinationIndex, bool swapNibbles, bool includeAir, bool includeSpecial)
 {
     bool low = CanPasteBlock(elements.data[elementIndex], includeAir, includeSpecial);
     bool high = CanPasteBlock(elements.data[elementIndex + 1], includeAir, includeSpecial);
@@ -718,12 +759,19 @@ void ConsoleSchematicFile::pasteIntoArray(arrayWithLength<unsigned char>& destin
     }
     else
     {
-        if (low) destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0xf0) | (value & 0x0f));
-        if (high) destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0x0f) | (value & 0xf0));
+        if (low)
+            destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0xf0)
+                                                                 | (value & 0x0f));
+        if (high)
+            destination.data[destinationIndex] = (unsigned char)((destination.data[destinationIndex] & 0x0f)
+                                                                 | (value & 0xf0));
     }
 }
 
-void ConsoleSchematicFile::setData(arrayWithLength<unsigned char>& out, arrayWithLength<unsigned char> in, ESchematicMirror mirror, int x0, int y0, int z0, int x1, int y1, int z1, int& count, bool includeAir, bool includeSpecial, arrayWithLength<unsigned short> elements, int& index)
+void ConsoleSchematicFile::setData(arrayWithLength<unsigned char>& out, arrayWithLength<unsigned char> in,
+                                   ESchematicMirror mirror, int x0, int y0, int z0, int x1, int y1, int z1, int& count,
+                                   bool includeAir, bool includeSpecial, arrayWithLength<unsigned short> elements,
+                                   int& index)
 {
     bool hasLowY = false;
     bool hasHighY = false;
@@ -767,7 +815,8 @@ void ConsoleSchematicFile::setData(arrayWithLength<unsigned char>& out, arrayWit
                     for (int y = y0; y < lowYEnd; y += 2)
                     {
                         unsigned int dest = (unsigned int)((x << 11) | (z << 7) | y) >> 1;
-                        pasteIntoArray(out, in, elements, (index - 1) * 2, index - 1, dest, (y & 1) != 0, includeAir, includeSpecial);
+                        pasteIntoArray(out, in, elements, (index - 1) * 2, index - 1, dest, (y & 1) != 0, includeAir,
+                                       includeSpecial);
                         index -= 2;
                         count += 2;
                     }
@@ -777,7 +826,8 @@ void ConsoleSchematicFile::setData(arrayWithLength<unsigned char>& out, arrayWit
                     for (int y = y0; y < lowYEnd; y += 2)
                     {
                         unsigned int dest = (unsigned int)((x << 11) | (z << 7) | y) >> 1;
-                        pasteIntoArray(out, in, elements, index * 2, index, dest, (y & 1) != 0, includeAir, includeSpecial);
+                        pasteIntoArray(out, in, elements, index * 2, index, dest, (y & 1) != 0, includeAir,
+                                       includeSpecial);
                         index += 2;
                         count += 2;
                     }
@@ -791,7 +841,8 @@ void ConsoleSchematicFile::setData(arrayWithLength<unsigned char>& out, arrayWit
                     for (int y = highYStart; y < highYEnd; y += 2)
                     {
                         unsigned int dest = (unsigned int)(((x << 11) | (z << 7) | y) + 0x8000) >> 1;
-                        pasteIntoArray(out, in, elements, (index - 1) * 2, index - 1, dest, (y & 1) != 0, includeAir, includeSpecial);
+                        pasteIntoArray(out, in, elements, (index - 1) * 2, index - 1, dest, (y & 1) != 0, includeAir,
+                                       includeSpecial);
                         index -= 2;
                         count += 2;
                     }
@@ -801,7 +852,8 @@ void ConsoleSchematicFile::setData(arrayWithLength<unsigned char>& out, arrayWit
                     for (int y = highYStart; y < highYEnd; y += 2)
                     {
                         unsigned int dest = (unsigned int)(((x << 11) | (z << 7) | y) + 0x8000) >> 1;
-                        pasteIntoArray(out, in, elements, index * 2, index, dest, (y & 1) != 0, includeAir, includeSpecial);
+                        pasteIntoArray(out, in, elements, index * 2, index, dest, (y & 1) != 0, includeAir,
+                                       includeSpecial);
                         index += 2;
                         count += 2;
                     }
@@ -817,7 +869,9 @@ void ConsoleSchematicFile::setData(arrayWithLength<unsigned char>& out, arrayWit
     PIXEndNamedEvent();
 }
 
-void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsigned short>* elements, arrayWithLength<unsigned short>* extra, int x0, int y0, int z0, int x1, int y1, int z1, int& count)
+void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsigned short>* elements,
+                                       arrayWithLength<unsigned short>* extra, int x0, int y0, int z0, int x1, int y1,
+                                       int z1, int& count)
 {
     bool hasLowY = false;
     bool hasHighY = false;
@@ -846,7 +900,8 @@ void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsign
 
     arrayWithLength<unsigned short> elementsBuffer(0x10000, true);
     arrayWithLength<unsigned short> extraBuffer(0x10000, true);
-    chunk->getElementRange(arrayWithLength<unsigned short>(elementsBuffer.data, elementsBuffer.length), arrayWithLength<unsigned short>(extraBuffer.data, extraBuffer.length), 0, 0x40);
+    chunk->getElementRange(arrayWithLength<unsigned short>(elementsBuffer.data, elementsBuffer.length),
+                           arrayWithLength<unsigned short>(extraBuffer.data, extraBuffer.length), 0, 0x40);
 
     for (int x = x0; x < x1; ++x)
     {
@@ -872,7 +927,8 @@ void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsign
     delete[] elementsBuffer.data;
 }
 
-void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithLength<unsigned char>* out, int& count, int x, int y, int z, int width, int height, int depth)
+void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithLength<unsigned char>* out, int& count,
+                                   int x, int y, int z, int width, int height, int depth)
 {
     bool hasLowY = false;
     bool hasHighY = false;
@@ -936,8 +992,7 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
                                     outIndex = count + 1;
                                     count = outIndex;
                                     packed = packed + 1;
-                                }
-                                while (yRemaining > 1);
+                                } while (yRemaining > 1);
                             }
                             else
                             {
@@ -949,8 +1004,7 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
                                     dataIndex = dataIndex + 1;
                                     outIndex = count + 1;
                                     count = outIndex;
-                                }
-                                while (yRemaining > 1);
+                                } while (yRemaining > 1);
                             }
                         }
                         if (yRemaining == 0)
@@ -991,14 +1045,16 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
                             unsigned char* outData = out->data;
                             if (swapHighNibbles)
                             {
-                                outData[outIndex] = (unsigned char)((source[dataIndex] & 0xf0) | (outData[outIndex] & 0xf));
+                                outData[outIndex] = (unsigned char)((source[dataIndex] & 0xf0)
+                                                                    | (outData[outIndex] & 0xf));
                                 dataIndex = dataIndex + 1;
                                 outIndex = count + 1;
                                 count = outIndex;
                             }
                             else
                             {
-                                outData[outIndex] = (unsigned char)((source[dataIndex] << 4) | (outData[outIndex] & 0xf));
+                                outData[outIndex] = (unsigned char)((source[dataIndex] << 4)
+                                                                    | (outData[outIndex] & 0xf));
                                 outIndex = count + 1;
                                 count = outIndex;
                             }
@@ -1016,8 +1072,7 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
                                         dataIndex = dataIndex + 1;
                                         outIndex = count + 1;
                                         count = outIndex;
-                                    }
-                                    while (yRemaining > 1);
+                                    } while (yRemaining > 1);
                                 }
                                 else
                                 {
@@ -1029,8 +1084,7 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
                                         outIndex = count + 1;
                                         count = outIndex;
                                         packed = packed + 1;
-                                    }
-                                    while (yRemaining > 1);
+                                    } while (yRemaining > 1);
                                 }
                             }
                             if (yRemaining != 0)
@@ -1064,8 +1118,7 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
                                         outIndex = count + 1;
                                         count = outIndex;
                                         packed = packed + 1;
-                                    }
-                                    while (yRemaining > 1);
+                                    } while (yRemaining > 1);
                                 }
                                 else
                                 {
@@ -1077,8 +1130,7 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
                                         dataIndex = dataIndex + 1;
                                         outIndex = count + 1;
                                         count = outIndex;
-                                    }
-                                    while (yRemaining > 1);
+                                    } while (yRemaining > 1);
                                 }
                             }
                             if (yRemaining != 0)
@@ -1099,17 +1151,19 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
 
                     zRemaining = zRemaining - 1;
                     zIndex = zIndex + 0x80;
-                }
-                while (zRemaining != 0);
+                } while (zRemaining != 0);
             }
             xRemaining = xRemaining - 1;
             xIndex = xIndex + 0x800;
-        }
-        while (xRemaining != 0);
+        } while (xRemaining != 0);
     }
 }
 
-void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z, int width, int height, int depth, arrayWithLength<unsigned short>* elements, arrayWithLength<unsigned short>* extra, arrayWithLength<unsigned char>* data, arrayWithLength<unsigned char>* extraData)
+void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z, int width, int height, int depth,
+                                               arrayWithLength<unsigned short>* elements,
+                                               arrayWithLength<unsigned short>* extra,
+                                               arrayWithLength<unsigned char>* data,
+                                               arrayWithLength<unsigned char>* extraData)
 {
     int yEnd = y + height;
     int x1 = x + width;
@@ -1125,16 +1179,20 @@ void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z
     for (int chunkX = x; chunkX < x1; chunkX = ((chunkX >> 4) << 4) + 16)
     {
         int lx0 = chunkX - ((chunkX >> 4) << 4);
-        if (lx0 < 0) lx0 = 0;
+        if (lx0 < 0)
+            lx0 = 0;
         int lx1 = lx0 + 1;
-        if (lx1 > 16) lx1 = 16;
+        if (lx1 > 16)
+            lx1 = 16;
 
         for (int chunkZ = z; chunkZ < z1; chunkZ = ((chunkZ >> 4) << 4) + 16)
         {
             int lz0 = chunkZ - ((chunkZ >> 4) << 4);
             int lz1 = z1 - ((chunkZ >> 4) << 4);
-            if (lz0 < 0) lz0 = 0;
-            if (lz1 > 16) lz1 = 16;
+            if (lz0 < 0)
+                lz0 = 0;
+            if (lz1 > 16)
+                lz1 = 16;
 
             LevelChunk* chunk = level->getChunk(chunkX >> 4, chunkZ >> 4);
 
@@ -1145,12 +1203,14 @@ void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z
             if (extraData != 0)
             {
                 chunk->getBlockLightData(arrayWithLength<unsigned char>(extraSkyLight.data, extraSkyLight.length));
-                getData(arrayWithLength<unsigned char>(extraSkyLight.data, extraSkyLight.length), extraData, extraDataCount, lx0, y, lz0, lx1, yEnd, lz1);
+                getData(arrayWithLength<unsigned char>(extraSkyLight.data, extraSkyLight.length), extraData,
+                        extraDataCount, lx0, y, lz0, lx1, yEnd, lz1);
             }
             if (data != 0)
             {
                 chunk->getSkyLightData(arrayWithLength<unsigned char>(skyLight.data, skyLight.length));
-                getData(arrayWithLength<unsigned char>(skyLight.data, skyLight.length), data, dataCount, lx0, y, lz0, lx1, yEnd, lz1);
+                getData(arrayWithLength<unsigned char>(skyLight.data, skyLight.length), data, dataCount, lx0, y, lz0,
+                        lx1, yEnd, lz1);
             }
         }
     }
@@ -1186,7 +1246,8 @@ long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, PasteData*
     int zStart = std::max(std::floor(paste->mArea->mMinZ), chunkZ * 16.0);
     int zEnd = std::min(std::floor(paste->mArea->mMaxZ), (zStart & ~15) + 16.0);
 
-    long long blocksApplied = writeSchematicIntoArrays(chunkX << 4, 0, chunkZ << 4, xStart, yStart, zStart, xEnd, yEnd, zEnd, paste, elements, extraElements, blockLight, skyLight);
+    long long blocksApplied = writeSchematicIntoArrays(chunkX << 4, 0, chunkZ << 4, xStart, yStart, zStart, xEnd, yEnd,
+                                                       zEnd, paste, elements, extraElements, blockLight, skyLight);
 
     PIXBeginNamedEvent(0.0f, "Setting Block and Data");
     chunk->setAllElements(elements, extraElements);
@@ -1206,7 +1267,8 @@ long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, PasteData*
     return blocksApplied;
 }
 
-long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, AABB* box, ESchematicRotation rotation, ESchematicMirror mirror)
+long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, AABB* box, ESchematicRotation rotation,
+                                                   ESchematicMirror mirror)
 {
     PasteData data;
     data.mArea = box;
@@ -1226,7 +1288,8 @@ long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, AABB* box,
 
 void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea, PasteData* paste, Level* level)
 {
-    for (std::vector<std::pair<BlockPos*, CompoundTag*> >::iterator it = paste->mBlockEntities.begin(); it != paste->mBlockEntities.end(); ++it)
+    for (std::vector<std::pair<BlockPos*, CompoundTag*> >::iterator it = paste->mBlockEntities.begin();
+         it != paste->mBlockEntities.end(); ++it)
     {
         double x = it->first->x;
         double y = it->first->y + static_cast<int>(std::floor(paste->mArea->mMinY));
@@ -1252,7 +1315,8 @@ void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea
         }
     }
 
-    for (std::vector<std::pair<Vec3*, CompoundTag*> >::iterator it = paste->mEntities.begin(); it != paste->mEntities.end(); ++it)
+    for (std::vector<std::pair<Vec3*, CompoundTag*> >::iterator it = paste->mEntities.begin();
+         it != paste->mEntities.end(); ++it)
     {
         double x = it->first->x;
         double y = it->first->y + paste->mArea->mMinY;
@@ -1280,7 +1344,8 @@ void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea
     }
 }
 
-void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea, AABB* area, ESchematicRotation rotation, ESchematicMirror mirror, Level* level)
+void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea, AABB* area,
+                                              ESchematicRotation rotation, ESchematicMirror mirror, Level* level)
 {
     PasteData paste;
     paste.mArea = area;
@@ -1333,7 +1398,10 @@ long long ConsoleSchematicFile::applyLighting(LevelChunk* chunk, AABB*, AABB* ar
                 {
                     chunk->level->checkLight(LightLayer::SKY, pos, true, false);
                 }
-                if (chunk->getBlock(BlockPos(x - chunk->x * 16, y, z - chunk->z * 16))->defaultBlockState()->getLightEmission() != 0)
+                if (chunk->getBlock(BlockPos(x - chunk->x * 16, y, z - chunk->z * 16))
+                        ->defaultBlockState()
+                        ->getLightEmission()
+                    != 0)
                 {
                     chunk->level->checkLight(LightLayer::BLOCK, pos, true, true);
                 }
@@ -1344,7 +1412,8 @@ long long ConsoleSchematicFile::applyLighting(LevelChunk* chunk, AABB*, AABB* ar
     return volume;
 }
 
-void ConsoleSchematicFile::offsetPainting(Level*, boost::shared_ptr<Painting> painting, ESchematicRotation rotation, ESchematicMirror mirror)
+void ConsoleSchematicFile::offsetPainting(Level*, boost::shared_ptr<Painting> painting, ESchematicRotation rotation,
+                                          ESchematicMirror mirror)
 {
     const Direction* direction = HandleRotation(painting->getDirection(), mirror, rotation);
     painting->setDirection(direction);
@@ -1368,7 +1437,13 @@ void ConsoleSchematicFile::offsetPainting(Level*, boost::shared_ptr<Painting> pa
         }
     }
 }
-void ConsoleSchematicFile::_applySchematicData(Level* level, AABB* area, ESchematicRotation rotation, arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, arrayWithLength<unsigned char> data, arrayWithLength<unsigned char> extraData, std::vector<std::pair<BlockPos*, CompoundTag*> >& blockEntities, std::vector<std::pair<Vec3*, CompoundTag*> >& entities, std::vector<DevSaveDataManager::NamedPositionOrVolume>& namedPositions, int width, int height, int depth, bool includeAir, bool includeSpecial, bool rotate)
+void ConsoleSchematicFile::_applySchematicData(
+    Level* level, AABB* area, ESchematicRotation rotation, arrayWithLength<unsigned short> elements,
+    arrayWithLength<unsigned short> extraElements, arrayWithLength<unsigned char> data,
+    arrayWithLength<unsigned char> extraData, std::vector<std::pair<BlockPos*, CompoundTag*> >& blockEntities,
+    std::vector<std::pair<Vec3*, CompoundTag*> >& entities,
+    std::vector<DevSaveDataManager::NamedPositionOrVolume>& namedPositions, int width, int height, int depth,
+    bool includeAir, bool includeSpecial, bool rotate)
 {
     mPasteData.mLevel = level;
     mPasteData.mArea->set(area);
@@ -1415,7 +1490,8 @@ bool ConsoleSchematicFile::undoPrevious(Level* level)
         }
     }
 
-    AABB* bounds = AABB::newTemp(mUndoArea->mMinX, mUndoArea->mMinY, mUndoArea->mMinZ, mUndoArea->mMaxX, mUndoArea->mMaxY, mUndoArea->mMaxZ);
+    AABB* bounds = AABB::newTemp(mUndoArea->mMinX, mUndoArea->mMinY, mUndoArea->mMinZ, mUndoArea->mMaxX,
+                                 mUndoArea->mMaxY, mUndoArea->mMaxZ);
     std::vector<boost::shared_ptr<Entity> > entities(*level->getEntities(boost::shared_ptr<Entity>(), bounds, NULL));
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
     {
@@ -1426,14 +1502,21 @@ bool ConsoleSchematicFile::undoPrevious(Level* level)
         }
     }
 
-    _applySchematicData(level, mUndoArea, eSchematicRotation_0, mUndoElements, mUndoExtraElements, mUndoData, mUndoExtraData, mUndoBlockEntities, mUndoEntities, mNamedPositions, mUndoWidth, mUndoHeight, mUndoDepth, true, true, false);
+    _applySchematicData(level, mUndoArea, eSchematicRotation_0, mUndoElements, mUndoExtraElements, mUndoData,
+                        mUndoExtraData, mUndoBlockEntities, mUndoEntities, mNamedPositions, mUndoWidth, mUndoHeight,
+                        mUndoDepth, true, true, false);
 
     Minecraft::GetInstance()->mGameRenderer->EnableUpdateThread(0);
     mCanUndo = false;
     return true;
 }
 
-long long ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY, int chunkZ, int x0, int y0, int z0, int x1, int y1, int z1, PasteData* paste, arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, arrayWithLength<unsigned char> data, arrayWithLength<unsigned char> extraData)
+long long ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY, int chunkZ, int x0, int y0, int z0,
+                                                         int x1, int y1, int z1, PasteData* paste,
+                                                         arrayWithLength<unsigned short> elements,
+                                                         arrayWithLength<unsigned short> extraElements,
+                                                         arrayWithLength<unsigned char> data,
+                                                         arrayWithLength<unsigned char> extraData)
 {
     int volume = (x1 - x0) * (y1 - y0) * (z1 - z0);
     int halfHeight = (paste->mHeight + 1) / 2;
@@ -1444,18 +1527,27 @@ long long ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY,
             int schematicX;
             int schematicZ;
             chunkCoordToSchematicCoord(paste->mArea, x, z, paste->mRotation, paste->mMirror, schematicX, schematicZ);
-            int elementIndex = schematicX * paste->mDepth * paste->mHeight + schematicZ * paste->mHeight + (y0 - chunkY);
+            int elementIndex = schematicX * paste->mDepth * paste->mHeight + schematicZ * paste->mHeight
+                               + (y0 - chunkY);
             int localX = x - chunkX;
             int localZ = z - chunkZ;
-            setElements(elements, paste->mElements, paste->mRotation, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1, elementIndex, paste->mIncludeAir, paste->mIncludeSpecial);
+            setElements(elements, paste->mElements, paste->mRotation, paste->mMirror, localX, y0, localZ, localX + 1,
+                        y1, localZ + 1, elementIndex, paste->mIncludeAir, paste->mIncludeSpecial);
             int extraIndex = schematicX * paste->mDepth * paste->mHeight + schematicZ * paste->mHeight + (y0 - chunkY);
-            setElements(extraElements, paste->mExtraElements, paste->mRotation, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1, extraIndex, paste->mIncludeAir, paste->mIncludeSpecial);
-            int destinationDataIndex = schematicX * paste->mDepth * halfHeight + schematicZ * halfHeight + ((y0 - chunkY) >> 1);
+            setElements(extraElements, paste->mExtraElements, paste->mRotation, paste->mMirror, localX, y0, localZ,
+                        localX + 1, y1, localZ + 1, extraIndex, paste->mIncludeAir, paste->mIncludeSpecial);
+            int destinationDataIndex = schematicX * paste->mDepth * halfHeight + schematicZ * halfHeight
+                                       + ((y0 - chunkY) >> 1);
             int sourceDataIndex = destinationDataIndex;
-            setData(data, paste->mData, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1, destinationDataIndex, paste->mIncludeAir, paste->mIncludeSpecial, paste->mElements, sourceDataIndex);
-            destinationDataIndex = schematicX * paste->mDepth * halfHeight + schematicZ * halfHeight + ((y0 - chunkY) >> 1);
+            setData(data, paste->mData, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1,
+                    destinationDataIndex, paste->mIncludeAir, paste->mIncludeSpecial, paste->mElements,
+                    sourceDataIndex);
+            destinationDataIndex = schematicX * paste->mDepth * halfHeight + schematicZ * halfHeight
+                                   + ((y0 - chunkY) >> 1);
             sourceDataIndex = destinationDataIndex;
-            setData(extraData, paste->mExtraData, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1, destinationDataIndex, paste->mIncludeAir, paste->mIncludeSpecial, paste->mExtraElements, sourceDataIndex);
+            setData(extraData, paste->mExtraData, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1,
+                    destinationDataIndex, paste->mIncludeAir, paste->mIncludeSpecial, paste->mExtraElements,
+                    sourceDataIndex);
         }
     }
     return volume;
@@ -1476,7 +1568,8 @@ void ConsoleSchematicFile::tick()
                 if (y >= SCHEMATIC_WORLD_HEIGHT)
                     continue;
 
-                for (int z = (int)std::floor(mPasteData.mArea->mMinZ); z < (int)std::floor(mPasteData.mArea->mMaxZ); ++z)
+                for (int z = (int)std::floor(mPasteData.mArea->mMinZ); z < (int)std::floor(mPasteData.mArea->mMaxZ);
+                     ++z)
                 {
                     BlockPos pos(x, y, z);
                     if (mPasteData.mMirror == eSchematicMirror_None && mPasteData.mRotation == eSchematicRotation_0)
@@ -1489,9 +1582,11 @@ void ConsoleSchematicFile::tick()
                         if (property == NULL)
                             continue;
 
-                        const Direction* direction =
-                            HandleRotation(mPasteData.mLevel->getBlockState(pos)->getValue(property), mPasteData.mMirror, eSchematicRotation_0);
-                        mPasteData.mLevel->setBlockAndUpdate(pos, mPasteData.mLevel->getBlockState(pos)->setValue(property, direction));
+                        const Direction* direction = HandleRotation(
+                            mPasteData.mLevel->getBlockState(pos)->getValue(property), mPasteData.mMirror,
+                            eSchematicRotation_0);
+                        mPasteData.mLevel->setBlockAndUpdate(
+                            pos, mPasteData.mLevel->getBlockState(pos)->setValue(property, direction));
                     }
                 }
             }
@@ -1536,10 +1631,13 @@ void ConsoleSchematicFile::tick()
     }
 }
 
-std::vector<boost::shared_ptr<BlockEntity> >* ConsoleSchematicFile::getBlockEntitiesInRegion(LevelChunk* chunk, int x0, int y0, int z0, int x1, int y1, int z1)
+std::vector<boost::shared_ptr<BlockEntity> >* ConsoleSchematicFile::getBlockEntitiesInRegion(LevelChunk* chunk, int x0,
+                                                                                             int y0, int z0, int x1,
+                                                                                             int y1, int z1)
 {
     std::vector<boost::shared_ptr<BlockEntity> >* result = new std::vector<boost::shared_ptr<BlockEntity> >();
-    for (LevelChunk::BlockEntityMap::iterator it = chunk->mBlockEntityMap.begin(); it != chunk->mBlockEntityMap.end(); ++it)
+    for (LevelChunk::BlockEntityMap::iterator it = chunk->mBlockEntityMap.begin(); it != chunk->mBlockEntityMap.end();
+         ++it)
     {
         boost::shared_ptr<BlockEntity> blockEntity = it->second;
         BlockPos pos = blockEntity->getBlockPos();
@@ -1551,14 +1649,17 @@ std::vector<boost::shared_ptr<BlockEntity> >* ConsoleSchematicFile::getBlockEnti
     return result;
 }
 
-void ConsoleSchematicFile::getBlockEntitiesInRegion(Level* level, int x0, int y0, int z0, int x1, int y1, int z1, std::vector<std::pair<BlockPos*, CompoundTag*> >& result)
+void ConsoleSchematicFile::getBlockEntitiesInRegion(Level* level, int x0, int y0, int z0, int x1, int y1, int z1,
+                                                    std::vector<std::pair<BlockPos*, CompoundTag*> >& result)
 {
     for (int chunkX = x0 >> 4; chunkX <= x1 >> 4; ++chunkX)
     {
         for (int chunkZ = z0 >> 4; chunkZ <= z1 >> 4; ++chunkZ)
         {
-            std::vector<boost::shared_ptr<BlockEntity> >* blockEntities = getBlockEntitiesInRegion(level->getChunk(chunkX, chunkZ), x0, y0, z0, x1, y1, z1);
-            for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = blockEntities->begin(); it != blockEntities->end(); ++it)
+            std::vector<boost::shared_ptr<BlockEntity> >* blockEntities = getBlockEntitiesInRegion(
+                level->getChunk(chunkX, chunkZ), x0, y0, z0, x1, y1, z1);
+            for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = blockEntities->begin();
+                 it != blockEntities->end(); ++it)
             {
                 CompoundTag* tag = new CompoundTag();
                 (*it)->save(tag);
@@ -1573,7 +1674,8 @@ void ConsoleSchematicFile::getBlockEntitiesInRegion(Level* level, int x0, int y0
     }
 }
 
-void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int z0, int x1, int y1, int z1, std::vector<std::pair<Vec3*, CompoundTag*> >& result)
+void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int z0, int x1, int y1, int z1,
+                                               std::vector<std::pair<Vec3*, CompoundTag*> >& result)
 {
     AABB* bounds = AABB::newTemp((double)x0, (double)y0, (double)z0, (double)x1, (double)y1, (double)z1);
     std::vector<boost::shared_ptr<Entity> > entities;
@@ -1610,7 +1712,8 @@ void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int
                 tag->putInt(L"TileY", (int)(entity->mY - y0));
                 tag->putInt(L"TileZ", (int)(entity->mZ - z0));
             }
-            result.push_back(std::make_pair(Vec3::newPermanent(entity->mX - x0, entity->mY - y0, entity->mZ - z0), tag));
+            result.push_back(
+                std::make_pair(Vec3::newPermanent(entity->mX - x0, entity->mY - y0, entity->mZ - z0), tag));
         }
         else
         {
@@ -1618,7 +1721,8 @@ void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int
         }
     }
 }
-ListTag* ConsoleSchematicFile::getBlockEntitiesInRegionAsTag(Level* level, int x0, int y0, int z0, int x1, int y1, int z1)
+ListTag* ConsoleSchematicFile::getBlockEntitiesInRegionAsTag(Level* level, int x0, int y0, int z0, int x1, int y1,
+                                                             int z1)
 {
     ListTag* result = new ListTag();
     std::vector<std::pair<BlockPos*, CompoundTag*> > values;
@@ -1643,7 +1747,8 @@ ListTag* ConsoleSchematicFile::getEntitiesInRegionAsTag(Level* level, int x0, in
     }
     return result;
 }
-bool ConsoleSchematicFile::generateSchematicFile(DataOutputStream* output, Level* level, int x0, int y0, int z0, int x1, int y1, int z1, Compression::ECompressionTypes compression)
+bool ConsoleSchematicFile::generateSchematicFile(DataOutputStream* output, Level* level, int x0, int y0, int z0, int x1,
+                                                 int y1, int z1, Compression::ECompressionTypes compression)
 {
     int width = x1 - x0;
     int height = y1 - y0;
@@ -1671,10 +1776,12 @@ bool ConsoleSchematicFile::generateSchematicFile(DataOutputStream* output, Level
     switch (compression)
     {
     case Compression::eCompressionTypes_LZXRLE:
-        Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, elements.data, elements.length * 2, 0);
+        Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, elements.data,
+                                                      elements.length * 2, 0);
         break;
     case Compression::eCompressionTypes_RLE:
-        Compression::getCompression()->CompressRLE(compressed.data, &compressed.length, elements.data, elements.length * 2);
+        Compression::getCompression()->CompressRLE(compressed.data, &compressed.length, elements.data,
+                                                   elements.length * 2);
         break;
     default:
         std::memcpy(compressed.data, elements.data, elements.length * 2);
@@ -1691,10 +1798,12 @@ bool ConsoleSchematicFile::generateSchematicFile(DataOutputStream* output, Level
     switch (compression)
     {
     case Compression::eCompressionTypes_LZXRLE:
-        Compression::getCompression()->CompressLZXRLE(extraCompressed.data, &extraCompressed.length, extraElements.data, extraElements.length * 2, 0);
+        Compression::getCompression()->CompressLZXRLE(extraCompressed.data, &extraCompressed.length, extraElements.data,
+                                                      extraElements.length * 2, 0);
         break;
     case Compression::eCompressionTypes_RLE:
-        Compression::getCompression()->CompressRLE(extraCompressed.data, &extraCompressed.length, extraElements.data, extraElements.length * 2);
+        Compression::getCompression()->CompressRLE(extraCompressed.data, &extraCompressed.length, extraElements.data,
+                                                   extraElements.length * 2);
         break;
     default:
         std::memcpy(extraCompressed.data, extraElements.data, extraElements.length * 2);

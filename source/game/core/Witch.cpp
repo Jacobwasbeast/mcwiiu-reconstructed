@@ -37,7 +37,8 @@
 const EntityDataAccessor<bool>* Witch::DATA_USING_ITEM = NULL;
 static AttributeModifier* SPEED_MODIFIER_DRINKING =
     (new AttributeModifier(eMODIFIER_ID_WitchDrinkingSpeedPenalty, -0.25, 0))->setSerialize(false);
-Witch::Witch(Level* level) : Monster(level) {
+Witch::Witch(Level* level) : Monster(level)
+{
     fjDerivedCtorCalls();
     setSize(0.6f, 1.95f);
     mUsingTime = 0;
@@ -47,8 +48,15 @@ Entity* Witch::create(Level* level)
 {
     return new Witch(level);
 }
-void Witch::staticCtor() { DATA_USING_ITEM = SynchedEntityData::defineId<bool>(EntityType::WITCH, EntityType::MONSTER, EntityDataSerializers::BOOLEAN); }
-void Witch::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, EntityType::WITCH); }
+void Witch::staticCtor()
+{
+    DATA_USING_ITEM = SynchedEntityData::defineId<bool>(EntityType::WITCH, EntityType::MONSTER,
+                                                        EntityDataSerializers::BOOLEAN);
+}
+void Witch::addDataWalkers(DataFixerUpper* fixer)
+{
+    Mob::addDataWalkers(fixer, EntityType::WITCH);
+}
 void Witch::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
     if (isDrinkingPotion())
@@ -59,11 +67,16 @@ void Witch::performRangedAttack(boost::shared_ptr<LivingEntity> target, float di
     double dz = target->mZ + target->mZd - mZ;
     float horizontal = Mth::sqrt(dx * dx + dz * dz);
     Potion* potion = Potions::HARMING;
-    if (horizontal >= 8.0f && !target->hasEffect(MobEffects::MOVEMENT_SLOWDOWN)) {
+    if (horizontal >= 8.0f && !target->hasEffect(MobEffects::MOVEMENT_SLOWDOWN))
+    {
         potion = Potions::SLOWNESS;
-    } else if (target->getHealth() >= 8.0f && !target->hasEffect(MobEffects::POISON)) {
+    }
+    else if (target->getHealth() >= 8.0f && !target->hasEffect(MobEffects::POISON))
+    {
         potion = Potions::POISON;
-    } else if (horizontal <= 3.0f && !target->hasEffect(MobEffects::WEAKNESS) && mRandom->nextFloat() < 0.25f) {
+    }
+    else if (horizontal <= 3.0f && !target->hasEffect(MobEffects::WEAKNESS) && mRandom->nextFloat() < 0.25f)
+    {
         potion = Potions::WEAKNESS;
     }
     boost::shared_ptr<ThrownPotion> projectile(new ThrownPotion(
@@ -76,8 +89,13 @@ void Witch::performRangedAttack(boost::shared_ptr<LivingEntity> target, float di
                       mRandom->nextFloat() * 0.4f + 0.8f, 16.0f);
     mLevel->addEntity(projectile);
 }
-bool Witch::isAggressive() { return false; }
-void Witch::setAggressive(bool) {}
+bool Witch::isAggressive()
+{
+    return false;
+}
+void Witch::setAggressive(bool)
+{
+}
 void Witch::registerGoals()
 {
     mGoalSelector.addGoal(1, new FloatGoal(this), true);
@@ -85,8 +103,7 @@ void Witch::registerGoals()
     mGoalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(3, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
     mGoalSelector.addGoal(3, new RandomLookAroundGoal(this), true);
-    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, false,
-                                                     arrayWithLength<unsigned long long>()), true);
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
 }
 void Witch::defineSynchedData()
@@ -94,11 +111,26 @@ void Witch::defineSynchedData()
     Monster::defineSynchedData();
     getEntityData()->define(DATA_USING_ITEM, false);
 }
-const SoundEvent* Witch::getAmbientSound() { return SoundEvents::WITCH_AMBIENT; }
-const SoundEvent* Witch::getHurtSound(const DamageSource*) { return SoundEvents::WITCH_HURT; }
-const SoundEvent* Witch::getDeathSound() { return SoundEvents::WITCH_DEATH; }
-void Witch::setUsingItem(bool usingItem) { getEntityData()->set(DATA_USING_ITEM, usingItem, true); }
-bool Witch::isDrinkingPotion() { return getEntityData()->get(DATA_USING_ITEM); }
+const SoundEvent* Witch::getAmbientSound()
+{
+    return SoundEvents::WITCH_AMBIENT;
+}
+const SoundEvent* Witch::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::WITCH_HURT;
+}
+const SoundEvent* Witch::getDeathSound()
+{
+    return SoundEvents::WITCH_DEATH;
+}
+void Witch::setUsingItem(bool usingItem)
+{
+    getEntityData()->set(DATA_USING_ITEM, usingItem, true);
+}
+bool Witch::isDrinkingPotion()
+{
+    return getEntityData()->get(DATA_USING_ITEM);
+}
 void Witch::registerAttributes()
 {
     Monster::registerAttributes();
@@ -107,47 +139,63 @@ void Witch::registerAttributes()
 }
 void Witch::aiStep()
 {
-    if (!mLevel->mIsClientSide) {
-        if (isDrinkingPotion()) {
-            if (mUsingTime-- <= 0) {
+    if (!mLevel->mIsClientSide)
+    {
+        if (isDrinkingPotion())
+        {
+            if (mUsingTime-- <= 0)
+            {
                 setUsingItem(false);
                 not_null_ptr<ItemInstance> item = getMainHandItem();
                 setItemSlot(EquipmentSlot::MAINHAND, ItemInstance::EMPTY);
-                if (item->getItem() == Items::potion) {
+                if (item->getItem() == Items::potion)
+                {
                     std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(item);
-                    if (effects != NULL) {
-                        for (std::vector<MobEffectInstance*>::iterator it = effects->begin();
-                             it != effects->end(); ++it)
+                    if (effects != NULL)
+                    {
+                        for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end();
+                             ++it)
                             addEffect(new MobEffectInstance(*it), boost::shared_ptr<Entity>());
                         delete effects;
                     }
                 }
                 getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->removeModifier(SPEED_MODIFIER_DRINKING);
             }
-        } else {
+        }
+        else
+        {
             Potion* potion = NULL;
             if (mRandom->nextFloat() < 0.15f && isUnderLiquid(Material::WATER)
-                && !hasEffect(MobEffects::WATER_BREATHING)) {
+                && !hasEffect(MobEffects::WATER_BREATHING))
+            {
                 potion = Potions::WATER_BREATHING;
-            } else if (mRandom->nextFloat() < 0.15f
-                       && (isOnFire() || (getLastDamageSource() != NULL && getLastDamageSource()->isFire()))
-                       && !hasEffect(MobEffects::FIRE_RESISTANCE)) {
+            }
+            else if (mRandom->nextFloat() < 0.15f
+                     && (isOnFire() || (getLastDamageSource() != NULL && getLastDamageSource()->isFire()))
+                     && !hasEffect(MobEffects::FIRE_RESISTANCE))
+            {
                 potion = Potions::FIRE_RESISTANCE;
-            } else if (mRandom->nextFloat() < 0.05f && getHealth() < getMaxHealth()) {
+            }
+            else if (mRandom->nextFloat() < 0.05f && getHealth() < getMaxHealth())
+            {
                 potion = Potions::HEALING;
-            } else if (mRandom->nextFloat() < 0.25f && getTarget() != NULL
-                       && !hasEffect(MobEffects::MOVEMENT_SPEED)
-                       && getTarget()->distanceToSqr(shared_from_this()) > 121.0) {
+            }
+            else if (mRandom->nextFloat() < 0.25f && getTarget() != NULL && !hasEffect(MobEffects::MOVEMENT_SPEED)
+                     && getTarget()->distanceToSqr(shared_from_this()) > 121.0)
+            {
                 potion = Potions::SWIFTNESS;
-            } else if (mRandom->nextFloat() < 0.25f && getTarget() != NULL
-                       && !hasEffect(MobEffects::MOVEMENT_SPEED)
-                       && getTarget()->distanceToSqr(shared_from_this()) > 121.0) {
+            }
+            else if (mRandom->nextFloat() < 0.25f && getTarget() != NULL && !hasEffect(MobEffects::MOVEMENT_SPEED)
+                     && getTarget()->distanceToSqr(shared_from_this()) > 121.0)
+            {
                 potion = Potions::SWIFTNESS;
             }
 
-            if (potion != NULL) {
-                setItemSlot(EquipmentSlot::MAINHAND,
-                            PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(Items::potion)), potion));
+            if (potion != NULL)
+            {
+                setItemSlot(
+                    EquipmentSlot::MAINHAND,
+                    PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(Items::potion)), potion));
                 mUsingTime = getMainHandItem()->getUseDuration();
                 setUsingItem(true);
                 mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::WITCH_DRINK, getSoundSource(),
@@ -158,7 +206,8 @@ void Witch::aiStep()
             }
         }
 
-        if (mRandom->nextFloat() < 0.00075f) {
+        if (mRandom->nextFloat() < 0.00075f)
+        {
             mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::WITCH_HAT_MAGIC, 0);
         }
     }
@@ -167,16 +216,17 @@ void Witch::aiStep()
 
 void Witch::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == EntityEvent::WITCH_HAT_MAGIC) {
-        for (int i = 0; i < mRandom->nextInt(35) + 10; ++i) {
-            mLevel->addParticle(PARTICLE_WITCH_MAGIC,
-                                mX + mRandom->nextGaussian() * 0.13f,
+    if (event == EntityEvent::WITCH_HAT_MAGIC)
+    {
+        for (int i = 0; i < mRandom->nextInt(35) + 10; ++i)
+        {
+            mLevel->addParticle(PARTICLE_WITCH_MAGIC, mX + mRandom->nextGaussian() * 0.13f,
                                 (mBoundingBox->mMaxY + 0.5) + mRandom->nextGaussian() * 0.13f,
-                                mZ + mRandom->nextGaussian() * 0.13f,
-                                0.0, 0.0, 0.0,
-                                arrayWithLength<int>());
+                                mZ + mRandom->nextGaussian() * 0.13f, 0.0, 0.0, 0.0, arrayWithLength<int>());
         }
-    } else {
+    }
+    else
+    {
         Monster::handleEntityEvent(event, data);
     }
 }
@@ -190,10 +240,16 @@ float Witch::getDamageAfterMagicAbsorb(const DamageSource* source, float damage)
         result *= 0.15f;
     return result;
 }
-ResourceLocation* Witch::getDefaultLootTable() { return &BuiltInLootTables::WITCH; }
+ResourceLocation* Witch::getDefaultLootTable()
+{
+    return &BuiltInLootTables::WITCH;
+}
 float Witch::getEyeHeight()
 {
     float eyeHeight = 1.62f;
     return eyeHeight;
 }
-unsigned long long Witch::GetType() { return EntityType::WITCH; }
+unsigned long long Witch::GetType()
+{
+    return EntityType::WITCH;
+}

@@ -26,8 +26,7 @@
 #include "game/world/generation/StructureManager.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
 
-static const eMinecraftStructureTemplate SHIPWRECK_TYPES[20] =
-{
+static const eMinecraftStructureTemplate SHIPWRECK_TYPES[20] = {
     eMinecraftStructureTemplate_Shipwreck_WithMast,
     eMinecraftStructureTemplate_Shipwreck_UpsideDownFull,
     eMinecraftStructureTemplate_Shipwreck_UpsideDownFrontHalf,
@@ -47,33 +46,26 @@ static const eMinecraftStructureTemplate SHIPWRECK_TYPES[20] =
     eMinecraftStructureTemplate_Shipwreck_SidewaysBackHalfDegraded,
     eMinecraftStructureTemplate_Shipwreck_RightSideUpFullDegraded,
     eMinecraftStructureTemplate_Shipwreck_RightSideUpFrontHalfDegraded,
-    eMinecraftStructureTemplate_Shipwreck_RightSideUpBackHalfDegraded
-};
+    eMinecraftStructureTemplate_Shipwreck_RightSideUpBackHalfDegraded};
 
-static const int SHIPWRECK_AUX_VALUES[9][2] = {
-    { 0, 1 }, { 3, 1 }, { 5, 3 }, { 5, 1 }, { 1, 0 },
-    { 1, 3 }, { 1, 5 }, { 0, 2 }, { 1, 4 }
-};
+static const int SHIPWRECK_AUX_VALUES[9][2] = {{0, 1}, {3, 1}, {5, 3}, {5, 1}, {1, 0}, {1, 3}, {1, 5}, {0, 2}, {1, 4}};
 
 int ShipwreckPiece::GetNonUpsideDownShipwreckType(Random& random)
 {
-    const eMinecraftStructureTemplate types[14] =
-    {
-        eMinecraftStructureTemplate_Shipwreck_WithMast,
-        eMinecraftStructureTemplate_Shipwreck_SidewaysFull,
-        eMinecraftStructureTemplate_Shipwreck_SidewaysFrontHalf,
-        eMinecraftStructureTemplate_Shipwreck_SidewaysBackHalf,
-        eMinecraftStructureTemplate_Shipwreck_RightSideUpFull,
-        eMinecraftStructureTemplate_Shipwreck_RightSideUpFrontHalf,
-        eMinecraftStructureTemplate_Shipwreck_RightSideUpBackHalf,
-        eMinecraftStructureTemplate_Shipwreck_WithMastDegraded,
-        eMinecraftStructureTemplate_Shipwreck_SidewaysFullDegraded,
-        eMinecraftStructureTemplate_Shipwreck_SidewaysFrontHalfDegraded,
-        eMinecraftStructureTemplate_Shipwreck_SidewaysBackHalfDegraded,
-        eMinecraftStructureTemplate_Shipwreck_RightSideUpFullDegraded,
-        eMinecraftStructureTemplate_Shipwreck_RightSideUpFrontHalfDegraded,
-        eMinecraftStructureTemplate_Shipwreck_RightSideUpBackHalfDegraded
-    };
+    const eMinecraftStructureTemplate types[14] = {eMinecraftStructureTemplate_Shipwreck_WithMast,
+                                                   eMinecraftStructureTemplate_Shipwreck_SidewaysFull,
+                                                   eMinecraftStructureTemplate_Shipwreck_SidewaysFrontHalf,
+                                                   eMinecraftStructureTemplate_Shipwreck_SidewaysBackHalf,
+                                                   eMinecraftStructureTemplate_Shipwreck_RightSideUpFull,
+                                                   eMinecraftStructureTemplate_Shipwreck_RightSideUpFrontHalf,
+                                                   eMinecraftStructureTemplate_Shipwreck_RightSideUpBackHalf,
+                                                   eMinecraftStructureTemplate_Shipwreck_WithMastDegraded,
+                                                   eMinecraftStructureTemplate_Shipwreck_SidewaysFullDegraded,
+                                                   eMinecraftStructureTemplate_Shipwreck_SidewaysFrontHalfDegraded,
+                                                   eMinecraftStructureTemplate_Shipwreck_SidewaysBackHalfDegraded,
+                                                   eMinecraftStructureTemplate_Shipwreck_RightSideUpFullDegraded,
+                                                   eMinecraftStructureTemplate_Shipwreck_RightSideUpFrontHalfDegraded,
+                                                   eMinecraftStructureTemplate_Shipwreck_RightSideUpBackHalfDegraded};
     eMinecraftStructureTemplate selected = types[random.nextInt(14)];
     for (int i = 0; i < 20; ++i)
     {
@@ -83,8 +75,8 @@ int ShipwreckPiece::GetNonUpsideDownShipwreckType(Random& random)
     return eMinecraftStructureTemplate_Shipwreck_WithMast;
 }
 
-ShipwreckPiece::ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelSource,
-                               int x, int z, Random& random, const Direction* orientation)
+ShipwreckPiece::ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelSource, int x, int z, Random& random,
+                               const Direction* orientation)
     : StructurePiece(20)
 {
     mWoodType = random.nextInt(9);
@@ -93,10 +85,8 @@ ShipwreckPiece::ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelS
     mNonUpsideDownType = GetNonUpsideDownShipwreckType(random);
 
     StructureManager* structureManager = level->getLevelStorage()->getStructureManager();
-    const StructureTemplate* normal = structureManager->getOrCreate(
-        SHIPWRECK_TYPES[mType]);
-    const StructureTemplate* alternate = structureManager->getOrCreate(
-        SHIPWRECK_TYPES[mNonUpsideDownType]);
+    const StructureTemplate* normal = structureManager->getOrCreate(SHIPWRECK_TYPES[mType]);
+    const StructureTemplate* alternate = structureManager->getOrCreate(SHIPWRECK_TYPES[mNonUpsideDownType]);
     BlockPos normalSize = normal->getSize();
     BlockPos alternateSize = alternate->getSize();
     BlockPos size(std::max(normalSize.x, alternateSize.x), std::max(normalSize.y, alternateSize.y),
@@ -126,15 +116,13 @@ ShipwreckPiece::ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelS
 bool ShipwreckPiece::IsUpsideDownShipwreckType(int type)
 {
     const int count = 6;
-    const eMinecraftStructureTemplate upsideDownTypes[count] =
-    {
+    const eMinecraftStructureTemplate upsideDownTypes[count] = {
         eMinecraftStructureTemplate_Shipwreck_UpsideDownFull,
         eMinecraftStructureTemplate_Shipwreck_UpsideDownFrontHalf,
         eMinecraftStructureTemplate_Shipwreck_UpsideDownBackHalf,
         eMinecraftStructureTemplate_Shipwreck_UpsideDownFullDegraded,
         eMinecraftStructureTemplate_Shipwreck_UpsideDownFrontHalfDegraded,
-        eMinecraftStructureTemplate_Shipwreck_UpsideDownBackHalfDegraded
-    };
+        eMinecraftStructureTemplate_Shipwreck_UpsideDownBackHalfDegraded};
     eMinecraftStructureTemplate value = SHIPWRECK_TYPES[type];
     for (int i = 0; i < count; ++i)
     {
@@ -149,7 +137,8 @@ bool ShipwreckPiece::postProcess(Level* level, Random& random, BoundingBox* box)
     BlockPos origin(getWorldX(0, 0), getWorldY(1), getWorldZ(0, 0));
     bool beached = false;
     Biome* biome = level->getBiome(origin);
-    if (biome == Biome::BEACH || biome == Biome::COLD_BEACH) beached = true;
+    if (biome == Biome::BEACH || biome == Biome::COLD_BEACH)
+        beached = true;
     StructureManager* structureManager = level->getLevelStorage()->getStructureManager();
     int templateType;
     bool upsideDown;
@@ -188,8 +177,7 @@ bool ShipwreckPiece::postProcess(Level* level, Random& random, BoundingBox* box)
     }
     BlockPos place = origin.offset(xOffset, mHeight + yOffset, zOffset);
 
-    const StructureTemplate* structure = structureManager->getOrCreate(
-        SHIPWRECK_TYPES[templateType]);
+    const StructureTemplate* structure = structureManager->getOrCreate(SHIPWRECK_TYPES[templateType]);
     structure->placeInWorldChunk(level, place, &settings);
     StructureTemplate::MarkerMap markers = structure->getMarkers(place, &settings);
     StructureTemplate::MarkerMap::const_iterator it;
@@ -202,8 +190,7 @@ bool ShipwreckPiece::postProcess(Level* level, Random& random, BoundingBox* box)
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(markerPos.below());
             if (blockEntity && eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
             {
-                boost::shared_ptr<ChestBlockEntity> chest =
-                    boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
+                boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
                 chest->setLootTable(&BuiltInLootTables::SHIPWRECK, random.nextLong());
             }
         }
@@ -212,8 +199,7 @@ bool ShipwreckPiece::postProcess(Level* level, Random& random, BoundingBox* box)
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(markerPos.below());
             if (blockEntity && eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
             {
-                boost::shared_ptr<ChestBlockEntity> chest =
-                    boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
+                boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
                 chest->setLootTable(&BuiltInLootTables::SHIPWRECKSUPPLY, random.nextLong());
             }
         }
@@ -222,8 +208,7 @@ bool ShipwreckPiece::postProcess(Level* level, Random& random, BoundingBox* box)
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(markerPos.below());
             if (blockEntity && eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
             {
-                boost::shared_ptr<ChestBlockEntity> chest =
-                    boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
+                boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
                 chest->setLootTable(&BuiltInLootTables::SHIPWRECKTREASURE, random.nextLong());
             }
         }

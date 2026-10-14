@@ -34,8 +34,7 @@
 
 const EntityDataAccessor<int>* Guardian::DATA_ID_ATTACK_TARGET = NULL;
 
-Guardian::Guardian(Level* level, bool createEntityData)
-    : Monster(level), mCachedAttackTarget()
+Guardian::Guardian(Level* level, bool createEntityData) : Monster(level), mCachedAttackTarget()
 {
     if (createEntityData)
     {
@@ -63,7 +62,8 @@ Guardian::~Guardian()
 
 void Guardian::staticCtor()
 {
-    DATA_ID_ATTACK_TARGET = SynchedEntityData::defineId(EntityType::GUARDIAN, EntityType::MONSTER, EntityDataSerializers::INT);
+    DATA_ID_ATTACK_TARGET = SynchedEntityData::defineId(EntityType::GUARDIAN, EntityType::MONSTER,
+                                                        EntityDataSerializers::INT);
 }
 
 void Guardian::addDataWalkers(DataFixerUpper* fixer)
@@ -88,8 +88,10 @@ void Guardian::registerGoals()
     mGoalSelector.addGoal(9, new RandomLookAroundGoal(this), true);
     mRandomStrollGoal->setRequiredControlFlags(3);
     restriction->setRequiredControlFlags(3);
-    mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(
-        this, typeid(LivingEntity), 10, true, false, new GuardianAttackSelector(this), true, true), true);
+    mTargetSelector.addGoal(1,
+                            new NearestAttackableTargetGoal(this, typeid(LivingEntity), 10, true, false,
+                                                            new GuardianAttackSelector(this), true, true),
+                            true);
 }
 
 void Guardian::registerAttributes()
@@ -219,10 +221,10 @@ void Guardian::aiStep()
             mTailAnimationSpeed = 2.0f;
             if (mYd > 0.0 && mTouchedGround && !isSilent())
             {
-                mLevel->playLocalSound(mX, mY, mZ, getFlopSound(), getSoundSource(),
-                                       1.0f, 1.0f, false, 16.0f);
+                mLevel->playLocalSound(mX, mY, mZ, getFlopSound(), getSoundSource(), 1.0f, 1.0f, false, 16.0f);
             }
-            mTouchedGround = mYd < 0.0 && mLevel->isSolidBlockingBlockInLoadedChunk(BlockPos(shared_from_this()).below(), false);
+            mTouchedGround = mYd < 0.0
+                             && mLevel->isSolidBlockingBlockInLoadedChunk(BlockPos(shared_from_this()).below(), false);
         }
         else if (isMoving())
         {
@@ -260,11 +262,10 @@ void Guardian::aiStep()
             Vec3* view = getViewVector(0.0f);
             for (int i = 0; i < 2; ++i)
             {
-                mLevel->addParticle(PARTICLE_BUBBLE,
-                    mX + (mRandom->nextDouble() - 0.5) * mBbWidth - view->x * 1.5,
-                    mY + mRandom->nextDouble() * mBbHeight - view->y * 1.5,
-                    mZ + (mRandom->nextDouble() - 0.5) * mBbWidth - view->z * 1.5,
-                    0.0, 0.0, 0.0, arrayWithLength<int>());
+                mLevel->addParticle(PARTICLE_BUBBLE, mX + (mRandom->nextDouble() - 0.5) * mBbWidth - view->x * 1.5,
+                                    mY + mRandom->nextDouble() * mBbHeight - view->y * 1.5,
+                                    mZ + (mRandom->nextDouble() - 0.5) * mBbWidth - view->z * 1.5, 0.0, 0.0, 0.0,
+                                    arrayWithLength<int>());
             }
         }
 
@@ -293,11 +294,9 @@ void Guardian::aiStep()
                     do
                     {
                         t = t + mRandom->nextDouble() * step + offset;
-                        mLevel->addParticle(PARTICLE_BUBBLE,
-                            (dx / distance) * t + mX,
-                            (dy / distance) * t + mY + getEyeHeight(),
-                            (dz / distance) * t + mZ,
-                            0.0, 0.0, 0.0, arrayWithLength<int>());
+                        mLevel->addParticle(PARTICLE_BUBBLE, (dx / distance) * t + mX,
+                                            (dy / distance) * t + mY + getEyeHeight(), (dz / distance) * t + mZ, 0.0,
+                                            0.0, 0.0, arrayWithLength<int>());
                     } while (t < distance);
                 }
             }
@@ -348,23 +347,22 @@ bool Guardian::isDarkEnoughToSpawn()
 
 bool Guardian::checkSpawnObstruction()
 {
-    return mLevel->isUnobstructed(mBoundingBox, shared_from_this()) &&
-           mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty();
+    return mLevel->isUnobstructed(mBoundingBox, shared_from_this())
+           && mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty();
 }
 
 bool Guardian::checkSpawnRules()
 {
-    return (mRandom->nextInt(20) == 0 || !mLevel->canSeeSkyFromBelowWater(BlockPos(shared_from_this()))) &&
-           Monster::checkSpawnRules();
+    return (mRandom->nextInt(20) == 0 || !mLevel->canSeeSkyFromBelowWater(BlockPos(shared_from_this())))
+           && Monster::checkSpawnRules();
 }
 
 bool Guardian::hurt(const DamageSource* source, float damage)
 {
-    if (!isMoving() && !source->isMagic() && source->getDirectEntity() != NULL &&
-        eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, source->getDirectEntity()->GetType()))
+    if (!isMoving() && !source->isMagic() && source->getDirectEntity() != NULL
+        && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, source->getDirectEntity()->GetType()))
     {
-        boost::shared_ptr<LivingEntity> attacker =
-            boost::dynamic_pointer_cast<LivingEntity>(source->getDirectEntity());
+        boost::shared_ptr<LivingEntity> attacker = boost::dynamic_pointer_cast<LivingEntity>(source->getDirectEntity());
         if (!source->isExplosion())
         {
             EntityDamageSource* thornsSource = DamageSource::CreateThorns(shared_from_this());
@@ -402,8 +400,7 @@ void Guardian::travel(float xxa, float yya, float zza)
     }
 }
 
-MobGroupData* Guardian::finalizeMobSpawn(const DifficultyInstance& difficulty,
-                                         MobGroupData* data,
+MobGroupData* Guardian::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                          const std::wstring& dataString)
 {
     data = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
@@ -416,7 +413,8 @@ unsigned long long Guardian::GetType()
 }
 
 Guardian::GuardianAttackGoal::GuardianAttackGoal(Guardian* guardian)
-    : mGuardian(guardian), mElder(eTYPE_DERIVED_FROM(EntityType::ELDER_GUARDIAN, guardian->GetType()))
+    : mGuardian(guardian),
+      mElder(eTYPE_DERIVED_FROM(EntityType::ELDER_GUARDIAN, guardian->GetType()))
 {
     setRequiredControlFlags(3);
 }
@@ -490,8 +488,7 @@ void Guardian::GuardianAttackGoal::tick()
     }
 }
 
-Guardian::GuardianAttackSelector::GuardianAttackSelector(Guardian* guardian)
-    : mGuardian(guardian)
+Guardian::GuardianAttackSelector::GuardianAttackSelector(Guardian* guardian) : mGuardian(guardian)
 {
 }
 
@@ -501,12 +498,12 @@ Guardian::GuardianAttackSelector::~GuardianAttackSelector()
 
 bool Guardian::GuardianAttackSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) || eTYPE_DERIVED_FROM(EntityType::SQUID, entity->GetType()))
-        && entity->distanceToSqr(mGuardian->shared_from_this()) > 9.0;
+    return (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::SQUID, entity->GetType()))
+           && entity->distanceToSqr(mGuardian->shared_from_this()) > 9.0;
 }
 
-Guardian::GuardianMoveControl::GuardianMoveControl(Guardian* guardian)
-    : MoveControl(guardian), mGuardian(guardian)
+Guardian::GuardianMoveControl::GuardianMoveControl(Guardian* guardian) : MoveControl(guardian), mGuardian(guardian)
 {
 }
 
@@ -558,10 +555,7 @@ void Guardian::GuardianMoveControl::tick()
         wantedY = lookY;
         wantedZ = lookZ;
     }
-    mGuardian->getLookControl()->setLookAt(
-        (lookX - wantedX) * 0.125 + wantedX,
-        (lookY - wantedY) * 0.125 + wantedY,
-        (lookZ - wantedZ) * 0.125 + wantedZ,
-        10.0f, 40.0f);
+    mGuardian->getLookControl()->setLookAt((lookX - wantedX) * 0.125 + wantedX, (lookY - wantedY) * 0.125 + wantedY,
+                                           (lookZ - wantedZ) * 0.125 + wantedZ, 10.0f, 40.0f);
     mGuardian->setMoving(true);
 }

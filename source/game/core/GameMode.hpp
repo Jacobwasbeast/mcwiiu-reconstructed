@@ -38,10 +38,8 @@ public:
 
     virtual bool startDestroyBlock(const BlockPos& pos, const Direction* direction) = 0;
     virtual void tick() = 0;
-    virtual InteractionResult::EInteractionResult useItem(boost::shared_ptr<Player> player,
-                                                          Level* level,
-                                                          InteractionHand::EInteractionHand hand,
-                                                          bool simulate) = 0;
+    virtual InteractionResult::EInteractionResult useItem(boost::shared_ptr<Player> player, Level* level,
+                                                          InteractionHand::EInteractionHand hand, bool simulate) = 0;
     virtual void SetGameType(const GameType* gameType) = 0;
     virtual const GameType* GetGameType() = 0;
 
@@ -82,13 +80,11 @@ public:
     virtual void RecordLanding(const BlockPos& pos);
     virtual void OnMouseDown();
 
-    virtual not_null_ptr<ItemInstance> handleCraftItem(int recipe, int category,
-                                                       boost::shared_ptr<Player> player);
-    virtual boost::shared_ptr<ItemInstance> handleStackedCraftItem(
-        std::vector<std::pair<int, int> >& recipes, int category,
-        boost::shared_ptr<Player> player);
-    virtual boost::shared_ptr<ItemInstance> handleCustomCraftItem(
-        std::vector<int>& recipes, boost::shared_ptr<Player> player);
+    virtual not_null_ptr<ItemInstance> handleCraftItem(int recipe, int category, boost::shared_ptr<Player> player);
+    virtual boost::shared_ptr<ItemInstance> handleStackedCraftItem(std::vector<std::pair<int, int> >& recipes,
+                                                                   int category, boost::shared_ptr<Player> player);
+    virtual boost::shared_ptr<ItemInstance> handleCustomCraftItem(std::vector<int>& recipes,
+                                                                  boost::shared_ptr<Player> player);
 
     bool isSurvival();
     bool isCreative();
@@ -97,19 +93,14 @@ public:
     bool isLobby();
     bool AutoEquipEnabled();
 
-    static void RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingredients,
-                                               Inventory* inventory,
-                                               not_null_ptr<ItemInstance> result,
-                                               bool removeResult);
+    static void RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingredients, Inventory* inventory,
+                                               not_null_ptr<ItemInstance> result, bool removeResult);
     static void RemoveRecipeItemsFromInventory(Recipe::INGREDIENTS_REQUIRED& ingredients,
                                                boost::shared_ptr<Inventory> inventory,
-                                               not_null_ptr<ItemInstance> result,
-                                               bool removeResult);
-    void UpdateCraftAchievements(boost::shared_ptr<Player> player,
-                                 not_null_ptr<ItemInstance> item, eAward award);
+                                               not_null_ptr<ItemInstance> result, bool removeResult);
+    void UpdateCraftAchievements(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item, eAward award);
     static void RemoveCustomRecipeItemsFromInventory(int recipe, Inventory* inventory);
-    static void RemoveCustomRecipeItemsFromInventory(
-        int recipe, boost::shared_ptr<Inventory> inventory);
+    static void RemoveCustomRecipeItemsFromInventory(int recipe, boost::shared_ptr<Inventory> inventory);
 
 protected:
     Minecraft* mMinecraft;

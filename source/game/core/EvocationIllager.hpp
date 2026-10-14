@@ -86,6 +86,7 @@ public:
     virtual const SoundEvent* getCastingSoundEvent();
     static Entity* create(Level* level);
     virtual unsigned long long GetType();
+
 private:
     boost::weak_ptr<Sheep> mWololoTarget;
 };

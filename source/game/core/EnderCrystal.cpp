@@ -35,11 +35,9 @@ EnderCrystal::EnderCrystal(Level* level, double x, double y, double z) : Entity(
 
 void EnderCrystal::staticCtor()
 {
-    DATA_BEAM_TARGET = SynchedEntityData::defineId(EntityType::ENDER_CRYSTAL,
-                                                    EntityType::ENTITY,
-                                                    EntityDataSerializers::OPTIONAL_BLOCK_POS);
-    DATA_SHOW_BOTTOM = SynchedEntityData::defineId(EntityType::ENDER_CRYSTAL,
-                                                   EntityType::ENTITY,
+    DATA_BEAM_TARGET = SynchedEntityData::defineId(EntityType::ENDER_CRYSTAL, EntityType::ENTITY,
+                                                   EntityDataSerializers::OPTIONAL_BLOCK_POS);
+    DATA_SHOW_BOTTOM = SynchedEntityData::defineId(EntityType::ENDER_CRYSTAL, EntityType::ENTITY,
                                                    EntityDataSerializers::BOOLEAN);
 }
 
@@ -72,8 +70,8 @@ void EnderCrystal::tick()
     if (!mLevel->mIsClientSide)
     {
         BlockPos pos(this);
-        if (mLevel->mDimension->getType() == DimensionType::THE_END &&
-            mLevel->getBlockState(pos)->getBlock() != Blocks::fire)
+        if (mLevel->mDimension->getType() == DimensionType::THE_END
+            && mLevel->getBlockState(pos)->getBlock() != Blocks::fire)
         {
             mLevel->setBlockAndUpdate(pos, Blocks::fire->defaultBlockState());
         }
@@ -144,8 +142,8 @@ bool EnderCrystal::hurt(const DamageSource* source, float damage)
         remove();
         if (!mLevel->mIsClientSide)
         {
-            if (gApp.GetGameHostOption(eGameHostOption_TNT)
-                && mLevel->explodeNextEnderCrystal() && !source->isExplosion())
+            if (gApp.GetGameHostOption(eGameHostOption_TNT) && mLevel->explodeNextEnderCrystal()
+                && !source->isExplosion())
                 mLevel->explode(boost::shared_ptr<Entity>(), mX, mY, mZ, 6.0f, false, true, false, false, false, -1.0f);
             onDestroyedBy(source);
         }

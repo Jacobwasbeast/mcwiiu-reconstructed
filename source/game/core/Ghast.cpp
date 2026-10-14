@@ -50,7 +50,7 @@ Entity* Ghast::create(Level* level)
 void Ghast::staticCtor()
 {
     DATA_CHARGING = SynchedEntityData::defineId<bool>(EntityType::GHAST, EntityType::FLYING_MOB,
-                                                   EntityDataSerializers::BOOLEAN);
+                                                      EntityDataSerializers::BOOLEAN);
 }
 
 void Ghast::_init()
@@ -86,12 +86,14 @@ bool Ghast::hurt(const DamageSource* source, float damage)
 {
     if (isInvulnerableTo(source))
         return false;
-    if (source->getDirectEntity() && eTYPE_DERIVED_FROM(EntityType::LARGE_FIREBALL, source->getDirectEntity()->GetType()))
+    if (source->getDirectEntity()
+        && eTYPE_DERIVED_FROM(EntityType::LARGE_FIREBALL, source->getDirectEntity()->GetType()))
     {
         if (source->getEntity() && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
         {
             LivingEntity::hurt(source, 1000.0f);
-            boost::dynamic_pointer_cast<Player>(source->getEntity())->awardStat(GenericStats::ghast(), GenericStats::param_ghast());
+            boost::dynamic_pointer_cast<Player>(source->getEntity())
+                ->awardStat(GenericStats::ghast(), GenericStats::param_ghast());
             return true;
         }
     }
@@ -111,18 +113,36 @@ void Ghast::registerAttributes()
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(100.0);
 }
 
-const SoundEvent* Ghast::getAmbientSound() { return SoundEvents::GHAST_AMBIENT; }
-const SoundEvent* Ghast::getHurtSound(const DamageSource*) { return SoundEvents::GHAST_SCREAM; }
-const SoundEvent* Ghast::getDeathSound() { return SoundEvents::GHAST_DEATH; }
-ResourceLocation* Ghast::getDefaultLootTable() { return &BuiltInLootTables::GHAST; }
-float Ghast::getSoundVolume() { return 0.5f; }
+const SoundEvent* Ghast::getAmbientSound()
+{
+    return SoundEvents::GHAST_AMBIENT;
+}
+const SoundEvent* Ghast::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::GHAST_SCREAM;
+}
+const SoundEvent* Ghast::getDeathSound()
+{
+    return SoundEvents::GHAST_DEATH;
+}
+ResourceLocation* Ghast::getDefaultLootTable()
+{
+    return &BuiltInLootTables::GHAST;
+}
+float Ghast::getSoundVolume()
+{
+    return 0.5f;
+}
 
 bool Ghast::checkSpawnRules()
 {
     return mRandom->nextInt(20) == 0 && Mob::checkSpawnRules() && mLevel->getDifficulty() != Difficulty::PEACEFUL;
 }
 
-int Ghast::getMaxSpawnClusterSize() { return 1; }
+int Ghast::getMaxSpawnClusterSize()
+{
+    return 1;
+}
 
 void Ghast::addDataWalkers(DataFixerUpper* fixer)
 {
@@ -142,7 +162,10 @@ void Ghast::readAdditionalSaveData(CompoundTag* tag)
         mExplosionPower = tag->getInt(std::wstring(L"ExplosionPower"));
 }
 
-float Ghast::getEyeHeight() { return 2.6f; }
+float Ghast::getEyeHeight()
+{
+    return 2.6f;
+}
 
 void Ghast::tick()
 {
@@ -156,14 +179,22 @@ void Ghast::tick()
     }
 }
 
-unsigned long long Ghast::GetType() { return EntityType::GHAST; }
+unsigned long long Ghast::GetType()
+{
+    return EntityType::GHAST;
+}
 
 Ghast::GhastLookGoal::GhastLookGoal(Ghast* ghast) : Goal(), mGhast(ghast)
 {
     setRequiredControlFlags(2);
 }
-Ghast::GhastLookGoal::~GhastLookGoal() {}
-bool Ghast::GhastLookGoal::canUse() { return true; }
+Ghast::GhastLookGoal::~GhastLookGoal()
+{
+}
+bool Ghast::GhastLookGoal::canUse()
+{
+    return true;
+}
 void Ghast::GhastLookGoal::tick()
 {
     if (mGhast->getTarget() == NULL)
@@ -183,8 +214,12 @@ void Ghast::GhastLookGoal::tick()
         }
     }
 }
-Ghast::GhastMoveControl::GhastMoveControl(Ghast* ghast) : MoveControl(ghast), mGhast(ghast), mCountdown(0) {}
-Ghast::GhastMoveControl::~GhastMoveControl() {}
+Ghast::GhastMoveControl::GhastMoveControl(Ghast* ghast) : MoveControl(ghast), mGhast(ghast), mCountdown(0)
+{
+}
+Ghast::GhastMoveControl::~GhastMoveControl()
+{
+}
 bool Ghast::GhastMoveControl::canReach(double x, double y, double z, double distance)
 {
     double dx = (x - mGhast->mX) / distance;
@@ -222,11 +257,24 @@ void Ghast::GhastMoveControl::tick()
     }
 }
 
-Ghast::GhastShootFireballGoal::GhastShootFireballGoal(Ghast* ghast) : Goal(), mGhast(ghast) {}
-Ghast::GhastShootFireballGoal::~GhastShootFireballGoal() {}
-bool Ghast::GhastShootFireballGoal::canUse() { return mGhast->getTarget() != boost::shared_ptr<LivingEntity>(); }
-void Ghast::GhastShootFireballGoal::start() { mChargeTime = 0; }
-void Ghast::GhastShootFireballGoal::stop() { mGhast->setCharging(false); }
+Ghast::GhastShootFireballGoal::GhastShootFireballGoal(Ghast* ghast) : Goal(), mGhast(ghast)
+{
+}
+Ghast::GhastShootFireballGoal::~GhastShootFireballGoal()
+{
+}
+bool Ghast::GhastShootFireballGoal::canUse()
+{
+    return mGhast->getTarget() != boost::shared_ptr<LivingEntity>();
+}
+void Ghast::GhastShootFireballGoal::start()
+{
+    mChargeTime = 0;
+}
+void Ghast::GhastShootFireballGoal::stop()
+{
+    mGhast->setCharging(false);
+}
 void Ghast::GhastShootFireballGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = mGhast->getTarget();
@@ -236,15 +284,19 @@ void Ghast::GhastShootFireballGoal::tick()
         Level* level = mGhast->mLevel;
         ++mChargeTime;
         if (mChargeTime == 10)
-            level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_WARNING, BlockPos(mGhast->shared_from_this()), 0);
+            level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_WARNING,
+                              BlockPos(mGhast->shared_from_this()), 0);
         if (mChargeTime == 20)
         {
             Vec3* viewVector = mGhast->getViewVector(1.0f);
             double xd = target->mX - (mGhast->mX + viewVector->x * 4.0);
-            double yd = (target->mBoundingBox->mMinY + (double)(target->mBbHeight * 0.5f)) - (mGhast->mY + 0.5 + (double)(mGhast->mBbHeight * 0.5f));
+            double yd = (target->mBoundingBox->mMinY + (double)(target->mBbHeight * 0.5f))
+                        - (mGhast->mY + 0.5 + (double)(mGhast->mBbHeight * 0.5f));
             double zd = target->mZ - (mGhast->mZ + viewVector->z * 4.0);
-            level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_FIREBALL, BlockPos(mGhast->shared_from_this()), 0);
-            boost::shared_ptr<LargeFireball> fireball(new LargeFireball(level, boost::dynamic_pointer_cast<LivingEntity>(mGhast->shared_from_this()), xd, yd, zd));
+            level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_FIREBALL,
+                              BlockPos(mGhast->shared_from_this()), 0);
+            boost::shared_ptr<LargeFireball> fireball(new LargeFireball(
+                level, boost::dynamic_pointer_cast<LivingEntity>(mGhast->shared_from_this()), xd, yd, zd));
             fireball->mExplosionPower = mGhast->getExplosionPower();
             fireball->mX = mGhast->mX + viewVector->x * 4.0;
             fireball->mY = mGhast->mY + (double)(mGhast->mBbHeight * 0.5f) + 0.5;
@@ -263,7 +315,9 @@ Ghast::RandomFloatAroundGoal::RandomFloatAroundGoal(Ghast* ghast) : Goal(), mGha
 {
     setRequiredControlFlags(1);
 }
-Ghast::RandomFloatAroundGoal::~RandomFloatAroundGoal() {}
+Ghast::RandomFloatAroundGoal::~RandomFloatAroundGoal()
+{
+}
 bool Ghast::RandomFloatAroundGoal::canUse()
 {
     MoveControl* control = static_cast<MoveControl*>(mGhast->getMoveControl());
@@ -278,7 +332,10 @@ bool Ghast::RandomFloatAroundGoal::canUse()
         return true;
     return false;
 }
-bool Ghast::RandomFloatAroundGoal::canContinueToUse() { return false; }
+bool Ghast::RandomFloatAroundGoal::canContinueToUse()
+{
+    return false;
+}
 void Ghast::RandomFloatAroundGoal::start()
 {
     Random* random = mGhast->getRandom();

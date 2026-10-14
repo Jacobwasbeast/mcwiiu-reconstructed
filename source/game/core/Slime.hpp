@@ -19,7 +19,7 @@ class MobGroupData;
 class ParticleType;
 class Random;
 class SoundEvent;
-template<class T> class EntityDataAccessor;
+template <class T> class EntityDataAccessor;
 
 class Slime : public Mob, public Enemy
 {

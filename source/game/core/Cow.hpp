@@ -32,8 +32,7 @@ public:
     virtual void registerGoals();
     virtual const SoundEvent* getAmbientSound();
     virtual ResourceLocation* getDefaultLootTable();
-    virtual bool mobInteract(const boost::shared_ptr<Player>& player,
-                             InteractionHand::EInteractionHand hand);
+    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> parent);
     static Entity* create(Level* level);
 };

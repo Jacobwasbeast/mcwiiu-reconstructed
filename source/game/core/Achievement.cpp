@@ -9,8 +9,8 @@
 
 static std::vector<Achievement*>* achievements = new std::vector<Achievement*>();
 
-Achievement::Achievement(int id, const std::wstring& name, int displayColumn, int displayRow,
-                         Item* item, Achievement* parent)
+Achievement::Achievement(int id, const std::wstring& name, int displayColumn, int displayRow, Item* item,
+                         Achievement* parent)
     : Stat(id + 5242880, std::wstring(L"achievement.").append(name)),
       displayColumn(displayColumn),
       displayRow(displayRow),
@@ -20,8 +20,8 @@ Achievement::Achievement(int id, const std::wstring& name, int displayColumn, in
 {
 }
 
-Achievement::Achievement(int id, const std::wstring& name, int displayColumn, int displayRow,
-                         Block* block, Achievement* parent)
+Achievement::Achievement(int id, const std::wstring& name, int displayColumn, int displayRow, Block* block,
+                         Achievement* parent)
     : Stat(id + 5242880, std::wstring(L"achievement.").append(name)),
       displayColumn(displayColumn),
       displayRow(displayRow),

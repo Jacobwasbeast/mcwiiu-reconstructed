@@ -79,8 +79,8 @@ void FoodData::tick(const boost::shared_ptr<Player>& player)
         return;
     }
 
-    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) && naturalRegeneration && saturationLevel > 0.0f &&
-        player->isHurt() && foodLevel >= static_cast<int>(FoodConstants::MaxFood()))
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) && naturalRegeneration && saturationLevel > 0.0f
+        && player->isHurt() && foodLevel >= static_cast<int>(FoodConstants::MaxFood()))
     {
         ++foodTickTimer;
         if (foodTickTimer >= static_cast<int>(FoodConstants::HealthTickCountSaturated()))
@@ -94,8 +94,8 @@ void FoodData::tick(const boost::shared_ptr<Player>& player)
         return;
     }
 
-    if (player->mLevel->getGameRules()->getBoolean(GameRules::RULE_NATURAL_REGENERATION) &&
-        foodLevel >= static_cast<int>(FoodConstants::HealLevel()) && player->isHurt())
+    if (player->mLevel->getGameRules()->getBoolean(GameRules::RULE_NATURAL_REGENERATION)
+        && foodLevel >= static_cast<int>(FoodConstants::HealLevel()) && player->isHurt())
     {
         ++foodTickTimer;
         if (foodTickTimer >= static_cast<int>(FoodConstants::HealthTickCount()))
@@ -112,8 +112,8 @@ void FoodData::tick(const boost::shared_ptr<Player>& player)
         ++foodTickTimer;
         if (foodTickTimer >= static_cast<int>(FoodConstants::HealthTickCount()))
         {
-            if ((player->getHealth() > 10.0f || difficulty == Difficulty::HARD) ||
-                (player->getHealth() > 1.0f && (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD)))
+            if ((player->getHealth() > 10.0f || difficulty == Difficulty::HARD)
+                || (player->getHealth() > 1.0f && (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD)))
             {
                 if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
                     player->hurt(DamageSource::STARVE, 1.0f);

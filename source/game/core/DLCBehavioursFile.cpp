@@ -1,7 +1,6 @@
 #include "game/core/DLCBehavioursFile.hpp"
 
-DLCBehavioursFile::DLCBehavioursFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_Behaviours, path)
+DLCBehavioursFile::DLCBehavioursFile(const std::wstring& path) : DLCFile(DLCManager::eDLCType_Behaviours, path)
 {
 }
 

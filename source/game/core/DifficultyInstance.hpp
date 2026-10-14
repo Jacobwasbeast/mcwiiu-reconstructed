@@ -20,7 +20,8 @@ public:
     bool isHarderThan(float threshold);
 
 private:
-    float calculateDifficulty(const Difficulty* difficulty, long long levelTime, long long inhabitedTime, float moonPhase) const;
+    float calculateDifficulty(const Difficulty* difficulty, long long levelTime, long long inhabitedTime,
+                              float moonPhase) const;
 
     const Difficulty* difficulty;
     float effectiveDifficulty;

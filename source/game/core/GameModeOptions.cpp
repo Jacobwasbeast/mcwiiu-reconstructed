@@ -32,27 +32,15 @@ static inline unsigned int GetShift(unsigned int mask)
 
 static const int HOST_OPTION_NAME_COUNT = 10;
 
-static const std::wstring HOST_OPTION_NAMES[HOST_OPTION_NAME_COUNT] =
-{
-    L"NoSmallSkins",
-    L"SpectateMode",
-    L"RoundLength",
-    L"MaxPlayers",
-    L"CentreSpawn",
-    L"PointsActive",
-    L"PowerupsActive",
-    L"EnableVoting",
-    L"IsTeams",
-    L"Nothing"
-};
+static const std::wstring HOST_OPTION_NAMES[HOST_OPTION_NAME_COUNT] = {
+    L"NoSmallSkins", L"SpectateMode",   L"RoundLength",  L"MaxPlayers", L"CentreSpawn",
+    L"PointsActive", L"PowerupsActive", L"EnableVoting", L"IsTeams",    L"Nothing"};
 
-GameModeOptions::GameModeOptions()
-    : m_uOptions(0)
+GameModeOptions::GameModeOptions() : m_uOptions(0)
 {
 }
 
-GameModeOptions::GameModeOptions(unsigned int uOptions)
-    : m_uOptions(uOptions)
+GameModeOptions::GameModeOptions(unsigned int uOptions) : m_uOptions(uOptions)
 {
 }
 

@@ -23,8 +23,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/item/ItemId.hpp"
 
-Fish::Fish(Level* level, bool deferredInit)
-    : WaterAnimal(level)
+Fish::Fish(Level* level, bool deferredInit) : WaterAnimal(level)
 {
     if (!deferredInit)
     {
@@ -128,12 +127,10 @@ int Fish::getExperienceReward(boost::shared_ptr<Player>)
 
 bool Fish::checkSpawnRules()
 {
-    return mY > 45.0 && mY < static_cast<double>(mLevel->getSeaLevel())
-        && WaterAnimal::checkSpawnRules();
+    return mY > 45.0 && mY < static_cast<double>(mLevel->getSeaLevel()) && WaterAnimal::checkSpawnRules();
 }
 
-bool Fish::mobInteract(const boost::shared_ptr<Player>& player,
-                       InteractionHand::EInteractionHand hand)
+bool Fish::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
     if (item->getItem() == Items::bucket || item->getItem() == Items::waterBucket)

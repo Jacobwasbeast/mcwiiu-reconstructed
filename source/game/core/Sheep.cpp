@@ -87,11 +87,9 @@ arrayWithLength<const float> Sheep::createSheepColor(const DyeColor* color)
 
 void Sheep::staticCtor()
 {
-    gSheepSheared = SynchedEntityData::defineId(EntityType::SHEEP, EntityType::ANIMAL,
-                                                EntityDataSerializers::BYTE);
+    gSheepSheared = SynchedEntityData::defineId(EntityType::SHEEP, EntityType::ANIMAL, EntityDataSerializers::BYTE);
 
-    for (std::vector<const DyeColor*>::const_iterator it = DyeColor::COLORS.begin();
-         it != DyeColor::COLORS.end(); ++it)
+    for (std::vector<const DyeColor*>::const_iterator it = DyeColor::COLORS.begin(); it != DyeColor::COLORS.end(); ++it)
     {
         const DyeColor* color = *it;
         gSheepColors[color] = createSheepColor(color);
@@ -112,10 +110,9 @@ void Sheep::registerGoals()
     mGoalSelector.addGoal(1, new PanicGoal(this, 1.25), true);
     mGoalSelector.addGoal(2, new BreedGoal(this, 1.0), true);
 
-    static Item* temptItems[] = { Items::wheat };
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.1, arrayWithLength<Item*>(temptItems, 1), false,
-                                           arrayWithLength<int>()),
-                          true);
+    static Item* temptItems[] = {Items::wheat};
+    mGoalSelector.addGoal(
+        3, new TemptGoal(this, 1.1, arrayWithLength<Item*>(temptItems, 1), false, arrayWithLength<int>()), true);
 
     mGoalSelector.addGoal(4, new FollowParentGoal(this, 1.1), true);
     mGoalSelector.addGoal(5, mEatBlockGoal, true);
@@ -189,8 +186,7 @@ float Sheep::getHeadEatAngleScale(float partialTick)
 {
     if (mEatAnimationTick > 4 && mEatAnimationTick <= 36)
     {
-        return 0.62831855f
-               + 0.21991149f * Mth::sin((mEatAnimationTick - 4 - partialTick) * 0.03125f * 28.7f);
+        return 0.62831855f + 0.21991149f * Mth::sin((mEatAnimationTick - 4 - partialTick) * 0.03125f * 28.7f);
     }
     float scale = 0.62831855f;
     if (mEatAnimationTick <= 0)
@@ -242,8 +238,7 @@ bool Sheep::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand
             for (int i = 0; i < count; ++i)
             {
                 boost::shared_ptr<ItemEntity> wool = spawnAtLocation(
-                    not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, getColor()->getBlockData())),
-                    1.0f);
+                    not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, getColor()->getBlockData())), 1.0f);
                 wool->mYd += mRandom->nextFloat() * 0.05f;
                 wool->mXd += (mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f;
                 wool->mZd += (mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f;
@@ -276,9 +271,7 @@ void Sheep::addAdditonalSaveData(CompoundTag* tag)
 void Sheep::setColor(const DyeColor* color)
 {
     unsigned char value = mEntityData->get(gSheepSheared);
-    mEntityData->set(gSheepSheared,
-                     static_cast<unsigned char>((value & 0xf0) | (color->getBlockData() & 0x0f)),
-                     true);
+    mEntityData->set(gSheepSheared, static_cast<unsigned char>((value & 0xf0) | (color->getBlockData() & 0x0f)), true);
 }
 
 void Sheep::readAdditionalSaveData(CompoundTag* tag)
@@ -314,9 +307,18 @@ unsigned int Sheep::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     return Animal::GetInteractTooltip(holder);
 }
 
-const SoundEvent* Sheep::getAmbientSound() { return SoundEvents::SHEEP_AMBIENT; }
-const SoundEvent* Sheep::getHurtSound(const DamageSource*) { return SoundEvents::SHEEP_HURT; }
-const SoundEvent* Sheep::getDeathSound() { return SoundEvents::SHEEP_DEATH; }
+const SoundEvent* Sheep::getAmbientSound()
+{
+    return SoundEvents::SHEEP_AMBIENT;
+}
+const SoundEvent* Sheep::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::SHEEP_HURT;
+}
+const SoundEvent* Sheep::getDeathSound()
+{
+    return SoundEvents::SHEEP_DEATH;
+}
 
 void Sheep::playStepSound(const BlockPos&, Block*)
 {
@@ -326,10 +328,14 @@ void Sheep::playStepSound(const BlockPos&, Block*)
 const DyeColor* Sheep::getRandomSheepColor(Random* random)
 {
     int value = random->nextInt(100);
-    if (value < 5) return DyeColor::BLACK;
-    if (value < 10) return DyeColor::GRAY;
-    if (value < 15) return DyeColor::SILVER;
-    if (value < 18) return DyeColor::BROWN;
+    if (value < 5)
+        return DyeColor::BLACK;
+    if (value < 10)
+        return DyeColor::GRAY;
+    if (value < 15)
+        return DyeColor::SILVER;
+    if (value < 18)
+        return DyeColor::BROWN;
     return random->nextInt(500) == 0 ? DyeColor::PINK : DyeColor::WHITE;
 }
 
@@ -341,8 +347,8 @@ const DyeColor* Sheep::getOffspringColor(boost::shared_ptr<Animal> first, boost:
     mCraftingContainer->getItem(0)->setAuxValue(firstData);
     mCraftingContainer->getItem(1)->setAuxValue(secondData);
 
-    not_null_ptr<ItemInstance> result = Recipes::getInstance()->getItemFor(
-        mCraftingContainer, first->mLevel, NULL, Recipes::eRecipeCategory_Crafting);
+    not_null_ptr<ItemInstance> result = Recipes::getInstance()->getItemFor(mCraftingContainer, first->mLevel, NULL,
+                                                                           Recipes::eRecipeCategory_Crafting);
 
     int itemData;
     if (result->getItem() == Items::dye)
@@ -361,8 +367,7 @@ boost::shared_ptr<AgableMob> Sheep::getBreedOffspring(boost::shared_ptr<AgableMo
 {
     boost::shared_ptr<Sheep> partnerSheep = boost::dynamic_pointer_cast<Sheep>(partner);
     boost::shared_ptr<Sheep> offspring(new Sheep(mLevel));
-    offspring->setColor(
-        getOffspringColor(boost::dynamic_pointer_cast<Animal>(shared_from_this()), partnerSheep));
+    offspring->setColor(getOffspringColor(boost::dynamic_pointer_cast<Animal>(shared_from_this()), partnerSheep));
     return offspring;
 }
 

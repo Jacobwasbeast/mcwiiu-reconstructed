@@ -9,8 +9,7 @@
 #include <algorithm>
 #include <string>
 
-GameRules_IntAttribute::GameRules_IntAttribute(int* value)
-    : mValue(value)
+GameRules_IntAttribute::GameRules_IntAttribute(int* value) : mValue(value)
 {
     mHasMin = false;
     mHasMax = false;

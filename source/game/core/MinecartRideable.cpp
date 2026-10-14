@@ -15,8 +15,7 @@ MinecartRideable::MinecartRideable(Level* level) : Minecart(level)
     mCategories |= EntityCategory::eEntityCategory_Rideable;
 }
 
-MinecartRideable::MinecartRideable(Level* level, double x, double y, double z)
-    : Minecart(level, x, y, z)
+MinecartRideable::MinecartRideable(Level* level, double x, double y, double z) : Minecart(level, x, y, z)
 {
     fjDerivedCtorCalls();
     mCategories |= EntityCategory::eEntityCategory_Rideable;
@@ -31,8 +30,7 @@ void MinecartRideable::addDataWalkers(DataFixerUpper* dataFixerUpper)
 {
 }
 
-bool MinecartRideable::interact(const boost::shared_ptr<Player>& player,
-                                InteractionHand::EInteractionHand hand)
+bool MinecartRideable::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     if (player->isSneaking())
     {

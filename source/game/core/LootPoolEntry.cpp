@@ -5,9 +5,7 @@
 #include "game/core/Mth.hpp"
 #include "game/util/Random.hpp"
 
-LootPoolEntry::LootPoolEntry(int weight,
-                             int quality,
-                             std::vector<LootItemCondition*>* conditions,
+LootPoolEntry::LootPoolEntry(int weight, int quality, std::vector<LootItemCondition*>* conditions,
                              LootTableEntry* entry)
     : mConditions(conditions),
       mEntry(entry),
@@ -16,8 +14,7 @@ LootPoolEntry::LootPoolEntry(int weight,
 {
 }
 
-void LootPoolEntry::createItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                               Random* random,
+void LootPoolEntry::createItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random,
                                LootTableContext& context)
 {
     if (_createItem(items, random, context) && mEntry != NULL)

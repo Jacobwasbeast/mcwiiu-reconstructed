@@ -34,8 +34,8 @@ public:
     static void RectifyBubbleFlow(Level* level, const BlockPos& pos, bool down);
     virtual int getTickDelay(Level* level);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual bool canSurvive(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool canInstantlyTick();
     virtual bool isPathfindable(LevelSource* levelSource, const BlockPos& pos);
@@ -43,8 +43,8 @@ public:
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getResourceCount(Random* random);
     virtual int getRenderLayer();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                              const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);

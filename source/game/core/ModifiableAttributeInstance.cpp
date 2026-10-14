@@ -17,7 +17,8 @@ ModifiableAttributeInstance::~ModifiableAttributeInstance()
 {
     for (int operation = 0; operation < NUM_OPERATIONS; ++operation)
     {
-        for (ModifierSet::iterator it = mModifiersByOperation[operation].begin(); it != mModifiersByOperation[operation].end(); ++it)
+        for (ModifierSet::iterator it = mModifiersByOperation[operation].begin();
+             it != mModifiersByOperation[operation].end(); ++it)
         {
             delete *it;
         }
@@ -112,7 +113,8 @@ void ModifiableAttributeInstance::removeModifier(AttributeModifier* modifier)
 
     for (int operation = 0; operation < NUM_OPERATIONS; ++operation)
     {
-        for (ModifierSet::iterator it = mModifiersByOperation[operation].begin(); it != mModifiersByOperation[operation].end(); ++it)
+        for (ModifierSet::iterator it = mModifiersByOperation[operation].begin();
+             it != mModifiersByOperation[operation].end(); ++it)
         {
             if (modifier->equals(*it))
             {
@@ -158,7 +160,8 @@ void ModifiableAttributeInstance::removeModifiers()
     }
 }
 
-void ModifiableAttributeInstance::getAppliedModifiers(int operation, boost::unordered_set<AttributeModifier*>& modifiers)
+void ModifiableAttributeInstance::getAppliedModifiers(int operation,
+                                                      boost::unordered_set<AttributeModifier*>& modifiers)
 {
     modifiers.clear();
 

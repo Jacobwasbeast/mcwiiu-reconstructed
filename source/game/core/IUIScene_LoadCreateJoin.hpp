@@ -66,8 +66,7 @@ public:
     virtual bool GetHideLoadTab() = 0;
     virtual void AddLoadListButton(const std::wstring& label, int id) = 0;
     virtual bool DoesLoadListHaveFocus() = 0;
-    virtual void SetLoadListIcon(int index, unsigned char* data, unsigned int size,
-                                   const std::wstring& name) = 0;
+    virtual void SetLoadListIcon(int index, unsigned char* data, unsigned int size, const std::wstring& name) = 0;
     virtual void ScrollLoadListToSelection(unsigned int selection) = 0;
     virtual void ClearLoadList() = 0;
     virtual unsigned int GetLoadListSize() = 0;
@@ -76,14 +75,12 @@ public:
     virtual void AddCreateListButton(const std::wstring& label, int id) = 0;
     virtual bool DoesCreateListHaveFocus() = 0;
     virtual bool DoesMashUpWorldHaveFocus() = 0;
-    virtual void SetCreateListIcon(int index, unsigned char* data, unsigned int size,
-                                   const std::wstring& name) = 0;
+    virtual void SetCreateListIcon(int index, unsigned char* data, unsigned int size, const std::wstring& name) = 0;
     virtual void ScrollCreateListToSelection(unsigned int selection) = 0;
     virtual void ClearCreateList() = 0;
     virtual void SetCreateListEnabled(bool enabled) = 0;
-    virtual void AddJoinListButton(const std::wstring& label, int id, unsigned char* data,
-                                   unsigned int size, const std::wstring& textureName,
-                                   unsigned char* data1, unsigned int size1,
+    virtual void AddJoinListButton(const std::wstring& label, int id, unsigned char* data, unsigned int size,
+                                   const std::wstring& textureName, unsigned char* data1, unsigned int size1,
                                    const std::wstring& textureName1) = 0;
     virtual bool DoesGamesListHaveFocus() = 0;
     virtual void InitFocusJoinList(int focus) = 0;
@@ -100,6 +97,7 @@ public:
     virtual int handleSaveOptionsDialogReturned(int userIndex, C4JStorage::EMessageResult result) = 0;
     virtual int handleTexturePackDialogReturned(int userIndex, C4JStorage::EMessageResult result) = 0;
     virtual uint32_t GetCustomGameModeID();
+
 protected:
     std::vector<FriendSessionInfo*>* m_friendSessions;
     _SaveListDetails* m_saveListDetails;
@@ -134,4 +132,3 @@ protected:
     OSFastMutex m_lock;
 };
 #endif
-

@@ -15,14 +15,13 @@ class GameMedal;
 class ClientScoreboard : public Scoreboard
 {
 public:
-    typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID>,
-                                 std::equal_to<StatsUID> > PlayerStatsMap;
+    typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID>, std::equal_to<StatsUID> >
+        PlayerStatsMap;
 
     ClientScoreboard();
 
     void SyncPlayerStats(const StatsUID& suid, PlayerStats* stats, int round);
-    void UpdatePlayerStats(const StatsUID& suid, PlayerStats* stats,
-                           int round, int life, unsigned long long changed);
+    void UpdatePlayerStats(const StatsUID& suid, PlayerStats* stats, int round, int life, unsigned long long changed);
     PlayerStats* GetPlayerStats(const StatsUID& suid);
     PlayerStats::_RoundStats* GetPlayerRoundStats(const StatsUID& suid, int round);
     int GetLastBankedCheckpointID(const StatsUID& suid, int round);

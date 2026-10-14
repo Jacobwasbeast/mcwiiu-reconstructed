@@ -22,8 +22,7 @@ class RiderPositionOverrides
 public:
     static void ClearOverrides();
     static void ReadOverrides(DataInputStream* stream);
-    static bool OverridePosition(const boost::shared_ptr<Entity>& vehicle,
-                                 const boost::shared_ptr<Entity>& passenger);
+    static bool OverridePosition(const boost::shared_ptr<Entity>& vehicle, const boost::shared_ptr<Entity>& passenger);
 };
 
 #endif

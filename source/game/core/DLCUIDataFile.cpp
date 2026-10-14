@@ -1,10 +1,10 @@
 #include "game/core/DLCUIDataFile.hpp"
 
 DLCUIDataFile::DLCUIDataFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_UIData, path)
-    , m_pData(NULL)
-    , m_dataSize(0)
-    , m_bTakeDataOwnership(false)
+    : DLCFile(DLCManager::eDLCType_UIData, path),
+      m_pData(NULL),
+      m_dataSize(0),
+      m_bTakeDataOwnership(false)
 {
 }
 

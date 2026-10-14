@@ -35,7 +35,11 @@ void Node::_init()
     acceptedNode = 0;
 }
 
-Node::Node(int xValue, int yValue, int zValue) : x(xValue), y(yValue), z(zValue), hash(createHash(xValue, yValue, zValue))
+Node::Node(int xValue, int yValue, int zValue)
+    : x(xValue),
+      y(yValue),
+      z(zValue),
+      hash(createHash(xValue, yValue, zValue))
 {
     _init();
 }
@@ -46,9 +50,21 @@ Node::Node() : x(0), y(0), z(0), hash(0)
 }
 
 Node::Node(const Node& node)
-    : x(node.x), y(node.y), z(node.z), hash(node.hash), heapIdx(node.heapIdx), g(node.g), h(node.h), f(node.f),
-      cameFrom(node.cameFrom), closed(node.closed), walkedDistance(node.walkedDistance), cost(node.cost),
-      costMalus(node.costMalus), type(node.type), hasAcceptedNode(node.hasAcceptedNode),
+    : x(node.x),
+      y(node.y),
+      z(node.z),
+      hash(node.hash),
+      heapIdx(node.heapIdx),
+      g(node.g),
+      h(node.h),
+      f(node.f),
+      cameFrom(node.cameFrom),
+      closed(node.closed),
+      walkedDistance(node.walkedDistance),
+      cost(node.cost),
+      costMalus(node.costMalus),
+      type(node.type),
+      hasAcceptedNode(node.hasAcceptedNode),
       acceptedNode(node.acceptedNode)
 {
 }

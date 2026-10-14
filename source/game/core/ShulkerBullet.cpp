@@ -25,18 +25,27 @@
 #include "game/world/generation/Player.hpp"
 
 ShulkerBullet::ShulkerBullet(Level* level)
-    : Entity(level, true), mOwner(), mTarget(), mOwnerUniqueId(), mOwnerPos(),
-      mTargetUniqueId(), mTargetPos()
+    : Entity(level, true),
+      mOwner(),
+      mTarget(),
+      mOwnerUniqueId(),
+      mOwnerPos(),
+      mTargetUniqueId(),
+      mTargetPos()
 {
     init();
     setSize(0.3125f, 0.3125f);
     mNoPhysics = true;
 }
 
-ShulkerBullet::ShulkerBullet(Level* level, double x, double y, double z,
-                             double xd, double yd, double zd)
-    : Entity(level, true), mOwner(), mTarget(), mOwnerUniqueId(), mOwnerPos(),
-      mTargetUniqueId(), mTargetPos()
+ShulkerBullet::ShulkerBullet(Level* level, double x, double y, double z, double xd, double yd, double zd)
+    : Entity(level, true),
+      mOwner(),
+      mTarget(),
+      mOwnerUniqueId(),
+      mOwnerPos(),
+      mTargetUniqueId(),
+      mTargetPos()
 {
     init();
     moveTo(x, y, z, mYRot, mXRot);
@@ -45,11 +54,15 @@ ShulkerBullet::ShulkerBullet(Level* level, double x, double y, double z,
     mZd = zd;
 }
 
-ShulkerBullet::ShulkerBullet(Level* level, boost::shared_ptr<LivingEntity> owner,
-                             boost::shared_ptr<Entity> target,
+ShulkerBullet::ShulkerBullet(Level* level, boost::shared_ptr<LivingEntity> owner, boost::shared_ptr<Entity> target,
                              const Direction::Axis* axis)
-    : Entity(level, true), mOwner(), mTarget(), mOwnerUniqueId(), mOwnerPos(),
-      mTargetUniqueId(), mTargetPos()
+    : Entity(level, true),
+      mOwner(),
+      mTarget(),
+      mOwnerUniqueId(),
+      mOwnerPos(),
+      mTargetUniqueId(),
+      mTargetPos()
 {
     init();
     mOwner = owner;

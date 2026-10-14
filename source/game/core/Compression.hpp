@@ -38,7 +38,8 @@ public:
     int Decompress(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize);
     int DecompressWithType(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize);
 
-    int CompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize, unsigned int* pRleSize);
+    int CompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize,
+                       unsigned int* pRleSize);
     int DecompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize);
 
     int CompressRLE(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize);

@@ -12,16 +12,8 @@ public:
     ~FastNoise();
 
     void init(Random* random, int seed);
-    arrayWithLength<double> getRegion(arrayWithLength<double> values,
-                                      double x,
-                                      double y,
-                                      double z,
-                                      int xSize,
-                                      int ySize,
-                                      int zSize,
-                                      double xScale,
-                                      double yScale,
-                                      double zScale);
+    arrayWithLength<double> getRegion(arrayWithLength<double> values, double x, double y, double z, int xSize,
+                                      int ySize, int zSize, double xScale, double yScale, double zScale);
 };
 
 #endif

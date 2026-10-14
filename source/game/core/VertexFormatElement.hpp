@@ -11,8 +11,13 @@ public:
     public:
         enum EType
         {
-            eType_Float, eType_UnsignedByte, eType_Byte, eType_UnsignedShort,
-            eType_Short, eType_UnsignedInt, eType_Int
+            eType_Float,
+            eType_UnsignedByte,
+            eType_Byte,
+            eType_UnsignedShort,
+            eType_Short,
+            eType_UnsignedInt,
+            eType_Int
         };
         static const Type* FLOAT;
         static const Type* UBYTE;
@@ -26,6 +31,7 @@ public:
         std::wstring getName() const;
         int getGlType() const;
         int getId() const;
+
     private:
         int size;
         std::wstring name;
@@ -38,8 +44,13 @@ public:
     public:
         enum EUsage
         {
-            eUsage_Position, eUsage_Normal, eUsage_Color, eUsage_Uv,
-            eUsage_BoneMatrix, eUsage_BlendWeight, eUsage_Padding
+            eUsage_Position,
+            eUsage_Normal,
+            eUsage_Color,
+            eUsage_Uv,
+            eUsage_BoneMatrix,
+            eUsage_BlendWeight,
+            eUsage_Padding
         };
         static const Usage* POSITION;
         static const Usage* NORMAL;
@@ -51,14 +62,14 @@ public:
         Usage(const std::wstring& name, EUsage usage);
         int getId() const;
         std::wstring getName() const;
+
     private:
         std::wstring name;
         EUsage usage;
     };
 
     VertexFormatElement(const VertexFormatElement& source);
-    VertexFormatElement(int elementIndex, const Type* elementType,
-                        const Usage* elementUsage, int elementCount);
+    VertexFormatElement(int elementIndex, const Type* elementType, const Usage* elementUsage, int elementCount);
     bool isPosition() const;
     const Usage* getUsage() const;
     int getIndex() const;

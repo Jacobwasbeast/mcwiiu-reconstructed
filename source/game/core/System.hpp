@@ -20,12 +20,18 @@ public:
     };
 
     template <class T>
-    static void arraycopy(arrayWithLength<T> src, unsigned int srcPos, arrayWithLength<T>* dest, unsigned int destPos, unsigned int length);
-    static void arraycopy(arrayWithLength<unsigned char> src, unsigned int srcPos, arrayWithLength<unsigned char>* dest, unsigned int destPos, unsigned int length);
-    static void arraycopy(arrayWithLength<Node*> src, unsigned int srcPos, arrayWithLength<Node*>* dest, unsigned int destPos, unsigned int length);
-    static void arraycopy(arrayWithLength<Biome*> src, unsigned int srcPos, arrayWithLength<Biome*>* dest, unsigned int destPos, unsigned int length);
-    static void arraycopy(arrayWithLength<int> src, unsigned int srcPos, arrayWithLength<int>* dest, unsigned int destPos, unsigned int length);
-    static void arraycopy(arrayWithLength<unsigned short> src, unsigned int srcPos, arrayWithLength<unsigned short>* dest, unsigned int destPos, unsigned int length);
+    static void arraycopy(arrayWithLength<T> src, unsigned int srcPos, arrayWithLength<T>* dest, unsigned int destPos,
+                          unsigned int length);
+    static void arraycopy(arrayWithLength<unsigned char> src, unsigned int srcPos, arrayWithLength<unsigned char>* dest,
+                          unsigned int destPos, unsigned int length);
+    static void arraycopy(arrayWithLength<Node*> src, unsigned int srcPos, arrayWithLength<Node*>* dest,
+                          unsigned int destPos, unsigned int length);
+    static void arraycopy(arrayWithLength<Biome*> src, unsigned int srcPos, arrayWithLength<Biome*>* dest,
+                          unsigned int destPos, unsigned int length);
+    static void arraycopy(arrayWithLength<int> src, unsigned int srcPos, arrayWithLength<int>* dest,
+                          unsigned int destPos, unsigned int length);
+    static void arraycopy(arrayWithLength<unsigned short> src, unsigned int srcPos,
+                          arrayWithLength<unsigned short>* dest, unsigned int destPos, unsigned int length);
 
     static uint64_t processTime(ETimeGranularity granularity);
     static uint64_t processTimeInSeconds();
@@ -44,7 +50,8 @@ public:
 };
 
 template <class T>
-void System::arraycopy(arrayWithLength<T> src, unsigned int srcPos, arrayWithLength<T>* dest, unsigned int destPos, unsigned int length)
+void System::arraycopy(arrayWithLength<T> src, unsigned int srcPos, arrayWithLength<T>* dest, unsigned int destPos,
+                       unsigned int length)
 {
     std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(T));
 }

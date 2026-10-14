@@ -21,12 +21,10 @@ template <class T> class EntityDataAccessor;
 class ThrownTrident : public AbstractRotatedItemProjectile
 {
 public:
-    ThrownTrident(Level* level, boost::shared_ptr<LivingEntity> owner,
-        not_null_ptr<ItemInstance> item);
+    ThrownTrident(Level* level, boost::shared_ptr<LivingEntity> owner, not_null_ptr<ItemInstance> item);
     ThrownTrident(Level* level);
     ThrownTrident(Level* level, double x, double y, double z);
-    ThrownTrident(Level* level, not_null_ptr<ItemInstance> item,
-        double x, double y, double z);
+    ThrownTrident(Level* level, not_null_ptr<ItemInstance> item, double x, double y, double z);
 
     static Entity* create(Level* level);
     static void staticCtor();

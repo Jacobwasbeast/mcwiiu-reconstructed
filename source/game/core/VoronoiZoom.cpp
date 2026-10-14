@@ -4,8 +4,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/System.hpp"
 
-VoronoiZoom::VoronoiZoom(long long seed, boost::shared_ptr<Layer> parentLayer)
-    : Layer(seed)
+VoronoiZoom::VoronoiZoom(long long seed, boost::shared_ptr<Layer> parentLayer) : Layer(seed)
 {
     parent = parentLayer;
 }
@@ -56,13 +55,13 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
                 for (int localX = 0; localX < 4; localX++)
                 {
                     double upperLeftDistance = ((double)localX - upperLeftX) * ((double)localX - upperLeftX)
-                        + ((double)localZ - upperLeftZ) * ((double)localZ - upperLeftZ);
+                                               + ((double)localZ - upperLeftZ) * ((double)localZ - upperLeftZ);
                     double upperRightDistance = ((double)localX - upperRightX) * ((double)localX - upperRightX)
-                        + ((double)localZ - upperRightZ) * ((double)localZ - upperRightZ);
+                                                + ((double)localZ - upperRightZ) * ((double)localZ - upperRightZ);
                     double lowerLeftDistance = ((double)localX - lowerLeftX) * ((double)localX - lowerLeftX)
-                        + ((double)localZ - lowerLeftZ) * ((double)localZ - lowerLeftZ);
+                                               + ((double)localZ - lowerLeftZ) * ((double)localZ - lowerLeftZ);
                     double lowerRightDistance = ((double)localX - lowerRightX) * ((double)localX - lowerRightX)
-                        + ((double)localZ - lowerRightZ) * ((double)localZ - lowerRightZ);
+                                                + ((double)localZ - lowerRightZ) * ((double)localZ - lowerRightZ);
 
                     if (upperLeftDistance < upperRightDistance && upperLeftDistance < lowerLeftDistance
                         && upperLeftDistance < lowerRightDistance)
@@ -95,8 +94,8 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
 
     for (int row = 0; row < height; row++)
     {
-        System::arraycopy(grid, (unsigned int)((row + (z & 3)) * gridWidth + (x & 3)),
-                          &area, (unsigned int)(row * width), (unsigned int)width);
+        System::arraycopy(grid, (unsigned int)((row + (z & 3)) * gridWidth + (x & 3)), &area,
+                          (unsigned int)(row * width), (unsigned int)width);
     }
 
     PIXEndNamedEvent();

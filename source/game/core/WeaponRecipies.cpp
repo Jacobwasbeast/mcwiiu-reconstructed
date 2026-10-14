@@ -8,7 +8,7 @@
 #include "game/item/Recipes.hpp"
 #include "game/world/block/Blocks.hpp"
 
-std::wstring SWORD_PATTERN[4] = { L"X", L"X", L"#", L"" };
+std::wstring SWORD_PATTERN[4] = {L"X", L"X", L"#", L""};
 
 void WeaponRecipies::_init()
 {
@@ -52,6 +52,6 @@ void WeaponRecipies::addRecipes(Recipes* recipes)
         }
 
         recipes->addShapedRecipe(new ItemInstance(weapon), types, SWORD_PATTERN, L'#', Items::stick, L'X',
-            ingredient->object, L'T');
+                                 ingredient->object, L'T');
     }
 }

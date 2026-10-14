@@ -32,8 +32,7 @@ public:
 
     Painting(Level* level);
     Painting(Level* level, const BlockPos& pos, const Direction* direction);
-    Painting(Level* level, const BlockPos& pos, const Direction* direction,
-             const std::wstring& motiveName);
+    Painting(Level* level, const BlockPos& pos, const Direction* direction, const std::wstring& motiveName);
 
     static Entity* create(Level* level);
     void _init(Level* level);
@@ -45,8 +44,7 @@ public:
     virtual void dropItem(boost::shared_ptr<Entity> breaker);
     virtual void playPlacementSound();
     virtual void moveTo(double x, double y, double z, float yRot, float xRot);
-    virtual void lerpTo(double x, double y, double z, float yRot, float xRot,
-                        int steps, bool teleport);
+    virtual void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport);
     virtual unsigned long long GetType();
 
     Motive* motive;

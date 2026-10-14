@@ -15,14 +15,10 @@ class Random;
 class LootTableReference : public LootPoolEntry
 {
 public:
-    LootTableReference(ResourceLocation location,
-                       int weight,
-                       int quality,
-                       std::vector<LootItemCondition*>* conditions,
+    LootTableReference(ResourceLocation location, int weight, int quality, std::vector<LootItemCondition*>* conditions,
                        LootTableEntry* entry);
 
-    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                                 Random* random,
+    virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random,
                                  LootTableContext& context);
 
 private:

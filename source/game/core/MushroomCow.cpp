@@ -20,8 +20,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
 
-MushroomCow::MushroomCow(Level* level)
-    : Cow(level, false)
+MushroomCow::MushroomCow(Level* level) : Cow(level, false)
 {
     fjDerivedCtorCalls();
     setSize(0.9f, 1.4f);
@@ -38,8 +37,7 @@ void MushroomCow::addDataWalkers(DataFixerUpper* fixer)
     Mob::addDataWalkers(fixer, EntityType::MUSHROOM_COW);
 }
 
-bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
-                              InteractionHand::EInteractionHand hand)
+bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
@@ -87,8 +85,9 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
 
                 for (int i = 0; i < 5; ++i)
                 {
-                    mLevel->addEntity(boost::shared_ptr<Entity>(boost::shared_ptr<ItemEntity>(new ItemEntity(
-                        mLevel, mX, mY + mBbHeight, mZ, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::red_mushroom))))));
+                    mLevel->addEntity(boost::shared_ptr<Entity>(boost::shared_ptr<ItemEntity>(
+                        new ItemEntity(mLevel, mX, mY + mBbHeight, mZ,
+                                       not_null_ptr<ItemInstance>(new ItemInstance(Blocks::red_mushroom))))));
                 }
 
                 itemInstance->hurtAndBreak(1, player);

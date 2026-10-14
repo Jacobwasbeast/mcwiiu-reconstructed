@@ -42,10 +42,10 @@ void OreRecipies::addRecipes(Recipes* recipes)
     recipes->addShapedRecipe(new ItemInstance(Items::string, 9), L"sctbg", L"#", L'#', Blocks::web, 0x1f, L'D');
 
     recipes->addShapedRecipe(new ItemInstance(Items::goldIngot), L"ssscig", L"###", L"###", L"###", L'#',
-        Items::goldNugget, L'D');
+                             Items::goldNugget, L'D');
     recipes->addShapedRecipe(new ItemInstance(Items::goldNugget, 9), L"scig", L"#", L'#', Items::goldIngot, L'D');
 
     recipes->addShapedRecipe(new ItemInstance(Items::ironIngot), L"ssscig", L"###", L"###", L"###", L'#',
-        Items::ironNugget, L'D');
+                             Items::ironNugget, L'D');
     recipes->addShapedRecipe(new ItemInstance(Items::ironNugget, 9), L"scig", L"#", L'#', Items::ironIngot, L'D');
 }

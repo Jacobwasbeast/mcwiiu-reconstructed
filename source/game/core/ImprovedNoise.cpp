@@ -2,30 +2,15 @@
 
 #include "game/util/Random.hpp"
 
-static double gradX[16] =
-{
-    1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -1.0, 0.0
-};
+static double gradX[16] = {1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -1.0, 0.0};
 
-static double gradY[16] =
-{
-    1.0, 1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0
-};
+static double gradY[16] = {1.0, 1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0};
 
-static double gradZ[16] =
-{
-    0.0, 0.0, 0.0, 0.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 0.0, 1.0, 0.0, -1.0
-};
+static double gradZ[16] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 0.0, 1.0, 0.0, -1.0};
 
-static double grad2X[16] =
-{
-    1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -1.0, 0.0
-};
+static double grad2X[16] = {1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -1.0, 0.0};
 
-static double grad2Z[16] =
-{
-    0.0, 0.0, 0.0, 0.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 0.0, 1.0, 0.0, -1.0
-};
+static double grad2Z[16] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 0.0, 1.0, 0.0, -1.0};
 
 struct ImprovedNoiseYSample
 {
@@ -133,7 +118,8 @@ double ImprovedNoise::noise(double x, double y, double z)
     double lerpY0Z0 = lerp(u, grad(p[AA], xin, yin, zin), grad(p[BA], xin - 1.0, yin, zin));
     double lerpY1Z0 = lerp(u, grad(p[AB], xin, yin - 1.0, zin), grad(p[BB], xin - 1.0, yin - 1.0, zin));
     double lerpY0Z1 = lerp(u, grad(p[AA + 1], xin, yin, zin - 1.0), grad(p[BA + 1], xin - 1.0, yin, zin - 1.0));
-    double lerpY1Z1 = lerp(u, grad(p[AB + 1], xin, yin - 1.0, zin - 1.0), grad(p[BB + 1], xin - 1.0, yin - 1.0, zin - 1.0));
+    double lerpY1Z1 = lerp(u, grad(p[AB + 1], xin, yin - 1.0, zin - 1.0),
+                           grad(p[BB + 1], xin - 1.0, yin - 1.0, zin - 1.0));
 
     return lerp(w, lerp(v, lerpY0Z0, lerpY1Z0), lerp(v, lerpY0Z1, lerpY1Z1));
 }
@@ -148,7 +134,8 @@ double ImprovedNoise::getValue(double x, double y, double z)
     return noise(x, y, z);
 }
 
-void ImprovedNoise::add(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize, double xScale, double yScale, double zScale, double noiseScale)
+void ImprovedNoise::add(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize,
+                        double xScale, double yScale, double zScale, double noiseScale)
 {
     double xin = x + xo;
     double invNoiseScale = 1.0 / noiseScale;
@@ -188,7 +175,8 @@ void ImprovedNoise::add(arrayWithLength<double> values, double x, double y, doub
                 int BA = p[B] + Z;
 
                 double lerpX0 = lerp(xFade, grad2(p[AA], xin, zin), grad(p[BA], xin - 1.0, 0.0, zin));
-                double lerpX1 = lerp(xFade, grad(p[AA + 1], xin, 0.0, zin - 1.0), grad(p[BA + 1], xin - 1.0, 0.0, zin - 1.0));
+                double lerpX1 = lerp(xFade, grad(p[AA + 1], xin, 0.0, zin - 1.0),
+                                     grad(p[BA + 1], xin - 1.0, 0.0, zin - 1.0));
 
                 values.data[index++] += lerp(zFade, lerpX0, lerpX1) * invNoiseScale;
 
@@ -271,9 +259,12 @@ void ImprovedNoise::add(arrayWithLength<double> values, double x, double y, doub
                             int BB = p[B + 1] + Z;
 
                             lerpY0Z0 = lerp(xFade, grad(p[AA], xin, yin, zin), grad(p[BA], xin - 1.0, yin, zin));
-                            lerpY1Z0 = lerp(xFade, grad(p[AB], xin, yin - 1.0, zin), grad(p[BB], xin - 1.0, yin - 1.0, zin));
-                            lerpY0Z1 = lerp(xFade, grad(p[AA + 1], xin, yin, zin - 1.0), grad(p[BA + 1], xin - 1.0, yin, zin - 1.0));
-                            lerpY1Z1 = lerp(xFade, grad(p[AB + 1], xin, yin - 1.0, zin - 1.0), grad(p[BB + 1], xin - 1.0, yin - 1.0, zin - 1.0));
+                            lerpY1Z0 = lerp(xFade, grad(p[AB], xin, yin - 1.0, zin),
+                                            grad(p[BB], xin - 1.0, yin - 1.0, zin));
+                            lerpY0Z1 = lerp(xFade, grad(p[AA + 1], xin, yin, zin - 1.0),
+                                            grad(p[BA + 1], xin - 1.0, yin, zin - 1.0));
+                            lerpY1Z1 = lerp(xFade, grad(p[AB + 1], xin, yin - 1.0, zin - 1.0),
+                                            grad(p[BB + 1], xin - 1.0, yin - 1.0, zin - 1.0));
 
                             lastY = Y;
                         }
@@ -304,9 +295,12 @@ void ImprovedNoise::add(arrayWithLength<double> values, double x, double y, doub
                             int BB = p[B + 1] + Z;
 
                             lerpY0Z0 = lerp(xFade, grad(p[AA], xin, yFrac, zin), grad(p[BA], xin - 1.0, yFrac, zin));
-                            lerpY1Z0 = lerp(xFade, grad(p[AB], xin, yFrac - 1.0, zin), grad(p[BB], xin - 1.0, yFrac - 1.0, zin));
-                            lerpY0Z1 = lerp(xFade, grad(p[AA + 1], xin, yFrac, zin - 1.0), grad(p[BA + 1], xin - 1.0, yFrac, zin - 1.0));
-                            lerpY1Z1 = lerp(xFade, grad(p[AB + 1], xin, yFrac - 1.0, zin - 1.0), grad(p[BB + 1], xin - 1.0, yFrac - 1.0, zin - 1.0));
+                            lerpY1Z0 = lerp(xFade, grad(p[AB], xin, yFrac - 1.0, zin),
+                                            grad(p[BB], xin - 1.0, yFrac - 1.0, zin));
+                            lerpY0Z1 = lerp(xFade, grad(p[AA + 1], xin, yFrac, zin - 1.0),
+                                            grad(p[BA + 1], xin - 1.0, yFrac, zin - 1.0));
+                            lerpY1Z1 = lerp(xFade, grad(p[AB + 1], xin, yFrac - 1.0, zin - 1.0),
+                                            grad(p[BB + 1], xin - 1.0, yFrac - 1.0, zin - 1.0));
 
                             lastY = Y;
                         }

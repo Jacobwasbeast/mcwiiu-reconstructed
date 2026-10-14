@@ -569,7 +569,8 @@ arrayWithLength<unsigned char> GenericStats::param_itemsSmelted(Item* item, int 
     return gStats->getParam_itemsSmelted(Item::getId(item), auxValue, count);
 }
 
-arrayWithLength<unsigned char> GenericStats::param_itemsUsed(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> itemInstance)
+arrayWithLength<unsigned char> GenericStats::param_itemsUsed(boost::shared_ptr<Player> player,
+                                                             not_null_ptr<ItemInstance> itemInstance)
 {
     if (player && !itemInstance->isEmpty())
     {
@@ -584,7 +585,8 @@ arrayWithLength<unsigned char> GenericStats::param_itemsBought(Item* item, int a
     return gStats->getParam_itemsBought(Item::getId(item), auxValue, count);
 }
 
-arrayWithLength<unsigned char> GenericStats::param_mobKill(boost::shared_ptr<Player> player, boost::shared_ptr<Mob> mob, const DamageSource* damageSource)
+arrayWithLength<unsigned char> GenericStats::param_mobKill(boost::shared_ptr<Player> player, boost::shared_ptr<Mob> mob,
+                                                           const DamageSource* damageSource)
 {
     if (player && mob)
     {
@@ -1409,7 +1411,8 @@ arrayWithLength<unsigned char> GenericStats::getParam_itemsSmelted(int value, in
     return getParam_itemsCrafted(value, auxValue, count);
 }
 
-arrayWithLength<unsigned char> GenericStats::getParam_itemsUsed(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> itemInstance)
+arrayWithLength<unsigned char> GenericStats::getParam_itemsUsed(boost::shared_ptr<Player> player,
+                                                                not_null_ptr<ItemInstance> itemInstance)
 {
     return getParam_noArgs();
 }
@@ -1419,7 +1422,9 @@ arrayWithLength<unsigned char> GenericStats::getParam_itemsBought(int value, int
     return getParam_noArgs();
 }
 
-arrayWithLength<unsigned char> GenericStats::getParam_mobKill(boost::shared_ptr<Player> player, boost::shared_ptr<Mob> mob, const DamageSource* damageSource)
+arrayWithLength<unsigned char> GenericStats::getParam_mobKill(boost::shared_ptr<Player> player,
+                                                              boost::shared_ptr<Mob> mob,
+                                                              const DamageSource* damageSource)
 {
     return getParam_noArgs();
 }

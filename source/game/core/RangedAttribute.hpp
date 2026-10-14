@@ -6,7 +6,8 @@
 class RangedAttribute : public BaseAttribute
 {
 public:
-    RangedAttribute(Attribute* parentAttribute, eATTRIBUTE_ID id, double defaultValue, double minValue, double maxValue);
+    RangedAttribute(Attribute* parentAttribute, eATTRIBUTE_ID id, double defaultValue, double minValue,
+                    double maxValue);
     virtual ~RangedAttribute();
 
     virtual double sanitizeValue(double value);

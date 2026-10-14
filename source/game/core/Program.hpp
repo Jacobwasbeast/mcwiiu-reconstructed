@@ -32,8 +32,7 @@ public:
     void attachToEffect(Effect* effect);
     void detachFromEffect(Effect* effect);
     std::wstring getName();
-    static Program* getOrCreate(ResourceManager* resourceManager, Type* type,
-                                const std::wstring& name);
+    static Program* getOrCreate(ResourceManager* resourceManager, Type* type, const std::wstring& name);
     std::vector<unsigned char> getBytes(BufferedInputStream* stream);
 };
 

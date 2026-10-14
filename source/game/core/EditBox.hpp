@@ -11,8 +11,7 @@ class Screen;
 class EditBox : public GuiComponent
 {
 public:
-    EditBox(Screen* screen, Font* font, int x, int y, int width, int height,
-            const std::wstring& value);
+    EditBox(Screen* screen, Font* font, int x, int y, int width, int height, const std::wstring& value);
 
     void tick();
     void setValue(const std::wstring& value);

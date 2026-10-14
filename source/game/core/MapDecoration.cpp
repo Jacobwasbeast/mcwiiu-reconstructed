@@ -4,37 +4,21 @@
 
 #include "game/core/Mth.hpp"
 
-const MapDecoration::Type MapDecoration::Type::TYPES[28] =
-{
-    MapDecoration::Type(0, false, true, -1),
-    MapDecoration::Type(1, false, true, -1),
-    MapDecoration::Type(2, false, true, -1),
-    MapDecoration::Type(3, false, true, -1),
-    MapDecoration::Type(4, false, false, -1),
-    MapDecoration::Type(5, false, false, -1),
-    MapDecoration::Type(6, false, false, -1),
-    MapDecoration::Type(7, true, false, -1),
-    MapDecoration::Type(8, false, true, -1),
-    MapDecoration::Type(9, false, true, -1),
-    MapDecoration::Type(10, false, true, -1),
-    MapDecoration::Type(11, false, true, -1),
-    MapDecoration::Type(12, false, false, -1),
-    MapDecoration::Type(13, false, false, -1),
-    MapDecoration::Type(14, true, false, 0x524C44),
-    MapDecoration::Type(15, true, false, 0x3A7265),
-    MapDecoration::Type(16, false, true, -1),
-    MapDecoration::Type(17, false, true, -1),
-    MapDecoration::Type(18, false, true, -1),
-    MapDecoration::Type(19, false, true, -1),
-    MapDecoration::Type(20, true, false, 0x675AAD),
-    MapDecoration::Type(21, false, false, -1),
-    MapDecoration::Type(22, false, false, -1),
-    MapDecoration::Type(23, true, false, -1),
-    MapDecoration::Type(24, false, true, -1),
-    MapDecoration::Type(25, false, true, -1),
-    MapDecoration::Type(26, false, true, -1),
-    MapDecoration::Type(27, false, true, -1)
-};
+const MapDecoration::Type MapDecoration::Type::TYPES[28] = {
+    MapDecoration::Type(0, false, true, -1),        MapDecoration::Type(1, false, true, -1),
+    MapDecoration::Type(2, false, true, -1),        MapDecoration::Type(3, false, true, -1),
+    MapDecoration::Type(4, false, false, -1),       MapDecoration::Type(5, false, false, -1),
+    MapDecoration::Type(6, false, false, -1),       MapDecoration::Type(7, true, false, -1),
+    MapDecoration::Type(8, false, true, -1),        MapDecoration::Type(9, false, true, -1),
+    MapDecoration::Type(10, false, true, -1),       MapDecoration::Type(11, false, true, -1),
+    MapDecoration::Type(12, false, false, -1),      MapDecoration::Type(13, false, false, -1),
+    MapDecoration::Type(14, true, false, 0x524C44), MapDecoration::Type(15, true, false, 0x3A7265),
+    MapDecoration::Type(16, false, true, -1),       MapDecoration::Type(17, false, true, -1),
+    MapDecoration::Type(18, false, true, -1),       MapDecoration::Type(19, false, true, -1),
+    MapDecoration::Type(20, true, false, 0x675AAD), MapDecoration::Type(21, false, false, -1),
+    MapDecoration::Type(22, false, false, -1),      MapDecoration::Type(23, true, false, -1),
+    MapDecoration::Type(24, false, true, -1),       MapDecoration::Type(25, false, true, -1),
+    MapDecoration::Type(26, false, true, -1),       MapDecoration::Type(27, false, true, -1)};
 
 MapDecoration::Type::Type(int icon, bool renderedOnFrame, bool player, int mapColor)
 {

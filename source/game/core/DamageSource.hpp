@@ -46,13 +46,16 @@ public:
     static const DamageSource* const INSTANT_DAMAGE;
     static const DamageSource* const DRY_OUT;
 
-    DamageSource(ClientboundChatPacket::EChatPacketMessage message, ClientboundChatPacket::EChatPacketMessage deathMessage = ClientboundChatPacket::eChatPacketMessage_Text);
+    DamageSource(
+        ClientboundChatPacket::EChatPacketMessage message,
+        ClientboundChatPacket::EChatPacketMessage deathMessage = ClientboundChatPacket::eChatPacketMessage_Text);
     DamageSource(const DamageSource& source);
     virtual ~DamageSource() {}
     bool equals(const DamageSource* source) const;
     static EntityDamageSource* CreateMobAttack(boost::shared_ptr<LivingEntity> entity);
     DamageSource* setProjectile();
-    static DamageSource* CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectile);
+    static DamageSource* CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source,
+                                                 const boost::shared_ptr<LivingEntity>& target, bool projectile);
     static EntityDamageSource* CreatePlayerAttack(boost::shared_ptr<Player> player);
     void setIsFireProjectile();
     static DamageSource* CreateArrow(boost::shared_ptr<Arrow> arrow, boost::shared_ptr<Entity> owner, bool fire);
@@ -62,7 +65,8 @@ public:
     static DamageSource* CreateThrown(boost::shared_ptr<Entity> projectile, boost::shared_ptr<Entity> owner);
     DamageSource* setMagic();
     DamageSource* bypassArmor();
-    static DamageSource* CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target, const DamageSource* baseSource);
+    static DamageSource* CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target,
+                                             const DamageSource* baseSource);
     static EntityDamageSource* CreateThorns(boost::shared_ptr<Entity> entity);
     DamageSource* setExplosion();
     DamageSource* setScalesWithDifficulty();
@@ -81,7 +85,8 @@ public:
     bool isMagic() const;
     virtual bool scalesWithDifficulty() const;
     void sendDamageIndicatorUpdate(boost::shared_ptr<ServerPlayer> player) const;
-    virtual boost::shared_ptr<ClientboundChatPacket> getDeathMessagePacket(boost::shared_ptr<LivingEntity> entity) const;
+    virtual boost::shared_ptr<ClientboundChatPacket> getDeathMessagePacket(
+        boost::shared_ptr<LivingEntity> entity) const;
     bool isFire() const;
     ClientboundChatPacket::EChatPacketMessage getMsgId() const;
     bool isCreativePlayer() const;

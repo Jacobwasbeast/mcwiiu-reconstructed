@@ -62,11 +62,9 @@ arrayWithLength<int> IntCache::allocate(int size)
     {
         PIXBeginNamedEvent(0.0f, "IntCache::allocate new max size");
         storage->mIntCacheSize = size;
-        storage->mOldLargeArrays.insert(storage->mOldLargeArrays.end(),
-                                        storage->mFreeLargeArrays.begin(),
+        storage->mOldLargeArrays.insert(storage->mOldLargeArrays.end(), storage->mFreeLargeArrays.begin(),
                                         storage->mFreeLargeArrays.end());
-        storage->mOldLargeArrays.insert(storage->mOldLargeArrays.end(),
-                                        storage->mInUseLargeArrays.begin(),
+        storage->mOldLargeArrays.insert(storage->mOldLargeArrays.end(), storage->mInUseLargeArrays.begin(),
                                         storage->mInUseLargeArrays.end());
         storage->mFreeLargeArrays.clear();
         storage->mInUseLargeArrays.clear();
@@ -114,11 +112,9 @@ void IntCache::releaseAll()
         storage->mFreeSmallArrays.pop_back();
     }
 
-    storage->mFreeLargeArrays.insert(storage->mFreeLargeArrays.end(),
-                                     storage->mInUseLargeArrays.begin(),
+    storage->mFreeLargeArrays.insert(storage->mFreeLargeArrays.end(), storage->mInUseLargeArrays.begin(),
                                      storage->mInUseLargeArrays.end());
-    storage->mFreeSmallArrays.insert(storage->mFreeSmallArrays.end(),
-                                     storage->mInUseSmallArrays.begin(),
+    storage->mFreeSmallArrays.insert(storage->mFreeSmallArrays.end(), storage->mInUseSmallArrays.begin(),
                                      storage->mInUseSmallArrays.end());
 
     storage->mInUseLargeArrays.clear();

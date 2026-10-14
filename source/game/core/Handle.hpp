@@ -6,11 +6,7 @@ struct Handle
     unsigned int index;
     unsigned int generation;
 
-    Handle()
-        : index(0),
-          generation(0)
-    {
-    }
+    Handle() : index(0), generation(0) {}
 };
 
 #endif

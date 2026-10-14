@@ -7,8 +7,7 @@
 
 #include <string>
 
-GameRules_HexAttribute::GameRules_HexAttribute(int* value)
-    : mValue(value)
+GameRules_HexAttribute::GameRules_HexAttribute(int* value) : mValue(value)
 {
 }
 

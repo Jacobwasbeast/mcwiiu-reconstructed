@@ -10,8 +10,7 @@
 #include <string>
 
 
-GameRules_DoubleAttribute::GameRules_DoubleAttribute(double* value)
-    : mValue(value)
+GameRules_DoubleAttribute::GameRules_DoubleAttribute(double* value) : mValue(value)
 {
     mHasMin = false;
     mHasMax = false;

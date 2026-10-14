@@ -9,11 +9,8 @@
 #include "game/item/LootItemConditions.hpp"
 #include "game/util/Random.hpp"
 
-LootPool::LootPool(std::vector<LootPoolEntry*>* entries,
-                   std::vector<LootItemCondition*>* conditions,
-                   RandomValueBounds rolls,
-                   RandomValueBounds bonusRolls,
-                   LootPoolTiers* tiers)
+LootPool::LootPool(std::vector<LootPoolEntry*>* entries, std::vector<LootItemCondition*>* conditions,
+                   RandomValueBounds rolls, RandomValueBounds bonusRolls, LootPoolTiers* tiers)
     : mEntries(entries),
       mConditions(conditions),
       mRolls(rolls),
@@ -22,9 +19,7 @@ LootPool::LootPool(std::vector<LootPoolEntry*>* entries,
 {
 }
 
-void LootPool::addTier(std::vector<not_null_ptr<ItemInstance> >* items,
-                       Random* random,
-                       LootTableContext& context,
+void LootPool::addTier(std::vector<not_null_ptr<ItemInstance> >* items, Random* random, LootTableContext& context,
                        int tier)
 {
     if (tier < 0 || tier >= (int)mEntries->size())
@@ -35,16 +30,12 @@ void LootPool::addTier(std::vector<not_null_ptr<ItemInstance> >* items,
     (*mEntries)[tier]->createItem(items, random, context);
 }
 
-void LootPool::addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items,
-                             Random* random,
-                             LootTableContext& context)
+void LootPool::addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items, Random* random, LootTableContext& context)
 {
     std::list<LootPoolEntry*> eligibleEntries;
     int totalWeight = 0;
 
-    for (std::vector<LootPoolEntry*>::iterator it = mEntries->begin();
-         it != mEntries->end();
-         ++it)
+    for (std::vector<LootPoolEntry*>::iterator it = mEntries->begin(); it != mEntries->end(); ++it)
     {
         LootPoolEntry* entry = *it;
         if (LootItemConditions::allApply(entry->mConditions, random, context))
@@ -64,9 +55,7 @@ void LootPool::addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items,
     }
 
     int selectedWeight = random->nextInt(totalWeight);
-    for (std::list<LootPoolEntry*>::iterator it = eligibleEntries.begin();
-         it != eligibleEntries.end();
-         ++it)
+    for (std::list<LootPoolEntry*>::iterator it = eligibleEntries.begin(); it != eligibleEntries.end(); ++it)
     {
         selectedWeight -= (*it)->getWeight(context.mLuck);
         if (selectedWeight < 0)
@@ -77,8 +66,7 @@ void LootPool::addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items,
     }
 }
 
-void LootPool::addRandomItems(std::vector<not_null_ptr<ItemInstance> >* items,
-                              Random* random,
+void LootPool::addRandomItems(std::vector<not_null_ptr<ItemInstance> >* items, Random* random,
                               LootTableContext& context)
 {
     if (!LootItemConditions::allApply(mConditions, random, context))

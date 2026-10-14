@@ -28,6 +28,7 @@ public:
     bool equals(VertexFormat* other);
     bool hasPositionElement();
     VertexFormat* addElement(const VertexFormatElement* element);
+
 private:
     std::vector<const VertexFormatElement*> elements;
     std::vector<int> offsets;

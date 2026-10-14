@@ -7,8 +7,7 @@
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/world/block/BlockEntity.hpp"
 
-KeyedDataWalker::KeyedDataWalker(unsigned long long type)
-    : mKey()
+KeyedDataWalker::KeyedDataWalker(unsigned long long type) : mKey()
 {
     if ((EntityType::ENTITY & type) == EntityType::ENTITY)
     {

@@ -16,8 +16,8 @@ public:
     TrackingEmitter(Level* level, boost::shared_ptr<Entity> entity, const ParticleType* particleType, int lifetime);
     virtual uint64_t GetType();
     virtual void tick();
-    virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
-                        float partialTicks, float xa, float ya, float za, float xa2, float za2);
+    virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa,
+                        float ya, float za, float xa2, float za2);
     virtual int getParticleTexture();
 
 private:

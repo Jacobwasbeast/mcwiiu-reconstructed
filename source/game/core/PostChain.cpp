@@ -6,8 +6,8 @@
 #include "game/core/PostPass.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-PostChain::PostChain(TextureManager* textureManager, ResourceManager* resourceManager,
-                     RenderTarget* screenTarget, ResourceLocation* name)
+PostChain::PostChain(TextureManager* textureManager, ResourceManager* resourceManager, RenderTarget* screenTarget,
+                     ResourceLocation* name)
 {
     mScreenTarget = screenTarget;
     mResourceManager = resourceManager;

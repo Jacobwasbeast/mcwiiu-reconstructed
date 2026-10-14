@@ -25,31 +25,28 @@ extern ConsoleUIController gConsoleUIController;
 
 char* wstringtofilename(const std::wstring& text, char (&fileName)[256]);
 
-const wchar_t* s_parameterNames[] =
-{
-    L"DISPLAYNAME",
-    L"THEMENAME",
-    L"LOC_KEY",
-    L"FREE",
-    L"CREDIT",
-    L"CAPEPATH",
-    L"BOX",
-    L"ANIM",
-    L"GAME_FLAGS",
-    L"PACKID",
-    L"NETHERPARTICLECOLOUR",
-    L"ENCHANTTEXTCOLOUR",
-    L"ENCHANTTEXTFOCUSCOLOUR",
-    L"DATAPATH",
-    L"PACKVERSION",
-    L"DISPLAYNAMEID",
-    L"THEMENAMEID",
-    L"CLOUDHEIGHT",
-    L"CREDITID",
-    L"DISABLEMIPMAP",
-    L"OFFSET",
-    L"XMLVERSION"
-};
+const wchar_t* s_parameterNames[] = {L"DISPLAYNAME",
+                                     L"THEMENAME",
+                                     L"LOC_KEY",
+                                     L"FREE",
+                                     L"CREDIT",
+                                     L"CAPEPATH",
+                                     L"BOX",
+                                     L"ANIM",
+                                     L"GAME_FLAGS",
+                                     L"PACKID",
+                                     L"NETHERPARTICLECOLOUR",
+                                     L"ENCHANTTEXTCOLOUR",
+                                     L"ENCHANTTEXTFOCUSCOLOUR",
+                                     L"DATAPATH",
+                                     L"PACKVERSION",
+                                     L"DISPLAYNAMEID",
+                                     L"THEMENAMEID",
+                                     L"CLOUDHEIGHT",
+                                     L"CREDITID",
+                                     L"DISABLEMIPMAP",
+                                     L"OFFSET",
+                                     L"XMLVERSION"};
 
 char s_dlcDataFileName[256];
 
@@ -317,11 +314,13 @@ int DLCManager::checkForCorruptDLCAndAlert(bool bShowMessage)
 
             swprintf(messageText, 132, L"%ls\n\n%%ls", pFirstCorruptPack->getName().c_str());
 
-            gConsoleUIController.RequestErrorMessage(IDS_CORRUPT_DLC_TITLE, IDS_CORRUPT_DLC, messageParameters, 1, gProfile->GetPrimaryPad(), NULL, NULL, messageText, true);
+            gConsoleUIController.RequestErrorMessage(IDS_CORRUPT_DLC_TITLE, IDS_CORRUPT_DLC, messageParameters, 1,
+                                                     gProfile->GetPrimaryPad(), NULL, NULL, messageText, true);
         }
         else
         {
-            gConsoleUIController.RequestErrorMessage(IDS_CORRUPT_DLC_TITLE, 0x75E79C02, messageParameters, 1, gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+            gConsoleUIController.RequestErrorMessage(IDS_CORRUPT_DLC_TITLE, 0x75E79C02, messageParameters, 1,
+                                                     gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         }
     }
 
@@ -330,7 +329,8 @@ int DLCManager::checkForCorruptDLCAndAlert(bool bShowMessage)
     return numCorruptPacks;
 }
 
-bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* pData, unsigned int size, DLCPack* pPack, bool bTakeDataOwnership)
+bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* pData, unsigned int size,
+                                    DLCPack* pPack, bool bTakeDataOwnership)
 {
     boost::unordered_map<int, EDLCParameterType> parameterTypes;
     bool bHasXMLVersion = false;
@@ -450,7 +450,8 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
         if (pTexturePack != NULL)
         {
             unsigned int numChildItemsAdded = 0;
-            bool bLoaded = processDLCDataFile(numChildItemsAdded, (unsigned char*)pItemData, pItemHeader[0], pTexturePack, false);
+            bool bLoaded = processDLCDataFile(numChildItemsAdded, (unsigned char*)pItemData, pItemHeader[0],
+                                              pTexturePack, false);
 
             pPack->SetDataPointer(NULL, false);
 
@@ -476,7 +477,8 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
         else if (pChildPack != NULL)
         {
             unsigned int numChildItemsAdded = 0;
-            bool bLoaded = processDLCDataFile(numChildItemsAdded, (unsigned char*)pItemData, pItemHeader[0], pChildPack, false);
+            bool bLoaded = processDLCDataFile(numChildItemsAdded, (unsigned char*)pItemData, pItemHeader[0], pChildPack,
+                                              false);
 
             pPack->SetDataPointer(NULL, false);
 
@@ -518,7 +520,8 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
     return true;
 }
 
-bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::string& fileName, DLCPack* pPack, unsigned int packID, bool bTakeDataOwnership)
+bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::string& fileName, DLCPack* pPack,
+                                 unsigned int packID, bool bTakeDataOwnership)
 {
     std::wstring wideFileName = convStringToWstring(fileName);
     int file = CreateFileA(fileName.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -551,7 +554,8 @@ bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::string&
     return processDLCDataFile(numItemsAdded, pData, bytesRead, pPack, bTakeDataOwnership);
 }
 
-bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::wstring& fileName, DLCPack* pPack, unsigned int packID, bool bTakeDataOwnership)
+bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::wstring& fileName, DLCPack* pPack,
+                                 unsigned int packID, bool bTakeDataOwnership)
 {
     std::string narrowFileName = wstringtofilename(fileName, s_dlcDataFileName);
     bool result = readDLCDataFile(numItemsAdded, narrowFileName, pPack, packID, bTakeDataOwnership);

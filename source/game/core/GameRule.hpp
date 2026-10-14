@@ -18,11 +18,7 @@ class GameRule
 public:
     struct _ValueType
     {
-        _ValueType()
-            : lValue(0)
-            , bIsGameRule(false)
-        {
-        }
+        _ValueType() : lValue(0), bIsGameRule(false) {}
 
         union
         {

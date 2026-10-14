@@ -65,7 +65,10 @@ public:
 
         _CachedMovieData() : expiryTime(0) {}
         _CachedMovieData(const arrayWithLength<unsigned char>& value, long long expiry)
-            : data(value), expiryTime(expiry) {}
+            : data(value),
+              expiryTime(expiry)
+        {
+        }
     };
 
     struct _MessageBoxData
@@ -95,9 +98,8 @@ public:
     void preInit(int width, int height);
     void postInit();
     void init(int width, int height);
-    static int TextureSubstitutionCreateCallbackFui(void* context, const std::wstring& name,
-                                                     unsigned int* width, unsigned int* height,
-                                                     bool* hasAlpha);
+    static int TextureSubstitutionCreateCallbackFui(void* context, const std::wstring& name, unsigned int* width,
+                                                    unsigned int* height, bool* hasAlpha);
     static void TextureSubstitutionDestroyCallbackFui(int texture);
     EFont getFontForLanguage(int language);
     UITTFFont* createFont(EFont font);
@@ -108,16 +110,13 @@ public:
     void renderScenes();
     bool PendingFontChange();
     bool UsingBitmapFont();
-    void TouchBoxAdd(UIControl* control, EUIGroup group, EUILayer layer, EUIScene scene,
-                     UIControl* parent);
+    void TouchBoxAdd(UIControl* control, EUIGroup group, EUILayer layer, EUIScene scene, UIControl* parent);
     void TouchBoxAdd(UIControl* control, UIScene* scene);
     bool TouchBoxHit(UIScene* scene, int x, int y);
     void TouchBoxesClear(UIScene* scene);
     void TouchBoxRebuild(UIScene* scene);
-    void SendTouchInput(unsigned int playerId, unsigned int action, bool pressed, bool repeat,
-                        bool released);
-    void HandleTouchInput(unsigned int playerId, unsigned int action, bool pressed, bool repeat,
-                          bool released);
+    void SendTouchInput(unsigned int playerId, unsigned int action, bool pressed, bool repeat, bool released);
+    void HandleTouchInput(unsigned int playerId, unsigned int action, bool pressed, bool repeat, bool released);
     void updateViewportTouchOffset(C4JRender::eViewportType viewport);
     void updateViewportTouchOffset(int x, int y);
     void SetMenuDisplayed(int playerId, bool displayed);
@@ -136,8 +135,7 @@ public:
     void setupCustomDrawGameState();
     void endCustomDrawGameState();
     void registerSubstitutionTexture(const std::wstring& name, int texture);
-    void registerSubstitutionTexture(const std::wstring& name, unsigned char* data,
-                                     unsigned int size, bool deleteData);
+    void registerSubstitutionTexture(const std::wstring& name, unsigned char* data, unsigned int size, bool deleteData);
     void unregisterSubstitutionTexture(const std::wstring& name, bool deleteData);
     void FixupMenuDisplayedAfterNavigateBack();
     void NavigateToHomeMenu(bool immediate);
@@ -156,8 +154,7 @@ public:
     bool GetHoldToShowAchievementsActive(bool includeCancelled);
     bool GetHoldActionCancelled(int playerId);
     void RequestUGCMessageBox(int titleId, int messageId, int buttonId,
-                              int (*callback)(void*, int, C4JStorage::EMessageResult),
-                              void* callbackData);
+                              int (*callback)(void*, int, C4JStorage::EMessageResult), void* callbackData);
     unsigned int GetWinUserIndex();
     UIScene* FindScene(EUIScene scene);
 
@@ -169,8 +166,7 @@ public:
     virtual void StartReloadSkinThread();
     virtual bool IsReloadingSkin();
     virtual void CleanUpSkinReload();
-    virtual bool NavigateToScene(int playerId, EUIScene scene, void* sceneData, EUILayer layer,
-                                 EUIGroup group);
+    virtual bool NavigateToScene(int playerId, EUIScene scene, void* sceneData, EUILayer layer, EUIGroup group);
     virtual bool NavigateBack(int playerId, bool closeCurrent, EUIScene scene, EUILayer layer);
     virtual void CloseUIScenes(int playerId, bool immediate);
     virtual void CloseAllPlayersScenes(bool immediate);
@@ -185,10 +181,9 @@ public:
     virtual void SetTooltipText(unsigned int playerId, unsigned int tooltipIndex, int textId);
     virtual void SetEnableTooltips(unsigned int playerId, bool enable);
     virtual void ShowTooltip(unsigned int playerId, unsigned int tooltipIndex, bool show);
-    virtual void SetTooltips(unsigned int playerId, int tooltip0, int tooltip1, int tooltip2,
-                             int tooltip3, int tooltip4, int tooltip5, int tooltip6, int tooltip7,
-                             int tooltip8, int tooltip9, int tooltip10, int tooltip11,
-                             int tooltip12, int tooltip13, int tooltip14, int tooltip15,
+    virtual void SetTooltips(unsigned int playerId, int tooltip0, int tooltip1, int tooltip2, int tooltip3,
+                             int tooltip4, int tooltip5, int tooltip6, int tooltip7, int tooltip8, int tooltip9,
+                             int tooltip10, int tooltip11, int tooltip12, int tooltip13, int tooltip14, int tooltip15,
                              bool show, bool useGlobalGroup);
     virtual void EnableTooltip(unsigned int playerId, unsigned int tooltipIndex, bool enable);
     virtual void RefreshTooltips(unsigned int playerId);
@@ -226,17 +221,14 @@ public:
     virtual void ShowPressStart(unsigned int playerId);
     virtual void ShowChestRefillAnimation(bool show);
     virtual void SetWinUserIndex(unsigned int userIndex);
-    virtual void ShowTimedSplash(unsigned int playerId, const std::wstring& text,
-                                 unsigned int durationMs);
+    virtual void ShowTimedSplash(unsigned int playerId, const std::wstring& text, unsigned int durationMs);
     virtual bool IsShowingErrorMessage(int playerId);
     virtual bool IsShowingAlertMessage(int playerId);
     virtual bool getCleanupOnReload();
     virtual void setCleanupOnReload(bool cleanupOnReload);
     virtual bool IsExpectingOrReloadingSkin();
-    virtual void SetTooltips(unsigned int playerId, int* tooltips, bool show,
-                             bool useGlobalGroup);
-    virtual bool IsToolTipDynamic(unsigned int playerId, unsigned int tooltipIndex,
-                                  EControllerActions& action);
+    virtual void SetTooltips(unsigned int playerId, int* tooltips, bool show, bool useGlobalGroup);
+    virtual bool IsToolTipDynamic(unsigned int playerId, unsigned int tooltipIndex, EControllerActions& action);
     virtual int GetHotBarX(unsigned int playerId);
     virtual int GetHotBarY(unsigned int playerId);
     virtual int GetHotBarWidth(unsigned int playerId);
@@ -250,21 +242,18 @@ public:
     virtual void HidePressStart();
     virtual int RequestProfileSignInMenu(int titleId, int messageId, wchar_t** messageParameters,
                                          unsigned int parameterCount, unsigned int userIndex,
-                                         int (*callback)(void*, int, int), void* callbackData,
-                                         wchar_t* overrideText, unsigned int controllerIndex);
-    virtual void RequestAlertMessage(int titleId, int messageId, int* messageParameters,
-                                     unsigned int parameterCount, unsigned int userIndex,
-                                     int (*callback)(void*, int, C4JStorage::EMessageResult),
+                                         int (*callback)(void*, int, int), void* callbackData, wchar_t* overrideText,
+                                         unsigned int controllerIndex);
+    virtual void RequestAlertMessage(int titleId, int messageId, int* messageParameters, unsigned int parameterCount,
+                                     unsigned int userIndex, int (*callback)(void*, int, C4JStorage::EMessageResult),
                                      void* callbackData, wchar_t* overrideText, bool blocking);
-    virtual int RequestErrorMessage(int titleId, int messageId, int* messageParameters,
-                                    unsigned int parameterCount, unsigned int userIndex,
-                                    int (*callback)(void*, int, C4JStorage::EMessageResult),
+    virtual int RequestErrorMessage(int titleId, int messageId, int* messageParameters, unsigned int parameterCount,
+                                    unsigned int userIndex, int (*callback)(void*, int, C4JStorage::EMessageResult),
                                     void* callbackData, wchar_t* overrideText, bool blocking);
-    virtual int RequestMessageBox(int titleId, int messageId, int* messageParameters,
-                                  unsigned int parameterCount, unsigned int userIndex,
-                                  int (*callback)(void*, int, C4JStorage::EMessageResult),
-                                  void* callbackData, wchar_t* overrideText,
-                                  unsigned int buttonFlags, bool alert, bool blocking);
+    virtual int RequestMessageBox(int titleId, int messageId, int* messageParameters, unsigned int parameterCount,
+                                  unsigned int userIndex, int (*callback)(void*, int, C4JStorage::EMessageResult),
+                                  void* callbackData, wchar_t* overrideText, unsigned int buttonFlags, bool alert,
+                                  bool blocking);
 
     void shutdown();
     void setBlockOrigin(int x, int y);
@@ -281,7 +270,6 @@ public:
     void logDebugString(const std::string& text);
 
 private:
-
     UIScene* m_debugConsole;
     int m_layoutWord;
     OSFastMutex m_renderMutex;

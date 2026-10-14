@@ -22,11 +22,16 @@ static std::string gByteOrderMarks[] = {"", "", "\xEF\xBB\xBF", "\xFE\xFF", "\xF
 
 unsigned int XmlParser::detectFileFormat(void* data)
 {
-    if (compare((char*)data, (char*)gByteOrderMarks[eFileFormatUtf8].c_str(), gByteOrderMarks[eFileFormatUtf8].size()) == 0)
+    if (compare((char*)data, (char*)gByteOrderMarks[eFileFormatUtf8].c_str(), gByteOrderMarks[eFileFormatUtf8].size())
+        == 0)
     {
-        if (compare((char*)data, (char*)gByteOrderMarks[eFileFormatUtf16BigEndian].c_str(), gByteOrderMarks[eFileFormatUtf16BigEndian].size()) != 0)
+        if (compare((char*)data, (char*)gByteOrderMarks[eFileFormatUtf16BigEndian].c_str(),
+                    gByteOrderMarks[eFileFormatUtf16BigEndian].size())
+            != 0)
             return eFileFormatUtf16BigEndian;
-        if (compare((char*)data, (char*)gByteOrderMarks[eFileFormatUtf16LittleEndian].c_str(), gByteOrderMarks[eFileFormatUtf16LittleEndian].size()) != 0)
+        if (compare((char*)data, (char*)gByteOrderMarks[eFileFormatUtf16LittleEndian].c_str(),
+                    gByteOrderMarks[eFileFormatUtf16LittleEndian].size())
+            != 0)
             return eFileFormatUtf16LittleEndian;
     }
     return eFileFormatUtf8;
@@ -148,7 +153,8 @@ XmlObject* XmlParser::readXml(unsigned char* data, unsigned int length)
 void XmlParser::writeXml(DataOutputStream* stream, XmlObject* object, bool formatted)
 {
     arrayWithLength<unsigned char> output;
-    output = arrayWithLength<unsigned char>((unsigned char*)gByteOrderMarks[eFileFormatUtf8].c_str(), gByteOrderMarks[eFileFormatUtf8].size());
+    output = arrayWithLength<unsigned char>((unsigned char*)gByteOrderMarks[eFileFormatUtf8].c_str(),
+                                            gByteOrderMarks[eFileFormatUtf8].size());
     stream->write(output);
     toUtf8(std::wstring(L""), (char**)&output.data, output.length);
     --output.length;

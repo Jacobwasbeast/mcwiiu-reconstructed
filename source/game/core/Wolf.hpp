@@ -20,7 +20,7 @@ class ResourceLocation;
 class AvoidEntityGoal;
 class EntityTooltipDataHolder;
 class Llama;
-template<class T> class EntityDataAccessor;
+template <class T> class EntityDataAccessor;
 class Wolf : public TamableAnimal
 {
 public:

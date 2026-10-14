@@ -10,8 +10,7 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/world/Level.hpp"
 
-MagmaCube::MagmaCube(Level* level)
-    : Slime(level)
+MagmaCube::MagmaCube(Level* level) : Slime(level)
 {
     fjDerivedCtorCalls();
     mFireImmune = true;
@@ -39,16 +38,16 @@ void MagmaCube::defineSynchedData()
 
 bool MagmaCube::checkSpawnRules()
 {
-    return mLevel->getDifficulty() != Difficulty::PEACEFUL && mLevel->isUnobstructed(mBoundingBox) &&
-           mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty() &&
-           !mLevel->containsAnyLiquid(mBoundingBox);
+    return mLevel->getDifficulty() != Difficulty::PEACEFUL && mLevel->isUnobstructed(mBoundingBox)
+           && mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty()
+           && !mLevel->containsAnyLiquid(mBoundingBox);
 }
 
 bool MagmaCube::checkSpawnObstruction()
 {
-    return mLevel->isUnobstructed(mBoundingBox, shared_from_this()) &&
-           mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty() &&
-           !mLevel->containsAnyLiquid(mBoundingBox);
+    return mLevel->isUnobstructed(mBoundingBox, shared_from_this())
+           && mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty()
+           && !mLevel->containsAnyLiquid(mBoundingBox);
 }
 
 void MagmaCube::setSize(int size, bool reset)

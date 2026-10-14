@@ -17,7 +17,6 @@ class SoundEvent;
 class Boat : public Entity
 {
 public:
-
     enum Type
     {
         OAK,

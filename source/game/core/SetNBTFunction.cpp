@@ -5,11 +5,13 @@
 #include "game/item/not_null_ptr.hpp"
 
 SetNBTFunction::SetNBTFunction(std::vector<LootItemCondition*>* conditions, CompoundTag* tag)
-    : LootItemFunction(conditions), tag(tag)
+    : LootItemFunction(conditions),
+      tag(tag)
 {
 }
 
-not_null_ptr<ItemInstance> SetNBTFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context)
+not_null_ptr<ItemInstance> SetNBTFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
+                                                 LootTableContext& context)
 {
     CompoundTag* itemTag = itemInstance->getTag();
 

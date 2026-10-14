@@ -83,7 +83,6 @@ void Compression::ReleaseThreadStorage()
     {
         delete pStorage;
     }
-
 }
 
 Compression* Compression::getCompression()
@@ -134,8 +133,7 @@ int Compression::internalCompressRle(void* pDest, unsigned int* pDestSize, void*
             *pOutput++ = (unsigned char)(runLength - 1);
             *pOutput++ = value;
         }
-    }
-    while (pInput != pInputEnd && pOutput < pOutputLimit);
+    } while (pInput != pInputEnd && pOutput < pOutputLimit);
 
     PIXEndNamedEvent();
 
@@ -250,7 +248,8 @@ int Compression::Decompress(void* pDest, unsigned int* pDestSize, void* pSource,
     return 0;
 }
 
-int Compression::CompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize, unsigned int* pRleSize)
+int Compression::CompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize,
+                                unsigned int* pRleSize)
 {
     EnterCriticalSection(&m_compressLock);
 

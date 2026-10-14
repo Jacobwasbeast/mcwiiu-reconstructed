@@ -1,7 +1,6 @@
 #include "game/core/Scale.hpp"
 
-Scale::Scale(Synth* source, double scaleX, double scaleY)
-    : mSource(source), mScaleX(scaleX), mScaleY(scaleY)
+Scale::Scale(Synth* source, double scaleX, double scaleY) : mSource(source), mScaleX(scaleX), mScaleY(scaleY)
 {
 }
 

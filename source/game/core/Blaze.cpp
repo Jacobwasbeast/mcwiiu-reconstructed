@@ -32,8 +32,7 @@
 
 static const EntityDataAccessor<unsigned char>* DATA_FLAGS = NULL;
 
-Blaze::Blaze(Level* level)
-    : Monster(level)
+Blaze::Blaze(Level* level) : Monster(level)
 {
     fjDerivedCtorCalls();
     setPathfindingMalus(BlockPathTypes::WATER, -1.0f);
@@ -119,16 +118,14 @@ void Blaze::aiStep()
     {
         if (mRandom->nextInt(24) == 0 && !isSilent())
         {
-            mLevel->playLocalSound(mX + 0.5, mY + 0.5, mZ + 0.5, SoundEvents::BLAZE_BURN,
-                                   getSoundSource(), 1.0f + mRandom->nextFloat(),
-                                   0.3f + mRandom->nextFloat() * 0.7f, false, 16.0f);
+            mLevel->playLocalSound(mX + 0.5, mY + 0.5, mZ + 0.5, SoundEvents::BLAZE_BURN, getSoundSource(),
+                                   1.0f + mRandom->nextFloat(), 0.3f + mRandom->nextFloat() * 0.7f, false, 16.0f);
         }
 
         for (int i = 0; i < 2; ++i)
         {
             mLevel->addParticle(PARTICLE_LARGE_SMOKE, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                                mY + mRandom->nextDouble() * mBbHeight,
-                                mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                                mY + mRandom->nextDouble() * mBbHeight, mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
                                 0.0, 0.0, 0.0, arrayWithLength<int>());
         }
     }
@@ -226,9 +223,7 @@ Entity* Blaze::create(Level* level)
     return new Blaze(level);
 }
 
-Blaze::BlazeAttackGoal::BlazeAttackGoal(Blaze* blaze)
-    : Goal()
-    , mBlaze(blaze)
+Blaze::BlazeAttackGoal::BlazeAttackGoal(Blaze* blaze) : Goal(), mBlaze(blaze)
 {
     setRequiredControlFlags(3);
     mAttackTime = 0;
@@ -272,8 +267,7 @@ void Blaze::BlazeAttackGoal::tick()
     else if (distance < 256.0)
     {
         double xd = target->mX - mBlaze->mX;
-        double yd = target->mBoundingBox->mMinY + target->mBbHeight * 0.5f
-                  - (mBlaze->mY + mBlaze->mBbHeight * 0.5f);
+        double yd = target->mBoundingBox->mMinY + target->mBbHeight * 0.5f - (mBlaze->mY + mBlaze->mBbHeight * 0.5f);
         double zd = target->mZ - mBlaze->mZ;
 
         if (mAttackTime <= 0)
@@ -299,15 +293,15 @@ void Blaze::BlazeAttackGoal::tick()
             {
                 Random* random = mBlaze->mRandom;
                 float spread = static_cast<float>(std::sqrt(std::sqrt(distance))) * 0.5f;
-                mBlaze->mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_BLAZE_FIREBALL,
-                                           BlockPos(static_cast<int>(mBlaze->mX), static_cast<int>(mBlaze->mY),
-                                                     static_cast<int>(mBlaze->mZ)), 0);
+                mBlaze->mLevel->levelEvent(
+                    boost::shared_ptr<Player>(), LevelEvent::SOUND_BLAZE_FIREBALL,
+                    BlockPos(static_cast<int>(mBlaze->mX), static_cast<int>(mBlaze->mY), static_cast<int>(mBlaze->mZ)),
+                    0);
                 for (int i = 0; i < 1; ++i)
                 {
                     boost::shared_ptr<SmallFireball> fireball(new SmallFireball(
                         mBlaze->mLevel, boost::dynamic_pointer_cast<Mob>(mBlaze->shared_from_this()),
-                        xd + random->nextGaussian() * spread, yd,
-                        zd + random->nextGaussian() * spread));
+                        xd + random->nextGaussian() * spread, yd, zd + random->nextGaussian() * spread));
                     fireball->mY = mBlaze->mY + mBlaze->mBbHeight * 0.5f + 0.5;
                     mBlaze->mLevel->addEntity(fireball);
                 }
@@ -317,4 +311,3 @@ void Blaze::BlazeAttackGoal::tick()
         mBlaze->getLookControl()->setLookAt(target, 10.0f, 10.0f);
     }
 }
-

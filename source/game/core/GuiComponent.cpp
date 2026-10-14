@@ -8,8 +8,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 
-GuiComponent::GuiComponent()
-    : zLevel(0.0f)
+GuiComponent::GuiComponent() : zLevel(0.0f)
 {
 }
 

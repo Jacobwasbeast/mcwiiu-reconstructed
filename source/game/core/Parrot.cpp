@@ -66,8 +66,7 @@ Item* Parrot::POISONOUS_FOOD = NULL;
 arrayWithLength<Item*> Parrot::TAME_FOOD;
 Predicate<boost::shared_ptr<Entity> >* Parrot::CAN_MIMIC = NULL;
 
-Parrot::Parrot(Level* level)
-    : ShoulderRidingEntity(level), mFlapping(1.0f)
+Parrot::Parrot(Level* level) : ShoulderRidingEntity(level), mFlapping(1.0f)
 {
     fjDerivedCtorCalls();
     _init();
@@ -98,8 +97,7 @@ bool Parrot::isFlying()
 
 const SoundEvent* Parrot::getImitatedSound(unsigned long long type)
 {
-    boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
-        gImitatedSounds.find(type);
+    boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it = gImitatedSounds.find(type);
     return it != gImitatedSounds.end() ? it->second : SoundEvents::PARROT_AMBIENT;
 }
 
@@ -113,8 +111,8 @@ bool Parrot::imitateNearbyMobs(Level* level, Entity* entity)
     if (entity->isSilent() || level->mRandom->nextInt(50) != 0)
         return false;
 
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(Mob), entity->mBoundingBox->grow(20.0), CAN_MIMIC, false);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(
+        typeid(Mob), entity->mBoundingBox->grow(20.0), CAN_MIMIC, false);
     if (!entities->empty())
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(
@@ -136,8 +134,7 @@ const SoundEvent* Parrot::getAmbient(Random* random)
 {
     if (random->nextInt(1000) == 0)
     {
-        boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
-            gImitatedSounds.begin();
+        boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it = gImitatedSounds.begin();
         std::advance(it, random->nextInt((int)gImitatedSounds.size()));
         return getImitatedSound(it->first);
     }
@@ -168,7 +165,7 @@ void Parrot::staticCtor()
                                                     EntityDataSerializers::INT);
     CAN_MIMIC = new NotParrotPredicate();
     POISONOUS_FOOD = Items::cookie;
-    static Item* tameFood[] = { Items::wheatSeeds, Items::melonSeeds, Items::pumpkinSeeds, Items::beetrootSeeds };
+    static Item* tameFood[] = {Items::wheatSeeds, Items::melonSeeds, Items::pumpkinSeeds, Items::beetrootSeeds};
     TAME_FOOD = arrayWithLength<Item*>(tameFood, 4);
     gImitatedSounds[EntityType::BLAZE] = SoundEvents::PARROT_IMITATE_BLAZE;
     gImitatedSounds[EntityType::CAVE_SPIDER] = SoundEvents::PARROT_IMITATE_SPIDER;
@@ -255,17 +252,19 @@ void Parrot::calculateFlapping()
     mOFlapSpeed = mFlapSpeed;
     mFlapSpeed += (mOnGround ? -1.0f : 4.0f) * 0.3f;
     mFlapSpeed = Mth::clamp(mFlapSpeed, 0.0f, 1.0f);
-    if (!mOnGround && mFlapping < 1.0f) mFlapping = 1.0f;
+    if (!mOnGround && mFlapping < 1.0f)
+        mFlapping = 1.0f;
     mFlapping *= 0.9f;
-    if (!mOnGround && mYd < 0.0) mYd *= 0.6;
+    if (!mOnGround && mYd < 0.0)
+        mYd *= 0.6;
     mFlap += mFlapping * 2.0f;
 }
 
 void Parrot::aiStep()
 {
     imitateNearbyMobs(mLevel, this);
-    if (mRecordPosition == NULL || mRecordPosition->distSqr(mX, mY, mZ) > 12.0 ||
-        mLevel->getBlockState(*mRecordPosition)->getBlock() != Blocks::jukebox)
+    if (mRecordPosition == NULL || mRecordPosition->distSqr(mX, mY, mZ) > 12.0
+        || mLevel->getBlockState(*mRecordPosition)->getBlock() != Blocks::jukebox)
     {
         mRecordPlayingNearby = false;
         mRecordPosition = NULL;
@@ -307,8 +306,8 @@ bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
 
         if (!isSilent())
         {
-            mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::PARROT_EAT,
-                              getSoundSource(), 1.0f, 1.0f + (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f, 16.0f);
+            mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::PARROT_EAT, getSoundSource(), 1.0f,
+                              1.0f + (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f, 16.0f);
         }
 
         if (!mLevel->mIsClientSide)
@@ -369,10 +368,9 @@ bool Parrot::checkSpawnRules()
     int z = Mth::floor(mZ);
     BlockPos pos(x, y, z);
     Block* block = mLevel->getBlockState(pos.below())->getBlock();
-    return (block != NULL && dynamic_cast<LeafBlock*>(block) != NULL)
-        || block == Blocks::grass
-        || (block != NULL && dynamic_cast<LogBlock*>(block) != NULL)
-        || (block == Blocks::air && mLevel->getDaytimeRawBrightness(pos) > 8 && Animal::checkSpawnRules());
+    return (block != NULL && dynamic_cast<LeafBlock*>(block) != NULL) || block == Blocks::grass
+           || (block != NULL && dynamic_cast<LogBlock*>(block) != NULL)
+           || (block == Blocks::air && mLevel->getDaytimeRawBrightness(pos) > 8 && Animal::checkSpawnRules());
 }
 
 void Parrot::causeFallDamage(float, float)
@@ -455,8 +453,8 @@ boost::shared_ptr<AgableMob> Parrot::getBreedOffspring(boost::shared_ptr<AgableM
 
 bool Parrot::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    EntityDamageSource* damageSource =
-        DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+    EntityDamageSource* damageSource = DamageSource::CreateMobAttack(
+        boost::static_pointer_cast<LivingEntity>(shared_from_this()));
     bool result = target->hurt(damageSource, 3.0f);
     delete damageSource;
     return result;
@@ -577,4 +575,3 @@ bool Parrot::NotParrotPredicate::apply(boost::shared_ptr<Entity> entity) const
     unsigned long long type = entity->GetType();
     return entity != NULL && gImitatedSounds.find(type) != gImitatedSounds.end();
 }
-

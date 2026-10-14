@@ -72,8 +72,7 @@ void MG04ScoreboardLayout::Init(int value)
     ClearPlayersInfo();
 
     const unsigned int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
-        Minecraft::GetInstance()->mLocalPlayers[value];
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[value];
 
     for (unsigned int index = 0; index < playerCount; ++index)
     {
@@ -195,7 +194,8 @@ std::wstring MG04ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
     return std::wstring(L"");
 }
 
-not_null_ptr<ItemInstance> MG04ScoreboardLayout::getItemForSlot(int row, int, const unsigned int&, const EScoreboardType& type)
+not_null_ptr<ItemInstance> MG04ScoreboardLayout::getItemForSlot(int row, int, const unsigned int&,
+                                                                const EScoreboardType& type)
 {
     if (type == EScoreboardType_Scoreboard)
     {
@@ -236,8 +236,8 @@ void MG04ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* b
     const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
     IScoreboardLayout::BuildPlayerInfo(player, info);
 
-    boost::shared_ptr<AbstractClientPlayer> localPlayer =
-        Minecraft::GetInstance()->GetLocalPlayerByName(player->GetOnlineName());
+    boost::shared_ptr<AbstractClientPlayer> localPlayer = Minecraft::GetInstance()->GetLocalPlayerByName(
+        player->GetOnlineName());
 
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();

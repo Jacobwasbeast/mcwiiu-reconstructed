@@ -14,8 +14,7 @@ public:
     WeighedTreasure(Item*, int, int, int, int);
     WeighedTreasure(not_null_ptr<ItemInstance>, int, int, int);
     not_null_ptr<ItemInstance> getItem();
-    static void addChestItems(Random*, arrayWithLength<WeighedTreasure*>, boost::shared_ptr<Container>, int,
-                              bool);
+    static void addChestItems(Random*, arrayWithLength<WeighedTreasure*>, boost::shared_ptr<Container>, int, bool);
     static void addToTreasure(arrayWithLength<WeighedTreasure*>, WeighedTreasure*);
 
 private:

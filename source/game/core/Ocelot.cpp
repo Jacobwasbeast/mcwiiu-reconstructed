@@ -95,8 +95,7 @@ void Ocelot::setSittingOnBlock(bool sitting)
 {
     unsigned char flags = mEntityData->get(TamableAnimal::DATA_FLAGS);
     mEntityData->set(TamableAnimal::DATA_FLAGS,
-                     sitting ? static_cast<unsigned char>(flags | 2) : static_cast<unsigned char>(flags & ~2),
-                     true);
+                     sitting ? static_cast<unsigned char>(flags | 2) : static_cast<unsigned char>(flags & ~2), true);
 }
 
 bool Ocelot::isSittingOnBlock()
@@ -114,9 +113,9 @@ void Ocelot::registerGoals()
     delete mSitGoal;
     mSitGoal = new SitGoal(this);
 
-    static Item* temptItems[2] = { Items::fish, Items::fish };
-    static int temptAuxValues[2] = { static_cast<int>(FishFoodItem::Type::COD->getId()),
-                                     static_cast<int>(FishFoodItem::Type::SALMON->getId()) };
+    static Item* temptItems[2] = {Items::fish, Items::fish};
+    static int temptAuxValues[2] = {static_cast<int>(FishFoodItem::Type::COD->getId()),
+                                    static_cast<int>(FishFoodItem::Type::SALMON->getId())};
 
     arrayWithLength<Item*> items;
     items.data = temptItems;
@@ -136,13 +135,13 @@ void Ocelot::registerGoals()
     mGoalSelector.addGoal(7, new LeapAtTargetGoal(this, 0.3f), true);
     mGoalSelector.addGoal(8, new OcelotAttackGoal(this), true);
     mGoalSelector.addGoal(9, new BreedGoal(this, 0.8), true);
-    mGoalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 0.8,
-                                                                WaterAvoidingRandomStrollGoal::PROBABILITY / 100.0f), true);
+    mGoalSelector.addGoal(
+        10, new WaterAvoidingRandomStrollGoal(this, 0.8, WaterAvoidingRandomStrollGoal::PROBABILITY / 100.0f), true);
     mGoalSelector.addGoal(11, new LookAtPlayerGoal(this, typeid(Player), 10.0f), true);
 
     mTargetSelector.addGoal(1, new NonTameRandomTargetGoal(this, typeid(Chicken), false, NULL, true), true);
-    mTargetSelector.addGoal(1, new NonTameRandomTargetGoal(this, typeid(Turtle), false,
-                                                           Turtle::BABY_ON_LAND_SELECTOR, false), true);
+    mTargetSelector.addGoal(
+        1, new NonTameRandomTargetGoal(this, typeid(Turtle), false, Turtle::BABY_ON_LAND_SELECTOR, false), true);
 }
 
 void Ocelot::defineSynchedData()
@@ -245,8 +244,7 @@ float Ocelot::getSoundVolume()
 
 bool Ocelot::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    EntityDamageSource* source =
-        DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<Mob>(shared_from_this()));
+    EntityDamageSource* source = DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<Mob>(shared_from_this()));
     bool hurtTarget = target->hurt(source, 3.0f);
     delete source;
     return hurtTarget;
@@ -273,8 +271,8 @@ bool Ocelot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
     if (!isTame())
     {
         bool canTame = false;
-        if ((mEntityData->get(DATA_IS_TEMPTED) || (!isBaby() && player->mAbilities.mInstabuild))
-            && isFood(item) && player->distanceToSqr(shared_from_this()) < 9.0)
+        if ((mEntityData->get(DATA_IS_TEMPTED) || (!isBaby() && player->mAbilities.mInstabuild)) && isFood(item)
+            && player->distanceToSqr(shared_from_this()) < 9.0)
             canTame = true;
 
         if (canTame)
@@ -319,8 +317,7 @@ bool Ocelot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
 
         bool toggleSitting = true;
         if (!item->isEmpty()
-            && ((item->getItem() == Items::spawnEgg && item->getAuxValue() == OCELOT_SPAWN_EGG_AUX)
-                || renaming
+            && ((item->getItem() == Items::spawnEgg && item->getAuxValue() == OCELOT_SPAWN_EGG_AUX) || renaming
                 || item->getItem() == Items::lead))
         {
             toggleSitting = false;
@@ -416,8 +413,7 @@ std::wstring Ocelot::getName()
     return std::wstring(L"");
 }
 
-MobGroupData* Ocelot::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                       const std::wstring&)
+MobGroupData* Ocelot::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring&)
 {
     data = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 
@@ -492,8 +488,7 @@ unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
 
     if (isFood(tooltipData.m_pItemInstance))
     {
-        if ((mEntityData->get(DATA_IS_TEMPTED)
-             || (!isBaby() && tooltipData.m_pPlayer->mAbilities.mInstabuild))
+        if ((mEntityData->get(DATA_IS_TEMPTED) || (!isBaby() && tooltipData.m_pPlayer->mAbilities.mInstabuild))
             && tooltipData.m_pPlayer->distanceToSqr(shared_from_this()) < 9.0)
         {
             if (getPassengers()->empty())

@@ -24,8 +24,7 @@
 const EntityDataAccessor<unsigned char>* ThrownTrident::ID_LOYALTY = NULL;
 const EntityDataAccessor<bool>* ThrownTrident::ID_FOIL = NULL;
 
-ThrownTrident::ThrownTrident(Level* level, boost::shared_ptr<LivingEntity> owner,
-    not_null_ptr<ItemInstance> item)
+ThrownTrident::ThrownTrident(Level* level, boost::shared_ptr<LivingEntity> owner, not_null_ptr<ItemInstance> item)
     : AbstractRotatedItemProjectile(level, owner)
 {
     _init();
@@ -38,22 +37,19 @@ ThrownTrident::ThrownTrident(Level* level, boost::shared_ptr<LivingEntity> owner
     mOwnerId = owner->getId();
 }
 
-ThrownTrident::ThrownTrident(Level* level)
-    : AbstractRotatedItemProjectile(level)
+ThrownTrident::ThrownTrident(Level* level) : AbstractRotatedItemProjectile(level)
 {
     _init();
     mTridentItem = new ItemInstance(Items::trident);
 }
 
-ThrownTrident::ThrownTrident(Level* level, double x, double y, double z)
-    : AbstractRotatedItemProjectile(level, x, y, z)
+ThrownTrident::ThrownTrident(Level* level, double x, double y, double z) : AbstractRotatedItemProjectile(level, x, y, z)
 {
     _init();
     mTridentItem = new ItemInstance(Items::trident);
 }
 
-ThrownTrident::ThrownTrident(Level* level, not_null_ptr<ItemInstance> item,
-    double x, double y, double z)
+ThrownTrident::ThrownTrident(Level* level, not_null_ptr<ItemInstance> item, double x, double y, double z)
     : AbstractRotatedItemProjectile(level, x, y, z)
 {
     _init();
@@ -67,10 +63,10 @@ Entity* ThrownTrident::create(Level* level)
 
 void ThrownTrident::staticCtor()
 {
-    ID_LOYALTY = SynchedEntityData::defineId(EntityType::THROWN_TRIDENT,
-        EntityType::THROWABLE_PROJECTILE, EntityDataSerializers::BYTE);
-    ID_FOIL = SynchedEntityData::defineId(EntityType::THROWN_TRIDENT,
-        EntityType::THROWABLE_PROJECTILE, EntityDataSerializers::BOOLEAN);
+    ID_LOYALTY = SynchedEntityData::defineId(EntityType::THROWN_TRIDENT, EntityType::THROWABLE_PROJECTILE,
+                                             EntityDataSerializers::BYTE);
+    ID_FOIL = SynchedEntityData::defineId(EntityType::THROWN_TRIDENT, EntityType::THROWABLE_PROJECTILE,
+                                          EntityDataSerializers::BOOLEAN);
 }
 
 void ThrownTrident::_init()
@@ -111,8 +107,7 @@ void ThrownTrident::tick()
     {
         mClampedToLevel = true;
         setNoPhysics(true);
-        Vec3* direction = Vec3::newTemp(mOwner->mX - mX,
-            mOwner->mY + mOwner->getEyeHeight() - mY, mOwner->mZ - mZ);
+        Vec3* direction = Vec3::newTemp(mOwner->mX - mX, mOwner->mY + mOwner->getEyeHeight() - mY, mOwner->mZ - mZ);
         mY += direction->y * 0.015 * loyalty;
         if (mLevel->mIsClientSide)
             mYOld = mY;
@@ -169,36 +164,30 @@ void ThrownTrident::onHitEntity(const HitResult* result)
     {
         if (!mTridentItem->isEmpty())
         {
-            boost::shared_ptr<LivingEntity> target =
-                boost::static_pointer_cast<LivingEntity>(entity);
+            boost::shared_ptr<LivingEntity> target = boost::static_pointer_cast<LivingEntity>(entity);
             damage += EnchantmentHelper::getDamageBonus(mTridentItem, target);
         }
     }
     DamageSource* source;
     if (!mOwner)
-        source = DamageSource::CreateTrident(
-            boost::static_pointer_cast<ThrownTrident>(shared_from_this()), shared_from_this());
+        source = DamageSource::CreateTrident(boost::static_pointer_cast<ThrownTrident>(shared_from_this()),
+                                             shared_from_this());
     else
-        source = DamageSource::CreateTrident(
-            boost::static_pointer_cast<ThrownTrident>(shared_from_this()), mOwner);
+        source = DamageSource::CreateTrident(boost::static_pointer_cast<ThrownTrident>(shared_from_this()), mOwner);
     mDealtDamage = true;
     if (entity->hurt(source, damage))
     {
         if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
         {
-            boost::shared_ptr<LivingEntity> target =
-                boost::static_pointer_cast<LivingEntity>(entity);
-            if (mOwner &&
-                eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mOwner->GetType()))
+            boost::shared_ptr<LivingEntity> target = boost::static_pointer_cast<LivingEntity>(entity);
+            if (mOwner && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mOwner->GetType()))
             {
                 EnchantmentHelper::doPostHurtEffects(target, mOwner);
-                EnchantmentHelper::doPostDamageEffects(
-                    boost::static_pointer_cast<LivingEntity>(mOwner), target);
+                EnchantmentHelper::doPostDamageEffects(boost::static_pointer_cast<LivingEntity>(mOwner), target);
             }
             doPostHurtEffects(target);
         }
-        playSound(SoundEvents::TRIDENT_PIERCE, 1.0f,
-            1.2f / (mRandom->nextFloat() * 0.2f + 0.9f));
+        playSound(SoundEvents::TRIDENT_PIERCE, 1.0f, 1.2f / (mRandom->nextFloat() * 0.2f + 0.9f));
     }
 
     mXd *= -0.01f;
@@ -206,16 +195,15 @@ void ThrownTrident::onHitEntity(const HitResult* result)
     mZd *= -0.01f;
     mHasImpulse = true;
 
-    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
-        && mLevel->isThundering() && !mTridentItem->isEmpty()
-        && EnchantmentHelper::hasChanneling(mTridentItem))
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()) && mLevel->isThundering()
+        && !mTridentItem->isEmpty() && EnchantmentHelper::hasChanneling(mTridentItem))
     {
         BlockPos pos(entity->getCommandSenderBlockPosition());
         if (mLevel->canSeeSky(pos))
         {
             playSound(SoundEvents::TRIDENT_THUNDER, 1.0f, 1.0f);
-            mLevel->addGlobalEntity(boost::shared_ptr<LightningBolt>(
-                new LightningBolt(mLevel, pos.x, pos.y, pos.z, false)));
+            mLevel->addGlobalEntity(
+                boost::shared_ptr<LightningBolt>(new LightningBolt(mLevel, pos.x, pos.y, pos.z, false)));
         }
     }
 }
@@ -245,8 +233,7 @@ void ThrownTrident::readAdditionalSaveData(CompoundTag* tag)
     mDealtDamage = tag->getBoolean(L"DealtDamage");
     if (tag->contains(L"OwnerId"))
         mOwnerId = tag->getInt(L"OwnerId");
-    mEntityData->set(ID_LOYALTY,
-        static_cast<unsigned char>(tag->getInt(L"LoyalLevel")), true);
+    mEntityData->set(ID_LOYALTY, static_cast<unsigned char>(tag->getInt(L"LoyalLevel")), true);
 }
 
 void ThrownTrident::addAdditonalSaveData(CompoundTag* tag)

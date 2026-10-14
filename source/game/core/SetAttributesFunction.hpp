@@ -16,19 +16,13 @@ public:
     class Modifier
     {
     public:
-        Modifier(const std::wstring& attributeName,
-                 const std::wstring& name,
-                 const int& operation,
-                 RandomValueBounds amount,
-                 std::vector<EquipmentSlot*> slots,
-                 eMODIFIER_ID id);
+        Modifier(const std::wstring& attributeName, const std::wstring& name, const int& operation,
+                 RandomValueBounds amount, std::vector<EquipmentSlot*> slots, eMODIFIER_ID id);
     };
 
-    SetAttributesFunction(std::vector<LootItemCondition*>* conditions,
-                          std::vector<Modifier*>* modifiers);
+    SetAttributesFunction(std::vector<LootItemCondition*>* conditions, std::vector<Modifier*>* modifiers);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                             Random* random,
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
                                              LootTableContext& context);
 
 protected:

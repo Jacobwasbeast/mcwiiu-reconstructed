@@ -18,8 +18,7 @@ Socket::SocketOutputStreamLocal* gLocalOutputStreams[2];
 Socket::SocketInputStreamLocal* gLocalInputStreams[2];
 bool gLocalStreamsInitialised = false;
 
-Socket::SocketInputStreamLocal::SocketInputStreamLocal(int index)
-    : mOpen(true), mIndex(index)
+Socket::SocketInputStreamLocal::SocketInputStreamLocal(int index) : mOpen(true), mIndex(index)
 {
 }
 
@@ -93,7 +92,9 @@ void Socket::SocketInputStreamLocal::flush()
 }
 
 Socket::SocketInputStreamNetwork::SocketInputStreamNetwork(Socket* socket, int index)
-    : mOpen(true), mIndex(index), mSocket(socket)
+    : mOpen(true),
+      mIndex(index),
+      mSocket(socket)
 {
 }
 
@@ -174,8 +175,7 @@ void Socket::SocketOutputStream::writeWithFlags(arrayWithLength<unsigned char> b
     write(buffer, offset, length);
 }
 
-Socket::SocketOutputStreamLocal::SocketOutputStreamLocal(int index)
-    : mOpen(true), mIndex(index)
+Socket::SocketOutputStreamLocal::SocketOutputStreamLocal(int index) : mOpen(true), mIndex(index)
 {
 }
 
@@ -223,8 +223,7 @@ void Socket::SocketOutputStreamLocal::flush()
 {
 }
 
-Socket::SocketOutputStreamNetwork::SocketOutputStreamNetwork(Socket* socket, int index)
-    : mIndex(index), mSocket(socket)
+Socket::SocketOutputStreamNetwork::SocketOutputStreamNetwork(Socket* socket, int index) : mIndex(index), mSocket(socket)
 {
     mOpen = true;
 }

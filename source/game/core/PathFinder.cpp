@@ -12,7 +12,9 @@
 #include "game/world/block/BlockPos.hpp"
 
 PathFinder::PathFinder(NodeEvaluator* nodeEvaluator)
-    : openSet(), mNeighbors(new arrayWithLength<Node*>(32, true)), mNodeEvaluator(nodeEvaluator)
+    : openSet(),
+      mNeighbors(new arrayWithLength<Node*>(32, true)),
+      mNodeEvaluator(nodeEvaluator)
 {
 }
 
@@ -113,8 +115,10 @@ Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, double x, double 
     {
         int mobX = (int)floor(mob->mX + 0.5);
         int mobZ = (int)floor(mob->mZ + 0.5);
-        if ((double)mobX == floor(mob->mX)) --mobX;
-        if ((double)mobZ == floor(mob->mZ)) --mobZ;
+        if ((double)mobX == floor(mob->mX))
+            --mobX;
+        if ((double)mobZ == floor(mob->mZ))
+            --mobZ;
         Node* adjusted = mNodeEvaluator->getNode(mobX, start->y, mobZ);
         if (adjusted != NULL)
         {

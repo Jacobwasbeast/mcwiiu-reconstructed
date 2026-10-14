@@ -75,7 +75,8 @@ DLCFile* DLCPack::getFile(DLCManager::EDLCType type, unsigned int index, bool se
         for (i = 0; i < DLCManager::eDLCType_NumTypes; ++i)
         {
             DLCFile* result = getFile(static_cast<DLCManager::EDLCType>(i), index, true, true);
-            if (result != NULL) return result;
+            if (result != NULL)
+                return result;
         }
     }
     else
@@ -91,7 +92,8 @@ DLCFile* DLCPack::getFile(DLCManager::EDLCType type, unsigned int index, bool se
                 for (std::vector<DLCPack*>::iterator it = m_childPacks.begin(); it != m_childPacks.end(); ++it)
                 {
                     file = (*it)->getFile(type, index, false, true);
-                    if (file != NULL) return file;
+                    if (file != NULL)
+                        return file;
                 }
             }
         }
@@ -126,7 +128,8 @@ DLCFile* DLCPack::getFile(DLCManager::EDLCType type, const std::wstring& name, b
         for (i = 0; i < DLCManager::eDLCType_NumTypes; ++i)
         {
             DLCFile* result = getFile(static_cast<DLCManager::EDLCType>(i), name, true, true);
-            if (result != NULL) return result;
+            if (result != NULL)
+                return result;
         }
         return 0;
     }
@@ -139,13 +142,15 @@ DLCFile* DLCPack::getFile(DLCManager::EDLCType type, const std::wstring& name, b
     if (m_parentPack != NULL && searchParent)
     {
         DLCFile* result = m_parentPack->getFile(type, name, true, false);
-        if (result != NULL) return result;
+        if (result != NULL)
+            return result;
     }
     if (searchChildren)
         for (std::vector<DLCPack*>::iterator it = m_childPacks.begin(); it != m_childPacks.end(); ++it)
         {
             DLCFile* result = (*it)->getFile(type, name, false, true);
-            if (result != NULL) return result;
+            if (result != NULL)
+                return result;
         }
     return 0;
 }
@@ -155,15 +160,24 @@ void DLCPack::UpdateLanguage()
     if (!m_files[DLCManager::eDLCType_Localisation].empty())
     {
         DLCFile* file = getFile(DLCManager::eDLCType_Localisation,
-                                m_files[DLCManager::eDLCType_Localisation][0]->getPath(),
-                                true, true);
+                                m_files[DLCManager::eDLCType_Localisation][0]->getPath(), true, true);
         static_cast<DLCLocalisationFile*>(file)->getStringTable()->ReloadStringTable();
     }
 }
-std::wstring DLCPack::getName() { return m_name; }
-unsigned int DLCPack::GetPackId() { return m_packId; }
-DLCFile* DLCPack::getSkinFile(const std::wstring& name) { return getFile(DLCManager::eDLCType_Skin, name, true, true); }
-bool DLCPack::doesPackContainFile(DLCManager::EDLCType type, const std::wstring& name, bool searchParent, bool searchChildren)
+std::wstring DLCPack::getName()
+{
+    return m_name;
+}
+unsigned int DLCPack::GetPackId()
+{
+    return m_packId;
+}
+DLCFile* DLCPack::getSkinFile(const std::wstring& name)
+{
+    return getFile(DLCManager::eDLCType_Skin, name, true, true);
+}
+bool DLCPack::doesPackContainFile(DLCManager::EDLCType type, const std::wstring& name, bool searchParent,
+                                  bool searchChildren)
 {
     if (type == DLCManager::eDLCType_All)
     {
@@ -195,7 +209,10 @@ bool DLCPack::doesPackContainFile(DLCManager::EDLCType type, const std::wstring&
     }
     return false;
 }
-bool DLCPack::doesPackContainSkin(const std::wstring& name) { return doesPackContainFile(DLCManager::eDLCType_Skin, name, true, true); }
+bool DLCPack::doesPackContainSkin(const std::wstring& name)
+{
+    return doesPackContainFile(DLCManager::eDLCType_Skin, name, true, true);
+}
 bool DLCPack::hasPurchasedPack()
 {
     if (m_licenseMask == 0)
@@ -214,10 +231,23 @@ bool DLCPack::hasPurchasedPack()
     }
     return true;
 }
-bool DLCPack::IsCorrupt() { return m_isCorrupt; }
-void DLCPack::SetIsCorrupt(bool corrupt) { m_isCorrupt = corrupt; }
-void DLCPack::SetDataPointer(unsigned char* data, bool ownsData) { m_data = data; m_ownsData = ownsData; }
-unsigned int DLCPack::getLicenseMask() { return m_licenseMask; }
+bool DLCPack::IsCorrupt()
+{
+    return m_isCorrupt;
+}
+void DLCPack::SetIsCorrupt(bool corrupt)
+{
+    m_isCorrupt = corrupt;
+}
+void DLCPack::SetDataPointer(unsigned char* data, bool ownsData)
+{
+    m_data = data;
+    m_ownsData = ownsData;
+}
+unsigned int DLCPack::getLicenseMask()
+{
+    return m_licenseMask;
+}
 DLCFile* DLCPack::addFile(DLCManager::EDLCType type, const std::wstring& name)
 {
     DLCFile* file = NULL;
@@ -292,8 +322,14 @@ DLCFile* DLCPack::addFile(DLCManager::EDLCType type, const std::wstring& name)
     }
     return file;
 }
-void DLCPack::SetPackId(unsigned int id) { m_packId = id; }
-void DLCPack::SetPackVersion(unsigned int version) { m_packVersion = version; }
+void DLCPack::SetPackId(unsigned int id)
+{
+    m_packId = id;
+}
+void DLCPack::SetPackVersion(unsigned int version)
+{
+    m_packVersion = version;
+}
 void DLCPack::addParameter(DLCManager::EDLCParameterType type, const std::wstring& value)
 {
     if (type == DLCManager::eDLCParameterType_DisplayName)
@@ -327,12 +363,33 @@ void DLCPack::addParameter(DLCManager::EDLCParameterType type, const std::wstrin
         m_parameters[static_cast<int>(type)] = value;
     }
 }
-void DLCPack::setParentPack(DLCPack* parent) { m_parentPack = parent; }
-void DLCPack::addChildPack(DLCPack* child) { child->SetPackId((child->GetPackId() << 24) | m_packId); m_childPacks.push_back(child); child->setParentPack(this); child->m_name = m_name + child->getName(); }
-std::wstring DLCPack::getFullDataPath() { return m_dataPath; }
-DLCPack* DLCPack::GetParentPack() { return m_parentPack; }
-unsigned int DLCPack::GetParentPackId() { return m_parentPack->m_packId; }
-void DLCPack::SetDLCMountIndex(unsigned int index) { m_dlcMountIndex = index; }
+void DLCPack::setParentPack(DLCPack* parent)
+{
+    m_parentPack = parent;
+}
+void DLCPack::addChildPack(DLCPack* child)
+{
+    child->SetPackId((child->GetPackId() << 24) | m_packId);
+    m_childPacks.push_back(child);
+    child->setParentPack(this);
+    child->m_name = m_name + child->getName();
+}
+std::wstring DLCPack::getFullDataPath()
+{
+    return m_dataPath;
+}
+DLCPack* DLCPack::GetParentPack()
+{
+    return m_parentPack;
+}
+unsigned int DLCPack::GetParentPackId()
+{
+    return m_parentPack->m_packId;
+}
+void DLCPack::SetDLCMountIndex(unsigned int index)
+{
+    m_dlcMountIndex = index;
+}
 unsigned int DLCPack::GetDLCMountIndex()
 {
     DLCPack* pack = m_parentPack;
@@ -348,10 +405,22 @@ unsigned int DLCPack::GetDLCMountIndex()
     }
     return m_dlcMountIndex;
 }
-void DLCPack::SetDLCDeviceID(int id) { m_dlcDeviceId = id; }
-std::vector<DLCPack*>& DLCPack::getChildPacks() { return m_childPacks; }
-void DLCPack::AddCreditID(const std::wstring& value) { m_creditIds.push_back(value); }
-void DLCPack::AddCreditString(const std::wstring& value) { m_creditStrings.push_back(value); }
+void DLCPack::SetDLCDeviceID(int id)
+{
+    m_dlcDeviceId = id;
+}
+std::vector<DLCPack*>& DLCPack::getChildPacks()
+{
+    return m_childPacks;
+}
+void DLCPack::AddCreditID(const std::wstring& value)
+{
+    m_creditIds.push_back(value);
+}
+void DLCPack::AddCreditString(const std::wstring& value)
+{
+    m_creditStrings.push_back(value);
+}
 void DLCPack::updateLicenseMask(unsigned int licenseMask)
 {
     unsigned int packId = m_packId;
@@ -398,9 +467,18 @@ int DLCPack::getFileIndexAt(DLCManager::EDLCType type, const std::wstring& name,
     }
     return 0;
 }
-int DLCPack::getSkinCount() { return getDLCItemsCount(DLCManager::eDLCType_Skin); }
-int DLCPack::getSkinIndexAt(const std::wstring& name, bool& found) { return getFileIndexAt(DLCManager::eDLCType_Skin, name, found); }
-DLCFile* DLCPack::getSkinFile(unsigned int index) { return getFile(DLCManager::eDLCType_Skin, index, true, true); }
+int DLCPack::getSkinCount()
+{
+    return getDLCItemsCount(DLCManager::eDLCType_Skin);
+}
+int DLCPack::getSkinIndexAt(const std::wstring& name, bool& found)
+{
+    return getFileIndexAt(DLCManager::eDLCType_Skin, name, found);
+}
+DLCFile* DLCPack::getSkinFile(unsigned int index)
+{
+    return getFile(DLCManager::eDLCType_Skin, index, true, true);
+}
 std::wstring DLCPack::getLocalisedDisplayName()
 {
     DLCLocalisationFile* localisation = static_cast<DLCLocalisationFile*>(

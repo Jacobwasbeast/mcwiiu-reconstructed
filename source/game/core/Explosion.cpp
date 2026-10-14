@@ -30,7 +30,9 @@
 
 static unsigned int gExplosionCountTlsIndex = TlsAlloc();
 
-void Explosion::_init(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius, bool fire, bool breaksBlocks, bool playersOnly, bool noBlockDrops, bool silent, float damageRadius, bool breaksBlocksUnderwater)
+void Explosion::_init(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius,
+                      bool fire, bool breaksBlocks, bool playersOnly, bool noBlockDrops, bool silent,
+                      float damageRadius, bool breaksBlocksUnderwater)
 {
     mLevel = level;
     mSource = source;
@@ -47,28 +49,34 @@ void Explosion::_init(Level* level, boost::shared_ptr<Entity> source, double x, 
     mBreaksBlocksUnderwater = breaksBlocksUnderwater;
 }
 
-Explosion::Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius, float damageRadius)
+Explosion::Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius,
+                     float damageRadius)
 {
     _init(level, source, x, y, z, radius, false, true, false, false, false, damageRadius, false);
 }
 
-Explosion::Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius, std::vector<BlockPos>* toBlow, float damageRadius)
+Explosion::Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius,
+                     std::vector<BlockPos>* toBlow, float damageRadius)
 {
     _init(level, source, x, y, z, radius, false, true, false, false, false, damageRadius, false);
 
     mToBlow.insert(toBlow->begin(), toBlow->end());
 }
 
-Explosion::Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius, bool fire, bool breaksBlocks, bool playersOnly, std::vector<BlockPos>* toBlow, float damageRadius)
+Explosion::Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius,
+                     bool fire, bool breaksBlocks, bool playersOnly, std::vector<BlockPos>* toBlow, float damageRadius)
 {
     _init(level, source, x, y, z, radius, fire, breaksBlocks, playersOnly, false, false, damageRadius, false);
 
     mToBlow.insert(toBlow->begin(), toBlow->end());
 }
 
-Explosion::Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius, bool fire, bool breaksBlocks, bool playersOnly, bool noBlockDrops, bool silent, float damageRadius, bool breaksBlocksUnderwater)
+Explosion::Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius,
+                     bool fire, bool breaksBlocks, bool playersOnly, bool noBlockDrops, bool silent, float damageRadius,
+                     bool breaksBlocksUnderwater)
 {
-    _init(level, source, x, y, z, radius, fire, breaksBlocks, playersOnly, noBlockDrops, silent, damageRadius, breaksBlocksUnderwater);
+    _init(level, source, x, y, z, radius, fire, breaksBlocks, playersOnly, noBlockDrops, silent, damageRadius,
+          breaksBlocksUnderwater);
 }
 
 Explosion::~Explosion()
@@ -165,7 +173,8 @@ void Explosion::explode()
         {
             for (int rayZ = 0; rayZ < rayCount; rayZ++)
             {
-                if (rayX != 0 && rayX != rayCount - 1 && rayY != 0 && rayY != rayCount - 1 && rayZ != 0 && rayZ != rayCount - 1)
+                if (rayX != 0 && rayX != rayCount - 1 && rayY != 0 && rayY != rayCount - 1 && rayZ != 0
+                    && rayZ != rayCount - 1)
                 {
                     continue;
                 }
@@ -176,7 +185,8 @@ void Explosion::explode()
                 double directionY = (double)((float)rayY / extent * 2.0f - 1.0f);
                 double directionZ = (double)((float)rayZ / extent * 2.0f - 1.0f);
 
-                double directionLength = sqrt(directionX * directionX + directionY * directionY + directionZ * directionZ);
+                double directionLength = sqrt(directionX * directionX + directionY * directionY
+                                              + directionZ * directionZ);
 
                 directionX /= directionLength;
                 directionY /= directionLength;
@@ -283,8 +293,9 @@ void Explosion::explode()
         maxZ--;
     }
 
-    std::vector<boost::shared_ptr<Entity> >* found = mLevel->getEntities(mSource,
-        AABB::newTemp((double)minX, (double)minY, (double)minZ, (double)maxX, (double)maxY, (double)maxZ), NULL);
+    std::vector<boost::shared_ptr<Entity> >* found = mLevel->getEntities(
+        mSource, AABB::newTemp((double)minX, (double)minY, (double)minZ, (double)maxX, (double)maxY, (double)maxZ),
+        NULL);
 
     std::vector<boost::shared_ptr<Entity> > entities(found->begin(), found->end());
 
@@ -305,8 +316,9 @@ void Explosion::explode()
             {
                 const BlockPos& blownPos = *blown;
 
-                if (entity->mBoundingBox->intersectsInner(AABB::newTemp((double)blownPos.x, (double)blownPos.y, (double)blownPos.z,
-                        (double)blownPos.x + 1.0, (double)blownPos.y + 1.0, (double)blownPos.z + 1.0)))
+                if (entity->mBoundingBox->intersectsInner(
+                        AABB::newTemp((double)blownPos.x, (double)blownPos.y, (double)blownPos.z,
+                                      (double)blownPos.x + 1.0, (double)blownPos.y + 1.0, (double)blownPos.z + 1.0)))
                 {
                     inBlast = true;
                     break;
@@ -357,7 +369,8 @@ void Explosion::explode()
 
         if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
         {
-            knockback = ProtectionEnchantment::getExplosionKnockbackAfterDampener(boost::static_pointer_cast<LivingEntity>(entity), falloff);
+            knockback = ProtectionEnchantment::getExplosionKnockbackAfterDampener(
+                boost::static_pointer_cast<LivingEntity>(entity), falloff);
         }
 
         if (!inBlast)
@@ -397,8 +410,9 @@ void Explosion::explode()
 
 void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* toBlow)
 {
-    mLevel->playLocalSound(mX, mY, mZ, SoundEvents::GENERIC_EXPLODE, SoundSource::eSoundSource_Blocks,
-        4.0f, ((mLevel->mRandom->nextFloat() - mLevel->mRandom->nextFloat()) * 0.2f + 1.0f) * 0.7f, false, 16.0f);
+    mLevel->playLocalSound(mX, mY, mZ, SoundEvents::GENERIC_EXPLODE, SoundSource::eSoundSource_Blocks, 4.0f,
+                           ((mLevel->mRandom->nextFloat() - mLevel->mRandom->nextFloat()) * 0.2f + 1.0f) * 0.7f, false,
+                           16.0f);
 
     if (spawnParticles)
     {
@@ -458,7 +472,8 @@ void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* to
                 double toParticleY = particleY - mY;
                 double toParticleZ = particleZ - mZ;
 
-                double toParticleLength = sqrt(toParticleX * toParticleX + toParticleY * toParticleY + toParticleZ * toParticleZ);
+                double toParticleLength = sqrt(toParticleX * toParticleX + toParticleY * toParticleY
+                                               + toParticleZ * toParticleZ);
 
                 toParticleX /= toParticleLength;
                 toParticleY /= toParticleLength;
@@ -470,13 +485,14 @@ void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* to
                 toParticleY *= speed;
                 toParticleZ *= speed;
 
-                mLevel->addParticle(PARTICLE_EXPLODE, (particleX + mX) / 2.0, (particleY + mY) / 2.0, (particleZ + mZ) / 2.0,
-                    toParticleX, toParticleY, toParticleZ, arrayWithLength<int>());
+                mLevel->addParticle(PARTICLE_EXPLODE, (particleX + mX) / 2.0, (particleY + mY) / 2.0,
+                                    (particleZ + mZ) / 2.0, toParticleX, toParticleY, toParticleZ,
+                                    arrayWithLength<int>());
 
                 if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureLessExplosionParticles())
                 {
-                    mLevel->addParticle(PARTICLE_SMOKE, particleX, particleY, particleZ,
-                        toParticleX, toParticleY, toParticleZ, arrayWithLength<int>());
+                    mLevel->addParticle(PARTICLE_SMOKE, particleX, particleY, particleZ, toParticleX, toParticleY,
+                                        toParticleZ, arrayWithLength<int>());
                 }
             }
 
@@ -501,8 +517,7 @@ void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* to
             BlockPos blockPos = *it;
 
             if (mLevel->getBlock(blockPos)->mMaterial == Material::AIR
-                && mLevel->getBlockState(blockPos.below())->isSolid()
-                && mRandom.nextInt(3) == 0)
+                && mLevel->getBlockState(blockPos.below())->isSolid() && mRandom.nextInt(3) == 0)
             {
                 mLevel->setBlockAndUpdate(blockPos, Blocks::fire->defaultBlockState());
             }

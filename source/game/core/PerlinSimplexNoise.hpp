@@ -20,9 +20,12 @@ public:
     virtual double getValue(double x, double y);
     double getValue(double x, double y, double z);
 
-    arrayWithLength<double> getRegion(arrayWithLength<double> values, double x, double y, int xSize, int ySize, double xScale, double yScale, double frequencyScale);
-    arrayWithLength<double> getRegion(arrayWithLength<double> values, double x, double y, int xSize, int ySize, double xScale, double yScale, double frequencyScale, double amplitudeScale);
-    arrayWithLength<double> getRegion(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize, double xScale, double yScale, double zScale);
+    arrayWithLength<double> getRegion(arrayWithLength<double> values, double x, double y, int xSize, int ySize,
+                                      double xScale, double yScale, double frequencyScale);
+    arrayWithLength<double> getRegion(arrayWithLength<double> values, double x, double y, int xSize, int ySize,
+                                      double xScale, double yScale, double frequencyScale, double amplitudeScale);
+    arrayWithLength<double> getRegion(arrayWithLength<double> values, double x, double y, double z, int xSize,
+                                      int ySize, int zSize, double xScale, double yScale, double zScale);
 
     SimplexNoise** noiseLevels;
     int levels;

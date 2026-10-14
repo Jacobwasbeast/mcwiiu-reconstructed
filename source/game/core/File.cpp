@@ -152,7 +152,8 @@ long long File::length()
 {
     char filename[256];
 
-    int file = CreateFileA(wstringtofilename(getPath(), filename), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    int file = CreateFileA(wstringtofilename(getPath(), filename), GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL, 0);
 
     if (file == INVALID_HANDLE_VALUE)
     {
@@ -184,8 +185,7 @@ std::vector<File*>* File::listFiles() const
             do
             {
                 files->push_back(new File(*this, filenametowstring(findData.cFileName)));
-            }
-            while (FindNextFileA(findHandle, &findData) != 0);
+            } while (FindNextFileA(findHandle, &findData) != 0);
 
             CloseHandle(findHandle);
         }
@@ -223,8 +223,7 @@ std::vector<File*>* File::listFiles(FileFilter* filter) const
 
                 files->push_back(&copy);
             }
-        }
-        while (FindNextFileA(findHandle, &findData) != 0);
+        } while (FindNextFileA(findHandle, &findData) != 0);
 
         CloseHandle(findHandle);
     }
@@ -255,7 +254,9 @@ bool File::renameTo(File destination)
 {
     char sourceName[256];
     char destinationName[256];
-    return MoveFileA(wstringtofilename(getPath(), sourceName), wstringtofilename(destination.getPath(), destinationName)) != 0;
+    return MoveFileA(wstringtofilename(getPath(), sourceName),
+                     wstringtofilename(destination.getPath(), destinationName))
+           != 0;
 }
 
 long long File::lastModified()
@@ -273,7 +274,8 @@ long long File::lastModified()
         return 0;
     }
     CloseHandle(findHandle);
-    return (static_cast<long long>(findData.ftLastWriteTime.dwHighDateTime) << 32) | findData.ftLastWriteTime.dwLowDateTime;
+    return (static_cast<long long>(findData.ftLastWriteTime.dwHighDateTime) << 32)
+           | findData.ftLastWriteTime.dwLowDateTime;
 }
 
 std::wstring File::getBaseName() const

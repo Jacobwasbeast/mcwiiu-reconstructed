@@ -7,10 +7,7 @@
 class DiggerCategory : public EnchantmentCategory
 {
 public:
-    virtual bool canEnchant(Item* item) const
-    {
-        return dynamic_cast<DiggerItem*>(item) != NULL;
-    }
+    virtual bool canEnchant(Item* item) const { return dynamic_cast<DiggerItem*>(item) != NULL; }
 };
 
 #endif

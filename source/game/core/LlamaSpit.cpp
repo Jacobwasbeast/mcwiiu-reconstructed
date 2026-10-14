@@ -18,26 +18,27 @@
 #include "game/world/Level.hpp"
 
 LlamaSpit::LlamaSpit(Level* level, const boost::shared_ptr<Llama>& owner)
-    : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
+    : Entity(level, true),
+      Projectile(level, boost::shared_ptr<LivingEntity>())
 {
     Entity::fjDerivedCtorCalls();
     _init();
     mLlamaOwner = owner;
     setPos(owner->mX - (owner->mBbWidth + 1.0f) * 0.5 * std::sin(owner->mYBodyRot * Mth::DEG_TO_RAD),
-        owner->mY + owner->getEyeHeight() - 0.1f,
-        owner->mZ + (owner->mBbWidth + 1.0f) * 0.5 * std::cos(owner->mYBodyRot * Mth::DEG_TO_RAD));
+           owner->mY + owner->getEyeHeight() - 0.1f,
+           owner->mZ + (owner->mBbWidth + 1.0f) * 0.5 * std::cos(owner->mYBodyRot * Mth::DEG_TO_RAD));
     setSize(0.25f, 0.25f);
 }
 
-LlamaSpit::LlamaSpit(Level* level)
-    : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
+LlamaSpit::LlamaSpit(Level* level) : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
 {
     Entity::fjDerivedCtorCalls();
     _init();
 }
 
 LlamaSpit::LlamaSpit(Level* level, double x, double y, double z, double xd, double yd, double zd)
-    : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
+    : Entity(level, true),
+      Projectile(level, boost::shared_ptr<LivingEntity>())
 {
     Entity::fjDerivedCtorCalls();
     _init();
@@ -84,8 +85,8 @@ void LlamaSpit::shoot(double x, double y, double z, float velocity, float inaccu
     mXRotO = mXRot;
 }
 
-void LlamaSpit::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot,
-    float offset, float velocity, float inaccuracy)
+void LlamaSpit::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset,
+                                  float velocity, float inaccuracy)
 {
 }
 
@@ -100,8 +101,7 @@ bool LlamaSpit::onHit(const HitResult* result)
     boost::shared_ptr<Llama> owner = getOwner();
     if (result->mEntity && owner)
     {
-        DamageSource* source = DamageSource::CreateIndirectMagic(
-            shared_from_this(), owner, DamageSource::FALL);
+        DamageSource* source = DamageSource::CreateIndirectMagic(shared_from_this(), owner, DamageSource::FALL);
         result->mEntity->hurt(source, 1.0f);
         delete source;
     }
@@ -119,10 +119,9 @@ void LlamaSpit::restoreOwnerFromSave()
         if (mOwnerTag->contains(L"OwnerUUID"))
         {
             const std::wstring ownerUuid = mOwnerTag->getString(L"OwnerUUID");
-            std::vector<boost::shared_ptr<Entity> >* entities =
-                Entity::mLevel->getEntitiesOfClass(typeid(Llama), mBoundingBox->grow(15.0));
-            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-                 it != entities->end(); ++it)
+            std::vector<boost::shared_ptr<Entity> >* entities = Entity::mLevel->getEntitiesOfClass(
+                typeid(Llama), mBoundingBox->grow(15.0));
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
             {
                 boost::shared_ptr<Llama> llama = boost::static_pointer_cast<Llama>(*it);
                 if (llama->getUUID() == ownerUuid)
@@ -143,8 +142,7 @@ boost::shared_ptr<Entity> LlamaSpit::getHitEntity(Vec3* from, Vec3* to)
     std::vector<boost::shared_ptr<Entity> >* entities = Entity::mLevel->getEntities(
         shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), NULL);
     double bestDistance = 0.0;
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
         bool isOwner = entity.get() == mLlamaOwner.lock().get();

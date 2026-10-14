@@ -5,37 +5,17 @@ template <class T>
 class maybe
 {
 public:
-    maybe()
-        : hasValue(false)
-        , value()
-    {
-    }
+    maybe() : hasValue(false), value() {}
 
-    maybe(const T& value)
-        : hasValue(true)
-        , value(value)
-    {
-    }
+    maybe(const T& value) : hasValue(true), value(value) {}
 
-    bool isSet() const
-    {
-        return hasValue;
-    }
+    bool isSet() const { return hasValue; }
 
-    const T& get() const
-    {
-        return value;
-    }
+    const T& get() const { return value; }
 
-    T otherwise(T fallback) const
-    {
-        return hasValue ? value : fallback;
-    }
+    T otherwise(T fallback) const { return hasValue ? value : fallback; }
 
-    maybe<T> otherwise(maybe<T> fallback) const
-    {
-        return hasValue ? maybe<T>(value) : fallback;
-    }
+    maybe<T> otherwise(maybe<T> fallback) const { return hasValue ? maybe<T>(value) : fallback; }
 
     template <class U>
     maybe<U> fmap(maybe<U> (*func)(T)) const

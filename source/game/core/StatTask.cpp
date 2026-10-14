@@ -5,8 +5,7 @@
 #include "game/core/StatsCounter.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
-StatTask::StatTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-                   Stat* stat, int requiredValue)
+StatTask::StatTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled, Stat* stat, int requiredValue)
     : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, false, true, true),
       mStat(stat)
 {

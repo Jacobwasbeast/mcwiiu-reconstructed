@@ -640,8 +640,8 @@ void GlStateManager::texGenMode(TexGen coord, int mode)
 
 void GlStateManager::texGenParam(TexGen coord, int parameter, FloatBuffer* buffer)
 {
-    gRenderer->StateSetTexGenCol(getTexGen(coord)->coord, buffer->get(0), buffer->get(1), buffer->get(2), buffer->get(3),
-                                 parameter == 1);
+    gRenderer->StateSetTexGenCol(getTexGen(coord)->coord, buffer->get(0), buffer->get(1), buffer->get(2),
+                                 buffer->get(3), parameter == 1);
 }
 
 void GlStateManager::enableNormalize()

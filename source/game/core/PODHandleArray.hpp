@@ -13,8 +13,8 @@ static void* Handle_Get(Handle handle)
 {
     if (handle.index != 0 && handle.index <= HandleCount)
     {
-        const HandleEntry* entry = reinterpret_cast<const HandleEntry*>(
-            HandleTableEnd - handle.index * sizeof(HandleEntry));
+        const HandleEntry* entry = reinterpret_cast<const HandleEntry*>(HandleTableEnd
+                                                                        - handle.index * sizeof(HandleEntry));
         void* data = entry->data;
         if (handle.generation == entry->generation)
         {

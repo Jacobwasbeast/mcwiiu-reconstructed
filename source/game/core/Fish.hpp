@@ -36,8 +36,7 @@ public:
     virtual ResourceLocation* getDefaultLootTable();
     virtual int getExperienceReward(boost::shared_ptr<Player> player);
     virtual bool checkSpawnRules();
-    virtual bool mobInteract(const boost::shared_ptr<Player>& player,
-                             InteractionHand::EInteractionHand hand);
+    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     virtual unsigned long long GetType();

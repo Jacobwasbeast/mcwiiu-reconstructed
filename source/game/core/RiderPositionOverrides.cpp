@@ -16,8 +16,7 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 
-static boost::unordered_map<unsigned long long, std::vector<PositionOverrideStruct> >
-    gRiderPositionOverrides;
+static boost::unordered_map<unsigned long long, std::vector<PositionOverrideStruct> > gRiderPositionOverrides;
 
 void RiderPositionOverrides::ClearOverrides()
 {
@@ -37,14 +36,13 @@ void RiderPositionOverrides::ReadOverrides(DataInputStream* stream)
         double y = stream->readFloat();
         double z = stream->readFloat();
         unsigned long long type = EntityIO::byString(entityName);
-        PositionOverrideStruct overridePosition = { isTamed, isSaddled, x, y, z };
+        PositionOverrideStruct overridePosition = {isTamed, isSaddled, x, y, z};
         gRiderPositionOverrides[type].push_back(overridePosition);
     }
 }
 
-bool RiderPositionOverrides::OverridePosition(
-    const boost::shared_ptr<Entity>& vehicle,
-    const boost::shared_ptr<Entity>& passenger)
+bool RiderPositionOverrides::OverridePosition(const boost::shared_ptr<Entity>& vehicle,
+                                              const boost::shared_ptr<Entity>& passenger)
 {
     if (gRiderPositionOverrides.find(vehicle->GetType()) == gRiderPositionOverrides.end())
     {
@@ -70,23 +68,17 @@ bool RiderPositionOverrides::OverridePosition(
 
     for (unsigned int i = 0; i < gRiderPositionOverrides.at(vehicle->GetType()).size(); ++i)
     {
-        PositionOverrideStruct overridePosition =
-            gRiderPositionOverrides.at(vehicle->GetType()).at(i);
+        PositionOverrideStruct overridePosition = gRiderPositionOverrides.at(vehicle->GetType()).at(i);
         if (overridePosition.isTamed != isTamed || overridePosition.isSaddled != isSaddled)
         {
             continue;
         }
 
-        Vec3* riderOffset = Vec3::newTemp(
-            overridePosition.x,
-            overridePosition.y + passenger->getRidingHeight(),
-            overridePosition.z);
+        Vec3* riderOffset = Vec3::newTemp(overridePosition.x, overridePosition.y + passenger->getRidingHeight(),
+                                          overridePosition.z);
         riderOffset->yRot(-(vehicle->mYRot * Mth::DEG_TO_RAD));
 
-        Vec3* vehiclePosition = Vec3::newTemp(
-            vehicle->mX,
-            vehicle->mBoundingBox->mMinY,
-            vehicle->mZ);
+        Vec3* vehiclePosition = Vec3::newTemp(vehicle->mX, vehicle->mBoundingBox->mMinY, vehicle->mZ);
 
         float cosine;
         float sine;
@@ -103,10 +95,8 @@ bool RiderPositionOverrides::OverridePosition(
             sine = cosine;
         }
 
-        passenger->setPos(
-            riderOffset->x * sine + vehiclePosition->x,
-            vehiclePosition->y + riderOffset->y,
-            riderOffset->z * cosine + vehiclePosition->z);
+        passenger->setPos(riderOffset->x * sine + vehiclePosition->x, vehiclePosition->y + riderOffset->y,
+                          riderOffset->z * cosine + vehiclePosition->z);
         return true;
     }
 

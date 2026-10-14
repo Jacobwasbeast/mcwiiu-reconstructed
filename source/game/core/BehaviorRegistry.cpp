@@ -1,8 +1,8 @@
 #include "game/core/BehaviorRegistry.hpp"
 
 BehaviorRegistry::BehaviorRegistry(DispenseItemBehavior* defaultBehavior)
-    : boost::unordered_map<Item*, DispenseItemBehavior*>(11)
-    , mDefaultBehavior(defaultBehavior)
+    : boost::unordered_map<Item*, DispenseItemBehavior*>(11),
+      mDefaultBehavior(defaultBehavior)
 {
 }
 

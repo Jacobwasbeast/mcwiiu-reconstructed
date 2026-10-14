@@ -26,8 +26,20 @@ class Vec3;
 class ConsoleSchematicFile
 {
 public:
-    enum ESchematicRotation { eSchematicRotation_0, eSchematicRotation_90, eSchematicRotation_180, eSchematicRotation_270 };
-    enum ESchematicMirror { eSchematicMirror_None, eSchematicMirror_LeftRight, eSchematicMirror_FrontBack, eSchematicMirror_Both };
+    enum ESchematicRotation
+    {
+        eSchematicRotation_0,
+        eSchematicRotation_90,
+        eSchematicRotation_180,
+        eSchematicRotation_270
+    };
+    enum ESchematicMirror
+    {
+        eSchematicMirror_None,
+        eSchematicMirror_LeftRight,
+        eSchematicMirror_FrontBack,
+        eSchematicMirror_Both
+    };
 
     class PasteData
     {
@@ -98,10 +110,15 @@ public:
     void chunkCoordToSchematicCoord(AABB*, int, int, ESchematicRotation, ESchematicMirror, int&, int&);
     bool CanPasteBlock(unsigned short, bool, bool);
     unsigned short rotateElementValue(unsigned short, ESchematicRotation);
-    void setElements(arrayWithLength<unsigned short>&, arrayWithLength<unsigned short>, ESchematicRotation, ESchematicMirror, int, int, int, int, int, int, int&, bool, bool);
-    void pasteIntoArray(arrayWithLength<unsigned char>&, arrayWithLength<unsigned char>, arrayWithLength<unsigned short>, int, int, int, bool, bool, bool);
-    void setData(arrayWithLength<unsigned char>&, arrayWithLength<unsigned char>, ESchematicMirror, int, int, int, int, int, int, int&, bool, bool, arrayWithLength<unsigned short>, int&);
-    long long writeSchematicIntoArrays(int, int, int, int, int, int, int, int, int, PasteData*, arrayWithLength<unsigned short>, arrayWithLength<unsigned short>, arrayWithLength<unsigned char>, arrayWithLength<unsigned char>);
+    void setElements(arrayWithLength<unsigned short>&, arrayWithLength<unsigned short>, ESchematicRotation,
+                     ESchematicMirror, int, int, int, int, int, int, int&, bool, bool);
+    void pasteIntoArray(arrayWithLength<unsigned char>&, arrayWithLength<unsigned char>,
+                        arrayWithLength<unsigned short>, int, int, int, bool, bool, bool);
+    void setData(arrayWithLength<unsigned char>&, arrayWithLength<unsigned char>, ESchematicMirror, int, int, int, int,
+                 int, int, int&, bool, bool, arrayWithLength<unsigned short>, int&);
+    long long writeSchematicIntoArrays(int, int, int, int, int, int, int, int, int, PasteData*,
+                                       arrayWithLength<unsigned short>, arrayWithLength<unsigned short>,
+                                       arrayWithLength<unsigned char>, arrayWithLength<unsigned char>);
     long long applyBlocksAndData(LevelChunk*, PasteData*);
     long long applyBlocksAndData(LevelChunk*, AABB*, ESchematicRotation, ESchematicMirror);
     void schematicCoordToChunkCoord(AABB*, double, double, ESchematicRotation, ESchematicMirror, double&, double&);
@@ -116,13 +133,22 @@ public:
     static int calculateFullElementSize(int, int, int);
     void load(DataInputStream*);
     static std::wstring formatFilenameWithExt(const std::wstring&);
-    void _applySchematicData(Level*, AABB*, ESchematicRotation, arrayWithLength<unsigned short>, arrayWithLength<unsigned short>, arrayWithLength<unsigned char>, arrayWithLength<unsigned char>, std::vector<std::pair<BlockPos*, CompoundTag*> >&, std::vector<std::pair<Vec3*, CompoundTag*> >&, std::vector<DevSaveDataManager::NamedPositionOrVolume>&, int, int, int, bool, bool, bool);
+    void _applySchematicData(Level*, AABB*, ESchematicRotation, arrayWithLength<unsigned short>,
+                             arrayWithLength<unsigned short>, arrayWithLength<unsigned char>,
+                             arrayWithLength<unsigned char>, std::vector<std::pair<BlockPos*, CompoundTag*> >&,
+                             std::vector<std::pair<Vec3*, CompoundTag*> >&,
+                             std::vector<DevSaveDataManager::NamedPositionOrVolume>&, int, int, int, bool, bool, bool);
     bool undoPrevious(Level*);
-    void getElements(LevelChunk*, arrayWithLength<unsigned short>*, arrayWithLength<unsigned short>*, int, int, int, int, int, int, int&);
+    void getElements(LevelChunk*, arrayWithLength<unsigned short>*, arrayWithLength<unsigned short>*, int, int, int,
+                     int, int, int, int&);
     void getData(arrayWithLength<unsigned char>, arrayWithLength<unsigned char>*, int&, int, int, int, int, int, int);
-    void fillArraysFromLevel(Level*, int, int, int, int, int, int, arrayWithLength<unsigned short>*, arrayWithLength<unsigned short>*, arrayWithLength<unsigned char>*, arrayWithLength<unsigned char>*);
-    static std::vector<boost::shared_ptr<class BlockEntity> >* getBlockEntitiesInRegion(LevelChunk*, int, int, int, int, int, int);
-    void getBlockEntitiesInRegion(Level*, int, int, int, int, int, int, std::vector<std::pair<BlockPos*, CompoundTag*> >&);
+    void fillArraysFromLevel(Level*, int, int, int, int, int, int, arrayWithLength<unsigned short>*,
+                             arrayWithLength<unsigned short>*, arrayWithLength<unsigned char>*,
+                             arrayWithLength<unsigned char>*);
+    static std::vector<boost::shared_ptr<class BlockEntity> >* getBlockEntitiesInRegion(LevelChunk*, int, int, int, int,
+                                                                                        int, int);
+    void getBlockEntitiesInRegion(Level*, int, int, int, int, int, int,
+                                  std::vector<std::pair<BlockPos*, CompoundTag*> >&);
     void getEntitiesInRegion(Level*, int, int, int, int, int, int, std::vector<std::pair<Vec3*, CompoundTag*> >&);
     ListTag* getBlockEntitiesInRegionAsTag(Level*, int, int, int, int, int, int);
     ListTag* getEntitiesInRegionAsTag(Level*, int, int, int, int, int, int);
@@ -146,7 +172,11 @@ public:
     Vec3* getPointB();
     ESchematicRotation getRotation();
     ESchematicMirror getMirror();
-    void _storeSchematic(Level*, int, int, int, int, int, int, arrayWithLength<unsigned short>&, arrayWithLength<unsigned short>&, arrayWithLength<unsigned char>&, arrayWithLength<unsigned char>&, std::vector<std::pair<BlockPos*, CompoundTag*> >&, std::vector<std::pair<Vec3*, CompoundTag*> >&, std::vector<DevSaveDataManager::NamedPositionOrVolume>&);
+    void _storeSchematic(Level*, int, int, int, int, int, int, arrayWithLength<unsigned short>&,
+                         arrayWithLength<unsigned short>&, arrayWithLength<unsigned char>&,
+                         arrayWithLength<unsigned char>&, std::vector<std::pair<BlockPos*, CompoundTag*> >&,
+                         std::vector<std::pair<Vec3*, CompoundTag*> >&,
+                         std::vector<DevSaveDataManager::NamedPositionOrVolume>&);
     void storeUndoSchematic(Level*, int, int, int, int, int, int);
     bool applySchematicFile(Level*, bool, int, int, int, ESchematicRotation, bool, bool, bool, DataInputStream*);
     bool applySchematicFile(Level*, bool, int, int, int, bool, bool, bool, DataInputStream*);

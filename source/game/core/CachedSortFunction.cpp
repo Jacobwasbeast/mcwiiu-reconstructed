@@ -9,9 +9,7 @@ static inline BlockPos getMinBlockPos(const AABB* bounds)
 
 static inline BlockPos getBlockSize(const AABB* bounds)
 {
-    return BlockPos(bounds->mMaxX - bounds->mMinX,
-                    bounds->mMaxY - bounds->mMinY,
-                    bounds->mMaxZ - bounds->mMinZ);
+    return BlockPos(bounds->mMaxX - bounds->mMinX, bounds->mMaxY - bounds->mMinY, bounds->mMaxZ - bounds->mMinZ);
 }
 
 CachedSortFunction::CachedSortFunction(arrayWithLength<double> values, const AABB* bounds)

@@ -48,8 +48,7 @@ public:
     public:
         PolarBearHurtByTargetGoal(PolarBear* polarBear);
         virtual void start();
-        virtual void alertOther(boost::shared_ptr<PathfinderMob> mob,
-                                boost::shared_ptr<LivingEntity> target);
+        virtual void alertOther(boost::shared_ptr<PathfinderMob> mob, boost::shared_ptr<LivingEntity> target);
     };
 
     class PolarBearMeleeAttackGoal : public MeleeAttackGoal

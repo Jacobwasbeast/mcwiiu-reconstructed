@@ -13,8 +13,10 @@ public:
     void init(Random* random, int levels);
     virtual double getValue(double x, double y);
     double getValue(double x, double y, double z);
-    arrayWithLength<double> getRegion(arrayWithLength<double> values, int x, int z, int xSize, int zSize, double xScale, double zScale, double yScale);
-    arrayWithLength<double> getRegion(arrayWithLength<double> values, int x, int y, int z, int xSize, int ySize, int zSize, double xScale, double yScale, double zScale);
+    arrayWithLength<double> getRegion(arrayWithLength<double> values, int x, int z, int xSize, int zSize, double xScale,
+                                      double zScale, double yScale);
+    arrayWithLength<double> getRegion(arrayWithLength<double> values, int x, int y, int z, int xSize, int ySize,
+                                      int zSize, double xScale, double yScale, double zScale);
     ImprovedNoise** noiseLevels;
     int levels;
 };

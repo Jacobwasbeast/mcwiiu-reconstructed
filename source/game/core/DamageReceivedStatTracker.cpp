@@ -2,8 +2,7 @@
 
 #include "game/core/DamageEvent.hpp"
 
-DamageReceivedStatTracker::DamageReceivedStatTracker(const StatsUID& statsUID)
-    : StatTracker<float>(statsUID, 0.0f)
+DamageReceivedStatTracker::DamageReceivedStatTracker(const StatsUID& statsUID) : StatTracker<float>(statsUID, 0.0f)
 {
 }
 

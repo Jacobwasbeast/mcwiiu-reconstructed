@@ -52,13 +52,19 @@ Predicate<boost::shared_ptr<Entity> >* Turtle::BABY_ON_LAND_SELECTOR = new BabyO
 
 void Turtle::staticCtor()
 {
-    DATA_HOME_POS = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BLOCK_POS);
+    DATA_HOME_POS = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL,
+                                                EntityDataSerializers::BLOCK_POS);
     DATA_HAS_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
-    DATA_HAS_GIVEN_UP_ON_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
-    DATA_IS_LAYING_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
-    DATA_TRAVEL_POS = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BLOCK_POS);
-    DATA_GOING_HOME = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
-    DATA_TRAVELLING = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
+    DATA_HAS_GIVEN_UP_ON_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL,
+                                                           EntityDataSerializers::BOOLEAN);
+    DATA_IS_LAYING_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL,
+                                                     EntityDataSerializers::BOOLEAN);
+    DATA_TRAVEL_POS = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL,
+                                                  EntityDataSerializers::BLOCK_POS);
+    DATA_GOING_HOME = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL,
+                                                  EntityDataSerializers::BOOLEAN);
+    DATA_TRAVELLING = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL,
+                                                  EntityDataSerializers::BOOLEAN);
 }
 
 Turtle::Turtle(Level* level) : Animal(level)
@@ -161,8 +167,9 @@ void Turtle::registerGoals()
     mGoalSelector.addGoal(1, new TurtleGoHomeGoal(this, 1.0), true);
     mGoalSelector.addGoal(1, new TurtleLayEggGoal(this, 1.0, 4.0), true);
     mGoalSelector.addGoal(2, new TurtleBreedGoal(this, 1.0), true);
-    static Item* temptItemsData[1] = { Item::byBlock(Blocks::sea_grass) };
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.1, arrayWithLength<Item*>(temptItemsData, 1), false, arrayWithLength<int>()), true);
+    static Item* temptItemsData[1] = {Item::byBlock(Blocks::sea_grass)};
+    mGoalSelector.addGoal(
+        3, new TemptGoal(this, 1.1, arrayWithLength<Item*>(temptItemsData, 1), false, arrayWithLength<int>()), true);
     mGoalSelector.addGoal(4, new TurtleGoToWaterGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new TurtleTravelGoal(this, 1.0), true);
     mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
@@ -179,7 +186,8 @@ void Turtle::registerAttributes()
 void Turtle::grewUp()
 {
     AgableMob::grewUp();
-    if (!mLevel->mIsClientSide) spawnAtLocation(Items::turtleShellPiece, 1);
+    if (!mLevel->mIsClientSide)
+        spawnAtLocation(Items::turtleShellPiece, 1);
 }
 
 void Turtle::defineSynchedData()
@@ -273,7 +281,8 @@ void Turtle::readAdditionalSaveData(CompoundTag* tag)
     setHomePos(BlockPos(homeX, homeY, homeZ));
     Animal::readAdditionalSaveData(tag);
     setHasEgg(tag->getBoolean(L"HasEgg"));
-    if (tag->getBoolean(L"HasGivenUpOnEgg")) GiveUpOnEgg();
+    if (tag->getBoolean(L"HasGivenUpOnEgg"))
+        GiveUpOnEgg();
     int travelX = tag->getInt(L"TravelPosX");
     int travelY = tag->getInt(L"TravelPosY");
     int travelZ = tag->getInt(L"TravelPosZ");
@@ -306,7 +315,8 @@ bool Turtle::breathesWater()
     return true;
 }
 
-MobGroupData* Turtle::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString)
+MobGroupData* Turtle::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                       const std::wstring& dataString)
 {
     setHomePos(BlockPos(mX, mY, mZ));
     setTravelPos(BlockPos::ZERO);
@@ -335,7 +345,8 @@ bool Turtle::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 
 float Turtle::getWalkTargetValue(const BlockPos& pos)
 {
-    if (mLevel->getBlockState(pos)->getMaterial() == Material::WATER) return 10.0f;
+    if (mLevel->getBlockState(pos)->getMaterial() == Material::WATER)
+        return 10.0f;
     return Animal::getWalkTargetValue(pos);
 }
 

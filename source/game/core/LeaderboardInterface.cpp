@@ -4,8 +4,7 @@
 #include "game/network/LeaderboardReadListener.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 
-LeaderboardInterface::LeaderboardInterface(LeaderboardManager* pManager)
-    : m_uid(0)
+LeaderboardInterface::LeaderboardInterface(LeaderboardManager* pManager) : m_uid(0)
 {
     m_pManager = pManager;
     m_pReadListener = NULL;
@@ -44,13 +43,15 @@ bool LeaderboardInterface::callManager()
         switch (m_eReadType)
         {
         case LeaderboardManager::eReadType_Friends:
-            return m_pManager->ReadStats_Friends(m_pReadListener, m_iUserIndex, m_eStatsType, m_uid, m_uiStartRank, m_uiNumRows);
+            return m_pManager->ReadStats_Friends(m_pReadListener, m_iUserIndex, m_eStatsType, m_uid, m_uiStartRank,
+                                                 m_uiNumRows);
 
         case LeaderboardManager::eReadType_MyScore:
             return m_pManager->ReadStats_MyScore(m_pReadListener, m_iUserIndex, m_eStatsType, m_uid, m_uiNumRows);
 
         case LeaderboardManager::eReadType_TopRank:
-            return m_pManager->ReadStats_TopRank(m_pReadListener, m_iUserIndex, m_eStatsType, m_uiStartRank, m_uiNumRows);
+            return m_pManager->ReadStats_TopRank(m_pReadListener, m_iUserIndex, m_eStatsType, m_uiStartRank,
+                                                 m_uiNumRows);
 
         default:
             return true;
@@ -69,7 +70,9 @@ void LeaderboardInterface::tick()
     }
 }
 
-void LeaderboardInterface::ReadStats_Friends(LeaderboardReadListener* pReadListener, int iUserIndex, LeaderboardManager::EStatsType eStatsType, PlayerUID uid, unsigned int uiStartRank, unsigned int uiNumRows)
+void LeaderboardInterface::ReadStats_Friends(LeaderboardReadListener* pReadListener, int iUserIndex,
+                                             LeaderboardManager::EStatsType eStatsType, PlayerUID uid,
+                                             unsigned int uiStartRank, unsigned int uiNumRows)
 {
     m_pReadListener = pReadListener;
     m_iUserIndex = iUserIndex;
@@ -82,7 +85,9 @@ void LeaderboardInterface::ReadStats_Friends(LeaderboardReadListener* pReadListe
     tick();
 }
 
-void LeaderboardInterface::ReadStats_MyScore(LeaderboardReadListener* pReadListener, int iUserIndex, LeaderboardManager::EStatsType eStatsType, PlayerUID uid, unsigned int uiNumRows)
+void LeaderboardInterface::ReadStats_MyScore(LeaderboardReadListener* pReadListener, int iUserIndex,
+                                             LeaderboardManager::EStatsType eStatsType, PlayerUID uid,
+                                             unsigned int uiNumRows)
 {
     m_eStatsType = eStatsType;
     m_iUserIndex = iUserIndex;
@@ -94,7 +99,9 @@ void LeaderboardInterface::ReadStats_MyScore(LeaderboardReadListener* pReadListe
     tick();
 }
 
-void LeaderboardInterface::ReadStats_TopRank(LeaderboardReadListener* pReadListener, int iUserIndex, LeaderboardManager::EStatsType eStatsType, unsigned int uiStartRank, unsigned int uiNumRows)
+void LeaderboardInterface::ReadStats_TopRank(LeaderboardReadListener* pReadListener, int iUserIndex,
+                                             LeaderboardManager::EStatsType eStatsType, unsigned int uiStartRank,
+                                             unsigned int uiNumRows)
 {
     m_eReadType = LeaderboardManager::eReadType_TopRank;
     m_pReadListener = pReadListener;

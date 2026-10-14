@@ -46,8 +46,7 @@ void RegisterAwardsWithProfileManager()
     for (int i = 0; i < UIScene_AchievementsMenu::DISPLAY_COUNT; ++i)
     {
         const AchievementInfo* info = UIScene_AchievementsMenu::GetInfo(UIScene_AchievementsMenu::sDisplayList[i]);
-        gProfile->RegisterAward(info->id, info->registrationId, eAwardType_None, info->title,
-                                info->description);
+        gProfile->RegisterAward(info->id, info->registrationId, eAwardType_None, info->title, info->description);
     }
 
     gProfile->RichPresenceInit(-1, -1);
@@ -93,14 +92,38 @@ CConsoleMinecraftApp::CConsoleMinecraftApp() : CMinecraftApp()
     m_drcOutputEnabled = true;
     m_drcIconEnabled = false;
 }
-bool CConsoleMinecraftApp::IsAmericanSKU() { return m_productSKU == 1; }
-cCommerceNintendoWiiU* CConsoleMinecraftApp::GetCommerceInstance() { return m_commerce; }
-void CConsoleMinecraftApp::RequestToBackground() { s_requestBackground = 1; }
-uint8_t CConsoleMinecraftApp::ReadyToBackground() { return (uint8_t)(s_requestBackground ^ 1); }
-bool CConsoleMinecraftApp::GetDRCIconEnabled() { return m_drcIconEnabled; }
-void CConsoleMinecraftApp::SetDRCOuputEnabled(bool value) { m_drcOutputEnabled = value; }
-bool CConsoleMinecraftApp::GetDRCOutputEnabled() { return m_drcOutputEnabled; }
-uint8_t CConsoleMinecraftApp::GetDRCCheckPlayerCountEnabled() { return m_drcCheckPlayerCountEnabled; }
+bool CConsoleMinecraftApp::IsAmericanSKU()
+{
+    return m_productSKU == 1;
+}
+cCommerceNintendoWiiU* CConsoleMinecraftApp::GetCommerceInstance()
+{
+    return m_commerce;
+}
+void CConsoleMinecraftApp::RequestToBackground()
+{
+    s_requestBackground = 1;
+}
+uint8_t CConsoleMinecraftApp::ReadyToBackground()
+{
+    return (uint8_t)(s_requestBackground ^ 1);
+}
+bool CConsoleMinecraftApp::GetDRCIconEnabled()
+{
+    return m_drcIconEnabled;
+}
+void CConsoleMinecraftApp::SetDRCOuputEnabled(bool value)
+{
+    m_drcOutputEnabled = value;
+}
+bool CConsoleMinecraftApp::GetDRCOutputEnabled()
+{
+    return m_drcOutputEnabled;
+}
+uint8_t CConsoleMinecraftApp::GetDRCCheckPlayerCountEnabled()
+{
+    return m_drcCheckPlayerCountEnabled;
+}
 #if defined(RECON_NATIVE)
 extern "C" void native_report_stack(const char* tag);
 #endif
@@ -131,7 +154,10 @@ void CConsoleMinecraftApp::FatalLoadError(const wchar_t* message, ...)
             ShutdownAndExit();
     }
 }
-void CConsoleMinecraftApp::InitialiseDLCInfo() { m_dlcInfo = new cNintendoDLCInfo; }
+void CConsoleMinecraftApp::InitialiseDLCInfo()
+{
+    m_dlcInfo = new cNintendoDLCInfo;
+}
 uint32_t CConsoleMinecraftApp::ReadProductCodes()
 {
     unsigned int bytesRead = 0;
@@ -189,7 +215,10 @@ uint32_t CConsoleMinecraftApp::ReadProductCodes()
         m_productSKU = 2;
     return 1;
 }
-uint32_t CConsoleMinecraftApp::GetProductSKU() { return (uint32_t)m_productSKU; }
+uint32_t CConsoleMinecraftApp::GetProductSKU()
+{
+    return (uint32_t)m_productSKU;
+}
 void CConsoleMinecraftApp::CommerceInit()
 {
     m_commerceInitialized = 0;
@@ -204,7 +233,8 @@ void CConsoleMinecraftApp::CommerceInit()
 }
 int CConsoleMinecraftApp::RequestSignInUIChoices(int playerId)
 {
-    gConsoleUIController.NavigateToScene(playerId, EUIScene_AvatarSelectMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+    gConsoleUIController.NavigateToScene(playerId, EUIScene_AvatarSelectMenu, NULL, EUILayer_Scene,
+                                         EUIGroup_PlayerDefault);
     s_signInRequested = 1;
     return 0;
 }
@@ -215,9 +245,12 @@ int CConsoleMinecraftApp::DisplaySavingMessageWiiU(void*, C4JStorage::ESavingMes
     gConsoleUIController.ShowSavingMessage((unsigned int)playerId, message);
     return 0;
 }
-void CConsoleMinecraftApp::SetNoSpaceForSaveQuota(bool value) { m_noSpaceForSaveQuota = value; }
+void CConsoleMinecraftApp::SetNoSpaceForSaveQuota(bool value)
+{
+    m_noSpaceForSaveQuota = value;
+}
 int CConsoleMinecraftApp::Callback_SaveGameIncompleteMessageBoxReturned(void* context, int playerId,
-                                                                         C4JStorage::EMessageResult result)
+                                                                        C4JStorage::EMessageResult result)
 {
     CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
     if (static_cast<unsigned int>(result) < C4JStorage::EMessageResult_Cancelled)
@@ -234,7 +267,8 @@ int CConsoleMinecraftApp::Callback_SaveGameIncompleteMessageBoxReturned(void* co
         {
             if (result != C4JStorage::EMessageResult_ThirdOption)
                 return 0;
-            gConsoleUIController.NavigateToScene(playerId, EUIScene_InGameSaveManagementMenu, NULL, EUILayer_Alert, EUIGroup_Fullscreen);
+            gConsoleUIController.NavigateToScene(playerId, EUIScene_InGameSaveManagementMenu, NULL, EUILayer_Alert,
+                                                 EUIGroup_Fullscreen);
             return 0;
         }
     }
@@ -248,29 +282,45 @@ void CConsoleMinecraftApp::Callback_SaveGameIncomplete(void* context, C4JStorage
     {
         CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
         app->EnterSaveNotificationSection();
-        int messageParameters[] = { (int)IDS_SAVE_INCOMPLETE_RETRY_SAVING, (int)0xce9c596c, (int)IDS_SAVE_INCOMPLETE_DELETE_SAVES };
+        int messageParameters[] = {(int)IDS_SAVE_INCOMPLETE_RETRY_SAVING, (int)0xce9c596c,
+                                   (int)IDS_SAVE_INCOMPLETE_DELETE_SAVES};
         if (gConsoleUIController.RequestErrorMessage(IDS_SAVE_INCOMPLETE_TITLE, 0x92727461, messageParameters, 3, 0xff,
-                                                       Callback_SaveGameIncompleteMessageBoxReturned, context, NULL,
-                                                       true) != 1)
+                                                     Callback_SaveGameIncompleteMessageBoxReturned, context, NULL, true)
+            != 1)
             return;
     }
     Callback_SaveGameIncompleteMessageBoxReturned(context, 0, C4JStorage::EMessageResult_Cancelled);
 }
-cNintendoDLCInfo* CConsoleMinecraftApp::GetDLCInfoInstance() { return m_dlcInfo; }
+cNintendoDLCInfo* CConsoleMinecraftApp::GetDLCInfoInstance()
+{
+    return m_dlcInfo;
+}
 void CConsoleMinecraftApp::HandleDLCLicenseChange(std::wstring& packName)
 {
     DLCPack* pack = gApp.mDLCManager.getPack(packName);
     if (pack != NULL)
         pack->updateLicenseMask(1);
 }
-void CConsoleMinecraftApp::SetDRCIconEnabled(bool value) { m_drcIconEnabled = value; }
+void CConsoleMinecraftApp::SetDRCIconEnabled(bool value)
+{
+    m_drcIconEnabled = value;
+}
 void CConsoleMinecraftApp::SetRichPresenceContext(int context, int value)
 {
     gProfile->SetRichPresenceContextValue(context, 0, value);
 }
-uint8_t CConsoleMinecraftApp::HasNoSpaceForSaveQuota() { return m_noSpaceForSaveQuota; }
-void CConsoleMinecraftApp::SetDRCCheckPlayerCountEnabled(bool value) { m_drcCheckPlayerCountEnabled = value; }
-bool CConsoleMinecraftApp::getIgnoreMainMenuInputDuringInvite() { return m_ignoreMainMenuInputDuringInvite; }
+uint8_t CConsoleMinecraftApp::HasNoSpaceForSaveQuota()
+{
+    return m_noSpaceForSaveQuota;
+}
+void CConsoleMinecraftApp::SetDRCCheckPlayerCountEnabled(bool value)
+{
+    m_drcCheckPlayerCountEnabled = value;
+}
+bool CConsoleMinecraftApp::getIgnoreMainMenuInputDuringInvite()
+{
+    return m_ignoreMainMenuInputDuringInvite;
+}
 void CConsoleMinecraftApp::ExitGame()
 {
     SYSLaunchMenu();
@@ -287,7 +337,10 @@ void CConsoleMinecraftApp::ReleaseSaveThumbnail()
 void CConsoleMinecraftApp::StoreLaunchData()
 {
 }
-void CConsoleMinecraftApp::CaptureSaveThumbnail() { gRenderer->CaptureThumbnail(&m_saveThumbnail); }
+void CConsoleMinecraftApp::CaptureSaveThumbnail()
+{
+    gRenderer->CaptureThumbnail(&m_saveThumbnail);
+}
 void CConsoleMinecraftApp::GetSaveThumbnail(unsigned char** data, unsigned int* size)
 {
     if (m_saveThumbnail.mData != NULL)
@@ -314,12 +367,21 @@ void CConsoleMinecraftApp::GetSaveThumbnail(unsigned char** data, unsigned int* 
 void CConsoleMinecraftApp::GetScreenshot(int, unsigned char**, unsigned int*)
 {
 }
-uint32_t CConsoleMinecraftApp::LoadLocalTMSFile(wchar_t*) { return 0xffffffffU; }
-uint32_t CConsoleMinecraftApp::LoadLocalTMSFile(wchar_t*, eFileExtensionType) { return 0xffffffffU; }
+uint32_t CConsoleMinecraftApp::LoadLocalTMSFile(wchar_t*)
+{
+    return 0xffffffffU;
+}
+uint32_t CConsoleMinecraftApp::LoadLocalTMSFile(wchar_t*, eFileExtensionType)
+{
+    return 0xffffffffU;
+}
 void CConsoleMinecraftApp::FreeLocalTMSFiles(eTMSFileType)
 {
 }
-uint32_t CConsoleMinecraftApp::GetLocalTMSFileIndex(wchar_t*, bool, eFileExtensionType) { return 0xffffffffU; }
+uint32_t CConsoleMinecraftApp::GetLocalTMSFileIndex(wchar_t*, bool, eFileExtensionType)
+{
+    return 0xffffffffU;
+}
 void CConsoleMinecraftApp::TemporaryCreateGameStart()
 {
 }
@@ -334,7 +396,7 @@ uint32_t CConsoleMinecraftApp::UpgradeTrial()
     {
         int messageParameter = IDS_CONFIRM_OK;
         gConsoleUIController.RequestErrorMessage(0xa561a8df, 0x84f3e8d2, &messageParameter, 1,
-                                                   gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+                                                 gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         return 1;
     }
     return 0;
@@ -356,9 +418,18 @@ uint8_t CConsoleMinecraftApp::IsDrcPreventingSplitscreen()
 {
     return m_drcOutputEnabled;
 }
-void CConsoleMinecraftApp::setIgnoreMainMenuInputDuringInvite(bool value) { m_ignoreMainMenuInputDuringInvite = value; }
-void CConsoleMinecraftApp::LoadLocalDLCImages() { m_dlcInfo->LoadLocalDLCImages(); }
-void CConsoleMinecraftApp::FreeLocalDLCImages() { m_dlcInfo->FreeLocalDLCImages(); }
+void CConsoleMinecraftApp::setIgnoreMainMenuInputDuringInvite(bool value)
+{
+    m_ignoreMainMenuInputDuringInvite = value;
+}
+void CConsoleMinecraftApp::LoadLocalDLCImages()
+{
+    m_dlcInfo->LoadLocalDLCImages();
+}
+void CConsoleMinecraftApp::FreeLocalDLCImages()
+{
+    m_dlcInfo->FreeLocalDLCImages();
+}
 void CConsoleMinecraftApp::ReadBannedList(int, eTMSAction, bool)
 {
 }

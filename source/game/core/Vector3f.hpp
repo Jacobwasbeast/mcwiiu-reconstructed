@@ -8,17 +8,9 @@ public:
     float y;
     float z;
 
-    Vector3f()
-    {
-        x = y = z = 0.0f;
-    }
+    Vector3f() { x = y = z = 0.0f; }
 
-    Vector3f(float x, float y, float z)
-        : x(x)
-        , y(y)
-        , z(z)
-    {
-    }
+    Vector3f(float x, float y, float z) : x(x), y(y), z(z) {}
 };
 
 #endif

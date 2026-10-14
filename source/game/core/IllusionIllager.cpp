@@ -34,8 +34,7 @@
 extern SpellcasterIllager::IllagerSpell* gSpell4;
 extern SpellcasterIllager::IllagerSpell* gSpell5;
 
-IllusionIllager::IllusionIllager(Level* level)
-    : SpellcasterIllager(level), RangedAttackMob()
+IllusionIllager::IllusionIllager(Level* level) : SpellcasterIllager(level), RangedAttackMob()
 {
     fjDerivedCtorCalls();
     setSize(0.6f, 1.95f);
@@ -54,8 +53,14 @@ Entity* IllusionIllager::create(Level* level)
 {
     return new IllusionIllager(level);
 }
-bool IllusionIllager::isAggressive() { return getIllagerFlag(1); }
-void IllusionIllager::setAggressive(bool aggressive) { setIllagerFlag(1, aggressive); }
+bool IllusionIllager::isAggressive()
+{
+    return getIllagerFlag(1);
+}
+void IllusionIllager::setAggressive(bool aggressive)
+{
+    setIllagerFlag(1, aggressive);
+}
 
 void IllusionIllager::registerGoals()
 {
@@ -71,12 +76,16 @@ void IllusionIllager::registerGoals()
     arrayWithLength<unsigned long long> hurtByTargetTypes(1, true);
     hurtByTargetTypes.data[0] = EntityType::ILLUSION_ILLAGER;
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, hurtByTargetTypes), true);
-    mTargetSelector.addGoal(2, (new NearestAttackableTargetGoal(this, typeid(Player), true, false, false))
-        ->setUnseenMemoryTicks(300), true);
-    mTargetSelector.addGoal(3, (new NearestAttackableTargetGoal(this, typeid(Villager), false, false, false))
-        ->setUnseenMemoryTicks(300), true);
-    mTargetSelector.addGoal(3, (new NearestAttackableTargetGoal(this, typeid(VillagerGolem), false, false, false))
-        ->setUnseenMemoryTicks(300), true);
+    mTargetSelector.addGoal(
+        2, (new NearestAttackableTargetGoal(this, typeid(Player), true, false, false))->setUnseenMemoryTicks(300),
+        true);
+    mTargetSelector.addGoal(
+        3, (new NearestAttackableTargetGoal(this, typeid(Villager), false, false, false))->setUnseenMemoryTicks(300),
+        true);
+    mTargetSelector.addGoal(
+        3,
+        (new NearestAttackableTargetGoal(this, typeid(VillagerGolem), false, false, false))->setUnseenMemoryTicks(300),
+        true);
 }
 
 void IllusionIllager::registerAttributes()
@@ -87,14 +96,24 @@ void IllusionIllager::registerAttributes()
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(32.0);
 }
 
-MobGroupData* IllusionIllager::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString)
+MobGroupData* IllusionIllager::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                                const std::wstring& dataString)
 {
     setItemSlot(EquipmentSlot::MAINHAND, not_null_ptr<ItemInstance>(new ItemInstance(Items::bow)));
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
-void IllusionIllager::defineSynchedData() { SpellcasterIllager::defineSynchedData(); }
-ResourceLocation* IllusionIllager::getDefaultLootTable() { return BuiltInLootTables::EMPTY; }
-AABB* IllusionIllager::getBoundingBoxForCulling() { return mBoundingBox->grow(3.0, 0.0, 3.0); }
+void IllusionIllager::defineSynchedData()
+{
+    SpellcasterIllager::defineSynchedData();
+}
+ResourceLocation* IllusionIllager::getDefaultLootTable()
+{
+    return BuiltInLootTables::EMPTY;
+}
+AABB* IllusionIllager::getBoundingBoxForCulling()
+{
+    return mBoundingBox->grow(3.0, 0.0, 3.0);
+}
 
 void IllusionIllager::aiStep()
 {
@@ -121,25 +140,25 @@ void IllusionIllager::aiStep()
             if (roll > 0)
                 y = roll;
             mDisguisedPositionO = Vec3::newPermanent((-6.0f + (float)mRandom->nextInt(13)) * 0.5, y,
-                                    (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
+                                                     (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
             delete mDisguisedPosition2;
             mDisguisedPosition2 = mDisguisedPosition2O;
             roll = mRandom->nextInt(6) - 4;
             mDisguisedPosition2O = Vec3::newPermanent((-6.0f + (float)mRandom->nextInt(13)) * 0.5,
-                                    roll <= 0 ? 0.0 : (double)roll,
-                                    (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
+                                                      roll <= 0 ? 0.0 : (double)roll,
+                                                      (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
             delete mDisguisedPosition3;
             mDisguisedPosition3 = mDisguisedPosition3O;
             roll = mRandom->nextInt(6) - 4;
             mDisguisedPosition3O = Vec3::newPermanent((-6.0f + (float)mRandom->nextInt(13)) * 0.5,
-                                    roll <= 0 ? 0.0 : (double)roll,
-                                    (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
+                                                      roll <= 0 ? 0.0 : (double)roll,
+                                                      (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
             delete mDisguisedPosition4;
             mDisguisedPosition4 = mDisguisedPosition4O;
             roll = mRandom->nextInt(6) - 4;
             mDisguisedPosition4O = Vec3::newPermanent((-6.0f + (float)mRandom->nextInt(13)) * 0.5,
-                                    roll <= 0 ? 0.0 : (double)roll,
-                                    (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
+                                                      roll <= 0 ? 0.0 : (double)roll,
+                                                      (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
 
             for (int i = 0; i < 16; ++i)
             {
@@ -185,12 +204,30 @@ bool IllusionIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
         return getTeam() == NULL && entity->getTeam() == NULL;
     return false;
 }
-const SoundEvent* IllusionIllager::getAmbientSound() { return SoundEvents::ILLUSION_ILLAGER_AMBIENT; }
-const SoundEvent* IllusionIllager::getDeathSound() { return SoundEvents::ILLUSION_ILLAGER_DEATH; }
-const SoundEvent* IllusionIllager::getHurtSound(const DamageSource*) { return SoundEvents::ILLUSION_ILLAGER_HURT; }
-const SoundEvent* IllusionIllager::getCastingSoundEvent() { return SoundEvents::ILLUSION_ILLAGER_CAST_SPELL; }
-int IllusionIllager::getArmPose() { return isCastingSpell() ? 2 : (isAggressive() ? 3 : 0); }
-unsigned long long IllusionIllager::GetType() { return EntityType::ILLUSION_ILLAGER; }
+const SoundEvent* IllusionIllager::getAmbientSound()
+{
+    return SoundEvents::ILLUSION_ILLAGER_AMBIENT;
+}
+const SoundEvent* IllusionIllager::getDeathSound()
+{
+    return SoundEvents::ILLUSION_ILLAGER_DEATH;
+}
+const SoundEvent* IllusionIllager::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::ILLUSION_ILLAGER_HURT;
+}
+const SoundEvent* IllusionIllager::getCastingSoundEvent()
+{
+    return SoundEvents::ILLUSION_ILLAGER_CAST_SPELL;
+}
+int IllusionIllager::getArmPose()
+{
+    return isCastingSpell() ? 2 : (isAggressive() ? 3 : 0);
+}
+unsigned long long IllusionIllager::GetType()
+{
+    return EntityType::ILLUSION_ILLAGER;
+}
 
 arrayWithLength<Vec3*> IllusionIllager::getIllusionOffsets(float partialTick)
 {
@@ -234,8 +271,13 @@ boost::shared_ptr<Arrow> IllusionIllager::getArrow(float distanceFactor)
 }
 
 IllusionIllager::IllusionistBlindnessSpellGoal::IllusionistBlindnessSpellGoal(IllusionIllager* illager)
-    : SpellcasterUseSpellGoal(illager), mTargetId(0) {}
-IllusionIllager::IllusionistBlindnessSpellGoal::~IllusionistBlindnessSpellGoal() {}
+    : SpellcasterUseSpellGoal(illager),
+      mTargetId(0)
+{
+}
+IllusionIllager::IllusionistBlindnessSpellGoal::~IllusionistBlindnessSpellGoal()
+{
+}
 bool IllusionIllager::IllusionistBlindnessSpellGoal::canUse()
 {
     if (!SpellcasterUseSpellGoal::canUse())
@@ -244,8 +286,8 @@ bool IllusionIllager::IllusionistBlindnessSpellGoal::canUse()
         return false;
     if (mSpellcaster->getTarget()->getId() == mTargetId)
         return false;
-    if (!mSpellcaster->mLevel->getCurrentDifficultyAt(BlockPos(mSpellcaster)).isHarderThan(
-            static_cast<float>(Difficulty::NORMAL->getId())))
+    if (!mSpellcaster->mLevel->getCurrentDifficultyAt(BlockPos(mSpellcaster))
+             .isHarderThan(static_cast<float>(Difficulty::NORMAL->getId())))
         return false;
     return true;
 }
@@ -256,15 +298,32 @@ void IllusionIllager::IllusionistBlindnessSpellGoal::start()
 }
 void IllusionIllager::IllusionistBlindnessSpellGoal::performSpellCasting()
 {
-    mSpellcaster->getTarget()->addEffect(new MobEffectInstance(MobEffects::BLINDNESS, 400), boost::shared_ptr<Entity>());
+    mSpellcaster->getTarget()->addEffect(new MobEffectInstance(MobEffects::BLINDNESS, 400),
+                                         boost::shared_ptr<Entity>());
 }
-int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingTime() { return 20; }
-int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingInterval() { return 180; }
-const SoundEvent* IllusionIllager::IllusionistBlindnessSpellGoal::getSpellPrepareSound() { return SoundEvents::ILLUSION_ILLAGER_PREPARE_BLINDNESS; }
-SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistBlindnessSpellGoal::getSpell() { return gSpell5; }
+int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingTime()
+{
+    return 20;
+}
+int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingInterval()
+{
+    return 180;
+}
+const SoundEvent* IllusionIllager::IllusionistBlindnessSpellGoal::getSpellPrepareSound()
+{
+    return SoundEvents::ILLUSION_ILLAGER_PREPARE_BLINDNESS;
+}
+SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistBlindnessSpellGoal::getSpell()
+{
+    return gSpell5;
+}
 IllusionIllager::IllusionistMirrorSpellGoal::IllusionistMirrorSpellGoal(IllusionIllager* illager)
-    : SpellcasterUseSpellGoal(illager) {}
-IllusionIllager::IllusionistMirrorSpellGoal::~IllusionistMirrorSpellGoal() {}
+    : SpellcasterUseSpellGoal(illager)
+{
+}
+IllusionIllager::IllusionistMirrorSpellGoal::~IllusionistMirrorSpellGoal()
+{
+}
 bool IllusionIllager::IllusionistMirrorSpellGoal::canUse()
 {
     if (!SpellcasterUseSpellGoal::canUse())
@@ -277,7 +336,19 @@ void IllusionIllager::IllusionistMirrorSpellGoal::performSpellCasting()
 {
     mSpellcaster->addEffect(new MobEffectInstance(MobEffects::INVISIBILITY, 1200), boost::shared_ptr<Entity>());
 }
-int IllusionIllager::IllusionistMirrorSpellGoal::getCastingTime() { return 20; }
-int IllusionIllager::IllusionistMirrorSpellGoal::getCastingInterval() { return 340; }
-const SoundEvent* IllusionIllager::IllusionistMirrorSpellGoal::getSpellPrepareSound() { return SoundEvents::ILLUSION_ILLAGER_PREPARE_MIRROR; }
-SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistMirrorSpellGoal::getSpell() { return gSpell4; }
+int IllusionIllager::IllusionistMirrorSpellGoal::getCastingTime()
+{
+    return 20;
+}
+int IllusionIllager::IllusionistMirrorSpellGoal::getCastingInterval()
+{
+    return 340;
+}
+const SoundEvent* IllusionIllager::IllusionistMirrorSpellGoal::getSpellPrepareSound()
+{
+    return SoundEvents::ILLUSION_ILLAGER_PREPARE_MIRROR;
+}
+SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistMirrorSpellGoal::getSpell()
+{
+    return gSpell4;
+}

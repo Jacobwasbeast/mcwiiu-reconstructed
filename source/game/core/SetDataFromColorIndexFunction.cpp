@@ -15,7 +15,8 @@ SetDataFromColorIndexFunction::SetDataFromColorIndexFunction(std::vector<LootIte
 {
 }
 
-not_null_ptr<ItemInstance> SetDataFromColorIndexFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context)
+not_null_ptr<ItemInstance> SetDataFromColorIndexFunction::apply(const not_null_ptr<ItemInstance>& itemInstance,
+                                                                Random* random, LootTableContext& context)
 {
     if (!itemInstance->isDamageableItem())
     {

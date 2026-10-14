@@ -18,8 +18,7 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-MG02ScoreboardLayout::MG02ScoreboardLayout()
-    : IScoreboardLayout()
+MG02ScoreboardLayout::MG02ScoreboardLayout() : IScoreboardLayout()
 {
 }
 
@@ -172,10 +171,22 @@ UIString MG02ScoreboardLayout::getLabel7(const StatsUID&)
     return UIString(0xe063a16f);
 }
 
-unsigned int MG02ScoreboardLayout::getStatIcon2(const EScoreboardType&) { return 5; }
-unsigned int MG02ScoreboardLayout::getStatIcon3(const EScoreboardType&) { return 6; }
-unsigned int MG02ScoreboardLayout::getStatIcon4(const EScoreboardType&) { return 7; }
-unsigned int MG02ScoreboardLayout::getStatIcon5(const EScoreboardType&) { return 0xffffffff; }
+unsigned int MG02ScoreboardLayout::getStatIcon2(const EScoreboardType&)
+{
+    return 5;
+}
+unsigned int MG02ScoreboardLayout::getStatIcon3(const EScoreboardType&)
+{
+    return 6;
+}
+unsigned int MG02ScoreboardLayout::getStatIcon4(const EScoreboardType&)
+{
+    return 7;
+}
+unsigned int MG02ScoreboardLayout::getStatIcon5(const EScoreboardType&)
+{
+    return 0xffffffff;
+}
 
 unsigned int MG02ScoreboardLayout::getTitleIcon(int column, const EScoreboardType& type)
 {
@@ -208,7 +219,8 @@ std::wstring MG02ScoreboardLayout::GetRowLabel(int row, const StatsUID& uid, con
     return std::wstring(L"");
 }
 
-not_null_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int, const unsigned int&, const EScoreboardType& type)
+not_null_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int, const unsigned int&,
+                                                                const EScoreboardType& type)
 {
     if (column != -1)
     {
@@ -251,8 +263,8 @@ void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* b
     MG02PlayerInfo* info = static_cast<MG02PlayerInfo*>(baseInfo);
     IScoreboardLayout::BuildPlayerInfo(player, info);
 
-    boost::shared_ptr<AbstractClientPlayer> localPlayer =
-        Minecraft::GetInstance()->GetLocalPlayerByName(player->GetOnlineName());
+    boost::shared_ptr<AbstractClientPlayer> localPlayer = Minecraft::GetInstance()->GetLocalPlayerByName(
+        player->GetOnlineName());
 
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();

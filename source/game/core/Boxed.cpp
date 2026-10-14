@@ -1,12 +1,10 @@
 #include "game/core/Boxed.hpp"
 
-Boxed::Boxed()
-    : mValueClass(NULL)
+Boxed::Boxed() : mValueClass(NULL)
 {
 }
 
-Boxed::Boxed(const std::type_info* type)
-    : mValueClass(type)
+Boxed::Boxed(const std::type_info* type) : mValueClass(type)
 {
 }
 

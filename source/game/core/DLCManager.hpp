@@ -95,9 +95,12 @@ public:
 
     int checkForCorruptDLCAndAlert(bool bShowMessage);
 
-    bool processDLCDataFile(unsigned int& numItemsAdded, unsigned char* pData, unsigned int size, DLCPack* pPack, bool bTakeDataOwnership);
-    bool readDLCDataFile(unsigned int& numItemsAdded, const std::string& fileName, DLCPack* pPack, unsigned int packID, bool bTakeDataOwnership);
-    bool readDLCDataFile(unsigned int& numItemsAdded, const std::wstring& fileName, DLCPack* pPack, unsigned int packID, bool bTakeDataOwnership);
+    bool processDLCDataFile(unsigned int& numItemsAdded, unsigned char* pData, unsigned int size, DLCPack* pPack,
+                            bool bTakeDataOwnership);
+    bool readDLCDataFile(unsigned int& numItemsAdded, const std::string& fileName, DLCPack* pPack, unsigned int packID,
+                         bool bTakeDataOwnership);
+    bool readDLCDataFile(unsigned int& numItemsAdded, const std::wstring& fileName, DLCPack* pPack, unsigned int packID,
+                         bool bTakeDataOwnership);
 
     unsigned int retrievePackID(unsigned char* pData, unsigned int size);
     unsigned int retrievePackIDFromDLCDataFile(const std::string& fileName);

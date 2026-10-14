@@ -4,8 +4,7 @@
 #include "game/core/GuiComponent.hpp"
 #include "game/core/Minecraft.hpp"
 
-SlideButton::SlideButton(int id, int x, int y, const Options::Option* option,
-                         const std::wstring& message, float value)
+SlideButton::SlideButton(int id, int x, int y, const Options::Option* option, const std::wstring& message, float value)
     : Button(id, x, y, 150, 20, message),
       mValue(value),
       mSliding(false),

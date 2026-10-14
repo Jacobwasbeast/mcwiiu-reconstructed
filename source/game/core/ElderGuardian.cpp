@@ -20,8 +20,7 @@
 
 const float ElderGuardian::ELDER_SIZE_SCALE = 2.35f;
 
-ElderGuardian::ElderGuardian(Level* level)
-    : Guardian(level, false)
+ElderGuardian::ElderGuardian(Level* level) : Guardian(level, false)
 {
     fjDerivedCtorCalls();
     setSize(mBbWidth * ELDER_SIZE_SCALE, mBbHeight * ELDER_SIZE_SCALE);
@@ -63,20 +62,17 @@ void ElderGuardian::setGhost()
 
 const SoundEvent* ElderGuardian::getAmbientSound()
 {
-    return isInWaterOrBubble() ? SoundEvents::ELDER_GUARDIAN_AMBIENT
-                               : SoundEvents::ELDER_GUARDIAN_AMBIENT_LAND;
+    return isInWaterOrBubble() ? SoundEvents::ELDER_GUARDIAN_AMBIENT : SoundEvents::ELDER_GUARDIAN_AMBIENT_LAND;
 }
 
 const SoundEvent* ElderGuardian::getHurtSound(const DamageSource*)
 {
-    return isInWaterOrBubble() ? SoundEvents::ELDER_GUARDIAN_HURT
-                               : SoundEvents::ELDER_GUARDIAN_HURT_LAND;
+    return isInWaterOrBubble() ? SoundEvents::ELDER_GUARDIAN_HURT : SoundEvents::ELDER_GUARDIAN_HURT_LAND;
 }
 
 const SoundEvent* ElderGuardian::getDeathSound()
 {
-    return isInWaterOrBubble() ? SoundEvents::ELDER_GUARDIAN_DEATH
-                               : SoundEvents::ELDER_GUARDIAN_DEATH_LAND;
+    return isInWaterOrBubble() ? SoundEvents::ELDER_GUARDIAN_DEATH : SoundEvents::ELDER_GUARDIAN_DEATH_LAND;
 }
 
 const SoundEvent* ElderGuardian::getFlopSound()
@@ -92,21 +88,17 @@ void ElderGuardian::customServerAiStep()
     {
         MobEffect* effect = MobEffects::DIG_SLOWDOWN;
         PlayerSelector selector(this);
-        std::vector<boost::shared_ptr<Player> >* players =
-            mLevel->getPlayers(EntityType::SERVER_PLAYER, &selector);
-        for (std::vector<boost::shared_ptr<Player> >::iterator playerIt = players->begin();
-             playerIt != players->end(); ++playerIt)
+        std::vector<boost::shared_ptr<Player> >* players = mLevel->getPlayers(EntityType::SERVER_PLAYER, &selector);
+        for (std::vector<boost::shared_ptr<Player> >::iterator playerIt = players->begin(); playerIt != players->end();
+             ++playerIt)
         {
-            boost::shared_ptr<ServerPlayer> player =
-                boost::static_pointer_cast<ServerPlayer>(*playerIt);
-            if (!player->hasEffect(effect) ||
-                player->getEffect(effect)->getAmplifier() < 2 ||
-                player->getEffect(effect)->getDuration() < 1200)
+            boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(*playerIt);
+            if (!player->hasEffect(effect) || player->getEffect(effect)->getAmplifier() < 2
+                || player->getEffect(effect)->getDuration() < 1200)
             {
                 player->mConnection->send(boost::shared_ptr<Packet>(
                     new ClientboundGameEventPacket(ClientboundGameEventPacket::GUARDIAN_ELDER_EFFECT, 0.0f)));
-                player->addEffect(new MobEffectInstance(effect, 6000, 2),
-                                  boost::shared_ptr<Entity>());
+                player->addEffect(new MobEffectInstance(effect, 6000, 2), boost::shared_ptr<Entity>());
             }
         }
         delete players;

@@ -14,6 +14,7 @@ public:
     virtual int getFrames();
     virtual void freeFrameTextures();
     virtual unsigned int hasOwnData();
+
 private:
     double mLastTime;
     double mRotation;

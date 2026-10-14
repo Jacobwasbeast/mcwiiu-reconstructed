@@ -35,30 +35,15 @@ public:
 
     static void staticCtor();
 
-    EIndex getEIndex() const
-    {
-        return eIndex;
-    }
+    EIndex getEIndex() const { return eIndex; }
 
-    Type getType() const
-    {
-        return type;
-    }
+    Type getType() const { return type; }
 
-    int getIndex() const
-    {
-        return index;
-    }
+    int getIndex() const { return index; }
 
-    int getFilterFlag() const
-    {
-        return filterFlag;
-    }
+    int getFilterFlag() const { return filterFlag; }
 
-    const std::wstring& getName() const
-    {
-        return name;
-    }
+    const std::wstring& getName() const { return name; }
 
 private:
     EIndex eIndex;

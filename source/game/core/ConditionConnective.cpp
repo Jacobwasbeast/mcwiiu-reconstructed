@@ -18,7 +18,8 @@ ConditionConnective::ConditionConnective(const XmlObject& object)
 {
     m_type = parseType(object.mName).second;
 
-    for (std::vector<XmlChild>::const_iterator child = object.getChildrenRaw().begin(); child != object.getChildrenRaw().end(); ++child)
+    for (std::vector<XmlChild>::const_iterator child = object.getChildrenRaw().begin();
+         child != object.getChildrenRaw().end(); ++child)
     {
         if (child->m_type == 1)
         {

@@ -24,8 +24,7 @@ public:
     virtual unsigned int getContainerType();
     virtual unsigned int getContainerSize();
     virtual int getTypeId(bool large);
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void destroy(const DamageSource* source);
     virtual const Minecart::Type* getType();

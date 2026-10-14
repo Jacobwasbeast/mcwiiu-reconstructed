@@ -13,20 +13,17 @@
 #include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-ThrownEgg::ThrownEgg(Level* level)
-    : ThrowableProjectile(level)
+ThrownEgg::ThrownEgg(Level* level) : ThrowableProjectile(level)
 {
     _init();
 }
 
-ThrownEgg::ThrownEgg(Level* level, boost::shared_ptr<LivingEntity> owner)
-    : ThrowableProjectile(level, owner)
+ThrownEgg::ThrownEgg(Level* level, boost::shared_ptr<LivingEntity> owner) : ThrowableProjectile(level, owner)
 {
     _init();
 }
 
-ThrownEgg::ThrownEgg(Level* level, double x, double y, double z)
-    : ThrowableProjectile(level, x, y, z)
+ThrownEgg::ThrownEgg(Level* level, double x, double y, double z) : ThrowableProjectile(level, x, y, z)
 {
     _init();
 }
@@ -49,8 +46,7 @@ bool ThrownEgg::onHit(const HitResult* result)
 
     if (!mLevel->mIsClientSide)
     {
-        if (mRandom->nextInt(8) == 0
-            && mLevel->canCreateMore(EntityType::CHICKEN, Level::eSpawnType_Breed))
+        if (mRandom->nextInt(8) == 0 && mLevel->canCreateMore(EntityType::CHICKEN, Level::eSpawnType_Breed))
         {
             int count = 1;
             if (mRandom->nextInt(32) == 0)
@@ -96,14 +92,11 @@ void ThrownEgg::handleEntityEvent(unsigned char event, int data)
         Vec3* position = fjGetParticleSpawnPos();
         for (int i = 0; i < 8; ++i)
         {
-            int itemId[] = { Item::getId(Items::egg) };
+            int itemId[] = {Item::getId(Items::egg)};
             arrayWithLength<int> particleData(itemId, 1);
-            mLevel->addParticle(PARTICLE_ICON_CRACK,
-                position->x, position->y, position->z,
-                (mRandom->nextFloat() - 0.5f) * 0.08,
-                (mRandom->nextFloat() - 0.5f) * 0.08,
-                (mRandom->nextFloat() - 0.5f) * 0.08,
-                particleData);
+            mLevel->addParticle(PARTICLE_ICON_CRACK, position->x, position->y, position->z,
+                                (mRandom->nextFloat() - 0.5f) * 0.08, (mRandom->nextFloat() - 0.5f) * 0.08,
+                                (mRandom->nextFloat() - 0.5f) * 0.08, particleData);
         }
     }
     else

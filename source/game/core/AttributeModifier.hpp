@@ -55,7 +55,8 @@ public:
     bool equals(AttributeModifier* other);
     std::wstring toString();
 
-    HtmlString getHoverText(eATTRIBUTE_ID attributeId, not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player);
+    HtmlString getHoverText(eATTRIBUTE_ID attributeId, not_null_ptr<ItemInstance> item,
+                            boost::shared_ptr<Player> player);
 
 private:
     void _init(eMODIFIER_ID id, std::wstring name, double amount, int operation);

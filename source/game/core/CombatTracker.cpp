@@ -15,8 +15,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
 
-CombatTracker::CombatTracker(LivingEntity* mob)
-    : mMob(mob), mLastDamageTime(0)
+CombatTracker::CombatTracker(LivingEntity* mob) : mMob(mob), mLastDamageTime(0)
 {
 }
 
@@ -125,8 +124,8 @@ boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
     {
         if (source->equals(DamageSource::CREATIVE_PLAYER))
         {
-            ClientboundChatPacket* packet =
-                new ClientboundChatPacket(ClientboundChatPacket::eChatPacketMessage_DeathCustom, -1);
+            ClientboundChatPacket* packet = new ClientboundChatPacket(
+                ClientboundChatPacket::eChatPacketMessage_DeathCustom, -1);
             packet->strings.push_back(mMob->getNetworkName());
             packet->strings.push_back(mMob->mDeathMessage);
             packet->ints.push_back(mMob->mDeathMessageId);
@@ -162,9 +161,10 @@ boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
         }
         else if (attacker != NULL && (killer == NULL || attacker != killer))
         {
-            not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, attacker->GetType())
-                ? boost::static_pointer_cast<LivingEntity>(attacker)->getMainHandItem()
-                : ItemInstance::EMPTY;
+            not_null_ptr<ItemInstance> item =
+                eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, attacker->GetType())
+                    ? boost::static_pointer_cast<LivingEntity>(attacker)->getMainHandItem()
+                    : ItemInstance::EMPTY;
             if (!item->isEmpty() && item->hasCustomHoverName())
             {
                 result = boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
@@ -181,8 +181,8 @@ boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
         else if (killer != NULL)
         {
             not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, killer->GetType())
-                ? boost::static_pointer_cast<LivingEntity>(killer)->getMainHandItem()
-                : ItemInstance::EMPTY;
+                                                  ? boost::static_pointer_cast<LivingEntity>(killer)->getMainHandItem()
+                                                  : ItemInstance::EMPTY;
             if (!item->isEmpty() && item->hasCustomHoverName())
             {
                 result = boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(

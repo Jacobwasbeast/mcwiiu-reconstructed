@@ -9,11 +9,11 @@
 #include <sstream>
 
 HtmlString::HtmlString(const HtmlString& other)
-    : mText(other.mText)
-    , mColour(other.mColour)
-    , mItalic(other.mItalic)
-    , mIndent(other.mIndent)
-    , mFontSize(other.mFontSize)
+    : mText(other.mText),
+      mColour(other.mColour),
+      mItalic(other.mItalic),
+      mIndent(other.mIndent),
+      mFontSize(other.mFontSize)
 {
 }
 

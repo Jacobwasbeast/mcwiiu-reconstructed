@@ -6,13 +6,11 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-AreaConstraint::AreaConstraint(int messageId, double x0, double y0, double z0, double x1, double y1,
-                               double z1, bool insideArea, bool constrainHorizontally,
-                               bool constrainVertically, int border)
+AreaConstraint::AreaConstraint(int messageId, double x0, double y0, double z0, double x1, double y1, double z1,
+                               bool insideArea, bool constrainHorizontally, bool constrainVertically, int border)
     : TutorialConstraint(messageId)
 {
-    innerArea = AABB::newPermanent(x0 + border, y0 + border, z0 + border, x1 - border, y1 - border,
-                                   z1 - border);
+    innerArea = AABB::newPermanent(x0 + border, y0 + border, z0 + border, x1 - border, y1 - border, z1 - border);
     area = AABB::newPermanent(x0, y0, z0, x1, y1, z1);
     this->insideArea = insideArea;
     this->constrainHorizontally = constrainHorizontally;
@@ -57,8 +55,7 @@ bool AreaConstraint::isConstraintSatisfied(int playerId)
 
     if (constrainHorizontally)
     {
-        if (withinHorizontally == insideArea &&
-            (!constrainVertically || withinVertically == insideArea))
+        if (withinHorizontally == insideArea && (!constrainVertically || withinVertically == insideArea))
         {
             satisfied = true;
         }
@@ -76,9 +73,8 @@ bool AreaConstraint::isConstraintRestrictive(int playerId)
     return constrainHorizontally || constrainVertically;
 }
 
-int AreaConstraint::canMoveToPosition(double oldX, double oldY, double oldZ, double newX,
-                                      double newY, double newZ, Vec3* clampedPosition,
-                                      bool positionOnly)
+int AreaConstraint::canMoveToPosition(double oldX, double oldY, double oldZ, double newX, double newY, double newZ,
+                                      Vec3* clampedPosition, bool positionOnly)
 {
     if (!constrainHorizontally && !constrainVertically)
     {
@@ -111,20 +107,17 @@ int AreaConstraint::canMoveToPosition(double oldX, double oldY, double oldZ, dou
     }
     else
     {
-        if ((newPos->x <= area->mMinX && newPos->x < oldPos->x) ||
-            (newPos->x >= area->mMaxX && newPos->x > oldPos->x))
+        if ((newPos->x <= area->mMinX && newPos->x < oldPos->x) || (newPos->x >= area->mMaxX && newPos->x > oldPos->x))
         {
             withinX = false;
         }
 
-        if ((newPos->y <= area->mMinY && newPos->y < oldPos->y) ||
-            (newPos->y >= area->mMaxY && newPos->y > oldPos->y))
+        if ((newPos->y <= area->mMinY && newPos->y < oldPos->y) || (newPos->y >= area->mMaxY && newPos->y > oldPos->y))
         {
             withinY = false;
         }
 
-        if ((newPos->z <= area->mMinZ && newPos->z < oldPos->z) ||
-            (newPos->z >= area->mMaxZ && newPos->z > oldPos->z))
+        if ((newPos->z <= area->mMinZ && newPos->z < oldPos->z) || (newPos->z >= area->mMaxZ && newPos->z > oldPos->z))
         {
             withinZ = false;
         }
@@ -144,25 +137,25 @@ int AreaConstraint::canMoveToPosition(double oldX, double oldY, double oldZ, dou
         if (blockedY && !withinY)
         {
             if (newPos->y < area->mMaxY)
-        {
-            clampedPosition->y = area->mMinY;
-        }
-        else
-        {
-            clampedPosition->y = area->mMaxY;
-        }
+            {
+                clampedPosition->y = area->mMinY;
+            }
+            else
+            {
+                clampedPosition->y = area->mMaxY;
+            }
         }
 
         if (blockedZ && !withinZ)
         {
             if (newPos->z < area->mMaxZ)
-        {
-            clampedPosition->z = area->mMinZ;
-        }
-        else
-        {
-            clampedPosition->z = area->mMaxZ;
-        }
+            {
+                clampedPosition->z = area->mMinZ;
+            }
+            else
+            {
+                clampedPosition->z = area->mMaxZ;
+            }
         }
     }
 

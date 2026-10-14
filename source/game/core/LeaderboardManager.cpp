@@ -1,7 +1,6 @@
 #include "game/core/LeaderboardManager.hpp"
 
-LeaderboardManager::LeaderboardManager()
-    : m_uid(0)
+LeaderboardManager::LeaderboardManager() : m_uid(0)
 {
     zeroReadParameters();
     m_uid = PlayerUID(0);
@@ -17,7 +16,9 @@ void LeaderboardManager::zeroReadParameters()
     m_uiNumRows = 0;
 }
 
-bool LeaderboardManager::ReadStats_Friends(LeaderboardReadListener* pReadListener, int iUserIndex, EStatsType eStatsType, PlayerUID uid, unsigned int uiStartRank, unsigned int uiNumRows)
+bool LeaderboardManager::ReadStats_Friends(LeaderboardReadListener* pReadListener, int iUserIndex,
+                                           EStatsType eStatsType, PlayerUID uid, unsigned int uiStartRank,
+                                           unsigned int uiNumRows)
 {
     zeroReadParameters();
 
@@ -29,7 +30,8 @@ bool LeaderboardManager::ReadStats_Friends(LeaderboardReadListener* pReadListene
     return true;
 }
 
-bool LeaderboardManager::ReadStats_MyScore(LeaderboardReadListener* pReadListener, int iUserIndex, EStatsType eStatsType, PlayerUID uid, unsigned int uiNumRows)
+bool LeaderboardManager::ReadStats_MyScore(LeaderboardReadListener* pReadListener, int iUserIndex,
+                                           EStatsType eStatsType, PlayerUID uid, unsigned int uiNumRows)
 {
     zeroReadParameters();
 
@@ -42,7 +44,8 @@ bool LeaderboardManager::ReadStats_MyScore(LeaderboardReadListener* pReadListene
     return true;
 }
 
-bool LeaderboardManager::ReadStats_TopRank(LeaderboardReadListener* pReadListener, int iUserIndex, EStatsType eStatsType, unsigned int uiStartRank, unsigned int uiNumRows)
+bool LeaderboardManager::ReadStats_TopRank(LeaderboardReadListener* pReadListener, int iUserIndex,
+                                           EStatsType eStatsType, unsigned int uiStartRank, unsigned int uiNumRows)
 {
     zeroReadParameters();
 

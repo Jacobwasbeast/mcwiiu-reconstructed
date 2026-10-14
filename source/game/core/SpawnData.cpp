@@ -7,9 +7,7 @@
 
 static const std::wstring EMPTY_STRING = L"";
 
-SpawnData::SpawnData()
-    : WeighedRandomItem(1)
-    , mTag(new CompoundTag())
+SpawnData::SpawnData() : WeighedRandomItem(1), mTag(new CompoundTag())
 {
     mTag->putString(std::wstring(L"id"), EMPTY_STRING);
 }
@@ -20,9 +18,7 @@ SpawnData::SpawnData(CompoundTag* tag)
     mTag = tag->getCompound(std::wstring(L"Entity"))->copy();
 }
 
-SpawnData::SpawnData(int weight, CompoundTag* entityTag)
-    : WeighedRandomItem(weight)
-    , mTag(entityTag->copy())
+SpawnData::SpawnData(int weight, CompoundTag* entityTag) : WeighedRandomItem(weight), mTag(entityTag->copy())
 {
 }
 

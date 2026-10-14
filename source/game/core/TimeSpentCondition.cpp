@@ -5,10 +5,10 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-TimeSpentCondition::TimeSpentCondition(float target, eTimeSpentCategory category,
-    GameMedal::EOperator op, bool bestOnly)
-    : MultiConditionMedal::MultiCondition(target, op, bestOnly)
-    , mCategory(category)
+TimeSpentCondition::TimeSpentCondition(float target, eTimeSpentCategory category, GameMedal::EOperator op,
+                                       bool bestOnly)
+    : MultiConditionMedal::MultiCondition(target, op, bestOnly),
+      mCategory(category)
 {
 }
 
@@ -26,7 +26,8 @@ float TimeSpentCondition::getScore(const GameMedal* medal, PlayerStats* playerSt
         if (mCategory == eTimeSpentCategory_BetweenCheckpoints)
         {
             int previousTime = 0;
-            for (unsigned int checkpoint = 0; checkpoint < static_cast<unsigned int>(roundStats->mLastCheckpointID + 1); ++checkpoint)
+            for (unsigned int checkpoint = 0; checkpoint < static_cast<unsigned int>(roundStats->mLastCheckpointID + 1);
+                 ++checkpoint)
             {
                 if (roundStats->mCheckpointTimes.find(checkpoint) != roundStats->mCheckpointTimes.end())
                 {

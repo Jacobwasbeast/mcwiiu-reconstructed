@@ -37,7 +37,8 @@ public:
     virtual Item* getResource(const BlockState*, Random*, int);
     virtual void spawnResources(Level*, const BlockPos&, const BlockState*, float, int);
     virtual int getLightEmission(const BlockState*);
-    virtual void playerDestroy(Level*, boost::shared_ptr<Player>, const BlockPos&, const BlockState*, boost::shared_ptr<BlockEntity>, not_null_ptr<ItemInstance>);
+    virtual void playerDestroy(Level*, boost::shared_ptr<Player>, const BlockPos&, const BlockState*,
+                               boost::shared_ptr<BlockEntity>, not_null_ptr<ItemInstance>);
     virtual bool canSurvive(Level*, const BlockPos&, const BlockState*);
     virtual const AABB* getShape(const BlockState*, LevelSource*, const BlockPos&);
     virtual bool mayReplaceWithPlace(LevelSource*, const BlockPos&);

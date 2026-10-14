@@ -16,10 +16,7 @@ struct FileEntrySaveData
 class FileEntry
 {
 public:
-    FileEntry()
-    {
-        memset(&m_data, 0, sizeof(m_data));
-    }
+    FileEntry() { memset(&m_data, 0, sizeof(m_data)); }
 
     FileEntry(wchar_t* name, unsigned int fileSize, unsigned int startOffset);
 

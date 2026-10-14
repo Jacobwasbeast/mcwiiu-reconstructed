@@ -236,10 +236,14 @@ Stat* CommonStats::get_armourDyed(int itemId)
 {
     switch (itemId)
     {
-    case 298: return Stats::armourDyedStats.data[0];
-    case 299: return Stats::armourDyedStats.data[1];
-    case 300: return Stats::armourDyedStats.data[2];
-    case 301: return Stats::armourDyedStats.data[3];
+    case 298:
+        return Stats::armourDyedStats.data[0];
+    case 299:
+        return Stats::armourDyedStats.data[1];
+    case 300:
+        return Stats::armourDyedStats.data[2];
+    case 301:
+        return Stats::armourDyedStats.data[3];
     }
     return NULL;
 }
@@ -279,103 +283,200 @@ Stat* CommonStats::get_achievement(eAward award)
 {
     switch (award)
     {
-    case 0: return Achievements::openInventory;
-    case 1: return Achievements::mineWood;
-    case 2: return Achievements::buildWorkBench;
-    case 3: return Achievements::buildPickaxe;
-    case 4: return Achievements::buildFurnace;
-    case 5: return Achievements::acquireIron;
-    case 6: return Achievements::buildHoe;
-    case 7: return Achievements::makeBread;
-    case 8: return Achievements::bakeCake;
-    case 9: return Achievements::buildBetterPickaxe;
-    case 10: return Achievements::cookFish;
-    case 11: return Achievements::onARail;
-    case 12: return Achievements::buildSword;
-    case 13: return Achievements::killEnemy;
-    case 14: return Achievements::killCow;
-    case 15: return Achievements::flyPig;
-    case 16: return Achievements::leaderOfThePack;
-    case 17: return Achievements::MOARTools;
-    case 18: return Achievements::dispenseWithThis;
-    case 19: return Achievements::InToTheNether;
-    case 20: return Achievements::mine100Blocks;
-    case 21: return Achievements::kill10Creepers;
-    case 22: return Achievements::eatPorkChop;
-    case 23: return Achievements::play100Days;
-    case 24: return Achievements::arrowKillCreeper;
-    case 25: return Achievements::socialPost;
-    case 26: return Achievements::snipeSkeleton;
-    case 27: return Achievements::diamonds;
-    case 29: return Achievements::ghast;
-    case 30: return Achievements::blazeRod;
-    case 31: return Achievements::potion;
-    case 32: return Achievements::theEnd;
-    case 33: return Achievements::theEnd2;
-    case 34: return Achievements::enchantments;
-    case 35: return Achievements::overkill;
-    case 36: return Achievements::bookcase;
-    case 37: return Achievements::adventuringTime;
-    case 38: return Achievements::repopulation;
-    case 39: return Achievements::diamondsToYou;
-    case 40: return Achievements::theHaggler;
-    case 41: return Achievements::potPlanter;
-    case 42: return Achievements::itsASign;
-    case 43: return Achievements::ironBelly;
-    case 44: return Achievements::haveAShearfulDay;
-    case 45: return Achievements::rainbowCollection;
-    case 46: return Achievements::stayingFrosty;
-    case 47: return Achievements::chestfulOfCobblestone;
-    case 48: return Achievements::renewableEnergy;
-    case 49: return Achievements::musicToMyEars;
-    case 50: return Achievements::bodyGuard;
-    case 51: return Achievements::ironMan;
-    case 52: return Achievements::zombieDoctor;
-    case 53: return Achievements::lionTamer;
-    case 54: return Achievements::spawnWither;
-    case 55: return Achievements::killWither;
-    case 56: return Achievements::fullBeacon;
-    case 57: return Achievements::overpowered;
-    case 58: return Achievements::theDyeOutfit;
-    case 59: return Achievements::trampoline;
-    case 66: return Achievements::theEndAgain;
-    case 67: return Achievements::youNeedAMint;
-    case 68: return Achievements::superSonic;
-    case 69: return Achievements::drySpell;
-    case 70: return Achievements::freeDiver;
-    case 71: return Achievements::superFuel;
-    case 72: return Achievements::saddleUp;
-    case 73: return Achievements::tasteOfYourOwnMedicine;
-    case 74: return Achievements::beamMeUp;
-    case 75: return Achievements::mapRoom;
-    case 76: return Achievements::camouflage;
-    case 77: return Achievements::backFromTheDead;
-    case 78: return Achievements::equipYourFists;
-    case 79: return Achievements::tenaciousBall;
-    case 80: return Achievements::deadshot;
-    case 81: return Achievements::suckMySnowballs;
-    case 82: return Achievements::mountainTop;
-    case 83: return Achievements::willLikeNoOther;
-    case 84: return Achievements::theDeepEnd;
-    case 85: return Achievements::greatViewFromUpHere;
-    case 86: return Achievements::changeOfSheets;
-    case 87: return Achievements::cheatingDeath;
-    case 88: return Achievements::soIGotThatGoingForMe;
-    case 89: return Achievements::letItGo;
-    case 90: return Achievements::feelingIll;
-    case 60: return Achievements::theStudent;
-    case 61: return Achievements::hasBecomeTheMaster;
-    case 62: return Achievements::tisButAScratch;
-    case 63: return Achievements::cupid;
-    case 64: return Achievements::youWontLikeMeWhenImHungry;
-    case 65: return Achievements::mine;
-    case 91: return Achievements::_1234Pickle;
-    case 92: return Achievements::alternativeFuel;
-    case 93: return Achievements::moskstraumen;
-    case 94: return Achievements::castaway;
-    case 95: return Achievements::sleepWithTheFishes;
-    case 96: return Achievements::echolocation;
-    default: return NULL;
+    case 0:
+        return Achievements::openInventory;
+    case 1:
+        return Achievements::mineWood;
+    case 2:
+        return Achievements::buildWorkBench;
+    case 3:
+        return Achievements::buildPickaxe;
+    case 4:
+        return Achievements::buildFurnace;
+    case 5:
+        return Achievements::acquireIron;
+    case 6:
+        return Achievements::buildHoe;
+    case 7:
+        return Achievements::makeBread;
+    case 8:
+        return Achievements::bakeCake;
+    case 9:
+        return Achievements::buildBetterPickaxe;
+    case 10:
+        return Achievements::cookFish;
+    case 11:
+        return Achievements::onARail;
+    case 12:
+        return Achievements::buildSword;
+    case 13:
+        return Achievements::killEnemy;
+    case 14:
+        return Achievements::killCow;
+    case 15:
+        return Achievements::flyPig;
+    case 16:
+        return Achievements::leaderOfThePack;
+    case 17:
+        return Achievements::MOARTools;
+    case 18:
+        return Achievements::dispenseWithThis;
+    case 19:
+        return Achievements::InToTheNether;
+    case 20:
+        return Achievements::mine100Blocks;
+    case 21:
+        return Achievements::kill10Creepers;
+    case 22:
+        return Achievements::eatPorkChop;
+    case 23:
+        return Achievements::play100Days;
+    case 24:
+        return Achievements::arrowKillCreeper;
+    case 25:
+        return Achievements::socialPost;
+    case 26:
+        return Achievements::snipeSkeleton;
+    case 27:
+        return Achievements::diamonds;
+    case 29:
+        return Achievements::ghast;
+    case 30:
+        return Achievements::blazeRod;
+    case 31:
+        return Achievements::potion;
+    case 32:
+        return Achievements::theEnd;
+    case 33:
+        return Achievements::theEnd2;
+    case 34:
+        return Achievements::enchantments;
+    case 35:
+        return Achievements::overkill;
+    case 36:
+        return Achievements::bookcase;
+    case 37:
+        return Achievements::adventuringTime;
+    case 38:
+        return Achievements::repopulation;
+    case 39:
+        return Achievements::diamondsToYou;
+    case 40:
+        return Achievements::theHaggler;
+    case 41:
+        return Achievements::potPlanter;
+    case 42:
+        return Achievements::itsASign;
+    case 43:
+        return Achievements::ironBelly;
+    case 44:
+        return Achievements::haveAShearfulDay;
+    case 45:
+        return Achievements::rainbowCollection;
+    case 46:
+        return Achievements::stayingFrosty;
+    case 47:
+        return Achievements::chestfulOfCobblestone;
+    case 48:
+        return Achievements::renewableEnergy;
+    case 49:
+        return Achievements::musicToMyEars;
+    case 50:
+        return Achievements::bodyGuard;
+    case 51:
+        return Achievements::ironMan;
+    case 52:
+        return Achievements::zombieDoctor;
+    case 53:
+        return Achievements::lionTamer;
+    case 54:
+        return Achievements::spawnWither;
+    case 55:
+        return Achievements::killWither;
+    case 56:
+        return Achievements::fullBeacon;
+    case 57:
+        return Achievements::overpowered;
+    case 58:
+        return Achievements::theDyeOutfit;
+    case 59:
+        return Achievements::trampoline;
+    case 66:
+        return Achievements::theEndAgain;
+    case 67:
+        return Achievements::youNeedAMint;
+    case 68:
+        return Achievements::superSonic;
+    case 69:
+        return Achievements::drySpell;
+    case 70:
+        return Achievements::freeDiver;
+    case 71:
+        return Achievements::superFuel;
+    case 72:
+        return Achievements::saddleUp;
+    case 73:
+        return Achievements::tasteOfYourOwnMedicine;
+    case 74:
+        return Achievements::beamMeUp;
+    case 75:
+        return Achievements::mapRoom;
+    case 76:
+        return Achievements::camouflage;
+    case 77:
+        return Achievements::backFromTheDead;
+    case 78:
+        return Achievements::equipYourFists;
+    case 79:
+        return Achievements::tenaciousBall;
+    case 80:
+        return Achievements::deadshot;
+    case 81:
+        return Achievements::suckMySnowballs;
+    case 82:
+        return Achievements::mountainTop;
+    case 83:
+        return Achievements::willLikeNoOther;
+    case 84:
+        return Achievements::theDeepEnd;
+    case 85:
+        return Achievements::greatViewFromUpHere;
+    case 86:
+        return Achievements::changeOfSheets;
+    case 87:
+        return Achievements::cheatingDeath;
+    case 88:
+        return Achievements::soIGotThatGoingForMe;
+    case 89:
+        return Achievements::letItGo;
+    case 90:
+        return Achievements::feelingIll;
+    case 60:
+        return Achievements::theStudent;
+    case 61:
+        return Achievements::hasBecomeTheMaster;
+    case 62:
+        return Achievements::tisButAScratch;
+    case 63:
+        return Achievements::cupid;
+    case 64:
+        return Achievements::youWontLikeMeWhenImHungry;
+    case 65:
+        return Achievements::mine;
+    case 91:
+        return Achievements::_1234Pickle;
+    case 92:
+        return Achievements::alternativeFuel;
+    case 93:
+        return Achievements::moskstraumen;
+    case 94:
+        return Achievements::castaway;
+    case 95:
+        return Achievements::sleepWithTheFishes;
+    case 96:
+        return Achievements::echolocation;
+    default:
+        return NULL;
     }
 }
 

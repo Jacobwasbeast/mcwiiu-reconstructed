@@ -4,17 +4,11 @@
 #include "game/data/FloatTag.hpp"
 #include "game/data/ListTag.hpp"
 
-Rotations::Rotations(float x, float y, float z)
-    : x(x)
-    , y(y)
-    , z(z)
+Rotations::Rotations(float x, float y, float z) : x(x), y(y), z(z)
 {
 }
 
-Rotations::Rotations(const ListTag* tag)
-    : x(tag->getFloat(0))
-    , y(tag->getFloat(1))
-    , z(tag->getFloat(2))
+Rotations::Rotations(const ListTag* tag) : x(tag->getFloat(0)), y(tag->getFloat(1)), z(tag->getFloat(2))
 {
 }
 

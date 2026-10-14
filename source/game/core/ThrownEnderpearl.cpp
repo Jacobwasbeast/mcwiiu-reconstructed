@@ -18,21 +18,22 @@
 #include "game/world/Dimension.hpp"
 #include "game/world/WorldBorder.hpp"
 
-ThrownEnderpearl::ThrownEnderpearl(Level* level)
-    : ThrowableProjectile(level), mThrower()
+ThrownEnderpearl::ThrownEnderpearl(Level* level) : ThrowableProjectile(level), mThrower()
 {
     _init();
 }
 
 ThrownEnderpearl::ThrownEnderpearl(Level* level, boost::shared_ptr<LivingEntity> owner)
-    : ThrowableProjectile(level, owner), mThrower()
+    : ThrowableProjectile(level, owner),
+      mThrower()
 {
     _init();
     mThrower = owner;
 }
 
 ThrownEnderpearl::ThrownEnderpearl(Level* level, double x, double y, double z)
-    : ThrowableProjectile(level, x, y, z), mThrower()
+    : ThrowableProjectile(level, x, y, z),
+      mThrower()
 {
     _init();
 }
@@ -44,8 +45,8 @@ Entity* ThrownEnderpearl::create(Level* level)
 
 void ThrownEnderpearl::PlayTeleportSound()
 {
-    mLevel->playSound(boost::shared_ptr<Player>(), mXo, mYo, mZo,
-        SoundEvents::ENDERMEN_TELEPORT, getSoundSource(), 1.0f, 1.0f, 16.0f);
+    mLevel->playSound(boost::shared_ptr<Player>(), mXo, mYo, mZo, SoundEvents::ENDERMEN_TELEPORT, getSoundSource(),
+                      1.0f, 1.0f, 16.0f);
     playSound(SoundEvents::ENDERMEN_TELEPORT, 1.0f, 1.0f);
 }
 
@@ -59,8 +60,7 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
         if (result->mEntity == mThrower)
             return false;
 
-        DamageSource* damage = DamageSource::CreateThrown(
-            shared_from_this(), getOwner());
+        DamageSource* damage = DamageSource::CreateThrown(shared_from_this(), getOwner());
         result->mEntity->hurt(damage, 0.0f);
         delete damage;
     }
@@ -71,8 +71,8 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
         boost::shared_ptr<BlockEntity> blockEntity = mLevel->getBlockEntity(position);
         if (blockEntity && eTYPE_DERIVED_FROM(BlockEntityType::THE_END_GATEWAY_ENTITY, blockEntity->GetType()))
         {
-            boost::shared_ptr<TheEndGatewayEntity> gateway =
-                boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);
+            boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(
+                blockEntity);
             if (owner)
             {
                 gateway->teleportEntity(owner);
@@ -86,10 +86,8 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
 
     for (int i = 0; i < 32; ++i)
     {
-        mLevel->addParticle(PARTICLE_ENDER,
-            mX, mY + mRandom->nextDouble() * 2.0, mZ,
-            mRandom->nextGaussian(), 0.0, mRandom->nextGaussian(),
-            arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_ENDER, mX, mY + mRandom->nextDouble() * 2.0, mZ, mRandom->nextGaussian(), 0.0,
+                            mRandom->nextGaussian(), arrayWithLength<int>());
     }
 
     if (!mLevel->mIsClientSide)
@@ -103,25 +101,21 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
 
         if (owner && owner->instanceof(EntityType::SERVER_PLAYER))
         {
-            boost::shared_ptr<ServerPlayer> player =
-                boost::static_pointer_cast<ServerPlayer>(getOwner());
-            if (!player->mRemoved && !player->mConnection->isDisconnected()
-                && player->mLevel == mLevel && !player->isSleeping())
+            boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(getOwner());
+            if (!player->mRemoved && !player->mConnection->isDisconnected() && player->mLevel == mLevel
+                && !player->isSleeping())
             {
                 double distance = player->distanceTo(mX, mY, mZ);
                 if (distance > 100.0)
                 {
-                    player->awardStat(GenericStats::beamMeUp(),
-                        GenericStats::param_beamMeUp((int)distance));
+                    player->awardStat(GenericStats::beamMeUp(), GenericStats::param_beamMeUp((int)distance));
                 }
 
-                if (mRandom->nextFloat() < 0.05f
-                    && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING))
+                if (mRandom->nextFloat() < 0.05f && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING))
                 {
                     boost::shared_ptr<Endermite> endermite(new Endermite(mLevel));
                     endermite->setPlayerSpawned(true);
-                    endermite->moveTo(player->mX, player->mY, player->mZ,
-                        player->mYRot, player->mXRot);
+                    endermite->moveTo(player->mX, player->mY, player->mZ, player->mYRot, player->mXRot);
                     mLevel->addEntity(endermite);
                 }
 
@@ -158,8 +152,7 @@ void ThrownEnderpearl::tick()
 {
     PIXBeginNamedEvent(0.0f, "Thrown enderpearl tick");
     boost::shared_ptr<LivingEntity> owner = getOwner();
-    if (owner && eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType())
-        && !owner->isAlive())
+    if (owner && eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType()) && !owner->isAlive())
     {
         remove();
     }

@@ -14,10 +14,7 @@ public:
         eGameRulesInstanceType_Player = 0
     };
 
-    GameRulesInstance(GameRuleDefinition* definition, Connection* connection)
-        : GameRule(definition, connection)
-    {
-    }
+    GameRulesInstance(GameRuleDefinition* definition, Connection* connection) : GameRule(definition, connection) {}
 };
 
 #endif

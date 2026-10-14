@@ -5,8 +5,7 @@
 #include "game/core/FloatBuffer.hpp"
 #include "game/core/IntBuffer.hpp"
 
-ByteBuffer::ByteBuffer(unsigned int capacity)
-    : Buffer(capacity)
+ByteBuffer::ByteBuffer(unsigned int capacity) : Buffer(capacity)
 {
     mIsWrapped = false;
     mBuffer = new unsigned char[capacity];

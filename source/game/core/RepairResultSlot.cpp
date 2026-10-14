@@ -12,8 +12,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-RepairResultSlot::RepairResultSlot(AnvilMenu* menu, const BlockPos& position,
-                                   boost::shared_ptr<Container> container, int index, int x, int y)
+RepairResultSlot::RepairResultSlot(AnvilMenu* menu, const BlockPos& position, boost::shared_ptr<Container> container,
+                                   int index, int x, int y)
     : Slot(container, index, x, y)
 {
     mMenu = menu;
@@ -27,12 +27,11 @@ bool RepairResultSlot::mayPlace(not_null_ptr<ItemInstance>)
 
 bool RepairResultSlot::mayPickup(boost::shared_ptr<Player> player)
 {
-    return (player->mAbilities.mInstabuild || player->mExperienceLevel >= mMenu->mRepairCost) &&
-           mMenu->mRepairCost > 0 && hasItem();
+    return (player->mAbilities.mInstabuild || player->mExperienceLevel >= mMenu->mRepairCost) && mMenu->mRepairCost > 0
+           && hasItem();
 }
 
-not_null_ptr<ItemInstance> RepairResultSlot::onTake(boost::shared_ptr<Player> player,
-                                                    not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> RepairResultSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
 {
     if (!player->mAbilities.mInstabuild)
     {
@@ -65,8 +64,8 @@ not_null_ptr<ItemInstance> RepairResultSlot::onTake(boost::shared_ptr<Player> pl
     mMenu->mRepairCost = 0;
 
     const BlockState* state = mMenu->mLevel->getBlockState(mPosition);
-    if (!player->mAbilities.mInstabuild && !mMenu->mLevel->mIsClientSide &&
-        state->getBlock() == Blocks::anvil && player->getRandom()->nextFloat() < 0.12f)
+    if (!player->mAbilities.mInstabuild && !mMenu->mLevel->mIsClientSide && state->getBlock() == Blocks::anvil
+        && player->getRandom()->nextFloat() < 0.12f)
     {
         int damage = state->getValue(AnvilBlock::DAMAGE) + 1;
         if (damage > 2)

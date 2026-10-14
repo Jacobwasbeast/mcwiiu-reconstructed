@@ -27,14 +27,12 @@
 #include "game/world/block/HopperBlockEntity.hpp"
 #include "game/world/generation/Player.hpp"
 
-MinecartHopper::MinecartHopper(Level* level)
-    : MinecartContainer(level), Hopper()
+MinecartHopper::MinecartHopper(Level* level) : MinecartContainer(level), Hopper()
 {
     _init();
 }
 
-MinecartHopper::MinecartHopper(Level* level, double x, double y, double z)
-    : MinecartContainer(level, x, y, z), Hopper()
+MinecartHopper::MinecartHopper(Level* level, double x, double y, double z) : MinecartContainer(level, x, y, z), Hopper()
 {
     _init();
 }
@@ -104,10 +102,9 @@ bool MinecartHopper::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 }
 
 AbstractContainerMenu* MinecartHopper::createMenu(boost::shared_ptr<Inventory> inventory,
-                                                   boost::shared_ptr<Player> player)
+                                                  boost::shared_ptr<Player> player)
 {
-    return new HopperMenu(inventory,
-                          boost::static_pointer_cast<MinecartHopper>(shared_from_this()), player);
+    return new HopperMenu(inventory, boost::static_pointer_cast<MinecartHopper>(shared_from_this()), player);
 }
 
 int MinecartHopper::getTypeId(bool large)
@@ -164,8 +161,7 @@ int MinecartHopper::getDefaultDisplayOffset()
     return 1;
 }
 
-bool MinecartHopper::interact(const boost::shared_ptr<Player>& player,
-                              InteractionHand::EInteractionHand hand)
+bool MinecartHopper::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     if (!player->isAllowedToInteract(shared_from_this()))
         return false;
@@ -228,9 +224,8 @@ bool MinecartHopper::suckInItems()
 {
     if (HopperBlockEntity::suckInItems(this))
         return true;
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(typeid(ItemEntity), mBoundingBox->grow(0.25, 0.0, 0.25),
-                                   EntitySelector::ENTITY_STILL_ALIVE, false);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(
+        typeid(ItemEntity), mBoundingBox->grow(0.25, 0.0, 0.25), EntitySelector::ENTITY_STILL_ALIVE, false);
     if (!entities->empty())
     {
         boost::shared_ptr<ItemEntity> item = boost::static_pointer_cast<ItemEntity>(entities->at(0));

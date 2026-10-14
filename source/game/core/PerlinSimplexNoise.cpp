@@ -74,12 +74,15 @@ double PerlinSimplexNoise::getValue(double x, double y, double z)
     return value;
 }
 
-arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> values, double x, double y, int xSize, int ySize, double xScale, double yScale, double frequencyScale)
+arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> values, double x, double y, int xSize,
+                                                      int ySize, double xScale, double yScale, double frequencyScale)
 {
     return getRegion(values, x, y, xSize, ySize, xScale, yScale, frequencyScale, 0.5);
 }
 
-arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> values, double x, double y, int xSize, int ySize, double xScale, double yScale, double frequencyScale, double amplitudeScale)
+arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> values, double x, double y, int xSize,
+                                                      int ySize, double xScale, double yScale, double frequencyScale,
+                                                      double amplitudeScale)
 {
     xScale /= 1.5;
     yScale /= 1.5;
@@ -115,7 +118,9 @@ arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> va
     return values;
 }
 
-arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize, double xScale, double yScale, double zScale)
+arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> values, double x, double y, double z,
+                                                      int xSize, int ySize, int zSize, double xScale, double yScale,
+                                                      double zScale)
 {
     unsigned int required = (unsigned int)(xSize * ySize * zSize);
     if (values.data == NULL || values.length < required)
@@ -136,7 +141,8 @@ arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> va
     double frequency = 0.5;
     for (int i = 0; i < levels; i++)
     {
-        noiseLevels[i]->add(values, x, y, z, xSize, ySize, zSize, xScale * frequency, yScale * frequency, zScale * frequency, frequency);
+        noiseLevels[i]->add(values, x, y, z, xSize, ySize, zSize, xScale * frequency, yScale * frequency,
+                            zScale * frequency, frequency);
         frequency *= 0.5;
     }
     return values;

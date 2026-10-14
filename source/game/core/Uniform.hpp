@@ -31,13 +31,11 @@ public:
     virtual void setMat2x4(float, float, float, float, float, float, float, float);
     virtual void setMat3x2(float, float, float, float, float, float);
     virtual void setMat3x3(float, float, float, float, float, float, float, float, float);
-    virtual void setMat3x4(float, float, float, float, float, float, float, float, float, float, float,
-                           float);
+    virtual void setMat3x4(float, float, float, float, float, float, float, float, float, float, float, float);
     virtual void setMat4x2(float, float, float, float, float, float, float, float);
-    virtual void setMat4x3(float, float, float, float, float, float, float, float, float, float, float,
-                           float);
-    virtual void setMat4x4(float, float, float, float, float, float, float, float, float, float, float, float,
-                           float, float, float, float);
+    virtual void setMat4x3(float, float, float, float, float, float, float, float, float, float, float, float);
+    virtual void setMat4x4(float, float, float, float, float, float, float, float, float, float, float, float, float,
+                           float, float, float);
     static int getTypeFromString(const std::wstring&);
     void setLocation(int);
     std::wstring getName();

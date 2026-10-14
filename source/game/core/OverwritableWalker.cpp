@@ -6,9 +6,7 @@
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-OverwritableWalker::OverwritableWalker(unsigned long long type, const std::wstring& name)
-    : mType(type)
-    , mName(name)
+OverwritableWalker::OverwritableWalker(unsigned long long type, const std::wstring& name) : mType(type), mName(name)
 {
 }
 

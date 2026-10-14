@@ -5,8 +5,7 @@
 #include "game/util/Random.hpp"
 #include "game/util/Vec3i.hpp"
 
-StarShape::StarShape(unsigned int points)
-    : points(points)
+StarShape::StarShape(unsigned int points) : points(points)
 {
 }
 

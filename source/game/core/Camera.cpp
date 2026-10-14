@@ -30,9 +30,9 @@ float gCameraYOff = 0.0f;
 float gCameraZOff = 0.0f;
 float gCameraYOff2 = 0.0f;
 float gCameraXOff2 = 0.0f;
-float gCameraOffsetsX[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-float gCameraOffsetsY[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-float gCameraOffsetsZ[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+float gCameraOffsetsX[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+float gCameraOffsetsY[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+float gCameraOffsetsZ[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 void Camera::prepare(boost::shared_ptr<Player> player, bool secondPass)
 {

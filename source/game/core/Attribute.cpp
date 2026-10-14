@@ -13,21 +13,18 @@ static const unsigned int kNameArmorToughness = 0xAAE7CF20;
 static const unsigned int kNameLuck = 0xC9BC92C8;
 static const unsigned int kNameFlyingSpeed = 0;
 
-static const unsigned int ATTRIBUTE_NAMES[eATTRIBUTE_ID_Count] =
-{
-    kNameMaxHealth,
-    kNameFollowRange,
-    kNameKnockbackResistance,
-    kNameMovementSpeed,
-    kNameAttackDamage,
-    kNameHorseJumpStrength,
-    kNameZombieSpawnReinforcements,
-    kNameAttackSpeed,
-    kNameArmor,
-    kNameArmorToughness,
-    kNameLuck,
-    kNameFlyingSpeed
-};
+static const unsigned int ATTRIBUTE_NAMES[eATTRIBUTE_ID_Count] = {kNameMaxHealth,
+                                                                  kNameFollowRange,
+                                                                  kNameKnockbackResistance,
+                                                                  kNameMovementSpeed,
+                                                                  kNameAttackDamage,
+                                                                  kNameHorseJumpStrength,
+                                                                  kNameZombieSpawnReinforcements,
+                                                                  kNameAttackSpeed,
+                                                                  kNameArmor,
+                                                                  kNameArmorToughness,
+                                                                  kNameLuck,
+                                                                  kNameFlyingSpeed};
 
 int Attribute::getName(eATTRIBUTE_ID id)
 {

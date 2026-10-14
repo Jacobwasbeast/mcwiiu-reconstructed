@@ -38,8 +38,8 @@ void Input::tick(LocalPlayer* player)
     mLeft = false;
     mRight = false;
 
-    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveLeft) ||
-        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveRight))
+    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveLeft)
+        || minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveRight))
     {
         mMoveStrafe = -g_pInput->GetJoypadStick_LX(playerIndex, true);
         if (mMoveStrafe > 0.5f)
@@ -59,8 +59,8 @@ void Input::tick(LocalPlayer* player)
     mUp = false;
     mDown = false;
 
-    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveForward) ||
-        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveBackward))
+    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveForward)
+        || minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveBackward))
     {
         mMoveForward = g_pInput->GetJoypadStick_LY(playerIndex, true);
         if (mMoveForward > 0.0f)
@@ -99,8 +99,8 @@ void Input::tick(LocalPlayer* player)
 
     if ((!player->mAbilities.mFlying && !swimming) || player->isPassenger())
     {
-        if ((player->mButtonsDown & (1LL << EControllerActions_Sneak)) != 0 &&
-            minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_Sneak))
+        if ((player->mButtonsDown & (1LL << EControllerActions_Sneak)) != 0
+            && minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_Sneak))
         {
             mSneaking = !mSneaking;
         }
@@ -115,18 +115,20 @@ void Input::tick(LocalPlayer* player)
     float turnX = 0.0f;
     float turnY = 0.0f;
 
-    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookUp) ||
-        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookDown))
+    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookUp)
+        || minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookDown))
     {
-        turnX = g_pInput->GetJoypadStick_RX(playerIndex, true) *
-                (static_cast<float>(GameSettings::GetGameSettings(playerIndex, eGameSetting_GameSensitivity)) / 100.0f);
+        turnX = g_pInput->GetJoypadStick_RX(playerIndex, true)
+                * (static_cast<float>(GameSettings::GetGameSettings(playerIndex, eGameSetting_GameSensitivity))
+                   / 100.0f);
     }
 
-    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookLeft) ||
-        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookRight))
+    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookLeft)
+        || minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookRight))
     {
-        turnY = g_pInput->GetJoypadStick_RY(playerIndex, true) *
-                (static_cast<float>(GameSettings::GetGameSettings(playerIndex, eGameSetting_GameSensitivity)) / 100.0f);
+        turnY = g_pInput->GetJoypadStick_RY(playerIndex, true)
+                * (static_cast<float>(GameSettings::GetGameSettings(playerIndex, eGameSetting_GameSensitivity))
+                   / 100.0f);
     }
 
     if (GameSettings::GetGameSettings(playerIndex, eGameSetting_InvertLook) != 0)
@@ -134,8 +136,8 @@ void Input::tick(LocalPlayer* player)
         turnY = -turnY;
     }
 
-    if (gApp.GetFirstMiniGameType() == eMiniGameId_Glide &&
-        player->CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID_InvertControls))
+    if (gApp.GetFirstMiniGameType() == eMiniGameId_Glide
+        && player->CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID_InvertControls))
     {
         turnY = -turnY;
         turnX = -turnX;
@@ -153,8 +155,8 @@ void Input::tick(LocalPlayer* player)
     player->interpolateTurn(turnX * (turnX < 0.0f ? -turnX : turnX) * 50.0f,
                             turnY * (turnY < 0.0f ? -turnY : turnY) * 50.0f);
 
-    if (g_pInput->GetValue(playerIndex, EControllerActions_Jump, false) != 0 &&
-        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_Jump))
+    if (g_pInput->GetValue(playerIndex, EControllerActions_Jump, false) != 0
+        && minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_Jump))
     {
         mJumping = true;
     }

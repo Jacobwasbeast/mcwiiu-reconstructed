@@ -1,7 +1,6 @@
 #include "game/core/Distort.hpp"
 
-Distort::Distort(Synth* source, Synth* distortion)
-    : mSource(source), mDistortion(distortion)
+Distort::Distort(Synth* source, Synth* distortion) : mSource(source), mDistortion(distortion)
 {
 }
 

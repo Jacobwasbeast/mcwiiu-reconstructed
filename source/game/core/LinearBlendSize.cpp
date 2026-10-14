@@ -5,7 +5,8 @@
 #include "game/util/Random.hpp"
 
 LinearBlendSize::LinearBlendSize(unsigned int minSize, unsigned int maxSize)
-    : mMinSize(static_cast<int>(minSize)), mMaxSize(static_cast<int>(maxSize))
+    : mMinSize(static_cast<int>(minSize)),
+      mMaxSize(static_cast<int>(maxSize))
 {
 }
 

@@ -15,7 +15,8 @@ class SetDataFromColorIndexFunction : public LootItemFunction
 public:
     SetDataFromColorIndexFunction(std::vector<LootItemCondition*>* conditions);
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context);
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
+                                             LootTableContext& context);
 };
 
 #endif

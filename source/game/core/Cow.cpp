@@ -27,8 +27,7 @@
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 
-Cow::Cow(Level* level, bool callDerivedCtor)
-    : Animal(level)
+Cow::Cow(Level* level, bool callDerivedCtor) : Animal(level)
 {
     if (callDerivedCtor)
         fjDerivedCtorCalls();
@@ -46,9 +45,9 @@ void Cow::registerGoals()
     mGoalSelector.addGoal(1, new PanicGoal(this, 2.0), true);
     mGoalSelector.addGoal(2, new BreedGoal(this, 1.0), true);
 
-    static Item* temptItems[] = { Items::wheat };
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.25, arrayWithLength<Item*>(temptItems, 1), false, arrayWithLength<int>()),
-                          true);
+    static Item* temptItems[] = {Items::wheat};
+    mGoalSelector.addGoal(
+        3, new TemptGoal(this, 1.25, arrayWithLength<Item*>(temptItems, 1), false, arrayWithLength<int>()), true);
 
     mGoalSelector.addGoal(4, new FollowParentGoal(this, 1.25), true);
     mGoalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
@@ -93,8 +92,7 @@ ResourceLocation* Cow::getDefaultLootTable()
     return &BuiltInLootTables::COW;
 }
 
-bool Cow::mobInteract(const boost::shared_ptr<Player>& player,
-                      InteractionHand::EInteractionHand hand)
+bool Cow::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (itemInstance->getItem() == Items::bucket && !isBaby())

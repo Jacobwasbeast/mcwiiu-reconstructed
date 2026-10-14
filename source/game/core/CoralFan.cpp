@@ -24,37 +24,29 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<int>* CoralFan::VARIANT = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 4));
-AbstractProperty<int>* CoralFan::DIRECTION = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"direction", 0, 1));
+AbstractProperty<int>* CoralFan::VARIANT = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"variant", 0, 4));
+AbstractProperty<int>* CoralFan::DIRECTION = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"direction", 0, 1));
 
 namespace
 {
-    std::wstring DEAD_CORAL_FAN_ICON_NAMES[5] =
-    {
-        L"coral_fan_blue_dead", L"coral_fan_pink_dead", L"coral_fan_purple_dead",
-        L"coral_fan_red_dead", L"coral_fan_yellow_dead"
-    };
+std::wstring DEAD_CORAL_FAN_ICON_NAMES[5] = {L"coral_fan_blue_dead", L"coral_fan_pink_dead", L"coral_fan_purple_dead",
+                                             L"coral_fan_red_dead", L"coral_fan_yellow_dead"};
 
-    std::wstring CORAL_FAN_ICON_NAMES[5] =
-    {
-        L"coral_fan_blue", L"coral_fan_pink", L"coral_fan_purple", L"coral_fan_red",
-        L"coral_fan_yellow"
-    };
+std::wstring CORAL_FAN_ICON_NAMES[5] = {L"coral_fan_blue", L"coral_fan_pink", L"coral_fan_purple", L"coral_fan_red",
+                                        L"coral_fan_yellow"};
 
-    const AABB* CORAL_FAN_SHAPE = AABB::newPermanent(
-        0.19999998807907104, 0.0, 0.19999998807907104,
-        0.8f, 0.4f, 0.8f);
+const AABB* CORAL_FAN_SHAPE = AABB::newPermanent(0.19999998807907104, 0.0, 0.19999998807907104, 0.8f, 0.4f, 0.8f);
 }
 
-CoralFan::CoralFan()
-    : Bush(Material::STONE)
+CoralFan::CoralFan() : Bush(Material::STONE)
 {
     DerivedInit();
 
     memset(mIcons, 0, sizeof(mIcons));
 
-    registerDefaultState(defaultBlockState()->setValue(CoralFan::VARIANT, 3)
-                                            ->setValue(CoralFan::DIRECTION, 1));
+    registerDefaultState(defaultBlockState()->setValue(CoralFan::VARIANT, 3)->setValue(CoralFan::DIRECTION, 1));
 }
 
 int CoralFan::getColor(const BlockState* state)
@@ -67,8 +59,7 @@ int CoralFan::getColor(LevelSource* levelSource, const BlockPos& pos, const Bloc
     return -1;
 }
 
-const MaterialColor* CoralFan::getMapColor(const BlockState* state, LevelSource* levelSource,
-                                           const BlockPos& pos)
+const MaterialColor* CoralFan::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     return Blocks::grass->getMapColor(state, levelSource, pos);
 }
@@ -78,8 +69,7 @@ Item* CoralFan::getResource(const BlockState* state, Random* random, int lootBon
     return NULL;
 }
 
-const AABB* CoralFan::getShape(const BlockState* state, LevelSource* levelSource,
-                               const BlockPos& pos)
+const AABB* CoralFan::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     return CORAL_FAN_SHAPE;
 }
@@ -119,8 +109,8 @@ bool CoralFan::canContainLiquid(const BlockState* state) const
     return true;
 }
 
-void CoralFan::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                               Block* block, const BlockPos& fromPos)
+void CoralFan::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                               const BlockPos& fromPos)
 {
     if (level->mIsClientSide)
     {
@@ -170,8 +160,7 @@ int CoralFan::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* CoralFan::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(CoralFan::VARIANT, data & 7)
-                              ->setValue(CoralFan::DIRECTION, (data >> 3) & 1);
+    return defaultBlockState()->setValue(CoralFan::VARIANT, data & 7)->setValue(CoralFan::DIRECTION, (data >> 3) & 1);
 }
 
 int CoralFan::getDescriptionId(int auxValue)
@@ -207,8 +196,7 @@ not_null_ptr<ItemInstance> CoralFan::getSilkTouchItemInstance(const BlockState* 
     return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, convertBlockStateToLegacyData(state)));
 }
 
-not_null_ptr<ItemInstance> CoralFan::getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                          const BlockState* state)
+not_null_ptr<ItemInstance> CoralFan::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
 {
     const BlockState* upright = state->setValue(CoralFan::DIRECTION, 0);
     int auxValue = convertBlockStateToLegacyData(upright);
@@ -217,7 +205,7 @@ not_null_ptr<ItemInstance> CoralFan::getCloneItemInstance(Level* level, const Bl
 
 BlockStateDefinition* CoralFan::createBlockStateDefinition()
 {
-    static const Property* PROPERTIES[2] = { CoralFan::VARIANT, CoralFan::DIRECTION };
+    static const Property* PROPERTIES[2] = {CoralFan::VARIANT, CoralFan::DIRECTION};
 
     return new BlockStateDefinition(this, PROPERTIES, 2);
 }
@@ -281,4 +269,3 @@ void CoralFan::checkAlive(Level* level, const BlockPos& pos, const BlockState* s
         level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
     }
 }
-

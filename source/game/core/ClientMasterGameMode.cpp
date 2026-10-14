@@ -90,7 +90,10 @@ ClientMasterGameMode::~ClientMasterGameMode()
     delete mVoteables;
 }
 
-bool ClientMasterGameMode::IsRoundRestarting() const { return mGameModeState == eGameModeState_LoadingSubRound; }
+bool ClientMasterGameMode::IsRoundRestarting() const
+{
+    return mGameModeState == eGameModeState_LoadingSubRound;
+}
 
 void ClientMasterGameMode::ResetReadyStates()
 {
@@ -121,7 +124,8 @@ void ClientMasterGameMode::OnRoundWaitingToStart()
     {
         for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
+                Minecraft::GetInstance()->mLocalPlayers[playerIndex];
             if (localPlayer != NULL)
             {
                 localPlayer->SetWaitingForScoreboard(true);
@@ -207,8 +211,7 @@ void ClientMasterGameMode::OnRoundPlay()
         {
             for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
             {
-                boost::shared_ptr<MultiplayerLocalPlayer> player =
-                    Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+                boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
                 if (player != NULL && !player->isSpectator())
                     Minecraft::GetInstance()->GetGhostController()->startRecording(playerIndex, player->getPos(1.0f));
             }
@@ -255,14 +258,13 @@ void ClientMasterGameMode::OnRoundEnding()
                 if (Minecraft::InMiniGame(eMiniGameId_Battle, true))
                     mStrings[player->getName()] = 0;
             }
-            else if (Minecraft::InMiniGame(eMiniGameId_Battle, true) &&
-                     CGameNetworkManager::sInstance.IsInPublicJoinableGame())
+            else if (Minecraft::InMiniGame(eMiniGameId_Battle, true)
+                     && CGameNetworkManager::sInstance.IsInPublicJoinableGame())
             {
                 player->awardStat(GenericStats::theStudent(), GenericStats::param_theStudent());
                 const bool isMaster = ++mStrings[player->getName()] >= 3;
                 if (isMaster)
-                    player->awardStat(GenericStats::hasBecomeTheMaster(),
-                                      GenericStats::param_hasBecomeTheMaster());
+                    player->awardStat(GenericStats::hasBecomeTheMaster(), GenericStats::param_hasBecomeTheMaster());
             }
         }
     }
@@ -336,9 +338,8 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
         params->m_completeFuncParam = NULL;
         params->m_completionData = progressState;
 
-        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
-                                             params, EUILayer_Scene,
-                                             EUIGroup_PlayerDefault);
+        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
+                                             EUILayer_Scene, EUIGroup_PlayerDefault);
 
         mSubRoundLoadStartTime = System::processTimeInMilliSecs();
         mLocalChunksLoaded = false;
@@ -389,7 +390,9 @@ void ClientMasterGameMode::SetMapVote(int playerIndex, int vote, bool remove)
 
 unsigned int ClientMasterGameMode::GetMapVote(int playerIndex, int vote)
 {
-    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_Map)->getVote(Minecraft::GetInstance()->mLocalPlayers[playerIndex], vote) >= 0);
+    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_Map)
+                                         ->getVote(Minecraft::GetInstance()->mLocalPlayers[playerIndex], vote)
+                                     >= 0);
 }
 
 void ClientMasterGameMode::GetUniquePlaylist(std::vector<MapSelectInfo>& playlist)
@@ -398,7 +401,8 @@ void ClientMasterGameMode::GetUniquePlaylist(std::vector<MapSelectInfo>& playlis
     std::vector<int> themes;
     for (std::vector<MapSelectInfo>::const_iterator it = mPlaylist.begin(); it != mPlaylist.end(); ++it)
     {
-        if (std::find(themes.begin(), themes.end(), it->uniqueId) != themes.end()) continue;
+        if (std::find(themes.begin(), themes.end(), it->uniqueId) != themes.end())
+            continue;
         themes.push_back(it->uniqueId);
         playlist.push_back(*it);
     }
@@ -420,16 +424,18 @@ void ClientMasterGameMode::GetCurrentMapVotesText(std::vector<HtmlString>& text)
         if (gApp.DebugArtToolsOn())
         {
             if (totals.find(it->uniqueId) == totals.end())
-                text.push_back(HtmlString(formatwstr(L"%ls : 0", worldName.c_str()), eMinecraftColour_NOTSET, false, false, 0));
+                text.push_back(
+                    HtmlString(formatwstr(L"%ls : 0", worldName.c_str()), eMinecraftColour_NOTSET, false, false, 0));
             else
                 text.push_back(HtmlString(formatwstr(L"%ls : %d", worldName.c_str(), totals[it->uniqueId]),
                                           eMinecraftColour_NOTSET, false, false, 0));
         }
 
-        const int themeUniqueId =
-            LevelGenerationOptions::CreateUniqueId(LevelGenerationOptions::GetThemeFromUniqueId(it->uniqueId), -1);
+        const int themeUniqueId = LevelGenerationOptions::CreateUniqueId(
+            LevelGenerationOptions::GetThemeFromUniqueId(it->uniqueId), -1);
         if (totals.find(themeUniqueId) == totals.end())
-            text.push_back(HtmlString(formatwstr(L"%ls : 0", worldName.c_str()), eMinecraftColour_NOTSET, false, false, 0));
+            text.push_back(
+                HtmlString(formatwstr(L"%ls : 0", worldName.c_str()), eMinecraftColour_NOTSET, false, false, 0));
         else
             text.push_back(HtmlString(formatwstr(L"%ls : %d", worldName.c_str(), totals[themeUniqueId]),
                                       eMinecraftColour_NOTSET, false, false, 0));
@@ -439,8 +445,7 @@ void ClientMasterGameMode::GetCurrentVariantVotesText(std::vector<HtmlString>& t
 {
     Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
     boost::unordered_map<int, int> totals = voteable->getTotalledVotes();
-    MiniGameDef* definition =
-        MiniGameDef::GetCustomGameModeById(GetNextGameMode(), true);
+    MiniGameDef* definition = MiniGameDef::GetCustomGameModeById(GetNextGameMode(), true);
     int count = static_cast<int>(definition->GetGameVariantCount()) - 2;
     if (definition->IsCustomGame())
         count = definition->GetLootSetCount();
@@ -448,11 +453,10 @@ void ClientMasterGameMode::GetCurrentVariantVotesText(std::vector<HtmlString>& t
     {
         const std::wstring label = definition->GetLootSetText(i);
         if (totals.find(i) != totals.end())
-            text.push_back(HtmlString(formatwstr(L"%ls : %d", label.c_str(), totals[i]),
-                                      eMinecraftColour_NOTSET, false, false, 0));
+            text.push_back(HtmlString(formatwstr(L"%ls : %d", label.c_str(), totals[i]), eMinecraftColour_NOTSET, false,
+                                      false, 0));
         else
-            text.push_back(HtmlString(formatwstr(L"%ls : 0", label.c_str()),
-                                      eMinecraftColour_NOTSET, false, false, 0));
+            text.push_back(HtmlString(formatwstr(L"%ls : 0", label.c_str()), eMinecraftColour_NOTSET, false, false, 0));
     }
 }
 
@@ -463,19 +467,23 @@ void ClientMasterGameMode::SetKickVote(int playerIndex, unsigned char colour, bo
         return;
     INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(colour);
     if (networkPlayer != NULL)
-        mVoteables->getVoteable(Voteables::eVoteable_Kick)->setVoteAndSync(localPlayer->mPlayerIndex, gApp.GetPlayerColour(colour), vote);
+        mVoteables->getVoteable(Voteables::eVoteable_Kick)
+            ->setVoteAndSync(localPlayer->mPlayerIndex, gApp.GetPlayerColour(colour), vote);
 }
 
 unsigned int ClientMasterGameMode::GetKickVote(int playerIndex, unsigned char colour)
 {
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
-    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_Kick)->getVote(localPlayer->mPlayerIndex, gApp.GetPlayerColour(colour)) >= 0);
+    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_Kick)
+                                         ->getVote(localPlayer->mPlayerIndex, gApp.GetPlayerColour(colour))
+                                     >= 0);
 }
 
 void ClientMasterGameMode::SetBuildOffScoringVote(int playerIndex, int vote, int value)
 {
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
-    mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring)->setVoteAndSync(localPlayer->mPlayerIndex, vote, static_cast<char>(value));
+    mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring)
+        ->setVoteAndSync(localPlayer->mPlayerIndex, vote, static_cast<char>(value));
 }
 
 unsigned int ClientMasterGameMode::GetBuildOffTeamIndexToScore(int playerIndex)
@@ -493,7 +501,8 @@ unsigned int ClientMasterGameMode::GetBuildOffTeamIndexToScore(int playerIndex)
 
 unsigned int ClientMasterGameMode::GetBuildOffScoringVote(int playerIndex, int vote)
 {
-    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring)->getVote(Minecraft::GetInstance()->mLocalPlayers[playerIndex], vote));
+    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring)
+                                         ->getVote(Minecraft::GetInstance()->mLocalPlayers[playerIndex], vote));
 }
 
 void ClientMasterGameMode::SetBuildOffThemeVote(int playerIndex, int vote, int value)
@@ -504,10 +513,14 @@ void ClientMasterGameMode::SetBuildOffThemeVote(int playerIndex, int vote, int v
 
 unsigned int ClientMasterGameMode::GetBuildOffThemeVote(int playerIndex)
 {
-    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme)->getVote(Minecraft::GetInstance()->mLocalPlayers[playerIndex], 0));
+    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme)
+                                         ->getVote(Minecraft::GetInstance()->mLocalPlayers[playerIndex], 0));
 }
 
-const wchar_t* ClientMasterGameMode::GetString(const int& id) { return mStringTable.getString(id); }
+const wchar_t* ClientMasterGameMode::GetString(const int& id)
+{
+    return mStringTable.getString(id);
+}
 void ClientMasterGameMode::GetCurrentThemeVotesText(std::vector<HtmlString>& text)
 {
     Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme);
@@ -547,7 +560,8 @@ std::wstring ClientMasterGameMode::GetTransitionTextOverride()
 
 void ClientMasterGameMode::SetPlayerReady(unsigned int playerIndex, bool ready)
 {
-    if (playerIndex < 8) mPlayerReady[playerIndex] = ready;
+    if (playerIndex < 8)
+        mPlayerReady[playerIndex] = ready;
 }
 
 bool ClientMasterGameMode::IsPlayerReady(unsigned int playerIndex)
@@ -570,8 +584,14 @@ void ClientMasterGameMode::SetCurrentUniqueId(int uniqueId)
         mRoundInfo.reset();
 }
 
-unsigned int ClientMasterGameMode::GetCurrentThemeId() const { return mRoundInfo.getThemeId(); }
-unsigned int ClientMasterGameMode::GetCurrentUniqueId() const { return mRoundInfo.getThemeUniqueId(); }
+unsigned int ClientMasterGameMode::GetCurrentThemeId() const
+{
+    return mRoundInfo.getThemeId();
+}
+unsigned int ClientMasterGameMode::GetCurrentUniqueId() const
+{
+    return mRoundInfo.getThemeUniqueId();
+}
 
 void ClientMasterGameMode::SetNextLevelGenerationOptions(LevelGenerationOptions* options, bool owned)
 {
@@ -607,7 +627,8 @@ void ClientMasterGameMode::OnChestRefill()
 }
 void ClientMasterGameMode::OnDeath(const Vec3* position)
 {
-    const float deadPlayers = static_cast<float>(8 - Minecraft::GetInstance()->mLevel->GetClientScoreboard()->GetActivePlayerCount(eMiniGameId_Any));
+    const float deadPlayers = static_cast<float>(
+        8 - Minecraft::GetInstance()->mLevel->GetClientScoreboard()->GetActivePlayerCount(eMiniGameId_Any));
     const float pitchStep = deadPlayers * 0.125f * 0.25f;
     const float volumeStep = pitchStep;
     MiniGameDef::SoundSpec sound;
@@ -628,10 +649,9 @@ void ClientMasterGameMode::OnDeath(const Vec3* position)
         if (position != NULL)
         {
             sound = miniGame->getSoundSpec(EGameModeSound_OnDeath);
-            Minecraft::GetInstance()->mSoundEngine->play(
-                SoundEvents::MG03_DEATH, static_cast<float>(position->x),
-                static_cast<float>(position->y), static_cast<float>(position->z),
-                sound.Volume(), pitch, NULL);
+            Minecraft::GetInstance()->mSoundEngine->play(SoundEvents::MG03_DEATH, static_cast<float>(position->x),
+                                                         static_cast<float>(position->y),
+                                                         static_cast<float>(position->z), sound.Volume(), pitch, NULL);
         }
         break;
     }
@@ -641,8 +661,9 @@ void ClientMasterGameMode::DoLobbyTickSound(int tick, const MiniGameDef::SoundSp
 {
     if (tick <= static_cast<int>(sound.ForLast()))
     {
-        PlaySound(tick == 1 ? SoundEvents::MG01_LOBBY_ZERO
-                            : (tick & 1) != 0 ? SoundEvents::MG01_LOBBY : SoundEvents::MG01_LOBBY_ACCENT,
+        PlaySound(tick == 1         ? SoundEvents::MG01_LOBBY_ZERO
+                  : (tick & 1) != 0 ? SoundEvents::MG01_LOBBY
+                                    : SoundEvents::MG01_LOBBY_ACCENT,
                   static_cast<float>(sound.Volume()), 1.0f);
     }
 }
@@ -651,9 +672,8 @@ void ClientMasterGameMode::DoRoundStartTickSound(int tick, const MiniGameDef::So
 {
     if (tick <= static_cast<int>(sound.ForLast()))
     {
-        const SoundEvent* event = GetMiniGame()->GetId() == 2
-                                      ? SoundEvents::MG02_START_COUNTDOWN
-                                      : SoundEvents::MG01_START_COUNTDOWN;
+        const SoundEvent* event = GetMiniGame()->GetId() == 2 ? SoundEvents::MG02_START_COUNTDOWN
+                                                              : SoundEvents::MG01_START_COUNTDOWN;
         PlaySound(event, static_cast<float>(sound.Volume()), 1.0f);
     }
 }
@@ -687,15 +707,15 @@ void ClientMasterGameMode::OnChatPacket(boost::shared_ptr<ClientboundChatPacket>
     {
     case ClientboundChatPacket::eChatPacketMessage_TimeToGameChangeCountdown:
     {
-        const MiniGameDef::SoundSpec& spec =
-            Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_LobbyTimer);
+        const MiniGameDef::SoundSpec& spec = Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(
+            EGameModeSound_LobbyTimer);
         DoLobbyTickSound(packet->ints[0], spec);
         break;
     }
     case ClientboundChatPacket::eChatPacketMessage_TimeToStartCountdown:
     {
-        const MiniGameDef::SoundSpec& spec =
-            Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_RoundStartTimer);
+        const MiniGameDef::SoundSpec& spec = Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(
+            EGameModeSound_RoundStartTimer);
         DoRoundStartTickSound(packet->ints[0], spec);
         OnRoundStartTimerTick(packet->ints[0]);
         break;
@@ -703,16 +723,16 @@ void ClientMasterGameMode::OnChatPacket(boost::shared_ptr<ClientboundChatPacket>
     case ClientboundChatPacket::eChatPacketMessage_InvulnerabilityOff:
     case ClientboundChatPacket::eChatPacketMessage_InvulnerabilityCountdown:
     {
-        const MiniGameDef::SoundSpec& spec =
-            Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_GraceTimer);
+        const MiniGameDef::SoundSpec& spec = Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(
+            EGameModeSound_GraceTimer);
         DoGraceTickSound(packet->ints.size() == 0 ? 0 : packet->ints[0], spec);
         break;
     }
     case ClientboundChatPacket::eChatPacketMessage_SecondsToReachEnd:
     case ClientboundChatPacket::eChatPacketMessage_RoundEndIn:
     {
-        const MiniGameDef::SoundSpec& spec =
-            Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_RoundLimitTimer);
+        const MiniGameDef::SoundSpec& spec = Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(
+            EGameModeSound_RoundLimitTimer);
         DoLobbyTickSound(packet->ints[0], spec);
         break;
     }
@@ -723,14 +743,27 @@ void ClientMasterGameMode::SetGeneratorSeed(long long seed, float scale)
     UpdateGeneratorSeed(seed, scale);
     RestartMapGenerator();
 }
-bool ClientMasterGameMode::IsWaitingToStart() const { return mGameModeState == eGameModeState_WaitingToStart; }
-bool ClientMasterGameMode::IsRoundStarting() const { return mGameModeState == eGameModeState_RoundStarting; }
+bool ClientMasterGameMode::IsWaitingToStart() const
+{
+    return mGameModeState == eGameModeState_WaitingToStart;
+}
+bool ClientMasterGameMode::IsRoundStarting() const
+{
+    return mGameModeState == eGameModeState_RoundStarting;
+}
 bool ClientMasterGameMode::IsWaitingForMusicStartEvent() const
 {
-    return IsWaitingToStart() || IsRoundStarting() || mGameModeState == eGameModeState_SelectingGameRules || mGameModeState == eGameModeState_LoadingRound;
+    return IsWaitingToStart() || IsRoundStarting() || mGameModeState == eGameModeState_SelectingGameRules
+           || mGameModeState == eGameModeState_LoadingRound;
 }
-bool ClientMasterGameMode::IsRoundEnding() const { return mGameModeState == eGameModeState_RoundEnding; }
-bool ClientMasterGameMode::IsRoundPlaying() const { return mGameModeState == eGameModeState_RoundPlaying; }
+bool ClientMasterGameMode::IsRoundEnding() const
+{
+    return mGameModeState == eGameModeState_RoundEnding;
+}
+bool ClientMasterGameMode::IsRoundPlaying() const
+{
+    return mGameModeState == eGameModeState_RoundPlaying;
+}
 bool ClientMasterGameMode::IsInScoringState() const
 {
     return Minecraft::InMiniGame(eMiniGameId_Build, true) && mGameModeState == eGameModeState_PostRound;
@@ -843,8 +876,8 @@ void ClientMasterGameMode::FireGameRoundStats()
                 {
                     GhostController* ghosts = Minecraft::GetInstance()->GetGhostController();
                     const MiniGameDef* miniGame = GetMiniGame();
-                    if (ghosts != NULL && scoreboard->GetEndZoneEntered(player->getSUID(), -1) &&
-                        ghosts->mRecordingPending[slot])
+                    if (ghosts != NULL && scoreboard->GetEndZoneEntered(player->getSUID(), -1)
+                        && ghosts->mRecordingPending[slot])
                     {
                         int recorded;
                         if (!miniGame->ArePointsActive())
@@ -879,8 +912,8 @@ void ClientMasterGameMode::updateProgressRenderer()
         if (!mActiveChunkAreas.empty())
         {
             const AABB* area = mActiveChunkAreas.at(0);
-            const int area2D = (static_cast<int>(area->mMaxX) - static_cast<int>(area->mMinX)) *
-                               (static_cast<int>(area->mMaxZ) - static_cast<int>(area->mMinZ));
+            const int area2D = (static_cast<int>(area->mMaxX) - static_cast<int>(area->mMinX))
+                               * (static_cast<int>(area->mMaxZ) - static_cast<int>(area->mMinZ));
             if (area2D > 0)
                 progress = (mLoadedChunkCount * 100) / area2D;
         }
@@ -979,8 +1012,15 @@ void ClientMasterGameMode::Tick()
         break;
     }
 }
-bool ClientMasterGameMode::isNewLevelDataPending() { return mNewLevelDataPending; }
-bool ClientMasterGameMode::isWaitingToTransition() { return !mTransitions.empty() && gApp.GetGameStarted() && gApp.GetXuiAction(gProfile->GetPrimaryPad()) == eXuiAction_Idle; }
+bool ClientMasterGameMode::isNewLevelDataPending()
+{
+    return mNewLevelDataPending;
+}
+bool ClientMasterGameMode::isWaitingToTransition()
+{
+    return !mTransitions.empty() && gApp.GetGameStarted()
+           && gApp.GetXuiAction(gProfile->GetPrimaryPad()) == eXuiAction_Idle;
+}
 
 GameModeTransitionParams* ClientMasterGameMode::popTransition()
 {
@@ -999,7 +1039,8 @@ void ClientMasterGameMode::queueTransition(GameModeTransitionParams* transition)
     {
         for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
+                Minecraft::GetInstance()->mLocalPlayers[playerIndex];
             if (localPlayer != NULL)
             {
                 localPlayer->clientSideCloseContainer();
@@ -1031,8 +1072,7 @@ void ClientMasterGameMode::onChangeCustomGameMode()
         std::vector<TargetAreaRuleDefinition*> targetAreas;
         rules->getTargetAreas(&targetAreas);
         mPrimaryTargetAreas.clear();
-        for (std::vector<TargetAreaRuleDefinition*>::iterator it = targetAreas.begin();
-             it != targetAreas.end(); it++)
+        for (std::vector<TargetAreaRuleDefinition*>::iterator it = targetAreas.begin(); it != targetAreas.end(); it++)
         {
             if ((*it)->mPrimary)
                 mPrimaryTargetAreas.push_back((*it)->getArea());
@@ -1040,17 +1080,41 @@ void ClientMasterGameMode::onChangeCustomGameMode()
     }
 }
 
-void ClientMasterGameMode::SetServerIsWaitingOnChunkLoading() { mServerIsWaitingOnChunkLoading = true; }
-bool ClientMasterGameMode::ServerIsWaitingOnUsLoading() { return mServerIsWaitingOnChunkLoading; }
-void ClientMasterGameMode::RecievedBRUP() { if (mBRUPsRemaining > 0) --mBRUPsRemaining; }
-void ClientMasterGameMode::SetBRUPSToWaitOn(int count) { mBRUPCount = count; mBRUPsRemaining = count; }
+void ClientMasterGameMode::SetServerIsWaitingOnChunkLoading()
+{
+    mServerIsWaitingOnChunkLoading = true;
+}
+bool ClientMasterGameMode::ServerIsWaitingOnUsLoading()
+{
+    return mServerIsWaitingOnChunkLoading;
+}
+void ClientMasterGameMode::RecievedBRUP()
+{
+    if (mBRUPsRemaining > 0)
+        --mBRUPsRemaining;
+}
+void ClientMasterGameMode::SetBRUPSToWaitOn(int count)
+{
+    mBRUPCount = count;
+    mBRUPsRemaining = count;
+}
 bool ClientMasterGameMode::IsValidStateForItemUse() const
 {
-    return !IsWaitingToStart() && !IsRoundStarting() && !IsRoundRestarting() && mGameModeState != eGameModeState_LoadingRound;
+    return !IsWaitingToStart() && !IsRoundStarting() && !IsRoundRestarting()
+           && mGameModeState != eGameModeState_LoadingRound;
 }
-EGameModeState ClientMasterGameMode::GetGameModeState() const { return mGameModeState; }
-Level* ClientMasterGameMode::GeneratorTargetLevel() const { return Minecraft::GetInstance()->mLevels[0]; }
-Scoreboard* ClientMasterGameMode::getScoreboard() { return Minecraft::GetInstance()->mLevel->GetClientScoreboard(); }
+EGameModeState ClientMasterGameMode::GetGameModeState() const
+{
+    return mGameModeState;
+}
+Level* ClientMasterGameMode::GeneratorTargetLevel() const
+{
+    return Minecraft::GetInstance()->mLevels[0];
+}
+Scoreboard* ClientMasterGameMode::getScoreboard()
+{
+    return Minecraft::GetInstance()->mLevel->GetClientScoreboard();
+}
 
 double ClientMasterGameMode::GetPlayerMapProgress(PlayerUID uid) const
 {
@@ -1066,7 +1130,12 @@ void ClientMasterGameMode::OnProgressMade(const boost::shared_ptr<Player>& playe
         mPlayerProgress[player->getXuid()] = progress;
 }
 
-void ClientMasterGameMode::ResetMapDistances() { CommonMasterGameMode::ResetMapDistances(); mPlayerProgress.clear(); mLastCheckpoints.clear(); }
+void ClientMasterGameMode::ResetMapDistances()
+{
+    CommonMasterGameMode::ResetMapDistances();
+    mPlayerProgress.clear();
+    mLastCheckpoints.clear();
+}
 int ClientMasterGameMode::convertCheckpointIDToSpawnableID(int checkpoint)
 {
     int spawnableIndex = 0;
@@ -1078,8 +1147,8 @@ int ClientMasterGameMode::convertCheckpointIDToSpawnableID(int checkpoint)
         LevelRuleset* rules = options->getRequiredGameRules();
         std::vector<CheckpointRuleDefinition*> checkpoints = *rules->getCheckpoints();
         int lastSequenceId = -1;
-        for (std::vector<CheckpointRuleDefinition*>::iterator it = checkpoints.begin();
-             it != checkpoints.end(); it++, checkpointIndex++)
+        for (std::vector<CheckpointRuleDefinition*>::iterator it = checkpoints.begin(); it != checkpoints.end();
+             it++, checkpointIndex++)
         {
             if ((*it)->hasSpawnPoint())
             {
@@ -1128,13 +1197,21 @@ void ClientMasterGameMode::SetLocalRoundTimeStart(long long value)
         ghosts->startPlayback();
 }
 
-void ClientMasterGameMode::SetLocalRoundTimeStartOverride(long long value) { mLocalRoundTimeStart = value; }
-unsigned long long ClientMasterGameMode::GetLocalRoundTimeStart() const { return static_cast<unsigned long long>(mLocalRoundTimeStart); }
-AABB* ClientMasterGameMode::GetSweptVolumeFromLastKnownPosition(boost::shared_ptr<Player> player) { return player->getSweptVolume(); }
+void ClientMasterGameMode::SetLocalRoundTimeStartOverride(long long value)
+{
+    mLocalRoundTimeStart = value;
+}
+unsigned long long ClientMasterGameMode::GetLocalRoundTimeStart() const
+{
+    return static_cast<unsigned long long>(mLocalRoundTimeStart);
+}
+AABB* ClientMasterGameMode::GetSweptVolumeFromLastKnownPosition(boost::shared_ptr<Player> player)
+{
+    return player->getSweptVolume();
+}
 unsigned int ClientMasterGameMode::GetLastCheckpointID(const StatsUID& uid)
 {
-    boost::unordered_map<StatsUID, int, boost::hash<StatsUID> >::const_iterator it =
-        mLastCheckpoints.find(uid);
+    boost::unordered_map<StatsUID, int, boost::hash<StatsUID> >::const_iterator it = mLastCheckpoints.find(uid);
     if (it != mLastCheckpoints.end())
         return it->second;
     return 0xffffffffU;

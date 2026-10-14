@@ -7,11 +7,9 @@ Mirror* Mirror::NONE = new Mirror(L"no_mirror", Mirror::eTYPE_None);
 Mirror* Mirror::LEFT_RIGHT = new Mirror(L"mirror_left_right", Mirror::eTYPE_LeftRight);
 Mirror* Mirror::FRONT_BACK = new Mirror(L"mirror_front_back", Mirror::eTYPE_FrontBack);
 
-Mirror* Mirror::VALUES[3] = { NONE, LEFT_RIGHT, FRONT_BACK };
+Mirror* Mirror::VALUES[3] = {NONE, LEFT_RIGHT, FRONT_BACK};
 
-Mirror::Mirror(const std::wstring& name, eTYPE type)
-    : name(name),
-      type(type)
+Mirror::Mirror(const std::wstring& name, eTYPE type) : name(name), type(type)
 {
 }
 
@@ -50,8 +48,7 @@ Rotation* Mirror::getRotation(const Direction* direction)
 {
     Direction::Axis* axis = direction->getAxis();
 
-    if ((this == LEFT_RIGHT && axis == Direction::Axis::Z) ||
-        (this == FRONT_BACK && axis == Direction::Axis::X))
+    if ((this == LEFT_RIGHT && axis == Direction::Axis::Z) || (this == FRONT_BACK && axis == Direction::Axis::X))
     {
         return Rotation::CLOCKWISE_180;
     }

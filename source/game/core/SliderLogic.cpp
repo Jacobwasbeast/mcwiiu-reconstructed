@@ -13,7 +13,8 @@ SliderLogic::SliderLogic()
     mIncludeRandom = false;
 }
 
-SliderLogic::SliderLogic(int id, int label, eCustomGameModeHostOption option, EMiniGameId miniGameId, bool includeRandom)
+SliderLogic::SliderLogic(int id, int label, eCustomGameModeHostOption option, EMiniGameId miniGameId,
+                         bool includeRandom)
 {
     mId = id;
     mLabel = label;

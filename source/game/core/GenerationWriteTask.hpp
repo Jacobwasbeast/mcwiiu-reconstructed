@@ -18,8 +18,7 @@ public:
     BlockPos mOrigin;
     int* mChangedBlocks;
 
-    GenerationWriteTask(Level* level, BlockTransaction* transaction, const BlockPos& origin,
-                        int* changedBlocks);
+    GenerationWriteTask(Level* level, BlockTransaction* transaction, const BlockPos& origin, int* changedBlocks);
     ~GenerationWriteTask();
 
     void doWork(long long endTime);

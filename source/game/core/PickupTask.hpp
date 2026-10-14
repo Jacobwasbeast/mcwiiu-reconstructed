@@ -13,14 +13,12 @@ class MobEffect;
 class PickupTask : public TutorialTask
 {
 public:
-    PickupTask(Item** items, unsigned int itemCount, unsigned int requiredCount, int auxValue,
-               Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-               std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
-               bool allowFade, bool repeatMessage, MobEffect* effect);
+    PickupTask(Item** items, unsigned int itemCount, unsigned int requiredCount, int auxValue, Tutorial* tutorial,
+               int descriptionId, bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
+               bool showMinimumTime, bool allowFade, bool repeatMessage, MobEffect* effect);
 
     unsigned int hasPickedUpWoodBlock(not_null_ptr<ItemInstance> item);
-    virtual void onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
-                        unsigned int exactCount);
+    virtual void onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount, unsigned int exactCount);
     virtual bool isCompleted();
 
 private:

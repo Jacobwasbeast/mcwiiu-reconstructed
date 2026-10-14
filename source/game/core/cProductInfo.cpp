@@ -26,7 +26,9 @@ cProductInfo::~cProductInfo()
     delete m_pBanner;
 }
 
-void cProductInfo::Init(bool canPurchase, bool canDownload, unsigned int price, char* pName, char* pDescription, char* pPriceString, char* pProductIdString, char* pSKUId, char* pBanner, unsigned int packID, unsigned int sortIndex)
+void cProductInfo::Init(bool canPurchase, bool canDownload, unsigned int price, char* pName, char* pDescription,
+                        char* pPriceString, char* pProductIdString, char* pSKUId, char* pBanner, unsigned int packID,
+                        unsigned int sortIndex)
 {
     m_bCanDownload = canDownload;
     m_bCanPurchase = canPurchase;

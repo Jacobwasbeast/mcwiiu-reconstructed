@@ -39,8 +39,7 @@ void Slot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
 {
 }
 
-not_null_ptr<ItemInstance> Slot::onTake(boost::shared_ptr<Player> player,
-                                        not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> Slot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
 {
     setChanged();
     return item;
@@ -112,10 +111,8 @@ bool Slot::mayCombine(not_null_ptr<ItemInstance> item)
     not_null_ptr<ItemInstance> current = getItem();
     if (!current->isEmpty() && !item->isEmpty())
     {
-        if (!current->isEmpty() && !item->isEmpty() &&
-            Item::getId(current->getItem()) == Item::getId(item->getItem()) &&
-            current->getCount() == 1 && item->getCount() == 1 &&
-            current->getItem()->canBeDepleted())
+        if (!current->isEmpty() && !item->isEmpty() && Item::getId(current->getItem()) == Item::getId(item->getItem())
+            && current->getCount() == 1 && item->getCount() == 1 && current->getItem()->canBeDepleted())
         {
             if (current->isDamaged() || item->isDamaged())
             {

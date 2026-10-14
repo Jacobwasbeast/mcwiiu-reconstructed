@@ -4,7 +4,8 @@
 class GameModeTransitionParams
 {
 public:
-    GameModeTransitionParams(int texturePackId, bool returningToLobby, bool waitForRoundStart, int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ, int themeId);
+    GameModeTransitionParams(int texturePackId, bool returningToLobby, bool waitForRoundStart, int minChunkX,
+                             int minChunkZ, int maxChunkX, int maxChunkZ, int themeId);
 
     int mTexturePackId;
     bool mReturningToLobby;

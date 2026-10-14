@@ -26,8 +26,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-Endermite::Endermite(Level* level)
-    : Monster(level)
+Endermite::Endermite(Level* level) : Monster(level)
 {
     fjDerivedCtorCalls();
     mLifetime = 0;
@@ -147,14 +146,10 @@ void Endermite::aiStep()
     {
         for (int i = 0; i < 2; ++i)
         {
-            mLevel->addParticle(PARTICLE_ENDER,
-                                mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                                mY + mRandom->nextDouble() * mBbHeight,
-                                mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                                (mRandom->nextDouble() - 0.5) * 2.0,
-                                -mRandom->nextDouble(),
-                                (mRandom->nextDouble() - 0.5) * 2.0,
-                                arrayWithLength<int>());
+            mLevel->addParticle(PARTICLE_ENDER, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                                mY + mRandom->nextDouble() * mBbHeight, mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                                (mRandom->nextDouble() - 0.5) * 2.0, -mRandom->nextDouble(),
+                                (mRandom->nextDouble() - 0.5) * 2.0, arrayWithLength<int>());
         }
     }
     else

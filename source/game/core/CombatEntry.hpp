@@ -13,7 +13,8 @@ class Entity;
 class CombatEntry
 {
 public:
-    CombatEntry(const DamageSource* source, int time, float healthBeforeDamage, float damage, CombatTracker::eLOCATION location, float fallDistance);
+    CombatEntry(const DamageSource* source, int time, float healthBeforeDamage, float damage,
+                CombatTracker::eLOCATION location, float fallDistance);
     ~CombatEntry();
 
     bool isCombatRelated();

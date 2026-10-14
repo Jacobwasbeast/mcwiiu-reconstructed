@@ -1,8 +1,7 @@
 #include "game/core/FallKillStatTracker.hpp"
 #include "game/core/DamageEvent.hpp"
 
-FallKillStatTracker::FallKillStatTracker(const StatsUID& statsUID)
-    : StatTracker<unsigned int>(statsUID, 0)
+FallKillStatTracker::FallKillStatTracker(const StatsUID& statsUID) : StatTracker<unsigned int>(statsUID, 0)
 {
 }
 

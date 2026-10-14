@@ -27,7 +27,8 @@ public:
     static void Render(float fWidth, float fHeight);
 
 private:
-    static void RenderQuad(float fX, float fY, float fWidth, float fHeight, unsigned int uColour, BufferBuilder* pBufferBuilder);
+    static void RenderQuad(float fX, float fY, float fWidth, float fHeight, unsigned int uColour,
+                           BufferBuilder* pBufferBuilder);
 };
 
 #endif

@@ -28,6 +28,7 @@ public:
         virtual bool canUse();
         virtual void tick();
         virtual std::wstring getName() { return L"GhastLook"; }
+
     private:
         Ghast* mGhast;
     };
@@ -39,6 +40,7 @@ public:
         virtual ~GhastMoveControl();
         bool canReach(double x, double y, double z, double distance);
         virtual void tick();
+
     private:
         Ghast* mGhast;
         int mCountdown;
@@ -54,6 +56,7 @@ public:
         virtual void stop();
         virtual void tick();
         virtual std::wstring getName() { return L"GhastShootFireball"; }
+
     private:
         Ghast* mGhast;
         int mChargeTime;
@@ -68,6 +71,7 @@ public:
         virtual bool canContinueToUse();
         virtual void start();
         virtual std::wstring getName() { return L"RandomFloatAround"; }
+
     private:
         Ghast* mGhast;
     };

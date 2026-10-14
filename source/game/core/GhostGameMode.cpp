@@ -5,8 +5,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/world/generation/GhostPlayer.hpp"
 
-GhostGameMode::GhostGameMode(GhostPlayer* player)
-    : GameMode(), mGhostPlayer(player)
+GhostGameMode::GhostGameMode(GhostPlayer* player) : GameMode(), mGhostPlayer(player)
 {
 }
 
@@ -23,8 +22,8 @@ void GhostGameMode::tick()
 {
 }
 
-InteractionResult::EInteractionResult GhostGameMode::useItem(
-    boost::shared_ptr<Player>, Level*, InteractionHand::EInteractionHand, bool)
+InteractionResult::EInteractionResult GhostGameMode::useItem(boost::shared_ptr<Player>, Level*,
+                                                             InteractionHand::EInteractionHand, bool)
 {
     return InteractionResult::eInteractionResult_Fail;
 }

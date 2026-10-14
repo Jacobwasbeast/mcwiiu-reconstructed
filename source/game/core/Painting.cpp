@@ -18,60 +18,59 @@
 
 const int Painting::Motive::MAX_MOTIVE_NAME_LENGTH = 13;
 
-Painting::Motive* paintingMotives[30] = {
-    new Painting::Motive(L"Kebab", 16, 16, 0, 0),
-    new Painting::Motive(L"Aztec", 16, 16, 16, 0),
-    new Painting::Motive(L"Alban", 16, 16, 32, 0),
-    new Painting::Motive(L"Aztec2", 16, 16, 48, 0),
-    new Painting::Motive(L"Bomb", 16, 16, 64, 0),
-    new Painting::Motive(L"Plant", 16, 16, 80, 0),
-    new Painting::Motive(L"Wasteland", 16, 16, 96, 0),
-    new Painting::Motive(L"Pool", 32, 16, 0, 32),
-    new Painting::Motive(L"Courbet", 32, 16, 32, 32),
-    new Painting::Motive(L"Sea", 32, 16, 64, 32),
-    new Painting::Motive(L"Sunset", 32, 16, 96, 32),
-    new Painting::Motive(L"Creebet", 32, 16, 128, 32),
-    new Painting::Motive(L"Wanderer", 16, 32, 0, 64),
-    new Painting::Motive(L"Graham", 16, 32, 16, 64),
-    new Painting::Motive(L"Match", 32, 32, 0, 128),
-    new Painting::Motive(L"Bust", 32, 32, 32, 128),
-    new Painting::Motive(L"Stage", 32, 32, 64, 128),
-    new Painting::Motive(L"Void", 32, 32, 96, 128),
-    new Painting::Motive(L"SkullAndRoses", 32, 32, 128, 128),
-    new Painting::Motive(L"Wither", 32, 32, 160, 128),
-    new Painting::Motive(L"Fighters", 64, 32, 0, 96),
-    new Painting::Motive(L"Pointer", 64, 64, 0, 192),
-    new Painting::Motive(L"Pigscene", 64, 64, 64, 192),
-    new Painting::Motive(L"BurningSkull", 64, 64, 128, 192),
-    new Painting::Motive(L"Skeleton", 64, 48, 192, 64),
-    new Painting::Motive(L"DonkeyKong", 64, 48, 192, 112),
-    new Painting::Motive(L"1x1E1", 16, 16, 0, 16),
-    new Painting::Motive(L"1x1E2", 16, 16, 16, 16),
-    new Painting::Motive(L"1x1E3", 16, 16, 32, 16),
-    new Painting::Motive(L"1x1E4", 16, 16, 48, 16)
-};
+Painting::Motive* paintingMotives[30] = {new Painting::Motive(L"Kebab", 16, 16, 0, 0),
+                                         new Painting::Motive(L"Aztec", 16, 16, 16, 0),
+                                         new Painting::Motive(L"Alban", 16, 16, 32, 0),
+                                         new Painting::Motive(L"Aztec2", 16, 16, 48, 0),
+                                         new Painting::Motive(L"Bomb", 16, 16, 64, 0),
+                                         new Painting::Motive(L"Plant", 16, 16, 80, 0),
+                                         new Painting::Motive(L"Wasteland", 16, 16, 96, 0),
+                                         new Painting::Motive(L"Pool", 32, 16, 0, 32),
+                                         new Painting::Motive(L"Courbet", 32, 16, 32, 32),
+                                         new Painting::Motive(L"Sea", 32, 16, 64, 32),
+                                         new Painting::Motive(L"Sunset", 32, 16, 96, 32),
+                                         new Painting::Motive(L"Creebet", 32, 16, 128, 32),
+                                         new Painting::Motive(L"Wanderer", 16, 32, 0, 64),
+                                         new Painting::Motive(L"Graham", 16, 32, 16, 64),
+                                         new Painting::Motive(L"Match", 32, 32, 0, 128),
+                                         new Painting::Motive(L"Bust", 32, 32, 32, 128),
+                                         new Painting::Motive(L"Stage", 32, 32, 64, 128),
+                                         new Painting::Motive(L"Void", 32, 32, 96, 128),
+                                         new Painting::Motive(L"SkullAndRoses", 32, 32, 128, 128),
+                                         new Painting::Motive(L"Wither", 32, 32, 160, 128),
+                                         new Painting::Motive(L"Fighters", 64, 32, 0, 96),
+                                         new Painting::Motive(L"Pointer", 64, 64, 0, 192),
+                                         new Painting::Motive(L"Pigscene", 64, 64, 64, 192),
+                                         new Painting::Motive(L"BurningSkull", 64, 64, 128, 192),
+                                         new Painting::Motive(L"Skeleton", 64, 48, 192, 64),
+                                         new Painting::Motive(L"DonkeyKong", 64, 48, 192, 112),
+                                         new Painting::Motive(L"1x1E1", 16, 16, 0, 16),
+                                         new Painting::Motive(L"1x1E2", 16, 16, 16, 16),
+                                         new Painting::Motive(L"1x1E3", 16, 16, 32, 16),
+                                         new Painting::Motive(L"1x1E4", 16, 16, 48, 16)};
 
 Painting::Motive::Motive(std::wstring name, int width, int height, int textureX, int textureY)
-    : name(name), width(width), height(height), textureX(textureX), textureY(textureY)
+    : name(name),
+      width(width),
+      height(height),
+      textureX(textureX),
+      textureY(textureY)
 {
 }
 
-Painting::Painting(Level* level)
-    : HangingEntity(level)
-{
-    Entity::fjDerivedCtorCalls();
-    _init(level);
-}
-
-Painting::Painting(Level* level, const BlockPos& pos, const Direction* direction)
-    : HangingEntity(level, pos)
+Painting::Painting(Level* level) : HangingEntity(level)
 {
     Entity::fjDerivedCtorCalls();
     _init(level);
 }
 
-Painting::Painting(Level* level, const BlockPos& pos, const Direction* direction,
-                   const std::wstring& motiveName)
+Painting::Painting(Level* level, const BlockPos& pos, const Direction* direction) : HangingEntity(level, pos)
+{
+    Entity::fjDerivedCtorCalls();
+    _init(level);
+}
+
+Painting::Painting(Level* level, const BlockPos& pos, const Direction* direction, const std::wstring& motiveName)
     : HangingEntity(level, pos)
 {
     Entity::fjDerivedCtorCalls();
@@ -185,8 +184,7 @@ void Painting::moveTo(double x, double y, double z, float yRot, float xRot)
     setPos(x, y, z);
 }
 
-void Painting::lerpTo(double x, double y, double z, float yRot, float xRot,
-                      int steps, bool teleport)
+void Painting::lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport)
 {
     BlockPos pos = mPos.offset(x - mX, y - mY, z - mZ);
     setPos((double)pos.x, (double)pos.y, (double)pos.z);

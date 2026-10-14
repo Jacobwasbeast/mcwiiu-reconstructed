@@ -10,23 +10,31 @@
 #include "game/util/Math.hpp"
 #include "game/data/IntArrayTag.hpp"
 
-BoundingBox::BoundingBox()
-    : x0(0), y0(0), z0(0), x1(0), y1(0), z1(0)
+BoundingBox::BoundingBox() : x0(0), y0(0), z0(0), x1(0), y1(0), z1(0)
 {
 }
 
 BoundingBox::BoundingBox(int x0, int y0, int z0, int x1, int y1, int z1)
-    : x0(x0), y0(y0), z0(z0), x1(x1), y1(y1), z1(z1)
+    : x0(x0),
+      y0(y0),
+      z0(z0),
+      x1(x1),
+      y1(y1),
+      z1(z1)
 {
 }
 
 BoundingBox::BoundingBox(BoundingBox* other)
-    : x0(other->x0), y0(other->y0), z0(other->z0), x1(other->x1), y1(other->y1), z1(other->z1)
+    : x0(other->x0),
+      y0(other->y0),
+      z0(other->z0),
+      x1(other->x1),
+      y1(other->y1),
+      z1(other->z1)
 {
 }
 
-BoundingBox::BoundingBox(int x0, int z0, int x1, int z1)
-    : x0(x0), y0(1), z0(z0), x1(x1), y1(512), z1(z1)
+BoundingBox::BoundingBox(int x0, int z0, int x1, int z1) : x0(x0), y0(1), z0(z0), x1(x1), y1(512), z1(z1)
 {
 }
 
@@ -35,33 +43,30 @@ BoundingBox* BoundingBox::getUnknownBox()
     return new BoundingBox(INT_MAX, INT_MAX, INT_MAX, INT_MIN, INT_MIN, INT_MIN);
 }
 
-BoundingBox* BoundingBox::orientBox(int x, int y, int z, int xOffset, int yOffset, int zOffset,
-                                    int xSize, int ySize, int zSize, const Direction* direction)
+BoundingBox* BoundingBox::orientBox(int x, int y, int z, int xOffset, int yOffset, int zOffset, int xSize, int ySize,
+                                    int zSize, const Direction* direction)
 {
     int face = direction->get3DDataValue();
     if (face == 2)
     {
-        return new BoundingBox(x + xOffset, y + yOffset, z - zSize + zOffset + 1,
-                               x + xSize - 1 + xOffset, y + ySize - 1 + yOffset, z + zOffset);
+        return new BoundingBox(x + xOffset, y + yOffset, z - zSize + zOffset + 1, x + xSize - 1 + xOffset,
+                               y + ySize - 1 + yOffset, z + zOffset);
     }
     if (face == 4)
     {
-        return new BoundingBox(x - zSize + zOffset + 1, y + yOffset, z + xOffset,
-                               x + zOffset, y + ySize - 1 + yOffset, z + xSize - 1 + xOffset);
+        return new BoundingBox(x - zSize + zOffset + 1, y + yOffset, z + xOffset, x + zOffset, y + ySize - 1 + yOffset,
+                               z + xSize - 1 + xOffset);
     }
     if (face == 5)
     {
-        return new BoundingBox(x + zOffset, y + yOffset, z + xOffset,
-                               x + zSize - 1 + zOffset, y + ySize - 1 + yOffset,
+        return new BoundingBox(x + zOffset, y + yOffset, z + xOffset, x + zSize - 1 + zOffset, y + ySize - 1 + yOffset,
                                z + xSize - 1 + xOffset);
     }
-    return new BoundingBox(x + xOffset, y + yOffset, z + zOffset,
-                           x + xSize - 1 + xOffset, y + ySize - 1 + yOffset,
+    return new BoundingBox(x + xOffset, y + yOffset, z + zOffset, x + xSize - 1 + xOffset, y + ySize - 1 + yOffset,
                            z + zSize - 1 + zOffset);
 }
 
-BoundingBox* BoundingBox::createProper(int firstX, int firstY, int firstZ,
-                                       int secondX, int secondY, int secondZ)
+BoundingBox* BoundingBox::createProper(int firstX, int firstY, int firstZ, int secondX, int secondY, int secondZ)
 {
     int minX = firstX;
     if (secondX < firstX)
@@ -86,8 +91,7 @@ BoundingBox* BoundingBox::createProper(int firstX, int firstY, int firstZ,
 
 bool BoundingBox::intersects(BoundingBox* box)
 {
-    return !(x1 < box->x0 || x0 > box->x1 || z1 < box->z0 || z0 > box->z1 || y1 < box->y0 ||
-             y0 > box->y1);
+    return !(x1 < box->x0 || x0 > box->x1 || z1 < box->z0 || z0 > box->z1 || y1 < box->y0 || y0 > box->y1);
 }
 
 bool BoundingBox::intersects(Vec3i min, Vec3i max)

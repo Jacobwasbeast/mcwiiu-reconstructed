@@ -14,13 +14,15 @@ BufferedImage::BufferedImage(int width, int height, int mipLevels)
     m_data[0] = (int*)std::malloc(height * width * sizeof(int));
     std::memset(m_data[0], 0, height * width);
     int i;
-    for (i = 1; i < 10; ++i) m_data[i] = NULL;
+    for (i = 1; i < 10; ++i)
+        m_data[i] = NULL;
     m_width = (unsigned int)width;
     m_height = (unsigned int)height;
     m_mipmapDisabled = 0;
 }
 
-BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool useTitleUpdate, const std::wstring& path)
+BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool useTitleUpdate,
+                             const std::wstring& path)
 {
     std::wstring base;
     std::wstring baseName = name;
@@ -39,7 +41,8 @@ BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool
     }
 
     int i;
-    for (i = 0; i < 10; ++i) m_data[i] = NULL;
+    for (i = 0; i < 10; ++i)
+        m_data[i] = NULL;
 
     const int levels = mipmapDisabled ? 1 : 10;
     int level;
@@ -86,7 +89,8 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
 {
     std::wstring baseName = name;
     int i;
-    for (i = 0; i < 10; ++i) m_data[i] = NULL;
+    for (i = 0; i < 10; ++i)
+        m_data[i] = NULL;
 
     unsigned int imageLength = 0;
     const int levels = mipmapDisabled ? 1 : 10;
@@ -112,8 +116,7 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
         if (!pack->doesPackContainFile(DLCManager::eDLCType_All, file, true, true))
         {
             if (level == 0)
-                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to find texture %ls", 0xf4,
-                                    file.c_str());
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to find texture %ls", 0xf4, file.c_str());
             return;
         }
 
@@ -124,19 +127,16 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
         if (imageData == NULL || imageLength == 0)
         {
             if (level == 0)
-                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load texture %ls", 0x101,
-                                    file.c_str());
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load texture %ls", 0x101, file.c_str());
             return;
         }
 
         int width = 0;
         int height = 0;
-        if (TextureUtil::LoadTextureData(imageData, imageLength, &width, &height,
-                                         &m_data[level]) != 0)
+        if (TextureUtil::LoadTextureData(imageData, imageLength, &width, &height, &m_data[level]) != 0)
         {
             if (level == 0)
-                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load texture data %ls", 0x112,
-                                    file.c_str());
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load texture data %ls", 0x112, file.c_str());
             return;
         }
         if (level == 0)
@@ -153,7 +153,8 @@ BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
     int height = 0;
     m_mipmapDisabled = 0;
     int i;
-    for (i = 0; i < 10; ++i) m_data[i] = NULL;
+    for (i = 0; i < 10; ++i)
+        m_data[i] = NULL;
     if (TextureUtil::LoadTextureData(data, length, &width, &height, &m_data[0]) == 0)
     {
         m_width = (unsigned int)width;
@@ -168,13 +169,21 @@ BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
 BufferedImage::~BufferedImage()
 {
     int i;
-    for (i = 0; i < 10; ++i) std::free(m_data[i]);
+    for (i = 0; i < 10; ++i)
+        std::free(m_data[i]);
 }
 
-unsigned int BufferedImage::getWidth() { return m_width; }
-unsigned int BufferedImage::getHeight() { return m_height; }
+unsigned int BufferedImage::getWidth()
+{
+    return m_width;
+}
+unsigned int BufferedImage::getHeight()
+{
+    return m_height;
+}
 
-void BufferedImage::getRGB(int x, int y, int width, int height, arrayWithLength<int> rgbArray, int offset, int scansize, int mipLevel)
+void BufferedImage::getRGB(int x, int y, int width, int height, arrayWithLength<int> rgbArray, int offset, int scansize,
+                           int mipLevel)
 {
     int sourceWidth = (int)m_width >> mipLevel;
     int* destination = rgbArray.data;
@@ -190,9 +199,18 @@ void BufferedImage::getRGB(int x, int y, int width, int height, arrayWithLength<
     }
 }
 
-int* BufferedImage::getData() { return m_data[0]; }
-int* BufferedImage::getData(int mipLevel) { return m_data[mipLevel]; }
-void* BufferedImage::getGraphics() { return NULL; }
+int* BufferedImage::getData()
+{
+    return m_data[0];
+}
+int* BufferedImage::getData(int mipLevel)
+{
+    return m_data[mipLevel];
+}
+void* BufferedImage::getGraphics()
+{
+    return NULL;
+}
 
 BufferedImage* BufferedImage::getSubimage(int x, int y, int width, int height)
 {
@@ -209,13 +227,17 @@ BufferedImage* BufferedImage::getSubimage(int x, int y, int width, int height)
         int levelCount = levelHeight * levelWidth;
         int* levelData = (int*)std::malloc(levelCount * sizeof(int));
         image->m_data[level] = levelData;
-        getRGB(levelX, levelY, levelWidth, levelHeight, arrayWithLength<int>(levelData, levelCount), 0, levelWidth, level);
+        getRGB(levelX, levelY, levelWidth, levelHeight, arrayWithLength<int>(levelData, levelCount), 0, levelWidth,
+               level);
         ++level;
     }
     return image;
 }
 
-unsigned char BufferedImage::isMipmapDisabled() { return m_mipmapDisabled; }
+unsigned char BufferedImage::isMipmapDisabled()
+{
+    return m_mipmapDisabled;
+}
 
 void BufferedImage::preMultiplyAlpha()
 {

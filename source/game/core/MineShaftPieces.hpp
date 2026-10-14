@@ -45,8 +45,8 @@ public:
         MineShaftCorridor(int genDepth, Random& random, BoundingBox* box, const Direction* direction,
                           MineShaftFeature::MineShaftType type);
 
-        static BoundingBox* findCorridorSize(std::vector<StructurePiece*>* pieces, Random& random,
-                                             int x, int y, int z, const Direction* direction);
+        static BoundingBox* findCorridorSize(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                             const Direction* direction);
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
         virtual void addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces, Random& random);
@@ -72,8 +72,8 @@ public:
         MineShaftCrossing(int genDepth, Random& random, BoundingBox* box, const Direction* direction,
                           MineShaftFeature::MineShaftType type);
 
-        static BoundingBox* findCrossing(std::vector<StructurePiece*>* pieces, Random& random,
-                                         int x, int y, int z, const Direction* direction);
+        static BoundingBox* findCrossing(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                         const Direction* direction);
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
         virtual void addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces, Random& random);
@@ -111,8 +111,8 @@ public:
         MineShaftStairs();
         MineShaftStairs(int genDepth, Random& random, BoundingBox* box, const Direction* direction,
                         MineShaftFeature::MineShaftType type);
-        static BoundingBox* findStairs(std::vector<StructurePiece*>* pieces, Random& random,
-                                       int x, int y, int z, const Direction* direction);
+        static BoundingBox* findStairs(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
+                                       const Direction* direction);
         virtual void addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces, Random& random);
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
@@ -120,12 +120,12 @@ public:
     };
 
     static void loadStatic();
-    static StructurePiece* createRandomShaftPiece(std::vector<StructurePiece*>* pieces, Random& random,
-                                                   int x, int y, int z, const Direction* direction,
-                                                   int genDepth, MineShaftFeature::MineShaftType type);
+    static StructurePiece* createRandomShaftPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y,
+                                                  int z, const Direction* direction, int genDepth,
+                                                  MineShaftFeature::MineShaftType type);
     static StructurePiece* generateAndAddPiece(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces,
-                                   Random& random, int x, int y, int z, const Direction* direction,
-                                   int genDepth);
+                                               Random& random, int x, int y, int z, const Direction* direction,
+                                               int genDepth);
     static void staticCtor();
 };
 

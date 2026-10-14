@@ -7,8 +7,7 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/RenderTarget.hpp"
 
-template<typename T> std::wstring _toString(T value);
-
+template <typename T> std::wstring _toString(T value);
 
 
 void PostPass::destroy()
@@ -28,7 +27,6 @@ void PostPass::prepareState()
     GlStateManager::enableTexture();
     GlStateManager::bindTexture(0);
 }
-
 
 
 void PostPass::addAuxAsset(std::wstring name, RenderTarget* target, int width, int height)
@@ -54,14 +52,17 @@ void PostPass::process(float time)
     for (int i = 0; i < mAuxAssets.size(); ++i)
     {
         mEffect->setSampler(mAuxAssetNames.at(i), mAuxAssets.at(i));
-        mEffect->safeGetUniform(L"AuxSize" + _toString(i))->set(static_cast<float>(mAuxWidths.at(i)), static_cast<float>(mAuxHeights.at(i)));
+        mEffect->safeGetUniform(L"AuxSize" + _toString(i))
+            ->set(static_cast<float>(mAuxWidths.at(i)), static_cast<float>(mAuxHeights.at(i)));
     }
     mEffect->safeGetUniform(L"ProjMat")->set(mOrthoMatrix);
-    mEffect->safeGetUniform(L"InSize")->set(static_cast<float>(mInput->renderWidth), static_cast<float>(mInput->renderHeight));
+    mEffect->safeGetUniform(L"InSize")->set(static_cast<float>(mInput->renderWidth),
+                                            static_cast<float>(mInput->renderHeight));
     mEffect->safeGetUniform(L"OutSize")->set(outputWidth, outputHeight);
     mEffect->safeGetUniform(L"Time")->set(time);
     Minecraft* minecraft = Minecraft::GetInstance();
-    mEffect->safeGetUniform(L"ScreenSize")->set(static_cast<float>(minecraft->mWidth), static_cast<float>(minecraft->mHeight));
+    mEffect->safeGetUniform(L"ScreenSize")
+        ->set(static_cast<float>(minecraft->mWidth), static_cast<float>(minecraft->mHeight));
     mEffect->apply();
     GlStateManager::depthMask(false);
     GlStateManager::colorMask(true, true, true, true);

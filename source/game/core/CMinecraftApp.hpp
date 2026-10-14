@@ -174,9 +174,18 @@ enum eGameExtraData
 };
 const unsigned int EXTRA_DATA_SAVE_BUILD = 2177;
 const unsigned int EXTRA_DATA_SAVE_VERSION = 11;
-enum eGameMode { eGameMode_0 = 0 };
-enum eTPDFileType { eTPDFileType_Icon = 1 };
-enum eTMSAction { eTMSAction_Default = 0 };
+enum eGameMode
+{
+    eGameMode_0 = 0
+};
+enum eTPDFileType
+{
+    eTPDFileType_Icon = 1
+};
+enum eTMSAction
+{
+    eTMSAction_Default = 0
+};
 enum EDLC_ID
 {
     EDLC_ID_Default = 0,
@@ -277,16 +286,30 @@ const unsigned int SKIN_ID_DLC_FLAG_SHIFT = 31;
 const unsigned int SKIN_ID_DLC_MASK = 0x7fffffffU;
 const unsigned int SKIN_ID_UGC_MASK = 0x7fffffe0U;
 const unsigned int SKIN_ID_DEFAULT_MASK = 0x1fU;
-enum eFileExtensionType { eFileExtensionType_Default = 0 };
-enum eTMSFileType { eTMSFileType_Default = 0 };
-enum _eTerrainFeatureType { eTerrainFeatureType_0 = 0, eTerrainFeatureType_Stronghold = 1 };
-enum EHTMLFontSize { EHTMLFontSize_0 = 0 };
+enum eFileExtensionType
+{
+    eFileExtensionType_Default = 0
+};
+enum eTMSFileType
+{
+    eTMSFileType_Default = 0
+};
+enum _eTerrainFeatureType
+{
+    eTerrainFeatureType_0 = 0,
+    eTerrainFeatureType_Stronghold = 1
+};
+enum EHTMLFontSize
+{
+    EHTMLFontSize_0 = 0
+};
 struct TIPSTRUCT
 {
     unsigned int sortValue;
     unsigned int tipId;
 };
-class CMinecraftApp {
+class CMinecraftApp
+{
 public:
     class PngTagData
     {
@@ -313,10 +336,12 @@ public:
 
         PngTagData();
     };
-    class _TipData {
+    class _TipData
+    {
         unsigned int m_index;
         unsigned int m_count;
         TIPSTRUCT* m_tips;
+
     public:
         _TipData();
         _TipData(TIPSTRUCT* tips, unsigned int count);
@@ -342,7 +367,8 @@ public:
     virtual uint32_t GetTMSGlobalFileListRead();
     virtual uint32_t GetTMSDLCInfoRead();
     virtual uint32_t GetTMSXUIDsFileRead();
-    virtual void GetFileFromTPD(eTPDFileType type, unsigned char* source, unsigned int sourceSize, unsigned char** data, unsigned int* size);
+    virtual void GetFileFromTPD(eTPDFileType type, unsigned char* source, unsigned int sourceSize, unsigned char** data,
+                                unsigned int* size);
     void SetGameHostOption(unsigned int& options, eGameHostOption option, unsigned int value);
     void SetGameHostOption(eGameHostOption option, unsigned int value);
     void SetXuiServerAction(int player, eXuiServerAction action, void* param);
@@ -367,7 +393,8 @@ public:
     static int SignInChangeCallback(void* context, bool signedIn, unsigned int usersMask);
     static void ProfileReadErrorCallback(void* context);
     static int DefaultOptionsCallback(void* context, C4JStorage::PROFILESETTINGS* settings, int profile);
-    static int OptionsDataCallback(void* context, int profile, unsigned short size, C4JStorage::eOptionsCallback status);
+    static int OptionsDataCallback(void* context, int profile, unsigned short size,
+                                   C4JStorage::eOptionsCallback status);
     void EnterSaveNotificationSection();
     void LeaveSaveNotificationSection();
     bool GetGameStarted();
@@ -429,9 +456,11 @@ public:
     void HandleButtonPresses();
     bool LoadInventoryMenu(int player, boost::shared_ptr<LocalPlayer> localPlayer, bool creative);
     bool LoadCreativeMenu(int player, boost::shared_ptr<LocalPlayer> localPlayer, bool creative);
-    bool LoadEnchantingMenu(int player, boost::shared_ptr<Inventory> inventory, int x, int y, int z, Level* level, const std::wstring& name);
+    bool LoadEnchantingMenu(int player, boost::shared_ptr<Inventory> inventory, int x, int y, int z, Level* level,
+                            const std::wstring& name);
     bool LoadFurnaceMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container);
-    bool LoadBrewingStandMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container);
+    bool LoadBrewingStandMenu(int player, boost::shared_ptr<Inventory> inventory,
+                              boost::shared_ptr<Container> container);
     bool LoadContainerMenu(int player, boost::shared_ptr<Container> inventory, boost::shared_ptr<Container> container);
     bool LoadTrapMenu(int player, boost::shared_ptr<Container> inventory, boost::shared_ptr<Container> container);
     bool LoadCrafting2x2Menu(int player, boost::shared_ptr<LocalPlayer> localPlayer);
@@ -439,11 +468,13 @@ public:
     bool LoadFireworksMenu(int player, boost::shared_ptr<LocalPlayer> localPlayer, int x, int y, int z);
     bool LoadSignEntryMenu(int player, boost::shared_ptr<SignBlockEntity> sign);
     bool LoadRepairingMenu(int player, boost::shared_ptr<Inventory> inventory, Level* level, int x, int y, int z);
-    bool LoadTradingMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Merchant> merchant, Level* level, const std::wstring& name);
+    bool LoadTradingMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Merchant> merchant,
+                         Level* level, const std::wstring& name);
     bool LoadShulkerBoxMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container);
     bool LoadHopperMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container);
     bool LoadHopperMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<MinecartHopper> hopper);
-    bool LoadHorseMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container, boost::shared_ptr<AbstractHorse> horse);
+    bool LoadHorseMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container,
+                       boost::shared_ptr<AbstractHorse> horse);
     bool LoadBeaconMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container);
     bool LoadWritingBookMenu(int player, not_null_ptr<ItemInstance> item, bool signing);
     bool IsConsoleChatCensored();
@@ -533,7 +564,8 @@ public:
     void SetCorruptSaveDeleted(bool deleted);
     uint8_t GetCorruptSaveDeleted();
     void SetAdditionalSkinBoxes(unsigned int skinId, SKIN_BOX* boxes, unsigned int count, _SkinAdjustments adjustments);
-    std::vector<ModelPart*>* SetAdditionalSkinBoxes(unsigned int skinId, std::vector<SKIN_BOX*>* boxes, _SkinAdjustments adjustments);
+    std::vector<ModelPart*>* SetAdditionalSkinBoxes(unsigned int skinId, std::vector<SKIN_BOX*>* boxes,
+                                                    _SkinAdjustments adjustments);
     std::vector<ModelPart*>* GetAdditionalModelParts(unsigned int value);
     std::vector<SKIN_BOX*>* GetAdditionalSkinBoxes(unsigned int skinId);
     static unsigned int getSkinIdFromPath(const std::wstring& path);
@@ -608,7 +640,8 @@ public:
     void TickTMSPPFilesRetrieved();
     void ClearTMSPPFilesRetrieved();
     void AddTMSPPFileTypeRequest(int p1, bool p2);
-    static void TMSPPFileReturned(void* context, int result, int index, C4JStorage::TMSPP_FILEDATA* data, const char* name);
+    static void TMSPPFileReturned(void* context, int result, int index, C4JStorage::TMSPP_FILEDATA* data,
+                                  const char* name);
     bool GetBanListRead(int value);
     void SetBanListRead(int p1, bool p2);
     void ClearBanList(int value);
@@ -631,6 +664,7 @@ public:
     std::vector<std::wstring> m_dlcSkinNames;
     DLCManager mDLCManager;
     unsigned int mGameDefinedDataChangedBitmask;
+
 private:
     bool mDebugUIFocussed;
     PlayerUID mPrimaryPlayerUID;
@@ -695,8 +729,10 @@ private:
     bool mNewDLCAvailable;
     bool mUnusedNewDLCFlag;
     PngTagData mCurrentImageTextData;
+
 public:
     GameRuleManager mGameRuleManager;
+
 private:
     unsigned char mUnusedPlayerInfoByte;
     unsigned char mPlayerIds[8];

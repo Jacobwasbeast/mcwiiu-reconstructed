@@ -5,8 +5,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-int IUIScene_DLCUpsell::NotOnlineDialogCallback(
-    void*, int userIndex, C4JStorage::EMessageResult result)
+int IUIScene_DLCUpsell::NotOnlineDialogCallback(void*, int userIndex, C4JStorage::EMessageResult result)
 {
     if (result == C4JStorage::EMessageResult_Accept)
         CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex, NULL, NULL);
@@ -21,6 +20,6 @@ void IUIScene_DLCUpsell::ShowNotOnlineDialog(int userIndex)
     int messageParameters[2];
     messageParameters[0] = cMessageParameterFirst;
     messageParameters[1] = cMessageParameterSecond;
-    gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xb837024e, messageParameters, 2,
-                                             userIndex, NotOnlineDialogCallback, this, NULL, true);
+    gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xb837024e, messageParameters, 2, userIndex,
+                                             NotOnlineDialogCallback, this, NULL, true);
 }

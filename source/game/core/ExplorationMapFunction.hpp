@@ -17,8 +17,8 @@ public:
     ExplorationMapFunction(std::vector<LootItemCondition*>* conditions, const std::wstring& destination);
     virtual ~ExplorationMapFunction() {}
 
-    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
-                                             Random* random, LootTableContext& context);
+    virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random,
+                                             LootTableContext& context);
     const MapDecoration::Type* getType(const std::wstring& destination);
     unsigned int getTranslatableName(const std::wstring& destination);
 

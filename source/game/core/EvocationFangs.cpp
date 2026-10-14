@@ -21,8 +21,9 @@ EvocationFangs::EvocationFangs(Level* level) : Entity(level, true), mOwner()
 }
 
 EvocationFangs::EvocationFangs(Level* level, double x, double y, double z, float yRot, int warmupDelay,
-                               const boost::shared_ptr<LivingEntity>& owner) : Entity(level, true),
-    mOwner()
+                               const boost::shared_ptr<LivingEntity>& owner)
+    : Entity(level, true),
+      mOwner()
 {
     _init();
     mWarmupDelay = warmupDelay;
@@ -72,7 +73,8 @@ void EvocationFangs::readAdditionalSaveData(CompoundTag* tag)
 void EvocationFangs::addAdditonalSaveData(CompoundTag* tag)
 {
     tag->putInt(L"Warmup", mWarmupDelay);
-    if (mOwnerUUID != L"") tag->putString(L"OwnerUUID", mOwnerUUID);
+    if (mOwnerUUID != L"")
+        tag->putString(L"OwnerUUID", mOwnerUUID);
 }
 
 void EvocationFangs::dealDamageTo(const boost::shared_ptr<LivingEntity>& target)
@@ -130,8 +132,8 @@ void EvocationFangs::tick()
         if (mWarmupDelay == -8)
         {
             Level* level = mLevel;
-            std::vector<boost::shared_ptr<Entity> >* entities =
-                level->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(0.2, 0.0, 0.2));
+            std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(
+                typeid(LivingEntity), mBoundingBox->grow(0.2, 0.0, 0.2));
             for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
             {
                 dealDamageTo(boost::static_pointer_cast<LivingEntity>(*it));
@@ -143,7 +145,8 @@ void EvocationFangs::tick()
             mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::START_ATTACKING, 0);
             mSentSpikeEvent = true;
         }
-        if (--mLifeTicks < 0) remove();
+        if (--mLifeTicks < 0)
+            remove();
     }
 }
 
@@ -154,8 +157,7 @@ void EvocationFangs::handleEntityEvent(unsigned char event, int data)
         mClientSideAttack = true;
         if (!isSilent())
         {
-            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::EVOCATION_FANGS_ATTACK,
-                                   getSoundSource(), 1.0f,
+            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::EVOCATION_FANGS_ATTACK, getSoundSource(), 1.0f,
                                    0.85f + mRandom->nextFloat() * 0.2f, false, 16.0f);
         }
     }
@@ -167,7 +169,8 @@ void EvocationFangs::handleEntityEvent(unsigned char event, int data)
 
 float EvocationFangs::getAnimationProgress(float partialTicks) const
 {
-    if (!mClientSideAttack) return 0.0f;
+    if (!mClientSideAttack)
+        return 0.0f;
     int ticks = mLifeTicks - 2;
     return ticks <= 0 ? 1.0f : 1.0f - ((float)ticks - partialTicks) / 20.0f;
 }

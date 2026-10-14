@@ -4,14 +4,12 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 
-Button::Button(int id, int x, int y, const std::wstring& message)
-    : GuiComponent()
+Button::Button(int id, int x, int y, const std::wstring& message) : GuiComponent()
 {
     init(id, x, y, 200, 20, message);
 }
 
-Button::Button(int id, int x, int y, int width, int height, const std::wstring& message)
-    : GuiComponent()
+Button::Button(int id, int x, int y, int width, int height, const std::wstring& message) : GuiComponent()
 {
     init(id, x, y, width, height, message);
 }

@@ -7,10 +7,11 @@
 
 MineShaftStart::MineShaftStart(Level* level, Random& random, int chunkX, int chunkZ,
                                MineShaftFeature::MineShaftType type)
-    : StructureStart(chunkX, chunkZ), mType(type)
+    : StructureStart(chunkX, chunkZ),
+      mType(type)
 {
-    MineShaftPieces::MineShaftRoom* room =
-        new MineShaftPieces::MineShaftRoom(0, random, (chunkX << 4) + 2, (chunkZ << 4) + 2, mType);
+    MineShaftPieces::MineShaftRoom* room = new MineShaftPieces::MineShaftRoom(0, random, (chunkX << 4) + 2,
+                                                                              (chunkZ << 4) + 2, mType);
     mPieces.push_back(room);
     room->addChildren(room, &mPieces, random);
     calculateBoundingBox();
@@ -30,8 +31,7 @@ MineShaftStart::MineShaftStart(Level* level, Random& random, int chunkX, int chu
     }
 }
 
-MineShaftStart::MineShaftStart()
-    : StructureStart()
+MineShaftStart::MineShaftStart() : StructureStart()
 {
 }
 

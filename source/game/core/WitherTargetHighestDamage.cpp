@@ -6,8 +6,7 @@
 #include "game/server/ServerPlayer.hpp"
 #include "game/util/Vec3.hpp"
 
-WitherTargetHighestDamage::WitherTargetHighestDamage(WitherBoss* wither)
-    : TargetGoal(wither, false, false)
+WitherTargetHighestDamage::WitherTargetHighestDamage(WitherBoss* wither) : TargetGoal(wither, false, false)
 {
     setRequiredControlFlags(1);
 }
@@ -56,8 +55,7 @@ void WitherTargetHighestDamage::start()
     static_cast<WitherBoss*>(mMob)->setTarget(mTarget.lock());
 }
 
-bool WitherTargetHighestDamage::canAttack(boost::shared_ptr<LivingEntity> target,
-                                          bool allowInvulnerablePlayers)
+bool WitherTargetHighestDamage::canAttack(boost::shared_ptr<LivingEntity> target, bool allowInvulnerablePlayers)
 {
     double followDistance = mMob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->getValue();
     Vec3* delta = mMob->getPos(1.0f)->subtract(target->mX, target->mY, target->mZ);

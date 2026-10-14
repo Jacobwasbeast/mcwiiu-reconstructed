@@ -13,10 +13,7 @@ class Level;
 class ProcedureCompoundTask : public TutorialTask
 {
 public:
-    ProcedureCompoundTask(Tutorial* tutorial)
-        : TutorialTask(tutorial, -1, false, NULL, false, true, false), tasks()
-    {
-    }
+    ProcedureCompoundTask(Tutorial* tutorial) : TutorialTask(tutorial, -1, false, NULL, false, true, false), tasks() {}
 
     virtual ~ProcedureCompoundTask();
 
@@ -32,11 +29,9 @@ public:
     virtual bool hasBeenActivated();
     virtual void setShownForMinimumTime();
     virtual bool AllowFade();
-    virtual void useItemOn(Level* level, not_null_ptr<ItemInstance> item, const BlockPos& pos,
-                           bool cancelled);
+    virtual void useItemOn(Level* level, not_null_ptr<ItemInstance> item, const BlockPos& pos, bool cancelled);
     virtual void useItem(not_null_ptr<ItemInstance> item, bool cancelled);
-    virtual void onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
-                        unsigned int exactCount);
+    virtual void onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount, unsigned int exactCount);
     virtual void onStateChange(eTutorial_State state);
 
 private:

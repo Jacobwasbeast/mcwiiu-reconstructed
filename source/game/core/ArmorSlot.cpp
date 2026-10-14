@@ -5,10 +5,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/world/generation/Player.hpp"
 
-ArmorSlot::ArmorSlot(const EquipmentSlot* equipmentSlot,
-                     boost::shared_ptr<Container> container,
-                     int index,
-                     int x,
+ArmorSlot::ArmorSlot(const EquipmentSlot* equipmentSlot, boost::shared_ptr<Container> container, int index, int x,
                      int y)
     : Slot(container, index, x, y),
       mEquipmentSlot(equipmentSlot)
@@ -28,8 +25,7 @@ bool ArmorSlot::mayPlace(not_null_ptr<ItemInstance> item)
 bool ArmorSlot::mayPickup(boost::shared_ptr<Player> player)
 {
     not_null_ptr<ItemInstance> item = getItem();
-    if (!item->isEmpty() && !player->isCreative() &&
-        EnchantmentHelper::hasBindingCurse(item))
+    if (!item->isEmpty() && !player->isCreative() && EnchantmentHelper::hasBindingCurse(item))
     {
         return false;
     }

@@ -1,7 +1,6 @@
 #include "game/core/Uniform.hpp"
 
-Uniform::Uniform(const std::wstring& name, int type, int count, Effect* effect)
-    : mName(name)
+Uniform::Uniform(const std::wstring& name, int type, int count, Effect* effect) : mName(name)
 {
     mCount = count;
     mType = type;
@@ -303,6 +302,6 @@ void Uniform::setMat4x4(float a, float b, float c, float d, float e, float f, fl
 void Uniform::set(Matrix4f* matrix)
 {
     setMat4x4(matrix->m[0], matrix->m[1], matrix->m[2], matrix->m[3], matrix->m[4], matrix->m[5], matrix->m[6],
-              matrix->m[7], matrix->m[8], matrix->m[9], matrix->m[10], matrix->m[11], matrix->m[12],
-              matrix->m[13], matrix->m[14], matrix->m[15]);
+              matrix->m[7], matrix->m[8], matrix->m[9], matrix->m[10], matrix->m[11], matrix->m[12], matrix->m[13],
+              matrix->m[14], matrix->m[15]);
 }

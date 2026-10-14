@@ -5,10 +5,10 @@
 #include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-TrackingEmitter::TrackingEmitter(Level* level, boost::shared_ptr<Entity> entity,
-                                 const ParticleType* particleType, int lifetime)
-    : Particle(level, entity->mX, entity->mBoundingBox->mMinY + entity->mBbHeight * 0.5f,
-               entity->mZ, entity->mXd, entity->mYd, entity->mZd)
+TrackingEmitter::TrackingEmitter(Level* level, boost::shared_ptr<Entity> entity, const ParticleType* particleType,
+                                 int lifetime)
+    : Particle(level, entity->mX, entity->mBoundingBox->mMinY + entity->mBbHeight * 0.5f, entity->mZ, entity->mXd,
+               entity->mYd, entity->mZd)
 {
     mEntity = entity;
     this->lifetime = lifetime;
@@ -30,8 +30,8 @@ void TrackingEmitter::tick()
         }
 
         double x = mEntity->mX + xa * (double)mEntity->mBbWidth / 4.0;
-        double y = mEntity->mBoundingBox->mMinY + (double)mEntity->mBbHeight * 0.5 +
-                   ya * (double)mEntity->mBbHeight / 4.0;
+        double y = mEntity->mBoundingBox->mMinY + (double)mEntity->mBbHeight * 0.5
+                   + ya * (double)mEntity->mBbHeight / 4.0;
         double z = mEntity->mZ + za * (double)mEntity->mBbWidth / 4.0;
         level->addParticle(mParticleType, false, x, y, z, xa, ya + 0.2, za, arrayWithLength<int>());
     }
@@ -42,8 +42,7 @@ void TrackingEmitter::tick()
     }
 }
 
-void TrackingEmitter::render(BufferBuilder*, const boost::shared_ptr<Entity>&,
-                             float, float, float, float, float, float)
+void TrackingEmitter::render(BufferBuilder*, const boost::shared_ptr<Entity>&, float, float, float, float, float, float)
 {
 }
 

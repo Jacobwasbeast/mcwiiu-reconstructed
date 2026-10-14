@@ -6,8 +6,7 @@ LockCode* LockCode::NO_LOCK = new LockCode(L"");
 
 static const std::wstring LOCK_TAG = L"Lock";
 
-LockCode::LockCode(const std::wstring& key)
-    : mKey(key)
+LockCode::LockCode(const std::wstring& key) : mKey(key)
 {
 }
 

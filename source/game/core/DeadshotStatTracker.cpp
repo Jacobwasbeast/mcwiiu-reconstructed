@@ -6,9 +6,7 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemId.hpp"
 
-DeadshotStatTracker::DeadshotStatTracker(const StatsUID& statsUID)
-    : StatTracker<bool>(statsUID, false)
-    , mFallCount(-1)
+DeadshotStatTracker::DeadshotStatTracker(const StatsUID& statsUID) : StatTracker<bool>(statsUID, false), mFallCount(-1)
 {
 }
 
@@ -23,8 +21,7 @@ void DeadshotStatTracker::update(const DamageEvent* damageEvent)
         return;
     }
 
-    if (isTracking(damageEvent->mAttacker)
-        && damageEvent->mWeapon.mItemId == ItemId::SNOWBALL
+    if (isTracking(damageEvent->mAttacker) && damageEvent->mWeapon.mItemId == ItemId::SNOWBALL
         && damageEvent->mVictim != StatsUID::EMPTY_SUID() && damageEvent->mFallDistance > 0.0f)
     {
         mFallCount = damageEvent->mFallCount;
@@ -35,8 +32,7 @@ void DeadshotStatTracker::update(const DamageEvent* damageEvent)
         return;
     }
 
-    if (damageEvent->mFatal && damageEvent->mDamageSource == Scoreboard::DAMAGE_SOURCE_FALL
-        && mFallCount > 0)
+    if (damageEvent->mFatal && damageEvent->mDamageSource == Scoreboard::DAMAGE_SOURCE_FALL && mFallCount > 0)
     {
         mValue = true;
         return;

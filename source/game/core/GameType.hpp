@@ -28,6 +28,7 @@ public:
     static const GameType* byId(int id);
     static const GameType* byName(const std::wstring& name, const GameType* defaultType);
     static const GameType* byName(const std::wstring& name);
+
 private:
     int id;
     std::wstring name;

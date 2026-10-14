@@ -63,8 +63,7 @@ void SnowMan::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)
     double dz = target->mZ - mZ;
     float distance = Mth::sqrt(dx * dx + dz * dz) * 0.2f;
     snowball->shoot(dx, dy + distance, dz, 1.6f, 12.0f);
-    playSound(SoundEvents::SNOWMAN_SHOOT, 1.0f,
-              1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
+    playSound(SoundEvents::SNOWMAN_SHOOT, 1.0f, 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
     mLevel->addEntity(snowball);
 }
 
@@ -79,7 +78,8 @@ void SnowMan::setAggressive(bool)
 
 void SnowMan::staticCtor()
 {
-    DATA_PUMPKIN = SynchedEntityData::defineId<unsigned char>(EntityType::SNOW_MAN, EntityType::GOLEM, EntityDataSerializers::BYTE);
+    DATA_PUMPKIN = SynchedEntityData::defineId<unsigned char>(EntityType::SNOW_MAN, EntityType::GOLEM,
+                                                              EntityDataSerializers::BYTE);
 }
 
 void SnowMan::addDataWalkers(DataFixerUpper* fixer)
@@ -90,12 +90,14 @@ void SnowMan::addDataWalkers(DataFixerUpper* fixer)
 void SnowMan::registerGoals()
 {
     mGoalSelector.addGoal(1, new RangedAttackGoal(this, this, 1.25, 20, 10.0f), true);
-    mGoalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0, WaterAvoidingRandomStrollGoal::PROBABILITY / 100.0f), true);
+    mGoalSelector.addGoal(
+        2, new WaterAvoidingRandomStrollGoal(this, 1.0, WaterAvoidingRandomStrollGoal::PROBABILITY / 100.0f), true);
     mGoalSelector.addGoal(3, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
     mGoalSelector.addGoal(4, new RandomLookAroundGoal(this), true);
-    mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(this, typeid(Mob), 10,
-                                                               true, false, EntitySelector::ENEMY_SELECTOR,
-                                                               true, false), true);
+    mTargetSelector.addGoal(1,
+                            new NearestAttackableTargetGoal(this, typeid(Mob), 10, true, false,
+                                                            EntitySelector::ENEMY_SELECTOR, true, false),
+                            true);
 }
 
 void SnowMan::registerAttributes()
@@ -162,9 +164,9 @@ void SnowMan::aiStep()
             y = Mth::floor(mY);
             z = Mth::floor(mZ + (((i / 2) % 2) * 2 - 1) * 0.25f);
             BlockPos snowPos(x, y, z);
-            if (mLevel->getBlockState(snowPos)->getMaterial() == Material::AIR &&
-                mLevel->getBiome(snowPos)->getTemperature(snowPos) < 0.8f &&
-                Blocks::snow_layer->mayPlace(mLevel, snowPos))
+            if (mLevel->getBlockState(snowPos)->getMaterial() == Material::AIR
+                && mLevel->getBiome(snowPos)->getTemperature(snowPos) < 0.8f
+                && Blocks::snow_layer->mayPlace(mLevel, snowPos))
                 mLevel->setBlockAndUpdate(snowPos, Blocks::snow_layer->defaultBlockState());
         }
     }
@@ -227,7 +229,19 @@ bool SnowMan::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
     return Mob::mobInteract(player, hand);
 }
 
-const SoundEvent* SnowMan::getAmbientSound() { return SoundEvents::SNOWMAN_AMBIENT; }
-const SoundEvent* SnowMan::getHurtSound(const DamageSource*) { return SoundEvents::SNOWMAN_HURT; }
-const SoundEvent* SnowMan::getDeathSound() { return SoundEvents::SNOWMAN_DEATH; }
-unsigned long long SnowMan::GetType() { return EntityType::SNOW_MAN; }
+const SoundEvent* SnowMan::getAmbientSound()
+{
+    return SoundEvents::SNOWMAN_AMBIENT;
+}
+const SoundEvent* SnowMan::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::SNOWMAN_HURT;
+}
+const SoundEvent* SnowMan::getDeathSound()
+{
+    return SoundEvents::SNOWMAN_DEATH;
+}
+unsigned long long SnowMan::GetType()
+{
+    return EntityType::SNOW_MAN;
+}

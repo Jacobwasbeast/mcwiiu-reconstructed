@@ -30,10 +30,9 @@ public:
     BoundingBox(int x0, int z0, int x1, int z1);
 
     static BoundingBox* getUnknownBox();
-    static BoundingBox* orientBox(int x, int y, int z, int xOffset, int yOffset, int zOffset,
-                                  int xSize, int ySize, int zSize, const Direction* direction);
-    static BoundingBox* createProper(int firstX, int firstY, int firstZ,
-                                     int secondX, int secondY, int secondZ);
+    static BoundingBox* orientBox(int x, int y, int z, int xOffset, int yOffset, int zOffset, int xSize, int ySize,
+                                  int zSize, const Direction* direction);
+    static BoundingBox* createProper(int firstX, int firstY, int firstZ, int secondX, int secondY, int secondZ);
 
     bool intersects(BoundingBox* box);
     bool intersects(Vec3i min, Vec3i max);

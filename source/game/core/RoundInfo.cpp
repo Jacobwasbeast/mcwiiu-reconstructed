@@ -8,9 +8,7 @@ std::wstring CreateRoundGuid()
     return _toString<int>(Random().nextInt());
 }
 
-RoundInfo::RoundInfo()
-    : mRoundId(L"")
-    , mSubRoundId(L"")
+RoundInfo::RoundInfo() : mRoundId(L""), mSubRoundId(L"")
 {
     mCurrentSubRoundNumber = -1;
     mThemeId = -1;

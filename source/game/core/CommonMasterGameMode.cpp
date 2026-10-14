@@ -164,9 +164,8 @@ Team* CommonMasterGameMode::GetTeamAtPosition(double x, double y, double z, doub
             continue;
 
         area = area->grow(margin, margin, margin);
-        if (area->mMinX <= x && area->mMaxX >= x
-            && area->mMinY <= y && area->mMaxY >= y
-            && area->mMinZ <= z && area->mMaxZ >= z)
+        if (area->mMinX <= x && area->mMaxX >= x && area->mMinY <= y && area->mMaxY >= y && area->mMinZ <= z
+            && area->mMaxZ >= z)
         {
             return team;
         }
@@ -223,8 +222,7 @@ int CommonMasterGameMode::GetLayer(const double& y)
         const unsigned int layerCount = mMapGenerator->GetNumberOfLayers();
         for (unsigned int layer = 0; layer < layerCount; ++layer)
         {
-            if (mMapGenerator->GetLayerBB(layer) != NULL
-                && y >= mMapGenerator->GetLayerBB(layer)->mMinY
+            if (mMapGenerator->GetLayerBB(layer) != NULL && y >= mMapGenerator->GetLayerBB(layer)->mMinY
                 && y < mMapGenerator->GetLayerBB(layer)->mMaxY)
             {
                 LeaveCriticalSection(&mGeneratorMutex);
@@ -275,8 +273,8 @@ long long CommonMasterGameMode::RestartMapGenerator()
         delete mMapGenerator;
 
         Random layerRandom(seed);
-        std::vector<LayerGenerator*>* layers =
-            layerRule->CreateLayers(layerRandom, area, GetMiniGame()->GetLayerCount(), mGeneratorSeedScale);
+        std::vector<LayerGenerator*>* layers = layerRule->CreateLayers(
+            layerRandom, area, GetMiniGame()->GetLayerCount(), mGeneratorSeedScale);
         mMapGenerator = new TumbleGenerator(layerRandom, *layers);
         mMapGenerator->StartGeneration(GeneratorTargetLevel());
         delete layers;
@@ -358,7 +356,8 @@ void CommonMasterGameMode::setCheckpoints(std::vector<CheckpointRuleDefinition*>
 {
     mCheckpoints = checkpoints;
     mFinalCheckpointSequenceID = 0;
-    for (std::vector<CheckpointRuleDefinition*>::const_iterator it = mCheckpoints.begin(); it != mCheckpoints.end(); ++it)
+    for (std::vector<CheckpointRuleDefinition*>::const_iterator it = mCheckpoints.begin(); it != mCheckpoints.end();
+         ++it)
     {
         const int sequenceID = (*it)->getSequenceID();
         if (sequenceID >= mFinalCheckpointSequenceID)
@@ -397,8 +396,10 @@ void CommonMasterGameMode::CacheMapDistance()
 
     std::vector<Vec3*> spawnPositions;
     LevelRuleset* ruleDefinitions = gApp.getGameRuleDefinitions();
-    OnGameStartSpawnPositions* spawnRule = ruleDefinitions == NULL ? NULL :
-        static_cast<OnGameStartSpawnPositions*>(ruleDefinitions->getRuleByType(ConsoleGameRules::eGameRuleType_OnGameStartSpawnPositions));
+    OnGameStartSpawnPositions* spawnRule = ruleDefinitions == NULL
+                                               ? NULL
+                                               : static_cast<OnGameStartSpawnPositions*>(ruleDefinitions->getRuleByType(
+                                                     ConsoleGameRules::eGameRuleType_OnGameStartSpawnPositions));
     if (spawnRule != NULL)
     {
         const bool centreSpawn = GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_CentreSpawn);
@@ -429,7 +430,8 @@ void CommonMasterGameMode::CacheMapDistance()
         double distance = 0.0;
         for (std::vector<Vec3*>::const_iterator spawn = spawnPositions.begin(); spawn != spawnPositions.end(); ++spawn)
         {
-            for (std::vector<AABB*>::const_iterator area = primaryTargetAreas.begin(); area != primaryTargetAreas.end(); ++area)
+            for (std::vector<AABB*>::const_iterator area = primaryTargetAreas.begin(); area != primaryTargetAreas.end();
+                 ++area)
             {
                 double areaDistance = (*spawn)->distanceTo(*area);
                 distance = std::max(distance, areaDistance);
@@ -442,11 +444,13 @@ void CommonMasterGameMode::CacheMapDistance()
     else
     {
         double startDistance = 0.0;
-        for (std::vector<CheckpointRuleDefinition*>::const_iterator checkpoint = checkpoints.begin(); checkpoint != checkpoints.end(); ++checkpoint)
+        for (std::vector<CheckpointRuleDefinition*>::const_iterator checkpoint = checkpoints.begin();
+             checkpoint != checkpoints.end(); ++checkpoint)
         {
             if ((*checkpoint)->getSequenceID() != 0)
                 continue;
-            for (std::vector<Vec3*>::const_iterator spawn = spawnPositions.begin(); spawn != spawnPositions.end(); ++spawn)
+            for (std::vector<Vec3*>::const_iterator spawn = spawnPositions.begin(); spawn != spawnPositions.end();
+                 ++spawn)
             {
                 double spawnDistance = (*spawn)->distanceTo((*checkpoint)->getArea());
                 startDistance = std::max(startDistance, spawnDistance);
@@ -464,7 +468,8 @@ void CommonMasterGameMode::CacheMapDistance()
             std::vector<CheckpointRuleDefinition*> nextCheckpoints =
                 gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpointsBySequenceID(++nextSequenceID);
             std::vector<CheckpointRuleDefinition*> currentCheckpoints =
-                gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpointsBySequenceID(nextSequenceID - 1);
+                gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpointsBySequenceID(nextSequenceID
+                                                                                                     - 1);
             if (nextCheckpoints.empty())
             {
                 finished = true;
@@ -473,10 +478,12 @@ void CommonMasterGameMode::CacheMapDistance()
             {
                 bool hasSpawnPoint = false;
                 double distance = 0.0;
-                for (std::vector<CheckpointRuleDefinition*>::const_iterator next = nextCheckpoints.begin(); next != nextCheckpoints.end(); ++next)
+                for (std::vector<CheckpointRuleDefinition*>::const_iterator next = nextCheckpoints.begin();
+                     next != nextCheckpoints.end(); ++next)
                 {
                     hasSpawnPoint = hasSpawnPoint || (*next)->hasSpawnPoint();
-                    for (std::vector<CheckpointRuleDefinition*>::const_iterator current = currentCheckpoints.begin(); current != currentCheckpoints.end(); ++current)
+                    for (std::vector<CheckpointRuleDefinition*>::const_iterator current = currentCheckpoints.begin();
+                         current != currentCheckpoints.end(); ++current)
                     {
                         AABB* currentArea = (*current)->getArea();
                         double areaDistance = (*next)->getArea()->getCenter()->distanceTo(currentArea);
@@ -500,9 +507,11 @@ void CommonMasterGameMode::CacheMapDistance()
         std::vector<CheckpointRuleDefinition*> lastCheckpoints =
             gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpointsBySequenceID(nextSequenceID - 1);
         double endDistance = 0.0;
-        for (std::vector<CheckpointRuleDefinition*>::const_iterator checkpoint = lastCheckpoints.begin(); checkpoint != lastCheckpoints.end(); ++checkpoint)
+        for (std::vector<CheckpointRuleDefinition*>::const_iterator checkpoint = lastCheckpoints.begin();
+             checkpoint != lastCheckpoints.end(); ++checkpoint)
         {
-            for (std::vector<AABB*>::const_iterator area = primaryTargetAreas.begin(); area != primaryTargetAreas.end(); ++area)
+            for (std::vector<AABB*>::const_iterator area = primaryTargetAreas.begin(); area != primaryTargetAreas.end();
+                 ++area)
             {
                 double areaDistance = (*checkpoint)->getArea()->getCenter()->distanceTo(*area);
                 endDistance = std::max(endDistance, areaDistance);
@@ -514,7 +523,8 @@ void CommonMasterGameMode::CacheMapDistance()
 
     std::vector<TargetAreaRuleDefinition*> targetAreas;
     gApp.getLevelGenerationOptions()->getRequiredGameRules()->getTargetAreas(&targetAreas);
-    for (std::vector<TargetAreaRuleDefinition*>::const_iterator target = targetAreas.begin(); target != targetAreas.end(); ++target)
+    for (std::vector<TargetAreaRuleDefinition*>::const_iterator target = targetAreas.begin();
+         target != targetAreas.end(); ++target)
     {
         if ((*target)->mPrimary)
             mRequiredLaps = (*target)->mLaps;
@@ -525,7 +535,9 @@ void CommonMasterGameMode::CacheMapDistance()
     mDistancesCached = true;
 }
 
-void CommonMasterGameMode::CheckProgress(boost::shared_ptr<Player> player, const std::vector<CheckpointRuleDefinition*>* rules, const std::vector<AABB*>* areas)
+void CommonMasterGameMode::CheckProgress(boost::shared_ptr<Player> player,
+                                         const std::vector<CheckpointRuleDefinition*>* rules,
+                                         const std::vector<AABB*>* areas)
 {
     if (!GetMiniGame()->HasFeatureCheckpoints())
         return;
@@ -564,7 +576,8 @@ void CommonMasterGameMode::CheckProgress(boost::shared_ptr<Player> player, const
     }
     else
     {
-        for (std::vector<CheckpointRuleDefinition*>::const_iterator checkpoint = nextCheckpoints.begin(); checkpoint != nextCheckpoints.end(); ++checkpoint)
+        for (std::vector<CheckpointRuleDefinition*>::const_iterator checkpoint = nextCheckpoints.begin();
+             checkpoint != nextCheckpoints.end(); ++checkpoint)
             nearestDistance = std::min(nearestDistance, player->getPos(1.0f)->distanceTo((*checkpoint)->getArea()));
     }
 
@@ -574,8 +587,9 @@ void CommonMasterGameMode::CheckProgress(boost::shared_ptr<Player> player, const
         distanceTravelled += mSequenceDistances.at(i);
 
     const double progress = (distanceTravelled / mTotalDistance) * 100.0;
-    const double speed = Vec3::newTemp(player->mXo, player->mYo, player->mZo)->distanceTo(
-        Vec3::newTemp(player->mX, player->mY, player->mZ)) * 20.0;
+    const double speed = Vec3::newTemp(player->mXo, player->mYo, player->mZo)
+                             ->distanceTo(Vec3::newTemp(player->mX, player->mY, player->mZ))
+                         * 20.0;
 
     GameMode* gameMode = player->GetGameMode();
     if (gameMode != NULL)
@@ -630,14 +644,17 @@ void CommonMasterGameMode::CheckPowerups(const std::vector<boost::shared_ptr<Pla
     CheckIntersectsNamedAreas(players, powerups, &CommonMasterGameMode::OnPowerupEnter);
 }
 
-void CommonMasterGameMode::OnCheckpointEnter(const boost::shared_ptr<Player>& player, unsigned int checkpoint, CheckpointRuleDefinition* rule)
+void CommonMasterGameMode::OnCheckpointEnter(const boost::shared_ptr<Player>& player, unsigned int checkpoint,
+                                             CheckpointRuleDefinition* rule)
 {
     GameMode* gameMode = player->GetGameMode();
     if (gameMode != NULL)
-        gameMode->RecordLastCheckpoint(checkpoint, rule->getSequenceID(), rule->hasSpawnPoint(), rule->hasSpawnPoint(), false);
+        gameMode->RecordLastCheckpoint(checkpoint, rule->getSequenceID(), rule->hasSpawnPoint(), rule->hasSpawnPoint(),
+                                       false);
 }
 
-void CommonMasterGameMode::OnTargetEnter(const boost::shared_ptr<Player>& player, unsigned int target, TargetAreaRuleDefinition* rule)
+void CommonMasterGameMode::OnTargetEnter(const boost::shared_ptr<Player>& player, unsigned int target,
+                                         TargetAreaRuleDefinition* rule)
 {
     const MiniGameDef* miniGame = GetMiniGame();
     bool usingPrimaryTargetAreas = false;
@@ -647,7 +664,8 @@ void CommonMasterGameMode::OnTargetEnter(const boost::shared_ptr<Player>& player
     {
         for (unsigned int i = 0; i < endConditions->GetConditions().size(); ++i)
         {
-            PlayersEnteredVolumeCondition* volumeCondition = dynamic_cast<PlayersEnteredVolumeCondition*>(endConditions->GetConditions().at(i));
+            PlayersEnteredVolumeCondition* volumeCondition = dynamic_cast<PlayersEnteredVolumeCondition*>(
+                endConditions->GetConditions().at(i));
             if (volumeCondition != NULL && volumeCondition->IsUsingPrimaryTargetAreas())
             {
                 usingPrimaryTargetAreas = true;
@@ -675,7 +693,8 @@ void CommonMasterGameMode::OnTargetEnter(const boost::shared_ptr<Player>& player
     }
 }
 
-void CommonMasterGameMode::OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup, PowerupRuleDefinition* rule)
+void CommonMasterGameMode::OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup,
+                                          PowerupRuleDefinition* rule)
 {
     rule->GiveRandomPowerup(player);
 }
@@ -684,7 +703,8 @@ void CommonMasterGameMode::OnPrimaryTargetEnter(const boost::shared_ptr<Player>&
 {
 }
 
-void CommonMasterGameMode::OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule)
+void CommonMasterGameMode::OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player,
+                                                  TargetAreaRuleDefinition* rule)
 {
 }
 
@@ -697,12 +717,15 @@ void CommonMasterGameMode::setChosenThemeWordId(int id)
     mChosenThemeWordId = id;
 }
 
-template<class Rule> void CommonMasterGameMode::CheckIntersectsNamedAreas(const std::vector<boost::shared_ptr<Player> >& players, std::vector<Rule*>& rules, void (CommonMasterGameMode::*callback)(const boost::shared_ptr<Player>&, unsigned int, Rule*))
+template <class Rule> void CommonMasterGameMode::CheckIntersectsNamedAreas(
+    const std::vector<boost::shared_ptr<Player> >& players, std::vector<Rule*>& rules,
+    void (CommonMasterGameMode::*callback)(const boost::shared_ptr<Player>&, unsigned int, Rule*))
 {
     if (rules.empty())
         return;
 
-    for (typename std::vector<boost::shared_ptr<Player> >::const_iterator player = players.begin(); player != players.end(); ++player)
+    for (typename std::vector<boost::shared_ptr<Player> >::const_iterator player = players.begin();
+         player != players.end(); ++player)
     {
         if ((*player)->GetType() != EntityType::GHOST_PLAYER && !(*player)->isAlive())
             continue;
@@ -712,9 +735,9 @@ template<class Rule> void CommonMasterGameMode::CheckIntersectsNamedAreas(const 
         {
             AABB* area = (*rule)->getArea();
             AABB* bounds = GetSweptVolumeFromLastKnownPosition(*player);
-            if (area->intersects(bounds->mMinX, bounds->mMinY, bounds->mMinZ, bounds->mMaxX, bounds->mMaxY, bounds->mMaxZ))
+            if (area->intersects(bounds->mMinX, bounds->mMinY, bounds->mMinZ, bounds->mMaxX, bounds->mMaxY,
+                                 bounds->mMaxZ))
                 (this->*callback)(*player, index, *rule);
         }
     }
 }
-

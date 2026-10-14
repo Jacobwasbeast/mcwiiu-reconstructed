@@ -34,11 +34,16 @@ static std::list<StrongholdPieces::PieceWeight*> sStrongholdPieceWeights;
 static StrongholdPieces::EPieceClass sForcedPieceClass = StrongholdPieces::ePieceClass_None;
 
 StrongholdPieces::PieceWeight::PieceWeight(EPieceClass pieceClass, int weight, int maxPlaceCount)
-    : pieceClass(pieceClass), weight(weight), placeCount(0), maxPlaceCount(maxPlaceCount)
+    : pieceClass(pieceClass),
+      weight(weight),
+      placeCount(0),
+      maxPlaceCount(maxPlaceCount)
 {
 }
 
-StrongholdPieces::PieceWeight::~PieceWeight() { }
+StrongholdPieces::PieceWeight::~PieceWeight()
+{
+}
 
 bool StrongholdPieces::PieceWeight::isValid()
 {
@@ -50,27 +55,29 @@ bool StrongholdPieces::PieceWeight::doPlace(int depth)
     return maxPlaceCount == 0 || placeCount < maxPlaceCount;
 }
 
-StrongholdPieces::PieceWeight_Library::~PieceWeight_Library() { }
+StrongholdPieces::PieceWeight_Library::~PieceWeight_Library()
+{
+}
 
 bool StrongholdPieces::PieceWeight_Library::doPlace(int depth)
 {
     return PieceWeight::doPlace(depth) && depth > 4;
 }
 
-StrongholdPieces::PieceWeight_PortalRoom::~PieceWeight_PortalRoom() { }
+StrongholdPieces::PieceWeight_PortalRoom::~PieceWeight_PortalRoom()
+{
+}
 
 bool StrongholdPieces::PieceWeight_PortalRoom::doPlace(int depth)
 {
     return PieceWeight::doPlace(depth) && depth > 5;
 }
 
-StrongholdPieces::StrongholdPiece::StrongholdPiece(int depth)
-    : StructurePiece(depth), mEntryDoor(OPENING)
+StrongholdPieces::StrongholdPiece::StrongholdPiece(int depth) : StructurePiece(depth), mEntryDoor(OPENING)
 {
 }
 
-StrongholdPieces::StrongholdPiece::StrongholdPiece()
-    : StructurePiece(), mEntryDoor(OPENING)
+StrongholdPieces::StrongholdPiece::StrongholdPiece() : StructurePiece(), mEntryDoor(OPENING)
 {
 }
 
@@ -117,7 +124,8 @@ void StrongholdPieces::StrongholdPiece::readAdditionalSaveData(DataInputStream* 
     mEntryDoor = static_cast<SmallDoorType>(input->readInt());
 }
 
-void StrongholdPieces::StrongholdPiece::generateSmallDoor(Level* level, Random&, BoundingBox* box, SmallDoorType type, int x, int y, int z)
+void StrongholdPieces::StrongholdPiece::generateSmallDoor(Level* level, Random&, BoundingBox* box, SmallDoorType type,
+                                                          int x, int y, int z)
 {
     if (type == WOOD_DOOR)
     {
@@ -130,8 +138,8 @@ void StrongholdPieces::StrongholdPiece::generateSmallDoor(Level* level, Random&,
         placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 2, y, z, box);
         placeBlock(level, Blocks::wooden_door->defaultBlockState(), x + 1, y, z, box);
         TypedBoxed<DoorBlock::DoorHalf*> upperHalf(DoorBlock::UPPER);
-        placeBlock(level, Blocks::wooden_door->defaultBlockState()->setBoxedValue(DoorBlock::HALF, &upperHalf),
-            x + 1, y + 1, z, box);
+        placeBlock(level, Blocks::wooden_door->defaultBlockState()->setBoxedValue(DoorBlock::HALF, &upperHalf), x + 1,
+                   y + 1, z, box);
         return;
     }
     if (type == GRATES)
@@ -158,21 +166,24 @@ void StrongholdPieces::StrongholdPiece::generateSmallDoor(Level* level, Random&,
         placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 2, y, z, box);
         placeBlock(level, Blocks::iron_door->defaultBlockState(), x + 1, y, z, box);
         TypedBoxed<DoorBlock::DoorHalf*> upperHalf(DoorBlock::UPPER);
-        placeBlock(level, Blocks::iron_door->defaultBlockState()->setBoxedValue(DoorBlock::HALF, &upperHalf),
-            x + 1, y + 1, z, box);
+        placeBlock(level, Blocks::iron_door->defaultBlockState()->setBoxedValue(DoorBlock::HALF, &upperHalf), x + 1,
+                   y + 1, z, box);
         TypedBoxed<const Direction*> buttonNorth(Direction::NORTH);
         placeBlock(level, Blocks::stone_button->defaultBlockState()->setBoxedValue(ButtonBlock::FACING, &buttonNorth),
-            x + 2, y + 1, z + 1, box);
+                   x + 2, y + 1, z + 1, box);
         TypedBoxed<const Direction*> buttonSouth(Direction::SOUTH);
         placeBlock(level, Blocks::stone_button->defaultBlockState()->setBoxedValue(ButtonBlock::FACING, &buttonSouth),
-            x + 2, y + 1, z - 1, box);
+                   x + 2, y + 1, z - 1, box);
         return;
     }
-    generateBox(level, box, x, y, z, x + 2, y + 2, z,
-        Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, x, y, z, x + 2, y + 2, z, Blocks::air->defaultBlockState(),
+                Blocks::air->defaultBlockState(), false);
 }
 
-StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildForward(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int offsetX, int offsetY)
+StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildForward(StartPiece* start,
+                                                                                 std::vector<StructurePiece*>* pieces,
+                                                                                 Random& random, int offsetX,
+                                                                                 int offsetY)
 {
     const Direction* direction = getOrientation();
     if (direction == NULL)
@@ -182,28 +193,34 @@ StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildForward
         return NULL;
     if (value == 2)
     {
-        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
-            mBoundingBox->x0 + offsetX, mBoundingBox->y0 + offsetY, mBoundingBox->z0 - 1, direction, getGenDepth());
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random, mBoundingBox->x0 + offsetX,
+                                                     mBoundingBox->y0 + offsetY, mBoundingBox->z0 - 1, direction,
+                                                     getGenDepth());
     }
     if (value < 4)
     {
-        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
-            mBoundingBox->x0 + offsetX, mBoundingBox->y0 + offsetY, mBoundingBox->z1 + 1, direction, getGenDepth());
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random, mBoundingBox->x0 + offsetX,
+                                                     mBoundingBox->y0 + offsetY, mBoundingBox->z1 + 1, direction,
+                                                     getGenDepth());
     }
     if (value == 4)
     {
-        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
-            mBoundingBox->x0 - 1, mBoundingBox->y0 + offsetY, mBoundingBox->z0 + offsetX, direction, getGenDepth());
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random, mBoundingBox->x0 - 1,
+                                                     mBoundingBox->y0 + offsetY, mBoundingBox->z0 + offsetX, direction,
+                                                     getGenDepth());
     }
     if (value == 5)
     {
-        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
-            mBoundingBox->x1 + 1, mBoundingBox->y0 + offsetY, mBoundingBox->z0 + offsetX, direction, getGenDepth());
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random, mBoundingBox->x1 + 1,
+                                                     mBoundingBox->y0 + offsetY, mBoundingBox->z0 + offsetX, direction,
+                                                     getGenDepth());
     }
     return NULL;
 }
 
-StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildLeft(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int offsetY, int offsetXZ)
+StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildLeft(StartPiece* start,
+                                                                              std::vector<StructurePiece*>* pieces,
+                                                                              Random& random, int offsetY, int offsetXZ)
 {
     const Direction* direction = getOrientation();
     if (direction == NULL)
@@ -213,18 +230,23 @@ StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildLeft(St
         return NULL;
     if (value < 4)
     {
-        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
-            mBoundingBox->x0 - 1, mBoundingBox->y0 + offsetY, mBoundingBox->z0 + offsetXZ, Direction::WEST, getGenDepth());
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random, mBoundingBox->x0 - 1,
+                                                     mBoundingBox->y0 + offsetY, mBoundingBox->z0 + offsetXZ,
+                                                     Direction::WEST, getGenDepth());
     }
     if (value < 6)
     {
-        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
-            mBoundingBox->x0 + offsetXZ, mBoundingBox->y0 + offsetY, mBoundingBox->z0 - 1, Direction::NORTH, getGenDepth());
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random, mBoundingBox->x0 + offsetXZ,
+                                                     mBoundingBox->y0 + offsetY, mBoundingBox->z0 - 1, Direction::NORTH,
+                                                     getGenDepth());
     }
     return NULL;
 }
 
-StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildRight(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int offsetY, int offsetXZ)
+StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildRight(StartPiece* start,
+                                                                               std::vector<StructurePiece*>* pieces,
+                                                                               Random& random, int offsetY,
+                                                                               int offsetXZ)
 {
     const Direction* direction = getOrientation();
     if (direction == NULL)
@@ -234,20 +256,23 @@ StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildRight(S
         return NULL;
     if (value < 4)
     {
-        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
-            mBoundingBox->x1 + 1, mBoundingBox->y0 + offsetY, mBoundingBox->z0 + offsetXZ, Direction::EAST, getGenDepth());
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random, mBoundingBox->x1 + 1,
+                                                     mBoundingBox->y0 + offsetY, mBoundingBox->z0 + offsetXZ,
+                                                     Direction::EAST, getGenDepth());
     }
     if (value < 6)
     {
-        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
-            mBoundingBox->x0 + offsetXZ, mBoundingBox->y0 + offsetY, mBoundingBox->z1 + 1, Direction::SOUTH, getGenDepth());
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random, mBoundingBox->x0 + offsetXZ,
+                                                     mBoundingBox->y0 + offsetY, mBoundingBox->z1 + 1, Direction::SOUTH,
+                                                     getGenDepth());
     }
     return NULL;
 }
 
 void StrongholdPieces::resetPieces()
 {
-    for (std::list<PieceWeight*>::iterator it = sStrongholdPieceWeights.begin(); it != sStrongholdPieceWeights.end(); ++it)
+    for (std::list<PieceWeight*>::iterator it = sStrongholdPieceWeights.begin(); it != sStrongholdPieceWeights.end();
+         ++it)
         delete *it;
     sStrongholdPieceWeights.clear();
     sStrongholdPieceWeights.push_back(new PieceWeight(ePieceClass_Straight, 40, 0));
@@ -291,7 +316,8 @@ bool StrongholdPieces::updatePieceWeight()
 {
     bool canPlace = false;
     sStrongholdWeightTotal = 0;
-    for (std::list<PieceWeight*>::iterator it = sStrongholdPieceWeights.begin(); it != sStrongholdPieceWeights.end(); ++it)
+    for (std::list<PieceWeight*>::iterator it = sStrongholdPieceWeights.begin(); it != sStrongholdPieceWeights.end();
+         ++it)
     {
         PieceWeight* weight = *it;
         if (weight->maxPlaceCount > 0 && weight->placeCount < weight->maxPlaceCount)
@@ -301,26 +327,41 @@ bool StrongholdPieces::updatePieceWeight()
     return canPlace;
 }
 
-StructurePiece* StrongholdPieces::findAndCreatePieceFactory(EPieceClass pieceClass, std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StructurePiece* StrongholdPieces::findAndCreatePieceFactory(EPieceClass pieceClass,
+                                                            std::vector<StructurePiece*>* pieces, Random& random, int x,
+                                                            int y, int z, const Direction* direction, int depth)
 {
     switch (pieceClass)
     {
-    case ePieceClass_Straight: return Straight::createPiece(pieces, random, x, y, z, direction, depth);
-    case ePieceClass_PrisonHall: return PrisonHall::createPiece(pieces, random, x, y, z, direction, depth);
+    case ePieceClass_Straight:
+        return Straight::createPiece(pieces, random, x, y, z, direction, depth);
+    case ePieceClass_PrisonHall:
+        return PrisonHall::createPiece(pieces, random, x, y, z, direction, depth);
     case ePieceClass_LeftTurn:
-    case ePieceClass_RightTurn: return LeftTurn::createPiece(pieces, random, x, y, z, direction, depth);
-    case ePieceClass_RoomCrossing: return RoomCrossing::createPiece(pieces, random, x, y, z, direction, depth);
-    case ePieceClass_StraightStairsDown: return StraightStairsDown::createPiece(pieces, random, x, y, z, direction, depth);
-    case ePieceClass_StairsDown: return StairsDown::createPiece(pieces, random, x, y, z, direction, depth);
-    case ePieceClass_FiveCrossing: return FiveCrossing::createPiece(pieces, random, x, y, z, direction, depth);
-    case ePieceClass_ChestCorridor: return ChestCorridor::createPiece(pieces, random, x, y, z, direction, depth);
-    case ePieceClass_Library: return Library::createPiece(pieces, random, x, y, z, direction, depth);
-    case ePieceClass_PortalRoom: return PortalRoom::createPiece(pieces, random, x, y, z, direction, depth);
-    default: return NULL;
+    case ePieceClass_RightTurn:
+        return LeftTurn::createPiece(pieces, random, x, y, z, direction, depth);
+    case ePieceClass_RoomCrossing:
+        return RoomCrossing::createPiece(pieces, random, x, y, z, direction, depth);
+    case ePieceClass_StraightStairsDown:
+        return StraightStairsDown::createPiece(pieces, random, x, y, z, direction, depth);
+    case ePieceClass_StairsDown:
+        return StairsDown::createPiece(pieces, random, x, y, z, direction, depth);
+    case ePieceClass_FiveCrossing:
+        return FiveCrossing::createPiece(pieces, random, x, y, z, direction, depth);
+    case ePieceClass_ChestCorridor:
+        return ChestCorridor::createPiece(pieces, random, x, y, z, direction, depth);
+    case ePieceClass_Library:
+        return Library::createPiece(pieces, random, x, y, z, direction, depth);
+    case ePieceClass_PortalRoom:
+        return PortalRoom::createPiece(pieces, random, x, y, z, direction, depth);
+    default:
+        return NULL;
     }
 }
 
-StructurePiece* StrongholdPieces::generatePieceFromSmallDoor(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StructurePiece* StrongholdPieces::generatePieceFromSmallDoor(StartPiece* start, std::vector<StructurePiece*>* pieces,
+                                                             Random& random, int x, int y, int z,
+                                                             const Direction* direction, int depth)
 {
     if (!updatePieceWeight())
         return NULL;
@@ -347,8 +388,8 @@ StructurePiece* StrongholdPieces::generatePieceFromSmallDoor(StartPiece* start, 
             {
                 if (!weight->doPlace(depth) || weight == start->mLastPieceWeight)
                     break;
-                StructurePiece* piece = findAndCreatePieceFactory(weight->pieceClass, pieces, random,
-                                                                  x, y, z, direction, depth);
+                StructurePiece* piece = findAndCreatePieceFactory(weight->pieceClass, pieces, random, x, y, z,
+                                                                  direction, depth);
                 if (piece != NULL)
                 {
                     start->mLastPieceWeight = weight;
@@ -374,7 +415,9 @@ StructurePiece* StrongholdPieces::generatePieceFromSmallDoor(StartPiece* start, 
     return NULL;
 }
 
-StructurePiece* StrongholdPieces::generateAndAddPiece(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StructurePiece* StrongholdPieces::generateAndAddPiece(StartPiece* start, std::vector<StructurePiece*>* pieces,
+                                                      Random& random, int x, int y, int z, const Direction* direction,
+                                                      int depth)
 {
     if (depth > 50)
         return NULL;
@@ -392,7 +435,8 @@ StructurePiece* StrongholdPieces::generateAndAddPiece(StartPiece* start, std::ve
         return NULL;
     if (start->mLevel->getLevelData()->getHasStrongholdEndPortal())
         return NULL;
-    for (std::list<PieceWeight*>::iterator it = sStrongholdPieceWeights.begin(); it != sStrongholdPieceWeights.end(); ++it)
+    for (std::list<PieceWeight*>::iterator it = sStrongholdPieceWeights.begin(); it != sStrongholdPieceWeights.end();
+         ++it)
     {
         PieceWeight* weight = *it;
         if (weight->pieceClass == ePieceClass_PortalRoom)
@@ -414,8 +458,7 @@ StructurePiece* StrongholdPieces::generateAndAddPiece(StartPiece* start, std::ve
     return NULL;
 }
 
-StrongholdPieces::ChestCorridor::ChestCorridor()
-    : StrongholdPiece()
+StrongholdPieces::ChestCorridor::ChestCorridor() : StrongholdPiece()
 {
 }
 
@@ -428,12 +471,12 @@ StrongholdPieces::ChestCorridor::ChestCorridor(int depth, Random& random, Boundi
     mHasPlacedChest = false;
 }
 
-StrongholdPieces::FillerCorridor::FillerCorridor()
-    : StrongholdPiece(), mSteps(0)
+StrongholdPieces::FillerCorridor::FillerCorridor() : StrongholdPiece(), mSteps(0)
 {
 }
 
-StrongholdPieces::FillerCorridor::FillerCorridor(int depth, Random& random, BoundingBox* box, const Direction* direction)
+StrongholdPieces::FillerCorridor::FillerCorridor(int depth, Random& random, BoundingBox* box,
+                                                 const Direction* direction)
     : StrongholdPiece(depth)
 {
     if (direction == Direction::NORTH || direction == Direction::SOUTH)
@@ -444,8 +487,7 @@ StrongholdPieces::FillerCorridor::FillerCorridor(int depth, Random& random, Boun
     mBoundingBox = box;
 }
 
-StrongholdPieces::FiveCrossing::FiveCrossing()
-    : StrongholdPiece()
+StrongholdPieces::FiveCrossing::FiveCrossing() : StrongholdPiece()
 {
     mLeftLow = mLeftHigh = mRightLow = mRightHigh = false;
 }
@@ -462,8 +504,7 @@ StrongholdPieces::FiveCrossing::FiveCrossing(int depth, Random& random, Bounding
     mRightHigh = random.nextInt(3) > 0;
 }
 
-StrongholdPieces::LeftTurn::LeftTurn()
-    : StrongholdPiece()
+StrongholdPieces::LeftTurn::LeftTurn() : StrongholdPiece()
 {
 }
 
@@ -475,33 +516,32 @@ StrongholdPieces::LeftTurn::LeftTurn(int depth, Random& random, BoundingBox* box
     mBoundingBox = box;
 }
 
-StrongholdPieces::Library::Library()
-    : StrongholdPiece(), mIsTall(false)
+StrongholdPieces::Library::Library() : StrongholdPiece(), mIsTall(false)
 {
 }
 
 StrongholdPieces::Library::Library(int depth, Random& random, BoundingBox* box, const Direction* direction)
-    : StrongholdPiece(depth), mIsTall(box->getYSpan() > 6)
+    : StrongholdPiece(depth),
+      mIsTall(box->getYSpan() > 6)
 {
     mEntryDoor = randomSmallDoor(random);
     setOrientation(direction);
     mBoundingBox = box;
 }
 
-StrongholdPieces::PortalRoom::PortalRoom()
-    : StrongholdPiece()
+StrongholdPieces::PortalRoom::PortalRoom() : StrongholdPiece()
 {
 }
 
 StrongholdPieces::PortalRoom::PortalRoom(int depth, Random&, BoundingBox* box, const Direction* direction)
-    : StrongholdPiece(depth), mHasPlacedSpawner(false)
+    : StrongholdPiece(depth),
+      mHasPlacedSpawner(false)
 {
     setOrientation(direction);
     mBoundingBox = box;
 }
 
-StrongholdPieces::PrisonHall::PrisonHall()
-    : StrongholdPiece()
+StrongholdPieces::PrisonHall::PrisonHall() : StrongholdPiece()
 {
 }
 
@@ -513,26 +553,26 @@ StrongholdPieces::PrisonHall::PrisonHall(int depth, Random& random, BoundingBox*
     mBoundingBox = box;
 }
 
-StrongholdPieces::RoomCrossing::RoomCrossing()
-    : StrongholdPiece()
+StrongholdPieces::RoomCrossing::RoomCrossing() : StrongholdPiece()
 {
 }
 
 StrongholdPieces::RoomCrossing::RoomCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction)
-    : StrongholdPiece(depth), mType(random.nextInt(5))
+    : StrongholdPiece(depth),
+      mType(random.nextInt(5))
 {
     mEntryDoor = randomSmallDoor(random);
     setOrientation(direction);
     mBoundingBox = box;
 }
 
-StrongholdPieces::StairsDown::StairsDown()
-    : StrongholdPiece()
+StrongholdPieces::StairsDown::StairsDown() : StrongholdPiece()
 {
 }
 
 StrongholdPieces::StairsDown::StairsDown(int depth, Random& random, BoundingBox* box, const Direction* direction)
-    : StrongholdPiece(depth), mIsSource(false)
+    : StrongholdPiece(depth),
+      mIsSource(false)
 {
     mEntryDoor = randomSmallDoor(random);
     setOrientation(direction);
@@ -540,7 +580,8 @@ StrongholdPieces::StairsDown::StairsDown(int depth, Random& random, BoundingBox*
 }
 
 StrongholdPieces::StairsDown::StairsDown(int depth, Random& random, int x, int z)
-    : StrongholdPiece(depth), mIsSource(true)
+    : StrongholdPiece(depth),
+      mIsSource(true)
 {
     setOrientation(Direction::Plane::HORIZONTAL->getRandomDirection(random));
     mEntryDoor = OPENING;
@@ -550,25 +591,26 @@ StrongholdPieces::StairsDown::StairsDown(int depth, Random& random, int x, int z
         mBoundingBox = new BoundingBox(x, 64, z, x + 5 - 1, 74, z + 5 - 1);
 }
 
-StrongholdPieces::Straight::Straight()
-    : StrongholdPiece()
+StrongholdPieces::Straight::Straight() : StrongholdPiece()
 {
 }
 
 StrongholdPieces::Straight::Straight(int depth, Random& random, BoundingBox* box, const Direction* direction)
-    : StrongholdPiece(depth), mLeftChild(random.nextInt(2) == 0), mRightChild(random.nextInt(2) == 0)
+    : StrongholdPiece(depth),
+      mLeftChild(random.nextInt(2) == 0),
+      mRightChild(random.nextInt(2) == 0)
 {
     mEntryDoor = randomSmallDoor(random);
     setOrientation(direction);
     mBoundingBox = box;
 }
 
-StrongholdPieces::StraightStairsDown::StraightStairsDown()
-    : StrongholdPiece()
+StrongholdPieces::StraightStairsDown::StraightStairsDown() : StrongholdPiece()
 {
 }
 
-StrongholdPieces::StraightStairsDown::StraightStairsDown(int depth, Random& random, BoundingBox* box, const Direction* direction)
+StrongholdPieces::StraightStairsDown::StraightStairsDown(int depth, Random& random, BoundingBox* box,
+                                                         const Direction* direction)
     : StrongholdPiece(depth)
 {
     mEntryDoor = randomSmallDoor(random);
@@ -576,7 +618,8 @@ StrongholdPieces::StraightStairsDown::StraightStairsDown(int depth, Random& rand
     mBoundingBox = box;
 }
 
-BoundingBox* StrongholdPieces::FillerCorridor::findPieceBox(std::vector<StructurePiece*>* pieces, Random&, int x, int y, int z, const Direction* direction)
+BoundingBox* StrongholdPieces::FillerCorridor::findPieceBox(std::vector<StructurePiece*>* pieces, Random&, int x, int y,
+                                                            int z, const Direction* direction)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 4, direction);
     StructurePiece* collision = StructurePiece::findCollisionPiece(pieces, box);
@@ -597,7 +640,9 @@ BoundingBox* StrongholdPieces::FillerCorridor::findPieceBox(std::vector<Structur
     return NULL;
 }
 
-StrongholdPieces::ChestCorridor* StrongholdPieces::ChestCorridor::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::ChestCorridor* StrongholdPieces::ChestCorridor::createPiece(std::vector<StructurePiece*>* pieces,
+                                                                              Random& random, int x, int y, int z,
+                                                                              const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 7, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -607,7 +652,9 @@ StrongholdPieces::ChestCorridor* StrongholdPieces::ChestCorridor::createPiece(st
     return NULL;
 }
 
-StrongholdPieces::FiveCrossing* StrongholdPieces::FiveCrossing::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::FiveCrossing* StrongholdPieces::FiveCrossing::createPiece(std::vector<StructurePiece*>* pieces,
+                                                                            Random& random, int x, int y, int z,
+                                                                            const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -4, -3, 0, 10, 9, 11, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -617,7 +664,9 @@ StrongholdPieces::FiveCrossing* StrongholdPieces::FiveCrossing::createPiece(std:
     return NULL;
 }
 
-StrongholdPieces::LeftTurn* StrongholdPieces::LeftTurn::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::LeftTurn* StrongholdPieces::LeftTurn::createPiece(std::vector<StructurePiece*>* pieces,
+                                                                    Random& random, int x, int y, int z,
+                                                                    const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 5, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -627,7 +676,9 @@ StrongholdPieces::LeftTurn* StrongholdPieces::LeftTurn::createPiece(std::vector<
     return NULL;
 }
 
-StrongholdPieces::Library* StrongholdPieces::Library::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::Library* StrongholdPieces::Library::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                                                  int x, int y, int z, const Direction* direction,
+                                                                  int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -4, -1, 0, 14, 11, 15, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -644,7 +695,9 @@ StrongholdPieces::Library* StrongholdPieces::Library::createPiece(std::vector<St
     return new Library(depth, random, box, direction);
 }
 
-StrongholdPieces::PortalRoom* StrongholdPieces::PortalRoom::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::PortalRoom* StrongholdPieces::PortalRoom::createPiece(std::vector<StructurePiece*>* pieces,
+                                                                        Random& random, int x, int y, int z,
+                                                                        const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -4, -1, 0, 11, 8, 16, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -654,7 +707,9 @@ StrongholdPieces::PortalRoom* StrongholdPieces::PortalRoom::createPiece(std::vec
     return NULL;
 }
 
-StrongholdPieces::PrisonHall* StrongholdPieces::PrisonHall::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::PrisonHall* StrongholdPieces::PrisonHall::createPiece(std::vector<StructurePiece*>* pieces,
+                                                                        Random& random, int x, int y, int z,
+                                                                        const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 9, 5, 11, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -664,7 +719,9 @@ StrongholdPieces::PrisonHall* StrongholdPieces::PrisonHall::createPiece(std::vec
     return NULL;
 }
 
-StrongholdPieces::RoomCrossing* StrongholdPieces::RoomCrossing::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::RoomCrossing* StrongholdPieces::RoomCrossing::createPiece(std::vector<StructurePiece*>* pieces,
+                                                                            Random& random, int x, int y, int z,
+                                                                            const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -4, -1, 0, 11, 7, 11, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -674,7 +731,9 @@ StrongholdPieces::RoomCrossing* StrongholdPieces::RoomCrossing::createPiece(std:
     return NULL;
 }
 
-StrongholdPieces::StairsDown* StrongholdPieces::StairsDown::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::StairsDown* StrongholdPieces::StairsDown::createPiece(std::vector<StructurePiece*>* pieces,
+                                                                        Random& random, int x, int y, int z,
+                                                                        const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -7, 0, 5, 11, 5, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -684,7 +743,9 @@ StrongholdPieces::StairsDown* StrongholdPieces::StairsDown::createPiece(std::vec
     return NULL;
 }
 
-StrongholdPieces::Straight* StrongholdPieces::Straight::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::Straight* StrongholdPieces::Straight::createPiece(std::vector<StructurePiece*>* pieces,
+                                                                    Random& random, int x, int y, int z,
+                                                                    const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 7, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -694,7 +755,8 @@ StrongholdPieces::Straight* StrongholdPieces::Straight::createPiece(std::vector<
     return NULL;
 }
 
-StrongholdPieces::StraightStairsDown* StrongholdPieces::StraightStairsDown::createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
+StrongholdPieces::StraightStairsDown* StrongholdPieces::StraightStairsDown::createPiece(
+    std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -7, 0, 5, 11, 8, direction);
     StartPiece* start = pieces != NULL ? static_cast<StartPiece*>(pieces->front()) : NULL;
@@ -716,7 +778,8 @@ void StrongholdPieces::ChestCorridor::readAdditionalSaveData(DataInputStream* in
     mHasPlacedChest = input->readBoolean();
 }
 
-void StrongholdPieces::ChestCorridor::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+void StrongholdPieces::ChestCorridor::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces,
+                                                  Random& random)
 {
     generateSmallDoorChildForward(static_cast<StartPiece*>(start), pieces, random, 1, 1);
 }
@@ -728,8 +791,8 @@ bool StrongholdPieces::ChestCorridor::postProcess(Level* level, Random& random, 
     generateBox(level, box, 0, 0, 0, 4, 4, 6, true, random, sStrongholdStoneSelector);
     generateSmallDoor(level, random, box, mEntryDoor, 1, 1, 0);
     generateSmallDoor(level, random, box, OPENING, 1, 1, 6);
-    generateBox(level, box, 3, 1, 2, 3, 1, 4,
-        Blocks::stonebrick->defaultBlockState(), Blocks::stonebrick->defaultBlockState(), false);
+    generateBox(level, box, 3, 1, 2, 3, 1, 4, Blocks::stonebrick->defaultBlockState(),
+                Blocks::stonebrick->defaultBlockState(), false);
     placeBlock(level, Blocks::stone_slab->getBlockState(StoneSlabBlock::Variant::SMOOTHBRICK->getData()), 3, 1, 1, box);
     placeBlock(level, Blocks::stone_slab->getBlockState(StoneSlabBlock::Variant::SMOOTHBRICK->getData()), 3, 1, 5, box);
     placeBlock(level, Blocks::stone_slab->getBlockState(StoneSlabBlock::Variant::SMOOTHBRICK->getData()), 3, 2, 2, box);
@@ -750,8 +813,14 @@ bool StrongholdPieces::ChestCorridor::postProcess(Level* level, Random& random, 
     return true;
 }
 
-StructurePiece* StrongholdPieces::ChestCorridor::Create() { return new ChestCorridor(); }
-EStructurePiece StrongholdPieces::ChestCorridor::GetType() { return eStructurePiece_ChestCorridor; }
+StructurePiece* StrongholdPieces::ChestCorridor::Create()
+{
+    return new ChestCorridor();
+}
+EStructurePiece StrongholdPieces::ChestCorridor::GetType()
+{
+    return eStructurePiece_ChestCorridor;
+}
 
 void StrongholdPieces::FiveCrossing::addAdditionalSaveData(DataOutputStream* output)
 {
@@ -771,7 +840,8 @@ void StrongholdPieces::FiveCrossing::readAdditionalSaveData(DataInputStream* inp
     mRightHigh = input->readBoolean();
 }
 
-void StrongholdPieces::FiveCrossing::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+void StrongholdPieces::FiveCrossing::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces,
+                                                 Random& random)
 {
     int lowOffset = 3;
     int highOffset = 5;
@@ -800,47 +870,54 @@ bool StrongholdPieces::FiveCrossing::postProcess(Level* level, Random& random, B
     generateBox(level, box, 0, 0, 0, 9, 8, 10, true, random, sStrongholdStoneSelector);
     generateSmallDoor(level, random, box, mEntryDoor, 4, 3, 0);
     if (mLeftLow)
-        generateBox(level, box, 0, 3, 1, 0, 5, 3,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 0, 3, 1, 0, 5, 3, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
     if (mRightLow)
-        generateBox(level, box, 9, 3, 1, 9, 5, 3,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 9, 3, 1, 9, 5, 3, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
     if (mLeftHigh)
-        generateBox(level, box, 0, 5, 7, 0, 7, 9,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 0, 5, 7, 0, 7, 9, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
     if (mRightHigh)
-        generateBox(level, box, 9, 5, 7, 9, 7, 9,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 5, 1, 10, 7, 3, 10,
-        Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 9, 5, 7, 9, 7, 9, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
+    generateBox(level, box, 5, 1, 10, 7, 3, 10, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
     generateBox(level, box, 1, 2, 1, 8, 2, 6, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 4, 1, 5, 4, 4, 9, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 8, 1, 5, 8, 4, 9, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 1, 4, 7, 3, 4, 9, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 1, 3, 5, 3, 3, 6, false, random, sStrongholdStoneSelector);
-    generateBox(level, box, 1, 3, 4, 3, 3, 4,
-        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
-    generateBox(level, box, 1, 4, 6, 3, 4, 6,
-        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 1, 3, 4, 3, 3, 4, Blocks::stone_slab->defaultBlockState(),
+                Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 1, 4, 6, 3, 4, 6, Blocks::stone_slab->defaultBlockState(),
+                Blocks::stone_slab->defaultBlockState(), false);
     generateBox(level, box, 5, 1, 7, 7, 1, 8, false, random, sStrongholdStoneSelector);
-    generateBox(level, box, 5, 1, 9, 7, 1, 9,
-        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
-    generateBox(level, box, 5, 2, 7, 7, 2, 7,
-        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
-    generateBox(level, box, 4, 5, 7, 4, 5, 9,
-        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
-    generateBox(level, box, 8, 5, 7, 8, 5, 9,
-        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
-    generateBox(level, box, 5, 5, 7, 7, 5, 9,
-        Blocks::double_stone_slab->defaultBlockState(), Blocks::double_stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 5, 1, 9, 7, 1, 9, Blocks::stone_slab->defaultBlockState(),
+                Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 5, 2, 7, 7, 2, 7, Blocks::stone_slab->defaultBlockState(),
+                Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 4, 5, 7, 4, 5, 9, Blocks::stone_slab->defaultBlockState(),
+                Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 8, 5, 7, 8, 5, 9, Blocks::stone_slab->defaultBlockState(),
+                Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 5, 5, 7, 7, 5, 9, Blocks::double_stone_slab->defaultBlockState(),
+                Blocks::double_stone_slab->defaultBlockState(), false);
     placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::SOUTH), 6, 5, 6, box);
     return true;
 }
 
-StructurePiece* StrongholdPieces::FiveCrossing::Create() { return new FiveCrossing(); }
-EStructurePiece StrongholdPieces::FiveCrossing::GetType() { return eStructurePiece_FiveCrossing; }
+StructurePiece* StrongholdPieces::FiveCrossing::Create()
+{
+    return new FiveCrossing();
+}
+EStructurePiece StrongholdPieces::FiveCrossing::GetType()
+{
+    return eStructurePiece_FiveCrossing;
+}
 
-void StrongholdPieces::LeftTurn::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+void StrongholdPieces::LeftTurn::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces,
+                                             Random& random)
 {
     const Direction* orientation = getOrientation();
     if (orientation == Direction::NORTH || orientation == Direction::EAST)
@@ -858,19 +935,25 @@ bool StrongholdPieces::LeftTurn::postProcess(Level* level, Random& random, Bound
     const Direction* orientation = getOrientation();
     if (orientation == Direction::NORTH || orientation == Direction::EAST)
     {
-        generateBox(level, box, 0, 1, 1, 0, 3, 3,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 0, 1, 1, 0, 3, 3, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
     }
     else
     {
-        generateBox(level, box, 4, 1, 1, 4, 3, 3,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 4, 1, 1, 4, 3, 3, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
     }
     return true;
 }
 
-StructurePiece* StrongholdPieces::LeftTurn::Create() { return new LeftTurn(); }
-EStructurePiece StrongholdPieces::LeftTurn::GetType() { return eStructurePiece_LeftTurn; }
+StructurePiece* StrongholdPieces::LeftTurn::Create()
+{
+    return new LeftTurn();
+}
+EStructurePiece StrongholdPieces::LeftTurn::GetType()
+{
+    return eStructurePiece_LeftTurn;
+}
 
 void StrongholdPieces::Library::addAdditionalSaveData(DataOutputStream* output)
 {
@@ -893,74 +976,76 @@ bool StrongholdPieces::Library::postProcess(Level* level, Random& random, Boundi
         height = 6;
     generateBox(level, box, 0, 0, 0, 13, height - 1, 14, true, random, sStrongholdStoneSelector);
     generateSmallDoor(level, random, box, mEntryDoor, 4, 1, 0);
-    generateMaybeBox(level, box, random, 0.07f, 2, 1, 1, 11, 4, 13,
-        Blocks::web->defaultBlockState(), Blocks::web->defaultBlockState(), false, false);
+    generateMaybeBox(level, box, random, 0.07f, 2, 1, 1, 11, 4, 13, Blocks::web->defaultBlockState(),
+                     Blocks::web->defaultBlockState(), false, false);
 
     for (int z = 1; z <= 13; ++z)
     {
         if ((z - 1) % 4 == 0)
         {
-            generateBox(level, box, 1, 1, z, 1, 4, z,
-                Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
-            generateBox(level, box, 12, 1, z, 12, 4, z,
-                Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
-            placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::EAST), 2, 3, z, box);
-            placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::WEST), 11, 3, z, box);
+            generateBox(level, box, 1, 1, z, 1, 4, z, Blocks::planks->defaultBlockState(),
+                        Blocks::planks->defaultBlockState(), false);
+            generateBox(level, box, 12, 1, z, 12, 4, z, Blocks::planks->defaultBlockState(),
+                        Blocks::planks->defaultBlockState(), false);
+            placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::EAST), 2, 3,
+                       z, box);
+            placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::WEST), 11, 3,
+                       z, box);
             if (mIsTall)
             {
-                generateBox(level, box, 1, 6, z, 1, 9, z,
-                    Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
-                generateBox(level, box, 12, 6, z, 12, 9, z,
-                    Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+                generateBox(level, box, 1, 6, z, 1, 9, z, Blocks::planks->defaultBlockState(),
+                            Blocks::planks->defaultBlockState(), false);
+                generateBox(level, box, 12, 6, z, 12, 9, z, Blocks::planks->defaultBlockState(),
+                            Blocks::planks->defaultBlockState(), false);
             }
         }
         else
         {
-            generateBox(level, box, 1, 1, z, 1, 4, z,
-                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
-            generateBox(level, box, 12, 1, z, 12, 4, z,
-                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+            generateBox(level, box, 1, 1, z, 1, 4, z, Blocks::bookshelf->defaultBlockState(),
+                        Blocks::bookshelf->defaultBlockState(), false);
+            generateBox(level, box, 12, 1, z, 12, 4, z, Blocks::bookshelf->defaultBlockState(),
+                        Blocks::bookshelf->defaultBlockState(), false);
             if (mIsTall)
             {
-                generateBox(level, box, 1, 6, z, 1, 9, z,
-                    Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
-                generateBox(level, box, 12, 6, z, 12, 9, z,
-                    Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+                generateBox(level, box, 1, 6, z, 1, 9, z, Blocks::bookshelf->defaultBlockState(),
+                            Blocks::bookshelf->defaultBlockState(), false);
+                generateBox(level, box, 12, 6, z, 12, 9, z, Blocks::bookshelf->defaultBlockState(),
+                            Blocks::bookshelf->defaultBlockState(), false);
             }
         }
     }
 
     for (int z = 3; z < 12; z += 2)
     {
-        generateBox(level, box, 3, 1, z, 4, 3, z,
-            Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
-        generateBox(level, box, 6, 1, z, 7, 3, z,
-            Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
-        generateBox(level, box, 9, 1, z, 10, 3, z,
-            Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+        generateBox(level, box, 3, 1, z, 4, 3, z, Blocks::bookshelf->defaultBlockState(),
+                    Blocks::bookshelf->defaultBlockState(), false);
+        generateBox(level, box, 6, 1, z, 7, 3, z, Blocks::bookshelf->defaultBlockState(),
+                    Blocks::bookshelf->defaultBlockState(), false);
+        generateBox(level, box, 9, 1, z, 10, 3, z, Blocks::bookshelf->defaultBlockState(),
+                    Blocks::bookshelf->defaultBlockState(), false);
     }
 
     if (mIsTall)
     {
-        generateBox(level, box, 1, 5, 1, 3, 5, 13,
-            Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
-        generateBox(level, box, 10, 5, 1, 12, 5, 13,
-            Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
-        generateBox(level, box, 4, 5, 1, 9, 5, 2,
-            Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
-        generateBox(level, box, 4, 5, 12, 9, 5, 13,
-            Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+        generateBox(level, box, 1, 5, 1, 3, 5, 13, Blocks::planks->defaultBlockState(),
+                    Blocks::planks->defaultBlockState(), false);
+        generateBox(level, box, 10, 5, 1, 12, 5, 13, Blocks::planks->defaultBlockState(),
+                    Blocks::planks->defaultBlockState(), false);
+        generateBox(level, box, 4, 5, 1, 9, 5, 2, Blocks::planks->defaultBlockState(),
+                    Blocks::planks->defaultBlockState(), false);
+        generateBox(level, box, 4, 5, 12, 9, 5, 13, Blocks::planks->defaultBlockState(),
+                    Blocks::planks->defaultBlockState(), false);
         placeBlock(level, Blocks::planks->defaultBlockState(), 9, 5, 11, box);
         placeBlock(level, Blocks::planks->defaultBlockState(), 8, 5, 11, box);
         placeBlock(level, Blocks::planks->defaultBlockState(), 9, 5, 10, box);
-        generateBox(level, box, 3, 6, 2, 3, 6, 12,
-            Blocks::fence->defaultBlockState(), Blocks::fence->defaultBlockState(), false);
-        generateBox(level, box, 10, 6, 2, 10, 6, 10,
-            Blocks::fence->defaultBlockState(), Blocks::fence->defaultBlockState(), false);
-        generateBox(level, box, 4, 6, 2, 9, 6, 2,
-            Blocks::fence->defaultBlockState(), Blocks::fence->defaultBlockState(), false);
-        generateBox(level, box, 4, 6, 12, 8, 6, 12,
-            Blocks::fence->defaultBlockState(), Blocks::fence->defaultBlockState(), false);
+        generateBox(level, box, 3, 6, 2, 3, 6, 12, Blocks::fence->defaultBlockState(),
+                    Blocks::fence->defaultBlockState(), false);
+        generateBox(level, box, 10, 6, 2, 10, 6, 10, Blocks::fence->defaultBlockState(),
+                    Blocks::fence->defaultBlockState(), false);
+        generateBox(level, box, 4, 6, 2, 9, 6, 2, Blocks::fence->defaultBlockState(),
+                    Blocks::fence->defaultBlockState(), false);
+        generateBox(level, box, 4, 6, 12, 8, 6, 12, Blocks::fence->defaultBlockState(),
+                    Blocks::fence->defaultBlockState(), false);
         placeBlock(level, Blocks::fence->defaultBlockState(), 9, 6, 11, box);
         placeBlock(level, Blocks::fence->defaultBlockState(), 8, 6, 11, box);
         placeBlock(level, Blocks::fence->defaultBlockState(), 9, 6, 10, box);
@@ -1005,10 +1090,17 @@ bool StrongholdPieces::Library::postProcess(Level* level, Random& random, Boundi
     return true;
 }
 
-StructurePiece* StrongholdPieces::Library::Create() { return new Library(); }
-EStructurePiece StrongholdPieces::Library::GetType() { return eStructurePiece_Library; }
+StructurePiece* StrongholdPieces::Library::Create()
+{
+    return new Library();
+}
+EStructurePiece StrongholdPieces::Library::GetType()
+{
+    return eStructurePiece_Library;
+}
 
-void StrongholdPieces::PrisonHall::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+void StrongholdPieces::PrisonHall::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces,
+                                               Random& random)
 {
     generateSmallDoorChildForward(static_cast<StartPiece*>(start), pieces, random, 1, 1);
 }
@@ -1019,24 +1111,23 @@ bool StrongholdPieces::PrisonHall::postProcess(Level* level, Random& random, Bou
         return false;
     generateBox(level, box, 0, 0, 0, 8, 4, 10, true, random, sStrongholdStoneSelector);
     generateSmallDoor(level, random, box, mEntryDoor, 1, 1, 0);
-    generateBox(level, box, 1, 1, 10, 3, 3, 10,
-        Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 1, 1, 10, 3, 3, 10, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
     generateBox(level, box, 4, 1, 1, 4, 3, 1, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 4, 1, 3, 4, 3, 3, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 4, 1, 7, 4, 3, 7, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 4, 1, 9, 4, 3, 9, false, random, sStrongholdStoneSelector);
-    generateBox(level, box, 4, 1, 4, 4, 3, 6,
-        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
-    generateBox(level, box, 5, 1, 5, 7, 3, 5,
-        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 4, 1, 4, 4, 3, 6, Blocks::iron_bars->defaultBlockState(),
+                Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 5, 1, 5, 7, 3, 5, Blocks::iron_bars->defaultBlockState(),
+                Blocks::iron_bars->defaultBlockState(), false);
     placeBlock(level, Blocks::iron_bars->defaultBlockState(), 4, 3, 2, box);
     placeBlock(level, Blocks::iron_bars->defaultBlockState(), 4, 3, 8, box);
 
-    const BlockState* lowerDoor =
-        Blocks::iron_door->defaultBlockState()->setValue(DoorBlock::FACING, Direction::WEST);
-    const BlockState* upperDoor =
-        Blocks::iron_door->defaultBlockState()->setValue(DoorBlock::FACING, Direction::WEST)
-            ->setValue(DoorBlock::HALF, DoorBlock::UPPER);
+    const BlockState* lowerDoor = Blocks::iron_door->defaultBlockState()->setValue(DoorBlock::FACING, Direction::WEST);
+    const BlockState* upperDoor = Blocks::iron_door->defaultBlockState()
+                                      ->setValue(DoorBlock::FACING, Direction::WEST)
+                                      ->setValue(DoorBlock::HALF, DoorBlock::UPPER);
     placeBlock(level, lowerDoor, 4, 1, 2, box);
     placeBlock(level, upperDoor, 4, 2, 2, box);
     placeBlock(level, lowerDoor, 4, 1, 8, box);
@@ -1044,8 +1135,14 @@ bool StrongholdPieces::PrisonHall::postProcess(Level* level, Random& random, Bou
     return true;
 }
 
-StructurePiece* StrongholdPieces::PrisonHall::Create() { return new PrisonHall(); }
-EStructurePiece StrongholdPieces::PrisonHall::GetType() { return eStructurePiece_PrisonHall; }
+StructurePiece* StrongholdPieces::PrisonHall::Create()
+{
+    return new PrisonHall();
+}
+EStructurePiece StrongholdPieces::PrisonHall::GetType()
+{
+    return eStructurePiece_PrisonHall;
+}
 
 void StrongholdPieces::RoomCrossing::addAdditionalSaveData(DataOutputStream* output)
 {
@@ -1059,7 +1156,8 @@ void StrongholdPieces::RoomCrossing::readAdditionalSaveData(DataInputStream* inp
     mType = input->readInt();
 }
 
-void StrongholdPieces::RoomCrossing::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+void StrongholdPieces::RoomCrossing::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces,
+                                                 Random& random)
 {
     StartPiece* startPiece = static_cast<StartPiece*>(start);
     generateSmallDoorChildForward(startPiece, pieces, random, 4, 1);
@@ -1073,12 +1171,12 @@ bool StrongholdPieces::RoomCrossing::postProcess(Level* level, Random& random, B
         return false;
     generateBox(level, box, 0, 0, 0, 10, 6, 10, true, random, sStrongholdStoneSelector);
     generateSmallDoor(level, random, box, mEntryDoor, 4, 1, 0);
-    generateBox(level, box, 4, 1, 10, 6, 3, 10,
-        Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 0, 1, 4, 0, 3, 6,
-        Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
-    generateBox(level, box, 10, 1, 4, 10, 3, 6,
-        Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 4, 1, 10, 6, 3, 10, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
+    generateBox(level, box, 0, 1, 4, 0, 3, 6, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
+    generateBox(level, box, 10, 1, 4, 10, 3, 6, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                false);
 
     switch (mType)
     {
@@ -1087,10 +1185,14 @@ bool StrongholdPieces::RoomCrossing::postProcess(Level* level, Random& random, B
         placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 1, 5, box);
         placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 2, 5, box);
         placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 3, 5, box);
-        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::WEST), 4, 3, 5, box);
-        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::EAST), 6, 3, 5, box);
-        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::SOUTH), 5, 3, 4, box);
-        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::NORTH), 5, 3, 6, box);
+        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::WEST), 4, 3, 5,
+                   box);
+        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::EAST), 6, 3, 5,
+                   box);
+        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::SOUTH), 5, 3, 4,
+                   box);
+        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::NORTH), 5, 3, 6,
+                   box);
         placeBlock(level, Blocks::stone_slab->defaultBlockState(), 4, 1, 4, box);
         placeBlock(level, Blocks::stone_slab->defaultBlockState(), 4, 1, 5, box);
         placeBlock(level, Blocks::stone_slab->defaultBlockState(), 4, 1, 6, box);
@@ -1166,8 +1268,14 @@ bool StrongholdPieces::RoomCrossing::postProcess(Level* level, Random& random, B
     return true;
 }
 
-StructurePiece* StrongholdPieces::RoomCrossing::Create() { return new RoomCrossing(); }
-EStructurePiece StrongholdPieces::RoomCrossing::GetType() { return eStructurePiece_StrongholdRoomCrossing; }
+StructurePiece* StrongholdPieces::RoomCrossing::Create()
+{
+    return new RoomCrossing();
+}
+EStructurePiece StrongholdPieces::RoomCrossing::GetType()
+{
+    return eStructurePiece_StrongholdRoomCrossing;
+}
 
 void StrongholdPieces::StairsDown::addAdditionalSaveData(DataOutputStream* output)
 {
@@ -1181,7 +1289,8 @@ void StrongholdPieces::StairsDown::readAdditionalSaveData(DataInputStream* input
     mIsSource = input->readBoolean();
 }
 
-void StrongholdPieces::StairsDown::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+void StrongholdPieces::StairsDown::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces,
+                                               Random& random)
 {
     if (mIsSource)
         sForcedPieceClass = ePieceClass_FiveCrossing;
@@ -1215,8 +1324,14 @@ bool StrongholdPieces::StairsDown::postProcess(Level* level, Random& random, Bou
     return true;
 }
 
-StructurePiece* StrongholdPieces::StairsDown::Create() { return new StairsDown(); }
-EStructurePiece StrongholdPieces::StairsDown::GetType() { return eStructurePiece_StairsDown; }
+StructurePiece* StrongholdPieces::StairsDown::Create()
+{
+    return new StairsDown();
+}
+EStructurePiece StrongholdPieces::StairsDown::GetType()
+{
+    return eStructurePiece_StairsDown;
+}
 
 void StrongholdPieces::Straight::addAdditionalSaveData(DataOutputStream* output)
 {
@@ -1232,7 +1347,8 @@ void StrongholdPieces::Straight::readAdditionalSaveData(DataInputStream* input, 
     mRightChild = input->readBoolean();
 }
 
-void StrongholdPieces::Straight::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+void StrongholdPieces::Straight::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces,
+                                             Random& random)
 {
     StartPiece* startPiece = static_cast<StartPiece*>(start);
     generateSmallDoorChildForward(startPiece, pieces, random, 1, 1);
@@ -1257,21 +1373,28 @@ bool StrongholdPieces::Straight::postProcess(Level* level, Random& random, Bound
     maybeGenerateBlock(level, box, random, 0.1f, 3, 2, 5, torchWest);
     if (mLeftChild)
     {
-        generateBox(level, box, 0, 1, 2, 0, 3, 4,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 0, 1, 2, 0, 3, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
     }
     if (mRightChild)
     {
-        generateBox(level, box, 4, 1, 2, 4, 3, 4,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 4, 1, 2, 4, 3, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
     }
     return true;
 }
 
-StructurePiece* StrongholdPieces::Straight::Create() { return new Straight(); }
-EStructurePiece StrongholdPieces::Straight::GetType() { return eStructurePiece_Straight; }
+StructurePiece* StrongholdPieces::Straight::Create()
+{
+    return new Straight();
+}
+EStructurePiece StrongholdPieces::Straight::GetType()
+{
+    return eStructurePiece_Straight;
+}
 
-void StrongholdPieces::StraightStairsDown::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+void StrongholdPieces::StraightStairsDown::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces,
+                                                       Random& random)
 {
     generateSmallDoorChildForward(static_cast<StartPiece*>(start), pieces, random, 1, 1);
 }
@@ -1283,7 +1406,8 @@ bool StrongholdPieces::StraightStairsDown::postProcess(Level* level, Random& ran
     generateBox(level, box, 0, 0, 0, 4, 10, 7, true, random, sStrongholdStoneSelector);
     generateSmallDoor(level, random, box, mEntryDoor, 1, 7, 0);
     generateSmallDoor(level, random, box, OPENING, 1, 1, 7);
-    const BlockState* stairs = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH);
+    const BlockState* stairs = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                   Direction::SOUTH);
     for (int i = 0; i < 6; ++i)
     {
         placeBlock(level, stairs, 1, 6 - i, 1 + i, box);
@@ -1299,8 +1423,14 @@ bool StrongholdPieces::StraightStairsDown::postProcess(Level* level, Random& ran
     return true;
 }
 
-StructurePiece* StrongholdPieces::StraightStairsDown::Create() { return new StraightStairsDown(); }
-EStructurePiece StrongholdPieces::StraightStairsDown::GetType() { return eStructurePiece_StraightStairsDown; }
+StructurePiece* StrongholdPieces::StraightStairsDown::Create()
+{
+    return new StraightStairsDown();
+}
+EStructurePiece StrongholdPieces::StraightStairsDown::GetType()
+{
+    return eStructurePiece_StraightStairsDown;
+}
 
 void StrongholdPieces::PortalRoom::addAdditionalSaveData(DataOutputStream* output)
 {
@@ -1330,28 +1460,28 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
     generateBox(level, box, 2, 6, 14, 8, 6, 14, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 1, 1, 1, 2, 1, 4, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 8, 1, 1, 9, 1, 4, false, random, sStrongholdStoneSelector);
-    generateBox(level, box, 1, 1, 1, 1, 1, 3,
-        Blocks::flowing_lava->defaultBlockState(), Blocks::flowing_lava->defaultBlockState(), false);
-    generateBox(level, box, 9, 1, 1, 9, 1, 3,
-        Blocks::flowing_lava->defaultBlockState(), Blocks::flowing_lava->defaultBlockState(), false);
+    generateBox(level, box, 1, 1, 1, 1, 1, 3, Blocks::flowing_lava->defaultBlockState(),
+                Blocks::flowing_lava->defaultBlockState(), false);
+    generateBox(level, box, 9, 1, 1, 9, 1, 3, Blocks::flowing_lava->defaultBlockState(),
+                Blocks::flowing_lava->defaultBlockState(), false);
     generateBox(level, box, 3, 1, 8, 7, 1, 12, false, random, sStrongholdStoneSelector);
-    generateBox(level, box, 4, 1, 9, 6, 1, 11,
-        Blocks::flowing_lava->defaultBlockState(), Blocks::flowing_lava->defaultBlockState(), false);
+    generateBox(level, box, 4, 1, 9, 6, 1, 11, Blocks::flowing_lava->defaultBlockState(),
+                Blocks::flowing_lava->defaultBlockState(), false);
     for (int z = 3; z < 14; z += 2)
     {
-        generateBox(level, box, 0, 3, z, 0, 4, z,
-            Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
-        generateBox(level, box, 10, 3, z, 10, 4, z,
-            Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+        generateBox(level, box, 0, 3, z, 0, 4, z, Blocks::iron_bars->defaultBlockState(),
+                    Blocks::iron_bars->defaultBlockState(), false);
+        generateBox(level, box, 10, 3, z, 10, 4, z, Blocks::iron_bars->defaultBlockState(),
+                    Blocks::iron_bars->defaultBlockState(), false);
     }
     for (int x = 2; x < 9; x += 2)
     {
-        generateBox(level, box, x, 3, 15, x, 4, 15,
-            Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+        generateBox(level, box, x, 3, 15, x, 4, 15, Blocks::iron_bars->defaultBlockState(),
+                    Blocks::iron_bars->defaultBlockState(), false);
     }
 
-    const BlockState* stairs =
-        Blocks::stone_brick_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH);
+    const BlockState* stairs = Blocks::stone_brick_stairs->defaultBlockState()->setValue(StairBlock::FACING,
+                                                                                         Direction::NORTH);
     generateBox(level, box, 4, 1, 5, 6, 1, 7, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 4, 2, 6, 6, 2, 7, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 4, 3, 7, 6, 3, 7, false, random, sStrongholdStoneSelector);
@@ -1362,14 +1492,14 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
         placeBlock(level, stairs, x, 3, 6, box);
     }
 
-    const BlockState* frameNorthState =
-        Blocks::end_portal_frame->defaultBlockState()->setValue(EndPortalFrameBlock::FACING, Direction::NORTH);
-    const BlockState* frameSouthState =
-        Blocks::end_portal_frame->defaultBlockState()->setValue(EndPortalFrameBlock::FACING, Direction::SOUTH);
-    const BlockState* frameEastState =
-        Blocks::end_portal_frame->defaultBlockState()->setValue(EndPortalFrameBlock::FACING, Direction::EAST);
-    const BlockState* frameWestState =
-        Blocks::end_portal_frame->defaultBlockState()->setValue(EndPortalFrameBlock::FACING, Direction::WEST);
+    const BlockState* frameNorthState = Blocks::end_portal_frame->defaultBlockState()->setValue(
+        EndPortalFrameBlock::FACING, Direction::NORTH);
+    const BlockState* frameSouthState = Blocks::end_portal_frame->defaultBlockState()->setValue(
+        EndPortalFrameBlock::FACING, Direction::SOUTH);
+    const BlockState* frameEastState = Blocks::end_portal_frame->defaultBlockState()->setValue(
+        EndPortalFrameBlock::FACING, Direction::EAST);
+    const BlockState* frameWestState = Blocks::end_portal_frame->defaultBlockState()->setValue(
+        EndPortalFrameBlock::FACING, Direction::WEST);
 
     bool complete = true;
     bool eyes[12];
@@ -1425,8 +1555,8 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
             bool isSpawner = eTYPE_DERIVED_FROM(BlockEntityType::MOB_SPAWNER, blockEntity->GetType());
             if (isSpawner)
             {
-                boost::shared_ptr<MobSpawnerBlockEntity> spawner =
-                    boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);
+                boost::shared_ptr<MobSpawnerBlockEntity> spawner = boost::static_pointer_cast<MobSpawnerBlockEntity>(
+                    blockEntity);
                 spawner->getSpawner()->setEntityId(EntityIO::getKey(EntityType::SILVERFISH));
             }
         }
@@ -1434,8 +1564,14 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
     return true;
 }
 
-StructurePiece* StrongholdPieces::PortalRoom::Create() { return new PortalRoom(); }
-EStructurePiece StrongholdPieces::PortalRoom::GetType() { return eStructurePiece_PortalRoom; }
+StructurePiece* StrongholdPieces::PortalRoom::Create()
+{
+    return new PortalRoom();
+}
+EStructurePiece StrongholdPieces::PortalRoom::GetType()
+{
+    return eStructurePiece_PortalRoom;
+}
 
 void StrongholdPieces::FillerCorridor::addAdditionalSaveData(DataOutputStream* output)
 {
@@ -1477,11 +1613,16 @@ bool StrongholdPieces::FillerCorridor::postProcess(Level* level, Random&, Boundi
     return true;
 }
 
-StructurePiece* StrongholdPieces::FillerCorridor::Create() { return new FillerCorridor(); }
-EStructurePiece StrongholdPieces::FillerCorridor::GetType() { return eStructurePiece_FillerCorridor; }
+StructurePiece* StrongholdPieces::FillerCorridor::Create()
+{
+    return new FillerCorridor();
+}
+EStructurePiece StrongholdPieces::FillerCorridor::GetType()
+{
+    return eStructurePiece_FillerCorridor;
+}
 
-StrongholdPieces::RightTurn::RightTurn()
-    : LeftTurn()
+StrongholdPieces::RightTurn::RightTurn() : LeftTurn()
 {
 }
 
@@ -1490,7 +1631,8 @@ StrongholdPieces::RightTurn::RightTurn(int depth, Random& random, BoundingBox* b
 {
 }
 
-void StrongholdPieces::RightTurn::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+void StrongholdPieces::RightTurn::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces,
+                                              Random& random)
 {
     const Direction* orientation = getOrientation();
     if (orientation == Direction::NORTH || orientation == Direction::EAST)
@@ -1508,19 +1650,25 @@ bool StrongholdPieces::RightTurn::postProcess(Level* level, Random& random, Boun
     const Direction* orientation = getOrientation();
     if (orientation == Direction::NORTH || orientation == Direction::EAST)
     {
-        generateBox(level, box, 4, 1, 1, 4, 3, 3,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 4, 1, 1, 4, 3, 3, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
     }
     else
     {
-        generateBox(level, box, 0, 1, 1, 0, 3, 3,
-            Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+        generateBox(level, box, 0, 1, 1, 0, 3, 3, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
+                    false);
     }
     return true;
 }
 
-StructurePiece* StrongholdPieces::RightTurn::Create() { return new RightTurn(); }
-EStructurePiece StrongholdPieces::RightTurn::GetType() { return eStructurePiece_RightTurn; }
+StructurePiece* StrongholdPieces::RightTurn::Create()
+{
+    return new RightTurn();
+}
+EStructurePiece StrongholdPieces::RightTurn::GetType()
+{
+    return eStructurePiece_RightTurn;
+}
 
 StrongholdPieces::StartPiece::StartPiece(int depth, Random& random, int x, int z, Level* level)
     : StairsDown(0, random, x, z)
@@ -1532,7 +1680,12 @@ StrongholdPieces::StartPiece::StartPiece(int depth, Random& random, int x, int z
 }
 
 StrongholdPieces::StartPiece::StartPiece()
-    : StairsDown(), mStartFlag(false), mLastPieceWeight(NULL), mPortalRoom(NULL), mLevel(NULL), mPendingChildren()
+    : StairsDown(),
+      mStartFlag(false),
+      mLastPieceWeight(NULL),
+      mPortalRoom(NULL),
+      mLevel(NULL),
+      mPendingChildren()
 {
 }
 
@@ -1543,7 +1696,10 @@ BlockPos StrongholdPieces::StartPiece::getLocatorPosition()
     return StructurePiece::getLocatorPosition();
 }
 
-EStructurePiece StrongholdPieces::StartPiece::GetType() { return eStructurePiece_StrongholdStartPiece; }
+EStructurePiece StrongholdPieces::StartPiece::GetType()
+{
+    return eStructurePiece_StrongholdStartPiece;
+}
 
 void StrongholdPieces::SmoothStoneSelector::next(Random& random, int, int, int, bool edge)
 {

@@ -56,8 +56,7 @@ public:
     virtual bool isWoolStat();
     virtual bool isBiomeStat();
     virtual bool isArmourStat();
-    virtual void handleParamBlob(boost::shared_ptr<LocalPlayer> player,
-                                 arrayWithLength<unsigned char> params);
+    virtual void handleParamBlob(boost::shared_ptr<LocalPlayer> player, arrayWithLength<unsigned char> params);
 
     Stat* setWoolStat(bool woolStat);
     Stat* setBiomeStat(bool biomeStat);

@@ -13,18 +13,12 @@ static struct
 {
     std::wstring name;
     DirectionalDegrade::EDirection direction;
-} sDirectionNames[7] =
-{
-    { L"North", DirectionalDegrade::eDirection_North },
-    { L"South", DirectionalDegrade::eDirection_South },
-    { L"East", DirectionalDegrade::eDirection_East },
-    { L"West", DirectionalDegrade::eDirection_West },
-    { L"ToEdges", DirectionalDegrade::eDirection_ToEdges },
-    { L"ToCentre", DirectionalDegrade::eDirection_ToCentre }
-};
+} sDirectionNames[7] = {
+    {L"North", DirectionalDegrade::eDirection_North},     {L"South", DirectionalDegrade::eDirection_South},
+    {L"East", DirectionalDegrade::eDirection_East},       {L"West", DirectionalDegrade::eDirection_West},
+    {L"ToEdges", DirectionalDegrade::eDirection_ToEdges}, {L"ToCentre", DirectionalDegrade::eDirection_ToCentre}};
 
-DirectionalDegrade::DirectionalDegrade()
-    : mDirection(eDirection_ToEdges)
+DirectionalDegrade::DirectionalDegrade() : mDirection(eDirection_ToEdges)
 {
 }
 
@@ -56,8 +50,7 @@ void DirectionalDegrade::ClearCaches()
     mBlocks.clear();
 }
 
-void DirectionalDegrade::NextBlocks(BlockDegradeRoutine::LayerCache* layerCache,
-                                    arrayWithLength<BlockPos>& blocks)
+void DirectionalDegrade::NextBlocks(BlockDegradeRoutine::LayerCache* layerCache, arrayWithLength<BlockPos>& blocks)
 {
     if (mBlocks.empty())
     {
@@ -72,16 +65,14 @@ void DirectionalDegrade::NextBlocks(BlockDegradeRoutine::LayerCache* layerCache,
 
         AABB* bounds = layerCache->getCurrentBounds();
         BlockPos min(bounds->mMinX, bounds->mMinY, bounds->mMinZ);
-        BlockPos size(bounds->mMaxX - bounds->mMinX,
-                      bounds->mMaxY - bounds->mMinY,
-                      bounds->mMaxZ - bounds->mMinZ);
+        BlockPos size(bounds->mMaxX - bounds->mMinX, bounds->mMaxY - bounds->mMinY, bounds->mMaxZ - bounds->mMinZ);
         BlockPos paddedSize = size.offset(BlockPos(1, 1, 1));
 
         Random random;
         PerlinNoise noise(&random, 3);
         arrayWithLength<double> values;
-        arrayWithLength<double> noiseValues = noise.getRegion(values, min.x, min.y, min.z,
-                                                              paddedSize.x, paddedSize.y, paddedSize.z, 5.0, 5.0, 5.0);
+        arrayWithLength<double> noiseValues = noise.getRegion(values, min.x, min.y, min.z, paddedSize.x, paddedSize.y,
+                                                              paddedSize.z, 5.0, 5.0, 5.0);
 
         CachedSortFunction sortFunction(noiseValues, bounds);
         std::sort(mBlocks.begin(), mBlocks.end(), sortFunction);

@@ -8,6 +8,7 @@ class FloatBuffer : public Buffer
 {
     friend class Camera;
     friend class GlStateManager;
+
 public:
     FloatBuffer(unsigned int capacity);
     FloatBuffer(unsigned int capacity, float* data);
@@ -18,6 +19,7 @@ public:
     FloatBuffer* put(arrayWithLength<float> values);
     void get(arrayWithLength<float>* values);
     float get(int index);
+
 protected:
     float* mBuffer;
 };

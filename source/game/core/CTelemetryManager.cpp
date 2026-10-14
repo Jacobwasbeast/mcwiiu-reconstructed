@@ -45,9 +45,8 @@ unsigned int CTelemetryManager::RecordHeartBeat(int playerId)
 }
 
 unsigned int CTelemetryManager::RecordLevelStart(int playerId, ESen_FriendOrMatch friendOrMatch,
-                                                 ESen_CompeteOrCoop competeOrCoop,
-                                                 int difficultyLevel, int localPlayerCount,
-                                                 int onlinePlayerCount)
+                                                 ESen_CompeteOrCoop competeOrCoop, int difficultyLevel,
+                                                 int localPlayerCount, int onlinePlayerCount)
 {
     if (playerId == gProfile->GetPrimaryPad())
         mLevelStarted = true;
@@ -68,9 +67,8 @@ unsigned int CTelemetryManager::RecordLevelSaveOrCheckpoint(int playerId, int sa
 }
 
 unsigned int CTelemetryManager::RecordLevelResume(int playerId, ESen_FriendOrMatch friendOrMatch,
-                                                  ESen_CompeteOrCoop competeOrCoop,
-                                                  int difficultyLevel, int localPlayerCount,
-                                                  int onlinePlayerCount, int secondsPlayed)
+                                                  ESen_CompeteOrCoop competeOrCoop, int difficultyLevel,
+                                                  int localPlayerCount, int onlinePlayerCount, int secondsPlayed)
 {
     return 1;
 }
@@ -90,51 +88,43 @@ unsigned int CTelemetryManager::RecordMenuShown(int playerId, EUIScene scene, in
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordAchievementUnlocked(int playerId, int achievementId,
-                                                          int gamerScore)
+unsigned int CTelemetryManager::RecordAchievementUnlocked(int playerId, int achievementId, int gamerScore)
 {
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordMediaShareUpload(int playerId,
-                                                       ESen_MediaDestination destination,
+unsigned int CTelemetryManager::RecordMediaShareUpload(int playerId, ESen_MediaDestination destination,
                                                        ESen_MediaType mediaType)
 {
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordUpsellPresented(int playerId, ESen_UpsellID upsellId,
-                                                      int upsellContext)
+unsigned int CTelemetryManager::RecordUpsellPresented(int playerId, ESen_UpsellID upsellId, int upsellContext)
 {
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordUpsellResponded(int playerId, ESen_UpsellID upsellId,
-                                                      int upsellContext,
+unsigned int CTelemetryManager::RecordUpsellResponded(int playerId, ESen_UpsellID upsellId, int upsellContext,
                                                       ESen_UpsellOutcome outcome)
 {
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordPlayerDiedOrFailed(int playerId, int locationX, int locationY,
-                                                         int locationZ, int enemyTypeId,
-                                                         int playerWeaponId, int causeOfDeathId,
+unsigned int CTelemetryManager::RecordPlayerDiedOrFailed(int playerId, int locationX, int locationY, int locationZ,
+                                                         int enemyTypeId, int playerWeaponId, int causeOfDeathId,
                                                          ETelemetryChallenges challenges)
 {
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordEnemyKilledOrOvercome(int playerId, int locationX,
-                                                            int locationY, int locationZ,
-                                                            int enemyTypeId, int playerWeaponId,
-                                                            int causeOfDeathId,
+unsigned int CTelemetryManager::RecordEnemyKilledOrOvercome(int playerId, int locationX, int locationY, int locationZ,
+                                                            int enemyTypeId, int playerWeaponId, int causeOfDeathId,
                                                             ETelemetryChallenges challenges)
 {
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordTexturePackLoaded(int playerId, int texturePackId,
-                                                        bool isDefault)
+unsigned int CTelemetryManager::RecordTexturePackLoaded(int playerId, int texturePackId, bool isDefault)
 {
     return 1;
 }
@@ -154,8 +144,7 @@ unsigned int CTelemetryManager::RecordUnBanLevel(int playerId)
     return 1;
 }
 
-unsigned int CTelemetryManager::PrepareMiniGameHostOptions(int playerId,
-                                                           const LaunchMoreOptionsMenuInitData* initData,
+unsigned int CTelemetryManager::PrepareMiniGameHostOptions(int playerId, const LaunchMoreOptionsMenuInitData* initData,
                                                            TelemetryJoinMethod joinMethod)
 {
     return 1;
@@ -171,28 +160,26 @@ unsigned int CTelemetryManager::RecordPlayerSettings(int playerId)
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordBlockPlaced(boost::shared_ptr<LocalPlayer> player, int blockId,
-                                                  int blockData, unsigned long long position)
+unsigned int CTelemetryManager::RecordBlockPlaced(boost::shared_ptr<LocalPlayer> player, int blockId, int blockData,
+                                                  unsigned long long position)
 {
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordBlockBroken(boost::shared_ptr<LocalPlayer> player, int blockId,
-                                                  int blockData, unsigned long long position)
+unsigned int CTelemetryManager::RecordBlockBroken(boost::shared_ptr<LocalPlayer> player, int blockId, int blockData,
+                                                  unsigned long long position)
 {
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordItemAcquired(boost::shared_ptr<LocalPlayer> player, int itemId,
-                                                   int itemData, int count,
-                                                   unsigned long long position, const Vec3* location)
+unsigned int CTelemetryManager::RecordItemAcquired(boost::shared_ptr<LocalPlayer> player, int itemId, int itemData,
+                                                   int count, unsigned long long position, const Vec3* location)
 {
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordItemUsed(boost::shared_ptr<LocalPlayer> player, int itemId,
-                                               int itemData, unsigned long long position, int count,
-                                               const Vec3* location)
+unsigned int CTelemetryManager::RecordItemUsed(boost::shared_ptr<LocalPlayer> player, int itemId, int itemData,
+                                               unsigned long long position, int count, const Vec3* location)
 {
     return 1;
 }
@@ -208,8 +195,7 @@ unsigned int CTelemetryManager::RecordGameModeRoundFinished()
     return 1;
 }
 
-unsigned int CTelemetryManager::RecordSavesInformation(int playerId, const SAVE_DETAILS* saves,
-                                                       unsigned int saveCount)
+unsigned int CTelemetryManager::RecordSavesInformation(int playerId, const SAVE_DETAILS* saves, unsigned int saveCount)
 {
     return 1;
 }
@@ -245,7 +231,8 @@ unsigned int CTelemetryManager::GetMode(unsigned int playerId)
     if (playerId < 4 && minecraft->mLocalPlayers[playerId] != NULL)
     {
         const GameType* gameType = NULL;
-        if (minecraft->mLocalPlayers[playerId]->mLevel != NULL && minecraft->mLocalPlayers[playerId]->mLevel->getLevelData() != NULL)
+        if (minecraft->mLocalPlayers[playerId]->mLevel != NULL
+            && minecraft->mLocalPlayers[playerId]->mLevel->getLevelData() != NULL)
             gameType = minecraft->mLocalPlayers[playerId]->mLevel->getLevelData()->getGameType();
 
         if (gameType == NULL && gApp.GetGameHostOption(eGameHostOption_HostCanFly))

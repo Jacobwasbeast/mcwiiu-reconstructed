@@ -7,8 +7,7 @@
 class TimeSpentCondition : public MultiConditionMedal::MultiCondition
 {
 public:
-    TimeSpentCondition(float target, eTimeSpentCategory category,
-        GameMedal::EOperator op, bool bestOnly);
+    TimeSpentCondition(float target, eTimeSpentCategory category, GameMedal::EOperator op, bool bestOnly);
 
     virtual ~TimeSpentCondition();
     virtual float getScore(const GameMedal* medal, PlayerStats* playerStats) const;
