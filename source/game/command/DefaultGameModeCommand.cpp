@@ -15,8 +15,7 @@
 
 extern MinecraftServer* gMinecraftServer;
 
-static const eGameHostOption eGameHostOption_DefaultGameMode =
-    eGameHostOption_GameType;
+static const eGameHostOption eGameHostOption_DefaultGameMode = eGameHostOption_GameType;
 static const ClientboundChatPacket::EChatPacketMessage eChatPacketMessage_AdminAction =
     ClientboundChatPacket::eChatPacketMessage_DefaultGameModeSuccess;
 
@@ -36,8 +35,7 @@ void DefaultGameModeCommand::doSetGameType(const GameType* gameType)
     {
         for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it =
                  gMinecraftServer->getPlayers()->mPlayers.begin();
-             it != gMinecraftServer->getPlayers()->mPlayers.end();
-             ++it)
+             it != gMinecraftServer->getPlayers()->mPlayers.end(); ++it)
         {
             boost::shared_ptr<ServerPlayer> player = *it;
             player->setGameMode(gameType);
@@ -51,8 +49,7 @@ void DefaultGameModeCommand::doSetGameType(const GameType* gameType)
     }
 }
 
-void DefaultGameModeCommand::execute(boost::shared_ptr<CommandSender> sender,
-                                     arrayWithLength<unsigned char> data)
+void DefaultGameModeCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data)
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
@@ -62,9 +59,8 @@ void DefaultGameModeCommand::execute(boost::shared_ptr<CommandSender> sender,
     doSetGameType(GameType::byId(gameType));
     gApp.SetGameHostOption(eGameHostOption_DefaultGameMode, gameType);
 
-    int intParams[1] = { gameType };
-    logAdminAction(sender, eChatPacketMessage_AdminAction,
-                   intParams, 1, NULL, 0);
+    int intParams[1] = {gameType};
+    logAdminAction(sender, eChatPacketMessage_AdminAction, intParams, 1, NULL, 0);
 }
 
 boost::shared_ptr<GameCommandPacket> DefaultGameModeCommand::preparePacket(unsigned char gameType)

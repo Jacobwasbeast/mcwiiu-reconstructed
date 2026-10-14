@@ -52,5 +52,6 @@ boost::shared_ptr<GameCommandPacket> ChangeCollisionTypeCommand::preparePacket(P
     stream.writePlayerUID(uid);
     stream.writeInt(collisionType);
 
-    return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket(eGameCommand_ChangeCollisionType, byteStream.toByteArray()));
+    return boost::shared_ptr<GameCommandPacket>(
+        new GameCommandPacket(eGameCommand_ChangeCollisionType, byteStream.toByteArray()));
 }

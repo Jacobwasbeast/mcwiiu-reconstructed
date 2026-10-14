@@ -43,18 +43,20 @@ void GameModeCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
             player->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeChanged, NULL, 0, NULL, 0);
         }
 
-        int intParams[1] = { gameMode };
+        int intParams[1] = {gameMode};
         std::wstring stringParams[1];
 
         stringParams[0] = player->getName();
 
         if (player != sender)
         {
-            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther, intParams, 1, stringParams, 1);
+            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther, intParams, 1,
+                           stringParams, 1);
         }
         else
         {
-            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_GameModeSuccessSelf, intParams, 1, stringParams, 1);
+            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_GameModeSuccessSelf, intParams, 1,
+                           stringParams, 1);
         }
     }
 }

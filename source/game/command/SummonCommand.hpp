@@ -11,7 +11,6 @@
 class SummonCommand : public Command
 {
 public:
-
     virtual EGameCommand getId();
     virtual int getPermissionLevel();
     virtual void execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data);

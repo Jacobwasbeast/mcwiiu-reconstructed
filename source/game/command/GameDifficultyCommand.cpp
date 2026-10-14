@@ -29,7 +29,7 @@ void GameDifficultyCommand::execute(boost::shared_ptr<CommandSender> sender, arr
 
     gMinecraftServer->setDifficulty(Difficulty::byId(difficulty));
 
-    int intParams[1] = { difficulty };
+    int intParams[1] = {difficulty};
     logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_DifficultySuccess, intParams, 1, NULL, 0);
 }
 

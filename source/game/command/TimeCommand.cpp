@@ -29,7 +29,7 @@ void TimeCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLeng
 
     doSetTime(sender, time);
 
-    int intParams[1] = { (int)time };
+    int intParams[1] = {(int)time};
 
     logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_TimeSuccess, intParams, 1, NULL, 0);
 }

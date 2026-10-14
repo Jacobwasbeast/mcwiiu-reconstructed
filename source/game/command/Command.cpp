@@ -35,7 +35,9 @@ bool Command::canExecute(boost::shared_ptr<CommandSender> sender)
     return allowed;
 }
 
-void Command::logAdminAction(boost::shared_ptr<CommandSender> sender, ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams)
+void Command::logAdminAction(boost::shared_ptr<CommandSender> sender, ClientboundChatPacket::EChatPacketMessage message,
+                             int* intParams, unsigned int numIntParams, std::wstring* stringParams,
+                             unsigned int numStringParams)
 {
     if (sLogger != NULL)
     {
@@ -60,7 +62,8 @@ boost::shared_ptr<ServerPlayer> Command::convertSourceToPlayer(boost::shared_ptr
     return boost::shared_ptr<ServerPlayer>();
 }
 
-boost::shared_ptr<ServerPlayer> Command::convertToPlayer(boost::shared_ptr<CommandSender> sender, std::wstring playerName)
+boost::shared_ptr<ServerPlayer> Command::convertToPlayer(boost::shared_ptr<CommandSender> sender,
+                                                         std::wstring playerName)
 {
     (void)sender;
     (void)playerName;

@@ -44,23 +44,25 @@ void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
             source->stopRidingBeforeTeleport();
             if (passenger)
             {
-                source->mConnection->teleport(target->mX, target->mY + 1.0, target->mZ, target->mYRot,
-                                              target->mXRot, true, true);
+                source->mConnection->teleport(target->mX, target->mY + 1.0, target->mZ, target->mYRot, target->mXRot,
+                                              true, true);
             }
             else
             {
-                source->mConnection->teleport(target->mX, target->mY, target->mZ, target->mYRot,
-                                              target->mXRot, true, true);
+                source->mConnection->teleport(target->mX, target->mY, target->mZ, target->mYRot, target->mXRot, true,
+                                              true);
             }
             if (source == sender)
             {
                 std::wstring stringParams = source->getName();
-                target->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedToYou, NULL, 0, &stringParams, 1);
+                target->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedToYou, NULL, 0, &stringParams,
+                                    1);
             }
             else
             {
                 std::wstring stringParams = target->getName();
-                source->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedYouToPosition, NULL, 0, &stringParams, 1);
+                source->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedYouToPosition, NULL, 0,
+                                    &stringParams, 1);
             }
         }
     }

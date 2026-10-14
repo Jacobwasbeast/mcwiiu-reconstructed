@@ -32,9 +32,10 @@ void SetDefaultSpawnpointCommand::execute(boost::shared_ptr<CommandSender> sende
         gMinecraftServer->getPlayers()->broadcastAll(boost::shared_ptr<ClientboundSetSpawnPositionPacket>(
             new ClientboundSetSpawnPositionPacket(pos.x, pos.y, pos.z)));
 
-        int intParams[3] = { pos.x, pos.y, pos.z };
+        int intParams[3] = {pos.x, pos.y, pos.z};
 
-        logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_DefaultSpawnpointSuccess, intParams, 3, NULL, 0);
+        logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_DefaultSpawnpointSuccess, intParams, 3, NULL,
+                       0);
     }
     else
     {

@@ -20,7 +20,8 @@ class CommandSender
 public:
     virtual ~CommandSender() {}
 
-    virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams) = 0;
+    virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams,
+                             unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams) = 0;
     virtual bool hasPermission(EGameCommand command) = 0;
     virtual std::wstring getDisplayName() = 0;
     virtual BlockPos getCommandSenderBlockPosition() = 0;

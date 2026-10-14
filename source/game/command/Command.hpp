@@ -29,14 +29,18 @@ public:
     boost::shared_ptr<ServerPlayer> getPlayer(PlayerUID uid);
 
     static void setLogger(AdminLogCommand* logger);
-    static void logAdminAction(boost::shared_ptr<CommandSender> sender, ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams);
+    static void logAdminAction(boost::shared_ptr<CommandSender> sender,
+                               ClientboundChatPacket::EChatPacketMessage message, int* intParams,
+                               unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams);
 
     static boost::shared_ptr<ServerPlayer> convertSourceToPlayer(boost::shared_ptr<CommandSender> sender);
-    static boost::shared_ptr<ServerPlayer> convertToPlayer(boost::shared_ptr<CommandSender> sender, std::wstring playerName);
+    static boost::shared_ptr<ServerPlayer> convertToPlayer(boost::shared_ptr<CommandSender> sender,
+                                                           std::wstring playerName);
     static std::wstring convertToPlayerName(boost::shared_ptr<CommandSender> sender, std::wstring playerName);
     static boost::shared_ptr<Entity> convertToEntity(boost::shared_ptr<CommandSender> sender, std::wstring entityName);
     static std::wstring convertToEntityName(boost::shared_ptr<CommandSender> sender, std::wstring entityName);
-    static std::vector<boost::shared_ptr<Entity> > convertToEntityList(boost::shared_ptr<CommandSender> sender, std::wstring entityName);
+    static std::vector<boost::shared_ptr<Entity> > convertToEntityList(boost::shared_ptr<CommandSender> sender,
+                                                                       std::wstring entityName);
 };
 
 #endif

@@ -12,7 +12,10 @@ class CommandSender;
 class AdminLogCommand
 {
 public:
-    virtual void logAdminCommand(boost::shared_ptr<CommandSender> sender, ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams) = 0;
+    virtual void logAdminCommand(boost::shared_ptr<CommandSender> sender,
+                                 ClientboundChatPacket::EChatPacketMessage message, int* intParams,
+                                 unsigned int numIntParams, std::wstring* stringParams,
+                                 unsigned int numStringParams) = 0;
 };
 
 #endif

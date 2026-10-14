@@ -33,6 +33,5 @@ boost::shared_ptr<GameCommandPacket> CompareCommand::preparePacket(unsigned char
 
     stream.writeByte(commandId);
 
-    return boost::shared_ptr<GameCommandPacket>(
-        new GameCommandPacket(eGameCommand_Compare, byteStream.toByteArray()));
+    return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket(eGameCommand_Compare, byteStream.toByteArray()));
 }

@@ -2,22 +2,19 @@
 
 #include "game/command/CommandSender.hpp"
 
-CommandDispatcher::CommandDispatcher()
-    : mCommandsById(), mCommands()
+CommandDispatcher::CommandDispatcher() : mCommandsById(), mCommands()
 {
 }
 
 CommandDispatcher::~CommandDispatcher()
 {
-    for (boost::unordered_set<Command*>::const_iterator it = mCommands.begin(), end = mCommands.end(); it != end;
-         ++it)
+    for (boost::unordered_set<Command*>::const_iterator it = mCommands.begin(), end = mCommands.end(); it != end; ++it)
     {
         delete *it;
     }
 }
 
-unsigned int CommandDispatcher::performCommand(boost::shared_ptr<CommandSender> sender,
-                                               EGameCommand command,
+unsigned int CommandDispatcher::performCommand(boost::shared_ptr<CommandSender> sender, EGameCommand command,
                                                arrayWithLength<unsigned char> data)
 {
     boost::unordered_map<EGameCommand, Command*>::iterator it = mCommandsById.find(command);

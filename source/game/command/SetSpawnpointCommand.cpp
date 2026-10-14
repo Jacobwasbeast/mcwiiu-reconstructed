@@ -40,12 +40,13 @@ void SetSpawnpointCommand::execute(boost::shared_ptr<CommandSender> sender, arra
 
             player->setRespawnPosition(new BlockPos(pos), true);
 
-            int intParams[3] = { pos.x, pos.y, pos.z };
+            int intParams[3] = {pos.x, pos.y, pos.z};
             std::wstring stringParams[1];
 
             stringParams[0] = player->getName();
 
-            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_SpawnpointSuccess, intParams, 3, stringParams, 1);
+            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_SpawnpointSuccess, intParams, 3,
+                           stringParams, 1);
         }
     }
     else
@@ -70,5 +71,6 @@ boost::shared_ptr<GameCommandPacket> SetSpawnpointCommand::preparePacket(PlayerU
 
     stream.writePlayerUID(uid);
 
-    return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket(eGameCommand_SetSpawnpoint, byteStream.toByteArray()));
+    return boost::shared_ptr<GameCommandPacket>(
+        new GameCommandPacket(eGameCommand_SetSpawnpoint, byteStream.toByteArray()));
 }

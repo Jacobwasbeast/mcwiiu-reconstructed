@@ -78,19 +78,18 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
         {
             if ((unsigned int)checkpoint < checkpoints->size())
             {
-                playerGameMode->RecordLastCheckpoint(checkpoint,
-                                                     (*checkpoints)[checkpoint]->getSequenceID(), true, true, true);
+                playerGameMode->RecordLastCheckpoint(checkpoint, (*checkpoints)[checkpoint]->getSequenceID(), true,
+                                                     true, true);
             }
         }
 
-        for (int lastCheckpoint = playerGameMode->getLastCheckpoint(); lastCheckpoint >= 0;
-             --lastCheckpoint)
+        for (int lastCheckpoint = playerGameMode->getLastCheckpoint(); lastCheckpoint >= 0; --lastCheckpoint)
         {
             if ((*checkpoints)[lastCheckpoint]->hasSpawnPoint())
             {
                 playerGameMode->ResetTempPoints();
-                playerGameMode->RecordLastCheckpoint(lastCheckpoint,
-                                                     (*checkpoints)[lastCheckpoint]->getSequenceID(), true, true, true);
+                playerGameMode->RecordLastCheckpoint(lastCheckpoint, (*checkpoints)[lastCheckpoint]->getSequenceID(),
+                                                     true, true, true);
 
                 UpdatePlayerRuleDefinition* spawnPoint = (*checkpoints)[lastCheckpoint]->GetSpawnPoint();
                 int spawnX = spawnPoint->getX();
@@ -101,8 +100,7 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
                 std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = players->getPlayers();
 
                 std::vector<boost::shared_ptr<ServerPlayer> >::iterator end = allPlayers->end();
-                for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = allPlayers->begin();
-                     it != end; ++it)
+                for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = allPlayers->begin(); it != end; ++it)
                 {
                     if (*it && (*it)->GetCamera() == player)
                     {
