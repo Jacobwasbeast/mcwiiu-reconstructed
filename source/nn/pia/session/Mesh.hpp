@@ -188,7 +188,7 @@ public:
     Result LeaveMeshWithHostMigration(common::CallContext* callerContext);
     bool IsProcessingLeaveMesh() const;
     StationIndex GetUsableStationIndex();
-    Result CheckApprovalJoin(transport::Station* station);
+    unsigned char CheckApprovalJoin(transport::Station* station);
     Result JoinMeshCore(const transport::StationConnectionInfo& info,
                         common::CallContext* callerContext);
     Result LeaveMesh(common::CallContext* callerContext);

@@ -17,9 +17,11 @@
 #include "nn/pia/session/SyncClockProtocol.hpp"
 #include "nn/pia/transport/BandwidthCheckProtocol.hpp"
 #include "nn/pia/transport/IdentificationInfoTable.hpp"
+#include "nn/pia/transport/ProtocolEvent.hpp"
 #include "nn/pia/transport/RelayRouteManager.hpp"
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
+#include "nn/pia/transport/StationConnectionInfoTable.hpp"
 #include "nn/pia/transport/StationProtocol.hpp"
 #include "nn/pia/common/Scheduler.hpp"
 #include "nn/pia/common/SessionBeginMonitoringContent.hpp"
@@ -34,6 +36,7 @@
 #include "nn/pia/transport/StationProtocolManager.hpp"
 #include "platform/wiiu/pead.hpp"
 #include <nn/act/client_cpp.h>
+#include <nn/fp/fp_cpp.h>
 #include <coreinit/memory.h>
 #include <new>
 
@@ -92,7 +95,22 @@ enum
     cIdentificationInfoPlayersCounted = 3,
     cSyncClockProtocolType = 0x1c,
     cDisconnectReasonDestroyed = 0x10c08,
-    cStationUnused = 0xfd
+    cStationUnused = 0xfd,
+    cMeshAlignment = 8,
+    cProtocolEventConnect = 0,
+    cProtocolEventDisconnect = 1,
+    cMeshEventMeshStateCreated = 0x11,
+    cMeshEventMeshStateChanged = 0x12,
+    cMeshEventJoinRequestParticipants = 0x18,
+    cMeshEventJoinRequestPrincipal = 0x19,
+    cJoinDenyReasonSessionFull = 0,
+    cJoinDenyReasonNotAccepting = 2,
+    cJoinDenyReasonInvalidState = 4,
+    cJoinApproved = 0xff,
+    cRecentPlayNameLengthMax = 20,
+    cRecentPlayNameCopyMax = nn::act::AccountIdSize - 1,
+    cRecentPlayRecordCount = 1,
+    cLanguageByteBits = 8
 };
 
 const unsigned int cMonitoringUnset32 = 0xffffffffu;
@@ -385,34 +403,35 @@ Result Mesh::CreateInstance(const Setting& setting)
     if ((!relayPermitted && setting.m_networkTopologyType != 0) || !topologyAllowed)
         return static_cast<Result>(cResultInvalidArgument);
 
-    if (g_piaMesh != 0)
-        return static_cast<Result>(cResultAlreadyInitialized);
-
-    sMeshStorage = common::NewArray<unsigned char>(sizeof(Mesh));
-    if (sMeshStorage == 0)
-        return static_cast<Result>(cResultOutOfMemory);
-
-    g_piaMesh = new (sMeshStorage) Mesh(setting);
     if (g_piaMesh == 0)
     {
-        common::DeleteArray<unsigned char>(sMeshStorage);
-        sMeshStorage = 0;
-        return static_cast<Result>(cResultOutOfMemory);
-    }
+        sMeshStorage = common::NewArray<unsigned char>(sizeof(Mesh), cMeshAlignment);
+        if (sMeshStorage == 0)
+            return static_cast<Result>(cResultOutOfMemory);
 
-    const Result result = g_piaMesh->Initialize(setting, sDebugSetting.m_relayEmulationEnabled != 0);
-    if (result == 0)
-    {
+        g_piaMesh = new (sMeshStorage) Mesh(setting);
+        if (g_piaMesh == 0)
+        {
+            common::DeleteArray<unsigned char>(sMeshStorage);
+            sMeshStorage = 0;
+            return static_cast<Result>(cResultOutOfMemory);
+        }
+
+        const Result result = g_piaMesh->Initialize(setting, sDebugSetting.m_relayEmulationEnabled != 0);
+        if (result != 0)
+        {
+            g_piaMesh->~Mesh();
+            g_piaMesh = 0;
+            common::DeleteArray<unsigned char>(sMeshStorage);
+            sMeshStorage = 0;
+            return result;
+        }
+
         common::g_sessionBeginMonitoringContent.m_metric45 =
             static_cast<unsigned char>(setting.m_networkTopologyType);
         return 0;
     }
-
-    g_piaMesh->~Mesh();
-    g_piaMesh = 0;
-    common::DeleteArray<unsigned char>(sMeshStorage);
-    sMeshStorage = 0;
-    return result;
+    return static_cast<Result>(cResultAlreadyInitialized);
 }
 
 void Mesh::DestroyInstance()
@@ -481,12 +500,8 @@ bool Mesh::IsValidStationIndex(StationIndex index) const
     if (static_cast<int>(index) > 31)
         return false;
     unsigned int mask = 1;
-    unsigned int shift = index & 0xffff;
-    while (shift != 0)
-    {
+    for (unsigned short shift = 0; shift < static_cast<unsigned short>(index); ++shift)
         mask <<= 1;
-        --shift;
-    }
     return (m_validStationBitmap & mask) != 0;
 }
 
@@ -495,19 +510,29 @@ void Mesh::StopUse(StationIndex index)
     if (static_cast<int>(index) > 31)
         return;
     unsigned int mask = 1;
-    unsigned int shift = index & 0xffff;
-    while (shift != 0)
-    {
+    for (unsigned short shift = 0; shift < static_cast<unsigned short>(index); ++shift)
         mask <<= 1;
-        --shift;
-    }
     m_validStationBitmap &= ~mask;
+    if (m_unknown24 != 0)
+        m_unknown24->m_stationBitmap &= ~mask;
     m_connectedStationBitmap &= ~mask;
+    transport::g_piaTransport->m_stationIdTable->SetJoinEventNotifiedByStationIndex(index, false);
 }
 
 void Mesh::UnfixDisconnectedId(StationIndex index)
 {
-    StopUse(index);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(index);
+    Result result;
+    {
+        transport::ProtocolEvent event = {cProtocolEventDisconnect, station->GetStationAddress()};
+        result = transport::g_piaTransport->m_protocolManager.UpdateProtocolEvent(event);
+    }
+    if (result == 0)
+    {
+        m_kickoutManageJob->SetLeaveEventStationIndex(index);
+        NoticeMeshEvent(cEventTypeLeave, index);
+        StopUse(index);
+    }
 }
 
 void Mesh::ResetStationIndexUsage()
@@ -518,7 +543,20 @@ void Mesh::ResetStationIndexUsage()
 
 void Mesh::SetMeshState(State state)
 {
+    if (m_meshState == static_cast<unsigned int>(state))
+        return;
     m_meshState = static_cast<unsigned int>(state);
+    if (m_meshEventListener != 0)
+    {
+        MeshEventListener::MeshEvent event;
+        if (state == cStateCreated)
+            event.type = cMeshEventMeshStateCreated;
+        else
+            event.type = cMeshEventMeshStateChanged;
+        event.stationIndex = cStationIndexInvalid;
+        event.stationId = 0;
+        m_meshEventListener->NoticeEvent(event);
+    }
 }
 
 void Mesh::CleanupStatus()
@@ -771,21 +809,24 @@ Result Mesh::Startup(StartupSetting& setting)
 Result Mesh::CreateMesh(common::CallContext* callerContext)
 {
     if (callerContext != 0 && callerContext->m_state == common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     if (m_meshState == cStateCreated)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
+    if (transport::StationManager::s_pInstance->m_localStation != 0)
+        return static_cast<Result>(cResultInvalidState);
     if (m_createMeshJob->GetState() != common::Job::cStateNotEntried &&
         m_createMeshJob->GetState() != common::Job::cStateCompleted)
-        return static_cast<Result>(0x10c08);
-    m_createMeshJob->Startup(callerContext);
-    m_createMeshJob->Ready(true);
-    return 0;
+        return static_cast<Result>(cResultInvalidState);
+    const Result result = m_createMeshJob->Startup(callerContext);
+    if (result == 0)
+        m_createMeshJob->Ready(true);
+    return result;
 }
 
 Result Mesh::CreateMeshAsync()
 {
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     ResetInternalAsyncState();
     const Result result = CreateMesh(&m_callContext);
     if (result == 0)
@@ -810,7 +851,7 @@ Result Mesh::GetAsyncProcessResult(AsyncProcessingName process)
     if (m_asyncProcess == static_cast<unsigned int>(process) &&
         m_callContext.m_state - 2u < 3u)
         return m_callContext.m_result;
-    return static_cast<Result>(0x10c08);
+    return static_cast<Result>(cResultInvalidState);
 }
 
 Result Mesh::GetCreateMeshResult()
@@ -822,7 +863,7 @@ Result Mesh::CancelAsyncProcess(AsyncProcessingName process)
 {
     if (m_asyncProcess != static_cast<unsigned int>(process) ||
         m_callContext.m_state != common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     m_callContext.Cancel();
     return 0;
 }
@@ -862,7 +903,7 @@ void Mesh::SetSkipCleanupReport(bool skip)
 Result Mesh::JoinMeshAsync(const transport::StationConnectionInfo& info)
 {
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     ResetInternalAsyncState();
     const Result result = JoinMeshCore(info, &m_callContext);
     if (result == 0)
@@ -897,7 +938,7 @@ Result Mesh::CancelJoinMeshAsync()
 Result Mesh::LeaveMeshAsync()
 {
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     ResetInternalAsyncState();
     const Result result = LeaveMesh(&m_callContext);
     if (result == 0)
@@ -1002,7 +1043,7 @@ void Mesh::UnregisterJoiningMeshApprovalCallback()
 Result Mesh::RegisterCheckHostCandidateRankingCallback(HostCandidateRankingCallback callback)
 {
     if (m_hostMigrationMode != 2)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     m_hostCandidateRankingCallback = callback;
     return 0;
 }
@@ -1116,19 +1157,27 @@ void Mesh::StartUse(StationIndex index)
     if (static_cast<int>(index) > 31)
         return;
     unsigned int mask = 1;
-    unsigned int shift = index & 0xffff;
-    while (shift != 0)
-    {
+    for (unsigned short shift = 0; shift < static_cast<unsigned short>(index); ++shift)
         mask <<= 1;
-        --shift;
-    }
     m_validStationBitmap |= mask;
+    if (m_unknown24 != 0)
+        m_unknown24->m_stationBitmap |= mask;
 }
 
 void Mesh::FixConnectedId(StationIndex index)
 {
-    StartUse(index);
-    NoticeMeshEvent(cEventTypeJoin, index);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(index);
+    Result result;
+    {
+        transport::ProtocolEvent event = {cProtocolEventConnect, station->GetStationAddress()};
+        result = transport::g_piaTransport->m_protocolManager.UpdateProtocolEvent(event);
+    }
+    if (result == 0)
+    {
+        transport::g_piaTransport->OutputStreamUpdateEvent();
+        StartUse(index);
+        NoticeMeshEvent(cEventTypeJoin, index);
+    }
 }
 
 void Mesh::JoinResponseComplete(StationIndex index)
@@ -1136,12 +1185,8 @@ void Mesh::JoinResponseComplete(StationIndex index)
     if (static_cast<int>(index) > 31)
         return;
     unsigned int mask = 1;
-    unsigned int shift = index & 0xffff;
-    while (shift != 0)
-    {
+    for (unsigned short shift = 0; shift < static_cast<unsigned short>(index); ++shift)
         mask <<= 1;
-        --shift;
-    }
     m_connectedStationBitmap |= mask;
 }
 
@@ -1155,9 +1200,46 @@ void Mesh::ProcessingAtEndHM()
 {
 }
 
-void Mesh::AddPlayHistory(transport::Station*, transport::Station::PlayerInfo*, unsigned int count)
+void Mesh::AddPlayHistory(transport::Station* station, transport::Station::PlayerInfo*, unsigned int)
 {
-    (void)count;
+    nn::fp::RecentPlayRecord record;
+    OSBlockSet(&record, 0, sizeof(record));
+    transport::IdentificationInfo stationInfo;
+    transport::StationConnectionInfo connectionInfo;
+    transport::IdentificationInfo localInfo;
+
+    if (transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(station, &stationInfo) != 0)
+        return;
+    if (stationInfo.m_field109 != cIdentificationInfoPlayersCounted)
+        return;
+    if (stationInfo.m_field60[0].GetStringLength() == 0 ||
+        stationInfo.m_field60[0].GetStringLength() > cRecentPlayNameLengthMax)
+        return;
+    if (transport::g_stationConnectionInfoTable->GetStationConnectionInfo(station, &connectionInfo) != 0)
+        return;
+    if (transport::IdentificationInfoTable::GetInstance()->GetLocalIdentificationInfo(&localInfo) != 0)
+        return;
+    if (localInfo.m_field60[0].GetStringLength() == 0 ||
+        localInfo.m_field60[0].GetStringLength() > cRecentPlayNameLengthMax)
+        return;
+
+    const wchar_t* stationName = static_cast<const wchar_t*>(stationInfo.m_field60[0].GetBuffer());
+    const unsigned int stationNameLength = stationInfo.m_field60[0].GetStringLength();
+    const wchar_t* localName = static_cast<const wchar_t*>(localInfo.m_field60[0].GetBuffer());
+    const unsigned int localNameLength = localInfo.m_field60[0].GetStringLength();
+
+    unsigned int index;
+    for (index = 0; index < cRecentPlayNameCopyMax && index < stationNameLength; ++index)
+        record.inGameName[index] = *stationName++;
+    record.inGameName[index] = 0;
+    record.principalId = static_cast<nn::act::PrincipalId>(connectionInfo.m_stationLocation.m_principalId);
+
+    for (index = 0; index < cRecentPlayNameCopyMax && index < localNameLength; ++index)
+        record.myMiiName[index] = *localName++;
+    record.myMiiName[index] = 0;
+    record.unk_0x04 = static_cast<uint16_t>((stationInfo.m_field108 << cLanguageByteBits) | localInfo.m_field108);
+
+    nn::fp::AddRecentPlayRecord(&record, cRecentPlayRecordCount);
 }
 
 void Mesh::NoticeMeshEvent(EventType type, StationIndex index)
@@ -1225,9 +1307,9 @@ void Mesh::ProcessingAtMeshEnd(DisconnectReason reason)
 Result Mesh::DestroyMesh(common::CallContext* callerContext)
 {
     if (m_unknown5c == static_cast<StationIndex>(0xfd) || m_unknown5c != m_unknown58)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     if (callerContext != 0 && callerContext->m_state == common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     m_unknown56 = 0;
     if (GetStationNum() < 2)
     {
@@ -1255,11 +1337,11 @@ bool Mesh::IsHostMigrationEnabled() const
 Result Mesh::LeaveMeshWithHostMigration(common::CallContext* callerContext)
 {
     if (!IsHostMigrationEnabled())
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     if (m_unknown5c == static_cast<StationIndex>(0xfd) || m_unknown5c != m_unknown58)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     if (callerContext != 0 && callerContext->m_state == common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     m_unknown56 = 0;
     if (GetStationNum() < 2)
     {
@@ -1280,7 +1362,7 @@ Result Mesh::LeaveMeshWithHostMigration(common::CallContext* callerContext)
 Result Mesh::LeaveMesh(common::CallContext* callerContext)
 {
     if (callerContext != 0 && callerContext->m_state == common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     if (m_meshState == cStateNone)
     {
         if (callerContext != 0)
@@ -1291,12 +1373,12 @@ Result Mesh::LeaveMesh(common::CallContext* callerContext)
         return 0;
     }
     if (m_unknown5c == static_cast<StationIndex>(0xfd) || m_unknown5c == m_unknown58)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     if (m_leaveMeshJob->Startup(callerContext))
         m_leaveMeshJob->Ready(false);
     else if ((!m_kickoutManageJob->IsRunning() || !m_kickoutManageJob->AssociateKickoutWith(callerContext)) &&
              m_leaveMeshJob->RegisterExtraCallback(callerContext) == 0)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     return 0;
 }
 
@@ -1310,32 +1392,70 @@ StationIndex Mesh::GetUsableStationIndex()
     return static_cast<StationIndex>(0xfd);
 }
 
-Result Mesh::CheckApprovalJoin(transport::Station*)
+unsigned char Mesh::CheckApprovalJoin(transport::Station* station)
 {
+    unsigned long long principalId = 0;
     if (m_unknown56 == 0 || IsProcessingLeaveMesh())
-        return static_cast<Result>(2);
-    if (m_unknown54 <= GetStationNum() || GetUsableStationIndex() == static_cast<StationIndex>(0xfd))
-        return 0;
-    if (m_denyJoinRequestBySessionIsFull != 0)
+        return cJoinDenyReasonNotAccepting;
+    if (GetStationNum() >= m_unknown54 || GetUsableStationIndex() == cStationIndexInvalid)
+        return cJoinDenyReasonSessionFull;
+
+    transport::StationConnectionInfo connectionInfo;
+    if (transport::g_stationConnectionInfoTable->GetStationConnectionInfo(station, &connectionInfo) != 0)
+        return cJoinDenyReasonNotAccepting;
+
+    if (connectionInfo.m_stationLocation.m_principalId != 0)
+        principalId = connectionInfo.m_stationLocation.m_principalId;
+    else if (connectionInfo.m_localStationLocation.m_principalId != 0)
+        principalId = connectionInfo.m_localStationLocation.m_principalId;
+    if (principalId == 0 || transport::g_piaTransport->m_stationIdTable->FindByUniqueIdCore(principalId) == 0)
     {
-        m_denyJoinRequestBySessionIsFull = 0;
-        return 0;
+        if (transport::g_piaTransport->m_stationIdTable->GetEntryNum() >= transport::g_piaTransport->m_stationNum)
+            return cJoinDenyReasonSessionFull;
+        transport::StationIdTable* stationIdTable = transport::g_piaTransport->m_stationIdTable;
+        if (stationIdTable->GetEntryNum() >= stationIdTable->m_availableEntryNum)
+            return cJoinDenyReasonSessionFull;
     }
-    if (m_denyJoinRequestByInvalidState != 0)
+
+    if (m_meshEventListener != 0)
     {
-        m_denyJoinRequestByInvalidState = 0;
-        return static_cast<Result>(4);
+        unsigned char participantCount = 1;
+        if (station->GetParticipantCount(&participantCount) != 0)
+            participantCount = 1;
+        MeshEventListener::MeshEvent participantsEvent;
+        participantsEvent.type = cMeshEventJoinRequestParticipants;
+        participantsEvent.stationIndex = station->GetStationIndex();
+        participantsEvent.stationId = participantCount;
+        m_meshEventListener->NoticeEvent(participantsEvent);
+        if (m_denyJoinRequestBySessionIsFull != 0)
+        {
+            m_denyJoinRequestBySessionIsFull = 0;
+            return cJoinDenyReasonSessionFull;
+        }
+
+        MeshEventListener::MeshEvent principalEvent;
+        principalEvent.type = cMeshEventJoinRequestPrincipal;
+        principalEvent.stationIndex = station->GetStationIndex();
+        principalEvent.stationId = principalId;
+        m_meshEventListener->NoticeEvent(principalEvent);
+        if (m_denyJoinRequestByInvalidState != 0)
+        {
+            m_denyJoinRequestByInvalidState = 0;
+            return cJoinDenyReasonInvalidState;
+        }
     }
-    return static_cast<Result>(0xff);
+    return cJoinApproved;
 }
 
 Result Mesh::JoinMeshCore(const transport::StationConnectionInfo& info,
                           common::CallContext* callerContext)
 {
     if (m_meshState == cStateCreated)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
+    if (transport::StationManager::s_pInstance->m_localStation != 0)
+        return static_cast<Result>(cResultInvalidState);
     if (callerContext != 0 && callerContext->m_state == common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     m_unknown88 = 0;
     m_unknown58 = static_cast<StationIndex>(0xfe);
     m_unknown80 = 0;
@@ -1367,7 +1487,7 @@ ProcessUpdateMeshJob* Mesh::GetProcessUpdateMeshJobPtr()
 Result Mesh::setDebugSettingImpl(const DebugSetting& setting)
 {
     if (g_piaMesh != 0)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(cResultInvalidState);
     sDebugSetting = setting;
     return 0;
 }
@@ -1417,13 +1537,13 @@ unsigned int Mesh::GetDisconnectReason() const
 {
     if (m_meshState == cStateCreated)
         return 0;
-    if (m_disconnectReason == 1)
-        return 1;
+    if (m_disconnectReason == cDisconnectReasonNormal)
+        return m_disconnectReason;
     if (m_kickoutManageJob->m_kickoutReason == 0)
         return m_disconnectReason;
-    if (m_kickoutManageJob->m_kickoutReason != 2)
-        return 5;
-    return 4;
+    if (m_kickoutManageJob->m_kickoutReason != cKickoutReasonRequested)
+        return cMonitoringReasonKickoutRequested;
+    return cMonitoringReasonKickout;
 }
 
 bool Mesh::IsBandwidthCheckProtocolSetupParamValid(int measurementTime,

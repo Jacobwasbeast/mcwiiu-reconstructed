@@ -470,7 +470,7 @@ RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::CompleteProcess()
         common::g_sessionBeginMonitoringContent.m_joinMeshState =
             static_cast<unsigned char>(session->GetJoinMeshState());
         setStep(&RandomMatchmakeJob::LeaveMesh, "RandomMatchmakeJob::LeaveMesh");
-        return MakeExecuteResult(cExecuteKindContinue);
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     session->m_postponeNotice = false;
     session->m_stationIdStatusTable->ClearDisconnectedStationId();

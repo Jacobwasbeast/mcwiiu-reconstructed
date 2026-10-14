@@ -1027,7 +1027,7 @@ JoinMeshJob::ExecuteResult JoinMeshJob::WaitAllConnection()
     }
     unsigned short connectedCount = 0;
     bool waiting = false;
-    for (unsigned short index = 0; index < m_stationCount; ++index)
+    for (unsigned int index = 0; index < m_stationCount; ++index)
     {
         if (m_stationIndices[index] == static_cast<unsigned int>(localStationIndex))
         {
@@ -1047,8 +1047,43 @@ JoinMeshJob::ExecuteResult JoinMeshJob::WaitAllConnection()
             }
         }
     }
-    if (waiting || (m_stationCount != 0 && connectedCount == cLocalAndHostStationCount))
+    if (waiting || (connectedCount == cLocalAndHostStationCount &&
+                    (g_piaMesh->m_unknown80 == 0 || g_piaMesh->m_processUpdateMeshJob->m_started)))
     {
+        unsigned int meshVersion = g_piaMesh->m_unknown80;
+        if (meshVersion != 0)
+        {
+            ProcessUpdateMeshJob* updateJob = g_piaMesh->m_processUpdateMeshJob;
+            if (updateJob->m_started)
+                meshVersion = updateJob->m_updateVersion;
+            if (m_lastUpdateCount < meshVersion)
+            {
+                for (unsigned int index = 0; index < m_stationCount; ++index)
+                {
+                    if (m_stationConnected[index] == 0)
+                    {
+                        m_stationConnected[index] = 1;
+                        if (m_stationIndices[index] == static_cast<unsigned int>(localStationIndex))
+                        {
+                            m_stationConnected[index] = 0;
+                        }
+                        else
+                        {
+                            for (unsigned int entry = 0; entry < updateJob->m_stationCount; ++entry)
+                            {
+                                if (updateJob->m_stationIndices[entry] == m_stationIndices[index])
+                                {
+                                    if (updateJob->m_stationConnectionInfos[entry] == m_stationInfos[index])
+                                        m_stationConnected[index] = 0;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                m_lastUpdateCount = meshVersion;
+            }
+        }
         if (CheckTransportConnectionStatus() != 0)
             return MakeExecuteResult(cExecuteKindFinished);
         if (CheckConnectionStateWithHostStation() != 0)
@@ -1062,6 +1097,7 @@ JoinMeshJob::ExecuteResult JoinMeshJob::WaitAllConnection()
         return MakeExecuteResult(cExecuteKindNextStep);
     g_piaMesh->SetMeshState(Mesh::cStateCreated);
     g_piaMesh->m_disconnectReason = 0;
+    g_piaMesh->GetProcessUpdateMeshJobPtr()->m_leaveMeshOnFailure = false;
     return SetNextStepAfterWaitAllConnection();
 }
 
