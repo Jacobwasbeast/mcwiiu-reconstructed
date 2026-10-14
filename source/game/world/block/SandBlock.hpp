@@ -28,8 +28,8 @@ public:
         static Variant* SAND;
         static Variant* RED_SAND;
 
-        Variant(int data, const std::wstring& name, int nameId, int descriptionId,
-                const MaterialColor* materialColor, int dustColor);
+        Variant(int data, const std::wstring& name, int nameId, int descriptionId, const MaterialColor* materialColor,
+                int dustColor);
 
         const MaterialColor* getMaterialColor();
         int getData();
@@ -54,16 +54,12 @@ public:
     static AbstractProperty<Variant*>* TYPE;
 
     SandBlock();
-    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
-                                       bool isClientSide);
-    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos,
-                                   const BlockState* state);
-    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                 const BlockState* state);
+    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
+    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
+    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
     static void blockStaticCtor();
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
-    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource,
-                                             const BlockPos& pos);
+    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);

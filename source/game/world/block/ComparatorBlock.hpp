@@ -77,7 +77,9 @@ public:
     virtual bool shouldTurnOn(Level* level, const BlockPos& pos, const BlockState* state);
     boost::shared_ptr<ItemFrame> getItemFrame(Level* level, const Direction* direction, const BlockPos& pos);
     virtual int getInputSignal(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     virtual void checkTickOnNeighbor(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
@@ -89,7 +91,9 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual bool TestUse();
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);

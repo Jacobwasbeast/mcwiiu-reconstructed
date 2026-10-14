@@ -10,8 +10,7 @@
 #include <cmath>
 #include <boost/pointer_cast.hpp>
 
-SlimeBlock::SlimeBlock()
-    : HalfTransparentBlock(L"slime", Material::CLAY, false, MaterialColor::GRASS)
+SlimeBlock::SlimeBlock() : HalfTransparentBlock(L"slime", Material::CLAY, false, MaterialColor::GRASS)
 {
     DerivedInit();
     mFriction = 0.8f;
@@ -44,8 +43,8 @@ void SlimeBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity>
     {
         if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
-                boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(entity);
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(
+                entity);
             if (localPlayer)
             {
                 localPlayer->onSlimeBlockBounce();

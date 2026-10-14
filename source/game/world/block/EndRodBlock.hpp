@@ -34,8 +34,8 @@ public:
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                              const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     const AABB* getShapeRod(const BlockState* state);
     const AABB* getShapeBase(const BlockState* state);

@@ -20,14 +20,9 @@ class SlabBlockItem : public BlockItem
 public:
     SlabBlockItem(Block* block, HalfSlabBlock* halfSlab, HalfSlabBlock* fullSlab);
 
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
                                                         bool simulate);
     virtual int getLevelDataForAuxValue(int auxValue);
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
@@ -36,12 +31,8 @@ public:
 
 private:
     const BlockState* makeState(const Property* property, Boxed* value);
-    bool tryConvertTargetBlock(boost::shared_ptr<Player> player,
-                               not_null_ptr<ItemInstance> itemInstance,
-                               Level* level,
-                               const BlockPos& pos,
-                               Boxed* type,
-                               bool simulate);
+    bool tryConvertTargetBlock(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> itemInstance, Level* level,
+                               const BlockPos& pos, Boxed* type, bool simulate);
 
     HalfSlabBlock* mHalfSlab;
     HalfSlabBlock* mFullSlab;

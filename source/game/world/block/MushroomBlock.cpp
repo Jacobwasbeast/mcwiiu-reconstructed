@@ -21,8 +21,7 @@
 
 static const AABB* MUSHROOM_SHAPE = AABB::newPermanent(0.3f, 0.0, 0.3f, 0.7f, 0.4f, 0.7f);
 
-MushroomBlock::MushroomBlock()
-    : Bush()
+MushroomBlock::MushroomBlock() : Bush()
 {
     DerivedInit();
     setTicking(true);
@@ -58,8 +57,7 @@ bool MushroomBlock::growMushroom(Level* level, const BlockPos& pos, const BlockS
     return false;
 }
 
-void MushroomBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                    const BlockState* state)
+void MushroomBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
     growMushroom(level, pos, state, random);
 }
@@ -77,7 +75,7 @@ void MushroomBlock::tick(Level* level, const BlockPos& pos, const BlockState* st
     {
         int count = 5;
         Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(currentPos.offset(-4, -1, -4),
-                                                                           currentPos.offset(4, 1, 4));
+                                                                          currentPos.offset(4, 1, 4));
         while (positions->hasNext())
         {
             BlockPos current = *positions->next();
@@ -127,11 +125,11 @@ bool MushroomBlock::canSurvive(Level* level, const BlockPos& pos, const BlockSta
     if (belowState->getBlock() == Blocks::mycelium)
         return true;
 
-    if (belowState->getBlock() == Blocks::dirt && belowState->getValue(DirtBlock::VARIANT) == DirtBlock::Variant::PODZOL)
+    if (belowState->getBlock() == Blocks::dirt
+        && belowState->getValue(DirtBlock::VARIANT) == DirtBlock::Variant::PODZOL)
         return true;
 
-    return level->getDaytimeRawBrightness(pos) < 13
-        && mayPlaceOn(level, pos.below(), belowState);
+    return level->getDaytimeRawBrightness(pos) < 13 && mayPlaceOn(level, pos.below(), belowState);
 }
 
 unsigned int MushroomBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)

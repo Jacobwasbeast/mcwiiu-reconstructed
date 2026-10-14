@@ -38,14 +38,16 @@ public:
     virtual bool canContainLiquid(const BlockState* state) const;
     virtual int getResourceCount(Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
-    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus);
+    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                int lootBonus);
     virtual void dropExtraLoot(Level* level, const BlockPos& pos, const BlockState* state, int lootBonus);
     virtual int getLootDropChance(const BlockState* state);
     virtual bool isSolidRender(const BlockState* state) const;
     void setFancy(bool fancy);
     virtual int getRenderLayer();
     virtual bool isViewBlocking(const BlockState* state);
-    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                  const Direction* direction);
     virtual bool shouldBlockTick(Level* level, const BlockPos& pos, const BlockState* state);
     virtual int getDescriptionId(int auxValue);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);

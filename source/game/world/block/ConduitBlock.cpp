@@ -14,8 +14,7 @@
 
 static const AABB* CONDUIT_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 
-ConduitBlock::ConduitBlock()
-    : BaseEntityBlock(Material::CONDUIT, MaterialColor::STONE)
+ConduitBlock::ConduitBlock() : BaseEntityBlock(Material::CONDUIT, MaterialColor::STONE)
 {
     DerivedInit();
     setDestroyTime(3.0f);
@@ -48,8 +47,7 @@ bool ConduitBlock::isSolidRender(const BlockState* state) const
 }
 
 void ConduitBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                               boost::shared_ptr<LivingEntity> placer,
-                               not_null_ptr<ItemInstance> itemInstance)
+                               boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
 {
     Block::setPlacedBy(level, pos, state, placer, itemInstance);
 }
@@ -69,15 +67,14 @@ EBlockRenderShape ConduitBlock::getRenderShape(const BlockState* state)
     return BLOCK_RENDER_CONDUIT;
 }
 
-void ConduitBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos,
-                                     const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
-                                     boost::shared_ptr<Entity> entity, bool isActualState)
+void ConduitBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,
+                                     std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity,
+                                     bool isActualState)
 {
     addCollisionAABB(pos, entityBox, collidingBoxes, CONDUIT_SHAPE);
 }
 
-const AABB* ConduitBlock::getShape(const BlockState* state, LevelSource* levelSource,
-                                   const BlockPos& pos)
+const AABB* ConduitBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     return CONDUIT_SHAPE;
 }

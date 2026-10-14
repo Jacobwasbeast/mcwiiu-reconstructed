@@ -20,12 +20,10 @@ public:
     class PredicateConversion : public Predicate<Boxed*>
     {
     public:
-        explicit PredicateConversion(const Predicate<T>* predicate)
-            : mPredicate(predicate)
-        {
-        }
+        explicit PredicateConversion(const Predicate<T>* predicate) : mPredicate(predicate) {}
         virtual bool apply(Boxed* value) const;
         virtual ~PredicateConversion();
+
     private:
         const Predicate<T>* mPredicate;
     };
@@ -35,6 +33,7 @@ public:
     static BlockStatePredicate* forDefinition(BlockStateDefinition* definition);
     virtual bool apply(const BlockState* state) const;
     BlockStatePredicate* where(Property* property, const Predicate<Boxed*>* predicate);
+
 private:
     BlockStateDefinition* mDefinition;
     boost::unordered_map<Property*, const Predicate<Boxed*>*> mPredicates;

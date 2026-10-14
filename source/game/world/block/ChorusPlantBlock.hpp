@@ -25,10 +25,12 @@ public:
 
     ChorusPlantBlock();
     virtual void DerivedInit();
-    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                              const BlockPos& pos);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,
-                                   std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity, bool isActualState);
+                                   std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity,
+                                   bool isActualState);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
@@ -36,11 +38,13 @@ public:
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual bool mayPlace(Level* level, const BlockPos& pos);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual bool canSurvive(Level* level, const BlockPos& pos, const BlockState* state);
     virtual int getRenderLayer();
     virtual bool isPathfindable(LevelSource* levelSource, const BlockPos& pos);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     const AABB* getVerticalShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     const AABB* getHorizontalShape(const BlockState* state, const Direction* direction);

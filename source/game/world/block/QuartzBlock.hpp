@@ -50,7 +50,9 @@ public:
     QuartzBlock();
 
     static void blockStaticCtor();
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
     virtual not_null_ptr<ItemInstance> getSilkTouchItemInstance(const BlockState* state);
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

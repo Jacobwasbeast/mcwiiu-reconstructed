@@ -39,13 +39,12 @@ public:
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
     virtual bool TestUse();
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     static void setLit(bool lit, Level* level, const BlockPos& pos);
     virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                             boost::shared_ptr<LivingEntity> placer,
-                             not_null_ptr<ItemInstance> itemInstance);
+                             boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool hasAnalogOutputSignal(const BlockState* state);
     virtual int getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos);

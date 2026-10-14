@@ -32,11 +32,10 @@
 
 DirectionProperty* EnderChestBlock::FACING = NULL;
 
-static const AABB* ENDER_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0,
-                                                         15.0 / 16.0, 14.0 / 16.0, 15.0 / 16.0);
+static const AABB* ENDER_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0, 15.0 / 16.0, 14.0 / 16.0,
+                                                          15.0 / 16.0);
 
-EnderChestBlock::EnderChestBlock()
-    : BaseEntityBlock(Material::STONE)
+EnderChestBlock::EnderChestBlock() : BaseEntityBlock(Material::STONE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH));
@@ -89,23 +88,22 @@ bool EnderChestBlock::isSilkTouchable()
     return true;
 }
 
-const BlockState* EnderChestBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float,
-                                                         float, int, boost::shared_ptr<LivingEntity> placer)
+const BlockState* EnderChestBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float,
+                                                        int, boost::shared_ptr<LivingEntity> placer)
 {
     return defaultBlockState()->setValue(FACING, placer->getDirection()->getOpposite());
 }
 
 void EnderChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                                  boost::shared_ptr<LivingEntity> placer,
-                                  not_null_ptr<ItemInstance> itemInstance)
+                                  boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
 {
     DirectionProperty* facing = FACING;
     level->setBlock(pos, state->setValue(facing, placer->getDirection()->getOpposite()), Block::UPDATE_CLIENTS, false);
 
     if (itemInstance->hasCustomHoverName())
     {
-        boost::shared_ptr<EnderChestBlockEntity> enderChest =
-            boost::dynamic_pointer_cast<EnderChestBlockEntity>(level->getBlockEntity(pos));
+        boost::shared_ptr<EnderChestBlockEntity> enderChest = boost::dynamic_pointer_cast<EnderChestBlockEntity>(
+            level->getBlockEntity(pos));
         if (enderChest)
         {
             enderChest->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
@@ -185,7 +183,7 @@ const BlockState* EnderChestBlock::mirror(const BlockState* state, Mirror* mirro
 
 BlockStateDefinition* EnderChestBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING };
+    static const Property* properties[] = {FACING};
     return new BlockStateDefinition(this, properties, 1);
 }
 

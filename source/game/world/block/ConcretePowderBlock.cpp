@@ -23,21 +23,24 @@ EnumProperty<const DyeColor*>* ConcretePowderBlock::COLOR = NULL;
 
 void ConcretePowderBlock::blockStaticCtor()
 {
-    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS, Predicates<const DyeColor*>::alwaysTrue);
+    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS,
+                                                  Predicates<const DyeColor*>::alwaysTrue);
 }
 
-ConcretePowderBlock::ConcretePowderBlock()
-    : FallingBlock(Material::SAND)
+ConcretePowderBlock::ConcretePowderBlock() : FallingBlock(Material::SAND)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(COLOR, DyeColor::WHITE));
 }
 
-void ConcretePowderBlock::onLand(Level* level, const BlockPos& pos, const BlockState* state, const BlockState* replacedState)
+void ConcretePowderBlock::onLand(Level* level, const BlockPos& pos, const BlockState* state,
+                                 const BlockState* replacedState)
 {
     if (replacedState->getMaterial()->isLiquid())
     {
-        level->setBlock(pos, Blocks::concrete->defaultBlockState()->setValue(ColoredBlock::COLOR, state->getValue(COLOR)), Block::UPDATE_ALL, false);
+        level->setBlock(pos,
+                        Blocks::concrete->defaultBlockState()->setValue(ColoredBlock::COLOR, state->getValue(COLOR)),
+                        Block::UPDATE_ALL, false);
     }
 }
 
@@ -59,12 +62,15 @@ unsigned int ConcretePowderBlock::tryTouchWater(Level* level, const BlockPos& po
     }
     if (touched)
     {
-        level->setBlock(pos, Blocks::concrete->defaultBlockState()->setValue(ColoredBlock::COLOR, state->getValue(COLOR)), Block::UPDATE_ALL, false);
+        level->setBlock(pos,
+                        Blocks::concrete->defaultBlockState()->setValue(ColoredBlock::COLOR, state->getValue(COLOR)),
+                        Block::UPDATE_ALL, false);
     }
     return touched;
 }
 
-void ConcretePowderBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
+void ConcretePowderBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                          const BlockPos& fromPos)
 {
     if (tryTouchWater(level, pos, state) == 0)
     {
@@ -85,7 +91,8 @@ int ConcretePowderBlock::getSpawnResourcesAuxValue(const BlockState* state)
     return state->getValue(COLOR)->getBlockData();
 }
 
-const MaterialColor* ConcretePowderBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const MaterialColor* ConcretePowderBlock::getMapColor(const BlockState* state, LevelSource* levelSource,
+                                                      const BlockPos& pos)
 {
     return MaterialColor::getDyeMaterial(state->getValue(COLOR));
 }
@@ -102,7 +109,7 @@ int ConcretePowderBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* ConcretePowderBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { COLOR };
+    static const Property* properties[] = {COLOR};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -115,6 +122,7 @@ void ConcretePowderBlock::registerIcons(IconRegister* iconRegister)
 {
     for (int i = 0; i < 16; ++i)
     {
-        mIcons[i] = iconRegister->registerIcon(getIconName() + L"_" + DyeColor::TEXTURE_NAMES[DyeColor::byBlockData(i)->getItemData()]);
+        mIcons[i] = iconRegister->registerIcon(getIconName() + L"_"
+                                               + DyeColor::TEXTURE_NAMES[DyeColor::byBlockData(i)->getItemData()]);
     }
 }

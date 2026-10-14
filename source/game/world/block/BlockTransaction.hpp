@@ -24,8 +24,8 @@ public:
     Vec3i mMax;
     Element* mElements;
 
-    BlockTransaction(const BlockPos& min, const BlockPos& max, const Vec3i& size,
-                     Element* elements, unsigned int elementCount);
+    BlockTransaction(const BlockPos& min, const BlockPos& max, const Vec3i& size, Element* elements,
+                     unsigned int elementCount);
     ~BlockTransaction();
 
     static BlockTransaction* CreateTransaction(const BlockPos& min, const BlockPos& max);

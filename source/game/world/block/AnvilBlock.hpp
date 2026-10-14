@@ -34,7 +34,7 @@ public:
         Anvil(Level* level, const BlockPos& pos);
 
         virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                                   boost::shared_ptr<Player> player);
+                                                  boost::shared_ptr<Player> player);
         virtual int getTypeId(bool large);
         virtual std::wstring getName();
         virtual std::wstring getCustomName();
@@ -52,25 +52,23 @@ public:
     AnvilBlock();
     static void blockStaticCtor();
     virtual bool isCubeShaped(const BlockState* state);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                              const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual bool isSolidRender(const BlockState* state) const;
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos,
-                                                    const Direction* direction, float hitX, float hitY,
-                                                    float hitZ, int auxValue,
-                                                    boost::shared_ptr<LivingEntity> placer);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool canContainLiquid(const BlockState* state) const;
     virtual void falling(boost::shared_ptr<FallingBlockEntity> entity);
-    virtual void onLand(Level* level, const BlockPos& pos, const BlockState* state,
-                        const BlockState* replacedState);
+    virtual void onLand(Level* level, const BlockPos& pos, const BlockState* state, const BlockState* replacedState);
     virtual void onBroken(Level* level, const BlockPos& pos);
-    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource,
-                                  const BlockPos& pos, const Direction* direction);
+    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                  const Direction* direction);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);

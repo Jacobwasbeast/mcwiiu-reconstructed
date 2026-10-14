@@ -54,8 +54,7 @@ public:
             INVENTORY = 3
         };
 
-        Variant(int data, const std::wstring& name, int nameId, int descriptionId,
-                std::wstring* textures);
+        Variant(int data, const std::wstring& name, int nameId, int descriptionId, std::wstring* textures);
         int getData();
         static Variant* byData(int data);
 
@@ -102,18 +101,16 @@ public:
     void placeAt(Level* level, const BlockPos& pos, Variant* variant, int flags);
     virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
                              boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> item);
-    int popGrassResources(Level* level, const BlockPos& pos, const BlockState* state,
-                          boost::shared_ptr<Player> player);
+    int popGrassResources(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player);
     virtual void playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
                                const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                not_null_ptr<ItemInstance> tool);
     virtual bool playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
                                    boost::shared_ptr<Player> player);
-    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                             const BlockState* state);
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
     virtual const BlockState* getBlockState(int data);
     virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
-                                                               const BlockPos& pos);
+                                                              const BlockPos& pos);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
     virtual BlockStateDefinition* createBlockStateDefinition();

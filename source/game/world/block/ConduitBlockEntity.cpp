@@ -30,8 +30,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
-ConduitBlockEntity::ConduitBlockEntity()
-    : BlockEntity()
+ConduitBlockEntity::ConduitBlockEntity() : BlockEntity()
 {
     mActive = false;
     mHunting = false;
@@ -188,9 +187,8 @@ void ConduitBlockEntity::_checkShape()
             mActive = true;
             if (!wasActive)
             {
-                mLevel->playLocalSound(getBlockPos().x, getBlockPos().y, getBlockPos().z,
-                                       SoundEvents::CONDUIT_ACTIVATE, SoundSource::eSoundSource_Blocks, 1.0f,
-                                       1.0f, false, 16.0f);
+                mLevel->playLocalSound(getBlockPos().x, getBlockPos().y, getBlockPos().z, SoundEvents::CONDUIT_ACTIVATE,
+                                       SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, false, 16.0f);
                 if (!mLevel->mIsClientSide)
                 {
                     int range = mEffectRange;
@@ -274,12 +272,11 @@ void ConduitBlockEntity::_updateTarget()
         int x = mPos.x;
         int y = mPos.y;
         int z = mPos.z;
-        const AABB* area = AABB::newTemp(x, y, z, x + 1, y + 1, z + 1)
-                               ->grow(8.0)
-                               ->expand(0.0, mLevel->getMaxBuildHeight(), 0.0);
+        const AABB* area =
+            AABB::newTemp(x, y, z, x + 1, y + 1, z + 1)->grow(8.0)->expand(0.0, mLevel->getMaxBuildHeight(), 0.0);
         std::vector<boost::shared_ptr<Entity> >* monsters = mLevel->getEntitiesOfClass(typeid(Monster), area);
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = monsters->begin(), end = monsters->end();
-             it != end; ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = monsters->begin(), end = monsters->end(); it != end;
+             ++it)
         {
             boost::shared_ptr<Entity> monster = *it;
             if (monster != NULL && monster->isAlive() && monster->isInWaterOrRain())
@@ -354,8 +351,8 @@ CompoundTag* ConduitBlockEntity::save(CompoundTag* tag)
 
 boost::shared_ptr<Packet> ConduitBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(
-        mPos, 13, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(
+        new ClientboundBlockEntityDataPacket(mPos, 13, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* ConduitBlockEntity::getUpdateTag()

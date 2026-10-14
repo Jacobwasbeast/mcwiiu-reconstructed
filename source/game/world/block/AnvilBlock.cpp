@@ -30,27 +30,21 @@
 #include "game/world/block/Blocks.hpp"
 
 DirectionProperty* AnvilBlock::FACING = NULL;
-AbstractProperty<int>* AnvilBlock::DAMAGE =
-    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"damage", 0, 2));
+AbstractProperty<int>* AnvilBlock::DAMAGE = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"damage", 0, 2));
 
 static const AABB* ANVIL_X_SHAPE = AABB::newPermanent(0.0, 0.0, 0.125, 1.0, 0.75, 0.875);
 static const AABB* ANVIL_Z_SHAPE = AABB::newPermanent(0.125, 0.0, 0.0, 0.875, 0.75, 1.0);
 
 namespace
 {
-    std::wstring gAnvilTopIconNames[3] =
-    {
-        L"anvil_top", L"anvil_top_damaged_1", L"anvil_top_damaged_2"
-    };
+std::wstring gAnvilTopIconNames[3] = {L"anvil_top", L"anvil_top_damaged_1", L"anvil_top_damaged_2"};
 }
 
-AnvilBlock::AnvilBlock()
-    : FallingBlock(Material::HEAVY_METAL)
+AnvilBlock::AnvilBlock() : FallingBlock(Material::HEAVY_METAL)
 {
     Block::DerivedInit();
-    registerDefaultState(mStateDefinition->any()
-                             ->setValue(FACING, Direction::NORTH)
-                             ->setValue(DAMAGE, 0));
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(DAMAGE, 0));
     mTextureType = 0;
     setLightBlock(0);
     memset(mTopIcons, 0, sizeof(mTopIcons));
@@ -77,8 +71,8 @@ bool AnvilBlock::isSolidRender(const BlockState*) const
 }
 
 const BlockState* AnvilBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
-                                                    float hitX, float hitY, float hitZ, int auxValue,
-                                                    boost::shared_ptr<LivingEntity> placer)
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer)
 {
     const Direction* facing = placer->getDirection()->getClockWise();
     return Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)
@@ -163,7 +157,7 @@ const BlockState* AnvilBlock::rotate(const BlockState* state, Rotation* rotation
 
 BlockStateDefinition* AnvilBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING, DAMAGE };
+    static const Property* properties[] = {FACING, DAMAGE};
     return new BlockStateDefinition(this, properties, 2);
 }
 
@@ -188,15 +182,14 @@ EBlockRenderShape AnvilBlock::getRenderShape(const BlockState*)
     return BLOCK_RENDER_ANVIL;
 }
 
-AnvilBlock::Anvil::Anvil(Level* level, const BlockPos& pos)
-    : InteractionObject()
+AnvilBlock::Anvil::Anvil(Level* level, const BlockPos& pos) : InteractionObject()
 {
     mLevel = level;
     mBlockPos = pos;
 }
 
 AbstractContainerMenu* AnvilBlock::Anvil::createMenu(boost::shared_ptr<Inventory> inventory,
-                                                      boost::shared_ptr<Player> player)
+                                                     boost::shared_ptr<Player> player)
 {
     return new AnvilMenu(inventory, mLevel, mBlockPos, player);
 }

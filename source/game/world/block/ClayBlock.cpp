@@ -13,8 +13,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/item/ItemId.hpp"
 
-ClayBlock::ClayBlock()
-    : Block(Material::CLAY)
+ClayBlock::ClayBlock() : Block(Material::CLAY)
 {
     DerivedInit();
 }
@@ -49,8 +48,7 @@ unsigned int ClayBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE)
     {
         BlockPos above = tooltipData.m_blockPos.above();
-        if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 270, 0)
-            && tooltipData.m_eInteractionResult != 2
+        if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 270, 0) && tooltipData.m_eInteractionResult != 2
             && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
             return IDS_TOOLTIPS_GROW;
@@ -59,4 +57,3 @@ unsigned int ClayBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
     return Block::GetInteractTooltip(tooltipData);
 }
-

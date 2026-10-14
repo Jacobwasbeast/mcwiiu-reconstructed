@@ -40,14 +40,12 @@ public:
     JukeboxBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void addDataWalkers(DataFixerUpper* fixer);
-    virtual bool TestUse(Level* level, const BlockPos& pos, const BlockState* state,
-                         boost::shared_ptr<Player> player);
+    virtual bool TestUse(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player);
     void dropRecording(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
-    void setRecord(Level* level, const BlockPos& pos, const BlockState* state,
-                   not_null_ptr<ItemInstance> record);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
+    void setRecord(Level* level, const BlockPos& pos, const BlockState* state, not_null_ptr<ItemInstance> record);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
                                 int lootBonus);

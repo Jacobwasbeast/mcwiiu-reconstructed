@@ -10,8 +10,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/RandomPatchesLayerTheme.hpp"
 
-MushroomBlockLayerTheme::MushroomBlockLayerTheme(HugeMushroomBlock* block)
-    : mBlock(block)
+MushroomBlockLayerTheme::MushroomBlockLayerTheme(HugeMushroomBlock* block) : mBlock(block)
 {
 }
 
@@ -25,14 +24,16 @@ void MushroomBlockLayerTheme::Apply(Random&, BlockTransaction* transaction, int&
             if (surfaceY == -1)
                 continue;
 
-            const Direction* directions[4] = { Direction::NORTH, Direction::EAST, Direction::SOUTH, Direction::WEST };
-            int neighbourSurfaces[4] = { -1, -1, -1, -1 };
+            const Direction* directions[4] = {Direction::NORTH, Direction::EAST, Direction::SOUTH, Direction::WEST};
+            int neighbourSurfaces[4] = {-1, -1, -1, -1};
             for (int i = 0; i < 4; ++i)
             {
                 int neighbourX = directions[i]->getStepX() + x;
                 int neighbourZ = directions[i]->getStepZ() + z;
-                if (neighbourX >= 0 && neighbourX < transaction->mSize.x && neighbourZ >= 0 && neighbourZ < transaction->mSize.z)
-                    neighbourSurfaces[i] = RandomPatchesLayerTheme::HighestSolidBlock(transaction, neighbourX, neighbourZ);
+                if (neighbourX >= 0 && neighbourX < transaction->mSize.x && neighbourZ >= 0
+                    && neighbourZ < transaction->mSize.z)
+                    neighbourSurfaces[i] = RandomPatchesLayerTheme::HighestSolidBlock(transaction, neighbourX,
+                                                                                      neighbourZ);
             }
 
             for (int y = 0; y < transaction->mSize.y; ++y)
@@ -55,17 +56,36 @@ void MushroomBlockLayerTheme::Apply(Random&, BlockTransaction* transaction, int&
                 switch (exposed)
                 {
                 case 0:
-                    variant = y < surfaceY ? HugeMushroomBlock::Variant::ALL_INSIDE : HugeMushroomBlock::Variant::CENTER;
+                    variant = y < surfaceY ? HugeMushroomBlock::Variant::ALL_INSIDE
+                                           : HugeMushroomBlock::Variant::CENTER;
                     break;
-                case 1: variant = HugeMushroomBlock::Variant::NORTH; break;
-                case 3: variant = HugeMushroomBlock::Variant::NORTH_EAST; break;
-                case 2: variant = HugeMushroomBlock::Variant::EAST; break;
-                case 6: variant = HugeMushroomBlock::Variant::SOUTH_EAST; break;
-                case 4: variant = HugeMushroomBlock::Variant::SOUTH; break;
-                case 12: variant = HugeMushroomBlock::Variant::SOUTH_WEST; break;
-                case 8: variant = HugeMushroomBlock::Variant::WEST; break;
-                case 9: variant = HugeMushroomBlock::Variant::NORTH_WEST; break;
-                default: variant = HugeMushroomBlock::Variant::ALL_OUTSIDE; break;
+                case 1:
+                    variant = HugeMushroomBlock::Variant::NORTH;
+                    break;
+                case 3:
+                    variant = HugeMushroomBlock::Variant::NORTH_EAST;
+                    break;
+                case 2:
+                    variant = HugeMushroomBlock::Variant::EAST;
+                    break;
+                case 6:
+                    variant = HugeMushroomBlock::Variant::SOUTH_EAST;
+                    break;
+                case 4:
+                    variant = HugeMushroomBlock::Variant::SOUTH;
+                    break;
+                case 12:
+                    variant = HugeMushroomBlock::Variant::SOUTH_WEST;
+                    break;
+                case 8:
+                    variant = HugeMushroomBlock::Variant::WEST;
+                    break;
+                case 9:
+                    variant = HugeMushroomBlock::Variant::NORTH_WEST;
+                    break;
+                default:
+                    variant = HugeMushroomBlock::Variant::ALL_OUTSIDE;
+                    break;
                 }
                 transaction->setBlock(position, state->setValue(HugeMushroomBlock::VARIANT, variant));
             }

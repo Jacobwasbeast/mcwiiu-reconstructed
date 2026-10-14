@@ -23,7 +23,8 @@ public:
     static AABB* X_AXIS_COLLISION_AABB;
 
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                              const BlockPos& pos);
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
@@ -46,8 +47,8 @@ public:
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
     virtual bool canContainLiquid(const BlockState* state) const;
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                              const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     static bool isFenceGate(Block* block);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);

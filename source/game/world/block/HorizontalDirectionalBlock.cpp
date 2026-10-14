@@ -6,8 +6,7 @@
 DirectionProperty* HorizontalDirectionalBlock::FACING = NULL;
 DirectionProperty* HorizontalDirectionalBlock::FACING_PROPERTY = NULL;
 
-HorizontalDirectionalBlock::HorizontalDirectionalBlock(Material* material)
-    : Block(material)
+HorizontalDirectionalBlock::HorizontalDirectionalBlock(Material* material) : Block(material)
 {
 }
 

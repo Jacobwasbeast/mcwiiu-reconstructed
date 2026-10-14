@@ -37,8 +37,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-ShulkerBoxBlock::ShulkerBoxBlock(const DyeColor* color)
-    : BaseEntityBlock(Material::STONE, MaterialColor::NONE)
+ShulkerBoxBlock::ShulkerBoxBlock(const DyeColor* color) : BaseEntityBlock(Material::STONE, MaterialColor::NONE)
 {
     DerivedInit();
     mColor = color;
@@ -52,10 +51,22 @@ boost::shared_ptr<BlockEntity> ShulkerBoxBlock::newBlockEntity(Level* level, int
     return box;
 }
 
-bool ShulkerBoxBlock::isSolidRender(const BlockState*) const { return false; }
-bool ShulkerBoxBlock::isViewBlocking(const BlockState*) { return true; }
-bool ShulkerBoxBlock::isCubeShaped(const BlockState*) { return false; }
-bool ShulkerBoxBlock::hasCustomBreakingProgress(const BlockState*) { return true; }
+bool ShulkerBoxBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool ShulkerBoxBlock::isViewBlocking(const BlockState*)
+{
+    return true;
+}
+bool ShulkerBoxBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+bool ShulkerBoxBlock::hasCustomBreakingProgress(const BlockState*)
+{
+    return true;
+}
 EBlockRenderShape ShulkerBoxBlock::getRenderShape(const BlockState*)
 {
     return BLOCK_RENDER_ENTITY;
@@ -69,22 +80,23 @@ bool ShulkerBoxBlock::isEntityOnChest(Level* level, const AABB* box)
     return onChest;
 }
 
-bool ShulkerBoxBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
-                          boost::shared_ptr<Player> player, InteractionHand::EInteractionHand,
-                          const Direction* direction, float, float, float, bool)
+bool ShulkerBoxBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                          InteractionHand::EInteractionHand, const Direction* direction, float, float, float, bool)
 {
     if (level->mIsClientSide)
         return true;
     if (player->isSpectator())
         return true;
-    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
+    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(
+        level->getBlockEntity(pos));
     if (box.get() == NULL)
         return false;
     const Direction* facing = state->getValue(DirectionalBlock::FACING);
     bool canOpen = true;
     if (box->getAnimationStatus() == 0)
     {
-        AABB* shape = FULL_BLOCK_SHAPE->expand(0.5f * facing->getStepX(), 0.5f * facing->getStepY(), 0.5f * facing->getStepZ())
+        AABB* shape = FULL_BLOCK_SHAPE
+                          ->expand(0.5f * facing->getStepX(), 0.5f * facing->getStepY(), 0.5f * facing->getStepZ())
                           ->contract(facing->getStepX(), facing->getStepY(), facing->getStepZ());
         BlockPos adjacent = pos.relative(facing);
         AABB* expanded = shape->move(adjacent);
@@ -95,16 +107,15 @@ bool ShulkerBoxBlock::use(Level* level, const BlockPos& pos, const BlockState* s
     return true;
 }
 
-const BlockState* ShulkerBoxBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction,
-                                                         float, float, float, int,
-                                                         boost::shared_ptr<LivingEntity>)
+const BlockState* ShulkerBoxBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction, float,
+                                                        float, float, int, boost::shared_ptr<LivingEntity>)
 {
     return defaultBlockState()->setValue(DirectionalBlock::FACING, direction);
 }
 
 BlockStateDefinition* ShulkerBoxBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { DirectionalBlock::FACING };
+    const Property* properties[] = {DirectionalBlock::FACING};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -138,18 +149,18 @@ bool ShulkerBoxBlock::playerWillDestroy(Level* level, const BlockPos& pos, const
     return false;
 }
 
-void ShulkerBoxBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
-                                     float chance, int lootBonus)
+void ShulkerBoxBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                     int lootBonus)
 {
 }
 
 void ShulkerBoxBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                                  boost::shared_ptr<LivingEntity> placer,
-                                  not_null_ptr<ItemInstance> itemInstance)
+                                  boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
 {
     if (itemInstance->hasCustomHoverName())
     {
-        boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
+        boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(
+            level->getBlockEntity(pos));
         if (box.get() != NULL)
             box->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
                                itemInstance->wasCreatedByRestrictedPlayer(), itemInstance->wasCreatedOnHost());
@@ -181,8 +192,7 @@ void ShulkerBoxBlock::onRemove(Level* level, const BlockPos& pos, const BlockSta
     BaseEntityBlock::onRemove(level, pos, state);
 }
 
-void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                      boost::shared_ptr<Player> player,
+void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
                                       std::vector<HtmlString>* lines, bool advanced)
 {
     Block::appendHoverText(itemInstance, player, lines, advanced);
@@ -198,8 +208,8 @@ void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 
         if (blockEntityTag->contains(L"Items", Tag::TAG_LIST))
         {
-            NonNullList<not_null_ptr<ItemInstance> > items =
-                NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
+            NonNullList<not_null_ptr<ItemInstance> > items = NonNullList<not_null_ptr<ItemInstance> >::withSize(
+                27, ItemInstance::EMPTY);
             ContainerHelper::loadAllItems(blockEntityTag, items);
 
             int displayedItems = 0;
@@ -213,8 +223,7 @@ void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
                     if (displayedItems > 4)
                         continue;
                     ++displayedItems;
-                    lines->push_back(HtmlString(formatwstr(L"%ls x%d", item->getHoverName().c_str(),
-                                                           item->getCount()),
+                    lines->push_back(HtmlString(formatwstr(L"%ls x%d", item->getHoverName().c_str(), item->getCount()),
                                                 eMinecraftColour_NOTSET, false, false, 0));
                 }
             }
@@ -225,25 +234,32 @@ void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
             {
                 std::wstring moreText = L10N::GetString(IDS_SHULKER_BOX_MORE);
                 moreText = replaceAll(moreText, L"%s", L"%d");
-                HtmlString moreLine(formatwstr(moreText.c_str(), totalItems - displayedItems),
-                                    eMinecraftColour_NOTSET, true, false, 0);
+                HtmlString moreLine(formatwstr(moreText.c_str(), totalItems - displayedItems), eMinecraftColour_NOTSET,
+                                    true, false, 0);
                 lines->push_back(moreLine);
             }
         }
     }
 }
 
-EPistonPushReaction ShulkerBoxBlock::getPistonPushReaction(const BlockState*) { return PISTON_PUSH_DESTROY; }
+EPistonPushReaction ShulkerBoxBlock::getPistonPushReaction(const BlockState*)
+{
+    return PISTON_PUSH_DESTROY;
+}
 
 const AABB* ShulkerBoxBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(levelSource->getBlockEntity(pos));
+    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(
+        levelSource->getBlockEntity(pos));
     if (box.get() != NULL)
         return box->getBoundingBox(state);
     return FULL_BLOCK_SHAPE;
 }
 
-bool ShulkerBoxBlock::hasAnalogOutputSignal(const BlockState*) { return true; }
+bool ShulkerBoxBlock::hasAnalogOutputSignal(const BlockState*)
+{
+    return true;
+}
 
 int ShulkerBoxBlock::getAnalogOutputSignal(const BlockState*, Level* level, const BlockPos& pos)
 {
@@ -251,17 +267,22 @@ int ShulkerBoxBlock::getAnalogOutputSignal(const BlockState*, Level* level, cons
         boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos)));
 }
 
-not_null_ptr<ItemInstance> ShulkerBoxBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
+not_null_ptr<ItemInstance> ShulkerBoxBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
+                                                                 const BlockState* state)
 {
     not_null_ptr<ItemInstance> item = Block::getCloneItemInstance(level, pos, state);
-    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
+    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(
+        level->getBlockEntity(pos));
     CompoundTag* tag = box->saveToTag(new CompoundTag());
     if (!tag->isEmpty())
         item->addTagElement(BlockItem::BLOCK_ENTITY_TAG, tag);
     return item;
 }
 
-const DyeColor* ShulkerBoxBlock::getDyeColor() { return mColor; }
+const DyeColor* ShulkerBoxBlock::getDyeColor()
+{
+    return mColor;
+}
 
 const DyeColor* ShulkerBoxBlock::getColorFromBlock(Block* block)
 {
@@ -318,7 +339,8 @@ not_null_ptr<ItemInstance> ShulkerBoxBlock::getColoredItemInstance(const DyeColo
 
 const BlockState* ShulkerBoxBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(DirectionalBlock::FACING, rotation->rotate(state->getTypedBoxed(DirectionalBlock::FACING)->getValue()));
+    return state->setValue(DirectionalBlock::FACING,
+                           rotation->rotate(state->getTypedBoxed(DirectionalBlock::FACING)->getValue()));
 }
 
 const BlockState* ShulkerBoxBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -331,12 +353,13 @@ EBlockFaceShape ShulkerBoxBlock::getBlockFaceShape(LevelSource* levelSource, con
 {
     state = fillVirtualBlockStateProperties(state, levelSource, pos);
     const Direction* facing = state->getValue(DirectionalBlock::FACING);
-    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(levelSource->getBlockEntity(pos));
+    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(
+        levelSource->getBlockEntity(pos));
     if (box.get() != NULL)
     {
         int animationStatus = box->getAnimationStatus();
-        if (animationStatus == 0 ||
-            (animationStatus == 2 && (facing == direction->getOpposite() || facing == direction)))
+        if (animationStatus == 0
+            || (animationStatus == 2 && (facing == direction->getOpposite() || facing == direction)))
         {
             return BLOCK_FACE_SOLID;
         }

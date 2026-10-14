@@ -6,8 +6,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-BlueIceBlock::BlueIceBlock(Material* material)
-    : Block(material)
+BlueIceBlock::BlueIceBlock(Material* material) : Block(material)
 {
     setIconName(L"blue_ice");
     DerivedInit();

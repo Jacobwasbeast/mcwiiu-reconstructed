@@ -5,9 +5,8 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 
-float BowItem_Pull_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance,
-                                               Level*,
-                                               boost::shared_ptr<LivingEntity> entity)
+float BowItem_Pull_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance, Level*,
+                                              boost::shared_ptr<LivingEntity> entity)
 {
     if (entity == NULL)
     {
@@ -19,5 +18,6 @@ float BowItem_Pull_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemIns
         return 0.0f;
     }
 
-    return (float)(itemInstance->getUseDuration() - entity->getUseItemRemainingTicks()) / (float)BowItem::GetMaxBowDuration();
+    return (float)(itemInstance->getUseDuration() - entity->getUseItemRemainingTicks())
+           / (float)BowItem::GetMaxBowDuration();
 }

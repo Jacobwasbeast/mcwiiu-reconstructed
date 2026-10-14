@@ -21,8 +21,7 @@
 
 static const AABB* gSignShape = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 1.0, 0.75);
 
-SignBlock::SignBlock()
-    : BaseEntityBlock(Material::WOOD)
+SignBlock::SignBlock() : BaseEntityBlock(Material::WOOD)
 {
 }
 
@@ -108,8 +107,7 @@ EBlockFaceShape SignBlock::getBlockFaceShape(LevelSource*, const BlockState*, co
 unsigned int SignBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     unsigned int result = Block::GetInteractTooltip(tooltipData);
-    if (!tooltipData.m_pPlayer->isSneaking()
-        && (result == IDS_TOOLTIPS_PLACE || result == IDS_TOOLTIPS_HANG))
+    if (!tooltipData.m_pPlayer->isSneaking() && (result == IDS_TOOLTIPS_PLACE || result == IDS_TOOLTIPS_HANG))
         return IDS_NONE;
     return result;
 }

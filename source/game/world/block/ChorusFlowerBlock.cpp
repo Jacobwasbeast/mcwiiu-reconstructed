@@ -36,18 +36,35 @@ static const AABB* FLOWER_NORTH_SHAPE = createFlowerShape(2.0, 2.0, 0.0, 14.0, 1
 static const AABB* FLOWER_WEST_SHAPE = createFlowerShape(0.0, 2.0, 2.0, 2.0, 14.0, 14.0);
 static const AABB* FLOWER_EAST_SHAPE = createFlowerShape(14.0, 2.0, 2.0, 16.0, 14.0, 14.0);
 
-ChorusFlowerBlock::ChorusFlowerBlock()
-    : Block(Material::PLANT, MaterialColor::COLOR_PURPLE)
+ChorusFlowerBlock::ChorusFlowerBlock() : Block(Material::PLANT, MaterialColor::COLOR_PURPLE)
 {
     DerivedInit();
 }
 
-const AABB* ChorusFlowerBlock::getUpShape() { return FLOWER_UP_SHAPE; }
-const AABB* ChorusFlowerBlock::getDownShape() { return FLOWER_DOWN_SHAPE; }
-const AABB* ChorusFlowerBlock::getSouthShape() { return FLOWER_SOUTH_SHAPE; }
-const AABB* ChorusFlowerBlock::getNorthShape() { return FLOWER_NORTH_SHAPE; }
-const AABB* ChorusFlowerBlock::getEastShape() { return FLOWER_EAST_SHAPE; }
-const AABB* ChorusFlowerBlock::getWestShape() { return FLOWER_WEST_SHAPE; }
+const AABB* ChorusFlowerBlock::getUpShape()
+{
+    return FLOWER_UP_SHAPE;
+}
+const AABB* ChorusFlowerBlock::getDownShape()
+{
+    return FLOWER_DOWN_SHAPE;
+}
+const AABB* ChorusFlowerBlock::getSouthShape()
+{
+    return FLOWER_SOUTH_SHAPE;
+}
+const AABB* ChorusFlowerBlock::getNorthShape()
+{
+    return FLOWER_NORTH_SHAPE;
+}
+const AABB* ChorusFlowerBlock::getEastShape()
+{
+    return FLOWER_EAST_SHAPE;
+}
+const AABB* ChorusFlowerBlock::getWestShape()
+{
+    return FLOWER_WEST_SHAPE;
+}
 
 void ChorusFlowerBlock::DerivedInit()
 {
@@ -192,8 +209,14 @@ void ChorusFlowerBlock::tick(Level* level, const BlockPos& pos, const BlockState
     }
 }
 
-bool ChorusFlowerBlock::isCubeShaped(const BlockState*) { return false; }
-bool ChorusFlowerBlock::isSolidRender(const BlockState*) const { return false; }
+bool ChorusFlowerBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+bool ChorusFlowerBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
 
 bool ChorusFlowerBlock::mayPlace(Level* level, const BlockPos& pos)
 {
@@ -246,7 +269,10 @@ void ChorusFlowerBlock::playerDestroy(Level* level, boost::shared_ptr<Player> pl
     Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this))));
 }
 
-int ChorusFlowerBlock::getRenderLayer() { return 0; }
+int ChorusFlowerBlock::getRenderLayer()
+{
+    return 0;
+}
 
 const BlockState* ChorusFlowerBlock::getBlockState(int data)
 {
@@ -258,8 +284,8 @@ int ChorusFlowerBlock::convertBlockStateToLegacyData(const BlockState* state)
     return state->getValue(CHORUS_AGE);
 }
 
-void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Random* random,
-                                          const BlockPos& origin, int radius, int depth)
+void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Random* random, const BlockPos& origin,
+                                          int radius, int depth)
 {
     int height = random->nextInt(4) + 1;
     if (depth == 0)
@@ -287,10 +313,8 @@ void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Ran
         {
             const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(*random);
             BlockPos branch = pos.above(height).relative(direction);
-            if (abs(branch.x - origin.x) < radius
-                && abs(branch.z - origin.z) < radius
-                && level->isEmptyBlock(branch) && level->isEmptyBlock(branch.below())
-                && allNeighborsEmpty(level, branch, direction->getOpposite()))
+            if (abs(branch.x - origin.x) < radius && abs(branch.z - origin.z) < radius && level->isEmptyBlock(branch)
+                && level->isEmptyBlock(branch.below()) && allNeighborsEmpty(level, branch, direction->getOpposite()))
             {
                 grew = true;
                 level->setBlock(branch, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
@@ -300,7 +324,8 @@ void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Ran
     }
     if (!grew)
     {
-        level->setBlock(pos.above(height), Blocks::chorus_flower->defaultBlockState()->setValue(CHORUS_AGE, 5), Block::UPDATE_CLIENTS, false);
+        level->setBlock(pos.above(height), Blocks::chorus_flower->defaultBlockState()->setValue(CHORUS_AGE, 5),
+                        Block::UPDATE_CLIENTS, false);
     }
 }
 
@@ -326,18 +351,42 @@ TextureAtlasSprite* ChorusFlowerBlock::getTexture(const Direction* direction, co
     return isDead(state->getValue(CHORUS_AGE)) ? mDeadIcon : mIcon;
 }
 
-EBlockRenderShape ChorusFlowerBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_CHORUS_FLOWER; }
-bool ChorusFlowerBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction* direction) { return direction != mCulledFace; }
-void ChorusFlowerBlock::setCulledFace(const Direction* direction) { mCulledFace = direction; }
-bool ChorusFlowerBlock::isWaterBlocking() const { return false; }
-bool ChorusFlowerBlock::waterSpreadCausesSpawn() { return true; }
-bool ChorusFlowerBlock::canContainLiquid(const BlockState*) const { return false; }
-bool ChorusFlowerBlock::canProvideSupport(const BlockState*, const Direction*, EBlockSupportType) { return false; }
-not_null_ptr<ItemInstance> ChorusFlowerBlock::getSilkTouchItemInstance(const BlockState*) { return ItemInstance::EMPTY; }
+EBlockRenderShape ChorusFlowerBlock::getRenderShape(const BlockState*)
+{
+    return BLOCK_RENDER_CHORUS_FLOWER;
+}
+bool ChorusFlowerBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction* direction)
+{
+    return direction != mCulledFace;
+}
+void ChorusFlowerBlock::setCulledFace(const Direction* direction)
+{
+    mCulledFace = direction;
+}
+bool ChorusFlowerBlock::isWaterBlocking() const
+{
+    return false;
+}
+bool ChorusFlowerBlock::waterSpreadCausesSpawn()
+{
+    return true;
+}
+bool ChorusFlowerBlock::canContainLiquid(const BlockState*) const
+{
+    return false;
+}
+bool ChorusFlowerBlock::canProvideSupport(const BlockState*, const Direction*, EBlockSupportType)
+{
+    return false;
+}
+not_null_ptr<ItemInstance> ChorusFlowerBlock::getSilkTouchItemInstance(const BlockState*)
+{
+    return ItemInstance::EMPTY;
+}
 
 BlockStateDefinition* ChorusFlowerBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { CHORUS_AGE };
+    static const Property* properties[] = {CHORUS_AGE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

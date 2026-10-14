@@ -66,7 +66,9 @@ public:
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);

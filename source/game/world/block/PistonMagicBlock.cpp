@@ -28,8 +28,7 @@
 AbstractProperty<const Direction*>* PistonMagicBlock::FACING = NULL;
 AbstractProperty<PistonHeadBlock::PistonType*>* PistonMagicBlock::TYPE = NULL;
 
-PistonMagicBlock::PistonMagicBlock()
-    : BaseEntityBlock(Material::PISTON)
+PistonMagicBlock::PistonMagicBlock() : BaseEntityBlock(Material::PISTON)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(TYPE, pistonTypeNormal));
@@ -42,11 +41,11 @@ boost::shared_ptr<BlockEntity> PistonMagicBlock::newBlockEntity(Level*, int)
 }
 
 boost::shared_ptr<BlockEntity> PistonMagicBlock::newMovingBlockEntity(const BlockState* state,
-                                                                       const Direction* direction,
-                                                                       bool extending, bool source,
-                                                                       CompoundTag* blockEntityTag)
+                                                                      const Direction* direction, bool extending,
+                                                                      bool source, CompoundTag* blockEntityTag)
 {
-    return boost::shared_ptr<BlockEntity>(new PistonMovingBlockEntity(state, direction, extending, source, blockEntityTag));
+    return boost::shared_ptr<BlockEntity>(
+        new PistonMovingBlockEntity(state, direction, extending, source, blockEntityTag));
 }
 
 void PistonMagicBlock::blockStaticCtor()
@@ -60,7 +59,8 @@ void PistonMagicBlock::onRemove(Level* level, const BlockPos& pos, const BlockSt
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
     if (entity != NULL && boost::dynamic_pointer_cast<PistonMovingBlockEntity>(entity) != NULL)
     {
-        boost::shared_ptr<PistonMovingBlockEntity> moving = boost::dynamic_pointer_cast<PistonMovingBlockEntity>(entity);
+        boost::shared_ptr<PistonMovingBlockEntity> moving = boost::dynamic_pointer_cast<PistonMovingBlockEntity>(
+            entity);
         moving->finalTick();
     }
     else
@@ -101,9 +101,8 @@ bool PistonMagicBlock::isCubeShaped(const BlockState*)
     return false;
 }
 
-bool PistonMagicBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
-                           boost::shared_ptr<Player>, InteractionHand::EInteractionHand,
-                           const Direction*, float, float, float, bool clientSide)
+bool PistonMagicBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player>,
+                           InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
     if (!clientSide)
     {
@@ -121,8 +120,7 @@ Item* PistonMagicBlock::getResource(const BlockState*, Random*, int)
     return Items::air;
 }
 
-boost::shared_ptr<PistonMovingBlockEntity> PistonMagicBlock::getEntity(LevelSource* levelSource,
-                                                                        const BlockPos& pos)
+boost::shared_ptr<PistonMovingBlockEntity> PistonMagicBlock::getEntity(LevelSource* levelSource, const BlockPos& pos)
 {
     boost::shared_ptr<BlockEntity> entity = levelSource->getBlockEntity(pos);
     if (entity && boost::dynamic_pointer_cast<PistonMovingBlockEntity>(entity))
@@ -132,8 +130,7 @@ boost::shared_ptr<PistonMovingBlockEntity> PistonMagicBlock::getEntity(LevelSour
     return boost::shared_ptr<PistonMovingBlockEntity>();
 }
 
-void PistonMagicBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
-                                      float, int)
+void PistonMagicBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float, int)
 {
     if (level->mIsClientSide)
         return;
@@ -149,15 +146,13 @@ HitResult* PistonMagicBlock::clip(const BlockState*, Level*, const BlockPos&, Ve
     return NULL;
 }
 
-void PistonMagicBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos,
-                                       Block*, const BlockPos&)
+void PistonMagicBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     if (!level->mIsClientSide)
         level->getBlockEntity(pos);
 }
 
-const AABB* PistonMagicBlock::getClipAABB(const BlockState*, LevelSource* levelSource,
-                                           const BlockPos& pos)
+const AABB* PistonMagicBlock::getClipAABB(const BlockState*, LevelSource* levelSource, const BlockPos& pos)
 {
     boost::shared_ptr<PistonMovingBlockEntity> moving = getEntity(levelSource, pos);
     if (!moving)
@@ -165,17 +160,15 @@ const AABB* PistonMagicBlock::getClipAABB(const BlockState*, LevelSource* levelS
     return moving->getAABB(levelSource, pos);
 }
 
-void PistonMagicBlock::addCollisionAABBs(const BlockState*, Level* level, const BlockPos& pos,
-                                         const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
-                                         boost::shared_ptr<Entity> entity, bool)
+void PistonMagicBlock::addCollisionAABBs(const BlockState*, Level* level, const BlockPos& pos, const AABB* entityBox,
+                                         std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity, bool)
 {
     boost::shared_ptr<PistonMovingBlockEntity> moving = getEntity(level, pos);
     if (moving)
         moving->addCollissionAABBs(level, pos, entityBox, collidingBoxes, entity);
 }
 
-const AABB* PistonMagicBlock::getShape(const BlockState*, LevelSource* levelSource,
-                                        const BlockPos& pos)
+const AABB* PistonMagicBlock::getShape(const BlockState*, LevelSource* levelSource, const BlockPos& pos)
 {
     boost::shared_ptr<PistonMovingBlockEntity> moving = getEntity(levelSource, pos);
     if (moving)
@@ -195,7 +188,9 @@ not_null_ptr<ItemInstance> PistonMagicBlock::getCloneItemInstance(Level*, const 
 
 const BlockState* PistonMagicBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(FACING, PistonHeadBlock::getFacing(data))->setValue(TYPE, (data & 8) > 0 ? pistonTypeSticky : pistonTypeNormal);
+    return defaultBlockState()
+        ->setValue(FACING, PistonHeadBlock::getFacing(data))
+        ->setValue(TYPE, (data & 8) > 0 ? pistonTypeSticky : pistonTypeNormal);
 }
 
 int PistonMagicBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -220,12 +215,11 @@ const BlockState* PistonMagicBlock::mirror(const BlockState* state, Mirror* mirr
 
 BlockStateDefinition* PistonMagicBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING, TYPE };
+    static const Property* properties[] = {FACING, TYPE};
     return new BlockStateDefinition(this, properties, 2);
 }
 
-EBlockFaceShape PistonMagicBlock::getBlockFaceShape(LevelSource*, const BlockState*,
-                                                    const BlockPos&, const Direction*)
+EBlockFaceShape PistonMagicBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
     return BLOCK_FACE_UNDEFINED;
 }

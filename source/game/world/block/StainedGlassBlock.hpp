@@ -28,8 +28,7 @@ public:
     static void blockStaticCtor();
 
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
-    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource,
-                                              const BlockPos& pos);
+    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual int getRenderLayer();
     virtual int getResourceCount(Random* random);
     virtual bool isSilkTouchable();

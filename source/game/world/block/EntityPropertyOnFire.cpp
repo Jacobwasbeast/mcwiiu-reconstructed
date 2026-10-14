@@ -2,8 +2,7 @@
 
 #include "game/entity/mob/Entity.hpp"
 
-EntityPropertyOnFire::EntityPropertyOnFire(bool onFire)
-    : m_onFire(onFire)
+EntityPropertyOnFire::EntityPropertyOnFire(bool onFire) : m_onFire(onFire)
 {
 }
 

@@ -24,14 +24,12 @@
 
 namespace
 {
-const _eTerrainFeatureType STRONGHOLD_END_PORTAL_FEATURE =
-    static_cast<_eTerrainFeatureType>(eTerrainFeatureType_0 + 6);
+const _eTerrainFeatureType STRONGHOLD_END_PORTAL_FEATURE = static_cast<_eTerrainFeatureType>(eTerrainFeatureType_0 + 6);
 }
 
 static const AABB* gEndPortalShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0);
 
-EndPortalBlock::EndPortalBlock(Material* material)
-    : BaseEntityBlock(material)
+EndPortalBlock::EndPortalBlock(Material* material) : BaseEntityBlock(material)
 {
     DerivedInit();
     setLightEmission(1.0f);
@@ -49,16 +47,16 @@ const AABB* EndPortalBlock::getShape(const BlockState*, LevelSource*, const Bloc
     return gEndPortalShape;
 }
 
-bool EndPortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource,
-                                      const BlockPos& pos, const Direction* direction)
+bool EndPortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                      const Direction* direction)
 {
     if (direction == Direction::DOWN)
         return Block::shouldRenderFace(state, levelSource, pos, direction);
     return false;
 }
 
-void EndPortalBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos&, const AABB*,
-                                       std::vector<AABB*>*, boost::shared_ptr<Entity>, bool)
+void EndPortalBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos&, const AABB*, std::vector<AABB*>*,
+                                       boost::shared_ptr<Entity>, bool)
 {
 }
 
@@ -83,8 +81,7 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
     if (entity->GetType() == EntityType::EXPERIENCE_ORB)
         return;
 
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && Minecraft::GetInstance()->GetMiniGame()->ArePortalsDisabled())
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && Minecraft::GetInstance()->GetMiniGame()->ArePortalsDisabled())
         return;
 
     if (entity->isPassenger() || entity->isVehicle() || !entity->canChangeDimensions())
@@ -103,8 +100,8 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
     if (level->mIsClientSide)
         return;
 
-    if (!entity->mBoundingBox->intersects(portalBox->mMinX, portalBox->mMinY, portalBox->mMinZ,
-                                          portalBox->mMaxX, portalBox->mMaxY, portalBox->mMaxZ))
+    if (!entity->mBoundingBox->intersects(portalBox->mMinX, portalBox->mMinY, portalBox->mMinZ, portalBox->mMaxX,
+                                          portalBox->mMaxY, portalBox->mMaxZ))
         return;
 
     if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
@@ -129,12 +126,10 @@ void EndPortalBlock::animateTick(const BlockState*, Level* level, const BlockPos
     double x = (float)pos.x + random->nextFloat();
     double y = (float)pos.y + 0.8f;
     double z = (float)pos.z + random->nextFloat();
-    level->addParticle(PARTICLE_END_PORTAL, x, y, z, 0.0, 0.0, 0.0,
-                       arrayWithLength<int>());
+    level->addParticle(PARTICLE_END_PORTAL, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
 }
 
-not_null_ptr<ItemInstance> EndPortalBlock::getCloneItemInstance(Level*, const BlockPos&,
-                                                                  const BlockState*)
+not_null_ptr<ItemInstance> EndPortalBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {
     return ItemInstance::EMPTY;
 }
@@ -144,8 +139,7 @@ const MaterialColor* EndPortalBlock::getMapColor(const BlockState*, LevelSource*
     return MaterialColor::COLOR_BLACK;
 }
 
-EBlockFaceShape EndPortalBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
-                                                   const Direction*)
+EBlockFaceShape EndPortalBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
     return BLOCK_FACE_UNDEFINED;
 }

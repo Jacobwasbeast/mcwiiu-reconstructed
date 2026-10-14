@@ -39,16 +39,14 @@ public:
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getResourceCount(Random* random);
     virtual bool isSilkTouchable();
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos,
-                                                   const Direction* direction, float hitX, float hitY,
-                                                   float hitZ, int auxValue,
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
                                                    boost::shared_ptr<LivingEntity> placer);
     virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                             boost::shared_ptr<LivingEntity> placer,
-                             not_null_ptr<ItemInstance> itemInstance);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+                             boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
@@ -56,8 +54,8 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                              const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 };

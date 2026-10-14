@@ -18,8 +18,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-SeaPickleBlockItem::SeaPickleBlockItem(Block* block)
-    : BlockItem(block)
+SeaPickleBlockItem::SeaPickleBlockItem(Block* block) : BlockItem(block)
 {
     Item::setMaxDamage(0);
     Item::setStackedByData(true);
@@ -30,14 +29,10 @@ int SeaPickleBlockItem::getLevelDataForAuxValue(int auxValue)
     return auxValue;
 }
 
-InteractionResult::EInteractionResult SeaPickleBlockItem::useOn(boost::shared_ptr<Player> player,
-                                                                Level* level,
+InteractionResult::EInteractionResult SeaPickleBlockItem::useOn(boost::shared_ptr<Player> player, Level* level,
                                                                 const BlockPos& pos,
                                                                 InteractionHand::EInteractionHand hand,
-                                                                const Direction* direction,
-                                                                float,
-                                                                float,
-                                                                float,
+                                                                const Direction* direction, float, float, float,
                                                                 bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);

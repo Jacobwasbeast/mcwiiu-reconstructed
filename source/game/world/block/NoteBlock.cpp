@@ -20,8 +20,7 @@
 
 static std::vector<const SoundEvent*> noteBlockInstruments;
 
-NoteBlock::NoteBlock()
-    : BaseEntityBlock(Material::WOOD)
+NoteBlock::NoteBlock() : BaseEntityBlock(Material::WOOD)
 {
     DerivedInit();
 }
@@ -130,8 +129,8 @@ bool NoteBlock::triggerEvent(const BlockState*, Level* level, const BlockPos& po
     float pitch = (float)std::pow(2.0, (double)(eventParam - 12) / 12.0);
     level->playSound(boost::shared_ptr<Player>(), pos, getInstrument(instrument), SoundSource::eSoundSource_Records,
                      3.0f, pitch, 64.0f);
-    level->addParticle(PARTICLE_NOTE, (double)pos.x + 0.5, (double)pos.y + 1.2,
-                       (double)pos.z + 0.5, (double)eventParam / 24.0, 0.0, 0.0, arrayWithLength<int>());
+    level->addParticle(PARTICLE_NOTE, (double)pos.x + 0.5, (double)pos.y + 1.2, (double)pos.z + 0.5,
+                       (double)eventParam / 24.0, 0.0, 0.0, arrayWithLength<int>());
     return true;
 }
 
@@ -142,18 +141,11 @@ EBlockRenderShape NoteBlock::getRenderShape(const BlockState*)
 
 void NoteBlock::blockStaticCtor()
 {
-    const SoundEvent* instruments[] = {
-        SoundEvents::NOTE_HARP,
-        SoundEvents::NOTE_BASEDRUM,
-        SoundEvents::NOTE_SNARE,
-        SoundEvents::NOTE_HAT,
-        SoundEvents::NOTE_BASS,
-        SoundEvents::NOTE_FLUTE,
-        SoundEvents::NOTE_BELL,
-        SoundEvents::NOTE_GUITAR,
-        SoundEvents::NOTE_CHIME,
-        SoundEvents::NOTE_XYLOPHONE
-    };
-    std::vector<const SoundEvent*> instrumentList(instruments, instruments + sizeof(instruments) / sizeof(instruments[0]));
+    const SoundEvent* instruments[] = {SoundEvents::NOTE_HARP,     SoundEvents::NOTE_BASEDRUM, SoundEvents::NOTE_SNARE,
+                                       SoundEvents::NOTE_HAT,      SoundEvents::NOTE_BASS,     SoundEvents::NOTE_FLUTE,
+                                       SoundEvents::NOTE_BELL,     SoundEvents::NOTE_GUITAR,   SoundEvents::NOTE_CHIME,
+                                       SoundEvents::NOTE_XYLOPHONE};
+    std::vector<const SoundEvent*> instrumentList(instruments,
+                                                  instruments + sizeof(instruments) / sizeof(instruments[0]));
     noteBlockInstruments = instrumentList;
 }

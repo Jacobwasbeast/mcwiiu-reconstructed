@@ -11,18 +11,17 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<int>* StandingSignBlock::ROTATION =
-    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"rotation", 0, 15));
+AbstractProperty<int>* StandingSignBlock::ROTATION = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"rotation", 0, 15));
 
-StandingSignBlock::StandingSignBlock()
-    : SignBlock()
+StandingSignBlock::StandingSignBlock() : SignBlock()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(ROTATION, 0));
 }
 
-void StandingSignBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                        Block* block, const BlockPos& fromPos)
+void StandingSignBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                        const BlockPos& fromPos)
 {
     if (!level->getBlockState(pos.below())->getBlock()->mMaterial->isSolid())
     {
@@ -55,6 +54,6 @@ const BlockState* StandingSignBlock::mirror(const BlockState* state, Mirror* mir
 
 BlockStateDefinition* StandingSignBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { ROTATION };
+    static const Property* properties[] = {ROTATION};
     return new BlockStateDefinition(this, properties, 1);
 }

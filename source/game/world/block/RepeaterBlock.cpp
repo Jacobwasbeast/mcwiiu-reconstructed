@@ -29,18 +29,19 @@
 #include "game/item/Items.hpp"
 
 const double RepeaterBlock::DELAY_TORCH_OFFSETS[4] = {-0.0625, 0.0625, 0.1875, 0.3125};
-AbstractProperty<bool>* RepeaterBlock::LOCKED =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"locked"));
-AbstractProperty<int>* RepeaterBlock::DELAY =
-    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"delay", 1, 4));
+AbstractProperty<bool>* RepeaterBlock::LOCKED = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"locked"));
+AbstractProperty<int>* RepeaterBlock::DELAY = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"delay", 1, 4));
 static const eGameHostOption REPEATER_INTERACTION_HOST_OPTION = eGameHostOption_MiniGame;
 
 RepeaterBlock::RepeaterBlock(bool on) : DiodeBlock(on)
 {
     DerivedInit();
-    registerDefaultState(mStateDefinition->any()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::NORTH)
-                              ->setValue(DELAY, 1)
-                              ->setValue(LOCKED, false));
+    registerDefaultState(mStateDefinition->any()
+                             ->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::NORTH)
+                             ->setValue(DELAY, 1)
+                             ->setValue(LOCKED, false));
 }
 
 std::wstring RepeaterBlock::getName()
@@ -48,7 +49,8 @@ std::wstring RepeaterBlock::getName()
     return L10N::GetString(IDS_ITEM_DIODE);
 }
 
-const BlockState* RepeaterBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const BlockState* RepeaterBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                                 const BlockPos& pos)
 {
     AbstractProperty<bool>* lockedProperty = LOCKED;
     TypedBoxed<bool> locked(isLocked(levelSource, pos, state));
@@ -57,7 +59,9 @@ const BlockState* RepeaterBlock::fillVirtualBlockStateProperties(const BlockStat
 
 const BlockState* RepeaterBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
+    return state->setValue(
+        HorizontalDirectionalBlock::FACING_PROPERTY,
+        rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* RepeaterBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -65,7 +69,8 @@ const BlockState* RepeaterBlock::mirror(const BlockState* state, Mirror* mirror)
     return state->rotate(mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
 }
 
-bool RepeaterBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+bool RepeaterBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                        InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
     if (clientSide)
         return false;
@@ -88,7 +93,8 @@ const BlockState* RepeaterBlock::getOnBlock(const BlockState* state)
     int delayValue = state->getValue(DELAY);
     bool lockedValue = state->getValue(LOCKED);
     const Direction* facingValue = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
-    return Blocks::powered_repeater->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
+    return Blocks::powered_repeater->defaultBlockState()
+        ->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
         ->setValue(DELAY, delayValue)
         ->setValue(LOCKED, lockedValue);
 }
@@ -98,7 +104,8 @@ const BlockState* RepeaterBlock::getOffBlock(const BlockState* state)
     int delayValue = state->getValue(DELAY);
     bool lockedValue = state->getValue(LOCKED);
     const Direction* facingValue = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
-    return Blocks::unpowered_repeater->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
+    return Blocks::unpowered_repeater->defaultBlockState()
+        ->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
         ->setValue(DELAY, delayValue)
         ->setValue(LOCKED, lockedValue);
 }
@@ -151,7 +158,8 @@ void RepeaterBlock::onRemove(Level* level, const BlockPos& pos, const BlockState
 
 const BlockState* RepeaterBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::from2DDataValue(data))
+    return defaultBlockState()
+        ->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::from2DDataValue(data))
         ->setValue(LOCKED, false)
         ->setValue(DELAY, (data >> 2) + 1);
 }
@@ -171,7 +179,7 @@ unsigned int RepeaterBlock::GetInteractTooltip(const BlockTooltipDataHolder& too
 
 BlockStateDefinition* RepeaterBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY, DELAY, LOCKED };
+    static const Property* properties[] = {HorizontalDirectionalBlock::FACING_PROPERTY, DELAY, LOCKED};
     return new BlockStateDefinition(this, properties, 3);
 }
 

@@ -17,13 +17,11 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-WaterLilyBlockItem::WaterLilyBlockItem(Block* block)
-    : TintedBlockItem(block, false)
+WaterLilyBlockItem::WaterLilyBlockItem(Block* block) : TintedBlockItem(block, false)
 {
 }
 
-bool WaterLilyBlockItem::TestUse(Level* level, boost::shared_ptr<Player> player,
-                                 InteractionHand::EInteractionHand hand)
+bool WaterLilyBlockItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     HitResult* hitResult = Item::getPlayerPOVHitResult(level, player, true);
@@ -92,7 +90,8 @@ InteractionResultHolder WaterLilyBlockItem::use(Level* level, boost::shared_ptr<
         if (block->mMaterial == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0
             && level->isEmptyBlock(above))
         {
-            level->setBlock(above, Blocks::waterlily->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+            level->setBlock(above, Blocks::waterlily->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
+                            false);
             if (!player->mAbilities.mInstabuild)
             {
                 itemInstance->shrink(1);

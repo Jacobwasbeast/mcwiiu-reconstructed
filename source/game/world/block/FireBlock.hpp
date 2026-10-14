@@ -24,7 +24,8 @@ public:
 
     int getFlameOdds(Block* block);
     bool canBurn(LevelSource* levelSource, const BlockPos& pos);
-    const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                      const BlockPos& pos);
     void setFlammable(Block* block, int flameOdds, int burnOdds);
     static void staticCtor();
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
@@ -41,7 +42,8 @@ public:
     virtual bool canInstantlyTick();
     virtual bool mayPick();
     virtual bool mayPlace(Level* level, const BlockPos& pos);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
@@ -51,7 +53,8 @@ public:
     virtual bool waterSpreadCausesSpawn();
     virtual bool canContainLiquid(const BlockState* state) const;
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     TextureAtlasSprite* getTextureLayer(int layer);
     virtual void registerIcons(IconRegister* iconRegister);

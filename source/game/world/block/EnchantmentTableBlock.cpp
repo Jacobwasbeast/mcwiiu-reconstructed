@@ -23,8 +23,7 @@ static const std::wstring gEnchantmentTopIconName(L"enchantment_top");
 static const std::wstring gEnchantmentBottomIconName(L"enchantment_bottom");
 static const AABB* gEnchantmentTableShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0);
 
-EnchantmentTableBlock::EnchantmentTableBlock()
-    : BaseEntityBlock(Material::STONE, MaterialColor::COLOR_RED)
+EnchantmentTableBlock::EnchantmentTableBlock() : BaseEntityBlock(Material::STONE, MaterialColor::COLOR_RED)
 {
     DerivedInit();
     setLightBlock(0);
@@ -93,9 +92,9 @@ EBlockRenderShape EnchantmentTableBlock::getRenderShape(const BlockState*)
     return BLOCK_RENDER_MODEL;
 }
 
-bool EnchantmentTableBlock::use(Level* level, const BlockPos& pos, const BlockState*,
-                                 boost::shared_ptr<Player> player, InteractionHand::EInteractionHand,
-                                 const Direction*, float, float, float, bool clientSide)
+bool EnchantmentTableBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
+                                InteractionHand::EInteractionHand, const Direction*, float, float, float,
+                                bool clientSide)
 {
     if (clientSide)
     {
@@ -108,8 +107,7 @@ bool EnchantmentTableBlock::use(Level* level, const BlockPos& pos, const BlockSt
         bool isTable = eTYPE_DERIVED_FROM(BlockEntityType::ENCHANTMENT_TABLE_ENTITY, blockEntity->GetType());
         if (isTable)
         {
-            EnchantmentTableEntity& table =
-                *boost::dynamic_pointer_cast<EnchantmentTableEntity>(blockEntity).get();
+            EnchantmentTableEntity& table = *boost::dynamic_pointer_cast<EnchantmentTableEntity>(blockEntity).get();
             player->startBlockInteraction(table);
         }
     }
@@ -117,8 +115,7 @@ bool EnchantmentTableBlock::use(Level* level, const BlockPos& pos, const BlockSt
 }
 
 void EnchantmentTableBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                                        boost::shared_ptr<LivingEntity> placer,
-                                        not_null_ptr<ItemInstance> itemInstance)
+                                        boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
 {
     Block::setPlacedBy(level, pos, state, placer, itemInstance);
     if (itemInstance->hasCustomHoverName())
@@ -127,16 +124,16 @@ void EnchantmentTableBlock::setPlacedBy(Level* level, const BlockPos& pos, const
         bool isTable = eTYPE_DERIVED_FROM(BlockEntityType::ENCHANTMENT_TABLE_ENTITY, blockEntity->GetType());
         if (isTable)
         {
-            boost::shared_ptr<EnchantmentTableEntity> table =
-                boost::dynamic_pointer_cast<EnchantmentTableEntity>(blockEntity);
+            boost::shared_ptr<EnchantmentTableEntity> table = boost::dynamic_pointer_cast<EnchantmentTableEntity>(
+                blockEntity);
             table->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
                                  itemInstance->wasCreatedByRestrictedPlayer(), itemInstance->wasCreatedOnHost());
         }
     }
 }
 
-EBlockFaceShape EnchantmentTableBlock::getBlockFaceShape(LevelSource*, const BlockState*,
-                                                         const BlockPos&, const Direction* direction)
+EBlockFaceShape EnchantmentTableBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
+                                                         const Direction* direction)
 {
     return direction == Direction::DOWN ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
 }

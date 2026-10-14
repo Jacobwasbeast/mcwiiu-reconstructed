@@ -18,11 +18,11 @@ EnumProperty<const DyeColor*>* ColoredBlock::COLOR = NULL;
 
 void ColoredBlock::blockStaticCtor()
 {
-    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS, Predicates<const DyeColor*>::alwaysTrue);
+    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS,
+                                                  Predicates<const DyeColor*>::alwaysTrue);
 }
 
-ColoredBlock::ColoredBlock(Material* material)
-    : Block(material)
+ColoredBlock::ColoredBlock(Material* material) : Block(material)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(COLOR, DyeColor::WHITE));
@@ -55,7 +55,7 @@ TextureAtlasSprite* ColoredBlock::getTexture(const Direction* direction, const B
 
 BlockStateDefinition* ColoredBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { COLOR };
+    static const Property* properties[] = {COLOR};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -63,6 +63,7 @@ void ColoredBlock::registerIcons(IconRegister* iconRegister)
 {
     for (int i = 0; i < 16; ++i)
     {
-        mIcons[i] = iconRegister->registerIcon(getIconName() + L"_" + DyeColor::TEXTURE_NAMES[DyeColor::byBlockData(i)->getItemData()]);
+        mIcons[i] = iconRegister->registerIcon(getIconName() + L"_"
+                                               + DyeColor::TEXTURE_NAMES[DyeColor::byBlockData(i)->getItemData()]);
     }
 }

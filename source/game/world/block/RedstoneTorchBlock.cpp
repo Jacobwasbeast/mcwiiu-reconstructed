@@ -23,8 +23,7 @@
 
 static boost::unordered_map<Level*, std::deque<RedstoneTorchBlock::Toggle>*> sToggleLists;
 
-RedstoneTorchBlock::RedstoneTorchBlock(bool lit)
-    : TorchBlock()
+RedstoneTorchBlock::RedstoneTorchBlock(bool lit) : TorchBlock()
 {
     ClearDerivedInit();
     DerivedInit();
@@ -64,14 +63,16 @@ int RedstoneTorchBlock::getTickDelay(Level*)
 void RedstoneTorchBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
     if (mLit)
-        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
+             it != Direction::VALUES.end(); ++it)
             level->updateNeighborsAt(pos.relative(*it), this, false);
 }
 
 void RedstoneTorchBlock::onRemove(Level* level, const BlockPos& pos, const BlockState*)
 {
     if (mLit)
-        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
+             it != Direction::VALUES.end(); ++it)
             level->updateNeighborsAt(pos.relative(*it), this, false);
 }
 
@@ -106,7 +107,9 @@ void RedstoneTorchBlock::tick(Level* level, const BlockPos& pos, const BlockStat
     {
         if (powered)
         {
-            level->setBlock(pos, Blocks::unlit_redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)), flags, false);
+            level->setBlock(
+                pos, Blocks::unlit_redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)),
+                flags, false);
             if (isToggledTooFrequently(level, pos, true))
             {
                 level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::REDSTONE_TORCH_BURNOUT,
@@ -127,17 +130,20 @@ void RedstoneTorchBlock::tick(Level* level, const BlockPos& pos, const BlockStat
     }
     else if (!powered && !isToggledTooFrequently(level, pos, false))
     {
-        level->setBlock(pos, Blocks::redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)), flags, false);
+        level->setBlock(pos, Blocks::redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)),
+                        flags, false);
     }
 }
 
-void RedstoneTorchBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
+void RedstoneTorchBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*,
+                                         const BlockPos&)
 {
     if (!checkDoPop(level, pos, state) && hasNeighborSignal(level, pos, state) == mLit)
         level->addToTickNextTick(pos, this, getTickDelay(level));
 }
 
-int RedstoneTorchBlock::getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+int RedstoneTorchBlock::getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                        const Direction* direction)
 {
     return direction == Direction::DOWN ? getSignal(state, levelSource, pos, direction) : 0;
 }

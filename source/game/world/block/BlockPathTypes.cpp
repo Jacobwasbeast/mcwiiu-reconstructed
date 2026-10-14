@@ -20,32 +20,12 @@ const BlockPathTypes* BlockPathTypes::DOOR_WOOD_CLOSED = new BlockPathTypes(16, 
 const BlockPathTypes* BlockPathTypes::DOOR_IRON_CLOSED = new BlockPathTypes(17, -1.0F);
 const BlockPathTypes* BlockPathTypes::BREACH = new BlockPathTypes(18, 4.0F);
 
-const BlockPathTypes* BlockPathTypes::VALUES[19] =
-{
-    BLOCKED,
-    OPEN,
-    WALKABLE,
-    TRAPDOOR,
-    FENCE,
-    LAVA,
-    WATER,
-    WATER_BORDER,
-    RAIL,
-    DANGER_FIRE,
-    DAMAGE_FIRE,
-    DANGER_CACTUS,
-    DAMAGE_CACTUS,
-    DANGER_OTHER,
-    DAMAGE_OTHER,
-    DOOR_OPEN,
-    DOOR_WOOD_CLOSED,
-    DOOR_IRON_CLOSED,
-    BREACH
-};
+const BlockPathTypes* BlockPathTypes::VALUES[19] = {
+    BLOCKED,      OPEN,      WALKABLE,         TRAPDOOR,         FENCE,         LAVA,          WATER,
+    WATER_BORDER, RAIL,      DANGER_FIRE,      DAMAGE_FIRE,      DANGER_CACTUS, DAMAGE_CACTUS, DANGER_OTHER,
+    DAMAGE_OTHER, DOOR_OPEN, DOOR_WOOD_CLOSED, DOOR_IRON_CLOSED, BREACH};
 
-BlockPathTypes::BlockPathTypes(int id, float malus)
-    : id(id),
-      malus(malus)
+BlockPathTypes::BlockPathTypes(int id, float malus) : id(id), malus(malus)
 {
 }
 

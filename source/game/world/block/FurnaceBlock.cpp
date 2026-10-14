@@ -33,8 +33,7 @@ DirectionProperty* FurnaceBlock::FACING = NULL;
 
 bool FurnaceBlock::sKeepInventory = false;
 
-FurnaceBlock::FurnaceBlock(bool lit)
-    : BaseEntityBlock(Material::STONE)
+FurnaceBlock::FurnaceBlock(bool lit) : BaseEntityBlock(Material::STONE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any());
@@ -60,16 +59,21 @@ Item* FurnaceBlock::getResource(const BlockState*, Random*, int)
 
 void FurnaceBlock::recalcLockDir(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (level->mIsClientSide) return;
+    if (level->mIsClientSide)
+        return;
     const BlockState* north = level->getBlockState(pos.north());
     const BlockState* south = level->getBlockState(pos.south());
     const BlockState* west = level->getBlockState(pos.west());
     const BlockState* east = level->getBlockState(pos.east());
     const Direction* facing = state->getValue(FACING);
-    if (facing == Direction::NORTH && north->isSolid() && !south->isSolid()) facing = Direction::SOUTH;
-    else if (facing == Direction::SOUTH && south->isSolid() && !north->isSolid()) facing = Direction::NORTH;
-    else if (facing == Direction::WEST && west->isSolid() && !east->isSolid()) facing = Direction::EAST;
-    else if (facing == Direction::EAST && east->isSolid() && !west->isSolid()) facing = Direction::WEST;
+    if (facing == Direction::NORTH && north->isSolid() && !south->isSolid())
+        facing = Direction::SOUTH;
+    else if (facing == Direction::SOUTH && south->isSolid() && !north->isSolid())
+        facing = Direction::NORTH;
+    else if (facing == Direction::WEST && west->isSolid() && !east->isSolid())
+        facing = Direction::EAST;
+    else if (facing == Direction::EAST && east->isSolid() && !west->isSolid())
+        facing = Direction::WEST;
     level->setBlock(pos, state->setValue(FACING, facing), Block::UPDATE_CLIENTS, false);
 }
 
@@ -122,7 +126,8 @@ bool FurnaceBlock::TestUse()
     return true;
 }
 
-bool FurnaceBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+bool FurnaceBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                       InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
     if (clientSide)
         return false;
@@ -143,13 +148,17 @@ void FurnaceBlock::setLit(bool lit, Level* level, const BlockPos& pos)
     sKeepInventory = true;
     if (lit)
     {
-        level->setBlock(pos, Blocks::lit_furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)), Block::UPDATE_ALL, false);
-        level->setBlock(pos, Blocks::lit_furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)), Block::UPDATE_ALL, false);
+        level->setBlock(pos, Blocks::lit_furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)),
+                        Block::UPDATE_ALL, false);
+        level->setBlock(pos, Blocks::lit_furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)),
+                        Block::UPDATE_ALL, false);
     }
     else
     {
-        level->setBlock(pos, Blocks::furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)), Block::UPDATE_ALL, false);
-        level->setBlock(pos, Blocks::furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)), Block::UPDATE_ALL, false);
+        level->setBlock(pos, Blocks::furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)),
+                        Block::UPDATE_ALL, false);
+        level->setBlock(pos, Blocks::furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)),
+                        Block::UPDATE_ALL, false);
     }
     sKeepInventory = false;
     if (blockEntity != NULL)
@@ -160,18 +169,22 @@ void FurnaceBlock::setLit(bool lit, Level* level, const BlockPos& pos)
     }
 }
 
-void FurnaceBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
+void FurnaceBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
+                               boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
 {
     DirectionProperty* property = FACING;
-    level->setBlock(pos, state->setValue(property, placer->getDirection()->getOpposite()), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos, state->setValue(property, placer->getDirection()->getOpposite()), Block::UPDATE_CLIENTS,
+                    false);
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
         bool isFurnace = eTYPE_DERIVED_FROM(BlockEntityType::FURNACE, blockEntity->GetType());
         if (isFurnace)
         {
-            boost::shared_ptr<FurnaceBlockEntity> furnace = boost::dynamic_pointer_cast<FurnaceBlockEntity>(blockEntity);
-            furnace->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(), itemInstance->wasCreatedByRestrictedPlayer(), itemInstance->wasCreatedOnHost());
+            boost::shared_ptr<FurnaceBlockEntity> furnace = boost::dynamic_pointer_cast<FurnaceBlockEntity>(
+                blockEntity);
+            furnace->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
+                                   itemInstance->wasCreatedByRestrictedPlayer(), itemInstance->wasCreatedOnHost());
         }
     }
 }
@@ -222,7 +235,8 @@ const BlockState* FurnaceBlock::getInventoryRenderState(const BlockState*)
 const BlockState* FurnaceBlock::getBlockState(int data)
 {
     const Direction* direction = Direction::from3DDataValue(data);
-    if (direction->getAxis() == Direction::Axis::Y) direction = Direction::NORTH;
+    if (direction->getAxis() == Direction::Axis::Y)
+        direction = Direction::NORTH;
     return defaultBlockState()->setValue(FACING, direction);
 }
 
@@ -233,7 +247,8 @@ int FurnaceBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int FurnaceBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace) return IDS_TOOLTIPS_USE;
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
+        return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -251,13 +266,14 @@ const BlockState* FurnaceBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* FurnaceBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING };
+    static const Property* properties[] = {FACING};
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* FurnaceBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction == Direction::UP || direction == Direction::DOWN) return mTopIcon;
+    if (direction == Direction::UP || direction == Direction::DOWN)
+        return mTopIcon;
     return direction != state->getValue(FACING) ? mIcon : mFrontIcon;
 }
 

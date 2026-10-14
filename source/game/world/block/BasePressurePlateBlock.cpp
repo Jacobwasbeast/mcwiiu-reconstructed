@@ -14,13 +14,16 @@ static const AABB* PRESSED_AABB = AABB::newPermanent(0.0625, 0.0, 0.0625, 0.9375
 static const AABB* UNPRESSED_AABB = AABB::newPermanent(0.0625, 0.0, 0.0625, 0.9375, 0.0625, 0.9375);
 
 BasePressurePlateBlock::BasePressurePlateBlock(const std::wstring& name, Material* material)
-    : Block(material), mTextureName(name)
+    : Block(material),
+      mTextureName(name)
 {
     setTicking(true);
 }
 
-BasePressurePlateBlock::BasePressurePlateBlock(const std::wstring& name, Material* material, const MaterialColor* materialColor)
-    : Block(material), mTextureName(name)
+BasePressurePlateBlock::BasePressurePlateBlock(const std::wstring& name, Material* material,
+                                               const MaterialColor* materialColor)
+    : Block(material),
+      mTextureName(name)
 {
     setTicking(true);
 }
@@ -68,8 +71,8 @@ bool BasePressurePlateBlock::isPossibleToRespawnInThis()
 
 bool BasePressurePlateBlock::canPlaceOn(Level* level, const BlockPos& pos)
 {
-    return level->getBlockState(pos)->isTopSolidBlocking() ||
-           dynamic_cast<FenceBlock*>(level->getBlockState(pos)->getBlock()) != NULL;
+    return level->getBlockState(pos)->isTopSolidBlocking()
+           || dynamic_cast<FenceBlock*>(level->getBlockState(pos)->getBlock()) != NULL;
 }
 
 bool BasePressurePlateBlock::mayPlace(Level* level, const BlockPos& pos)
@@ -77,7 +80,8 @@ bool BasePressurePlateBlock::mayPlace(Level* level, const BlockPos& pos)
     return canPlaceOn(level, pos.below());
 }
 
-void BasePressurePlateBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
+void BasePressurePlateBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                             const BlockPos& fromPos)
 {
     Block* supportingBlock = level->getBlockState(pos.below())->getBlock();
     if (!canPlaceOn(level, pos.below()) && !Block::isExceptionForPistonAttaching(supportingBlock))
@@ -101,7 +105,8 @@ void BasePressurePlateBlock::tick(Level* level, const BlockPos& pos, const Block
     }
 }
 
-void BasePressurePlateBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity)
+void BasePressurePlateBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
+                                          const boost::shared_ptr<Entity>& entity)
 {
     if (!level->mIsClientSide)
     {
@@ -139,8 +144,7 @@ void BasePressurePlateBlock::checkPressed(Level* level, const BlockPos& pos, con
 
 const AABB* BasePressurePlateBlock::getSensitiveAABB(const BlockPos& pos)
 {
-    return AABB::newTemp(pos.x + 0.125f, pos.y, pos.z + 0.125f,
-                         pos.x + 1 - 0.125f, pos.y + 0.25, pos.z + 1 - 0.125f);
+    return AABB::newTemp(pos.x + 0.125f, pos.y, pos.z + 0.125f, pos.x + 1 - 0.125f, pos.y + 0.25, pos.z + 1 - 0.125f);
 }
 
 void BasePressurePlateBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
@@ -161,7 +165,8 @@ int BasePressurePlateBlock::getSignal(const BlockState* state, LevelSource*, con
     return getSignalForState(state);
 }
 
-int BasePressurePlateBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction* direction)
+int BasePressurePlateBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&,
+                                            const Direction* direction)
 {
     if (direction == Direction::UP)
         return getSignalForState(state);
@@ -178,7 +183,8 @@ EPistonPushReaction BasePressurePlateBlock::getPistonPushReaction(const BlockSta
     return PISTON_PUSH_DESTROY;
 }
 
-EBlockFaceShape BasePressurePlateBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
+EBlockFaceShape BasePressurePlateBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
+                                                          const Direction*)
 {
     return BLOCK_FACE_UNDEFINED;
 }

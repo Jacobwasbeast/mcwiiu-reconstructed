@@ -25,8 +25,9 @@ static Predicate<const BlockState*>* sTallGrassPredicate;
 
 bool tallGrassPredicate(Boxed* value)
 {
-    const TypedBoxed<TallGrassBlock::Variant*>* boxed = value->isA(typeid(TallGrassBlock::Variant*))
-        ? static_cast<const TypedBoxed<TallGrassBlock::Variant*>*>(value) : NULL;
+    const TypedBoxed<TallGrassBlock::Variant*>* boxed =
+        value->isA(typeid(TallGrassBlock::Variant*)) ? static_cast<const TypedBoxed<TallGrassBlock::Variant*>*>(value)
+                                                     : NULL;
     return boxed->getValue() == TallGrassBlock::Variant::GRASS;
 }
 
@@ -45,7 +46,8 @@ EatBlockGoal::~EatBlockGoal()
 void EatBlockGoal::staticCtor()
 {
     sTallGrassPredicate = BlockStatePredicate::forBlock(Blocks::tallgrass)
-                              ->where(TallGrassBlock::VARIANT, new Predicates<Boxed*>::FunctionPredicate(tallGrassPredicate));
+                              ->where(TallGrassBlock::VARIANT,
+                                      new Predicates<Boxed*>::FunctionPredicate(tallGrassPredicate));
 }
 
 bool EatBlockGoal::canUse()
@@ -118,4 +120,3 @@ void EatBlockGoal::setLevel(Level* level)
 {
     mLevel = level;
 }
-

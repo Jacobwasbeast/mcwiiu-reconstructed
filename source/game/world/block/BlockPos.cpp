@@ -27,38 +27,31 @@ const long long BlockPos::PACKED_Z_MASK = (1LL << BlockPos::PACKED_Z_LENGTH) - 1
 const int BlockPos::Y_OFFSET = BlockPos::PACKED_Z_LENGTH;
 const int BlockPos::X_OFFSET = BlockPos::PACKED_Y_LENGTH + BlockPos::PACKED_Z_LENGTH;
 
-BlockPos::BlockPos()
-    : Vec3i(0, 0, 0)
+BlockPos::BlockPos() : Vec3i(0, 0, 0)
 {
 }
 
-BlockPos::BlockPos(int x, int y, int z)
-    : Vec3i(x, y, z)
+BlockPos::BlockPos(int x, int y, int z) : Vec3i(x, y, z)
 {
 }
 
-BlockPos::BlockPos(double x, double y, double z)
-    : Vec3i(x, y, z)
+BlockPos::BlockPos(double x, double y, double z) : Vec3i(x, y, z)
 {
 }
 
-BlockPos::BlockPos(const boost::shared_ptr<Entity>& entity)
-    : Vec3i(entity->mX, entity->mY, entity->mZ)
+BlockPos::BlockPos(const boost::shared_ptr<Entity>& entity) : Vec3i(entity->mX, entity->mY, entity->mZ)
 {
 }
 
-BlockPos::BlockPos(Entity* entity)
-    : Vec3i(entity->mX, entity->mY, entity->mZ)
+BlockPos::BlockPos(Entity* entity) : Vec3i(entity->mX, entity->mY, entity->mZ)
 {
 }
 
-BlockPos::BlockPos(Vec3* pos)
-    : Vec3i(pos->x, pos->y, pos->z)
+BlockPos::BlockPos(Vec3* pos) : Vec3i(pos->x, pos->y, pos->z)
 {
 }
 
-BlockPos::BlockPos(const Vec3i& other)
-    : Vec3i(other.x, other.y, other.z)
+BlockPos::BlockPos(const Vec3i& other) : Vec3i(other.x, other.y, other.z)
 {
 }
 
@@ -151,8 +144,7 @@ BlockPos BlockPos::multiply(int scale) const
 
 BlockPos BlockPos::relative(const Direction* direction, int steps) const
 {
-    return BlockPos(x + direction->getStepX() * steps,
-                    y + direction->getStepY() * steps,
+    return BlockPos(x + direction->getStepX() * steps, y + direction->getStepY() * steps,
                     z + direction->getStepZ() * steps);
 }
 
@@ -251,15 +243,13 @@ BlockPos BlockPos::rotate(Rotation* rotation) const
 
     case Rotation::eTYPE_CounterClockwise90:
         return BlockPos(z, y, -x);
-
     }
 }
 
 long long BlockPos::compressBlockPos() const
 {
-    return (((long long)x & PACKED_X_MASK) << X_OFFSET)
-         | (((long long)y & PACKED_Y_MASK) << Y_OFFSET)
-         | ((long long)z & PACKED_Z_MASK);
+    return (((long long)x & PACKED_X_MASK) << X_OFFSET) | (((long long)y & PACKED_Y_MASK) << Y_OFFSET)
+           | ((long long)z & PACKED_Z_MASK);
 }
 
 int BlockPos::getRandomSeed() const
@@ -271,9 +261,7 @@ int BlockPos::getRandomSeed() const
 
 BlockPos BlockPos::cross(const Vec3i& other) const
 {
-    return BlockPos(y * other.z - z * other.y,
-                    z * other.x - x * other.z,
-                    x * other.y - y * other.x);
+    return BlockPos(y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x);
 }
 
 BlockPos BlockPos::decompressBlockPos(long long packed)
@@ -326,8 +314,7 @@ Iterator<MutableBlockPos*>* BlockPos::pooledMutablesBetween(const BlockPos& from
                                  std::max(from.x, to.x), std::max(from.y, to.y), std::max(from.z, to.z));
 }
 
-Iterator<MutableBlockPos*>* BlockPos::pooledMutablesBetween(int minX, int minY, int minZ,
-                                                              int maxX, int maxY, int maxZ)
+Iterator<MutableBlockPos*>* BlockPos::pooledMutablesBetween(int minX, int minY, int minZ, int maxX, int maxY, int maxZ)
 {
     return new MutableBlockPosIterator(minX, minY, minZ, maxX, maxY, maxZ);
 }

@@ -7,10 +7,7 @@
 class GasMaterial : public Material
 {
 public:
-    GasMaterial(const MaterialColor* color) : Material(color)
-    {
-        replaceable();
-    }
+    GasMaterial(const MaterialColor* color) : Material(color) { replaceable(); }
     virtual ~GasMaterial();
 
     virtual bool isSolid();

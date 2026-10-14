@@ -8,8 +8,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-SeaLanternBlock::SeaLanternBlock(Material* material)
-    : Block(material)
+SeaLanternBlock::SeaLanternBlock(Material* material) : Block(material)
 {
     DerivedInit();
 }
@@ -29,7 +28,8 @@ Item* SeaLanternBlock::getResource(const BlockState* state, Random* random, int 
     return Items::prismarineCrystals;
 }
 
-const MaterialColor* SeaLanternBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const MaterialColor* SeaLanternBlock::getMapColor(const BlockState* state, LevelSource* levelSource,
+                                                  const BlockPos& pos)
 {
     return MaterialColor::QUARTZ;
 }

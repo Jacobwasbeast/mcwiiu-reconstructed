@@ -7,13 +7,13 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-PoweredBlock::PoweredBlock(Material* material, const MaterialColor* materialColor)
-    : Block(material, materialColor)
+PoweredBlock::PoweredBlock(Material* material, const MaterialColor* materialColor) : Block(material, materialColor)
 {
     DerivedInit();
 }
 
-int PoweredBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+int PoweredBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                            const Direction* direction)
 {
     return Block::SIGNAL_MAX;
 }

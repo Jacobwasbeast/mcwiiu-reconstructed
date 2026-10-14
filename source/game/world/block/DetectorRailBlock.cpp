@@ -38,14 +38,12 @@ void DetectorRailBlock::blockStaticCtor()
         boost::unordered_set<BaseRailBlock::RailShape*> values;
         for (int i = 0; i < 10; ++i)
             values.insert(RailShape::VALUES[i]);
-        shape = EnumProperty<BaseRailBlock::RailShape*>::create(
-            name, typeid(BaseRailBlock::RailShape), values, filter);
+        shape = EnumProperty<BaseRailBlock::RailShape*>::create(name, typeid(BaseRailBlock::RailShape), values, filter);
     }
     DetectorRailBlock::SHAPE = shape;
 }
 
-DetectorRailBlock::DetectorRailBlock()
-    : BaseRailBlock(true)
+DetectorRailBlock::DetectorRailBlock() : BaseRailBlock(true)
 {
     DerivedInit();
     setTicking(true);
@@ -55,9 +53,15 @@ DetectorRailBlock::DetectorRailBlock()
     memset(mIcons, 0, sizeof(mIcons));
 }
 
-int DetectorRailBlock::getTickDelay(Level*) { return 20; }
+int DetectorRailBlock::getTickDelay(Level*)
+{
+    return 20;
+}
 
-bool DetectorRailBlock::isSignalSource(const BlockState*) { return true; }
+bool DetectorRailBlock::isSignalSource(const BlockState*)
+{
+    return true;
+}
 
 void DetectorRailBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                                      const boost::shared_ptr<Entity>&)
@@ -90,8 +94,7 @@ int DetectorRailBlock::getSignal(const BlockState* state, LevelSource*, const Bl
 AABB* DetectorRailBlock::getSearchBB(const BlockPos& pos)
 {
     float inset = 0.2f;
-    return AABB::newTemp(pos.x + inset, pos.y, pos.z + inset,
-                         pos.x + 1 - inset, pos.y + 1 - inset, pos.z + 1 - inset);
+    return AABB::newTemp(pos.x + inset, pos.y, pos.z + inset, pos.x + 1 - inset, pos.y + 1 - inset, pos.z + 1 - inset);
 }
 
 std::vector<boost::shared_ptr<Entity> >* DetectorRailBlock::getInteractingMinecartOfType(
@@ -107,8 +110,8 @@ std::vector<boost::shared_ptr<Entity> >* DetectorRailBlock::getInteractingMineca
 void DetectorRailBlock::checkPressed(Level* level, const BlockPos& pos, const BlockState* state)
 {
     bool powered = state->getValue(DetectorRailBlock::POWERED);
-    std::vector<boost::shared_ptr<Entity> >* minecarts =
-        getInteractingMinecartOfType(level, pos, typeid(Minecart), NULL);
+    std::vector<boost::shared_ptr<Entity> >* minecarts = getInteractingMinecartOfType(level, pos, typeid(Minecart),
+                                                                                      NULL);
     bool occupied = !minecarts->empty();
     if (occupied && !powered)
     {
@@ -130,8 +133,7 @@ void DetectorRailBlock::checkPressed(Level* level, const BlockPos& pos, const Bl
     delete minecarts;
 }
 
-void DetectorRailBlock::updatePowerToConnected(Level* level, const BlockPos& pos,
-                                               const BlockState* state, bool)
+void DetectorRailBlock::updatePowerToConnected(Level* level, const BlockPos& pos, const BlockState* state, bool)
 {
     BaseRailBlock::Rail rail(level, pos, state);
     std::vector<BlockPos>* connections = rail.getConnections();
@@ -146,7 +148,8 @@ void DetectorRailBlock::updatePowerToConnected(Level* level, const BlockPos& pos
 int DetectorRailBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&,
                                        const Direction* direction)
 {
-    return state->getValue(DetectorRailBlock::POWERED) && direction == Direction::UP ? Block::SIGNAL_MAX : Block::SIGNAL_NONE;
+    return state->getValue(DetectorRailBlock::POWERED) && direction == Direction::UP ? Block::SIGNAL_MAX
+                                                                                     : Block::SIGNAL_NONE;
 }
 
 void DetectorRailBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -160,7 +163,10 @@ const AbstractProperty<BaseRailBlock::RailShape*>* DetectorRailBlock::getShapePr
     return DetectorRailBlock::SHAPE;
 }
 
-bool DetectorRailBlock::hasAnalogOutputSignal(const BlockState*) { return true; }
+bool DetectorRailBlock::hasAnalogOutputSignal(const BlockState*)
+{
+    return true;
+}
 
 int DetectorRailBlock::getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos)
 {
@@ -168,14 +174,14 @@ int DetectorRailBlock::getAnalogOutputSignal(const BlockState* state, Level* lev
     if (!railState->getValue(DetectorRailBlock::POWERED))
         return Block::SIGNAL_NONE;
 
-    std::vector<boost::shared_ptr<Entity> >* commandCarts =
-        getInteractingMinecartOfType(level, pos, typeid(MinecartCommandBlock), NULL);
+    std::vector<boost::shared_ptr<Entity> >* commandCarts = getInteractingMinecartOfType(
+        level, pos, typeid(MinecartCommandBlock), NULL);
     if (!commandCarts->empty())
     {
         int successCount;
         {
-            boost::shared_ptr<MinecartCommandBlock> commandCart =
-                boost::static_pointer_cast<MinecartCommandBlock>(commandCarts->at(0));
+            boost::shared_ptr<MinecartCommandBlock> commandCart = boost::static_pointer_cast<MinecartCommandBlock>(
+                commandCarts->at(0));
             successCount = commandCart->getCommandBlock()->getSuccessCount();
         }
         delete commandCarts;
@@ -183,8 +189,8 @@ int DetectorRailBlock::getAnalogOutputSignal(const BlockState* state, Level* lev
     }
     delete commandCarts;
 
-    std::vector<boost::shared_ptr<Entity> >* containerCarts =
-        getInteractingMinecartOfType(level, pos, typeid(Minecart), EntitySelector::CONTAINER_ENTITY_SELECTOR);
+    std::vector<boost::shared_ptr<Entity> >* containerCarts = getInteractingMinecartOfType(
+        level, pos, typeid(Minecart), EntitySelector::CONTAINER_ENTITY_SELECTOR);
     if (!containerCarts->empty())
     {
         boost::shared_ptr<Entity> containerCart = containerCarts->at(0);
@@ -338,7 +344,7 @@ const BlockState* DetectorRailBlock::mirror(const BlockState* state, Mirror* mir
 
 BlockStateDefinition* DetectorRailBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { DetectorRailBlock::SHAPE, DetectorRailBlock::POWERED };
+    static const Property* properties[] = {DetectorRailBlock::SHAPE, DetectorRailBlock::POWERED};
     return new BlockStateDefinition(this, properties, 2);
 }
 

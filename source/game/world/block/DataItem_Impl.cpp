@@ -76,7 +76,8 @@ void DataItem_Impl<CompoundTag*>::setValue(CompoundTag* value)
     LeaveCriticalSection(&SynchedEntityData::sDataItemLock);
 }
 
-DataItem_Impl<const Rotations*>::DataItem_Impl(const EntityDataAccessor<const Rotations*>* accessor, const Rotations* value)
+DataItem_Impl<const Rotations*>::DataItem_Impl(const EntityDataAccessor<const Rotations*>* accessor,
+                                               const Rotations* value)
 {
     mAccessor = accessor;
     mValue = value;

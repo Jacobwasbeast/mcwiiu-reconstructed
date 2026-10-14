@@ -24,7 +24,9 @@ GlazedTerracottaBlock::GlazedTerracottaBlock(const DyeColor* dyeColor)
 
 const BlockState* GlazedTerracottaBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
+    return state->setValue(
+        HorizontalDirectionalBlock::FACING_PROPERTY,
+        rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* GlazedTerracottaBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -32,9 +34,8 @@ const BlockState* GlazedTerracottaBlock::mirror(const BlockState* state, Mirror*
     return state->rotate(mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
 }
 
-const BlockState* GlazedTerracottaBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*,
-                                                               float, float, float, int,
-                                                               boost::shared_ptr<LivingEntity> placer)
+const BlockState* GlazedTerracottaBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float,
+                                                              float, int, boost::shared_ptr<LivingEntity> placer)
 {
     const BlockState* state = defaultBlockState();
     DirectionProperty* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
@@ -69,6 +70,6 @@ EBlockRenderShape GlazedTerracottaBlock::getRenderShape(const BlockState*)
 
 BlockStateDefinition* GlazedTerracottaBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY };
+    static const Property* properties[] = {HorizontalDirectionalBlock::FACING_PROPERTY};
     return new BlockStateDefinition(this, properties, 1);
 }

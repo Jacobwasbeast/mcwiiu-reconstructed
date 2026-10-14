@@ -168,7 +168,7 @@ Boxed* BlockStateDefinition::getPropertyValue(const Property* property, unsigned
 }
 
 BlockStateDefinition::BlockStateImpl* BlockStateDefinition::getNeighbour(const Property* property, Boxed* value,
-                                                                        unsigned short data) const
+                                                                         unsigned short data) const
 {
     unsigned int i = 0;
     unsigned short index = 0;
@@ -187,8 +187,7 @@ BlockStateDefinition::BlockStateImpl* BlockStateDefinition::getNeighbour(const P
 
 boost::unordered_map<const Property*, Boxed*>* BlockStateDefinition::getValues(unsigned short data) const
 {
-    boost::unordered_map<const Property*, Boxed*>* values =
-        new boost::unordered_map<const Property*, Boxed*>();
+    boost::unordered_map<const Property*, Boxed*>* values = new boost::unordered_map<const Property*, Boxed*>();
 
     unsigned int i = 0;
 
@@ -309,8 +308,7 @@ bool BlockStateDefinition::BlockStateImpl::doesPropagate() const
     return mBlock->mUseNeighbourBrightness;
 }
 
-const MaterialColor* BlockStateDefinition::BlockStateImpl::getMapColor(LevelSource* levelSource,
-                                                                      const BlockPos& pos)
+const MaterialColor* BlockStateDefinition::BlockStateImpl::getMapColor(LevelSource* levelSource, const BlockPos& pos)
 {
     if (mCachedMapColor == NULL)
     {
@@ -479,7 +477,7 @@ bool BlockStateDefinition::BlockStateImpl::isViewBlocking() const
 }
 
 EBlockFaceShape BlockStateDefinition::BlockStateImpl::getBlockFaceShape(LevelSource* levelSource, const BlockPos& pos,
-                                                                       const Direction* direction) const
+                                                                        const Direction* direction) const
 {
     return mBlock->getBlockFaceShape(levelSource, this, pos, direction);
 }

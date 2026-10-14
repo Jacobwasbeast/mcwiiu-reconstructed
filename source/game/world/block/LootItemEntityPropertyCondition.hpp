@@ -11,7 +11,8 @@ class EntityProperty;
 class LootItemEntityPropertyCondition : public LootItemCondition
 {
 public:
-    LootItemEntityPropertyCondition(std::vector<EntityProperty*> properties, LootTableContext::EntityTarget entityTarget);
+    LootItemEntityPropertyCondition(std::vector<EntityProperty*> properties,
+                                    LootTableContext::EntityTarget entityTarget);
 
     virtual bool applies(Random* random, LootTableContext& context);
 

@@ -29,12 +29,13 @@ StoneSlabBlock::Variant* StoneSlabBlock::Variant::SMOOTHBRICK = NULL;
 StoneSlabBlock::Variant* StoneSlabBlock::Variant::NETHERBRICK = NULL;
 StoneSlabBlock::Variant* StoneSlabBlock::Variant::QUARTZ = NULL;
 
-static StoneSlabBlock::Variant* gStoneSlabVariants[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+static StoneSlabBlock::Variant* gStoneSlabVariants[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 EnumProperty<StoneSlabBlock::Variant*>* StoneSlabBlock::VARIANT = NULL;
-static AbstractProperty<bool>* gStoneSlabSeamlessProperty =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"seamless"));
+static AbstractProperty<bool>* gStoneSlabSeamlessProperty = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"seamless"));
 
-StoneSlabBlock::Variant::Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int translationKey)
+StoneSlabBlock::Variant::Variant(int data, const MaterialColor* materialColor, const std::wstring& name,
+                                 int translationKey)
 {
     mColor = materialColor;
     mData = data;
@@ -42,8 +43,14 @@ StoneSlabBlock::Variant::Variant(int data, const MaterialColor* materialColor, c
     mTranslationKey = translationKey;
 }
 
-int StoneSlabBlock::Variant::getData() { return mData; }
-int StoneSlabBlock::Variant::getTranslationKey() { return mTranslationKey; }
+int StoneSlabBlock::Variant::getData()
+{
+    return mData;
+}
+int StoneSlabBlock::Variant::getTranslationKey()
+{
+    return mTranslationKey;
+}
 
 StoneSlabBlock::Variant* StoneSlabBlock::Variant::byData(int data)
 {
@@ -54,10 +61,19 @@ StoneSlabBlock::Variant* StoneSlabBlock::Variant::byData(int data)
     return gStoneSlabVariants[data];
 }
 
-const MaterialColor* StoneSlabBlock::Variant::getColor() { return mColor; }
+const MaterialColor* StoneSlabBlock::Variant::getColor()
+{
+    return mColor;
+}
 
-std::wstring StoneSlabBlock::Variant::toString() const { return mName; }
-std::wstring StoneSlabBlock::Variant::getSerializedName() const { return mName; }
+std::wstring StoneSlabBlock::Variant::toString() const
+{
+    return mName;
+}
+std::wstring StoneSlabBlock::Variant::getSerializedName() const
+{
+    return mName;
+}
 
 void StoneSlabBlock::blockStaticCtor()
 {
@@ -83,12 +99,10 @@ void StoneSlabBlock::blockStaticCtor()
     {
         values.insert(gStoneSlabVariants[i]);
     }
-    VARIANT = EnumProperty<Variant*>::create(
-        L"variant", typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
+    VARIANT = EnumProperty<Variant*>::create(L"variant", typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
 }
 
-StoneSlabBlock::StoneSlabBlock()
-    : HalfSlabBlock(Material::STONE)
+StoneSlabBlock::StoneSlabBlock() : HalfSlabBlock(Material::STONE)
 {
 }
 
@@ -169,10 +183,10 @@ BlockStateDefinition* StoneSlabBlock::createBlockStateDefinition()
 {
     if (isFullSize())
     {
-        static const Property* fullProperties[2] = { gStoneSlabSeamlessProperty, VARIANT };
+        static const Property* fullProperties[2] = {gStoneSlabSeamlessProperty, VARIANT};
         return new BlockStateDefinition(this, fullProperties, 2);
     }
-    static const Property* halfProperties[2] = { HalfSlabBlock::TYPE, VARIANT };
+    static const Property* halfProperties[2] = {HalfSlabBlock::TYPE, VARIANT};
     return new BlockStateDefinition(this, halfProperties, 2);
 }
 

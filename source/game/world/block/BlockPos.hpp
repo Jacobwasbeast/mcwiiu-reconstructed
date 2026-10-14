@@ -67,7 +67,8 @@ public:
     static Iterator<MutableBlockPos*>* mutablesBetween(int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
     static Iterator<MutableBlockPos*>* mutablesBetween(const BlockPos& from, const BlockPos& to);
     static Iterator<MutableBlockPos*>* pooledMutablesBetween(const BlockPos& from, const BlockPos& to);
-    static Iterator<MutableBlockPos*>* pooledMutablesBetween(int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
+    static Iterator<MutableBlockPos*>* pooledMutablesBetween(int minX, int minY, int minZ, int maxX, int maxY,
+                                                             int maxZ);
 
     bool operator==(const BlockPos& other) const;
     bool operator!=(const BlockPos& other) const;

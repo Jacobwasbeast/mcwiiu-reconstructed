@@ -6,13 +6,13 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-TransparentBlock::TransparentBlock(Material* material, bool ignoreSimilarity)
-    : Block(material)
+TransparentBlock::TransparentBlock(Material* material, bool ignoreSimilarity) : Block(material)
 {
     mIgnoreSimilarity = ignoreSimilarity;
 }
 
-bool TransparentBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+bool TransparentBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                        const Direction* direction)
 {
     if (!mIgnoreSimilarity && levelSource->getBlockState(pos)->getBlock() == this)
     {

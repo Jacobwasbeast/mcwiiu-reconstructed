@@ -14,8 +14,7 @@
 
 static const AABB* SOUL_SAND_CLIP_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.875, 1.0);
 
-SoulSandBlock::SoulSandBlock()
-    : Block(Material::SAND, MaterialColor::COLOR_BROWN)
+SoulSandBlock::SoulSandBlock() : Block(Material::SAND, MaterialColor::COLOR_BROWN)
 {
     DerivedInit();
     setTicking(true);
@@ -26,8 +25,7 @@ const AABB* SoulSandBlock::getClipAABB(const BlockState*, LevelSource*, const Bl
     return SOUL_SAND_CLIP_AABB;
 }
 
-void SoulSandBlock::entityInside(Level*, const BlockPos&, const BlockState*,
-                                 const boost::shared_ptr<Entity>& entity)
+void SoulSandBlock::entityInside(Level*, const BlockPos&, const BlockState*, const boost::shared_ptr<Entity>& entity)
 {
     entity->mXd *= 0.4;
     entity->mZd *= 0.4;
@@ -48,8 +46,8 @@ void SoulSandBlock::tick(Level* level, const BlockPos& pos, const BlockState*, R
     static_cast<BubbleColumnSegment*>(Blocks::bubble_column_segment)->addBubbleColumnSegment(level, pos);
 }
 
-void SoulSandBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                    Block*, const BlockPos& fromPos)
+void SoulSandBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*,
+                                    const BlockPos& fromPos)
 {
     if (fromPos == pos.above() && level->isEmptyWaterBlock(pos.above()))
         level->addToTickNextTick(pos, this, level->mRandom->nextInt(2, 3));

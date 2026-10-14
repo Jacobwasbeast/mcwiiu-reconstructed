@@ -14,8 +14,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-RandomizableLockableContainerBlockEntity::RandomizableLockableContainerBlockEntity()
-    : LockableContainerBlockEntity()
+RandomizableLockableContainerBlockEntity::RandomizableLockableContainerBlockEntity() : LockableContainerBlockEntity()
 {
     mLootTable = NULL;
     mLootTableSeed = 0;
@@ -50,8 +49,7 @@ not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::getItem(uns
 not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::removeItem(unsigned int slot, int count)
 {
     unpackLootTable(boost::shared_ptr<Player>());
-    not_null_ptr<ItemInstance> item =
-        ContainerHelper::removeItem(getItems(), slot, static_cast<unsigned int>(count));
+    not_null_ptr<ItemInstance> item = ContainerHelper::removeItem(getItems(), slot, static_cast<unsigned int>(count));
     if (!item->isEmpty())
     {
         setChanged();
@@ -124,8 +122,8 @@ void RandomizableLockableContainerBlockEntity::clearContent()
 
 InteractionObject::NameData RandomizableLockableContainerBlockEntity::GetNetworkNameData()
 {
-    return InteractionObject::NameData(mCustomName->raw(), mCustomName->getUUID(),
-                                       mCustomName->isUUIDLocal(), mCustomName->isChatCensored());
+    return InteractionObject::NameData(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isUUIDLocal(),
+                                       mCustomName->isChatCensored());
 }
 
 void RandomizableLockableContainerBlockEntity::unpackLootTable(const boost::shared_ptr<Player>& player)
@@ -139,8 +137,7 @@ void RandomizableLockableContainerBlockEntity::unpackLootTable(const boost::shar
         return;
     }
 
-    LootTable* lootTable =
-        static_cast<LootTables*>(mLevel->getLootTables())->get(mLootTable);
+    LootTable* lootTable = static_cast<LootTables*>(mLevel->getLootTables())->get(mLootTable);
     if (lootTable == NULL)
     {
         return;
@@ -191,10 +188,8 @@ bool RandomizableLockableContainerBlockEntity::trySaveLootTable(CompoundTag* tag
     return false;
 }
 
-void RandomizableLockableContainerBlockEntity::setCustomName(const std::wstring& name,
-                                                             const std::wstring& uuid,
-                                                             bool chatCensored,
-                                                             bool uuidLocal)
+void RandomizableLockableContainerBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid,
+                                                             bool chatCensored, bool uuidLocal)
 {
     mCustomName->set(name, uuid, chatCensored, uuidLocal);
 }

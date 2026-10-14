@@ -13,8 +13,7 @@
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/SkullBlock.hpp"
 
-SkullBlockEntity::SkullBlockEntity()
-    : BlockEntity()
+SkullBlockEntity::SkullBlockEntity() : BlockEntity()
 {
     mSkullType = -1;
     mRotation = 0;
@@ -102,7 +101,8 @@ float SkullBlockEntity::getMouthAnimation(float partialTick)
 
 boost::shared_ptr<Packet> SkullBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(mPos, 4, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(
+        new ClientboundBlockEntityDataPacket(mPos, 4, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* SkullBlockEntity::getUpdateTag()

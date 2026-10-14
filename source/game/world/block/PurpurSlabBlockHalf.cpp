@@ -1,7 +1,6 @@
 #include "game/world/block/PurpurSlabBlockHalf.hpp"
 
-PurpurSlabBlockHalf::PurpurSlabBlockHalf()
-    : PurpurSlabBlock()
+PurpurSlabBlockHalf::PurpurSlabBlockHalf() : PurpurSlabBlock()
 {
     PurpurSlabBlock::DerivedInit();
 }

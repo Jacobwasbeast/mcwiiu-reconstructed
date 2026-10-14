@@ -12,15 +12,13 @@ class Property;
 class LookAtBlockHint : public TutorialHint
 {
 public:
-    LookAtBlockHint(eTutorial_Hint hint, Tutorial* tutorial,
-                    const BlockState** states, unsigned int stateCount,
-                    const Property* const* properties, unsigned int propertyCount,
-                    int descriptionId, int auxValue, bool useState);
+    LookAtBlockHint(eTutorial_Hint hint, Tutorial* tutorial, const BlockState** states, unsigned int stateCount,
+                    const Property* const* properties, unsigned int propertyCount, int descriptionId, int auxValue,
+                    bool useState);
     virtual ~LookAtBlockHint();
 
     virtual unsigned int onLookAt(const BlockState* state);
-    virtual unsigned int onLookAtSkull(Level* level, const BlockPos& pos,
-                                       const BlockState* state);
+    virtual unsigned int onLookAtSkull(Level* level, const BlockPos& pos, const BlockState* state);
 
 private:
     unsigned int mStateCount;

@@ -12,18 +12,15 @@
 class DirectionProperty : public EnumProperty<const Direction*>
 {
 public:
-    static DirectionProperty* create(const std::wstring& name,
-                                     const boost::unordered_set<const Direction*>& values);
-    static DirectionProperty* create(const std::wstring& name,
-                                     const Predicate<const Direction*>* filter);
+    static DirectionProperty* create(const std::wstring& name, const boost::unordered_set<const Direction*>& values);
+    static DirectionProperty* create(const std::wstring& name, const Predicate<const Direction*>* filter);
     static DirectionProperty* create(const std::wstring& name);
 
     static bool NOT_DOWN(const Direction* direction);
 
 
 protected:
-    DirectionProperty(const std::wstring& name,
-                      const boost::unordered_set<const Direction*>& values);
+    DirectionProperty(const std::wstring& name, const boost::unordered_set<const Direction*>& values);
 };
 
 #endif

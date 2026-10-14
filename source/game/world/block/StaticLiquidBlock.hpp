@@ -15,8 +15,8 @@ class StaticLiquidBlock : public LiquidBlock
 public:
     StaticLiquidBlock(Material* material);
 
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void setDynamic(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
 };

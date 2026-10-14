@@ -26,8 +26,7 @@ public:
         static Variant* BRICKS;
         static Variant* DARK;
 
-        Variant(int data, const std::wstring& name, int nameId, int descriptionId,
-                const std::wstring& serializedName);
+        Variant(int data, const std::wstring& name, int nameId, int descriptionId, const std::wstring& serializedName);
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
         std::wstring getName();

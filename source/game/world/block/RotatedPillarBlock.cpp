@@ -39,8 +39,7 @@ void RotatedPillarBlock::blockStaticCtor()
     gRotatedPillarBlockAxisProperty = property;
 }
 
-RotatedPillarBlock::RotatedPillarBlock(Material* material)
-    : Block(material, material->getColor())
+RotatedPillarBlock::RotatedPillarBlock(Material* material) : Block(material, material->getColor())
 {
 }
 
@@ -102,7 +101,7 @@ int RotatedPillarBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* RotatedPillarBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { gRotatedPillarBlockAxisProperty };
+    static const Property* properties[] = {gRotatedPillarBlockAxisProperty};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -111,26 +110,27 @@ not_null_ptr<ItemInstance> RotatedPillarBlock::getSilkTouchItemInstance(const Bl
     return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this)));
 }
 
-const BlockState* RotatedPillarBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
+const BlockState* RotatedPillarBlock::getStateForPlacement(Level* level, const BlockPos& pos,
+                                                           const Direction* direction, float hitX, float hitY,
+                                                           float hitZ, int auxValue,
+                                                           boost::shared_ptr<LivingEntity> placer)
 {
-    return Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)->setValue(gRotatedPillarBlockAxisProperty, direction->getAxis());
+    return Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)
+        ->setValue(gRotatedPillarBlockAxisProperty, direction->getAxis());
 }
 
 TextureAtlasSprite* RotatedPillarBlock::getTexture(const Direction* direction, const BlockState* state)
 {
     Direction::Axis* axis = getAxis(state);
-    if (axis == Direction::Axis::Y
-        && (direction == Direction::UP || direction == Direction::DOWN))
+    if (axis == Direction::Axis::Y && (direction == Direction::UP || direction == Direction::DOWN))
     {
         return getTopTexture(state);
     }
-    if (axis == Direction::Axis::X
-        && (direction == Direction::EAST || direction == Direction::WEST))
+    if (axis == Direction::Axis::X && (direction == Direction::EAST || direction == Direction::WEST))
     {
         return getTopTexture(state);
     }
-    if (axis == Direction::Axis::Z
-        && (direction == Direction::NORTH || direction == Direction::SOUTH))
+    if (axis == Direction::Axis::Z && (direction == Direction::NORTH || direction == Direction::SOUTH))
     {
         return getTopTexture(state);
     }

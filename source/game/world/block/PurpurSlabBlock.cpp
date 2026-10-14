@@ -19,7 +19,7 @@
 
 EnumProperty<PurpurSlabBlock::Variant*>* PurpurSlabBlock::VARIANT = NULL;
 PurpurSlabBlock::Variant* PurpurSlabBlock::Variant::DEFAULT = new PurpurSlabBlock::Variant(L"default");
-static PurpurSlabBlock::Variant* gPurpurSlabVariants[1] = { PurpurSlabBlock::Variant::DEFAULT };
+static PurpurSlabBlock::Variant* gPurpurSlabVariants[1] = {PurpurSlabBlock::Variant::DEFAULT};
 
 PurpurSlabBlock::Variant::Variant(std::wstring name)
 {
@@ -49,8 +49,7 @@ void PurpurSlabBlock::blockStaticCtor()
     VARIANT = variant;
 }
 
-PurpurSlabBlock::PurpurSlabBlock()
-    : HalfSlabBlock(Material::STONE, MaterialColor::COLOR_MAGENTA)
+PurpurSlabBlock::PurpurSlabBlock() : HalfSlabBlock(Material::STONE, MaterialColor::COLOR_MAGENTA)
 {
 }
 
@@ -114,10 +113,10 @@ BlockStateDefinition* PurpurSlabBlock::createBlockStateDefinition()
 {
     if (isFullSize())
     {
-        static const Property* properties[1] = { VARIANT };
+        static const Property* properties[1] = {VARIANT};
         return new BlockStateDefinition(this, properties, 1);
     }
 
-    static const Property* properties[2] = { HalfSlabBlock::TYPE, VARIANT };
+    static const Property* properties[2] = {HalfSlabBlock::TYPE, VARIANT};
     return new BlockStateDefinition(this, properties, 2);
 }

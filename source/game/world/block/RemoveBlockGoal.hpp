@@ -12,10 +12,8 @@ class SoundEvent;
 class RemoveBlockGoal : public MoveToBlockGoal
 {
 public:
-    RemoveBlockGoal(Block* block, PathfinderMob* mob, double speedModifier,
-                    int searchRange, int verticalSearchStart,
-                    double maxStayDistance, const SoundEvent* startSound,
-                    const SoundEvent* endSound);
+    RemoveBlockGoal(Block* block, PathfinderMob* mob, double speedModifier, int searchRange, int verticalSearchStart,
+                    double maxStayDistance, const SoundEvent* startSound, const SoundEvent* endSound);
     virtual ~RemoveBlockGoal();
 
     virtual bool canUse();
@@ -26,8 +24,7 @@ public:
     BlockPos* getPosWithBlock(BlockPos pos, Level* level);
     virtual void tick();
     virtual bool isValidTarget(Level* level, const BlockPos& pos);
-    virtual bool isValidTargetArea(Level* level, const BlockPos& from,
-                                   const BlockPos& to);
+    virtual bool isValidTargetArea(Level* level, const BlockPos& from, const BlockPos& to);
 
 private:
     Block* mBlock;

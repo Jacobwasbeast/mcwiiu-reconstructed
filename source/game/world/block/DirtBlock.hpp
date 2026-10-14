@@ -27,9 +27,8 @@ public:
     class Variant : public StringRepresentable
     {
     public:
-        Variant(int data, const std::wstring& name, int nameId, int descriptionId,
-                const MaterialColor* materialColor, const std::wstring& texture,
-                const std::wstring& topTexture, const std::wstring& sideTexture);
+        Variant(int data, const std::wstring& name, int nameId, int descriptionId, const MaterialColor* materialColor,
+                const std::wstring& texture, const std::wstring& topTexture, const std::wstring& sideTexture);
 
         const MaterialColor* getMaterialColor();
         int getData();
@@ -62,23 +61,17 @@ public:
     };
 
     DirtBlock();
-    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
-                                       bool isClientSide);
-    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos,
-                                   const BlockState* state);
-    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                 const BlockState* state);
+    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
+    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
+    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
     static void blockStaticCtor();
 
     static EnumProperty<Variant*>* VARIANT;
 
-    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource,
-                                             const BlockPos& pos);
-    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state,
-                                                               LevelSource* levelSource,
-                                                               const BlockPos& pos);
-    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                            const BlockState* state);
+    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                              const BlockPos& pos);
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);

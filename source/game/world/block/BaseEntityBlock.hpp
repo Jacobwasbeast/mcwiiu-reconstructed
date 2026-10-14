@@ -27,8 +27,7 @@ public:
     virtual void playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
                                const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                not_null_ptr<ItemInstance> tool);
-    virtual bool triggerEvent(const BlockState* state, Level* level, const BlockPos& pos,
-                              int eventId, int eventParam);
+    virtual bool triggerEvent(const BlockState* state, Level* level, const BlockPos& pos, int eventId, int eventParam);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);
 };
 

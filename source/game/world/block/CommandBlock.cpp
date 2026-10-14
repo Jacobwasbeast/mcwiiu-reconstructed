@@ -21,8 +21,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 AbstractProperty<const Direction*>* CommandBlock::FACING = NULL;
-AbstractProperty<bool>* CommandBlock::CONDITIONAL =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"conditional"));
+AbstractProperty<bool>* CommandBlock::CONDITIONAL = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"conditional"));
 
 void CommandBlock::blockStaticCtor()
 {
@@ -44,13 +44,14 @@ unsigned int CommandBlock::getMode()
 
 boost::shared_ptr<BlockEntity> CommandBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<CommandBlockEntity>(new CommandBlockEntity(static_cast<CommandBlock::Mode>(getMode())));
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<CommandBlockEntity>(
+        new CommandBlockEntity(static_cast<CommandBlock::Mode>(getMode())));
     entity->setLevel(level);
     return entity;
 }
 
-void CommandBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                   Block* block, const BlockPos& fromPos)
+void CommandBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                   const BlockPos& fromPos)
 {
     (void)state;
     (void)level;
@@ -72,7 +73,8 @@ int CommandBlock::getTickDelay(Level*)
     return 1;
 }
 
-bool CommandBlock::use(Level*, const BlockPos&, const BlockState*, boost::shared_ptr<Player>, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
+bool CommandBlock::use(Level*, const BlockPos&, const BlockState*, boost::shared_ptr<Player>,
+                       InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
 {
     return false;
 }
@@ -87,12 +89,14 @@ int CommandBlock::getAnalogOutputSignal(const BlockState*, Level* level, const B
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::COMMAND, blockEntity->GetType()))
     {
-        return static_cast<int>(boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity)->getCommandBlock()->getSuccessCount());
+        return static_cast<int>(
+            boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity)->getCommandBlock()->getSuccessCount());
     }
     return Block::SIGNAL_NONE;
 }
 
-void CommandBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance> itemInstance)
+void CommandBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<LivingEntity>,
+                               not_null_ptr<ItemInstance> itemInstance)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     bool isCommandBlock = eTYPE_DERIVED_FROM(BlockEntityType::COMMAND, blockEntity->GetType());
@@ -148,11 +152,12 @@ const BlockState* CommandBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* CommandBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING, CONDITIONAL };
+    static const Property* properties[] = {FACING, CONDITIONAL};
     return new BlockStateDefinition(this, properties, 2);
 }
 
-const BlockState* CommandBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)
+const BlockState* CommandBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float, float,
+                                                     int, boost::shared_ptr<LivingEntity> placer)
 {
     return defaultBlockState()
         ->setValue(FACING, Direction::getDirectionFromLivingEntity(pos, placer)->getOpposite())
@@ -162,7 +167,7 @@ const BlockState* CommandBlock::getStateForPlacement(Level*, const BlockPos& pos
 bool CommandBlock::isCommandBlock(Block* block)
 {
     return block == Blocks::command_block || block == Blocks::chain_command_block
-        || block == Blocks::repeating_command_block;
+           || block == Blocks::repeating_command_block;
 }
 
 TextureAtlasSprite* CommandBlock::getTexture(const Direction* direction, const BlockState* state)

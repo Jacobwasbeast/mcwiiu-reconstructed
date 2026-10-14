@@ -11,15 +11,12 @@ class EntityDataAccessor : public EntityDataAccessor_Base
 {
 public:
     EntityDataAccessor(int id, EntityDataSerializer<T>* serializer)
-        : EntityDataAccessor_Base(id)
-        , mSerializer(serializer)
+        : EntityDataAccessor_Base(id),
+          mSerializer(serializer)
     {
     }
 
-    EntityDataSerializer<T>* getSerializer() const
-    {
-        return mSerializer;
-    }
+    EntityDataSerializer<T>* getSerializer() const { return mSerializer; }
 
 private:
     EntityDataSerializer<T>* mSerializer;

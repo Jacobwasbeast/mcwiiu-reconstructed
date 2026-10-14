@@ -54,11 +54,14 @@ public:
     static int getDataForAxis(Direction::Axis* axis);
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool trySpawnPortal(Level* level, const BlockPos& pos, bool create);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
-    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
+    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                  const Direction* direction);
     virtual int getResourceCount(Random* random);
     virtual int getRenderLayer();
-    virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity);
+    virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state,
+                              const boost::shared_ptr<Entity>& entity);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool isWaterBlocking() const;
@@ -68,7 +71,8 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual bool canContainLiquid(const BlockState* state) const;
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual bool mayPick();
 };
 

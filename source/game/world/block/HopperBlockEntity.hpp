@@ -48,8 +48,7 @@ public:
     virtual bool isOnCooldown();
     virtual bool isOnCustomCooldown();
     virtual int getTypeId(bool large);
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
 
     virtual Level* getLevel();
     virtual void setChanged();
@@ -65,14 +64,16 @@ public:
     static boost::shared_ptr<Container> getContainerAt(Level* level, double x, double y, double z);
     static boost::shared_ptr<Container> getSourceContainer(Hopper* hopper);
     static bool isEmptyContainer(boost::shared_ptr<Container> container, const Direction* direction);
-    static bool canTakeItemFromContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction* direction);
-    static bool canPlaceItemInContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction* direction);
+    static bool canTakeItemFromContainer(Container* container, not_null_ptr<ItemInstance> item, int slot,
+                                         const Direction* direction);
+    static bool canPlaceItemInContainer(Container* container, not_null_ptr<ItemInstance> item, int slot,
+                                        const Direction* direction);
     static bool canMergeItems(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second);
     static not_null_ptr<ItemInstance> tryMoveInItem(Container* source, Container* destination,
-                                                      not_null_ptr<ItemInstance> item, int slot,
-                                                      const Direction* direction);
+                                                    not_null_ptr<ItemInstance> item, int slot,
+                                                    const Direction* direction);
     static not_null_ptr<ItemInstance> addItem(Container* source, Container* destination,
-                                               not_null_ptr<ItemInstance> item, const Direction* direction);
+                                              not_null_ptr<ItemInstance> item, const Direction* direction);
     static bool tryTakeInItemFromSlot(Hopper* hopper, Container* container, int slot, const Direction* direction);
     static bool addItem(Container* source, Container* destination, const boost::shared_ptr<ItemEntity>& entity);
     static bool suckInItems(Hopper* hopper);

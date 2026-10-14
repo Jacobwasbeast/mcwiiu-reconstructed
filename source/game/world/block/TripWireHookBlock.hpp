@@ -29,19 +29,25 @@ public:
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool mayPlace(Level* level, const BlockPos& pos, const Direction* direction);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     void notifyNeighbors(Level* level, const BlockPos& pos, const Direction* direction);
     void playSound(Level* level, const BlockPos& pos, bool attached, bool powered, bool oldAttached, bool oldPowered);
-    void calculateState(Level* level, const BlockPos& pos, const BlockState* state, bool isBeingDestroyed, bool canUpdate,
-                        int wireSource, const BlockState* wireSourceState);
-    virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
+    void calculateState(Level* level, const BlockPos& pos, const BlockState* state, bool isBeingDestroyed,
+                        bool canUpdate, int wireSource, const BlockState* wireSourceState);
+    virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
+                             boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
     bool checkCanSurvive(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void randomTick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
-    virtual int getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                          const Direction* direction);
+    virtual int getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                const Direction* direction);
     virtual bool isSignalSource(const BlockState* state);
     virtual int getRenderLayer();
     virtual const BlockState* getBlockState(int data);
@@ -49,7 +55,8 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 };
 

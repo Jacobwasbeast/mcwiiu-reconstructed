@@ -151,7 +151,8 @@ bool ChestBlockEntity::canPlaceItem(int, not_null_ptr<ItemInstance>)
     return true;
 }
 
-AbstractContainerMenu* ChestBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
+AbstractContainerMenu* ChestBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory,
+                                                    boost::shared_ptr<Player> player)
 {
     unpackLootTable(player);
     return new ChestMenu(inventory, boost::static_pointer_cast<ChestBlockEntity>(shared_from_this()), player);
@@ -273,8 +274,7 @@ bool ChestBlockEntity::isSameChest(const BlockPos& position)
         return false;
     }
     Block* block = mLevel->getBlockState(position)->getBlock();
-    return block != NULL && dynamic_cast<ChestBlock*>(block) != NULL &&
-           ((ChestBlock*)block)->mType == getType();
+    return block != NULL && dynamic_cast<ChestBlock*>(block) != NULL && ((ChestBlock*)block)->mType == getType();
 }
 
 boost::weak_ptr<ChestBlockEntity> ChestBlockEntity::findAndGreetChestEntity(const Direction* direction)
@@ -296,8 +296,8 @@ boost::weak_ptr<ChestBlockEntity> ChestBlockEntity::findAndGreetChestEntity(cons
 
 void ChestBlockEntity::checkNeighbors()
 {
-    if (!mNeighborsChecked && mWestNeighbour.expired() && mEastNeighbour.expired() &&
-        mNorthNeighbour.expired() && mSouthNeighbour.expired())
+    if (!mNeighborsChecked && mWestNeighbour.expired() && mEastNeighbour.expired() && mNorthNeighbour.expired()
+        && mSouthNeighbour.expired())
     {
         mNeighborsChecked = true;
         mWestNeighbour = findAndGreetChestEntity(Direction::WEST);
@@ -355,18 +355,16 @@ void ChestBlockEntity::tick()
                                           (double)((float)z - 5.0f), (double)((float)(x + 1) + 5.0f),
                                           (double)((float)(y + 1) + 5.0f), (double)((float)(z + 1) + 5.0f));
         std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), range);
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-             it != entities->end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
             boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
             ChestMenu* menu = dynamic_cast<ChestMenu*>(player->mContainerMenu);
             if (menu != NULL)
             {
                 boost::shared_ptr<Container> container = menu->getContainer();
-                boost::shared_ptr<Container> self =
-                    boost::dynamic_pointer_cast<Container>(shared_from_this());
-                boost::shared_ptr<CompoundContainer> compound =
-                    boost::dynamic_pointer_cast<CompoundContainer>(container);
+                boost::shared_ptr<Container> self = boost::dynamic_pointer_cast<Container>(shared_from_this());
+                boost::shared_ptr<CompoundContainer> compound = boost::dynamic_pointer_cast<CompoundContainer>(
+                    container);
                 if (container == self || (compound.get() != NULL && compound->contains(self)))
                 {
                     ++mOpenCount;
@@ -392,9 +390,9 @@ void ChestBlockEntity::tick()
             {
                 soundX += 0.5;
             }
-            mLevel->playSound(boost::shared_ptr<Player>(), soundX, (double)y + 0.5, soundZ,
-                              SoundEvents::CHEST_OPEN, SoundSource::eSoundSource_Blocks, 0.2f,
-                              mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
+            mLevel->playSound(boost::shared_ptr<Player>(), soundX, (double)y + 0.5, soundZ, SoundEvents::CHEST_OPEN,
+                              SoundSource::eSoundSource_Blocks, 0.2f, mLevel->mRandom->nextFloat() * 0.1f + 0.9f,
+                              16.0f);
         }
     }
 
@@ -496,7 +494,8 @@ boost::shared_ptr<BlockEntity> ChestBlockEntity::clone()
     {
         copy->mItems[i] = mItems[i]->copy();
     }
-    copy->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    copy->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(),
+                           mCustomName->isUUIDLocal());
     return copy;
 }
 

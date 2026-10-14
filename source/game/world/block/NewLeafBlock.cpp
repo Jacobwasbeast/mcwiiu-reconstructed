@@ -45,8 +45,7 @@ void NewLeafBlock::blockStaticCtor()
     VARIANT = variant;
 }
 
-NewLeafBlock::NewLeafBlock()
-    : LeafBlock()
+NewLeafBlock::NewLeafBlock() : LeafBlock()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()
@@ -71,14 +70,14 @@ int NewLeafBlock::getSpawnResourcesAuxValue(const BlockState* state)
 
 not_null_ptr<ItemInstance> NewLeafBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1,
-        state->getBlock()->convertBlockStateToLegacyData(state) & 3));
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(this, 1, state->getBlock()->convertBlockStateToLegacyData(state) & 3));
 }
 
 not_null_ptr<ItemInstance> NewLeafBlock::getSilkTouchItemInstance(const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        state->getValue(VARIANT)->getData() - 4));
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(Item::byBlock(this), 1, state->getValue(VARIANT)->getData() - 4));
 }
 
 const BlockState* NewLeafBlock::getBlockState(int data)
@@ -108,7 +107,7 @@ PlanksBlock::Variant* NewLeafBlock::getWoodVariantForData(int data)
 
 BlockStateDefinition* NewLeafBlock::createBlockStateDefinition()
 {
-    static const Property* properties[3] = { VARIANT, CHECK_DECAY, DECAYABLE };
+    static const Property* properties[3] = {VARIANT, CHECK_DECAY, DECAYABLE};
     return new BlockStateDefinition(this, properties, 3);
 }
 
@@ -121,8 +120,9 @@ void NewLeafBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player,
         Player* miner = player.operator->();
         Stat* stat = gStats->get_blocksMined(Block::getId(this));
         miner->awardStat(stat, GenericStats::param_blocksMined(state, 1));
-        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-            state->getValue(VARIANT)->getData() - 4)));
+        Block::popResource(level, pos,
+                           not_null_ptr<ItemInstance>(
+                               new ItemInstance(Item::byBlock(this), 1, state->getValue(VARIANT)->getData() - 4)));
     }
     else
     {

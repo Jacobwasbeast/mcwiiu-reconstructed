@@ -27,8 +27,7 @@ public:
 
     static void blockStaticCtor();
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
-    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource,
-                                             const BlockPos& pos);
+    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);

@@ -26,10 +26,14 @@
 #include "game/world/block/TripWireHookBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<bool>* TripWireBlock::POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
-AbstractProperty<bool>* TripWireBlock::SUSPENDED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"suspended"));
-AbstractProperty<bool>* TripWireBlock::ATTACHED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"attached"));
-AbstractProperty<bool>* TripWireBlock::DISARMED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"disarmed"));
+AbstractProperty<bool>* TripWireBlock::POWERED = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"powered"));
+AbstractProperty<bool>* TripWireBlock::SUSPENDED = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"suspended"));
+AbstractProperty<bool>* TripWireBlock::ATTACHED = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"attached"));
+AbstractProperty<bool>* TripWireBlock::DISARMED = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"disarmed"));
 AbstractProperty<bool>* TripWireBlock::NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
 AbstractProperty<bool>* TripWireBlock::EAST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
 AbstractProperty<bool>* TripWireBlock::SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
@@ -59,7 +63,8 @@ const AABB* TripWireBlock::getShape(const BlockState* state, LevelSource* levelS
     return TRIPWIRE_ATTACHED;
 }
 
-bool TripWireBlock::shouldConnectTo(LevelSource* levelSource, const BlockPos& pos, const BlockState*, const Direction* direction)
+bool TripWireBlock::shouldConnectTo(LevelSource* levelSource, const BlockPos& pos, const BlockState*,
+                                    const Direction* direction)
 {
     BlockPos neighbourPos = pos.relative(direction);
     const BlockState* neighbour = levelSource->getBlockState(neighbourPos);
@@ -67,12 +72,14 @@ bool TripWireBlock::shouldConnectTo(LevelSource* levelSource, const BlockPos& po
     if (block == Blocks::tripwire_hook)
     {
         const Direction* opposite = direction->getOpposite();
-        return neighbour->getValue(static_cast<AbstractProperty<const Direction*>*>(TripWireHookBlock::FACING)) == opposite;
+        return neighbour->getValue(static_cast<AbstractProperty<const Direction*>*>(TripWireHookBlock::FACING))
+               == opposite;
     }
     return block == Blocks::tripwire;
 }
 
-const BlockState* TripWireBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const BlockState* TripWireBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                                 const BlockPos& pos)
 {
     return state->setValue(NORTH, shouldConnectTo(levelSource, pos, state, Direction::NORTH))
         ->setValue(EAST, shouldConnectTo(levelSource, pos, state, Direction::EAST))
@@ -80,16 +87,34 @@ const BlockState* TripWireBlock::fillVirtualBlockStateProperties(const BlockStat
         ->setValue(WEST, shouldConnectTo(levelSource, pos, state, Direction::WEST));
 }
 
-const AABB* TripWireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
-bool TripWireBlock::isSolidRender(const BlockState*) const { return false; }
-bool TripWireBlock::isCubeShaped(const BlockState*) { return false; }
-int TripWireBlock::getRenderLayer() { return 1; }
-Item* TripWireBlock::getResource(const BlockState*, Random*, int) { return Items::string; }
-not_null_ptr<ItemInstance> TripWireBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*) { return not_null_ptr<ItemInstance>(new ItemInstance(Items::string)); }
+const AABB* TripWireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
+{
+    return NULL;
+}
+bool TripWireBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool TripWireBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+int TripWireBlock::getRenderLayer()
+{
+    return 1;
+}
+Item* TripWireBlock::getResource(const BlockState*, Random*, int)
+{
+    return Items::string;
+}
+not_null_ptr<ItemInstance> TripWireBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
+{
+    return not_null_ptr<ItemInstance>(new ItemInstance(Items::string));
+}
 
 void TripWireBlock::updateSource(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    static const Direction* directions[2] = { Direction::SOUTH, Direction::WEST };
+    static const Direction* directions[2] = {Direction::SOUTH, Direction::WEST};
     for (int d = 0; d < 2; ++d)
     {
         const Direction* direction = directions[d];
@@ -123,7 +148,8 @@ void TripWireBlock::onRemove(Level* level, const BlockPos& pos, const BlockState
     updateSource(level, pos, state->setValue(POWERED, true));
 }
 
-bool TripWireBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player)
+bool TripWireBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
+                                      boost::shared_ptr<Player> player)
 {
     if (!level->mIsClientSide)
     {
@@ -143,8 +169,8 @@ void TripWireBlock::checkPressed(Level* level, const BlockPos& pos)
 
     bool wasPressed = state->getValue(POWERED);
     bool pressed = false;
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntities(boost::shared_ptr<Entity>(), state->getShape(level, pos)->move(pos), NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(
+        boost::shared_ptr<Entity>(), state->getShape(level, pos)->move(pos), NULL);
     if (!entities->empty())
     {
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
@@ -168,15 +194,20 @@ void TripWireBlock::checkPressed(Level* level, const BlockPos& pos)
         level->addToTickNextTick(pos, this, getTickDelay(level));
 }
 
-void TripWireBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>&)
+void TripWireBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
+                                 const boost::shared_ptr<Entity>&)
 {
-    if (!level->mIsClientSide && !state->getValue(POWERED)) checkPressed(level, pos);
+    if (!level->mIsClientSide && !state->getValue(POWERED))
+        checkPressed(level, pos);
 }
 
-void TripWireBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*) {}
+void TripWireBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*)
+{
+}
 void TripWireBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    if (!level->mIsClientSide && level->getBlockState(pos)->getValue(POWERED)) checkPressed(level, pos);
+    if (!level->mIsClientSide && level->getBlockState(pos)->getValue(POWERED))
+        checkPressed(level, pos);
 }
 
 const BlockState* TripWireBlock::getBlockState(int data)
@@ -190,9 +221,12 @@ const BlockState* TripWireBlock::getBlockState(int data)
 int TripWireBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = 0;
-    if (state->getValue(POWERED)) data |= 1;
-    if (state->getValue(ATTACHED)) data |= 4;
-    if (state->getValue(DISARMED)) data |= 8;
+    if (state->getValue(POWERED))
+        data |= 1;
+    if (state->getValue(ATTACHED))
+        data |= 4;
+    if (state->getValue(DISARMED))
+        data |= 8;
     return data;
 }
 
@@ -235,9 +269,15 @@ const BlockState* TripWireBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* TripWireBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { POWERED, SUSPENDED, ATTACHED, DISARMED, NORTH, EAST, WEST, SOUTH };
+    static const Property* properties[] = {POWERED, SUSPENDED, ATTACHED, DISARMED, NORTH, EAST, WEST, SOUTH};
     return new BlockStateDefinition(this, properties, 8);
 }
 
-EBlockFaceShape TripWireBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return BLOCK_FACE_UNDEFINED; }
-EBlockRenderShape TripWireBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_TRIPWIRE; }
+EBlockFaceShape TripWireBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
+{
+    return BLOCK_FACE_UNDEFINED;
+}
+EBlockRenderShape TripWireBlock::getRenderShape(const BlockState*)
+{
+    return BLOCK_RENDER_TRIPWIRE;
+}

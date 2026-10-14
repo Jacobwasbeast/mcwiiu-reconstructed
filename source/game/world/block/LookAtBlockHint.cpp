@@ -14,9 +14,8 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Property.hpp"
 
-LookAtBlockHint::LookAtBlockHint(eTutorial_Hint hint, Tutorial* tutorial,
-                                 const BlockState** states, unsigned int stateCount,
-                                 const Property* const* properties, unsigned int propertyCount,
+LookAtBlockHint::LookAtBlockHint(eTutorial_Hint hint, Tutorial* tutorial, const BlockState** states,
+                                 unsigned int stateCount, const Property* const* properties, unsigned int propertyCount,
                                  int descriptionId, int auxValue, bool useState)
     : TutorialHint(hint, tutorial, -1, TutorialHint::HINT_LOOK_AT_BLOCK, true, true, -1)
 {
@@ -63,8 +62,8 @@ unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
                     for (unsigned int j = 0; j < mPropertyCount; ++j)
                     {
                         const Property* property = mPropertyValues[j];
-                        if (std::find(mStates[i]->getProperties().begin(), mStates[i]->getProperties().end(),
-                                      property) != mStates[i]->getProperties().end()
+                        if (std::find(mStates[i]->getProperties().begin(), mStates[i]->getProperties().end(), property)
+                                != mStates[i]->getProperties().end()
                             && std::find(state->getProperties().begin(), state->getProperties().end(), property)
                                    != state->getProperties().end()
                             && mStates[i]->getBoxedValue(property) == state->getBoxedValue(property))
@@ -143,8 +142,7 @@ unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
     return 0;
 }
 
-unsigned int LookAtBlockHint::onLookAtSkull(Level* level, const BlockPos& pos,
-                                             const BlockState* state)
+unsigned int LookAtBlockHint::onLookAtSkull(Level* level, const BlockPos& pos, const BlockState* state)
 {
     Block* block;
     bool found;

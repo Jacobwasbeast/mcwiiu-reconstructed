@@ -12,10 +12,7 @@ public:
     class ConstantPredicate : public Predicate<T>
     {
     public:
-        ConstantPredicate(bool value)
-            : mValue(value)
-        {
-        }
+        ConstantPredicate(bool value) : mValue(value) {}
 
         virtual bool apply(T input) const;
         virtual Predicate<T>* copy() const;
@@ -28,10 +25,7 @@ public:
     class FunctionPredicate : public Predicate<T>
     {
     public:
-        FunctionPredicate(bool (*function)(T))
-            : mFunction(function)
-        {
-        }
+        FunctionPredicate(bool (*function)(T)) : mFunction(function) {}
 
         virtual bool apply(T input) const;
         virtual ~FunctionPredicate();
@@ -117,10 +111,8 @@ Predicates<T>::EqualToValuePredicate::~EqualToValuePredicate()
 }
 
 template <class T>
-Predicates<T>::ConnectivePredicate::ConnectivePredicate(
-    typename Predicates<T>::ConnectivePredicate::eOperator op,
-    const Predicate<T>** predicates,
-    unsigned int count)
+Predicates<T>::ConnectivePredicate::ConnectivePredicate(typename Predicates<T>::ConnectivePredicate::eOperator op,
+                                                        const Predicate<T>** predicates, unsigned int count)
     : mOperator(op),
       mPredicates()
 {
@@ -140,8 +132,7 @@ bool Predicates<T>::ConnectivePredicate::apply(T input) const
         result = false;
 
         for (typename std::vector<const Predicate<T>*>::const_iterator it = mPredicates.begin();
-             it != mPredicates.end();
-             ++it)
+             it != mPredicates.end(); ++it)
         {
             result = result ^ (*it)->apply(input);
         }
@@ -149,8 +140,7 @@ bool Predicates<T>::ConnectivePredicate::apply(T input) const
     else
     {
         for (typename std::vector<const Predicate<T>*>::const_iterator it = mPredicates.begin();
-             it != mPredicates.end();
-             ++it)
+             it != mPredicates.end(); ++it)
         {
             result = result && (*it)->apply(input);
         }

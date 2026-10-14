@@ -28,14 +28,12 @@ void RailBlock::blockStaticCtor()
         boost::unordered_set<BaseRailBlock::RailShape*> values;
         for (int i = 0; i < 10; ++i)
             values.insert(RailShape::VALUES[i]);
-        shape = EnumProperty<BaseRailBlock::RailShape*>::create(
-            name, typeid(BaseRailBlock::RailShape), values, filter);
+        shape = EnumProperty<BaseRailBlock::RailShape*>::create(name, typeid(BaseRailBlock::RailShape), values, filter);
     }
     RailBlock::SHAPE = shape;
 }
 
-RailBlock::RailBlock()
-    : BaseRailBlock(false)
+RailBlock::RailBlock() : BaseRailBlock(false)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(RailBlock::SHAPE, RailShape::NORTH_SOUTH));
@@ -70,8 +68,7 @@ int RailBlock::convertBlockStateToLegacyData(const BlockState* state)
 unsigned int RailBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     unsigned int tooltip = Block::GetInteractTooltip(tooltipData);
-    if (tooltipData.m_bCanPlace
-        && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success)
+    if (tooltipData.m_bCanPlace && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success)
     {
         return IDS_TOOLTIPS_PLACE;
     }
@@ -204,7 +201,7 @@ const BlockState* RailBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* RailBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { RailBlock::SHAPE };
+    static const Property* properties[] = {RailBlock::SHAPE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

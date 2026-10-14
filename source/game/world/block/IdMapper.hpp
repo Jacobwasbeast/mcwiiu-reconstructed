@@ -9,7 +9,7 @@
 
 class BlockState;
 
-template<class T> class IdMapper : public IdMap<T>
+template <class T> class IdMapper : public IdMap<T>
 {
 public:
     IdMapper() {}
@@ -39,7 +39,7 @@ private:
     std::vector<T> mObjects;
 };
 
-template<class T> void IdMapper<T>::addMapping(T value, int id)
+template <class T> void IdMapper<T>::addMapping(T value, int id)
 {
     mIds[value] = id;
 
@@ -51,7 +51,7 @@ template<class T> void IdMapper<T>::addMapping(T value, int id)
     mObjects[id] = value;
 }
 
-template<> class IdMapper<const BlockState*> : public IdMap<const BlockState*>
+template <> class IdMapper<const BlockState*> : public IdMap<const BlockState*>
 {
 public:
     enum

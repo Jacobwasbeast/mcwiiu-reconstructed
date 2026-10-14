@@ -32,21 +32,17 @@
 
 static const std::wstring STEM_BENT_ICON_NAME = L"stem_bent";
 AbstractProperty<int>* StemBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 7));
-const AABB* STEM_SHAPES[8] =
-{
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.125, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.25, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.375, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.5, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.625, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.75, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.875, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 0.625)
-};
+const AABB* STEM_SHAPES[8] = {AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.125, 0.625),
+                              AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.25, 0.625),
+                              AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.375, 0.625),
+                              AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.5, 0.625),
+                              AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.625, 0.625),
+                              AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.75, 0.625),
+                              AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.875, 0.625),
+                              AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 0.625)};
 DirectionProperty* StemBlock::FACING = NULL;
 
-StemBlock::StemBlock(Block* fruitType)
-    : Bush()
+StemBlock::StemBlock(Block* fruitType) : Bush()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(AGE, 0)->setValue(FACING, Direction::UP));
@@ -79,9 +75,8 @@ const AABB* StemBlock::getShape(const BlockState* state, LevelSource*, const Blo
     return STEM_SHAPES[state->getValue(AGE)];
 }
 
-const BlockState* StemBlock::fillVirtualBlockStateProperties(const BlockState* state,
-                                                              LevelSource* levelSource,
-                                                              const BlockPos& pos)
+const BlockState* StemBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                             const BlockPos& pos)
 {
     int age = state->getValue(AGE);
     state = state->setValue(FACING, Direction::UP);
@@ -181,8 +176,7 @@ Item* StemBlock::getSeedItem()
     return NULL;
 }
 
-void StemBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
-                               float chance, int lootBonus)
+void StemBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
 {
     Block::spawnResources(level, pos, state, chance, lootBonus);
     if (level->mIsClientSide)
@@ -222,18 +216,17 @@ int StemBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int StemBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE &&
-        tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail &&
-        DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0 &&
-        isValidBonemealTarget(tooltipData.m_pLevel, tooltipData.m_blockPos,
-                              tooltipData.m_pBlockState, true))
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
+        && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
+        && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
+        && isValidBonemealTarget(tooltipData.m_pLevel, tooltipData.m_blockPos, tooltipData.m_pBlockState, true))
         return IDS_TOOLTIPS_GROW;
     return Block::GetInteractTooltip(tooltipData);
 }
 
 BlockStateDefinition* StemBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { AGE, FACING };
+    static const Property* properties[] = {AGE, FACING};
     return new BlockStateDefinition(this, properties, 2);
 }
 

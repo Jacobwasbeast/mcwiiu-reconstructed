@@ -38,10 +38,10 @@
 
 namespace
 {
-    typedef boost::unordered_map<std::wstring, BlockEntity::Creator> CreatorMap;
-    typedef MappedRegistry<ResourceLocation, unsigned long long> TypeRegistry;
-    CreatorMap gCreators;
-    TypeRegistry gTypes;
+typedef boost::unordered_map<std::wstring, BlockEntity::Creator> CreatorMap;
+typedef MappedRegistry<ResourceLocation, unsigned long long> TypeRegistry;
+CreatorMap gCreators;
+TypeRegistry gTypes;
 }
 
 BlockEntity::BlockEntity()

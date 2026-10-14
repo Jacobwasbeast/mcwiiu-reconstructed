@@ -1,7 +1,6 @@
 #include "game/world/block/HalfNewStoneSlabBlock.hpp"
 
-HalfNewStoneSlabBlock::HalfNewStoneSlabBlock()
-    : NewStoneSlabBlock()
+HalfNewStoneSlabBlock::HalfNewStoneSlabBlock() : NewStoneSlabBlock()
 {
     NewStoneSlabBlock::DerivedInit();
 }

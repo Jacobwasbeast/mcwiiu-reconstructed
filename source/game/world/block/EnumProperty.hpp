@@ -57,10 +57,7 @@ public:
         }
     }
 
-    virtual const std::vector<Boxed*>& getPossibleValues() const
-    {
-        return mPossibleValues;
-    }
+    virtual const std::vector<Boxed*>& getPossibleValues() const { return mPossibleValues; }
     virtual bool equals(const Property* other) const
     {
         if (this == other)
@@ -78,13 +75,11 @@ public:
     }
     virtual int hashCode() const
     {
-        return ((int)((std::size_t)this->mValueClass * 31U) + javaStringHashCode(this->mName)) * 31 + AbstractProperty<T>::hashBoxedSet(mPossibleValues);
+        return ((int)((std::size_t)this->mValueClass * 31U) + javaStringHashCode(this->mName)) * 31
+               + AbstractProperty<T>::hashBoxedSet(mPossibleValues);
     }
     virtual unsigned int getValueCount() const { return mPossibleValues.size(); }
-    virtual Boxed* getValueAtIndex(unsigned int index) const
-    {
-        return mPossibleValues.at(index);
-    }
+    virtual Boxed* getValueAtIndex(unsigned int index) const { return mPossibleValues.at(index); }
     virtual unsigned int getIndexForValue(Boxed* value) const
     {
         unsigned int index = 0;
@@ -116,8 +111,7 @@ public:
 protected:
     typedef boost::unordered_map<std::wstring, T> ValuesByName;
 
-    EnumProperty(const std::wstring& name, const std::type_info& valueClass,
-                 const boost::unordered_set<T>& values)
+    EnumProperty(const std::wstring& name, const std::type_info& valueClass, const boost::unordered_set<T>& values)
         : AbstractProperty<T>(name, valueClass)
     {
         for (typename boost::unordered_set<T>::const_iterator it = values.begin(); it != values.end(); ++it)

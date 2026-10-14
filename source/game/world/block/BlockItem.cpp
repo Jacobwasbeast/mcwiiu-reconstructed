@@ -21,8 +21,7 @@
 const std::wstring BlockItem::BLOCK_ENTITY_TAG = L"BlockEntityTag";
 static boost::shared_ptr<Player> currentlyPlacingBlockPlayer;
 
-BlockItem::BlockItem(Block* block)
-    : Item(), mBlock(block), mIcon(NULL)
+BlockItem::BlockItem(Block* block) : Item(), mBlock(block), mIcon(NULL)
 {
 }
 
@@ -44,8 +43,8 @@ InteractionResultHolder BlockItem::use(Level* level, boost::shared_ptr<Player> p
     return Item::use(level, player, hand);
 }
 
-bool BlockItem::updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Player> player,
-                                            const BlockPos& pos, not_null_ptr<ItemInstance> itemInstance)
+bool BlockItem::updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
+                                           not_null_ptr<ItemInstance> itemInstance)
 {
     if (level->getServer() == NULL)
     {
@@ -81,15 +80,10 @@ bool BlockItem::updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Playe
     return true;
 }
 
-InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
-                                                        bool simulate)
+InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                       const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                       const Direction* direction, float hitX, float hitY, float hitZ,
+                                                       bool simulate)
 {
     BlockPos placePos = pos;
     const BlockState* state = level->getBlockState(placePos);
@@ -124,9 +118,8 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
     if (!simulate)
     {
         int auxValue = getLevelDataForAuxValue(itemInstance->getAuxValue());
-        const BlockState* placedState =
-            mBlock->getStateForPlacement(level, placePos, placeDirection, hitX, hitY, hitZ,
-                                         auxValue, player);
+        const BlockState* placedState = mBlock->getStateForPlacement(level, placePos, placeDirection, hitX, hitY, hitZ,
+                                                                     auxValue, player);
         currentlyPlacingBlockPlayer = player;
         if (!level->setBlock(placePos, placedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
         {
@@ -139,8 +132,7 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
         }
         else
         {
-            player->awardStat(GenericStats::blocksPlaced(block),
-                              GenericStats::param_blocksPlaced(state, 1));
+            player->awardStat(GenericStats::blocksPlaced(block), GenericStats::param_blocksPlaced(state, 1));
             player->swing(InteractionHand::eInteractionHand_MainHand);
 
             const BlockState* actualState = level->getBlockState(placePos);
@@ -153,17 +145,15 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
             if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::CONDUIT, blockEntity->GetType()))
             {
-                boost::shared_ptr<ConduitBlockEntity> conduit =
-                    boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
+                boost::shared_ptr<ConduitBlockEntity> conduit = boost::static_pointer_cast<ConduitBlockEntity>(
+                    blockEntity);
                 int rotation = Mth::floor(player->mYRot * 16.0f / 360.0f + 0.5f) & 15;
                 conduit->mActiveRotation = (float)rotation * 360.0f * 0.0625f;
             }
 
             const SoundType* soundType = mBlock->getSoundType();
-            level->playSound(soundPlayer, placePos, soundType->getPlaceSound(),
-                             SoundSource::eSoundSource_Blocks,
-                             (soundType->getVolume() + 1.0f) * 0.5f,
-                             soundType->getPitch() * 0.8f, 16.0f);
+            level->playSound(soundPlayer, placePos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
+                             (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, 16.0f);
             itemInstance->shrink(1);
         }
     }
@@ -192,8 +182,8 @@ int BlockItem::getUseDescriptionId()
     return mBlock->getUseDescriptionId(-1);
 }
 
-bool BlockItem::mayPlace(Level* level, const BlockPos& pos, const Direction* direction,
-                         boost::shared_ptr<Player>, not_null_ptr<ItemInstance>)
+bool BlockItem::mayPlace(Level* level, const BlockPos& pos, const Direction* direction, boost::shared_ptr<Player>,
+                         not_null_ptr<ItemInstance>)
 {
     BlockPos placePos = pos;
     const BlockState* state = level->getBlockState(placePos);
@@ -210,10 +200,8 @@ bool BlockItem::mayPlace(Level* level, const BlockPos& pos, const Direction* dir
     return level->mayPlace(mBlock, placePos, false, placeDirection, boost::shared_ptr<Entity>());
 }
 
-void BlockItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                boost::shared_ptr<Player> player,
-                                std::vector<HtmlString>* lines,
-                                bool advanced)
+void BlockItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                std::vector<HtmlString>* lines, bool advanced)
 {
     Item::appendHoverText(itemInstance, player, lines, advanced);
     mBlock->appendHoverText(itemInstance, player, lines, advanced);

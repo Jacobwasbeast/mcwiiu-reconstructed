@@ -24,26 +24,21 @@ PlanksBlock::Variant* PlanksBlock::Variant::DARK_OAK = NULL;
 PlanksBlock::Variant* PlanksBlock::Variant::BY_DATA[6];
 EnumProperty<PlanksBlock::Variant*>* PlanksBlock::VARIANT = NULL;
 
-std::wstring PlanksBlock::TEXTURE_NAMES[6] = {
-    std::wstring(L"oak"),
-    std::wstring(L"spruce"),
-    std::wstring(L"birch"),
-    std::wstring(L"jungle"),
-    std::wstring(L"acacia"),
-    std::wstring(L"big_oak")
-};
+std::wstring PlanksBlock::TEXTURE_NAMES[6] = {std::wstring(L"oak"),    std::wstring(L"spruce"),
+                                              std::wstring(L"birch"),  std::wstring(L"jungle"),
+                                              std::wstring(L"acacia"), std::wstring(L"big_oak")};
 
 const int gPlankTranslationKeys[6] = {
-    PlanksBlock::Variant::eTranslationKeyOak,
-    PlanksBlock::Variant::eTranslationKeySpruce,
-    PlanksBlock::Variant::eTranslationKeyBirch,
-    PlanksBlock::Variant::eTranslationKeyJungle,
-    PlanksBlock::Variant::eTranslationKeyAcacia,
-    PlanksBlock::Variant::eTranslationKeyDarkOak
-};
+    PlanksBlock::Variant::eTranslationKeyOak,    PlanksBlock::Variant::eTranslationKeySpruce,
+    PlanksBlock::Variant::eTranslationKeyBirch,  PlanksBlock::Variant::eTranslationKeyJungle,
+    PlanksBlock::Variant::eTranslationKeyAcacia, PlanksBlock::Variant::eTranslationKeyDarkOak};
 
-PlanksBlock::Variant::Variant(int data, const std::wstring& name, int translationKey, const MaterialColor* materialColor)
-    : mData(data), mName(name), mTranslationKey(translationKey), mMaterialColor(materialColor)
+PlanksBlock::Variant::Variant(int data, const std::wstring& name, int translationKey,
+                              const MaterialColor* materialColor)
+    : mData(data),
+      mName(name),
+      mTranslationKey(translationKey),
+      mMaterialColor(materialColor)
 {
 }
 
@@ -84,11 +79,14 @@ PlanksBlock::Variant* PlanksBlock::Variant::byData(int data)
 void PlanksBlock::blockStaticCtor()
 {
     Variant::OAK = new Variant(Variant::eDataOak, L"oak", Variant::eTranslationKeyOak, MaterialColor::WOOD);
-    Variant::SPRUCE = new Variant(Variant::eDataSpruce, L"spruce", Variant::eTranslationKeySpruce, MaterialColor::PODZOL);
+    Variant::SPRUCE = new Variant(Variant::eDataSpruce, L"spruce", Variant::eTranslationKeySpruce,
+                                  MaterialColor::PODZOL);
     Variant::BIRCH = new Variant(Variant::eDataBirch, L"birch", Variant::eTranslationKeyBirch, MaterialColor::SAND);
     Variant::JUNGLE = new Variant(Variant::eDataJungle, L"jungle", Variant::eTranslationKeyJungle, MaterialColor::DIRT);
-    Variant::ACACIA = new Variant(Variant::eDataAcacia, L"acacia", Variant::eTranslationKeyAcacia, MaterialColor::COLOR_ORANGE);
-    Variant::DARK_OAK = new Variant(Variant::eDataDarkOak, L"dark_oak", Variant::eTranslationKeyDarkOak, MaterialColor::COLOR_BROWN);
+    Variant::ACACIA = new Variant(Variant::eDataAcacia, L"acacia", Variant::eTranslationKeyAcacia,
+                                  MaterialColor::COLOR_ORANGE);
+    Variant::DARK_OAK = new Variant(Variant::eDataDarkOak, L"dark_oak", Variant::eTranslationKeyDarkOak,
+                                    MaterialColor::COLOR_BROWN);
 
     Variant::BY_DATA[4] = Variant::ACACIA;
     Variant::BY_DATA[2] = Variant::BIRCH;
@@ -108,8 +106,7 @@ void PlanksBlock::blockStaticCtor()
     VARIANT = EnumProperty<Variant*>::create(name, typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
 }
 
-PlanksBlock::PlanksBlock()
-    : Block(Material::WOOD)
+PlanksBlock::PlanksBlock() : Block(Material::WOOD)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::OAK));
@@ -138,7 +135,7 @@ int PlanksBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* PlanksBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { VARIANT };
+    static const Property* properties[] = {VARIANT};
     return new BlockStateDefinition(this, properties, 1);
 }
 

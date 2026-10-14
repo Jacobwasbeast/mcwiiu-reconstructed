@@ -25,23 +25,28 @@ public:
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isPathfindable(LevelSource* levelSource, const BlockPos& pos);
     virtual bool isTopSolidBlocking(const BlockState* state);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     static double getHeight(Level* level, int x, int y, int z);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual bool isWaterBlocking() const;
     virtual bool waterSpreadCausesSpawn();
     virtual bool canContainLiquid(const BlockState* state) const;
     virtual bool canSurvive(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual void playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity, not_null_ptr<ItemInstance> tool);
+    virtual void playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
+                               const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
+                               not_null_ptr<ItemInstance> tool);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getResourceCount(Random* random);
     int melt(Level* level, const BlockPos& pos, int amount);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
-    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                  const Direction* direction);
     virtual const BlockState* getBlockState(int data);
     virtual bool mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos);
     virtual int convertBlockStateToLegacyData(const BlockState* state);

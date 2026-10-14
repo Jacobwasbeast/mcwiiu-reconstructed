@@ -11,8 +11,7 @@ class MultiBlockItem : public BlockItem
 public:
     typedef int (*ItemInstanceResolver)(not_null_ptr<ItemInstance> itemInstance);
 
-    MultiBlockItem(Block* block, Block* blockForAuxValue,
-                   ItemInstanceResolver nameFunction,
+    MultiBlockItem(Block* block, Block* blockForAuxValue, ItemInstanceResolver nameFunction,
                    ItemInstanceResolver descriptionFunction);
     virtual ~MultiBlockItem() {}
 

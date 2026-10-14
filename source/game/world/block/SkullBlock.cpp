@@ -44,22 +44,22 @@ bool isWitherSkull(BlockInWorld* block);
 bool isWitherSkull(BlockInWorld* block)
 {
     return block->getState() != NULL && block->getState()->getBlock() == Blocks::skull
-        && eTYPE_DERIVED_FROM(BlockEntityType::SKULL, block->getEntity()->GetType())
-        && boost::dynamic_pointer_cast<SkullBlockEntity>(block->getEntity())->getSkullType() == 1;
+           && eTYPE_DERIVED_FROM(BlockEntityType::SKULL, block->getEntity()->GetType())
+           && boost::dynamic_pointer_cast<SkullBlockEntity>(block->getEntity())->getSkullType() == 1;
 }
 
 DirectionProperty* SkullBlock::FACING = NULL;
 AbstractProperty<bool>* SkullBlock::NODROP = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"nodrop"));
 
-static Predicate<BlockInWorld*>* WITHER_SKULL_PREDICATE = new Predicates<BlockInWorld*>::FunctionPredicate(isWitherSkull);
+static Predicate<BlockInWorld*>* WITHER_SKULL_PREDICATE = new Predicates<BlockInWorld*>::FunctionPredicate(
+    isWitherSkull);
 static const AABB* SKULL_AABB = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 0.5, 0.75);
 static const AABB* SKULL_NORTH_AABB = AABB::newPermanent(0.25, 0.25, 0.5, 0.75, 0.75, 1.0);
 static const AABB* SKULL_SOUTH_AABB = AABB::newPermanent(0.25, 0.25, 0.0, 0.75, 0.75, 0.5);
 static const AABB* SKULL_WEST_AABB = AABB::newPermanent(0.5, 0.25, 0.25, 1.0, 0.75, 0.75);
 static const AABB* SKULL_EAST_AABB = AABB::newPermanent(0.0, 0.25, 0.25, 0.5, 0.75, 0.75);
 
-SkullBlock::SkullBlock()
-    : BaseEntityBlock(Material::DECORATION)
+SkullBlock::SkullBlock() : BaseEntityBlock(Material::DECORATION)
 {
     Block::DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(NODROP, false));
@@ -103,22 +103,26 @@ const AABB* SkullBlock::getShape(const BlockState* state, LevelSource*, const Bl
 {
     switch (state->getValue(FACING)->get3DDataValue())
     {
-    default: return SKULL_AABB;
-    case 2: return SKULL_NORTH_AABB;
-    case 3: return SKULL_SOUTH_AABB;
-    case 4: return SKULL_WEST_AABB;
-    case 5: return SKULL_EAST_AABB;
+    default:
+        return SKULL_AABB;
+    case 2:
+        return SKULL_NORTH_AABB;
+    case 3:
+        return SKULL_SOUTH_AABB;
+    case 4:
+        return SKULL_WEST_AABB;
+    case 5:
+        return SKULL_EAST_AABB;
     }
 }
 
-const BlockState* SkullBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float,
-                                                    float, int, boost::shared_ptr<LivingEntity> placer)
+const BlockState* SkullBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float, float,
+                                                   int, boost::shared_ptr<LivingEntity> placer)
 {
     return defaultBlockState()->setValue(FACING, placer->getDirection())->setValue(NODROP, false);
 }
 
-not_null_ptr<ItemInstance> SkullBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                            const BlockState*)
+not_null_ptr<ItemInstance> SkullBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState*)
 {
     int skullType = 0;
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
@@ -127,8 +131,7 @@ not_null_ptr<ItemInstance> SkullBlock::getCloneItemInstance(Level* level, const 
     return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, skullType));
 }
 
-void SkullBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
-                                float chance, int lootBonus)
+void SkullBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
 {
 }
 
@@ -171,11 +174,12 @@ BlockPattern* SkullBlock::getOrCreateWitherBase()
 {
     if (mWitherBase == NULL)
     {
-        static std::wstring aisle[] = { L"   ", L"###", L"~#~" };
-        mWitherBase = BlockPatternBuilder::start()->aisle(aisle)
-            ->where('#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::soul_sand)))
-            ->where('~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
-            ->build(NULL, NULL);
+        static std::wstring aisle[] = {L"   ", L"###", L"~#~"};
+        mWitherBase = BlockPatternBuilder::start()
+                          ->aisle(aisle)
+                          ->where('#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::soul_sand)))
+                          ->where('~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
+                          ->build(NULL, NULL);
     }
     return mWitherBase;
 }
@@ -184,12 +188,13 @@ BlockPattern* SkullBlock::getOrCreateWitherFull()
 {
     if (mWitherFull == NULL)
     {
-        static std::wstring aisle[] = { L"^^^", L"###", L"~#~" };
-        mWitherFull = BlockPatternBuilder::start()->aisle(aisle)
-            ->where('#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::soul_sand)))
-            ->where('^', WITHER_SKULL_PREDICATE)
-            ->where('~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
-            ->build(NULL, NULL);
+        static std::wstring aisle[] = {L"^^^", L"###", L"~#~"};
+        mWitherFull = BlockPatternBuilder::start()
+                          ->aisle(aisle)
+                          ->where('#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::soul_sand)))
+                          ->where('^', WITHER_SKULL_PREDICATE)
+                          ->where('~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
+                          ->build(NULL, NULL);
     }
     return mWitherFull;
 }
@@ -207,8 +212,7 @@ bool SkullBlock::canSpawnMob(Level* level, const BlockPos& pos, not_null_ptr<Ite
     return false;
 }
 
-void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
-                               boost::shared_ptr<SkullBlockEntity> skull,
+void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos, boost::shared_ptr<SkullBlockEntity> skull,
                                boost::shared_ptr<Player> player)
 {
     if (skull->getSkullType() != 1 || pos.y < 2 || level->mIsClientSide)
@@ -232,7 +236,8 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
             if (!canCreate)
                 level->setBlock(block->getPos(), block->getState(), Block::UPDATE_CLIENTS, false);
             else
-                level->setBlock(block->getPos(), block->getState()->setValue(NODROP, true), Block::UPDATE_CLIENTS, false);
+                level->setBlock(block->getPos(), block->getState()->setValue(NODROP, true), Block::UPDATE_CLIENTS,
+                                false);
         }
 
         for (int x = 0; x < static_cast<int>(pattern->getWidth()); ++x)
@@ -255,8 +260,8 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
             wither->mYBodyRot = match->getForwards()->getAxis() == Direction::Axis::X ? 0.0f : 90.0f;
             wither->makeInvulnerable();
 
-            std::vector<boost::shared_ptr<Entity> >* players =
-                level->getEntitiesOfClass(typeid(Player), wither->mBoundingBox->grow(50.0, 50.0, 50.0));
+            std::vector<boost::shared_ptr<Entity> >* players = level->getEntitiesOfClass(
+                typeid(Player), wither->mBoundingBox->grow(50.0, 50.0, 50.0));
             for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
             {
                 boost::shared_ptr<Player> nearby = boost::static_pointer_cast<Player>(*it);
@@ -286,7 +291,8 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
 
 const BlockState* SkullBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(FACING, Direction::from3DDataValue(data & 7))
+    return defaultBlockState()
+        ->setValue(FACING, Direction::from3DDataValue(data & 7))
         ->setValue(NODROP, (data & 8) > 0);
 }
 
@@ -322,7 +328,7 @@ const BlockState* SkullBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* SkullBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING, NODROP };
+    static const Property* properties[] = {FACING, NODROP};
     return new BlockStateDefinition(this, properties, 2);
 }
 

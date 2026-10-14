@@ -20,7 +20,8 @@ XboxStructureActionPlaceBlock::XboxStructureActionPlaceBlock()
     addBlockAttribute(ConsoleGameRules::eGameRuleAttr_block, &mBlock);
 }
 
-uint32_t XboxStructureActionPlaceBlock::placeBlockInLevel(StructurePiece* structurePiece, Level* level, BoundingBox* box)
+uint32_t XboxStructureActionPlaceBlock::placeBlockInLevel(StructurePiece* structurePiece, Level* level,
+                                                          BoundingBox* box)
 {
     structurePiece->placeBlock(level, mBlock->getBlockState(mAuxValue), mEndX, mEndY, mEndZ, box);
     return 1;

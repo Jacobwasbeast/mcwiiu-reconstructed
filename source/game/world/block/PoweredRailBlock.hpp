@@ -21,10 +21,10 @@ class PoweredRailBlock : public BaseRailBlock
 public:
     PoweredRailBlock();
     static void blockStaticCtor();
-    virtual bool findPoweredRailSignal(Level* level, const BlockPos& pos, const BlockState* state,
-                               bool forward, int distance);
+    virtual bool findPoweredRailSignal(Level* level, const BlockPos& pos, const BlockState* state, bool forward,
+                                       int distance);
     virtual bool isSameRailWithPower(Level* level, const BlockPos& pos, bool forward, int distance,
-                             BaseRailBlock::RailShape* shape);
+                                     BaseRailBlock::RailShape* shape);
     virtual void updateState(const BlockState* state, Level* level, const BlockPos& pos, Block* block);
     virtual const AbstractProperty<BaseRailBlock::RailShape*>* getShapeProperty();
     virtual const BlockState* getBlockState(int data);

@@ -8,7 +8,6 @@
 class ComparatorBlockEntity : public BlockEntity
 {
 public:
-
     static BlockEntity* create();
     virtual unsigned long long GetType();
     virtual void load(CompoundTag* tag);

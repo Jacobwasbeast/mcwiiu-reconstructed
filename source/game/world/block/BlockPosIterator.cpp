@@ -7,10 +7,8 @@
 BlockPosIterator::BlockPosIterator(const BlockPos& from, const BlockPos& to)
 {
     this->currentPos = NULL;
-    this->minPos = new BlockPos(std::min(from.x, to.x), std::min(from.y, to.y),
-                                std::min(from.z, to.z));
-    this->maxPos = new BlockPos(std::max(from.x, to.x), std::max(from.y, to.y),
-                                std::max(from.z, to.z));
+    this->minPos = new BlockPos(std::min(from.x, to.x), std::min(from.y, to.y), std::min(from.z, to.z));
+    this->maxPos = new BlockPos(std::max(from.x, to.x), std::max(from.y, to.y), std::max(from.z, to.z));
 }
 
 BlockPosIterator::~BlockPosIterator()

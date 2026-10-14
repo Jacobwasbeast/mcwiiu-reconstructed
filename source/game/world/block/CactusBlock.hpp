@@ -24,14 +24,17 @@ public:
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual bool mayPlace(Level* level, const BlockPos& pos);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual bool canSurvive(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity);
+    virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state,
+                              const boost::shared_ptr<Entity>& entity);
     virtual int getRenderLayer();
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual bool shouldBlockTick(Level* level, const BlockPos& pos, const BlockState* state);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);

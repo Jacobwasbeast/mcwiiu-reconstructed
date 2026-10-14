@@ -90,8 +90,7 @@ int SandBlock::Variant::getDescriptionId()
     return mDescriptionId;
 }
 
-SandBlock::SandBlock()
-    : FallingBlock()
+SandBlock::SandBlock() : FallingBlock()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue<Variant*>(TYPE, Variant::SAND));
@@ -103,32 +102,28 @@ bool SandBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*
     return true;
 }
 
-bool SandBlock::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos,
-                                  const BlockState* state)
+bool SandBlock::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
     return SeaGrass::trySpawnSeaGrass(true, level, random, pos, state);
 }
 
-void SandBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                const BlockState* state)
+void SandBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
     SeaGrass::trySpawnSeaGrass(false, level, random, pos, state);
 }
 
 void SandBlock::blockStaticCtor()
 {
-    Variant::SAND = new Variant(0, L"sand", IDS_TILE_SAND, IDS_DESC_SAND, MaterialColor::SAND,
-                                -2370656);
-    Variant::RED_SAND = new Variant(1, L"red_sand", IDS_TILE_SAND_RED, IDS_DESC_SAND_RED,
-                                    MaterialColor::COLOR_ORANGE, -5679071);
+    Variant::SAND = new Variant(0, L"sand", IDS_TILE_SAND, IDS_DESC_SAND, MaterialColor::SAND, -2370656);
+    Variant::RED_SAND = new Variant(1, L"red_sand", IDS_TILE_SAND_RED, IDS_DESC_SAND_RED, MaterialColor::COLOR_ORANGE,
+                                    -5679071);
     gSandVariants[0] = Variant::SAND;
     gSandVariants[1] = Variant::RED_SAND;
     std::wstring name(L"variant");
     boost::unordered_set<Variant*> variants;
     variants.insert(gSandVariants[0]);
     variants.insert(gSandVariants[1]);
-    TYPE = EnumProperty<Variant*>::create(name, typeid(Variant), variants,
-                                          Predicates<Variant*>::alwaysTrue);
+    TYPE = EnumProperty<Variant*>::create(name, typeid(Variant), variants, Predicates<Variant*>::alwaysTrue);
 }
 
 int SandBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -156,8 +151,7 @@ unsigned int SandBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE)
     {
         BlockPos above = tooltipData.m_blockPos.above();
-        if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 0x10E, 0)
-            && tooltipData.m_eInteractionResult != 2
+        if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 0x10E, 0) && tooltipData.m_eInteractionResult != 2
             && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
             return IDS_TOOLTIPS_GROW;
@@ -168,7 +162,7 @@ unsigned int SandBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 BlockStateDefinition* SandBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { TYPE };
+    static const Property* properties[] = {TYPE};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -187,4 +181,3 @@ void SandBlock::registerIcons(IconRegister* iconRegister)
     mTextures[0] = iconRegister->registerIcon(gSandVariants[0]->getName());
     mTextures[1] = iconRegister->registerIcon(gSandVariants[1]->getName());
 }
-

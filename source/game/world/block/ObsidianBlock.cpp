@@ -9,8 +9,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-ObsidianBlock::ObsidianBlock()
-    : Block(Material::STONE)
+ObsidianBlock::ObsidianBlock() : Block(Material::STONE)
 {
     DerivedInit();
 }
@@ -24,4 +23,3 @@ const MaterialColor* ObsidianBlock::getMapColor(const BlockState* state, LevelSo
 {
     return MaterialColor::COLOR_BLACK;
 }
-

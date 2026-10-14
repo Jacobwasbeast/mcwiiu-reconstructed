@@ -194,7 +194,7 @@ void CompressedBlockStorage::compress(int upgradeBlock)
 
             if (unpacked != NULL)
             {
-                unsigned long long usedTypes[4] = { 0, 0, 0, 0 };
+                unsigned long long usedTypes[4] = {0, 0, 0, 0};
 
                 for (int j = 0; j < 64; j++)
                 {
@@ -574,8 +574,10 @@ CompressedBlockStorage::CompressedBlockStorage(bool empty)
 
 bool CompressedBlockStorage::isSameAs(CompressedBlockStorage* other)
 {
-    if (other == NULL || mSize != other->mSize) return false;
-    if (mSize == 0) return true;
+    if (other == NULL || mSize != other->mSize)
+        return false;
+    if (mSize == 0)
+        return true;
     return memcmp(mData, other->mData, mSize) == 0;
 }
 
@@ -607,15 +609,23 @@ void CompressedBlockStorage::set(int x, int y, int z, int blockId)
     section[((x & 3) << 4) | ((z & 3) << 2) | (y & 3)] = (unsigned char)blockId;
     unsigned char* dst = mData + 1024 + ((headers[sectionIndex] >> 1) & 0x7FFE);
     unsigned int format = headers[sectionIndex] & 3;
-    if (format == 3 && (headers[sectionIndex] & 4) == 0) memcpy(dst, section, 64);
-    else if (format == 3) headers[sectionIndex] = (unsigned short)(section[0] << 8 | 7);
-    else compress(sectionIndex);
+    if (format == 3 && (headers[sectionIndex] & 4) == 0)
+        memcpy(dst, section, 64);
+    else if (format == 3)
+        headers[sectionIndex] = (unsigned short)(section[0] << 8 | 7);
+    else
+        compress(sectionIndex);
 }
 
 void CompressedBlockStorage::setData(arrayWithLength<unsigned char> blocks, unsigned int offset)
 {
-    if (mData != NULL) { XPhysicalFree(mData); sAllocatedBytes -= mSize; }
-    mData = NULL; mSize = 0;
+    if (mData != NULL)
+    {
+        XPhysicalFree(mData);
+        sAllocatedBytes -= mSize;
+    }
+    mData = NULL;
+    mSize = 0;
     if (blocks.data != NULL && offset < blocks.length)
     {
         mSize = blocks.length - offset;
@@ -629,50 +639,117 @@ void CompressedBlockStorage::setData(arrayWithLength<unsigned char> blocks, unsi
 
 void CompressedBlockStorage::getData(arrayWithLength<unsigned char> blocks, unsigned int offset, int minY, int maxY)
 {
-    if (mData == NULL || blocks.data == NULL) return;
+    if (mData == NULL || blocks.data == NULL)
+        return;
     unsigned int count = blocks.length - offset;
-    if (count > (unsigned int)mSize) count = mSize;
+    if (count > (unsigned int)mSize)
+        count = mSize;
     memcpy(blocks.data + offset, mData, count);
     reverseIndices(blocks.data + offset);
 }
 
 bool CompressedBlockStorage::isRenderChunkEmpty(int renderChunkIndex)
 {
-    if (mData == NULL) return true;
+    if (mData == NULL)
+        return true;
     unsigned short* headers = (unsigned short*)mData;
     int first = renderChunkIndex * 32;
-    for (int i = 0; i < 32; i++) if ((headers[first + i] & 3) != 3 || (headers[first + i] & 4) == 0) return false;
+    for (int i = 0; i < 32; i++)
+        if ((headers[first + i] & 3) != 3 || (headers[first + i] & 4) == 0)
+            return false;
     return true;
 }
 
 int CompressedBlockStorage::getHighestNonEmptyY()
 {
-    if (mData == NULL) return -1;
+    if (mData == NULL)
+        return -1;
     unsigned short* headers = (unsigned short*)mData;
     for (int y = 7; y >= 0; y--)
-        for (int x = 0; x < 8; x++) for (int z = 0; z < 8; z++)
-            if ((headers[(x << 7) | (z << 5) | y] & 3) != 3 || (headers[(x << 7) | (z << 5) | y] & 4) == 0) return y;
+        for (int x = 0; x < 8; x++)
+            for (int z = 0; z < 8; z++)
+                if ((headers[(x << 7) | (z << 5) | y] & 3) != 3 || (headers[(x << 7) | (z << 5) | y] & 4) == 0)
+                    return y;
     return -1;
 }
 
-void CompressedBlockStorage::getAllocatedSize(int* totalSize, int* uniformCount, int* oneBitCount, int* twoBitCount, int* fourBitCount)
+void CompressedBlockStorage::getAllocatedSize(int* totalSize, int* uniformCount, int* oneBitCount, int* twoBitCount,
+                                              int* fourBitCount)
 {
     int u = 0, a = 0, b = 0, c = 0;
-    if (mData != NULL) for (int i = 0; i < 512; i++) { int f = ((unsigned short*)mData)[i] & 3; if (f == 3) u++; else if (f == 0) a++; else if (f == 1) b++; else c++; }
-    if (totalSize) *totalSize = mSize; if (uniformCount) *uniformCount = u; if (oneBitCount) *oneBitCount = a; if (twoBitCount) *twoBitCount = b; if (fourBitCount) *fourBitCount = c;
+    if (mData != NULL)
+        for (int i = 0; i < 512; i++)
+        {
+            int f = ((unsigned short*)mData)[i] & 3;
+            if (f == 3)
+                u++;
+            else if (f == 0)
+                a++;
+            else if (f == 1)
+                b++;
+            else
+                c++;
+        }
+    if (totalSize)
+        *totalSize = mSize;
+    if (uniformCount)
+        *uniformCount = u;
+    if (oneBitCount)
+        *oneBitCount = a;
+    if (twoBitCount)
+        *twoBitCount = b;
+    if (fourBitCount)
+        *fourBitCount = c;
 }
 
-void CompressedBlockStorage::setDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z, int sizeX, int sizeY, int sizeZ, void (*changedCallback)(int, int, int, void*, int), void* callbackData, int oldBlockId)
+void CompressedBlockStorage::setDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z,
+                                           int sizeX, int sizeY, int sizeZ,
+                                           void (*changedCallback)(int, int, int, void*, int), void* callbackData,
+                                           int oldBlockId)
 {
-    for (int dz = 0; dz < sizeZ; dz++) for (int dy = 0; dy < sizeY; dy++) for (int dx = 0; dx < sizeX; dx++) { int p = offset + (dz * sizeY + dy) * sizeX + dx; if (blocks.data && p < (int)blocks.length) { set(x + dx, y + dy, z + dz, blocks.data[p]); if (changedCallback) changedCallback(x + dx, y + dy, z + dz, callbackData, oldBlockId); } }
+    for (int dz = 0; dz < sizeZ; dz++)
+        for (int dy = 0; dy < sizeY; dy++)
+            for (int dx = 0; dx < sizeX; dx++)
+            {
+                int p = offset + (dz * sizeY + dy) * sizeX + dx;
+                if (blocks.data && p < (int)blocks.length)
+                {
+                    set(x + dx, y + dy, z + dz, blocks.data[p]);
+                    if (changedCallback)
+                        changedCallback(x + dx, y + dy, z + dz, callbackData, oldBlockId);
+                }
+            }
 }
 
-bool CompressedBlockStorage::testSetDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z, int sizeX, int sizeY, int sizeZ, bool* changed)
+bool CompressedBlockStorage::testSetDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z,
+                                               int sizeX, int sizeY, int sizeZ, bool* changed)
 {
-    bool result = false; for (int dz = 0; dz < sizeZ; dz++) for (int dy = 0; dy < sizeY; dy++) for (int dx = 0; dx < sizeX; dx++) { int p = offset + (dz * sizeY + dy) * sizeX + dx; if (blocks.data && p < (int)blocks.length && get(x + dx, y + dy, z + dz) != blocks.data[p]) { set(x + dx, y + dy, z + dz, blocks.data[p]); result = true; } } if (changed) *changed = result; return result;
+    bool result = false;
+    for (int dz = 0; dz < sizeZ; dz++)
+        for (int dy = 0; dy < sizeY; dy++)
+            for (int dx = 0; dx < sizeX; dx++)
+            {
+                int p = offset + (dz * sizeY + dy) * sizeX + dx;
+                if (blocks.data && p < (int)blocks.length && get(x + dx, y + dy, z + dz) != blocks.data[p])
+                {
+                    set(x + dx, y + dy, z + dz, blocks.data[p]);
+                    result = true;
+                }
+            }
+    if (changed)
+        *changed = result;
+    return result;
 }
 
-void CompressedBlockStorage::getDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z, int sizeX, int sizeY, int sizeZ)
+void CompressedBlockStorage::getDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z,
+                                           int sizeX, int sizeY, int sizeZ)
 {
-    for (int dz = 0; dz < sizeZ; dz++) for (int dy = 0; dy < sizeY; dy++) for (int dx = 0; dx < sizeX; dx++) { int p = offset + (dz * sizeY + dy) * sizeX + dx; if (blocks.data && p < (int)blocks.length) blocks.data[p] = get(x + dx, y + dy, z + dz); }
+    for (int dz = 0; dz < sizeZ; dz++)
+        for (int dy = 0; dy < sizeY; dy++)
+            for (int dx = 0; dx < sizeX; dx++)
+            {
+                int p = offset + (dz * sizeY + dy) * sizeX + dx;
+                if (blocks.data && p < (int)blocks.length)
+                    blocks.data[p] = get(x + dx, y + dy, z + dz);
+            }
 }

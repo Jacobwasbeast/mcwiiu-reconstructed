@@ -37,20 +37,29 @@
 #include "game/item/ItemId.hpp"
 
 EnumProperty<PlanksBlock::Variant*>* SaplingBlock::TYPE = NULL;
-static AbstractProperty<int>* gSaplingStage = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"stage", 0, 1));
-static const AABB* SAPLING_SHAPE = AABB::newPermanent(0.09999999403953552, 0.0, 0.09999999403953552, 0.8999999761581421, 0.800000011920929, 0.8999999761581421);
-static unsigned int SAPLING_DESCRIPTION_IDS[6] = { IDS_TILE_SAPLING_OAK, IDS_TILE_SAPLING_SPRUCE, IDS_TILE_SAPLING_BIRCH, IDS_TILE_SAPLING_JUNGLE, IDS_TILE_SAPLING_ACACIA, IDS_TILE_SAPLING_DARKOAK };
+static AbstractProperty<int>* gSaplingStage = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"stage", 0, 1));
+static const AABB* SAPLING_SHAPE = AABB::newPermanent(0.09999999403953552, 0.0, 0.09999999403953552, 0.8999999761581421,
+                                                      0.800000011920929, 0.8999999761581421);
+static unsigned int SAPLING_DESCRIPTION_IDS[6] = {IDS_TILE_SAPLING_OAK,    IDS_TILE_SAPLING_SPRUCE,
+                                                  IDS_TILE_SAPLING_BIRCH,  IDS_TILE_SAPLING_JUNGLE,
+                                                  IDS_TILE_SAPLING_ACACIA, IDS_TILE_SAPLING_DARKOAK};
 
-static const std::wstring SAPLING_ICON_NAMES[6] = { L"sapling", L"sapling_spruce", L"sapling_birch", L"sapling_jungle", L"sapling_acacia", L"sapling_roofed_oak" };
+static const std::wstring SAPLING_ICON_NAMES[6] = {L"sapling",        L"sapling_spruce", L"sapling_birch",
+                                                   L"sapling_jungle", L"sapling_acacia", L"sapling_roofed_oak"};
 
 SaplingBlock::SaplingBlock()
 {
     DerivedInit();
-    registerDefaultState(mStateDefinition->any()->setValue(TYPE, PlanksBlock::Variant::OAK)->setValue(gSaplingStage, 0));
+    registerDefaultState(
+        mStateDefinition->any()->setValue(TYPE, PlanksBlock::Variant::OAK)->setValue(gSaplingStage, 0));
     memset(mIcons, 0, sizeof(mIcons));
 }
 
-bool SaplingBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool) { return true; }
+bool SaplingBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool)
+{
+    return true;
+}
 
 bool SaplingBlock::isBonemealSuccess(Level* level, Random*, const BlockPos&, const BlockState*)
 {
@@ -66,18 +75,19 @@ bool SaplingBlock::isSapling(Level* level, const BlockPos& pos, PlanksBlock::Var
     return state->getBlock() == this && state->getValue(TYPE) == variant;
 }
 
-bool SaplingBlock::isTwoByTwoSaplingOfType(Level* level, const BlockPos& pos, int x, int z, PlanksBlock::Variant* variant)
+bool SaplingBlock::isTwoByTwoSaplingOfType(Level* level, const BlockPos& pos, int x, int z,
+                                           PlanksBlock::Variant* variant)
 {
-    return isSapling(level, pos.offset(x, 0, z), variant)
-        && isSapling(level, pos.offset(x + 1, 0, z), variant)
-        && isSapling(level, pos.offset(x, 0, z + 1), variant)
-        && isSapling(level, pos.offset(x + 1, 0, z + 1), variant);
+    return isSapling(level, pos.offset(x, 0, z), variant) && isSapling(level, pos.offset(x + 1, 0, z), variant)
+           && isSapling(level, pos.offset(x, 0, z + 1), variant)
+           && isSapling(level, pos.offset(x + 1, 0, z + 1), variant);
 }
 
 void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState* state, Random* random, bool bonemeal)
 {
-    AbstractTreeFeature* feature = random->nextInt(10) == 0 ? static_cast<AbstractTreeFeature*>(new BigTreeFeature(true))
-                                                            : new TreeFeature(true);
+    AbstractTreeFeature* feature = random->nextInt(10) == 0
+                                       ? static_cast<AbstractTreeFeature*>(new BigTreeFeature(true))
+                                       : new TreeFeature(true);
     int dx = 0;
     int dz = 0;
     bool mega = false;
@@ -107,7 +117,8 @@ void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState*
                         break;
                     }
                 }
-                if (mega) break;
+                if (mega)
+                    break;
             }
         }
         if (!mega)
@@ -124,7 +135,8 @@ void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState*
         break;
     case PlanksBlock::Variant::eDataJungle:
     {
-        const BlockState* logState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
+        const BlockState* logState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT,
+                                                                                PlanksBlock::Variant::JUNGLE);
         const BlockState* leavesState = Blocks::leaves->defaultBlockState()
                                             ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::JUNGLE)
                                             ->setValue(LeafBlock::CHECK_DECAY, false);
@@ -151,7 +163,8 @@ void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState*
                         break;
                     }
                 }
-                if (mega) break;
+                if (mega)
+                    break;
             }
         }
         if (!mega)
@@ -191,7 +204,8 @@ void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState*
                         break;
                     }
                 }
-                if (mega) break;
+                if (mega)
+                    break;
             }
             if (!mega)
             {
@@ -235,8 +249,10 @@ void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState*
 
 void SaplingBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
-    if (((GameMode*)Minecraft::GetInstance()->mGameMode)->isCreative()) growTree(level, pos, state, random, false);
-    else advanceTree(level, pos, state, random);
+    if (((GameMode*)Minecraft::GetInstance()->mGameMode)->isCreative())
+        growTree(level, pos, state, random, false);
+    else
+        advanceTree(level, pos, state, random);
 }
 
 void SaplingBlock::blockStaticCtor()
@@ -246,35 +262,50 @@ void SaplingBlock::blockStaticCtor()
     const Predicate<PlanksBlock::Variant*>* filter = Predicates<PlanksBlock::Variant*>::alwaysTrue;
     {
         boost::unordered_set<PlanksBlock::Variant*> values;
-        for (int i = 0; i < 6; ++i) values.insert(PlanksBlock::Variant::BY_DATA[i]);
+        for (int i = 0; i < 6; ++i)
+            values.insert(PlanksBlock::Variant::BY_DATA[i]);
         type = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant), values, filter);
     }
     TYPE = type;
 }
 
-std::wstring SaplingBlock::getName() { return std::wstring(L10N::GetString(IDS_TILE_SAPLING)); }
-const AABB* SaplingBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return SAPLING_SHAPE; }
+std::wstring SaplingBlock::getName()
+{
+    return std::wstring(L10N::GetString(IDS_TILE_SAPLING));
+}
+const AABB* SaplingBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
+{
+    return SAPLING_SHAPE;
+}
 
 void SaplingBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
     if (!level->mIsClientSide)
     {
         Bush::tick(level, pos, state, random);
-        if (level->getRawBrightness(pos.above()) >= 9 && random->nextInt(7) == 0) advanceTree(level, pos, state, random);
+        if (level->getRawBrightness(pos.above()) >= 9 && random->nextInt(7) == 0)
+            advanceTree(level, pos, state, random);
     }
 }
 
 void SaplingBlock::advanceTree(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (state->getValue(gSaplingStage) == 0) level->setBlock(pos, state->cycle(gSaplingStage), Block::UPDATE_INVISIBLE, false);
-    else growTree(level, pos, state, random, false);
+    if (state->getValue(gSaplingStage) == 0)
+        level->setBlock(pos, state->cycle(gSaplingStage), Block::UPDATE_INVISIBLE, false);
+    else
+        growTree(level, pos, state, random, false);
 }
 
-int SaplingBlock::getSpawnResourcesAuxValue(const BlockState* state) { return state->getValue(TYPE)->getData(); }
+int SaplingBlock::getSpawnResourcesAuxValue(const BlockState* state)
+{
+    return state->getValue(TYPE)->getData();
+}
 
 const BlockState* SaplingBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(TYPE, PlanksBlock::Variant::byData(data & 7))->setValue(gSaplingStage, (data >> 3) & 1);
+    return defaultBlockState()
+        ->setValue(TYPE, PlanksBlock::Variant::byData(data & 7))
+        ->setValue(gSaplingStage, (data >> 3) & 1);
 }
 
 int SaplingBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -285,19 +316,28 @@ int SaplingBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int SaplingBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0) return IDS_TOOLTIPS_GROW;
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
+        && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
+        && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
+        return IDS_TOOLTIPS_GROW;
     return Block::GetInteractTooltip(tooltipData);
 }
 
-bool SaplingBlock::canContainLiquid(const BlockState*) const { return false; }
+bool SaplingBlock::canContainLiquid(const BlockState*) const
+{
+    return false;
+}
 
 BlockStateDefinition* SaplingBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { TYPE, gSaplingStage };
+    static const Property* properties[] = {TYPE, gSaplingStage};
     return new BlockStateDefinition(this, properties, 2);
 }
 
-TextureAtlasSprite* SaplingBlock::getTexture(const Direction*, const BlockState* state) { return mIcons[state->getValue(TYPE)->getData()]; }
+TextureAtlasSprite* SaplingBlock::getTexture(const Direction*, const BlockState* state)
+{
+    return mIcons[state->getValue(TYPE)->getData()];
+}
 
 void SaplingBlock::registerIcons(IconRegister* iconRegister)
 {
@@ -311,6 +351,7 @@ int SaplingBlock::getDescriptionId(int auxValue)
 {
     const BlockState* state = getBlockState(auxValue);
     int data = state->getValue(TYPE)->getData();
-    if (data < 0) data = 0;
+    if (data < 0)
+        data = 0;
     return SAPLING_DESCRIPTION_IDS[data];
 }

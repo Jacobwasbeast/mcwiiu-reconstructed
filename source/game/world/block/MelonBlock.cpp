@@ -7,8 +7,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-MelonBlock::MelonBlock()
-    : Block(Material::VEGETABLE, MaterialColor::COLOR_LIGHT_GREEN)
+MelonBlock::MelonBlock() : Block(Material::VEGETABLE, MaterialColor::COLOR_LIGHT_GREEN)
 {
     DerivedInit();
 }

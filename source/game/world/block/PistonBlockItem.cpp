@@ -1,7 +1,6 @@
 #include "game/world/block/PistonBlockItem.hpp"
 
-PistonBlockItem::PistonBlockItem(Block* block)
-    : BlockItem(block)
+PistonBlockItem::PistonBlockItem(Block* block) : BlockItem(block)
 {
 }
 

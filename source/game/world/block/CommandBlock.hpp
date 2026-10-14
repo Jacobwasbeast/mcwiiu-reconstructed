@@ -42,13 +42,17 @@ public:
     unsigned int getMode();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void blockStaticCtor();
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual int getTickDelay(Level* level);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     virtual bool hasAnalogOutputSignal(const BlockState* state);
     virtual int getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos);
-    virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
+    virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
+                             boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
     virtual int getResourceCount(Random* random);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual const BlockState* getBlockState(int data);
@@ -56,7 +60,9 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     static bool isCommandBlock(Block* block);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);

@@ -9,8 +9,7 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-BlockStatePredicate::BlockStatePredicate(BlockStateDefinition* definition)
-    : mDefinition(definition)
+BlockStatePredicate::BlockStatePredicate(BlockStateDefinition* definition) : mDefinition(definition)
 {
 }
 
@@ -45,8 +44,7 @@ bool BlockStatePredicate::apply(const BlockState* state) const
     return true;
 }
 
-BlockStatePredicate* BlockStatePredicate::where(Property* property,
-                                                const Predicate<Boxed*>* predicate)
+BlockStatePredicate* BlockStatePredicate::where(Property* property, const Predicate<Boxed*>* predicate)
 {
     const std::vector<const Property*>& properties = mDefinition->getProperties();
     std::vector<const Property*>::const_iterator found = std::find(properties.begin(), properties.end(), property);

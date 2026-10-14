@@ -8,8 +8,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-DriedKelpBlock::DriedKelpBlock(Material* material)
-    : Block(material)
+DriedKelpBlock::DriedKelpBlock(Material* material) : Block(material)
 {
     DerivedInit();
     setTicking(true);
@@ -18,8 +17,7 @@ DriedKelpBlock::DriedKelpBlock(Material* material)
 
 void DriedKelpBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    if (!level->mIsClientSide
-        && level->getBlockId(pos.x, pos.y + 1, pos.z) == BlockId::FIRE
+    if (!level->mIsClientSide && level->getBlockId(pos.x, pos.y + 1, pos.z) == BlockId::FIRE
         && level->isUnderWater(pos, 269, 0))
     {
         level->removeBlock(pos.above());

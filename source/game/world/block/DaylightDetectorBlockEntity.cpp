@@ -4,8 +4,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/DaylightDetectorBlock.hpp"
 
-DaylightDetectorBlockEntity::DaylightDetectorBlockEntity()
-    : BlockEntity()
+DaylightDetectorBlockEntity::DaylightDetectorBlockEntity() : BlockEntity()
 {
 }
 

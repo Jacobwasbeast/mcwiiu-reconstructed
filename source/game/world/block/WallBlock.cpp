@@ -54,27 +54,19 @@ static AABB* AABB_BY_INDEX[16] = {
 };
 
 static AABB* CLIP_AABB_BY_INDEX[16] = {
-    AABB_BY_INDEX[0]->setMaxY(1.5),
-    AABB_BY_INDEX[1]->setMaxY(1.5),
-    AABB_BY_INDEX[2]->setMaxY(1.5),
-    AABB_BY_INDEX[3]->setMaxY(1.5),
-    AABB_BY_INDEX[4]->setMaxY(1.5),
-    AABB_BY_INDEX[5]->setMaxY(1.5),
-    AABB_BY_INDEX[6]->setMaxY(1.5),
-    AABB_BY_INDEX[7]->setMaxY(1.5),
-    AABB_BY_INDEX[8]->setMaxY(1.5),
-    AABB_BY_INDEX[9]->setMaxY(1.5),
-    AABB_BY_INDEX[10]->setMaxY(1.5),
-    AABB_BY_INDEX[11]->setMaxY(1.5),
-    AABB_BY_INDEX[12]->setMaxY(1.5),
-    AABB_BY_INDEX[13]->setMaxY(1.5),
-    AABB_BY_INDEX[14]->setMaxY(1.5),
+    AABB_BY_INDEX[0]->setMaxY(1.5),  AABB_BY_INDEX[1]->setMaxY(1.5),  AABB_BY_INDEX[2]->setMaxY(1.5),
+    AABB_BY_INDEX[3]->setMaxY(1.5),  AABB_BY_INDEX[4]->setMaxY(1.5),  AABB_BY_INDEX[5]->setMaxY(1.5),
+    AABB_BY_INDEX[6]->setMaxY(1.5),  AABB_BY_INDEX[7]->setMaxY(1.5),  AABB_BY_INDEX[8]->setMaxY(1.5),
+    AABB_BY_INDEX[9]->setMaxY(1.5),  AABB_BY_INDEX[10]->setMaxY(1.5), AABB_BY_INDEX[11]->setMaxY(1.5),
+    AABB_BY_INDEX[12]->setMaxY(1.5), AABB_BY_INDEX[13]->setMaxY(1.5), AABB_BY_INDEX[14]->setMaxY(1.5),
     AABB_BY_INDEX[15]->setMaxY(1.5),
 };
 
-WallBlock::Variant* WallBlock::Variant::COBBLESTONE = new WallBlock::Variant(0, L"cobblestone", IDS_TILE_COBBLESTONE_WALL);
-WallBlock::Variant* WallBlock::Variant::MOSSY = new WallBlock::Variant(1, L"mossy_cobblestone", IDS_TILE_COBBLESTONE_WALL_MOSSY);
-WallBlock::Variant* WallBlock::Variant::VALUES[2] = { WallBlock::Variant::COBBLESTONE, WallBlock::Variant::MOSSY };
+WallBlock::Variant* WallBlock::Variant::COBBLESTONE = new WallBlock::Variant(0, L"cobblestone",
+                                                                             IDS_TILE_COBBLESTONE_WALL);
+WallBlock::Variant* WallBlock::Variant::MOSSY = new WallBlock::Variant(1, L"mossy_cobblestone",
+                                                                       IDS_TILE_COBBLESTONE_WALL_MOSSY);
+WallBlock::Variant* WallBlock::Variant::VALUES[2] = {WallBlock::Variant::COBBLESTONE, WallBlock::Variant::MOSSY};
 EnumProperty<WallBlock::Variant*>* WallBlock::VARIANT = NULL;
 const double WallBlock::POST_HEIGHT = 1.0;
 const float WallBlock::ARM_HALF_WIDTH = 0.1875f;
@@ -82,20 +74,34 @@ const float WallBlock::ARM_HEIGHT = 0.875f;
 const float WallBlock::POST_HALF_WIDTH = 0.25f;
 
 WallBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
-    : mData(data), mName(name), mTranslationKey(translationKey)
+    : mData(data),
+      mName(name),
+      mTranslationKey(translationKey)
 {
 }
 
-int WallBlock::Variant::getData() { return mData; }
+int WallBlock::Variant::getData()
+{
+    return mData;
+}
 
 WallBlock::Variant* WallBlock::Variant::byData(int data)
 {
     return VALUES[(unsigned int)data < 2 ? data : 0];
 }
 
-std::wstring WallBlock::Variant::toString() const { return mName; }
-std::wstring WallBlock::Variant::getSerializedName() const { return mName; }
-int WallBlock::Variant::getTranslationKey() { return mTranslationKey; }
+std::wstring WallBlock::Variant::toString() const
+{
+    return mName;
+}
+std::wstring WallBlock::Variant::getSerializedName() const
+{
+    return mName;
+}
+int WallBlock::Variant::getTranslationKey()
+{
+    return mTranslationKey;
+}
 
 void WallBlock::blockStaticCtor()
 {
@@ -113,8 +119,7 @@ void WallBlock::blockStaticCtor()
     VARIANT = variant;
 }
 
-WallBlock::WallBlock(Block* block)
-    : Block(block->mMaterial)
+WallBlock::WallBlock(Block* block) : Block(block->mMaterial)
 {
     mIsWall = true;
     mBlockType = EBLOCK_TYPE_WALL;
@@ -165,17 +170,32 @@ const AABB* WallBlock::getClipAABB(const BlockState* state, LevelSource* levelSo
     return CLIP_AABB_BY_INDEX[getAABBIndex(state)];
 }
 
-std::wstring WallBlock::getName() { return L10N::GetString(IDS_TILE_COBBLESTONE_WALL); }
-bool WallBlock::isCubeShaped(const BlockState*) { return false; }
-bool WallBlock::isPathfindable(LevelSource*, const BlockPos&) { return false; }
-bool WallBlock::isSolidRender(const BlockState*) const { return false; }
-bool WallBlock::canContainLiquid(const BlockState*) const { return true; }
+std::wstring WallBlock::getName()
+{
+    return L10N::GetString(IDS_TILE_COBBLESTONE_WALL);
+}
+bool WallBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+bool WallBlock::isPathfindable(LevelSource*, const BlockPos&)
+{
+    return false;
+}
+bool WallBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool WallBlock::canContainLiquid(const BlockState*) const
+{
+    return true;
+}
 
 bool WallBlock::isExceptionBlockForAttachingPlusPiston(Block* block)
 {
     return Block::isExceptionBlockForAttachingPlusPiston(block) || block == Blocks::barrier
-        || block == Blocks::melon_block || block == Blocks::pumpkin || block == Blocks::carved_pumpkin
-        || block == Blocks::lit_pumpkin;
+           || block == Blocks::melon_block || block == Blocks::pumpkin || block == Blocks::carved_pumpkin
+           || block == Blocks::lit_pumpkin;
 }
 
 bool WallBlock::connectsTo(LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
@@ -184,11 +204,15 @@ bool WallBlock::connectsTo(LevelSource* levelSource, const BlockPos& pos, const 
     Block* block = state->getBlock();
     EBlockFaceShape faceShape = state->getBlockFaceShape(levelSource, pos, direction);
     bool wallFace = faceShape == BLOCK_FACE_MIDDLE_POLE_THICK
-        || (faceShape == BLOCK_FACE_MIDDLE_POLE && block != NULL && dynamic_cast<FenceGateBlock*>(block) != NULL);
+                    || (faceShape == BLOCK_FACE_MIDDLE_POLE && block != NULL
+                        && dynamic_cast<FenceGateBlock*>(block) != NULL);
     return (!isExceptionBlockForAttachingPlusPiston(block) && faceShape == BLOCK_FACE_SOLID) || wallFace;
 }
 
-int WallBlock::getSpawnResourcesAuxValue(const BlockState* state) { return state->getValue(VARIANT)->getData(); }
+int WallBlock::getSpawnResourcesAuxValue(const BlockState* state)
+{
+    return state->getValue(VARIANT)->getData();
+}
 
 bool WallBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
                                  const Direction* direction)
@@ -203,7 +227,10 @@ const BlockState* WallBlock::getBlockState(int data)
     return defaultBlockState()->setValue(VARIANT, Variant::byData(data));
 }
 
-int WallBlock::convertBlockStateToLegacyData(const BlockState* state) { return state->getValue(VARIANT)->getData(); }
+int WallBlock::convertBlockStateToLegacyData(const BlockState* state)
+{
+    return state->getValue(VARIANT)->getData();
+}
 
 const BlockState* WallBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
                                                              const BlockPos& pos)
@@ -222,11 +249,12 @@ const BlockState* WallBlock::fillVirtualBlockStateProperties(const BlockState* s
 
 BlockStateDefinition* WallBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { UP, NORTH, EAST, SOUTH, WEST, VARIANT };
+    static const Property* properties[] = {UP, NORTH, EAST, SOUTH, WEST, VARIANT};
     return new BlockStateDefinition(this, properties, 6);
 }
 
-EBlockFaceShape WallBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
+EBlockFaceShape WallBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
+                                             const Direction* direction)
 {
     if (direction != Direction::UP && direction != Direction::DOWN)
         return BLOCK_FACE_MIDDLE_POLE_THICK;
@@ -240,6 +268,11 @@ TextureAtlasSprite* WallBlock::getTexture(const Direction* direction, const Bloc
     return Blocks::cobblestone->getTexture(direction);
 }
 
-void WallBlock::registerIcons(IconRegister*) {}
+void WallBlock::registerIcons(IconRegister*)
+{
+}
 
-EBlockRenderShape WallBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_WALL; }
+EBlockRenderShape WallBlock::getRenderShape(const BlockState*)
+{
+    return BLOCK_RENDER_WALL;
+}

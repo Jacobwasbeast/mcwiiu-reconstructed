@@ -19,8 +19,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-MagmaBlock::MagmaBlock()
-    : Block(Material::STONE)
+MagmaBlock::MagmaBlock() : Block(Material::STONE)
 {
     DerivedInit();
     setLightEmission(0.2f);
@@ -34,8 +33,7 @@ const MaterialColor* MagmaBlock::getMapColor(const BlockState*, LevelSource*, co
 
 void MagmaBlock::stepOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity)
 {
-    if (!entity->isFireImmune()
-        && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
+    if (!entity->isFireImmune() && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
         && !EnchantmentHelper::hasFrostWalker(boost::static_pointer_cast<LivingEntity>(entity)))
     {
         entity->hurt(DamageSource::HOT_FLOOR, 1.0f);
@@ -80,8 +78,7 @@ void MagmaBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
     }
 }
 
-void MagmaBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos,
-                                 Block*, const BlockPos& fromPos)
+void MagmaBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos& fromPos)
 {
     if (fromPos == pos.above())
     {
@@ -91,8 +88,7 @@ void MagmaBlock::neighborChanged(const BlockState*, Level* level, const BlockPos
 
     Block* block = level->getBlock(fromPos);
     bool ice = block == Blocks::ice;
-    if (block == Blocks::water || block == Blocks::flowing_water
-        || block == Blocks::snow_layer || ice)
+    if (block == Blocks::water || block == Blocks::flowing_water || block == Blocks::snow_layer || ice)
         addToTickQueue(level, pos, level->mRandom);
 }
 

@@ -39,8 +39,7 @@ public:
     SkullBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     BlockPattern* getOrCreateWitherFull();
-    void checkMobSpawn(Level* level, const BlockPos& pos,
-                       boost::shared_ptr<SkullBlockEntity> skull,
+    void checkMobSpawn(Level* level, const BlockPos& pos, boost::shared_ptr<SkullBlockEntity> skull,
                        boost::shared_ptr<Player> player);
     static void blockStaticCtor();
     virtual std::wstring getName();
@@ -48,14 +47,12 @@ public:
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool hasCustomBreakingProgress(const BlockState* state);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos,
-                                                    const Direction* direction, float hitX, float hitY,
-                                                    float hitZ, int auxValue,
-                                                    boost::shared_ptr<LivingEntity> placer);
-    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                            const BlockState* state);
-    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
-                                float chance, int lootBonus);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
+    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                int lootBonus);
     virtual bool playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
                                    boost::shared_ptr<Player> player);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
@@ -69,8 +66,8 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                              const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual std::wstring getTileItemIconName();

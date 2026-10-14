@@ -16,26 +16,20 @@
 #include "game/world/block/SandBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-RedSandStoneBlock::Variant* RedSandStoneBlock::Variant::DEFAULT =
-    new RedSandStoneBlock::Variant(0, L"red_sandstone", IDS_TILE_REDSANDSTONE);
-RedSandStoneBlock::Variant* RedSandStoneBlock::Variant::CHISELED =
-    new RedSandStoneBlock::Variant(1, L"chiseled_red_sandstone", 0xD03F0851);
-RedSandStoneBlock::Variant* RedSandStoneBlock::Variant::SMOOTH =
-    new RedSandStoneBlock::Variant(2, L"smooth_red_sandstone", 0x40496822);
+RedSandStoneBlock::Variant* RedSandStoneBlock::Variant::DEFAULT = new RedSandStoneBlock::Variant(0, L"red_sandstone",
+                                                                                                 IDS_TILE_REDSANDSTONE);
+RedSandStoneBlock::Variant* RedSandStoneBlock::Variant::CHISELED = new RedSandStoneBlock::Variant(
+    1, L"chiseled_red_sandstone", 0xD03F0851);
+RedSandStoneBlock::Variant* RedSandStoneBlock::Variant::SMOOTH = new RedSandStoneBlock::Variant(
+    2, L"smooth_red_sandstone", 0x40496822);
 static RedSandStoneBlock::Variant* gRedSandStoneVariants[3] = {
-    RedSandStoneBlock::Variant::DEFAULT,
-    RedSandStoneBlock::Variant::CHISELED,
-    RedSandStoneBlock::Variant::SMOOTH
-};
+    RedSandStoneBlock::Variant::DEFAULT, RedSandStoneBlock::Variant::CHISELED, RedSandStoneBlock::Variant::SMOOTH};
 EnumProperty<RedSandStoneBlock::Variant*>* RedSandStoneBlock::TYPE = NULL;
 
 static std::wstring gRedSandStoneTopTexture = L"red_sandstone_top";
 static std::wstring gRedSandStoneBottomTexture = L"red_sandstone_bottom";
-static std::wstring gRedSandStoneSideTextures[3] = {
-    L"red_sandstone_normal",
-    L"red_sandstone_carved",
-    L"red_sandstone_smooth"
-};
+static std::wstring gRedSandStoneSideTextures[3] = {L"red_sandstone_normal", L"red_sandstone_carved",
+                                                    L"red_sandstone_smooth"};
 
 RedSandStoneBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
 {
@@ -84,14 +78,12 @@ void RedSandStoneBlock::blockStaticCtor()
         {
             values.insert(gRedSandStoneVariants[i]);
         }
-        type = EnumProperty<Variant*>::create(
-            name, typeid(Variant), values, predicate);
+        type = EnumProperty<Variant*>::create(name, typeid(Variant), values, predicate);
     }
     TYPE = type;
 }
 
-RedSandStoneBlock::RedSandStoneBlock()
-    : Block(Material::STONE, SandBlock::Variant::RED_SAND->getMaterialColor())
+RedSandStoneBlock::RedSandStoneBlock() : Block(Material::STONE, SandBlock::Variant::RED_SAND->getMaterialColor())
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(TYPE, Variant::DEFAULT));
@@ -115,7 +107,7 @@ int RedSandStoneBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* RedSandStoneBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { TYPE };
+    static const Property* properties[1] = {TYPE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

@@ -9,8 +9,7 @@
 #include <typeinfo>
 #include <vector>
 
-BooleanProperty::BooleanProperty(const std::wstring& name)
-    : AbstractProperty<bool>(name, typeid(bool))
+BooleanProperty::BooleanProperty(const std::wstring& name) : AbstractProperty<bool>(name, typeid(bool))
 {
     mValuesByName[L"true"] = true;
     mValuesByName[L"false"] = false;

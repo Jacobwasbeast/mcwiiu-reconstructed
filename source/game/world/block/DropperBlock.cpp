@@ -23,8 +23,7 @@
 #include "game/world/block/HopperBlockEntity.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-DropperBlock::DropperBlock()
-    : DispenserBlock()
+DropperBlock::DropperBlock() : DispenserBlock()
 {
     Block::ClearDerivedInit();
     Block::DerivedInit();
@@ -47,8 +46,8 @@ DispenseItemBehavior* DropperBlock::getDispenseMethod(not_null_ptr<ItemInstance>
 void DropperBlock::dispenseFrom(Level* level, const BlockPos& pos)
 {
     BlockSourceImpl source(level, pos);
-    boost::shared_ptr<DispenserBlockEntity> dispenser =
-        boost::dynamic_pointer_cast<DispenserBlockEntity>(source.getEntity());
+    boost::shared_ptr<DispenserBlockEntity> dispenser = boost::dynamic_pointer_cast<DispenserBlockEntity>(
+        source.getEntity());
     if (!dispenser)
     {
         return;
@@ -78,8 +77,8 @@ void DropperBlock::dispenseFrom(Level* level, const BlockPos& pos)
     }
     else
     {
-        result = HopperBlockEntity::addItem(dispenser.get(), container.get(),
-                                            item->copy()->split(1), direction->getOpposite());
+        result = HopperBlockEntity::addItem(dispenser.get(), container.get(), item->copy()->split(1),
+                                            direction->getOpposite());
         if (result->isEmpty())
         {
             result = item->copy();

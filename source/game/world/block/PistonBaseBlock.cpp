@@ -37,7 +37,8 @@
 #include "game/entity/mob/LivingEntity.hpp"
 
 AbstractProperty<const Direction*>* PistonBaseBlock::FACING = NULL;
-AbstractProperty<bool>* PistonBaseBlock::EXTENDED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"extended"));
+AbstractProperty<bool>* PistonBaseBlock::EXTENDED = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"extended"));
 const std::wstring PistonBaseBlock::TEXTURE_SIDE = L"piston_side";
 const std::wstring PistonBaseBlock::TEXTURE_TOP = L"piston_top";
 const std::wstring PistonBaseBlock::TEXTURE_TOP_STICKY = L"piston_top_sticky";
@@ -51,8 +52,7 @@ static const AABB* PISTON_EXTENDED_SOUTH = AABB::newPermanent(0.0, 0.0, 0.0, 1.0
 static const AABB* PISTON_EXTENDED_WEST = AABB::newPermanent(0.25, 0.0, 0.0, 1.0, 1.0, 1.0);
 static const AABB* PISTON_EXTENDED_EAST = AABB::newPermanent(0.0, 0.0, 0.0, 0.75, 1.0, 1.0);
 
-PistonBaseBlock::PistonBaseBlock(bool sticky)
-    : DirectionalBlock(Material::PISTON)
+PistonBaseBlock::PistonBaseBlock(bool sticky) : DirectionalBlock(Material::PISTON)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::UP)->setValue(EXTENDED, false));
@@ -71,7 +71,10 @@ bool PistonBaseBlock::isViewBlocking(const BlockState* state)
     return !state->getValue(EXTENDED);
 }
 
-int PistonBaseBlock::getSpawnResourcesAuxValue(const BlockState*) { return 5; }
+int PistonBaseBlock::getSpawnResourcesAuxValue(const BlockState*)
+{
+    return 5;
+}
 
 const AABB* PistonBaseBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
@@ -79,12 +82,18 @@ const AABB* PistonBaseBlock::getShape(const BlockState* state, LevelSource* leve
     {
         switch (state->getValue(FACING)->get3DDataValue())
         {
-        case Direction::eDirection_Down: return PISTON_EXTENDED_DOWN;
-        case Direction::eDirection_North: return PISTON_EXTENDED_NORTH;
-        case Direction::eDirection_South: return PISTON_EXTENDED_SOUTH;
-        case Direction::eDirection_West: return PISTON_EXTENDED_WEST;
-        case Direction::eDirection_East: return PISTON_EXTENDED_EAST;
-        default: return PISTON_EXTENDED_UP;
+        case Direction::eDirection_Down:
+            return PISTON_EXTENDED_DOWN;
+        case Direction::eDirection_North:
+            return PISTON_EXTENDED_NORTH;
+        case Direction::eDirection_South:
+            return PISTON_EXTENDED_SOUTH;
+        case Direction::eDirection_West:
+            return PISTON_EXTENDED_WEST;
+        case Direction::eDirection_East:
+            return PISTON_EXTENDED_EAST;
+        default:
+            return PISTON_EXTENDED_UP;
         }
     }
     return FULL_BLOCK_SHAPE;
@@ -102,7 +111,10 @@ void PistonBaseBlock::addCollisionAABBs(const BlockState* state, Level* level, c
     addCollisionAABB(pos, entityBox, collidingBoxes, state->getShape(level, pos));
 }
 
-bool PistonBaseBlock::isSolidRender(const BlockState*) const { return false; }
+bool PistonBaseBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
 
 int PistonBaseBlock::getNeighborSignal(Level* level, const BlockPos& pos, const Direction* direction)
 {
@@ -206,8 +218,8 @@ void PistonBaseBlock::setPlacedBy(Level* level, const BlockPos& pos, const Block
         checkIfExtend(level, pos, state);
 }
 
-void PistonBaseBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                      Block*, const BlockPos&)
+void PistonBaseBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*,
+                                      const BlockPos&)
 {
     if (!level->mIsClientSide)
         checkIfExtend(level, pos, state);
@@ -219,10 +231,11 @@ void PistonBaseBlock::onPlace(Level* level, const BlockPos& pos, const BlockStat
         checkIfExtend(level, pos, state);
 }
 
-const Direction* PistonBaseBlock::getFacingFromPlayer(Level*, const BlockPos& pos, boost::shared_ptr<LivingEntity> placer)
+const Direction* PistonBaseBlock::getFacingFromPlayer(Level*, const BlockPos& pos,
+                                                      boost::shared_ptr<LivingEntity> placer)
 {
-    if (Mth::abs(static_cast<float>(placer->mX) - (static_cast<float>(pos.x) + 0.5f)) < 2.5f &&
-        Mth::abs(static_cast<float>(placer->mZ) - (static_cast<float>(pos.z) + 0.5f)) < 2.5f)
+    if (Mth::abs(static_cast<float>(placer->mX) - (static_cast<float>(pos.x) + 0.5f)) < 2.5f
+        && Mth::abs(static_cast<float>(placer->mZ) - (static_cast<float>(pos.z) + 0.5f)) < 2.5f)
     {
         double eyeY = placer->mY + placer->getEyeHeight();
         if (eyeY - static_cast<double>(pos.y) > 2.0)
@@ -233,15 +246,17 @@ const Direction* PistonBaseBlock::getFacingFromPlayer(Level*, const BlockPos& po
     return placer->getDirection()->getOpposite();
 }
 
-const BlockState* PistonBaseBlock::getStateForPlacement(Level* level, const BlockPos& pos,
-                                                         const Direction*, float, float, float, int,
-                                                         boost::shared_ptr<LivingEntity> placer)
+const BlockState* PistonBaseBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction*, float,
+                                                        float, float, int, boost::shared_ptr<LivingEntity> placer)
 {
     const BlockState* state = defaultBlockState();
     return state->setValue(FACING, getFacingFromPlayer(level, pos, placer))->setValue(EXTENDED, false);
 }
 
-bool PistonBaseBlock::canContainLiquid(const BlockState*) const { return true; }
+bool PistonBaseBlock::canContainLiquid(const BlockState*) const
+{
+    return true;
+}
 
 int PistonBaseBlock::moveBlocks(Level* level, const BlockPos& pos, const Direction* direction, bool extending)
 {
@@ -289,7 +304,8 @@ int PistonBaseBlock::moveBlocks(Level* level, const BlockPos& pos, const Directi
         level->setExtraBlock(pushPos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         level->removeBlock(pushPos);
         pushPos = pushPos.relative(moveDirection);
-        level->setBlock(pushPos, Blocks::piston_extension->defaultBlockState()->setValue(PistonMagicBlock::FACING, direction),
+        level->setBlock(pushPos,
+                        Blocks::piston_extension->defaultBlockState()->setValue(PistonMagicBlock::FACING, direction),
                         Block::UPDATE_INVISIBLE, false);
         level->setBlockEntity(pushPos, PistonMagicBlock::newMovingBlockEntity(pushStates.at(i), direction, extending,
                                                                               false, blockEntityTag));
@@ -304,7 +320,8 @@ int PistonBaseBlock::moveBlocks(Level* level, const BlockPos& pos, const Directi
                                           ->setValue(PistonHeadBlock::TYPE, type);
         const BlockState* movingState = Blocks::piston_extension->defaultBlockState()
                                             ->setValue(PistonMagicBlock::FACING, direction)
-                                            ->setValue(PistonMagicBlock::TYPE, mSticky ? pistonTypeSticky : pistonTypeNormal);
+                                            ->setValue(PistonMagicBlock::TYPE,
+                                                       mSticky ? pistonTypeSticky : pistonTypeNormal);
         level->setBlock(headPos, movingState, Block::UPDATE_INVISIBLE, false);
         if (headInWater)
             level->setExtraBlock(headPos, Blocks::water->defaultBlockState(), Block::UPDATE_INVISIBLE, false);
@@ -329,8 +346,8 @@ int PistonBaseBlock::moveBlocks(Level* level, const BlockPos& pos, const Directi
     return true;
 }
 
-bool PistonBaseBlock::triggerEvent(const BlockState* state, Level* level, const BlockPos& pos,
-                                   int eventId, int eventParam)
+bool PistonBaseBlock::triggerEvent(const BlockState* state, Level* level, const BlockPos& pos, int eventId,
+                                   int eventParam)
 {
     const Direction* facing = state->getValue(FACING);
     if (!level->mIsClientSide)
@@ -367,8 +384,8 @@ bool PistonBaseBlock::triggerEvent(const BlockState* state, Level* level, const 
                             ->setValue(PistonMagicBlock::FACING, facing)
                             ->setValue(PistonMagicBlock::TYPE, mSticky ? pistonTypeSticky : pistonTypeNormal),
                         Block::UPDATE_ALL, false);
-        level->setBlockEntity(pos, PistonMagicBlock::newMovingBlockEntity(getBlockState(eventParam), facing, false,
-                                                                          true, NULL));
+        level->setBlockEntity(
+            pos, PistonMagicBlock::newMovingBlockEntity(getBlockState(eventParam), facing, false, true, NULL));
         PIXEndNamedEvent();
 
         if (mSticky)
@@ -412,13 +429,15 @@ bool PistonBaseBlock::triggerEvent(const BlockState* state, Level* level, const 
         }
 
         level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::PISTON_CONTRACT,
-                         SoundSource::eSoundSource_Blocks, 0.5f, level->mRandom->nextFloat() * 0.15f + 0.6f,
-                         16.0f);
+                         SoundSource::eSoundSource_Blocks, 0.5f, level->mRandom->nextFloat() * 0.15f + 0.6f, 16.0f);
     }
     return true;
 }
 
-bool PistonBaseBlock::isCubeShaped(const BlockState*) { return false; }
+bool PistonBaseBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
 
 const Direction* PistonBaseBlock::getFacing(int data)
 {
@@ -455,12 +474,12 @@ int PistonBaseBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* PistonBaseBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING, EXTENDED };
+    static const Property* properties[] = {FACING, EXTENDED};
     return new BlockStateDefinition(this, properties, 2);
 }
 
 EBlockFaceShape PistonBaseBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                                    const BlockPos& pos, const Direction* direction)
+                                                   const BlockPos& pos, const Direction* direction)
 {
     state = fillVirtualBlockStateProperties(state, levelSource, pos);
     if (state->getValue(FACING) == direction->getOpposite() || !state->getValue(EXTENDED))
@@ -476,8 +495,8 @@ TextureAtlasSprite* PistonBaseBlock::getTexture(const Direction* direction, cons
     if (direction == facing)
     {
         const AABB* shape = getShape(state, NULL, BlockPos());
-        if (state->getValue(EXTENDED) || shape->mMinX > 0.0 || shape->mMinY > 0.0 || shape->mMinZ > 0.0 ||
-            shape->mMaxX < 1.0 || shape->mMaxY < 1.0 || shape->mMaxZ < 1.0)
+        if (state->getValue(EXTENDED) || shape->mMinX > 0.0 || shape->mMinY > 0.0 || shape->mMinZ > 0.0
+            || shape->mMaxX < 1.0 || shape->mMaxY < 1.0 || shape->mMaxZ < 1.0)
             return mInnerTopIcon;
         return mTopIcon;
     }
@@ -508,6 +527,12 @@ void PistonBaseBlock::registerIcons(IconRegister* iconRegister)
     mBottomIcon = iconRegister->registerIcon(TEXTURE_BOTTOM);
 }
 
-EBlockRenderShape PistonBaseBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_PISTON_BASE; }
+EBlockRenderShape PistonBaseBlock::getRenderShape(const BlockState*)
+{
+    return BLOCK_RENDER_PISTON_BASE;
+}
 
-bool PistonBaseBlock::canProvideSupport(const BlockState*, const Direction*, EBlockSupportType) { return true; }
+bool PistonBaseBlock::canProvideSupport(const BlockState*, const Direction*, EBlockSupportType)
+{
+    return true;
+}

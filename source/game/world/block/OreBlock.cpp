@@ -13,14 +13,12 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 
-OreBlock::OreBlock()
-    : Block(Material::STONE)
+OreBlock::OreBlock() : Block(Material::STONE)
 {
     DerivedInit();
 }
 
-OreBlock::OreBlock(const MaterialColor* materialColor)
-    : Block(Material::STONE, materialColor)
+OreBlock::OreBlock(const MaterialColor* materialColor) : Block(Material::STONE, materialColor)
 {
     DerivedInit();
 }
@@ -114,4 +112,3 @@ int OreBlock::getSpawnResourcesAuxValue(const BlockState*)
     }
     return DyeColor::BLUE->getItemData();
 }
-

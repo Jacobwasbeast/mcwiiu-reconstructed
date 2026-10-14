@@ -14,8 +14,7 @@
 #include <vector>
 
 
-GameRules_BlockStateAttribute::GameRules_BlockStateAttribute(const BlockState** value)
-    : mValue(value)
+GameRules_BlockStateAttribute::GameRules_BlockStateAttribute(const BlockState** value) : mValue(value)
 {
 }
 
@@ -59,7 +58,8 @@ void GameRules_BlockStateAttribute::setValue(const std::wstring& value)
     }
 }
 
-void GameRules_BlockStateAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)
+void GameRules_BlockStateAttribute::save(ConsoleGameRules::EGameRuleAttr attribute,
+                                         GameRuleSaveInterface* saveInterface)
 {
     saveInterface->saveAttribute(attribute, _toString<const BlockState*>(*mValue));
 }

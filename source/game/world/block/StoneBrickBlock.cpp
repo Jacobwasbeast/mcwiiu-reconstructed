@@ -23,16 +23,11 @@ StoneBrickBlock::Variant* StoneBrickBlock::Variant::CRACKED = new StoneBrickBloc
 StoneBrickBlock::Variant* StoneBrickBlock::Variant::CHISELED = new StoneBrickBlock::Variant(
     StoneBrickBlock::Variant::eDataChiseled, L"chiseled_stonebrick", IDS_TILE_STONE_BRICK_SMOOTH_CHISELED);
 StoneBrickBlock::Variant* StoneBrickBlock::Variant::BY_DATA[4] = {
-    StoneBrickBlock::Variant::DEFAULT, StoneBrickBlock::Variant::MOSSY,
-    StoneBrickBlock::Variant::CRACKED, StoneBrickBlock::Variant::CHISELED
-};
+    StoneBrickBlock::Variant::DEFAULT, StoneBrickBlock::Variant::MOSSY, StoneBrickBlock::Variant::CRACKED,
+    StoneBrickBlock::Variant::CHISELED};
 
-std::wstring StoneBrickBlock::TEXTURE_NAMES[4] = {
-    std::wstring(L""),
-    std::wstring(L"mossy"),
-    std::wstring(L"cracked"),
-    std::wstring(L"carved")
-};
+std::wstring StoneBrickBlock::TEXTURE_NAMES[4] = {std::wstring(L""), std::wstring(L"mossy"), std::wstring(L"cracked"),
+                                                  std::wstring(L"carved")};
 
 int StoneBrickBlock::DEFAULT_META = 0;
 int StoneBrickBlock::MOSSY_META = 0;
@@ -41,7 +36,9 @@ int StoneBrickBlock::CHISELED_META = 0;
 EnumProperty<StoneBrickBlock::Variant*>* StoneBrickBlock::VARIANT = NULL;
 
 StoneBrickBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
-    : mData(data), mName(name), mTranslationKey(translationKey)
+    : mData(data),
+      mName(name),
+      mTranslationKey(translationKey)
 {
 }
 
@@ -96,8 +93,7 @@ void StoneBrickBlock::blockStaticCtor()
     CHISELED_META = Variant::CHISELED->getData();
 }
 
-StoneBrickBlock::StoneBrickBlock()
-    : Block(Material::STONE)
+StoneBrickBlock::StoneBrickBlock() : Block(Material::STONE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::DEFAULT));
@@ -121,7 +117,7 @@ int StoneBrickBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* StoneBrickBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { VARIANT };
+    static const Property* properties[] = {VARIANT};
     return new BlockStateDefinition(this, properties, 1);
 }
 

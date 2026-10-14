@@ -24,18 +24,9 @@ public:
     virtual int getAccessorId();
     virtual void setValue(T value);
 
-    T getValue()
-    {
-        return mValue;
-    }
-    const EntityDataAccessor<T>* getAccessor()
-    {
-        return mAccessor;
-    }
-    bool shouldUpdate(T value)
-    {
-        return value != getValue();
-    }
+    T getValue() { return mValue; }
+    const EntityDataAccessor<T>* getAccessor() { return mAccessor; }
+    bool shouldUpdate(T value) { return value != getValue(); }
 
 private:
     const EntityDataAccessor<T>* mAccessor;
@@ -87,14 +78,8 @@ public:
     virtual int getAccessorId();
     virtual void setValue(BlockPos* value);
 
-    BlockPos* getValue()
-    {
-        return mValue;
-    }
-    const EntityDataAccessor<BlockPos*>* getAccessor()
-    {
-        return mAccessor;
-    }
+    BlockPos* getValue() { return mValue; }
+    const EntityDataAccessor<BlockPos*>* getAccessor() { return mAccessor; }
     bool shouldUpdate(BlockPos* value);
 
 private:
@@ -118,18 +103,9 @@ public:
     virtual int getAccessorId();
     virtual void setValue(CompoundTag* value);
 
-    CompoundTag* getValue()
-    {
-        return mValue;
-    }
-    const EntityDataAccessor<CompoundTag*>* getAccessor()
-    {
-        return mAccessor;
-    }
-    bool shouldUpdate(CompoundTag* value)
-    {
-        return value != getValue();
-    }
+    CompoundTag* getValue() { return mValue; }
+    const EntityDataAccessor<CompoundTag*>* getAccessor() { return mAccessor; }
+    bool shouldUpdate(CompoundTag* value) { return value != getValue(); }
 
 private:
     const EntityDataAccessor<CompoundTag*>* mAccessor;

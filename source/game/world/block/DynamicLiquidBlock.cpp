@@ -18,8 +18,7 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-DynamicLiquidBlock::DynamicLiquidBlock(Material* material)
-    : LiquidBlock(material), mTickQueue()
+DynamicLiquidBlock::DynamicLiquidBlock(Material* material) : LiquidBlock(material), mTickQueue()
 {
     LiquidBlock::DerivedInit();
     mAdjacentSources = 0;
@@ -60,8 +59,8 @@ int DynamicLiquidBlock::getHighest(Level* level, const BlockPos& pos, int curren
     return currentHighest;
 }
 
-bool DynamicLiquidBlock::_isWaterBlocking(Level* level, const BlockPos& pos,
-                                           const BlockPos& sourcePos, const Direction* direction)
+bool DynamicLiquidBlock::_isWaterBlocking(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
+                                          const Direction* direction)
 {
     PIXBeginNamedEvent(0.0F, "isWaterBlocking");
     Block* block = level->getBlock(pos);
@@ -105,7 +104,8 @@ bool DynamicLiquidBlock::_canSpreadTo(Level* level, const BlockPos& pos, const B
 
 void DynamicLiquidBlock::_spread(Level* level, const BlockPos& pos, int depth, bool extraLayer)
 {
-    unsigned short element = static_cast<unsigned short>(depth | ((getCraftingMaterial() == Material::LAVA ? 10 : 8) << 4));
+    unsigned short element = static_cast<unsigned short>(depth
+                                                         | ((getCraftingMaterial() == Material::LAVA ? 10 : 8) << 4));
     LiquidBlock::setLiquidElement(level, pos, element, extraLayer, 3);
     level->addToTickNextTick(pos, this, getTickDelay(level));
 }
@@ -131,7 +131,8 @@ void DynamicLiquidBlock::_trySpreadTo(Level* level, const BlockPos& pos, const B
             if (block->waterSpreadCausesSpawn())
             {
                 extraLayer = false;
-                level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(level->getBlockState(pos)));
+                level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos,
+                                  Block::getIdWithData(level->getBlockState(pos)));
                 block->spawnResources(level, pos, level->getBlockState(pos), 0);
             }
         }
@@ -400,8 +401,7 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
     PIXEndNamedEvent();
 }
 
-void DynamicLiquidBlock::iterativetick(Level* level, const BlockPos& pos,
-                                       const BlockState* state, Random* random)
+void DynamicLiquidBlock::iterativetick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
     _LiquidTickData first(level, pos, state, random);
     mTickQueue.push_back(first);

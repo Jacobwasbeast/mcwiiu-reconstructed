@@ -19,10 +19,9 @@ public:
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual int getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction, float hitX, float hitY,
-                                                        float hitZ, bool simulate);
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate);
     virtual int getLevelDataForAuxValue(int auxValue);
 
 private:

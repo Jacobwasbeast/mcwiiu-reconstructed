@@ -9,8 +9,7 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-RotatedPillarBlockImpl::RotatedPillarBlockImpl(Material* material)
-    : RotatedPillarBlock(material, material->getColor())
+RotatedPillarBlockImpl::RotatedPillarBlockImpl(Material* material) : RotatedPillarBlock(material, material->getColor())
 {
     DerivedInit();
 }

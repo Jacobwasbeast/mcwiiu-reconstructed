@@ -23,9 +23,7 @@ void GenericMultiBlockThemeRuleDefinition::fillStack(std::vector<const BlockStat
     }
 }
 
-GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::BlockRuleDefinition()
-    : mBlockState(NULL),
-      mBlockAux(-1)
+GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::BlockRuleDefinition() : mBlockState(NULL), mBlockAux(-1)
 {
     addBlockStateAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockState);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockAux, &mBlockAux);

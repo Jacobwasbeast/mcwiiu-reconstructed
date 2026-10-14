@@ -30,8 +30,7 @@
 
 AbstractProperty<bool>* GrassBlock::SNOWY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
 
-GrassBlock::GrassBlock()
-    : Block(Material::GRASS)
+GrassBlock::GrassBlock() : Block(Material::GRASS)
 {
     DerivedInit();
     setTicking(true);
@@ -64,8 +63,7 @@ bool GrassBlock::randomWalk(Level* level, Random* random, BlockPos& pos, int dis
     return steps > 0;
 }
 
-void GrassBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                 const BlockState*)
+void GrassBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState*)
 {
     BlockPos target = pos.above();
     for (int distance = 16; distance < 64; ++distance)
@@ -173,8 +171,7 @@ void GrassBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
 Item* GrassBlock::getResource(const BlockState*, Random* random, int lootBonus)
 {
     return Blocks::dirt->getResource(
-        Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT), random,
-        lootBonus);
+        Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT), random, lootBonus);
 }
 
 int GrassBlock::getRenderLayer()
@@ -196,7 +193,8 @@ unsigned int GrassBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
     case 292:
     case 293:
     case 294:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace)
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
+            && tooltipData.m_bCanPlace)
             return IDS_TOOLTIPS_TILL;
         break;
     case 256:
@@ -204,7 +202,8 @@ unsigned int GrassBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
     case 273:
     case 277:
     case 284:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace)
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
+            && tooltipData.m_bCanPlace)
             return IDS_TOOLTIPS_DIG_PATH;
         break;
     case 351:
@@ -225,7 +224,7 @@ bool GrassBlock::waterSpreadCausesSpawn()
 
 BlockStateDefinition* GrassBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { SNOWY };
+    static const Property* properties[1] = {SNOWY};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -249,8 +248,8 @@ TextureAtlasSprite* GrassBlock::getTexture(const Direction* direction, const Blo
     return mIcon;
 }
 
-TextureAtlasSprite* GrassBlock::getTexture(LevelSource* levelSource, const BlockPos& pos,
-                                            const Direction* direction, const BlockState* state)
+TextureAtlasSprite* GrassBlock::getTexture(LevelSource* levelSource, const BlockPos& pos, const Direction* direction,
+                                           const BlockState* state)
 {
     if (direction == Direction::UP)
         return mTopIcon;

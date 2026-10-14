@@ -43,6 +43,7 @@ public:
         static Variant* DEAD_BUSH;
         static Variant* GRASS;
         static Variant* FERN;
+
     private:
         int mData;
         std::wstring mName;
@@ -65,8 +66,7 @@ public:
     virtual void playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
                                const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                not_null_ptr<ItemInstance> tool);
-    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                             const BlockState* state);
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);

@@ -18,16 +18,15 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 EnumProperty<const DyeColor*>* StainedGlassBlock::COLOR = NULL;
-TextureAtlasSprite* gStainedGlassBlockIcons[16] = { NULL };
+TextureAtlasSprite* gStainedGlassBlockIcons[16] = {NULL};
 
 void StainedGlassBlock::blockStaticCtor()
 {
-    COLOR = EnumProperty<const DyeColor*>::create(
-        L"color", typeid(DyeColor), DyeColor::COLORS, Predicates<const DyeColor*>::alwaysTrue);
+    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS,
+                                                  Predicates<const DyeColor*>::alwaysTrue);
 }
 
-StainedGlassBlock::StainedGlassBlock(Material* material)
-    : HalfTransparentBlock(L"glass", material, false)
+StainedGlassBlock::StainedGlassBlock(Material* material) : HalfTransparentBlock(L"glass", material, false)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(COLOR, DyeColor::WHITE));
@@ -105,7 +104,7 @@ int StainedGlassBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* StainedGlassBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { COLOR };
+    static const Property* properties[] = {COLOR};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -118,6 +117,7 @@ void StainedGlassBlock::registerIcons(IconRegister* iconRegister)
 {
     for (int data = 0; data < 16; ++data)
     {
-        gStainedGlassBlockIcons[data] = iconRegister->registerIcon(getIconName() + L"_" + DyeColor::TEXTURE_NAMES[DyeColor::byBlockData(data)->getItemData()]);
+        gStainedGlassBlockIcons[data] = iconRegister->registerIcon(
+            getIconName() + L"_" + DyeColor::TEXTURE_NAMES[DyeColor::byBlockData(data)->getItemData()]);
     }
 }

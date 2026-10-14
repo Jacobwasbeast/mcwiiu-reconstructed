@@ -14,8 +14,7 @@
 #include "game/core/SeaGrass.hpp"
 #include "game/item/ItemId.hpp"
 
-GravelBlock::GravelBlock()
-    : FallingBlock()
+GravelBlock::GravelBlock() : FallingBlock()
 {
     DerivedInit();
 }
@@ -25,14 +24,12 @@ bool GravelBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockStat
     return true;
 }
 
-bool GravelBlock::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos,
-                                    const BlockState* state)
+bool GravelBlock::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
     return SeaGrass::trySpawnSeaGrass(true, level, random, pos, state);
 }
 
-void GravelBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                  const BlockState* state)
+void GravelBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
     SeaGrass::trySpawnSeaGrass(false, level, random, pos, state);
 }
@@ -67,8 +64,7 @@ unsigned int GravelBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolt
     if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE)
     {
         BlockPos above = tooltipData.m_blockPos.above();
-        if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 270, 0)
-            && tooltipData.m_eInteractionResult != 2
+        if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, 270, 0) && tooltipData.m_eInteractionResult != 2
             && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
             return IDS_TOOLTIPS_GROW;
@@ -77,4 +73,3 @@ unsigned int GravelBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolt
 
     return Block::GetInteractTooltip(tooltipData);
 }
-

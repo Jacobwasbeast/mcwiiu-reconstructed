@@ -3,13 +3,11 @@
 #include "game/core/Direction.hpp"
 #include "game/util/Vec3i.hpp"
 
-MutableBlockPos::MutableBlockPos(int x, int y, int z)
-    : BlockPos(x, y, z)
+MutableBlockPos::MutableBlockPos(int x, int y, int z) : BlockPos(x, y, z)
 {
 }
 
-MutableBlockPos::MutableBlockPos(const Vec3i& other)
-    : BlockPos(other)
+MutableBlockPos::MutableBlockPos(const Vec3i& other) : BlockPos(other)
 {
 }
 

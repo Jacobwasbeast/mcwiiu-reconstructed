@@ -27,7 +27,8 @@ NewStoneSlabBlock::Variant* NewStoneSlabBlock::Variant::RED_SANDSTONE = NULL;
 static Property* gNewStoneSlabSeamlessProperty = BooleanProperty::create(L"seamless");
 static NewStoneSlabBlock::Variant* gDefaultVariant;
 
-NewStoneSlabBlock::Variant::Variant(int data, const std::wstring& name, int translationKey, const MaterialColor* materialColor)
+NewStoneSlabBlock::Variant::Variant(int data, const std::wstring& name, int translationKey,
+                                    const MaterialColor* materialColor)
     : mData(data),
       mMaterialColor(materialColor)
 {
@@ -60,8 +61,7 @@ std::wstring NewStoneSlabBlock::Variant::getSerializedName() const
     return mName;
 }
 
-NewStoneSlabBlock::NewStoneSlabBlock()
-    : HalfSlabBlock(Material::STONE)
+NewStoneSlabBlock::NewStoneSlabBlock() : HalfSlabBlock(Material::STONE)
 {
 }
 
@@ -85,8 +85,8 @@ void NewStoneSlabBlock::DerivedInit()
 
 void NewStoneSlabBlock::blockStaticCtor()
 {
-    gDefaultVariant = new Variant(
-        0, L"red_sandstone", IDS_TILE_STONESLAB_REDSANDSTONE, SandBlock::Variant::RED_SAND->getMaterialColor());
+    gDefaultVariant = new Variant(0, L"red_sandstone", IDS_TILE_STONESLAB_REDSANDSTONE,
+                                  SandBlock::Variant::RED_SAND->getMaterialColor());
     Variant::RED_SANDSTONE = gDefaultVariant;
 
     std::wstring propertyName(L"variant");
@@ -105,7 +105,8 @@ Item* NewStoneSlabBlock::getResource(const BlockState* state, Random* random, in
     return Item::byBlock(Blocks::stone_slab2);
 }
 
-not_null_ptr<ItemInstance> NewStoneSlabBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
+not_null_ptr<ItemInstance> NewStoneSlabBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
+                                                                   const BlockState* state)
 {
     return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::stone_slab2)));
 }
@@ -131,7 +132,8 @@ const BlockState* NewStoneSlabBlock::getBlockState(int data)
 
     if (isFullSize())
     {
-        state = state->setValue(static_cast<const AbstractProperty<bool>*>(gNewStoneSlabSeamlessProperty), (data & 8) != 0);
+        state = state->setValue(static_cast<const AbstractProperty<bool>*>(gNewStoneSlabSeamlessProperty),
+                                (data & 8) != 0);
     }
     else
     {
@@ -164,15 +166,16 @@ BlockStateDefinition* NewStoneSlabBlock::createBlockStateDefinition()
 {
     if (isFullSize())
     {
-        static const Property* fullProperties[2] = { gNewStoneSlabSeamlessProperty, VARIANT };
+        static const Property* fullProperties[2] = {gNewStoneSlabSeamlessProperty, VARIANT};
         return new BlockStateDefinition(this, fullProperties, 2);
     }
 
-    static const Property* halfProperties[2] = { TYPE, VARIANT };
+    static const Property* halfProperties[2] = {TYPE, VARIANT};
     return new BlockStateDefinition(this, halfProperties, 2);
 }
 
-const MaterialColor* NewStoneSlabBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const MaterialColor* NewStoneSlabBlock::getMapColor(const BlockState* state, LevelSource* levelSource,
+                                                    const BlockPos& pos)
 {
     return state->getValue(VARIANT)->getMaterialColor();
 }

@@ -22,7 +22,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 DirectionProperty* ButtonBlock::FACING = NULL;
-AbstractProperty<bool>* ButtonBlock::POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
+AbstractProperty<bool>* ButtonBlock::POWERED = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"powered"));
 const AABB* ButtonBlock::AABB_DOWN_OFF = AABB::newPermanent(0.3125, 0.875, 0.375, 0.6875, 1.0, 0.625);
 const AABB* ButtonBlock::AABB_UP_OFF = AABB::newPermanent(0.3125, 0.0, 0.375, 0.6875, 0.125, 0.625);
 const AABB* ButtonBlock::AABB_NORTH_OFF = AABB::newPermanent(0.3125, 0.375, 0.875, 0.6875, 0.625, 1.0);
@@ -36,8 +37,7 @@ const AABB* ButtonBlock::AABB_SOUTH_ON = AABB::newPermanent(0.3125, 0.375, 0.0, 
 const AABB* ButtonBlock::AABB_WEST_ON = AABB::newPermanent(0.9375, 0.375, 0.3125, 1.0, 0.625, 0.6875);
 const AABB* ButtonBlock::AABB_EAST_ON = AABB::newPermanent(0.0, 0.375, 0.3125, 0.0625, 0.625, 0.6875);
 
-ButtonBlock::ButtonBlock(bool wooden, Material* material)
-    : Block(material)
+ButtonBlock::ButtonBlock(bool wooden, Material* material) : Block(material)
 {
     setTicking(true);
     mWooden = wooden;
@@ -64,8 +64,14 @@ int ButtonBlock::getTickDelay(Level*)
     return mWooden ? 30 : 20;
 }
 
-bool ButtonBlock::isSolidRender(const BlockState*) const { return false; }
-bool ButtonBlock::isCubeShaped(const BlockState*) { return false; }
+bool ButtonBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool ButtonBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
 
 bool ButtonBlock::canAttachTo(Level* level, const BlockPos& pos, const Direction* direction)
 {
@@ -75,10 +81,11 @@ bool ButtonBlock::canAttachTo(Level* level, const BlockPos& pos, const Direction
     Block* support = supportState->getBlock();
     if (direction == Direction::UP)
     {
-        return support == Blocks::hopper || (!Block::isExceptionBlockForAttaching(support) && solidFace) ||
-            Block::isExceptionForPistonAttaching(support) || support->mIsFence;
+        return support == Blocks::hopper || (!Block::isExceptionBlockForAttaching(support) && solidFace)
+               || Block::isExceptionForPistonAttaching(support) || support->mIsFence;
     }
-    return (!Block::isExceptionBlockForAttaching(support) && solidFace) || Block::isExceptionForPistonAttaching(support);
+    return (!Block::isExceptionBlockForAttaching(support) && solidFace)
+           || Block::isExceptionForPistonAttaching(support);
 }
 
 bool ButtonBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* direction)
@@ -88,25 +95,30 @@ bool ButtonBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* d
 
 bool ButtonBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
+         ++it)
     {
         const Direction* direction = *it;
-        if (canAttachTo(level, pos, direction)) return true;
+        if (canAttachTo(level, pos, direction))
+            return true;
     }
     return false;
 }
 
-const BlockState* ButtonBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float, float, float, int, boost::shared_ptr<LivingEntity>)
+const BlockState* ButtonBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                    float, float, float, int, boost::shared_ptr<LivingEntity>)
 {
     bool canAttach = canAttachTo(level, pos, direction);
     const BlockState* state = defaultBlockState();
-    if (canAttach) return state->setValue(FACING, direction)->setValue(POWERED, false);
+    if (canAttach)
+        return state->setValue(FACING, direction)->setValue(POWERED, false);
     return state->setValue(FACING, Direction::DOWN)->setValue(POWERED, false);
 }
 
 bool ButtonBlock::checkCanSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (mayPlace(level, pos)) return true;
+    if (mayPlace(level, pos))
+        return true;
     spawnResources(level, pos, state, 0);
     level->removeBlock(pos);
     return false;
@@ -121,7 +133,10 @@ void ButtonBlock::neighborChanged(const BlockState* state, Level* level, const B
     }
 }
 
-int ButtonBlock::getSpawnResourcesAuxValue(const BlockState*) { return 4; }
+int ButtonBlock::getSpawnResourcesAuxValue(const BlockState*)
+{
+    return 4;
+}
 
 const AABB* ButtonBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
@@ -143,7 +158,10 @@ const AABB* ButtonBlock::getShape(const BlockState* state, LevelSource*, const B
         return powered ? AABB_NORTH_ON : AABB_NORTH_OFF;
     }
 }
-bool ButtonBlock::TestUse() { return true; }
+bool ButtonBlock::TestUse()
+{
+    return true;
+}
 
 void ButtonBlock::updateNeighbours(Level* level, const BlockPos& pos, const Direction* direction)
 {
@@ -151,14 +169,16 @@ void ButtonBlock::updateNeighbours(Level* level, const BlockPos& pos, const Dire
     level->updateNeighborsAt(pos.relative(direction->getOpposite()), this, false);
 }
 
-bool ButtonBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+bool ButtonBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                      InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
     if (clientSide)
     {
         playOnSound(player, level, pos);
         return false;
     }
-    if (state->getValue(POWERED)) return true;
+    if (state->getValue(POWERED))
+        return true;
     level->setBlock(pos, state->setValue(POWERED, true), Block::UPDATE_ALL, false);
     level->setBlocksDirty(pos, pos);
     playOnSound(player, level, pos);
@@ -169,31 +189,38 @@ bool ButtonBlock::use(Level* level, const BlockPos& pos, const BlockState* state
 
 void ButtonBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (state->getValue(POWERED)) updateNeighbours(level, pos, state->getValue(FACING));
+    if (state->getValue(POWERED))
+        updateNeighbours(level, pos, state->getValue(FACING));
 }
 
 int ButtonBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction*)
 {
-    if (state->getValue(POWERED)) return SIGNAL_MAX;
+    if (state->getValue(POWERED))
+        return SIGNAL_MAX;
     return SIGNAL_NONE;
 }
 
 int ButtonBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction* direction)
 {
-    if (state->getValue(POWERED) && direction == state->getValue(FACING)) return SIGNAL_MAX;
+    if (state->getValue(POWERED) && direction == state->getValue(FACING))
+        return SIGNAL_MAX;
     return SIGNAL_NONE;
 }
 
-bool ButtonBlock::isSignalSource(const BlockState*) { return true; }
-void ButtonBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*) {}
+bool ButtonBlock::isSignalSource(const BlockState*)
+{
+    return true;
+}
+void ButtonBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*)
+{
+}
 
 void ButtonBlock::checkPressed(const BlockState* state, Level* level, const BlockPos& pos)
 {
     const AABB* shape = state->getShape(level, pos);
-    std::vector<boost::shared_ptr<Entity> >* arrows =
-        level->getEntitiesOfClass(typeid(Arrow), shape->move(pos));
-    std::vector<boost::shared_ptr<Entity> >* tridents =
-        level->getEntitiesOfClass(typeid(ThrownTrident), shape->move(pos));
+    std::vector<boost::shared_ptr<Entity> >* arrows = level->getEntitiesOfClass(typeid(Arrow), shape->move(pos));
+    std::vector<boost::shared_ptr<Entity> >* tridents = level->getEntitiesOfClass(typeid(ThrownTrident),
+                                                                                  shape->move(pos));
     bool pressed = !arrows->empty() || !tridents->empty();
     bool powered = state->getValue(POWERED);
     delete arrows;
@@ -213,14 +240,16 @@ void ButtonBlock::checkPressed(const BlockState* state, Level* level, const Bloc
         level->setBlocksDirty(pos, pos);
         playOffSound(level, pos);
     }
-    if (pressed) level->addToTickNextTick(pos, this, getTickDelay(level));
+    if (pressed)
+        level->addToTickNextTick(pos, this, getTickDelay(level));
 }
 
 void ButtonBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
     if (!level->mIsClientSide && state->getValue(POWERED))
     {
-        if (mWooden) checkPressed(state, level, pos);
+        if (mWooden)
+            checkPressed(state, level, pos);
         else
         {
             level->setBlockAndUpdate(pos, state->setValue(POWERED, false));
@@ -231,9 +260,11 @@ void ButtonBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
     }
 }
 
-void ButtonBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>&)
+void ButtonBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
+                               const boost::shared_ptr<Entity>&)
 {
-    if (!level->mIsClientSide && mWooden && !state->getValue(POWERED)) checkPressed(state, level, pos);
+    if (!level->mIsClientSide && mWooden && !state->getValue(POWERED))
+        checkPressed(state, level, pos);
 }
 
 const BlockState* ButtonBlock::getBlockState(int data)
@@ -287,13 +318,15 @@ int ButtonBlock::convertBlockStateToLegacyData(const BlockState* state)
         data = 5;
         break;
     }
-    if (state->getValue(POWERED)) data |= 8;
+    if (state->getValue(POWERED))
+        data |= 8;
     return data;
 }
 
 unsigned int ButtonBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace) return IDS_TOOLTIPS_USE;
+    if ((tooltipData.m_bUseBlock || tooltipData.m_bUseItemOnBlock) && tooltipData.m_bCanPlace)
+        return IDS_TOOLTIPS_USE;
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -311,7 +344,7 @@ const BlockState* ButtonBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* ButtonBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING, POWERED };
+    static const Property* properties[] = {FACING, POWERED};
     return new BlockStateDefinition(this, properties, 2);
 }
 

@@ -24,8 +24,7 @@ class Inventory;
 class Packet;
 class Player;
 
-class ShulkerBoxBlockEntity : public RandomizableLockableContainerBlockEntity,
-                              public WorldlyContainer
+class ShulkerBoxBlockEntity : public RandomizableLockableContainerBlockEntity, public WorldlyContainer
 {
 public:
     enum AnimationStatus
@@ -54,17 +53,14 @@ public:
     virtual void setItems(NonNullList<not_null_ptr<ItemInstance> > items);
     virtual unsigned int getContainerSize();
     virtual int getMaxStackSize();
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
     virtual int getTypeId(bool large);
     virtual std::wstring getName();
     virtual std::wstring getCustomName();
     virtual bool isEmpty();
     virtual arrayWithLength<int> getSlotsForFace(const Direction* face);
-    virtual bool canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> item,
-                                         const Direction* face);
-    virtual bool canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> item,
-                                        const Direction* face);
+    virtual bool canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> item, const Direction* face);
+    virtual bool canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> item, const Direction* face);
 
     virtual void setChanged();
     int getAnimationStatus();

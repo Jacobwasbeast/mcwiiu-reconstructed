@@ -18,8 +18,7 @@ class CompoundTag;
 class ItemInstance;
 class Player;
 
-class RandomizableLockableContainerBlockEntity : public LockableContainerBlockEntity,
-                                                public RandomizableContainer
+class RandomizableLockableContainerBlockEntity : public LockableContainerBlockEntity, public RandomizableContainer
 {
 public:
     RandomizableLockableContainerBlockEntity();
@@ -50,8 +49,7 @@ public:
     void setLootTable(ResourceLocation* lootTable, long long seed);
     bool tryLoadLootTable(CompoundTag* tag);
     bool trySaveLootTable(CompoundTag* tag);
-    void setCustomName(const std::wstring& name, const std::wstring& uuid,
-                       bool chatCensored, bool uuidLocal);
+    void setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal);
 
 protected:
     ResourceLocation* mLootTable;

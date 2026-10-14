@@ -17,26 +17,14 @@ template <class T>
 class AbstractProperty : public Property
 {
 public:
-    virtual std::wstring getName() const
-    {
-        return mName;
-    }
+    virtual std::wstring getName() const { return mName; }
     virtual std::wstring getName(const Boxed* value) const
     {
         return getName((value->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(value) : NULL)->getValue());
     }
-    virtual const std::type_info& getValueClass() const
-    {
-        return *mValueClass;
-    }
-    virtual Boxed* getValue(const std::wstring& name) const
-    {
-        return new TypedBoxed<T>(getUnboxedValue(name));
-    }
-    virtual std::wstring toString() const
-    {
-        return std::wstring(L"");
-    }
+    virtual const std::type_info& getValueClass() const { return *mValueClass; }
+    virtual Boxed* getValue(const std::wstring& name) const { return new TypedBoxed<T>(getUnboxedValue(name)); }
+    virtual std::wstring toString() const { return std::wstring(L""); }
     virtual bool equals(const Property* other) const
     {
         if (this == other)
@@ -50,15 +38,15 @@ public:
         }
         return false;
     }
-    virtual int hashCode() const
-    {
-        return (int)((std::size_t)mValueClass * 31U) + javaStringHashCode(mName);
-    }
+    virtual int hashCode() const { return (int)((std::size_t)mValueClass * 31U) + javaStringHashCode(mName); }
     virtual std::wstring getName(const T& value) const = 0;
     virtual T getUnboxedValue(const std::wstring& name) const = 0;
     void getUnboxedPossibleValues(boost::unordered_set<T>& values) const;
+
 protected:
-    AbstractProperty(const std::wstring& name, const std::type_info& valueClass) : mValueClass(&valueClass), mName(name) {}
+    AbstractProperty(const std::wstring& name, const std::type_info& valueClass) : mValueClass(&valueClass), mName(name)
+    {
+    }
     static int hashBoxedSet(const std::vector<Boxed*>& values)
     {
         int hash = 0;

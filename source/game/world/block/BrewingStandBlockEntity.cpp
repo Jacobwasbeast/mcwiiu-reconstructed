@@ -159,9 +159,9 @@ bool BrewingStandBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> 
     {
         return item == Items::blazePowder;
     }
-    return (item == Items::potion || item == Items::splashPotion || item == Items::lingeringPotion ||
-            item == Items::glassBottle) &&
-           getItem(slot)->isEmpty();
+    return (item == Items::potion || item == Items::splashPotion || item == Items::lingeringPotion
+            || item == Items::glassBottle)
+           && getItem(slot)->isEmpty();
 }
 
 int BrewingStandBlockEntity::getContainerData(int id)
@@ -200,7 +200,8 @@ void BrewingStandBlockEntity::clearContent()
     mItems.clear();
 }
 
-AbstractContainerMenu* BrewingStandBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
+AbstractContainerMenu* BrewingStandBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory,
+                                                           boost::shared_ptr<Player> player)
 {
     return new BrewingStandMenu(inventory, boost::dynamic_pointer_cast<Container>(shared_from_this()));
 }
@@ -212,7 +213,8 @@ int BrewingStandBlockEntity::getTypeId(bool large)
 
 InteractionObject::NameData BrewingStandBlockEntity::GetNetworkNameData()
 {
-    return InteractionObject::NameData(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isUUIDLocal(), mCustomName->isChatCensored());
+    return InteractionObject::NameData(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isUUIDLocal(),
+                                       mCustomName->isChatCensored());
 }
 
 arrayWithLength<int> BrewingStandBlockEntity::getSlotsForFace(const Direction* face)
@@ -228,12 +230,14 @@ arrayWithLength<int> BrewingStandBlockEntity::getSlotsForFace(const Direction* f
     return SLOTS_FOR_SIDES;
 }
 
-bool BrewingStandBlockEntity::canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> itemInstance, const Direction* face)
+bool BrewingStandBlockEntity::canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> itemInstance,
+                                                      const Direction* face)
 {
     return canPlaceItem(slot, itemInstance);
 }
 
-bool BrewingStandBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> itemInstance, const Direction* face)
+bool BrewingStandBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> itemInstance,
+                                                     const Direction* face)
 {
     if (slot == 3)
     {
@@ -242,7 +246,8 @@ bool BrewingStandBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<Item
     return true;
 }
 
-void BrewingStandBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal)
+void BrewingStandBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored,
+                                            bool uuidLocal)
 {
     mCustomName->set(name, uuid, chatCensored, uuidLocal);
 }
@@ -414,7 +419,8 @@ boost::shared_ptr<BlockEntity> BrewingStandBlockEntity::clone()
     copy->mLastPotionBits = mLastPotionBits;
     copy->mLastIngredientItem = mLastIngredientItem;
     copy->mFuel = mFuel;
-    copy->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    copy->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(),
+                           mCustomName->isUUIDLocal());
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
         copy->mItems[i] = mItems[i]->copy();

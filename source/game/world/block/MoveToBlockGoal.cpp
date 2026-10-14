@@ -11,8 +11,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-MoveToBlockGoal::MoveToBlockGoal(PathfinderMob* mob, double speedModifier,
-                                 int searchRange, int verticalSearchStart,
+MoveToBlockGoal::MoveToBlockGoal(PathfinderMob* mob, double speedModifier, int searchRange, int verticalSearchStart,
                                  double maxStayDistance)
     : mBlockPos(BlockPos::ZERO)
 {
@@ -47,12 +46,10 @@ bool MoveToBlockGoal::findNearestBlock()
         {
             for (int x = 0; x <= radius; x = x > 0 ? -x : 1 - x)
             {
-                for (int z = x < radius && x > -radius ? radius : 0;
-                     z <= radius; z = z > 0 ? -z : 1 - z)
+                for (int z = x < radius && x > -radius ? radius : 0; z <= radius; z = z > 0 ? -z : 1 - z)
                 {
                     BlockPos candidate = origin.offset(x, y - 1, z);
-                    if (mMob->isWithinRestriction(candidate) &&
-                        isValidTarget(mMob->mLevel, candidate))
+                    if (mMob->isWithinRestriction(candidate) && isValidTarget(mMob->mLevel, candidate))
                     {
                         mBlockPos = candidate;
                         return true;
@@ -79,20 +76,16 @@ bool MoveToBlockGoal::canUse()
 
 bool MoveToBlockGoal::canContinueToUse()
 {
-    return mTicksStayingStill >= -mMaxStayDuration &&
-           mTicksStayingStill <= 1200 &&
-           isValidTarget(mMob->mLevel, mBlockPos);
+    return mTicksStayingStill >= -mMaxStayDuration && mTicksStayingStill <= 1200
+           && isValidTarget(mMob->mLevel, mBlockPos);
 }
 
 void MoveToBlockGoal::start()
 {
-    mMob->getNavigation()->moveTo((double)mBlockPos.x + 0.5,
-                                  (double)mBlockPos.y + 1.0,
-                                  (double)mBlockPos.z + 0.5,
+    mMob->getNavigation()->moveTo((double)mBlockPos.x + 0.5, (double)mBlockPos.y + 1.0, (double)mBlockPos.z + 0.5,
                                   mSpeedModifier);
     mTicksStayingStill = 0;
-    mMaxStayDuration = 1200 +
-        mMob->getRandom()->nextInt(1200 + mMob->getRandom()->nextInt(1200));
+    mMaxStayDuration = 1200 + mMob->getRandom()->nextInt(1200 + mMob->getRandom()->nextInt(1200));
 }
 
 int MoveToBlockGoal::yOff()
@@ -109,10 +102,9 @@ void MoveToBlockGoal::tick()
         mReachedTarget = false;
         if (mTicksStayingStill % 40 == 0)
         {
-            mMob->getNavigation()->moveTo(
-                (double)mBlockPos.x + 0.5,
-                (double)mBlockPos.y + (double)MoveToBlockGoal::yOff(),
-                (double)mBlockPos.z + 0.5, mSpeedModifier);
+            mMob->getNavigation()->moveTo((double)mBlockPos.x + 0.5,
+                                          (double)mBlockPos.y + (double)MoveToBlockGoal::yOff(),
+                                          (double)mBlockPos.z + 0.5, mSpeedModifier);
         }
     }
     else
@@ -134,8 +126,7 @@ int MoveToBlockGoal::GetNextStartTick(PathfinderMob* mob)
 
 bool MoveToBlockGoal::canReach(const BlockPos& pos)
 {
-    Vec3* target = Vec3::newTemp((double)pos.x, (double)(pos.y + 1),
-                                 (double)pos.z);
+    Vec3* target = Vec3::newTemp((double)pos.x, (double)(pos.y + 1), (double)pos.z);
     Path* path = mMob->getNavigation()->createPath(BlockPos(target));
     if (path == NULL)
     {

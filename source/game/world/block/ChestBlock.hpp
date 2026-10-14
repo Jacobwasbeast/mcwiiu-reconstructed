@@ -45,16 +45,16 @@ public:
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
-                                                    float hitX, float hitY, float hitZ, int auxValue,
-                                                    boost::shared_ptr<LivingEntity> placer);
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     const BlockState* recalcLockDir(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
                              boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
     const BlockState* reorient(Level* level, const BlockPos& pos, const BlockState* state);
     bool isFullChest(Level* level, const BlockPos& pos);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool TestUse();
     static bool isBlockedChestByBlock(Level* level, const BlockPos& pos);
@@ -62,9 +62,9 @@ public:
     static bool isChestBlockedAt(Level* level, const BlockPos& pos);
     boost::shared_ptr<LockableContainer> getContainer(Level* level, const BlockPos& pos, bool force);
     boost::shared_ptr<LockableContainer> getContainer(Level* level, const BlockPos& pos);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     virtual bool isSignalSource(const BlockState* state);
     virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
                           const Direction* direction);
@@ -78,8 +78,8 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                              const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);

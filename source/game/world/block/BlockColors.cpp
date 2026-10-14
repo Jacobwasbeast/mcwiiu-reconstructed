@@ -52,38 +52,34 @@ BlockColors* BlockColors::createDefault()
             if (levelSource != NULL && pos != NULL && (variant == gDoublePlantGrass || variant == gDoublePlantFern))
             {
                 DoublePlantBlock::Half* half = state->getValue(DoublePlantBlock::HALF);
-                return BiomeColors::getAverageGrassColor(levelSource, half == DoublePlantBlock::UPPER_HALF ? pos->below() : *pos);
+                return BiomeColors::getAverageGrassColor(levelSource,
+                                                         half == DoublePlantBlock::UPPER_HALF ? pos->below() : *pos);
             }
 
             return -1;
         }
     };
 
-    Block* doublePlantBlocks[] = { Blocks::double_plant };
+    Block* doublePlantBlocks[] = {Blocks::double_plant};
     blockColors->registerColor(new DoublePlant_BlockColor(), arrayWithLength<Block*>(doublePlantBlocks, 1));
 
     class FlowerPot_BlockColor : public BlockColor
     {
     public:
-        FlowerPot_BlockColor(BlockColors* blockColors)
-        {
-            mBlockColors = blockColors;
-        }
+        FlowerPot_BlockColor(BlockColors* blockColors) { mBlockColors = blockColors; }
 
         virtual int getColor(const BlockState* state, LevelSource* levelSource, const BlockPos* pos, int tintIndex)
         {
             if (levelSource != NULL && pos != NULL)
             {
                 boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(*pos);
-                boost::shared_ptr<FlowerPotBlockEntity> flowerPot =
-                    boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
+                boost::shared_ptr<FlowerPotBlockEntity> flowerPot = boost::dynamic_pointer_cast<FlowerPotBlockEntity>(
+                    blockEntity);
 
                 if (flowerPot)
                 {
                     return mBlockColors->getColor(Block::byItem(flowerPot->getPlantItem())->defaultBlockState(),
-                                                  levelSource,
-                                                  pos,
-                                                  tintIndex);
+                                                  levelSource, pos, tintIndex);
                 }
             }
 
@@ -94,7 +90,7 @@ BlockColors* BlockColors::createDefault()
         BlockColors* mBlockColors;
     };
 
-    Block* flowerPotBlocks[] = { Blocks::flower_pot };
+    Block* flowerPotBlocks[] = {Blocks::flower_pot};
     blockColors->registerColor(new FlowerPot_BlockColor(blockColors), arrayWithLength<Block*>(flowerPotBlocks, 1));
 
     class Grass_BlockColor : public BlockColor
@@ -111,7 +107,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* grassBlocks[] = { Blocks::grass };
+    Block* grassBlocks[] = {Blocks::grass};
     blockColors->registerColor(new Grass_BlockColor(), arrayWithLength<Block*>(grassBlocks, 1));
 
     class Leaves1_BlockColor : public BlockColor
@@ -140,7 +136,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* leavesBlocks[] = { Blocks::leaves };
+    Block* leavesBlocks[] = {Blocks::leaves};
     blockColors->registerColor(new Leaves1_BlockColor(), arrayWithLength<Block*>(leavesBlocks, 1));
 
     class Leaves2_BlockColor : public BlockColor
@@ -157,7 +153,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* leaves2Blocks[] = { Blocks::leaves2 };
+    Block* leaves2Blocks[] = {Blocks::leaves2};
     blockColors->registerColor(new Leaves2_BlockColor(), arrayWithLength<Block*>(leaves2Blocks, 1));
 
     class Water_BlockColor : public BlockColor
@@ -174,7 +170,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* waterBlocks[] = { Blocks::water, Blocks::flowing_water };
+    Block* waterBlocks[] = {Blocks::water, Blocks::flowing_water};
     blockColors->registerColor(new Water_BlockColor(), arrayWithLength<Block*>(waterBlocks, 2));
 
     class RedstoneWire_BlockColor : public BlockColor
@@ -186,7 +182,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* redstoneWireBlocks[] = { Blocks::redstone_wire };
+    Block* redstoneWireBlocks[] = {Blocks::redstone_wire};
     blockColors->registerColor(new RedstoneWire_BlockColor(), arrayWithLength<Block*>(redstoneWireBlocks, 1));
 
     class Reeds_BlockColor : public BlockColor
@@ -198,7 +194,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* reedsBlocks[] = { Blocks::reeds };
+    Block* reedsBlocks[] = {Blocks::reeds};
     blockColors->registerColor(new Reeds_BlockColor(), arrayWithLength<Block*>(reedsBlocks, 1));
 
     class Stem_BlockColor : public BlockColor
@@ -211,7 +207,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* stemBlocks[] = { Blocks::melon_stem, Blocks::pumpkin_stem };
+    Block* stemBlocks[] = {Blocks::melon_stem, Blocks::pumpkin_stem};
     blockColors->registerColor(new Stem_BlockColor(), arrayWithLength<Block*>(stemBlocks, 2));
 
     class TallGrass_BlockColor : public BlockColor
@@ -235,7 +231,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* tallGrassBlocks[] = { Blocks::tallgrass };
+    Block* tallGrassBlocks[] = {Blocks::tallgrass};
     blockColors->registerColor(new TallGrass_BlockColor(), arrayWithLength<Block*>(tallGrassBlocks, 1));
 
     class Vine_BlockColor : public BlockColor
@@ -252,7 +248,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* vineBlocks[] = { Blocks::vine };
+    Block* vineBlocks[] = {Blocks::vine};
     blockColors->registerColor(new Vine_BlockColor(), arrayWithLength<Block*>(vineBlocks, 1));
 
     class WaterLily_BlockColor : public BlockColor
@@ -264,7 +260,7 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* waterLilyBlocks[] = { Blocks::waterlily };
+    Block* waterLilyBlocks[] = {Blocks::waterlily};
     blockColors->registerColor(new WaterLily_BlockColor(), arrayWithLength<Block*>(waterLilyBlocks, 1));
 
     class ShulkerBox_BlockColor : public BlockColor
@@ -279,22 +275,13 @@ BlockColors* BlockColors::createDefault()
         }
     };
 
-    Block* shulkerBoxBlocks[] = { Blocks::white_shulker_box,
-                                  Blocks::orange_shulker_box,
-                                  Blocks::magenta_shulker_box,
-                                  Blocks::light_blue_shulker_box,
-                                  Blocks::yellow_shulker_box,
-                                  Blocks::lime_shulker_box,
-                                  Blocks::pink_shulker_box,
-                                  Blocks::gray_shulker_box,
-                                  Blocks::silver_shulker_box,
-                                  Blocks::cyan_shulker_box,
-                                  Blocks::purple_shulker_box,
-                                  Blocks::blue_shulker_box,
-                                  Blocks::brown_shulker_box,
-                                  Blocks::green_shulker_box,
-                                  Blocks::red_shulker_box,
-                                  Blocks::black_shulker_box };
+    Block* shulkerBoxBlocks[] = {
+        Blocks::white_shulker_box,      Blocks::orange_shulker_box, Blocks::magenta_shulker_box,
+        Blocks::light_blue_shulker_box, Blocks::yellow_shulker_box, Blocks::lime_shulker_box,
+        Blocks::pink_shulker_box,       Blocks::gray_shulker_box,   Blocks::silver_shulker_box,
+        Blocks::cyan_shulker_box,       Blocks::purple_shulker_box, Blocks::blue_shulker_box,
+        Blocks::brown_shulker_box,      Blocks::green_shulker_box,  Blocks::red_shulker_box,
+        Blocks::black_shulker_box};
     blockColors->registerColor(new ShulkerBox_BlockColor(), arrayWithLength<Block*>(shulkerBoxBlocks, 16));
 
     return blockColors;

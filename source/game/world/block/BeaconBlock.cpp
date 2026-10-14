@@ -17,8 +17,7 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/generation/Player.hpp"
 
-BeaconBlock::BeaconBlock()
-    : BaseEntityBlock(Material::GLASS, MaterialColor::DIAMOND)
+BeaconBlock::BeaconBlock() : BaseEntityBlock(Material::GLASS, MaterialColor::DIAMOND)
 {
     Block::DerivedInit();
     setDestroyTime(3.0f);
@@ -31,14 +30,13 @@ boost::shared_ptr<BlockEntity> BeaconBlock::newBlockEntity(Level* level, int)
     return blockEntity;
 }
 
-bool BeaconBlock::use(Level* level, const BlockPos& pos, const BlockState*,
-                      boost::shared_ptr<Player> player, InteractionHand::EInteractionHand,
-                      const Direction*, float, float, float, bool)
+bool BeaconBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
+                      InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
 {
     if (!level->mIsClientSide)
     {
-        boost::shared_ptr<BeaconBlockEntity> beaconEntity =
-            boost::dynamic_pointer_cast<BeaconBlockEntity>(level->getBlockEntity(pos));
+        boost::shared_ptr<BeaconBlockEntity> beaconEntity = boost::dynamic_pointer_cast<BeaconBlockEntity>(
+            level->getBlockEntity(pos));
         if (beaconEntity.get() != NULL)
             player->openContainer(beaconEntity);
     }
@@ -56,28 +54,25 @@ bool BeaconBlock::isCubeShaped(const BlockState*)
 }
 
 void BeaconBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                              boost::shared_ptr<LivingEntity> placer,
-                              not_null_ptr<ItemInstance> itemInstance)
+                              boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
 {
     Block::setPlacedBy(level, pos, state, placer, itemInstance);
     if (itemInstance->hasCustomHoverName())
     {
-        boost::shared_ptr<BeaconBlockEntity> beaconEntity =
-            boost::dynamic_pointer_cast<BeaconBlockEntity>(level->getBlockEntity(pos));
+        boost::shared_ptr<BeaconBlockEntity> beaconEntity = boost::dynamic_pointer_cast<BeaconBlockEntity>(
+            level->getBlockEntity(pos));
         if (beaconEntity.get() != NULL)
         {
-            beaconEntity->setCustomName(itemInstance->getHoverNameUnfiltered(),
-                                        itemInstance->getOwnerUUID(),
-                                        itemInstance->wasCreatedByRestrictedPlayer(),
-                                        itemInstance->wasCreatedOnHost());
+            beaconEntity->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
+                                        itemInstance->wasCreatedByRestrictedPlayer(), itemInstance->wasCreatedOnHost());
         }
     }
 }
 
 void BeaconBlock::updateEntity(Level* level, const BlockPos& pos)
 {
-    boost::shared_ptr<BeaconBlockEntity> beaconEntity =
-        boost::dynamic_pointer_cast<BeaconBlockEntity>(level->getBlockEntity(pos));
+    boost::shared_ptr<BeaconBlockEntity> beaconEntity = boost::dynamic_pointer_cast<BeaconBlockEntity>(
+        level->getBlockEntity(pos));
     if (beaconEntity.get() != NULL)
     {
         beaconEntity->checkValidity();
@@ -85,8 +80,7 @@ void BeaconBlock::updateEntity(Level* level, const BlockPos& pos)
     }
 }
 
-void BeaconBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos,
-                                  Block*, const BlockPos&)
+void BeaconBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     updateEntity(level, pos);
 }

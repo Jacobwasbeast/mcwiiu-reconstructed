@@ -43,22 +43,20 @@ public:
     void recalcLockDir(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool TestUse();
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     virtual void dispenseFrom(Level* level, const BlockPos& pos);
     virtual DispenseItemBehavior* getDispenseMethod(not_null_ptr<ItemInstance> itemInstance);
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos,
-                                                    const Direction* direction, float hitX, float hitY,
-                                                    float hitZ, int auxValue,
-                                                    boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                             boost::shared_ptr<LivingEntity> placer,
-                             not_null_ptr<ItemInstance> itemInstance);
+                             boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool hasAnalogOutputSignal(const BlockState* state);
     virtual int getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos);

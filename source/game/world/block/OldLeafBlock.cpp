@@ -43,8 +43,7 @@ void OldLeafBlock::blockStaticCtor()
     VARIANT = variant;
 }
 
-OldLeafBlock::OldLeafBlock()
-    : LeafBlock()
+OldLeafBlock::OldLeafBlock() : LeafBlock()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()
@@ -58,8 +57,10 @@ int OldLeafBlock::getColor(const BlockState* state)
     if (state->getBlock() == this)
     {
         PlanksBlock::Variant* variant = state->getValue(VARIANT);
-        if (variant == PlanksBlock::Variant::SPRUCE) return FoliageColor::getEvergreenColor();
-        if (variant == PlanksBlock::Variant::BIRCH) return FoliageColor::getBirchColor();
+        if (variant == PlanksBlock::Variant::SPRUCE)
+            return FoliageColor::getEvergreenColor();
+        if (variant == PlanksBlock::Variant::BIRCH)
+            return FoliageColor::getBirchColor();
     }
     return LeafBlock::getColor(state);
 }
@@ -70,34 +71,39 @@ int OldLeafBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int ti
     if (state->getBlock() == this)
     {
         PlanksBlock::Variant* variant = state->getValue(VARIANT);
-        if (variant == PlanksBlock::Variant::SPRUCE) return FoliageColor::getEvergreenColor();
-        if (variant == PlanksBlock::Variant::BIRCH) return FoliageColor::getBirchColor();
+        if (variant == PlanksBlock::Variant::SPRUCE)
+            return FoliageColor::getEvergreenColor();
+        if (variant == PlanksBlock::Variant::BIRCH)
+            return FoliageColor::getBirchColor();
     }
     return LeafBlock::getColor(levelSource, pos, tintIndex);
 }
 
 void OldLeafBlock::dropExtraLoot(Level* level, const BlockPos& pos, const BlockState* state, int lootBonus)
 {
-    if (state->getValue(VARIANT) != PlanksBlock::Variant::OAK) return;
-    if (level->mRandom->nextInt(lootBonus) != 0) return;
+    if (state->getValue(VARIANT) != PlanksBlock::Variant::OAK)
+        return;
+    if (level->mRandom->nextInt(lootBonus) != 0)
+        return;
     Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::apple, 1, 0)));
 }
 
 int OldLeafBlock::getLootDropChance(const BlockState* state)
 {
-    if (state->getValue(VARIANT) == PlanksBlock::Variant::JUNGLE) return 40;
+    if (state->getValue(VARIANT) == PlanksBlock::Variant::JUNGLE)
+        return 40;
     return LeafBlock::getLootDropChance(state);
 }
 
 not_null_ptr<ItemInstance> OldLeafBlock::getSilkTouchItemInstance(const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        state->getValue(VARIANT)->getData()));
+    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1, state->getValue(VARIANT)->getData()));
 }
 
 const BlockState* OldLeafBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(VARIANT, getWoodVariantForData(data))
+    return defaultBlockState()
+        ->setValue(VARIANT, getWoodVariantForData(data))
         ->setValue(DECAYABLE, (data & 4) == 0)
         ->setValue(CHECK_DECAY, (data & 8) > 0);
 }
@@ -105,8 +111,10 @@ const BlockState* OldLeafBlock::getBlockState(int data)
 int OldLeafBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = state->getValue(VARIANT)->getData();
-    if (!state->getValue(DECAYABLE)) data |= 4;
-    if (state->getValue(CHECK_DECAY)) data |= 8;
+    if (!state->getValue(DECAYABLE))
+        data |= 4;
+    if (state->getValue(CHECK_DECAY))
+        data |= 8;
     return data;
 }
 
@@ -117,7 +125,7 @@ PlanksBlock::Variant* OldLeafBlock::getWoodVariantForData(int data)
 
 BlockStateDefinition* OldLeafBlock::createBlockStateDefinition()
 {
-    static const Property* properties[3] = { VARIANT, CHECK_DECAY, DECAYABLE };
+    static const Property* properties[3] = {VARIANT, CHECK_DECAY, DECAYABLE};
     return new BlockStateDefinition(this, properties, 3);
 }
 
@@ -127,15 +135,16 @@ int OldLeafBlock::getSpawnResourcesAuxValue(const BlockState* state)
 }
 
 void OldLeafBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
-                                  const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
-                                  not_null_ptr<ItemInstance> tool)
+                                 const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
+                                 not_null_ptr<ItemInstance> tool)
 {
     if (!level->mIsClientSide && tool->getItem() == Items::shears)
     {
         Stat* stat = gStats->get_blocksMined(Block::getId(this));
         player->awardStat(stat, GenericStats::param_blocksMined(state, 1));
-        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-            state->getValue(VARIANT)->getData())));
+        Block::popResource(
+            level, pos,
+            not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1, state->getValue(VARIANT)->getData())));
     }
     else
     {

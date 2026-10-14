@@ -2,8 +2,7 @@
 
 #include "game/world/block/Material.hpp"
 
-StructureVoidBlock::StructureVoidBlock()
-    : Block(Material::AIR)
+StructureVoidBlock::StructureVoidBlock() : Block(Material::AIR)
 {
     DerivedInit();
 }
@@ -28,7 +27,8 @@ bool StructureVoidBlock::mayPick(const BlockState* state, bool includeLiquid)
     return false;
 }
 
-void StructureVoidBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
+void StructureVoidBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                        int lootBonus)
 {
 }
 
@@ -42,7 +42,8 @@ EPistonPushReaction StructureVoidBlock::getPistonPushReaction(const BlockState* 
     return PISTON_PUSH_DESTROY;
 }
 
-EBlockFaceShape StructureVoidBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
+EBlockFaceShape StructureVoidBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
+                                                      const BlockPos& pos, const Direction* direction)
 {
     return BLOCK_FACE_UNDEFINED;
 }

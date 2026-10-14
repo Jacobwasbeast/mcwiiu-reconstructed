@@ -6,14 +6,13 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/Material.hpp"
 
-NetherBrickBlock::NetherBrickBlock()
-    : Block(Material::STONE)
+NetherBrickBlock::NetherBrickBlock() : Block(Material::STONE)
 {
     Block::DerivedInit();
 }
 
-const MaterialColor* NetherBrickBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const MaterialColor* NetherBrickBlock::getMapColor(const BlockState* state, LevelSource* levelSource,
+                                                   const BlockPos& pos)
 {
     return MaterialColor::NETHER;
 }
-

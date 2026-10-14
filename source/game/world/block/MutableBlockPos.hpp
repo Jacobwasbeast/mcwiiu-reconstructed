@@ -6,18 +6,12 @@
 class MutableBlockPos : public BlockPos
 {
 public:
-    MutableBlockPos()
-        : BlockPos(0, 0, 0)
-    {
-    }
+    MutableBlockPos() : BlockPos(0, 0, 0) {}
 
     MutableBlockPos(int x, int y, int z);
     MutableBlockPos(const Vec3i& other);
 
-    MutableBlockPos(Vec3* pos)
-        : BlockPos(pos)
-    {
-    }
+    MutableBlockPos(Vec3* pos) : BlockPos(pos) {}
 
     void setX(int x);
     void setY(int y);
@@ -39,7 +33,6 @@ public:
     void addX(int dx);
     void addY(int dy);
     void addZ(int dz);
-
 };
 
 #endif

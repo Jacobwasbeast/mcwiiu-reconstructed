@@ -34,12 +34,15 @@ public:
     virtual int getTickDelay(Level* level);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                          const Direction* direction);
     bool hasNeighborSignal(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void randomTick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
-    virtual int getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
+    virtual int getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                const Direction* direction);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual bool isSignalSource(const BlockState* state);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);

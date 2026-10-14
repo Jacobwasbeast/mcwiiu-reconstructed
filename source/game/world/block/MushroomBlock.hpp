@@ -17,12 +17,9 @@ class MushroomBlock : public Bush, public BonemealableBlock
 public:
     MushroomBlock();
 
-    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
-                                       bool isClientSide);
-    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos,
-                                   const BlockState* state);
-    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                 const BlockState* state);
+    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
+    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
+    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
 
     bool growMushroom(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

@@ -25,14 +25,10 @@ static const AABB* TOP_AABB = AABB::newPermanent(0.0, 0.5, 0.0, 1.0, 1.0, 1.0);
 AbstractProperty<HalfSlabBlock::Half*>* HalfSlabBlock::TYPE = NULL;
 HalfSlabBlock::Half* HalfSlabBlock::TOP = new HalfSlabBlock::Half(L"top");
 HalfSlabBlock::Half* HalfSlabBlock::BOTTOM = new HalfSlabBlock::Half(L"bottom");
-HalfSlabBlock::Half* HalfSlabBlock::HALVES[HalfSlabBlock::Half::HALF_COUNT] =
-{
-    HalfSlabBlock::TOP,
-    HalfSlabBlock::BOTTOM
-};
+HalfSlabBlock::Half* HalfSlabBlock::HALVES[HalfSlabBlock::Half::HALF_COUNT] = {HalfSlabBlock::TOP,
+                                                                               HalfSlabBlock::BOTTOM};
 
-HalfSlabBlock::Half::Half(const std::wstring& name)
-    : mName(name)
+HalfSlabBlock::Half::Half(const std::wstring& name) : mName(name)
 {
 }
 
@@ -64,14 +60,12 @@ void HalfSlabBlock::blockStaticCtor()
     TYPE = type;
 }
 
-HalfSlabBlock::HalfSlabBlock(Material* material)
-    : Block(material)
+HalfSlabBlock::HalfSlabBlock(Material* material) : Block(material)
 {
     _init();
 }
 
-HalfSlabBlock::HalfSlabBlock(Material* material, const MaterialColor* materialColor)
-    : Block(material, materialColor)
+HalfSlabBlock::HalfSlabBlock(Material* material, const MaterialColor* materialColor) : Block(material, materialColor)
 {
     _init();
 }
@@ -112,7 +106,8 @@ bool HalfSlabBlock::isTopSolidBlocking(const BlockState* state)
     return static_cast<HalfSlabBlock*>(state->getBlock())->isFullSize() || state->getValue(TYPE) == TOP;
 }
 
-EBlockFaceShape HalfSlabBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
+EBlockFaceShape HalfSlabBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                                 const Direction* direction)
 {
     HalfSlabBlock* block = (HalfSlabBlock*)state->getBlock();
 
@@ -139,9 +134,12 @@ bool HalfSlabBlock::isSolidRender(const BlockState* state) const
     return isFullSize();
 }
 
-const BlockState* HalfSlabBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
+const BlockState* HalfSlabBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                      float hitX, float hitY, float hitZ, int auxValue,
+                                                      boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)->setValue(TYPE, BOTTOM);
+    const BlockState* state =
+        Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)->setValue(TYPE, BOTTOM);
 
     if (!isFullSize() && (direction == Direction::DOWN || (direction != Direction::UP && hitY > 0.5)))
     {
@@ -164,7 +162,7 @@ bool HalfSlabBlock::isCubeShaped(const BlockState* state)
 bool HalfSlabBlock::isHalfSlab(Block* block)
 {
     return block == Blocks::stone_slab || block == Blocks::wooden_slab || block == Blocks::stone_slab2
-        || block == Blocks::purpur_slab || block == Blocks::prismarine_slab;
+           || block == Blocks::purpur_slab || block == Blocks::prismarine_slab;
 }
 
 bool HalfSlabBlock::isHalfSlab(const BlockState* state)
@@ -172,7 +170,8 @@ bool HalfSlabBlock::isHalfSlab(const BlockState* state)
     return isHalfSlab(state->getBlock());
 }
 
-bool HalfSlabBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+bool HalfSlabBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                     const Direction* direction)
 {
     if (isFullSize())
     {
@@ -232,8 +231,9 @@ bool HalfSlabBlock::isSlabBlock()
 
 bool HalfSlabBlock::isFullSlab(Block* block)
 {
-    return block == Blocks::purpur_double_slab || block == Blocks::double_wooden_slab || block == Blocks::double_stone_slab2
-        || block == Blocks::double_stone_slab || block == Blocks::prismarine_double_slab;
+    return block == Blocks::purpur_double_slab || block == Blocks::double_wooden_slab
+           || block == Blocks::double_stone_slab2 || block == Blocks::double_stone_slab
+           || block == Blocks::prismarine_double_slab;
 }
 
 Block* HalfSlabBlock::GetDoubleSlabBlockFromSlab(Block* block)
@@ -266,14 +266,15 @@ Block* HalfSlabBlock::GetDoubleSlabBlockFromSlab(Block* block)
     return NULL;
 }
 
-bool HalfSlabBlock::liquidCanFlowIntoFromDirection(LevelSource* levelSource, const BlockPos& pos, const Direction* direction) const
+bool HalfSlabBlock::liquidCanFlowIntoFromDirection(LevelSource* levelSource, const BlockPos& pos,
+                                                   const Direction* direction) const
 {
     if (direction == Direction::UP || direction == Direction::DOWN)
     {
         if (isHalfSlab(levelSource->getBlockState(pos)))
         {
-            const Direction* halfFace =
-                (levelSource->getBlockData(pos.x, pos.y, pos.z) & 8) != 0 ? Direction::UP : Direction::DOWN;
+            const Direction* halfFace = (levelSource->getBlockData(pos.x, pos.y, pos.z) & 8) != 0 ? Direction::UP
+                                                                                                  : Direction::DOWN;
 
             if (direction == halfFace)
             {

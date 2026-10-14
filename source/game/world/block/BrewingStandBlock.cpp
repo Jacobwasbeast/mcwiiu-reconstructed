@@ -28,25 +28,25 @@
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 
-AbstractProperty<bool>* BrewingStandBlock::HAS_BOTTLE_0 =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_bottle_0"));
-AbstractProperty<bool>* BrewingStandBlock::HAS_BOTTLE_1 =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_bottle_1"));
-AbstractProperty<bool>* BrewingStandBlock::HAS_BOTTLE_2 =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_bottle_2"));
+AbstractProperty<bool>* BrewingStandBlock::HAS_BOTTLE_0 = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"has_bottle_0"));
+AbstractProperty<bool>* BrewingStandBlock::HAS_BOTTLE_1 = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"has_bottle_1"));
+AbstractProperty<bool>* BrewingStandBlock::HAS_BOTTLE_2 = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"has_bottle_2"));
 
 static const AABB* gBrewingStandShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.875, 1.0);
 static const AABB* gBrewingStandBaseShape = AABB::newPermanent(0.125, 0.0, 0.125, 0.875, 0.125, 0.875);
 
-BrewingStandBlock::BrewingStandBlock()
-    : BaseEntityBlock(Material::METAL)
+BrewingStandBlock::BrewingStandBlock() : BaseEntityBlock(Material::METAL)
 {
     DerivedInit();
 }
 
 boost::shared_ptr<BlockEntity> BrewingStandBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<BrewingStandBlockEntity>(new BrewingStandBlockEntity());
+    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<BrewingStandBlockEntity>(
+        new BrewingStandBlockEntity());
     blockEntity->setLevel(level);
     return blockEntity;
 }
@@ -66,9 +66,8 @@ bool BrewingStandBlock::isCubeShaped(const BlockState*)
     return false;
 }
 
-void BrewingStandBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos& pos,
-                                          const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
-                                          boost::shared_ptr<Entity>, bool)
+void BrewingStandBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos& pos, const AABB* entityBox,
+                                          std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity>, bool)
 {
     addCollisionAABB(pos, entityBox, collidingBoxes, gBrewingStandShape);
     addCollisionAABB(pos, entityBox, collidingBoxes, gBrewingStandBaseShape);
@@ -79,16 +78,15 @@ const AABB* BrewingStandBlock::getShape(const BlockState*, LevelSource*, const B
     return gBrewingStandBaseShape;
 }
 
-bool BrewingStandBlock::use(Level* level, const BlockPos& pos, const BlockState*,
-                            boost::shared_ptr<Player> player, InteractionHand::EInteractionHand,
-                            const Direction*, float, float, float, bool clientSide)
+bool BrewingStandBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
+                            InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
     if (clientSide)
         return false;
     if (!level->mIsClientSide)
     {
-        boost::shared_ptr<BrewingStandBlockEntity> brewingStand =
-            boost::dynamic_pointer_cast<BrewingStandBlockEntity>(level->getBlockEntity(pos));
+        boost::shared_ptr<BrewingStandBlockEntity> brewingStand = boost::dynamic_pointer_cast<BrewingStandBlockEntity>(
+            level->getBlockEntity(pos));
         if (brewingStand.get() != NULL)
             player->openContainer(brewingStand);
     }
@@ -100,8 +98,8 @@ void BrewingStandBlock::setPlacedBy(Level* level, const BlockPos& pos, const Blo
 {
     if (!itemInstance->hasCustomHoverName())
         return;
-    boost::shared_ptr<BrewingStandBlockEntity> brewingStand =
-        boost::dynamic_pointer_cast<BrewingStandBlockEntity>(level->getBlockEntity(pos));
+    boost::shared_ptr<BrewingStandBlockEntity> brewingStand = boost::dynamic_pointer_cast<BrewingStandBlockEntity>(
+        level->getBlockEntity(pos));
     if (brewingStand.get() != NULL)
     {
         brewingStand->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
@@ -181,12 +179,11 @@ unsigned int BrewingStandBlock::GetInteractTooltip(const BlockTooltipDataHolder&
 
 BlockStateDefinition* BrewingStandBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { HAS_BOTTLE_0, HAS_BOTTLE_1, HAS_BOTTLE_2 };
+    static const Property* properties[] = {HAS_BOTTLE_0, HAS_BOTTLE_1, HAS_BOTTLE_2};
     return new BlockStateDefinition(this, properties, 3);
 }
 
-EBlockFaceShape BrewingStandBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
-                                                     const Direction*)
+EBlockFaceShape BrewingStandBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
     return BLOCK_FACE_UNDEFINED;
 }

@@ -18,18 +18,27 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "platform/wiiu/TLSStorageCafe.hpp"
 
-AbstractProperty<bool>* LeafBlock::DECAYABLE = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"decayable"));
-AbstractProperty<bool>* LeafBlock::CHECK_DECAY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"check_decay"));
+AbstractProperty<bool>* LeafBlock::DECAYABLE = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"decayable"));
+AbstractProperty<bool>* LeafBlock::CHECK_DECAY = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"check_decay"));
 
 extern unsigned int THREAD_STORAGE_INDEX;
 
-static const std::wstring LEAF_TEXTURES[12] = {
-    L"leaves", L"leaves_spruce", L"leaves_birch", L"leaves_jungle", L"leaves_acacia", L"leaves_big_oak",
-    L"leaves_opaque", L"leaves_spruce_opaque", L"leaves_birch_fast", L"leaves_jungle_opaque", L"leaves_acacia_fast", L"leaves_big_oak_fast"
-};
+static const std::wstring LEAF_TEXTURES[12] = {L"leaves",
+                                               L"leaves_spruce",
+                                               L"leaves_birch",
+                                               L"leaves_jungle",
+                                               L"leaves_acacia",
+                                               L"leaves_big_oak",
+                                               L"leaves_opaque",
+                                               L"leaves_spruce_opaque",
+                                               L"leaves_birch_fast",
+                                               L"leaves_jungle_opaque",
+                                               L"leaves_acacia_fast",
+                                               L"leaves_big_oak_fast"};
 
-LeafBlock::LeafBlock()
-    : TransparentBlock(Material::LEAVES, false)
+LeafBlock::LeafBlock() : TransparentBlock(Material::LEAVES, false)
 {
 }
 
@@ -93,7 +102,8 @@ void LeafBlock::onRemove(Level* level, const BlockPos& pos, const BlockState*)
                     const BlockState* neighborState = level->getBlockState(neighborPos);
                     if (neighborState->getMaterial() == Material::LEAVES && !neighborState->getValue(CHECK_DECAY))
                     {
-                        level->setBlock(neighborPos, neighborState->setValue(CHECK_DECAY, true), Block::UPDATE_INVISIBLE, false);
+                        level->setBlock(neighborPos, neighborState->setValue(CHECK_DECAY, true),
+                                        Block::UPDATE_INVISIBLE, false);
                     }
                 }
             }
@@ -276,7 +286,8 @@ bool LeafBlock::isViewBlocking(const BlockState* state)
     return false;
 }
 
-bool LeafBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+bool LeafBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                 const Direction* direction)
 {
     if (!mIgnoreSimilarity && levelSource->getBlockState(pos.relative(direction))->getBlock() == this)
         return false;
@@ -290,10 +301,9 @@ bool LeafBlock::shouldBlockTick(Level* level, const BlockPos& pos, const BlockSt
 
 int LeafBlock::getDescriptionId(int auxValue)
 {
-    static const int descriptions[6] = {
-        IDS_TILE_LEAVES_OAK, IDS_TILE_LEAVES_SPRUCE, IDS_TILE_LEAVES_BIRCH,
-        static_cast<int>(IDS_TILE_LEAVES_JUNGLE), IDS_TILE_LEAVES_ACACIA, static_cast<int>(IDS_TILE_LEAVES_DARK_OAK)
-    };
+    static const int descriptions[6] = {IDS_TILE_LEAVES_OAK,    IDS_TILE_LEAVES_SPRUCE,
+                                        IDS_TILE_LEAVES_BIRCH,  static_cast<int>(IDS_TILE_LEAVES_JUNGLE),
+                                        IDS_TILE_LEAVES_ACACIA, static_cast<int>(IDS_TILE_LEAVES_DARK_OAK)};
     const BlockState* state = auxValue == -1 ? defaultBlockState() : getBlockState(auxValue);
     return descriptions[getWoodType(state)];
 }

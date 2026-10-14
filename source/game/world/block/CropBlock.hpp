@@ -36,7 +36,8 @@ public:
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
-    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus);
+    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                int lootBonus);
     virtual bool mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool canSurvive(Level* level, const BlockPos& pos, const BlockState* state);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);

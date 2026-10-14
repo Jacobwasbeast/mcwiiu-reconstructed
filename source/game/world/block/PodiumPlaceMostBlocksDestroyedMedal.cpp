@@ -7,9 +7,10 @@
 #include "game/world/generation/PlayerList.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
-PodiumPlaceMostBlocksDestroyedMedal::PodiumPlaceMostBlocksDestroyedMedal(EPodium podium,
-    int name, float target, unsigned int weight, GameMedal::EOperator op)
-    : GameMedal(name, target, weight, op, true, false), mPodium(podium)
+PodiumPlaceMostBlocksDestroyedMedal::PodiumPlaceMostBlocksDestroyedMedal(EPodium podium, int name, float target,
+                                                                         unsigned int weight, GameMedal::EOperator op)
+    : GameMedal(name, target, weight, op, true, false),
+      mPodium(podium)
 {
 }
 
@@ -37,8 +38,8 @@ float PodiumPlaceMostBlocksDestroyedMedal::GetScore(PlayerStats* playerStats) co
             }
             break;
         case PODIUM_SECOND:
-            if ((player != firstPlace || playerStats->getTotalBlocksDestroyed() != mostBlocksDestroyed) &&
-                (player == secondPlace || player == firstPlace))
+            if ((player != firstPlace || playerStats->getTotalBlocksDestroyed() != mostBlocksDestroyed)
+                && (player == secondPlace || player == firstPlace))
             {
                 unsigned int blocksDestroyed = playerStats->getTotalBlocksDestroyed();
 
@@ -49,8 +50,9 @@ float PodiumPlaceMostBlocksDestroyedMedal::GetScore(PlayerStats* playerStats) co
             }
             break;
         case PODIUM_THIRD:
-            if (((player != firstPlace && player != secondPlace) || playerStats->getTotalBlocksDestroyed() < secondMostBlocksDestroyed) &&
-                (player == secondPlace || player == firstPlace || player == thirdPlace))
+            if (((player != firstPlace && player != secondPlace)
+                 || playerStats->getTotalBlocksDestroyed() < secondMostBlocksDestroyed)
+                && (player == secondPlace || player == firstPlace || player == thirdPlace))
             {
                 unsigned int blocksDestroyed = playerStats->getTotalBlocksDestroyed();
 

@@ -13,8 +13,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BedBlock.hpp"
 
-BedBlockEntity::BedBlockEntity()
-    : BlockEntity(), mColor(DyeColor::RED)
+BedBlockEntity::BedBlockEntity() : BlockEntity(), mColor(DyeColor::RED)
 {
 }
 
@@ -70,7 +69,8 @@ CompoundTag* BedBlockEntity::getUpdateTag()
 
 boost::shared_ptr<Packet> BedBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(mPos, 11, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(
+        new ClientboundBlockEntityDataPacket(mPos, 11, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 bool BedBlockEntity::isHeadPiece()

@@ -6,14 +6,13 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-NetherrackBlock::NetherrackBlock()
-    : Block(Material::STONE)
+NetherrackBlock::NetherrackBlock() : Block(Material::STONE)
 {
     DerivedInit();
 }
 
-const MaterialColor* NetherrackBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const MaterialColor* NetherrackBlock::getMapColor(const BlockState* state, LevelSource* levelSource,
+                                                  const BlockPos& pos)
 {
     return MaterialColor::NETHER;
 }
-

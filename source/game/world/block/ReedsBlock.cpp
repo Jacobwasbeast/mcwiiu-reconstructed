@@ -24,8 +24,7 @@
 static AbstractProperty<int>* AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
 static const AABB* REEDS_SHAPE = AABB::newPermanent(0.125, 0.0, 0.125, 0.875, 1.0, 0.875);
 
-ReedsBlock::ReedsBlock()
-    : Block(Material::PLANT)
+ReedsBlock::ReedsBlock() : Block(Material::PLANT)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(AGE, 0));
@@ -175,8 +174,7 @@ bool ReedsBlock::mayPlace(Level* level, const BlockPos& pos)
     return false;
 }
 
-void ReedsBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block*, const BlockPos&)
+void ReedsBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     checkAlive(level, pos, state);
 }
@@ -243,7 +241,7 @@ bool ReedsBlock::canContainLiquid(const BlockState*) const
 
 BlockStateDefinition* ReedsBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { AGE };
+    static const Property* properties[] = {AGE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

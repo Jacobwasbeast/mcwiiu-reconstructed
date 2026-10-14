@@ -8,8 +8,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-SnowBlock::SnowBlock()
-    : Block(Material::SNOW)
+SnowBlock::SnowBlock() : Block(Material::SNOW)
 {
     DerivedInit();
     setTicking(true);

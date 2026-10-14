@@ -8,8 +8,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-AirBlock::AirBlock()
-    : Block(Material::AIR)
+AirBlock::AirBlock() : Block(Material::AIR)
 {
     DerivedInit();
 }

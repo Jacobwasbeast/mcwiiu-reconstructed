@@ -3,8 +3,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/world/block/LeafBlock.hpp"
 
-LeafBlockItem::LeafBlockItem(LeafBlock* block)
-    : BlockItem(block), mLeafBlock(block)
+LeafBlockItem::LeafBlockItem(LeafBlock* block) : BlockItem(block), mLeafBlock(block)
 {
     setMaxDamage(0);
     setStackedByData(true);

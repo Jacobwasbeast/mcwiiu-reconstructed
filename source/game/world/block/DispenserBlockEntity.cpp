@@ -84,7 +84,7 @@ void DispenserBlockEntity::setChanged()
 }
 
 AbstractContainerMenu* DispenserBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory,
-                                                          boost::shared_ptr<Player> player)
+                                                        boost::shared_ptr<Player> player)
 {
     unpackLootTable(player);
     return new DispenserMenu(inventory, boost::static_pointer_cast<DispenserBlockEntity>(shared_from_this()));
@@ -171,7 +171,8 @@ boost::shared_ptr<BlockEntity> DispenserBlockEntity::clone()
 {
     boost::shared_ptr<DispenserBlockEntity> result(new DispenserBlockEntity());
     BlockEntity::clone(result);
-    result->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    result->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(),
+                             mCustomName->isUUIDLocal());
     for (unsigned int slot = 0; slot < mItems.size(); ++slot)
     {
         if (!mItems[slot]->isEmpty())

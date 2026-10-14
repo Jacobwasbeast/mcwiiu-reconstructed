@@ -14,9 +14,7 @@ class LivingEntity;
 class ItemPropertyFunction_Damage : public ItemPropertyFunction
 {
 public:
-    virtual float call(not_null_ptr<ItemInstance> itemInstance,
-                       Level* level,
-                       boost::shared_ptr<LivingEntity> entity)
+    virtual float call(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<LivingEntity> entity)
     {
         return Mth::clamp((float)itemInstance->getDamageValue() / (float)itemInstance->getMaxDamage(), 0.0f, 1.0f);
     }

@@ -29,14 +29,12 @@ void PoweredRailBlock::blockStaticCtor()
         boost::unordered_set<BaseRailBlock::RailShape*> values;
         for (int i = 0; i < 10; ++i)
             values.insert(RailShape::VALUES[i]);
-        shape = EnumProperty<BaseRailBlock::RailShape*>::create(
-            name, typeid(BaseRailBlock::RailShape), values, filter);
+        shape = EnumProperty<BaseRailBlock::RailShape*>::create(name, typeid(BaseRailBlock::RailShape), values, filter);
     }
     PoweredRailBlock::SHAPE = shape;
 }
 
-PoweredRailBlock::PoweredRailBlock()
-    : BaseRailBlock(true)
+PoweredRailBlock::PoweredRailBlock() : BaseRailBlock(true)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()
@@ -44,8 +42,8 @@ PoweredRailBlock::PoweredRailBlock()
                              ->setValue(PoweredRailBlock::POWERED, false));
 }
 
-bool PoweredRailBlock::findPoweredRailSignal(Level* level, const BlockPos& pos,
-                                              const BlockState* state, bool forward, int distance)
+bool PoweredRailBlock::findPoweredRailSignal(Level* level, const BlockPos& pos, const BlockState* state, bool forward,
+                                             int distance)
 {
     if (distance >= 8)
         return false;
@@ -130,20 +128,20 @@ bool PoweredRailBlock::findPoweredRailSignal(Level* level, const BlockPos& pos,
     return false;
 }
 
-bool PoweredRailBlock::isSameRailWithPower(Level* level, const BlockPos& pos, bool forward,
-                                           int distance, BaseRailBlock::RailShape* shape)
+bool PoweredRailBlock::isSameRailWithPower(Level* level, const BlockPos& pos, bool forward, int distance,
+                                           BaseRailBlock::RailShape* shape)
 {
     const BlockState* state = level->getBlockState(pos);
     if (state->getBlock() == this)
     {
         BaseRailBlock::RailShape* otherShape = state->getValue(PoweredRailBlock::SHAPE);
-        if (shape == RailShape::EAST_WEST &&
-            (otherShape == RailShape::NORTH_SOUTH || otherShape == RailShape::ASCENDING_NORTH ||
-             otherShape == RailShape::ASCENDING_SOUTH))
+        if (shape == RailShape::EAST_WEST
+            && (otherShape == RailShape::NORTH_SOUTH || otherShape == RailShape::ASCENDING_NORTH
+                || otherShape == RailShape::ASCENDING_SOUTH))
             return false;
-        if (shape == RailShape::NORTH_SOUTH &&
-            (otherShape == RailShape::EAST_WEST || otherShape == RailShape::ASCENDING_EAST ||
-             otherShape == RailShape::ASCENDING_WEST))
+        if (shape == RailShape::NORTH_SOUTH
+            && (otherShape == RailShape::EAST_WEST || otherShape == RailShape::ASCENDING_EAST
+                || otherShape == RailShape::ASCENDING_WEST))
             return false;
         if (state->getValue(PoweredRailBlock::POWERED))
         {
@@ -159,7 +157,7 @@ void PoweredRailBlock::updateState(const BlockState* state, Level* level, const 
 {
     bool wasPowered = state->getValue(PoweredRailBlock::POWERED);
     bool powered = level->hasNeighborSignal(pos) || findPoweredRailSignal(level, pos, state, true, 0)
-        || findPoweredRailSignal(level, pos, state, false, 0);
+                   || findPoweredRailSignal(level, pos, state, false, 0);
     if (powered != wasPowered)
     {
         level->setBlock(pos, state->setValue(PoweredRailBlock::POWERED, powered), Block::UPDATE_ALL, false);
@@ -314,7 +312,7 @@ const BlockState* PoweredRailBlock::mirror(const BlockState* state, Mirror* mirr
 
 BlockStateDefinition* PoweredRailBlock::createBlockStateDefinition()
 {
-    static const Property* properties[2] = { PoweredRailBlock::SHAPE, PoweredRailBlock::POWERED };
+    static const Property* properties[2] = {PoweredRailBlock::SHAPE, PoweredRailBlock::POWERED};
     return new BlockStateDefinition(this, properties, 2);
 }
 

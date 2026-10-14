@@ -9,20 +9,15 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
 
-RedStoneDustItem::RedStoneDustItem()
-    : Item()
+RedStoneDustItem::RedStoneDustItem() : Item()
 {
 }
 
-InteractionResult::EInteractionResult RedStoneDustItem::useOn(boost::shared_ptr<Player> player,
-                                                               Level* level,
-                                                               const BlockPos& pos,
-                                                               InteractionHand::EInteractionHand hand,
-                                                               const Direction* direction,
-                                                               float hitX,
-                                                               float hitY,
-                                                               float hitZ,
-                                                               bool simulate)
+InteractionResult::EInteractionResult RedStoneDustItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                              const BlockPos& pos,
+                                                              InteractionHand::EInteractionHand hand,
+                                                              const Direction* direction, float hitX, float hitY,
+                                                              float hitZ, bool simulate)
 {
     BlockPos placePos = level->getBlockState(pos)->getBlock()->mayReplaceWithPlace(level, pos)
                             ? pos

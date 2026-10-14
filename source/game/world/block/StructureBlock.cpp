@@ -2,8 +2,7 @@
 
 #include "game/world/block/Material.hpp"
 
-StructureBlock::StructureBlock()
-    : Block(Material::AIR)
+StructureBlock::StructureBlock() : Block(Material::AIR)
 {
     DerivedInit();
 }
@@ -28,7 +27,8 @@ bool StructureBlock::mayPick(const BlockState* state, bool includeLiquid)
     return false;
 }
 
-void StructureBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
+void StructureBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                    int lootBonus)
 {
 }
 

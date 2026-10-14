@@ -44,18 +44,18 @@ static const AABB* thinFenceShapes[16] = {
     AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, 0.0, 1.0, 1.0, THIN_FENCE_POST_MAX),
     AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, 0.0, 1.0, 1.0, 1.0),
     AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, THIN_FENCE_POST_MAX),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
-};
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)};
 
-ThinFenceBlock::ThinFenceBlock(const std::wstring& name, const std::wstring& edgeTexture, Material* material, bool extraBlock)
+ThinFenceBlock::ThinFenceBlock(const std::wstring& name, const std::wstring& edgeTexture, Material* material,
+                               bool extraBlock)
     : Block(material)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()
-        ->setValue(THIN_FENCE_NORTH, false)
-        ->setValue(THIN_FENCE_EAST, false)
-        ->setValue(THIN_FENCE_SOUTH, false)
-        ->setValue(THIN_FENCE_WEST, false));
+                             ->setValue(THIN_FENCE_NORTH, false)
+                             ->setValue(THIN_FENCE_EAST, false)
+                             ->setValue(THIN_FENCE_SOUTH, false)
+                             ->setValue(THIN_FENCE_WEST, false));
     mEdgeTextureId = 0;
     mEdgeTexture = edgeTexture;
     mDropsOnBreak = extraBlock;
@@ -67,8 +67,9 @@ int ThinFenceBlock::indexFor(const Direction* direction)
     return 1 << (direction->get2DDataValue() & 0x3f);
 }
 
-void ThinFenceBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,
-                                       std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity, bool isActualState)
+void ThinFenceBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos,
+                                       const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
+                                       boost::shared_ptr<Entity> entity, bool isActualState)
 {
     if (!isActualState)
     {
@@ -96,10 +97,14 @@ void ThinFenceBlock::addCollisionAABBs(const BlockState* state, Level* level, co
 int ThinFenceBlock::getAABBIndex(const BlockState* state)
 {
     int index = 0;
-    if (state->getValue(THIN_FENCE_NORTH)) index |= indexFor(Direction::NORTH);
-    if (state->getValue(THIN_FENCE_EAST)) index |= indexFor(Direction::EAST);
-    if (state->getValue(THIN_FENCE_SOUTH)) index |= indexFor(Direction::SOUTH);
-    if (state->getValue(THIN_FENCE_WEST)) index |= indexFor(Direction::WEST);
+    if (state->getValue(THIN_FENCE_NORTH))
+        index |= indexFor(Direction::NORTH);
+    if (state->getValue(THIN_FENCE_EAST))
+        index |= indexFor(Direction::EAST);
+    if (state->getValue(THIN_FENCE_SOUTH))
+        index |= indexFor(Direction::SOUTH);
+    if (state->getValue(THIN_FENCE_WEST))
+        index |= indexFor(Direction::WEST);
     return index;
 }
 
@@ -111,30 +116,34 @@ const AABB* ThinFenceBlock::getShape(const BlockState* state, LevelSource* level
 
 bool ThinFenceBlock::isExceptionBlockForAttachingPlusPiston(Block* block)
 {
-    return (block != NULL && (dynamic_cast<ShulkerBoxBlock*>(block) != NULL
-            || dynamic_cast<LeafBlock*>(block) != NULL))
-        || block == Blocks::beacon || block == Blocks::cauldron
-        || block == Blocks::glowstone || block == Blocks::ice
-        || block == Blocks::sea_lantern || block == Blocks::piston
-        || block == Blocks::sticky_piston || block == Blocks::piston_head
-        || block == Blocks::melon_block || block == Blocks::pumpkin
-        || block == Blocks::carved_pumpkin || block == Blocks::lit_pumpkin
-        || block == Blocks::barrier || block == Blocks::turtle_egg;
+    return (block != NULL && (dynamic_cast<ShulkerBoxBlock*>(block) != NULL || dynamic_cast<LeafBlock*>(block) != NULL))
+           || block == Blocks::beacon || block == Blocks::cauldron || block == Blocks::glowstone || block == Blocks::ice
+           || block == Blocks::sea_lantern || block == Blocks::piston || block == Blocks::sticky_piston
+           || block == Blocks::piston_head || block == Blocks::melon_block || block == Blocks::pumpkin
+           || block == Blocks::carved_pumpkin || block == Blocks::lit_pumpkin || block == Blocks::barrier
+           || block == Blocks::turtle_egg;
 }
 
-bool ThinFenceBlock::attachsTo(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
+bool ThinFenceBlock::attachsTo(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                               const Direction* direction)
 {
     Block* block = state->getBlock();
     int faceShape = state->getBlockFaceShape(levelSource, pos, direction);
     return !isExceptionBlockForAttachingPlusPiston(block) && (faceShape == 0 || faceShape == 3);
 }
 
-const BlockState* ThinFenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const BlockState* ThinFenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                                  const BlockPos& pos)
 {
-    return state->setValue(THIN_FENCE_NORTH, attachsTo(levelSource, levelSource->getBlockState(pos.north()), pos.north(), Direction::SOUTH))
-        ->setValue(THIN_FENCE_SOUTH, attachsTo(levelSource, levelSource->getBlockState(pos.south()), pos.south(), Direction::NORTH))
-        ->setValue(THIN_FENCE_WEST, attachsTo(levelSource, levelSource->getBlockState(pos.west()), pos.west(), Direction::EAST))
-        ->setValue(THIN_FENCE_EAST, attachsTo(levelSource, levelSource->getBlockState(pos.east()), pos.east(), Direction::WEST));
+    return state
+        ->setValue(THIN_FENCE_NORTH,
+                   attachsTo(levelSource, levelSource->getBlockState(pos.north()), pos.north(), Direction::SOUTH))
+        ->setValue(THIN_FENCE_SOUTH,
+                   attachsTo(levelSource, levelSource->getBlockState(pos.south()), pos.south(), Direction::NORTH))
+        ->setValue(THIN_FENCE_WEST,
+                   attachsTo(levelSource, levelSource->getBlockState(pos.west()), pos.west(), Direction::EAST))
+        ->setValue(THIN_FENCE_EAST,
+                   attachsTo(levelSource, levelSource->getBlockState(pos.east()), pos.east(), Direction::WEST));
 }
 
 Item* ThinFenceBlock::getResource(const BlockState* state, Random* random, int lootBonus)
@@ -146,20 +155,39 @@ Item* ThinFenceBlock::getResource(const BlockState* state, Random* random, int l
     return Block::getResource(state, random, lootBonus);
 }
 
-bool ThinFenceBlock::isSolidRender(const BlockState*) const { return false; }
-bool ThinFenceBlock::isCubeShaped(const BlockState*) { return false; }
+bool ThinFenceBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool ThinFenceBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
 
-bool ThinFenceBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+bool ThinFenceBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                      const Direction* direction)
 {
     if (levelSource->getBlockState(pos)->getBlock() != this)
         return Block::shouldRenderFace(state, levelSource, pos, direction);
     return false;
 }
 
-bool ThinFenceBlock::canContainLiquid(const BlockState*) const { return true; }
-bool ThinFenceBlock::isSilkTouchable() { return true; }
-int ThinFenceBlock::getRenderLayer() { return 0; }
-int ThinFenceBlock::convertBlockStateToLegacyData(const BlockState*) { return 0; }
+bool ThinFenceBlock::canContainLiquid(const BlockState*) const
+{
+    return true;
+}
+bool ThinFenceBlock::isSilkTouchable()
+{
+    return true;
+}
+int ThinFenceBlock::getRenderLayer()
+{
+    return 0;
+}
+int ThinFenceBlock::convertBlockStateToLegacyData(const BlockState*)
+{
+    return 0;
+}
 
 const BlockState* ThinFenceBlock::rotate(const BlockState* state, Rotation* rotation)
 {
@@ -202,13 +230,15 @@ const BlockState* ThinFenceBlock::mirror(const BlockState* state, Mirror* mirror
 
 BlockStateDefinition* ThinFenceBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { THIN_FENCE_NORTH, THIN_FENCE_EAST, THIN_FENCE_WEST, THIN_FENCE_SOUTH };
+    static const Property* properties[] = {THIN_FENCE_NORTH, THIN_FENCE_EAST, THIN_FENCE_WEST, THIN_FENCE_SOUTH};
     return new BlockStateDefinition(this, properties, 4);
 }
 
-EBlockFaceShape ThinFenceBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
+EBlockFaceShape ThinFenceBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
+                                                  const Direction* direction)
 {
-    return direction == Direction::UP || direction == Direction::DOWN ? BLOCK_FACE_CENTER_SMALL : BLOCK_FACE_MIDDLE_POLE_THIN;
+    return direction == Direction::UP || direction == Direction::DOWN ? BLOCK_FACE_CENTER_SMALL
+                                                                      : BLOCK_FACE_MIDDLE_POLE_THIN;
 }
 
 void ThinFenceBlock::registerIcons(IconRegister* iconRegister)
@@ -217,7 +247,10 @@ void ThinFenceBlock::registerIcons(IconRegister* iconRegister)
     mEdgeTextureId = iconRegister->registerIcon(mEdgeTexture);
 }
 
-TextureAtlasSprite* ThinFenceBlock::getEdgeTexture() { return mEdgeTextureId; }
+TextureAtlasSprite* ThinFenceBlock::getEdgeTexture()
+{
+    return mEdgeTextureId;
+}
 
 EBlockRenderShape ThinFenceBlock::getRenderShape(const BlockState* state)
 {

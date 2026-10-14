@@ -40,8 +40,8 @@ void DragonEggBlock::checkSlide(Level* level, const BlockPos& pos)
         return;
     if (!FallingBlock::fallInstantly && level->hasChunksAt(pos.offset(-32, -32, -32), pos.offset(32, 32, 32)))
     {
-        boost::shared_ptr<FallingBlockEntity> entity(new FallingBlockEntity(
-            level, pos.x + 0.5f, pos.y, pos.z + 0.5f, defaultBlockState()));
+        boost::shared_ptr<FallingBlockEntity> entity(
+            new FallingBlockEntity(level, pos.x + 0.5f, pos.y, pos.z + 0.5f, defaultBlockState()));
         level->addEntity(entity);
         return;
     }
@@ -79,16 +79,15 @@ void DragonEggBlock::teleport(Level* level, const BlockPos& pos)
             level->setBlock(target, state, Block::UPDATE_CLIENTS, false);
             level->removeBlock(pos);
             level->levelEvent(LevelEvent::DRAGON_EGG_TELEPORT, target,
-                              ((pos.x - target.x) & 0xff) |
-                              (unsigned char)(char)(pos.y - target.y) << 8 |
-                              ((pos.z - target.z) << 16 & 0xff0000));
+                              ((pos.x - target.x) & 0xff) | (unsigned char)(char)(pos.y - target.y) << 8
+                                  | ((pos.z - target.z) << 16 & 0xff0000));
             return;
         }
     }
 }
 
 bool DragonEggBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player>,
-                          InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+                         InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
     if (clientSide)
         return false;
@@ -106,11 +105,26 @@ int DragonEggBlock::getTickDelay(Level*)
     return 5;
 }
 
-bool DragonEggBlock::isSolidRender(const BlockState*) const { return false; }
-bool DragonEggBlock::isCubeShaped(const BlockState*) { return false; }
-bool DragonEggBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction*) { return true; }
-EBlockFaceShape DragonEggBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return BLOCK_FACE_UNDEFINED; }
-EBlockRenderShape DragonEggBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_EGG; }
+bool DragonEggBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool DragonEggBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+bool DragonEggBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction*)
+{
+    return true;
+}
+EBlockFaceShape DragonEggBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
+{
+    return BLOCK_FACE_UNDEFINED;
+}
+EBlockRenderShape DragonEggBlock::getRenderShape(const BlockState*)
+{
+    return BLOCK_RENDER_EGG;
+}
 
 void DragonEggBlock::generateTeleportParticles(Level* level, int x, int y, int z, int data)
 {
@@ -129,13 +143,11 @@ void DragonEggBlock::generateTeleportParticles(Level* level, int x, int y, int z
             double jitterY = level->mRandom->nextDouble();
             double jitterZ = level->mRandom->nextDouble();
             arrayWithLength<int> params;
-            level->addParticle(PARTICLE_PORTAL,
-                               0.5 + ((jitterX - 0.5) * 1.0 + ((double)dx * along + (double)x)),
+            level->addParticle(PARTICLE_PORTAL, 0.5 + ((jitterX - 0.5) * 1.0 + ((double)dx * along + (double)x)),
                                jitterY * 1.0 + ((double)dy * along + (double)y) - 0.5,
                                0.5 + ((jitterZ - 0.5) * 1.0 + ((double)dz * along + (double)z)),
-                               (double)((xa - 0.5f) * 0.2f),
-                               (double)((ya - 0.5f) * 0.2f),
-                               (double)((za - 0.5f) * 0.2f), params);
+                               (double)((xa - 0.5f) * 0.2f), (double)((ya - 0.5f) * 0.2f), (double)((za - 0.5f) * 0.2f),
+                               params);
         }
     }
 }

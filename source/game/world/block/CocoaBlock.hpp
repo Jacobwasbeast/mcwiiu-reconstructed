@@ -42,20 +42,19 @@ public:
     virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
                                                    float hitX, float hitY, float hitZ, int auxValue,
                                                    boost::shared_ptr<LivingEntity> placer);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     using Block::spawnResources;
-    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
-                                float chance, int lootBonus);
-    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                             const BlockState* state);
+    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                int lootBonus);
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
     virtual int getRenderLayer();
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                              const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     TextureAtlasSprite* getTextureForAge(int age);
     virtual void registerIcons(IconRegister* iconRegister);

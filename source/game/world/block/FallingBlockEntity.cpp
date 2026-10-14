@@ -58,8 +58,7 @@ FallingBlockEntity::FallingBlockEntity(Level* level, double x, double y, double 
     setStartPos(BlockPos(this));
 }
 
-FallingBlockEntity::FallingBlockEntity(Level* level)
-    : Entity(level, true)
+FallingBlockEntity::FallingBlockEntity(Level* level) : Entity(level, true)
 {
     _init();
 }
@@ -71,7 +70,8 @@ FallingBlockEntity::~FallingBlockEntity()
 
 void FallingBlockEntity::staticCtor()
 {
-    DATA_START_POS = SynchedEntityData::defineId(EntityType::FALLING_BLOCK_ENTITY, EntityType::ENTITY, EntityDataSerializers::BLOCK_POS);
+    DATA_START_POS = SynchedEntityData::defineId(EntityType::FALLING_BLOCK_ENTITY, EntityType::ENTITY,
+                                                 EntityDataSerializers::BLOCK_POS);
 }
 
 void FallingBlockEntity::_init()
@@ -210,7 +210,8 @@ void FallingBlockEntity::tick()
                             {
                                 CompoundTag* blockEntityTag = blockEntity->save(new CompoundTag());
                                 boost::unordered_map<std::wstring, Tag*>* tags = mBlockEntityData->getAllTagsMap();
-                                for (boost::unordered_map<std::wstring, Tag*>::iterator it = tags->begin(); it != tags->end(); ++it)
+                                for (boost::unordered_map<std::wstring, Tag*>::iterator it = tags->begin();
+                                     it != tags->end(); ++it)
                                 {
                                     Tag* tag = it->second;
                                     if (it->first.compare(L"x") != 0 && it->first.compare(L"y") != 0
@@ -227,7 +228,9 @@ void FallingBlockEntity::tick()
                     }
                     else if (mDropItem && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
                     {
-                        spawnAtLocation(boost::shared_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
+                        spawnAtLocation(boost::shared_ptr<ItemInstance>(
+                                            new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))),
+                                        0.0f);
                     }
                 }
                 else if (dynamic_cast<FallingBlock*>(block) != NULL)
@@ -242,7 +245,9 @@ void FallingBlockEntity::tick()
             {
                 if (mDropItem && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
                 {
-                    spawnAtLocation(boost::shared_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
+                    spawnAtLocation(boost::shared_ptr<ItemInstance>(
+                                        new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))),
+                                    0.0f);
                 }
                 remove();
             }
@@ -274,8 +279,8 @@ void FallingBlockEntity::causeFallDamage(float fallDistance, float damageMultipl
         return;
     }
 
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        new std::vector<boost::shared_ptr<Entity> >(*mLevel->getEntities(shared_from_this(), mBoundingBox, NULL));
+    std::vector<boost::shared_ptr<Entity> >* entities = new std::vector<boost::shared_ptr<Entity> >(
+        *mLevel->getEntities(shared_from_this(), mBoundingBox, NULL));
     bool anvil = block == Blocks::anvil;
     const DamageSource* damageSource = anvil ? DamageSource::ANVIL : DamageSource::FALLING_BLOCK;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)

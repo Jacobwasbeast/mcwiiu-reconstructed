@@ -14,20 +14,15 @@
 #include "game/world/block/SnowLayerBlock.hpp"
 #include "game/world/generation/Player.hpp"
 
-BlockPlanterItem::BlockPlanterItem(Block* block)
-    : Item(), mBlock(block)
+BlockPlanterItem::BlockPlanterItem(Block* block) : Item(), mBlock(block)
 {
 }
 
-InteractionResult::EInteractionResult BlockPlanterItem::useOn(boost::shared_ptr<Player> player,
-                                                             Level* level,
-                                                             const BlockPos& pos,
-                                                             InteractionHand::EInteractionHand hand,
-                                                             const Direction* direction,
-                                                             float hitX,
-                                                             float hitY,
-                                                             float hitZ,
-                                                             bool simulate)
+InteractionResult::EInteractionResult BlockPlanterItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                              const BlockPos& pos,
+                                                              InteractionHand::EInteractionHand hand,
+                                                              const Direction* direction, float hitX, float hitY,
+                                                              float hitZ, bool simulate)
 {
     BlockPos placePos = pos;
     const BlockState* state = level->getBlockState(placePos);
@@ -52,16 +47,15 @@ InteractionResult::EInteractionResult BlockPlanterItem::useOn(boost::shared_ptr<
 
     if (!simulate)
     {
-        const BlockState* placedState =
-            mBlock->getStateForPlacement(level, placePos, direction, hitX, hitY, hitZ, 0, player);
+        const BlockState* placedState = mBlock->getStateForPlacement(level, placePos, direction, hitX, hitY, hitZ, 0,
+                                                                     player);
 
         if (!level->setBlock(placePos, placedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
         {
             return InteractionResult::eInteractionResult_Fail;
         }
 
-        player->awardStat(GenericStats::blocksPlaced(mBlock),
-                          GenericStats::param_blocksPlaced(placedState, 1));
+        player->awardStat(GenericStats::blocksPlaced(mBlock), GenericStats::param_blocksPlaced(placedState, 1));
 
         placedState = level->getBlockState(placePos);
 
@@ -72,13 +66,8 @@ InteractionResult::EInteractionResult BlockPlanterItem::useOn(boost::shared_ptr<
         }
 
         const SoundType* soundType = mBlock->getSoundType();
-        level->playSound(player,
-                         placePos,
-                         soundType->getPlaceSound(),
-                         SoundSource::eSoundSource_Blocks,
-                         (soundType->getVolume() + 1.0f) * 0.5f,
-                         soundType->getPitch() * 0.8f,
-                         16.0f);
+        level->playSound(player, placePos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
+                         (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, 16.0f);
 
         itemInstance->shrink(1);
     }

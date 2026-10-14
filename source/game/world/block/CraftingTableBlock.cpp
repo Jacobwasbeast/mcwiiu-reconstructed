@@ -11,8 +11,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
-CraftingTableBlock::CraftingTableBlock()
-    : Block(Material::WOOD)
+CraftingTableBlock::CraftingTableBlock() : Block(Material::WOOD)
 {
     DerivedInit();
     mTopTexture = NULL;
@@ -75,15 +74,14 @@ unsigned int CraftingTableBlock::GetInteractTooltip(const BlockTooltipDataHolder
     return Block::GetInteractTooltip(tooltipData);
 }
 
-CraftingTableBlock::CraftingTable::CraftingTable(Level* level, const BlockPos& pos)
-    : InteractionObject()
+CraftingTableBlock::CraftingTable::CraftingTable(Level* level, const BlockPos& pos) : InteractionObject()
 {
     mLevel = level;
     mBlockPos = pos;
 }
 
 AbstractContainerMenu* CraftingTableBlock::CraftingTable::createMenu(boost::shared_ptr<Inventory> inventory,
-                                                                      boost::shared_ptr<Player> player)
+                                                                     boost::shared_ptr<Player> player)
 {
     return new CraftingMenu(inventory, mLevel, mBlockPos);
 }

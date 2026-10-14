@@ -9,8 +9,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-Glowstoneblock::Glowstoneblock(Material* material)
-    : Block(material)
+Glowstoneblock::Glowstoneblock(Material* material) : Block(material)
 {
     DerivedInit();
 }
@@ -34,4 +33,3 @@ const MaterialColor* Glowstoneblock::getMapColor(const BlockState* state, LevelS
 {
     return MaterialColor::SAND;
 }
-

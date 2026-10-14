@@ -20,37 +20,32 @@ BaseRailBlock::RailShape* BaseRailBlock::RailShape::NORTH_SOUTH = new BaseRailBl
 BaseRailBlock::RailShape* BaseRailBlock::RailShape::EAST_WEST = new BaseRailBlock::RailShape(1, L"east_west");
 BaseRailBlock::RailShape* BaseRailBlock::RailShape::ASCENDING_EAST = new BaseRailBlock::RailShape(2, L"ascending_east");
 BaseRailBlock::RailShape* BaseRailBlock::RailShape::ASCENDING_WEST = new BaseRailBlock::RailShape(3, L"ascending_west");
-BaseRailBlock::RailShape* BaseRailBlock::RailShape::ASCENDING_NORTH = new BaseRailBlock::RailShape(4, L"ascending_north");
-BaseRailBlock::RailShape* BaseRailBlock::RailShape::ASCENDING_SOUTH = new BaseRailBlock::RailShape(5, L"ascending_south");
+BaseRailBlock::RailShape* BaseRailBlock::RailShape::ASCENDING_NORTH = new BaseRailBlock::RailShape(4,
+                                                                                                   L"ascending_north");
+BaseRailBlock::RailShape* BaseRailBlock::RailShape::ASCENDING_SOUTH = new BaseRailBlock::RailShape(5,
+                                                                                                   L"ascending_south");
 BaseRailBlock::RailShape* BaseRailBlock::RailShape::SOUTH_EAST = new BaseRailBlock::RailShape(6, L"south_east");
 BaseRailBlock::RailShape* BaseRailBlock::RailShape::SOUTH_WEST = new BaseRailBlock::RailShape(7, L"south_west");
 BaseRailBlock::RailShape* BaseRailBlock::RailShape::NORTH_WEST = new BaseRailBlock::RailShape(8, L"north_west");
 BaseRailBlock::RailShape* BaseRailBlock::RailShape::NORTH_EAST = new BaseRailBlock::RailShape(9, L"north_east");
 
-BaseRailBlock::RailShape* BaseRailBlock::RailShape::VALUES[10] =
-{
-    BaseRailBlock::RailShape::NORTH_SOUTH,
-    BaseRailBlock::RailShape::EAST_WEST,
-    BaseRailBlock::RailShape::ASCENDING_EAST,
-    BaseRailBlock::RailShape::ASCENDING_WEST,
-    BaseRailBlock::RailShape::ASCENDING_NORTH,
-    BaseRailBlock::RailShape::ASCENDING_SOUTH,
-    BaseRailBlock::RailShape::SOUTH_EAST,
-    BaseRailBlock::RailShape::SOUTH_WEST,
-    BaseRailBlock::RailShape::NORTH_WEST,
-    BaseRailBlock::RailShape::NORTH_EAST
-};
+BaseRailBlock::RailShape* BaseRailBlock::RailShape::VALUES[10] = {
+    BaseRailBlock::RailShape::NORTH_SOUTH,     BaseRailBlock::RailShape::EAST_WEST,
+    BaseRailBlock::RailShape::ASCENDING_EAST,  BaseRailBlock::RailShape::ASCENDING_WEST,
+    BaseRailBlock::RailShape::ASCENDING_NORTH, BaseRailBlock::RailShape::ASCENDING_SOUTH,
+    BaseRailBlock::RailShape::SOUTH_EAST,      BaseRailBlock::RailShape::SOUTH_WEST,
+    BaseRailBlock::RailShape::NORTH_WEST,      BaseRailBlock::RailShape::NORTH_EAST};
 
 bool railfilter(BaseRailBlock::RailShape* shape)
 {
-    return shape != BaseRailBlock::RailShape::NORTH_EAST && shape != BaseRailBlock::RailShape::NORTH_WEST &&
-           shape != BaseRailBlock::RailShape::SOUTH_EAST && shape != BaseRailBlock::RailShape::SOUTH_WEST;
+    return shape != BaseRailBlock::RailShape::NORTH_EAST && shape != BaseRailBlock::RailShape::NORTH_WEST
+           && shape != BaseRailBlock::RailShape::SOUTH_EAST && shape != BaseRailBlock::RailShape::SOUTH_WEST;
 }
 
 bool railpredicate(BaseRailBlock::RailShape* shape)
 {
-    return shape != BaseRailBlock::RailShape::NORTH_EAST && shape != BaseRailBlock::RailShape::NORTH_WEST &&
-           shape != BaseRailBlock::RailShape::SOUTH_EAST && shape != BaseRailBlock::RailShape::SOUTH_WEST;
+    return shape != BaseRailBlock::RailShape::NORTH_EAST && shape != BaseRailBlock::RailShape::NORTH_WEST
+           && shape != BaseRailBlock::RailShape::SOUTH_EAST && shape != BaseRailBlock::RailShape::SOUTH_WEST;
 }
 
 BaseRailBlock::RailShape::RailShape(int data, const std::wstring& name)
@@ -61,8 +56,8 @@ BaseRailBlock::RailShape::RailShape(int data, const std::wstring& name)
 
 bool BaseRailBlock::RailShape::isAscending()
 {
-    return this == RailShape::ASCENDING_NORTH || this == RailShape::ASCENDING_EAST ||
-           this == RailShape::ASCENDING_SOUTH || this == RailShape::ASCENDING_WEST;
+    return this == RailShape::ASCENDING_NORTH || this == RailShape::ASCENDING_EAST || this == RailShape::ASCENDING_SOUTH
+           || this == RailShape::ASCENDING_WEST;
 }
 
 int BaseRailBlock::RailShape::getData()
@@ -87,8 +82,7 @@ std::wstring BaseRailBlock::RailShape::getSerializedName() const
     return mName;
 }
 
-BaseRailBlock::BaseRailBlock(bool isPowered)
-    : Block(Material::DECORATION), mIsPowered(isPowered)
+BaseRailBlock::BaseRailBlock(bool isPowered) : Block(Material::DECORATION), mIsPowered(isPowered)
 {
     mIsRail = true;
     mBlockType = EBLOCK_TYPE_RAIL;
@@ -98,7 +92,7 @@ BaseRailBlock::BaseRailBlock(bool isPowered)
 bool BaseRailBlock::isRail(const Block* block)
 {
     return block == Blocks::rail || block == Blocks::golden_rail || block == Blocks::detector_rail
-        || block == Blocks::activator_rail;
+           || block == Blocks::activator_rail;
 }
 
 bool BaseRailBlock::isRail(Level* level, const BlockPos& pos)
@@ -147,7 +141,7 @@ bool BaseRailBlock::isCubeShaped(const BlockState*)
 bool BaseRailBlock::mayPlace(Level* level, const BlockPos& pos)
 {
     return level->getBlockState(pos.below())->isTopSolidBlocking()
-        || Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.below())->getBlock());
+           || Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.below())->getBlock());
 }
 
 void BaseRailBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -160,8 +154,8 @@ void BaseRailBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*
     }
 }
 
-void BaseRailBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                    Block* block, const BlockPos& fromPos)
+void BaseRailBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                    const BlockPos& fromPos)
 {
     if (level->mIsClientSide)
     {
@@ -176,17 +170,13 @@ void BaseRailBlock::neighborChanged(const BlockState* state, Level* level, const
         unsupported = true;
     }
 
-    if ((shape == RailShape::ASCENDING_EAST
-            && !level->getBlockState(pos.east())->isTopSolidBlocking()
-            && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.east())->getBlock()))
-        || (shape == RailShape::ASCENDING_WEST
-            && !level->getBlockState(pos.west())->isTopSolidBlocking()
+    if ((shape == RailShape::ASCENDING_EAST && !level->getBlockState(pos.east())->isTopSolidBlocking()
+         && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.east())->getBlock()))
+        || (shape == RailShape::ASCENDING_WEST && !level->getBlockState(pos.west())->isTopSolidBlocking()
             && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.west())->getBlock()))
-        || (shape == RailShape::ASCENDING_NORTH
-            && !level->getBlockState(pos.north())->isTopSolidBlocking()
+        || (shape == RailShape::ASCENDING_NORTH && !level->getBlockState(pos.north())->isTopSolidBlocking()
             && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.north())->getBlock()))
-        || (shape == RailShape::ASCENDING_SOUTH
-            && !level->getBlockState(pos.south())->isTopSolidBlocking()
+        || (shape == RailShape::ASCENDING_SOUTH && !level->getBlockState(pos.south())->isTopSolidBlocking()
             && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.south())->getBlock()))
         || unsupported)
     {
@@ -529,8 +519,8 @@ std::vector<BlockPos>* BaseRailBlock::Rail::getConnections()
 
 bool BaseRailBlock::Rail::hasRail(const BlockPos& pos)
 {
-    return BaseRailBlock::isRail(mLevel, pos) || BaseRailBlock::isRail(mLevel, pos.above()) ||
-           BaseRailBlock::isRail(mLevel, pos.below());
+    return BaseRailBlock::isRail(mLevel, pos) || BaseRailBlock::isRail(mLevel, pos.above())
+           || BaseRailBlock::isRail(mLevel, pos.below());
 }
 
 int BaseRailBlock::Rail::countPotentialConnections()

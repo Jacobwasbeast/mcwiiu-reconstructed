@@ -30,13 +30,12 @@ void StainedHardenedClayBlock::staticCtor()
     gStainedHardenedClayColors[15] = MaterialColor::TERRACOTTA_BLACK;
 }
 
-StainedHardenedClayBlock::StainedHardenedClayBlock()
-    : ColoredBlock(Material::STONE)
+StainedHardenedClayBlock::StainedHardenedClayBlock() : ColoredBlock(Material::STONE)
 {
 }
 
-const MaterialColor* StainedHardenedClayBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const MaterialColor* StainedHardenedClayBlock::getMapColor(const BlockState* state, LevelSource* levelSource,
+                                                           const BlockPos& pos)
 {
     return gStainedHardenedClayColors[state->getValue(ColoredBlock::COLOR)->getBlockData()];
 }
-

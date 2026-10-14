@@ -40,8 +40,7 @@ AbstractProperty<bool>* FireBlock::SOUTH = static_cast<AbstractProperty<bool>*>(
 AbstractProperty<bool>* FireBlock::WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
 AbstractProperty<bool>* FireBlock::UP = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"upper"));
 
-FireBlock::FireBlock()
-    : Block(Material::FIRE), mFlameOdds(), mBurnOdds()
+FireBlock::FireBlock() : Block(Material::FIRE), mFlameOdds(), mBurnOdds()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()
@@ -66,7 +65,8 @@ bool FireBlock::canBurn(LevelSource* levelSource, const BlockPos& pos)
     return getFlameOdds(levelSource->getBlockState(pos)->getBlock()) > 0;
 }
 
-const BlockState* FireBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const BlockState* FireBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                             const BlockPos& pos)
 {
     if (levelSource->getBlockState(pos.below())->isTopSolidBlocking()
         || static_cast<FireBlock*>(Blocks::fire)->canBurn(levelSource, pos.below()))
@@ -139,10 +139,22 @@ const AABB* FireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockP
     return NULL_AABB;
 }
 
-bool FireBlock::isSolidRender(const BlockState*) const { return false; }
-bool FireBlock::isCubeShaped(const BlockState*) { return false; }
-int FireBlock::getResourceCount(Random*) { return 0; }
-int FireBlock::getTickDelay(Level*) { return 30; }
+bool FireBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool FireBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+int FireBlock::getResourceCount(Random*)
+{
+    return 0;
+}
+int FireBlock::getTickDelay(Level*)
+{
+    return 30;
+}
 
 int FireBlock::getFireOdds(Level* level, const BlockPos& pos)
 {
@@ -158,8 +170,8 @@ int FireBlock::getFireOdds(Level* level, const BlockPos& pos)
 
 bool FireBlock::isNearRain(Level* level, const BlockPos& pos)
 {
-    return level->isRainingAt(pos) || level->isRainingAt(pos.west()) || level->isRainingAt(pos.east()) ||
-           level->isRainingAt(pos.north()) || level->isRainingAt(pos.south());
+    return level->isRainingAt(pos) || level->isRainingAt(pos.west()) || level->isRainingAt(pos.east())
+           || level->isRainingAt(pos.north()) || level->isRainingAt(pos.south());
 }
 
 bool FireBlock::isValidFireLocation(Level* level, const BlockPos& pos)
@@ -281,8 +293,7 @@ void FireBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
                 int odds = (fireOdds + 40 + level->getDifficulty()->getId() * 7) / (age + 30);
                 if (humid)
                     odds /= 2;
-                if (odds < 1 || random->nextInt(chance) > odds
-                    || (level->isRaining() && isNearRain(level, target)))
+                if (odds < 1 || random->nextInt(chance) > odds || (level->isRaining() && isNearRain(level, target)))
                     continue;
                 int newAge = age + random->nextInt(5) / 4;
                 if (newAge > 15)
@@ -293,8 +304,14 @@ void FireBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
     }
 }
 
-bool FireBlock::canInstantlyTick() { return false; }
-bool FireBlock::mayPick() { return false; }
+bool FireBlock::canInstantlyTick()
+{
+    return false;
+}
+bool FireBlock::mayPick()
+{
+    return false;
+}
 bool FireBlock::mayPlace(Level* level, const BlockPos& pos)
 {
     return level->getBlockState(pos.below())->isTopSolidBlocking() || isValidFireLocation(level, pos);
@@ -308,7 +325,8 @@ void FireBlock::neighborChanged(const BlockState*, Level* level, const BlockPos&
 
 void FireBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
-    if ((level->mDimension->getType() == DimensionType::NETHER || level->mDimension->getType() == DimensionType::OVERWORLD)
+    if ((level->mDimension->getType() == DimensionType::NETHER
+         || level->mDimension->getType() == DimensionType::OVERWORLD)
         && static_cast<PortalBlock*>(Blocks::portal)->trySpawnPortal(level, pos, true))
     {
         return;
@@ -398,8 +416,14 @@ void FireBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos
     }
 }
 
-const MaterialColor* FireBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&) { return MaterialColor::FIRE; }
-int FireBlock::getRenderLayer() { return 0; }
+const MaterialColor* FireBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&)
+{
+    return MaterialColor::FIRE;
+}
+int FireBlock::getRenderLayer()
+{
+    return 0;
+}
 const BlockState* FireBlock::getBlockState(int data)
 {
     return defaultBlockState()->setValue(AGE, data);
@@ -408,12 +432,18 @@ int FireBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     return state->getValue(AGE);
 }
-bool FireBlock::waterSpreadCausesSpawn() { return true; }
-bool FireBlock::canContainLiquid(const BlockState*) const { return false; }
+bool FireBlock::waterSpreadCausesSpawn()
+{
+    return true;
+}
+bool FireBlock::canContainLiquid(const BlockState*) const
+{
+    return false;
+}
 
 BlockStateDefinition* FireBlock::createBlockStateDefinition()
 {
-    static const Property* properties[6] = { AGE, NORTH, EAST, SOUTH, WEST, UP };
+    static const Property* properties[6] = {AGE, NORTH, EAST, SOUTH, WEST, UP};
     return new BlockStateDefinition(this, properties, 6);
 }
 
@@ -422,8 +452,14 @@ EBlockFaceShape FireBlock::getBlockFaceShape(LevelSource*, const BlockState*, co
     return BLOCK_FACE_UNDEFINED;
 }
 
-TextureAtlasSprite* FireBlock::getTexture(const Direction*, const BlockState*) { return mFireIcons[0]; }
-TextureAtlasSprite* FireBlock::getTextureLayer(int layer) { return mFireIcons[layer]; }
+TextureAtlasSprite* FireBlock::getTexture(const Direction*, const BlockState*)
+{
+    return mFireIcons[0];
+}
+TextureAtlasSprite* FireBlock::getTextureLayer(int layer)
+{
+    return mFireIcons[layer];
+}
 
 void FireBlock::registerIcons(IconRegister* iconRegister)
 {
@@ -431,4 +467,7 @@ void FireBlock::registerIcons(IconRegister* iconRegister)
     mFireIcons[1] = iconRegister->registerIcon(TEXTURE_SECOND);
 }
 
-EBlockRenderShape FireBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_FIRE; }
+EBlockRenderShape FireBlock::getRenderShape(const BlockState*)
+{
+    return BLOCK_RENDER_FIRE;
+}

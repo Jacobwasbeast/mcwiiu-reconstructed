@@ -11,7 +11,8 @@ class BlockRotProcessor : public StructureProcessor
 {
 public:
     BlockRotProcessor(StructurePlaceSettings* settings, const BlockPos& position)
-        : mIntegrity(settings->getIntegrity()), mRandom(settings->getRandom(&position, mOwnsRandom))
+        : mIntegrity(settings->getIntegrity()),
+          mRandom(settings->getRandom(&position, mOwnsRandom))
     {
     }
     virtual ~BlockRotProcessor()
@@ -20,8 +21,8 @@ public:
             delete mRandom;
     }
 
-    virtual StructureTemplate::StructureBlockInfo* processBlock(Level* level,
-        const BlockPos& position, StructureTemplate::StructureBlockInfo* blockInfo);
+    virtual StructureTemplate::StructureBlockInfo* processBlock(Level* level, const BlockPos& position,
+                                                                StructureTemplate::StructureBlockInfo* blockInfo);
 
 private:
     float mIntegrity;

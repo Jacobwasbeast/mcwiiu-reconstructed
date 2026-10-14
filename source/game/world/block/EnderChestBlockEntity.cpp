@@ -11,8 +11,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-EnderChestBlockEntity::EnderChestBlockEntity()
-    : BlockEntity()
+EnderChestBlockEntity::EnderChestBlockEntity() : BlockEntity()
 {
     mOpen = 0.0F;
     mOpenOld = 0.0F;
@@ -26,8 +25,8 @@ BlockEntity* EnderChestBlockEntity::create()
     return new EnderChestBlockEntity();
 }
 
-void EnderChestBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid,
-                                          bool chatCensored, bool uuidLocal)
+void EnderChestBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored,
+                                          bool uuidLocal)
 {
     mName->set(name, uuid, chatCensored, uuidLocal);
 }
@@ -44,9 +43,8 @@ void EnderChestBlockEntity::tick()
     if (mOpenCount > 0 && mOpen == 0.0f)
     {
         BlockPos soundPos(x + 0.5, y + 0.5, z + 0.5);
-        mLevel->playSound(boost::shared_ptr<Player>(), soundPos,
-                          SoundEvents::ENDERCHEST_OPEN, SoundSource::eSoundSource_Blocks, 0.5f,
-                          mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
+        mLevel->playSound(boost::shared_ptr<Player>(), soundPos, SoundEvents::ENDERCHEST_OPEN,
+                          SoundSource::eSoundSource_Blocks, 0.5f, mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
     }
     if ((mOpenCount == 0 && mOpen > 0.0f) || (mOpenCount > 0 && mOpen < 1.0f))
     {

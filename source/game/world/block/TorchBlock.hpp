@@ -24,9 +24,12 @@ public:
     bool canStandOn(Level* level, const BlockPos& pos);
     bool canBePlacedOn(Level* level, const BlockPos& pos, const Direction* direction);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual bool checkDoPop(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool checkCanSurvive(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
@@ -36,7 +39,8 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 
     static DirectionProperty* FACING;

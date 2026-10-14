@@ -4,9 +4,7 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/chunk/array2DWithLength.hpp"
 
-BlockPatternBuilder::BlockPatternBuilder()
-    : mPattern(),
-      mLookup(11)
+BlockPatternBuilder::BlockPatternBuilder() : mPattern(), mLookup(11)
 {
     mLookup[L' '] = Predicates<BlockInWorld*>::alwaysTrue->copy();
 }

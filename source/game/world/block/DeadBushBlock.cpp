@@ -17,8 +17,7 @@
 
 static const AABB* gDeadBushShape = AABB::newPermanent(0.1, 0.0, 0.1, 0.9, 0.8, 0.9);
 
-DeadBushBlock::DeadBushBlock()
-    : Bush(Material::REPLACEABLE_PLANT)
+DeadBushBlock::DeadBushBlock() : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
 }
@@ -35,10 +34,8 @@ const MaterialColor* DeadBushBlock::getMapColor(const BlockState*, LevelSource*,
 
 bool DeadBushBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)
 {
-    return state->getBlock() == Blocks::sand
-        || state->getBlock() == Blocks::hardened_clay
-        || state->getBlock() == Blocks::stained_hardened_clay
-        || state->getBlock() == Blocks::dirt;
+    return state->getBlock() == Blocks::sand || state->getBlock() == Blocks::hardened_clay
+           || state->getBlock() == Blocks::stained_hardened_clay || state->getBlock() == Blocks::dirt;
 }
 
 bool DeadBushBlock::mayReplaceWithPlace(LevelSource*, const BlockPos&)

@@ -17,18 +17,15 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-PrismarineBlock::Variant* PrismarineBlock::Variant::ROUGH =
-    new Variant(0, L"prismarine", IDS_TILE_PRISMARINE, IDS_DESC_PRISMARINE, L"prismarine_rough");
-PrismarineBlock::Variant* PrismarineBlock::Variant::BRICKS =
-    new Variant(1, L"prismarine_bricks", IDS_TILE_BRICKS_PRISMARINE, IDS_DESC_BRICKS_PRISMARINE, L"prismarine_bricks");
-PrismarineBlock::Variant* PrismarineBlock::Variant::DARK =
-    new Variant(2, L"dark_prismarine", IDS_TILE_PRISMARINE_DARK, IDS_DESC_PRISMARINE_DARK, L"prismarine_dark");
+PrismarineBlock::Variant* PrismarineBlock::Variant::ROUGH = new Variant(0, L"prismarine", IDS_TILE_PRISMARINE,
+                                                                        IDS_DESC_PRISMARINE, L"prismarine_rough");
+PrismarineBlock::Variant* PrismarineBlock::Variant::BRICKS = new Variant(
+    1, L"prismarine_bricks", IDS_TILE_BRICKS_PRISMARINE, IDS_DESC_BRICKS_PRISMARINE, L"prismarine_bricks");
+PrismarineBlock::Variant* PrismarineBlock::Variant::DARK = new Variant(2, L"dark_prismarine", IDS_TILE_PRISMARINE_DARK,
+                                                                       IDS_DESC_PRISMARINE_DARK, L"prismarine_dark");
 
 static PrismarineBlock::Variant* gPrismarineVariants[3] = {
-    PrismarineBlock::Variant::ROUGH,
-    PrismarineBlock::Variant::BRICKS,
-    PrismarineBlock::Variant::DARK
-};
+    PrismarineBlock::Variant::ROUGH, PrismarineBlock::Variant::BRICKS, PrismarineBlock::Variant::DARK};
 EnumProperty<PrismarineBlock::Variant*>* PrismarineBlock::VARIANT = NULL;
 static Predicate<PrismarineBlock::Variant*>* gPrismarineVariantPredicate =
     new Predicates<PrismarineBlock::Variant*>::ConstantPredicate(true);
@@ -36,8 +33,8 @@ int PrismarineBlock::ROUGH_DATA;
 int PrismarineBlock::BRICKS_DATA;
 int PrismarineBlock::DARK_DATA;
 
-PrismarineBlock::Variant::Variant(int data, const std::wstring& name, int nameId,
-                                  int descriptionId, const std::wstring& serializedName)
+PrismarineBlock::Variant::Variant(int data, const std::wstring& name, int nameId, int descriptionId,
+                                  const std::wstring& serializedName)
 {
     mData = data;
     mName = name;
@@ -114,8 +111,7 @@ void PrismarineBlock::blockStaticCtor()
     DARK_DATA = Variant::DARK->getData();
 }
 
-PrismarineBlock::PrismarineBlock()
-    : Block(Material::STONE)
+PrismarineBlock::PrismarineBlock() : Block(Material::STONE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::ROUGH));
@@ -128,9 +124,7 @@ std::wstring PrismarineBlock::getName()
 
 const MaterialColor* PrismarineBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    return state->getValue(VARIANT) == Variant::ROUGH
-        ? MaterialColor::COLOR_CYAN
-        : MaterialColor::DIAMOND;
+    return state->getValue(VARIANT) == Variant::ROUGH ? MaterialColor::COLOR_CYAN : MaterialColor::DIAMOND;
 }
 
 int PrismarineBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -145,7 +139,7 @@ int PrismarineBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* PrismarineBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { VARIANT };
+    static const Property* properties[] = {VARIANT};
     return new BlockStateDefinition(this, properties, 1);
 }
 

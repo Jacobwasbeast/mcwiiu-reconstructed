@@ -20,26 +20,19 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<int>* CoralBlock::VARIANT =
-    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 5));
-AbstractProperty<bool>* CoralBlock::DEAD =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"dead_coral"));
+AbstractProperty<int>* CoralBlock::VARIANT = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"variant", 0, 5));
+AbstractProperty<bool>* CoralBlock::DEAD = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"dead_coral"));
 
-static std::wstring ICON_NAMES[10] = {
-    L"coral_blue",      L"coral_pink",      L"coral_purple",      L"coral_red",      L"coral_yellow",
-    L"coral_blue_dead", L"coral_pink_dead", L"coral_purple_dead", L"coral_red_dead", L"coral_yellow_dead"
-};
+static std::wstring ICON_NAMES[10] = {L"coral_blue",     L"coral_pink",       L"coral_purple",    L"coral_red",
+                                      L"coral_yellow",   L"coral_blue_dead",  L"coral_pink_dead", L"coral_purple_dead",
+                                      L"coral_red_dead", L"coral_yellow_dead"};
 
-static const unsigned int LIVE_DESCRIPTION_IDS[4] = {
-    0x3513E921U, 0xF7EF6A83U, 0x259DE196U, 0x919D90B9U
-};
+static const unsigned int LIVE_DESCRIPTION_IDS[4] = {0x3513E921U, 0xF7EF6A83U, 0x259DE196U, 0x919D90B9U};
 
-static const int DEAD_DESCRIPTION_IDS[5] = {
-    0x323B09A8U, 0xE8C04B12U, 0xCDCA46E0U, 0x30F2646DU, 0xEE954CBAU
-};
+static const int DEAD_DESCRIPTION_IDS[5] = {0x323B09A8U, 0xE8C04B12U, 0xCDCA46E0U, 0x30F2646DU, 0xEE954CBAU};
 
-CoralBlock::CoralBlock()
-    : Block(Material::STONE)
+CoralBlock::CoralBlock() : Block(Material::STONE)
 {
     DerivedInit();
     memset(mIcons, 0, sizeof(mIcons));
@@ -175,7 +168,7 @@ void CoralBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 
 BlockStateDefinition* CoralBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { DEAD, VARIANT };
+    static const Property* properties[] = {DEAD, VARIANT};
     return new BlockStateDefinition(this, properties, 2);
 }
 

@@ -13,14 +13,10 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-RemoveBlockGoal::RemoveBlockGoal(Block* block, PathfinderMob* mob,
-                                 double speedModifier, int searchRange,
-                                 int verticalSearchStart,
-                                 double maxStayDistance,
-                                 const SoundEvent* startSound,
+RemoveBlockGoal::RemoveBlockGoal(Block* block, PathfinderMob* mob, double speedModifier, int searchRange,
+                                 int verticalSearchStart, double maxStayDistance, const SoundEvent* startSound,
                                  const SoundEvent* endSound)
-    : MoveToBlockGoal(mob, speedModifier, searchRange, verticalSearchStart,
-                      maxStayDistance),
+    : MoveToBlockGoal(mob, speedModifier, searchRange, verticalSearchStart, maxStayDistance),
       mStartSound(startSound),
       mEndSound(endSound)
 {
@@ -34,8 +30,7 @@ RemoveBlockGoal::~RemoveBlockGoal()
 
 bool RemoveBlockGoal::canUse()
 {
-    if (!mMob->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) ||
-        mMob->getRandom()->nextInt(20) != 0)
+    if (!mMob->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) || mMob->getRandom()->nextInt(20) != 0)
     {
         return false;
     }
@@ -113,16 +108,15 @@ void RemoveBlockGoal::tick()
             {
                 if (!level->mIsClientSide)
                 {
-                    int params[2] = { Block::getId(mBlock), 0 };
+                    int params[2] = {Block::getId(mBlock), 0};
                     if (mStartSound != NULL && mTicks % 6 == 0)
                     {
                         mMob->playSound(mStartSound, 0.65f, 1.0f);
                     }
-                    static_cast<ServerLevel*>(level)->sendParticles(PARTICLE_ICON_CRACK, position->x + 0.5, position->y + 0.7,
-                                                                    position->z + 0.5, 3, (random->nextFloat() - 0.5) * 0.08,
-                                                                    (random->nextFloat() - 0.5) * 0.08,
-                                                                    (random->nextFloat() - 0.5) * 0.08, 0.15f,
-                                                                    arrayWithLength<int>(params, 2));
+                    static_cast<ServerLevel*>(level)->sendParticles(
+                        PARTICLE_ICON_CRACK, position->x + 0.5, position->y + 0.7, position->z + 0.5, 3,
+                        (random->nextFloat() - 0.5) * 0.08, (random->nextFloat() - 0.5) * 0.08,
+                        (random->nextFloat() - 0.5) * 0.08, 0.15f, arrayWithLength<int>(params, 2));
                 }
 
                 if (mTicks > 60)
@@ -139,9 +133,9 @@ void RemoveBlockGoal::tick()
                             double xDist = random->nextGaussian() * 0.02;
                             double yDist = random->nextGaussian() * 0.02;
                             double zDist = random->nextGaussian() * 0.02;
-                            static_cast<ServerLevel*>(level)->sendParticles(PARTICLE_EXPLODE, position->x + 0.5, position->y,
-                                                                            position->z + 0.5, 1, xDist, yDist,
-                                                                            zDist, 0.15f, arrayWithLength<int>());
+                            static_cast<ServerLevel*>(level)->sendParticles(
+                                PARTICLE_EXPLODE, position->x + 0.5, position->y, position->z + 0.5, 1, xDist, yDist,
+                                zDist, 0.15f, arrayWithLength<int>());
                         }
                     }
                 }
@@ -161,8 +155,7 @@ bool RemoveBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
     return level->getBlock(pos) == mBlock;
 }
 
-bool RemoveBlockGoal::isValidTargetArea(Level* level, const BlockPos& from,
-                                        const BlockPos& to)
+bool RemoveBlockGoal::isValidTargetArea(Level* level, const BlockPos& from, const BlockPos& to)
 {
     int blockId = Block::getId(mBlock);
     BlockPos end = to.offset(4, 4, 4);

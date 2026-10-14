@@ -12,7 +12,10 @@ public:
     class Half : public StringRepresentable
     {
     public:
-        enum { HALF_COUNT = 2 };
+        enum
+        {
+            HALF_COUNT = 2
+        };
         Half(const std::wstring& name);
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
@@ -26,15 +29,21 @@ public:
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isPathfindable(LevelSource* levelSource, const BlockPos& pos);
     virtual bool isSlabBlock();
-    virtual bool liquidCanFlowIntoFromDirection(LevelSource* levelSource, const BlockPos& pos, const Direction* direction) const;
+    virtual bool liquidCanFlowIntoFromDirection(LevelSource* levelSource, const BlockPos& pos,
+                                                const Direction* direction) const;
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                  const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual int getResourceCount(Random* random);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     virtual bool isSilkTouchable();
-    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state) = 0;
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
+                                                            const BlockState* state) = 0;
     virtual int getAuxName(int auxValue) = 0;
     virtual bool isFullSize() const = 0;
     virtual Property* getTypeProperty() = 0;

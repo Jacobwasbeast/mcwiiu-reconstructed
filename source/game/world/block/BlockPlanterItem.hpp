@@ -18,15 +18,10 @@ class BlockPlanterItem : public Item
 public:
     BlockPlanterItem(Block* block);
 
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                       Level* level,
-                                                       const BlockPos& pos,
-                                                       InteractionHand::EInteractionHand hand,
-                                                       const Direction* direction,
-                                                       float hitX,
-                                                       float hitY,
-                                                       float hitZ,
-                                                       bool simulate);
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
+                                                        bool simulate);
 
 private:
     Block* mBlock;

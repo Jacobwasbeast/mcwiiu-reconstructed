@@ -24,29 +24,19 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-std::wstring LogBlock::TEXTURE_NAMES[6] = {
-    std::wstring(L"oak"),
-    std::wstring(L"spruce"),
-    std::wstring(L"birch"),
-    std::wstring(L"jungle"),
-    std::wstring(L"acacia"),
-    std::wstring(L"big_oak")
-};
-LogBlock::LogAxis* LogBlock::LogAxis::values[4] = {
-    new LogBlock::LogAxis(L"x"),
-    new LogBlock::LogAxis(L"y"),
-    new LogBlock::LogAxis(L"z"),
-    new LogBlock::LogAxis(L"none")
-};
+std::wstring LogBlock::TEXTURE_NAMES[6] = {std::wstring(L"oak"),    std::wstring(L"spruce"), std::wstring(L"birch"),
+                                           std::wstring(L"jungle"), std::wstring(L"acacia"), std::wstring(L"big_oak")};
+LogBlock::LogAxis* LogBlock::LogAxis::values[4] = {new LogBlock::LogAxis(L"x"), new LogBlock::LogAxis(L"y"),
+                                                   new LogBlock::LogAxis(L"z"), new LogBlock::LogAxis(L"none")};
 LogBlock::LogAxis* LogBlock::X = LogBlock::LogAxis::values[0];
 LogBlock::LogAxis* LogBlock::Y = LogBlock::LogAxis::values[1];
 LogBlock::LogAxis* LogBlock::Z = LogBlock::LogAxis::values[2];
 LogBlock::LogAxis* LogBlock::NONE = LogBlock::LogAxis::values[3];
 EnumProperty<LogBlock::LogAxis*>* LogBlock::AXIS = NULL;
-static const int gLogDescriptionIds[6] = { IDS_TILE_LOG_OAK, IDS_TILE_LOG_SPRUCE, IDS_TILE_LOG_BIRCH, IDS_TILE_LOG_JUNGLE, IDS_TILE_LOG_ACACIA, IDS_TILE_LOG_DARK_OAK };
+static const int gLogDescriptionIds[6] = {IDS_TILE_LOG_OAK,    IDS_TILE_LOG_SPRUCE, IDS_TILE_LOG_BIRCH,
+                                          IDS_TILE_LOG_JUNGLE, IDS_TILE_LOG_ACACIA, IDS_TILE_LOG_DARK_OAK};
 
-LogBlock::LogAxis::LogAxis(const std::wstring& name)
-    : mName(name)
+LogBlock::LogAxis::LogAxis(const std::wstring& name) : mName(name)
 {
 }
 
@@ -114,8 +104,7 @@ void LogBlock::blockStaticCtor()
     AXIS = axis;
 }
 
-LogBlock::LogBlock()
-    : RotatedPillarBlock(Material::WOOD)
+LogBlock::LogBlock() : RotatedPillarBlock(Material::WOOD)
 {
     setDestroyTime(2.0f);
     setSoundType(SoundType::WOOD);
@@ -131,15 +120,19 @@ void LogBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* sta
     {
         const BlockPos neighbour = *positions->next();
         const BlockState* neighbourState = level->getBlockState(neighbour);
-        if (neighbourState->getBlock()->mMaterial == Material::LEAVES && !neighbourState->getValue(LeafBlock::CHECK_DECAY))
+        if (neighbourState->getBlock()->mMaterial == Material::LEAVES
+            && !neighbourState->getValue(LeafBlock::CHECK_DECAY))
         {
-            level->setBlock(neighbour, neighbourState->setValue(LeafBlock::CHECK_DECAY, true), Block::UPDATE_INVISIBLE, false);
+            level->setBlock(neighbour, neighbourState->setValue(LeafBlock::CHECK_DECAY, true), Block::UPDATE_INVISIBLE,
+                            false);
         }
     }
     delete positions;
 }
 
-const BlockState* LogBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
+const BlockState* LogBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                 float hitX, float hitY, float hitZ, int auxValue,
+                                                 boost::shared_ptr<LivingEntity> placer)
 {
     return getBlockState(auxValue)->setValue(AXIS, LogAxis::fromAxis(direction->getAxis()));
 }
@@ -218,7 +211,10 @@ const BlockState* LogBlock::getStrippedBlock(const BlockState* state)
 unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     unsigned int id = Item::getId(tooltipData.m_pItemInstance->getItem());
-    if ((id == 0x102 || id == 0x10f || id == 0x113 || id == 0x117 || id == 0x11e) && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && !Minecraft::InMiniGame(eMiniGameId_Any, true)) return IDS_TOOLTIPS_STRIP;
+    if ((id == 0x102 || id == 0x10f || id == 0x113 || id == 0x117 || id == 0x11e)
+        && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
+        && !Minecraft::InMiniGame(eMiniGameId_Any, true))
+        return IDS_TOOLTIPS_STRIP;
     return Block::GetInteractTooltip(tooltipData);
 }
 

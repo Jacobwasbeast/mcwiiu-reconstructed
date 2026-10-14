@@ -35,16 +35,18 @@ public:
     virtual bool isSolidRender(const BlockState* state) const;
     virtual bool isPossibleToRespawnInThis();
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
-    not_null_ptr<ItemInstance> getItemInstanceFromBlockEntity(Level* level, const BlockPos& pos, const BlockState* state);
+    not_null_ptr<ItemInstance> getItemInstanceFromBlockEntity(Level* level, const BlockPos& pos,
+                                                              const BlockState* state);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus);
+    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                int lootBonus);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);
     virtual void playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
                                const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                not_null_ptr<ItemInstance> tool);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                               const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
 };
 
 #endif

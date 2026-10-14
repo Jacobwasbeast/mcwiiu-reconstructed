@@ -46,29 +46,27 @@ public:
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void blockStaticCtor();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual void addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos,
-                                   const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
-                                   boost::shared_ptr<Entity> entity, bool isActualState);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos,
-                                                    const Direction* direction, float hitX, float hitY,
-                                                    float hitZ, int auxValue,
-                                                    boost::shared_ptr<LivingEntity> placer);
+    virtual void addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,
+                                   std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity,
+                                   bool isActualState);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     virtual void setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                             boost::shared_ptr<LivingEntity> placer,
-                             not_null_ptr<ItemInstance> itemInstance);
+                             boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance);
     virtual bool isTopSolidBlocking(const BlockState* state);
     void checkPoweredState(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                  Block* block, const BlockPos& fromPos);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isSolidRender(const BlockState* state) const;
-    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource,
-                                  const BlockPos& pos, const Direction* direction);
+    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                  const Direction* direction);
     static const Direction* getAttachedFace(int data);
     static bool isTurnedOn(int data);
     virtual bool hasAnalogOutputSignal(const BlockState* state);
@@ -80,15 +78,14 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                               const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
     static TextureAtlasSprite* getTexture(const std::wstring& name);
     virtual std::wstring getTileItemIconName();
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
-    virtual bool canProvideSupport(const BlockState* state, const Direction* direction,
-                                   EBlockSupportType supportType);
+    virtual bool canProvideSupport(const BlockState* state, const Direction* direction, EBlockSupportType supportType);
 
 private:
     TextureAtlasSprite* mSideTexture;

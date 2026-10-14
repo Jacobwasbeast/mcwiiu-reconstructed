@@ -16,11 +16,10 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-AbstractProperty<int>* EndGatewayBlock::PORTAL_NUMBER =
-    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"fj_portal_number", 0, 15));
+AbstractProperty<int>* EndGatewayBlock::PORTAL_NUMBER = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"fj_portal_number", 0, 15));
 
-EndGatewayBlock::EndGatewayBlock(Material* material)
-    : BaseEntityBlock(material)
+EndGatewayBlock::EndGatewayBlock(Material* material) : BaseEntityBlock(material)
 {
     DerivedInit();
     setLightEmission(1.0f);
@@ -33,8 +32,8 @@ boost::shared_ptr<BlockEntity> EndGatewayBlock::newBlockEntity(Level* level, int
     return entity;
 }
 
-bool EndGatewayBlock::shouldRenderFace(const BlockState*, LevelSource* levelSource,
-                                       const BlockPos& pos, const Direction* direction)
+bool EndGatewayBlock::shouldRenderFace(const BlockState*, LevelSource* levelSource, const BlockPos& pos,
+                                       const Direction* direction)
 {
     const BlockState* state = levelSource->getBlockState(pos.relative(direction));
     const Block* block = state->getBlock();
@@ -88,8 +87,7 @@ void EndGatewayBlock::animateTick(const BlockState*, Level* level, const BlockPo
             x = static_cast<double>(pos.x) + 0.5 + 0.25 * sign;
             velocityX = random->nextFloat() * 2.0f * sign;
         }
-        level->addParticle(PARTICLE_PORTAL, x, y, z, velocityX, velocityY, velocityZ,
-                           arrayWithLength<int>());
+        level->addParticle(PARTICLE_PORTAL, x, y, z, velocityX, velocityY, velocityZ, arrayWithLength<int>());
     }
 }
 
@@ -125,7 +123,7 @@ bool EndGatewayBlock::canContainLiquid(const BlockState*) const
 
 BlockStateDefinition* EndGatewayBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { PORTAL_NUMBER };
+    static const Property* properties[] = {PORTAL_NUMBER};
     return new BlockStateDefinition(this, properties, 1);
 }
 

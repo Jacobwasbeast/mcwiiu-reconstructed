@@ -35,7 +35,8 @@
 
 class Block;
 
-class Blocks {
+class Blocks
+{
 public:
     static void staticInit();
 

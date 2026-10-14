@@ -32,8 +32,7 @@ public:
     virtual std::wstring getCustomName();
     virtual int getMaxStackSize();
     virtual int getTypeId(bool large);
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
 
     virtual void setChanged();
     virtual boost::shared_ptr<BlockEntity> clone();

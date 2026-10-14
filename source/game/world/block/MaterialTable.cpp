@@ -28,18 +28,22 @@ void MaterialTable::resetMaterials()
     mMaterialShaders[eMinecraftEntityMaterial_BlazeHead] = getMaterialShadersFromDataName(L"entity_emissive_alpha");
     mMaterialShaders[eMinecraftEntityMaterial_Drowned] = getMaterialShadersFromDataName(L"entity_emissive_alpha");
     mMaterialShaders[eMinecraftEntityMaterial_Enderman] = getMaterialShadersFromDataName(L"entity_emissive_alpha");
-    mMaterialShaders[eMinecraftEntityMaterial_EndermanInvisible] = getMaterialShadersFromDataName(L"entity_emissive_alpha_only");
+    mMaterialShaders[eMinecraftEntityMaterial_EndermanInvisible] = getMaterialShadersFromDataName(
+        L"entity_emissive_alpha_only");
     mMaterialShaders[eMinecraftEntityMaterial_Ghast] = getMaterialShadersFromDataName(L"entity_emissive_alpha");
     mMaterialShaders[eMinecraftEntityMaterial_Guardian] = getMaterialShadersFromDataName(L"entity_alphatest");
     mMaterialShaders[eMinecraftEntityMaterial_MagmaCube] = getMaterialShadersFromDataName(L"entity_emissive_alpha");
     mMaterialShaders[eMinecraftEntityMaterial_ZombiePigman] = getMaterialShadersFromDataName(L"entity");
     mMaterialShaders[eMinecraftEntityMaterial_Phantom] = getMaterialShadersFromDataName(L"entity_emissive_alpha");
-    mMaterialShaders[eMinecraftEntityMaterial_PhantomInvisible] = getMaterialShadersFromDataName(L"entity_emissive_alpha_only");
+    mMaterialShaders[eMinecraftEntityMaterial_PhantomInvisible] = getMaterialShadersFromDataName(
+        L"entity_emissive_alpha_only");
     mMaterialShaders[eMinecraftEntityMaterial_Sheep] = getMaterialShadersFromDataName(L"entity_alphatest_change_color");
-    mMaterialShaders[eMinecraftEntityMaterial_Shulker] = getMaterialShadersFromDataName(L"entity_alphatest_change_color");
+    mMaterialShaders[eMinecraftEntityMaterial_Shulker] = getMaterialShadersFromDataName(
+        L"entity_alphatest_change_color");
     mMaterialShaders[eMinecraftEntityMaterial_Skeleton] = getMaterialShadersFromDataName(L"entity_alphatest");
     mMaterialShaders[eMinecraftEntityMaterial_Spider] = getMaterialShadersFromDataName(L"entity_emissive_alpha");
-    mMaterialShaders[eMinecraftEntityMaterial_SpiderInvisible] = getMaterialShadersFromDataName(L"entity_emissive_alpha_only");
+    mMaterialShaders[eMinecraftEntityMaterial_SpiderInvisible] = getMaterialShadersFromDataName(
+        L"entity_emissive_alpha_only");
     mMaterialShaders[eMinecraftEntityMaterial_Stray] = getMaterialShadersFromDataName(L"entity_alphatest");
     mMaterialShaders[eMinecraftEntityMaterial_IronGolem] = getMaterialShadersFromDataName(L"entity_alphatest");
     mMaterialShaders[eMinecraftEntityMaterial_WitherBoss] = getMaterialShadersFromDataName(L"entity_alphatest");
@@ -100,7 +104,8 @@ void MaterialTable::loadMaterialData(unsigned char* materialData, unsigned int m
     byteStream.reset();
 }
 
-MaterialTable::MaterialTable(const MaterialTable& materialTable, unsigned char* materialData, unsigned int materialDataLength)
+MaterialTable::MaterialTable(const MaterialTable& materialTable, unsigned char* materialData,
+                             unsigned int materialDataLength)
 {
     memcpy(mMaterialShaders, materialTable.mMaterialShaders, sizeof(mMaterialShaders));
 

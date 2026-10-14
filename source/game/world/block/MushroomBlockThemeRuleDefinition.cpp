@@ -6,8 +6,7 @@
 
 static Block* sDefaultMushroomBlock = Blocks::red_mushroom_block;
 
-MushroomBlockThemeRuleDefinition::MushroomBlockThemeRuleDefinition()
-    : mBlock(sDefaultMushroomBlock)
+MushroomBlockThemeRuleDefinition::MushroomBlockThemeRuleDefinition() : mBlock(sDefaultMushroomBlock)
 {
     addBlockAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlock);
 }
@@ -20,5 +19,6 @@ ConsoleGameRules::EGameRuleType MushroomBlockThemeRuleDefinition::getActionType(
 LayerTheme* MushroomBlockThemeRuleDefinition::Generate() const
 {
     HugeMushroomBlock* mushroomBlock = dynamic_cast<HugeMushroomBlock*>(mBlock);
-    return new MushroomBlockLayerTheme(mushroomBlock != NULL ? mushroomBlock : static_cast<HugeMushroomBlock*>(sDefaultMushroomBlock));
+    return new MushroomBlockLayerTheme(mushroomBlock != NULL ? mushroomBlock
+                                                             : static_cast<HugeMushroomBlock*>(sDefaultMushroomBlock));
 }

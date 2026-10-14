@@ -49,17 +49,16 @@ static const AABB* gStairBottomSouthEastAABB = AABB::newPermanent(0.5, 0.0, 0.5,
 StairBlock::Half* StairBlock::Half::TOP = new StairBlock::Half(L"top");
 StairBlock::Half* StairBlock::Half::BOTTOM = new StairBlock::Half(L"bottom");
 static const int STAIR_OPAQUE_LIGHT_BLOCK = 0xff;
-StairBlock::Half* gStairHalfValues[2] = { StairBlock::Half::TOP, StairBlock::Half::BOTTOM };
+StairBlock::Half* gStairHalfValues[2] = {StairBlock::Half::TOP, StairBlock::Half::BOTTOM};
 static StairBlock::Shape* gStairStraight = new StairBlock::Shape(L"straight", 0);
 static StairBlock::Shape* gStairInnerLeft = new StairBlock::Shape(L"inner_left", 1);
 static StairBlock::Shape* gStairInnerRight = new StairBlock::Shape(L"inner_right", 2);
 static StairBlock::Shape* gStairOuterLeft = new StairBlock::Shape(L"outer_left", 3);
 static StairBlock::Shape* gStairOuterRight = new StairBlock::Shape(L"outer_right", 4);
-StairBlock::Shape* gStairShapeValues[5] = { gStairStraight, gStairInnerLeft, gStairInnerRight, gStairOuterLeft,
-                                                   gStairOuterRight };
+StairBlock::Shape* gStairShapeValues[5] = {gStairStraight, gStairInnerLeft, gStairInnerRight, gStairOuterLeft,
+                                           gStairOuterRight};
 
-StairBlock::Half::Half(const std::wstring& name)
-    : mName(name)
+StairBlock::Half::Half(const std::wstring& name) : mName(name)
 {
 }
 
@@ -73,8 +72,7 @@ std::wstring StairBlock::Half::getSerializedName() const
     return mName;
 }
 
-StairBlock::Shape::Shape(const std::wstring& name, int id)
-    : mName(name), mId(id)
+StairBlock::Shape::Shape(const std::wstring& name, int id) : mName(name), mId(id)
 {
 }
 
@@ -120,13 +118,15 @@ void StairBlock::blockStaticCtor()
     }
 }
 
-StairBlock::StairBlock(const BlockState* modelState)
-    : Block(modelState->getBlock()->getCraftingMaterial())
+StairBlock::StairBlock(const BlockState* modelState) : Block(modelState->getBlock()->getCraftingMaterial())
 {
     mBlockType = static_cast<EBlockType>(EBLOCK_TYPE_NONE + 7);
     DerivedInit();
 
-    const BlockState* state = mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(HALF, Half::BOTTOM)->setValue(SHAPE, gStairStraight);
+    const BlockState* state = mStateDefinition->any()
+                                  ->setValue(FACING, Direction::NORTH)
+                                  ->setValue(HALF, Half::BOTTOM)
+                                  ->setValue(SHAPE, gStairStraight);
     registerDefaultState(state);
 
     mModelBlock = modelState->getBlock();
@@ -139,7 +139,8 @@ StairBlock::StairBlock(const BlockState* modelState)
     setLightBlock(STAIR_OPAQUE_LIGHT_BLOCK);
 }
 
-void StairBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* box, std::vector<AABB*>* result, boost::shared_ptr<Entity> entity, bool actual)
+void StairBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* box,
+                                   std::vector<AABB*>* result, boost::shared_ptr<Entity> entity, bool actual)
 {
     if (!actual)
     {
@@ -207,13 +208,14 @@ const AABB* StairBlock::getCornerAABB(const BlockState* state)
     }
 }
 
-EBlockFaceShape StairBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
+EBlockFaceShape StairBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction)
 {
     state = fillVirtualBlockStateProperties(state, levelSource, pos);
     if (direction->getAxis() == Direction::Axis::Y)
     {
         return (direction == Direction::UP) == (state->getValue(HALF) == Half::TOP) ? BLOCK_FACE_SOLID
-                                                                                     : BLOCK_FACE_UNDEFINED;
+                                                                                    : BLOCK_FACE_UNDEFINED;
     }
 
     Shape* shape = state->getValue(SHAPE);
@@ -337,10 +339,11 @@ void StairBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
     mModelBlock->tick(level, pos, state, random);
 }
 
-const arrayWithLength<const AABB*>* StairBlock::getShapes(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const arrayWithLength<const AABB*>* StairBlock::getShapes(const BlockState* state, LevelSource* levelSource,
+                                                          const BlockPos& pos)
 {
-    arrayWithLength<const AABB*>* shapes
-        = &static_cast<Block::ThreadStorage*>(TlsGetValue(THREAD_STORAGE_INDEX))->mShapes;
+    arrayWithLength<const AABB*>* shapes =
+        &static_cast<Block::ThreadStorage*>(TlsGetValue(THREAD_STORAGE_INDEX))->mShapes;
 
     if (state->getValue(HALF) == Half::TOP)
     {
@@ -373,7 +376,8 @@ void StairBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* st
     mModelBlock->onPlace(level, pos, state);
 }
 
-bool StairBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction*, float, float, float, bool client)
+bool StairBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction*, float, float, float, bool client)
 {
     if (client)
     {
@@ -398,7 +402,9 @@ const MaterialColor* StairBlock::getMapColor(const BlockState*, LevelSource* sou
     return mModelBlock->getMapColor(mModelState, source, pos);
 }
 
-const BlockState* StairBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
+const BlockState* StairBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer)
 {
     const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer);
     state = state->setValue(FACING, placer->getDirection())->setValue(SHAPE, gStairStraight);
@@ -411,7 +417,9 @@ const BlockState* StairBlock::getStateForPlacement(Level* level, const BlockPos&
     return state->setValue(HALF, Half::BOTTOM);
 }
 
-bool StairBlock::_neighboringBlockCheckForCreatingBarrierInDirection(LevelSource* source, const BlockPos& pos, const BlockState* state, const Direction* direction) const
+bool StairBlock::_neighboringBlockCheckForCreatingBarrierInDirection(LevelSource* source, const BlockPos& pos,
+                                                                     const BlockState* state,
+                                                                     const Direction* direction) const
 {
     const BlockState* neighbor = source->getBlockState(pos);
     if (state->getBlock() == neighbor->getBlock())
@@ -425,7 +433,8 @@ bool StairBlock::_neighboringBlockCheckForCreatingBarrierInDirection(LevelSource
     return false;
 }
 
-bool StairBlock::liquidCanFlowIntoFromDirection(LevelSource* source, const BlockPos& pos, const Direction* direction) const
+bool StairBlock::liquidCanFlowIntoFromDirection(LevelSource* source, const BlockPos& pos,
+                                                const Direction* direction) const
 {
     const BlockState* state = source->getBlockState(pos);
     if (direction == Direction::UP || direction == Direction::DOWN)
@@ -562,8 +571,8 @@ bool StairBlock::liquidCanFlowIntoFromDirection(LevelSource* source, const Block
 HitResult* StairBlock::clip(const BlockState* state, Level* level, const BlockPos& pos, Vec3* from, Vec3* to)
 {
     std::vector<HitResult*> hits;
-    const arrayWithLength<const AABB*>* shapes
-        = getShapes(fillVirtualBlockStateProperties(state, level, pos), level, pos);
+    const arrayWithLength<const AABB*>* shapes = getShapes(fillVirtualBlockStateProperties(state, level, pos), level,
+                                                           pos);
     for (unsigned int i = 0; i < shapes->length; ++i)
     {
         if (shapes->data[i] != NULL)
@@ -614,7 +623,8 @@ bool StairBlock::isStairs(const BlockState* state)
     return dynamic_cast<StairBlock*>(state->getBlock()) != NULL;
 }
 
-bool StairBlock::canTakeShape(const BlockState* state, LevelSource* source, const BlockPos& pos, const Direction* direction)
+bool StairBlock::canTakeShape(const BlockState* state, LevelSource* source, const BlockPos& pos,
+                              const Direction* direction)
 {
     const BlockState* neighbor = source->getBlockState(pos.relative(direction));
     bool matches = false;
@@ -655,8 +665,7 @@ StairBlock::Shape* StairBlock::getStairsShape(const BlockState* state, LevelSour
     if (isStairs(back) && state->getValue(HALF) == back->getValue(HALF))
     {
         const Direction* backFacing = back->getValue(FACING);
-        if (backFacing->getAxis() != state->getValue(FACING)->getAxis()
-            && canTakeShape(state, source, pos, backFacing))
+        if (backFacing->getAxis() != state->getValue(FACING)->getAxis() && canTakeShape(state, source, pos, backFacing))
         {
             if (backFacing == facing->getCounterClockWise())
             {
@@ -670,7 +679,8 @@ StairBlock::Shape* StairBlock::getStairsShape(const BlockState* state, LevelSour
     return gStairStraight;
 }
 
-const BlockState* StairBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* source, const BlockPos& pos)
+const BlockState* StairBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* source,
+                                                              const BlockPos& pos)
 {
     return state->setValue(SHAPE, getStairsShape(state, source, pos));
 }
@@ -784,7 +794,7 @@ const BlockState* StairBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* StairBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING, HALF, SHAPE };
+    static const Property* properties[] = {FACING, HALF, SHAPE};
     return new BlockStateDefinition(this, properties, 3);
 }
 

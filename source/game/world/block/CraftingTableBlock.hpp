@@ -20,7 +20,7 @@ public:
         CraftingTable(Level* level, const BlockPos& pos);
 
         virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                                   boost::shared_ptr<Player> player);
+                                                  boost::shared_ptr<Player> player);
         virtual int getTypeId(bool large);
         virtual std::wstring getName();
         virtual std::wstring getCustomName();
@@ -34,9 +34,9 @@ public:
 
     CraftingTableBlock();
     virtual bool TestUse();
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);

@@ -25,7 +25,10 @@ public:
         Random* random;
 
         _LiquidTickData(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
-            : level(level), pos(pos), state(state), random(random)
+            : level(level),
+              pos(pos),
+              state(state),
+              random(random)
         {
         }
     };
@@ -34,13 +37,11 @@ public:
 
     void setStatic(Level* level, const BlockPos& pos, bool extraLayer);
     int getHighest(Level* level, const BlockPos& pos, int currentHighest);
-    bool _isWaterBlocking(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
-                          const Direction* direction);
-    bool _canSpreadTo(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
-                      const Direction* direction);
+    bool _isWaterBlocking(Level* level, const BlockPos& pos, const BlockPos& sourcePos, const Direction* direction);
+    bool _canSpreadTo(Level* level, const BlockPos& pos, const BlockPos& sourcePos, const Direction* direction);
     void _spread(Level* level, const BlockPos& pos, int depth, bool extraLayer);
-    void _trySpreadTo(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
-                      const Direction* direction, int depth);
+    void _trySpreadTo(Level* level, const BlockPos& pos, const BlockPos& sourcePos, const Direction* direction,
+                      int depth);
     int _getSlopeDistance(Level* level, const BlockPos& pos, int distance, int directionIndex);
     void _getSpread(Level* level, const BlockPos& pos, bool (&spread)[4]);
     void maintick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);

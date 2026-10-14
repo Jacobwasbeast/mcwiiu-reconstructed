@@ -1,7 +1,6 @@
 #include "game/world/block/FullWoodSlabBlock.hpp"
 
-FullWoodSlabBlock::FullWoodSlabBlock()
-    : WoodSlabBlock()
+FullWoodSlabBlock::FullWoodSlabBlock() : WoodSlabBlock()
 {
     WoodSlabBlock::DerivedInit();
 }

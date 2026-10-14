@@ -24,8 +24,8 @@ PrismarineSlabBlock::Variant* PrismarineSlabBlock::Variant::DARK = NULL;
 static PrismarineSlabBlock::Variant* gPrismarineSlabVariants[3];
 EnumProperty<PrismarineSlabBlock::Variant*>* PrismarineSlabBlock::VARIANT = NULL;
 
-PrismarineSlabBlock::Variant::Variant(int data, const std::wstring& name, int nameId,
-                                      int descriptionId, const std::wstring& serializedName)
+PrismarineSlabBlock::Variant::Variant(int data, const std::wstring& name, int nameId, int descriptionId,
+                                      const std::wstring& serializedName)
 {
     mData = data;
     mName = name;
@@ -70,9 +70,12 @@ std::wstring PrismarineSlabBlock::Variant::getSerializedName() const
 
 void PrismarineSlabBlock::blockStaticCtor()
 {
-    Variant::ROUGH = new Variant(0, L"prismarine_slab", IDS_TILE_SLAB_PRISMARINE, IDS_DESC_SLAB_PRISMARINE, L"prismarine_rough");
-    Variant::BRICKS = new Variant(1, L"prismarine_bricks_slab", IDS_TILE_SLAB_PRISMARINE_BRICKS, IDS_DESC_SLAB_PRISMARINE, L"prismarine_bricks");
-    Variant::DARK = new Variant(2, L"dark_prismarine_slab", IDS_TILE_SLAB_DARK_PRISMARINE, IDS_DESC_SLAB_PRISMARINE, L"prismarine_dark");
+    Variant::ROUGH = new Variant(0, L"prismarine_slab", IDS_TILE_SLAB_PRISMARINE, IDS_DESC_SLAB_PRISMARINE,
+                                 L"prismarine_rough");
+    Variant::BRICKS = new Variant(1, L"prismarine_bricks_slab", IDS_TILE_SLAB_PRISMARINE_BRICKS,
+                                  IDS_DESC_SLAB_PRISMARINE, L"prismarine_bricks");
+    Variant::DARK = new Variant(2, L"dark_prismarine_slab", IDS_TILE_SLAB_DARK_PRISMARINE, IDS_DESC_SLAB_PRISMARINE,
+                                L"prismarine_dark");
     gPrismarineSlabVariants[0] = Variant::ROUGH;
     gPrismarineSlabVariants[1] = Variant::BRICKS;
     gPrismarineSlabVariants[2] = Variant::DARK;
@@ -90,8 +93,7 @@ void PrismarineSlabBlock::blockStaticCtor()
     VARIANT = variant;
 }
 
-PrismarineSlabBlock::PrismarineSlabBlock()
-    : HalfSlabBlock(Material::STONE)
+PrismarineSlabBlock::PrismarineSlabBlock() : HalfSlabBlock(Material::STONE)
 {
 }
 
@@ -123,8 +125,8 @@ int PrismarineSlabBlock::getSpawnResourcesAuxValue(const BlockState* state)
 
 not_null_ptr<ItemInstance> PrismarineSlabBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::prismarine_slab, 1,
-                                                       state->getValue(VARIANT)->getData()));
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(Blocks::prismarine_slab, 1, state->getValue(VARIANT)->getData()));
 }
 
 const BlockState* PrismarineSlabBlock::getBlockState(int data)
@@ -167,11 +169,11 @@ BlockStateDefinition* PrismarineSlabBlock::createBlockStateDefinition()
 {
     if (isFullSize())
     {
-        static const Property* properties[] = { VARIANT };
+        static const Property* properties[] = {VARIANT};
         return new BlockStateDefinition(this, properties, 1);
     }
 
-    static const Property* properties[] = { TYPE, VARIANT };
+    static const Property* properties[] = {TYPE, VARIANT};
     return new BlockStateDefinition(this, properties, 2);
 }
 

@@ -11,8 +11,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MobSpawnerBlockEntity.hpp"
 
-MobSpawnerBlock::MobSpawnerBlock()
-    : BaseEntityBlock(Material::STONE)
+MobSpawnerBlock::MobSpawnerBlock() : BaseEntityBlock(Material::STONE)
 {
     DerivedInit();
 }
@@ -34,8 +33,8 @@ int MobSpawnerBlock::getResourceCount(Random*)
     return 0;
 }
 
-void MobSpawnerBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
-                                     float chance, int lootBonus)
+void MobSpawnerBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                     int lootBonus)
 {
     Block::spawnResources(level, pos, state, chance, lootBonus);
     int experience = level->mRandom->nextInt(15) + 15 + level->mRandom->nextInt(15);

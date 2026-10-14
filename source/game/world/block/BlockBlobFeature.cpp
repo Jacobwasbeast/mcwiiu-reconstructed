@@ -8,8 +8,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Iterator.hpp"
 
-BlockBlobFeature::BlockBlobFeature(Block* block, int radius)
-    : Feature(false), mBlock(block), mRadius(radius)
+BlockBlobFeature::BlockBlobFeature(Block* block, int radius) : Feature(false), mBlock(block), mRadius(radius)
 {
 }
 
@@ -48,7 +47,8 @@ bool BlockBlobFeature::place(Level* level, Random& random, const BlockPos& origi
         int zRadius = radiusBase + random.nextInt(2);
         float radius = (float)(xRadius + yRadius + zRadius) * 0.333F + 0.5F;
 
-        Iterator<BlockPos*>* positions = BlockPos::between(position.offset(-xRadius, -yRadius, -zRadius), position.offset(xRadius, yRadius, zRadius));
+        Iterator<BlockPos*>* positions = BlockPos::between(position.offset(-xRadius, -yRadius, -zRadius),
+                                                           position.offset(xRadius, yRadius, zRadius));
         while (positions->hasNext())
         {
             BlockPos candidate = *positions->next();
@@ -59,7 +59,8 @@ bool BlockBlobFeature::place(Level* level, Random& random, const BlockPos& origi
         }
         delete positions;
 
-        position = position.offset(random.nextInt(radiusBase * 2 + 2) - (radiusBase + 1), -random.nextInt(2), random.nextInt(radiusBase * 2 + 2) - (radiusBase + 1));
+        position = position.offset(random.nextInt(radiusBase * 2 + 2) - (radiusBase + 1), -random.nextInt(2),
+                                   random.nextInt(radiusBase * 2 + 2) - (radiusBase + 1));
     }
 
     return true;

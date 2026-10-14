@@ -20,10 +20,12 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<bool>* PressurePlateBlock::POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
+AbstractProperty<bool>* PressurePlateBlock::POWERED = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"powered"));
 
 PressurePlateBlock::PressurePlateBlock(const std::wstring& name, Material* material, Sensitivity sensitivity)
-    : BasePressurePlateBlock(name, material), mSensitivity(sensitivity)
+    : BasePressurePlateBlock(name, material),
+      mSensitivity(sensitivity)
 {
     DerivedInit();
     const BlockState* state = mStateDefinition->any();
@@ -44,17 +46,21 @@ const BlockState* PressurePlateBlock::setSignalForState(const BlockState* state,
 void PressurePlateBlock::playOnSound(Level* level, const BlockPos& pos)
 {
     if (mMaterial == Material::WOOD)
-        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::WOOD_PRESSUREPLATE_CLICK_ON, SoundSource::eSoundSource_Blocks, 0.3f, 0.8f, 16.0f);
+        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::WOOD_PRESSUREPLATE_CLICK_ON,
+                         SoundSource::eSoundSource_Blocks, 0.3f, 0.8f, 16.0f);
     else
-        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::STONE_PRESSUREPLATE_CLICK_ON, SoundSource::eSoundSource_Blocks, 0.3f, 0.6f, 16.0f);
+        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::STONE_PRESSUREPLATE_CLICK_ON,
+                         SoundSource::eSoundSource_Blocks, 0.3f, 0.6f, 16.0f);
 }
 
 void PressurePlateBlock::playOffSound(Level* level, const BlockPos& pos)
 {
     if (mMaterial == Material::WOOD)
-        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::WOOD_PRESSUREPLATE_CLICK_OFF, SoundSource::eSoundSource_Blocks, 0.3f, 0.7f, 16.0f);
+        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::WOOD_PRESSUREPLATE_CLICK_OFF,
+                         SoundSource::eSoundSource_Blocks, 0.3f, 0.7f, 16.0f);
     else
-        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::STONE_PRESSUREPLATE_CLICK_OFF, SoundSource::eSoundSource_Blocks, 0.3f, 0.5f, 16.0f);
+        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::STONE_PRESSUREPLATE_CLICK_OFF,
+                         SoundSource::eSoundSource_Blocks, 0.3f, 0.5f, 16.0f);
 }
 
 int PressurePlateBlock::getSignalStrength(Level* level, const BlockPos& pos)
@@ -77,12 +83,14 @@ int PressurePlateBlock::getSignalStrength(Level* level, const BlockPos& pos)
             boost::shared_ptr<Entity> entity = *it;
             if (!entity->isIgnoringBlockTriggers())
             {
-                if (mSensitivity != EVERYTHING && entities != NULL) delete entities;
+                if (mSensitivity != EVERYTHING && entities != NULL)
+                    delete entities;
                 return 15;
             }
         }
     }
-    if (mSensitivity != EVERYTHING && entities != NULL) delete entities;
+    if (mSensitivity != EVERYTHING && entities != NULL)
+        delete entities;
     return 0;
 }
 
@@ -98,6 +106,6 @@ int PressurePlateBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* PressurePlateBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { POWERED };
+    static const Property* properties[] = {POWERED};
     return new BlockStateDefinition(this, properties, 1);
 }

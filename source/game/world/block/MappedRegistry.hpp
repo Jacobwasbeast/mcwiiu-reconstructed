@@ -10,22 +10,15 @@
 #include "game/world/block/IdMapper.hpp"
 #include "game/world/block/SimpleRegistry.hpp"
 
-template <class K,
-          class V,
-          class KeyHash = boost::hash<K>,
-          class KeyEqual = std::equal_to<K>,
-          class ValueHash = boost::hash<V>,
-          class ValueEqual = std::equal_to<V> >
+template <class K, class V, class KeyHash = boost::hash<K>, class KeyEqual = std::equal_to<K>,
+          class ValueHash = boost::hash<V>, class ValueEqual = std::equal_to<V> >
 class MappedRegistry : public SimpleRegistry<K, V, KeyHash, KeyEqual>, public IdMap<V>
 {
 public:
     MappedRegistry();
     ~MappedRegistry();
 
-    virtual V get(K key)
-    {
-        return SimpleRegistry<K, V, KeyHash, KeyEqual>::get(key);
-    }
+    virtual V get(K key) { return SimpleRegistry<K, V, KeyHash, KeyEqual>::get(key); }
 
     virtual void registerKey(K key, V value);
     virtual bool containsKey(K key);
@@ -39,15 +32,9 @@ public:
 
     virtual K getKey(V value) const;
 
-    virtual int getId(V value)
-    {
-        return mIdMapper.getId(value);
-    }
+    virtual int getId(V value) { return mIdMapper.getId(value); }
 
-    virtual V byId(int id)
-    {
-        return mIdMapper.byId(id);
-    }
+    virtual V byId(int id) { return mIdMapper.byId(id); }
 
     virtual bool containsId(int id)
     {
@@ -64,14 +51,12 @@ public:
 };
 
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
-MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::MappedRegistry()
-    : mIdMapper()
+MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::MappedRegistry() : mIdMapper()
 {
     const boost::unordered_map<K, V, KeyHash, KeyEqual>& registry = this->keySet();
 
     for (typename boost::unordered_map<K, V, KeyHash, KeyEqual>::const_iterator it = registry.begin();
-         it != registry.end();
-         ++it)
+         it != registry.end(); ++it)
     {
         mInverseRegistry[it->second] = it->first;
     }

@@ -5,8 +5,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 
-BookshelfBlock::BookshelfBlock()
-    : Block(Material::WOOD)
+BookshelfBlock::BookshelfBlock() : Block(Material::WOOD)
 {
     DerivedInit();
 }

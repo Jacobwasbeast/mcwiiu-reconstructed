@@ -20,8 +20,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-CoralFanBlockItem::CoralFanBlockItem(Block* block)
-    : BlockItem(block), mIsDead(block == Blocks::coral_fan_dead)
+CoralFanBlockItem::CoralFanBlockItem(Block* block) : BlockItem(block), mIsDead(block == Blocks::coral_fan_dead)
 {
     setStackedByData(true);
     setMaxDamage(0);
@@ -47,10 +46,10 @@ int CoralFanBlockItem::getUseDescriptionId(not_null_ptr<ItemInstance>)
 }
 
 InteractionResult::EInteractionResult CoralFanBlockItem::useOn(boost::shared_ptr<Player> player, Level* level,
-                                                                const BlockPos& pos,
-                                                                InteractionHand::EInteractionHand hand,
-                                                                const Direction* direction, float, float, float,
-                                                                bool simulate)
+                                                               const BlockPos& pos,
+                                                               InteractionHand::EInteractionHand hand,
+                                                               const Direction* direction, float, float, float,
+                                                               bool simulate)
 {
     BlockPos placePos = pos.relative(direction);
     bool isUp = true;

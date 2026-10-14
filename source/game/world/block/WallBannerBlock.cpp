@@ -19,8 +19,7 @@ static const AABB* WALL_BANNER_SHAPE_SOUTH = AABB::newPermanent(0.0, 0.0, 0.0, 1
 static const AABB* WALL_BANNER_SHAPE_WEST = AABB::newPermanent(0.75, 0.0, 0.0, 1.0, 1.0, 1.0);
 static const AABB* WALL_BANNER_SHAPE_EAST = AABB::newPermanent(0.0, 0.0, 0.0, 0.25, 1.0, 1.0);
 
-WallBannerBlock::WallBannerBlock()
-    : BannerBlock()
+WallBannerBlock::WallBannerBlock() : BannerBlock()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(BannerBlock::FACING, Direction::NORTH));
@@ -55,8 +54,8 @@ const AABB* WallBannerBlock::getShape(const BlockState* state, LevelSource*, con
     }
 }
 
-void WallBannerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                      Block* block, const BlockPos& fromPos)
+void WallBannerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                      const BlockPos& fromPos)
 {
     const Direction* direction = state->getValue(BannerBlock::FACING);
     if (!level->getBlockState(pos.relative(direction->getOpposite()))->getMaterial()->isSolid())
@@ -82,6 +81,6 @@ int WallBannerBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* WallBannerBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { BannerBlock::FACING };
+    static const Property* properties[] = {BannerBlock::FACING};
     return new BlockStateDefinition(this, properties, 1);
 }

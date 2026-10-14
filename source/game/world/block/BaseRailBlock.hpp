@@ -84,13 +84,13 @@ public:
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                               const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void updateState(const BlockState* state, Level* level, const BlockPos& pos, Block* block);
     virtual const BlockState* updateDir(Level* level, const BlockPos& pos, const BlockState* state, bool forceUpdate);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);

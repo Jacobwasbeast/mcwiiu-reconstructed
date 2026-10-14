@@ -30,6 +30,7 @@ public:
         virtual Level* getCommandSenderWorld();
         virtual boost::shared_ptr<Entity> getCommandSenderEntity();
         virtual MinecraftServer* getServer();
+
     private:
         boost::weak_ptr<MinecartCommandBlock> mMinecart;
     };
@@ -48,6 +49,7 @@ public:
     virtual bool interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
     virtual bool onlyOpCanSetNbt();
+
 private:
     static const EntityDataAccessor<std::wstring>* DATA_COMMAND_ID;
     static const EntityDataAccessor<std::wstring>* DATA_LAST_OUTPUT_ID;

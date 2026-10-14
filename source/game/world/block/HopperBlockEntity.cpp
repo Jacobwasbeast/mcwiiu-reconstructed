@@ -25,7 +25,11 @@
 #include "game/world/block/HopperBlock.hpp"
 
 HopperBlockEntity::HopperBlockEntity()
-    : RandomizableLockableContainerBlockEntity(), Hopper(), mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY)), mCooldown(-1), mLastTick(0)
+    : RandomizableLockableContainerBlockEntity(),
+      Hopper(),
+      mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY)),
+      mCooldown(-1),
+      mLastTick(0)
 {
 }
 
@@ -92,7 +96,7 @@ void HopperBlockEntity::setChanged()
 }
 
 AbstractContainerMenu* HopperBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory,
-                                                       boost::shared_ptr<Player> player)
+                                                     boost::shared_ptr<Player> player)
 {
     unpackLootTable(player);
     return new HopperMenu(inventory, boost::static_pointer_cast<HopperBlockEntity>(shared_from_this()), player);
@@ -133,7 +137,8 @@ boost::shared_ptr<BlockEntity> HopperBlockEntity::clone()
 {
     boost::shared_ptr<HopperBlockEntity> result(new HopperBlockEntity());
     BlockEntity::clone(result);
-    result->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    result->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(),
+                             mCustomName->isUUIDLocal());
     result->mCooldown = mCooldown;
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
@@ -188,10 +193,11 @@ bool HopperBlockEntity::inventoryFull()
     return true;
 }
 
-std::vector<boost::shared_ptr<Entity> >* HopperBlockEntity::getItemsAtAndAbove(Level* level, double x, double y, double z)
+std::vector<boost::shared_ptr<Entity> >* HopperBlockEntity::getItemsAtAndAbove(Level* level, double x, double y,
+                                                                               double z)
 {
-    return level->getEntitiesOfClass(typeid(ItemEntity),
-        AABB::newTemp(x - 0.5, y, z - 0.5, x + 0.5, y + 1.5, z + 0.5), EntitySelector::ENTITY_STILL_ALIVE, false);
+    return level->getEntitiesOfClass(typeid(ItemEntity), AABB::newTemp(x - 0.5, y, z - 0.5, x + 0.5, y + 1.5, z + 0.5),
+                                     EntitySelector::ENTITY_STILL_ALIVE, false);
 }
 
 boost::shared_ptr<Container> HopperBlockEntity::getContainerAt(Level* level, double x, double y, double z)
@@ -215,9 +221,11 @@ boost::shared_ptr<Container> HopperBlockEntity::getContainerAt(Level* level, dou
     {
         ContainerEntitySelector selector;
         AABB* box = AABB::newTemp(x - 0.5, y - 0.5, z - 0.5, x + 0.5, y + 0.5, z + 0.5);
-        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(boost::shared_ptr<Entity>(), box, &selector, NULL);
+        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(boost::shared_ptr<Entity>(), box,
+                                                                               &selector, NULL);
         if (entities != NULL && !entities->empty())
-            container = boost::dynamic_pointer_cast<Container>(entities->at(level->mRandom->nextInt(static_cast<int>(entities->size()))));
+            container = boost::dynamic_pointer_cast<Container>(
+                entities->at(level->mRandom->nextInt(static_cast<int>(entities->size()))));
     }
     return container;
 }
@@ -251,20 +259,22 @@ bool HopperBlockEntity::isEmptyContainer(boost::shared_ptr<Container> container,
     return true;
 }
 
-bool HopperBlockEntity::canTakeItemFromContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction* direction)
+bool HopperBlockEntity::canTakeItemFromContainer(Container* container, not_null_ptr<ItemInstance> item, int slot,
+                                                 const Direction* direction)
 {
-    if (dynamic_cast<WorldlyContainer*>(container) != NULL &&
-        !dynamic_cast<WorldlyContainer*>(container)->canTakeItemThroughFace(slot, item, direction))
+    if (dynamic_cast<WorldlyContainer*>(container) != NULL
+        && !dynamic_cast<WorldlyContainer*>(container)->canTakeItemThroughFace(slot, item, direction))
         return false;
     return true;
 }
 
-bool HopperBlockEntity::canPlaceItemInContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction* direction)
+bool HopperBlockEntity::canPlaceItemInContainer(Container* container, not_null_ptr<ItemInstance> item, int slot,
+                                                const Direction* direction)
 {
     if (!container->canPlaceItem(slot, item))
         return false;
-    if (dynamic_cast<WorldlyContainer*>(container) != NULL &&
-        !dynamic_cast<WorldlyContainer*>(container)->canPlaceItemThroughFace(slot, item, direction))
+    if (dynamic_cast<WorldlyContainer*>(container) != NULL
+        && !dynamic_cast<WorldlyContainer*>(container)->canPlaceItemThroughFace(slot, item, direction))
         return false;
     return true;
 }
@@ -283,8 +293,8 @@ bool HopperBlockEntity::canMergeItems(not_null_ptr<ItemInstance> first, not_null
 }
 
 not_null_ptr<ItemInstance> HopperBlockEntity::tryMoveInItem(Container* source, Container* destination,
-                                                              not_null_ptr<ItemInstance> item, int slot,
-                                                              const Direction* direction)
+                                                            not_null_ptr<ItemInstance> item, int slot,
+                                                            const Direction* direction)
 {
     not_null_ptr<ItemInstance> existing = destination->getItem(slot);
     if (canPlaceItemInContainer(destination, item, slot, direction))
@@ -323,7 +333,7 @@ not_null_ptr<ItemInstance> HopperBlockEntity::tryMoveInItem(Container* source, C
 }
 
 not_null_ptr<ItemInstance> HopperBlockEntity::addItem(Container* source, Container* destination,
-                                                       not_null_ptr<ItemInstance> item, const Direction* direction)
+                                                      not_null_ptr<ItemInstance> item, const Direction* direction)
 {
     if (destination != NULL && dynamic_cast<WorldlyContainer*>(destination) != NULL && direction != NULL)
     {
@@ -345,7 +355,8 @@ not_null_ptr<ItemInstance> HopperBlockEntity::addItem(Container* source, Contain
     return item;
 }
 
-bool HopperBlockEntity::tryTakeInItemFromSlot(Hopper* hopper, Container* container, int slot, const Direction* direction)
+bool HopperBlockEntity::tryTakeInItemFromSlot(Hopper* hopper, Container* container, int slot,
+                                              const Direction* direction)
 {
     not_null_ptr<ItemInstance> item = container->getItem(slot);
     if (!item->isEmpty() && canTakeItemFromContainer(container, item, slot, direction))
@@ -496,7 +507,8 @@ bool HopperBlockEntity::ejectItems()
 boost::shared_ptr<Container> HopperBlockEntity::getAttachedContainer()
 {
     const Direction* face = HopperBlock::getAttachedFace(getData());
-    return getContainerAt(getLevel(), getLevelX() + face->getStepX(), getLevelY() + face->getStepY(), getLevelZ() + face->getStepZ());
+    return getContainerAt(getLevel(), getLevelX() + face->getStepX(), getLevelY() + face->getStepY(),
+                          getLevelZ() + face->getStepZ());
 }
 
 void HopperBlockEntity::setCooldown(int cooldown)

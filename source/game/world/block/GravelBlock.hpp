@@ -16,15 +16,11 @@ class GravelBlock : public FallingBlock, public BonemealableBlock
 public:
     GravelBlock();
 
-    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
-                                       bool isClientSide);
-    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos,
-                                   const BlockState* state);
-    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                 const BlockState* state);
+    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
+    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
+    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
-    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource,
-                                             const BlockPos& pos);
+    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual unsigned int getDustColor(const BlockState* state);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
 };

@@ -36,8 +36,8 @@ public:
         ServerLevel* mLevel;
         NamedAreaRuleDefinition* mRule;
         AABB* mCurrentBounds;
-        boost::unordered_set<BlockPos, boost::hash<BlockPos>, std::equal_to<BlockPos>,
-                             std::allocator<BlockPos> > mBroken;
+        boost::unordered_set<BlockPos, boost::hash<BlockPos>, std::equal_to<BlockPos>, std::allocator<BlockPos> >
+            mBroken;
     };
 
     struct Info

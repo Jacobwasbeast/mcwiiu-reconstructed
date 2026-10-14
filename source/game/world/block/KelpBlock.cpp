@@ -27,13 +27,12 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/item/ItemId.hpp"
 
-static const std::wstring KELP_ICON_NAMES[5] = { L"kelp_d", L"kelp_c", L"kelp_a", L"kelp_b", L"kelp_top_a" };
+static const std::wstring KELP_ICON_NAMES[5] = {L"kelp_d", L"kelp_c", L"kelp_a", L"kelp_b", L"kelp_top_a"};
 
 AbstractProperty<int>* KelpBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
 static const AABB* KELP_SHAPE = AABB::newPermanent(0.125, 0.0, 0.125, 0.875, 1.0, 0.875);
 
-KelpBlock::KelpBlock()
-    : Block(Material::PLANT)
+KelpBlock::KelpBlock() : Block(Material::PLANT)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(AGE, 0));
@@ -201,9 +200,9 @@ bool KelpBlock::mayPlace(Level* level, const BlockPos& pos)
 {
     const BlockState* belowState = level->getBlockState(pos.below());
     Block* below = belowState->getBlock();
-    if (below == Blocks::magma || below == Blocks::soul_sand || below == Blocks::fence
-        || below == Blocks::jungle_fence || below == Blocks::nether_brick_fence || below == Blocks::spruce_fence
-        || below == Blocks::birch_fence || below == Blocks::dark_oak_fence || below == Blocks::acacia_fence)
+    if (below == Blocks::magma || below == Blocks::soul_sand || below == Blocks::fence || below == Blocks::jungle_fence
+        || below == Blocks::nether_brick_fence || below == Blocks::spruce_fence || below == Blocks::birch_fence
+        || below == Blocks::dark_oak_fence || below == Blocks::acacia_fence)
     {
         return false;
     }
@@ -288,7 +287,7 @@ int KelpBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* KelpBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { AGE };
+    static const Property* properties[1] = {AGE};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -297,8 +296,7 @@ unsigned int KelpBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
         && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
         && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
-        && isValidBonemealTarget((Level*)tooltipData.m_pLevel, tooltipData.m_blockPos,
-                                 tooltipData.m_pBlockState, true))
+        && isValidBonemealTarget((Level*)tooltipData.m_pLevel, tooltipData.m_blockPos, tooltipData.m_pBlockState, true))
         return IDS_TOOLTIPS_GROW;
     return Block::GetInteractTooltip(tooltipData);
 }

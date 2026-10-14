@@ -3,8 +3,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-BlockMaterialPredicate::BlockMaterialPredicate(Material* material)
-    : mMaterial(material)
+BlockMaterialPredicate::BlockMaterialPredicate(Material* material) : mMaterial(material)
 {
 }
 

@@ -12,7 +12,8 @@
 #include "game/world/block/CommandBlock.hpp"
 
 CommandBlockEntity::AnonymousCommandBlock::AnonymousCommandBlock(CommandBlockEntity* entity)
-    : BaseCommandBlock(), mEntity(entity)
+    : BaseCommandBlock(),
+      mEntity(entity)
 {
 }
 
@@ -23,7 +24,8 @@ BlockPos CommandBlockEntity::AnonymousCommandBlock::getCommandSenderBlockPositio
 
 Vec3* CommandBlockEntity::AnonymousCommandBlock::getCommandSenderWorldPosition()
 {
-    return Vec3::newTemp((double)mEntity->mPos.getX() + 0.5, (double)mEntity->mPos.getY() + 0.5, (double)mEntity->mPos.getZ() + 0.5);
+    return Vec3::newTemp((double)mEntity->mPos.getX() + 0.5, (double)mEntity->mPos.getY() + 0.5,
+                         (double)mEntity->mPos.getZ() + 0.5);
 }
 
 Level* CommandBlockEntity::AnonymousCommandBlock::getCommandSenderWorld()
@@ -125,7 +127,8 @@ void CommandBlockEntity::load(CompoundTag* tag)
 boost::shared_ptr<Packet> CommandBlockEntity::getUpdatePacket()
 {
     CompoundTag* tag = save(new CompoundTag());
-    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(mPos, 2, mLevel->mDimension->getType()->getId(), tag));
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(
+        new ClientboundBlockEntityDataPacket(mPos, 2, mLevel->mDimension->getType()->getId(), tag));
 }
 
 bool CommandBlockEntity::onlyOpCanSetNbt()

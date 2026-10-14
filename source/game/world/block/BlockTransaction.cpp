@@ -8,9 +8,13 @@
 
 BlockTransaction::Element g_emptyBlockElement;
 
-BlockTransaction::BlockTransaction(const BlockPos& min, const BlockPos& max, const Vec3i& size,
-                                   Element* elements, unsigned int elementCount)
-    : mSize(size), mElementCount(elementCount), mMin(size), mMax(0, 0, 0), mElements(elements)
+BlockTransaction::BlockTransaction(const BlockPos& min, const BlockPos& max, const Vec3i& size, Element* elements,
+                                   unsigned int elementCount)
+    : mSize(size),
+      mElementCount(elementCount),
+      mMin(size),
+      mMax(0, 0, 0),
+      mElements(elements)
 {
 }
 
@@ -52,9 +56,8 @@ BlockTransaction::Element* BlockTransaction::at(const Vec3i& position) const
 
 bool BlockTransaction::inBounds(const Vec3i& position) const
 {
-    return position.x >= 0 && position.x < mSize.x &&
-           position.y >= 0 && position.y < mSize.y &&
-           position.z >= 0 && position.z < mSize.z;
+    return position.x >= 0 && position.x < mSize.x && position.y >= 0 && position.y < mSize.y && position.z >= 0
+           && position.z < mSize.z;
 }
 
 bool BlockTransaction::shouldWrite(const Vec3i& position)
@@ -84,14 +87,16 @@ void BlockTransaction::setBlock(const Vec3i& position, int block, int data)
 {
     Element* target = at(position);
     target->value = (unsigned short)((block << 4) | data);
-    if (block != 0) updateMinMax(position);
+    if (block != 0)
+        updateMinMax(position);
 }
 
 void BlockTransaction::setElement(const Vec3i& position, unsigned short element)
 {
     Element* target = at(position);
     target->value = element;
-    if (element != 0) updateMinMax(position);
+    if (element != 0)
+        updateMinMax(position);
 }
 
 void BlockTransaction::setBlock(const Vec3i& position, const BlockState* state)
@@ -133,7 +138,8 @@ void BlockTransaction::reduceMinMax()
             for (int z = minZ; z < maxZ; ++z)
             {
                 Vec3i position(x, y, z);
-                if (!isEmpty(position)) updateMinMax(position);
+                if (!isEmpty(position))
+                    updateMinMax(position);
             }
         }
     }

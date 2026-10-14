@@ -10,8 +10,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 
-RedstoneLampBlock::RedstoneLampBlock(bool lit)
-    : Block(Material::BUILDABLE_GLASS)
+RedstoneLampBlock::RedstoneLampBlock(bool lit) : Block(Material::BUILDABLE_GLASS)
 {
     DerivedInit();
     mLit = lit;
@@ -38,8 +37,8 @@ void RedstoneLampBlock::onPlace(Level* level, const BlockPos& pos, const BlockSt
     }
 }
 
-void RedstoneLampBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-    Block* block, const BlockPos& fromPos)
+void RedstoneLampBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                        const BlockPos& fromPos)
 {
     if (!level->mIsClientSide)
     {
@@ -70,7 +69,7 @@ Item* RedstoneLampBlock::getResource(const BlockState* state, Random* random, in
 }
 
 not_null_ptr<ItemInstance> RedstoneLampBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
-    const BlockState* state)
+                                                                   const BlockState* state)
 {
     return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::redstone_lamp)));
 }

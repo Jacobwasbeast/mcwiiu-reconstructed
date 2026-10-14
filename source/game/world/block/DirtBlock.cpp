@@ -36,8 +36,7 @@ DirtBlock::Variant* DirtBlock::Variant::DIRT = NULL;
 DirtBlock::Variant* DirtBlock::Variant::COARSE_DIRT = NULL;
 DirtBlock::Variant* DirtBlock::Variant::PODZOL = NULL;
 static DirtBlock::Variant* gVariantsByData[3];
-static AbstractProperty<bool>* gSnowyProperty =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
+static AbstractProperty<bool>* gSnowyProperty = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
 
 DirtBlock::Variant::Variant(int data, const std::wstring& name, int nameId, int descriptionId,
                             const MaterialColor* materialColor, const std::wstring& texture,
@@ -122,12 +121,10 @@ std::wstring DirtBlock::Variant::getSerializedName() const
     return mName;
 }
 
-DirtBlock::DirtBlock()
-    : Block(Material::DIRT)
+DirtBlock::DirtBlock() : Block(Material::DIRT)
 {
     DerivedInit();
-    registerDefaultState(
-        mStateDefinition->any()->setValue(VARIANT, Variant::DIRT)->setValue(gSnowyProperty, false));
+    registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::DIRT)->setValue(gSnowyProperty, false));
 }
 
 bool DirtBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool)
@@ -135,24 +132,21 @@ bool DirtBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*
     return true;
 }
 
-bool DirtBlock::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos,
-                                  const BlockState* state)
+bool DirtBlock::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
     return SeaGrass::trySpawnSeaGrass(true, level, random, pos, state);
 }
 
-void DirtBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                const BlockState* state)
+void DirtBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
     SeaGrass::trySpawnSeaGrass(false, level, random, pos, state);
 }
 
 void DirtBlock::blockStaticCtor()
 {
-    Variant::DIRT = new Variant(0, L"dirt", IDS_TILE_DIRT, IDS_DESC_DIRT, MaterialColor::DIRT,
-                                L"dirt", L"", L"");
-    Variant::COARSE_DIRT = new Variant(1, L"coarse_dirt", IDS_TILE_DIRT_COARSE, IDS_DESC_DIRT_COARSE, MaterialColor::DIRT,
-                                       L"coarse_dirt", L"", L"");
+    Variant::DIRT = new Variant(0, L"dirt", IDS_TILE_DIRT, IDS_DESC_DIRT, MaterialColor::DIRT, L"dirt", L"", L"");
+    Variant::COARSE_DIRT = new Variant(1, L"coarse_dirt", IDS_TILE_DIRT_COARSE, IDS_DESC_DIRT_COARSE,
+                                       MaterialColor::DIRT, L"coarse_dirt", L"", L"");
     Variant::PODZOL = new Variant(2, L"podzol", IDS_TILE_DIRT_PODZOL, IDS_DESC_DIRT_PODZOL, MaterialColor::PODZOL,
                                   L"dirt", L"dirt_podzol_top", L"dirt_podzol_side");
 
@@ -166,19 +160,16 @@ void DirtBlock::blockStaticCtor()
     {
         variants.insert(gVariantsByData[i]);
     }
-    VARIANT = EnumProperty<Variant*>::create(
-        name, typeid(Variant), variants, Predicates<Variant*>::alwaysTrue);
+    VARIANT = EnumProperty<Variant*>::create(name, typeid(Variant), variants, Predicates<Variant*>::alwaysTrue);
 }
 
-const MaterialColor* DirtBlock::getMapColor(const BlockState* state, LevelSource* levelSource,
-                                            const BlockPos& pos)
+const MaterialColor* DirtBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     return state->getValue(VARIANT)->getMaterialColor();
 }
 
-const BlockState* DirtBlock::fillVirtualBlockStateProperties(const BlockState* state,
-                                                              LevelSource* levelSource,
-                                                              const BlockPos& pos)
+const BlockState* DirtBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                             const BlockPos& pos)
 {
     if (state->getValue(VARIANT) == Variant::PODZOL)
     {
@@ -188,19 +179,16 @@ const BlockState* DirtBlock::fillVirtualBlockStateProperties(const BlockState* s
     return state;
 }
 
-not_null_ptr<ItemInstance> DirtBlock::getCloneItemInstance(Level*, const BlockPos&,
-                                                           const BlockState* state)
+not_null_ptr<ItemInstance> DirtBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
     return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, state->getValue(VARIANT)->getData()));
 }
 
 const BlockState* DirtBlock::getBlockState(int data)
 {
-    static const BlockState* states[3] = {
-        defaultBlockState()->setValue(VARIANT, Variant::byData(0)),
-        defaultBlockState()->setValue(VARIANT, Variant::byData(1)),
-        defaultBlockState()->setValue(VARIANT, Variant::byData(2))
-    };
+    static const BlockState* states[3] = {defaultBlockState()->setValue(VARIANT, Variant::byData(0)),
+                                          defaultBlockState()->setValue(VARIANT, Variant::byData(1)),
+                                          defaultBlockState()->setValue(VARIANT, Variant::byData(2))};
     if (data < 0 || data > 2)
     {
         data = 0;
@@ -222,24 +210,23 @@ unsigned int DirtBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     case ItemId::IRON_HOE:
     case ItemId::DIAMOND_HOE:
     case ItemId::GOLDEN_HOE:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
-            && tooltipData.m_bCanPlace
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace
             && tooltipData.m_pBlockState->getValue(VARIANT) != Variant::PODZOL)
         {
             return kHoeTooltip;
         }
         break;
     case ItemId::DYE:
+    {
+        BlockPos above = tooltipData.m_blockPos.above();
+        if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, kWaterDepth, 0)
+            && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
+            && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
-            BlockPos above = tooltipData.m_blockPos.above();
-            if (((Level*)tooltipData.m_pLevel)->isUnderWater(above, kWaterDepth, 0)
-                && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
-                && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
-            {
-                return kDyeTooltip;
-            }
+            return kDyeTooltip;
         }
-        break;
+    }
+    break;
     default:
         return Block::GetInteractTooltip(tooltipData);
     }
@@ -248,7 +235,7 @@ unsigned int DirtBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 BlockStateDefinition* DirtBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { VARIANT, gSnowyProperty };
+    static const Property* properties[] = {VARIANT, gSnowyProperty};
     BlockStateDefinition* definition = new BlockStateDefinition(this, properties, 2);
     return definition;
 }

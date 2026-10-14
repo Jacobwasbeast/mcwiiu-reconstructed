@@ -26,20 +26,20 @@ TextureAtlasSprite* gStainedGlassPaneEdges[16];
 
 void StainedGlassPaneBlock::blockStaticCtor()
 {
-    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS, Predicates<const DyeColor*>::alwaysTrue);
+    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS,
+                                                  Predicates<const DyeColor*>::alwaysTrue);
 }
 
-StainedGlassPaneBlock::StainedGlassPaneBlock()
-    : ThinFenceBlock(L"glass", L"glass_pane_top", Material::GLASS, false)
+StainedGlassPaneBlock::StainedGlassPaneBlock() : ThinFenceBlock(L"glass", L"glass_pane_top", Material::GLASS, false)
 {
     ClearDerivedInit();
     DerivedInit();
     registerDefaultState(mStateDefinition->any()
-        ->setValue(THIN_FENCE_NORTH, false)
-        ->setValue(THIN_FENCE_EAST, false)
-        ->setValue(THIN_FENCE_SOUTH, false)
-        ->setValue(THIN_FENCE_WEST, false)
-        ->setValue(COLOR, DyeColor::WHITE));
+                             ->setValue(THIN_FENCE_NORTH, false)
+                             ->setValue(THIN_FENCE_EAST, false)
+                             ->setValue(THIN_FENCE_SOUTH, false)
+                             ->setValue(THIN_FENCE_WEST, false)
+                             ->setValue(COLOR, DyeColor::WHITE));
 }
 
 int StainedGlassPaneBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -109,8 +109,7 @@ const BlockState* StainedGlassPaneBlock::mirror(const BlockState* state, Mirror*
 
 BlockStateDefinition* StainedGlassPaneBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { THIN_FENCE_NORTH, THIN_FENCE_EAST,
-        THIN_FENCE_WEST, THIN_FENCE_SOUTH, COLOR };
+    static const Property* properties[] = {THIN_FENCE_NORTH, THIN_FENCE_EAST, THIN_FENCE_WEST, THIN_FENCE_SOUTH, COLOR};
     return new BlockStateDefinition(this, properties, 5);
 }
 

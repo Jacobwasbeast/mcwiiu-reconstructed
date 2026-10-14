@@ -19,8 +19,7 @@
 
 DirectionProperty* BannerBlock::FACING = NULL;
 
-BannerBlock::BannerBlock()
-    : BaseEntityBlock(Material::WOOD)
+BannerBlock::BannerBlock() : BaseEntityBlock(Material::WOOD)
 {
 }
 
@@ -71,29 +70,26 @@ Item* BannerBlock::getResource(const BlockState*, Random*, int)
     return Items::banner;
 }
 
-not_null_ptr<ItemInstance> BannerBlock::getItemInstanceFromBlockEntity(Level* level,
-                                                                        const BlockPos& pos,
-                                                                        const BlockState*)
+not_null_ptr<ItemInstance> BannerBlock::getItemInstanceFromBlockEntity(Level* level, const BlockPos& pos,
+                                                                       const BlockState*)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<BannerBlockEntity> bannerEntity =
-        boost::dynamic_pointer_cast<BannerBlockEntity>(blockEntity);
+    boost::shared_ptr<BannerBlockEntity> bannerEntity = boost::dynamic_pointer_cast<BannerBlockEntity>(blockEntity);
     if (bannerEntity != NULL)
         return bannerEntity->getItem();
     return ItemInstance::EMPTY;
 }
 
-not_null_ptr<ItemInstance> BannerBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                               const BlockState* state)
+not_null_ptr<ItemInstance> BannerBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
 {
     not_null_ptr<ItemInstance> item = getItemInstanceFromBlockEntity(level, pos, state);
     return item->isEmpty()
-        ? not_null_ptr<ItemInstance>(boost::shared_ptr<ItemInstance>(new ItemInstance(Items::banner)))
-        : item;
+               ? not_null_ptr<ItemInstance>(boost::shared_ptr<ItemInstance>(new ItemInstance(Items::banner)))
+               : item;
 }
 
-void BannerBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
-                                 float chance, int lootBonus)
+void BannerBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                 int lootBonus)
 {
     not_null_ptr<ItemInstance> item = getItemInstanceFromBlockEntity(level, pos, state);
     if (item->isEmpty())
@@ -116,8 +112,7 @@ void BannerBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, 
                                 const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                 not_null_ptr<ItemInstance> tool)
 {
-    boost::shared_ptr<BannerBlockEntity> bannerEntity =
-        boost::dynamic_pointer_cast<BannerBlockEntity>(blockEntity);
+    boost::shared_ptr<BannerBlockEntity> bannerEntity = boost::dynamic_pointer_cast<BannerBlockEntity>(blockEntity);
     if (bannerEntity != NULL)
     {
         not_null_ptr<ItemInstance> item = bannerEntity->getItem();
@@ -129,8 +124,7 @@ void BannerBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, 
     }
 }
 
-EBlockFaceShape BannerBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
-                                                const Direction*)
+EBlockFaceShape BannerBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
     return BLOCK_FACE_UNDEFINED;
 }

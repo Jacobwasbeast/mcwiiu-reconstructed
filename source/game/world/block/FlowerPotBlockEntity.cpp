@@ -10,13 +10,11 @@
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 
-FlowerPotBlockEntity::FlowerPotBlockEntity(Item* item, int data)
-    : BlockEntity(), mPlantItem(item), mItemData(data)
+FlowerPotBlockEntity::FlowerPotBlockEntity(Item* item, int data) : BlockEntity(), mPlantItem(item), mItemData(data)
 {
 }
 
-FlowerPotBlockEntity::FlowerPotBlockEntity()
-    : BlockEntity(), mPlantItem(NULL), mItemData(0)
+FlowerPotBlockEntity::FlowerPotBlockEntity() : BlockEntity(), mPlantItem(NULL), mItemData(0)
 {
 }
 
@@ -32,7 +30,8 @@ Item* FlowerPotBlockEntity::getPlantItem()
 
 not_null_ptr<ItemInstance> FlowerPotBlockEntity::getPlantItemInstance()
 {
-    return mPlantItem == NULL ? ItemInstance::EMPTY : not_null_ptr<ItemInstance>(new ItemInstance(mPlantItem, 1, mItemData));
+    return mPlantItem == NULL ? ItemInstance::EMPTY
+                              : not_null_ptr<ItemInstance>(new ItemInstance(mPlantItem, 1, mItemData));
 }
 
 void FlowerPotBlockEntity::setItemInstance(const not_null_ptr<ItemInstance>& item)
@@ -76,7 +75,8 @@ boost::shared_ptr<Packet> FlowerPotBlockEntity::getUpdatePacket()
 {
     CompoundTag* tag = new CompoundTag();
     save(tag);
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 5, mLevel->mDimension->getType()->getId(), tag));
+    return boost::shared_ptr<Packet>(
+        new ClientboundBlockEntityDataPacket(mPos, 5, mLevel->mDimension->getType()->getId(), tag));
 }
 
 CompoundTag* FlowerPotBlockEntity::getUpdateTag()

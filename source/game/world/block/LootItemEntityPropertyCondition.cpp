@@ -2,7 +2,8 @@
 
 #include "game/world/block/EntityProperty.hpp"
 
-LootItemEntityPropertyCondition::LootItemEntityPropertyCondition(std::vector<EntityProperty*> properties, LootTableContext::EntityTarget entityTarget)
+LootItemEntityPropertyCondition::LootItemEntityPropertyCondition(std::vector<EntityProperty*> properties,
+                                                                 LootTableContext::EntityTarget entityTarget)
 {
     this->properties = properties;
     this->entityTarget = entityTarget;

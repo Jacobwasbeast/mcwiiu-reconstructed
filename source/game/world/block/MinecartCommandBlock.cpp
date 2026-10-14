@@ -18,13 +18,16 @@ const EntityDataAccessor<std::wstring>* MinecartCommandBlock::DATA_LAST_OUTPUT_I
 
 void MinecartCommandBlock::staticCtor()
 {
-    DATA_COMMAND_ID = SynchedEntityData::defineId<std::wstring>(EntityType::MINECART_COMMAND_BLOCK, EntityType::MINECART, EntityDataSerializers::STRING);
-    DATA_LAST_OUTPUT_ID = SynchedEntityData::defineId<std::wstring>(EntityType::MINECART_COMMAND_BLOCK, EntityType::MINECART, EntityDataSerializers::STRING);
+    DATA_COMMAND_ID = SynchedEntityData::defineId<std::wstring>(EntityType::MINECART_COMMAND_BLOCK,
+                                                                EntityType::MINECART, EntityDataSerializers::STRING);
+    DATA_LAST_OUTPUT_ID = SynchedEntityData::defineId<std::wstring>(
+        EntityType::MINECART_COMMAND_BLOCK, EntityType::MINECART, EntityDataSerializers::STRING);
 }
 
 void MinecartCommandBlock::addDataWalkers(DataFixerUpper* dataFixerUpper)
 {
-    dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity, new OverwritableWalker(EntityType::MINECART_COMMAND_BLOCK, L"Control"));
+    dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity,
+                              new OverwritableWalker(EntityType::MINECART_COMMAND_BLOCK, L"Control"));
 }
 
 void MinecartCommandBlock::defineSynchedData()
@@ -93,8 +96,10 @@ bool MinecartCommandBlock::onlyOpCanSetNbt()
     return true;
 }
 
-MinecartCommandBlock::MinecartBaseCommandBlock::MinecartBaseCommandBlock(const boost::shared_ptr<MinecartCommandBlock>& minecart)
-    : BaseCommandBlock(), mMinecart(minecart)
+MinecartCommandBlock::MinecartBaseCommandBlock::MinecartBaseCommandBlock(
+    const boost::shared_ptr<MinecartCommandBlock>& minecart)
+    : BaseCommandBlock(),
+      mMinecart(minecart)
 {
 }
 

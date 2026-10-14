@@ -32,7 +32,9 @@ public:
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual not_null_ptr<ItemInstance> getSilkTouchItemInstance(const BlockState* state);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual TextureAtlasSprite* getTypeTexture(const BlockState* state);
     virtual TextureAtlasSprite* getTopTexture(const BlockState* state);

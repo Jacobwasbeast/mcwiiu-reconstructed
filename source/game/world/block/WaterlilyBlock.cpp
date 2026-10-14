@@ -14,15 +14,13 @@
 
 static const AABB* LILY_PAD_AABB = AABB::newPermanent(0.0625, 0.0, 0.0625, 0.9375, 0.09375, 0.9375);
 
-WaterlilyBlock::WaterlilyBlock()
-    : Bush()
+WaterlilyBlock::WaterlilyBlock() : Bush()
 {
     DerivedInit();
 }
 
-void WaterlilyBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos& pos,
-                                       const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
-                                       boost::shared_ptr<Entity> entity, bool)
+void WaterlilyBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos& pos, const AABB* entityBox,
+                                       std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity, bool)
 {
     if (entity && entity->GetType() != EntityType::BOAT)
     {
@@ -79,8 +77,7 @@ bool WaterlilyBlock::canSurvive(Level* level, const BlockPos& pos, const BlockSt
 
     const BlockState* belowState = level->getBlockState(pos.below());
     Material* material = belowState->getMaterial();
-    return (material == Material::WATER && belowState->getValue(LiquidBlock::LEVEL) == 0)
-        || material == Material::ICE;
+    return (material == Material::WATER && belowState->getValue(LiquidBlock::LEVEL) == 0) || material == Material::ICE;
 }
 
 int WaterlilyBlock::convertBlockStateToLegacyData(const BlockState*)

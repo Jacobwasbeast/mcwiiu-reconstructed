@@ -140,7 +140,9 @@ BlockDegradeRoutine::LayerCache* BlockDegradeRoutine::getCacheFor(const std::wst
 }
 
 BlockDegradeRoutine::LayerCache::LayerCache(ServerLevel* level, NamedAreaRuleDefinition* rule)
-    : mLevel(level), mRule(rule), mCurrentBounds(rule->getArea())
+    : mLevel(level),
+      mRule(rule),
+      mCurrentBounds(rule->getArea())
 {
 }
 

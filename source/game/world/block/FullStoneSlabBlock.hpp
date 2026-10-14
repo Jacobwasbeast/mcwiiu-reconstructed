@@ -7,7 +7,8 @@ class FullStoneSlabBlock : public StoneSlabBlock
 {
 public:
     FullStoneSlabBlock();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual bool isFullSize() const;
 };
 

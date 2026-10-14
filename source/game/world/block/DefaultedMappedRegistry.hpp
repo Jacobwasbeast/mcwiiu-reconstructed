@@ -25,15 +25,9 @@ public:
     virtual int getId(V value);
     virtual V byId(int id);
 
-    iterator begin()
-    {
-        return this->keySet().begin();
-    }
+    iterator begin() { return this->keySet().begin(); }
 
-    iterator end()
-    {
-        return this->keySet().end();
-    }
+    iterator end() { return this->keySet().end(); }
 
 private:
     K mDefaultKey;
@@ -41,8 +35,7 @@ private:
 };
 
 template <class K, class V>
-DefaultedMappedRegistry<K, V>::DefaultedMappedRegistry(K defaultKey)
-    : mDefaultKey(defaultKey)
+DefaultedMappedRegistry<K, V>::DefaultedMappedRegistry(K defaultKey) : mDefaultKey(defaultKey)
 {
     mDefaultValue = V();
 }
@@ -118,30 +111,20 @@ public:
     class iterator
     {
     private:
-        typedef boost::unordered_map<ResourceLocation,
-                                     Block*,
-                                     boost::hash<ResourceLocation>,
+        typedef boost::unordered_map<ResourceLocation, Block*, boost::hash<ResourceLocation>,
                                      std::equal_to<ResourceLocation> >::const_iterator base_iterator;
 
         base_iterator mIterator;
         mutable std::pair<Block*, ResourceLocation> mValue;
 
-        iterator(base_iterator value)
-            : mIterator(value)
-        {
-        }
+        iterator(base_iterator value) : mIterator(value) {}
 
-        void update() const
-        {
-            mValue = std::make_pair(mIterator->second, mIterator->first);
-        }
+        void update() const { mValue = std::make_pair(mIterator->second, mIterator->first); }
 
         friend class DefaultedMappedRegistry<ResourceLocation, Block*>;
 
     public:
-        iterator()
-        {
-        }
+        iterator() {}
 
         iterator& operator++()
         {
@@ -149,15 +132,9 @@ public:
             return *this;
         }
 
-        bool operator!=(const iterator& other) const
-        {
-            return mIterator != other.mIterator;
-        }
+        bool operator!=(const iterator& other) const { return mIterator != other.mIterator; }
 
-        bool operator==(const iterator& other) const
-        {
-            return mIterator == other.mIterator;
-        }
+        bool operator==(const iterator& other) const { return mIterator == other.mIterator; }
 
         std::pair<Block*, ResourceLocation>& operator*() const
         {
@@ -180,15 +157,9 @@ public:
     virtual Block* byId(int id);
     virtual bool containsId(int id);
 
-    iterator begin()
-    {
-        return iterator(this->keySet().begin());
-    }
+    iterator begin() { return iterator(this->keySet().begin()); }
 
-    iterator end()
-    {
-        return iterator(this->keySet().end());
-    }
+    iterator end() { return iterator(this->keySet().end()); }
 
 private:
     Block* mBlocksById[BLOCK_COUNT];

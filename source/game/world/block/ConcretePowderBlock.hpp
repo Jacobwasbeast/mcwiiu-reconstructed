@@ -24,7 +24,8 @@ public:
     static EnumProperty<const DyeColor*>* COLOR;
 
     virtual void onLand(Level* level, const BlockPos& pos, const BlockState* state, const BlockState* replacedState);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

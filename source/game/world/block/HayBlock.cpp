@@ -12,8 +12,7 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-HayBlock::HayBlock()
-    : RotatedPillarBlock(Material::GRASS, MaterialColor::COLOR_YELLOW)
+HayBlock::HayBlock() : RotatedPillarBlock(Material::GRASS, MaterialColor::COLOR_YELLOW)
 {
     DerivedInit();
 

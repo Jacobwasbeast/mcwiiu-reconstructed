@@ -16,8 +16,7 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/generation/Player.hpp"
 
-BaseEntityBlock::BaseEntityBlock(Material* material)
-    : Block(material)
+BaseEntityBlock::BaseEntityBlock(Material* material) : Block(material)
 {
     mBlockEntity = true;
 }
@@ -35,10 +34,8 @@ bool BaseEntityBlock::isCactus(Level* level, const BlockPos& pos, const Directio
 
 bool BaseEntityBlock::touchesCactus(Level* level, const BlockPos& pos)
 {
-    return isCactus(level, pos, Direction::NORTH)
-        || isCactus(level, pos, Direction::SOUTH)
-        || isCactus(level, pos, Direction::WEST)
-        || isCactus(level, pos, Direction::EAST);
+    return isCactus(level, pos, Direction::NORTH) || isCactus(level, pos, Direction::SOUTH)
+           || isCactus(level, pos, Direction::WEST) || isCactus(level, pos, Direction::EAST);
 }
 
 EBlockRenderShape BaseEntityBlock::getRenderShape(const BlockState*)
@@ -52,9 +49,8 @@ void BaseEntityBlock::onRemove(Level* level, const BlockPos& pos, const BlockSta
     level->removeBlockEntity(pos);
 }
 
-void BaseEntityBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player,
-                                    const BlockPos& pos, const BlockState* state,
-                                    boost::shared_ptr<BlockEntity> blockEntity,
+void BaseEntityBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
+                                    const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                     not_null_ptr<ItemInstance> tool)
 {
     boost::shared_ptr<Nameable> nameable = boost::dynamic_pointer_cast<Nameable>(blockEntity);
@@ -78,8 +74,8 @@ void BaseEntityBlock::playerDestroy(Level* level, boost::shared_ptr<Player> play
     }
 }
 
-bool BaseEntityBlock::triggerEvent(const BlockState* state, Level* level, const BlockPos& pos,
-                                   int eventId, int eventParam)
+bool BaseEntityBlock::triggerEvent(const BlockState* state, Level* level, const BlockPos& pos, int eventId,
+                                   int eventParam)
 {
     Block::triggerEvent(state, level, pos, eventId, eventParam);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);

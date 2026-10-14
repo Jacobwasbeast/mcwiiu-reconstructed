@@ -29,28 +29,28 @@ FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::YELLOW = new FlowerBlo
 FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::RED = new FlowerBlock::FlowerCategory();
 
 FlowerBlock::Flower* FlowerBlock::Flower::DANDELION = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::YELLOW, 0, L"dandelion", IDS_TILE_DANDELION, IDS_DESC_DANDELION,
-    L"flower_dandelion", FlowerBlock::Flower::FLOWER_DANDELION);
+    FlowerBlock::FlowerCategory::YELLOW, 0, L"dandelion", IDS_TILE_DANDELION, IDS_DESC_DANDELION, L"flower_dandelion",
+    FlowerBlock::Flower::FLOWER_DANDELION);
 
 FlowerBlock::Flower* FlowerBlock::Flower::POPPY = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 0, L"poppy", IDS_TILE_POPPY, IDS_DESC_POPPY,
-    L"flower_rose", FlowerBlock::Flower::FLOWER_POPPY);
+    FlowerBlock::FlowerCategory::RED, 0, L"poppy", IDS_TILE_POPPY, IDS_DESC_POPPY, L"flower_rose",
+    FlowerBlock::Flower::FLOWER_POPPY);
 
 FlowerBlock::Flower* FlowerBlock::Flower::BLUE_ORCHID = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 1, L"blue_orchid", IDS_TILE_BLUE_ORCHID, IDS_DESC_ORCHID,
-    L"flower_blue_orchid", FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
+    FlowerBlock::FlowerCategory::RED, 1, L"blue_orchid", IDS_TILE_BLUE_ORCHID, IDS_DESC_ORCHID, L"flower_blue_orchid",
+    FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
 
 FlowerBlock::Flower* FlowerBlock::Flower::ALLIUM = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 2, L"allium", IDS_TILE_ALLIUM, IDS_DESC_ALLIUM,
-    L"flower_alium", FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
+    FlowerBlock::FlowerCategory::RED, 2, L"allium", IDS_TILE_ALLIUM, IDS_DESC_ALLIUM, L"flower_alium",
+    FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
 
 FlowerBlock::Flower* FlowerBlock::Flower::HOUSTONIA = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 3, L"houstonia", IDS_TILE_AZURE_BLUET, IDS_DESC_AZURE_BLUET,
-    L"flower_houstonia", FlowerBlock::Flower::FLOWER_HOUSTONIA);
+    FlowerBlock::FlowerCategory::RED, 3, L"houstonia", IDS_TILE_AZURE_BLUET, IDS_DESC_AZURE_BLUET, L"flower_houstonia",
+    FlowerBlock::Flower::FLOWER_HOUSTONIA);
 
 FlowerBlock::Flower* FlowerBlock::Flower::RED_TULIP = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 4, L"red_tulip", IDS_TILE_TULIP_RED, IDS_DESC_TULIP_RED,
-    L"flower_tulip_red", FlowerBlock::Flower::FLOWER_RED_TULIP);
+    FlowerBlock::FlowerCategory::RED, 4, L"red_tulip", IDS_TILE_TULIP_RED, IDS_DESC_TULIP_RED, L"flower_tulip_red",
+    FlowerBlock::Flower::FLOWER_RED_TULIP);
 
 FlowerBlock::Flower* FlowerBlock::Flower::ORANGE_TULIP = new FlowerBlock::Flower(
     FlowerBlock::FlowerCategory::RED, 5, L"orange_tulip", IDS_TILE_TULIP_ORANGE, IDS_DESC_TULIP_ORANGE,
@@ -61,47 +61,29 @@ FlowerBlock::Flower* FlowerBlock::Flower::WHITE_TULIP = new FlowerBlock::Flower(
     L"flower_tulip_white", FlowerBlock::Flower::FLOWER_WHITE_TULIP);
 
 FlowerBlock::Flower* FlowerBlock::Flower::PINK_TULIP = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 7, L"pink_tulip", IDS_TILE_TULIP_PINK, IDS_DESC_TULIP_PINK,
-    L"flower_tulip_pink", FlowerBlock::Flower::FLOWER_PINK_TULIP);
+    FlowerBlock::FlowerCategory::RED, 7, L"pink_tulip", IDS_TILE_TULIP_PINK, IDS_DESC_TULIP_PINK, L"flower_tulip_pink",
+    FlowerBlock::Flower::FLOWER_PINK_TULIP);
 
 FlowerBlock::Flower* FlowerBlock::Flower::OXEYE_DAISY = new FlowerBlock::Flower(
-    FlowerBlock::FlowerCategory::RED, 8, L"oxeye_daisy", IDS_TILE_OXEYE_DAISY, IDS_DESC_DAISY,
-    L"flower_oxeye_daisy", FlowerBlock::Flower::FLOWER_OXEYE_DAISY);
+    FlowerBlock::FlowerCategory::RED, 8, L"oxeye_daisy", IDS_TILE_OXEYE_DAISY, IDS_DESC_DAISY, L"flower_oxeye_daisy",
+    FlowerBlock::Flower::FLOWER_OXEYE_DAISY);
 
-FlowerBlock::Flower* FlowerBlock::Flower::FLOWERS[FlowerBlock::Flower::FLOWER_COUNT] =
-{
-    FlowerBlock::Flower::DANDELION,
-    FlowerBlock::Flower::POPPY,
-    FlowerBlock::Flower::BLUE_ORCHID,
-    FlowerBlock::Flower::ALLIUM,
-    FlowerBlock::Flower::HOUSTONIA,
-    FlowerBlock::Flower::RED_TULIP,
-    FlowerBlock::Flower::ORANGE_TULIP,
-    FlowerBlock::Flower::WHITE_TULIP,
-    FlowerBlock::Flower::PINK_TULIP,
-    FlowerBlock::Flower::OXEYE_DAISY
-};
+FlowerBlock::Flower* FlowerBlock::Flower::FLOWERS[FlowerBlock::Flower::FLOWER_COUNT] = {
+    FlowerBlock::Flower::DANDELION,    FlowerBlock::Flower::POPPY,       FlowerBlock::Flower::BLUE_ORCHID,
+    FlowerBlock::Flower::ALLIUM,       FlowerBlock::Flower::HOUSTONIA,   FlowerBlock::Flower::RED_TULIP,
+    FlowerBlock::Flower::ORANGE_TULIP, FlowerBlock::Flower::WHITE_TULIP, FlowerBlock::Flower::PINK_TULIP,
+    FlowerBlock::Flower::OXEYE_DAISY};
 
-FlowerBlock::Flower* FlowerBlock::Flower::YELLOW_FLOWERS[FlowerBlock::Flower::YELLOW_FLOWER_COUNT] =
-{
-    FlowerBlock::Flower::DANDELION
-};
+FlowerBlock::Flower* FlowerBlock::Flower::YELLOW_FLOWERS[FlowerBlock::Flower::YELLOW_FLOWER_COUNT] = {
+    FlowerBlock::Flower::DANDELION};
 
-FlowerBlock::Flower* FlowerBlock::Flower::RED_FLOWERS[FlowerBlock::Flower::RED_FLOWER_COUNT] =
-{
-    FlowerBlock::Flower::POPPY,
-    FlowerBlock::Flower::BLUE_ORCHID,
-    FlowerBlock::Flower::ALLIUM,
-    FlowerBlock::Flower::HOUSTONIA,
-    FlowerBlock::Flower::RED_TULIP,
-    FlowerBlock::Flower::ORANGE_TULIP,
-    FlowerBlock::Flower::WHITE_TULIP,
-    FlowerBlock::Flower::PINK_TULIP,
-    FlowerBlock::Flower::OXEYE_DAISY
-};
+FlowerBlock::Flower* FlowerBlock::Flower::RED_FLOWERS[FlowerBlock::Flower::RED_FLOWER_COUNT] = {
+    FlowerBlock::Flower::POPPY,       FlowerBlock::Flower::BLUE_ORCHID, FlowerBlock::Flower::ALLIUM,
+    FlowerBlock::Flower::HOUSTONIA,   FlowerBlock::Flower::RED_TULIP,   FlowerBlock::Flower::ORANGE_TULIP,
+    FlowerBlock::Flower::WHITE_TULIP, FlowerBlock::Flower::PINK_TULIP,  FlowerBlock::Flower::OXEYE_DAISY};
 
-FlowerBlock::Flower::Flower(FlowerCategory* category, int data, const std::wstring& name, int nameId,
-                            int descriptionId, const std::wstring& iconName, EFlower id)
+FlowerBlock::Flower::Flower(FlowerCategory* category, int data, const std::wstring& name, int nameId, int descriptionId,
+                            const std::wstring& iconName, EFlower id)
     : mCategory(category),
       mData(data),
       mName(name),
@@ -185,8 +167,7 @@ Block* FlowerBlock::FlowerCategory::getBlock()
     return this == YELLOW ? Blocks::yellow_flower : Blocks::red_flower;
 }
 
-FlowerBlock::FlowerCategoryPredicate::FlowerCategoryPredicate(FlowerBlock* block)
-    : mBlock(block)
+FlowerBlock::FlowerCategoryPredicate::FlowerCategoryPredicate(FlowerBlock* block) : mBlock(block)
 {
 }
 
@@ -195,8 +176,7 @@ bool FlowerBlock::FlowerCategoryPredicate::apply(FlowerBlock::Flower* flower) co
     return flower->getCategory() == mBlock->getFlowerCategory();
 }
 
-FlowerBlock::FlowerBlock()
-    : mTypeProperty(NULL)
+FlowerBlock::FlowerBlock() : mTypeProperty(NULL)
 {
 }
 
@@ -207,7 +187,8 @@ void FlowerBlock::DerivedInit()
     BlockStateDefinition::BlockStateImpl* state = mStateDefinition->any();
     AbstractProperty<Flower*>* property = getFlowerProperty();
 
-    registerDefaultState(state->setValue(property, getFlowerCategory() == FlowerCategory::RED ? Flower::POPPY : Flower::DANDELION));
+    registerDefaultState(
+        state->setValue(property, getFlowerCategory() == FlowerCategory::RED ? Flower::POPPY : Flower::DANDELION));
 }
 
 AbstractProperty<FlowerBlock::Flower*>* FlowerBlock::getFlowerProperty()
@@ -237,7 +218,7 @@ AbstractProperty<FlowerBlock::Flower*>* FlowerBlock::getFlowerProperty()
 
 BlockStateDefinition* FlowerBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { getFlowerProperty() };
+    const Property* properties[] = {getFlowerProperty()};
 
     return new BlockStateDefinition(this, properties, 1);
 }
@@ -372,7 +353,8 @@ bool FlowerBlock::performBonemeal(bool checkOnly, Level* level, Random* random, 
         {
             if (!checkOnly)
             {
-                level->setBlockAndData(flowerPos.x, flowerPos.y, flowerPos.z, Block::getId(flowerBlock), 0, Block::UPDATE_ALL);
+                level->setBlockAndData(flowerPos.x, flowerPos.y, flowerPos.z, Block::getId(flowerBlock), 0,
+                                       Block::UPDATE_ALL);
             }
 
             success = true;

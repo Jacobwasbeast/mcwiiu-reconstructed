@@ -15,12 +15,11 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<int>* StandingBannerBlock::ROTATION =
-    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"rotation", 0, 15));
+AbstractProperty<int>* StandingBannerBlock::ROTATION = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"rotation", 0, 15));
 static const AABB* gStandingBannerShape = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 1.0, 0.75);
 
-StandingBannerBlock::StandingBannerBlock()
-    : BannerBlock()
+StandingBannerBlock::StandingBannerBlock() : BannerBlock()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(ROTATION, 0));
@@ -43,8 +42,8 @@ const BlockState* StandingBannerBlock::mirror(const BlockState* state, Mirror* m
     return result;
 }
 
-void StandingBannerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                          Block* block, const BlockPos& fromPos)
+void StandingBannerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                          const BlockPos& fromPos)
 {
     const BlockState* below = level->getBlockState(pos.below());
     if (!below->getMaterial()->isSolid())
@@ -67,6 +66,6 @@ int StandingBannerBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* StandingBannerBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { ROTATION };
+    static const Property* properties[] = {ROTATION};
     return new BlockStateDefinition(this, properties, 1);
 }

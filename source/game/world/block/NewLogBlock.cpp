@@ -41,8 +41,7 @@ void NewLogBlock::blockStaticCtor()
     VARIANT = variant;
 }
 
-NewLogBlock::NewLogBlock()
-    : LogBlock()
+NewLogBlock::NewLogBlock() : LogBlock()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(VARIANT, PlanksBlock::Variant::ACACIA)->setValue(AXIS, Y));
@@ -107,14 +106,14 @@ int NewLogBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* NewLogBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { VARIANT, AXIS };
+    static const Property* properties[] = {VARIANT, AXIS};
     return new BlockStateDefinition(this, properties, 2);
 }
 
 not_null_ptr<ItemInstance> NewLogBlock::getSilkTouchItemInstance(const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        state->getValue(VARIANT)->getData() - 4));
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(Item::byBlock(this), 1, state->getValue(VARIANT)->getData() - 4));
 }
 
 int NewLogBlock::getSpawnResourcesAuxValue(const BlockState* state)

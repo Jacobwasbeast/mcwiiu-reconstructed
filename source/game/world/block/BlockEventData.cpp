@@ -32,5 +32,6 @@ Block* BlockEventData::getBlock()
 
 bool BlockEventData::equals(BlockEventData& other)
 {
-    return BlockPos::equals(other) && eventId == other.eventId && eventParam == other.eventParam && block == other.block;
+    return BlockPos::equals(other) && eventId == other.eventId && eventParam == other.eventParam
+           && block == other.block;
 }

@@ -19,9 +19,9 @@ class ServerLevel;
 
 namespace
 {
-    OSFastMutex gSignUniqueIdMutex;
-    bool gSignUniqueIdMutexInitialized = true;
-    int gSignUniqueId = 0;
+OSFastMutex gSignUniqueIdMutex;
+bool gSignUniqueIdMutexInitialized = true;
+int gSignUniqueId = 0;
 }
 
 struct _STRING_VERIFY_RESPONSE
@@ -184,7 +184,8 @@ void SignBlockEntity::load(CompoundTag* tag)
 
 boost::shared_ptr<Packet> SignBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(mPos, 9, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(
+        new ClientboundBlockEntityDataPacket(mPos, 9, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* SignBlockEntity::getUpdateTag()
@@ -227,7 +228,8 @@ unsigned int SignBlockEntity::StringVerifyCallback(void* context, _STRING_VERIFY
             if (level->hasChunkAt(sign->getBlockPos(), false))
             {
                 BlockState* state = const_cast<BlockState*>(level->getBlockState(sign->getBlockPos()));
-                static_cast<ServerLevel*>(level)->queueSendBlockUpdate(sign->getBlockPos().x, sign->getBlockPos().y, sign->getBlockPos().z, state, state);
+                static_cast<ServerLevel*>(level)->queueSendBlockUpdate(sign->getBlockPos().x, sign->getBlockPos().y,
+                                                                       sign->getBlockPos().z, state, state);
             }
         }
         sign->setUniqueId();

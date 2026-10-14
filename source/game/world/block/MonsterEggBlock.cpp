@@ -20,26 +20,24 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/Material.hpp"
 
-MonsterEggBlock::Variant* MonsterEggBlock::Variant::STONE =
-    new MonsterEggBlock::Variant(0, L"stone", IDS_TILE_STONE_SILVERFISH);
-MonsterEggBlock::Variant* MonsterEggBlock::Variant::COBBLESTONE =
-    new MonsterEggBlock::Variant(1, L"cobblestone", IDS_TILE_STONE_SILVERFISH_COBBLESTONE);
-MonsterEggBlock::Variant* MonsterEggBlock::Variant::STONEBRICK =
-    new MonsterEggBlock::Variant(2, L"stone_brick", IDS_TILE_STONE_SILVERFISH_STONE_BRICK);
-MonsterEggBlock::Variant* MonsterEggBlock::Variant::MOSSY_STONEBRICK =
-    new MonsterEggBlock::Variant(3, L"mossy_brick", IDS_TILE_STONE_SILVERFISH_MOSSY_STONE_BRICK);
-MonsterEggBlock::Variant* MonsterEggBlock::Variant::CRACKED_STONEBRICK =
-    new MonsterEggBlock::Variant(4, L"cracked_brick", IDS_TILE_STONE_SILVERFISH_CRACKED_STONE_BRICK);
-MonsterEggBlock::Variant* MonsterEggBlock::Variant::CHISELED_STONEBRICK =
-    new MonsterEggBlock::Variant(5, L"chiseled_brick", IDS_TILE_STONE_SILVERFISH_CHISELED_STONE_BRICK);
-MonsterEggBlock::Variant* MonsterEggBlock::Variant::VALUES[6] = {
-    MonsterEggBlock::Variant::STONE,
-    MonsterEggBlock::Variant::COBBLESTONE,
-    MonsterEggBlock::Variant::STONEBRICK,
-    MonsterEggBlock::Variant::MOSSY_STONEBRICK,
-    MonsterEggBlock::Variant::CRACKED_STONEBRICK,
-    MonsterEggBlock::Variant::CHISELED_STONEBRICK
-};
+MonsterEggBlock::Variant* MonsterEggBlock::Variant::STONE = new MonsterEggBlock::Variant(0, L"stone",
+                                                                                         IDS_TILE_STONE_SILVERFISH);
+MonsterEggBlock::Variant* MonsterEggBlock::Variant::COBBLESTONE = new MonsterEggBlock::Variant(
+    1, L"cobblestone", IDS_TILE_STONE_SILVERFISH_COBBLESTONE);
+MonsterEggBlock::Variant* MonsterEggBlock::Variant::STONEBRICK = new MonsterEggBlock::Variant(
+    2, L"stone_brick", IDS_TILE_STONE_SILVERFISH_STONE_BRICK);
+MonsterEggBlock::Variant* MonsterEggBlock::Variant::MOSSY_STONEBRICK = new MonsterEggBlock::Variant(
+    3, L"mossy_brick", IDS_TILE_STONE_SILVERFISH_MOSSY_STONE_BRICK);
+MonsterEggBlock::Variant* MonsterEggBlock::Variant::CRACKED_STONEBRICK = new MonsterEggBlock::Variant(
+    4, L"cracked_brick", IDS_TILE_STONE_SILVERFISH_CRACKED_STONE_BRICK);
+MonsterEggBlock::Variant* MonsterEggBlock::Variant::CHISELED_STONEBRICK = new MonsterEggBlock::Variant(
+    5, L"chiseled_brick", IDS_TILE_STONE_SILVERFISH_CHISELED_STONE_BRICK);
+MonsterEggBlock::Variant* MonsterEggBlock::Variant::VALUES[6] = {MonsterEggBlock::Variant::STONE,
+                                                                 MonsterEggBlock::Variant::COBBLESTONE,
+                                                                 MonsterEggBlock::Variant::STONEBRICK,
+                                                                 MonsterEggBlock::Variant::MOSSY_STONEBRICK,
+                                                                 MonsterEggBlock::Variant::CRACKED_STONEBRICK,
+                                                                 MonsterEggBlock::Variant::CHISELED_STONEBRICK};
 EnumProperty<MonsterEggBlock::Variant*>* MonsterEggBlock::VARIANT = NULL;
 
 MonsterEggBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
@@ -87,13 +85,17 @@ const BlockState* MonsterEggBlock::Variant::getHostBlockState()
     case 1:
         return Blocks::cobblestone->defaultBlockState();
     case 2:
-        return Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::DEFAULT);
+        return Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT,
+                                                                 StoneBrickBlock::Variant::DEFAULT);
     case 3:
-        return Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::MOSSY);
+        return Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT,
+                                                                 StoneBrickBlock::Variant::MOSSY);
     case 4:
-        return Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CRACKED);
+        return Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT,
+                                                                 StoneBrickBlock::Variant::CRACKED);
     case 5:
-        return Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CHISELED);
+        return Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT,
+                                                                 StoneBrickBlock::Variant::CHISELED);
     }
 }
 
@@ -127,8 +129,7 @@ void MonsterEggBlock::blockStaticCtor()
     VARIANT = property;
 }
 
-MonsterEggBlock::MonsterEggBlock()
-    : Block(Material::CLAY)
+MonsterEggBlock::MonsterEggBlock() : Block(Material::CLAY)
 {
     DerivedInit();
     setDestroyTime(0.0f);
@@ -143,7 +144,8 @@ bool MonsterEggBlock::isCompatibleHostBlock(const BlockState* state)
 {
     const Block* block = state->getBlock();
     bool compatible = true;
-    return state == Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::STONE) || block == Blocks::cobblestone || block == Blocks::stonebrick;
+    return state == Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::STONE)
+           || block == Blocks::cobblestone || block == Blocks::stonebrick;
 }
 
 not_null_ptr<ItemInstance> MonsterEggBlock::getSilkTouchItemInstance(const BlockState* state)
@@ -156,14 +158,14 @@ not_null_ptr<ItemInstance> MonsterEggBlock::getSilkTouchItemInstance(const Block
     case 2:
         return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stonebrick));
     case 3:
-        return not_null_ptr<ItemInstance>(new ItemInstance(
-            Blocks::stonebrick, 1, StoneBrickBlock::Variant::MOSSY->getData()));
+        return not_null_ptr<ItemInstance>(
+            new ItemInstance(Blocks::stonebrick, 1, StoneBrickBlock::Variant::MOSSY->getData()));
     case 4:
-        return not_null_ptr<ItemInstance>(new ItemInstance(
-            Blocks::stonebrick, 1, StoneBrickBlock::Variant::CRACKED->getData()));
+        return not_null_ptr<ItemInstance>(
+            new ItemInstance(Blocks::stonebrick, 1, StoneBrickBlock::Variant::CRACKED->getData()));
     case 5:
-        return not_null_ptr<ItemInstance>(new ItemInstance(
-            Blocks::stonebrick, 1, StoneBrickBlock::Variant::CHISELED->getData()));
+        return not_null_ptr<ItemInstance>(
+            new ItemInstance(Blocks::stonebrick, 1, StoneBrickBlock::Variant::CHISELED->getData()));
     default:
         return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone));
     }
@@ -184,10 +186,11 @@ void MonsterEggBlock::spawnResources(Level* level, const BlockPos& pos, const Bl
     }
 }
 
-not_null_ptr<ItemInstance> MonsterEggBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
+not_null_ptr<ItemInstance> MonsterEggBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
+                                                                 const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(
-        this, 1, state->getBlock()->convertBlockStateToLegacyData(state)));
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(this, 1, state->getBlock()->convertBlockStateToLegacyData(state)));
 }
 
 const BlockState* MonsterEggBlock::getBlockState(int data)
@@ -202,7 +205,7 @@ int MonsterEggBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* MonsterEggBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { VARIANT };
+    static const Property* properties[] = {VARIANT};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -224,17 +227,20 @@ TextureAtlasSprite* MonsterEggBlock::getTexture(const Direction* direction, cons
     }
     else if (variant == Variant::MOSSY_STONEBRICK)
     {
-        const BlockState* brickState = Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::MOSSY);
+        const BlockState* brickState = Blocks::stonebrick->defaultBlockState()->setValue(
+            StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::MOSSY);
         result = Blocks::stonebrick->getTexture(direction, brickState);
     }
     else if (variant == Variant::CRACKED_STONEBRICK)
     {
-        const BlockState* brickState = Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CRACKED);
+        const BlockState* brickState = Blocks::stonebrick->defaultBlockState()->setValue(
+            StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CRACKED);
         result = Blocks::stonebrick->getTexture(direction, brickState);
     }
     else if (variant == Variant::CHISELED_STONEBRICK)
     {
-        const BlockState* brickState = Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CHISELED);
+        const BlockState* brickState = Blocks::stonebrick->defaultBlockState()->setValue(
+            StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CHISELED);
         result = Blocks::stonebrick->getTexture(direction, brickState);
     }
     return result;

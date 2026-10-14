@@ -22,10 +22,7 @@ template <class K, class V, class KeyHash, class KeyEqual>
 class SimpleRegistry : public Registry<K, V, KeyHash, KeyEqual>
 {
 public:
-    virtual V get(K key)
-    {
-        return mRegistry.at(key);
-    }
+    virtual V get(K key) { return mRegistry.at(key); }
 
     virtual void registerKey(K key, V value);
     virtual const boost::unordered_map<K, V, KeyHash, KeyEqual>& keySet();

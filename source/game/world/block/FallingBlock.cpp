@@ -12,14 +12,12 @@
 
 bool FallingBlock::fallInstantly;
 
-FallingBlock::FallingBlock()
-    : Block(Material::SAND)
+FallingBlock::FallingBlock() : Block(Material::SAND)
 {
     mBlockType = EBLOCK_TYPE_FALLING;
 }
 
-FallingBlock::FallingBlock(Material* material)
-    : Block(material)
+FallingBlock::FallingBlock(Material* material) : Block(material)
 {
     mBlockType = EBLOCK_TYPE_FALLING;
 }
@@ -29,8 +27,8 @@ void FallingBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* 
     level->addToTickNextTick(pos, this, getTickDelay(level));
 }
 
-void FallingBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                   Block* block, const BlockPos& fromPos)
+void FallingBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                   const BlockPos& fromPos)
 {
     level->addToTickNextTick(pos, this, getTickDelay(level));
 }
@@ -69,8 +67,7 @@ void FallingBlock::checkSlide(Level* level, const BlockPos& pos)
             }
 
             boost::shared_ptr<FallingBlockEntity> entity(new FallingBlockEntity(
-                level, (double)pos.x + 0.5, (double)pos.y, (double)pos.z + 0.5,
-                level->getBlockState(pos)));
+                level, (double)pos.x + 0.5, (double)pos.y, (double)pos.z + 0.5, level->getBlockState(pos)));
             falling(entity);
             level->addEntity(entity);
         }
@@ -94,8 +91,7 @@ int FallingBlock::getTickDelay(Level* level)
     return 2;
 }
 
-void FallingBlock::onLand(Level* level, const BlockPos& pos, const BlockState* state,
-                          const BlockState* replacedState)
+void FallingBlock::onLand(Level* level, const BlockPos& pos, const BlockState* state, const BlockState* replacedState)
 {
 }
 

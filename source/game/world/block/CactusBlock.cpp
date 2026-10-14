@@ -17,13 +17,11 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 static AbstractProperty<int>* AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
-static const AABB* CACTUS_COLLISION_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0,
-                                                               15.0 / 16.0, 15.0 / 16.0, 15.0 / 16.0);
-static const AABB* CACTUS_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0,
-                                                      15.0 / 16.0, 1.0, 15.0 / 16.0);
+static const AABB* CACTUS_COLLISION_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0, 15.0 / 16.0, 15.0 / 16.0,
+                                                               15.0 / 16.0);
+static const AABB* CACTUS_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0, 15.0 / 16.0, 1.0, 15.0 / 16.0);
 
-CactusBlock::CactusBlock()
-    : Block(Material::CACTUS)
+CactusBlock::CactusBlock() : Block(Material::CACTUS)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(AGE, 0));
@@ -99,7 +97,8 @@ bool CactusBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState
     }
 
     Block* below = level->getBlockState(pos.below())->getBlock();
-    bool survives = (below == Blocks::cactus || below == Blocks::sand) && !level->getBlockState(pos.above())->getMaterial()->isLiquid();
+    bool survives = (below == Blocks::cactus || below == Blocks::sand)
+                    && !level->getBlockState(pos.above())->getMaterial()->isLiquid();
     return survives;
 }
 
@@ -125,7 +124,7 @@ int CactusBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* CactusBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { AGE };
+    static const Property* properties[] = {AGE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

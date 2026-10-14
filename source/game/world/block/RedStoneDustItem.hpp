@@ -14,14 +14,9 @@ class RedStoneDustItem : public Item
 {
 public:
     RedStoneDustItem();
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
                                                         bool simulate);
 };
 

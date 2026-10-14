@@ -31,9 +31,9 @@ public:
         BlockInWorld* getUnchecked(const BlockPos& pos);
 
     private:
-        typedef boost::unordered_map<BlockPos, BlockInWorld*, boost::hash<BlockPos>,
-                                     std::equal_to<BlockPos>,
-                                     std::allocator<std::pair<const BlockPos, BlockInWorld*> > > BlockCache;
+        typedef boost::unordered_map<BlockPos, BlockInWorld*, boost::hash<BlockPos>, std::equal_to<BlockPos>,
+                                     std::allocator<std::pair<const BlockPos, BlockInWorld*> > >
+            BlockCache;
 
         Level* mLevel;
         bool mLoadChunks;
@@ -43,9 +43,8 @@ public:
     class BlockPatternMatch
     {
     public:
-        BlockPatternMatch(const BlockPos& frontTopLeft, const Direction* forwards,
-                          const Direction* up, boost::shared_ptr<BlockLoadingCache> cache,
-                          int width, int height, int depth);
+        BlockPatternMatch(const BlockPos& frontTopLeft, const Direction* forwards, const Direction* up,
+                          boost::shared_ptr<BlockLoadingCache> cache, int width, int height, int depth);
         ~BlockPatternMatch();
 
         BlockPos getFrontTopLeft();
@@ -66,8 +65,7 @@ public:
         int mDepth;
     };
 
-    BlockPattern(array3DWithLength<Predicate<BlockInWorld*>*> pattern,
-                 const Direction* up, const Direction* forward);
+    BlockPattern(array3DWithLength<Predicate<BlockInWorld*>*> pattern, const Direction* up, const Direction* forward);
 
     unsigned int getHeight();
     unsigned int getWidth();
@@ -78,14 +76,12 @@ public:
     std::wstring toString();
 
     static BlockLoadingCache* createLevelCache(Level* level, bool loadChunks);
-    static BlockPos translateAndRotate(const BlockPos& pos, const Direction* forwards,
-                                       const Direction* up, int x, int y, int z);
+    static BlockPos translateAndRotate(const BlockPos& pos, const Direction* forwards, const Direction* up, int x,
+                                       int y, int z);
 
-    BlockPatternMatch* matches(const BlockPos& pos, const Direction* forwards,
-                               const Direction* up,
+    BlockPatternMatch* matches(const BlockPos& pos, const Direction* forwards, const Direction* up,
                                boost::shared_ptr<BlockLoadingCache> cache);
-    BlockPatternMatch* matches(Level* level, const BlockPos& pos,
-                               const Direction* forwards, const Direction* up);
+    BlockPatternMatch* matches(Level* level, const BlockPos& pos, const Direction* forwards, const Direction* up);
     BlockPatternMatch* find(Level* level, const BlockPos& pos);
 
 private:

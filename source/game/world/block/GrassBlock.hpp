@@ -24,12 +24,9 @@ public:
 
     GrassBlock();
 
-    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
-                                       bool isClientSide);
-    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos,
-                                   const BlockState* state);
-    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos,
-                                 const BlockState* state);
+    virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
+    virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
+    virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
     virtual int getColor() const;
     virtual int getColor(const BlockState* state);
     virtual int getColor(LevelSource* levelSource, const BlockPos& pos, int tintIndex);
@@ -43,8 +40,8 @@ public:
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual bool shouldBlockTick(Level* level, const BlockPos& pos, const BlockState* state);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
-    virtual TextureAtlasSprite* getTexture(LevelSource* levelSource, const BlockPos& pos,
-                                            const Direction* direction, const BlockState* state);
+    virtual TextureAtlasSprite* getTexture(LevelSource* levelSource, const BlockPos& pos, const Direction* direction,
+                                           const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
 
     static TextureAtlasSprite* getSideTextureOverlay();

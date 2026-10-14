@@ -20,19 +20,13 @@
 #include "game/world/generation/Player.hpp"
 
 static AbstractProperty<int>* BITES = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"bites", 0, 6));
-static const AABB* SHAPES[7] =
-{
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0),
-    AABB::newPermanent(0.125, 0.0, 0.0, 1.0, 0.5, 1.0),
-    AABB::newPermanent(0.25, 0.0, 0.0, 1.0, 0.5, 1.0),
-    AABB::newPermanent(0.375, 0.0, 0.0, 1.0, 0.5, 1.0),
-    AABB::newPermanent(0.5, 0.0, 0.0, 1.0, 0.5, 1.0),
-    AABB::newPermanent(0.625, 0.0, 0.0, 1.0, 0.5, 1.0),
-    AABB::newPermanent(0.75, 0.0, 0.0, 1.0, 0.5, 1.0)
-};
+static const AABB* SHAPES[7] = {
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0),  AABB::newPermanent(0.125, 0.0, 0.0, 1.0, 0.5, 1.0),
+    AABB::newPermanent(0.25, 0.0, 0.0, 1.0, 0.5, 1.0), AABB::newPermanent(0.375, 0.0, 0.0, 1.0, 0.5, 1.0),
+    AABB::newPermanent(0.5, 0.0, 0.0, 1.0, 0.5, 1.0),  AABB::newPermanent(0.625, 0.0, 0.0, 1.0, 0.5, 1.0),
+    AABB::newPermanent(0.75, 0.0, 0.0, 1.0, 0.5, 1.0)};
 
-CakeBlock::CakeBlock()
-    : Block(Material::CAKE)
+CakeBlock::CakeBlock() : Block(Material::CAKE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(BITES, 0));
@@ -44,12 +38,20 @@ const AABB* CakeBlock::getShape(const BlockState* state, LevelSource*, const Blo
     return SHAPES[state->getValue(BITES)];
 }
 
-bool CakeBlock::isCubeShaped(const BlockState*) { return false; }
-bool CakeBlock::isSolidRender(const BlockState*) const { return false; }
-bool CakeBlock::TestUse() { return false; }
+bool CakeBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+bool CakeBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool CakeBlock::TestUse()
+{
+    return false;
+}
 
-bool CakeBlock::eat(Level* level, const BlockPos& pos, const BlockState* state,
-                    const boost::shared_ptr<Player>& player)
+bool CakeBlock::eat(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Player>& player)
 {
     if (!player->canEat(false))
         return false;
@@ -64,9 +66,8 @@ bool CakeBlock::eat(Level* level, const BlockPos& pos, const BlockState* state,
     return true;
 }
 
-bool CakeBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
-                    boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                    const Direction*, float, float, float, bool clientSide)
+bool CakeBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                    InteractionHand::EInteractionHand hand, const Direction*, float, float, float, bool clientSide)
 {
     if (clientSide || !player->canEat(false))
         return false;
@@ -85,8 +86,7 @@ bool CakeBlock::mayPlace(Level* level, const BlockPos& pos)
     return false;
 }
 
-void CakeBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos,
-                                Block*, const BlockPos&)
+void CakeBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     if (!canSurvive(level, pos, NULL))
         level->removeBlock(pos);
@@ -97,15 +97,24 @@ bool CakeBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
     return level->getBlockState(pos.below())->getMaterial()->isSolid();
 }
 
-int CakeBlock::getResourceCount(Random*) { return 0; }
-Item* CakeBlock::getResource(const BlockState*, Random*, int) { return Items::air; }
+int CakeBlock::getResourceCount(Random*)
+{
+    return 0;
+}
+Item* CakeBlock::getResource(const BlockState*, Random*, int)
+{
+    return Items::air;
+}
 
 not_null_ptr<ItemInstance> CakeBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {
     return not_null_ptr<ItemInstance>(new ItemInstance(Items::cake));
 }
 
-int CakeBlock::getRenderLayer() { return 0; }
+int CakeBlock::getRenderLayer()
+{
+    return 0;
+}
 
 const BlockState* CakeBlock::getBlockState(int data)
 {
@@ -119,8 +128,7 @@ int CakeBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int CakeBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (!tooltipData.m_pPlayer->mAbilities.mInstabuild
-        && tooltipData.m_pPlayer->getFoodData()->needsFood()
+    if (!tooltipData.m_pPlayer->mAbilities.mInstabuild && tooltipData.m_pPlayer->getFoodData()->needsFood()
         && tooltipData.m_bUseBlock && tooltipData.m_bCanPlace)
         return IDS_TOOLTIPS_EAT;
     return Block::GetInteractTooltip(tooltipData);
@@ -128,7 +136,7 @@ unsigned int CakeBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 BlockStateDefinition* CakeBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { BITES };
+    static const Property* properties[] = {BITES};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -137,7 +145,10 @@ int CakeBlock::getAnalogOutputSignal(const BlockState* state, Level*, const Bloc
     return 14 - state->getValue(BITES) * 2;
 }
 
-bool CakeBlock::hasAnalogOutputSignal(const BlockState*) { return true; }
+bool CakeBlock::hasAnalogOutputSignal(const BlockState*)
+{
+    return true;
+}
 
 EBlockFaceShape CakeBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {

@@ -18,8 +18,8 @@ public:
     virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                               const boost::shared_ptr<Entity>& entity);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
 };
 

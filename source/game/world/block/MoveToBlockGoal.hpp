@@ -12,8 +12,8 @@ class PathfinderMob;
 class MoveToBlockGoal : public Goal
 {
 public:
-    MoveToBlockGoal(PathfinderMob* mob, double speedModifier, int searchRange,
-                    int verticalSearchStart, double maxStayDistance);
+    MoveToBlockGoal(PathfinderMob* mob, double speedModifier, int searchRange, int verticalSearchStart,
+                    double maxStayDistance);
     virtual ~MoveToBlockGoal() {}
 
     virtual bool canUse();
@@ -24,8 +24,7 @@ public:
     virtual int GetNextStartTick(PathfinderMob* mob);
     virtual bool canReach(const BlockPos& pos);
     virtual bool isValidTarget(Level* level, const BlockPos& pos) = 0;
-    virtual bool isValidTargetArea(Level* level, const BlockPos& from,
-                                   const BlockPos& to);
+    virtual bool isValidTargetArea(Level* level, const BlockPos& from, const BlockPos& to);
 
 protected:
     bool findNearestBlock();

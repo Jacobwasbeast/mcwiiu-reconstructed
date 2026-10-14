@@ -23,8 +23,7 @@ const std::wstring BannerBlockEntity::TAG_PATTERNS = L"Patterns";
 const std::wstring BannerBlockEntity::TAG_PATTERN = L"Pattern";
 const std::wstring BannerBlockEntity::TAG_COLOR = L"Color";
 
-BannerBlockEntity::BannerBlockEntity()
-    : BlockEntity(), mName(), mTextureHashName(), mCustomName()
+BannerBlockEntity::BannerBlockEntity() : BlockEntity(), mName(), mTextureHashName(), mCustomName()
 {
     mPatternList = NULL;
     mColorList = NULL;
@@ -74,8 +73,8 @@ const DyeColor* BannerBlockEntity::getColor(const not_null_ptr<ItemInstance>& it
     return DyeColor::BLACK;
 }
 
-void BannerBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid,
-                                      bool chatCensored, bool uuidLocal)
+void BannerBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored,
+                                      bool uuidLocal)
 {
     mCustomName->set(name, uuid, chatCensored, uuidLocal);
 }
@@ -129,7 +128,8 @@ not_null_ptr<ItemInstance> BannerBlockEntity::getItem()
 {
     not_null_ptr<ItemInstance> item(BannerItem::makeBanner(mBaseColor, mPatterns));
     addTags(item, mBaseColor->getItemData(), NULL);
-    if (hasCustomName()) item->setHoverName(getName());
+    if (hasCustomName())
+        item->setHoverName(getName());
     return item;
 }
 
@@ -171,7 +171,8 @@ void BannerBlockEntity::load(CompoundTag* tag)
 
 boost::shared_ptr<Packet> BannerBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 6, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return boost::shared_ptr<Packet>(
+        new ClientboundBlockEntityDataPacket(mPos, 6, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* BannerBlockEntity::getUpdateTag()
@@ -249,8 +250,8 @@ std::wstring BannerBlockEntity::getTextureHashName()
     return mTextureHashName;
 }
 
-void BannerBlockEntity::fjAddPatternToItem(const not_null_ptr<ItemInstance>& item,
-                                           const BannerPattern* pattern, const DyeColor* color)
+void BannerBlockEntity::fjAddPatternToItem(const not_null_ptr<ItemInstance>& item, const BannerPattern* pattern,
+                                           const DyeColor* color)
 {
     CompoundTag* tag = static_cast<CompoundTag*>(item->getOrCreateTagElement(BlockItem::BLOCK_ENTITY_TAG));
     ListTag* patterns;
@@ -275,7 +276,8 @@ void BannerBlockEntity::fjAddPatternToItem(const not_null_ptr<ItemInstance>& ite
 void BannerBlockEntity::removeLastPattern(not_null_ptr<ItemInstance> item)
 {
     CompoundTag* tag = static_cast<CompoundTag*>(item->getTagElement(BlockItem::BLOCK_ENTITY_TAG));
-    if (tag == NULL || !tag->contains(TAG_PATTERNS, Tag::TAG_LIST)) return;
+    if (tag == NULL || !tag->contains(TAG_PATTERNS, Tag::TAG_LIST))
+        return;
     ListTag* patterns = tag->getList(TAG_PATTERNS, Tag::TAG_COMPOUND);
     if (patterns->isEmpty())
     {

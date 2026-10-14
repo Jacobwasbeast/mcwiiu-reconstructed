@@ -10,10 +10,8 @@ class PlayerStats;
 class BlocksPresentWithIdMedal : public GameMedal
 {
 public:
-    BlocksPresentWithIdMedal(int name, float target, unsigned int weight,
-                             const std::set<int>& blockIds,
-                             float (&scoreFunction)(int, int), float value,
-                             GameMedal::EOperator op);
+    BlocksPresentWithIdMedal(int name, float target, unsigned int weight, const std::set<int>& blockIds,
+                             float (&scoreFunction)(int, int), float value, GameMedal::EOperator op);
 
 
     virtual float GetScore(PlayerStats* playerStats) const;

@@ -28,12 +28,11 @@ public:
     virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
                           const Direction* direction);
     virtual void updateSignalStrength(Level* level, const BlockPos& pos);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
-    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                             const BlockState* state);
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool isInverted();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual bool isCubeShaped(const BlockState* state);
@@ -46,8 +45,8 @@ public:
     virtual unsigned int GetHitTooltip(const BlockTooltipDataHolder& tooltipData);
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                               const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
 

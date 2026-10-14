@@ -26,11 +26,11 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/StemBlock.hpp"
 
-AbstractProperty<int>* FarmBlock::MOISTURE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"moisture", 0, 7));
+AbstractProperty<int>* FarmBlock::MOISTURE = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"moisture", 0, 7));
 static const AABB* gFarmShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.9375, 1.0);
 
-FarmBlock::FarmBlock()
-    : Block(Material::DIRT)
+FarmBlock::FarmBlock() : Block(Material::DIRT)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(MOISTURE, 0));
@@ -38,9 +38,18 @@ FarmBlock::FarmBlock()
     setLightBlock(0xff);
 }
 
-const AABB* FarmBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return gFarmShape; }
-bool FarmBlock::isSolidRender(const BlockState*) const { return false; }
-bool FarmBlock::isCubeShaped(const BlockState*) { return false; }
+const AABB* FarmBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
+{
+    return gFarmShape;
+}
+bool FarmBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool FarmBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
 
 void FarmBlock::turnToDirt(Level* level, const BlockPos& pos)
 {
@@ -62,7 +71,8 @@ void FarmBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
     int moisture = state->getValue(MOISTURE);
     if (isNearWater(level, pos) || level->isRainingAt(pos.above()))
     {
-        if (moisture < 7) level->setBlock(pos, state->setValue(MOISTURE, 7), Block::UPDATE_CLIENTS, false);
+        if (moisture < 7)
+            level->setBlock(pos, state->setValue(MOISTURE, 7), Block::UPDATE_CLIENTS, false);
     }
     else if (moisture > 0)
         level->setBlock(pos, state->setValue(MOISTURE, moisture - 1), Block::UPDATE_CLIENTS, false);
@@ -80,7 +90,8 @@ void FarmBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Enti
             bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
             if (isPlayer || level->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
             {
-                if (entity->mBbWidth * entity->mBbWidth * entity->mBbHeight > 0.512f) turnToDirt(level, pos);
+                if (entity->mBbWidth * entity->mBbWidth * entity->mBbHeight > 0.512f)
+                    turnToDirt(level, pos);
             }
         }
     }
@@ -95,8 +106,7 @@ bool FarmBlock::isUnderCrops(Level* level, const BlockPos& pos)
 
 bool FarmBlock::isNearWater(Level* level, const BlockPos& pos)
 {
-    Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(pos.offset(-4, 0, -4),
-                                                                        pos.offset(4, 1, 4));
+    Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(pos.offset(-4, 0, -4), pos.offset(4, 1, 4));
     while (positions->hasNext())
     {
         BlockPos current = *positions->next();
@@ -110,19 +120,23 @@ bool FarmBlock::isNearWater(Level* level, const BlockPos& pos)
     return false;
 }
 
-void FarmBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
+void FarmBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                const BlockPos& fromPos)
 {
     Block::neighborChanged(state, level, pos, block, fromPos);
-    if (level->getBlockState(pos.above())->getBlock()->mMaterial->isSolid()) turnToDirt(level, pos);
+    if (level->getBlockState(pos.above())->getBlock()->mMaterial->isSolid())
+        turnToDirt(level, pos);
 }
 
 void FarmBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
     Block::onPlace(level, pos, state);
-    if (level->getBlockState(pos.above())->getMaterial()->isSolid()) turnToDirt(level, pos);
+    if (level->getBlockState(pos.above())->getMaterial()->isSolid())
+        turnToDirt(level, pos);
 }
 
-bool FarmBlock::shouldRenderFace(const BlockState* state, LevelSource* source, const BlockPos& pos, const Direction* direction)
+bool FarmBlock::shouldRenderFace(const BlockState* state, LevelSource* source, const BlockPos& pos,
+                                 const Direction* direction)
 {
     switch (direction->get3DDataValue())
     {
@@ -154,28 +168,37 @@ const BlockState* FarmBlock::getBlockState(int data)
     return defaultBlockState()->setValue(MOISTURE, data & 7);
 }
 
-int FarmBlock::convertBlockStateToLegacyData(const BlockState* state) { return state->getValue(MOISTURE); }
-bool FarmBlock::canContainLiquid(const BlockState*) const { return false; }
+int FarmBlock::convertBlockStateToLegacyData(const BlockState* state)
+{
+    return state->getValue(MOISTURE);
+}
+bool FarmBlock::canContainLiquid(const BlockState*) const
+{
+    return false;
+}
 
 not_null_ptr<ItemInstance> FarmBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::dirt), 1, getSpawnResourcesAuxValue(state)));
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(Item::byBlock(Blocks::dirt), 1, getSpawnResourcesAuxValue(state)));
 }
 
 BlockStateDefinition* FarmBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { MOISTURE };
+    static const Property* properties[] = {MOISTURE};
     return new BlockStateDefinition(this, properties, 1);
 }
 
-EBlockFaceShape FarmBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
+EBlockFaceShape FarmBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
+                                             const Direction* direction)
 {
     return direction == Direction::DOWN ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
 }
 
 TextureAtlasSprite* FarmBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction == Direction::UP) return state->getValue(MOISTURE) > 0 ? mWetIcon : mDryIcon;
+    if (direction == Direction::UP)
+        return state->getValue(MOISTURE) > 0 ? mWetIcon : mDryIcon;
     return Blocks::dirt->getTexture(direction);
 }
 

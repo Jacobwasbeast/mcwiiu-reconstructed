@@ -24,12 +24,11 @@ static const AABB* WOOL_CARPET_COLLISION_SHAPE = AABB::newPermanent(0.0, 0.0, 0.
 
 void WoolCarpetBlock::blockStaticCtor()
 {
-    gWoolCarpetColorProperty = EnumProperty<const DyeColor*>::create(
-        L"color", typeid(DyeColor), DyeColor::COLORS, Predicates<const DyeColor*>::alwaysTrue);
+    gWoolCarpetColorProperty = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS,
+                                                                     Predicates<const DyeColor*>::alwaysTrue);
 }
 
-WoolCarpetBlock::WoolCarpetBlock()
-    : Block(Material::CLOTH_DECORATION)
+WoolCarpetBlock::WoolCarpetBlock() : Block(Material::CLOTH_DECORATION)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(gWoolCarpetColorProperty, DyeColor::WHITE));
@@ -37,8 +36,8 @@ WoolCarpetBlock::WoolCarpetBlock()
     setThickness(0.07f);
 }
 
-void WoolCarpetBlock::addCollisionAABB(const BlockPos& pos, const AABB* entityBox,
-                                       std::vector<AABB*>* collidingBoxes, const AABB* blockBox)
+void WoolCarpetBlock::addCollisionAABB(const BlockPos& pos, const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
+                                       const AABB* blockBox)
 {
     AABB* movedBox = WOOL_CARPET_COLLISION_SHAPE->move(pos);
     if (entityBox->intersects(movedBox))
@@ -83,8 +82,8 @@ bool WoolCarpetBlock::checkCanSurvive(Level* level, const BlockPos& pos, const B
     return true;
 }
 
-void WoolCarpetBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                      Block*, const BlockPos&)
+void WoolCarpetBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*,
+                                      const BlockPos&)
 {
     checkCanSurvive(level, pos, state);
 }
@@ -94,8 +93,8 @@ bool WoolCarpetBlock::canSurvive(Level* level, const BlockPos& pos, const BlockS
     return !level->isEmptyBlock(pos.below());
 }
 
-bool WoolCarpetBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource,
-                                       const BlockPos& pos, const Direction* direction)
+bool WoolCarpetBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                       const Direction* direction)
 {
     if (direction == Direction::UP)
     {
@@ -126,11 +125,12 @@ int WoolCarpetBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* WoolCarpetBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { gWoolCarpetColorProperty };
+    static const Property* properties[] = {gWoolCarpetColorProperty};
     return new BlockStateDefinition(this, properties, 1);
 }
 
-EBlockFaceShape WoolCarpetBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
+EBlockFaceShape WoolCarpetBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
+                                                   const Direction* direction)
 {
     return direction == Direction::DOWN ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
 }

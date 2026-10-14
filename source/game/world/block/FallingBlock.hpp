@@ -18,7 +18,8 @@ public:
 
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual int getTickDelay(Level* level);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void falling(boost::shared_ptr<FallingBlockEntity> entity);

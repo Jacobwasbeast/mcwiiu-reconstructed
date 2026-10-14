@@ -20,51 +20,32 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::NORTH_WEST =
-    new HugeMushroomBlock::Variant(1, L"north_west");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::NORTH =
-    new HugeMushroomBlock::Variant(2, L"north");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::NORTH_EAST =
-    new HugeMushroomBlock::Variant(3, L"north_east");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::WEST =
-    new HugeMushroomBlock::Variant(4, L"west");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::CENTER =
-    new HugeMushroomBlock::Variant(5, L"center");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::EAST =
-    new HugeMushroomBlock::Variant(6, L"east");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::SOUTH_WEST =
-    new HugeMushroomBlock::Variant(7, L"south_west");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::SOUTH =
-    new HugeMushroomBlock::Variant(8, L"south");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::SOUTH_EAST =
-    new HugeMushroomBlock::Variant(9, L"south_east");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::STEM =
-    new HugeMushroomBlock::Variant(10, L"stem");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::ALL_INSIDE =
-    new HugeMushroomBlock::Variant(0, L"all_inside");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::ALL_OUTSIDE =
-    new HugeMushroomBlock::Variant(11, L"all_outside");
-HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::ALL_STEM =
-    new HugeMushroomBlock::Variant(12, L"all_stem");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::NORTH_WEST = new HugeMushroomBlock::Variant(1, L"north_west");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::NORTH = new HugeMushroomBlock::Variant(2, L"north");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::NORTH_EAST = new HugeMushroomBlock::Variant(3, L"north_east");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::WEST = new HugeMushroomBlock::Variant(4, L"west");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::CENTER = new HugeMushroomBlock::Variant(5, L"center");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::EAST = new HugeMushroomBlock::Variant(6, L"east");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::SOUTH_WEST = new HugeMushroomBlock::Variant(7, L"south_west");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::SOUTH = new HugeMushroomBlock::Variant(8, L"south");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::SOUTH_EAST = new HugeMushroomBlock::Variant(9, L"south_east");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::STEM = new HugeMushroomBlock::Variant(10, L"stem");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::ALL_INSIDE = new HugeMushroomBlock::Variant(0, L"all_inside");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::ALL_OUTSIDE = new HugeMushroomBlock::Variant(11,
+                                                                                                     L"all_outside");
+HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::ALL_STEM = new HugeMushroomBlock::Variant(12, L"all_stem");
 HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::VALUES[13] = {
-    HugeMushroomBlock::Variant::ALL_INSIDE,
-    HugeMushroomBlock::Variant::NORTH_WEST,
-    HugeMushroomBlock::Variant::NORTH,
-    HugeMushroomBlock::Variant::NORTH_EAST,
-    HugeMushroomBlock::Variant::WEST,
-    HugeMushroomBlock::Variant::CENTER,
-    HugeMushroomBlock::Variant::EAST,
-    HugeMushroomBlock::Variant::SOUTH_WEST,
-    HugeMushroomBlock::Variant::SOUTH,
-    HugeMushroomBlock::Variant::SOUTH_EAST,
-    HugeMushroomBlock::Variant::STEM,
-    HugeMushroomBlock::Variant::ALL_OUTSIDE,
-    HugeMushroomBlock::Variant::ALL_STEM
-};
+    HugeMushroomBlock::Variant::ALL_INSIDE, HugeMushroomBlock::Variant::NORTH_WEST,
+    HugeMushroomBlock::Variant::NORTH,      HugeMushroomBlock::Variant::NORTH_EAST,
+    HugeMushroomBlock::Variant::WEST,       HugeMushroomBlock::Variant::CENTER,
+    HugeMushroomBlock::Variant::EAST,       HugeMushroomBlock::Variant::SOUTH_WEST,
+    HugeMushroomBlock::Variant::SOUTH,      HugeMushroomBlock::Variant::SOUTH_EAST,
+    HugeMushroomBlock::Variant::STEM,       HugeMushroomBlock::Variant::ALL_OUTSIDE,
+    HugeMushroomBlock::Variant::ALL_STEM};
 EnumProperty<HugeMushroomBlock::Variant*>* HugeMushroomBlock::VARIANT = NULL;
 const std::wstring HugeMushroomBlock::TEXTURE_STEM = L"skin_stem";
 const std::wstring HugeMushroomBlock::TEXTURE_INSIDE = L"inside";
-const std::wstring HugeMushroomBlock::TEXTURE_TYPE[2] = { L"skin_brown", L"skin_red" };
+const std::wstring HugeMushroomBlock::TEXTURE_TYPE[2] = {L"skin_brown", L"skin_red"};
 
 int getMushroomDataValue(HugeMushroomBlock::Variant* variant)
 {
@@ -133,7 +114,8 @@ void HugeMushroomBlock::blockStaticCtor()
 }
 
 HugeMushroomBlock::HugeMushroomBlock(Material* material, const MaterialColor* materialColor, Block* otherBlock)
-    : Block(material, materialColor), mIsOtherBlock(0)
+    : Block(material, materialColor),
+      mIsOtherBlock(0)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::ALL_OUTSIDE));
@@ -148,7 +130,8 @@ int HugeMushroomBlock::getResourceCount(Random* random)
     return count < 0 ? 0 : count;
 }
 
-const MaterialColor* HugeMushroomBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const MaterialColor* HugeMushroomBlock::getMapColor(const BlockState* state, LevelSource* levelSource,
+                                                    const BlockPos& pos)
 {
     switch (state->getValue(VARIANT)->getData())
     {
@@ -169,11 +152,11 @@ Item* HugeMushroomBlock::getResource(const BlockState*, Random*, int)
 
 not_null_ptr<ItemInstance> HugeMushroomBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        state->getValue(VARIANT)->getData()));
+    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1, state->getValue(VARIANT)->getData()));
 }
 
-const BlockState* HugeMushroomBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int auxValue, boost::shared_ptr<LivingEntity>)
+const BlockState* HugeMushroomBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float,
+                                                          float, int auxValue, boost::shared_ptr<LivingEntity>)
 {
     return getBlockState(auxValue);
 }
@@ -315,13 +298,12 @@ const BlockState* HugeMushroomBlock::mirror(const BlockState* state, Mirror* mir
 
 not_null_ptr<ItemInstance> HugeMushroomBlock::getSilkTouchItemInstance(const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        Variant::ALL_OUTSIDE->getData()));
+    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1, Variant::ALL_OUTSIDE->getData()));
 }
 
 BlockStateDefinition* HugeMushroomBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { VARIANT };
+    static const Property* properties[] = {VARIANT};
     return new BlockStateDefinition(this, properties, 1);
 }
 

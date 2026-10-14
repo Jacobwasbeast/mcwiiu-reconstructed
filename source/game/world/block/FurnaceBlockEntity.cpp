@@ -32,9 +32,11 @@ arrayWithLength<int> FurnaceBlockEntity::SLOTS_FOR_DOWN(furnaceDownSlots, 2);
 arrayWithLength<int> FurnaceBlockEntity::SLOTS_FOR_SIDES(furnaceSideSlots, 1);
 
 FurnaceBlockEntity::FurnaceBlockEntity()
-    : LockableContainerBlockEntity(), WorldlyContainer(),
+    : LockableContainerBlockEntity(),
+      WorldlyContainer(),
       mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(3, ItemInstance::EMPTY)),
-      mOpenersThisTick(), mOpeners()
+      mOpenersThisTick(),
+      mOpeners()
 {
     mLitTime = 0;
     mLitDuration = 0;
@@ -56,19 +58,22 @@ BlockEntity* FurnaceBlockEntity::create()
 
 std::wstring FurnaceBlockEntity::getName()
 {
-    if (hasCustomName()) return mName->get();
+    if (hasCustomName())
+        return mName->get();
     return std::wstring(L"");
 }
 
 std::wstring FurnaceBlockEntity::getCustomName()
 {
-    if (hasCustomName()) return mName->get();
+    if (hasCustomName())
+        return mName->get();
     return std::wstring(L"");
 }
 
 bool FurnaceBlockEntity::hasCustomName()
 {
-    if (!mName->checkParentalFilter()) return false;
+    if (!mName->checkParentalFilter())
+        return false;
     return !mName->raw().empty();
 }
 
@@ -82,7 +87,8 @@ bool FurnaceBlockEntity::isEmpty()
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = mItems[i];
-        if (!item->isEmpty()) return false;
+        if (!item->isEmpty())
+            return false;
     }
     return true;
 }
@@ -112,7 +118,8 @@ void FurnaceBlockEntity::setItem(unsigned int slot, not_null_ptr<ItemInstance> i
     not_null_ptr<ItemInstance> previous = mItems[slot];
     bool same = !item->isEmpty() && item->sameItem(previous) && ItemInstance::tagMatches(item, previous);
     mItems[slot] = item;
-    if (item->getCount() > getMaxStackSize()) item->setCount(getMaxStackSize());
+    if (item->getCount() > getMaxStackSize())
+        item->setCount(getMaxStackSize());
     if (slot == 0 && !same)
     {
         mCookingTotalTime = getTotalCookTime(item);
@@ -157,43 +164,65 @@ void FurnaceBlockEntity::stopOpen(boost::shared_ptr<Player> player)
 
 int FurnaceBlockEntity::getBurnDuration(not_null_ptr<ItemInstance> item)
 {
-    if (item->isEmpty()) return 0;
+    if (item->isEmpty())
+        return 0;
     Item* itemType = item->getItem();
-    if (itemType == Item::byBlock(Blocks::wooden_slab)) return 150;
-    if (itemType == Item::byBlock(Blocks::wool)) return 100;
-    if (itemType == Item::byBlock(Blocks::carpet)) return 67;
+    if (itemType == Item::byBlock(Blocks::wooden_slab))
+        return 150;
+    if (itemType == Item::byBlock(Blocks::wool))
+        return 100;
+    if (itemType == Item::byBlock(Blocks::carpet))
+        return 67;
     if (itemType != Item::byBlock(Blocks::ladder))
     {
-        if (itemType == Item::byBlock(Blocks::wooden_button)) return 100;
-        if (itemType == Item::byBlock(Blocks::acacia_button)) return 100;
-        if (itemType == Item::byBlock(Blocks::birch_button)) return 100;
-        if (itemType == Item::byBlock(Blocks::dark_oak_button)) return 100;
-        if (itemType == Item::byBlock(Blocks::jungle_button)) return 100;
-        if (itemType == Item::byBlock(Blocks::spruce_button)) return 100;
+        if (itemType == Item::byBlock(Blocks::wooden_button))
+            return 100;
+        if (itemType == Item::byBlock(Blocks::acacia_button))
+            return 100;
+        if (itemType == Item::byBlock(Blocks::birch_button))
+            return 100;
+        if (itemType == Item::byBlock(Blocks::dark_oak_button))
+            return 100;
+        if (itemType == Item::byBlock(Blocks::jungle_button))
+            return 100;
+        if (itemType == Item::byBlock(Blocks::spruce_button))
+            return 100;
         Block* block = Block::byItem(itemType);
         const BlockState* state = block->defaultBlockState();
         Material* material = state->getMaterial();
         if (material != Material::WOOD)
         {
-            if (itemType == Item::byBlock(Blocks::coal_block)) return 16000;
+            if (itemType == Item::byBlock(Blocks::coal_block))
+                return 16000;
             DiggerItem* digger = dynamic_cast<DiggerItem*>(itemType);
-            if (digger != NULL && digger->getTier() == Item::Tier::WOOD) return 200;
+            if (digger != NULL && digger->getTier() == Item::Tier::WOOD)
+                return 200;
             SwordItem* sword = dynamic_cast<SwordItem*>(itemType);
-            if (sword != NULL && sword->getTier() == Item::Tier::WOOD) return 200;
+            if (sword != NULL && sword->getTier() == Item::Tier::WOOD)
+                return 200;
             HoeItem* hoe = dynamic_cast<HoeItem*>(itemType);
-            if (hoe != NULL && hoe->getTier() == Item::Tier::WOOD) return 200;
-            if (itemType == Items::stick) return 100;
+            if (hoe != NULL && hoe->getTier() == Item::Tier::WOOD)
+                return 200;
+            if (itemType == Items::stick)
+                return 100;
             if (itemType != Items::bow && itemType != Items::fishingRod)
             {
-                if (itemType == Items::sign) return 200;
-                if (itemType == Items::coal) return 1600;
-                if (itemType == Items::lavaBucket) return 20000;
+                if (itemType == Items::sign)
+                    return 200;
+                if (itemType == Items::coal)
+                    return 1600;
+                if (itemType == Items::lavaBucket)
+                    return 20000;
                 if (itemType != Item::byBlock(Blocks::sapling) && itemType != Items::bowl)
                 {
-                    if (itemType == Items::blazeRod) return 2400;
-                    if (itemType == Item::byBlock(Blocks::dried_kelp_block)) return 4000;
-                    if (itemType == NULL) return 0;
-                    if (dynamic_cast<DoorItem*>(itemType) != NULL && itemType != Items::ironDoor) return 200;
+                    if (itemType == Items::blazeRod)
+                        return 2400;
+                    if (itemType == Item::byBlock(Blocks::dried_kelp_block))
+                        return 4000;
+                    if (itemType == NULL)
+                        return 0;
+                    if (dynamic_cast<DoorItem*>(itemType) != NULL && itemType != Items::ironDoor)
+                        return 200;
                     return dynamic_cast<BoatItem*>(itemType) != NULL ? 400 : 0;
                 }
                 return 100;
@@ -211,7 +240,8 @@ bool FurnaceBlockEntity::isFuel(not_null_ptr<ItemInstance> item)
 
 bool FurnaceBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 {
-    if (slot == 2) return false;
+    if (slot == 2)
+        return false;
     if (slot == 1)
     {
         not_null_ptr<ItemInstance> fuel = mItems[1];
@@ -267,7 +297,8 @@ void FurnaceBlockEntity::clearContent()
     mItems.clear();
 }
 
-AbstractContainerMenu* FurnaceBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
+AbstractContainerMenu* FurnaceBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory,
+                                                      boost::shared_ptr<Player> player)
 {
     return new FurnaceMenu(inventory, boost::static_pointer_cast<FurnaceBlockEntity>(shared_from_this()));
 }
@@ -289,8 +320,10 @@ std::wstring FurnaceBlockEntity::getDisplayName()
 
 arrayWithLength<int> FurnaceBlockEntity::getSlotsForFace(const Direction* face)
 {
-    if (face == Direction::DOWN) return SLOTS_FOR_DOWN;
-    if (face == Direction::UP) return SLOTS_FOR_UP;
+    if (face == Direction::DOWN)
+        return SLOTS_FOR_DOWN;
+    if (face == Direction::UP)
+        return SLOTS_FOR_UP;
     return SLOTS_FOR_SIDES;
 }
 
@@ -310,7 +343,8 @@ bool FurnaceBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<ItemInsta
     return true;
 }
 
-void FurnaceBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal)
+void FurnaceBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored,
+                                       bool uuidLocal)
 {
     mName->set(name, uuid, chatCensored, uuidLocal);
 }
@@ -359,31 +393,39 @@ bool FurnaceBlockEntity::isLit(boost::shared_ptr<Container> container)
 
 bool FurnaceBlockEntity::canBurn()
 {
-    if (mItems[0]->isEmpty()) return false;
+    if (mItems[0]->isEmpty())
+        return false;
     ItemInstance* result = FurnaceRecipes::getInstance()->getResult(mItems[0]);
-    if (result->isEmpty()) return false;
+    if (result->isEmpty())
+        return false;
     not_null_ptr<ItemInstance> output = mItems[2];
-    if (output->isEmpty()) return true;
-    if (!output->sameItem_not_shared(result)) return false;
-    if (output->getCount() < getMaxStackSize() && output->getCount() < output->getMaxStackSize()) return true;
-    if (output->getCount() < result->getMaxStackSize()) return true;
+    if (output->isEmpty())
+        return true;
+    if (!output->sameItem_not_shared(result))
+        return false;
+    if (output->getCount() < getMaxStackSize() && output->getCount() < output->getMaxStackSize())
+        return true;
+    if (output->getCount() < result->getMaxStackSize())
+        return true;
     return false;
 }
 
 void FurnaceBlockEntity::burn()
 {
-    if (!canBurn()) return;
+    if (!canBurn())
+        return;
     ItemInstance* result = FurnaceRecipes::getInstance()->getResult(mItems[0]);
     if (!mItems[2]->isEmpty())
     {
-        if (mItems[2]->getItem() == result->getItem()) mItems[2]->grow(1);
+        if (mItems[2]->getItem() == result->getItem())
+            mItems[2]->grow(1);
     }
     else
     {
         mItems[2] = result->copy();
     }
-    if (mItems[0]->getItem() == Item::byBlock(Blocks::sponge) && mItems[0]->getAuxValue() == 1
-        && !mItems[1]->isEmpty() && mItems[1]->getItem() == Items::bucket)
+    if (mItems[0]->getItem() == Item::byBlock(Blocks::sponge) && mItems[0]->getAuxValue() == 1 && !mItems[1]->isEmpty()
+        && mItems[1]->getItem() == Items::bucket)
     {
         mItems[1] = not_null_ptr<ItemInstance>(new ItemInstance(Items::waterBucket));
     }
@@ -394,9 +436,12 @@ void FurnaceBlockEntity::tick()
 {
     bool wasLit = isLit();
     bool changed = false;
-    if (isLit()) --mLitTime;
-    if (mLevel == NULL) return;
-    if (mLevel->mIsClientSide) return;
+    if (isLit())
+        --mLitTime;
+    if (mLevel == NULL)
+        return;
+    if (mLevel->mIsClientSide)
+        return;
 
     {
         not_null_ptr<ItemInstance> fuel = mItems[1];
@@ -418,7 +463,8 @@ void FurnaceBlockEntity::tick()
                         }
                         else if (fuelItem == Items::lavaBucket)
                         {
-                            for (std::set<boost::shared_ptr<Player> >::iterator it = mOpenersThisTick.begin(); it != mOpenersThisTick.end(); ++it)
+                            for (std::set<boost::shared_ptr<Player> >::iterator it = mOpenersThisTick.begin();
+                                 it != mOpenersThisTick.end(); ++it)
                             {
                                 boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(*it);
                                 player->awardStat(GenericStats::superFuel(), GenericStats::param_superFuel());
@@ -426,17 +472,20 @@ void FurnaceBlockEntity::tick()
                         }
                         else if (fuelItem == Item::byBlock(Blocks::dried_kelp_block))
                         {
-                            for (std::set<boost::shared_ptr<Player> >::iterator it = mOpenersThisTick.begin(); it != mOpenersThisTick.end(); ++it)
+                            for (std::set<boost::shared_ptr<Player> >::iterator it = mOpenersThisTick.begin();
+                                 it != mOpenersThisTick.end(); ++it)
                             {
                                 boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(*it);
-                                player->awardStat(GenericStats::alternativeFuel(), GenericStats::param_alternativeFuel());
+                                player->awardStat(GenericStats::alternativeFuel(),
+                                                  GenericStats::param_alternativeFuel());
                             }
                         }
                         fuel->shrink(1);
                         if (fuel->isEmpty())
                         {
                             Item* remainder = fuelItem->getCraftingRemainingItem();
-                            mItems[1] = (remainder == NULL) ? ItemInstance::EMPTY : not_null_ptr<ItemInstance>(new ItemInstance(remainder));
+                            mItems[1] = (remainder == NULL) ? ItemInstance::EMPTY
+                                                            : not_null_ptr<ItemInstance>(new ItemInstance(remainder));
                         }
                     }
                 }
@@ -470,7 +519,8 @@ void FurnaceBlockEntity::tick()
             FurnaceBlock::setLit(nowLit, mLevel, mPos);
         }
     }
-    if (changed) setChanged();
+    if (changed)
+        setChanged();
 }
 
 boost::shared_ptr<BlockEntity> FurnaceBlockEntity::clone()

@@ -2,8 +2,7 @@
 
 #include "game/world/block/Material.hpp"
 
-BarrierBlock::BarrierBlock()
-    : Block(Material::BARRIER)
+BarrierBlock::BarrierBlock() : Block(Material::BARRIER)
 {
     DerivedInit();
     setIndestructible();
@@ -27,6 +26,7 @@ float BarrierBlock::getShadeBrightness(const BlockState* state)
     return 1.0f;
 }
 
-void BarrierBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
+void BarrierBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                  int lootBonus)
 {
 }

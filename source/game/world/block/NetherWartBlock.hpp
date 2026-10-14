@@ -22,7 +22,8 @@ public:
     virtual bool mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool canSurvive(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
-    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus);
+    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                int lootBonus);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getResourceCount(Random* random);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);

@@ -20,9 +20,9 @@ public:
     WaterlilyBlock();
     virtual ~WaterlilyBlock() {}
 
-    virtual void addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos,
-                                   const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
-                                   boost::shared_ptr<Entity> entity, bool isActualState);
+    virtual void addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,
+                                   std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity,
+                                   bool isActualState);
     virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                               const boost::shared_ptr<Entity>& entity);
     virtual int getColor() const;

@@ -11,7 +11,6 @@ class BlockImpl : public Block
 public:
     BlockImpl(Material* material);
     BlockImpl(Material* material, const MaterialColor* materialColor);
-
 };
 
 #endif

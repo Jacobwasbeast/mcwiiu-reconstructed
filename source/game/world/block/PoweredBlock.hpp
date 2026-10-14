@@ -15,7 +15,8 @@ class PoweredBlock : public Block
 public:
     PoweredBlock(Material* material, const MaterialColor* materialColor);
 
-    virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                          const Direction* direction);
     virtual bool isSignalSource(const BlockState* state);
 };
 

@@ -1,7 +1,6 @@
 #include "game/world/block/MultiBlockItem.hpp"
 
-MultiBlockItem::MultiBlockItem(Block* block, Block* blockForAuxValue,
-                               ItemInstanceResolver nameFunction,
+MultiBlockItem::MultiBlockItem(Block* block, Block* blockForAuxValue, ItemInstanceResolver nameFunction,
                                ItemInstanceResolver descriptionFunction)
     : BlockItem(block),
       mBlockForAuxValue(blockForAuxValue),

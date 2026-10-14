@@ -25,32 +25,17 @@ static const std::wstring gQuartzTopTexture = L"top";
 static const std::wstring gQuartzChiseledTopTexture = L"chiseled_top";
 static const std::wstring gQuartzLinesTopTexture = L"lines_top";
 static const std::wstring gQuartzBottomTexture = L"bottom";
-const std::wstring gQuartzVariantTextures[5] = {
-    L"side",
-    L"chiseled",
-    L"lines",
-    L"",
-    L""
-};
+const std::wstring gQuartzVariantTextures[5] = {L"side", L"chiseled", L"lines", L"", L""};
 
-QuartzBlock::Variant* QuartzBlock::Variant::DEFAULT =
-    new QuartzBlock::Variant(0, L"default", L"default");
-QuartzBlock::Variant* QuartzBlock::Variant::CHISELED =
-    new QuartzBlock::Variant(1, L"chiseled", L"chiseled");
-QuartzBlock::Variant* QuartzBlock::Variant::LINES_Y =
-    new QuartzBlock::Variant(2, L"lines_y", L"linesy");
-QuartzBlock::Variant* QuartzBlock::Variant::LINES_X =
-    new QuartzBlock::Variant(3, L"lines_x", L"linesx");
-QuartzBlock::Variant* QuartzBlock::Variant::LINES_Z =
-    new QuartzBlock::Variant(4, L"lines_z", L"linesz");
+QuartzBlock::Variant* QuartzBlock::Variant::DEFAULT = new QuartzBlock::Variant(0, L"default", L"default");
+QuartzBlock::Variant* QuartzBlock::Variant::CHISELED = new QuartzBlock::Variant(1, L"chiseled", L"chiseled");
+QuartzBlock::Variant* QuartzBlock::Variant::LINES_Y = new QuartzBlock::Variant(2, L"lines_y", L"linesy");
+QuartzBlock::Variant* QuartzBlock::Variant::LINES_X = new QuartzBlock::Variant(3, L"lines_x", L"linesx");
+QuartzBlock::Variant* QuartzBlock::Variant::LINES_Z = new QuartzBlock::Variant(4, L"lines_z", L"linesz");
 
-QuartzBlock::Variant* gQuartzVariants[5] = {
-    QuartzBlock::Variant::DEFAULT,
-    QuartzBlock::Variant::CHISELED,
-    QuartzBlock::Variant::LINES_Y,
-    QuartzBlock::Variant::LINES_X,
-    QuartzBlock::Variant::LINES_Z
-};
+QuartzBlock::Variant* gQuartzVariants[5] = {QuartzBlock::Variant::DEFAULT, QuartzBlock::Variant::CHISELED,
+                                            QuartzBlock::Variant::LINES_Y, QuartzBlock::Variant::LINES_X,
+                                            QuartzBlock::Variant::LINES_Z};
 
 EnumProperty<QuartzBlock::Variant*>* QuartzBlock::VARIANT = NULL;
 
@@ -104,16 +89,14 @@ void QuartzBlock::blockStaticCtor()
     VARIANT = property;
 }
 
-QuartzBlock::QuartzBlock()
-    : Block(Material::STONE)
+QuartzBlock::QuartzBlock() : Block(Material::STONE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::DEFAULT));
 }
 
-const BlockState* QuartzBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction,
-                                                    float, float, float, int auxValue,
-                                                    boost::shared_ptr<LivingEntity>)
+const BlockState* QuartzBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction, float, float,
+                                                    float, int auxValue, boost::shared_ptr<LivingEntity>)
 {
     if (auxValue == Variant::LINES_Y->getData())
     {
@@ -156,8 +139,7 @@ not_null_ptr<ItemInstance> QuartzBlock::getSilkTouchItemInstance(const BlockStat
     Variant* variant = state->getValue(VARIANT);
     if (variant == Variant::LINES_X || variant == Variant::LINES_Z)
     {
-        return not_null_ptr<ItemInstance>(
-            new ItemInstance(Item::byBlock(this), 1, Variant::LINES_Y->getData()));
+        return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1, Variant::LINES_Y->getData()));
     }
 
     return Block::getSilkTouchItemInstance(state);
@@ -199,7 +181,7 @@ const BlockState* QuartzBlock::rotate(const BlockState* state, Rotation* rotatio
 
 BlockStateDefinition* QuartzBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { VARIANT };
+    static const Property* properties[] = {VARIANT};
     return new BlockStateDefinition(this, properties, 1);
 }
 

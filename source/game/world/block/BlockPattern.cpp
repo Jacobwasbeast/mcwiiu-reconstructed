@@ -9,8 +9,8 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Iterator.hpp"
 
-BlockPattern::BlockPattern(array3DWithLength<Predicate<BlockInWorld*>*> pattern,
-                           const Direction* up, const Direction* forward)
+BlockPattern::BlockPattern(array3DWithLength<Predicate<BlockInWorld*>*> pattern, const Direction* up,
+                           const Direction* forward)
     : mPattern(pattern),
       mDepth(pattern.length),
       mHeight(pattern.data[0]->length),
@@ -45,8 +45,8 @@ BlockPattern::BlockLoadingCache* BlockPattern::createLevelCache(Level* level, bo
     return new BlockLoadingCache(level, loadChunks);
 }
 
-BlockPos BlockPattern::translateAndRotate(const BlockPos& pos, const Direction* forwards,
-                                           const Direction* up, int x, int y, int z)
+BlockPos BlockPattern::translateAndRotate(const BlockPos& pos, const Direction* forwards, const Direction* up, int x,
+                                          int y, int z)
 {
     if (forwards != up && forwards != up->getOpposite())
     {
@@ -55,14 +55,12 @@ BlockPos BlockPattern::translateAndRotate(const BlockPos& pos, const Direction* 
     Vec3i upVector(up->getStepX(), up->getStepY(), up->getStepZ());
     Vec3i left = forward.cross(upVector);
 
-    return pos.offset(left.x * x - upVector.x * y + forward.x * z,
-                      left.y * x - upVector.y * y + forward.y * z,
+    return pos.offset(left.x * x - upVector.x * y + forward.x * z, left.y * x - upVector.y * y + forward.y * z,
                       left.z * x - upVector.z * y + forward.z * z);
 }
 
-BlockPattern::BlockPatternMatch* BlockPattern::matches(
-    const BlockPos& pos, const Direction* forwards, const Direction* up,
-    boost::shared_ptr<BlockLoadingCache> cache)
+BlockPattern::BlockPatternMatch* BlockPattern::matches(const BlockPos& pos, const Direction* forwards,
+                                                       const Direction* up, boost::shared_ptr<BlockLoadingCache> cache)
 {
     for (unsigned int x = 0; x < mWidth; x++)
     {
@@ -83,9 +81,8 @@ BlockPattern::BlockPatternMatch* BlockPattern::matches(
     return new BlockPatternMatch(pos, forwards, up, cache, mWidth, mHeight, mDepth);
 }
 
-BlockPattern::BlockPatternMatch* BlockPattern::matches(Level* level, const BlockPos& pos,
-                                                        const Direction* forwards,
-                                                        const Direction* up)
+BlockPattern::BlockPatternMatch* BlockPattern::matches(Level* level, const BlockPos& pos, const Direction* forwards,
+                                                       const Direction* up)
 {
     boost::shared_ptr<BlockLoadingCache> cache(createLevelCache(level, false));
     return matches(pos, forwards, up, cache);
@@ -116,8 +113,7 @@ BlockPattern::BlockPatternMatch* BlockPattern::find(Level* level, const BlockPos
     while (positions->hasNext())
     {
         BlockPos candidate = *positions->next();
-        for (std::vector<const Direction*>::iterator forward = forwards->begin();
-             forward != forwards->end(); ++forward)
+        for (std::vector<const Direction*>::iterator forward = forwards->begin(); forward != forwards->end(); ++forward)
         {
             for (std::vector<const Direction*>::iterator up = ups->begin(); up != ups->end(); ++up)
             {
@@ -154,14 +150,14 @@ BlockPattern::BlockPatternMatch* BlockPattern::find(Level* level, const BlockPos
 }
 
 BlockPattern::BlockLoadingCache::BlockLoadingCache(Level* level, bool loadChunks)
-    : mLevel(level), mLoadChunks(loadChunks)
+    : mLevel(level),
+      mLoadChunks(loadChunks)
 {
 }
 
 BlockPattern::BlockLoadingCache::~BlockLoadingCache()
 {
-    for (BlockCache::iterator it = mCache.begin();
-         it != mCache.end(); ++it)
+    for (BlockCache::iterator it = mCache.begin(); it != mCache.end(); ++it)
     {
         delete it->second;
     }
@@ -183,9 +179,9 @@ BlockInWorld* BlockPattern::BlockLoadingCache::getUnchecked(const BlockPos& pos)
     return block;
 }
 
-BlockPattern::BlockPatternMatch::BlockPatternMatch(
-    const BlockPos& frontTopLeft, const Direction* forwards, const Direction* up,
-    boost::shared_ptr<BlockLoadingCache> cache, int width, int height, int depth)
+BlockPattern::BlockPatternMatch::BlockPatternMatch(const BlockPos& frontTopLeft, const Direction* forwards,
+                                                   const Direction* up, boost::shared_ptr<BlockLoadingCache> cache,
+                                                   int width, int height, int depth)
     : mFrontTopLeft(frontTopLeft),
       mForwards(forwards),
       mUp(up),

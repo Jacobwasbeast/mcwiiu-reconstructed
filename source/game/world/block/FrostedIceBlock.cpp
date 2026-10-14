@@ -16,8 +16,7 @@
 
 static AbstractProperty<int>* AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 3));
 
-FrostedIceBlock::FrostedIceBlock()
-    : IceBlock(true)
+FrostedIceBlock::FrostedIceBlock() : IceBlock(true)
 {
     Block::DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(AGE, 0));
@@ -40,8 +39,8 @@ const BlockState* FrostedIceBlock::getBlockState(int data)
 int FrostedIceBlock::countNeighbours(Level* level, const BlockPos& pos)
 {
     int count = 0;
-    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
-         it != Direction::VALUES.end(); ++it)
+    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
+         ++it)
     {
         const BlockState* state = level->getBlockState(pos.relative(*it));
         if (state->getBlock() == this)
@@ -56,8 +55,8 @@ int FrostedIceBlock::countNeighbours(Level* level, const BlockPos& pos)
     return count;
 }
 
-void FrostedIceBlock::slightlyMelt(Level* level, const BlockPos& pos, const BlockState* state,
-                                   Random* random, bool meltNeighbors)
+void FrostedIceBlock::slightlyMelt(Level* level, const BlockPos& pos, const BlockState* state, Random* random,
+                                   bool meltNeighbors)
 {
     int age = state->getValue(AGE);
     if (age < 3)
@@ -103,7 +102,7 @@ bool FrostedIceBlock::shouldBlockTick(Level*, const BlockPos&, const BlockState*
 }
 
 void FrostedIceBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block* block,
-                                     const BlockPos&)
+                                      const BlockPos&)
 {
     if (block == this && countNeighbours(level, pos) < 2)
     {
@@ -113,7 +112,7 @@ void FrostedIceBlock::neighborChanged(const BlockState*, Level* level, const Blo
 
 BlockStateDefinition* FrostedIceBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { AGE };
+    static const Property* properties[] = {AGE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

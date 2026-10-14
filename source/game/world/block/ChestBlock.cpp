@@ -37,19 +37,14 @@
 
 DirectionProperty* ChestBlock::FACING = NULL;
 
-static const AABB* NORTH_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 0.0,
-                                                          15.0 / 16.0, 14.0 / 16.0, 15.0 / 16.0);
-static const AABB* SOUTH_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0,
-                                                          15.0 / 16.0, 14.0 / 16.0, 1.0);
-static const AABB* WEST_CHEST_SHAPE = AABB::newPermanent(0.0, 0.0, 1.0 / 16.0,
-                                                         15.0 / 16.0, 14.0 / 16.0, 15.0 / 16.0);
-static const AABB* EAST_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0,
-                                                         1.0, 14.0 / 16.0, 15.0 / 16.0);
-static const AABB* SINGLE_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0,
-                                                           15.0 / 16.0, 14.0 / 16.0, 15.0 / 16.0);
+static const AABB* NORTH_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 0.0, 15.0 / 16.0, 14.0 / 16.0, 15.0 / 16.0);
+static const AABB* SOUTH_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0, 15.0 / 16.0, 14.0 / 16.0, 1.0);
+static const AABB* WEST_CHEST_SHAPE = AABB::newPermanent(0.0, 0.0, 1.0 / 16.0, 15.0 / 16.0, 14.0 / 16.0, 15.0 / 16.0);
+static const AABB* EAST_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0, 1.0, 14.0 / 16.0, 15.0 / 16.0);
+static const AABB* SINGLE_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0, 15.0 / 16.0, 14.0 / 16.0,
+                                                           15.0 / 16.0);
 
-ChestBlock::ChestBlock(Type type)
-    : BaseEntityBlock(Material::WOOD)
+ChestBlock::ChestBlock(Type type) : BaseEntityBlock(Material::WOOD)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH));
@@ -110,8 +105,7 @@ void ChestBlock::onPlace(Level*, const BlockPos&, const BlockState*)
 {
 }
 
-const BlockState* ChestBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*,
-                                                   float, float, float, int,
+const BlockState* ChestBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int,
                                                    boost::shared_ptr<LivingEntity> placer)
 {
     return defaultBlockState()->setValue(FACING, placer->getDirection());
@@ -131,8 +125,7 @@ const BlockState* ChestBlock::recalcLockDir(Level* level, const BlockPos& pos, c
         const BlockState* otherWest = level->getBlockState(other.west());
         const BlockState* otherEast = level->getBlockState(other.east());
         facing = Direction::EAST;
-        const Direction* otherFacing = north->getBlock() == this ? north->getValue(FACING)
-                                                                 : south->getValue(FACING);
+        const Direction* otherFacing = north->getBlock() == this ? north->getValue(FACING) : south->getValue(FACING);
         if (otherFacing == Direction::WEST)
         {
             facing = Direction::WEST;
@@ -156,8 +149,7 @@ const BlockState* ChestBlock::recalcLockDir(Level* level, const BlockPos& pos, c
             const BlockState* otherNorth = level->getBlockState(other.north());
             const BlockState* otherSouth = level->getBlockState(other.south());
             facing = Direction::SOUTH;
-            const Direction* otherFacing = west->getBlock() == this ? west->getValue(FACING)
-                                                                    : east->getValue(FACING);
+            const Direction* otherFacing = west->getBlock() == this ? west->getValue(FACING) : east->getValue(FACING);
             if (otherFacing == Direction::NORTH)
             {
                 facing = Direction::NORTH;
@@ -252,8 +244,7 @@ void ChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState
         bool isChest = eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType());
         if (isChest)
         {
-            boost::shared_ptr<ChestBlockEntity> chest =
-                boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
+            boost::shared_ptr<ChestBlockEntity> chest = boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
             chest->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
                                  itemInstance->wasCreatedByRestrictedPlayer(), itemInstance->wasCreatedOnHost());
         }
@@ -365,8 +356,8 @@ bool ChestBlock::mayPlace(Level* level, const BlockPos& pos)
     return count <= 1;
 }
 
-void ChestBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos)
+void ChestBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos)
 {
     Block::neighborChanged(state, level, pos, block, fromPos);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
@@ -426,8 +417,7 @@ boost::shared_ptr<LockableContainer> ChestBlock::getContainer(Level* level, cons
         return boost::shared_ptr<LockableContainer>();
     }
 
-    boost::shared_ptr<LockableContainer> container =
-        boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
+    boost::shared_ptr<LockableContainer> container = boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
     if (!force && isChestBlockedAt(level, pos))
     {
         return boost::shared_ptr<LockableContainer>();
@@ -450,13 +440,13 @@ boost::shared_ptr<LockableContainer> ChestBlock::getContainer(Level* level, cons
             {
                 if (direction == Direction::WEST || direction == Direction::NORTH)
                 {
-                    container = boost::shared_ptr<LockableContainer>(
-                        new CompoundContainer(-1, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity), container));
+                    container = boost::shared_ptr<LockableContainer>(new CompoundContainer(
+                        -1, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity), container));
                 }
                 else
                 {
-                    container = boost::shared_ptr<LockableContainer>(
-                        new CompoundContainer(-1, container, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity)));
+                    container = boost::shared_ptr<LockableContainer>(new CompoundContainer(
+                        -1, container, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity)));
                 }
             }
         }
@@ -469,9 +459,8 @@ boost::shared_ptr<LockableContainer> ChestBlock::getContainer(Level* level, cons
     return getContainer(level, pos, false);
 }
 
-bool ChestBlock::use(Level* level, const BlockPos& pos, const BlockState*,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand,
-                     const Direction*, float, float, float, bool clientSide)
+bool ChestBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
     if (!clientSide && !level->mIsClientSide)
     {
@@ -494,8 +483,7 @@ bool ChestBlock::isSignalSource(const BlockState*)
     return mType == TYPE_LEFT;
 }
 
-int ChestBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
-                          const Direction*)
+int ChestBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction*)
 {
     if (!state->isSignalSource())
     {
@@ -568,12 +556,11 @@ const BlockState* ChestBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* ChestBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING };
+    static const Property* properties[] = {FACING};
     return new BlockStateDefinition(this, properties, 1);
 }
 
-EBlockFaceShape ChestBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
-                                              const Direction*)
+EBlockFaceShape ChestBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
     return BLOCK_FACE_UNDEFINED;
 }

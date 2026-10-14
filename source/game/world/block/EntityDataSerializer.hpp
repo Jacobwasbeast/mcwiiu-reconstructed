@@ -10,32 +10,29 @@ template <class T> class EntityDataAccessor;
 
 namespace EntityDataSerializerEnum
 {
-    enum EEntityDataSerializer
-    {
-        BYTE,
-        INT,
-        FLOAT,
-        STRING,
-        ITEM_INSTANCE,
-        BLOCK_STATE,
-        BOOLEAN,
-        ROTATIONS,
-        BLOCK_POS,
-        OPTIONAL_BLOCK_POS,
-        DIRECTION,
-        COMPOUND_TAG,
-        NUM_ENTITY_DATA_SERIALIZERS
-    };
+enum EEntityDataSerializer
+{
+    BYTE,
+    INT,
+    FLOAT,
+    STRING,
+    ITEM_INSTANCE,
+    BLOCK_STATE,
+    BOOLEAN,
+    ROTATIONS,
+    BLOCK_POS,
+    OPTIONAL_BLOCK_POS,
+    DIRECTION,
+    COMPOUND_TAG,
+    NUM_ENTITY_DATA_SERIALIZERS
+};
 }
 
 template <class T>
 class EntityDataSerializer
 {
 public:
-    EntityDataSerializer(EntityDataSerializerEnum::EEntityDataSerializer id)
-        : mId(id)
-    {
-    }
+    EntityDataSerializer(EntityDataSerializerEnum::EEntityDataSerializer id) : mId(id) {}
 
     virtual void write(DataOutputStream* output, T value) const = 0;
     virtual T read(DataInputStream* input) const = 0;
@@ -43,10 +40,7 @@ public:
     virtual T copy(T value) const = 0;
     virtual EntityDataAccessor<T>* getOrCreateStoredAccessor(int id);
 
-    EntityDataSerializerEnum::EEntityDataSerializer getId() const
-    {
-        return mId;
-    }
+    EntityDataSerializerEnum::EEntityDataSerializer getId() const { return mId; }
 
 private:
     boost::unordered_map<int, EntityDataAccessor<T>*> mAccessors;

@@ -47,22 +47,26 @@ public:
     virtual bool isSolidRender(const BlockState* state) const;
     virtual bool mayPick(const BlockState* state, bool includeLiquid);
     virtual bool isSolidFace(LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
-    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                  const Direction* direction);
     virtual bool shouldRenderBackwardUpFace(LevelSource* levelSource, const BlockPos& pos);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getResourceCount(Random* random);
     virtual Vec3* getFlow(LevelSource* levelSource, const BlockPos& pos, const BlockState* state);
     virtual Vec3* handleEntityInside(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, Vec3* motion);
-    virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity);
+    virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state,
+                              const boost::shared_ptr<Entity>& entity);
     virtual int getTickDelay(Level* level);
     virtual int getLightColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, int lightValue);
     virtual int getRenderLayer();
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
     static LiquidBlock* getDynamicLiquid(Material* material);
-    static double getSlopeAngle(LevelSource* levelSource, const BlockPos& pos, Material* material, const BlockState* state);
+    static double getSlopeAngle(LevelSource* levelSource, const BlockPos& pos, Material* material,
+                                const BlockState* state);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual bool updateLiquid(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos);
     virtual void fizz(Level* level, const BlockPos& pos);
@@ -75,8 +79,10 @@ public:
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     static float getBlockLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     static float getLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
-    static void setLiquidElement(Level* level, const BlockPos& pos, unsigned short elementId, bool extraLayer, int flags);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
+    static void setLiquidElement(Level* level, const BlockPos& pos, unsigned short elementId, bool extraLayer,
+                                 int flags);
     void trySpreadFire(Level* level, const BlockPos& pos, Random* random);
     static LiquidBlock* getStaticLiquid(Material* material);
     static TextureAtlasSprite* getTexture(const std::wstring& name);

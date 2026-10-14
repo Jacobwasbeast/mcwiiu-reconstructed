@@ -14,17 +14,11 @@
 
 #include <string>
 
-static const AABB* SHAPE_BY_AGE[8] =
-{
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.1875, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.3125, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.4375, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5625, 1.0)
-};
+static const AABB* SHAPE_BY_AGE[8] = {
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.1875, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),  AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.3125, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.4375, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0),   AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5625, 1.0)};
 
 const AABB* CarrotBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {

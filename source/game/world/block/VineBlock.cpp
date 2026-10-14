@@ -28,7 +28,7 @@ BooleanProperty* VineBlock::NORTH = static_cast<BooleanProperty*>(BooleanPropert
 BooleanProperty* VineBlock::EAST = static_cast<BooleanProperty*>(BooleanProperty::create(L"east"));
 BooleanProperty* VineBlock::SOUTH = static_cast<BooleanProperty*>(BooleanProperty::create(L"south"));
 BooleanProperty* VineBlock::WEST = static_cast<BooleanProperty*>(BooleanProperty::create(L"west"));
-BooleanProperty* VineBlock::ALL_FACES[5] = { UP, NORTH, SOUTH, WEST, EAST };
+BooleanProperty* VineBlock::ALL_FACES[5] = {UP, NORTH, SOUTH, WEST, EAST};
 const AABB* VineBlock::UP_AABB = AABB::newPermanent(0.0, 0.9375, 0.0, 1.0, 1.0, 1.0);
 const AABB* VineBlock::WEST_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 0.0625, 1.0, 1.0);
 const AABB* VineBlock::EAST_AABB = AABB::newPermanent(0.9375, 0.0, 0.0, 1.0, 1.0, 1.0);
@@ -38,7 +38,12 @@ const AABB* VineBlock::SOUTH_AABB = AABB::newPermanent(0.0, 0.0, 0.9375, 1.0, 1.
 VineBlock::VineBlock() : Block(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
-    registerDefaultState(mStateDefinition->any()->setValue(UP, false)->setValue(NORTH, false)->setValue(EAST, false)->setValue(SOUTH, false)->setValue(WEST, false));
+    registerDefaultState(mStateDefinition->any()
+                             ->setValue(UP, false)
+                             ->setValue(NORTH, false)
+                             ->setValue(EAST, false)
+                             ->setValue(SOUTH, false)
+                             ->setValue(WEST, false));
     setTicking(true);
 }
 
@@ -86,7 +91,7 @@ const BlockState* VineBlock::fillVirtualBlockStateProperties(const BlockState* s
 {
     BlockPos above = pos.above();
     return state->setValue(UP, levelSource->getBlockState(above)->getBlockFaceShape(levelSource, above, Direction::DOWN)
-                                    == BLOCK_FACE_SOLID);
+                                   == BLOCK_FACE_SOLID);
 }
 
 bool VineBlock::isSolidRender(const BlockState* state) const
@@ -310,16 +315,18 @@ void VineBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
                     else if (hasClockWise && level->isEmptyBlock(clockWisePos)
                              && canAttachTo(level, clockWisePos, direction))
                     {
-                        level->setBlock(clockWisePos,
-                                        defaultBlockState()->setValue(getPropertyForFace(direction->getOpposite()), true),
-                                        Block::UPDATE_CLIENTS, false);
+                        level->setBlock(
+                            clockWisePos,
+                            defaultBlockState()->setValue(getPropertyForFace(direction->getOpposite()), true),
+                            Block::UPDATE_CLIENTS, false);
                     }
                     else if (hasCounterClockWise && level->isEmptyBlock(counterClockWisePos)
                              && canAttachTo(level, counterClockWisePos, direction))
                     {
-                        level->setBlock(counterClockWisePos,
-                                        defaultBlockState()->setValue(getPropertyForFace(direction->getOpposite()), true),
-                                        Block::UPDATE_CLIENTS, false);
+                        level->setBlock(
+                            counterClockWisePos,
+                            defaultBlockState()->setValue(getPropertyForFace(direction->getOpposite()), true),
+                            Block::UPDATE_CLIENTS, false);
                     }
                 }
                 else if (targetState->getBlockFaceShape(level, target, direction) == BLOCK_FACE_SOLID)
@@ -344,8 +351,7 @@ void VineBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
                         state = state->setValue(getPropertyForFace(directions.data[i]), false);
                     }
                 }
-                if (state->getValue(NORTH) || state->getValue(EAST) || state->getValue(SOUTH)
-                    || state->getValue(WEST))
+                if (state->getValue(NORTH) || state->getValue(EAST) || state->getValue(SOUTH) || state->getValue(WEST))
                 {
                     level->setBlock(below, state, Block::UPDATE_CLIENTS, false);
                 }
@@ -442,7 +448,7 @@ int VineBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* VineBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { UP, NORTH, EAST, SOUTH, WEST };
+    static const Property* properties[] = {UP, NORTH, EAST, SOUTH, WEST};
     return new BlockStateDefinition(this, properties, 5);
 }
 

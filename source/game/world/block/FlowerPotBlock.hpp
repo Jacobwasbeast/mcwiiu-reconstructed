@@ -99,14 +99,13 @@ public:
     virtual int getColor(LevelSource* levelSource, const BlockPos& pos, int tintIndex);
     boost::shared_ptr<class FlowerPotBlockEntity> getFlowerPotEntity(Level* level, const BlockPos& pos);
     bool canBePotted(const not_null_ptr<ItemInstance>& item);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
-    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
-                                                             const BlockState* state);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
     bool CanSurvive(const BlockState* state);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
                                    boost::shared_ptr<Player> player);
@@ -114,12 +113,11 @@ public:
     virtual bool canContainLiquid(const BlockState* state) const;
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual int convertBlockStateToLegacyData(const BlockState* state);
-    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state,
-                                                               LevelSource* levelSource,
-                                                               const BlockPos& pos);
+    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                              const BlockPos& pos);
     virtual int getRenderLayer();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                               const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
     virtual bool mayPlace(Level* level, const BlockPos& pos);

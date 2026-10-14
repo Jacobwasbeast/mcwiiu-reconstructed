@@ -21,14 +21,16 @@ public:
     static AbstractProperty<bool>* SNOWY;
 
     MyceliumBlock();
-    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                              const BlockPos& pos);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
-    virtual TextureAtlasSprite* getTexture(LevelSource* levelSource, const BlockPos& pos, const Direction* direction, const BlockState* state);
+    virtual TextureAtlasSprite* getTexture(LevelSource* levelSource, const BlockPos& pos, const Direction* direction,
+                                           const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
 
 private:

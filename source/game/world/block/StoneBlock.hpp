@@ -24,7 +24,8 @@ public:
     class Variant : public StringRepresentable
     {
     public:
-        Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int nameId, int descriptionId, const std::wstring& serializedName, bool natural);
+        Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int nameId, int descriptionId,
+                const std::wstring& serializedName, bool natural);
         const MaterialColor* getMaterialColor();
         int getData();
         static Variant* byData(int data);
@@ -46,6 +47,7 @@ public:
         int getDescriptionId();
         bool isNatural() const;
         std::wstring getName();
+
     private:
         int mData;
         std::wstring mName;

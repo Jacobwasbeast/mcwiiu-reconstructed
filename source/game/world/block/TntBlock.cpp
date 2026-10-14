@@ -29,8 +29,7 @@
 
 AbstractProperty<bool>* TntBlock::EXPLODE = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"explode"));
 
-TntBlock::TntBlock()
-    : Block(Material::EXPLOSIVE)
+TntBlock::TntBlock() : Block(Material::EXPLOSIVE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(EXPLODE, false));
@@ -60,8 +59,8 @@ void TntBlock::wasExploded(Level* level, const BlockPos& pos, Explosion* explosi
     if (level->mIsClientSide || !level->newPrimedTntAllowed() || !gApp.GetGameHostOption(eGameHostOption_TNT))
         return;
 
-    boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, pos.x + 0.5f, pos.y, pos.z + 0.5f,
-        explosion->getSourceMob()));
+    boost::shared_ptr<PrimedTnt> primedTnt(
+        new PrimedTnt(level, pos.x + 0.5f, pos.y, pos.z + 0.5f, explosion->getSourceMob()));
     primedTnt->setFuse(level->mRandom->nextInt(primedTnt->getLife() / 4) + primedTnt->getLife() / 8);
     level->addEntity(primedTnt);
 }
@@ -71,23 +70,25 @@ void TntBlock::destroy(Level* level, const BlockPos& pos, const BlockState* stat
     destroy(level, pos, state, boost::shared_ptr<LivingEntity>());
 }
 
-void TntBlock::destroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity> entity)
+void TntBlock::destroy(Level* level, const BlockPos& pos, const BlockState* state,
+                       boost::shared_ptr<LivingEntity> entity)
 {
     if (level->mIsClientSide)
         return;
 
-    if ((state->getValue(EXPLODE) || Minecraft::InMiniGame(eMiniGameId_Tumble, true))
-        && level->newPrimedTntAllowed() && gApp.GetGameHostOption(eGameHostOption_TNT))
+    if ((state->getValue(EXPLODE) || Minecraft::InMiniGame(eMiniGameId_Tumble, true)) && level->newPrimedTntAllowed()
+        && gApp.GetGameHostOption(eGameHostOption_TNT))
     {
-        boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, pos.x + 0.5f, pos.y, pos.z + 0.5f,
-            entity));
+        boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, pos.x + 0.5f, pos.y, pos.z + 0.5f, entity));
         level->addEntity(primedTnt);
         level->playSound(boost::shared_ptr<Player>(), primedTnt->mX, primedTnt->mY, primedTnt->mZ,
-            SoundEvents::TNT_PRIMED, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
+                         SoundEvents::TNT_PRIMED, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
     }
 }
 
-bool TntBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide)
+bool TntBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                   InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                   float hitZ, bool clientSide)
 {
     if (clientSide)
         return false;
@@ -110,7 +111,8 @@ bool TntBlock::use(Level* level, const BlockPos& pos, const BlockState* state, b
     return Block::use(level, pos, state, player, hand, direction, hitX, hitY, hitZ, false);
 }
 
-void TntBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity)
+void TntBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
+                            const boost::shared_ptr<Entity>& entity)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Battle, true) || level->mIsClientSide)
         return;
@@ -126,9 +128,9 @@ void TntBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*
         {
             const BlockState* primedState = level->getBlockState(pos)->setValue(EXPLODE, true);
             destroy(level, pos, primedState,
-                eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, arrow->mOwner->GetType())
-                    ? boost::dynamic_pointer_cast<LivingEntity>(arrow->mOwner)
-                    : boost::shared_ptr<LivingEntity>());
+                    eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, arrow->mOwner->GetType())
+                        ? boost::dynamic_pointer_cast<LivingEntity>(arrow->mOwner)
+                        : boost::shared_ptr<LivingEntity>());
         }
         level->removeBlock(pos);
     }
@@ -139,7 +141,8 @@ bool TntBlock::dropFromExplosion(Explosion*)
     return false;
 }
 
-void TntBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
+void TntBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
+                           boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
 {
     Block::setPlacedBy(level, pos, state, placer, itemInstance);
     if (Minecraft::InMiniGame(eMiniGameId_Any, true) && gApp.GetGameHostOption(eGameHostOption_TNT))
@@ -161,7 +164,7 @@ int TntBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* TntBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { EXPLODE };
+    static const Property* properties[] = {EXPLODE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

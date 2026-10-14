@@ -2,8 +2,7 @@
 
 #include "game/item/ItemInstance.hpp"
 
-TintedBlockItem::TintedBlockItem(Block* block, bool stackedByData)
-    : BlockItem(block)
+TintedBlockItem::TintedBlockItem(Block* block, bool stackedByData) : BlockItem(block)
 {
     if (stackedByData)
     {

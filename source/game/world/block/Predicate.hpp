@@ -9,9 +9,7 @@ class Predicate
 public:
     virtual bool apply(T input) const = 0;
     virtual Predicate<T>* copy() const;
-    virtual ~Predicate()
-    {
-    }
+    virtual ~Predicate() {}
 };
 
 template <class T>

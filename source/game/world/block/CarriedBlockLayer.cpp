@@ -11,8 +11,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/BlockState.hpp"
 
-CarriedBlockLayer::CarriedBlockLayer(EndermanRenderer* renderer)
-    : mEndermanRenderer(renderer)
+CarriedBlockLayer::CarriedBlockLayer(EndermanRenderer* renderer) : mEndermanRenderer(renderer)
 {
 }
 
@@ -20,8 +19,8 @@ CarriedBlockLayer::~CarriedBlockLayer()
 {
 }
 
-void CarriedBlockLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float partialTicks,
-                               float, float, float, float, bool)
+void CarriedBlockLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float partialTicks, float, float,
+                               float, float, bool)
 {
     boost::shared_ptr<EnderMan> enderman = boost::dynamic_pointer_cast<EnderMan>(entity);
     const BlockState* blockState = enderman->getCarryingBlock();

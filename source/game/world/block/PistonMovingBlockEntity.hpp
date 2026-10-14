@@ -49,8 +49,7 @@ public:
     static void addDataWalkers(DataFixerUpper*);
     virtual void load(CompoundTag*);
     virtual CompoundTag* save(CompoundTag*);
-    void addCollissionAABBs(Level*, const BlockPos&, const AABB*, std::vector<AABB*>*,
-                            boost::shared_ptr<Entity>);
+    void addCollissionAABBs(Level*, const BlockPos&, const AABB*, std::vector<AABB*>*, boost::shared_ptr<Entity>);
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual unsigned long long GetType();
 

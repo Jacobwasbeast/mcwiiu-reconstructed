@@ -3,8 +3,7 @@
 #include "game/core/HumanoidArm.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 
-float ItemPropertyFunction_LeftHanded::call(not_null_ptr<ItemInstance> itemInstance,
-                                            Level* level,
+float ItemPropertyFunction_LeftHanded::call(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                             boost::shared_ptr<LivingEntity> entity)
 {
     if (!entity || entity->getMainArm() == HumanoidArm::RIGHT)

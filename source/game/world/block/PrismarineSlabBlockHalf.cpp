@@ -1,7 +1,6 @@
 #include "game/world/block/PrismarineSlabBlockHalf.hpp"
 
-PrismarineSlabBlockHalf::PrismarineSlabBlockHalf()
-    : PrismarineSlabBlock()
+PrismarineSlabBlockHalf::PrismarineSlabBlockHalf() : PrismarineSlabBlock()
 {
     PrismarineSlabBlock::DerivedInit();
 }

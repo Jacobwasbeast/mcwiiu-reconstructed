@@ -45,7 +45,10 @@ int sBeaconEffectCount = 0;
 }
 
 BeaconBlockEntity::BeaconBeamSection::BeaconBeamSection(arrayWithLength<float> color)
-    : mRed(color.data[0]), mGreen(color.data[1]), mBlue(color.data[2]), mHeight(1)
+    : mRed(color.data[0]),
+      mGreen(color.data[1]),
+      mBlue(color.data[2]),
+      mHeight(1)
 {
 }
 
@@ -208,8 +211,8 @@ void BeaconBlockEntity::stopOpen(boost::shared_ptr<Player> player)
 
 bool BeaconBlockEntity::canPlaceItem(int, not_null_ptr<ItemInstance> item)
 {
-    return item->getItem() == Items::emerald || item->getItem() == Items::diamond
-        || item->getItem() == Items::goldIngot || item->getItem() == Items::ironIngot;
+    return item->getItem() == Items::emerald || item->getItem() == Items::diamond || item->getItem() == Items::goldIngot
+           || item->getItem() == Items::ironIngot;
 }
 
 int BeaconBlockEntity::getContainerData(int id)
@@ -266,7 +269,8 @@ void BeaconBlockEntity::clearContent()
     mItem = ItemInstance::EMPTY;
 }
 
-AbstractContainerMenu* BeaconBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
+AbstractContainerMenu* BeaconBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory,
+                                                     boost::shared_ptr<Player> player)
 {
     return new BeaconMenu(inventory, boost::dynamic_pointer_cast<BeaconBlockEntity>(shared_from_this()));
 }
@@ -296,7 +300,8 @@ bool BeaconBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<ItemInstan
     return false;
 }
 
-void BeaconBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal)
+void BeaconBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored,
+                                      bool uuidLocal)
 {
     mName->set(name, uuid, chatCensored, uuidLocal);
 }
@@ -318,7 +323,7 @@ void BeaconBlockEntity::updateShapeForGlide()
         mActive = false;
         return;
     }
-    float color[3] = { 1.0F, 1.0F, 1.0F };
+    float color[3] = {1.0F, 1.0F, 1.0F};
     arrayWithLength<float> colors(color, 3);
     mBeamSections.push_back(BeaconBeamSection(colors));
     BeaconBeamSection& section = mBeamSections[mBeamSections.size() - 1];
@@ -568,7 +573,8 @@ void BeaconBlockEntity::applyEffects()
 
 void BeaconBlockEntity::checkValidity()
 {
-    if (mLevel == NULL) return;
+    if (mLevel == NULL)
+        return;
     updateShape();
     applyEffects();
 }
@@ -595,7 +601,8 @@ void BeaconBlockEntity::staticCtor()
 {
     for (int level = 0; level < 4; ++level)
     {
-        for (int slot = 0; slot < 3; ++slot) sBeaconEffects[level][slot] = NULL;
+        for (int slot = 0; slot < 3; ++slot)
+            sBeaconEffects[level][slot] = NULL;
     }
     AddEffect(0, 0, MobEffects::MOVEMENT_SPEED);
     AddEffect(0, 1, MobEffects::DIG_SPEED);

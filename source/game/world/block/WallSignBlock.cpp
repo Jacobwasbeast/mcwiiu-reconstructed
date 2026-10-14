@@ -23,8 +23,7 @@ static const AABB* WALL_SIGN_SHAPE_WEST = AABB::newPermanent(0.875, 0.25, 0.0, 1
 static const AABB* WALL_SIGN_SHAPE_SOUTH = AABB::newPermanent(0.0, 0.25, 0.0, 1.0, 0.75, 0.125);
 static const AABB* WALL_SIGN_SHAPE_NORTH = AABB::newPermanent(0.0, 0.25, 0.875, 1.0, 0.75, 1.0);
 
-WallSignBlock::WallSignBlock()
-    : SignBlock()
+WallSignBlock::WallSignBlock() : SignBlock()
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH));
@@ -42,14 +41,17 @@ const AABB* WallSignBlock::getShape(const BlockState* state, LevelSource*, const
     case Direction::eDirection_North:
     default:
         return WALL_SIGN_SHAPE_NORTH;
-    case Direction::eDirection_South: return WALL_SIGN_SHAPE_SOUTH;
-    case Direction::eDirection_West: return WALL_SIGN_SHAPE_WEST;
-    case Direction::eDirection_East: return WALL_SIGN_SHAPE_EAST;
+    case Direction::eDirection_South:
+        return WALL_SIGN_SHAPE_SOUTH;
+    case Direction::eDirection_West:
+        return WALL_SIGN_SHAPE_WEST;
+    case Direction::eDirection_East:
+        return WALL_SIGN_SHAPE_EAST;
     }
 }
 
-void WallSignBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                    Block* block, const BlockPos& fromPos)
+void WallSignBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                    const BlockPos& fromPos)
 {
     const Direction* facing = state->getValue(FACING);
     const BlockState* support = level->getBlockState(pos.relative(facing->getOpposite()));
@@ -88,6 +90,6 @@ const BlockState* WallSignBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* WallSignBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING };
+    static const Property* properties[] = {FACING};
     return new BlockStateDefinition(this, properties, 1);
 }

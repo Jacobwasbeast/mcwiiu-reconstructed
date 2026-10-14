@@ -4,15 +4,9 @@
 class EntityDataAccessor_Base
 {
 public:
-    EntityDataAccessor_Base(int id)
-        : mId(id)
-    {
-    }
+    EntityDataAccessor_Base(int id) : mId(id) {}
 
-    int getId() const
-    {
-        return mId;
-    }
+    int getId() const { return mId; }
 
 protected:
     int mId;

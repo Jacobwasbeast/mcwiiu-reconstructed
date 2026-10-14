@@ -11,8 +11,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Blocks.hpp"
 
-MobSpawnerBlockEntity::MobSpawnerBlockEntity()
-    : BlockEntity(), mSpawner(new BlockEntityMobSpawner(this))
+MobSpawnerBlockEntity::MobSpawnerBlockEntity() : BlockEntity(), mSpawner(new BlockEntityMobSpawner(this))
 {
 }
 
@@ -63,8 +62,8 @@ void MobSpawnerBlockEntity::tick()
 
 boost::shared_ptr<Packet> MobSpawnerBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(
-        mPos, 1, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return boost::shared_ptr<Packet>(
+        new ClientboundBlockEntityDataPacket(mPos, 1, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* MobSpawnerBlockEntity::getUpdateTag()
@@ -102,7 +101,8 @@ void MobSpawnerBlockEntity::setEntityId(const std::wstring& entityId)
 }
 
 MobSpawnerBlockEntity::BlockEntityMobSpawner::BlockEntityMobSpawner(MobSpawnerBlockEntity* blockEntity)
-    : BaseMobSpawner(), mBlockEntity(blockEntity)
+    : BaseMobSpawner(),
+      mBlockEntity(blockEntity)
 {
 }
 

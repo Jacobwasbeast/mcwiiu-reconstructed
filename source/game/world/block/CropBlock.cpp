@@ -30,21 +30,14 @@
 #include <string>
 
 
-static const AABB* SHAPE_BY_AGE[8] =
-{
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.625, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.875, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
-};
+static const AABB* SHAPE_BY_AGE[8] = {
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.625, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.875, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)};
 AbstractProperty<int>* CropBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 7));
 
-CropBlock::CropBlock(bool derivedInit)
-    : Bush()
+CropBlock::CropBlock(bool derivedInit) : Bush()
 {
     if (!derivedInit)
     {
@@ -142,8 +135,8 @@ float CropBlock::getGrowthSpeed(Block* block, Level* level, const BlockPos& pos)
     BlockPos west = pos.west();
     BlockPos east = pos.east();
     bool eastWest = block == level->getBlockState(west)->getBlock() || block == level->getBlockState(east)->getBlock();
-    bool northSouth =
-        block == level->getBlockState(north)->getBlock() || block == level->getBlockState(south)->getBlock();
+    bool northSouth = block == level->getBlockState(north)->getBlock()
+                      || block == level->getBlockState(south)->getBlock();
     if (eastWest && northSouth)
     {
         speed *= 0.5f;
@@ -175,7 +168,8 @@ void CropBlock::growCrops(Level* level, const BlockPos& pos, const BlockState* s
 {
     int age = getAge(state) + getBonemealAgeIncrease(level);
     int maxAge = getMaxAge();
-    if (age > maxAge) age = maxAge;
+    if (age > maxAge)
+        age = maxAge;
     level->setBlock(pos, getStateForAge(age), Block::UPDATE_CLIENTS, false);
 }
 
@@ -186,8 +180,8 @@ int CropBlock::getBonemealAgeIncrease(Level* level)
 
 bool CropBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return (level->getDaytimeRawBrightness(pos) >= 8 || level->canSeeSky(pos)) &&
-        mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
+    return (level->getDaytimeRawBrightness(pos) >= 8 || level->canSeeSky(pos))
+           && mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
 }
 
 Item* CropBlock::getBaseSeedId()
@@ -203,9 +197,11 @@ Item* CropBlock::getBasePlantId()
 void CropBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
 {
     Block::spawnResources(level, pos, state, chance, 0);
-    if (level->mIsClientSide) return;
+    if (level->mIsClientSide)
+        return;
     int age = getAge(state);
-    if (age < getMaxAge()) return;
+    if (age < getMaxAge())
+        return;
     for (int i = 0; i < lootBonus + 3; ++i)
     {
         if (level->mRandom->nextInt(getMaxAge() * 2) <= age)
@@ -237,11 +233,10 @@ int CropBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int CropBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE &&
-        tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail &&
-        DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0 &&
-        isValidBonemealTarget(tooltipData.m_pLevel, tooltipData.m_blockPos,
-                              tooltipData.m_pBlockState, true))
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
+        && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
+        && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
+        && isValidBonemealTarget(tooltipData.m_pLevel, tooltipData.m_blockPos, tooltipData.m_pBlockState, true))
     {
         return IDS_TOOLTIPS_GROW;
     }
@@ -255,7 +250,7 @@ bool CropBlock::canContainLiquid(const BlockState*) const
 
 BlockStateDefinition* CropBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { AGE };
+    static const Property* properties[] = {AGE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

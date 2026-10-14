@@ -23,8 +23,12 @@
 #include "game/world/generation/Player.hpp"
 
 CauldronBlockEntity::CauldronBlockEntity()
-    : BlockEntity(), Container(), mPotionId(L""), mHasCustomColor(false),
-      mCustomColor(0), mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(10, ItemInstance::EMPTY)),
+    : BlockEntity(),
+      Container(),
+      mPotionId(L""),
+      mHasCustomColor(false),
+      mCustomColor(0),
+      mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(10, ItemInstance::EMPTY)),
       mCustomName(new CensoredString())
 {
 }
@@ -167,7 +171,10 @@ void CauldronBlockEntity::clearContent()
     mItems.clear();
 }
 
-std::wstring CauldronBlockEntity::getPotionId() const { return mPotionId; }
+std::wstring CauldronBlockEntity::getPotionId() const
+{
+    return mPotionId;
+}
 
 void CauldronBlockEntity::setPotionId(const std::wstring& potionId)
 {
@@ -187,7 +194,10 @@ int CauldronBlockEntity::getPotionColor() const
     return MobEffectInstance::getColorValue(&Potion::byName(mPotionId)->getEffects());
 }
 
-int CauldronBlockEntity::getCustomColor() const { return mCustomColor; }
+int CauldronBlockEntity::getCustomColor() const
+{
+    return mCustomColor;
+}
 
 int CauldronBlockEntity::getColor() const
 {
@@ -202,8 +212,14 @@ int CauldronBlockEntity::getColor() const
     return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Cauldron_Water);
 }
 
-Potion::EType CauldronBlockEntity::getPotionType() const { return mPotionType; }
-void CauldronBlockEntity::setPotionType(Potion::EType type) { mPotionType = type; }
+Potion::EType CauldronBlockEntity::getPotionType() const
+{
+    return mPotionType;
+}
+void CauldronBlockEntity::setPotionType(Potion::EType type)
+{
+    mPotionType = type;
+}
 
 int CauldronBlockEntity::getMixDyeColor()
 {
@@ -296,11 +312,15 @@ CompoundTag* CauldronBlockEntity::save(CompoundTag* tag)
     return tag;
 }
 
-void CauldronBlockEntity::tick() { BlockEntity::tick(); }
+void CauldronBlockEntity::tick()
+{
+    BlockEntity::tick();
+}
 
 boost::shared_ptr<Packet> CauldronBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 12, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return boost::shared_ptr<Packet>(
+        new ClientboundBlockEntityDataPacket(mPos, 12, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* CauldronBlockEntity::getUpdateTag()
@@ -316,7 +336,8 @@ boost::shared_ptr<BlockEntity> CauldronBlockEntity::clone()
     result->mPotionType = mPotionType;
     result->mHasCustomColor = mHasCustomColor;
     result->mCustomColor = mCustomColor;
-    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(),
+                             mCustomName->isUUIDLocal());
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
         result->mItems.set(i, mItems[i]->copy());
@@ -324,7 +345,10 @@ boost::shared_ptr<BlockEntity> CauldronBlockEntity::clone()
     return result;
 }
 
-void CauldronBlockEntity::setChanged() { BlockEntity::setChanged(); }
+void CauldronBlockEntity::setChanged()
+{
+    BlockEntity::setChanged();
+}
 unsigned long long CauldronBlockEntity::GetType()
 {
     return BlockEntityType::CAULDRON;

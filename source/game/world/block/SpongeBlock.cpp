@@ -19,11 +19,9 @@
 #include <deque>
 #include <utility>
 
-AbstractProperty<bool>* SpongeBlock::WET =
-    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"wet"));
+AbstractProperty<bool>* SpongeBlock::WET = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"wet"));
 
-SpongeBlock::SpongeBlock()
-    : Block(Material::SPONGE)
+SpongeBlock::SpongeBlock() : Block(Material::SPONGE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(WET, false));
@@ -53,7 +51,8 @@ int SpongeBlock::removeWaterBreadthFirstSearch(Level* level, const BlockPos& pos
         BlockPos currentPos = front.first;
         int distance = front.second;
         queue.pop_front();
-        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
+             it != Direction::VALUES.end(); ++it)
         {
             BlockPos adjacent = currentPos.relative(*it);
             const BlockState* adjacentState = level->getBlockState(adjacent);
@@ -103,8 +102,8 @@ void SpongeBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* s
     tryAbsorbWater(level, pos, state);
 }
 
-void SpongeBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                  Block* block, const BlockPos& fromPos)
+void SpongeBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                  const BlockPos& fromPos)
 {
     tryAbsorbWater(level, pos, state);
     Block::neighborChanged(state, level, pos, block, fromPos);
@@ -122,7 +121,7 @@ int SpongeBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* SpongeBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { WET };
+    static const Property* properties[] = {WET};
     return new BlockStateDefinition(this, properties, 1);
 }
 

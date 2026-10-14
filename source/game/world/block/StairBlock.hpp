@@ -55,12 +55,11 @@ public:
     static EnumProperty<Shape*>* SHAPE;
     StairBlock(const BlockState* modelState);
     static void blockStaticCtor();
-    virtual void addCollisionAABBs(const BlockState*, Level*, const BlockPos&, const AABB*,
-                                   std::vector<AABB*>*, boost::shared_ptr<Entity>, bool);
+    virtual void addCollisionAABBs(const BlockState*, Level*, const BlockPos&, const AABB*, std::vector<AABB*>*,
+                                   boost::shared_ptr<Entity>, bool);
     static const AABB* getStepAABB(const BlockState*);
     static const AABB* getCornerAABB(const BlockState*);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
-                                              const Direction*);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*);
     virtual int getSpawnResourcesAuxValue(const BlockState*);
     virtual const arrayWithLength<const AABB*>* getShapes(const BlockState*, LevelSource*, const BlockPos&);
     virtual bool isSolidRender(const BlockState*) const;
@@ -88,8 +87,8 @@ public:
     virtual void wasExploded(Level*, const BlockPos&, Explosion*);
     virtual bool isTopSolidBlocking(const BlockState*);
     virtual const MaterialColor* getMapColor(const BlockState*, LevelSource*, const BlockPos&);
-    virtual const BlockState* getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float,
-                                                   float, int, boost::shared_ptr<LivingEntity>);
+    virtual const BlockState* getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int,
+                                                   boost::shared_ptr<LivingEntity>);
     bool _neighboringBlockCheckForCreatingBarrierInDirection(LevelSource*, const BlockPos&, const BlockState*,
                                                              const Direction*) const;
     virtual bool liquidCanFlowIntoFromDirection(LevelSource*, const BlockPos&, const Direction*) const;
@@ -100,8 +99,7 @@ public:
     static bool isStairs(const BlockState*);
     static bool canTakeShape(const BlockState*, LevelSource*, const BlockPos&, const Direction*);
     static Shape* getStairsShape(const BlockState*, LevelSource*, const BlockPos&);
-    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState*, LevelSource*,
-                                                              const BlockPos&);
+    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState*, LevelSource*, const BlockPos&);
     static bool isStairs(int);
     virtual const BlockState* rotate(const BlockState*, Rotation*);
     virtual const BlockState* mirror(const BlockState*, Mirror*);

@@ -16,14 +16,16 @@ HalfTransparentBlock::HalfTransparentBlock(const std::wstring& iconName, Materia
     mTextureName = iconName;
 }
 
-HalfTransparentBlock::HalfTransparentBlock(const std::wstring& iconName, Material* material, bool ignoreSimilarity, const MaterialColor* materialColor)
+HalfTransparentBlock::HalfTransparentBlock(const std::wstring& iconName, Material* material, bool ignoreSimilarity,
+                                           const MaterialColor* materialColor)
     : Block(material, materialColor)
 {
     mIgnoreSimilarity = ignoreSimilarity;
     mTextureName = iconName;
 }
 
-bool HalfTransparentBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+bool HalfTransparentBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                            const Direction* direction)
 {
     const BlockState* neighbourState = levelSource->getBlockState(pos.relative(direction));
     Block* neighbourBlock = neighbourState->getBlock();

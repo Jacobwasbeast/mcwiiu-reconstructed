@@ -2,8 +2,7 @@
 
 #include "game/world/block/BlockState.hpp"
 
-BlockPredicate::BlockPredicate(Block* block)
-    : mBlock(block)
+BlockPredicate::BlockPredicate(Block* block) : mBlock(block)
 {
 }
 

@@ -6,14 +6,9 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
-static const int ANVIL_BLOCK_NAME_IDS[] = {
-    (int)0x99A9E601,
-    (int)0x872533DB,
-    (int)0x872533DB
-};
+static const int ANVIL_BLOCK_NAME_IDS[] = {(int)0x99A9E601, (int)0x872533DB, (int)0x872533DB};
 
-AnvilBlockItem::AnvilBlockItem(Block* block)
-    : MultiBlockItem(block, block, AnvilBlockNameResolver, NULL)
+AnvilBlockItem::AnvilBlockItem(Block* block) : MultiBlockItem(block, block, AnvilBlockNameResolver, NULL)
 {
 }
 

@@ -31,9 +31,13 @@ public:
     void setData(arrayWithLength<unsigned char> blocks, unsigned int offset);
     void getData(arrayWithLength<unsigned char> blocks, unsigned int offset, int minY, int maxY);
 
-    void setDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z, int sizeX, int sizeY, int sizeZ, void (*changedCallback)(int, int, int, void*, int), void* callbackData, int oldBlockId);
-    bool testSetDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z, int sizeX, int sizeY, int sizeZ, bool* changed);
-    void getDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z, int sizeX, int sizeY, int sizeZ);
+    void setDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z, int sizeX, int sizeY,
+                       int sizeZ, void (*changedCallback)(int, int, int, void*, int), void* callbackData,
+                       int oldBlockId);
+    bool testSetDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z, int sizeX, int sizeY,
+                           int sizeZ, bool* changed);
+    void getDataRegion(arrayWithLength<unsigned char> blocks, int offset, int x, int y, int z, int sizeX, int sizeY,
+                       int sizeZ);
 
     void getDataSection(unsigned char* blocks, int x, int y, int z);
 

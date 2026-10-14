@@ -51,7 +51,8 @@ public:
     static bool shouldConnectTo(const BlockState* state, const Direction* direction);
     static bool shouldConnectTo(const BlockState* state);
     ConnectingSide* getConnectingSide(LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
-    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                              const BlockPos& pos);
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual bool isCubeShaped(const BlockState* state);
@@ -59,17 +60,21 @@ public:
     virtual bool waterSpreadCausesSpawn();
     virtual bool canContainLiquid(const BlockState* state) const;
     int checkTarget(Level* level, const BlockPos& pos, int strength);
-    const BlockState* updatePowerStrength(Level* level, const BlockPos& pos, const BlockPos& sourcePos, const BlockState* state);
+    const BlockState* updatePowerStrength(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
+                                          const BlockState* state);
     const BlockState* updatePowerStrength(Level* level, const BlockPos& pos, const BlockState* state);
     void checkCornerChangeAt(Level* level, const BlockPos& pos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
-    virtual int getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual int getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                const Direction* direction);
     static bool shouldConnectTo(LevelSource* levelSource, const BlockPos& pos);
     bool isPowerSourceAt(LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
-    virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
+    virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                          const Direction* direction);
     virtual bool isSignalSource(const BlockState* state);
     static int getColorForData(int data);
     virtual void animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random);
@@ -80,7 +85,8 @@ public:
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual void registerIcons(IconRegister* iconRegister);
     static TextureAtlasSprite* getTexture(const std::wstring& name);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
@@ -91,7 +97,9 @@ private:
     TextureAtlasSprite* mCrossOverlayIcon;
     TextureAtlasSprite* mLineOverlayIcon;
     bool mSignalSource;
-    boost::unordered_set<BlockPos, boost::hash<const BlockPos>, std::equal_to<const BlockPos>, std::allocator<BlockPos> > mUpdatedPositions;
+    boost::unordered_set<BlockPos, boost::hash<const BlockPos>, std::equal_to<const BlockPos>,
+                         std::allocator<BlockPos> >
+        mUpdatedPositions;
 };
 
 #endif

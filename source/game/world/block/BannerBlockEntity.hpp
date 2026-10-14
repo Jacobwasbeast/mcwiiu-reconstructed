@@ -42,7 +42,8 @@ public:
     std::vector<const BannerPattern*>* getPatterns();
     std::vector<const DyeColor*>* getColors();
     std::wstring getTextureHashName();
-    static void fjAddPatternToItem(const not_null_ptr<ItemInstance>& item, const BannerPattern* pattern, const DyeColor* color);
+    static void fjAddPatternToItem(const not_null_ptr<ItemInstance>& item, const BannerPattern* pattern,
+                                   const DyeColor* color);
     static void removeLastPattern(not_null_ptr<ItemInstance> item);
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual unsigned long long GetType();

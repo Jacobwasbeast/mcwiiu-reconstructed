@@ -25,8 +25,7 @@ OcelotSitOnBlockGoal::~OcelotSitOnBlockGoal()
 
 bool OcelotSitOnBlockGoal::canUse()
 {
-    return mOcelot->isTame() && !mOcelot->isSitting() &&
-           MoveToBlockGoal::canUse();
+    return mOcelot->isTame() && !mOcelot->isSitting() && MoveToBlockGoal::canUse();
 }
 
 void OcelotSitOnBlockGoal::start()
@@ -66,8 +65,8 @@ bool OcelotSitOnBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
     if (block == Blocks::chest)
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        boost::shared_ptr<ChestBlockEntity> chest =
-            boost::dynamic_pointer_cast<ChestBlockEntity>(level->getBlockEntity(pos));
+        boost::shared_ptr<ChestBlockEntity> chest = boost::dynamic_pointer_cast<ChestBlockEntity>(
+            level->getBlockEntity(pos));
         if (chest != NULL && chest->mOpenCount < 1)
         {
             return true;
@@ -84,4 +83,3 @@ bool OcelotSitOnBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
 
     return false;
 }
-

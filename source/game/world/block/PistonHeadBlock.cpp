@@ -30,7 +30,8 @@
 
 AbstractProperty<const Direction*>* PistonHeadBlock::FACING = NULL;
 AbstractProperty<PistonHeadBlock::PistonType*>* PistonHeadBlock::TYPE = NULL;
-AbstractProperty<bool>* PistonHeadBlock::SHORT = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"short"));
+AbstractProperty<bool>* PistonHeadBlock::SHORT = static_cast<AbstractProperty<bool>*>(
+    BooleanProperty::create(L"short"));
 
 PistonHeadBlock::PistonType* pistonTypeNormal = new PistonHeadBlock::PistonType(L"normal");
 PistonHeadBlock::PistonType* pistonTypeSticky = new PistonHeadBlock::PistonType(L"sticky");
@@ -53,8 +54,7 @@ static const AABB* pistonShortArmShapeNorth = AABB::newPermanent(0.375, 0.375, 0
 static const AABB* pistonShortArmShapeEast = AABB::newPermanent(0.0, 0.375, 0.375, 0.75, 0.625, 0.625);
 static const AABB* pistonShortArmShapeWest = AABB::newPermanent(0.25, 0.375, 0.375, 1.0, 0.625, 0.625);
 
-PistonHeadBlock::PistonType::PistonType(const std::wstring& name)
-    : mName(name)
+PistonHeadBlock::PistonType::PistonType(const std::wstring& name) : mName(name)
 {
 }
 
@@ -83,8 +83,7 @@ void PistonHeadBlock::blockStaticCtor()
     TYPE = type;
 }
 
-PistonHeadBlock::PistonHeadBlock()
-    : Block(Material::PISTON)
+PistonHeadBlock::PistonHeadBlock() : Block(Material::PISTON)
 {
     DerivedInit();
     setSoundType(SoundType::STONE);
@@ -98,12 +97,18 @@ const AABB* PistonHeadBlock::getShape(const BlockState* state, LevelSource*, con
     unsigned int data = facing->get3DDataValue();
     switch (data)
     {
-    case 1: return pistonHeadShapeUp;
-    case 2: return pistonHeadShapeNorth;
-    case 3: return pistonHeadShapeSouth;
-    case 4: return pistonHeadShapeWest;
-    case 5: return pistonHeadShapeEast;
-    default: return pistonHeadShapeDown;
+    case 1:
+        return pistonHeadShapeUp;
+    case 2:
+        return pistonHeadShapeNorth;
+    case 3:
+        return pistonHeadShapeSouth;
+    case 4:
+        return pistonHeadShapeWest;
+    case 5:
+        return pistonHeadShapeEast;
+    default:
+        return pistonHeadShapeDown;
     }
 }
 
@@ -113,12 +118,18 @@ const AABB* PistonHeadBlock::getArmShape(const BlockState* state)
     const Direction* facing = state->getValue(FACING);
     switch (facing->get3DDataValue())
     {
-    case 1: return shortened ? pistonShortArmShapeUp : pistonArmShapeUp;
-    case 2: return shortened ? pistonShortArmShapeNorth : pistonArmShapeNorth;
-    case 3: return shortened ? pistonShortArmShapeSouth : pistonArmShapeSouth;
-    case 4: return shortened ? pistonShortArmShapeWest : pistonArmShapeWest;
-    case 5: return shortened ? pistonShortArmShapeEast : pistonArmShapeEast;
-    default: return shortened ? pistonShortArmShapeDown : pistonArmShapeDown;
+    case 1:
+        return shortened ? pistonShortArmShapeUp : pistonArmShapeUp;
+    case 2:
+        return shortened ? pistonShortArmShapeNorth : pistonArmShapeNorth;
+    case 3:
+        return shortened ? pistonShortArmShapeSouth : pistonArmShapeSouth;
+    case 4:
+        return shortened ? pistonShortArmShapeWest : pistonArmShapeWest;
+    case 5:
+        return shortened ? pistonShortArmShapeEast : pistonArmShapeEast;
+    default:
+        return shortened ? pistonShortArmShapeDown : pistonArmShapeDown;
     }
 }
 
@@ -172,14 +183,29 @@ void PistonHeadBlock::onRemove(Level* level, const BlockPos& pos, const BlockSta
     }
 }
 
-bool PistonHeadBlock::isSolidRender(const BlockState*) const { return false; }
-bool PistonHeadBlock::isCubeShaped(const BlockState*) { return false; }
-bool PistonHeadBlock::mayPlace(Level*, const BlockPos&) { return false; }
-bool PistonHeadBlock::mayPlace(Level*, const BlockPos&, const Direction*) { return false; }
-int PistonHeadBlock::getResourceCount(Random*) { return 0; }
+bool PistonHeadBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool PistonHeadBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+bool PistonHeadBlock::mayPlace(Level*, const BlockPos&)
+{
+    return false;
+}
+bool PistonHeadBlock::mayPlace(Level*, const BlockPos&, const Direction*)
+{
+    return false;
+}
+int PistonHeadBlock::getResourceCount(Random*)
+{
+    return 0;
+}
 
-void PistonHeadBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                      Block* block, const BlockPos& fromPos)
+void PistonHeadBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                      const BlockPos& fromPos)
 {
     BlockPos basePos = pos.relative(state->getValue(FACING)->getOpposite());
     const BlockState* baseState = level->getBlockState(basePos);
@@ -189,33 +215,44 @@ void PistonHeadBlock::neighborChanged(const BlockState* state, Level* level, con
         level->removeBlock(pos);
 }
 
-bool PistonHeadBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction*) { return true; }
+bool PistonHeadBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction*)
+{
+    return true;
+}
 
 const Direction* PistonHeadBlock::getFacing(int data)
 {
     int value = data & 7;
-    if (value > 5) return NULL;
+    if (value > 5)
+        return NULL;
     return Direction::from3DDataValue(value);
 }
 
 not_null_ptr<ItemInstance> PistonHeadBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(state->getValue(TYPE) == pistonTypeSticky ? Blocks::sticky_piston : Blocks::piston));
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(state->getValue(TYPE) == pistonTypeSticky ? Blocks::sticky_piston : Blocks::piston));
 }
 
 const BlockState* PistonHeadBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue<const Direction*>(FACING, getFacing(data))->setValue<PistonType*>(TYPE, (data & 8) > 0 ? pistonTypeSticky : pistonTypeNormal);
+    return defaultBlockState()
+        ->setValue<const Direction*>(FACING, getFacing(data))
+        ->setValue<PistonType*>(TYPE, (data & 8) > 0 ? pistonTypeSticky : pistonTypeNormal);
 }
 
 int PistonHeadBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = state->getValue(FACING)->get3DDataValue();
-    if (state->getValue(TYPE) == pistonTypeSticky) data |= 8;
+    if (state->getValue(TYPE) == pistonTypeSticky)
+        data |= 8;
     return data;
 }
 
-bool PistonHeadBlock::canContainLiquid(const BlockState*) const { return true; }
+bool PistonHeadBlock::canContainLiquid(const BlockState*) const
+{
+    return true;
+}
 
 const BlockState* PistonHeadBlock::rotate(const BlockState* state, Rotation* rotation)
 {
@@ -231,12 +268,12 @@ const BlockState* PistonHeadBlock::mirror(const BlockState* state, Mirror* mirro
 
 BlockStateDefinition* PistonHeadBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING, TYPE, SHORT };
+    static const Property* properties[] = {FACING, TYPE, SHORT};
     return new BlockStateDefinition(this, properties, 3);
 }
 
-EBlockFaceShape PistonHeadBlock::getBlockFaceShape(LevelSource*, const BlockState* state,
-                                                    const BlockPos&, const Direction* direction)
+EBlockFaceShape PistonHeadBlock::getBlockFaceShape(LevelSource*, const BlockState* state, const BlockPos&,
+                                                   const Direction* direction)
 {
     return direction == state->getValue(FACING) ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
 }

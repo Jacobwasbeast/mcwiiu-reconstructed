@@ -12,8 +12,7 @@
 #include "game/world/block/CropBlock.hpp"
 #include "game/world/generation/Villager.hpp"
 
-HarvestFarmBlockGoal::HarvestFarmBlockGoal(Villager* villager,
-                                           double speedModifier)
+HarvestFarmBlockGoal::HarvestFarmBlockGoal(Villager* villager, double speedModifier)
     : MoveToBlockGoal(villager, speedModifier, 16, 1, 1.0),
       mVillager(villager),
       mHasFarmSeeds(false),
@@ -95,9 +94,8 @@ int HarvestFarmBlockGoal::findInventorySlotForFarmSeeds()
 void HarvestFarmBlockGoal::tick()
 {
     MoveToBlockGoal::tick();
-    mVillager->getLookControl()->setLookAt(
-        (double)mBlockPos.x + 0.5, (double)mBlockPos.y + 1.0,
-        (double)mBlockPos.z + 0.5, 10.0f, mVillager->getMaxHeadXRot());
+    mVillager->getLookControl()->setLookAt((double)mBlockPos.x + 0.5, (double)mBlockPos.y + 1.0,
+                                           (double)mBlockPos.z + 0.5, 10.0f, mVillager->getMaxHeadXRot());
 
     if (!isReachedTarget())
     {
@@ -124,23 +122,19 @@ void HarvestFarmBlockGoal::tick()
             {
                 if (item->getItem() == Items::wheatSeeds)
                 {
-                    level->setBlock(above, Blocks::wheat->defaultBlockState(), Block::UPDATE_ALL,
-                                    false);
+                    level->setBlock(above, Blocks::wheat->defaultBlockState(), Block::UPDATE_ALL, false);
                 }
                 else if (item->getItem() == Items::potato)
                 {
-                    level->setBlock(above, Blocks::potatoes->defaultBlockState(), Block::UPDATE_ALL,
-                                    false);
+                    level->setBlock(above, Blocks::potatoes->defaultBlockState(), Block::UPDATE_ALL, false);
                 }
                 else if (item->getItem() == Items::carrot)
                 {
-                    level->setBlock(above, Blocks::carrots->defaultBlockState(), Block::UPDATE_ALL,
-                                    false);
+                    level->setBlock(above, Blocks::carrots->defaultBlockState(), Block::UPDATE_ALL, false);
                 }
                 else if (item->getItem() == Items::beetrootSeeds)
                 {
-                    level->setBlock(above, Blocks::beetroots->defaultBlockState(), Block::UPDATE_ALL,
-                                    false);
+                    level->setBlock(above, Blocks::beetroots->defaultBlockState(), Block::UPDATE_ALL, false);
                 }
             }
             item->shrink(1);
@@ -187,4 +181,3 @@ bool HarvestFarmBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
     }
     return false;
 }
-

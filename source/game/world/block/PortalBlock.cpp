@@ -46,8 +46,7 @@ static const AABB* gPortalShapeX = AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 1.0,
 static const AABB* gPortalShapeZ = AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.0, 1.0);
 static const AABB* gPortalShapeY = AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 0.625);
 
-PortalBlock::PortalBlock()
-    : HalfTransparentBlock(L"portal", Material::PORTAL, false)
+PortalBlock::PortalBlock() : HalfTransparentBlock(L"portal", Material::PORTAL, false)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(AXIS, Direction::Axis::X));
@@ -96,20 +95,17 @@ BlockPattern::BlockPatternMatch* PortalBlock::getPortalShape(Level* level, const
     for (int i = 0; i < 2; ++i)
     {
         Direction::AxisDirection* axisDirection = Direction::AxisDirection::VALUES[i];
-        BlockPattern::BlockPatternMatch match(facing->getAxisDirection() == axisDirection
-                                                  ? topLeft
-                                                  : topLeft.relative(shape.mRightDir, shape.getWidth() - 1),
-                                              Direction::get(axisDirection, axis),
-                                              Direction::UP, cache,
-                                              shape.getWidth(), shape.getHeight(), 1);
+        BlockPattern::BlockPatternMatch match(
+            facing->getAxisDirection() == axisDirection ? topLeft
+                                                        : topLeft.relative(shape.mRightDir, shape.getWidth() - 1),
+            Direction::get(axisDirection, axis), Direction::UP, cache, shape.getWidth(), shape.getHeight(), 1);
 
         for (int x = 0; x < shape.getWidth(); ++x)
         {
             for (int y = 0; y < shape.getHeight(); ++y)
             {
                 BlockInWorld* blockInWorld = match.getBlock(x, y, 1);
-                if (blockInWorld->getState() != NULL
-                    && blockInWorld->getState()->getMaterial() != Material::AIR)
+                if (blockInWorld->getState() != NULL && blockInWorld->getState()->getMaterial() != Material::AIR)
                 {
                     ++filled[axisDirection->getOrdinal()];
                 }
@@ -125,12 +121,9 @@ BlockPattern::BlockPatternMatch* PortalBlock::getPortalShape(Level* level, const
             best = candidate;
     }
 
-    return new BlockPattern::BlockPatternMatch(facing->getAxisDirection() == best
-                                                   ? topLeft
-                                                   : topLeft.relative(shape.mRightDir, shape.getWidth() - 1),
-                                               Direction::get(best, axis),
-                                               Direction::UP, cache,
-                                               shape.getWidth(), shape.getHeight(), 1);
+    return new BlockPattern::BlockPatternMatch(
+        facing->getAxisDirection() == best ? topLeft : topLeft.relative(shape.mRightDir, shape.getWidth() - 1),
+        Direction::get(best, axis), Direction::UP, cache, shape.getWidth(), shape.getHeight(), 1);
 }
 
 const AABB* PortalBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -149,8 +142,7 @@ void PortalBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
 {
     Block::tick(level, pos, state, random);
 
-    if (level->mDimension->isNaturalDimension()
-        && level->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING)
+    if (level->mDimension->isNaturalDimension() && level->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING)
         && random->nextInt(2000) < level->getDifficulty()->getId())
     {
         int y = pos.y;
@@ -163,10 +155,9 @@ void PortalBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
         if (y > 0 && !level->getBlockState(ground.above())->isSolidBlockingCubeAndNotSignalSource())
         {
             int error = 0;
-            boost::shared_ptr<Entity> mob =
-                SpawnEggItem::spawnMobAt(level, EntityIO::getKey(EntityType::PIG_ZOMBIE),
-                                         (double)ground.x + 0.5, (double)ground.y + 1.1,
-                                         (double)ground.z + 0.5, &error, std::wstring(L""));
+            boost::shared_ptr<Entity> mob = SpawnEggItem::spawnMobAt(level, EntityIO::getKey(EntityType::PIG_ZOMBIE),
+                                                                     (double)ground.x + 0.5, (double)ground.y + 1.1,
+                                                                     (double)ground.z + 0.5, &error, std::wstring(L""));
             if (mob)
             {
                 mob->mPortalCooldown = mob->getDimensionChangingDelay();
@@ -182,8 +173,10 @@ const AABB* PortalBlock::getClipAABB(const BlockState* state, LevelSource* level
 
 int PortalBlock::getDataForAxis(Direction::Axis* axis)
 {
-    if (axis == Direction::Axis::X) return 1;
-    if (axis == Direction::Axis::Z) return 2;
+    if (axis == Direction::Axis::X)
+        return 1;
+    if (axis == Direction::Axis::Z)
+        return 2;
     return 0;
 }
 
@@ -197,19 +190,22 @@ bool PortalBlock::trySpawnPortal(Level* level, const BlockPos& pos, bool create)
     PortalShape x(level, pos, Direction::Axis::X);
     if (x.isValid() && x.mNumPortalBlocks == 0)
     {
-        if (create) x.createPortalBlocks();
+        if (create)
+            x.createPortalBlocks();
         return true;
     }
     PortalShape z(level, pos, Direction::Axis::Z);
     if (z.isValid() && z.mNumPortalBlocks == 0)
     {
-        if (create) z.createPortalBlocks();
+        if (create)
+            z.createPortalBlocks();
         return true;
     }
     return false;
 }
 
-void PortalBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
+void PortalBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                  const BlockPos& fromPos)
 {
     Direction::Axis* axis = state->getValue(AXIS);
     if (axis == Direction::Axis::X)
@@ -230,7 +226,8 @@ void PortalBlock::neighborChanged(const BlockState* state, Level* level, const B
     }
 }
 
-bool PortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+bool PortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                   const Direction* direction)
 {
     BlockPos neighbourPos = pos.relative(direction);
     Direction::Axis* axis = NULL;
@@ -253,16 +250,16 @@ bool PortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSo
     }
 
     bool westOpen = levelSource->getBlockState(neighbourPos.west())->getBlock() == this
-                  && levelSource->getBlockState(neighbourPos.west(2))->getBlock() != this;
+                    && levelSource->getBlockState(neighbourPos.west(2))->getBlock() != this;
 
     bool eastOpen = levelSource->getBlockState(neighbourPos.east())->getBlock() == this
-                  && levelSource->getBlockState(neighbourPos.east(2))->getBlock() != this;
+                    && levelSource->getBlockState(neighbourPos.east(2))->getBlock() != this;
 
     bool northOpen = levelSource->getBlockState(neighbourPos.north())->getBlock() == this
-                  && levelSource->getBlockState(neighbourPos.north(2))->getBlock() != this;
+                     && levelSource->getBlockState(neighbourPos.north(2))->getBlock() != this;
 
     bool southOpen = levelSource->getBlockState(neighbourPos.south())->getBlock() == this
-                  && levelSource->getBlockState(neighbourPos.south(2))->getBlock() != this;
+                     && levelSource->getBlockState(neighbourPos.south(2))->getBlock() != this;
 
     bool westEastAllowed = westOpen || eastOpen || axis == Direction::Axis::X;
     bool northSouthAllowed = northOpen || southOpen || axis == Direction::Axis::Z;
@@ -274,8 +271,14 @@ bool PortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSo
     return false;
 }
 
-int PortalBlock::getResourceCount(Random* random) { return 0; }
-int PortalBlock::getRenderLayer() { return 1; }
+int PortalBlock::getResourceCount(Random* random)
+{
+    return 0;
+}
+int PortalBlock::getRenderLayer()
+{
+    return 1;
+}
 
 void PortalBlock::entityInside(Level*, const BlockPos& pos, const BlockState*, const boost::shared_ptr<Entity>& entity)
 {
@@ -301,8 +304,8 @@ void PortalBlock::animateTick(const BlockState*, Level* level, const BlockPos& p
     if (random->nextInt(100) == 0)
     {
         level->playLocalSound((double)pos.x + 0.5, (double)pos.y + 0.5, (double)pos.z + 0.5,
-                              SoundEvents::PORTAL_AMBIENT, SoundSource::eSoundSource_Blocks,
-                              0.5f, random->nextFloat() * 0.4f + 0.8f, false, 16.0f);
+                              SoundEvents::PORTAL_AMBIENT, SoundSource::eSoundSource_Blocks, 0.5f,
+                              random->nextFloat() * 0.4f + 0.8f, false, 16.0f);
     }
 
     for (int i = 0; i < 4; ++i)
@@ -336,8 +339,14 @@ not_null_ptr<ItemInstance> PortalBlock::getCloneItemInstance(Level*, const Block
     return ItemInstance::EMPTY;
 }
 
-bool PortalBlock::isWaterBlocking() const { return true; }
-bool PortalBlock::waterSpreadCausesSpawn() { return false; }
+bool PortalBlock::isWaterBlocking() const
+{
+    return true;
+}
+bool PortalBlock::waterSpreadCausesSpawn()
+{
+    return false;
+}
 
 const BlockState* PortalBlock::getBlockState(int data)
 {
@@ -368,23 +377,34 @@ const BlockState* PortalBlock::rotate(const BlockState* state, Rotation* rotatio
     return state;
 }
 
-bool PortalBlock::canContainLiquid(const BlockState* state) const { return false; }
+bool PortalBlock::canContainLiquid(const BlockState* state) const
+{
+    return false;
+}
 
 BlockStateDefinition* PortalBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { AXIS };
+    static const Property* properties[1] = {AXIS};
     return new BlockStateDefinition(this, properties, 1);
 }
 
-EBlockFaceShape PortalBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
+EBlockFaceShape PortalBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                               const Direction* direction)
 {
     return BLOCK_FACE_UNDEFINED;
 }
 
-bool PortalBlock::mayPick() { return false; }
+bool PortalBlock::mayPick()
+{
+    return false;
+}
 
 PortalBlock::PortalShape::PortalShape(Level* level, const BlockPos& pos, Direction::Axis* axis)
-    : mLevel(level), mAxis(axis), mNumPortalBlocks(0), mBottomLeft(NULL), mWidth(0)
+    : mLevel(level),
+      mAxis(axis),
+      mNumPortalBlocks(0),
+      mBottomLeft(NULL),
+      mWidth(0)
 {
     if (axis == Direction::Axis::X)
     {
@@ -398,8 +418,7 @@ PortalBlock::PortalShape::PortalShape(Level* level, const BlockPos& pos, Directi
     }
     BlockPos origin = pos;
     BlockPos bottom = origin;
-    while (bottom.y > origin.y - 21 && bottom.y > 0
-           && isEmptyBlock(level->getBlockState(bottom.below())->getBlock()))
+    while (bottom.y > origin.y - 21 && bottom.y > 0 && isEmptyBlock(level->getBlockState(bottom.below())->getBlock()))
     {
         bottom = bottom.below();
     }
@@ -424,7 +443,10 @@ PortalBlock::PortalShape::PortalShape(Level* level, const BlockPos& pos, Directi
     }
 }
 
-int PortalBlock::PortalShape::getHeight() { return mHeight; }
+int PortalBlock::PortalShape::getHeight()
+{
+    return mHeight;
+}
 
 bool PortalBlock::PortalShape::isEmptyBlock(Block* block)
 {
@@ -490,7 +512,8 @@ int PortalBlock::PortalShape::calculatePortalHeight()
 
     for (int width = 0; width < mWidth; ++width)
     {
-        if (mLevel->getBlockState(mBottomLeft->relative(mRightDir, width).above(mHeight))->getBlock() != Blocks::obsidian)
+        if (mLevel->getBlockState(mBottomLeft->relative(mRightDir, width).above(mHeight))->getBlock()
+            != Blocks::obsidian)
         {
             mBottomLeft = NULL;
             mHeight = 0;
@@ -510,8 +533,14 @@ int PortalBlock::PortalShape::calculatePortalHeight()
     return 0;
 }
 
-bool PortalBlock::PortalShape::isValid() { return mWidth >= 2 && mWidth <= 21 && mHeight >= 3 && mHeight <= 21; }
-int PortalBlock::PortalShape::getWidth() { return mWidth; }
+bool PortalBlock::PortalShape::isValid()
+{
+    return mWidth >= 2 && mWidth <= 21 && mHeight >= 3 && mHeight <= 21;
+}
+int PortalBlock::PortalShape::getWidth()
+{
+    return mWidth;
+}
 
 void PortalBlock::PortalShape::createPortalBlocks()
 {
@@ -520,8 +549,7 @@ void PortalBlock::PortalShape::createPortalBlocks()
         BlockPos column = mBottomLeft->relative(mRightDir, width);
         for (int height = 0; height < mHeight; ++height)
         {
-            mLevel->setBlock(column.above(height),
-                             Blocks::portal->defaultBlockState()->setValue(AXIS, mAxis),
+            mLevel->setBlock(column.above(height), Blocks::portal->defaultBlockState()->setValue(AXIS, mAxis),
                              Block::UPDATE_CLIENTS, false);
         }
     }

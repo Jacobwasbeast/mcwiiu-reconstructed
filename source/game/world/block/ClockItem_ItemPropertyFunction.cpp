@@ -23,8 +23,7 @@ double ClockItem_ItemPropertyFunction::wobble(Level* level, double value)
     return mRotation;
 }
 
-float ClockItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance,
-                                           Level* level,
+float ClockItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                            boost::shared_ptr<LivingEntity> entity)
 {
     boost::shared_ptr<Entity> holder = entity ? boost::shared_ptr<Entity>(entity)

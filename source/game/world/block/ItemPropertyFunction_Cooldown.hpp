@@ -13,9 +13,7 @@ class LivingEntity;
 class ItemPropertyFunction_Cooldown : public ItemPropertyFunction
 {
 public:
-    virtual float call(not_null_ptr<ItemInstance> itemInstance,
-                       Level* level,
-                       boost::shared_ptr<LivingEntity> entity);
+    virtual float call(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<LivingEntity> entity);
 };
 
 #endif

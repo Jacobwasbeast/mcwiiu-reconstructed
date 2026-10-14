@@ -53,12 +53,15 @@ public:
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool TestUse(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player);
     boost::shared_ptr<Player> getSleepingPlayerAt(Level* level, const BlockPos& pos);
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual void fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, float fallDistance);
     virtual void updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity> entity);
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool hasCustomBreakingProgress(const BlockState* state);
@@ -66,18 +69,24 @@ public:
     static bool hasSolidGroundAndTwoBlocksSpaceAt(Level* level, const BlockPos& pos);
     static BlockPos* findStandUpPosition(Level* level, const BlockPos& pos, int data);
     using Block::spawnResources;
-    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus);
+    virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                int lootBonus);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);
     virtual int getRenderLayer();
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual bool playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player);
-    virtual void playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity, not_null_ptr<ItemInstance> tool);
+    virtual bool playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
+                                   boost::shared_ptr<Player> player);
+    virtual void playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
+                               const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
+                               not_null_ptr<ItemInstance> tool);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual const BlockState* getBlockState(int data);
-    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                              const BlockPos& pos);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);

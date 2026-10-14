@@ -21,10 +21,9 @@ public:
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos,
-                                                    const Direction* direction, float hitX,
-                                                    float hitY, float hitZ, int auxValue,
-                                                    boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
+                                                   boost::shared_ptr<LivingEntity> placer);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual const BlockState* getBlockState(int data);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);

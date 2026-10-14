@@ -28,22 +28,14 @@ AbstractProperty<bool>* FenceBlock::SOUTH = static_cast<AbstractProperty<bool>*>
 AbstractProperty<bool>* FenceBlock::WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
 
 const AABB* FenceBlock::BOUNDING_BOXES[16] = {
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.375, 0.625, 1.0, 0.625),
-    AABB::newPermanent(0.0, 0.0, 0.375, 0.625, 1.0, 1.0),
-    AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.0, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.0, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 0.625, 1.0, 0.625),
-    AABB::newPermanent(0.0, 0.0, 0.0, 0.625, 1.0, 1.0),
-    AABB::newPermanent(0.375, 0.0, 0.375, 1.0, 1.0, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.375, 1.0, 1.0, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 1.0, 0.625),
-    AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 1.0, 1.0),
-    AABB::newPermanent(0.375, 0.0, 0.0, 1.0, 1.0, 0.625),
-    AABB::newPermanent(0.375, 0.0, 0.0, 1.0, 1.0, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.625),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 0.625), AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.375, 0.625, 1.0, 0.625),   AABB::newPermanent(0.0, 0.0, 0.375, 0.625, 1.0, 1.0),
+    AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.0, 0.625),   AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 0.625, 1.0, 0.625),     AABB::newPermanent(0.0, 0.0, 0.0, 0.625, 1.0, 1.0),
+    AABB::newPermanent(0.375, 0.0, 0.375, 1.0, 1.0, 0.625),   AABB::newPermanent(0.375, 0.0, 0.375, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 1.0, 0.625),     AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.375, 0.0, 0.0, 1.0, 1.0, 0.625),     AABB::newPermanent(0.375, 0.0, 0.0, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.625),       AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0),
 };
 const AABB* FenceBlock::PILLAR_AABB = AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.5, 0.625);
 const AABB* FenceBlock::SOUTH_AABB = AABB::newPermanent(0.375, 0.0, 0.625, 0.625, 1.5, 1.0);
@@ -52,7 +44,8 @@ const AABB* FenceBlock::NORTH_AABB = AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 
 const AABB* FenceBlock::EAST_AABB = AABB::newPermanent(0.625, 0.0, 0.375, 1.0, 1.5, 0.625);
 
 FenceBlock::FenceBlock(const std::wstring& name, Material* material, const MaterialColor* materialColor)
-    : Block(material, materialColor), mTextureName(name)
+    : Block(material, materialColor),
+      mTextureName(name)
 {
     _init();
 }
@@ -63,10 +56,10 @@ void FenceBlock::_init()
     mBlockType = EBLOCK_TYPE_FENCE;
     DerivedInit();
     registerDefaultState(mStateDefinition->any()
-        ->setValue(NORTH, false)
-        ->setValue(EAST, false)
-        ->setValue(SOUTH, false)
-        ->setValue(WEST, false));
+                             ->setValue(NORTH, false)
+                             ->setValue(EAST, false)
+                             ->setValue(SOUTH, false)
+                             ->setValue(WEST, false));
 }
 
 unsigned int FenceBlock::getAABBIndex(const BlockState* state)
@@ -90,7 +83,8 @@ const AABB* FenceBlock::getShape(const BlockState* state, LevelSource* levelSour
 }
 
 void FenceBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,
-                                    std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity, bool isActualState)
+                                   std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity,
+                                   bool isActualState)
 {
     addCollisionAABB(pos, entityBox, collidingBoxes, PILLAR_AABB);
     if (connectsTo(level, pos.north(), Direction::SOUTH))
@@ -103,18 +97,36 @@ void FenceBlock::addCollisionAABBs(const BlockState* state, Level* level, const 
         addCollisionAABB(pos, entityBox, collidingBoxes, WEST_AABB);
 }
 
-bool FenceBlock::isSolidRender(const BlockState*) const { return false; }
-bool FenceBlock::isCubeShaped(const BlockState*) { return false; }
-bool FenceBlock::isPathfindable(LevelSource*, const BlockPos&) { return false; }
-bool FenceBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction*) { return true; }
-int FenceBlock::convertBlockStateToLegacyData(const BlockState*) { return 0; }
-bool FenceBlock::canContainLiquid(const BlockState*) const { return true; }
+bool FenceBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool FenceBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+bool FenceBlock::isPathfindable(LevelSource*, const BlockPos&)
+{
+    return false;
+}
+bool FenceBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPos&, const Direction*)
+{
+    return true;
+}
+int FenceBlock::convertBlockStateToLegacyData(const BlockState*)
+{
+    return 0;
+}
+bool FenceBlock::canContainLiquid(const BlockState*) const
+{
+    return true;
+}
 
 bool FenceBlock::isExceptionBlockForAttachingPlusPiston(Block* block)
 {
     return Block::isExceptionBlockForAttachingPlusPiston(block) || block == Blocks::barrier
-        || block == Blocks::melon_block || block == Blocks::pumpkin || block == Blocks::carved_pumpkin
-        || block == Blocks::lit_pumpkin;
+           || block == Blocks::melon_block || block == Blocks::pumpkin || block == Blocks::carved_pumpkin
+           || block == Blocks::lit_pumpkin;
 }
 
 bool FenceBlock::connectsTo(LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
@@ -123,7 +135,8 @@ bool FenceBlock::connectsTo(LevelSource* levelSource, const BlockPos& pos, const
     EBlockFaceShape faceShape = state->getBlockFaceShape(levelSource, pos, direction);
     Block* block = state->getBlock();
     bool fenceFace = faceShape == BLOCK_FACE_MIDDLE_POLE
-        && (state->getMaterial() == mMaterial || (block != NULL && dynamic_cast<FenceGateBlock*>(block) != NULL));
+                     && (state->getMaterial() == mMaterial
+                         || (block != NULL && dynamic_cast<FenceGateBlock*>(block) != NULL));
     return (!isExceptionBlockForAttachingPlusPiston(block) && faceShape == BLOCK_FACE_SOLID) || fenceFace;
 }
 
@@ -145,7 +158,8 @@ bool FenceBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost
     }
 }
 
-const BlockState* FenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const BlockState* FenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                              const BlockPos& pos)
 {
     return state->setValue(NORTH, connectsTo(levelSource, pos.north(), Direction::SOUTH))
         ->setValue(EAST, connectsTo(levelSource, pos.east(), Direction::WEST))
@@ -192,11 +206,12 @@ const BlockState* FenceBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* FenceBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { NORTH, EAST, WEST, SOUTH };
+    static const Property* properties[] = {NORTH, EAST, WEST, SOUTH};
     return new BlockStateDefinition(this, properties, 4);
 }
 
-EBlockFaceShape FenceBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
+EBlockFaceShape FenceBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
+                                              const Direction* direction)
 {
     return direction == Direction::UP || direction == Direction::DOWN ? BLOCK_FACE_CENTER : BLOCK_FACE_MIDDLE_POLE;
 }
@@ -206,7 +221,10 @@ void FenceBlock::registerIcons(IconRegister* iconRegister)
     mIcon = iconRegister->registerIcon(mTextureName);
 }
 
-EBlockRenderShape FenceBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_FENCE; }
+EBlockRenderShape FenceBlock::getRenderShape(const BlockState*)
+{
+    return BLOCK_RENDER_FENCE;
+}
 
 unsigned int FenceBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {

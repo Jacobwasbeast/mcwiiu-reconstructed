@@ -14,8 +14,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 
-RedStoneOreBlock::RedStoneOreBlock(bool lit)
-    : Block(Material::STONE)
+RedStoneOreBlock::RedStoneOreBlock(bool lit) : Block(Material::STONE)
 {
     DerivedInit();
     if (lit)
@@ -48,9 +47,9 @@ bool RedStoneOreBlock::TestUse()
     return this == Blocks::redstone_ore;
 }
 
-bool RedStoneOreBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
-                           boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                           const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide)
+bool RedStoneOreBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                           InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                           float hitZ, bool clientSide)
 {
     if (clientSide)
     {
@@ -97,9 +96,8 @@ void RedStoneOreBlock::spawnParticles(Level* level, const BlockPos& pos)
             x = (double)pos.x - edge;
         }
 
-        if (x < (double)pos.x || x > (double)(pos.x + 1)
-            || y < 0.0 || y > (double)(pos.y + 1)
-            || z < (double)pos.z || z > (double)(pos.z + 1))
+        if (x < (double)pos.x || x > (double)(pos.x + 1) || y < 0.0 || y > (double)(pos.y + 1) || z < (double)pos.z
+            || z > (double)(pos.z + 1))
         {
             level->addParticle(PARTICLE_RED_DUST, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
         }
@@ -138,8 +136,8 @@ int RedStoneOreBlock::getResourceCount(Random* random)
     return random->nextInt(2) + 4;
 }
 
-void RedStoneOreBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
-                                      float chance, int lootBonus)
+void RedStoneOreBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance,
+                                      int lootBonus)
 {
     Block::spawnResources(level, pos, state, chance, lootBonus);
     if (getResource(state, level->mRandom, lootBonus) != Item::byBlock(this))
@@ -159,8 +157,7 @@ void RedStoneOreBlock::animateTick(const BlockState*, Level* level, const BlockP
 
 unsigned int RedStoneOreBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
-        && tooltipData.m_bCanPlace)
+    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace)
     {
         return IDS_TOOLTIPS_USE;
     }

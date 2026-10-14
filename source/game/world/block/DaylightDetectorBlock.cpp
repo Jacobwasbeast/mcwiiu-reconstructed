@@ -25,13 +25,12 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/util/Math.hpp"
 
-static AbstractProperty<int>* gDaylightDetectorPower =
-    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"power", 0, 15));
+static AbstractProperty<int>* gDaylightDetectorPower = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"power", 0, 15));
 static const AABB* gDaylightDetectorShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0);
 static const unsigned int DAYLIGHT_DETECTOR_ADVENTURE_TOOLTIP = IDS_TOOLTIP_INVERT;
 
-DaylightDetectorBlock::DaylightDetectorBlock(bool inverted)
-    : BaseEntityBlock(Material::WOOD)
+DaylightDetectorBlock::DaylightDetectorBlock(bool inverted) : BaseEntityBlock(Material::WOOD)
 {
     DerivedInit();
     mInverted = inverted;
@@ -42,7 +41,8 @@ DaylightDetectorBlock::DaylightDetectorBlock(bool inverted)
 
 boost::shared_ptr<BlockEntity> DaylightDetectorBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<DaylightDetectorBlockEntity>(new DaylightDetectorBlockEntity());
+    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<DaylightDetectorBlockEntity>(
+        new DaylightDetectorBlockEntity());
     blockEntity->setLevel(level);
     return blockEntity;
 }
@@ -91,17 +91,20 @@ bool DaylightDetectorBlock::use(Level* level, const BlockPos& pos, const BlockSt
         {
             if (mInverted)
             {
-                level->setBlock(pos, Blocks::daylight_detector->defaultBlockState()->setValue(gDaylightDetectorPower,
-                                    state->getValue(gDaylightDetectorPower)),
+                level->setBlock(pos,
+                                Blocks::daylight_detector->defaultBlockState()->setValue(
+                                    gDaylightDetectorPower, state->getValue(gDaylightDetectorPower)),
                                 Block::UPDATE_INVISIBLE, false);
                 static_cast<DaylightDetectorBlock*>(Blocks::daylight_detector)->updateSignalStrength(level, pos);
             }
             else
             {
-                level->setBlock(pos, Blocks::daylight_detector_inverted->defaultBlockState()->setValue(
+                level->setBlock(pos,
+                                Blocks::daylight_detector_inverted->defaultBlockState()->setValue(
                                     gDaylightDetectorPower, state->getValue(gDaylightDetectorPower)),
                                 Block::UPDATE_INVISIBLE, false);
-                static_cast<DaylightDetectorBlock*>(Blocks::daylight_detector_inverted)->updateSignalStrength(level, pos);
+                static_cast<DaylightDetectorBlock*>(Blocks::daylight_detector_inverted)
+                    ->updateSignalStrength(level, pos);
             }
         }
         return true;
@@ -175,7 +178,7 @@ unsigned int DaylightDetectorBlock::GetHitTooltip(const BlockTooltipDataHolder& 
 
 BlockStateDefinition* DaylightDetectorBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { gDaylightDetectorPower };
+    static const Property* properties[1] = {gDaylightDetectorPower};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -184,7 +187,8 @@ EPistonPushReaction DaylightDetectorBlock::getPistonPushReaction(const BlockStat
     return PISTON_PUSH_NORMAL;
 }
 
-EBlockFaceShape DaylightDetectorBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
+EBlockFaceShape DaylightDetectorBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
+                                                         const Direction* direction)
 {
     return direction == Direction::DOWN ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
 }
@@ -202,4 +206,3 @@ void DaylightDetectorBlock::registerIcons(IconRegister* iconRegister)
     mInvertedTopIcon = iconRegister->registerIcon(getIconName() + L"_inverted_top");
     mSideIcon = iconRegister->registerIcon(getIconName() + L"_side");
 }
-

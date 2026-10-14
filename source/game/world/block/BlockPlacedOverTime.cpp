@@ -25,14 +25,10 @@ float countEmpty(const std::map<int, int>& blocksPlaced, int firstRound, int las
     return score;
 }
 
-BlockPlacedOverTime::BlockPlacedOverTime(
-    int name,
-    float target,
-    unsigned int weight,
-    ScoreFunction& scoreFunction,
-    GameMedal::EOperator op)
-    : GameMedal(name, target, weight, op, true, false)
-    , mScoreFunction(&scoreFunction)
+BlockPlacedOverTime::BlockPlacedOverTime(int name, float target, unsigned int weight, ScoreFunction& scoreFunction,
+                                         GameMedal::EOperator op)
+    : GameMedal(name, target, weight, op, true, false),
+      mScoreFunction(&scoreFunction)
 {
 }
 

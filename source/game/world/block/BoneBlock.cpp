@@ -11,8 +11,7 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-BoneBlock::BoneBlock()
-    : RotatedPillarBlock(Material::STONE, MaterialColor::SAND)
+BoneBlock::BoneBlock() : RotatedPillarBlock(Material::STONE, MaterialColor::SAND)
 {
     DerivedInit();
 

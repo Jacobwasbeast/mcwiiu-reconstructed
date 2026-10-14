@@ -35,12 +35,14 @@ public:
     virtual void onPlace(Level*, const BlockPos&, const BlockState*);
     virtual int getRenderLayer();
     virtual bool mayPlace(Level*, const BlockPos&);
-    virtual const BlockState* getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity>);
+    virtual const BlockState* getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int,
+                                                   boost::shared_ptr<LivingEntity>);
     virtual int getSignal(const BlockState*, LevelSource*, const BlockPos&, const Direction*);
     virtual bool isSignalSource(const BlockState*);
     virtual int getDirectSignal(const BlockState*, LevelSource*, const BlockPos&, const Direction*);
     virtual bool canSurvive(Level*, const BlockPos&, const BlockState*);
-    virtual void setPlacedBy(Level*, const BlockPos&, const BlockState*, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>);
+    virtual void setPlacedBy(Level*, const BlockPos&, const BlockState*, boost::shared_ptr<LivingEntity>,
+                             not_null_ptr<ItemInstance>);
     virtual bool isMatching(Block*);
     virtual TextureAtlasSprite* getTexture(const Direction*, const BlockState*);
     virtual bool isOn(const BlockState*);

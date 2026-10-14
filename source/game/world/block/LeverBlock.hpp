@@ -73,30 +73,28 @@ public:
     virtual bool isCubeShaped(const BlockState* state);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                              const BlockPos& pos, const Direction* direction);
-    virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource,
-                                    const BlockPos& pos);
+    virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                              const Direction* direction);
+    virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isSolidRender(const BlockState* state) const;
-    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                 Block* block, const BlockPos& fromPos);
+    virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                 const BlockPos& fromPos);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
     virtual bool mayPlace(Level* level, const BlockPos& pos, const Direction* direction);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
     virtual bool TestUse();
-    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
-                     boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                     const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
-    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos,
-                                                   const Direction* direction, float hitX, float hitY,
-                                                   float hitZ, int auxValue,
+    virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                     InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                     float hitZ, bool clientSide);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                   float hitX, float hitY, float hitZ, int auxValue,
                                                    boost::shared_ptr<LivingEntity> placer);
     virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
                           const Direction* direction);
     virtual bool isSignalSource(const BlockState* state);
-    virtual int getDirectSignal(const BlockState* state, LevelSource* levelSource,
-                                const BlockPos& pos, const Direction* direction);
+    virtual int getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                const Direction* direction);
     virtual bool canSurvive(Level* level, const BlockPos& pos, const BlockState* state);
     virtual BlockStateDefinition* createBlockStateDefinition();
 };

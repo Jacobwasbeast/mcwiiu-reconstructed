@@ -33,18 +33,16 @@
 #include "game/item/ItemId.hpp"
 
 static const AABB* gTallGrassShape = AABB::newPermanent(0.1, 0.0, 0.1, 0.9, 0.8, 0.9);
-static const std::wstring gIconNames[3] = { L"deadbush", L"tallgrass", L"fern" };
+static const std::wstring gIconNames[3] = {L"deadbush", L"tallgrass", L"fern"};
 
 AbstractProperty<TallGrassBlock::Variant*>* TallGrassBlock::VARIANT = NULL;
 TallGrassBlock::Variant* TallGrassBlock::Variant::DEAD_BUSH = new TallGrassBlock::Variant(0, L"dead_bush");
 TallGrassBlock::Variant* TallGrassBlock::Variant::GRASS = new TallGrassBlock::Variant(1, L"tall_grass");
 TallGrassBlock::Variant* TallGrassBlock::Variant::FERN = new TallGrassBlock::Variant(2, L"fern");
-TallGrassBlock::Variant* TallGrassBlock::VARIANTS[3] = {
-    TallGrassBlock::Variant::DEAD_BUSH, TallGrassBlock::Variant::GRASS, TallGrassBlock::Variant::FERN
-};
+TallGrassBlock::Variant* TallGrassBlock::VARIANTS[3] = {TallGrassBlock::Variant::DEAD_BUSH,
+                                                        TallGrassBlock::Variant::GRASS, TallGrassBlock::Variant::FERN};
 
-TallGrassBlock::Variant::Variant(int data, const std::wstring& name)
-    : mData(data), mName(name)
+TallGrassBlock::Variant::Variant(int data, const std::wstring& name) : mData(data), mName(name)
 {
 }
 
@@ -87,8 +85,7 @@ void TallGrassBlock::blockStaticCtor()
     VARIANT = property;
 }
 
-TallGrassBlock::TallGrassBlock()
-    : Bush(Material::REPLACEABLE_PLANT)
+TallGrassBlock::TallGrassBlock() : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::GRASS));
@@ -191,7 +188,8 @@ void TallGrassBlock::playerDestroy(Level* level, boost::shared_ptr<Player> playe
         Stat* stat = gStats->get_blocksMined(Block::getId(this));
         awardee->awardStat(stat, GenericStats::param_blocksMined(state, 1));
         Variant* variant = state->getValue(VARIANT);
-        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tallgrass, 1, variant->getData())));
+        Block::popResource(level, pos,
+                           not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tallgrass, 1, variant->getData())));
         return;
     }
     Block::playerDestroy(level, player, pos, state, blockEntity, tool);
@@ -199,7 +197,8 @@ void TallGrassBlock::playerDestroy(Level* level, boost::shared_ptr<Player> playe
 
 not_null_ptr<ItemInstance> TallGrassBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, state->getBlock()->convertBlockStateToLegacyData(state)));
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(this, 1, state->getBlock()->convertBlockStateToLegacyData(state)));
 }
 
 const BlockState* TallGrassBlock::getBlockState(int data)
@@ -230,7 +229,7 @@ bool TallGrassBlock::canContainLiquid(const BlockState*) const
 
 BlockStateDefinition* TallGrassBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { VARIANT };
+    static const Property* properties[1] = {VARIANT};
     return new BlockStateDefinition(this, properties, 1);
 }
 

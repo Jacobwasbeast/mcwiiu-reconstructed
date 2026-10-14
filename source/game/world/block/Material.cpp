@@ -137,7 +137,11 @@ void Material::staticCtor()
     CORAL = (new Material(MaterialColor::PLANT))->destroyOnPush();
     ICE = (new Material(MaterialColor::ICE))->neverBuildable();
     ICE_SOLID = new Material(MaterialColor::ICE);
-    TOP_SNOW = (new DecorationMaterial(MaterialColor::SNOW))->replaceable()->neverBuildable()->notAlwaysDestroyable()->destroyOnPush();
+    TOP_SNOW = (new DecorationMaterial(MaterialColor::SNOW))
+                   ->replaceable()
+                   ->neverBuildable()
+                   ->notAlwaysDestroyable()
+                   ->destroyOnPush();
     SNOW = (new Material(MaterialColor::SNOW))->notAlwaysDestroyable();
     CACTUS = (new Material(MaterialColor::PLANT))->neverBuildable()->destroyOnPush();
     CLAY = new Material(MaterialColor::CLAY);

@@ -39,17 +39,15 @@ public:
     }
     virtual bool operator==(const Boxed* other) const
     {
-        return other->isA(this->mValueClass) && this->mValue == (other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL)->mValue;
+        return other->isA(this->mValueClass)
+               && this->mValue == (other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL)->mValue;
     }
     virtual void setValue(const Boxed* other)
     {
         const TypedBoxed<T>* boxed = other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL;
         this->mValue = boxed->mValue;
     }
-    virtual std::wstring toString() const
-    {
-        return _toString(this->mValue);
-    }
+    virtual std::wstring toString() const { return _toString(this->mValue); }
 
 private:
     T mValue;

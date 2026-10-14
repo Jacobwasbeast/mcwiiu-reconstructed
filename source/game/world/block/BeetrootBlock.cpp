@@ -21,14 +21,10 @@
 AbstractProperty<int>* BeetrootBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 3));
 
 static const AABB* SHAPE_BY_AGE[4] = {
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0)
-};
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0)};
 
-BeetrootBlock::BeetrootBlock()
-    : CropBlock(true)
+BeetrootBlock::BeetrootBlock() : CropBlock(true)
 {
     CropBlock::DerivedInit();
     memset(mStageIcons, 0, sizeof(mStageIcons));
@@ -71,7 +67,7 @@ int BeetrootBlock::getBonemealAgeIncrease(Level* level)
 
 BlockStateDefinition* BeetrootBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { AGE };
+    static const Property* properties[] = {AGE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

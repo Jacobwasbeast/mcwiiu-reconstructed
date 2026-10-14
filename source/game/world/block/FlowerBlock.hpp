@@ -44,8 +44,8 @@ public:
             RED_FLOWER_COUNT = 9
         };
 
-        Flower(FlowerCategory* category, int data, const std::wstring& name,
-               int nameId, int descriptionId, const std::wstring& iconName, EFlower id);
+        Flower(FlowerCategory* category, int data, const std::wstring& name, int nameId, int descriptionId,
+               const std::wstring& iconName, EFlower id);
 
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;

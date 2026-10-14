@@ -8,7 +8,8 @@ class PlayerStats;
 class BlocksDestroyedFromBelowMedal : public GameMedal
 {
 public:
-    BlocksDestroyedFromBelowMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly, bool canMultiAward)
+    BlocksDestroyedFromBelowMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly,
+                                  bool canMultiAward)
         : GameMedal(name, target, weight, op, bestOnly, canMultiAward)
     {
     }

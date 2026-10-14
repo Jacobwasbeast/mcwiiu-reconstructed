@@ -18,16 +18,11 @@ AbstractProperty<SandStoneBlock::Variant*>* SandStoneBlock::TYPE = NULL;
 SandStoneBlock::Variant* SandStoneBlock::SANDSTONE = new SandStoneBlock::Variant(0, L"sandstone", 0);
 SandStoneBlock::Variant* SandStoneBlock::CHISELED = new SandStoneBlock::Variant(1, L"chiseled_sandstone", 1);
 SandStoneBlock::Variant* SandStoneBlock::SMOOTH = new SandStoneBlock::Variant(2, L"smooth_sandstone", 2);
-static SandStoneBlock::Variant* gSandStoneVariants[3] = {
-    SandStoneBlock::SANDSTONE, SandStoneBlock::CHISELED, SandStoneBlock::SMOOTH
-};
+static SandStoneBlock::Variant* gSandStoneVariants[3] = {SandStoneBlock::SANDSTONE, SandStoneBlock::CHISELED,
+                                                         SandStoneBlock::SMOOTH};
 static std::wstring gSandStoneTopTexture = L"sandstone_top";
 static std::wstring gSandStoneBottomTexture = L"sandstone_bottom";
-static std::wstring gSandStoneSideTextures[3] = {
-    L"sandstone_side",
-    L"sandstone_carved",
-    L"sandstone_smooth"
-};
+static std::wstring gSandStoneSideTextures[3] = {L"sandstone_side", L"sandstone_carved", L"sandstone_smooth"};
 
 SandStoneBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
 {
@@ -76,14 +71,12 @@ void SandStoneBlock::blockStaticCtor()
         {
             values.insert(gSandStoneVariants[i]);
         }
-        type = EnumProperty<Variant*>::create(
-            name, typeid(Variant), values, predicate);
+        type = EnumProperty<Variant*>::create(name, typeid(Variant), values, predicate);
     }
     TYPE = type;
 }
 
-SandStoneBlock::SandStoneBlock()
-    : Block(Material::STONE)
+SandStoneBlock::SandStoneBlock() : Block(Material::STONE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(TYPE, SANDSTONE));
@@ -112,7 +105,7 @@ int SandStoneBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* SandStoneBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { TYPE };
+    static const Property* properties[1] = {TYPE};
     return new BlockStateDefinition(this, properties, 1);
 }
 

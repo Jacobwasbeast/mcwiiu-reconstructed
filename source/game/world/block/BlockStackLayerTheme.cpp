@@ -6,8 +6,7 @@
 #include "game/util/Vec3i.hpp"
 #include "game/world/block/BlockTransaction.hpp"
 
-BlockStackLayerTheme::BlockStackLayerTheme(const std::vector<const BlockState*>& states)
-    : mStates(states)
+BlockStackLayerTheme::BlockStackLayerTheme(const std::vector<const BlockState*>& states) : mStates(states)
 {
 }
 

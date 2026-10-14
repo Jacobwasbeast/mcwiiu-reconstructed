@@ -16,7 +16,8 @@
 #include <typeinfo>
 #include <vector>
 
-AbstractProperty<int>* WeightedPressurePlateBlock::POWER = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"power", 0, 15));
+AbstractProperty<int>* WeightedPressurePlateBlock::POWER = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"power", 0, 15));
 
 WeightedPressurePlateBlock::WeightedPressurePlateBlock(const std::wstring& name, Material* material, int maxWeight,
                                                        const MaterialColor* materialColor)
@@ -29,7 +30,8 @@ WeightedPressurePlateBlock::WeightedPressurePlateBlock(const std::wstring& name,
 
 int WeightedPressurePlateBlock::getSignalStrength(Level* level, const BlockPos& pos)
 {
-    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(Entity), getSensitiveAABB(pos));
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(Entity),
+                                                                                  getSensitiveAABB(pos));
     int count = std::min(static_cast<int>(entities->size()), mMaxWeight);
     delete entities;
 
@@ -80,6 +82,6 @@ int WeightedPressurePlateBlock::convertBlockStateToLegacyData(const BlockState* 
 
 BlockStateDefinition* WeightedPressurePlateBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { POWER };
+    static const Property* properties[] = {POWER};
     return new BlockStateDefinition(this, properties, 1);
 }

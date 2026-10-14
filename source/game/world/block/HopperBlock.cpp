@@ -40,12 +40,13 @@ bool notUpFunction(const Direction* direction)
     return direction != Direction::UP;
 }
 
-HopperBlock::HopperBlock()
-    : BaseEntityBlock(Material::METAL, MaterialColor::STONE)
+HopperBlock::HopperBlock() : BaseEntityBlock(Material::METAL, MaterialColor::STONE)
 {
     mBlockType = EBLOCK_TYPE_HOPPER;
     DerivedInit();
-    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::DOWN)->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), true));
+    registerDefaultState(mStateDefinition->any()
+                             ->setValue(FACING, Direction::DOWN)
+                             ->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), true));
 }
 
 boost::shared_ptr<BlockEntity> HopperBlock::newBlockEntity(Level* level, int data)
@@ -65,9 +66,9 @@ const AABB* HopperBlock::getShape(const BlockState* state, LevelSource* levelSou
     return FULL_BLOCK_SHAPE;
 }
 
-void HopperBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos,
-                                    const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
-                                    boost::shared_ptr<Entity> entity, bool isActualState)
+void HopperBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,
+                                    std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity,
+                                    bool isActualState)
 {
     addCollisionAABB(pos, entityBox, collidingBoxes, BASE_AABB);
     addCollisionAABB(pos, entityBox, collidingBoxes, EAST_AABB);
@@ -76,22 +77,22 @@ void HopperBlock::addCollisionAABBs(const BlockState* state, Level* level, const
     addCollisionAABB(pos, entityBox, collidingBoxes, NORTH_AABB);
 }
 
-const BlockState* HopperBlock::getStateForPlacement(Level* level, const BlockPos& pos,
-                                                     const Direction* direction, float hitX, float hitY,
-                                                     float hitZ, int auxValue,
-                                                     boost::shared_ptr<LivingEntity> placer)
+const BlockState* HopperBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                    float hitX, float hitY, float hitZ, int auxValue,
+                                                    boost::shared_ptr<LivingEntity> placer)
 {
     const Direction* attached = direction->getOpposite();
     if (attached == Direction::UP)
     {
         attached = Direction::DOWN;
     }
-    return defaultBlockState()->setValue(FACING, attached)->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), true);
+    return defaultBlockState()
+        ->setValue(FACING, attached)
+        ->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), true);
 }
 
 void HopperBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
-                              boost::shared_ptr<LivingEntity> placer,
-                              not_null_ptr<ItemInstance> itemInstance)
+                              boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
 {
     Block::setPlacedBy(level, pos, state, placer, itemInstance);
     if (itemInstance->hasCustomHoverName())
@@ -118,7 +119,8 @@ void HopperBlock::checkPoweredState(Level* level, const BlockPos& pos, const Blo
     bool enabled = state->getValue(static_cast<const AbstractProperty<bool>*>(ENABLED));
     if (powered != enabled)
     {
-        level->setBlock(pos, state->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), powered), Block::UPDATE_INVISIBLE, false);
+        level->setBlock(pos, state->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), powered),
+                        Block::UPDATE_INVISIBLE, false);
     }
 }
 
@@ -127,9 +129,9 @@ void HopperBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* s
     checkPoweredState(level, pos, state);
 }
 
-bool HopperBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
-                      boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
-                      const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide)
+bool HopperBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
+                      InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY,
+                      float hitZ, bool clientSide)
 {
     if (!level->mIsClientSide)
     {
@@ -143,8 +145,8 @@ bool HopperBlock::use(Level* level, const BlockPos& pos, const BlockState* state
     return true;
 }
 
-void HopperBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                  Block* block, const BlockPos& fromPos)
+void HopperBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                  const BlockPos& fromPos)
 {
     checkPoweredState(level, pos, state);
 }
@@ -164,9 +166,19 @@ void HopperBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* 
     BaseEntityBlock::onRemove(level, pos, state);
 }
 
-bool HopperBlock::isCubeShaped(const BlockState* state) { return false; }
-bool HopperBlock::isSolidRender(const BlockState* state) const { return false; }
-bool HopperBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction) { return true; }
+bool HopperBlock::isCubeShaped(const BlockState* state)
+{
+    return false;
+}
+bool HopperBlock::isSolidRender(const BlockState* state) const
+{
+    return false;
+}
+bool HopperBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                   const Direction* direction)
+{
+    return true;
+}
 
 const Direction* HopperBlock::getAttachedFace(int data)
 {
@@ -178,18 +190,26 @@ bool HopperBlock::isTurnedOn(int data)
     return (data & 8) == 0;
 }
 
-bool HopperBlock::hasAnalogOutputSignal(const BlockState* state) { return true; }
+bool HopperBlock::hasAnalogOutputSignal(const BlockState* state)
+{
+    return true;
+}
 
 int HopperBlock::getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos)
 {
     return AbstractContainerMenu::getRedstoneSignalFromBlockEntity(level->getBlockEntity(pos));
 }
 
-int HopperBlock::getRenderLayer() { return 0; }
+int HopperBlock::getRenderLayer()
+{
+    return 0;
+}
 
 const BlockState* HopperBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(FACING, getAttachedFace(data))->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), isTurnedOn(data));
+    return defaultBlockState()
+        ->setValue(FACING, getAttachedFace(data))
+        ->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), isTurnedOn(data));
 }
 
 int HopperBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -225,12 +245,12 @@ const BlockState* HopperBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* HopperBlock::createBlockStateDefinition()
 {
-    static const Property* properties[2] = { FACING, ENABLED };
+    static const Property* properties[2] = {FACING, ENABLED};
     return new BlockStateDefinition(this, properties, 2);
 }
 
-EBlockFaceShape HopperBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
-                                               const BlockPos& pos, const Direction* direction)
+EBlockFaceShape HopperBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                               const Direction* direction)
 {
     return direction == Direction::UP ? BLOCK_FACE_BOWL : BLOCK_FACE_UNDEFINED;
 }
@@ -266,8 +286,7 @@ EBlockRenderShape HopperBlock::getRenderShape(const BlockState* state)
     return BLOCK_RENDER_HOPPER;
 }
 
-bool HopperBlock::canProvideSupport(const BlockState* state, const Direction* direction,
-                                    EBlockSupportType supportType)
+bool HopperBlock::canProvideSupport(const BlockState* state, const Direction* direction, EBlockSupportType supportType)
 {
     return direction == Direction::UP;
 }

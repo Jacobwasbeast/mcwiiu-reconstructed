@@ -19,16 +19,13 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<int>* SnowLayerBlock::LAYERS = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"layers", 1, 8));
+AbstractProperty<int>* SnowLayerBlock::LAYERS = static_cast<AbstractProperty<int>*>(
+    IntegerProperty::create(L"layers", 1, 8));
 const AABB* SnowLayerBlock::SNOW_AABB[9] = {
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.0, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.625, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0),
-    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.875, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.0, 1.0),  AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0),  AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.625, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0), AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.875, 1.0),
     AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0),
 };
 
@@ -49,12 +46,17 @@ const AABB* SnowLayerBlock::getShape(const BlockState* state, LevelSource*, cons
 bool SnowLayerBlock::isPathfindable(LevelSource* levelSource, const BlockPos& pos)
 {
     const BlockState* state = levelSource->getBlockState(pos);
-    if (state->getBlock() == Blocks::snow_layer) return state->getValue(LAYERS) < 5;
+    if (state->getBlock() == Blocks::snow_layer)
+        return state->getValue(LAYERS) < 5;
     return state->getBlock()->isPathfindable(levelSource, pos);
 }
 
-bool SnowLayerBlock::isTopSolidBlocking(const BlockState* state) { return state->getValue(LAYERS) == 8; }
-EBlockFaceShape SnowLayerBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
+bool SnowLayerBlock::isTopSolidBlocking(const BlockState* state)
+{
+    return state->getValue(LAYERS) == 8;
+}
+EBlockFaceShape SnowLayerBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
+                                                  const Direction* direction)
 {
     return direction == Direction::DOWN ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
 }
@@ -72,28 +74,44 @@ double SnowLayerBlock::getHeight(Level* level, int x, int y, int z)
     return height * 0.0625f;
 }
 
-bool SnowLayerBlock::isSolidRender(const BlockState*) const { return false; }
-bool SnowLayerBlock::isCubeShaped(const BlockState*) { return false; }
+bool SnowLayerBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+bool SnowLayerBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
 
 bool SnowLayerBlock::mayPlace(Level* level, const BlockPos& pos)
 {
     const BlockState* below = level->getBlockState(pos.below());
     Block* block = below->getBlock();
-    if (block == Blocks::ice || block == Blocks::barrier) return false;
+    if (block == Blocks::ice || block == Blocks::barrier)
+        return false;
     return below->getBlockFaceShape(level, pos.below(), Direction::UP) == BLOCK_FACE_SOLID
-        || below->getMaterial() == Material::LEAVES
-        || (block == this && below->getValue(LAYERS) == 8);
+           || below->getMaterial() == Material::LEAVES || (block == this && below->getValue(LAYERS) == 8);
 }
 
-void SnowLayerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
+void SnowLayerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block,
+                                     const BlockPos& fromPos)
 {
     if (fromPos.y < pos.y && pos.x == fromPos.x && pos.z == fromPos.z)
         FallingBlock::neighborChanged(state, level, pos, block, fromPos);
 }
 
-bool SnowLayerBlock::isWaterBlocking() const { return false; }
-bool SnowLayerBlock::waterSpreadCausesSpawn() { return true; }
-bool SnowLayerBlock::canContainLiquid(const BlockState*) const { return false; }
+bool SnowLayerBlock::isWaterBlocking() const
+{
+    return false;
+}
+bool SnowLayerBlock::waterSpreadCausesSpawn()
+{
+    return true;
+}
+bool SnowLayerBlock::canContainLiquid(const BlockState*) const
+{
+    return false;
+}
 
 bool SnowLayerBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
@@ -106,14 +124,22 @@ bool SnowLayerBlock::canSurvive(Level* level, const BlockPos& pos, const BlockSt
     return true;
 }
 
-void SnowLayerBlock::playerDestroy(Level* level, boost::shared_ptr<Player>, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity>, not_null_ptr<ItemInstance>)
+void SnowLayerBlock::playerDestroy(Level* level, boost::shared_ptr<Player>, const BlockPos& pos,
+                                   const BlockState* state, boost::shared_ptr<BlockEntity>, not_null_ptr<ItemInstance>)
 {
-    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::snowball, state->getValue(LAYERS) + 1, 0)));
+    Block::popResource(level, pos,
+                       not_null_ptr<ItemInstance>(new ItemInstance(Items::snowball, state->getValue(LAYERS) + 1, 0)));
     level->removeBlock(pos);
 }
 
-Item* SnowLayerBlock::getResource(const BlockState*, Random*, int) { return Items::snowball; }
-int SnowLayerBlock::getResourceCount(Random*) { return 0; }
+Item* SnowLayerBlock::getResource(const BlockState*, Random*, int)
+{
+    return Items::snowball;
+}
+int SnowLayerBlock::getResourceCount(Random*)
+{
+    return 0;
+}
 
 int SnowLayerBlock::melt(Level* level, const BlockPos& pos, int amount)
 {
@@ -164,11 +190,14 @@ void SnowLayerBlock::tick(Level* level, const BlockPos& pos, const BlockState* s
     }
 }
 
-bool SnowLayerBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
+bool SnowLayerBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
+                                      const Direction* direction)
 {
-    if (direction == Direction::UP) return true;
+    if (direction == Direction::UP)
+        return true;
     const BlockState* neighbour = levelSource->getBlockState(pos.relative(direction));
-    if (neighbour->getBlock() == this && neighbour->getValue(LAYERS) >= state->getValue(LAYERS)) return false;
+    if (neighbour->getBlock() == this && neighbour->getValue(LAYERS) >= state->getValue(LAYERS))
+        return false;
     return Block::shouldRenderFace(state, levelSource, pos, direction);
 }
 
@@ -182,16 +211,25 @@ bool SnowLayerBlock::mayReplaceWithPlace(LevelSource* levelSource, const BlockPo
     return levelSource->getBlockState(pos)->getValue(LAYERS) == 1;
 }
 
-int SnowLayerBlock::convertBlockStateToLegacyData(const BlockState* state) { return state->getValue(LAYERS) - 1; }
-bool SnowLayerBlock::hasInHandRenderOffset() { return true; }
+int SnowLayerBlock::convertBlockStateToLegacyData(const BlockState* state)
+{
+    return state->getValue(LAYERS) - 1;
+}
+bool SnowLayerBlock::hasInHandRenderOffset()
+{
+    return true;
+}
 
 BlockStateDefinition* SnowLayerBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { LAYERS };
+    static const Property* properties[] = {LAYERS};
     return new BlockStateDefinition(this, properties, 1);
 }
 
-bool SnowLayerBlock::shouldBlockTick(Level*, const BlockPos&, const BlockState*) { return true; }
+bool SnowLayerBlock::shouldBlockTick(Level*, const BlockPos&, const BlockState*)
+{
+    return true;
+}
 
 const BlockState* SnowLayerBlock::buildSnowBlock(Level* level, const BlockPos& pos, int layers, int addLayers)
 {
@@ -202,7 +240,8 @@ const BlockState* SnowLayerBlock::buildSnowBlock(Level* level, const BlockPos& p
         if (addLayers != 0)
         {
             layers += state->getValue(LAYERS);
-            if (layers > 8) layers = 8;
+            if (layers > 8)
+                layers = 8;
         }
         return state->setValue(LAYERS, layers);
     }

@@ -22,10 +22,9 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 EnumProperty<PlanksBlock::Variant*>* WoodSlabBlock::VARIANT = NULL;
-const int gWoodSlabDescriptionIds[6] = {
-    (int)IDS_TILE_STONESLAB_OAK, (int)IDS_TILE_STONESLAB_SPRUCE, (int)IDS_TILE_STONESLAB_BIRCH,
-    (int)IDS_TILE_STONESLAB_JUNGLE, (int)IDS_TILE_STONESLAB_ACACIA, (int)IDS_TILE_STONESLAB_DARK_OAK
-};
+const int gWoodSlabDescriptionIds[6] = {(int)IDS_TILE_STONESLAB_OAK,    (int)IDS_TILE_STONESLAB_SPRUCE,
+                                        (int)IDS_TILE_STONESLAB_BIRCH,  (int)IDS_TILE_STONESLAB_JUNGLE,
+                                        (int)IDS_TILE_STONESLAB_ACACIA, (int)IDS_TILE_STONESLAB_DARK_OAK};
 
 void WoodSlabBlock::blockStaticCtor()
 {
@@ -39,14 +38,12 @@ void WoodSlabBlock::blockStaticCtor()
             values.insert(PlanksBlock::Variant::BY_DATA[i]);
         }
 
-        variant = EnumProperty<PlanksBlock::Variant*>::create(
-            name, typeid(PlanksBlock::Variant), values, filter);
+        variant = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant), values, filter);
     }
     VARIANT = variant;
 }
 
-WoodSlabBlock::WoodSlabBlock()
-    : HalfSlabBlock(Material::WOOD)
+WoodSlabBlock::WoodSlabBlock() : HalfSlabBlock(Material::WOOD)
 {
 }
 
@@ -91,8 +88,7 @@ Property* WoodSlabBlock::getTypeProperty()
 
 Boxed* WoodSlabBlock::getTypeForItem(not_null_ptr<ItemInstance> itemInstance)
 {
-    return new TypedBoxed<PlanksBlock::Variant*>(
-        PlanksBlock::Variant::byData(itemInstance->getAuxValue() & 7));
+    return new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::byData(itemInstance->getAuxValue() & 7));
 }
 
 const BlockState* WoodSlabBlock::getBlockState(int data)
@@ -123,11 +119,11 @@ BlockStateDefinition* WoodSlabBlock::createBlockStateDefinition()
 {
     if (isFullSize())
     {
-        static const Property* properties[1] = { VARIANT };
+        static const Property* properties[1] = {VARIANT};
         return new BlockStateDefinition(this, properties, 1);
     }
 
-    static const Property* properties[2] = { TYPE, VARIANT };
+    static const Property* properties[2] = {TYPE, VARIANT};
     return new BlockStateDefinition(this, properties, 2);
 }
 

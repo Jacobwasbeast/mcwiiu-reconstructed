@@ -7,10 +7,7 @@
 class DecorationMaterial : public Material
 {
 public:
-    DecorationMaterial(const MaterialColor* color) : Material(color)
-    {
-        makeDestroyedByHand();
-    }
+    DecorationMaterial(const MaterialColor* color) : Material(color) { makeDestroyedByHand(); }
     virtual ~DecorationMaterial();
 
     virtual bool isSolid();

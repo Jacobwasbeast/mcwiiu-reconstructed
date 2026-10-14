@@ -10,13 +10,13 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Material.hpp"
 
-WebBlock::WebBlock()
-    : Block(Material::WEB)
+WebBlock::WebBlock() : Block(Material::WEB)
 {
     DerivedInit();
 }
 
-void WebBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity)
+void WebBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
+                            const boost::shared_ptr<Entity>& entity)
 {
     entity->makeStuckInWeb();
 
@@ -52,7 +52,9 @@ bool WebBlock::isSilkTouchable()
     return true;
 }
 
-void WebBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity, not_null_ptr<ItemInstance> tool)
+void WebBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
+                             const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
+                             not_null_ptr<ItemInstance> tool)
 {
     if (!level->mIsClientSide && tool->getItem() == Items::shears)
     {
@@ -63,7 +65,8 @@ void WebBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, con
     Block::playerDestroy(level, player, pos, state, blockEntity, tool);
 }
 
-EBlockFaceShape WebBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
+EBlockFaceShape WebBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,
+                                            const Direction* direction)
 {
     return BLOCK_FACE_UNDEFINED;
 }

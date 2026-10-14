@@ -19,15 +19,15 @@
 
 AbstractProperty<bool>* MyceliumBlock::SNOWY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
 
-MyceliumBlock::MyceliumBlock()
-    : Block(Material::GRASS, MaterialColor::COLOR_PURPLE)
+MyceliumBlock::MyceliumBlock() : Block(Material::GRASS, MaterialColor::COLOR_PURPLE)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(SNOWY, false));
     setTicking(true);
 }
 
-const BlockState* MyceliumBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const BlockState* MyceliumBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
+                                                                 const BlockPos& pos)
 {
     Block* aboveBlock = levelSource->getBlockState(pos.above())->getBlock();
     return state->setValue(SNOWY, aboveBlock == Blocks::snow || aboveBlock == Blocks::snow_layer);
@@ -46,7 +46,8 @@ void MyceliumBlock::tick(Level* level, const BlockPos& pos, const BlockState*, R
 
     if (level->getRawBrightness(pos.above()) < 4 && lightBlock > 2)
     {
-        level->setBlockAndUpdate(pos, Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT));
+        level->setBlockAndUpdate(
+            pos, Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT));
         return;
     }
 
@@ -77,11 +78,9 @@ void MyceliumBlock::animateTick(const BlockState* state, Level* level, const Blo
     Block::animateTick(state, level, pos, random);
     if (random->nextInt(10) == 0)
     {
-        level->addParticle(PARTICLE_TOWN_AURA,
-                           (double)((float)pos.x + random->nextFloat()),
-                           (double)((float)pos.y + 1.1f),
-                           (double)((float)pos.z + random->nextFloat()),
-                           0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_TOWN_AURA, (double)((float)pos.x + random->nextFloat()),
+                           (double)((float)pos.y + 1.1f), (double)((float)pos.z + random->nextFloat()), 0.0, 0.0, 0.0,
+                           arrayWithLength<int>());
     }
 }
 
@@ -98,7 +97,7 @@ int MyceliumBlock::convertBlockStateToLegacyData(const BlockState*)
 
 BlockStateDefinition* MyceliumBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { SNOWY };
+    static const Property* properties[] = {SNOWY};
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -115,7 +114,8 @@ TextureAtlasSprite* MyceliumBlock::getTexture(const Direction* direction, const 
     return mIcon;
 }
 
-TextureAtlasSprite* MyceliumBlock::getTexture(LevelSource* levelSource, const BlockPos& pos, const Direction* direction, const BlockState* state)
+TextureAtlasSprite* MyceliumBlock::getTexture(LevelSource* levelSource, const BlockPos& pos, const Direction* direction,
+                                              const BlockState* state)
 {
     if (direction == Direction::UP)
     {

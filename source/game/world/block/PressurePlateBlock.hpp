@@ -15,7 +15,11 @@ template <class T> class AbstractProperty;
 class PressurePlateBlock : public BasePressurePlateBlock
 {
 public:
-    enum Sensitivity { EVERYTHING, MOBS };
+    enum Sensitivity
+    {
+        EVERYTHING,
+        MOBS
+    };
 
     static AbstractProperty<bool>* POWERED;
 

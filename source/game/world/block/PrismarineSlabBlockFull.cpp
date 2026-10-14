@@ -1,7 +1,6 @@
 #include "game/world/block/PrismarineSlabBlockFull.hpp"
 
-PrismarineSlabBlockFull::PrismarineSlabBlockFull()
-    : PrismarineSlabBlock()
+PrismarineSlabBlockFull::PrismarineSlabBlockFull() : PrismarineSlabBlock()
 {
     PrismarineSlabBlock::DerivedInit();
 }

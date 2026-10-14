@@ -11,8 +11,7 @@
 #include <string>
 
 
-GameRules_BlockAttribute::GameRules_BlockAttribute(Block** value)
-    : mValue(value)
+GameRules_BlockAttribute::GameRules_BlockAttribute(Block** value) : mValue(value)
 {
 }
 

@@ -14,8 +14,7 @@ class LocalBlockInteraction : public InteractionObject
 public:
     LocalBlockInteraction(int typeId, const std::wstring& name);
 
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
     virtual int getTypeId(bool large);
     virtual std::wstring getName();
     virtual std::wstring getCustomName();
