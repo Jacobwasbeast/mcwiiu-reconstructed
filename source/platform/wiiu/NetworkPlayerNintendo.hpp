@@ -44,6 +44,7 @@ public:
     virtual IQNetPlayer* GetQNetPlayer();
     std::wstring GetMiiName();
     const char* GetNetworkName();
+
 private:
     NQRNetworkPlayer* m_player;
     Socket* m_socket;

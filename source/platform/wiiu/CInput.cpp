@@ -240,19 +240,32 @@ unsigned int XGetLanguage()
         s_xLanguage = 0xff;
     switch (s_xLanguage)
     {
-    case SCI_CAFE_LANGUAGE_JAPANESE: return XC_LANGUAGE_JAPANESE;
-    case SCI_CAFE_LANGUAGE_ENGLISH: return XC_LANGUAGE_ENGLISH;
-    case SCI_CAFE_LANGUAGE_FRENCH: return XC_LANGUAGE_FRENCH;
-    case SCI_CAFE_LANGUAGE_GERMAN: return XC_LANGUAGE_GERMAN;
-    case SCI_CAFE_LANGUAGE_ITALIAN: return XC_LANGUAGE_ITALIAN;
-    case SCI_CAFE_LANGUAGE_SPANISH: return XC_LANGUAGE_SPANISH;
-    case SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE: return XC_LANGUAGE_ZH_HANS;
-    case SCI_CAFE_LANGUAGE_KOREAN: return XC_LANGUAGE_KOREAN;
-    case SCI_CAFE_LANGUAGE_DUTCH: return XC_LANGUAGE_DUTCH;
-    case SCI_CAFE_LANGUAGE_PORTUGUESE: return XC_LANGUAGE_PORTUGUESE;
-    case SCI_CAFE_LANGUAGE_RUSSIAN: return XC_LANGUAGE_RUSSIAN;
-    case SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE: return XC_LANGUAGE_TCHINESE;
-    default: return XC_LANGUAGE_ENGLISH;
+    case SCI_CAFE_LANGUAGE_JAPANESE:
+        return XC_LANGUAGE_JAPANESE;
+    case SCI_CAFE_LANGUAGE_ENGLISH:
+        return XC_LANGUAGE_ENGLISH;
+    case SCI_CAFE_LANGUAGE_FRENCH:
+        return XC_LANGUAGE_FRENCH;
+    case SCI_CAFE_LANGUAGE_GERMAN:
+        return XC_LANGUAGE_GERMAN;
+    case SCI_CAFE_LANGUAGE_ITALIAN:
+        return XC_LANGUAGE_ITALIAN;
+    case SCI_CAFE_LANGUAGE_SPANISH:
+        return XC_LANGUAGE_SPANISH;
+    case SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE:
+        return XC_LANGUAGE_ZH_HANS;
+    case SCI_CAFE_LANGUAGE_KOREAN:
+        return XC_LANGUAGE_KOREAN;
+    case SCI_CAFE_LANGUAGE_DUTCH:
+        return XC_LANGUAGE_DUTCH;
+    case SCI_CAFE_LANGUAGE_PORTUGUESE:
+        return XC_LANGUAGE_PORTUGUESE;
+    case SCI_CAFE_LANGUAGE_RUSSIAN:
+        return XC_LANGUAGE_RUSSIAN;
+    case SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE:
+        return XC_LANGUAGE_TCHINESE;
+    default:
+        return XC_LANGUAGE_ENGLISH;
     }
 }
 
@@ -265,18 +278,30 @@ int XGetLocale()
         s_xLocale = 0xff;
     switch (s_xLocale)
     {
-    case SCI_CAFE_LANGUAGE_JAPANESE: return XC_LOCALE_JAPAN;
-    case SCI_CAFE_LANGUAGE_FRENCH: return gApp.IsAmericanSKU() ? XC_LOCALE_CANADA : XC_LOCALE_FRANCE;
-    case SCI_CAFE_LANGUAGE_GERMAN: return XC_LOCALE_GERMANY;
-    case SCI_CAFE_LANGUAGE_ITALIAN: return XC_LOCALE_ITALY;
-    case SCI_CAFE_LANGUAGE_SPANISH: return gApp.IsAmericanSKU() ? XC_LOCALE_MEXICO : XC_LOCALE_SPAIN;
-    case SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE: return XC_LOCALE_CHINA;
-    case SCI_CAFE_LANGUAGE_KOREAN: return XC_LOCALE_KOREA;
-    case SCI_CAFE_LANGUAGE_DUTCH: return XC_LOCALE_NETHERLANDS;
-    case SCI_CAFE_LANGUAGE_PORTUGUESE: return gApp.IsAmericanSKU() ? XC_LOCALE_BRAZIL : XC_LOCALE_PORTUGAL;
-    case SCI_CAFE_LANGUAGE_RUSSIAN: return XC_LOCALE_RUSSIAN_FEDERATION;
-    case SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE: return XC_LOCALE_TAIWAN;
-    default: return XC_LOCALE_UNITED_STATES;
+    case SCI_CAFE_LANGUAGE_JAPANESE:
+        return XC_LOCALE_JAPAN;
+    case SCI_CAFE_LANGUAGE_FRENCH:
+        return gApp.IsAmericanSKU() ? XC_LOCALE_CANADA : XC_LOCALE_FRANCE;
+    case SCI_CAFE_LANGUAGE_GERMAN:
+        return XC_LOCALE_GERMANY;
+    case SCI_CAFE_LANGUAGE_ITALIAN:
+        return XC_LOCALE_ITALY;
+    case SCI_CAFE_LANGUAGE_SPANISH:
+        return gApp.IsAmericanSKU() ? XC_LOCALE_MEXICO : XC_LOCALE_SPAIN;
+    case SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE:
+        return XC_LOCALE_CHINA;
+    case SCI_CAFE_LANGUAGE_KOREAN:
+        return XC_LOCALE_KOREA;
+    case SCI_CAFE_LANGUAGE_DUTCH:
+        return XC_LOCALE_NETHERLANDS;
+    case SCI_CAFE_LANGUAGE_PORTUGUESE:
+        return gApp.IsAmericanSKU() ? XC_LOCALE_BRAZIL : XC_LOCALE_PORTUGAL;
+    case SCI_CAFE_LANGUAGE_RUSSIAN:
+        return XC_LOCALE_RUSSIAN_FEDERATION;
+    case SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE:
+        return XC_LOCALE_TAIWAN;
+    default:
+        return XC_LOCALE_UNITED_STATES;
     }
 }
 
@@ -474,7 +499,8 @@ void CInput::ReadAllPads()
         status = s_kpadStatus[channel][0];
         bool supported = status.extensionType == 2 || status.extensionType == 7 || status.extensionType == 0x1f;
         bool connected = supported && (status.error == 0 || status.error == -2);
-        if (!preserveConnections && (status.extensionType == 0xff || (status.extensionType == 0x1f && status.error == -4)))
+        if (!preserveConnections
+            && (status.extensionType == 0xff || (status.extensionType == 0x1f && status.error == -4)))
         {
             connected = true;
         }
@@ -525,8 +551,10 @@ void CInput::SetDRCJoypadValue(JOYPAD* joypad, unsigned int sourceMask, unsigned
 void CInput::SetJoypadValuesDRC(JOYPAD* joypad)
 {
     VPADStatus* status = static_cast<VPADStatus*>(joypad->statusStorage.vpad.statuses) + joypad->statusIndex;
-    static const unsigned int source[] = { 0x4000, 0x8000, 0x1000, 0x2000, 0x40, 0x80, 0x10, 0x20, 8, 4, 0x20000, 0x40000, 0x200, 0x100, 0x800, 0x400 };
-    static const unsigned int destination[] = { 1, 2, 4, 8, 0x400000, 0x800000, 0x40, 0x80, 0x10, 0x20, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000 };
+    static const unsigned int source[] = {0x4000, 0x8000, 0x1000,  0x2000,  0x40,  0x80,  0x10,  0x20,
+                                          8,      4,      0x20000, 0x40000, 0x200, 0x100, 0x800, 0x400};
+    static const unsigned int destination[] = {1,    2,    4,     8,     0x400000, 0x800000, 0x40,   0x80,
+                                               0x10, 0x20, 0x100, 0x200, 0x400,    0x800,    0x1000, 0x2000};
     for (int button = 0; button < 16; ++button)
     {
         SetDRCJoypadValue(joypad, source[button], destination[button]);
@@ -672,8 +700,10 @@ void CInput::SetJoypadValues(JOYPAD* joypad)
     int rightY = 0;
     if (status->extensionType == 2)
     {
-        static const unsigned int source[] = { 0x10, 0x40, 0x20, 8, 4, 0x80, 0x200, 0x2000, 0x400, 0x1000, 1, 0x4000, 2, 0x8000 };
-        static const unsigned int destination[] = { 2, 1, 4, 8, 0x400000, 0x800000, 0x40, 0x80, 0x10, 0x20, 0x400, 0x800, 0x1000, 0x2000 };
+        static const unsigned int source[] = {0x10,   0x40,  0x20,   8, 4,      0x80, 0x200,
+                                              0x2000, 0x400, 0x1000, 1, 0x4000, 2,    0x8000};
+        static const unsigned int destination[] = {2,    1,    4,    8,     0x400000, 0x800000, 0x40,
+                                                   0x80, 0x10, 0x20, 0x400, 0x800,    0x1000,   0x2000};
         for (int button = 0; button < 14; ++button)
         {
             SetClassicJoypadValue(joypad, source[button], destination[button]);
@@ -685,8 +715,9 @@ void CInput::SetJoypadValues(JOYPAD* joypad)
     }
     else if (status->extensionType == 1)
     {
-        static const unsigned int source[] = { 0x800, 0x400, 0x200, 0x100, 0x2000, 0x4000, 0x10, 0x1000, 8, 4, 1, 2 };
-        static const unsigned int destination[] = { 2, 1, 4, 8, 0x400000, 0x800000, 0x10, 0x20, 0x400, 0x800, 0x1000, 0x2000 };
+        static const unsigned int source[] = {0x800, 0x400, 0x200, 0x100, 0x2000, 0x4000, 0x10, 0x1000, 8, 4, 1, 2};
+        static const unsigned int destination[] = {2,    1,    4,     8,     0x400000, 0x800000,
+                                                   0x10, 0x20, 0x400, 0x800, 0x1000,   0x2000};
         for (int button = 0; button < 12; ++button)
         {
             SetFreestyleJoypadValue(joypad, source[button], destination[button]);
@@ -696,8 +727,10 @@ void CInput::SetJoypadValues(JOYPAD* joypad)
     }
     else if (status->extensionType == 0x1f)
     {
-        static const unsigned int source[] = { 0x10, 0x40, 0x20, 8, 4, 0x80, 0x200, 0x2000, 0x400, 0x1000, 0x10000, 0x20000, 1, 0x4000, 2, 0x8000 };
-        static const unsigned int destination[] = { 2, 1, 4, 8, 0x400000, 0x800000, 0x40, 0x80, 0x10, 0x20, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000 };
+        static const unsigned int source[] = {0x10,  0x40,   0x20,    8,       4, 0x80,   0x200, 0x2000,
+                                              0x400, 0x1000, 0x10000, 0x20000, 1, 0x4000, 2,     0x8000};
+        static const unsigned int destination[] = {2,    1,    4,     8,     0x400000, 0x800000, 0x40,   0x80,
+                                                   0x10, 0x20, 0x100, 0x200, 0x400,    0x800,    0x1000, 0x2000};
         for (int button = 0; button < 16; ++button)
         {
             SetURCCJoypadValue(joypad, source[button], destination[button]);
@@ -908,9 +941,9 @@ unsigned int CInput::allowInput(int pad, unsigned char map, unsigned int value)
         for (unsigned char other = controllerConfiguration[2] + 1; other < controllerConfiguration[1]; ++other)
         {
             unsigned int otherMapping = GetGameJoypadMaps(pad, other);
-            if (!only_one_bit_set(otherMapping) && (mapping & otherMapping) &&
-                (joypads[mappedPad].rawValue & mapping & otherMapping) &&
-                (joypads[mappedPad].rawValue & otherMapping) == otherMapping)
+            if (!only_one_bit_set(otherMapping) && (mapping & otherMapping)
+                && (joypads[mappedPad].rawValue & mapping & otherMapping)
+                && (joypads[mappedPad].rawValue & otherMapping) == otherMapping)
             {
                 return 0;
             }
@@ -1228,15 +1261,18 @@ unsigned short* CInput::GetTouchPadData(int pad, C_4JInput::ETouchType type, boo
     }
     if (type == C_4JInput::ETouchType_0)
     {
-        return reinterpret_cast<unsigned short*>(&static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpNormal);
+        return reinterpret_cast<unsigned short*>(
+            &static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpNormal);
     }
     if (type == C_4JInput::ETouchType_1)
     {
-        return reinterpret_cast<unsigned short*>(&static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpFiltered1);
+        return reinterpret_cast<unsigned short*>(
+            &static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpFiltered1);
     }
     if (type == C_4JInput::ETouchType_2)
     {
-        return reinterpret_cast<unsigned short*>(&static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpFiltered2);
+        return reinterpret_cast<unsigned short*>(
+            &static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpFiltered2);
     }
     return 0;
 }
@@ -1419,7 +1455,9 @@ void CInput::SetKeyboardMode(eKeyboardProcessState value)
 {
     keyboardState = value;
 }
-unsigned int CInput::RequestKeyboard(const wchar_t* title, const wchar_t* initialText, unsigned int pad, unsigned int maximumLength, KeyboardCallback callback, void* context, C_4JInput::EKeyboardMode mode)
+unsigned int CInput::RequestKeyboard(const wchar_t* title, const wchar_t* initialText, unsigned int pad,
+                                     unsigned int maximumLength, KeyboardCallback callback, void* context,
+                                     C_4JInput::EKeyboardMode mode)
 {
     if (keyboardState != eKeyboardProcessState_0)
     {
@@ -1429,7 +1467,8 @@ unsigned int CInput::RequestKeyboard(const wchar_t* title, const wchar_t* initia
 
     SetKeyboardMode(eKeyboardProcessState_1);
     const wchar_t* diagnosticText = initialText == 0 ? L"" : initialText;
-    g_pInputInstance->DebugPrintf("CInput::RequestKeyboard: Opening keyboard : maxChars - %d init str - %ls\n", maximumLength, diagnosticText);
+    g_pInputInstance->DebugPrintf("CInput::RequestKeyboard: Opening keyboard : maxChars - %d init str - %ls\n",
+                                  maximumLength, diagnosticText);
     keyboardCallback = callback;
     keyboardMaximumLength = maximumLength;
     keyboardContext = context;
@@ -1476,14 +1515,16 @@ void CInput::KeyboardOnCreate()
     destroyKeyboardRequested = 0;
     OSInitMessageQueue(&s_fontQueue, &s_fontMessage, 1);
     OSInitMessageQueue(&s_predictQueue, &s_predictMessage, 1);
-    C4JThreadImpl::OSCreateThread4J(&s_fontThread, CInput::ProcFont, 0, 0, s_fontStack + sizeof(s_fontStack), sizeof(s_fontStack), 0x11, 0);
+    C4JThreadImpl::OSCreateThread4J(&s_fontThread, CInput::ProcFont, 0, 0, s_fontStack + sizeof(s_fontStack),
+                                    sizeof(s_fontStack), 0x11, 0);
     OSResumeThread(&s_fontThread);
-    C4JThreadImpl::OSCreateThread4J(&s_predictThread, CInput::ProcPredict, 0, 0, s_predictStack + sizeof(s_predictStack), sizeof(s_predictStack), 0x12, 0);
+    C4JThreadImpl::OSCreateThread4J(&s_predictThread, CInput::ProcPredict, 0, 0,
+                                    s_predictStack + sizeof(s_predictStack), sizeof(s_predictStack), 0x12, 0);
     OSResumeThread(&s_predictThread);
 }
 unsigned int CInput::GetKeyboardControllerType()
 {
-    static const unsigned char controllerTypes[5] = { 4, 0, 1, 2, 3 };
+    static const unsigned char controllerTypes[5] = {4, 0, 1, 2, 3};
     if (keyboardPad < 5)
     {
         return controllerTypes[keyboardPad];
@@ -1528,7 +1569,8 @@ unsigned int CInput::GetKeyboardMode()
         }
     case 4:
     {
-        static const unsigned short accessFlags[] = { KEYBOARD_FLAG_QWERTY_EU_FRA, KEYBOARD_FLAG_QWERTY_EU_DEU, KEYBOARD_FLAG_QWERTY_EU_ITA, KEYBOARD_FLAG_QWERTY_EU_SPA };
+        static const unsigned short accessFlags[] = {KEYBOARD_FLAG_QWERTY_EU_FRA, KEYBOARD_FLAG_QWERTY_EU_DEU,
+                                                     KEYBOARD_FLAG_QWERTY_EU_ITA, KEYBOARD_FLAG_QWERTY_EU_SPA};
         if (keyboardRegion < SCI_CAFE_LANGUAGE_FRENCH)
         {
             keyboardControllerType = KEYBOARD_FLAG_QWERTY_EU_ENG;
@@ -1557,8 +1599,8 @@ unsigned int CInput::GetKeyboardMode()
 }
 unsigned char CInput::GetLanguageType()
 {
-    static const unsigned char regionLanguages[] = { 0, 1, 1, 6, 7, 11 };
-    static const unsigned char languages[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+    static const unsigned char regionLanguages[] = {0, 1, 1, 6, 7, 11};
+    static const unsigned char languages[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
     if (keyboardRegion < 12)
     {
         return languages[keyboardRegion];
@@ -1580,7 +1622,8 @@ void CInput::TickKeyboard()
         appearArg.keyboardArg.receiverArg.unk_0x0C = -1;
         appearArg.keyboardArg.receiverArg.unk_0x10 = 0;
         appearArg.keyboardArg.receiverArg.unk_0x14 = -1;
-        appearArg.keyboardArg.configArg.controllerType = static_cast<nn::swkbd::ControllerType>(GetKeyboardControllerType());
+        appearArg.keyboardArg.configArg.controllerType = static_cast<nn::swkbd::ControllerType>(
+            GetKeyboardControllerType());
         appearArg.keyboardArg.configArg.keyboardMode = static_cast<nn::swkbd::KeyboardMode>(GetKeyboardMode());
         appearArg.keyboardArg.configArg.accessFlags = keyboardControllerType;
         appearArg.keyboardArg.configArg.languageType = static_cast<nn::swkbd::LanguageType>(GetLanguageType());
@@ -1630,7 +1673,7 @@ void CInput::TickKeyboard()
             keyboardText[keyboardMaximumLength] = 0;
             if (keyboardCallback)
             {
-            keyboardCallback(keyboardContext, true);
+                keyboardCallback(keyboardContext, true);
             }
             nn::swkbd::DisappearInputForm();
         }
@@ -1710,7 +1753,8 @@ void CInput::RequestErrorViewer(unsigned int value, unsigned int type, ErrorView
         errorViewerCallback = callback;
     }
 }
-void CInput::RequestErrorViewer(unsigned int value, wchar_t* title, wchar_t* message, ErrorViewerCallback callback, void* context)
+void CInput::RequestErrorViewer(unsigned int value, wchar_t* title, wchar_t* message, ErrorViewerCallback callback,
+                                void* context)
 {
     if (errorViewerState == ERROR_VIEWER_NONE)
     {
@@ -1750,18 +1794,21 @@ void CInput::InitialiseErrorViewer()
     unsigned int platformRegion = SCI_PLATFORM_REGION_EUR;
     if (SCIGetPlatformRegion(&platformRegion) == 1)
     {
-        createArg.region = platformRegion == SCI_PLATFORM_REGION_EUR ? static_cast<nn::erreula::RegionType>(2) : static_cast<nn::erreula::RegionType>(platformRegion == SCI_PLATFORM_REGION_USA);
+        createArg.region = platformRegion == SCI_PLATFORM_REGION_EUR
+                               ? static_cast<nn::erreula::RegionType>(2)
+                               : static_cast<nn::erreula::RegionType>(platformRegion == SCI_PLATFORM_REGION_USA);
     }
     unsigned int language;
     if (SCIGetCafeLanguage(&language) == 1)
     {
-        createArg.language = static_cast<int>(language) > 11 ? static_cast<nn::erreula::LangType>(1) : static_cast<nn::erreula::LangType>(language);
+        createArg.language = static_cast<int>(language) > 11 ? static_cast<nn::erreula::LangType>(1)
+                                                             : static_cast<nn::erreula::LangType>(language);
     }
     nn::erreula::Create(createArg);
 }
 unsigned int CInput::GetErrorViewerControllerType()
 {
-    static const unsigned char controllerTypes[5] = { 0, 0, 1, 2, 3 };
+    static const unsigned char controllerTypes[5] = {0, 0, 1, 2, 3};
     return errorViewerController < 5 ? controllerTypes[errorViewerController] : errorViewerController;
 }
 void CInput::TickErrorViewer()
@@ -1818,7 +1865,8 @@ void CInput::TickErrorViewer()
         if (result == 2)
         {
             nn::erreula::AppearArg appearArg;
-            appearArg.errorArg.controllerType = static_cast<nn::erreula::ControllerType>(GetErrorViewerControllerType());
+            appearArg.errorArg.controllerType = static_cast<nn::erreula::ControllerType>(
+                GetErrorViewerControllerType());
             appearArg.errorArg.renderTarget = static_cast<nn::erreula::RenderTarget>(2);
             appearArg.errorArg.errorCode = nn::erreula::GetResultCode();
             nn::erreula::AppearErrorViewer(appearArg);

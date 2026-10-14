@@ -1,7 +1,6 @@
 #include "platform/wiiu/cCommerceNintendo.hpp"
 
-cCommerceNintendo::cCommerceNintendo()
-    : cCommerce()
+cCommerceNintendo::cCommerceNintendo() : cCommerce()
 {
     SetLoggedIn(false);
     SetCommerceInitialised(false);

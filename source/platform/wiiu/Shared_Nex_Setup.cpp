@@ -121,7 +121,7 @@ static void Nex_InitializeErrorHandling()
 }
 
 unsigned int Nex_InitializeNex(unsigned int runtimeMemorySize, unsigned int reservedMemorySize,
-    nn::nex::Core::ThreadMode threadMode)
+                               nn::nex::Core::ThreadMode threadMode)
 {
     checkPiaCoreToUse();
     InitializeRuntimeMemory(runtimeMemorySize, reservedMemorySize);

@@ -16,15 +16,15 @@
 extern void setAltMainOKToRun();
 extern void waitForAltMainThreadToComplete();
 
-static void *s_virtualMemory = 0;
+static void* s_virtualMemory = 0;
 static unsigned long s_virtualMemorySize = 0;
-std::map<int, WiiU_FileCache *> s_fileCaches;
+std::map<int, WiiU_FileCache*> s_fileCaches;
 OSFastMutex s_fileCacheMutex;
 static bool s_fileCacheMutexInitialized = false;
-unsigned char *s_writeBuffer;
+unsigned char* s_writeBuffer;
 OSFastMutex s_writeMutex;
 OSFastMutex s_commandBlockMutex;
-static boost::unordered_map<int, FSCmdBlock *> s_commandBlocks;
+static boost::unordered_map<int, FSCmdBlock*> s_commandBlocks;
 static int s_nextCommandBlockId = 1;
 static std::map<OSThread*, int> s_commandBlockIds;
 
@@ -33,7 +33,7 @@ static int& currentCommandBlockId()
     return CafeThreadLocal::slot(s_commandBlockIds);
 }
 
-FSCmdBlock *GetCommandBlock()
+FSCmdBlock* GetCommandBlock()
 {
     EnterCriticalSection(&s_commandBlockMutex);
     int& commandBlockId = currentCommandBlockId();
@@ -42,10 +42,10 @@ FSCmdBlock *GetCommandBlock()
         commandBlockId = s_nextCommandBlockId++;
     }
 
-    boost::unordered_map<int, FSCmdBlock *>::iterator it = s_commandBlocks.find(commandBlockId);
+    boost::unordered_map<int, FSCmdBlock*>::iterator it = s_commandBlocks.find(commandBlockId);
     if (it == s_commandBlocks.end())
     {
-        FSCmdBlock *commandBlock = static_cast<FSCmdBlock *>(std::malloc(sizeof(FSCmdBlock)));
+        FSCmdBlock* commandBlock = static_cast<FSCmdBlock*>(std::malloc(sizeof(FSCmdBlock)));
         FSInitCmdBlock(commandBlock);
         s_commandBlocks[commandBlockId] = commandBlock;
         LeaveCriticalSection(&s_commandBlockMutex);
@@ -56,23 +56,22 @@ FSCmdBlock *GetCommandBlock()
     return it->second;
 }
 
-unsigned int GetFileSize(int file, unsigned int *fileSizeHigh)
+unsigned int GetFileSize(int file, unsigned int* fileSizeHigh)
 {
     (void)fileSizeHigh;
     FSStat stat;
     setAltMainOKToRun();
-    FSCmdBlock *commandBlock = GetCommandBlock();
+    FSCmdBlock* commandBlock = GetCommandBlock();
     FSGetStatFile(gFileSystemClient, commandBlock, file, &stat, FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
     return stat.size;
 }
 
-int ReadFile(int file, void *buffer, unsigned int bytesToRead,
-             unsigned int *bytesRead, _OVERLAPPED *overlapped)
+int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped)
 {
     (void)overlapped;
     setAltMainOKToRun();
-    WiiU_FileCache *cache = WiiU_FileCache::GetFileCache(file);
+    WiiU_FileCache* cache = WiiU_FileCache::GetFileCache(file);
     int result = 0;
     if (cache != 0)
     {
@@ -86,8 +85,8 @@ int ReadFile(int file, void *buffer, unsigned int bytesToRead,
     return result >= 0;
 }
 
-int WriteFile(int file, const void *buffer, unsigned int bytesToWrite,
-              unsigned int *bytesWritten, _OVERLAPPED *overlapped)
+int WriteFile(int file, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten,
+              _OVERLAPPED* overlapped)
 {
     (void)overlapped;
     setAltMainOKToRun();
@@ -96,12 +95,15 @@ int WriteFile(int file, const void *buffer, unsigned int bytesToWrite,
     {
         EnterCriticalSection(&s_writeMutex);
         std::memcpy(s_writeBuffer, buffer, bytesToWrite);
-        result = FSWriteFile(gFileSystemClient, GetCommandBlock(), s_writeBuffer, 1, bytesToWrite, file, 0, FS_ERROR_FLAG_NONE);
+        result = FSWriteFile(gFileSystemClient, GetCommandBlock(), s_writeBuffer, 1, bytesToWrite, file, 0,
+                             FS_ERROR_FLAG_NONE);
         LeaveCriticalSection(&s_writeMutex);
     }
     else
     {
-        result = FSWriteFile(gFileSystemClient, GetCommandBlock(), const_cast<unsigned char *>(static_cast<const unsigned char *>(buffer)), 1, bytesToWrite, file, 0, FS_ERROR_FLAG_NONE);
+        result = FSWriteFile(gFileSystemClient, GetCommandBlock(),
+                             const_cast<unsigned char*>(static_cast<const unsigned char*>(buffer)), 1, bytesToWrite,
+                             file, 0, FS_ERROR_FLAG_NONE);
     }
     if (result >= 0 && bytesWritten != 0)
     {
@@ -111,11 +113,11 @@ int WriteFile(int file, const void *buffer, unsigned int bytesToWrite,
     return result >= 0 ? 1 : 0;
 }
 
-int SetFilePointer(int file, long distanceToMove, int *distanceToMoveHigh, unsigned int moveMethod)
+int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh, unsigned int moveMethod)
 {
     (void)distanceToMoveHigh;
     setAltMainOKToRun();
-    WiiU_FileCache *cache = WiiU_FileCache::GetFileCache(file);
+    WiiU_FileCache* cache = WiiU_FileCache::GetFileCache(file);
     int position;
     int fileSize = cache->m_fileSize;
     if (moveMethod == 2)
@@ -141,13 +143,13 @@ int SetFilePointer(int file, long distanceToMove, int *distanceToMoveHigh, unsig
     }
 }
 
-unsigned int GetFileAttributesA(const char *fileName)
+unsigned int GetFileAttributesA(const char* fileName)
 {
     char path[256];
     FSStat stat;
     setAltMainOKToRun();
     getFinalFilePath(path, fileName);
-    FSCmdBlock *commandBlock = GetCommandBlock();
+    FSCmdBlock* commandBlock = GetCommandBlock();
     FSStatus result = FSGetStat(gFileSystemClient, commandBlock, path, &stat, FS_ERROR_FLAG_NOT_FOUND);
     waitForAltMainThreadToComplete();
     if (result == -6)
@@ -157,10 +159,9 @@ unsigned int GetFileAttributesA(const char *fileName)
     return (stat.flags & FS_STAT_DIRECTORY) != 0 ? 0x10 : 0x80;
 }
 
-WiiU_FileCache::WiiU_FileCache(int file)
-    : m_file(file), m_filePos(0), m_cacheLength(0), m_cachePos(0)
+WiiU_FileCache::WiiU_FileCache(int file) : m_file(file), m_filePos(0), m_cacheLength(0), m_cachePos(0)
 {
-    m_cache = (unsigned char *)MEMAllocFromDefaultHeapEx(FILE_CACHE_BUFFER_SIZE, 64);
+    m_cache = (unsigned char*)MEMAllocFromDefaultHeapEx(FILE_CACHE_BUFFER_SIZE, 64);
     m_fileSize = GetFileSize(file, 0);
 }
 
@@ -169,10 +170,10 @@ WiiU_FileCache::~WiiU_FileCache()
     MEMFreeToDefaultHeap(m_cache);
 }
 
-WiiU_FileCache *WiiU_FileCache::GetFileCache(int file)
+WiiU_FileCache* WiiU_FileCache::GetFileCache(int file)
 {
     EnterCriticalSection(&s_fileCacheMutex);
-    WiiU_FileCache *cache = s_fileCaches[file];
+    WiiU_FileCache* cache = s_fileCaches[file];
     LeaveCriticalSection(&s_fileCacheMutex);
     return cache;
 }
@@ -191,7 +192,8 @@ void WiiU_FileCache::fillCache()
 {
     if (FSSetPosFile(gFileCacheClient, GetCommandBlock(), m_file, (unsigned int)m_filePos, FS_ERROR_FLAG_ALL) == 0)
     {
-        int bytesRead = FSReadFile(gFileCacheClient, GetCommandBlock(), m_cache, 1, FILE_CACHE_BUFFER_SIZE, m_file, 0, FS_ERROR_FLAG_ALL);
+        int bytesRead = FSReadFile(gFileCacheClient, GetCommandBlock(), m_cache, 1, FILE_CACHE_BUFFER_SIZE, m_file, 0,
+                                   FS_ERROR_FLAG_ALL);
         if (bytesRead >= 0)
         {
             m_cacheLength = bytesRead;
@@ -204,9 +206,9 @@ void WiiU_FileCache::fillCache()
     }
 }
 
-unsigned int WiiU_FileCache::Read(void *buffer, unsigned int size)
+unsigned int WiiU_FileCache::Read(void* buffer, unsigned int size)
 {
-    unsigned char *dest = static_cast<unsigned char *>(buffer);
+    unsigned char* dest = static_cast<unsigned char*>(buffer);
     unsigned int total = 0;
     int available = bytesAvailableInCache();
     while (total < size)
@@ -255,14 +257,14 @@ void WiiU_FileCache::CreateFileCache(int file)
         s_fileCacheMutexInitialized = true;
     }
     EnterCriticalSection(&s_fileCacheMutex);
-    WiiU_FileCache *cache = new WiiU_FileCache(file);
+    WiiU_FileCache* cache = new WiiU_FileCache(file);
     s_fileCaches[file] = cache;
     LeaveCriticalSection(&s_fileCacheMutex);
 }
 
 bool WiiU_FileCache::Close()
 {
-    FSCmdBlock *commandBlock = GetCommandBlock();
+    FSCmdBlock* commandBlock = GetCommandBlock();
     FSStatus result = FSCloseFile(gFileCacheClient, commandBlock, m_file, FS_ERROR_FLAG_ALL);
     return result == 0;
 }
@@ -270,7 +272,7 @@ bool WiiU_FileCache::Close()
 bool WiiU_FileCache::DeleteFileCache(int file)
 {
     EnterCriticalSection(&s_fileCacheMutex);
-    WiiU_FileCache *cache = GetFileCache(file);
+    WiiU_FileCache* cache = GetFileCache(file);
     if (cache != 0)
     {
         bool result = cache->Close();
@@ -283,7 +285,7 @@ bool WiiU_FileCache::DeleteFileCache(int file)
     return false;
 }
 
-void *VirtualAlloc(void *address, unsigned long size, unsigned int, unsigned int)
+void* VirtualAlloc(void* address, unsigned long size, unsigned int, unsigned int)
 {
     if (address == 0)
     {
@@ -293,7 +295,7 @@ void *VirtualAlloc(void *address, unsigned long size, unsigned int, unsigned int
     return s_virtualMemory;
 }
 
-int VirtualFree(void *, unsigned long, unsigned int)
+int VirtualFree(void*, unsigned long, unsigned int)
 {
     return 1;
 }

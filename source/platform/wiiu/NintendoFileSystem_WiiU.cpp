@@ -10,9 +10,8 @@ extern void setAltMainOKToRun();
 extern void waitForAltMainThreadToComplete();
 extern FSCmdBlock* GetCommandBlock();
 
-int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
-               void* securityAttributes, unsigned int creationDisposition,
-               unsigned int flagsAndAttributes, int templateFile)
+int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes,
+                unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile)
 {
     (void)shareMode;
     (void)securityAttributes;
@@ -61,8 +60,7 @@ int CreateDirectoryA(const char* pathName, void* securityAttributes)
     char path[256];
     getFinalFilePath(path, pathName);
     FSCmdBlock* commandBlock = GetCommandBlock();
-    FSStatus result = FSMakeDir(gFileSystemClient, commandBlock, path,
-                                FS_ERROR_FLAG_NONE);
+    FSStatus result = FSMakeDir(gFileSystemClient, commandBlock, path, FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
     return result == 0;
 }
@@ -71,8 +69,8 @@ int ReadDir(int* directory, FSDirEntry* entry)
 {
     setAltMainOKToRun();
     FSCmdBlock* commandBlock = GetCommandBlock();
-    FSStatus result = FSReadDir(gFileSystemClient, commandBlock,
-                                static_cast<FSDirectoryHandle>(*directory), entry, FS_ERROR_FLAG_NONE);
+    FSStatus result = FSReadDir(gFileSystemClient, commandBlock, static_cast<FSDirectoryHandle>(*directory), entry,
+                                FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
     return result == 0;
 }
@@ -81,8 +79,8 @@ int CloseDir(int* directory)
 {
     setAltMainOKToRun();
     FSCmdBlock* commandBlock = GetCommandBlock();
-    FSStatus result = FSCloseDir(gFileSystemClient, commandBlock,
-                                 static_cast<FSDirectoryHandle>(*directory), FS_ERROR_FLAG_NONE);
+    FSStatus result = FSCloseDir(gFileSystemClient, commandBlock, static_cast<FSDirectoryHandle>(*directory),
+                                 FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
     return result == 0;
 }

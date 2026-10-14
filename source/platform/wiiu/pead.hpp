@@ -58,11 +58,14 @@ public:
     }
 };
 
-template<typename T> class MathCalcCommon
+template <typename T> class MathCalcCommon
 {
 public:
     static T maxNumber() { return std::numeric_limits<T>::max(); }
-    static T minNumber() { return std::numeric_limits<T>::is_integer ? std::numeric_limits<T>::min() : -std::numeric_limits<T>::max(); }
+    static T minNumber()
+    {
+        return std::numeric_limits<T>::is_integer ? std::numeric_limits<T>::min() : -std::numeric_limits<T>::max();
+    }
 };
 
 struct Endian
@@ -75,7 +78,7 @@ struct Endian
     };
 };
 
-template<typename T> class SafeStringBase
+template <typename T> class SafeStringBase
 {
 public:
     class iterator
@@ -167,12 +170,12 @@ protected:
     const T* mStringTop;
 };
 
-template<> const char SafeStringBase<char>::cNullChar;
-template<> const wchar_t SafeStringBase<wchar_t>::cNullChar;
-template<> SafeStringBase<char>& SafeStringBase<char>::operator=(const SafeStringBase<char>& other);
-template<> SafeStringBase<wchar_t>& SafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other);
+template <> const char SafeStringBase<char>::cNullChar;
+template <> const wchar_t SafeStringBase<wchar_t>::cNullChar;
+template <> SafeStringBase<char>& SafeStringBase<char>::operator=(const SafeStringBase<char>& other);
+template <> SafeStringBase<wchar_t>& SafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other);
 
-template<typename T> class Buffer
+template <typename T> class Buffer
 {
 public:
     Buffer() : mSize(0), mBuffer(0) {}
@@ -212,7 +215,7 @@ private:
     T* mBuffer;
 };
 
-template<typename T> class RingBuffer
+template <typename T> class RingBuffer
 {
 public:
     RingBuffer() : mBuffer(NULL), mCapacity(0), mHead(0), mSize(0) {}
@@ -285,7 +288,7 @@ public:
     int mSize;
 };
 
-template<typename T> class BitFlag
+template <typename T> class BitFlag
 {
 public:
     BitFlag(T value = 0) : mValue(value) {}
@@ -298,11 +301,12 @@ private:
     T mValue;
 };
 
-template<typename T> class BufferedSafeStringBase : public SafeStringBase<T>
+template <typename T> class BufferedSafeStringBase : public SafeStringBase<T>
 {
 public:
     BufferedSafeStringBase(BufferedSafeStringBase<T>* original, int position)
-        : SafeStringBase<T>(original->getBuffer() + position), mBufferSize(0)
+        : SafeStringBase<T>(original->getBuffer() + position),
+          mBufferSize(0)
     {
         if (position < original->mBufferSize && position >= 0)
         {
@@ -409,7 +413,7 @@ protected:
     int mBufferSize;
 };
 
-template<typename T> inline int BufferedSafeStringBase<T>::copy(const SafeStringBase<T>& source, int length)
+template <typename T> inline int BufferedSafeStringBase<T>::copy(const SafeStringBase<T>& source, int length)
 {
     T* buffer = getMutableStringTop_();
     const T* text = source.cstr();
@@ -424,28 +428,30 @@ template<typename T> inline int BufferedSafeStringBase<T>::copy(const SafeString
     return length;
 }
 
-template<> BufferedSafeStringBase<char>& BufferedSafeStringBase<char>::operator=(const SafeStringBase<char>& other);
-template<> BufferedSafeStringBase<wchar_t>& BufferedSafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other);
-template<> void BufferedSafeStringBase<char>::assureTerminationImpl_() const;
-template<> void BufferedSafeStringBase<wchar_t>::assureTerminationImpl_() const;
-template<> int BufferedSafeStringBase<char>::formatImpl_(char* buffer, int size, const char* format, va_list args);
-template<> int BufferedSafeStringBase<wchar_t>::formatImpl_(wchar_t* buffer, int size, const wchar_t* format, va_list args);
-template<> int BufferedSafeStringBase<char>::formatV(const char* format, va_list args);
-template<> int BufferedSafeStringBase<wchar_t>::formatV(const wchar_t* format, va_list args);
-template<> int BufferedSafeStringBase<char>::format(const char* format, ...);
-template<> int BufferedSafeStringBase<wchar_t>::format(const wchar_t* format, ...);
-template<> int BufferedSafeStringBase<char>::appendWithFormatV(const char* format, va_list args);
-template<> int BufferedSafeStringBase<wchar_t>::appendWithFormatV(const wchar_t* format, va_list args);
-template<> int BufferedSafeStringBase<char>::appendWithFormat(const char* format, ...);
-template<> int BufferedSafeStringBase<wchar_t>::appendWithFormat(const wchar_t* format, ...);
+template <> BufferedSafeStringBase<char>& BufferedSafeStringBase<char>::operator=(const SafeStringBase<char>& other);
+template <> BufferedSafeStringBase<wchar_t>& BufferedSafeStringBase<wchar_t>::operator=(
+    const SafeStringBase<wchar_t>& other);
+template <> void BufferedSafeStringBase<char>::assureTerminationImpl_() const;
+template <> void BufferedSafeStringBase<wchar_t>::assureTerminationImpl_() const;
+template <> int BufferedSafeStringBase<char>::formatImpl_(char* buffer, int size, const char* format, va_list args);
+template <> int BufferedSafeStringBase<wchar_t>::formatImpl_(wchar_t* buffer, int size, const wchar_t* format,
+                                                             va_list args);
+template <> int BufferedSafeStringBase<char>::formatV(const char* format, va_list args);
+template <> int BufferedSafeStringBase<wchar_t>::formatV(const wchar_t* format, va_list args);
+template <> int BufferedSafeStringBase<char>::format(const char* format, ...);
+template <> int BufferedSafeStringBase<wchar_t>::format(const wchar_t* format, ...);
+template <> int BufferedSafeStringBase<char>::appendWithFormatV(const char* format, va_list args);
+template <> int BufferedSafeStringBase<wchar_t>::appendWithFormatV(const wchar_t* format, va_list args);
+template <> int BufferedSafeStringBase<char>::appendWithFormat(const char* format, ...);
+template <> int BufferedSafeStringBase<wchar_t>::appendWithFormat(const wchar_t* format, ...);
 
-template<typename T> class StringBuilderBase : public BufferedSafeStringBase<T>
+template <typename T> class StringBuilderBase : public BufferedSafeStringBase<T>
 {
 public:
     StringBuilderBase(T* buffer, int size) : BufferedSafeStringBase<T>(buffer, size) {}
 };
 
-template<typename T> class HeapSafeStringBase : public BufferedSafeStringBase<T>
+template <typename T> class HeapSafeStringBase : public BufferedSafeStringBase<T>
 {
 public:
     HeapSafeStringBase(T* buffer, int size) : BufferedSafeStringBase<T>(buffer, size) {}
@@ -453,20 +459,14 @@ public:
     virtual HeapSafeStringBase& operator=(const SafeStringBase<T>& other);
 };
 
-template<> HeapSafeStringBase<char>& HeapSafeStringBase<char>::operator=(const SafeStringBase<char>& other);
-template<> HeapSafeStringBase<wchar_t>& HeapSafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other);
+template <> HeapSafeStringBase<char>& HeapSafeStringBase<char>::operator=(const SafeStringBase<char>& other);
+template <> HeapSafeStringBase<wchar_t>& HeapSafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other);
 
-template<typename T, int N> class FixedSafeStringBase : public BufferedSafeStringBase<T>
+template <typename T, int N> class FixedSafeStringBase : public BufferedSafeStringBase<T>
 {
 public:
-    FixedSafeStringBase() : BufferedSafeStringBase<T>(mStorage, N)
-    {
-        this->clear();
-    }
-    FixedSafeStringBase(const SafeStringBase<T>& text) : BufferedSafeStringBase<T>(mStorage, N)
-    {
-        this->copy(text);
-    }
+    FixedSafeStringBase() : BufferedSafeStringBase<T>(mStorage, N) { this->clear(); }
+    FixedSafeStringBase(const SafeStringBase<T>& text) : BufferedSafeStringBase<T>(mStorage, N) { this->copy(text); }
     virtual ~FixedSafeStringBase() {}
     virtual FixedSafeStringBase& operator=(const SafeStringBase<T>& text)
     {
@@ -478,7 +478,7 @@ private:
     T mStorage[N];
 };
 
-template<int N> class FixedSafeString : public FixedSafeStringBase<char, N>
+template <int N> class FixedSafeString : public FixedSafeStringBase<char, N>
 {
 public:
     FixedSafeString() {}
@@ -510,7 +510,7 @@ public:
     virtual bool isDerived(const Interface* type) const { return type == this; }
 };
 
-template<typename BaseType> class Derive : public Interface
+template <typename BaseType> class Derive : public Interface
 {
 public:
     virtual bool isDerived(const Interface* type) const
@@ -595,7 +595,7 @@ protected:
     int mCount;
 };
 
-template<typename T> class OffsetList : public ListImpl
+template <typename T> class OffsetList : public ListImpl
 {
 public:
     class iterator
@@ -655,9 +655,9 @@ protected:
     int mOffset;
 };
 
-template<typename T> class TList;
+template <typename T> class TList;
 
-template<typename T> class TListNode : public ListNode
+template <typename T> class TListNode : public ListNode
 {
 public:
     TListNode() : ListNode(), mData(), mList(0) {}
@@ -672,7 +672,7 @@ public:
     TList<T>* mList;
 };
 
-template<typename T> class TList : public ListImpl
+template <typename T> class TList : public ListImpl
 {
 public:
     TList() : ListImpl() {}
@@ -722,7 +722,7 @@ protected:
     void** mPtrs;
 };
 
-template<typename T> class PtrArray : public PtrArrayImpl
+template <typename T> class PtrArray : public PtrArrayImpl
 {
 public:
     T* at(int index) const
@@ -746,7 +746,7 @@ public:
         if (mPtrNum > 0)
             --mPtrNum;
     }
-    template<typename Key> int binarySearch(const Key* key, int (*compare)(const T*, const Key*)) const
+    template <typename Key> int binarySearch(const Key* key, int (*compare)(const T*, const Key*)) const
     {
         return PtrArrayImpl::binarySearch(key, reinterpret_cast<int (*)(const void*, const void*)>(compare));
     }
@@ -754,7 +754,7 @@ public:
     T** end() const { return reinterpret_cast<T**>(mPtrs) + mPtrNum; }
 };
 
-template<typename T, int N> class FixedPtrArray : public PtrArray<T>
+template <typename T, int N> class FixedPtrArray : public PtrArray<T>
 {
 public:
     FixedPtrArray() { this->setBuffer(N, mWork); }
@@ -1291,21 +1291,21 @@ private:
 #endif
 };
 
-template<typename T> class IDelegate1
+template <typename T> class IDelegate1
 {
 public:
     virtual void invoke(T) = 0;
     virtual IDelegate1* clone(Heap*) const { return 0; }
 };
 
-template<typename T1, typename T2> class IDelegate2
+template <typename T1, typename T2> class IDelegate2
 {
 public:
     virtual void invoke(T1, T2) = 0;
     virtual IDelegate2* clone(Heap*) const { return 0; }
 };
 
-template<typename Owner, typename T1, typename T2> class Delegate2 : public IDelegate2<T1, T2>
+template <typename Owner, typename T1, typename T2> class Delegate2 : public IDelegate2<T1, T2>
 {
 public:
     typedef void (Owner::*Method)(T1, T2);
@@ -1322,7 +1322,7 @@ private:
     Method mMethod;
 };
 
-template<typename T> class DelegateEvent
+template <typename T> class DelegateEvent
 {
 public:
     class Slot : public ListNode
@@ -1639,7 +1639,7 @@ void* allocateFromSeadHeap(unsigned int, Heap*, int);
 void freeToSeadHeap(void*);
 unsigned int getArraySize(void*);
 
-template<typename T> T* NewArray(unsigned int count, Heap* heap)
+template <typename T> T* NewArray(unsigned int count, Heap* heap)
 {
     void* memory = allocateFromSeadHeap(sizeof(T) * count, heap);
     if (!memory)
@@ -1650,7 +1650,7 @@ template<typename T> T* NewArray(unsigned int count, Heap* heap)
     return array;
 }
 
-template<typename T> T* NewArray(unsigned int count, Heap* heap, int alignment)
+template <typename T> T* NewArray(unsigned int count, Heap* heap, int alignment)
 {
     void* memory = allocateFromSeadHeap(sizeof(T) * count, heap, alignment);
     if (!memory)
@@ -1661,7 +1661,7 @@ template<typename T> T* NewArray(unsigned int count, Heap* heap, int alignment)
     return array;
 }
 
-template<typename T> void DeleteArray(T* array)
+template <typename T> void DeleteArray(T* array)
 {
     if (!array)
         return;
@@ -1671,7 +1671,7 @@ template<typename T> void DeleteArray(T* array)
     freeToSeadHeap(array);
 }
 
-template<typename T> inline bool Buffer<T>::tryAllocBuffer(int size, Heap* heap, int alignment)
+template <typename T> inline bool Buffer<T>::tryAllocBuffer(int size, Heap* heap, int alignment)
 {
     if (size > 0)
     {
@@ -1693,7 +1693,7 @@ template<typename T> inline bool Buffer<T>::tryAllocBuffer(int size, Heap* heap,
     return false;
 }
 
-template<typename T> inline void Buffer<T>::freeBuffer()
+template <typename T> inline void Buffer<T>::freeBuffer()
 {
     if (mBuffer)
     {
@@ -1719,7 +1719,7 @@ private:
     OSFastMutex mCriticalSectionInner;
 };
 
-template<typename Lock> class ScopedLock
+template <typename Lock> class ScopedLock
 {
 public:
     ScopedLock(Lock* lock) : mLock(lock)
@@ -1737,7 +1737,7 @@ private:
     Lock* mLock;
 };
 
-template<typename Lock> class ConditionalScopedLock
+template <typename Lock> class ConditionalScopedLock
 {
 public:
     ConditionalScopedLock(Lock* lock, bool condition) : mLock(0)
@@ -1778,10 +1778,7 @@ public:
     {
         return TickSpan(microSeconds * cFrequency / 1000 / 1000);
     }
-    static TickSpan makeFromMilliSeconds(long long milliSeconds)
-    {
-        return TickSpan(milliSeconds * cFrequency / 1000);
-    }
+    static TickSpan makeFromMilliSeconds(long long milliSeconds) { return TickSpan(milliSeconds * cFrequency / 1000); }
     long long getTicks() const { return mTicks; }
 
     static const long long cFrequency;
@@ -1920,8 +1917,8 @@ public:
 class DelegateThread : public Thread
 {
 public:
-    DelegateThread(const SafeStringBase<char>&, IDelegate2<Thread*, int>*, Heap*, int,
-                   MessageQueue::BlockType, int, int, int);
+    DelegateThread(const SafeStringBase<char>&, IDelegate2<Thread*, int>*, Heap*, int, MessageQueue::BlockType, int,
+                   int, int);
     virtual ~DelegateThread();
     virtual void calc_(int);
 
@@ -2031,7 +2028,7 @@ private:
 class PrintFormatter
 {
 public:
-    template<typename T, template<typename> class Wrapper> class OutImpl
+    template <typename T, template <typename> class Wrapper> class OutImpl
     {
     public:
         static void out(const Wrapper<T>&, const char*, PrintOutput*);
@@ -2044,8 +2041,8 @@ public:
     PrintFormatter& __ls(const char*);
     static void outputString_(const char*, PrintOutput*, const char*, int);
     static void outputPtr_(const char*, PrintOutput*, unsigned int);
-    template<typename T> static void out(const T&, const char*, PrintOutput*);
-    template<typename T> static void out(const T*, const char*, PrintOutput*);
+    template <typename T> static void out(const T&, const char*, PrintOutput*);
+    template <typename T> static void out(const T*, const char*, PrintOutput*);
 
 private:
     enum
@@ -2116,189 +2113,189 @@ public:
 
 namespace StringUtil
 {
-    enum CardinalNumber
+enum CardinalNumber
+{
+    cAuto = -1,
+    cDecimal = 10,
+    cHexadecimal = 16
+};
+struct Char16Pair
+{
+    wchar_t from;
+    wchar_t to;
+};
+bool tryParseU64(unsigned long long*, const SafeStringBase<char>&, CardinalNumber);
+bool tryParseS64(long long*, const SafeStringBase<char>&, CardinalNumber);
+bool tryParseU32(unsigned int*, const SafeStringBase<char>&, CardinalNumber);
+bool tryParseS32(int*, const SafeStringBase<char>&, CardinalNumber);
+bool tryParseU16(unsigned short*, const SafeStringBase<char>&, CardinalNumber);
+bool tryParseS16(short*, const SafeStringBase<char>&, CardinalNumber);
+bool tryParseU8(unsigned char*, const SafeStringBase<char>&, CardinalNumber);
+bool tryParseS8(signed char*, const SafeStringBase<char>&, CardinalNumber);
+int parseS32(const SafeStringBase<char>&, CardinalNumber);
+int vsw16printf(wchar_t*, unsigned int, const wchar_t*, va_list);
+int vsnprintf(char*, unsigned int, const char*, va_list);
+int convertUtf16ToSjis(char*, unsigned int, const wchar_t*, int);
+int convertUtf16ToUtf8(char*, unsigned int, const wchar_t*, int);
+int convertUtf8ToSjis(char*, unsigned int, const char*, int);
+int compareChar16Pair(const Char16Pair&, const wchar_t&);
+wchar_t replace(wchar_t, const Buffer<const Char16Pair>&);
+wchar_t toUpperCapital(wchar_t);
+void toUpperCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>*);
+wchar_t toLowerCapital(wchar_t);
+void toLowerCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>*);
+bool tryParseF32(float*, const SafeStringBase<char>&);
+bool tryParseF64(double*, const SafeStringBase<char>&);
+unsigned long long parseU64(const SafeStringBase<char>&, CardinalNumber);
+long long parseS64(const SafeStringBase<char>&, CardinalNumber);
+unsigned int parseU32(const SafeStringBase<char>&, CardinalNumber);
+unsigned short parseU16(const SafeStringBase<char>&, CardinalNumber);
+short parseS16(const SafeStringBase<char>&, CardinalNumber);
+unsigned char parseU8(const SafeStringBase<char>&, CardinalNumber);
+signed char parseS8(const SafeStringBase<char>&, CardinalNumber);
+float parseF32(const SafeStringBase<char>&);
+double parseF64(const SafeStringBase<char>&);
+void wcs16cpy(wchar_t*, unsigned int, const wchar_t*);
+int sw16printf(wchar_t*, unsigned int, const wchar_t*, ...);
+int snprintf(char*, unsigned int, const char*, ...);
+int convertSjisToUtf16(wchar_t*, unsigned int, const char*, int);
+int convertUtf8ToUtf16(wchar_t*, unsigned int, const char*, int);
+int convertSjisToUtf8(char*, unsigned int, const char*, int);
+
+namespace __N_18_peadStringUtil_cpp_6714fef4
+{
+struct OutBuffer16
+{
+    OutBuffer16(wchar_t* text, int size) : buffer(text), capacity(size), length(0), overflow(false) {}
+    void put(wchar_t character)
     {
-        cAuto = -1,
-        cDecimal = 10,
-        cHexadecimal = 16
-    };
-    struct Char16Pair
-    {
-        wchar_t from;
-        wchar_t to;
-    };
-    bool tryParseU64(unsigned long long*, const SafeStringBase<char>&, CardinalNumber);
-    bool tryParseS64(long long*, const SafeStringBase<char>&, CardinalNumber);
-    bool tryParseU32(unsigned int*, const SafeStringBase<char>&, CardinalNumber);
-    bool tryParseS32(int*, const SafeStringBase<char>&, CardinalNumber);
-    bool tryParseU16(unsigned short*, const SafeStringBase<char>&, CardinalNumber);
-    bool tryParseS16(short*, const SafeStringBase<char>&, CardinalNumber);
-    bool tryParseU8(unsigned char*, const SafeStringBase<char>&, CardinalNumber);
-    bool tryParseS8(signed char*, const SafeStringBase<char>&, CardinalNumber);
-    int parseS32(const SafeStringBase<char>&, CardinalNumber);
-    int vsw16printf(wchar_t*, unsigned int, const wchar_t*, va_list);
-    int vsnprintf(char*, unsigned int, const char*, va_list);
-    int convertUtf16ToSjis(char*, unsigned int, const wchar_t*, int);
-    int convertUtf16ToUtf8(char*, unsigned int, const wchar_t*, int);
-    int convertUtf8ToSjis(char*, unsigned int, const char*, int);
-    int compareChar16Pair(const Char16Pair&, const wchar_t&);
-    wchar_t replace(wchar_t, const Buffer<const Char16Pair>&);
-    wchar_t toUpperCapital(wchar_t);
-    void toUpperCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>*);
-    wchar_t toLowerCapital(wchar_t);
-    void toLowerCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>*);
-    bool tryParseF32(float*, const SafeStringBase<char>&);
-    bool tryParseF64(double*, const SafeStringBase<char>&);
-    unsigned long long parseU64(const SafeStringBase<char>&, CardinalNumber);
-    long long parseS64(const SafeStringBase<char>&, CardinalNumber);
-    unsigned int parseU32(const SafeStringBase<char>&, CardinalNumber);
-    unsigned short parseU16(const SafeStringBase<char>&, CardinalNumber);
-    short parseS16(const SafeStringBase<char>&, CardinalNumber);
-    unsigned char parseU8(const SafeStringBase<char>&, CardinalNumber);
-    signed char parseS8(const SafeStringBase<char>&, CardinalNumber);
-    float parseF32(const SafeStringBase<char>&);
-    double parseF64(const SafeStringBase<char>&);
-    void wcs16cpy(wchar_t*, unsigned int, const wchar_t*);
-    int sw16printf(wchar_t*, unsigned int, const wchar_t*, ...);
-    int snprintf(char*, unsigned int, const char*, ...);
-    int convertSjisToUtf16(wchar_t*, unsigned int, const char*, int);
-    int convertUtf8ToUtf16(wchar_t*, unsigned int, const char*, int);
-    int convertSjisToUtf8(char*, unsigned int, const char*, int);
-
-    namespace __N_18_peadStringUtil_cpp_6714fef4
-    {
-        struct OutBuffer16
-        {
-            OutBuffer16(wchar_t* text, int size) : buffer(text), capacity(size), length(0), overflow(false) {}
-            void put(wchar_t character)
-            {
-                if (length < capacity)
-                    buffer[length++] = character;
-                else
-                    overflow = true;
-            }
-            void put(wchar_t character, unsigned int count)
-            {
-                for (; count != 0; --count)
-                {
-                    if (length >= capacity)
-                    {
-                        overflow = true;
-                        break;
-                    }
-                    buffer[length++] = character;
-                }
-            }
-
-            wchar_t* buffer;
-            int capacity;
-            int length;
-            bool overflow;
-        };
-
-        class FormatParser16
-        {
-        public:
-            enum Flag
-            {
-                cFlagLeftJustify = 1,
-                cFlagForceSign = 2,
-                cFlagZeroPad = 4,
-                cFlagBlankSign = 8,
-                cFlagAlternate = 16
-            };
-            enum Size
-            {
-                cSizeChar = 0,
-                cSizeShort = 1,
-                cSizeInt = 2,
-                cSizeLong = 3,
-                cSizeLongLong = 4
-            };
-            enum
-            {
-                cBaseOctal = 8,
-                cBaseDecimal = 10,
-                cBaseHexadecimal = 16,
-                cOctalDigitBits = 3,
-                cOctalDigitMask = 7,
-                cHexDigitBits = 4,
-                cHexDigitMask = 15,
-                cIntegerDigitBufferLength = 32,
-                cIntegerDigitCapacity = cIntegerDigitBufferLength - 1,
-                cPointerPrecision = 8,
-                cDefaultFloatPrecision = 6
-            };
-
-            FormatParser16(va_list);
-            void clear_();
-            const wchar_t* parseFlag_(const wchar_t*);
-            const wchar_t* parseWidth_(const wchar_t*);
-            const wchar_t* parsePrecision_(const wchar_t*);
-            const wchar_t* parseSize_(const wchar_t*);
-            void printInteger_(OutBuffer16*, unsigned int, bool, bool);
-            void printCharacter_(OutBuffer16*);
-            void printString_(OutBuffer16*);
-            void printFloat_(OutBuffer16*, wchar_t, bool);
-            int execute(OutBuffer16*, const wchar_t*);
-            template<typename T> static void printIntegerInverseString_(OutBuffer16*, unsigned int, bool, T);
-            template<typename U, typename S, typename A>
-            void printIntegerInverseStringFromArg_(OutBuffer16*, bool*, bool, unsigned int, bool);
-            template<typename T> void printStringCore_(OutBuffer16*, const T*);
-
-        private:
-            va_list mArgs;
-            unsigned int mFlags;
-            int mWidth;
-            int mPrecision;
-            bool mHasPrecision;
-            Size mSize;
-        };
-
-        template<typename T> struct UnsignedType
-        {
-            typedef T Type;
-        };
-        template<> struct UnsignedType<long long>
-        {
-            typedef unsigned long long Type;
-        };
-        template<> struct UnsignedType<int>
-        {
-            typedef unsigned int Type;
-        };
-        template<> struct UnsignedType<short>
-        {
-            typedef unsigned short Type;
-        };
-        template<> struct UnsignedType<signed char>
-        {
-            typedef unsigned char Type;
-        };
-
-        int checkAndConvertDecChar_(char);
-        int checkAndConvertHexChar_(char);
-        void tryParseSignImpl_(int*, SafeStringBase<char>::iterator&);
-        bool tryParsePrefixImpl_(int*, SafeStringBase<char>::iterator&, const SafeStringBase<char>&);
-        template<typename T> bool tryParseNumberImpl_(T*, SafeStringBase<char>::iterator&, int);
-        template<typename T> bool tryParseDecImpl_(T*, SafeStringBase<char>::iterator&, int);
-        template<typename T> bool tryParseImpl_(T*, const SafeStringBase<char>&, int);
-        template<typename T>
-        void tryParseUnderDecimalPointImpl_(T*, SafeStringBase<char>::iterator&, T, T);
-        template<typename T> bool tryParseDecimalFractionImpl_(T*, const SafeStringBase<char>&);
-        template<typename T> T parseImpl_(const SafeStringBase<char>&, CardinalNumber);
-        template<typename T> T parseDecimalFractionImpl_(const SafeStringBase<char>&);
+        if (length < capacity)
+            buffer[length++] = character;
+        else
+            overflow = true;
     }
+    void put(wchar_t character, unsigned int count)
+    {
+        for (; count != 0; --count)
+        {
+            if (length >= capacity)
+            {
+                overflow = true;
+                break;
+            }
+            buffer[length++] = character;
+        }
+    }
+
+    wchar_t* buffer;
+    int capacity;
+    int length;
+    bool overflow;
+};
+
+class FormatParser16
+{
+public:
+    enum Flag
+    {
+        cFlagLeftJustify = 1,
+        cFlagForceSign = 2,
+        cFlagZeroPad = 4,
+        cFlagBlankSign = 8,
+        cFlagAlternate = 16
+    };
+    enum Size
+    {
+        cSizeChar = 0,
+        cSizeShort = 1,
+        cSizeInt = 2,
+        cSizeLong = 3,
+        cSizeLongLong = 4
+    };
+    enum
+    {
+        cBaseOctal = 8,
+        cBaseDecimal = 10,
+        cBaseHexadecimal = 16,
+        cOctalDigitBits = 3,
+        cOctalDigitMask = 7,
+        cHexDigitBits = 4,
+        cHexDigitMask = 15,
+        cIntegerDigitBufferLength = 32,
+        cIntegerDigitCapacity = cIntegerDigitBufferLength - 1,
+        cPointerPrecision = 8,
+        cDefaultFloatPrecision = 6
+    };
+
+    FormatParser16(va_list);
+    void clear_();
+    const wchar_t* parseFlag_(const wchar_t*);
+    const wchar_t* parseWidth_(const wchar_t*);
+    const wchar_t* parsePrecision_(const wchar_t*);
+    const wchar_t* parseSize_(const wchar_t*);
+    void printInteger_(OutBuffer16*, unsigned int, bool, bool);
+    void printCharacter_(OutBuffer16*);
+    void printString_(OutBuffer16*);
+    void printFloat_(OutBuffer16*, wchar_t, bool);
+    int execute(OutBuffer16*, const wchar_t*);
+    template <typename T> static void printIntegerInverseString_(OutBuffer16*, unsigned int, bool, T);
+    template <typename U, typename S, typename A>
+    void printIntegerInverseStringFromArg_(OutBuffer16*, bool*, bool, unsigned int, bool);
+    template <typename T> void printStringCore_(OutBuffer16*, const T*);
+
+private:
+    va_list mArgs;
+    unsigned int mFlags;
+    int mWidth;
+    int mPrecision;
+    bool mHasPrecision;
+    Size mSize;
+};
+
+template <typename T> struct UnsignedType
+{
+    typedef T Type;
+};
+template <> struct UnsignedType<long long>
+{
+    typedef unsigned long long Type;
+};
+template <> struct UnsignedType<int>
+{
+    typedef unsigned int Type;
+};
+template <> struct UnsignedType<short>
+{
+    typedef unsigned short Type;
+};
+template <> struct UnsignedType<signed char>
+{
+    typedef unsigned char Type;
+};
+
+int checkAndConvertDecChar_(char);
+int checkAndConvertHexChar_(char);
+void tryParseSignImpl_(int*, SafeStringBase<char>::iterator&);
+bool tryParsePrefixImpl_(int*, SafeStringBase<char>::iterator&, const SafeStringBase<char>&);
+template <typename T> bool tryParseNumberImpl_(T*, SafeStringBase<char>::iterator&, int);
+template <typename T> bool tryParseDecImpl_(T*, SafeStringBase<char>::iterator&, int);
+template <typename T> bool tryParseImpl_(T*, const SafeStringBase<char>&, int);
+template <typename T>
+void tryParseUnderDecimalPointImpl_(T*, SafeStringBase<char>::iterator&, T, T);
+template <typename T> bool tryParseDecimalFractionImpl_(T*, const SafeStringBase<char>&);
+template <typename T> T parseImpl_(const SafeStringBase<char>&, CardinalNumber);
+template <typename T> T parseDecimalFractionImpl_(const SafeStringBase<char>&);
+}
 }
 
 namespace __N_16_peadCoreInfo_cpp_b178e7d4
 {
-    int countNumBits(unsigned int);
+int countNumBits(unsigned int);
 }
 
 namespace __N_24_peadTextStreamFormat_cpp_8d174ff4
 {
-    bool isSJISCode_(unsigned char);
+bool isSJISCode_(unsigned char);
 }
 
 namespace system
@@ -2309,7 +2306,7 @@ void PrintV(const char*, va_list);
 void Print(const char*, ...);
 }
 
-template<typename T> inline bool isMatchString_(const T* text, const T* pattern, int length)
+template <typename T> inline bool isMatchString_(const T* text, const T* pattern, int length)
 {
     for (int index = 0; index < length; ++index)
     {
@@ -2318,9 +2315,8 @@ template<typename T> inline bool isMatchString_(const T* text, const T* pattern,
     }
     return true;
 }
-template<typename T>
-int replaceStringImpl_(T*, int*, int, const T*, int, const SafeStringBase<T>&, const SafeStringBase<T>&,
-                       bool*);
+template <typename T>
+int replaceStringImpl_(T*, int*, int, const T*, int, const SafeStringBase<T>&, const SafeStringBase<T>&, bool*);
 }
 
 inline void* operator new(size_t size, pead::Heap* heap)

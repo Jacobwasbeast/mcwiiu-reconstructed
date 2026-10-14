@@ -13,8 +13,12 @@ int XMemCreateDecompressionContext(_XMEMCODEC_TYPE, const void*, unsigned int, v
     return 0;
 }
 
-void XMemDestroyCompressionContext(void*) {}
-void XMemDestroyDecompressionContext(void*) {}
+void XMemDestroyCompressionContext(void*)
+{
+}
+void XMemDestroyDecompressionContext(void*)
+{
+}
 
 void* XMemCpy(void* destination, const void* source, unsigned int count)
 {

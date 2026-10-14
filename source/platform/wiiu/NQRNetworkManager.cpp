@@ -7,7 +7,10 @@ int g_iGameBootInviteUserIndex = 0;
 bool g_bSafeToRespondToGameBootInvite = false;
 
 NQRNetworkManager::NQRNetworkManager()
-    : m_stateChanges(), m_stateChangeLock(), m_playerLock(), m_localPlayerRequestLock(),
+    : m_stateChanges(),
+      m_stateChangeLock(),
+      m_playerLock(),
+      m_localPlayerRequestLock(),
       m_localPlayerRequests()
 {
 }
@@ -72,7 +75,6 @@ int NQRNetworkManager::GetSendQueueSizeMessages()
     return iSendQueueMessages;
 }
 
-NQRNetworkManager::PlayerSyncData::PlayerSyncData()
-    : PlayerUID(0)
+NQRNetworkManager::PlayerSyncData::PlayerSyncData() : PlayerUID(0)
 {
 }

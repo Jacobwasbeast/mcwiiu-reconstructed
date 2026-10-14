@@ -4,7 +4,13 @@
 #include <cstring>
 
 C4JEventQueueImpl::C4JEventQueueImpl(void (*eventHandler)(void*), void (*startedHandler)(), const char* name)
-    : m_thread(NULL), m_eventArray(NULL), m_finishEvent(NULL), m_eventHandler(eventHandler), m_startedHandler(startedHandler), m_processor(-1), m_priority(3)
+    : m_thread(NULL),
+      m_eventArray(NULL),
+      m_finishEvent(NULL),
+      m_eventHandler(eventHandler),
+      m_startedHandler(startedHandler),
+      m_processor(-1),
+      m_priority(3)
 {
     m_name[0] = '\0';
     if (name != NULL)
@@ -59,8 +65,7 @@ void C4JEventQueueImpl::threadPoll()
                     m_finishEvent->Set();
                 }
                 LeaveCriticalSection(&m_mutex);
-            }
-            while (!empty);
+            } while (!empty);
         }
     }
     ShutdownManager::HasFinished(ShutdownManager::eThreadId_EventQueue);

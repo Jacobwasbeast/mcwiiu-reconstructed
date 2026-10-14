@@ -52,7 +52,8 @@ public:
     virtual void SetCorruptSaveName(const wchar_t*);
     virtual void SetGameSaveFolderPrefix(const char*);
     virtual void SetMaxSaves(int);
-    virtual void SetDefaultImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*, unsigned int);
+    virtual void SetDefaultImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*,
+                                  unsigned int);
     virtual void SetIncompleteSaveCallback(IncompleteSaveCallback, void*);
     virtual void SetSaveDisabled(bool);
     virtual unsigned char GetSaveDisabled();
@@ -63,7 +64,8 @@ public:
     virtual int GetSavesInfo(int, SavesInfoCallback, void*, const char*);
     virtual SAVE_DETAILS* ReturnSavesInfo();
     virtual void ClearSavesInfo();
-    virtual C4JStorage::ESaveGameState LoadSaveDataThumbnail(SAVE_INFO*, int (*)(void*, unsigned char*, unsigned int), void*);
+    virtual C4JStorage::ESaveGameState LoadSaveDataThumbnail(SAVE_INFO*, int (*)(void*, unsigned char*, unsigned int),
+                                                             void*);
     virtual C4JStorage::ESaveGameState LoadSaveData(SAVE_INFO*, LoadCallback, void*);
     virtual int GetSaveSize();
     virtual void GetSaveData(void*, unsigned int*);
@@ -76,7 +78,8 @@ public:
     virtual void SetSaveDataSize(unsigned int);
     virtual void GetDefaultSaveImage(unsigned char**, unsigned int*);
     virtual void GetDefaultSaveThumbnail(unsigned char**, unsigned int*);
-    virtual void SetSaveImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*, unsigned int);
+    virtual void SetSaveImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*,
+                               unsigned int);
     virtual C4JStorage::ESaveGameState SaveSaveData(SaveCallback, void*);
     virtual void ContinueIncompleteOperation();
     virtual void CancelIncompleteOperation();
@@ -103,7 +106,8 @@ public:
     virtual void SetSaveDeviceSelected(unsigned int, bool);
     virtual int GetSaveDeviceSelected(unsigned int);
     virtual void ClearDLCOffers();
-    virtual int ReadTMSFile(int, C4JStorage::eGlobalStorage, C4JStorage::eTMS_FileType, wchar_t*, unsigned char**, unsigned int*, int (*)(void*, wchar_t*, int, bool, C4JStorage::eTMS_FileType), void*, int);
+    virtual int ReadTMSFile(int, C4JStorage::eGlobalStorage, C4JStorage::eTMS_FileType, wchar_t*, unsigned char**,
+                            unsigned int*, int (*)(void*, wchar_t*, int, bool, C4JStorage::eTMS_FileType), void*, int);
     virtual int WriteTMSFile(int, C4JStorage::eGlobalStorage, wchar_t*, unsigned char*, unsigned int);
     virtual int DeleteTMSFile(int, C4JStorage::eGlobalStorage, wchar_t*);
     virtual int GetDLCOffers(int pad, DLCOffersCallback callback, void* context, unsigned int contentId);

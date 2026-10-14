@@ -60,7 +60,8 @@ public:
     typedef void (*UpsellHandler)(void*, eUpsellType, eUpsellResponse, int);
     typedef int (*SignInChoicesHandler)(int);
 
-    virtual void Initialise(const void*, const void*, unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*) = 0;
+    virtual void Initialise(const void*, const void*, unsigned short, unsigned int, unsigned int, unsigned int*, int,
+                            unsigned int*) = 0;
     virtual int GetLockedProfile() = 0;
     virtual void SetLockedProfile(int) = 0;
     virtual bool IsSignedIn(int) = 0;
@@ -216,7 +217,8 @@ public:
     CProfile();
     ~CProfile();
 
-    virtual void Initialise(const void*, const void*, unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*);
+    virtual void Initialise(const void*, const void*, unsigned short, unsigned int, unsigned int, unsigned int*, int,
+                            unsigned int*);
     virtual int GetLockedProfile();
     virtual void SetLockedProfile(int);
     virtual bool IsSignedIn(int);

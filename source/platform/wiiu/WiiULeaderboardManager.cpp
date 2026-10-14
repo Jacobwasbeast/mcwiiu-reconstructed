@@ -2,8 +2,7 @@
 
 LeaderboardManager* g_pLeaderboardManager = new WiiULeaderboardManager();
 
-WiiULeaderboardManager::WiiULeaderboardManager()
-    : LeaderboardManager()
+WiiULeaderboardManager::WiiULeaderboardManager() : LeaderboardManager()
 {
 }
 

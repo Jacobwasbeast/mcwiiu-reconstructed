@@ -3,13 +3,13 @@
 
 namespace nn
 {
-    namespace pia
-    {
-        namespace transport
-        {
-            class Station;
-        }
-    }
+namespace pia
+{
+namespace transport
+{
+class Station;
+}
+}
 }
 
 class __N_35_session_ProcessHostMigrationJob_cpp_89c02c09

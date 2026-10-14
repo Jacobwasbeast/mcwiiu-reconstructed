@@ -2,7 +2,8 @@ extern "C" void __init_wut_newlib();
 extern "C" void __init_wut_devoptab();
 extern "C" void __attribute__((weak)) __init_wut_socket();
 
-extern "C" {
+extern "C"
+{
 extern void (*__preinit_array_start[])();
 extern void (*__preinit_array_end[])();
 extern void (*__init_array_start[])();
@@ -40,7 +41,8 @@ extern "C" void __init_wut()
 {
     __init_wut_newlib();
     __init_wut_devoptab();
-    if (&__init_wut_socket) __init_wut_socket();
+    if (&__init_wut_socket)
+        __init_wut_socket();
     RunInitArray(__preinit_array_start, __preinit_array_end);
     _init();
     RunInitArray(__init_array_start, __init_array_end);

@@ -49,12 +49,14 @@ T convertEndian(T value, Endian::Types endian)
 
 int appendText(char* destination, unsigned int capacity, const char* source, int length)
 {
-    if (!destination || capacity == 0) return 0;
+    if (!destination || capacity == 0)
+        return 0;
     unsigned int current = static_cast<unsigned int>(strlen(destination));
     unsigned int requested = length < 0 ? static_cast<unsigned int>(strlen(source)) : static_cast<unsigned int>(length);
     unsigned int available = current < capacity ? capacity - current - 1 : 0;
     unsigned int copied = requested < available ? requested : available;
-    if (copied) memcpy(destination + current, source, copied);
+    if (copied)
+        memcpy(destination + current, source, copied);
     destination[current + copied] = 0;
     return static_cast<int>(copied);
 }
@@ -93,9 +95,11 @@ void ListNode::erase_()
 
 ListNode* ListImpl::nth(int index) const
 {
-    if (index < 0 || index >= mCount) return 0;
+    if (index < 0 || index >= mCount)
+        return 0;
     ListNode* node = mStartEnd.next();
-    while (index--) node = node->next();
+    while (index--)
+        node = node->next();
     return node;
 }
 
@@ -108,13 +112,14 @@ void ListImpl::sort(int offset, int (*compare)(const void*, const void*))
     while (node != &mStartEnd)
     {
         ListNode* next = node->next();
-        if (compare(reinterpret_cast<const char*>(node->prev()) - offset,
-                    reinterpret_cast<const char*>(node) - offset) > 0)
+        if (compare(reinterpret_cast<const char*>(node->prev()) - offset, reinterpret_cast<const char*>(node) - offset)
+            > 0)
         {
             ListNode* insertion = node->prev();
-            while (insertion != &mStartEnd &&
-                   compare(reinterpret_cast<const char*>(insertion) - offset,
-                           reinterpret_cast<const char*>(node) - offset) > 0)
+            while (insertion != &mStartEnd
+                   && compare(reinterpret_cast<const char*>(insertion) - offset,
+                              reinterpret_cast<const char*>(node) - offset)
+                          > 0)
                 insertion = insertion->prev();
             node->erase_();
             insertion->insertBack_(node);
@@ -140,8 +145,10 @@ void ListImpl::clear()
 
 void PtrArrayImpl::setBuffer(int capacity, void* buffer)
 {
-    if (capacity < 1) return;
-    if (!buffer) return;
+    if (capacity < 1)
+        return;
+    if (!buffer)
+        return;
     mPtrNumMax = capacity;
     mPtrs = static_cast<void**>(buffer);
     mPtrNum = 0;
@@ -153,7 +160,8 @@ bool PtrArrayImpl::tryAllocBuffer(int capacity, Heap* heap, int alignment)
     {
         unsigned int size = sizeof(void*) * capacity;
         unsigned char* buffer = static_cast<unsigned char*>(allocateFromSeadHeap(size, heap, alignment));
-        if (!buffer) return false;
+        if (!buffer)
+            return false;
         for (unsigned char* byte = buffer; size != 0; --size, ++byte)
             new (byte) unsigned char();
         if (buffer)
@@ -188,7 +196,8 @@ void PtrArrayImpl::erase(int index, int count)
         int end = index + count;
         if (end <= mPtrNum)
         {
-            if (end < mPtrNum) memmove(mPtrs + index, mPtrs + end, sizeof(void*) * (mPtrNum - end));
+            if (end < mPtrNum)
+                memmove(mPtrs + index, mPtrs + end, sizeof(void*) * (mPtrNum - end));
             mPtrNum -= count;
         }
     }
@@ -203,7 +212,8 @@ void PtrArrayImpl::insert(int index, void* value)
 {
     if (checkInsert(index, 1))
     {
-        if (index < mPtrNum) memmove(mPtrs + index + 1, mPtrs + index, sizeof(void*) * (mPtrNum - index));
+        if (index < mPtrNum)
+            memmove(mPtrs + index + 1, mPtrs + index, sizeof(void*) * (mPtrNum - index));
         mPtrs[index] = value;
         ++mPtrNum;
     }
@@ -260,11 +270,17 @@ unsigned long long Random::getU64()
 }
 
 BufferReadStreamSrc::BufferReadStreamSrc(StreamSrc* src, void* buffer, unsigned int size)
-    : mSrc(src), mBuffer(static_cast<unsigned char*>(buffer)), mBufferSize(size), mBufferEndPos(0), mBufferPos(0)
+    : mSrc(src),
+      mBuffer(static_cast<unsigned char*>(buffer)),
+      mBufferSize(size),
+      mBufferEndPos(0),
+      mBufferPos(0)
 {
 }
 
-BufferReadStreamSrc::~BufferReadStreamSrc() {}
+BufferReadStreamSrc::~BufferReadStreamSrc()
+{
+}
 
 int BufferReadStreamSrc::skip(int size)
 {
@@ -303,7 +319,10 @@ unsigned int BufferReadStreamSrc::read(void* destination, unsigned int size)
     return readSize;
 }
 
-unsigned int BufferReadStreamSrc::write(const void*, unsigned int) { return 0; }
+unsigned int BufferReadStreamSrc::write(const void*, unsigned int)
+{
+    return 0;
+}
 
 void BufferReadStreamSrc::rewind()
 {
@@ -312,16 +331,30 @@ void BufferReadStreamSrc::rewind()
     mBufferEndPos = 0;
 }
 
-bool BufferReadStreamSrc::isEOF() { return mSrc->isEOF() && mBufferPos >= mBufferEndPos; }
+bool BufferReadStreamSrc::isEOF()
+{
+    return mSrc->isEOF() && mBufferPos >= mBufferEndPos;
+}
 
 BufferWriteStreamSrc::BufferWriteStreamSrc(StreamSrc* src, void* buffer, unsigned int size)
-    : mSrc(src), mBuffer(static_cast<unsigned char*>(buffer)), mBufferSize(size), mBufferPos(0)
+    : mSrc(src),
+      mBuffer(static_cast<unsigned char*>(buffer)),
+      mBufferSize(size),
+      mBufferPos(0)
 {
 }
 
-BufferWriteStreamSrc::~BufferWriteStreamSrc() {}
-int BufferWriteStreamSrc::skip(int) { return 0; }
-unsigned int BufferWriteStreamSrc::read(void*, unsigned int) { return 0; }
+BufferWriteStreamSrc::~BufferWriteStreamSrc()
+{
+}
+int BufferWriteStreamSrc::skip(int)
+{
+    return 0;
+}
+unsigned int BufferWriteStreamSrc::read(void*, unsigned int)
+{
+    return 0;
+}
 
 unsigned int BufferWriteStreamSrc::write(const void* source, unsigned int size)
 {
@@ -347,7 +380,10 @@ void BufferWriteStreamSrc::rewind()
     mSrc->rewind();
 }
 
-bool BufferWriteStreamSrc::isEOF() { return mSrc->isEOF(); }
+bool BufferWriteStreamSrc::isEOF()
+{
+    return mSrc->isEOF();
+}
 
 bool BufferWriteStreamSrc::flush()
 {
@@ -382,7 +418,9 @@ unsigned int BufferMultiByteTextWriteStreamSrc::write(const void* source, unsign
                 {
                     if ((last & cUtf8TrailMask) == cUtf8TrailBits)
                     {
-                        const int searchLength = static_cast<int>(space) > cUtf8MaxSequenceLength ? static_cast<int>(cUtf8MaxSequenceLength) : static_cast<int>(space);
+                        const int searchLength = static_cast<int>(space) > cUtf8MaxSequenceLength
+                                                     ? static_cast<int>(cUtf8MaxSequenceLength)
+                                                     : static_cast<int>(space);
                         int tailLength = 2;
                         if (searchLength > 1)
                         {
@@ -452,15 +490,42 @@ void writeBinary(StreamSrc* source, Endian::Types endian, T value)
     source->write(&value, sizeof(value));
 }
 
-unsigned char BinaryStreamFormat::readU8(StreamSrc* src, Endian::Types e) { return readBinary<unsigned char>(src, e); }
-unsigned short BinaryStreamFormat::readU16(StreamSrc* src, Endian::Types e) { return readBinary<unsigned short>(src, e); }
-unsigned int BinaryStreamFormat::readU32(StreamSrc* src, Endian::Types e) { return readBinary<unsigned int>(src, e); }
-unsigned long long BinaryStreamFormat::readU64(StreamSrc* src, Endian::Types e) { return readBinary<unsigned long long>(src, e); }
-signed char BinaryStreamFormat::readS8(StreamSrc* src, Endian::Types e) { return readBinary<signed char>(src, e); }
-short BinaryStreamFormat::readS16(StreamSrc* src, Endian::Types e) { return readBinary<short>(src, e); }
-int BinaryStreamFormat::readS32(StreamSrc* src, Endian::Types e) { return readBinary<int>(src, e); }
-long long BinaryStreamFormat::readS64(StreamSrc* src, Endian::Types e) { return readBinary<long long>(src, e); }
-float BinaryStreamFormat::readF32(StreamSrc* src, Endian::Types e) { return readBinary<float>(src, e); }
+unsigned char BinaryStreamFormat::readU8(StreamSrc* src, Endian::Types e)
+{
+    return readBinary<unsigned char>(src, e);
+}
+unsigned short BinaryStreamFormat::readU16(StreamSrc* src, Endian::Types e)
+{
+    return readBinary<unsigned short>(src, e);
+}
+unsigned int BinaryStreamFormat::readU32(StreamSrc* src, Endian::Types e)
+{
+    return readBinary<unsigned int>(src, e);
+}
+unsigned long long BinaryStreamFormat::readU64(StreamSrc* src, Endian::Types e)
+{
+    return readBinary<unsigned long long>(src, e);
+}
+signed char BinaryStreamFormat::readS8(StreamSrc* src, Endian::Types e)
+{
+    return readBinary<signed char>(src, e);
+}
+short BinaryStreamFormat::readS16(StreamSrc* src, Endian::Types e)
+{
+    return readBinary<short>(src, e);
+}
+int BinaryStreamFormat::readS32(StreamSrc* src, Endian::Types e)
+{
+    return readBinary<int>(src, e);
+}
+long long BinaryStreamFormat::readS64(StreamSrc* src, Endian::Types e)
+{
+    return readBinary<long long>(src, e);
+}
+float BinaryStreamFormat::readF32(StreamSrc* src, Endian::Types e)
+{
+    return readBinary<float>(src, e);
+}
 
 void BinaryStreamFormat::readBit(StreamSrc* src, void* data, unsigned int bits)
 {
@@ -472,7 +537,8 @@ void BinaryStreamFormat::readBit(StreamSrc* src, void* data, unsigned int bits)
         unsigned char tail = 0;
         src->read(&tail, 1);
         unsigned char mask = static_cast<unsigned char>(0xffu << remaining);
-        static_cast<unsigned char*>(data)[bytes] = static_cast<unsigned char>((static_cast<unsigned char*>(data)[bytes] & mask) | (tail & ~mask));
+        static_cast<unsigned char*>(data)[bytes] = static_cast<unsigned char>(
+            (static_cast<unsigned char*>(data)[bytes] & mask) | (tail & ~mask));
     }
 }
 
@@ -493,16 +559,46 @@ void BinaryStreamFormat::readString(StreamSrc* src, BufferedSafeStringBase<char>
         src->read(string->getBuffer(), restSize);
 }
 
-void BinaryStreamFormat::readMemBlock(StreamSrc* src, void* data, unsigned int size) { src->read(data, size); }
-void BinaryStreamFormat::writeU8(StreamSrc* src, Endian::Types e, unsigned char v) { writeBinary(src, e, v); }
-void BinaryStreamFormat::writeU16(StreamSrc* src, Endian::Types e, unsigned short v) { writeBinary(src, e, v); }
-void BinaryStreamFormat::writeU32(StreamSrc* src, Endian::Types e, unsigned int v) { writeBinary(src, e, v); }
-void BinaryStreamFormat::writeU64(StreamSrc* src, Endian::Types e, unsigned long long v) { writeBinary(src, e, v); }
-void BinaryStreamFormat::writeS8(StreamSrc* src, Endian::Types e, signed char v) { writeBinary(src, e, v); }
-void BinaryStreamFormat::writeS16(StreamSrc* src, Endian::Types e, short v) { writeBinary(src, e, v); }
-void BinaryStreamFormat::writeS32(StreamSrc* src, Endian::Types e, int v) { writeBinary(src, e, v); }
-void BinaryStreamFormat::writeS64(StreamSrc* src, Endian::Types e, long long v) { writeBinary(src, e, v); }
-void BinaryStreamFormat::writeF32(StreamSrc* src, Endian::Types e, float v) { writeBinary(src, e, v); }
+void BinaryStreamFormat::readMemBlock(StreamSrc* src, void* data, unsigned int size)
+{
+    src->read(data, size);
+}
+void BinaryStreamFormat::writeU8(StreamSrc* src, Endian::Types e, unsigned char v)
+{
+    writeBinary(src, e, v);
+}
+void BinaryStreamFormat::writeU16(StreamSrc* src, Endian::Types e, unsigned short v)
+{
+    writeBinary(src, e, v);
+}
+void BinaryStreamFormat::writeU32(StreamSrc* src, Endian::Types e, unsigned int v)
+{
+    writeBinary(src, e, v);
+}
+void BinaryStreamFormat::writeU64(StreamSrc* src, Endian::Types e, unsigned long long v)
+{
+    writeBinary(src, e, v);
+}
+void BinaryStreamFormat::writeS8(StreamSrc* src, Endian::Types e, signed char v)
+{
+    writeBinary(src, e, v);
+}
+void BinaryStreamFormat::writeS16(StreamSrc* src, Endian::Types e, short v)
+{
+    writeBinary(src, e, v);
+}
+void BinaryStreamFormat::writeS32(StreamSrc* src, Endian::Types e, int v)
+{
+    writeBinary(src, e, v);
+}
+void BinaryStreamFormat::writeS64(StreamSrc* src, Endian::Types e, long long v)
+{
+    writeBinary(src, e, v);
+}
+void BinaryStreamFormat::writeF32(StreamSrc* src, Endian::Types e, float v)
+{
+    writeBinary(src, e, v);
+}
 
 void BinaryStreamFormat::writeBit(StreamSrc* src, const void* data, unsigned int bitNum)
 {
@@ -523,15 +619,34 @@ void BinaryStreamFormat::writeString(StreamSrc* src, const SafeStringBase<char>&
         src->write(&padding, 1);
 }
 
-void BinaryStreamFormat::writeMemBlock(StreamSrc* src, const void* data, unsigned int size) { src->write(data, size); }
-void BinaryStreamFormat::writeDecorationText(StreamSrc*, const SafeStringBase<char>&) {}
-void BinaryStreamFormat::writeNullChar(StreamSrc*) {}
-void BinaryStreamFormat::skip(StreamSrc* src, unsigned int size) { src->skip(static_cast<int>(size)); }
-void BinaryStreamFormat::flush(StreamSrc*) {}
-void BinaryStreamFormat::rewind(StreamSrc* src) { src->rewind(); }
+void BinaryStreamFormat::writeMemBlock(StreamSrc* src, const void* data, unsigned int size)
+{
+    src->write(data, size);
+}
+void BinaryStreamFormat::writeDecorationText(StreamSrc*, const SafeStringBase<char>&)
+{
+}
+void BinaryStreamFormat::writeNullChar(StreamSrc*)
+{
+}
+void BinaryStreamFormat::skip(StreamSrc* src, unsigned int size)
+{
+    src->skip(static_cast<int>(size));
+}
+void BinaryStreamFormat::flush(StreamSrc*)
+{
+}
+void BinaryStreamFormat::rewind(StreamSrc* src)
+{
+    src->rewind();
+}
 
-TextStreamFormat::~TextStreamFormat() {}
-TextStreamFormat::TextStreamFormat() : mSeparator(" \t\n") {}
+TextStreamFormat::~TextStreamFormat()
+{
+}
+TextStreamFormat::TextStreamFormat() : mSeparator(" \t\n")
+{
+}
 void TextStreamFormat::getNextData_(StreamSrc* src)
 {
     char commentEnd = '\0';
@@ -839,7 +954,9 @@ void TextStreamFormat::writeString(StreamSrc* src, const SafeStringBase<char>& s
     src->write(&quote, 1);
     for (int index = 0; size != 0; --size, ++index)
     {
-        if (string.at(index) == '"' || ((index == 0 || !__N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(string.at(index - 1))) && string.at(index) == '"'))
+        if (string.at(index) == '"'
+            || ((index == 0 || !__N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(string.at(index - 1)))
+                && string.at(index) == '"'))
             src->write(&escape, 1);
         src->write(string.cstr() + index, 1);
     }
@@ -861,7 +978,10 @@ void TextStreamFormat::writeMemBlock(StreamSrc* src, const void* data, unsigned 
         src->write(mSeparator.cstr(), 1);
     }
 }
-void TextStreamFormat::writeDecorationText(StreamSrc* s, const SafeStringBase<char>& v) { s->write(v.cstr(), v.calcLength()); }
+void TextStreamFormat::writeDecorationText(StreamSrc* s, const SafeStringBase<char>& v)
+{
+    s->write(v.cstr(), v.calcLength());
+}
 void TextStreamFormat::writeNullChar(StreamSrc* src)
 {
     const char nullChar = 0;
@@ -872,52 +992,169 @@ void TextStreamFormat::skip(StreamSrc* src, unsigned int)
     ScopedLock<Mutex> lock(&sMutex);
     getNextData_(src);
 }
-void TextStreamFormat::rewind(StreamSrc* s) { s->rewind(); }
-void TextStreamFormat::flush(StreamSrc*) {}
+void TextStreamFormat::rewind(StreamSrc* s)
+{
+    s->rewind();
+}
+void TextStreamFormat::flush(StreamSrc*)
+{
+}
 
-Stream::~Stream() {}
-void Stream::skip(unsigned int size) { mFormat->skip(mSrc, size); }
-void Stream::skip(unsigned int size, unsigned int count) { for (unsigned int i = 0; i < count; ++i) mFormat->skip(mSrc, size); }
-void Stream::rewind() { mFormat->rewind(mSrc); }
-bool Stream::isEOF() { return mSrc->isEOF(); }
-ReadStream::~ReadStream() {}
-unsigned char pead::ReadStream::readU8() { return mFormat->readU8(mSrc, mEndian); }
-unsigned short pead::ReadStream::readU16() { return mFormat->readU16(mSrc, mEndian); }
-unsigned int pead::ReadStream::readU32() { return mFormat->readU32(mSrc, mEndian); }
-unsigned long long pead::ReadStream::readU64() { return mFormat->readU64(mSrc, mEndian); }
-signed char pead::ReadStream::readS8() { return mFormat->readS8(mSrc, mEndian); }
-short pead::ReadStream::readS16() { return mFormat->readS16(mSrc, mEndian); }
-int pead::ReadStream::readS32() { return mFormat->readS32(mSrc, mEndian); }
-long long pead::ReadStream::readS64() { return mFormat->readS64(mSrc, mEndian); }
-float pead::ReadStream::readF32() { return mFormat->readF32(mSrc, mEndian); }
-void ReadStream::readBit(void* d, unsigned int n) { mFormat->readBit(mSrc, d, n); }
-void ReadStream::readString(BufferedSafeStringBase<char>* s, unsigned int n) { mFormat->readString(mSrc, s, n); }
-void ReadStream::readMemBlock(void* d, unsigned int n) { mFormat->readMemBlock(mSrc, d, n); }
+Stream::~Stream()
+{
+}
+void Stream::skip(unsigned int size)
+{
+    mFormat->skip(mSrc, size);
+}
+void Stream::skip(unsigned int size, unsigned int count)
+{
+    for (unsigned int i = 0; i < count; ++i)
+        mFormat->skip(mSrc, size);
+}
+void Stream::rewind()
+{
+    mFormat->rewind(mSrc);
+}
+bool Stream::isEOF()
+{
+    return mSrc->isEOF();
+}
+ReadStream::~ReadStream()
+{
+}
+unsigned char pead::ReadStream::readU8()
+{
+    return mFormat->readU8(mSrc, mEndian);
+}
+unsigned short pead::ReadStream::readU16()
+{
+    return mFormat->readU16(mSrc, mEndian);
+}
+unsigned int pead::ReadStream::readU32()
+{
+    return mFormat->readU32(mSrc, mEndian);
+}
+unsigned long long pead::ReadStream::readU64()
+{
+    return mFormat->readU64(mSrc, mEndian);
+}
+signed char pead::ReadStream::readS8()
+{
+    return mFormat->readS8(mSrc, mEndian);
+}
+short pead::ReadStream::readS16()
+{
+    return mFormat->readS16(mSrc, mEndian);
+}
+int pead::ReadStream::readS32()
+{
+    return mFormat->readS32(mSrc, mEndian);
+}
+long long pead::ReadStream::readS64()
+{
+    return mFormat->readS64(mSrc, mEndian);
+}
+float pead::ReadStream::readF32()
+{
+    return mFormat->readF32(mSrc, mEndian);
+}
+void ReadStream::readBit(void* d, unsigned int n)
+{
+    mFormat->readBit(mSrc, d, n);
+}
+void ReadStream::readString(BufferedSafeStringBase<char>* s, unsigned int n)
+{
+    mFormat->readString(mSrc, s, n);
+}
+void ReadStream::readMemBlock(void* d, unsigned int n)
+{
+    mFormat->readMemBlock(mSrc, d, n);
+}
 
 inline WriteStream::~WriteStream()
 {
     if (mSrc)
         flush();
 }
-void WriteStream::flush() { mFormat->flush(mSrc); mSrc->flush(); }
-void WriteStream::writeU8(unsigned char v) { mFormat->writeU8(mSrc, mEndian, v); }
-void WriteStream::writeU16(unsigned short v) { mFormat->writeU16(mSrc, mEndian, v); }
-void WriteStream::writeU32(unsigned int v) { mFormat->writeU32(mSrc, mEndian, v); }
-void WriteStream::writeU64(unsigned long long v) { mFormat->writeU64(mSrc, mEndian, v); }
-void WriteStream::writeS8(signed char v) { mFormat->writeS8(mSrc, mEndian, v); }
-void WriteStream::writeS16(short v) { mFormat->writeS16(mSrc, mEndian, v); }
-void WriteStream::writeS32(int v) { mFormat->writeS32(mSrc, mEndian, v); }
-void WriteStream::writeS64(long long v) { mFormat->writeS64(mSrc, mEndian, v); }
-void WriteStream::writeF32(float v) { mFormat->writeF32(mSrc, mEndian, v); }
-void WriteStream::writeBit(const void* d, unsigned int n) { mFormat->writeBit(mSrc, d, n); }
-void WriteStream::writeString(const SafeStringBase<char>& s, unsigned int n) { mFormat->writeString(mSrc, s, n); }
-void WriteStream::writeMemBlock(const void* d, unsigned int n) { mFormat->writeMemBlock(mSrc, d, n); }
-void WriteStream::writeComment(const SafeStringBase<char>& s) { mFormat->writeDecorationText(mSrc, SafeStringBase<char>("/* ")); mFormat->writeDecorationText(mSrc, s); mFormat->writeDecorationText(mSrc, SafeStringBase<char>(" */")); }
-void WriteStream::writeLineComment(const SafeStringBase<char>& s) { mFormat->writeDecorationText(mSrc, SafeStringBase<char>("// ")); mFormat->writeDecorationText(mSrc, s); mFormat->writeDecorationText(mSrc, SafeStringBase<char>("\n")); }
-void WriteStream::writeDecorationText(const SafeStringBase<char>& s) { mFormat->writeDecorationText(mSrc, s); }
-void WriteStream::writeNullChar() { mFormat->writeNullChar(mSrc); }
+void WriteStream::flush()
+{
+    mFormat->flush(mSrc);
+    mSrc->flush();
+}
+void WriteStream::writeU8(unsigned char v)
+{
+    mFormat->writeU8(mSrc, mEndian, v);
+}
+void WriteStream::writeU16(unsigned short v)
+{
+    mFormat->writeU16(mSrc, mEndian, v);
+}
+void WriteStream::writeU32(unsigned int v)
+{
+    mFormat->writeU32(mSrc, mEndian, v);
+}
+void WriteStream::writeU64(unsigned long long v)
+{
+    mFormat->writeU64(mSrc, mEndian, v);
+}
+void WriteStream::writeS8(signed char v)
+{
+    mFormat->writeS8(mSrc, mEndian, v);
+}
+void WriteStream::writeS16(short v)
+{
+    mFormat->writeS16(mSrc, mEndian, v);
+}
+void WriteStream::writeS32(int v)
+{
+    mFormat->writeS32(mSrc, mEndian, v);
+}
+void WriteStream::writeS64(long long v)
+{
+    mFormat->writeS64(mSrc, mEndian, v);
+}
+void WriteStream::writeF32(float v)
+{
+    mFormat->writeF32(mSrc, mEndian, v);
+}
+void WriteStream::writeBit(const void* d, unsigned int n)
+{
+    mFormat->writeBit(mSrc, d, n);
+}
+void WriteStream::writeString(const SafeStringBase<char>& s, unsigned int n)
+{
+    mFormat->writeString(mSrc, s, n);
+}
+void WriteStream::writeMemBlock(const void* d, unsigned int n)
+{
+    mFormat->writeMemBlock(mSrc, d, n);
+}
+void WriteStream::writeComment(const SafeStringBase<char>& s)
+{
+    mFormat->writeDecorationText(mSrc, SafeStringBase<char>("/* "));
+    mFormat->writeDecorationText(mSrc, s);
+    mFormat->writeDecorationText(mSrc, SafeStringBase<char>(" */"));
+}
+void WriteStream::writeLineComment(const SafeStringBase<char>& s)
+{
+    mFormat->writeDecorationText(mSrc, SafeStringBase<char>("// "));
+    mFormat->writeDecorationText(mSrc, s);
+    mFormat->writeDecorationText(mSrc, SafeStringBase<char>("\n"));
+}
+void WriteStream::writeDecorationText(const SafeStringBase<char>& s)
+{
+    mFormat->writeDecorationText(mSrc, s);
+}
+void WriteStream::writeNullChar()
+{
+    mFormat->writeNullChar(mSrc);
+}
 
-BufferReadStream::~BufferReadStream() { mSrc = NULL; }
+BufferReadStream::~BufferReadStream()
+{
+    mSrc = NULL;
+}
 BufferWriteStream::~BufferWriteStream()
 {
     flush();
@@ -929,11 +1166,25 @@ BufferMultiByteTextWriteStream::~BufferMultiByteTextWriteStream()
     mSrc = NULL;
 }
 
-unsigned int PrintStreamSrc::read(void*, unsigned int) { return 0; }
-unsigned int PrintStreamSrc::write(const void*, unsigned int size) { return size; }
-int PrintStreamSrc::skip(int) { return 0; }
-void PrintStreamSrc::rewind() {}
-bool PrintStreamSrc::isEOF() { return false; }
+unsigned int PrintStreamSrc::read(void*, unsigned int)
+{
+    return 0;
+}
+unsigned int PrintStreamSrc::write(const void*, unsigned int size)
+{
+    return size;
+}
+int PrintStreamSrc::skip(int)
+{
+    return 0;
+}
+void PrintStreamSrc::rewind()
+{
+}
+bool PrintStreamSrc::isEOF()
+{
+    return false;
+}
 PrintWriteStream::~PrintWriteStream()
 {
     flush();
@@ -942,7 +1193,8 @@ PrintWriteStream::~PrintWriteStream()
 
 void Base64::encode(char* destination, const void* source, unsigned int size, bool urlSafe)
 {
-    const char* alphabet = urlSafe ? "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const char* alphabet = urlSafe ? "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+                                   : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     const unsigned char* input = static_cast<const unsigned char*>(source);
     unsigned int inputIndex = 0;
     unsigned int outputIndex = 0;
@@ -958,7 +1210,8 @@ void Base64::encode(char* destination, const void* source, unsigned int size, bo
     if (inputIndex < size)
     {
         unsigned int value = input[inputIndex] << 16;
-        if (inputIndex + 1 < size) value |= input[inputIndex + 1] << 8;
+        if (inputIndex + 1 < size)
+            value |= input[inputIndex + 1] << 8;
         destination[outputIndex++] = alphabet[(value >> 18) & 63];
         destination[outputIndex++] = alphabet[(value >> 12) & 63];
         destination[outputIndex++] = inputIndex + 1 < size ? alphabet[(value >> 6) & 63] : '=';
@@ -966,7 +1219,8 @@ void Base64::encode(char* destination, const void* source, unsigned int size, bo
     }
 }
 
-bool Base64::decode(void* destination, unsigned int capacity, const char* source, unsigned int size, unsigned int* resultSize)
+bool Base64::decode(void* destination, unsigned int capacity, const char* source, unsigned int size,
+                    unsigned int* resultSize)
 {
     unsigned char* output = static_cast<unsigned char*>(destination);
     const unsigned char* input = reinterpret_cast<const unsigned char*>(source);
@@ -992,12 +1246,12 @@ bool Base64::decode(void* destination, unsigned int capacity, const char* source
         for (int position = 0; position < cEncodedBlockSize; ++position)
         {
             const unsigned char character = input[index + position];
-            values[position] = character >= 'A' && character <= 'Z' ? character - 'A'
-                             : character >= 'a' && character <= 'z' ? character - 'a' + 26
-                             : character >= '0' && character <= '9' ? character - '0' + 52
-                             : character == '+' || character == '-' ? 62
-                             : character == '/' || character == '_' ? 63
-                             : cPadding;
+            values[position] = character >= 'A' && character <= 'Z'   ? character - 'A'
+                               : character >= 'a' && character <= 'z' ? character - 'a' + 26
+                               : character >= '0' && character <= '9' ? character - '0' + 52
+                               : character == '+' || character == '-' ? 62
+                               : character == '/' || character == '_' ? 63
+                                                                      : cPadding;
         }
         const unsigned int first = values[0] & cValueMask;
         const unsigned int second = values[1] & cValueMask;
@@ -1044,7 +1298,9 @@ int BitFlagUtil::findOnBitFromRight(unsigned int value, int ordinal)
     return -1;
 }
 
-CoreId::CoreId() : mId(0) {}
+CoreId::CoreId() : mId(0)
+{
+}
 unsigned int CoreInfo::sCoreCount = 1;
 unsigned int CoreInfo::sCoreIdMap[3];
 unsigned int CoreInfo::sCoreIndexTable[3];
@@ -1117,9 +1373,19 @@ IDisposer::~IDisposer()
     }
 }
 
-Heap::Heap(const SafeStringBase<char>& name, Heap* parent, void* start, unsigned int size, HeapDirection direction, bool enableLock)
-    : IDisposer(parent, cHeapNullOption_UseSpecifiedOrContainHeap), mName(name), mStart(start), mSize(size), mParent(parent),
-      mChildren(), mListNode(), mDisposerList(), mDirection(direction), mCS(parent), mFlag(cFlag_EnableWarning),
+Heap::Heap(const SafeStringBase<char>& name, Heap* parent, void* start, unsigned int size, HeapDirection direction,
+           bool enableLock)
+    : IDisposer(parent, cHeapNullOption_UseSpecifiedOrContainHeap),
+      mName(name),
+      mStart(start),
+      mSize(size),
+      mParent(parent),
+      mChildren(),
+      mListNode(),
+      mDisposerList(),
+      mDirection(direction),
+      mCS(parent),
+      mFlag(cFlag_EnableWarning),
       mHeapCheckTag(HeapMgr::issueHeapCheckTag())
 {
     if (enableLock)
@@ -1131,14 +1397,33 @@ Heap::Heap(const SafeStringBase<char>& name, Heap* parent, void* start, unsigned
     mDisposerList.initOffset(offsetof(IDisposer, mListNode));
 }
 
-Heap::~Heap() {}
+Heap::~Heap()
+{
+}
 
-bool Heap::checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface* type) const { return checkDerivedRuntimeTypeInfoStatic(type); }
-const RuntimeTypeInfo::Interface* Heap::getRuntimeTypeInfo() const { return getRuntimeTypeInfoStatic(); }
-bool ExpHeap::checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface* type) const { return checkDerivedRuntimeTypeInfoStatic(type); }
-const RuntimeTypeInfo::Interface* ExpHeap::getRuntimeTypeInfo() const { return getRuntimeTypeInfoStatic(); }
-void* Heap::tryRealloc(void*, unsigned int, int) { return 0; }
-void Heap::dump() const {}
+bool Heap::checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface* type) const
+{
+    return checkDerivedRuntimeTypeInfoStatic(type);
+}
+const RuntimeTypeInfo::Interface* Heap::getRuntimeTypeInfo() const
+{
+    return getRuntimeTypeInfoStatic();
+}
+bool ExpHeap::checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface* type) const
+{
+    return checkDerivedRuntimeTypeInfoStatic(type);
+}
+const RuntimeTypeInfo::Interface* ExpHeap::getRuntimeTypeInfo() const
+{
+    return getRuntimeTypeInfoStatic();
+}
+void* Heap::tryRealloc(void*, unsigned int, int)
+{
+    return 0;
+}
+void Heap::dump() const
+{
+}
 
 void Heap::dumpYAML(WriteStream& stream, int indent) const
 {
@@ -1258,8 +1543,12 @@ void Heap::removeDisposer_(IDisposer* disposer)
     mDisposerList.erase(disposer);
 }
 
-ExpHeap::ExpHeap(const SafeStringBase<char>& name, Heap* parent, void* start, unsigned int size, HeapDirection direction, bool enableLock)
-    : Heap(name, parent, start, size, direction, enableLock), mAllocMode(cAllocMode_FirstFit), mFreeList(), mUseList()
+ExpHeap::ExpHeap(const SafeStringBase<char>& name, Heap* parent, void* start, unsigned int size,
+                 HeapDirection direction, bool enableLock)
+    : Heap(name, parent, start, size, direction, enableLock),
+      mAllocMode(cAllocMode_FirstFit),
+      mFreeList(),
+      mUseList()
 {
     ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
     mFreeList.initOffset(offsetof(MemBlock, mListNode));
@@ -1271,7 +1560,8 @@ ExpHeap::~ExpHeap()
     destruct_();
 }
 
-ExpHeap* ExpHeap::tryCreate(unsigned int size, const SafeStringBase<char>& name, Heap* parent, HeapDirection direction, bool enableLock)
+ExpHeap* ExpHeap::tryCreate(unsigned int size, const SafeStringBase<char>& name, Heap* parent, HeapDirection direction,
+                            bool enableLock)
 {
     if (!parent)
     {
@@ -1299,7 +1589,8 @@ ExpHeap* ExpHeap::tryCreate(unsigned int size, const SafeStringBase<char>& name,
     return heap;
 }
 
-ExpHeap* ExpHeap::create(unsigned int size, const SafeStringBase<char>& name, Heap* parent, HeapDirection direction, bool enableLock)
+ExpHeap* ExpHeap::create(unsigned int size, const SafeStringBase<char>& name, Heap* parent, HeapDirection direction,
+                         bool enableLock)
 {
     return tryCreate(size, name, parent, direction, enableLock);
 }
@@ -1458,8 +1749,8 @@ MemBlock* ExpHeap::findFreeMemBlockFromHead_(unsigned int size, FindMode mode) c
         {
             if (mode == cFindMode_FirstFit)
                 return &*it;
-            if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize) ||
-                (mode == cFindMode_MaxSize && found->mSize < blockSize))
+            if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize)
+                || (mode == cFindMode_MaxSize && found->mSize < blockSize))
                 found = &*it;
         }
     }
@@ -1479,7 +1770,8 @@ MemBlock* ExpHeap::allocFromHead_(unsigned int size)
         pushToUseList_(block);
         if (remainSize > sizeof(MemBlock))
         {
-            MemBlock* freeBlock = new (reinterpret_cast<unsigned char*>(block) + offset + sizeof(MemBlock) + size) MemBlock(remainSize - sizeof(MemBlock));
+            MemBlock* freeBlock = new (reinterpret_cast<unsigned char*>(block) + offset + sizeof(MemBlock) + size)
+                MemBlock(remainSize - sizeof(MemBlock));
             pushToFreeList_(freeBlock);
         }
         else if (remainSize != 0)
@@ -1504,8 +1796,8 @@ MemBlock* ExpHeap::findFreeMemBlockFromHead_(unsigned int size, int alignment, F
             {
                 if (mode == cFindMode_FirstFit)
                     return &*it;
-                if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize) ||
-                    (mode == cFindMode_MaxSize && found->mSize < blockSize))
+                if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize)
+                    || (mode == cFindMode_MaxSize && found->mSize < blockSize))
                     found = &*it;
             }
         }
@@ -1562,8 +1854,8 @@ MemBlock* ExpHeap::findFreeMemBlockFromTail_(unsigned int size, FindMode mode) c
         {
             if (mode == cFindMode_FirstFit)
                 return block;
-            if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize) ||
-                (mode == cFindMode_MaxSize && found->mSize < blockSize))
+            if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize)
+                || (mode == cFindMode_MaxSize && found->mSize < blockSize))
                 found = block;
         }
     }
@@ -1602,8 +1894,8 @@ MemBlock* ExpHeap::findFreeMemBlockFromTail_(unsigned int size, int alignment, F
             {
                 if (mode == cFindMode_FirstFit)
                     return block;
-                if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize) ||
-                    (mode == cFindMode_MaxSize && found->mSize < blockSize))
+                if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize)
+                    || (mode == cFindMode_MaxSize && found->mSize < blockSize))
                     found = block;
             }
         }
@@ -1782,7 +2074,8 @@ void* ExpHeap::resizeFront(void* address, unsigned int size)
         unsigned int freeSpan = span + sizeof(MemBlock) - size;
         if (freeSpan - sizeof(MemBlock) >= sizeof(MemBlock))
         {
-            MemBlock* useBlock = new (reinterpret_cast<unsigned char*>(block) + (freeSpan - sizeof(MemBlock))) MemBlock();
+            MemBlock* useBlock = new (reinterpret_cast<unsigned char*>(block) + (freeSpan - sizeof(MemBlock)))
+                MemBlock();
             useBlock->mMagic = mHeapCheckTag;
             useBlock->mSize = size;
             pushToUseList_(useBlock);
@@ -1879,8 +2172,14 @@ void ExpHeap::freeAll()
     createMaxSizeFreeMemBlock_(this);
 }
 
-void* ExpHeap::getStartAddress() const { return mStart; }
-void* ExpHeap::getEndAddress() const { return static_cast<unsigned char*>(mStart) + mSize; }
+void* ExpHeap::getStartAddress() const
+{
+    return mStart;
+}
+void* ExpHeap::getEndAddress() const
+{
+    return static_cast<unsigned char*>(mStart) + mSize;
+}
 
 unsigned int ExpHeap::getFreeSize() const
 {
@@ -1891,7 +2190,10 @@ unsigned int ExpHeap::getFreeSize() const
     return freeSize;
 }
 
-unsigned int ExpHeap::getSize() const { return mSize; }
+unsigned int ExpHeap::getSize() const
+{
+    return mSize;
+}
 
 unsigned int ExpHeap::getMaxAllocatableSize(int alignment) const
 {
@@ -1922,7 +2224,8 @@ unsigned int ExpHeap::getMaxAllocatableSize(int alignment) const
             if (!block)
                 return 0;
             uintptr_t memory = reinterpret_cast<uintptr_t>(block->memory());
-            return block->mSize - (((memory + directedAlignment - 1) & ~static_cast<uintptr_t>(directedAlignment - 1)) - memory);
+            return block->mSize
+                   - (((memory + directedAlignment - 1) & ~static_cast<uintptr_t>(directedAlignment - 1)) - memory);
         }
         block = findFreeMemBlockFromHead_(4, cFindMode_MaxSize);
     }
@@ -1948,10 +2251,22 @@ bool ExpHeap::isInclude(const void* address) const
     return begin <= address && address < start + size;
 }
 
-bool ExpHeap::isEmpty() const { return mUseList.size() == 0; }
-bool ExpHeap::isFreeable() const { return true; }
-bool ExpHeap::isResizable() const { return true; }
-bool ExpHeap::isAdjustable() const { return true; }
+bool ExpHeap::isEmpty() const
+{
+    return mUseList.size() == 0;
+}
+bool ExpHeap::isFreeable() const
+{
+    return true;
+}
+bool ExpHeap::isResizable() const
+{
+    return true;
+}
+bool ExpHeap::isAdjustable() const
+{
+    return true;
+}
 
 void ExpHeap::dump() const
 {
@@ -1989,10 +2304,18 @@ void ExpHeap::dumpYAML(WriteStream& stream, int indent) const
     stream.writeDecorationText(line);
 }
 
-void ExpHeap::setAllocMode(AllocMode mode) { mAllocMode = mode; }
-ExpHeap::AllocMode ExpHeap::getAllocMode() const { return mAllocMode; }
+void ExpHeap::setAllocMode(AllocMode mode)
+{
+    mAllocMode = mode;
+}
+ExpHeap::AllocMode ExpHeap::getAllocMode() const
+{
+    return mAllocMode;
+}
 
-FindContainHeapCache::FindContainHeapCache() : mHeap(0) {}
+FindContainHeapCache::FindContainHeapCache() : mHeap(0)
+{
+}
 
 bool FindContainHeapCache::tryRemoveHeap(Heap* heap)
 {
@@ -2010,8 +2333,12 @@ HeapMgr::RootHeaps HeapMgr::sRootHeaps;
 CriticalSection HeapMgr::sHeapTreeLockCS;
 HeapMgr::IndependentHeaps HeapMgr::sIndependentHeaps;
 
-HeapMgr::HeapMgr() : mAllocFailedCallback(0) {}
-HeapMgr::~HeapMgr() {}
+HeapMgr::HeapMgr() : mAllocFailedCallback(0)
+{
+}
+HeapMgr::~HeapMgr()
+{
+}
 
 void HeapMgr::createRootHeap_()
 {
@@ -2203,35 +2530,84 @@ CriticalSection::CriticalSection() : IDisposer(), mCriticalSectionInner()
 {
     OSFastMutex_Init(&mCriticalSectionInner, NULL);
 }
-CriticalSection::CriticalSection(Heap* heap) : IDisposer(heap, cHeapNullOption_UseSpecifiedOrContainHeap), mCriticalSectionInner()
+CriticalSection::CriticalSection(Heap* heap)
+    : IDisposer(heap, cHeapNullOption_UseSpecifiedOrContainHeap),
+      mCriticalSectionInner()
 {
     OSFastMutex_Init(&mCriticalSectionInner, NULL);
 }
-CriticalSection::~CriticalSection() {}
-void CriticalSection::lock() { OSFastMutex_Lock(&mCriticalSectionInner); }
-void CriticalSection::unlock() { OSFastMutex_Unlock(&mCriticalSectionInner); }
+CriticalSection::~CriticalSection()
+{
+}
+void CriticalSection::lock()
+{
+    OSFastMutex_Lock(&mCriticalSectionInner);
+}
+void CriticalSection::unlock()
+{
+    OSFastMutex_Unlock(&mCriticalSectionInner);
+}
 
 pead::Mutex::Mutex() : IDisposer(), mCriticalSectionInner()
 {
     OSFastMutex_Init(&mCriticalSectionInner, NULL);
 }
-Mutex::~Mutex() {}
-void Mutex::lock() { OSFastMutex_Lock(&mCriticalSectionInner); }
-void Mutex::unlock() { OSFastMutex_Unlock(&mCriticalSectionInner); }
+Mutex::~Mutex()
+{
+}
+void Mutex::lock()
+{
+    OSFastMutex_Lock(&mCriticalSectionInner);
+}
+void Mutex::unlock()
+{
+    OSFastMutex_Unlock(&mCriticalSectionInner);
+}
 
-long long TickSpan::toNanoSeconds() const { return OSTicksToNanoseconds(mTicks); }
-void TickSpan::setNanoSeconds(long long nanoSeconds) { mTicks = OSNanosecondsToTicks(nanoSeconds); }
+long long TickSpan::toNanoSeconds() const
+{
+    return OSTicksToNanoseconds(mTicks);
+}
+void TickSpan::setNanoSeconds(long long nanoSeconds)
+{
+    mTicks = OSNanosecondsToTicks(nanoSeconds);
+}
 
-pead::Event::Event(bool manualReset) : IDisposer() { initialize(manualReset); }
-Event::~Event() {}
-void Event::initialize(bool manualReset) { OSInitEvent(reinterpret_cast<OSEvent*>(mStorage), false, manualReset ? OS_EVENT_MODE_MANUAL : OS_EVENT_MODE_AUTO); }
-void Event::wait() { OSWaitEvent(reinterpret_cast<OSEvent*>(mStorage)); }
-bool Event::wait(TickSpan timeout) { return OSWaitEventWithTimeout(reinterpret_cast<OSEvent*>(mStorage), timeout.toNanoSeconds()); }
-void Event::setSignal() { OSSignalEvent(reinterpret_cast<OSEvent*>(mStorage)); }
-void Event::resetSignal() { OSResetEvent(reinterpret_cast<OSEvent*>(mStorage)); }
+pead::Event::Event(bool manualReset) : IDisposer()
+{
+    initialize(manualReset);
+}
+Event::~Event()
+{
+}
+void Event::initialize(bool manualReset)
+{
+    OSInitEvent(reinterpret_cast<OSEvent*>(mStorage), false, manualReset ? OS_EVENT_MODE_MANUAL : OS_EVENT_MODE_AUTO);
+}
+void Event::wait()
+{
+    OSWaitEvent(reinterpret_cast<OSEvent*>(mStorage));
+}
+bool Event::wait(TickSpan timeout)
+{
+    return OSWaitEventWithTimeout(reinterpret_cast<OSEvent*>(mStorage), timeout.toNanoSeconds());
+}
+void Event::setSignal()
+{
+    OSSignalEvent(reinterpret_cast<OSEvent*>(mStorage));
+}
+void Event::resetSignal()
+{
+    OSResetEvent(reinterpret_cast<OSEvent*>(mStorage));
+}
 
-MessageQueue::MessageQueue() : mBuffer(0), mQueue() {}
-MessageQueue::~MessageQueue() { free(); }
+MessageQueue::MessageQueue() : mBuffer(0), mQueue()
+{
+}
+MessageQueue::~MessageQueue()
+{
+    free();
+}
 void MessageQueue::allocate(int size, Heap* heap)
 {
     if (size > 0)
@@ -2265,13 +2641,28 @@ bool MessageQueue::jam(int message, BlockType block)
 {
     OSMessage msg;
     msg.message = reinterpret_cast<void*>(message);
-    return OSSendMessage(&mQueue, &msg, static_cast<OSMessageFlags>((block == cBlock ? OS_MESSAGE_FLAGS_BLOCKING : OS_MESSAGE_FLAGS_NONE) | OS_MESSAGE_FLAGS_HIGH_PRIORITY)) != FALSE;
+    return OSSendMessage(
+               &mQueue, &msg,
+               static_cast<OSMessageFlags>((block == cBlock ? OS_MESSAGE_FLAGS_BLOCKING : OS_MESSAGE_FLAGS_NONE)
+                                           | OS_MESSAGE_FLAGS_HIGH_PRIORITY))
+           != FALSE;
 }
 
 Thread::Thread(Heap* heap, OSThread* thread)
-    : IDisposer(), mName("pead::MainThread"), mMessageQueue(), mStackSize(0), mListNode(), mCurrentHeap(0),
-      mFindContainHeapCache(), mBlockType(MessageQueue::cNoBlock), mQuitMsg(cDefaultQuitMsg),
-      mId(reinterpret_cast<uintptr_t>(thread)), mState(cState_Running), mAffinity(1), mThread(thread), mStack(0),
+    : IDisposer(),
+      mName("pead::MainThread"),
+      mMessageQueue(),
+      mStackSize(0),
+      mListNode(),
+      mCurrentHeap(0),
+      mFindContainHeapCache(),
+      mBlockType(MessageQueue::cNoBlock),
+      mQuitMsg(cDefaultQuitMsg),
+      mId(reinterpret_cast<uintptr_t>(thread)),
+      mState(cState_Running),
+      mAffinity(1),
+      mThread(thread),
+      mStack(0),
       mPriority(OSGetThreadPriority(thread))
 {
     mListNode.mData = this;
@@ -2279,10 +2670,22 @@ Thread::Thread(Heap* heap, OSThread* thread)
     mStack = static_cast<unsigned char*>(thread->stackEnd);
     mStackSize = static_cast<unsigned char*>(thread->stackStart) - mStack;
 }
-Thread::Thread(const SafeStringBase<char>& name, Heap* heap, int priority, MessageQueue::BlockType blockType, int quitMsg, int stackSize, int messageQueueSize)
-    : IDisposer(), mName(name), mMessageQueue(), mStackSize(stackSize), mListNode(), mCurrentHeap(0),
-      mFindContainHeapCache(), mBlockType(blockType), mQuitMsg(quitMsg), mId(0), mState(cState_Initialized),
-      mAffinity(1), mStack(0), mPriority(priority)
+Thread::Thread(const SafeStringBase<char>& name, Heap* heap, int priority, MessageQueue::BlockType blockType,
+               int quitMsg, int stackSize, int messageQueueSize)
+    : IDisposer(),
+      mName(name),
+      mMessageQueue(),
+      mStackSize(stackSize),
+      mListNode(),
+      mCurrentHeap(0),
+      mFindContainHeapCache(),
+      mBlockType(blockType),
+      mQuitMsg(quitMsg),
+      mId(0),
+      mState(cState_Initialized),
+      mAffinity(1),
+      mStack(0),
+      mPriority(priority)
 {
     mListNode.mData = this;
     mMessageQueue.allocate(messageQueueSize, heap);
@@ -2320,7 +2723,14 @@ Thread::~Thread()
         mMessageQueue.free();
     }
 }
-void Thread::waitDone() { if (mState != cState_Initialized && mState != cState_Released) { OSJoinThread(mThread, 0); mState = cState_Released; } }
+void Thread::waitDone()
+{
+    if (mState != cState_Initialized && mState != cState_Released)
+    {
+        OSJoinThread(mThread, 0);
+        mState = cState_Released;
+    }
+}
 int Thread::cafeThreadFunc_(int, void* context)
 {
     Thread* thread = static_cast<Thread*>(context);
@@ -2332,8 +2742,8 @@ unsigned int Thread::start()
 {
     if (mState != cState_Initialized)
         return 0;
-    if (!OSCreateThread(mThread, reinterpret_cast<OSThreadEntryPointFn>(cafeThreadFunc_), 0, reinterpret_cast<char*>(this),
-                        mStack + mStackSize, mStackSize, mPriority, 0))
+    if (!OSCreateThread(mThread, reinterpret_cast<OSThreadEntryPointFn>(cafeThreadFunc_), 0,
+                        reinterpret_cast<char*>(this), mStack + mStackSize, mStackSize, mPriority, 0))
         return 0;
     OSSetThreadName(mThread, mName.cstr());
     unsigned short platformMask = 0;
@@ -2348,8 +2758,14 @@ unsigned int Thread::start()
     OSResumeThread(mThread);
     return 1;
 }
-void Thread::sleep(TickSpan span) { OSSleepTicks(span.getTicks()); }
-void Thread::yield() { OSYieldThread(); }
+void Thread::sleep(TickSpan span)
+{
+    OSSleepTicks(span.getTicks());
+}
+void Thread::yield()
+{
+    OSYieldThread();
+}
 void Thread::setPriority(int priority)
 {
     mPriority = priority;
@@ -2357,7 +2773,10 @@ void Thread::setPriority(int priority)
         return;
     OSSetThreadPriority(mThread, priority);
 }
-int Thread::getPriority() const { return mPriority; }
+int Thread::getPriority() const
+{
+    return mPriority;
+}
 void Thread::setAffinity(const CoreIdMask& affinity)
 {
     mAffinity = affinity;
@@ -2369,11 +2788,30 @@ void Thread::setAffinity(const CoreIdMask& affinity)
     }
     OSSetThreadAffinity(mThread, platformMask);
 }
-void* Thread::getStackCheckStartAddress_() const { return mStack ? mStack + 4 : 0; }
-void Thread::destroy() { waitDone(); }
-MessageQueue* Thread::getMessageQueue() const { return const_cast<MessageQueue*>(&mMessageQueue); }
-bool Thread::sendMessage(int message, MessageQueue::BlockType block) { if (!message || mState == cState_Terminated || mState == cState_Released || message == mQuitMsg) return false; return mMessageQueue.push(message, block); }
-int Thread::recvMessage(MessageQueue::BlockType block) { if (mState == cState_Quitting) return 0; return mMessageQueue.pop(block); }
+void* Thread::getStackCheckStartAddress_() const
+{
+    return mStack ? mStack + 4 : 0;
+}
+void Thread::destroy()
+{
+    waitDone();
+}
+MessageQueue* Thread::getMessageQueue() const
+{
+    return const_cast<MessageQueue*>(&mMessageQueue);
+}
+bool Thread::sendMessage(int message, MessageQueue::BlockType block)
+{
+    if (!message || mState == cState_Terminated || mState == cState_Released || message == mQuitMsg)
+        return false;
+    return mMessageQueue.push(message, block);
+}
+int Thread::recvMessage(MessageQueue::BlockType block)
+{
+    if (mState == cState_Quitting)
+        return 0;
+    return mMessageQueue.pop(block);
+}
 void Thread::quit(bool isJam)
 {
     if (isDone())
@@ -2385,30 +2823,72 @@ void Thread::quit(bool isJam)
     else
         mMessageQueue.push(mQuitMsg, MessageQueue::cBlock);
 }
-void Thread::quitAndDestroySingleThread(bool jam) { quitAndWaitDoneSingleThread(jam); destroy(); }
-void Thread::quitAndWaitDoneSingleThread(bool jam) { quit(jam); waitDone(); }
-MessageQueue::BlockType Thread::getBlockType() const { return mBlockType; }
-int Thread::getStackSize() const { return mStackSize; }
+void Thread::quitAndDestroySingleThread(bool jam)
+{
+    quitAndWaitDoneSingleThread(jam);
+    destroy();
+}
+void Thread::quitAndWaitDoneSingleThread(bool jam)
+{
+    quit(jam);
+    waitDone();
+}
+MessageQueue::BlockType Thread::getBlockType() const
+{
+    return mBlockType;
+}
+int Thread::getStackSize() const
+{
+    return mStackSize;
+}
 void Thread::run_()
 {
     int message;
     while ((message = mMessageQueue.pop(mBlockType)) != mQuitMsg)
         calc_(message);
 }
-int Thread::calcStackUsedSizePeak() const { return 0; }
+int Thread::calcStackUsedSizePeak() const
+{
+    return 0;
+}
 
-MainThread::~MainThread() { mState = cState_Terminated; }
-void MainThread::destroy() {}
-void MainThread::quit(bool) {}
-void MainThread::waitDone() {}
-void MainThread::quitAndDestroySingleThread(bool) {}
-void MainThread::setPriority(int) {}
-void MainThread::calc_(int) {}
+MainThread::~MainThread()
+{
+    mState = cState_Terminated;
+}
+void MainThread::destroy()
+{
+}
+void MainThread::quit(bool)
+{
+}
+void MainThread::waitDone()
+{
+}
+void MainThread::quitAndDestroySingleThread(bool)
+{
+}
+void MainThread::setPriority(int)
+{
+}
+void MainThread::calc_(int)
+{
+}
 
-DelegateThread::DelegateThread(const SafeStringBase<char>& name, IDelegate2<Thread*, int>* delegate, Heap* heap, int priority, MessageQueue::BlockType block, int quitMsg, int stackSize, int messageQueueSize)
-    : Thread(name, heap, priority, block, quitMsg, stackSize, messageQueueSize), mDelegate(delegate) {}
-DelegateThread::~DelegateThread() {}
-void DelegateThread::calc_(int message) { mDelegate->invoke(this, message); }
+DelegateThread::DelegateThread(const SafeStringBase<char>& name, IDelegate2<Thread*, int>* delegate, Heap* heap,
+                               int priority, MessageQueue::BlockType block, int quitMsg, int stackSize,
+                               int messageQueueSize)
+    : Thread(name, heap, priority, block, quitMsg, stackSize, messageQueueSize),
+      mDelegate(delegate)
+{
+}
+DelegateThread::~DelegateThread()
+{
+}
+void DelegateThread::calc_(int message)
+{
+    mDelegate->invoke(this, message);
+}
 
 ThreadMgr* ThreadMgr::sInstance = 0;
 ThreadMgr::SingletonDisposer_* ThreadMgr::SingletonDisposer_::sStaticDisposer = 0;
@@ -2439,7 +2919,8 @@ void HeapMgr::removeFromFindContainHeapCache_(Heap* heap)
     {
         threadMgr->mListCS.lock();
         bool removed = true;
-        for (TListNode<Thread*>* node = threadMgr->mList.begin(); node != threadMgr->mList.end(); node = ThreadMgr::ThreadList::next(node))
+        for (TListNode<Thread*>* node = threadMgr->mList.begin(); node != threadMgr->mList.end();
+             node = ThreadMgr::ThreadList::next(node))
         {
             if (!node->mData->getFindContainHeapCache()->tryRemoveHeap(heap))
             {
@@ -2455,7 +2936,9 @@ void HeapMgr::removeFromFindContainHeapCache_(Heap* heap)
     threadMgr->mListCS.unlock();
 }
 
-ThreadMgr::ThreadMgr() : mList(), mListCS(), mMainThread(0) {}
+ThreadMgr::ThreadMgr() : mList(), mListCS(), mMainThread(0)
+{
+}
 ThreadMgr::~ThreadMgr()
 {
     ScopedLock<CriticalSection> lock(&mListCS);
@@ -2507,7 +2990,10 @@ unsigned int ThreadMgr::getCurrentThreadID_()
 {
     return reinterpret_cast<uintptr_t>(OSGetCurrentThread());
 }
-void ThreadMgr::initialize(Heap* heap) { initMainThread_(heap); }
+void ThreadMgr::initialize(Heap* heap)
+{
+    initMainThread_(heap);
+}
 void ThreadMgr::destroyMainThread_()
 {
     if (mMainThread)
@@ -2517,7 +3003,10 @@ void ThreadMgr::destroyMainThread_()
         mMainThread = 0;
     }
 }
-void ThreadMgr::destroy() { destroyMainThread_(); }
+void ThreadMgr::destroy()
+{
+    destroyMainThread_();
+}
 Thread* ThreadMgr::getCurrentThread() const
 {
     ScopedLock<CriticalSection> lock(&mListCS);
@@ -2542,30 +3031,53 @@ void ThreadMgr::waitDoneMultipleThread(Thread* const* threads, int count)
     for (int index = 0; index < count; ++index)
         threads[index]->waitDone();
 }
-void ThreadMgr::quitAndWaitDoneMultipleThread(Thread** threads, int count, bool jam) { for (int index = 0; index < count; ++index) threads[index]->quit(jam); waitDoneMultipleThread(threads, count); }
+void ThreadMgr::quitAndWaitDoneMultipleThread(Thread** threads, int count, bool jam)
+{
+    for (int index = 0; index < count; ++index)
+        threads[index]->quit(jam);
+    waitDoneMultipleThread(threads, count);
+}
 
-PrintOutput::~PrintOutput() {}
-void PrintOutput::writeLineBreak() { write("\n", 1); }
+PrintOutput::~PrintOutput()
+{
+}
+void PrintOutput::writeLineBreak()
+{
+    write("\n", 1);
+}
 BufferingPrintOutput::~BufferingPrintOutput()
 {
     mStreamSrc.BufferMultiByteTextWriteStreamSrc::write(&SafeStringBase<char>::cNullChar, sizeof(char));
     mStreamSrc.BufferMultiByteNullTerminatedTextWriteStreamSrc::flush();
 }
-void BufferingPrintOutput::write(const char* text, int length) { mStreamSrc.BufferMultiByteTextWriteStreamSrc::write(text, length); }
-StringPrintOutput::~StringPrintOutput() {}
+void BufferingPrintOutput::write(const char* text, int length)
+{
+    mStreamSrc.BufferMultiByteTextWriteStreamSrc::write(text, length);
+}
+StringPrintOutput::~StringPrintOutput()
+{
+}
 void StringPrintOutput::write(const char* text, int length)
 {
     BufferedSafeStringBase<char> buffer(mString, mPosition);
     mPosition += buffer.copy(SafeStringBase<char>(text), length);
 }
-StringCutOffPrintOutput::~StringCutOffPrintOutput() {}
+StringCutOffPrintOutput::~StringCutOffPrintOutput()
+{
+}
 void StringCutOffPrintOutput::write(const char* text, int length)
 {
     BufferedSafeStringBase<char> buffer(mString, mPosition);
     mPosition += buffer.copy(SafeStringBase<char>(text), length);
 }
-StreamPrintOutput::~StreamPrintOutput() { mSrc->flush(); }
-void StreamPrintOutput::write(const char* text, int length) { mSrc->write(text, length); }
+StreamPrintOutput::~StreamPrintOutput()
+{
+    mSrc->flush();
+}
+void StreamPrintOutput::write(const char* text, int length)
+{
+    mSrc->write(text, length);
+}
 
 bool PrintFormatter::proceedToFormatMark_(char* specifier)
 {
@@ -2614,8 +3126,8 @@ bool PrintFormatter::proceedToFormatMark_(char* specifier)
         for (int index = 1;; ++index)
         {
             const char character = segment[index];
-            if (character != '+' && character != '-' && character != ' ' && character != '#' && character != 'h' &&
-                character != 'l' && character != 'L' && character != '.' && !(character >= '0' && character <= '9'))
+            if (character != '+' && character != '-' && character != ' ' && character != '#' && character != 'h'
+                && character != 'l' && character != 'L' && character != '.' && !(character >= '0' && character <= '9'))
             {
                 if (character != 0)
                 {
@@ -2658,7 +3170,8 @@ void PrintFormatter::outputString_(const char* option, PrintOutput* output, cons
     {
         FixedSafeString128 converted;
         SafeStringBase<char> source(text);
-        int convertedLength = StringUtil::convertUtf8ToSjis(converted.getBuffer(), converted.getBufferSize(), source.cstr(), -1);
+        int convertedLength = StringUtil::convertUtf8ToSjis(converted.getBuffer(), converted.getBufferSize(),
+                                                            source.cstr(), -1);
         if (option[1] == '-')
         {
             output->write(text, length == -1 ? strlen(text) : length);
@@ -2875,7 +3388,8 @@ void PrintFormatter::out<wchar_t>(const wchar_t* value, const char* option, Prin
     if (isString)
     {
         FixedSafeString<256> text;
-        int length = StringUtil::convertUtf16ToUtf8(text.getBuffer(), text.getBufferSize(), SafeStringBase<wchar_t>(value).cstr(), -1);
+        int length = StringUtil::convertUtf16ToUtf8(text.getBuffer(), text.getBufferSize(),
+                                                    SafeStringBase<wchar_t>(value).cstr(), -1);
         outputString_(option, output, text.cstr(), length);
         return;
     }
@@ -2892,13 +3406,15 @@ void PrintFormatter::out<TickSpan>(const TickSpan& value, const char*, PrintOutp
 }
 
 template <>
-void PrintFormatter::OutImpl<char, SafeStringBase>::out(const SafeStringBase<char>& value, const char* option, PrintOutput* output)
+void PrintFormatter::OutImpl<char, SafeStringBase>::out(const SafeStringBase<char>& value, const char* option,
+                                                        PrintOutput* output)
 {
     outputString_(option, output, value.cstr(), value.calcLength());
 }
 
 template <>
-void PrintFormatter::OutImpl<char, BufferedSafeStringBase>::out(const BufferedSafeStringBase<char>& value, const char* option, PrintOutput* output)
+void PrintFormatter::OutImpl<char, BufferedSafeStringBase>::out(const BufferedSafeStringBase<char>& value,
+                                                                const char* option, PrintOutput* output)
 {
     outputString_(option, output, value.cstr(), value.calcLength());
 }
@@ -2909,7 +3425,8 @@ void PrintFormatter::out<Heap>(const Heap& heap, const char*, PrintOutput* outpu
     ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&heap.mCS), heap.isEnableLock());
     FixedSafeString128 text;
     OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("\n"), 0, output);
-    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("==================================================\n"), 0, output);
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("==================================================\n"), 0,
+                                       output);
     text.format("              Name: %s\n", heap.mName.cstr());
     OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
     text.format("             Range: [0x%08X - 0x%08X)\n", heap.getStartAddress(), heap.getEndAddress());
@@ -2927,7 +3444,8 @@ void PrintFormatter::out<Heap>(const Heap& heap, const char*, PrintOutput* outpu
     OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
     text.format("MaxAllocatableSize: %u\n", heap.getMaxAllocatableSize(4));
     OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
-    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("--------------------------------------------------\n"), 0, output);
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("--------------------------------------------------\n"), 0,
+                                       output);
 }
 
 template <>
@@ -2936,17 +3454,20 @@ void PrintFormatter::out<ExpHeap>(const ExpHeap& heap, const char*, PrintOutput*
     ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&heap.mCS), heap.isEnableLock());
     out<Heap>(heap, 0, output);
     FixedSafeString128 text;
-    text.format("         AllocMode: %s\n", heap.getAllocMode() == ExpHeap::cAllocMode_FirstFit ? "First Fit" : "Best Fit");
+    text.format("         AllocMode: %s\n",
+                heap.getAllocMode() == ExpHeap::cAllocMode_FirstFit ? "First Fit" : "Best Fit");
     OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
     text.format("      UseList size: %d\n", heap.mUseList.size());
     OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
     text.format("     FreeList size: %d\n", heap.mFreeList.size());
     OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
-    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("==================================================\n"), 0, output);
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("==================================================\n"), 0,
+                                       output);
 }
 
 template <>
-void PrintFormatter::OutImpl<unsigned char, BitFlag>::out(const BitFlag<unsigned char>& value, const char* option, PrintOutput* output)
+void PrintFormatter::OutImpl<unsigned char, BitFlag>::out(const BitFlag<unsigned char>& value, const char* option,
+                                                          PrintOutput* output)
 {
     unsigned char bits = value.getDirect();
     FixedSafeString<32> text;
@@ -2959,7 +3480,8 @@ void PrintFormatter::OutImpl<unsigned char, BitFlag>::out(const BitFlag<unsigned
 }
 
 template <>
-void PrintFormatter::OutImpl<unsigned short, BitFlag>::out(const BitFlag<unsigned short>& value, const char* option, PrintOutput* output)
+void PrintFormatter::OutImpl<unsigned short, BitFlag>::out(const BitFlag<unsigned short>& value, const char* option,
+                                                           PrintOutput* output)
 {
     unsigned short bits = value.getDirect();
     FixedSafeString<32> text;
@@ -2972,7 +3494,8 @@ void PrintFormatter::OutImpl<unsigned short, BitFlag>::out(const BitFlag<unsigne
 }
 
 template <>
-void PrintFormatter::OutImpl<unsigned int, BitFlag>::out(const BitFlag<unsigned int>& value, const char* option, PrintOutput* output)
+void PrintFormatter::OutImpl<unsigned int, BitFlag>::out(const BitFlag<unsigned int>& value, const char* option,
+                                                         PrintOutput* output)
 {
     unsigned int bits = value.getDirect();
     FixedSafeString<32> text;
@@ -2985,7 +3508,8 @@ void PrintFormatter::OutImpl<unsigned int, BitFlag>::out(const BitFlag<unsigned 
 }
 
 template <>
-void PrintFormatter::OutImpl<unsigned long long, BitFlag>::out(const BitFlag<unsigned long long>& value, const char* option, PrintOutput* output)
+void PrintFormatter::OutImpl<unsigned long long, BitFlag>::out(const BitFlag<unsigned long long>& value,
+                                                               const char* option, PrintOutput* output)
 {
     unsigned long long bits = value.getDirect();
     FixedSafeString<32> text;
@@ -2997,7 +3521,10 @@ void PrintFormatter::OutImpl<unsigned long long, BitFlag>::out(const BitFlag<uns
     output->write(text.cstr(), length);
 }
 
-void PrintConfig::registerFinalCallback(IDelegate1<const PrintEventArg&>* callback) { sFinalPrintCallback = callback; }
+void PrintConfig::registerFinalCallback(IDelegate1<const PrintEventArg&>* callback)
+{
+    sFinalPrintCallback = callback;
+}
 void PrintConfig::execCallbacks(const PrintEventArg& event)
 {
     if (sPrintEventEnabled)
@@ -3015,13 +3542,17 @@ int StringUtil::__N_18_peadStringUtil_cpp_6714fef4::checkAndConvertDecChar_(char
 
 int StringUtil::__N_18_peadStringUtil_cpp_6714fef4::checkAndConvertHexChar_(char character)
 {
-    if (character >= 'A' && character <= 'Z') character = static_cast<char>(character + ('a' - 'A'));
-    if (character >= '0' && character <= '9') return character - '0';
-    if (character >= 'a' && character <= 'f') return character - 'a' + 10;
+    if (character >= 'A' && character <= 'Z')
+        character = static_cast<char>(character + ('a' - 'A'));
+    if (character >= '0' && character <= '9')
+        return character - '0';
+    if (character >= 'a' && character <= 'f')
+        return character - 'a' + 10;
     return -1;
 }
 
-void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseSignImpl_(int* sign, SafeStringBase<char>::iterator& current)
+void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseSignImpl_(int* sign,
+                                                                       SafeStringBase<char>::iterator& current)
 {
     *sign = 1;
     char character = *current;
@@ -3036,10 +3567,13 @@ void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseSignImpl_(int* sign
     }
 }
 
-bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParsePrefixImpl_(int* base, SafeStringBase<char>::iterator& current, const SafeStringBase<char>& text)
+bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParsePrefixImpl_(int* base,
+                                                                         SafeStringBase<char>::iterator& current,
+                                                                         const SafeStringBase<char>& text)
 {
     char character = *current;
-    if (character < '0' || character > '9') return false;
+    if (character < '0' || character > '9')
+        return false;
     if (character == '0')
     {
         char next = text.at(current.getIndex() + 1);
@@ -3068,7 +3602,9 @@ bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParsePrefixImpl_(int* ba
 }
 
 template <typename T>
-bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseNumberImpl_(T* value, SafeStringBase<char>::iterator& current, int base)
+bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseNumberImpl_(T* value,
+                                                                         SafeStringBase<char>::iterator& current,
+                                                                         int base)
 {
     T result = 0;
     bool parsed = false;
@@ -3093,7 +3629,8 @@ bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseNumberImpl_(T* valu
 }
 
 template <typename T>
-bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseDecImpl_(T* value, SafeStringBase<char>::iterator& current, int sign)
+bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseDecImpl_(T* value, SafeStringBase<char>::iterator& current,
+                                                                      int sign)
 {
     T result = 0;
     bool parsed = false;
@@ -3146,7 +3683,8 @@ bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseImpl_(T* value, con
 }
 
 template <typename T>
-void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseUnderDecimalPointImpl_(T* value, SafeStringBase<char>::iterator& current, T sign, T integer)
+void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseUnderDecimalPointImpl_(
+    T* value, SafeStringBase<char>::iterator& current, T sign, T integer)
 {
     T numerator = 0;
     T denominator = 1;
@@ -3164,7 +3702,8 @@ void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseUnderDecimalPointIm
 }
 
 template <typename T>
-bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseDecimalFractionImpl_(T* value, const SafeStringBase<char>& text)
+bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseDecimalFractionImpl_(T* value,
+                                                                                  const SafeStringBase<char>& text)
 {
     SafeStringBase<char>::iterator current(&text);
     int sign;
@@ -3180,7 +3719,8 @@ bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseDecimalFractionImpl
 }
 
 template <typename T>
-T pead::StringUtil::__N_18_peadStringUtil_cpp_6714fef4::parseImpl_(const SafeStringBase<char>& text, CardinalNumber cardinal)
+T pead::StringUtil::__N_18_peadStringUtil_cpp_6714fef4::parseImpl_(const SafeStringBase<char>& text,
+                                                                   CardinalNumber cardinal)
 {
     T value = 0;
     tryParseImpl_(&value, text, cardinal);
@@ -3286,12 +3826,18 @@ const wchar_t* FormatParser16::parseFlag_(const wchar_t* format)
 {
     for (;; ++format)
     {
-        if (*format == L'-') mFlags |= cFlagLeftJustify;
-        else if (*format == L'+') mFlags |= cFlagForceSign;
-        else if (*format == L' ') mFlags |= cFlagBlankSign;
-        else if (*format == L'#') mFlags |= cFlagAlternate;
-        else if (*format == L'0') mFlags |= cFlagZeroPad;
-        else return format;
+        if (*format == L'-')
+            mFlags |= cFlagLeftJustify;
+        else if (*format == L'+')
+            mFlags |= cFlagForceSign;
+        else if (*format == L' ')
+            mFlags |= cFlagBlankSign;
+        else if (*format == L'#')
+            mFlags |= cFlagAlternate;
+        else if (*format == L'0')
+            mFlags |= cFlagZeroPad;
+        else
+            return format;
     }
 }
 const wchar_t* FormatParser16::parseWidth_(const wchar_t* format)
@@ -3304,13 +3850,15 @@ const wchar_t* FormatParser16::parseWidth_(const wchar_t* format)
     if (*format >= L'1' && *format <= L'9')
     {
         mWidth = *format++ - L'0';
-        while (*format >= L'0' && *format <= L'9') mWidth = mWidth * 10 + *format++ - L'0';
+        while (*format >= L'0' && *format <= L'9')
+            mWidth = mWidth * 10 + *format++ - L'0';
     }
     return format;
 }
 const wchar_t* FormatParser16::parsePrecision_(const wchar_t* format)
 {
-    if (*format != L'.') return format;
+    if (*format != L'.')
+        return format;
     mHasPrecision = true;
     ++format;
     if (*format == L'*')
@@ -3321,7 +3869,8 @@ const wchar_t* FormatParser16::parsePrecision_(const wchar_t* format)
     if (*format >= L'0' && *format <= L'9')
     {
         mPrecision = *format++ - L'0';
-        while (*format >= L'0' && *format <= L'9') mPrecision = mPrecision * 10 + *format++ - L'0';
+        while (*format >= L'0' && *format <= L'9')
+            mPrecision = mPrecision * 10 + *format++ - L'0';
     }
     return format;
 }
@@ -3330,14 +3879,24 @@ const wchar_t* FormatParser16::parseSize_(const wchar_t* format)
     if (*format == L'h')
     {
         ++format;
-        if (*format == L'h') { ++format; mSize = cSizeChar; }
-        else mSize = cSizeShort;
+        if (*format == L'h')
+        {
+            ++format;
+            mSize = cSizeChar;
+        }
+        else
+            mSize = cSizeShort;
     }
     else if (*format == L'l')
     {
         ++format;
-        if (*format == L'l') { ++format; mSize = cSizeLongLong; }
-        else mSize = cSizeLong;
+        if (*format == L'l')
+        {
+            ++format;
+            mSize = cSizeLongLong;
+        }
+        else
+            mSize = cSizeLong;
     }
     return format;
 }
@@ -3382,11 +3941,13 @@ void FormatParser16::printIntegerInverseString_(OutBuffer16* output, unsigned in
 }
 
 template <typename U, typename S, typename A>
-void FormatParser16::printIntegerInverseStringFromArg_(OutBuffer16* output, bool* negative, bool signedValue, unsigned int base, bool upper)
+void FormatParser16::printIntegerInverseStringFromArg_(OutBuffer16* output, bool* negative, bool signedValue,
+                                                       unsigned int base, bool upper)
 {
     if (!signedValue)
     {
-        printIntegerInverseString_<U>(output, base, upper, static_cast<typename UnsignedType<S>::Type>(va_arg(mArgs, A)));
+        printIntegerInverseString_<U>(output, base, upper,
+                                      static_cast<typename UnsignedType<S>::Type>(va_arg(mArgs, A)));
         return;
     }
     const S value = static_cast<S>(va_arg(mArgs, A));
@@ -3402,7 +3963,7 @@ void FormatParser16::printIntegerInverseStringFromArg_(OutBuffer16* output, bool
 template <typename T>
 void FormatParser16::printStringCore_(OutBuffer16* output, const T* text)
 {
-    static const T cEmpty[1] = { 0 };
+    static const T cEmpty[1] = {0};
     if (!text)
         text = cEmpty;
     unsigned int length = 0;
@@ -3463,7 +4024,8 @@ void FormatParser16::printInteger_(OutBuffer16* output, unsigned int base, bool 
         printIntegerInverseStringFromArg_<unsigned int, int, int>(&digits, &negative, signedValue, base, upper);
         break;
     case cSizeLongLong:
-        printIntegerInverseStringFromArg_<unsigned long long, long long, long long>(&digits, &negative, signedValue, base, upper);
+        printIntegerInverseStringFromArg_<unsigned long long, long long, long long>(&digits, &negative, signedValue,
+                                                                                    base, upper);
         break;
     }
     const unsigned int digitCount = digits.length;
@@ -3566,7 +4128,8 @@ void FormatParser16::printFloat_(OutBuffer16* output, wchar_t type, bool upper)
     } number;
     number.value = va_arg(mArgs, double);
     const bool positive = (number.bits & cDoubleSignBit) == 0;
-    const unsigned int biasedExponent = static_cast<unsigned int>(number.bits >> cDoubleMantissaBits) & cDoubleExponentMask;
+    const unsigned int biasedExponent = static_cast<unsigned int>(number.bits >> cDoubleMantissaBits)
+                                        & cDoubleExponentMask;
     const unsigned long long fraction = number.bits & cDoubleFractionMask;
     if (biasedExponent == cDoubleExponentMask)
     {
@@ -3622,17 +4185,21 @@ void FormatParser16::printFloat_(OutBuffer16* output, wchar_t type, bool upper)
     }
     const unsigned char* record = sFloatDigitTable[tableIndex];
     if (mantissa != 0)
-        exponent = static_cast<int>(static_cast<unsigned int>(record[0]) << (cByteBits * 3) | record[1] << (cByteBits * 2) | record[2] << cByteBits | record[3]);
+        exponent = static_cast<int>(static_cast<unsigned int>(record[0]) << (cByteBits * 3)
+                                    | record[1] << (cByteBits * 2) | record[2] << cByteBits | record[3]);
     MemUtil::fill(digitBase, 0, cFloatAccumulatorLength * sizeof(unsigned int));
     while (mantissa != 0)
     {
         if (mantissa & cDoubleSignBit)
         {
-            const int recordExponent = static_cast<int>(static_cast<unsigned int>(record[0]) << (cByteBits * 3) | record[1] << (cByteBits * 2) | record[2] << cByteBits | record[3]);
+            const int recordExponent = static_cast<int>(static_cast<unsigned int>(record[0]) << (cByteBits * 3)
+                                                        | record[1] << (cByteBits * 2) | record[2] << cByteBits
+                                                        | record[3]);
             const int shift = exponent - recordExponent + 1;
             for (int position = shift; position < cFloatAccumulatorLength; ++position)
                 digitBase[position] += record[cFloatDigitOffset + position - shift];
-            if (shift > 0 && shift >= cFloatAccumulatorLength && record[cFloatDigitOffset + cFloatAccumulatorLength - shift] > cFloatRoundHalf)
+            if (shift > 0 && shift >= cFloatAccumulatorLength
+                && record[cFloatDigitOffset + cFloatAccumulatorLength - shift] > cFloatRoundHalf)
                 ++digitBase[cFloatAccumulatorLength - 1];
         }
         mantissa <<= 1;
@@ -3906,11 +4473,14 @@ int FormatParser16::execute(OutBuffer16* output, const wchar_t* format)
     return conversion - format + 1;
 }
 
-template bool StringUtilImpl::tryParseNumberImpl_<unsigned long long>(unsigned long long*, SafeStringBase<char>::iterator&, int);
+template bool StringUtilImpl::tryParseNumberImpl_<unsigned long long>(unsigned long long*,
+                                                                      SafeStringBase<char>::iterator&, int);
 template bool StringUtilImpl::tryParseNumberImpl_<unsigned int>(unsigned int*, SafeStringBase<char>::iterator&, int);
-template bool StringUtilImpl::tryParseNumberImpl_<unsigned short>(unsigned short*, SafeStringBase<char>::iterator&, int);
+template bool StringUtilImpl::tryParseNumberImpl_<unsigned short>(unsigned short*, SafeStringBase<char>::iterator&,
+                                                                  int);
 template bool StringUtilImpl::tryParseNumberImpl_<unsigned char>(unsigned char*, SafeStringBase<char>::iterator&, int);
-template bool StringUtilImpl::tryParseDecImpl_<unsigned long long>(unsigned long long*, SafeStringBase<char>::iterator&, int);
+template bool StringUtilImpl::tryParseDecImpl_<unsigned long long>(unsigned long long*, SafeStringBase<char>::iterator&,
+                                                                   int);
 template bool StringUtilImpl::tryParseDecImpl_<long long>(long long*, SafeStringBase<char>::iterator&, int);
 template bool StringUtilImpl::tryParseDecImpl_<unsigned int>(unsigned int*, SafeStringBase<char>::iterator&, int);
 template bool StringUtilImpl::tryParseDecImpl_<int>(int*, SafeStringBase<char>::iterator&, int);
@@ -3928,29 +4498,66 @@ template bool StringUtilImpl::tryParseImpl_<unsigned short>(unsigned short*, con
 template bool StringUtilImpl::tryParseImpl_<short>(short*, const SafeStringBase<char>&, int);
 template bool StringUtilImpl::tryParseImpl_<unsigned char>(unsigned char*, const SafeStringBase<char>&, int);
 template bool StringUtilImpl::tryParseImpl_<signed char>(signed char*, const SafeStringBase<char>&, int);
-template void StringUtilImpl::tryParseUnderDecimalPointImpl_<float>(float*, SafeStringBase<char>::iterator&, float, float);
-template void StringUtilImpl::tryParseUnderDecimalPointImpl_<double>(double*, SafeStringBase<char>::iterator&, double, double);
+template void StringUtilImpl::tryParseUnderDecimalPointImpl_<float>(float*, SafeStringBase<char>::iterator&, float,
+                                                                    float);
+template void StringUtilImpl::tryParseUnderDecimalPointImpl_<double>(double*, SafeStringBase<char>::iterator&, double,
+                                                                     double);
 template bool StringUtilImpl::tryParseDecimalFractionImpl_<float>(float*, const SafeStringBase<char>&);
 template bool StringUtilImpl::tryParseDecimalFractionImpl_<double>(double*, const SafeStringBase<char>&);
 template int StringUtilImpl::parseImpl_<int>(const SafeStringBase<char>&, CardinalNumber);
 template void FormatParser16::printIntegerInverseString_<unsigned int>(OutBuffer16*, unsigned int, bool, unsigned int);
-template void FormatParser16::printIntegerInverseString_<unsigned long long>(OutBuffer16*, unsigned int, bool, unsigned long long);
-template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int, signed char, int>(OutBuffer16*, bool*, bool, unsigned int, bool);
-template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int, short, int>(OutBuffer16*, bool*, bool, unsigned int, bool);
-template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int, int, int>(OutBuffer16*, bool*, bool, unsigned int, bool);
-template void FormatParser16::printIntegerInverseStringFromArg_<unsigned long long, long long, long long>(OutBuffer16*, bool*, bool, unsigned int, bool);
+template void FormatParser16::printIntegerInverseString_<unsigned long long>(OutBuffer16*, unsigned int, bool,
+                                                                             unsigned long long);
+template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int, signed char, int>(OutBuffer16*, bool*,
+                                                                                                bool, unsigned int,
+                                                                                                bool);
+template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int, short, int>(OutBuffer16*, bool*, bool,
+                                                                                          unsigned int, bool);
+template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int, int, int>(OutBuffer16*, bool*, bool,
+                                                                                        unsigned int, bool);
+template void FormatParser16::printIntegerInverseStringFromArg_<unsigned long long, long long, long long>(OutBuffer16*,
+                                                                                                          bool*, bool,
+                                                                                                          unsigned int,
+                                                                                                          bool);
 template void FormatParser16::printStringCore_<char>(OutBuffer16*, const char*);
 template void FormatParser16::printStringCore_<wchar_t>(OutBuffer16*, const wchar_t*);
 
-bool StringUtil::tryParseU64(unsigned long long* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
-bool StringUtil::tryParseS64(long long* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
-bool StringUtil::tryParseU32(unsigned int* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
-bool StringUtil::tryParseS32(int* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
-bool StringUtil::tryParseU16(unsigned short* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
-bool StringUtil::tryParseS16(short* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
-bool StringUtil::tryParseU8(unsigned char* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
-bool StringUtil::tryParseS8(signed char* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
-int StringUtil::parseS32(const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::parseImpl_<int>(s, c); }
+bool StringUtil::tryParseU64(unsigned long long* v, const SafeStringBase<char>& s, CardinalNumber c)
+{
+    return StringUtilImpl::tryParseImpl_(v, s, c);
+}
+bool StringUtil::tryParseS64(long long* v, const SafeStringBase<char>& s, CardinalNumber c)
+{
+    return StringUtilImpl::tryParseImpl_(v, s, c);
+}
+bool StringUtil::tryParseU32(unsigned int* v, const SafeStringBase<char>& s, CardinalNumber c)
+{
+    return StringUtilImpl::tryParseImpl_(v, s, c);
+}
+bool StringUtil::tryParseS32(int* v, const SafeStringBase<char>& s, CardinalNumber c)
+{
+    return StringUtilImpl::tryParseImpl_(v, s, c);
+}
+bool StringUtil::tryParseU16(unsigned short* v, const SafeStringBase<char>& s, CardinalNumber c)
+{
+    return StringUtilImpl::tryParseImpl_(v, s, c);
+}
+bool StringUtil::tryParseS16(short* v, const SafeStringBase<char>& s, CardinalNumber c)
+{
+    return StringUtilImpl::tryParseImpl_(v, s, c);
+}
+bool StringUtil::tryParseU8(unsigned char* v, const SafeStringBase<char>& s, CardinalNumber c)
+{
+    return StringUtilImpl::tryParseImpl_(v, s, c);
+}
+bool StringUtil::tryParseS8(signed char* v, const SafeStringBase<char>& s, CardinalNumber c)
+{
+    return StringUtilImpl::tryParseImpl_(v, s, c);
+}
+int StringUtil::parseS32(const SafeStringBase<char>& s, CardinalNumber c)
+{
+    return StringUtilImpl::parseImpl_<int>(s, c);
+}
 int StringUtil::vsw16printf(wchar_t* buffer, unsigned int size, const wchar_t* format, va_list args)
 {
     if (size == 0)
@@ -4054,7 +4661,8 @@ int StringUtil::convertUtf16ToSjis(char* destination, unsigned int capacity, con
             const unsigned int offset = character - cPrivateUseFirst;
             const unsigned int column = offset % cSjisRowLength;
             lead = static_cast<unsigned char>((offset - column) / cSjisRowLength + cSjisUserDefinedLeadFirst);
-            trail = static_cast<unsigned char>(column + (column < cSjisTrailGap ? cSjisTrailFirst : cSjisTrailFirst + 1));
+            trail = static_cast<unsigned char>(column
+                                               + (column < cSjisTrailGap ? cSjisTrailFirst : cSjisTrailFirst + 1));
         }
         else if (character == cSjisSpecialA0Source)
         {
@@ -4160,7 +4768,8 @@ int StringUtil::convertUtf8ToSjis(char* destination, unsigned int capacity, cons
         int converted;
         if (bytes[0] < cUtf8Lead3First)
         {
-            utf16[0] = static_cast<wchar_t>((bytes[0] & cUtf8Lead2Payload) << cUtf8TrailBits | (bytes[1] & cUtf8TrailPayload));
+            utf16[0] = static_cast<wchar_t>((bytes[0] & cUtf8Lead2Payload) << cUtf8TrailBits
+                                            | (bytes[1] & cUtf8TrailPayload));
             utf16[1] = 0;
             converted = convertUtf16ToSjis(reinterpret_cast<char*>(bytes), cUtf8ConvertBufferLength, utf16, -1);
             index += 2;
@@ -4173,7 +4782,9 @@ int StringUtil::convertUtf8ToSjis(char* destination, unsigned int capacity, cons
             if (bytes[2] == 0)
                 break;
             utf16[1] = 0;
-            utf16[0] = static_cast<wchar_t>(bytes[0] << (cUtf8TrailBits * 2) | (bytes[1] & cUtf8TrailPayload) << cUtf8TrailBits | (bytes[2] & cUtf8TrailPayload));
+            utf16[0] = static_cast<wchar_t>(bytes[0] << (cUtf8TrailBits * 2)
+                                            | (bytes[1] & cUtf8TrailPayload) << cUtf8TrailBits
+                                            | (bytes[2] & cUtf8TrailPayload));
             converted = convertUtf16ToSjis(reinterpret_cast<char*>(bytes), cUtf8ConvertBufferLength, utf16, -1);
             index += 3;
         }
@@ -4192,46 +4803,63 @@ int StringUtil::convertUtf8ToSjis(char* destination, unsigned int capacity, cons
 }
 namespace
 {
-const StringUtil::Char16Pair cToUpperCapitalPairs[] =
-{
-    { L'a', L'A' }, { L'b', L'B' }, { L'c', L'C' }, { L'd', L'D' }, { L'e', L'E' }, { L'f', L'F' },
-    { L'g', L'G' }, { L'h', L'H' }, { L'i', L'I' }, { L'j', L'J' }, { L'k', L'K' }, { L'l', L'L' },
-    { L'm', L'M' }, { L'n', L'N' }, { L'o', L'O' }, { L'p', L'P' }, { L'q', L'Q' }, { L'r', L'R' },
-    { L's', L'S' }, { L't', L'T' }, { L'u', L'U' }, { L'v', L'V' }, { L'w', L'W' }, { L'x', L'X' },
-    { L'y', L'Y' }, { L'z', L'Z' }, { L'\x00e0', L'\x00c0' }, { L'\x00e1', L'\x00c1' }, { L'\x00e2', L'\x00c2' }, { L'\x00e3', L'\x00c3' },
-    { L'\x00e4', L'\x00c4' }, { L'\x00e6', L'\x00c6' }, { L'\x00e7', L'\x00c7' }, { L'\x00e8', L'\x00c8' }, { L'\x00e9', L'\x00c9' }, { L'\x00ea', L'\x00ca' },
-    { L'\x00eb', L'\x00cb' }, { L'\x00ec', L'\x00cc' }, { L'\x00ed', L'\x00cd' }, { L'\x00ee', L'\x00ce' }, { L'\x00ef', L'\x00cf' }, { L'\x00f1', L'\x00d1' },
-    { L'\x00f2', L'\x00d2' }, { L'\x00f3', L'\x00d3' }, { L'\x00f4', L'\x00d4' }, { L'\x00f5', L'\x00d5' }, { L'\x00f6', L'\x00d6' }, { L'\x00f9', L'\x00d9' },
-    { L'\x00fa', L'\x00da' }, { L'\x00fb', L'\x00db' }, { L'\x00fc', L'\x00dc' }, { L'\x00ff', L'\x0178' }, { L'\x0153', L'\x0152' }, { L'\x0430', L'\x0410' },
-    { L'\x0431', L'\x0411' }, { L'\x0432', L'\x0412' }, { L'\x0433', L'\x0413' }, { L'\x0434', L'\x0414' }, { L'\x0435', L'\x0415' }, { L'\x0436', L'\x0416' },
-    { L'\x0437', L'\x0417' }, { L'\x0438', L'\x0418' }, { L'\x0439', L'\x0419' }, { L'\x043a', L'\x041a' }, { L'\x043b', L'\x041b' }, { L'\x043c', L'\x041c' },
-    { L'\x043d', L'\x041d' }, { L'\x043e', L'\x041e' }, { L'\x043f', L'\x041f' }, { L'\x0440', L'\x0420' }, { L'\x0441', L'\x0421' }, { L'\x0442', L'\x0422' },
-    { L'\x0443', L'\x0423' }, { L'\x0444', L'\x0424' }, { L'\x0445', L'\x0425' }, { L'\x0446', L'\x0426' }, { L'\x0447', L'\x0427' }, { L'\x0448', L'\x0428' },
-    { L'\x0449', L'\x0429' }, { L'\x044a', L'\x042a' }, { L'\x044b', L'\x042b' }, { L'\x044c', L'\x042c' }, { L'\x044d', L'\x042d' }, { L'\x044e', L'\x042e' },
-    { L'\x044f', L'\x042f' }, { L'\x0451', L'\x0401' }
-};
-const StringUtil::Char16Pair cToLowerCapitalPairs[] =
-{
-    { L'A', L'a' }, { L'B', L'b' }, { L'C', L'c' }, { L'D', L'd' }, { L'E', L'e' }, { L'F', L'f' },
-    { L'G', L'g' }, { L'H', L'h' }, { L'I', L'i' }, { L'J', L'j' }, { L'K', L'k' }, { L'L', L'l' },
-    { L'M', L'm' }, { L'N', L'n' }, { L'O', L'o' }, { L'P', L'p' }, { L'Q', L'q' }, { L'R', L'r' },
-    { L'S', L's' }, { L'T', L't' }, { L'U', L'u' }, { L'V', L'v' }, { L'W', L'w' }, { L'X', L'x' },
-    { L'Y', L'y' }, { L'Z', L'z' }, { L'\x00c0', L'\x00e0' }, { L'\x00c1', L'\x00e1' }, { L'\x00c2', L'\x00e2' }, { L'\x00c3', L'\x00e3' },
-    { L'\x00c4', L'\x00e4' }, { L'\x00c6', L'\x00e6' }, { L'\x00c7', L'\x00e7' }, { L'\x00c8', L'\x00e8' }, { L'\x00c9', L'\x00e9' }, { L'\x00ca', L'\x00ea' },
-    { L'\x00cb', L'\x00eb' }, { L'\x00cc', L'\x00ec' }, { L'\x00cd', L'\x00ed' }, { L'\x00ce', L'\x00ee' }, { L'\x00cf', L'\x00ef' }, { L'\x00d1', L'\x00f1' },
-    { L'\x00d2', L'\x00f2' }, { L'\x00d3', L'\x00f3' }, { L'\x00d4', L'\x00f4' }, { L'\x00d5', L'\x00f5' }, { L'\x00d6', L'\x00f6' }, { L'\x00d9', L'\x00f9' },
-    { L'\x00da', L'\x00fa' }, { L'\x00db', L'\x00fb' }, { L'\x00dc', L'\x00fc' }, { L'\x0152', L'\x0153' }, { L'\x0178', L'\x00ff' }, { L'\x0401', L'\x0451' },
-    { L'\x0410', L'\x0430' }, { L'\x0411', L'\x0431' }, { L'\x0412', L'\x0432' }, { L'\x0413', L'\x0433' }, { L'\x0414', L'\x0434' }, { L'\x0415', L'\x0435' },
-    { L'\x0416', L'\x0436' }, { L'\x0417', L'\x0437' }, { L'\x0418', L'\x0438' }, { L'\x0419', L'\x0439' }, { L'\x041a', L'\x043a' }, { L'\x041b', L'\x043b' },
-    { L'\x041c', L'\x043c' }, { L'\x041d', L'\x043d' }, { L'\x041e', L'\x043e' }, { L'\x041f', L'\x043f' }, { L'\x0420', L'\x0440' }, { L'\x0421', L'\x0441' },
-    { L'\x0422', L'\x0442' }, { L'\x0423', L'\x0443' }, { L'\x0424', L'\x0444' }, { L'\x0425', L'\x0445' }, { L'\x0426', L'\x0446' }, { L'\x0427', L'\x0447' },
-    { L'\x0428', L'\x0448' }, { L'\x0429', L'\x0449' }, { L'\x042a', L'\x044a' }, { L'\x042b', L'\x044b' }, { L'\x042c', L'\x044c' }, { L'\x042d', L'\x044d' },
-    { L'\x042e', L'\x044e' }, { L'\x042f', L'\x044f' }
-};
-const Buffer<const StringUtil::Char16Pair> cToUpperCapitalTable(sizeof(cToUpperCapitalPairs) / sizeof(cToUpperCapitalPairs[0]), cToUpperCapitalPairs);
-const Buffer<const StringUtil::Char16Pair> cToLowerCapitalTable(sizeof(cToLowerCapitalPairs) / sizeof(cToLowerCapitalPairs[0]), cToLowerCapitalPairs);
+const StringUtil::Char16Pair cToUpperCapitalPairs[] = {
+    {L'a', L'A'},           {L'b', L'B'},           {L'c', L'C'},           {L'd', L'D'},
+    {L'e', L'E'},           {L'f', L'F'},           {L'g', L'G'},           {L'h', L'H'},
+    {L'i', L'I'},           {L'j', L'J'},           {L'k', L'K'},           {L'l', L'L'},
+    {L'm', L'M'},           {L'n', L'N'},           {L'o', L'O'},           {L'p', L'P'},
+    {L'q', L'Q'},           {L'r', L'R'},           {L's', L'S'},           {L't', L'T'},
+    {L'u', L'U'},           {L'v', L'V'},           {L'w', L'W'},           {L'x', L'X'},
+    {L'y', L'Y'},           {L'z', L'Z'},           {L'\x00e0', L'\x00c0'}, {L'\x00e1', L'\x00c1'},
+    {L'\x00e2', L'\x00c2'}, {L'\x00e3', L'\x00c3'}, {L'\x00e4', L'\x00c4'}, {L'\x00e6', L'\x00c6'},
+    {L'\x00e7', L'\x00c7'}, {L'\x00e8', L'\x00c8'}, {L'\x00e9', L'\x00c9'}, {L'\x00ea', L'\x00ca'},
+    {L'\x00eb', L'\x00cb'}, {L'\x00ec', L'\x00cc'}, {L'\x00ed', L'\x00cd'}, {L'\x00ee', L'\x00ce'},
+    {L'\x00ef', L'\x00cf'}, {L'\x00f1', L'\x00d1'}, {L'\x00f2', L'\x00d2'}, {L'\x00f3', L'\x00d3'},
+    {L'\x00f4', L'\x00d4'}, {L'\x00f5', L'\x00d5'}, {L'\x00f6', L'\x00d6'}, {L'\x00f9', L'\x00d9'},
+    {L'\x00fa', L'\x00da'}, {L'\x00fb', L'\x00db'}, {L'\x00fc', L'\x00dc'}, {L'\x00ff', L'\x0178'},
+    {L'\x0153', L'\x0152'}, {L'\x0430', L'\x0410'}, {L'\x0431', L'\x0411'}, {L'\x0432', L'\x0412'},
+    {L'\x0433', L'\x0413'}, {L'\x0434', L'\x0414'}, {L'\x0435', L'\x0415'}, {L'\x0436', L'\x0416'},
+    {L'\x0437', L'\x0417'}, {L'\x0438', L'\x0418'}, {L'\x0439', L'\x0419'}, {L'\x043a', L'\x041a'},
+    {L'\x043b', L'\x041b'}, {L'\x043c', L'\x041c'}, {L'\x043d', L'\x041d'}, {L'\x043e', L'\x041e'},
+    {L'\x043f', L'\x041f'}, {L'\x0440', L'\x0420'}, {L'\x0441', L'\x0421'}, {L'\x0442', L'\x0422'},
+    {L'\x0443', L'\x0423'}, {L'\x0444', L'\x0424'}, {L'\x0445', L'\x0425'}, {L'\x0446', L'\x0426'},
+    {L'\x0447', L'\x0427'}, {L'\x0448', L'\x0428'}, {L'\x0449', L'\x0429'}, {L'\x044a', L'\x042a'},
+    {L'\x044b', L'\x042b'}, {L'\x044c', L'\x042c'}, {L'\x044d', L'\x042d'}, {L'\x044e', L'\x042e'},
+    {L'\x044f', L'\x042f'}, {L'\x0451', L'\x0401'}};
+const StringUtil::Char16Pair cToLowerCapitalPairs[] = {
+    {L'A', L'a'},           {L'B', L'b'},           {L'C', L'c'},           {L'D', L'd'},
+    {L'E', L'e'},           {L'F', L'f'},           {L'G', L'g'},           {L'H', L'h'},
+    {L'I', L'i'},           {L'J', L'j'},           {L'K', L'k'},           {L'L', L'l'},
+    {L'M', L'm'},           {L'N', L'n'},           {L'O', L'o'},           {L'P', L'p'},
+    {L'Q', L'q'},           {L'R', L'r'},           {L'S', L's'},           {L'T', L't'},
+    {L'U', L'u'},           {L'V', L'v'},           {L'W', L'w'},           {L'X', L'x'},
+    {L'Y', L'y'},           {L'Z', L'z'},           {L'\x00c0', L'\x00e0'}, {L'\x00c1', L'\x00e1'},
+    {L'\x00c2', L'\x00e2'}, {L'\x00c3', L'\x00e3'}, {L'\x00c4', L'\x00e4'}, {L'\x00c6', L'\x00e6'},
+    {L'\x00c7', L'\x00e7'}, {L'\x00c8', L'\x00e8'}, {L'\x00c9', L'\x00e9'}, {L'\x00ca', L'\x00ea'},
+    {L'\x00cb', L'\x00eb'}, {L'\x00cc', L'\x00ec'}, {L'\x00cd', L'\x00ed'}, {L'\x00ce', L'\x00ee'},
+    {L'\x00cf', L'\x00ef'}, {L'\x00d1', L'\x00f1'}, {L'\x00d2', L'\x00f2'}, {L'\x00d3', L'\x00f3'},
+    {L'\x00d4', L'\x00f4'}, {L'\x00d5', L'\x00f5'}, {L'\x00d6', L'\x00f6'}, {L'\x00d9', L'\x00f9'},
+    {L'\x00da', L'\x00fa'}, {L'\x00db', L'\x00fb'}, {L'\x00dc', L'\x00fc'}, {L'\x0152', L'\x0153'},
+    {L'\x0178', L'\x00ff'}, {L'\x0401', L'\x0451'}, {L'\x0410', L'\x0430'}, {L'\x0411', L'\x0431'},
+    {L'\x0412', L'\x0432'}, {L'\x0413', L'\x0433'}, {L'\x0414', L'\x0434'}, {L'\x0415', L'\x0435'},
+    {L'\x0416', L'\x0436'}, {L'\x0417', L'\x0437'}, {L'\x0418', L'\x0438'}, {L'\x0419', L'\x0439'},
+    {L'\x041a', L'\x043a'}, {L'\x041b', L'\x043b'}, {L'\x041c', L'\x043c'}, {L'\x041d', L'\x043d'},
+    {L'\x041e', L'\x043e'}, {L'\x041f', L'\x043f'}, {L'\x0420', L'\x0440'}, {L'\x0421', L'\x0441'},
+    {L'\x0422', L'\x0442'}, {L'\x0423', L'\x0443'}, {L'\x0424', L'\x0444'}, {L'\x0425', L'\x0445'},
+    {L'\x0426', L'\x0446'}, {L'\x0427', L'\x0447'}, {L'\x0428', L'\x0448'}, {L'\x0429', L'\x0449'},
+    {L'\x042a', L'\x044a'}, {L'\x042b', L'\x044b'}, {L'\x042c', L'\x044c'}, {L'\x042d', L'\x044d'},
+    {L'\x042e', L'\x044e'}, {L'\x042f', L'\x044f'}};
+const Buffer<const StringUtil::Char16Pair> cToUpperCapitalTable(sizeof(cToUpperCapitalPairs)
+                                                                    / sizeof(cToUpperCapitalPairs[0]),
+                                                                cToUpperCapitalPairs);
+const Buffer<const StringUtil::Char16Pair> cToLowerCapitalTable(sizeof(cToLowerCapitalPairs)
+                                                                    / sizeof(cToLowerCapitalPairs[0]),
+                                                                cToLowerCapitalPairs);
 }
-int StringUtil::compareChar16Pair(const Char16Pair& pair, const wchar_t& value) { return value < pair.from ? 1 : value > pair.from ? -1 : 0; }
+int StringUtil::compareChar16Pair(const Char16Pair& pair, const wchar_t& value)
+{
+    return value < pair.from ? 1 : value > pair.from ? -1 : 0;
+}
 wchar_t StringUtil::replace(wchar_t value, const Buffer<const Char16Pair>& pairs)
 {
     int first = 0;
@@ -4240,13 +4868,19 @@ wchar_t StringUtil::replace(wchar_t value, const Buffer<const Char16Pair>& pairs
     {
         int middle = first + (last - first) / 2;
         int order = compareChar16Pair(pairs[middle], value);
-        if (order == 0) return pairs[middle].to;
-        if (order < 0) first = middle + 1;
-        else last = middle;
+        if (order == 0)
+            return pairs[middle].to;
+        if (order < 0)
+            first = middle + 1;
+        else
+            last = middle;
     }
     return value;
 }
-wchar_t StringUtil::toUpperCapital(wchar_t value) { return replace(value, cToUpperCapitalTable); }
+wchar_t StringUtil::toUpperCapital(wchar_t value)
+{
+    return replace(value, cToUpperCapitalTable);
+}
 void StringUtil::toUpperCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>* text)
 {
     wchar_t* buffer = text->getBuffer();
@@ -4255,7 +4889,10 @@ void StringUtil::toUpperCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>* t
         buffer[0] = toUpperCapital(buffer[0]);
     }
 }
-wchar_t StringUtil::toLowerCapital(wchar_t value) { return replace(value, cToLowerCapitalTable); }
+wchar_t StringUtil::toLowerCapital(wchar_t value)
+{
+    return replace(value, cToLowerCapitalTable);
+}
 void StringUtil::toLowerCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>* text)
 {
     wchar_t* buffer = text->getBuffer();
@@ -4267,8 +4904,13 @@ void StringUtil::toLowerCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>* t
 
 namespace system
 {
-void PrintStringImpl(const char*, int) {}
-void PrintString(const char* text, int level) { PrintConfig::execCallbacks(PrintConfig::PrintEventArg(text, level)); }
+void PrintStringImpl(const char*, int)
+{
+}
+void PrintString(const char* text, int level)
+{
+    PrintConfig::execCallbacks(PrintConfig::PrintEventArg(text, level));
+}
 }
 
 template <typename T>
@@ -4413,6 +5055,8 @@ int replaceStringImpl_(T* dst, int* length, int dstSize, const T* src, int srcSi
     return replaceCount;
 }
 
-template int replaceStringImpl_<char>(char*, int*, int, const char*, int, const SafeStringBase<char>&, const SafeStringBase<char>&, bool*);
-template int replaceStringImpl_<wchar_t>(wchar_t*, int*, int, const wchar_t*, int, const SafeStringBase<wchar_t>&, const SafeStringBase<wchar_t>&, bool*);
+template int replaceStringImpl_<char>(char*, int*, int, const char*, int, const SafeStringBase<char>&,
+                                      const SafeStringBase<char>&, bool*);
+template int replaceStringImpl_<wchar_t>(wchar_t*, int*, int, const wchar_t*, int, const SafeStringBase<wchar_t>&,
+                                         const SafeStringBase<wchar_t>&, bool*);
 }

@@ -44,31 +44,34 @@ int user_write_data_bytes_written();
 
 namespace nn
 {
-    namespace swkbd
-    {
-        void DrawTV();
-        void DrawDRC();
-    }
+namespace swkbd
+{
+void DrawTV();
+void DrawDRC();
+}
 
-    namespace erreula
-    {
-        void DrawTV();
-        void DrawDRC();
-    }
+namespace erreula
+{
+void DrawTV();
+void DrawDRC();
+}
 }
 
 #include "platform/wiiu/shaders/RendererShaders.inc"
 
 const GX2AttribStream gAttribStreamStandard[5] = {
-    {0, 0, 0, GX2_ATTRIB_FORMAT_32_32_32_32_FLOAT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XYZ1, GX2_ENDIANSWAP_DEFAULT},
+    {0, 0, 0, GX2_ATTRIB_FORMAT_32_32_32_32_FLOAT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XYZ1,
+     GX2_ENDIANSWAP_DEFAULT},
     {1, 0, 20, GX2_ATTRIB_FORMAT_8_8_8_8_UNORM, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XYZW, GX2_ENDIANSWAP_8IN32},
     {2, 0, 24, GX2_ATTRIB_FORMAT_8_8_8_8_SNORM, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XYZW, GX2_ENDIANSWAP_8IN32},
     {3, 0, 12, GX2_ATTRIB_FORMAT_32_32_FLOAT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XY00, GX2_ENDIANSWAP_DEFAULT},
     {4, 0, 28, GX2_ATTRIB_FORMAT_16_16_SINT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XY00, GX2_ENDIANSWAP_DEFAULT},
 };
 const GX2AttribStream gAttribStreamQuad[2] = {
-    {0, 0, 0, GX2_ATTRIB_FORMAT_16_16_16_16_SINT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XYZW, GX2_ENDIANSWAP_DEFAULT},
-    {1, 0, 8, GX2_ATTRIB_FORMAT_16_16_16_16_SINT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XYZW, GX2_ENDIANSWAP_DEFAULT},
+    {0, 0, 0, GX2_ATTRIB_FORMAT_16_16_16_16_SINT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XYZW,
+     GX2_ENDIANSWAP_DEFAULT},
+    {1, 0, 8, GX2_ATTRIB_FORMAT_16_16_16_16_SINT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XYZW,
+     GX2_ENDIANSWAP_DEFAULT},
 };
 const GX2AttribStream gAttribStreamPosition[1] = {
     {0, 0, 0, GX2_ATTRIB_FORMAT_32_32_FLOAT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XY01, GX2_ENDIANSWAP_DEFAULT},
@@ -92,7 +95,7 @@ static int sTotalCommandBufferBytes = 0;
 static unsigned long long sPreviousSubmitTimeStamp = 0;
 static unsigned long long sLastSubmitTimeStamp = 0;
 static void* sFFLWorkMemory = NULL;
-static FFLInitDesc sFFLInitDesc = { NULL, NULL, FFL_FONT_REGION_JP_US_EU, FALSE, TRUE };
+static FFLInitDesc sFFLInitDesc = {NULL, NULL, FFL_FONT_REGION_JP_US_EU, FALSE, TRUE};
 static GX2Sampler sMiiIconSampler;
 static unsigned char* sUserWriteDataStart;
 static unsigned char* sUserWriteDataCurrent;
@@ -230,16 +233,26 @@ void Renderer::SetupShaders()
     mAlphaAccumulatePixelShader = &gPixelShaderAlphaAccumulate;
     mAlphaResolvePixelShader = &gPixelShaderAlphaResolve;
 
-    GX2InitFetchShader(mFetchShaders[0], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5, gAttribStreamStandard);
-    GX2InitFetchShader(mFetchShaders[1], MemoryAllocMEM2(GX2CalcFetchShaderSize(2), GX2_SHADER_ALIGNMENT), 2, gAttribStreamQuad);
-    GX2InitFetchShader(mFetchShaders[2], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5, gAttribStreamStandard);
-    GX2InitFetchShader(mFetchShaders[3], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5, gAttribStreamStandard);
-    GX2InitFetchShader(mFetchShaders[4], MemoryAllocMEM2(GX2CalcFetchShaderSize(1), GX2_SHADER_ALIGNMENT), 1, gAttribStreamPosition);
-    GX2InitFetchShader(mFetchShaders[5], MemoryAllocMEM2(GX2CalcFetchShaderSize(1), GX2_SHADER_ALIGNMENT), 1, gAttribStreamPosition);
-    GX2InitFetchShader(mFetchShaders[6], MemoryAllocMEM2(GX2CalcFetchShaderSize(1), GX2_SHADER_ALIGNMENT), 1, gAttribStreamPosition);
-    GX2InitFetchShader(mFetchShaders[7], MemoryAllocMEM2(GX2CalcFetchShaderSize(3), GX2_SHADER_ALIGNMENT), 3, gAttribStreamParticle);
-    GX2InitFetchShader(mFetchShaders[8], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5, gAttribStreamStandard);
-    GX2InitFetchShader(mFetchShaders[9], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5, gAttribStreamStandard);
+    GX2InitFetchShader(mFetchShaders[0], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5,
+                       gAttribStreamStandard);
+    GX2InitFetchShader(mFetchShaders[1], MemoryAllocMEM2(GX2CalcFetchShaderSize(2), GX2_SHADER_ALIGNMENT), 2,
+                       gAttribStreamQuad);
+    GX2InitFetchShader(mFetchShaders[2], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5,
+                       gAttribStreamStandard);
+    GX2InitFetchShader(mFetchShaders[3], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5,
+                       gAttribStreamStandard);
+    GX2InitFetchShader(mFetchShaders[4], MemoryAllocMEM2(GX2CalcFetchShaderSize(1), GX2_SHADER_ALIGNMENT), 1,
+                       gAttribStreamPosition);
+    GX2InitFetchShader(mFetchShaders[5], MemoryAllocMEM2(GX2CalcFetchShaderSize(1), GX2_SHADER_ALIGNMENT), 1,
+                       gAttribStreamPosition);
+    GX2InitFetchShader(mFetchShaders[6], MemoryAllocMEM2(GX2CalcFetchShaderSize(1), GX2_SHADER_ALIGNMENT), 1,
+                       gAttribStreamPosition);
+    GX2InitFetchShader(mFetchShaders[7], MemoryAllocMEM2(GX2CalcFetchShaderSize(3), GX2_SHADER_ALIGNMENT), 3,
+                       gAttribStreamParticle);
+    GX2InitFetchShader(mFetchShaders[8], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5,
+                       gAttribStreamStandard);
+    GX2InitFetchShader(mFetchShaders[9], MemoryAllocMEM2(GX2CalcFetchShaderSize(5), GX2_SHADER_ALIGNMENT), 5,
+                       gAttribStreamStandard);
 }
 
 void Renderer::Initialise(bool bFirstTime)
@@ -276,11 +289,11 @@ void Renderer::Initialise(bool bFirstTime)
         SetupShaders();
 
         void* commandBufferPool = MemoryAllocMEM2(COMMAND_BUFFER_POOL_SIZE, 0x40);
-        u32 initAttributes[] = { GX2_INIT_ATTRIB_CB_BASE, (u32)commandBufferPool, GX2_INIT_ATTRIB_CB_SIZE,
-                                 COMMAND_BUFFER_POOL_SIZE, GX2_INIT_ATTRIB_NULL };
+        u32 initAttributes[] = {GX2_INIT_ATTRIB_CB_BASE, (u32)commandBufferPool, GX2_INIT_ATTRIB_CB_SIZE,
+                                COMMAND_BUFFER_POOL_SIZE, GX2_INIT_ATTRIB_NULL};
         GX2Init(initAttributes);
 
-        float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
         SetClearColour(black);
 
         mForegroundAcquired = true;
@@ -298,24 +311,27 @@ void Renderer::Initialise(bool bFirstTime)
         mHiDef = false;
     }
 
-    GX2CalcTVSize(GX2_TV_RENDER_720, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_BUFFERING_DOUBLE, &size, &scaleNeeded);
+    GX2CalcTVSize(GX2_TV_RENDER_720, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_BUFFERING_DOUBLE, &size,
+                  &scaleNeeded);
     mTVScanBuffer = MemoryAllocBucket(size, 0x1000);
     GX2Invalidate(GX2_INVALIDATE_CPU, mTVScanBuffer, size);
-    GX2SetTVBuffer(mTVScanBuffer, size, GX2_TV_RENDER_720, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_BUFFERING_DOUBLE);
+    GX2SetTVBuffer(mTVScanBuffer, size, GX2_TV_RENDER_720, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM,
+                   GX2_BUFFERING_DOUBLE);
 
     GX2CalcDRCSize(GX2_DRC_SINGLE, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_BUFFERING_DOUBLE, &size, &scaleNeeded);
     mDRCScanBuffer = MemoryAllocBucket(size, 0x1000);
     GX2Invalidate(GX2_INVALIDATE_CPU, mTVScanBuffer, size);
-    GX2SetDRCBuffer(mDRCScanBuffer, size, GX2_DRC_SINGLE, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_BUFFERING_DOUBLE);
+    GX2SetDRCBuffer(mDRCScanBuffer, size, GX2_DRC_SINGLE, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM,
+                    GX2_BUFFERING_DOUBLE);
 
-    GX2InitColorBuffer(&mColourBuffer, mScreenWidth[0], mScreenHeight[0],
-                        GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_AA_MODE_1X);
+    GX2InitColorBuffer(&mColourBuffer, mScreenWidth[0], mScreenHeight[0], GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM,
+                       GX2_AA_MODE_1X);
     void* colourImage = MemoryAllocMEM1(mColourBuffer.surface.imageSize, mColourBuffer.surface.alignment, false);
     GX2Invalidate(GX2_INVALIDATE_CPU, colourImage, mColourBuffer.surface.imageSize);
     mColourBuffer.surface.imagePtr = colourImage;
 
-    GX2InitTexture(&mColourTexture, mScreenWidth[0], mScreenHeight[0], 1, 1,
-                   GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_SURFACE_DIM_2D);
+    GX2InitTexture(&mColourTexture, mScreenWidth[0], mScreenHeight[0], 1, 1, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM,
+                   GX2_SURFACE_DIM_2D);
     GX2CalcSurfaceSizeAndAlignment(&mColourTexture.surface);
     GX2InitTextureRegs(&mColourTexture);
     GX2InitTexturePtrs(&mColourTexture, colourImage, NULL);
@@ -353,31 +369,31 @@ void Renderer::Initialise(bool bFirstTime)
 
     mReservedMEM1 = NULL;
     GX2InitColorBuffer(&mAlphaColourBuffer, mScreenWidth[0], mScreenHeight[0],
-                        GX2_SURFACE_FORMAT_TC_R16_G16_B16_A16_FLOAT, GX2_AA_MODE_1X);
+                       GX2_SURFACE_FORMAT_TC_R16_G16_B16_A16_FLOAT, GX2_AA_MODE_1X);
     void* alphaImage = MemoryAllocMEM1(0x1600000, mAlphaColourBuffer.surface.alignment, true);
     GX2Invalidate(GX2_INVALIDATE_CPU, alphaImage, mAlphaColourBuffer.surface.imageSize);
     mAlphaColourBuffer.surface.imagePtr = alphaImage;
 
-    GX2InitTexture(&mAlphaTexture, mScreenWidth[0], mScreenHeight[0], 1, 1,
-                   GX2_SURFACE_FORMAT_TC_R16_G16_B16_A16_FLOAT, GX2_SURFACE_DIM_2D);
+    GX2InitTexture(&mAlphaTexture, mScreenWidth[0], mScreenHeight[0], 1, 1, GX2_SURFACE_FORMAT_TC_R16_G16_B16_A16_FLOAT,
+                   GX2_SURFACE_DIM_2D);
     GX2InitTexturePtrs(&mAlphaTexture, alphaImage, NULL);
 
     GX2InitSamplerClamping(&mAlphaSampler, GX2_TEX_CLAMP_CLAMP, GX2_TEX_CLAMP_CLAMP, GX2_TEX_CLAMP_CLAMP);
     GX2InitSamplerXYFilter(&mAlphaSampler, GX2_TEX_XY_FILTER_POINT, GX2_TEX_XY_FILTER_POINT, GX2_TEX_ANISO_1_TO_1);
     GX2InitSamplerZMFilter(&mAlphaSampler, GX2_TEX_Z_FILTER_POINT, GX2_TEX_MIP_FILTER_LINEAR);
 
-    GX2InitColorBufferFTV(&mTVColourBuffer, mScreenWidth[0], mScreenHeight[0],
-                          GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_AA_MODE_1X);
+    GX2InitColorBufferFTV(&mTVColourBuffer, mScreenWidth[0], mScreenHeight[0], GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM,
+                          GX2_AA_MODE_1X);
     mTVColourBuffer.surface.imagePtr = alphaImage;
 
-    GX2InitTexture(&mTVTexture, mScreenWidth[0], mScreenHeight[0], 1, 1,
-                   GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_SURFACE_DIM_2D);
+    GX2InitTexture(&mTVTexture, mScreenWidth[0], mScreenHeight[0], 1, 1, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM,
+                   GX2_SURFACE_DIM_2D);
     GX2InitTexturePtrs(&mTVTexture, alphaImage, NULL);
 
     for (int thumbnail = 0, thumbnailSize = 0x200; thumbnail < 4; ++thumbnail, thumbnailSize >>= 1)
     {
         GX2InitColorBuffer(&mThumbnailColourBuffer[thumbnail], thumbnailSize, thumbnailSize,
-                            GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_AA_MODE_1X);
+                           GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_AA_MODE_1X);
         mThumbnailColourBuffer[thumbnail].surface.tileMode = GX2_TILE_MODE_LINEAR_ALIGNED;
         GX2CalcSurfaceSizeAndAlignment(&mThumbnailColourBuffer[thumbnail].surface);
         GX2InitColorBufferRegs(&mThumbnailColourBuffer[thumbnail]);
@@ -396,7 +412,8 @@ void Renderer::Initialise(bool bFirstTime)
 
     if (bFirstTime)
     {
-        mContextState = static_cast<GX2ContextState*>(MemoryAllocMEM2(sizeof(GX2ContextState), GX2_CONTEXT_STATE_ALIGNMENT));
+        mContextState = static_cast<GX2ContextState*>(
+            MemoryAllocMEM2(sizeof(GX2ContextState), GX2_CONTEXT_STATE_ALIGNMENT));
         GX2SetupContextState(mContextState);
         memset(mTextures, 0, sizeof(mTextures));
         mDefaultTexture = TextureCreate();
@@ -414,21 +431,23 @@ void Renderer::Initialise(bool bFirstTime)
         OSFastMutex_Init(&sTotalAllocMutex, "totalAllocCS");
         mNextCommandBufferId = 0;
         mAllowStaticCommandBufferIds = true;
-        GX2SetViewport(0.0f, 0.0f, (float)(unsigned int)mScreenWidth[0], (float)(unsigned int)mScreenHeight[0], 0.0f, 1.0f);
+        GX2SetViewport(0.0f, 0.0f, (float)(unsigned int)mScreenWidth[0], (float)(unsigned int)mScreenHeight[0], 0.0f,
+                       1.0f);
         GX2SetScissor(0, 0, mScreenWidth[0], mScreenHeight[0]);
         GX2SetSwapInterval(1);
     }
     else
     {
         GX2SetContextState(mContextState);
-        GX2SetViewport(0.0f, 0.0f, (float)(unsigned int)mScreenWidth[0], (float)(unsigned int)mScreenHeight[0], 0.0f, 1.0f);
+        GX2SetViewport(0.0f, 0.0f, (float)(unsigned int)mScreenWidth[0], (float)(unsigned int)mScreenHeight[0], 0.0f,
+                       1.0f);
         GX2SetScissor(0, 0, mScreenWidth[0], mScreenHeight[0]);
         GX2SetSwapInterval(1);
     }
 
     GX2SetShaderModeEx(GX2_SHADER_MODE_UNIFORM_REGISTER, 48, 64, 0, 0, 200, 192);
 
-    float one[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    float one[4] = {1.0f, 1.0f, 1.0f, 1.0f};
     memcpy(mColour, one, sizeof(mColour));
     memset(mColourAdd, 0, sizeof(mColourAdd));
     memcpy(mTexColour[0], one, sizeof(mTexColour[0]));
@@ -531,7 +550,9 @@ void Renderer::GammaCorrect()
 
     GX2SetVertexShader(mResolveVertexShader);
     GX2SetPixelShader(mGammaPixelShader);
-    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_FALSE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, 0, GX2_FALSE, GX2_TRUE);
     GX2SetPixelSampler(&mAlphaSampler, 0);
@@ -555,10 +576,15 @@ void Renderer::GammaCorrect()
     GX2SetColorBuffer(&mTVColourBuffer, GX2_RENDER_TARGET_0);
     GX2DrawEx(GX2_PRIMITIVE_TRIANGLE_STRIP, 4, 0, 1);
 
-    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
-    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
+    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE,
+                              context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE,
+                         GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, context.mBlendEnable, GX2_FALSE, GX2_TRUE);
-    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
+    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD,
+                       GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
     GX2SetAlphaTest(GX2_TRUE, GX2_COMPARE_GEQUAL, context.mAlphaTestEnable ? context.mAlphaTestRef : 0.0f);
     StateSetViewport(mCurrentViewport);
 
@@ -577,7 +603,9 @@ void Renderer::CopyFrameToDRC()
 
     GX2SetVertexShader(mResolveVertexShader);
     GX2SetPixelShader(mCopyPixelShader);
-    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_FALSE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, 0, GX2_FALSE, GX2_TRUE);
     GX2SetPixelSampler(&mDRCSampler, 0);
@@ -594,10 +622,15 @@ void Renderer::CopyFrameToDRC()
     GX2SetColorBuffer(&mDRCColourBuffer, GX2_RENDER_TARGET_0);
     GX2DrawEx(GX2_PRIMITIVE_TRIANGLE_STRIP, 4, 0, 1);
 
-    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
-    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
+    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE,
+                              context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE,
+                         GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, context.mBlendEnable, GX2_FALSE, GX2_TRUE);
-    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
+    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD,
+                       GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
     GX2SetAlphaTest(GX2_TRUE, GX2_COMPARE_GEQUAL, context.mAlphaTestEnable ? context.mAlphaTestRef : 0.0f);
     StateSetViewport(mCurrentViewport);
 
@@ -745,20 +778,31 @@ void Renderer::Clear(int flags)
     GX2SetVertexShader(mClearVertexShader);
     GX2SetPixelShader(mClearPixelShader);
     GX2SetStencilMask(0, 0, 0, 0, 0, 0);
-    GX2SetDepthStencilControl(GX2_TRUE, (flags & 1) ? GX2_TRUE : GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetDepthStencilControl(GX2_TRUE, (flags & 1) ? GX2_TRUE : GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE,
+                              GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP,
+                              GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_FALSE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, 0, GX2_FALSE, GX2_TRUE);
     GX2SetAlphaTest(GX2_FALSE, GX2_COMPARE_GEQUAL, 0.0f);
-    GX2SetTargetChannelMasks((flags & 2) != 0 ? GX2_CHANNEL_MASK_RGBA : GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE);
+    GX2SetTargetChannelMasks((flags & 2) != 0 ? GX2_CHANNEL_MASK_RGBA : GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE,
+                             GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE,
+                             GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE);
     GX2SetPixelUniformReg(0x10, 4, mClearColour);
     GX2DrawEx(GX2_PRIMITIVE_TRIANGLE_STRIP, 4, 0, 1);
 
-    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
-    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
+    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE,
+                              context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE,
+                         GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, context.mBlendEnable, GX2_FALSE, GX2_TRUE);
-    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
+    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD,
+                       GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
     GX2SetAlphaTest(GX2_TRUE, GX2_COMPARE_GEQUAL, context.mAlphaTestEnable ? context.mAlphaTestRef : 0.0f);
-    GX2SetTargetChannelMasks(GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE);
+    GX2SetTargetChannelMasks(GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE,
+                             GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE,
+                             GX2_CHANNEL_MASK_NONE);
     GX2SetStencilMask(0, 255, 0, 0, 255, 0);
     mCurrentVertexShader = -1;
     mCurrentPixelShader = -1;
@@ -858,7 +902,9 @@ void Renderer::CaptureThumbnail(ImageFileBuffer* buffer)
 
     GX2SetVertexShader(mResolveVertexShader);
     GX2SetPixelShader(mCopyPixelShader);
-    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_FALSE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, 0, GX2_FALSE, GX2_TRUE);
     GX2SetPixelSampler(&mAlphaSampler, 0);
@@ -875,7 +921,8 @@ void Renderer::CaptureThumbnail(ImageFileBuffer* buffer)
     GX2SetPixelTexture(&mColourTexture, 0);
     GX2SetColorBuffer(&mThumbnailColourBuffer[0], GX2_RENDER_TARGET_0);
     GX2Flush();
-    GX2Invalidate(GX2_INVALIDATE_COLOR_BUFFER | GX2_INVALIDATE_TEXTURE, mColourTexture.surface.imagePtr, mColourTexture.surface.imageSize);
+    GX2Invalidate(GX2_INVALIDATE_COLOR_BUFFER | GX2_INVALIDATE_TEXTURE, mColourTexture.surface.imagePtr,
+                  mColourTexture.surface.imageSize);
     GX2DrawEx(GX2_PRIMITIVE_TRIANGLE_STRIP, 4, 0, 1);
 
     for (int level = 1; level < 4; ++level)
@@ -891,18 +938,25 @@ void Renderer::CaptureThumbnail(ImageFileBuffer* buffer)
         GX2SetPixelTexture(&mThumbnailTexture[level - 1], 0);
         GX2SetColorBuffer(&mThumbnailColourBuffer[level], GX2_RENDER_TARGET_0);
         GX2Flush();
-        GX2Invalidate(GX2_INVALIDATE_COLOR_BUFFER | GX2_INVALIDATE_TEXTURE, mThumbnailTexture[level - 1].surface.imagePtr, mThumbnailTexture[level - 1].surface.imageSize);
+        GX2Invalidate(GX2_INVALIDATE_COLOR_BUFFER | GX2_INVALIDATE_TEXTURE,
+                      mThumbnailTexture[level - 1].surface.imagePtr, mThumbnailTexture[level - 1].surface.imageSize);
         GX2DrawEx(GX2_PRIMITIVE_TRIANGLE_STRIP, 4, 0, 1);
     }
 
     GX2DrawDone();
-    GX2Invalidate(GX2_INVALIDATE_COLOR_BUFFER, mThumbnailTexture[3].surface.imagePtr, mThumbnailTexture[3].surface.imageSize);
+    GX2Invalidate(GX2_INVALIDATE_COLOR_BUFFER, mThumbnailTexture[3].surface.imagePtr,
+                  mThumbnailTexture[3].surface.imageSize);
     ConvertLinearToPng(buffer, (unsigned char*)mThumbnailTexture[3].surface.imagePtr, 0x40, 0x40);
 
-    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
-    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
+    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE,
+                              context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE,
+                         GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, context.mBlendEnable, GX2_FALSE, GX2_TRUE);
-    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
+    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD,
+                       GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
     GX2SetAlphaTest(GX2_TRUE, GX2_COMPARE_GEQUAL, context.mAlphaTestEnable ? context.mAlphaTestRef : 0.0f);
     StateSetViewport(mCurrentViewport);
     mCurrentPixelShader = -1;
@@ -937,18 +991,26 @@ void Renderer::BeginOrderIndependentAlpha()
     GX2SetColorBuffer(&mColourBuffer, GX2_RENDER_TARGET_1);
     GX2SetVertexShader(mClearVertexShader);
     GX2SetPixelShader(mAlphaAccumulatePixelShader);
-    GX2SetTargetChannelMasks(GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_A, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE);
-    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetTargetChannelMasks(GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_A, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE,
+                             GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE,
+                             GX2_CHANNEL_MASK_NONE);
+    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_FALSE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, 0, GX2_FALSE, GX2_TRUE);
     GX2SetAlphaTest(GX2_FALSE, GX2_COMPARE_GEQUAL, 0.0f);
     GX2DrawEx(GX2_PRIMITIVE_TRIANGLE_STRIP, 4, 0, 1);
     mCurrentVertexShader = -1;
     mCurrentPixelShader = -1;
-    GX2SetBlendControl(GX2_RENDER_TARGET_0, GX2_BLEND_ONE, GX2_BLEND_ONE, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
-    GX2SetBlendControl(GX2_RENDER_TARGET_1, GX2_BLEND_ZERO, GX2_BLEND_ONE_MINUS_SRC_ALPHA, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
+    GX2SetBlendControl(GX2_RENDER_TARGET_0, GX2_BLEND_ONE, GX2_BLEND_ONE, GX2_BLEND_COMBINE_ADD, GX2_FALSE,
+                       GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
+    GX2SetBlendControl(GX2_RENDER_TARGET_1, GX2_BLEND_ZERO, GX2_BLEND_ONE_MINUS_SRC_ALPHA, GX2_BLEND_COMBINE_ADD,
+                       GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, 3, GX2_FALSE, GX2_TRUE);
-    GX2SetDepthStencilControl(GX2_TRUE, GX2_FALSE, GX2_COMPARE_LEQUAL, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetDepthStencilControl(GX2_TRUE, GX2_FALSE, GX2_COMPARE_LEQUAL, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_FALSE, GX2_TRUE);
     context.mOrderIndependentAlpha = true;
 }
@@ -964,8 +1026,11 @@ void Renderer::EndOrderIndependentAlpha()
     GX2SetColorBuffer(&mColourBuffer, GX2_RENDER_TARGET_0);
     GX2SetVertexShader(mResolveVertexShader);
     GX2SetPixelShader(mAlphaResolvePixelShader);
-    GX2SetBlendControl(GX2_RENDER_TARGET_0, GX2_BLEND_ONE_MINUS_DST_ALPHA, GX2_BLEND_DST_ALPHA, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
-    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetBlendControl(GX2_RENDER_TARGET_0, GX2_BLEND_ONE_MINUS_DST_ALPHA, GX2_BLEND_DST_ALPHA, GX2_BLEND_COMBINE_ADD,
+                       GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
+    GX2SetDepthStencilControl(GX2_FALSE, GX2_FALSE, GX2_COMPARE_ALWAYS, GX2_TRUE, GX2_TRUE, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, GX2_COMPARE_ALWAYS,
+                              GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_FALSE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, 3, GX2_FALSE, GX2_TRUE);
 
@@ -980,10 +1045,15 @@ void Renderer::EndOrderIndependentAlpha()
     GX2SetPixelSampler(&mAlphaSampler, 0);
     GX2DrawEx(GX2_PRIMITIVE_TRIANGLE_STRIP, 4, 0, 1);
 
-    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
-    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
+    GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE,
+                              context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP,
+                              context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+    GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE,
+                         GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
     GX2SetColorControl(GX2_LOGIC_OP_COPY, context.mBlendEnable, GX2_FALSE, GX2_TRUE);
-    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
+    GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD,
+                       GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
     GX2SetAlphaTest(GX2_TRUE, GX2_COMPARE_GEQUAL, context.mAlphaTestEnable ? context.mAlphaTestRef : 0.0f);
     mCurrentPixelShader = -1;
     mCurrentVertexShader = -1;
@@ -1106,8 +1176,7 @@ void Renderer::MatrixPerspective(float fieldOfView, float aspect, float nearDist
     MultWithStack(matrix);
 }
 
-void Renderer::MatrixOrthogonal(float left, float right, float bottom, float top, float nearDistance,
-                                float farDistance)
+void Renderer::MatrixOrthogonal(float left, float right, float bottom, float top, float nearDistance, float farDistance)
 {
     float matrix[4][4];
     C_MTXOrtho(matrix, top, bottom, left, right, nearDistance, farDistance);
@@ -1294,7 +1363,10 @@ void Renderer::StateSetDepthMask(bool bDepthMask)
     else
     {
         context.mDepthMask = bDepthMask;
-        GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, bDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+        GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, bDepthMask ? GX2_TRUE : GX2_FALSE,
+                                  context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE,
+                                  GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE,
+                                  GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     }
 }
 
@@ -1331,7 +1403,8 @@ void Renderer::StateSetBlendFunc(int source, int destination)
     {
         context.mBlendSource = static_cast<GX2BlendFunction>(source);
         context.mBlendDestination = static_cast<GX2BlendFunction>(destination);
-        GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
+        GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD,
+                           GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
     }
 }
 
@@ -1377,7 +1450,10 @@ void Renderer::StateSetDepthFunc(int depthFunc)
     else
     {
         context.mDepthFunc = static_cast<GX2CompareFunction>(depthFunc);
-        GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+        GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE,
+                                  context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE,
+                                  context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP,
+                                  context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     }
 }
 
@@ -1395,7 +1471,8 @@ void Renderer::StateSetFaceCull(bool bFaceCull)
     else
     {
         context.mFaceCull = bFaceCull;
-        GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, bFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
+        GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, bFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE,
+                             GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
     }
 }
 
@@ -1405,7 +1482,9 @@ void Renderer::StateSetFaceCullCW(bool bClockwise)
 
     if (context.mRecordingBuffer == NULL)
     {
-        GX2SetPolygonControl(bClockwise ? GX2_FRONT_FACE_CCW : GX2_FRONT_FACE_CW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
+        GX2SetPolygonControl(bClockwise ? GX2_FRONT_FACE_CCW : GX2_FRONT_FACE_CW, GX2_FALSE,
+                             context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE,
+                             GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
     }
 }
 
@@ -1416,7 +1495,12 @@ void Renderer::StateSetLineWidth(float width)
 void Renderer::StateSetWriteEnable(bool bRed, bool bGreen, bool bBlue, bool bAlpha)
 {
     getContext();
-    GX2SetTargetChannelMasks((bRed ? GX2_CHANNEL_MASK_R : GX2_CHANNEL_MASK_NONE) | (bGreen ? GX2_CHANNEL_MASK_G : GX2_CHANNEL_MASK_NONE) | (bBlue ? GX2_CHANNEL_MASK_B : GX2_CHANNEL_MASK_NONE) | (bAlpha ? GX2_CHANNEL_MASK_A : GX2_CHANNEL_MASK_NONE), GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE);
+    GX2SetTargetChannelMasks((bRed ? GX2_CHANNEL_MASK_R : GX2_CHANNEL_MASK_NONE)
+                                 | (bGreen ? GX2_CHANNEL_MASK_G : GX2_CHANNEL_MASK_NONE)
+                                 | (bBlue ? GX2_CHANNEL_MASK_B : GX2_CHANNEL_MASK_NONE)
+                                 | (bAlpha ? GX2_CHANNEL_MASK_A : GX2_CHANNEL_MASK_NONE),
+                             GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE,
+                             GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE, GX2_CHANNEL_MASK_NONE);
 }
 
 void Renderer::StateSetDepthTestEnable(bool bDepthTest)
@@ -1433,7 +1517,10 @@ void Renderer::StateSetDepthTestEnable(bool bDepthTest)
     else
     {
         context.mDepthTestEnable = bDepthTest;
-        GX2SetDepthStencilControl(bDepthTest ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+        GX2SetDepthStencilControl(bDepthTest ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE,
+                                  context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE,
+                                  GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE,
+                                  GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
     }
 }
 
@@ -1455,7 +1542,8 @@ void Renderer::StateSetDepthSlopeAndBias(float slope, float bias)
 
     if (buffer == NULL)
     {
-        GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
+        GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, context.mFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE,
+                             GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
         GX2SetPolygonOffset(bias, slope, bias, slope, 0.0f);
     }
 }
@@ -1534,8 +1622,7 @@ void Renderer::StateSetTextureScaleUI(float scaleU, float scaleV, float offsetU,
 }
 
 void Renderer::StateSetScalingGridUI(float left, float right, float top, float bottom, float innerLeft,
-                                     float innerRight, float innerTop, float innerBottom, float scaleU,
-                                     float scaleV)
+                                     float innerRight, float innerTop, float innerBottom, float scaleU, float scaleV)
 {
     float edges[4];
     float inner[4];
@@ -1769,8 +1856,7 @@ void Renderer::StateSetViewport(C4JRender::eViewportType viewport)
     GX2SetScissor((unsigned int)x, (unsigned int)y, (unsigned int)width, (unsigned int)height);
 }
 
-void Renderer::StateGetScissorRect(unsigned int& left, unsigned int& top, unsigned int& right,
-                                   unsigned int& bottom)
+void Renderer::StateGetScissorRect(unsigned int& left, unsigned int& top, unsigned int& right, unsigned int& bottom)
 {
     Context& context = getContext();
     left = context.mScissorRect[0];
@@ -1797,14 +1883,14 @@ void Renderer::StateSetEnableViewportClipPlanes(bool bEnable)
 
 void Renderer::Mtx44Vec4Transform(float (*matrix)[4], _Vec4* source, _Vec4* destination)
 {
-    destination->x = matrix[0][0] * source->x + matrix[0][1] * source->y + matrix[0][2] * source->z +
-                     matrix[0][3] * source->w;
-    destination->y = matrix[1][0] * source->x + matrix[1][1] * source->y + matrix[1][2] * source->z +
-                     matrix[1][3] * source->w;
-    destination->z = matrix[2][0] * source->x + matrix[2][1] * source->y + matrix[2][2] * source->z +
-                     matrix[2][3] * source->w;
-    destination->w = matrix[3][0] * source->x + matrix[3][1] * source->y + matrix[3][2] * source->z +
-                     matrix[3][3] * source->w;
+    destination->x = matrix[0][0] * source->x + matrix[0][1] * source->y + matrix[0][2] * source->z
+                     + matrix[0][3] * source->w;
+    destination->y = matrix[1][0] * source->x + matrix[1][1] * source->y + matrix[1][2] * source->z
+                     + matrix[1][3] * source->w;
+    destination->z = matrix[2][0] * source->x + matrix[2][1] * source->y + matrix[2][2] * source->z
+                     + matrix[2][3] * source->w;
+    destination->w = matrix[3][0] * source->x + matrix[3][1] * source->y + matrix[3][2] * source->z
+                     + matrix[3][3] * source->w;
 }
 
 void Renderer::StateSetTexGenCol(int coordinate, float x, float y, float z, float w, bool bEyeLinear)
@@ -1860,7 +1946,10 @@ void Renderer::StateSetStencil(int stencilFunc, unsigned char reference, unsigne
 
     if (context.mRecordingBuffer == NULL)
     {
-        GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
+        GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE,
+                                  context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE,
+                                  context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP,
+                                  context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
         GX2SetStencilMask(compareMask, writeMask, reference, compareMask, writeMask, reference);
     }
 }
@@ -2171,8 +2260,8 @@ void Renderer::TextureData(int width, int height, void* data, int level, C4JRend
 
     if (level == 0)
     {
-        GX2InitTexture(&texture.mTexture, width, height, 1, texture.mLevels,
-                       GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_SURFACE_DIM_2D);
+        GX2InitTexture(&texture.mTexture, width, height, 1, texture.mLevels, GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM,
+                       GX2_SURFACE_DIM_2D);
         texture.mTexture.surface.tileMode = GX2_TILE_MODE_LINEAR_ALIGNED;
         GX2CalcSurfaceSizeAndAlignment(&texture.mTexture.surface);
         GX2InitTextureRegs(&texture.mTexture);
@@ -2287,8 +2376,7 @@ void Renderer::TextureDataUpdate(int x, int y, int width, int height, void* data
         {
             GX2Invalidate(GX2_INVALIDATE_CPU, destination, texture.mTexture.surface.imageSize);
             GX2Invalidate(GX2_INVALIDATE_CPU, source, texture.mTexture.surface.imageSize);
-            DMAETimeStamp timestamp = DMAECopyMem(destination, source,
-                                                  texture.mTexture.surface.imageSize >> 2,
+            DMAETimeStamp timestamp = DMAECopyMem(destination, source, texture.mTexture.surface.imageSize >> 2,
                                                   DMAE_SWAP_NONE);
             DMAEWaitDone(timestamp);
             return;
@@ -2385,10 +2473,15 @@ void Renderer::TextureSetParam(int parameter, int value)
         }
     }
 
-    GX2InitSamplerClamping(&texture.mSampler, (flags & 1) != 0 ? GX2_TEX_CLAMP_CLAMP : GX2_TEX_CLAMP_WRAP, (flags & 2) != 0 ? GX2_TEX_CLAMP_CLAMP : GX2_TEX_CLAMP_WRAP, GX2_TEX_CLAMP_CLAMP);
+    GX2InitSamplerClamping(&texture.mSampler, (flags & 1) != 0 ? GX2_TEX_CLAMP_CLAMP : GX2_TEX_CLAMP_WRAP,
+                           (flags & 2) != 0 ? GX2_TEX_CLAMP_CLAMP : GX2_TEX_CLAMP_WRAP, GX2_TEX_CLAMP_CLAMP);
     flags = mTextures[context.mBoundTexture[0]].mFlags;
-    GX2InitSamplerXYFilter(&mTextures[context.mBoundTexture[0]].mSampler, (flags & 8) != 0 ? GX2_TEX_XY_FILTER_BILINEAR : GX2_TEX_XY_FILTER_POINT, (flags & 4) != 0 ? GX2_TEX_XY_FILTER_BILINEAR : GX2_TEX_XY_FILTER_POINT, GX2_TEX_ANISO_1_TO_1);
-    GX2InitSamplerZMFilter(&mTextures[context.mBoundTexture[0]].mSampler, GX2_TEX_Z_FILTER_POINT, GX2_TEX_MIP_FILTER_LINEAR);
+    GX2InitSamplerXYFilter(&mTextures[context.mBoundTexture[0]].mSampler,
+                           (flags & 8) != 0 ? GX2_TEX_XY_FILTER_BILINEAR : GX2_TEX_XY_FILTER_POINT,
+                           (flags & 4) != 0 ? GX2_TEX_XY_FILTER_BILINEAR : GX2_TEX_XY_FILTER_POINT,
+                           GX2_TEX_ANISO_1_TO_1);
+    GX2InitSamplerZMFilter(&mTextures[context.mBoundTexture[0]].mSampler, GX2_TEX_Z_FILTER_POINT,
+                           GX2_TEX_MIP_FILTER_LINEAR);
     UpdateTextureState(0);
 }
 
@@ -2476,8 +2569,8 @@ int Renderer::SaveTextureData(const char* fileName, D3DXIMAGE_INFO* info, int* d
     return 0;
 }
 
-int Renderer::SaveTextureDataToMemory(void* destination, int destinationSize, int* bytesWritten, int width,
-                                      int height, int* data)
+int Renderer::SaveTextureDataToMemory(void* destination, int destinationSize, int* bytesWritten, int width, int height,
+                                      int* data)
 {
     png_image image;
     memset(&image, 0, sizeof(image));
@@ -2486,8 +2579,8 @@ int Renderer::SaveTextureDataToMemory(void* destination, int destinationSize, in
     image.height = height;
     image.format = 3;
     user_write_data_init(destination, destinationSize);
-    png_image_write_to_stdio(&image, NULL, 0, data, 0, NULL,
-                             reinterpret_cast<void*>(user_write_data), reinterpret_cast<void*>(user_flush_data));
+    png_image_write_to_stdio(&image, NULL, 0, data, 0, NULL, reinterpret_cast<void*>(user_write_data),
+                             reinterpret_cast<void*>(user_flush_data));
     *bytesWritten = user_write_data_bytes_written();
     return 0;
 }
@@ -2590,8 +2683,8 @@ void Renderer::DrawVertexSetup(C4JRender::eVertexType vertexType, C4JRender::ePi
 
     C4JRender::ePixelShaderType finalPixelShader = FinalisePixelShaderType(pixelShaderType);
 
-    if (finalPixelShader == C4JRender::ePixelShaderType_LayeredColourMask &&
-        (mCurrentPixelShader != C4JRender::ePixelShaderType_LayeredColourMask || mLayeredParamsDirty))
+    if (finalPixelShader == C4JRender::ePixelShaderType_LayeredColourMask
+        && (mCurrentPixelShader != C4JRender::ePixelShaderType_LayeredColourMask || mLayeredParamsDirty))
     {
         GX2SetPixelUniformReg(0x24, 0x80, mLayeredTextureSize);
         mLayeredParamsDirty = false;
@@ -2866,11 +2959,9 @@ void Renderer::CBuffEnd()
 
     if (context.mDeferredMode)
     {
-        context.mDeferredBuffers.push_back(DeferredCBuff(context.mRecordingId, context.mRecordingBuffer,
-                                                         context.mRecordingVertexType,
-                                                         context.mRecordingPixelShaderType,
-                                                         context.mRecordingPrimitiveType,
-                                                         context.mMatrixStack[3][0]));
+        context.mDeferredBuffers.push_back(DeferredCBuff(
+            context.mRecordingId, context.mRecordingBuffer, context.mRecordingVertexType,
+            context.mRecordingPixelShaderType, context.mRecordingPrimitiveType, context.mMatrixStack[3][0]));
         context.mMatrixMode = 0;
         context.mRecordingBuffer->EndRecording(mVertexStrides[context.mRecordingVertexType]);
         context.mRecordingBuffer = NULL;
@@ -2923,8 +3014,7 @@ bool Renderer::CBuffCall(int id, bool bApplyMatrix, unsigned char layerMask)
 
     if (!bApplyMatrix)
     {
-        mCommandBuffers[slot]->Render((C4JRender::eVertexType)vertexType, context, primitiveType, false,
-                                      layerMask);
+        mCommandBuffers[slot]->Render((C4JRender::eVertexType)vertexType, context, primitiveType, false, layerMask);
         OSFastMutex_Unlock(&mCommandBufferMutex);
         return true;
     }
@@ -2983,8 +3073,7 @@ bool Renderer::CBuffCall(int id, bool bApplyMatrix, unsigned char layerMask)
         mCurrentVertexShader = vertexType;
     }
 
-    C4JRender::ePixelShaderType pixelShaderType =
-        (C4JRender::ePixelShaderType)mCommandBufferPixelShaderTypes[slot];
+    C4JRender::ePixelShaderType pixelShaderType = (C4JRender::ePixelShaderType)mCommandBufferPixelShaderTypes[slot];
 
     if (context.mForceLOD >= 0)
     {
@@ -3005,8 +3094,8 @@ bool Renderer::CBuffCall(int id, bool bApplyMatrix, unsigned char layerMask)
         mPixelUniformsDirty = false;
     }
 
-    if (finalPixelShader == C4JRender::ePixelShaderType_LayeredColourMask &&
-        (mCurrentPixelShader != C4JRender::ePixelShaderType_LayeredColourMask || mLayeredParamsDirty))
+    if (finalPixelShader == C4JRender::ePixelShaderType_LayeredColourMask
+        && (mCurrentPixelShader != C4JRender::ePixelShaderType_LayeredColourMask || mLayeredParamsDirty))
     {
         GX2SetPixelUniformReg(0x24, 0x80, mLayeredTextureSize);
         mLayeredParamsDirty = false;
@@ -3018,10 +3107,9 @@ bool Renderer::CBuffCall(int id, bool bApplyMatrix, unsigned char layerMask)
         mCurrentPixelShader = finalPixelShader;
     }
 
-    mCommandBuffers[slot]->Render((C4JRender::eVertexType)vertexType, context, primitiveType, bApplyMatrix,
-                                  layerMask);
+    mCommandBuffers[slot]->Render((C4JRender::eVertexType)vertexType, context, primitiveType, bApplyMatrix, layerMask);
 
-    MultWithStack((float (*)[4])&mCommandBufferMatrices[slot * 16]);
+    MultWithStack((float (*)[4]) & mCommandBufferMatrices[slot * 16]);
     ASM_MTX44Identity(context.mMatrixStack[3][0]);
     context.mMatrixDirty[3] = true;
 
@@ -3244,8 +3332,8 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
         {
             if (shaderVertexType == C4JRender::eVertexType_Terrain)
             {
-                if (!bApplyMatrix && command.mMatrix[13] == context.mLastQuadUniform[2] &&
-                    command.mMatrix[14] == context.mLastQuadUniform[3])
+                if (!bApplyMatrix && command.mMatrix[13] == context.mLastQuadUniform[2]
+                    && command.mMatrix[14] == context.mLastQuadUniform[3])
                 {
                     continue;
                 }
@@ -3270,8 +3358,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
                 {
                     shaderVertexType = C4JRender::eVertexType_DefaultLighting;
                 }
-                else if (shaderVertexType == C4JRender::eVertexType_DefaultLighting &&
-                         !context.mLightingEnable)
+                else if (shaderVertexType == C4JRender::eVertexType_DefaultLighting && !context.mLightingEnable)
                 {
                     shaderVertexType = C4JRender::eVertexType_Default;
                 }
@@ -3279,8 +3366,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
                 {
                     shaderVertexType = C4JRender::eVertexType_EntityLighting;
                 }
-                else if (shaderVertexType == C4JRender::eVertexType_EntityLighting &&
-                         !context.mLightingEnable)
+                else if (shaderVertexType == C4JRender::eVertexType_EntityLighting && !context.mLightingEnable)
                 {
                     shaderVertexType = C4JRender::eVertexType_Entity;
                 }
@@ -3295,9 +3381,11 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
 
             if (shaderVertexType == C4JRender::eVertexType_Terrain)
             {
-                if (numBatches != 0 &&
-                    command.mVertices.mOffset == batchOffset[numBatches - 1] +
-                    batchCount[numBatches - 1] * gRendererInstance->mVertexStrides[C4JRender::eVertexType_Terrain])
+                if (numBatches != 0
+                    && command.mVertices.mOffset
+                           == batchOffset[numBatches - 1]
+                                  + batchCount[numBatches - 1]
+                                        * gRendererInstance->mVertexStrides[C4JRender::eVertexType_Terrain])
                 {
                     batchCount[numBatches - 1] += command.mVertices.mCount;
                 }

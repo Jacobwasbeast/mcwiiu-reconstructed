@@ -27,7 +27,8 @@ public:
 
     virtual void Initialise(int controllerCount, unsigned char gameMapCount, unsigned char menuMapCount) = 0;
     virtual void Tick() = 0;
-    virtual void SetDeadzoneAndMovementRange(unsigned int deadzone, unsigned int maximum, unsigned int movementRange) = 0;
+    virtual void SetDeadzoneAndMovementRange(unsigned int deadzone, unsigned int maximum,
+                                             unsigned int movementRange) = 0;
     virtual void SetGameControllerTypeJoypadMaps(int controllerType, unsigned char map, unsigned int value) = 0;
     virtual void SetGameJoypadMaps(int pad, unsigned char map, unsigned int value) = 0;
     virtual unsigned int GetGameJoypadMaps(int pad, unsigned char map) = 0;
@@ -61,16 +62,21 @@ public:
     virtual unsigned char GetJoypadRTrigger(int pad, bool raw) = 0;
     virtual unsigned short* GetTouchPadData(int pad, ETouchType touchType, bool previous) = 0;
     virtual void SetMenuDisplayed(int pad, bool displayed) = 0;
-    virtual unsigned int RequestKeyboard(const wchar_t* title, const wchar_t* initialText, unsigned int pad, unsigned int maximumLength, KeyboardCallback callback, void* context, EKeyboardMode mode) = 0;
-    virtual void RequestErrorViewer(unsigned int value, unsigned int type, ErrorViewerCallback callback, void* context) = 0;
-    virtual void RequestErrorViewer(unsigned int value, wchar_t* title, wchar_t* message, ErrorViewerCallback callback, void* context) = 0;
+    virtual unsigned int RequestKeyboard(const wchar_t* title, const wchar_t* initialText, unsigned int pad,
+                                         unsigned int maximumLength, KeyboardCallback callback, void* context,
+                                         EKeyboardMode mode) = 0;
+    virtual void RequestErrorViewer(unsigned int value, unsigned int type, ErrorViewerCallback callback,
+                                    void* context) = 0;
+    virtual void RequestErrorViewer(unsigned int value, wchar_t* title, wchar_t* message, ErrorViewerCallback callback,
+                                    void* context) = 0;
     virtual void DestroyErrorViewer() = 0;
     virtual void DestroyKeyboard() = 0;
     virtual void GetText(wchar_t* text, int length) = 0;
     virtual void SetLocalMultiplayer(bool enabled) = 0;
     virtual unsigned int IsLocalMultiplayerAvailable() = 0;
     virtual unsigned int UsingRemoteVita() = 0;
-    virtual unsigned int VerifyStrings(wchar_t** strings, int count, int (*callback)(void*, _STRING_VERIFY_RESPONSE*), void* context) = 0;
+    virtual unsigned int VerifyStrings(wchar_t** strings, int count, int (*callback)(void*, _STRING_VERIFY_RESPONSE*),
+                                       void* context) = 0;
     virtual void CancelQueuedVerifyStrings(int (*callback)(void*, _STRING_VERIFY_RESPONSE*), void* context) = 0;
     virtual void CancelAllVerifyInProgress() = 0;
     virtual unsigned int LockPad(int pad, int controllerId) = 0;
@@ -293,16 +299,20 @@ public:
     virtual unsigned char GetJoypadRTrigger(int pad, bool raw);
     virtual unsigned short* GetTouchPadData(int pad, C_4JInput::ETouchType touchType, bool previous);
     virtual void SetMenuDisplayed(int pad, bool displayed);
-    virtual unsigned int RequestKeyboard(const wchar_t* title, const wchar_t* initialText, unsigned int pad, unsigned int maximumLength, KeyboardCallback callback, void* context, C_4JInput::EKeyboardMode mode);
+    virtual unsigned int RequestKeyboard(const wchar_t* title, const wchar_t* initialText, unsigned int pad,
+                                         unsigned int maximumLength, KeyboardCallback callback, void* context,
+                                         C_4JInput::EKeyboardMode mode);
     virtual void RequestErrorViewer(unsigned int value, unsigned int type, ErrorViewerCallback callback, void* context);
-    virtual void RequestErrorViewer(unsigned int value, wchar_t* title, wchar_t* message, ErrorViewerCallback callback, void* context);
+    virtual void RequestErrorViewer(unsigned int value, wchar_t* title, wchar_t* message, ErrorViewerCallback callback,
+                                    void* context);
     virtual void DestroyErrorViewer();
     virtual void DestroyKeyboard();
     virtual void GetText(wchar_t* text, int length);
     virtual void SetLocalMultiplayer(bool enabled);
     virtual unsigned int IsLocalMultiplayerAvailable();
     virtual unsigned int UsingRemoteVita();
-    virtual unsigned int VerifyStrings(wchar_t** strings, int count, int (*callback)(void*, _STRING_VERIFY_RESPONSE*), void* context);
+    virtual unsigned int VerifyStrings(wchar_t** strings, int count, int (*callback)(void*, _STRING_VERIFY_RESPONSE*),
+                                       void* context);
     virtual void CancelQueuedVerifyStrings(int (*callback)(void*, _STRING_VERIFY_RESPONSE*), void* context);
     virtual void CancelAllVerifyInProgress();
     virtual unsigned int LockPad(int pad, int controllerId);

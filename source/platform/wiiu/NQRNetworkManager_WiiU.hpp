@@ -21,21 +21,21 @@ class C4JThreadImpl;
 
 namespace nn
 {
-    namespace nex
-    {
-        class Gathering;
-        class ProtocolCallContext;
-        class String;
-        template <typename T, typename KeyType> class AnyObjectHolder;
-    }
+namespace nex
+{
+class Gathering;
+class ProtocolCallContext;
+class String;
+template <typename T, typename KeyType> class AnyObjectHolder;
+}
 }
 
 namespace nn
 {
-    namespace fp
-    {
-        struct FriendPresence;
-    }
+namespace fp
+{
+struct FriendPresence;
+}
 }
 
 class CMatchMakeSearchParam
@@ -144,7 +144,8 @@ public:
     virtual bool IsReadyToPlayOrIdle();
     virtual bool IsInSession();
     virtual bool IsMatchmakingEnabled();
-    virtual void CreateAndJoinRoom(int userIndex, int localUserMask, void* extData, int extDataSize, int* attributes, int attributeCount, bool localGame, unsigned char gameMode);
+    virtual void CreateAndJoinRoom(int userIndex, int localUserMask, void* extData, int extDataSize, int* attributes,
+                                   int attributeCount, bool localGame, unsigned char gameMode);
     virtual void UpdateExternalRoomData();
     virtual bool FriendRoomManagerIsBusy();
     virtual bool FriendRoomManagerSearch();
@@ -156,8 +157,10 @@ public:
     virtual bool JoinRoom(int userIndexMask, const nn::fp::FriendPresence* friendPresence);
     virtual bool FriendPresenceUpdatedRoomList();
     virtual SessionSearchResult* GetFriendRoomSearchResults(int* count);
-    virtual void GetExtDataForRoom(unsigned int sessionId, void* extData, void (*callback)(bool, void*), void* callbackData);
-    virtual bool FindAndJoinRoom(int userIndexMask, unsigned int searchFlags, CMatchMakeSearchParam* searchParam, unsigned char gameMode);
+    virtual void GetExtDataForRoom(unsigned int sessionId, void* extData, void (*callback)(bool, void*),
+                                   void* callbackData);
+    virtual bool FindAndJoinRoom(int userIndexMask, unsigned int searchFlags, CMatchMakeSearchParam* searchParam,
+                                 unsigned char gameMode);
     virtual void StartGame();
     virtual void LeaveRoom(bool actuallyLeaveRoom);
     virtual void EndGame();
@@ -189,7 +192,8 @@ public:
     static int ConnectOnlineNintendoThreadProc(void* context);
     void CancelConnectCallbacks();
     static void CancelConnectOnlineNintendo(void* context);
-    static int ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int, int), void* callbackData);
+    static int ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int, int),
+                                                 void* callbackData);
     static int InvitationSignInReturned(void* context, bool signedIn, int error, int userIndex);
     static int InvitationMustConnectReturned(void* context, int pad, C4JStorage::EMessageResult result);
     void UpdateInvitationChecks();
@@ -209,13 +213,15 @@ public:
     void ClearSendQueue();
     void SetState(eNQRNetworkManagerInternalState state);
     void TickSendQueue();
-    nn::pia::Result Pia_InitializeCommon(unsigned char* memory, unsigned int memorySize, unsigned long long traceFlags, bool enableCachedPrint, bool);
+    nn::pia::Result Pia_InitializeCommon(unsigned char* memory, unsigned int memorySize, unsigned long long traceFlags,
+                                         bool enableCachedPrint, bool);
     nn::pia::Result Pia_InitializeInet();
     nn::pia::Result Pia_InitializeSession(const nn::pia::session::Session::Setting& setting);
     ConnectedStation* GetConnectedStation(unsigned long long stationId);
     void AddConnectedStation(unsigned long long stationId);
     void Pia_SignalLeaveSession();
-    static void Pia_SessionCallback(nn::pia::session::Session::EventType eventType, unsigned long long stationId, void* context);
+    static void Pia_SessionCallback(nn::pia::session::Session::EventType eventType, unsigned long long stationId,
+                                    void* context);
     bool NexFacadeLogin(unsigned int timeout);
     void InitialiseAfterOnline();
     void OnlineCheck();

@@ -62,7 +62,8 @@ nn::pia::chat::VoiceProtocol* Chat_GetVoiceProtocol()
 {
     if (nn::pia::transport::g_piaTransport == NULL || s_protocolId == 0)
         return NULL;
-    return nn::pia::transport::g_piaTransport->m_protocolManager.GetProtocol<nn::pia::chat::VoiceProtocol>(s_protocolId);
+    return nn::pia::transport::g_piaTransport->m_protocolManager.GetProtocol<nn::pia::chat::VoiceProtocol>(
+        s_protocolId);
 }
 
 extern "C" void ReleaseCallback()
@@ -98,7 +99,8 @@ void NintendoVoiceChat_WiiU::AddPlayer(unsigned long long stationId)
     EnterCriticalSection(&s_voiceMutex);
     nn::pia::session::Session* session = nn::pia::session::g_piaSession;
     nn::pia::chat::VoiceProtocol* protocol = Chat_GetVoiceProtocol();
-    if (session != NULL && protocol != NULL && session->IsValidStationId(stationId) && !protocol->IsClientInConference(stationId))
+    if (session != NULL && protocol != NULL && session->IsValidStationId(stationId)
+        && !protocol->IsClientInConference(stationId))
     {
         startConference();
         nn::pia::Result result = protocol->AddConferenceClient(stationId);
@@ -221,7 +223,8 @@ void NintendoVoiceChat_WiiU::InitialiseAfterOnline()
     AssertPiaError(result);
     result = nn::pia::chat::BeginSetup();
     AssertPiaError(result);
-    s_protocolId = nn::pia::transport::g_piaTransport->m_protocolManager.CreateProtocol<nn::pia::chat::VoiceProtocol>(1);
+    s_protocolId = nn::pia::transport::g_piaTransport->m_protocolManager.CreateProtocol<nn::pia::chat::VoiceProtocol>(
+        1);
     nn::pia::chat::VoiceProtocol::Setting setting;
     setting.maxPlayers = 10;
     setting.codec = nn::pia::chat::CODEC_4;

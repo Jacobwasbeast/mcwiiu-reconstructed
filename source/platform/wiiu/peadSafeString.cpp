@@ -2,31 +2,31 @@
 
 namespace pead
 {
-template<> const char SafeStringBase<char>::cNullChar = '\0';
-template<> const wchar_t SafeStringBase<wchar_t>::cNullChar = L'\0';
+template <> const char SafeStringBase<char>::cNullChar = '\0';
+template <> const wchar_t SafeStringBase<wchar_t>::cNullChar = L'\0';
 
-template<>
+template <>
 SafeStringBase<char>& SafeStringBase<char>::operator=(const SafeStringBase<char>& other)
 {
     mStringTop = other.mStringTop;
     return *this;
 }
 
-template<>
+template <>
 SafeStringBase<wchar_t>& SafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other)
 {
     mStringTop = other.mStringTop;
     return *this;
 }
 
-template<>
+template <>
 BufferedSafeStringBase<char>& BufferedSafeStringBase<char>::operator=(const SafeStringBase<char>& other)
 {
     copy(other);
     return *this;
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<char>::formatImpl_(char* buffer, int size, const char* format, va_list args)
 {
     int result = StringUtil::vsnprintf(buffer, size, format, args);
@@ -35,13 +35,13 @@ int BufferedSafeStringBase<char>::formatImpl_(char* buffer, int size, const char
     return result;
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<char>::formatV(const char* format, va_list args)
 {
     return formatImpl_(getMutableStringTop_(), mBufferSize, format, args);
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<char>::format(const char* format, ...)
 {
     va_list args;
@@ -51,7 +51,7 @@ int BufferedSafeStringBase<char>::format(const char* format, ...)
     return result;
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<char>::appendWithFormatV(const char* format, va_list args)
 {
     char* buffer = getMutableStringTop_();
@@ -60,7 +60,7 @@ int BufferedSafeStringBase<char>::appendWithFormatV(const char* format, va_list 
     return length + result;
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<char>::appendWithFormat(const char* format, ...)
 {
     va_list args;
@@ -70,20 +70,20 @@ int BufferedSafeStringBase<char>::appendWithFormat(const char* format, ...)
     return result;
 }
 
-template<>
+template <>
 void BufferedSafeStringBase<char>::assureTerminationImpl_() const
 {
     const_cast<char*>(mStringTop)[getBufferSize() - 1] = cNullChar;
 }
 
-template<>
+template <>
 BufferedSafeStringBase<wchar_t>& BufferedSafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other)
 {
     copy(other);
     return *this;
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<wchar_t>::formatImpl_(wchar_t* buffer, int size, const wchar_t* format, va_list args)
 {
     int result = StringUtil::vsw16printf(buffer, size, format, args);
@@ -95,13 +95,13 @@ int BufferedSafeStringBase<wchar_t>::formatImpl_(wchar_t* buffer, int size, cons
     return result;
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<wchar_t>::formatV(const wchar_t* format, va_list args)
 {
     return formatImpl_(getMutableStringTop_(), mBufferSize, format, args);
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<wchar_t>::format(const wchar_t* format, ...)
 {
     va_list args;
@@ -111,7 +111,7 @@ int BufferedSafeStringBase<wchar_t>::format(const wchar_t* format, ...)
     return result;
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<wchar_t>::appendWithFormatV(const wchar_t* format, va_list args)
 {
     wchar_t* buffer = getMutableStringTop_();
@@ -120,7 +120,7 @@ int BufferedSafeStringBase<wchar_t>::appendWithFormatV(const wchar_t* format, va
     return length + result;
 }
 
-template<>
+template <>
 int BufferedSafeStringBase<wchar_t>::appendWithFormat(const wchar_t* format, ...)
 {
     va_list args;
@@ -130,26 +130,26 @@ int BufferedSafeStringBase<wchar_t>::appendWithFormat(const wchar_t* format, ...
     return result;
 }
 
-template<>
+template <>
 void BufferedSafeStringBase<wchar_t>::assureTerminationImpl_() const
 {
     const_cast<wchar_t*>(mStringTop)[getBufferSize() - 1] = cNullChar;
 }
 
-template<typename T>
+template <typename T>
 HeapSafeStringBase<T>::~HeapSafeStringBase()
 {
     DeleteArray(this->getMutableStringTop_());
 }
 
-template<>
+template <>
 HeapSafeStringBase<char>& HeapSafeStringBase<char>::operator=(const SafeStringBase<char>& other)
 {
     BufferedSafeStringBase<char>::operator=(other);
     return *this;
 }
 
-template<>
+template <>
 HeapSafeStringBase<wchar_t>& HeapSafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other)
 {
     BufferedSafeStringBase<wchar_t>::operator=(other);

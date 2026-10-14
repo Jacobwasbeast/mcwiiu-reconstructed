@@ -20,13 +20,15 @@ int ReadDir(int* piHandle, FSDirEntry* pDirEntry);
 
 extern "C"
 {
-    int AOC_Initialize();
-    int AOC_Finalize();
-    unsigned int AOC_CalculateWorkBufferSize(unsigned int uiMaxTitles);
-    int AOC_ListTitle(unsigned int* puiTitleCount, AOCTitle* pTitleList, unsigned int uiMaxTitles, void* pWorkBuffer, unsigned int uiWorkBufferSize);
-    int AOC_OpenTitle(char* pMountPath, AOCTitle* pTitle, void* pWorkBuffer, unsigned int uiWorkBufferSize);
-    int AOC_CloseTitle(AOCTitle* pTitle);
-    int AOC_GetPurchaseInfo(int* piPurchased, unsigned long long ullTitleId, unsigned short* pusContentIndices, unsigned int uiContentCount, void* pWorkBuffer, unsigned int uiWorkBufferSize);
+int AOC_Initialize();
+int AOC_Finalize();
+unsigned int AOC_CalculateWorkBufferSize(unsigned int uiMaxTitles);
+int AOC_ListTitle(unsigned int* puiTitleCount, AOCTitle* pTitleList, unsigned int uiMaxTitles, void* pWorkBuffer,
+                  unsigned int uiWorkBufferSize);
+int AOC_OpenTitle(char* pMountPath, AOCTitle* pTitle, void* pWorkBuffer, unsigned int uiWorkBufferSize);
+int AOC_CloseTitle(AOCTitle* pTitle);
+int AOC_GetPurchaseInfo(int* piPurchased, unsigned long long ullTitleId, unsigned short* pusContentIndices,
+                        unsigned int uiContentCount, void* pWorkBuffer, unsigned int uiWorkBufferSize);
 }
 
 C_AOC* C_AOC::s_pInstance = new C_AOC();
@@ -56,7 +58,9 @@ void C_AOC::Init()
 
     char* pStack = (char*)MEMAllocFromDefaultHeap(AOC_THREAD_STACK_SIZE);
 
-    bool bCreated = C4JThreadImpl::OSCreateThread4J(&m_thread, GetPurchasedContent_threadEntry, 0, this, pStack + AOC_THREAD_STACK_SIZE, AOC_THREAD_STACK_SIZE, AOC_THREAD_PRIORITY, AOC_THREAD_ATTRIBUTES);
+    bool bCreated = C4JThreadImpl::OSCreateThread4J(&m_thread, GetPurchasedContent_threadEntry, 0, this,
+                                                    pStack + AOC_THREAD_STACK_SIZE, AOC_THREAD_STACK_SIZE,
+                                                    AOC_THREAD_PRIORITY, AOC_THREAD_ATTRIBUTES);
 
     if (bCreated)
     {
@@ -86,7 +90,8 @@ void C_AOC::GetPurchasedContent()
             break;
 
         case eAOCState_ListTitles:
-            if (AOC_ListTitle(&m_uiTitleCount, m_pTitleList, MAX_AOC_TITLES, m_pWorkBuffer, m_uiWorkBufferSize) == 0 && m_uiTitleCount != 0)
+            if (AOC_ListTitle(&m_uiTitleCount, m_pTitleList, MAX_AOC_TITLES, m_pWorkBuffer, m_uiWorkBufferSize) == 0
+                && m_uiTitleCount != 0)
             {
                 m_eState = eAOCState_OpenTitle;
             }
@@ -116,97 +121,99 @@ void C_AOC::GetPurchasedContent()
             break;
 
         case eAOCState_ReadDirectory:
+        {
+            int iDirHandle = -1;
+
+            if (OpenDir(m_szMountPath, &iDirHandle) != 1)
             {
-                int iDirHandle = -1;
-
-                if (OpenDir(m_szMountPath, &iDirHandle) != 1)
-                {
-                    m_eState = eAOCState_Error;
-                }
-                else
-                {
-                    FSDirEntry dirEntry;
-
-                    while (ReadDir(&iDirHandle, &dirEntry) == 1 && (dirEntry.info.flags & FS_STAT_DIRECTORY) != 0)
-                    {
-                        char* pContentName = new char[strlen(dirEntry.name)];
-                        strcpy(pContentName, dirEntry.name);
-
-                        m_contentNames.push_back(pContentName);
-                        m_iNumContentNames++;
-                    }
-
-                    if (iDirHandle >= 0)
-                    {
-                        CloseDir(&iDirHandle);
-                    }
-
-                    m_eState = eAOCState_GetPurchaseInfo;
-                }
+                m_eState = eAOCState_Error;
             }
-            break;
+            else
+            {
+                FSDirEntry dirEntry;
+
+                while (ReadDir(&iDirHandle, &dirEntry) == 1 && (dirEntry.info.flags & FS_STAT_DIRECTORY) != 0)
+                {
+                    char* pContentName = new char[strlen(dirEntry.name)];
+                    strcpy(pContentName, dirEntry.name);
+
+                    m_contentNames.push_back(pContentName);
+                    m_iNumContentNames++;
+                }
+
+                if (iDirHandle >= 0)
+                {
+                    CloseDir(&iDirHandle);
+                }
+
+                m_eState = eAOCState_GetPurchaseInfo;
+            }
+        }
+        break;
 
         case eAOCState_GetPurchaseInfo:
-            {
-                int iContent;
+        {
+            int iContent;
 
+            for (iContent = 0; iContent < m_iNumContentNames; iContent++)
+            {
+                const char* pContentName = m_contentNames[iContent];
+                m_contentIndices[iContent] = (unsigned short)strtoull(pContentName, NULL, 16);
+            }
+
+            m_pPurchased = (int*)MEMAllocFromDefaultHeap(m_iNumContentNames * sizeof(int));
+
+            if (AOC_GetPurchaseInfo(m_pPurchased, m_pTitleList[m_uiCurrentTitle].ullTitleId, m_contentIndices,
+                                    m_iNumContentNames, m_pWorkBuffer, m_uiWorkBufferSize)
+                == 0)
+            {
                 for (iContent = 0; iContent < m_iNumContentNames; iContent++)
                 {
                     const char* pContentName = m_contentNames[iContent];
-                    m_contentIndices[iContent] = (unsigned short)strtoull(pContentName, NULL, 16);
-                }
+                    DLC_INFO* pDLCInfo = gApp.GetDLCInfoInstance()->GetDLCInfoByRomName(pContentName);
 
-                m_pPurchased = (int*)MEMAllocFromDefaultHeap(m_iNumContentNames * sizeof(int));
-
-                if (AOC_GetPurchaseInfo(m_pPurchased, m_pTitleList[m_uiCurrentTitle].ullTitleId, m_contentIndices, m_iNumContentNames, m_pWorkBuffer, m_uiWorkBufferSize) == 0)
-                {
-                    for (iContent = 0; iContent < m_iNumContentNames; iContent++)
+                    if (m_pPurchased[iContent] == 1 && pDLCInfo != NULL)
                     {
-                        const char* pContentName = m_contentNames[iContent];
-                        DLC_INFO* pDLCInfo = gApp.GetDLCInfoInstance()->GetDLCInfoByRomName(pContentName);
-
-                        if (m_pPurchased[iContent] == 1 && pDLCInfo != NULL)
+                        if (gApp.GetDLCInfoInstance()->SetDLCPurchased(pDLCInfo->CatalogIndex, true))
                         {
-                            if (gApp.GetDLCInfoInstance()->SetDLCPurchased(pDLCInfo->CatalogIndex, true))
-                            {
-                                std::wstring packName = convStringToWstring(std::string(pDLCInfo->PackName));
-                                gApp.HandleDLCLicenseChange(packName);
-                            }
+                            std::wstring packName = convStringToWstring(std::string(pDLCInfo->PackName));
+                            gApp.HandleDLCLicenseChange(packName);
                         }
                     }
                 }
-
-                m_iNumContentNames = 0;
-                m_uiTitleCount = 0;
-                m_uiCurrentTitle = 0;
-
-                for (std::vector<const char*>::iterator it = m_contentNames.begin(); it != m_contentNames.end(); ++it)
-                {
-                    delete *it;
-                }
-
-                m_contentNames.clear();
-
-                m_eState = eAOCState_CloseTitle;
             }
-            break;
+
+            m_iNumContentNames = 0;
+            m_uiTitleCount = 0;
+            m_uiCurrentTitle = 0;
+
+            for (std::vector<const char*>::iterator it = m_contentNames.begin(); it != m_contentNames.end(); ++it)
+            {
+                delete *it;
+            }
+
+            m_contentNames.clear();
+
+            m_eState = eAOCState_CloseTitle;
+        }
+        break;
 
         case eAOCState_CloseTitle:
+        {
+            int iResult = AOC_CloseTitle(&m_pTitleList[m_uiCurrentTitle]);
+
+            m_uiCurrentTitle++;
+
+            if (iResult == 0 && m_uiCurrentTitle < m_uiTitleCount)
             {
-                int iResult = AOC_CloseTitle(&m_pTitleList[m_uiCurrentTitle]);
-
-                m_uiCurrentTitle++;
-
-                if (iResult == 0 && m_uiCurrentTitle < m_uiTitleCount)
-                {
-                    m_eState = eAOCState_OpenTitle;
-                }
-                else
-                {
-                    m_eState = eAOCState_Finalise;
-                }
+                m_eState = eAOCState_OpenTitle;
             }
-            break;
+            else
+            {
+                m_eState = eAOCState_Finalise;
+            }
+        }
+        break;
 
         case eAOCState_Finalise:
             AOC_Finalize();

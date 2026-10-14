@@ -95,7 +95,7 @@ int altMainThread(int, void*)
             PIXEndNamedEvent();
 
             gRenderer->ResetRenderState();
-            const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+            const float clearColour[4] = {0.0f, 0.0f, 0.0f, 0.0f};
             gRenderer->SetClearColour(clearColour);
             gRenderer->Clear(3);
             gRenderer->StartDRCFrame(false);

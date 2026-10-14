@@ -5,11 +5,13 @@
 #include "nn/pia/Transport.hpp"
 
 nn::pia::Result Transport_InitializePiaTransport(const nn::pia::transport::Transport::Setting& setting,
-    unsigned short unreliablePort, unsigned int* unreliableProtocolHandle,
-    unsigned short reliablePort, unsigned int* reliableProtocolHandle,
-    unsigned int reliableSendBufferNum, unsigned int reliableReceiveBufferNum,
-    nn::pia::Result (*setupCallback)(), unsigned int unreliableReceiveBufferNum);
+                                                 unsigned short unreliablePort, unsigned int* unreliableProtocolHandle,
+                                                 unsigned short reliablePort, unsigned int* reliableProtocolHandle,
+                                                 unsigned int reliableSendBufferNum,
+                                                 unsigned int reliableReceiveBufferNum,
+                                                 nn::pia::Result (*setupCallback)(),
+                                                 unsigned int unreliableReceiveBufferNum);
 void Transport_FinalizePiaTransport(unsigned int unreliableProtocolHandle, unsigned int reliableProtocolHandle,
-    void (*finalizeCallback)());
+                                    void (*finalizeCallback)());
 
 #endif

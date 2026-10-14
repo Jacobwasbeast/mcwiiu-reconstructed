@@ -2,27 +2,32 @@
 #include <coreinit/systeminfo.h>
 #include <coreinit/time.h>
 
-void System::arraycopy(arrayWithLength<unsigned char> src, unsigned int srcPos, arrayWithLength<unsigned char>* dest, unsigned int destPos, unsigned int length)
+void System::arraycopy(arrayWithLength<unsigned char> src, unsigned int srcPos, arrayWithLength<unsigned char>* dest,
+                       unsigned int destPos, unsigned int length)
 {
     std::memcpy(dest->data + destPos, src.data + srcPos, length);
 }
 
-void System::arraycopy(arrayWithLength<Node*> src, unsigned int srcPos, arrayWithLength<Node*>* dest, unsigned int destPos, unsigned int length)
+void System::arraycopy(arrayWithLength<Node*> src, unsigned int srcPos, arrayWithLength<Node*>* dest,
+                       unsigned int destPos, unsigned int length)
 {
     System::arraycopy<Node*>(src, srcPos, dest, destPos, length);
 }
 
-void System::arraycopy(arrayWithLength<Biome*> src, unsigned int srcPos, arrayWithLength<Biome*>* dest, unsigned int destPos, unsigned int length)
+void System::arraycopy(arrayWithLength<Biome*> src, unsigned int srcPos, arrayWithLength<Biome*>* dest,
+                       unsigned int destPos, unsigned int length)
 {
     System::arraycopy<Biome*>(src, srcPos, dest, destPos, length);
 }
 
-void System::arraycopy(arrayWithLength<int> src, unsigned int srcPos, arrayWithLength<int>* dest, unsigned int destPos, unsigned int length)
+void System::arraycopy(arrayWithLength<int> src, unsigned int srcPos, arrayWithLength<int>* dest, unsigned int destPos,
+                       unsigned int length)
 {
     std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(int));
 }
 
-void System::arraycopy(arrayWithLength<unsigned short> src, unsigned int srcPos, arrayWithLength<unsigned short>* dest, unsigned int destPos, unsigned int length)
+void System::arraycopy(arrayWithLength<unsigned short> src, unsigned int srcPos, arrayWithLength<unsigned short>* dest,
+                       unsigned int destPos, unsigned int length)
 {
     std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(unsigned short));
 }
@@ -36,7 +41,8 @@ uint64_t System::processTime(ETimeGranularity granularity)
     case eTimeGranularity_MicroSecs:
         return (unsigned long long)OSGetTime() * 1000000 / (OSGetSystemInfo()->busClockSpeed >> 2);
     case eTimeGranularity_NanoSecs:
-        return (unsigned long long)OSGetTime() * 32000 / ((unsigned long long)(OSGetSystemInfo()->busClockSpeed >> 2) / 31250);
+        return (unsigned long long)OSGetTime() * 32000
+               / ((unsigned long long)(OSGetSystemInfo()->busClockSpeed >> 2) / 31250);
     }
     return 0;
 }

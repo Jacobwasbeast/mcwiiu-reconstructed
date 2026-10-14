@@ -139,7 +139,9 @@ public:
     struct StateChangeInfo
     {
         StateChangeInfo(eNQRNetworkManagerState oldState, eNQRNetworkManagerState newState, bool error)
-            : eOldState(oldState), eNewState(newState), bError(error)
+            : eOldState(oldState),
+              eNewState(newState),
+              bError(error)
         {
         }
 

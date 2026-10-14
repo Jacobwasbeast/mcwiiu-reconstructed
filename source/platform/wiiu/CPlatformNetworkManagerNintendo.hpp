@@ -14,7 +14,13 @@ class CGameNetworkManager;
 class NQRNetworkManager_WiiU;
 class NQRNetworkPlayer;
 
-namespace nn { namespace fp { struct FriendPresence; } }
+namespace nn
+{
+namespace fp
+{
+struct FriendPresence;
+}
+}
 
 class CPlatformNetworkManagerNintendo : public CPlatformNetworkManager, public INQRNetworkManagerListener
 {
@@ -41,10 +47,12 @@ public:
     void SystemFlagReset();
     static int RemovePlayerOnSocketClosedThreadProc(void* data);
 
-    virtual void HandleDataReceived(NQRNetworkPlayer* from, NQRNetworkPlayer* to, unsigned char* data, unsigned int size);
+    virtual void HandleDataReceived(NQRNetworkPlayer* from, NQRNetworkPlayer* to, unsigned char* data,
+                                    unsigned int size);
     virtual void HandlePlayerJoined(NQRNetworkPlayer* player);
     virtual void HandlePlayerLeaving(NQRNetworkPlayer* player);
-    virtual void HandleStateChange(NQRNetworkManager::eNQRNetworkManagerState oldState, NQRNetworkManager::eNQRNetworkManagerState newState, bool error);
+    virtual void HandleStateChange(NQRNetworkManager::eNQRNetworkManagerState oldState,
+                                   NQRNetworkManager::eNQRNetworkManagerState newState, bool error);
     virtual void HandleResyncPlayerRequest(NQRNetworkPlayer** players);
     virtual void HandleAddLocalPlayerFailed(int userIndex);
     virtual void HandleDisconnect(bool error);
@@ -80,21 +88,26 @@ public:
     virtual bool SessionHasMii(int userIndex);
     virtual void SendInviteGUI(int userIndex);
     virtual bool IsAddingPlayer();
-    virtual void HostGame(int userIndexMask, bool onlineGame, bool privateGame, unsigned char gameMode, EMiniGameId miniGameId, unsigned int worldId, unsigned int* attributes);
+    virtual void HostGame(int userIndexMask, bool onlineGame, bool privateGame, unsigned char gameMode,
+                          EMiniGameId miniGameId, unsigned int worldId, unsigned int* attributes);
     virtual int JoinGame(FriendSessionInfo* sessionInfo, int userIndex, int userIndexMask, bool matchmaking);
-    virtual int FindAndJoinGame(int userIndexMask, int searchFlags, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributeValues, unsigned int* attributeIds);
+    virtual int FindAndJoinGame(int userIndexMask, int searchFlags, EMiniGameId miniGameId, unsigned int attributeCount,
+                                unsigned int* attributeValues, unsigned int* attributeIds);
     virtual bool SetLocalGame(bool localGame);
     virtual bool IsLocalGame();
     virtual void SetPrivateGame(bool privateGame);
     virtual bool IsPrivateGame();
     virtual bool IsLeavingGame();
     virtual void ResetLeavingGame();
-    virtual void RegisterPlayerChangedCallback(int userIndex, void (*callback)(void*, INetworkPlayer*, bool), void* callbackData);
-    virtual void UnRegisterPlayerChangedCallback(int userIndex, void (*callback)(void*, INetworkPlayer*, bool), void* callbackData);
+    virtual void RegisterPlayerChangedCallback(int userIndex, void (*callback)(void*, INetworkPlayer*, bool),
+                                               void* callbackData);
+    virtual void UnRegisterPlayerChangedCallback(int userIndex, void (*callback)(void*, INetworkPlayer*, bool),
+                                                 void* callbackData);
     virtual void HandleSignInChange();
     virtual bool _RunNetworkGame();
     virtual bool _LeaveGame(bool error, bool endSession);
-    virtual void _HostGame(int userIndexMask, unsigned char gameMode, EMiniGameId miniGameId, unsigned int worldId, unsigned int* attributes);
+    virtual void _HostGame(int userIndexMask, unsigned char gameMode, EMiniGameId miniGameId, unsigned int worldId,
+                           unsigned int* attributes);
     virtual bool _StartGame();
     virtual void UpdateAndSetGameSessionData(INetworkPlayer* player);
     virtual bool RemoveLocalPlayer(INetworkPlayer* player);
@@ -133,10 +146,13 @@ public:
     virtual std::wstring GetDisplayNameByGamertag(std::wstring gamertag);
     virtual int GetOutstandingAckCount(INetworkPlayer* player);
     virtual void TryToConnectOnline(int (*callback)(void*, bool, int), void* callbackData, bool showProgress);
-    virtual void AttemptPSNSignIn(int (*callback)(void*, bool, int), void* callbackData, bool showProgress, int userIndex);
+    virtual void AttemptPSNSignIn(int (*callback)(void*, bool, int), void* callbackData, bool showProgress,
+                                  int userIndex);
     virtual void RecvInviteGUI();
     virtual bool UpdateInviteData(void* inviteData);
-    virtual void CheckFriendsCanPlay(int userIndex, int& friendCount, boost::shared_ptr<ClientboundPreLoginPacket> packet, int titleVersion, int& canPlayCount, int& cannotPlayCount, int& blockedCount, int& unknownCount);
+    virtual void CheckFriendsCanPlay(int userIndex, int& friendCount,
+                                     boost::shared_ptr<ClientboundPreLoginPacket> packet, int titleVersion,
+                                     int& canPlayCount, int& cannotPlayCount, int& blockedCount, int& unknownCount);
 
 private:
     bool m_adhocMode;

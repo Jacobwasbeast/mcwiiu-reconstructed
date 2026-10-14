@@ -58,8 +58,14 @@ public:
     struct DLC_TMS_DETAILS;
     struct TMSPP_FILEDATA;
 
-    enum eGlobalStorage { eGlobalStorageValue = 0 };
-    enum eTMS_FileType { eTMS_FileTypeValue = 0 };
+    enum eGlobalStorage
+    {
+        eGlobalStorageValue = 0
+    };
+    enum eTMS_FileType
+    {
+        eTMS_FileTypeValue = 0
+    };
     enum ESavingMessage
     {
         ESavingMessage_0 = 0,
@@ -109,7 +115,10 @@ public:
         eOptions_Callback_Read_CorruptDeletePending,
         eOptions_Callback_Read_CorruptDeleted
     };
-    enum eGeneralData_Callback_Status { eGeneralData_Callback_StatusValue = 0 };
+    enum eGeneralData_Callback_Status
+    {
+        eGeneralData_Callback_StatusValue = 0
+    };
 
     typedef int (*SavingMessageCallback)(void*, ESavingMessage, int);
     typedef void (*IncompleteSaveCallback)(void*, ESaveIncompleteType);
@@ -133,14 +142,16 @@ public:
     typedef void (*DLCUpgradeCallback)(void*, bool);
 
     virtual void Tick() = 0;
-    virtual void Init(unsigned int, const wchar_t*, const char*, int, SavingMessageCallback, void*, const char*, bool*) = 0;
+    virtual void Init(unsigned int, const wchar_t*, const char*, int, SavingMessageCallback, void*, const char*,
+                      bool*) = 0;
     virtual void SetGameSaveFolderTitle(const wchar_t*) = 0;
     virtual void SetSaveCacheFolderTitle(const wchar_t*) = 0;
     virtual void SetOptionsFolderTitle(const wchar_t*) = 0;
     virtual void SetCorruptSaveName(const wchar_t*) = 0;
     virtual void SetGameSaveFolderPrefix(const char*) = 0;
     virtual void SetMaxSaves(int) = 0;
-    virtual void SetDefaultImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*, unsigned int) = 0;
+    virtual void SetDefaultImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*,
+                                  unsigned int) = 0;
     virtual void SetIncompleteSaveCallback(IncompleteSaveCallback, void*) = 0;
     virtual void SetSaveDisabled(bool) = 0;
     virtual unsigned char GetSaveDisabled() = 0;
@@ -164,7 +175,8 @@ public:
     virtual void SetSaveDataSize(unsigned int) = 0;
     virtual void GetDefaultSaveImage(unsigned char**, unsigned int*) = 0;
     virtual void GetDefaultSaveThumbnail(unsigned char**, unsigned int*) = 0;
-    virtual void SetSaveImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*, unsigned int) = 0;
+    virtual void SetSaveImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*,
+                               unsigned int) = 0;
     virtual ESaveGameState SaveSaveData(SaveCallback, void*) = 0;
     virtual void ContinueIncompleteOperation() = 0;
     virtual void CancelIncompleteOperation() = 0;
@@ -173,7 +185,8 @@ public:
     virtual ESaveGameState RenameSaveData(int, wchar_t*, SaveCallback, void*) = 0;
     virtual void GetSaveImage(unsigned char**, int*) = 0;
     virtual void GetSaveThumbnail(unsigned char**, int*) = 0;
-    virtual void InitialiseProfileData(unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*) = 0;
+    virtual void InitialiseProfileData(unsigned short, unsigned int, unsigned int, unsigned int*, int,
+                                       unsigned int*) = 0;
     virtual int SetDefaultOptionsCallback(DefaultOptionsCallback, void*) = 0;
     virtual void SetOptionsDataCallback(OptionsDataCallback, void*) = 0;
     virtual int SetOldProfileVersionCallback(OldProfileVersionCallback, void*) = 0;
@@ -191,7 +204,8 @@ public:
     virtual void SetSaveDeviceSelected(unsigned int device, bool selected);
     virtual int GetSaveDeviceSelected(unsigned int) = 0;
     virtual void ClearDLCOffers() = 0;
-    virtual int ReadTMSFile(int, eGlobalStorage, eTMS_FileType, wchar_t*, unsigned char**, unsigned int*, int (*)(void*, wchar_t*, int, bool, eTMS_FileType), void*, int) = 0;
+    virtual int ReadTMSFile(int, eGlobalStorage, eTMS_FileType, wchar_t*, unsigned char**, unsigned int*,
+                            int (*)(void*, wchar_t*, int, bool, eTMS_FileType), void*, int) = 0;
     virtual int WriteTMSFile(int, eGlobalStorage, wchar_t*, unsigned char*, unsigned int) = 0;
     virtual int DeleteTMSFile(int, eGlobalStorage, wchar_t*) = 0;
     virtual int GetDLCOffers(int pad, DLCOffersCallback callback, void* context, unsigned int contentId) = 0;

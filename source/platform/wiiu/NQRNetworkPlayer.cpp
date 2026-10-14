@@ -8,8 +8,8 @@
 #include <cwchar>
 
 NQRNetworkPlayer::NQRNetworkPlayer(NQRNetworkManager* manager, eNQRNetworkPlayerType type, bool local,
-    unsigned long long stationId, int localPlayerIndex, PlayerUID* uid,
-    const char* networkName, const wchar_t* miiName)
+                                   unsigned long long stationId, int localPlayerIndex, PlayerUID* uid,
+                                   const char* networkName, const wchar_t* miiName)
 {
     m_type = type;
     m_local = local;
@@ -41,17 +41,51 @@ NQRNetworkPlayer::~NQRNetworkPlayer()
     DeleteCriticalSection(&m_voiceMutex);
 }
 
-unsigned char NQRNetworkPlayer::GetSmallId() { return m_smallId; }
-wchar_t* NQRNetworkPlayer::GetMiiName() { return m_miiName; }
-char* NQRNetworkPlayer::GetNetworkName() { return m_networkName; }
-wchar_t* NQRNetworkPlayer::GetNetworkNameW() { return m_networkNameW; }
-bool NQRNetworkPlayer::IsLocal() { return m_local ? (m_type == eNQRNetworkPlayerType_Host || m_type == eNQRNetworkPlayerType_Local) : (m_type == eNQRNetworkPlayerType_Local); }
-unsigned char NQRNetworkPlayer::IsRemote() { return (unsigned char)!IsLocal(); }
-bool NQRNetworkPlayer::IsHost() { return m_type == eNQRNetworkPlayerType_Host; }
-unsigned int NQRNetworkPlayer::GetLocalPlayerIndex() { return m_localPlayerIndex; }
-bool NQRNetworkPlayer::IsSameSystem(NQRNetworkPlayer* player) { return m_stationId == player->m_stationId; }
-unsigned int NQRNetworkPlayer::GetCustomDataValue() { return m_customData; }
-void NQRNetworkPlayer::SetCustomDataValue(unsigned int value) { m_customData = value; }
+unsigned char NQRNetworkPlayer::GetSmallId()
+{
+    return m_smallId;
+}
+wchar_t* NQRNetworkPlayer::GetMiiName()
+{
+    return m_miiName;
+}
+char* NQRNetworkPlayer::GetNetworkName()
+{
+    return m_networkName;
+}
+wchar_t* NQRNetworkPlayer::GetNetworkNameW()
+{
+    return m_networkNameW;
+}
+bool NQRNetworkPlayer::IsLocal()
+{
+    return m_local ? (m_type == eNQRNetworkPlayerType_Host || m_type == eNQRNetworkPlayerType_Local)
+                   : (m_type == eNQRNetworkPlayerType_Local);
+}
+unsigned char NQRNetworkPlayer::IsRemote()
+{
+    return (unsigned char)!IsLocal();
+}
+bool NQRNetworkPlayer::IsHost()
+{
+    return m_type == eNQRNetworkPlayerType_Host;
+}
+unsigned int NQRNetworkPlayer::GetLocalPlayerIndex()
+{
+    return m_localPlayerIndex;
+}
+bool NQRNetworkPlayer::IsSameSystem(NQRNetworkPlayer* player)
+{
+    return m_stationId == player->m_stationId;
+}
+unsigned int NQRNetworkPlayer::GetCustomDataValue()
+{
+    return m_customData;
+}
+void NQRNetworkPlayer::SetCustomDataValue(unsigned int value)
+{
+    m_customData = value;
+}
 
 unsigned int NQRNetworkPlayer::HasVoice()
 {
@@ -76,13 +110,35 @@ unsigned int NQRNetworkPlayer::IsTalking()
     return 0;
 }
 
-unsigned int NQRNetworkPlayer::IsMutedByLocalUser(int userIndex) { return 0; }
-PlayerUID NQRNetworkPlayer::GetUID() { return m_uid; }
-void NQRNetworkPlayer::SetUID(PlayerUID uid) { m_uid = uid; }
-bool NQRNetworkPlayer::IsReady() { return (m_connectionFlags & 3) == 3; }
-unsigned int NQRNetworkPlayer::IsConnectionComplete() { return m_connectionFlags & 1; }
-void NQRNetworkPlayer::ConnectionComplete() { m_connectionFlags |= 1; }
-void NQRNetworkPlayer::SmallIdAllocated(unsigned char smallId) { m_smallId = smallId; m_connectionFlags |= 2; }
+unsigned int NQRNetworkPlayer::IsMutedByLocalUser(int userIndex)
+{
+    return 0;
+}
+PlayerUID NQRNetworkPlayer::GetUID()
+{
+    return m_uid;
+}
+void NQRNetworkPlayer::SetUID(PlayerUID uid)
+{
+    m_uid = uid;
+}
+bool NQRNetworkPlayer::IsReady()
+{
+    return (m_connectionFlags & 3) == 3;
+}
+unsigned int NQRNetworkPlayer::IsConnectionComplete()
+{
+    return m_connectionFlags & 1;
+}
+void NQRNetworkPlayer::ConnectionComplete()
+{
+    m_connectionFlags |= 1;
+}
+void NQRNetworkPlayer::SmallIdAllocated(unsigned char smallId)
+{
+    m_smallId = smallId;
+    m_connectionFlags |= 2;
+}
 
 void NQRNetworkPlayer::SendInternal(NQRNetworkPlayer* player, const void* data, unsigned int size, AckFlags flags)
 {
@@ -127,21 +183,61 @@ void NQRNetworkPlayer::SendData(NQRNetworkPlayer* player, const void* data, unsi
     }
 }
 
-int NQRNetworkPlayer::GetPacketDataSize() { return 0; }
-void NQRNetworkPlayer::WriteDataPacket(const void* data, int size, AckFlags flags) { SendInternal(this, data, (unsigned int)size, flags); }
-void NQRNetworkPlayer::WriteAck(NQRNetworkPlayer* player) { SendInternal(player, NULL, 0, Ack_Response); }
-void NQRNetworkPlayer::ReadAckReturn(AckFlags flags) { EnterCriticalSection(&m_sendMutex); --m_outstandingAckCount; LeaveCriticalSection(&m_sendMutex); }
-void NQRNetworkPlayer::ReadAckRequest(AckFlags flags, NQRNetworkPlayer* player) { if (flags == Ack_Return) WriteAck(player); }
+int NQRNetworkPlayer::GetPacketDataSize()
+{
+    return 0;
+}
+void NQRNetworkPlayer::WriteDataPacket(const void* data, int size, AckFlags flags)
+{
+    SendInternal(this, data, (unsigned int)size, flags);
+}
+void NQRNetworkPlayer::WriteAck(NQRNetworkPlayer* player)
+{
+    SendInternal(player, NULL, 0, Ack_Response);
+}
+void NQRNetworkPlayer::ReadAckReturn(AckFlags flags)
+{
+    EnterCriticalSection(&m_sendMutex);
+    --m_outstandingAckCount;
+    LeaveCriticalSection(&m_sendMutex);
+}
+void NQRNetworkPlayer::ReadAckRequest(AckFlags flags, NQRNetworkPlayer* player)
+{
+    if (flags == Ack_Return)
+        WriteAck(player);
+}
 
 int NQRNetworkPlayer::GetOutstandingAckCount()
 {
     return m_manager->GetOutstandingAckCount(this);
 }
 
-int NQRNetworkPlayer::GetSendQueueSizeBytes() { return m_manager->GetSendQueueSizeBytes(); }
-int NQRNetworkPlayer::GetSendQueueSizeMessages() { return m_manager->GetSendQueueSizeMessages(); }
+int NQRNetworkPlayer::GetSendQueueSizeBytes()
+{
+    return m_manager->GetSendQueueSizeBytes();
+}
+int NQRNetworkPlayer::GetSendQueueSizeMessages()
+{
+    return m_manager->GetSendQueueSizeMessages();
+}
 
-int NQRNetworkPlayer::GetTotalOutstandingAckCount() { return m_outstandingAckCount; }
-unsigned int NQRNetworkPlayer::GetTotalSendQueueBytes() { return m_totalSendQueueBytes; }
-unsigned int NQRNetworkPlayer::GetTotalSendQueueMessages() { OSFastMutex* mutex = &m_voiceMutex; EnterCriticalSection(mutex); unsigned int value = m_sendQueue.size(); LeaveCriticalSection(mutex); return value; }
-int NQRNetworkPlayer::GetSessionIndex() { return m_manager->GetSessionIndex(this); }
+int NQRNetworkPlayer::GetTotalOutstandingAckCount()
+{
+    return m_outstandingAckCount;
+}
+unsigned int NQRNetworkPlayer::GetTotalSendQueueBytes()
+{
+    return m_totalSendQueueBytes;
+}
+unsigned int NQRNetworkPlayer::GetTotalSendQueueMessages()
+{
+    OSFastMutex* mutex = &m_voiceMutex;
+    EnterCriticalSection(mutex);
+    unsigned int value = m_sendQueue.size();
+    LeaveCriticalSection(mutex);
+    return value;
+}
+int NQRNetworkPlayer::GetSessionIndex()
+{
+    return m_manager->GetSessionIndex(this);
+}

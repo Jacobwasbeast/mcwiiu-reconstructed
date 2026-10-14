@@ -57,10 +57,7 @@ public:
     virtual CatalogRecord* GetCommerceInfo() = 0;
     virtual void tick() = 0;
     virtual unsigned int PurchaseBedrock();
-    eCommerce_ShoppingCatalogState GetShoppingCatalogState()
-    {
-        return m_shoppingCatalogState;
-    }
+    eCommerce_ShoppingCatalogState GetShoppingCatalogState() { return m_shoppingCatalogState; }
 
 private:
     eCommerce_Process_State m_processState;

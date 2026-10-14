@@ -20,7 +20,8 @@ public:
     static bool isMainThread();
     static const char* getCurrentThreadName();
     static void threadDeallocator(void* thread, void* stack);
-    static uint32_t OSCreateThread4J(OSThread* thread, int (*entry)(int, void*), int argumentCount, void* argument, void* stack, unsigned int stackSize, int priority, unsigned short attributes);
+    static uint32_t OSCreateThread4J(OSThread* thread, int (*entry)(int, void*), int argumentCount, void* argument,
+                                     void* stack, unsigned int stackSize, int priority, unsigned short attributes);
     static int entryPoint(int argumentCount, void* argument);
     static void Sleep(int milliseconds) { ::Sleep(milliseconds); }
 

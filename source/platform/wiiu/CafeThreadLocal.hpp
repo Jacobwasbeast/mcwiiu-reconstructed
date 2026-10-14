@@ -5,16 +5,14 @@
 #include <coreinit/thread.h>
 #include <map>
 
-namespace CafeThreadLocal {
+namespace CafeThreadLocal
+{
 
 inline OSMutex& mutex()
 {
     struct Mutex
     {
-        Mutex()
-        {
-            OSInitMutex(&value);
-        }
+        Mutex() { OSInitMutex(&value); }
 
         OSMutex value;
     };
@@ -23,7 +21,7 @@ inline OSMutex& mutex()
     return mutex.value;
 }
 
-template<typename T>
+template <typename T>
 T& slot(std::map<OSThread*, T>& values)
 {
     OSThread* thread = OSGetCurrentThread();

@@ -9,8 +9,7 @@
 extern CConsoleMinecraftApp gApp;
 extern ConsoleUIController gConsoleUIController;
 
-UIComponent_WiiUDRC::UIComponent_WiiUDRC(int sceneType, void* param, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIComponent_WiiUDRC::UIComponent_WiiUDRC(int sceneType, void* param, UILayer* layer) : UIScene(sceneType, layer)
 {
     initialiseMovie();
     m_iconY = -1;
@@ -80,8 +79,7 @@ void UIComponent_WiiUDRC::handleDRCTouchInput(unsigned int playerIndex)
     {
         if (!gApp.GetDRCIconEnabled())
             return;
-        if (x > GetIconX() && x < GetIconX() + GetIconWidth() &&
-            y > GetIconY() && y < GetIconY() + GetIconHeight())
+        if (x > GetIconX() && x < GetIconX() + GetIconWidth() && y > GetIconY() && y < GetIconY() + GetIconHeight())
         {
             if (pressed)
             {

@@ -39,26 +39,23 @@ public:
 static ThreadCommandBlockId g_commandBlockId;
 #endif
 static const int SPECIAL_THREAD_ID_FOR_FS_MILES_STREAM_THREAD = 0x40000000;
-static const unsigned char s_processorAffinity[3] = { OS_THREAD_ATTRIB_AFFINITY_CPU0, OS_THREAD_ATTRIB_AFFINITY_CPU1, OS_THREAD_ATTRIB_AFFINITY_CPU2 };
-static const unsigned char s_priorities[] = { 18, 17, 16, 15, 14 };
+static const unsigned char s_processorAffinity[3] = {OS_THREAD_ATTRIB_AFFINITY_CPU0, OS_THREAD_ATTRIB_AFFINITY_CPU1,
+                                                     OS_THREAD_ATTRIB_AFFINITY_CPU2};
+static const unsigned char s_priorities[] = {18, 17, 16, 15, 14};
 
 void SetThreadName(unsigned int, const char*)
 {
 }
 
-long long InterlockedCompareExchangeRelease64(volatile long long* destination,
-                                              long long exchange,
-                                              long long comparand)
+long long InterlockedCompareExchangeRelease64(volatile long long* destination, long long exchange, long long comparand)
 {
     uint64_t previous;
-    OSCompareAndSwapAtomicEx64(reinterpret_cast<volatile uint64_t*>(destination),
-                               static_cast<uint64_t>(comparand),
+    OSCompareAndSwapAtomicEx64(reinterpret_cast<volatile uint64_t*>(destination), static_cast<uint64_t>(comparand),
                                static_cast<uint64_t>(exchange), &previous);
     return static_cast<long long>(previous);
 }
 
-long InterlockedCompareExchangeRelease(volatile long* destination,
-                                        long exchange, long comparand)
+long InterlockedCompareExchangeRelease(volatile long* destination, long exchange, long comparand)
 {
 #ifdef __ghs__
     unsigned int* word = reinterpret_cast<unsigned int*>(const_cast<long*>(destination));
@@ -73,9 +70,8 @@ long InterlockedCompareExchangeRelease(volatile long* destination,
     return static_cast<long>(previous);
 #else
     uint32_t previous = 0;
-    OSCompareAndSwapAtomicEx(reinterpret_cast<volatile uint32_t*>(destination),
-                              static_cast<uint32_t>(comparand),
-                              static_cast<uint32_t>(exchange), &previous);
+    OSCompareAndSwapAtomicEx(reinterpret_cast<volatile uint32_t*>(destination), static_cast<uint32_t>(comparand),
+                             static_cast<uint32_t>(exchange), &previous);
     return static_cast<long>(previous);
 #endif
 }
@@ -119,7 +115,8 @@ void C4JThreadImpl::threadDeallocator(void*, void* stack)
     MEMFreeToDefaultHeap(stack);
 }
 
-uint32_t C4JThreadImpl::OSCreateThread4J(OSThread* thread, int (*entry)(int, void*), int argumentCount, void* argument, void* stack, unsigned int stackSize, int priority, unsigned short attributes)
+uint32_t C4JThreadImpl::OSCreateThread4J(OSThread* thread, int (*entry)(int, void*), int argumentCount, void* argument,
+                                         void* stack, unsigned int stackSize, int priority, unsigned short attributes)
 {
     if (!s_createSectionInitialized)
     {
@@ -127,7 +124,8 @@ uint32_t C4JThreadImpl::OSCreateThread4J(OSThread* thread, int (*entry)(int, voi
         s_createSectionInitialized = true;
     }
     EnterCriticalSection(&s_createSection);
-    uint32_t result = OSCreateThread(thread, reinterpret_cast<OSThreadEntryPointFn>(entry), argumentCount, static_cast<char*>(argument), stack, stackSize, priority, attributes);
+    uint32_t result = OSCreateThread(thread, reinterpret_cast<OSThreadEntryPointFn>(entry), argumentCount,
+                                     static_cast<char*>(argument), stack, stackSize, priority, attributes);
     OSSetThreadDeallocator(thread, reinterpret_cast<OSThreadDeallocatorFn>(threadDeallocator));
     LeaveCriticalSection(&s_createSection);
     return result;
@@ -174,7 +172,8 @@ C4JThreadImpl::C4JThreadImpl(int (*entry)(void*), void* argument, const char* na
     m_stack = MEMAllocFromDefaultHeap(m_stackSize);
     void* stackTop = (char*)m_stack + m_stackSize;
     m_thread = (OSThread*)MEMAllocFromDefaultHeapEx(sizeof(OSThread), 8);
-    OSCreateThread4J(m_thread, entryPoint, 0, this, stackTop, m_stackSize, 16, OS_THREAD_ATTRIB_AFFINITY_ANY | OS_THREAD_ATTRIB_DETACHED);
+    OSCreateThread4J(m_thread, entryPoint, 0, this, stackTop, m_stackSize, 16,
+                     OS_THREAD_ATTRIB_AFFINITY_ANY | OS_THREAD_ATTRIB_DETACHED);
     OSSetThreadRunQuantum(m_thread, 8000);
     EnterCriticalSection(&s_threadSection);
     s_threads.push_back(this);
@@ -229,8 +228,14 @@ void C4JThreadImpl::Run()
     OSResumeThread(m_thread);
 }
 
-bool C4JThreadImpl::isRunning() { return m_running; }
-bool C4JThreadImpl::hasStarted() { return m_started; }
+bool C4JThreadImpl::isRunning()
+{
+    return m_running;
+}
+bool C4JThreadImpl::hasStarted()
+{
+    return m_started;
+}
 
 void C4JThreadImpl::SetProcessor(int processor)
 {
@@ -248,7 +253,10 @@ void C4JThreadImpl::SetProcessor(int processor)
     }
 }
 
-uint32_t C4JThreadImpl::GetProcessor() { return m_processor; }
+uint32_t C4JThreadImpl::GetProcessor()
+{
+    return m_processor;
+}
 
 void C4JThreadImpl::SetPriority(int priority)
 {
@@ -273,9 +281,18 @@ uint32_t C4JThreadImpl::WaitForCompletion(int milliseconds)
     return 0;
 }
 
-int C4JThreadImpl::GetExitCode() { return m_exitCode; }
-const char* C4JThreadImpl::getName() { return m_name; }
-void C4JThreadImpl::SetDeleteOnExit(bool deleteOnExit) { m_deleteOnExit = deleteOnExit; }
+int C4JThreadImpl::GetExitCode()
+{
+    return m_exitCode;
+}
+const char* C4JThreadImpl::getName()
+{
+    return m_name;
+}
+void C4JThreadImpl::SetDeleteOnExit(bool deleteOnExit)
+{
+    m_deleteOnExit = deleteOnExit;
+}
 
 void C4JThreadImpl::SetMainThreadID()
 {
@@ -288,20 +305,19 @@ void SetSpecialThreadIDForFS_MilesStreamThread()
     g_commandBlockId = SPECIAL_THREAD_ID_FOR_FS_MILES_STREAM_THREAD;
 }
 
-static void insertThreads(
-    C4JThreadVector& vector, C4JThreadVectorIterator position, size_t count, C4JThreadImpl* const& value)
+static void insertThreads(C4JThreadVector& vector, C4JThreadVectorIterator position, size_t count,
+                          C4JThreadImpl* const& value)
 {
     vector.insert(position, count, value);
 }
 
-static C4JThreadVectorIterator insertThread(
-    C4JThreadVector& vector, C4JThreadVectorIterator position, C4JThreadImpl* const& value)
+static C4JThreadVectorIterator insertThread(C4JThreadVector& vector, C4JThreadVectorIterator position,
+                                            C4JThreadImpl* const& value)
 {
     return vector.insert(position, value);
 }
 
-static C4JThreadVectorIterator eraseThread(
-    C4JThreadVector& vector, C4JThreadVectorIterator position)
+static C4JThreadVectorIterator eraseThread(C4JThreadVector& vector, C4JThreadVectorIterator position)
 {
     return vector.erase(position);
 }

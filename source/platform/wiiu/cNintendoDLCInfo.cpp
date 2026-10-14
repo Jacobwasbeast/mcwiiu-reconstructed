@@ -77,7 +77,8 @@ bool cNintendoDLCInfo::GetDLCPurchased(char* pPackName)
         wchar_t packName[64];
         mbstowcs(packName, pPackName, 64);
 
-        boost::unordered_map<std::wstring, DLC_INFO*>::const_iterator it = m_dlcInfoByPackName.find(std::wstring(packName));
+        boost::unordered_map<std::wstring, DLC_INFO*>::const_iterator it = m_dlcInfoByPackName.find(
+            std::wstring(packName));
         if (it != m_dlcInfoByPackName.end())
         {
             DLC_INFO* pDLCInfo = it->second;

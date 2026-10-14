@@ -12,7 +12,7 @@ class NgsFacade;
 }
 
 unsigned int Nex_InitializeNex(unsigned int runtimeMemorySize, unsigned int reservedMemorySize,
-    nn::nex::Core::ThreadMode threadMode);
+                               nn::nex::Core::ThreadMode threadMode);
 void Nex_FinalizeNex();
 nn::nex::NgsFacade* Nex_GetNgsFacadeInstance();
 unsigned int Nex_GetInternalErrorCode();

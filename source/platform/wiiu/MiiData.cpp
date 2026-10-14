@@ -27,7 +27,7 @@ void MiiData::CreateSysUserData(int slot)
     memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
 
     entry.mIconMemory = (void*)gRendererInstance->CreateMiiIconTexture(FFL_DATA_SOURCE_STORE_DATA, &storeData, 0,
-                                                               &entry.mIconTexture);
+                                                                       &entry.mIconTexture);
 
     mSysUserMiis.push_back(entry);
 }
@@ -46,7 +46,7 @@ void MiiData::CreateGuestData(int index)
     memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
 
     entry.mIconMemory = (void*)gRendererInstance->CreateMiiIconTexture(FFL_DATA_SOURCE_DEFAULT, NULL, index,
-                                                               &entry.mIconTexture);
+                                                                       &entry.mIconTexture);
 
     mGuestMiis.push_back(entry);
 }
@@ -65,7 +65,7 @@ void MiiData::CreateMiiMakerData(int index)
     memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
 
     entry.mIconMemory = (void*)gRendererInstance->CreateMiiIconTexture(FFL_DATA_SOURCE_OFFICIAL, NULL, index,
-                                                               &entry.mIconTexture);
+                                                                       &entry.mIconTexture);
 
     mMiiMakerMiis.push_back(entry);
 }

@@ -145,13 +145,11 @@ static inline unsigned long long getSystemMilliseconds()
     return OSTicksToMilliseconds(OSGetTime());
 }
 
-CProfile::PROFILE_DETAILS::PROFILE_DETAILS()
-    : signedIn(false)
+CProfile::PROFILE_DETAILS::PROFILE_DETAILS() : signedIn(false)
 {
 }
 
-CProfile::CONTEXTVAL::CONTEXTVAL()
-    : boost::unordered_map<int, int>(11)
+CProfile::CONTEXTVAL::CONTEXTVAL() : boost::unordered_map<int, int>(11)
 {
 }
 
@@ -233,7 +231,8 @@ void CProfile::SetSignInChange(bool changed)
     mSignInChange = changed;
 }
 
-void CProfile::Initialise(const void*, const void*, unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*)
+void CProfile::Initialise(const void*, const void*, unsigned short, unsigned int, unsigned int, unsigned int*, int,
+                          unsigned int*)
 {
     nn::act::Initialize();
     nn::act::GetUuid(reinterpret_cast<char*>(&mAccountUuid));
@@ -286,12 +285,14 @@ bool CProfile::IsGuest(int quadrant)
     return mProfiles[quadrant].mii->mIsGuestMii;
 }
 
-int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool trial, bool fromGame, SignInUIHandler handler, void* context, int quadrant)
+int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool trial, bool fromGame,
+                              SignInUIHandler handler, void* context, int quadrant)
 {
     return RequestSignInUI(online, guest, subAccount, trial, false, fromGame, handler, context, quadrant);
 }
 
-int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool trial, bool force, bool fromGame, SignInUIHandler handler, void* context, int quadrant)
+int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool trial, bool force, bool fromGame,
+                              SignInUIHandler handler, void* context, int quadrant)
 {
     mRequestOnline = online;
     mRequestGuest = guest;
@@ -328,7 +329,8 @@ int CProfile::SignInUser(MiiDataEntry* mii, int pad)
     {
         for (int quadrant = 0; quadrant < 4; ++quadrant)
         {
-            if (mProfiles[quadrant].signedIn && std::memcmp(mProfiles[quadrant].mii->mCreatorId, mii->mCreatorId, 10) == 0)
+            if (mProfiles[quadrant].signedIn
+                && std::memcmp(mProfiles[quadrant].mii->mCreatorId, mii->mCreatorId, 10) == 0)
                 return -1;
         }
     }
@@ -502,7 +504,7 @@ bool CProfile::CanViewPlayerCreatedContent(int quadrant, bool singlePlayer, Play
 
 bool CProfile::GetProfileAvatar(int quadrant, AvatarHandler handler, void* context)
 {
-    AvatarRequest request = { quadrant, context, handler };
+    AvatarRequest request = {quadrant, context, handler};
     mAvatarRequests.push_back(request);
     return true;
 }
@@ -880,8 +882,8 @@ void CProfile::RichPresenceInit(int, int titleId)
     if ((resultValue & moduleMask) == 0x00c00000 && description > 0x31ff && description < 0x1f400)
     {
         unsigned int errorCode = nn::fp::ResultToErrorCode(result);
-        DebugPrintf("\"%s @%d\" failed. errorCode = %03u-%04u\n",
-                    "RichPresenceInit", 44, errorCode / 10000, errorCode % 10000);
+        DebugPrintf("\"%s @%d\" failed. errorCode = %03u-%04u\n", "RichPresenceInit", 44, errorCode / 10000,
+                    errorCode % 10000);
     }
     mLastPresenceUpdate = getSystemMilliseconds() - 600000;
     mLastGameModeUpdate = 0;
@@ -899,7 +901,8 @@ const wchar_t* CProfile::getStringFromID(int stringId)
 void CProfile::CreatePresenceString(int quadrant, std::wstring& text)
 {
     text.assign(getStringFromID(mPresenceStrings[mCurrentGameActivity[quadrant]]));
-    for (boost::unordered_map<int, int>::const_iterator context = mPresenceContexts.begin(); context != mPresenceContexts.end(); ++context)
+    for (boost::unordered_map<int, int>::const_iterator context = mPresenceContexts.begin();
+         context != mPresenceContexts.end(); ++context)
     {
         const wchar_t* formatToken = getStringFromID(context->second);
         std::wstring::size_type position = text.find(formatToken);
@@ -933,8 +936,8 @@ void CProfile::SetPresenceString(int presence)
     {
         if (!mPresenceUpdatePending)
         {
-            DebugPrintf("Setting m_bPresenceUpdatePending = true - %ls %.02f secs since the last one\n",
-                        text.c_str(), (float)elapsed / 1000.0f);
+            DebugPrintf("Setting m_bPresenceUpdatePending = true - %ls %.02f secs since the last one\n", text.c_str(),
+                        (float)elapsed / 1000.0f);
             mPresenceUpdatePending = true;
         }
         return;
@@ -968,12 +971,12 @@ void CProfile::SetPresenceString(int presence)
     unsigned int level = (resultValue >> 27) & 3;
     unsigned int moduleMask = level == 3 ? 0x07f00000 : 0x1ff00000;
     unsigned int descriptionMask = level == 3 ? 0x3ff : 0xfffff;
-    if ((resultValue & moduleMask) == 0x00c00000 && (resultValue & descriptionMask) > 0x31ff &&
-        (resultValue & descriptionMask) < 0x1f400)
+    if ((resultValue & moduleMask) == 0x00c00000 && (resultValue & descriptionMask) > 0x31ff
+        && (resultValue & descriptionMask) < 0x1f400)
     {
         unsigned int errorCode = nn::fp::ResultToErrorCode(result);
         gProfileInstance->DebugPrintf("\"%s @%d\" failed. errorCode = %03u-%04u\n", "SetPresenceString", 197,
-                              errorCode / 10000, errorCode % 10000);
+                                      errorCode / 10000, errorCode % 10000);
     }
 }
 
@@ -1270,7 +1273,8 @@ bool CProfile::callAwardManagerCallback(int quadrant, int achievementId) const
         if (mAwardHandler != NULL)
         {
             const AwardRegistration& registration = mAwardRegistrations[achievementId];
-            mAwardHandler(mAwardContext, quadrant, achievementId, registration.callbackValue, registration.callbackContext);
+            mAwardHandler(mAwardContext, quadrant, achievementId, registration.callbackValue,
+                          registration.callbackContext);
             return true;
         }
         return false;
@@ -1302,7 +1306,8 @@ bool CProfile::IsAwardsFlagSet(int quadrant, int achievementId)
 {
     PlayerUID uid = getPlayerUID(quadrant, false);
     CAchievements* achievements = getAchievements(quadrant);
-    return achievements != NULL && achievementId >= 0 && achievementId < 128 && achievements->GetAwardedBit(achievementId);
+    return achievements != NULL && achievementId >= 0 && achievementId < 128
+           && achievements->GetAwardedBit(achievementId);
 }
 
 void CProfile::SetOnAwardHandler(AwardHandler handler, void* context)
@@ -1327,7 +1332,8 @@ CAchievements* CProfile::nextAwardManagerTask()
 int CProfile::openAwardManagerFile(int& file, const char* mode, unsigned char slot, const char* filename)
 {
     FSFileHandle handle = static_cast<FSFileHandle>(file);
-    FSStatus result = SAVEOpenFile(&mFileSystemClient, &mFileSystemCommand, slot, filename, mode, &handle, FS_ERROR_FLAG_ALL);
+    FSStatus result = SAVEOpenFile(&mFileSystemClient, &mFileSystemCommand, slot, filename, mode, &handle,
+                                   FS_ERROR_FLAG_ALL);
     std::memcpy(&file, &handle, sizeof(file));
     return result;
 }
@@ -1395,7 +1401,8 @@ int CProfile::AwardManagerThreadProc(int, void* argument)
                 uint8_t* data = static_cast<uint8_t*>(allocAligned());
                 achievements->mHasAchievementsFile = true;
                 achievements->WriteTo(data, 16);
-                FSWriteFile(&profile->mFileSystemClient, &profile->mFileSystemCommand, data, 1, 16, file, 0, FS_ERROR_FLAG_ALL);
+                FSWriteFile(&profile->mFileSystemClient, &profile->mFileSystemCommand, data, 1, 16, file, 0,
+                            FS_ERROR_FLAG_ALL);
                 profile->closeAwardManagerFile(file);
                 MEMFreeToDefaultHeap(data);
                 if (achievements->mSlotId != nn::act::GetSlotNo())
@@ -1413,10 +1420,13 @@ int CProfile::AwardManagerThreadProc(int, void* argument)
             if (profile->openAwardManagerFile(file, "r", achievements->mSlotId, filename) == 0)
             {
                 FSStat stat;
-                if (FSGetStatFile(&profile->mFileSystemClient, &profile->mFileSystemCommand, file, &stat, FS_ERROR_FLAG_ALL) == 0)
+                if (FSGetStatFile(&profile->mFileSystemClient, &profile->mFileSystemCommand, file, &stat,
+                                  FS_ERROR_FLAG_ALL)
+                    == 0)
                 {
                     uint8_t* data = static_cast<uint8_t*>(allocAligned());
-                    int bytesRead = FSReadFile(&profile->mFileSystemClient, &profile->mFileSystemCommand, data, 1, 16, file, 0, FS_ERROR_FLAG_ALL);
+                    int bytesRead = FSReadFile(&profile->mFileSystemClient, &profile->mFileSystemCommand, data, 1, 16,
+                                               file, 0, FS_ERROR_FLAG_ALL);
                     achievements->mHasAchievementsFile = true;
                     achievements->ReadFrom(data, bytesRead);
                     profile->closeAwardManagerFile(file);
@@ -1437,11 +1447,13 @@ void CProfile::AwardManagerOnCreate()
     OSFastMutex_Init(&mAwardMutex, "AwardManager");
     FSInitCmdBlock(&mFileSystemCommand);
     FSAddClient(&mFileSystemClient, FS_ERROR_FLAG_ALL);
-    FSStateChangeParams notification = { stateChangeCallback, NULL, 0 };
+    FSStateChangeParams notification = {stateChangeCallback, NULL, 0};
     FSSetStateChangeNotification(&mFileSystemClient, &notification);
     mAwardThreadStack = MEMAllocFromDefaultHeap(60000);
     mAwardThreadStackTop = (unsigned char*)mAwardThreadStack + 60000;
-    if (C4JThreadImpl::OSCreateThread4J(&mAwardThread, AwardManagerThreadProc, 0, this, mAwardThreadStackTop, 60000, 16, 7) != 0)
+    if (C4JThreadImpl::OSCreateThread4J(&mAwardThread, AwardManagerThreadProc, 0, this, mAwardThreadStackTop, 60000, 16,
+                                        7)
+        != 0)
         OSResumeThread(&mAwardThread);
     for (int index = 0; index < 128; ++index)
     {
@@ -1487,7 +1499,8 @@ void CProfile::AwardManagerTick()
         {
             std::set<int> awardsNotRegistered;
             achievements->awardPending(awardsNotRegistered);
-            for (std::set<int>::const_iterator award = awardsNotRegistered.begin(); award != awardsNotRegistered.end(); ++award)
+            for (std::set<int>::const_iterator award = awardsNotRegistered.begin(); award != awardsNotRegistered.end();
+                 ++award)
                 callAwardManagerCallback(quadrant, *award);
         }
         else if (achievements->IsIdle())

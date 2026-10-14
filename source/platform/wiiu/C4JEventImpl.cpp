@@ -1,8 +1,7 @@
 #include "platform/wiiu/C4JEventImpl.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-C4JEventImpl::C4JEventImpl(C4JEvent::EMode mode)
-    : m_mode(mode), m_waitCount(0)
+C4JEventImpl::C4JEventImpl(C4JEvent::EMode mode) : m_mode(mode), m_waitCount(0)
 {
     OSInitEvent(&m_event, 0, static_cast<OSEventMode>(mode != C4JEvent::Mode1));
 }

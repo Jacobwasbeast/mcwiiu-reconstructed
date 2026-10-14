@@ -55,8 +55,8 @@
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 void AssertPiaError(nn::pia::Result& result);
-nn::pia::Result NQRNetworkManager_Lan_WiiU_Pia_StartupSession(
-    nn::pia::transport::Station::IdentificationToken* token, char* name);
+nn::pia::Result NQRNetworkManager_Lan_WiiU_Pia_StartupSession(nn::pia::transport::Station::IdentificationToken* token,
+                                                              char* name);
 
 static NQRNetworkManager_Lan_WiiU* s_networkManager;
 static int (*s_connectCallback)(void*, bool, int);
@@ -293,24 +293,18 @@ void NQRNetworkManager_Lan_WiiU::SetFriendSearchState(eNQRNetworkManagerFriendSe
 }
 
 
-
-
-
-
-
-
-
 void NQRNetworkManager_Lan_WiiU::Tick()
 {
     m_tickEvent->Set();
 }
 
-NQRNetworkPlayer* NQRNetworkManager_Lan_WiiU::GetPlayerFromStationIdAndLocalIdx(unsigned long long stationId, int localIndex)
+NQRNetworkPlayer* NQRNetworkManager_Lan_WiiU::GetPlayerFromStationIdAndLocalIdx(unsigned long long stationId,
+                                                                                int localIndex)
 {
     for (unsigned int index = 0; index < m_players.size(); ++index)
     {
-        if (m_players[index]->GetStationId() == stationId &&
-            m_players[index]->GetLocalIndex() == static_cast<unsigned int>(localIndex))
+        if (m_players[index]->GetStationId() == stationId
+            && m_players[index]->GetLocalIndex() == static_cast<unsigned int>(localIndex))
             return m_players[index];
     }
     return NULL;
@@ -401,9 +395,9 @@ void NQRNetworkManager_Lan_WiiU::FindOrCreateNonNetworkPlayer(int slotIndex, int
          candidate != m_unconnectedPlayers.end(); ++candidate)
     {
         NQRNetworkPlayer* player = *candidate;
-        if (player->GetType() == type && player->GetLocalIndex() == syncData->m_uiLocalPlayerIndex &&
-            (type != NQRNetworkPlayer::eNQRNetworkPlayerType_Remote ||
-             player->GetStationId() == syncData->m_uiStationId))
+        if (player->GetType() == type && player->GetLocalIndex() == syncData->m_uiLocalPlayerIndex
+            && (type != NQRNetworkPlayer::eNQRNetworkPlayerType_Remote
+                || player->GetStationId() == syncData->m_uiStationId))
         {
             m_unconnectedPlayers.erase(candidate);
             m_roomSlotPlayers[slotIndex] = player;
@@ -413,19 +407,19 @@ void NQRNetworkManager_Lan_WiiU::FindOrCreateNonNetworkPlayer(int slotIndex, int
 
     PlayerUID localUID(0);
     NQRNetworkPlayer* player;
-    if (type == NQRNetworkPlayer::eNQRNetworkPlayerType_Local ||
-        (m_host && type == NQRNetworkPlayer::eNQRNetworkPlayerType_Host))
+    if (type == NQRNetworkPlayer::eNQRNetworkPlayerType_Local
+        || (m_host && type == NQRNetworkPlayer::eNQRNetworkPlayerType_Host))
     {
         gProfile->GetXUID(syncData->m_uiLocalPlayerIndex, &localUID, false);
         player = new NQRNetworkPlayer(this, static_cast<NQRNetworkPlayer::eNQRNetworkPlayerType>(type), m_host,
-            syncData->m_uiStationId, syncData->m_uiLocalPlayerIndex, &localUID,
-            syncData->m_szNetworkName, syncData->m_szMiiName);
+                                      syncData->m_uiStationId, syncData->m_uiLocalPlayerIndex, &localUID,
+                                      syncData->m_szNetworkName, syncData->m_szMiiName);
     }
     else
     {
         player = new NQRNetworkPlayer(this, static_cast<NQRNetworkPlayer::eNQRNetworkPlayerType>(type), m_host,
-            syncData->m_uiStationId, syncData->m_uiLocalPlayerIndex, syncData,
-            syncData->m_szNetworkName, syncData->m_szMiiName);
+                                      syncData->m_uiStationId, syncData->m_uiLocalPlayerIndex, syncData,
+                                      syncData->m_szNetworkName, syncData->m_szMiiName);
     }
     NonNetworkPlayerComplete(player, syncData->m_uiSmallId);
     AddConnectedPlayer(player);
@@ -456,8 +450,8 @@ void NQRNetworkManager_Lan_WiiU::MapRoomSlotPlayers(int roomSlotPlayerCount)
     {
         for (int index = 0; index < 8; ++index)
         {
-            if (m_roomSlotPlayers[index] != NULL &&
-                m_roomSlotPlayers[index]->GetType() != NQRNetworkPlayer::eNQRNetworkPlayerType_Remote)
+            if (m_roomSlotPlayers[index] != NULL
+                && m_roomSlotPlayers[index]->GetType() != NQRNetworkPlayer::eNQRNetworkPlayerType_Remote)
             {
                 m_unconnectedPlayers.push_back(m_roomSlotPlayers[index]);
                 m_roomSlotPlayers[index] = NULL;
@@ -467,12 +461,14 @@ void NQRNetworkManager_Lan_WiiU::MapRoomSlotPlayers(int roomSlotPlayerCount)
         {
             if (index == 0)
             {
-                FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Host, &m_roomPlayers[index]);
+                FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Host,
+                                             &m_roomPlayers[index]);
                 static_cast<PlayerUID&>(m_roomPlayers[index]) = m_roomSlotPlayers[index]->GetUID();
             }
             else if (m_roomPlayers[index].m_uiStationId == m_localStationId)
             {
-                FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Local, &m_roomPlayers[index]);
+                FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Local,
+                                             &m_roomPlayers[index]);
                 static_cast<PlayerUID&>(m_roomPlayers[index]) = m_roomSlotPlayers[index]->GetUID();
             }
             else
@@ -504,17 +500,20 @@ void NQRNetworkManager_Lan_WiiU::MapRoomSlotPlayers(int roomSlotPlayerCount)
         {
             if (index == 0)
             {
-                FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Host, &m_roomPlayers[index]);
+                FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Host,
+                                             &m_roomPlayers[index]);
                 m_roomSlotPlayers[index]->SetUID(m_roomPlayers[index]);
             }
             else if (m_roomPlayers[index].m_uiStationId == m_localStationId)
             {
                 if (gProfile->IsSignedIn(m_roomPlayers[index].m_uiLocalPlayerIndex))
-                    FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Local, &m_roomPlayers[index]);
+                    FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Local,
+                                                 &m_roomPlayers[index]);
             }
             else
             {
-                FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Remote, &m_roomPlayers[index]);
+                FindOrCreateNonNetworkPlayer(index, NQRNetworkPlayer::eNQRNetworkPlayerType_Remote,
+                                             &m_roomPlayers[index]);
                 m_roomSlotPlayers[index]->SetUID(m_roomPlayers[index]);
             }
         }
@@ -545,7 +544,8 @@ void NQRNetworkManager_Lan_WiiU::UpdateRoomSyncUIDsFromPlayers()
     LeaveCriticalSection(&m_playerMutex);
 }
 
-void NQRNetworkManager_Lan_WiiU::RemoteDataSend(unsigned long long stationId, unsigned char channel, const void* data, unsigned int size)
+void NQRNetworkManager_Lan_WiiU::RemoteDataSend(unsigned long long stationId, unsigned char channel, const void* data,
+                                                unsigned int size)
 {
     EnterCriticalSection(&m_sendQueueMutex);
     SendQueueItem item;
@@ -573,11 +573,12 @@ void NQRNetworkManager_Lan_WiiU::RemoveRemotePlayersAndSync(unsigned long long s
     EnterCriticalSection(&m_playerMutex);
     for (int index = 0; index < m_roomPlayers[0].m_uiPlayerCountMinusOne + 1;)
     {
-        if (m_roomPlayers[index].m_uiStationId == stationId &&
-            ((1 << m_roomPlayers[index].m_uiLocalPlayerIndex) & playerMask) != 0)
+        if (m_roomPlayers[index].m_uiStationId == stationId
+            && ((1 << m_roomPlayers[index].m_uiLocalPlayerIndex) & playerMask) != 0)
         {
             EnterCriticalSection(&m_connectedPlayerMutex);
-            NQRNetworkPlayer* player = GetPlayerFromStationIdAndLocalIdx(stationId, m_roomPlayers[index].m_uiLocalPlayerIndex);
+            NQRNetworkPlayer* player = GetPlayerFromStationIdAndLocalIdx(stationId,
+                                                                         m_roomPlayers[index].m_uiLocalPlayerIndex);
             if (player != NULL)
             {
                 if (m_listener != NULL)
@@ -685,7 +686,9 @@ int NQRNetworkManager_Lan_WiiU::InitialiseNetwork(NetworkType type)
     return 0;
 }
 
-nn::pia::Result NQRNetworkManager_Lan_WiiU::Pia_InitializeCommon(unsigned char* memory, unsigned int memorySize, unsigned long long traceFlags, bool enableCachedPrint, bool)
+nn::pia::Result NQRNetworkManager_Lan_WiiU::Pia_InitializeCommon(unsigned char* memory, unsigned int memorySize,
+                                                                 unsigned long long traceFlags, bool enableCachedPrint,
+                                                                 bool)
 {
     checkPiaCoreToUse();
     nn::pia::Result result = 0;
@@ -740,7 +743,8 @@ nn::pia::Result NQRNetworkManager_Lan_WiiU::Pia_InitializeSession(const nn::pia:
     return result;
 }
 
-NQRNetworkManager_Lan_WiiU::ConnectedStation* NQRNetworkManager_Lan_WiiU::GetConnectedStation(unsigned long long stationId)
+NQRNetworkManager_Lan_WiiU::ConnectedStation* NQRNetworkManager_Lan_WiiU::GetConnectedStation(
+    unsigned long long stationId)
 {
     OSFastMutex* mutex = &m_connectedStationMutex;
     EnterCriticalSection(mutex);
@@ -775,7 +779,8 @@ void NQRNetworkManager_Lan_WiiU::Pia_SignalLeaveSession()
     m_leaveRequested = true;
 }
 
-void NQRNetworkManager_Lan_WiiU::Pia_SessionCallback(nn::pia::session::Session::EventType eventType, unsigned long long stationId, void*)
+void NQRNetworkManager_Lan_WiiU::Pia_SessionCallback(nn::pia::session::Session::EventType eventType,
+                                                     unsigned long long stationId, void*)
 {
     checkPiaCoreToUse();
     switch (eventType)
@@ -795,9 +800,9 @@ void NQRNetworkManager_Lan_WiiU::Pia_SessionCallback(nn::pia::session::Session::
     case nn::pia::session::Session::cEventTypeLeave:
         if (!s_networkManager->m_host)
         {
-            if (stationId == s_networkManager->m_hostStationId &&
-                s_networkManager->m_internalState != eNQRNetworkManagerInternalState_LeavingRoom &&
-                !s_sessionDisconnectPending)
+            if (stationId == s_networkManager->m_hostStationId
+                && s_networkManager->m_internalState != eNQRNetworkManagerInternalState_LeavingRoom
+                && !s_sessionDisconnectPending)
             {
                 s_networkManager->SetState(eNQRNetworkManagerInternalState_LeavingRoom);
                 s_networkManager->Pia_SignalLeaveSession();
@@ -1031,8 +1036,8 @@ void NQRNetworkManager_Lan_WiiU::UpdateApplicationConnected()
 {
     EnterCriticalSection(&s_connectMutex);
     checkPiaCoreToUse();
-    if (IsInitialisedAfterOnline() && s_piaSessionStarted && nn::pia::session::g_piaSession != NULL &&
-        !CGameNetworkManager::sInstance.IsLeavingGame())
+    if (IsInitialisedAfterOnline() && s_piaSessionStarted && nn::pia::session::g_piaSession != NULL
+        && !CGameNetworkManager::sInstance.IsLeavingGame())
     {
         nn::pia::Result result = nn::pia::session::g_piaSession->CheckConnectionError();
         if (result != 0 || s_sessionDisconnectPending)
@@ -1040,8 +1045,8 @@ void NQRNetworkManager_Lan_WiiU::UpdateApplicationConnected()
             SetLastNetworkError(result);
             if (result == nn::pia::session::Session::cResultStatusDisconnectedSession)
             {
-                if (nn::pia::session::g_piaSession->GetSessionDisconnectReason() ==
-                    nn::pia::session::Session::cStatusUnknown8)
+                if (nn::pia::session::g_piaSession->GetSessionDisconnectReason()
+                    == nn::pia::session::Session::cStatusUnknown8)
                 {
                     Minecraft* minecraft = Minecraft::GetInstance();
                     int primaryPad = gProfile->GetPrimaryPad();
@@ -1163,7 +1168,6 @@ bool NQRNetworkManager_Lan_WiiU::Pia_LeaveSession()
     SetNexAsyncProcess(eNEXAsyncProcess_LeaveSession);
     return true;
 }
-
 
 
 void NQRNetworkManager_Lan_WiiU::UpdateExternalRoomDataFromThread()
@@ -1420,9 +1424,9 @@ void NQRNetworkManager_Lan_WiiU::TickNexAsyncProcess()
             }
             m_saveTransferState = eSaveTransfer_JoinFailed;
             SetLastNetworkError(result);
-            SetState(m_internalState == eNQRNetworkManagerInternalState_JoinJoiningMatchmakeSession ?
-                eNQRNetworkManagerInternalState_JoinMatchmakeSessionFailed :
-                eNQRNetworkManagerInternalState_JoinSessionFailed);
+            SetState(m_internalState == eNQRNetworkManagerInternalState_JoinJoiningMatchmakeSession
+                         ? eNQRNetworkManagerInternalState_JoinMatchmakeSessionFailed
+                         : eNQRNetworkManagerInternalState_JoinSessionFailed);
             if (result == cPiaResultJoinSessionFull)
             {
                 Minecraft* minecraft = Minecraft::GetInstance();
@@ -1525,9 +1529,9 @@ void NQRNetworkManager_Lan_WiiU::PollUnconnectedStations()
         {
             if ((m_connectedStations[index].state & ConnectedStation::eStateFlag_InCommunication) == 0)
             {
-                nn::pia::transport::ReliableProtocol* protocol =
-                    nn::pia::transport::g_piaTransport->m_protocolManager.GetProtocol<nn::pia::transport::ReliableProtocol>(
-                        m_reliableProtocolHandle);
+                nn::pia::transport::ReliableProtocol* protocol = nn::pia::transport::g_piaTransport->m_protocolManager
+                                                                     .GetProtocol<nn::pia::transport::ReliableProtocol>(
+                                                                         m_reliableProtocolHandle);
                 if (m_host)
                 {
                     if (protocol->IsInCommunication(m_connectedStations[index].stationId))
@@ -1563,7 +1567,8 @@ void NQRNetworkManager_Lan_WiiU::PollUnconnectedStations()
     LeaveCriticalSection(&m_connectedPlayerMutex);
 }
 
-bool NQRNetworkManager_Lan_WiiU::AddRemotePlayersAndSync(unsigned long long stationId, ClientJoinData& joinData, EJoinFailedReason* reason)
+bool NQRNetworkManager_Lan_WiiU::AddRemotePlayersAndSync(unsigned long long stationId, ClientJoinData& joinData,
+                                                         EJoinFailedReason* reason)
 {
     EnterCriticalSection(&m_playerMutex);
     for (int userIndex = 0; userIndex < 4; ++userIndex)
@@ -1572,8 +1577,8 @@ bool NQRNetworkManager_Lan_WiiU::AddRemotePlayersAndSync(unsigned long long stat
         {
             for (int index = 0; index < m_roomPlayers[0].m_uiPlayerCountMinusOne + 1; ++index)
             {
-                if (m_roomPlayers[index] == joinData.playerUIDs[index] &&
-                    (m_roomPlayers[index].flags & PlayerUID::FlagMiiPrincipal) == 0)
+                if (m_roomPlayers[index] == joinData.playerUIDs[index]
+                    && (m_roomPlayers[index].flags & PlayerUID::FlagMiiPrincipal) == 0)
                 {
                     if (reason != NULL)
                         *reason = eJoinFailedReason_MiiInUse;
@@ -1647,7 +1652,8 @@ bool NQRNetworkManager_Lan_WiiU::AddRemotePlayersAndSync(unsigned long long stat
     return true;
 }
 
-void NQRNetworkManager_Lan_WiiU::SendJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason)
+void NQRNetworkManager_Lan_WiiU::SendJoinFailedData(unsigned long long stationId, unsigned int playerMask,
+                                                    EJoinFailedReason reason)
 {
     checkPiaCoreToUse();
     if (!m_localGame)
@@ -1673,7 +1679,8 @@ void NQRNetworkManager_Lan_WiiU::PollReceiveData()
     if (nn::pia::transport::g_piaTransport == NULL)
         return;
     nn::pia::transport::ReliableProtocol* protocol =
-        nn::pia::transport::g_piaTransport->m_protocolManager.GetProtocol<nn::pia::transport::ReliableProtocol>(m_reliableProtocolHandle);
+        nn::pia::transport::g_piaTransport->m_protocolManager.GetProtocol<nn::pia::transport::ReliableProtocol>(
+            m_reliableProtocolHandle);
     if (!m_hostStationIdCached)
         return;
 
@@ -1765,11 +1772,14 @@ void NQRNetworkManager_Lan_WiiU::PollReceiveData()
                     }
                 int messageParameter = IDS_CONFIRM_OK;
                 if (reason == eJoinFailedReason_Full)
-                    gConsoleUIController.RequestErrorMessage(cGameFullTitleId, cGameFullTextId, &messageParameter, 1, 0xff, NULL, NULL, NULL, true);
+                    gConsoleUIController.RequestErrorMessage(cGameFullTitleId, cGameFullTextId, &messageParameter, 1,
+                                                             0xff, NULL, NULL, NULL, true);
                 else if (reason == eJoinFailedReason_MiiInUse)
-                    gConsoleUIController.RequestErrorMessage(cMiiInUseTitleId, cMiiInUseTextId, &messageParameter, 1, 0xff, NULL, NULL, NULL, true);
+                    gConsoleUIController.RequestErrorMessage(cMiiInUseTitleId, cMiiInUseTextId, &messageParameter, 1,
+                                                             0xff, NULL, NULL, NULL, true);
                 else
-                    gConsoleUIController.RequestErrorMessage(IDS_ERROR_NETWORK_TITLE, IDS_ERROR_NETWORK, &messageParameter, 1, 0xff, NULL, NULL, NULL, true);
+                    gConsoleUIController.RequestErrorMessage(IDS_ERROR_NETWORK_TITLE, IDS_ERROR_NETWORK,
+                                                             &messageParameter, 1, 0xff, NULL, NULL, NULL, true);
             }
             else
             {
@@ -1951,12 +1961,13 @@ void NQRNetworkManager_Lan_WiiU::TickFromThread()
     {
         s_connectNetworkErrorPending = false;
         int parameter = static_cast<int>(IDS_CONFIRM_OK);
-        gConsoleUIController.RequestErrorMessage(IDS_ERROR_NETWORK_TITLE, IDS_ERROR_NETWORK,
-            &parameter, 1, cAnyPad, NULL, NULL, NULL, true);
+        gConsoleUIController.RequestErrorMessage(IDS_ERROR_NETWORK_TITLE, IDS_ERROR_NETWORK, &parameter, 1, cAnyPad,
+                                                 NULL, NULL, NULL, true);
     }
     if (s_piaShutdownPending)
         Pia_Shutdown();
-    if (s_shutdownTickStartTime > 0 && System::processTimeInMilliSecs() - s_shutdownTickStartTime > cShutdownTickDuration)
+    if (s_shutdownTickStartTime > 0
+        && System::processTimeInMilliSecs() - s_shutdownTickStartTime > cShutdownTickDuration)
     {
         s_shutdownTickPending = false;
         s_shutdownTickStartTime = 0;
@@ -2059,7 +2070,6 @@ void NQRNetworkManager_Lan_WiiU::MallocAndSetExtDataFromNQRPresenceInfo(void** e
 }
 
 
-
 void NQRNetworkManager_Lan_WiiU::Initialise()
 {
     s_lastNetworkError = 0;
@@ -2072,11 +2082,11 @@ void NQRNetworkManager_Lan_WiiU::Initialise()
 
 void NQRNetworkManager_Lan_WiiU::Terminate()
 {
-    if ((m_internalState == eNQRNetworkManagerInternalState_HostSessionCreated ||
-         m_internalState == eNQRNetworkManagerInternalState_HostRoomReady ||
-         m_internalState == eNQRNetworkManagerInternalState_JoinRoomReady ||
-         m_internalState == eNQRNetworkManagerInternalState_Playing) &&
-        !m_localGame)
+    if ((m_internalState == eNQRNetworkManagerInternalState_HostSessionCreated
+         || m_internalState == eNQRNetworkManagerInternalState_HostRoomReady
+         || m_internalState == eNQRNetworkManagerInternalState_JoinRoomReady
+         || m_internalState == eNQRNetworkManagerInternalState_Playing)
+        && !m_localGame)
     {
         LeaveRoom(true);
         int remainingTicks = cTerminateTickCount;
@@ -2102,9 +2112,9 @@ bool NQRNetworkManager_Lan_WiiU::IsHost()
 
 bool NQRNetworkManager_Lan_WiiU::IsReadyToPlayOrIdle()
 {
-    return m_internalState == eNQRNetworkManagerInternalState_HostRoomReady ||
-        m_internalState == eNQRNetworkManagerInternalState_Playing ||
-        m_internalState == eNQRNetworkManagerInternalState_Idle;
+    return m_internalState == eNQRNetworkManagerInternalState_HostRoomReady
+           || m_internalState == eNQRNetworkManagerInternalState_Playing
+           || m_internalState == eNQRNetworkManagerInternalState_Idle;
 }
 
 bool NQRNetworkManager_Lan_WiiU::IsInSession()
@@ -2117,7 +2127,9 @@ bool NQRNetworkManager_Lan_WiiU::IsMatchmakingEnabled()
     return m_matchmaking;
 }
 
-void NQRNetworkManager_Lan_WiiU::CreateAndJoinRoom(int primaryUserIndex, int localUserMask, void* extData, int extDataSize, int* attributes, int attributeCount, bool localGame, unsigned char gameMode)
+void NQRNetworkManager_Lan_WiiU::CreateAndJoinRoom(int primaryUserIndex, int localUserMask, void* extData,
+                                                   int extDataSize, int* attributes, int attributeCount, bool localGame,
+                                                   unsigned char gameMode)
 {
     m_externalDataSize = extDataSize;
     m_receiving = true;
@@ -2181,8 +2193,8 @@ bool NQRNetworkManager_Lan_WiiU::FriendRoomManagerSearch()
 {
     OSFastMutex* mutex = &m_friendSearchMutex;
     EnterCriticalSection(mutex);
-    if (!IsInitialisedAfterOnline() || m_internalState != eNQRNetworkManagerInternalState_Idle ||
-        m_friendSearchState != eNQRNetworkManagerFriendSearchState_Idle)
+    if (!IsInitialisedAfterOnline() || m_internalState != eNQRNetworkManagerInternalState_Idle
+        || m_friendSearchState != eNQRNetworkManagerFriendSearchState_Idle)
     {
         LeaveCriticalSection(mutex);
         return false;
@@ -2199,7 +2211,8 @@ bool NQRNetworkManager_Lan_WiiU::FriendRoomManagerSearch()
     SetFriendSearchState(eNQRNetworkManagerFriendSearchState_Searching);
     m_friendSearchResults.clear();
     m_friendSearchStatus = 0;
-    m_friendSearchThread = new C4JThreadImpl(GetFriendsThreadProc, this, "GetFriendsThreadProc", cFriendSearchThreadStackSize);
+    m_friendSearchThread = new C4JThreadImpl(GetFriendsThreadProc, this, "GetFriendsThreadProc",
+                                             cFriendSearchThreadStackSize);
     m_tickThread->SetProcessor(cFriendSearchThreadProcessor);
     m_saveTransferSearch = false;
     m_friendSearchThread->Run();
@@ -2287,7 +2300,8 @@ bool NQRNetworkManager_Lan_WiiU::JoinRoom(SessionSearchResult* result, int userI
     return JoinRoom(result->m_uiSessionId, userIndexMask, NULL);
 }
 
-bool NQRNetworkManager_Lan_WiiU::JoinRoom(unsigned int sessionId, int userIndexMask, const PresenceSyncInfo* presenceInfo)
+bool NQRNetworkManager_Lan_WiiU::JoinRoom(unsigned int sessionId, int userIndexMask,
+                                          const PresenceSyncInfo* presenceInfo)
 {
     if (m_internalState == eNQRNetworkManagerInternalState_Idle)
         SetState(eNQRNetworkManagerInternalState_JoinRequested);
@@ -2320,7 +2334,8 @@ bool NQRNetworkManager_Lan_WiiU::FriendPresenceUpdatedRoomList()
     return m_friendPresenceUpdated;
 }
 
-void NQRNetworkManager_Lan_WiiU::GetExtDataForRoom(unsigned int sessionId, void* extData, void (*callback)(bool, void*), void* callbackData)
+void NQRNetworkManager_Lan_WiiU::GetExtDataForRoom(unsigned int sessionId, void* extData, void (*callback)(bool, void*),
+                                                   void* callbackData)
 {
     m_extDataCallback = callback;
     m_extDataCallbackData = callbackData;
@@ -2333,7 +2348,6 @@ bool NQRNetworkManager_Lan_WiiU::FindAndJoinRoom(int, unsigned int, CMatchMakeSe
 {
     return true;
 }
-
 
 
 int NQRNetworkManager_Lan_WiiU::GetFriendsThreadProc(void* context)
@@ -2389,7 +2403,8 @@ unsigned int NQRNetworkManager_Lan_WiiU::GetFriendsFromSessionBrowse()
             AssertPiaError(result);
         else
         {
-            nn::pia::session::ISessionInfoList* sessionInfoList = nn::pia::session::g_piaSession->GetBrowsedSessionInfoList();
+            nn::pia::session::ISessionInfoList* sessionInfoList =
+                nn::pia::session::g_piaSession->GetBrowsedSessionInfoList();
             if (sessionInfoList != NULL)
             {
                 int sessionCount = sessionInfoList->GetSize();
@@ -2510,7 +2525,8 @@ void NQRNetworkManager_Lan_WiiU::EndGame()
 
 bool NQRNetworkManager_Lan_WiiU::SessionHasSpace(int extraPlayers)
 {
-    return m_roomPlayers[0].m_uiPlayerCountMinusOne + extraPlayers + 1 <= static_cast<int>(CGameNetworkManager::sInstance.GetMaxPlayers());
+    return m_roomPlayers[0].m_uiPlayerCountMinusOne + extraPlayers + 1
+           <= static_cast<int>(CGameNetworkManager::sInstance.GetMaxPlayers());
 }
 
 bool NQRNetworkManager_Lan_WiiU::SessionHasMii(int userIndex)
@@ -2600,8 +2616,8 @@ bool NQRNetworkManager_Lan_WiiU::RemoveLocalPlayerByUserIndex(int userIndex)
     int playerCount = m_roomPlayers[0].m_uiPlayerCountMinusOne + 1;
     for (int index = 0; index < playerCount; ++index)
     {
-        if (m_roomPlayers[index].m_uiStationId == m_localStationId &&
-            m_roomPlayers[index].m_uiLocalPlayerIndex == userIndex)
+        if (m_roomPlayers[index].m_uiStationId == m_localStationId
+            && m_roomPlayers[index].m_uiLocalPlayerIndex == userIndex)
         {
             m_roomPlayers[0].m_uiPlayerCountMinusOne--;
             for (int slot = index; slot < m_roomPlayers[0].m_uiPlayerCountMinusOne + 1; ++slot)
@@ -2692,8 +2708,8 @@ NQRNetworkPlayer* NQRNetworkManager_Lan_WiiU::GetLocalPlayerByUserIndex(int user
     EnterCriticalSection(&m_playerMutex);
     for (int index = 0; index < m_roomPlayers[0].m_uiPlayerCountMinusOne + 1; ++index)
     {
-        if (m_roomPlayers[index].m_uiStationId == m_localStationId &&
-            m_roomPlayers[index].m_uiLocalPlayerIndex == userIndex)
+        if (m_roomPlayers[index].m_uiStationId == m_localStationId
+            && m_roomPlayers[index].m_uiLocalPlayerIndex == userIndex)
         {
             NQRNetworkPlayer* player = GetPlayerIfReady(m_roomSlotPlayers[index]);
             LeaveCriticalSection(&m_playerMutex);
@@ -2713,13 +2729,15 @@ NQRNetworkPlayer* NQRNetworkManager_Lan_WiiU::GetHostPlayer()
 }
 
 
-void NQRNetworkManager_Lan_WiiU::LocalDataSend(NQRNetworkPlayer* from, NQRNetworkPlayer* to, const void* data, unsigned int size)
+void NQRNetworkManager_Lan_WiiU::LocalDataSend(NQRNetworkPlayer* from, NQRNetworkPlayer* to, const void* data,
+                                               unsigned int size)
 {
     if (m_listener != NULL)
         m_listener->HandleDataReceived(from, to, static_cast<unsigned char*>(const_cast<void*>(data)), size);
 }
 
-void NQRNetworkManager_Lan_WiiU::RemoteDataSend(NQRNetworkPlayer* from, NQRNetworkPlayer* to, const void* data, unsigned int size)
+void NQRNetworkManager_Lan_WiiU::RemoteDataSend(NQRNetworkPlayer* from, NQRNetworkPlayer* to, const void* data,
+                                                unsigned int size)
 {
     unsigned char channel = from->GetLocalPlayerIndex();
     RemoteDataSend(to->GetStationId(), channel, data, size);
@@ -2749,8 +2767,8 @@ void NQRNetworkManager_Lan_WiiU::SetPresenceDataStartHostingGame()
 
 int NQRNetworkManager_Lan_WiiU::GetJoiningReadyPercentage()
 {
-    if (m_internalState == eNQRNetworkManagerInternalState_HostWaitingForLogin ||
-        m_internalState == eNQRNetworkManagerInternalState_JoinWaitingForLogin)
+    if (m_internalState == eNQRNetworkManagerInternalState_HostWaitingForLogin
+        || m_internalState == eNQRNetworkManagerInternalState_JoinWaitingForLogin)
         return 50;
     return 100;
 }
@@ -2778,7 +2796,8 @@ unsigned int NQRNetworkManager_Lan_WiiU::GetSaveTransferConnectionFromSessionBro
             AssertPiaError(result);
         else
         {
-            nn::pia::session::ISessionInfoList* sessionInfoList = nn::pia::session::g_piaSession->GetBrowsedSessionInfoList();
+            nn::pia::session::ISessionInfoList* sessionInfoList =
+                nn::pia::session::g_piaSession->GetBrowsedSessionInfoList();
             if (sessionInfoList != NULL)
             {
                 m_saveTransferReceiveSize = 0;
@@ -2830,7 +2849,9 @@ void NQRNetworkManager_Lan_WiiU::Pia_ShutdownForOnline()
     }
 }
 
-void NQRNetworkManager_Lan_WiiU::CreateSessionForSaveTransfer(int dataSize, void* data, int metadataSize, void* metadata, long long seed, unsigned int hostOptions, unsigned int texturePack, wchar_t* name)
+void NQRNetworkManager_Lan_WiiU::CreateSessionForSaveTransfer(int dataSize, void* data, int metadataSize,
+                                                              void* metadata, long long seed, unsigned int hostOptions,
+                                                              unsigned int texturePack, wchar_t* name)
 {
     m_saveTransferSize = dataSize + metadataSize;
     m_saveTransferData = static_cast<unsigned char*>(std::malloc(m_saveTransferSize));
@@ -2879,8 +2900,8 @@ unsigned int NQRNetworkManager_Lan_WiiU::FindSessionForSaveTransfer()
 {
     OSFastMutex* mutex = &m_friendSearchMutex;
     EnterCriticalSection(mutex);
-    if (!IsInitialisedAfterOnline() || m_internalState != eNQRNetworkManagerInternalState_Idle ||
-        m_friendSearchState != eNQRNetworkManagerFriendSearchState_Idle)
+    if (!IsInitialisedAfterOnline() || m_internalState != eNQRNetworkManagerInternalState_Idle
+        || m_friendSearchState != eNQRNetworkManagerFriendSearchState_Idle)
     {
         LeaveCriticalSection(mutex);
         return false;
@@ -2915,7 +2936,8 @@ void NQRNetworkManager_Lan_WiiU::JoinSaveTransferConnection()
     m_saveTransferReceiveOffset = 0;
 }
 
-void NQRNetworkManager_Lan_WiiU::TryToConnectOnline(int (*callback)(void*, bool, int), void* callbackData, bool showProgress)
+void NQRNetworkManager_Lan_WiiU::TryToConnectOnline(int (*callback)(void*, bool, int), void* callbackData,
+                                                    bool showProgress)
 {
 }
 

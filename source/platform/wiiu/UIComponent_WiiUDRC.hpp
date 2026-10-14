@@ -18,6 +18,7 @@ private:
     unsigned int m_touchY;
     bool m_touchingIcon;
     bool m_touchPressed;
+
 public:
     UIComponent_WiiUDRC(int sceneType, void* param, UILayer* layer);
     int GetIconX();

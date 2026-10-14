@@ -8,13 +8,13 @@ struct _AX_FINAL_MIX_CB_STRUCT;
 
 namespace nn
 {
-    namespace pia
-    {
-        namespace chat
-        {
-            class VoiceProtocol;
-        }
-    }
+namespace pia
+{
+namespace chat
+{
+class VoiceProtocol;
+}
+}
 }
 
 enum eSndRateMode

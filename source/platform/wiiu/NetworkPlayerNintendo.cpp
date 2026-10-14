@@ -10,7 +10,9 @@ INetworkPlayer* NetworkPlayerNintendo_Create(NQRNetworkPlayer* player)
 }
 
 NetworkPlayerNintendo::NetworkPlayerNintendo(NQRNetworkPlayer* player)
-    : m_player(player), m_socket(0), m_lastChunkPacketTime(0)
+    : m_player(player),
+      m_socket(0),
+      m_lastChunkPacketTime(0)
 {
 }
 

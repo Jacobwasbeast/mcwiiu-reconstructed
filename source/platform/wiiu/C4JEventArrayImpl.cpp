@@ -2,8 +2,7 @@
 
 #include <coreinit/time.h>
 
-C4JEventArrayImpl::C4JEventArrayImpl(int count, C4JEventArray::EMode mode)
-    : m_count(count), m_mode(mode)
+C4JEventArrayImpl::C4JEventArrayImpl(int count, C4JEventArray::EMode mode) : m_count(count), m_mode(mode)
 {
     m_events = new OSEvent[static_cast<unsigned int>(count)];
     for (int index = 0; index < count; ++index)

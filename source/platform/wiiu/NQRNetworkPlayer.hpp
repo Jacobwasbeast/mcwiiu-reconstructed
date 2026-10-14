@@ -34,9 +34,8 @@ public:
         unsigned int flags;
     };
 
-    NQRNetworkPlayer(NQRNetworkManager* manager, eNQRNetworkPlayerType type, bool local,
-        unsigned long long stationId, int localPlayerIndex, PlayerUID* uid,
-        const char* networkName, const wchar_t* miiName);
+    NQRNetworkPlayer(NQRNetworkManager* manager, eNQRNetworkPlayerType type, bool local, unsigned long long stationId,
+                     int localPlayerIndex, PlayerUID* uid, const char* networkName, const wchar_t* miiName);
     ~NQRNetworkPlayer();
 
     unsigned char GetSmallId();

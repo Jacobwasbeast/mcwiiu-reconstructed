@@ -35,7 +35,11 @@ void HandleDRCStatusChanges()
 }
 
 FJ_WiiUDRC::FJ_WiiUDRC(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_tileCount(0), m_tilesAcross(0), m_tilesDown(0), m_backgroundVisible(false)
+    : FJ_FuiNode(pRenderNode),
+      m_tileCount(0),
+      m_tilesAcross(0),
+      m_tilesDown(0),
+      m_backgroundVisible(false)
 {
     ShowDRCBackground(false);
     ShowDRCIcon(true, true);
@@ -100,24 +104,20 @@ void FJ_WiiUDRC::SetSafeZone(int, int iBottom, int, int iRight)
     if (getChildByName(std::string("DRC_On_Icon")) != NULL)
     {
         getChildByName(std::string("DRC_On_Icon"))
-            ->setX((float)Math::round(getStage()->getStageWidth() -
-                                      getChildByName(std::string("DRC_On_Icon"))->getWidth() -
-                                      iRight * scaleX));
+            ->setX((float)Math::round(getStage()->getStageWidth()
+                                      - getChildByName(std::string("DRC_On_Icon"))->getWidth() - iRight * scaleX));
         getChildByName(std::string("DRC_On_Icon"))
-            ->setY((float)Math::round(getStage()->getStageHeight() -
-                                      getChildByName(std::string("DRC_On_Icon"))->getHeight() -
-                                      iBottom * scaleY));
+            ->setY((float)Math::round(getStage()->getStageHeight()
+                                      - getChildByName(std::string("DRC_On_Icon"))->getHeight() - iBottom * scaleY));
     }
     if (getChildByName(std::string("DRC_Off_Icon")) != NULL)
     {
         getChildByName(std::string("DRC_Off_Icon"))
-            ->setX((float)Math::round(getStage()->getStageWidth() -
-                                      getChildByName(std::string("DRC_On_Icon"))->getWidth() -
-                                      iRight * scaleX));
+            ->setX((float)Math::round(getStage()->getStageWidth()
+                                      - getChildByName(std::string("DRC_On_Icon"))->getWidth() - iRight * scaleX));
         getChildByName(std::string("DRC_Off_Icon"))
-            ->setY((float)Math::round(getStage()->getStageHeight() -
-                                      getChildByName(std::string("DRC_On_Icon"))->getHeight() -
-                                      iBottom * scaleY));
+            ->setY((float)Math::round(getStage()->getStageHeight()
+                                      - getChildByName(std::string("DRC_On_Icon"))->getHeight() - iBottom * scaleY));
     }
 }
 
@@ -133,18 +133,16 @@ unsigned int FJ_WiiUDRC::getType()
 
 int FJ_WiiUDRC::GetIconX()
 {
-    float x = getChildByName(std::string("DRC_On_Icon")) != NULL
-                  ? getChildByName(std::string("DRC_On_Icon"))->getX()
-                  : 0.0f;
+    float x = getChildByName(std::string("DRC_On_Icon")) != NULL ? getChildByName(std::string("DRC_On_Icon"))->getX()
+                                                                 : 0.0f;
     float scale = s_drcDesignWidth / getStage()->getStageWidth();
     return (int)(x * scale);
 }
 
 int FJ_WiiUDRC::GetIconY()
 {
-    float y = getChildByName(std::string("DRC_On_Icon")) != NULL
-                  ? getChildByName(std::string("DRC_On_Icon"))->getY()
-                  : 0.0f;
+    float y = getChildByName(std::string("DRC_On_Icon")) != NULL ? getChildByName(std::string("DRC_On_Icon"))->getY()
+                                                                 : 0.0f;
     float scale = s_drcDesignHeight / getStage()->getStageHeight();
     return (int)(y * scale);
 }

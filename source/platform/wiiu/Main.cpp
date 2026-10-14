@@ -135,8 +135,7 @@ int main()
 
     OSInitMessageQueue(&gMainMessageQueue, &gMainMessageBuffer, 1);
     InitializeCriticalSection(&gMainMutex);
-    C4JThreadImpl::OSCreateThread4J(&gMainThread, altMainThread, 0, 0,
-                                    gMainThreadStack + sizeof(gMainThreadStack),
+    C4JThreadImpl::OSCreateThread4J(&gMainThread, altMainThread, 0, 0, gMainThreadStack + sizeof(gMainThreadStack),
                                     sizeof(gMainThreadStack), 0x11, 0);
     OSResumeThread(&gMainThread);
     C4JThreadImpl::SetMainThreadID();
@@ -201,25 +200,19 @@ int main()
                    CConsoleMinecraftApp::DisplaySavingMessageWiiU, &gApp, "", &noSpaceForSaveQuota);
     gApp.SetNoSpaceForSaveQuota(noSpaceForSaveQuota);
     gProfile->LoadAllMiiData();
-    gProfile->SetSignInChangeCallback(
-        (CProfile::SignInChangeHandler)CMinecraftApp::SignInChangeCallback, &gApp);
+    gProfile->SetSignInChangeCallback((CProfile::SignInChangeHandler)CMinecraftApp::SignInChangeCallback, &gApp);
     gProfile->SetProfileReadErrorCallback(CMinecraftApp::ProfileReadErrorCallback, &gApp);
 
     gStorage->InitialiseGenericData();
     gStorage->InitialiseProfileData(0x22, 5, 4, s_profileDefaults, 0x1e60, &gApp.mGameDefinedDataChangedBitmask);
-    gStorage->SetDefaultOptionsCallback(
-        CMinecraftApp::DefaultOptionsCallback, &gApp);
-    gStorage->SetOptionsDataCallback(
-        CMinecraftApp::OptionsDataCallback, &gApp);
-    gStorage->SetOldProfileVersionCallback(
-        GameSettings::OldProfileVersionCallback, &gApp);
+    gStorage->SetDefaultOptionsCallback(CMinecraftApp::DefaultOptionsCallback, &gApp);
+    gStorage->SetOptionsDataCallback(CMinecraftApp::OptionsDataCallback, &gApp);
+    gStorage->SetOldProfileVersionCallback(GameSettings::OldProfileVersionCallback, &gApp);
     gStorage->SetGameSaveFolderPrefix("");
     gStorage->SetMaxSaves(99);
-    arrayWithLength<unsigned char> thumbnail = gApp.getArchiveFile(
-        L"DefaultSaveThumbnail64x64.png", false);
+    arrayWithLength<unsigned char> thumbnail = gApp.getArchiveFile(L"DefaultSaveThumbnail64x64.png", false);
     gStorage->SetDefaultImages(0, 0, 0, 0, thumbnail.data, thumbnail.length);
-    gStorage->SetIncompleteSaveCallback(
-        CConsoleMinecraftApp::Callback_SaveGameIncomplete, &gApp);
+    gStorage->SetIncompleteSaveCallback(CConsoleMinecraftApp::Callback_SaveGameIncomplete, &gApp);
     if (thumbnail.data != 0)
         delete[] thumbnail.data;
     gStorage->SetSaveTitle(L"Default Save");
@@ -245,8 +238,8 @@ int main()
     Minecraft* minecraft = Minecraft::GetInstance();
     gApp.InitGameSettings();
     gStorage->ReadFromProfile(0, 0);
-    gProfile->SetUpsellCallback(
-        reinterpret_cast<CProfile::UpsellHandler>(CMinecraftApp::UpsellReturnedCallback), &gApp);
+    gProfile->SetUpsellCallback(reinterpret_cast<CProfile::UpsellHandler>(CMinecraftApp::UpsellReturnedCallback),
+                                &gApp);
     gApp.InitialiseTips();
     g_pLeaderboardManager->OpenSession();
     CGameNetworkManager::sInstance.Initialise();
@@ -299,9 +292,9 @@ int main()
         CGameNetworkManager::sInstance.DoWork();
         PIXEndNamedEvent();
 
-        if (gApp.GetDRCOutputEnabled() != 0 || gApp.GetDRCIconEnabled() != 0 ||
-            !CGameNetworkManager::sInstance.IsInGameplay() ||
-            gApp.GetDRCCheckPlayerCountEnabled() == 0 || gApp.GetLocalPlayerCount() != 1)
+        if (gApp.GetDRCOutputEnabled() != 0 || gApp.GetDRCIconEnabled() != 0
+            || !CGameNetworkManager::sInstance.IsInGameplay() || gApp.GetDRCCheckPlayerCountEnabled() == 0
+            || gApp.GetLocalPlayerCount() != 1)
         {
             s_drcIconDelay = 0x77;
         }
@@ -316,9 +309,9 @@ int main()
         if (gApp.GetGameStarted() != 0)
         {
             minecraft->run_middle();
-            gApp.SetAppPaused(CGameNetworkManager::sInstance.IsLocalGame() &&
-                              CGameNetworkManager::sInstance.GetPlayerCount() == 1 &&
-                              gConsoleUIController.IsPauseMenuDisplayed(gProfile->GetPrimaryPad()));
+            gApp.SetAppPaused(CGameNetworkManager::sInstance.IsLocalGame()
+                              && CGameNetworkManager::sInstance.GetPlayerCount() == 1
+                              && gConsoleUIController.IsPauseMenuDisplayed(gProfile->GetPrimaryPad()));
         }
         else
         {
@@ -446,6 +439,7 @@ extern "C" void __preinit_user(MEMHeapHandle* mem1, MEMHeapHandle* foreground, M
     MEMFreeToDefaultHeap = sMEMFreeToDefaultHeap;
     gHeapStart = arena;
     gHeapEnd = arena + size;
-    gHeapTop = reinterpret_cast<char*>((reinterpret_cast<uintptr_t>(arena) + (kHeapPageSize - 1)) & ~(kHeapPageSize - 1));
+    gHeapTop = reinterpret_cast<char*>((reinterpret_cast<uintptr_t>(arena) + (kHeapPageSize - 1))
+                                       & ~(kHeapPageSize - 1));
     OSDynLoad_SetAllocator(CoreUser_DynLoad_DefaultAlloc, CoreUser_DynLoad_DefaultFree);
 }
