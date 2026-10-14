@@ -40,12 +40,14 @@ python tools/prepare.py --base <base game dump> --update <update v688 dump>
 ```
 
 - `source/platform/wiiu/shaders/` receives the renderer's 31 shader
-  objects, the Mii icon module's two shader files, and four data tables the
-  game carries: the keys the online monitoring traffic is encrypted with,
-  the Shift-JIS conversion tables and a table of decimal digits used to
-  print floating-point numbers. The original game built the shaders from
-  shader source with Nintendo's tools, and none of this data can be written
-  by hand, so all of it is taken from the update's `Minecraft.Client.rpx`,
+  objects, the Mii icon module's two shader files, and the data the game
+  carries that this repository does not: the key the game logs in to
+  Nintendo's online service with, the keys its online monitoring traffic is
+  encrypted with, the Shift-JIS conversion tables and a table of decimal
+  digits used to print floating-point numbers. The original game built the
+  shaders from shader source with Nintendo's tools, and none of this data
+  can be written by hand, so all of it is taken from the update's
+  `Minecraft.Client.rpx`,
   whose size and SHA-256 are checked first.
   `tools/gamedata/recipe-v688.json` records where each one lives in that
   executable. The files that include them do not compile until

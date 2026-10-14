@@ -42,7 +42,7 @@ BUILD_DIR = os.path.join(ROOT, "build")
 DEPS_DIR = os.path.join(BUILD_DIR, "deps")
 SHADER_DIR = os.path.join(ROOT, "source", "platform", "wiiu", "shaders")
 GENERATED = ("RendererShaders.inc", "MiiIconDefaultShader.inc", "MiiIconExtShader.inc", "MonitoringCryptoKeys.inc",
-             "PeadSjisCodeTable.inc", "PeadSjisIndexTable.inc", "PeadFloatDigitTable.inc")
+             "PeadSjisCodeTable.inc", "PeadSjisIndexTable.inc", "PeadFloatDigitTable.inc", "NexAccessKey.inc")
 STAGED = ("source", "tools")
 EXCLUDED = (".git", "__pycache__", ".download-cache")
 # The two-byte wchar_t runtime is rebuilt when the scripts that define it change.
