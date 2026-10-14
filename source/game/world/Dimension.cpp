@@ -131,12 +131,12 @@ float* Dimension::getSunriseColor(float celestialAngle, float timeOfDay)
 {
     unsigned int dark = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Sky_Dawn_Dark);
     unsigned int bright = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Sky_Dawn_Bright);
-    float darkRed = (float)((dark >> 16) & 255) / 255.0f;
-    float darkGreen = (float)((dark >> 8) & 255) / 255.0f;
-    float darkBlue = (float)(dark & 255) / 255.0f;
-    float brightRed = (float)((bright >> 16) & 255) / 255.0f;
-    float brightGreen = (float)((bright >> 8) & 255) / 255.0f;
-    float brightBlue = (float)(bright & 255) / 255.0f;
+    double darkRed = ((dark >> 16) & 255) / 255.0f;
+    double darkGreen = ((dark >> 8) & 255) / 255.0;
+    double darkBlue = (dark & 255) / 255.0;
+    double brightRed = ((bright >> 16) & 255) / 255.0f;
+    double brightGreen = ((bright >> 8) & 255) / 255.0;
+    double brightBlue = (bright & 255) / 255.0;
     float blend = Mth::cos(celestialAngle * 6.2831855f);
     if (blend < -0.4f || blend > 0.4f)
         return NULL;

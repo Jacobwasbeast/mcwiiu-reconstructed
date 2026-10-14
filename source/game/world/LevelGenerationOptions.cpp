@@ -399,7 +399,7 @@ void LevelGenerationOptions::loadGameRulesHeaders(DLCPack* pack, StringTable* ta
             unsigned int bytesRead;
             if (ReadFile(handle, data, size, &bytesRead, NULL) == 0)
             {
-                gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Failed to read %s", __LINE__, fileName);
+                gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Failed to read %s", 1136, fileName);
             }
             CloseHandle(handle);
             header->setGrfData(data, size, table);
@@ -495,7 +495,7 @@ void LevelGenerationOptions::setBaseSaveData(File file)
         unsigned int bytesRead;
         if (ReadFile(handle, data, size, &bytesRead, NULL) == 0)
         {
-            gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Failed to read %s", __LINE__, path);
+            gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Failed to read %s", 1193, path);
         }
         CloseHandle(handle);
         setBaseSaveData(data, size);

@@ -475,9 +475,8 @@ protected:
 
 public:
     std::vector<boost::shared_ptr<Player> > mPlayers;
-
-private:
     std::vector<boost::shared_ptr<Entity> > mGlobalEntities;
+
 protected:
     boost::unordered_map<int, boost::shared_ptr<Entity>, IntKeyHash2, IntKeyEq> mEntityMap;
 private:

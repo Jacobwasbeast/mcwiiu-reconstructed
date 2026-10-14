@@ -1548,7 +1548,7 @@ bool Level::setBlockAndData(int x, int y, int z, int blockId, int data, int flag
 
     if ((flags & Block::UPDATE_CHUNK_ONLY) != 0)
     {
-        chunk->setBlockAndData(x & 0xF, y, z & 0xF, blockId, data, true, false);
+        chunk->setBlockAndData(x & 0xF, y, z & 0xF, blockId, data, false, true);
         return true;
     }
 
@@ -1568,12 +1568,7 @@ bool Level::setBlockAndData(int x, int y, int z, int blockId, int data, int flag
 
     Block* block = Block::byId(blockId);
     Block* oldBlock = Block::byId(oldBlockId);
-    bool immediate = false;
-
-    if ((flags & Block::UPDATE_CLIENTS) != 0 && (!mIsClientSide || (flags & Block::UPDATE_INVISIBLE) == 0))
-    {
-        immediate = true;
-    }
+    bool immediate = (flags & Block::UPDATE_CLIENTS) != 0 && (!mIsClientSide || (flags & Block::UPDATE_INVISIBLE) == 0);
 
     sendBlockUpdated(pos, block->defaultBlockState(), oldBlock->defaultBlockState(), flags, immediate);
 
@@ -1582,14 +1577,7 @@ bool Level::setBlockAndData(int x, int y, int z, int blockId, int data, int flag
         return changed;
     }
 
-    if ((flags & Block::UPDATE_NEIGHBORS) == 0)
-    {
-        if ((flags & Block::UPDATE_NO_OBSERVERS) == 0)
-        {
-            updateObservingBlocksAt(pos, block);
-        }
-    }
-    else
+    if ((flags & Block::UPDATE_NEIGHBORS) != 0)
     {
         blockUpdated(pos, oldBlock, (flags & Block::UPDATE_NO_OBSERVERS) == 0);
 
@@ -1597,6 +1585,10 @@ bool Level::setBlockAndData(int x, int y, int z, int blockId, int data, int flag
         {
             updateNeighbourForOutputSignal(pos, block);
         }
+    }
+    else if ((flags & Block::UPDATE_NO_OBSERVERS) == 0)
+    {
+        updateObservingBlocksAt(pos, block);
     }
 
     return changed;
@@ -2831,9 +2823,9 @@ bool Level::checkAndHandleWater(AABB* box, Material* material, boost::shared_ptr
                 if (state->getMaterial() == material)
                 {
                     int data = state->getValue(LiquidBlock::LEVEL);
-                    double surface = (double)(y + 1) - LiquidBlock::getHeightFromData(data);
+                    double surface = (y + 1) - LiquidBlock::getHeightFromData(data);
 
-                    if (surface <= (double)maxY)
+                    if (surface <= maxY)
                     {
                         found = true;
                         flow = block->handleEntityInside(this, pos, entity, flow);
@@ -2846,7 +2838,9 @@ bool Level::checkAndHandleWater(AABB* box, Material* material, boost::shared_ptr
     if (flow->length() > 0.0 && entity->isPushedByWater())
     {
         flow = flow->normalize();
-        entity->push(flow->x * 0.014, flow->y * 0.014, flow->z * 0.014);
+        entity->mXd += flow->x * 0.014;
+        entity->mYd += flow->y * 0.014;
+        entity->mZd += flow->z * 0.014;
     }
 
     return found;
@@ -3140,7 +3134,7 @@ boost::shared_ptr<SavedData> Level::getSavedData(const std::type_info& type, con
 
 int Level::getFreeAuxValueFor(const std::wstring& id)
 {
-    return mSavedDataStorage == NULL ? -1 : mSavedDataStorage->getFreeAuxValueFor(id);
+    return mSavedDataStorage->getFreeAuxValueFor(id);
 }
 
 int Level::getAuxValueForMap(PlayerUID uid, int dimension, int x, int z, int scale)
@@ -4243,8 +4237,9 @@ boost::shared_ptr<Player> Level::getNearestAttackablePlayer(
     const RangeModifier* modifier, const Predicate<boost::shared_ptr<Entity> >* predicate)
 {
     boost::shared_ptr<Player> nearest;
+    std::vector<boost::shared_ptr<Player> >::iterator end = mPlayers.end();
     double nearestDistance = -1.0;
-    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != end; ++it)
     {
         boost::shared_ptr<Player> player = *it;
         if (player->mAbilities.mInvulnerable || !player->isAlive() || player->hasInvisiblePrivilege()
@@ -4253,6 +4248,7 @@ boost::shared_ptr<Player> Level::getNearestAttackablePlayer(
         {
             continue;
         }
+        double distanceSquared = player->distanceToSqr(x, player->mY, z);
         double adjustedRange = distance;
         if (player->isSneaking())
         {
@@ -4260,17 +4256,20 @@ boost::shared_ptr<Player> Level::getNearestAttackablePlayer(
         }
         if (player->isInvisible())
         {
-            float cover = std::max(player->getArmorCoverPercentage(), 0.1f);
+            float cover = player->getArmorCoverPercentage();
+            if (cover < 0.1f)
+            {
+                cover = 0.1f;
+            }
             adjustedRange *= 0.7f * cover;
         }
         if (modifier != NULL)
         {
             adjustedRange *= modifier->apply(player);
         }
-        double distanceSquared = player->distanceToSqr(x, player->mY, z);
-        if ((distance < 0.0 || distanceSquared < adjustedRange * adjustedRange)
-            && (maxYDistance < 0.0 || std::fabs(player->mY - y) < maxYDistance)
-            && (nearestDistance < 0.0 || distanceSquared < nearestDistance))
+        if ((maxYDistance < 0.0 || std::fabs(player->mY - y) < maxYDistance * maxYDistance)
+            && (distance < 0.0 || distanceSquared < adjustedRange * adjustedRange)
+            && (nearestDistance == -1.0 || distanceSquared < nearestDistance))
         {
             nearest = player;
             nearestDistance = distanceSquared;
@@ -5017,14 +5016,13 @@ bool Level::containsAnyLiquid_NoLoad(AABB* box)
     int maxY = Mth::ceil(static_cast<float>(box->mMaxY));
     int minZ = Mth::floor(box->mMinZ);
     int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
-    for (int x = minX; x < maxX; ++x)
+    for (int x = minX; x <= maxX; ++x)
     {
-        for (int y = minY; y < maxY; ++y)
+        for (int y = minY; y <= maxY; ++y)
         {
-            for (int z = minZ; z < maxZ; ++z)
+            for (int z = minZ; z <= maxZ; ++z)
             {
-                BlockPos pos(x, y, z);
-                if (!hasChunkAt(pos) || getLiquidBlockState(pos)->getMaterial()->isLiquid())
+                if (!hasChunkAt(BlockPos(x, y, z)) || getLiquidBlockState(BlockPos(x, y, z))->getMaterial()->isLiquid())
                 {
                     return true;
                 }

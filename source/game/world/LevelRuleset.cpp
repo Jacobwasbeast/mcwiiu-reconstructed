@@ -121,119 +121,120 @@ void LevelRuleset::addUniqueRule(ConsoleGameRules::EGameRuleType type, GameRuleD
 
 GameRuleDefinition* LevelRuleset::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    switch (type)
+    GameRuleDefinition* rule = NULL;
+    if (type == ConsoleGameRules::eGameRuleType_NamedArea)
     {
-    case ConsoleGameRules::eGameRuleType_NamedArea:
-        {
-            NamedAreaRuleDefinition* rule = new NamedAreaRuleDefinition();
-            mNamedAreas.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_ActiveChunkArea:
-        {
-            ActiveChunkAreaRuleDefinition* rule = new ActiveChunkAreaRuleDefinition();
-            mNamedAreas.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_ActiveViewArea:
-        {
-            ActiveViewAreaRuleDefinition* rule = new ActiveViewAreaRuleDefinition();
-            mNamedAreas.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_TargetArea:
-        {
-            TargetAreaRuleDefinition* rule = new TargetAreaRuleDefinition();
-            mNamedAreas.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_ScoreRing:
-        {
-            ScoreRingRuleDefinition* rule = new ScoreRingRuleDefinition();
-            mNamedAreas.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_ThermalArea:
-        {
-            ThermalAreaRuleDefinition* rule = new ThermalAreaRuleDefinition();
-            mNamedAreas.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_PlayerBoundsVolume:
-        {
-            PlayerBoundsVolumeRuleDefinition* rule = new PlayerBoundsVolumeRuleDefinition();
-            mNamedAreas.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_BlockLayer:
-        {
-            BlockLayerRuleDefinition* rule = new BlockLayerRuleDefinition();
-            mNamedAreas.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_RandomItemSet:
-        {
-            RandomItemSetRuleDefinition* rule = new RandomItemSetRuleDefinition();
-            mRandomItemSets.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_OnGameStartSpawnPositions:
-        {
-            OnGameStartSpawnPositions* rule = new OnGameStartSpawnPositions();
-            addUniqueRule(type, rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_OnInitialiseWorld:
-        {
-            OnInitialiseWorld* rule = new OnInitialiseWorld();
-            addUniqueRule(type, rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_DegradationSequence:
-        {
-            DegradationSequenceRuleDefinition* rule = new DegradationSequenceRuleDefinition();
-            addUniqueRule(type, rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_GrantPermissions:
-        {
-            GrantPermissionsRuleDefinition* rule = new GrantPermissionsRuleDefinition();
-            addUniqueRule(type, rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_LayerGeneration:
-        {
-            LayerGenerationRuleDefinition* rule = new LayerGenerationRuleDefinition();
-            addUniqueRule(type, rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_BlockCollisionException:
-        {
-            CollisionExceptionGameRuleDefinition* rule = new CollisionExceptionGameRuleDefinition();
-            mCollisionExceptions.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_Checkpoint:
-        {
-            CheckpointRuleDefinition* rule = new CheckpointRuleDefinition();
-            mCheckpoints.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_Powerup:
-        {
-            PowerupRuleDefinition* rule = new PowerupRuleDefinition();
-            mPowerups.push_back(rule);
-            return rule;
-        }
-    case ConsoleGameRules::eGameRuleType_Killbox:
-        {
-            KillboxRuleDefinition* rule = new KillboxRuleDefinition();
-            mKillboxes.push_back(rule);
-            return rule;
-        }
-    default:
-        return CompoundGameRuleDefinition::addChild(type);
+        NamedAreaRuleDefinition* r = new NamedAreaRuleDefinition();
+        mNamedAreas.push_back(r);
+        rule = r;
     }
+    else if (type == ConsoleGameRules::eGameRuleType_ActiveChunkArea)
+    {
+        ActiveChunkAreaRuleDefinition* r = new ActiveChunkAreaRuleDefinition();
+        mNamedAreas.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_ActiveViewArea)
+    {
+        ActiveViewAreaRuleDefinition* r = new ActiveViewAreaRuleDefinition();
+        mNamedAreas.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_TargetArea)
+    {
+        TargetAreaRuleDefinition* r = new TargetAreaRuleDefinition();
+        mNamedAreas.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_ScoreRing)
+    {
+        ScoreRingRuleDefinition* r = new ScoreRingRuleDefinition();
+        mNamedAreas.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_ThermalArea)
+    {
+        ThermalAreaRuleDefinition* r = new ThermalAreaRuleDefinition();
+        mNamedAreas.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_PlayerBoundsVolume)
+    {
+        PlayerBoundsVolumeRuleDefinition* r = new PlayerBoundsVolumeRuleDefinition();
+        mNamedAreas.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_BlockLayer)
+    {
+        BlockLayerRuleDefinition* r = new BlockLayerRuleDefinition();
+        mNamedAreas.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_RandomItemSet)
+    {
+        RandomItemSetRuleDefinition* r = new RandomItemSetRuleDefinition();
+        mRandomItemSets.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_OnGameStartSpawnPositions)
+    {
+        OnGameStartSpawnPositions* r = new OnGameStartSpawnPositions();
+        addUniqueRule(type, r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_OnInitialiseWorld)
+    {
+        OnInitialiseWorld* r = new OnInitialiseWorld();
+        addUniqueRule(type, r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_DegradationSequence)
+    {
+        DegradationSequenceRuleDefinition* r = new DegradationSequenceRuleDefinition();
+        addUniqueRule(type, r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_GrantPermissions)
+    {
+        GrantPermissionsRuleDefinition* r = new GrantPermissionsRuleDefinition();
+        addUniqueRule(type, r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_LayerGeneration)
+    {
+        LayerGenerationRuleDefinition* r = new LayerGenerationRuleDefinition();
+        addUniqueRule(type, r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_BlockCollisionException)
+    {
+        CollisionExceptionGameRuleDefinition* r = new CollisionExceptionGameRuleDefinition();
+        mCollisionExceptions.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_Checkpoint)
+    {
+        CheckpointRuleDefinition* r = new CheckpointRuleDefinition();
+        mCheckpoints.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_Powerup)
+    {
+        PowerupRuleDefinition* r = new PowerupRuleDefinition();
+        mPowerups.push_back(r);
+        rule = r;
+    }
+    else if (type == ConsoleGameRules::eGameRuleType_Killbox)
+    {
+        KillboxRuleDefinition* r = new KillboxRuleDefinition();
+        mKillboxes.push_back(r);
+        rule = r;
+    }
+    else
+    {
+        rule = CompoundGameRuleDefinition::addChild(type);
+    }
+    return rule;
 }
 
 void LevelRuleset::addAttribute(const std::wstring& name, const std::wstring& value)
@@ -255,7 +256,7 @@ wchar_t* LevelRuleset::getString(const std::wstring& key)
 {
     if (mStringTable == NULL)
     {
-        return const_cast<wchar_t*>(L"Active");
+        return const_cast<wchar_t*>(L"");
     }
     return mStringTable->getString(key);
 }
