@@ -45,7 +45,7 @@ def download(url, sha256, cache):
         return path
     path.parent.mkdir(parents=True, exist_ok=True)
     print('downloading %s' % url, flush=True)
-    request = urllib.request.Request(url, headers={'User-Agent': 'WiiUConsoleEditionRecon-build'})
+    request = urllib.request.Request(url, headers={'User-Agent': 'mcwiiu-reconstructed-build'})
     with urllib.request.urlopen(request, timeout=600) as response:
         data = response.read()
     actual = hashlib.sha256(data).hexdigest()
