@@ -3,7 +3,8 @@
 
 #include <coreinit/thread.h>
 
-enum __ghs_ThreadLocalStorage_specifier {
+enum __ghs_ThreadLocalStorage_specifier
+{
     __ghs_TLS_asctime_buff,
     __ghs_TLS_tmpnam_space,
     __ghs_TLS_strtok_saved_pos,
@@ -21,26 +22,28 @@ struct __ghs_ThreadLocalStorage
 {
     char tmpnam_space[32];
     char asctime_buff[30];
-    char *strtok_saved_pos;
+    char* strtok_saved_pos;
     struct tm gmtime_temp;
-    void *eh_globals;
-    void *eh_mem_manage[9];
-    void *eh_store_globals[6];
-    void *eh_store_globals_tdeh[76];
+    void* eh_globals;
+    void* eh_mem_manage[9];
+    void* eh_store_globals[6];
+    void* eh_store_globals_tdeh[76];
 };
 
-static inline __ghs_ThreadLocalStorage *ghsThreadLocalStorage(OSThread *thread)
+static inline __ghs_ThreadLocalStorage* ghsThreadLocalStorage(OSThread* thread)
 {
-    return reinterpret_cast<__ghs_ThreadLocalStorage *>(&thread->ghsExceptionHandling);
+    return reinterpret_cast<__ghs_ThreadLocalStorage*>(&thread->ghsExceptionHandling);
 }
 
-extern "C" {
-
-void *__ghs_GetThreadLocalStorageItem(int specifier)
+extern "C"
 {
-    OSThread *thread = OSGetCurrentThread();
-    void *ptlsitem = 0;
-    switch (specifier) {
+
+void* __ghs_GetThreadLocalStorageItem(int specifier)
+{
+    OSThread* thread = OSGetCurrentThread();
+    void* ptlsitem = 0;
+    switch (specifier)
+    {
     case (int)__ghs_TLS_Errno:
         ptlsitem = &thread->context.error;
         break;
@@ -87,5 +90,4 @@ int __ghs_SaveSignalContext(jmp_buf jmpbuf)
 void __ghs_RestoreSignalContext(jmp_buf jmpbuf)
 {
 }
-
 }

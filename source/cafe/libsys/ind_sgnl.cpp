@@ -5,13 +5,14 @@
 
 typedef void (*SignalHandler)(int);
 
-extern "C" {
+extern "C"
+{
 
 static SignalHandler static_SignalHandlers[_SIGMAX];
 
 static int __gh_signal_initialized;
 
-void __gh_signal_init(SignalHandler *SignalHandlers)
+void __gh_signal_init(SignalHandler* SignalHandlers)
 {
     int i;
     for (i = 1; i <= _SIGMAX; i++)
@@ -39,18 +40,19 @@ int raise(int sig)
         return -1;
     handlers = static_SignalHandlers;
 
-    if (__gh_signal_initialized != 1) {
+    if (__gh_signal_initialized != 1)
+    {
         __gh_signal_init(handlers);
     }
 
     temp = handlers[sig - 1];
     if (sig == SIGKILL || temp == SIG_DFL)
         __ghs_default_signal_handler(sig);
-    else if (temp != SIG_IGN) {
+    else if (temp != SIG_IGN)
+    {
         handlers[sig - 1] = SIG_DFL;
         (*temp)(sig);
     }
     return 0;
 }
-
 }
