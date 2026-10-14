@@ -14,7 +14,7 @@ python tools/package.py --update <update v688 dump>
 
 - This repository with its submodule. `source/nn/ffl` is a git submodule,
   so clone with
-  `git clone --recurse-submodules https://github.com/Jacobwasbeast/WiiUConsoleEditionRecon.git`,
+  `git clone --recurse-submodules https://github.com/Jacobwasbeast/mcwiiu-reconstructed.git`,
   or run `git submodule update --init` in an existing clone.
 - Your own extracted, decrypted dumps of the base game (title
   `00050000101D9D00`) and of update version 688 (title `0005000E101D9D00`),

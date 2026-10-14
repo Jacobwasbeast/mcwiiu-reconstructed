@@ -9,7 +9,7 @@ Opus 5.5 worker agents; earlier phases had the dispatchers Sol and Fable
 hand class families to Luna and Opus 5 workers. See `docs/overview.md`.
 
 ```
-git clone --recurse-submodules https://github.com/Jacobwasbeast/WiiUConsoleEditionRecon.git
+git clone --recurse-submodules https://github.com/Jacobwasbeast/mcwiiu-reconstructed.git
 python tools/prepare.py --base <base game dump> --update <update v688 dump>
 python tools/build.py
 python tools/package.py --update <update v688 dump>

@@ -39,7 +39,7 @@ def download(url, cache):
     os.makedirs(cache, exist_ok=True)
     path = os.path.join(cache, url.rstrip("/").split("/")[-1])
     if not os.path.isfile(path):
-        request = urllib.request.Request(url, headers={"User-Agent": "WiiUConsoleEditionRecon-build"})
+        request = urllib.request.Request(url, headers={"User-Agent": "mcwiiu-reconstructed-build"})
         try:
             with urllib.request.urlopen(request, timeout=600) as response:
                 data = response.read()
