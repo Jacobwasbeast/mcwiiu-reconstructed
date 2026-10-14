@@ -5,7 +5,8 @@
 
 class fuiRenderNode;
 
-class FJ_SaveMessage : public FJ_Document {
+class FJ_SaveMessage : public FJ_Document
+{
 public:
     FJ_SaveMessage(fuiRenderNode* renderNode);
 

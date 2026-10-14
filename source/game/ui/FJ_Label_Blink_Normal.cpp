@@ -1,7 +1,6 @@
 #include "game/ui/FJ_Label_Blink_Normal.hpp"
 
-FJ_Label_Blink_Normal::FJ_Label_Blink_Normal(fuiRenderNode* renderNode)
-    : FJ_Label_Blink(renderNode)
+FJ_Label_Blink_Normal::FJ_Label_Blink_Normal(fuiRenderNode* renderNode) : FJ_Label_Blink(renderNode)
 {
 }
 

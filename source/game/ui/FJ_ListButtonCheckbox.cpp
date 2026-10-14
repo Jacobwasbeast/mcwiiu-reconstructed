@@ -10,8 +10,7 @@
 
 extern fui* gFui;
 
-FJ_ListButtonCheckbox::FJ_ListButtonCheckbox(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode), m_checkBox(true)
+FJ_ListButtonCheckbox::FJ_ListButtonCheckbox(fuiRenderNode* renderNode) : FJ_Button(renderNode), m_checkBox(true)
 {
     SetCheckBox(true);
     SetKeyDownDelegate(_HandleTriggerCheckBox, this);
@@ -79,8 +78,7 @@ void FJ_ListButtonCheckbox::SetSlotID(int slotId, bool visible)
 
         char name[64];
         std::sprintf(name, "iggy_slot_%d_%d", slotId, m_id);
-        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-            getStage()->m_pRenderNode, &rect, name);
+        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, name);
         renderNode->setAlpha(0.25f);
         removeChild(slotControl, true);
         FJ_FuiNode* node = new FJ_FuiNode(renderNode);
@@ -106,8 +104,7 @@ void FJ_ListButtonCheckbox::SetTextureName(const std::wstring& textureName)
     bool hasTexture = false;
     unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
-        texture, true, hasTexture);
+        getStage()->m_pRenderNode, &rect, "CustomTexture", width, height, texture, true, hasTexture);
     FJ_FuiNode* node = new FJ_FuiNode(renderNode);
     renderNode->setFuiNode(node);
     iconPlaceholder->addChild(node);

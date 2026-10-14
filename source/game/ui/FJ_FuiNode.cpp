@@ -524,7 +524,6 @@ FJ_MobEffect* FJ_FuiNode::asFJ_MobEffect()
 }
 
 
-
 FJ_ProgressBar* FJ_FuiNode::asFJ_ProgressBar()
 {
     return dynamic_cast<FJ_ProgressBar*>(this);
@@ -815,7 +814,8 @@ void FJ_FuiNode::dispatchEvent(FJ_Event* pEvent)
     delete pEvent;
 }
 
-void FJ_FuiNode::addEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*pfnHandler)(FJ_FuiNode*, FJ_Event*), bool bCapture)
+void FJ_FuiNode::addEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*pfnHandler)(FJ_FuiNode*, FJ_Event*),
+                                  bool bCapture)
 {
     bool found = false;
     FJ_EventListener listener;
@@ -833,10 +833,8 @@ void FJ_FuiNode::addEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*
     for (unsigned int i = 0; i < m_eventListeners.size(); ++i)
     {
         const FJ_EventListener& existing = m_eventListeners[i];
-        if (existing.m_eType == listener.m_eType &&
-            existing.m_bCapture == listener.m_bCapture &&
-            existing.m_pNode == listener.m_pNode &&
-            existing.m_pfnHandler == listener.m_pfnHandler)
+        if (existing.m_eType == listener.m_eType && existing.m_bCapture == listener.m_bCapture
+            && existing.m_pNode == listener.m_pNode && existing.m_pfnHandler == listener.m_pfnHandler)
             found = true;
     }
 
@@ -861,9 +859,8 @@ void FJ_FuiNode::removeEventListener(eFJEventType eType, FJ_FuiNode* pNode, void
     std::vector<FJ_EventListener>::iterator it = m_eventListeners.begin();
     while (it != m_eventListeners.end())
     {
-        if (it->m_eType == listener.m_eType &&
-            it->m_pNode == listener.m_pNode &&
-            it->m_pfnHandler == listener.m_pfnHandler)
+        if (it->m_eType == listener.m_eType && it->m_pNode == listener.m_pNode
+            && it->m_pfnHandler == listener.m_pfnHandler)
         {
             m_eventListeners.erase(it);
             return;

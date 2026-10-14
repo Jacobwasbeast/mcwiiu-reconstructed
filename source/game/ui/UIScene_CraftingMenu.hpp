@@ -42,7 +42,8 @@ public:
     virtual void handleDestroy();
     virtual void handleReload();
     virtual void handleTouchBoxRebuild();
-    virtual void handleTouchInput(unsigned int player, int touchX, int touchY, int control, bool pressed, bool repeat, bool released);
+    virtual void handleTouchInput(unsigned int player, int touchX, int touchY, int control, bool pressed, bool repeat,
+                                  bool released);
 
     virtual int getPad();
     void hideAllHSlots();

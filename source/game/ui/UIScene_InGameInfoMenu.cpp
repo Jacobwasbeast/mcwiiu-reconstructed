@@ -25,7 +25,9 @@
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_InGameInfoMenu::UIScene_InGameInfoMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), IUIScene_PlayerList(), m_players()
+    : UIScene(type, layer),
+      IUIScene_PlayerList(),
+      m_players()
 {
     initialiseMovie();
     m_optionsButton.init(UIString(L10N::GetString(IDS_HOST_OPTIONS)), 0);
@@ -42,12 +44,11 @@ UIScene_InGameInfoMenu::UIScene_InGameInfoMenu(int type, void* data, UILayer* la
             PlayerInfo* info = CreatePlayerInfo();
             BuildPlayerInfo(player, info);
             m_players.push_back(info);
-            m_playerList.addItem(info->name, static_cast<int>(info->colour),
-                                 static_cast<int>(info->voiceStatus), true);
+            m_playerList.addItem(info->name, static_cast<int>(info->colour), static_cast<int>(info->voiceStatus), true);
         }
     }
-    CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(
-        m_playerId, IUIScene_PlayerList::OnPlayerChanged, static_cast<IUIScene_PlayerList*>(this));
+    CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, IUIScene_PlayerList::OnPlayerChanged,
+                                                                 static_cast<IUIScene_PlayerList*>(this));
     INetworkPlayer* localNetworkPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
     m_isHost = false;
     if (localNetworkPlayer != NULL)
@@ -146,10 +147,8 @@ void UIScene_InGameInfoMenu::updateTooltips()
     int selected = m_playerList.getCurrentSelection();
     if (selected < m_players.size())
     {
-        INetworkPlayer* player =
-            CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[selected]->smallId);
-        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
-            Minecraft::GetInstance()->mLocalPlayers[m_playerId];
+        INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[selected]->smallId);
+        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
         if (m_isHost || localPlayer->isModerator())
         {
             if (m_optionsButton.hasFocus())
@@ -160,15 +159,13 @@ void UIScene_InGameInfoMenu::updateTooltips()
             {
                 if (hasSomethingToEdit(m_players[m_playerList.getCurrentSelection()]->smallId))
                     tooltip = static_cast<int>(IDS_TOOLTIPS_PRIVILEGES);
-                else if (!player->IsLocal() &&
-                         !player->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
+                else if (!player->IsLocal() && !player->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
                     tooltip = static_cast<int>(IDS_TOOLTIPS_KICK);
             }
         }
     }
-    gConsoleUIController.SetTooltips(m_playerId, tooltip, static_cast<int>(IDS_TOOLTIPS_BACK), partyTooltip,
-                                     yTooltip, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     false, false);
+    gConsoleUIController.SetTooltips(m_playerId, tooltip, static_cast<int>(IDS_TOOLTIPS_BACK), partyTooltip, yTooltip,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 unsigned int UIScene_InGameInfoMenu::mapElementsAndNames()
@@ -203,8 +200,7 @@ void UIScene_InGameInfoMenu::handleReload()
             PlayerInfo* info = CreatePlayerInfo();
             BuildPlayerInfo(player, info);
             m_players.push_back(info);
-            m_playerList.addItem(info->name, static_cast<int>(info->colour),
-                                 static_cast<int>(info->voiceStatus), true);
+            m_playerList.addItem(info->name, static_cast<int>(info->colour), static_cast<int>(info->voiceStatus), true);
         }
     }
 
@@ -227,8 +223,8 @@ std::wstring UIScene_InGameInfoMenu::getMoviePath()
     return std::wstring(L"InGameInfoMenu");
 }
 
-void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                         bool released, bool& handled)
+void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
+                                         bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
@@ -252,8 +248,7 @@ void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, 
         unsigned int selection = m_playerList.getCurrentSelection();
         if (selection >= playerCount)
             return;
-        INetworkPlayer* player =
-            CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[selection]->smallId);
+        INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[selection]->smallId);
         if (player == NULL)
             return;
         PlayerUID uid = player->GetUID();
@@ -280,8 +275,8 @@ void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, 
 void UIScene_InGameInfoMenu::handleGainFocus(bool hadFocus)
 {
     if (hadFocus)
-        CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(
-            m_playerId, IUIScene_PlayerList::OnPlayerChanged, static_cast<IUIScene_PlayerList*>(this));
+        CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, IUIScene_PlayerList::OnPlayerChanged,
+                                                                     static_cast<IUIScene_PlayerList*>(this));
 }
 
 void UIScene_InGameInfoMenu::handlePress(int controlId, int childId)
@@ -290,8 +285,8 @@ void UIScene_InGameInfoMenu::handlePress(int controlId, int childId)
     switch (controlId)
     {
     case 0:
-        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_InGameHostOptionsMenu, NULL,
-                                             EUILayer_Scene, EUIGroup_PlayerDefault);
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_InGameHostOptionsMenu, NULL, EUILayer_Scene,
+                                             EUIGroup_PlayerDefault);
         break;
     case 1:
     {
@@ -311,16 +306,16 @@ void UIScene_InGameInfoMenu::handlePress(int controlId, int childId)
                     gConsoleUIController.NavigateToScene(m_playerId, EUIScene_InGamePlayerOptionsMenu, data,
                                                          EUILayer_Scene, EUIGroup_PlayerDefault);
                 }
-                else if (!networkPlayer->IsLocal() &&
-                         !networkPlayer->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
+                else if (!networkPlayer->IsLocal()
+                         && !networkPlayer->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
                 {
                     unsigned char* kickedSmallId = new unsigned char(0);
                     *kickedSmallId = m_players[childId]->smallId;
                     int parameters[2] = {static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL)};
                     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
                         gConsoleUIController.RequestAlertMessage(
-                            IDS_UNLOCK_KICK_PLAYER_TITLE, IDS_UNLOCK_KICK_PLAYER_MINIGAMES, parameters, 2,
-                            m_playerId, IUIScene_PlayerList::KickPlayerReturned, kickedSmallId, 0, true);
+                            IDS_UNLOCK_KICK_PLAYER_TITLE, IDS_UNLOCK_KICK_PLAYER_MINIGAMES, parameters, 2, m_playerId,
+                            IUIScene_PlayerList::KickPlayerReturned, kickedSmallId, 0, true);
                     else
                         gConsoleUIController.RequestAlertMessage(
                             IDS_UNLOCK_KICK_PLAYER_TITLE, IDS_UNLOCK_KICK_PLAYER, parameters, 2, m_playerId,
@@ -335,8 +330,8 @@ void UIScene_InGameInfoMenu::handlePress(int controlId, int childId)
 
 void UIScene_InGameInfoMenu::handleDestroy()
 {
-    CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(
-        m_playerId, IUIScene_PlayerList::OnPlayerChanged, static_cast<IUIScene_PlayerList*>(this));
+    CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(m_playerId, IUIScene_PlayerList::OnPlayerChanged,
+                                                                   static_cast<IUIScene_PlayerList*>(this));
     m_layer->showComponent(m_playerId, EUIScene_MenuBackground, false);
 }
 

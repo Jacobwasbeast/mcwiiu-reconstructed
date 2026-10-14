@@ -29,7 +29,9 @@
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 UIScene_FullscreenProgress::UIScene_FullscreenProgress(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_titleText(), m_statusText()
+    : UIScene(type, layer),
+      m_titleText(),
+      m_statusText()
 {
     initialiseMovie();
     m_movieLoaded = false;
@@ -112,8 +114,8 @@ void UIScene_FullscreenProgress::setMiniGameLogoTexture()
 {
     const MiniGameDef* game = Minecraft::GetInstance()->GetMiniGame();
     std::wstring icon = (game->GetId() == 15 || game->GetId() == 0)
-        ? Minecraft::GetInstance()->GetFirstMiniGame()->getIcon()
-        : game->getIcon();
+                            ? Minecraft::GetInstance()->GetFirstMiniGame()->getIcon()
+                            : game->getIcon();
     if (gApp.hasArchiveFile(icon, false))
     {
         arrayWithLength<unsigned char> file = gApp.getArchiveFile(icon, false);
@@ -145,14 +147,12 @@ void UIScene_FullscreenProgress::SetTipText(bool initial)
             id = gApp.GetFirstMiniGameType();
         }
         unsigned int tip = gApp.GetNextTip(true, id);
-        text = gApp.FormatHTMLString(
-            m_playerId, std::wstring(L10N::GetString(static_cast<int>(tip))), -1);
+        text = gApp.FormatHTMLString(m_playerId, std::wstring(L10N::GetString(static_cast<int>(tip))), -1);
     }
     else
     {
         unsigned int tip = gApp.GetNextTip(false, eMiniGameId_Lobby);
-        text = gApp.FormatHTMLString(
-            m_playerId, std::wstring(L10N::GetString(static_cast<int>(tip))), -1);
+        text = gApp.FormatHTMLString(m_playerId, std::wstring(L10N::GetString(static_cast<int>(tip))), -1);
     }
     unsigned int colour = gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White);
     wchar_t formatted[64];
@@ -232,8 +232,7 @@ void UIScene_FullscreenProgress::updateTooltips()
     Tooltips::ForceAllPlayerTooltipReset();
     int second = m_confirmationVisible ? static_cast<int>(IDS_TOOLTIPS_SELECT) : -1;
     int third = m_confirmationVisible ? -1 : m_cancelTooltip;
-    gConsoleUIController.SetTooltips(m_playerId, second, third, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, second, third, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      false, m_layer->IsFullscreenGroup());
 }
 
@@ -253,7 +252,8 @@ void UIScene_FullscreenProgress::tick()
     UIScene::tick();
     Minecraft* minecraft = Minecraft::GetInstance();
     int percent = minecraft->mProgressRenderer->getCurrentPercent();
-    if (percent < 0) percent = 0;
+    if (percent < 0)
+        percent = 0;
     if (percent != m_progress)
     {
         m_progress = percent;
@@ -289,8 +289,8 @@ void UIScene_FullscreenProgress::tick()
                     int parameter = static_cast<int>(IDS_CONFIRM_OK);
                     int title = CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_FAILED);
                     int message = CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_LOST_SERVER);
-                    gConsoleUIController.RequestErrorMessage(title, message, &parameter, 1, 0xff,
-                                                             NULL, NULL, NULL, true);
+                    gConsoleUIController.RequestErrorMessage(title, message, &parameter, 1, 0xff, NULL, NULL, NULL,
+                                                             true);
                     gConsoleUIController.NavigateToHomeMenu(false);
                 }
                 gConsoleUIController.UpdatePlayerBasePositions();
@@ -388,8 +388,8 @@ std::wstring UIScene_FullscreenProgress::getMoviePath()
     return L"FullscreenProgress";
 }
 
-void UIScene_FullscreenProgress::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                             bool released, bool& handled)
+void UIScene_FullscreenProgress::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
+                                             bool& handled)
 {
     switch (action)
     {
@@ -412,9 +412,11 @@ void UIScene_FullscreenProgress::handleInput(int playerId, int action, bool repe
 
 void UIScene_FullscreenProgress::handlePress(int controlId, int childId)
 {
-    if (!m_confirmationVisible || controlId != 0) return;
+    if (!m_confirmationVisible || controlId != 0)
+        return;
     gConsoleUIController.AnimateKeyPress(m_playerId, 0, false, true, false);
-    if (m_completeFunc != NULL) m_completeFunc(m_completeFuncParam);
+    if (m_completeFunc != NULL)
+        m_completeFunc(m_completeFuncParam);
     switch (m_completionData->closeMode)
     {
     case 1:
@@ -423,7 +425,8 @@ void UIScene_FullscreenProgress::handlePress(int controlId, int childId)
         break;
     case 6:
         gConsoleUIController.UpdatePlayerBasePositions();
-        m_layer->m_group->NavigateBack(m_playerId, m_completionData->backScene, static_cast<EUILayer>(m_layer->m_layerId));
+        m_layer->m_group->NavigateBack(m_playerId, m_completionData->backScene,
+                                       static_cast<EUILayer>(m_layer->m_layerId));
         gConsoleUIController.FixupMenuDisplayedAfterNavigateBack();
         break;
     case 2:
@@ -443,7 +446,8 @@ void UIScene_FullscreenProgress::handlePress(int controlId, int childId)
 
 void UIScene_FullscreenProgress::handleTimerComplete(int timerId)
 {
-    if (timerId == 1) SetTipText(false);
+    if (timerId == 1)
+        SetTipText(false);
 }
 
 void UIScene_FullscreenProgress::SetWasCancelled(bool cancelled)

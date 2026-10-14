@@ -6,8 +6,7 @@
 #include "game/ui/FJ_ListButtonAchievement.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_List_ListButtonAchievement::FJ_List_ListButtonAchievement(fuiRenderNode* renderNode)
-    : FJ_List2D(renderNode)
+FJ_List_ListButtonAchievement::FJ_List_ListButtonAchievement(fuiRenderNode* renderNode) : FJ_List2D(renderNode)
 {
 }
 

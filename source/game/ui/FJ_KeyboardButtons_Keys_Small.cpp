@@ -1,7 +1,6 @@
 #include "game/ui/FJ_KeyboardButtons_Keys_Small.hpp"
 
-FJ_KeyboardButtons_Keys_Small::FJ_KeyboardButtons_Keys_Small(fuiRenderNode* renderNode)
-    : FJ_KeyboardButtons(renderNode)
+FJ_KeyboardButtons_Keys_Small::FJ_KeyboardButtons_Keys_Small(fuiRenderNode* renderNode) : FJ_KeyboardButtons(renderNode)
 {
     m_keyboardOffset = 2;
 }

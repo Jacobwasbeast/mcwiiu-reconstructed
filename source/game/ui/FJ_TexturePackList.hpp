@@ -14,6 +14,7 @@ class fuiRenderNode;
 class FJ_TexturePackList : public FJ_Base
 {
     friend class fuiRenderNodeTimeline;
+
 public:
     explicit FJ_TexturePackList(fuiRenderNode* renderNode);
 

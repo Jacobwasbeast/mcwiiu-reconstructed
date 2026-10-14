@@ -1,7 +1,6 @@
 #include "game/ui/FJ_SettingsUIMenu.hpp"
 
-FJ_SettingsUIMenu::FJ_SettingsUIMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_SettingsUIMenu::FJ_SettingsUIMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

@@ -20,8 +20,12 @@
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_CreateWorldMenu::UIScene_CreateWorldMenu(int sceneType, void* data, UILayer* layer)
-    : IUIScene_StartGame(sceneType, data, layer, false), m_worldNameLabel(),
-      m_moreOptionsButton(), m_playButton(), m_worldNameInput(), m_worldIcon()
+    : IUIScene_StartGame(sceneType, data, layer, false),
+      m_worldNameLabel(),
+      m_moreOptionsButton(),
+      m_playButton(),
+      m_worldNameInput(),
+      m_worldIcon()
 {
     initialiseMovie();
     m_worldName.assign(L10N::GetString(IDS_DEFAULT_WORLD_NAME));
@@ -29,8 +33,8 @@ UIScene_CreateWorldMenu::UIScene_CreateWorldMenu(int sceneType, void* data, UILa
     m_worldNameLabel.init(UIString(L10N::GetString(IDS_WORLD_NAME)));
     m_worldNameInput.init(UIString(m_worldName), 0);
     m_worldNameInput.SetCharLimit(0x19);
-    m_gameModeSlider.init(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), 1, 0,
-                          GameType::CREATIVE->getId(), GameType::SURVIVAL->getId(), false, 10, 1);
+    m_gameModeSlider.init(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), 1, 0, GameType::CREATIVE->getId(),
+                          GameType::SURVIVAL->getId(), false, 10, 1);
     m_moreOptionsButton.init(UIString(L10N::GetString(IDS_MORE_OPTIONS)), 3);
     m_playButton.init(UIString(L10N::GetString(IDS_CREATE_NEW_WORLD)), 6);
     m_texturePackList.init(std::wstring(L10N::GetString(IDS_DLC_MENU_TEXTUREPACKS)), 4);
@@ -39,7 +43,8 @@ UIScene_CreateWorldMenu::UIScene_CreateWorldMenu(int sceneType, void* data, UILa
     m_difficulty = GameSettings::GetGameSettings(m_playerId, eGameSetting_Difficulty);
     wchar_t difficultyLabel[256];
     std::swprintf(difficultyLabel, 256, L"%ls: %ls", L10N::GetString(IDS_SLIDER_DIFFICULTY),
-                  L10N::GetString(Difficulty::byId(GameSettings::GetGameSettings(m_playerId, eGameSetting_Difficulty))->getKey()));
+                  L10N::GetString(
+                      Difficulty::byId(GameSettings::GetGameSettings(m_playerId, eGameSetting_Difficulty))->getKey()));
     m_difficultySlider.init(UIString(difficultyLabel), 2, 0, 3,
                             GameSettings::GetGameSettings(m_playerId, eGameSetting_Difficulty), false, 10, 1);
     m_launchData.mNewWorld = true;
@@ -52,8 +57,7 @@ UIScene_CreateWorldMenu::UIScene_CreateWorldMenu(int sceneType, void* data, UILa
         m_onlineGameCheckBox.SetEnable(false);
         initialChecked = false;
     }
-    m_onlineGameCheckBox.init(UIString(L10N::GetString(IDS_ONLINE_GAME)), 5,
-                              initialChecked);
+    m_onlineGameCheckBox.init(UIString(L10N::GetString(IDS_ONLINE_GAME)), 5, initialChecked);
     _init();
     if (data != NULL)
         ::operator delete(data);
@@ -110,8 +114,8 @@ unsigned int UIScene_CreateWorldMenu::mapElementsAndNames()
 
 void UIScene_CreateWorldMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, false, false);
 }
 
 void UIScene_CreateWorldMenu::updateComponents()
@@ -146,8 +150,8 @@ void UIScene_CreateWorldMenu::handleGainFocus(bool hadFocus)
         m_onlineGameCheckBox.setChecked(m_launchData.mOnlineGame);
 }
 
-void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                          bool released, bool& handled)
+void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
+                                          bool& handled)
 {
     if (m_actionPending)
         return;
@@ -214,14 +218,12 @@ void UIScene_CreateWorldMenu::handlePress(int controlId, int childId)
         {
         case 0:
             m_actionPending = true;
-            g_pInput->RequestKeyboard(L10N::GetString(IDS_CREATE_NEW_WORLD), m_worldNameInput.getLabel(),
-                                      0, 0x19, KeyboardCompleteWorldNameCallback, this,
-                                      C_4JInput::EKeyboardMode_0);
+            g_pInput->RequestKeyboard(L10N::GetString(IDS_CREATE_NEW_WORLD), m_worldNameInput.getLabel(), 0, 0x19,
+                                      KeyboardCompleteWorldNameCallback, this, C_4JInput::EKeyboardMode_0);
             break;
         case 3:
-            gConsoleUIController.NavigateToScene(m_playerId, EUIScene_LaunchMoreOptionsMenu,
-                                                 &m_launchData, EUILayer_Scene,
-                                                 EUIGroup_PlayerDefault);
+            gConsoleUIController.NavigateToScene(m_playerId, EUIScene_LaunchMoreOptionsMenu, &m_launchData,
+                                                 EUILayer_Scene, EUIGroup_PlayerDefault);
             break;
         case 4:
             UpdateCurrentTexturePack(childId);

@@ -15,4 +15,3 @@ void FJ_Label_HUD_SmallWhite::SetLabel(const std::wstring& label)
     m_htmlText = true;
     FJ_Label::SetLabel(label);
 }
-

@@ -16,7 +16,8 @@ UIControl_GridList::UIControl_GridList()
 UIControl_GridList::~UIControl_GridList()
 {
     std::vector<GenericPendingUpdate*>::iterator update = m_pendingUpdates.begin();
-    while (update != m_pendingUpdates.end()) {
+    while (update != m_pendingUpdates.end())
+    {
         delete *update;
         ++update;
     }
@@ -71,7 +72,8 @@ int UIControl_GridList::getListIndex(int index)
     std::vector<int>::iterator element = m_elements.begin();
     std::vector<int>::iterator end = m_elements.end();
     int listIndex = 0;
-    while (element != end && *element != index) {
+    while (element != end && *element != index)
+    {
         ++element;
         ++listIndex;
     }
@@ -96,7 +98,8 @@ void UIControl_GridList::init(int controlId)
     m_controlId = controlId;
     static_cast<FJ_List2D*>(m_fuiRenderNode->getFuiNode())->Init(controlId);
     int layerId = m_scene->m_layer->m_layerId;
-    switch (layerId) {
+    switch (layerId)
+    {
     case 4:
     case 6:
     case 7:
@@ -119,7 +122,8 @@ void UIControl_GridList::tick()
 {
     UIControl_Base::tick();
     std::vector<GenericPendingUpdate*>::iterator update = m_pendingUpdates.begin();
-    while (update != m_pendingUpdates.end()) {
+    while (update != m_pendingUpdates.end())
+    {
         (*update)->OnTick();
         delete *update;
         ++update;
@@ -129,7 +133,8 @@ void UIControl_GridList::tick()
 
 void UIControl_GridList::setCurrentSelection(int selection, bool immediate)
 {
-    if (immediate) {
+    if (immediate)
+    {
         static_cast<FJ_List2D*>(m_fuiRenderNode->getFuiNode())->HighlightItem(selection);
         return;
     }
@@ -138,7 +143,8 @@ void UIControl_GridList::setCurrentSelection(int selection, bool immediate)
 
 void UIControl_GridList::EnableItem(int item, bool enabled, bool immediate)
 {
-    if (immediate) {
+    if (immediate)
+    {
         int listIndex = getListIndex(item);
         static_cast<FJ_List2D*>(m_fuiRenderNode->getFuiNode())->EnableItem(listIndex, enabled);
         return;

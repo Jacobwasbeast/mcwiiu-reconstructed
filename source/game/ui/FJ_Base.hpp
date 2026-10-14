@@ -16,6 +16,7 @@ class FJ_Base : public FJ_FuiNode
     friend class FJ_List;
     friend class FJ_List2D;
     friend class fuiRenderNodeTimeline;
+
 public:
     explicit FJ_Base(fuiRenderNode* renderNode);
     virtual ~FJ_Base();
@@ -49,6 +50,7 @@ public:
     virtual void SetNewObjectHeight(int height);
     virtual void HandleCharInput(unsigned int character);
     virtual uint32_t getType();
+
 protected:
     friend class FJ_BookAndQuillMenu;
 

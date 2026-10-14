@@ -5,8 +5,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_SlotList::FJ_SlotList(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_SlotList::FJ_SlotList(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     m_slotSize = 50;
     m_slotVisible = false;
@@ -75,8 +74,8 @@ void FJ_SlotList::addSlot(int slot, bool highlighted, bool visible)
     FJ_FuiNode* container = FJ_Factory::createObject("", m_pRenderNode, true, NULL);
     getParent()->addChildAt(container, getParent()->getChildIndex(this));
 
-    FJ_SlotList_Slot* slotNode = static_cast<FJ_SlotList_Slot*>(FJ_Factory::createObject(
-        "fourj.listClasses.FJ_SlotList_Slot", m_pRenderNode, true, NULL));
+    FJ_SlotList_Slot* slotNode = static_cast<FJ_SlotList_Slot*>(
+        FJ_Factory::createObject("fourj.listClasses.FJ_SlotList_Slot", m_pRenderNode, true, NULL));
     slotNode->SetParams(m_slotSize, m_slotVisible);
     unsigned int row = m_slots.size() / (unsigned int)m_columns;
     unsigned int column = m_slots.size() % (unsigned int)m_columns;
@@ -91,8 +90,7 @@ void FJ_SlotList::addSlot(int slot, bool highlighted, bool visible)
 
 bool FJ_SlotList::SetSlotRedBox(int slot, bool show)
 {
-    if (!m_slots.empty() && slot >= 0 && (unsigned int)slot < m_slots.size() &&
-        m_slots[slot] != NULL)
+    if (!m_slots.empty() && slot >= 0 && (unsigned int)slot < m_slots.size() && m_slots[slot] != NULL)
     {
         m_slots[slot]->SetRedBoxActive(show);
         return true;
@@ -102,8 +100,7 @@ bool FJ_SlotList::SetSlotRedBox(int slot, bool show)
 
 bool FJ_SlotList::SetSlotHighlight(int slot, bool highlighted)
 {
-    if (!m_slots.empty() && slot >= 0 && (unsigned int)slot < m_slots.size() &&
-        m_slots[slot] != NULL)
+    if (!m_slots.empty() && slot >= 0 && (unsigned int)slot < m_slots.size() && m_slots[slot] != NULL)
     {
         m_slots[slot]->SetHighlightActive(highlighted);
         return true;

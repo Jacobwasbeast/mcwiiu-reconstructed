@@ -1,7 +1,6 @@
 #include "game/ui/FJ_Cursor_Normal.hpp"
 
-FJ_Cursor_Normal::FJ_Cursor_Normal(fuiRenderNode* pRenderNode)
-    : FJ_Cursor(pRenderNode)
+FJ_Cursor_Normal::FJ_Cursor_Normal(fuiRenderNode* pRenderNode) : FJ_Cursor(pRenderNode)
 {
 }
 

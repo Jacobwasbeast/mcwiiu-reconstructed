@@ -27,8 +27,7 @@ public:
         virtual int getMaxStackSize();
     };
 
-    BeaconMenu(boost::shared_ptr<Container> playerContainer,
-               boost::shared_ptr<Container> beaconContainer);
+    BeaconMenu(boost::shared_ptr<Container> playerContainer, boost::shared_ptr<Container> beaconContainer);
 
     virtual void addSlotListener(net_minecraft_world_inventory::ContainerListener* listener);
     virtual void setData(int id, int value);

@@ -2,8 +2,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/UILayer.hpp"
 
-UIScene_Timer::UIScene_Timer(int type, void* data, UILayer* layer)
-    : UIScene(type, layer)
+UIScene_Timer::UIScene_Timer(int type, void* data, UILayer* layer) : UIScene(type, layer)
 {
     initialiseMovie();
     if (data == 0)

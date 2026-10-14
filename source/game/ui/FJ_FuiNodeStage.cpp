@@ -3,9 +3,7 @@
 #include "game/ui/FJ_FocusEvent.hpp"
 #include "game/ui/fuiRenderNodeStage.hpp"
 
-FJ_FuiNodeStage::FJ_FuiNodeStage(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
-    , m_pFocus(NULL)
+FJ_FuiNodeStage::FJ_FuiNodeStage(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode), m_pFocus(NULL)
 {
 }
 

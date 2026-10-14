@@ -36,9 +36,11 @@ void fuiTextureManager::removeManagedTexture(fuiFile*, fuiBitmap* bitmap)
 {
     if (!initialised)
         initialise();
-    if (bitmap->textureId != -1) {
+    if (bitmap->textureId != -1)
+    {
         TextureEntry& entry = textures[bitmap->textureId];
-        if (entry.bitmap != 0) {
+        if (entry.bitmap != 0)
+        {
             EnterCriticalSection(&mutex);
             --managedTextureCount;
             managedTextureMemory -= (int)(bitmap->height * bitmap->width * 4);
@@ -55,9 +57,11 @@ void fuiTextureManager::manageTexture(fuiFile* file, fuiBitmap* bitmap)
 {
     if (!initialised)
         initialise();
-    if (bitmap->textureId != -1) {
+    if (bitmap->textureId != -1)
+    {
         TextureEntry& entry = textures[bitmap->textureId];
-        if (entry.bitmap == 0) {
+        if (entry.bitmap == 0)
+        {
             EnterCriticalSection(&mutex);
             unsigned int count = (unsigned int)(managedTextureCount + 1);
             entry.file = file;
@@ -81,16 +85,20 @@ void fuiTextureManager::tick()
     if (!initialised)
         initialise();
     ++tickCount;
-    if ((tickCount % 20) == 0) {
+    if ((tickCount % 20) == 0)
+    {
         uint64_t now = System::processTimeInMilliSecs();
         EnterCriticalSection(&mutex);
         int count = (int)textureCount;
         int index = 0;
-        while (index < count) {
-            if (textures[index].lastUsed != 0) {
+        while (index < count)
+        {
+            if (textures[index].lastUsed != 0)
+            {
                 int64_t age = (int64_t)(now - textures[index].lastUsed);
                 int ageHigh = (int)(age >> 32);
-                if (ageHigh >= 0 && (ageHigh > 0 || (unsigned int)age > 1000)) {
+                if (ageHigh >= 0 && (ageHigh > 0 || (unsigned int)age > 1000))
+                {
                     gRenderer->TextureFree(textures[index].bitmap->textureId);
                     removeManagedTexture(textures[index].file, textures[index].bitmap);
                     count = (int)textureCount;

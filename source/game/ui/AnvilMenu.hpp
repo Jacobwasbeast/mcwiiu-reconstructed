@@ -21,13 +21,12 @@ class ContainerListener;
 class AnvilMenu : public AbstractContainerMenu
 {
 public:
-    AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
-              const BlockPos& position, boost::shared_ptr<Player> player);
-    AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
+    AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& position,
               boost::shared_ptr<Player> player);
+    AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level, boost::shared_ptr<Player> player);
 
-    void _init(boost::shared_ptr<Inventory> inventory, Level* level,
-               const BlockPos& position, boost::shared_ptr<Player> player);
+    void _init(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& position,
+               boost::shared_ptr<Player> player);
     void createResult();
     void slotsChanged(boost::shared_ptr<Container> container);
     virtual void addSlotListener(net_minecraft_world_inventory::ContainerListener* listener);

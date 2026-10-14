@@ -7,8 +7,7 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/util/Math.hpp"
 
-fuiTTFFontSet::fuiTTFFontSet(const char* name, const void* ttfData, unsigned short missingGlyphChar)
-    : fuiFontSet(name)
+fuiTTFFontSet::fuiTTFFontSet(const char* name, const void* ttfData, unsigned short missingGlyphChar) : fuiFontSet(name)
 {
     const unsigned char* data = (const unsigned char*)ttfData;
     init(name, 1, &data, missingGlyphChar);
@@ -37,8 +36,7 @@ fuiTTFFontSet::~fuiTTFFontSet()
     m_fontSizeData.clear();
 }
 
-void fuiTTFFontSet::init(const char* name, int numTTFs, const unsigned char** ttfData,
-                         unsigned short missingGlyphChar)
+void fuiTTFFontSet::init(const char* name, int numTTFs, const unsigned char** ttfData, unsigned short missingGlyphChar)
 {
     m_missingGlyphChar = missingGlyphChar;
 
@@ -218,8 +216,7 @@ void fuiTTFFontSet::renderFontTexture()
 {
 }
 
-fuiTTFFontSet::FontSizeData::FontSizeData(float fontSize, fuiTTFFontSet* fontSet, int ttfIndex)
-    : m_glyphs(11)
+fuiTTFFontSet::FontSizeData::FontSizeData(float fontSize, fuiTTFFontSet* fontSet, int ttfIndex) : m_glyphs(11)
 {
     m_fontSize = fontSize;
     m_fontSet = fontSet;
@@ -304,8 +301,8 @@ fuiTTFFontSet::GlyphInfo* fuiTTFFontSet::FontSizeData::createGlyph(int codepoint
     int x1;
     int y1;
 
-    stbtt_GetCodepointBitmapBoxSubpixel(&m_fontSet->m_fonts[m_ttfIndex].m_info, codepoint, m_scale, m_scale,
-                                        shiftX, 0.0f, &x0, &y0, &x1, &y1);
+    stbtt_GetCodepointBitmapBoxSubpixel(&m_fontSet->m_fonts[m_ttfIndex].m_info, codepoint, m_scale, m_scale, shiftX,
+                                        0.0f, &x0, &y0, &x1, &y1);
 
     GlyphInfo* glyph = new GlyphInfo;
 
@@ -367,7 +364,7 @@ void fuiTTFFontSet::FontSizeData::getGlyphWidthHeight(float& texWidth, float& te
 }
 
 float fuiTTFFontSet::FontSizeData::renderGlyph(unsigned short codepoint, float x, float y, unsigned int colour,
-                                              std::vector<fuiFontSet::FontVert> (&verts)[4])
+                                               std::vector<fuiFontSet::FontVert> (&verts)[4])
 {
     float glyphWidth = (float)m_glyphWidth;
     float glyphHeight = (float)m_glyphHeight;

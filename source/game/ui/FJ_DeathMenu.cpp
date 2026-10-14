@@ -2,8 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_DeathMenu::FJ_DeathMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_DeathMenu::FJ_DeathMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

@@ -7,8 +7,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/network/net_minecraft_world_inventory__ContainerListener.hpp"
 
-BeaconMenu::BeaconMenu(boost::shared_ptr<Container> playerContainer,
-                       boost::shared_ptr<Container> beaconContainer)
+BeaconMenu::BeaconMenu(boost::shared_ptr<Container> playerContainer, boost::shared_ptr<Container> beaconContainer)
 {
     mBeaconContainer = beaconContainer;
     mPaymentSlot = new PaymentSlot(beaconContainer, 0, 136, 110);
@@ -77,8 +76,7 @@ not_null_ptr<ItemInstance> BeaconMenu::quickMoveStack(boost::shared_ptr<Player> 
                 return ItemInstance::EMPTY;
             slot->onQuickCraft(item, result);
         }
-        else if (!mPaymentSlot->hasItem() && mPaymentSlot->mayPlace(item) &&
-                 item->getCount() == 1)
+        else if (!mPaymentSlot->hasItem() && mPaymentSlot->mayPlace(item) && item->getCount() == 1)
         {
             if (!moveItemStackTo(item, 0, 1, false, true, true))
                 return ItemInstance::EMPTY;
@@ -112,8 +110,7 @@ not_null_ptr<ItemInstance> BeaconMenu::quickMoveStack(boost::shared_ptr<Player> 
     return result;
 }
 
-BeaconMenu::PaymentSlot::PaymentSlot(boost::shared_ptr<Container> container,
-                                     int index, int x, int y)
+BeaconMenu::PaymentSlot::PaymentSlot(boost::shared_ptr<Container> container, int index, int x, int y)
     : Slot(container, index, x, y)
 {
 }
@@ -121,8 +118,7 @@ BeaconMenu::PaymentSlot::PaymentSlot(boost::shared_ptr<Container> container,
 bool BeaconMenu::PaymentSlot::mayPlace(not_null_ptr<ItemInstance> item)
 {
     Item* type = item->getItem();
-    return type == Items::emerald || type == Items::diamond ||
-           type == Items::goldIngot || type == Items::ironIngot;
+    return type == Items::emerald || type == Items::diamond || type == Items::goldIngot || type == Items::ironIngot;
 }
 
 int BeaconMenu::PaymentSlot::getMaxStackSize()

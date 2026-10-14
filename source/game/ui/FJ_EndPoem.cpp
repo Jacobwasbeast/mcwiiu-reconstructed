@@ -13,8 +13,7 @@
 #include "game/ui/fuiRect.hpp"
 #include "game/util/Math.hpp"
 
-FJ_EndPoem::FJ_EndPoem(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_EndPoem::FJ_EndPoem(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     m_tileCount = 0;
     m_tileColumns = 0;
@@ -95,7 +94,9 @@ void FJ_EndPoem::UpdateScrolling(FJ_Event* event)
         {
             if (!m_visibleNodes.empty())
             {
-                if (m_visibleNodes[m_visibleNodes.size() - 1]->getY() + m_visibleNodes[m_visibleNodes.size() - 1]->getHeight() < getStage()->getStageHeight())
+                if (m_visibleNodes[m_visibleNodes.size() - 1]->getY()
+                        + m_visibleNodes[m_visibleNodes.size() - 1]->getHeight()
+                    < getStage()->getStageHeight())
                 {
                     m_appending = true;
                     RequestNextLabel(m_visibleLabels[m_visibleNodes.size() - 1] + 1);
@@ -117,8 +118,10 @@ void FJ_EndPoem::UpdateScrolling(FJ_Event* event)
         }
     }
 
-    if (!(m_scrollSpeed > 0 && m_lastLabelShown && m_visibleNodes.size() != 0 &&
-          m_visibleNodes[m_visibleNodes.size() - 1]->getY() + m_visibleNodes[m_visibleNodes.size() - 1]->getHeight() * 0.5f < getStage()->getStageHeight() * 0.5f))
+    if (!(m_scrollSpeed > 0 && m_lastLabelShown && m_visibleNodes.size() != 0
+          && m_visibleNodes[m_visibleNodes.size() - 1]->getY()
+                     + m_visibleNodes[m_visibleNodes.size() - 1]->getHeight() * 0.5f
+                 < getStage()->getStageHeight() * 0.5f))
     {
         for (unsigned int i = 0; i < m_visibleNodes.size(); ++i)
             m_visibleNodes[i]->decY((float)Math::round(1.0f) * m_scrollSpeed);
@@ -182,8 +185,8 @@ void FJ_EndPoem::init(FJ_Event* event)
         if (node != NULL)
         {
             m_textNodes[i] = node;
-            m_textNodes[i]->setX(Math::round(getStage()->getStageWidth() * 0.5f - m_textNodes[i]->getWidth() * 0.5f +
-                                             getRect(this).xMin));
+            m_textNodes[i]->setX(Math::round(getStage()->getStageWidth() * 0.5f - m_textNodes[i]->getWidth() * 0.5f
+                                             + getRect(this).xMin));
             m_textNodes[i]->setY(-getStage()->getStageHeight());
             m_textNodes[i]->setVisible(false);
             ++m_textNodeCount;
@@ -231,8 +234,9 @@ unsigned int FJ_EndPoem::SetNextLabel(const std::wstring& label, int index, bool
                 }
                 else if (m_visibleNodes.size() != 1)
                 {
-                    m_visibleNodes[m_visibleNodes.size() - 1]->setY(m_visibleNodes[m_visibleNodes.size() - 2]->getY() +
-                                                m_visibleNodes[m_visibleNodes.size() - 2]->getHeight());
+                    m_visibleNodes[m_visibleNodes.size() - 1]->setY(
+                        m_visibleNodes[m_visibleNodes.size() - 2]->getY()
+                        + m_visibleNodes[m_visibleNodes.size() - 2]->getHeight());
                 }
                 else
                 {

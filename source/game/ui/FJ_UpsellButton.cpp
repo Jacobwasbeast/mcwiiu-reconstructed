@@ -2,8 +2,7 @@
 
 #include "game/ui/FJ_Base.hpp"
 
-FJ_UpsellButton::FJ_UpsellButton(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode)
+FJ_UpsellButton::FJ_UpsellButton(fuiRenderNode* renderNode) : FJ_Button(renderNode)
 {
     m_textOnly = false;
     m_textContainerChanged = true;

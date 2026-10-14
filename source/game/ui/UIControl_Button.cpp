@@ -7,11 +7,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-UIControl_Button::UIControl_Button()
-    : UIControl_Base()
-    , m_focus(false)
-    , m_enablePending(false)
-    , m_enabled(true)
+UIControl_Button::UIControl_Button() : UIControl_Base(), m_focus(false), m_enablePending(false), m_enabled(true)
 {
 }
 
@@ -25,10 +21,12 @@ void UIControl_Button::init(UIString label, int id)
 {
     m_label = label;
     m_controlId = id;
-    if (m_fuiRenderNode->getFuiNode()->isFJ_Button()) {
+    if (m_fuiRenderNode->getFuiNode()->isFJ_Button())
+    {
         m_fuiRenderNode->getFuiNode()->asFJ_Button()->Init(label.getString(), id);
     }
-    switch (m_scene->m_layer->m_layerId) {
+    switch (m_scene->m_layer->m_layerId)
+    {
     case EUILayer_Alert:
     case EUILayer_Fullscreen:
     case EUILayer_Scene:
@@ -46,11 +44,13 @@ void UIControl_Button::ReInit()
 
 void UIControl_Button::setEnable(bool enable, bool immediate)
 {
-    if (enable == m_enabled) {
+    if (enable == m_enabled)
+    {
         return;
     }
     m_enabled = enable;
-    if (!immediate) {
+    if (!immediate)
+    {
         m_enablePending = true;
         return;
     }
@@ -60,14 +60,16 @@ void UIControl_Button::setEnable(bool enable, bool immediate)
 void UIControl_Button::tick()
 {
     UIControl_Base::tick();
-    if (m_enablePending) {
+    if (m_enablePending)
+    {
         setEnable(m_enabled, true);
     }
 }
 
 void UIControl_Button::setFocus(bool focus)
 {
-    if (m_focus == focus) {
+    if (m_focus == focus)
+    {
         return;
     }
     m_focus = focus;

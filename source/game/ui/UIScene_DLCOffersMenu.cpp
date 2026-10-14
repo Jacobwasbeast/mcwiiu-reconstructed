@@ -22,8 +22,13 @@
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_displayUpdated(false), m_category(static_cast<int*>(data)[2]), m_selection(0),
-      m_productCount(0), m_populatePending(true), m_products(NULL)
+    : UIScene(type, layer),
+      m_displayUpdated(false),
+      m_category(static_cast<int*>(data)[2]),
+      m_selection(0),
+      m_productCount(0),
+      m_populatePending(true),
+      m_products(NULL)
 {
     initialiseMovie();
     gApp.SetLiveLinkRequired(true);
@@ -102,11 +107,13 @@ uint32_t UIScene_DLCOffersMenu::ExitDLCOffersMenu(void*, int, C4JStorage::EMessa
 
 uint32_t UIScene_DLCOffersMenu::UpdateDisplay(cProductInfo*)
 {
-    if (gApp.GetCommerceInstance()->GetPurchasabilityUpdated() && gApp.GetCommerceInstance()->GetDLCCatalogListRetrieved() &&
-        gApp.GetCommerceInstance()->GetDLCCatalogListInfoRetrieved() && m_productCount != 0)
+    if (gApp.GetCommerceInstance()->GetPurchasabilityUpdated()
+        && gApp.GetCommerceInstance()->GetDLCCatalogListRetrieved()
+        && gApp.GetCommerceInstance()->GetDLCCatalogListInfoRetrieved() && m_productCount != 0)
     {
         gApp.GetCommerceInstance()->ClearProductInfo();
-        gApp.GetCommerceInstance()->GetDLCProductInfo(&m_products, &m_productCount, m_category, gConsoleUIController.UsingBitmapFont());
+        gApp.GetCommerceInstance()->GetDLCProductInfo(&m_products, &m_productCount, m_category,
+                                                      gConsoleUIController.UsingBitmapFont());
         for (unsigned int i = 0; i < m_productCount; ++i)
         {
             bool purchased = true;
@@ -126,7 +133,8 @@ uint32_t UIScene_DLCOffersMenu::UpdateDisplay(cProductInfo*)
             void* imageData = NULL;
             unsigned int imageSize = 0;
             bool freeImageData;
-            gApp.GetDLCInfoInstance()->DLC_RetrieveImageData(m_products[m_selection].GetBanner(), &imageData, &imageSize, &freeImageData);
+            gApp.GetDLCInfoInstance()->DLC_RetrieveImageData(m_products[m_selection].GetBanner(), &imageData,
+                                                             &imageSize, &freeImageData);
             if (imageSize != 0)
             {
                 registerSubstitutionTexture(banner, static_cast<unsigned char*>(imageData), imageSize, freeImageData);
@@ -157,8 +165,10 @@ void UIScene_DLCOffersMenu::tick()
             navigateBack();
             return;
         }
-        if (gApp.GetCommerceInstance()->GetDLCCatalogListRetrieved() && gApp.GetCommerceInstance()->GetDLCCatalogListInfoRetrieved() &&
-            gApp.GetCommerceInstance()->GetDLCProductInfo(&m_products, &m_productCount, m_category, gConsoleUIController.UsingBitmapFont()))
+        if (gApp.GetCommerceInstance()->GetDLCCatalogListRetrieved()
+            && gApp.GetCommerceInstance()->GetDLCCatalogListInfoRetrieved()
+            && gApp.GetCommerceInstance()->GetDLCProductInfo(&m_products, &m_productCount, m_category,
+                                                             gConsoleUIController.UsingBitmapFont()))
         {
             for (unsigned int i = 0; i < m_productCount; ++i)
                 m_offerList.addItem(std::string(m_products[i].GetName()), !m_products[i].CanPurchase(), i);
@@ -168,8 +178,8 @@ void UIScene_DLCOffersMenu::tick()
             m_timer.setVisible(false);
         }
     }
-    if (!m_displayUpdated && gApp.GetCommerceInstance()->GetDLCCatalogListInfoRetrieved() && m_productCount != 0 &&
-        m_offerList.hasFocus())
+    if (!m_displayUpdated && gApp.GetCommerceInstance()->GetDLCCatalogListInfoRetrieved() && m_productCount != 0
+        && m_offerList.hasFocus())
     {
         int focus = getControlChildFocus();
         if (focus >= 0)

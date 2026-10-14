@@ -37,12 +37,32 @@
 #include "game/core/Rarity.hpp"
 #include "platform/wiiu/CInput.hpp"
 
-static const int s_toolTipStringIds[] = {
-    IDS_TOOLTIPS_PICKUPPLACE, (int)IDS_TOOLTIPS_EXIT, IDS_TOOLTIPS_PICKUP_GENERIC, 0x1d6a6d67, 0x23a35725, (int)0x987f8d08,
-    (int)IDS_TOOLTIPS_PLACE_ONE, (int)IDS_TOOLTIPS_DISTRIBUTE, (int)IDS_TOOLTIPS_PLACE_ALL, (int)0x92835202, (int)IDS_TOOLTIPS_DROP_ONE,
-    (int)IDS_TOOLTIPS_DROP_ALL, (int)IDS_TOOLTIPS_SWAP, IDS_TOOLTIPS_QUICK_MOVE, (int)IDS_TOOLTIPS_QUICK_MOVE_INGREDIENT, IDS_TOOLTIPS_QUICK_MOVE_FUEL, 0x2fccdffb,
-    (int)IDS_TOOLTIPS_EQUIP, (int)IDS_TOOLTIPS_CLEAR_QUICK_SELECT, IDS_TOOLTIPS_QUICK_MOVE_TOOL, (int)IDS_TOOLTIPS_QUICK_MOVE_ARMOR, (int)IDS_TOOLTIPS_QUICK_MOVE_WEAPON, IDS_TOOLTIPS_DYE,
-    IDS_TOOLTIPS_REPAIR, IDS_TOOLTIPS_TAKE_EVERYTHING, (int)IDS_TOOLTIPS_SELECT};
+static const int s_toolTipStringIds[] = {IDS_TOOLTIPS_PICKUPPLACE,
+                                         (int)IDS_TOOLTIPS_EXIT,
+                                         IDS_TOOLTIPS_PICKUP_GENERIC,
+                                         0x1d6a6d67,
+                                         0x23a35725,
+                                         (int)0x987f8d08,
+                                         (int)IDS_TOOLTIPS_PLACE_ONE,
+                                         (int)IDS_TOOLTIPS_DISTRIBUTE,
+                                         (int)IDS_TOOLTIPS_PLACE_ALL,
+                                         (int)0x92835202,
+                                         (int)IDS_TOOLTIPS_DROP_ONE,
+                                         (int)IDS_TOOLTIPS_DROP_ALL,
+                                         (int)IDS_TOOLTIPS_SWAP,
+                                         IDS_TOOLTIPS_QUICK_MOVE,
+                                         (int)IDS_TOOLTIPS_QUICK_MOVE_INGREDIENT,
+                                         IDS_TOOLTIPS_QUICK_MOVE_FUEL,
+                                         0x2fccdffb,
+                                         (int)IDS_TOOLTIPS_EQUIP,
+                                         (int)IDS_TOOLTIPS_CLEAR_QUICK_SELECT,
+                                         IDS_TOOLTIPS_QUICK_MOVE_TOOL,
+                                         (int)IDS_TOOLTIPS_QUICK_MOVE_ARMOR,
+                                         (int)IDS_TOOLTIPS_QUICK_MOVE_WEAPON,
+                                         IDS_TOOLTIPS_DYE,
+                                         IDS_TOOLTIPS_REPAIR,
+                                         IDS_TOOLTIPS_TAKE_EVERYTHING,
+                                         (int)IDS_TOOLTIPS_SELECT};
 
 IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()
 {
@@ -66,9 +86,8 @@ IUIScene_AbstractContainerMenu::~IUIScene_AbstractContainerMenu()
 bool IUIScene_AbstractContainerMenu::canTakeAll() const
 {
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    return m_takeAllEnabled && Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-           miniGame->IsTakeEverythingEnabled() &&
-           CGameNetworkManager::sInstance.IsInActiveCoopOrCompetitive(-1);
+    return m_takeAllEnabled && Minecraft::InMiniGame(eMiniGameId_Any, true) && miniGame->IsTakeEverythingEnabled()
+           && CGameNetworkManager::sInstance.IsInActiveCoopOrCompetitive(-1);
 }
 
 bool IUIScene_AbstractContainerMenu::canQuickCraft() const
@@ -95,8 +114,8 @@ int IUIScene_AbstractContainerMenu::GetSectionDimensions(ESceneSection section, 
 }
 
 void IUIScene_AbstractContainerMenu::updateSlotPosition(ESceneSection section, ESceneSection newSection,
-                                                         ETapState tapState, int* slotX, int* slotY,
-                                                         int xOffset, int yOffset)
+                                                        ETapState tapState, int* slotX, int* slotY, int xOffset,
+                                                        int yOffset)
 {
     int columns;
     int rows;
@@ -144,8 +163,7 @@ void IUIScene_AbstractContainerMenu::updateSlotPosition(ESceneSection section, E
     }
 }
 
-IUIScene_AbstractContainerMenu::ETapState IUIScene_AbstractContainerMenu::GetTapInputType(float inputX,
-                                                                                           float inputY)
+IUIScene_AbstractContainerMenu::ETapState IUIScene_AbstractContainerMenu::GetTapInputType(float inputX, float inputY)
 {
     if (std::fabs(inputX) < 0.3f && std::fabs(inputY) < 0.3f)
         return ETapState_None;
@@ -187,16 +205,15 @@ void IUIScene_AbstractContainerMenu::SetToolTip(EToolTipButton button, EToolTipI
 }
 
 void IUIScene_AbstractContainerMenu::Initialize(bool navigateBack, int pad, AbstractContainerMenu* menu,
-                                                 bool autoDeleteMenu, int startIndex,
-                                                 ESceneSection firstSection, ESceneSection maxSection,
-                                                 bool navigateBackOnClose)
+                                                bool autoDeleteMenu, int startIndex, ESceneSection firstSection,
+                                                ESceneSection maxSection, bool navigateBackOnClose)
 {
     m_menu = menu;
     m_autoDeleteMenu = autoDeleteMenu;
 
     bool smallInventory = false;
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-        Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled())
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
+        && Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled())
     {
         smallInventory = true;
     }
@@ -243,15 +260,14 @@ std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetItemDescription(Slot
     return description;
 }
 
-bool IUIScene_AbstractContainerMenu::IsSameItemAs(not_null_ptr<ItemInstance> first,
-                                                  not_null_ptr<ItemInstance> second)
+bool IUIScene_AbstractContainerMenu::IsSameItemAs(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second)
 {
     if (first->isEmpty() || second->isEmpty())
         return false;
 
-    return first->getItem() == second->getItem() &&
-           (!second->isStackedByData() || second->getAuxValue() == first->getAuxValue()) &&
-           ItemInstance::tagMatches(second, first);
+    return first->getItem() == second->getItem()
+           && (!second->isStackedByData() || second->getAuxValue() == first->getAuxValue())
+           && ItemInstance::tagMatches(second, first);
 }
 
 int IUIScene_AbstractContainerMenu::GetEmptyStackSpace(Slot* slot)
@@ -311,8 +327,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
     if (minecraft->mGameModes[getPad()] != NULL)
     {
         Tutorial* tutorial = minecraft->mGameModes[getPad()]->getTutorial();
-        if (tutorial != NULL && gConsoleUIController.IsTutorialVisible(getPad()) && !tutorial->popupPending &&
-            !minecraft->mGameModes[getPad()]->getGameModeConstraints()->isInputAllowed(EControllerActions_MenuUp))
+        if (tutorial != NULL && gConsoleUIController.IsTutorialVisible(getPad()) && !tutorial->popupPending
+            && !minecraft->mGameModes[getPad()]->getGameModeConstraints()->isInputAllowed(EControllerActions_MenuUp))
         {
             return;
         }
@@ -324,10 +340,10 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
 
     int pad = getPad();
     bool pointerMoved = false;
-    float inputX = (float)(g_pInput->GetJoypadStick_Menu_LX(pad) *
-                           ((float)GameSettings::GetGameSettings(pad, eGameSetting_InterfaceSensitivity) / 100.0f));
-    float inputY = (float)(g_pInput->GetJoypadStick_Menu_LY(pad) *
-                           ((float)GameSettings::GetGameSettings(pad, eGameSetting_InterfaceSensitivity) / 100.0f));
+    float inputX = (float)(g_pInput->GetJoypadStick_Menu_LX(pad)
+                           * ((float)GameSettings::GetGameSettings(pad, eGameSetting_InterfaceSensitivity) / 100.0f));
+    float inputY = (float)(g_pInput->GetJoypadStick_Menu_LY(pad)
+                           * ((float)GameSettings::GetGameSettings(pad, eGameSetting_InterfaceSensitivity) / 100.0f));
     float xDirection = 0.0f;
     float yDirection = 0.0f;
 
@@ -409,8 +425,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
             _UIVec2D itemPos;
             _UIVec2D itemSize;
             GetItemScreenData(candidate, 0, &itemPos, &itemSize);
-            if (sectionPos.x <= pointerX && pointerX <= itemSize.x + itemPos.x &&
-                sectionPos.y <= pointerY && pointerY <= itemSize.y + itemPos.y)
+            if (sectionPos.x <= pointerX && pointerX <= itemSize.x + itemPos.x && sectionPos.y <= pointerY
+                && pointerY <= itemSize.y + itemPos.y)
             {
                 snapPos.x = itemSize.x * 0.5f + itemPos.x;
                 snapPos.y = itemSize.y * 0.5f + itemPos.y;
@@ -435,8 +451,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
             GetItemScreenData(candidate, item, &itemPos, &itemSize);
             itemPos.x += sectionPos.x;
             itemPos.y += sectionPos.y;
-            if (itemPos.x <= pointerX && pointerX <= itemSize.x + itemPos.x && itemPos.y <= pointerY &&
-                pointerY <= itemSize.y + itemPos.y)
+            if (itemPos.x <= pointerX && pointerX <= itemSize.x + itemPos.x && itemPos.y <= pointerY
+                && pointerY <= itemSize.y + itemPos.y)
             {
                 slotY = item / columns;
                 slotX = item - slotY * columns;
@@ -510,9 +526,9 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
         }
         GetSectionDimensions(section, &columns, &rows);
 
-        if (m_tapState != ETapState_Cancelled && m_tapState != ETapState_None &&
-            (!IsSectionSlotList(section) || targetSlotX < 0 || targetSlotX >= columns || targetSlotY < 0 ||
-             targetSlotY >= rows))
+        if (m_tapState != ETapState_Cancelled && m_tapState != ETapState_None
+            && (!IsSectionSlotList(section) || targetSlotX < 0 || targetSlotX >= columns || targetSlotY < 0
+                || targetSlotY >= rows))
         {
             section = static_cast<ESceneSection>(
                 GetSectionAndSlotInDirection(section, m_tapState, &targetSlotX, &targetSlotY));
@@ -521,8 +537,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
             GetSectionDimensions(section, &columns, &rows);
         }
 
-        if (!IsSectionSlotList(section) ||
-            (targetSlotX >= 0 && targetSlotX < columns && targetSlotY >= 0 && targetSlotY < rows))
+        if (!IsSectionSlotList(section)
+            || (targetSlotX >= 0 && targetSlotX < columns && targetSlotY >= 0 && targetSlotY < rows))
         {
             _UIVec2D sectionPos;
             _UIVec2D itemPos;
@@ -606,9 +622,9 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
             {
                 carriedSameAsSlot = IsSameItemAs(carried, slotItem);
                 canCombine = m_menu->mayCombine(slot, carried);
-                slotItemIsWearable =
-                    canCombine && (dynamic_cast<ArmorItem*>(slot->getItem()->getItem()) != NULL ||
-                                   dynamic_cast<ShulkerBoxBlockItem*>(slot->getItem()->getItem()) != NULL);
+                slotItemIsWearable = canCombine
+                                     && (dynamic_cast<ArmorItem*>(slot->getItem()->getItem()) != NULL
+                                         || dynamic_cast<ShulkerBoxBlockItem*>(slot->getItem()->getItem()) != NULL);
                 if (carriedSameAsSlot)
                     slotSpace = GetEmptyStackSpace(m_menu->getSlot(slotId));
             }
@@ -679,7 +695,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
                     else
                     {
                         toolTip0 = eToolTipTakeAll;
-                        if (m_currentSection != ESceneSection_InventoryResult && m_currentSection != ESceneSection_ClassicCraftingResult)
+                        if (m_currentSection != ESceneSection_InventoryResult
+                            && m_currentSection != ESceneSection_ClassicCraftingResult)
                             toolTip2 = eToolTipTakeHalf;
                     }
                     checkTutorial = true;
@@ -811,8 +828,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
                 else
                 {
                     not_null_ptr<ItemInstance> ingredient = getSlotItem(ESceneSection_FurnaceIngredient, 0);
-                    if (ingredient->getItem() == item->getItem() ||
-                        !FurnaceRecipes::getInstance()->getResult(item)->isEmpty())
+                    if (ingredient->getItem() == item->getItem()
+                        || !FurnaceRecipes::getInstance()->getResult(item)->isEmpty())
                     {
                         toolTip3 = eToolTipQuickMoveIngredient;
                     }
@@ -841,9 +858,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
             not_null_ptr<ItemInstance> item = getSlotItem(section, slotIndex);
             bool isIngredient = PotionBrewing::isIngredient(item);
             bool notBlazePowder = item->getItem() != Items::blazePowder;
-            bool isBottle = item->getItem() == Items::potion || item->getItem() == Items::splashPotion ||
-                            item->getItem() == Items::lingeringPotion ||
-                            item->getItem() == Items::glassBottle;
+            bool isBottle = item->getItem() == Items::potion || item->getItem() == Items::splashPotion
+                            || item->getItem() == Items::lingeringPotion || item->getItem() == Items::glassBottle;
             if (isIngredient)
             {
                 if (isSlotEmpty(ESceneSection_BrewingIngredient, 0))
@@ -868,8 +884,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
             {
                 toolTip3 = eToolTipQuickMove;
             }
-            else if (isSlotEmpty(ESceneSection_BrewingBottle1, 0) || isSlotEmpty(ESceneSection_BrewingBottle2, 0) ||
-                     isSlotEmpty(ESceneSection_BrewingBottle3, 0))
+            else if (isSlotEmpty(ESceneSection_BrewingBottle1, 0) || isSlotEmpty(ESceneSection_BrewingBottle2, 0)
+                     || isSlotEmpty(ESceneSection_BrewingBottle3, 0))
             {
                 toolTip3 = eToolTipQuickMoveIngredient;
             }
@@ -947,14 +963,14 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
     if (onSlot && slotIsItem)
         pointerItem = getSlotItem(section, slotIndex);
 
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-        Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled())
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
+        && Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled())
     {
         if (toolTip3 != eToolTipEquip && player->mContainerMenu == player->mInventoryMenu)
             toolTip3 = eToolTipNone;
 
-        if (pointerItem.get() != NULL && pointerItem->getItem() != NULL && pointerItem->getItem()->IsArmor() &&
-            section != ESceneSection_ContainerHotbar)
+        if (pointerItem.get() != NULL && pointerItem->getItem() != NULL && pointerItem->getItem()->IsArmor()
+            && section != ESceneSection_ContainerHotbar)
         {
             int armorType = pointerItem->getItem()->GetArmorType();
             const EquipmentSlot* equipmentSlot = NULL;
@@ -976,8 +992,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
     if (canTakeAll())
         toolTip6 = eToolTipTakeEverything;
 
-    overrideTooltips(section, pointerItem, carriedIsItem, slotIsItem, carriedSameAsSlot, slotSpace, toolTip0,
-                     toolTip2, toolTip3, toolTip5, toolTip10, toolTip6, toolTip7);
+    overrideTooltips(section, pointerItem, carriedIsItem, slotIsItem, carriedSameAsSlot, slotSpace, toolTip0, toolTip2,
+                     toolTip3, toolTip5, toolTip10, toolTip6, toolTip7);
 
     if (canTakeAll())
         toolTip5 = eToolTipNone;
@@ -1019,10 +1035,10 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
     if (m_menu->m_uiQuickCraftActive)
     {
         bool addSlot = false;
-        if (slot != NULL && m_menu->m_uiQuickCraftSlots.size() < (unsigned int)carried->getCount() && canPlaceOne &&
-            AbstractContainerMenu::canItemQuickReplace(
-                slot, minecraft->mLocalPlayers[getPad()]->mInventory->getCarried(), true) &&
-            m_menu->canDragTo(slot))
+        if (slot != NULL && m_menu->m_uiQuickCraftSlots.size() < (unsigned int)carried->getCount() && canPlaceOne
+            && AbstractContainerMenu::canItemQuickReplace(
+                slot, minecraft->mLocalPlayers[getPad()]->mInventory->getCarried(), true)
+            && m_menu->canDragTo(slot))
         {
             addSlot = true;
         }
@@ -1043,8 +1059,8 @@ int IUIScene_AbstractContainerMenu::getCurrentIndex(ESceneSection section)
 void IUIScene_AbstractContainerMenu::slotClicked(int slotId, int buttonNum, ClickType::eClickType clickType)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    minecraft->mGameModes[getPad()]->handleInventoryMouseClick(m_menu->m_containerId, slotId, buttonNum,
-                                                               clickType, minecraft->mLocalPlayers[getPad()]);
+    minecraft->mGameModes[getPad()]->handleInventoryMouseClick(m_menu->m_containerId, slotId, buttonNum, clickType,
+                                                               minecraft->mLocalPlayers[getPad()]);
 }
 
 void IUIScene_AbstractContainerMenu::handleQuickCraft()
@@ -1087,8 +1103,8 @@ bool IUIScene_AbstractContainerMenu::handleKeyDown(int pad, int action, bool rep
         if (tutorial != NULL)
         {
             tutorial->handleUIInput(action);
-            if (gConsoleUIController.IsTutorialVisible(getPad()) && !tutorial->popupPending &&
-                !minecraft->mGameModes[getPad()]->getGameModeConstraints()->isInputAllowed(action))
+            if (gConsoleUIController.IsTutorialVisible(getPad()) && !tutorial->popupPending
+                && !minecraft->mGameModes[getPad()]->getGameModeConstraints()->isInputAllowed(action))
             {
                 return false;
             }
@@ -1138,8 +1154,8 @@ bool IUIScene_AbstractContainerMenu::handleKeyDown(int pad, int action, bool rep
         break;
     case EControllerActions_MenuB:
     case EControllerActions_MenuStart:
-        gConsoleUIController.SetTooltips(pad, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                          -1, false, false);
+        gConsoleUIController.SetTooltips(pad, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false,
+                                         false);
         if (m_navigateBack)
         {
             gConsoleUIController.NavigateBack(pad, false, EUIScene_None, EUILayer_Count);
@@ -1237,8 +1253,7 @@ void IUIScene_AbstractContainerMenu::handleOutsideClicked(int pad, int buttonNum
     slotClicked(-999, buttonNum, (ClickType::eClickType)(quickKeyHeld != 0));
 }
 
-void IUIScene_AbstractContainerMenu::handleOtherClicked(int pad, ESceneSection section, int buttonNum,
-                                                        bool quickKey)
+void IUIScene_AbstractContainerMenu::handleOtherClicked(int pad, ESceneSection section, int buttonNum, bool quickKey)
 {
 }
 
@@ -1246,8 +1261,7 @@ void IUIScene_AbstractContainerMenu::handleAdditionalKeyPress(int action)
 {
 }
 
-void IUIScene_AbstractContainerMenu::handleSlotListClicked(ESceneSection section, int buttonNum,
-                                                           int quickKeyHeld)
+void IUIScene_AbstractContainerMenu::handleSlotListClicked(ESceneSection section, int buttonNum, int quickKeyHeld)
 {
     int index = getCurrentIndex(section);
     bool quick = quickKeyHeld != 0;
@@ -1264,8 +1278,8 @@ void IUIScene_AbstractContainerMenu::handleTakeAll(int buttonNum)
     int count = rows * columns;
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    minecraft->mGameModes[getPad()]->handleTakeAllInvenetory(m_menu->m_containerId, buttonNum, startIndex,
-                                                             count, minecraft->mLocalPlayers[getPad()]);
+    minecraft->mGameModes[getPad()]->handleTakeAllInvenetory(m_menu->m_containerId, buttonNum, startIndex, count,
+                                                             minecraft->mLocalPlayers[getPad()]);
     handleSectionClick(ESceneSection_ContainerChest);
 }
 
@@ -1294,13 +1308,10 @@ unsigned int IUIScene_AbstractContainerMenu::IsVisible(ESceneSection section)
     return true;
 }
 
-unsigned int IUIScene_AbstractContainerMenu::overrideTooltips(ESceneSection section, not_null_ptr<ItemInstance> slotItem,
-                                                      bool carriedIsItem, bool slotIsItem,
-                                                      bool carriedSameAsSlot, int slotSpace,
-                                                      EToolTipItem& toolTip0, EToolTipItem& toolTip2,
-                                                      EToolTipItem& toolTip3, EToolTipItem& toolTip5,
-                                                      EToolTipItem& toolTip10, EToolTipItem& toolTip6,
-                                                      EToolTipItem& toolTip7)
+unsigned int IUIScene_AbstractContainerMenu::overrideTooltips(
+    ESceneSection section, not_null_ptr<ItemInstance> slotItem, bool carriedIsItem, bool slotIsItem,
+    bool carriedSameAsSlot, int slotSpace, EToolTipItem& toolTip0, EToolTipItem& toolTip2, EToolTipItem& toolTip3,
+    EToolTipItem& toolTip5, EToolTipItem& toolTip10, EToolTipItem& toolTip6, EToolTipItem& toolTip7)
 {
     return false;
 }

@@ -27,8 +27,7 @@ struct AvatarRequest
 };
 }
 
-UIScene_QuadrantSignin::UIScene_QuadrantSignin(int playerId, void* data, UILayer* layer)
-    : UIScene(playerId, layer)
+UIScene_QuadrantSignin::UIScene_QuadrantSignin(int playerId, void* data, UILayer* layer) : UIScene(playerId, layer)
 {
     initialiseMovie();
     m_signInInfo = *static_cast<SignInInfo*>(data);
@@ -193,11 +192,13 @@ void UIScene_QuadrantSignin::setControllerState(int controller, EControllerStatu
     m_controllerStates[controller] = status;
     if (g_pInput->IsPadDRCController(controller))
     {
-        static_cast<FJ_QuadrantSignin*>(m_movie->getRootNode()->getFuiNode())->SetControllerStatus(controller, status, 0);
+        static_cast<FJ_QuadrantSignin*>(m_movie->getRootNode()->getFuiNode())
+            ->SetControllerStatus(controller, status, 0);
         return;
     }
     int controllerType = g_pInput->IsPadClassicController(controller) ? 2 : 1;
-    static_cast<FJ_QuadrantSignin*>(m_movie->getRootNode()->getFuiNode())->SetControllerStatus(controller, status, controllerType);
+    static_cast<FJ_QuadrantSignin*>(m_movie->getRootNode()->getFuiNode())
+        ->SetControllerStatus(controller, status, controllerType);
 }
 
 void UIScene_QuadrantSignin::_initQuadrants()
@@ -228,8 +229,8 @@ void UIScene_QuadrantSignin::_initQuadrants()
 
 void UIScene_QuadrantSignin::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_CONTINUE, IDS_TOOLTIPS_CANCEL, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_CONTINUE, IDS_TOOLTIPS_CANCEL, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 bool UIScene_QuadrantSignin::hasFocus(int)
@@ -307,8 +308,8 @@ int UIScene_QuadrantSignin::SignInReturned(void* context, bool, int, int)
     return 0;
 }
 
-void UIScene_QuadrantSignin::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                         bool released, bool& handled)
+void UIScene_QuadrantSignin::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
+                                         bool& handled)
 {
     if (!m_signInPending)
     {

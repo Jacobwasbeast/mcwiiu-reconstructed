@@ -21,7 +21,8 @@ public:
 
     static FJ_PressStartToPlay* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
-    void ShowAchievementToast(const std::wstring& title, const std::wstring& description, const std::wstring& gamerPic, const std::wstring& achievementIcon);
+    void ShowAchievementToast(const std::wstring& title, const std::wstring& description, const std::wstring& gamerPic,
+                              const std::wstring& achievementIcon);
     void HideAchievementToast();
     void ResizePanel(bool multiLine);
     void SetText(const std::wstring& text);

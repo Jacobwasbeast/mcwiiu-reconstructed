@@ -1,7 +1,6 @@
 #include "game/ui/FJ_SaveMenu.hpp"
 
-FJ_SaveMenu::FJ_SaveMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_SaveMenu::FJ_SaveMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

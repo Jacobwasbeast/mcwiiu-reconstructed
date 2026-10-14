@@ -18,10 +18,8 @@ public:
     MultiPlayerLevel* m_pLevel;
     InteractionResult::EInteractionResult m_eInteractionResult;
 
-    ItemTooltipDataHolder(boost::shared_ptr<MultiplayerLocalPlayer> pPlayer,
-                          not_null_ptr<ItemInstance> pItemInstance,
-                          MultiPlayerLevel* pLevel,
-                          InteractionResult::EInteractionResult eInteractionResult);
+    ItemTooltipDataHolder(boost::shared_ptr<MultiplayerLocalPlayer> pPlayer, not_null_ptr<ItemInstance> pItemInstance,
+                          MultiPlayerLevel* pLevel, InteractionResult::EInteractionResult eInteractionResult);
 };
 
 #endif

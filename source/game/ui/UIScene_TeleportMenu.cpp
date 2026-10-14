@@ -18,8 +18,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/core/GameSettings.hpp"
 
-UIScene_TeleportMenu::UIScene_TeleportMenu(int sceneType, void* data, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIScene_TeleportMenu::UIScene_TeleportMenu(int sceneType, void* data, UILayer* layer) : UIScene(sceneType, layer)
 {
     initialiseMovie();
     m_splitScreen = static_cast<bool*>(data)[4];
@@ -130,8 +129,8 @@ void UIScene_TeleportMenu::OnPlayerChanged(void* context, INetworkPlayer* player
 
 void UIScene_TeleportMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_TeleportMenu::handleReload()
@@ -186,12 +185,11 @@ void UIScene_TeleportMenu::tick()
 
 std::wstring UIScene_TeleportMenu::getMoviePath()
 {
-    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"InGameTeleportMenuSplit") :
-                                               std::wstring(L"InGameTeleportMenu");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"InGameTeleportMenuSplit")
+                                          : std::wstring(L"InGameTeleportMenu");
 }
 
-void UIScene_TeleportMenu::handleInput(int, int action, bool repeat, bool pressed, bool released,
-                                       bool& handled)
+void UIScene_TeleportMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)

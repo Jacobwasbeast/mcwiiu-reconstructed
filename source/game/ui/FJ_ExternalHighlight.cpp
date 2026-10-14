@@ -1,7 +1,6 @@
 #include "game/ui/FJ_ExternalHighlight.hpp"
 
-FJ_ExternalHighlight::FJ_ExternalHighlight(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_ExternalHighlight::FJ_ExternalHighlight(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
 }
 

@@ -5,10 +5,9 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-static std::string s_buttonStateLabels[2] = { std::string("Button_Enabled"), std::string("Button_Disabled") };
+static std::string s_buttonStateLabels[2] = {std::string("Button_Enabled"), std::string("Button_Disabled")};
 
-FJ_ListButtonAchievement::FJ_ListButtonAchievement(fuiRenderNode* pRenderNode)
-    : FJ_Base(pRenderNode)
+FJ_ListButtonAchievement::FJ_ListButtonAchievement(fuiRenderNode* pRenderNode) : FJ_Base(pRenderNode)
 {
     m_bitmapIcon = getChildByName("BitmapIcon")->asFJ_BitmapIcon();
     m_highlight = getChildByName("AchievementEntry_Highlight")->asMovieClip();

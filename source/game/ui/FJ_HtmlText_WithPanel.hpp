@@ -11,6 +11,7 @@ class fuiRenderNode;
 class FJ_HtmlText_WithPanel : public FJ_HtmlText
 {
     friend class fuiRenderNodeTimeline;
+
 public:
     FJ_HtmlText_WithPanel(fuiRenderNode* renderNode);
     virtual ~FJ_HtmlText_WithPanel();

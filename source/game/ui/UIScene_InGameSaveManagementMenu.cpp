@@ -122,8 +122,8 @@ void UIScene_InGameSaveManagementMenu::updateTooltips()
     int deleteTooltip = -1;
     if (m_saveInfoReady && m_saveDetailsCount > 0)
         deleteTooltip = IDS_TOOLTIPS_DELETESAVE;
-    gConsoleUIController.SetTooltips(m_playerId, deleteTooltip, IDS_SAVE_INCOMPLETE_RETRY_SAVING, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, m_layer->IsFullscreenGroup());
+    gConsoleUIController.SetTooltips(m_playerId, deleteTooltip, IDS_SAVE_INCOMPLETE_RETRY_SAVING, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, false, m_layer->IsFullscreenGroup());
 }
 
 void UIScene_InGameSaveManagementMenu::handleReload()
@@ -186,7 +186,7 @@ bool UIScene_InGameSaveManagementMenu::hasFocus(int playerId)
 }
 
 int UIScene_InGameSaveManagementMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char* data,
-                                                                     unsigned int size)
+                                                                    unsigned int size)
 {
     UIScene_InGameSaveManagementMenu* menu = static_cast<UIScene_InGameSaveManagementMenu*>(context);
     if (data != NULL && size != 0)
@@ -259,8 +259,8 @@ void UIScene_InGameSaveManagementMenu::tick()
                     m_thumbnailRequested = true;
                     SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
                     if (gStorage->LoadSaveDataThumbnail(&details->saves[m_nextThumbnail],
-                                                        &LoadSaveDataThumbnailReturned,
-                                                        this) != C4JStorage::ESaveGame_GetThumbnail)
+                                                        &LoadSaveDataThumbnailReturned, this)
+                        != C4JStorage::ESaveGame_GetThumbnail)
                     {
                         m_thumbnailsComplete = true;
                         m_thumbnailRequested = false;
@@ -287,8 +287,8 @@ void UIScene_InGameSaveManagementMenu::tick()
                     {
                         SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
                         if (gStorage->LoadSaveDataThumbnail(&details->saves[m_nextThumbnail],
-                                                            &LoadSaveDataThumbnailReturned,
-                                                            this) != C4JStorage::ESaveGame_GetThumbnail)
+                                                            &LoadSaveDataThumbnailReturned, this)
+                            != C4JStorage::ESaveGame_GetThumbnail)
                         {
                             m_thumbnailRequested = false;
                             m_thumbnailsComplete = true;
@@ -340,11 +340,10 @@ int UIScene_InGameSaveManagementMenu::DeleteSaveDataReturned(void* context, bool
 int UIScene_InGameSaveManagementMenu::DeleteSaveDialogReturned(void* context, int, C4JStorage::EMessageResult result)
 {
     UIScene_InGameSaveManagementMenu* menu = static_cast<UIScene_InGameSaveManagementMenu*>(context);
-    if (result == C4JStorage::EMessageResult_Decline &&
-        (!gApp.DebugSettingsOn() || !gApp.GetLoadSavesFromFolderEnabled()))
+    if (result == C4JStorage::EMessageResult_Decline
+        && (!gApp.DebugSettingsOn() || !gApp.GetLoadSavesFromFolderEnabled()))
     {
-        gStorage->DeleteSaveData(&menu->m_saveDetails->saves[menu->m_selectedSaveIndex], &DeleteSaveDataReturned,
-                                 menu);
+        gStorage->DeleteSaveData(&menu->m_saveDetails->saves[menu->m_selectedSaveIndex], &DeleteSaveDataReturned, menu);
         menu->m_saveTimer.setVisible(true);
     }
     else

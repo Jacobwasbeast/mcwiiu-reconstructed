@@ -25,6 +25,7 @@ public:
         std::string& getCharString();
         unsigned char isCharString();
         unsigned int length();
+
     private:
         unsigned int mLanguage;
         unsigned int mLocale;
@@ -55,6 +56,7 @@ public:
     unsigned char isCharString();
     const wchar_t* c_str();
     unsigned int length();
+
 private:
     boost::shared_ptr<UIStringCore> mCore;
 };

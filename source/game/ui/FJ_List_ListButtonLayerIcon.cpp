@@ -5,7 +5,8 @@
 #include "game/ui/FJ_ListButtonLayerIcon.hpp"
 
 FJ_List_ListButtonLayerIcon::FJ_List_ListButtonLayerIcon(fuiRenderNode* renderNode)
-    : FJ_List(renderNode), m_useIggyIcons(false)
+    : FJ_List(renderNode),
+      m_useIggyIcons(false)
 {
 }
 
@@ -24,19 +25,19 @@ void FJ_List_ListButtonLayerIcon::UseIggyIcons()
     m_useIggyIcons = true;
 }
 
-void FJ_List_ListButtonLayerIcon::addNewItem(const std::wstring& label,
-    const std::wstring& secondaryText, int id, const std::wstring& textureName)
+void FJ_List_ListButtonLayerIcon::addNewItem(const std::wstring& label, const std::wstring& secondaryText, int id,
+                                             const std::wstring& textureName)
 {
     FJ_ListButtonLayerIcon* item;
     if (!m_checkboxTick)
     {
-        item = static_cast<FJ_ListButtonLayerIcon*>(FJ_Factory::createObject(
-            "fourj.Buttons.FJ_ListButtonLayerIcon_Normal", m_pRenderNode, true, NULL));
+        item = static_cast<FJ_ListButtonLayerIcon*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonLayerIcon_Normal", m_pRenderNode, true, NULL));
     }
     else
     {
-        item = static_cast<FJ_ListButtonLayerIcon*>(FJ_Factory::createObject(
-            "fourj.Buttons.FJ_ListButtonLayerIcon_Small", m_pRenderNode, true, NULL));
+        item = static_cast<FJ_ListButtonLayerIcon*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonLayerIcon_Small", m_pRenderNode, true, NULL));
     }
 
     addNewListItem(item, label, id);
@@ -56,8 +57,7 @@ void FJ_List_ListButtonLayerIcon::SetLayerLabel(int index, const std::wstring& l
         item->SetSecondaryText(label, false, false);
 }
 
-void FJ_List_ListButtonLayerIcon::SetTextureName(int index,
-    const std::wstring& textureName)
+void FJ_List_ListButtonLayerIcon::SetTextureName(int index, const std::wstring& textureName)
 {
     FJ_ListButtonLayerIcon* item = static_cast<FJ_ListButtonLayerIcon*>(ReturnItem(index));
     if (item != NULL)
@@ -66,4 +66,3 @@ void FJ_List_ListButtonLayerIcon::SetTextureName(int index,
         item->SetTextureName(textureName, layerName);
     }
 }
-

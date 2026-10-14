@@ -12,8 +12,13 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_SuperFlatMenu::FJ_SuperFlatMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), m_activeTab(0), m_currentTab(-1), m_helpTextSet(false),
-      m_layersFocus(-1), m_biomesFocus(-1), m_propertiesFocus(-1)
+    : FJ_Document(renderNode),
+      m_activeTab(0),
+      m_currentTab(-1),
+      m_helpTextSet(false),
+      m_layersFocus(-1),
+      m_biomesFocus(-1),
+      m_propertiesFocus(-1)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 

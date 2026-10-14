@@ -32,28 +32,21 @@ void TitleScreen::init()
     Language* language = Language::getInstance();
     const int top = mHeight / 4 + 48;
 
-    mButtons.push_back(new Button(1, mWidth / 2 - 100, top,
-                                  language->getElement(L"menu.singleplayer")));
+    mButtons.push_back(new Button(1, mWidth / 2 - 100, top, language->getElement(L"menu.singleplayer")));
 
-    mButtons.push_back(mMultiplayerButton = new Button(2, mWidth / 2 - 100, top + 24,
-                                                       language->getElement(L"menu.multiplayer")));
+    mButtons.push_back(
+        mMultiplayerButton = new Button(2, mWidth / 2 - 100, top + 24, language->getElement(L"menu.multiplayer")));
 
-    mButtons.push_back(new Button(3, mWidth / 2 - 100, top + 48,
-                                  language->getElement(L"menu.mods")));
+    mButtons.push_back(new Button(3, mWidth / 2 - 100, top + 48, language->getElement(L"menu.mods")));
 
     if (mMinecraft->mPaused)
     {
-        mButtons.push_back(new Button(0, mWidth / 2 - 100, top + 72,
-                                      language->getElement(L"menu.options")));
+        mButtons.push_back(new Button(0, mWidth / 2 - 100, top + 72, language->getElement(L"menu.options")));
     }
     else
     {
-        mButtons.push_back(new Button(0, mWidth / 2 - 100, top + 84,
-                                      98, 20,
-                                      language->getElement(L"menu.options")));
-        mButtons.push_back(new Button(4, mWidth / 2 + 2, top + 84,
-                                      98, 20,
-                                      language->getElement(L"menu.quit")));
+        mButtons.push_back(new Button(0, mWidth / 2 - 100, top + 84, 98, 20, language->getElement(L"menu.options")));
+        mButtons.push_back(new Button(4, mWidth / 2 + 2, top + 84, 98, 20, language->getElement(L"menu.quit")));
     }
 
     if (mMinecraft->mUser == NULL)

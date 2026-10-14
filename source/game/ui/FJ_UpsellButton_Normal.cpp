@@ -1,7 +1,6 @@
 #include "game/ui/FJ_UpsellButton_Normal.hpp"
 
-FJ_UpsellButton_Normal::FJ_UpsellButton_Normal(fuiRenderNode* renderNode)
-    : FJ_UpsellButton(renderNode)
+FJ_UpsellButton_Normal::FJ_UpsellButton_Normal(fuiRenderNode* renderNode) : FJ_UpsellButton(renderNode)
 {
 }
 

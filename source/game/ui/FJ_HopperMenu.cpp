@@ -2,8 +2,7 @@
 
 #include "game/ui/FJ_FuiNodeStage.hpp"
 
-FJ_HopperMenu::FJ_HopperMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_HopperMenu::FJ_HopperMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
 }
 

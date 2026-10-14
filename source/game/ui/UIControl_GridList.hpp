@@ -16,6 +16,7 @@ public:
         GenericPendingUpdate(int value) : m_value(value) {}
         virtual ~GenericPendingUpdate();
         virtual unsigned int OnTick() = 0;
+
     protected:
         int m_value;
     };
@@ -26,6 +27,7 @@ public:
     public:
         PendingUpdate(T* list, int value) : GenericPendingUpdate(value), m_list(list) {}
         virtual ~PendingUpdate() {}
+
     protected:
         T* m_list;
     };
@@ -34,7 +36,9 @@ public:
     {
     public:
         PendingSetCurrentSelection(UIControl_GridList* list, int selection)
-            : PendingUpdate<UIControl_GridList>(list, selection) {}
+            : PendingUpdate<UIControl_GridList>(list, selection)
+        {
+        }
         virtual ~PendingSetCurrentSelection();
         virtual unsigned int OnTick();
     };
@@ -43,9 +47,13 @@ public:
     {
     public:
         PendingSetEnable(UIControl_GridList* list, int item, bool enabled)
-            : PendingUpdate<UIControl_GridList>(list, item), m_enabled(enabled) {}
+            : PendingUpdate<UIControl_GridList>(list, item),
+              m_enabled(enabled)
+        {
+        }
         virtual ~PendingSetEnable();
         virtual unsigned int OnTick();
+
     private:
         bool m_enabled;
     };

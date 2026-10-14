@@ -3,8 +3,7 @@
 #include "game/ui/FJ_Base.hpp"
 #include "game/ui/FJ_Button.hpp"
 
-FJ_MenuButton::FJ_MenuButton(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode)
+FJ_MenuButton::FJ_MenuButton(fuiRenderNode* renderNode) : FJ_Button(renderNode)
 {
 }
 

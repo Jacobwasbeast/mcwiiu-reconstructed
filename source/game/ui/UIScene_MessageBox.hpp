@@ -16,8 +16,7 @@ public:
     virtual std::wstring getMoviePath();
     virtual void updateTooltips();
     virtual void handleReload();
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual bool hasFocus(int sceneType);
     virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();

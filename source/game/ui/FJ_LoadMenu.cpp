@@ -13,8 +13,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_LoadMenu::FJ_LoadMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_LoadMenu::FJ_LoadMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     m_customLoadMenu = false;
     m_unused = 0;
@@ -85,8 +84,8 @@ void FJ_LoadMenu::RescaleCustomLoadMenu(bool comparison)
     int listHeight = multiList->GetListHeight();
     int textY = m_iconY;
     int spareHeight = m_listHeight - multiList->GetListHeight();
-    int descriptionHeight =
-        (int)(description->GetRealHeight() + (comparisonPic->getY() - (description->getY() + description->GetRealHeight())));
+    int descriptionHeight = (int)(description->GetRealHeight()
+                                  + (comparisonPic->getY() - (description->getY() + description->GetRealHeight())));
     float comparisonY = comparisonPic->getY();
     float reclaimedHeight = (float)spareHeight;
     float offset = reclaimedHeight * 0.5f;
@@ -97,8 +96,8 @@ void FJ_LoadMenu::RescaleCustomLoadMenu(bool comparison)
 
     if (description->GetNumberOfLines() < 3)
     {
-        reclaimedHeight = (float)((int)(comparisonPic->getY() + comparisonPic->getHeight() - levelIcon->getY()) -
-                                  (int)(description->GetOptimalHeight(-1) + comparisonPic->getHeight()));
+        reclaimedHeight = (float)((int)(comparisonPic->getY() + comparisonPic->getHeight() - levelIcon->getY())
+                                  - (int)(description->GetOptimalHeight(-1) + comparisonPic->getHeight()));
         multiList->incY((float)m_listHeight - listHeight - reclaimedHeight);
         offset = reclaimedHeight * 0.5f;
     }

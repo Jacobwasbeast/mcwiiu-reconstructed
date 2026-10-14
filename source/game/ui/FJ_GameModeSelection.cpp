@@ -6,8 +6,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_GameModeSelection::FJ_GameModeSelection(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_GameModeSelection::FJ_GameModeSelection(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

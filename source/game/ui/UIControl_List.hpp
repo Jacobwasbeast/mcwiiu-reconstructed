@@ -17,6 +17,7 @@ public:
         GenericPendingUpdate(int item) : m_item(item) {}
         virtual ~GenericPendingUpdate() {}
         virtual unsigned int OnTick() = 0;
+
     protected:
         int m_item;
     };
@@ -27,6 +28,7 @@ public:
     public:
         PendingUpdate(T* list, int item) : GenericPendingUpdate(item), m_list(list) {}
         virtual ~PendingUpdate() {}
+
     protected:
         T* m_list;
     };
@@ -34,8 +36,7 @@ public:
     class PendingRemoveItem : public PendingUpdate<UIControl_List>
     {
     public:
-        PendingRemoveItem(UIControl_List* list, int item)
-            : PendingUpdate<UIControl_List>(list, item) {}
+        PendingRemoveItem(UIControl_List* list, int item) : PendingUpdate<UIControl_List>(list, item) {}
         virtual ~PendingRemoveItem();
         virtual unsigned int OnTick();
     };
@@ -44,9 +45,13 @@ public:
     {
     public:
         PendingSetCurrentSelection(UIControl_List* list, int item, bool update)
-            : PendingUpdate<UIControl_List>(list, item), m_update(update) {}
+            : PendingUpdate<UIControl_List>(list, item),
+              m_update(update)
+        {
+        }
         virtual ~PendingSetCurrentSelection();
         virtual unsigned int OnTick();
+
     private:
         bool m_update;
     };
@@ -55,9 +60,13 @@ public:
     {
     public:
         PendingSetEnable(UIControl_List* list, int item, bool enabled)
-            : PendingUpdate<UIControl_List>(list, item), m_enabled(enabled) {}
+            : PendingUpdate<UIControl_List>(list, item),
+              m_enabled(enabled)
+        {
+        }
         virtual ~PendingSetEnable();
         virtual unsigned int OnTick();
+
     private:
         bool m_enabled;
     };
@@ -65,13 +74,13 @@ public:
     class PendingSetLabel : public PendingUpdate<UIControl_List>
     {
     public:
-        PendingSetLabel(UIControl_List* list, int item, UIString label)
-            : PendingUpdate<UIControl_List>(list, item)
+        PendingSetLabel(UIControl_List* list, int item, UIString label) : PendingUpdate<UIControl_List>(list, item)
         {
             m_label = label;
         }
         virtual ~PendingSetLabel() {}
         virtual unsigned int OnTick();
+
     private:
         UIString m_label;
     };

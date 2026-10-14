@@ -18,8 +18,8 @@ public:
     virtual void ReInit();
     virtual void setFocus(bool focus);
     virtual void setAllPossibleLabels(int firstLabel, unsigned int labelCount, wchar_t (*labels)[256]);
-    void init(UIString label, int controlId, int minimum, int maximum, int value,
-              bool repeat, int repeatDelay, int repeatStep);
+    void init(UIString label, int controlId, int minimum, int maximum, int value, bool repeat, int repeatDelay,
+              int repeatStep);
     void handleSliderMove(int value);
     void SetSliderTouchPos(float position);
     void SetSliderValue(int value);

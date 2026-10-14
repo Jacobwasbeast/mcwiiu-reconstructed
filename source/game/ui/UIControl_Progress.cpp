@@ -6,20 +6,22 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 UIControl_Progress::UIControl_Progress()
-    : UIControl_Base(), m_minimum(0), m_maximum(100), m_progress(0),
-      m_progressRatio(0.0f), m_showBar(true)
+    : UIControl_Base(),
+      m_minimum(0),
+      m_maximum(100),
+      m_progress(0),
+      m_progressRatio(0.0f),
+      m_showBar(true)
 {
 }
 
-bool UIControl_Progress::setupControl(UIScene* scene, fuiRenderNode* node,
-                                      const std::string& name)
+bool UIControl_Progress::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_Progress;
     return UIControl_Base::setupControl(scene, node, name);
 }
 
-void UIControl_Progress::init(UIString label, int controlId, int minimum, int maximum,
-                              int progress)
+void UIControl_Progress::init(UIString label, int controlId, int minimum, int maximum, int progress)
 {
     m_label = label;
     m_controlId = controlId;

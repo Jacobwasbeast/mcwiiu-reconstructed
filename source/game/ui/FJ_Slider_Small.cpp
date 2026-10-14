@@ -1,7 +1,6 @@
 #include "game/ui/FJ_Slider_Small.hpp"
 
-FJ_Slider_Small::FJ_Slider_Small(fuiRenderNode* renderNode)
-    : FJ_Slider(renderNode)
+FJ_Slider_Small::FJ_Slider_Small(fuiRenderNode* renderNode) : FJ_Slider(renderNode)
 {
 }
 

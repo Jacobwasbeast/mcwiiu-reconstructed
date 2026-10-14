@@ -22,8 +22,7 @@ public:
     virtual void removed();
     virtual void tabPressed();
 
-    static std::wstring findAvailableFolderName(LevelStorageSource* levelSource,
-                                                 const std::wstring& folderName);
+    static std::wstring findAvailableFolderName(LevelStorageSource* levelSource, const std::wstring& folderName);
 
     void updateResultFolder();
 

@@ -577,8 +577,7 @@ SCreditTextItemDef CREDIT_TEXT[] = {
 };
 }
 
-UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
-    : UIScene(type, layer)
+UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer) : UIScene(type, layer)
 {
     initialiseMovie();
     m_requestMoreData = false;
@@ -632,8 +631,8 @@ UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
                     DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
                         pack->getFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true));
                     StringTable* stringTable = file->getStringTable();
-                    for (std::vector<std::wstring>::iterator it = childCreditIds.begin();
-                         it != childCreditIds.end(); ++it)
+                    for (std::vector<std::wstring>::iterator it = childCreditIds.begin(); it != childCreditIds.end();
+                         ++it)
                     {
                         addCreditLine(stringTable->getString(*it));
                     }
@@ -643,8 +642,8 @@ UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
                     DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
                         pack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true));
                     StringTable* stringTable = file->getStringTable();
-                    for (std::vector<std::wstring>::iterator it = childCreditIds.begin();
-                         it != childCreditIds.end(); ++it)
+                    for (std::vector<std::wstring>::iterator it = childCreditIds.begin(); it != childCreditIds.end();
+                         ++it)
                     {
                         addCreditLine(stringTable->getString(*it));
                     }
@@ -696,7 +695,8 @@ bool UIScene_Credits::AlreadySeenCreditText(const std::wstring& text)
     for (unsigned int index = 0; index < m_seenCreditText.size(); ++index)
     {
         std::wstring seen = m_seenCreditText.at(index);
-        if (seen.compare(text) == 0) return true;
+        if (seen.compare(text) == 0)
+            return true;
     }
     m_seenCreditText.push_back(std::wstring(text.c_str()));
     return false;
@@ -715,7 +715,8 @@ void UIScene_Credits::AddCreditText(const wchar_t* text)
 
 void UIScene_Credits::addCreditLine(const std::wstring& text)
 {
-    if (AlreadySeenCreditText(text)) return;
+    if (AlreadySeenCreditText(text))
+        return;
 
     AddCreditText(L"");
     bool useShortLine = !gRenderer->IsHiDef() && !gRenderer->IsWidescreen();
@@ -736,10 +737,13 @@ void UIScene_Credits::addCreditLine(const std::wstring& text)
     while (remaining.size() > maximum)
     {
         unsigned int length = 1;
-        while (length < remaining.size() && length + 1 <= maximum) ++length;
+        while (length < remaining.size() && length + 1 <= maximum)
+            ++length;
         std::wstring::size_type split = remaining.find_last_of(L" ", length);
-        if (split == std::wstring::npos) split = maximum;
-        if (split != length) ++split;
+        if (split == std::wstring::npos)
+            split = maximum;
+        if (split != length)
+            ++split;
         AddCreditText(remaining.substr(0, split).c_str());
         remaining = remaining.substr(split);
     }
@@ -753,14 +757,14 @@ int UIScene_Credits::GetDLCCreditsCount()
 
 void UIScene_Credits::setNextLabel(const std::wstring& text, ECreditTextTypes type)
 {
-    static_cast<FJ_CreditsMenu*>(m_movie->getRootNode()->getFuiNode())->SetNextLabel(
-        text, type, m_currentCredit == m_creditCount - 1);
+    static_cast<FJ_CreditsMenu*>(m_movie->getRootNode()->getFuiNode())
+        ->SetNextLabel(text, type, m_currentCredit == m_creditCount - 1);
 }
 
 void UIScene_Credits::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, -1, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, -1, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, false, false);
 }
 
 void UIScene_Credits::updateComponents()
@@ -780,14 +784,15 @@ SCreditTextItemDef* UIScene_Credits::GetDLCCredits(int index)
 
 void UIScene_Credits::addImage(ECreditIcons icon)
 {
-    static_cast<FJ_CreditsMenu*>(m_movie->getRootNode()->getFuiNode())->AddImage(
-        icon, m_currentCredit == m_creditCount - 1);
+    static_cast<FJ_CreditsMenu*>(m_movie->getRootNode()->getFuiNode())
+        ->AddImage(icon, m_currentCredit == m_creditCount - 1);
 }
 
 void UIScene_Credits::tick()
 {
     UIScene::tick();
-    if (!m_requestMoreData) return;
+    if (!m_requestMoreData)
+        return;
     m_requestMoreData = false;
 
     if (m_currentCredit + 1 >= m_creditCount)
@@ -851,8 +856,7 @@ std::wstring UIScene_Credits::getMoviePath()
     return L"Credits";
 }
 
-void UIScene_Credits::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                                  bool& handled)
+void UIScene_Credits::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)

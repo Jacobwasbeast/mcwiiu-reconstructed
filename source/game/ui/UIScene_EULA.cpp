@@ -12,8 +12,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/UIString.hpp"
 
-UIScene_EULA::UIScene_EULA(int sceneType, void* callback, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIScene_EULA::UIScene_EULA(int sceneType, void* callback, UILayer* layer) : UIScene(sceneType, layer)
 {
     initialiseMovie();
     layer->addComponent(sceneType, EUIScene_Panorama, 0);
@@ -63,8 +62,8 @@ unsigned int UIScene_EULA::mapElementsAndNames()
 
 void UIScene_EULA::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     false, false);
 }
 
 std::wstring UIScene_EULA::getMoviePath()
@@ -72,8 +71,7 @@ std::wstring UIScene_EULA::getMoviePath()
     return std::wstring(L"EULA");
 }
 
-void UIScene_EULA::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                               bool& handled)
+void UIScene_EULA::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     if (m_ignoreInput)
         return;

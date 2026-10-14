@@ -8,8 +8,7 @@
 #include "game/ui/fuiRenderNodeTimeline.hpp"
 #include "game/util/Math.hpp"
 
-FJ_TutorialPopup::FJ_TutorialPopup(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_TutorialPopup::FJ_TutorialPopup(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     m_iconHolder = NULL;
     m_bitmap = NULL;
@@ -136,7 +135,8 @@ fuiRenderNode* FJ_TutorialPopup::GetBitmapData(int type)
 void FJ_TutorialPopup::SetupIconHolder(int type)
 {
     FJ_FuiNode* holder = getChildByName(std::string("IconHolder"));
-    FJ_FuiNode* slotControl = FJ_FuiNode::asMovieClip(holder->getChildAt(0))->getChildByName(std::string("SlotControl"))->asMovieClip();
+    FJ_FuiNode* slotControl =
+        FJ_FuiNode::asMovieClip(holder->getChildAt(0))->getChildByName(std::string("SlotControl"))->asMovieClip();
     int width = Math::round(holder->getChildAt(0)->getScaleX());
 
     if (m_iconHolder != NULL && m_iconHolder->getParent() != NULL)
@@ -161,7 +161,8 @@ void FJ_TutorialPopup::SetupIconHolder(int type)
         rect.yMin = rect.xMin;
         rect.xMax = rect.xMin + holder->getWidth() - (float)(width * 2);
         rect.yMax = rect.yMin + holder->getHeight() - (float)(width * 2);
-        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "iggy_slot_IconHolder");
+        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect,
+                                                                            "iggy_slot_IconHolder");
         renderNode->setAlpha(0.25f);
         FJ_FuiNode* iconHolder = new FJ_FuiNode(renderNode);
         m_iconHolder = iconHolder;

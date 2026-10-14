@@ -11,8 +11,7 @@ class Player;
 class HopperMenu : public AbstractContainerMenu
 {
 public:
-    HopperMenu(boost::shared_ptr<Container> playerContainer,
-               boost::shared_ptr<Container> container,
+    HopperMenu(boost::shared_ptr<Container> playerContainer, boost::shared_ptr<Container> container,
                boost::shared_ptr<Player> player);
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);

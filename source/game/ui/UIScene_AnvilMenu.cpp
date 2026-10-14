@@ -76,12 +76,10 @@ UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void* data, UILayer* layer)
     }
 
     m_anvilMenu = new AnvilMenu(sceneData->inventory, sceneData->level,
-                                BlockPos(sceneData->x, sceneData->y, sceneData->z),
-                                minecraft->mLocalPlayers[type]);
+                                BlockPos(sceneData->x, sceneData->y, sceneData->z), minecraft->mLocalPlayers[type]);
     m_anvilMenu->addSlotListener(this);
 
-    Initialize(false, type, m_anvilMenu, true, 3,
-               IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar,
+    Initialize(false, type, m_anvilMenu, true, 3, IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar,
                IUIScene_AbstractContainerMenu::ESceneSection_AnvilMax, false);
     m_ingredientSlot.addSlots(0, 1);
     m_ingredientSlot2.addSlots(1, 1);
@@ -134,7 +132,7 @@ bool UIScene_AnvilMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::EScene
 
 int UIScene_AnvilMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    static const unsigned char columns[] = { 9, 9, 1, 1, 1 };
+    static const unsigned char columns[] = {9, 9, 1, 1, 1};
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar:
@@ -166,8 +164,8 @@ int UIScene_AnvilMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSect
 }
 
 unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                              IUIScene_AbstractContainerMenu::ETapState state,
-                                                              int* x, int* y)
+                                                             IUIScene_AbstractContainerMenu::ETapState state, int* x,
+                                                             int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection target = section;
     int horizontalOffset = 0;
@@ -179,7 +177,8 @@ unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractCo
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_smallInventory != 0 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar : IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory;
+            target = m_smallInventory != 0 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar
+                                           : IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory;
             horizontalOffset = 3;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
@@ -192,7 +191,8 @@ unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractCo
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_smallInventory != 0 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar : IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory;
+            target = m_smallInventory != 0 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar
+                                           : IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory;
             horizontalOffset = -4;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
@@ -205,7 +205,8 @@ unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractCo
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_smallInventory != 0 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar : IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory;
+            target = m_smallInventory != 0 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar
+                                           : IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory;
             horizontalOffset = -5;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
@@ -258,19 +259,17 @@ unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractCo
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = *x <= 3 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1 : IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
+            target = *x <= 3 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1
+                             : IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
         }
         break;
     }
 
-    updateSlotPosition(section,
-        target, state, x, y,
-        horizontalOffset, 0);
+    updateSlotPosition(section, target, state, x, y, horizontalOffset, 0);
     return target;
 }
 
-void UIScene_AnvilMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                              _UIVec2D* position)
+void UIScene_AnvilMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
     switch (section)
     {
@@ -304,7 +303,7 @@ void UIScene_AnvilMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESc
 }
 
 void UIScene_AnvilMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-                                           _UIVec2D* position, _UIVec2D* size)
+                                          _UIVec2D* position, _UIVec2D* size)
 {
     _UIVec2D itemSize;
     switch (section)
@@ -362,8 +361,7 @@ void UIScene_AnvilMenu::addPendingNameChange(const PendingNameInfo& info)
 int UIScene_AnvilMenu::KeyboardCompleteCallback(void* data, bool accepted)
 {
     unsigned int callbackId = static_cast<unsigned int>(reinterpret_cast<unsigned long>(data));
-    UIScene_AnvilMenu* scene =
-        static_cast<UIScene_AnvilMenu*>(gConsoleUIController.GetSceneFromCallbackId(callbackId));
+    UIScene_AnvilMenu* scene = static_cast<UIScene_AnvilMenu*>(gConsoleUIController.GetSceneFromCallbackId(callbackId));
     if (scene == 0)
         return 0;
 
@@ -390,24 +388,20 @@ void UIScene_AnvilMenu::handleEditNamePressed()
     if (item->getItem() != Items::nameTag && item->getItem() != Items::spawnEgg)
     {
         g_pInput->RequestKeyboard(L10N::GetString(IDS_TITLE_RENAME), m_editName.getLabel(), m_playerId, 0x1e,
-                                  KeyboardCompleteCallback,
-                                  reinterpret_cast<void*>(GetCallbackUniqueId()),
+                                  KeyboardCompleteCallback, reinterpret_cast<void*>(GetCallbackUniqueId()),
                                   C_4JInput::EKeyboardMode_0);
     }
     else
     {
-        std::wstring sanitized =
-            Minecraft::GetInstance()->mFont->sanitize(std::wstring(m_editName.getLabel()), true);
+        std::wstring sanitized = Minecraft::GetInstance()->mFont->sanitize(std::wstring(m_editName.getLabel()), true);
         g_pInput->RequestKeyboard(L10N::GetString(IDS_TITLE_RENAME), sanitized.c_str(), m_playerId, 0x1e,
-                                  KeyboardCompleteCallback,
-                                  reinterpret_cast<void*>(GetCallbackUniqueId()),
+                                  KeyboardCompleteCallback, reinterpret_cast<void*>(GetCallbackUniqueId()),
                                   static_cast<C_4JInput::EKeyboardMode>(3));
     }
     m_ignoreInput = false;
 }
 
-void UIScene_AnvilMenu::handleOtherClicked(int, IUIScene_AbstractContainerMenu::ESceneSection section,
-                                            int, bool)
+void UIScene_AnvilMenu::handleOtherClicked(int, IUIScene_AbstractContainerMenu::ESceneSection section, int, bool)
 {
     if (section != IUIScene_AbstractContainerMenu::ESceneSection_AnvilName)
         return;
@@ -431,8 +425,8 @@ int UIScene_AnvilMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESc
     }
 }
 
-void UIScene_AnvilMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                int slot, int direction, bool wrap)
+void UIScene_AnvilMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                               int direction, bool wrap)
 {
     const int columns = getSectionColumns(section);
     const int target = direction * columns + slot;
@@ -467,8 +461,7 @@ UIScene_AnvilMenu::~UIScene_AnvilMenu()
     m_pendingName = 0;
 }
 
-void UIScene_AnvilMenu::refreshContainer(AbstractContainerMenu* container,
-                                           std::vector<not_null_ptr<ItemInstance> >*)
+void UIScene_AnvilMenu::refreshContainer(AbstractContainerMenu* container, std::vector<not_null_ptr<ItemInstance> >*)
 {
     slotChanged(container, 0, container->getSlot(0)->getItem());
 }
@@ -479,8 +472,8 @@ void UIScene_AnvilMenu::slotChanged(AbstractContainerMenu*, int slot, not_null_p
     {
         if (!item->isEmpty())
         {
-            m_itemName->set(item->getHoverNameUnfiltered(), item->getOwnerUUID(),
-                             item->wasCreatedByRestrictedPlayer(), item->wasCreatedOnHost());
+            m_itemName->set(item->getHoverNameUnfiltered(), item->getOwnerUUID(), item->wasCreatedByRestrictedPlayer(),
+                            item->wasCreatedOnHost());
         }
         else
         {
@@ -655,10 +648,10 @@ void UIScene_AnvilMenu::updateItemName()
         ByteArrayOutputStream bytes;
         DataOutputStream output(&bytes);
         output.writeUTF(m_itemName->raw());
-        std::wstring channel = censored ? ServerboundCustomPayloadPacket::SET_RENAME_ITEM_PACKET : ServerboundCustomPayloadPacket::SET_ITEM_NAME_PACKET;
-        Minecraft::GetInstance()->getConnection(getPad())->send(
-            boost::shared_ptr<ServerboundCustomPayloadPacket>(
-                new ServerboundCustomPayloadPacket(channel, bytes.toByteArray())));
+        std::wstring channel = censored ? ServerboundCustomPayloadPacket::SET_RENAME_ITEM_PACKET
+                                        : ServerboundCustomPayloadPacket::SET_ITEM_NAME_PACKET;
+        Minecraft::GetInstance()->getConnection(getPad())->send(boost::shared_ptr<ServerboundCustomPayloadPacket>(
+            new ServerboundCustomPayloadPacket(channel, bytes.toByteArray())));
     }
 }
 

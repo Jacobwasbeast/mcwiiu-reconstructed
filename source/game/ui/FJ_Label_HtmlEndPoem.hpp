@@ -10,10 +10,7 @@ class fuiRenderNode;
 class FJ_Label_HtmlEndPoem : public FJ_Label
 {
 public:
-    FJ_Label_HtmlEndPoem(fuiRenderNode* renderNode)
-        : FJ_Label(renderNode)
-    {
-    }
+    FJ_Label_HtmlEndPoem(fuiRenderNode* renderNode) : FJ_Label(renderNode) {}
 
 
     static FJ_Label* Create(fuiRenderNode* renderNode);

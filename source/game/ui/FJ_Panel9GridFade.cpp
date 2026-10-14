@@ -1,7 +1,6 @@
 #include "game/ui/FJ_Panel9GridFade.hpp"
 
-FJ_Panel9GridFade::FJ_Panel9GridFade(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_Panel9GridFade::FJ_Panel9GridFade(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     float width = getWidth();
     float height = getHeight();
@@ -28,4 +27,3 @@ unsigned int FJ_Panel9GridFade::getType()
 {
     return 0x80b1;
 }
-

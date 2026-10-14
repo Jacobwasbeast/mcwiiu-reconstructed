@@ -10,9 +10,7 @@
 
 #include <string>
 
-UIControl_Label::UIControl_Label()
-    : UIControl_Base()
-    , m_reinit(true)
+UIControl_Label::UIControl_Label() : UIControl_Base(), m_reinit(true)
 {
 }
 

@@ -1,7 +1,6 @@
 #include "game/ui/FJ_FurnaceFlame.hpp"
 
-FJ_FurnaceFlame::FJ_FurnaceFlame(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_FurnaceFlame::FJ_FurnaceFlame(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     InitBarType();
     FJ_ProgressBar::GetBarFiller();

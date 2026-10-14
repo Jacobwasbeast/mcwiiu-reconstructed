@@ -10,8 +10,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_DebugSetCamera::FJ_DebugSetCamera(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_DebugSetCamera::FJ_DebugSetCamera(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 

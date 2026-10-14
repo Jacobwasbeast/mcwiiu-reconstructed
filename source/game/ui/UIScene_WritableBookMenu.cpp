@@ -48,8 +48,7 @@ struct UIScene_WritableBookMenuData
     bool canEdit;
 };
 
-UIScene_WritableBookMenu::UIScene_WritableBookMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer)
+UIScene_WritableBookMenu::UIScene_WritableBookMenu(int type, void* data, UILayer* layer) : UIScene(type, layer)
 {
     UIScene_WritableBookMenuData* sceneData = static_cast<UIScene_WritableBookMenuData*>(data);
     initialiseMovie();
@@ -217,8 +216,8 @@ void UIScene_WritableBookMenu::Init()
         if (tag->contains(TAG_CREATED_BY_HOST) && tag->getByte(TAG_CREATED_BY_HOST) == 0)
             createdByHost = false;
 
-        if (!((!chatCensored && !createdByRestrictedPlayer) || ownedByLocalPlayer ||
-              (CGameNetworkManager::sInstance.IsHost() && createdByHost)))
+        if (!((!chatCensored && !createdByRestrictedPlayer) || ownedByLocalPlayer
+              || (CGameNetworkManager::sInstance.IsHost() && createdByHost)))
             m_contentRestricted = true;
 
         if (!m_contentRestricted)
@@ -238,8 +237,8 @@ void UIScene_WritableBookMenu::Init()
         {
             std::wstring censoredText = L"";
             unsigned int language = XGetLanguage();
-            if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN ||
-                language == XC_LANGUAGE_TCHINESE || language == XC_LANGUAGE_ZH_HANS)
+            if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN || language == XC_LANGUAGE_TCHINESE
+                || language == XC_LANGUAGE_ZH_HANS)
                 censoredText = L"Censored";
             else
                 censoredText = L10N::GetString(IDS_STRINGVERIFY_CENSORED);
@@ -373,8 +372,8 @@ void UIScene_WritableBookMenu::updateTooltips()
             }
         }
     }
-    gConsoleUIController.SetTooltips(m_playerId, select, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, previousPage, nextPage,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, select, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, previousPage, nextPage, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_WritableBookMenu::OnStopSigning()
@@ -427,8 +426,8 @@ bool UIScene_WritableBookMenu::GetBookHasFocus()
 int UIScene_WritableBookMenu::KeyboardCompleteCallback(void* context, bool success)
 {
     unsigned int callbackId = static_cast<unsigned int>(reinterpret_cast<unsigned long>(context));
-    UIScene_WritableBookMenu* scene =
-        static_cast<UIScene_WritableBookMenu*>(gConsoleUIController.GetSceneFromCallbackId(callbackId));
+    UIScene_WritableBookMenu* scene = static_cast<UIScene_WritableBookMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(callbackId));
     if (scene == 0)
         return 0;
 
@@ -509,8 +508,8 @@ void UIScene_WritableBookMenu::SaveChanges(bool signing)
     if (signing)
     {
         channel = ServerboundCustomPayloadPacket::CUSTOM_BOOK_SIGN_PACKET;
-        m_book.get()->addTagElement(TAG_AUTHOR,
-                                    new StringTag(Minecraft::GetInstance()->mLocalPlayers[m_playerId].get()->getName()));
+        m_book.get()->addTagElement(
+            TAG_AUTHOR, new StringTag(Minecraft::GetInstance()->mLocalPlayers[m_playerId].get()->getName()));
         m_book.get()->addTagElement(TAG_TITLE, new StringTag(m_titleText));
     }
 
@@ -609,7 +608,8 @@ void UIScene_WritableBookMenu::ScrollPageRight()
     updateTooltips();
 }
 
-void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled)
+void UIScene_WritableBookMenu::handleInput(int player, int action, bool repeat, bool pressed, bool released,
+                                           bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(player, action, repeat, pressed, released);
     switch (action)

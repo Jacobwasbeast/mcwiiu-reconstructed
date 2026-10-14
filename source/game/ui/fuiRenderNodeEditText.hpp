@@ -83,7 +83,8 @@ public:
         std::vector<HtmlImageDrawData>* activeImageData;
     };
 
-    fuiRenderNodeEditText(fuiRenderNode*, fuiRenderNode*, fuiObject*, unsigned int, unsigned char, fuiRGBA*, unsigned char, bool, fuiFile*);
+    fuiRenderNodeEditText(fuiRenderNode*, fuiRenderNode*, fuiObject*, unsigned int, unsigned char, fuiRGBA*,
+                          unsigned char, bool, fuiFile*);
     virtual ~fuiRenderNodeEditText();
     static const wchar_t* getHtmlTag(const wchar_t*, std::wstring*);
     static const wchar_t* parseHTMLString(const wchar_t*, std::wstring*);

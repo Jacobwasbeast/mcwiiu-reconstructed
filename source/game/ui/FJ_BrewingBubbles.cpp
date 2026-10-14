@@ -1,7 +1,6 @@
 #include "game/ui/FJ_BrewingBubbles.hpp"
 
-FJ_BrewingBubbles::FJ_BrewingBubbles(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_BrewingBubbles::FJ_BrewingBubbles(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     InitBarType();
     FJ_ProgressBar::GetBarFiller();

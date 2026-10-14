@@ -6,8 +6,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_IconSlot.hpp"
 
-FJ_ListButtonScoreBoard::FJ_ListButtonScoreBoard(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode)
+FJ_ListButtonScoreBoard::FJ_ListButtonScoreBoard(fuiRenderNode* renderNode) : FJ_Button(renderNode)
 {
     m_playerIcons = getChildByName("PlayerIcons")->asMovieClip();
     m_voipIcon = getChildByName("VOIP")->asMovieClip();
@@ -33,8 +32,8 @@ void FJ_ListButtonScoreBoard::SetNumIcons(int numIcons, int width, int highlight
 
     for (int i = 0; i < numIcons; ++i)
     {
-        FJ_IconSlot* slot = static_cast<FJ_IconSlot*>(FJ_Factory::createObject(
-            "fourj.listClasses.FJ_IconSlot", m_pRenderNode, true, NULL));
+        FJ_IconSlot* slot = static_cast<FJ_IconSlot*>(
+            FJ_Factory::createObject("fourj.listClasses.FJ_IconSlot", m_pRenderNode, true, NULL));
         slot->SetParams(getHeight(), m_small);
         slot->Init(std::wstring(L""));
         slot->ShowSlotHolder(false);
@@ -48,8 +47,7 @@ void FJ_ListButtonScoreBoard::SetNumIcons(int numIcons, int width, int highlight
             m_objects[j]->setVisible(isVisible());
     }
 
-    FJ_FuiNode* highlight = FJ_Factory::createObject(
-        "fourj.Misc.FJ_ExternalHighlight", m_pRenderNode, true, NULL);
+    FJ_FuiNode* highlight = FJ_Factory::createObject("fourj.Misc.FJ_ExternalHighlight", m_pRenderNode, true, NULL);
     highlight->setX(static_cast<float>(-highlightWidth) / getScaleX());
     highlight->setY(0.0f);
     highlight->setScaleX(highlight->getScaleX() / getScaleX());
@@ -60,8 +58,7 @@ void FJ_ListButtonScoreBoard::SetNumIcons(int numIcons, int width, int highlight
     highlight->setVisible(true);
     addChild(highlight);
 
-    m_externalHighlight = FJ_Factory::createObject(
-        "fourj.Misc.FJ_ExternalHighlight", m_pRenderNode, true, NULL);
+    m_externalHighlight = FJ_Factory::createObject("fourj.Misc.FJ_ExternalHighlight", m_pRenderNode, true, NULL);
     m_externalHighlight->setX(static_cast<float>(-highlightWidth) / getScaleX());
     m_externalHighlight->setY(0.0f);
     m_externalHighlight->setScaleX(m_externalHighlight->getScaleX() / getScaleX());

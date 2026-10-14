@@ -34,8 +34,7 @@ public:
     virtual void tick();
     virtual void handleDestroy();
     virtual void handleReload();
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleTimerComplete(int timerId);
     virtual void handlePress(int controlId, int childId);

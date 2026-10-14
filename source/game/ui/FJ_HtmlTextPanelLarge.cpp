@@ -8,12 +8,12 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
-FJ_HtmlTextPanelLarge::FJ_HtmlTextPanelLarge(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_HtmlTextPanelLarge::FJ_HtmlTextPanelLarge(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"))->asMovieClip();
     FJ_FuiNode* textFieldContainer = textContainer->getChildAt(0)->asMovieClip();
-    m_textField = static_cast<fuiRenderNodeEditText*>(textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField")));
+    m_textField = static_cast<fuiRenderNodeEditText*>(
+        textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField")));
     addChild(m_textField);
     m_textField->setY(textContainer->getY());
     removeChild(textContainer, true);
@@ -50,7 +50,8 @@ void FJ_HtmlTextPanelLarge::SetLabel(const std::wstring& label)
         int charHeight = static_cast<int>(charBounds.yMax - charBounds.yMin);
 
         m_textField->setX(m_pointerTextPanel->getX() + 4.0f);
-        m_pointerTextPanel->getChildAt(0)->setWidth(static_cast<float>(Math::round(m_textField->getWidth() + charHeight * 0.8f)));
+        m_pointerTextPanel->getChildAt(0)->setWidth(
+            static_cast<float>(Math::round(m_textField->getWidth() + charHeight * 0.8f)));
         m_pointerTextPanel->getChildAt(0)->setHeight(m_textField->getHeight() + charHeight);
         m_textField->setX(static_cast<float>(Math::round(m_pointerTextPanel->getX() + charHeight * 0.35f)));
         m_textField->setY(static_cast<float>(Math::round(m_pointerTextPanel->getY() + charHeight / 2)));

@@ -9,7 +9,9 @@
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
 FJ_ListButtonIconLeft::FJ_ListButtonIconLeft(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode), m_pIconPlaceholder(NULL), m_pIconPlaceholder1(NULL)
+    : FJ_Button(renderNode),
+      m_pIconPlaceholder(NULL),
+      m_pIconPlaceholder1(NULL)
 {
 }
 
@@ -40,8 +42,7 @@ void FJ_ListButtonIconLeft::SetSlotID(int slotId, bool hasSlot)
 
     char name[64];
     std::sprintf(name, "iggy_slot_%d_%d", slotId, m_id);
-    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, name);
+    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);
     removeChild(slotControl, true);
     FJ_FuiNode* node = new FJ_FuiNode(renderNode);
@@ -49,8 +50,7 @@ void FJ_ListButtonIconLeft::SetSlotID(int slotId, bool hasSlot)
     addChild(node);
 }
 
-void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
-                                            const std::wstring& textureName1)
+void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName, const std::wstring& textureName1)
 {
     if (!textureName.empty())
     {
@@ -69,11 +69,9 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
             unsigned int width;
             unsigned int height;
             bool hasAlpha = false;
-            unsigned int texture = gFui->getCustomTexture(
-                textureName, &width, &height, &hasAlpha);
+            unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasAlpha);
             fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-                getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
-                texture, true, hasAlpha);
+                getStage()->m_pRenderNode, &rect, "CustomTexture", width, height, texture, true, hasAlpha);
             m_pIconPlaceholder = new FJ_FuiNode(renderNode);
             renderNode->setFuiNode(m_pIconPlaceholder);
             iconControl->addChild(m_pIconPlaceholder);
@@ -83,10 +81,9 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
             unsigned int width;
             unsigned int height;
             bool hasAlpha = false;
-            unsigned int texture = gFui->getCustomTexture(
-                textureName, &width, &height, &hasAlpha);
-            static_cast<fuiRenderNodeCodeGenRect*>(m_pIconPlaceholder->m_pRenderNode)->setTexture(
-                width, height, texture, hasAlpha);
+            unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasAlpha);
+            static_cast<fuiRenderNodeCodeGenRect*>(m_pIconPlaceholder->m_pRenderNode)
+                ->setTexture(width, height, texture, hasAlpha);
         }
     }
 
@@ -109,11 +106,9 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
                 unsigned int width;
                 unsigned int height;
                 bool hasAlpha = false;
-                unsigned int texture = gFui->getCustomTexture(
-                    textureName1, &width, &height, &hasAlpha);
+                unsigned int texture = gFui->getCustomTexture(textureName1, &width, &height, &hasAlpha);
                 fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-                    getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
-                    texture, true, hasAlpha);
+                    getStage()->m_pRenderNode, &rect, "CustomTexture", width, height, texture, true, hasAlpha);
                 m_pIconPlaceholder1 = new FJ_FuiNode(renderNode);
                 renderNode->setFuiNode(m_pIconPlaceholder1);
                 iconControl->addChild(m_pIconPlaceholder1);
@@ -124,10 +119,9 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
             unsigned int width;
             unsigned int height;
             bool hasAlpha = false;
-            unsigned int texture = gFui->getCustomTexture(
-                textureName1, &width, &height, &hasAlpha);
-            static_cast<fuiRenderNodeCodeGenRect*>(m_pIconPlaceholder1->m_pRenderNode)->setTexture(
-                width, height, texture, hasAlpha);
+            unsigned int texture = gFui->getCustomTexture(textureName1, &width, &height, &hasAlpha);
+            static_cast<fuiRenderNodeCodeGenRect*>(m_pIconPlaceholder1->m_pRenderNode)
+                ->setTexture(width, height, texture, hasAlpha);
         }
     }
 }

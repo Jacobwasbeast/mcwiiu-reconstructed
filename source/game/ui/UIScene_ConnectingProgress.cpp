@@ -20,8 +20,7 @@
 #include "game/core/GameSettings.hpp"
 #include "vendor/_ConnectionProgressParams.hpp"
 
-UIScene_ConnectingProgress::UIScene_ConnectingProgress(int type, void* data, UILayer* layer)
-    : UIScene(type, layer)
+UIScene_ConnectingProgress::UIScene_ConnectingProgress(int type, void* data, UILayer* layer) : UIScene(type, layer)
 {
     _ConnectionProgressParams* params = static_cast<_ConnectionProgressParams*>(data);
 
@@ -88,8 +87,8 @@ void UIScene_ConnectingProgress::setMiniGameLogoTexture()
 {
     const MiniGameDef* game = Minecraft::GetInstance()->GetMiniGame();
     std::wstring icon = (game->GetId() == eMiniGameId_Any || game->GetId() == eMiniGameId_Lobby)
-        ? Minecraft::GetInstance()->GetFirstMiniGame()->getIcon()
-        : game->getIcon();
+                            ? Minecraft::GetInstance()->GetFirstMiniGame()->getIcon()
+                            : game->getIcon();
 
     if (gApp.hasArchiveFile(icon, false))
     {
@@ -172,8 +171,7 @@ void UIScene_ConnectingProgress::tick()
     if (m_removeLocalPlayer)
         removeLocalPlayer();
 
-    if (!m_miniGameLogoSet && m_movie != NULL &&
-        Minecraft::GetInstance()->GetMiniGame()->GetId() != eMiniGameId_Any)
+    if (!m_miniGameLogoSet && m_movie != NULL && Minecraft::GetInstance()->GetMiniGame()->GetId() != eMiniGameId_Any)
     {
         SetLoadingScreenType(1);
         setMiniGameLogoTexture();
@@ -199,8 +197,8 @@ void UIScene_ConnectingProgress::handleReload()
 void UIScene_ConnectingProgress::updateTooltips()
 {
     int cancelTooltip = m_showTooltips ? static_cast<int>(IDS_TOOLTIPS_CANCEL_JOIN) : -1;
-    gConsoleUIController.SetTooltips(m_playerId, -1, cancelTooltip, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, -1, cancelTooltip, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, false, false);
 }
 
 void UIScene_ConnectingProgress::handleGainFocus(bool navigatedBack)
@@ -228,19 +226,45 @@ void UIScene_ConnectingProgress::handleTimerComplete(int)
     int message;
     switch (minecraft->mDisconnectReasons[m_playerId])
     {
-    case DisconnectPacket::eDisconnectReason_LoginTooLong:                 message = IDS_DISCONNECTED_LOGIN_TOO_LONG; break;
-    case DisconnectPacket::eDisconnectReason_GameFull:                     message = IDS_DISCONNECTED_SERVER_FULL; break;
-    case DisconnectPacket::eDisconnectReason_HostOutOfDate:                message = IDS_DISCONNECTED_SERVER_OLD; break;
-    case DisconnectPacket::eDisconnectReason_ClientOutOfDate:              message = IDS_DISCONNECTED_CLIENT_OLD; break;
-    case DisconnectPacket::eDisconnectReason_Kicked:                       message = IDS_DISCONNECTED_KICKED; break;
-    case DisconnectPacket::eDisconnectReason_ContentRestrictedSingleLocal: message = STRING_JOIN_LOCAL_PLAYER_CONTENT_RESTRICTED; break;
-    case DisconnectPacket::eDisconnectReason_ContentRestrictedAllLocal:    message = STRING_JOIN_CONTENT_PRIVILEGE_TOO_RESTRICTIVE; break;
-    case DisconnectPacket::eDisconnectReason_NoFlying:                     message = IDS_DISCONNECTED_FLYING; break;
-    case DisconnectPacket::eDisconnectReason_Quit:                         message = IDS_DISCONNECTED_SERVER_QUIT; break;
-    case DisconnectPacket::eDisconnectReason_MiiInUse:                     message = STRING_MII_ALREADY_IN_USE; break;
-    case DisconnectPacket::eDisconnectReason_CannotJoinGame:               message = STRING_CANNOT_JOIN_GAME; break;
-    case DisconnectPacket::eDisconnectReason_NoSuitableGame:               message = STRING_NO_SUITABLE_GAME_TO_JOIN; break;
-    default:                                                               message = IDS_CONNECTION_LOST_SERVER; break;
+    case DisconnectPacket::eDisconnectReason_LoginTooLong:
+        message = IDS_DISCONNECTED_LOGIN_TOO_LONG;
+        break;
+    case DisconnectPacket::eDisconnectReason_GameFull:
+        message = IDS_DISCONNECTED_SERVER_FULL;
+        break;
+    case DisconnectPacket::eDisconnectReason_HostOutOfDate:
+        message = IDS_DISCONNECTED_SERVER_OLD;
+        break;
+    case DisconnectPacket::eDisconnectReason_ClientOutOfDate:
+        message = IDS_DISCONNECTED_CLIENT_OLD;
+        break;
+    case DisconnectPacket::eDisconnectReason_Kicked:
+        message = IDS_DISCONNECTED_KICKED;
+        break;
+    case DisconnectPacket::eDisconnectReason_ContentRestrictedSingleLocal:
+        message = STRING_JOIN_LOCAL_PLAYER_CONTENT_RESTRICTED;
+        break;
+    case DisconnectPacket::eDisconnectReason_ContentRestrictedAllLocal:
+        message = STRING_JOIN_CONTENT_PRIVILEGE_TOO_RESTRICTIVE;
+        break;
+    case DisconnectPacket::eDisconnectReason_NoFlying:
+        message = IDS_DISCONNECTED_FLYING;
+        break;
+    case DisconnectPacket::eDisconnectReason_Quit:
+        message = IDS_DISCONNECTED_SERVER_QUIT;
+        break;
+    case DisconnectPacket::eDisconnectReason_MiiInUse:
+        message = STRING_MII_ALREADY_IN_USE;
+        break;
+    case DisconnectPacket::eDisconnectReason_CannotJoinGame:
+        message = STRING_CANNOT_JOIN_GAME;
+        break;
+    case DisconnectPacket::eDisconnectReason_NoSuitableGame:
+        message = STRING_NO_SUITABLE_GAME_TO_JOIN;
+        break;
+    default:
+        message = IDS_CONNECTION_LOST_SERVER;
+        break;
     }
 
     if (m_playerId != gProfile->GetPrimaryPad() && CGameNetworkManager::sInstance.IsInSession())
@@ -260,7 +284,7 @@ void UIScene_ConnectingProgress::handleTimerComplete(int)
     }
     else
     {
-        int parameters[1] = { IDS_CONFIRM_OK };
+        int parameters[1] = {IDS_CONFIRM_OK};
         gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_FAILED, message, parameters, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
     }
@@ -274,8 +298,8 @@ std::wstring UIScene_ConnectingProgress::getMoviePath()
     return L"FullscreenProgress";
 }
 
-void UIScene_ConnectingProgress::handleInput(int playerId, int action, bool repeat,
-                                             bool pressed, bool released, bool& handled)
+void UIScene_ConnectingProgress::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
+                                             bool& handled)
 {
     if (m_showTooltips)
     {

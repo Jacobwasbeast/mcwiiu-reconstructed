@@ -66,8 +66,7 @@ public:
     void handleScale(bool increase);
     void handleZoom(bool zoomOut);
     void handleNavigate(ENavDir direction);
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual UIControl* GetMainPanel();
     virtual int getSceneType();
     void SetMapNavigator(int x, int z, int scale);

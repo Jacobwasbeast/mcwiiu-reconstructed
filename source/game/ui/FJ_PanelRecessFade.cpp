@@ -1,7 +1,6 @@
 #include "game/ui/FJ_PanelRecessFade.hpp"
 
-FJ_PanelRecessFade::FJ_PanelRecessFade(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_PanelRecessFade::FJ_PanelRecessFade(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     float width = getWidth();
     float height = getHeight();
@@ -28,4 +27,3 @@ unsigned int FJ_PanelRecessFade::getType()
 {
     return 0x80b2;
 }
-

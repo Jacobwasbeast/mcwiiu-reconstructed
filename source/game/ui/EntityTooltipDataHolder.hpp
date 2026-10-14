@@ -16,10 +16,8 @@ public:
     bool m_bAllowedToHurt;
     bool m_bAllowedToInteract;
 
-    EntityTooltipDataHolder(boost::shared_ptr<MultiplayerLocalPlayer> pPlayer,
-                            not_null_ptr<ItemInstance> pItemInstance,
-                            bool bAllowedToHurt,
-                            bool bAllowedToInteract);
+    EntityTooltipDataHolder(boost::shared_ptr<MultiplayerLocalPlayer> pPlayer, not_null_ptr<ItemInstance> pItemInstance,
+                            bool bAllowedToHurt, bool bAllowedToInteract);
 };
 
 #endif

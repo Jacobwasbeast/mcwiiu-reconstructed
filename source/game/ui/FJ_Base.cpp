@@ -40,7 +40,9 @@ FJ_Base::FJ_Base(fuiRenderNode* renderNode) : FJ_FuiNode(renderNode)
     CorrectPixelPosition();
 }
 
-FJ_Base::~FJ_Base() {}
+FJ_Base::~FJ_Base()
+{
+}
 
 void FJ_Base::CheckLabelWidths(std::vector<std::wstring>& labels)
 {
@@ -50,9 +52,15 @@ void FJ_Base::CheckLabelWidths(std::vector<std::wstring>& labels)
     }
 }
 
-FJ_Base* FJ_Base::getObjListParent() { return static_cast<FJ_Base*>(m_objListParent); }
+FJ_Base* FJ_Base::getObjListParent()
+{
+    return static_cast<FJ_Base*>(m_objListParent);
+}
 
-uint32_t FJ_Base::getId() { return static_cast<uint32_t>(m_id); }
+uint32_t FJ_Base::getId()
+{
+    return static_cast<uint32_t>(m_id);
+}
 
 void FJ_Base::LostFocus()
 {
@@ -67,16 +75,46 @@ void FJ_Base::LostFocus()
     }
 }
 
-uint32_t FJ_Base::getNewWidth() { return static_cast<uint32_t>(m_newWidth); }
-void FJ_Base::ResizingComplete() { m_resizing = true; }
-void FJ_Base::ResetResizing() { m_resizing = false; }
-void FJ_Base::setObjListParent(FJ_FuiNode* parent) { m_objListParent = parent; }
-uint32_t FJ_Base::getListId() { return static_cast<uint32_t>(m_listId); }
-void FJ_Base::setListId(int id) { m_listId = id; }
-void FJ_Base::setPreScaleWidth(int width) { m_preScaleWidth = width; }
-void FJ_Base::setId(int id) { m_id = id; }
-uint8_t FJ_Base::getLabelTooWide() { return m_labelTooWide ? 1 : 0; }
-int FJ_Base::getOldWidth() { return static_cast<int>(getWidth()); }
+uint32_t FJ_Base::getNewWidth()
+{
+    return static_cast<uint32_t>(m_newWidth);
+}
+void FJ_Base::ResizingComplete()
+{
+    m_resizing = true;
+}
+void FJ_Base::ResetResizing()
+{
+    m_resizing = false;
+}
+void FJ_Base::setObjListParent(FJ_FuiNode* parent)
+{
+    m_objListParent = parent;
+}
+uint32_t FJ_Base::getListId()
+{
+    return static_cast<uint32_t>(m_listId);
+}
+void FJ_Base::setListId(int id)
+{
+    m_listId = id;
+}
+void FJ_Base::setPreScaleWidth(int width)
+{
+    m_preScaleWidth = width;
+}
+void FJ_Base::setId(int id)
+{
+    m_id = id;
+}
+uint8_t FJ_Base::getLabelTooWide()
+{
+    return m_labelTooWide ? 1 : 0;
+}
+int FJ_Base::getOldWidth()
+{
+    return static_cast<int>(getWidth());
+}
 
 void FJ_Base::CorrectPixelPosition()
 {
@@ -139,7 +177,10 @@ void FJ_Base::CheckLabelWidth(const std::wstring& label)
     field->setText(std::wstring(L" "));
 }
 
-void FJ_Base::SetLabelAlignment(int alignment) { m_labelAlignment = alignment; }
+void FJ_Base::SetLabelAlignment(int alignment)
+{
+    m_labelAlignment = alignment;
+}
 
 void FJ_Base::DoManualWordWrapCheck(FJ_FuiNode* container, fuiRenderNodeEditText* field)
 {
@@ -214,7 +255,8 @@ void FJ_Base::DoManualWordWrapCheck(FJ_FuiNode* container, fuiRenderNodeEditText
         widthDelta = (secondWidth - firstWidth) / 2;
     else if (secondWidth < firstWidth)
         widthDelta = (firstWidth - secondWidth) / 2;
-    int padding = Math::round(static_cast<float>(widthDelta) / static_cast<float>(static_cast<int>(field->m_textWidth)));
+    int padding = Math::round(static_cast<float>(widthDelta)
+                              / static_cast<float>(static_cast<int>(field->m_textWidth)));
     std::wstring spaces = std::wstring(L"");
     for (int i = 0; i < padding; ++i)
         spaces.append(L" ");
@@ -292,14 +334,14 @@ void FJ_Base::DoEllipsisCheck(FJ_FuiNode* container, fuiRenderNodeEditText* fiel
         suffixAllowance = 0;
         limitWidth = m_ellipsisWidthOverride;
     }
-    if (static_cast<float>(limitWidth) < static_cast<float>(offset) + field->m_textWidth + static_cast<float>(suffixAllowance))
+    if (static_cast<float>(limitWidth)
+        < static_cast<float>(offset) + field->m_textWidth + static_cast<float>(suffixAllowance))
     {
         const float targetWidth = static_cast<float>(limitWidth - offset - suffixAllowance);
         do
         {
             field->setText(field->getText().substr(0, field->getText().size() - 1));
-        }
-        while (targetWidth < field->m_textWidth);
+        } while (targetWidth < field->m_textWidth);
         field->setText(field->getText().substr(0, field->getText().size() - 3));
         m_label = field->getText() + L"...";
         field->setText(m_label);
@@ -352,7 +394,8 @@ void FJ_Base::SetLabel(const std::wstring& label)
         DoManualWordWrapCheck(container, field);
         int heightAfter = static_cast<int>(field->m_textHeight);
         if (m_autoGrowHeight && heightBefore < heightAfter)
-            SetNewObjectHeight(static_cast<int>(getHeight() + static_cast<float>(heightAfter) - static_cast<float>(heightBefore)));
+            SetNewObjectHeight(
+                static_cast<int>(getHeight() + static_cast<float>(heightAfter) - static_cast<float>(heightBefore)));
         if (!m_manualWrap && m_multilineWrap)
             DoMultilineWordWrap(container, field);
     }
@@ -432,7 +475,10 @@ void FJ_Base::SetLabel(const std::wstring& label)
     }
 }
 
-const std::wstring& FJ_Base::GetLabel() { return m_label; }
+const std::wstring& FJ_Base::GetLabel()
+{
+    return m_label;
+}
 
 void FJ_Base::SetTextOnly(const std::wstring& text)
 {
@@ -489,5 +535,10 @@ void FJ_Base::SetNewObjectHeight(int height)
     }
 }
 
-void FJ_Base::HandleCharInput(unsigned int) {}
-uint32_t FJ_Base::getType() { return 0x8000; }
+void FJ_Base::HandleCharInput(unsigned int)
+{
+}
+uint32_t FJ_Base::getType()
+{
+    return 0x8000;
+}

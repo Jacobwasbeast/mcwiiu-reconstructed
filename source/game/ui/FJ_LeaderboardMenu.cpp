@@ -9,8 +9,7 @@
 #include "game/ui/FJ_LeaderboardList.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_LeaderboardMenu::FJ_LeaderboardMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_LeaderboardMenu::FJ_LeaderboardMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

@@ -5,8 +5,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
-FJ_TexturePackList_Slot::FJ_TexturePackList_Slot(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_TexturePackList_Slot::FJ_TexturePackList_Slot(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     m_pSlotOutline = getChildByName("Slot_Outline")->asMovieClip();
     m_pSlotOutline->setVisible(false);
@@ -35,8 +34,7 @@ void FJ_TexturePackList_Slot::SetTextureName(const std::wstring& textureName)
     bool hasTexture = false;
     unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
-        texture, true, hasTexture);
+        getStage()->m_pRenderNode, &rect, "CustomTexture", width, height, texture, true, hasTexture);
     FJ_FuiNode* customTexture = new FJ_FuiNode(renderNode);
     renderNode->setFuiNode(customTexture);
     addChild(customTexture);

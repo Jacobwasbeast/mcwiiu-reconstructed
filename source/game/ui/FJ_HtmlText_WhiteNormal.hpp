@@ -8,7 +8,6 @@ class fuiRenderNode;
 class FJ_HtmlText_WhiteNormal : public FJ_HtmlText
 {
 private:
-
 public:
     FJ_HtmlText_WhiteNormal(fuiRenderNode* pRenderNode);
     static FJ_HtmlText* Create(fuiRenderNode* pRenderNode);

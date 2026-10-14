@@ -3,7 +3,9 @@
 #include "game/ui/FJ_ListButtonIconLeft.hpp"
 
 FJ_List_ListButtonIconLeft::FJ_List_ListButtonIconLeft(fuiRenderNode* renderNode)
-    : FJ_List(renderNode), m_useLayerIcon(false), m_useIggyIcons(false)
+    : FJ_List(renderNode),
+      m_useLayerIcon(false),
+      m_useIggyIcons(false)
 {
 }
 
@@ -12,19 +14,16 @@ void FJ_List_ListButtonIconLeft::UseIggyIcons()
     m_useIggyIcons = true;
 }
 
-void FJ_List_ListButtonIconLeft::addNewItem(const std::wstring& label, int id,
-                                            const std::wstring& textureName,
+void FJ_List_ListButtonIconLeft::addNewItem(const std::wstring& label, int id, const std::wstring& textureName,
                                             const std::wstring& textureName1)
 {
     const char* objectName;
     if (m_checkboxTick)
-        objectName = m_useLayerIcon
-            ? "fourj.Buttons.FJ_ListButtonIconX2Left_Small"
-            : "fourj.Buttons.FJ_ListButtonIconLeft_Small";
+        objectName = m_useLayerIcon ? "fourj.Buttons.FJ_ListButtonIconX2Left_Small"
+                                    : "fourj.Buttons.FJ_ListButtonIconLeft_Small";
     else
-        objectName = m_useLayerIcon
-            ? "fourj.Buttons.FJ_ListButtonIconX2Left_Normal"
-            : "fourj.Buttons.FJ_ListButtonIconLeft_Normal";
+        objectName = m_useLayerIcon ? "fourj.Buttons.FJ_ListButtonIconX2Left_Normal"
+                                    : "fourj.Buttons.FJ_ListButtonIconLeft_Normal";
 
     FJ_ListButtonIconLeft* item = static_cast<FJ_ListButtonIconLeft*>(
         FJ_Factory::createObject(objectName, m_pRenderNode, true, NULL));
@@ -38,8 +37,7 @@ void FJ_List_ListButtonIconLeft::addNewItem(const std::wstring& label, int id,
         item->SetTextureName(textureName, textureName1);
 }
 
-void FJ_List_ListButtonIconLeft::SetTextureName(int index,
-                                                  const std::wstring& textureName)
+void FJ_List_ListButtonIconLeft::SetTextureName(int index, const std::wstring& textureName)
 {
     FJ_ListButtonIconLeft* item = static_cast<FJ_ListButtonIconLeft*>(ReturnItem(index));
     if (item != NULL)

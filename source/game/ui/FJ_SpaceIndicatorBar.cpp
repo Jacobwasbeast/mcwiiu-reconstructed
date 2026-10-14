@@ -3,8 +3,7 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
-FJ_SpaceIndicatorBar::FJ_SpaceIndicatorBar(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode)
+FJ_SpaceIndicatorBar::FJ_SpaceIndicatorBar(fuiRenderNode* renderNode) : FJ_Base(renderNode)
 {
     GetBarFiller();
 
@@ -15,16 +14,16 @@ FJ_SpaceIndicatorBar::FJ_SpaceIndicatorBar(fuiRenderNode* renderNode)
     rect.yMin = 0.0f;
     rect.xMax = m_saveBar->getWidth();
     rect.yMax = m_saveBar->getHeight();
-    fuiRenderNodeCodeGenRect* greenNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, "fillerMask_Green");
+    fuiRenderNodeCodeGenRect* greenNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect,
+                                                                       "fillerMask_Green");
     m_saveGameFiller = new FJ_FuiNode(greenNode);
     greenNode->setFuiNode(m_saveGameFiller);
     m_saveBar->addMask(m_saveGameFiller);
 
     rect.xMax = m_saveBarFiller->getWidth();
     rect.yMax = m_saveBarFiller->getHeight();
-    fuiRenderNodeCodeGenRect* yellowNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, "fillerMask_Yellow");
+    fuiRenderNodeCodeGenRect* yellowNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect,
+                                                                        "fillerMask_Yellow");
     m_totalFiller = new FJ_FuiNode(yellowNode);
     yellowNode->setFuiNode(m_totalFiller);
     m_saveBarFiller->addMask(m_totalFiller);

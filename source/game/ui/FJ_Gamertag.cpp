@@ -4,8 +4,7 @@
 #include "game/ui/FJ_Label.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Gamertag::FJ_Gamertag(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_Gamertag::FJ_Gamertag(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

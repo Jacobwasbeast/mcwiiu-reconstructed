@@ -9,13 +9,11 @@
 #include "game/ui/fuiRenderNodeTimeline.hpp"
 #include "game/util/Math.hpp"
 
-static std::string s_buttonStates[4][2] =
-{
-    { std::string("Active_First_Selected", 21), std::string("Inactive_Selected", 17) },
-    { std::string("Active_Selected", 15), std::string("Inactive_Selected", 17) },
-    { std::string("Active_Unselected", 17), std::string("Inactive_Unselected", 19) },
-    { std::string("Active_Pressed", 14), std::string("Inactive_Selected", 17) }
-};
+static std::string s_buttonStates[4][2] = {
+    {std::string("Active_First_Selected", 21), std::string("Inactive_Selected", 17)},
+    {std::string("Active_Selected", 15), std::string("Inactive_Selected", 17)},
+    {std::string("Active_Unselected", 17), std::string("Inactive_Unselected", 19)},
+    {std::string("Active_Pressed", 14), std::string("Inactive_Selected", 17)}};
 
 class FJ_ButtonRenderNodeAccess : public fuiRenderNode
 {
@@ -30,11 +28,20 @@ public:
 };
 
 FJ_Button::FJ_Button(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_buttonPressed(false), m_showOutline(false), m_enabled(true),
-      m_keyDownDelegate(0), m_focused(false),
-      m_hiddenUntilInit(false), m_hasSecondaryText(false), m_secondaryText(),
-      m_secondaryWidth(-1.0f), m_secondaryX(-1.0f), m_updateLabelDelegate(0),
-      m_secondaryHtml(false), m_secondaryAutoSize(false)
+    : FJ_Base(renderNode),
+      m_buttonPressed(false),
+      m_showOutline(false),
+      m_enabled(true),
+      m_keyDownDelegate(0),
+      m_focused(false),
+      m_hiddenUntilInit(false),
+      m_hasSecondaryText(false),
+      m_secondaryText(),
+      m_secondaryWidth(-1.0f),
+      m_secondaryX(-1.0f),
+      m_updateLabelDelegate(0),
+      m_secondaryHtml(false),
+      m_secondaryAutoSize(false)
 {
     ChangeState(2);
     ToggleOutline(false);
@@ -44,7 +51,10 @@ FJ_Button::FJ_Button(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_KeyUp, this, _keyUpHandler, false);
 }
 
-void FJ_Button::setButtonPressed(bool pressed) { m_buttonPressed = pressed; }
+void FJ_Button::setButtonPressed(bool pressed)
+{
+    m_buttonPressed = pressed;
+}
 
 void FJ_Button::ChangeState(int state)
 {
@@ -131,7 +141,10 @@ void FJ_Button::HideUntilInit()
     m_hiddenUntilInit = true;
 }
 
-void FJ_Button::HandleUpdateLabel(FJ_Event*) { UpdateLabel(); }
+void FJ_Button::HandleUpdateLabel(FJ_Event*)
+{
+    UpdateLabel();
+}
 
 void FJ_Button::_HandleUpdateLabel(FJ_FuiNode* node, FJ_Event* event)
 {
@@ -203,7 +216,8 @@ void FJ_Button::SetSecondaryText(const std::wstring& text, bool html, bool autoS
         movieClip->setY(0.0f);
     if (!html)
     {
-        field->setX(static_cast<float>(Math::round((m_secondaryWidth / getScaleX() - field->getWidth()) * 0.5f + m_centerBiasX)));
+        field->setX(static_cast<float>(
+            Math::round((m_secondaryWidth / getScaleX() - field->getWidth()) * 0.5f + m_centerBiasX)));
         field->setY(static_cast<float>(Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f)));
     }
     else
@@ -235,7 +249,10 @@ void FJ_Button::UpdateLabel()
         m_updateLabelDelegate(this);
 }
 
-void FJ_Button::SetLabel(const std::wstring& label) { FJ_Base::SetLabel(label); }
+void FJ_Button::SetLabel(const std::wstring& label)
+{
+    FJ_Base::SetLabel(label);
+}
 
 void FJ_Button::AdjustDisabledTint()
 {

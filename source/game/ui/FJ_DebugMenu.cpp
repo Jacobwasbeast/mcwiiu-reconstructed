@@ -1,7 +1,6 @@
 #include "game/ui/FJ_DebugMenu.hpp"
 
-FJ_DebugMenu::FJ_DebugMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_DebugMenu::FJ_DebugMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

@@ -2,8 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_MenuButton_Normal::FJ_MenuButton_Normal(fuiRenderNode* renderNode)
-    : FJ_MenuButton(renderNode)
+FJ_MenuButton_Normal::FJ_MenuButton_Normal(fuiRenderNode* renderNode) : FJ_MenuButton(renderNode)
 {
 }
 

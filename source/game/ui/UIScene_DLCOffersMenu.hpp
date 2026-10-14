@@ -22,14 +22,12 @@ public:
     virtual ~UIScene_DLCOffersMenu();
 
     virtual unsigned int mapElementsAndNames();
-    static uint32_t ExitDLCOffersMenu(void* context, int pad,
-                                      C4JStorage::EMessageResult result);
+    static uint32_t ExitDLCOffersMenu(void* context, int pad, C4JStorage::EMessageResult result);
     uint32_t UpdateDisplay(cProductInfo* product);
     virtual void tick();
     virtual void updateTooltips();
     virtual std::wstring getMoviePath();
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed,
-                             bool released, bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handlePress(int controlId, int childId);
     virtual void handleSelectionChanged(int selection);
     virtual void handleFocusChange(int focus, int childFocus);

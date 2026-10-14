@@ -39,16 +39,27 @@
 #include "game/core/PIXNamedEvents.hpp"
 
 UIScene_GameModeScoreboardMenu::UIScene_GameModeScoreboardMenu(int type, void* data, UILayer* layer)
-    : IUIScene_PlayerList(), UIScene(type, layer), m_awardPanel(), m_mainPanel(), m_killBar(),
-      m_playerTitleLabel(), m_stat1Label(), m_stat2Label(), m_stat3Label(), m_stat4Label(), m_stat5Label(),
-      m_killedByLabel(), m_gamertagLabel()
+    : IUIScene_PlayerList(),
+      UIScene(type, layer),
+      m_awardPanel(),
+      m_mainPanel(),
+      m_killBar(),
+      m_playerTitleLabel(),
+      m_stat1Label(),
+      m_stat2Label(),
+      m_stat3Label(),
+      m_stat4Label(),
+      m_stat5Label(),
+      m_killedByLabel(),
+      m_gamertagLabel()
 {
     m_statsPending = false;
     int* options = static_cast<int*>(data);
     initialiseMovie();
     m_scoreboardType = static_cast<EScoreboardType>(options[1]);
     delete options;
-    m_canKickPlayers = !CGameNetworkManager::sInstance.IsInPublicJoinableGame() || m_scoreboardType == EScoreboardType_Award;
+    m_canKickPlayers = !CGameNetworkManager::sInstance.IsInPublicJoinableGame()
+                       || m_scoreboardType == EScoreboardType_Award;
     m_canVoteToKick = 0;
     if (m_scoreboardType == EScoreboardType_Award && !GetScoreboard()->HasStats())
         m_scoreboardType = EScoreboardType_Scoreboard;
@@ -62,8 +73,8 @@ UIScene_GameModeScoreboardMenu::UIScene_GameModeScoreboardMenu(int type, void* d
         m_scoreboardLayout = new MG04ScoreboardLayout();
     else
         m_scoreboardLayout = new MG01ScoreboardLayout(m_scoreboardType);
-    CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(
-        m_playerId, IUIScene_PlayerList::OnPlayerChanged, this);
+    CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, IUIScene_PlayerList::OnPlayerChanged,
+                                                                 this);
     handleReload();
 }
 
@@ -165,8 +176,7 @@ void UIScene_GameModeScoreboardMenu::registerTexture(int index)
         arrayWithLength<unsigned char> data = gApp.getArchiveFile(std::wstring(path), false);
         if (data.length != 0 && data.data != 0)
         {
-            registerSubstitutionTexture(std::wstring(IScoreboardLayout::getIcon(index)), data.data,
-                                        data.length, true);
+            registerSubstitutionTexture(std::wstring(IScoreboardLayout::getIcon(index)), data.data, data.length, true);
             m_registeredTextures[index] = 1;
         }
     }
@@ -237,12 +247,17 @@ void UIScene_GameModeScoreboardMenu::InitialiseScoreboard(INetworkPlayer* player
         m_killBar.setProgress(100);
         UpdateStats(uid);
     }
-    SetStatIconTextureName(1, std::wstring(IScoreboardLayout::getIcon(m_scoreboardLayout->getStatIcon2(m_scoreboardType))));
-    SetStatIconTextureName(2, std::wstring(IScoreboardLayout::getIcon(m_scoreboardLayout->getStatIcon3(m_scoreboardType))));
-    SetStatIconTextureName(3, std::wstring(IScoreboardLayout::getIcon(m_scoreboardLayout->getStatIcon4(m_scoreboardType))));
-    SetStatIconTextureName(4, std::wstring(IScoreboardLayout::getIcon(m_scoreboardLayout->getStatIcon5(m_scoreboardType))));
+    SetStatIconTextureName(
+        1, std::wstring(IScoreboardLayout::getIcon(m_scoreboardLayout->getStatIcon2(m_scoreboardType))));
+    SetStatIconTextureName(
+        2, std::wstring(IScoreboardLayout::getIcon(m_scoreboardLayout->getStatIcon3(m_scoreboardType))));
+    SetStatIconTextureName(
+        3, std::wstring(IScoreboardLayout::getIcon(m_scoreboardLayout->getStatIcon4(m_scoreboardType))));
+    SetStatIconTextureName(
+        4, std::wstring(IScoreboardLayout::getIcon(m_scoreboardLayout->getStatIcon5(m_scoreboardType))));
     for (int column = 0; column < m_columnCount; ++column)
-        SetTitleIconTextureName(column, std::wstring(IScoreboardLayout::getIcon(static_cast<int>(m_scoreboardLayout->getTitleIcon(column, m_scoreboardType)))));
+        SetTitleIconTextureName(column, std::wstring(IScoreboardLayout::getIcon(static_cast<int>(
+                                            m_scoreboardLayout->getTitleIcon(column, m_scoreboardType)))));
 
     int selectedPlayer = -1;
     for (unsigned int index = 0; index < static_cast<unsigned int>(m_scoreboardLayout->GetPlayerCount()); ++index)
@@ -259,8 +274,8 @@ void UIScene_GameModeScoreboardMenu::InitialiseScoreboard(INetworkPlayer* player
         if (m_scoreboardType == EScoreboardType_Scoreboard)
         {
             int icon = m_scoreboardLayout->GetEndBarIcon(m_scoreboardLayout->GetPlayer(index));
-            m_playerList.SetSlotTextureName(index, m_columnCount - 1,
-                                            std::wstring(IScoreboardLayout::getIcon(icon)), true);
+            m_playerList.SetSlotTextureName(index, m_columnCount - 1, std::wstring(IScoreboardLayout::getIcon(icon)),
+                                            true);
         }
         else
         {
@@ -278,8 +293,7 @@ void UIScene_GameModeScoreboardMenu::InitialiseScoreboard(INetworkPlayer* player
                                                 std::wstring(IScoreboardLayout::getIcon(0x6e)), true);
             }
         }
-        m_playerList.setSlotsText(index,
-                                  m_scoreboardLayout->GetRowLabel(0, playerUid, m_scoreboardType),
+        m_playerList.setSlotsText(index, m_scoreboardLayout->GetRowLabel(0, playerUid, m_scoreboardType),
                                   m_scoreboardLayout->GetRowLabel(1, playerUid, m_scoreboardType),
                                   m_scoreboardLayout->GetRowLabel(2, playerUid, m_scoreboardType),
                                   m_scoreboardLayout->GetRowLabel(3, playerUid, m_scoreboardType),
@@ -351,8 +365,8 @@ void UIScene_GameModeScoreboardMenu::tick()
             }
             int progress = 100;
             if (totalRoundLength != 0)
-                progress = static_cast<int>(static_cast<float>(totalLifeSpan) /
-                                            static_cast<float>(totalRoundLength) * 100.0f);
+                progress = static_cast<int>(static_cast<float>(totalLifeSpan) / static_cast<float>(totalRoundLength)
+                                            * 100.0f);
             std::wstring details = L10N::GetString(0x6f5446df);
             details += _toString(progress);
             details += L"%";
@@ -421,8 +435,8 @@ void UIScene_GameModeScoreboardMenu::updateTooltips()
         partyTooltip = -1;
 
     int selected = static_cast<int>(m_playerList.getCurrentSelection());
-    if (selected >= 0 && selected < m_scoreboardLayout->GetPlayerCount() &&
-        m_scoreboardLayout->doesExist(static_cast<unsigned int>(selected)))
+    if (selected >= 0 && selected < m_scoreboardLayout->GetPlayerCount()
+        && m_scoreboardLayout->doesExist(static_cast<unsigned int>(selected)))
     {
         unsigned int index = static_cast<unsigned int>(selected);
         INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(
@@ -434,16 +448,15 @@ void UIScene_GameModeScoreboardMenu::updateTooltips()
         else
             viewTooltip = static_cast<int>(IDS_TOOLTIPS_VIEW_GAMERCARD);
     }
-    gConsoleUIController.SetTooltips(m_playerId, kickTooltip, IDS_TOOLTIPS_BACK, partyTooltip,
-                                     viewTooltip, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, kickTooltip, IDS_TOOLTIPS_BACK, partyTooltip, viewTooltip, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_GameModeScoreboardMenu::handleGainFocus(bool hadFocus)
 {
     if (hadFocus)
-        CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(
-            m_playerId, IUIScene_PlayerList::OnPlayerChanged, this);
+        CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, IUIScene_PlayerList::OnPlayerChanged,
+                                                                     this);
 }
 
 UIControl* UIScene_GameModeScoreboardMenu::GetMainPanel()
@@ -459,13 +472,14 @@ void UIScene_GameModeScoreboardMenu::customDraw(const char* name, fuiRect* rect)
     wchar_t slotName[64];
     mbstowcs(slotName, name, 64);
     IScoreboardLayout* layout = m_scoreboardLayout;
-    not_null_ptr<ItemInstance> item =
-        layout->getItemForSlot(slotName, m_playerList.getCurrentSelection(), m_scoreboardType);
+    not_null_ptr<ItemInstance> item = layout->getItemForSlot(slotName, m_playerList.getCurrentSelection(),
+                                                             m_scoreboardType);
     if (!item->isEmpty())
         customDrawSlotControlFui(rect, m_playerId, item, 1.0f, item->getItem()->isFoil(item), false, false);
 }
 
-void UIScene_GameModeScoreboardMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
+void UIScene_GameModeScoreboardMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
+                                                 bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
@@ -506,8 +520,8 @@ void UIScene_GameModeScoreboardMenu::handleInput(int playerId, int action, bool 
 
 void UIScene_GameModeScoreboardMenu::handleDestroy()
 {
-    CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(
-        m_playerId, IUIScene_PlayerList::OnPlayerChanged, this);
+    CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(m_playerId, IUIScene_PlayerList::OnPlayerChanged,
+                                                                   this);
     m_layer->showComponent(m_playerId, EUIScene_MenuBackground, false);
 }
 
@@ -549,8 +563,8 @@ void UIScene_GameModeScoreboardMenu::handleReload()
 
 void UIScene_GameModeScoreboardMenu::handlePress(int controlId, int childId)
 {
-    if (controlId == 0 && (m_canKickPlayers || m_canVoteToKick) && childId >= 0 &&
-        childId < m_scoreboardLayout->GetPlayerCount())
+    if (controlId == 0 && (m_canKickPlayers || m_canVoteToKick) && childId >= 0
+        && childId < m_scoreboardLayout->GetPlayerCount())
     {
         if (m_scoreboardLayout->doesExist(static_cast<unsigned int>(childId)))
         {
@@ -560,14 +574,13 @@ void UIScene_GameModeScoreboardMenu::handlePress(int controlId, int childId)
             {
                 unsigned char* smallId = new unsigned char(0);
                 *smallId = m_scoreboardLayout->getSmallIDOfPlayerAt(static_cast<unsigned int>(childId));
-                int parameters[2] = { static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL) };
+                int parameters[2] = {static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL)};
                 int message = IDS_UNLOCK_KICK_PLAYER;
                 if (Minecraft::InMiniGame(eMiniGameId_Any, true))
                     message = IDS_UNLOCK_KICK_PLAYER_MINIGAMES;
-                gConsoleUIController.RequestAlertMessage(
-                    IDS_UNLOCK_KICK_PLAYER_TITLE, message, parameters, 2, m_playerId,
-                    IUIScene_PlayerList::KickPlayerReturned,
-                    smallId, 0, true);
+                gConsoleUIController.RequestAlertMessage(IDS_UNLOCK_KICK_PLAYER_TITLE, message, parameters, 2,
+                                                         m_playerId, IUIScene_PlayerList::KickPlayerReturned, smallId,
+                                                         0, true);
             }
         }
     }
@@ -581,8 +594,8 @@ void UIScene_GameModeScoreboardMenu::handleFocusChange(int focus, int childFocus
     if (m_scoreboardType == EScoreboardType_Award && m_scoreboardLayout->GetPlayerCount() > 0)
     {
         int selected = static_cast<int>(m_playerList.getCurrentSelection());
-        if (selected >= 0 && selected < m_scoreboardLayout->GetPlayerCount() &&
-            m_scoreboardLayout->doesExist(static_cast<unsigned int>(selected)))
+        if (selected >= 0 && selected < m_scoreboardLayout->GetPlayerCount()
+            && m_scoreboardLayout->doesExist(static_cast<unsigned int>(selected)))
         {
             INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(
                 m_scoreboardLayout->getSmallIDOfPlayerAt(static_cast<unsigned int>(selected)));
@@ -648,8 +661,7 @@ void UIScene_GameModeScoreboardMenu::UpdatePlayer(int index, PlayerInfo* oldInfo
             if (player != 0)
             {
                 StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
-                m_playerList.setSlotsText(index,
-                                          m_scoreboardLayout->GetRowLabel(0, uid, m_scoreboardType),
+                m_playerList.setSlotsText(index, m_scoreboardLayout->GetRowLabel(0, uid, m_scoreboardType),
                                           m_scoreboardLayout->GetRowLabel(1, uid, m_scoreboardType),
                                           m_scoreboardLayout->GetRowLabel(2, uid, m_scoreboardType),
                                           m_scoreboardLayout->GetRowLabel(3, uid, m_scoreboardType),
@@ -660,8 +672,8 @@ void UIScene_GameModeScoreboardMenu::UpdatePlayer(int index, PlayerInfo* oldInfo
             else
             {
                 m_playerList.setSlotsText(index, std::wstring(L""), std::wstring(L""), std::wstring(L""),
-                                          std::wstring(L""), std::wstring(L""), std::wstring(L""),
-                                          std::wstring(L""), true);
+                                          std::wstring(L""), std::wstring(L""), std::wstring(L""), std::wstring(L""),
+                                          true);
             }
         }
         else
@@ -685,15 +697,13 @@ void UIScene_GameModeScoreboardMenu::UpdatePlayer(int index, PlayerInfo* oldInfo
                 }
                 m_playerList.SetSlotTextureName(index, m_columnCount - 1, iconName, true);
                 m_playerList.setSlotsText(
-                    index,
-                    m_scoreboardLayout->GetRowLabel(0, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
+                    index, m_scoreboardLayout->GetRowLabel(0, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
                     m_scoreboardLayout->GetRowLabel(1, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
                     m_scoreboardLayout->GetRowLabel(2, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
                     m_scoreboardLayout->GetRowLabel(3, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
                     m_scoreboardLayout->GetRowLabel(4, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
                     m_scoreboardLayout->GetRowLabel(5, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
-                    m_scoreboardLayout->GetRowLabel(6, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
-                    true);
+                    m_scoreboardLayout->GetRowLabel(6, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType), true);
             }
         }
     }

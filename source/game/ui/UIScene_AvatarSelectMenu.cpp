@@ -19,8 +19,7 @@ extern CInput* g_pInput;
 extern ConsoleUIController gConsoleUIController;
 extern C_4JProfile* gProfile;
 
-UIScene_AvatarSelectMenu::TabControls::TabControls()
-    : m_tab(), m_title(), m_timer(), m_miis()
+UIScene_AvatarSelectMenu::TabControls::TabControls() : m_tab(), m_title(), m_timer(), m_miis()
 {
 }
 
@@ -30,8 +29,13 @@ void UIScene_AvatarSelectMenu::TabControls::ShowTimer(bool show)
 }
 
 UIScene_AvatarSelectMenu::UIScene_AvatarSelectMenu(int player, void* data, UILayer* layer)
-    : UIScene(player, layer), m_userTabTouch(), m_favouriteTabTouch(), m_guestTabTouch(), m_userControls(),
-      m_favouriteControls(), m_guestControls()
+    : UIScene(player, layer),
+      m_userTabTouch(),
+      m_favouriteTabTouch(),
+      m_guestTabTouch(),
+      m_userControls(),
+      m_favouriteControls(),
+      m_guestControls()
 {
     initialiseMovie();
     gApp.SetLiveLinkRequired(true);
@@ -209,22 +213,38 @@ void UIScene_AvatarSelectMenu::AddMiiItems()
     }
 }
 
-void UIScene_AvatarSelectMenu::updateTooltips() { hasFocus(m_playerId); }
-void UIScene_AvatarSelectMenu::updateComponents() {}
-void UIScene_AvatarSelectMenu::handleDestroy() {}
-void UIScene_AvatarSelectMenu::handleLoseFocus() {}
+void UIScene_AvatarSelectMenu::updateTooltips()
+{
+    hasFocus(m_playerId);
+}
+void UIScene_AvatarSelectMenu::updateComponents()
+{
+}
+void UIScene_AvatarSelectMenu::handleDestroy()
+{
+}
+void UIScene_AvatarSelectMenu::handleLoseFocus()
+{
+}
 
 void UIScene_AvatarSelectMenu::handleGainFocus(bool hadFocus)
 {
     updateTooltips();
-    if (hadFocus) { gApp.SetLiveLinkRequired(true); m_initialised = false; }
+    if (hadFocus)
+    {
+        gApp.SetLiveLinkRequired(true);
+        m_initialised = false;
+    }
 }
 
-void UIScene_AvatarSelectMenu::handleTimerComplete(int) {}
+void UIScene_AvatarSelectMenu::handleTimerComplete(int)
+{
+}
 
 bool UIScene_AvatarSelectMenu::handleKeyDown(int, int action, bool)
 {
-    if (m_initialised) return false;
+    if (m_initialised)
+        return false;
     bool consumed = false;
     switch (action)
     {
@@ -294,11 +314,12 @@ void UIScene_AvatarSelectMenu::handleFocusChange(int focus, int childFocus)
     updateTooltips();
 }
 
-void UIScene_AvatarSelectMenu::handleInitFocus(int, int) {}
+void UIScene_AvatarSelectMenu::handleInitFocus(int, int)
+{
+}
 
-void UIScene_AvatarSelectMenu::handleTouchInput(unsigned int playerId, int touchX, int touchY,
-                                               int touchBox, bool pressed, bool repeat,
-                                               bool released)
+void UIScene_AvatarSelectMenu::handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
+                                                bool pressed, bool repeat, bool released)
 {
     if (!pressed)
         return;
@@ -341,8 +362,13 @@ void UIScene_AvatarSelectMenu::tick()
         gApp.RequestSignInUIWiiUReturnedSelected(NULL, m_choice, m_pad);
         gConsoleUIController.NavigateBack(GetPad(), false, EUIScene_None, EUILayer_Count);
     }
-    if (m_navigateBack) navigateBack();
-    if (hasFocus(m_playerId) && !m_miisAdded) { AddMiiItems(); m_miisAdded = true; }
+    if (m_navigateBack)
+        navigateBack();
+    if (hasFocus(m_playerId) && !m_miisAdded)
+    {
+        AddMiiItems();
+        m_miisAdded = true;
+    }
 }
 
 void UIScene_AvatarSelectMenu::SelectTab(int tab)
@@ -354,7 +380,10 @@ void UIScene_AvatarSelectMenu::SelectTab(int tab)
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
-std::wstring UIScene_AvatarSelectMenu::getMoviePath() { return std::wstring(L"AvatarSelectMenu"); }
+std::wstring UIScene_AvatarSelectMenu::getMoviePath()
+{
+    return std::wstring(L"AvatarSelectMenu");
+}
 
 void UIScene_AvatarSelectMenu::handlePress(int controlId, int childId)
 {
@@ -383,5 +412,11 @@ void UIScene_AvatarSelectMenu::handlePress(int controlId, int childId)
     }
 }
 
-int UIScene_AvatarSelectMenu::getSceneType() { return EUIScene_LoadCreateJoinMenu; }
-unsigned int UIScene_AvatarSelectMenu::GetPad() { return (unsigned int)m_playerId; }
+int UIScene_AvatarSelectMenu::getSceneType()
+{
+    return EUIScene_LoadCreateJoinMenu;
+}
+unsigned int UIScene_AvatarSelectMenu::GetPad()
+{
+    return (unsigned int)m_playerId;
+}

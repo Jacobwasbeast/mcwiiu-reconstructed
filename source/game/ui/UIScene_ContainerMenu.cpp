@@ -82,8 +82,8 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int playerId, void* data, UILayer* 
 
     const int containerSlots = static_cast<int>(menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
     Initialize(false, args->player, menu, true, containerSlots,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
+               IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
     m_containerList.addSlots(0, containerSlots);
 
     delete args;
@@ -94,14 +94,12 @@ UIScene_ContainerMenu::~UIScene_ContainerMenu()
 {
 }
 
-int UIScene_ContainerMenu::getSectionColumns(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_ContainerMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     return static_cast<unsigned int>(section) <= IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest ? 9 : 0;
 }
 
-int UIScene_ContainerMenu::getSectionRows(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_ContainerMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int rows = 0;
     switch (section)
@@ -123,18 +121,17 @@ int UIScene_ContainerMenu::getSectionRows(
     return rows;
 }
 
-unsigned int UIScene_ContainerMenu::GetSectionAndSlotInDirection(
-    IUIScene_AbstractContainerMenu::ESceneSection section,
-    IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
+unsigned int UIScene_ContainerMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                                 IUIScene_AbstractContainerMenu::ETapState state,
+                                                                 int* x, int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection newSection = section;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            newSection = m_smallInventory ?
-                IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar :
-                IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory;
+            newSection = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar
+                                          : IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
             newSection = IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar;
         break;
@@ -148,17 +145,16 @@ unsigned int UIScene_ContainerMenu::GetSectionAndSlotInDirection(
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
             newSection = IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            newSection = m_smallInventory ?
-                IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest :
-                IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory;
+            newSection = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest
+                                          : IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory;
         break;
     }
     updateSlotPosition(section, newSection, state, x, y, 0, 0);
     return newSection;
 }
 
-void UIScene_ContainerMenu::GetPositionOfSection(
-    IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
+void UIScene_ContainerMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                 _UIVec2D* position)
 {
     switch (section)
     {
@@ -177,9 +173,8 @@ void UIScene_ContainerMenu::GetPositionOfSection(
     }
 }
 
-void UIScene_ContainerMenu::GetItemScreenData(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-    _UIVec2D* position, _UIVec2D* size)
+void UIScene_ContainerMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                              _UIVec2D* position, _UIVec2D* size)
 {
     _UIVec2D controlSize;
     switch (section)
@@ -207,8 +202,8 @@ void UIScene_ContainerMenu::GetItemScreenData(
     position->y = y * size->y;
 }
 
-void UIScene_ContainerMenu::setSectionSelectedSlot(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
+void UIScene_ContainerMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                                   int direction, bool wrap)
 {
     const int highlightSlot = direction * getSectionColumns(section) + slot;
     UIControl_SlotList* list = 0;
@@ -228,8 +223,7 @@ void UIScene_ContainerMenu::setSectionSelectedSlot(
         list->setHighlightSlot(highlightSlot);
 }
 
-int UIScene_ContainerMenu::getSectionStartOffset(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_ContainerMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int offset = 0;
     switch (section)
@@ -253,8 +247,7 @@ int UIScene_ContainerMenu::getSectionStartOffset(
     return offset;
 }
 
-void UIScene_ContainerMenu::handleSectionClick(
-    IUIScene_AbstractContainerMenu::ESceneSection)
+void UIScene_ContainerMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection)
 {
 }
 
@@ -281,24 +274,20 @@ unsigned int UIScene_ContainerMenu::mapElementsAndNames()
 std::wstring UIScene_ContainerMenu::getMoviePath()
 {
     if (m_largeChest)
-        return 1 < gApp.GetLocalPlayerCount() ?
-            std::wstring(L"ChestLargeMenuSplit") : std::wstring(L"ChestLargeMenu");
-    return 1 < gApp.GetLocalPlayerCount() ?
-        std::wstring(L"ChestMenuSplit") : std::wstring(L"ChestMenu");
+        return 1 < gApp.GetLocalPlayerCount() ? std::wstring(L"ChestLargeMenuSplit") : std::wstring(L"ChestLargeMenu");
+    return 1 < gApp.GetLocalPlayerCount() ? std::wstring(L"ChestMenuSplit") : std::wstring(L"ChestMenu");
 }
 
 void UIScene_ContainerMenu::handleReload()
 {
     AbstractContainerMenu* menu = m_menu;
     const int count = static_cast<int>(menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
-    Initialize(true, m_playerId, menu, true, count,
-                                IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
-                                IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
+    Initialize(true, m_playerId, menu, true, count, IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
     m_containerList.addSlots(0, count);
 }
 
-UIControl* UIScene_ContainerMenu::getSection(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+UIControl* UIScene_ContainerMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     UIControl* control = 0;
     switch (section)

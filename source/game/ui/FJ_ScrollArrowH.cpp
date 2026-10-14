@@ -4,17 +4,10 @@
 
 namespace
 {
-    std::string g_scrollArrowHStates[4] =
-    {
-        "Visible_A",
-        "Animating_A",
-        "Visible_B",
-        "Animating_B"
-    };
+std::string g_scrollArrowHStates[4] = {"Visible_A", "Animating_A", "Visible_B", "Animating_B"};
 }
 
-FJ_ScrollArrowH::FJ_ScrollArrowH(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_ScrollArrowH::FJ_ScrollArrowH(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     m_iState = 0;
 }
@@ -38,4 +31,3 @@ void FJ_ScrollArrowH::ChangeState(int iState)
         gotoAndStop(state);
     m_iState = iState;
 }
-

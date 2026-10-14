@@ -1,7 +1,6 @@
 #include "game/ui/FJ_AttackIndicatorCrosshair.hpp"
 
-FJ_AttackIndicatorCrosshair::FJ_AttackIndicatorCrosshair(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_AttackIndicatorCrosshair::FJ_AttackIndicatorCrosshair(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     InitBarType();
     FJ_ProgressBar::GetBarFiller();
@@ -23,4 +22,3 @@ uint32_t FJ_AttackIndicatorCrosshair::getType()
 {
     return 0x8056;
 }
-

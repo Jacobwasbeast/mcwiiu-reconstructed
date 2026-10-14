@@ -14,4 +14,3 @@ uint32_t FJ_ListButtonCheckbox_Normal::getType()
 {
     return 0x8020;
 }
-

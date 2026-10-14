@@ -17,6 +17,7 @@ public:
     virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();
+
 private:
     UIControl_Button m_buttons[8];
     bool m_unknownFlag;

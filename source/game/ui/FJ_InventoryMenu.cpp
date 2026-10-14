@@ -7,14 +7,10 @@
 #include "game/ui/FJ_MobEffect.hpp"
 #include "game/util/Math.hpp"
 
-static const int s_effectSlots[28] =
-{
-    -1, 12, 9, 2, 14, 11, 5, 3, 6, 13, 16, 7, 8, 1,
-    0, 4, 10, 15, 17, 18, 19, 20, 21, 22, 23, -1, 25, 24
-};
+static const int s_effectSlots[28] = {-1, 12, 9,  2,  14, 11, 5,  3,  6,  13, 16, 7,  8,  1,
+                                      0,  4,  10, 15, 17, 18, 19, 20, 21, 22, 23, -1, 25, 24};
 
-FJ_InventoryMenu::FJ_InventoryMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_InventoryMenu::FJ_InventoryMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
     m_inventoryHidden = false;
 }
@@ -125,10 +121,12 @@ void FJ_InventoryMenu::SetClassicCrafting(bool classicCrafting)
         mainPanel->removeChild(mainPanel->getChildByName(std::string("Result")), true);
         mainPanel->removeChild(mainPanel->getChildByName(std::string("CraftingArrow")), true);
         const int armorListX = static_cast<int>(armorList->getX());
-        const int halfSpan = Math::round((armorList->getWidth() +
-                                          (iggyPlayer->getX() - (armorList->getX() + armorList->getWidth())) +
-                                          iggyPlayer->getWidth()) * 0.5f);
-        const int halfBackground = Math::round(mainPanel->getChildByName(std::string("BackgroundPanel"))->getWidth() * 0.5f);
+        const int halfSpan = Math::round((armorList->getWidth()
+                                          + (iggyPlayer->getX() - (armorList->getX() + armorList->getWidth()))
+                                          + iggyPlayer->getWidth())
+                                         * 0.5f);
+        const int halfBackground = Math::round(mainPanel->getChildByName(std::string("BackgroundPanel"))->getWidth()
+                                               * 0.5f);
         const float offset = static_cast<float>(halfBackground - armorListX - halfSpan);
         armorList->incX(offset);
         mainPanel->getChildByName(std::string("EquipmentHolder"))->incX(offset);
@@ -178,7 +176,8 @@ unsigned int FJ_InventoryMenu::UpdateEffects(int count, int* effects)
             }
             else
             {
-                m_effectNodes[index]->asFJ_MobEffect()->SetDuration(static_cast<int>(m_effectNodes[index]->asFJ_MobEffect()->getTimeLeft()) - 1);
+                m_effectNodes[index]->asFJ_MobEffect()->SetDuration(
+                    static_cast<int>(m_effectNodes[index]->asFJ_MobEffect()->getTimeLeft()) - 1);
                 changed = 1;
             }
         }

@@ -114,8 +114,8 @@ UIScene_TradingMenu::~UIScene_TradingMenu()
     delete m_merchantMenu;
     if (Minecraft::GetInstance()->mLocalPlayers[m_playerId].get() != 0)
     {
-        if (Minecraft::GetInstance()->mLocalPlayers[m_playerId].get()->mContainerMenu->m_containerId ==
-            m_merchantMenu->m_containerId)
+        if (Minecraft::GetInstance()->mLocalPlayers[m_playerId].get()->mContainerMenu->m_containerId
+            == m_merchantMenu->m_containerId)
             Minecraft::GetInstance()->mLocalPlayers[m_playerId].get()->closeContainer();
     }
 }
@@ -178,14 +178,13 @@ unsigned int UIScene_TradingMenu::mapElementsAndNames()
 
 std::wstring UIScene_TradingMenu::getMoviePath()
 {
-    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"TradingMenuSplit") :
-        std::wstring(L"TradingMenu");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"TradingMenuSplit") : std::wstring(L"TradingMenu");
 }
 
 void UIScene_TradingMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, (int)IDS_TOOLTIPS_TRADE, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, (int)IDS_TOOLTIPS_TRADE, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_TradingMenu::handleDestroy()
@@ -355,7 +354,8 @@ void UIScene_TradingMenu::updateDisplay()
             MerchantRecipe* recipe = m_trades.at(m_tradeRow + m_tradeOffset).first;
 
             std::wstring villagerText = L10N::GetString(IDS_VILLAGER_OFFERS_ITEM);
-            villagerText = replaceAll(villagerText, std::wstring(L"{*VILLAGER_TYPE*}"), m_merchant.get()->getDisplayName());
+            villagerText = replaceAll(villagerText, std::wstring(L"{*VILLAGER_TYPE*}"),
+                                      m_merchant.get()->getDisplayName());
             villagerText.replace(villagerText.find(L"%s"), 2, recipe->getSellItem().get()->getHoverName());
             setTitle(villagerText);
             setOfferDescription(GetItemDescription(recipe->getSellItem()));
@@ -404,8 +404,8 @@ void UIScene_TradingMenu::updateDisplay()
         }
     }
 
-    gConsoleUIController.SetTooltips(m_playerId, tooltipHint, IDS_TOOLTIPS_EXIT, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, tooltipHint, IDS_TOOLTIPS_EXIT, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, false, false);
 }
 
 void UIScene_TradingMenu::handleReload()
@@ -523,8 +523,8 @@ bool UIScene_TradingMenu::handleKeyDown(int iPad, int action, bool)
         const int matchesA = player.get()->mInventory.get()->countMatches(buyA);
         const int matchesB = player.get()->mInventory.get()->countMatches(buyB);
 
-        if (buyA.get()->isEmpty() || matchesA < buyA.get()->getCount() ||
-            (!buyB.get()->isEmpty() && matchesB < buyB.get()->getCount()))
+        if (buyA.get()->isEmpty() || matchesA < buyA.get()->getCount()
+            || (!buyB.get()->isEmpty() && matchesB < buyB.get()->getCount()))
             return true;
 
         const int originalIndex = m_trades.at(selectedIndex).second;
@@ -537,8 +537,8 @@ bool UIScene_TradingMenu::handleKeyDown(int iPad, int action, bool)
         if (!player.get()->mInventory.get()->add(sellItemCopy))
             player.get()->Player::drop(sellItemCopy, false);
 
-        player.get()->mPacketListener->send(boost::shared_ptr<Packet>(
-            new TradeItemPacket(m_merchantMenu->m_containerId, originalIndex)));
+        player.get()->mPacketListener->send(
+            boost::shared_ptr<Packet>(new TradeItemPacket(m_merchantMenu->m_containerId, originalIndex)));
 
         updateDisplay();
         return true;
@@ -591,15 +591,15 @@ bool UIScene_TradingMenu::handleKeyDown(int iPad, int action, bool)
     DataOutputStream dataStream(&byteStream);
     dataStream.writeInt(originalIndex);
 
-    Minecraft::GetInstance()->getConnection(m_playerId)->send(
-        boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(
+    Minecraft::GetInstance()
+        ->getConnection(m_playerId)
+        ->send(boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(
             ServerboundCustomPayloadPacket::TRADER_SELECTION_PACKET, byteStream.toByteArray())));
 
     return true;
 }
 
-void UIScene_TradingMenu::handleInput(int, int action, bool repeat, bool pressed,
-                                      bool released, bool& handled)
+void UIScene_TradingMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     if (pressed)
@@ -627,8 +627,8 @@ void UIScene_TradingMenu::customDraw(const char* name, fuiRect* rect)
     {
         if (!m_trades.empty() && static_cast<unsigned int>(m_tradeRow + m_tradeOffset) < m_trades.size())
         {
-            item = (slotId != 0x28) ? m_trades.at(m_tradeRow + m_tradeOffset).first->getBuyAItem() :
-                m_trades.at(m_tradeRow + m_tradeOffset).first->getBuyBItem();
+            item = (slotId != 0x28) ? m_trades.at(m_tradeRow + m_tradeOffset).first->getBuyAItem()
+                                    : m_trades.at(m_tradeRow + m_tradeOffset).first->getBuyBItem();
         }
     }
     else if (!m_trades.empty() && static_cast<unsigned int>(slotId - 0x29 + m_tradeOffset) < m_trades.size())

@@ -8,8 +8,7 @@
 #include "game/core/Slot.hpp"
 #include "game/world/generation/Player.hpp"
 
-ShulkerBoxMenu::ShulkerBoxMenu(boost::shared_ptr<Container> inventory,
-                               boost::shared_ptr<Container> container,
+ShulkerBoxMenu::ShulkerBoxMenu(boost::shared_ptr<Container> inventory, boost::shared_ptr<Container> container,
                                boost::shared_ptr<Player> player)
     : AbstractContainerMenu()
 {
@@ -23,8 +22,7 @@ ShulkerBoxMenu::ShulkerBoxMenu(boost::shared_ptr<Container> inventory,
     {
         for (int column = 0; column < columns; ++column)
         {
-            addSlot(new ShulkerBoxSlot(container, column + row * columns,
-                                       8 + column * 18, 18 + row * 18));
+            addSlot(new ShulkerBoxSlot(container, column + row * columns, 8 + column * 18, 18 + row * 18));
         }
     }
 
@@ -32,8 +30,7 @@ ShulkerBoxMenu::ShulkerBoxMenu(boost::shared_ptr<Container> inventory,
     {
         for (int column = 0; column < 9; ++column)
         {
-            addSlot(new Slot(inventory, column + row * 9 + 9,
-                             8 + column * 18, 84 + row * 18));
+            addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 84 + row * 18));
         }
     }
 
@@ -60,14 +57,12 @@ not_null_ptr<ItemInstance> ShulkerBoxMenu::quickMoveStack(boost::shared_ptr<Play
 
         if (index < (int)mContainer->getContainerSize())
         {
-            if (!moveItemStackTo(item, (int)mContainer->getContainerSize(),
-                                (int)m_slots.size(), true, true, true))
+            if (!moveItemStackTo(item, (int)mContainer->getContainerSize(), (int)m_slots.size(), true, true, true))
             {
                 return ItemInstance::EMPTY;
             }
         }
-        else if (!moveItemStackTo(item, 0, (int)mContainer->getContainerSize(),
-                                 false, true, true))
+        else if (!moveItemStackTo(item, 0, (int)mContainer->getContainerSize(), false, true, true))
         {
             return ItemInstance::EMPTY;
         }

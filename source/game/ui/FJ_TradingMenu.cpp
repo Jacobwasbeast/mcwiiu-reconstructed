@@ -40,11 +40,11 @@ void FJ_TradingMenu::init(FJ_Event* event)
     m_visibleSlots = Math::round(tradingBar->getWidth() / static_cast<float>(m_slotWidth));
     m_selectorSlot = 0;
 
-    selector->setX(tradingBar->getX() -
-                    static_cast<float>(Math::round((selector->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f)) +
-                    static_cast<float>(m_selectorSlot * m_slotWidth));
-    selector->setY(tradingBar->getY() -
-                    static_cast<float>(Math::round((selector->getHeight() - static_cast<float>(m_slotWidth)) * 0.5f)));
+    selector->setX(tradingBar->getX()
+                   - static_cast<float>(Math::round((selector->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f))
+                   + static_cast<float>(m_selectorSlot * m_slotWidth));
+    selector->setY(tradingBar->getY()
+                   - static_cast<float>(Math::round((selector->getHeight() - static_cast<float>(m_slotWidth)) * 0.5f)));
 
     m_scrollRight = mainPanel->getChildByName("ScrollRight");
     m_scrollLeft = mainPanel->getChildByName("ScrollLeft");
@@ -55,14 +55,15 @@ void FJ_TradingMenu::init(FJ_Event* event)
     offer->setY(selector->getY());
 
     fuiRect leftRect = m_scrollLeft->getRect(m_scrollLeft);
-    if (m_scrollLeft->getX() + leftRect.xMin * m_scrollLeft->getScaleX() + m_scrollLeft->getWidth() > tradingBar->getX())
+    if (m_scrollLeft->getX() + leftRect.xMin * m_scrollLeft->getScaleX() + m_scrollLeft->getWidth()
+        > tradingBar->getX())
     {
         fuiRect rightRect = m_scrollRight->getRect(m_scrollRight);
-        const int overlap = static_cast<int>((m_scrollRight->getX() + rightRect.xMin * m_scrollRight->getScaleX()) -
-                                             (tradingBar->getX() + tradingBar->getWidth()));
+        const int overlap = static_cast<int>((m_scrollRight->getX() + rightRect.xMin * m_scrollRight->getScaleX())
+                                             - (tradingBar->getX() + tradingBar->getWidth()));
         fuiRect currentLeftRect = m_scrollLeft->getRect(m_scrollLeft);
-        m_scrollLeft->setX(tradingBar->getX() - m_scrollLeft->getWidth() -
-                           currentLeftRect.xMin * m_scrollLeft->getScaleX() - static_cast<float>(overlap));
+        m_scrollLeft->setX(tradingBar->getX() - m_scrollLeft->getWidth()
+                           - currentLeftRect.xMin * m_scrollLeft->getScaleX() - static_cast<float>(overlap));
     }
 }
 
@@ -130,11 +131,11 @@ void FJ_TradingMenu::MoveSelector(bool right)
         }
     }
 
-    selector->setX(tradingBar->getX() -
-                    static_cast<float>(Math::round((selector->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f)) +
-                    static_cast<float>(m_selectorSlot * m_slotWidth));
-    selector->setY(tradingBar->getY() -
-                    static_cast<float>(Math::round((selector->getHeight() - static_cast<float>(m_slotWidth)) * 0.5f)));
+    selector->setX(tradingBar->getX()
+                   - static_cast<float>(Math::round((selector->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f))
+                   + static_cast<float>(m_selectorSlot * m_slotWidth));
+    selector->setY(tradingBar->getY()
+                   - static_cast<float>(Math::round((selector->getHeight() - static_cast<float>(m_slotWidth)) * 0.5f)));
     PositionOfferDescription();
 }
 
@@ -145,11 +146,11 @@ void FJ_TradingMenu::SetSelectorSlot(int slot)
     FJ_FuiNode* selector = mainPanel->getChildByName("TradingSelector");
 
     m_selectorSlot = slot;
-    selector->setX(tradingBar->getX() -
-                    static_cast<float>(Math::round((selector->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f)) +
-                    static_cast<float>(m_selectorSlot * m_slotWidth));
-    selector->setY(tradingBar->getY() -
-                    static_cast<float>(Math::round((selector->getHeight() - static_cast<float>(m_slotWidth)) * 0.5f)));
+    selector->setX(tradingBar->getX()
+                   - static_cast<float>(Math::round((selector->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f))
+                   + static_cast<float>(m_selectorSlot * m_slotWidth));
+    selector->setY(tradingBar->getY()
+                   - static_cast<float>(Math::round((selector->getHeight() - static_cast<float>(m_slotWidth)) * 0.5f)));
     PositionOfferDescription();
 }
 

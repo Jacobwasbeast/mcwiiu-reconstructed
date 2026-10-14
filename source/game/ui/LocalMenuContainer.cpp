@@ -3,9 +3,9 @@
 #include "game/core/LockCode.hpp"
 
 LocalMenuContainer::LocalMenuContainer(int typeId, const std::wstring& name, int size)
-    : SimpleContainer(name, size)
-    , LockableContainer()
-    , mContainerData()
+    : SimpleContainer(name, size),
+      LockableContainer(),
+      mContainerData()
 {
     mTypeId = typeId;
 }
@@ -143,7 +143,7 @@ int LocalMenuContainer::getTypeId(bool large)
 }
 
 AbstractContainerMenu* LocalMenuContainer::createMenu(boost::shared_ptr<Inventory> inventory,
-                                                       boost::shared_ptr<Player> player)
+                                                      boost::shared_ptr<Player> player)
 {
     return NULL;
 }

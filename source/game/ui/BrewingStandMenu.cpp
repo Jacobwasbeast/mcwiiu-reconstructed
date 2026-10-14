@@ -18,8 +18,8 @@ BrewingStandMenu::PotionSlot::PotionSlot(boost::shared_ptr<Container> container,
 bool BrewingStandMenu::PotionSlot::mayPlaceItem(not_null_ptr<ItemInstance> item)
 {
     Item* type = item->getItem();
-    return type == Items::potion || type == Items::splashPotion ||
-           type == Items::lingeringPotion || type == Items::glassBottle;
+    return type == Items::potion || type == Items::splashPotion || type == Items::lingeringPotion
+           || type == Items::glassBottle;
 }
 
 bool BrewingStandMenu::PotionSlot::mayPlace(not_null_ptr<ItemInstance> item)
@@ -33,7 +33,7 @@ int BrewingStandMenu::PotionSlot::getMaxStackSize()
 }
 
 not_null_ptr<ItemInstance> BrewingStandMenu::PotionSlot::onTake(boost::shared_ptr<Player> player,
-                                                                 not_null_ptr<ItemInstance> item)
+                                                                not_null_ptr<ItemInstance> item)
 {
     item->onCraftedBy(player->mLevel, boost::dynamic_pointer_cast<Player>(player->shared_from_this()), 1);
     Potion* potion = PotionUtils::getPotion(item);
@@ -90,8 +90,7 @@ int BrewingStandMenu::FuelSlot::getMaxStackSize()
     return 64;
 }
 
-BrewingStandMenu::BrewingStandMenu(boost::shared_ptr<Inventory> inventory,
-                                   boost::shared_ptr<Container> container)
+BrewingStandMenu::BrewingStandMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container)
     : mLastBrewTime(0),
       mLastFuel(0)
 {
@@ -106,8 +105,7 @@ BrewingStandMenu::BrewingStandMenu(boost::shared_ptr<Inventory> inventory,
     {
         for (int column = 0; column < 9; ++column)
         {
-            addSlot(new Slot(inventory, column + row * 9 + 9,
-                             8 + column * 18, 84 + row * 18));
+            addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 84 + row * 18));
         }
     }
     for (int column = 0; column < 9; ++column)

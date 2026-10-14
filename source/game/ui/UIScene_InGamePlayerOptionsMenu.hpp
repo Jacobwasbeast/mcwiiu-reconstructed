@@ -43,8 +43,7 @@ public:
     virtual void tick();
     virtual void handleTimerComplete(int timerId);
     virtual void updateTooltips();
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleDestroy();
     virtual void handleReload();
     virtual void handlePress(int controlId, int childId);

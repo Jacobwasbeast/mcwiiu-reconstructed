@@ -16,18 +16,38 @@ extern "C" void OSReport(const char*, ...);
 #endif
 
 FJ_Document::FJ_Document(fuiRenderNode* renderNode)
-    : FJ_FuiNode(renderNode), m_safeZoneTop(0), m_safeZoneBottom(0), m_safeZoneLeft(0), m_safeZoneRight(0),
-      m_root(this), m_focus(NULL), m_focusParentId(0), m_focusChildId(0), m_focusChange(true)
+    : FJ_FuiNode(renderNode),
+      m_safeZoneTop(0),
+      m_safeZoneBottom(0),
+      m_safeZoneLeft(0),
+      m_safeZoneRight(0),
+      m_root(this),
+      m_focus(NULL),
+      m_focusParentId(0),
+      m_focusChildId(0),
+      m_focusChange(true)
 {
     addEventListener(eFJEventType_Init, this, _init, false);
     getStage()->addEventListener(eFJEventType_FocusChangeInit, this, _HandleOnFocusChangeInit, false);
     getStage()->addEventListener(eFJEventType_FocusChangeUser, this, _HandleOnFocusChangeUser, false);
 }
 
-int FJ_Document::getISafeZoneTop() { return m_safeZoneTop; }
-int FJ_Document::getISafeZoneBottom() { return m_safeZoneBottom; }
-int FJ_Document::getISafeZoneLeft() { return m_safeZoneLeft; }
-int FJ_Document::getISafeZoneRight() { return m_safeZoneRight; }
+int FJ_Document::getISafeZoneTop()
+{
+    return m_safeZoneTop;
+}
+int FJ_Document::getISafeZoneBottom()
+{
+    return m_safeZoneBottom;
+}
+int FJ_Document::getISafeZoneLeft()
+{
+    return m_safeZoneLeft;
+}
+int FJ_Document::getISafeZoneRight()
+{
+    return m_safeZoneRight;
+}
 
 void FJ_Document::_init(FJ_FuiNode* node, FJ_Event* event)
 {
@@ -124,8 +144,8 @@ void FJ_Document::handlePress(FJ_Event* event)
 
 #if defined(RECON_NATIVE)
     if (base != NULL && m_pCallbackScene != NULL)
-        OSReport("[native-ui] press scene=%d node=%s id=%u\n",
-                 m_pCallbackScene->getSceneType(), base->getName(), base->getId());
+        OSReport("[native-ui] press scene=%d node=%s id=%u\n", m_pCallbackScene->getSceneType(), base->getName(),
+                 base->getId());
 #endif
 
     if (button == NULL || button->getObjListParent() == NULL)
@@ -165,8 +185,8 @@ void FJ_Document::keyDownHandler(FJ_Event* event)
 
     if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 3)
     {
-        if (getStage()->getFocus()->asFJ_Base()->m_navUpName.length() != 0 &&
-            m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navUpName) != NULL)
+        if (getStage()->getFocus()->asFJ_Base()->m_navUpName.length() != 0
+            && m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navUpName) != NULL)
         {
             getStage()->setFocus(m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navUpName));
             if (getStage()->getFocus()->asFJ_Base()->getObjListParent() != NULL && getStage()->getFocus()->isFJ_Label())
@@ -175,8 +195,8 @@ void FJ_Document::keyDownHandler(FJ_Event* event)
     }
     else if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 4)
     {
-        if (getStage()->getFocus()->asFJ_Base()->m_navDownName.length() != 0 &&
-            m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navDownName) != NULL)
+        if (getStage()->getFocus()->asFJ_Base()->m_navDownName.length() != 0
+            && m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navDownName) != NULL)
         {
             getStage()->setFocus(m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navDownName));
             if (getStage()->getFocus()->asFJ_Base()->getObjListParent() != NULL && getStage()->getFocus()->isFJ_Label())
@@ -185,16 +205,16 @@ void FJ_Document::keyDownHandler(FJ_Event* event)
     }
     else if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 5)
     {
-        if (getStage()->getFocus()->asFJ_Base()->m_navLeftName.length() != 0 &&
-            m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navLeftName) != NULL)
+        if (getStage()->getFocus()->asFJ_Base()->m_navLeftName.length() != 0
+            && m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navLeftName) != NULL)
         {
             getStage()->setFocus(m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navLeftName));
         }
     }
     else if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 6)
     {
-        if (getStage()->getFocus()->asFJ_Base()->m_navRightName.length() != 0 &&
-            m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navRightName) != NULL)
+        if (getStage()->getFocus()->asFJ_Base()->m_navRightName.length() != 0
+            && m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navRightName) != NULL)
         {
             getStage()->setFocus(m_root->getChildByName(getStage()->getFocus()->asFJ_Base()->m_navRightName));
         }
@@ -206,7 +226,8 @@ void FJ_Document::keyDownHandler(FJ_Event* event)
             if (getStage()->getFocus()->asFJ_Base()->getObjListParent()->isFJ_List())
                 getStage()->getFocus()->asFJ_Base()->getObjListParent()->asFJ_List()->HandlePageUpDownNavigation(true);
             else if (getStage()->getFocus()->asFJ_Base()->getObjListParent()->isFJ_List2D())
-                getStage()->getFocus()->asFJ_Base()->getObjListParent()->asFJ_List2D()->HandlePageUpDownNavigation(true);
+                getStage()->getFocus()->asFJ_Base()->getObjListParent()->asFJ_List2D()->HandlePageUpDownNavigation(
+                    true);
         }
     }
     else if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 2)
@@ -216,7 +237,8 @@ void FJ_Document::keyDownHandler(FJ_Event* event)
             if (getStage()->getFocus()->asFJ_Base()->getObjListParent()->isFJ_List())
                 getStage()->getFocus()->asFJ_Base()->getObjListParent()->asFJ_List()->HandlePageUpDownNavigation(false);
             else if (getStage()->getFocus()->asFJ_Base()->getObjListParent()->isFJ_List2D())
-                getStage()->getFocus()->asFJ_Base()->getObjListParent()->asFJ_List2D()->HandlePageUpDownNavigation(false);
+                getStage()->getFocus()->asFJ_Base()->getObjListParent()->asFJ_List2D()->HandlePageUpDownNavigation(
+                    false);
         }
     }
 
@@ -242,8 +264,8 @@ void FJ_Document::OnFocusChange(bool focused)
     if (changed)
         OSReport("[native-ui] focus scene=%d node=%s id=%u tab=%d up=%s down=%s left=%s right=%s\n",
                  m_pCallbackScene->getSceneType(), base->getName(), base->getId(), base->getTabIndex(),
-                 base->m_navUpName.c_str(), base->m_navDownName.c_str(),
-                 base->m_navLeftName.c_str(), base->m_navRightName.c_str());
+                 base->m_navUpName.c_str(), base->m_navDownName.c_str(), base->m_navLeftName.c_str(),
+                 base->m_navRightName.c_str());
 #endif
 
     if (base->getObjListParent() == NULL)
@@ -382,9 +404,9 @@ void FJ_Document::RepositionItems(FJ_FuiNode* first, FJ_FuiNode* second, bool ho
                 continue;
 
             bool move = true;
-            if (!m_root->getChildAt(i)->isFJ_Base() &&
-                std::string(m_root->getChildAt(i)->getName()).compare("BackgroundPanel") != 0 &&
-                std::string(m_root->getChildAt(i)->getName()).compare("PlayerIcon") != 0)
+            if (!m_root->getChildAt(i)->isFJ_Base()
+                && std::string(m_root->getChildAt(i)->getName()).compare("BackgroundPanel") != 0
+                && std::string(m_root->getChildAt(i)->getName()).compare("PlayerIcon") != 0)
                 move = false;
             if (move)
                 m_root->getChildAt(i)->incY(Math::round(amount));
@@ -471,8 +493,7 @@ void FJ_Document::DoHorizontalResizeCheck()
         }
     }
 
-    if (backgroundMovie != NULL &&
-        widest + (left - backgroundMovie->getX()) * 2 > backgroundMovie->getWidth())
+    if (backgroundMovie != NULL && widest + (left - backgroundMovie->getX()) * 2 > backgroundMovie->getWidth())
     {
         oldWidth = backgroundMovie->getWidth() - (left - backgroundMovie->getX()) * 2;
         resized = true;

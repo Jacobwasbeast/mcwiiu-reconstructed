@@ -16,8 +16,7 @@
 
 static const int CHESTFUL_OF_COBBLESTONE = 27 * 64;
 
-ChestMenu::ChestMenu(boost::shared_ptr<Container> playerInventory,
-                     boost::shared_ptr<Container> container,
+ChestMenu::ChestMenu(boost::shared_ptr<Container> playerInventory, boost::shared_ptr<Container> container,
                      boost::shared_ptr<Player> player)
 {
     m_container = container;
@@ -28,21 +27,23 @@ ChestMenu::ChestMenu(boost::shared_ptr<Container> playerInventory,
     int row;
     int column;
 
-    for (row = 0; row < m_numRows; ++row) {
-        for (column = 0; column < 9; ++column) {
-            addSlot(new Slot(container, column + row * 9,
-                             8 + column * 18, 18 + row * 18));
+    for (row = 0; row < m_numRows; ++row)
+    {
+        for (column = 0; column < 9; ++column)
+        {
+            addSlot(new Slot(container, column + row * 9, 8 + column * 18, 18 + row * 18));
         }
     }
-    for (row = 0; row < 3; ++row) {
-        for (column = 0; column < 9; ++column) {
-            addSlot(new Slot(playerInventory, column + row * 9 + 9,
-                             8 + column * 18, 103 + row * 18 + yo));
+    for (row = 0; row < 3; ++row)
+    {
+        for (column = 0; column < 9; ++column)
+        {
+            addSlot(new Slot(playerInventory, column + row * 9 + 9, 8 + column * 18, 103 + row * 18 + yo));
         }
     }
-    for (column = 0; column < 9; ++column) {
-        addSlot(new Slot(playerInventory, column,
-                         8 + column * 18, 161 + yo));
+    for (column = 0; column < 9; ++column)
+    {
+        addSlot(new Slot(playerInventory, column, 8 + column * 18, 161 + yo));
     }
 }
 
@@ -142,14 +143,13 @@ boost::shared_ptr<Container> ChestMenu::getContainer()
     return m_container;
 }
 
-not_null_ptr<ItemInstance> ChestMenu::clicked(int slot, int button,
-                                              ClickType::eClickType type,
+not_null_ptr<ItemInstance> ChestMenu::clicked(int slot, int button, ClickType::eClickType type,
                                               boost::shared_ptr<Player> player)
 {
     bool carriedIsCobblestone = Block::byItem(player->mInventory->getCarried()->getItem()) == Blocks::cobblestone;
 
     bool clickedCobblestone = type == ClickType::eClickType_QuickMove && slot != -999 && m_slots[slot] != NULL
-        && Block::byItem(m_slots[slot]->getItem()->getItem()) == Blocks::cobblestone;
+                              && Block::byItem(m_slots[slot]->getItem()->getItem()) == Blocks::cobblestone;
 
     not_null_ptr<ItemInstance> result = AbstractContainerMenu::clicked(slot, button, type, player);
 

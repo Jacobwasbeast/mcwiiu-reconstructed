@@ -35,8 +35,8 @@ FJ_SuperFlatEditLayerMenu::FJ_SuperFlatEditLayerMenu(fuiRenderNode* renderNode)
         mScrollDown->ChangeState(3);
         mSlotID = 0;
         mScrollTop = (int)button->getY();
-        mScrollBottom = (int)((track->getY() - button->getY()) + (track->getY() + track->getHeight()) -
-                              button->getHeight());
+        mScrollBottom = (int)((track->getY() - button->getY()) + (track->getY() + track->getHeight())
+                              - button->getHeight());
     }
     SetSlotID();
 }
@@ -52,8 +52,8 @@ void FJ_SuperFlatEditLayerMenu::SetSlotID()
         rect.yMin = slotControl->getY();
         rect.xMax = rect.xMin + slotControl->getWidth() / getScaleX();
         rect.yMax = rect.yMin + slotControl->getHeight();
-        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-            getStage()->m_pRenderNode, &rect, "iggy_layerslot_0");
+        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect,
+                                                                            "iggy_layerslot_0");
         renderNode->setAlpha(0.25f);
         panel->removeChild(slotControl, true);
         FJ_FuiNode* slot = new FJ_FuiNode(renderNode);

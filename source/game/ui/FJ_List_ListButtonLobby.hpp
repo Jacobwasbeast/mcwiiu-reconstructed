@@ -15,8 +15,7 @@ public:
 
     static FJ_List* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
-    void addNewItem(const std::wstring& label, int id, bool showTick,
-        int playerIcon, int voipIcon);
+    void addNewItem(const std::wstring& label, int id, bool showTick, int playerIcon, int voipIcon);
     void SetPlayerIcon(int item, int icon);
     void SetVOIPIcon(int item, int icon);
     void ShowTick(int item, bool showTick);

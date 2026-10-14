@@ -2,8 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_Blink_Small::FJ_Label_Blink_Small(fuiRenderNode* renderNode)
-    : FJ_Label_Blink(renderNode)
+FJ_Label_Blink_Small::FJ_Label_Blink_Small(fuiRenderNode* renderNode) : FJ_Label_Blink(renderNode)
 {
 }
 

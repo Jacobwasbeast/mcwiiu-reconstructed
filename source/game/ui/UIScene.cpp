@@ -56,7 +56,8 @@ UIScene::UIScene(int playerId, UILayer* layer)
 UIScene::~UIScene()
 {
     for (boost::unordered_map<std::wstring, bool>::iterator it = m_substitutionTextures.begin();
-         it != m_substitutionTextures.end(); ++it) {
+         it != m_substitutionTextures.end(); ++it)
+    {
         gConsoleUIController.unregisterSubstitutionTexture(it->first, it->second);
     }
 
@@ -76,7 +77,8 @@ void UIScene::reloadMovie(bool force)
         return;
 
     m_reloading = true;
-    if (m_movie != 0) {
+    if (m_movie != 0)
+    {
         handlePreUnloadForReload();
         gFui->unloadScene(m_movie);
         m_movie = 0;
@@ -90,7 +92,8 @@ void UIScene::reloadMovie(bool force)
     updateComponents();
     handleReload();
 
-    if (m_movie != 0) {
+    if (m_movie != 0)
+    {
         if (m_movie->getRootNode()->getFuiNode()->isFJ_Document())
             m_movie->getRootNode()->getFuiNode()->asFJ_Document()->SetFocus(m_controlFocus);
     }
@@ -111,11 +114,11 @@ bool UIScene::hasMovie()
 
 void UIScene::updateSafeZone()
 {
-    switch (m_layer->getViewport()) {
+    switch (m_layer->getViewport())
+    {
     default:
     case C4JRender::eViewportType_FullScreen:
-        setSafeZone(getSafeZoneHalfHeight(), getSafeZoneHalfHeight(), getSafeZoneHalfWidth(),
-                    getSafeZoneHalfWidth());
+        setSafeZone(getSafeZoneHalfHeight(), getSafeZoneHalfHeight(), getSafeZoneHalfWidth(), getSafeZoneHalfWidth());
         break;
     case C4JRender::eViewportType_TopHalf:
         setSafeZone(getSafeZoneHalfHeight(), 0.0, 0.0, 0.0);
@@ -206,9 +209,10 @@ bool UIScene::hasFocus(int playerId)
 
 void UIScene::updateTooltips()
 {
-    if (!gConsoleUIController.IsReloadingSkin()) {
-        gConsoleUIController.SetTooltips(m_playerId, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                         -1, -1, -1, -1, -1, -1, -1, false, false);
+    if (!gConsoleUIController.IsReloadingSkin())
+    {
+        gConsoleUIController.SetTooltips(m_playerId, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                         false, false);
     }
 }
 
@@ -241,10 +245,10 @@ UIControl* UIScene::GetMainPanel()
 
 void UIScene::render(int width, int height, C4JRender::eViewportType viewport)
 {
-    if (!m_reloading && m_hasTicked && m_movie != 0) {
+    if (!m_reloading && m_hasTicked && m_movie != 0)
+    {
         gConsoleUIController.setupRenderPosition(viewport);
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
-                     static_cast<float>(height));
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
     }
 }
 
@@ -255,7 +259,8 @@ void UIScene::customDraw(const char*, fuiRect*)
 bool UIScene::allowRepeat(int action)
 {
     unsigned int unsignedAction = action;
-    return unsignedAction > EControllerActions_MenuY && (unsignedAction < EControllerActions_MenuOk || unsignedAction > EControllerActions_MenuCancel);
+    return unsignedAction > EControllerActions_MenuY
+           && (unsignedAction < EControllerActions_MenuOk || unsignedAction > EControllerActions_MenuCancel);
 }
 
 void UIScene::handleInput(int, int, bool, bool, bool, bool&)
@@ -292,9 +297,11 @@ void UIScene::handleInitFocus(int, int)
 
 void UIScene::handleCheckboxToggled(int id, bool checked)
 {
-    for (std::vector<UIControl*>::iterator it = m_controls.begin(); it != m_controls.end(); ++it) {
+    for (std::vector<UIControl*>::iterator it = m_controls.begin(); it != m_controls.end(); ++it)
+    {
         UIControl* control = *it;
-        if (control->m_controlType == 2 && control->m_controlId == id) {
+        if (control->m_controlType == 2 && control->m_controlId == id)
+        {
             static_cast<UIControl_CheckBox*>(control)->updateCheckedStatus(checked);
             return;
         }
@@ -375,13 +382,16 @@ void UIScene::tickTimers()
 {
     const int now = static_cast<int>(System::processTimeInMilliSecs());
     boost::unordered_map<int, _TimerInfo>::iterator it = m_timers.begin();
-    while (it != m_timers.end()) {
-        if (!it->second.active) {
+    while (it != m_timers.end())
+    {
+        if (!it->second.active)
+        {
             it = m_timers.erase(it);
             continue;
         }
 
-        if (it->second.triggerTime < now) {
+        if (it->second.triggerTime < now)
+        {
             handleTimerComplete(it->first);
             it->second.triggerTime = now + it->second.duration;
         }
@@ -392,8 +402,7 @@ void UIScene::tickTimers()
 void UIScene::navigateBack()
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-    gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None,
-                                      EUILayer_Count);
+    gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None, EUILayer_Count);
 }
 
 bool UIScene::hasRegisteredSubstitutionTexture(const std::wstring& name)
@@ -405,14 +414,15 @@ void UIScene::unregisterSubstitutionTexture(const std::wstring& name, bool delet
 {
     boost::unordered_map<std::wstring, bool>::iterator found = m_substitutionTextures.find(name);
     m_substitutionTextures[name] = deleteData;
-    if (found != m_substitutionTextures.end()) {
+    if (found != m_substitutionTextures.end())
+    {
         gConsoleUIController.unregisterSubstitutionTexture(found->first, found->second);
         m_substitutionTextures.erase(name);
     }
 }
 
-void UIScene::registerSubstitutionTexture(const std::wstring& name, unsigned char* data,
-                                          unsigned int size, bool deleteData)
+void UIScene::registerSubstitutionTexture(const std::wstring& name, unsigned char* data, unsigned int size,
+                                          bool deleteData)
 {
     boost::unordered_map<std::wstring, bool>::iterator found = m_substitutionTextures.find(name);
     if (found != m_substitutionTextures.end())
@@ -425,10 +435,13 @@ void UIScene::loadMovie()
 {
     EnterCriticalSection(&g_uiCriticalSection);
     std::wstring path = getMoviePath();
-    if (gRenderer->IsWidescreen()) {
+    if (gRenderer->IsWidescreen())
+    {
         path.append(L"720.fui");
         m_movieResolution = 1;
-    } else {
+    }
+    else
+    {
         path.append(L"480.fui");
         m_movieResolution = 2;
     }
@@ -514,9 +527,8 @@ unsigned int UIScene::getControlChildFocus()
     return m_controlChildFocus;
 }
 
-void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInstance> item,
-                                       float partialTick, bool flat, bool drawDecorations,
-                                       bool drawOverlay)
+void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInstance> item, float partialTick,
+                                       bool flat, bool drawDecorations, bool drawOverlay)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     const float x = rect->xMin;
@@ -530,7 +542,8 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
     Lighting::turnOn();
     GlStateManager::popMatrix();
 
-    if (item->getPopTime() > 0) {
+    if (item->getPopTime() > 0)
+    {
         const float translateX = 8.0f * scaleX + x;
         const float translateY = 12.0f * scaleY + y;
         const float popScale = item->getPopTime() / 5.0f + 1.0f;
@@ -542,7 +555,8 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
 
     Minecraft* rendererMinecraft = Minecraft::GetInstance();
     PIXBeginNamedEvent(0.0f, "Render and decorate");
-    if (m_itemRenderer == 0) {
+    if (m_itemRenderer == 0)
+    {
         m_itemRenderer = new ItemRenderer(rendererMinecraft->getEntityRenderDispatcher(),
                                           rendererMinecraft->getTextureManager(),
                                           Minecraft::GetInstance()->getItemColors());
@@ -555,7 +569,8 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
     std::wstring countText = L"";
     int countColour = -1;
     TextureAtlasSprite* countIcon = 0;
-    if (getSceneType() == EUIScene_HUD) {
+    if (getSceneType() == EUIScene_HUD)
+    {
         int overrideCount = item->getItem()->GetOverrideCount();
         if (overrideCount > 0)
             countText = _toString(overrideCount);
@@ -563,27 +578,29 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
         countIcon = item->getItem()->GetOverrideCountIcon(item);
     }
 
-    m_itemRenderer->renderAndDecorateItem(item, x, y, scaleX, scaleY, partialTick, flat, true,
-                                          !drawOverlay, countIcon);
+    m_itemRenderer->renderAndDecorateItem(item, x, y, scaleX, scaleY, partialTick, flat, true, !drawOverlay, countIcon);
     PIXEndNamedEvent();
 
     if (item->getPopTime() > 0)
         GlStateManager::popMatrix();
 
-    if (drawDecorations) {
-        if (scaleX != 1.0f || scaleY != 1.0f) {
+    if (drawDecorations)
+    {
+        if (scaleX != 1.0f || scaleY != 1.0f)
+        {
             GlStateManager::pushMatrix();
             GlStateManager::scalef(scaleX, scaleY, 1.0f);
             gRenderer->StateSetBlendEnable(true);
             gRenderer->StateSetBlendFunc(4, 5);
             gRenderer->StateSetBlendFactor(0xFFFFFFFF);
-            m_itemRenderer->renderGuiItemDecorations(
-                minecraft->mFont, item, static_cast<int>(x / scaleX + 0.5f),
-                static_cast<int>(y / scaleY + 0.5f), countText, countColour, partialTick);
+            m_itemRenderer->renderGuiItemDecorations(minecraft->mFont, item, static_cast<int>(x / scaleX + 0.5f),
+                                                     static_cast<int>(y / scaleY + 0.5f), countText, countColour,
+                                                     partialTick);
             GlStateManager::popMatrix();
-        } else {
-            m_itemRenderer->renderGuiItemDecorations(minecraft->mFont, item,
-                                                     static_cast<int>(x), static_cast<int>(y),
+        }
+        else
+        {
+            m_itemRenderer->renderGuiItemDecorations(minecraft->mFont, item, static_cast<int>(x), static_cast<int>(y),
                                                      countText, countColour, partialTick);
         }
     }
@@ -594,7 +611,8 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
 
 void UIScene::destroyMovie()
 {
-    if (m_movie != 0) {
+    if (m_movie != 0)
+    {
         gFui->unloadScene(m_movie);
         m_movie = 0;
     }
@@ -630,8 +648,10 @@ UIScene* UIScene::getBackScene()
 
 void UIScene::gainFocus()
 {
-    if (!m_hasFocus) {
-        if (stealsFocus()) {
+    if (!m_hasFocus)
+    {
+        if (stealsFocus())
+        {
             m_hasFocus = true;
             if (needsReloaded())
                 reloadMovie(false);
@@ -639,7 +659,8 @@ void UIScene::gainFocus()
             updateComponents();
 
             bool hadFocus = m_hasGainedFocus;
-            if (!hadFocus) {
+            if (!hadFocus)
+            {
                 if (m_movie->getRootNode()->getFuiNode()->isFJ_Document())
                     static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())->SetFocus(-1);
                 hadFocus = m_hasGainedFocus;
@@ -661,7 +682,8 @@ void UIScene::gainFocus()
 
 void UIScene::loseFocus()
 {
-    if (m_hasFocus) {
+    if (m_hasFocus)
+    {
         m_hasFocus = false;
         handleLoseFocus();
     }
@@ -674,25 +696,29 @@ void UIScene::setBackScene(UIScene* scene)
 
 void UIScene::setSafeZone(double top, double bottom, double left, double right)
 {
-    if (m_movie->getRootNode()->getFuiNode()->getType() == 0x59) {
+    if (m_movie->getRootNode()->getFuiNode()->getType() == 0x59)
+    {
         static_cast<FJ_Hud*>(m_movie->getRootNode()->getFuiNode())
             ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
                           static_cast<int>(right));
         return;
     }
-    if (m_movie->getRootNode()->getFuiNode()->getType() == 0x58) {
+    if (m_movie->getRootNode()->getFuiNode()->getType() == 0x58)
+    {
         static_cast<FJ_HowToPlay*>(m_movie->getRootNode()->getFuiNode())
             ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
                           static_cast<int>(right));
         return;
     }
-    if (m_movie->getRootNode()->getFuiNode()->getType() == 0x5a) {
+    if (m_movie->getRootNode()->getFuiNode()->getType() == 0x5a)
+    {
         static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode())
             ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
                           static_cast<int>(right));
         return;
     }
-    if (m_movie->getRootNode()->getFuiNode()->getType() != 0) {
+    if (m_movie->getRootNode()->getFuiNode()->getType() != 0)
+    {
         static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())
             ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
                           static_cast<int>(right));
@@ -701,8 +727,7 @@ void UIScene::setSafeZone(double top, double bottom, double left, double right)
 
 void UIScene::resetHorizontalResizeCheck()
 {
-    static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())
-        ->ResetHorizontalResizeCheck();
+    static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())->ResetHorizontalResizeCheck();
 }
 
 void UIScene::_handleFocusChange(int focus, int childFocus)

@@ -3,8 +3,7 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_ChestMenu::FJ_ChestMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_ChestMenu::FJ_ChestMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
 }
 

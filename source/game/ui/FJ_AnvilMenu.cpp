@@ -3,8 +3,7 @@
 #include "game/ui/FJ_Base.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 
-FJ_AnvilMenu::FJ_AnvilMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_AnvilMenu::FJ_AnvilMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
     SetCostLabel(L"", false);
     ShowRedCross(false);

@@ -1,7 +1,6 @@
 #include "game/ui/FJ_EnchantingButton_Normal.hpp"
 
-FJ_EnchantingButton_Normal::FJ_EnchantingButton_Normal(fuiRenderNode* pRenderNode)
-    : FJ_EnchantingButton(pRenderNode)
+FJ_EnchantingButton_Normal::FJ_EnchantingButton_Normal(fuiRenderNode* pRenderNode) : FJ_EnchantingButton(pRenderNode)
 {
 }
 

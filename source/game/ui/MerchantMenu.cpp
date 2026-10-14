@@ -18,8 +18,7 @@ MerchantMenu::MerchantMenu(boost::shared_ptr<Inventory> inventory, boost::shared
         new MerchantContainer(boost::dynamic_pointer_cast<Player>(inventory->m_player->shared_from_this()), merchant));
     addSlot(new Slot(mTradeContainer, 0, 36, 53));
     addSlot(new Slot(mTradeContainer, 1, 62, 53));
-    addSlot(new MerchantResultSlot(inventory->m_player,
-                                   merchant, mTradeContainer, 2, 120, 53));
+    addSlot(new MerchantResultSlot(inventory->m_player, merchant, mTradeContainer, 2, 120, 53));
 
     int row;
     int column;

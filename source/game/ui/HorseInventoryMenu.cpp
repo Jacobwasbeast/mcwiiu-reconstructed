@@ -11,8 +11,7 @@
 
 HorseInventoryMenu::HorseInventoryMenu(boost::shared_ptr<Container> playerInventory,
                                        boost::shared_ptr<Container> horseContainer,
-                                       boost::shared_ptr<AbstractHorse> horseEntity,
-                                       boost::shared_ptr<Player> player)
+                                       boost::shared_ptr<AbstractHorse> horseEntity, boost::shared_ptr<Player> player)
 {
     m_container = horseContainer;
     horse = horseEntity;
@@ -24,16 +23,20 @@ HorseInventoryMenu::HorseInventoryMenu(boost::shared_ptr<Container> playerInvent
     addSlot(new HorseSaddleSlot(this, horseContainer, 0, 8, 18));
     addSlot(new HorseArmorSlot(this, horseContainer, 1, 8, 36));
 
-    if (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_CHESTED_HORSE, horseEntity->GetType()) &&
-        boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->hasChest())
+    if (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_CHESTED_HORSE, horseEntity->GetType())
+        && boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->hasChest())
     {
         for (int row = 0; row < containerRows; ++row)
         {
-            for (int column = 0; column < boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->getInventoryColumns(); ++column)
+            for (int column = 0;
+                 column < boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->getInventoryColumns();
+                 ++column)
             {
-                addSlot(new Slot(horseContainer,
-                                 2 + column + row * boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->getInventoryColumns(),
-                                 80 + column * 18, 18 + row * 18));
+                addSlot(new Slot(
+                    horseContainer,
+                    2 + column
+                        + row * boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->getInventoryColumns(),
+                    80 + column * 18, 18 + row * 18));
             }
         }
     }
@@ -66,11 +69,9 @@ not_null_ptr<ItemInstance> HorseInventoryMenu::quickMoveStack(boost::shared_ptr<
         result = item->copy();
         if ((unsigned int)index < m_container->getContainerSize())
         {
-            if (!moveItemStackTo(item, m_container->getContainerSize() + 27, (int)m_slots.size(),
-                                false, true, true))
+            if (!moveItemStackTo(item, m_container->getContainerSize() + 27, (int)m_slots.size(), false, true, true))
             {
-                if (!moveItemStackTo(item, m_container->getContainerSize(), (int)m_slots.size(),
-                                    true, true, true))
+                if (!moveItemStackTo(item, m_container->getContainerSize(), (int)m_slots.size(), true, true, true))
                     return ItemInstance::EMPTY;
             }
         }
@@ -84,8 +85,8 @@ not_null_ptr<ItemInstance> HorseInventoryMenu::quickMoveStack(boost::shared_ptr<
             if (!moveItemStackTo(item, 0, 1, false, true, true))
                 return ItemInstance::EMPTY;
         }
-        else if (m_container->getContainerSize() <= 2 ||
-                 !moveItemStackTo(item, 2, m_container->getContainerSize(), false, true, true))
+        else if (m_container->getContainerSize() <= 2
+                 || !moveItemStackTo(item, 2, m_container->getContainerSize(), false, true, true))
         {
             int horseSize = m_container->getContainerSize();
             int playerInventoryEnd = horseSize + 27;

@@ -41,7 +41,8 @@ void ReceivingLevelScreen::render(int x, int y, float partialTick)
     renderDirtBackground(0);
 
     Language* language = Language::getInstance();
-    drawCenteredString(mFont, language->getElement(L"multiplayer.downloadingTerrain"), mWidth / 2, mHeight / 2 - 50, 0xffffff);
+    drawCenteredString(mFont, language->getElement(L"multiplayer.downloadingTerrain"), mWidth / 2, mHeight / 2 - 50,
+                       0xffffff);
 
     Screen::render(x, y, partialTick);
 }

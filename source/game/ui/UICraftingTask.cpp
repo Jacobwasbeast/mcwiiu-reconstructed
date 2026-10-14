@@ -5,23 +5,21 @@
 #include "game/ui/IUIScene_CraftingMenu.hpp"
 #include "game/ui/UIScene_CraftingMenu.hpp"
 
-UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId,
-                               Recipe::_eGroupType group, bool preCompletionEnabled,
-                               std::vector<TutorialConstraint*>* constraints,
+UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId, Recipe::_eGroupType group,
+                               bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
                                bool showMinimumTime, bool allowFade, bool repeatMessage)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
-                   showMinimumTime, allowFade, repeatMessage)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime, allowFade,
+                   repeatMessage)
 {
     this->group = group;
     taskType = 0;
 }
 
-UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId, Item* item,
-                               bool preCompletionEnabled,
-                               std::vector<TutorialConstraint*>* constraints,
-                               bool showMinimumTime, bool allowFade, bool repeatMessage)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
-                   showMinimumTime, allowFade, repeatMessage)
+UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId, Item* item, bool preCompletionEnabled,
+                               std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                               bool repeatMessage)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints, showMinimumTime, allowFade,
+                   repeatMessage)
 {
     this->item = item;
     taskType = 1;

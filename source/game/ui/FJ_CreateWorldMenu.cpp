@@ -9,8 +9,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_CreateWorldMenu::FJ_CreateWorldMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_CreateWorldMenu::FJ_CreateWorldMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 }

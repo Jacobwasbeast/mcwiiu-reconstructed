@@ -2,8 +2,7 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 
-FJ_ListButtonDLC::FJ_ListButtonDLC(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode)
+FJ_ListButtonDLC::FJ_ListButtonDLC(fuiRenderNode* renderNode) : FJ_Button(renderNode)
 {
     m_tickNode = getChildByName("DLCTick")->asMovieClip();
     m_tickNode->setVisible(false);

@@ -9,8 +9,7 @@
 #include "game/ui/FJ_List.hpp"
 #include "game/ui/UIScene.hpp"
 
-FJ_SkinSelect::FJ_SkinSelect(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), m_animationPlaying(false)
+FJ_SkinSelect::FJ_SkinSelect(fuiRenderNode* renderNode) : FJ_Document(renderNode), m_animationPlaying(false)
 {
     SetPlayerCharacterSelected(false, false);
     SetCharacterLocked(false);

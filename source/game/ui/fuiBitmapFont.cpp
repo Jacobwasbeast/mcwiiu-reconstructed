@@ -10,7 +10,8 @@
 #include "game/ui/fui.hpp"
 
 fuiBitmapFont::fuiBitmapFont(SFontData& fontData, unsigned short missingGlyphChar)
-    : fuiFontSet(fontData.fontName.c_str()), m_bitmapFont(fontData),
+    : fuiFontSet(fontData.fontName.c_str()),
+      m_bitmapFont(fontData),
       m_missingGlyphChar(missingGlyphChar)
 {
     m_sFontData = &fontData;

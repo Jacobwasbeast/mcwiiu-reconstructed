@@ -1,7 +1,6 @@
 #include "game/ui/FJ_DragonHealth_04.hpp"
 
-FJ_DragonHealth_04::FJ_DragonHealth_04(fuiRenderNode* renderNode)
-    : FJ_DragonHealth(renderNode)
+FJ_DragonHealth_04::FJ_DragonHealth_04(fuiRenderNode* renderNode) : FJ_DragonHealth(renderNode)
 {
 }
 

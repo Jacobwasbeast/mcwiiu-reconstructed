@@ -145,7 +145,8 @@ unsigned int UIControl_PlayerSkinPreview::bindTexture(const std::wstring& name, 
     return 0;
 }
 
-void UIControl_PlayerSkinPreview::render(EntityRenderer* renderer, double x, double y, double z, float yaw, float partialTick)
+void UIControl_PlayerSkinPreview::render(EntityRenderer* renderer, double x, double y, double z, float yaw,
+                                         float partialTick)
 {
     GlStateManager::pushMatrix();
     GlStateManager::disableCull();
@@ -289,7 +290,8 @@ void UIControl_PlayerSkinPreview::render(fuiRect* rect)
     {
         if (mAdditionalModelParts != NULL && !mAdditionalModelParts->empty())
         {
-            for (std::vector<ModelPart*>::iterator it = mAdditionalModelParts->begin(); it != mAdditionalModelParts->end(); ++it)
+            for (std::vector<ModelPart*>::iterator it = mAdditionalModelParts->begin();
+                 it != mAdditionalModelParts->end(); ++it)
             {
                 (*it)->mShow = true;
             }
@@ -297,7 +299,8 @@ void UIControl_PlayerSkinPreview::render(fuiRect* rect)
         render(renderer, 0.0, 0.0, 0.0, 0.0f, 1.0f);
         if (mAdditionalModelParts != NULL && !mAdditionalModelParts->empty())
         {
-            for (std::vector<ModelPart*>::iterator it = mAdditionalModelParts->begin(); it != mAdditionalModelParts->end(); ++it)
+            for (std::vector<ModelPart*>::iterator it = mAdditionalModelParts->begin();
+                 it != mAdditionalModelParts->end(); ++it)
             {
                 (*it)->mShow = false;
             }
@@ -367,6 +370,7 @@ void UIControl_PlayerSkinPreview::CycleNextAnimation()
 void UIControl_PlayerSkinPreview::CyclePreviousAnimation()
 {
     --mAnimation;
-    if (mAnimation < 0) mAnimation = 2;
+    if (mAnimation < 0)
+        mAnimation = 2;
     mAnimationAngle = 0.0f;
 }

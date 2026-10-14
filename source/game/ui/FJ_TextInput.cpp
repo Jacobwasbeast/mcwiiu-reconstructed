@@ -15,10 +15,17 @@
 #include "game/ui/UIScene.hpp"
 
 FJ_TextInput::FJ_TextInput(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_scrollWidth(100), m_firstFocus(true),
-      m_caretIndex(0), m_scrollOffset(0.0f), m_charLimit(-1),
-      m_pLeftArrow(0), m_pRightArrow(0), m_pTextField(0),
-      m_bKeepCaret(false), m_bUseScale(false)
+    : FJ_Base(renderNode),
+      m_scrollWidth(100),
+      m_firstFocus(true),
+      m_caretIndex(0),
+      m_scrollOffset(0.0f),
+      m_charLimit(-1),
+      m_pLeftArrow(0),
+      m_pRightArrow(0),
+      m_pTextField(0),
+      m_bKeepCaret(false),
+      m_bUseScale(false)
 {
 }
 
@@ -229,8 +236,10 @@ void FJ_TextInput::Init(std::wstring name, int id)
     m_isLabel = false;
     if (!m_bUseScale)
     {
-        if (getScaleX() != 1.0f) setScaleX(1.0f);
-        if (getScaleY() != 1.0f) setScaleY(1.0f);
+        if (getScaleX() != 1.0f)
+            setScaleX(1.0f);
+        if (getScaleY() != 1.0f)
+            setScaleY(1.0f);
     }
     InitBase(name, id);
     HandleScrollArrows(true);

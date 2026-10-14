@@ -22,8 +22,7 @@ class Container;
 class Inventory;
 class ItemInstance;
 class UILayer;
-class UIScene_AnvilMenu : public UIScene_AbstractContainerMenu,
-                          public net_minecraft_world_inventory::ContainerListener
+class UIScene_AnvilMenu : public UIScene_AbstractContainerMenu, public net_minecraft_world_inventory::ContainerListener
 {
 public:
     struct PendingNameInfo
@@ -37,19 +36,17 @@ public:
 
     virtual int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                      _UIVec2D* position);
-    virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-                                   _UIVec2D* position, _UIVec2D* size);
+    virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position);
+    virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, _UIVec2D* position,
+                                   _UIVec2D* size);
     virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-                                        int direction, bool wrap);
+    virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction,
+                                        bool wrap);
     virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                      IUIScene_AbstractContainerMenu::ETapState state, int* x,
-                                                      int* y);
+                                                      IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y);
     virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section,
-                                    int slot, bool pressed);
+    virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                    bool pressed);
     virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
 
     virtual std::wstring getMoviePath();
@@ -63,8 +60,7 @@ public:
     void addPendingNameChange(const PendingNameInfo& info);
     static int KeyboardCompleteCallback(void* data, bool accepted);
     void handleEditNamePressed();
-    virtual void refreshContainer(AbstractContainerMenu* menu,
-                                  std::vector<not_null_ptr<ItemInstance> >* items);
+    virtual void refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items);
     virtual void slotChanged(AbstractContainerMenu* menu, int slot, not_null_ptr<ItemInstance> item);
     virtual void setContainerData(AbstractContainerMenu* menu, int id, int value);
     virtual void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);

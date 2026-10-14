@@ -31,7 +31,11 @@ const int cParagraphBreakLength = 12;
 }
 
 UIScene_EndPoem::UIScene_EndPoem(int type, void*, UILayer* layer)
-    : UIScene(type, layer), m_poemText(), m_noisyText(), m_noiseLengths(), m_labels()
+    : UIScene(type, layer),
+      m_poemText(),
+      m_noisyText(),
+      m_noiseLengths(),
+      m_labels()
 {
     initialiseMovie();
     m_finished = false;
@@ -52,8 +56,7 @@ UIScene_EndPoem::UIScene_EndPoem(int type, void*, UILayer* layer)
 
     Random random(8124371LL);
     const wchar_t* noiseTag = L"{*NOISE*}";
-    for (int position = m_poemText.find(noiseTag); position != -1;
-         position = m_poemText.find(noiseTag, position + 1))
+    for (int position = m_poemText.find(noiseTag); position != -1; position = m_poemText.find(noiseTag, position + 1))
     {
         m_noiseLengths.push_back(random.nextInt(4) + 3);
     }
@@ -91,7 +94,8 @@ void UIScene_EndPoem::updateNoise()
             wchar_t character;
             if (gConsoleUIController.UsingBitmapFont())
             {
-                character = SharedConstants::ALLOWED_CHARACTERS[random->nextInt(SharedConstants::ALLOWED_CHARACTERS.length())];
+                character =
+                    SharedConstants::ALLOWED_CHARACTERS[random->nextInt(SharedConstants::ALLOWED_CHARACTERS.length())];
             }
             else
             {
@@ -135,8 +139,8 @@ void UIScene_EndPoem::updateNoise()
 void UIScene_EndPoem::updateTooltips()
 {
     int tooltip = m_finished ? -1 : static_cast<int>(IDS_TOOLTIPS_CONTINUE);
-    gConsoleUIController.SetTooltips(m_playerId, -1, tooltip, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, false, true);
+    gConsoleUIController.SetTooltips(m_playerId, -1, tooltip, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     false, true);
 }
 
 std::wstring UIScene_EndPoem::getMoviePath()
@@ -157,8 +161,7 @@ void UIScene_EndPoem::tick()
     }
 }
 
-void UIScene_EndPoem::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                                  bool& handled)
+void UIScene_EndPoem::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     if (m_finished)
         return;

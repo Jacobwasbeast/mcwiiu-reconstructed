@@ -10,10 +10,7 @@ class fuiRenderNode;
 class FJ_Label_HUD_BigWhite : public FJ_Label
 {
 public:
-    explicit FJ_Label_HUD_BigWhite(fuiRenderNode* renderNode)
-        : FJ_Label(renderNode)
-    {
-    }
+    explicit FJ_Label_HUD_BigWhite(fuiRenderNode* renderNode) : FJ_Label(renderNode) {}
 
 
     static FJ_Label* Create(fuiRenderNode* pRenderNode);

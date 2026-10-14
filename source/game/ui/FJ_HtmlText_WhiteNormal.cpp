@@ -6,8 +6,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
-FJ_HtmlText_WhiteNormal::FJ_HtmlText_WhiteNormal(fuiRenderNode* pRenderNode)
-    : FJ_HtmlText(pRenderNode)
+FJ_HtmlText_WhiteNormal::FJ_HtmlText_WhiteNormal(fuiRenderNode* pRenderNode) : FJ_HtmlText(pRenderNode)
 {
 }
 

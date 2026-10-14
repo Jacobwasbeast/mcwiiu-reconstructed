@@ -5,7 +5,8 @@
 
 class fuiRenderNode;
 
-class FJ_InGameInfoMenu : public FJ_Document {
+class FJ_InGameInfoMenu : public FJ_Document
+{
 public:
     FJ_InGameInfoMenu(fuiRenderNode* renderNode);
 

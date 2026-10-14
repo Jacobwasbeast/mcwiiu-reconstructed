@@ -70,8 +70,8 @@ unsigned char UIString::UIStringCore::needsUpdating()
     if (mIsConstant)
         return 0;
     unsigned int result = 1;
-    if (mLanguage == gCurrentLanguage && mUpdatedLanguage == mLanguage &&
-        mLocale == gCurrentLocale && mUpdatedLocale == mLocale)
+    if (mLanguage == gCurrentLanguage && mUpdatedLanguage == mLanguage && mLocale == gCurrentLocale
+        && mUpdatedLocale == mLocale)
         result = 0;
     return result;
 }

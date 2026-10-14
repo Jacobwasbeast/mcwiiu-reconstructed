@@ -6,8 +6,7 @@
 #include "game/client/render/SFontData.hpp"
 #include "game/core/BufferedImage.hpp"
 
-UIBitmapFont::UIBitmapFont(SFontData& fontData)
-    : UIAbstractBitmapFont(fontData.fontName)
+UIBitmapFont::UIBitmapFont(SFontData& fontData) : UIAbstractBitmapFont(fontData.fontName)
 {
     m_numGlyphs = fontData.numGlyphs;
     BufferedImage image(fontData.textureFileName, true, true, L"");

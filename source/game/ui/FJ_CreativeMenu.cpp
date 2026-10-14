@@ -10,8 +10,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_CreativeMenu::FJ_CreativeMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_CreativeMenu::FJ_CreativeMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
     FJ_FuiNode* scrollBar = getChildByName(std::string("MainPanel.Scrollbar"));
     if (scrollBar != NULL)
@@ -25,11 +24,11 @@ FJ_CreativeMenu::FJ_CreativeMenu(fuiRenderNode* renderNode)
         m_currentPage = 0;
         m_scrollBarButtonPosition = static_cast<int>(scrollBar->getChildByName(std::string("ScrollBarButton"))->getY());
         m_scrollBarEndPosition = static_cast<int>(
-            (scrollBar->getChildByName(std::string("ScrollBarTrack"))->getY() -
-             scrollBar->getChildByName(std::string("ScrollBarButton"))->getY()) +
-            (scrollBar->getChildByName(std::string("ScrollBarTrack"))->getY() +
-             scrollBar->getChildByName(std::string("ScrollBarTrack"))->getHeight()) -
-            scrollBar->getChildByName(std::string("ScrollBarButton"))->getHeight());
+            (scrollBar->getChildByName(std::string("ScrollBarTrack"))->getY()
+             - scrollBar->getChildByName(std::string("ScrollBarButton"))->getY())
+            + (scrollBar->getChildByName(std::string("ScrollBarTrack"))->getY()
+               + scrollBar->getChildByName(std::string("ScrollBarTrack"))->getHeight())
+            - scrollBar->getChildByName(std::string("ScrollBarButton"))->getHeight());
     }
     addEventListener(eFJEventType_SlideComplete, this, _handleSlideComplete, false);
 }
@@ -129,15 +128,14 @@ void FJ_CreativeMenu::SetScrollBar(int pageCount, int currentPage)
     if (pageCount > 1)
     {
         scrollBar->getChildByName(std::string("ScrollBarButton"))
-            ->setY(static_cast<float>(m_scrollBarButtonPosition) +
-                   static_cast<float>(m_scrollBarEndPosition - m_scrollBarButtonPosition) *
-                   (static_cast<float>(currentPage) / static_cast<float>(lastPage)));
+            ->setY(static_cast<float>(m_scrollBarButtonPosition)
+                   + static_cast<float>(m_scrollBarEndPosition - m_scrollBarButtonPosition)
+                         * (static_cast<float>(currentPage) / static_cast<float>(lastPage)));
         m_currentPage = currentPage;
     }
     else
     {
-        scrollBar->getChildByName(std::string("ScrollBarButton"))
-            ->setY(static_cast<float>(m_scrollBarButtonPosition));
+        scrollBar->getChildByName(std::string("ScrollBarButton"))->setY(static_cast<float>(m_scrollBarButtonPosition));
         m_currentPage = currentPage;
     }
 }

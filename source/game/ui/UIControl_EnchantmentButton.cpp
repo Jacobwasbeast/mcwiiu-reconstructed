@@ -25,10 +25,10 @@ static UIControl_EnchantmentButton::EnchantmentNames g_enchantmentNames;
 
 UIControl_EnchantmentButton::EnchantmentNames::EnchantmentNames()
 {
-    std::wstring source(L"the elder scrolls klaatu berata niktu xyzzy bless curse light darkness fire air earth water hot dry cold wet ignite snuff embiggen twist shorten stretch fiddle destroy imbue galvanize enchant free limited range of towards inside sphere cube self other ball mental physical grow shrink demon elemental spirit animal creature beast humanoid undead fresh stale phnglui mglwnafh cthulhu rlyeh wgahnagl fhtagn baguette");
+    std::wstring source(
+        L"the elder scrolls klaatu berata niktu xyzzy bless curse light darkness fire air earth water hot dry cold wet ignite snuff embiggen twist shorten stretch fiddle destroy imbue galvanize enchant free limited range of towards inside sphere cube self other ball mental physical grow shrink demon elemental spirit animal creature beast humanoid undead fresh stale phnglui mglwnafh cthulhu rlyeh wgahnagl fhtagn baguette");
     std::wistringstream stream(source);
-    std::copy(std::istream_iterator<std::wstring, wchar_t>(stream),
-              std::istream_iterator<std::wstring, wchar_t>(),
+    std::copy(std::istream_iterator<std::wstring, wchar_t>(stream), std::istream_iterator<std::wstring, wchar_t>(),
               std::back_inserter(m_names));
 }
 
@@ -47,8 +47,7 @@ std::wstring UIControl_EnchantmentButton::EnchantmentNames::getRandomName()
     return result;
 }
 
-UIControl_EnchantmentButton::UIControl_EnchantmentButton()
-    : UIControl_Button()
+UIControl_EnchantmentButton::UIControl_EnchantmentButton() : UIControl_Button()
 {
     m_state = 0;
     m_level = 0;
@@ -57,12 +56,10 @@ UIControl_EnchantmentButton::UIControl_EnchantmentButton()
     m_focus = false;
     m_colour = (int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantText) | 0xff000000);
     m_focusColour = (int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextFocus) | 0xff000000);
-    m_inactiveColour = (int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextDisabled) |
-                             0xff000000);
+    m_inactiveColour = (int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextDisabled) | 0xff000000);
 }
 
-bool UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* node,
-                                                const std::string& name)
+bool UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_EnchantmentButton;
     return UIControl_Button::setupControl(scene, node, name);
@@ -77,9 +74,9 @@ void UIControl_EnchantmentButton::updateState()
     Enchantment* enchantment = Enchantment::byId(menu->mEnchantmentIds[m_index]);
     Minecraft* minecraft = Minecraft::GetInstance();
     int state;
-    if ((enchantment == NULL || goldCount < m_index + 1 ||
-         minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel < level) &&
-        !minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild)
+    if ((enchantment == NULL || goldCount < m_index + 1
+         || minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel < level)
+        && !minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild)
     {
         state = 0;
     }
@@ -104,8 +101,7 @@ void UIControl_EnchantmentButton::updateState()
     }
     if (state != m_state)
     {
-        FJ_EnchantingButton* button = static_cast<FJ_EnchantingButton*>(
-            m_fuiRenderNode->getFuiNode());
+        FJ_EnchantingButton* button = static_cast<FJ_EnchantingButton*>(m_fuiRenderNode->getFuiNode());
         button->ChangeState(state);
         m_state = state;
     }
@@ -135,8 +131,7 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
 {
     UIScene_EnchantingMenu* scene = static_cast<UIScene_EnchantingMenu*>(m_scene);
     EnchantmentMenu* menu = scene->getMenu();
-    GlStateManager::scalef((rect->xMax - rect->xMin) / m_width,
-                           (rect->yMax - rect->yMin) / m_height, 1.0F);
+    GlStateManager::scalef((rect->xMax - rect->xMin) / m_width, (rect->yMax - rect->yMin) / m_height, 1.0F);
     const bool splitScreen = gApp.GetLocalPlayerCount() > 1;
     float scale;
     if (scene->m_movieResolution == 0)
@@ -160,9 +155,8 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
         std::wstring levelText = _toString(level);
         Font* font = minecraft->mAlternateFont;
         int colour = m_colour;
-        if ((goldCount < m_index + 1 ||
-             minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel < level) &&
-            !minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild)
+        if ((goldCount < m_index + 1 || minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel < level)
+            && !minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild)
         {
             colour = m_inactiveColour;
         }
@@ -170,9 +164,7 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
         {
             colour = m_focusColour;
         }
-        font->drawWordWrap(
-            m_name, 0, 0, (int)(m_width / scale),
-            colour, (int)(m_height / scale));
+        font->drawWordWrap(m_name, 0, 0, (int)(m_width / scale), colour, (int)(m_height / scale));
         GlStateManager::disableAlphaTest();
     }
     GlStateManager::disableRescaleNormal();
@@ -180,8 +172,7 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
 
 void UIControl_EnchantmentButton::SetEnchantmentLevel(int level)
 {
-    FJ_EnchantingButton* button = static_cast<FJ_EnchantingButton*>(
-        m_fuiRenderNode->getFuiNode());
+    FJ_EnchantingButton* button = static_cast<FJ_EnchantingButton*>(m_fuiRenderNode->getFuiNode());
     button->SetEnchantmentLevel(level);
 }
 

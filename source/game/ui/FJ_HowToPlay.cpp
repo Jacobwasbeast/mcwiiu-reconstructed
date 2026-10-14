@@ -14,8 +14,7 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
-FJ_HowToPlay::FJ_HowToPlay(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_HowToPlay::FJ_HowToPlay(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     InitScene();
 }

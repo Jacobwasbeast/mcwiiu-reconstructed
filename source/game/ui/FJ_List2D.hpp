@@ -14,6 +14,7 @@ class fuiRenderNode;
 class FJ_List2D : public FJ_Base
 {
     friend class FJ_AchievementsMenu;
+
 protected:
     typedef void (*FJ_ScrollDelegateType)(FJ_FuiNode*);
 

@@ -2,8 +2,7 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 
-FJ_ListButtonLobby::FJ_ListButtonLobby(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode)
+FJ_ListButtonLobby::FJ_ListButtonLobby(fuiRenderNode* renderNode) : FJ_Button(renderNode)
 {
     m_playerIcons = getChildByName(std::string("PlayerIcons"))->asMovieClip();
     m_voipIcon = getChildByName(std::string("VOIP"))->asMovieClip();

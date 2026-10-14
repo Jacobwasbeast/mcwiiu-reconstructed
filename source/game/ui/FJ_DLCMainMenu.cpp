@@ -5,8 +5,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/UIScene.hpp"
 
-FJ_DLCMainMenu::FJ_DLCMainMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_DLCMainMenu::FJ_DLCMainMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

@@ -43,14 +43,13 @@ public:
     virtual void handleLoseFocus();
     virtual void handleGainFocus(bool navigatedBack);
     virtual void handleTimerComplete(int timerId);
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleFocusChange(int controlId, int childId);
     virtual void handleInitFocus(int controlId, int childId);
     virtual int getSceneType();
     virtual unsigned int getSubSceneType() const;
-    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
-                                  bool pressed, bool repeat, bool released);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                  bool repeat, bool released);
     virtual UIControl* GetMainPanel();
     virtual void tick();
     virtual void handleReload();
@@ -83,9 +82,8 @@ public:
     virtual void ClearCreateList();
     virtual void SetCreateListEnabled(bool enabled);
     virtual void AddJoinListButton(const std::wstring& label, int id, unsigned char* gameIcon,
-                                   unsigned int gameIconSize, const std::wstring& gameIconName,
-                                   unsigned char* packIcon, unsigned int packIconSize,
-                                   const std::wstring& packIconName);
+                                   unsigned int gameIconSize, const std::wstring& gameIconName, unsigned char* packIcon,
+                                   unsigned int packIconSize, const std::wstring& packIconName);
     virtual void InitFocusJoinList(int focus);
     virtual void ClearJoinList();
     virtual unsigned int GetJoinListSize();

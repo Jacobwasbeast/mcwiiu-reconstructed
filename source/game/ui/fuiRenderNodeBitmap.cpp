@@ -82,8 +82,8 @@ void fuiRenderNodeBitmap::render(fuiRect* bounds, fuiMatrix* matrix)
         }
         gRenderer->StateSetColour(redMultiply, greenMultiply, blueMultiply, alphaMultiply);
         gRenderer->StateSetColourAdd(redAdd, greenAdd, blueAdd, alphaAdd);
-        gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices,
-                                C4JRender::eVertexType_UI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
+        gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices, C4JRender::eVertexType_UI,
+                                C4JRender::ePixelShaderType_UIColourAdd, NULL);
     }
 
     popFilterFlags();

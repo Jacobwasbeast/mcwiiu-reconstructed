@@ -3,8 +3,7 @@
 #include "game/ui/FJ_BeaconEffectButton.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-UIControl_BeaconEffectButton::UIControl_BeaconEffectButton()
-    : UIControl()
+UIControl_BeaconEffectButton::UIControl_BeaconEffectButton() : UIControl()
 {
     m_icon = 0;
     m_state = 0;

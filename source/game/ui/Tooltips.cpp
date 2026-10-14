@@ -50,7 +50,8 @@ void Tooltips::staticCtor()
     int playerId;
     int action;
 
-    for (playerId = 0; playerId < 4; ++playerId) {
+    for (playerId = 0; playerId < 4; ++playerId)
+    {
         gTooltipsDirty[playerId] = 1;
         for (action = 0; action < 25; ++action)
             gTooltips[playerId * kTooltipsPerPlayer + action] = -1;
@@ -71,15 +72,12 @@ void Tooltips::ResetTooltip(int playerId, EControllerActions action)
     OverwriteTooltip(playerId, action, -1);
 }
 
-void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> player,
-                                   MultiPlayerLevel* level, const HitResult* hitResult,
-                                   InteractionResult::EInteractionResult interactionResult)
+void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> player, MultiPlayerLevel* level,
+                                   const HitResult* hitResult, InteractionResult::EInteractionResult interactionResult)
 {
     static EControllerActions extraTooltipActions[5] = {
-        EControllerActions_ConfirmReady, EControllerActions_Vote,
-        EControllerActions_LookBehind, EControllerActions_RestartSection,
-        EControllerActions_RestartRace
-    };
+        EControllerActions_ConfirmReady, EControllerActions_Vote, EControllerActions_LookBehind,
+        EControllerActions_RestartSection, EControllerActions_RestartRace};
     const int playerId = player->mUserIndex;
 
     if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
@@ -144,12 +142,11 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
             Block* block = state->getBlock();
 
             const bool useBlock = !player->isSneaking() && player->isAllowedToUse(block);
-            const bool useItemOnBlock =
-                player->isSneaking() && player->isAllowedToUse(block) && item->isEmpty();
-            const bool canPlace = pos.y < level->getMaxBuildHeight() - 1 ||
-                                  (face != Direction::UP && pos.y < level->getMaxBuildHeight());
-            const bool canDestroy = Minecraft::GetInstance()->mGameModes[playerId]->MayDestroy(pos) &&
-                                    player->isAllowedToMine();
+            const bool useItemOnBlock = player->isSneaking() && player->isAllowedToUse(block) && item->isEmpty();
+            const bool canPlace = pos.y < level->getMaxBuildHeight() - 1
+                                  || (face != Direction::UP && pos.y < level->getMaxBuildHeight());
+            const bool canDestroy = Minecraft::GetInstance()->mGameModes[playerId]->MayDestroy(pos)
+                                    && player->isAllowedToMine();
 
             BlockTooltipDataHolder blockData(player, level, item, state, pos, interactionResult, useBlock,
                                              useItemOnBlock, canDestroy, canPlace);
@@ -160,14 +157,12 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
                 interactTooltip = static_cast<int>(item->getItem()->GetUseTooltip(itemData));
             }
             OverwriteTooltip(playerId, EControllerActions_Use, interactTooltip);
-            OverwriteTooltip(playerId, EControllerActions_Action,
-                             static_cast<int>(block->GetHitTooltip(blockData)));
+            OverwriteTooltip(playerId, EControllerActions_Action, static_cast<int>(block->GetHitTooltip(blockData)));
             break;
         }
         case HitResult::ENTITY:
         {
-            EntityTooltipDataHolder entityData(player, item,
-                                               player->isAllowedToHurtEntity(hitResult->mEntity),
+            EntityTooltipDataHolder entityData(player, item, player->isAllowedToHurtEntity(hitResult->mEntity),
                                                player->isAllowedToInteract(hitResult->mEntity));
             int interactTooltip = static_cast<int>(hitResult->mEntity->GetInteractTooltip(entityData));
             if (interactTooltip == -1 && !item->isEmpty() && !hitResult->mEntity->HideUseTooltips())
@@ -189,8 +184,7 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
             else
             {
                 ItemTooltipDataHolder itemData(player, item, level, interactionResult);
-                OverwriteTooltip(playerId, EControllerActions_Use,
-                                 item->getItem()->GetUseTooltip(itemData));
+                OverwriteTooltip(playerId, EControllerActions_Use, item->getItem()->GetUseTooltip(itemData));
                 ResetTooltip(playerId, EControllerActions_Action);
             }
             break;
@@ -210,8 +204,7 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
             {
                 {
                     ItemTooltipDataHolder itemData(player, item, level, interactionResult);
-                    OverwriteTooltip(playerId, EControllerActions_Use,
-                                     item->getItem()->GetUseTooltip(itemData));
+                    OverwriteTooltip(playerId, EControllerActions_Use, item->getItem()->GetUseTooltip(itemData));
                 }
                 ResetTooltip(playerId, EControllerActions_Action);
             }
@@ -232,7 +225,8 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
         if (player->GetGameType() == GameType::LOBBY)
         {
             extraTooltips[0x34] = gameMode->IsPlayerReady(player->mPlayerIndex)
-                ? static_cast<int>(IDS_TOOLTIP_NOT_READY) : static_cast<int>(IDS_TOOLTIP_READY);
+                                      ? static_cast<int>(IDS_TOOLTIP_NOT_READY)
+                                      : static_cast<int>(IDS_TOOLTIP_READY);
 
             std::vector<ClientMasterGameMode::MapSelectInfo> playlist;
             gameMode->GetUniquePlaylist(playlist);
@@ -242,24 +236,23 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
                 {
                     extraTooltips[0x35] = kTooltipMapVote;
                 }
-                else if (isPrimaryPad && CGameNetworkManager::sInstance.IsHost() &&
-                         minecraft != NULL && minecraft->mLocalPlayers[playerId]->GetGameType() == GameType::LOBBY)
+                else if (isPrimaryPad && CGameNetworkManager::sInstance.IsHost() && minecraft != NULL
+                         && minecraft->mLocalPlayers[playerId]->GetGameType() == GameType::LOBBY)
                 {
                     extraTooltips[0x35] = IDS_MG_SELECT_MAP;
                 }
             }
-            else if (!Minecraft::InMiniGame(eMiniGameId_Battle, true) &&
-                     minecraft->GetMiniGame()->HasMultipleVariants())
+            else if (!Minecraft::InMiniGame(eMiniGameId_Battle, true)
+                     && minecraft->GetMiniGame()->HasMultipleVariants())
             {
                 if (CGameNetworkManager::sInstance.IsInPublicJoinableGame())
                 {
                     if (minecraft->GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
                         extraTooltips[0x35] = kTooltipVote;
                 }
-                else if (isPrimaryPad && CGameNetworkManager::sInstance.IsHost() &&
-                         minecraft != NULL &&
-                         minecraft->mLocalPlayers[playerId]->GetGameType() == GameType::LOBBY &&
-                         minecraft->GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
+                else if (isPrimaryPad && CGameNetworkManager::sInstance.IsHost() && minecraft != NULL
+                         && minecraft->mLocalPlayers[playerId]->GetGameType() == GameType::LOBBY
+                         && minecraft->GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
                 {
                     extraTooltips[0x35] = static_cast<int>(IDS_MG_SELECT_VARIANT);
                 }
@@ -280,17 +273,16 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
             ClientScoreboard* scoreboard = player->GetLevel()->GetClientScoreboard();
             for (int i = 0; i < 4; ++i)
             {
-                if (minecraft->mLocalPlayers[i] != NULL &&
-                    (!minecraft->mLocalPlayers[i]->isSpectator() ||
-                     scoreboard->GetEndZoneEntered(minecraft->mLocalPlayers[i]->getSUID(), -1)))
+                if (minecraft->mLocalPlayers[i] != NULL
+                    && (!minecraft->mLocalPlayers[i]->isSpectator()
+                        || scoreboard->GetEndZoneEntered(minecraft->mLocalPlayers[i]->getSUID(), -1)))
                     ++activePlayers;
             }
             if (activePlayers == 1 && !player->isSpectator())
             {
                 ClientMasterGameMode* masterGameMode = minecraft->GetClientMasterGameMode();
-                if (CommonMasterGameMode::GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0 &&
-                    masterGameMode->IsRoundPlaying() &&
-                    !scoreboard->GetEndZoneEntered(player->getSUID(), -1))
+                if (CommonMasterGameMode::GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0
+                    && masterGameMode->IsRoundPlaying() && !scoreboard->GetEndZoneEntered(player->getSUID(), -1))
                 {
                     extraTooltips[0x36] = IDS_TOOLTIP_RESTART_SECTION;
                     extraTooltips[0x37] = static_cast<int>(IDS_TOOLTIP_RESTART_RACE);
@@ -320,8 +312,7 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     {
         ResetTooltip(playerId, EControllerActions_Inventory);
     }
-    else if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-             Minecraft::GetInstance()->GetMiniGame()->LockedInventory())
+    else if (Minecraft::InMiniGame(eMiniGameId_Any, true) && Minecraft::GetInstance()->GetMiniGame()->LockedInventory())
     {
         ResetTooltip(playerId, EControllerActions_Inventory);
     }
@@ -341,7 +332,8 @@ void Tooltips::ResetAllTooltips(int playerId)
 
 void Tooltips::ForceTooltipReload(int playerId)
 {
-    if (playerId == 0xff) {
+    if (playerId == 0xff)
+    {
         gTooltipsDirty[0] = 1;
         gTooltipsDirty[1] = 1;
         gTooltipsDirty[2] = 1;
@@ -362,9 +354,11 @@ void Tooltips::ForceAllPlayerTooltipReset()
 
 void Tooltips::DisplayTooltips(int playerId)
 {
-    if (gTooltipsDirty[playerId] != 0) {
-        if (!gConsoleUIController.GetMenuDisplayed(playerId) &&
-            !gConsoleUIController.IsSceneInStack(playerId, EUIScene_ConnectingProgress)) {
+    if (gTooltipsDirty[playerId] != 0)
+    {
+        if (!gConsoleUIController.GetMenuDisplayed(playerId)
+            && !gConsoleUIController.IsSceneInStack(playerId, EUIScene_ConnectingProgress))
+        {
             gConsoleUIController.SetTooltips((unsigned int)playerId, &gTooltips[playerId * kTooltipsPerPlayer], false,
                                              false);
             gTooltipsDirty[playerId] = 0;

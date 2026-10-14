@@ -19,8 +19,7 @@ public:
     void AddNewItem(const std::wstring& label, int id, const std::wstring& textureName,
                     const std::wstring& textureName1);
     void AddNewItem(const std::wstring& label, const std::wstring& textureName);
-    void AddNewItem(const std::wstring& label, const std::wstring& textureName,
-                    const std::wstring& textureName1);
+    void AddNewItem(const std::wstring& label, const std::wstring& textureName, const std::wstring& textureName1);
     void SetTextureName(int index, const std::wstring& textureName);
     void SetItem(int index, const std::wstring& label, const std::wstring& textureName);
 };

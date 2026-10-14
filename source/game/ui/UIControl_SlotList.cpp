@@ -3,8 +3,7 @@
 #include "game/ui/FJ_SlotList.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-UIControl_SlotList::UIControl_SlotList()
-    : m_highlightSlot(-1)
+UIControl_SlotList::UIControl_SlotList() : m_highlightSlot(-1)
 {
 }
 

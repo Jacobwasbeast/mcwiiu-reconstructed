@@ -1,7 +1,6 @@
 #include "game/ui/FJ_CheckpointMarker.hpp"
 
-FJ_CheckpointMarker::FJ_CheckpointMarker(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_CheckpointMarker::FJ_CheckpointMarker(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
 }
 

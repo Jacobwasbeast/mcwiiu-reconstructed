@@ -1,7 +1,6 @@
 #include "game/ui/FJ_ListButtonController.hpp"
 
-FJ_ListButtonController::FJ_ListButtonController(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode)
+FJ_ListButtonController::FJ_ListButtonController(fuiRenderNode* renderNode) : FJ_Button(renderNode)
 {
 }
 

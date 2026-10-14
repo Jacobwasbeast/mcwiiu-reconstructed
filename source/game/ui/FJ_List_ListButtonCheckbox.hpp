@@ -16,8 +16,7 @@ public:
     static FJ_List* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
     void UseIggyIcons();
-    void addNewItem(const std::wstring& label, int id, bool checked,
-                    const std::wstring& textureName);
+    void addNewItem(const std::wstring& label, int id, bool checked, const std::wstring& textureName);
     void SetCheckBox(int index, bool checked);
     uint8_t GetCheckBox(int index);
     void SetTextureName(int index, const std::wstring& textureName);

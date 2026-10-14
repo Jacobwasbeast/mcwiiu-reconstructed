@@ -8,8 +8,7 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/ui/fuiRenderNodeTimeline.hpp"
 
-FJ_HtmlText_WithPanel::FJ_HtmlText_WithPanel(fuiRenderNode* renderNode)
-    : FJ_HtmlText(renderNode)
+FJ_HtmlText_WithPanel::FJ_HtmlText_WithPanel(fuiRenderNode* renderNode) : FJ_HtmlText(renderNode)
 {
     m_panelNode = NULL;
 }

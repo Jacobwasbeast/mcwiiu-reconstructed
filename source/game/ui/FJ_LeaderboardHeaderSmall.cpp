@@ -1,7 +1,6 @@
 #include "game/ui/FJ_LeaderboardHeaderSmall.hpp"
 
-FJ_LeaderboardHeaderSmall::FJ_LeaderboardHeaderSmall(fuiRenderNode* pRenderNode)
-    : FJ_LeaderboardHeader(pRenderNode)
+FJ_LeaderboardHeaderSmall::FJ_LeaderboardHeaderSmall(fuiRenderNode* pRenderNode) : FJ_LeaderboardHeader(pRenderNode)
 {
 }
 

@@ -13,8 +13,7 @@
 #include "game/world/block/FurnaceBlockEntity.hpp"
 #include "game/world/generation/Player.hpp"
 
-FurnaceMenu::FurnaceMenu(boost::shared_ptr<Inventory> inventory,
-                         boost::shared_ptr<Container> container)
+FurnaceMenu::FurnaceMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container)
     : AbstractContainerMenu()
 {
     mLitDuration = 0;
@@ -22,13 +21,11 @@ FurnaceMenu::FurnaceMenu(boost::shared_ptr<Inventory> inventory,
     mCookingTotalTime = 0;
     mCookingProgress = 0;
     mContainer = container;
-    container->startOpen(
-        boost::static_pointer_cast<Player>(inventory->m_player->shared_from_this()));
+    container->startOpen(boost::static_pointer_cast<Player>(inventory->m_player->shared_from_this()));
     addSlot(new Slot(container, 0, 56, 17));
     addSlot(new FurnaceFuelSlot(container, 1, 56, 53));
-    addSlot(new FurnaceResultSlot(
-        boost::static_pointer_cast<Player>(inventory->m_player->shared_from_this()), container, 2,
-        116, 35));
+    addSlot(new FurnaceResultSlot(boost::static_pointer_cast<Player>(inventory->m_player->shared_from_this()),
+                                  container, 2, 116, 35));
 
     for (int row = 0; row < 3; ++row)
     {
@@ -52,10 +49,8 @@ void FurnaceMenu::addSlotListener(net_minecraft_world_inventory::ContainerListen
 void FurnaceMenu::broadcastChanges()
 {
     AbstractContainerMenu::broadcastChanges();
-    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator end =
-        m_listeners.end();
-    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it =
-        m_listeners.begin();
+    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator end = m_listeners.end();
+    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin();
     for (; it != end; ++it)
     {
         net_minecraft_world_inventory::ContainerListener* listener = *it;
@@ -97,14 +92,12 @@ int FurnaceMenu::GetInvSlotStart()
     return IsSmallInventory() ? 30 : 3;
 }
 
-void FurnaceMenu::fjCheckAchievements(const boost::shared_ptr<Player>& player,
-                                      const not_null_ptr<ItemInstance>& item)
+void FurnaceMenu::fjCheckAchievements(const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item)
 {
     bool fueledByCharcoal = mContainer->getContainerData(4) == 1;
     if (fueledByCharcoal && item->getItem() == Items::coal && item->getAuxValue() == 1)
     {
-        player->awardStat(GenericStats::renewableEnergy(),
-                          GenericStats::param_renewableEnergy());
+        player->awardStat(GenericStats::renewableEnergy(), GenericStats::param_renewableEnergy());
         return;
     }
     if (Block::byItem(item->getItem()) == Blocks::sponge)
@@ -190,10 +183,8 @@ not_null_ptr<ItemInstance> FurnaceMenu::quickMoveStack(boost::shared_ptr<Player>
 not_null_ptr<ItemInstance> FurnaceMenu::clicked(int slot, int button, ClickType::eClickType type,
                                                 boost::shared_ptr<Player> player)
 {
-    not_null_ptr<ItemInstance> itemstack =
-        AbstractContainerMenu::clicked(slot, button, type, player);
-    if (slot == 2 && !itemstack->isEmpty() && (button == 0 || button == 1) &&
-        type == ClickType::eClickType_Pickup)
+    not_null_ptr<ItemInstance> itemstack = AbstractContainerMenu::clicked(slot, button, type, player);
+    if (slot == 2 && !itemstack->isEmpty() && (button == 0 || button == 1) && type == ClickType::eClickType_Pickup)
     {
         fjCheckAchievements(player, itemstack);
         mContainer->setContainerData(4, 0);

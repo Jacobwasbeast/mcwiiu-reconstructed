@@ -36,9 +36,11 @@ UIGroup::UIGroup(EUIGroup group, int player)
     }
 
     if (m_group != EUIGroup_Fullscreen && m_group != EUIGroup_DRC)
-        m_tooltips = static_cast<UIComponent_Tooltips*>(m_layers[EUILayer_Tooltips]->addComponent(m_player, EUIScene_Tooltips, NULL));
+        m_tooltips = static_cast<UIComponent_Tooltips*>(
+            m_layers[EUILayer_Tooltips]->addComponent(m_player, EUIScene_Tooltips, NULL));
     else
-        m_tooltips = static_cast<UIComponent_Tooltips*>(m_layers[EUILayer_Tooltips]->addComponent(0, EUIScene_Tooltips, NULL));
+        m_tooltips = static_cast<UIComponent_Tooltips*>(
+            m_layers[EUILayer_Tooltips]->addComponent(0, EUIScene_Tooltips, NULL));
     m_hud = NULL;
     m_tutorialPopup = NULL;
     m_pressStartToPlay = NULL;
@@ -46,24 +48,26 @@ UIGroup::UIGroup(EUIGroup group, int player)
 
     if (m_group == EUIGroup_DRC)
     {
-        m_drc = static_cast<UIComponent_WiiUDRC*>(m_layers[EUILayer_Fullscreen]->addComponent(m_player, EUIScene_WiiUDRC, NULL));
+        m_drc = static_cast<UIComponent_WiiUDRC*>(
+            m_layers[EUILayer_Fullscreen]->addComponent(m_player, EUIScene_WiiUDRC, NULL));
     }
     else if (m_group != EUIGroup_Fullscreen)
     {
-        m_tutorialPopup = static_cast<UIComponent_TutorialPopup*>(m_layers[EUILayer_Tutorial]->addComponent(m_player, EUIScene_TutorialPopup, NULL));
+        m_tutorialPopup = static_cast<UIComponent_TutorialPopup*>(
+            m_layers[EUILayer_Tutorial]->addComponent(m_player, EUIScene_TutorialPopup, NULL));
         m_hud = static_cast<UIScene_HUD*>(m_layers[EUILayer_HUD]->addComponent(m_player, EUIScene_HUD, NULL));
     }
     else
     {
-        m_pressStartToPlay = static_cast<UIComponent_PressStartToPlay*>(m_layers[EUILayer_Tooltips]->addComponent(0, EUIScene_PressStartToPlay, NULL));
+        m_pressStartToPlay = static_cast<UIComponent_PressStartToPlay*>(
+            m_layers[EUILayer_Tooltips]->addComponent(0, EUIScene_PressStartToPlay, NULL));
     }
     m_commandBufferList = MemoryTracker::genLists(1);
 }
 
 void UIGroup::getRenderDimensions(int& width, int& height)
 {
-    gConsoleUIController.getRenderDimensions(
-        static_cast<C4JRender::eViewportType>(m_viewportType), width, height);
+    gConsoleUIController.getRenderDimensions(static_cast<C4JRender::eViewportType>(m_viewportType), width, height);
 }
 
 unsigned int UIGroup::GetLayerIndex(UILayer* layer)
@@ -162,8 +166,8 @@ void UIGroup::render()
         {
             height = 0;
             width = 0;
-            gConsoleUIController.getRenderDimensions(
-                static_cast<C4JRender::eViewportType>(m_viewportType), width, height);
+            gConsoleUIController.getRenderDimensions(static_cast<C4JRender::eViewportType>(m_viewportType), width,
+                                                     height);
         }
 
         int i;
@@ -383,7 +387,6 @@ void UIGroup::ClearTooltips()
 {
     if (GetTopScene(EUILayer_Alert) == NULL)
     {
-        m_tooltips->SetTooltips(
-            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false);
+        m_tooltips->SetTooltips(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false);
     }
 }

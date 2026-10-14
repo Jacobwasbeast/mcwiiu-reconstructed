@@ -6,8 +6,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_JoinMenu::FJ_JoinMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_JoinMenu::FJ_JoinMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     getChildByName(std::string("JoinGame"))->asFJ_Button()->HideUntilInit();
 }
@@ -21,4 +20,3 @@ uint32_t FJ_JoinMenu::getType()
 {
     return 0x40;
 }
-

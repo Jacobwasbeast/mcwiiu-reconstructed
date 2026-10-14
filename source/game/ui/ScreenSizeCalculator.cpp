@@ -29,8 +29,7 @@ void ScreenSizeCalculator::_init(Options* options, int width, int height, int gu
             maxScale = 1000;
         }
 
-        while (mScale < maxScale && mWidth / (mScale + 1) >= 320 &&
-               mHeight / (mScale + 1) >= 240)
+        while (mScale < maxScale && mWidth / (mScale + 1) >= 320 && mHeight / (mScale + 1) >= 240)
         {
             mScale++;
         }

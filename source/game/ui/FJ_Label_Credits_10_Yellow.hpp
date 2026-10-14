@@ -8,10 +8,7 @@ class fuiRenderNode;
 class FJ_Label_Credits_10_Yellow : public FJ_LabelOutline
 {
 public:
-    FJ_Label_Credits_10_Yellow(fuiRenderNode* pRenderNode)
-        : FJ_LabelOutline(pRenderNode)
-    {
-    }
+    FJ_Label_Credits_10_Yellow(fuiRenderNode* pRenderNode) : FJ_LabelOutline(pRenderNode) {}
     virtual ~FJ_Label_Credits_10_Yellow();
 
     static FJ_LabelOutline* Create(fuiRenderNode* pRenderNode);

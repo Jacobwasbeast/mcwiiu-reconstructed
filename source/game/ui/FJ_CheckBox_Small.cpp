@@ -1,7 +1,6 @@
 #include "game/ui/FJ_CheckBox_Small.hpp"
 
-FJ_CheckBox_Small::FJ_CheckBox_Small(fuiRenderNode* pRenderNode)
-    : FJ_CheckBox(pRenderNode)
+FJ_CheckBox_Small::FJ_CheckBox_Small(fuiRenderNode* pRenderNode) : FJ_CheckBox(pRenderNode)
 {
 }
 

@@ -1,7 +1,6 @@
 #include "game/ui/FJ_Label_Book_Normal.hpp"
 
-FJ_Label_Book_Normal::FJ_Label_Book_Normal(fuiRenderNode* renderNode)
-    : FJ_Label_Book(renderNode)
+FJ_Label_Book_Normal::FJ_Label_Book_Normal(fuiRenderNode* renderNode) : FJ_Label_Book(renderNode)
 {
 }
 

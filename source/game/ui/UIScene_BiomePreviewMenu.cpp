@@ -27,8 +27,7 @@ extern ConsoleUIController gConsoleUIController;
 
 C4JThreadImpl* UIScene_BiomePreviewMenu::s_regenThread = 0;
 
-UIScene_BiomePreviewMenu::CustomImage::CustomImage()
-    : mImage()
+UIScene_BiomePreviewMenu::CustomImage::CustomImage() : mImage()
 {
     mTextureLoaded = 0;
     mTexture = GlStateManager::genTexture();
@@ -41,9 +40,21 @@ UIScene_BiomePreviewMenu::CustomImage::~CustomImage()
 }
 
 UIScene_BiomePreviewMenu::UIScene_BiomePreviewMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), mBiomeMap(), mNavigatorMap(), mMainPanel(), mTimer(), mScrollUp(),
-      mScrollDown(), mScrollLeft(), mScrollRight(), mPlayableAreaLabel(), mCoordinatesLabel(),
-      mFullMapLabel(), mHelpLabel(), mCursor(), mOverrideSettings()
+    : UIScene(type, layer),
+      mBiomeMap(),
+      mNavigatorMap(),
+      mMainPanel(),
+      mTimer(),
+      mScrollUp(),
+      mScrollDown(),
+      mScrollLeft(),
+      mScrollRight(),
+      mPlayableAreaLabel(),
+      mCoordinatesLabel(),
+      mFullMapLabel(),
+      mHelpLabel(),
+      mCursor(),
+      mOverrideSettings()
 {
     initialiseMovie();
     mHelpLabel.init(UIString(L""));
@@ -83,7 +94,7 @@ UIScene_BiomePreviewMenu::UIScene_BiomePreviewMenu(int type, void* data, UILayer
     mRegenerate = true;
     mSectionsChanged = true;
     s_regenThread = new C4JThreadImpl(reinterpret_cast<int (*)(void*)>(&UIScene_BiomePreviewMenu::UpdateRegenBiomes),
-                                       this, "Regenerating Section", 0);
+                                      this, "Regenerating Section", 0);
     s_regenThread->SetProcessor(0);
     s_regenThread->Run();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -135,8 +146,7 @@ void UIScene_BiomePreviewMenu::setNewPointerPos(const _UIVec2D& position)
     setNewPointerPos(position.x, position.y);
 }
 
-void UIScene_BiomePreviewMenu::UpdatePixelCaches(int sectionX, int sectionZ, bool atVerticalEdge,
-                                                  bool atHorizontalEdge)
+void UIScene_BiomePreviewMenu::UpdatePixelCaches(int sectionX, int sectionZ, bool atVerticalEdge, bool atHorizontalEdge)
 {
     mSectionsChanged = false;
     if (sectionX != -1 && sectionZ != -1)
@@ -157,8 +167,8 @@ void UIScene_BiomePreviewMenu::UpdatePixelCaches(int sectionX, int sectionZ, boo
             width /= 2;
         if (atHorizontalEdge)
             height /= 2;
-        mOverrideSettings.UpdateBiomeMapPixelsInRegion((unsigned int*)mNavigatorMap.mPixels.data, sectionX,
-                                                       sectionZ, width, height, mSectionsChanged, true);
+        mOverrideSettings.UpdateBiomeMapPixelsInRegion((unsigned int*)mNavigatorMap.mPixels.data, sectionX, sectionZ,
+                                                       width, height, mSectionsChanged, true);
         LeaveCriticalSection(&mCriticalSection);
     }
 
@@ -170,8 +180,8 @@ void UIScene_BiomePreviewMenu::UpdatePixelCaches(int sectionX, int sectionZ, boo
             delete[] mBiomeMap.mPixels.data;
             mBiomeMap.mPixels.length = 0;
         }
-        arrayWithLength<unsigned char> image =
-            mOverrideSettings.CreateZoomedImage((unsigned int*)mNavigatorMap.mPixels.data, mTargetZoomLevel);
+        arrayWithLength<unsigned char> image = mOverrideSettings.CreateZoomedImage(
+            (unsigned int*)mNavigatorMap.mPixels.data, mTargetZoomLevel);
         mBiomeMap.mPixels = image;
         LeaveCriticalSection(&mCriticalSection);
     }
@@ -192,10 +202,10 @@ unsigned int UIScene_BiomePreviewMenu::UpdateRegenBiomes(void* data)
             int sectionZ = -1;
             bool atVerticalEdge = false;
             bool atHorizontalEdge = false;
-            if ((!scene->mOverrideSettings.FullyGenerated() &&
-                 scene->mOverrideSettings.RegenerateNearestBiomeSection(sectionX, sectionZ, atVerticalEdge,
-                                                                        atHorizontalEdge)) ||
-                scene->mRegenerate)
+            if ((!scene->mOverrideSettings.FullyGenerated()
+                 && scene->mOverrideSettings.RegenerateNearestBiomeSection(sectionX, sectionZ, atVerticalEdge,
+                                                                           atHorizontalEdge))
+                || scene->mRegenerate)
             {
                 scene->UpdatePixelCaches(sectionX, sectionZ, atVerticalEdge, atHorizontalEdge);
                 break;
@@ -311,8 +321,8 @@ void UIScene_BiomePreviewMenu::updateTooltips()
         break;
     }
     gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_ACCEPT, IDS_TOOLTIPS_CANCEL, IDS_TOOLTIPS_RANDOMISE, -1,
-                                     zoomOutTooltip, zoomInTooltip, scaleDownTooltip, scaleUpTooltip,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+                                     zoomOutTooltip, zoomInTooltip, scaleDownTooltip, scaleUpTooltip, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, false, false);
 }
 
 void UIScene_BiomePreviewMenu::updateComponents()
@@ -340,7 +350,7 @@ void UIScene_BiomePreviewMenu::dmouse(float& x, float& y, float& width, float& h
 }
 
 void UIScene_BiomePreviewMenu::componentExtents(UIControl& control, float& left, float& right, float& top,
-                                                 float& bottom)
+                                                float& bottom)
 {
     left = (float)control.getXPos();
     top = (float)control.getYPos();
@@ -385,8 +395,7 @@ void UIScene_BiomePreviewMenu::onMouseTick()
     }
 }
 
-void UIScene_BiomePreviewMenu::UpdatePreviewImage(const arrayWithLength<unsigned char>& pixels,
-                                                   bool wholeMap)
+void UIScene_BiomePreviewMenu::UpdatePreviewImage(const arrayWithLength<unsigned char>& pixels, bool wholeMap)
 {
     if (pixels.length == 0 || pixels.data == 0)
         return;
@@ -465,8 +474,7 @@ void UIScene_BiomePreviewMenu::SetMapNavigator(int, int, int)
 void UIScene_BiomePreviewMenu::updateMapNavigatorFromOverrideSettings()
 {
     int scale = (int)pow(2.0, (double)(int)mOverrideSettings.GetZoomLevel());
-    SetMapNavigator(mOverrideSettings.GetZoomedCentreXPercent(), mOverrideSettings.GetZoomedCentreZPercent(),
-                    scale);
+    SetMapNavigator(mOverrideSettings.GetZoomedCentreXPercent(), mOverrideSettings.GetZoomedCentreZPercent(), scale);
 }
 
 void UIScene_BiomePreviewMenu::handleScale(bool increase)
@@ -506,10 +514,18 @@ void UIScene_BiomePreviewMenu::handleNavigate(ENavDir direction)
         EnterCriticalSection(&mCriticalSection);
         switch (direction)
         {
-        case NAV_LEFT: mOverrideSettings.RegenerateLeft(pixels); break;
-        case NAV_RIGHT: mOverrideSettings.RegenerateRight(pixels); break;
-        case NAV_UP: mOverrideSettings.RegenerateUp(pixels); break;
-        case NAV_DOWN: mOverrideSettings.RegenerateDown(pixels); break;
+        case NAV_LEFT:
+            mOverrideSettings.RegenerateLeft(pixels);
+            break;
+        case NAV_RIGHT:
+            mOverrideSettings.RegenerateRight(pixels);
+            break;
+        case NAV_UP:
+            mOverrideSettings.RegenerateUp(pixels);
+            break;
+        case NAV_DOWN:
+            mOverrideSettings.RegenerateDown(pixels);
+            break;
         }
         LeaveCriticalSection(&mCriticalSection);
         mSectionsChanged = true;
@@ -520,10 +536,18 @@ void UIScene_BiomePreviewMenu::handleNavigate(ENavDir direction)
         EnterCriticalSection(&mCriticalSection);
         switch (direction)
         {
-        case NAV_LEFT: changed = mOverrideSettings.ScrollLeft(pixels); break;
-        case NAV_RIGHT: changed = mOverrideSettings.ScrollRight(pixels); break;
-        case NAV_UP: changed = mOverrideSettings.ScrollUp(pixels); break;
-        case NAV_DOWN: changed = mOverrideSettings.ScrollDown(pixels); break;
+        case NAV_LEFT:
+            changed = mOverrideSettings.ScrollLeft(pixels);
+            break;
+        case NAV_RIGHT:
+            changed = mOverrideSettings.ScrollRight(pixels);
+            break;
+        case NAV_UP:
+            changed = mOverrideSettings.ScrollUp(pixels);
+            break;
+        case NAV_DOWN:
+            changed = mOverrideSettings.ScrollDown(pixels);
+            break;
         }
         LeaveCriticalSection(&mCriticalSection);
         mSectionsChanged = true;
@@ -535,8 +559,8 @@ void UIScene_BiomePreviewMenu::handleNavigate(ENavDir direction)
     }
 }
 
-void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                            bool released, bool& handled)
+void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
+                                           bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)

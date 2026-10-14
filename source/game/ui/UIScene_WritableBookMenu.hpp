@@ -37,7 +37,8 @@ public:
     virtual void handleDestroy();
     virtual void handlePreReload();
     virtual void handleReload();
-    virtual void handleTouchInput(unsigned int player, int touchX, int touchY, int touchBox, bool pressed, bool repeat, bool released);
+    virtual void handleTouchInput(unsigned int player, int touchX, int touchY, int touchBox, bool pressed, bool repeat,
+                                  bool released);
 
     void HandleFontSizeOverride();
     void SetBookIsSigned();

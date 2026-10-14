@@ -11,6 +11,7 @@ class fuiRenderNode;
 class FJ_List_ListButton : public FJ_List
 {
     friend class fuiRenderNodeTimeline;
+
 public:
     explicit FJ_List_ListButton(fuiRenderNode* renderNode);
 

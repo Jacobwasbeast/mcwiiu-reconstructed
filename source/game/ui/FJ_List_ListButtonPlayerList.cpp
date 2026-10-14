@@ -3,8 +3,7 @@
 #include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_ListButtonPlayerList.hpp"
 
-FJ_List_ListButtonPlayerList::FJ_List_ListButtonPlayerList(fuiRenderNode* renderNode)
-    : FJ_List(renderNode)
+FJ_List_ListButtonPlayerList::FJ_List_ListButtonPlayerList(fuiRenderNode* renderNode) : FJ_List(renderNode)
 {
 }
 
@@ -18,19 +17,18 @@ uint32_t FJ_List_ListButtonPlayerList::getType()
     return 0x803a;
 }
 
-void FJ_List_ListButtonPlayerList::addNewItem(const std::wstring& label, int id,
-    int playerIcon, int voipIcon)
+void FJ_List_ListButtonPlayerList::addNewItem(const std::wstring& label, int id, int playerIcon, int voipIcon)
 {
     FJ_ListButtonPlayerList* item;
     if (m_checkboxTick)
     {
-        item = static_cast<FJ_ListButtonPlayerList*>(FJ_Factory::createObject(
-            "fourj.Buttons.FJ_ListButtonPlayerList_Small", m_pRenderNode, true, NULL));
+        item = static_cast<FJ_ListButtonPlayerList*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonPlayerList_Small", m_pRenderNode, true, NULL));
     }
     else
     {
-        item = static_cast<FJ_ListButtonPlayerList*>(FJ_Factory::createObject(
-            "fourj.Buttons.FJ_ListButtonPlayerList_Normal", m_pRenderNode, true, NULL));
+        item = static_cast<FJ_ListButtonPlayerList*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonPlayerList_Normal", m_pRenderNode, true, NULL));
     }
 
     addNewListItem(item, label, id);
@@ -52,4 +50,3 @@ void FJ_List_ListButtonPlayerList::SetVOIPIcon(int item, int icon)
     if (button != NULL)
         button->SetVOIPIcon(icon);
 }
-

@@ -6,8 +6,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_LeaderboardEntrySmall::FJ_LeaderboardEntrySmall(fuiRenderNode* pRenderNode)
-    : FJ_LeaderboardEntry(pRenderNode)
+FJ_LeaderboardEntrySmall::FJ_LeaderboardEntrySmall(fuiRenderNode* pRenderNode) : FJ_LeaderboardEntry(pRenderNode)
 {
     addEventListener(eFJEventType_UpdateLabel, this, _HandleUpdateLabel, false);
     getChildByName("StyleContainer")->setVisible(false);

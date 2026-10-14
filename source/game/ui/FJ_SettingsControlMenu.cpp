@@ -2,8 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_SettingsControlMenu::FJ_SettingsControlMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_SettingsControlMenu::FJ_SettingsControlMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

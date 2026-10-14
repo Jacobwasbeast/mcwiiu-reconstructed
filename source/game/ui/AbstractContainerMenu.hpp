@@ -76,7 +76,8 @@ public:
     static bool canItemQuickReplace(Slot* slot, not_null_ptr<ItemInstance> item, bool stacking);
     bool canDragTo(Slot* slot);
     static void getQuickCraftSlotCount(SlotSet* slots, int mode, not_null_ptr<ItemInstance> item, int slotCount);
-    virtual not_null_ptr<ItemInstance> clicked(int slot, int button, ClickType::eClickType type, boost::shared_ptr<Player> player);
+    virtual not_null_ptr<ItemInstance> clicked(int slot, int button, ClickType::eClickType type,
+                                               boost::shared_ptr<Player> player);
     virtual bool mayCombine(Slot* slot, not_null_ptr<ItemInstance> item);
     virtual bool canTakeItemForPickAll(not_null_ptr<ItemInstance> item, Slot* slot);
     virtual bool doQuickMoveLoop() { return true; }
@@ -92,7 +93,8 @@ public:
     bool isSynched(boost::shared_ptr<Player> player);
     void setSynched(boost::shared_ptr<Player> player, bool value);
     static bool stackAsdAsd(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second);
-    bool moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool mergeStacks, bool fillEmpty);
+    bool moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool mergeStacks,
+                         bool fillEmpty);
     virtual bool isOverrideResultClick(int slot, int button);
     static int getQuickcraftMask(int header, int type);
     static int getRedstoneSignalFromContainer(boost::shared_ptr<Container> container);

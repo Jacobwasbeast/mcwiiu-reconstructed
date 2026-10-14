@@ -13,9 +13,8 @@ UITTFFont::UITTFFont(const std::string& fontName, const std::string& fontFile, i
     init(fontName, fontFiles, missingGlyph);
 }
 
-UITTFFont::UITTFFont(const std::string& fontName, const std::string& regularFontFile,
-                     const std::string& boldFontFile, const std::string& italicFontFile,
-                     int missingGlyph)
+UITTFFont::UITTFFont(const std::string& fontName, const std::string& regularFontFile, const std::string& boldFontFile,
+                     const std::string& italicFontFile, int missingGlyph)
 {
     mFontName = fontName;
     std::vector<std::string> fontFiles;
@@ -47,15 +46,13 @@ void UITTFFont::init(const std::string& fontName, std::vector<std::string> fontF
             unsigned int bytesRead;
             if (ReadFile(file, data, fileSize, &bytesRead, NULL) == 0)
             {
-                gApp.FatalLoadError(L"<UITTFFont@%d> Failed to load font %s", 72,
-                                      fontFiles[fontIndex].c_str());
+                gApp.FatalLoadError(L"<UITTFFont@%d> Failed to load font %s", 72, fontFiles[fontIndex].c_str());
             }
             CloseHandle(file);
         }
     }
 
-    gFui->installTrueTypeFont((int)fontCount, fontData, mFontName.c_str(),
-                              (unsigned short)missingGlyph);
+    gFui->installTrueTypeFont((int)fontCount, fontData, mFontName.c_str(), (unsigned short)missingGlyph);
     delete[] fontData;
 }
 

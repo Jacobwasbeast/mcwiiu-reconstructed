@@ -14,8 +14,8 @@ public:
     class PendingAddItem : public UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>
     {
     public:
-        PendingAddItem(UIControl_ScoreboardButtonList* list, int type, std::wstring label,
-                       int playerIcon, int voipIcon);
+        PendingAddItem(UIControl_ScoreboardButtonList* list, int type, std::wstring label, int playerIcon,
+                       int voipIcon);
         virtual unsigned int OnTick();
 
     private:
@@ -27,8 +27,7 @@ public:
     class PendingSetSlotTextureName : public UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>
     {
     public:
-        PendingSetSlotTextureName(UIControl_ScoreboardButtonList* list, int item, int slot,
-                                  std::wstring textureName)
+        PendingSetSlotTextureName(UIControl_ScoreboardButtonList* list, int item, int slot, std::wstring textureName)
             : UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>(list, item)
         {
             m_slot = slot;
@@ -44,9 +43,8 @@ public:
     class PendingSetSlotsText : public UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>
     {
     public:
-        PendingSetSlotsText(UIControl_ScoreboardButtonList* list, int item,
-                            std::wstring slot0, std::wstring slot1, std::wstring slot2,
-                            std::wstring slot3, std::wstring slot4, std::wstring slot5,
+        PendingSetSlotsText(UIControl_ScoreboardButtonList* list, int item, std::wstring slot0, std::wstring slot1,
+                            std::wstring slot2, std::wstring slot3, std::wstring slot4, std::wstring slot5,
                             std::wstring slot6);
         virtual ~PendingSetSlotsText();
         virtual unsigned int OnTick();
@@ -65,9 +63,8 @@ public:
     virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void addItem(const std::wstring& label, int playerIcon, int voipIcon, bool immediate);
     void SetSlotTextureName(int item, int slot, const std::wstring& textureName, bool immediate);
-    void setSlotsText(int item, const std::wstring& slot0, const std::wstring& slot1,
-                      const std::wstring& slot2, const std::wstring& slot3,
-                      const std::wstring& slot4, const std::wstring& slot5,
+    void setSlotsText(int item, const std::wstring& slot0, const std::wstring& slot1, const std::wstring& slot2,
+                      const std::wstring& slot3, const std::wstring& slot4, const std::wstring& slot5,
                       const std::wstring& slot6, bool immediate);
     void setPlayerIcon(int item, int icon);
     void setVOIPIcon(int item, int icon);

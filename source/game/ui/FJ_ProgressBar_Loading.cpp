@@ -1,7 +1,6 @@
 #include "game/ui/FJ_ProgressBar_Loading.hpp"
 
-FJ_ProgressBar_Loading::FJ_ProgressBar_Loading(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_ProgressBar_Loading::FJ_ProgressBar_Loading(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     GetBarFiller();
     initFiller();

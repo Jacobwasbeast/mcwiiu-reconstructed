@@ -1,7 +1,6 @@
 #include "game/ui/FJ_EnchantingButton_Small.hpp"
 
-FJ_EnchantingButton_Small::FJ_EnchantingButton_Small(fuiRenderNode* pRenderNode)
-    : FJ_EnchantingButton(pRenderNode)
+FJ_EnchantingButton_Small::FJ_EnchantingButton_Small(fuiRenderNode* pRenderNode) : FJ_EnchantingButton(pRenderNode)
 {
 }
 

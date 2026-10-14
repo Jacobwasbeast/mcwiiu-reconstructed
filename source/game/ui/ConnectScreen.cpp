@@ -8,8 +8,7 @@
 #include "game/network/ClientPacketListener.hpp"
 #include "game/ui/TitleScreen.hpp"
 
-ConnectScreen::ConnectScreen(Minecraft* minecraft, const std::wstring&, int)
-    : Screen(), mFinished(false)
+ConnectScreen::ConnectScreen(Minecraft* minecraft, const std::wstring&, int) : Screen(), mFinished(false)
 {
     minecraft->setLevel(NULL, -1, boost::shared_ptr<Player>(), true, false);
 }

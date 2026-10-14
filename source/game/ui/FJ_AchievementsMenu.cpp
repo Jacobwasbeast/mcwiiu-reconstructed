@@ -10,8 +10,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_AchievementsMenu::FJ_AchievementsMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_AchievementsMenu::FJ_AchievementsMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     if (getChildByName(std::string("GroupMoreDetails")) != NULL)
         getChildByName(std::string("GroupMoreDetails"))->setVisible(false);
@@ -42,31 +41,28 @@ void FJ_AchievementsMenu::PositionAchievementDescription()
     FJ_FuiNode* listContainer = getChildByName(std::string("AchievementsListContainer"));
     FJ_FuiNode* description = getChildByName(std::string("AchievementDescription"));
 
-    int descriptionRight = static_cast<int>(listContainer->getX() +
-        (m_achievementsList->getActiveItem()->getX() +
-         m_achievementsList->getActiveItem()->getWidth() +
-         description->getWidth()));
-    if (descriptionRight <
-        static_cast<int>(getStage()->getStageWidth() - static_cast<float>(getISafeZoneRight())))
+    int descriptionRight = static_cast<int>(listContainer->getX()
+                                            + (m_achievementsList->getActiveItem()->getX()
+                                               + m_achievementsList->getActiveItem()->getWidth()
+                                               + description->getWidth()));
+    if (descriptionRight < static_cast<int>(getStage()->getStageWidth() - static_cast<float>(getISafeZoneRight())))
     {
         fuiRect itemRect = m_achievementsList->getActiveItem()->getRect(m_achievementsList->getActiveItem());
-        description->setX(static_cast<float>(Math::round(
-            listContainer->getX() + m_achievementsList->getActiveItem()->getX() +
-            m_achievementsList->getActiveItem()->getWidth() + itemRect.xMin +
-            static_cast<float>(m_achievementsList->m_itemSpacing))));
+        description->setX(
+            static_cast<float>(Math::round(listContainer->getX() + m_achievementsList->getActiveItem()->getX()
+                                           + m_achievementsList->getActiveItem()->getWidth() + itemRect.xMin
+                                           + static_cast<float>(m_achievementsList->m_itemSpacing))));
     }
     else
     {
-        description->setX(static_cast<float>(Math::round(
-            listContainer->getX() + m_achievementsList->getActiveItem()->getX() -
-            description->getWidth() -
-            2.0f * static_cast<float>(m_achievementsList->m_itemSpacing))));
+        description->setX(static_cast<float>(
+            Math::round(listContainer->getX() + m_achievementsList->getActiveItem()->getX() - description->getWidth()
+                        - 2.0f * static_cast<float>(m_achievementsList->m_itemSpacing))));
     }
 
-    description->setY(static_cast<float>(Math::round(
-        listContainer->getY() + m_achievementsList->getActiveItem()->getY() +
-        m_achievementsList->getActiveItem()->getHeight() * 0.5f -
-        description->getHeight() * 0.5f)));
+    description->setY(static_cast<float>(Math::round(listContainer->getY() + m_achievementsList->getActiveItem()->getY()
+                                                     + m_achievementsList->getActiveItem()->getHeight() * 0.5f
+                                                     - description->getHeight() * 0.5f)));
 }
 
 void FJ_AchievementsMenu::_PositionAchievementDescription(FJ_FuiNode* node)

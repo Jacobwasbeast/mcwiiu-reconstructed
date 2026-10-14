@@ -19,11 +19,9 @@ public:
     virtual void updateTooltips();
     virtual void updateComponents();
     virtual std::wstring getMoviePath();
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void tick();
-    static int ResetDefaultsDialogReturned(void* context, int pad,
-                                           C4JStorage::EMessageResult result);
+    static int ResetDefaultsDialogReturned(void* context, int pad, C4JStorage::EMessageResult result);
     virtual void handleReload();
     virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();

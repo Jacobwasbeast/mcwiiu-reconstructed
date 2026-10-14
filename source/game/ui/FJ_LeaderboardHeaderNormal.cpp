@@ -1,7 +1,6 @@
 #include "game/ui/FJ_LeaderboardHeaderNormal.hpp"
 
-FJ_LeaderboardHeaderNormal::FJ_LeaderboardHeaderNormal(fuiRenderNode* pRenderNode)
-    : FJ_LeaderboardHeader(pRenderNode)
+FJ_LeaderboardHeaderNormal::FJ_LeaderboardHeaderNormal(fuiRenderNode* pRenderNode) : FJ_LeaderboardHeader(pRenderNode)
 {
 }
 

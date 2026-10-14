@@ -8,10 +8,7 @@ class fuiRenderNode;
 class FJ_Label_VerySmallGrey : public FJ_Label
 {
 public:
-    explicit FJ_Label_VerySmallGrey(fuiRenderNode* renderNode)
-        : FJ_Label(renderNode)
-    {
-    }
+    explicit FJ_Label_VerySmallGrey(fuiRenderNode* renderNode) : FJ_Label(renderNode) {}
 
     static FJ_Label* Create(fuiRenderNode* renderNode);
 

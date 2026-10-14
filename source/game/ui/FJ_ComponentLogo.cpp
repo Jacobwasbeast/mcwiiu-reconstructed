@@ -4,13 +4,12 @@
 
 namespace
 {
-    std::string gLogoLanguageLabels[3] = {"English", "Japanese", "Chinese"};
-    std::string gComponentLogoStrings0[7];
-    std::string gComponentLogoStrings1[5];
+std::string gLogoLanguageLabels[3] = {"English", "Japanese", "Chinese"};
+std::string gComponentLogoStrings0[7];
+std::string gComponentLogoStrings1[5];
 }
 
-FJ_ComponentLogo::FJ_ComponentLogo(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), m_logoLanguage(-1)
+FJ_ComponentLogo::FJ_ComponentLogo(fuiRenderNode* renderNode) : FJ_Document(renderNode), m_logoLanguage(-1)
 {
     SetLogoLanguage(0);
 }

@@ -13,20 +13,20 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_LoadCreateJoinMenu::FJ_LoadCreateJoinMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
-    , m_activeTab(0)
-    , m_currentTab(-1)
-    , m_loadTabFocus(-1)
-    , m_newTabFocus(-1)
-    , m_joinTabFocus(-1)
-    , m_loadListHeight(0)
-    , m_loadListRecessHeight(0)
-    , m_loadTimerY(0)
-    , m_touchEnabled(false)
-    , m_loadTabTitleY(0)
-    , m_joinTabTitleY(0)
-    , m_newTabX(0)
-    , m_joinTabX(0)
+    : FJ_Document(renderNode),
+      m_activeTab(0),
+      m_currentTab(-1),
+      m_loadTabFocus(-1),
+      m_newTabFocus(-1),
+      m_joinTabFocus(-1),
+      m_loadListHeight(0),
+      m_loadListRecessHeight(0),
+      m_loadTimerY(0),
+      m_touchEnabled(false),
+      m_loadTabTitleY(0),
+      m_joinTabTitleY(0),
+      m_newTabX(0),
+      m_joinTabX(0)
 {
     getChildByName("LoadGame.TabLeft")->getChildAt(0)->gotoAndStop(1);
     getChildByName("NewGame.TabMiddle")->getChildAt(0)->gotoAndStop(2);
@@ -36,7 +36,8 @@ FJ_LoadCreateJoinMenu::FJ_LoadCreateJoinMenu(fuiRenderNode* renderNode)
         m_loadListHeight = static_cast<int>(getChildByName("LoadGame")->getChildByName("LoadGameList")->getHeight());
 
     if (getChildByName("LoadGame")->getChildByName("LoadGameListRecessPanel") != NULL)
-        m_loadListRecessHeight = static_cast<int>(getChildByName("LoadGame")->getChildByName("LoadGameListRecessPanel")->getChildAt(0)->getHeight());
+        m_loadListRecessHeight = static_cast<int>(
+            getChildByName("LoadGame")->getChildByName("LoadGameListRecessPanel")->getChildAt(0)->getHeight());
 
     if (getChildByName("LoadGame")->getChildByName("LoadGameList") != NULL)
         m_loadTimerY = static_cast<int>(getChildByName("LoadGame.LoadGameTimer")->getY());
@@ -44,12 +45,12 @@ FJ_LoadCreateJoinMenu::FJ_LoadCreateJoinMenu(fuiRenderNode* renderNode)
     m_loadTabTitleY = static_cast<int>(getChildByName("LoadGameTabTitle")->getY());
     m_joinTabTitleY = static_cast<int>(getChildByName("JoinGameTabTitle")->getY());
 
-    m_newTabX = static_cast<int>(getChildByName("LoadGame")->getX() +
-                                 getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.25f -
-                                 getChildByName("NewGameTabTitle")->getWidth() * 0.5f);
-    m_joinTabX = static_cast<int>(getChildByName("LoadGame")->getX() +
-                                  getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.25f * 3.0f -
-                                  getChildByName("JoinGameTabTitle")->getWidth() * 0.5f);
+    m_newTabX = static_cast<int>(getChildByName("LoadGame")->getX()
+                                 + getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.25f
+                                 - getChildByName("NewGameTabTitle")->getWidth() * 0.5f);
+    m_joinTabX = static_cast<int>(getChildByName("LoadGame")->getX()
+                                  + getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.25f * 3.0f
+                                  - getChildByName("JoinGameTabTitle")->getWidth() * 0.5f);
     SetActiveTab(m_activeTab);
 }
 
@@ -168,7 +169,8 @@ void FJ_LoadCreateJoinMenu::handlePress(FJ_Event* event)
     FJ_Button* button = event->m_pTarget->asFJ_Button();
     if (button != NULL)
     {
-        static_cast<UIScene_LoadCreateJoinMenu*>(m_pCallbackScene)->handlePress(button->FJ_Base::getObjListParent()->asFJ_List()->getId(), button->getId());
+        static_cast<UIScene_LoadCreateJoinMenu*>(m_pCallbackScene)
+            ->handlePress(button->FJ_Base::getObjListParent()->asFJ_List()->getId(), button->getId());
         button->setButtonPressed(false);
     }
 }
@@ -195,7 +197,9 @@ void FJ_LoadCreateJoinMenu::ShowSaveSizeBar(bool show)
             if (getChildByName("LoadGame.LoadGameList") != NULL)
                 getChildByName("LoadGame.LoadGameList")->setHeight(static_cast<float>(m_loadListHeight));
             if (getChildByName("LoadGame.LoadGameListRecessPanel") != NULL)
-                getChildByName("LoadGame.LoadGameListRecessPanel")->getChildAt(0)->setHeight(static_cast<float>(m_loadListRecessHeight));
+                getChildByName("LoadGame.LoadGameListRecessPanel")
+                    ->getChildAt(0)
+                    ->setHeight(static_cast<float>(m_loadListRecessHeight));
             if (getChildByName("LoadGame.LoadGameList") != NULL)
                 getChildByName("LoadGame.LoadGameTimer")->setY(static_cast<float>(m_loadTimerY));
         }
@@ -204,8 +208,9 @@ void FJ_LoadCreateJoinMenu::ShowSaveSizeBar(bool show)
             if (getChildByName("LoadGame.LoadGameList") != NULL)
                 getChildByName("LoadGame.LoadGameList")->setHeight(getChildByName("NewGame.NewGameList")->getHeight());
             if (getChildByName("LoadGame.LoadGameListRecessPanel") != NULL)
-                getChildByName("LoadGame.LoadGameListRecessPanel")->getChildAt(0)->setHeight(
-                    getChildByName("NewGame.NewGameListRecessPanel")->getChildAt(0)->getHeight());
+                getChildByName("LoadGame.LoadGameListRecessPanel")
+                    ->getChildAt(0)
+                    ->setHeight(getChildByName("NewGame.NewGameListRecessPanel")->getChildAt(0)->getHeight());
             if (getChildByName("LoadGame.LoadGameList") != NULL)
                 getChildByName("LoadGame.LoadGameTimer")->setY(getChildByName("NewGame.NewGameTimer")->getY());
         }
@@ -223,30 +228,40 @@ void FJ_LoadCreateJoinMenu::HideLoadTab()
         getChildByName("JoinGame.TabRight")->getChildAt(0)->gotoAndStop(3);
 
         getChildByName("TabOff_Create")->setX(getChildByName("LoadGame")->getX());
-        getChildByName("TabOff_Create")->getChildAt(0)->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+        getChildByName("TabOff_Create")
+            ->getChildAt(0)
+            ->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
 
         getChildByName("NewGame.TabMiddle")->setX(0.0f);
-        getChildByName("NewGame.TabMiddle")->getChildAt(0)->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+        getChildByName("NewGame.TabMiddle")
+            ->getChildAt(0)
+            ->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
 
         if (getChildByName("LoadGame.TouchTabLoad") != NULL)
         {
             getChildByName("LoadGame.TouchTabLoad")->setVisible(false);
             getChildByName("NewGame.TouchTabCreate")->setX(0.0f);
-            getChildByName("NewGame.TouchTabCreate")->setWidth(getChildByName("NewGame.TabMiddle")->getChildAt(0)->getWidth());
+            getChildByName("NewGame.TouchTabCreate")
+                ->setWidth(getChildByName("NewGame.TabMiddle")->getChildAt(0)->getWidth());
         }
 
-        getChildByName("TabOff_Join")->setX(getChildByName("LoadGame")->getX() +
-                                            getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
-        getChildByName("TabOff_Join")->getChildAt(0)->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+        getChildByName("TabOff_Join")
+            ->setX(getChildByName("LoadGame")->getX() + getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+        getChildByName("TabOff_Join")
+            ->getChildAt(0)
+            ->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
 
         getChildByName("JoinGame.TabRight")->setX(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
-        getChildByName("JoinGame.TabRight")->getChildAt(0)->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+        getChildByName("JoinGame.TabRight")
+            ->getChildAt(0)
+            ->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
 
         bool hasTouchLoadTab = getChildByName("LoadGame.TouchTabLoad") != NULL;
         if (hasTouchLoadTab)
         {
             getChildByName("JoinGame.TouchTabJoin")->setX(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
-            getChildByName("JoinGame.TouchTabJoin")->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+            getChildByName("JoinGame.TouchTabJoin")
+                ->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
         }
     }
 }

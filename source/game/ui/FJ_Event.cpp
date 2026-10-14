@@ -4,9 +4,8 @@
 #include <vector>
 
 FJ_Event::FJ_Event(eFJEventType eType, bool bBubbles, bool bCancelable)
-    : m_eType(eType)
-    , m_bBubbles(bBubbles)
-    , m_bCancelable(bCancelable)
+    : m_eType(eType),
+      m_bBubbles(bBubbles),
+      m_bCancelable(bCancelable)
 {
 }
-

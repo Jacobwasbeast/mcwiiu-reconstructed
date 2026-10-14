@@ -1,7 +1,6 @@
 #include "game/ui/FJ_PauseMenu.hpp"
 
-FJ_PauseMenu::FJ_PauseMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_PauseMenu::FJ_PauseMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

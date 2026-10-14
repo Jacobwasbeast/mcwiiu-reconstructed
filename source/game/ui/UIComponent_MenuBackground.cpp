@@ -5,7 +5,8 @@
 #include "game/ui/fui.hpp"
 
 UIComponent_MenuBackground::UIComponent_MenuBackground(int sceneType, void* data, UILayer* layer)
-    : UIScene(sceneType, layer), m_splitScreen(false)
+    : UIScene(sceneType, layer),
+      m_splitScreen(false)
 {
     initialiseMovie();
     m_movieLoaded = true;
@@ -32,8 +33,7 @@ std::wstring UIComponent_MenuBackground::getMoviePath()
     return L"MenuBackground";
 }
 
-void UIComponent_MenuBackground::render(int width, int height,
-                                        C4JRender::eViewportType viewport)
+void UIComponent_MenuBackground::render(int width, int height, C4JRender::eViewportType viewport)
 {
     if (m_splitScreen)
     {

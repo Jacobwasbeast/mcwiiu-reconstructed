@@ -8,11 +8,9 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_SlotList_Slot::FJ_SlotList_Slot(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_SlotList_Slot::FJ_SlotList_Slot(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
-    m_pRedBox = FJ_Factory::createObject("fourj.listClasses.FJ_ExlamationMark",
-        m_pRenderNode, true, NULL);
+    m_pRedBox = FJ_Factory::createObject("fourj.listClasses.FJ_ExlamationMark", m_pRenderNode, true, NULL);
     m_pSlotControl = getChildByName("IconHolder")->asMovieClip();
     m_pHighlight = getChildByName("Highlight")->asMovieClip();
     m_pHighlight->setVisible(false);
@@ -44,8 +42,7 @@ void FJ_SlotList_Slot::SetSlotID(int iSlotId)
     rect.yMax = getHeight() - (float)offset;
     char name[64];
     std::sprintf(name, "iggy_slot_%d", iSlotId);
-    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, name);
+    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);
     m_pSlotControl->removeChild(oldControl, true);
     FJ_FuiNode* replacement = new FJ_FuiNode(renderNode);

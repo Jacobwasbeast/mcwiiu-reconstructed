@@ -29,7 +29,8 @@
 #include <cstdio>
 
 UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), IUIScene_CraftingMenu()
+    : UIScene(type, layer),
+      IUIScene_CraftingMenu()
 {
     _CraftingPanelScreenInput* input = static_cast<_CraftingPanelScreenInput*>(data);
     m_tabsDirty = false;
@@ -455,7 +456,8 @@ void UIScene_CraftingMenu::setCraftHSlotItem(int, int index, not_null_ptr<ItemIn
     m_horizontalSlotItems[index].displayValue = displayValue;
 }
 
-void UIScene_CraftingMenu::setSpecialSlotItem(int, int index, not_null_ptr<ItemInstance> item, unsigned int displayValue)
+void UIScene_CraftingMenu::setSpecialSlotItem(int, int index, not_null_ptr<ItemInstance> item,
+                                              unsigned int displayValue)
 {
     m_horizontalSlotItems[index].item = item;
     m_horizontalSlotItems[index].visible = true;
@@ -519,8 +521,8 @@ void UIScene_CraftingMenu::setIngredientDescriptionItem(int, int index, not_null
     m_ingredientDescriptionItems[index].item = item;
     m_ingredientDescriptionItems[index].displayValue = 0x1f;
     m_ingredientDescriptionItems[index].visible = !item->isEmpty();
-    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->ShowIngredient(
-        index, m_ingredientDescriptionItems[index].visible);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())
+        ->ShowIngredient(index, m_ingredientDescriptionItems[index].visible);
 }
 
 void UIScene_CraftingMenu::setIngredientDescriptionRedBox(int index, bool show)
@@ -600,19 +602,15 @@ void UIScene_CraftingMenu::updateHighlightAndScrollPositions()
     int vertical = 0;
     if (IUIScene_CraftingMenu::getCurrentVSlotCount() == 2)
     {
-        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->MoveSelector(
-            m_horizontalSlot, 1);
-        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SelectVerticalItem(
-            m_verticalColumn);
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->MoveSelector(m_horizontalSlot, 1);
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SelectVerticalItem(m_verticalColumn);
     }
     else
     {
         if (IUIScene_CraftingMenu::getCurrentVSlotCount() > 2)
             vertical = 2;
-        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->MoveSelector(
-            m_horizontalSlot, vertical);
-        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SelectVerticalItem(
-            m_verticalColumn);
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->MoveSelector(m_horizontalSlot, vertical);
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SelectVerticalItem(m_verticalColumn);
     }
 }
 
@@ -780,8 +778,7 @@ void UIScene_CraftingMenu::customDraw(const char* name, fuiRect* rect)
                 else if (index == 3)
                     item = not_null_ptr<ItemInstance>(new ItemInstance(Items::fireworks, 1));
                 else if (index == 4)
-                    item = not_null_ptr<ItemInstance>(
-                        new ItemInstance(Items::dye, 1, DyeColor::CYAN->getItemData()));
+                    item = not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, DyeColor::CYAN->getItemData()));
             }
         }
         else if (m_currentTab >= 1 && m_currentTab <= 3)
@@ -832,8 +829,7 @@ void UIScene_CraftingMenu::customDraw(const char* name, fuiRect* rect)
         if (m_ingredientDescriptionItems[slot].visible)
         {
             item = m_ingredientDescriptionItems[slot].item;
-            partialTick =
-                static_cast<float>(m_ingredientDescriptionItems[slot].displayValue) / 31.0f;
+            partialTick = static_cast<float>(m_ingredientDescriptionItems[slot].displayValue) / 31.0f;
         }
     }
     else if (index == 51)
@@ -899,8 +895,8 @@ void UIScene_CraftingMenu::customDraw(const char* name, fuiRect* rect)
             item->setAuxValue(0);
     }
 
-    customDrawSlotControlFui(rect, m_playerId, item, partialTick,
-                             item->getItem()->isFoil(item), drawDecorations, false);
+    customDrawSlotControlFui(rect, m_playerId, item, partialTick, item->getItem()->isFoil(item), drawDecorations,
+                             false);
 }
 
 void UIScene_CraftingMenu::handleTouchBoxRebuild()
@@ -908,8 +904,8 @@ void UIScene_CraftingMenu::handleTouchBoxRebuild()
     addTimer(0, 100);
 }
 
-void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY, int control,
-                                            bool pressed, bool repeat, bool released)
+void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY, int control, bool pressed,
+                                            bool repeat, bool released)
 {
     if (pressed)
     {
@@ -919,10 +915,10 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
         if (!IUIScene_CraftingMenu::isSpinnerGroup())
         {
             const float px = static_cast<float>(touchX);
-            if (m_mainPanel.getXPos() + m_craftingHSlots.getXPos() +
-                        m_craftingHSlots.getHeight() * m_horizontalSlot < px &&
-                px < m_mainPanel.getXPos() + m_craftingHSlots.getXPos() +
-                         m_craftingHSlots.getHeight() * (m_horizontalSlot + 1))
+            if (m_mainPanel.getXPos() + m_craftingHSlots.getXPos() + m_craftingHSlots.getHeight() * m_horizontalSlot
+                    < px
+                && px < m_mainPanel.getXPos() + m_craftingHSlots.getXPos()
+                            + m_craftingHSlots.getHeight() * (m_horizontalSlot + 1))
             {
                 m_touchDragging = true;
                 return;
@@ -933,17 +929,17 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
             const float px = static_cast<float>(touchX);
             if (IUIScene_CraftingMenu::getNumSpinnerSlots() == 3)
             {
-                if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[m_horizontalSlot].getXPos() < px &&
-                    px < m_mainPanel.getXPos() + m_tripleSpinnerSlots[m_horizontalSlot].getXPos() +
-                             m_tripleSpinnerSlots[m_horizontalSlot].getHeight())
+                if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[m_horizontalSlot].getXPos() < px
+                    && px < m_mainPanel.getXPos() + m_tripleSpinnerSlots[m_horizontalSlot].getXPos()
+                                + m_tripleSpinnerSlots[m_horizontalSlot].getHeight())
                 {
                     m_touchDragging = true;
                     return;
                 }
             }
-            else if (m_mainPanel.getXPos() + m_doubleSpinnerSlots[m_horizontalSlot].getXPos() < px &&
-                     px < m_mainPanel.getXPos() + m_doubleSpinnerSlots[m_horizontalSlot].getXPos() +
-                              m_doubleSpinnerSlots[m_horizontalSlot].getHeight())
+            else if (m_mainPanel.getXPos() + m_doubleSpinnerSlots[m_horizontalSlot].getXPos() < px
+                     && px < m_mainPanel.getXPos() + m_doubleSpinnerSlots[m_horizontalSlot].getXPos()
+                                 + m_doubleSpinnerSlots[m_horizontalSlot].getHeight())
             {
                 m_touchDragging = true;
                 return;
@@ -999,9 +995,8 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
     float py;
     if (!IUIScene_CraftingMenu::isSpinnerGroup())
     {
-        column = static_cast<int>(
-            (static_cast<float>(touchX) - m_craftingHSlots.getXPos() - m_mainPanel.getXPos()) /
-            m_craftingHSlots.getHeight());
+        column = static_cast<int>((static_cast<float>(touchX) - m_craftingHSlots.getXPos() - m_mainPanel.getXPos())
+                                  / m_craftingHSlots.getHeight());
         py = static_cast<float>(touchY);
     }
     else
@@ -1010,28 +1005,26 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
         column = -1;
         if (IUIScene_CraftingMenu::getNumSpinnerSlots() == 3)
         {
-            if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[0].getXPos() < px &&
-                px <= m_mainPanel.getXPos() + m_tripleSpinnerSlots[0].getXPos() +
-                          m_tripleSpinnerSlots[0].getWidth())
+            if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[0].getXPos() < px
+                && px <= m_mainPanel.getXPos() + m_tripleSpinnerSlots[0].getXPos() + m_tripleSpinnerSlots[0].getWidth())
                 column = 0;
-            else if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[1].getXPos() < px &&
-                     px <= m_mainPanel.getXPos() + m_tripleSpinnerSlots[1].getXPos() +
-                               m_tripleSpinnerSlots[1].getWidth())
+            else if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[1].getXPos() < px
+                     && px <= m_mainPanel.getXPos() + m_tripleSpinnerSlots[1].getXPos()
+                                  + m_tripleSpinnerSlots[1].getWidth())
                 column = 1;
-            else if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[2].getXPos() < px &&
-                     px <= m_mainPanel.getXPos() + m_tripleSpinnerSlots[2].getXPos() +
-                               m_tripleSpinnerSlots[2].getWidth())
+            else if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[2].getXPos() < px
+                     && px <= m_mainPanel.getXPos() + m_tripleSpinnerSlots[2].getXPos()
+                                  + m_tripleSpinnerSlots[2].getWidth())
                 column = 2;
         }
         else
         {
-            if (m_mainPanel.getXPos() + m_doubleSpinnerSlots[0].getXPos() < px &&
-                px <= m_mainPanel.getXPos() + m_doubleSpinnerSlots[0].getXPos() +
-                          m_doubleSpinnerSlots[0].getWidth())
+            if (m_mainPanel.getXPos() + m_doubleSpinnerSlots[0].getXPos() < px
+                && px <= m_mainPanel.getXPos() + m_doubleSpinnerSlots[0].getXPos() + m_doubleSpinnerSlots[0].getWidth())
                 column = 0;
-            else if (m_mainPanel.getXPos() + m_doubleSpinnerSlots[1].getXPos() < px &&
-                     px <= m_mainPanel.getXPos() + m_doubleSpinnerSlots[1].getXPos() +
-                               m_doubleSpinnerSlots[1].getWidth())
+            else if (m_mainPanel.getXPos() + m_doubleSpinnerSlots[1].getXPos() < px
+                     && px <= m_mainPanel.getXPos() + m_doubleSpinnerSlots[1].getXPos()
+                                  + m_doubleSpinnerSlots[1].getWidth())
                 column = 1;
         }
 
@@ -1040,8 +1033,8 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
         py = static_cast<float>(touchY);
     }
 
-    if (m_mainPanel.getYPos() + m_craftingHSlots.getYPos() < py &&
-        py < m_mainPanel.getYPos() + m_craftingHSlots.getYPos() + m_craftingHSlots.getHeight())
+    if (m_mainPanel.getYPos() + m_craftingHSlots.getYPos() < py
+        && py < m_mainPanel.getYPos() + m_craftingHSlots.getYPos() + m_craftingHSlots.getHeight())
     {
         const int previous = m_horizontalSlot;
         if (previous != column)
@@ -1072,8 +1065,7 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
             rows = 2;
     }
 
-    if (m_mainPanel.getYPos() + m_craftingHSlots.getYPos() + m_craftingHSlots.getHeight() < py &&
-        rows > 0)
+    if (m_mainPanel.getYPos() + m_craftingHSlots.getYPos() + m_craftingHSlots.getHeight() < py && rows > 0)
         m_verticalColumn = 2;
     else if (py < m_mainPanel.getYPos() + m_craftingHSlots.getYPos() && rows > 1)
         m_verticalColumn = 0;

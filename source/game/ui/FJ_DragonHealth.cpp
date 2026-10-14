@@ -5,8 +5,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_Label.hpp"
 
-FJ_DragonHealth::FJ_DragonHealth(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_DragonHealth::FJ_DragonHealth(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     GetBarFiller();
     initFiller();

@@ -33,8 +33,8 @@ public:
     void HandleUpdateLabel(FJ_Event* event);
     static void _HandleUpdateLabel(FJ_FuiNode* node, FJ_Event* event);
     virtual void ASConstructor();
-    void Init(const std::wstring& name, int id, int minValue, int maxValue,
-              int value, bool repeat, int repeatDelay, int repeatStep);
+    void Init(const std::wstring& name, int id, int minValue, int maxValue, int value, bool repeat, int repeatDelay,
+              int repeatStep);
     void SetRelativeSliderPos(float position);
     float GetRealWidth();
     void SetSliderValue(int value);
@@ -43,6 +43,7 @@ public:
     virtual void SetNewObjectWidth(int width);
     uint32_t getCurrentState();
     void AdjustDisabledTint();
+
 private:
     int m_minValue;
     int m_maxValue;

@@ -10,10 +10,7 @@ class fuiRenderNode;
 class FJ_Label_HtmlSmall : public FJ_Label
 {
 public:
-    explicit FJ_Label_HtmlSmall(fuiRenderNode* renderNode)
-        : FJ_Label(renderNode)
-    {
-    }
+    explicit FJ_Label_HtmlSmall(fuiRenderNode* renderNode) : FJ_Label(renderNode) {}
 
 
     static FJ_Label* Create(fuiRenderNode* renderNode);

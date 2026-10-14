@@ -10,8 +10,8 @@
 extern Renderer* gRenderer;
 
 fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRect* rect, const char* name,
-                                                   unsigned int textureWidth, unsigned int textureHeight,
-                                                   int textureId, bool customTexture, bool textureAlpha)
+                                                   unsigned int textureWidth, unsigned int textureHeight, int textureId,
+                                                   bool customTexture, bool textureAlpha)
     : fuiRenderNode(parent, 0, 0, 0, eFuiObjectType_CodeGenRect, 0, 0, 0, false, 0)
 {
     m_bounds = *rect;
@@ -95,21 +95,14 @@ void fuiRenderNodeCodeGenRect::render(fuiRect* bounds, fuiMatrix* matrix)
     pushFilterFlags();
     const float bottom = m_bounds.yMin + (m_bounds.yMax - m_bounds.yMin);
     const float right = m_bounds.xMin + (m_bounds.xMax - m_bounds.xMin);
-    float vertices[12] =
-    {
-        m_bounds.xMin, m_bounds.yMin,
-        right, bottom,
-        m_bounds.xMin, bottom,
-        m_bounds.xMin, m_bounds.yMin,
-        right, m_bounds.yMin,
-        right, bottom
-    };
+    float vertices[12] = {m_bounds.xMin, m_bounds.yMin, right, bottom,        m_bounds.xMin, bottom,
+                          m_bounds.xMin, m_bounds.yMin, right, m_bounds.yMin, right,         bottom};
     if (mTextureId == -1)
     {
         gRenderer->TextureBind(-1);
         gRenderer->StateSetColour(1.0f, 0.0f, 0.0f, 0.0f);
-        gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices,
-                                C4JRender::eVertexType_UI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
+        gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices, C4JRender::eVertexType_UI,
+                                C4JRender::ePixelShaderType_UIColourAdd, NULL);
     }
     else
     {
@@ -123,10 +116,9 @@ void fuiRenderNodeCodeGenRect::render(fuiRect* bounds, fuiMatrix* matrix)
         gRenderer->TextureBind(mTextureId);
         const float width = m_bounds.xMax - m_bounds.xMin;
         const float height = m_bounds.yMax - m_bounds.yMin;
-        gRenderer->StateSetTextureScaleUI(1.0f / width, 1.0f / height,
-                                          -m_bounds.xMin / width, -m_bounds.yMin / height);
-        gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices,
-                                C4JRender::eVertexType_UI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
+        gRenderer->StateSetTextureScaleUI(1.0f / width, 1.0f / height, -m_bounds.xMin / width, -m_bounds.yMin / height);
+        gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices, C4JRender::eVertexType_UI,
+                                C4JRender::ePixelShaderType_UIColourAdd, NULL);
     }
     popFilterFlags();
     popColor();
@@ -143,8 +135,8 @@ void fuiRenderNodeCodeGenRect::setHeight(float height)
     m_bounds.yMax = m_bounds.yMin + height;
 }
 
-void fuiRenderNodeCodeGenRect::setTexture(unsigned int textureWidth, unsigned int textureHeight,
-                                          int textureId, bool textureAlpha)
+void fuiRenderNodeCodeGenRect::setTexture(unsigned int textureWidth, unsigned int textureHeight, int textureId,
+                                          bool textureAlpha)
 {
     if (mTextureId >= 0)
     {

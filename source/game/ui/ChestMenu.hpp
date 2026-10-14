@@ -10,8 +10,7 @@ class Container;
 class ChestMenu : public AbstractContainerMenu
 {
 public:
-    ChestMenu(boost::shared_ptr<Container> playerInventory,
-              boost::shared_ptr<Container> container,
+    ChestMenu(boost::shared_ptr<Container> playerInventory, boost::shared_ptr<Container> container,
               boost::shared_ptr<Player> player);
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);

@@ -7,8 +7,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-UIControl_Touch::UIControl_Touch()
-    : UIControl_Base()
+UIControl_Touch::UIControl_Touch() : UIControl_Base()
 {
 }
 

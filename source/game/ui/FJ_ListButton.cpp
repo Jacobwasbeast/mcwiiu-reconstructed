@@ -1,7 +1,6 @@
 #include "game/ui/FJ_ListButton.hpp"
 
-FJ_ListButton::FJ_ListButton(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode), m_listButtonFlag(false)
+FJ_ListButton::FJ_ListButton(fuiRenderNode* renderNode) : FJ_Button(renderNode), m_listButtonFlag(false)
 {
     m_textOnly = true;
     m_labelAlignment = 1;

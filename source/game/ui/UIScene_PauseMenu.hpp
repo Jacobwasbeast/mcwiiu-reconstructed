@@ -19,11 +19,10 @@ public:
         EOpenExitGameDialog_ExitGame = 0,
         EOpenExitGameDialog_JoinInvite = 1
     };
-    static void OpenExitGameDialog(
-        int player, void* callbackData,
-        int (*callback)(void*, int, C4JStorage::EMessageResult),
-        int (*saveCallback)(void*, int, C4JStorage::EMessageResult),
-        EOpenExitGameDialog action);
+    static void OpenExitGameDialog(int player, void* callbackData,
+                                   int (*callback)(void*, int, C4JStorage::EMessageResult),
+                                   int (*saveCallback)(void*, int, C4JStorage::EMessageResult),
+                                   EOpenExitGameDialog action);
     static int WarningTrialTexturePackReturned(void* context, int pad, C4JStorage::EMessageResult result);
     static int ExitGameDialogReturned(void* context, int pad, C4JStorage::EMessageResult result);
     static int ExitGameAndSaveReturned(void* context, int pad, C4JStorage::EMessageResult result);
@@ -54,6 +53,7 @@ public:
     virtual unsigned int mapElementsAndNames();
     virtual int getSceneType();
     static unsigned int MustSignInReturnedNintendo(void* context, int pad, C4JStorage::EMessageResult result);
+
 private:
     bool m_unusedFlag;
     bool m_texturePackWarningPending;

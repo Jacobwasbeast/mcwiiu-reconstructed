@@ -19,8 +19,7 @@ public:
     virtual int getSceneType();
     virtual bool hasFocus(int sceneType);
     virtual void handleGainFocus(bool hadFocus);
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleReload();
     virtual void handleAnimationEnd();
     virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,

@@ -4,8 +4,7 @@
 #include "game/ui/FJ_MenuButton.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_List_MenuButton::FJ_List_MenuButton(fuiRenderNode* renderNode)
-    : FJ_List(renderNode), m_useEllipsis(false)
+FJ_List_MenuButton::FJ_List_MenuButton(fuiRenderNode* renderNode) : FJ_List(renderNode), m_useEllipsis(false)
 {
 }
 
@@ -14,16 +13,16 @@ void FJ_List_MenuButton::addNewItem(std::wstring label, int id)
     FJ_MenuButton* button;
     if (m_checkboxTick)
     {
-        button = static_cast<FJ_MenuButton*>(FJ_Factory::createObject(
-            "fourj.Buttons.FJ_MenuButton_Small", m_pRenderNode, true, 0));
+        button = static_cast<FJ_MenuButton*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_MenuButton_Small", m_pRenderNode, true, 0));
         addNewListItem(button, label, id);
         button->UseEllipsis(m_useEllipsis);
         button->Init(label, id);
     }
     else
     {
-        button = static_cast<FJ_MenuButton*>(FJ_Factory::createObject(
-            "fourj.Buttons.FJ_MenuButton_Normal", m_pRenderNode, true, 0));
+        button = static_cast<FJ_MenuButton*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_MenuButton_Normal", m_pRenderNode, true, 0));
         addNewListItem(button, label, id);
         button->UseEllipsis(m_useEllipsis);
         button->Init(label, id);

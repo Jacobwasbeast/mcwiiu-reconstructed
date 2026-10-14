@@ -1,7 +1,6 @@
 #include "game/ui/FJ_ListButton_Small.hpp"
 
-FJ_ListButton_Small::FJ_ListButton_Small(fuiRenderNode* renderNode)
-    : FJ_ListButton(renderNode)
+FJ_ListButton_Small::FJ_ListButton_Small(fuiRenderNode* renderNode) : FJ_ListButton(renderNode)
 {
 }
 

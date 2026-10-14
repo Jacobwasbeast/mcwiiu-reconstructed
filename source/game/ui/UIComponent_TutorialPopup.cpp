@@ -28,8 +28,14 @@
 #include "vendor/_TutorialPopupInfo.hpp"
 
 UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer), m_description(), m_icon(), m_title(),
-      m_descriptionLabel(), m_titleLabel(), m_iconHolderControl(), m_exitScreenshotControl()
+    : UIScene(sceneType, layer),
+      m_description(),
+      m_icon(),
+      m_title(),
+      m_descriptionLabel(),
+      m_titleLabel(),
+      m_iconHolderControl(),
+      m_exitScreenshotControl()
 {
     initialiseMovie();
     m_interactScene = 0;
@@ -67,9 +73,8 @@ void UIComponent_TutorialPopup::setupIconHolder(EIcons icon)
     m_iconHolder = icon;
 }
 
-std::wstring UIComponent_TutorialPopup::_SetIcon(not_null_ptr<ItemInstance> item, int itemId,
-                                                 int auxValue, bool showIcon,
-                                                 const wchar_t* image)
+std::wstring UIComponent_TutorialPopup::_SetIcon(not_null_ptr<ItemInstance> item, int itemId, int auxValue,
+                                                 bool showIcon, const wchar_t* image)
 {
     std::wstring text(image);
     bool usesIconHolderPreset = false;
@@ -332,8 +337,8 @@ void UIComponent_TutorialPopup::SetTutorialDescription(_TutorialPopupInfo* info)
     if (formattedTitle.empty())
         _SetDescription(info->scene, L"", L"", info->showTitle, info->showExitScreenshot, info->displayTime);
     else
-        _SetDescription(info->scene, formattedTitle, info->description, info->showTitle,
-                        info->showExitScreenshot, info->displayTime);
+        _SetDescription(info->scene, formattedTitle, info->description, info->showTitle, info->showExitScreenshot,
+                        info->displayTime);
 }
 
 void UIComponent_TutorialPopup::RemoveInteractSceneReference(UIScene* scene)
@@ -344,9 +349,11 @@ void UIComponent_TutorialPopup::RemoveInteractSceneReference(UIScene* scene)
 
 void UIComponent_TutorialPopup::UpdateTutorialPopup()
 {
-    if (m_splitScreen != (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0))
+    if (m_splitScreen
+        != (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0))
     {
-        m_splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
+        m_splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames)
+                        != 0;
         handleReload();
     }
 }
@@ -408,13 +415,12 @@ void UIComponent_TutorialPopup::handleReload()
         }
         else
         {
-            _SetDescription(m_interactScene, formattedTitle, m_description, m_showTitleTimer,
-                            m_showExitScreenshot, -1);
+            _SetDescription(m_interactScene, formattedTitle, m_description, m_showTitleTimer, m_showExitScreenshot, -1);
         }
     }
 
-    bool adjustSplit = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0 &&
-                        !m_containerMenuDisplayed;
+    bool adjustSplit = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0
+                       && !m_containerMenuDisplayed;
     FJ_TutorialPopup* popup = static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode());
     popup->AdjustLayout(adjustSplit);
     setupIconHolder(m_iconHolder);
@@ -487,7 +493,8 @@ void UIComponent_TutorialPopup::customDraw(const char*, fuiRect* rect)
     {
         if (m_icon->getCount() == 0)
             m_icon->setCount(1);
-        customDrawSlotControlFui(rect, m_playerId, m_icon, 1.0f, m_icon->getItem()->isFoil(m_icon) || m_showIcon, false, false);
+        customDrawSlotControlFui(rect, m_playerId, m_icon, 1.0f, m_icon->getItem()->isFoil(m_icon) || m_showIcon, false,
+                                 false);
     }
 }
 
@@ -497,7 +504,7 @@ void UIComponent_TutorialPopup::UpdateInteractScenePosition(bool visible)
         return;
 
     bool craftingMenu = m_interactScene->getSceneType() == EUIScene_CraftingMenu2x2
-        || m_interactScene->getSceneType() == EUIScene_CraftingMenu;
+                        || m_interactScene->getSceneType() == EUIScene_CraftingMenu;
     bool creativeMenu = m_interactScene->getSceneType() == EUIScene_CreativeMenu;
     bool tradingMenu = m_interactScene->getSceneType() == EUIScene_TradingMenu;
     if (Minecraft::GetInstance()->mLocalPlayers[m_playerId]->mViewport > C4JRender::eViewportType_BottomHalf
@@ -546,7 +553,19 @@ void UIComponent_TutorialPopup::handleTimerComplete(int timerId)
     }
 }
 
-int UIComponent_TutorialPopup::getSceneType() { return EUIScene_TutorialPopup; }
-bool UIComponent_TutorialPopup::stealsFocus() { return false; }
-bool UIComponent_TutorialPopup::hasFocus(int) { return false; }
-bool UIComponent_TutorialPopup::hidesLowerScenes() { return false; }
+int UIComponent_TutorialPopup::getSceneType()
+{
+    return EUIScene_TutorialPopup;
+}
+bool UIComponent_TutorialPopup::stealsFocus()
+{
+    return false;
+}
+bool UIComponent_TutorialPopup::hasFocus(int)
+{
+    return false;
+}
+bool UIComponent_TutorialPopup::hidesLowerScenes()
+{
+    return false;
+}

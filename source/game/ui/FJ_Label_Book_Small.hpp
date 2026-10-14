@@ -8,10 +8,7 @@ class fuiRenderNode;
 class FJ_Label_Book_Small : public FJ_Label_Book
 {
 public:
-    FJ_Label_Book_Small(fuiRenderNode* pRenderNode)
-        : FJ_Label_Book(pRenderNode)
-    {
-    }
+    FJ_Label_Book_Small(fuiRenderNode* pRenderNode) : FJ_Label_Book(pRenderNode) {}
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

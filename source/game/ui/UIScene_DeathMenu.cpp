@@ -24,8 +24,7 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/core/GameSettings.hpp"
 
-UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
-    : UIScene(playerId, layer)
+UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer) : UIScene(playerId, layer)
 {
     initialiseMovie();
 
@@ -57,8 +56,8 @@ UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
     Gui* gui = minecraft->mGui;
 
     {
-        std::wstring deathMessage = !Minecraft::InMiniGame(eMiniGameId_Tumble, true) &&
-                                            !Minecraft::InMiniGame(eMiniGameId_Glide, true)
+        std::wstring deathMessage = !Minecraft::InMiniGame(eMiniGameId_Tumble, true)
+                                            && !Minecraft::InMiniGame(eMiniGameId_Glide, true)
                                         ? gui->mNowPlaying[playerId]
                                         : std::wstring(L"");
         m_deathMessageLabel.setLabel(UIString(deathMessage), false, false);
@@ -67,8 +66,7 @@ UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
     }
 
     std::wstring extraMessage(L"");
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-        Minecraft::GetInstance()->GetMiniGame()->GetLivesPerRound() > 0)
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && Minecraft::GetInstance()->GetMiniGame()->GetLivesPerRound() > 0)
     {
         boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerId];
         if (!player->isSpectator())
@@ -148,8 +146,8 @@ void UIScene_DeathMenu::updateTooltips()
     int timerLength;
     if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
         tooltip = -1;
-    gConsoleUIController.SetTooltips(m_playerId, tooltip, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, tooltip, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     false, false);
 }
 
 std::wstring UIScene_DeathMenu::getMoviePath()
@@ -159,8 +157,7 @@ std::wstring UIScene_DeathMenu::getMoviePath()
     return std::wstring(L"DeathMenu");
 }
 
-void UIScene_DeathMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                    bool released, bool& handled)
+void UIScene_DeathMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     if (m_deathMenuActive)
         return;
@@ -193,14 +190,11 @@ void UIScene_DeathMenu::handlePress(int controlId, int)
         gApp.SetAction(m_playerId, eXuiAction_Respawn, NULL);
         break;
     case 1:
-        telemetryManagerInstance->RecordLevelExit(
-            m_playerId, eSen_LevelExitStatus_Quit);
+        telemetryManagerInstance->RecordLevelExit(m_playerId, eSen_LevelExitStatus_Quit);
         unsigned int callbackId = GetCallbackUniqueId();
         UIScene_PauseMenu::OpenExitGameDialog(
-            m_playerId, reinterpret_cast<void*>(callbackId),
-            UIScene_PauseMenu::ExitGameDialogReturned,
-            UIScene_PauseMenu::ExitGameSaveDialogReturned,
-            UIScene_PauseMenu::EOpenExitGameDialog_ExitGame);
+            m_playerId, reinterpret_cast<void*>(callbackId), UIScene_PauseMenu::ExitGameDialogReturned,
+            UIScene_PauseMenu::ExitGameSaveDialogReturned, UIScene_PauseMenu::EOpenExitGameDialog_ExitGame);
         break;
     }
 }

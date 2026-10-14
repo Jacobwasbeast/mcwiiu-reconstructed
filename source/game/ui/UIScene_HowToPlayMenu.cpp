@@ -19,31 +19,32 @@
 extern ConsoleUIController gConsoleUIController;
 
 unsigned int UIScene_HowToPlayMenu::m_buttonLabels[33] = {
-    IDS_HOW_TO_PLAY_MENU_WHATSNEW, IDS_HOW_TO_PLAY_MENU_BASICS, IDS_HOW_TO_PLAY_MENU_MULTIPLAYER, IDS_HOW_TO_PLAY_MENU_HUD,
-    IDS_HOW_TO_PLAY_MENU_MG01, IDS_HOW_TO_PLAY_MENU_MG02, IDS_HOW_TO_PLAY_MENU_MG03, IDS_HOW_TO_PLAY_MENU_CREATIVE,
-    IDS_HOW_TO_PLAY_MENU_INVENTORY, IDS_HOW_TO_PLAY_MENU_CHESTS, IDS_HOW_TO_PLAY_MENU_CRAFTING, IDS_HOW_TO_PLAY_MENU_FURNACE,
-    IDS_HOW_TO_PLAY_MENU_DISPENSER, IDS_HOW_TO_PLAY_MENU_BREWING, IDS_HOW_TO_PLAY_MENU_ENCHANTMENT, IDS_HOW_TO_PLAY_MENU_ANVIL,
-    IDS_HOW_TO_PLAY_MENU_FARMANIMALS, IDS_HOW_TO_PLAY_MENU_BREEDANIMALS, IDS_HOW_TO_PLAY_MENU_TRADING, IDS_HOW_TO_PLAY_MENU_HORSES,
-    IDS_HOW_TO_PLAY_MENU_BEACONS, IDS_HOW_TO_PLAY_MENU_FIREWORKS, IDS_HOW_TO_PLAY_MENU_BANNERS, IDS_HOW_TO_PLAY_MENU_HOPPERS,
-    IDS_HOW_TO_PLAY_MENU_DROPPERS, IDS_HOW_TO_PLAY_MENU_NETHERPORTAL, IDS_HOW_TO_PLAY_MENU_THEEND, IDS_HOW_TO_PLAY_MENU_ENDCITIES,
-    IDS_HOW_TO_PLAY_MENU_ELYTRA, IDS_HOW_TO_PLAY_MENU_OCEANS, IDS_HOW_TO_PLAY_MENU_OCEAN_MOBS, IDS_HOW_TO_PLAY_MENU_CONDUIT,
-    IDS_HOW_TO_PLAY_MENU_HOSTOPTIONS
-};
+    IDS_HOW_TO_PLAY_MENU_WHATSNEW,   IDS_HOW_TO_PLAY_MENU_BASICS,       IDS_HOW_TO_PLAY_MENU_MULTIPLAYER,
+    IDS_HOW_TO_PLAY_MENU_HUD,        IDS_HOW_TO_PLAY_MENU_MG01,         IDS_HOW_TO_PLAY_MENU_MG02,
+    IDS_HOW_TO_PLAY_MENU_MG03,       IDS_HOW_TO_PLAY_MENU_CREATIVE,     IDS_HOW_TO_PLAY_MENU_INVENTORY,
+    IDS_HOW_TO_PLAY_MENU_CHESTS,     IDS_HOW_TO_PLAY_MENU_CRAFTING,     IDS_HOW_TO_PLAY_MENU_FURNACE,
+    IDS_HOW_TO_PLAY_MENU_DISPENSER,  IDS_HOW_TO_PLAY_MENU_BREWING,      IDS_HOW_TO_PLAY_MENU_ENCHANTMENT,
+    IDS_HOW_TO_PLAY_MENU_ANVIL,      IDS_HOW_TO_PLAY_MENU_FARMANIMALS,  IDS_HOW_TO_PLAY_MENU_BREEDANIMALS,
+    IDS_HOW_TO_PLAY_MENU_TRADING,    IDS_HOW_TO_PLAY_MENU_HORSES,       IDS_HOW_TO_PLAY_MENU_BEACONS,
+    IDS_HOW_TO_PLAY_MENU_FIREWORKS,  IDS_HOW_TO_PLAY_MENU_BANNERS,      IDS_HOW_TO_PLAY_MENU_HOPPERS,
+    IDS_HOW_TO_PLAY_MENU_DROPPERS,   IDS_HOW_TO_PLAY_MENU_NETHERPORTAL, IDS_HOW_TO_PLAY_MENU_THEEND,
+    IDS_HOW_TO_PLAY_MENU_ENDCITIES,  IDS_HOW_TO_PLAY_MENU_ELYTRA,       IDS_HOW_TO_PLAY_MENU_OCEANS,
+    IDS_HOW_TO_PLAY_MENU_OCEAN_MOBS, IDS_HOW_TO_PLAY_MENU_CONDUIT,      IDS_HOW_TO_PLAY_MENU_HOSTOPTIONS};
 
 static const EHowToPlayPage s_howToPlayMenuPages[33] = {
-    EHowToPlayPage_WhatsNew, EHowToPlayPage_Basics, EHowToPlayPage_Multiplayer, EHowToPlayPage_HUD,
-    EHowToPlayPage_BattleMiniGame, EHowToPlayPage_TumbleMiniGame, EHowToPlayPage_GlideMiniGame, EHowToPlayPage_Creative,
-    EHowToPlayPage_Inventory, EHowToPlayPage_Chest, EHowToPlayPage_Crafting, EHowToPlayPage_Furnace,
-    EHowToPlayPage_Dispenser, EHowToPlayPage_Brewing, EHowToPlayPage_Enchanting, EHowToPlayPage_Anvil,
-    EHowToPlayPage_FarmingAnimals, EHowToPlayPage_BreedingAnimals, EHowToPlayPage_Trading, EHowToPlayPage_Horses,
-    EHowToPlayPage_Beacons, EHowToPlayPage_Fireworks, EHowToPlayPage_Banners, EHowToPlayPage_Hoppers,
-    EHowToPlayPage_Droppers, EHowToPlayPage_NetherPortal, EHowToPlayPage_TheEnd, EHowToPlayPage_EndCities,
-    EHowToPlayPage_Elytra, EHowToPlayPage_Oceans, EHowToPlayPage_OceanMobs, EHowToPlayPage_Conduit,
-    EHowToPlayPage_HostOptions
-};
+    EHowToPlayPage_WhatsNew,      EHowToPlayPage_Basics,         EHowToPlayPage_Multiplayer,
+    EHowToPlayPage_HUD,           EHowToPlayPage_BattleMiniGame, EHowToPlayPage_TumbleMiniGame,
+    EHowToPlayPage_GlideMiniGame, EHowToPlayPage_Creative,       EHowToPlayPage_Inventory,
+    EHowToPlayPage_Chest,         EHowToPlayPage_Crafting,       EHowToPlayPage_Furnace,
+    EHowToPlayPage_Dispenser,     EHowToPlayPage_Brewing,        EHowToPlayPage_Enchanting,
+    EHowToPlayPage_Anvil,         EHowToPlayPage_FarmingAnimals, EHowToPlayPage_BreedingAnimals,
+    EHowToPlayPage_Trading,       EHowToPlayPage_Horses,         EHowToPlayPage_Beacons,
+    EHowToPlayPage_Fireworks,     EHowToPlayPage_Banners,        EHowToPlayPage_Hoppers,
+    EHowToPlayPage_Droppers,      EHowToPlayPage_NetherPortal,   EHowToPlayPage_TheEnd,
+    EHowToPlayPage_EndCities,     EHowToPlayPage_Elytra,         EHowToPlayPage_Oceans,
+    EHowToPlayPage_OceanMobs,     EHowToPlayPage_Conduit,        EHowToPlayPage_HostOptions};
 
-UIScene_HowToPlayMenu::UIScene_HowToPlayMenu(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIScene_HowToPlayMenu::UIScene_HowToPlayMenu(int sceneType, void*, UILayer* layer) : UIScene(sceneType, layer)
 {
     initialiseMovie();
     m_buttonList.init(0);
@@ -57,8 +58,7 @@ UIScene_HowToPlayMenu::UIScene_HowToPlayMenu(int sceneType, void*, UILayer* laye
 
 void UIScene_HowToPlayMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK,
-                                     -1, -1, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -93,12 +93,10 @@ void UIScene_HowToPlayMenu::handleReload()
 
 std::wstring UIScene_HowToPlayMenu::getMoviePath()
 {
-    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"HowToPlayMenuSplit")
-                                             : std::wstring(L"HowToPlayMenu");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"HowToPlayMenuSplit") : std::wstring(L"HowToPlayMenu");
 }
 
-void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool pressed, bool released,
-                                        bool& handled)
+void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
@@ -123,11 +121,11 @@ void UIScene_HowToPlayMenu::handlePress(int controlId, int childId)
     {
         m_selectedItem = childId;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-        const uint32_t sceneData = (s_howToPlayMenuPages[childId] << 16) | 0x80000000u |
-                                   static_cast<int16_t>(m_playerId);
+        const uint32_t sceneData = (s_howToPlayMenuPages[childId] << 16) | 0x80000000u
+                                   | static_cast<int16_t>(m_playerId);
         gConsoleUIController.NavigateToScene(m_playerId, EUIScene_HowToPlay,
-                                             reinterpret_cast<void*>(static_cast<uintptr_t>(sceneData)),
-                                             EUILayer_Scene, EUIGroup_PlayerDefault);
+                                             reinterpret_cast<void*>(static_cast<uintptr_t>(sceneData)), EUILayer_Scene,
+                                             EUIGroup_PlayerDefault);
     }
 }
 

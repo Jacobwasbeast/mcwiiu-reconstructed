@@ -6,8 +6,7 @@
 #include "game/core/Button.hpp"
 #include "game/core/Minecraft.hpp"
 
-Screen::Screen()
-    : GuiComponent()
+Screen::Screen() : GuiComponent()
 {
     mMinecraft = NULL;
     mWidth = 0;

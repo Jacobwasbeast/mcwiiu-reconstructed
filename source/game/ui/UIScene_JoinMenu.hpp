@@ -38,6 +38,7 @@ public:
     void StartSharedLaunchFlow();
     virtual void handlePress(int, int);
     virtual int getSceneType();
+
 private:
     UIControl_Button m_joinButton;
     UIControl_ButtonList m_gamePlayers;

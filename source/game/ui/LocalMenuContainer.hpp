@@ -44,8 +44,7 @@ public:
     virtual LockCode* getLockKeyCode();
     virtual void unlock();
     virtual int getTypeId(bool large);
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
 
 private:
     int mTypeId;

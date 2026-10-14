@@ -13,8 +13,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_List2D::FJ_List2D(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_items()
+FJ_List2D::FJ_List2D(fuiRenderNode* renderNode) : FJ_Base(renderNode), m_items()
 {
     m_activeItem = 0;
     m_firstVisibleRow = 0;
@@ -29,8 +28,7 @@ FJ_List2D::FJ_List2D(fuiRenderNode* renderNode)
     m_touchX = 0;
     m_touchRow = 0;
     m_scrollDelegate = 0;
-    m_upArrow = static_cast<FJ_ScrollArrow*>(
-        FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
+    m_upArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
     m_downArrow = static_cast<FJ_ScrollArrow*>(
         FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
     m_listHeight = static_cast<int>(getHeight() - m_upArrow->getHeight() / 1.3f);
@@ -46,8 +44,7 @@ void FJ_List2D::HighlightItem(int index)
     int column = index - row * m_itemsPerRow;
     if (m_items[row].size() - 1 < static_cast<unsigned int>(column))
         column = static_cast<int>(m_items[row].size()) - 1;
-    if (static_cast<unsigned int>(row) < m_items.size() &&
-        static_cast<unsigned int>(column) < m_items[row].size())
+    if (static_cast<unsigned int>(row) < m_items.size() && static_cast<unsigned int>(column) < m_items[row].size())
     {
         m_activeRow = row;
         m_activeColumn = column;
@@ -151,10 +148,8 @@ void FJ_List2D::setX(float x)
         {
             m_items[row][column]->setX(getX());
             unsigned int object;
-            for (object = 0;
-                 object < static_cast<FJ_Base*>(m_items[row][column])->m_objects.size(); ++object)
-                static_cast<FJ_Base*>(m_items[row][column])->m_objects[object]->setX(
-                    m_items[row][column]->getX());
+            for (object = 0; object < static_cast<FJ_Base*>(m_items[row][column])->m_objects.size(); ++object)
+                static_cast<FJ_Base*>(m_items[row][column])->m_objects[object]->setX(m_items[row][column]->getX());
         }
     }
 }
@@ -171,10 +166,8 @@ void FJ_List2D::setY(float y)
         {
             m_items[row][column]->setY(getY());
             unsigned int object;
-            for (object = 0;
-                 object < static_cast<FJ_Base*>(m_items[row][column])->m_objects.size(); ++object)
-                static_cast<FJ_Base*>(m_items[row][column])->m_objects[object]->setY(
-                    m_items[row][column]->getY());
+            for (object = 0; object < static_cast<FJ_Base*>(m_items[row][column])->m_objects.size(); ++object)
+                static_cast<FJ_Base*>(m_items[row][column])->m_objects[object]->setY(m_items[row][column]->getY());
         }
     }
 }
@@ -194,12 +187,9 @@ void FJ_List2D::HandleScrollListArrows(bool addToStage)
         {
             getParent()->addChild(upArrow);
             getParent()->addChild(m_downArrow);
-            m_upArrow->setX(static_cast<float>(
-                Math::round(getX() + getWidth() - m_upArrow->getWidth() * 1.5f)));
-            m_upArrow->setY(static_cast<float>(
-                Math::round(getY() + getHeight() - m_upArrow->getHeight() * 0.5f)));
-            m_downArrow->setX(static_cast<float>(
-                Math::round(getX() + getWidth() - m_upArrow->getWidth() * 0.5f)));
+            m_upArrow->setX(static_cast<float>(Math::round(getX() + getWidth() - m_upArrow->getWidth() * 1.5f)));
+            m_upArrow->setY(static_cast<float>(Math::round(getY() + getHeight() - m_upArrow->getHeight() * 0.5f)));
+            m_downArrow->setX(static_cast<float>(Math::round(getX() + getWidth() - m_upArrow->getWidth() * 0.5f)));
             m_downArrow->setY(m_upArrow->getY());
             m_upArrow->ChangeState(0);
             m_downArrow->ChangeState(3);
@@ -247,8 +237,7 @@ void FJ_List2D::ScrollList(bool up, bool initial, bool immediate)
         for (r = 0; r < m_items.size(); ++r)
         {
             if (static_cast<int>(r) < m_firstVisibleRow)
-                heightBeforeFirstVisible +=
-                    m_items[r][0]->getHeight() + static_cast<float>(m_itemSpacing);
+                heightBeforeFirstVisible += m_items[r][0]->getHeight() + static_cast<float>(m_itemSpacing);
             if (static_cast<int>(r) < static_cast<int>(row))
                 heightBeforeRow += m_items[r][0]->getHeight() + static_cast<float>(m_itemSpacing);
             if (static_cast<int>(r) >= m_firstVisibleRow && !reachedLimit)
@@ -269,25 +258,22 @@ void FJ_List2D::ScrollList(bool up, bool initial, bool immediate)
         {
             FJ_FuiNode* itemX = m_items[row][column];
             fuiRect rect = itemX->getRect(itemX);
-            itemX->setX(static_cast<float>(Math::round(getX() +
-                static_cast<float>(static_cast<int>(column)) * m_items[0][0]->getWidth() +
-                static_cast<float>(static_cast<int>(column) * m_itemSpacing) - rect.xMin)));
+            itemX->setX(static_cast<float>(
+                Math::round(getX() + static_cast<float>(static_cast<int>(column)) * m_items[0][0]->getWidth()
+                            + static_cast<float>(static_cast<int>(column) * m_itemSpacing) - rect.xMin)));
             FJ_FuiNode* itemY = m_items[row][column];
             rect = itemY->getRect(itemY);
-            itemY->setY(static_cast<float>(Math::round(getY() + heightBeforeRow - rect.yMin -
-                heightBeforeFirstVisible)));
+            itemY->setY(
+                static_cast<float>(Math::round(getY() + heightBeforeRow - rect.yMin - heightBeforeFirstVisible)));
             if (m_items[row][column]->isFJ_Base())
             {
                 unsigned int object;
-                for (object = 0;
-                     object < m_items[row][column]->asFJ_Base()->m_objects.size(); ++object)
-                    m_items[row][column]->asFJ_Base()->m_objects[object]->setY(
-                        m_items[row][column]->getY());
+                for (object = 0; object < m_items[row][column]->asFJ_Base()->m_objects.size(); ++object)
+                    m_items[row][column]->asFJ_Base()->m_objects[object]->setY(m_items[row][column]->getY());
             }
         }
 
-        if (static_cast<int>(row) < m_firstVisibleRow ||
-            m_firstVisibleRow + m_visibleRows <= static_cast<int>(row))
+        if (static_cast<int>(row) < m_firstVisibleRow || m_firstVisibleRow + m_visibleRows <= static_cast<int>(row))
         {
             if (!immediate && row == static_cast<unsigned int>(m_activeRow))
             {
@@ -306,10 +292,8 @@ void FJ_List2D::ScrollList(bool up, bool initial, bool immediate)
         for (column = 0; column < m_items[row].size(); ++column)
         {
             unsigned int object;
-            for (object = 0;
-                 object < m_items[row][column]->asFJ_Base()->m_objects.size(); ++object)
-                m_items[row][column]->asFJ_Base()->m_objects[object]->setVisible(
-                    m_items[row][column]->isVisible());
+            for (object = 0; object < m_items[row][column]->asFJ_Base()->m_objects.size(); ++object)
+                m_items[row][column]->asFJ_Base()->m_objects[object]->setVisible(m_items[row][column]->isVisible());
         }
     }
 
@@ -452,8 +436,7 @@ void FJ_List2D::EnableItem(int index, bool enabled)
 {
     int row = index / m_itemsPerRow;
     int column = index - m_itemsPerRow * row;
-    if (static_cast<unsigned int>(row) < m_items.size() &&
-        static_cast<unsigned int>(column) < m_items[row].size())
+    if (static_cast<unsigned int>(row) < m_items.size() && static_cast<unsigned int>(column) < m_items[row].size())
     {
         if (m_items[row][column]->isFJ_ListButtonAchievement())
             m_items[row][column]->asFJ_ListButtonAchievement()->EnableButton(enabled);
@@ -470,10 +453,10 @@ void FJ_List2D::SetTouchFocus(int x, int y, bool focus)
             unsigned int column;
             for (column = 0; column < m_items[row].size(); ++column)
             {
-                if (m_items[row][column]->getY() < static_cast<float>(y) &&
-                    static_cast<float>(y) < m_items[row][column]->getY() + m_items[row][column]->getHeight() &&
-                    m_items[row][column]->getX() < static_cast<float>(x) &&
-                    static_cast<float>(x) < m_items[row][column]->getX() + m_items[row][column]->getWidth())
+                if (m_items[row][column]->getY() < static_cast<float>(y)
+                    && static_cast<float>(y) < m_items[row][column]->getY() + m_items[row][column]->getHeight()
+                    && m_items[row][column]->getX() < static_cast<float>(x)
+                    && static_cast<float>(x) < m_items[row][column]->getX() + m_items[row][column]->getWidth())
                 {
                     m_touchRow = static_cast<int>(row);
                     m_touchFocus = false;
@@ -491,8 +474,7 @@ void FJ_List2D::SetTouchFocus(int x, int y, bool focus)
         {
             if (y < m_touchY)
             {
-                int rows = (m_touchY - y) /
-                    (static_cast<int>(m_items[0][0]->getHeight()) + m_itemSpacing);
+                int rows = (m_touchY - y) / (static_cast<int>(m_items[0][0]->getHeight()) + m_itemSpacing);
                 if (rows > 0)
                 {
                     int firstVisibleRow = m_firstVisibleRow + rows;
@@ -511,8 +493,7 @@ void FJ_List2D::SetTouchFocus(int x, int y, bool focus)
             }
             else if (m_touchY < y)
             {
-                int rows = (y - m_touchY) /
-                    (static_cast<int>(m_items[0][0]->getHeight()) + m_itemSpacing);
+                int rows = (y - m_touchY) / (static_cast<int>(m_items[0][0]->getHeight()) + m_itemSpacing);
                 if (rows > 0)
                 {
                     int firstVisibleRow = m_firstVisibleRow - rows;
@@ -546,13 +527,11 @@ uint32_t FJ_List2D::CanTouchTrigger(int x, int y)
         unsigned int column;
         for (column = 0; column < m_items[row].size(); ++column)
         {
-            if (static_cast<float>(y) > m_items[row][column]->getY() &&
-                static_cast<float>(y) <
-                    m_items[row][column]->getY() + m_items[row][column]->getHeight() &&
-                static_cast<float>(x) > m_items[row][column]->getX() &&
-                static_cast<float>(x) <
-                    m_items[row][column]->getX() + m_items[row][column]->getWidth() &&
-                !m_touchFocus && m_touchRow == row)
+            if (static_cast<float>(y) > m_items[row][column]->getY()
+                && static_cast<float>(y) < m_items[row][column]->getY() + m_items[row][column]->getHeight()
+                && static_cast<float>(x) > m_items[row][column]->getX()
+                && static_cast<float>(x) < m_items[row][column]->getX() + m_items[row][column]->getWidth()
+                && !m_touchFocus && m_touchRow == row)
                 return 1;
         }
     }

@@ -8,8 +8,7 @@
 
 template <typename T> std::wstring _toString(T value);
 
-FJ_MobEffect::FJ_MobEffect(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_MobEffect::FJ_MobEffect(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
 }
 
@@ -45,7 +44,8 @@ void FJ_MobEffect::Init(const std::wstring& effectName, int iDuration)
     pPointerTextPanel->getChildAt(0)->setHeight((float)iHeight);
 
     FJ_FuiNode* pTextNode = getChildByName("EffectName")->asMovieClip();
-    fuiRenderNodeEditText* pEffectNameText = pTextNode->getChildAt(0)->asMovieClip()->getRenderNodeChildAt(0)->asEditText();
+    fuiRenderNodeEditText* pEffectNameText =
+        pTextNode->getChildAt(0)->asMovieClip()->getRenderNodeChildAt(0)->asEditText();
     pEffectNameText->setScaleX(1.0f / pTextNode->getScaleX());
     pEffectNameText->setScaleY(1.0f / pTextNode->getScaleY());
     pEffectNameText->setWidth((float)iWidth);

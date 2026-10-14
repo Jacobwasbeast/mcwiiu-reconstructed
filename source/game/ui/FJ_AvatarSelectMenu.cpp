@@ -10,12 +10,12 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_AvatarSelectMenu::FJ_AvatarSelectMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
-    , m_activeTab(0)
-    , m_currentTab(-1)
-    , m_userTabFocus(-1)
-    , m_favouriteTabFocus(-1)
-    , m_guestTabFocus(-1)
+    : FJ_Document(renderNode),
+      m_activeTab(0),
+      m_currentTab(-1),
+      m_userTabFocus(-1),
+      m_favouriteTabFocus(-1),
+      m_guestTabFocus(-1)
 {
     getChildByName("UserTab.TabLeft")->getChildAt(0)->gotoAndStop(1);
     getChildByName("FavouriteTab.TabMiddle")->getChildAt(0)->gotoAndStop(2);

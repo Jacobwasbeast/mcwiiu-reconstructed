@@ -28,21 +28,34 @@
 extern CConsoleMinecraftApp gApp;
 extern ConsoleUIController gConsoleUIController;
 
-static const int s_defaultSkinNameIds[19] = {
-    -1,
-    IDS_DEFAULT_SKIN0, IDS_DEFAULT_SKIN1, IDS_DEFAULT_SKIN2, IDS_DEFAULT_SKIN3, IDS_DEFAULT_SKIN4, IDS_DEFAULT_SKIN5,
-    IDS_DEFAULT_SKIN6, IDS_DEFAULT_SKIN7, IDS_DEFAULT_SKIN8, IDS_DEFAULT_SKIN9, IDS_DEFAULT_SKIN10, IDS_DEFAULT_SKIN11,
-    IDS_DEFAULT_SKIN12, IDS_DEFAULT_SKIN13, IDS_DEFAULT_SKIN14, IDS_DEFAULT_SKIN15, IDS_DEFAULT_SKIN17, IDS_DEFAULT_SKIN16
-};
+static const int s_defaultSkinNameIds[19] = {-1,
+                                             IDS_DEFAULT_SKIN0,
+                                             IDS_DEFAULT_SKIN1,
+                                             IDS_DEFAULT_SKIN2,
+                                             IDS_DEFAULT_SKIN3,
+                                             IDS_DEFAULT_SKIN4,
+                                             IDS_DEFAULT_SKIN5,
+                                             IDS_DEFAULT_SKIN6,
+                                             IDS_DEFAULT_SKIN7,
+                                             IDS_DEFAULT_SKIN8,
+                                             IDS_DEFAULT_SKIN9,
+                                             IDS_DEFAULT_SKIN10,
+                                             IDS_DEFAULT_SKIN11,
+                                             IDS_DEFAULT_SKIN12,
+                                             IDS_DEFAULT_SKIN13,
+                                             IDS_DEFAULT_SKIN14,
+                                             IDS_DEFAULT_SKIN15,
+                                             IDS_DEFAULT_SKIN17,
+                                             IDS_DEFAULT_SKIN16};
 
 static const unsigned int s_dlcSkinIdMask = 0x7fffffff;
 
-static int s_newestSkinPackIds[12] = {
-    0x22c, 0x224, 0x233, 0x222, 0x216, 0x225, 0x234, 0x207, 0x227, 0x4f9, 0x23c, 0x40e
-};
+static int s_newestSkinPackIds[12] = {0x22c, 0x224, 0x233, 0x222, 0x216, 0x225,
+                                      0x234, 0x207, 0x227, 0x4f9, 0x23c, 0x40e};
 
 UIScene_SkinSelectMenu::UIScene_SkinSelectMenu(int player, void* data, UILayer* layer)
-    : UIScene(player, layer), IUIScene_DlcSelectMenu(eDLCContentType_SkinPack)
+    : UIScene(player, layer),
+      IUIScene_DlcSelectMenu(eDLCContentType_SkinPack)
 {
     initialiseMovie();
     m_packList.init(0);
@@ -216,8 +229,8 @@ void UIScene_SkinSelectMenu::setActivePackIndex()
     for (unsigned int i = 0; i < favouriteCount; ++i)
     {
         DLCFile* skinFile = gApp.mDLCManager.getSkinFile(
-            static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(i))),
-            isDefaultSkin, hasPurchasedPack);
+            static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(i))), isDefaultSkin,
+            hasPurchasedPack);
         if (!isDefaultSkin)
         {
             if (skinFile != NULL)
@@ -231,7 +244,8 @@ void UIScene_SkinSelectMenu::setActivePackIndex()
                 }
             }
         }
-        else if (m_originalSkinId == static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(i))))
+        else if (m_originalSkinId
+                 == static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(i))))
         {
             m_selectedPackId = 0;
             m_packIndex = 1;
@@ -256,10 +270,8 @@ unsigned int UIScene_SkinSelectMenu::registerTexture(std::wstring textureName)
 
 unsigned char UIScene_SkinSelectMenu::getTextureId(int index)
 {
-    static const unsigned char textureIds[19] = {
-        0x25, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c,
-        0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0xaa, 0xa9
-    };
+    static const unsigned char textureIds[19] = {0x25, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x70,
+                                                 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0xaa, 0xa9};
     if (static_cast<unsigned int>(index) > 0x12)
         return 0x25;
     return textureIds[index];
@@ -331,8 +343,8 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
         skinOrigin = skinFile->getParameterAsString(DLCManager::eDLCParameterType_ThemeName, L"");
 
         bool smallSkinBlocked = false;
-        if (Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() &&
-            (skinFile->getSkinAdjustments().mGameFlags & 1) != 0)
+        if (Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins()
+            && (skinFile->getSkinAdjustments().mGameFlags & 1) != 0)
             smallSkinBlocked = true;
         const bool skinIsFree = skinFile->getParameterAsBool(DLCManager::eDLCParameterType_Free);
         const bool licensed = m_pack->hasPurchasedPack();
@@ -381,8 +393,9 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                         skinName = L10N::GetString(IDS_DEFAULT_SKINS);
                     else
                         skinName = L10N::GetString(s_defaultSkinNameIds[favouriteSkin]);
-                    if (m_originalSkinId == static_cast<int>(GameSettings::GetPlayerFavoriteSkin(
-                                                m_playerId, static_cast<int>(m_skinIndex))))
+                    if (m_originalSkinId
+                        == static_cast<int>(
+                            GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(m_skinIndex))))
                         setCharacterSelected(true);
                     else
                         setCharacterSelected(false);
@@ -399,8 +412,8 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                     skinOrigin = skinFile->getParameterAsString(DLCManager::eDLCParameterType_ThemeName, L"");
 
                     bool smallSkinBlocked = false;
-                    if (Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() &&
-                        (skinFile->getSkinAdjustments().mGameFlags & 1) != 0)
+                    if (Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins()
+                        && (skinFile->getSkinAdjustments().mGameFlags & 1) != 0)
                         smallSkinBlocked = true;
                     const bool skinIsFree = skinFile->getParameterAsBool(DLCManager::eDLCParameterType_Free);
                     const bool available = skinIsFree || licensed;
@@ -437,7 +450,8 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
         setCharacterFavourite(false);
         for (unsigned int i = 0; i < favouriteCount; ++i)
         {
-            const int favouriteSkin = static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(i)));
+            const int favouriteSkin = static_cast<int>(
+                GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(i)));
             int skinId;
             if (m_pack == NULL)
                 skinId = static_cast<int>(m_skinIndex);
@@ -454,8 +468,8 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
     m_labelSkinName.setLabel(UIString(skinName), false, false);
     m_labelSkinOrigin.setLabel(UIString(skinOrigin), false, false);
 
-    if (m_additionalSkinBoxes != NULL && m_additionalSkinBoxes->size() != 0 &&
-        gApp.GetAdditionalModelParts(skinFile->m_fileID) == NULL)
+    if (m_additionalSkinBoxes != NULL && m_additionalSkinBoxes->size() != 0
+        && gApp.GetAdditionalModelParts(skinFile->m_fileID) == NULL)
     {
         gApp.SetAdditionalSkinBoxes(skinFile->m_fileID, m_additionalSkinBoxes, skinFile->getSkinAdjustments());
     }
@@ -536,7 +550,8 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                     if (otherSkinFile != NULL)
                     {
                         otherSkinPath = otherSkinFile->getPath();
-                        otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
+                        otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath,
+                                                                            L"");
                         otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
                         backupTexture = TN_MOB_STEVE;
                     }
@@ -553,10 +568,11 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
 
         if (otherSkinFile != NULL)
         {
-            if (otherSkinBoxes != NULL && otherSkinBoxes->size() != 0 &&
-                gApp.GetAdditionalModelParts(otherSkinFile->m_fileID) == NULL)
+            if (otherSkinBoxes != NULL && otherSkinBoxes->size() != 0
+                && gApp.GetAdditionalModelParts(otherSkinFile->m_fileID) == NULL)
             {
-                gApp.SetAdditionalSkinBoxes(otherSkinFile->m_fileID, otherSkinBoxes, otherSkinFile->getSkinAdjustments());
+                gApp.SetAdditionalSkinBoxes(otherSkinFile->m_fileID, otherSkinBoxes,
+                                            otherSkinFile->getSkinAdjustments());
             }
             gApp.SetSkinAdjustments(otherSkinFile->m_fileID, otherSkinFile->getSkinAdjustments());
         }
@@ -602,7 +618,8 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                     if (otherSkinFile != NULL)
                     {
                         otherSkinPath = otherSkinFile->getPath();
-                        otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
+                        otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath,
+                                                                            L"");
                         otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
                         backupTexture = TN_MOB_STEVE;
                     }
@@ -619,10 +636,11 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
 
         if (otherSkinFile != NULL)
         {
-            if (otherSkinBoxes != NULL && otherSkinBoxes->size() != 0 &&
-                gApp.GetAdditionalModelParts(otherSkinFile->m_fileID) == NULL)
+            if (otherSkinBoxes != NULL && otherSkinBoxes->size() != 0
+                && gApp.GetAdditionalModelParts(otherSkinFile->m_fileID) == NULL)
             {
-                gApp.SetAdditionalSkinBoxes(otherSkinFile->m_fileID, otherSkinBoxes, otherSkinFile->getSkinAdjustments());
+                gApp.SetAdditionalSkinBoxes(otherSkinFile->m_fileID, otherSkinBoxes,
+                                            otherSkinFile->getSkinAdjustments());
             }
             gApp.SetSkinAdjustments(otherSkinFile->m_fileID, otherSkinFile->getSkinAdjustments());
         }
@@ -641,8 +659,8 @@ unsigned char UIScene_SkinSelectMenu::IsTrialDiscontinuedPack(int packId)
     {
         DLCPack* pack = gApp.mDLCManager.getPackFromPackID(packId);
         DLC_INFO* info = gApp.GetDLCInfoInstance()->GetDLCInfoForPackID(static_cast<unsigned int>(packId));
-        if (info != NULL && info->PackType == 4 &&
-            GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(2), -1) == 0)
+        if (info != NULL && info->PackType == 4
+            && GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(2), -1) == 0)
         {
             return pack != NULL && !pack->hasPurchasedPack();
         }
@@ -691,12 +709,13 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
 
     DLCPack* texturePackSkinPack = NULL;
     unsigned int packIndex = m_packIndex;
-    const bool usingDefaultPack =
-        Minecraft::GetInstance()->mTexturePackRepository->getSelected() == TexturePackRepository::defaultTexturePack;
+    const bool usingDefaultPack = Minecraft::GetInstance()->mTexturePackRepository->getSelected()
+                                  == TexturePackRepository::defaultTexturePack;
     if (!usingDefaultPack)
     {
         texturePackSkinPack = static_cast<DLCTexturePack*>(
-            Minecraft::GetInstance()->mTexturePackRepository->getSelected())->getDLCInfoParentPack();
+                                  Minecraft::GetInstance()->mTexturePackRepository->getSelected())
+                                  ->getDLCInfoParentPack();
     }
 
     m_packList.clearList();
@@ -714,7 +733,8 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
     m_newPackIds.clear();
     m_addedPackIds.clear();
 
-    for (unsigned int i = 0; i < static_cast<unsigned int>(gApp.mDLCManager.getPackCount(DLCManager::eDLCType_Skin)); ++i)
+    for (unsigned int i = 0; i < static_cast<unsigned int>(gApp.mDLCManager.getPackCount(DLCManager::eDLCType_Skin));
+         ++i)
     {
         DLCPack* pack = gApp.mDLCManager.getPack(i, DLCManager::eDLCType_Skin);
         if (pack == NULL)
@@ -726,9 +746,8 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
 
         if (IsTrialDiscontinuedPack(static_cast<int>(pack->GetPackId())) == 0)
         {
-            if (m_hasTexturePackSkinPack && texturePackSkinPack != NULL &&
-                texturePackSkinPack->GetPackId() >= 0x400 &&
-                texturePackSkinPack->GetPackId() == pack->GetPackId())
+            if (m_hasTexturePackSkinPack && texturePackSkinPack != NULL && texturePackSkinPack->GetPackId() >= 0x400
+                && texturePackSkinPack->GetPackId() == pack->GetPackId())
             {
                 m_texturePackSkinPackId = static_cast<int>(texturePackSkinPack->GetPackId());
             }
@@ -752,8 +771,7 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
     if (m_hasTexturePackSkinPack)
     {
         std::wstring packName = texturePackSkinPack->getLocalisedDisplayName();
-        m_packList.AddNewButton(packName.c_str(),
-                                static_cast<int>(texturePackSkinPack->GetPackId()), true);
+        m_packList.AddNewButton(packName.c_str(), static_cast<int>(texturePackSkinPack->GetPackId()), true);
         m_addedPackIds.push_back(static_cast<int>(texturePackSkinPack->GetPackId()));
     }
 
@@ -897,8 +915,8 @@ void UIScene_SkinSelectMenu::handlePackIndexChanged()
                     wchar_t skinPath[256];
                     swprintf(skinPath, 256, L"dlcskin%08d.png",
                              GameSettings::GetPlayerFavoriteSkin(m_playerId,
-                                                                 GameSettings::GetPlayerFavoriteSkinsPos(m_playerId)) &
-                                 s_dlcSkinIdMask);
+                                                                 GameSettings::GetPlayerFavoriteSkinsPos(m_playerId))
+                                 & s_dlcSkinIdMask);
                     DLCPack* favouritePack = gApp.mDLCManager.getPackContainingSkin(skinPath);
                     bool found = false;
                     if (favouritePack == NULL)
@@ -980,9 +998,9 @@ void UIScene_SkinSelectMenu::updateTooltips()
     }
 
     const int selectTooltip = m_noSkinsToShow ? -1 : IDS_TOOLTIPS_SELECT_SKIN;
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), selectTooltip, static_cast<int>(IDS_TOOLTIPS_CANCEL), -1,
-                                     favouriteTooltip, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     IDS_TOOLTIPS_NAVIGATE, false, false);
+    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), selectTooltip,
+                                     static_cast<int>(IDS_TOOLTIPS_CANCEL), -1, favouriteTooltip, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, IDS_TOOLTIPS_NAVIGATE, false, false);
 }
 
 void UIScene_SkinSelectMenu::updateComponents()
@@ -1031,7 +1049,8 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
                 isDefaultSkin, licensed));
             if (isDefaultSkin)
             {
-                GameSettings::SetPlayerSkin(pad, GameSettings::GetPlayerFavoriteSkin(pad, static_cast<int>(m_skinIndex)), true);
+                GameSettings::SetPlayerSkin(
+                    pad, GameSettings::GetPlayerFavoriteSkin(pad, static_cast<int>(m_skinIndex)), true);
                 GameSettings::SetPlayerCape(pad, 0, true);
                 m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
                 m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
@@ -1040,11 +1059,12 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
             }
             else if (skinFile != NULL)
             {
-                if (!Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() ||
-                    (skinFile->getSkinAdjustments().mGameFlags & 1) == 0)
+                if (!Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins()
+                    || (skinFile->getSkinAdjustments().mGameFlags & 1) == 0)
                 {
                     GameSettings::SetPlayerSkin(pad, skinFile->getPath());
-                    GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
+                    GameSettings::SetPlayerCape(
+                        pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
                     m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
                     m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
                     GameSettings::SetPlayerFavoriteSkinsPos(pad, static_cast<int>(m_skinIndex));
@@ -1070,32 +1090,36 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
                 {
                     tryPurchaseDlc(m_playerId, handled, eDLCContentType_All);
                 }
-                else if (!Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() ||
-                    (skinFile->getSkinAdjustments().mGameFlags & 1) == 0)
+                else if (!Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins()
+                         || (skinFile->getSkinAdjustments().mGameFlags & 1) == 0)
                 {
                     GameSettings::SetPlayerSkin(pad, skinFile->getPath());
-                    GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
+                    GameSettings::SetPlayerCape(
+                        pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
                     setCharacterSelected(true);
                     m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
                     m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
                     GameSettings::SetPlayerFavoriteSkinsPos(
-                        m_playerId, GameSettings::GetPlayerFavoriteSkinsPos(m_playerId, static_cast<unsigned int>(m_originalSkinId)));
+                        m_playerId, GameSettings::GetPlayerFavoriteSkinsPos(
+                                        m_playerId, static_cast<unsigned int>(m_originalSkinId)));
                 }
                 else
                 {
                     setCharacterSelected(false);
                 }
             }
-            else if (!Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() ||
-                (skinFile->getSkinAdjustments().mGameFlags & 1) == 0)
+            else if (!Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins()
+                     || (skinFile->getSkinAdjustments().mGameFlags & 1) == 0)
             {
                 GameSettings::SetPlayerSkin(pad, skinFile->getPath());
-                GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
+                GameSettings::SetPlayerCape(
+                    pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
                 setCharacterSelected(true);
                 m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
                 m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
                 GameSettings::SetPlayerFavoriteSkinsPos(
-                    m_playerId, GameSettings::GetPlayerFavoriteSkinsPos(m_playerId, static_cast<unsigned int>(m_originalSkinId)));
+                    m_playerId,
+                    GameSettings::GetPlayerFavoriteSkinsPos(m_playerId, static_cast<unsigned int>(m_originalSkinId)));
             }
             else
             {
@@ -1152,15 +1176,16 @@ void UIScene_SkinSelectMenu::SetFavoriteSkin(int player, int skin)
                                                 GameSettings::GetPlayerFavoriteSkin(player, static_cast<int>(i + 1)));
         GameSettings::SetPlayerFavoriteSkin(player, static_cast<int>(favouriteCount - 1), 0xffffffff);
         if (GameSettings::GetPlayerFavoriteSkinsPos(player) == slot)
-            GameSettings::SetPlayerFavoriteSkinsPos(m_playerId, static_cast<int>(GameSettings::GetPlayerFavoriteSkinsCount(player)));
+            GameSettings::SetPlayerFavoriteSkinsPos(
+                m_playerId, static_cast<int>(GameSettings::GetPlayerFavoriteSkinsCount(player)));
         return;
     }
 
     if (favouriteCount == 10)
     {
-        int messageParameters[2] = { static_cast<int>(IDS_CONFIRM_OK), IDS_CONFIRM_CANCEL };
-        gConsoleUIController.RequestAlertMessage(IDS_MAX_FAVORITES_TITLE, static_cast<int>(IDS_MAX_FAVORITES_TEXT), messageParameters, 2, player,
-                                                 ManageFavoritesReturned,
+        int messageParameters[2] = {static_cast<int>(IDS_CONFIRM_OK), IDS_CONFIRM_CANCEL};
+        gConsoleUIController.RequestAlertMessage(IDS_MAX_FAVORITES_TITLE, static_cast<int>(IDS_MAX_FAVORITES_TEXT),
+                                                 messageParameters, 2, player, ManageFavoritesReturned,
                                                  reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
         return;
     }
@@ -1190,7 +1215,8 @@ void UIScene_SkinSelectMenu::InputActionFavorite(unsigned int player)
             isDefaultSkin, licensed);
         if (skinFile == NULL && !isDefaultSkin)
             return;
-        SetFavoriteSkin(m_playerId, static_cast<int>(GameSettings::GetPlayerFavoriteSkin(pad, static_cast<int>(m_skinIndex))));
+        SetFavoriteSkin(m_playerId,
+                        static_cast<int>(GameSettings::GetPlayerFavoriteSkin(pad, static_cast<int>(m_skinIndex))));
         const unsigned int favouriteCount = GameSettings::GetPlayerFavoriteSkinsCount(pad);
         if (favouriteCount <= m_skinIndex && favouriteCount != 0)
             m_skinIndex = favouriteCount - 1;
@@ -1214,8 +1240,8 @@ void UIScene_SkinSelectMenu::InputActionFavorite(unsigned int player)
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
 }
 
-void UIScene_SkinSelectMenu::handleInput(int player, int action, bool repeat, bool pressed,
-                                         bool released, bool& handled)
+void UIScene_SkinSelectMenu::handleInput(int player, int action, bool repeat, bool pressed, bool released,
+                                         bool& handled)
 {
     if (m_purchasePending)
         return;
@@ -1390,14 +1416,12 @@ void UIScene_SkinSelectMenu::HandleDLCLicenseChange()
     handleSkinIndexChanged();
 }
 
-void UIScene_SkinSelectMenu::handleTouchInput(unsigned int playerId, int touchX, int touchY,
-                                              int touchBox, bool pressed, bool repeat,
-                                              bool released)
+void UIScene_SkinSelectMenu::handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                              bool repeat, bool released)
 {
     if (pressed)
     {
-        if (touchBox == 10 &&
-            (m_packIndex != 1 || GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) != 0))
+        if (touchBox == 10 && (m_packIndex != 1 || GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) != 0))
         {
             m_touchStartX = touchX;
             m_touchConsumed = false;

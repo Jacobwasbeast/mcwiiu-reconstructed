@@ -17,8 +17,7 @@ public:
         static bool mayPlaceItem(not_null_ptr<ItemInstance> item);
         virtual bool mayPlace(not_null_ptr<ItemInstance> item);
         virtual int getMaxStackSize();
-        virtual not_null_ptr<ItemInstance> onTake(boost::shared_ptr<Player> player,
-                                                   not_null_ptr<ItemInstance> item);
+        virtual not_null_ptr<ItemInstance> onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item);
         virtual bool mayCombine(not_null_ptr<ItemInstance> item);
     };
 

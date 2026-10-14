@@ -51,8 +51,7 @@ EnchantmentMenu::EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* 
     mDataChanged = false;
 }
 
-EnchantmentMenu::EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* level)
-    : AbstractContainerMenu()
+EnchantmentMenu::EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* level) : AbstractContainerMenu()
 {
     EnchantmentMenu(inventory, level, BlockPos::ZERO);
 }
@@ -114,7 +113,8 @@ void EnchantmentMenu::setData(int id, int value)
     }
 }
 
-std::vector<EnchantmentInstance*>* EnchantmentMenu::getEnchantmentList(not_null_ptr<ItemInstance> item, int enchantSlot, int cost)
+std::vector<EnchantmentInstance*>* EnchantmentMenu::getEnchantmentList(not_null_ptr<ItemInstance> item, int enchantSlot,
+                                                                       int cost)
 {
     mRandom.setSeed(mEnchantmentSeed + static_cast<long long>(enchantSlot));
     std::vector<EnchantmentInstance*>* results = EnchantmentHelper::selectEnchantment(&mRandom, item, cost, false);
@@ -143,8 +143,8 @@ void EnchantmentMenu::slotsChanged()
         {
             for (int dx = -1; dx <= 1; ++dx)
             {
-                if ((dz != 0 || dx != 0) && mLevel->isEmptyBlock(mPosition.offset(dx, 0, dz)) &&
-                    mLevel->isEmptyBlock(mPosition.offset(dx, 1, dz)))
+                if ((dz != 0 || dx != 0) && mLevel->isEmptyBlock(mPosition.offset(dx, 0, dz))
+                    && mLevel->isEmptyBlock(mPosition.offset(dx, 1, dz)))
                 {
                     if (mLevel->getBlockState(mPosition.offset(dx * 2, 0, dz * 2))->getBlock() == Blocks::bookshelf)
                         ++bookshelves;
@@ -212,9 +212,9 @@ bool EnchantmentMenu::clickMenuButton(boost::shared_ptr<Player> player, int id)
     if ((lapis->isEmpty() || lapis->getCount() < lapisRequired) && !player->mAbilities.mInstabuild)
         return false;
 
-    if (mCosts[id] > 0 && !item->isEmpty() &&
-        ((player->mExperienceLevel >= lapisRequired && player->mExperienceLevel >= mCosts[id]) ||
-         player->mAbilities.mInstabuild))
+    if (mCosts[id] > 0 && !item->isEmpty()
+        && ((player->mExperienceLevel >= lapisRequired && player->mExperienceLevel >= mCosts[id])
+            || player->mAbilities.mInstabuild))
     {
         if (!mLevel->mIsClientSide)
         {
@@ -296,7 +296,8 @@ bool EnchantmentMenu::stillValid(boost::shared_ptr<Player> player)
 {
     if (mLevel->getBlockState(mPosition)->getBlock() != Blocks::enchanting_table)
         return false;
-    if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
+    if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox)
+        > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
         return false;
     return true;
 }

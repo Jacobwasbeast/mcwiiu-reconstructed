@@ -11,14 +11,10 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
-static std::string s_sliderStates[2][2] =
-{
-    { std::string("Active_Selected"), std::string("Inactive_Selected") },
-    { std::string("Active_Unselected"), std::string("Inactive_Unselected") }
-};
+static std::string s_sliderStates[2][2] = {{std::string("Active_Selected"), std::string("Inactive_Selected")},
+                                           {std::string("Active_Unselected"), std::string("Inactive_Unselected")}};
 
-FJ_Slider::FJ_Slider(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode)
+FJ_Slider::FJ_Slider(fuiRenderNode* renderNode) : FJ_Base(renderNode)
 {
 }
 
@@ -266,8 +262,8 @@ void FJ_Slider::ASConstructor()
     addEventListener(eFJEventType_UpdateLabel, this, _HandleUpdateLabel, false);
 }
 
-void FJ_Slider::Init(const std::wstring& name, int id, int minValue, int maxValue,
-                     int value, bool repeat, int repeatDelay, int repeatStep)
+void FJ_Slider::Init(const std::wstring& name, int id, int minValue, int maxValue, int value, bool repeat,
+                     int repeatDelay, int repeatStep)
 {
     if (!m_maskInitialized)
         InitSliderMask();

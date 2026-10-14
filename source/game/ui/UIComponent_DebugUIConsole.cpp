@@ -2,8 +2,7 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/UILayer.hpp"
 
-UIComponent_DebugUIConsole::UIComponent_DebugUIConsole(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIComponent_DebugUIConsole::UIComponent_DebugUIConsole(int sceneType, void*, UILayer* layer) : UIScene(sceneType, layer)
 {
     initialiseMovie();
     m_updateLabels = false;

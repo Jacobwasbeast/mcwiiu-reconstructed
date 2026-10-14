@@ -33,11 +33,14 @@ void UIControl_SpaceIndicatorBar::setSaveGameOffset(float offset)
 
 void UIControl_SpaceIndicatorBar::selectSave(int index)
 {
-    if (index >= 0 && (unsigned int)index < m_saves.size()) {
+    if (index >= 0 && (unsigned int)index < m_saves.size())
+    {
         std::pair<long long, float> save = m_saves[index];
         setSaveSize(save.first);
         setSaveGameOffset(save.second);
-    } else {
+    }
+    else
+    {
         setSaveSize(0);
         setSaveGameOffset(0.0f);
     }

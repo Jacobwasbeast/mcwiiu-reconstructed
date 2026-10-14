@@ -47,16 +47,16 @@
 extern Renderer* gRenderer;
 
 fuiRenderNodeTimeline::frameAction::frameAction(const frameAction& other)
-    : frame(other.frame), type(other.type), value(other.value)
+    : frame(other.frame),
+      type(other.type),
+      value(other.value)
 {
 }
 
-fuiRenderNodeTimeline::fuiRenderNodeTimeline(fuiRenderNode* stage, fuiRenderNode* parent,
-                                             fuiObject* object, unsigned int symbolIndex,
-                                             unsigned char depth, fuiRGBA* color,
+fuiRenderNodeTimeline::fuiRenderNodeTimeline(fuiRenderNode* stage, fuiRenderNode* parent, fuiObject* object,
+                                             unsigned int symbolIndex, unsigned char depth, fuiRGBA* color,
                                              unsigned char clipDepth, bool visible, fuiFile* file)
-    : fuiRenderNode(stage, parent, object, symbolIndex, eFuiObjectType_Timeline, depth, color,
-                    clipDepth, visible, file)
+    : fuiRenderNode(stage, parent, object, symbolIndex, eFuiObjectType_Timeline, depth, color, clipDepth, visible, file)
 {
     m_flags |= 4;
     m_currentFrame = -1;
@@ -65,8 +65,8 @@ fuiRenderNodeTimeline::fuiRenderNodeTimeline(fuiRenderNode* stage, fuiRenderNode
     if (object != 0)
     {
         fuiTimeline* timeline = static_cast<fuiTimeline*>(object);
-        if (timeline->bounds.xMin != 0.0f || timeline->bounds.xMax != 0.0f ||
-            timeline->bounds.yMin != 0.0f || timeline->bounds.yMax != 0.0f)
+        if (timeline->bounds.xMin != 0.0f || timeline->bounds.xMax != 0.0f || timeline->bounds.yMin != 0.0f
+            || timeline->bounds.yMax != 0.0f)
             m_flags |= 0x20;
     }
 }
@@ -97,8 +97,7 @@ void fuiRenderNodeTimeline::setFrame(unsigned int frame)
     m_previousFrame = std::min(frame - 1, last);
 }
 
-void fuiRenderNodeTimeline::addFrameAction(int frame, eFrameActionType type,
-                                           const std::string& value)
+void fuiRenderNodeTimeline::addFrameAction(int frame, eFrameActionType type, const std::string& value)
 {
     frameAction action;
     action.frame = frame - 1;
@@ -196,18 +195,16 @@ fuiRenderNode* fuiRenderNodeTimeline::createReferencedNode(fuiObject* object, un
             switch (symbol->objectType)
             {
             case eFuiObjectType_Shape:
-                return new fuiRenderNodeShape(m_stage, this, &file->shapeData[symbol->objectIndex],
-                                              depth, renderFlags, color, clipDepth, visible, file);
+                return new fuiRenderNodeShape(m_stage, this, &file->shapeData[symbol->objectIndex], depth, renderFlags,
+                                              color, clipDepth, visible, file);
             case eFuiObjectType_Timeline:
-                return new fuiRenderNodeTimeline(m_stage, this,
-                                                 &file->timelineData[symbol->objectIndex], depth,
+                return new fuiRenderNodeTimeline(m_stage, this, &file->timelineData[symbol->objectIndex], depth,
                                                  renderFlags, color, clipDepth, visible, file);
             case eFuiObjectType_Bitmap:
-                return new fuiRenderNodeBitmap(m_stage, this, &file->bitmaps[symbol->objectIndex],
-                                               depth, renderFlags, color, clipDepth, visible, file);
+                return new fuiRenderNodeBitmap(m_stage, this, &file->bitmaps[symbol->objectIndex], depth, renderFlags,
+                                               color, clipDepth, visible, file);
             case eFuiObjectType_EditText:
-                return new fuiRenderNodeEditText(m_stage, this,
-                                                 &file->editTextData[symbol->objectIndex], depth,
+                return new fuiRenderNodeEditText(m_stage, this, &file->editTextData[symbol->objectIndex], depth,
                                                  renderFlags, color, clipDepth, visible, file);
             default:
                 break;
@@ -232,8 +229,8 @@ void fuiRenderNodeTimeline::handleConstruction()
     FJ_FuiNode* created;
     if (static_cast<int>(m_object->symbolIndex) != -1)
     {
-        created = FJ_Factory::createObject(
-            m_file->symbolData[static_cast<int>(m_object->symbolIndex)].name, this, false, 0);
+        created = FJ_Factory::createObject(m_file->symbolData[static_cast<int>(m_object->symbolIndex)].name, this,
+                                           false, 0);
     }
     else
     {
@@ -504,7 +501,6 @@ void fuiRenderNodeTimeline::handleConstruction()
                 }
             }
         }
-
     }
 }
 
@@ -602,8 +598,7 @@ void fuiRenderNodeTimeline::gather(bool force)
 
         for (; frame <= m_currentFrame; ++frame)
         {
-            fuiTimelineFrame* timelineFrame =
-                m_file->frameData + timeline->timelineFrameIndex + frame;
+            fuiTimelineFrame* timelineFrame = m_file->frameData + timeline->timelineFrameIndex + frame;
             fuiTimelineEvent* event = m_file->eventData + timelineFrame->timelineEventIndex;
             for (unsigned int e = 0; e < timelineFrame->timelineEventCount; ++e, ++event)
             {
@@ -636,8 +631,7 @@ void fuiRenderNodeTimeline::gather(bool force)
                         default:
                             break;
                         }
-                        if (m_removedChildren[r].depth == event->depth &&
-                            m_removedChildren[r].object == object)
+                        if (m_removedChildren[r].depth == event->depth && m_removedChildren[r].object == object)
                             alreadyRemoved = true;
                     }
 
@@ -649,33 +643,28 @@ void fuiRenderNodeTimeline::gather(bool force)
                     switch (event->objectType)
                     {
                     case eFuiObjectType_Shape:
-                        node = new fuiRenderNodeShape(m_stage, this,
-                                                      &m_file->shapeData[event->objectIndex],
-                                                      event->depth, renderFlags, &event->color,
-                                                      event->blendMode, visible, m_file);
+                        node = new fuiRenderNodeShape(m_stage, this, &m_file->shapeData[event->objectIndex],
+                                                      event->depth, renderFlags, &event->color, event->blendMode,
+                                                      visible, m_file);
                         break;
                     case eFuiObjectType_Timeline:
-                        node = new fuiRenderNodeTimeline(m_stage, this,
-                                                         &m_file->timelineData[event->objectIndex],
-                                                         event->depth, renderFlags, &event->color,
-                                                         event->blendMode, visible, m_file);
+                        node = new fuiRenderNodeTimeline(m_stage, this, &m_file->timelineData[event->objectIndex],
+                                                         event->depth, renderFlags, &event->color, event->blendMode,
+                                                         visible, m_file);
                         break;
                     case eFuiObjectType_Bitmap:
-                        node = new fuiRenderNodeBitmap(m_stage, this,
-                                                       &m_file->bitmaps[event->objectIndex],
-                                                       event->depth, renderFlags, &event->color,
-                                                       event->blendMode, visible, m_file);
+                        node = new fuiRenderNodeBitmap(m_stage, this, &m_file->bitmaps[event->objectIndex],
+                                                       event->depth, renderFlags, &event->color, event->blendMode,
+                                                       visible, m_file);
                         break;
                     case eFuiObjectType_Reference:
-                        node = createReferencedNode(&m_file->referenceData[event->objectIndex],
-                                                    event->depth, renderFlags, &event->color,
-                                                    event->blendMode, visible);
+                        node = createReferencedNode(&m_file->referenceData[event->objectIndex], event->depth,
+                                                    renderFlags, &event->color, event->blendMode, visible);
                         break;
                     case eFuiObjectType_EditText:
-                        node = new fuiRenderNodeEditText(m_stage, this,
-                                                         &m_file->editTextData[event->objectIndex],
-                                                         event->depth, renderFlags, &event->color,
-                                                         event->blendMode, visible, m_file);
+                        node = new fuiRenderNodeEditText(m_stage, this, &m_file->editTextData[event->objectIndex],
+                                                         event->depth, renderFlags, &event->color, event->blendMode,
+                                                         visible, m_file);
                         break;
                     default:
                         continue;
@@ -689,8 +678,7 @@ void fuiRenderNodeTimeline::gather(bool force)
                         }
                         else
                         {
-                            const char* eventNames =
-                                reinterpret_cast<const char*>(m_file->eventNameData);
+                            const char* eventNames = reinterpret_cast<const char*>(m_file->eventNameData);
                             std::strncpy(node->m_name, eventNames + event->nameIndex * 0x40, 0x40);
                         }
                         node->m_frame = event->clipDepth;
@@ -754,8 +742,7 @@ void fuiRenderNodeTimeline::gather(bool force)
         depthSort();
 
         if (force && (m_flags & 4) != 0)
-            m_previousFrame = (m_currentFrame + 1) %
-                static_cast<int>(timeline->timelineFrameCount);
+            m_previousFrame = (m_currentFrame + 1) % static_cast<int>(timeline->timelineFrameCount);
 
         if (!removed.empty())
         {
@@ -854,7 +841,8 @@ void fuiRenderNodeTimeline::gather(bool force)
 
 void fuiRenderNodeTimeline::preRender()
 {
-    if (!isVisible()) return;
+    if (!isVisible())
+        return;
     for (unsigned int i = 0; i < m_children.size(); ++i)
         m_children[i]->preRender();
 }

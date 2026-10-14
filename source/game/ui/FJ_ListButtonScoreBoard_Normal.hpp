@@ -13,7 +13,6 @@ public:
     explicit FJ_ListButtonScoreBoard_Normal(fuiRenderNode* renderNode);
     static FJ_ListButtonScoreBoard* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
-
 };
 
 #endif

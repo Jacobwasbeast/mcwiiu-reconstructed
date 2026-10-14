@@ -43,13 +43,18 @@ struct InventoryMenuSceneData
 
 UIScene_InventoryMenu::UIScene_InventoryMenu(int pad, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(pad, layer),
-      m_armorList(), m_craftingList(), m_resultList(), m_shieldList(), m_playerControl(), m_craftingLabel()
+      m_armorList(),
+      m_craftingList(),
+      m_resultList(),
+      m_shieldList(),
+      m_playerControl(),
+      m_craftingLabel()
 {
     InventoryMenuSceneData* sceneData = static_cast<InventoryMenuSceneData*>(data);
     initialiseMovie();
     m_effectDurations = new int[static_cast<int>(MobEffect::GetEffectCount()) + 1];
-    m_classicCrafting = GameSettings::GetGameSettings(pad, eGameSetting_ClassicCrafting) != 0 &&
-        gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0;
+    m_classicCrafting = GameSettings::GetGameSettings(pad, eGameSetting_ClassicCrafting) != 0
+                        && gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0;
     SetClassicCrafting(m_classicCrafting);
 
     if (Minecraft::GetInstance()->mGameModes[sceneData->player] != 0)
@@ -66,13 +71,16 @@ UIScene_InventoryMenu::UIScene_InventoryMenu(int pad, void* data, UILayer* layer
     sceneData->localPlayer->awardStat(GenericStats::openInventory(), GenericStats::param_openInventory());
     Initialize(false, sceneData->player, menu, false, InventoryMenu::INV_SLOT_START,
                IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar,
-               m_classicCrafting ? IUIScene_AbstractContainerMenu::ESceneSection_InventoryMax : IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting,
+               m_classicCrafting ? IUIScene_AbstractContainerMenu::ESceneSection_InventoryMax
+                                 : IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting,
                sceneData->creative);
-    m_armorList.addSlots(InventoryMenu::ARMOR_SLOT_START, InventoryMenu::ARMOR_SLOT_END - InventoryMenu::ARMOR_SLOT_START);
+    m_armorList.addSlots(InventoryMenu::ARMOR_SLOT_START,
+                         InventoryMenu::ARMOR_SLOT_END - InventoryMenu::ARMOR_SLOT_START);
     m_shieldList.addSlots(InventoryMenu::USE_ROW_SLOT_END, 1);
     if (m_classicCrafting)
     {
-        m_craftingList.addSlots(InventoryMenu::CRAFT_SLOT_START, InventoryMenu::CRAFT_SLOT_END - InventoryMenu::CRAFT_SLOT_START);
+        m_craftingList.addSlots(InventoryMenu::CRAFT_SLOT_START,
+                                InventoryMenu::CRAFT_SLOT_END - InventoryMenu::CRAFT_SLOT_START);
         m_resultList.addSlots(InventoryMenu::RESULT_SLOT, 1);
         m_craftingLabel.setLabel(UIString(IDS_CONTROLS_CRAFTING), false, false);
     }
@@ -143,7 +151,9 @@ int UIScene_InventoryMenu::getSectionRows(IUIScene_AbstractContainerMenu::EScene
     return rows;
 }
 
-unsigned int UIScene_InventoryMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section, IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
+unsigned int UIScene_InventoryMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                                 IUIScene_AbstractContainerMenu::ETapState state,
+                                                                 int* x, int* y)
 {
     typedef IUIScene_AbstractContainerMenu::ESceneSection ESceneSection;
     const ESceneSection hotbar = ESceneSection_InventoryHotbar;
@@ -171,8 +181,8 @@ unsigned int UIScene_InventoryMenu::GetSectionAndSlotInDirection(IUIScene_Abstra
             target = m_classicCrafting ? crafting : hotbar;
             xOffset = m_classicCrafting ? -5 : -8;
         }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
-                 state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left
+                 || state == IUIScene_AbstractContainerMenu::ETapState_Right)
         {
             target = armor;
             yOffset = 3;
@@ -292,7 +302,8 @@ unsigned int UIScene_InventoryMenu::GetSectionAndSlotInDirection(IUIScene_Abstra
     return static_cast<unsigned int>(target);
 }
 
-void UIScene_InventoryMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
+void UIScene_InventoryMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                 _UIVec2D* position)
 {
     switch (section)
     {
@@ -331,7 +342,8 @@ void UIScene_InventoryMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu:
     }
 }
 
-void UIScene_InventoryMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int itemIndex, _UIVec2D* position, _UIVec2D* size)
+void UIScene_InventoryMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int itemIndex,
+                                              _UIVec2D* position, _UIVec2D* size)
 {
     _UIVec2D sectionSize;
     switch (section)
@@ -404,7 +416,8 @@ int UIScene_InventoryMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu:
     }
 }
 
-void UIScene_InventoryMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
+void UIScene_InventoryMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                                   int direction, bool wrap)
 {
     int index = slot + direction * getSectionColumns(section);
     UIControl_SlotList* list = NULL;
@@ -504,7 +517,8 @@ void UIScene_InventoryMenu::updateEffectsDisplay()
             if (type->hasIcon())
                 icon = type->getIcon();
             int seconds = effect->getDuration() / 20;
-            static_cast<FJ_InventoryMenu*>(m_movie->getRootNode()->getFuiNode())->AddEffect(icon, effectString, seconds);
+            static_cast<FJ_InventoryMenu*>(m_movie->getRootNode()->getFuiNode())
+                ->AddEffect(icon, effectString, seconds);
         }
         if (effect->getEffect()->hasIcon())
         {
@@ -567,14 +581,17 @@ void UIScene_InventoryMenu::handleReload()
 {
     SetClassicCrafting(m_classicCrafting);
     Initialize(true, m_playerId, m_menu, false, InventoryMenu::INV_SLOT_START,
-        IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar,
-        m_classicCrafting ? IUIScene_AbstractContainerMenu::ESceneSection_InventoryMax : IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting,
-        m_navigateBack);
-    m_armorList.addSlots(InventoryMenu::ARMOR_SLOT_START, InventoryMenu::ARMOR_SLOT_END - InventoryMenu::ARMOR_SLOT_START);
+               IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar,
+               m_classicCrafting ? IUIScene_AbstractContainerMenu::ESceneSection_InventoryMax
+                                 : IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting,
+               m_navigateBack);
+    m_armorList.addSlots(InventoryMenu::ARMOR_SLOT_START,
+                         InventoryMenu::ARMOR_SLOT_END - InventoryMenu::ARMOR_SLOT_START);
     m_shieldList.addSlots(InventoryMenu::USE_ROW_SLOT_END, 1);
     if (m_classicCrafting)
     {
-        m_craftingList.addSlots(InventoryMenu::CRAFT_SLOT_START, InventoryMenu::CRAFT_SLOT_END - InventoryMenu::CRAFT_SLOT_START);
+        m_craftingList.addSlots(InventoryMenu::CRAFT_SLOT_START,
+                                InventoryMenu::CRAFT_SLOT_END - InventoryMenu::CRAFT_SLOT_START);
         m_resultList.addSlots(InventoryMenu::RESULT_SLOT, 1);
     }
     for (int i = 0; i < static_cast<int>(MobEffect::GetEffectCount()) + 1; ++i)
@@ -637,13 +654,15 @@ void UIScene_InventoryMenu::customDraw(const char* name, fuiRect* rect)
     {
         item = m_menu->getSlot(slotId)->getItem();
         bool empty = item->isEmpty();
-        static_cast<FJ_InventoryMenu*>(m_movie->getRootNode()->getFuiNode())->ShowArmorSlot(slotId - InventoryMenu::ARMOR_SLOT_START, empty);
+        static_cast<FJ_InventoryMenu*>(m_movie->getRootNode()->getFuiNode())
+            ->ShowArmorSlot(slotId - InventoryMenu::ARMOR_SLOT_START, empty);
     }
 }
 
 void UIScene_InventoryMenu::handleTimerComplete(int timerId)
 {
-    if (timerId == 10) updateEffectsDisplay();
+    if (timerId == 10)
+        updateEffectsDisplay();
 }
 
 int UIScene_InventoryMenu::getSceneType()

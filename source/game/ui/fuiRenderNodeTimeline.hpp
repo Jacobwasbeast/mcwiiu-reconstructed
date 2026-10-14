@@ -48,9 +48,8 @@ private:
     int getFrame(const char* name);
     void handleFrameTransition(int frame);
     fuiObject* getReferencedObject(fuiObject* object);
-    fuiRenderNode* createReferencedNode(fuiObject* object, unsigned int depth,
-                                        unsigned char renderFlags, fuiRGBA* color,
-                                        unsigned char clipDepth, bool visible);
+    fuiRenderNode* createReferencedNode(fuiObject* object, unsigned int depth, unsigned char renderFlags,
+                                        fuiRGBA* color, unsigned char clipDepth, bool visible);
     static bool depthComparison(const fuiRenderNode* first, const fuiRenderNode* second);
     void depthSort();
     void expandBoundsFromChild(fuiRect& bounds);
@@ -58,9 +57,8 @@ private:
     void updateBoundsTree();
 
 public:
-    fuiRenderNodeTimeline(fuiRenderNode* stage, fuiRenderNode* parent, fuiObject* object,
-                          unsigned int symbolIndex, unsigned char depth, fuiRGBA* color,
-                          unsigned char clipDepth, bool visible, fuiFile* file);
+    fuiRenderNodeTimeline(fuiRenderNode* stage, fuiRenderNode* parent, fuiObject* object, unsigned int symbolIndex,
+                          unsigned char depth, fuiRGBA* color, unsigned char clipDepth, bool visible, fuiFile* file);
     virtual ~fuiRenderNodeTimeline();
     void setPlaying(bool playing);
     void setFrame(unsigned int frame);

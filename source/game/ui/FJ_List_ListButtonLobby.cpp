@@ -4,8 +4,7 @@
 #include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_ListButtonLobby.hpp"
 
-FJ_List_ListButtonLobby::FJ_List_ListButtonLobby(fuiRenderNode* renderNode)
-    : FJ_List(renderNode)
+FJ_List_ListButtonLobby::FJ_List_ListButtonLobby(fuiRenderNode* renderNode) : FJ_List(renderNode)
 {
 }
 
@@ -19,12 +18,10 @@ uint32_t FJ_List_ListButtonLobby::getType()
     return 0x8039;
 }
 
-void FJ_List_ListButtonLobby::addNewItem(const std::wstring& label, int id, bool showTick,
-    int playerIcon, int voipIcon)
+void FJ_List_ListButtonLobby::addNewItem(const std::wstring& label, int id, bool showTick, int playerIcon, int voipIcon)
 {
-    const char* objectName = m_checkboxTick
-        ? "fourj.Buttons.FJ_ListButtonLobby_Small"
-        : "fourj.Buttons.FJ_ListButtonLobby_Normal";
+    const char* objectName = m_checkboxTick ? "fourj.Buttons.FJ_ListButtonLobby_Small"
+                                            : "fourj.Buttons.FJ_ListButtonLobby_Normal";
     FJ_ListButtonLobby* item = static_cast<FJ_ListButtonLobby*>(
         FJ_Factory::createObject(objectName, m_pRenderNode, true, NULL));
     addNewListItem(item, label, id);
@@ -33,4 +30,3 @@ void FJ_List_ListButtonLobby::addNewItem(const std::wstring& label, int id, bool
     item->SetPlayerIcon(playerIcon);
     item->SetVOIPIcon(voipIcon);
 }
-

@@ -90,8 +90,8 @@ void InventoryMenu::slotsChanged()
 {
     MemSect(0x17);
 
-    not_null_ptr<ItemInstance> resultItem =
-        Recipes::getInstance()->getItemFor(mCraftSlots, mPlayer->mLevel, NULL, Recipes::eRecipeCategory_Crafting);
+    not_null_ptr<ItemInstance> resultItem = Recipes::getInstance()->getItemFor(mCraftSlots, mPlayer->mLevel, NULL,
+                                                                               Recipes::eRecipeCategory_Crafting);
 
     int craftColor = -1;
     int dyeColor = -1;
@@ -157,8 +157,8 @@ not_null_ptr<ItemInstance> InventoryMenu::quickMoveStack(boost::shared_ptr<Playe
         result = item->copy();
         const EquipmentSlot* equipmentSlot = Mob::getEquipmentSlotForItem(result);
 
-        bool smallInventory = Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-                              Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled();
+        bool smallInventory = Minecraft::InMiniGame(eMiniGameId_Any, true)
+                              && Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled();
 
         if (index == RESULT_SLOT)
         {
@@ -184,11 +184,10 @@ not_null_ptr<ItemInstance> InventoryMenu::quickMoveStack(boost::shared_ptr<Playe
                 return ItemInstance::EMPTY;
             }
         }
-        else if (equipmentSlot->getType() == EquipmentSlot::ARMOR &&
-                 !m_slots.at(8 - equipmentSlot->getIndex())->hasItem())
+        else if (equipmentSlot->getType() == EquipmentSlot::ARMOR
+                 && !m_slots.at(8 - equipmentSlot->getIndex())->hasItem())
         {
-            if (!moveItemStackTo(item, 8 - equipmentSlot->getIndex(), 9 - equipmentSlot->getIndex(), false, true,
-                                 true))
+            if (!moveItemStackTo(item, 8 - equipmentSlot->getIndex(), 9 - equipmentSlot->getIndex(), false, true, true))
             {
                 return ItemInstance::EMPTY;
             }
@@ -209,24 +208,21 @@ not_null_ptr<ItemInstance> InventoryMenu::quickMoveStack(boost::shared_ptr<Playe
                     return ItemInstance::EMPTY;
                 }
             }
-            else if (ArmorRecipes::GetArmorType(item->getItem()) == 2 &&
-                     !chestSlot->hasItem())
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 2 && !chestSlot->hasItem())
             {
                 if (!moveItemStackTo(item, ARMOR_SLOT_START + 1, ARMOR_SLOT_START + 2, false, true, true))
                 {
                     return ItemInstance::EMPTY;
                 }
             }
-            else if (ArmorRecipes::GetArmorType(item->getItem()) == 3 &&
-                     !legsSlot->hasItem())
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 3 && !legsSlot->hasItem())
             {
                 if (!moveItemStackTo(item, ARMOR_SLOT_START + 2, ARMOR_SLOT_START + 3, false, true, true))
                 {
                     return ItemInstance::EMPTY;
                 }
             }
-            else if (ArmorRecipes::GetArmorType(item->getItem()) == 4 &&
-                     !feetSlot->hasItem())
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 4 && !feetSlot->hasItem())
             {
                 if (!moveItemStackTo(item, ARMOR_SLOT_START + 3, ARMOR_SLOT_END, false, true, true))
                 {
@@ -247,24 +243,21 @@ not_null_ptr<ItemInstance> InventoryMenu::quickMoveStack(boost::shared_ptr<Playe
                     return ItemInstance::EMPTY;
                 }
             }
-            else if (ArmorRecipes::GetArmorType(item->getItem()) == 2 &&
-                     !chestSlot->hasItem())
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 2 && !chestSlot->hasItem())
             {
                 if (!moveItemStackTo(item, ARMOR_SLOT_START + 1, ARMOR_SLOT_START + 2, false, true, true))
                 {
                     return ItemInstance::EMPTY;
                 }
             }
-            else if (ArmorRecipes::GetArmorType(item->getItem()) == 3 &&
-                     !legsSlot->hasItem())
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 3 && !legsSlot->hasItem())
             {
                 if (!moveItemStackTo(item, ARMOR_SLOT_START + 2, ARMOR_SLOT_START + 3, false, true, true))
                 {
                     return ItemInstance::EMPTY;
                 }
             }
-            else if (ArmorRecipes::GetArmorType(item->getItem()) == 4 &&
-                     !feetSlot->hasItem())
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 4 && !feetSlot->hasItem())
             {
                 if (!moveItemStackTo(item, ARMOR_SLOT_START + 3, ARMOR_SLOT_END, false, true, true))
                 {
@@ -277,8 +270,8 @@ not_null_ptr<ItemInstance> InventoryMenu::quickMoveStack(boost::shared_ptr<Playe
                 return ItemInstance::EMPTY;
             }
         }
-        else if (!moveItemStackTo(item, smallInventory ? USE_ROW_SLOT_START : INV_SLOT_START, USE_ROW_SLOT_END,
-                                  false, true, true))
+        else if (!moveItemStackTo(item, smallInventory ? USE_ROW_SLOT_START : INV_SLOT_START, USE_ROW_SLOT_END, false,
+                                  true, true))
         {
             return ItemInstance::EMPTY;
         }
@@ -324,13 +317,13 @@ not_null_ptr<ItemInstance> InventoryMenu::clicked(int slot, int button, ClickTyp
 {
     not_null_ptr<ItemInstance> result = AbstractContainerMenu::clicked(slot, button, type, player);
 
-    static Item* ironArmor[4] = { Items::ironHelmet, Items::ironChestplate, Items::ironLeggings, Items::ironBoots };
+    static Item* ironArmor[4] = {Items::ironHelmet, Items::ironChestplate, Items::ironLeggings, Items::ironBoots};
 
     for (int armorSlot = 5; armorSlot < 9; ++armorSlot)
     {
         Slot* armorSlotObj = m_slots.at(armorSlot);
-        if (armorSlotObj == NULL || !armorSlotObj->hasItem() ||
-            armorSlotObj->getItem()->getItem() != ironArmor[armorSlot - 5])
+        if (armorSlotObj == NULL || !armorSlotObj->hasItem()
+            || armorSlotObj->getItem()->getItem() != ironArmor[armorSlot - 5])
         {
             return result;
         }

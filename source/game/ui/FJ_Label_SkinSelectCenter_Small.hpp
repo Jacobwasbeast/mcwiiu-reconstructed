@@ -8,10 +8,7 @@ class fuiRenderNode;
 class FJ_Label_SkinSelectCenter_Small : public FJ_Label
 {
 public:
-    FJ_Label_SkinSelectCenter_Small(fuiRenderNode* pRenderNode)
-        : FJ_Label(pRenderNode)
-    {
-    }
+    FJ_Label_SkinSelectCenter_Small(fuiRenderNode* pRenderNode) : FJ_Label(pRenderNode) {}
 
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

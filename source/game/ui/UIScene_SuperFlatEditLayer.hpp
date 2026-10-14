@@ -72,13 +72,12 @@ public:
     virtual void handleReload();
     void exit(EExit result);
     ESnap getSnap(int action) const;
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handlePress(int controlId, int childId);
     virtual void handleSliderMove(int id, int value);
     virtual void customDraw(const char* name, fuiRect* rect);
-    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
-                                  bool pressed, bool repeat, bool released);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                  bool repeat, bool released);
     virtual UIControl* GetMainPanel();
     virtual void SetFocusToElement(int focus);
     virtual std::wstring getMoviePath() { return L"SuperFlatEditLayerMenu"; }

@@ -87,8 +87,7 @@ public:
     class ItemPickerMenu : public AbstractContainerMenu
     {
     public:
-        ItemPickerMenu(boost::shared_ptr<SimpleContainer> container,
-                       boost::shared_ptr<Inventory> inventory);
+        ItemPickerMenu(boost::shared_ptr<SimpleContainer> container, boost::shared_ptr<Inventory> inventory);
         virtual bool stillValid(boost::shared_ptr<Player> player);
         virtual bool isOverrideResultClick(int slot, int button);
         virtual bool doQuickMoveLoop();
@@ -103,33 +102,28 @@ public:
 
     virtual int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                      _UIVec2D* position);
-    virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-                                   _UIVec2D* position, _UIVec2D* size);
+    virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position);
+    virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, _UIVec2D* position,
+                                   _UIVec2D* size);
     virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                        int slot, int direction, bool wrap);
-    virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section,
-                                    int slot, bool pressed);
+    virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction,
+                                        bool wrap);
+    virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                    bool pressed);
     virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                       IUIScene_AbstractContainerMenu::ETapState state,
-                                                       int* x, int* y);
+                                                      IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y);
     virtual unsigned int handleValidKeyPress(int key, int value, int player);
     virtual void handleOutsideClicked(int x, int y, int button);
     virtual void handleAdditionalKeyPress(int key);
-    virtual void handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                       int slot, int button);
+    virtual void handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int button);
     virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int CanHaveFocus(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                          not_null_ptr<ItemInstance> slotItem, bool carriedIsItem,
-                                          bool slotIsItem, bool carriedSameAsSlot, int slotSpace,
-                                          EToolTipItem& toolTip0, EToolTipItem& toolTip2,
-                                          EToolTipItem& toolTip3, EToolTipItem& toolTip5,
-                                          EToolTipItem& toolTip10, EToolTipItem& toolTip6,
-                                          EToolTipItem& toolTip7);
+                                          not_null_ptr<ItemInstance> slotItem, bool carriedIsItem, bool slotIsItem,
+                                          bool carriedSameAsSlot, int slotSpace, EToolTipItem& toolTip0,
+                                          EToolTipItem& toolTip2, EToolTipItem& toolTip3, EToolTipItem& toolTip5,
+                                          EToolTipItem& toolTip10, EToolTipItem& toolTip6, EToolTipItem& toolTip7);
     void updateTabHighlightAndText(ECreativeInventoryTabs tab);
     void updateScrollCurrentPage(int page, int pageCount);
     void switchTab(ECreativeInventoryTabs tab);
@@ -140,8 +134,7 @@ public:
     virtual std::wstring getMoviePath();
     virtual void handleReload();
     virtual UIControl* getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
                                   bool repeat, bool released);
     virtual UIControl* GetMainPanel();
@@ -167,7 +160,6 @@ private:
 
 public:
     static std::vector<const ItemBuilder*> s_groupItems[ECreative_Inventory_Groups_Count];
-
 };
 
 #endif

@@ -3,8 +3,7 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_MapSelectMenu::FJ_MapSelectMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_MapSelectMenu::FJ_MapSelectMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

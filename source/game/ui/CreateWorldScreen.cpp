@@ -11,11 +11,11 @@
 #include "game/util/Random.hpp"
 #include "game/core/StringUtils.hpp"
 
-template<typename T>
+template <typename T>
 T _fromString(const std::wstring& value);
 
 extern const wchar_t illegalFileCharacters[15] = {L'/', L'\n', L'\r', L'\t', L'\0', L'\f', L'`', L'?',
-                                                   L'*', L'\\', L'<', L'>', L'|', L'\"', L':'};
+                                                  L'*', L'\\', L'<',  L'>',  L'|',  L'\"', L':'};
 
 CreateWorldScreen::CreateWorldScreen(Screen* parentScreen)
 {
@@ -34,8 +34,7 @@ void CreateWorldScreen::tick()
     }
 }
 
-std::wstring CreateWorldScreen::findAvailableFolderName(LevelStorageSource* levelSource,
-                                                          const std::wstring& folderName)
+std::wstring CreateWorldScreen::findAvailableFolderName(LevelStorageSource* levelSource, const std::wstring& folderName)
 {
     static_cast<void>(levelSource);
     std::wstring name = folderName;
@@ -66,13 +65,10 @@ void CreateWorldScreen::init()
 {
     Language* language = Language::getInstance();
     mButtons.clear();
-    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 108,
-                                  language->getElement(L"selectWorld.create")));
-    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 132,
-                                  language->getElement(L"gui.cancel")));
+    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 108, language->getElement(L"selectWorld.create")));
+    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 132, language->getElement(L"gui.cancel")));
 
-    mNameEdit = new EditBox(this, mFont, mWidth / 2 - 100, 60, 200, 20,
-                            language->getElement(L"testWorld"));
+    mNameEdit = new EditBox(this, mFont, mWidth / 2 - 100, 60, 200, 20, language->getElement(L"testWorld"));
     mNameEdit->mFocused = true;
     mNameEdit->setMaxLength(32);
     mSeedEdit = new EditBox(this, mFont, mWidth / 2 - 100, 116, 200, 20, L"");
@@ -139,16 +135,12 @@ void CreateWorldScreen::render(int x, int y, float partialTick)
 {
     Language* language = Language::getInstance();
     renderBackground();
-    drawCenteredString(mFont, language->getElement(L"selectWorld.create"), mWidth / 2,
-                       mHeight / 4 - 40, 0xffffff);
-    drawString(mFont, language->getElement(L"selectWorld.enterName"), mWidth / 2 - 100,
-               47, 0xa0a0a0);
-    drawString(mFont, language->getElement(L"selectWorld.resultFolder") + L" " + mResultFolder,
-               mWidth / 2 - 100, 85, 0xa0a0a0);
-    drawString(mFont, language->getElement(L"selectWorld.enterSeed"), mWidth / 2 - 100,
-               104, 0xa0a0a0);
-    drawString(mFont, language->getElement(L"selectWorld.seedInfo"), mWidth / 2 - 100,
-               140, 0xa0a0a0);
+    drawCenteredString(mFont, language->getElement(L"selectWorld.create"), mWidth / 2, mHeight / 4 - 40, 0xffffff);
+    drawString(mFont, language->getElement(L"selectWorld.enterName"), mWidth / 2 - 100, 47, 0xa0a0a0);
+    drawString(mFont, language->getElement(L"selectWorld.resultFolder") + L" " + mResultFolder, mWidth / 2 - 100, 85,
+               0xa0a0a0);
+    drawString(mFont, language->getElement(L"selectWorld.enterSeed"), mWidth / 2 - 100, 104, 0xa0a0a0);
+    drawString(mFont, language->getElement(L"selectWorld.seedInfo"), mWidth / 2 - 100, 140, 0xa0a0a0);
     mNameEdit->render();
     mSeedEdit->render();
     Screen::render(x, y, partialTick);

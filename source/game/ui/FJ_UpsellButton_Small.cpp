@@ -1,7 +1,6 @@
 #include "game/ui/FJ_UpsellButton_Small.hpp"
 
-FJ_UpsellButton_Small::FJ_UpsellButton_Small(fuiRenderNode* renderNode)
-    : FJ_UpsellButton(renderNode)
+FJ_UpsellButton_Small::FJ_UpsellButton_Small(fuiRenderNode* renderNode) : FJ_UpsellButton(renderNode)
 {
 }
 

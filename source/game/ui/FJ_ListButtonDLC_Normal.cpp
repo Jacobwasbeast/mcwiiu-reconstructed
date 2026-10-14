@@ -1,7 +1,6 @@
 #include "game/ui/FJ_ListButtonDLC_Normal.hpp"
 
-FJ_ListButtonDLC_Normal::FJ_ListButtonDLC_Normal(fuiRenderNode* renderNode)
-    : FJ_ListButtonDLC(renderNode)
+FJ_ListButtonDLC_Normal::FJ_ListButtonDLC_Normal(fuiRenderNode* renderNode) : FJ_ListButtonDLC(renderNode)
 {
 }
 

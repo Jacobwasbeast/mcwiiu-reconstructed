@@ -25,9 +25,15 @@ struct UIScene_BrewingStandMenuData
 };
 
 UIScene_BrewingStandMenu::UIScene_BrewingStandMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_container(),
-      m_bottleSlots(), m_ingredientSlot(), m_brewingPlate(), m_brewingStandLabel(),
-      m_brewingArrow(), m_brewingBubbles(), m_brewingPlateBar()
+    : UIScene_AbstractContainerMenu(type, layer),
+      m_container(),
+      m_bottleSlots(),
+      m_ingredientSlot(),
+      m_brewingPlate(),
+      m_brewingStandLabel(),
+      m_brewingArrow(),
+      m_brewingBubbles(),
+      m_brewingPlateBar()
 {
     UIScene_BrewingStandMenuData* sceneData = static_cast<UIScene_BrewingStandMenuData*>(data);
     initialiseMovie();
@@ -53,8 +59,8 @@ UIScene_BrewingStandMenu::UIScene_BrewingStandMenu(int type, void* data, UILayer
 
     BrewingStandMenu* menu = new BrewingStandMenu(sceneData->inventory, sceneData->container);
     Initialize(false, sceneData->playerIndex, menu, true, 5,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingMax, false);
+               IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_BrewingMax, false);
     m_ingredientSlot.addSlots(3, 1);
     m_brewingPlate.addSlots(4, 1);
     for (int i = 0; i < 3; ++i)
@@ -68,8 +74,7 @@ UIScene_BrewingStandMenu::~UIScene_BrewingStandMenu()
 {
 }
 
-int UIScene_BrewingStandMenu::getSectionColumns(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_BrewingStandMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int columns = 0;
     switch (section)
@@ -101,8 +106,7 @@ int UIScene_BrewingStandMenu::getSectionColumns(
     return columns;
 }
 
-int UIScene_BrewingStandMenu::getSectionRows(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_BrewingStandMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int rows = 0;
     switch (section)
@@ -125,8 +129,8 @@ int UIScene_BrewingStandMenu::getSectionRows(
 }
 
 unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
-    IUIScene_AbstractContainerMenu::ESceneSection section,
-    IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
+    IUIScene_AbstractContainerMenu::ESceneSection section, IUIScene_AbstractContainerMenu::ETapState state, int* x,
+    int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection target = section;
     int dx = 0;
@@ -137,8 +141,8 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar :
-                                        IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
+            target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar
+                                      : IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
             dx = -3;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
@@ -151,8 +155,8 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar :
-                                        IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
+            target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar
+                                      : IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
             dx = -4;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
@@ -165,8 +169,8 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar :
-                                        IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
+            target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar
+                                      : IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
             dx = -5;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
@@ -182,8 +186,8 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle2;
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
-                 state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left
+                 || state == IUIScene_AbstractContainerMenu::ETapState_Right)
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel:
@@ -191,8 +195,8 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory;
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
-                 state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left
+                 || state == IUIScene_AbstractContainerMenu::ETapState_Right)
             target = IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory:
@@ -242,8 +246,8 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
     return target;
 }
 
-void UIScene_BrewingStandMenu::GetPositionOfSection(
-    IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
+void UIScene_BrewingStandMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                    _UIVec2D* position)
 {
     switch (section)
     {
@@ -280,9 +284,8 @@ void UIScene_BrewingStandMenu::GetPositionOfSection(
     }
 }
 
-void UIScene_BrewingStandMenu::GetItemScreenData(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-    _UIVec2D* position, _UIVec2D* size)
+void UIScene_BrewingStandMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                                 _UIVec2D* position, _UIVec2D* size)
 {
     _UIVec2D controlSize;
     switch (section)
@@ -328,34 +331,47 @@ void UIScene_BrewingStandMenu::GetItemScreenData(
     position->y = static_cast<float>(row) * size->y;
 }
 
-void UIScene_BrewingStandMenu::handleSectionClick(
-    IUIScene_AbstractContainerMenu::ESceneSection)
+void UIScene_BrewingStandMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection)
 {
 }
 
-void UIScene_BrewingStandMenu::setSectionSelectedSlot(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
+void UIScene_BrewingStandMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                                      int direction, bool wrap)
 {
     const int columns = getSectionColumns(section);
     const int highlightSlot = direction * columns + slot;
     UIControl_SlotList* list = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1: list = &m_bottleSlots[0]; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle2: list = &m_bottleSlots[1]; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle3: list = &m_bottleSlots[2]; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient: list = &m_ingredientSlot; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel: list = &m_brewingPlate; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory: list = &m_inventoryList; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar: list = &m_hotbarList; break;
-    default: break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1:
+        list = &m_bottleSlots[0];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle2:
+        list = &m_bottleSlots[1];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle3:
+        list = &m_bottleSlots[2];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient:
+        list = &m_ingredientSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel:
+        list = &m_brewingPlate;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory:
+        list = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar:
+        list = &m_hotbarList;
+        break;
+    default:
+        break;
     }
     if (wrap)
         list->setHighlightSlot(highlightSlot);
 }
 
-int UIScene_BrewingStandMenu::getSectionStartOffset(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_BrewingStandMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int offset = 0;
     switch (section)
@@ -437,15 +453,13 @@ unsigned int UIScene_BrewingStandMenu::mapElementsAndNames()
 
 std::wstring UIScene_BrewingStandMenu::getMoviePath()
 {
-    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"BrewingStandMenuSplit") :
-        std::wstring(L"BrewingStandMenu");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"BrewingStandMenuSplit") : std::wstring(L"BrewingStandMenu");
 }
 
 void UIScene_BrewingStandMenu::handleReload()
 {
-    Initialize(true, m_playerId, m_menu, true, 5,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_BrewingMax, false);
+    Initialize(true, m_playerId, m_menu, true, 5, IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_BrewingMax, false);
     m_ingredientSlot.addSlots(3, 1);
     m_brewingPlate.addSlots(4, 1);
     for (int i = 0; i < 3; ++i)
@@ -487,20 +501,34 @@ void UIScene_BrewingStandMenu::tick()
     UIScene_AbstractContainerMenu::tick();
 }
 
-UIControl* UIScene_BrewingStandMenu::getSection(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+UIControl* UIScene_BrewingStandMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     UIControl* control = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1: control = &m_bottleSlots[0]; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle2: control = &m_bottleSlots[1]; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle3: control = &m_bottleSlots[2]; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient: control = &m_ingredientSlot; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel: control = &m_brewingPlate; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory: control = &m_inventoryList; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar: control = &m_hotbarList; break;
-    default: break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1:
+        control = &m_bottleSlots[0];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle2:
+        control = &m_bottleSlots[1];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle3:
+        control = &m_bottleSlots[2];
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient:
+        control = &m_ingredientSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel:
+        control = &m_brewingPlate;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory:
+        control = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar:
+        control = &m_hotbarList;
+        break;
+    default:
+        break;
     }
     return control;
 }

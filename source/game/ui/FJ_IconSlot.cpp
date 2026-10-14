@@ -9,8 +9,7 @@
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 #include "game/util/Math.hpp"
 
-FJ_IconSlot::FJ_IconSlot(fuiRenderNode* pRenderNode)
-    : FJ_Base(pRenderNode)
+FJ_IconSlot::FJ_IconSlot(fuiRenderNode* pRenderNode) : FJ_Base(pRenderNode)
 {
 }
 
@@ -42,7 +41,8 @@ void FJ_IconSlot::SetParams(int iWidth, bool bUseSmallText)
     if (bUseSmallText)
     {
         removeChild(getChildByName("FJ_TextContainer"), true);
-        FJ_FuiNode* smallText = FJ_FuiNode::asMovieClip(getChildByName("SmallTextContainer"))->getChildAt(0)->asMovieClip();
+        FJ_FuiNode* smallText =
+            FJ_FuiNode::asMovieClip(getChildByName("SmallTextContainer"))->getChildAt(0)->asMovieClip();
         addChild(smallText);
         removeChild(getChildByName("SmallTextContainer"), true);
     }
@@ -87,8 +87,7 @@ void FJ_IconSlot::SetSlotID(const std::string& slotName, int iSlotId)
 
         char name[64];
         std::sprintf(name, "iggy_slot_%s_%d", slotName.c_str(), iSlotId);
-        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-            getStage()->m_pRenderNode, &rect, name);
+        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, name);
         renderNode->setAlpha(0.25f);
         m_pIconHolder->removeChild(oldControl, true);
         FJ_FuiNode* slotNode = new FJ_FuiNode(renderNode);

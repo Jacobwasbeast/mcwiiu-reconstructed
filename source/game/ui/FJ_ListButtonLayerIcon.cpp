@@ -8,8 +8,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
-FJ_ListButtonLayerIcon::FJ_ListButtonLayerIcon(fuiRenderNode* pRenderNode)
-    : FJ_Button(pRenderNode)
+FJ_ListButtonLayerIcon::FJ_ListButtonLayerIcon(fuiRenderNode* pRenderNode) : FJ_Button(pRenderNode)
 {
 }
 
@@ -40,8 +39,7 @@ void FJ_ListButtonLayerIcon::SetSlotID(int slotId, bool visible)
 
     char name[64];
     std::sprintf(name, "iggy_slot_%d_%d", slotId, m_id);
-    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, name);
+    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);
     removeChild(slotControl, true);
     FJ_FuiNode* slotNode = new FJ_FuiNode(renderNode);
@@ -49,8 +47,7 @@ void FJ_ListButtonLayerIcon::SetSlotID(int slotId, bool visible)
     addChild(slotNode);
 }
 
-void FJ_ListButtonLayerIcon::SetTextureName(const std::wstring& textureName,
-                                            const std::wstring&)
+void FJ_ListButtonLayerIcon::SetTextureName(const std::wstring& textureName, const std::wstring&)
 {
     if (!textureName.empty() && m_textureNode == NULL)
     {
@@ -69,8 +66,7 @@ void FJ_ListButtonLayerIcon::SetTextureName(const std::wstring& textureName,
         bool hasTexture = false;
         unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
         fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-            getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
-            texture, true, hasTexture);
+            getStage()->m_pRenderNode, &rect, "CustomTexture", width, height, texture, true, hasTexture);
         m_textureNode = new FJ_FuiNode(renderNode);
         renderNode->setFuiNode(m_textureNode);
         iconPlaceholder->addChild(m_textureNode);

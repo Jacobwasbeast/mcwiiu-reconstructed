@@ -23,4 +23,3 @@ unsigned int FJ_HtmlText_Normal::getType()
 {
     return 0x80a2;
 }
-

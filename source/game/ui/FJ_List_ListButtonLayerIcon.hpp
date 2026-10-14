@@ -16,8 +16,8 @@ public:
     static FJ_List* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     void UseIggyIcons();
-    void addNewItem(const std::wstring& label, const std::wstring& secondaryText,
-        int id, const std::wstring& textureName);
+    void addNewItem(const std::wstring& label, const std::wstring& secondaryText, int id,
+                    const std::wstring& textureName);
     void SetLayerLabel(int index, const std::wstring& label);
     void SetTextureName(int index, const std::wstring& textureName);
 

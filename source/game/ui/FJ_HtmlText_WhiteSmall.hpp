@@ -8,10 +8,7 @@ class fuiRenderNode;
 class FJ_HtmlText_WhiteSmall : public FJ_HtmlText
 {
 public:
-    FJ_HtmlText_WhiteSmall(fuiRenderNode* pRenderNode)
-        : FJ_HtmlText(pRenderNode)
-    {
-    }
+    FJ_HtmlText_WhiteSmall(fuiRenderNode* pRenderNode) : FJ_HtmlText(pRenderNode) {}
 
     static FJ_HtmlText* Create(fuiRenderNode* pRenderNode);
     virtual void ASConstructor();

@@ -1,7 +1,6 @@
 #include "game/ui/FJ_BrewingPlate_Small.hpp"
 
-FJ_BrewingPlate_Small::FJ_BrewingPlate_Small(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_BrewingPlate_Small::FJ_BrewingPlate_Small(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     InitBarType();
     FJ_ProgressBar::GetBarFiller();

@@ -10,8 +10,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-UIControl_LeaderboardList::UIControl_LeaderboardList()
-    : UIControl_Base()
+UIControl_LeaderboardList::UIControl_LeaderboardList() : UIControl_Base()
 {
 }
 
@@ -20,8 +19,7 @@ void UIControl_LeaderboardList::clearList()
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->ResetLeaderboard();
 }
 
-bool UIControl_LeaderboardList::setupControl(UIScene* scene, fuiRenderNode* node,
-                                             const std::string& name)
+bool UIControl_LeaderboardList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_LeaderboardList;
     bool result = UIControl_Base::setupControl(scene, node, name);
@@ -40,18 +38,18 @@ void UIControl_LeaderboardList::ReInit()
     init(m_controlId);
 }
 
-void UIControl_LeaderboardList::setupTitles(const std::wstring& title,
-                                            const std::wstring& subtitle)
+void UIControl_LeaderboardList::setupTitles(const std::wstring& title, const std::wstring& subtitle)
 {
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->SetupTitles(title, subtitle);
 }
 
 void UIControl_LeaderboardList::initLeaderboard(int focusRank, int totalEntries, int numColumns)
 {
-    m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->InitLeaderboard(focusRank, totalEntries,
-                                                                            numColumns);
-    if (!m_touchBoxAdded) {
-        switch (m_scene->m_layer->m_layerId) {
+    m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->InitLeaderboard(focusRank, totalEntries, numColumns);
+    if (!m_touchBoxAdded)
+    {
+        switch (m_scene->m_layer->m_layerId)
+        {
         case EUILayer_Fullscreen:
         case EUILayer_Scene:
             gConsoleUIController.TouchBoxAdd(this, m_scene);
@@ -69,15 +67,11 @@ void UIControl_LeaderboardList::setColumnIcon(int column, int icon)
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->SetColumnIcon(column, offsetIcon);
 }
 
-void UIControl_LeaderboardList::addDataSet(bool loading, int rank, int value,
-                                            const std::wstring& gamertag, bool complete,
-                                            const std::wstring& firstColumnText,
-                                            const std::wstring& secondColumnText,
-                                            const std::wstring& thirdColumnText,
-                                            const std::wstring& fourthColumnText,
-                                            const std::wstring& fifthColumnText,
-                                            const std::wstring& sixthColumnText,
-                                            const std::wstring& seventhColumnText)
+void UIControl_LeaderboardList::addDataSet(bool loading, int rank, int value, const std::wstring& gamertag,
+                                           bool complete, const std::wstring& firstColumnText,
+                                           const std::wstring& secondColumnText, const std::wstring& thirdColumnText,
+                                           const std::wstring& fourthColumnText, const std::wstring& fifthColumnText,
+                                           const std::wstring& sixthColumnText, const std::wstring& seventhColumnText)
 {
     const std::wstring* columns[7];
     for (int i = 0; i < 7; ++i)
@@ -96,8 +90,9 @@ void UIControl_LeaderboardList::addDataSet(bool loading, int rank, int value,
         columns[5] = &sixthColumnText;
     if (!seventhColumnText.empty())
         columns[6] = &seventhColumnText;
-    m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->AddDataSet(loading, rank, value, gamertag,
-        complete, columns[0], columns[1], columns[2], columns[3], columns[4], columns[5], columns[6]);
+    m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->AddDataSet(loading, rank, value, gamertag, complete,
+                                                                      columns[0], columns[1], columns[2], columns[3],
+                                                                      columns[4], columns[5], columns[6]);
 }
 
 void UIControl_LeaderboardList::SetTouchFocus(int x, int y, bool focus)

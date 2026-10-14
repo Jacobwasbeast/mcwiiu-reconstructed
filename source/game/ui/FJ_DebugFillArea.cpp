@@ -10,8 +10,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_DebugFillArea::FJ_DebugFillArea(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_DebugFillArea::FJ_DebugFillArea(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
     static_cast<FJ_TextInput*>(getChildByName(std::string("EdgeTile")))->m_bUseScale = true;

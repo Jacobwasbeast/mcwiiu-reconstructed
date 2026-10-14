@@ -2,8 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_SocialPost::FJ_SocialPost(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_SocialPost::FJ_SocialPost(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

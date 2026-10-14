@@ -10,8 +10,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-UIControl_HTMLLabel::UIControl_HTMLLabel()
-    : UIControl_Label()
+UIControl_HTMLLabel::UIControl_HTMLLabel() : UIControl_Label()
 {
 }
 
@@ -39,8 +38,7 @@ int UIControl_HTMLLabel::GetRealHeight()
     return size;
 }
 
-bool UIControl_HTMLLabel::setupControl(UIScene* scene, fuiRenderNode* node,
-                                       const std::string& name)
+bool UIControl_HTMLLabel::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_HTMLLabel;
     return UIControl_Base::setupControl(scene, node, name);
@@ -55,7 +53,8 @@ void UIControl_HTMLLabel::ReInit()
 void UIControl_HTMLLabel::SetupTouch()
 {
     int layerId = m_scene->m_layer->m_layerId;
-    switch (layerId) {
+    switch (layerId)
+    {
     case 4:
     case 6:
     case 7:

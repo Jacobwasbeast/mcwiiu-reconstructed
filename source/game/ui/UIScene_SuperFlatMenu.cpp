@@ -213,7 +213,7 @@ void UIScene_SuperFlatMenu::PopulateParamsList()
         else if (param->isChild())
         {
             m_properties.list.AddNewSlider(L"", index, param->getMinValue(), param->getMaxValue(), param->getMinValue(),
-                                          false, 7, 3);
+                                           false, 7, 3);
         }
     }
 }
@@ -331,16 +331,16 @@ void UIScene_SuperFlatMenu::handleTouchInput(unsigned int, int, int, int touchBo
         case 3:
         case 4:
         case 5:
+        {
+            int tab = touchBox - 3;
+            if (m_activeTab != tab)
             {
-                int tab = touchBox - 3;
-                if (m_activeTab != tab)
-                {
-                    m_activeTab = tab;
-                    updateTooltips();
-                    SetActiveTab(static_cast<eTabs>(m_activeTab));
-                }
+                m_activeTab = tab;
+                updateTooltips();
+                SetActiveTab(static_cast<eTabs>(m_activeTab));
             }
-            break;
+        }
+        break;
         }
     }
 }
@@ -406,8 +406,8 @@ void UIScene_SuperFlatMenu::updateTooltips()
         break;
     }
     gConsoleUIController.SetTooltips(0, primaryAction, IDS_TOOLTIPS_BACK, moveLayerAction, secondaryAction,
-        pageUpAction, pageDownAction, disabledAction, layerAction, -1, -1, -1, -1, -1, -1, -1,
-        moveUpDownAction, false, false);
+                                     pageUpAction, pageDownAction, disabledAction, layerAction, -1, -1, -1, -1, -1, -1,
+                                     -1, moveUpDownAction, false, false);
 }
 
 void UIScene_SuperFlatMenu::updateComponents()
@@ -571,14 +571,14 @@ int UIScene_SuperFlatMenu::CbGenerationWarning(void* context, int pad, C4JStorag
 
 void UIScene_SuperFlatMenu::ReturnResults(bool accepted)
 {
-    unsigned int warning = SuperflatMenu::CustomSuperflatBlocks::verify(
-        m_initData, m_config);
+    unsigned int warning = SuperflatMenu::CustomSuperflatBlocks::verify(m_initData, m_config);
     if (accepted && warning != 0)
     {
         m_generating = true;
-        int params[2] = { static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL) };
-        gConsoleUIController.RequestAlertMessage(static_cast<int>(IDS_SUPERFLAT_CONFIGURATION_PROBLEMS), static_cast<int>(warning),
-            params, 2, m_playerId, &UIScene_SuperFlatMenu::CbGenerationWarning, this, NULL, true);
+        int params[2] = {static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL)};
+        gConsoleUIController.RequestAlertMessage(static_cast<int>(IDS_SUPERFLAT_CONFIGURATION_PROBLEMS),
+                                                 static_cast<int>(warning), params, 2, m_playerId,
+                                                 &UIScene_SuperFlatMenu::CbGenerationWarning, this, NULL, true);
         return;
     }
     SuperflatMenu::CustomSuperflatBlocks::sanitise(m_generatorInfo);
@@ -606,17 +606,17 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
         }
         break;
     case EControllerActions_MenuX:
+    {
+        bool last = m_layers.list.getCurrentSelection() == m_layers.list.getItemCount() - 1;
+        if (!last && !m_editingLayer && m_layers.list.hasFocus() && pressed)
         {
-            bool last = m_layers.list.getCurrentSelection() == m_layers.list.getItemCount() - 1;
-            if (!last && !m_editingLayer && m_layers.list.hasFocus() && pressed)
-            {
-                m_editingLayer = true;
-                updateTooltips();
-                handled = true;
-                return;
-            }
+            m_editingLayer = true;
+            updateTooltips();
+            handled = true;
+            return;
         }
-        break;
+    }
+    break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuPageUp:
@@ -740,11 +740,11 @@ void UIScene_SuperFlatMenu::handlePress(int controlId, int childId)
                 ExecuteOnTick(&UIScene_SuperFlatMenu::OpenMaxHeightDialog);
                 return;
             }
-            int params[3] = { static_cast<int>(IDS_SUPERFLAT_EDIT_LAYER), static_cast<int>(IDS_SUPERFLAT_ADD_LAYER),
-                              static_cast<int>(IDS_SUPERFLAT_DELETE_LAYER) };
+            int params[3] = {static_cast<int>(IDS_SUPERFLAT_EDIT_LAYER), static_cast<int>(IDS_SUPERFLAT_ADD_LAYER),
+                             static_cast<int>(IDS_SUPERFLAT_DELETE_LAYER)};
             gConsoleUIController.RequestAlertMessage(static_cast<int>(IDS_SUPERFLAT_LAYER_OPTIONS_TITLE),
-                static_cast<int>(0x78a7e3b3U), params, 3, m_playerId,
-                &UIScene_SuperFlatMenu::CbLayerOperation, this, NULL, true);
+                                                     static_cast<int>(0x78a7e3b3U), params, 3, m_playerId,
+                                                     &UIScene_SuperFlatMenu::CbLayerOperation, this, NULL, true);
             m_generating = true;
             return;
         }
@@ -788,8 +788,8 @@ void UIScene_SuperFlatMenu::handleSelectionChanged(int selection)
             m_properties.help.setLabel(UIString(param->getDesc()), false, false);
             return;
         }
-        std::wstring text = std::wstring(L10N::GetString(SuperflatMenu::params[ParentParam(selection)].getDesc())) +
-                            L"<br/>" + std::wstring(L10N::GetString(param->getDesc()));
+        std::wstring text = std::wstring(L10N::GetString(SuperflatMenu::params[ParentParam(selection)].getDesc()))
+                            + L"<br/>" + std::wstring(L10N::GetString(param->getDesc()));
         m_properties.help.setLabel(UIString(text), false, false);
         return;
     }
@@ -901,30 +901,39 @@ void UIScene_SuperFlatMenu::PlaySound(const SoundEvent* sound)
 
 void UIScene_SuperFlatMenu::OpenPresetsDialog()
 {
-    struct PresetsData { bool flag; SuperflatConfig* config; };
+    struct PresetsData
+    {
+        bool flag;
+        SuperflatConfig* config;
+    };
     PresetsData* data = new PresetsData();
     data->flag = m_presetsFlag;
     data->config = m_config;
-    gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SuperFlatPresets, data,
-        EUILayer_Scene, EUIGroup_PlayerDefault);
+    gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SuperFlatPresets, data, EUILayer_Scene,
+                                         EUIGroup_PlayerDefault);
 }
 
 void UIScene_SuperFlatMenu::OpenEditLayerDialog(bool insert)
 {
-    struct EditLayerData { bool insert; int index; SuperflatConfig* config; };
+    struct EditLayerData
+    {
+        bool insert;
+        int index;
+        SuperflatConfig* config;
+    };
     EditLayerData* data = new EditLayerData();
     data->config = m_config;
     data->insert = insert;
     data->index = (m_generatorInfo.numLayers() - 1) - m_layers.list.getCurrentSelection();
-    gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SuperFlatEditLayer, data,
-        EUILayer_Scene, EUIGroup_PlayerDefault);
+    gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SuperFlatEditLayer, data, EUILayer_Scene,
+                                         EUIGroup_PlayerDefault);
 }
 
 void UIScene_SuperFlatMenu::OpenMaxHeightDialog()
 {
-    int params[1] = { static_cast<int>(IDS_CONFIRM_OK) };
-    gConsoleUIController.RequestAlertMessage(static_cast<int>(0xf2637855U), static_cast<int>(0x373ccbf0U),
-        params, 1, m_playerId, NULL, NULL, NULL, true);
+    int params[1] = {static_cast<int>(IDS_CONFIRM_OK)};
+    gConsoleUIController.RequestAlertMessage(static_cast<int>(0xf2637855U), static_cast<int>(0x373ccbf0U), params, 1,
+                                             m_playerId, NULL, NULL, NULL, true);
 }
 
 std::wstring UIScene_SuperFlatMenu::getMoviePath()
@@ -937,6 +946,7 @@ int UIScene_SuperFlatMenu::getSceneType()
     return EUIScene_SuperFlatMenu;
 }
 
-template void UIScene_SuperFlatMenu::ExecuteOnTick<const SoundEvent*>(MethodActionArg1<const SoundEvent*>::Func function, const SoundEvent* value);
+template void UIScene_SuperFlatMenu::ExecuteOnTick<const SoundEvent*>(
+    MethodActionArg1<const SoundEvent*>::Func function, const SoundEvent* value);
 template void UIScene_SuperFlatMenu::ExecuteOnTick<int>(MethodActionArg1<int>::Func function, int value);
 template void UIScene_SuperFlatMenu::ExecuteOnTick<bool>(MethodActionArg1<bool>::Func function, bool value);

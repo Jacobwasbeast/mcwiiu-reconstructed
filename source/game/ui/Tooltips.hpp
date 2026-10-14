@@ -16,8 +16,8 @@ public:
     static void staticCtor();
     static void OverwriteTooltip(int playerId, EControllerActions action, int tooltip);
     static void ResetTooltip(int playerId, EControllerActions action);
-    static void SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> player,
-                                    MultiPlayerLevel* level, const HitResult* hitResult,
+    static void SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> player, MultiPlayerLevel* level,
+                                    const HitResult* hitResult,
                                     InteractionResult::EInteractionResult interactionResult);
     static void ResetAllTooltips(int playerId);
     static void ForceTooltipReload(int playerId);

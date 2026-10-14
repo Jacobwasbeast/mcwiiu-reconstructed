@@ -20,58 +20,29 @@
 #include "game/ui/fuiRect.hpp"
 #include "game/util/Math.hpp"
 
-static std::string s_crosshairNames[3] =
-{
-    std::string("CrosshairSmall"),
-    std::string("CrosshairNormal"),
-    std::string("CrosshairLarge")
-};
+static std::string s_crosshairNames[3] = {std::string("CrosshairSmall"), std::string("CrosshairNormal"),
+                                          std::string("CrosshairLarge")};
 
-static std::string s_offhandSlotNames[3] =
-{
-    std::string("OffhandSlot_Small"),
-    std::string("OffhandSlot_Normal"),
-    std::string("OffhandSlot_Large")
-};
+static std::string s_offhandSlotNames[3] = {std::string("OffhandSlot_Small"), std::string("OffhandSlot_Normal"),
+                                            std::string("OffhandSlot_Large")};
 
-static std::string s_hudNames[3] =
-{
-    std::string("HudSmall"),
-    std::string("HudNormal"),
-    std::string("HudLarge")
-};
+static std::string s_hudNames[3] = {std::string("HudSmall"), std::string("HudNormal"), std::string("HudLarge")};
 
-static std::string s_xpLevelNames[3] =
-{
-    std::string("HUD_XP_Level_Small"),
-    std::string("HUD_XP_Level_Normal"),
-    std::string("HUD_XP_Level_Large")
-};
+static std::string s_xpLevelNames[3] = {std::string("HUD_XP_Level_Small"), std::string("HUD_XP_Level_Normal"),
+                                        std::string("HUD_XP_Level_Large")};
 
-static std::string s_scaleNames[3] =
-{
-    std::string("ScaleSmall"),
-    std::string("ScaleNormal"),
-    std::string("ScaleLarge")
-};
+static std::string s_scaleNames[3] = {std::string("ScaleSmall"), std::string("ScaleNormal"), std::string("ScaleLarge")};
 
-static std::string s_airBubbleFrames[3] =
-{
-    std::string("AirBubble_Full"),
-    std::string("AirBubble_Pop"),
-    std::string("AirBubble_Empty")
-};
+static std::string s_airBubbleFrames[3] = {std::string("AirBubble_Full"), std::string("AirBubble_Pop"),
+                                           std::string("AirBubble_Empty")};
 
 static const int s_healthFrames[6] = {1, 4, 3, 2, 6, 5};
 static const int s_poisonedHealthFrames[6] = {1, 8, 7, 2, 10, 9};
 static const int s_witheredHealthFrames[6] = {1, 12, 11, 2, 14, 13};
 static const int s_foodFrames[6] = {1, 1, 3, 5, 2, 4};
 static const int s_armourFrames[3] = {1, 2, 3};
-static const int s_effectSlots[28] =
-{
-    -1, 12, 9, 2, 14, 11, 5, 3, 6, 13, 16, 7, 8, 1,
-    0, 4, 10, 15, 17, 18, 19, 20, 21, 22, 23, -1, 25, 24
-};
+static const int s_effectSlots[28] = {-1, 12, 9,  2,  14, 11, 5,  3,  6,  13, 16, 7,  8,  1,
+                                      0,  4,  10, 15, 17, 18, 19, 20, 21, 22, 23, -1, 25, 24};
 
 void FJ_Hud::SetPlayerLevel(int level)
 {
@@ -86,9 +57,9 @@ void FJ_Hud::SetPlayerLevel(int level)
     int width = (int)(rect.xMin + rect.xMin + m_xpLevelLabel->getWidth());
     m_xpLevelLabel->setVisible(level != 0 ? m_expBar->isVisible() : false);
     m_xpLevelLabel->setX(Math::round(m_hud->getX() + m_hudWidth * 0.5f - width * 0.5f));
-    m_xpLevelLabel->setY(Math::round(m_hud->getY() - m_xpLevelLabel->getHeight() * 0.5f +
-                                     m_healthBar->getY() * m_hud->getScaleY() +
-                                     m_healthBarHeight * m_hud->getScaleY() * 0.5f - 1.0f));
+    m_xpLevelLabel->setY(Math::round(m_hud->getY() - m_xpLevelLabel->getHeight() * 0.5f
+                                     + m_healthBar->getY() * m_hud->getScaleY()
+                                     + m_healthBarHeight * m_hud->getScaleY() * 0.5f - 1.0f));
 }
 
 void FJ_Hud::SetActiveSlot(int slot)
@@ -171,9 +142,9 @@ void FJ_Hud::SetJukeBoxLabelPos()
 {
     if (m_gameMode == 0)
     {
-        getChildByName("Jukebox")->setY(Math::round(getChildByName("SelectedLabel")->getY() -
-                                                    getChildByName("SelectedLabel")->getHeight() * 0.5f -
-                                                    m_jukeboxHeight * 0.5f));
+        getChildByName("Jukebox")->setY(Math::round(getChildByName("SelectedLabel")->getY()
+                                                    - getChildByName("SelectedLabel")->getHeight() * 0.5f
+                                                    - m_jukeboxHeight * 0.5f));
     }
     else if (m_viewportWidth != -1 && m_viewportHeight != -1)
     {
@@ -195,13 +166,12 @@ void FJ_Hud::SetSelectedLabel(const std::wstring& label, bool visible)
         getChildByName("SelectedLabel")->gotoAndStop("On");
         if (m_viewportWidth != -1)
         {
-            getChildByName("SelectedLabel")->setX(Math::round(m_viewportWidth * 0.5f -
-                                                              m_selectedLabelWidth * 0.5f));
+            getChildByName("SelectedLabel")->setX(Math::round(m_viewportWidth * 0.5f - m_selectedLabelWidth * 0.5f));
         }
     }
-    getChildByName("SelectedLabel")->setY(Math::round(m_hud->getY() -
-                                                      getChildByName("SelectedLabel")->getHeight() * 0.5f -
-                                                      m_selectedLabelHeight));
+    getChildByName("SelectedLabel")
+        ->setY(
+            Math::round(m_hud->getY() - getChildByName("SelectedLabel")->getHeight() * 0.5f - m_selectedLabelHeight));
     if (!m_horseHealthBar->isVisible() && !m_healthBar->isVisible() && !m_foodBar->isVisible())
     {
         getChildByName("SelectedLabel")->incY(Math::round(m_healthBarHeight * m_hud->getScaleY() * 2.0f));
@@ -332,8 +302,8 @@ void FJ_Hud::ShowQuickSelect(bool visible)
         }
         else
         {
-            m_aliveDeadBar->setY(Math::round(m_hotBar->getY() + m_hotBar->getHeight() / m_hud->getScaleY() -
-                                             m_aliveDeadBar->getHeight() / m_hud->getScaleY()));
+            m_aliveDeadBar->setY(Math::round(m_hotBar->getY() + m_hotBar->getHeight() / m_hud->getScaleY()
+                                             - m_aliveDeadBar->getHeight() / m_hud->getScaleY()));
         }
     }
     m_showQuickSelect = visible;
@@ -355,8 +325,8 @@ void FJ_Hud::UpdateBossBarPositions()
         if (m_viewportWidth != -1 && m_viewportHeight != -1)
         {
             m_bossBars[i]->setX(Math::round(m_viewportWidth / 2 - m_bossBars[i]->getWidth() * 0.5f));
-            m_bossBars[i]->setY((m_safeZoneTop + (getStage()->getStageHeight() - m_viewportHeight)) +
-                                m_bossBars[i]->getHeight() * i);
+            m_bossBars[i]->setY((m_safeZoneTop + (getStage()->getStageHeight() - m_viewportHeight))
+                                + m_bossBars[i]->getHeight() * i);
         }
         else
         {
@@ -399,8 +369,8 @@ void FJ_Hud::PositionGameModeComponents()
         top = Math::round(getStage()->getStageHeight() - m_viewportHeight + m_viewportHeight / 5.0f + m_safeZoneTop);
     }
 
-    m_raceProgress->setY(getStage()->getStageHeight() - bottom -
-                         Math::round(m_raceBarHeight * m_raceBar->getScaleX() * 1.5f));
+    m_raceProgress->setY(getStage()->getStageHeight() - bottom
+                         - Math::round(m_raceBarHeight * m_raceBar->getScaleX() * 1.5f));
     m_pickup->setX(width - m_safeZoneRight - m_pickup->getWidth());
     m_pickup->setY(getStage()->getStageHeight() - bottom - m_pickup->getHeight());
 
@@ -415,8 +385,10 @@ void FJ_Hud::PositionGameModeComponents()
     m_speedLabel->setX(Math::round(m_timeIcon->getX() - m_speedLabelWidth - m_timeIcon->getWidth() * 0.25f));
     m_scoreLabel->setX(Math::round(m_timeIcon->getX() - m_speedLabelWidth - m_timeIcon->getWidth() * 0.25f));
     m_timeLabel->setY(m_timeIcon->getY() + Math::round((m_timeIcon->getHeight() - m_timeLabel->getHeight()) * 0.5f));
-    m_speedLabel->setY(m_speedIcon->getY() + Math::round((m_speedIcon->getHeight() - m_speedLabel->getHeight()) * 0.5f));
-    m_scoreLabel->setY(m_scoreIcon->getY() + Math::round((m_scoreIcon->getHeight() - m_scoreLabel->getHeight()) * 0.5f));
+    m_speedLabel->setY(m_speedIcon->getY()
+                       + Math::round((m_speedIcon->getHeight() - m_speedLabel->getHeight()) * 0.5f));
+    m_scoreLabel->setY(m_scoreIcon->getY()
+                       + Math::round((m_scoreIcon->getHeight() - m_scoreLabel->getHeight()) * 0.5f));
 
     m_gold->setX(m_safeZoneLeft);
     m_silver->setX(m_safeZoneLeft);
@@ -430,18 +402,19 @@ void FJ_Hud::PositionGameModeComponents()
     m_positionThree->setX(m_safeZoneLeft + m_bronze->getWidth());
     m_positionOne->setY(m_gold->getY() + Math::round((m_gold->getHeight() - m_positionOne->getHeight()) * 0.5f));
     m_positionTwo->setY(m_silver->getY() + Math::round((m_silver->getHeight() - m_positionTwo->getHeight()) * 0.5f));
-    m_positionThree->setY(m_bronze->getY() + Math::round((m_bronze->getHeight() - m_positionThree->getHeight()) * 0.5f));
+    m_positionThree->setY(m_bronze->getY()
+                          + Math::round((m_bronze->getHeight() - m_positionThree->getHeight()) * 0.5f));
 
     int wrongWayX = Math::round((width - m_wrongWayLabelWidth) * 0.5f);
     float wrongWayY = getChildByName("Jukebox")->getY() + m_jukeboxHeight;
     m_wrongWayLabel->setX(wrongWayX);
     m_wrongWayLabel->setY(wrongWayY);
 
-    m_roundNumber->setX(m_raceProgress->getX() + m_raceProgress->getWidth() +
-                        Math::round(m_raceBarHeight * m_raceBar->getScaleX() * 0.5f));
-    m_roundNumber->setY(m_raceProgress->getY() +
-                        Math::round(m_raceBarHeight * m_raceBar->getScaleY() * 0.5f -
-                                    m_roundNumber->getHeight() * 0.5f - 1.0f));
+    m_roundNumber->setX(m_raceProgress->getX() + m_raceProgress->getWidth()
+                        + Math::round(m_raceBarHeight * m_raceBar->getScaleX() * 0.5f));
+    m_roundNumber->setY(
+        m_raceProgress->getY()
+        + Math::round(m_raceBarHeight * m_raceBar->getScaleY() * 0.5f - m_roundNumber->getHeight() * 0.5f - 1.0f));
 }
 
 void FJ_Hud::PositionIggySplash()
@@ -449,8 +422,9 @@ void FJ_Hud::PositionIggySplash()
     if (m_viewportWidth != -1 && m_viewportHeight != -1)
     {
         m_gameModeSplash->setX(Math::round(m_viewportWidth * 0.5f - m_gameModeSplash->getWidth() * 0.5f));
-        m_gameModeSplash->setY(m_safeZoneTop + Math::round(getStage()->getStageHeight() - m_viewportHeight +
-                                                           Math::round(m_viewportHeight / 3.0f)));
+        m_gameModeSplash->setY(
+            m_safeZoneTop
+            + Math::round(getStage()->getStageHeight() - m_viewportHeight + Math::round(m_viewportHeight / 3.0f)));
     }
     else
     {
@@ -473,8 +447,8 @@ void FJ_Hud::RepositionHud(int width, int height)
     m_crosshair->setY(Math::round(getStage()->getStageHeight() - crosshair->getHeight() * 0.5f - height * 0.5f));
 
     m_armourBarIcons->setX(m_safeZoneLeft > 0 ? (float)m_safeZoneLeft : m_armourBarIcons->getWidth());
-    m_armourBarIcons->setY(Math::round(getStage()->getStageHeight() - m_armourBarIcons->getHeight() * 0.5f -
-                                       height * 0.5f));
+    m_armourBarIcons->setY(
+        Math::round(getStage()->getStageHeight() - m_armourBarIcons->getHeight() * 0.5f - height * 0.5f));
 
     if (m_gamertagLabel != NULL)
         SetGamertag(m_gamertag);
@@ -580,11 +554,10 @@ void FJ_Hud::ShowAnimatedLogoText(FJ_Event* event)
     int offset = 6;
     if (m_viewportWidth != -1 && m_viewportHeight != -1)
         offset = m_viewportWidth == 640 || m_viewportHeight == 360 ? 7 : 8;
-    m_animatedSplashText->setY(m_animatedSplash->getY() +
-                               m_animatedSplash->getChildByName("TextPanel")->getY() * m_animatedSplash->getScaleY() -
-                               m_animatedSplash->getChildByName("TextPanel")->getHeight() * m_animatedSplash->getScaleY() * 0.5f -
-                               m_animatedSplashText->getHeight() * 0.5f +
-                               offset * m_animatedSplash->getScaleY());
+    m_animatedSplashText->setY(
+        m_animatedSplash->getY() + m_animatedSplash->getChildByName("TextPanel")->getY() * m_animatedSplash->getScaleY()
+        - m_animatedSplash->getChildByName("TextPanel")->getHeight() * m_animatedSplash->getScaleY() * 0.5f
+        - m_animatedSplashText->getHeight() * 0.5f + offset * m_animatedSplash->getScaleY());
     removeEventListener(eFJEventType_ShowAnimatedLogoText, this, _ShowAnimatedLogoText);
 }
 
@@ -610,24 +583,27 @@ void FJ_Hud::ShowAnimatedSplash(const std::wstring& label, bool visible)
         if (m_viewportWidth != -1 && m_viewportHeight != -1)
         {
             m_animatedSplash->setX(Math::round(m_viewportWidth * 0.5f));
-            m_animatedSplash->setY((getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight()) +
-                                   m_animatedSplashHeight * 0.5f);
+            m_animatedSplash->setY((getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight())
+                                   + m_animatedSplashHeight * 0.5f);
             m_animatedSplashText->setX(Math::round((m_viewportWidth - m_animatedSplashTextWidth) * 0.5f));
             FJ_FuiNode* panel = m_animatedSplash->getChildByName("TextPanel")->getChildAt(0);
-            panel->setHeight(Math::round(m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->getHeight() * 1.2f));
+            panel->setHeight(
+                Math::round(m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->getHeight() * 1.2f));
         }
         else
         {
             m_animatedSplash->setX(Math::round(getStage()->getStageWidth() * 0.5f));
-            m_animatedSplash->setY((getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight()) +
-                                   m_animatedSplashHeight * 0.5f);
+            m_animatedSplash->setY((getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight())
+                                   + m_animatedSplashHeight * 0.5f);
         }
         m_animatedSplashText->SetLabel(label);
         m_animatedSplashText->setAlpha(0.0f);
 
         int padding = (int)(m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->getWidth() * 0.25f);
-        m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->setWidth(
-            (float)Math::round(m_animatedSplashText->getWidth() / m_animatedSplash->getScaleX()) + (float)padding);
+        m_animatedSplash->getChildByName("TextPanel")
+            ->getChildAt(0)
+            ->setWidth((float)Math::round(m_animatedSplashText->getWidth() / m_animatedSplash->getScaleX())
+                       + (float)padding);
         m_animatedSplash->gotoAndPlay(2);
     }
     else
@@ -778,8 +754,8 @@ void FJ_Hud::InitHud(FJ_Event* event)
 
     m_aliveDeadBarWidth = (int)(m_aliveDeadBar->getWidth() / m_aliveDeadBar->getScaleX());
     m_aliveIconWidth = (int)m_aliveDeadBar->getChildByName("Alive00")->getWidth();
-    m_aliveIconSpacing = Math::round((float)(m_aliveDeadBarWidth - m_aliveIconWidth * m_maxAliveIcons) /
-                                     ((float)m_maxAliveIcons - 1.0f));
+    m_aliveIconSpacing = Math::round((float)(m_aliveDeadBarWidth - m_aliveIconWidth * m_maxAliveIcons)
+                                     / ((float)m_maxAliveIcons - 1.0f));
     for (int i = 0; i < m_maxAliveIcons; ++i)
     {
         sprintf(name, "Alive0%d", i);
@@ -790,8 +766,9 @@ void FJ_Hud::InitHud(FJ_Event* event)
     if (m_isFullHd)
     {
         m_smallAliveIconWidth = (int)m_aliveDeadBar->getChildByName("SmallAlive00")->getWidth();
-        m_smallAliveIconSpacing = Math::round((float)(m_aliveDeadBarWidth - m_smallAliveIconWidth * m_maxSmallAliveIcons) /
-                                              ((float)m_maxSmallAliveIcons - 1.0f));
+        m_smallAliveIconSpacing = Math::round(
+            (float)(m_aliveDeadBarWidth - m_smallAliveIconWidth * m_maxSmallAliveIcons)
+            / ((float)m_maxSmallAliveIcons - 1.0f));
         for (int i = 0; i < m_maxSmallAliveIcons; ++i)
         {
             sprintf(name, "SmallAlive%02d", i);
@@ -917,8 +894,7 @@ void FJ_Hud::_init(FJ_FuiNode* node, FJ_Event* event)
     static_cast<FJ_Hud*>(node)->init(event);
 }
 
-FJ_Hud::FJ_Hud(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_Hud::FJ_Hud(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     m_safeZoneTop = 0;
     m_showHud = true;
@@ -1109,8 +1085,8 @@ void FJ_Hud::SetSafeZone(int top, int bottom, int left, int right)
     }
     else
     {
-        m_armourBarIcons->setY(Math::round(getStage()->getStageHeight() - m_armourBarIcons->getHeight() * 0.5f -
-                                           m_viewportHeight * 0.5f));
+        m_armourBarIcons->setY(
+            Math::round(getStage()->getStageHeight() - m_armourBarIcons->getHeight() * 0.5f - m_viewportHeight * 0.5f));
     }
 
     getChildByName("Label1")->setX(m_safeZoneLeft);
@@ -1367,16 +1343,28 @@ void FJ_Hud::ShowArmorIcons(int armour, bool visible)
     switch (armour)
     {
     case 0:
-        m_armourBarIcons->getChildAt(0)->getChildByName("Armor_Icons")->getChildByName("Armor_Head")->setVisible(visible);
+        m_armourBarIcons->getChildAt(0)
+            ->getChildByName("Armor_Icons")
+            ->getChildByName("Armor_Head")
+            ->setVisible(visible);
         break;
     case 1:
-        m_armourBarIcons->getChildAt(0)->getChildByName("Armor_Icons")->getChildByName("Armor_Chest")->setVisible(visible);
+        m_armourBarIcons->getChildAt(0)
+            ->getChildByName("Armor_Icons")
+            ->getChildByName("Armor_Chest")
+            ->setVisible(visible);
         break;
     case 2:
-        m_armourBarIcons->getChildAt(0)->getChildByName("Armor_Icons")->getChildByName("Armor_Legs")->setVisible(visible);
+        m_armourBarIcons->getChildAt(0)
+            ->getChildByName("Armor_Icons")
+            ->getChildByName("Armor_Legs")
+            ->setVisible(visible);
         break;
     case 3:
-        m_armourBarIcons->getChildAt(0)->getChildByName("Armor_Icons")->getChildByName("Armor_Boots")->setVisible(visible);
+        m_armourBarIcons->getChildAt(0)
+            ->getChildByName("Armor_Icons")
+            ->getChildByName("Armor_Boots")
+            ->setVisible(visible);
         break;
     }
 }
@@ -1502,8 +1490,8 @@ void FJ_Hud::UpdateStatusEffectTile(int count, int index, int effect, bool ambie
         }
         else
         {
-            m_statusEffectTiles[i]->setX(Math::round(getStage()->getStageWidth() - m_safeZoneRight -
-                                                     m_statusEffectTiles[i]->getWidth() - x));
+            m_statusEffectTiles[i]->setX(
+                Math::round(getStage()->getStageWidth() - m_safeZoneRight - m_statusEffectTiles[i]->getWidth() - x));
             m_statusEffectTiles[i]->setY(Math::round(y + m_safeZoneTop));
             int bottom = Math::round(y + m_safeZoneTop) + (int)m_statusEffectTiles[i]->getHeight();
             if (bottom > m_statusEffectsYOffset)
@@ -1586,7 +1574,8 @@ void FJ_Hud::SetGameModeNumPlayers(int count, bool alignLeft)
                 if (count <= 8)
                     m_aliveIconSpacing = Math::round((m_aliveDeadBarWidth - m_aliveIconWidth * 8.0f) / 7.0f);
                 else
-                    m_aliveIconSpacing = Math::round((float)(m_aliveDeadBarWidth - m_aliveIconWidth * count) / (float)last);
+                    m_aliveIconSpacing = Math::round((float)(m_aliveDeadBarWidth - m_aliveIconWidth * count)
+                                                     / (float)last);
                 offset = (m_aliveDeadBarWidth - (m_aliveIconWidth * count + last * m_aliveIconSpacing)) / 2;
             }
             else
@@ -1717,7 +1706,8 @@ void FJ_Hud::SetGameModePlayerState(int player, int state, bool alive)
 
 void FJ_Hud::SetPercentageMapTraversed(int player, float percentage)
 {
-    m_racePlayers[player]->setX(Math::round(percentage / 100.0f * (m_raceBarWidth - m_racePlayers[player]->getWidth())));
+    m_racePlayers[player]->setX(
+        Math::round(percentage / 100.0f * (m_raceBarWidth - m_racePlayers[player]->getWidth())));
     m_racePlayers[player]->setY(m_raceBarHeight * 0.5f - m_racePlayers[player]->getHeight() * 0.5f);
 }
 

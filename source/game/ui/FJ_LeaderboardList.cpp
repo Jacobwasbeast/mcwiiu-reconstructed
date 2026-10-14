@@ -13,7 +13,11 @@
 #include "game/util/Math.hpp"
 
 FJ_LeaderboardList::FJ_LeaderboardList(fuiRenderNode* renderNode)
-    : FJ_FuiNode(renderNode), m_leaderboard(), m_entries(), m_rankTitle(), m_gamertagTitle()
+    : FJ_FuiNode(renderNode),
+      m_leaderboard(),
+      m_entries(),
+      m_rankTitle(),
+      m_gamertagTitle()
 {
     m_small = false;
     m_entrySpacing = 4;
@@ -107,9 +111,12 @@ void FJ_LeaderboardList::HandleScrollListArrows(bool added)
     {
         getParent()->addChild(m_upArrow);
         getParent()->addChild(m_downArrow);
-        m_upArrow->setX(m_entries[m_entries.size() - 1]->getX() + m_entries[m_entries.size() - 1]->getWidth() - m_upArrow->getWidth() * 1.5f);
-        m_upArrow->setY(m_entries[m_entries.size() - 1]->getY() + m_entries[m_entries.size() - 1]->getHeight() + m_upArrow->getHeight() * 0.5f);
-        m_downArrow->setX(m_entries[m_entries.size() - 1]->getX() + m_entries[m_entries.size() - 1]->getWidth() - m_upArrow->getWidth() * 0.5f);
+        m_upArrow->setX(m_entries[m_entries.size() - 1]->getX() + m_entries[m_entries.size() - 1]->getWidth()
+                        - m_upArrow->getWidth() * 1.5f);
+        m_upArrow->setY(m_entries[m_entries.size() - 1]->getY() + m_entries[m_entries.size() - 1]->getHeight()
+                        + m_upArrow->getHeight() * 0.5f);
+        m_downArrow->setX(m_entries[m_entries.size() - 1]->getX() + m_entries[m_entries.size() - 1]->getWidth()
+                          - m_upArrow->getWidth() * 0.5f);
         m_downArrow->setY(m_upArrow->getY());
         m_upArrow->ChangeState(0);
         m_downArrow->ChangeState(3);
@@ -295,8 +302,10 @@ unsigned int FJ_LeaderboardList::getType()
 
 void FJ_LeaderboardList::ASConstructor()
 {
-    m_upArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
-    m_downArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
+    m_upArrow = static_cast<FJ_ScrollArrow*>(
+        FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
+    m_downArrow = static_cast<FJ_ScrollArrow*>(
+        FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
     FJ_FuiNode* background = getChildByName(std::string("Background"))->asMovieClip();
     background->setVisible(false);
 }

@@ -66,7 +66,8 @@ void UIControl_MinecraftHorse::render(fuiRect* rect)
     bool oldHideGui = minecraft->mOptions->mHideGui;
     minecraft->mOptions->mHideGui = true;
     boost::shared_ptr<Entity> entity = horse;
-    Minecraft::GetInstance()->getEntityRenderDispatcher()->render(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, false, false, false, false);
+    Minecraft::GetInstance()->getEntityRenderDispatcher()->render(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, false, false,
+                                                                  false, false);
     minecraft->mOptions->mHideGui = oldHideGui;
 
     horse->mYBodyRot = oldYBodyRot;

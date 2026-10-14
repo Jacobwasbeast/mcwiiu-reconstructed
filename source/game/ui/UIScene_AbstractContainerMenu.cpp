@@ -28,8 +28,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-UIScene_AbstractContainerMenu::UIScene_AbstractContainerMenu(int type, UILayer* layer)
-    : UIScene(type, layer)
+UIScene_AbstractContainerMenu::UIScene_AbstractContainerMenu(int type, UILayer* layer) : UIScene(type, layer)
 {
     m_focusSection = IUIScene_AbstractContainerMenu::ESceneSection_None;
     gConsoleUIController.OverrideSFX(m_playerId, 0, true);
@@ -104,10 +103,10 @@ void UIScene_AbstractContainerMenu::PlatformInitialize(bool navigateBack, int pa
         width = 640;
     gFui->dispatchMouseMoveEvent(
         m_movie,
-        static_cast<float>(static_cast<int>(m_pointerPos.x * (static_cast<float>(width) /
-                                                               static_cast<float>(m_stageWidth)))),
-        static_cast<float>(static_cast<int>(m_pointerPos.y * (static_cast<float>(height) /
-                                                               static_cast<float>(m_stageHeight)))));
+        static_cast<float>(
+            static_cast<int>(m_pointerPos.x * (static_cast<float>(width) / static_cast<float>(m_stageWidth)))),
+        static_cast<float>(
+            static_cast<int>(m_pointerPos.y * (static_cast<float>(height) / static_cast<float>(m_stageHeight)))));
 }
 
 void UIScene_AbstractContainerMenu::InitDataAssociations(int, AbstractContainerMenu*, int)
@@ -122,8 +121,7 @@ void UIScene_AbstractContainerMenu::setSectionFocus(IUIScene_AbstractContainerMe
 
     if (m_focusSection != IUIScene_AbstractContainerMenu::ESceneSection_None)
     {
-        UIControl* previousSection = getSection(
-            m_focusSection);
+        UIControl* previousSection = getSection(m_focusSection);
         if (previousSection != selectedSection && previousSection != NULL)
             previousSection->setFocus(false);
     }
@@ -134,8 +132,7 @@ void UIScene_AbstractContainerMenu::setFocusToPointer(int)
 {
     if (m_focusSection != IUIScene_AbstractContainerMenu::ESceneSection_None)
     {
-        UIControl* previousSection = getSection(
-            m_focusSection);
+        UIControl* previousSection = getSection(m_focusSection);
         if (previousSection != NULL)
             previousSection->setFocus(false);
     }
@@ -161,8 +158,7 @@ Slot* UIScene_AbstractContainerMenu::getSlot(IUIScene_AbstractContainerMenu::ESc
     return m_menu->getSlot(getSectionStartOffset(section) + slotIndex);
 }
 
-bool UIScene_AbstractContainerMenu::isSlotEmpty(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                int slotIndex)
+bool UIScene_AbstractContainerMenu::isSlotEmpty(IUIScene_AbstractContainerMenu::ESceneSection section, int slotIndex)
 {
     Slot* slot = m_menu->getSlot(getSectionStartOffset(section) + slotIndex);
     if (slot != NULL)
@@ -223,8 +219,8 @@ void UIScene_AbstractContainerMenu::handleDestroy()
         }
     }
 
-    if (minecraft->mLocalPlayers[m_playerId] != NULL &&
-        minecraft->mLocalPlayers[m_playerId]->mContainerMenu->m_containerId == m_menu->m_containerId)
+    if (minecraft->mLocalPlayers[m_playerId] != NULL
+        && minecraft->mLocalPlayers[m_playerId]->mContainerMenu->m_containerId == m_menu->m_containerId)
         minecraft->mLocalPlayers[m_playerId]->closeContainer();
 
     gConsoleUIController.OverrideSFX(m_playerId, 0, false);
@@ -251,10 +247,10 @@ void UIScene_AbstractContainerMenu::tick()
         width = 640;
     gFui->dispatchMouseMoveEvent(
         m_movie,
-        static_cast<float>(static_cast<int>(m_pointerPos.x * (static_cast<float>(width) /
-                                                               static_cast<float>(m_stageWidth)))),
-        static_cast<float>(static_cast<int>(m_pointerPos.y * (static_cast<float>(height) /
-                                                               static_cast<float>(m_stageHeight)))));
+        static_cast<float>(
+            static_cast<int>(m_pointerPos.x * (static_cast<float>(width) / static_cast<float>(m_stageWidth)))),
+        static_cast<float>(
+            static_cast<int>(m_pointerPos.y * (static_cast<float>(height) / static_cast<float>(m_stageHeight)))));
 }
 
 void UIScene_AbstractContainerMenu::render(int width, int height, C4JRender::eViewportType viewport)

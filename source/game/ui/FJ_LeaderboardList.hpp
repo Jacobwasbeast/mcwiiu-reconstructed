@@ -17,6 +17,7 @@ class fuiRenderNode;
 class FJ_LeaderboardList : public FJ_FuiNode
 {
     friend class fuiRenderNodeTimeline;
+
 public:
     struct CLeaderboardEntry
     {

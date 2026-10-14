@@ -8,7 +8,11 @@
 #include <cstdio>
 
 FJ_LeaderboardHeader::FJ_LeaderboardHeader(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_rankTextWidth(0.0f), m_gamertagTextWidth(0.0f), m_small(false), m_slotWidth(0),
+    : FJ_FuiNode(pRenderNode),
+      m_rankTextWidth(0.0f),
+      m_gamertagTextWidth(0.0f),
+      m_small(false),
+      m_slotWidth(0),
       m_slotAreaWidth(0)
 {
     for (int i = 0; i < 7; ++i)
@@ -45,8 +49,10 @@ void FJ_LeaderboardHeader::Init(int count, FJ_FuiNode* parent, int x, int y)
     {
         if (i < count)
         {
-            m_entryPositions[i] = Math::round(static_cast<float>(left + i * (spacing + slotWidth)) + static_cast<float>(slotWidth) * 0.5f);
-            m_icons[i]->setX(static_cast<float>(x + Math::round(static_cast<float>(m_entryPositions[i]) * getScaleX())));
+            m_entryPositions[i] = Math::round(static_cast<float>(left + i * (spacing + slotWidth))
+                                              + static_cast<float>(slotWidth) * 0.5f);
+            m_icons[i]->setX(
+                static_cast<float>(x + Math::round(static_cast<float>(m_entryPositions[i]) * getScaleX())));
             m_icons[i]->setY(static_cast<float>(iconY + y));
             m_icons[i]->setVisible(true);
         }

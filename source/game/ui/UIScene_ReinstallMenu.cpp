@@ -10,8 +10,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/core/GameSettings.hpp"
 
-UIScene_ReinstallMenu::UIScene_ReinstallMenu(int type, void*, UILayer* layer)
-    : UIScene(type, layer)
+UIScene_ReinstallMenu::UIScene_ReinstallMenu(int type, void*, UILayer* layer) : UIScene(type, layer)
 {
     initialiseMovie();
 }
@@ -50,8 +49,7 @@ unsigned int UIScene_ReinstallMenu::mapElementsAndNames()
 void UIScene_ReinstallMenu::updateTooltips()
 {
     gConsoleUIController.SetTooltips(m_playerId, (int)IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, IDS_TOOLTIPS_SELECTDEVICE,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, false, false);
+                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_ReinstallMenu::updateComponents()
@@ -76,8 +74,7 @@ std::wstring UIScene_ReinstallMenu::getMoviePath()
     return std::wstring(L"ReinstallMenu");
 }
 
-void UIScene_ReinstallMenu::handleInput(int, int action, bool repeat, bool pressed,
-                                        bool released, bool& handled)
+void UIScene_ReinstallMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)

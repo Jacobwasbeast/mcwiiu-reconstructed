@@ -26,20 +26,25 @@
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_MapSelectMenu::UIScene_MapSelectMenu(int sceneType, void* data, UILayer* layer)
-    : UIScene(sceneType, layer), IUIScene_DlcSelectMenu(eDLCContentType_MapPack), m_levelRuleGroups(),
-      m_mapList(), m_mapListTitle(), m_mapTitle(), m_mapDescription(), m_mapIcon()
+    : UIScene(sceneType, layer),
+      IUIScene_DlcSelectMenu(eDLCContentType_MapPack),
+      m_levelRuleGroups(),
+      m_mapList(),
+      m_mapListTitle(),
+      m_mapTitle(),
+      m_mapDescription(),
+      m_mapIcon()
 {
     initialiseMovie();
     m_initData = static_cast<LaunchMoreOptionsMenuInitData*>(data);
     m_generationOptions = NULL;
     m_playerId = m_initData->mPad;
     LevelRules::ELevelRuleType ruleType = LevelRules::GetRuleTypeForMiniGame(m_initData->mMiniGameId);
-    if (m_initData->mMatchmaking && !m_initData->mTimeTrial &&
-        !Minecraft::GetInstance()->GetMiniGame()->HasFeatureSeasonalMaps())
+    if (m_initData->mMatchmaking && !m_initData->mTimeTrial
+        && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureSeasonalMaps())
         gApp.getLevelRules()->getRulesByType(ruleType, &m_initData->mLevelRulesetGroups, true);
     gApp.getLevelRules()->getRulesByType(ruleType, &m_levelRuleGroups, false);
-    std::sort(m_levelRuleGroups.begin(), m_levelRuleGroups.end(),
-              LevelRules::LevelRulesetGroup::SortMapRules);
+    std::sort(m_levelRuleGroups.begin(), m_levelRuleGroups.end(), LevelRules::LevelRulesetGroup::SortMapRules);
     m_miniGameType = m_initData->mMiniGameId;
     m_mapSelection = 0;
     switch (m_miniGameType)
@@ -100,8 +105,7 @@ void UIScene_MapSelectMenu::_init()
         wchar_t textureName[64] = L"default";
 
         unsigned int texturePackId = group->rulesets[0]->getGenerationOptions()->getTexturePackId();
-        TexturePack* texturePack =
-            Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(texturePackId);
+        TexturePack* texturePack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(texturePackId);
         if (texturePack == NULL)
             gApp.getDLCFolderName(static_cast<EDLC_ID>(texturePackId));
 
@@ -111,20 +115,19 @@ void UIScene_MapSelectMenu::_init()
         {
             std::swprintf(textureName, 64, L"tpack%08x", texturePack->getId());
             if (!hasRegisteredSubstitutionTexture(textureName))
-                registerSubstitutionTexture(textureName,
-                                            static_cast<unsigned char*>(const_cast<void*>(iconData)),
+                registerSubstitutionTexture(textureName, static_cast<unsigned char*>(const_cast<void*>(iconData)),
                                             iconSize, false);
         }
 
         LevelGenerationOptions* options = group->rulesets[0]->getGenerationOptions();
         bool selected = (m_mapSelection & (1 << options->getThemeId())) != 0;
-        if (!options->getPack()->hasPurchasedPack() &&
-            !gApp.mDLCManager.IsMiniGameTemporarilyFree(group->rulesets[0]->getRuleType()))
+        if (!options->getPack()->hasPurchasedPack()
+            && !gApp.mDLCManager.IsMiniGameTemporarilyFree(group->rulesets[0]->getRuleType()))
             selected = false;
 
-        if (m_initData->mMatchmaking && !m_initData->mTimeTrial &&
-            std::find(m_initData->mLevelRulesetGroups.begin(), m_initData->mLevelRulesetGroups.end(),
-                      group) != m_initData->mLevelRulesetGroups.end())
+        if (m_initData->mMatchmaking && !m_initData->mTimeTrial
+            && std::find(m_initData->mLevelRulesetGroups.begin(), m_initData->mLevelRulesetGroups.end(), group)
+                   != m_initData->mLevelRulesetGroups.end())
         {
             selected = true;
             anySelected = true;
@@ -134,8 +137,7 @@ void UIScene_MapSelectMenu::_init()
             anySelected = true;
         }
 
-        m_mapList.AddNewItem(group->rulesets[0]->getGenerationOptions()->getWorldName(), index, selected,
-                             textureName);
+        m_mapList.AddNewItem(group->rulesets[0]->getGenerationOptions()->getWorldName(), index, selected, textureName);
         if (m_initData->mMatchmaking && !m_initData->mTimeTrial)
         {
             m_mapList.EnableItem(index, false, true);
@@ -164,12 +166,12 @@ std::wstring UIScene_MapSelectMenu::getMoviePath()
 void UIScene_MapSelectMenu::updateTooltips()
 {
     if (m_initData->mMatchmaking && !m_initData->mTimeTrial)
-        gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1,
-                                         -1, -1, -1, -1, -1, -1, false, false);
+        gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                         -1, -1, -1, -1, -1, false, false);
     else
         gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, IDS_TOOLTIPS_SELECT_ALL,
-                                         IDS_TOOLTIPS_UNSELECT_ALL, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                         -1, false, false);
+                                         IDS_TOOLTIPS_UNSELECT_ALL, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                         false, false);
 }
 
 void UIScene_MapSelectMenu::updateComponents()
@@ -239,8 +241,7 @@ int UIScene_MapSelectMenu::checkHasPurchased(int index, bool tryPurchase)
     return purchased;
 }
 
-void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool pressed, bool released,
-                                        bool& handled)
+void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     if (m_purchasePending)
         return;
@@ -285,7 +286,7 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool press
         }
         else
         {
-            int parameters[1] = { IDS_CONFIRM_OK };
+            int parameters[1] = {IDS_CONFIRM_OK};
             m_mapSelection = 0;
             gConsoleUIController.RequestAlertMessage(IDS_MG_NO_MAPS_SELECTED_TITLE, IDS_MG_NO_MAPS_SELECTED_TEXT,
                                                      parameters, 1, m_playerId, NULL, NULL, NULL, true);
@@ -334,8 +335,7 @@ void UIScene_MapSelectMenu::handleFocusChange(int, int childFocus)
 {
     m_mapList.updateChildFocus(childFocus);
     m_mapInfoPending = 1;
-    m_generationOptions =
-        m_levelRuleGroups.at(m_mapList.getCurrentSelection())->rulesets.at(0)->getGenerationOptions();
+    m_generationOptions = m_levelRuleGroups.at(m_mapList.getCurrentSelection())->rulesets.at(0)->getGenerationOptions();
     m_pack = m_generationOptions->getPack();
 }
 

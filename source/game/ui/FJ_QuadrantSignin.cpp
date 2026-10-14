@@ -6,12 +6,11 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-std::string s_controllerNames[4] = { "Controller1", "Controller2", "Controller3", "Controller4" };
-const std::string s_controllerStatusNames[5] = { "ConnectController", "PressToJoin", "PlayerDetails",
-                                                 "PlayerLoggedIn_ConnectController", "PlayerLoggedIn_NoController" };
+std::string s_controllerNames[4] = {"Controller1", "Controller2", "Controller3", "Controller4"};
+const std::string s_controllerStatusNames[5] = {"ConnectController", "PressToJoin", "PlayerDetails",
+                                                "PlayerLoggedIn_ConnectController", "PlayerLoggedIn_NoController"};
 
-FJ_QuadrantSignin::FJ_QuadrantSignin(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_QuadrantSignin::FJ_QuadrantSignin(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 
@@ -66,7 +65,9 @@ void FJ_QuadrantSignin::init(FJ_Event* event)
         mControllers[i] = getChildByName(s_controllerNames[i]);
         ShowControllerTimer(i, false);
         SetControllerStatus(i, 0, 1);
-        mControllers[i]->getChildByName("ButtonGraphic")->addEventListener(eFJEventType_ShowTimerAnimation, this, _ShowTimerAnimation, false);
+        mControllers[i]
+            ->getChildByName("ButtonGraphic")
+            ->addEventListener(eFJEventType_ShowTimerAnimation, this, _ShowTimerAnimation, false);
     }
     mABSwap = false;
 }

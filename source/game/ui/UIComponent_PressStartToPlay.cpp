@@ -25,7 +25,9 @@ namespace
 struct AvatarRequest
 {
     AvatarRequest(UIComponent_PressStartToPlay* scene, int player, int achievement)
-        : scene(scene), player(player), achievement(achievement)
+        : scene(scene),
+          player(player),
+          achievement(achievement)
     {
     }
 
@@ -35,8 +37,7 @@ struct AvatarRequest
 };
 }
 
-UIComponent_PressStartToPlay::UIComponent_PressStartToPlay(int type, void* data, UILayer* layer)
-    : UIScene(type, layer)
+UIComponent_PressStartToPlay::UIComponent_PressStartToPlay(int type, void* data, UILayer* layer) : UIScene(type, layer)
 {
     initialiseMovie();
     m_showSaveIcon = false;
@@ -77,10 +78,11 @@ bool UIComponent_PressStartToPlay::GetHoldToShowAchievementsActive(bool includeC
     return m_holdToShowAchievements;
 }
 
-unsigned int UIComponent_PressStartToPlay::handleHold(int player, int action, bool repeat,
-                                                       bool pressed, bool released, bool& handled)
+unsigned int UIComponent_PressStartToPlay::handleHold(int player, int action, bool repeat, bool pressed, bool released,
+                                                      bool& handled)
 {
-    if (GetAchievementToastShowing(player) && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && pressed && !repeat)
+    if (GetAchievementToastShowing(player)
+        && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && pressed && !repeat)
     {
         m_holdToShowAchievements = true;
         m_holdActionCancelled = false;
@@ -88,7 +90,8 @@ unsigned int UIComponent_PressStartToPlay::handleHold(int player, int action, bo
         handled = true;
         return 1;
     }
-    if (m_holdToShowAchievements && !handled && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && released)
+    if (m_holdToShowAchievements && !handled
+        && (action == EControllerActions_Inventory || action == EControllerActions_MenuY) && released)
     {
         if (m_holdCancelPending)
         {
@@ -132,8 +135,8 @@ void UIComponent_PressStartToPlay::setTrialTimer(const std::wstring& timer)
 void UIComponent_PressStartToPlay::showSaveIcon(bool show)
 {
     m_showSaveIcon = show;
-    if (!gConsoleUIController.IsExpectingOrReloadingSkin() && hasMovie() &&
-        GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplaySaveIcon))
+    if (!gConsoleUIController.IsExpectingOrReloadingSkin() && hasMovie()
+        && GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplaySaveIcon))
         m_saveIcon.setVisible(show);
 }
 
@@ -141,7 +144,8 @@ void UIComponent_PressStartToPlay::ShowChestRefillAnimation(bool show, int yOffs
 {
     if (hasMovie())
     {
-        static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->ShowChestRefillAnimation(show, yOffset);
+        static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())
+            ->ShowChestRefillAnimation(show, yOffset);
         addTimer(3, 2500);
     }
 }
@@ -196,8 +200,8 @@ void UIComponent_PressStartToPlay::ShowAchievementToast(const Toast& toast)
 {
     addTimer(1, 4000);
     m_achievementToastShowing = true;
-    static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->ShowAchievementToast(toast.title, toast.description,
-                                                              toast.gamerPic, toast.achievementIcon);
+    static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())
+        ->ShowAchievementToast(toast.title, toast.description, toast.gamerPic, toast.achievementIcon);
 }
 
 int UIComponent_PressStartToPlay::AvatarReturned(void* context, unsigned char* data, unsigned int size)
@@ -220,7 +224,7 @@ int UIComponent_PressStartToPlay::AvatarReturned(void* context, unsigned char* d
         std::wstring text = L10N::GetString(0x4523129e);
         std::wstring description = gApp.FormatHTMLString(
             player, replaceAll(text, L"{*CONTROLLER_VK_X*}", L"{*CONTROLLER_VK_Y*}"), -1);
-        Toast toast = { title, description, texture, info->icon };
+        Toast toast = {title, description, texture, info->icon};
         if (!scene->m_achievementToastShowing)
             scene->ShowAchievementToast(toast);
         else
@@ -314,8 +318,7 @@ void UIComponent_PressStartToPlay::ShowAchievementMenu()
     m_achievementToastShowing = false;
     if (gApp.GetGameStarted() != 0)
         gConsoleUIController.CloseAllPlayersScenes(false);
-    gConsoleUIController.NavigateToScene(m_player, EUIScene_AchievementsMenu,
-                                         (void*)(unsigned int)m_achievement,
+    gConsoleUIController.NavigateToScene(m_player, EUIScene_AchievementsMenu, (void*)(unsigned int)m_achievement,
                                          EUILayer_Scene, EUIGroup_PlayerDefault);
 }
 

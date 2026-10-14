@@ -29,8 +29,7 @@ public:
     virtual void updateTooltips();
     virtual void handleReload();
     virtual void handleGainFocus(bool navigatedBack);
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleFocusChange(int controlId, int childId);
     virtual void handleInitFocus(int controlId, int childId);
     virtual bool hasFocus(int playerId);

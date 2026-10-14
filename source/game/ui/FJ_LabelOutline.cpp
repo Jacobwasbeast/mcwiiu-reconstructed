@@ -6,8 +6,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
-FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode)
+FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode) : FJ_Base(renderNode)
 {
     m_centreLabel = true;
     FJ_FuiNode* labelContainer = getChildAt(0)->asMovieClip();

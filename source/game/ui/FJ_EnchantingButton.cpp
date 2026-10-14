@@ -8,15 +8,10 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
-static std::string s_enchantingButtonStates[3] =
-{
-    std::string("Inactive"),
-    std::string("Active"),
-    std::string("Selected")
-};
+static std::string s_enchantingButtonStates[3] = {std::string("Inactive"), std::string("Active"),
+                                                  std::string("Selected")};
 
-FJ_EnchantingButton::FJ_EnchantingButton(fuiRenderNode* pRenderNode)
-    : FJ_Base(pRenderNode)
+FJ_EnchantingButton::FJ_EnchantingButton(fuiRenderNode* pRenderNode) : FJ_Base(pRenderNode)
 {
     SetLabelAlignment(0);
     m_isLabel = false;
@@ -46,8 +41,7 @@ void FJ_EnchantingButton::SetupIggySlot()
     rect.yMax = icon->getHeight() / icon->getScaleY();
     char name[64];
     std::sprintf(name, "iggy_slot_%s", getName());
-    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, name);
+    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);
     FJ_FuiNode* blank = new FJ_FuiNode(renderNode);
     renderNode->setFuiNode(blank);

@@ -12,14 +12,10 @@
 
 bool FJ_CheckBox::s_keyDown = false;
 
-static std::string s_checkBoxStates[2][2] =
-{
-    {std::string("Active_Selected"), std::string("Inactive_Selected")},
-    {std::string("Active_Unselected"), std::string("Inactive_Unselected")}
-};
+static std::string s_checkBoxStates[2][2] = {{std::string("Active_Selected"), std::string("Inactive_Selected")},
+                                             {std::string("Active_Unselected"), std::string("Inactive_Unselected")}};
 
-FJ_CheckBox::FJ_CheckBox(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode)
+FJ_CheckBox::FJ_CheckBox(fuiRenderNode* renderNode) : FJ_Base(renderNode)
 {
     m_checked = true;
     m_enabled = true;
@@ -47,11 +43,13 @@ void FJ_CheckBox::SetCheckBox(bool checked)
     {
         if (parent->isFJ_List())
         {
-            getRoot()->m_pCallbackScene->handleCheckboxElementToggled(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
+            getRoot()->m_pCallbackScene->handleCheckboxElementToggled(
+                static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
         }
         else if (getObjListParent()->isFJ_List2D())
         {
-            getRoot()->m_pCallbackScene->handleCheckboxElementToggled(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
+            getRoot()->m_pCallbackScene->handleCheckboxElementToggled(
+                static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
         }
     }
     else

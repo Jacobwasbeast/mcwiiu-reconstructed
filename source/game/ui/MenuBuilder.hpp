@@ -57,7 +57,8 @@ public:
         {
         public:
             PotionItemBuilder(const ItemInstance& item, Potion* potion)
-                : ItemInstanceClonerBuilder(item), mPotion(potion)
+                : ItemInstanceClonerBuilder(item),
+                  mPotion(potion)
             {
             }
 
@@ -80,7 +81,9 @@ public:
         {
         public:
             SpawnEggItemBuilder(const std::wstring& entityId, const std::wstring& debugTag)
-                : ItemInstanceClonerBuilder(ItemInstance(Items::spawnEgg)), mEntityId(entityId), mDebugTag(debugTag)
+                : ItemInstanceClonerBuilder(ItemInstance(Items::spawnEgg)),
+                  mEntityId(entityId),
+                  mDebugTag(debugTag)
             {
             }
 

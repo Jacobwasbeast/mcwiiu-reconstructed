@@ -1,7 +1,6 @@
 #include "game/ui/FJ_TextInput_Vita.hpp"
 
-FJ_TextInput_Vita::FJ_TextInput_Vita(fuiRenderNode* renderNode)
-    : FJ_TextInput(renderNode)
+FJ_TextInput_Vita::FJ_TextInput_Vita(fuiRenderNode* renderNode) : FJ_TextInput(renderNode)
 {
 }
 

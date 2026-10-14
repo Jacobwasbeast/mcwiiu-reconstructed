@@ -16,10 +16,7 @@ public:
         unsigned int colour;
     };
 
-    fuiFontSet(const char* name)
-        : m_name(name)
-    {
-    }
+    fuiFontSet(const char* name) : m_name(name) {}
 
     virtual int getTextureIndex(float fontSize, int ttfIndex) = 0;
     virtual float getGlyphScale(float fontSize) = 0;

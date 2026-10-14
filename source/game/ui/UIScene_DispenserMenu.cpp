@@ -30,7 +30,9 @@ struct DispenserMenuArgs
 }
 
 UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_dispenserSlot(), m_dispenserLabel()
+    : UIScene_AbstractContainerMenu(type, layer),
+      m_dispenserSlot(),
+      m_dispenserLabel()
 {
     initialiseMovie();
 
@@ -41,8 +43,8 @@ UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* laye
     }
     else
     {
-        boost::shared_ptr<InteractionObject> interaction =
-            boost::dynamic_pointer_cast<InteractionObject>(args->container);
+        boost::shared_ptr<InteractionObject> interaction = boost::dynamic_pointer_cast<InteractionObject>(
+            args->container);
         if (interaction && interaction->getTypeId(false) == ClientboundContainerOpenPacket::DROPPER)
         {
             m_dispenserLabel.init(UIString(L10N::GetString(IDS_CONTAINER_DROPPER)));
@@ -64,9 +66,9 @@ UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* laye
     }
     AbstractContainerMenu* menu = new TrapMenu(args->inventory, args->container);
     m_containerSize = static_cast<int>(args->container->getContainerSize());
-    Initialize(false, args->player, menu, true,
-                                m_containerSize, IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar,
-                                IUIScene_AbstractContainerMenu::ESceneSection_DispenserMax, false);
+    Initialize(false, args->player, menu, true, m_containerSize,
+               IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_DispenserMax, false);
     m_dispenserSlot.addSlots(0, 9);
     delete args;
 }
@@ -75,8 +77,7 @@ UIScene_DispenserMenu::~UIScene_DispenserMenu()
 {
 }
 
-int UIScene_DispenserMenu::getSectionColumns(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_DispenserMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int columns = 0;
     switch (section)
@@ -96,8 +97,7 @@ int UIScene_DispenserMenu::getSectionColumns(
     return columns;
 }
 
-int UIScene_DispenserMenu::getSectionRows(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_DispenserMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int rows = 0;
     switch (section)
@@ -117,9 +117,9 @@ int UIScene_DispenserMenu::getSectionRows(
     return rows;
 }
 
-unsigned int UIScene_DispenserMenu::GetSectionAndSlotInDirection(
-    IUIScene_AbstractContainerMenu::ESceneSection section,
-    IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
+unsigned int UIScene_DispenserMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                                 IUIScene_AbstractContainerMenu::ETapState state,
+                                                                 int* x, int* y)
 {
     const IUIScene_AbstractContainerMenu::ESceneSection hotbar =
         IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar;
@@ -176,8 +176,8 @@ unsigned int UIScene_DispenserMenu::GetSectionAndSlotInDirection(
     return newSection;
 }
 
-void UIScene_DispenserMenu::GetPositionOfSection(
-    IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
+void UIScene_DispenserMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                 _UIVec2D* position)
 {
     switch (section)
     {
@@ -198,9 +198,8 @@ void UIScene_DispenserMenu::GetPositionOfSection(
     }
 }
 
-void UIScene_DispenserMenu::GetItemScreenData(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-    _UIVec2D* position, _UIVec2D* size)
+void UIScene_DispenserMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                              _UIVec2D* position, _UIVec2D* size)
 {
     _UIVec2D controlSize;
     switch (section)
@@ -230,8 +229,7 @@ void UIScene_DispenserMenu::GetItemScreenData(
     position->y = static_cast<float>(row) * size->y;
 }
 
-int UIScene_DispenserMenu::getSectionStartOffset(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_DispenserMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int offset = 0;
     switch (section)
@@ -251,8 +249,8 @@ int UIScene_DispenserMenu::getSectionStartOffset(
     return offset;
 }
 
-void UIScene_DispenserMenu::setSectionSelectedSlot(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
+void UIScene_DispenserMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                                   int direction, bool wrap)
 {
     const int highlightSlot = direction * getSectionColumns(section) + slot;
     UIControl_SlotList* list = 0;
@@ -292,15 +290,14 @@ unsigned int UIScene_DispenserMenu::mapElementsAndNames()
 
 std::wstring UIScene_DispenserMenu::getMoviePath()
 {
-    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"DispenserMenuSplit") :
-        std::wstring(L"DispenserMenu");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"DispenserMenuSplit") : std::wstring(L"DispenserMenu");
 }
 
 void UIScene_DispenserMenu::handleReload()
 {
-    Initialize(true, m_playerId, m_menu, true,
-                                m_containerSize, IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar,
-                                IUIScene_AbstractContainerMenu::ESceneSection_DispenserMax, false);
+    Initialize(true, m_playerId, m_menu, true, m_containerSize,
+               IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_DispenserMax, false);
     m_dispenserSlot.addSlots(0, 9);
 }
 
@@ -324,8 +321,7 @@ UIControl* UIScene_DispenserMenu::getSection(IUIScene_AbstractContainerMenu::ESc
     return control;
 }
 
-void UIScene_DispenserMenu::handleSectionClick(
-    IUIScene_AbstractContainerMenu::ESceneSection)
+void UIScene_DispenserMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection)
 {
 }
 

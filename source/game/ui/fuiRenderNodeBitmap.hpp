@@ -8,9 +8,8 @@ struct fuiFile;
 class fuiRenderNodeBitmap : public fuiRenderNode
 {
 public:
-    fuiRenderNodeBitmap(fuiRenderNode* parent, fuiRenderNode* root, fuiObject* object,
-                        unsigned int symbolIndex, unsigned char depth, fuiRGBA* color,
-                        unsigned char clipDepth, bool visible, fuiFile* file);
+    fuiRenderNodeBitmap(fuiRenderNode* parent, fuiRenderNode* root, fuiObject* object, unsigned int symbolIndex,
+                        unsigned char depth, fuiRGBA* color, unsigned char clipDepth, bool visible, fuiFile* file);
     virtual ~fuiRenderNodeBitmap();
     virtual void gather(bool recurse);
     virtual void preRender();

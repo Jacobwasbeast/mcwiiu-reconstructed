@@ -2,8 +2,7 @@
 
 #include <string>
 
-FJ_TouchControlFrontend::FJ_TouchControlFrontend(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_TouchControlFrontend::FJ_TouchControlFrontend(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     Init();
 }

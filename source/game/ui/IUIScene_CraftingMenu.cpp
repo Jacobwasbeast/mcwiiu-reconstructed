@@ -49,23 +49,16 @@ typedef std::pair<std::pair<int, CompoundTag*>, int> InventoryItemCount;
 }
 
 
-int IUIScene_CraftingMenu::m_craftingTabOrder2x2[4] = { 0, 1, 2, 3 };
-int IUIScene_CraftingMenu::m_craftingTabOrder3x3[4] = { 0, 1, 2, 3 };
+int IUIScene_CraftingMenu::m_craftingTabOrder2x2[4] = {0, 1, 2, 3};
+int IUIScene_CraftingMenu::m_craftingTabOrder3x3[4] = {0, 1, 2, 3};
 
 int IUIScene_CraftingMenu::m_groupMap2x2[5][7] = {
-    { 0, 1, 2, 4, 5, 6, -1 },
-    { 0, 4, 5, -1, -1, -1, -1 },
-    { 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0 },
+    {0, 1, 2, 4, 5, 6, -1}, {0, 4, 5, -1, -1, -1, -1}, {0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0},  {0, 0, 0, 0, 0, 0, 0},
 };
 
 int IUIScene_CraftingMenu::m_groupMap3x3[5][7] = {
-    { 0, 1, 2, 3, 4, 5, 6 },
-    { 0, 1, 2, 3, 4, 5, -1 },
-    { 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0 },
+    {0, 1, 2, 3, 4, 5, 6}, {0, 1, 2, 3, 4, 5, -1}, {0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0},
 };
 
 IUIScene_CraftingMenu::IUIScene_CraftingMenu()
@@ -244,8 +237,8 @@ bool IUIScene_CraftingMenu::isItemSelected(int itemId)
     bool selected = false;
     if (m_player != NULL && m_player->mInventory != NULL)
     {
-        Recipe::INGREDIENTS_REQUIRED* ingredients =
-            Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+        Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+            static_cast<Recipes::ERecipeCategory>(m_currentTab));
         int count = getCurrentVSlotCount();
         if (count != 0)
         {
@@ -345,7 +338,8 @@ int IUIScene_CraftingMenu::GetCustomIngredientCount(not_null_ptr<ItemInstance> i
         if (!m_maintainedInventory->m_items[slot]->isEmpty()
             && m_maintainedInventory->m_items[slot]->getItem() == item->getItem()
             && m_maintainedInventory->m_items[slot]->getAuxValue() == item->getAuxValue()
-            && (m_maintainedInventory->m_items[slot]->getTag() == NULL || item->getTag() == NULL || ItemInstance::tagMatches(m_maintainedInventory->m_items[slot], item)))
+            && (m_maintainedInventory->m_items[slot]->getTag() == NULL || item->getTag() == NULL
+                || ItemInstance::tagMatches(m_maintainedInventory->m_items[slot], item)))
         {
             count += m_maintainedInventory->m_items[slot]->getCount();
         }
@@ -378,7 +372,8 @@ bool IUIScene_CraftingMenu::isValidCustomRecipeIngredient(int index, not_null_pt
             continue;
         if (itemId != featherId && itemId != goldNuggetId && itemId != fireChargeId && itemId != skullId)
             continue;
-        if (slotItemId == featherId || slotItemId == goldNuggetId || slotItemId == fireChargeId || slotItemId == skullId)
+        if (slotItemId == featherId || slotItemId == goldNuggetId || slotItemId == fireChargeId
+            || slotItemId == skullId)
             return false;
     }
 
@@ -387,7 +382,8 @@ bool IUIScene_CraftingMenu::isValidCustomRecipeIngredient(int index, not_null_pt
     int gunpowderId = Item::getId(Items::gunpowder);
     for (int slot = 0; slot < gridSize; ++slot)
     {
-        if (m_customGridItems[slot]->isEmpty() || m_customIngredientSlots.empty() || m_customIngredientSlots.back() == slot)
+        if (m_customGridItems[slot]->isEmpty() || m_customIngredientSlots.empty()
+            || m_customIngredientSlots.back() == slot)
             continue;
         if (Item::getId(m_customGridItems[slot]->getItem()) == gunpowderId && itemId == gunpowderId)
         {
@@ -418,8 +414,8 @@ int IUIScene_CraftingMenu::GetCustomIngredientIndex(not_null_ptr<ItemInstance> i
 void IUIScene_CraftingMenu::UpdateMaintainedInventory()
 {
     m_maintainedInventory->replaceWith_NONRECURSIVE(m_player->mInventory);
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
     for (std::vector<std::pair<int, int> >::iterator it = m_stackedRecipes.begin(); it != m_stackedRecipes.end(); it++)
     {
         Recipe::INGREDIENTS_REQUIRED& required = ingredients[it->first];
@@ -449,8 +445,8 @@ void IUIScene_CraftingMenu::UpdateMaintainedInventory()
 void IUIScene_CraftingMenu::DisplayCustomRecipeIngredients(int recipe)
 {
     int gridSize = m_craftingMode == 0 ? 2 : 3;
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
     Recipe::INGREDIENTS_REQUIRED& required = ingredients[recipe];
     m_ingredientCount = required.numIngredients;
     not_null_ptr<ItemInstance> resultItem = required.recipe->assemble(boost::shared_ptr<CraftingContainer>());
@@ -579,8 +575,8 @@ void IUIScene_CraftingMenu::DisplayCustomRecipeIngredients(int recipe)
                 {
                     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
                     bool enabled = false;
-                    not_null_ptr<ItemInstance> spinnerItem =
-                        GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot], enabled);
+                    not_null_ptr<ItemInstance> spinnerItem = GetSpinnerSlot(
+                        m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot], enabled);
                     if (m_customIngredientSlots.back() == slot && !spinnerItem->isEmpty())
                     {
                         bool valid = true;
@@ -664,8 +660,8 @@ void IUIScene_CraftingMenu::DisplayCustomRecipeIngredients(int recipe)
 
 void IUIScene_CraftingMenu::UpdateDescriptionText(bool show)
 {
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
     if (!show)
     {
         if (static_cast<unsigned int>(m_currentTab - 1) < 3)
@@ -762,9 +758,10 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
         return;
 
     m_maintainedInventory->PrintContents();
-    std::vector<Recipe*>* recipes = Recipes::getInstance()->getRecipes(static_cast<Recipes::ERecipeCategory>(m_currentTab));
-    Recipe::INGREDIENTS_REQUIRED* required =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    std::vector<Recipe*>* recipes = Recipes::getInstance()->getRecipes(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* required = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
     int recipeCount = static_cast<int>(recipes->size());
 
     std::vector<InventoryItemCount> inventoryCounts;
@@ -788,7 +785,8 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
         unsigned int key = Item::VALIDgetId(m_player->mInventory->m_items[slot]->getItem()) | (auxValue << 16);
 
         bool merged = false;
-        for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end(); ++count)
+        for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end();
+             ++count)
         {
             CompoundTag* countTag = count->first.second;
             CompoundTag* itemTag = m_player->mInventory->m_items[slot]->getTag();
@@ -807,7 +805,8 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
         if (!merged)
         {
             inventoryCounts.push_back(
-                InventoryItemCount(std::pair<int, CompoundTag*>(key, m_player->mInventory->m_items[slot]->getTag()), m_player->mInventory->m_items[slot]->getCount()));
+                InventoryItemCount(std::pair<int, CompoundTag*>(key, m_player->mInventory->m_items[slot]->getTag()),
+                                   m_player->mInventory->m_items[slot]->getCount()));
         }
     }
 
@@ -816,9 +815,11 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
     {
         unsigned int key = used->first;
         int remaining = used->second;
-        for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end(); ++count)
+        for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end();
+             ++count)
         {
-            if ((static_cast<int>(key) >> 16 < 0 && (count->first.first & 0xffff) == (key & 0xffff)) || count->first.first == key)
+            if ((static_cast<int>(key) >> 16 < 0 && (count->first.first & 0xffff) == (key & 0xffff))
+                || count->first.first == key)
             {
                 if (count->second < remaining)
                 {
@@ -865,7 +866,8 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
             int have = 0;
             Item* ingredientItem = Item::byId(ingredients.itemIds[i]);
             bool baseIngredient = false;
-            if (ingredientItem != NULL && !m_accumulatedItem->isEmpty() && m_accumulatedItem->getItem() == ingredientItem)
+            if (ingredientItem != NULL && !m_accumulatedItem->isEmpty()
+                && m_accumulatedItem->getItem() == ingredientItem)
             {
                 baseIngredient = true;
             }
@@ -882,8 +884,8 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
             }
             else if (ingredients.auxValues[i] == -1)
             {
-                for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end();
-                     ++count)
+                for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin();
+                     count != inventoryCounts.end(); ++count)
                 {
                     if ((count->first.first & 0xffff) == static_cast<unsigned int>(ingredients.itemIds[i]))
                         have += count->second;
@@ -893,12 +895,13 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
             {
                 unsigned int key = ingredients.itemIds[i] | (ingredients.auxValues[i] << 16);
                 CompoundTag* tag = ingredients.itemTags != NULL ? ingredients.itemTags[i] : NULL;
-                for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end();
-                     ++count)
+                for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin();
+                     count != inventoryCounts.end(); ++count)
                 {
                     if (count->first.first != key)
                         continue;
-                    if (tag == NULL || (count->first.second != NULL && tag->equalsWithException(count->first.second, ignoredTags)))
+                    if (tag == NULL
+                        || (count->first.second != NULL && tag->equalsWithException(count->first.second, ignoredTags)))
                     {
                         have = count->second;
                         break;
@@ -920,7 +923,8 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
             {
                 unsigned int gridEntry = ingredients.craftingGrid[slot];
                 if ((gridEntry & 0xffffff) == static_cast<unsigned int>(ingredients.itemIds[i])
-                    && (ingredients.auxValues[i] == -1 || static_cast<unsigned int>(ingredients.auxValues[i]) == gridEntry >> 24))
+                    && (ingredients.auxValues[i] == -1
+                        || static_cast<unsigned int>(ingredients.auxValues[i]) == gridEntry >> 24))
                 {
                     ingredients.missingSlotMask[getPad()] |= 1 << slot;
                     --missing;
@@ -1006,8 +1010,7 @@ int IUIScene_CraftingMenu::getNumSpinnerSlots()
 
 bool IUIScene_CraftingMenu::canAddMoreStacks()
 {
-    if (isSpinnerGroup()
-        && ((!isInventoryItem() && !isDuplicateItem()) || (!isInventoryItem() && isDuplicateItem())))
+    if (isSpinnerGroup() && ((!isInventoryItem() && !isDuplicateItem()) || (!isInventoryItem() && isDuplicateItem())))
         return true;
     if (m_accumulatedItem->isEmpty())
         return false;
@@ -1016,8 +1019,8 @@ bool IUIScene_CraftingMenu::canAddMoreStacks()
 
 void IUIScene_CraftingMenu::UpdateHorizontalSlots()
 {
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
     if (!isSpinnerGroup())
     {
         for (int slot = 0; slot < m_horizontalSlotCount; ++slot)
@@ -1025,11 +1028,12 @@ void IUIScene_CraftingMenu::UpdateHorizontalSlots()
             if (GetRecipeCount(slot) == 0)
                 return;
 
-            not_null_ptr<ItemInstance> item =
-                ingredients[GetRecipeId(slot, 0)].recipe->assemble(boost::shared_ptr<CraftingContainer>());
+            not_null_ptr<ItemInstance> item = ingredients[GetRecipeId(slot, 0)].recipe->assemble(
+                boost::shared_ptr<CraftingContainer>());
             unsigned int flags = 0x1f;
             if (!GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(14), -1)
-                && (!ingredients[GetRecipeId(slot, 0)].available[getPad()] || (m_currentTab == 1 && !canAddMoreStacks())))
+                && (!ingredients[GetRecipeId(slot, 0)].available[getPad()]
+                    || (m_currentTab == 1 && !canAddMoreStacks())))
                 flags = 0x10;
             if (item->getItem() == Items::clock || item->getItem() == Items::compass)
                 item->setAuxValue(0xff);
@@ -1043,8 +1047,8 @@ void IUIScene_CraftingMenu::UpdateHorizontalSlots()
         not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
         if (m_craftingMode == 1)
         {
-            not_null_ptr<ItemInstance> result =
-                ingredients[GetRecipeId(0, 0)].recipe->assemble(boost::shared_ptr<CraftingContainer>());
+            not_null_ptr<ItemInstance> result = ingredients[GetRecipeId(0, 0)].recipe->assemble(
+                boost::shared_ptr<CraftingContainer>());
             unsigned int flags = 0x1f;
             if (!GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(14), -1)
                 && (!ingredients[GetRecipeId(0, 0)].available[getPad()] || (m_currentTab == 1 && !canAddMoreStacks())))
@@ -1084,8 +1088,8 @@ void IUIScene_CraftingMenu::UpdateVerticalSlots()
 {
     hideAllVSlots();
     bool smallScreen = m_compactInventory || (!gRenderer->IsHiDef() && !gRenderer->IsWidescreen());
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
 
     if (!isSpinnerGroup())
     {
@@ -1100,7 +1104,8 @@ void IUIScene_CraftingMenu::UpdateVerticalSlots()
                 continue;
 
             int recipe = GetRecipeId(m_horizontalSlot, m_verticalSlots[slot]);
-            not_null_ptr<ItemInstance> item = ingredients[recipe].recipe->assemble(boost::shared_ptr<CraftingContainer>());
+            not_null_ptr<ItemInstance> item = ingredients[recipe].recipe->assemble(
+                boost::shared_ptr<CraftingContainer>());
             unsigned int flags = 0x1f;
             if (!GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(14), -1)
                 && (!ingredients[GetRecipeId(m_horizontalSlot, m_verticalSlots[slot])].available[getPad()]
@@ -1137,8 +1142,8 @@ void IUIScene_CraftingMenu::UpdateVerticalSlots()
 
         if (m_craftingMode == 1)
         {
-            not_null_ptr<ItemInstance> result =
-                ingredients[GetRecipeId(0, recipeSlot)].recipe->assemble(boost::shared_ptr<CraftingContainer>());
+            not_null_ptr<ItemInstance> result = ingredients[GetRecipeId(0, recipeSlot)].recipe->assemble(
+                boost::shared_ptr<CraftingContainer>());
             unsigned int flags = 0x1f;
             if (!GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(14), -1)
                 && !ingredients[GetRecipeId(0, recipeSlot)].available[getPad()])
@@ -1225,8 +1230,8 @@ bool IUIScene_CraftingMenu::stackedCraftingAllowed()
 
 void IUIScene_CraftingMenu::DisplayIngredients()
 {
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
     hideAllIngredientsSlots();
     int slotCount = getCurrentVSlotCount();
     if (slotCount == 0 && m_currentTab != 2 && m_currentTab != 3)
@@ -1300,7 +1305,8 @@ void IUIScene_CraftingMenu::DisplayIngredients()
             }
             else
             {
-                result = Recipes::getInstance()->getItemFor(m_craftingContainer, m_player->mLevel, Recipes::mFireworksRecipe,
+                result = Recipes::getInstance()->getItemFor(m_craftingContainer, m_player->mLevel,
+                                                            Recipes::mFireworksRecipe,
                                                             Recipes::eRecipeCategory_Crafting);
             }
         }
@@ -1328,8 +1334,8 @@ void IUIScene_CraftingMenu::DisplayIngredients()
             }
             else if (m_currentGroup == 0)
             {
-                result = Recipes::getInstance()->getItemFor(m_craftingContainer, m_player->mLevel, Recipes::mArmorDyeRecipe,
-                                                            Recipes::eRecipeCategory_Crafting);
+                result = Recipes::getInstance()->getItemFor(
+                    m_craftingContainer, m_player->mLevel, Recipes::mArmorDyeRecipe, Recipes::eRecipeCategory_Crafting);
             }
             else
             {
@@ -1529,8 +1535,8 @@ void IUIScene_CraftingMenu::DisplayIngredients()
         return;
 
     bool enabled = false;
-    not_null_ptr<ItemInstance> spinnerItem =
-        GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot], enabled);
+    not_null_ptr<ItemInstance> spinnerItem = GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot],
+                                                            enabled);
     for (unsigned int slot = 0; slot < m_maintainedInventory->m_items.size(); ++slot)
     {
         not_null_ptr<ItemInstance>& inventoryItem = m_maintainedInventory->m_items[slot];
@@ -1576,8 +1582,8 @@ bool IUIScene_CraftingMenu::canAddCustomRecipeIngredient(not_null_ptr<ItemInstan
 
 void IUIScene_CraftingMenu::UpdateTooltips()
 {
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
     int slotCount = getCurrentVSlotCount();
     bool available = false;
     if (slotCount != 0)
@@ -1591,21 +1597,21 @@ void IUIScene_CraftingMenu::UpdateTooltips()
         if (m_currentTab == 2 || m_currentTab == 3)
         {
             bool enabled = false;
-            not_null_ptr<ItemInstance> item =
-                GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot], enabled);
+            not_null_ptr<ItemInstance> item = GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot],
+                                                             enabled);
             bool canAdd = canAddCustomRecipeIngredient(item) && enabled;
             int craftTooltip = m_customRecipeValid ? IDS_TOOLTIPS_CREATE : -1;
             int removeTooltip = m_customIngredientSlots.empty() ? -1 : IDS_TOOLTIPS_REMOVE;
             int addTooltip = canAdd ? IDS_TOOLTIPS_ADD : -1;
             gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, removeTooltip, addTooltip, -2,
-                                             IDS_TOOLTIPS_TYPE, -2, IDS_TOOLTIPS_GROUP, -1, -1, -1, -1, -1, -1, -1, -1, false,
-                                             false);
+                                             IDS_TOOLTIPS_TYPE, -2, IDS_TOOLTIPS_GROUP, -1, -1, -1, -1, -1, -1, -1, -1,
+                                             false, false);
         }
         else
         {
-            gConsoleUIController.SetTooltips(getPad(), available ? IDS_TOOLTIPS_CREATE : -1, IDS_TOOLTIPS_EXIT, IDS_TOOLTIPS_INFO, -1, -2,
-                                             IDS_TOOLTIPS_TYPE, -2, IDS_TOOLTIPS_GROUP, -1, -1, -1, -1, -1, -1, -1, -1, false,
-                                             false);
+            gConsoleUIController.SetTooltips(getPad(), available ? IDS_TOOLTIPS_CREATE : -1, IDS_TOOLTIPS_EXIT,
+                                             IDS_TOOLTIPS_INFO, -1, -2, IDS_TOOLTIPS_TYPE, -2, IDS_TOOLTIPS_GROUP, -1,
+                                             -1, -1, -1, -1, -1, -1, -1, false, false);
         }
         return;
     }
@@ -1614,12 +1620,13 @@ void IUIScene_CraftingMenu::UpdateTooltips()
     {
         int craftTooltip = m_stackedRecipes.empty() ? -1 : IDS_TOOLTIPS_CREATE;
         if (available && canAddMoreStacks())
-            gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, IDS_TOOLTIPS_REMOVE, IDS_TOOLTIPS_ADD, -2,
-                                             IDS_TOOLTIPS_TYPE, -2, IDS_TOOLTIPS_GROUP, -1, -1, -1, -1, -1, -1, -1, -1, false,
-                                             false);
+            gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, IDS_TOOLTIPS_REMOVE,
+                                             IDS_TOOLTIPS_ADD, -2, IDS_TOOLTIPS_TYPE, -2, IDS_TOOLTIPS_GROUP, -1, -1,
+                                             -1, -1, -1, -1, -1, -1, false, false);
         else
-            gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, IDS_TOOLTIPS_REMOVE, -1, -2, IDS_TOOLTIPS_TYPE,
-                                             -2, IDS_TOOLTIPS_GROUP, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+            gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, IDS_TOOLTIPS_REMOVE, -1, -2,
+                                             IDS_TOOLTIPS_TYPE, -2, IDS_TOOLTIPS_GROUP, -1, -1, -1, -1, -1, -1, -1, -1,
+                                             false, false);
         return;
     }
 
@@ -1648,30 +1655,30 @@ void IUIScene_CraftingMenu::UpdateTooltips()
             if (available && canAddMoreStacks())
             {
                 gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, -1, IDS_TOOLTIPS_ADD, -2,
-                                                 IDS_TOOLTIPS_TYPE, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+                                                 IDS_TOOLTIPS_TYPE, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false,
+                                                 false);
                 return;
             }
         }
         else if (!m_baseItemSlots.empty())
         {
-            gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, -1, IDS_TOOLTIPS_SELECT, -2, IDS_TOOLTIPS_TYPE,
-                                             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+            gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, -1, IDS_TOOLTIPS_SELECT, -2,
+                                             IDS_TOOLTIPS_TYPE, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
             return;
         }
     }
     else if (duplicateEnabled)
     {
-        not_null_ptr<ItemInstance> banner =
-            m_player->mInventory->getItem(m_duplicateItemSlots[verticalSlot].first);
+        not_null_ptr<ItemInstance> banner = m_player->mInventory->getItem(m_duplicateItemSlots[verticalSlot].first);
         if (BannerBlockEntity::getPatternCount(banner) < 6)
         {
-            gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, -1, IDS_TOOLTIPS_SELECT, -2, IDS_TOOLTIPS_TYPE,
-                                             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+            gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, -1, IDS_TOOLTIPS_SELECT, -2,
+                                             IDS_TOOLTIPS_TYPE, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
             return;
         }
     }
-    gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, -1, -1, -2, IDS_TOOLTIPS_TYPE, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(getPad(), craftTooltip, IDS_TOOLTIPS_EXIT, -1, -1, -2, IDS_TOOLTIPS_TYPE, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void IUIScene_CraftingMenu::UpdateHighlight()
@@ -1699,8 +1706,8 @@ void IUIScene_CraftingMenu::UpdateHighlight()
         }
         else
         {
-            Recipe::INGREDIENTS_REQUIRED* ingredients =
-                Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+            Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+                static_cast<Recipes::ERecipeCategory>(m_currentTab));
             int verticalSlot = getCurrentVSlotCount() > 1 ? m_verticalSlots[m_verticalColumn] : 0;
             item = ingredients[GetRecipeId(m_horizontalSlot, verticalSlot)].recipe->assemble(
                 boost::shared_ptr<CraftingContainer>());
@@ -1785,12 +1792,12 @@ void IUIScene_CraftingMenu::RemoveLastCustomRecipeIngredient()
 
 void IUIScene_CraftingMenu::updateAccumulatedItem()
 {
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
     m_accumulatedItem = m_baseRecipeItem;
     int gridSize = m_craftingMode == 0 ? 2 : 3;
-    for (std::vector<std::pair<int, int> >::iterator stacked = m_stackedRecipes.begin(); stacked != m_stackedRecipes.end();
-         ++stacked)
+    for (std::vector<std::pair<int, int> >::iterator stacked = m_stackedRecipes.begin();
+         stacked != m_stackedRecipes.end(); ++stacked)
     {
         Recipe::INGREDIENTS_REQUIRED& required = ingredients[stacked->first];
         for (int x = 0; x < gridSize; ++x)
@@ -1981,7 +1988,8 @@ void IUIScene_CraftingMenu::refreshBaseItemSlots(not_null_ptr<ItemInstance> item
                     if (selected->sameItemWithTags(m_recipeIngredients[index], NULL))
                     {
                         customSlot = index;
-                        if ((m_currentGroup == 1 && m_horizontalSlot == 0) || (m_currentGroup == 2 && m_horizontalSlot == 1))
+                        if ((m_currentGroup == 1 && m_horizontalSlot == 0)
+                            || (m_currentGroup == 2 && m_horizontalSlot == 1))
                             m_verticalSlots[1] = index;
                         found = true;
                         break;
@@ -1996,13 +2004,15 @@ void IUIScene_CraftingMenu::refreshBaseItemSlots(not_null_ptr<ItemInstance> item
             }
         }
 
-        for (std::vector<const DyeColor*>::iterator color = DyeColor::COLORS.begin(); color != DyeColor::COLORS.end(); ++color)
+        for (std::vector<const DyeColor*>::iterator color = DyeColor::COLORS.begin(); color != DyeColor::COLORS.end();
+             ++color)
         {
             choice = not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, (*color)->getItemData()));
             bool owned = false;
             for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
             {
-                if (m_player->mInventory->m_items[slot]->getItem() == Items::dye && m_player->mInventory->m_items[slot]->getAuxValue() == (*color)->getItemData())
+                if (m_player->mInventory->m_items[slot]->getItem() == Items::dye
+                    && m_player->mInventory->m_items[slot]->getAuxValue() == (*color)->getItemData())
                 {
                     owned = true;
                     break;
@@ -2141,7 +2151,8 @@ void IUIScene_CraftingMenu::refreshBaseItemSlots(not_null_ptr<ItemInstance> item
             }
             if (!found && static_cast<unsigned int>(m_customRecipeSlots[0]) >= m_recipeIngredients.size())
             {
-                m_customRecipeSlots[0] = m_recipeIngredients.empty() ? 0 : static_cast<int>(m_recipeIngredients.size()) - 1;
+                m_customRecipeSlots[0] = m_recipeIngredients.empty() ? 0
+                                                                     : static_cast<int>(m_recipeIngredients.size()) - 1;
                 if ((m_currentGroup == 0 || m_currentGroup == 1) && m_horizontalSlot == 0)
                     m_verticalSlots[1] = m_customRecipeSlots[0];
             }
@@ -2215,7 +2226,8 @@ void IUIScene_CraftingMenu::UpdateTabs(bool force)
             not_null_ptr<ItemInstance> tabItem = ItemInstance::EMPTY;
             if (m_currentTab == 1)
             {
-                tabItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::banner, 1, DyeColor::WHITE->getItemData()));
+                tabItem = not_null_ptr<ItemInstance>(
+                    new ItemInstance(Items::banner, 1, DyeColor::WHITE->getItemData()));
                 const BannerPattern* pattern = NULL;
                 if (m_craftingMode == 0)
                 {
@@ -2287,7 +2299,8 @@ void IUIScene_CraftingMenu::UpdateTabs(bool force)
                 }
                 else if (group == 1)
                 {
-                    tabItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, DyeColor::CYAN->getItemData()));
+                    tabItem = not_null_ptr<ItemInstance>(
+                        new ItemInstance(Items::dye, 1, DyeColor::CYAN->getItemData()));
                 }
             }
             SetHTabItem(group, tabItem);
@@ -2442,8 +2455,8 @@ void IUIScene_CraftingMenu::CraftCurrentItem()
         if (getCurrentVSlotCount() == 0)
             return;
 
-        Recipe::INGREDIENTS_REQUIRED* ingredients =
-            Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+        Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+            static_cast<Recipes::ERecipeCategory>(m_currentTab));
         int recipe = GetRecipeId(m_horizontalSlot, m_verticalSlots[m_verticalColumn]);
         Recipe::INGREDIENTS_REQUIRED& required = ingredients[recipe];
         if (GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(14), -1) || required.available[getPad()])
@@ -2486,8 +2499,8 @@ void IUIScene_CraftingMenu::CraftCurrentItem()
             GameMode::RemoveCustomRecipeItemsFromInventory(ingredient, m_maintainedInventory);
         }
     }
-    not_null_ptr<ItemInstance> crafted =
-        minecraft->mGameModes[getPad()]->handleCustomCraftItem(customIngredients, m_player);
+    not_null_ptr<ItemInstance> crafted = minecraft->mGameModes[getPad()]->handleCustomCraftItem(customIngredients,
+                                                                                                m_player);
     not_null_ptr<ItemInstance> selected = crafted->copy();
     selected->setCount(1);
     gConsoleUIController.PlayUISFX(SoundEvents::UI_CRAFT);
@@ -2760,8 +2773,8 @@ bool IUIScene_CraftingMenu::handleKeyDown(int pad, int key, bool repeat)
         else
         {
             bool enabled = false;
-            not_null_ptr<ItemInstance> item =
-                GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot], enabled);
+            not_null_ptr<ItemInstance> item = GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot],
+                                                             enabled);
             if (canAddCustomRecipeIngredient(item) && enabled)
             {
                 AddCustomRecipeIngredient(item->copy());
@@ -2871,8 +2884,8 @@ void IUIScene_CraftingMenu::RemoveStackedCraftRecipe()
     if (!m_stackedRecipes.empty())
     {
         int recipeIndex = m_stackedRecipes.back().first;
-        Recipe::INGREDIENTS_REQUIRED* ingredients =
-            Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+        Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+            static_cast<Recipes::ERecipeCategory>(m_currentTab));
         for (int i = 0; i < ingredients[recipeIndex].numIngredients; ++i)
         {
             int key = ingredients[recipeIndex].itemIds[i] | (ingredients[recipeIndex].auxValues[i] << 16);
@@ -2937,8 +2950,8 @@ bool IUIScene_CraftingMenu::AddStackedCraftRecipe(bool advanceGroup)
     if (!canAddMoreStacks())
         return added;
 
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+    Recipe::INGREDIENTS_REQUIRED* ingredients = Recipes::getInstance()->getRecipeIngredientsArray(
+        static_cast<Recipes::ERecipeCategory>(m_currentTab));
     int recipe = GetRecipeId(m_horizontalSlot, verticalSlot);
     int previousSlot = m_selectedInventorySlot;
     bool debugCrafting = false;

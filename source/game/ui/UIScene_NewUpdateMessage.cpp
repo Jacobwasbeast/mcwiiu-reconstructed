@@ -14,8 +14,7 @@
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 
-UIScene_NewUpdateMessage::UIScene_NewUpdateMessage(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIScene_NewUpdateMessage::UIScene_NewUpdateMessage(int sceneType, void*, UILayer* layer) : UIScene(sceneType, layer)
 {
     initialiseMovie();
     layer->addComponent(sceneType, EUIScene_Panorama, NULL);
@@ -66,8 +65,8 @@ unsigned int UIScene_NewUpdateMessage::mapElementsAndNames()
 
 void UIScene_NewUpdateMessage::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     false, false);
 }
 
 std::wstring UIScene_NewUpdateMessage::getMoviePath()
@@ -75,8 +74,7 @@ std::wstring UIScene_NewUpdateMessage::getMoviePath()
     return L"EULA";
 }
 
-void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool pressed,
-                                           bool released, bool&)
+void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool pressed, bool released, bool&)
 {
     if (m_ignoreInput)
         return;
@@ -88,8 +86,7 @@ void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool pr
         int value = GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage);
         if (value > 0)
             --value;
-        GameSettings::SetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage,
-                                      static_cast<unsigned char>(value));
+        GameSettings::SetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage, static_cast<unsigned char>(value));
         GameSettings::SetGameSettings(m_playerId, eGameSetting_UpdateMessageSeen, 1);
         GameSettings::CheckGameSettingsChanged(true, m_playerId);
         gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None, EUILayer_Count);
@@ -112,12 +109,10 @@ void UIScene_NewUpdateMessage::handlePress(int controlId, int)
     if (controlId == 0)
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-        int value = GameSettings::GetGameSettings(
-            m_playerId, eGameSetting_DisplayUpdateMessage);
+        int value = GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage);
         if (value > 0)
             --value;
-        GameSettings::SetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage,
-                                      static_cast<unsigned char>(value));
+        GameSettings::SetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage, static_cast<unsigned char>(value));
         GameSettings::CheckGameSettingsChanged(true, m_playerId);
         gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None, EUILayer_Count);
     }

@@ -246,7 +246,8 @@ public:
     void eventListen(FJ_Event* pEvent, bool bCapture);
     void dispatchEvent(FJ_Event* pEvent);
 
-    void addEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*pfnHandler)(FJ_FuiNode*, FJ_Event*), bool bCapture);
+    void addEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*pfnHandler)(FJ_FuiNode*, FJ_Event*),
+                          bool bCapture);
     void removeEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*pfnHandler)(FJ_FuiNode*, FJ_Event*));
 
     FJ_FuiNode* getRoot();

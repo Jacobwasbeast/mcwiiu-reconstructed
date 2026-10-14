@@ -23,8 +23,7 @@
 #include "platform/wiiu/CInput.hpp"
 #include "game/core/GameSettings.hpp"
 
-UIScene_SignEntryMenu::UIScene_SignEntryMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_sign()
+UIScene_SignEntryMenu::UIScene_SignEntryMenu(int type, void* data, UILayer* layer) : UIScene(type, layer), m_sign()
 {
     initialiseMovie();
     m_sign = *static_cast<boost::shared_ptr<SignBlockEntity>*>(data);
@@ -81,9 +80,8 @@ unsigned int UIScene_SignEntryMenu::mapElementsAndNames()
 
 void UIScene_SignEntryMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, (int)IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK,
-                                     -1, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, (int)IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_SignEntryMenu::tick()
@@ -105,8 +103,7 @@ void UIScene_SignEntryMenu::tick()
     if (minecraft->mLevel->mIsClientSide)
     {
         boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[m_playerId];
-        if (player.get() != NULL && player.get()->mPacketListener != NULL &&
-            player.get()->mPacketListener->isStarted())
+        if (player.get() != NULL && player.get()->mPacketListener != NULL && player.get()->mPacketListener->isStarted())
         {
             BlockPos pos = m_sign.get()->getBlockPos();
             boost::shared_ptr<Packet> packet(
@@ -125,8 +122,8 @@ std::wstring UIScene_SignEntryMenu::getMoviePath()
     return std::wstring(L"SignEntryMenu");
 }
 
-void UIScene_SignEntryMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                        bool released, bool& handled)
+void UIScene_SignEntryMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
+                                        bool& handled)
 {
     if (!m_confirmRequested && !m_keyboardActive)
     {
@@ -186,10 +183,10 @@ void UIScene_SignEntryMenu::handlePress(int controlId, int)
     case 3:
         m_selectedLine = controlId;
         m_keyboardActive = true;
-        if (g_pInput->RequestKeyboard(L10N::GetString(IDS_SIGN_TITLE),
-                                      m_lineInputs[m_selectedLine].getLabel(), m_playerId, 0xf,
-                                      KeyboardCompleteCallback, this,
-                                      static_cast<C_4JInput::EKeyboardMode>(3)) != 0)
+        if (g_pInput->RequestKeyboard(L10N::GetString(IDS_SIGN_TITLE), m_lineInputs[m_selectedLine].getLabel(),
+                                      m_playerId, 0xf, KeyboardCompleteCallback, this,
+                                      static_cast<C_4JInput::EKeyboardMode>(3))
+            != 0)
             m_keyboardActive = false;
         break;
     }

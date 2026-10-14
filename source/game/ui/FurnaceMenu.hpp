@@ -19,8 +19,7 @@ public:
     virtual void setData(int id, int value);
     virtual bool stillValid(boost::shared_ptr<Player> player);
     int GetInvSlotStart();
-    void fjCheckAchievements(const boost::shared_ptr<Player>& player,
-                             const not_null_ptr<ItemInstance>& item);
+    void fjCheckAchievements(const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item);
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
     virtual not_null_ptr<ItemInstance> clicked(int slot, int button, ClickType::eClickType type,
                                                boost::shared_ptr<Player> player);

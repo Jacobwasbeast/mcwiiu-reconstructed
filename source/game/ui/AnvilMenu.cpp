@@ -22,24 +22,31 @@
 #include "game/world/generation/Player.hpp"
 #include "game/core/StringUtils.hpp"
 
-AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
-                     const BlockPos& position, boost::shared_ptr<Player> player)
-    : AbstractContainerMenu(), mResultSlots(), mInputSlots(),
-      mPosition(), mItemName(), mPlayer()
+AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& position,
+                     boost::shared_ptr<Player> player)
+    : AbstractContainerMenu(),
+      mResultSlots(),
+      mInputSlots(),
+      mPosition(),
+      mItemName(),
+      mPlayer()
 {
     _init(inventory, level, position, player);
 }
 
-AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
-                     boost::shared_ptr<Player> player)
-    : AbstractContainerMenu(), mResultSlots(), mInputSlots(),
-      mPosition(), mItemName(), mPlayer()
+AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level, boost::shared_ptr<Player> player)
+    : AbstractContainerMenu(),
+      mResultSlots(),
+      mInputSlots(),
+      mPosition(),
+      mItemName(),
+      mPlayer()
 {
     _init(inventory, level, BlockPos::ZERO, player);
 }
 
-void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
-                      const BlockPos& position, boost::shared_ptr<Player> player)
+void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& position,
+                      boost::shared_ptr<Player> player)
 {
     mResultSlots = boost::shared_ptr<ResultContainer>(new ResultContainer());
     mInputSlots = boost::shared_ptr<RepairContainer>(new RepairContainer(this, IDS_REPAIR_AND_NAME, true, 2));
@@ -57,8 +64,7 @@ void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
     {
         for (int column = 0; column < 9; ++column)
         {
-            addSlot(new Slot(inventory, column + row * 9 + 9,
-                             8 + column * 18, 84 + row * 18));
+            addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 84 + row * 18));
         }
     }
     for (int column = 0; column < 9; ++column)
@@ -84,17 +90,15 @@ void AnvilMenu::createResult()
     {
         not_null_ptr<ItemInstance> result = first->copy();
         not_null_ptr<ItemInstance> second = mInputSlots->getItem(1);
-        boost::unordered_map<Enchantment*, int>* enchantments =
-            EnchantmentHelper::getEnchantments(result);
+        boost::unordered_map<Enchantment*, int>* enchantments = EnchantmentHelper::getEnchantments(result);
         int baseCost = first->getBaseRepairCost() + (second->isEmpty() ? 0 : second->getBaseRepairCost());
         mMaterialCost = 0;
 
         if (!second->isEmpty())
         {
-            bool enchantedBook = second->getItem() == Items::enchantedBook &&
-                                 EnchantedBookItem::getEnchantments(second)->size() > 0;
-            if (result->isDamageableItem() &&
-                result->getItem()->isValidRepairItem(first, second))
+            bool enchantedBook = second->getItem() == Items::enchantedBook
+                                 && EnchantedBookItem::getEnchantments(second)->size() > 0;
+            if (result->isDamageableItem() && result->getItem()->isValidRepairItem(first, second))
             {
                 int repairAmount = std::min(result->getDamageValue(), result->getMaxDamage() / 4);
                 if (repairAmount < 1)
@@ -116,8 +120,7 @@ void AnvilMenu::createResult()
             }
             else
             {
-                if (!enchantedBook &&
-                    (result->getItem() != second->getItem() || !result->isDamageableItem()))
+                if (!enchantedBook && (result->getItem() != second->getItem() || !result->isDamageableItem()))
                 {
                     mResultSlots->setItem(0, ItemInstance::EMPTY);
                     mRepairCost = 0;
@@ -131,7 +134,8 @@ void AnvilMenu::createResult()
                     int bonus = remainingSecond + result->getMaxDamage() * 12 / 100;
                     int combined = remainingFirst + bonus;
                     int damage = result->getMaxDamage() - combined;
-                    if (damage < 0) damage = 0;
+                    if (damage < 0)
+                        damage = 0;
                     if (damage < result->getAuxValue())
                     {
                         result->setAuxValue(damage);
@@ -139,17 +143,16 @@ void AnvilMenu::createResult()
                     }
                 }
 
-                boost::unordered_map<Enchantment*, int>* addedEnchantments =
-                    EnchantmentHelper::getEnchantments(second);
+                boost::unordered_map<Enchantment*, int>* addedEnchantments = EnchantmentHelper::getEnchantments(second);
                 bool hadEnchantment = false;
                 bool appliedEnchantment = false;
                 boost::unordered_map<Enchantment*, int>::iterator added;
                 for (added = addedEnchantments->begin(); added != addedEnchantments->end(); ++added)
                 {
                     Enchantment* enchantment = added->first;
-                    if (enchantment == NULL) continue;
-                    boost::unordered_map<Enchantment*, int>::iterator current =
-                        enchantments->find(enchantment);
+                    if (enchantment == NULL)
+                        continue;
+                    boost::unordered_map<Enchantment*, int>::iterator current = enchantments->find(enchantment);
                     int oldLevel = current != enchantments->end() ? current->second : 0;
                     int level = added->second;
                     level = oldLevel == level ? level + 1 : std::max(level, oldLevel);
@@ -176,7 +179,8 @@ void AnvilMenu::createResult()
                     else
                     {
                         appliedEnchantment = true;
-                        if (level > enchantment->getMaxLevel()) level = enchantment->getMaxLevel();
+                        if (level > enchantment->getMaxLevel())
+                            level = enchantment->getMaxLevel();
                         (*enchantments)[enchantment] = level;
 
                         int rarityCost = 0;
@@ -188,9 +192,11 @@ void AnvilMenu::createResult()
                             rarityCost = 4;
                         else if (enchantment->getRarity()->getWeight() == Rarity::EPIC->getWeight())
                             rarityCost = 8;
-                        if (enchantedBook) rarityCost = std::max(1, rarityCost / 2);
+                        if (enchantedBook)
+                            rarityCost = std::max(1, rarityCost / 2);
                         operationCost += rarityCost * level;
-                        if (first->getCount() > 1) operationCost = 40;
+                        if (first->getCount() > 1)
+                            operationCost = 40;
                     }
                 }
                 if (hadEnchantment && !appliedEnchantment)
@@ -212,9 +218,8 @@ void AnvilMenu::createResult()
                 result->resetHoverName();
             }
         }
-        else if (!mItemName.empty() &&
-                 !equalsIgnoreCase(mItemName, first->getHoverNameUnfiltered()) &&
-                 !mItemName.empty())
+        else if (!mItemName.empty() && !equalsIgnoreCase(mItemName, first->getHoverNameUnfiltered())
+                 && !mItemName.empty())
         {
             renameCost = 1;
             ++operationCost;
@@ -223,7 +228,8 @@ void AnvilMenu::createResult()
         }
 
         mRepairCost = baseCost + operationCost;
-        if (operationCost < 1) result = ItemInstance::EMPTY;
+        if (operationCost < 1)
+            result = ItemInstance::EMPTY;
         if (mRepairCost >= 40)
         {
             if (renameCost == operationCost && renameCost > 0)
@@ -251,7 +257,8 @@ void AnvilMenu::createResult()
 void AnvilMenu::slotsChanged(boost::shared_ptr<Container> container)
 {
     AbstractContainerMenu::slotsChanged();
-    if (container.get() == mInputSlots.get()) createResult();
+    if (container.get() == mInputSlots.get())
+        createResult();
 }
 
 void AnvilMenu::addSlotListener(net_minecraft_world_inventory::ContainerListener* listener)
@@ -262,7 +269,8 @@ void AnvilMenu::addSlotListener(net_minecraft_world_inventory::ContainerListener
 
 void AnvilMenu::setData(int id, int value)
 {
-    if (id == 0) mRepairCost = value;
+    if (id == 0)
+        mRepairCost = value;
 }
 
 void AnvilMenu::removed(boost::shared_ptr<Player> player)
@@ -277,7 +285,8 @@ bool AnvilMenu::stillValid(boost::shared_ptr<Player> player)
 {
     if (mLevel->getBlockState(mPosition)->getBlock() != Blocks::anvil)
         return false;
-    if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
+    if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox)
+        > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
         return false;
     return true;
 }
@@ -328,7 +337,8 @@ void AnvilMenu::setItemName(const std::wstring& name, bool censored)
     if (getSlot(2)->hasItem())
     {
         not_null_ptr<ItemInstance> result = getSlot(2)->getItem();
-        if (name.empty()) result->resetHoverName();
+        if (name.empty())
+            result->resetHoverName();
         else
         {
             result->setHoverName(mItemName);

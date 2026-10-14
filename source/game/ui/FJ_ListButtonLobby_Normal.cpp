@@ -1,7 +1,6 @@
 #include "game/ui/FJ_ListButtonLobby_Normal.hpp"
 
-FJ_ListButtonLobby_Normal::FJ_ListButtonLobby_Normal(fuiRenderNode* renderNode)
-    : FJ_ListButtonLobby(renderNode)
+FJ_ListButtonLobby_Normal::FJ_ListButtonLobby_Normal(fuiRenderNode* renderNode) : FJ_ListButtonLobby(renderNode)
 {
 }
 
@@ -14,4 +13,3 @@ unsigned int FJ_ListButtonLobby_Normal::getType()
 {
     return 0x8026;
 }
-

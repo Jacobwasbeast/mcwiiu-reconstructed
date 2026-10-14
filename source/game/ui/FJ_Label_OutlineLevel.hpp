@@ -8,10 +8,7 @@ class fuiRenderNode;
 class FJ_Label_OutlineLevel : public FJ_LabelOutline
 {
 public:
-    explicit FJ_Label_OutlineLevel(fuiRenderNode* renderNode)
-        : FJ_LabelOutline(renderNode)
-    {
-    }
+    explicit FJ_Label_OutlineLevel(fuiRenderNode* renderNode) : FJ_LabelOutline(renderNode) {}
 
     virtual ~FJ_Label_OutlineLevel();
     static FJ_LabelOutline* Create(fuiRenderNode* renderNode);

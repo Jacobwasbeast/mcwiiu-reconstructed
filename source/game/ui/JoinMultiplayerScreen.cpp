@@ -11,11 +11,13 @@
 #include "game/core/Options.hpp"
 #include "game/core/StringUtils.hpp"
 
-template<typename T>
+template <typename T>
 T _fromString(const std::wstring& value);
 
 JoinMultiplayerScreen::JoinMultiplayerScreen(Screen* parentScreen)
-    : Screen(), mParentScreen(parentScreen), mEditBox(NULL)
+    : Screen(),
+      mParentScreen(parentScreen),
+      mEditBox(NULL)
 {
 }
 
@@ -28,15 +30,13 @@ void JoinMultiplayerScreen::init()
 {
     Language* language = Language::getInstance();
     mButtons.clear();
-    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 108,
-                                  language->getElement(L"multiplayer.connect")));
-    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 132,
-                                  language->getElement(L"gui.cancel")));
+    mButtons.push_back(
+        new Button(0, mWidth / 2 - 100, mHeight / 4 + 108, language->getElement(L"multiplayer.connect")));
+    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 132, language->getElement(L"gui.cancel")));
 
     std::wstring value = replaceAll(mMinecraft->mOptions->mLastServer, L"_", L":");
     mButtons[0]->mActive = value.length() != 0;
-    mEditBox = new EditBox(this, mFont, mWidth / 2 - 100, mHeight / 4 + 58,
-                           200, 20, value);
+    mEditBox = new EditBox(this, mFont, mWidth / 2 - 100, mHeight / 4 + 58, 200, 20, value);
     mEditBox->mFocused = true;
     mEditBox->setMaxLength(128);
 }
@@ -119,14 +119,10 @@ void JoinMultiplayerScreen::render(int x, int y, float partialTick)
 {
     Language* language = Language::getInstance();
     renderBackground();
-    drawCenteredString(mFont, language->getElement(L"multiplayer.title"),
-                       mWidth / 2, mHeight / 4 - 40, 0xffffff);
-    drawString(mFont, language->getElement(L"multiplayer.info1"),
-               mWidth / 2 - 140, mHeight / 4, 0xa0a0a0);
-    drawString(mFont, language->getElement(L"multiplayer.info2"),
-               mWidth / 2 - 140, mHeight / 4 + 9, 0xa0a0a0);
-    drawString(mFont, language->getElement(L"multiplayer.ipinfo"),
-               mWidth / 2 - 140, mHeight / 4 + 36, 0xa0a0a0);
+    drawCenteredString(mFont, language->getElement(L"multiplayer.title"), mWidth / 2, mHeight / 4 - 40, 0xffffff);
+    drawString(mFont, language->getElement(L"multiplayer.info1"), mWidth / 2 - 140, mHeight / 4, 0xa0a0a0);
+    drawString(mFont, language->getElement(L"multiplayer.info2"), mWidth / 2 - 140, mHeight / 4 + 9, 0xa0a0a0);
+    drawString(mFont, language->getElement(L"multiplayer.ipinfo"), mWidth / 2 - 140, mHeight / 4 + 36, 0xa0a0a0);
     mEditBox->render();
     Screen::render(x, y, partialTick);
 }

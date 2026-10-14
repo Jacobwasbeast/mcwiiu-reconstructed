@@ -7,10 +7,9 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
-static std::string s_blinkLabels[2] = { std::string("Label_Stop"), std::string("Label_Off") };
+static std::string s_blinkLabels[2] = {std::string("Label_Stop"), std::string("Label_Off")};
 
-FJ_Label_Blink::FJ_Label_Blink(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_blinkEnabled(false)
+FJ_Label_Blink::FJ_Label_Blink(fuiRenderNode* renderNode) : FJ_Base(renderNode), m_blinkEnabled(false)
 {
 }
 

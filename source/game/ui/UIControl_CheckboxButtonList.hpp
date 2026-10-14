@@ -16,8 +16,7 @@ public:
     virtual ~UIControl_CheckboxButtonList() {}
     virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void UseIggyIcons();
-    void AddNewItem(const std::wstring& label, int id, bool checked,
-                    const std::wstring& textureName);
+    void AddNewItem(const std::wstring& label, int id, bool checked, const std::wstring& textureName);
     void SetCheckbox(int index, bool checked);
     uint8_t GetCheckbox(int index);
     void SetTextureName(int index, const std::wstring& textureName);

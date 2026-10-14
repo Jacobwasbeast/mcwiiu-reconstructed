@@ -6,8 +6,7 @@
 #include "game/core/Options.hpp"
 #include "game/core/SmallButton.hpp"
 
-ControlsScreen::ControlsScreen(Screen* parent, Options* options)
-    : Screen()
+ControlsScreen::ControlsScreen(Screen* parent, Options* options) : Screen()
 {
     mTitle = L"Controls";
     mSelectedKey = -1;
@@ -27,12 +26,11 @@ void ControlsScreen::init()
 
     for (int key = 0; key < 14; ++key)
     {
-        mButtons.push_back(new SmallButton(key, left + key % 2 * 160,
-            mHeight / 6 + 24 * (key >> 1), 70, 20, mOptions->getKeyMessage(key)));
+        mButtons.push_back(new SmallButton(key, left + key % 2 * 160, mHeight / 6 + 24 * (key >> 1), 70, 20,
+                                           mOptions->getKeyMessage(key)));
     }
 
-    mButtons.push_back(new Button(200, mWidth / 2 - 100, mHeight / 6 + 168,
-        language->getElement(L"gui.done")));
+    mButtons.push_back(new Button(200, mWidth / 2 - 100, mHeight / 6 + 168, language->getElement(L"gui.done")));
     mTitle = language->getElement(L"controls.title");
 }
 
@@ -76,7 +74,7 @@ void ControlsScreen::render(int x, int y, float partialTick)
     for (int key = 0; key < 14; ++key)
     {
         drawString(mFont, mOptions->getKeyDescription(key), left + key % 2 * 160 + 76,
-            mHeight / 6 + 24 * (key >> 1) + 7, 0xffffffff);
+                   mHeight / 6 + 24 * (key >> 1) + 7, 0xffffffff);
     }
 
     Screen::render(x, y, partialTick);

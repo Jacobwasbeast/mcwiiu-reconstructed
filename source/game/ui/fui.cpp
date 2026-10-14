@@ -99,7 +99,8 @@ int fui::load(arrayWithLength<unsigned char> bytes, bool createRoot, int fileInd
     for (importIndex = 0; importIndex < file->header.importAssetCount && unresolvedReferences != 0; ++importIndex)
     {
         unsigned int existingFileIndex;
-        for (existingFileIndex = 0; existingFileIndex < m_files.size() && unresolvedReferences != 0; ++existingFileIndex)
+        for (existingFileIndex = 0; existingFileIndex < m_files.size() && unresolvedReferences != 0;
+             ++existingFileIndex)
             if (std::strcmp(file->importAssetData[importIndex].name, m_files[existingFileIndex]->header.name) == 0)
                 unresolvedReferences = file->resolveReferences(m_files[existingFileIndex]);
     }
@@ -120,7 +121,8 @@ int fui::load(arrayWithLength<unsigned char> bytes, bool createRoot, int fileInd
     {
         file->stage = new fuiRenderNodeStage(file);
         file->stage->m_node = new FJ_FuiNodeStage(file->stage);
-        file->rootNode = new fuiRenderNodeTimeline(file->stage, file->stage, file->timelineData, 0, 0, NULL, 0, false, file);
+        file->rootNode = new fuiRenderNodeTimeline(file->stage, file->stage, file->timelineData, 0, 0, NULL, 0, false,
+                                                   file);
         FJ_FuiNode rootNode(file->rootNode);
         file->rootNode->m_node = &rootNode;
         std::strncpy(file->rootNode->m_name, "root", 64);
@@ -241,7 +243,8 @@ void fui::render(fuiFile* file, float x, float y, float width, float height, flo
     gRenderer->MatrixTranslate(m_originX - x, m_originY - y, -2000.0f);
     gRenderer->MatrixScale(scaleX, scaleY, 1.0f);
     gRenderer->StateSetScissorRect(static_cast<unsigned int>(m_originX), static_cast<unsigned int>(m_originY),
-                                   static_cast<unsigned int>(m_originX + width), static_cast<unsigned int>(m_originY + height));
+                                   static_cast<unsigned int>(m_originX + width),
+                                   static_cast<unsigned int>(m_originY + height));
     file->stage->gather(m_enterFrameDispatch);
     preRender(file);
     file->stage->render(NULL, NULL);
@@ -288,7 +291,8 @@ void fui::removeDirectEventListener(const FJ_EventListener& listener)
     std::vector<FJ_EventListener>::iterator it = m_directEventListeners.begin();
     while (it != m_directEventListeners.end())
     {
-        if (it->m_eType == listener.m_eType && it->m_pfnHandler == listener.m_pfnHandler && it->m_pNode == listener.m_pNode)
+        if (it->m_eType == listener.m_eType && it->m_pfnHandler == listener.m_pfnHandler
+            && it->m_pNode == listener.m_pNode)
         {
             m_directEventListeners.erase(it);
             return;
@@ -315,7 +319,8 @@ void fui::removeEventListenerForNode(FJ_FuiNode* node)
     }
 }
 
-void fui::setCustomTextureFn(int (*textureFunction)(void*, const std::wstring&, unsigned int*, unsigned int*, bool*), void (*releaseFunction)(int), void* context)
+void fui::setCustomTextureFn(int (*textureFunction)(void*, const std::wstring&, unsigned int*, unsigned int*, bool*),
+                             void (*releaseFunction)(int), void* context)
 {
     m_customTextureFunction = textureFunction;
     m_releaseCustomTextureFunction = releaseFunction;
@@ -356,7 +361,8 @@ fuiRenderNode* fui::createNodeFromSymbol(const char* name, fuiRenderNode* parent
 {
     if (std::strlen(name) == 0)
     {
-        fuiRenderNodeTimeline* timeline = new fuiRenderNodeTimeline(parent->m_stage, NULL, NULL, 0, 0, NULL, 0, false, NULL);
+        fuiRenderNodeTimeline* timeline = new fuiRenderNodeTimeline(parent->m_stage, NULL, NULL, 0, 0, NULL, 0, false,
+                                                                    NULL);
         timeline->disableCtor();
         timeline->gather(false);
         return timeline;
@@ -379,16 +385,23 @@ fuiRenderNode* fui::createNodeFromSymbol(const char* name, fuiRenderNode* parent
                     switch (action.actionType)
                     {
                     case 0x1e:
-                        timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_Stop, std::string("?"));
+                        timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_Stop,
+                                                     std::string("?"));
                         break;
                     case 0x1f:
-                        timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndStopLabel, std::string(action.actionValue));
+                        timelineNode->addFrameAction(action.frameIndex,
+                                                     fuiRenderNodeTimeline::eFrameActionType_GotoAndStopLabel,
+                                                     std::string(action.actionValue));
                         break;
                     case 0x20:
-                        timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndPlay, std::string(action.actionValue));
+                        timelineNode->addFrameAction(action.frameIndex,
+                                                     fuiRenderNodeTimeline::eFrameActionType_GotoAndPlay,
+                                                     std::string(action.actionValue));
                         break;
                     case 0x21:
-                        timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndStop, std::string(action.actionValue));
+                        timelineNode->addFrameAction(action.frameIndex,
+                                                     fuiRenderNodeTimeline::eFrameActionType_GotoAndStop,
+                                                     std::string(action.actionValue));
                         break;
                     }
                 }
@@ -412,8 +425,8 @@ int fui::findBitmapFromSymbol(const char* name, fuiFile** file)
         for (unsigned int i = 0; i < currentFile->header.bitmapCount; ++i)
         {
             fuiBitmap& bitmap = currentFile->bitmaps[i];
-            if (bitmap.symbolIndex != static_cast<unsigned int>(-1) &&
-                std::strcmp(name, currentFile->symbolData[bitmap.symbolIndex].name) == 0)
+            if (bitmap.symbolIndex != static_cast<unsigned int>(-1)
+                && std::strcmp(name, currentFile->symbolData[bitmap.symbolIndex].name) == 0)
             {
                 *file = currentFile;
                 return (int)&bitmap;

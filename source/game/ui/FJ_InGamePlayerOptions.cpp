@@ -26,8 +26,7 @@ void FJ_InGamePlayerOptions::_handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* 
     static_cast<FJ_InGamePlayerOptions*>(node)->handleCheckboxToggled(event);
 }
 
-FJ_InGamePlayerOptions::FJ_InGamePlayerOptions(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_InGamePlayerOptions::FJ_InGamePlayerOptions(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 }
@@ -53,13 +52,12 @@ void FJ_InGamePlayerOptions::InitMenu()
     if (static_cast<float>(list->asFJ_List_MultiList()->GetListHeight()) < list->getHeight())
     {
         FJ_FuiNode* backgroundItem = background->getChildAt(0);
-        backgroundItem->setHeight(static_cast<float>(list->asFJ_List_MultiList()->GetListHeight()) +
-                                  (list->getY() - background->getY()) +
-                                  ((background->getY() + background->getHeight()) -
-                                   (list->getY() + list->getHeight())));
+        backgroundItem->setHeight(
+            static_cast<float>(list->asFJ_List_MultiList()->GetListHeight()) + (list->getY() - background->getY())
+            + ((background->getY() + background->getHeight()) - (list->getY() + list->getHeight())));
 
-        const int amount = Math::round((static_cast<float>(backgroundHeight) -
-                                        background->getChildAt(0)->getHeight()) * 0.5f);
+        const int amount = Math::round((static_cast<float>(backgroundHeight) - background->getChildAt(0)->getHeight())
+                                       * 0.5f);
         if (amount > 0)
         {
             const float offset = static_cast<float>(amount);
@@ -87,4 +85,3 @@ void FJ_InGamePlayerOptions::SetPlayerIcon(int icon)
     FJ_FuiNode* movieClip = FJ_FuiNode::asMovieClip(playerIcon->getChildAt(0));
     movieClip->gotoAndStop(frame);
 }
-

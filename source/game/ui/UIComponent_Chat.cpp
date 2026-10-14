@@ -11,8 +11,7 @@
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
 
-UIComponent_Chat::UIComponent_Chat(int type, void* data, UILayer* layer)
-    : UIScene(type, layer)
+UIComponent_Chat::UIComponent_Chat(int type, void* data, UILayer* layer) : UIScene(type, layer)
 {
     initialiseMovie();
     for (int i = 0; i < 10; ++i)

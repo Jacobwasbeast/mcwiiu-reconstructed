@@ -5,8 +5,7 @@
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 #include "game/ui/fui.hpp"
 
-FJ_BitmapIcon::FJ_BitmapIcon(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_pBitmapNode(NULL)
+FJ_BitmapIcon::FJ_BitmapIcon(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode), m_pBitmapNode(NULL)
 {
 }
 
@@ -60,7 +59,7 @@ void FJ_BitmapIcon::SetTextureName(const std::wstring& textureName)
         unsigned int height;
         bool hasTexture = false;
         unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
-        static_cast<fuiRenderNodeCodeGenRect*>(m_pBitmapNode->m_pRenderNode)->setTexture(
-            width, height, texture, hasTexture);
+        static_cast<fuiRenderNodeCodeGenRect*>(m_pBitmapNode->m_pRenderNode)
+            ->setTexture(width, height, texture, hasTexture);
     }
 }

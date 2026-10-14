@@ -18,7 +18,10 @@
 #include "game/ui/UILayer.hpp"
 
 UIScene_ClassicCraftingMenu::UIScene_ClassicCraftingMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_resultSlot(), m_craftingSlots(), m_titleLabel()
+    : UIScene_AbstractContainerMenu(type, layer),
+      m_resultSlot(),
+      m_craftingSlots(),
+      m_titleLabel()
 {
     initialiseMovie();
 
@@ -110,8 +113,8 @@ int UIScene_ClassicCraftingMenu::getSectionRows(IUIScene_AbstractContainerMenu::
 }
 
 unsigned int UIScene_ClassicCraftingMenu::GetSectionAndSlotInDirection(
-    IUIScene_AbstractContainerMenu::ESceneSection section,
-    IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
+    IUIScene_AbstractContainerMenu::ESceneSection section, IUIScene_AbstractContainerMenu::ETapState state, int* x,
+    int* y)
 {
     unsigned int newSection = section;
     int xOffset = 0;
@@ -130,7 +133,8 @@ unsigned int UIScene_ClassicCraftingMenu::GetSectionAndSlotInDirection(
             newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar;
             xOffset = -1;
         }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left || state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left
+                 || state == IUIScene_AbstractContainerMenu::ETapState_Right)
         {
             newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult;
         }
@@ -197,11 +201,13 @@ unsigned int UIScene_ClassicCraftingMenu::GetSectionAndSlotInDirection(
         break;
     }
 
-    updateSlotPosition(section, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(newSection), state, x, y, xOffset, yOffset);
+    updateSlotPosition(section, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(newSection), state, x, y,
+                       xOffset, yOffset);
     return newSection;
 }
 
-void UIScene_ClassicCraftingMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
+void UIScene_ClassicCraftingMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                       _UIVec2D* position)
 {
     switch (section)
     {
@@ -224,7 +230,8 @@ void UIScene_ClassicCraftingMenu::GetPositionOfSection(IUIScene_AbstractContaine
     }
 }
 
-void UIScene_ClassicCraftingMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, _UIVec2D* position, _UIVec2D* size)
+void UIScene_ClassicCraftingMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                                    _UIVec2D* position, _UIVec2D* size)
 {
     _UIVec2D sectionSize;
     switch (section)
@@ -285,7 +292,8 @@ int UIScene_ClassicCraftingMenu::getSectionStartOffset(IUIScene_AbstractContaine
     return offset;
 }
 
-void UIScene_ClassicCraftingMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
+void UIScene_ClassicCraftingMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                         int slot, int direction, bool wrap)
 {
     int columns = getSectionColumns(section);
     int index = direction * columns + slot;

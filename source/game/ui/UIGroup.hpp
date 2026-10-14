@@ -82,6 +82,7 @@ public:
     UIComponent_PressStartToPlay* getPressStartToPlay() { return m_pressStartToPlay; }
     UIScene_HUD* getHUD() { return m_hud; }
     UIComponent_WiiUDRC* getDRC() { return m_drc; }
+
 private:
     UILayer* m_layers[EUILayer_Count];
     UIComponent_Tooltips* m_tooltips;

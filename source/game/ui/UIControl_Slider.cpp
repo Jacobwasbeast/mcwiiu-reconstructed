@@ -9,8 +9,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-UIControl_Slider::UIControl_Slider()
-    : UIControl_Base()
+UIControl_Slider::UIControl_Slider() : UIControl_Base()
 {
     m_currentValue = 0;
     m_repeatDelay = 10;
@@ -22,8 +21,8 @@ UIControl_Slider::UIControl_Slider()
     m_minimum = 0;
 }
 
-void UIControl_Slider::init(UIString label, int controlId, int minimum, int maximum, int value,
-                            bool repeat, int repeatDelay, int repeatStep)
+void UIControl_Slider::init(UIString label, int controlId, int minimum, int maximum, int value, bool repeat,
+                            int repeatDelay, int repeatStep)
 {
     m_label = label;
     m_controlId = controlId;
@@ -34,8 +33,8 @@ void UIControl_Slider::init(UIString label, int controlId, int minimum, int maxi
     m_repeatDelay = repeatDelay;
     m_repeat = repeat;
 
-    static_cast<FJ_Slider*>(m_fuiRenderNode->getFuiNode())->Init(label.getString(), controlId, minimum, maximum,
-                                                                 value, repeat, repeatDelay, repeatStep);
+    static_cast<FJ_Slider*>(m_fuiRenderNode->getFuiNode())
+        ->Init(label.getString(), controlId, minimum, maximum, value, repeat, repeatDelay, repeatStep);
 
     switch (m_scene->m_layer->m_layerId)
     {
@@ -89,8 +88,7 @@ void UIControl_Slider::MoveSliderValue(int amount)
     handleSliderMove(value);
 }
 
-void UIControl_Slider::setAllPossibleLabels(int firstLabel, unsigned int labelCount,
-                                            wchar_t (*labels)[256])
+void UIControl_Slider::setAllPossibleLabels(int firstLabel, unsigned int labelCount, wchar_t (*labels)[256])
 {
     m_possibleLabels.clear();
 
@@ -114,6 +112,5 @@ int UIControl_Slider::GetRealWidth()
 void UIControl_Slider::ReInit()
 {
     UIControl::ReInit();
-    init(m_label, m_controlId, m_minimum, m_maximum, (int)m_currentValue,
-         m_repeat, m_repeatDelay, m_repeatStep);
+    init(m_label, m_controlId, m_minimum, m_maximum, (int)m_currentValue, m_repeat, m_repeatDelay, m_repeatStep);
 }

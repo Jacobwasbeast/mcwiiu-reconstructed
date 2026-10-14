@@ -27,8 +27,7 @@ public:
     virtual UIControl* GetMainPanel();
     virtual std::wstring getMoviePath();
     virtual void handleGainFocus(bool hadFocus);
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     static int KeyboardCompleteWorldNameCallback(void* data, bool accepted);
     virtual void handlePress(int controlId, int childId);
     virtual void handleCheckboxToggled(int id, bool checked);

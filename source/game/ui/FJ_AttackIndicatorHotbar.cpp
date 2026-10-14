@@ -1,7 +1,6 @@
 #include "game/ui/FJ_AttackIndicatorHotbar.hpp"
 
-FJ_AttackIndicatorHotbar::FJ_AttackIndicatorHotbar(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_AttackIndicatorHotbar::FJ_AttackIndicatorHotbar(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     InitBarType();
     FJ_ProgressBar::GetBarFiller();

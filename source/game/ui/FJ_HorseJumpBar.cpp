@@ -2,8 +2,7 @@
 
 #include <string>
 
-FJ_HorseJumpBar::FJ_HorseJumpBar(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_HorseJumpBar::FJ_HorseJumpBar(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     GetBarFiller();
     initFiller();
@@ -27,4 +26,3 @@ uint32_t FJ_HorseJumpBar::getType()
 void FJ_HorseJumpBar::Init(const std::wstring& label)
 {
 }
-

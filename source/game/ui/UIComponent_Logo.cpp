@@ -33,8 +33,23 @@ std::wstring UIComponent_Logo::getMoviePath()
         return L"ComponentLogo";
     }
 }
-void UIComponent_Logo::handleReload() { setLogoLanguage(0); }
-int UIComponent_Logo::getSceneType() { return EUIScene_Logo; }
-bool UIComponent_Logo::stealsFocus() { return false; }
-bool UIComponent_Logo::hasFocus(int controller) { return false; }
-bool UIComponent_Logo::hidesLowerScenes() { return false; }
+void UIComponent_Logo::handleReload()
+{
+    setLogoLanguage(0);
+}
+int UIComponent_Logo::getSceneType()
+{
+    return EUIScene_Logo;
+}
+bool UIComponent_Logo::stealsFocus()
+{
+    return false;
+}
+bool UIComponent_Logo::hasFocus(int controller)
+{
+    return false;
+}
+bool UIComponent_Logo::hidesLowerScenes()
+{
+    return false;
+}

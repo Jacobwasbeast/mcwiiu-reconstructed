@@ -8,8 +8,7 @@
 #include "game/core/SmallButton.hpp"
 #include "game/ui/ScreenSizeCalculator.hpp"
 
-VideoSettingsScreen::VideoSettingsScreen(Screen* parentScreen, Options* options)
-    : Screen()
+VideoSettingsScreen::VideoSettingsScreen(Screen* parentScreen, Options* options) : Screen()
 {
     mTitle = L"Video Settings";
     mParentScreen = parentScreen;
@@ -21,32 +20,27 @@ void VideoSettingsScreen::init()
     Language* language = Language::getInstance();
     mTitle = language->getElement(L"options.videoTitle");
 
-    const Options::Option* videoOptions[8] = {
-        Options::Option::graphics, Options::Option::renderDistance, Options::Option::ambientOcclusion,
-        Options::Option::framerateLimit, Options::Option::anaglyph, Options::Option::viewBobbing,
-        Options::Option::guiScale, Options::Option::advancedOpengl
-    };
+    const Options::Option* videoOptions[8] = {Options::Option::graphics,         Options::Option::renderDistance,
+                                              Options::Option::ambientOcclusion, Options::Option::framerateLimit,
+                                              Options::Option::anaglyph,         Options::Option::viewBobbing,
+                                              Options::Option::guiScale,         Options::Option::advancedOpengl};
     for (int i = 0; i < 8; ++i)
     {
         const Options::Option* option = videoOptions[i];
         if (!option->isProgress())
         {
             mButtons.push_back(new SmallButton(option->getId(), mWidth / 2 - 155 + i % 2 * 160,
-                                               mHeight / 6 + 24 * (i >> 1), option,
-                                               mOptions->getMessage(option)));
+                                               mHeight / 6 + 24 * (i >> 1), option, mOptions->getMessage(option)));
         }
         else
         {
             mButtons.push_back(new SlideButton(option->getId(), mWidth / 2 - 155 + i % 2 * 160,
-                                               mHeight / 6 + 24 * (i >> 1), option,
-                                               mOptions->getMessage(option),
+                                               mHeight / 6 + 24 * (i >> 1), option, mOptions->getMessage(option),
                                                mOptions->getProgressValue(option)));
         }
     }
 
-    mButtons.push_back(new Button(200, mWidth / 2 - 100,
-                                  mHeight / 6 + 168,
-                                  language->getElement(L"gui.done")));
+    mButtons.push_back(new Button(200, mWidth / 2 - 100, mHeight / 6 + 168, language->getElement(L"gui.done")));
 }
 
 void VideoSettingsScreen::buttonClicked(Button* button)

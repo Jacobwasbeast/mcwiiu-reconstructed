@@ -9,7 +9,8 @@
 class UILayer;
 class CommandBlockEntity;
 
-class UIScene_CommandBlockMenu : public UIScene_AbstractContainerMenu {
+class UIScene_CommandBlockMenu : public UIScene_AbstractContainerMenu
+{
 public:
     UIScene_CommandBlockMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_CommandBlockMenu();

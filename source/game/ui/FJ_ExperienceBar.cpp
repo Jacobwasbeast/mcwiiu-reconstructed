@@ -2,8 +2,7 @@
 
 #include <string>
 
-FJ_ExperienceBar::FJ_ExperienceBar(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_ExperienceBar::FJ_ExperienceBar(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     GetBarFiller();
     FJ_ProgressBar::initFiller();
@@ -28,4 +27,3 @@ void FJ_ExperienceBar::Init(const std::wstring& label)
 {
     (void)label;
 }
-

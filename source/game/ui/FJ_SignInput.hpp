@@ -14,6 +14,7 @@ class fuiRenderNodeEditText;
 class FJ_SignInput : public FJ_Base
 {
     friend class fuiRenderNodeTimeline;
+
 public:
     explicit FJ_SignInput(fuiRenderNode* renderNode);
     virtual ~FJ_SignInput();

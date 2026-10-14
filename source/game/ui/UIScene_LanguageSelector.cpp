@@ -12,10 +12,11 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 
-static const unsigned int languageNames[] = {0x4A55D76A, 0x85CABB8D, 0xA7BED7AD, 0x927530AB, 0xB524803B, 0x1C9D5CE9, 0xAF947AA3, 0xFD7B9B78, 0x8DC52CD3, 0xBEACA054, 0x4F5B792B, 0xD1E5AF59, 0x21828946};
+static const unsigned int languageNames[] = {0x4A55D76A, 0x85CABB8D, 0xA7BED7AD, 0x927530AB, 0xB524803B,
+                                             0x1C9D5CE9, 0xAF947AA3, 0xFD7B9B78, 0x8DC52CD3, 0xBEACA054,
+                                             0x4F5B792B, 0xD1E5AF59, 0x21828946};
 
-UIScene_LanguageSelector::UIScene_LanguageSelector(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIScene_LanguageSelector::UIScene_LanguageSelector(int sceneType, void*, UILayer* layer) : UIScene(sceneType, layer)
 {
     initialiseMovie();
     m_languageList.init(0);
@@ -25,9 +26,8 @@ UIScene_LanguageSelector::UIScene_LanguageSelector(int sceneType, void*, UILayer
 
 void UIScene_LanguageSelector::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), IDS_TOOLTIPS_SELECT,
-                                     IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_LanguageSelector::updateComponents()
@@ -60,8 +60,7 @@ std::wstring UIScene_LanguageSelector::getMoviePath()
     return std::wstring(L"LanguagesMenu");
 }
 
-void UIScene_LanguageSelector::handleInput(int, int action, bool repeat, bool pressed, bool released,
-                                           bool&)
+void UIScene_LanguageSelector::handleInput(int, int action, bool repeat, bool pressed, bool released, bool&)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)

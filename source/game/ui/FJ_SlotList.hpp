@@ -14,6 +14,7 @@ class FJ_SlotList : public FJ_FuiNode
     friend class FJ_CraftingMenu;
     friend class FJ_TradingMenu;
     friend class fuiRenderNodeTimeline;
+
 private:
     int m_slotSize;
     bool m_slotVisible;

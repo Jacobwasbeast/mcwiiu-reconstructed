@@ -7,8 +7,7 @@ void Swap4Bytes(unsigned int& value)
 {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     unsigned int swapped = value;
-    swapped = ((swapped << 24) | ((swapped & 0x0000ff00) << 8) |
-               (swapped >> 24) | ((swapped >> 8) & 0x0000ff00));
+    swapped = ((swapped << 24) | ((swapped & 0x0000ff00) << 8) | (swapped >> 24) | ((swapped >> 8) & 0x0000ff00));
     value = swapped;
 #else
     (void)value;

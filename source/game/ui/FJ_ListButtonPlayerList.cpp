@@ -1,8 +1,7 @@
 #include "game/ui/FJ_ListButtonPlayerList.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 
-FJ_ListButtonPlayerList::FJ_ListButtonPlayerList(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode)
+FJ_ListButtonPlayerList::FJ_ListButtonPlayerList(fuiRenderNode* renderNode) : FJ_Button(renderNode)
 {
     m_playerIcon = getChildByName(std::string("PlayerIcons"))->asMovieClip();
     m_voipIcon = getChildByName(std::string("VOIP"))->asMovieClip();

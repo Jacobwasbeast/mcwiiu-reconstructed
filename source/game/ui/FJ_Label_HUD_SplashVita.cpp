@@ -3,8 +3,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_HUD_SplashVita::FJ_Label_HUD_SplashVita(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode), m_animated(false)
+FJ_Label_HUD_SplashVita::FJ_Label_HUD_SplashVita(fuiRenderNode* renderNode) : FJ_Label(renderNode), m_animated(false)
 {
 }
 

@@ -7,8 +7,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-UIControl_CheckBox::UIControl_CheckBox()
-    : UIControl_Base()
+UIControl_CheckBox::UIControl_CheckBox() : UIControl_Base()
 {
 }
 

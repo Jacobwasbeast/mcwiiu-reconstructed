@@ -2,8 +2,7 @@
 
 #include "game/ui/FJ_FuiNodeStage.hpp"
 
-FJ_BeaconMenu::FJ_BeaconMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_BeaconMenu::FJ_BeaconMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
 }
 

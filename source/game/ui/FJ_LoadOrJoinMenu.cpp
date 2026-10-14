@@ -7,8 +7,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/UIScene.hpp"
 
-FJ_LoadOrJoinMenu::FJ_LoadOrJoinMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_LoadOrJoinMenu::FJ_LoadOrJoinMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 
@@ -27,8 +26,8 @@ void FJ_LoadOrJoinMenu::handlePress(FJ_Event* event)
     FJ_Button* button = event->m_pTarget->asFJ_Button();
     if (button != NULL)
     {
-        m_pCallbackScene->handlePress(static_cast<FJ_Base*>(button->FJ_Base::getObjListParent())->getId(), button->getId());
+        m_pCallbackScene->handlePress(static_cast<FJ_Base*>(button->FJ_Base::getObjListParent())->getId(),
+                                      button->getId());
         button->setButtonPressed(false);
     }
 }
-

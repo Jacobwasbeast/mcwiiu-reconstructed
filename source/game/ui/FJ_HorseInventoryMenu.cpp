@@ -2,8 +2,7 @@
 
 #include "game/ui/FJ_FuiNodeStage.hpp"
 
-FJ_HorseInventoryMenu::FJ_HorseInventoryMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_HorseInventoryMenu::FJ_HorseInventoryMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
 }
 

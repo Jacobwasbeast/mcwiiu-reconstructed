@@ -51,10 +51,7 @@ FireworksMenu::FireworksMenu(boost::shared_ptr<Inventory> inventory, Level* leve
 
 void FireworksMenu::slotsChanged()
 {
-    FireworksRecipe::updatePossibleRecipes(m_craftSlots,
-                                           &m_hasPaper,
-                                           &m_hasGunpowder,
-                                           &m_hasFireworkCharge);
+    FireworksRecipe::updatePossibleRecipes(m_craftSlots, &m_hasPaper, &m_hasGunpowder, &m_hasFireworkCharge);
     m_resultSlots->setItem(0, Recipes::getInstance()->getItemFor(m_craftSlots, m_level, Recipes::mFireworksRecipe,
                                                                  Recipes::eRecipeCategory_Crafting));
 }
@@ -71,7 +68,8 @@ bool FireworksMenu::stillValid(boost::shared_ptr<Player> player)
 {
     if (m_level->getBlockState(m_playerPos)->getBlock() != Blocks::crafting_table)
         return false;
-    if (player->distanceAsIfHitscanned(m_playerPos, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
+    if (player->distanceAsIfHitscanned(m_playerPos, *player->mBoundingBox)
+        > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
         return false;
     return true;
 }
@@ -138,7 +136,5 @@ bool FireworksMenu::isValidIngredient(not_null_ptr<ItemInstance> item, int slot)
 {
     if (item->isEmpty() || slot == 0)
         return true;
-    return FireworksRecipe::isValidIngredient(item, m_hasPaper,
-                                              m_hasGunpowder,
-                                              m_hasFireworkCharge);
+    return FireworksRecipe::isValidIngredient(item, m_hasPaper, m_hasGunpowder, m_hasFireworkCharge);
 }

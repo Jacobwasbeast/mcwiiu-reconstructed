@@ -12,10 +12,7 @@ public:
     MethodAction(T* pTarget, Func pFunc) : m_pTarget(pTarget), m_pFunc(pFunc) {}
     virtual ~MethodAction() {}
 
-    virtual void Execute()
-    {
-        (m_pTarget->*m_pFunc)();
-    }
+    virtual void Execute() { (m_pTarget->*m_pFunc)(); }
 
 private:
     T* m_pTarget;

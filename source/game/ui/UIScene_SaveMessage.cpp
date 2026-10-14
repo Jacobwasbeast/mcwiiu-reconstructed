@@ -17,8 +17,7 @@
 #include "platform/wiiu/NQRNetworkManager.hpp"
 #include "game/core/GameSettings.hpp"
 
-UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer* layer)
-    : UIScene(playerId, layer)
+UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer* layer) : UIScene(playerId, layer)
 {
     initialiseMovie();
     layer->addComponent(playerId, EUIScene_Panorama, 0);
@@ -40,8 +39,8 @@ UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer*
 
     for (int pad = 0; pad < 4; ++pad)
     {
-        if ((g_pInput->IsPadConnected(pad) || gProfile->IsSignedIn(pad))
-            && !gApp.DLCInstallProcessCompleted() && !gApp.DLCInstallPending())
+        if ((g_pInput->IsPadConnected(pad) || gProfile->IsSignedIn(pad)) && !gApp.DLCInstallProcessCompleted()
+            && !gApp.DLCInstallPending())
         {
             gApp.StartInstallDLCProcess(pad);
             break;
@@ -74,8 +73,8 @@ unsigned int UIScene_SaveMessage::mapElementsAndNames()
 
 void UIScene_SaveMessage::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     false, false);
 }
 
 std::wstring UIScene_SaveMessage::getMoviePath()
@@ -83,8 +82,7 @@ std::wstring UIScene_SaveMessage::getMoviePath()
     return std::wstring(L"SaveMessage");
 }
 
-void UIScene_SaveMessage::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                      bool released, bool& handled)
+void UIScene_SaveMessage::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     if (!m_saveComplete)
     {

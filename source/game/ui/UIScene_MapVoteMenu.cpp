@@ -25,8 +25,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-UIScene_MapVoteMenu::UIScene_MapVoteMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer)
+UIScene_MapVoteMenu::UIScene_MapVoteMenu(int type, void* data, UILayer* layer) : UIScene(type, layer)
 {
     m_splitScreen = reinterpret_cast<int>(data) == 1;
     initialiseMovie();
@@ -92,7 +91,8 @@ void UIScene_MapVoteMenu::InitForMap()
         do
         {
             wchar_t textureName[64] = L"default";
-            TexturePack* texturePack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(info->texturePackId);
+            TexturePack* texturePack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(
+                info->texturePackId);
             unsigned int iconSize;
             const void* icon = texturePack->getPackIcon(iconSize);
             if (iconSize != 0 && icon != NULL)
@@ -201,9 +201,8 @@ void UIScene_MapVoteMenu::Init()
 
 void UIScene_MapVoteMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips((unsigned int)m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, false, false);
+    gConsoleUIController.SetTooltips((unsigned int)m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_MapVoteMenu::updateComponents()
@@ -270,19 +269,20 @@ void UIScene_MapVoteMenu::UpdateVotableInfo()
         if (m_splitScreen)
         {
             m_mapTitle.setLabel(UIString(definition->GetLootSetText(m_mapList.getCurrentSelection())), false, false);
-            m_mapDescription.setLabel(UIString(definition->GetLootSetDescription(m_mapList.getCurrentSelection())), false, false);
+            m_mapDescription.setLabel(UIString(definition->GetLootSetDescription(m_mapList.getCurrentSelection())),
+                                      false, false);
             switch (m_mapList.getCurrentSelection())
             {
             case 0:
-                {
-                    m_mapDescription.setLabel(UIString(L10N::GetString(0xea1ca730)), false, false);
-                }
-                break;
+            {
+                m_mapDescription.setLabel(UIString(L10N::GetString(0xea1ca730)), false, false);
+            }
+            break;
             case 1:
-                {
-                    m_mapDescription.setLabel(UIString(L10N::GetString(0x28850ed6)), false, false);
-                }
-                break;
+            {
+                m_mapDescription.setLabel(UIString(L10N::GetString(0x28850ed6)), false, false);
+            }
+            break;
             }
         }
     }
@@ -337,8 +337,7 @@ std::wstring UIScene_MapVoteMenu::getMoviePath()
         return L"MapSelectMenu";
 }
 
-void UIScene_MapVoteMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                                      bool& handled)
+void UIScene_MapVoteMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
     switch (action)

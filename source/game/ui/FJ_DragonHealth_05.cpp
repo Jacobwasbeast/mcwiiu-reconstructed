@@ -2,8 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_DragonHealth_05::FJ_DragonHealth_05(fuiRenderNode* renderNode)
-    : FJ_DragonHealth(renderNode)
+FJ_DragonHealth_05::FJ_DragonHealth_05(fuiRenderNode* renderNode) : FJ_DragonHealth(renderNode)
 {
 }
 

@@ -7,15 +7,14 @@
 #include "game/core/GuiComponent.hpp"
 #include "game/core/StringUtils.hpp"
 
-static std::wstring ALLOWED_CHARACTERS(L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ,.:-_'*!\"#%/()=+?[]{}<>");
+static std::wstring ALLOWED_CHARACTERS(
+    L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ,.:-_'*!\"#%/()=+?[]{}<>");
 
 void NameEntryScreen::init()
 {
     mButtons.clear();
-    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 120,
-                                  L"Save"));
-    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 144,
-                                  L"Cancel"));
+    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 120, L"Save"));
+    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 144, L"Cancel"));
 
     mButtons[0]->mActive = trimString(mName).size() > 1;
 }
@@ -53,8 +52,7 @@ void NameEntryScreen::keyPressed(wchar_t key, int action)
         mName = mName.substr(0, mName.size() - 1);
     }
 
-    if (ALLOWED_CHARACTERS.find(key, 0) != std::wstring::npos
-        && mName.size() < 64)
+    if (ALLOWED_CHARACTERS.find(key, 0) != std::wstring::npos && mName.size() < 64)
     {
         mName += key;
     }

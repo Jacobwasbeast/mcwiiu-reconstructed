@@ -18,8 +18,7 @@ void DisconnectedScreen::init()
 {
     Language* language = Language::getInstance();
     mButtons.clear();
-    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 132,
-        language->getElement(L"gui.toMenu")));
+    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 132, language->getElement(L"gui.toMenu")));
 }
 
 void DisconnectedScreen::buttonClicked(Button* button)

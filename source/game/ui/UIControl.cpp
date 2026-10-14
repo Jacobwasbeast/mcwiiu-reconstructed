@@ -2,9 +2,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-UIControl::UIControl()
-    : m_scene(0),
-      m_opacity(1.0f)
+UIControl::UIControl() : m_scene(0), m_opacity(1.0f)
 {
     m_name = "";
     m_controlType = eUIControlType_Unknown;
@@ -15,11 +13,15 @@ UIControl::UIControl()
 
 void UIControl::setVisible(bool visible)
 {
-    if (m_fuiRenderNode != 0) {
+    if (m_fuiRenderNode != 0)
+    {
         FJ_FuiNode* fuiNode = m_fuiRenderNode->getFuiNode();
-        if (fuiNode == 0) {
+        if (fuiNode == 0)
+        {
             m_fuiRenderNode->setVisibility(visible);
-        } else {
+        }
+        else
+        {
             fuiNode->setVisible(visible);
         }
         m_visible = visible;
@@ -49,7 +51,8 @@ float UIControl::getYPos()
 bool UIControl::getVisible()
 {
     bool visible = false;
-    if (m_fuiRenderNode != 0) {
+    if (m_fuiRenderNode != 0)
+    {
         visible = m_fuiRenderNode->isVisible();
     }
     m_visible = visible;
@@ -66,7 +69,8 @@ bool UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::str
     m_scene = scene;
     m_name.assign(name, 0, std::string::npos);
     m_fuiRenderNode = node->findNode(name.c_str());
-    if (m_fuiRenderNode != 0) {
+    if (m_fuiRenderNode != 0)
+    {
         m_x = m_fuiRenderNode->getX();
         m_y = m_fuiRenderNode->getY();
         m_width = m_fuiRenderNode->getWidth();
@@ -77,7 +81,8 @@ bool UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::str
 
 void UIControl::UpdateControl()
 {
-    if (m_fuiRenderNode != 0) {
+    if (m_fuiRenderNode != 0)
+    {
         m_x = m_fuiRenderNode->getX();
         m_y = m_fuiRenderNode->getY();
         m_width = m_fuiRenderNode->getWidth();
@@ -92,7 +97,8 @@ fuiRenderNode* UIControl::getFuiRenderNode()
 
 void UIControl::ReInit()
 {
-    if (m_fuiRenderNode != 0) {
+    if (m_fuiRenderNode != 0)
+    {
         m_fuiRenderNode->setAlpha(m_opacity);
         m_fuiRenderNode->setVisibility(m_visible);
     }
@@ -100,7 +106,8 @@ void UIControl::ReInit()
 
 void UIControl::setWidth(float width)
 {
-    if (m_fuiRenderNode != 0) {
+    if (m_fuiRenderNode != 0)
+    {
         m_fuiRenderNode->setWidth(width);
         m_width = width;
     }
@@ -108,11 +115,13 @@ void UIControl::setWidth(float width)
 
 void UIControl::setOpacity(float opacity)
 {
-    if (opacity == m_opacity) {
+    if (opacity == m_opacity)
+    {
         return;
     }
     m_opacity = opacity;
-    if (m_fuiRenderNode != 0) {
+    if (m_fuiRenderNode != 0)
+    {
         m_fuiRenderNode->setAlpha(opacity);
     }
 }

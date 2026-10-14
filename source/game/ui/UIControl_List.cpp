@@ -15,7 +15,8 @@ UIControl_List::UIControl_List()
 UIControl_List::~UIControl_List()
 {
     std::vector<GenericPendingUpdate*>::iterator update = m_pendingUpdates.begin();
-    while (update != m_pendingUpdates.end()) {
+    while (update != m_pendingUpdates.end())
+    {
         delete *update;
         ++update;
     }
@@ -43,7 +44,8 @@ unsigned int UIControl_List::GetTopItem()
 
 void UIControl_List::setCurrentSelection(int selection, bool update, bool immediate)
 {
-    if (immediate) {
+    if (immediate)
+    {
         static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode())->HighlightItem(selection, update);
         return;
     }
@@ -70,7 +72,8 @@ void UIControl_List::init(int controlId)
     m_controlId = controlId;
     FJ_List* list = m_fuiRenderNode->getFuiNode()->asFJ_List();
     list->Init(controlId);
-    switch (m_scene->m_layer->m_layerId) {
+    switch (m_scene->m_layer->m_layerId)
+    {
     case EUILayer_Fullscreen:
     case EUILayer_Scene:
     case EUILayer_HUD:
@@ -83,7 +86,8 @@ int UIControl_List::getListIndex(int index)
 {
     std::vector<int>::iterator element = m_elements.begin();
     int listIndex = 0;
-    while (element != m_elements.end()) {
+    while (element != m_elements.end())
+    {
         if (*element == index)
             return listIndex;
         ++element;
@@ -94,15 +98,19 @@ int UIControl_List::getListIndex(int index)
 
 void UIControl_List::EnableItem(int item, bool enabled, bool immediate)
 {
-    if (immediate) {
+    if (immediate)
+    {
         m_elementEnabled[(unsigned int)item] = enabled;
         int listIndex = getListIndex(item);
-        if (m_fuiRenderNode != NULL) {
+        if (m_fuiRenderNode != NULL)
+        {
             FJ_List* list = static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode());
             if (list != NULL)
                 list->EnableItem(listIndex, enabled);
         }
-    } else {
+    }
+    else
+    {
         m_pendingUpdates.push_back(new PendingSetEnable(this, item, enabled));
     }
 }
@@ -132,10 +140,13 @@ void UIControl_List::SetItemLabel(int item, UIString label, bool immediate)
     FJ_List* list = static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode());
     if (list == NULL)
         return;
-    if (immediate) {
+    if (immediate)
+    {
         if (m_scene->m_movie != NULL)
             list->SetItemLabel(getListIndex(item), label.getString());
-    } else {
+    }
+    else
+    {
         m_pendingUpdates.push_back(new PendingSetLabel(this, item, label));
     }
 }
@@ -146,8 +157,10 @@ void UIControl_List::remElement(int index)
     m_elementTypes.erase((unsigned int)index);
     m_elementEnabled.erase((unsigned int)index);
     std::vector<int>::iterator element = m_elements.begin();
-    while (element != m_elements.end()) {
-        if (*element == index) {
+    while (element != m_elements.end())
+    {
+        if (*element == index)
+        {
             m_elements.erase(element);
             return;
         }
@@ -167,7 +180,8 @@ void UIControl_List::tick()
 {
     UIControl_Base::tick();
     std::vector<GenericPendingUpdate*>::iterator update = m_pendingUpdates.begin();
-    while (update != m_pendingUpdates.end()) {
+    while (update != m_pendingUpdates.end())
+    {
         (*update)->OnTick();
         delete *update;
         ++update;
@@ -177,7 +191,8 @@ void UIControl_List::tick()
 
 void UIControl_List::removeItem(int item, bool immediate)
 {
-    if (immediate) {
+    if (immediate)
+    {
         static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode())->RemoveItem(item);
         remElement(item);
         return;
@@ -203,7 +218,8 @@ int UIControl_List::GetActiveItem()
 void UIControl_List::UpdateControl()
 {
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_List()) {
+    if (node->isFJ_List())
+    {
         node = m_fuiRenderNode->getFuiNode();
         node->asFJ_List()->UpdateTouchSize();
     }

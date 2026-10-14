@@ -38,8 +38,7 @@ struct D3DXIMAGE_INFO
     unsigned int ImageFileFormat;
 };
 
-fuiFile::fuiFile()
-    : index(0), stage(NULL), rootNode(NULL), customDrawCallback(NULL), data(NULL)
+fuiFile::fuiFile() : index(0), stage(NULL), rootNode(NULL), customDrawCallback(NULL), data(NULL)
 {
 }
 
@@ -93,15 +92,18 @@ unsigned int fuiFile::load(arrayWithLength<unsigned char> bytes, int value)
     unsigned char* cursor = data;
     fileIndex = value;
     timelineData = (fuiTimeline*)addDataRegion(header.timelineCount, 0x1c, &cursor, fuiTimeline::EndianSwap);
-    timelineActionData = (fuiTimelineAction*)addDataRegion(header.timelineActionCount, 0x84, &cursor, fuiTimelineAction::EndianSwap);
+    timelineActionData = (fuiTimelineAction*)addDataRegion(header.timelineActionCount, 0x84, &cursor,
+                                                           fuiTimelineAction::EndianSwap);
     shapeData = (fuiShape*)addDataRegion(header.shapeCount, 0x1c, &cursor, fuiShape::EndianSwap);
-    shapeComponentData = (fuiShapeComponent*)addDataRegion(header.shapeComponentCount, 0x2c, &cursor, fuiShapeComponent::EndianSwap);
+    shapeComponentData = (fuiShapeComponent*)addDataRegion(header.shapeComponentCount, 0x2c, &cursor,
+                                                           fuiShapeComponent::EndianSwap);
     vertexData = (fuiVert*)addDataRegion(header.vertCount, 8, &cursor, fuiVert::EndianSwap);
-    frameData = (fuiTimelineFrame*)addDataRegion(header.timelineFrameCount, 0x48, &cursor, fuiTimelineFrame::EndianSwap);
+    frameData = (fuiTimelineFrame*)addDataRegion(header.timelineFrameCount, 0x48, &cursor,
+                                                 fuiTimelineFrame::EndianSwap);
     if (version == 0)
     {
-        fuiTimelineEvent_version0* source = (fuiTimelineEvent_version0*)addDataRegion(header.timelineEventCount,
-            0x48, &cursor, fuiTimelineEvent_version0::EndianSwap);
+        fuiTimelineEvent_version0* source = (fuiTimelineEvent_version0*)addDataRegion(
+            header.timelineEventCount, 0x48, &cursor, fuiTimelineEvent_version0::EndianSwap);
         eventData = (fuiTimelineEvent*)source;
         unsigned int i;
         for (i = 0; i < header.timelineEventCount; ++i)
@@ -113,14 +115,16 @@ unsigned int fuiFile::load(arrayWithLength<unsigned char> bytes, int value)
     else
     {
         eventData = (fuiTimelineEvent*)addDataRegion(header.timelineEventCount, 0x48, &cursor,
-            fuiTimelineEvent::EndianSwap);
+                                                     fuiTimelineEvent::EndianSwap);
     }
-    eventNameData = (fuiTimelineEventName*)addDataRegion(header.timelineEventNameCount, 0x40, &cursor, fuiTimelineEventName::EndianSwap);
+    eventNameData = (fuiTimelineEventName*)addDataRegion(header.timelineEventNameCount, 0x40, &cursor,
+                                                         fuiTimelineEventName::EndianSwap);
     referenceData = (fuiReference*)addDataRegion(header.referenceCount, 0x48, &cursor, fuiReference::EndianSwap);
     editTextData = (fuiEdittext*)addDataRegion(header.edittextCount, 0x138, &cursor, fuiEdittext::EndianSwap);
     fontNameData = (fuiFontName*)addDataRegion(header.fontNameCount, 0x104, &cursor, fuiFontName::EndianSwap);
     symbolData = (fuiSymbol*)addDataRegion(header.symbolCount, 0x48, &cursor, fuiSymbol::EndianSwap);
-    importAssetData = (fuiImportAsset*)addDataRegion(header.importAssetCount, 0x40, &cursor, fuiImportAsset::EndianSwap);
+    importAssetData = (fuiImportAsset*)addDataRegion(header.importAssetCount, 0x40, &cursor,
+                                                     fuiImportAsset::EndianSwap);
     bitmaps = (fuiBitmap*)addDataRegion(header.bitmapCount, 0x20, &cursor, fuiBitmap::EndianSwap);
     imageData = cursor;
     rootNode = NULL;
@@ -179,16 +183,16 @@ void fuiFile::initialiseRenderTexture(fuiBitmap* bitmap, bool force)
             textureData = (int*)TextureUtil::decodeJpeg(imageData + bitmap->imageDataOffset, length, &width, &height);
             if (bitmap->type == eFuiBitmapType_Jpeg3)
                 TextureUtil::insertZlibAlphaChannelData(textureData, width, height,
-                    imageData + bitmap->imageDataOffset + bitmap->jpegDataSize,
-                    bitmap->imageDataSize - bitmap->jpegDataSize);
+                                                        imageData + bitmap->imageDataOffset + bitmap->jpegDataSize,
+                                                        bitmap->imageDataSize - bitmap->jpegDataSize);
         }
         else
         {
             D3DXIMAGE_INFO imageInfo;
             imageInfo.Width = bitmap->width;
             imageInfo.Height = bitmap->height;
-            gRenderer->LoadTextureData(imageData + bitmap->imageDataOffset, bitmap->imageDataSize,
-                &imageInfo, &textureData);
+            gRenderer->LoadTextureData(imageData + bitmap->imageDataOffset, bitmap->imageDataSize, &imageInfo,
+                                       &textureData);
         }
         if (textureData == NULL)
         {
@@ -202,8 +206,7 @@ void fuiFile::initialiseRenderTexture(fuiBitmap* bitmap, bool force)
         {
             gRenderer->TextureBind(bitmap->textureId);
             gRenderer->TextureSetTextureLevels(1);
-            gRenderer->TextureData(bitmap->width, bitmap->height, textureData, 0,
-                C4JRender::eTextureFormat_RGBA8);
+            gRenderer->TextureData(bitmap->width, bitmap->height, textureData, 0, C4JRender::eTextureFormat_RGBA8);
             if (textureData != NULL)
             {
                 delete textureData;
@@ -236,15 +239,15 @@ int fuiFile::createNodeFromSymbol(const char* name, fuiRenderNode* parent, int v
         {
             if (symbol->objectType == eFuiObjectType_Timeline)
             {
-                fuiRenderNodeTimeline* node = new fuiRenderNodeTimeline(parent->getStage(), NULL,
-                    &timelineData[symbol->objectIndex], 0, 0, NULL, 0, false, this);
+                fuiRenderNodeTimeline* node = new fuiRenderNodeTimeline(
+                    parent->getStage(), NULL, &timelineData[symbol->objectIndex], 0, 0, NULL, 0, false, this);
                 node->disableCtor();
                 node->gather(false);
                 return (int)node;
             }
             if (symbol->objectType == eFuiObjectType_Bitmap)
-                return (int)new fuiRenderNodeBitmap(parent->getStage(), NULL,
-                    &bitmaps[symbol->objectIndex], 0, 0, NULL, 0, false, this);
+                return (int)new fuiRenderNodeBitmap(parent->getStage(), NULL, &bitmaps[symbol->objectIndex], 0, 0, NULL,
+                                                    0, false, this);
         }
     }
     return 0;

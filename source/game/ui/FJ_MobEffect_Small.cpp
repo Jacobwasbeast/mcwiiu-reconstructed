@@ -1,7 +1,6 @@
 #include "game/ui/FJ_MobEffect_Small.hpp"
 
-FJ_MobEffect_Small::FJ_MobEffect_Small(fuiRenderNode* pRenderNode)
-    : FJ_MobEffect(pRenderNode)
+FJ_MobEffect_Small::FJ_MobEffect_Small(fuiRenderNode* pRenderNode) : FJ_MobEffect(pRenderNode)
 {
 }
 
@@ -14,4 +13,3 @@ unsigned int FJ_MobEffect_Small::getType()
 {
     return 0x62;
 }
-

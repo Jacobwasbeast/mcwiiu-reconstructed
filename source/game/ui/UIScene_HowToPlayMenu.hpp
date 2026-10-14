@@ -13,8 +13,7 @@ public:
     virtual int getSceneType();
     virtual void updateTooltips();
     virtual void updateComponents();
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleReload();
     virtual void handlePress(int controlId, int childId);
 

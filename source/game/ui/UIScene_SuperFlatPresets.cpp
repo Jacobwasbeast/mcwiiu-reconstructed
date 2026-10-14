@@ -28,21 +28,23 @@ struct DefaultPresetInfo
     int preset;
 };
 
-DefaultPresetInfo s_defaultPresetInfo[] = {
-    { IDS_PRESET_CLASSIC_FLAT, 2, DefaultPresets::CLASSIC },
-    { IDS_PRESET_TUNNELERS_DREAM, 1, DefaultPresets::TUNNELERS_DREAM },
-    { IDS_PRESET_WATER_WORLD, 9, DefaultPresets::WATER_WORLD },
-    { IDS_PRESET_OVERWORLD, 31, DefaultPresets::OVERWORLD },
-    { IDS_PRESET_SNOWY_KINGDOM, 78, DefaultPresets::SNOWY_KINGDOM },
-    { IDS_PRESET_DESERT, 12, DefaultPresets::DESERT },
-    { IDS_PRESET_REDSTONE_READY, 331, DefaultPresets::REDSTONE_READY },
-    { static_cast<unsigned int>(-1), -1, -1 }
-};
+DefaultPresetInfo s_defaultPresetInfo[] = {{IDS_PRESET_CLASSIC_FLAT, 2, DefaultPresets::CLASSIC},
+                                           {IDS_PRESET_TUNNELERS_DREAM, 1, DefaultPresets::TUNNELERS_DREAM},
+                                           {IDS_PRESET_WATER_WORLD, 9, DefaultPresets::WATER_WORLD},
+                                           {IDS_PRESET_OVERWORLD, 31, DefaultPresets::OVERWORLD},
+                                           {IDS_PRESET_SNOWY_KINGDOM, 78, DefaultPresets::SNOWY_KINGDOM},
+                                           {IDS_PRESET_DESERT, 12, DefaultPresets::DESERT},
+                                           {IDS_PRESET_REDSTONE_READY, 331, DefaultPresets::REDSTONE_READY},
+                                           {static_cast<unsigned int>(-1), -1, -1}};
 }
 
 UIScene_SuperFlatPresets::UIScene_SuperFlatPresets(int sceneType, void* data, UILayer* layer)
-    : UIScene(sceneType, layer), m_generator(static_cast<SuperflatConfig*>(0)),
-      m_functionPresetIds(), m_customPresets(), m_defaultPresets(), m_presetList(),
+    : UIScene(sceneType, layer),
+      m_generator(static_cast<SuperflatConfig*>(0)),
+      m_functionPresetIds(),
+      m_customPresets(),
+      m_defaultPresets(),
+      m_presetList(),
       m_presetTitle()
 {
     SuperflatConfig* config = static_cast<SuperflatConfig**>(data)[1];
@@ -90,8 +92,7 @@ unsigned int UIScene_SuperFlatPresets::mapElementsAndNames()
 
 int UIScene_SuperFlatPresets::GetPresetCount() const
 {
-    return static_cast<int>(m_functionPresetIds.size() + m_customPresets.size() +
-                            m_defaultPresets.size());
+    return static_cast<int>(m_functionPresetIds.size() + m_customPresets.size() + m_defaultPresets.size());
 }
 
 int UIScene_SuperFlatPresets::SafeGetIndex(unsigned int count, int start, int index) const
@@ -109,8 +110,8 @@ int UIScene_SuperFlatPresets::GetFunctionPresetId(int index) const
 
 int UIScene_SuperFlatPresets::GetCustomPresetId(int index) const
 {
-    return SafeGetIndex(static_cast<unsigned int>(m_customPresets.size()),
-                        static_cast<int>(m_functionPresetIds.size()), index);
+    return SafeGetIndex(static_cast<unsigned int>(m_customPresets.size()), static_cast<int>(m_functionPresetIds.size()),
+                        index);
 }
 
 int UIScene_SuperFlatPresets::GetDefaultPresetId(int index) const
@@ -188,8 +189,8 @@ int UIScene_SuperFlatPresets::GetTooltip(int function) const
 
 void UIScene_SuperFlatPresets::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, GetTooltip(0), IDS_TOOLTIPS_BACK, GetTooltip(2), GetTooltip(3),
-                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(0, GetTooltip(0), IDS_TOOLTIPS_BACK, GetTooltip(2), GetTooltip(3), -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_SuperFlatPresets::updateComponents()
@@ -217,8 +218,7 @@ int UIScene_SuperFlatPresets::LoadConfirmMessageCallback(void* data, int, C4JSto
     if (result == C4JStorage::EMessageResult_Accept)
     {
         scene->m_generator.setEqualTo(scene->GetSuperflatConfig(scene->m_selectedPreset));
-        gConsoleUIController.NavigateBack(scene->m_playerId, false, EUIScene_None,
-                                           EUILayer_Count);
+        gConsoleUIController.NavigateBack(scene->m_playerId, false, EUIScene_None, EUILayer_Count);
     }
     return 0;
 }
@@ -232,13 +232,13 @@ void UIScene_SuperFlatPresets::HandlePresetListPress(int function)
         int parameters[2];
         parameters[0] = IDS_CONFIRM_OK;
         parameters[1] = IDS_CONFIRM_CANCEL;
-        gConsoleUIController.RequestAlertMessage(IDS_SUPERFLAT_LOAD_PRESET, IDS_SUPERFLAT_UNSAVED_CONFIGURATION_LOAD_MESSAGE, parameters, 2,
-                                                  m_playerId, LoadConfirmMessageCallback, this, 0, true);
+        gConsoleUIController.RequestAlertMessage(IDS_SUPERFLAT_LOAD_PRESET,
+                                                 IDS_SUPERFLAT_UNSAVED_CONFIGURATION_LOAD_MESSAGE, parameters, 2,
+                                                 m_playerId, LoadConfirmMessageCallback, this, 0, true);
     }
 }
 
-void UIScene_SuperFlatPresets::handleInput(int, int action, bool repeat, bool pressed, bool released,
-                                           bool& handled)
+void UIScene_SuperFlatPresets::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)

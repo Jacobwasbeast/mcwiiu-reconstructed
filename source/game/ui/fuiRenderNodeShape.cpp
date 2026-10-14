@@ -98,8 +98,7 @@ void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
                         fuiMatrix::mul(bitmapScale, component->bitmapMatrix, textureMatrix);
                         vertexType = C4JRender::eVertexType_TiledUI;
                         pixelShaderType = C4JRender::ePixelShaderType_UIAlphaTest;
-                        gRenderer->StateSetTextureScaleUI(1.0f / textureMatrix.scaleX,
-                                                          1.0f / textureMatrix.scaleY,
+                        gRenderer->StateSetTextureScaleUI(1.0f / textureMatrix.scaleX, 1.0f / textureMatrix.scaleY,
                                                           -(textureMatrix.translateX / textureMatrix.scaleX),
                                                           -(textureMatrix.translateY / textureMatrix.scaleY));
                     }
@@ -137,12 +136,11 @@ void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
                 }
                 else
                 {
-                    gRenderer->StateSetScalingGridUI(shape->bounds.xMin, bounds->xMin, bounds->xMax,
-                                                     shape->bounds.xMax, shape->bounds.yMin, bounds->yMin,
-                                                     bounds->yMax, shape->bounds.yMax,
+                    gRenderer->StateSetScalingGridUI(shape->bounds.xMin, bounds->xMin, bounds->xMax, shape->bounds.xMax,
+                                                     shape->bounds.yMin, bounds->yMin, bounds->yMax, shape->bounds.yMax,
                                                      matrix->scaleX, matrix->scaleY);
-                    gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, vertexCount, vertices,
-                                            vertexType, pixelShaderType, NULL);
+                    gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, vertexCount, vertices, vertexType,
+                                            pixelShaderType, NULL);
                 }
             }
             ++component;

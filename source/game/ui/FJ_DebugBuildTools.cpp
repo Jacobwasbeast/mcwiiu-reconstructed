@@ -2,8 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_DebugBuildTools::FJ_DebugBuildTools(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_DebugBuildTools::FJ_DebugBuildTools(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

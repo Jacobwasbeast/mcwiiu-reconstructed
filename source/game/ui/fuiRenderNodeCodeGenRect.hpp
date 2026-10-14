@@ -6,9 +6,8 @@
 class fuiRenderNodeCodeGenRect : public fuiRenderNode
 {
 public:
-    fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRect* rect, const char* name,
-                             unsigned int textureWidth, unsigned int textureHeight, int textureId,
-                             bool customTexture, bool textureAlpha);
+    fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRect* rect, const char* name, unsigned int textureWidth,
+                             unsigned int textureHeight, int textureId, bool customTexture, bool textureAlpha);
     fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRect* rect, const char* name);
     virtual ~fuiRenderNodeCodeGenRect();
     virtual void gather(bool recurse);

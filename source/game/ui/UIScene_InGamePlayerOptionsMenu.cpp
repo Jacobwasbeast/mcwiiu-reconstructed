@@ -62,25 +62,35 @@ UIScene_InGamePlayerOptionsMenu::UIScene_InGamePlayerOptionsMenu(int sceneType, 
     {
         if (cheatsEnabled)
         {
-            bool canToggleInvisible = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible) != 0;
-            checked = canToggleInvisible && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invisible) != 0 && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invulnerable) != 0;
+            bool canToggleInvisible =
+                Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible) != 0;
+            checked = canToggleInvisible
+                      && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invisible) != 0
+                      && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invulnerable) != 0;
             m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_INVISIBLE), ePlayerOption_Invisible, checked);
             m_playerOptions.EnableItem(ePlayerOption_Invisible, canToggleInvisible, true);
             if (Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) == 0)
             {
-                bool canToggleFly = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0;
-                bool canToggleExhaustion = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0;
-                checked = canToggleFly && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanFly) != 0;
+                bool canToggleFly =
+                    Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0;
+                bool canToggleExhaustion =
+                    Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0;
+                checked = canToggleFly
+                          && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanFly) != 0;
                 m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_FLY), ePlayerOption_Fly, checked);
                 m_playerOptions.EnableItem(ePlayerOption_Fly, canToggleFly, true);
-                checked = canToggleExhaustion && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_ExhaustionDisabled) != 0;
-                m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_DISABLE_EXHAUSTION), ePlayerOption_DisableExhaustion, checked);
+                checked = canToggleExhaustion
+                          && Player::getPlayerGamePrivilege(m_privileges,
+                                                            Player::ePlayerGamePrivilege_ExhaustionDisabled)
+                                 != 0;
+                m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_DISABLE_EXHAUSTION), ePlayerOption_DisableExhaustion,
+                                               checked);
                 m_playerOptions.EnableItem(ePlayerOption_DisableExhaustion, canToggleExhaustion, true);
             }
             unsigned int gameType = gApp.GetPlayerGameType(m_smallId);
             m_playerOptions.AddNewSlider(L10N::GetString(GameType::byId(gameType)->getSliderLabel()),
-                                         ePlayerOption_GameMode, 0, GameType::ADVENTURE->getId(), gameType, false,
-                                         7, 3);
+                                         ePlayerOption_GameMode, 0, GameType::ADVENTURE->getId(), gameType, false, 7,
+                                         3);
             m_playerOptions.AddNewButton(L10N::GetString(IDS_SET_PLAYER_SPAWN), ePlayerOption_SetSpawn, true);
         }
     }
@@ -88,55 +98,70 @@ UIScene_InGamePlayerOptionsMenu::UIScene_InGamePlayerOptionsMenu(int sceneType, 
     {
         if (trustPlayers == 0 && player != NULL && !player->IsHost())
         {
-            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotMine) == 0 && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotBuild) == 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_BUILD_AND_MINE), ePlayerOption_BuildAndMine, checked);
-            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanUseDoorsAndSwitches) != 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_USE_DOORS_AND_SWITCHES), ePlayerOption_UseDoorsAndSwitches, checked);
+            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotMine) == 0
+                      && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotBuild) == 0;
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_BUILD_AND_MINE), ePlayerOption_BuildAndMine,
+                                           checked);
+            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanUseDoorsAndSwitches)
+                      != 0;
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_USE_DOORS_AND_SWITCHES),
+                                           ePlayerOption_UseDoorsAndSwitches, checked);
             checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanUseContainers) != 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_OPEN_CONTAINERS), ePlayerOption_OpenContainers, checked);
-            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotAttackPlayers) == 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_ATTACK_PLAYERS), ePlayerOption_AttackPlayers, checked);
-            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotAttackAnimals) == 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_ATTACK_ANIMALS), ePlayerOption_AttackAnimals, checked);
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_OPEN_CONTAINERS), ePlayerOption_OpenContainers,
+                                           checked);
+            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotAttackPlayers)
+                      == 0;
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_ATTACK_PLAYERS), ePlayerOption_AttackPlayers,
+                                           checked);
+            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotAttackAnimals)
+                      == 0;
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_ATTACK_ANIMALS), ePlayerOption_AttackAnimals,
+                                           checked);
         }
 
         if (localPlayer->IsHost())
         {
             m_cheatsEnabled = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Op) != 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_MODERATOR), ePlayerOption_Moderator, Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Op) != 0);
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_MODERATOR), ePlayerOption_Moderator,
+                                           Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Op)
+                                               != 0);
             if (cheatsEnabled)
             {
-                checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible) != 0;
+                checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible)
+                          != 0;
                 m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_INVISIBLE), ePlayerOption_Invisible, checked);
                 m_playerOptions.EnableItem(ePlayerOption_Invisible, true, true);
                 if (Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) == 0)
                 {
-                    checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0;
+                    checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly)
+                              != 0;
                     m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_FLY), ePlayerOption_Fly, checked);
                     m_playerOptions.EnableItem(ePlayerOption_Fly, true, true);
-                    checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0;
-                    m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_DISABLE_EXHAUSTION), ePlayerOption_DisableExhaustion, checked);
+                    checked = Player::getPlayerGamePrivilege(m_privileges,
+                                                             Player::ePlayerGamePrivilege_CanToggleExhaustion)
+                              != 0;
+                    m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_DISABLE_EXHAUSTION),
+                                                   ePlayerOption_DisableExhaustion, checked);
                     m_playerOptions.EnableItem(ePlayerOption_DisableExhaustion, true, true);
                 }
                 checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanTeleport) != 0;
                 m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_ENABLE_TELEPORT), ePlayerOption_Teleport, checked);
                 unsigned int gameType = gApp.GetPlayerGameType(m_smallId);
                 m_playerOptions.AddNewSlider(L10N::GetString(GameType::byId(gameType)->getSliderLabel()),
-                                             ePlayerOption_GameMode, 0, GameType::ADVENTURE->getId(), gameType,
-                                             false, 7, 3);
+                                             ePlayerOption_GameMode, 0, GameType::ADVENTURE->getId(), gameType, false,
+                                             7, 3);
                 m_playerOptions.AddNewButton(L10N::GetString(IDS_SET_PLAYER_SPAWN), ePlayerOption_SetSpawn, true);
             }
             resetCheatCheckboxes();
         }
 
-        if (player != NULL && !player->IsLocal() &&
-            !player->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
+        if (player != NULL && !player->IsLocal()
+            && !player->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
             m_playerOptions.AddNewButton(L10N::GetString(IDS_KICK_PLAYER), ePlayerOption_Kick, true);
     }
 
     int playerColour = gApp.GetPlayerColour(m_smallId);
-    static_cast<FJ_InGamePlayerOptions*>(m_movie->getRootNode()->getFuiNode())
-        ->SetPlayerIcon(playerColour);
+    static_cast<FJ_InGamePlayerOptions*>(m_movie->getRootNode()->getFuiNode())->SetPlayerIcon(playerColour);
     resetCheatCheckboxes();
     addTimer(0, 100);
     CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, OnPlayerChanged, this);
@@ -157,24 +182,37 @@ void UIScene_InGamePlayerOptionsMenu::resetCheatCheckboxes()
         if (m_playerOptions.IsCheckbox(ePlayerOption_Invisible))
         {
             m_playerOptions.EnableItem(ePlayerOption_Invisible, cheats, true);
-            m_playerOptions.SetCheckboxValue(ePlayerOption_Invisible, cheats && Player::getPlayerGamePrivilege(m_privileges,
-                Player::ePlayerGamePrivilege_CanToggleInvisible) != 0, true);
+            m_playerOptions.SetCheckboxValue(
+                ePlayerOption_Invisible,
+                cheats
+                    && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible)
+                           != 0,
+                true);
         }
-        bool creativeMode = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) != 0;
+        bool creativeMode = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode)
+                            != 0;
         if (!creativeMode)
         {
             m_playerOptions.EnableItem(ePlayerOption_Fly, cheats, true);
-            m_playerOptions.SetCheckboxValue(ePlayerOption_Fly, cheats && Player::getPlayerGamePrivilege(m_privileges,
-                Player::ePlayerGamePrivilege_CanToggleFly) != 0, true);
+            m_playerOptions.SetCheckboxValue(
+                ePlayerOption_Fly,
+                cheats && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0,
+                true);
             m_playerOptions.EnableItem(ePlayerOption_DisableExhaustion, cheats, true);
-            m_playerOptions.SetCheckboxValue(ePlayerOption_DisableExhaustion, cheats && Player::getPlayerGamePrivilege(m_privileges,
-                Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0, true);
+            m_playerOptions.SetCheckboxValue(
+                ePlayerOption_DisableExhaustion,
+                cheats
+                    && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion)
+                           != 0,
+                true);
         }
         if (m_playerOptions.IsCheckbox(ePlayerOption_Invisible))
         {
             m_playerOptions.EnableItem(ePlayerOption_Teleport, cheats, true);
-            m_playerOptions.SetCheckboxValue(ePlayerOption_Teleport, cheats && Player::getPlayerGamePrivilege(m_privileges,
-                Player::ePlayerGamePrivilege_CanTeleport) != 0, true);
+            m_playerOptions.SetCheckboxValue(
+                ePlayerOption_Teleport,
+                cheats && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanTeleport) != 0,
+                true);
         }
     }
 }
@@ -205,8 +243,8 @@ unsigned int UIScene_InGamePlayerOptionsMenu::mapElementsAndNames()
 
 void UIScene_InGamePlayerOptionsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_InGamePlayerOptionsMenu::handleReload()
@@ -223,26 +261,37 @@ void UIScene_InGamePlayerOptionsMenu::handleReload()
     {
         if (cheatsEnabled)
         {
-            bool canToggleInvisible = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible) != 0;
-            checked = canToggleInvisible && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invisible) != 0 && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invulnerable) != 0;
+            bool canToggleInvisible =
+                Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible) != 0;
+            checked = canToggleInvisible
+                      && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invisible) != 0
+                      && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invulnerable) != 0;
             m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_INVISIBLE), ePlayerOption_Invisible, checked);
             m_playerOptions.EnableItem(ePlayerOption_Invisible, canToggleInvisible, true);
-            bool creativeMode = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) != 0;
+            bool creativeMode = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode)
+                                != 0;
             if (!creativeMode)
             {
-                bool canToggleFly = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0;
-                bool canToggleExhaustion = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0;
-                checked = canToggleFly && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanFly) != 0;
+                bool canToggleFly =
+                    Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0;
+                bool canToggleExhaustion =
+                    Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0;
+                checked = canToggleFly
+                          && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanFly) != 0;
                 m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_FLY), ePlayerOption_Fly, checked);
                 m_playerOptions.EnableItem(ePlayerOption_Fly, canToggleFly, true);
-                checked = canToggleExhaustion && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_ExhaustionDisabled) != 0;
-                m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_DISABLE_EXHAUSTION), ePlayerOption_DisableExhaustion, checked);
+                checked = canToggleExhaustion
+                          && Player::getPlayerGamePrivilege(m_privileges,
+                                                            Player::ePlayerGamePrivilege_ExhaustionDisabled)
+                                 != 0;
+                m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_DISABLE_EXHAUSTION), ePlayerOption_DisableExhaustion,
+                                               checked);
                 m_playerOptions.EnableItem(ePlayerOption_DisableExhaustion, canToggleExhaustion, true);
             }
             unsigned int gameType = gApp.GetPlayerGameType(m_smallId);
             m_playerOptions.AddNewSlider(L10N::GetString(GameType::byId(gameType)->getSliderLabel()),
-                                         ePlayerOption_GameMode, 0, GameType::ADVENTURE->getId(), gameType, false,
-                                         7, 3);
+                                         ePlayerOption_GameMode, 0, GameType::ADVENTURE->getId(), gameType, false, 7,
+                                         3);
             m_playerOptions.AddNewButton(L10N::GetString(IDS_SET_PLAYER_SPAWN), ePlayerOption_SetSpawn, true);
         }
     }
@@ -250,63 +299,79 @@ void UIScene_InGamePlayerOptionsMenu::handleReload()
     {
         if (trustPlayers == 0 && player != NULL && !player->IsHost())
         {
-            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotMine) == 0 && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotBuild) == 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_BUILD_AND_MINE), ePlayerOption_BuildAndMine, checked);
-            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanUseDoorsAndSwitches) != 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_USE_DOORS_AND_SWITCHES), ePlayerOption_UseDoorsAndSwitches, checked);
+            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotMine) == 0
+                      && Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotBuild) == 0;
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_BUILD_AND_MINE), ePlayerOption_BuildAndMine,
+                                           checked);
+            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanUseDoorsAndSwitches)
+                      != 0;
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_USE_DOORS_AND_SWITCHES),
+                                           ePlayerOption_UseDoorsAndSwitches, checked);
             checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanUseContainers) != 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_OPEN_CONTAINERS), ePlayerOption_OpenContainers, checked);
-            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotAttackPlayers) == 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_ATTACK_PLAYERS), ePlayerOption_AttackPlayers, checked);
-            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotAttackAnimals) == 0;
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_ATTACK_ANIMALS), ePlayerOption_AttackAnimals, checked);
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_OPEN_CONTAINERS), ePlayerOption_OpenContainers,
+                                           checked);
+            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotAttackPlayers)
+                      == 0;
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_ATTACK_PLAYERS), ePlayerOption_AttackPlayers,
+                                           checked);
+            checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CannotAttackAnimals)
+                      == 0;
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_ATTACK_ANIMALS), ePlayerOption_AttackAnimals,
+                                           checked);
         }
 
         if (localPlayer->IsHost())
         {
-            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_MODERATOR), ePlayerOption_Moderator, Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Op) != 0);
+            m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_MODERATOR), ePlayerOption_Moderator,
+                                           Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Op)
+                                               != 0);
             if (cheatsEnabled)
             {
-                checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible) != 0;
+                checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible)
+                          != 0;
                 m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_INVISIBLE), ePlayerOption_Invisible, checked);
                 m_playerOptions.EnableItem(ePlayerOption_Invisible, true, true);
-                bool creativeMode = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) != 0;
+                bool creativeMode =
+                    Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) != 0;
                 if (!creativeMode)
                 {
-                    checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0;
+                    checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly)
+                              != 0;
                     m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_FLY), ePlayerOption_Fly, checked);
                     m_playerOptions.EnableItem(ePlayerOption_Fly, true, true);
-                    checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0;
-                    m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_DISABLE_EXHAUSTION), ePlayerOption_DisableExhaustion, checked);
+                    checked = Player::getPlayerGamePrivilege(m_privileges,
+                                                             Player::ePlayerGamePrivilege_CanToggleExhaustion)
+                              != 0;
+                    m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_CAN_DISABLE_EXHAUSTION),
+                                                   ePlayerOption_DisableExhaustion, checked);
                     m_playerOptions.EnableItem(ePlayerOption_DisableExhaustion, true, true);
                 }
                 checked = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanTeleport) != 0;
                 m_playerOptions.AddNewCheckbox(L10N::GetString(IDS_ENABLE_TELEPORT), ePlayerOption_Teleport, checked);
                 unsigned int gameType = gApp.GetPlayerGameType(m_smallId);
                 m_playerOptions.AddNewSlider(L10N::GetString(GameType::byId(gameType)->getSliderLabel()),
-                                             ePlayerOption_GameMode, 0, GameType::ADVENTURE->getId(), gameType,
-                                             false, 7, 3);
+                                             ePlayerOption_GameMode, 0, GameType::ADVENTURE->getId(), gameType, false,
+                                             7, 3);
                 m_playerOptions.AddNewButton(L10N::GetString(IDS_SET_PLAYER_SPAWN), ePlayerOption_SetSpawn, true);
             }
             resetCheatCheckboxes();
         }
 
-        if (player != NULL && !player->IsLocal() &&
-            !player->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
+        if (player != NULL && !player->IsLocal()
+            && !player->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
             m_playerOptions.AddNewButton(L10N::GetString(IDS_KICK_PLAYER), ePlayerOption_Kick, true);
     }
 
     int playerColour = gApp.GetPlayerColour(m_smallId);
-    static_cast<FJ_InGamePlayerOptions*>(m_movie->getRootNode()->getFuiNode())
-        ->SetPlayerIcon(playerColour);
+    static_cast<FJ_InGamePlayerOptions*>(m_movie->getRootNode()->getFuiNode())->SetPlayerIcon(playerColour);
     static_cast<FJ_InGamePlayerOptions*>(m_movie->getRootNode()->getFuiNode())->InitMenu();
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
 std::wstring UIScene_InGamePlayerOptionsMenu::getMoviePath()
 {
-    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"InGamePlayerOptionsSplit") :
-                                               std::wstring(L"InGamePlayerOptions");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"InGamePlayerOptionsSplit")
+                                          : std::wstring(L"InGamePlayerOptions");
 }
 
 void UIScene_InGamePlayerOptionsMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
@@ -331,7 +396,9 @@ void UIScene_InGamePlayerOptionsMenu::handleInput(int playerId, int action, bool
             {
                 if (cheatsEnabled)
                 {
-                    bool canToggleInvisible = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible) != 0;
+                    bool canToggleInvisible = Player::getPlayerGamePrivilege(
+                                                  m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible)
+                                              != 0;
                     if (canToggleInvisible)
                     {
                         Player::setPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invisible,
@@ -339,11 +406,16 @@ void UIScene_InGamePlayerOptionsMenu::handleInput(int playerId, int action, bool
                         Player::setPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_Invulnerable,
                                                        m_playerOptions.GetCheckboxValue(ePlayerOption_Invisible));
                     }
-                    bool creativeMode = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) != 0;
+                    bool creativeMode =
+                        Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) != 0;
                     if (!creativeMode)
                     {
-                        bool canToggleFly = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0;
-                        bool canToggleExhaustion = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0;
+                        bool canToggleFly = Player::getPlayerGamePrivilege(m_privileges,
+                                                                           Player::ePlayerGamePrivilege_CanToggleFly)
+                                            != 0;
+                        bool canToggleExhaustion = Player::getPlayerGamePrivilege(
+                                                       m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion)
+                                                   != 0;
                         if (canToggleFly)
                         {
                             Player::setPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanFly,
@@ -351,8 +423,9 @@ void UIScene_InGamePlayerOptionsMenu::handleInput(int playerId, int action, bool
                         }
                         if (canToggleExhaustion)
                         {
-                            Player::setPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_ExhaustionDisabled,
-                                                           m_playerOptions.GetCheckboxValue(ePlayerOption_DisableExhaustion));
+                            Player::setPlayerGamePrivilege(
+                                m_privileges, Player::ePlayerGamePrivilege_ExhaustionDisabled,
+                                m_playerOptions.GetCheckboxValue(ePlayerOption_DisableExhaustion));
                         }
                     }
                     unsigned int currentGameType = gApp.GetPlayerGameType(m_smallId);
@@ -364,8 +437,8 @@ void UIScene_InGamePlayerOptionsMenu::handleInput(int playerId, int action, bool
                         if (localMultiplayerPlayer && localMultiplayerPlayer->mPacketListener != 0)
                         {
                             sentGameModeChange = true;
-                            localMultiplayerPlayer->mPacketListener->send(GameModeCommand::preparePacket(
-                                player->GetUID(), static_cast<unsigned char>(gameType)));
+                            localMultiplayerPlayer->mPacketListener->send(
+                                GameModeCommand::preparePacket(player->GetUID(), static_cast<unsigned char>(gameType)));
                         }
                     }
                 }
@@ -396,13 +469,16 @@ void UIScene_InGamePlayerOptionsMenu::handleInput(int playerId, int action, bool
                     {
                         Player::setPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleInvisible,
                                                        m_playerOptions.GetCheckboxValue(ePlayerOption_Invisible));
-                        bool creativeMode = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) != 0;
+                        bool creativeMode = Player::getPlayerGamePrivilege(m_privileges,
+                                                                           Player::ePlayerGamePrivilege_CreativeMode)
+                                            != 0;
                         if (!creativeMode)
                         {
                             Player::setPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleFly,
                                                            m_playerOptions.GetCheckboxValue(ePlayerOption_Fly));
-                            Player::setPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion,
-                                                           m_playerOptions.GetCheckboxValue(ePlayerOption_DisableExhaustion));
+                            Player::setPlayerGamePrivilege(
+                                m_privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion,
+                                m_playerOptions.GetCheckboxValue(ePlayerOption_DisableExhaustion));
                         }
                         Player::setPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CanTeleport,
                                                        m_playerOptions.GetCheckboxValue(ePlayerOption_Teleport));
@@ -434,8 +510,8 @@ void UIScene_InGamePlayerOptionsMenu::handleInput(int playerId, int action, bool
                     unsigned int gameTypeByte = gApp.GetPlayerGameType(m_smallId);
                     if (localPlayer->IsHost() && cheatsEnabled)
                         gameTypeByte = m_playerOptions.GetSliderValue(ePlayerOption_GameMode);
-                    localMultiplayerPlayer->mPacketListener->send(
-                        boost::shared_ptr<PlayerInfoPacket>(new PlayerInfoPacket(m_smallId, -1, m_privileges, gameTypeByte)));
+                    localMultiplayerPlayer->mPacketListener->send(boost::shared_ptr<PlayerInfoPacket>(
+                        new PlayerInfoPacket(m_smallId, -1, m_privileges, gameTypeByte)));
                 }
             }
 
@@ -469,16 +545,18 @@ void UIScene_InGamePlayerOptionsMenu::handlePress(int, int childId)
     {
         unsigned char* data = new unsigned char();
         *data = m_smallId;
-        int parameters[2] = { (int)IDS_CONFIRM_OK, (int)IDS_CONFIRM_CANCEL };
+        int parameters[2] = {(int)IDS_CONFIRM_OK, (int)IDS_CONFIRM_CANCEL};
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         {
             gConsoleUIController.RequestAlertMessage(IDS_UNLOCK_KICK_PLAYER_TITLE, IDS_UNLOCK_KICK_PLAYER_MINIGAMES,
-                parameters, 2, m_playerId, IUIScene_PlayerList::KickPlayerReturned, data, 0, true);
+                                                     parameters, 2, m_playerId, IUIScene_PlayerList::KickPlayerReturned,
+                                                     data, 0, true);
         }
         else
         {
-            gConsoleUIController.RequestAlertMessage(IDS_UNLOCK_KICK_PLAYER_TITLE, IDS_UNLOCK_KICK_PLAYER,
-                parameters, 2, m_playerId, IUIScene_PlayerList::KickPlayerReturned, data, 0, true);
+            gConsoleUIController.RequestAlertMessage(IDS_UNLOCK_KICK_PLAYER_TITLE, IDS_UNLOCK_KICK_PLAYER, parameters,
+                                                     2, m_playerId, IUIScene_PlayerList::KickPlayerReturned, data, 0,
+                                                     true);
         }
         break;
     }
@@ -518,8 +596,7 @@ void UIScene_InGamePlayerOptionsMenu::tick()
     {
         if (!gConsoleUIController.IsSceneInStack(0xff, EUIScene_MessageBox))
             m_navigatingBack = false;
-        gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None,
-                                          EUILayer_Count);
+        gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None, EUILayer_Count);
     }
 }
 

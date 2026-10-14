@@ -6,8 +6,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_BiomeSelectMenu::FJ_BiomeSelectMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_BiomeSelectMenu::FJ_BiomeSelectMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
     FJ_FuiNode* guide = getChildByName(std::string("MainPanel.NavigatorGuide"));
     mNavigatorWidth = guide->getWidth();
@@ -33,8 +32,10 @@ void FJ_BiomeSelectMenu::SetMapNavigator(float scale, int x, int z)
     guide->setHeight(static_cast<float>(Math::round(mNavigatorHeight * (1.0f / scale))));
 
     const float guideWidth = guide->getWidth();
-    const float offsetX = static_cast<float>(Math::round(mNavigatorWidth / 200.0f * static_cast<float>(x) + (mNavigatorWidth * 0.5f - guideWidth * 0.5f)));
-    const float offsetY = static_cast<float>(Math::round(mNavigatorWidth / 200.0f * static_cast<float>(z) + (mNavigatorWidth * 0.5f - guideWidth * 0.5f)));
+    const float offsetX = static_cast<float>(
+        Math::round(mNavigatorWidth / 200.0f * static_cast<float>(x) + (mNavigatorWidth * 0.5f - guideWidth * 0.5f)));
+    const float offsetY = static_cast<float>(
+        Math::round(mNavigatorWidth / 200.0f * static_cast<float>(z) + (mNavigatorWidth * 0.5f - guideWidth * 0.5f)));
     guide->setX(mNavigatorX + offsetX);
     guide->setY(mNavigatorY + offsetY);
 

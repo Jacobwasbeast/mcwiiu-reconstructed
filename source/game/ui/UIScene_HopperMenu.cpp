@@ -33,7 +33,9 @@ struct HopperMenuSceneData
 }
 
 UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_hopperSlot(), m_hopperLabel()
+    : UIScene_AbstractContainerMenu(type, layer),
+      m_hopperSlot(),
+      m_hopperLabel()
 {
     initialiseMovie();
 
@@ -44,8 +46,8 @@ UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
     }
     else
     {
-        boost::shared_ptr<InteractionObject> interaction =
-            boost::dynamic_pointer_cast<InteractionObject>(sceneData->container);
+        boost::shared_ptr<InteractionObject> interaction = boost::dynamic_pointer_cast<InteractionObject>(
+            sceneData->container);
         if (interaction != 0 && interaction->getTypeId(false) == ClientboundContainerOpenPacket::MINECART_HOPPER)
             m_hopperLabel.init(UIString(L10N::GetString(IDS_CONTAINER_MINECART)));
         else
@@ -67,8 +69,8 @@ UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
                                       sceneData->container, minecraft->mLocalPlayers[m_playerId]);
     m_containerSize = static_cast<int>(sceneData->container->getContainerSize());
     Initialize(false, sceneData->playerIndex, menu, true, m_containerSize,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_HopperMax, false);
+               IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_HopperMax, false);
     m_hopperSlot.addSlots(0, 9);
     delete sceneData;
 }
@@ -77,37 +79,49 @@ UIScene_HopperMenu::~UIScene_HopperMenu()
 {
 }
 
-int UIScene_HopperMenu::getSectionColumns(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_HopperMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int columns = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar: columns = 9; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory: columns = 9; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots: columns = 5; break;
-    default: break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar:
+        columns = 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory:
+        columns = 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots:
+        columns = 5;
+        break;
+    default:
+        break;
     }
     return columns;
 }
 
-int UIScene_HopperMenu::getSectionRows(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_HopperMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int rows = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar: rows = 1; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory: rows = GetInventoryRows(); break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots: rows = 1; break;
-    default: break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar:
+        rows = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory:
+        rows = GetInventoryRows();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots:
+        rows = 1;
+        break;
+    default:
+        break;
     }
     return rows;
 }
 
-unsigned int UIScene_HopperMenu::GetSectionAndSlotInDirection(
-    IUIScene_AbstractContainerMenu::ESceneSection section,
-    IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
+unsigned int UIScene_HopperMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                              IUIScene_AbstractContainerMenu::ETapState state, int* x,
+                                                              int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection newSection = section;
     int xOffset = 0;
@@ -157,8 +171,7 @@ unsigned int UIScene_HopperMenu::GetSectionAndSlotInDirection(
     return newSection;
 }
 
-void UIScene_HopperMenu::GetPositionOfSection(
-    IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
+void UIScene_HopperMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
     switch (section)
     {
@@ -179,9 +192,8 @@ void UIScene_HopperMenu::GetPositionOfSection(
     }
 }
 
-void UIScene_HopperMenu::GetItemScreenData(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-    _UIVec2D* position, _UIVec2D* size)
+void UIScene_HopperMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                           _UIVec2D* position, _UIVec2D* size)
 {
     _UIVec2D controlSize;
     switch (section)
@@ -211,17 +223,24 @@ void UIScene_HopperMenu::GetItemScreenData(
     position->y = static_cast<float>(row) * size->y;
 }
 
-void UIScene_HopperMenu::setSectionSelectedSlot(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
+void UIScene_HopperMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                                int direction, bool wrap)
 {
     const int highlightSlot = direction * getSectionColumns(section) + slot;
     UIControl_SlotList* list = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots: list = &m_hopperSlot; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory: list = &m_inventoryList; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar: list = &m_hotbarList; break;
-    default: break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots:
+        list = &m_hopperSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory:
+        list = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar:
+        list = &m_hotbarList;
+        break;
+    default:
+        break;
     }
     if (wrap)
         list->setHighlightSlot(highlightSlot);
@@ -245,34 +264,38 @@ unsigned int UIScene_HopperMenu::mapElementsAndNames()
 
 std::wstring UIScene_HopperMenu::getMoviePath()
 {
-    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"HopperMenuSplit") :
-        std::wstring(L"HopperMenu");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"HopperMenuSplit") : std::wstring(L"HopperMenu");
 }
 
 void UIScene_HopperMenu::handleReload()
 {
-    Initialize(true, m_playerId, m_menu, true,
-                                 m_containerSize, IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_HopperMax, false);
+    Initialize(true, m_playerId, m_menu, true, m_containerSize,
+               IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_HopperMax, false);
     m_hopperSlot.addSlots(0, 9);
 }
 
-UIControl* UIScene_HopperMenu::getSection(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+UIControl* UIScene_HopperMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     UIControl* control = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots: control = &m_hopperSlot; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory: control = &m_inventoryList; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar: control = &m_hotbarList; break;
-    default: break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots:
+        control = &m_hopperSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory:
+        control = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar:
+        control = &m_hotbarList;
+        break;
+    default:
+        break;
     }
     return control;
 }
 
-void UIScene_HopperMenu::handleSectionClick(
-    IUIScene_AbstractContainerMenu::ESceneSection)
+void UIScene_HopperMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection)
 {
 }
 
@@ -281,16 +304,22 @@ int UIScene_HopperMenu::getSceneType()
     return EUIScene_HopperMenu;
 }
 
-int UIScene_HopperMenu::getSectionStartOffset(
-    IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_HopperMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     int offset = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar: offset = 32; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory: offset = 5; break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots: offset = 0; break;
-    default: break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar:
+        offset = 32;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory:
+        offset = 5;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots:
+        offset = 0;
+        break;
+    default:
+        break;
     }
     return offset;
 }

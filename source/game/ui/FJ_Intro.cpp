@@ -6,12 +6,15 @@
 
 namespace
 {
-    std::vector<std::string> g_0x104F357C[11];
-    bool g_0x104C6614 = true;
+std::vector<std::string> g_0x104F357C[11];
+bool g_0x104C6614 = true;
 }
 
 FJ_Intro::FJ_Intro(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), m_platform(0), m_animationStep(0), m_alternate(false)
+    : FJ_Document(renderNode),
+      m_platform(0),
+      m_animationStep(0),
+      m_alternate(false)
 {
     if (g_0x104C6614)
     {

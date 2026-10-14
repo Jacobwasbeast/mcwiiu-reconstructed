@@ -18,8 +18,7 @@
 
 template <typename T> std::wstring _toString(T value);
 
-SelectWorldScreen::SelectWorldScreen(Screen* parent)
-    : Screen()
+SelectWorldScreen::SelectWorldScreen(Screen* parent) : Screen()
 {
     mTitle = L"Select world";
     mSelecting = false;
@@ -75,10 +74,9 @@ void SelectWorldScreen::postInit()
                                                   language->getElement(L"selectWorld.rename")));
     mButtons.push_back(mDeleteButton = new Button(2, mWidth / 2 - 74, mHeight - 28, 70, 20,
                                                   language->getElement(L"selectWorld.delete")));
-    mButtons.push_back(new Button(3, mWidth / 2 + 4, mHeight - 52, 150, 20,
-                                  language->getElement(L"selectWorld.create")));
-    mButtons.push_back(new Button(0, mWidth / 2 + 4, mHeight - 28, 150, 20,
-                                  language->getElement(L"gui.cancel")));
+    mButtons.push_back(
+        new Button(3, mWidth / 2 + 4, mHeight - 52, 150, 20, language->getElement(L"selectWorld.create")));
+    mButtons.push_back(new Button(0, mWidth / 2 + 4, mHeight - 28, 150, 20, language->getElement(L"gui.cancel")));
     mSelectButton->mActive = false;
     mRenameButton->mActive = false;
     mDeleteButton->mActive = false;
@@ -197,8 +195,8 @@ void SelectWorldScreen::render(int x, int y, float partialTick)
 }
 
 SelectWorldScreen::WorldSelectionList::WorldSelectionList(SelectWorldScreen* screen)
-    : ScrolledSelectionList(screen->mMinecraft, screen->mWidth, screen->mHeight,
-                            32, screen->mHeight - 64, 36), mScreen(screen)
+    : ScrolledSelectionList(screen->mMinecraft, screen->mWidth, screen->mHeight, 32, screen->mHeight - 64, 36),
+      mScreen(screen)
 {
 }
 
@@ -249,8 +247,8 @@ void SelectWorldScreen::WorldSelectionList::renderItem(int index, int x, int y, 
     fileTime.dwLowDateTime = lastPlayed.u.LowPart;
     FileTimeToSystemTime(&fileTime, &systemTime);
     wchar_t date[20];
-    swprintf(date, 20, L"%d/%d/%d %d:%02d", systemTime.day, systemTime.month,
-             systemTime.year, systemTime.hour, systemTime.minute);
+    swprintf(date, 20, L"%d/%d/%d %d:%02d", systemTime.day, systemTime.month, systemTime.year, systemTime.hour,
+             systemTime.minute);
 
     id = id + L" (" + date;
     long long size = summary->getSizeOnDisk();

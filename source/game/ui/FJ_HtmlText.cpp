@@ -11,11 +11,10 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
-static const int s_scrollUpKeys[2] = { 3, 17 };
-static const int s_scrollDownKeys[2] = { 4, 18 };
+static const int s_scrollUpKeys[2] = {3, 17};
+static const int s_scrollDownKeys[2] = {4, 18};
 
-FJ_HtmlText::FJ_HtmlText(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode)
+FJ_HtmlText::FJ_HtmlText(fuiRenderNode* renderNode) : FJ_Base(renderNode)
 {
     m_pText = NULL;
     m_bScrollingEnabled = 1;
@@ -34,7 +33,8 @@ FJ_HtmlText::FJ_HtmlText(fuiRenderNode* renderNode)
     m_iTouchScroll = 0;
     m_iTouchTarget = 0;
     m_pUpArrow = FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL);
-    m_pDownArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
+    m_pDownArrow = static_cast<FJ_ScrollArrow*>(
+        FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
     getStage()->addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
     getStage()->addEventListener(eFJEventType_KeyUp, this, _keyUpHandler, false);
     m_fScrollSpeed = 1.0f;

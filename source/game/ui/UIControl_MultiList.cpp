@@ -33,18 +33,16 @@ void UIControl_MultiList::AddNewCheckbox(const std::wstring& label, int id, bool
     addElement(type, id);
 }
 
-void UIControl_MultiList::AddNewControllerButton(const std::wstring& label,
-                                                  const std::wstring& secondaryLabel,
-                                                  bool html, int id)
+void UIControl_MultiList::AddNewControllerButton(const std::wstring& label, const std::wstring& secondaryLabel,
+                                                 bool html, int id)
 {
-    static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->addNewItem_ControllerButton(
-        label, secondaryLabel, html, id);
+    static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())
+        ->addNewItem_ControllerButton(label, secondaryLabel, html, id);
     addElement(UIControl::eUIControlType_Button, id);
 }
 
-void UIControl_MultiList::AddNewSlider(const std::wstring& label, int id, int minValue,
-                                       int maxValue, int value, bool repeat, int repeatDelay,
-                                       int repeatStep)
+void UIControl_MultiList::AddNewSlider(const std::wstring& label, int id, int minValue, int maxValue, int value,
+                                       bool repeat, int repeatDelay, int repeatStep)
 {
     FJ_List_MultiList* list = static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode());
     list->addNewItem_Slider(label, id, minValue, maxValue, value, repeat, repeatDelay, repeatStep);
@@ -54,7 +52,8 @@ void UIControl_MultiList::AddNewSlider(const std::wstring& label, int id, int mi
 
 void UIControl_MultiList::SetCheckboxValue(int id, bool checked, bool immediate)
 {
-    if (immediate) {
+    if (immediate)
+    {
         int index = getListIndex(id);
         static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->SetCheckBox(index, checked);
         return;
@@ -76,8 +75,7 @@ bool UIControl_MultiList::GetCheckboxValue(int id)
 void UIControl_MultiList::AddNewTextInput(const std::wstring& label, int id, int charLimit)
 {
     FJ_List_MultiList* list = static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode());
-    list->addNewItem_TextInput(
-        label, id, charLimit);
+    list->addNewItem_TextInput(label, id, charLimit);
     UIControl::eUIControlType type = UIControl::eUIControlType_TextInput;
     addElement(type, id);
 }
@@ -94,8 +92,7 @@ bool UIControl_MultiList::setupControl(UIScene* scene, fuiRenderNode* node, cons
     return UIControl_List::setupControl(scene, node, name);
 }
 
-void UIControl_MultiList::setAllPossibleLabels(int firstLabel, unsigned int labelCount,
-                                                wchar_t (*labels)[256])
+void UIControl_MultiList::setAllPossibleLabels(int firstLabel, unsigned int labelCount, wchar_t (*labels)[256])
 {
     std::vector<std::wstring> possibleLabels;
     for (unsigned int i = 0; i < labelCount; ++i)
@@ -125,7 +122,8 @@ void UIControl_MultiList::HighlightItem(unsigned int id, bool update)
 
 void UIControl_MultiList::SetSliderValue(int id, int value, bool immediate)
 {
-    if (immediate) {
+    if (immediate)
+    {
         int index = getListIndex(id);
         static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->SetSliderValue(index, value);
         return;
@@ -135,20 +133,23 @@ void UIControl_MultiList::SetSliderValue(int id, int value, bool immediate)
 
 void UIControl_MultiList::SetItemOpacity(int id, float opacity, bool immediate)
 {
-    if (immediate) {
+    if (immediate)
+    {
         int index = getListIndex(id);
-        if (m_fuiRenderNode != NULL) {
+        if (m_fuiRenderNode != NULL)
+        {
             FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
             if (node != NULL)
                 static_cast<FJ_List_MultiList*>(node)->SetItemAlpha(index, opacity);
         }
-    } else {
+    }
+    else
+    {
         m_pendingUpdates.push_back(new PendingSetOpacity(this, id, opacity));
     }
 }
 
-void UIControl_MultiList::SetSecondaryLabel(int id, UIString label, bool html, bool autoSize,
-                                             bool immediate)
+void UIControl_MultiList::SetSecondaryLabel(int id, UIString label, bool html, bool autoSize, bool immediate)
 {
     int index = getListIndex(id);
     const std::wstring& text = label.getString();
@@ -158,7 +159,8 @@ void UIControl_MultiList::SetSecondaryLabel(int id, UIString label, bool html, b
 
 void UIControl_MultiList::ToggleButtonOutline(int id, bool outline, bool immediate)
 {
-    if (immediate) {
+    if (immediate)
+    {
         int index = getListIndex(id);
         static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->ToggleButtonOutline(index, outline);
         return;

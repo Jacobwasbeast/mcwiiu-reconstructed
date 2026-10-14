@@ -40,8 +40,7 @@ public:
     virtual void updateTooltips();
     virtual void updateComponents();
     virtual void customDraw(const char* name, fuiRect* rect);
-    virtual void handleInput(int player, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleReload();
     virtual void handlePress(int controlId, int childId);
     virtual void handleFocusChange(int focus, int childFocus);
@@ -49,8 +48,8 @@ public:
     virtual void HandleDLCMountingComplete();
     virtual void HandleDLCInstalled();
     virtual void HandleDLCLicenseChange();
-    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
-                                  bool pressed, bool repeat, bool released);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                  bool repeat, bool released);
     virtual int getSceneType();
 
     void setCharacterLocked(bool locked);
@@ -72,8 +71,7 @@ public:
     void updatePackDisplay();
     void handlePackIndexChanged();
     void InputActionOK(unsigned int player);
-    static int ManageFavoritesReturned(void* context, int player,
-                                       C4JStorage::EMessageResult result);
+    static int ManageFavoritesReturned(void* context, int player, C4JStorage::EMessageResult result);
     void SetFavoriteSkin(int player, int skin);
     void InputActionFavorite(unsigned int player);
     unsigned int IsFavoriteSkin(int player, int skin);

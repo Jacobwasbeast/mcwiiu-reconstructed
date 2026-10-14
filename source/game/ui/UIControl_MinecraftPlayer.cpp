@@ -74,7 +74,8 @@ void UIControl_MinecraftPlayer::render(fuiRect* rect)
     float x = player->isSleeping() ? player->mBedOffsetX : 0.0f;
     float z = player->isSleeping() ? player->mBedOffsetZ : 0.0f;
     boost::shared_ptr<Entity> entity = player;
-    Minecraft::GetInstance()->getEntityRenderDispatcher()->render(entity, -x, 0.0, -z, 0.0f, 1.0f, false, false, false, true);
+    Minecraft::GetInstance()->getEntityRenderDispatcher()->render(entity, -x, 0.0, -z, 0.0f, 1.0f, false, false, false,
+                                                                  true);
     minecraft->mOptions->mHideGui = oldHideGui;
 
     player->mYRot = oldYRot;

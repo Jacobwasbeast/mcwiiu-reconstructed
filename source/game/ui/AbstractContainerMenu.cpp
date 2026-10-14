@@ -55,8 +55,8 @@ void AbstractContainerMenu::addSlotListener(net_minecraft_world_inventory::Conta
 
 void AbstractContainerMenu::removeSlotListener(net_minecraft_world_inventory::ContainerListener* listener)
 {
-    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it =
-        std::find(m_listeners.begin(), m_listeners.end(), listener);
+    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = std::find(
+        m_listeners.begin(), m_listeners.end(), listener);
     if (it != m_listeners.end())
         m_listeners.erase(it);
 }
@@ -65,14 +65,16 @@ AbstractContainerMenu::ItemList* AbstractContainerMenu::getItems()
 {
     ItemList* items = new ItemList();
     std::vector<Slot*>::iterator end = m_slots.end();
-    for (std::vector<Slot*>::iterator it = m_slots.begin(); it != end; ++it) items->push_back((*it)->getItem());
+    for (std::vector<Slot*>::iterator it = m_slots.begin(); it != end; ++it)
+        items->push_back((*it)->getItem());
     return items;
 }
 
 void AbstractContainerMenu::sendData(int id, int value)
 {
     std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator end = m_listeners.end();
-    for (std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin(); it != end; ++it)
+    for (std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin(); it != end;
+         ++it)
         (*it)->setContainerData(this, id, value);
 }
 
@@ -114,7 +116,10 @@ bool AbstractContainerMenu::needsRendered()
     }
     return changed;
 }
-bool AbstractContainerMenu::clickMenuButton(boost::shared_ptr<Player>, int) { return false; }
+bool AbstractContainerMenu::clickMenuButton(boost::shared_ptr<Player>, int)
+{
+    return false;
+}
 
 Slot* AbstractContainerMenu::getSlotFor(boost::shared_ptr<Container> container, int index)
 {
@@ -132,7 +137,8 @@ Slot* AbstractContainerMenu::getSlotFor(boost::shared_ptr<Container> container, 
 
 Slot* AbstractContainerMenu::getSlot(int index)
 {
-    if (index < (int)m_slots.size()) return m_slots.at(index);
+    if (index < (int)m_slots.size())
+        return m_slots.at(index);
     return NULL;
 }
 
@@ -141,11 +147,13 @@ AbstractContainerMenu::ItemList AbstractContainerMenu::getAllItems(int start, in
     ItemList items;
     items.reserve(count);
     int i;
-    for (i = start; i < start + count; ++i) items.push_back(m_slots.at(i)->getItem());
+    for (i = start; i < start + count; ++i)
+        items.push_back(m_slots.at(i)->getItem());
     return items;
 }
 
-AbstractContainerMenu::ItemList AbstractContainerMenu::takeAll(boost::shared_ptr<Player> player, int button, int start, int count)
+AbstractContainerMenu::ItemList AbstractContainerMenu::takeAll(boost::shared_ptr<Player> player, int button, int start,
+                                                               int count)
 {
     ItemList items;
     items.reserve(count);
@@ -158,18 +166,31 @@ AbstractContainerMenu::ItemList AbstractContainerMenu::takeAll(boost::shared_ptr
 not_null_ptr<ItemInstance> AbstractContainerMenu::quickMoveStack(boost::shared_ptr<Player>, int index)
 {
     Slot* slot = m_slots.at(index);
-    if (slot != NULL) return slot->getItem();
+    if (slot != NULL)
+        return slot->getItem();
     return ItemInstance::EMPTY;
 }
 
-int AbstractContainerMenu::getQuickcraftHeader(int flags) { return flags & 3; }
+int AbstractContainerMenu::getQuickcraftHeader(int flags)
+{
+    return flags & 3;
+}
 
-void AbstractContainerMenu::resetQuickCraft() { m_quickcraftStatus = 0; m_quickcraftSlots.clear(); }
-int AbstractContainerMenu::getQuickcraftType(int flags) { return (flags >> 2) & 3; }
+void AbstractContainerMenu::resetQuickCraft()
+{
+    m_quickcraftStatus = 0;
+    m_quickcraftSlots.clear();
+}
+int AbstractContainerMenu::getQuickcraftType(int flags)
+{
+    return (flags >> 2) & 3;
+}
 bool AbstractContainerMenu::isValidQuickcraftType(int type, boost::shared_ptr<Player> player)
 {
-    if (type == 0 || type == 1) return true;
-    if (type == 2 && player->mAbilities.mInstabuild) return true;
+    if (type == 0 || type == 1)
+        return true;
+    if (type == 2 && player->mAbilities.mInstabuild)
+        return true;
     return false;
 }
 
@@ -184,9 +205,13 @@ bool AbstractContainerMenu::canItemQuickReplace(Slot* slot, not_null_ptr<ItemIns
     return slotEmpty;
 }
 
-bool AbstractContainerMenu::canDragTo(Slot*) { return true; }
+bool AbstractContainerMenu::canDragTo(Slot*)
+{
+    return true;
+}
 
-void AbstractContainerMenu::getQuickCraftSlotCount(SlotSet* slots, int mode, not_null_ptr<ItemInstance> item, int slotCount)
+void AbstractContainerMenu::getQuickCraftSlotCount(SlotSet* slots, int mode, not_null_ptr<ItemInstance> item,
+                                                   int slotCount)
 {
     switch (mode)
     {
@@ -203,7 +228,8 @@ void AbstractContainerMenu::getQuickCraftSlotCount(SlotSet* slots, int mode, not
     item->grow(slotCount);
 }
 
-not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button, ClickType::eClickType type, boost::shared_ptr<Player> player)
+not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button, ClickType::eClickType type,
+                                                          boost::shared_ptr<Player> player)
 {
     not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
     boost::shared_ptr<Inventory> inventory = player->mInventory;
@@ -259,8 +285,10 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
                                 getQuickCraftSlotCount(&m_quickcraftSlots, m_quickcraftType, placed, alreadyThere);
                                 int limit = placed->getMaxStackSize();
                                 int slotLimit = slot->getMaxStackSize(placed);
-                                if (slotLimit < limit) limit = slotLimit;
-                                if (limit < placed->getCount()) placed->setCount(limit);
+                                if (slotLimit < limit)
+                                    limit = slotLimit;
+                                if (limit < placed->getCount())
+                                    placed->setCount(limit);
                                 remaining -= placed->getCount() - alreadyThere;
                                 slot->set(placed);
                             }
@@ -309,9 +337,11 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
         }
         else if (type == ClickType::eClickType_QuickMove)
         {
-            if (index < 0) return ItemInstance::EMPTY;
+            if (index < 0)
+                return ItemInstance::EMPTY;
             Slot* slot = m_slots.at(index);
-            if (slot == NULL || !slot->mayPickup(player)) return ItemInstance::EMPTY;
+            if (slot == NULL || !slot->mayPickup(player))
+                return ItemInstance::EMPTY;
             not_null_ptr<ItemInstance> moved = quickMoveStack(player, index);
             while (!moved->isEmpty() && ItemInstance::isSame(slot->getItem(), moved) && doQuickMoveLoop())
             {
@@ -321,17 +351,20 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
         }
         else
         {
-            if (index < 0) return ItemInstance::EMPTY;
+            if (index < 0)
+                return ItemInstance::EMPTY;
             Slot* slot = m_slots.at(index);
             if (slot != NULL)
             {
                 not_null_ptr<ItemInstance> slotItem = slot->getItem();
                 not_null_ptr<ItemInstance> carried = inventory->getCarried();
-                if (!slotItem->isEmpty()) result = slotItem->copy();
+                if (!slotItem->isEmpty())
+                    result = slotItem->copy();
                 if (!slotItem->isEmpty())
                 {
                     bool combining = false;
-                    if (button == 1 && mayCombine(slot, carried)) combining = true;
+                    if (button == 1 && mayCombine(slot, carried))
+                        combining = true;
                     if (combining)
                     {
                         not_null_ptr<ItemInstance> combined = slot->combine(carried);
@@ -339,8 +372,9 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
                         {
                             slot->set(combined);
                             combined->onCraftedBy(player->mLevel,
-                                                 boost::static_pointer_cast<Player>(player->shared_from_this()), 1);
-                            if (!player->mAbilities.mInstabuild) carried->split(1);
+                                                  boost::static_pointer_cast<Player>(player->shared_from_this()), 1);
+                            if (!player->mAbilities.mInstabuild)
+                                carried->split(1);
                         }
                     }
                     else if (slot->mayPickup(player))
@@ -359,7 +393,8 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
                                     {
                                         carried->grow(taken);
                                         slotItem = slot->remove(taken);
-                                        if (slotItem->isEmpty()) slot->set(ItemInstance::EMPTY);
+                                        if (slotItem->isEmpty())
+                                            slot->set(ItemInstance::EMPTY);
                                         slot->onTake(player, inventory->getCarried());
                                     }
                                 }
@@ -386,7 +421,8 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
                         {
                             int amount = button == 0 ? slotItem->getCount() : (slotItem->getCount() + 1) / 2;
                             inventory->setCarried(slot->remove(amount));
-                            if (slotItem->isEmpty()) slot->set(ItemInstance::EMPTY);
+                            if (slotItem->isEmpty())
+                                slot->set(ItemInstance::EMPTY);
                             slot->onTake(player, inventory->getCarried());
                         }
                         else
@@ -399,7 +435,8 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
                 else if (!carried->isEmpty() && slot->mayPlace(carried))
                 {
                     int amount = button == 0 ? carried->getCount() : 1;
-                    if (slot->getMaxStackSize(carried) < amount) amount = slot->getMaxStackSize(carried);
+                    if (slot->getMaxStackSize(carried) < amount)
+                        amount = slot->getMaxStackSize(carried);
                     slot->set(carried->split(amount));
                 }
                 slot->setChanged();
@@ -446,7 +483,8 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
                 {
                     slot->set(hotbarItem->split(limit));
                     slot->onTake(player, slotItem);
-                    if (!inventory->add(slotItem)) player->drop(slotItem, true);
+                    if (!inventory->add(slotItem))
+                        player->drop(slotItem, true);
                 }
                 else
                 {
@@ -457,8 +495,8 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
             }
         }
     }
-    else if (type == ClickType::eClickType_Clone && player->mAbilities.mInstabuild
-             && inventory->getCarried()->isEmpty() && index >= 0)
+    else if (type == ClickType::eClickType_Clone && player->mAbilities.mInstabuild && inventory->getCarried()->isEmpty()
+             && index >= 0)
     {
         Slot* slot = m_slots.at(index);
         if (slot != NULL && slot->hasItem())
@@ -496,17 +534,19 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
                      at += step)
                 {
                     Slot* source = m_slots.at(at);
-                    if (source->hasItem() && canItemQuickReplace(source, carried, true)
-                        && source->mayPickup(player) && canTakeItemForPickAll(carried, source))
+                    if (source->hasItem() && canItemQuickReplace(source, carried, true) && source->mayPickup(player)
+                        && canTakeItemForPickAll(carried, source))
                     {
                         not_null_ptr<ItemInstance> sourceItem = source->getItem();
                         if (pass != 0 || sourceItem->getCount() != sourceItem->getMaxStackSize())
                         {
                             int amount = carried->getMaxStackSize() - carried->getCount();
-                            if (sourceItem->getCount() < amount) amount = sourceItem->getCount();
+                            if (sourceItem->getCount() < amount)
+                                amount = sourceItem->getCount();
                             not_null_ptr<ItemInstance> taken = source->remove(amount);
                             carried->grow(amount);
-                            if (taken->isEmpty()) source->set(ItemInstance::EMPTY);
+                            if (taken->isEmpty())
+                                source->set(ItemInstance::EMPTY);
                             source->onTake(player, taken);
                         }
                     }
@@ -519,10 +559,17 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
     return result;
 }
 
-bool AbstractContainerMenu::mayCombine(Slot*, not_null_ptr<ItemInstance>) { return false; }
-bool AbstractContainerMenu::canTakeItemForPickAll(not_null_ptr<ItemInstance>, Slot*) { return true; }
+bool AbstractContainerMenu::mayCombine(Slot*, not_null_ptr<ItemInstance>)
+{
+    return false;
+}
+bool AbstractContainerMenu::canTakeItemForPickAll(not_null_ptr<ItemInstance>, Slot*)
+{
+    return true;
+}
 
-void AbstractContainerMenu::clearContainer(boost::shared_ptr<Player> player, Level* level, boost::shared_ptr<Container> container)
+void AbstractContainerMenu::clearContainer(boost::shared_ptr<Player> player, Level* level,
+                                           boost::shared_ptr<Container> container)
 {
     boost::shared_ptr<ServerPlayer> serverPlayer;
     if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, player->GetType()))
@@ -559,7 +606,10 @@ void AbstractContainerMenu::removed(boost::shared_ptr<Player> player)
         inventory->setCarried(ItemInstance::EMPTY);
     }
 }
-void AbstractContainerMenu::slotsChanged() { broadcastChanges(); }
+void AbstractContainerMenu::slotsChanged()
+{
+    broadcastChanges();
+}
 
 void AbstractContainerMenu::setItem(unsigned int index, not_null_ptr<ItemInstance> item)
 {
@@ -569,18 +619,28 @@ void AbstractContainerMenu::setItem(unsigned int index, not_null_ptr<ItemInstanc
 void AbstractContainerMenu::setAll(NonNullList<not_null_ptr<ItemInstance> > items)
 {
     unsigned int i;
-    for (i = 0; i < items.size(); ++i) getSlot(i)->set(items[i]);
+    for (i = 0; i < items.size(); ++i)
+        getSlot(i)->set(items[i]);
 }
 
-void AbstractContainerMenu::setData(int, int) { }
-int AbstractContainerMenu::backup(boost::shared_ptr<Inventory>) { return ++m_transactionId; }
-bool AbstractContainerMenu::isSynched(boost::shared_ptr<Player> player) { return m_synched.find(player) == m_synched.end(); }
+void AbstractContainerMenu::setData(int, int)
+{
+}
+int AbstractContainerMenu::backup(boost::shared_ptr<Inventory>)
+{
+    return ++m_transactionId;
+}
+bool AbstractContainerMenu::isSynched(boost::shared_ptr<Player> player)
+{
+    return m_synched.find(player) == m_synched.end();
+}
 void AbstractContainerMenu::setSynched(boost::shared_ptr<Player> player, bool value)
 {
     if (value)
     {
         PlayerSet::iterator it = m_synched.find(player);
-        if (it != m_synched.end()) m_synched.erase(it);
+        if (it != m_synched.end())
+            m_synched.erase(it);
     }
     else
     {
@@ -590,11 +650,12 @@ void AbstractContainerMenu::setSynched(boost::shared_ptr<Player> player, bool va
 bool AbstractContainerMenu::stackAsdAsd(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second)
 {
     return second->getItem() == first->getItem()
-        && (!first->isStackedByData() || first->getAuxValue() == second->getAuxValue())
-        && ItemInstance::tagMatches(first, second);
+           && (!first->isStackedByData() || first->getAuxValue() == second->getAuxValue())
+           && ItemInstance::tagMatches(first, second);
 }
 
-bool AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool mergeStacks, bool fillEmpty)
+bool AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse,
+                                            bool mergeStacks, bool fillEmpty)
 {
     bool moved = false;
     if (mergeStacks && item->isStackable())
@@ -607,7 +668,8 @@ bool AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int
             if (!slotItem->isEmpty() && stackAsdAsd(item, slotItem))
             {
                 int limit = slot->getMaxStackSize();
-                if (item->getMaxStackSize() < limit) limit = item->getMaxStackSize();
+                if (item->getMaxStackSize() < limit)
+                    limit = item->getMaxStackSize();
                 int total = slotItem->getCount() + item->getCount();
                 if (total <= limit)
                 {
@@ -624,7 +686,10 @@ bool AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int
                     moved = true;
                 }
             }
-            if (reverse) --i; else ++i;
+            if (reverse)
+                --i;
+            else
+                ++i;
         }
     }
     if ((fillEmpty || moved) && item->getCount() > 0)
@@ -652,18 +717,28 @@ bool AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int
                 moved = true;
                 break;
             }
-            if (reverse) --i; else ++i;
+            if (reverse)
+                --i;
+            else
+                ++i;
         }
     }
     return moved;
 }
 
-bool AbstractContainerMenu::isOverrideResultClick(int, int) { return false; }
-int AbstractContainerMenu::getQuickcraftMask(int header, int type) { return (header & 3) | ((type & 3) << 2); }
+bool AbstractContainerMenu::isOverrideResultClick(int, int)
+{
+    return false;
+}
+int AbstractContainerMenu::getQuickcraftMask(int header, int type)
+{
+    return (header & 3) | ((type & 3) << 2);
+}
 
 int AbstractContainerMenu::getRedstoneSignalFromContainer(boost::shared_ptr<Container> container)
 {
-    if (container.get() == NULL) return 0;
+    if (container.get() == NULL)
+        return 0;
     int filled = 0;
     float fill = 0.0f;
     unsigned int i;
@@ -690,7 +765,10 @@ int AbstractContainerMenu::getRedstoneSignalFromBlockEntity(boost::shared_ptr<Bl
         return getRedstoneSignalFromContainer(boost::dynamic_pointer_cast<Container>(entity));
     return 0;
 }
-bool AbstractContainerMenu::isValidIngredient(not_null_ptr<ItemInstance>, int) { return true; }
+bool AbstractContainerMenu::isValidIngredient(not_null_ptr<ItemInstance>, int)
+{
+    return true;
+}
 not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int playerIndex, int slotIndex)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -701,7 +779,8 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int playerIn
         if (m_uiQuickCraftSlots.size() != 0)
         {
             not_null_ptr<ItemInstance> carried = minecraft->mLocalPlayers[playerIndex]->mInventory->getCarried();
-            if (!carried->isEmpty() && slotIndex == -1) useCarried = true;
+            if (!carried->isEmpty() && slotIndex == -1)
+                useCarried = true;
         }
         if (useCarried)
         {
@@ -716,7 +795,8 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int playerIn
             if (m_uiQuickCraftSlots.find(slot) != m_uiQuickCraftSlots.end())
             {
                 not_null_ptr<ItemInstance> carried = minecraft->mLocalPlayers[playerIndex]->mInventory->getCarried();
-                if (!carried->isEmpty()) spread = true;
+                if (!carried->isEmpty())
+                    spread = true;
             }
             if (spread)
             {
@@ -752,8 +832,10 @@ bool AbstractContainerMenu::IsSmallInventory()
 }
 bool AbstractContainerMenu::matches(AbstractContainerMenu* first, AbstractContainerMenu* second)
 {
-    if (first == NULL || second == NULL) return false;
-    if (first->m_slots.size() != second->m_slots.size()) return false;
+    if (first == NULL || second == NULL)
+        return false;
+    if (first->m_slots.size() != second->m_slots.size())
+        return false;
     for (unsigned int index = 0; index < first->m_slots.size(); ++index)
     {
         not_null_ptr<ItemInstance> firstItem = first->m_slots.at(index)->getItem();

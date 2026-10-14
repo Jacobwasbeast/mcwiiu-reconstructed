@@ -4,8 +4,7 @@
 #include "platform/wiiu/C4JThread.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-UIControl_BitmapIcon::UIControl_BitmapIcon()
-    : m_textureName()
+UIControl_BitmapIcon::UIControl_BitmapIcon() : m_textureName()
 {
     m_textureNamePending = false;
     m_textureName = L"";
@@ -14,20 +13,25 @@ UIControl_BitmapIcon::UIControl_BitmapIcon()
 void UIControl_BitmapIcon::setTextureName(const std::wstring& textureName, bool immediate)
 {
     m_textureName.assign(textureName, 0, std::wstring::npos);
-    if (immediate) {
+    if (immediate)
+    {
         m_textureNamePending = false;
         fuiRenderNode* node = m_fuiRenderNode;
-        if (node != 0) {
+        if (node != 0)
+        {
             static_cast<FJ_BitmapIcon*>(node->getFuiNode())->SetTextureName(textureName);
         }
-    } else {
+    }
+    else
+    {
         m_textureNamePending = true;
     }
 }
 
 void UIControl_BitmapIcon::tick()
 {
-    if (m_textureNamePending && C4JThread::isMainThread()) {
+    if (m_textureNamePending && C4JThread::isMainThread())
+    {
         setTextureName(m_textureName, true);
     }
 }

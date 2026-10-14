@@ -8,10 +8,7 @@ class fuiRenderNode;
 class FJ_Label_BigGrey : public FJ_Label
 {
 public:
-    FJ_Label_BigGrey(fuiRenderNode* renderNode)
-        : FJ_Label(renderNode)
-    {
-    }
+    FJ_Label_BigGrey(fuiRenderNode* renderNode) : FJ_Label(renderNode) {}
 
 
     static FJ_Label* Create(fuiRenderNode* pRenderNode);

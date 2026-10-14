@@ -9,8 +9,7 @@
 #include "game/ui/UIString.hpp"
 #include "game/core/GameSettings.hpp"
 
-UIScene_Keyboard::UIScene_Keyboard(int sceneType, void* sceneData, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIScene_Keyboard::UIScene_Keyboard(int sceneType, void* sceneData, UILayer* layer) : UIScene(sceneType, layer)
 {
     initialiseMovie();
 
@@ -78,8 +77,8 @@ unsigned int UIScene_Keyboard::mapElementsAndNames()
 
 void UIScene_Keyboard::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, false, false);
 }
 
 bool UIScene_Keyboard::allowRepeat(int action)

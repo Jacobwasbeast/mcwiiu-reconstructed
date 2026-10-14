@@ -15,11 +15,11 @@ class fuiRenderNodeStage;
 
 class fuiRenderNode
 {
-	friend class fui;
-	friend class fuiRenderNodeTimeline;
-	friend class fuiRenderNodeCodeGenRect;
-	friend class FJ_Factory;
-	friend class FJ_FuiNode;
+    friend class fui;
+    friend class fuiRenderNodeTimeline;
+    friend class fuiRenderNodeCodeGenRect;
+    friend class FJ_Factory;
+    friend class FJ_FuiNode;
 
 protected:
     unsigned int m_flags;
@@ -50,7 +50,8 @@ protected:
     FJ_FuiNode* m_node;
 
 public:
-    fuiRenderNode(fuiRenderNode*, fuiRenderNode*, fuiObject*, unsigned int, eFuiObjectType, unsigned char, fuiRGBA*, unsigned char, bool, fuiFile*);
+    fuiRenderNode(fuiRenderNode*, fuiRenderNode*, fuiObject*, unsigned int, eFuiObjectType, unsigned char, fuiRGBA*,
+                  unsigned char, bool, fuiFile*);
     virtual ~fuiRenderNode();
     virtual void shutdown();
     virtual void gather(bool) = 0;

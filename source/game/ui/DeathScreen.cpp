@@ -10,7 +10,7 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-template<typename T>
+template <typename T>
 std::wstring _toString(T value);
 
 static int s_deathScreenTicks = 0;
@@ -19,10 +19,8 @@ void DeathScreen::init()
 {
     mButtons.clear();
 
-    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 72,
-                                  std::wstring(L"Respawn")));
-    mButtons.push_back(new Button(2, mWidth / 2 - 100, mHeight / 4 + 96,
-                                  std::wstring(L"Title menu")));
+    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 72, std::wstring(L"Respawn")));
+    mButtons.push_back(new Button(2, mWidth / 2 - 100, mHeight / 4 + 96, std::wstring(L"Title menu")));
 
     if (mMinecraft->mUser == NULL)
     {
@@ -57,7 +55,8 @@ void DeathScreen::render(int x, int y, float partialTick)
     drawCenteredString(mFont, L"Game over!", mWidth / 2 / 2, 30, 0xffffff);
     GlStateManager::popMatrix();
 
-    drawCenteredString(mFont, L"Score: &e" + _toString<int>(mMinecraft->mPlayer->getScore()), mWidth / 2, 100, 0xffffff);
+    drawCenteredString(mFont, L"Score: &e" + _toString<int>(mMinecraft->mPlayer->getScore()), mWidth / 2, 100,
+                       0xffffff);
 
     Screen::render(x, y, partialTick);
 

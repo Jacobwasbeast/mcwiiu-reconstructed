@@ -40,8 +40,12 @@ struct UIScene_EnchantingMenuData
 };
 
 UIScene_EnchantingMenu::UIScene_EnchantingMenu(int pad, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(pad, layer), m_ingredientSlot(), m_lapisSlot(),
-      m_enchantLabel(), m_enchantmentButtons(), m_enchantmentBook()
+    : UIScene_AbstractContainerMenu(pad, layer),
+      m_ingredientSlot(),
+      m_lapisSlot(),
+      m_enchantLabel(),
+      m_enchantmentButtons(),
+      m_enchantmentBook()
 {
     UIScene_EnchantingMenuData* sceneData = static_cast<UIScene_EnchantingMenuData*>(data);
     initialiseMovie();
@@ -51,7 +55,8 @@ UIScene_EnchantingMenu::UIScene_EnchantingMenu(int pad, void* data, UILayer* lay
     m_enchantmentButtons[0].SetEnchantmentLevel(1);
     m_enchantmentButtons[1].SetEnchantmentLevel(2);
     m_enchantmentButtons[2].SetEnchantmentLevel(3);
-    m_enchantLabel.init(UIString(sceneData->name.empty() ? std::wstring(L10N::GetString(IDS_ENCHANT)) : sceneData->name));
+    m_enchantLabel.init(
+        UIString(sceneData->name.empty() ? std::wstring(L10N::GetString(IDS_ENCHANT)) : sceneData->name));
     if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
     {
         Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[pad]->getTutorial();
@@ -62,10 +67,10 @@ UIScene_EnchantingMenu::UIScene_EnchantingMenu(int pad, void* data, UILayer* lay
         }
     }
     EnchantmentMenu* menu = new EnchantmentMenu(sceneData->inventory, sceneData->level,
-                                                  BlockPos(sceneData->x, sceneData->y, sceneData->z));
+                                                BlockPos(sceneData->x, sceneData->y, sceneData->z));
     Initialize(false, sceneData->playerIndex, menu, true, 2,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_EnchantMax, false);
+               IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_EnchantMax, false);
     m_ingredientSlot.addSlots(0, 1);
     m_lapisSlot.addSlots(1, 1);
     gApp.SetRichPresenceContext(m_playerId, 10);
@@ -128,9 +133,9 @@ int UIScene_EnchantingMenu::getSectionRows(IUIScene_AbstractContainerMenu::EScen
     return rows;
 }
 
-unsigned int UIScene_EnchantingMenu::GetSectionAndSlotInDirection(
-    IUIScene_AbstractContainerMenu::ESceneSection section,
-    IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
+unsigned int UIScene_EnchantingMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                                  IUIScene_AbstractContainerMenu::ETapState state,
+                                                                  int* x, int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection newSection = section;
     int xOffset = 0;
@@ -250,8 +255,8 @@ unsigned int UIScene_EnchantingMenu::GetSectionAndSlotInDirection(
     return newSection;
 }
 
-void UIScene_EnchantingMenu::GetPositionOfSection(
-    IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
+void UIScene_EnchantingMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                  _UIVec2D* position)
 {
     switch (section)
     {
@@ -288,9 +293,8 @@ void UIScene_EnchantingMenu::GetPositionOfSection(
     }
 }
 
-void UIScene_EnchantingMenu::GetItemScreenData(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-    _UIVec2D* position, _UIVec2D* size)
+void UIScene_EnchantingMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                               _UIVec2D* position, _UIVec2D* size)
 {
     _UIVec2D extent;
     switch (section)
@@ -345,8 +349,8 @@ void UIScene_EnchantingMenu::GetItemScreenData(
     }
 }
 
-void UIScene_EnchantingMenu::handleOtherClicked(int pad,
-    IUIScene_AbstractContainerMenu::ESceneSection section, int, bool)
+void UIScene_EnchantingMenu::handleOtherClicked(int pad, IUIScene_AbstractContainerMenu::ESceneSection section, int,
+                                                bool)
 {
     int buttonId = -1;
     switch (section)
@@ -364,8 +368,8 @@ void UIScene_EnchantingMenu::handleOtherClicked(int pad,
         break;
     }
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (buttonId >= 0 &&
-        m_menu->clickMenuButton(boost::dynamic_pointer_cast<Player>(minecraft->mLocalPlayers[pad]), buttonId))
+    if (buttonId >= 0
+        && m_menu->clickMenuButton(boost::dynamic_pointer_cast<Player>(minecraft->mLocalPlayers[pad]), buttonId))
         minecraft->mGameModes[pad]->handleInventoryButtonClick(m_menu->m_containerId, buttonId);
 }
 
@@ -392,8 +396,8 @@ int UIScene_EnchantingMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu
     return offset;
 }
 
-void UIScene_EnchantingMenu::setSectionSelectedSlot(
-    IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
+void UIScene_EnchantingMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                                    int direction, bool wrap)
 {
     const int columns = getSectionColumns(section);
     const int index = direction * columns + slot;
@@ -447,8 +451,8 @@ std::vector<HtmlString>* UIScene_EnchantingMenu::GetSectionHoverText(
     if (cost > 0 && level >= 0 && enchantment != NULL)
     {
         std::vector<HtmlString>* result = new std::vector<HtmlString>();
-        result->push_back(HtmlString(enchantment->getFullname(level).mText + L"...?", eMinecraftColour_HTMLColor_White, true,
-                                     false, 0));
+        result->push_back(HtmlString(enchantment->getFullname(level).mText + L"...?", eMinecraftColour_HTMLColor_White,
+                                     true, false, 0));
         if (!instabuild)
         {
             result->push_back(HtmlString(L"", static_cast<eMinecraftColour>(0), false, false, 0));
@@ -509,10 +513,10 @@ bool UIScene_EnchantingMenu::IsActiveButton(IUIScene_AbstractContainerMenu::ESce
     return active;
 }
 
-unsigned int UIScene_EnchantingMenu::overrideTooltips(
-    IUIScene_AbstractContainerMenu::ESceneSection section, not_null_ptr<ItemInstance>, bool, bool,
-    bool, int, EToolTipItem& first, EToolTipItem&, EToolTipItem&, EToolTipItem&, EToolTipItem&,
-    EToolTipItem&, EToolTipItem&)
+unsigned int UIScene_EnchantingMenu::overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                      not_null_ptr<ItemInstance>, bool, bool, bool, int,
+                                                      EToolTipItem& first, EToolTipItem&, EToolTipItem&, EToolTipItem&,
+                                                      EToolTipItem&, EToolTipItem&, EToolTipItem&)
 {
     unsigned int count = 0;
     if (IsActiveButton(section))
@@ -561,15 +565,14 @@ unsigned int UIScene_EnchantingMenu::mapElementsAndNames()
 
 std::wstring UIScene_EnchantingMenu::getMoviePath()
 {
-    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"EnchantingMenuSplit") :
-        std::wstring(L"EnchantingMenu");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"EnchantingMenuSplit") : std::wstring(L"EnchantingMenu");
 }
 
 void UIScene_EnchantingMenu::handleReload()
 {
-    static_cast<IUIScene_AbstractContainerMenu*>(this)->Initialize(true, m_playerId, m_menu, true, 2,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_EnchantMax, false);
+    static_cast<IUIScene_AbstractContainerMenu*>(this)->Initialize(
+        true, m_playerId, m_menu, true, 2, IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar,
+        IUIScene_AbstractContainerMenu::ESceneSection_EnchantMax, false);
     m_enchantmentButtons[0].SetEnchantmentLevel(1);
     m_enchantmentButtons[1].SetEnchantmentLevel(2);
     m_enchantmentButtons[2].SetEnchantmentLevel(3);

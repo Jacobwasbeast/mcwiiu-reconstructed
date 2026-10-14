@@ -188,11 +188,10 @@ public:
     virtual unsigned int IsVisible(ESceneSection section);
     virtual int getSectionColumns(ESceneSection section) = 0;
     virtual int getSectionRows(ESceneSection section) = 0;
-    virtual unsigned int GetSectionAndSlotInDirection(ESceneSection section, ETapState tapState,
-                                                      int* slotX, int* slotY) = 0;
+    virtual unsigned int GetSectionAndSlotInDirection(ESceneSection section, ETapState tapState, int* slotX,
+                                                      int* slotY) = 0;
     virtual void GetPositionOfSection(ESceneSection section, _UIVec2D* position) = 0;
-    virtual void GetItemScreenData(ESceneSection section, int itemIndex, _UIVec2D* position,
-                                   _UIVec2D* size) = 0;
+    virtual void GetItemScreenData(ESceneSection section, int itemIndex, _UIVec2D* position, _UIVec2D* size) = 0;
     virtual void PlatformInitialize(bool navigateBack, int pad, int startIndex) = 0;
     virtual void InitDataAssociations(int pad, AbstractContainerMenu* menu, int startIndex) = 0;
     virtual unsigned int handleValidKeyPress(int pad, int buttonNum, int quickKeyHeld);
@@ -214,25 +213,23 @@ public:
     virtual bool isSlotEmpty(ESceneSection section, int slotIndex) = 0;
     virtual void adjustPointerForSafeZone() = 0;
     virtual unsigned int overrideTooltips(ESceneSection section, not_null_ptr<ItemInstance> slotItem,
-                                  bool carriedIsItem, bool slotIsItem, bool carriedSameAsSlot,
-                                  int slotSpace, EToolTipItem& buttonA, EToolTipItem& buttonX,
-                                  EToolTipItem& buttonY, EToolTipItem& buttonRT,
-                                  EToolTipItem& buttonBack, EToolTipItem& buttonLB,
-                                  EToolTipItem& buttonRB);
+                                          bool carriedIsItem, bool slotIsItem, bool carriedSameAsSlot, int slotSpace,
+                                          EToolTipItem& buttonA, EToolTipItem& buttonX, EToolTipItem& buttonY,
+                                          EToolTipItem& buttonRT, EToolTipItem& buttonBack, EToolTipItem& buttonLB,
+                                          EToolTipItem& buttonRB);
     virtual ~IUIScene_AbstractContainerMenu();
     virtual int getPad() = 0;
 
     bool canTakeAll() const;
     bool canQuickCraft() const;
     int GetSectionDimensions(ESceneSection section, int* columns, int* rows);
-    void updateSlotPosition(ESceneSection section, ESceneSection newSection, ETapState tapState,
-                            int* slotX, int* slotY, int xOffset, int yOffset);
+    void updateSlotPosition(ESceneSection section, ESceneSection newSection, ETapState tapState, int* slotX, int* slotY,
+                            int xOffset, int yOffset);
     ETapState GetTapInputType(float inputX, float inputY);
     void UpdateTooltips();
     void SetToolTip(EToolTipButton button, EToolTipItem item);
-    void Initialize(bool navigateBack, int pad, AbstractContainerMenu* menu, bool autoDeleteMenu,
-                    int startIndex, ESceneSection firstSection, ESceneSection maxSection,
-                    bool navigateBackOnClose);
+    void Initialize(bool navigateBack, int pad, AbstractContainerMenu* menu, bool autoDeleteMenu, int startIndex,
+                    ESceneSection firstSection, ESceneSection maxSection, bool navigateBackOnClose);
     std::vector<HtmlString>* GetItemDescription(Slot* slot);
     bool IsSameItemAs(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second);
     int GetEmptyStackSpace(Slot* slot);

@@ -11,8 +11,7 @@
 static std::wstring s_caretLineEnd(L"_");
 static std::wstring s_caret(L"|");
 
-FJ_BookAndQuillMenu::FJ_BookAndQuillMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_BookAndQuillMenu::FJ_BookAndQuillMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

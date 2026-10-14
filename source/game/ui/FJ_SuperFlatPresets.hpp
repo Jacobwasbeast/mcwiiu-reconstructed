@@ -5,7 +5,8 @@
 
 class fuiRenderNode;
 
-class FJ_SuperFlatPresets : public FJ_Document {
+class FJ_SuperFlatPresets : public FJ_Document
+{
 public:
     FJ_SuperFlatPresets(fuiRenderNode* renderNode);
 

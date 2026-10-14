@@ -1,7 +1,6 @@
 #include "game/ui/FJ_TextInput_Normal.hpp"
 
-FJ_TextInput_Normal::FJ_TextInput_Normal(fuiRenderNode* renderNode)
-    : FJ_TextInput(renderNode)
+FJ_TextInput_Normal::FJ_TextInput_Normal(fuiRenderNode* renderNode) : FJ_TextInput(renderNode)
 {
 }
 

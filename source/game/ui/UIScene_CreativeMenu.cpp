@@ -93,9 +93,18 @@ UIScene_CreativeMenu::TabSpec::TabSpec(const wchar_t* title, int titleStringId, 
                                        ECreative_Inventory_Groups* groups, int specialGroupCount,
                                        ECreative_Inventory_Groups* specialGroups, int extraGroupCount,
                                        ECreative_Inventory_Groups* extraGroups)
-    : m_title(title), m_titleStringId(titleStringId), m_groupCount(groupCount), m_groups(NULL),
-      m_specialGroupCount(specialGroupCount), m_specialGroups(NULL), m_extraGroupCount(extraGroupCount),
-      m_extraGroups(NULL), m_pageCount(0), m_itemsPerPage(0), m_itemCount(0), m_extraItemCount(0)
+    : m_title(title),
+      m_titleStringId(titleStringId),
+      m_groupCount(groupCount),
+      m_groups(NULL),
+      m_specialGroupCount(specialGroupCount),
+      m_specialGroups(NULL),
+      m_extraGroupCount(extraGroupCount),
+      m_extraGroups(NULL),
+      m_pageCount(0),
+      m_itemsPerPage(0),
+      m_itemCount(0),
+      m_extraItemCount(0)
 {
     if (groupCount > 0)
     {
@@ -240,13 +249,11 @@ UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void* data, UILayer* layer)
     initialiseMovie();
 
     CreativeMenuSceneData* sceneData = static_cast<CreativeMenuSceneData*>(data);
-    boost::shared_ptr<SimpleContainer> container(
-        new SimpleContainer(0, std::wstring(L""), false, 50));
+    boost::shared_ptr<SimpleContainer> container(new SimpleContainer(0, std::wstring(L""), false, 50));
     m_containerMenu = new ItemPickerMenu(container, sceneData->localPlayer->mInventory);
     Initialize(false, sceneData->playerIndex, m_containerMenu, true, -1,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_CreativeMax,
-                                 sceneData->creative);
+               IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_CreativeMax, sceneData->creative);
     m_inventoryLabel.setLabel(UIString(L""), false, false);
 
     m_restoreSelectorPending = false;
@@ -344,18 +351,20 @@ int UIScene_CreativeMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneS
 }
 
 unsigned int UIScene_CreativeMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                                 IUIScene_AbstractContainerMenu::ETapState state,
-                                                                 int* x, int* y)
+                                                                IUIScene_AbstractContainerMenu::ETapState state, int* x,
+                                                                int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection next = section;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector:
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Down || state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down
+            || state == IUIScene_AbstractContainerMenu::ETapState_Up)
             next = IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar:
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Down || state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down
+            || state == IUIScene_AbstractContainerMenu::ETapState_Up)
             next = IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector;
         break;
     }
@@ -363,7 +372,8 @@ unsigned int UIScene_CreativeMenu::GetSectionAndSlotInDirection(IUIScene_Abstrac
     return next;
 }
 
-void UIScene_CreativeMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
+void UIScene_CreativeMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                _UIVec2D* position)
 {
     switch (section)
     {
@@ -415,7 +425,7 @@ void UIScene_CreativeMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::
 }
 
 void UIScene_CreativeMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
-                                              _UIVec2D* position, _UIVec2D* size)
+                                             _UIVec2D* position, _UIVec2D* size)
 {
     float width;
     float height;
@@ -496,8 +506,9 @@ unsigned int UIScene_CreativeMenu::handleValidKeyPress(int key, int value, int)
             if (!item->isEmpty())
             {
                 m_menu->getSlot(index)->set(ItemInstance::EMPTY);
-                minecraft->mGameModes[key]->handleCreativeModeItemAdd(
-                    ItemInstance::EMPTY, (index - static_cast<int>(m_menu->m_slots.size())) + Inventory::INVENTORY_SIZE + 9);
+                minecraft->mGameModes[key]->handleCreativeModeItemAdd(ItemInstance::EMPTY,
+                                                                      (index - static_cast<int>(m_menu->m_slots.size()))
+                                                                          + Inventory::INVENTORY_SIZE + 9);
             }
         }
         return 1;
@@ -551,10 +562,9 @@ void UIScene_CreativeMenu::switchTab(ECreativeInventoryTabs tab)
 
 void UIScene_CreativeMenu::ScrollBar(_UIVec2D position)
 {
-    _UIVec2D origin = { 0.0f, 0.0f };
-    _UIVec2D size = { 0.0f, 0.0f };
-    GetItemScreenData(
-        IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider, 0, &origin, &size);
+    _UIVec2D origin = {0.0f, 0.0f};
+    _UIVec2D size = {0.0f, 0.0f};
+    GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider, 0, &origin, &size);
 
     float fraction = (position.y - origin.y) / size.y;
     if (fraction > 1.0f)
@@ -568,7 +578,8 @@ void UIScene_CreativeMenu::ScrollBar(_UIVec2D position)
     switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
 }
 
-void UIScene_CreativeMenu::handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section, int, bool)
+void UIScene_CreativeMenu::handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section, int,
+                                              bool)
 {
     switch (section)
     {
@@ -673,8 +684,8 @@ bool UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance> item
     for (int remaining = 9; remaining > 0; --remaining, ++menuSlot, ++relativeSlot)
     {
         not_null_ptr<ItemInstance> slotItem = m_menu->getSlot(menuSlot)->getItem();
-        if (!slotItem->isEmpty() && slotItem->sameItemWithTags(item, 0) &&
-            slotItem->getCount() + item->getCount() <= item->getMaxStackSize())
+        if (!slotItem->isEmpty() && slotItem->sameItemWithTags(item, 0)
+            && slotItem->getCount() + item->getCount() <= item->getMaxStackSize())
         {
             slot = relativeSlot;
             found = true;
@@ -718,8 +729,8 @@ bool UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance> item
     return found;
 }
 
-void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                 int slot, int button)
+void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                                 int button)
 {
     int effectiveSlot = getCurrentIndex(section);
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -753,20 +764,20 @@ void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu:
 
     if (found != 0)
     {
-        setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
-                               m_currentSlotX, m_currentSlotY,
-                               section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar);
+        setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar, m_currentSlotX,
+                               m_currentSlotY, section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar);
         effectiveSlot = getCurrentIndex(IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar);
         slot = 0;
         button = 0;
     }
 
-    m_menu->clicked(effectiveSlot, slot, static_cast<ClickType::eClickType>(button != 0), minecraft->mLocalPlayers[getPad()]);
+    m_menu->clicked(effectiveSlot, slot, static_cast<ClickType::eClickType>(button != 0),
+                    minecraft->mLocalPlayers[getPad()]);
 
     not_null_ptr<ItemInstance> addedItem = m_menu->getSlot(effectiveSlot)->getItem();
     const int itemsSize = static_cast<int>(m_menu->m_slots.size());
-    minecraft->mGameModes[getPad()]->handleCreativeModeItemAdd(
-        addedItem, (effectiveSlot - itemsSize) + Inventory::INVENTORY_SIZE + 9);
+    minecraft->mGameModes[getPad()]->handleCreativeModeItemAdd(addedItem, (effectiveSlot - itemsSize)
+                                                                              + Inventory::INVENTORY_SIZE + 9);
 
     if (m_restoreSelectorPending)
     {
@@ -797,7 +808,8 @@ int UIScene_CreativeMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::
     return offset;
 }
 
-void UIScene_CreativeMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slotX, int slotY, bool pointer)
+void UIScene_CreativeMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slotX,
+                                                  int slotY, bool pointer)
 {
     int columns = getSectionColumns(section);
     UIControl_SlotList* list = NULL;
@@ -810,15 +822,10 @@ void UIScene_CreativeMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu
 }
 
 unsigned int UIScene_CreativeMenu::overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                     not_null_ptr<ItemInstance> slotItem, bool, bool slotIsItem,
-                                                     bool, int,
-                                                     EToolTipItem& toolTip0,
-                                                     EToolTipItem& toolTip2,
-                                                     EToolTipItem& toolTip3,
-                                                     EToolTipItem&,
-                                                     EToolTipItem&,
-                                                     EToolTipItem&,
-                                                     EToolTipItem&)
+                                                    not_null_ptr<ItemInstance> slotItem, bool, bool slotIsItem, bool,
+                                                    int, EToolTipItem& toolTip0, EToolTipItem& toolTip2,
+                                                    EToolTipItem& toolTip3, EToolTipItem&, EToolTipItem&, EToolTipItem&,
+                                                    EToolTipItem&)
 {
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector)
     {
@@ -887,18 +894,28 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::cobblestone->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::sand->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::sandstone->defaultBlockState());
-    builder.ITEM_BLOCKSTATE(Blocks::sandstone->defaultBlockState()->setValue(SandStoneBlock::TYPE, SandStoneBlock::SMOOTH));
-    builder.ITEM_BLOCKSTATE(Blocks::sandstone->defaultBlockState()->setValue(SandStoneBlock::TYPE, SandStoneBlock::CHISELED));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::sandstone->defaultBlockState()->setValue(SandStoneBlock::TYPE, SandStoneBlock::SMOOTH));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::sandstone->defaultBlockState()->setValue(SandStoneBlock::TYPE, SandStoneBlock::CHISELED));
     builder.ITEM_BLOCKSTATE(Blocks::sand->defaultBlockState()->setValue(SandBlock::TYPE, SandBlock::Variant::RED_SAND));
     builder.ITEM_BLOCKSTATE(Blocks::red_sandstone->defaultBlockState());
-    builder.ITEM_BLOCKSTATE(Blocks::red_sandstone->defaultBlockState()->setValue(RedSandStoneBlock::TYPE, RedSandStoneBlock::Variant::SMOOTH));
-    builder.ITEM_BLOCKSTATE(Blocks::red_sandstone->defaultBlockState()->setValue(RedSandStoneBlock::TYPE, RedSandStoneBlock::Variant::CHISELED));
-    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::GRANITE));
-    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_GRANITE));
-    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::ANDESITE));
-    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_ANDESITE));
-    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::DIORITE));
-    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_DIORITE));
+    builder.ITEM_BLOCKSTATE(Blocks::red_sandstone->defaultBlockState()->setValue(RedSandStoneBlock::TYPE,
+                                                                                 RedSandStoneBlock::Variant::SMOOTH));
+    builder.ITEM_BLOCKSTATE(Blocks::red_sandstone->defaultBlockState()->setValue(RedSandStoneBlock::TYPE,
+                                                                                 RedSandStoneBlock::Variant::CHISELED));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::GRANITE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_GRANITE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::ANDESITE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_ANDESITE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::DIORITE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_DIORITE));
     builder.ITEM_BLOCKSTATE(Blocks::coal_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::dried_kelp_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::gold_block->defaultBlockState());
@@ -906,7 +923,8 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::lapis_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::diamond_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::emerald_block->defaultBlockState());
-    builder.ITEM_BLOCKSTATE(Blocks::quartz_block->defaultBlockState()->setValue(QuartzBlock::VARIANT, QuartzBlock::Variant::DEFAULT));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::quartz_block->defaultBlockState()->setValue(QuartzBlock::VARIANT, QuartzBlock::Variant::DEFAULT));
     builder.ITEM_BLOCKSTATE(Blocks::coal_ore->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::lapis_ore->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::diamond_ore->defaultBlockState());
@@ -917,18 +935,30 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::quartz_ore->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::nether_wart_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::bedrock->defaultBlockState());
-    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::OAK));
-    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE));
-    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH));
-    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::JUNGLE));
-    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::ACACIA));
-    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::DARK_OAK));
-    builder.ITEM_BLOCKSTATE(Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::OAK));
-    builder.ITEM_BLOCKSTATE(Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE));
-    builder.ITEM_BLOCKSTATE(Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::BIRCH));
-    builder.ITEM_BLOCKSTATE(Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::JUNGLE));
-    builder.ITEM_BLOCKSTATE(Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::ACACIA));
-    builder.ITEM_BLOCKSTATE(Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::DARK_OAK));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::OAK));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::JUNGLE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::ACACIA));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::DARK_OAK));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::OAK));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::BIRCH));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::JUNGLE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::ACACIA));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::DARK_OAK));
     builder.ITEM_BLOCKSTATE(Blocks::stripped_log_oak->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::stripped_log_spruce->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::stripped_log_birch->defaultBlockState());
@@ -949,9 +979,12 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::glowstone->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::magma->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::sea_lantern->defaultBlockState());
-    builder.ITEM_BLOCKSTATE(Blocks::prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::ROUGH));
-    builder.ITEM_BLOCKSTATE(Blocks::prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::BRICKS));
-    builder.ITEM_BLOCKSTATE(Blocks::prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::DARK));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::ROUGH));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::BRICKS));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::DARK));
     builder.ITEM_BLOCKSTATE(Blocks::slime->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::fence->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::spruce_fence->defaultBlockState());
@@ -961,16 +994,26 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::dark_oak_fence->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::nether_brick_fence->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::iron_bars->defaultBlockState());
-    builder.ITEM_BLOCKSTATE(Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::DEFAULT));
-    builder.ITEM_BLOCKSTATE(Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::MOSSY));
-    builder.ITEM_BLOCKSTATE(Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CRACKED));
-    builder.ITEM_BLOCKSTATE(Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CHISELED));
-    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONE));
-    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::COBBLESTONE));
-    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONEBRICK));
-    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::MOSSY_STONEBRICK));
-    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CRACKED_STONEBRICK));
-    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CHISELED_STONEBRICK));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::DEFAULT));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::MOSSY));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CRACKED));
+    builder.ITEM_BLOCKSTATE(Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT,
+                                                                              StoneBrickBlock::Variant::CHISELED));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONE));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT,
+                                                                               MonsterEggBlock::Variant::COBBLESTONE));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT,
+                                                                               MonsterEggBlock::Variant::STONEBRICK));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(
+        MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::MOSSY_STONEBRICK));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(
+        MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CRACKED_STONEBRICK));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(
+        MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CHISELED_STONEBRICK));
     builder.ITEM_BLOCKSTATE(Blocks::mycelium->defaultBlockState());
     builder.ITEM_AUX(Blocks::dirt, DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT);
     builder.ITEM_AUX(Blocks::dirt, DirtBlock::VARIANT, DirtBlock::Variant::PODZOL);
@@ -1068,41 +1111,50 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::pumpkin->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::carved_pumpkin->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::lit_pumpkin->defaultBlockState());
-    builder.ITEM_BLOCKSTATE(Blocks::sapling->defaultBlockState()->setValue(SaplingBlock::TYPE, PlanksBlock::Variant::OAK));
-    builder.ITEM_BLOCKSTATE(Blocks::sapling->defaultBlockState()->setValue(SaplingBlock::TYPE, PlanksBlock::Variant::SPRUCE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::sapling->defaultBlockState()->setValue(SaplingBlock::TYPE, PlanksBlock::Variant::OAK));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::sapling->defaultBlockState()->setValue(SaplingBlock::TYPE, PlanksBlock::Variant::SPRUCE));
     builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::BIRCH);
     builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::JUNGLE);
     builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::ACACIA);
     builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::DARK_OAK);
-    builder.ITEM_BLOCKSTATE(Blocks::leaves->defaultBlockState()->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::leaves->defaultBlockState()->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK));
     builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
     builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::BIRCH);
     builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
-    builder.ITEM_BLOCKSTATE(Blocks::leaves2->defaultBlockState()->setValue(NewLeafBlock::VARIANT, PlanksBlock::Variant::ACACIA));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::leaves2->defaultBlockState()->setValue(NewLeafBlock::VARIANT, PlanksBlock::Variant::ACACIA));
     builder.ITEM_AUX(Blocks::leaves2, NewLeafBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
     builder.ITEM_BLOCKSTATE(Blocks::vine->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::waterlily->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::torch, 1, 5)));
     builder.ITEM_AUX(Blocks::tallgrass, TallGrassBlock::VARIANT, TallGrassBlock::Variant::DEAD_BUSH);
     builder.ITEM_AUX(Blocks::tallgrass, TallGrassBlock::VARIANT, TallGrassBlock::Variant::GRASS);
-    builder.ITEM_BLOCKSTATE(Blocks::tallgrass->defaultBlockState()->setValue(TallGrassBlock::VARIANT, TallGrassBlock::Variant::FERN));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::tallgrass->defaultBlockState()->setValue(TallGrassBlock::VARIANT, TallGrassBlock::Variant::FERN));
     builder.ITEM_BLOCKSTATE(Blocks::deadbush->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::flowerPot, 1, 0)));
     builder.ITEM_AUX(Blocks::yellow_flower, Blocks::yellow_flower->getFlowerProperty(), FlowerBlock::Flower::DANDELION);
     builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::POPPY);
-    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::BLUE_ORCHID));
+    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(Blocks::red_flower->getFlowerProperty(),
+                                                                              FlowerBlock::Flower::BLUE_ORCHID));
     builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::ALLIUM);
     builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::HOUSTONIA);
     builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::RED_TULIP);
-    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::ORANGE_TULIP));
+    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(Blocks::red_flower->getFlowerProperty(),
+                                                                              FlowerBlock::Flower::ORANGE_TULIP));
     builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::WHITE_TULIP);
     builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::PINK_TULIP);
     builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::OXEYE_DAISY);
-    builder.ITEM_BLOCKSTATE(Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SUNFLOWER));
+    builder.ITEM_BLOCKSTATE(Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT,
+                                                                                DoublePlantBlock::Variant::SUNFLOWER));
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SYRINGA);
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::GRASS);
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::FERN);
-    builder.ITEM_BLOCKSTATE(Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::ROSE));
+    builder.ITEM_BLOCKSTATE(Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT,
+                                                                                DoublePlantBlock::Variant::ROSE));
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::PAEONIA);
     builder.ITEM_BLOCKSTATE(Blocks::brown_mushroom->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::red_mushroom->defaultBlockState());
@@ -1120,8 +1172,10 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::chorus_flower->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::chorus_plant->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::end_rod->defaultBlockState());
-    builder.ITEM_BLOCKSTATE(Blocks::cobblestone_wall->defaultBlockState()->setValue(WallBlock::VARIANT, WallBlock::Variant::COBBLESTONE));
-    builder.ITEM_BLOCKSTATE(Blocks::cobblestone_wall->defaultBlockState()->setValue(WallBlock::VARIANT, WallBlock::Variant::MOSSY));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::cobblestone_wall->defaultBlockState()->setValue(WallBlock::VARIANT, WallBlock::Variant::COBBLESTONE));
+    builder.ITEM_BLOCKSTATE(
+        Blocks::cobblestone_wall->defaultBlockState()->setValue(WallBlock::VARIANT, WallBlock::Variant::MOSSY));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 15)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 11)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 3)));
@@ -1251,7 +1305,8 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 8)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 7)));
     builder.ITEM_AUX(Blocks::red_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_OUTSIDE);
-    builder.ITEM_BLOCKSTATE(Blocks::brown_mushroom_block->defaultBlockState()->setValue(HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_OUTSIDE));
+    builder.ITEM_BLOCKSTATE(Blocks::brown_mushroom_block->defaultBlockState()->setValue(
+        HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_OUTSIDE));
     builder.ITEM_AUX(Blocks::brown_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_INSIDE);
     builder.ITEM_AUX(Blocks::brown_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::STEM);
     builder.ITEM_BLOCKSTATE(Blocks::sea_pickle->defaultBlockState());
@@ -1289,7 +1344,8 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::piston, 1, 5)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::sticky_piston, 1, 5)));
     builder.ITEM_BLOCKSTATE(Blocks::tnt->defaultBlockState());
-    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::lever, 1, LeverBlock::getLeverFacing(Direction::NORTH))));
+    builder.ADD(
+        not_null_ptr<ItemInstance>(new ItemInstance(Blocks::lever, 1, LeverBlock::getLeverFacing(Direction::NORTH))));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone_button, 1, 4)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wooden_button, 1, 4)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::spruce_button, 1, 4)));
@@ -1617,8 +1673,9 @@ void UIScene_CreativeMenu::staticCtor()
 
     {
         std::vector<int> enchantmentIds;
-        const boost::unordered_map<Enchantment*, ResourceLocation, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >&
-            enchantments = Enchantment::enchantmentRegistry->mInverseRegistry;
+        const boost::unordered_map<Enchantment*, ResourceLocation, boost::hash<Enchantment*>,
+                                   std::equal_to<Enchantment*> >& enchantments =
+            Enchantment::enchantmentRegistry->mInverseRegistry;
         for (boost::unordered_map<Enchantment*, ResourceLocation, boost::hash<Enchantment*>,
                                   std::equal_to<Enchantment*> >::const_iterator it = enchantments.begin();
              it != enchantments.end(); ++it)
@@ -1832,14 +1889,13 @@ void UIScene_CreativeMenu::staticCtor()
     ECreative_Inventory_Groups structuresGroups[] = {ECreative_Inventory_Groups_BuildingBlocks};
     ECreative_Inventory_Groups decorationGroups[] = {ECreative_Inventory_Groups_Decoration};
     ECreative_Inventory_Groups redstoneAndTransportGroups[] = {ECreative_Inventory_Groups_Transport,
-                                                                      ECreative_Inventory_Groups_Redstone};
+                                                               ECreative_Inventory_Groups_Redstone};
     ECreative_Inventory_Groups materialsGroups[] = {ECreative_Inventory_Groups_Materials};
     ECreative_Inventory_Groups foodGroups[] = {ECreative_Inventory_Groups_Food};
     ECreative_Inventory_Groups toolsGroups[] = {ECreative_Inventory_Groups_ToolsAndCombat};
-    ECreative_Inventory_Groups brewingGroups[] = {ECreative_Inventory_Groups_BrewingIngredients,
-                                                         ECreative_Inventory_Groups_Potions,
-                                                         ECreative_Inventory_Groups_LongPotions,
-                                                         ECreative_Inventory_Groups_StrongPotions};
+    ECreative_Inventory_Groups brewingGroups[] = {
+        ECreative_Inventory_Groups_BrewingIngredients, ECreative_Inventory_Groups_Potions,
+        ECreative_Inventory_Groups_LongPotions, ECreative_Inventory_Groups_StrongPotions};
     ECreative_Inventory_Groups miscGroups[] = {ECreative_Inventory_Groups_Miscellaneous};
 
     s_tabSpecs = new TabSpec*[8];
@@ -1912,10 +1968,8 @@ std::wstring UIScene_CreativeMenu::getMoviePath()
 
 void UIScene_CreativeMenu::handleReload()
 {
-    Initialize(true, m_playerId, m_menu, false, -1,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
-                                 IUIScene_AbstractContainerMenu::ESceneSection_CreativeMax,
-                                 m_navigateBack != 0);
+    Initialize(true, m_playerId, m_menu, false, -1, IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
+               IUIScene_AbstractContainerMenu::ESceneSection_CreativeMax, m_navigateBack != 0);
 
     for (unsigned int i = 0; i < 50; ++i)
         m_containerList.addSlot(i);
@@ -1933,13 +1987,14 @@ UIControl* UIScene_CreativeMenu::getSection(IUIScene_AbstractContainerMenu::ESce
         return &m_hotbarList;
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector)
         return &m_containerList;
-    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0 &&
-        section <= IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider)
+    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0
+        && section <= IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider)
         return &m_touchPanels[section - IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0];
     return NULL;
 }
 
-void UIScene_CreativeMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
+void UIScene_CreativeMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
+                                       bool& handled)
 {
     if (repeat)
         return;
@@ -1952,8 +2007,8 @@ void UIScene_CreativeMenu::handleInput(int playerId, int action, bool repeat, bo
         if (pressed)
         {
             switchTab(static_cast<ECreativeInventoryTabs>(
-                (m_currentTab + (action == VK_PAD_RSHOULDER ? 1 : -1) + ECreativeInventoryTabs_COUNT) %
-                ECreativeInventoryTabs_COUNT));
+                (m_currentTab + (action == VK_PAD_RSHOULDER ? 1 : -1) + ECreativeInventoryTabs_COUNT)
+                % ECreativeInventoryTabs_COUNT));
             gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
         }
         break;
@@ -1985,14 +2040,14 @@ void UIScene_CreativeMenu::handleTouchInput(unsigned int, int, int touchY, int t
     {
         if (s_tabSpecs[m_currentTab]->getPageCount() > 1)
         {
-            float fraction = (static_cast<float>(touchY) - m_touchPanels[8].getYPos() - m_mainPanel.getYPos()) /
-                             m_touchPanels[8].getHeight();
+            float fraction = (static_cast<float>(touchY) - m_touchPanels[8].getYPos() - m_mainPanel.getYPos())
+                             / m_touchPanels[8].getHeight();
             if (fraction > 1.0f)
                 fraction = 1.0f;
             else if (fraction < 0.0f)
                 fraction = 0.0f;
-            m_tabCurrentPages[m_currentTab] =
-                Math::round(fraction * static_cast<float>(s_tabSpecs[m_currentTab]->getPageCount() - 1));
+            m_tabCurrentPages[m_currentTab] = Math::round(
+                fraction * static_cast<float>(s_tabSpecs[m_currentTab]->getPageCount() - 1));
             switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
         }
     }

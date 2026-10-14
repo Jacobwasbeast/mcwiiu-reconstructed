@@ -1,7 +1,6 @@
 #include "game/ui/FJ_MenuButton_Small.hpp"
 
-FJ_MenuButton_Small::FJ_MenuButton_Small(fuiRenderNode* renderNode)
-    : FJ_MenuButton(renderNode)
+FJ_MenuButton_Small::FJ_MenuButton_Small(fuiRenderNode* renderNode) : FJ_MenuButton(renderNode)
 {
 }
 

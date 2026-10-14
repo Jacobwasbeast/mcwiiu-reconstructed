@@ -2,8 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_FullScreenProgress::FJ_FullScreenProgress(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_FullScreenProgress::FJ_FullScreenProgress(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

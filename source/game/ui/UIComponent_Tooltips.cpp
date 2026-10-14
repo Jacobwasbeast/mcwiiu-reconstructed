@@ -31,8 +31,7 @@ UIComponent_Tooltips::_TooltipValues::_TooltipValues()
     m_button = EControllerActions_Jump;
 }
 
-UIComponent_Tooltips::UIComponent_Tooltips(int sceneType, void* data, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIComponent_Tooltips::UIComponent_Tooltips(int sceneType, void* data, UILayer* layer) : UIScene(sceneType, layer)
 {
     for (int pad = 0; pad < 4; ++pad)
     {
@@ -199,8 +198,8 @@ void UIComponent_Tooltips::updateSafeZone()
     setSafeZone(top, bottom, left, right);
 }
 
-void UIComponent_Tooltips::_SetTooltip(unsigned int index, int type, int subtype,
-                                       UIString text, bool enabled, bool force)
+void UIComponent_Tooltips::_SetTooltip(unsigned int index, int type, int subtype, UIString text, bool enabled,
+                                       bool force)
 {
     _TooltipValues& value = m_tooltipValues[index];
     if (force || enabled || value.m_enabled)
@@ -270,8 +269,7 @@ void UIComponent_Tooltips::tick()
         if (value.m_enabled && value.m_text.needsUpdating())
         {
             changed = true;
-            _SetTooltip((unsigned int)i, value.m_type, value.m_subtype, value.m_text,
-                       value.m_enabled, true);
+            _SetTooltip((unsigned int)i, value.m_type, value.m_subtype, value.m_text, value.m_enabled, true);
             value.m_text.setUpdated();
         }
     }
@@ -319,7 +317,8 @@ void UIComponent_Tooltips::render(int width, int height, C4JRender::eViewportTyp
         {
         case C4JRender::eViewportType_TopHalf:
         case C4JRender::eViewportType_BottomHalf:
-            gFui->render(m_movie, 0.0f, m_stageHeight / 2, static_cast<int>(gConsoleUIController.getScreenWidth()), height);
+            gFui->render(m_movie, 0.0f, m_stageHeight / 2, static_cast<int>(gConsoleUIController.getScreenWidth()),
+                         height);
             return;
         case C4JRender::eViewportType_LeftHalf:
         case C4JRender::eViewportType_RightHalf:
@@ -422,16 +421,40 @@ unsigned int UIComponent_Tooltips::GetToolTipButton(unsigned int button)
 {
     switch (button)
     {
-    case 1: return 0; case 2: return 1; case 4: return 2; case 8: return 3;
-    case 0x1000: return 11; case 0x2000: return 12; case 0x400: return 13; case 0x800: return 14;
-    case 0x40: return 7; case 0x80: return 6; case 0x400000: return 5; case 0x800000: return 4;
-    case 0x100: return 9; case 0x200: return 8;
-    default: return 0xffffffff;
+    case 1:
+        return 0;
+    case 2:
+        return 1;
+    case 4:
+        return 2;
+    case 8:
+        return 3;
+    case 0x1000:
+        return 11;
+    case 0x2000:
+        return 12;
+    case 0x400:
+        return 13;
+    case 0x800:
+        return 14;
+    case 0x40:
+        return 7;
+    case 0x80:
+        return 6;
+    case 0x400000:
+        return 5;
+    case 0x800000:
+        return 4;
+    case 0x100:
+        return 9;
+    case 0x200:
+        return 8;
+    default:
+        return 0xffffffff;
     }
 }
 
-unsigned int UIComponent_Tooltips::_SetTooltip(unsigned int index, int type, int subtype,
-                                               int textId, bool& changed)
+unsigned int UIComponent_Tooltips::_SetTooltip(unsigned int index, int type, int subtype, int textId, bool& changed)
 {
     unsigned int result = 0;
     if (type == -1 || textId == -1)
@@ -455,9 +478,8 @@ unsigned int UIComponent_Tooltips::_SetTooltip(unsigned int index, int type, int
     return result;
 }
 
-unsigned int UIComponent_Tooltips::HandleToolTipButton(unsigned int player,
-                                                        EControllerActions action,
-                                                        unsigned int& button, int type)
+unsigned int UIComponent_Tooltips::HandleToolTipButton(unsigned int player, EControllerActions action,
+                                                       unsigned int& button, int type)
 {
     unsigned int result = 0;
     bool changed = false;
@@ -518,8 +540,7 @@ void UIComponent_Tooltips::UpdateControllerType(int controllerType)
             return;
     }
 
-    static_cast<FJ_ToolTips*>(m_movie->getRootNode()->getFuiNode())
-        ->UpdateControllerType(m_controllerType);
+    static_cast<FJ_ToolTips*>(m_movie->getRootNode()->getFuiNode())->UpdateControllerType(m_controllerType);
 }
 
 void UIComponent_Tooltips::SetTooltips(int player, int* tooltips, bool visible)
@@ -527,55 +548,80 @@ void UIComponent_Tooltips::SetTooltips(int player, int* tooltips, bool visible)
     unsigned int button = 0;
     bool changed = false;
     changed = HandleToolTipButton(player, EControllerActions_Jump, button,
-                                   tooltips[EControllerActions_Jump - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_Jump - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_Drop, button,
-                                   tooltips[EControllerActions_Drop - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_Drop - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_Inventory, button,
-                                   tooltips[EControllerActions_Inventory - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_Inventory - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_Crafting, button,
-                                   tooltips[EControllerActions_Crafting - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_Crafting - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_Use, button,
-                                   tooltips[EControllerActions_Use - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_Use - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_Action, button,
-                                   tooltips[EControllerActions_Action - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_Action - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_Sneak, button,
-                                   tooltips[EControllerActions_Sneak - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_Sneak - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_Sprint, button,
-                                   tooltips[EControllerActions_Sprint - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_Sprint - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_PickBlock, button,
-                                   tooltips[EControllerActions_PickBlock - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_PickBlock - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_CycleHeldItemLeft, button,
-                                   tooltips[EControllerActions_CycleHeldItemLeft - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_CycleHeldItemLeft - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_CycleHeldItemRight, button,
-                                   tooltips[EControllerActions_CycleHeldItemRight - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_CycleHeldItemRight - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_ChangeCameraMode, button,
-                                   tooltips[EControllerActions_ChangeCameraMode - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_ChangeCameraMode - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_FlyLeft, button,
-                                   tooltips[EControllerActions_FlyLeft - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_FlyLeft - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_FlyRight, button,
-                                   tooltips[EControllerActions_FlyRight - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_FlyRight - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_FlyUp, button,
-                                   tooltips[EControllerActions_FlyUp - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_FlyUp - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_FlyDown, button,
-                                   tooltips[EControllerActions_FlyDown - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_FlyDown - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_SpectateCancel, button,
-                                   tooltips[EControllerActions_SpectateCancel - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_SpectateCancel - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_SpectateNoise, button,
-                                   tooltips[EControllerActions_SpectateNoise - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_SpectateNoise - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_SpectatePrevious, button,
-                                   tooltips[EControllerActions_SpectatePrevious - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_SpectatePrevious - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_SpectateNext, button,
-                                   tooltips[EControllerActions_SpectateNext - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_SpectateNext - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_ConfirmReady, button,
-                                   tooltips[EControllerActions_ConfirmReady - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_ConfirmReady - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_Vote, button,
-                                   tooltips[EControllerActions_Vote - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_Vote - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_LookBehind, button,
-                                   tooltips[EControllerActions_LookBehind - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_LookBehind - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_RestartSection, button,
-                                   tooltips[EControllerActions_RestartSection - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_RestartSection - EControllerActions_Jump])
+              || changed;
     changed = HandleToolTipButton(player, EControllerActions_RestartRace, button,
-                                   tooltips[EControllerActions_RestartRace - EControllerActions_Jump]) || changed;
+                                  tooltips[EControllerActions_RestartRace - EControllerActions_Jump])
+              || changed;
     for (unsigned int index = button; index < 16; ++index)
     {
         if (m_tooltipValues[index].m_enabled)
@@ -590,10 +636,9 @@ void UIComponent_Tooltips::SetTooltips(int player, int* tooltips, bool visible)
         UpdateControllerType(player);
 }
 
-void UIComponent_Tooltips::SetTooltips(int player, int first, int second, int third, int fourth,
-                                       int fifth, int sixth, int seventh, int eighth, int ninth,
-                                       int tenth, int eleventh, int twelfth, int thirteenth,
-                                       int fourteenth, int fifteenth, int sixteenth, bool visible)
+void UIComponent_Tooltips::SetTooltips(int player, int first, int second, int third, int fourth, int fifth, int sixth,
+                                       int seventh, int eighth, int ninth, int tenth, int eleventh, int twelfth,
+                                       int thirteenth, int fourteenth, int fifteenth, int sixteenth, bool visible)
 {
     bool changed = false;
     changed = _SetTooltip(0, first) || changed;
@@ -638,14 +683,13 @@ void UIComponent_Tooltips::handleReload()
     m_controllerType = -1;
     for (unsigned int i = 0; i < 16; ++i)
     {
-        _SetTooltip(i, m_tooltipValues[i].m_type, m_tooltipValues[i].m_subtype,
-                   UIString(m_tooltipValues[i].m_textId), m_tooltipValues[i].m_enabled, true);
+        _SetTooltip(i, m_tooltipValues[i].m_type, m_tooltipValues[i].m_subtype, UIString(m_tooltipValues[i].m_textId),
+                    m_tooltipValues[i].m_enabled, true);
     }
     _Relayout();
 }
 
-void UIComponent_Tooltips::handleInput(int player, int action, bool repeat, bool pressed,
-                                       bool released, bool& handled)
+void UIComponent_Tooltips::handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     if ((unsigned int)action >= EControllerActions_MenuStickPress)
     {
@@ -657,16 +701,15 @@ void UIComponent_Tooltips::handleInput(int player, int action, bool repeat, bool
     sendInputToMovie(action, repeat, pressed, released);
 }
 
-void UIComponent_Tooltips::handleTouchInput(unsigned int playerId, int touchX, int touchY,
-                                            int touchBox, bool pressed, bool repeat, bool released)
+void UIComponent_Tooltips::handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                            bool repeat, bool released)
 {
     if (gProfile->GetPrimaryPad() == -1)
         return;
 
     if (gConsoleUIController.GetMenuDisplayed(gProfile->GetPrimaryPad()) == 0)
     {
-        if (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(),
-                                          eGameSetting_Tooltips) == 0)
+        if (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_Tooltips) == 0)
             return;
     }
 
@@ -686,13 +729,10 @@ void UIComponent_Tooltips::handleTouchInput(unsigned int playerId, int touchX, i
         return;
 
     EControllerActions dynamicAction;
-    if (gConsoleUIController.IsToolTipDynamic((unsigned int)player, (unsigned int)touchBox,
-                                              dynamicAction))
+    if (gConsoleUIController.IsToolTipDynamic((unsigned int)player, (unsigned int)touchBox, dynamicAction))
     {
-        unsigned int primary =
-            (unsigned int)GameSettings::GetInputButton(player, false, dynamicAction);
-        unsigned int secondary =
-            (unsigned int)GameSettings::GetInputButton(player, true, dynamicAction);
+        unsigned int primary = (unsigned int)GameSettings::GetInputButton(player, false, dynamicAction);
+        unsigned int secondary = (unsigned int)GameSettings::GetInputButton(player, true, dynamicAction);
         g_pInput->MapTouchInput(player, primary | secondary);
         return;
     }
@@ -743,8 +783,7 @@ void UIComponent_Tooltips::handleTouchInput(unsigned int playerId, int touchX, i
         }
         break;
     case 7:
-        if ((settingsValue != 1 && settingsValue != 2) ||
-           gConsoleUIController.GetMenuDisplayed(player))
+        if ((settingsValue != 1 && settingsValue != 2) || gConsoleUIController.GetMenuDisplayed(player))
         {
             g_pInput->MapTouchInput(player, 0x40);
             return;

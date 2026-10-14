@@ -48,7 +48,8 @@ const unsigned int COPY_POLL_INTERVAL = 100;
 }
 
 UIScene_LoadCreateJoinMenu::UIScene_LoadCreateJoinMenu(int playerId, void* data, UILayer* layer)
-    : IUIScene_LoadCreateJoin(), UIScene(playerId, layer)
+    : IUIScene_LoadCreateJoin(),
+      UIScene(playerId, layer)
 {
     initialiseMovie();
     gApp.SetLiveLinkRequired(true);
@@ -225,15 +226,15 @@ int UIScene_LoadCreateJoinMenu::LoadSaveDataThumbnailReturned(void* context, uns
 void UIScene_LoadCreateJoinMenu::requestNextThumbnail()
 {
     int nextThumbnail = m_nextThumbnail;
-    if (nextThumbnail < m_loadList.getItemCount() &&
-        nextThumbnail < m_thumbnailWindowStart + static_cast<int>(THUMBNAIL_WINDOW_SIZE))
+    if (nextThumbnail < m_loadList.getItemCount()
+        && nextThumbnail < m_thumbnailWindowStart + static_cast<int>(THUMBNAIL_WINDOW_SIZE))
     {
         SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
         nextThumbnail = m_nextThumbnail;
         if (nextThumbnail < details->count)
         {
-            C4JStorage::ESaveGameState state = gStorage->LoadSaveDataThumbnail(
-                &details->saves[nextThumbnail], &LoadSaveDataThumbnailReturned, this);
+            C4JStorage::ESaveGameState state = gStorage->LoadSaveDataThumbnail(&details->saves[nextThumbnail],
+                                                                               &LoadSaveDataThumbnailReturned, this);
             if (state == C4JStorage::ESaveGame_GetThumbnail)
                 return;
         }
@@ -251,8 +252,8 @@ void UIScene_LoadCreateJoinMenu::cleanUpThumbNails(bool all)
 
     for (int index = 0; index < static_cast<int>(m_loadList.getItemCount()); ++index)
     {
-        if (!all && index >= m_thumbnailWindowStart &&
-            index < m_thumbnailWindowStart + static_cast<int>(THUMBNAIL_WINDOW_SIZE))
+        if (!all && index >= m_thumbnailWindowStart
+            && index < m_thumbnailWindowStart + static_cast<int>(THUMBNAIL_WINDOW_SIZE))
             continue;
         const wchar_t* name = getThumbnailName(index);
         if (m_saveListDetails[m_nextThumbnail].m_thumbnail == NULL)
@@ -906,7 +907,7 @@ int UIScene_LoadCreateJoinMenu::CopySaveDataReturned(void* context, bool success
         }
         else
         {
-            int options[1] = { IDS_CONFIRM_OK };
+            int options[1] = {IDS_CONFIRM_OK};
             if (state == C4JStorage::ESaveGame_CopyFailedNoSpace)
             {
                 gConsoleUIController.LeaveCallbackIdCriticalSection();
@@ -1006,8 +1007,8 @@ int UIScene_LoadCreateJoinMenu::CopySaveDialogReturned(void* context, int pad, C
 
 int UIScene_LoadCreateJoinMenu::LoadSaveDataForUploadReturned(void* context, bool failed, bool)
 {
-    static_cast<UIScene_LoadCreateJoinMenu*>(context)->m_uploadState =
-        failed ? eUploadState_Failed : eUploadState_SaveLoaded;
+    static_cast<UIScene_LoadCreateJoinMenu*>(context)->m_uploadState = failed ? eUploadState_Failed
+                                                                              : eUploadState_SaveLoaded;
     return 0;
 }
 
@@ -1029,7 +1030,8 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
     SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
     int saveIndex = menu->m_selectedSaveIndex;
     menu->m_uploadState = eUploadState_LoadingSave;
-    if (gStorage->LoadSaveData(&details->saves[saveIndex], &LoadSaveDataForUploadReturned, menu) == C4JStorage::ESaveGame_Load)
+    if (gStorage->LoadSaveData(&details->saves[saveIndex], &LoadSaveDataForUploadReturned, menu)
+        == C4JStorage::ESaveGame_Load)
     {
         menu->m_uploadState = eUploadState_LoadingSave;
         minecraft->mProgressRenderer->progressStagePercentage(0);
@@ -1123,8 +1125,8 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
                 break;
             case NQRNetworkManager_Lan_WiiU::eSaveTransfer_Transferring:
             {
-                int percent = static_cast<int>(lan->m_saveTransferOffset * 100) /
-                              static_cast<int>(lan->m_saveTransferSize);
+                int percent = static_cast<int>(lan->m_saveTransferOffset * 100)
+                              / static_cast<int>(lan->m_saveTransferSize);
                 std::swprintf(text, 256, L10N::GetString(0x0CE6C914), percent);
                 minecraft->mProgressRenderer->progressStage(std::wstring(text));
                 minecraft->mProgressRenderer->progressStagePercentage(percent);
@@ -1143,10 +1145,10 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
         }
         case eUploadState_Complete:
         {
-            int okOption[1] = { IDS_CONFIRM_OK };
+            int okOption[1] = {IDS_CONFIRM_OK};
             gConsoleUIController.RequestErrorMessage(IDS_TITLE_SAVETRANSFER, 0x4925B633, okOption, 1,
-                                                     gProfile->GetPrimaryPad(), &CrossSaveUploadFinishedCallback,
-                                                     menu, NULL, true);
+                                                     gProfile->GetPrimaryPad(), &CrossSaveUploadFinishedCallback, menu,
+                                                     NULL, true);
             menu->m_uploadState = eUploadState_CompleteShown;
             break;
         }
@@ -1157,10 +1159,10 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
                 menu->m_uploadState = eUploadState_Finished;
                 break;
             }
-            int okOption[1] = { IDS_CONFIRM_OK };
+            int okOption[1] = {IDS_CONFIRM_OK};
             gConsoleUIController.RequestErrorMessage(IDS_TITLE_SAVETRANSFER, IDS_SAVE_TRANSFER_FAILED, okOption, 1,
-                                                     gProfile->GetPrimaryPad(), &CrossSaveUploadFinishedCallback,
-                                                     menu, NULL, true);
+                                                     gProfile->GetPrimaryPad(), &CrossSaveUploadFinishedCallback, menu,
+                                                     NULL, true);
             menu->m_uploadState = eUploadState_FailedShown;
             break;
         }
@@ -1223,19 +1225,19 @@ int UIScene_LoadCreateJoinMenu::handleSaveOptionsDialogReturned(int pad, C4JStor
         m_ignoreInput = true;
         g_pInput->RequestKeyboard(L10N::GetString(IDS_RENAME_WORLD_TITLE),
                                   m_saveListDetails[m_selectedSaveIndex].m_title, 0, 25,
-                                  &KeyboardCompleteWorldNameCallback,
-                                  reinterpret_cast<void*>(GetCallbackUniqueId()), C_4JInput::EKeyboardMode_0);
+                                  &KeyboardCompleteWorldNameCallback, reinterpret_cast<void*>(GetCallbackUniqueId()),
+                                  C_4JInput::EKeyboardMode_0);
         break;
     case C4JStorage::EMessageResult_Decline:
     {
-        int options[2] = { IDS_CONFIRM_CANCEL, IDS_CONFIRM_OK };
+        int options[2] = {IDS_CONFIRM_CANCEL, IDS_CONFIRM_OK};
         gConsoleUIController.RequestAlertMessage(IDS_TOOLTIPS_DELETESAVE, IDS_TEXT_DELETE_SAVE, options, 2, pad,
                                                  &DeleteSaveDialogReturned, this, NULL, true);
         break;
     }
     case C4JStorage::EMessageResult_ThirdOption:
     {
-        int options[2] = { IDS_CONFIRM_OK, IDS_CONFIRM_CANCEL };
+        int options[2] = {IDS_CONFIRM_OK, IDS_CONFIRM_CANCEL};
         gConsoleUIController.RequestAlertMessage(IDS_COPYSAVE, IDS_TEXT_COPY_SAVE, options, 2, pad,
                                                  &CopySaveDialogReturned, this, NULL, true);
         break;
@@ -1244,7 +1246,7 @@ int UIScene_LoadCreateJoinMenu::handleSaveOptionsDialogReturned(int pad, C4JStor
     {
         if (!gProfile->IsSignedInLive(gProfile->GetPrimaryPad()))
             break;
-        int options[2] = { IDS_CONFIRM_OK, IDS_CONFIRM_CANCEL };
+        int options[2] = {IDS_CONFIRM_OK, IDS_CONFIRM_CANCEL};
         SAVE_INFO& save = gStorage->ReturnSavesInfo()->saves[m_selectedSaveIndex];
         unsigned int thumbnailSize = 0;
         unsigned char* thumbnail = NULL;
@@ -1256,8 +1258,8 @@ int UIScene_LoadCreateJoinMenu::handleSaveOptionsDialogReturned(int pad, C4JStor
         CMinecraftApp::PngTagData tagData;
         if (thumbnail != NULL)
             gApp.GetImageTextData(thumbnail, thumbnailSize, &tagData);
-        if ((tagData.flags & CMinecraftApp::PngTagData::eFlag_ExtraData) != 0 &&
-            gApp.GetExtraGameData(tagData.extraData, eGameExtraData_SaveVersion) >= EXTRA_DATA_SAVE_VERSION)
+        if ((tagData.flags & CMinecraftApp::PngTagData::eFlag_ExtraData) != 0
+            && gApp.GetExtraGameData(tagData.extraData, eGameExtraData_SaveVersion) >= EXTRA_DATA_SAVE_VERSION)
             gConsoleUIController.RequestAlertMessage(IDS_TITLE_SAVETRANSFER, 0x1E0353F0, options, 2, pad,
                                                      &SaveTransferDialogReturned, this, NULL, true);
         else
@@ -1285,7 +1287,7 @@ int UIScene_LoadCreateJoinMenu::handleTexturePackDialogReturned(int pad, C4JStor
                 if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(
                         m_joinSceneData->session->m_gameSessionData.m_texturePackParentId))
                 {
-                    int options[1] = { IDS_CONFIRM_OK };
+                    int options[1] = {IDS_CONFIRM_OK};
                     gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE,
                                                              IDS_DLC_ALREADY_INSTALLED_TEXT, options, 1, pad, NULL,
                                                              NULL, NULL, true);
@@ -1293,9 +1295,9 @@ int UIScene_LoadCreateJoinMenu::handleTexturePackDialogReturned(int pad, C4JStor
             }
             else
             {
-                int options[1] = { IDS_CONFIRM_OK };
-                gConsoleUIController.RequestErrorMessage(IDS_PRO_NOTONLINE_TITLE, 0xC34C0B77, options, 1, pad, NULL, NULL, NULL,
-                                                         true);
+                int options[1] = {IDS_CONFIRM_OK};
+                gConsoleUIController.RequestErrorMessage(IDS_PRO_NOTONLINE_TITLE, 0xC34C0B77, options, 1, pad, NULL,
+                                                         NULL, NULL, true);
             }
         }
     }

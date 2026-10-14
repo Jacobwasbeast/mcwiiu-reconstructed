@@ -4,8 +4,7 @@
 #include "game/ui/FJ_ListButtonCheckbox.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_List_ListButtonCheckbox::FJ_List_ListButtonCheckbox(fuiRenderNode* renderNode)
-    : FJ_List(renderNode)
+FJ_List_ListButtonCheckbox::FJ_List_ListButtonCheckbox(fuiRenderNode* renderNode) : FJ_List(renderNode)
 {
     m_useIggyIcons = false;
 }
@@ -25,17 +24,16 @@ void FJ_List_ListButtonCheckbox::UseIggyIcons()
     m_useIggyIcons = true;
 }
 
-void FJ_List_ListButtonCheckbox::addNewItem(const std::wstring& label, int id,
-                                            bool checked,
+void FJ_List_ListButtonCheckbox::addNewItem(const std::wstring& label, int id, bool checked,
                                             const std::wstring& textureName)
 {
     FJ_ListButtonCheckbox* item;
     if (m_checkboxTick)
-        item = static_cast<FJ_ListButtonCheckbox*>(FJ_Factory::createObject(
-            "fourj.Buttons.FJ_ListButtonCheckbox_Small", m_pRenderNode, true, NULL));
+        item = static_cast<FJ_ListButtonCheckbox*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonCheckbox_Small", m_pRenderNode, true, NULL));
     else
-        item = static_cast<FJ_ListButtonCheckbox*>(FJ_Factory::createObject(
-            "fourj.Buttons.FJ_ListButtonCheckbox_Normal", m_pRenderNode, true, NULL));
+        item = static_cast<FJ_ListButtonCheckbox*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonCheckbox_Normal", m_pRenderNode, true, NULL));
 
     addNewListItem(item, label, id);
     item->Init(label, id);

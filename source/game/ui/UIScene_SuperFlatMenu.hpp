@@ -53,7 +53,7 @@ public:
         Func m_function;
     };
 
-    template<class T> class MethodActionArg1 : public TickAction
+    template <class T> class MethodActionArg1 : public TickAction
     {
     public:
         typedef void (UIScene_SuperFlatMenu::*Func)(T);
@@ -66,7 +66,7 @@ public:
         T m_value;
     };
 
-    template<class List> class TabControls
+    template <class List> class TabControls
     {
     public:
         UIControl_Label tab;
@@ -91,8 +91,8 @@ public:
     void UpdateParamsList();
     void LoadPreset(SuperflatConfig* config);
     void SetActiveTab(eTabs tab);
-    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed, bool repeat,
-                                  bool released);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                  bool repeat, bool released);
     virtual UIControl* GetMainPanel();
     virtual void updateTooltips();
     virtual void updateComponents();
@@ -103,13 +103,12 @@ public:
     void UpdateParamHelpText();
     virtual void handleReload();
     void ExecuteOnTick(MethodAction::Func function);
-    template<class T> void ExecuteOnTick(typename MethodActionArg1<T>::Func function, T value);
+    template <class T> void ExecuteOnTick(typename MethodActionArg1<T>::Func function, T value);
     void MoveCurrentLayer(int amount);
     void NavActiveTab(int direction);
     static int CbGenerationWarning(void* context, int pad, C4JStorage::EMessageResult result);
     void ReturnResults(bool accepted);
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     static int CbLayerOperation(void* context, int pad, C4JStorage::EMessageResult result);
     void ChangeBiome(int biome);
     void HandleChangeParamList(int index);
@@ -151,7 +150,7 @@ private:
     LaunchMoreOptionsMenuInitData* m_initData;
 };
 
-template<class T>
+template <class T>
 void UIScene_SuperFlatMenu::ExecuteOnTick(typename MethodActionArg1<T>::Func function, T value)
 {
     m_tickActions.push_back(new MethodActionArg1<T>(function, value));

@@ -13,12 +13,12 @@ class TutorialConstraint;
 class UICraftingTask : public TutorialTask
 {
 public:
-    UICraftingTask(Tutorial* tutorial, int descriptionId, Recipe::_eGroupType group,
-                   bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
-                   bool showMinimumTime, bool allowFade, bool repeatMessage);
-    UICraftingTask(Tutorial* tutorial, int descriptionId, Item* item,
-                   bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
-                   bool showMinimumTime, bool allowFade, bool repeatMessage);
+    UICraftingTask(Tutorial* tutorial, int descriptionId, Recipe::_eGroupType group, bool preCompletionEnabled,
+                   std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                   bool repeatMessage);
+    UICraftingTask(Tutorial* tutorial, int descriptionId, Item* item, bool preCompletionEnabled,
+                   std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
+                   bool repeatMessage);
 
 
     virtual bool isCompleted();

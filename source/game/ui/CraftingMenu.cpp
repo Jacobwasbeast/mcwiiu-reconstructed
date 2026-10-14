@@ -51,8 +51,8 @@ CraftingMenu::CraftingMenu(boost::shared_ptr<Inventory> inventory, Level* level,
 
 void CraftingMenu::slotsChanged()
 {
-    not_null_ptr<ItemInstance> result =
-        Recipes::getInstance()->getItemFor(m_craftSlots, m_level, NULL, Recipes::eRecipeCategory_Crafting);
+    not_null_ptr<ItemInstance> result = Recipes::getInstance()->getItemFor(m_craftSlots, m_level, NULL,
+                                                                           Recipes::eRecipeCategory_Crafting);
 
     int ingredientColor = -1;
     int dyeColor = -1;
@@ -92,7 +92,8 @@ bool CraftingMenu::stillValid(boost::shared_ptr<Player> player)
 {
     if (m_level->getBlockState(m_playerPos)->getBlock() != Blocks::crafting_table)
         return false;
-    if (player->distanceAsIfHitscanned(m_playerPos, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
+    if (player->distanceAsIfHitscanned(m_playerPos, *player->mBoundingBox)
+        > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
         return false;
     return true;
 }

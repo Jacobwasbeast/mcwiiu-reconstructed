@@ -17,22 +17,17 @@ void PauseScreen::init()
     mButtonListState = 0;
     mButtons.clear();
 
-    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 104,
-                                  L"Save and quit to title"));
+    mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 104, L"Save and quit to title"));
 
     if (mMinecraft->isClientSide())
     {
         mButtons[0]->mMessage.assign(L"Disconnect");
     }
 
-    mButtons.push_back(new Button(4, mWidth / 2 - 100, mHeight / 4 + 8,
-                                  L"LBack to game"));
-    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 80,
-                                  L"LOptions..."));
-    mButtons.push_back(new Button(5, mWidth / 2 - 100, mHeight / 4 + 32,
-                                  98, 20, I18n::get(L"gui.achievements")));
-    mButtons.push_back(new Button(6, mWidth / 2 + 2, mHeight / 4 + 32,
-                                  98, 20, I18n::get(L"gui.stats")));
+    mButtons.push_back(new Button(4, mWidth / 2 - 100, mHeight / 4 + 8, L"LBack to game"));
+    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 80, L"LOptions..."));
+    mButtons.push_back(new Button(5, mWidth / 2 - 100, mHeight / 4 + 32, 98, 20, I18n::get(L"gui.achievements")));
+    mButtons.push_back(new Button(6, mWidth / 2 + 2, mHeight / 4 + 32, 98, 20, I18n::get(L"gui.stats")));
 }
 
 void PauseScreen::buttonClicked(Button button)
@@ -72,8 +67,7 @@ void PauseScreen::render(int x, int y, float partialTick)
         float col = (mTickCount % 10 + partialTick) / 10.0f;
         col = Mth::sin(col * 3.1415927f * 2) * 0.2f + 0.8f;
         int br = static_cast<int>(255 * col);
-        drawString(mFont, L"Saving level..", 8, mHeight - 16,
-                   (br << 16) | (br << 8) | br);
+        drawString(mFont, L"Saving level..", 8, mHeight - 16, (br << 16) | (br << 8) | br);
     }
 
     drawCenteredString(mFont, L"Game menu", mWidth / 2, 40, 0xffffff);

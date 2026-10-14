@@ -12,7 +12,9 @@
 
 static unsigned int g_fuiOldScissor[4] = {0, 0, 0, 0};
 
-fuiRenderNode::fuiRenderNode(fuiRenderNode* stage, fuiRenderNode* parent, fuiObject* object, unsigned int symbolIndex, eFuiObjectType type, unsigned char renderFlags, fuiRGBA* color, unsigned char visible, bool ctorEnabled, fuiFile* file)
+fuiRenderNode::fuiRenderNode(fuiRenderNode* stage, fuiRenderNode* parent, fuiObject* object, unsigned int symbolIndex,
+                             eFuiObjectType type, unsigned char renderFlags, fuiRGBA* color, unsigned char visible,
+                             bool ctorEnabled, fuiFile* file)
 {
     m_stage = (fuiRenderNodeStage*)stage;
     m_file = file;
@@ -128,8 +130,10 @@ void fuiRenderNode::setScrollRectViewport()
 
     unsigned int left = (unsigned int)(0.0f * m_globalMatrix.scaleX + gFui->m_originX + m_globalMatrix.translateX);
     unsigned int top = (unsigned int)(0.0f * m_globalMatrix.scaleY + gFui->m_originY + m_globalMatrix.translateY);
-    unsigned int right = (unsigned int)((m_scrollRect.xMax - m_scrollRect.xMin) * m_globalMatrix.scaleX + gFui->m_originX + m_globalMatrix.translateX);
-    unsigned int bottom = (unsigned int)((m_scrollRect.yMax - m_scrollRect.yMin) * m_globalMatrix.scaleY + gFui->m_originY + m_globalMatrix.translateY);
+    unsigned int right = (unsigned int)((m_scrollRect.xMax - m_scrollRect.xMin) * m_globalMatrix.scaleX
+                                        + gFui->m_originX + m_globalMatrix.translateX);
+    unsigned int bottom = (unsigned int)((m_scrollRect.yMax - m_scrollRect.yMin) * m_globalMatrix.scaleY
+                                         + gFui->m_originY + m_globalMatrix.translateY);
     gRenderer->StateSetScissorRect(left, top, right, bottom);
 
     fuiMatrix translation = {1.0f, 0.0f, 0.0f, 1.0f, -m_scrollRect.xMin, -m_scrollRect.yMin};
@@ -187,7 +191,7 @@ void fuiRenderNode::progogateBounds()
     {
         fuiRenderNode* timeline = m_parent->asTimeline();
         if (timeline != 0)
-        static_cast<fuiRenderNodeTimeline*>(timeline)->progogateBoundsFromChild();
+            static_cast<fuiRenderNodeTimeline*>(timeline)->progogateBoundsFromChild();
     }
 }
 
@@ -217,7 +221,8 @@ float fuiRenderNode::getY()
 
 float fuiRenderNode::getScaleX()
 {
-    return std::sqrt(m_localMatrix.scaleX * m_localMatrix.scaleX + m_localMatrix.rotateSkew1 * m_localMatrix.rotateSkew1);
+    return std::sqrt(m_localMatrix.scaleX * m_localMatrix.scaleX
+                     + m_localMatrix.rotateSkew1 * m_localMatrix.rotateSkew1);
 }
 
 void fuiRenderNode::setScaleX(float scale)
@@ -241,7 +246,8 @@ void fuiRenderNode::setWidth(float width)
 
 float fuiRenderNode::getScaleY()
 {
-    return std::sqrt(m_localMatrix.rotateSkew0 * m_localMatrix.rotateSkew0 + m_localMatrix.scaleY * m_localMatrix.scaleY);
+    return std::sqrt(m_localMatrix.rotateSkew0 * m_localMatrix.rotateSkew0
+                     + m_localMatrix.scaleY * m_localMatrix.scaleY);
 }
 
 void fuiRenderNode::setScaleY(float scale)

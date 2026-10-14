@@ -1,7 +1,6 @@
 #include "game/ui/FJ_KillBarSmall.hpp"
 
-FJ_KillBarSmall::FJ_KillBarSmall(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_KillBarSmall::FJ_KillBarSmall(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     FJ_ProgressBar::InitBarType();
     FJ_ProgressBar::GetBarFiller();
@@ -33,4 +32,3 @@ void FJ_KillBarSmall::SetLabel(const std::wstring& label)
     m_textOnly = false;
     FJ_Base::SetLabel(label);
 }
-

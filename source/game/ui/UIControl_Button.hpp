@@ -14,6 +14,7 @@ public:
     void setEnable(bool enable, bool immediate);
     virtual void tick();
     virtual void setFocus(bool focus);
+
 private:
     bool m_focus;
     bool m_enablePending;

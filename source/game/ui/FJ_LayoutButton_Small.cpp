@@ -3,8 +3,7 @@
 #include "game/ui/FJ_Button.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_LayoutButton_Small::FJ_LayoutButton_Small(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode)
+FJ_LayoutButton_Small::FJ_LayoutButton_Small(fuiRenderNode* renderNode) : FJ_Button(renderNode)
 {
 }
 

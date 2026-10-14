@@ -16,8 +16,7 @@
 #include "game/world/LevelData.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 
-UIComponent_Panorama::UIComponent_Panorama(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIComponent_Panorama::UIComponent_Panorama(int sceneType, void*, UILayer* layer) : UIScene(sceneType, layer)
 {
     initialiseMovie();
     m_panoramaDay = true;
@@ -29,7 +28,8 @@ UIComponent_Panorama::UIComponent_Panorama(int sceneType, void*, UILayer* layer)
 
 void UIComponent_Panorama::setPanorama(bool day)
 {
-    if (day != m_panoramaDay) {
+    if (day != m_panoramaDay)
+    {
         m_panoramaDay = day;
         fuiRenderNode* root = m_movie->getRootNode();
         static_cast<FJ_Panorama*>(root->getFuiNode())->ShowPanoramaDay(day);
@@ -43,9 +43,11 @@ void UIComponent_Panorama::tick()
 
     Minecraft* minecraft = Minecraft::GetInstance();
     EnterCriticalSection(&minecraft->mLevelLock);
-    if (minecraft->mLevel != NULL && minecraft->mLevel->mDimension->getType() == DimensionType::OVERWORLD) {
+    if (minecraft->mLevel != NULL && minecraft->mLevel->mDimension->getType() == DimensionType::OVERWORLD)
+    {
         long long dayTime = minecraft->mLevel->getLevelData()->getDayTime();
-        if (dayTime % 24000 > 14000) {
+        if (dayTime % 24000 > 14000)
+        {
             setPanorama(false);
             LeaveCriticalSection(&minecraft->mLevelLock);
             m_currentFrame = static_cast<FJ_Panorama*>(m_movie->getRootNode()->getFuiNode())->GetCurrentFrame();
@@ -61,7 +63,8 @@ void UIComponent_Panorama::tick()
 
 std::wstring UIComponent_Panorama::getMoviePath()
 {
-    switch (m_layer->getViewport()) {
+    switch (m_layer->getViewport())
+    {
     case C4JRender::eViewportType_TopHalf:
     case C4JRender::eViewportType_BottomHalf:
     case C4JRender::eViewportType_LeftHalf:
@@ -86,10 +89,12 @@ void UIComponent_Panorama::handleReload()
 void UIComponent_Panorama::render(int width, int height, C4JRender::eViewportType viewport)
 {
     bool isHalf = viewport >= C4JRender::eViewportType_TopHalf && viewport <= C4JRender::eViewportType_RightHalf;
-    if (m_splitScreen && isHalf) {
+    if (m_splitScreen && isHalf)
+    {
         int x = 0;
         int y = 0;
-        switch (viewport) {
+        switch (viewport)
+        {
         case C4JRender::eViewportType_BottomHalf:
             y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
             break;
@@ -99,15 +104,19 @@ void UIComponent_Panorama::render(int width, int height, C4JRender::eViewportTyp
         }
         gConsoleUIController.setupRenderPosition(x, y);
 
-        if (viewport == C4JRender::eViewportType_LeftHalf ||
-            viewport == C4JRender::eViewportType_RightHalf) {
+        if (viewport == C4JRender::eViewportType_LeftHalf || viewport == C4JRender::eViewportType_RightHalf)
+        {
             int screenHeight = static_cast<int>(gConsoleUIController.getScreenHeight());
             gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(screenHeight));
-        } else {
+        }
+        else
+        {
             gFui->render(m_movie, 0.0f, 0.0f, gConsoleUIController.getScreenWidth(),
                          gConsoleUIController.getScreenHeight(), 0.5f, 0.5f);
         }
-    } else {
+    }
+    else
+    {
         UIScene::render(width, height, viewport);
     }
 }

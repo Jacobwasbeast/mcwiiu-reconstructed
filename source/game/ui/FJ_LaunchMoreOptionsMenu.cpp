@@ -13,8 +13,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_LaunchMoreOptionsMenu::FJ_LaunchMoreOptionsMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_LaunchMoreOptionsMenu::FJ_LaunchMoreOptionsMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
     m_worldTabHidden = false;
@@ -105,16 +104,16 @@ void FJ_LaunchMoreOptionsMenu::SetActiveTab(int tab, bool resize)
     if (resize)
     {
         m_root = worldOptions;
-        worldBackground->getChildAt(0)->setHeight(worldList->GetListHeight() +
-                                                  (worldList->getY() - worldBackground->getY()) * 2);
-        worldDescription->setHeight(worldBackground->getChildAt(0)->getHeight() +
-                                    (worldOptions->getY() + worldBackground->getY() - textPanel->getY()) * 2 -
-                                    (worldDescription->getY() + worldOptions->getY() - textPanel->getY()) * 2);
-        gameBackground->getChildAt(0)->setHeight(gameList->GetListHeight() +
-                                                 (gameList->getY() - gameBackground->getY()) * 2);
-        gameDescription->setHeight(gameBackground->getChildAt(0)->getHeight() +
-                                   (gameOptions->getY() + gameBackground->getY() - textPanel->getY()) * 2 -
-                                   (gameDescription->getY() + gameOptions->getY() - textPanel->getY()) * 2);
+        worldBackground->getChildAt(0)->setHeight(worldList->GetListHeight()
+                                                  + (worldList->getY() - worldBackground->getY()) * 2);
+        worldDescription->setHeight(worldBackground->getChildAt(0)->getHeight()
+                                    + (worldOptions->getY() + worldBackground->getY() - textPanel->getY()) * 2
+                                    - (worldDescription->getY() + worldOptions->getY() - textPanel->getY()) * 2);
+        gameBackground->getChildAt(0)->setHeight(gameList->GetListHeight()
+                                                 + (gameList->getY() - gameBackground->getY()) * 2);
+        gameDescription->setHeight(gameBackground->getChildAt(0)->getHeight()
+                                   + (gameOptions->getY() + gameBackground->getY() - textPanel->getY()) * 2
+                                   - (gameDescription->getY() + gameOptions->getY() - textPanel->getY()) * 2);
         UpdateDescription();
         m_descriptionUpdated = true;
     }
@@ -126,8 +125,8 @@ void FJ_LaunchMoreOptionsMenu::SetActiveTab(int tab, bool resize)
         SetFocus(m_worldOptionsFocus);
         if (m_worldOptionsFocus >= 0)
             OnFocusChange(true);
-        textPanel->getChildAt(0)->setHeight(worldBackground->getChildAt(0)->getHeight() +
-                                            (worldOptions->getY() + worldBackground->getY() - textPanel->getY()) * 2);
+        textPanel->getChildAt(0)->setHeight(worldBackground->getChildAt(0)->getHeight()
+                                            + (worldOptions->getY() + worldBackground->getY() - textPanel->getY()) * 2);
         m_activeTab = tab;
         m_previousTab = tab;
         return;
@@ -136,8 +135,8 @@ void FJ_LaunchMoreOptionsMenu::SetActiveTab(int tab, bool resize)
     SetFocus(m_gameOptionsFocus);
     if (m_gameOptionsFocus >= 0)
         OnFocusChange(true);
-    textPanel->getChildAt(0)->setHeight(gameBackground->getChildAt(0)->getHeight() +
-                                        (gameOptions->getY() + gameBackground->getY() - textPanel->getY()) * 2);
+    textPanel->getChildAt(0)->setHeight(gameBackground->getChildAt(0)->getHeight()
+                                        + (gameOptions->getY() + gameBackground->getY() - textPanel->getY()) * 2);
     m_activeTab = tab;
     m_previousTab = tab;
 }

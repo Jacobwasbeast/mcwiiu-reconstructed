@@ -7,9 +7,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-UIControl_TextInput::UIControl_TextInput()
-    : UIControl_Base()
-    , m_focus(false)
+UIControl_TextInput::UIControl_TextInput() : UIControl_Base(), m_focus(false)
 {
 }
 
@@ -47,8 +45,7 @@ void UIControl_TextInput::init(UIString label, int id)
     SetCharLimit(101);
 }
 
-bool UIControl_TextInput::setupControl(UIScene* scene, fuiRenderNode* node,
-                                       const std::string& name)
+bool UIControl_TextInput::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_TextInput;
     return UIControl_Base::setupControl(scene, node, name);

@@ -32,8 +32,7 @@ public:
     virtual void tick();
     virtual std::wstring getMoviePath();
     virtual void handleReload();
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handlePress(int controlId, int childId);
     virtual void handleCheckboxToggled(int id, bool checked);
     virtual void handleCheckboxElementToggled(int first, int second, bool checked);
@@ -42,10 +41,8 @@ public:
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleTimerComplete(int timerId);
     void checkDialogReturned(bool& value, C4JStorage::EMessageResult result);
-    static uint32_t CheckResetNetherReturned(void* context, int userIndex,
-                                             C4JStorage::EMessageResult result);
-    static uint32_t CheckUpdateTheEndReturned(void* context, int userIndex,
-                                              C4JStorage::EMessageResult result);
+    static uint32_t CheckResetNetherReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
+    static uint32_t CheckUpdateTheEndReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
     virtual void checkStateAndStartGame();
     virtual UIControl* GetMainPanel();
     void SetEnablePlayGameButton(bool enabled);

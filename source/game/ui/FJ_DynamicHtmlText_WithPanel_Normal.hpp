@@ -8,10 +8,7 @@ class fuiRenderNode;
 class FJ_DynamicHtmlText_WithPanel_Normal : public FJ_DynamicHtmlText
 {
 public:
-    FJ_DynamicHtmlText_WithPanel_Normal(fuiRenderNode* pRenderNode)
-        : FJ_DynamicHtmlText(pRenderNode)
-    {
-    }
+    FJ_DynamicHtmlText_WithPanel_Normal(fuiRenderNode* pRenderNode) : FJ_DynamicHtmlText(pRenderNode) {}
 
     static FJ_DynamicHtmlText* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

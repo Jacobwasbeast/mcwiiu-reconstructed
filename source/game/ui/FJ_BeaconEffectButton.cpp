@@ -2,11 +2,11 @@
 
 #include <string>
 
-static std::string s_stateLabels[4] = { std::string("Button_Disabled"), std::string("Button_Enabled_Unselected"), std::string("Button_Enabled_Selected"), std::string("Button_Pressed") };
+static std::string s_stateLabels[4] = {std::string("Button_Disabled"), std::string("Button_Enabled_Unselected"),
+                                       std::string("Button_Enabled_Selected"), std::string("Button_Pressed")};
 static const int s_iconFrames[] = {-1, 12, 9, 2, 14, 11, 5, 3, 6, 13, 16, 7, 8, 1, 0, 4};
 
-FJ_BeaconEffectButton::FJ_BeaconEffectButton(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_BeaconEffectButton::FJ_BeaconEffectButton(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
 }
 

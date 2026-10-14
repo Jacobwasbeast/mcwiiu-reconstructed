@@ -8,8 +8,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_MessageBox::FJ_MessageBox(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_MessageBox::FJ_MessageBox(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     m_titleHeight = static_cast<int>(getChildByName(std::string("Title"))->getHeight());
     m_contentY = static_cast<int>(getChildByName(std::string("Content"))->getY());

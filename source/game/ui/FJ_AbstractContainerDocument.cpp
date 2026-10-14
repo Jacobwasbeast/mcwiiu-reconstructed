@@ -10,8 +10,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_AbstractContainerDocument::FJ_AbstractContainerDocument(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_AbstractContainerDocument::FJ_AbstractContainerDocument(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 
@@ -50,14 +49,19 @@ void FJ_AbstractContainerDocument::HideInventory()
 
         if (FJ_FuiNode::asMovieClip(mainPanel->getChildByName(std::string("BackgroundPanel")))->getChildAt(0) != 0)
         {
-            FJ_FuiNode::asMovieClip(mainPanel->getChildByName(std::string("BackgroundPanel")))->getChildAt(0)->decHeight(inventory->FJ_SlotList::getHeight() + (hotbar->getY() - (inventory->getY() + inventory->FJ_SlotList::getHeight())));
+            FJ_FuiNode::asMovieClip(mainPanel->getChildByName(std::string("BackgroundPanel")))
+                ->getChildAt(0)
+                ->decHeight(inventory->FJ_SlotList::getHeight()
+                            + (hotbar->getY() - (inventory->getY() + inventory->FJ_SlotList::getHeight())));
             hotbar->setY(inventory->getY());
             mainPanel->removeChild(inventory, true);
             incY(Math::round((oldHeight - mainPanel->getRenderNodeChildAt(0)->getHeight()) * 0.5f));
         }
         else
         {
-            mainPanel->getChildAt(0)->decHeight(inventory->FJ_SlotList::getHeight() + (hotbar->getY() - (inventory->getY() + inventory->FJ_SlotList::getHeight())));
+            mainPanel->getChildAt(0)->decHeight(
+                inventory->FJ_SlotList::getHeight()
+                + (hotbar->getY() - (inventory->getY() + inventory->FJ_SlotList::getHeight())));
             hotbar->setY(inventory->getY());
             mainPanel->removeChild(inventory, true);
             incY(Math::round((oldHeight - mainPanel->getRenderNodeChildAt(0)->getHeight()) * 0.5f));

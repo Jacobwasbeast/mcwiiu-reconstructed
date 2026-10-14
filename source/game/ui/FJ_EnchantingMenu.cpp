@@ -2,8 +2,7 @@
 
 #include "game/ui/FJ_FuiNodeStage.hpp"
 
-FJ_EnchantingMenu::FJ_EnchantingMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_EnchantingMenu::FJ_EnchantingMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
 }
 

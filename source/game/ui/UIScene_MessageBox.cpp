@@ -14,11 +14,9 @@
 #include "game/core/GameSettings.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
-UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* layer) : UIScene(sceneType, layer)
 {
-    ConsoleUIController::_MessageBoxData* data =
-        static_cast<ConsoleUIController::_MessageBoxData*>(sceneData);
+    ConsoleUIController::_MessageBoxData* data = static_cast<ConsoleUIController::_MessageBoxData*>(sceneData);
     initialiseMovie();
     m_titleId = data->titleId;
     m_buttonCount = data->parameterCount;
@@ -27,26 +25,32 @@ UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* 
     static_cast<FJ_MessageBox*>(m_movie->getRootNode()->getFuiNode())->Init(data->parameterCount, data->buttonFlags);
 
     unsigned int button = 0;
-    if (data->parameterCount > 3) {
+    if (data->parameterCount > 3)
+    {
         m_buttons[0].init(UIString(L10N::GetString(data->messageParameters[0])), 0);
         button = 1;
     }
-    if (data->parameterCount > 2) {
+    if (data->parameterCount > 2)
+    {
         m_buttons[1].init(UIString(L10N::GetString(data->messageParameters[button])), button);
         ++button;
     }
-    if (data->parameterCount > 1) {
+    if (data->parameterCount > 1)
+    {
         m_buttons[2].init(UIString(L10N::GetString(data->messageParameters[button])), button);
         ++button;
     }
     m_buttons[3].init(UIString(L10N::GetString(data->messageParameters[button])), button);
     m_title.init(UIString(L10N::GetString(data->titleId)));
 
-    if (data->overrideText != 0) {
+    if (data->overrideText != 0)
+    {
         wchar_t text[512];
         swprintf(text, 512, data->overrideText, L10N::GetString(data->messageId));
         m_content.init(UIString(text));
-    } else {
+    }
+    else
+    {
         m_content.init(UIString(L10N::GetString(data->messageId)));
     }
 
@@ -61,9 +65,10 @@ UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* 
 UIScene_MessageBox::~UIScene_MessageBox()
 {
     bool primaryPlayer = gProfile->GetPrimaryPad() == m_playerId;
-    if (!primaryPlayer) {
-        gConsoleUIController.SetTooltips(m_playerId, -1, -1, -1, -1, -1, -1, -1, -1,
-                                         -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    if (!primaryPlayer)
+    {
+        gConsoleUIController.SetTooltips(m_playerId, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                         false, false);
     }
     m_layer->removeComponent(EUIScene_MenuBackground);
 }
@@ -109,9 +114,8 @@ std::wstring UIScene_MessageBox::getMoviePath()
 void UIScene_MessageBox::updateTooltips()
 {
     int tooltip = m_alert ? IDS_TOOLTIPS_CANCEL : -1;
-    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, tooltip, -1, -1, -1, -1,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false,
-                                     m_layer->IsFullscreenGroup());
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, tooltip, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, false, m_layer->IsFullscreenGroup());
 }
 
 void UIScene_MessageBox::handleReload()
@@ -123,8 +127,7 @@ void UIScene_MessageBox::handleReload()
     static_cast<FJ_MessageBox*>(m_movie->getRootNode()->getFuiNode())->AutoResize();
 }
 
-void UIScene_MessageBox::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                     bool released, bool& handled)
+void UIScene_MessageBox::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
@@ -156,10 +159,11 @@ bool UIScene_MessageBox::hasFocus(int playerId)
 void UIScene_MessageBox::handlePress(int controlId, int)
 {
     C4JStorage::EMessageResult result = C4JStorage::EMessageResult_Cancelled;
-    if (static_cast<unsigned int>(controlId) <= 3) {
-        static const unsigned char results[4] = {
-            C4JStorage::EMessageResult_Accept, C4JStorage::EMessageResult_Decline,
-            C4JStorage::EMessageResult_ThirdOption, C4JStorage::EMessageResult_FourthOption };
+    if (static_cast<unsigned int>(controlId) <= 3)
+    {
+        static const unsigned char results[4] = {C4JStorage::EMessageResult_Accept, C4JStorage::EMessageResult_Decline,
+                                                 C4JStorage::EMessageResult_ThirdOption,
+                                                 C4JStorage::EMessageResult_FourthOption};
         result = static_cast<C4JStorage::EMessageResult>(results[controlId]);
     }
     navigateBack();

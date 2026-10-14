@@ -11,7 +11,8 @@ void FJ_HowToPlayMenu::handlePress(FJ_Event* event)
     FJ_MenuButton* button = event->m_pTarget->asFJ_MenuButton();
     if (button != NULL)
     {
-        getRoot()->m_pCallbackScene->handlePress(static_cast<FJ_Base*>(button->getObjListParent())->getId(), button->getId());
+        getRoot()->m_pCallbackScene->handlePress(static_cast<FJ_Base*>(button->getObjListParent())->getId(),
+                                                 button->getId());
         button->setButtonPressed(false);
     }
 }

@@ -9,8 +9,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_InGameHostOptions::FJ_InGameHostOptions(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_InGameHostOptions::FJ_InGameHostOptions(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 
@@ -30,11 +29,11 @@ void FJ_InGameHostOptions::InitMenu()
     FJ_FuiNode* list = getChildByName(std::string("HostOptionsList"));
     const int backgroundHeight = static_cast<int>(background->getChildAt(0)->getHeight());
     background->getChildAt(0)->setHeight(
-        static_cast<float>(static_cast<FJ_List*>(list->asFJ_List_MultiList())->GetListHeight()) +
-        (list->getY() - background->getY()) * 2.0f);
+        static_cast<float>(static_cast<FJ_List*>(list->asFJ_List_MultiList())->GetListHeight())
+        + (list->getY() - background->getY()) * 2.0f);
 
-    const int amount = Math::round((static_cast<float>(backgroundHeight) -
-                                    background->getChildAt(0)->getHeight()) * 0.5f);
+    const int amount = Math::round((static_cast<float>(backgroundHeight) - background->getChildAt(0)->getHeight())
+                                   * 0.5f);
     if (amount > 0)
     {
         background->getChildAt(0)->incY(static_cast<float>(amount));
@@ -52,4 +51,3 @@ void FJ_InGameHostOptions::SetSafeZone(int top, int bottom, int left, int right)
 
     setY(top);
 }
-

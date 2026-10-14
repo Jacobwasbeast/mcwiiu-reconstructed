@@ -24,7 +24,9 @@ extern CConsoleMinecraftApp gApp;
 extern C_4JProfile* gProfile;
 
 UIScene_DLCMainMenu::UIScene_DLCMainMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_titleLabel(), m_timer()
+    : UIScene(type, layer),
+      m_titleLabel(),
+      m_timer()
 {
     initialiseMovie();
     gApp.SetLiveLinkRequired(true);
@@ -65,8 +67,7 @@ unsigned int UIScene_DLCMainMenu::mapElementsAndNames()
     return 1;
 }
 
-int UIScene_DLCMainMenu::ExitDLCMainMenu(void* context, int,
-                                          C4JStorage::EMessageResult)
+int UIScene_DLCMainMenu::ExitDLCMainMenu(void* context, int, C4JStorage::EMessageResult)
 {
     cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
     commerce->HideStoreIcon();
@@ -79,10 +80,9 @@ void UIScene_DLCMainMenu::handleTimerComplete(int timerId)
     if (timerId == 0 && !gProfile->IsSignedInLive(gProfile->GetPrimaryPad()))
     {
         int parameter = static_cast<int>(IDS_CONFIRM_OK);
-        gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_LOST,
-                                                  CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_LOST_LIVE_NO_EXIT),
-                                                  &parameter, 1, gProfile->GetPrimaryPad(),
-                                                  ExitDLCMainMenu, this, NULL, true);
+        gConsoleUIController.RequestErrorMessage(
+            IDS_CONNECTION_LOST, CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_LOST_LIVE_NO_EXIT),
+            &parameter, 1, gProfile->GetPrimaryPad(), ExitDLCMainMenu, this, NULL, true);
     }
 }
 
@@ -110,9 +110,8 @@ void UIScene_DLCMainMenu::tick()
 
 void UIScene_DLCMainMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_playerId,
-                                      IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1,
-                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1, false, false);
 }
 
 std::wstring UIScene_DLCMainMenu::getMoviePath()
@@ -120,8 +119,7 @@ std::wstring UIScene_DLCMainMenu::getMoviePath()
     return std::wstring(L"DLCMainMenu");
 }
 
-void UIScene_DLCMainMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
-                                      bool released, bool& handled)
+void UIScene_DLCMainMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
@@ -155,13 +153,17 @@ void UIScene_DLCMainMenu::handlePress(int controlId, int childId)
     if (controlId == 0)
     {
         int index = childId;
-        struct OffersData { int playerId; unsigned char reserved[4]; int category; };
+        struct OffersData
+        {
+            int playerId;
+            unsigned char reserved[4];
+            int category;
+        };
         OffersData* data = new OffersData();
         data->playerId = m_playerId;
         data->category = index;
         killTimer(0);
-        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_DLCOffersMenu,
-                                             data, EUILayer_Scene,
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_DLCOffersMenu, data, EUILayer_Scene,
                                              EUIGroup_PlayerDefault);
     }
 }

@@ -1,7 +1,6 @@
 #include "game/ui/FJ_BrewingArrow_Small.hpp"
 
-FJ_BrewingArrow_Small::FJ_BrewingArrow_Small(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_BrewingArrow_Small::FJ_BrewingArrow_Small(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     InitBarType();
     FJ_ProgressBar::GetBarFiller();

@@ -7,8 +7,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-UIControl_DynamicLabel::UIControl_DynamicLabel()
-    : UIControl_Label()
+UIControl_DynamicLabel::UIControl_DynamicLabel() : UIControl_Label()
 {
 }
 
@@ -22,8 +21,7 @@ int UIControl_DynamicLabel::GetRealHeight()
     return (int)static_cast<FJ_DynamicHtmlText*>(m_fuiRenderNode->getFuiNode())->GetRealHeight();
 }
 
-bool UIControl_DynamicLabel::setupControl(UIScene* scene, fuiRenderNode* node,
-                                          const std::string& name)
+bool UIControl_DynamicLabel::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_DynamicLabel;
     return UIControl_Base::setupControl(scene, node, name);
@@ -42,7 +40,8 @@ void UIControl_DynamicLabel::ReInit()
 void UIControl_DynamicLabel::SetupTouch()
 {
     int layerId = m_scene->m_layer->m_layerId;
-    switch (layerId) {
+    switch (layerId)
+    {
     case 4:
     case 6:
     case 7:

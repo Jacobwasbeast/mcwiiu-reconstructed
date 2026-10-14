@@ -18,6 +18,7 @@ public:
     virtual void init(FJ_Event* event);
     void SetABSwap(bool swap);
     void JoinButtonPressed(int controller);
+
 private:
     bool mABSwap;
     FJ_FuiNode* mControllers[4];

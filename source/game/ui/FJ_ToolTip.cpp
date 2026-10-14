@@ -9,28 +9,29 @@
 #include "game/ui/fuiRenderNodeTimeline.hpp"
 #include "game/util/Math.hpp"
 
-static std::string g_toolTipLabels[16][2] = {
-    {"Button_A", "Button_A_Animated"},
-    {"Button_B", "Button_B_Animated"},
-    {"Button_X", "Button_X_Animated"},
-    {"Button_Y", "Button_Y_Animated"},
-    {"Button_LeftTrigger", "Button_LeftTrigger_Animated"},
-    {"Button_RightTrigger", "Button_RightTrigger_Animated"},
-    {"Button_LeftBumper", "Button_LeftBumper_Animated"},
-    {"Button_RightBumper", "Button_RightBumper_Animated"},
-    {"Button_LStick", "Button_LStick_Animated"},
-    {"Button_RStick", "Button_RStick_Animated"},
-    {"Button_SystemSelect", "Button_SystemSelect_Animated"},
-    {"Button_DpadLeft", "Button_Select_Animated"},
-    {"Button_DpadRight", "Button_Select_Animated"},
-    {"Button_DpadUp", "Button_Select_Animated"},
-    {"Button_DpadDown", "Button_Select_Animated"},
-    {"Button_LeftStick", "Button_LeftStick_Animated"}
-};
+static std::string g_toolTipLabels[16][2] = {{"Button_A", "Button_A_Animated"},
+                                             {"Button_B", "Button_B_Animated"},
+                                             {"Button_X", "Button_X_Animated"},
+                                             {"Button_Y", "Button_Y_Animated"},
+                                             {"Button_LeftTrigger", "Button_LeftTrigger_Animated"},
+                                             {"Button_RightTrigger", "Button_RightTrigger_Animated"},
+                                             {"Button_LeftBumper", "Button_LeftBumper_Animated"},
+                                             {"Button_RightBumper", "Button_RightBumper_Animated"},
+                                             {"Button_LStick", "Button_LStick_Animated"},
+                                             {"Button_RStick", "Button_RStick_Animated"},
+                                             {"Button_SystemSelect", "Button_SystemSelect_Animated"},
+                                             {"Button_DpadLeft", "Button_Select_Animated"},
+                                             {"Button_DpadRight", "Button_Select_Animated"},
+                                             {"Button_DpadUp", "Button_Select_Animated"},
+                                             {"Button_DpadDown", "Button_Select_Animated"},
+                                             {"Button_LeftStick", "Button_LeftStick_Animated"}};
 static std::string g_toolTipControllerSuffix("_CTRL_");
 
 FJ_ToolTip::FJ_ToolTip(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_controllerType(0), m_primaryType(-1), m_secondaryType(-1)
+    : FJ_Base(renderNode),
+      m_controllerType(0),
+      m_primaryType(-1),
+      m_secondaryType(-1)
 {
     m_primaryText = getChildByName(std::string("ToolTip_0"))->getChildAt(0)->asMovieClip();
     m_secondaryText = getChildByName(std::string("ToolTip_1"))->getChildAt(0)->asMovieClip();
@@ -80,8 +81,8 @@ void FJ_ToolTip::SetSecondaryText(const std::wstring& text)
     if (container != NULL)
         container->setY(0.0f);
 
-    field->setX(static_cast<float>(Math::round((container->getWidth() / getScaleX() - field->getWidth()) * 0.5f
-                                               + m_centerBiasX)));
+    field->setX(static_cast<float>(
+        Math::round((container->getWidth() / getScaleX() - field->getWidth()) * 0.5f + m_centerBiasX)));
     field->setY(static_cast<float>(Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f)));
 }
 

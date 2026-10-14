@@ -35,8 +35,7 @@ public:
     virtual std::wstring getMoviePath();
     virtual double getSafeZoneHalfWidth();
     virtual void updateSafeZone();
-    void _SetTooltip(unsigned int index, int type, int subtype, UIString text,
-                     bool enabled, bool force);
+    void _SetTooltip(unsigned int index, int type, int subtype, UIString text, bool enabled, bool force);
     void _Relayout();
     virtual void tick();
     virtual void render(int width, int height, C4JRender::eViewportType viewport);
@@ -46,23 +45,19 @@ public:
     virtual void SetEnableTooltips(bool enabled);
     virtual void ShowTooltip(unsigned int player, bool visible);
     unsigned int GetToolTipButton(unsigned int button);
-    unsigned int _SetTooltip(unsigned int index, int type, int subtype, int textId,
-                             bool& changed);
-    unsigned int HandleToolTipButton(unsigned int player, EControllerActions action,
-                                     unsigned int& button, int type);
+    unsigned int _SetTooltip(unsigned int index, int type, int subtype, int textId, bool& changed);
+    unsigned int HandleToolTipButton(unsigned int player, EControllerActions action, unsigned int& button, int type);
     void UpdateControllerType(int controllerType);
     virtual void SetTooltips(int player, int* tooltips, bool visible);
-    virtual void SetTooltips(int player, int first, int second, int third, int fourth,
-                     int fifth, int sixth, int seventh, int eighth, int ninth,
-                     int tenth, int eleventh, int twelfth, int thirteenth,
-                     int fourteenth, int fifteenth, int sixteenth, bool visible);
+    virtual void SetTooltips(int player, int first, int second, int third, int fourth, int fifth, int sixth,
+                             int seventh, int eighth, int ninth, int tenth, int eleventh, int twelfth, int thirteenth,
+                             int fourteenth, int fifteenth, int sixteenth, bool visible);
     virtual void EnableTooltip(unsigned int player, bool enabled);
     virtual bool IsToolTipDynamic(unsigned int player, EControllerActions& action);
     virtual void handleReload();
-    virtual void handleInput(int player, int action, bool repeat, bool pressed,
-                             bool released, bool& handled);
-    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
-                                  bool pressed, bool repeat, bool released);
+    virtual void handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                  bool repeat, bool released);
     virtual int getSceneType();
     virtual bool stealsFocus();
     virtual bool hasFocus(int sceneType);

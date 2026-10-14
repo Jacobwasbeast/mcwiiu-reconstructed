@@ -9,8 +9,7 @@ UIControl_LeftIconButtonList::UIControl_LeftIconButtonList()
 {
 }
 
-bool UIControl_LeftIconButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
-                                                const std::string& name)
+bool UIControl_LeftIconButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_LeftIconButtonList;
     return UIControl_List::setupControl(scene, node, name);
@@ -18,12 +17,10 @@ bool UIControl_LeftIconButtonList::setupControl(UIScene* scene, fuiRenderNode* n
 
 void UIControl_LeftIconButtonList::UseIggyIcons()
 {
-    static_cast<FJ_List_ListButtonIconLeft*>(m_fuiRenderNode->getFuiNode())
-        ->UseIggyIcons();
+    static_cast<FJ_List_ListButtonIconLeft*>(m_fuiRenderNode->getFuiNode())->UseIggyIcons();
 }
 
-void UIControl_LeftIconButtonList::AddNewItem(const std::wstring& label, int id,
-                                              const std::wstring& textureName)
+void UIControl_LeftIconButtonList::AddNewItem(const std::wstring& label, int id, const std::wstring& textureName)
 {
     {
         const std::wstring textureName1(L"");
@@ -33,8 +30,7 @@ void UIControl_LeftIconButtonList::AddNewItem(const std::wstring& label, int id,
     addElement(UIControl::eUIControlType_Button, -1);
 }
 
-void UIControl_LeftIconButtonList::AddNewItem(const std::wstring& label, int id,
-                                              const std::wstring& textureName,
+void UIControl_LeftIconButtonList::AddNewItem(const std::wstring& label, int id, const std::wstring& textureName,
                                               const std::wstring& textureName1)
 {
     static_cast<FJ_List_ListButtonIconLeft*>(m_fuiRenderNode->getFuiNode())

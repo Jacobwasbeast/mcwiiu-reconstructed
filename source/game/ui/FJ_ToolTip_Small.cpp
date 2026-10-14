@@ -1,7 +1,6 @@
 #include "game/ui/FJ_ToolTip_Small.hpp"
 
-FJ_ToolTip_Small::FJ_ToolTip_Small(fuiRenderNode* renderNode)
-    : FJ_ToolTip(renderNode)
+FJ_ToolTip_Small::FJ_ToolTip_Small(fuiRenderNode* renderNode) : FJ_ToolTip(renderNode)
 {
 }
 

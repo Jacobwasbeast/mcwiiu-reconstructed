@@ -24,7 +24,10 @@ struct AchievementInfo
 class UIScene_AchievementsMenu : public UIScene
 {
 public:
-    enum { DISPLAY_COUNT = 93 };
+    enum
+    {
+        DISPLAY_COUNT = 93
+    };
     static const int sDisplayList[DISPLAY_COUNT];
     UIScene_AchievementsMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_AchievementsMenu();
@@ -43,6 +46,7 @@ public:
     virtual UIControl* GetMainPanel();
     virtual void handleReload();
     virtual void tick();
+
 private:
     int m_achievementIndex;
     bool m_showDescription;

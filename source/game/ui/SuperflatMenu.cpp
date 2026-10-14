@@ -34,7 +34,8 @@
 #include "game/ui/UIScene_CreativeMenu.hpp"
 #include "game/core/StringFormat.hpp"
 
-namespace {
+namespace
+{
 
 const int OCEAN_MONUMENT_MIN_SEPARATION = 5;
 const int SHIPWRECK_MIN_SEPARATION = 5;
@@ -47,19 +48,23 @@ Block** getWhiteList();
 Block** getPlacementRestrictedList();
 
 SuperflatMenu::SliderLabelBehaviour::SliderLabelBehaviour(int name, unsigned int minimum, unsigned int maximum)
-    : mMinimum(minimum), mMaximum(maximum), mName(name)
+    : mMinimum(minimum),
+      mMaximum(maximum),
+      mName(name)
 {
 }
 
 SuperflatMenu::CategoricalLabelBehaviour::CategoricalLabelBehaviour(int name, int* labels)
-    : SliderLabelBehaviour(name, 0, getLength(labels) - 1), mLabels(labels)
+    : SliderLabelBehaviour(name, 0, getLength(labels) - 1),
+      mLabels(labels)
 {
 }
 
 int SuperflatMenu::CategoricalLabelBehaviour::getLength(int* labels)
 {
     int length = 0;
-    if (*labels < 0) return length;
+    if (*labels < 0)
+        return length;
     do
     {
         ++labels;
@@ -78,17 +83,28 @@ std::wstring SuperflatMenu::CategoricalLabelBehaviour::GetLabel(int value)
 }
 
 SuperflatMenu::NumericalLabelBehaviour::NumericalLabelBehaviour(int name, unsigned int minimum, unsigned int maximum)
-    : SliderLabelBehaviour(name, minimum, maximum), mType(eType_Integer), mScale(1.0), mFormat(L"%i")
+    : SliderLabelBehaviour(name, minimum, maximum),
+      mType(eType_Integer),
+      mScale(1.0),
+      mFormat(L"%i")
 {
 }
 
-SuperflatMenu::NumericalLabelBehaviour::NumericalLabelBehaviour(int name, const std::wstring& format, int multiplier, unsigned int minimum, unsigned int maximum)
-    : SliderLabelBehaviour(name, minimum, maximum), mType(eType_Integer), mScale(multiplier), mFormat(format)
+SuperflatMenu::NumericalLabelBehaviour::NumericalLabelBehaviour(int name, const std::wstring& format, int multiplier,
+                                                                unsigned int minimum, unsigned int maximum)
+    : SliderLabelBehaviour(name, minimum, maximum),
+      mType(eType_Integer),
+      mScale(multiplier),
+      mFormat(format)
 {
 }
 
-SuperflatMenu::NumericalLabelBehaviour::NumericalLabelBehaviour(int name, const std::wstring& format, double scale, unsigned int minimum, unsigned int maximum)
-    : SliderLabelBehaviour(name, minimum, maximum), mType(eType_Decimal), mScale(scale), mFormat(format)
+SuperflatMenu::NumericalLabelBehaviour::NumericalLabelBehaviour(int name, const std::wstring& format, double scale,
+                                                                unsigned int minimum, unsigned int maximum)
+    : SliderLabelBehaviour(name, minimum, maximum),
+      mType(eType_Decimal),
+      mScale(scale),
+      mFormat(format)
 {
 }
 
@@ -102,8 +118,16 @@ std::wstring SuperflatMenu::NumericalLabelBehaviour::GetLabel(int value)
     return std::wstring(L10N::GetString(mName)) + labelSeparator + result;
 }
 
-SuperflatMenu::Param::Param(bool terminal, bool parent, int name, int desc, int minimum, int maximum, MappingFactory* factory, SliderLabelBehaviour* behaviour)
-    : mTerminal(terminal), mParent(parent), mName(name), mDesc(desc), mMinValue(minimum), mMaxValue(maximum), mFactory(factory), mBehaviour(behaviour)
+SuperflatMenu::Param::Param(bool terminal, bool parent, int name, int desc, int minimum, int maximum,
+                            MappingFactory* factory, SliderLabelBehaviour* behaviour)
+    : mTerminal(terminal),
+      mParent(parent),
+      mName(name),
+      mDesc(desc),
+      mMinValue(minimum),
+      mMaxValue(maximum),
+      mFactory(factory),
+      mBehaviour(behaviour)
 {
 }
 
@@ -159,8 +183,7 @@ SuperflatMenu::Param SuperflatMenu::Param::Parent(MappingFactory* factory, int n
 
 SuperflatMenu::Param SuperflatMenu::Param::Child(SliderLabelBehaviour* behaviour, int name)
 {
-    return Param(false, false, behaviour->mName, name, behaviour->mMinimum,
-                 behaviour->mMaximum, NULL, behaviour);
+    return Param(false, false, behaviour->mName, name, behaviour->mMinimum, behaviour->mMaximum, NULL, behaviour);
 }
 
 SuperflatMenu::Param SuperflatMenu::Param::Terminal()
@@ -168,8 +191,7 @@ SuperflatMenu::Param SuperflatMenu::Param::Terminal()
     return Param(true, false, 0, 0, 0, 0, NULL, NULL);
 }
 
-SuperflatMenu::Mapping::Mapping(int control, UIControl_MultiList* list)
-    : mControl(control), mList(list), mChildren()
+SuperflatMenu::Mapping::Mapping(int control, UIControl_MultiList* list) : mControl(control), mList(list), mChildren()
 {
 }
 
@@ -242,8 +264,7 @@ int SuperflatMenu::Mapping::Sub::getPosition()
     return mPosition;
 }
 
-SuperflatMenu::MapCanyons::MapCanyons(int control, UIControl_MultiList* list)
-    : Mapping(control, list)
+SuperflatMenu::MapCanyons::MapCanyons(int control, UIControl_MultiList* list) : Mapping(control, list)
 {
 }
 void SuperflatMenu::MapCanyons::write(FlatGeneratorInfo& info)
@@ -255,8 +276,7 @@ void SuperflatMenu::MapCanyons::read(FlatGeneratorInfo& info)
     setChecked(info.hasCanyons());
 }
 
-SuperflatMenu::MapCaves::MapCaves(int control, UIControl_MultiList* list)
-    : Mapping(control, list)
+SuperflatMenu::MapCaves::MapCaves(int control, UIControl_MultiList* list) : Mapping(control, list)
 {
 }
 void SuperflatMenu::MapCaves::write(FlatGeneratorInfo& info)
@@ -268,8 +288,7 @@ void SuperflatMenu::MapCaves::read(FlatGeneratorInfo& info)
     setChecked(info.hasCaves());
 }
 
-SuperflatMenu::MapDecorations::MapDecorations(int control, UIControl_MultiList* list)
-    : Mapping(control, list)
+SuperflatMenu::MapDecorations::MapDecorations(int control, UIControl_MultiList* list) : Mapping(control, list)
 {
 }
 void SuperflatMenu::MapDecorations::write(FlatGeneratorInfo& info)
@@ -281,8 +300,7 @@ void SuperflatMenu::MapDecorations::read(FlatGeneratorInfo& info)
     setChecked(info.hasDecorations());
 }
 
-SuperflatMenu::MapDungeon::MapDungeon(int control, UIControl_MultiList* list)
-    : Mapping(control, list)
+SuperflatMenu::MapDungeon::MapDungeon(int control, UIControl_MultiList* list) : Mapping(control, list)
 {
 }
 void SuperflatMenu::MapDungeon::write(FlatGeneratorInfo& info)
@@ -294,8 +312,7 @@ void SuperflatMenu::MapDungeon::read(FlatGeneratorInfo& info)
     setChecked(info.hasDungeons());
 }
 
-SuperflatMenu::MapLake::MapLake(int control, UIControl_MultiList* list)
-    : Mapping(control, list)
+SuperflatMenu::MapLake::MapLake(int control, UIControl_MultiList* list) : Mapping(control, list)
 {
 }
 void SuperflatMenu::MapLake::write(FlatGeneratorInfo& info)
@@ -307,8 +324,7 @@ void SuperflatMenu::MapLake::read(FlatGeneratorInfo& info)
     setChecked(info.hasLakes());
 }
 
-SuperflatMenu::MapLavaLake::MapLavaLake(int control, UIControl_MultiList* list)
-    : Mapping(control, list)
+SuperflatMenu::MapLavaLake::MapLavaLake(int control, UIControl_MultiList* list) : Mapping(control, list)
 {
 }
 void SuperflatMenu::MapLavaLake::write(FlatGeneratorInfo& info)
@@ -321,7 +337,8 @@ void SuperflatMenu::MapLavaLake::read(FlatGeneratorInfo& info)
 }
 
 SuperflatMenu::MapBiomeSpecific::MapBiomeSpecific(int control, UIControl_MultiList* list)
-    : Mapping(control, list), mSub(this)
+    : Mapping(control, list),
+      mSub(this)
 {
 }
 void SuperflatMenu::MapBiomeSpecific::write(FlatGeneratorInfo& info)
@@ -337,8 +354,7 @@ void SuperflatMenu::MapBiomeSpecific::read(FlatGeneratorInfo& info)
     setChecked(info.hasBiomeSpecific());
 }
 
-SuperflatMenu::MapMineshaft::MapMineshaft(int control, UIControl_MultiList* list)
-    : Mapping(control, list), mSub(this)
+SuperflatMenu::MapMineshaft::MapMineshaft(int control, UIControl_MultiList* list) : Mapping(control, list), mSub(this)
 {
 }
 void SuperflatMenu::MapMineshaft::write(FlatGeneratorInfo& info)
@@ -355,13 +371,17 @@ void SuperflatMenu::MapMineshaft::read(FlatGeneratorInfo& info)
 }
 
 SuperflatMenu::MapVillage::MapVillage(int control, UIControl_MultiList* list)
-    : Mapping(control, list), mSub(this), mSub2(this)
+    : Mapping(control, list),
+      mSub(this),
+      mSub2(this)
 {
 }
 void SuperflatMenu::MapVillage::write(FlatGeneratorInfo& info)
 {
-    if (isChecked()) info.setVillage(mSub.getPosition(), mSub2.getPosition());
-    else info.setVillage(false);
+    if (isChecked())
+        info.setVillage(mSub.getPosition(), mSub2.getPosition());
+    else
+        info.setVillage(false);
 }
 void SuperflatMenu::MapVillage::read(FlatGeneratorInfo& info)
 {
@@ -371,13 +391,17 @@ void SuperflatMenu::MapVillage::read(FlatGeneratorInfo& info)
 }
 
 SuperflatMenu::MapStronghold::MapStronghold(int control, UIControl_MultiList* list)
-    : Mapping(control, list), mSub(this), mSub2(this)
+    : Mapping(control, list),
+      mSub(this),
+      mSub2(this)
 {
 }
 void SuperflatMenu::MapStronghold::write(FlatGeneratorInfo& info)
 {
-    if (isChecked()) info.setStronghold(mSub2.getPosition(), mSub.getPosition());
-    else info.setStronghold(false);
+    if (isChecked())
+        info.setStronghold(mSub2.getPosition(), mSub.getPosition());
+    else
+        info.setStronghold(false);
 }
 void SuperflatMenu::MapStronghold::read(FlatGeneratorInfo& info)
 {
@@ -387,7 +411,9 @@ void SuperflatMenu::MapStronghold::read(FlatGeneratorInfo& info)
 }
 
 SuperflatMenu::MapOceanMonument::MapOceanMonument(int control, UIControl_MultiList* list)
-    : Mapping(control, list), mSub(this), mSub2(this)
+    : Mapping(control, list),
+      mSub(this),
+      mSub2(this)
 {
 }
 void SuperflatMenu::MapOceanMonument::write(FlatGeneratorInfo& info)
@@ -395,7 +421,8 @@ void SuperflatMenu::MapOceanMonument::write(FlatGeneratorInfo& info)
     if (isChecked())
     {
         const int separation = mSub2.getPosition();
-        const std::pair<int, int> values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation, OCEAN_MONUMENT_MIN_SEPARATION);
+        const std::pair<int, int> values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation,
+                                                                                 OCEAN_MONUMENT_MIN_SEPARATION);
         info.setOceanMonument(values.first, values.second);
     }
     else
@@ -413,7 +440,9 @@ void SuperflatMenu::MapOceanMonument::read(FlatGeneratorInfo& info)
 }
 
 SuperflatMenu::MapShipwrecks::MapShipwrecks(int control, UIControl_MultiList* list)
-    : Mapping(control, list), mSub(this), mSub2(this)
+    : Mapping(control, list),
+      mSub(this),
+      mSub2(this)
 {
 }
 void SuperflatMenu::MapShipwrecks::write(FlatGeneratorInfo& info)
@@ -421,7 +450,8 @@ void SuperflatMenu::MapShipwrecks::write(FlatGeneratorInfo& info)
     if (isChecked())
     {
         const int separation = mSub2.getPosition();
-        const std::pair<int, int> values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation, SHIPWRECK_MIN_SEPARATION);
+        const std::pair<int, int> values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation,
+                                                                                 SHIPWRECK_MIN_SEPARATION);
         info.setShipwrecks(values.first, values.second);
     }
     else
@@ -439,7 +469,9 @@ void SuperflatMenu::MapShipwrecks::read(FlatGeneratorInfo& info)
 }
 
 SuperflatMenu::MapWoodlandMansion::MapWoodlandMansion(int control, UIControl_MultiList* list)
-    : Mapping(control, list), mSub(this), mSub2(this)
+    : Mapping(control, list),
+      mSub(this),
+      mSub2(this)
 {
 }
 void SuperflatMenu::MapWoodlandMansion::write(FlatGeneratorInfo& info)
@@ -447,7 +479,8 @@ void SuperflatMenu::MapWoodlandMansion::write(FlatGeneratorInfo& info)
     if (isChecked())
     {
         const int separation = mSub2.getPosition();
-        const std::pair<int, int> values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation, WOODLAND_MANSION_MIN_SEPARATION);
+        const std::pair<int, int> values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation,
+                                                                                 WOODLAND_MANSION_MIN_SEPARATION);
         info.setWoodlandMansion(values.first, values.second);
     }
     else
@@ -470,7 +503,8 @@ std::wstring SuperflatMenu::BiomeInfo::getName() const
 }
 
 SuperflatMenu::CustomSuperflatBlocks::CustomSuperflatBlocks()
-    : boost::unordered_map<int, not_null_ptr<ItemInstance> >(), mMaxId(0)
+    : boost::unordered_map<int, not_null_ptr<ItemInstance> >(),
+      mMaxId(0)
 {
     addItem(0, new ItemInstance(Blocks::air, 1, 0));
     addItem(1, new ItemInstance(Blocks::water, 1, 0));
@@ -479,7 +513,8 @@ SuperflatMenu::CustomSuperflatBlocks::CustomSuperflatBlocks()
     int nextId = 3;
     for (int group = 0; group < UIScene_CreativeMenu::ECreative_Inventory_Groups_Count; ++group)
     {
-        const std::vector<const UIScene_CreativeMenu::ItemBuilder*>& builders = UIScene_CreativeMenu::s_groupItems[group];
+        const std::vector<const UIScene_CreativeMenu::ItemBuilder*>& builders =
+            UIScene_CreativeMenu::s_groupItems[group];
         for (std::vector<const UIScene_CreativeMenu::ItemBuilder*>::const_iterator it = builders.begin();
              it != builders.end(); ++it)
         {
@@ -583,16 +618,16 @@ bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int* ids, int* data, in
             return false;
         }
     }
-    if ((block == Blocks::lava && underneath == Blocks::water) ||
-        (block == Blocks::water && (underneath == Blocks::magma || underneath == Blocks::soul_sand)))
+    if ((block == Blocks::lava && underneath == Blocks::water)
+        || (block == Blocks::water && (underneath == Blocks::magma || underneath == Blocks::soul_sand)))
     {
         ids[below] = Block::getId(Blocks::stone);
         data[below] = 0;
         return false;
     }
 
-    if (id != 0 && block->mMaterial->isLiquid() &&
-        (ids[below] == 0 || underneath == Blocks::carpet || underneath == Blocks::snow_layer))
+    if (id != 0 && block->mMaterial->isLiquid()
+        && (ids[below] == 0 || underneath == Blocks::carpet || underneath == Blocks::snow_layer))
     {
         ids[below] = ids[layer];
         data[below] = data[layer];
@@ -636,8 +671,8 @@ bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int* ids, int* data, in
 
     if (hasRestrictedPlacement(block))
     {
-        if (underneath->isSolidRender(underneath->defaultBlockState()) && underneath->mMaterial->blocksMotion() &&
-            underneath != Blocks::packed_ice)
+        if (underneath->isSolidRender(underneath->defaultBlockState()) && underneath->mMaterial->blocksMotion()
+            && underneath != Blocks::packed_ice)
             return false;
         ids[layer] = 0;
         data[layer] = 0;
@@ -803,10 +838,11 @@ uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitD
             aboveId = (it + 1)->getId();
             above = Block::byId(aboveId);
         }
-        bool supportsLayers = block->defaultBlockState()->isSolidRender() && block->mMaterial->blocksMotion() &&
-                              block != Blocks::packed_ice;
-        if (!supportsLayers && ((static_cast<int>(it->getHeight()) > 1 && hasRestrictedPlacement(block)) ||
-                                (aboveId != -1 && hasRestrictedPlacement(above))))
+        bool supportsLayers = block->defaultBlockState()->isSolidRender() && block->mMaterial->blocksMotion()
+                              && block != Blocks::packed_ice;
+        if (!supportsLayers
+            && ((static_cast<int>(it->getHeight()) > 1 && hasRestrictedPlacement(block))
+                || (aboveId != -1 && hasRestrictedPlacement(above))))
             return 0x16c16d5e;
         if (!block->mMaterial->blocksMotion() && above != NULL && dynamic_cast<FallingBlock*>(above) != NULL)
             return 0xf2c82a8d;
@@ -814,23 +850,23 @@ uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitD
             return 0x1b808acf;
     }
 
-    if (info.hasBiomeSpecific() && biome != 2 && biome != 0x15 && biome != 6 && biome != 0x1e && biome != 0xc &&
-        biome != 0 && biome != 0x18 && biome != 0x2e && biome != 0x2f && biome != 0x2c && biome != 0x2d &&
-        biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29)
+    if (info.hasBiomeSpecific() && biome != 2 && biome != 0x15 && biome != 6 && biome != 0x1e && biome != 0xc
+        && biome != 0 && biome != 0x18 && biome != 0x2e && biome != 0x2f && biome != 0x2c && biome != 0x2d
+        && biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29)
         return 0xd862b5d5;
-    if (info.hasOceanMonument() && biome != 0 && biome != 0x18 && biome != 0x2e && biome != 0x2f &&
-        biome != 0x2c && biome != 0x2d && biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29)
+    if (info.hasOceanMonument() && biome != 0 && biome != 0x18 && biome != 0x2e && biome != 0x2f && biome != 0x2c
+        && biome != 0x2d && biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29)
         return 0xc2e51385;
-    if (info.hasShipwrecks() && biome != 0 && biome != 0x18 && biome != 0x2e && biome != 0x2f &&
-        biome != 0x2c && biome != 0x2d && biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29 &&
-        biome != 0x10 && biome != 0x1a && biome != 0xf)
+    if (info.hasShipwrecks() && biome != 0 && biome != 0x18 && biome != 0x2e && biome != 0x2f && biome != 0x2c
+        && biome != 0x2d && biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29 && biome != 0x10
+        && biome != 0x1a && biome != 0xf)
         return 0x37917102;
     if (info.hasWoodlandMansion() && biome != 0x1d)
         return 0xdae45b4d;
 
-    if (!initData->mStructures &&
-        (info.hasVillage() || info.hasMineshaft() || info.hasStronghold() || info.hasBiomeSpecific() ||
-         info.hasOceanMonument() || info.hasDungeons() || info.hasDecorations()))
+    if (!initData->mStructures
+        && (info.hasVillage() || info.hasMineshaft() || info.hasStronghold() || info.hasBiomeSpecific()
+            || info.hasOceanMonument() || info.hasDungeons() || info.hasDecorations()))
         return 0x258655f1;
     if ((info.hasCaves() && info.getHeight() < 2) || (info.hasCanyons() && info.getHeight() < 4))
         return 0x258655f1;
@@ -859,46 +895,41 @@ void SuperflatMenu::PresetCache::SetCachedPreset(int index, const SuperflatConfi
 SuperflatMenu::BiomeInfo* SuperflatMenu::getBiomeInfoA()
 {
     static bool initialized = false;
-    static BiomeInfo items[22] =
-    {
-        { 1, static_cast<int>(0xe18c04c8u), not_null_ptr<ItemInstance>() },
-        { 35, static_cast<int>(0x70594c1du), not_null_ptr<ItemInstance>() },
-        { 37, static_cast<int>(0x512d43dbu), not_null_ptr<ItemInstance>() },
-        { 2, static_cast<int>(0xf440c270u), not_null_ptr<ItemInstance>() },
-        { 4, static_cast<int>(0xe2e84bd8u), not_null_ptr<ItemInstance>() },
-        { 29, static_cast<int>(0xa5e5b0f2u), not_null_ptr<ItemInstance>() },
-        { 21, static_cast<int>(0xcdc09066u), not_null_ptr<ItemInstance>() },
-        { 6, static_cast<int>(0xdccb0c5eu), not_null_ptr<ItemInstance>() },
-        { 3, static_cast<int>(0xb5196ce2u), not_null_ptr<ItemInstance>() },
-        { 0, static_cast<int>(IDS_BIOME_DESC_OCEAN), not_null_ptr<ItemInstance>() },
-        { 40, static_cast<int>(IDS_BIOME_DESC_WARM_OCEAN), not_null_ptr<ItemInstance>() },
-        { 42, static_cast<int>(0x5ecebfe6u), not_null_ptr<ItemInstance>() },
-        { 44, static_cast<int>(IDS_BIOME_DESC_COLD_OCEAN), not_null_ptr<ItemInstance>() },
-        { 46, static_cast<int>(0x84809552u), not_null_ptr<ItemInstance>() },
-        { 12, static_cast<int>(0xc36e4255u), not_null_ptr<ItemInstance>() },
-        { 30, static_cast<int>(0x54e18948u), not_null_ptr<ItemInstance>() },
-        { 5, static_cast<int>(0x970aa853u), not_null_ptr<ItemInstance>() },
-        { 32, static_cast<int>(0xb0f3c474u), not_null_ptr<ItemInstance>() },
-        { 14, static_cast<int>(0x64137d27u), not_null_ptr<ItemInstance>() },
-        { 8, static_cast<int>(0x36d871a9u), not_null_ptr<ItemInstance>() },
-        { 9, static_cast<int>(0x938424deu), not_null_ptr<ItemInstance>() },
-        { -1, -1, not_null_ptr<ItemInstance>() }
-    };
+    static BiomeInfo items[22] = {{1, static_cast<int>(0xe18c04c8u), not_null_ptr<ItemInstance>()},
+                                  {35, static_cast<int>(0x70594c1du), not_null_ptr<ItemInstance>()},
+                                  {37, static_cast<int>(0x512d43dbu), not_null_ptr<ItemInstance>()},
+                                  {2, static_cast<int>(0xf440c270u), not_null_ptr<ItemInstance>()},
+                                  {4, static_cast<int>(0xe2e84bd8u), not_null_ptr<ItemInstance>()},
+                                  {29, static_cast<int>(0xa5e5b0f2u), not_null_ptr<ItemInstance>()},
+                                  {21, static_cast<int>(0xcdc09066u), not_null_ptr<ItemInstance>()},
+                                  {6, static_cast<int>(0xdccb0c5eu), not_null_ptr<ItemInstance>()},
+                                  {3, static_cast<int>(0xb5196ce2u), not_null_ptr<ItemInstance>()},
+                                  {0, static_cast<int>(IDS_BIOME_DESC_OCEAN), not_null_ptr<ItemInstance>()},
+                                  {40, static_cast<int>(IDS_BIOME_DESC_WARM_OCEAN), not_null_ptr<ItemInstance>()},
+                                  {42, static_cast<int>(0x5ecebfe6u), not_null_ptr<ItemInstance>()},
+                                  {44, static_cast<int>(IDS_BIOME_DESC_COLD_OCEAN), not_null_ptr<ItemInstance>()},
+                                  {46, static_cast<int>(0x84809552u), not_null_ptr<ItemInstance>()},
+                                  {12, static_cast<int>(0xc36e4255u), not_null_ptr<ItemInstance>()},
+                                  {30, static_cast<int>(0x54e18948u), not_null_ptr<ItemInstance>()},
+                                  {5, static_cast<int>(0x970aa853u), not_null_ptr<ItemInstance>()},
+                                  {32, static_cast<int>(0xb0f3c474u), not_null_ptr<ItemInstance>()},
+                                  {14, static_cast<int>(0x64137d27u), not_null_ptr<ItemInstance>()},
+                                  {8, static_cast<int>(0x36d871a9u), not_null_ptr<ItemInstance>()},
+                                  {9, static_cast<int>(0x938424deu), not_null_ptr<ItemInstance>()},
+                                  {-1, -1, not_null_ptr<ItemInstance>()}};
     if (!initialized)
     {
         initialized = true;
         items[0].mItem = createItem(Blocks::grass);
         items[1].mItem = createItem(Blocks::tallgrass);
         TypedBoxed<SandBlock::Variant*> sandValue(SandBlock::Variant::RED_SAND);
-        items[2].mItem = not_null_ptr<ItemInstance>(createItem(
-            Blocks::sand->defaultBlockState()->setBoxedValue(
-                static_cast<const Property*>(SandBlock::TYPE), &sandValue)));
+        items[2].mItem = not_null_ptr<ItemInstance>(createItem(Blocks::sand->defaultBlockState()->setBoxedValue(
+            static_cast<const Property*>(SandBlock::TYPE), &sandValue)));
         items[3].mItem = createItem(Blocks::sand);
         items[4].mItem = createItem(Blocks::log);
         TypedBoxed<PlanksBlock::Variant*> logValue(PlanksBlock::Variant::DARK_OAK);
-        items[5].mItem = not_null_ptr<ItemInstance>(createItem(
-            Blocks::log2->defaultBlockState()->setBoxedValue(
-                static_cast<const Property*>(NewLogBlock::VARIANT), &logValue)));
+        items[5].mItem = not_null_ptr<ItemInstance>(createItem(Blocks::log2->defaultBlockState()->setBoxedValue(
+            static_cast<const Property*>(NewLogBlock::VARIANT), &logValue)));
         items[6].mItem = createItem(Blocks::cocoa);
         items[7].mItem = createItem(Blocks::waterlily);
         items[8].mItem = createItem(Blocks::stone);
@@ -910,9 +941,8 @@ SuperflatMenu::BiomeInfo* SuperflatMenu::getBiomeInfoA()
         items[14].mItem = createItem(Blocks::ice);
         items[15].mItem = createItem(Blocks::snow_layer);
         TypedBoxed<PlanksBlock::Variant*> leavesValue(PlanksBlock::Variant::SPRUCE);
-        items[16].mItem = not_null_ptr<ItemInstance>(createItem(
-            Blocks::leaves->defaultBlockState()->setBoxedValue(
-                static_cast<const Property*>(OldLeafBlock::VARIANT), &leavesValue)));
+        items[16].mItem = not_null_ptr<ItemInstance>(createItem(Blocks::leaves->defaultBlockState()->setBoxedValue(
+            static_cast<const Property*>(OldLeafBlock::VARIANT), &leavesValue)));
         items[17].mItem = createItem(Blocks::log2);
         items[18].mItem = createItem(Blocks::red_mushroom);
         items[19].mItem = createItem(Blocks::netherrack);
@@ -921,7 +951,7 @@ SuperflatMenu::BiomeInfo* SuperflatMenu::getBiomeInfoA()
     return items;
 }
 
-template<class T>
+template <class T>
 SuperflatMenu::Mapping* SuperflatMenu::Mapping::make(int control, UIControl_MultiList* list)
 {
     return new T(control, list);
@@ -932,16 +962,20 @@ template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::Map
 template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapCanyons>(int, UIControl_MultiList*);
 template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapMineshaft>(int, UIControl_MultiList*);
 template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapStronghold>(int, UIControl_MultiList*);
-template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapBiomeSpecific>(int, UIControl_MultiList*);
+template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapBiomeSpecific>(int,
+                                                                                               UIControl_MultiList*);
 template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapDungeon>(int, UIControl_MultiList*);
 template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapDecorations>(int, UIControl_MultiList*);
 template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapLake>(int, UIControl_MultiList*);
 template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapLavaLake>(int, UIControl_MultiList*);
-template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapOceanMonument>(int, UIControl_MultiList*);
+template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapOceanMonument>(int,
+                                                                                               UIControl_MultiList*);
 template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapShipwrecks>(int, UIControl_MultiList*);
-template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapWoodlandMansion>(int, UIControl_MultiList*);
+template SuperflatMenu::Mapping* SuperflatMenu::Mapping::make<SuperflatMenu::MapWoodlandMansion>(int,
+                                                                                                 UIControl_MultiList*);
 
-namespace {
+namespace
+{
 
 SuperflatMenu::Param::MappingFactory makeVillage = &SuperflatMenu::Mapping::make<SuperflatMenu::MapVillage>;
 SuperflatMenu::Param::MappingFactory makeCaves = &SuperflatMenu::Mapping::make<SuperflatMenu::MapCaves>;
@@ -955,34 +989,45 @@ SuperflatMenu::Param::MappingFactory makeLake = &SuperflatMenu::Mapping::make<Su
 SuperflatMenu::Param::MappingFactory makeLavaLake = &SuperflatMenu::Mapping::make<SuperflatMenu::MapLavaLake>;
 SuperflatMenu::Param::MappingFactory makeOceanMonument = &SuperflatMenu::Mapping::make<SuperflatMenu::MapOceanMonument>;
 SuperflatMenu::Param::MappingFactory makeShipwrecks = &SuperflatMenu::Mapping::make<SuperflatMenu::MapShipwrecks>;
-SuperflatMenu::Param::MappingFactory makeWoodlandMansion = &SuperflatMenu::Mapping::make<SuperflatMenu::MapWoodlandMansion>;
+SuperflatMenu::Param::MappingFactory makeWoodlandMansion =
+    &SuperflatMenu::Mapping::make<SuperflatMenu::MapWoodlandMansion>;
 
-int villageSizeLabels[] = { IDS_SMALL, IDS_LARGE, -1 };
+int villageSizeLabels[] = {IDS_SMALL, IDS_LARGE, -1};
 
 }
 
 SuperflatMenu::Param SuperflatMenu::params[SuperflatMenu::PARAM_COUNT] = {
     Param::Parent(&makeVillage, IDS_PARAM_VILLAGE, IDS_PARAM_DESC_VILLAGE),
     Param::Child(new CategoricalLabelBehaviour(IDS_PARAM_VILLAGE_SIZE, villageSizeLabels), IDS_PARAM_DESC_VILLAGE_SIZE),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 16, 100), IDS_PARAM_DESC_VILLAGE_DISTANCE),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 16, 100),
+                 IDS_PARAM_DESC_VILLAGE_DISTANCE),
     Param::Parent(&makeCaves, IDS_PARAM_CAVES, IDS_PARAM_DESC_CAVES),
     Param::Parent(&makeCanyons, IDS_PARAM_CANYONS, IDS_PARAM_DESC_CANYONS),
     Param::Parent(&makeMineshaft, IDS_PARAM_MINESHAFT, IDS_PARAM_DESC_MINESHAFT),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_MINESHAFT_CHANCE, L"%.1f%%", 0.1, 1, 10), IDS_PARAM_DESC_MINESHAFT_CHANCE),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_MINESHAFT_CHANCE, L"%.1f%%", 0.1, 1, 10),
+                 IDS_PARAM_DESC_MINESHAFT_CHANCE),
     Param::Parent(&makeStronghold, IDS_PARAM_STRONGHOLD, IDS_PARAM_DESC_STRONGHOLD),
     Param::Child(new NumericalLabelBehaviour(IDS_PARAM_STRONGHOLD_COUNT, 1, 3), IDS_PARAM_DESC_STRONGHOLD_COUNT),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 16, 100), IDS_PARAM_DESC_STRONGHOLD_SPACING),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 16, 100),
+                 IDS_PARAM_DESC_STRONGHOLD_SPACING),
     Param::Parent(&makeBiomeSpecific, IDS_PARAM_BIOMESPECIFIC, IDS_PARAM_DESC_BIOMESPECIFIC),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 16, 100), IDS_PARAM_DESC_BIOMESPECIFIC_SPACING),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 16, 100),
+                 IDS_PARAM_DESC_BIOMESPECIFIC_SPACING),
     Param::Parent(&makeOceanMonument, IDS_PARAM_OCEAN_MONUMENT, IDS_PARAM_DESC_OCEAN_MONUMENT),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 32, 100), IDS_PARAM_DESC_OCEAN_MONUMENT_SPACING),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_SEPERATION, L"%i%%", 5, 5, 15), IDS_PARAM_DESC_OCEAN_MONUMENT_SEPERATION),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 32, 100),
+                 IDS_PARAM_DESC_OCEAN_MONUMENT_SPACING),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_SEPERATION, L"%i%%", 5, 5, 15),
+                 IDS_PARAM_DESC_OCEAN_MONUMENT_SEPERATION),
     Param::Parent(&makeShipwrecks, IDS_PARAM_SHIPWRECK, IDS_PARAM_DESC_SHIPWRECK),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 32, 100), IDS_PARAM_DESC_SHIPWRECK_SPACING),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_SEPERATION, L"%i%%", 5, 5, 15), IDS_PARAM_DESC_SHIPWRECK_SEPERATION),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 32, 100),
+                 IDS_PARAM_DESC_SHIPWRECK_SPACING),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_SEPERATION, L"%i%%", 5, 5, 15),
+                 IDS_PARAM_DESC_SHIPWRECK_SEPERATION),
     Param::Parent(&makeWoodlandMansion, IDS_PARAM_WOODLAND_MANSION, IDS_PARAM_DESC_WOODLAND_MANSION),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 16, 100), IDS_PARAM_DESC_WOODLAND_MANSION_SPACING),
-    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_SEPERATION, L"%i%%", 5, 5, 15), IDS_PARAM_DESC_WOODLAND_MANSION_SEPERATION),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_VILLAGE_DISTANCE, L"%im", 16, 16, 100),
+                 IDS_PARAM_DESC_WOODLAND_MANSION_SPACING),
+    Param::Child(new NumericalLabelBehaviour(IDS_PARAM_SEPERATION, L"%i%%", 5, 5, 15),
+                 IDS_PARAM_DESC_WOODLAND_MANSION_SEPERATION),
     Param::Parent(&makeDungeon, IDS_PARAM_DUNGEON, IDS_PARAM_DESC_DUNGEON),
     Param::Parent(&makeDecorations, IDS_PARAM_DECORATION, IDS_PARAM_DESC_DECORATION),
     Param::Parent(&makeLake, IDS_PARAM_LAKES, IDS_PARAM_DESC_LAKES),

@@ -16,7 +16,7 @@
 
 extern Renderer* gRenderer;
 
-static wchar_t cjkPunctuation[] = { 0x3001, 0x3002, 0x3003, 0x3006, 0x3015, 0x3017, 0x301e };
+static wchar_t cjkPunctuation[] = {0x3001, 0x3002, 0x3003, 0x3006, 0x3015, 0x3017, 0x301e};
 
 unsigned int setRGBAOrder(unsigned int colour)
 {
@@ -61,8 +61,10 @@ void fuiRenderNodeEditText::RenderStringStateData::init(fuiFontSet* fontSet, flo
 }
 
 fuiRenderNodeEditText::fuiRenderNodeEditText(fuiRenderNode* parent, fuiRenderNode* node, fuiObject* object,
-    unsigned int symbolIndex, unsigned char type, fuiRGBA* colour, unsigned char renderFlags, bool visible, fuiFile* file)
-    : fuiRenderNode(parent, node, object, symbolIndex, eFuiObjectType_EditText, type, colour, renderFlags, visible, file)
+                                             unsigned int symbolIndex, unsigned char type, fuiRGBA* colour,
+                                             unsigned char renderFlags, bool visible, fuiFile* file)
+    : fuiRenderNode(parent, node, object, symbolIndex, eFuiObjectType_EditText, type, colour, renderFlags, visible,
+                    file)
 {
     InitializeCriticalSection(&m_lock);
 
@@ -78,7 +80,7 @@ fuiRenderNodeEditText::fuiRenderNodeEditText(fuiRenderNode* parent, fuiRenderNod
 
     if (editText->align < 4)
     {
-        static const unsigned char alignments[4] = { 0, 1, 2, 3 };
+        static const unsigned char alignments[4] = {0, 1, 2, 3};
         m_alignment = alignments[editText->align];
     }
 
@@ -244,7 +246,7 @@ void fuiRenderNodeEditText::setHtmlAlignPosition(RenderStringStateData& state)
     unsigned int alignment = m_alignment;
     if (m_html && m_htmlAlignment != 0 && m_htmlAlignment < 4)
     {
-        static const unsigned char htmlAlignments[4] = { 0, 0, 2, 1 };
+        static const unsigned char htmlAlignments[4] = {0, 0, 2, 1};
         alignment = htmlAlignments[m_htmlAlignment];
     }
     if (alignment == 0)
@@ -340,10 +342,8 @@ bool fuiRenderNodeEditText::htmlImage(const std::wstring& tag, RenderStringState
     std::wstring widthAttribute = getHtmlTagAttribute(tag, L"width");
     std::wstring heightAttribute = getHtmlTagAttribute(tag, L"height");
     std::wstring srcAttribute = getHtmlTagAttribute(tag, L"src");
-    float width = widthAttribute.empty() ? 0.0f :
-        static_cast<float>(std::wcstol(widthAttribute.c_str(), NULL, 10));
-    float height = heightAttribute.empty() ? 0.0f :
-        static_cast<float>(std::wcstol(heightAttribute.c_str(), NULL, 10));
+    float width = widthAttribute.empty() ? 0.0f : static_cast<float>(std::wcstol(widthAttribute.c_str(), NULL, 10));
+    float height = heightAttribute.empty() ? 0.0f : static_cast<float>(std::wcstol(heightAttribute.c_str(), NULL, 10));
     char symbolName[128];
     std::wcstombs(symbolName, srcAttribute.c_str(), sizeof(symbolName) - 1);
     symbolName[sizeof(symbolName) - 1] = '\0';
@@ -354,13 +354,11 @@ bool fuiRenderNodeEditText::htmlImage(const std::wstring& tag, RenderStringState
         fuiBitmap* bitmapObject = reinterpret_cast<fuiBitmap*>(bitmap);
         if (width == 0.0f)
         {
-            width = static_cast<float>(bitmapObject->width) * height /
-                    static_cast<float>(bitmapObject->height);
+            width = static_cast<float>(bitmapObject->width) * height / static_cast<float>(bitmapObject->height);
         }
         if (height == 0.0f)
         {
-            height = static_cast<float>(bitmapObject->height) * width /
-                     static_cast<float>(bitmapObject->width);
+            height = static_cast<float>(bitmapObject->height) * width / static_cast<float>(bitmapObject->width);
         }
         state.x += 8.0f;
         float left = state.x;
@@ -371,8 +369,8 @@ bool fuiRenderNodeEditText::htmlImage(const std::wstring& tag, RenderStringState
         }
         if (!state.measure && !state.shadow)
         {
-            float top = (m_lineHeights[static_cast<std::vector<float>::size_type>(state.lineNumber)] - height) *
-                            0.5f + state.y;
+            float top = (m_lineHeights[static_cast<std::vector<float>::size_type>(state.lineNumber)] - height) * 0.5f
+                        + state.y;
             float right = left + width;
             float bottom = top + height;
             file->initialiseRenderTexture(bitmapObject, false);
@@ -488,9 +486,9 @@ bool fuiRenderNodeEditText::isCJKChar(wchar_t character)
 
 bool fuiRenderNodeEditText::isCJKPunctuationChar(wchar_t character)
 {
-    if (character == cjkPunctuation[0] || character == cjkPunctuation[1] || character == cjkPunctuation[2] ||
-        character == cjkPunctuation[3] || character == cjkPunctuation[4] || character == cjkPunctuation[5] ||
-        character == cjkPunctuation[6])
+    if (character == cjkPunctuation[0] || character == cjkPunctuation[1] || character == cjkPunctuation[2]
+        || character == cjkPunctuation[3] || character == cjkPunctuation[4] || character == cjkPunctuation[5]
+        || character == cjkPunctuation[6])
         return true;
     return false;
 }
@@ -498,14 +496,11 @@ bool fuiRenderNodeEditText::isCJKPunctuationChar(wchar_t character)
 bool fuiRenderNodeEditText::endOfWord(wchar_t previous, wchar_t current)
 {
     bool result = false;
-    if (previous == 0 || previous == L' ' || previous == L'\t' ||
-        isNewLineChar(previous) ||
-        (m_html && previous == L'<'))
+    if (previous == 0 || previous == L' ' || previous == L'\t' || isNewLineChar(previous)
+        || (m_html && previous == L'<'))
         result = true;
-    if (current == 0 || current == L' ' || current == L'\t' ||
-        isNewLineChar(current) ||
-        (m_html && current == L'<') ||
-        (isCJKChar(current) && !isCJKPunctuationChar(current)))
+    if (current == 0 || current == L' ' || current == L'\t' || isNewLineChar(current) || (m_html && current == L'<')
+        || (isCJKChar(current) && !isCJKPunctuationChar(current)))
         result = true;
     return result;
 }
@@ -604,12 +599,14 @@ void fuiRenderNodeEditText::increaseCurrentCharacter(int count, const wchar_t* t
     } while (count != 0);
 }
 
-float fuiRenderNodeEditText::renderGlyph(unsigned short character, float, float y, float, unsigned int colour, RenderStringStateData& state)
+float fuiRenderNodeEditText::renderGlyph(unsigned short character, float, float y, float, unsigned int colour,
+                                         RenderStringStateData& state)
 {
     if (useBitmapFont(character, state.font))
         return m_boldFont->renderGlyph(character, state.x, y, state.fontSize, colour, *state.activeBitmapVerts);
     fuiFontSet* font = state.font;
-    return font->renderGlyph(character, state.x, getGlyphScale() * 3.0f + y, state.fontSize, colour, *state.activeFontVerts);
+    return font->renderGlyph(character, state.x, getGlyphScale() * 3.0f + y, state.fontSize, colour,
+                             *state.activeFontVerts);
 }
 
 bool fuiRenderNodeEditText::renderWord(std::wstring& word, RenderStringStateData& state)
@@ -692,7 +689,8 @@ void fuiRenderNodeEditText::renderString(const std::wstring& text, RenderStringS
     }
 }
 
-void fuiRenderNodeEditText::getRenderedStringWidthHeight(const std::wstring& text, fuiFontSet* font, float size, float& width, float& height)
+void fuiRenderNodeEditText::getRenderedStringWidthHeight(const std::wstring& text, fuiFontSet* font, float size,
+                                                         float& width, float& height)
 {
     EnterCriticalSection(&m_lock);
     m_renderState.init(font, size, getGlyphScale());
@@ -749,7 +747,8 @@ void fuiRenderNodeEditText::DrawFontVerts(RenderStringStateData&, std::vector<fu
         int start = drawn * 4;
         bool clipped = clipBottom(vertices->at(static_cast<std::vector<fuiFontSet::FontVert>::size_type>(start)));
         drawn += static_cast<int>(batch);
-        if (!clipped && !clipTop(vertices->at(static_cast<std::vector<fuiFontSet::FontVert>::size_type>(drawn * 4 - 1))))
+        if (!clipped
+            && !clipTop(vertices->at(static_cast<std::vector<fuiFontSet::FontVert>::size_type>(drawn * 4 - 1))))
         {
             gRenderer->DrawVertices(C4JRender::ePrimitiveType_Quads, static_cast<int>(batch * 4),
                                     &vertices->at(static_cast<std::vector<fuiFontSet::FontVert>::size_type>(start)),
@@ -820,13 +819,14 @@ void fuiRenderNodeEditText::DrawRenderData(RenderStringStateData& state)
             gRenderer->TextureBind(bitmapObject->textureId);
             gRenderer->TextureSetParam(1, 1);
             gRenderer->TextureSetParam(2, 1);
-            gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, &image,
-                                    C4JRender::eVertexType_ColouredUI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
+            gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, &image, C4JRender::eVertexType_ColouredUI,
+                                    C4JRender::ePixelShaderType_UIColourAdd, NULL);
         }
     }
 }
 
-void fuiRenderNodeEditText::renderString(const std::wstring& text, float x, float y, fuiFontSet* font, float size, unsigned int colour)
+void fuiRenderNodeEditText::renderString(const std::wstring& text, float x, float y, fuiFontSet* font, float size,
+                                         unsigned int colour)
 {
     EnterCriticalSection(&m_lock);
     if (!m_dirty)
@@ -1085,7 +1085,7 @@ fuiRect fuiRenderNodeEditText::getCharBoundaries(int index)
     if (m_text.size() == 0)
     {
         LeaveCriticalSection(&m_lock);
-        fuiRect emptyRect = { 0.0f, 0.0f, 0.0f, 0.0f };
+        fuiRect emptyRect = {0.0f, 0.0f, 0.0f, 0.0f};
         return emptyRect;
     }
 
@@ -1116,7 +1116,8 @@ fuiRect fuiRenderNodeEditText::getCharBoundaries(int index)
     return result;
 }
 
-std::wstring fuiRenderNodeEditText::createWordWrappedString(std::wstring text, fuiFontSet* font, float size, float width)
+std::wstring fuiRenderNodeEditText::createWordWrappedString(std::wstring text, fuiFontSet* font, float size,
+                                                            float width)
 {
     std::wstring wrapped;
     float glyphWidth = 0.0f;

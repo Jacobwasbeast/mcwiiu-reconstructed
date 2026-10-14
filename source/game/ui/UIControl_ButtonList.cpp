@@ -13,8 +13,7 @@ UIControl_ButtonList::UIControl_ButtonList()
 {
 }
 
-bool UIControl_ButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
-                                        const std::string& name)
+bool UIControl_ButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_ButtonList;
     return UIControl_List::setupControl(scene, node, name);
@@ -22,14 +21,22 @@ bool UIControl_ButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
 
 void UIControl_ButtonList::addItem(const std::wstring& label, int index)
 {
-    if (m_scene->m_movie != NULL) {
-        if (m_fuiRenderNode->getFuiNode()->asFJ_List_ListButton() != NULL) {
+    if (m_scene->m_movie != NULL)
+    {
+        if (m_fuiRenderNode->getFuiNode()->asFJ_List_ListButton() != NULL)
+        {
             m_fuiRenderNode->getFuiNode()->asFJ_List_ListButton()->addNewItem(label, index);
-        } else if (m_fuiRenderNode->getFuiNode()->asFJ_List_MenuButton() != NULL) {
+        }
+        else if (m_fuiRenderNode->getFuiNode()->asFJ_List_MenuButton() != NULL)
+        {
             m_fuiRenderNode->getFuiNode()->asFJ_List_MenuButton()->addNewItem(label, index);
-        } else if (m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonPlayerList() != NULL) {
+        }
+        else if (m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonPlayerList() != NULL)
+        {
             m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonPlayerList()->addNewItem(label, index, 1, 1);
-        } else if (m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonScoreBoard() != NULL) {
+        }
+        else if (m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonScoreBoard() != NULL)
+        {
             m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonScoreBoard()->addNewItem(label, index, 1, 1);
         }
     }

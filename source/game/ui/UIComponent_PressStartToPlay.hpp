@@ -27,8 +27,7 @@ public:
     virtual ~UIComponent_PressStartToPlay();
     bool GetAchievementToastShowing(int player);
     bool GetHoldToShowAchievementsActive(bool includeCancelled);
-    unsigned int handleHold(int player, int action, bool repeat, bool pressed, bool released,
-                            bool& handled);
+    unsigned int handleHold(int player, int action, bool repeat, bool pressed, bool released, bool& handled);
     void HideChestRefillAnimation();
     void ResetUIComponents();
     void showTrialTimer(bool show);

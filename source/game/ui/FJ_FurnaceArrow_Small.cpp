@@ -1,7 +1,6 @@
 #include "game/ui/FJ_FurnaceArrow_Small.hpp"
 
-FJ_FurnaceArrow_Small::FJ_FurnaceArrow_Small(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode)
+FJ_FurnaceArrow_Small::FJ_FurnaceArrow_Small(fuiRenderNode* renderNode) : FJ_ProgressBar(renderNode)
 {
     InitBarType();
     FJ_ProgressBar::GetBarFiller();

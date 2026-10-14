@@ -58,8 +58,7 @@
 #include "game/world/generation/Player.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
-UIScene_HUD::UIScene_HUD(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer)
+UIScene_HUD::UIScene_HUD(int sceneType, void*, UILayer* layer) : UIScene(sceneType, layer)
 {
     m_splitScreen = false;
     initialiseMovie();
@@ -112,13 +111,13 @@ void UIScene_HUD::SetSelectedLabel(const std::wstring& label)
 {
     if (!label.empty())
         m_selectedLabelTicks = 60;
-    if (getFJ_Hud() != 0) getFJ_Hud()->SetSelectedLabel(label, true);
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetSelectedLabel(label, true);
 }
 
 bool UIScene_HUD::HideMainHUD()
 {
-    return Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-        Minecraft::GetInstance()->GetMiniGame()->IsHUDDisabled();
+    return Minecraft::InMiniGame(eMiniGameId_Any, true) && Minecraft::GetInstance()->GetMiniGame()->IsHUDDisabled();
 }
 
 unsigned int UIScene_HUD::mapElementsAndNames()
@@ -310,13 +309,15 @@ void UIScene_HUD::updateEffectsDisplay()
             if (instance->getDuration() < 200)
             {
                 const int duration = instance->getDuration();
-                const float fadeIn = Mth::clamp(static_cast<float>(instance->getDuration()) / 10.0f / 5.0f * 0.5f, 0.0f, 0.5f);
+                const float fadeIn = Mth::clamp(static_cast<float>(instance->getDuration()) / 10.0f / 5.0f * 0.5f, 0.0f,
+                                                0.5f);
                 const float pulse = Mth::cos(static_cast<float>(instance->getDuration()) * 3.1415927f / 5.0f);
                 const float blink = Mth::clamp(static_cast<float>(10 - duration / 20) / 10.0f * 0.25f, 0.0f, 0.25f);
                 alpha = pulse * blink + fadeIn;
             }
 
-            getFJ_Hud()->UpdateStatusEffectTile(static_cast<int>(effects->size()), slot, effect->getIcon(), effect->isBeneficial(), alpha);
+            getFJ_Hud()->UpdateStatusEffectTile(static_cast<int>(effects->size()), slot, effect->getIcon(),
+                                                effect->isBeneficial(), alpha);
             ++slot;
         }
     }
@@ -326,17 +327,20 @@ void UIScene_HUD::updateEffectsDisplay()
 
 void UIScene_HUD::SetNumBossBars(int count)
 {
-    if (getFJ_Hud() != 0) getFJ_Hud()->SetNumBossBars(count);
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetNumBossBars(count);
 }
 
 void UIScene_HUD::SetBossBar(int index, float progress, const std::wstring& name)
 {
-    if (getFJ_Hud() != 0) getFJ_Hud()->SetBossBar(index, progress, name);
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetBossBar(index, progress, name);
 }
 
 void UIScene_HUD::HideSelectedLabel()
 {
-    if (getFJ_Hud() != 0) getFJ_Hud()->HideSelectedLabel();
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->HideSelectedLabel();
 }
 
 void UIScene_HUD::tick()
@@ -400,7 +404,8 @@ void UIScene_HUD::updateSafeZone()
     double safeBottom = 0.0;
     double safeLeft = 0.0;
     double safeRight = 0.0;
-    switch (m_layer->getViewport()) {
+    switch (m_layer->getViewport())
+    {
     case C4JRender::eViewportType_TopHalf:
         safeTop = getSafeZoneHalfHeight();
         safeLeft = getSafeZoneHalfWidth();
@@ -487,7 +492,9 @@ void UIScene_HUD::customDraw(const char* name, fuiRect* rect)
     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
     if (armorSlot)
     {
-        item = minecraft->mLocalPlayers[m_playerId]->mInventoryMenu->getSlot(InventoryMenu::ARMOR_SLOT_START + slot)->getItem();
+        item = minecraft->mLocalPlayers[m_playerId]
+                   ->mInventoryMenu->getSlot(InventoryMenu::ARMOR_SLOT_START + slot)
+                   ->getItem();
         bool hidden = false;
         if (!item->isEmpty() && HideMainHUD())
             hidden = true;
@@ -495,7 +502,9 @@ void UIScene_HUD::customDraw(const char* name, fuiRect* rect)
     }
     else
     {
-        item = minecraft->mLocalPlayers[m_playerId]->mInventoryMenu->getSlot(InventoryMenu::USE_ROW_SLOT_START + slot)->getItem();
+        item = minecraft->mLocalPlayers[m_playerId]
+                   ->mInventoryMenu->getSlot(InventoryMenu::USE_ROW_SLOT_START + slot)
+                   ->getItem();
     }
 
     if (item->isEmpty())
@@ -575,13 +584,14 @@ void UIScene_HUD::repositionHud()
 
 void UIScene_HUD::ShowGameModePlayers(bool visible)
 {
-    if (getFJ_Hud() != 0) getFJ_Hud()->ShowGameModePlayers(visible);
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowGameModePlayers(visible);
 }
 
 bool UIScene_HUD::ShowHudComponent(bool wasVisible, bool visible)
 {
-    if (!wasVisible && visible && Minecraft::InMiniGame(eMiniGameId_Lobby, true) &&
-        Minecraft::GetInstance()->GetClientMasterGameMode()->IsRoundEnding())
+    if (!wasVisible && visible && Minecraft::InMiniGame(eMiniGameId_Lobby, true)
+        && Minecraft::GetInstance()->GetClientMasterGameMode()->IsRoundEnding())
         visible = false;
     return visible;
 }
@@ -613,7 +623,11 @@ void UIScene_HUD::ShowArmour(bool visible)
     if (getFJ_Hud() != 0)
         getFJ_Hud()->ShowArmour(visible);
 }
-void UIScene_HUD::ShowArmorBar(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowArmorBar(visible); }
+void UIScene_HUD::ShowArmorBar(bool visible)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowArmorBar(visible);
+}
 void UIScene_HUD::ShowQuickSelect(bool visible)
 {
     if (HideMainHUD())
@@ -628,8 +642,16 @@ void UIScene_HUD::ShowQuickSelect(bool visible)
         getFJ_Hud()->ShowQuickSelect(visible);
 }
 
-void UIScene_HUD::ShowExpBar(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowExpBar(visible); }
-void UIScene_HUD::ShowHorseHealth(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowHorseHealth(visible); }
+void UIScene_HUD::ShowExpBar(bool visible)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowExpBar(visible);
+}
+void UIScene_HUD::ShowHorseHealth(bool visible)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowHorseHealth(visible);
+}
 void UIScene_HUD::ShowAir(bool visible)
 {
     if (HideMainHUD())
@@ -654,7 +676,11 @@ void UIScene_HUD::SetRegenerationEffect(bool enabled)
     if (getFJ_Hud() != 0)
         getFJ_Hud()->SetRegenerationEffect(enabled);
 }
-void UIScene_HUD::SetHealthAbsorb(int health) { if (getFJ_Hud() != 0) getFJ_Hud()->SetHealthAbsorb(health > 0, health); }
+void UIScene_HUD::SetHealthAbsorb(int health)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetHealthAbsorb(health > 0, health);
+}
 void UIScene_HUD::InitMainHUD()
 {
     const bool visible = !HideMainHUD();
@@ -678,7 +704,11 @@ void UIScene_HUD::InitMainHUD()
     m_shownArmorIcons[3] = visible;
     m_armorIcons[3] = visible;
 }
-void UIScene_HUD::SetTooltipsEnabled(bool enabled) { if (getFJ_Hud() != 0) getFJ_Hud()->SetTooltipsEnabled(enabled); }
+void UIScene_HUD::SetTooltipsEnabled(bool enabled)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetTooltipsEnabled(enabled);
+}
 void UIScene_HUD::handleReload()
 {
     m_hudSize = -1;
@@ -726,24 +756,49 @@ void UIScene_HUD::handleReload()
         InitMainHUD();
 
     bool tooltipsEnabled = true;
-    if (!gConsoleUIController.GetMenuDisplayed(m_playerId) &&
-        GameSettings::GetGameSettings(m_playerId, eGameSetting_Tooltips) == 0)
+    if (!gConsoleUIController.GetMenuDisplayed(m_playerId)
+        && GameSettings::GetGameSettings(m_playerId, eGameSetting_Tooltips) == 0)
         tooltipsEnabled = false;
     SetTooltipsEnabled(tooltipsEnabled);
 }
 
-unsigned int UIScene_HUD::getPad() { return static_cast<unsigned int>(m_playerId); }
-void UIScene_HUD::SetOpacity(float opacity) { setOpacity(opacity); }
-void UIScene_HUD::SetVisible(bool visible) { setVisible(visible); }
+unsigned int UIScene_HUD::getPad()
+{
+    return static_cast<unsigned int>(m_playerId);
+}
+void UIScene_HUD::SetOpacity(float opacity)
+{
+    setOpacity(opacity);
+}
+void UIScene_HUD::SetVisible(bool visible)
+{
+    setVisible(visible);
+}
 void UIScene_HUD::GetHudLoading()
 {
     if (m_hudLoading)
         m_hudLoading = getFJ_Hud()->GetHudLoading();
 }
-void UIScene_HUD::SetExpBarProgress(float progress, int) { if (getFJ_Hud() != 0) getFJ_Hud()->SetExpBarProgress(progress); }
-void UIScene_HUD::SetExpLevel(int level) { if (getFJ_Hud() != 0) getFJ_Hud()->SetPlayerLevel(level); }
-void UIScene_HUD::SetActiveSlot(int slot) { if (getFJ_Hud() != 0) getFJ_Hud()->SetActiveSlot(slot); }
-void UIScene_HUD::SetGlideHealth(int health) { if (getFJ_Hud() != 0) getFJ_Hud()->SetGlideHealth(health); }
+void UIScene_HUD::SetExpBarProgress(float progress, int)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetExpBarProgress(progress);
+}
+void UIScene_HUD::SetExpLevel(int level)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetPlayerLevel(level);
+}
+void UIScene_HUD::SetActiveSlot(int slot)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetActiveSlot(slot);
+}
+void UIScene_HUD::SetGlideHealth(int health)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetGlideHealth(health);
+}
 void UIScene_HUD::SetHealth(int health, int minimumHealth, bool highlight, bool hardcore, bool hide)
 {
     if (minimumHealth > health)
@@ -752,7 +807,11 @@ void UIScene_HUD::SetHealth(int health, int minimumHealth, bool highlight, bool 
     if (getFJ_Hud() != 0)
         getFJ_Hud()->SetHealth(health, highlight, hardcore, hide);
 }
-void UIScene_HUD::SetFood(int food, int, bool highlight) { if (getFJ_Hud() != 0) getFJ_Hud()->SetFood(food, highlight); }
+void UIScene_HUD::SetFood(int food, int, bool highlight)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetFood(food, highlight);
+}
 void UIScene_HUD::SetAir(int air, int)
 {
     if (m_air != air)
@@ -762,7 +821,11 @@ void UIScene_HUD::SetAir(int air, int)
             getFJ_Hud()->SetAir(air);
     }
 }
-void UIScene_HUD::SetArmour(int armour) { if (getFJ_Hud() != 0) getFJ_Hud()->SetArmour(armour); }
+void UIScene_HUD::SetArmour(int armour)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetArmour(armour);
+}
 void UIScene_HUD::SetRoundNumber(unsigned int round, unsigned int total, bool visible)
 {
     if (visible)
@@ -770,8 +833,16 @@ void UIScene_HUD::SetRoundNumber(unsigned int round, unsigned int total, bool vi
     else
         m_splashLabel.setLabel(UIString(L""), false, false);
 }
-void UIScene_HUD::ShowCrosshair(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowCrosshair(visible); }
-void UIScene_HUD::SetFoodSaturationLevel(int level) { if (getFJ_Hud() != 0) getFJ_Hud()->SetFoodSaturationLevel(level); }
+void UIScene_HUD::ShowCrosshair(bool visible)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowCrosshair(visible);
+}
+void UIScene_HUD::SetFoodSaturationLevel(int level)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetFoodSaturationLevel(level);
+}
 void UIScene_HUD::SetHorseHealth(int health, bool highlight)
 {
     if (m_ridingHorse && getFJ_Hud() != 0)
@@ -796,14 +867,42 @@ void UIScene_HUD::SetHudGameMode(int gameMode)
     if (getFJ_Hud() != 0)
         getFJ_Hud()->SetHudGameMode(gameMode);
 }
-void UIScene_HUD::SetGameModePlayerState(int player, eGameModePlayerState state, bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->SetGameModePlayerState(player, (int)state, visible); }
-void UIScene_HUD::SetGameModeNumPlayers(int count, bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->SetGameModeNumPlayers(count, visible); }
-int UIScene_HUD::GetHotBarX() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarX(); }
-int UIScene_HUD::GetHotBarY() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarY(); }
-int UIScene_HUD::GetHotBarWidth() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarWidth(); }
-int UIScene_HUD::GetHotBarHeight() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarHeight(); }
-void UIScene_HUD::ShowDirectionalDamage(int direction, int ticks, float alpha) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowDirectionalDamage(direction, ticks, alpha); }
-void UIScene_HUD::SetAnimatedSplashTexture(const std::wstring& texture) { if (getFJ_Hud() != 0) getFJ_Hud()->SetAnimatedSplashTexture(texture); }
+void UIScene_HUD::SetGameModePlayerState(int player, eGameModePlayerState state, bool visible)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetGameModePlayerState(player, (int)state, visible);
+}
+void UIScene_HUD::SetGameModeNumPlayers(int count, bool visible)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetGameModeNumPlayers(count, visible);
+}
+int UIScene_HUD::GetHotBarX()
+{
+    return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarX();
+}
+int UIScene_HUD::GetHotBarY()
+{
+    return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarY();
+}
+int UIScene_HUD::GetHotBarWidth()
+{
+    return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarWidth();
+}
+int UIScene_HUD::GetHotBarHeight()
+{
+    return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHotBarHeight();
+}
+void UIScene_HUD::ShowDirectionalDamage(int direction, int ticks, float alpha)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowDirectionalDamage(direction, ticks, alpha);
+}
+void UIScene_HUD::SetAnimatedSplashTexture(const std::wstring& texture)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetAnimatedSplashTexture(texture);
+}
 void UIScene_HUD::SetAnimatedSplashIcon(int icon)
 {
     std::wstring texture = L"";
@@ -815,8 +914,8 @@ void UIScene_HUD::SetAnimatedSplashIcon(int icon)
     }
     else if (icon == 2)
     {
-        if (Minecraft::InMiniGame(eMiniGameId_Glide, true) &&
-            Minecraft::GetInstance()->mLocalPlayers[getPad()]->GetGameType() != GameType::LOBBY)
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, true)
+            && Minecraft::GetInstance()->mLocalPlayers[getPad()]->GetGameType() != GameType::LOBBY)
         {
             if (Minecraft::GetInstance()->GetClientMasterGameMode()->GetMiniGame()->ArePointsActive())
             {
@@ -868,30 +967,79 @@ void UIScene_HUD::ShowAnimatedSplash(const std::wstring& label, bool visible, in
             getFJ_Hud()->ShowAnimatedSplash(label, visible);
     }
 }
-void UIScene_HUD::SetIsRightHanded(bool rightHanded) { if (getFJ_Hud() != 0) getFJ_Hud()->SetIsRightHanded(rightHanded); }
-void UIScene_HUD::ShowOffhandSlot(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowOffhandSlot(visible); }
-void UIScene_HUD::SetScore(const std::wstring& score) { m_healthLabel.setLabel(UIString(score), false, false); }
-void UIScene_HUD::ShowScore(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowScore(visible); }
-void UIScene_HUD::SetSpeed(const std::wstring& speed) { m_foodLabel.setLabel(UIString(speed), false, false); }
-void UIScene_HUD::SetTime(const std::wstring& time) { m_armourLabel.setLabel(UIString(time), false, false); }
-void UIScene_HUD::SetTimerIcon(int icon, int time) { if (getFJ_Hud() != 0) getFJ_Hud()->SetTimerIcon(icon, time); }
-void UIScene_HUD::SetWrongWay(const std::wstring& label) { if (getFJ_Hud() != 0) getFJ_Hud()->SetWrongWayLabel(label); }
+void UIScene_HUD::SetIsRightHanded(bool rightHanded)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetIsRightHanded(rightHanded);
+}
+void UIScene_HUD::ShowOffhandSlot(bool visible)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowOffhandSlot(visible);
+}
+void UIScene_HUD::SetScore(const std::wstring& score)
+{
+    m_healthLabel.setLabel(UIString(score), false, false);
+}
+void UIScene_HUD::ShowScore(bool visible)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ShowScore(visible);
+}
+void UIScene_HUD::SetSpeed(const std::wstring& speed)
+{
+    m_foodLabel.setLabel(UIString(speed), false, false);
+}
+void UIScene_HUD::SetTime(const std::wstring& time)
+{
+    m_armourLabel.setLabel(UIString(time), false, false);
+}
+void UIScene_HUD::SetTimerIcon(int icon, int time)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetTimerIcon(icon, time);
+}
+void UIScene_HUD::SetWrongWay(const std::wstring& label)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetWrongWayLabel(label);
+}
 void UIScene_HUD::SetPercentageMapTraversed(int position, double percentage)
 {
     percentage = Mth::clamp(percentage, 0.0, 100.0);
     if (getFJ_Hud() != 0)
         getFJ_Hud()->SetPercentageMapTraversed(position, (float)percentage);
 }
-void UIScene_HUD::AddCheckpointAtPercentage(double percentage) { if (getFJ_Hud() != 0) getFJ_Hud()->AddCheckpointAtPercentage((float)percentage); }
-void UIScene_HUD::ClearCheckpointPositions() { if (getFJ_Hud() != 0) getFJ_Hud()->ClearCheckpointPositions(); }
-void UIScene_HUD::AnimateCheckpoint(unsigned int index) { if (getFJ_Hud() != 0) getFJ_Hud()->AnimateCheckpoint((int)index); }
+void UIScene_HUD::AddCheckpointAtPercentage(double percentage)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->AddCheckpointAtPercentage((float)percentage);
+}
+void UIScene_HUD::ClearCheckpointPositions()
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->ClearCheckpointPositions();
+}
+void UIScene_HUD::AnimateCheckpoint(unsigned int index)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->AnimateCheckpoint((int)index);
+}
 void UIScene_HUD::SetPositions(unsigned int position, const std::wstring& label, bool visible)
 {
     if (position < 3 && getFJ_Hud() != 0)
         getFJ_Hud()->SetPosition((int)position, label, visible);
 }
-void UIScene_HUD::SetSpeedometer(unsigned int value) { if (getFJ_Hud() != 0) getFJ_Hud()->SetSpeedometer((int)value); }
-void UIScene_HUD::SetScoreIcon(unsigned int value) { if (getFJ_Hud() != 0) getFJ_Hud()->SetScoreIcon((int)value); }
+void UIScene_HUD::SetSpeedometer(unsigned int value)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetSpeedometer((int)value);
+}
+void UIScene_HUD::SetScoreIcon(unsigned int value)
+{
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetScoreIcon((int)value);
+}
 unsigned int UIScene_HUD::GetStatusEffectsYOffset()
 {
     boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
@@ -914,9 +1062,8 @@ void UIScene_HUD::renderPlayerHealth()
     const bool withered = minecraft->mLocalPlayers[pad]->hasEffect(MobEffects::WITHER);
     const int absorption = (int)minecraft->mLocalPlayers[pad]->getAbsorptionAmount();
     const int armour = minecraft->mLocalPlayers[pad]->getArmorValue();
-    SetHealth(health, m_previousHealth,
-              blinkActiveTime > 9 && (blinkCycleTime / 3) % 2 == 1,
-              poisoned || withered, withered);
+    SetHealth(health, m_previousHealth, blinkActiveTime > 9 && (blinkCycleTime / 3) % 2 == 1, poisoned || withered,
+              withered);
     m_previousHealth = health;
     SetHealthAbsorb(absorption);
     if (armour > 0)
@@ -1161,8 +1308,8 @@ void UIScene_HUD::updateFrameTick()
     SetDisplayName(gProfile->GetMiiName(pad));
 
     bool tooltipsEnabled = true;
-    if (gConsoleUIController.GetMenuDisplayed(pad) == 0 &&
-        GameSettings::GetGameSettings(pad, eGameSetting_Tooltips) == 0)
+    if (gConsoleUIController.GetMenuDisplayed(pad) == 0
+        && GameSettings::GetGameSettings(pad, eGameSetting_Tooltips) == 0)
         tooltipsEnabled = false;
     SetTooltipsEnabled(tooltipsEnabled);
 
@@ -1258,7 +1405,8 @@ void UIScene_HUD::updateFrameTick()
                 if (player->mDamageIndicatorSegments[segment])
                 {
                     const double delay = Minecraft::GetInstance()->GetMiniGame()->GetDamageIndicatorDelay();
-                    ShowDirectionalDamage(segment, static_cast<int>(player->getDamageTaken()), static_cast<float>(delay));
+                    ShowDirectionalDamage(segment, static_cast<int>(player->getDamageTaken()),
+                                          static_cast<float>(delay));
                 }
             }
         }
@@ -1300,12 +1448,10 @@ void UIScene_HUD::updateFrameTick()
         SetOpacity(static_cast<float>(hudOpacity) * 0.01f);
     }
 
-    if (gApp.GetGameStarted() == 0 ||
-        gConsoleUIController.GetMenuDisplayed(pad) != 0 ||
-        gConsoleUIController.IsSceneInStack(pad, EUIScene_ConnectingProgress) != 0 ||
-        gApp.GetXuiAction(pad) == eXuiAction_AutoSave ||
-        GameSettings::GetGameSettings(pad, eGameSetting_DisplayHUD) == 0 ||
-        player == 0)
+    if (gApp.GetGameStarted() == 0 || gConsoleUIController.GetMenuDisplayed(pad) != 0
+        || gConsoleUIController.IsSceneInStack(pad, EUIScene_ConnectingProgress) != 0
+        || gApp.GetXuiAction(pad) == eXuiAction_AutoSave
+        || GameSettings::GetGameSettings(pad, eGameSetting_DisplayHUD) == 0 || player == 0)
     {
         SetVisible(false);
     }
@@ -1334,7 +1480,8 @@ void UIScene_HUD::updateFrameTick()
             ClientMasterGameMode* clientGameMode = minecraft->GetClientMasterGameMode();
             const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
             boost::shared_ptr<Player> glidePlayer = localPlayer;
-            if (localPlayer->isSpectator() && eTYPE_DERIVED_FROM(EntityType::PLAYER, localPlayer->GetCamera()->GetType()))
+            if (localPlayer->isSpectator()
+                && eTYPE_DERIVED_FROM(EntityType::PLAYER, localPlayer->GetCamera()->GetType()))
                 glidePlayer = boost::static_pointer_cast<Player>(localPlayer->GetCamera());
 
             SetHudGameMode(2);
@@ -1344,9 +1491,8 @@ void UIScene_HUD::updateFrameTick()
             double speed = 0.0;
             if (glidePlayer->isFallFlying())
             {
-                speed = std::sqrt(glidePlayer->mXd * glidePlayer->mXd +
-                                  glidePlayer->mYd * glidePlayer->mYd +
-                                  glidePlayer->mZd * glidePlayer->mZd);
+                speed = std::sqrt(glidePlayer->mXd * glidePlayer->mXd + glidePlayer->mYd * glidePlayer->mYd
+                                  + glidePlayer->mZd * glidePlayer->mZd);
             }
             speed *= 20.0;
 
@@ -1431,7 +1577,8 @@ void UIScene_HUD::updateFrameTick()
             {
                 if (sortedPlayers.size() < 2)
                 {
-                    if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+                    if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial)
+                        != 0)
                     {
                         GhostController* ghostController = Minecraft::GetInstance()->GetGhostController();
                         const bool endZoneEntered = scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1);
@@ -1441,8 +1588,9 @@ void UIScene_HUD::updateFrameTick()
                             if (!miniGame->ArePointsActive())
                             {
                                 boost::shared_ptr<GhostPlayer> ghostPlayer = ghostController->getGhostPlayer(pad);
-                                if ((ghostPlayer != 0 || endZoneEntered) && ghostRecord != 0 &&
-                                    (ghostController->mPlaybackActive[pad] || ghostController->HasFinished(ghostRecord)))
+                                if ((ghostPlayer != 0 || endZoneEntered) && ghostRecord != 0
+                                    && (ghostController->mPlaybackActive[pad]
+                                        || ghostController->HasFinished(ghostRecord)))
                                 {
                                     int comparisonDelta;
                                     if (sortedPlayers.empty() || !endZoneEntered)
@@ -1452,15 +1600,18 @@ void UIScene_HUD::updateFrameTick()
                                     }
                                     else
                                     {
-                                        comparisonDelta = sortedPlayers.front().second - static_cast<int>(m_comparisonScore);
+                                        comparisonDelta = sortedPlayers.front().second
+                                                          - static_cast<int>(m_comparisonScore);
                                     }
 
                                     bool ghostAhead = false;
                                     if (ghostPlayer != 0)
                                     {
                                         const double ghostProgress = ghostPlayer->getProgress();
-                                        ghostAhead = Minecraft::GetInstance()->GetClientMasterGameMode()->GetPlayerMapProgress(
-                                                         localPlayer->mXuid) < ghostProgress;
+                                        ghostAhead =
+                                            Minecraft::GetInstance()->GetClientMasterGameMode()->GetPlayerMapProgress(
+                                                localPlayer->mXuid)
+                                            < ghostProgress;
                                     }
                                     if (comparisonDelta > 0)
                                         ghostAhead = true;
@@ -1468,17 +1619,20 @@ void UIScene_HUD::updateFrameTick()
                                     std::wstring positionLabel = L"";
                                     if (ghostAhead)
                                     {
-                                        positionLabel = formatwstr(L"%ls : %ls", formatTime(m_comparisonScore, true).c_str(),
+                                        positionLabel = formatwstr(L"%ls : %ls",
+                                                                   formatTime(m_comparisonScore, true).c_str(),
                                                                    L10N::GetString(IDS_MG03_GHOST));
                                     }
                                     else if (comparisonDelta < 0)
                                     {
-                                        positionLabel = formatwstr(L"-%ls : %ls", formatTime(-comparisonDelta, true).c_str(),
+                                        positionLabel = formatwstr(L"-%ls : %ls",
+                                                                   formatTime(-comparisonDelta, true).c_str(),
                                                                    player->getDisplayName().c_str());
                                     }
                                     else
                                     {
-                                        positionLabel = formatwstr(L"+%ls : %ls", formatTime(comparisonDelta, true).c_str(),
+                                        positionLabel = formatwstr(L"+%ls : %ls",
+                                                                   formatTime(comparisonDelta, true).c_str(),
                                                                    player->getDisplayName().c_str());
                                     }
                                     SetPositions(0, positionLabel, true);
@@ -1486,18 +1640,21 @@ void UIScene_HUD::updateFrameTick()
                                     {
                                         if (comparisonDelta < 0)
                                         {
-                                            positionLabel = formatwstr(L"-%ls : %ls", formatTime(-comparisonDelta, true).c_str(),
+                                            positionLabel = formatwstr(L"-%ls : %ls",
+                                                                       formatTime(-comparisonDelta, true).c_str(),
                                                                        player->getDisplayName().c_str());
                                         }
                                         else
                                         {
-                                            positionLabel = formatwstr(L"+%ls : %ls", formatTime(comparisonDelta, true).c_str(),
+                                            positionLabel = formatwstr(L"+%ls : %ls",
+                                                                       formatTime(comparisonDelta, true).c_str(),
                                                                        player->getDisplayName().c_str());
                                         }
                                     }
                                     else
                                     {
-                                        positionLabel = formatwstr(L"%ls : %ls", formatTime(m_comparisonScore, true).c_str(),
+                                        positionLabel = formatwstr(L"%ls : %ls",
+                                                                   formatTime(m_comparisonScore, true).c_str(),
                                                                    L10N::GetString(IDS_MG03_GHOST));
                                     }
                                     SetPositions(1, positionLabel, true);
@@ -1523,18 +1680,20 @@ void UIScene_HUD::updateFrameTick()
                                         playerScore = static_cast<unsigned int>(sortedPlayers.front().second);
                                     if (playerScore > bestScore)
                                     {
-                                        std::wstring positionLabel =
-                                            formatwstr(L"%d : %ls", playerScore, player->getDisplayName().c_str());
+                                        std::wstring positionLabel = formatwstr(L"%d : %ls", playerScore,
+                                                                                player->getDisplayName().c_str());
                                         SetPositions(0, positionLabel, true);
-                                        positionLabel = formatwstr(L"%d : %ls", m_comparisonScore, L10N::GetString(IDS_MG03_GHOST));
+                                        positionLabel = formatwstr(L"%d : %ls", m_comparisonScore,
+                                                                   L10N::GetString(IDS_MG03_GHOST));
                                         SetPositions(1, positionLabel, true);
                                     }
                                     else
                                     {
-                                        std::wstring positionLabel =
-                                            formatwstr(L"%d : %ls", bestScore, L10N::GetString(IDS_MG03_GHOST));
+                                        std::wstring positionLabel = formatwstr(L"%d : %ls", bestScore,
+                                                                                L10N::GetString(IDS_MG03_GHOST));
                                         SetPositions(0, positionLabel, true);
-                                        positionLabel = formatwstr(L"%d : %ls", playerScore, player->getDisplayName().c_str());
+                                        positionLabel = formatwstr(L"%d : %ls", playerScore,
+                                                                   player->getDisplayName().c_str());
                                         SetPositions(1, positionLabel, true);
                                     }
                                     positionSlot = 2;
@@ -1555,7 +1714,8 @@ void UIScene_HUD::updateFrameTick()
                             if (it->second == 0)
                                 label = formatwstr(L"%ls", it->first.c_str());
                             else if (positionSlot == 0)
-                                label = formatwstr(L"%ls : %ls", formatTime(it->second, true).c_str(), it->first.c_str());
+                                label = formatwstr(L"%ls : %ls", formatTime(it->second, true).c_str(),
+                                                   it->first.c_str());
                             else
                                 label = formatwstr(L"+%ls : %ls", formatTime(it->second - leaderValue, true).c_str(),
                                                    it->first.c_str());
@@ -1583,7 +1743,8 @@ void UIScene_HUD::updateFrameTick()
                 const double totalDistance = clientGameMode->getTotalDistance();
                 std::vector<double>* checkpointDistances = clientGameMode->getCheckpointDistances();
                 double accumulated = 0.0;
-                for (std::vector<double>::iterator it = checkpointDistances->begin(); it != checkpointDistances->end(); ++it)
+                for (std::vector<double>::iterator it = checkpointDistances->begin(); it != checkpointDistances->end();
+                     ++it)
                 {
                     AddCheckpointAtPercentage(((accumulated + *it) / totalDistance) * 100.0);
                     accumulated += *it;
@@ -1602,7 +1763,8 @@ void UIScene_HUD::updateFrameTick()
                 if (checkpointId > m_lastCheckpointIds[pad])
                 {
                     m_lastCheckpointIds[pad] = checkpointId;
-                    AnimateCheckpoint(static_cast<unsigned int>(clientGameMode->convertCheckpointIDToSpawnableID(checkpointId)));
+                    AnimateCheckpoint(
+                        static_cast<unsigned int>(clientGameMode->convertCheckpointIDToSpawnableID(checkpointId)));
                 }
                 else if (checkpointId == 0)
                 {
@@ -1616,10 +1778,10 @@ void UIScene_HUD::updateFrameTick()
                 boost::shared_ptr<MultiplayerLocalPlayer> traversingPlayer = minecraft->mLocalPlayers[pad];
                 if (traversingPlayer != 0 && !traversingPlayer->isSpectator())
                 {
-                    const double progress =
-                        Minecraft::GetInstance()->GetClientMasterGameMode()->GetPlayerMapProgress(localPlayer->mXuid);
-                    if (showTimer && !clientGameMode->IsWaitingToStart() && !clientGameMode->IsRoundStarting() &&
-                        !scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1))
+                    const double progress = Minecraft::GetInstance()->GetClientMasterGameMode()->GetPlayerMapProgress(
+                        localPlayer->mXuid);
+                    if (showTimer && !clientGameMode->IsWaitingToStart() && !clientGameMode->IsRoundStarting()
+                        && !scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1))
                     {
                         if (traversingPlayer->GetPercentageTraversed() <= progress || !localPlayer->isAlive())
                         {
@@ -1651,14 +1813,14 @@ void UIScene_HUD::updateFrameTick()
             for (int index = 0; index < 8; ++index)
             {
                 boost::shared_ptr<Player> trackedPlayer = Minecraft::GetInstance()->GetPlayerByPlayerIndex(index);
-                if (trackedPlayer == localPlayer && localPlayer->isSpectator() &&
-                    eTYPE_DERIVED_FROM(EntityType::PLAYER, localPlayer->GetCamera()->GetType()))
+                if (trackedPlayer == localPlayer && localPlayer->isSpectator()
+                    && eTYPE_DERIVED_FROM(EntityType::PLAYER, localPlayer->GetCamera()->GetType()))
                     trackedPlayer = boost::static_pointer_cast<Player>(localPlayer->GetCamera());
                 if (trackedPlayer != 0)
                 {
-                    SetPercentageMapTraversed(
-                        m_gameModePlayerSlots[index],
-                        Minecraft::GetInstance()->GetClientMasterGameMode()->GetPlayerMapProgress(trackedPlayer->mXuid));
+                    SetPercentageMapTraversed(m_gameModePlayerSlots[index],
+                                              Minecraft::GetInstance()->GetClientMasterGameMode()->GetPlayerMapProgress(
+                                                  trackedPlayer->mXuid));
                 }
             }
 
@@ -1696,8 +1858,8 @@ void UIScene_HUD::updateFrameTick()
                     std::wstring splash;
                     if (CommonMasterGameMode::GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0)
                     {
-                        if (scoreboard->mCurrentRound ==
-                            static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetFinalRoundIndex()))
+                        if (scoreboard->mCurrentRound
+                            == static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetFinalRoundIndex()))
                         {
                             splash = L10N::GetString(IDS_MG03_ROUND_FINAL);
                             ShowAnimatedSplash(splash, true, 0);
@@ -1736,8 +1898,9 @@ void UIScene_HUD::updateFrameTick()
                 {
                     StatsUID uid = localPlayer->getSUID();
                     std::wstring splash;
-                    if (minecraft->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0 &&
-                        scoreboard->mCurrentRound == static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetFinalRoundIndex()))
+                    if (minecraft->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0
+                        && scoreboard->mCurrentRound
+                               == static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetFinalRoundIndex()))
                     {
                         if (!scoreboard->GlideHasOverallWinner())
                         {
@@ -1748,7 +1911,8 @@ void UIScene_HUD::updateFrameTick()
                         {
                             splash = L10N::GetString(IDS_MG_PLAYER_WON);
                             splash = replaceAll(splash, L"{*PLAYER*}",
-                                                scoreboard->GetGlideOverallWinner(CommonMasterGameMode::GetMiniGame()->ArePointsActive()));
+                                                scoreboard->GetGlideOverallWinner(
+                                                    CommonMasterGameMode::GetMiniGame()->ArePointsActive()));
                             ShowAnimatedSplash(splash, true, 0);
                         }
                     }
@@ -1762,7 +1926,8 @@ void UIScene_HUD::updateFrameTick()
                         else
                         {
                             const unsigned int lifeSpan = scoreboard->GetLifeSpan(uid, -1);
-                            splash = formatwstr(L"%.2d:%.2d:%.3d", lifeSpan / 60000, (lifeSpan / 1000) % 60, lifeSpan % 1000);
+                            splash = formatwstr(L"%.2d:%.2d:%.3d", lifeSpan / 60000, (lifeSpan / 1000) % 60,
+                                                lifeSpan % 1000);
                             ShowAnimatedSplash(splash, true, 2);
                         }
                     }
@@ -1774,20 +1939,21 @@ void UIScene_HUD::updateFrameTick()
                 }
                 m_resultSplashShown = true;
             }
-            else if (!m_resultSplashShown && clientGameMode->IsRoundPlaying() &&
-                     Minecraft::InMiniGame(eMiniGameId_Glide, true) && !localPlayer->isSpectator() && scoreboard != 0 &&
-                     scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1) &&
-                     (ghostController == 0 || !ghostController->mRecordingActive[m_playerId]))
+            else if (!m_resultSplashShown && clientGameMode->IsRoundPlaying()
+                     && Minecraft::InMiniGame(eMiniGameId_Glide, true) && !localPlayer->isSpectator() && scoreboard != 0
+                     && scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1)
+                     && (ghostController == 0 || !ghostController->mRecordingActive[m_playerId]))
             {
                 StatsUID uid = localPlayer->getSUID();
                 std::wstring splash;
                 if (!CommonMasterGameMode::GetMiniGame()->ArePointsActive())
                 {
-                    if (!scoreboard->IsPersonalBest(uid, -1) ||
-                        (m_personalBestTime != 0 && System::processTimeInMilliSecs() >= m_personalBestTime + 3000))
+                    if (!scoreboard->IsPersonalBest(uid, -1)
+                        || (m_personalBestTime != 0 && System::processTimeInMilliSecs() >= m_personalBestTime + 3000))
                     {
                         const unsigned int lifeSpan = scoreboard->GetLifeSpan(uid, -1);
-                        splash = formatwstr(L"%.2d:%.2d:%.3d", lifeSpan / 60000, (lifeSpan / 1000) % 60, lifeSpan % 1000);
+                        splash = formatwstr(L"%.2d:%.2d:%.3d", lifeSpan / 60000, (lifeSpan / 1000) % 60,
+                                            lifeSpan % 1000);
                     }
                     else
                     {
@@ -1796,8 +1962,8 @@ void UIScene_HUD::updateFrameTick()
                         splash = L10N::GetString(IDS_MG03_PERSONAL_BEST);
                     }
                 }
-                else if (!scoreboard->IsPersonalBest(uid, -1) ||
-                         (m_personalBestTime != 0 && System::processTimeInMilliSecs() >= m_personalBestTime + 3000))
+                else if (!scoreboard->IsPersonalBest(uid, -1)
+                         || (m_personalBestTime != 0 && System::processTimeInMilliSecs() >= m_personalBestTime + 3000))
                 {
                     splash = formatwstr(L"%d", scoreboard->GetPoints(uid, -1));
                 }
@@ -1855,8 +2021,7 @@ void UIScene_HUD::render(int width, int height, C4JRender::eViewportType viewpor
 
     int screenWidth;
     int screenHeight;
-    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
-                                             screenWidth, screenHeight);
+    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen, screenWidth, screenHeight);
 
     int renderWidth = width;
     int renderHeight = height;
@@ -1902,8 +2067,8 @@ void UIScene_HUD::render(int width, int height, C4JRender::eViewportType viewpor
         break;
     }
 
-    gFui->render(m_movie, 0.0f, static_cast<float>(movieY),
-                 static_cast<float>(renderWidth), static_cast<float>(renderHeight));
+    gFui->render(m_movie, 0.0f, static_cast<float>(movieY), static_cast<float>(renderWidth),
+                 static_cast<float>(renderHeight));
 }
 void UIScene_HUD::updateViewportTouchOffset()
 {
@@ -1975,7 +2140,19 @@ void UIScene_HUD::handleTimerComplete(int)
         m_selectedLabel.setLabel(UIString(selected), false, false);
     }
 }
-int UIScene_HUD::getSceneType() { return EUIScene_HUD; }
-bool UIScene_HUD::stealsFocus() { return false; }
-bool UIScene_HUD::hasFocus(int) { return false; }
-bool UIScene_HUD::hidesLowerScenes() { return false; }
+int UIScene_HUD::getSceneType()
+{
+    return EUIScene_HUD;
+}
+bool UIScene_HUD::stealsFocus()
+{
+    return false;
+}
+bool UIScene_HUD::hasFocus(int)
+{
+    return false;
+}
+bool UIScene_HUD::hidesLowerScenes()
+{
+    return false;
+}

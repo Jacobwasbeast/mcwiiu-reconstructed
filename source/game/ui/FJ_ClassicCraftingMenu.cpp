@@ -2,8 +2,7 @@
 
 #include "game/ui/FJ_FuiNodeStage.hpp"
 
-FJ_ClassicCraftingMenu::FJ_ClassicCraftingMenu(fuiRenderNode* renderNode)
-    : FJ_AbstractContainerDocument(renderNode)
+FJ_ClassicCraftingMenu::FJ_ClassicCraftingMenu(fuiRenderNode* renderNode) : FJ_AbstractContainerDocument(renderNode)
 {
 }
 

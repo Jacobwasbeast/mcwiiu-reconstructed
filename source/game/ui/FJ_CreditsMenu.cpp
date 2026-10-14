@@ -9,8 +9,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-FJ_CreditsMenu::FJ_CreditsMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_CreditsMenu::FJ_CreditsMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     m_blendingContainer = getChildByName(std::string("BlendingContainer"))->asMovieClip();
     m_creditsContent = m_blendingContainer->getChildByName(std::string("CreditsContent"))->asMovieClip();
@@ -70,14 +69,13 @@ void FJ_CreditsMenu::UpdateScrolling(FJ_Event*)
 
     for (unsigned int i = 0; i < m_scrollingNodes.size(); ++i)
     {
-        m_scrollingNodes[i]->setY(m_scrollingNodes[i]->getY() -
-            static_cast<float>(Math::round(m_scrollAmount + m_scrollAmount)));
+        m_scrollingNodes[i]->setY(m_scrollingNodes[i]->getY()
+                                  - static_cast<float>(Math::round(m_scrollAmount + m_scrollAmount)));
     }
 
     if (!m_scrollingNodes.empty())
     {
-        if (m_scrollingNodes[0]->getY() + m_scrollingNodes[0]->getHeight() <
-            static_cast<float>(m_scrollTop))
+        if (m_scrollingNodes[0]->getY() + m_scrollingNodes[0]->getHeight() < static_cast<float>(m_scrollTop))
         {
             if (m_scrollingNodes[0]->isFJ_LabelOutline())
                 m_scrollingNodes[0]->asFJ_LabelOutline()->SetLabel(L"");
@@ -106,8 +104,8 @@ void FJ_CreditsMenu::init(FJ_Event*)
     {
         std::sprintf(name, "CreditsText_S_%d", i + 1);
         m_smallLabels[i] = m_creditsContent->getChildByName(std::string(name))->asFJ_LabelOutline();
-        m_smallLabels[i]->setX(static_cast<float>(Math::round(
-            getRect(this).xMin + (getWidth() * 0.5f - m_smallLabels[i]->getWidth() * 0.5f))));
+        m_smallLabels[i]->setX(static_cast<float>(
+            Math::round(getRect(this).xMin + (getWidth() * 0.5f - m_smallLabels[i]->getWidth() * 0.5f))));
         m_smallLabels[i]->setY(0.0f);
         m_smallLabels[i]->setVisible(false);
 
@@ -115,8 +113,8 @@ void FJ_CreditsMenu::init(FJ_Event*)
         {
             std::sprintf(name, "CreditsText_M_%d", i + 1);
             m_mediumLabels[i] = m_creditsContent->getChildByName(std::string(name))->asFJ_LabelOutline();
-            m_mediumLabels[i]->setX(static_cast<float>(Math::round(
-                getRect(this).xMin + (getWidth() * 0.5f - m_mediumLabels[i]->getWidth() * 0.5f))));
+            m_mediumLabels[i]->setX(static_cast<float>(
+                Math::round(getRect(this).xMin + (getWidth() * 0.5f - m_mediumLabels[i]->getWidth() * 0.5f))));
             m_mediumLabels[i]->setY(0.0f);
             m_mediumLabels[i]->setVisible(false);
         }
@@ -125,8 +123,8 @@ void FJ_CreditsMenu::init(FJ_Event*)
         {
             std::sprintf(name, "CreditsText_L_%d", i + 1);
             m_largeLabels[i] = m_creditsContent->getChildByName(std::string(name))->asFJ_LabelOutline();
-            m_largeLabels[i]->setX(static_cast<float>(Math::round(
-                getRect(this).xMin + (getWidth() * 0.5f - m_largeLabels[i]->getWidth() * 0.5f))));
+            m_largeLabels[i]->setX(static_cast<float>(
+                Math::round(getRect(this).xMin + (getWidth() * 0.5f - m_largeLabels[i]->getWidth() * 0.5f))));
             m_largeLabels[i]->setY(0.0f);
             m_largeLabels[i]->setVisible(false);
         }
@@ -135,31 +133,31 @@ void FJ_CreditsMenu::init(FJ_Event*)
         {
             std::sprintf(name, "CreditsText_XL_%d", i + 1);
             m_extraLargeLabels[i] = m_creditsContent->getChildByName(std::string(name))->asFJ_LabelOutline();
-            m_extraLargeLabels[i]->setX(static_cast<float>(Math::round(
-                getRect(this).xMin + (getWidth() * 0.5f - m_extraLargeLabels[i]->getWidth() * 0.5f))));
+            m_extraLargeLabels[i]->setX(static_cast<float>(
+                Math::round(getRect(this).xMin + (getWidth() * 0.5f - m_extraLargeLabels[i]->getWidth() * 0.5f))));
             m_extraLargeLabels[i]->setY(0.0f);
             m_extraLargeLabels[i]->setVisible(false);
         }
     }
 
     m_logoIggy = m_creditsContent->getChildByName(std::string("Logo_Iggy"));
-    m_logoIggy->setX(static_cast<float>(Math::round(
-        getRect(this).xMin + (getWidth() * 0.5f - m_logoIggy->getWidth() * 0.5f))));
+    m_logoIggy->setX(
+        static_cast<float>(Math::round(getRect(this).xMin + (getWidth() * 0.5f - m_logoIggy->getWidth() * 0.5f))));
     m_logoIggy->setY(0.0f);
 
     m_logoMiles = m_creditsContent->getChildByName(std::string("Logo_Miles"));
-    m_logoMiles->setX(static_cast<float>(Math::round(
-        getRect(this).xMin + (getWidth() * 0.5f - m_logoMiles->getWidth() * 0.5f))));
+    m_logoMiles->setX(
+        static_cast<float>(Math::round(getRect(this).xMin + (getWidth() * 0.5f - m_logoMiles->getWidth() * 0.5f))));
     m_logoMiles->setY(0.0f);
 
     m_logoDolby = m_creditsContent->getChildByName(std::string("Logo_Dolby"));
-    m_logoDolby->setX(static_cast<float>(Math::round(
-        getRect(this).xMin + (getWidth() * 0.5f - m_logoDolby->getWidth() * 0.5f))));
+    m_logoDolby->setX(
+        static_cast<float>(Math::round(getRect(this).xMin + (getWidth() * 0.5f - m_logoDolby->getWidth() * 0.5f))));
     m_logoDolby->setY(0.0f);
 
     m_logoNintendo = m_creditsContent->getChildByName(std::string("Logo_Nintendo"));
-    m_logoNintendo->setX(static_cast<float>(Math::round(
-        getRect(this).xMin + (getWidth() * 0.5f - m_logoNintendo->getWidth() * 0.5f))));
+    m_logoNintendo->setX(
+        static_cast<float>(Math::round(getRect(this).xMin + (getWidth() * 0.5f - m_logoNintendo->getWidth() * 0.5f))));
     m_logoNintendo->setY(0.0f);
 
     getChildByName(std::string("LogoObject"))->getChildAt(0)->gotoAndStop(1);
@@ -199,9 +197,8 @@ void FJ_CreditsMenu::AddImage(int image, bool requestNext)
         else
         {
             FJ_FuiNode* node = m_scrollingNodes[m_scrollingNodes.size() - 1];
-            node->setY(
-                m_scrollingNodes[m_scrollingNodes.size() - 2]->getY() +
-                m_scrollingNodes[m_scrollingNodes.size() - 2]->getHeight());
+            node->setY(m_scrollingNodes[m_scrollingNodes.size() - 2]->getY()
+                       + m_scrollingNodes[m_scrollingNodes.size() - 2]->getHeight());
         }
     }
 }
@@ -285,9 +282,8 @@ unsigned int FJ_CreditsMenu::SetNextLabel(std::wstring label, int type, bool req
             else
             {
                 FJ_FuiNode* node = m_scrollingNodes[m_scrollingNodes.size() - 1];
-                node->setY(
-                    m_scrollingNodes[m_scrollingNodes.size() - 2]->getY() +
-                    m_scrollingNodes[m_scrollingNodes.size() - 2]->getHeight());
+                node->setY(m_scrollingNodes[m_scrollingNodes.size() - 2]->getY()
+                           + m_scrollingNodes[m_scrollingNodes.size() - 2]->getHeight());
             }
         }
     }

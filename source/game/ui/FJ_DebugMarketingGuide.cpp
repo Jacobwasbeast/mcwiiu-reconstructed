@@ -10,8 +10,7 @@ namespace
 std::string platformLookup[4] = {};
 }
 
-FJ_DebugMarketingGuide::FJ_DebugMarketingGuide(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_DebugMarketingGuide::FJ_DebugMarketingGuide(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     for (int i = 0; i < getNumChildren(); ++i)
     {

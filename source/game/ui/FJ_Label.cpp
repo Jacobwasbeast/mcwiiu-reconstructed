@@ -9,8 +9,12 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
 FJ_Label::FJ_Label(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_textAlignment(eTextAlignment_Left), m_multiline(false),
-      m_wordWrap(false), m_useEllipsis(false), m_manualWordWrap(false)
+    : FJ_Base(renderNode),
+      m_textAlignment(eTextAlignment_Left),
+      m_multiline(false),
+      m_wordWrap(false),
+      m_useEllipsis(false),
+      m_manualWordWrap(false)
 {
 }
 
@@ -87,7 +91,8 @@ int FJ_Label::GetAverageCharHeight()
 void FJ_Label::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
     float limit = static_cast<float>(m_maxLabelWidth);
-    float required = static_cast<float>(static_cast<int>(limit <= textField->m_textWidth ? textField->m_textWidth : limit));
+    float required = static_cast<float>(
+        static_cast<int>(limit <= textField->m_textWidth ? textField->m_textWidth : limit));
     int width = getWidth() < required ? static_cast<int>(required) : static_cast<int>(getWidth());
     int newWidth = m_newWidth;
     m_newWidth = newWidth < width ? width : newWidth;
@@ -118,20 +123,18 @@ void FJ_Label::setAction(unsigned char action, char* value)
 typedef std::vector<FJ_Label*> FJ_LabelVector;
 typedef FJ_LabelVector::iterator FJ_LabelIterator;
 
-void FJ_Label_InsertRepeated(
-    FJ_LabelVector& vector, FJ_LabelIterator position, FJ_LabelVector::size_type count, FJ_Label* const& value)
+void FJ_Label_InsertRepeated(FJ_LabelVector& vector, FJ_LabelIterator position, FJ_LabelVector::size_type count,
+                             FJ_Label* const& value)
 {
     vector.insert(position, count, value);
 }
 
-FJ_LabelIterator FJ_Label_Insert(
-    FJ_LabelVector& vector, FJ_LabelIterator position, FJ_Label* const& value)
+FJ_LabelIterator FJ_Label_Insert(FJ_LabelVector& vector, FJ_LabelIterator position, FJ_Label* const& value)
 {
     return vector.insert(position, value);
 }
 
-FJ_LabelIterator FJ_Label_Erase(
-    FJ_LabelVector& vector, FJ_LabelIterator position)
+FJ_LabelIterator FJ_Label_Erase(FJ_LabelVector& vector, FJ_LabelIterator position)
 {
     return vector.erase(position);
 }

@@ -6,7 +6,10 @@
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
 FJ_ProgressBar::FJ_ProgressBar(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_pBarFiller(NULL), m_pFiller(NULL), m_progress(0.0f)
+    : FJ_Base(renderNode),
+      m_pBarFiller(NULL),
+      m_pFiller(NULL),
+      m_progress(0.0f)
 {
     InitBarType();
 }
@@ -31,8 +34,7 @@ void FJ_ProgressBar::initFiller()
     rect.yMin = 0.0f;
     rect.xMax = m_pFiller->getWidth();
     rect.yMax = m_pFiller->getHeight();
-    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, "fillerMask");
+    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "fillerMask");
     m_pBarFiller = new FJ_FuiNode(renderNode);
     renderNode->setFuiNode(m_pBarFiller);
     m_pFiller->addMask(m_pBarFiller);
@@ -77,14 +79,12 @@ void FJ_ProgressBar::setProgress(float progress)
     {
         m_pBarFiller->setWidth((m_fillerWidth / m_pFiller->getScaleX()) * m_progress);
         if (m_reverse)
-            m_pBarFiller->setX((m_fillerWidth / m_pFiller->getScaleX()) *
-                               (1.0f - m_progress) + m_fillerX);
+            m_pBarFiller->setX((m_fillerWidth / m_pFiller->getScaleX()) * (1.0f - m_progress) + m_fillerX);
     }
     else
     {
         m_pBarFiller->setHeight((m_fillerHeight / m_pFiller->getScaleY()) * m_progress);
         if (m_reverse)
-            m_pBarFiller->setY((m_fillerHeight / m_pFiller->getScaleY()) *
-                               (1.0f - m_progress) + m_fillerY);
+            m_pBarFiller->setY((m_fillerHeight / m_pFiller->getScaleY()) * (1.0f - m_progress) + m_fillerY);
     }
 }

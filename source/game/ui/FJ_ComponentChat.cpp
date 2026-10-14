@@ -2,8 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_ComponentChat::FJ_ComponentChat(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_ComponentChat::FJ_ComponentChat(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
 }
 
@@ -23,4 +22,3 @@ void FJ_ComponentChat::SetAlpha(const std::string& name, float alpha)
     pNode->setAlpha(alpha);
     pNode->setVisible(alpha > 0.0f);
 }
-

@@ -2,8 +2,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_KeyboardButtons::FJ_KeyboardButtons(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode)
+FJ_KeyboardButtons::FJ_KeyboardButtons(fuiRenderNode* renderNode) : FJ_Button(renderNode)
 {
     m_keyboardWidth = static_cast<int>(getWidth());
     m_keyboardHeight = static_cast<int>(getHeight());

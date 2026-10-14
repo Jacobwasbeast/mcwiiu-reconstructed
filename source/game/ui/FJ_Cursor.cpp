@@ -9,8 +9,7 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
-FJ_Cursor::FJ_Cursor(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_Cursor::FJ_Cursor(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
 }
 
@@ -35,8 +34,8 @@ void FJ_Cursor::AlignPanel(bool bRight)
         return;
     }
 
-    m_textPanel->setX((float)-Math::round(m_cursorImage->getWidth() * 0.5f * 0.8f) -
-                      m_textPanel->getChildAt(0)->getWidth());
+    m_textPanel->setX((float)-Math::round(m_cursorImage->getWidth() * 0.5f * 0.8f)
+                      - m_textPanel->getChildAt(0)->getWidth());
     m_textPanel->setY((float)m_topAlignment - m_textPanel->getHeight());
     m_textField->setX((float)Math::round(m_textPanel->getX() + charHeight * 0.35));
     m_textField->setY((float)Math::round(m_textPanel->getY() + (float)(charHeight / 2)));
@@ -82,7 +81,8 @@ void FJ_Cursor::ASConstructor()
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"))->asMovieClip();
     FJ_FuiNode* textFieldContainer = textContainer->getChildAt(0)->asMovieClip();
-    m_textField = static_cast<fuiRenderNodeEditText*>(textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField")));
+    m_textField = static_cast<fuiRenderNodeEditText*>(
+        textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField")));
     addChild(m_textField);
     m_textField->setY(textContainer->getY());
     removeChild(textContainer, true);

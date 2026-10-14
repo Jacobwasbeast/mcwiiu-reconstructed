@@ -84,8 +84,7 @@ public:
     virtual void render(int width, int height, C4JRender::eViewportType viewport);
     virtual void customDraw(const char* name, fuiRect* rect);
     virtual bool allowRepeat(int action);
-    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleDestroy();
     virtual void handlePreUnloadForReload();
     virtual void handlePreReload();
@@ -108,8 +107,8 @@ public:
     virtual void HandleMessage(EUIMessage message, void* data);
     virtual void HandleSaveDeviceRemoved(int deviceIndex);
     virtual void handleUnlockFullVersion();
-    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
-                                  bool pressed, bool repeat, bool released);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool pressed,
+                                  bool repeat, bool released);
     virtual bool isReadyToDelete();
 
     static void customDrawFui(void* context, const char* name, fuiRect* rect);
@@ -117,8 +116,7 @@ public:
     void navigateBack();
     bool hasRegisteredSubstitutionTexture(const std::wstring& name);
     void unregisterSubstitutionTexture(const std::wstring& name, bool deleteData);
-    void registerSubstitutionTexture(const std::wstring& name, unsigned char* data,
-                                     unsigned int size, bool deleteData);
+    void registerSubstitutionTexture(const std::wstring& name, unsigned char* data, unsigned int size, bool deleteData);
     void loadMovie();
     void initialiseMovie();
     void addTimer(int timerId, int duration);
@@ -128,9 +126,8 @@ public:
     unsigned int GetCallbackUniqueId();
     bool controlHasFocus(int focus);
     unsigned int getControlChildFocus();
-    void customDrawSlotControlFui(fuiRect* rect, int slot, not_null_ptr<ItemInstance> item,
-                                  float partialTick, bool flat, bool drawDecorations,
-                                  bool drawOverlay);
+    void customDrawSlotControlFui(fuiRect* rect, int slot, not_null_ptr<ItemInstance> item, float partialTick,
+                                  bool flat, bool drawDecorations, bool drawOverlay);
     void destroyMovie();
     void UpdateSceneControls();
     void removeControl(UIControl_Base* control, bool destroy);

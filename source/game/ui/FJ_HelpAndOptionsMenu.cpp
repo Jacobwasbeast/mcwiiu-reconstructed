@@ -1,7 +1,6 @@
 #include "game/ui/FJ_HelpAndOptionsMenu.hpp"
 
-FJ_HelpAndOptionsMenu::FJ_HelpAndOptionsMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_HelpAndOptionsMenu::FJ_HelpAndOptionsMenu(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
 }
 

@@ -7,10 +7,13 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/core/StringConversion.hpp"
 
-static std::string s_entryStates[2] = { "Entry_Unselected", "Entry_Selected" };
+static std::string s_entryStates[2] = {"Entry_Unselected", "Entry_Selected"};
 
 FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_rankTextWidth(0.0f), m_gamertagTextWidth(0.0f), m_columnTextWidth(0.0f)
+    : FJ_FuiNode(pRenderNode),
+      m_rankTextWidth(0.0f),
+      m_gamertagTextWidth(0.0f),
+      m_columnTextWidth(0.0f)
 {
     FJ_FuiNode* rankContainer = getChildByName("RankContainer")->getChildAt(0)->asMovieClip();
     FJ_FuiNode* gamertagContainer = getChildByName("GamertagContainer")->getChildAt(0)->asMovieClip();

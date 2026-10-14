@@ -4,7 +4,7 @@
 #include "game/core/SmallButton.hpp"
 
 ConfirmScreen::ConfirmScreen(Screen* parent, const std::wstring& title, const std::wstring& message,
-    const std::wstring& yesMessage, const std::wstring& noMessage, int id)
+                             const std::wstring& yesMessage, const std::wstring& noMessage, int id)
     : Screen()
 {
     mParent = parent;

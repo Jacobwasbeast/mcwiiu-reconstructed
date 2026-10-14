@@ -1,7 +1,6 @@
 #include "game/ui/FJ_TouchControl.hpp"
 
-FJ_TouchControl::FJ_TouchControl(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+FJ_TouchControl::FJ_TouchControl(fuiRenderNode* pRenderNode) : FJ_FuiNode(pRenderNode)
 {
     Init();
 }
@@ -21,4 +20,3 @@ unsigned int FJ_TouchControl::getType()
 {
     return 0x65;
 }
-

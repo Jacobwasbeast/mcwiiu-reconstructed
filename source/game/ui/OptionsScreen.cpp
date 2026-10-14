@@ -23,13 +23,8 @@ void OptionsScreen::init()
     Language* language = Language::getInstance();
     mTitle = language->getElement(L"options.title");
 
-    const Options::Option* options[5] = {
-        Options::Option::music,
-        Options::Option::sound,
-        Options::Option::invertMouse,
-        Options::Option::sensitivity,
-        Options::Option::difficulty
-    };
+    const Options::Option* options[5] = {Options::Option::music, Options::Option::sound, Options::Option::invertMouse,
+                                         Options::Option::sensitivity, Options::Option::difficulty};
     int position = 0;
 
     for (int index = 0; index < 5; ++index)
@@ -44,19 +39,15 @@ void OptionsScreen::init()
         else
         {
             mButtons.push_back(new SlideButton(option->getId(), mWidth / 2 - 155 + position % 2 * 160,
-                                               mHeight / 6 + 24 * (position >> 1), option,
-                                               mOptions->getMessage(option),
+                                               mHeight / 6 + 24 * (position >> 1), option, mOptions->getMessage(option),
                                                mOptions->getProgressValue(option)));
         }
         ++position;
     }
 
-    mButtons.push_back(new Button(101, mWidth / 2 - 100, mHeight / 6 + 108,
-                                  language->getElement(L"options.video")));
-    mButtons.push_back(new Button(100, mWidth / 2 - 100, mHeight / 6 + 132,
-                                  language->getElement(L"options.controls")));
-    mButtons.push_back(new Button(200, mWidth / 2 - 100, mHeight / 6 + 168,
-                                  language->getElement(L"gui.done")));
+    mButtons.push_back(new Button(101, mWidth / 2 - 100, mHeight / 6 + 108, language->getElement(L"options.video")));
+    mButtons.push_back(new Button(100, mWidth / 2 - 100, mHeight / 6 + 132, language->getElement(L"options.controls")));
+    mButtons.push_back(new Button(200, mWidth / 2 - 100, mHeight / 6 + 168, language->getElement(L"gui.done")));
 }
 
 void OptionsScreen::buttonClicked(Button* button)

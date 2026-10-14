@@ -8,12 +8,8 @@ class fuiRenderNode;
 class FJ_HtmlText_Normal : public FJ_HtmlText
 {
 private:
-
 public:
-    FJ_HtmlText_Normal(fuiRenderNode* pRenderNode)
-        : FJ_HtmlText(pRenderNode)
-    {
-    }
+    FJ_HtmlText_Normal(fuiRenderNode* pRenderNode) : FJ_HtmlText(pRenderNode) {}
     static FJ_HtmlText* Create(fuiRenderNode* pRenderNode);
     virtual void ASConstructor();
     virtual unsigned int getType();

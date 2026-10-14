@@ -9,14 +9,10 @@
 #include "game/ui/FJ_ToolTip.hpp"
 
 static std::string s_toolTipNames[16] = {
-    "ToolTip_0", "ToolTip_1", "ToolTip_2", "ToolTip_3",
-    "ToolTip_4", "ToolTip_5", "ToolTip_6", "ToolTip_7",
-    "ToolTip_8", "ToolTip_9", "ToolTip_10", "ToolTip_11",
-    "ToolTip_12", "ToolTip_13", "ToolTip_14", "ToolTip_15"
-};
+    "ToolTip_0", "ToolTip_1", "ToolTip_2",  "ToolTip_3",  "ToolTip_4",  "ToolTip_5",  "ToolTip_6",  "ToolTip_7",
+    "ToolTip_8", "ToolTip_9", "ToolTip_10", "ToolTip_11", "ToolTip_12", "ToolTip_13", "ToolTip_14", "ToolTip_15"};
 
-FJ_ToolTips::FJ_ToolTips(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
+FJ_ToolTips::FJ_ToolTips(fuiRenderNode* renderNode) : FJ_Document(renderNode)
 {
     m_useTouchControls = 0;
     m_touchControlsAvailable = false;

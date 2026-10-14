@@ -106,7 +106,8 @@ public:
     void removeDirectEventListener(const FJ_EventListener& listener);
     void addDirectEventListener(const FJ_EventListener& listener);
     void removeEventListenerForNode(FJ_FuiNode* node);
-    void setCustomTextureFn(int (*textureFunction)(void*, const std::wstring&, unsigned int*, unsigned int*, bool*), void (*releaseFunction)(int), void* context);
+    void setCustomTextureFn(int (*textureFunction)(void*, const std::wstring&, unsigned int*, unsigned int*, bool*),
+                            void (*releaseFunction)(int), void* context);
     uint32_t getCustomTexture(const std::wstring& name, unsigned int* width, unsigned int* height, bool* hasAlpha);
     void releaseCustomTexture(int textureId);
     unsigned char getCurrentStencilMask();

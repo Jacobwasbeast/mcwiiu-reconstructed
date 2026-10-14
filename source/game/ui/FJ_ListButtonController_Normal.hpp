@@ -12,7 +12,6 @@ public:
     explicit FJ_ListButtonController_Normal(fuiRenderNode* renderNode);
     static FJ_ListButtonController* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
-
 };
 
 #endif
