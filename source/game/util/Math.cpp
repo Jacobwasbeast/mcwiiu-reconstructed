@@ -6,71 +6,88 @@
 
 static Random sRandom;
 
-double Math::random() {
+double Math::random()
+{
     return sRandom.nextDouble();
 }
 
-int Math::randomInt(int bound) {
+int Math::randomInt(int bound)
+{
     return sRandom.nextInt(bound);
 }
 
-long long Math::round(double value) {
+long long Math::round(double value)
+{
     return (long long)floor(value + 0.5);
 }
 
-int Math::round(float value) {
+int Math::round(float value)
+{
     return (int)floor(value + 0.5);
 }
 
-int Math::_max(int a, int b) {
+int Math::_max(int a, int b)
+{
     return (a >= b) ? a : b;
 }
 
-float Math::_max(float a, float b) {
+float Math::_max(float a, float b)
+{
     return (a >= b) ? a : b;
 }
 
-int Math::_min(int a, int b) {
+int Math::_min(int a, int b)
+{
     return (a <= b) ? a : b;
 }
 
-float Math::_min(float a, float b) {
+float Math::_min(float a, float b)
+{
     return (a <= b) ? a : b;
 }
 
-float Math::wrapDegrees(float degrees) {
-    while (degrees >= 360.0f) {
+float Math::wrapDegrees(float degrees)
+{
+    while (degrees >= 360.0f)
+    {
         degrees -= 360.0f;
     }
 
-    if (degrees >= 180.0f) {
+    if (degrees >= 180.0f)
+    {
         degrees -= 360.0f;
     }
 
-    if (degrees < -180.0f) {
+    if (degrees < -180.0f)
+    {
         degrees += 360.0f;
     }
 
     return degrees;
 }
 
-double Math::wrapDegrees(double degrees) {
-    while (degrees >= 360.0) {
+double Math::wrapDegrees(double degrees)
+{
+    while (degrees >= 360.0)
+    {
         degrees -= 360.0;
     }
 
-    if (degrees >= 180.0) {
+    if (degrees >= 180.0)
+    {
         degrees -= 360.0;
     }
 
-    if (degrees < -180.0) {
+    if (degrees < -180.0)
+    {
         degrees += 360.0;
     }
 
     return degrees;
 }
 
-int Math::roundUpToPowerOf2(int value) {
+int Math::roundUpToPowerOf2(int value)
+{
     value--;
     value |= value >> 1;
     value |= value >> 2;

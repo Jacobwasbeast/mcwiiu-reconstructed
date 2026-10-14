@@ -56,7 +56,8 @@ int WeighedRandom::getTotalWeight(arrayWithLength<WeighedRandomItem*> items)
     return totalWeight;
 }
 
-WeighedRandomItem* WeighedRandom::getRandomItem(Random* random, arrayWithLength<WeighedRandomItem*> items, int totalWeight)
+WeighedRandomItem* WeighedRandom::getRandomItem(Random* random, arrayWithLength<WeighedRandomItem*> items,
+                                                int totalWeight)
 {
     if (totalWeight < 1)
     {

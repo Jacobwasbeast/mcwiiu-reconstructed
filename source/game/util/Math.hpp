@@ -1,7 +1,8 @@
 #ifndef GAME_UTIL_MATH_HPP
 #define GAME_UTIL_MATH_HPP
 
-class Math {
+class Math
+{
 public:
     static double random();
     static int randomInt(int bound);

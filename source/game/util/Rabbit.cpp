@@ -51,8 +51,7 @@
 
 static const EntityDataAccessor<int>* DATA_RABBIT_TYPE = NULL;
 
-Rabbit::EvilRabbitAttackGoal::EvilRabbitAttackGoal(Rabbit* rabbit)
-    : MeleeAttackGoal(rabbit, 1.4, true)
+Rabbit::EvilRabbitAttackGoal::EvilRabbitAttackGoal(Rabbit* rabbit) : MeleeAttackGoal(rabbit, 1.4, true)
 {
 }
 
@@ -61,9 +60,8 @@ double Rabbit::EvilRabbitAttackGoal::getAttackReachSqr(boost::shared_ptr<LivingE
     return target->mBbWidth + 4.0f;
 }
 
-Rabbit::RabbitAvoidEntityGoal::RabbitAvoidEntityGoal(Rabbit* rabbit, const std::type_info& avoidType,
-                                                     float maxDistance, double walkSpeedModifier,
-                                                     double sprintSpeedModifier)
+Rabbit::RabbitAvoidEntityGoal::RabbitAvoidEntityGoal(Rabbit* rabbit, const std::type_info& avoidType, float maxDistance,
+                                                     double walkSpeedModifier, double sprintSpeedModifier)
     : AvoidEntityGoal(rabbit, avoidType, maxDistance, walkSpeedModifier, sprintSpeedModifier),
       mRabbit(rabbit)
 {
@@ -74,8 +72,7 @@ bool Rabbit::RabbitAvoidEntityGoal::canUse()
     return mRabbit->getRabbitType() != 99 && AvoidEntityGoal::canUse();
 }
 
-Rabbit::RabbitGroupData::RabbitGroupData(int type)
-    : mRabbitType(type)
+Rabbit::RabbitGroupData::RabbitGroupData(int type) : mRabbitType(type)
 {
 }
 
@@ -83,8 +80,7 @@ Rabbit::RabbitGroupData::~RabbitGroupData()
 {
 }
 
-Rabbit::RabbitJumpControl::RabbitJumpControl(Rabbit* rabbit)
-    : JumpControl(rabbit), mRabbit(rabbit), mCanJump(false)
+Rabbit::RabbitJumpControl::RabbitJumpControl(Rabbit* rabbit) : JumpControl(rabbit), mRabbit(rabbit), mCanJump(false)
 {
 }
 
@@ -116,8 +112,7 @@ void Rabbit::RabbitJumpControl::tick()
     }
 }
 
-Rabbit::RabbitMoveControl::RabbitMoveControl(Rabbit* rabbit)
-    : MoveControl(rabbit), mRabbit(rabbit), mSpeedModifier(0.0)
+Rabbit::RabbitMoveControl::RabbitMoveControl(Rabbit* rabbit) : MoveControl(rabbit), mRabbit(rabbit), mSpeedModifier(0.0)
 {
 }
 
@@ -127,8 +122,7 @@ Rabbit::RabbitMoveControl::~RabbitMoveControl()
 
 void Rabbit::RabbitMoveControl::tick()
 {
-    if (mRabbit->mOnGround && !mRabbit->mJumping
-        && !static_cast<RabbitJumpControl*>(mRabbit->mJumpControl)->wantJump())
+    if (mRabbit->mOnGround && !mRabbit->mJumping && !static_cast<RabbitJumpControl*>(mRabbit->mJumpControl)->wantJump())
     {
         mRabbit->setSpeedModifier(0.0);
     }
@@ -141,13 +135,16 @@ void Rabbit::RabbitMoveControl::tick()
 
 void Rabbit::RabbitMoveControl::setWantedPosition(double x, double y, double z, double speedModifier)
 {
-    if (mRabbit->isInWater()) speedModifier = 1.5;
+    if (mRabbit->isInWater())
+        speedModifier = 1.5;
     MoveControl::setWantedPosition(x, y, z, speedModifier);
-    if (speedModifier > 0.0) mSpeedModifier = speedModifier;
+    if (speedModifier > 0.0)
+        mSpeedModifier = speedModifier;
 }
 
 Rabbit::RabbitPanicGoal::RabbitPanicGoal(Rabbit* rabbit, double speedModifier)
-    : PanicGoal(rabbit, speedModifier), mRabbit(rabbit)
+    : PanicGoal(rabbit, speedModifier),
+      mRabbit(rabbit)
 {
 }
 
@@ -161,8 +158,7 @@ void Rabbit::RabbitPanicGoal::tick()
     mRabbit->setSpeedModifier(mSpeedModifier);
 }
 
-Rabbit::RaidGardenGoal::RaidGardenGoal(Rabbit* rabbit)
-    : MoveToBlockGoal(rabbit, 0.7f, 16, 1, 1.0), mRabbit(rabbit)
+Rabbit::RaidGardenGoal::RaidGardenGoal(Rabbit* rabbit) : MoveToBlockGoal(rabbit, 0.7f, 16, 1, 1.0), mRabbit(rabbit)
 {
     mWantsToRaid = mCanRaid = false;
 }
@@ -238,8 +234,7 @@ bool Rabbit::RaidGardenGoal::isValidTarget(Level* level, const BlockPos& pos)
     return false;
 }
 
-Rabbit::Rabbit(Level* level)
-    : Animal(level)
+Rabbit::Rabbit(Level* level) : Animal(level)
 {
     fjDerivedCtorCalls();
     mMoreCarrotTicks = 0;
@@ -267,14 +262,14 @@ Entity* Rabbit::create(Level* level)
 void Rabbit::staticCtor()
 {
     DATA_RABBIT_TYPE = SynchedEntityData::defineId<int>(EntityType::RABBIT, EntityType::ANIMAL,
-                                                          EntityDataSerializers::INT);
+                                                        EntityDataSerializers::INT);
 }
 
 void Rabbit::setSpeedModifier(double speedModifier)
 {
     getNavigation()->setSpeedModifier(speedModifier);
-    mMoveControl->setWantedPosition(mMoveControl->getWantedX(), mMoveControl->getWantedY(),
-                                    mMoveControl->getWantedZ(), speedModifier);
+    mMoveControl->setWantedPosition(mMoveControl->getWantedX(), mMoveControl->getWantedY(), mMoveControl->getWantedZ(),
+                                    speedModifier);
 }
 
 void Rabbit::registerGoals()
@@ -284,14 +279,14 @@ void Rabbit::registerGoals()
     mGoalSelector.addGoal(2, new BreedGoal(this, 0.8), true);
 
     static Item* carrotItems[] = {Items::carrot};
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.0, arrayWithLength<Item*>(carrotItems, 1), false,
-                                           arrayWithLength<int>()), true);
+    mGoalSelector.addGoal(
+        3, new TemptGoal(this, 1.0, arrayWithLength<Item*>(carrotItems, 1), false, arrayWithLength<int>()), true);
     static Item* goldenCarrotItems[] = {Items::goldenCarrot};
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.0, arrayWithLength<Item*>(goldenCarrotItems, 1), false,
-                                           arrayWithLength<int>()), true);
+    mGoalSelector.addGoal(
+        3, new TemptGoal(this, 1.0, arrayWithLength<Item*>(goldenCarrotItems, 1), false, arrayWithLength<int>()), true);
     static Item* flowerItems[] = {Item::byBlock(Blocks::yellow_flower)};
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.0, arrayWithLength<Item*>(flowerItems, 1), false,
-                                           arrayWithLength<int>()), true);
+    mGoalSelector.addGoal(
+        3, new TemptGoal(this, 1.0, arrayWithLength<Item*>(flowerItems, 1), false, arrayWithLength<int>()), true);
 
     mGoalSelector.addGoal(4, new RabbitAvoidEntityGoal(this, typeid(Player), 8.0f, 2.2, 2.2), true);
     mGoalSelector.addGoal(4, new RabbitAvoidEntityGoal(this, typeid(Wolf), 10.0f, 2.2, 2.2), true);
@@ -326,7 +321,8 @@ void Rabbit::jumpFromGround()
 
 float Rabbit::getJumpCompletion(float partialTick)
 {
-    if (mJumpDuration == 0) return 0.0f;
+    if (mJumpDuration == 0)
+        return 0.0f;
     return (static_cast<float>(mJumpTicks) + partialTick) / static_cast<float>(mJumpDuration);
 }
 
@@ -399,8 +395,7 @@ int Rabbit::getRabbitType()
 
 void Rabbit::facePoint(double x, double z)
 {
-    mYRot = static_cast<float>((std::atan2(z - mZ, x - mX) * 180.0) / static_cast<double>(3.1415927f))
-        - 90.0f;
+    mYRot = static_cast<float>((std::atan2(z - mZ, x - mX) * 180.0) / static_cast<double>(3.1415927f)) - 90.0f;
 }
 
 void Rabbit::enableJumpControl()
@@ -433,8 +428,7 @@ void Rabbit::customServerAiStep()
             if (target != NULL && distanceToSqr(target) < 16.0)
             {
                 facePoint(target->mX, target->mZ);
-                mMoveControl->setWantedPosition(target->mX, target->mY, target->mZ,
-                                                mMoveControl->getSpeedModifier());
+                mMoveControl->setWantedPosition(target->mX, target->mY, target->mZ, mMoveControl->getSpeedModifier());
                 startJumping();
                 mWasOnGround = true;
             }
@@ -469,7 +463,8 @@ void Rabbit::updateSprintingState()
 void Rabbit::aiStep()
 {
     Animal::aiStep();
-    if (mJumpTicks != mJumpDuration) ++mJumpTicks;
+    if (mJumpTicks != mJumpDuration)
+        ++mJumpTicks;
     else if (mJumpDuration != 0)
     {
         mJumpTicks = 0;
@@ -537,8 +532,8 @@ const SoundEvent* Rabbit::getDeathSound()
 
 bool Rabbit::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    DamageSource* damageSource =
-        DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
+    DamageSource* damageSource = DamageSource::CreateMobAttack(
+        boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
     if (getRabbitType() == 99)
     {
         playSound(SoundEvents::RABBIT_ATTACK, 1.0f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
@@ -556,7 +551,8 @@ SoundSource::ESoundSource Rabbit::getSoundSource()
 
 bool Rabbit::hurt(const DamageSource* source, float damage)
 {
-    if (isInvulnerableTo(source)) return false;
+    if (isInvulnerableTo(source))
+        return false;
     return Animal::hurt(source, damage);
 }
 
@@ -610,7 +606,7 @@ bool Rabbit::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 }
 
 MobGroupData* Rabbit::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                      const std::wstring& entityData)
+                                       const std::wstring& entityData)
 {
     MobGroupData* groupData = Mob::finalizeMobSpawn(difficulty, data, L"");
     int type = getRandomRabbitType();
@@ -634,11 +630,10 @@ void Rabbit::eatCarrot()
 {
     CropBlock* carrots = static_cast<CropBlock*>(Blocks::carrots);
     int particleData = Block::getIdWithData(carrots->getStateForAge(carrots->getMaxAge()));
-    mLevel->addParticle(PARTICLE_BLOCK_DUST,
-                        mX + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
+    mLevel->addParticle(PARTICLE_BLOCK_DUST, mX + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
                         mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                        mZ + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
-                        0.0, 0.0, 0.0, arrayWithLength<int>(&particleData, 1));
+                        mZ + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth, 0.0, 0.0, 0.0,
+                        arrayWithLength<int>(&particleData, 1));
     mMoreCarrotTicks = 40;
 }
 

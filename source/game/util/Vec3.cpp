@@ -120,9 +120,7 @@ void Vec3::set(const Vec3* other)
 
 Vec3* Vec3::interpolateTo(Vec3* to, double part)
 {
-    return newTemp(x + (to->x - x) * part,
-        y + (to->y - y) * part,
-        z + (to->z - z) * part);
+    return newTemp(x + (to->x - x) * part, y + (to->y - y) * part, z + (to->z - z) * part);
 }
 
 Vec3* Vec3::vectorTo(Vec3* to)
@@ -149,9 +147,7 @@ double Vec3::dot(Vec3* other)
 
 Vec3* Vec3::cross(Vec3* other)
 {
-    return newTemp(y * other->z - z * other->y,
-        z * other->x - x * other->z,
-        x * other->y - y * other->x);
+    return newTemp(y * other->z - z * other->y, z * other->x - x * other->z, x * other->y - y * other->x);
 }
 
 Vec3* Vec3::add(double x, double y, double z)
@@ -291,9 +287,7 @@ Vec3* Vec3::xRot(float angle)
     float cosAngle = cosf(angle);
     float sinAngle = sinf(angle);
 
-    return newTemp(x,
-        y * cosAngle + z * sinAngle,
-        z * cosAngle - y * sinAngle);
+    return newTemp(x, y * cosAngle + z * sinAngle, z * cosAngle - y * sinAngle);
 }
 
 Vec3* Vec3::yRot(float angle)
@@ -301,9 +295,7 @@ Vec3* Vec3::yRot(float angle)
     float cosAngle = cosf(angle);
     float sinAngle = sinf(angle);
 
-    return newTemp(x * cosAngle + z * sinAngle,
-        y,
-        z * cosAngle - x * sinAngle);
+    return newTemp(x * cosAngle + z * sinAngle, y, z * cosAngle - x * sinAngle);
 }
 
 Vec3* Vec3::zRot(float angle)
@@ -311,9 +303,7 @@ Vec3* Vec3::zRot(float angle)
     float cosAngle = cosf(angle);
     float sinAngle = sinf(angle);
 
-    return newTemp(x * cosAngle + y * sinAngle,
-        y * cosAngle - x * sinAngle,
-        z);
+    return newTemp(x * cosAngle + y * sinAngle, y * cosAngle - x * sinAngle, z);
 }
 
 Vec3* Vec3::multiply(double x, double y, double z)

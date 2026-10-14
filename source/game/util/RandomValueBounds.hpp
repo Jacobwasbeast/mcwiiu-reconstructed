@@ -20,15 +20,9 @@ public:
     RandomValueBounds(float value);
     RandomValueBounds(double value);
 
-    int getInt(Random* random) const
-    {
-        return Mth::nextInt(random, Mth::floor(min), Mth::floor(max));
-    }
+    int getInt(Random* random) const { return Mth::nextInt(random, Mth::floor(min), Mth::floor(max)); }
 
-    float getFloat(Random* random) const
-    {
-        return Mth::nextFloat(random, min, max);
-    }
+    float getFloat(Random* random) const { return Mth::nextFloat(random, min, max); }
 };
 
 #endif

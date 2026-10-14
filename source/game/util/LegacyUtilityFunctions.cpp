@@ -40,8 +40,9 @@ int OnlyNum(const char* value)
     const char* start = value;
     while (*value != '\0')
     {
-        if ((value != start || *value != '-') &&
-            (static_cast<unsigned int>(static_cast<char>(*value + static_cast<unsigned char>(-'0'))) >= 10 && *value != '.'))
+        if ((value != start || *value != '-')
+            && (static_cast<unsigned int>(static_cast<char>(*value + static_cast<unsigned char>(-'0'))) >= 10
+                && *value != '.'))
         {
             return 0;
         }
@@ -122,16 +123,15 @@ extern "C" unsigned int find_ASI_provider(const char* attributeName, const char*
     return provider;
 }
 
-extern "C" void AIL_set_sample_speaker_scale_factors(_SAMPLE* pSample, const int* pSpeakers,
-                                                     const float* pScales, int iCount)
+extern "C" void AIL_set_sample_speaker_scale_factors(_SAMPLE* pSample, const int* pSpeakers, const float* pScales,
+                                                     int iCount)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_set_sample_speaker_scale_factors(0x%lX,0x%lX,0x%lX, %d)", pSample,
-                      pSpeakers, pScales, iCount);
+        AIL_debug_log("@AIL_set_sample_speaker_scale_factors(0x%lX,0x%lX,0x%lX, %d)", pSample, pSpeakers, pScales,
+                      iCount);
     }
 
     InMilesMutex();
@@ -141,16 +141,13 @@ extern "C" void AIL_set_sample_speaker_scale_factors(_SAMPLE* pSample, const int
     AIL_debug_depth = AIL_debug_depth - 1;
 }
 
-extern "C" void AIL_sample_speaker_scale_factors(_SAMPLE* pSample, int* pSpeakers, float* pScales,
-                                                 int iCount)
+extern "C" void AIL_sample_speaker_scale_factors(_SAMPLE* pSample, int* pSpeakers, float* pScales, int iCount)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_sample_speaker_scale_factors(0x%lX,0x%lX,0x%lX, %d)", pSample,
-                      pSpeakers, pScales, iCount);
+        AIL_debug_log("@AIL_sample_speaker_scale_factors(0x%lX,0x%lX,0x%lX, %d)", pSample, pSpeakers, pScales, iCount);
     }
 
     InMilesMutex();
@@ -160,16 +157,15 @@ extern "C" void AIL_sample_speaker_scale_factors(_SAMPLE* pSample, int* pSpeaker
     AIL_debug_depth = AIL_debug_depth - 1;
 }
 
-extern "C" void AIL_sample_channel_levels(_SAMPLE* pSample, int* pSources, int* pDestinations,
-                                          float* pLevels, int iCount)
+extern "C" void AIL_sample_channel_levels(_SAMPLE* pSample, int* pSources, int* pDestinations, float* pLevels,
+                                          int iCount)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_sample_channel_levels(0x%lX,0x%lX,0x%lX,0x%lX,%d)", pSample, pSources,
-                      pDestinations, pLevels, iCount);
+        AIL_debug_log("@AIL_sample_channel_levels(0x%lX,0x%lX,0x%lX,0x%lX,%d)", pSample, pSources, pDestinations,
+                      pLevels, iCount);
     }
 
     InMilesMutex();
@@ -179,17 +175,15 @@ extern "C" void AIL_sample_channel_levels(_SAMPLE* pSample, int* pSources, int* 
     AIL_debug_depth = AIL_debug_depth - 1;
 }
 
-extern "C" void AIL_set_sample_channel_levels(_SAMPLE* pSample, const int* pSources,
-                                              const int* pDestinations, const float* pLevels,
-                                              int iCount)
+extern "C" void AIL_set_sample_channel_levels(_SAMPLE* pSample, const int* pSources, const int* pDestinations,
+                                              const float* pLevels, int iCount)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_set_sample_channel_levels(0x%lX,0x%lX,0x%lX,0x%lX,%d)", pSample,
-                      pSources, pDestinations, pLevels, iCount);
+        AIL_debug_log("@AIL_set_sample_channel_levels(0x%lX,0x%lX,0x%lX,0x%lX,%d)", pSample, pSources, pDestinations,
+                      pLevels, iCount);
     }
 
     InMilesMutex();
@@ -203,8 +197,7 @@ extern "C" void AIL_set_sample_reverb_levels(_SAMPLE* pSample, float fFirst, flo
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_set_sample_reverb_levels(0x%lX,%f,%f)", pSample, fFirst, fSecond);
     }
@@ -220,8 +213,7 @@ extern "C" void AIL_set_sample_low_pass_cut_off(_SAMPLE* pSample, int iChannel, 
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_set_sample_low_pass_cut_off(0x%lX,%d,%f)", pSample, iChannel, fCutOff);
     }
@@ -233,16 +225,15 @@ extern "C" void AIL_set_sample_low_pass_cut_off(_SAMPLE* pSample, int iChannel, 
     AIL_debug_depth = AIL_debug_depth - 1;
 }
 
-extern "C" void AIL_set_sample_51_volume_pan(_SAMPLE* pSample, float fVolume, float fPan, float fFade,
-                                             float fCenter, float fLowFrequency)
+extern "C" void AIL_set_sample_51_volume_pan(_SAMPLE* pSample, float fVolume, float fPan, float fFade, float fCenter,
+                                             float fLowFrequency)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
-        AIL_debug_log("@AIL_set_sample_51_volume_pan(0x%lX,%f,%f,%f,%f,%f)", pSample, fVolume, fPan,
-                      fFade, fCenter, fLowFrequency);
+        AIL_debug_log("@AIL_set_sample_51_volume_pan(0x%lX,%f,%f,%f,%f,%f)", pSample, fVolume, fPan, fFade, fCenter,
+                      fLowFrequency);
     }
 
     InMilesMutex();
@@ -258,8 +249,7 @@ extern "C" int AIL_sample_processor(_SAMPLE* pSample, int iStage)
 
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_sample_processor(0x%lX,%ld)", pSample, iStage);
     }
@@ -268,8 +258,7 @@ extern "C" int AIL_sample_processor(_SAMPLE* pSample, int iStage)
     iResult = AIL_API_sample_processor(pSample, iStage);
     OutMilesMutex();
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         outresint(iResult);
     }
@@ -284,8 +273,7 @@ extern "C" int AIL_set_sample_processor(_SAMPLE* pSample, int iStage, int iProvi
 
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_set_sample_processor(0x%lX,%ld,%ld)", pSample, iStage, iProvider);
     }
@@ -294,8 +282,7 @@ extern "C" int AIL_set_sample_processor(_SAMPLE* pSample, int iStage, int iProvi
     iResult = AIL_API_set_sample_processor(pSample, iStage, iProvider);
     OutMilesMutex();
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         outresint(iResult);
     }
@@ -310,8 +297,7 @@ extern "C" int AIL_install_bus_compressor(_DIG_DRIVER* pDriver, int iBus, int iS
 
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_install_bus_compressor(0x%lX,%d,%d,%d)", pDriver, iBus, iStage, iMode);
     }
@@ -320,8 +306,7 @@ extern "C" int AIL_install_bus_compressor(_DIG_DRIVER* pDriver, int iBus, int iS
     iResult = AIL_API_install_bus_compressor(pDriver, iBus, iStage, iMode);
     OutMilesMutex();
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         outresint(iResult);
     }
@@ -336,8 +321,7 @@ extern "C" int AIL_open_filter(unsigned int uProvider, _DIG_DRIVER* pDriver)
 
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_open_filter(%ld,0x%lX)", uProvider, pDriver);
     }
@@ -346,8 +330,7 @@ extern "C" int AIL_open_filter(unsigned int uProvider, _DIG_DRIVER* pDriver)
     iResult = AIL_API_open_filter(uProvider, pDriver);
     OutMilesMutex();
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         outresint(iResult);
     }
@@ -362,16 +345,14 @@ extern "C" int AIL_sample_channel_count(_SAMPLE* pSample, unsigned int* puMask)
 
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_sample_channel_count(0x%lX,0x%lX)", pSample, puMask);
     }
 
     iResult = AIL_API_sample_channel_count(pSample, puMask);
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         outresint(iResult);
     }
@@ -386,16 +367,14 @@ extern "C" int AIL_sample_playback_rate(_SAMPLE* pSample)
 
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_sample_playback_rate(0x%lX)", pSample);
     }
 
     iResult = AIL_API_sample_playback_rate(pSample);
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         outresint(iResult);
     }
@@ -408,8 +387,7 @@ extern "C" void AIL_set_sample_playback_rate(_SAMPLE* pSample, int iRate)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
-    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
-        AIL_API_background() == 0)
+    if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) && AIL_API_background() == 0)
     {
         AIL_debug_log("@AIL_set_sample_playback_rate(0x%lX,%ld)", pSample, iRate);
     }

@@ -4,10 +4,7 @@ D3DXVECTOR3::D3DXVECTOR3()
 {
 }
 
-D3DXVECTOR3::D3DXVECTOR3(float x, float y, float z)
-    : x(x)
-    , y(y)
-    , z(z)
+D3DXVECTOR3::D3DXVECTOR3(float x, float y, float z) : x(x), y(y), z(z)
 {
 }
 

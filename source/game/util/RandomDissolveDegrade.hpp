@@ -6,7 +6,6 @@
 class RandomDissolveDegrade : public DegradationRuleDefinition
 {
 public:
-
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void NextBlocks(BlockDegradeRoutine::LayerCache* layerCache, arrayWithLength<BlockPos>& blocks);
 };

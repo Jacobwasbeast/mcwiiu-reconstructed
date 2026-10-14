@@ -29,7 +29,8 @@ BlockPos* RandomPos::getRandomDelta(Random* random, int xz, int y, const Vec3* d
         return new BlockPos(dx, dy, dz);
     }
 
-    double target = (double)(Mth::atan2((int)direction->z, (int)direction->x) - HALF_PI) + (double)(2.0f * random->nextFloat() - 1.0f) * maxAngleDelta;
+    double target = (double)(Mth::atan2((int)direction->z, (int)direction->x) - HALF_PI)
+                    + (double)(2.0f * random->nextFloat() - 1.0f) * maxAngleDelta;
     double distance = sqrt(random->nextDouble()) * (double)SQRT_OF_TWO * (double)xz;
     double dx = -distance * sin(target);
     double dz = distance * cos(target);
@@ -50,7 +51,8 @@ BlockPos RandomPos::moveAboveSolid(const BlockPos& pos, const boost::shared_ptr<
     {
         BlockPos above = pos.above();
 
-        while (above.y < mob->mLevel->getMaxBuildHeight() && mob->mLevel->getBlockState(above)->getMaterial()->isSolid())
+        while (above.y < mob->mLevel->getMaxBuildHeight()
+               && mob->mLevel->getBlockState(above)->getMaterial()->isSolid())
         {
             above = above.above();
         }
@@ -66,7 +68,8 @@ bool RandomPos::isWaterDestination(const BlockPos& pos, const boost::shared_ptr<
     return mob->mLevel->getBlockState(pos)->getMaterial()->isUnderWater();
 }
 
-Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, const Vec3* direction, bool allowWater, double maxAngleDelta, int wanderingQuadrant)
+Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, const Vec3* direction,
+                                   bool allowWater, double maxAngleDelta, int wanderingQuadrant)
 {
     PathNavigation* navigation = mob->getNavigation();
     Random* random = mob->getRandom();
@@ -77,7 +80,8 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
     {
         BlockPos restrictCenter = mob->getRestrictCenter();
         double distanceSqr = restrictCenter.distSqr((double)Mth::floor(mob->mX), (double)Mth::floor(mob->mY),
-                                                    (double)Mth::floor(mob->mZ)) + 4.0;
+                                                    (double)Mth::floor(mob->mZ))
+                             + 4.0;
         double range = mob->getRestrictRadius() + (float)xz;
 
         checkRestriction = distanceSqr < range * range;
@@ -185,7 +189,8 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
     return NULL;
 }
 
-Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, const Vec3* direction, int wanderingQuadrant)
+Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, const Vec3* direction,
+                                   int wanderingQuadrant)
 {
     return generateRandomPos(mob, xz, y, direction, true, (double)HALF_PI, -1);
 }
@@ -205,7 +210,8 @@ Vec3* RandomPos::getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int 
     return generateRandomPos(mob, xz, y, target->subtract(mob->mX, mob->mY, mob->mZ), -1);
 }
 
-Vec3* RandomPos::getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* target, double maxAngleDelta)
+Vec3* RandomPos::getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* target,
+                               double maxAngleDelta)
 {
     return generateRandomPos(mob, xz, y, target->subtract(mob->mX, mob->mY, mob->mZ), true, maxAngleDelta, -1);
 }

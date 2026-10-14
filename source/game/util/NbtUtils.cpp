@@ -19,10 +19,14 @@
 
 bool NbtUtils::compareNbt(Tag* first, Tag* second, bool compareLists)
 {
-    if (first == second) return true;
-    if (first == NULL) return true;
-    if (second == NULL) return false;
-    if (typeid(first) != typeid(second)) return false;
+    if (first == second)
+        return true;
+    if (first == NULL)
+        return true;
+    if (second == NULL)
+        return false;
+    if (typeid(first) != typeid(second))
+        return false;
     if (dynamic_cast<CompoundTag*>(first) != NULL)
     {
         CompoundTag* firstCompound = dynamic_cast<CompoundTag*>(first);
@@ -34,7 +38,8 @@ bool NbtUtils::compareNbt(Tag* first, Tag* second, bool compareLists)
             std::wstring key = *it;
             Tag* firstChild = firstCompound->get(key);
             Tag* secondChild = secondCompound->get(key);
-            if (!compareNbt(firstChild, secondChild, compareLists)) return false;
+            if (!compareNbt(firstChild, secondChild, compareLists))
+                return false;
         }
         delete keys;
         return true;
@@ -43,7 +48,8 @@ bool NbtUtils::compareNbt(Tag* first, Tag* second, bool compareLists)
     {
         ListTag* firstList = dynamic_cast<ListTag*>(first);
         ListTag* secondList = dynamic_cast<ListTag*>(second);
-        if (firstList->size() == 0) return secondList->size() == 0;
+        if (firstList->size() == 0)
+            return secondList->size() == 0;
         for (int i = 0; i < firstList->size(); ++i)
         {
             Tag* element = firstList->get(i);
@@ -56,7 +62,8 @@ bool NbtUtils::compareNbt(Tag* first, Tag* second, bool compareLists)
                     break;
                 }
             }
-            if (!found) return false;
+            if (!found)
+                return false;
         }
         return true;
     }
@@ -79,31 +86,124 @@ CompoundTag* NbtUtils::writeBlockPos(const BlockPos& pos)
 
 void NbtUtils::mapToBlock(std::wstring& name, int& data)
 {
-    if (name == L"minecraft:stone_bricks") { name = L"minecraft:stonebrick"; data = 0; return; }
-    if (name == L"minecraft:bricks") { name = L"minecraft:brick_block"; data = 0; return; }
-    if (name == L"minecraft:chiseled_stone_bricks") { name = L"minecraft:stonebrick"; data |= StoneBrickBlock::Variant::CHISELED->getData(); return; }
-    if (name == L"minecraft:cracked_stone_bricks") { name = L"minecraft:stonebrick"; data |= StoneBrickBlock::Variant::CRACKED->getData(); return; }
-    if (name == L"minecraft:mossy_stone_bricks") { name = L"minecraft:stonebrick"; data |= StoneBrickBlock::Variant::MOSSY->getData(); return; }
-    if (name == L"minecraft:polished_granite") { name = L"minecraft:stone"; data |= StoneBlock::Variant::SMOOTH_GRANITE->getData(); return; }
-    if (name == L"minecraft:diorite") { name = L"minecraft:stone"; data |= StoneBlock::Variant::DIORITE->getData(); return; }
-    if (name == L"minecraft:polished_diorite") { name = L"minecraft:stone"; data |= StoneBlock::Variant::SMOOTH_DIORITE->getData(); return; }
-    if (name == L"minecraft:dark_oak_planks") { name = L"minecraft:planks"; data |= PlanksBlock::Variant::DARK_OAK->getData(); return; }
-    if (name == L"minecraft:spruce_planks") { name = L"minecraft:planks"; data |= PlanksBlock::Variant::SPRUCE->getData(); return; }
-    if (name == L"minecraft:cut_sandstone") { name = L"minecraft:sandstone"; data |= SandStoneBlock::SMOOTH->getData(); return; }
-    if (name == L"minecraft:light_blue_terracotta") { name = L"minecraft:stained_hardened_clay"; data |= 3; return; }
-    if (name == L"minecraft:magma_block") { name = L"minecraft:magma"; return; }
-    if (name == L"minecraft:stripped_oak_log") { name = L"minecraft:stripped_log_oak"; return; }
-    if (name == L"minecraft:stripped_spruce_log") { name = L"minecraft:stripped_log_spruce"; return; }
-    if (name == L"minecraft:stripped_birch_log") { name = L"minecraft:stripped_log_birch"; return; }
-    if (name == L"minecraft:stripped_jungle_log") { name = L"minecraft:stripped_log_jungle"; return; }
-    if (name == L"minecraft:stripped_acacia_log") { name = L"minecraft:stripped_log_acacia"; return; }
-    if (name == L"minecraft:stripped_dark_oak_log") { name = L"minecraft:stripped_log_dark_oak"; return; }
-    if (name == L"minecraft:chiseled_sandstone") { name = L"minecraft:sandstone"; data |= SandStoneBlock::CHISELED->getData(); }
+    if (name == L"minecraft:stone_bricks")
+    {
+        name = L"minecraft:stonebrick";
+        data = 0;
+        return;
+    }
+    if (name == L"minecraft:bricks")
+    {
+        name = L"minecraft:brick_block";
+        data = 0;
+        return;
+    }
+    if (name == L"minecraft:chiseled_stone_bricks")
+    {
+        name = L"minecraft:stonebrick";
+        data |= StoneBrickBlock::Variant::CHISELED->getData();
+        return;
+    }
+    if (name == L"minecraft:cracked_stone_bricks")
+    {
+        name = L"minecraft:stonebrick";
+        data |= StoneBrickBlock::Variant::CRACKED->getData();
+        return;
+    }
+    if (name == L"minecraft:mossy_stone_bricks")
+    {
+        name = L"minecraft:stonebrick";
+        data |= StoneBrickBlock::Variant::MOSSY->getData();
+        return;
+    }
+    if (name == L"minecraft:polished_granite")
+    {
+        name = L"minecraft:stone";
+        data |= StoneBlock::Variant::SMOOTH_GRANITE->getData();
+        return;
+    }
+    if (name == L"minecraft:diorite")
+    {
+        name = L"minecraft:stone";
+        data |= StoneBlock::Variant::DIORITE->getData();
+        return;
+    }
+    if (name == L"minecraft:polished_diorite")
+    {
+        name = L"minecraft:stone";
+        data |= StoneBlock::Variant::SMOOTH_DIORITE->getData();
+        return;
+    }
+    if (name == L"minecraft:dark_oak_planks")
+    {
+        name = L"minecraft:planks";
+        data |= PlanksBlock::Variant::DARK_OAK->getData();
+        return;
+    }
+    if (name == L"minecraft:spruce_planks")
+    {
+        name = L"minecraft:planks";
+        data |= PlanksBlock::Variant::SPRUCE->getData();
+        return;
+    }
+    if (name == L"minecraft:cut_sandstone")
+    {
+        name = L"minecraft:sandstone";
+        data |= SandStoneBlock::SMOOTH->getData();
+        return;
+    }
+    if (name == L"minecraft:light_blue_terracotta")
+    {
+        name = L"minecraft:stained_hardened_clay";
+        data |= 3;
+        return;
+    }
+    if (name == L"minecraft:magma_block")
+    {
+        name = L"minecraft:magma";
+        return;
+    }
+    if (name == L"minecraft:stripped_oak_log")
+    {
+        name = L"minecraft:stripped_log_oak";
+        return;
+    }
+    if (name == L"minecraft:stripped_spruce_log")
+    {
+        name = L"minecraft:stripped_log_spruce";
+        return;
+    }
+    if (name == L"minecraft:stripped_birch_log")
+    {
+        name = L"minecraft:stripped_log_birch";
+        return;
+    }
+    if (name == L"minecraft:stripped_jungle_log")
+    {
+        name = L"minecraft:stripped_log_jungle";
+        return;
+    }
+    if (name == L"minecraft:stripped_acacia_log")
+    {
+        name = L"minecraft:stripped_log_acacia";
+        return;
+    }
+    if (name == L"minecraft:stripped_dark_oak_log")
+    {
+        name = L"minecraft:stripped_log_dark_oak";
+        return;
+    }
+    if (name == L"minecraft:chiseled_sandstone")
+    {
+        name = L"minecraft:sandstone";
+        data |= SandStoneBlock::CHISELED->getData();
+    }
 }
 
 const BlockState* NbtUtils::readBlockState(CompoundTag* tag)
 {
-    if (!tag->contains(L"Name", Tag::TAG_STRING)) return Blocks::air->defaultBlockState();
+    if (!tag->contains(L"Name", Tag::TAG_STRING))
+        return Blocks::air->defaultBlockState();
     std::wstring name = tag->getString(L"Name");
     int data = 0;
     mapToBlock(name, data);
@@ -118,7 +218,8 @@ const BlockState* NbtUtils::readBlockState(CompoundTag* tag)
         for (std::vector<std::wstring>::iterator it = keys->begin(); it != keys->end(); ++it)
         {
             std::wstring key = *it;
-            for (std::vector<const Property*>::iterator property = blockProperties.begin(); property != blockProperties.end(); ++property)
+            for (std::vector<const Property*>::iterator property = blockProperties.begin();
+                 property != blockProperties.end(); ++property)
             {
                 const Property* blockProperty = *property;
                 if (key == blockProperty->getName())

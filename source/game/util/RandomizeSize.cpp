@@ -4,9 +4,7 @@
 
 #include "game/util/Random.hpp"
 
-RandomizeSize::RandomizeSize(LayerSize* layerSize, float amount)
-    : mLayerSize(layerSize)
-    , mAmount(amount)
+RandomizeSize::RandomizeSize(LayerSize* layerSize, float amount) : mLayerSize(layerSize), mAmount(amount)
 {
 }
 

@@ -255,7 +255,8 @@ enum _TEXTURE_NAME
     TN_UNINDEXED,
 };
 
-class ResourceLocation {
+class ResourceLocation
+{
 public:
     ResourceLocation();
     ResourceLocation(const ResourceLocation& other);
@@ -281,15 +282,9 @@ public:
     int hashCode() const;
     bool equals(const ResourceLocation* other) const;
 
-    bool operator==(const ResourceLocation& other) const
-    {
-        return equals(&other);
-    }
+    bool operator==(const ResourceLocation& other) const { return equals(&other); }
 
-    bool operator!=(const ResourceLocation& other) const
-    {
-        return !equals(&other);
-    }
+    bool operator!=(const ResourceLocation& other) const { return !equals(&other); }
 
 protected:
     static arrayWithLength<std::wstring> decompose(const std::wstring& name);
@@ -306,14 +301,11 @@ private:
 
 namespace boost
 {
-    template <>
-    struct hash<ResourceLocation>
-    {
-        std::size_t operator()(const ResourceLocation& location) const
-        {
-            return location.hashCode();
-        }
-    };
+template <>
+struct hash<ResourceLocation>
+{
+    std::size_t operator()(const ResourceLocation& location) const { return location.hashCode(); }
+};
 }
 
 #endif

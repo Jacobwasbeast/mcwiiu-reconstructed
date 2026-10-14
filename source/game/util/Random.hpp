@@ -1,7 +1,8 @@
 #ifndef GAME_UTIL_RANDOM_HPP
 #define GAME_UTIL_RANDOM_HPP
 
-class Random {
+class Random
+{
 public:
     Random();
     Random(long long seed);

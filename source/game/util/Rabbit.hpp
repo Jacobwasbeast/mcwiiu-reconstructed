@@ -41,10 +41,10 @@ public:
     class RabbitAvoidEntityGoal : public AvoidEntityGoal
     {
     public:
-        RabbitAvoidEntityGoal(Rabbit* rabbit, const std::type_info& avoidType,
-                              float maxDistance, double walkSpeedModifier,
-                              double sprintSpeedModifier);
+        RabbitAvoidEntityGoal(Rabbit* rabbit, const std::type_info& avoidType, float maxDistance,
+                              double walkSpeedModifier, double sprintSpeedModifier);
         virtual bool canUse();
+
     private:
         Rabbit* mRabbit;
     };
@@ -66,6 +66,7 @@ public:
         unsigned char wantJump();
         unsigned char canJump();
         virtual void tick();
+
     private:
         Rabbit* mRabbit;
         bool mCanJump;
@@ -78,6 +79,7 @@ public:
         virtual ~RabbitMoveControl();
         virtual void tick();
         virtual void setWantedPosition(double x, double y, double z, double speedModifier);
+
     private:
         Rabbit* mRabbit;
         double mSpeedModifier;
@@ -89,6 +91,7 @@ public:
         RabbitPanicGoal(Rabbit* rabbit, double speedModifier);
         virtual ~RabbitPanicGoal();
         virtual void tick();
+
     private:
         Rabbit* mRabbit;
     };
@@ -102,6 +105,7 @@ public:
         virtual bool canContinueToUse();
         virtual void tick();
         virtual bool isValidTarget(Level* level, const BlockPos& pos);
+
     private:
         Rabbit* mRabbit;
         bool mWantsToRaid;
@@ -146,8 +150,7 @@ public:
     int getRandomRabbitType();
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> parent);
     virtual bool isFood(const not_null_ptr<ItemInstance>& itemInstance);
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
-                                           MobGroupData* data,
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                            const std::wstring& entityData);
     void eatCarrot();
     virtual void handleEntityEvent(unsigned char event, int data);

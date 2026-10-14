@@ -70,14 +70,13 @@ AABB* AABB::newPermanent(double x0, double y0, double z0, double x1, double y1, 
 
 AABB* AABB::newPermanent(const BlockPos& pos)
 {
-    return newPermanent((double)pos.x, (double)pos.y, (double)pos.z,
-        (double)(pos.x + 1), (double)(pos.y + 1), (double)(pos.z + 1));
+    return newPermanent((double)pos.x, (double)pos.y, (double)pos.z, (double)(pos.x + 1), (double)(pos.y + 1),
+                        (double)(pos.z + 1));
 }
 
 AABB* AABB::newPermanent(const BlockPos& from, const BlockPos& to)
 {
-    return newPermanent((double)from.x, (double)from.y, (double)from.z,
-        (double)to.x, (double)to.y, (double)to.z);
+    return newPermanent((double)from.x, (double)from.y, (double)from.z, (double)to.x, (double)to.y, (double)to.z);
 }
 
 AABB* AABB::newPermanent(const AABB* box)
@@ -117,14 +116,13 @@ AABB* AABB::newTemp(double x0, double y0, double z0, double x1, double y1, doubl
 
 AABB* AABB::newTemp(const BlockPos& pos)
 {
-    return newTemp((double)pos.x, (double)pos.y, (double)pos.z,
-        (double)(pos.x + 1), (double)(pos.y + 1), (double)(pos.z + 1));
+    return newTemp((double)pos.x, (double)pos.y, (double)pos.z, (double)(pos.x + 1), (double)(pos.y + 1),
+                   (double)(pos.z + 1));
 }
 
 AABB* AABB::newTemp(const BlockPos& from, const BlockPos& to)
 {
-    return newTemp((double)from.x, (double)from.y, (double)from.z,
-        (double)to.x, (double)to.y, (double)to.z);
+    return newTemp((double)from.x, (double)from.y, (double)from.z, (double)to.x, (double)to.y, (double)to.z);
 }
 
 AABB* AABB::newTemp(const AABB* box)
@@ -139,8 +137,8 @@ AABB* AABB::setMaxY(double maxY)
 
 bool AABB::equals(const AABB* other) const
 {
-    if (!(other != NULL && other->mMinX == mMinX && other->mMinY == mMinY && other->mMinZ == mMinZ &&
-        other->mMaxX == mMaxX && other->mMaxY == mMaxY))
+    if (!(other != NULL && other->mMinX == mMinX && other->mMinY == mMinY && other->mMinZ == mMinZ
+          && other->mMaxX == mMaxX && other->mMaxY == mMaxY))
     {
         return false;
     }
@@ -275,8 +273,8 @@ AABB* AABB::minmax(const AABB* other)
 
 AABB* AABB::minmax(double x0, double y0, double z0, double x1, double y1, double z1)
 {
-    return newTemp(x1 < x0 ? x1 : x0, y1 < y0 ? y1 : y0, z1 < z0 ? z1 : z0,
-        x0 < x1 ? x1 : x0, y0 < y1 ? y1 : y0, z0 < z1 ? z1 : z0);
+    return newTemp(x1 < x0 ? x1 : x0, y1 < y0 ? y1 : y0, z1 < z0 ? z1 : z0, x0 < x1 ? x1 : x0, y0 < y1 ? y1 : y0,
+                   z0 < z1 ? z1 : z0);
 }
 
 AABB* AABB::move(double x, double y, double z) const
@@ -381,8 +379,8 @@ double AABB::clipZCollide(const AABB* other, double za) const
 
 bool AABB::intersectsInner(const AABB* other) const
 {
-    if (!(other->mMaxX >= mMinX && other->mMinX <= mMaxX && other->mMaxY >= mMinY &&
-        other->mMinY <= mMaxY && other->mMaxZ >= mMinZ && other->mMinZ <= mMaxZ))
+    if (!(other->mMaxX >= mMinX && other->mMinX <= mMaxX && other->mMaxY >= mMinY && other->mMinY <= mMaxY
+          && other->mMaxZ >= mMinZ && other->mMinZ <= mMaxZ))
     {
         return false;
     }
@@ -392,12 +390,9 @@ bool AABB::intersectsInner(const AABB* other) const
 
 bool AABB::intersects(Vec3* from, Vec3* to) const
 {
-    return intersects(to->x < from->x ? to->x : from->x,
-        to->y < from->y ? to->y : from->y,
-        to->z < from->z ? to->z : from->z,
-        from->x < to->x ? to->x : from->x,
-        from->y < to->y ? to->y : from->y,
-        from->z < to->z ? to->z : from->z);
+    return intersects(to->x < from->x ? to->x : from->x, to->y < from->y ? to->y : from->y,
+                      to->z < from->z ? to->z : from->z, from->x < to->x ? to->x : from->x,
+                      from->y < to->y ? to->y : from->y, from->z < to->z ? to->z : from->z);
 }
 
 bool AABB::contains(double x, double y, double z) const
@@ -422,8 +417,7 @@ bool AABB::contains(const BlockPos& pos) const
 
 bool AABB::containsIncludingLowerBound(Vec3* pos) const
 {
-    if (!(pos->x >= mMinX && pos->x < mMaxX && pos->y >= mMinY && pos->y < mMaxY &&
-        pos->z >= mMinZ && pos->z < mMaxZ))
+    if (!(pos->x >= mMinX && pos->x < mMaxX && pos->y >= mMinY && pos->y < mMaxY && pos->z >= mMinZ && pos->z < mMaxZ))
     {
         return false;
     }
@@ -585,8 +579,7 @@ HitResult* AABB::clip(Vec3* from, Vec3* to) const
 
 bool AABB::hasNaN() const
 {
-    return mMinX != mMinX || mMinY != mMinY || mMinZ != mMinZ ||
-        mMaxX != mMaxX || mMaxY != mMaxY || mMaxZ != mMaxZ;
+    return mMinX != mMinX || mMinY != mMinY || mMinZ != mMinZ || mMaxX != mMaxX || mMaxY != mMaxY || mMaxZ != mMaxZ;
 }
 
 bool clip(AABB* box, float* plane)
@@ -606,13 +599,10 @@ bool clip(AABB* box, float* plane)
             double yMax = (double)plane[1] * box->mMaxY;
             double zMax = (double)plane[2] * box->mMaxZ;
 
-            if (xMax + yMin + zMin + offset <= 0.0 &&
-                xMin + yMax + zMin + offset <= 0.0 &&
-                xMax + yMax + zMin + offset <= 0.0 &&
-                xMin + yMin + zMax + offset <= 0.0 &&
-                xMax + yMin + zMax + offset <= 0.0 &&
-                xMin + yMax + zMax + offset <= 0.0 &&
-                xMax + yMax + zMax + offset <= 0.0)
+            if (xMax + yMin + zMin + offset <= 0.0 && xMin + yMax + zMin + offset <= 0.0
+                && xMax + yMax + zMin + offset <= 0.0 && xMin + yMin + zMax + offset <= 0.0
+                && xMax + yMin + zMax + offset <= 0.0 && xMin + yMax + zMax + offset <= 0.0
+                && xMax + yMax + zMax + offset <= 0.0)
             {
                 return false;
             }
@@ -620,8 +610,7 @@ bool clip(AABB* box, float* plane)
 
         plane += 4;
         --remaining;
-    }
-    while (remaining != 0);
+    } while (remaining != 0);
 
     return true;
 }
@@ -643,13 +632,10 @@ bool clip(float* matrix, float* plane)
             float yMax = plane[1] * matrix[4];
             float zMax = plane[2] * matrix[5];
 
-            if (xMax + yMin + zMin + offset <= 0.0f &&
-                xMin + yMax + zMin + offset <= 0.0f &&
-                xMax + yMax + zMin + offset <= 0.0f &&
-                xMin + yMin + zMax + offset <= 0.0f &&
-                xMax + yMin + zMax + offset <= 0.0f &&
-                xMin + yMax + zMax + offset <= 0.0f &&
-                xMax + yMax + zMax + offset <= 0.0f)
+            if (xMax + yMin + zMin + offset <= 0.0f && xMin + yMax + zMin + offset <= 0.0f
+                && xMax + yMax + zMin + offset <= 0.0f && xMin + yMin + zMax + offset <= 0.0f
+                && xMax + yMin + zMax + offset <= 0.0f && xMin + yMax + zMax + offset <= 0.0f
+                && xMax + yMax + zMax + offset <= 0.0f)
             {
                 return false;
             }
@@ -657,8 +643,7 @@ bool clip(float* matrix, float* plane)
 
         plane += 4;
         --remaining;
-    }
-    while (remaining != 0);
+    } while (remaining != 0);
 
     return true;
 }
@@ -694,9 +679,7 @@ AABB* getOuterWall(const AABB* box, Direction::EDirection direction)
 
 Vec3* AABB::getCenter() const
 {
-    return Vec3::newTemp(mMinX + (mMaxX - mMinX) * 0.5,
-        mMinY + (mMaxY - mMinY) * 0.5,
-        mMinZ + (mMaxZ - mMinZ) * 0.5);
+    return Vec3::newTemp(mMinX + (mMaxX - mMinX) * 0.5, mMinY + (mMaxY - mMinY) * 0.5, mMinZ + (mMaxZ - mMinZ) * 0.5);
 }
 
 AABB* AABB::scale(double x, double y, double z) const
@@ -705,8 +688,8 @@ AABB* AABB::scale(double x, double y, double z) const
     double centerY = mMinY + (mMaxY - mMinY) * 0.5;
     double centerZ = mMinZ + (mMaxZ - mMinZ) * 0.5;
 
-    AABB* scaled = newTemp((mMinX - centerX) * x, (mMinY - centerY) * y, (mMinZ - centerZ) * z,
-        (mMaxX - centerX) * x, (mMaxY - centerY) * y, (mMaxZ - centerZ) * z);
+    AABB* scaled = newTemp((mMinX - centerX) * x, (mMinY - centerY) * y, (mMinZ - centerZ) * z, (mMaxX - centerX) * x,
+                           (mMaxY - centerY) * y, (mMaxZ - centerZ) * z);
 
     scaled->mMinX += centerX;
     scaled->mMinY += centerY;
@@ -724,8 +707,8 @@ AABB* AABB::scaleAndShift(double x, double y, double z) const
     double centerY = mMinY + (mMaxY - mMinY) * 0.5;
     double centerZ = mMinZ + (mMaxZ - mMinZ) * 0.5;
 
-    AABB* scaled = newTemp((mMinX - centerX) * x, (mMinY - centerY) * y, (mMinZ - centerZ) * z,
-        (mMaxX - centerX) * x, (mMaxY - centerY) * y, (mMaxZ - centerZ) * z);
+    AABB* scaled = newTemp((mMinX - centerX) * x, (mMinY - centerY) * y, (mMinZ - centerZ) * z, (mMaxX - centerX) * x,
+                           (mMaxY - centerY) * y, (mMaxZ - centerZ) * z);
 
     double shiftY = mMaxY - scaled->mMaxY;
 

@@ -47,8 +47,7 @@ void phys::Vec2::ReleaseThreadStorage()
     }
 }
 
-phys::Vec2::Vec2(float x, float y)
-    : x(x), y(y)
+phys::Vec2::Vec2(float x, float y) : x(x), y(y)
 {
 }
 
