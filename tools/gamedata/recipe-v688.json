@@ -46,6 +46,9 @@
   "shader_files": [
     {"output": "MiiIconDefaultShader.inc", "address": "0x10460060", "size": 4912},
     {"output": "MiiIconExtShader.inc", "address": "0x10461594", "size": 2312},
-    {"output": "MonitoringCryptoKeys.inc", "address": "0x1047B3A0", "size": 256}
+    {"output": "MonitoringCryptoKeys.inc", "address": "0x1047B3A0", "size": 256},
+    {"output": "PeadSjisCodeTable.inc", "address": "0x104821B8", "size": 22245},
+    {"output": "PeadSjisIndexTable.inc", "address": "0x104878A0", "size": 514},
+    {"output": "PeadFloatDigitTable.inc", "address": "0x10487DF0", "size": 50352}
   ]
 }
