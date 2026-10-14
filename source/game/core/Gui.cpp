@@ -414,11 +414,11 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
                     GlStateManager::translatef(0.0f, -1.62f, 0.0f);
                 }
                 Minecraft::GetInstance()->getEntityRenderDispatcher()->mCameraYRot = 180.0f;
-                Minecraft::GetInstance()->getEntityRenderDispatcher()->mRenderName = true;
+                Minecraft::GetInstance()->getEntityRenderDispatcher()->mRenderingGuiPlayer = true;
                 boost::shared_ptr<Entity> entity = mMinecraft->mPlayer;
                 Minecraft::GetInstance()->getEntityRenderDispatcher()->render(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f,
                                                                               false, false, true, false);
-                Minecraft::GetInstance()->getEntityRenderDispatcher()->mRenderName = false;
+                Minecraft::GetInstance()->getEntityRenderDispatcher()->mRenderingGuiPlayer = false;
                 mMinecraft->mPlayer->mYRot = savedYRot;
                 mMinecraft->mPlayer->mYRotO = savedYRotO;
                 mMinecraft->mPlayer->mXRot = savedXRot;

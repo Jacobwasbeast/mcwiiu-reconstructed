@@ -668,8 +668,8 @@ void WitherBoss::aiStep()
     boost::shared_ptr<LivingEntity> target = getTarget();
     if (target != NULL)
     {
-        Vec3* myPos = getAttachPos(ENTITY_LOCATION_MOUNT, 0.0f);
-        Vec3* direction = target->getAttachPos(ENTITY_LOCATION_MOUNT, 0.0f)->subtract(myPos);
+        Vec3* myPos = getAttachPos(ENTITY_LOCATION_HEAD, 0.0f);
+        Vec3* direction = target->getAttachPos(ENTITY_LOCATION_HEAD, 0.0f)->subtract(myPos);
         int directionX = (int)direction->x;
         float yaw = (float)(Mth::atan2((int)direction->z, directionX) * 57.295776f - bodyXRot);
         mYHeadRot = Mth::clampRotateDegrees(mYHeadRot, yaw, 10.0f);

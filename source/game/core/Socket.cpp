@@ -262,7 +262,7 @@ void Socket::SocketOutputStreamNetwork::writeWithFlags(arrayWithLength<unsigned 
     if (!mOpen || length == 0)
         return;
 
-    if (mSocket->mNetwork)
+    if (mSocket->mHostLocal)
     {
         int queue = mIndex == 0 ? 1 : 0;
         EnterCriticalSection(&mSocket->mMutexes[queue]);
@@ -295,8 +295,8 @@ void Socket::SocketOutputStreamNetwork::flush()
 
 Socket::Socket(bool response)
 {
-    mLocal = true;
-    mNetwork = true;
+    mHostServerConnection = true;
+    mHostLocal = true;
     if (response)
     {
         mClosed[1] = false;
@@ -322,8 +322,8 @@ Socket::Socket(bool response)
 
 Socket::Socket(INetworkPlayer* player, bool response, bool hostLocal)
 {
-    mLocal = false;
-    mNetwork = hostLocal;
+    mHostServerConnection = false;
+    mHostLocal = hostLocal;
     InitializeCriticalSection(&mMutexes[0]);
     mInputStreams[0] = NULL;
     mOutputStreams[0] = NULL;
@@ -400,7 +400,7 @@ void Socket::pushDataToQueue(const unsigned char* data, unsigned int length, boo
     unsigned int queue = 0;
     if (!fromHost)
         queue = 1;
-    if (queue != mIndex && !mNetwork)
+    if (queue != mIndex && !mHostLocal)
         return;
 
     EnterCriticalSection(&mMutexes[queue]);
@@ -417,9 +417,9 @@ void Socket::addIncomingSocket(Socket* socket)
 
 InputStream* Socket::getInputStream(bool host)
 {
-    if (!mLocal)
+    if (!mHostServerConnection)
     {
-        if (mNetwork)
+        if (mHostLocal)
         {
             if (host)
                 return mInputStreams[1];
@@ -440,9 +440,9 @@ void Socket::setTrafficClass(int)
 
 OutputStream* Socket::getOutputStream(bool host)
 {
-    if (!mLocal)
+    if (!mHostServerConnection)
     {
-        if (mNetwork)
+        if (mHostLocal)
         {
             if (host)
                 return mOutputStreams[1];
@@ -456,7 +456,7 @@ OutputStream* Socket::getOutputStream(bool host)
 bool Socket::close(bool host)
 {
     bool result = false;
-    if (mNetwork)
+    if (mHostLocal)
     {
         bool otherClosed;
         if (host)

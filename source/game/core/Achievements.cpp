@@ -171,23 +171,23 @@ void Achievements::staticCtor()
 
     diamonds = (new Achievement(27, L"diamonds", -1, 5, Items::diamond, acquireIron))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(29, L"ghast", -4, 8, Items::ghastTear, InToTheNether);
+    achievement = new Achievement(29, L"ghast", -4, 8, Items::ghastTear, ghast);
     achievement->setGolden();
     ghast = achievement->postConstruct(true)->setExtended();
 
-    blazeRod = (new Achievement(30, L"blazeRod", 0, 9, Items::blazeRod, InToTheNether))->postConstruct(true)->setExtended();
+    blazeRod = (new Achievement(30, L"blazeRod", 0, 9, Items::blazeRod, blazeRod))->postConstruct(true)->setExtended();
 
-    potion = (new Achievement(31, L"potion", 2, 8, Items::potion, blazeRod))->postConstruct(true)->setExtended();
+    potion = (new Achievement(31, L"potion", 2, 8, Items::potion, potion))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(32, L"theEnd", 3, 10, Items::enderEye, InToTheNether);
+    achievement = new Achievement(32, L"theEnd", 3, 10, Items::enderEye, theEnd);
     achievement->setGolden();
     theEnd = achievement->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(33, L"theEnd2", 4, 13, Blocks::dragon_egg, theEnd);
+    achievement = new Achievement(33, L"theEnd2", 4, 13, Blocks::dragon_egg, theEnd2);
     achievement->setGolden();
     theEnd2 = achievement->postConstruct(true)->setExtended();
 
-    enchantments = (new Achievement(34, L"enchantments", -4, 4, Blocks::enchanting_table, diamonds))->postConstruct(true)->setExtended();
+    enchantments = (new Achievement(34, L"enchantments", -4, 4, Blocks::enchanting_table, enchantments))->postConstruct(true)->setExtended();
 
     achievement = new Achievement(35, L"overkill", -4, 1, Items::diamondSword, enchantments);
     achievement->setGolden();

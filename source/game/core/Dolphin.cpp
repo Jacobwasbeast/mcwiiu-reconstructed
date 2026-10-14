@@ -74,7 +74,7 @@ MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, Mo
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 
-unsigned int Dolphin::getMaxAirSupply() { return 4800; }
+int Dolphin::getMaxAirSupply() { return 4800; }
 float Dolphin::getEyeHeight() { return 0.3f; }
 int Dolphin::getAmbientSoundInterval() { return 120; }
 int Dolphin::getMaxHeadXRot() { return 1; }

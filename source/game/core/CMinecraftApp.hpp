@@ -177,7 +177,106 @@ const unsigned int EXTRA_DATA_SAVE_VERSION = 11;
 enum eGameMode { eGameMode_0 = 0 };
 enum eTPDFileType { eTPDFileType_Icon = 1 };
 enum eTMSAction { eTMSAction_Default = 0 };
-enum EDLC_ID { EDLC_ID_Default = 0 };
+enum EDLC_ID
+{
+    EDLC_ID_Default = 0,
+    EDLC_ID_TutorialWorld = 4,
+    EDLC_ID_SkinPack1 = 0x200,
+    EDLC_ID_SkinPack2 = 0x201,
+    EDLC_ID_SkinPack3 = 0x202,
+    EDLC_ID_SkinPack4 = 0x203,
+    EDLC_ID_SummerOfArcadeSkinPack = 0x204,
+    EDLC_ID_HalloweenCharitySkinPack = 0x205,
+    EDLC_ID_FestiveSkinPack = 0x206,
+    EDLC_ID_BirthdaySkinPack = 0x207,
+    EDLC_ID_BattleAndBeasts = 0x208,
+    EDLC_ID_SkinPack5 = 0x209,
+    EDLC_ID_BattleAndBeasts2 = 0x20a,
+    EDLC_ID_StarWarsClassicSkinPack = 0x20c,
+    EDLC_ID_StarWarsPrequelSkinPack = 0x20d,
+    EDLC_ID_SkinPack6 = 0x20f,
+    EDLC_ID_MarvelAvengers = 0x211,
+    EDLC_ID_MarvelSpiderMan = 0x212,
+    EDLC_ID_DoctorWhoSkinsVolume1 = 0x214,
+    EDLC_ID_TheSimpsons = 0x215,
+    EDLC_ID_SecondBirthdaySkinPack = 0x216,
+    EDLC_ID_MarvelGuardiansOfTheGalaxy = 0x217,
+    EDLC_ID_StarWarsRebelsSkinPack = 0x218,
+    EDLC_ID_DoctorWhoSkinsVolume2 = 0x219,
+    EDLC_ID_BiomeSettlersPack1 = 0x21a,
+    EDLC_ID_BiomeSettlersPack2 = 0x21b,
+    EDLC_ID_StoryModeSkinPack = 0x21c,
+    EDLC_ID_RedstoneSpecialistsSkinPack = 0x21d,
+    EDLC_ID_CampfireTalesSkinPack = 0x21e,
+    EDLC_ID_ThirdBirthdaySkinPack = 0x222,
+    EDLC_ID_Minecon2015SkinPack = 0x223,
+    EDLC_ID_FourthBirthdaySkinPack = 0x224,
+    EDLC_ID_SecondBirthdaySkinPackAlt = 0x225,
+    EDLC_ID_Minecon2016SkinPack = 0x226,
+    EDLC_ID_FirstBirthdaySkinPack = 0x227,
+    EDLC_ID_VillainsSkinPack = 0x228,
+    EDLC_ID_MiniGamesHeroesSkinPack = 0x22b,
+    EDLC_ID_MagicTheGatheringSkinPack = 0x22d,
+    EDLC_ID_StrangersBiomeSettlers3SkinPack = 0x22e,
+    EDLC_ID_StrangerThingsSkinPack = 0x22f,
+    EDLC_ID_MineconEarth2017 = 0x230,
+    EDLC_ID_MoanaCharacterPack = 0x232,
+    EDLC_ID_FourthBirthdaySkinPackAlt = 0x233,
+    EDLC_ID_SecondBirthdaySkinPackAlt2 = 0x234,
+    EDLC_ID_StarWarsSequelSkinPack = 0x235,
+    EDLC_ID_FinalFantasyXVSkinPack = 0x236,
+    EDLC_ID_TheIncrediblesSkinPack = 0x238,
+    EDLC_ID_SoloAStarWarsStoryPack = 0x239,
+    EDLC_ID_FromTheShadowsSkinPack = 0x23c,
+    EDLC_ID_MassEffect = 0x400,
+    EDLC_ID_Skyrim = 0x401,
+    EDLC_ID_Halo = 0x402,
+    EDLC_ID_Festive = 0x405,
+    EDLC_ID_LittleBigPlanet = 0x406,
+    EDLC_ID_GreekMythology = 0x407,
+    EDLC_ID_NorseMythology = 0x408,
+    EDLC_ID_Halloween2015 = 0x409,
+    EDLC_ID_Mario = 0x40a,
+    EDLC_ID_AdventureTime = 0x40c,
+    EDLC_ID_PiratesOfTheCaribbean = 0x40e,
+    EDLC_ID_EgyptianMythology = 0x40f,
+    EDLC_ID_ChineseMythology = 0x4f4,
+    EDLC_ID_Fallout = 0x4f5,
+    EDLC_ID_TheNightmareBeforeChristmas = 0x4f9,
+    EDLC_ID_Plastic = 0x801,
+    EDLC_ID_Candy = 0x802,
+    EDLC_ID_Fantasy = 0x803,
+    EDLC_ID_HalloweenTexturePack = 0x804,
+    EDLC_ID_Natural = 0x805,
+    EDLC_ID_City = 0x806,
+    EDLC_ID_Cartoon = 0x807,
+    EDLC_ID_Steampunk = 0x808,
+    EDLC_ID_Pattern = 0x809,
+    EDLC_ID_SuperCuteTexturePack = 0x812,
+    EDLC_ID_BattleMapPack0 = 0x1001,
+    EDLC_ID_BattleMapPack1 = 0x1002,
+    EDLC_ID_BattleMapPack2 = 0x1003,
+    EDLC_ID_BattleMapPack3 = 0x1004,
+    EDLC_ID_BattleMapPack4 = 0x1005,
+    EDLC_ID_MG02MapPack0 = 0x1007,
+    EDLC_ID_MG02MapPack1 = 0x1009,
+    EDLC_ID_MG04TestWorldPack = 0x100a,
+    EDLC_ID_HalloweenBattleMap = 0x100b,
+    EDLC_ID_FestiveBattleMap = 0x100c,
+    EDLC_ID_FalloutBattleMapPack = 0x100e,
+    EDLC_ID_GlideMapPack0 = 0x100f,
+    EDLC_ID_GlideBeastsTrackPack = 0x1011,
+    EDLC_ID_GlideGiantsTrackPack = 0x1012,
+    EDLC_ID_GlideMythsTrackPack = 0x1013,
+    EDLC_ID_MG02MapPack2 = 0x1014,
+    EDLC_ID_MG02MapPack3 = 0x1015,
+    EDLC_ID_CityAlt = 0x1000806,
+    EDLC_ID_SteampunkAlt = 0x1000808
+};
+const unsigned int SKIN_ID_DLC_FLAG_SHIFT = 31;
+const unsigned int SKIN_ID_DLC_MASK = 0x7fffffffU;
+const unsigned int SKIN_ID_UGC_MASK = 0x7fffffe0U;
+const unsigned int SKIN_ID_DEFAULT_MASK = 0x1fU;
 enum eFileExtensionType { eFileExtensionType_Default = 0 };
 enum eTMSFileType { eTMSFileType_Default = 0 };
 enum _eTerrainFeatureType { eTerrainFeatureType_0 = 0, eTerrainFeatureType_Stronghold = 1 };
@@ -349,8 +448,8 @@ public:
     bool LoadWritingBookMenu(int player, not_null_ptr<ItemInstance> item, bool signing);
     bool IsConsoleChatCensored();
     uint32_t IsUUIDLocal(const std::wstring& uuid);
-    uint8_t GetTutorialMode(PlayerUID uid);
-    uint8_t GetTutorialMode(const boost::shared_ptr<Player>& player);
+    bool GetTutorialMode(PlayerUID uid);
+    bool GetTutorialMode(const boost::shared_ptr<Player>& player);
     void SetGameMode(eGameMode mode);
     void StartReloadingTexturePack();
     static void StaticCtor();
@@ -528,8 +627,8 @@ private:
         void* param;
     };
 
-    std::vector<std::wstring> m_dlcSkinNames;
 public:
+    std::vector<std::wstring> m_dlcSkinNames;
     DLCManager mDLCManager;
     unsigned int mGameDefinedDataChangedBitmask;
 private:
@@ -583,8 +682,8 @@ private:
     bool mUnusedDLCInstallFlag;
     bool mDLCInstallProcessCompleted;
     bool mDLCInstallPending;
-    unsigned int mDLCInstallCount;
-    unsigned int mDLCInstallIndex;
+    int mDLCInstallCount;
+    int mDLCInstallIndex;
     _XUSER_SIGNIN_INFO mSignInInfo[4];
     arrayWithLength<unsigned char> mBanListBuffers[4];
     bool mUnusedBanListFlag;

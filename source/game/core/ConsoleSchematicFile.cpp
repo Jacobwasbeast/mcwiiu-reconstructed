@@ -1,5 +1,6 @@
 #include "game/core/ConsoleSchematicFile.hpp"
 #include "game/core/EntityType.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include "game/core/DataInputStream.hpp"
@@ -134,171 +135,190 @@ unsigned short ConsoleSchematicFile::rotateElementValue(unsigned short element, 
 
     const BlockState* state = Block::getStateByElementId(element);
     Rotation* blockRotation = Rotation::NONE;
-    if (rotation == eSchematicRotation_90) blockRotation = Rotation::CLOCKWISE_90;
-    else if (rotation == eSchematicRotation_180) blockRotation = Rotation::CLOCKWISE_180;
-    else if (rotation == eSchematicRotation_270) blockRotation = Rotation::COUNTERCLOCKWISE_90;
+    switch (rotation)
+    {
+    case eSchematicRotation_90:
+        blockRotation = Rotation::CLOCKWISE_90;
+        break;
+    case eSchematicRotation_180:
+        blockRotation = Rotation::CLOCKWISE_180;
+        break;
+    case eSchematicRotation_270:
+        blockRotation = Rotation::COUNTERCLOCKWISE_90;
+        break;
+    }
     return (unsigned short)Block::getElementId(state->rotate(blockRotation));
 }
 
 void ConsoleSchematicFile::chunkCoordToSchematicCoord(AABB* box, int x, int z, ESchematicRotation rotation, ESchematicMirror mirror, int& sx, int& sz)
 {
-    if (mirror == eSchematicMirror_None)
+    switch (rotation)
     {
-        if (rotation == eSchematicRotation_90)
-        {
-            sx = (int)std::floor(x - box->mMinX);
-            sz = (int)std::floor(box->mMaxZ - 1.0 - z);
-        }
-        else if (rotation == eSchematicRotation_270)
-        {
-            sx = (int)std::floor(box->mMaxX - 1.0 - x);
-            sz = (int)std::floor(z - box->mMinZ);
-        }
-        else
-        {
-            sx = (int)std::floor(x - box->mMinX);
-            sz = (int)std::floor(z - box->mMinZ);
-        }
-    }
-    else if (mirror == eSchematicMirror_LeftRight)
-    {
-        if (rotation == eSchematicRotation_90)
+    case eSchematicRotation_90:
+        if (mirror == eSchematicMirror_LeftRight)
         {
             sx = (int)std::floor(z - box->mMinZ);
             sz = (int)std::floor(x - box->mMinX);
         }
-        else if (rotation == eSchematicRotation_270)
+        else if (mirror == eSchematicMirror_Both)
         {
-            sx = (int)std::floor(box->mMaxZ - 1.0 - z);
-            sz = (int)std::floor(box->mMaxX - 1.0 - x);
+            sx = (int)std::floor((box->mMaxZ - 1 - box->mMinZ) - (z - box->mMinZ));
+            sz = (int)std::floor((box->mMaxX - 1 - box->mMinX) - (x - box->mMinX));
         }
         else
         {
             sx = (int)std::floor(z - box->mMinZ);
-            sz = (int)std::floor(box->mMaxX - 1.0 - x);
+            sz = (int)std::floor((box->mMaxX - 1 - box->mMinX) - (x - box->mMinX));
         }
-    }
-    else if (mirror == eSchematicMirror_FrontBack)
-    {
-        if (rotation == eSchematicRotation_90)
+        break;
+    case eSchematicRotation_180:
+        if (mirror == eSchematicMirror_LeftRight)
         {
-            sx = (int)std::floor(box->mMaxX - 1.0 - x);
+            sx = (int)std::floor((box->mMaxX - 1 - box->mMinX) - (x - box->mMinX));
             sz = (int)std::floor(z - box->mMinZ);
         }
-        else if (rotation == eSchematicRotation_270)
+        else if (mirror == eSchematicMirror_Both)
         {
             sx = (int)std::floor(x - box->mMinX);
-            sz = (int)std::floor(box->mMaxZ - 1.0 - z);
+            sz = (int)std::floor((box->mMaxZ - 1 - box->mMinZ) - (z - box->mMinZ));
         }
         else
         {
-            sx = (int)std::floor(box->mMaxX - 1.0 - x);
-            sz = (int)std::floor(box->mMaxZ - 1.0 - z);
+            sx = (int)std::floor((box->mMaxX - 1 - box->mMinX) - (x - box->mMinX));
+            sz = (int)std::floor((box->mMaxZ - 1 - box->mMinZ) - (z - box->mMinZ));
         }
-    }
-    else
-    {
-        if (rotation == eSchematicRotation_90)
+        break;
+    case eSchematicRotation_270:
+        if (mirror == eSchematicMirror_LeftRight)
+        {
+            sx = (int)std::floor((box->mMaxZ - 1 - box->mMinZ) - (z - box->mMinZ));
+            sz = (int)std::floor((box->mMaxX - 1 - box->mMinX) - (x - box->mMinX));
+        }
+        else if (mirror == eSchematicMirror_Both)
         {
             sx = (int)std::floor(z - box->mMinZ);
             sz = (int)std::floor(x - box->mMinX);
         }
-        else if (rotation == eSchematicRotation_270)
+        else
         {
-            sx = (int)std::floor(box->mMaxZ - 1.0 - z);
+            sx = (int)std::floor((box->mMaxZ - 1 - box->mMinZ) - (z - box->mMinZ));
             sz = (int)std::floor(x - box->mMinX);
+        }
+        break;
+    case eSchematicRotation_0:
+    default:
+        if (mirror == eSchematicMirror_LeftRight)
+        {
+            sx = (int)std::floor(x - box->mMinX);
+            sz = (int)std::floor((box->mMaxZ - 1 - box->mMinZ) - (z - box->mMinZ));
+        }
+        else if (mirror == eSchematicMirror_Both)
+        {
+            sx = (int)std::floor((box->mMaxX - 1 - box->mMinX) - (x - box->mMinX));
+            sz = (int)std::floor(z - box->mMinZ);
         }
         else
         {
             sx = (int)std::floor(x - box->mMinX);
             sz = (int)std::floor(z - box->mMinZ);
         }
+        break;
     }
 }
 
 void ConsoleSchematicFile::schematicCoordToChunkCoord(AABB* box, double x, double z, ESchematicRotation rotation, ESchematicMirror mirror, double& cx, double& cz)
 {
-    if (mirror == eSchematicMirror_None)
+    switch (rotation)
     {
-        if (rotation == eSchematicRotation_90)
+    case eSchematicRotation_90:
+        if (mirror == eSchematicMirror_LeftRight)
         {
-            cx = std::floor(x + box->mMinX);
-            cz = std::floor(box->mMaxZ - 1.0 - z);
+            cx = (int)std::floor(box->mMinX + z);
+            cz = (int)std::floor(x + box->mMinZ);
         }
-        else if (rotation == eSchematicRotation_270)
+        else if (mirror == eSchematicMirror_Both)
         {
-            cx = std::floor(box->mMaxX - 1.0 - x);
-            cz = std::floor(z + box->mMinZ);
+            cx = (int)std::floor(box->mMaxX - 1 - z);
+            cz = (int)std::floor(box->mMaxZ - 1 - x);
         }
         else
         {
-            cx = std::floor(x + box->mMinX);
-            cz = std::floor(z + box->mMinZ);
+            cx = (int)std::floor(box->mMaxX - 1 - z);
+            cz = (int)std::floor(x + box->mMinZ);
         }
-    }
-    else if (mirror == eSchematicMirror_LeftRight)
-    {
-        if (rotation == eSchematicRotation_90)
+        break;
+    case eSchematicRotation_180:
+        if (mirror == eSchematicMirror_LeftRight)
         {
-            cx = std::floor(z + box->mMinX);
-            cz = std::floor(x + box->mMinZ);
+            cx = (int)std::floor(box->mMaxX - 1 - x);
+            cz = (int)std::floor(z + box->mMinZ);
         }
-        else if (rotation == eSchematicRotation_270)
+        else if (mirror == eSchematicMirror_Both)
         {
-            cx = std::floor(box->mMaxX - 1.0 - z);
-            cz = std::floor(box->mMaxZ - 1.0 - x);
+            cx = (int)std::floor(x + box->mMinX);
+            cz = (int)std::floor(box->mMaxZ - 1 - z);
         }
         else
         {
-            cx = std::floor(box->mMaxX - 1.0 - z);
-            cz = std::floor(x + box->mMinZ);
+            cx = (int)std::floor(box->mMaxX - 1 - x);
+            cz = (int)std::floor(box->mMaxZ - 1 - z);
         }
-    }
-    else if (mirror == eSchematicMirror_FrontBack)
-    {
-        if (rotation == eSchematicRotation_90)
+        break;
+    case eSchematicRotation_270:
+        if (mirror == eSchematicMirror_LeftRight)
         {
-            cx = std::floor(box->mMaxX - 1.0 - x);
-            cz = std::floor(z + box->mMinZ);
+            cx = (int)std::floor(box->mMaxX - 1 - z);
+            cz = (int)std::floor(box->mMaxZ - 1 - x);
         }
-        else if (rotation == eSchematicRotation_270)
+        else if (mirror == eSchematicMirror_Both)
         {
-            cx = std::floor(x + box->mMinX);
-            cz = std::floor(box->mMaxZ - 1.0 - z);
+            cx = (int)std::floor(box->mMinX + z);
+            cz = (int)std::floor(x + box->mMinZ);
         }
         else
         {
-            cx = std::floor(box->mMaxX - 1.0 - x);
-            cz = std::floor(box->mMaxZ - 1.0 - z);
+            cx = (int)std::floor(z + box->mMinX);
+            cz = (int)std::floor(box->mMaxZ - 1 - x);
         }
-    }
-    else
-    {
-        if (rotation == eSchematicRotation_90)
+        break;
+    case eSchematicRotation_0:
+    default:
+        if (mirror == eSchematicMirror_LeftRight)
         {
-            cx = std::floor(z + box->mMinX);
-            cz = std::floor(x + box->mMinZ);
+            cx = (int)std::floor(x + box->mMinX);
+            cz = (int)std::floor(box->mMaxZ - 1 - z);
         }
-        else if (rotation == eSchematicRotation_270)
+        else if (mirror == eSchematicMirror_Both)
         {
-            cx = std::floor(z + box->mMinX);
-            cz = std::floor(box->mMaxZ - 1.0 - x);
+            cx = (int)std::floor(box->mMaxX - 1 - x);
+            cz = (int)std::floor(z + box->mMinZ);
         }
         else
         {
-            cx = std::floor(x + box->mMinX);
-            cz = std::floor(z + box->mMinZ);
+            cx = (int)std::floor(x + box->mMinX);
+            cz = (int)std::floor(z + box->mMinZ);
         }
+        break;
     }
 }
 
 const Direction* ConsoleSchematicFile::HandleRotation(const Direction* direction, ESchematicMirror mirror, ESchematicRotation rotation)
 {
-    const Direction* result = direction;
-    if (mirror == eSchematicMirror_LeftRight || mirror == eSchematicMirror_Both) { if (result == Direction::EAST) result = Direction::WEST; else if (result == Direction::WEST) result = Direction::EAST; }
-    if (mirror == eSchematicMirror_FrontBack || mirror == eSchematicMirror_Both) { if (result == Direction::NORTH) result = Direction::SOUTH; else if (result == Direction::SOUTH) result = Direction::NORTH; }
-    for (int i = 0; i < (int)rotation; ++i) result = result->getClockWise();
-    return result;
+    if ((mirror == eSchematicMirror_LeftRight && (direction == Direction::NORTH || direction == Direction::SOUTH)) ||
+        (mirror == eSchematicMirror_Both && (direction == Direction::EAST || direction == Direction::WEST)))
+    {
+        direction = direction->getOpposite();
+    }
+    switch (rotation)
+    {
+    case eSchematicRotation_90:
+        return direction->getClockWise();
+    case eSchematicRotation_180:
+        return direction->getOpposite();
+    case eSchematicRotation_270:
+        return direction->getCounterClockWise();
+    }
+    return direction;
 }
 
 int ConsoleSchematicFile::calcBlockIdsSizeLegacy(int x, int y, int z) { return x * y * z; }
@@ -1139,21 +1159,50 @@ void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z
     delete[] extraSkyLight.data;
 }
 
-long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, PasteData* data)
+long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, PasteData* paste)
 {
-    if (chunk == 0 || data == 0)
-    {
-        return 0;
-    }
+    arrayWithLength<unsigned short> elements(Level::maxBuildHeight * 16 * 16, true);
+    arrayWithLength<unsigned short> extraElements(Level::maxBuildHeight * 16 * 16, true);
+    PIXBeginNamedEvent(0.0f, "Getting elements");
+    chunk->getElementRange(elements, extraElements, 0, 64);
+    PIXEndNamedEvent();
 
-    int chunkMinX = chunk->x << 4;
-    int chunkMinZ = chunk->z << 4;
-    int x0 = (int)data->mArea->mMinX > chunkMinX ? (int)data->mArea->mMinX : chunkMinX;
-    int z0 = (int)data->mArea->mMinZ > chunkMinZ ? (int)data->mArea->mMinZ : chunkMinZ;
-    int x1 = (int)data->mArea->mMaxX < chunkMinX + 16 ? (int)data->mArea->mMaxX : chunkMinX + 16;
-    int z1 = (int)data->mArea->mMaxZ < chunkMinZ + 16 ? (int)data->mArea->mMaxZ : chunkMinZ + 16;
-    long long blocksApplied = writeSchematicIntoArrays(chunkMinX, 0, chunkMinZ, x0, (int)data->mArea->mMinY, z0, x1, (int)data->mArea->mMaxY, z1, data, data->mElements, data->mExtraElements, data->mData, data->mExtraData);
-    chunk->setAllElements(data->mElements, data->mExtraElements);
+    arrayWithLength<unsigned char> blockLight(Level::maxBuildHeight * 16 * 16 / 2, true);
+    PIXBeginNamedEvent(0.0f, "Getting block light data");
+    chunk->getBlockLightData(blockLight);
+    PIXEndNamedEvent();
+
+    arrayWithLength<unsigned char> skyLight(Level::maxBuildHeight * 16 * 16 / 2, true);
+    PIXBeginNamedEvent(0.0f, "Getting Sky light data");
+    chunk->getSkyLightData(skyLight);
+    PIXEndNamedEvent();
+
+    int chunkX = chunk->x;
+    int chunkZ = chunk->z;
+    int xStart = std::max(std::floor(paste->mArea->mMinX), chunkX * 16.0);
+    int xEnd = std::min(std::floor(paste->mArea->mMaxX), (xStart & ~15) + 16.0);
+    int yStart = std::max(0, std::min(Level::maxBuildHeight - 1, (int)std::floor(paste->mArea->mMinY)));
+    int yEnd = std::max(0, std::min(Level::maxBuildHeight - 1, (int)std::floor(paste->mArea->mMaxY)));
+    int zStart = std::max(std::floor(paste->mArea->mMinZ), chunkZ * 16.0);
+    int zEnd = std::min(std::floor(paste->mArea->mMaxZ), (zStart & ~15) + 16.0);
+
+    long long blocksApplied = writeSchematicIntoArrays(chunkX << 4, 0, chunkZ << 4, xStart, yStart, zStart, xEnd, yEnd, zEnd, paste, elements, extraElements, blockLight, skyLight);
+
+    PIXBeginNamedEvent(0.0f, "Setting Block and Data");
+    chunk->setAllElements(elements, extraElements);
+    PIXEndNamedEvent();
+    delete[] elements.data;
+
+    PIXBeginNamedEvent(0.0f, "Setting Block Light data");
+    chunk->setBlockLightData(blockLight);
+    PIXEndNamedEvent();
+    delete[] blockLight.data;
+
+    PIXBeginNamedEvent(0.0f, "Setting Sky Light data ");
+    chunk->setSkyLightData(skyLight);
+    PIXEndNamedEvent();
+    delete[] skyLight.data;
+
     return blocksApplied;
 }
 
@@ -1170,10 +1219,11 @@ long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, AABB* box,
     data.mBlockEntities = mBlockEntities;
     data.mEntities = mEntities;
     data.mNamedPositions = mNamedPositions;
-    data.mIncludeAir = true;
-    data.mIncludeSpecial = false;
+    data.mIncludeAir = false;
+    data.mIncludeSpecial = true;
     return applyBlocksAndData(chunk, &data);
 }
+
 void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea, PasteData* paste, Level* level)
 {
     for (std::vector<std::pair<BlockPos*, CompoundTag*> >::iterator it = paste->mBlockEntities.begin(); it != paste->mBlockEntities.end(); ++it)
@@ -1213,7 +1263,7 @@ void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea
 
         CompoundTag* tag = it->second;
         boost::shared_ptr<Entity> entity = EntityIO::newEntity(tag, chunk->level);
-        if (eTYPE_DERIVED_FROM(EntityType::PAINTING, entity->GetType()))
+        if (entity->GetType() == EntityType::PAINTING)
         {
             boost::shared_ptr<Painting> painting = boost::dynamic_pointer_cast<Painting>(entity);
             painting->setPos(x, y, z);
@@ -1236,69 +1286,56 @@ void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea
     paste.mArea = area;
     paste.mRotation = rotation;
     paste.mMirror = mirror;
+    paste.mElements = mElements;
+    paste.mExtraElements = mExtraElements;
+    paste.mData = mData;
+    paste.mExtraData = mExtraData;
     paste.mBlockEntities = mBlockEntities;
     paste.mEntities = mEntities;
+    paste.mNamedPositions = mNamedPositions;
+    paste.mIncludeAir = false;
+    paste.mIncludeSpecial = true;
     applyBlockEntities(chunk, chunkArea, &paste, level);
 }
 
 long long ConsoleSchematicFile::applyLighting(LevelChunk* chunk, AABB*, AABB* area, ESchematicRotation)
 {
-    if (chunk == 0 || area == 0)
+    int xStart = std::max(std::floor(area->mMinX), chunk->x * 16.0);
+    int xEnd = std::min(std::floor(area->mMaxX), ((xStart >> 4) << 4) + 16.0);
+    int yStart = std::floor(area->mMinY);
+    int yEnd = std::floor(area->mMaxY);
+    int zStart = std::max(std::floor(area->mMinZ), chunk->z * 16.0);
+    int zEnd = std::min(std::floor(area->mMaxZ), ((zStart >> 4) << 4) + 16.0);
+
+    int volume = (xEnd - xStart) * (yEnd - yStart) * (zEnd - zStart);
+
+    for (int x = xStart; x < xEnd; ++x)
     {
-        return 0;
-    }
-
-    int chunkMinX = chunk->x << 4;
-    int chunkMinZ = chunk->z << 4;
-    int minX = (int)std::floor(area->mMinX);
-    int maxX = (int)std::floor(area->mMaxX);
-    int minY = (int)std::floor(area->mMinY);
-    int maxY = (int)std::floor(area->mMaxY);
-    int minZ = (int)std::floor(area->mMinZ);
-    int maxZ = (int)std::floor(area->mMaxZ);
-
-    if (minX < chunkMinX) minX = chunkMinX;
-    if (maxX > chunkMinX + 16) maxX = chunkMinX + 16;
-    if (minZ < chunkMinZ) minZ = chunkMinZ;
-    if (maxZ > chunkMinZ + 16) maxZ = chunkMinZ + 16;
-
-    int volume = (maxX - minX) * (maxY - minY) * (maxZ - minZ);
-
-    int startY = minY;
-    if (minX < maxX && minZ < maxZ)
-    {
-        for (int x = minX; x < maxX; ++x)
+        for (int z = zStart; z < zEnd; ++z)
         {
-            for (int z = minZ; z < maxZ; ++z)
+            if (chunk->getHeightmap(x - chunk->x * 16, z - chunk->z * 16) < yStart)
             {
-                int height = chunk->getHeightmap(x - chunkMinX, z - chunkMinZ);
-                if (height < startY)
-                {
-                    startY = chunk->getHeightmap(x - chunkMinX, z - chunkMinZ);
-                }
+                yStart = chunk->getHeightmap(x - chunk->x * 16, z - chunk->z * 16);
             }
         }
     }
 
     chunk->recalcHeightmap();
 
-    if (minX < maxX && minZ < maxZ)
+    for (int x = xStart; x < xEnd; ++x)
     {
-        for (int x = minX; x < maxX; ++x)
+        for (int y = yStart; y < yEnd; ++y)
         {
-            for (int y = startY; y < maxY; ++y)
+            for (int z = zStart; z < zEnd; ++z)
             {
-                for (int z = minZ; z < maxZ; ++z)
+                BlockPos pos(x, y, z);
+                if (y <= chunk->getHeightmap(x - chunk->x * 16, z - chunk->z * 16))
                 {
-                    BlockPos pos(x, y, z);
-                    if (y <= chunk->getHeightmap(x - chunkMinX, z - chunkMinZ))
-                    {
-                        chunk->level->checkLight(LightLayer::SKY, pos, true, false);
-                    }
-                    if (chunk->getBlock(BlockPos(x - chunkMinX, y, z - chunkMinZ))->defaultBlockState()->getLightEmission() != 0)
-                    {
-                        chunk->level->checkLight(LightLayer::BLOCK, pos, true, true);
-                    }
+                    chunk->level->checkLight(LightLayer::SKY, pos, true, false);
+                }
+                if (chunk->getBlock(BlockPos(x - chunk->x * 16, y, z - chunk->z * 16))->defaultBlockState()->getLightEmission() != 0)
+                {
+                    chunk->level->checkLight(LightLayer::BLOCK, pos, true, true);
                 }
             }
         }

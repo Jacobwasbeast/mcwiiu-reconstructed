@@ -24,7 +24,7 @@ public:
     unsigned int getLastFoodLevel();
     bool needsFood();
     bool isStarving();
-    double getSaturationLevel();
+    float getSaturationLevel();
     void setFoodLevel(int foodLevel);
     void setSaturation(float saturationLevel);
     void setExhaustion(float exhaustionLevel);

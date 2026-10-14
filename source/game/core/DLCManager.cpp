@@ -22,7 +22,6 @@
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 extern ConsoleUIController gConsoleUIController;
-std::vector<std::wstring> g_dlcSkinNames;
 
 char* wstringtofilename(const std::wstring& text, char (&fileName)[256]);
 
@@ -498,7 +497,7 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
 
             if (pItemHeader[1] == eDLCType_Skin)
             {
-                g_dlcSkinNames.push_back(char16towstring((wchar_t*)(pItemHeader + 3)));
+                gApp.m_dlcSkinNames.push_back(char16towstring((wchar_t*)(pItemHeader + 3)));
             }
 
             numItemsAdded++;

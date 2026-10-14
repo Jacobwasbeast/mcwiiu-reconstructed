@@ -241,20 +241,17 @@ void GlStateManager::enableState(int capability)
     {
     case STATE_NONE:
         break;
-    case STATE_TEXTURE_2D:
-        gRenderer->TextureBind(textures[activeTextureUnit]->textureName);
-        break;
     case STATE_BLEND:
         gRenderer->StateSetBlendEnable(true);
         break;
     case STATE_CULL_FACE:
         gRenderer->StateSetFaceCull(true);
         break;
-    case STATE_ALPHA_TEST:
-        gRenderer->StateSetAlphaTestEnable(true);
-        break;
     case STATE_DEPTH_TEST:
         gRenderer->StateSetDepthTestEnable(true);
+        break;
+    case STATE_ALPHA_TEST:
+        gRenderer->StateSetAlphaTestEnable(true);
         break;
     case STATE_FOG:
         gRenderer->StateSetFogEnable(true);
@@ -267,24 +264,6 @@ void GlStateManager::enableState(int capability)
         break;
     case STATE_LIGHT1:
         gRenderer->StateSetLightEnable(1, true);
-        break;
-    case STATE_LIGHT0 + 2:
-        gRenderer->StateSetLightEnable(2, true);
-        break;
-    case STATE_LIGHT0 + 3:
-        gRenderer->StateSetLightEnable(3, true);
-        break;
-    case STATE_LIGHT0 + 4:
-        gRenderer->StateSetLightEnable(4, true);
-        break;
-    case STATE_LIGHT0 + 5:
-        gRenderer->StateSetLightEnable(5, true);
-        break;
-    case STATE_LIGHT0 + 6:
-        gRenderer->StateSetLightEnable(6, true);
-        break;
-    case STATE_LIGHT0 + 7:
-        gRenderer->StateSetLightEnable(7, true);
         break;
     default:
         break;
@@ -306,11 +285,11 @@ void GlStateManager::disableState(int capability)
     case STATE_CULL_FACE:
         gRenderer->StateSetFaceCull(false);
         break;
-    case STATE_ALPHA_TEST:
-        gRenderer->StateSetAlphaTestEnable(false);
-        break;
     case STATE_DEPTH_TEST:
         gRenderer->StateSetDepthTestEnable(false);
+        break;
+    case STATE_ALPHA_TEST:
+        gRenderer->StateSetAlphaTestEnable(false);
         break;
     case STATE_FOG:
         gRenderer->StateSetFogEnable(false);
@@ -323,24 +302,6 @@ void GlStateManager::disableState(int capability)
         break;
     case STATE_LIGHT1:
         gRenderer->StateSetLightEnable(1, false);
-        break;
-    case STATE_LIGHT0 + 2:
-        gRenderer->StateSetLightEnable(2, false);
-        break;
-    case STATE_LIGHT0 + 3:
-        gRenderer->StateSetLightEnable(3, false);
-        break;
-    case STATE_LIGHT0 + 4:
-        gRenderer->StateSetLightEnable(4, false);
-        break;
-    case STATE_LIGHT0 + 5:
-        gRenderer->StateSetLightEnable(5, false);
-        break;
-    case STATE_LIGHT0 + 6:
-        gRenderer->StateSetLightEnable(6, false);
-        break;
-    case STATE_LIGHT0 + 7:
-        gRenderer->StateSetLightEnable(7, false);
         break;
     default:
         break;

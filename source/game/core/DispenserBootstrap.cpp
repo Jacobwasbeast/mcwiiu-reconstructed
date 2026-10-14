@@ -463,9 +463,9 @@ void DispenserBootstrap::StaticCtor()
                         skull->setRotation(direction->getOpposite()->get2DDataValue() * 4);
                         block->checkMobSpawn(level, position, skull, boost::shared_ptr<Player>());
                     }
+                    item->shrink(1);
+                    outcome = eOUTCOME_Success;
                 }
-                item->shrink(1);
-                outcome = eOUTCOME_Success;
             }
             else if (ArmorItem::dispenseArmor(source, item, outcome)->isEmpty())
             {

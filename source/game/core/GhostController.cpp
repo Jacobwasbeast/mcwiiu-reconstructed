@@ -531,8 +531,8 @@ void GhostController::AddLoadedGhostRecord(int track, void* data, unsigned int l
         const float startZ = stream.readFloat();
         GhostRecord* record = new GhostRecord(Vec3::newTemp(startX, startY, startZ));
         record->mElapsed = stream.readLong();
-        int count = stream.readInt();
-        for (int i = 0; i < count; ++i)
+        unsigned int count = stream.readInt();
+        for (unsigned int i = 0; i < count; ++i)
             record->AddSample(GhostRecordSample(&stream));
         if (record->HasRecording())
         {

@@ -112,7 +112,7 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
         if (!pack->doesPackContainFile(DLCManager::eDLCType_All, file, true, true))
         {
             if (level == 0)
-                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to find %ls", 0xf4,
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to find texture %ls", 0xf4,
                                     file.c_str());
             return;
         }
@@ -124,7 +124,7 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
         if (imageData == NULL || imageLength == 0)
         {
             if (level == 0)
-                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load %ls", 0x101,
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load texture %ls", 0x101,
                                     file.c_str());
             return;
         }
@@ -135,7 +135,7 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
                                          &m_data[level]) != 0)
         {
             if (level == 0)
-                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load %ls", 0x112,
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load texture data %ls", 0x112,
                                     file.c_str());
             return;
         }

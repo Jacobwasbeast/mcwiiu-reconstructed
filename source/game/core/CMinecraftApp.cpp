@@ -59,6 +59,7 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/core/Achievement.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/core/UnityClient6.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/IUIScene_DLCUpsell.hpp"
@@ -666,20 +667,14 @@ void CMinecraftApp::loadMediaArchive()
 }
 arrayWithLength<unsigned char> CMinecraftApp::getArchiveFile(const std::wstring& path, bool ignoreTexturePack)
 {
-    if (ignoreTexturePack == 0)
-    {
-        Minecraft* minecraft = Minecraft::GetInstance();
-        if (minecraft != 0 && minecraft->mTexturePackRepository != 0)
-        {
-            TexturePack* selected = minecraft->mTexturePackRepository->getSelected();
-            if (selected != 0 && selected->hasData() && selected->getArchiveFile() != 0 &&
-                selected->getArchiveFile()->hasFile(path))
-                return selected->getArchiveFile()->getFile(path);
-        }
-    }
-    if (mMediaArchive != 0 && mMediaArchive->hasFile(path))
-        return mMediaArchive->getFile(path);
-    return arrayWithLength<unsigned char>();
+    TexturePack* selected = NULL;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft != NULL && minecraft->mTexturePackRepository != NULL)
+        selected = minecraft->mTexturePackRepository->getSelected();
+    if (!ignoreTexturePack && selected != NULL && selected->hasData() && selected->getArchiveFile() != NULL &&
+        selected->getArchiveFile()->hasFile(path))
+        return selected->getArchiveFile()->getFile(path);
+    return mMediaArchive->getFile(path);
 }
 bool CMinecraftApp::hasArchiveFile(const std::wstring& path, bool ignoreTexturePack)
 {
@@ -1189,8 +1184,8 @@ int CMinecraftApp::SignoutExitWorldThreadProc(void* context)
             case 8: exitReasonStringId = IDS_DISCONNECTED_KICKED; break;
             case 0xe: exitReasonStringId = IDS_DISCONNECTED_SERVER_OLD; break;
             case 0xf: exitReasonStringId = IDS_DISCONNECTED_CLIENT_OLD; break;
-            case 0x14: exitReasonStringId = 0xfb7f0496; break;
-            case 0x15: exitReasonStringId = 0x4d669d55; break;
+            case 0x14: exitReasonStringId = STRING_JOIN_LOCAL_PLAYER_CONTENT_RESTRICTED; break;
+            case 0x15: exitReasonStringId = STRING_JOIN_CONTENT_PRIVILEGE_TOO_RESTRICTIVE; break;
             default: exitReasonStringId = IDS_DISCONNECTED; break;
             }
             minecraft->mProgressRenderer->progressStartNoAbort(exitReasonStringId);
@@ -1215,8 +1210,8 @@ int CMinecraftApp::SignoutExitWorldThreadProc(void* context)
             case 8: exitReasonStringId = IDS_DISCONNECTED_KICKED; break;
             case 0xe: exitReasonStringId = IDS_DISCONNECTED_SERVER_OLD; break;
             case 0xf: exitReasonStringId = IDS_DISCONNECTED_CLIENT_OLD; break;
-            case 0x14: exitReasonStringId = 0xfb7f0496; break;
-            case 0x15: exitReasonStringId = 0x4d669d55; break;
+            case 0x14: exitReasonStringId = STRING_JOIN_LOCAL_PLAYER_CONTENT_RESTRICTED; break;
+            case 0x15: exitReasonStringId = STRING_JOIN_CONTENT_PRIVILEGE_TOO_RESTRICTIVE; break;
             default: exitReasonStringId = IDS_DISCONNECTED; break;
             }
             minecraft->mProgressRenderer->progressStartNoAbort(exitReasonStringId);
@@ -1648,17 +1643,19 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
     FireworksRecipe::UseDefaultThreadStorage();
     ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_GameModeTransition);
 
-    std::wstring transitionOverride = Minecraft::GetInstance()->GetClientMasterGameMode()->GetTransitionTextOverride();
-
-    std::vector<std::wstring> progressStrings;
-    if (!transitionOverride.empty())
-        progressStrings.push_back(transitionOverride);
-    progressStrings.push_back(L10N::GetString(IDS_PROGRESS_DOWNLOADING_TERRAIN));
-    progressStrings.push_back(L"TPACK");
-
     ProgressRenderer* progressRenderer = minecraft->mProgressRenderer;
-    progressRenderer->progressStartNoAbort(progressStrings[0]);
-    progressRenderer->progressStage(progressStrings[1]);
+    {
+        std::wstring transitionOverride = Minecraft::GetInstance()->GetClientMasterGameMode()->GetTransitionTextOverride();
+
+        std::vector<std::wstring> progressStrings;
+        if (!transitionOverride.empty())
+            progressStrings.push_back(transitionOverride);
+        progressStrings.push_back(L10N::GetString(IDS_PROGRESS_DOWNLOADING_TERRAIN));
+        progressStrings.push_back(L"TPACK");
+
+        progressRenderer->progressStartNoAbort(progressStrings[0]);
+        progressRenderer->progressStage(progressStrings[1]);
+    }
 
     progressRenderer->progressStagePercentage(0);
     Sleep(100);
@@ -1694,69 +1691,17 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
 
     for (;;)
     {
-        if (waitForRoundStart && !exitWaitLoop &&
-            CGameNetworkManager::sInstance.IsInSession() &&
-            !CGameNetworkManager::sInstance.IsLeavingGame())
-        {
-            for (;;)
-            {
-                masterGameMode->IsRoundStarting();
-                gConsoleUIController.IsExpectingOrReloadingSkin();
-                CGameNetworkManager::sInstance.IsInSession();
-                minecraft->tickAllConnections();
-                if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
-                {
-                    GhostController* ghostController = minecraft->GetGhostController();
-                    if (ghostController != NULL)
-                        ghostController->tick();
-                }
-                Sleep(100);
-                progressAccumulator = (progressAccumulator + 100) % 1000;
-                if (progressAccumulator == 0 && progress < 90)
-                {
-                    progress += 10;
-                    progressRenderer->progressStagePercentage(progress);
-                }
-
-                if (exitWaitLoop)
-                    break;
-
-                if (!masterGameMode->IsRoundStarting() &&
-                    !masterGameMode->ServerIsWaitingOnUsLoading())
-                {
-                    if (!gApp.IsActionPending(0, eXuiAction_ExitWorld) &&
-                        (!gApp.IsActionPending(0, eXuiAction_ConnectionLost) ||
-                         CGameNetworkManager::sInstance.IsLocalGame()))
-                    {
-                        break;
-                    }
-                    setGameStartedWhenReady = false;
-                    exitWaitLoop = true;
-                }
-                else
-                {
-                    exitWaitLoop = true;
-                }
-
-                if (!gConsoleUIController.IsExpectingOrReloadingSkin())
-                    goto complete_transition;
-            }
-            continue;
-        }
-
-        if (!gConsoleUIController.IsExpectingOrReloadingSkin())
-            goto complete_transition;
+        if ((!waitForRoundStart || exitWaitLoop || !CGameNetworkManager::sInstance.IsInSession() ||
+             CGameNetworkManager::sInstance.IsLeavingGame()) &&
+            !gConsoleUIController.IsExpectingOrReloadingSkin())
+            break;
 
         masterGameMode->IsRoundStarting();
         gConsoleUIController.IsExpectingOrReloadingSkin();
         CGameNetworkManager::sInstance.IsInSession();
         minecraft->tickAllConnections();
-        if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
-        {
-            GhostController* ghostController = minecraft->GetGhostController();
-            if (ghostController != NULL)
-                ghostController->tick();
-        }
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && minecraft->GetGhostController() != NULL)
+            minecraft->GetGhostController()->tick();
         Sleep(100);
         progressAccumulator = (progressAccumulator + 100) % 1000;
         if (progressAccumulator == 0 && progress < 90)
@@ -1764,9 +1709,26 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
             progress += 10;
             progressRenderer->progressStagePercentage(progress);
         }
+
+        if (!exitWaitLoop)
+        {
+            if (!masterGameMode->IsRoundStarting() && !masterGameMode->ServerIsWaitingOnUsLoading())
+            {
+                if (gApp.IsActionPending(0, eXuiAction_ExitWorld) ||
+                    (gApp.IsActionPending(0, eXuiAction_ConnectionLost) &&
+                     !CGameNetworkManager::sInstance.IsLocalGame()))
+                {
+                    setGameStartedWhenReady = false;
+                    exitWaitLoop = true;
+                }
+            }
+            else
+            {
+                exitWaitLoop = true;
+            }
+        }
     }
 
-complete_transition:
     progressRenderer->progressStagePercentage(90);
 
     if (!CGameNetworkManager::sInstance.IsHost())
@@ -1868,51 +1830,93 @@ std::wstring CMinecraftApp::getDLCFolderName(EDLC_ID dlcId)
 {
     switch (dlcId)
     {
-    case 4: return L"Tutorial World";
-    case 0x200: return L"Skin Pack 1";
-    case 0x201: return L"Skin Pack 2";
-    case 0x400: return L"Mass Effect";
-    case 0x401: return L"Skyrim";
-    case 0x402: return L"Halo";
-    case 0x405: return L"Festive";
-    case 0x406: return L"LittleBigPlanet";
-    case 0x407: return L"Greek Mythology";
-    case 0x408: return L"Norse Mythology";
-    case 0x409: return L"Halloween 2015";
-    case 0x40a: return L"Mario";
-    case 0x40c: return L"Adventure Time";
-    case 0x40e: return L"Pirates Of The Caribbean";
-    case 0x40f: return L"Egyptian Mythology";
-    case 0x4f4: return L"Chinese Mythology";
-    case 0x4f5: return L"Fallout";
-    case 0x4f9: return L"The Nightmare Before Christmas";
-    case 0x801: case 0x1000801: return L"Plastic";
-    case 0x802: return L"Candy";
-    case 0x803: return L"Fantasy";
-    case 0x804: return L"Halloween Texture Pack";
-    case 0x805: return L"Natural";
-    case 0x806: case 0x1000806: return L"City";
-    case 0x807: return L"Cartoon";
-    case 0x808: case 0x1000808: return L"Steampunk";
-    case 0x809: return L"Pattern";
-    case 0x812: return L"Super Cute Texture Pack";
-    case 0x1001: return L"Battle Map Pack 0";
-    case 0x1002: return L"Battle Map Pack 1";
-    case 0x1003: return L"Battle Map Pack 2";
-    case 0x1004: return L"Battle Map Pack 3";
-    case 0x1005: return L"Battle Map Pack 4";
-    case 0x1007: return L"MG02 Map Pack 0";
-    case 0x1009: return L"MG02 Map Pack 1";
-    case 0x100a: return L"MG04_TestWorldPack";
-    case 0x100b: return L"Halloween Battle Map";
-    case 0x100c: return L"Festive Battle Map";
-    case 0x100e: return L"Fallout Battle Map Pack";
-    case 0x100f: return L"Glide Map Pack 0";
-    case 0x1011: return L"Glide Beasts Track Pack";
-    case 0x1012: return L"Glide Giants Track Pack";
-    case 0x1013: return L"Glide Myths Track Pack";
-    case 0x1014: return L"MG02 Map Pack 2";
-    case 0x1015: return L"MG02 Map Pack 3";
+    case EDLC_ID_TutorialWorld: return L"Tutorial World";
+    case EDLC_ID_SkinPack1: return L"Skin Pack 1";
+    case EDLC_ID_SkinPack2: return L"Skin Pack 2";
+    case EDLC_ID_SkinPack3: return L"Skin Pack 3";
+    case EDLC_ID_SkinPack4: return L"Skin Pack 4";
+    case EDLC_ID_SummerOfArcadeSkinPack: return L"Summer of Arcade Skin Pack";
+    case EDLC_ID_HalloweenCharitySkinPack: return L"Halloween Charity Skin Pack";
+    case EDLC_ID_FestiveSkinPack: return L"Festive Skin Pack";
+    case EDLC_ID_BirthdaySkinPack: return L"Birthday Skin Pack";
+    case EDLC_ID_BattleAndBeasts: return L"Battle & Beasts";
+    case EDLC_ID_SkinPack5: return L"Skin Pack 5";
+    case EDLC_ID_BattleAndBeasts2: return L"Battle & Beasts 2";
+    case EDLC_ID_StarWarsClassicSkinPack: return L"Star Wars Classic Skin Pack";
+    case EDLC_ID_StarWarsPrequelSkinPack: return L"Star Wars Prequel Skin Pack";
+    case EDLC_ID_SkinPack6: return L"Skin Pack 6";
+    case EDLC_ID_MarvelAvengers: return L"Marvel Avengers";
+    case EDLC_ID_MarvelSpiderMan: return L"Marvel Spider-Man";
+    case EDLC_ID_DoctorWhoSkinsVolume1: return L"Doctor Who Skins Volume I";
+    case EDLC_ID_TheSimpsons: return L"The Simpsons";
+    case EDLC_ID_SecondBirthdaySkinPack: case EDLC_ID_SecondBirthdaySkinPackAlt: case EDLC_ID_SecondBirthdaySkinPackAlt2: return L"2nd Birthday Skin Pack";
+    case EDLC_ID_MarvelGuardiansOfTheGalaxy: return L"Marvel Guardians of the Galaxy";
+    case EDLC_ID_StarWarsRebelsSkinPack: return L"Star Wars Rebels Skin Pack";
+    case EDLC_ID_DoctorWhoSkinsVolume2: return L"Doctor Who Skins Volume II";
+    case EDLC_ID_BiomeSettlersPack1: return L"Biome Settlers Pack 1";
+    case EDLC_ID_BiomeSettlersPack2: return L"Biome Settlers Pack 2";
+    case EDLC_ID_StoryModeSkinPack: return L"Story Mode Skin Pack";
+    case EDLC_ID_RedstoneSpecialistsSkinPack: return L"Redstone Specialists Skin Pack";
+    case EDLC_ID_CampfireTalesSkinPack: return L"Campfire Tales Skin Pack";
+    case EDLC_ID_ThirdBirthdaySkinPack: return L"3rd Birthday Skin Pack";
+    case EDLC_ID_Minecon2015SkinPack: return L"Minecon 2015 Skin Pack";
+    case EDLC_ID_FourthBirthdaySkinPack: case EDLC_ID_FourthBirthdaySkinPackAlt: return L"4th Birthday Skin Pack";
+    case EDLC_ID_Minecon2016SkinPack: return L"Minecon 2016 Skin Pack";
+    case EDLC_ID_FirstBirthdaySkinPack: return L"1st Birthday Skin Pack";
+    case EDLC_ID_VillainsSkinPack: return L"Villains Skin Pack";
+    case EDLC_ID_MiniGamesHeroesSkinPack: return L"Mini Games Heroes Skin Pack";
+    case EDLC_ID_MagicTheGatheringSkinPack: return L"Magic: The Gathering Skin Pack";
+    case EDLC_ID_StrangersBiomeSettlers3SkinPack: return L"Strangers Biome Settlers 3 Skin Pack";
+    case EDLC_ID_StrangerThingsSkinPack: return L"Stranger Things Skin Pack";
+    case EDLC_ID_MineconEarth2017: return L"Minecon Earth 2017";
+    case EDLC_ID_MoanaCharacterPack: return L"Moana Character Pack";
+    case EDLC_ID_StarWarsSequelSkinPack: return L"Star Wars Sequel Skin Pack";
+    case EDLC_ID_FinalFantasyXVSkinPack: return L"FINAL FANTASY XV Skin Pack";
+    case EDLC_ID_TheIncrediblesSkinPack: return L"The Incredibles Skin Pack";
+    case EDLC_ID_SoloAStarWarsStoryPack: return L"Solo: A Star Wars Story Pack";
+    case EDLC_ID_FromTheShadowsSkinPack: return L"From The Shadows Skin Pack";
+    case EDLC_ID_MassEffect: return L"Mass Effect";
+    case EDLC_ID_Skyrim: return L"Skyrim";
+    case EDLC_ID_Halo: return L"Halo";
+    case EDLC_ID_Festive: return L"Festive";
+    case EDLC_ID_LittleBigPlanet: return L"LittleBigPlanet";
+    case EDLC_ID_GreekMythology: return L"Greek Mythology";
+    case EDLC_ID_NorseMythology: return L"Norse Mythology";
+    case EDLC_ID_Halloween2015: return L"Halloween 2015";
+    case EDLC_ID_Mario: return L"Mario";
+    case EDLC_ID_AdventureTime: return L"Adventure Time";
+    case EDLC_ID_PiratesOfTheCaribbean: return L"Pirates Of The Caribbean";
+    case EDLC_ID_EgyptianMythology: return L"Egyptian Mythology";
+    case EDLC_ID_ChineseMythology: return L"Chinese Mythology";
+    case EDLC_ID_Fallout: return L"Fallout";
+    case EDLC_ID_TheNightmareBeforeChristmas: return L"The Nightmare Before Christmas";
+    case EDLC_ID_Plastic: return L"Plastic";
+    case EDLC_ID_Candy: return L"Candy";
+    case EDLC_ID_Fantasy: return L"Fantasy";
+    case EDLC_ID_HalloweenTexturePack: return L"Halloween Texture Pack";
+    case EDLC_ID_Natural: return L"Natural";
+    case EDLC_ID_City: case EDLC_ID_CityAlt: return L"City";
+    case EDLC_ID_Cartoon: return L"Cartoon";
+    case EDLC_ID_Steampunk: case EDLC_ID_SteampunkAlt: return L"Steampunk";
+    case EDLC_ID_Pattern: return L"Pattern";
+    case EDLC_ID_SuperCuteTexturePack: return L"Super Cute Texture Pack";
+    case EDLC_ID_BattleMapPack0: return L"Battle Map Pack 0";
+    case EDLC_ID_BattleMapPack1: return L"Battle Map Pack 1";
+    case EDLC_ID_BattleMapPack2: return L"Battle Map Pack 2";
+    case EDLC_ID_BattleMapPack3: return L"Battle Map Pack 3";
+    case EDLC_ID_BattleMapPack4: return L"Battle Map Pack 4";
+    case EDLC_ID_MG02MapPack0: return L"MG02 Map Pack 0";
+    case EDLC_ID_MG02MapPack1: return L"MG02 Map Pack 1";
+    case EDLC_ID_MG04TestWorldPack: return L"MG04_TestWorldPack";
+    case EDLC_ID_HalloweenBattleMap: return L"Halloween Battle Map";
+    case EDLC_ID_FestiveBattleMap: return L"Festive Battle Map";
+    case EDLC_ID_FalloutBattleMapPack: return L"Fallout Battle Map Pack";
+    case EDLC_ID_GlideMapPack0: return L"Glide Map Pack 0";
+    case EDLC_ID_GlideBeastsTrackPack: return L"Glide Beasts Track Pack";
+    case EDLC_ID_GlideGiantsTrackPack: return L"Glide Giants Track Pack";
+    case EDLC_ID_GlideMythsTrackPack: return L"Glide Myths Track Pack";
+    case EDLC_ID_MG02MapPack2: return L"MG02 Map Pack 2";
+    case EDLC_ID_MG02MapPack3: return L"MG02 Map Pack 3";
     default: return std::wstring();
     }
 }
@@ -2064,34 +2068,38 @@ int CMinecraftApp::DLCMountedCallback(void* context, int result, unsigned int co
 }
 void CMinecraftApp::MountNextDLC(int32_t pad)
 {
-    while (mDLCInstallIndex < mDLCInstallCount)
+    if (mDLCInstallIndex < mDLCInstallCount)
     {
-        const int result = gStorage->MountInstalledDLC(pad, mDLCInstallIndex,
-                                                        DLCMountedCallback, this, NULL);
-        if (result == 0x3e5)
-            return;
-        ++mDLCInstallIndex;
+        if (gStorage->MountInstalledDLC(pad, mDLCInstallIndex, DLCMountedCallback, this, NULL) != 0x3e5)
+        {
+            ++mDLCInstallIndex;
+            gApp.MountNextDLC(pad);
+        }
     }
-    mDLCInstallProcessCompleted = true;
-    mDLCInstallPending = false;
-    gConsoleUIController.HandleDLCMountingComplete();
+    else
+    {
+        mDLCInstallProcessCompleted = true;
+        mDLCInstallPending = false;
+        gConsoleUIController.HandleDLCMountingComplete();
+    }
 }
 int CMinecraftApp::DLCInstalledCallback(void* context, int result, int index)
 {
     if (result != -1)
     {
-        gApp.mDLCInstallCount = static_cast<unsigned int>(result);
+        gApp.mDLCInstallCount = result;
         gApp.MountNextDLC(index);
     }
     return 0;
 }
 uint32_t CMinecraftApp::StartInstallDLCProcess(int32_t pad)
 {
-    if (DLCInstallProcessCompleted() != 0 || mDLCInstallPending)
+    if (gApp.DLCInstallProcessCompleted() != 0 || mDLCInstallPending)
         return 0;
     mDLCInstallCount = 0;
-    mDLCInstallPending = true;
     mDLCInstallIndex = 0;
+    gApp.mDLCManager.m_numCorruptPacks = 0;
+    mDLCInstallPending = true;
     gStorage->GetInstalledDLC(pad, DLCInstalledCallback, this);
     return 1;
 }
@@ -2562,18 +2570,18 @@ uint32_t CMinecraftApp::IsUUIDLocal(const std::wstring& uuid)
     }
     return 0;
 }
-uint8_t CMinecraftApp::GetTutorialMode(PlayerUID uid)
+bool CMinecraftApp::GetTutorialMode(PlayerUID uid)
 {
-    uint8_t tutorial;
+    bool tutorial;
     if (mTutorialModes.find(uid) != mTutorialModes.end())
         tutorial = mTutorialModes[uid];
     else
         tutorial = mTutorialModes[PlayerUID(0)];
     return tutorial;
 }
-uint8_t CMinecraftApp::GetTutorialMode(const boost::shared_ptr<Player>& player)
+bool CMinecraftApp::GetTutorialMode(const boost::shared_ptr<Player>& player)
 {
-    uint8_t tutorial;
+    bool tutorial;
     if (player)
     {
         Player* tutorialPlayer = player.get();
@@ -3295,51 +3303,46 @@ uint32_t CMinecraftApp::CanRecordStatsAndAchievements(Stat* stat, arrayWithLengt
 {
     (void)players;
 
-    bool tutorialMode = false;
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft != NULL && minecraft->isTutorial())
-        tutorialMode = true;
+    bool isTutorial = false;
+    if (Minecraft::GetInstance() != NULL && Minecraft::GetInstance()->isTutorial())
+        isTutorial = true;
 
-    const bool customGame =
-        minecraft != NULL && minecraft->GetMiniGame() != NULL && minecraft->GetMiniGame()->IsCustomGame();
-    bool allowAchievementRange = true;
-    if (stat != NULL && stat->isAchievement())
+    const bool isCustomGame = Minecraft::GetInstance()->GetMiniGame()->IsCustomGame();
+    bool allowMiniGameAward = true;
+    if (stat->isAchievement())
     {
         const unsigned int achievementId = static_cast<Achievement*>(stat)->getAchievementID();
-        if (achievementId > 0x3b &&
-            (achievementId < 0x42 || (achievementId > 0x4c && achievementId < 0x54)))
+        if (achievementId >= eAward_TheStudent &&
+            (achievementId <= eAward_Mine ||
+             (achievementId >= eAward_BackFromTheDead && achievementId <= eAward_WillLikeNoOther)))
         {
-            allowAchievementRange = false;
-            if (!customGame)
+            allowMiniGameAward = false;
+            if (!isCustomGame)
             {
-                if (!CGameNetworkManager::sInstance.IsInPublicJoinableGame() &&
-                    minecraft != NULL && minecraft->GetMiniGame() != NULL &&
-                    minecraft->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0)
-                {
-                    goto hostOptionCheck;
-                }
+                if (CGameNetworkManager::sInstance.IsInPublicJoinableGame() ||
+                    Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+                    allowMiniGameAward = true;
             }
-            allowAchievementRange = true;
         }
     }
 
-hostOptionCheck:
-    if ((GetGameHostOption(eGameHostOption_HasBeenInCreative) != 0 ||
-         GetGameHostOption(eGameHostOption_HostCanBeInvisible) != 0 ||
-         GetGameHostOption(eGameHostOption_HostCanChangeHunger) != 0 ||
-         GetGameHostOption(eGameHostOption_HostCanFly) != 0 ||
-         GetGameHostOption(eGameHostOption_WasntSaveOwner) != 0 ||
-         (GetGameHostOption(eGameHostOption_MobGriefing) == 0 &&
-          (GetGameHostOption(eGameHostOption_KeepInventory) != 0 ||
-           GetGameHostOption(eGameHostOption_DoMobSpawning) == 0)) ||
-         (GetGameHostOption(eGameHostOption_DoWeatherCycle) == 0 &&
-          GetGameHostOption(eGameHostOption_DoDaylightCycle) == 0 && !tutorialMode)) &&
-        (GetGameHostOption(eGameHostOption_MiniGame) == 0 || !allowAchievementRange))
+    bool canRecord = true;
+    if ((gApp.GetGameHostOption(eGameHostOption_HasBeenInCreative) != 0 ||
+         gApp.GetGameHostOption(eGameHostOption_HostCanBeInvisible) != 0 ||
+         gApp.GetGameHostOption(eGameHostOption_HostCanChangeHunger) != 0 ||
+         gApp.GetGameHostOption(eGameHostOption_HostCanFly) != 0 ||
+         gApp.GetGameHostOption(eGameHostOption_WasntSaveOwner) != 0 ||
+         gApp.GetGameHostOption(eGameHostOption_MobGriefing) == 0 ||
+         gApp.GetGameHostOption(eGameHostOption_KeepInventory) != 0 ||
+         gApp.GetGameHostOption(eGameHostOption_DoMobSpawning) == 0 ||
+         gApp.GetGameHostOption(eGameHostOption_DoWeatherCycle) == 0 ||
+         (gApp.GetGameHostOption(eGameHostOption_DoDaylightCycle) == 0 && !isTutorial)) &&
+        (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0 || !allowMiniGameAward))
     {
-        return 0;
+        canRecord = false;
     }
 
-    return 1;
+    return canRecord;
 }
 void CMinecraftApp::SetBaseSaveName(const std::wstring& name)
 {
@@ -3385,14 +3388,13 @@ void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int 
         char key[80];
         std::memset(key, 0, sizeof(key));
         char* keyOut = key;
+        const char* keyLimit = cursor + 999;
         unsigned int keyLength = 0;
-        while (*cursor != '\0' && cursor < end && keyLength < 0x4fU)
+        while (*cursor != '\0' && cursor < keyLimit && keyLength < 0x4fU)
         {
             *keyOut++ = *cursor++;
             ++keyLength;
         }
-        if (cursor >= end)
-            break;
         ++cursor;
 
         if (std::strcmp(key, "4J_SEED") == 0)
@@ -3517,10 +3519,6 @@ void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int 
             data->numLoads = parsedValue;
             if (cursor < end)
                 ++cursor;
-        }
-        else if (cursor < end)
-        {
-            ++cursor;
         }
     }
 }
@@ -3728,7 +3726,7 @@ std::wstring CMinecraftApp::getEntityName(uint64_t entityType, int32_t auxValue)
         return L10N::GetString(IDS_BLAZE);
     if (entityType == EntityType::ENDER_DRAGON)
         return L10N::GetString(IDS_ENDERDRAGON);
-    if (entityType == EntityType::TIPPABLE_ARROW)
+    if (entityType == EntityType::TIPPABLE_ARROW || entityType == EntityType::ARROW)
         return L10N::GetString(IDS_ITEM_ARROW);
     if (entityType == EntityType::SLIME)
         return L10N::GetString(IDS_SLIME);
@@ -3931,12 +3929,19 @@ unsigned int CMinecraftApp::getSkinIdFromPath(const std::wstring& path)
 std::wstring CMinecraftApp::getSkinPathFromId(unsigned int id)
 {
     wchar_t path[256];
-    if (static_cast<int>(id) < 0)
-        std::swprintf(path, 256, L"dlcskin%08d.png", id & 0x7fffffffU);
-    else if ((id & 0x7fffffe0U) == 0)
-        std::swprintf(path, 256, L"defskin%08X.png", id & 0x1fU);
+    if ((id >> SKIN_ID_DLC_FLAG_SHIFT) != 0)
+    {
+        std::swprintf(path, 256, L"dlcskin%08d.png", id & SKIN_ID_DLC_MASK);
+    }
     else
-        std::swprintf(path, 256, L"ugcskin%08X.png", id);
+    {
+        const unsigned int ugcIndex = id & SKIN_ID_UGC_MASK;
+        const unsigned int defaultIndex = id & SKIN_ID_DEFAULT_MASK;
+        if (ugcIndex == 0)
+            std::swprintf(path, 256, L"defskin%08X.png", defaultIndex);
+        else
+            std::swprintf(path, 256, L"ugcskin%08X.png", ugcIndex);
+    }
     return std::wstring(path);
 }
 uint32_t CMinecraftApp::GetTMSGlobalFileListRead()
@@ -4496,7 +4501,7 @@ void CMinecraftApp::HandleXuiActions()
             else
             {
                 bool levelLoaded = false;
-                for (int level = 0; level < minecraft->mLevelCount; ++level)
+                for (int level = 0; level < minecraft->mLevels.length; ++level)
                 {
                     if (minecraft->mLevels[level] != NULL)
                     {

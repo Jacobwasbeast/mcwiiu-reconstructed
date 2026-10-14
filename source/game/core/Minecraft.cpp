@@ -265,7 +265,7 @@ static long long sFrameStartTime = 0;
 static int sPressStartHoldOffFrames = 0;
 static bool sCheckForNewLocalPlayers = true;
 bool gFancyGraphics = true;
-static std::wstring sWorkingDirectory;
+static File sWorkingDirectory;
 static OSFastMutex sTextureRequestLock;
 
 struct ScoreboardMenuData
@@ -286,49 +286,46 @@ Minecraft::Minecraft(Component* parent, Canvas* canvas, MinecraftApplet* applet,
     mTimer = new Timer(20.0f);
     mPendingLevelChange = 0;
     mLevel = NULL;
+    mLevels = arrayWithLength<MultiPlayerLevel*>(3, true);
     mLevelRenderer = NULL;
-    mPlayer.reset();
-    mLevels = new MultiPlayerLevel*[3];
-    mLevels[0] = NULL;
-    mLevels[1] = NULL;
-    mLevels[2] = NULL;
-    mLevelCount = 3;
-    mCameraEntity.reset();
-    mMissTime = 0;
-    mRightClickDelay = 0;
-    mLastClickTick = 0;
-    mLevelId = 0;
-    mFrameNumber = 0;
-    mPaused = false;
+    mPlayer = boost::shared_ptr<MultiplayerLocalPlayer>();
+    mCameraEntity = boost::shared_ptr<Entity>();
+    mParticleEngine = NULL;
+    mUser = NULL;
+    mAppPaused = false;
+    mTextures = NULL;
+    mFont = NULL;
+    mScreen = NULL;
+    mLocalPlayerIdx = 0;
 
     InitializeCriticalSection(&sTextureRequestLock);
     InitializeCriticalSection(&mLevelLock);
 
-    mNoRender = false;
-    mScreen = NULL;
-    mHitResult = NULL;
-    mGui = NULL;
-    mOptions = NULL;
-    mMouseGrabTicks = 0;
     mProgressRenderer = NULL;
     mGameRenderer = NULL;
+    mRightClickDelay = 0;
+    mTicks = 0;
+    mLastClickTick = 0;
     mDefaultHeight = 0;
-    mTextures = NULL;
+    mGui = NULL;
+    mNoRender = false;
+    mHitResult = NULL;
+    mOptions = NULL;
 
     mSoundEngine = new SoundEngine();
-    mTexturePackRepository = NULL;
     mSoundReloadDelay = 0;
+    mTexturePackRepository = NULL;
     mWorkingDirectory = File(L"");
-    sWorkingDirectory = File(L"").getPath();
     mLevelSource = NULL;
     mStats[0] = NULL;
     mStats[1] = NULL;
     mStats[2] = NULL;
     mStats[3] = NULL;
     mLevelId = 0;
+    sWorkingDirectory = File(L"");
     mEmptyViewport = -1;
-    mLastRenderTime = -1;
     mRunning = true;
+    mLastRenderTime = -1;
     mFrameNumber = 0;
     Stats::init();
 
@@ -338,39 +335,28 @@ Minecraft::Minecraft(Component* parent, Canvas* canvas, MinecraftApplet* applet,
     mBlockColors = NULL;
     mDefaultHeight = height;
     mFullscreen = fullscreen;
-
-    sInstance = this;
+    if (gRenderer->IsWidescreen())
+        mWidth = width;
+    else
+        mWidth = (width * 3) / 4;
 
     mPaused = false;
     mFullHeight = height;
     mFullWidth = width;
     mHeight = height;
-    if (gRenderer->IsWidescreen())
-        mWidth = width;
-    else
-        mWidth = (width * 3) / 4;
+    sInstance = this;
+    mFullscreen = fullscreen;
     TextureManager::createInstance();
 
-    mConnectionStartTime[0] = 0;
-    mConnectionStartTime[1] = 0;
-    mConnectionStartTime[2] = 0;
-    mConnectionStartTime[3] = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        mGameModes[i] = NULL;
+        mConnectionFailed[i] = false;
+        mPendingConnections[i] = NULL;
+    }
     mTutorialPlayers = 0;
     mAnimateTickLevel = NULL;
-    mConnectionFailed[0] = false;
-    mConnectionFailed[1] = false;
-    mConnectionFailed[2] = false;
-    mConnectionFailed[3] = false;
-    mDisconnectReasons[0] = DisconnectPacket::eDisconnectReason_None;
-    mDisconnectReasons[1] = DisconnectPacket::eDisconnectReason_None;
-    mDisconnectReasons[2] = DisconnectPacket::eDisconnectReason_None;
-    mDisconnectReasons[3] = DisconnectPacket::eDisconnectReason_None;
     mReloadTextures = false;
-    mLocalPlayerIdx = 0;
-    mPendingConnections[0] = NULL;
-    mPendingConnections[1] = NULL;
-    mPendingConnections[2] = NULL;
-    mPendingConnections[3] = NULL;
     mSoundEngine->init(NULL);
 
     mClientMasterGameMode = new ClientMasterGameMode();
@@ -691,7 +677,7 @@ void Minecraft::setLevel(MultiPlayerLevel* level, int dimension, boost::shared_p
 
     mGameRenderer->DisableUpdateThread(0);
 
-    for (int i = 0; i < mLevelCount; ++i)
+    for (int i = 0; i < mLevels.length; ++i)
     {
         if (mLevels[i] != NULL && level == NULL)
         {
@@ -1102,105 +1088,91 @@ void Minecraft::setCameraEntity(boost::shared_ptr<Entity> entity)
     mCameraEntity = entity;
 }
 
-boost::shared_ptr<MultiplayerLocalPlayer> Minecraft::createExtraLocalPlayer(int entityId, const std::wstring& name,
-                                                                           int playerIdx, int userIndex,
+boost::shared_ptr<MultiplayerLocalPlayer> Minecraft::createExtraLocalPlayer(int playerIdx, const std::wstring& name,
+                                                                           int userIndex, int dimension,
                                                                            ClientPacketListener* connection,
-                                                                           MultiPlayerLevel* level, int dimension,
-                                                                           int gameTypeId)
+                                                                           MultiPlayerLevel* level, int gameTypeId,
+                                                                           int gameModeUserIndex)
 {
     if (connection == NULL)
         return boost::shared_ptr<MultiplayerLocalPlayer>();
 
-    if (connection != mPendingConnections[playerIdx])
-        return mLocalPlayers[playerIdx];
-
-    int viewport = 0;
-    if (mLocalPlayers[playerIdx] && mGameModes[playerIdx] == NULL)
-        viewport = mLocalPlayers[playerIdx]->mViewport;
-
-    std::wstring previousName = mUser->name;
-    mUser->name = name;
-    mPendingConnections[playerIdx] = NULL;
-
-    PlayerUID xuid(0);
-    PlayerUID suid(0);
-    gProfile->GetXUID(playerIdx, &xuid, false);
-    gProfile->GetXUID(playerIdx, &suid, true);
-
-    bool tutorialForUid = gApp.GetTutorialMode(suid != PlayerUID(0) ? suid : xuid);
-    bool tutorialMode = gApp.GetTutorialMode(boost::shared_ptr<Player>());
-
-    if (level == NULL)
+    if (connection == mPendingConnections[playerIdx])
     {
-        mLevel = getLevel(dimension);
-        getLevel(dimension)->mConnections.push_back(connection);
-    }
-    else
-    {
-        mLevel = level;
-    }
+        int viewport = 0;
+        if (mLocalPlayers[playerIdx] && mGameModes[playerIdx] == NULL)
+            viewport = mLocalPlayers[playerIdx]->mViewport;
 
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer;
-    if (tutorialMode && !tutorialForUid)
-    {
-        mGameModes[playerIdx] = new MultiPlayerGameMode(playerIdx, connection, userIndex, true, false);
-        localPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(
-            mGameModes[playerIdx]->createPlayer(mLevel));
-    }
-    else if (!gProfile->IsFullVersion())
-    {
-        mGameModes[playerIdx] = new TrialMode(playerIdx, connection, userIndex);
-        localPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(
-            mGameModes[playerIdx]->createPlayer(mLevel));
-    }
-    else
-    {
-        mGameModes[playerIdx] =
-            new MultiPlayerGameMode(playerIdx, connection, userIndex, false, GameType::byId(gameTypeId) == GameType::CREATIVE);
-        localPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(
-            mGameModes[playerIdx]->createPlayer(mLevel));
-    }
+        std::wstring previousName = mUser->name;
+        mUser->name = name;
+        mPendingConnections[playerIdx] = NULL;
 
-    mLocalPlayers[playerIdx] = localPlayer;
-
-    localPlayer->mIsGuest = gProfile->IsGuest(playerIdx);
-    localPlayer->setXuid(xuid);
-    localPlayer->mSuid = suid;
-    localPlayer->setName(convStringToWstring(gProfile->GetGamertag(playerIdx)));
-    localPlayer->mDisplayName = gProfile->GetDisplayName(playerIdx);
-    if (!localPlayer->mIsGuest && suid == PlayerUID(0))
-        localPlayer->setUUID(localPlayer->mDisplayName);
-
-    localPlayer->mViewport = viewport;
-
-    if (level == NULL)
-        mLevel->addEntity(localPlayer);
-
-    localPlayer->mUserIndex = userIndex;
-
-    if (localPlayer->mInput != NULL)
-        delete localPlayer->mInput;
-    localPlayer->mInput = new Input();
-
-    if (GetInstance()->GetClientMasterGameMode()->IsInActiveRoundState())
-        localPlayer->SetGameType(GameType::ADVENTURE);
-
-    localPlayer->resetPos();
-    mLevelRenderer->setLevel(playerIdx, mLevel);
-    localPlayer->mLevel = mLevel;
-
-    mUser->name = previousName;
-    updatePlayerViewportAssignments();
-
-    if (tutorialMode && !tutorialForUid)
-    {
-        if (mGameModes[playerIdx]->getGameModeConstraints()->canMoveToPosition(
-                localPlayer->mX, localPlayer->mY, localPlayer->mZ, localPlayer->mX, localPlayer->mY, localPlayer->mZ,
-                NULL))
+        if (level == NULL)
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> primary =
-                GetInstance()->mLocalPlayers[gProfile->GetPrimaryPad()];
-            localPlayer->teleportTo(primary->mX, primary->mY, primary->mZ);
+            mLevel = getLevel(dimension);
+            getLevel(dimension)->mConnections.push_back(connection);
+        }
+        else
+        {
+            mLevel = level;
+        }
+
+        PlayerUID xuid(0);
+        PlayerUID onlineXuid(0);
+        gProfile->GetXUID(playerIdx, &xuid, false);
+        gProfile->GetXUID(playerIdx, &onlineXuid, true);
+
+        bool tutorialForUid = gApp.GetTutorialMode(onlineXuid != PlayerUID(0) ? onlineXuid : xuid);
+        bool tutorialMode = gApp.GetTutorialMode(boost::shared_ptr<Player>());
+
+        if (tutorialMode && tutorialForUid)
+            mGameModes[playerIdx] = new MultiPlayerGameMode(playerIdx, connection, gameModeUserIndex, true, false);
+        else if (!gProfile->IsFullVersion())
+            mGameModes[playerIdx] = new TrialMode(playerIdx, connection, gameModeUserIndex);
+        else
+            mGameModes[playerIdx] = new MultiPlayerGameMode(playerIdx, connection, gameModeUserIndex, false,
+                                                            GameType::byId(gameTypeId) == GameType::LOBBY);
+        mLocalPlayers[playerIdx] = mGameModes[playerIdx]->createPlayer(mLevel);
+
+        mLocalPlayers[playerIdx]->mIsGuest = gProfile->IsGuest(playerIdx);
+        mLocalPlayers[playerIdx]->setXuid(xuid);
+        mLocalPlayers[playerIdx]->mOnlineXuid = onlineXuid;
+        mLocalPlayers[playerIdx]->setName(convStringToWstring(gProfile->GetGamertag(playerIdx)));
+        mLocalPlayers[playerIdx]->mDisplayName = gProfile->GetDisplayName(playerIdx);
+        if (!mLocalPlayers[playerIdx]->mIsGuest && (xuid.flags & PlayerUID::FlagMiiPrincipal) == 0)
+            mLocalPlayers[playerIdx]->setUUID(mLocalPlayers[playerIdx]->mDisplayName);
+
+        mLocalPlayers[playerIdx]->mViewport = viewport;
+
+        if (level == NULL)
+            mLevel->addEntity(mLocalPlayers[playerIdx]);
+
+        mLocalPlayers[playerIdx]->mUserIndex = userIndex;
+
+        if (mLocalPlayers[playerIdx]->mInput != NULL)
+            delete mLocalPlayers[playerIdx]->mInput;
+        mLocalPlayers[playerIdx]->mInput = new Input();
+
+        if (GetInstance()->GetClientMasterGameMode()->IsInActiveRoundState())
+            mLocalPlayers[playerIdx]->SetGameType(GameType::SPECTATOR);
+
+        mLocalPlayers[playerIdx]->resetPos();
+        mLevelRenderer->setLevel(playerIdx, mLevel);
+        mLocalPlayers[playerIdx]->mLevel = mLevel;
+
+        mUser->name = previousName;
+        updatePlayerViewportAssignments();
+
+        if (tutorialMode && !tutorialForUid)
+        {
+            if (mGameModes[playerIdx]->getGameModeConstraints()->canMoveToPosition(
+                    mLocalPlayers[playerIdx]->mX, mLocalPlayers[playerIdx]->mY, mLocalPlayers[playerIdx]->mZ,
+                    mLocalPlayers[playerIdx]->mX, mLocalPlayers[playerIdx]->mY, mLocalPlayers[playerIdx]->mZ, NULL))
+            {
+                boost::shared_ptr<MultiplayerLocalPlayer> primary =
+                    GetInstance()->mLocalPlayers[gProfile->GetPrimaryPad()];
+                mLocalPlayers[playerIdx]->teleportTo(primary->mX, primary->mY, primary->mZ);
+            }
         }
     }
 
@@ -1342,75 +1314,68 @@ int Minecraft::InGame_SignInReturned(void* userData, bool signedIn, int userInde
     if (CGameNetworkManager::sInstance.IsInSession())
         XEnableGuestSignin(0);
 
-    if (!signedIn || !CGameNetworkManager::sInstance.IsInSession())
+    if (signedIn && CGameNetworkManager::sInstance.IsInSession() && !minecraft->mLocalPlayers[userIndex] &&
+        !gConsoleUIController.IsIgnorePlayerJoinMenuDisplayed(gProfile->GetPrimaryPad()))
     {
-        gApp.SetDRCCheckPlayerCountEnabled(true);
-        return 0;
-    }
-
-    if (minecraft->mLocalPlayers[playerIdx])
-    {
-        gApp.SetDRCCheckPlayerCountEnabled(true);
-        return 0;
-    }
-
-    if (gConsoleUIController.IsIgnorePlayerJoinMenuDisplayed(gProfile->GetPrimaryPad()))
-    {
-        gApp.SetDRCCheckPlayerCountEnabled(true);
-        return 0;
-    }
-
-    if (!gProfile->IsSignedIn(playerIdx))
-        return 0;
-
-    if (!CGameNetworkManager::sInstance.SessionHasSpace(1))
-    {
-        int messageParameters[1];
-        messageParameters[0] = IDS_CONFIRM_OK;
-        gConsoleUIController.RequestErrorMessage(0x1AFA54B5, 0xF18FCCD0, messageParameters, 1, 0xff, NULL, NULL,
-                                                  NULL, true);
-        gProfile->SignOutUser(playerIdx);
-        gApp.SetDRCCheckPlayerCountEnabled(true);
-        return 0;
-    }
-
-    if (CGameNetworkManager::sInstance.SessionHasMii(playerIdx))
-    {
-        int messageParameters[1];
-        messageParameters[0] = IDS_CONFIRM_OK;
-        gConsoleUIController.RequestErrorMessage(0x624AEAD3, 0x3103BE06, messageParameters, 1, 0xff, NULL, NULL,
-                                                  NULL, true);
-        gProfile->SignOutUser(playerIdx);
-        gApp.SetDRCCheckPlayerCountEnabled(true);
-        return 0;
-    }
-
-    if (!CGameNetworkManager::sInstance.IsLocalGame() &&
-        (!gProfile->IsSignedInLive(playerIdx) || !gProfile->AllowedToPlayMultiplayer(playerIdx)))
-    {
-        if (!gProfile->IsSignedInLive(gProfile->GetPrimaryPad()))
-            return 0;
-        if (gProfile->AllowedToPlayMultiplayer(playerIdx))
+        if (!gProfile->IsSignedIn(userIndex))
             return 0;
 
-        int messageParameters[1];
-        messageParameters[0] = IDS_CONFIRM_OK;
-        gConsoleUIController.RequestErrorMessage(0x252AB13F, 0xCC5A590F, messageParameters, 1, playerIdx, NULL,
-                                                  NULL, NULL, true);
-        gProfile->SignOutUser(playerIdx);
-        gApp.SetDRCCheckPlayerCountEnabled(true);
+        if (!CGameNetworkManager::sInstance.SessionHasSpace(1))
+        {
+            int messageParameters[1];
+            messageParameters[0] = IDS_CONFIRM_OK;
+            gConsoleUIController.RequestErrorMessage(0x1AFA54B5, 0xF18FCCD0, messageParameters, 1, 0xff, NULL, NULL,
+                                                      NULL, true);
+            gProfile->SignOutUser(userIndex);
+            gApp.SetDRCCheckPlayerCountEnabled(true);
+            return 0;
+        }
+
+        if (CGameNetworkManager::sInstance.SessionHasMii(userIndex))
+        {
+            int messageParameters[1];
+            messageParameters[0] = IDS_CONFIRM_OK;
+            gConsoleUIController.RequestErrorMessage(STRING_MII_IN_USE_TITLE, STRING_MII_ALREADY_IN_USE,
+                                                      messageParameters, 1, 0xff, NULL, NULL, NULL, true);
+            gProfile->SignOutUser(userIndex);
+            gApp.SetDRCCheckPlayerCountEnabled(true);
+            return 0;
+        }
+
+        if (!CGameNetworkManager::sInstance.IsLocalGame() &&
+            (!gProfile->IsSignedInLive(userIndex) || !gProfile->AllowedToPlayMultiplayer(userIndex)))
+        {
+            if (!gProfile->IsSignedInLive(gProfile->GetPrimaryPad()))
+                return 0;
+            if (gProfile->AllowedToPlayMultiplayer(userIndex))
+                return 0;
+
+            int messageParameters[1];
+            messageParameters[0] = IDS_CONFIRM_OK;
+            gConsoleUIController.RequestErrorMessage(0x252AB13F, 0xCC5A590F, messageParameters, 1, userIndex, NULL,
+                                                      NULL, NULL, true);
+            gProfile->SignOutUser(userIndex);
+            gApp.SetDRCCheckPlayerCountEnabled(true);
+            return 0;
+        }
+
+        if (minecraft->mLevel->mIsClientSide)
+        {
+            minecraft->addLocalPlayer(userIndex);
+            return 0;
+        }
+
+        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[userIndex];
+        if (!player)
+        {
+            player = minecraft->createExtraLocalPlayer(userIndex, convStringToWstring(gProfile->GetGamertag(userIndex)).c_str(),
+                                                       userIndex, minecraft->mLevel->mDimension->getType()->getId(),
+                                                       NULL, NULL, 0, 0);
+        }
         return 0;
     }
 
-    if (minecraft->mLevel->mIsClientSide)
-    {
-        minecraft->addLocalPlayer(playerIdx);
-        return 0;
-    }
-
-    minecraft->createExtraLocalPlayer(playerIdx, convStringToWstring(gProfile->GetGamertag(playerIdx)), playerIdx,
-                                      playerIdx, NULL, NULL,
-                                      minecraft->mLevel->mDimension->getType()->getId(), 0);
+    gApp.SetDRCCheckPlayerCountEnabled(true);
     return 0;
 }
 
@@ -2100,7 +2065,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
             mClientMasterGameMode->Tick();
         }
 
-        for (int i = 0; i < mLevelCount; ++i)
+        for (int i = 0; i < mLevels.length; ++i)
         {
             MultiPlayerLevel* level = mLevels[i];
             if (level != mPlayer->mLevel)
@@ -2325,8 +2290,8 @@ void Minecraft::run_middle()
                             gApp.SetDRCCheckPlayerCountEnabled(false);
                             if (!mLevel->mIsClientSide)
                             {
-                                createExtraLocalPlayer(i, convStringToWstring(gProfile->GetGamertag(i)), i, i,
-                                                       NULL, NULL, mLevel->mDimension->getType()->getId(), 0);
+                                createExtraLocalPlayer(i, convStringToWstring(gProfile->GetGamertag(i)).c_str(), i,
+                                                       mLevel->mDimension->getType()->getId(), NULL, NULL, 0, 0);
                             }
                             else if (!addLocalPlayer(i))
                             {
@@ -2531,7 +2496,7 @@ void Minecraft::run_middle()
         gConsoleUIController.HandleGameTick();
         setLocalPlayerIdx(gProfile->GetPrimaryPad());
 
-        for (int i = 0; i < mLevelCount; ++i)
+        for (int i = 0; i < mLevels.length; ++i)
         {
             if (mLevels[i] != NULL)
                 mLevels[i]->animateTickDoWork();
@@ -2633,128 +2598,128 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
 {
     mGameRenderer->DisableUpdateThread(6);
 
-    boost::shared_ptr<MultiplayerLocalPlayer> oldPlayer = mLocalPlayers[playerIdx];
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mLocalPlayers[playerIdx];
     mLevel->validateSpawn();
     mLevel->removeAllPendingEntityRemovals();
-    if (oldPlayer)
-        mLevel->removeEntity(oldPlayer);
+    if (localPlayer)
+        mLevel->removeEntity(localPlayer);
 
-    boost::shared_ptr<MultiplayerLocalPlayer> newPlayer;
-    newPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(
-        mGameModes[playerIdx]->createPlayer(mLevel));
-    mPlayer = newPlayer;
+    boost::shared_ptr<Player> oldPlayer = localPlayer;
+    mCameraEntity = boost::shared_ptr<Entity>();
 
-    newPlayer->setName(convStringToWstring(gProfile->GetGamertag(playerIdx)));
+    int userIndex = localPlayer->mUserIndex;
+    unsigned int viewport = localPlayer->mViewport;
+    EDefaultSkins defaultSkin = static_cast<EDefaultSkins>(localPlayer->mField0x7d8);
+
+    mPlayer = mGameModes[playerIdx]->createPlayer(mLevel);
+
+    mPlayer->setName(convStringToWstring(gProfile->GetGamertag(playerIdx)));
     if (alive)
-        newPlayer->getEntityData()->assignValues(oldPlayer->getEntityData()->getAll());
+        mPlayer->getEntityData()->assignValues(oldPlayer->getEntityData()->getAll());
 
-    newPlayer->setSharedFlag(Entity::FLAG_ONFIRE, false);
-    if (InMiniGame(eMiniGameId_Glide, false) && gApp.getLevelGenerationOptions() != NULL)
+    mPlayer->setSharedFlag(Entity::FLAG_ONFIRE, false);
+    if (InMiniGame(eMiniGameId_Glide, false) && gApp.getLevelGenerationOptions() != NULL &&
+        gApp.getLevelGenerationOptions()->getRequiredGameRules() != NULL)
     {
-        LevelRuleset* ruleset = gApp.getLevelGenerationOptions()->getRequiredGameRules();
-        if (ruleset != NULL)
-        {
-            AABB* jumpOffArea = ruleset->getNamedArea(L"JumpOffPoint");
-            bool inJumpOffArea = jumpOffArea != NULL &&
-                                 jumpOffArea->containsIncludingLowerBound(newPlayer->getPos(1.0f));
-            if (!inJumpOffArea)
-                newPlayer->setSharedFlag(Entity::FLAG_FALL_FLYING, true);
-        }
+        AABB* jumpOffArea = gApp.getLevelGenerationOptions()->getRequiredGameRules()->getNamedArea(L"JumpOffPoint");
+        if (jumpOffArea == NULL || !jumpOffArea->containsIncludingLowerBound(mPlayer->getPos(1.0f)))
+            mPlayer->setSharedFlag(Entity::FLAG_FALL_FLYING, true);
     }
 
     PlayerUID xuid(0);
-    PlayerUID suid(0);
-    gProfile->GetXUID(playerIdx, &xuid, false);
-    gProfile->GetXUID(playerIdx, &suid, true);
-    newPlayer->mIsGuest = gProfile->IsGuest(playerIdx);
-    newPlayer->setXuid(xuid);
-    newPlayer->mSuid = suid;
-    newPlayer->mDisplayName = gProfile->GetDisplayName(playerIdx);
+    PlayerUID onlineXuid(0);
+    gProfile->GetXUID(userIndex, &xuid, false);
+    gProfile->GetXUID(userIndex, &onlineXuid, true);
+    mPlayer->mIsGuest = gProfile->IsGuest(userIndex);
+    mPlayer->setXuid(xuid);
+    mPlayer->mOnlineXuid = onlineXuid;
+    mPlayer->mDisplayName = gProfile->GetDisplayName(playerIdx);
 
     if (oldPlayer->IsSpectatingOtherPlayer())
-        newPlayer->SetCamera(oldPlayer->GetCamera());
+        mPlayer->SetCamera(oldPlayer->GetCamera());
 
-    if (!newPlayer->mIsGuest)
-        newPlayer->setUUID(newPlayer->mDisplayName);
+    if (!mPlayer->mIsGuest)
+        mPlayer->setUUID(mPlayer->mDisplayName);
 
-    newPlayer->mUserIndex = oldPlayer->mUserIndex;
-    newPlayer->mViewport = oldPlayer->mViewport;
-    newPlayer->mPlayerIndex = oldPlayer->mPlayerIndex;
+    mPlayer->mUserIndex = userIndex;
+    mPlayer->mViewport = viewport;
+    mPlayer->mPlayerIndex = localPlayer->mPlayerIndex;
 
-    newPlayer->setCustomSkin(oldPlayer->mCustomSkin);
-    newPlayer->setPlayerDefaultSkin(static_cast<EDefaultSkins>(oldPlayer->mField0x7d8));
-    newPlayer->setCustomCape(oldPlayer->mCustomCape);
-    newPlayer->mSessionTimerStart = oldPlayer->mSessionTimerStart;
-    newPlayer->mChangeDimensionTimerStart = oldPlayer->mChangeDimensionTimerStart;
-    newPlayer->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All,
-                                      oldPlayer->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All));
-    newPlayer->SetThirdPersonView(oldPlayer->GetThirdPersonView(true));
-    if (oldPlayer->getHealth() > 0.0f && oldPlayer->mY > -64.0 && !InMiniGame(eMiniGameId_Any, true))
-        newPlayer->mInventory->m_selected = oldPlayer->mInventory->m_selected;
+    mPlayer->setCustomSkin(localPlayer->mCustomSkin);
+    mPlayer->setPlayerDefaultSkin(defaultSkin);
+    mPlayer->setCustomCape(localPlayer->mCustomCape);
+    mPlayer->mSessionTimerStart = localPlayer->mSessionTimerStart;
+    mPlayer->mChangeDimensionTimerStart = localPlayer->mChangeDimensionTimerStart;
+    mPlayer->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All,
+                                    localPlayer->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All));
+    mPlayer->SetThirdPersonView(oldPlayer->GetThirdPersonView(true));
+    if (localPlayer->getHealth() > 0.0f && localPlayer->mY > -64.0 && !InMiniGame(eMiniGameId_Any, true))
+        mPlayer->mInventory->m_selected = localPlayer->mInventory->m_selected;
 
-    int skinId = static_cast<int>(CMinecraftApp::getSkinIdFromPath(newPlayer->mSkinLocation));
+    int skinId = static_cast<int>(CMinecraftApp::getSkinIdFromPath(mPlayer->mSkinLocation));
     if (skinId < 0)
-        newPlayer->setSkinAdjustments(Player::getSkinAdjustmentsById(skinId));
-    newPlayer->mDimension = dimension;
-    mCameraEntity = newPlayer;
+        mPlayer->setSkinAdjustments(Player::getSkinAdjustmentsById(skinId));
+    mPlayer->mDimension = dimension;
+    mCameraEntity = mPlayer;
 
     if (playerIdx == gProfile->GetPrimaryPad())
     {
         createPrimaryLocalPlayer(playerIdx);
-        GameSettings::SetGameSettingsDebugMask(playerIdx,
-                                               GameSettings::GetGameSettingsDebugMask(playerIdx, true));
+        GameSettings::SetGameSettingsDebugMask(gProfile->GetPrimaryPad(),
+                                               GameSettings::GetGameSettingsDebugMask(-1, true));
     }
     else
     {
         storeExtraLocalPlayer(playerIdx);
     }
 
-    newPlayer->mShowOnMaps = gApp.GetGameHostOption(eGameHostOption_Gamertags) != 0;
+    mPlayer->mShowOnMaps = gApp.GetGameHostOption(eGameHostOption_Gamertags) != 0;
 
-    newPlayer->resetPos();
-    mLevel->addEntity(newPlayer);
+    mPlayer->resetPos();
+    mLevel->addEntity(mPlayer);
 
-    mGameModes[playerIdx]->initPlayer(newPlayer);
+    mGameMode->initPlayer(mPlayer);
 
     ClientMasterGameMode* masterGameMode = GetClientMasterGameMode();
 
     if (InMiniGame(eMiniGameId_Glide, true) && CommonMasterGameMode::GetMiniGame()->IsCheckpointBasedSpawn())
     {
-        int checkpoint = newPlayer->GetLevel()->GetClientScoreboard()->GetLastCheckpointID(newPlayer->getSUID(), -1);
+        int checkpoint = mPlayer->GetLevel()->GetClientScoreboard()->GetLastCheckpointID(mPlayer->getSUID(), -1);
 
         if (gApp.getLevelGenerationOptions() != NULL)
         {
             const std::vector<CheckpointRuleDefinition*> checkpoints =
                 *gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpoints();
 
-            if (checkpoint >= 0 && !checkpoints.empty() && static_cast<unsigned int>(checkpoint) < checkpoints.size())
+            if (checkpoint >= 0 && static_cast<unsigned int>(checkpoint) < checkpoints.size())
             {
                 double speedBoost = gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpoints()->at(checkpoint)->getElytraBoost();
                 if (speedBoost > 0.0)
                 {
-                    newPlayer->activateElytraSpeedBoost(speedBoost);
+                    mPlayer->activateElytraSpeedBoost(speedBoost);
                 }
             }
         }
 
         if (masterGameMode->IsRoundPlaying())
         {
-            if (newPlayer->isLocalPlayer())
+            if (mPlayer->isLocalPlayer())
             {
                 mSoundEngine->playUI(SoundEvents::MG03_RESPAWN, 1.0f, 1.0f);
             }
             else
             {
-                mSoundEngine->play(SoundEvents::MG03_RESPAWN, (float)newPlayer->mX, (float)newPlayer->mY,
-                                   (float)newPlayer->mZ, 1.0f, 1.0f, NULL);
+                mSoundEngine->play(SoundEvents::MG03_RESPAWN, (float)mPlayer->mX, (float)mPlayer->mY,
+                                   (float)mPlayer->mZ, 1.0f, 1.0f, NULL);
             }
         }
     }
 
-    delete newPlayer->mInput;
-    newPlayer->mInput = new Input();
-    newPlayer->setId(entityId);
-    mGameModes[playerIdx]->adjustPlayer(newPlayer);
+    if (mPlayer->mInput != NULL)
+        delete mPlayer->mInput;
+    mPlayer->mInput = new Input();
+    mPlayer->setId(entityId);
+    mGameMode->adjustPlayer(mPlayer);
 
     if (!mLevel->mIsClientSide)
         prepareLevel((int)IDS_PROGRESS_RESPAWNING);
@@ -2775,7 +2740,7 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
     }
 
     mPlayer->mLastPoints = oldPlayer->mLastPoints;
-    mPlayer->SetWaitingForScoreboard(oldPlayer->IsWaitingForScoreboard());
+    mPlayer->SetWaitingForScoreboard(localPlayer->IsWaitingForScoreboard());
 
     if (dynamic_cast<DeathScreen*>(mScreen) != NULL)
         setScreen(NULL);
@@ -3095,7 +3060,7 @@ void Minecraft::fjReloadTexturePack()
 boost::shared_ptr<AbstractClientPlayer> Minecraft::GetLocalPlayerByName(const std::wstring& name)
 {
     boost::shared_ptr<Player> found;
-    for (int i = 0; i < mLevelCount; ++i)
+    for (int i = 0; i < mLevels.length; ++i)
     {
         if (mLevels[i] == NULL)
             continue;

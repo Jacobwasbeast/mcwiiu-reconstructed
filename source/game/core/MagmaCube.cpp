@@ -140,7 +140,7 @@ const SoundEvent* MagmaCube::getDeathSound()
 
 const SoundEvent* MagmaCube::getSquishSound()
 {
-    return getSize() > 1 ? SoundEvents::MAGMACUBE_SQUISH : SoundEvents::SMALL_MAGMACUBE_SQUISH;
+    return getSize() > 1 ? SoundEvents::SMALL_MAGMACUBE_SQUISH : SoundEvents::MAGMACUBE_SQUISH;
 }
 
 const SoundEvent* MagmaCube::getJumpSound()

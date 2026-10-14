@@ -166,9 +166,9 @@ bool FoodData::isStarving()
     return foodLevel <= static_cast<int>(FoodConstants::StarveLevel());
 }
 
-double FoodData::getSaturationLevel()
+float FoodData::getSaturationLevel()
 {
-    return static_cast<double>(saturationLevel);
+    return saturationLevel;
 }
 
 void FoodData::setFoodLevel(int foodLevelValue)

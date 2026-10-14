@@ -106,10 +106,11 @@ public:
     void setTrafficClass(int);
     OutputStream* getOutputStream(bool);
     bool close(bool);
+    bool isLocal() { return mHostLocal; }
 
 private:
-    bool mLocal;
-    bool mNetwork;
+    bool mHostServerConnection;
+    bool mHostLocal;
     int mIndex;
     std::queue<unsigned char> mQueues[2];
     OSFastMutex mMutexes[2];

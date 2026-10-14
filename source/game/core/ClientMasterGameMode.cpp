@@ -415,26 +415,24 @@ void ClientMasterGameMode::GetCurrentMapVotesText(std::vector<HtmlString>& text)
 
     for (std::vector<MapSelectInfo>::const_iterator it = playlist.begin(); it != playlist.end(); ++it)
     {
-        const int uniqueId = it->uniqueId;
-        LevelRules* levelRules = gApp.getLevelRules();
-        LevelGenerationOptions* options = levelRules->getLevelGenFromUniqueId(ruleType, uniqueId);
-        const wchar_t* worldName = options != NULL ? options->getWorldName() : L"Unknown";
-        boost::unordered_map<int, int>::const_iterator vote = totals.find(uniqueId);
+        LevelGenerationOptions* options = gApp.getLevelRules()->getLevelGenFromUniqueId(ruleType, it->uniqueId);
+        const std::wstring worldName = options != NULL ? options->getWorldName() : L"";
         if (gApp.DebugArtToolsOn())
         {
-            const std::wstring label = vote == totals.end()
-                                           ? formatwstr(L"%ls : 0", worldName)
-                                           : formatwstr(L"%ls : %d", worldName, vote->second);
-            text.push_back(HtmlString(label, eMinecraftColour_NOTSET, false, false, 0));
+            if (totals.find(it->uniqueId) == totals.end())
+                text.push_back(HtmlString(formatwstr(L"%ls : 0", worldName.c_str()), eMinecraftColour_NOTSET, false, false, 0));
+            else
+                text.push_back(HtmlString(formatwstr(L"%ls : %d", worldName.c_str(), totals[it->uniqueId]),
+                                          eMinecraftColour_NOTSET, false, false, 0));
         }
 
-        const unsigned int themeId = LevelGenerationOptions::GetThemeFromUniqueId(uniqueId);
-        const unsigned int themeUniqueId = LevelGenerationOptions::CreateUniqueId(themeId, -1);
-        vote = totals.find(static_cast<int>(themeUniqueId));
-        const std::wstring themeLabel = vote == totals.end()
-                                            ? formatwstr(L"%ls : 0", worldName)
-                                            : formatwstr(L"%ls : %d", worldName, vote->second);
-        text.push_back(HtmlString(themeLabel, eMinecraftColour_NOTSET, false, false, 0));
+        const int themeUniqueId =
+            LevelGenerationOptions::CreateUniqueId(LevelGenerationOptions::GetThemeFromUniqueId(it->uniqueId), -1);
+        if (totals.find(themeUniqueId) == totals.end())
+            text.push_back(HtmlString(formatwstr(L"%ls : 0", worldName.c_str()), eMinecraftColour_NOTSET, false, false, 0));
+        else
+            text.push_back(HtmlString(formatwstr(L"%ls : %d", worldName.c_str(), totals[themeUniqueId]),
+                                      eMinecraftColour_NOTSET, false, false, 0));
     }
 }
 void ClientMasterGameMode::GetCurrentVariantVotesText(std::vector<HtmlString>& text)
@@ -685,45 +683,40 @@ void ClientMasterGameMode::DoGraceTickSound(int tick, const MiniGameDef::SoundSp
 
 void ClientMasterGameMode::OnChatPacket(boost::shared_ptr<ClientboundChatPacket> packet)
 {
-    if (!packet)
-        return;
-    const unsigned int messageId = static_cast<unsigned int>(packet->getMessage());
-    const int tick = packet->getFirstInt();
-    const MiniGameDef* miniGame = GetMiniGame();
-    if (miniGame == NULL)
-        return;
-    if (messageId < 0x80U)
+    switch (packet->message)
     {
-        if (messageId == 0x7aU)
-        {
-            DoLobbyTickSound(tick, miniGame->getSoundSpec(EGameModeSound_RoundLimitTimer));
-            return;
-        }
-        if (messageId != 0x7cU)
-        {
-            if (messageId != 0x7eU)
-                return;
-            DoRoundStartTickSound(tick, miniGame->getSoundSpec(EGameModeSound_RoundStartTimer));
-            OnRoundStartTimerTick(tick);
-            return;
-        }
-    }
-    else
+    case ClientboundChatPacket::eChatPacketMessage_TimeToGameChangeCountdown:
     {
-        if (messageId < 0x81U)
-        {
-            DoLobbyTickSound(tick, miniGame->getSoundSpec(EGameModeSound_LobbyTimer));
-            return;
-        }
-        if (messageId != 0x81U)
-        {
-            if (messageId != 0x86U)
-                return;
-            DoLobbyTickSound(tick, miniGame->getSoundSpec(EGameModeSound_RoundLimitTimer));
-            return;
-        }
+        const MiniGameDef::SoundSpec& spec =
+            Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_LobbyTimer);
+        DoLobbyTickSound(packet->ints[0], spec);
+        break;
     }
-    DoGraceTickSound(packet->hasInts() ? tick : 0, miniGame->getSoundSpec(EGameModeSound_GraceTimer));
+    case ClientboundChatPacket::eChatPacketMessage_TimeToStartCountdown:
+    {
+        const MiniGameDef::SoundSpec& spec =
+            Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_RoundStartTimer);
+        DoRoundStartTickSound(packet->ints[0], spec);
+        OnRoundStartTimerTick(packet->ints[0]);
+        break;
+    }
+    case ClientboundChatPacket::eChatPacketMessage_InvulnerabilityOff:
+    case ClientboundChatPacket::eChatPacketMessage_InvulnerabilityCountdown:
+    {
+        const MiniGameDef::SoundSpec& spec =
+            Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_GraceTimer);
+        DoGraceTickSound(packet->ints.size() == 0 ? 0 : packet->ints[0], spec);
+        break;
+    }
+    case ClientboundChatPacket::eChatPacketMessage_SecondsToReachEnd:
+    case ClientboundChatPacket::eChatPacketMessage_RoundEndIn:
+    {
+        const MiniGameDef::SoundSpec& spec =
+            Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_RoundLimitTimer);
+        DoLobbyTickSound(packet->ints[0], spec);
+        break;
+    }
+    }
 }
 void ClientMasterGameMode::SetGeneratorSeed(long long seed, float scale)
 {
@@ -780,15 +773,14 @@ bool ClientMasterGameMode::IsInTrasitionFromLobby()
 }
 bool ClientMasterGameMode::CheckLocalChunksLoaded()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    Level* level = minecraft->getLevel(0);
     bool allLoaded = true;
+    Minecraft* minecraft = Minecraft::GetInstance();
 
     mLoadedChunkCount = 0;
-    for (std::vector<AABB*>::const_iterator areaIt = mActiveChunkAreas.begin();
-         areaIt != mActiveChunkAreas.end() && allLoaded; ++areaIt)
+    const unsigned int areaCount = mActiveChunkAreas.size();
+    for (unsigned int i = 0; i < areaCount; ++i)
     {
-        const AABB* area = *areaIt;
+        const AABB* area = mActiveChunkAreas.at(i);
         if (area == NULL)
             continue;
 
@@ -797,36 +789,39 @@ bool ClientMasterGameMode::CheckLocalChunksLoaded()
         const int minChunkZ = static_cast<int>(area->mMinZ);
         const int maxChunkZ = static_cast<int>(area->mMaxZ);
 
-        for (int chunkX = minChunkX; chunkX <= maxChunkX && allLoaded; ++chunkX)
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX)
         {
             for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; ++chunkZ)
             {
-                if (!level->reallyHasChunk(chunkX, chunkZ))
+                if (!minecraft->getLevel(0)->reallyHasChunk(chunkX, chunkZ))
                 {
                     allLoaded = false;
                     break;
                 }
                 ++mLoadedChunkCount;
             }
+            if (!allLoaded)
+                break;
         }
     }
 
-    if (!allLoaded || mBRUPsRemaining >= 1)
-        return false;
-
-    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+    bool sent = false;
+    if (allLoaded && mBRUPsRemaining < 1)
     {
-        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-        ClientPacketListener* connection = minecraft->getConnection(playerIndex);
-        if (localPlayer != NULL && connection != NULL)
+        for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
         {
-            GameModePacket::EmptyData emptyData;
-            connection->send(GameModePacket::Create(GameModePacket::eMessage_FinishedLoadingLocally, emptyData));
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
+            if (localPlayer != NULL && localPlayer->mPacketListener != NULL)
+            {
+                GameModePacket::EmptyData emptyData;
+                localPlayer->mPacketListener->send(
+                    GameModePacket::Create(GameModePacket::eMessage_FinishedLoadingLocally, emptyData));
+                sent = true;
+                mServerIsWaitingOnChunkLoading = false;
+            }
         }
     }
-
-    mServerIsWaitingOnChunkLoading = false;
-    return true;
+    return sent;
 }
 void ClientMasterGameMode::FireGameRoundStats()
 {

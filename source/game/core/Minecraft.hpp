@@ -11,6 +11,7 @@
 #include "game/core/File.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/network/DisconnectPacket.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 
 class AbstractClientPlayer;
 class BlockColors;
@@ -141,11 +142,11 @@ public:
 
     bool addLocalPlayer(int playerIdx);
     void createPrimaryLocalPlayer(int playerIdx);
-    boost::shared_ptr<MultiplayerLocalPlayer> createExtraLocalPlayer(int entityId, const std::wstring& name,
-                                                                     int playerIdx, int userIndex,
+    boost::shared_ptr<MultiplayerLocalPlayer> createExtraLocalPlayer(int playerIdx, const std::wstring& name,
+                                                                     int userIndex, int dimension,
                                                                      ClientPacketListener* connection,
-                                                                     MultiPlayerLevel* level, int dimension,
-                                                                     int gameTypeId);
+                                                                     MultiPlayerLevel* level, int gameTypeId,
+                                                                     int gameModeUserIndex);
     void storeExtraLocalPlayer(int playerIdx);
     void removeLocalPlayerIdx(int playerIdx);
     bool setLocalPlayerIdx(int playerIdx);
@@ -212,8 +213,7 @@ public:
     MultiPlayerLevel* mLevel;
     LevelRenderer* mLevelRenderer;
     boost::shared_ptr<MultiplayerLocalPlayer> mPlayer;
-    MultiPlayerLevel** mLevels;
-    unsigned int mLevelCount;
+    arrayWithLength<MultiPlayerLevel*> mLevels;
     boost::shared_ptr<MultiplayerLocalPlayer> mLocalPlayers[4];
     MultiPlayerGameMode* mGameModes[4];
     int mLocalPlayerIdx;

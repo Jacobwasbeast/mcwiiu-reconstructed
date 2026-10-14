@@ -261,101 +261,100 @@ uint32_t GameSettings::GetGameSettings(int profile, eGameSetting setting)
 {
     if (profile == 255)
         profile = gProfile->GetPrimaryPad();
-    GameSettings* s = gGameSettings[profile];
     switch (setting)
     {
     case eGameSetting_MusicVolume:
-        return s->mMusicVolume;
+        return gGameSettings[profile]->mMusicVolume;
     case eGameSetting_SoundVolume:
-        return s->mSoundVolume;
+        return gGameSettings[profile]->mSoundVolume;
     case eGameSetting_Gamma:
-        return s->mGamma;
+        return gGameSettings[profile]->mGamma;
     case eGameSetting_Difficulty:
-        return s->mPackedSettings & 3;
+        return gGameSettings[profile]->mPackedSettings & 3;
     case eGameSetting_GameSensitivity:
-        return s->mGameSensitivity;
-    case eGameSetting_InterfaceSensitivity:
-        return s->mInterfaceSensitivity;
+        return gGameSettings[profile]->mGameSensitivity;
     case eGameSetting_ViewBob:
-        return (s->mPackedSettings >> 2) & 1;
-    case eGameSetting_ControlScheme:
-        return (s->mPackedSettings >> 4) & 3;
-    case eGameSetting_InvertLook:
-        return (s->mPackedSettings >> 6) & 1;
-    case eGameSetting_SouthPaw:
-        return (s->mPackedSettings >> 7) & 1;
-    case eGameSetting_SecondaryControls:
-        return (s->mSettingFlags >> 23) & 1;
-    case eGameSetting_SplitScreenVertical:
-        return (s->mPackedSettings >> 8) & 1;
+        return (gGameSettings[profile]->mPackedSettings >> 2) & 1;
     case eGameSetting_DisplayMii:
-        return (s->mPackedSettings >> 3) & 1;
-    case eGameSetting_Autosave:
-        return (s->mPackedSettings >> 11) & 15;
+        return (gGameSettings[profile]->mPackedSettings >> 3) & 1;
+    case eGameSetting_ControlScheme:
+        return (gGameSettings[profile]->mPackedSettings >> 4) & 3;
+    case eGameSetting_InvertLook:
+        return (gGameSettings[profile]->mPackedSettings >> 6) & 1;
+    case eGameSetting_SouthPaw:
+        return (gGameSettings[profile]->mPackedSettings >> 7) & 1;
+    case eGameSetting_SplitScreenVertical:
+        return (gGameSettings[profile]->mPackedSettings >> 8) & 1;
+    case eGameSetting_InterfaceSensitivity:
+        return gGameSettings[profile]->mInterfaceSensitivity;
     case eGameSetting_SplitscreenNicknames:
-        return (s->mPackedSettings >> 9) & 1;
+        return (gGameSettings[profile]->mPackedSettings >> 9) & 1;
     case eGameSetting_Hints:
-        return (s->mPackedSettings >> 10) & 1;
-    case eGameSetting_InterfaceOpacity:
-        return s->mInterfaceOpacity;
+        return (gGameSettings[profile]->mPackedSettings >> 10) & 1;
+    case eGameSetting_Autosave:
+        return (gGameSettings[profile]->mPackedSettings >> 11) & 15;
     case eGameSetting_Tooltips:
-        return s->mPackedSettings >> 15;
+        return (gGameSettings[profile]->mPackedSettings >> 15) & 1;
+    case eGameSetting_InterfaceOpacity:
+        return gGameSettings[profile]->mInterfaceOpacity;
     case eGameSetting_Clouds:
-        return s->mSettingFlags & 1;
+        return gGameSettings[profile]->mSettingFlags & 1;
     case eGameSetting_Online:
-        return (s->mSettingFlags >> 1) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 1) & 1;
     case eGameSetting_InviteOnly:
-        return (s->mSettingFlags >> 2) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 2) & 1;
     case eGameSetting_FriendsOfFriends:
-        return (s->mSettingFlags >> 3) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 3) & 1;
     case eGameSetting_DisplayUpdateMessage:
-        return (s->mSettingFlags >> 4) & 3;
+        return (gGameSettings[profile]->mSettingFlags >> 4) & 3;
     case eGameSetting_DisplayHUD:
-        return (s->mSettingFlags >> 7) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 7) & 1;
     case eGameSetting_DisplayHand:
-        return (s->mSettingFlags >> 8) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 8) & 1;
     case eGameSetting_CustomSkinAnim:
-        return (s->mSettingFlags >> 9) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 9) & 1;
     case eGameSetting_DeathMessages:
-        return (s->mSettingFlags >> 10) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 10) & 1;
     case eGameSetting_HUDSize:
-        return (s->mSettingFlags >> 11) & 3;
+        return (gGameSettings[profile]->mSettingFlags >> 11) & 3;
     case eGameSetting_HUDSizeSplitscreen:
-        return (s->mSettingFlags >> 13) & 3;
+        return (gGameSettings[profile]->mSettingFlags >> 13) & 3;
     case eGameSetting_AnimatedCharacter:
-        return (s->mSettingFlags >> 15) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 15) & 1;
     case eGameSetting_EULAAccepted:
-        return (s->mSettingFlags >> 16) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 16) & 1;
     case eGameSetting_Reserved:
-        return (s->mSettingFlags >> 17) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 17) & 1;
     case eGameSetting_ClassicCrafting:
-        return (s->mSettingFlags >> 18) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 18) & 1;
     case eGameSetting_CaveSounds:
-        return (s->mSettingFlags >> 19) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 19) & 1;
     case eGameSetting_GameChat:
-        return (s->mSettingFlags >> 20) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 20) & 1;
     case eGameSetting_MinecartSounds:
-        return (s->mSettingFlags >> 21) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 21) & 1;
+    case eGameSetting_ShowGlideGhost:
+        return (gGameSettings[profile]->mSettingFlags >> 22) & 1;
+    case eGameSetting_SecondaryControls:
+        return (gGameSettings[profile]->mSettingFlags >> 23) & 1;
     case eGameSetting_PublicMiniGamePrompts:
-        return (s->mSettingFlags >> 24) & 3;
+        return (gGameSettings[profile]->mSettingFlags >> 24) & 3;
+    case eGameSetting_AutoJump:
+        return (gGameSettings[profile]->mSettingFlags >> 26) & 1;
     case eGameSetting_UpdateMessageSeen:
-        return (s->mSettingFlags >> 27) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 27) & 1;
     case eGameSetting_DisplayGameMessages:
-        return (s->mSettingFlags >> 28) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 28) & 1;
     case eGameSetting_DisplaySaveIcon:
-        return (s->mSettingFlags >> 29) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 29) & 1;
     case eGameSetting_FlyingViewRolling:
-        return (s->mSettingFlags >> 30) & 1;
+        return (gGameSettings[profile]->mSettingFlags >> 30) & 1;
+    case eGameSetting_ShowGlideGhostPath:
+        return gGameSettings[profile]->mSettingFlags >> 31;
+    case eGameSetting_SkinAdjustments:
+        return gGameSettings[profile]->mSkinFlags & 15;
     case eGameSetting_ControlMappings:
         return 0;
-    case eGameSetting_ShowGlideGhost:
-        return (s->mSettingFlags >> 22) & 1;
-    case eGameSetting_ShowGlideGhostPath:
-        return s->mSettingFlags >> 31;
-    case eGameSetting_AutoJump:
-        return (s->mSettingFlags >> 26) & 1;
-    case eGameSetting_SkinAdjustments:
-        return s->mSkinFlags & 15;
     default:
         return 0;
     }
@@ -479,6 +478,18 @@ void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
             }
         }
         return;
+    case eGameSetting_SplitscreenNicknames:
+        {
+            if (minecraft->mLocalPlayers[0])
+                gConsoleUIController.DisplayGamertag(0, minecraft->mLocalPlayers[0]->mViewport != 0);
+            if (minecraft->mLocalPlayers[1])
+                gConsoleUIController.DisplayGamertag(1, minecraft->mLocalPlayers[1]->mViewport != 0);
+            if (minecraft->mLocalPlayers[2])
+                gConsoleUIController.DisplayGamertag(2, minecraft->mLocalPlayers[2]->mViewport != 0);
+            if (minecraft->mLocalPlayers[3])
+                gConsoleUIController.DisplayGamertag(3, minecraft->mLocalPlayers[3]->mViewport != 0);
+        }
+        return;
     case eGameSetting_InterfaceOpacity:
         gConsoleUIController.RefreshTooltips(static_cast<unsigned int>(profile));
         return;
@@ -501,18 +512,6 @@ void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
                 g_pInput->SetGameJoypadMaps(profile, static_cast<unsigned char>(EControllerActions_Jump + action),
                     GetActionVal(GetActionMapping(profile, action)));
             }
-        }
-        return;
-    case eGameSetting_SplitscreenNicknames:
-        {
-            if (minecraft->mLocalPlayers[0])
-                gConsoleUIController.DisplayGamertag(0, minecraft->mLocalPlayers[0]->mViewport != 0);
-            if (minecraft->mLocalPlayers[1])
-                gConsoleUIController.DisplayGamertag(1, minecraft->mLocalPlayers[1]->mViewport != 0);
-            if (minecraft->mLocalPlayers[2])
-                gConsoleUIController.DisplayGamertag(2, minecraft->mLocalPlayers[2]->mViewport != 0);
-            if (minecraft->mLocalPlayers[3])
-                gConsoleUIController.DisplayGamertag(3, minecraft->mLocalPlayers[3]->mViewport != 0);
         }
         return;
     default:
@@ -554,9 +553,6 @@ void GameSettings::SetGameSettings(int profile, eGameSetting setting, unsigned c
     case eGameSetting_GameSensitivity:
         setGameSettingsHelper<unsigned char>(profile, setting, value, &gameSettings->mGameSensitivity, 0xff, 0);
         break;
-    case eGameSetting_InterfaceSensitivity:
-        setGameSettingsHelper<unsigned char>(profile, setting, value, &gameSettings->mInterfaceSensitivity, 0xff, 0);
-        break;
     case eGameSetting_ViewBob:
         setGameSettingsHelper<unsigned short>(profile, setting, value, &gameSettings->mPackedSettings, 0x4, 2);
         break;
@@ -569,17 +565,14 @@ void GameSettings::SetGameSettings(int profile, eGameSetting setting, unsigned c
     case eGameSetting_SouthPaw:
         setGameSettingsHelper<unsigned short>(profile, setting, value, &gameSettings->mPackedSettings, 0x80, 7);
         break;
-    case eGameSetting_SecondaryControls:
-        setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x800000, 23);
-        break;
     case eGameSetting_SplitScreenVertical:
         setGameSettingsHelper<unsigned short>(profile, setting, value, &gameSettings->mPackedSettings, 0x100, 8);
         break;
     case eGameSetting_DisplayMii:
         setGameSettingsHelper<unsigned short>(profile, setting, value, &gameSettings->mPackedSettings, 0x8, 3);
         break;
-    case eGameSetting_Autosave:
-        setGameSettingsHelper<unsigned short>(profile, setting, value, &gameSettings->mPackedSettings, 0x7800, 11);
+    case eGameSetting_InterfaceSensitivity:
+        setGameSettingsHelper<unsigned char>(profile, setting, value, &gameSettings->mInterfaceSensitivity, 0xff, 0);
         break;
     case eGameSetting_SplitscreenNicknames:
         setGameSettingsHelper<unsigned short>(profile, setting, value, &gameSettings->mPackedSettings, 0x200, 9);
@@ -587,11 +580,14 @@ void GameSettings::SetGameSettings(int profile, eGameSetting setting, unsigned c
     case eGameSetting_Hints:
         setGameSettingsHelper<unsigned short>(profile, setting, value, &gameSettings->mPackedSettings, 0x400, 10);
         break;
-    case eGameSetting_InterfaceOpacity:
-        setGameSettingsHelper<unsigned char>(profile, setting, value, &gameSettings->mInterfaceOpacity, 0xff, 0);
+    case eGameSetting_Autosave:
+        setGameSettingsHelper<unsigned short>(profile, setting, value, &gameSettings->mPackedSettings, 0x7800, 11);
         break;
     case eGameSetting_Tooltips:
         setGameSettingsHelper<unsigned short>(profile, setting, value, &gameSettings->mPackedSettings, 0x8000, 15);
+        break;
+    case eGameSetting_InterfaceOpacity:
+        setGameSettingsHelper<unsigned char>(profile, setting, value, &gameSettings->mInterfaceOpacity, 0xff, 0);
         break;
     case eGameSetting_Clouds:
         setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x1, 0);
@@ -647,8 +643,17 @@ void GameSettings::SetGameSettings(int profile, eGameSetting setting, unsigned c
     case eGameSetting_MinecartSounds:
         setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x200000, 21);
         break;
+    case eGameSetting_ShowGlideGhost:
+        setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x400000, 22);
+        break;
+    case eGameSetting_SecondaryControls:
+        setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x800000, 23);
+        break;
     case eGameSetting_PublicMiniGamePrompts:
         setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x3000000, 24);
+        break;
+    case eGameSetting_AutoJump:
+        setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x4000000, 26);
         break;
     case eGameSetting_UpdateMessageSeen:
         setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x8000000, 27);
@@ -662,19 +667,13 @@ void GameSettings::SetGameSettings(int profile, eGameSetting setting, unsigned c
     case eGameSetting_FlyingViewRolling:
         setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x40000000, 30);
         break;
-    case eGameSetting_ControlMappings:
-        break;
-    case eGameSetting_ShowGlideGhost:
-        setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x400000, 22);
-        break;
     case eGameSetting_ShowGlideGhostPath:
         setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x80000000, 31);
         break;
-    case eGameSetting_AutoJump:
-        setGameSettingsHelper<unsigned int>(profile, setting, value, &gameSettings->mSettingFlags, 0x4000000, 26);
-        break;
     case eGameSetting_SkinAdjustments:
         setGameSettingsHelper<unsigned char>(profile, setting, value, &gameSettings->mSkinFlags, 0xf, 0);
+        break;
+    case eGameSetting_ControlMappings:
         break;
     default:
         break;
