@@ -43,9 +43,7 @@ void TurtleBreedGoal::breed()
     Random* random = mAnimal->getRandom();
     if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
     {
-        mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(new ExperienceOrb(
-            mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ,
-            random->nextInt(7) + 1)));
+        mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(
+            new ExperienceOrb(mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ, random->nextInt(7) + 1)));
     }
 }
-

@@ -18,8 +18,8 @@ class PathfinderMob;
 class TemptGoal : public Goal
 {
 public:
-    TemptGoal(PathfinderMob* mob, double speedModifier, arrayWithLength<Item*> items,
-              bool canScare, arrayWithLength<int> itemAuxValues);
+    TemptGoal(PathfinderMob* mob, double speedModifier, arrayWithLength<Item*> items, bool canScare,
+              arrayWithLength<int> itemAuxValues);
 
     bool shouldFollowItem(not_null_ptr<ItemInstance> item);
     virtual bool canUse();

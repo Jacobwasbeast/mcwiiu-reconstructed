@@ -6,8 +6,7 @@
 #include "game/entity/ai/Goal.hpp"
 #include "game/world/Level.hpp"
 
-GoalSelector::GoalSelector()
-    : mTickCount(0), mNewGoalRate(3), mDisabledControlFlags(0)
+GoalSelector::GoalSelector() : mTickCount(0), mNewGoalRate(3), mDisabledControlFlags(0)
 {
 }
 

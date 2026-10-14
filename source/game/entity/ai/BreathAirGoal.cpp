@@ -9,10 +9,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/Level.hpp"
 
-BreathAirGoal::BreathAirGoal(Dolphin* dolphin)
-    : Goal(),
-      mAirSupplyThreshold(100),
-      mDolphin(dolphin)
+BreathAirGoal::BreathAirGoal(Dolphin* dolphin) : Goal(), mAirSupplyThreshold(100), mDolphin(dolphin)
 {
 }
 
@@ -41,11 +38,9 @@ void BreathAirGoal::findAirPosition()
 {
     const double radius = 2.0;
     const double verticalRange = 16.0;
-    BlockPos minPos(Mth::fastFloor(mDolphin->mX - radius),
-                    Mth::fastFloor(mDolphin->mY),
+    BlockPos minPos(Mth::fastFloor(mDolphin->mX - radius), Mth::fastFloor(mDolphin->mY),
                     Mth::fastFloor(mDolphin->mZ - radius));
-    BlockPos maxPos(Mth::fastFloor(mDolphin->mX + radius),
-                    Mth::fastFloor(mDolphin->mY + verticalRange),
+    BlockPos maxPos(Mth::fastFloor(mDolphin->mX + radius), Mth::fastFloor(mDolphin->mY + verticalRange),
                     Mth::fastFloor(mDolphin->mZ + radius));
     BlockPos* pos = findAirInArea(minPos, maxPos);
     if (pos == NULL)

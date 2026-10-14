@@ -19,8 +19,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-AmphibiousNodeEvaluator::AmphibiousNodeEvaluator(Entity* entity)
-    : WalkNodeEvaluator(entity)
+AmphibiousNodeEvaluator::AmphibiousNodeEvaluator(Entity* entity) : WalkNodeEvaluator(entity)
 {
 }
 
@@ -63,8 +62,7 @@ double AmphibiousNodeEvaluator::inWaterDependentPosHeight(const BlockPos& pos)
     return pos.y + 0.5;
 }
 
-Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int verticalRange,
-                                               double maxFallDistance)
+Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int verticalRange, double maxFallDistance)
 {
     Node* cachedNode = getNode(x, y, z);
     if (cachedNode->hasAcceptedNode)
@@ -79,9 +77,8 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
         return NULL;
     }
 
-    const BlockPathTypes* type =
-        WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y, z, mMob, mEntityWidth, mEntityHeight,
-                                            mEntityDepth, isCanOpenDoors(), isCanPassDoors());
+    const BlockPathTypes* type = WalkNodeEvaluator::getBlockPathType(
+        mLevelSource, x, y, z, mMob, mEntityWidth, mEntityHeight, mEntityDepth, isCanOpenDoors(), isCanPassDoors());
     float malus = mMob->getPathfindingMalus(type);
     const double halfWidth = mMob->mBbWidth * 0.5;
     if (malus >= 0.0f)
@@ -114,9 +111,9 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
             return NULL;
         }
 
-        const BlockPathTypes* below =
-            WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y - 1, z, mMob, mEntityWidth, mEntityHeight,
-                                                mEntityDepth, isCanOpenDoors(), isCanPassDoors());
+        const BlockPathTypes* below = WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y - 1, z, mMob, mEntityWidth,
+                                                                          mEntityHeight, mEntityDepth, isCanOpenDoors(),
+                                                                          isCanPassDoors());
         if (below == BlockPathTypes::BLOCKED)
         {
             node = getNode(x, y, z);
@@ -171,8 +168,7 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
     return node;
 }
 
-int AmphibiousNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* current,
-                                          Node* target, float maxCost)
+int AmphibiousNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* current, Node* target, float maxCost)
 {
     int count = 0;
     BlockPos pos(current->x, current->y, current->z);
@@ -236,11 +232,9 @@ int AmphibiousNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Nod
     return count;
 }
 
-const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathTypes(LevelSource* levelSource, int x,
-                                                                 int y, int z, int sizeX, int sizeY,
-                                                                 int sizeZ, bool canOpenDoors,
-                                                                 bool canPassDoors,
-                                                                 int& pathTypeFlags,
+const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathTypes(LevelSource* levelSource, int x, int y, int z,
+                                                                 int sizeX, int sizeY, int sizeZ, bool canOpenDoors,
+                                                                 bool canPassDoors, int& pathTypeFlags,
                                                                  const BlockPathTypes* pathType)
 {
     BlockPos mobPos(mMob);
@@ -292,11 +286,13 @@ const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathType(LevelSource* lev
     const BlockPathTypes* type = getBlockPathTypeRaw(levelSource, x, y, z);
     if (type == BlockPathTypes::WATER)
     {
-        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
+             ++it)
         {
             const Direction* direction = *it;
             if (getBlockPathTypeRaw(levelSource, x + direction->getStepX(), y + direction->getStepY(),
-                                    z + direction->getStepZ()) == BlockPathTypes::BLOCKED)
+                                    z + direction->getStepZ())
+                == BlockPathTypes::BLOCKED)
                 return BlockPathTypes::WATER_BORDER;
         }
         return BlockPathTypes::WATER;

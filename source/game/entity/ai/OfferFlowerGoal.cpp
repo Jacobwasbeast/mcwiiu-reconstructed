@@ -28,8 +28,8 @@ bool OfferFlowerGoal::canUse()
         return false;
 
     VillagerGolem* golem = mGolem;
-    mTarget = boost::weak_ptr<Villager>(boost::dynamic_pointer_cast<Villager>(
-        mGolem->mLevel->getClosestEntityOfClass(typeid(Villager), golem->mBoundingBox->grow(6.0, 2.0, 6.0), golem->shared_from_this())));
+    mTarget = boost::weak_ptr<Villager>(boost::dynamic_pointer_cast<Villager>(mGolem->mLevel->getClosestEntityOfClass(
+        typeid(Villager), golem->mBoundingBox->grow(6.0, 2.0, 6.0), golem->shared_from_this())));
     return !!mTarget.lock();
 }
 
@@ -55,4 +55,3 @@ void OfferFlowerGoal::tick()
     mGolem->getLookControl()->setLookAt(mTarget.lock(), 30.0f, 30.0f);
     --mTicks;
 }
-

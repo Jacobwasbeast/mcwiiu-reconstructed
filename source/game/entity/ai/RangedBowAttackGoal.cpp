@@ -13,9 +13,12 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 
-RangedBowAttackGoal::RangedBowAttackGoal(Monster* mob, double speedModifier, int attackInterval,
-                                         float attackRadius)
-    : Goal(), mAttackTime(-1), mSeeTime(0), mStrafingClockwise(false), mStrafingBackwards(false),
+RangedBowAttackGoal::RangedBowAttackGoal(Monster* mob, double speedModifier, int attackInterval, float attackRadius)
+    : Goal(),
+      mAttackTime(-1),
+      mSeeTime(0),
+      mStrafingClockwise(false),
+      mStrafingBackwards(false),
       mStrafingTime(-1)
 {
     mMob = mob;
@@ -36,8 +39,7 @@ void RangedBowAttackGoal::setMinAttackInterval(int attackInterval)
 
 bool RangedBowAttackGoal::isHoldingBow()
 {
-    return !mMob->getMainHandItem()->isEmpty()
-        && mMob->getMainHandItem()->getItem() == Items::bow;
+    return !mMob->getMainHandItem()->isEmpty() && mMob->getMainHandItem()->getItem() == Items::bow;
 }
 
 bool RangedBowAttackGoal::canUse()
@@ -110,8 +112,7 @@ void RangedBowAttackGoal::tick()
         else if (distance < (double)(mAttackRadiusSqr * 0.25f))
             mStrafingBackwards = true;
 
-        mMob->getMoveControl()->strafe(mStrafingBackwards ? -0.5f : 0.5f,
-                                       mStrafingClockwise ? 0.5f : -0.5f);
+        mMob->getMoveControl()->strafe(mStrafingBackwards ? -0.5f : 0.5f, mStrafingClockwise ? 0.5f : -0.5f);
         mMob->lookAt(target, 30.0f, 30.0f);
     }
     else
@@ -132,8 +133,8 @@ void RangedBowAttackGoal::tick()
             if (ticksUsingItem >= BowItem::GetMaxBowDuration())
             {
                 mMob->stopUsingItem();
-                dynamic_cast<RangedAttackMob*>(mMob)->performRangedAttack(
-                    target, BowItem::getPowerForTime(ticksUsingItem));
+                dynamic_cast<RangedAttackMob*>(mMob)->performRangedAttack(target,
+                                                                          BowItem::getPowerForTime(ticksUsingItem));
                 mAttackTime = mAttackInterval;
             }
         }
@@ -143,4 +144,3 @@ void RangedBowAttackGoal::tick()
         mMob->startUsingItem(InteractionHand::eInteractionHand_MainHand);
     }
 }
-

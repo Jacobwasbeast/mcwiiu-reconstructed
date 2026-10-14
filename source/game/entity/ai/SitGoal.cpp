@@ -7,10 +7,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/TamableAnimal.hpp"
 
-SitGoal::SitGoal(TamableAnimal* mob)
-    : Goal()
-    , mMob(mob)
-    , mWantToSit(false)
+SitGoal::SitGoal(TamableAnimal* mob) : Goal(), mMob(mob), mWantToSit(false)
 {
     setRequiredControlFlags(5);
 }
@@ -56,4 +53,3 @@ void SitGoal::wantToSit(bool wantToSit)
 {
     mWantToSit = wantToSit;
 }
-

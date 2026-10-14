@@ -7,8 +7,7 @@
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 
-SwellGoal::SwellGoal(Creeper* creeper)
-    : mTarget()
+SwellGoal::SwellGoal(Creeper* creeper) : mTarget()
 {
     mTarget = boost::weak_ptr<LivingEntity>();
     mCreeper = creeper;
@@ -18,8 +17,7 @@ SwellGoal::SwellGoal(Creeper* creeper)
 bool SwellGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mCreeper->getTarget();
-    return mCreeper->getSwellDir() > 0
-        || (target && mCreeper->distanceToSqr(target) < 9.0);
+    return mCreeper->getSwellDir() > 0 || (target && mCreeper->distanceToSqr(target) < 9.0);
 }
 
 void SwellGoal::start()

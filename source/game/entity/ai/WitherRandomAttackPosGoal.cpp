@@ -11,8 +11,8 @@
 #include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
 
-WitherRandomAttackPosGoal::WitherRandomAttackPosGoal(PathfinderMob* mob, float speedModifier,
-                                                     int interval, int xz, int y)
+WitherRandomAttackPosGoal::WitherRandomAttackPosGoal(PathfinderMob* mob, float speedModifier, int interval, int xz,
+                                                     int y)
     : RandomStrollGoal(mob, (double)speedModifier, interval),
       mIsPathing(false),
       mXz(xz),
@@ -57,8 +57,7 @@ bool WitherRandomAttackPosGoal::canUse()
             return false;
         }
 
-        boost::shared_ptr<PathfinderMob> mob =
-            boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());
+        boost::shared_ptr<PathfinderMob> mob = boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());
         Vec3* position = RandomPos::getPos(mob, mXz, mY, -1);
         if (position == NULL)
         {

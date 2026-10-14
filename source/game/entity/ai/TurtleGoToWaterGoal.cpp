@@ -22,8 +22,7 @@ TurtleGoToWaterGoal::~TurtleGoToWaterGoal()
 
 bool TurtleGoToWaterGoal::canUse()
 {
-    if ((mTurtle->isBaby() && !mTurtle->isInWater()) ||
-        (!mTurtle->isGoingHome() && !mTurtle->isInWater()))
+    if ((mTurtle->isBaby() && !mTurtle->isInWater()) || (!mTurtle->isGoingHome() && !mTurtle->isInWater()))
     {
         return MoveToBlockGoal::canUse();
     }
@@ -33,9 +32,7 @@ bool TurtleGoToWaterGoal::canUse()
 
 bool TurtleGoToWaterGoal::canContinueToUse()
 {
-    return !mTurtle->isInWater() &&
-           mTicksStayingStill <= 1200 &&
-           isValidTarget(mTurtle->mLevel, mBlockPos);
+    return !mTurtle->isInWater() && mTicksStayingStill <= 1200 && isValidTarget(mTurtle->mLevel, mBlockPos);
 }
 
 bool TurtleGoToWaterGoal::isValidTarget(Level* level, const BlockPos& pos)
@@ -43,4 +40,3 @@ bool TurtleGoToWaterGoal::isValidTarget(Level* level, const BlockPos& pos)
     Block* block = level->getBlockState(pos)->getBlock();
     return block == Blocks::water || block == Blocks::flowing_water;
 }
-

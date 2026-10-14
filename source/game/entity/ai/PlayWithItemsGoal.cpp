@@ -25,8 +25,8 @@ bool PlayWithItemsGoal::canUse()
         return false;
 
     Level* level = mDolphin->mLevel;
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(ItemEntity), mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0));
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(
+        typeid(ItemEntity), mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0));
     bool result = !entities->empty() || !mDolphin->getMainHandItem()->isEmpty();
     delete entities;
     return result;
@@ -40,8 +40,8 @@ bool PlayWithItemsGoal::canContinueToUse()
 void PlayWithItemsGoal::start()
 {
     Level* level = mDolphin->mLevel;
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(ItemEntity), mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0));
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(
+        typeid(ItemEntity), mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0));
     if (!entities->empty())
     {
         mDolphin->getNavigation()->moveTo(entities->at(0), 1.2f);
@@ -71,8 +71,8 @@ void PlayWithItemsGoal::tick()
     }
 
     Level* level = mDolphin->mLevel;
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(ItemEntity), mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0));
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(
+        typeid(ItemEntity), mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0));
     if (!entities->empty())
     {
         mDolphin->getNavigation()->moveTo(entities->at(0), 1.2f);

@@ -13,9 +13,9 @@
 
 #include <boost/unordered_set.hpp>
 
-WaterBoundPathNavigation::WaterBoundPathNavigation(Mob* mob, Level* level, bool createPathFinder,
-                                                   bool allowBreaching)
-    : PathNavigation(mob, level), mNodeEvaluator(allowBreaching)
+WaterBoundPathNavigation::WaterBoundPathNavigation(Mob* mob, Level* level, bool createPathFinder, bool allowBreaching)
+    : PathNavigation(mob, level),
+      mNodeEvaluator(allowBreaching)
 {
     if (createPathFinder)
         mPathFinder = this->createPathFinder();
@@ -50,9 +50,9 @@ void WaterBoundPathNavigation::updatePath()
 
     Vec3* currentPos = mPath->currentPos(mMob->shared_from_this());
 
-    if ((float)Mth::abs(mMob->mX - (currentPos->x + 0.5)) < distance &&
-        (float)Mth::abs(mMob->mZ - (currentPos->z + 0.5)) < distance &&
-        (float)Mth::abs(mMob->mY - currentPos->y) < distance + distance)
+    if ((float)Mth::abs(mMob->mX - (currentPos->x + 0.5)) < distance
+        && (float)Mth::abs(mMob->mZ - (currentPos->z + 0.5)) < distance
+        && (float)Mth::abs(mMob->mY - currentPos->y) < distance + distance)
         mPath->next();
 
     int best = mPath->getIndex() + 6;
@@ -63,8 +63,7 @@ void WaterBoundPathNavigation::updatePath()
     while (mPath->getIndex() < best)
     {
         Vec3* position = mPath->getPos(mMob->shared_from_this(), best);
-        if (position->distanceToSqr(mobPos) <= 36.0 &&
-            canMoveDirectly(mobPos, position, 0, 0, 0))
+        if (position->distanceToSqr(mobPos) <= 36.0 && canMoveDirectly(mobPos, position, 0, 0, 0))
         {
             mPath->setIndex(best);
             doStuckDetection(mobPos);

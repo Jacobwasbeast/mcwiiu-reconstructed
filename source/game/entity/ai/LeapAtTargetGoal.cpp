@@ -62,4 +62,3 @@ void LeapAtTargetGoal::start()
     }
     mMob->mYd = static_cast<double>(mYd);
 }
-

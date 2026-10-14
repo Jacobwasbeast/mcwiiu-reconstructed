@@ -12,8 +12,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 
-PanicGoal::PanicGoal(PathfinderMob* mob, double speedModifier)
-    : mMob(mob), mSpeedModifier(speedModifier)
+PanicGoal::PanicGoal(PathfinderMob* mob, double speedModifier) : mMob(mob), mSpeedModifier(speedModifier)
 {
     mWantedX = mWantedY = mWantedZ = 0.0;
     setRequiredControlFlags(1);
@@ -40,9 +39,8 @@ BlockPos* PanicGoal::lookForWater(Level* level, Entity* entity, int range, int v
                 pos.z = z;
                 if (level->getBlockState(pos)->getMaterial() == Material::WATER)
                 {
-                    const float distance = static_cast<float>((x - originX) * (x - originX)
-                        + (y - originY) * (y - originY)
-                        + (z - originZ) * (z - originZ));
+                    const float distance = static_cast<float>(
+                        (x - originX) * (x - originX) + (y - originY) * (y - originY) + (z - originZ) * (z - originZ));
                     if (distance < bestDistance)
                     {
                         bestDistance = distance;
@@ -102,4 +100,3 @@ bool PanicGoal::canContinueToUse()
 {
     return !mMob->getNavigation()->isDone();
 }
-

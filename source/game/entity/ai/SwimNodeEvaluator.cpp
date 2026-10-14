@@ -13,9 +13,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/util/Vec3i.hpp"
 
-SwimNodeEvaluator::SwimNodeEvaluator(bool allowBreaching)
-    : NodeEvaluator(),
-      mAllowBreaching(allowBreaching)
+SwimNodeEvaluator::SwimNodeEvaluator(bool allowBreaching) : NodeEvaluator(), mAllowBreaching(allowBreaching)
 {
 }
 
@@ -50,9 +48,10 @@ const BlockPathTypes* SwimNodeEvaluator::getPathTypeAtPos(int x, int y, int z, b
                  it != Direction::VALUES.end(); ++it)
             {
                 const Direction* direction = *it;
-                if (direction != Direction::DOWN && direction != Direction::UP &&
-                    getPathTypeAtPos(x + direction->getStepX(), y + direction->getStepY(),
-                                     z + direction->getStepZ(), false) == BlockPathTypes::BLOCKED)
+                if (direction != Direction::DOWN && direction != Direction::UP
+                    && getPathTypeAtPos(x + direction->getStepX(), y + direction->getStepY(), z + direction->getStepZ(),
+                                        false)
+                           == BlockPathTypes::BLOCKED)
                     return BlockPathTypes::WATER_BORDER;
             }
         }
@@ -68,7 +67,8 @@ Node* SwimNodeEvaluator::getStart()
 
 Node* SwimNodeEvaluator::getGoal(double x, double y, double z)
 {
-    return NodeEvaluator::getNode(Mth::floor(x - mMob->mBbWidth * 0.5f), Mth::floor(y + 0.5), Mth::floor(z - mMob->mBbWidth * 0.5f));
+    return NodeEvaluator::getNode(Mth::floor(x - mMob->mBbWidth * 0.5f), Mth::floor(y + 0.5),
+                                  Mth::floor(z - mMob->mBbWidth * 0.5f));
 }
 
 Node* SwimNodeEvaluator::getDirectGoal(const BlockPos& pos)
@@ -102,7 +102,8 @@ Node* SwimNodeEvaluator::getWaterNode(int x, int y, int z)
     }
     else if (type == BlockPathTypes::WATER_BORDER)
     {
-        if (getPathTypeAtPos(Mth::floor(mMob->mX), Mth::floor(mMob->mY), Mth::floor(mMob->mZ), false) == BlockPathTypes::WATER)
+        if (getPathTypeAtPos(Mth::floor(mMob->mX), Mth::floor(mMob->mY), Mth::floor(mMob->mZ), false)
+            == BlockPathTypes::WATER)
             return NodeEvaluator::getNode(x, y, z);
     }
     return NULL;
@@ -115,8 +116,7 @@ int SwimNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* cur
     for (it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
     {
         const Direction* direction = *it;
-        Node* node = getWaterNode(current->x + direction->getStepX(),
-                                  current->y + direction->getStepY(),
+        Node* node = getWaterNode(current->x + direction->getStepX(), current->y + direction->getStepY(),
                                   current->z + direction->getStepZ());
         if (node != NULL && !node->closed && node->distanceTo(target) < maxCost)
         {
@@ -127,8 +127,8 @@ int SwimNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* cur
 }
 
 const BlockPathTypes* SwimNodeEvaluator::getBlockPathType(LevelSource* levelSource, int x, int y, int z, Mob* mob,
-                                                           int sizeX, int sizeY, int sizeZ,
-                                                           bool canOpenDoors, bool canPassDoors)
+                                                          int sizeX, int sizeY, int sizeZ, bool canOpenDoors,
+                                                          bool canPassDoors)
 {
     return BlockPathTypes::WATER;
 }

@@ -13,13 +13,11 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 
-FollowMobGoal::FollowPredicate::FollowPredicate(Mob* mob)
-    : mMob(mob)
+FollowMobGoal::FollowPredicate::FollowPredicate(Mob* mob) : mMob(mob)
 {
 }
 
-FollowMobGoal::FollowMobGoal(Mob* mob, double speedModifier, float stopDistance, float areaSize)
-    : mTarget()
+FollowMobGoal::FollowMobGoal(Mob* mob, double speedModifier, float stopDistance, float areaSize) : mTarget()
 {
     mMob = mob;
     mPredicate = new FollowPredicate(mob);
@@ -30,8 +28,8 @@ FollowMobGoal::FollowMobGoal(Mob* mob, double speedModifier, float stopDistance,
     mTimeToRecalcPath = 0;
     mOldWaterCost = 0.0f;
     setRequiredControlFlags(3);
-    dynamic_cast<GroundPathNavigation*>(mob->getNavigation()) ||
-        dynamic_cast<FlyingPathNavigation*>(mob->getNavigation());
+    dynamic_cast<GroundPathNavigation*>(mob->getNavigation())
+        || dynamic_cast<FlyingPathNavigation*>(mob->getNavigation());
 }
 
 FollowMobGoal::~FollowMobGoal()
@@ -46,8 +44,7 @@ bool FollowMobGoal::canUse()
 
     if (!entities->empty())
     {
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-             it != entities->end(); it++)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); it++)
         {
             boost::shared_ptr<Mob> candidate = boost::static_pointer_cast<Mob>(*it);
             if (candidate->isInvisible())
@@ -64,8 +61,8 @@ bool FollowMobGoal::canUse()
 
 bool FollowMobGoal::canContinueToUse()
 {
-    return mTarget.lock() && !mNavigation->isDone() &&
-           mMob->distanceToSqr(mTarget.lock()) > (double)(mStopDistance * mStopDistance);
+    return mTarget.lock() && !mNavigation->isDone()
+           && mMob->distanceToSqr(mTarget.lock()) > (double)(mStopDistance * mStopDistance);
 }
 
 void FollowMobGoal::start()
@@ -101,10 +98,9 @@ void FollowMobGoal::tick()
     {
         mNavigation->stop();
         LookControl* targetLook = target->getLookControl();
-        if (distSq <= (double)mStopDistance ||
-            (targetLook->getWantedX() == mMob->mX &&
-             targetLook->getWantedY() == mMob->mY &&
-             targetLook->getWantedZ() == mMob->mZ))
+        if (distSq <= (double)mStopDistance
+            || (targetLook->getWantedX() == mMob->mX && targetLook->getWantedY() == mMob->mY
+                && targetLook->getWantedZ() == mMob->mZ))
         {
             double followX = target->mX - mMob->mX;
             double followZ = target->mZ - mMob->mZ;

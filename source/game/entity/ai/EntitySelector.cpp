@@ -14,11 +14,10 @@
 
 bool validPlayerPredicate(boost::shared_ptr<Player> player)
 {
-    static Predicate<boost::shared_ptr<Entity> >* const validPlayerDistance =
-        EntitySelector::withinDistance(0.0, 128.0, 0.0, 192.0);
+    static Predicate<boost::shared_ptr<Entity> >* const validPlayerDistance = EntitySelector::withinDistance(
+        0.0, 128.0, 0.0, 192.0);
 
-    return EntitySelector::ENTITY_STILL_ALIVE->apply(player)
-        && validPlayerDistance->apply(player);
+    return EntitySelector::ENTITY_STILL_ALIVE->apply(player) && validPlayerDistance->apply(player);
 }
 
 bool enemySelectorFunc(boost::shared_ptr<Entity> entity)
@@ -33,15 +32,15 @@ bool visibleEnemySelectorFunc(boost::shared_ptr<Entity> entity)
 
 namespace EntitySelector
 {
-    Predicate<boost::shared_ptr<Entity> >* ENTITY_STILL_ALIVE = new AliveEntitySelector();
-    Predicate<boost::shared_ptr<Entity> >* NOT_BEING_RIDDEN_ENTITY_SELECTOR = new NotBeingRiddenEntitySelector();
-    Predicate<boost::shared_ptr<Entity> >* CONTAINER_ENTITY_SELECTOR = new ContainerEntitySelector();
-    Predicate<boost::shared_ptr<Entity> >* NO_CREATIVE_OR_SPECTATOR = new NoCreativeOrSpectatorSelector();
-    Predicate<boost::shared_ptr<Entity> >* NO_SPECTATORS = new NoSpectatorsSelector();
-    Predicate<boost::shared_ptr<Entity> >* ENEMY_SELECTOR =
-        new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(enemySelectorFunc);
-    Predicate<boost::shared_ptr<Entity> >* VISIBLE_ENEMY_SELECTOR =
-        new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(visibleEnemySelectorFunc);
+Predicate<boost::shared_ptr<Entity> >* ENTITY_STILL_ALIVE = new AliveEntitySelector();
+Predicate<boost::shared_ptr<Entity> >* NOT_BEING_RIDDEN_ENTITY_SELECTOR = new NotBeingRiddenEntitySelector();
+Predicate<boost::shared_ptr<Entity> >* CONTAINER_ENTITY_SELECTOR = new ContainerEntitySelector();
+Predicate<boost::shared_ptr<Entity> >* NO_CREATIVE_OR_SPECTATOR = new NoCreativeOrSpectatorSelector();
+Predicate<boost::shared_ptr<Entity> >* NO_SPECTATORS = new NoSpectatorsSelector();
+Predicate<boost::shared_ptr<Entity> >* ENEMY_SELECTOR = new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(
+    enemySelectorFunc);
+Predicate<boost::shared_ptr<Entity> >* VISIBLE_ENEMY_SELECTOR =
+    new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(visibleEnemySelectorFunc);
 }
 
 namespace EntitySelector

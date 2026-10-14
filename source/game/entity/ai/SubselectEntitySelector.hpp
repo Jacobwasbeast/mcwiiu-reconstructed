@@ -11,7 +11,8 @@ class NearestAttackableTargetGoal;
 class SubselectEntitySelector : public Predicate<boost::shared_ptr<Entity> >
 {
 public:
-    SubselectEntitySelector(NearestAttackableTargetGoal* goal, const Predicate<boost::shared_ptr<Entity> >* selector, bool ownsSelector);
+    SubselectEntitySelector(NearestAttackableTargetGoal* goal, const Predicate<boost::shared_ptr<Entity> >* selector,
+                            bool ownsSelector);
     virtual ~SubselectEntitySelector();
     virtual bool apply(boost::shared_ptr<Entity> entity) const;
 

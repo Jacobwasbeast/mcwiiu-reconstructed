@@ -61,14 +61,18 @@ void WallClimberNavigation::tick()
         {
             double widthSquared = mMob->mBbWidth * mMob->mBbWidth;
 
-            if (mMob->distanceSqrToBlockPosCenter(*mTargetPos) < widthSquared ||
-                (mMob->mY > mTargetPos->getY() && mMob->distanceSqrToBlockPosCenter(BlockPos(mTargetPos->getX(), (int)std::floor(mMob->mY), mTargetPos->getZ())) < widthSquared))
+            if (mMob->distanceSqrToBlockPosCenter(*mTargetPos) < widthSquared
+                || (mMob->mY > mTargetPos->getY()
+                    && mMob->distanceSqrToBlockPosCenter(
+                           BlockPos(mTargetPos->getX(), (int)std::floor(mMob->mY), mTargetPos->getZ()))
+                           < widthSquared))
             {
                 mTargetPos = 0;
             }
             else
             {
-                mMob->getMoveControl()->setWantedPosition(mTargetPos->getX(), mTargetPos->getY(), mTargetPos->getZ(), mSpeedModifier);
+                mMob->getMoveControl()->setWantedPosition(mTargetPos->getX(), mTargetPos->getY(), mTargetPos->getZ(),
+                                                          mSpeedModifier);
             }
         }
     }

@@ -15,7 +15,8 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Predicates.hpp"
 
-AvoidEntityGoal::AvoidEntityGoal(PathfinderMob* mob, const std::type_info& avoidType, float maxDistance, double walkSpeedModifier, double sprintSpeedModifier)
+AvoidEntityGoal::AvoidEntityGoal(PathfinderMob* mob, const std::type_info& avoidType, float maxDistance,
+                                 double walkSpeedModifier, double sprintSpeedModifier)
     : Goal(),
       mAvoidType(&avoidType),
       mToAvoid()
@@ -34,7 +35,8 @@ AvoidEntityGoal::~AvoidEntityGoal()
     delete mEntitySelector;
 }
 
-void AvoidEntityGoal::_init(PathfinderMob* mob, const Predicate<boost::shared_ptr<Entity> >* selector, float maxDistance, double walkSpeedModifier, double sprintSpeedModifier)
+void AvoidEntityGoal::_init(PathfinderMob* mob, const Predicate<boost::shared_ptr<Entity> >* selector,
+                            float maxDistance, double walkSpeedModifier, double sprintSpeedModifier)
 {
     mMob = mob;
     mSelector = selector;
@@ -50,14 +52,15 @@ void AvoidEntityGoal::_init(PathfinderMob* mob, const Predicate<boost::shared_pt
 
 bool AvoidEntityGoal::canUse()
 {
-    const Predicate<boost::shared_ptr<Entity> >* predicates[] = { EntitySelector::NO_CREATIVE_OR_SPECTATOR, mEntitySelector, mSelector };
+    const Predicate<boost::shared_ptr<Entity> >* predicates[] = {EntitySelector::NO_CREATIVE_OR_SPECTATOR,
+                                                                 mEntitySelector, mSelector};
 
-    Predicate<boost::shared_ptr<Entity> >* predicate =
-        new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
-            Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, predicates, 3);
+    Predicate<boost::shared_ptr<Entity> >* predicate = new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
+        Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, predicates, 3);
 
     AABB* bb = mMob->mBoundingBox->grow(mMaxDistance, 3.0, mMaxDistance);
-    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(*mAvoidType, bb, predicate, true);
+    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(*mAvoidType, bb, predicate,
+                                                                                         true);
 
     delete predicate;
 
@@ -84,7 +87,8 @@ bool AvoidEntityGoal::canUse()
     if (toAvoid.get() == NULL)
         return false;
 
-    Vec3* pos = RandomPos::getPosAvoid(boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 16, 7, Vec3::newTemp(toAvoid->mX, toAvoid->mY, toAvoid->mZ));
+    Vec3* pos = RandomPos::getPosAvoid(boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 16, 7,
+                                       Vec3::newTemp(toAvoid->mX, toAvoid->mY, toAvoid->mZ));
     if (pos == NULL)
         return false;
 
@@ -129,4 +133,3 @@ void AvoidEntityGoal::tick()
         mMob->move(eMoverType_Self, delta->x, delta->y, delta->z, false);
     }
 }
-

@@ -21,11 +21,15 @@ class AvoidEntityGoal : public Goal
     friend class AvoidEntityGoalEntitySelector;
 
 public:
-    AvoidEntityGoal(PathfinderMob* mob, const std::type_info& avoidType, float maxDistance, double walkSpeedModifier, double sprintSpeedModifier);
-    AvoidEntityGoal(PathfinderMob* mob, const std::type_info& avoidType, const Predicate<boost::shared_ptr<Entity> >* selector, float maxDistance, double walkSpeedModifier, double sprintSpeedModifier);
+    AvoidEntityGoal(PathfinderMob* mob, const std::type_info& avoidType, float maxDistance, double walkSpeedModifier,
+                    double sprintSpeedModifier);
+    AvoidEntityGoal(PathfinderMob* mob, const std::type_info& avoidType,
+                    const Predicate<boost::shared_ptr<Entity> >* selector, float maxDistance, double walkSpeedModifier,
+                    double sprintSpeedModifier);
     virtual ~AvoidEntityGoal();
 
-    void _init(PathfinderMob* mob, const Predicate<boost::shared_ptr<Entity> >* selector, float maxDistance, double walkSpeedModifier, double sprintSpeedModifier);
+    void _init(PathfinderMob* mob, const Predicate<boost::shared_ptr<Entity> >* selector, float maxDistance,
+               double walkSpeedModifier, double sprintSpeedModifier);
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();

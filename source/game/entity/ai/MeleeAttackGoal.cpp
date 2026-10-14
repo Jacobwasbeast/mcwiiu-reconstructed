@@ -84,8 +84,7 @@ bool MeleeAttackGoal::canContinueToUse()
     if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
-        if (player->isSpectator() || player->isCreative()
-            || mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        if (player->isSpectator() || player->isCreative() || mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
             return false;
     }
     return true;
@@ -121,8 +120,7 @@ void MeleeAttackGoal::tick()
 
     if (canSeeTarget && mTicksUntilNextPathRecalculation <= 0
         && ((mTargetX == 0.0 && mTargetY == 0.0 && mTargetZ != 0.0)
-            || target->distanceToSqr(mTargetX, mTargetY, mTargetZ) >= 1.0
-            || mMob->getRandom()->nextFloat() < 0.05f))
+            || target->distanceToSqr(mTargetX, mTargetY, mTargetZ) >= 1.0 || mMob->getRandom()->nextFloat() < 0.05f))
     {
         mTargetX = target->mX;
         mTargetY = target->mBoundingBox->mMinY;
@@ -157,11 +155,11 @@ void MeleeAttackGoal::checkAndPerformAttack(boost::shared_ptr<LivingEntity> targ
 double MeleeAttackGoal::getAttackReachSqr(boost::shared_ptr<LivingEntity> target)
 {
     Entity* reachEntity = Entity::instanceof(mMob->getVehicle(), EntityType::MOB) ? mMob->getVehicle().get() : mMob;
-    return (reachEntity->mBbWidth + reachEntity->mBbWidth) * (reachEntity->mBbWidth + reachEntity->mBbWidth) + target->mBbWidth;
+    return (reachEntity->mBbWidth + reachEntity->mBbWidth) * (reachEntity->mBbWidth + reachEntity->mBbWidth)
+           + target->mBbWidth;
 }
 
 void MeleeAttackGoal::setLevel(Level* level)
 {
     mLevel = level;
 }
-

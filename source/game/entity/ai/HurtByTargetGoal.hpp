@@ -12,15 +12,13 @@ class PathfinderMob;
 class HurtByTargetGoal : public TargetGoal
 {
 public:
-    HurtByTargetGoal(PathfinderMob* mob, bool alertSameType,
-                     arrayWithLength<unsigned long long> entityTypes);
+    HurtByTargetGoal(PathfinderMob* mob, bool alertSameType, arrayWithLength<unsigned long long> entityTypes);
     virtual ~HurtByTargetGoal();
 
     virtual bool canUse();
     void alertOthers();
     virtual void start();
-    virtual void alertOther(boost::shared_ptr<PathfinderMob> mob,
-                            boost::shared_ptr<LivingEntity> target);
+    virtual void alertOther(boost::shared_ptr<PathfinderMob> mob, boost::shared_ptr<LivingEntity> target);
     virtual std::wstring getName() { return L"HurtByTarget"; }
 
 protected:

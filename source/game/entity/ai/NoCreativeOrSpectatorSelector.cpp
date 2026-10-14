@@ -6,9 +6,8 @@
 
 bool NoCreativeOrSpectatorSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return !entity->instanceof(EntityType::PLAYER)
-        || !boost::static_pointer_cast<Player>(entity)->isSpectator()
-        || !boost::static_pointer_cast<Player>(entity)->isCreative();
+    return !entity->instanceof(EntityType::PLAYER) || !boost::static_pointer_cast<Player>(entity)->isSpectator()
+           || !boost::static_pointer_cast<Player>(entity)->isCreative();
 }
 
 NoCreativeOrSpectatorSelector::~NoCreativeOrSpectatorSelector()

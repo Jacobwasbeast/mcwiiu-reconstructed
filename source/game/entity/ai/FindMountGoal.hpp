@@ -13,8 +13,8 @@ class Mob;
 class FindMountGoal : public Goal
 {
 public:
-    FindMountGoal(Mob& mob, float targetDistance, int startDelay, bool avoidWater,
-                  bool targetNeeded, float mountDistance);
+    FindMountGoal(Mob& mob, float targetDistance, int startDelay, bool avoidWater, bool targetNeeded,
+                  float mountDistance);
 
     virtual bool canUse();
     virtual bool canContinueToUse();

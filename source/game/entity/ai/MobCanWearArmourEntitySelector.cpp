@@ -34,8 +34,8 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
         return false;
     }
 
-    if (eTYPE_DERIVED_FROM(EntityType::ZOMBIE, livingEntity->GetType()) ||
-        eTYPE_DERIVED_FROM(EntityType::ABSTRACT_SKELETON, livingEntity->GetType()))
+    if (eTYPE_DERIVED_FROM(EntityType::ZOMBIE, livingEntity->GetType())
+        || eTYPE_DERIVED_FROM(EntityType::ABSTRACT_SKELETON, livingEntity->GetType()))
     {
         return true;
     }
@@ -59,4 +59,3 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
 
     return false;
 }
-

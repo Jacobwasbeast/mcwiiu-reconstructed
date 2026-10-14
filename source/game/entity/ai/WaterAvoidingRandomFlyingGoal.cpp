@@ -50,8 +50,8 @@ Vec3* WaterAvoidingRandomFlyingGoal::getTreePos()
                 }
 
                 Block* block = mMob->mLevel->getBlock(*below.set(candidate)->move(Direction::DOWN));
-                if ((block != NULL && dynamic_cast<LeafBlock*>(block) != NULL
-                     || block == Blocks::log || block == Blocks::log2)
+                if ((block != NULL && dynamic_cast<LeafBlock*>(block) != NULL || block == Blocks::log
+                     || block == Blocks::log2)
                     && mMob->mLevel->isEmptyBlock(candidate)
                     && mMob->mLevel->isEmptyBlock(*above.set(candidate)->move(Direction::UP)))
                 {
@@ -69,7 +69,8 @@ Vec3* WaterAvoidingRandomFlyingGoal::getPosition()
     Vec3* position = NULL;
     if (mMob->isInWater() || mMob->isOverWater())
     {
-        position = RandomPos::getLandPos(boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 15, 15, -1);
+        position = RandomPos::getLandPos(boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 15, 15,
+                                         -1);
     }
 
     if (mMob->getRandom()->nextFloat() >= mProbability)

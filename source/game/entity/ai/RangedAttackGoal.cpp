@@ -8,19 +8,22 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/util/AABB.hpp"
 
-RangedAttackGoal::RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackInterval, float attackRadius)
+RangedAttackGoal::RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackInterval,
+                                   float attackRadius)
     : mTarget()
 {
     _init(rangedAttackMob, mob, speedModifier, attackInterval, attackInterval, attackRadius);
 }
 
-RangedAttackGoal::RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackIntervalMin, int attackIntervalMax, float attackRadius)
+RangedAttackGoal::RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier,
+                                   int attackIntervalMin, int attackIntervalMax, float attackRadius)
     : mTarget()
 {
     _init(rangedAttackMob, mob, speedModifier, attackIntervalMin, attackIntervalMax, attackRadius);
 }
 
-void RangedAttackGoal::_init(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackIntervalMin, int attackIntervalMax, float attackRadius)
+void RangedAttackGoal::_init(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackIntervalMin,
+                             int attackIntervalMax, float attackRadius)
 {
     mRangedAttackMob = rangedAttackMob;
     mMob = mob;
@@ -82,13 +85,13 @@ void RangedAttackGoal::tick()
         float distanceFactor = Mth::sqrt(distance) / mAttackRadius;
         float attackPower = Mth::clamp(distanceFactor, 0.1f, 1.0f);
         mRangedAttackMob->performRangedAttack(mTarget.lock(), attackPower);
-        mAttackTime = Mth::floor(distanceFactor * (float)(mAttackIntervalMax - mAttackIntervalMin) +
-                                 (float)mAttackIntervalMin);
+        mAttackTime = Mth::floor(distanceFactor * (float)(mAttackIntervalMax - mAttackIntervalMin)
+                                 + (float)mAttackIntervalMin);
     }
     else if (mAttackTime < 0)
     {
         float distanceFactor = Mth::sqrt(distance) / mAttackRadius;
-        mAttackTime = Mth::floor(distanceFactor * (float)(mAttackIntervalMax - mAttackIntervalMin) +
-                                 (float)mAttackIntervalMin);
+        mAttackTime = Mth::floor(distanceFactor * (float)(mAttackIntervalMax - mAttackIntervalMin)
+                                 + (float)mAttackIntervalMin);
     }
 }

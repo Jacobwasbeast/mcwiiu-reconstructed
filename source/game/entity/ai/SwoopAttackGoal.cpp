@@ -12,15 +12,14 @@
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 
-SwoopAttackGoal::SwoopAttackGoal(Mob* mob, float speedModifier,
-                                 Goal::FloatRange attackDistance)
-    : Goal()
-    , mMob(mob)
-    , mSpeedModifier(speedModifier)
-    , mAttackDistance(attackDistance)
-    , mAttackInterval(0)
-    , mSwoopTicks(0)
-    , mSwooping(false)
+SwoopAttackGoal::SwoopAttackGoal(Mob* mob, float speedModifier, Goal::FloatRange attackDistance)
+    : Goal(),
+      mMob(mob),
+      mSpeedModifier(speedModifier),
+      mAttackDistance(attackDistance),
+      mAttackInterval(0),
+      mSwoopTicks(0),
+      mSwooping(false)
 {
     setRequiredControlFlags(3);
 }
@@ -48,8 +47,8 @@ bool SwoopAttackGoal::canUse()
         return false;
     }
 
-    mAttackInterval = (int)(mAttackDistance.min + mMob->getRandom()->nextFloat()
-        * (mAttackDistance.max - mAttackDistance.min)) * 20;
+    mAttackInterval =
+        (int)(mAttackDistance.min + mMob->getRandom()->nextFloat() * (mAttackDistance.max - mAttackDistance.min)) * 20;
     return true;
 }
 
@@ -89,19 +88,16 @@ void SwoopAttackGoal::tick()
     if (target && mSwoopTicks < 1)
     {
         Vec3* targetPosition = target->getPos(0.0f);
-        Vec3* wantedPosition = Vec3::newTemp(targetPosition->x,
-                                             targetPosition->y + (double)target->mBbHeight,
+        Vec3* wantedPosition = Vec3::newTemp(targetPosition->x, targetPosition->y + (double)target->mBbHeight,
                                              targetPosition->z);
         PathNavigation* navigation = mMob->getNavigation();
         if (navigation != NULL)
         {
-            navigation->moveTo(wantedPosition->x, wantedPosition->y, wantedPosition->z,
-                               (double)mSpeedModifier);
+            navigation->moveTo(wantedPosition->x, wantedPosition->y, wantedPosition->z, (double)mSpeedModifier);
         }
         else
         {
-            mMob->getMoveControl()->setWantedPosition(wantedPosition->x, wantedPosition->y,
-                                                      wantedPosition->z,
+            mMob->getMoveControl()->setWantedPosition(wantedPosition->x, wantedPosition->y, wantedPosition->z,
                                                       (double)mSpeedModifier);
         }
 
@@ -112,8 +108,7 @@ void SwoopAttackGoal::tick()
             mMob->playSound(SoundEvents::PHANTOM_BITE, 1.0f, 1.0f);
         }
 
-        double distance = mMob->distanceToSqr(target->mX, target->getBoundingBox()->mMinY,
-                                              target->mZ);
+        double distance = mMob->distanceToSqr(target->mX, target->getBoundingBox()->mMinY, target->mZ);
         if (distance > 1024.0)
         {
             mSwoopTicks = 5;
@@ -124,4 +119,3 @@ void SwoopAttackGoal::tick()
         }
     }
 }
-

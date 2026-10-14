@@ -12,8 +12,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-TemptGoal::TemptGoal(PathfinderMob* mob, double speedModifier,
-                     arrayWithLength<Item*> items, bool canScare,
+TemptGoal::TemptGoal(PathfinderMob* mob, double speedModifier, arrayWithLength<Item*> items, bool canScare,
                      arrayWithLength<int> itemAuxValues)
 {
     mTargetX = mTargetY = mTargetZ = mTargetXRot = mTargetYRot = 0.0;
@@ -60,8 +59,7 @@ bool TemptGoal::canUse()
     }
 
     mMob->setDespawnProtected();
-    return shouldFollowItem(mPlayer.lock()->getMainHandItem())
-        || shouldFollowItem(mPlayer.lock()->getOffhandItem());
+    return shouldFollowItem(mPlayer.lock()->getMainHandItem()) || shouldFollowItem(mPlayer.lock()->getOffhandItem());
 }
 
 bool TemptGoal::canContinueToUse()
@@ -141,4 +139,3 @@ bool TemptGoal::isRunning()
 {
     return mRunning;
 }
-

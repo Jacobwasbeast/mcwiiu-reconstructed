@@ -13,8 +13,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/Level.hpp"
 
-JumpGoal::JumpGoal(Dolphin* mob, int interval)
-    : Goal(), mInterval(interval), mMob(mob), mCanJump(false)
+JumpGoal::JumpGoal(Dolphin* mob, int interval) : Goal(), mInterval(interval), mMob(mob), mCanJump(false)
 {
 }
 
@@ -28,10 +27,10 @@ bool JumpGoal::isObstacle()
     int stepX = mMob->getMotionDirection()->getStepX();
     int stepZ = mMob->getMotionDirection()->getStepZ();
     return level->getBlockState(BlockPos(mMob).offset(stepX * 2, 0, stepZ * 2))->isSolidBlockingCube()
-        && level->getBlockState(BlockPos(mMob).offset(stepX, 0, stepZ))->getMaterial() == Material::WATER
-        && level->getBlockState(BlockPos(mMob).offset(stepX, 1, stepZ))->getMaterial() == Material::AIR
-        && level->getBlockState(BlockPos(mMob).offset(stepX, 2, stepZ))->getMaterial() == Material::AIR
-        && level->getBlockState(BlockPos(mMob).offset(stepX * 4, 0, stepZ * 4))->getMaterial() == Material::WATER;
+           && level->getBlockState(BlockPos(mMob).offset(stepX, 0, stepZ))->getMaterial() == Material::WATER
+           && level->getBlockState(BlockPos(mMob).offset(stepX, 1, stepZ))->getMaterial() == Material::AIR
+           && level->getBlockState(BlockPos(mMob).offset(stepX, 2, stepZ))->getMaterial() == Material::AIR
+           && level->getBlockState(BlockPos(mMob).offset(stepX * 4, 0, stepZ * 4))->getMaterial() == Material::WATER;
 }
 
 bool JumpGoal::canUse()
@@ -50,14 +49,14 @@ bool JumpGoal::canUse()
             clear = false;
         }
     }
-    return (isObstacle() || clear) && mMob->mLevel->getBlockState(BlockPos(mMob).above(2))->getMaterial() == Material::AIR;
+    return (isObstacle() || clear)
+           && mMob->mLevel->getBlockState(BlockPos(mMob).above(2))->getMaterial() == Material::AIR;
 }
 
 bool JumpGoal::canContinueToUse()
 {
     int finished = 1;
-    if (!(mMob->mYd * mMob->mYd < 0.03 && mMob->mXRot != 0.0f && std::fabs(mMob->mXRot) < 10.0f
-          && mMob->isInWater()))
+    if (!(mMob->mYd * mMob->mYd < 0.03 && mMob->mXRot != 0.0f && std::fabs(mMob->mXRot) < 10.0f && mMob->isInWater()))
     {
         if (!mMob->mOnGround)
         {
@@ -117,7 +116,8 @@ void JumpGoal::tick()
     double horizontalSpeed = Mth::sqrt(mMob->mXd * mMob->mXd + mMob->mZd * mMob->mZd);
     double fallSpeed = -mMob->mYd;
     double direction = static_cast<double>((0.0 < fallSpeed) - (fallSpeed < 0.0));
-    mMob->mXRot = static_cast<float>(direction * std::acos(Mth::clamp(horizontalSpeed / speed, -1.0, 1.0)) * Mth::RAD_TO_DEG);
+    mMob->mXRot = static_cast<float>(direction * std::acos(Mth::clamp(horizontalSpeed / speed, -1.0, 1.0))
+                                     * Mth::RAD_TO_DEG);
 }
 
 std::wstring JumpGoal::getName()

@@ -85,4 +85,3 @@ void RandomStrollGoal::setInterval(int interval)
 {
     mInterval = interval;
 }
-

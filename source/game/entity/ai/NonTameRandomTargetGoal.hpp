@@ -14,11 +14,8 @@ template <class T> class Predicate;
 class NonTameRandomTargetGoal : public NearestAttackableTargetGoal
 {
 public:
-    NonTameRandomTargetGoal(TamableAnimal* tamableAnimal,
-                            const std::type_info& targetType,
-                            bool mustSee,
-                            const Predicate<boost::shared_ptr<Entity> >* selector,
-                            bool includeRemoved);
+    NonTameRandomTargetGoal(TamableAnimal* tamableAnimal, const std::type_info& targetType, bool mustSee,
+                            const Predicate<boost::shared_ptr<Entity> >* selector, bool includeRemoved);
 
     virtual bool canUse();
     virtual bool canContinueToUse();

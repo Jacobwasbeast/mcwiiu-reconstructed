@@ -22,8 +22,8 @@ BegGoal::BegGoal(Wolf* wolf, float distance)
 
 bool BegGoal::playerHoldingInteresting(boost::shared_ptr<Player> player)
 {
-    for (int hand = InteractionHand::eInteractionHand_MainHand;
-         hand <= InteractionHand::eInteractionHand_OffHand; ++hand)
+    for (int hand = InteractionHand::eInteractionHand_MainHand; hand <= InteractionHand::eInteractionHand_OffHand;
+         ++hand)
     {
         not_null_ptr<ItemInstance> item = player->getItemInHand((InteractionHand::EInteractionHand)hand);
 
@@ -84,8 +84,7 @@ void BegGoal::stop()
 
 void BegGoal::tick()
 {
-    mWolf->getLookControl()->setLookAt(mPlayer.lock()->mX,
-                                       mPlayer.lock()->mY + mPlayer.lock()->getEyeHeight(),
+    mWolf->getLookControl()->setLookAt(mPlayer.lock()->mX, mPlayer.lock()->mY + mPlayer.lock()->getEyeHeight(),
                                        mPlayer.lock()->mZ, 10.0f, (float)mWolf->getMaxHeadXRot());
     --mTime;
 }
@@ -94,4 +93,3 @@ void BegGoal::setLevel(Level* level)
 {
     mLevel = level;
 }
-

@@ -10,10 +10,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/DoorBlock.hpp"
 
-BreakDoorGoal::BreakDoorGoal(Mob* mob)
-    : DoorInteractGoal(mob),
-      mBreakingTime(0),
-      mLastBreakProgress(-1)
+BreakDoorGoal::BreakDoorGoal(Mob* mob) : DoorInteractGoal(mob), mBreakingTime(0), mLastBreakProgress(-1)
 {
 }
 

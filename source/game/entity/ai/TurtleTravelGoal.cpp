@@ -26,9 +26,8 @@ TurtleTravelGoal::~TurtleTravelGoal()
 
 bool TurtleTravelGoal::canUse()
 {
-    return !mTurtle->isGoingHome()
-        && (!mTurtle->hasEgg() || mTurtle->hasGivenUpOnEgg())
-        && (mTurtle->isInWater() || mTurtle->isOverWater());
+    return !mTurtle->isGoingHome() && (!mTurtle->hasEgg() || mTurtle->hasGivenUpOnEgg())
+           && (mTurtle->isInWater() || mTurtle->isOverWater());
 }
 
 void TurtleTravelGoal::start()
@@ -44,9 +43,8 @@ void TurtleTravelGoal::start()
         targetY = 0.0;
     }
 
-    mTurtle->setTravelPos(BlockPos((double)(x - 512) + mTurtle->mX,
-                                   mTurtle->mY + targetY,
-                                   (double)(z - 512) + mTurtle->mZ));
+    mTurtle->setTravelPos(
+        BlockPos((double)(x - 512) + mTurtle->mX, mTurtle->mY + targetY, (double)(z - 512) + mTurtle->mZ));
     mTurtle->setTravelling(true);
     mReachedPosition = false;
 }
@@ -63,18 +61,13 @@ void TurtleTravelGoal::tick()
 
     BlockPos travelPos = mTurtle->getTravelPos();
     Vec3* position = RandomPos::getPosTowards(
-        boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()),
-        16,
-        3,
-        Vec3::newTemp((double)travelPos.x, (double)travelPos.y, (double)travelPos.z),
-        0.3141592741012573);
+        boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()), 16, 3,
+        Vec3::newTemp((double)travelPos.x, (double)travelPos.y, (double)travelPos.z), 0.3141592741012573);
 
     if (position == NULL)
     {
         position = RandomPos::getPosTowards(
-            boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()),
-            8,
-            7,
+            boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()), 8, 7,
             Vec3::newTemp((double)travelPos.x, (double)travelPos.y, (double)travelPos.z));
         if (position == NULL)
         {
@@ -108,11 +101,8 @@ bool TurtleTravelGoal::canContinueToUse()
 {
     BlockPos travelPos = mTurtle->getTravelPos();
     double distance = mTurtle->distanceToSqr(travelPos);
-    return distance >= 36.0
-        && !mReachedPosition
-        && !mTurtle->isGoingHome()
-        && !mTurtle->isInLove()
-        && (!mTurtle->hasEgg() || mTurtle->hasGivenUpOnEgg());
+    return distance >= 36.0 && !mReachedPosition && !mTurtle->isGoingHome() && !mTurtle->isInLove()
+           && (!mTurtle->hasEgg() || mTurtle->hasGivenUpOnEgg());
 }
 
 void TurtleTravelGoal::stop()
@@ -120,4 +110,3 @@ void TurtleTravelGoal::stop()
     mTurtle->setTravelling(false);
     Goal::stop();
 }
-

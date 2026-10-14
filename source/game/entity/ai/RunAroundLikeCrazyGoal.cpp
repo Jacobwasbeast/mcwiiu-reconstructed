@@ -14,7 +14,8 @@
 #include "game/world/generation/Player.hpp"
 
 RunAroundLikeCrazyGoal::RunAroundLikeCrazyGoal(AbstractHorse* horse, double speedModifier)
-    : mHorse(horse), mSpeedModifier(speedModifier)
+    : mHorse(horse),
+      mSpeedModifier(speedModifier)
 {
     mWantedX = mWantedY = mWantedZ = 0.0;
     setRequiredControlFlags(1);
@@ -90,4 +91,3 @@ void RunAroundLikeCrazyGoal::tick()
     mHorse->makeMad();
     mHorse->mLevel->broadcastEntityEvent(mHorse->shared_from_this(), EntityEvent::TAMING_FAILED, 0);
 }
-

@@ -79,4 +79,3 @@ void DoorInteractGoal::tick()
     if (mDoorX * x + mDoorZ * z < 0.0f)
         mHasDoor = true;
 }
-

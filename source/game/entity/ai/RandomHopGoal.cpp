@@ -61,4 +61,3 @@ void RandomHopGoal::start()
 {
     mMob->getNavigation()->moveTo(mWantedX, mWantedY, mWantedZ, mSpeedModifier);
 }
-

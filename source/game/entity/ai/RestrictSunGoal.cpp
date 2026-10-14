@@ -7,9 +7,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Material.hpp"
 
-RestrictSunGoal::RestrictSunGoal(PathfinderMob* mob)
-    : Goal(),
-      mMob(mob)
+RestrictSunGoal::RestrictSunGoal(PathfinderMob* mob) : Goal(), mMob(mob)
 {
 }
 
@@ -19,9 +17,8 @@ RestrictSunGoal::~RestrictSunGoal()
 
 bool RestrictSunGoal::canUse()
 {
-    return mMob->mLevel->isDay()
-        && mMob->getItemSlot(EquipmentSlot::HEAD)->isEmpty()
-        && !mMob->isUnderLiquid(Material::WATER);
+    return mMob->mLevel->isDay() && mMob->getItemSlot(EquipmentSlot::HEAD)->isEmpty()
+           && !mMob->isUnderLiquid(Material::WATER);
 }
 
 void RestrictSunGoal::start()
@@ -33,4 +30,3 @@ void RestrictSunGoal::stop()
 {
     static_cast<GroundPathNavigation*>(mMob->getNavigation())->setAvoidSun(false);
 }
-

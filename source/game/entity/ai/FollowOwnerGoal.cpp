@@ -62,10 +62,9 @@ bool FollowOwnerGoal::canUse()
 
 bool FollowOwnerGoal::canContinueToUse()
 {
-    return mOwner.lock() != NULL
-        && !mNavigation->isDone()
-        && mTamable->distanceToSqr(mOwner.lock()) > (double)(mStopDistance * mStopDistance)
-        && !mTamable->isSitting();
+    return mOwner.lock() != NULL && !mNavigation->isDone()
+           && mTamable->distanceToSqr(mOwner.lock()) > (double)(mStopDistance * mStopDistance)
+           && !mTamable->isSitting();
 }
 
 void FollowOwnerGoal::start()
@@ -154,12 +153,11 @@ void FollowOwnerGoal::tick()
     {
         for (int dz = 0; dz <= 4; ++dz)
         {
-            if ((dx < 1 || dz < 1 || dx > 3 || dz > 3)
-                && !(dx >= minX && dz >= minZ && dx <= maxX && dz <= maxZ)
+            if ((dx < 1 || dz < 1 || dx > 3 || dz > 3) && !(dx >= minX && dz >= minZ && dx <= maxX && dz <= maxZ)
                 && isTeleportFriendlyBlock(x, z, y, dx, dz))
             {
-                mTamable->moveTo((double)((float)(x + dx) + 0.5f), (double)y,
-                                 (double)((float)(z + dz) + 0.5f), mTamable->mYRot, mTamable->mXRot);
+                mTamable->moveTo((double)((float)(x + dx) + 0.5f), (double)y, (double)((float)(z + dz) + 0.5f),
+                                 mTamable->mYRot, mTamable->mXRot);
                 mNavigation->stop();
                 return;
             }
@@ -177,7 +175,6 @@ bool FollowOwnerGoal::isTeleportFriendlyBlock(int x, int z, int y, int dx, int d
     BlockPos blockPos(x + dx, y - 1, z + dz);
     const BlockState* blockState = mLevel->getBlockState(blockPos);
     return blockState->getBlockFaceShape(mLevel, blockPos, Direction::DOWN) == BLOCK_FACE_SOLID
-        && blockState->isValidSpawn(mTamable->shared_from_this())
-        && mLevel->isEmptyBlock(blockPos.above())
-        && mLevel->isEmptyBlock(blockPos.above(2));
+           && blockState->isValidSpawn(mTamable->shared_from_this()) && mLevel->isEmptyBlock(blockPos.above())
+           && mLevel->isEmptyBlock(blockPos.above(2));
 }

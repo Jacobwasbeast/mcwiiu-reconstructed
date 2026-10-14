@@ -29,10 +29,8 @@ public:
     virtual void trimPath();
     virtual bool canMoveDirectly(Vec3* start, Vec3* end, int width, int height, int depth);
 
-    bool canWalkAbove(int x, int y, int z, int sizeX, int sizeY, int sizeZ,
-                      Vec3* pos, double xStep, double zStep);
-    bool canWalkOn(int x, int y, int z, int sizeX, int sizeY, int sizeZ,
-                   Vec3* pos, double xStep, double zStep);
+    bool canWalkAbove(int x, int y, int z, int sizeX, int sizeY, int sizeZ, Vec3* pos, double xStep, double zStep);
+    bool canWalkOn(int x, int y, int z, int sizeX, int sizeY, int sizeZ, Vec3* pos, double xStep, double zStep);
     void setCanOpenDoors(bool value);
     void setCanPassDoors(bool value);
     bool canPassDoors();

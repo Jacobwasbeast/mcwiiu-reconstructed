@@ -14,9 +14,7 @@ public:
     PushableBySelector(const boost::shared_ptr<Entity>& pusher);
 
     virtual bool apply(boost::shared_ptr<Entity> entity) const;
-    virtual ~PushableBySelector()
-    {
-    }
+    virtual ~PushableBySelector() {}
 
     boost::shared_ptr<Entity> pusher;
     Team* team;

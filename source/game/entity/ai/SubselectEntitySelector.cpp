@@ -5,7 +5,9 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 
-SubselectEntitySelector::SubselectEntitySelector(NearestAttackableTargetGoal* goal, const Predicate<boost::shared_ptr<Entity> >* selector, bool ownsSelector)
+SubselectEntitySelector::SubselectEntitySelector(NearestAttackableTargetGoal* goal,
+                                                 const Predicate<boost::shared_ptr<Entity> >* selector,
+                                                 bool ownsSelector)
     : mOwnsSelector(ownsSelector),
       mSelector(selector),
       mGoal(goal)

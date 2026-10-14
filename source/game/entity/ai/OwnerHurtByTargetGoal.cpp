@@ -4,8 +4,7 @@
 
 #include "game/entity/mob/TamableAnimal.hpp"
 
-OwnerHurtByTargetGoal::OwnerHurtByTargetGoal(TamableAnimal* tamableAnimal)
-    : TargetGoal(tamableAnimal, false)
+OwnerHurtByTargetGoal::OwnerHurtByTargetGoal(TamableAnimal* tamableAnimal) : TargetGoal(tamableAnimal, false)
 {
     mTamableAnimal = tamableAnimal;
     mTimestamp = 0;
@@ -24,8 +23,8 @@ bool OwnerHurtByTargetGoal::canUse()
     mOwnerLastHurtBy = boost::weak_ptr<LivingEntity>(owner->getLastHurtByMob());
     int timestamp = owner->getLastHurtByMobTimestamp();
     boost::shared_ptr<LivingEntity> lastHurtBy = mOwnerLastHurtBy.lock();
-    return timestamp != mTimestamp && canAttack(lastHurtBy, false)
-        && mTamableAnimal->wantsToAttack(lastHurtBy, owner) && !mMob->mHurtByPlayerOnPeaceful;
+    return timestamp != mTimestamp && canAttack(lastHurtBy, false) && mTamableAnimal->wantsToAttack(lastHurtBy, owner)
+           && !mMob->mHurtByPlayerOnPeaceful;
 }
 
 void OwnerHurtByTargetGoal::start()
@@ -38,4 +37,3 @@ void OwnerHurtByTargetGoal::start()
 
     TargetGoal::start();
 }
-

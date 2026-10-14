@@ -9,8 +9,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-MoveToWaterGoal::MoveToWaterGoal(PathfinderMob* mob, double speedModifier,
-                                 int searchRange, int verticalSearchStart,
+MoveToWaterGoal::MoveToWaterGoal(PathfinderMob* mob, double speedModifier, int searchRange, int verticalSearchStart,
                                  double maxStayDistance)
     : MoveToBlockGoal(mob, speedModifier, searchRange, verticalSearchStart, 1.0),
       mSpeedModifierSquared(maxStayDistance * maxStayDistance),
@@ -79,8 +78,7 @@ void MoveToWaterGoal::tick()
         {
             mEntity->getNavigation()->moveTo((double)mBlockPos.x + 0.5,
                                              (double)mBlockPos.y + (double)MoveToBlockGoal::yOff(),
-                                             (double)mBlockPos.z + 0.5,
-                                             mSpeedModifier);
+                                             (double)mBlockPos.z + 0.5, mSpeedModifier);
         }
     }
     else

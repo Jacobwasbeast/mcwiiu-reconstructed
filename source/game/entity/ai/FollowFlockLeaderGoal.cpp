@@ -35,8 +35,8 @@ bool FollowFlockLeaderGoal::canUse()
         return false;
     }
 
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(typeid(*mMob), mMob->mBoundingBox->grow(8.0));
+    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(typeid(*mMob),
+                                                                                         mMob->mBoundingBox->grow(8.0));
     if (entities->size() <= 1)
     {
         delete entities;
@@ -45,8 +45,7 @@ bool FollowFlockLeaderGoal::canUse()
 
     boost::shared_ptr<Mob> self = boost::static_pointer_cast<Mob>(mMob->shared_from_this());
 
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<Mob> candidate = boost::static_pointer_cast<Mob>(*it);
         if (candidate->shouldFollow() && candidate != self)
@@ -58,8 +57,7 @@ bool FollowFlockLeaderGoal::canUse()
         }
     }
 
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<Mob> candidate = boost::static_pointer_cast<Mob>(*it);
         if (candidate != self && !candidate->followsLeader() && !candidate->isLeader())
@@ -147,4 +145,3 @@ void FollowFlockLeaderGoal::tick()
     BlockPos target = GetTargetPosition(mLeader);
     self->getNavigation()->moveTo((double)target.x, (double)target.y, (double)target.z, 1.0);
 }
-

@@ -103,9 +103,8 @@ void DrownedPathNavigation::tick()
         {
             Vec3* mobPos = getTempMobPos();
             Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
-            if (mobPos->y > next->y && (!mMob->mOnGround || !isInLiquid()) &&
-                std::floor(mobPos->x) == std::floor(next->x) &&
-                std::floor(mobPos->z) == std::floor(next->z))
+            if (mobPos->y > next->y && (!mMob->mOnGround || !isInLiquid())
+                && std::floor(mobPos->x) == std::floor(next->x) && std::floor(mobPos->z) == std::floor(next->z))
             {
                 mPath->setIndex(mPath->getIndex() + 1);
             }
@@ -146,7 +145,8 @@ void DrownedPathNavigation::updatePath()
             mPath->next();
         }
 
-        for (int index = std::min(mPath->getIndex() + lookAhead, mPath->getSize() - 1); index > mPath->getIndex(); --index)
+        for (int index = std::min(mPath->getIndex() + lookAhead, mPath->getSize() - 1); index > mPath->getIndex();
+             --index)
         {
             Vec3* target = mPath->getPos(mMob->shared_from_this(), index);
             if (target->distanceToSqr(mobPos) <= 36.0 && canMoveDirectly(mobPos, target, 0, 0, 0))

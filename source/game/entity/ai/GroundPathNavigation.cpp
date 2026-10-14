@@ -50,7 +50,7 @@ bool GroundPathNavigation::canSinkInWaterWalk()
 bool GroundPathNavigation::canUpdatePath()
 {
     return mMob->mOnGround || (canFloat() && isInLiquid()) || mMob->isPassenger()
-        || mMob->GetType() == EntityType::WITHER_BOSS || canSinkInWaterWalk();
+           || mMob->GetType() == EntityType::WITHER_BOSS || canSinkInWaterWalk();
 }
 
 int GroundPathNavigation::getSurfaceY()
@@ -99,8 +99,7 @@ Path* GroundPathNavigation::createPath(const BlockPos& pos)
         {
             return PathNavigation::createPath(column.above());
         }
-        while (column.y < mLevel->getMaxBuildHeight() &&
-               mLevel->getBlockState(column)->getMaterial() == Material::AIR)
+        while (column.y < mLevel->getMaxBuildHeight() && mLevel->getBlockState(column)->getMaterial() == Material::AIR)
         {
             column = column.above();
         }
@@ -109,8 +108,7 @@ Path* GroundPathNavigation::createPath(const BlockPos& pos)
     if (mLevel->getBlockState(target)->getMaterial()->isSolid())
     {
         BlockPos column = target.above();
-        while (column.y < mLevel->getMaxBuildHeight() &&
-               mLevel->getBlockState(column)->getMaterial()->isSolid())
+        while (column.y < mLevel->getMaxBuildHeight() && mLevel->getBlockState(column)->getMaterial()->isSolid())
         {
             column = column.above();
         }
@@ -127,8 +125,8 @@ Path* GroundPathNavigation::createPath(const BlockPos& pos)
         {
             return PathNavigation::createPath(column.above());
         }
-        while (column.y < mLevel->getMaxBuildHeight() &&
-               mLevel->getBlockState(column)->getMaterial() == Material::WATER)
+        while (column.y < mLevel->getMaxBuildHeight()
+               && mLevel->getBlockState(column)->getMaterial() == Material::WATER)
         {
             column = column.above();
         }
@@ -168,8 +166,8 @@ void GroundPathNavigation::trimPath()
     }
 }
 
-bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int sizeY, int sizeZ,
-                                        Vec3* pos, double xStep, double zStep)
+bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int sizeY, int sizeZ, Vec3* pos, double xStep,
+                                        double zStep)
 {
     MutableBlockPos blockPos(0, 0, 0);
     for (int ix = x; ix < x + sizeX; ++ix)
@@ -197,8 +195,8 @@ bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int size
     return true;
 }
 
-bool GroundPathNavigation::canWalkOn(int x, int y, int z, int sizeX, int sizeY, int sizeZ,
-                                     Vec3* pos, double xStep, double zStep)
+bool GroundPathNavigation::canWalkOn(int x, int y, int z, int sizeX, int sizeY, int sizeZ, Vec3* pos, double xStep,
+                                     double zStep)
 {
     int minX = x - sizeX / 2;
     int minZ = z - sizeZ / 2;
@@ -226,8 +224,8 @@ bool GroundPathNavigation::canWalkOn(int x, int y, int z, int sizeX, int sizeY, 
                     {
                         return false;
                     }
-                    type = mNodeEvaluator.getBlockPathType(
-                        mLevel, ix, y, iz, static_cast<Mob*>(mMob), sizeX, sizeY, sizeZ, true, true);
+                    type = mNodeEvaluator.getBlockPathType(mLevel, ix, y, iz, static_cast<Mob*>(mMob), sizeX, sizeY,
+                                                           sizeZ, true, true);
                     float malus = static_cast<Mob*>(mMob)->getPathfindingMalus(type);
                     if (malus < 0.0F || malus >= 8.0F || type == BlockPathTypes::DAMAGE_FIRE
                         || type == BlockPathTypes::DANGER_FIRE || type == BlockPathTypes::DAMAGE_OTHER)

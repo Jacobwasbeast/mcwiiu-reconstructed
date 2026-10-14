@@ -16,8 +16,7 @@ bool LandOnOwnersShoulderGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(mOwner->getOwner());
     bool canLand = owner && !boost::static_pointer_cast<Player>(owner)->isSpectator()
-        && !boost::static_pointer_cast<Player>(owner)->mAbilities.mFlying
-        && !owner->isInWater();
+                   && !boost::static_pointer_cast<Player>(owner)->mAbilities.mFlying && !owner->isInWater();
 
     return !mOwner->isSitting() && canLand && mOwner->canSitOnShoulder();
 }
@@ -44,4 +43,3 @@ void LandOnOwnersShoulderGoal::tick()
         }
     }
 }
-

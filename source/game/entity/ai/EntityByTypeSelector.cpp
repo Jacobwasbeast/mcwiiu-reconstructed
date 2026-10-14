@@ -2,8 +2,7 @@
 
 #include "game/entity/mob/Entity.hpp"
 
-EntityByTypeSelector::EntityByTypeSelector(unsigned long long entityType)
-    : mEntityType(entityType)
+EntityByTypeSelector::EntityByTypeSelector(unsigned long long entityType) : mEntityType(entityType)
 {
 }
 

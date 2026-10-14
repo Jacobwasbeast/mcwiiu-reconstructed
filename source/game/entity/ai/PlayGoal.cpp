@@ -31,8 +31,8 @@ bool PlayGoal::canUse()
     if (mVillager->getRandom()->nextInt(400) != 0)
         return false;
 
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mVillager->mLevel->getEntitiesOfClass(typeid(Villager), mVillager->mBoundingBox->grow(6.0, 3.0, 6.0));
+    std::vector<boost::shared_ptr<Entity> >* entities = mVillager->mLevel->getEntitiesOfClass(
+        typeid(Villager), mVillager->mBoundingBox->grow(6.0, 3.0, 6.0));
     double closestDistance = DBL_MAX;
     std::vector<boost::shared_ptr<Entity> >::iterator it;
     for (it = entities->begin(); it != entities->end(); ++it)
@@ -41,8 +41,7 @@ bool PlayGoal::canUse()
         if (entity.get() == mVillager)
             continue;
 
-        boost::shared_ptr<Villager> candidate =
-            boost::dynamic_pointer_cast<Villager>(entity);
+        boost::shared_ptr<Villager> candidate = boost::dynamic_pointer_cast<Villager>(entity);
         if (candidate->isChasing())
             continue;
         if (candidate->getAge() >= 0)
@@ -60,8 +59,8 @@ bool PlayGoal::canUse()
 
     if (!mTarget.lock())
     {
-        Vec3* position = RandomPos::getPos(
-            boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this()), 16, 3, -1);
+        Vec3* position = RandomPos::getPos(boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this()),
+                                           16, 3, -1);
         if (position == 0)
             return false;
     }
@@ -97,8 +96,8 @@ void PlayGoal::tick()
     }
     else if (mVillager->getNavigation()->isDone())
     {
-        Vec3* position = RandomPos::getPos(
-            boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this()), 16, 3, -1);
+        Vec3* position = RandomPos::getPos(boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this()),
+                                           16, 3, -1);
         if (position == 0)
             return;
 

@@ -44,8 +44,8 @@ void DolphinPathNavigation::updatePath()
     {
         Vec3* pathPos = mPath->getPos(mMob->shared_from_this(), index);
         Vec3* horizontalPos = Vec3::newTemp(mobPos->x, pathPos->y, mobPos->z);
-        if (horizontalPos->distanceToSqr(pathPos) < waypointDistance &&
-            std::abs(mobPos->y - pathPos->y) < waypointHeight)
+        if (horizontalPos->distanceToSqr(pathPos) < waypointDistance
+            && std::abs(mobPos->y - pathPos->y) < waypointHeight)
             mPath->setIndex(index + 1);
     }
 
@@ -54,8 +54,7 @@ void DolphinPathNavigation::updatePath()
     for (int best = std::min(mPath->getIndex() + 6, mPath->getSize() - 1); best > mPath->getIndex(); --best)
     {
         Vec3* pathPos = mPath->getPos(mMob->shared_from_this(), best);
-        if (pathPos->distanceToSqr(mobPos) <= 36.0 &&
-            canMoveDirectly(mobPos, pathPos, width, height, width))
+        if (pathPos->distanceToSqr(mobPos) <= 36.0 && canMoveDirectly(mobPos, pathPos, width, height, width))
         {
             mPath->setIndex(best);
             break;

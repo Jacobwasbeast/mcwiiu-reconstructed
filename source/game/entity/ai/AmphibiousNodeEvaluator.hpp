@@ -14,12 +14,9 @@ public:
     virtual void done();
     virtual Node* getStart();
     virtual Node* getGoal(double x, double y, double z);
-    virtual int getNeighbors(arrayWithLength<Node*>* neighbors, Node* current, Node* target,
-                             float maxCost);
-    virtual const BlockPathTypes* getBlockPathTypes(LevelSource* levelSource, int x, int y, int z,
-                                                    int sizeX, int sizeY, int sizeZ,
-                                                    bool canOpenDoors, bool canPassDoors,
-                                                    int& pathTypeFlags,
+    virtual int getNeighbors(arrayWithLength<Node*>* neighbors, Node* current, Node* target, float maxCost);
+    virtual const BlockPathTypes* getBlockPathTypes(LevelSource* levelSource, int x, int y, int z, int sizeX, int sizeY,
+                                                    int sizeZ, bool canOpenDoors, bool canPassDoors, int& pathTypeFlags,
                                                     const BlockPathTypes* pathType);
     virtual const BlockPathTypes* getBlockPathType(LevelSource* levelSource, int x, int y, int z);
 

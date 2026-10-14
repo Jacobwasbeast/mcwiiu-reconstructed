@@ -11,7 +11,10 @@ class WithinDistanceSelector : public Predicate<boost::shared_ptr<Entity> >
 {
 public:
     WithinDistanceSelector(double x, double y, double z, double distance)
-        : x(x), y(y), z(z), distanceSqr(distance * distance)
+        : x(x),
+          y(y),
+          z(z),
+          distanceSqr(distance * distance)
     {
     }
 

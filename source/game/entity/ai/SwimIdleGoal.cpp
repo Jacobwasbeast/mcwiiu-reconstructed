@@ -13,8 +13,7 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/WaterAnimal.hpp"
 
-SwimIdleGoal::SwimIdleGoal(Mob* mob)
-    : Goal(), mMob(mob)
+SwimIdleGoal::SwimIdleGoal(Mob* mob) : Goal(), mMob(mob)
 {
     mStartPos = NULL;
     mTicks = 0;
@@ -68,14 +67,13 @@ void SwimIdleGoal::tick()
     }
     if (isWaterAnimal)
     {
-        boost::shared_ptr<WaterAnimal> waterAnimal =
-            boost::static_pointer_cast<WaterAnimal>(mMob->shared_from_this());
+        boost::shared_ptr<WaterAnimal> waterAnimal = boost::static_pointer_cast<WaterAnimal>(mMob->shared_from_this());
         if (waterAnimal->mSwimAmplitude > 0.0f)
         {
             const int id = mMob->getId();
             const float phase = static_cast<float>(std::abs(id) % 100);
             const float swim = Mth::sin((static_cast<float>(mMob->mTickCount) + phase) * waterAnimal->mSwimFrequency)
-                * waterAnimal->mSwimAmplitude;
+                               * waterAnimal->mSwimAmplitude;
             const float cosYaw = Mth::cos(mMob->mYRot * Mth::DEG_TO_RAD);
             const float sinYaw = Mth::sin(mMob->mYRot * Mth::DEG_TO_RAD);
 
@@ -89,4 +87,3 @@ void SwimIdleGoal::tick()
         }
     }
 }
-

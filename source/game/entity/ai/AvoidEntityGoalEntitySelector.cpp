@@ -12,9 +12,8 @@ AvoidEntityGoalEntitySelector::AvoidEntityGoalEntitySelector(AvoidEntityGoal* av
 
 bool AvoidEntityGoalEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity->isAlive()
-        && mAvoidEntityGoal->mMob->getSensing()->canSee(entity)
-        && !mAvoidEntityGoal->mMob->isAlliedTo(entity);
+    return entity->isAlive() && mAvoidEntityGoal->mMob->getSensing()->canSee(entity)
+           && !mAvoidEntityGoal->mMob->isAlliedTo(entity);
 }
 
 AvoidEntityGoalEntitySelector::~AvoidEntityGoalEntitySelector()

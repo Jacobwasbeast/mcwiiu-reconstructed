@@ -9,7 +9,7 @@
 bool ParentHorseSelector::apply(boost::shared_ptr<Entity> entity) const
 {
     return eTYPE_DERIVED_FROM(EntityType::HORSE, entity->GetType())
-        && boost::static_pointer_cast<AbstractHorse>(entity)->isBred();
+           && boost::static_pointer_cast<AbstractHorse>(entity)->isBred();
 }
 
 ParentHorseSelector::~ParentHorseSelector()

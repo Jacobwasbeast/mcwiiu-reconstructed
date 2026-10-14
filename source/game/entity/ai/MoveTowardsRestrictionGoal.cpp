@@ -32,9 +32,7 @@ bool MoveTowardsRestrictionGoal::canUse()
 
     BlockPos restrictionCenter = mMob->getRestrictCenter();
     Vec3* position = RandomPos::getPosTowards(
-        boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()),
-        16,
-        7,
+        boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 16, 7,
         Vec3::newTemp((double)restrictionCenter.x, (double)restrictionCenter.y, (double)restrictionCenter.z));
     if (position == NULL)
     {
@@ -56,4 +54,3 @@ void MoveTowardsRestrictionGoal::start()
 {
     mMob->getNavigation()->moveTo(mWantedX, mWantedY, mWantedZ, mSpeedModifier);
 }
-

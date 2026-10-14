@@ -10,10 +10,7 @@ class Entity;
 class RidingSelector : public Predicate<boost::shared_ptr<Entity> >
 {
 public:
-    RidingSelector(const boost::shared_ptr<Entity>& vehicle, bool riding)
-        : vehicle(vehicle), riding(riding)
-    {
-    }
+    RidingSelector(const boost::shared_ptr<Entity>& vehicle, bool riding) : vehicle(vehicle), riding(riding) {}
 
     virtual bool apply(boost::shared_ptr<Entity> entity) const;
 

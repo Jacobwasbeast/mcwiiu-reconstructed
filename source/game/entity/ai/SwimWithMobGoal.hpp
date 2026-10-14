@@ -26,8 +26,7 @@ public:
     virtual bool canInterrupt();
     virtual void start();
     virtual void stop();
-    BlockPos GetTargetPosition(boost::shared_ptr<Entity> entity, Vec3* direction,
-                               double distance, double offset);
+    BlockPos GetTargetPosition(boost::shared_ptr<Entity> entity, Vec3* direction, double distance, double offset);
     virtual void tick();
     virtual std::wstring getName() { return L"SwimWithMob"; }
 

@@ -17,8 +17,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 
-SkeletonTrapGoal::SkeletonTrapGoal(SkeletonHorse* horse)
-    : mHorse(horse)
+SkeletonTrapGoal::SkeletonTrapGoal(SkeletonHorse* horse) : mHorse(horse)
 {
 }
 
@@ -27,8 +26,8 @@ bool SkeletonTrapGoal::canUse()
     return mHorse->mLevel->hasNearPlayer(mHorse->mX, mHorse->mY, mHorse->mZ, 10.0);
 }
 
-boost::shared_ptr<Skeleton> SkeletonTrapGoal::createSkeleton(
-    const DifficultyInstance& difficulty, const boost::shared_ptr<AbstractHorse>& horse)
+boost::shared_ptr<Skeleton> SkeletonTrapGoal::createSkeleton(const DifficultyInstance& difficulty,
+                                                             const boost::shared_ptr<AbstractHorse>& horse)
 {
     boost::shared_ptr<Skeleton> skeleton(new Skeleton(horse->mLevel));
     skeleton->finalizeMobSpawn(difficulty, NULL, std::wstring(L""));
@@ -39,14 +38,16 @@ boost::shared_ptr<Skeleton> SkeletonTrapGoal::createSkeleton(
     if (skeleton->getItemSlot(EquipmentSlot::HEAD)->isEmpty())
         skeleton->setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(Items::ironHelmet)));
 
-    skeleton->setItemSlot(EquipmentSlot::MAINHAND, EnchantmentHelper::enchantItem(
-        skeleton->getRandom(), skeleton->getMainHandItem(),
-        (int)(5.0F + difficulty.getSpecialMultiplier() *
-              (float)skeleton->getRandom()->nextInt(18)), false));
-    skeleton->setItemSlot(EquipmentSlot::HEAD, EnchantmentHelper::enchantItem(
-        skeleton->getRandom(), skeleton->getItemSlot(EquipmentSlot::HEAD),
-        (int)(5.0F + difficulty.getSpecialMultiplier() *
-              (float)skeleton->getRandom()->nextInt(18)), false));
+    skeleton->setItemSlot(
+        EquipmentSlot::MAINHAND,
+        EnchantmentHelper::enchantItem(
+            skeleton->getRandom(), skeleton->getMainHandItem(),
+            (int)(5.0F + difficulty.getSpecialMultiplier() * (float)skeleton->getRandom()->nextInt(18)), false));
+    skeleton->setItemSlot(
+        EquipmentSlot::HEAD,
+        EnchantmentHelper::enchantItem(
+            skeleton->getRandom(), skeleton->getItemSlot(EquipmentSlot::HEAD),
+            (int)(5.0F + difficulty.getSpecialMultiplier() * (float)skeleton->getRandom()->nextInt(18)), false));
 
     skeleton->mLevel->addEntity(skeleton);
     return skeleton;
@@ -73,10 +74,11 @@ void SkeletonTrapGoal::tick()
     mHorse->setTamed(true);
     mHorse->setAge(0);
 
-    mHorse->mLevel->addGlobalEntity(boost::shared_ptr<LightningBolt>(new LightningBolt(
-        mHorse->mLevel, mHorse->mX, mHorse->mY, mHorse->mZ, true)));
+    mHorse->mLevel->addGlobalEntity(
+        boost::shared_ptr<LightningBolt>(new LightningBolt(mHorse->mLevel, mHorse->mX, mHorse->mY, mHorse->mZ, true)));
 
-    boost::shared_ptr<Skeleton> skeleton = createSkeleton(difficulty, boost::static_pointer_cast<AbstractHorse>(mHorse->shared_from_this()));
+    boost::shared_ptr<Skeleton> skeleton = createSkeleton(
+        difficulty, boost::static_pointer_cast<AbstractHorse>(mHorse->shared_from_this()));
     skeleton->startRiding(mHorse->shared_from_this());
 
     for (int i = 0; i < 3; ++i)
@@ -84,8 +86,6 @@ void SkeletonTrapGoal::tick()
         boost::shared_ptr<AbstractHorse> trapHorse = createHorse(difficulty);
         boost::shared_ptr<Skeleton> trapSkeleton = createSkeleton(difficulty, trapHorse);
         trapSkeleton->startRiding(trapHorse);
-        trapHorse->push(mHorse->getRandom()->nextGaussian() * 0.5, 0.0,
-                        mHorse->getRandom()->nextGaussian() * 0.5);
+        trapHorse->push(mHorse->getRandom()->nextGaussian() * 0.5, 0.0, mHorse->getRandom()->nextGaussian() * 0.5);
     }
 }
-

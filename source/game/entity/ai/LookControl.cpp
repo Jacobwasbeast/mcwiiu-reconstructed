@@ -13,8 +13,15 @@
 #include "game/util/Vec3.hpp"
 
 LookControl::LookControl(Mob* mob)
-    : mMob(mob), mYMax(0.0f), mXMax(0.0f), mHasWanted(false), mHasWantedRotation(false),
-      mWantedRotation(NULL), mWantedX(0.0), mWantedY(0.0), mWantedZ(0.0)
+    : mMob(mob),
+      mYMax(0.0f),
+      mXMax(0.0f),
+      mHasWanted(false),
+      mHasWantedRotation(false),
+      mWantedRotation(NULL),
+      mWantedX(0.0),
+      mWantedY(0.0),
+      mWantedZ(0.0)
 {
 }
 

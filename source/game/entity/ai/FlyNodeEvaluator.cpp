@@ -15,8 +15,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 
-FlyNodeEvaluator::FlyNodeEvaluator(Entity* entity)
-    : WalkNodeEvaluator(entity)
+FlyNodeEvaluator::FlyNodeEvaluator(Entity* entity) : WalkNodeEvaluator(entity)
 {
 }
 
@@ -34,8 +33,8 @@ void FlyNodeEvaluator::done()
 
 const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(Mob* mob, int x, int y, int z)
 {
-    return getBlockPathType(mLevelSource, x, y, z, mob, mEntityWidth, mEntityHeight, mEntityDepth,
-                            isCanOpenDoors(), isCanPassDoors());
+    return getBlockPathType(mLevelSource, x, y, z, mob, mEntityWidth, mEntityHeight, mEntityDepth, isCanOpenDoors(),
+                            isCanPassDoors());
 }
 
 const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(Mob* mob, const BlockPos& pos)
@@ -193,15 +192,15 @@ Node* FlyNodeEvaluator::getNode(int x, int y, int z)
     return node;
 }
 
-const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(LevelSource* levelSource, int x, int y, int z,
-                                                          Mob* mob, int sizeX, int sizeY, int sizeZ,
-                                                          bool canOpenDoors, bool canPassDoors)
+const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(LevelSource* levelSource, int x, int y, int z, Mob* mob,
+                                                         int sizeX, int sizeY, int sizeZ, bool canOpenDoors,
+                                                         bool canPassDoors)
 {
     int pathTypeFlags = 0;
     const BlockPathTypes* result = BlockPathTypes::BLOCKED;
     BlockPos mobPos(mob);
-    result = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ, canOpenDoors, canPassDoors,
-                               pathTypeFlags, result);
+    result = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ, canOpenDoors, canPassDoors, pathTypeFlags,
+                               result);
     if ((pathTypeFlags & 1 << BlockPathTypes::FENCE->id) != 0)
         return BlockPathTypes::FENCE;
 
@@ -230,15 +229,13 @@ const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(LevelSource* levelSourc
     {
         Block* block = levelSource->getBlock(BlockPos(x, y - 1, z));
         const BlockPathTypes* belowType = WalkNodeEvaluator::getBlockPathTypeRaw(levelSource, x, y - 1, z);
-        result = belowType == BlockPathTypes::DAMAGE_FIRE || block == Blocks::magma ||
-                 belowType == BlockPathTypes::LAVA
-            ? BlockPathTypes::DAMAGE_FIRE
-            : belowType == BlockPathTypes::DAMAGE_CACTUS
-                ? BlockPathTypes::DAMAGE_CACTUS
-                : belowType == BlockPathTypes::WALKABLE || belowType == BlockPathTypes::OPEN ||
-                          belowType == BlockPathTypes::WATER
-                    ? BlockPathTypes::OPEN
-                    : BlockPathTypes::WALKABLE;
+        result = belowType == BlockPathTypes::DAMAGE_FIRE || block == Blocks::magma || belowType == BlockPathTypes::LAVA
+                     ? BlockPathTypes::DAMAGE_FIRE
+                 : belowType == BlockPathTypes::DAMAGE_CACTUS ? BlockPathTypes::DAMAGE_CACTUS
+                 : belowType == BlockPathTypes::WALKABLE || belowType == BlockPathTypes::OPEN
+                         || belowType == BlockPathTypes::WATER
+                     ? BlockPathTypes::OPEN
+                     : BlockPathTypes::WALKABLE;
     }
 
     return WalkNodeEvaluator::checkNeighbourBlocks(levelSource, x, y, z, result);

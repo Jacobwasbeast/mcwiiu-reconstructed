@@ -12,8 +12,8 @@ class Level;
 class MoveToWaterGoal : public MoveToBlockGoal
 {
 public:
-    MoveToWaterGoal(PathfinderMob* mob, double speedModifier, int searchRange,
-                    int verticalSearchStart, double maxStayDistance);
+    MoveToWaterGoal(PathfinderMob* mob, double speedModifier, int searchRange, int verticalSearchStart,
+                    double maxStayDistance);
     virtual ~MoveToWaterGoal();
 
     virtual bool canUse();

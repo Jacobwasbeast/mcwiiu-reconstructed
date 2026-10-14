@@ -27,6 +27,7 @@ public:
         DisguisedRangeModifier(PathfinderMob* mob);
         virtual ~DisguisedRangeModifier();
         virtual double apply(boost::shared_ptr<Player> player) const;
+
     private:
         PathfinderMob* mMob;
     };
@@ -35,17 +36,16 @@ public:
     {
     public:
         DistComp(Entity* entity);
-        bool operator()(boost::shared_ptr<Entity> first,
-                        boost::shared_ptr<Entity> second);
+        bool operator()(boost::shared_ptr<Entity> first, boost::shared_ptr<Entity> second);
+
     private:
         Entity* mEntity;
     };
 
-    NearestAttackableTargetGoal(PathfinderMob* mob, const std::type_info& targetType,
-                                bool mustSee, bool mustReach, bool includeRemoved);
-    NearestAttackableTargetGoal(PathfinderMob* mob, const std::type_info& targetType,
-                                int randomInterval, bool mustSee, bool mustReach,
-                                const Predicate<boost::shared_ptr<Entity> >* selector,
+    NearestAttackableTargetGoal(PathfinderMob* mob, const std::type_info& targetType, bool mustSee, bool mustReach,
+                                bool includeRemoved);
+    NearestAttackableTargetGoal(PathfinderMob* mob, const std::type_info& targetType, int randomInterval, bool mustSee,
+                                bool mustReach, const Predicate<boost::shared_ptr<Entity> >* selector,
                                 bool includeRemoved, bool ownsSelector);
     virtual ~NearestAttackableTargetGoal();
     virtual bool canUse();

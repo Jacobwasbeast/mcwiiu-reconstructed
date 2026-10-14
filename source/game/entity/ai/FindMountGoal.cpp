@@ -16,11 +16,16 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 
-FindMountGoal::FindMountGoal(Mob& mob, float targetDistance, int startDelay,
-                             bool avoidWater, bool targetNeeded, float mountDistance)
-    : mTarget(), mTargetDistance(targetDistance),
-      mStartCounter(0), mStartDelay(startDelay), mAvoidWater(avoidWater),
-      mTargetNeeded(targetNeeded), mMountDistance(mountDistance), mMob(&mob)
+FindMountGoal::FindMountGoal(Mob& mob, float targetDistance, int startDelay, bool avoidWater, bool targetNeeded,
+                             float mountDistance)
+    : mTarget(),
+      mTargetDistance(targetDistance),
+      mStartCounter(0),
+      mStartDelay(startDelay),
+      mAvoidWater(avoidWater),
+      mTargetNeeded(targetNeeded),
+      mMountDistance(mountDistance),
+      mMob(&mob)
 {
     setRequiredControlFlags(3);
 }
@@ -43,16 +48,15 @@ bool FindMountGoal::canUse()
         return false;
     }
 
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(typeid(Mob), mMob->mBoundingBox->grow((double)mTargetDistance));
+    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(
+        typeid(Mob), mMob->mBoundingBox->grow((double)mTargetDistance));
 
     static const unsigned long long mountTypes[] = {
-        EntityType::CHICKEN, EntityType::CAVE_SPIDER, EntityType::COW, EntityType::DONKEY,
-        EntityType::HORSE, EntityType::HUSK, EntityType::MUSHROOM_COW, EntityType::MULE,
-        EntityType::OCELOT, EntityType::PIG, EntityType::SHEEP, EntityType::SKELETON_HORSE,
-        EntityType::SPIDER, EntityType::WOLF, EntityType::ZOMBIE, EntityType::ZOMBIE_HORSE,
-        EntityType::ZOMBIE_VILLAGER
-    };
+        EntityType::CHICKEN,        EntityType::CAVE_SPIDER, EntityType::COW,          EntityType::DONKEY,
+        EntityType::HORSE,          EntityType::HUSK,        EntityType::MUSHROOM_COW, EntityType::MULE,
+        EntityType::OCELOT,         EntityType::PIG,         EntityType::SHEEP,        EntityType::SKELETON_HORSE,
+        EntityType::SPIDER,         EntityType::WOLF,        EntityType::ZOMBIE,       EntityType::ZOMBIE_HORSE,
+        EntityType::ZOMBIE_VILLAGER};
     double nearestDistance = -1.0;
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
@@ -63,11 +67,11 @@ bool FindMountGoal::canUse()
             boost::shared_ptr<Entity> self = mMob->shared_from_this();
             if (mount->isAlive() && mount->canAddPassenger(self) && !mount->isSleeping())
             {
-                if ((eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, mount->GetType()) &&
-                     boost::static_pointer_cast<TamableAnimal>(mount)->isTame()) ||
-                    (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, mount->GetType()) &&
-                     boost::static_pointer_cast<AbstractHorse>(mount)->isTamed()) ||
-                    mount->isBaby())
+                if ((eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, mount->GetType())
+                     && boost::static_pointer_cast<TamableAnimal>(mount)->isTame())
+                    || (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, mount->GetType())
+                        && boost::static_pointer_cast<AbstractHorse>(mount)->isTamed())
+                    || mount->isBaby())
                     continue;
                 if (mAvoidWater && mount->isInWater())
                     continue;
@@ -107,8 +111,7 @@ bool FindMountGoal::canUse()
 bool FindMountGoal::canContinueToUse()
 {
     boost::shared_ptr<Entity> target = mTarget.lock();
-    if (target && target->isAlive() && !mMob->isPassenger() &&
-        target->canAddPassenger(mMob->shared_from_this()))
+    if (target && target->isAlive() && !mMob->isPassenger() && target->canAddPassenger(mMob->shared_from_this()))
     {
         return true;
     }

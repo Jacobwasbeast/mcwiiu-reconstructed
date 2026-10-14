@@ -53,9 +53,7 @@ void OcelotAttackGoal::tick()
 
     float attackReach = mMob->mBbWidth * 2.0f;
     double attackReachSqr = attackReach * attackReach;
-    double distance = mMob->distanceToSqr(mTarget.lock()->mX,
-                                          mTarget.lock()->mBoundingBox->mMinY,
-                                          mTarget.lock()->mZ);
+    double distance = mMob->distanceToSqr(mTarget.lock()->mX, mTarget.lock()->mBoundingBox->mMinY, mTarget.lock()->mZ);
 
     double speed = 0.8;
     if (distance > attackReachSqr && distance < 16.0)
@@ -80,4 +78,3 @@ void OcelotAttackGoal::setLevel(Level* level)
 {
     mLevel = level;
 }
-

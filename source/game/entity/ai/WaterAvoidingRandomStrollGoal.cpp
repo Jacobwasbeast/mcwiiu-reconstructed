@@ -14,7 +14,8 @@ WaterAvoidingRandomStrollGoal::WaterAvoidingRandomStrollGoal(PathfinderMob* mob,
 {
 }
 
-WaterAvoidingRandomStrollGoal::WaterAvoidingRandomStrollGoal(PathfinderMob* mob, double speedModifier, float probability)
+WaterAvoidingRandomStrollGoal::WaterAvoidingRandomStrollGoal(PathfinderMob* mob, double speedModifier,
+                                                             float probability)
     : RandomStrollGoal(mob, speedModifier),
       mProbability(probability)
 {

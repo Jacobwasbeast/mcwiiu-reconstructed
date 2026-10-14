@@ -18,19 +18,17 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/generation/Player.hpp"
 
-NearestAttackableTargetGoal::DistComp::DistComp(Entity* entity)
-    : mEntity(entity)
+NearestAttackableTargetGoal::DistComp::DistComp(Entity* entity) : mEntity(entity)
 {
 }
 
 bool NearestAttackableTargetGoal::DistComp::operator()(boost::shared_ptr<Entity> first,
-                                                        boost::shared_ptr<Entity> second)
+                                                       boost::shared_ptr<Entity> second)
 {
     return mEntity->distanceToSqr(first) < mEntity->distanceToSqr(second);
 }
 
-NearestAttackableTargetGoal::DisguisedRangeModifier::DisguisedRangeModifier(PathfinderMob* mob)
-    : mMob(mob)
+NearestAttackableTargetGoal::DisguisedRangeModifier::DisguisedRangeModifier(PathfinderMob* mob) : mMob(mob)
 {
 }
 
@@ -46,8 +44,7 @@ double NearestAttackableTargetGoal::DisguisedRangeModifier::apply(boost::shared_
         int damage = item->getDamageValue();
         bool isSkeleton = eTYPE_DERIVED_FROM(EntityType::SKELETON, mMob->GetType());
         bool disguisedAsSkeleton = isSkeleton && damage == 0;
-        bool disguisedAsZombie =
-            eTYPE_DERIVED_FROM(EntityType::ZOMBIE, mMob->GetType()) && damage == 2;
+        bool disguisedAsZombie = eTYPE_DERIVED_FROM(EntityType::ZOMBIE, mMob->GetType()) && damage == 2;
         bool isCreeper = eTYPE_DERIVED_FROM(EntityType::CREEPER, mMob->GetType());
         bool disguisedAsCreeper = isCreeper && damage == 4;
         if (disguisedAsSkeleton || disguisedAsZombie || disguisedAsCreeper)
@@ -56,24 +53,26 @@ double NearestAttackableTargetGoal::DisguisedRangeModifier::apply(boost::shared_
     return 1.0;
 }
 
-NearestAttackableTargetGoal::NearestAttackableTargetGoal(
-    PathfinderMob* mob, const std::type_info& targetType, bool mustSee,
-    bool mustReach, bool includeRemoved)
-    : TargetGoal(mob, mustSee, mustReach), mTargetType(&targetType), mSorter(mob)
+NearestAttackableTargetGoal::NearestAttackableTargetGoal(PathfinderMob* mob, const std::type_info& targetType,
+                                                         bool mustSee, bool mustReach, bool includeRemoved)
+    : TargetGoal(mob, mustSee, mustReach),
+      mTargetType(&targetType),
+      mSorter(mob)
 {
     mRandomInterval = 10;
     setRequiredControlFlags(1);
-    mTargetSelector = new SubselectEntitySelector(
-        this, Predicates<boost::shared_ptr<Entity> >::alwaysTrue, false);
+    mTargetSelector = new SubselectEntitySelector(this, Predicates<boost::shared_ptr<Entity> >::alwaysTrue, false);
     mIncludeRemoved = includeRemoved;
     mRangeModifier = new DisguisedRangeModifier(mob);
 }
 
-NearestAttackableTargetGoal::NearestAttackableTargetGoal(
-    PathfinderMob* mob, const std::type_info& targetType, int randomInterval,
-    bool mustSee, bool mustReach, const Predicate<boost::shared_ptr<Entity> >* selector,
-    bool includeRemoved, bool ownsSelector)
-    : TargetGoal(mob, mustSee, mustReach), mTargetType(&targetType), mSorter(mob)
+NearestAttackableTargetGoal::NearestAttackableTargetGoal(PathfinderMob* mob, const std::type_info& targetType,
+                                                         int randomInterval, bool mustSee, bool mustReach,
+                                                         const Predicate<boost::shared_ptr<Entity> >* selector,
+                                                         bool includeRemoved, bool ownsSelector)
+    : TargetGoal(mob, mustSee, mustReach),
+      mTargetType(&targetType),
+      mSorter(mob)
 {
     mRandomInterval = randomInterval;
     setRequiredControlFlags(1);
@@ -94,15 +93,14 @@ bool NearestAttackableTargetGoal::canUse()
         return false;
     if (*mTargetType == typeid(Player) || *mTargetType == typeid(ServerPlayer))
     {
-        mTarget = mMob->mLevel->getNearestAttackablePlayer(
-            mMob->mX, mMob->mY + mMob->getEyeHeight(), mMob->mZ,
-            getFollowDistance(), getFollowDistance(), mRangeModifier, mTargetSelector);
+        mTarget = mMob->mLevel->getNearestAttackablePlayer(mMob->mX, mMob->mY + mMob->getEyeHeight(), mMob->mZ,
+                                                           getFollowDistance(), getFollowDistance(), mRangeModifier,
+                                                           mTargetSelector);
         return mTarget.lock().get() != NULL;
     }
 
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(*mTargetType,
-            getTargetSearchArea(getFollowDistance()), mTargetSelector, mIncludeRemoved);
+    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(
+        *mTargetType, getTargetSearchArea(getFollowDistance()), mTargetSelector, mIncludeRemoved);
     bool found = false;
     if (entities != NULL && !entities->empty())
     {

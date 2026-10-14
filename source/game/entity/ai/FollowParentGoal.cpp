@@ -25,8 +25,8 @@ bool FollowParentGoal::canUse()
     }
 
     Animal* animal = mAnimal;
-    std::vector<boost::shared_ptr<Entity> >* animals =
-        animal->mLevel->getEntitiesOfClass(typeid(*animal), animal->mBoundingBox->grow(8.0, 4.0, 8.0));
+    std::vector<boost::shared_ptr<Entity> >* animals = animal->mLevel->getEntitiesOfClass(
+        typeid(*animal), animal->mBoundingBox->grow(8.0, 4.0, 8.0));
 
     boost::shared_ptr<Entity> parent;
     double closestDistance = 1.7976931348623157e+308;
@@ -100,4 +100,3 @@ void FollowParentGoal::tick()
         mAnimal->getNavigation()->moveTo(mParentAnimal.lock(), mSpeedModifier);
     }
 }
-

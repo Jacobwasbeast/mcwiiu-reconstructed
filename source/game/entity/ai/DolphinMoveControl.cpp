@@ -11,7 +11,9 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 
 DolphinMoveControl::DolphinMoveControl(Dolphin* dolphin)
-    : MoveControl(dolphin), mMaxYRotChange(85.0f), mMaxXRotChange(10.0f)
+    : MoveControl(dolphin),
+      mMaxYRotChange(85.0f),
+      mMaxXRotChange(10.0f)
 {
 }
 

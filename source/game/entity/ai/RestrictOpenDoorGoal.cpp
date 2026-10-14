@@ -11,9 +11,7 @@
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
 
-RestrictOpenDoorGoal::RestrictOpenDoorGoal(PathfinderMob* mob)
-    : Goal(),
-      mDoorInfo()
+RestrictOpenDoorGoal::RestrictOpenDoorGoal(PathfinderMob* mob) : Goal(), mDoorInfo()
 {
     mMob = mob;
 }
@@ -67,4 +65,3 @@ void RestrictOpenDoorGoal::tick()
     if (doorInfo)
         doorInfo->incBookingCount();
 }
-

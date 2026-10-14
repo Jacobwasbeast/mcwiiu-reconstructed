@@ -15,9 +15,7 @@
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
 
-MoveIndoorsGoal::MoveIndoorsGoal(PathfinderMob* mob)
-    : Goal(),
-      mDoorInfo()
+MoveIndoorsGoal::MoveIndoorsGoal(PathfinderMob* mob) : Goal(), mDoorInfo()
 {
     mDoorX = mDoorZ = -1;
     mMob = mob;
@@ -37,15 +35,12 @@ bool MoveIndoorsGoal::canUse()
             return false;
     }
 
-    if (mMob->mLevel->mDimension->isHasSkyLight()
-        && mMob->getRandom()->nextInt(50) == 0)
+    if (mMob->mLevel->mDimension->isHasSkyLight() && mMob->getRandom()->nextInt(50) == 0)
     {
-        if (mDoorX != -1
-            && mMob->distanceToSqr((double)mDoorX, mMob->mY, (double)mDoorZ) < 4.0)
+        if (mDoorX != -1 && mMob->distanceToSqr((double)mDoorX, mMob->mY, (double)mDoorZ) < 4.0)
             return false;
 
-        boost::shared_ptr<Village> village =
-            mMob->mLevel->getVillages()->getClosestVillage(pos, 14);
+        boost::shared_ptr<Village> village = mMob->mLevel->getVillages()->getClosestVillage(pos, 14);
         if (village)
         {
             boost::shared_ptr<DoorInfo> doorInfo = village->getBestDoorInfo(pos);
@@ -80,14 +75,11 @@ void MoveIndoorsGoal::start()
     if (mMob->distanceToSqr(pos) > 256.0)
     {
         Vec3* destination = RandomPos::getPosTowards(
-            boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()),
-            14,
-            3,
+            boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 14, 3,
             Vec3::newTemp((double)x + 0.5, (double)y, (double)z + 0.5));
         if (destination != NULL)
         {
-            mMob->getNavigation()->moveTo(destination->x, destination->y,
-                                          destination->z, 1.0);
+            mMob->getNavigation()->moveTo(destination->x, destination->y, destination->z, 1.0);
         }
     }
     else
@@ -109,4 +101,3 @@ void MoveIndoorsGoal::stop()
     mDoorZ = doorInfo->getIndoorPos().z;
     mDoorInfo = boost::weak_ptr<DoorInfo>();
 }
-

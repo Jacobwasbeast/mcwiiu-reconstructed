@@ -11,8 +11,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockState.hpp"
 
-FlyingPathNavigation::FlyingPathNavigation(Mob* mob, Level* level)
-    : PathNavigation(mob, level), mNodeEvaluator(mob)
+FlyingPathNavigation::FlyingPathNavigation(Mob* mob, Level* level) : PathNavigation(mob, level), mNodeEvaluator(mob)
 {
     mPathFinder = createPathFinder();
 }
@@ -59,9 +58,8 @@ void FlyingPathNavigation::tick()
     else if (mPath != NULL && mPath->getIndex() < mPath->getSize())
     {
         Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
-        if (Mth::floor(mMob->mX) == Mth::floor(next->x) &&
-            Mth::floor(mMob->mY) == Mth::floor(next->y) &&
-            Mth::floor(mMob->mZ) == Mth::floor(next->z))
+        if (Mth::floor(mMob->mX) == Mth::floor(next->x) && Mth::floor(mMob->mY) == Mth::floor(next->y)
+            && Mth::floor(mMob->mZ) == Mth::floor(next->z))
             mPath->setIndex(mPath->getIndex() + 1);
     }
     debugPathfinding();
@@ -70,8 +68,7 @@ void FlyingPathNavigation::tick()
         return;
 
     Vec3* current = mPath->currentPos(mMob->shared_from_this());
-    mMob->getMoveControl()->setWantedPosition(current->x, current->y, current->z,
-                                              mSpeedModifier);
+    mMob->getMoveControl()->setWantedPosition(current->x, current->y, current->z, mSpeedModifier);
 }
 
 bool FlyingPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int width, int height, int depth)

@@ -32,23 +32,19 @@ HurtByTargetGoal::~HurtByTargetGoal()
 bool HurtByTargetGoal::canUse()
 {
     int timestamp = mMob->getLastHurtByMobTimestamp();
-    return timestamp != mTimestamp && canAttack(mMob->getLastHurtByMob(), false)
-        && !mMob->mHurtByPlayerOnPeaceful;
+    return timestamp != mTimestamp && canAttack(mMob->getLastHurtByMob(), false) && !mMob->mHurtByPlayerOnPeaceful;
 }
 
 void HurtByTargetGoal::alertOthers()
 {
     double followDistance = getFollowDistance();
     std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(
-        typeid(*mMob),
-        AABB::newTemp(mMob->mX, mMob->mY, mMob->mZ, mMob->mX + 1.0, mMob->mY + 1.0, mMob->mZ + 1.0)
-            ->grow(followDistance, 4.0, followDistance));
+        typeid(*mMob), AABB::newTemp(mMob->mX, mMob->mY, mMob->mZ, mMob->mX + 1.0, mMob->mY + 1.0, mMob->mZ + 1.0)
+                           ->grow(followDistance, 4.0, followDistance));
 
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        boost::shared_ptr<PathfinderMob> mob =
-            boost::dynamic_pointer_cast<PathfinderMob>(*it);
+        boost::shared_ptr<PathfinderMob> mob = boost::dynamic_pointer_cast<PathfinderMob>(*it);
         if (mMob->shared_from_this() == mob)
             continue;
 
@@ -57,7 +53,8 @@ void HurtByTargetGoal::alertOthers()
 
         if (eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, mMob->GetType())
             && eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, mob->GetType())
-            && static_cast<TamableAnimal*>(mMob)->getOwner() != boost::dynamic_pointer_cast<TamableAnimal>(mob)->getOwner())
+            && static_cast<TamableAnimal*>(mMob)->getOwner()
+                   != boost::dynamic_pointer_cast<TamableAnimal>(mob)->getOwner())
             continue;
 
         if (mob->isAlliedTo(mMob->getLastHurtByMob()))
@@ -94,9 +91,7 @@ void HurtByTargetGoal::start()
     TargetGoal::start();
 }
 
-void HurtByTargetGoal::alertOther(boost::shared_ptr<PathfinderMob> mob,
-                                  boost::shared_ptr<LivingEntity> target)
+void HurtByTargetGoal::alertOther(boost::shared_ptr<PathfinderMob> mob, boost::shared_ptr<LivingEntity> target)
 {
     mob->setTarget(target);
 }
-

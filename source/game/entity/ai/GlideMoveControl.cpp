@@ -10,7 +10,10 @@
 #include "game/util/Vec3.hpp"
 
 GlideMoveControl::GlideMoveControl(Mob* mob, float startSpeed, float speedWhenTurning)
-    : MoveControl(mob), mStartSpeed(startSpeed), mSpeedWhenTurning(speedWhenTurning), mSpeed(startSpeed)
+    : MoveControl(mob),
+      mStartSpeed(startSpeed),
+      mSpeedWhenTurning(speedWhenTurning),
+      mSpeed(startSpeed)
 {
 }
 
@@ -66,7 +69,8 @@ void GlideMoveControl::tick()
     }
 
     float wantedXRot = -((float)atan2(-dy, horizontalLength) * 57.295776f);
-    static_cast<LookControl*>(mMob->getLookControl())->setLookRotation(Vec3::newTemp((double)wantedXRot, (double)mMob->mYRot, 0.0), 60.0f, 20.0f);
+    static_cast<LookControl*>(mMob->getLookControl())
+        ->setLookRotation(Vec3::newTemp((double)wantedXRot, (double)mMob->mYRot, 0.0), 60.0f, 20.0f);
 
     float yawRadians = (90.0f + mMob->mYRot) * Mth::DEG_TO_RAD;
     float pitchRadians = wantedXRot * Mth::DEG_TO_RAD;

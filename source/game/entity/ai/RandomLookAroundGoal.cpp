@@ -40,11 +40,6 @@ void RandomLookAroundGoal::start()
 void RandomLookAroundGoal::tick()
 {
     --mLookTime;
-    mMob->getLookControl()->setLookAt(
-        mMob->mX + mLookAtX,
-        mMob->mY + mMob->getEyeHeight(),
-        mMob->mZ + mLookAtZ,
-        mMob->getMaxHeadYRot(),
-        mMob->getMaxHeadXRot());
+    mMob->getLookControl()->setLookAt(mMob->mX + mLookAtX, mMob->mY + mMob->getEyeHeight(), mMob->mZ + mLookAtZ,
+                                      mMob->getMaxHeadYRot(), mMob->getMaxHeadXRot());
 }
-

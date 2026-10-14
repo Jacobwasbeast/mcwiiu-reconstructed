@@ -54,8 +54,8 @@ void WalkNodeEvaluator::done()
 
 const BlockPathTypes* WalkNodeEvaluator::getBlockPathType(Mob* mob, int x, int y, int z)
 {
-    return getBlockPathType(mLevelSource, x, y, z, mob, mEntityWidth, mEntityHeight, mEntityDepth,
-                            isCanOpenDoors(), isCanPassDoors());
+    return getBlockPathType(mLevelSource, x, y, z, mob, mEntityWidth, mEntityHeight, mEntityDepth, isCanOpenDoors(),
+                            isCanPassDoors());
 }
 
 const BlockPathTypes* WalkNodeEvaluator::getBlockPathType(Mob* mob, const BlockPos& pos)
@@ -122,9 +122,9 @@ int WalkNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* cur
         verticalRange = Mth::floor(mMob->mMaxUpStep > 1.0f ? mMob->mMaxUpStep : 1.0f);
 
     BlockPos posBelow = BlockPos(current->x, current->y, current->z).below();
-    const double floorY = static_cast<double>(current->y)
-                          - (1.0 - getBlockState(mEntity->mTickCache, mLevelSource, posBelow)
-                                       ->getShape(mLevelSource, posBelow)->mMaxY);
+    const double floorY =
+        static_cast<double>(current->y)
+        - (1.0 - getBlockState(mEntity->mTickCache, mLevelSource, posBelow)->getShape(mLevelSource, posBelow)->mMaxY);
 
     Node* south = getLandNode(current->x, current->y, current->z + 1, verticalRange, floorY, Direction::SOUTH);
     Node* west = getLandNode(current->x - 1, current->y, current->z, verticalRange, floorY, Direction::WEST);
@@ -149,13 +149,15 @@ int WalkNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* cur
     {
         if (westOpen)
         {
-            Node* node = getLandNode(current->x - 1, current->y, current->z - 1, verticalRange, floorY, Direction::NORTH);
+            Node* node = getLandNode(current->x - 1, current->y, current->z - 1, verticalRange, floorY,
+                                     Direction::NORTH);
             if (node != NULL && !node->closed && node->distanceTo(target) < maxCost)
                 neighbors->data[count++] = node;
         }
         if (eastOpen)
         {
-            Node* node = getLandNode(current->x + 1, current->y, current->z - 1, verticalRange, floorY, Direction::NORTH);
+            Node* node = getLandNode(current->x + 1, current->y, current->z - 1, verticalRange, floorY,
+                                     Direction::NORTH);
             if (node != NULL && !node->closed && node->distanceTo(target) < maxCost)
                 neighbors->data[count++] = node;
         }
@@ -164,13 +166,15 @@ int WalkNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* cur
     {
         if (westOpen)
         {
-            Node* node = getLandNode(current->x - 1, current->y, current->z + 1, verticalRange, floorY, Direction::SOUTH);
+            Node* node = getLandNode(current->x - 1, current->y, current->z + 1, verticalRange, floorY,
+                                     Direction::SOUTH);
             if (node != NULL && !node->closed && node->distanceTo(target) < maxCost)
                 neighbors->data[count++] = node;
         }
         if (eastOpen)
         {
-            Node* node = getLandNode(current->x + 1, current->y, current->z + 1, verticalRange, floorY, Direction::SOUTH);
+            Node* node = getLandNode(current->x + 1, current->y, current->z + 1, verticalRange, floorY,
+                                     Direction::SOUTH);
             if (node != NULL && !node->closed && node->distanceTo(target) < maxCost)
                 neighbors->data[count++] = node;
         }
@@ -178,14 +182,14 @@ int WalkNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* cur
     return count;
 }
 
-const BlockPathTypes* WalkNodeEvaluator::getBlockPathType(LevelSource* levelSource, int x, int y, int z,
-                                                           Mob* mob, int sizeX, int sizeY, int sizeZ,
-                                                           bool canOpenDoors, bool canPassDoors)
+const BlockPathTypes* WalkNodeEvaluator::getBlockPathType(LevelSource* levelSource, int x, int y, int z, Mob* mob,
+                                                          int sizeX, int sizeY, int sizeZ, bool canOpenDoors,
+                                                          bool canPassDoors)
 {
     int pathTypeFlags = 0;
     const BlockPathTypes* pathType = BlockPathTypes::BLOCKED;
-    pathType = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ, canOpenDoors, canPassDoors,
-                                 pathTypeFlags, pathType);
+    pathType = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ, canOpenDoors, canPassDoors, pathTypeFlags,
+                                 pathType);
     if (pathTypeFlags & (1 << BlockPathTypes::FENCE->id))
         return BlockPathTypes::FENCE;
 
@@ -206,10 +210,9 @@ const BlockPathTypes* WalkNodeEvaluator::getBlockPathType(LevelSource* levelSour
     return worst;
 }
 
-const BlockPathTypes* WalkNodeEvaluator::getBlockPathTypes(LevelSource* levelSource, int x, int y, int z,
-                                                            int sizeX, int sizeY, int sizeZ,
-                                                            bool canOpenDoors, bool canPassDoors,
-                                                            int& pathTypeFlags, const BlockPathTypes* pathType)
+const BlockPathTypes* WalkNodeEvaluator::getBlockPathTypes(LevelSource* levelSource, int x, int y, int z, int sizeX,
+                                                           int sizeY, int sizeZ, bool canOpenDoors, bool canPassDoors,
+                                                           int& pathTypeFlags, const BlockPathTypes* pathType)
 {
     for (int dx = 0; dx < sizeX; ++dx)
         for (int dy = 0; dy < sizeY; ++dy)
@@ -282,7 +285,7 @@ const BlockPathTypes* WalkNodeEvaluator::getBlockPathTypeRaw(LevelSource* levelS
 }
 
 const BlockPathTypes* WalkNodeEvaluator::checkNeighbourBlocks(LevelSource* levelSource, int x, int y, int z,
-                                                               const BlockPathTypes* pathType)
+                                                              const BlockPathTypes* pathType)
 {
     if (pathType != BlockPathTypes::WALKABLE)
         return pathType;
@@ -359,8 +362,9 @@ Node* WalkNodeEvaluator::getLandNode(int x, int y, int z, int verticalRange, dou
             {
                 const double centreX = (x - direction->getStepX()) + 0.5;
                 const double centreZ = (z - direction->getStepZ()) + 0.5;
-                AABB* space = AABB::newTemp(centreX - halfWidth, blockY + 0.001, centreZ - halfWidth, centreX + halfWidth,
-                                            static_cast<float>(y) + mMob->mBbHeight, centreZ + halfWidth);
+                AABB* space = AABB::newTemp(centreX - halfWidth, blockY + 0.001, centreZ - halfWidth,
+                                            centreX + halfWidth, static_cast<float>(y) + mMob->mBbHeight,
+                                            centreZ + halfWidth);
                 const AABB* shape = getBlockState(mEntity->mTickCache, mLevelSource, pos)->getShape(mLevelSource, pos);
                 if (mMob->mLevel->hasBlockCubes(space->expand(0.0, shape->mMaxY - 0.002, 0.0)))
                     node = NULL;

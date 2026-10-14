@@ -9,8 +9,7 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/util/Vec3.hpp"
 
-SwimMoveControl::SwimMoveControl(Mob* mob)
-    : MoveControl(mob)
+SwimMoveControl::SwimMoveControl(Mob* mob) : MoveControl(mob)
 {
     mMob = mob;
     setSpeedModifier(0.5);
@@ -81,10 +80,8 @@ void SwimMoveControl::tick()
             wanted->y = target->y;
             wanted->z = target->z;
         }
-        lookControl->setLookAt((target->x - wanted->x) * 0.125 + wanted->x,
-                               (target->y - wanted->y) * 0.125 + wanted->y,
-                               (target->z - wanted->z) * 0.125 + wanted->z,
-                               10.0f, 40.0f);
+        lookControl->setLookAt((target->x - wanted->x) * 0.125 + wanted->x, (target->y - wanted->y) * 0.125 + wanted->y,
+                               (target->z - wanted->z) * 0.125 + wanted->z, 10.0f, 40.0f);
         mMob->setMoving(true);
     }
 }

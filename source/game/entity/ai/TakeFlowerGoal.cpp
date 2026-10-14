@@ -13,8 +13,7 @@
 #include "game/world/generation/Villager.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
 
-TakeFlowerGoal::TakeFlowerGoal(Villager* villager)
-    : mGolem(), mWantsToTakeFlower(false)
+TakeFlowerGoal::TakeFlowerGoal(Villager* villager) : mGolem(), mWantsToTakeFlower(false)
 {
     mTicks = 0;
     mGolem = boost::weak_ptr<VillagerGolem>();
@@ -90,4 +89,3 @@ void TakeFlowerGoal::tick()
         }
     }
 }
-

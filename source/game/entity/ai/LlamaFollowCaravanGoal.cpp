@@ -15,7 +15,8 @@
 #include "game/world/generation/Player.hpp"
 
 LlamaFollowCaravanGoal::LlamaFollowCaravanGoal(Llama* llama, double speedModifier)
-    : mLlama(llama), mSpeedModifier(speedModifier)
+    : mLlama(llama),
+      mSpeedModifier(speedModifier)
 {
     setRequiredControlFlags(1);
 }
@@ -24,8 +25,7 @@ LlamaFollowCaravanGoal::~LlamaFollowCaravanGoal()
 {
 }
 
-bool LlamaFollowCaravanGoal::firstIsLeashed(Llama* llama, int& distance,
-                                            boost::shared_ptr<Entity>& leashHolder)
+bool LlamaFollowCaravanGoal::firstIsLeashed(Llama* llama, int& distance, boost::shared_ptr<Entity>& leashHolder)
 {
     if (distance <= 8 && llama->inCaravan())
     {
@@ -50,8 +50,8 @@ bool LlamaFollowCaravanGoal::canUse()
     }
 
     const std::type_info& type = typeid(*mLlama);
-    std::vector<boost::shared_ptr<Entity> >* llamas =
-        mLlama->mLevel->getEntitiesOfClass(type, mLlama->mBoundingBox->grow(9.0, 4.0, 9.0));
+    std::vector<boost::shared_ptr<Entity> >* llamas = mLlama->mLevel->getEntitiesOfClass(
+        type, mLlama->mBoundingBox->grow(9.0, 4.0, 9.0));
 
     boost::shared_ptr<Llama> closest;
     double closestDistance = 1.7976931348623157e+308;
@@ -123,11 +123,10 @@ bool LlamaFollowCaravanGoal::canUse()
     mLlama->joinCaravan(closest);
     ++distance;
 
-    if (leashHolder && eTYPE_DERIVED_FROM(EntityType::PLAYER, leashHolder->GetType())
-        && distance >= 5)
+    if (leashHolder && eTYPE_DERIVED_FROM(EntityType::PLAYER, leashHolder->GetType()) && distance >= 5)
     {
-        boost::static_pointer_cast<Player>(leashHolder)->awardStat(
-            GenericStats::soIGotThatGoingForMe(), GenericStats::param_soIGotThatGoingForMe(distance));
+        boost::static_pointer_cast<Player>(leashHolder)
+            ->awardStat(GenericStats::soIGotThatGoingForMe(), GenericStats::param_soIGotThatGoingForMe(distance));
     }
 
     return true;
@@ -142,8 +141,8 @@ bool LlamaFollowCaravanGoal::canContinueToUse()
 
     boost::shared_ptr<Entity> leashHolder;
     int distance = 0;
-    if (!mLlama->inCaravan() || !mLlama->getCaravanHead()->isAlive()
-        || !firstIsLeashed(mLlama, distance, leashHolder) || mLlama->isLeashed())
+    if (!mLlama->inCaravan() || !mLlama->getCaravanHead()->isAlive() || !firstIsLeashed(mLlama, distance, leashHolder)
+        || mLlama->isLeashed())
     {
         return false;
     }
@@ -192,14 +191,11 @@ void LlamaFollowCaravanGoal::tick()
     boost::shared_ptr<Llama> caravanHead = mLlama->getCaravanHead();
     double distance = mLlama->distanceTo(caravanHead);
     float stopDistance = 2.0f;
-    Vec3* direction = Vec3::newTemp(caravanHead->mX - mLlama->mX,
-                                    caravanHead->mY - mLlama->mY,
+    Vec3* direction = Vec3::newTemp(caravanHead->mX - mLlama->mX, caravanHead->mY - mLlama->mY,
                                     caravanHead->mZ - mLlama->mZ)
                           ->normalize()
                           ->scale(std::max(distance - stopDistance, 0.0));
-    mLlama->getNavigation()->moveTo(mLlama->mX + direction->x,
-                                    mLlama->mY + direction->y,
-                                    mLlama->mZ + direction->z,
+    mLlama->getNavigation()->moveTo(mLlama->mX + direction->x, mLlama->mY + direction->y, mLlama->mZ + direction->z,
                                     mSpeedModifier);
 }
 

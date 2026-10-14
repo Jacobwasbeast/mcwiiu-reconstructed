@@ -16,15 +16,19 @@
 #include "game/world/Level.hpp"
 
 FollowBoatGoal::FollowBoatGoal(Dolphin* dolphin)
-    : mSearchDistance(4), mMaxDistance(12), mCooldown(0), mTarget(), mState(0),
+    : mSearchDistance(4),
+      mMaxDistance(12),
+      mCooldown(0),
+      mTarget(),
+      mState(0),
       mDolphin(dolphin)
 {
 }
 
 bool FollowBoatGoal::canUse()
 {
-    std::vector<boost::shared_ptr<Entity> >* boats =
-        mDolphin->mLevel->getEntitiesOfClass(typeid(Boat), mDolphin->mBoundingBox->grow(5.0));
+    std::vector<boost::shared_ptr<Entity> >* boats = mDolphin->mLevel->getEntitiesOfClass(
+        typeid(Boat), mDolphin->mBoundingBox->grow(5.0));
     bool boatMoving = false;
     for (unsigned int i = 0; i < boats->size(); ++i)
     {
@@ -32,7 +36,8 @@ bool FollowBoatGoal::canUse()
         if (boat->getControllingPassenger() != NULL
             && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, boat->getControllingPassenger()->GetType()))
         {
-            boost::shared_ptr<LivingEntity> passenger = boost::static_pointer_cast<LivingEntity>(boat->getControllingPassenger());
+            boost::shared_ptr<LivingEntity> passenger = boost::static_pointer_cast<LivingEntity>(
+                boat->getControllingPassenger());
             if (Mth::abs(passenger->mXxa) > 0.0f || Mth::abs(passenger->mZza) > 0.0f)
             {
                 boatMoving = true;
@@ -47,8 +52,7 @@ bool FollowBoatGoal::canUse()
 bool FollowBoatGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mTarget.lock();
-    return target != NULL && target->isPassenger()
-        && (Mth::abs(target->mXxa) > 0.0f || Mth::abs(target->mZza) > 0.0f);
+    return target != NULL && target->isPassenger() && (Mth::abs(target->mXxa) > 0.0f || Mth::abs(target->mZza) > 0.0f);
 }
 
 bool FollowBoatGoal::canInterrupt()
@@ -58,8 +62,8 @@ bool FollowBoatGoal::canInterrupt()
 
 void FollowBoatGoal::start()
 {
-    std::vector<boost::shared_ptr<Entity> >* boats =
-        mDolphin->mLevel->getEntitiesOfClass(typeid(Boat), mDolphin->mBoundingBox->grow(5.0));
+    std::vector<boost::shared_ptr<Entity> >* boats = mDolphin->mLevel->getEntitiesOfClass(
+        typeid(Boat), mDolphin->mBoundingBox->grow(5.0));
     for (unsigned int i = 0; i < boats->size(); ++i)
     {
         boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(boats->at(i));

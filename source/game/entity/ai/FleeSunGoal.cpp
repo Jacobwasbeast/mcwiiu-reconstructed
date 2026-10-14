@@ -34,9 +34,7 @@ Vec3* FleeSunGoal::getHidePos()
     BlockPos origin(mMob->mX, mMob->mBoundingBox->mMinY, mMob->mZ);
     for (int attempt = 0; attempt < 10; ++attempt)
     {
-        BlockPos candidate = origin.offset(random->nextInt(20) - 10,
-                                           random->nextInt(6) - 3,
-                                           random->nextInt(20) - 10);
+        BlockPos candidate = origin.offset(random->nextInt(20) - 10, random->nextInt(6) - 3, random->nextInt(20) - 10);
         if (!mLevel->canSeeSky(candidate) && mMob->getWalkTargetValue(candidate) < 0.0f)
             return Vec3::newTemp((double)candidate.x, (double)candidate.y, (double)candidate.z);
     }
@@ -80,4 +78,3 @@ void FleeSunGoal::setLevel(Level* level)
 {
     mLevel = level;
 }
-

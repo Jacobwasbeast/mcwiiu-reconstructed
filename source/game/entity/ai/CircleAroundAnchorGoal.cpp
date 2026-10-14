@@ -13,27 +13,23 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-CircleAroundAnchorGoal::CircleAroundAnchorGoal(Mob* mob, float speedModifier,
-                                               Goal::FloatRange distanceRange,
-                                               int distanceInterval,
-                                               Goal::FloatRange heightRange,
-                                               Goal::FloatRange verticalRange,
-                                               int verticalInterval,
-                                               float minDistance)
-    : Goal()
-    , mMob(mob)
-    , mSpeedModifier(speedModifier)
-    , mDistanceRange(distanceRange)
-    , mDistanceInterval(distanceInterval)
-    , mHeightRange(heightRange)
-    , mVerticalRange(verticalRange)
-    , mVerticalInterval(verticalInterval)
-    , mMinDistanceSquared(minDistance * minDistance)
-    , mAnchor(NULL)
-    , mCurrentDistance(0.0f)
-    , mCurrentHeight(0.0f)
-    , mDirection(1.0f)
-    , mAngle(0.0f)
+CircleAroundAnchorGoal::CircleAroundAnchorGoal(Mob* mob, float speedModifier, Goal::FloatRange distanceRange,
+                                               int distanceInterval, Goal::FloatRange heightRange,
+                                               Goal::FloatRange verticalRange, int verticalInterval, float minDistance)
+    : Goal(),
+      mMob(mob),
+      mSpeedModifier(speedModifier),
+      mDistanceRange(distanceRange),
+      mDistanceInterval(distanceInterval),
+      mHeightRange(heightRange),
+      mVerticalRange(verticalRange),
+      mVerticalInterval(verticalInterval),
+      mMinDistanceSquared(minDistance * minDistance),
+      mAnchor(NULL),
+      mCurrentDistance(0.0f),
+      mCurrentHeight(0.0f),
+      mDirection(1.0f),
+      mAngle(0.0f)
 {
     setRequiredControlFlags(3);
 }
@@ -94,8 +90,7 @@ void CircleAroundAnchorGoal::selectNext()
     }
 
     mAngle += mDirection * 30.0f * Mth::DEG_TO_RAD;
-    Vec3* wanted = anchor->add((double)(mCurrentDistance * Mth::cos(mAngle)),
-                               (double)mCurrentHeight,
+    Vec3* wanted = anchor->add((double)(mCurrentDistance * Mth::cos(mAngle)), (double)mCurrentHeight,
                                (double)(mCurrentDistance * Mth::sin(mAngle)));
     PathNavigation* navigation = mMob->getNavigation();
     if (navigation != NULL)
@@ -149,8 +144,7 @@ bool CircleAroundAnchorGoal::touchingTarget() const
 
     MoveControl* moveControl = mMob->getMoveControl();
     Vec3* position = mMob->getPos(0.0f);
-    Vec3* wanted = Vec3::newTemp(moveControl->getWantedX(), moveControl->getWantedY(),
-                                 moveControl->getWantedZ());
+    Vec3* wanted = Vec3::newTemp(moveControl->getWantedX(), moveControl->getWantedY(), moveControl->getWantedZ());
     return wanted->distanceToSqr(position) < (double)mMinDistanceSquared;
 }
 
@@ -162,14 +156,12 @@ void CircleAroundAnchorGoal::tick()
         setAnchorAboveTarget();
     }
 
-    if (mVerticalRange.max > mVerticalRange.min
-        && (mVerticalInterval == 0 || random->nextInt(mVerticalInterval) == 0))
+    if (mVerticalRange.max > mVerticalRange.min && (mVerticalInterval == 0 || random->nextInt(mVerticalInterval) == 0))
     {
         mCurrentHeight = calculateHeightOffset();
     }
 
-    if (mDistanceRange.max > mDistanceRange.min
-        && (mDistanceInterval == 0 || random->nextInt(mDistanceInterval) == 0))
+    if (mDistanceRange.max > mDistanceRange.min && (mDistanceInterval == 0 || random->nextInt(mDistanceInterval) == 0))
     {
         if (mCurrentDistance + 1.0f <= mDistanceRange.max)
         {
@@ -216,4 +208,3 @@ void CircleAroundAnchorGoal::tick()
         selectNext();
     }
 }
-

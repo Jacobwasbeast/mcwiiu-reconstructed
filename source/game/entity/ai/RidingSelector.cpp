@@ -6,4 +6,3 @@ bool RidingSelector::apply(boost::shared_ptr<Entity> entity) const
 {
     return riding ? entity->getVehicle() == vehicle : entity->getVehicle() != vehicle;
 }
-

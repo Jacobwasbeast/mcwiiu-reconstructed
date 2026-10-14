@@ -3,9 +3,7 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/world/block/DoorBlock.hpp"
 
-OpenDoorGoal::OpenDoorGoal(Mob* mob, bool closeDoor)
-    : DoorInteractGoal(mob),
-      mCloseDoorTimer(0)
+OpenDoorGoal::OpenDoorGoal(Mob* mob, bool closeDoor) : DoorInteractGoal(mob), mCloseDoorTimer(0)
 {
     mMob = mob;
     mCloseDoor = closeDoor;
@@ -39,4 +37,3 @@ void OpenDoorGoal::tick()
     --mCloseDoorTimer;
     DoorInteractGoal::tick();
 }
-

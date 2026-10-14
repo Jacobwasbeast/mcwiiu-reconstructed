@@ -22,8 +22,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/Player.hpp"
 
-BreedGoal::BreedGoal(Animal* animal, double speedModifier)
-    : mPartner()
+BreedGoal::BreedGoal(Animal* animal, double speedModifier) : mPartner()
 {
     mPartnerType = &typeid(*animal);
     mTicks = 0;
@@ -33,8 +32,7 @@ BreedGoal::BreedGoal(Animal* animal, double speedModifier)
     setRequiredControlFlags(3);
 }
 
-BreedGoal::BreedGoal(Animal* animal, double speedModifier, const std::type_info& partnerType)
-    : mPartner()
+BreedGoal::BreedGoal(Animal* animal, double speedModifier, const std::type_info& partnerType) : mPartner()
 {
     mPartnerType = &partnerType;
     mTicks = 0;
@@ -47,8 +45,7 @@ BreedGoal::BreedGoal(Animal* animal, double speedModifier, const std::type_info&
 boost::shared_ptr<Animal> BreedGoal::getFreePartner()
 {
     AABB* area = mAnimal->mBoundingBox->grow(8.0);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(*mPartnerType, area);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(*mPartnerType, area);
     double nearest = DBL_MAX;
     boost::shared_ptr<Animal> partner;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
@@ -89,8 +86,7 @@ void BreedGoal::tick()
 {
     ++mTicks;
     boost::shared_ptr<Animal> partner = mPartner.lock();
-    mAnimal->getLookControl()->setLookAt(partner, 10.0f,
-                                         static_cast<float>(mAnimal->getMaxHeadXRot()));
+    mAnimal->getLookControl()->setLookAt(partner, 10.0f, static_cast<float>(mAnimal->getMaxHeadXRot()));
     mAnimal->getNavigation()->moveTo(partner, mSpeedModifier);
     if (mTicks >= 60)
     {
@@ -130,7 +126,8 @@ void BreedGoal::breed()
         player = partner->getLoveCause();
     if (player)
     {
-        player->awardStat(GenericStats::breedEntity(child->GetType()), GenericStats::param_breedEntity(child->GetType()));
+        player->awardStat(GenericStats::breedEntity(child->GetType()),
+                          GenericStats::param_breedEntity(child->GetType()));
     }
 
     mAnimal->setAge(6000);
@@ -152,14 +149,14 @@ void BreedGoal::breed()
         double yOffset = random->nextDouble() * mAnimal->mBbHeight + 0.5;
         double zOffset = random->nextDouble() * mAnimal->mBbWidth * 2.0 - mAnimal->mBbWidth;
         arrayWithLength<int> particleData;
-        mLevel->addParticle(PARTICLE_HEART, mAnimal->mX + xOffset, mAnimal->mY + yOffset, mAnimal->mZ + zOffset,
-                            xa, ya, za, particleData);
+        mLevel->addParticle(PARTICLE_HEART, mAnimal->mX + xOffset, mAnimal->mY + yOffset, mAnimal->mZ + zOffset, xa, ya,
+                            za, particleData);
     }
 
     if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
     {
-        boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(
-            mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ, random->nextInt(7) + 1));
+        boost::shared_ptr<ExperienceOrb> orb(
+            new ExperienceOrb(mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ, random->nextInt(7) + 1));
         mLevel->addEntity(orb);
     }
 }
@@ -168,4 +165,3 @@ void BreedGoal::setLevel(Level* level)
 {
     mLevel = level;
 }
-

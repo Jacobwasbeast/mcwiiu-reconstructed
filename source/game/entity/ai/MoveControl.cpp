@@ -22,8 +22,14 @@
 float MoveControl::MIN_SPEED_SQR = 2.5000003E-7f;
 
 MoveControl::MoveControl(Mob* mob)
-    : mMob(mob), mWantedX(0.0), mWantedY(0.0), mWantedZ(0.0), mSpeedModifier(0.0),
-      mStrafeForwards(0.0f), mStrafeRight(0.0f), mOperation(WAIT)
+    : mMob(mob),
+      mWantedX(0.0),
+      mWantedY(0.0),
+      mWantedZ(0.0),
+      mSpeedModifier(0.0),
+      mStrafeForwards(0.0f),
+      mStrafeRight(0.0f),
+      mOperation(WAIT)
 {
 }
 
@@ -194,7 +200,8 @@ void MoveControl::tick()
             wantedYRot = (float)(atan2(dz, dx) * 57.2957763671875) - 90.0f;
         }
         mMob->mYRot = rotlerp(mMob->mYRot, wantedYRot, 30.0f);
-        mMob->setSpeed((float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
+        mMob->setSpeed(
+            (float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
 
         if (!swimming && dy > 0.009f && horizontalSqr < std::max(1.0f, mMob->mBbWidth))
         {
@@ -205,7 +212,8 @@ void MoveControl::tick()
     }
     else if (mOperation == JUMPING)
     {
-        mMob->setSpeed((float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
+        mMob->setSpeed(
+            (float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
         if (mMob->mOnGround)
         {
             mOperation = WAIT;

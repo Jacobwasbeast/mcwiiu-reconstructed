@@ -59,9 +59,7 @@ void TurtleGoHomeGoal::stop()
 bool TurtleGoHomeGoal::canContinueToUse()
 {
     BlockPos home = mTurtle->getHomePos();
-    return mTurtle->distanceToSqr(home) >= 16.0
-        && !mReachedHome
-        && mTravelTime <= 600;
+    return mTurtle->distanceToSqr(home) >= 16.0 && !mReachedHome && mTravelTime <= 600;
 }
 
 void TurtleGoHomeGoal::tick()
@@ -84,15 +82,14 @@ void TurtleGoHomeGoal::tick()
         return;
     }
 
-    Vec3* position = RandomPos::getPosTowards(
-        boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()), 16, 3,
-        Vec3::newTemp((double)home.x, (double)home.y, (double)home.z), 0.3141592741012573);
+    Vec3* position = RandomPos::getPosTowards(boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()),
+                                              16, 3, Vec3::newTemp((double)home.x, (double)home.y, (double)home.z),
+                                              0.3141592741012573);
 
     if (position == NULL)
     {
-        position = RandomPos::getPosTowards(
-            boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()), 8, 7,
-            Vec3::newTemp((double)home.x, (double)home.y, (double)home.z));
+        position = RandomPos::getPosTowards(boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()), 8,
+                                            7, Vec3::newTemp((double)home.x, (double)home.y, (double)home.z));
         if (position == NULL)
         {
             mReachedHome = true;
@@ -102,4 +99,3 @@ void TurtleGoHomeGoal::tick()
 
     mTurtle->getNavigation()->moveTo(position->x, position->y, position->z, mSpeedModifier);
 }
-

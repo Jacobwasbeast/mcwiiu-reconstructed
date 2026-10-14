@@ -10,9 +10,7 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/util/Random.hpp"
 
-FloatGoal::FloatGoal(Mob* mob)
-    : Goal(),
-      mMob(mob)
+FloatGoal::FloatGoal(Mob* mob) : Goal(), mMob(mob)
 {
     setRequiredControlFlags(4);
 

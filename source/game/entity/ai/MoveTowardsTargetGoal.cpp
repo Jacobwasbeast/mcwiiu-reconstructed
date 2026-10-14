@@ -9,8 +9,7 @@
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/RandomPos.hpp"
 
-MoveTowardsTargetGoal::MoveTowardsTargetGoal(PathfinderMob* mob, double speedModifier,
-                                             float within)
+MoveTowardsTargetGoal::MoveTowardsTargetGoal(PathfinderMob* mob, double speedModifier, float within)
 {
     mWantedX = mWantedY = mWantedZ = 0.0;
     mMob = mob;
@@ -48,9 +47,8 @@ bool MoveTowardsTargetGoal::canUse()
 
 bool MoveTowardsTargetGoal::canContinueToUse()
 {
-    return mTarget.lock() && !mMob->getNavigation()->isDone() && mTarget.lock()->isAlive() &&
-           mTarget.lock()->distanceToSqr(mMob->shared_from_this()) <
-               (double)(mWithin * mWithin);
+    return mTarget.lock() && !mMob->getNavigation()->isDone() && mTarget.lock()->isAlive()
+           && mTarget.lock()->distanceToSqr(mMob->shared_from_this()) < (double)(mWithin * mWithin);
 }
 
 void MoveTowardsTargetGoal::start()
@@ -62,4 +60,3 @@ void MoveTowardsTargetGoal::stop()
 {
     mTarget = boost::weak_ptr<Mob>();
 }
-

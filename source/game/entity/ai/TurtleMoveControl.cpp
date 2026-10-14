@@ -12,8 +12,7 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 
-TurtleMoveControl::TurtleMoveControl(Turtle* turtle)
-    : MoveControl(turtle), mTurtle(turtle)
+TurtleMoveControl::TurtleMoveControl(Turtle* turtle) : MoveControl(turtle), mTurtle(turtle)
 {
 }
 
@@ -49,8 +48,8 @@ void TurtleMoveControl::tick()
 
     if (mOperation == JUMPING)
     {
-        mMob->setSpeed((float)(mSpeedModifier
-            * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
+        mMob->setSpeed(
+            (float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
         if (mMob->mOnGround)
         {
             mOperation = WAIT;
@@ -72,7 +71,7 @@ void TurtleMoveControl::tick()
     mTurtle->mYBodyRot = mTurtle->mYRot = yRot;
 
     float wantedSpeed = (float)(mSpeedModifier
-        * mTurtle->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue());
+                                * mTurtle->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue());
     mTurtle->setSpeed(mTurtle->getSpeed() + (wantedSpeed - mTurtle->getSpeed()) * 0.125f);
 
     mTurtle->mYd += (double)mTurtle->getSpeed() * y * 0.1;

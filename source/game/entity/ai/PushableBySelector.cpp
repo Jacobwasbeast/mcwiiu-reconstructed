@@ -6,7 +6,8 @@
 #include "game/world/generation/Player.hpp"
 
 PushableBySelector::PushableBySelector(const boost::shared_ptr<Entity>& pusher)
-    : pusher(pusher), team(pusher->getTeam())
+    : pusher(pusher),
+      team(pusher->getTeam())
 {
 }
 
@@ -18,8 +19,7 @@ bool PushableBySelector::apply(boost::shared_ptr<Entity> entity) const
     }
 
     if (pusher->mLevel->mIsClientSide
-        && (!entity->instanceof(EntityType::PLAYER)
-            || !boost::static_pointer_cast<Player>(entity)->isLocalPlayer()))
+        && (!entity->instanceof(EntityType::PLAYER) || !boost::static_pointer_cast<Player>(entity)->isLocalPlayer()))
     {
         return false;
     }

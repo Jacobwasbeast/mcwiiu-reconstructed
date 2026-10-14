@@ -2,14 +2,10 @@
 
 #include "game/entity/mob/TamableAnimal.hpp"
 
-NonTameRandomTargetGoal::NonTameRandomTargetGoal(
-    TamableAnimal* tamableAnimal,
-    const std::type_info& targetType,
-    bool mustSee,
-    const Predicate<boost::shared_ptr<Entity> >* selector,
-    bool includeRemoved)
-    : NearestAttackableTargetGoal(tamableAnimal, targetType, 10, mustSee, false,
-                                  selector, true, includeRemoved),
+NonTameRandomTargetGoal::NonTameRandomTargetGoal(TamableAnimal* tamableAnimal, const std::type_info& targetType,
+                                                 bool mustSee, const Predicate<boost::shared_ptr<Entity> >* selector,
+                                                 bool includeRemoved)
+    : NearestAttackableTargetGoal(tamableAnimal, targetType, 10, mustSee, false, selector, true, includeRemoved),
       mTamableAnimal(tamableAnimal)
 {
 }
@@ -28,4 +24,3 @@ bool NonTameRandomTargetGoal::canContinueToUse()
     }
     return result;
 }
-

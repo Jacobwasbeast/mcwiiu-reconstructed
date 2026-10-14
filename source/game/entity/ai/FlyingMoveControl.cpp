@@ -5,8 +5,7 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 
-FlyingMoveControl::FlyingMoveControl(Mob* mob)
-    : MoveControl(mob)
+FlyingMoveControl::FlyingMoveControl(Mob* mob) : MoveControl(mob)
 {
 }
 

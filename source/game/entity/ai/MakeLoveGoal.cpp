@@ -49,8 +49,7 @@ bool MakeLoveGoal::canUse()
     if (mVillager->getRandom()->nextInt(500) != 0)
         return false;
 
-    mVillage = mLevel->getVillages()->getClosestVillage(
-        BlockPos(mVillager->shared_from_this()), 0);
+    mVillage = mLevel->getVillages()->getClosestVillage(BlockPos(mVillager->shared_from_this()), 0);
     if (!mVillage.lock())
         return false;
 
@@ -59,8 +58,7 @@ bool MakeLoveGoal::canUse()
 
     Villager* villager = mVillager;
     boost::shared_ptr<Entity> entity = mLevel->getClosestEntityOfClass(
-        typeid(Villager), villager->mBoundingBox->grow(8.0, 3.0, 8.0),
-        villager->shared_from_this());
+        typeid(Villager), villager->mBoundingBox->grow(8.0, 3.0, 8.0), villager->shared_from_this());
     if (!entity)
         return false;
 
@@ -86,8 +84,8 @@ void MakeLoveGoal::stop()
 
 bool MakeLoveGoal::canContinueToUse()
 {
-    return mPartner.lock() && mRunningTicks > -1 && villageNeedsMoreVillagers()
-        && mVillager->getAge() == 0 && mVillager->isWillingToBreed(false);
+    return mPartner.lock() && mRunningTicks > -1 && villageNeedsMoreVillagers() && mVillager->getAge() == 0
+           && mVillager->isWillingToBreed(false);
 }
 
 void MakeLoveGoal::breed()
@@ -114,9 +112,12 @@ void MakeLoveGoal::tick()
     --mRunningTicks;
 
     mVillager->getLookControl()->setLookAt(mPartner.lock(), 10.0F, 30.0F);
-    if (mVillager->distanceToSqr(mPartner.lock()) > 2.25) {
+    if (mVillager->distanceToSqr(mPartner.lock()) > 2.25)
+    {
         mVillager->getNavigation()->moveTo(mPartner.lock(), 0.25);
-    } else if (mRunningTicks == 0 && mPartner.lock()->isInLove()) {
+    }
+    else if (mRunningTicks == 0 && mPartner.lock()->isInLove())
+    {
         breed();
     }
 
@@ -128,4 +129,3 @@ void MakeLoveGoal::setLevel(Level* level)
 {
     mLevel = level;
 }
-

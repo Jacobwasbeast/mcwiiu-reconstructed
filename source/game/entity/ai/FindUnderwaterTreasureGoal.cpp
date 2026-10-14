@@ -21,7 +21,8 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/LargeFeature.hpp"
 
-FindUnderwaterTreasureGoal::FindUnderwaterTreasureGoal(PathfinderMob* mob, float speedModifier, int searchRadius, int maxDistance)
+FindUnderwaterTreasureGoal::FindUnderwaterTreasureGoal(PathfinderMob* mob, float speedModifier, int searchRadius,
+                                                       int maxDistance)
     : Goal(),
       mBribed(false),
       mTreasurePos(NULL),
@@ -69,8 +70,10 @@ void FindUnderwaterTreasureGoal::start()
 
         BlockPos* chest = NULL;
         Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(
-            BlockPos(Mth::floor(mMob->mX - mSearchRadius), Mth::floor(mMob->mY - 3.0), Mth::floor(mMob->mZ - mSearchRadius)),
-            BlockPos(Mth::floor(mMob->mX + mSearchRadius), Mth::floor(mMob->mY + 3.0), Mth::floor(mMob->mZ + mSearchRadius)));
+            BlockPos(Mth::floor(mMob->mX - mSearchRadius), Mth::floor(mMob->mY - 3.0),
+                     Mth::floor(mMob->mZ - mSearchRadius)),
+            BlockPos(Mth::floor(mMob->mX + mSearchRadius), Mth::floor(mMob->mY + 3.0),
+                     Mth::floor(mMob->mZ + mSearchRadius)));
         while (positions->hasNext())
         {
             BlockPos current = *positions->next();
@@ -96,7 +99,8 @@ void FindUnderwaterTreasureGoal::start()
             delete shipwreck;
         }
 
-        if (mTreasurePos != NULL && chest != NULL && pos.distSqr(*mTreasurePos) < (double)(mSearchRadius * mSearchRadius))
+        if (mTreasurePos != NULL && chest != NULL
+            && pos.distSqr(*mTreasurePos) < (double)(mSearchRadius * mSearchRadius))
         {
             delete mTreasurePos;
             mTreasurePos = chest;
@@ -165,15 +169,14 @@ void FindUnderwaterTreasureGoal::tick()
     double particleY = mMob->mY + 0.5 + ySpread;
     float zSpread = mMob->getRandom()->nextFloat() * mMob->mBbWidth;
     double particleZ = mMob->mZ + (zSpread + zSpread) - mMob->mBbWidth;
-    static_cast<ServerLevel*>(mMob->mLevel)->sendParticles(
-        PARTICLE_FIREWORKS_SPARK, particleX, particleY, particleZ, 7, 0.0, 0.0, 0.0, 1.0, arrayWithLength<int>(), 0.0,
-        0.0, 0.0);
+    static_cast<ServerLevel*>(mMob->mLevel)
+        ->sendParticles(PARTICLE_FIREWORKS_SPARK, particleX, particleY, particleZ, 7, 0.0, 0.0, 0.0, 1.0,
+                        arrayWithLength<int>(), 0.0, 0.0, 0.0);
 
     BlockPos target = mMob->mLevel->getTopSolidBlockPos(*mTreasurePos);
     Vec3* current = mMob->getPos(0.0f);
-    Vec3* direction = Vec3::newTemp((double)target.x - current->x,
-                                     (double)target.y - current->y,
-                                     (double)target.z - current->z);
+    Vec3* direction = Vec3::newTemp((double)target.x - current->x, (double)target.y - current->y,
+                                    (double)target.z - current->z);
 
     AttributeInstance* followRange = mMob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE);
     double range = 16.0;
@@ -200,8 +203,7 @@ void FindUnderwaterTreasureGoal::tick()
             {
                 facing = facing->getCounterClockWise();
             }
-            target = BlockPos(current->x + facing->getStepX() * 10,
-                              current->y + facing->getStepY() * 10,
+            target = BlockPos(current->x + facing->getStepX() * 10, current->y + facing->getStepY() * 10,
                               current->z + facing->getStepZ() * 10);
         }
         else

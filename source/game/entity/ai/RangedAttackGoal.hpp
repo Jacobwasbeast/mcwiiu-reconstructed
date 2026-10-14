@@ -14,14 +14,17 @@ class Mob;
 class RangedAttackGoal : public Goal
 {
 public:
-    RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackInterval, float attackRadius);
-    RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackIntervalMin, int attackIntervalMax, float attackRadius);
+    RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackInterval,
+                     float attackRadius);
+    RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackIntervalMin,
+                     int attackIntervalMax, float attackRadius);
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void stop();
     virtual void tick();
     virtual std::wstring getName() { return L"RangedAttack"; }
-    void _init(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackIntervalMin, int attackIntervalMax, float attackRadius);
+    void _init(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackIntervalMin,
+               int attackIntervalMax, float attackRadius);
 
 private:
     Mob* mMob;

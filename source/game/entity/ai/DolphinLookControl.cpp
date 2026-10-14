@@ -7,7 +7,8 @@
 #include "game/entity/mob/Mob.hpp"
 
 DolphinLookControl::DolphinLookControl(Mob* mob, int maxYRotFromCenter)
-    : LookControl(mob), mMaxYRotFromCenter(maxYRotFromCenter)
+    : LookControl(mob),
+      mMaxYRotFromCenter(maxYRotFromCenter)
 {
 }
 

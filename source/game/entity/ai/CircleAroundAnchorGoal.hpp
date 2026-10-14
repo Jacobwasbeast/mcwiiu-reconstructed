@@ -11,9 +11,8 @@ class Vec3;
 class CircleAroundAnchorGoal : public Goal
 {
 public:
-    CircleAroundAnchorGoal(Mob* mob, float speedModifier, Goal::FloatRange distanceRange,
-                           int distanceInterval, Goal::FloatRange heightRange,
-                           Goal::FloatRange verticalRange, int verticalInterval,
+    CircleAroundAnchorGoal(Mob* mob, float speedModifier, Goal::FloatRange distanceRange, int distanceInterval,
+                           Goal::FloatRange heightRange, Goal::FloatRange verticalRange, int verticalInterval,
                            float minDistance);
     virtual ~CircleAroundAnchorGoal();
     virtual bool canUse();

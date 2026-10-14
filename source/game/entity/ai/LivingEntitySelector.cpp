@@ -11,7 +11,7 @@ bool LivingEntitySelector::apply(boost::shared_ptr<Entity> entity) const
     if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         return boost::static_pointer_cast<LivingEntity>(entity)->getMobType() != MOB_TYPE_UNDEAD
-            && boost::static_pointer_cast<LivingEntity>(entity)->attackable();
+               && boost::static_pointer_cast<LivingEntity>(entity)->attackable();
     }
     return false;
 }
