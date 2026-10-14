@@ -10,13 +10,20 @@ maybe<float> readMaybeFloat(DataInputStream* input)
     return maybe<float>();
 }
 
-ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket() : mSettings() {}
-ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket(const MiniGamePlayerSettings& settings) { mSettings = settings; }
-ClientboundMGPlayerSettingsUpdatePacket::~ClientboundMGPlayerSettingsUpdatePacket() {}
+ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket() : mSettings()
+{
+}
+ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket(const MiniGamePlayerSettings& settings)
+{
+    mSettings = settings;
+}
+ClientboundMGPlayerSettingsUpdatePacket::~ClientboundMGPlayerSettingsUpdatePacket()
+{
+}
 void ClientboundMGPlayerSettingsUpdatePacket::read(DataInputStream* input)
 {
- mSettings.mHostOptions.Set(eCustomGameModeHostOption_All, input->readVarInt());
- mSettings.mPlayerAbilities.read(input);
+    mSettings.mHostOptions.Set(eCustomGameModeHostOption_All, input->readVarInt());
+    mSettings.mPlayerAbilities.read(input);
     mSettings.mLivesPerRound = input->readVarInt();
     mSettings.mLootSetId = static_cast<unsigned int>(input->readInt());
     mSettings.mRandomLootSet = input->readBoolean();
@@ -42,8 +49,7 @@ void ClientboundMGPlayerSettingsUpdatePacket::read(DataInputStream* input)
     mSettings.mArenaSizeMultiplier = readMaybeFloat(input);
 
     bool hasLayers = input->readBoolean();
-    mSettings.mLayerCount = hasLayers
-        ? maybe<unsigned int>(input->readVarInt()) : maybe<unsigned int>();
+    mSettings.mLayerCount = hasLayers ? maybe<unsigned int>(input->readVarInt()) : maybe<unsigned int>();
     mSettings.mRoundCount = input->readInt();
     mSettings.mSmallInventoryEnabled = input->readBoolean();
     mSettings.mNaturalRegeneration = input->readBoolean();
@@ -99,8 +105,23 @@ void ClientboundMGPlayerSettingsUpdatePacket::write(DataOutputStream* output)
     output->writeBoolean(mSettings.mTeamGame);
     output->writeBoolean(mSettings.mSpectatorParticipation);
 }
-void ClientboundMGPlayerSettingsUpdatePacket::handle(PacketListener* listener) { listener->handleMiniGamePlayerSettingsUpdatePacket(shared_from_this()); }
-int ClientboundMGPlayerSettingsUpdatePacket::getEstimatedSize() { return 0x68; }
-const MiniGamePlayerSettings& ClientboundMGPlayerSettingsUpdatePacket::getSettings() const { return mSettings; }
-int ClientboundMGPlayerSettingsUpdatePacket::getPacketId() { return 0xef; }
-boost::shared_ptr<Packet> ClientboundMGPlayerSettingsUpdatePacket::create() { return boost::shared_ptr<Packet>(new ClientboundMGPlayerSettingsUpdatePacket()); }
+void ClientboundMGPlayerSettingsUpdatePacket::handle(PacketListener* listener)
+{
+    listener->handleMiniGamePlayerSettingsUpdatePacket(shared_from_this());
+}
+int ClientboundMGPlayerSettingsUpdatePacket::getEstimatedSize()
+{
+    return 0x68;
+}
+const MiniGamePlayerSettings& ClientboundMGPlayerSettingsUpdatePacket::getSettings() const
+{
+    return mSettings;
+}
+int ClientboundMGPlayerSettingsUpdatePacket::getPacketId()
+{
+    return 0xef;
+}
+boost::shared_ptr<Packet> ClientboundMGPlayerSettingsUpdatePacket::create()
+{
+    return boost::shared_ptr<Packet>(new ClientboundMGPlayerSettingsUpdatePacket());
+}

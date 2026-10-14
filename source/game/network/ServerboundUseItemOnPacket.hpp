@@ -13,13 +13,11 @@ class DataOutputStream;
 class Direction;
 class PacketListener;
 
-class ServerboundUseItemOnPacket : public Packet,
-                                   public boost::enable_shared_from_this<ServerboundUseItemOnPacket>
+class ServerboundUseItemOnPacket : public Packet, public boost::enable_shared_from_this<ServerboundUseItemOnPacket>
 {
 public:
     ServerboundUseItemOnPacket();
-    ServerboundUseItemOnPacket(const BlockPos& pos, const Direction* face,
-                               InteractionHand::EInteractionHand hand,
+    ServerboundUseItemOnPacket(const BlockPos& pos, const Direction* face, InteractionHand::EInteractionHand hand,
                                float clickX, float clickY, float clickZ);
 
     virtual int getPacketId();
@@ -34,10 +32,7 @@ public:
     double getClickY();
     double getClickZ();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundUseItemOnPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundUseItemOnPacket()); }
 
 private:
     BlockPos pos;

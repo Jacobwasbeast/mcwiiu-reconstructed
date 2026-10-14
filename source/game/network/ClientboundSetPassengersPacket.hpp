@@ -10,7 +10,8 @@
 
 class Entity;
 
-class ClientboundSetPassengersPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetPassengersPacket>
+class ClientboundSetPassengersPacket : public Packet,
+                                       public boost::enable_shared_from_this<ClientboundSetPassengersPacket>
 {
 public:
     ClientboundSetPassengersPacket();

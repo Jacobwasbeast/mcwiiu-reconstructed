@@ -25,10 +25,14 @@ BlockRegionUpdatePacket::BlockRegionUpdatePacket()
     mChanges = new std::vector<LevelChunk::BlockChange>;
 }
 
-BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width, int height, int depth,
-                                                 Level* level, bool hasBlockChanges,
-                                                 const std::vector<short>* blockChanges)
-    : mX(x), mY(y), mZ(z), mWidth(width), mHeight(height), mDepth(depth),
+BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width, int height, int depth, Level* level,
+                                                 bool hasBlockChanges, const std::vector<short>* blockChanges)
+    : mX(x),
+      mY(y),
+      mZ(z),
+      mWidth(width),
+      mHeight(height),
+      mDepth(depth),
       mFullChunk(false)
 {
     shouldDelay = true;
@@ -47,15 +51,13 @@ BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width,
         mSize = 0;
         mData.data = NULL;
         mData.length = 0;
-        if (width == 16 && height == 256 && depth == 16 &&
-            (x & 15) == 0 && y == 0 && (z & 15) == 0)
+        if (width == 16 && height == 256 && depth == 16 && (x & 15) == 0 && y == 0 && (z & 15) == 0)
             mFullChunk = true;
         mHasBlockChanges = true;
 
         if (blockChanges != NULL)
         {
-            for (std::vector<short>::const_iterator it = blockChanges->begin();
-                 it != blockChanges->end(); ++it)
+            for (std::vector<short>::const_iterator it = blockChanges->begin(); it != blockChanges->end(); ++it)
             {
                 BlockPos pos = LevelChunk::UnpackBlockPos(*it);
                 LevelChunk* chunk = level->getChunkAt(x, z);
@@ -69,8 +71,7 @@ BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width,
     else
     {
         arrayWithLength<unsigned char> rawData;
-        if (width == 16 && height == 256 && depth == 16 &&
-            (x & 15) == 0 && y == 0 && (z & 15) == 0)
+        if (width == 16 && height == 256 && depth == 16 && (x & 15) == 0 && y == 0 && (z & 15) == 0)
         {
             mFullChunk = true;
             rawData = level->getChunkAt(BlockPos(x, 0, z))->getRawData();
@@ -93,8 +94,8 @@ BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width,
             unsigned int compressedSize = 0x30000;
             unsigned char* compressedData = new unsigned char[compressedSize];
             unsigned int rleSize = 0;
-            Compression::getCompression()->CompressLZXRLE(compressedData, &compressedSize,
-                                                           rawData.data, rawData.length, &rleSize);
+            Compression::getCompression()->CompressLZXRLE(compressedData, &compressedSize, rawData.data, rawData.length,
+                                                          &rleSize);
             unsigned char* copy = new unsigned char[compressedSize];
             std::memcpy(copy, compressedData, compressedSize);
             delete[] compressedData;
@@ -147,8 +148,7 @@ void BlockRegionUpdatePacket::read(DataInputStream* input)
         mData = arrayWithLength<unsigned char>(rawSize, true);
         unsigned int outputSize = rawSize;
         if (readComplete)
-            Compression::getCompression()->DecompressLZXRLE(mData.data, &outputSize,
-                                                             compressedData.data, mSize);
+            Compression::getCompression()->DecompressLZXRLE(mData.data, &outputSize, compressedData.data, mSize);
         delete[] compressedData.data;
         changeCount = input->readChar();
         mChanges->reserve(changeCount);
@@ -181,8 +181,7 @@ void BlockRegionUpdatePacket::write(DataOutputStream* output)
     output->writeInt(mSize | (mDimension << 30));
     output->write(mData, 0, mSize);
     output->writeChar(static_cast<char>(mChanges->size()));
-    for (std::vector<LevelChunk::BlockChange>::const_iterator it = mChanges->begin();
-         it != mChanges->end(); ++it)
+    for (std::vector<LevelChunk::BlockChange>::const_iterator it = mChanges->begin(); it != mChanges->end(); ++it)
     {
         output->writeShort(it->GetPackedPos());
         output->writeInt((int)it->GetElement());

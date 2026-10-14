@@ -23,8 +23,8 @@ class ClientboundAddPlayerPacket : public Packet, public boost::enable_shared_fr
 
 public:
     ClientboundAddPlayerPacket();
-    ClientboundAddPlayerPacket(boost::shared_ptr<Player> player, PlayerUID playerId, PlayerUID profileId,
-                               int x, int y, int z, int yRot, int xRot, int yHeadRot);
+    ClientboundAddPlayerPacket(boost::shared_ptr<Player> player, PlayerUID playerId, PlayerUID profileId, int x, int y,
+                               int z, int yRot, int xRot, int yHeadRot);
     virtual ~ClientboundAddPlayerPacket();
 
     virtual int getPacketId();
@@ -43,10 +43,7 @@ public:
     std::wstring getName();
     std::vector<DataItem*>* getUnpackedData();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundAddPlayerPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundAddPlayerPacket()); }
 
 private:
     unsigned int mEntityId;

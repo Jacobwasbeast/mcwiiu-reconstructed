@@ -11,7 +11,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundBlockDestructionPacket : public Packet, public boost::enable_shared_from_this<ClientboundBlockDestructionPacket>
+class ClientboundBlockDestructionPacket : public Packet,
+                                          public boost::enable_shared_from_this<ClientboundBlockDestructionPacket>
 {
 public:
     ClientboundBlockDestructionPacket();

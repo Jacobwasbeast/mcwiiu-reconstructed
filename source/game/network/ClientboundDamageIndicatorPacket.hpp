@@ -10,7 +10,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundDamageIndicatorPacket : public Packet, public boost::enable_shared_from_this<ClientboundDamageIndicatorPacket>
+class ClientboundDamageIndicatorPacket : public Packet,
+                                         public boost::enable_shared_from_this<ClientboundDamageIndicatorPacket>
 {
 public:
     ClientboundDamageIndicatorPacket();
@@ -27,6 +28,7 @@ public:
     {
         return boost::shared_ptr<Packet>(new ClientboundDamageIndicatorPacket());
     }
+
 private:
     float x;
     float z;

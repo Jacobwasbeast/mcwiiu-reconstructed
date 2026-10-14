@@ -14,7 +14,8 @@ class PacketListener;
 class ServerLevel;
 class ServerPlayer;
 
-class ServerboundTeleportToEntityPacket : public Packet, public boost::enable_shared_from_this<ServerboundTeleportToEntityPacket>
+class ServerboundTeleportToEntityPacket : public Packet,
+                                          public boost::enable_shared_from_this<ServerboundTeleportToEntityPacket>
 {
 public:
     ServerboundTeleportToEntityPacket();

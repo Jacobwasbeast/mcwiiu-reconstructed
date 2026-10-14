@@ -4,13 +4,13 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-TradeItemPacket::TradeItemPacket()
-    : containerId(0), itemIndex(0)
+TradeItemPacket::TradeItemPacket() : containerId(0), itemIndex(0)
 {
 }
 
 TradeItemPacket::TradeItemPacket(int containerIdValue, int itemIndexValue)
-    : containerId(containerIdValue), itemIndex(itemIndexValue)
+    : containerId(containerIdValue),
+      itemIndex(itemIndexValue)
 {
 }
 
@@ -31,5 +31,11 @@ void TradeItemPacket::write(DataOutputStream* output)
     output->writeInt(itemIndex);
 }
 
-int TradeItemPacket::getEstimatedSize() { return 8; }
-int TradeItemPacket::getPacketId() { return 151; }
+int TradeItemPacket::getEstimatedSize()
+{
+    return 8;
+}
+int TradeItemPacket::getPacketId()
+{
+    return 151;
+}

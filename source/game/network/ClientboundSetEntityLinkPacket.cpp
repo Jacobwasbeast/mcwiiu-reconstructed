@@ -12,13 +12,15 @@ ClientboundSetEntityLinkPacket::ClientboundSetEntityLinkPacket()
     destId = -1;
 }
 
-ClientboundSetEntityLinkPacket::ClientboundSetEntityLinkPacket(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> dest)
+ClientboundSetEntityLinkPacket::ClientboundSetEntityLinkPacket(boost::shared_ptr<Entity> source,
+                                                               boost::shared_ptr<Entity> dest)
 {
     sourceId = source->getId();
     destId = dest != NULL ? dest->getId() : -1;
 }
 
-ClientboundSetEntityLinkPacket::ClientboundSetEntityLinkPacket(int type, boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> dest)
+ClientboundSetEntityLinkPacket::ClientboundSetEntityLinkPacket(int type, boost::shared_ptr<Entity> source,
+                                                               boost::shared_ptr<Entity> dest)
 {
     sourceId = source->getId();
     destId = dest != NULL ? dest->getId() : -1;
@@ -58,7 +60,8 @@ bool ClientboundSetEntityLinkPacket::canBeInvalidated()
 
 bool ClientboundSetEntityLinkPacket::isInvalidatedBy(boost::shared_ptr<Packet> packet)
 {
-    boost::shared_ptr<ClientboundSetEntityLinkPacket> other = boost::dynamic_pointer_cast<ClientboundSetEntityLinkPacket>(packet);
+    boost::shared_ptr<ClientboundSetEntityLinkPacket> other =
+        boost::dynamic_pointer_cast<ClientboundSetEntityLinkPacket>(packet);
 
     return other->sourceId == sourceId;
 }

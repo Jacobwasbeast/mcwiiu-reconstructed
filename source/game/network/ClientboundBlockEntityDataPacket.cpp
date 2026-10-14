@@ -13,7 +13,8 @@ ClientboundBlockEntityDataPacket::ClientboundBlockEntityDataPacket()
     shouldDelay = true;
 }
 
-ClientboundBlockEntityDataPacket::ClientboundBlockEntityDataPacket(const BlockPos& pos, int type, int dimension, CompoundTag* tag)
+ClientboundBlockEntityDataPacket::ClientboundBlockEntityDataPacket(const BlockPos& pos, int type, int dimension,
+                                                                   CompoundTag* tag)
 {
     _init();
     shouldDelay = true;

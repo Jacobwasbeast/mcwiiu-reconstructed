@@ -11,7 +11,8 @@ class DataOutputStream;
 class ItemInstance;
 class PacketListener;
 
-class ServerboundSetCreativeModeSlotPacket : public Packet, public boost::enable_shared_from_this<ServerboundSetCreativeModeSlotPacket>
+class ServerboundSetCreativeModeSlotPacket : public Packet,
+                                             public boost::enable_shared_from_this<ServerboundSetCreativeModeSlotPacket>
 {
 public:
     ServerboundSetCreativeModeSlotPacket();

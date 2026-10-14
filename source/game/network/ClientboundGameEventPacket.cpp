@@ -4,18 +4,21 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundGameEventPacket::ClientboundGameEventPacket()
-    : mEvent(0), mParam(0.0f), mPlayerIndex(-1)
+ClientboundGameEventPacket::ClientboundGameEventPacket() : mEvent(0), mParam(0.0f), mPlayerIndex(-1)
 {
 }
 
 ClientboundGameEventPacket::ClientboundGameEventPacket(int event, float param)
-    : mEvent(event), mParam(param), mPlayerIndex(-1)
+    : mEvent(event),
+      mParam(param),
+      mPlayerIndex(-1)
 {
 }
 
 ClientboundGameEventPacket::ClientboundGameEventPacket(int event, float param, int playerIndex)
-    : mEvent(event), mParam(param), mPlayerIndex(playerIndex)
+    : mEvent(event),
+      mParam(param),
+      mPlayerIndex(playerIndex)
 {
 }
 

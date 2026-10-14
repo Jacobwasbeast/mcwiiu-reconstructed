@@ -4,13 +4,11 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-PlayerReadyPacket::PlayerReadyPacket()
-    : mPlayerId(0), mReady(false)
+PlayerReadyPacket::PlayerReadyPacket() : mPlayerId(0), mReady(false)
 {
 }
 
-PlayerReadyPacket::PlayerReadyPacket(unsigned int playerId, bool ready)
-    : mPlayerId(playerId), mReady(ready)
+PlayerReadyPacket::PlayerReadyPacket(unsigned int playerId, bool ready) : mPlayerId(playerId), mReady(ready)
 {
 }
 

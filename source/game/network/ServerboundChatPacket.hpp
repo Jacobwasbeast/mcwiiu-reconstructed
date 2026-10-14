@@ -26,10 +26,7 @@ public:
 
     std::wstring getMessage();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundChatPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundChatPacket()); }
 
 private:
     std::wstring message;

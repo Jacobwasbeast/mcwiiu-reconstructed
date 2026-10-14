@@ -149,7 +149,8 @@ public:
     virtual void handleAnimate(boost::shared_ptr<ServerboundSwingPacket> packet);
     virtual void handleAwardStat(boost::shared_ptr<ClientboundAwardStatPacket> packet);
     virtual void handleBlockDestruction(boost::shared_ptr<ClientboundBlockDestructionPacket> packet);
-    virtual void handleBlockCollectionDestruction(boost::shared_ptr<ClientboundBlockCollectionDestructionPacket> packet);
+    virtual void handleBlockCollectionDestruction(
+        boost::shared_ptr<ClientboundBlockCollectionDestructionPacket> packet);
     virtual void handleOpenSignEditor(boost::shared_ptr<ClientboundOpenSignEditorPacket> packet);
     virtual void handleBlockEntityData(boost::shared_ptr<ClientboundBlockEntityDataPacket> packet);
     virtual void handleBlockEvent(boost::shared_ptr<ClientboundBlockEventPacket> packet);
@@ -238,7 +239,8 @@ public:
     virtual void handlePlayerReady(boost::shared_ptr<PlayerReadyPacket> packet);
     virtual void handlePowerup(boost::shared_ptr<ClientboundPowerupPacket> packet);
     virtual void handleDamageIndicator(boost::shared_ptr<ClientboundDamageIndicatorPacket> packet);
-    virtual void handleMiniGamePlayerSettingsUpdatePacket(boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket> packet);
+    virtual void handleMiniGamePlayerSettingsUpdatePacket(
+        boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket> packet);
     virtual void handleClientCommand(boost::shared_ptr<ServerboundClientCommandPacket> packet);
     virtual void handleClientInformation(boost::shared_ptr<ServerboundClientInformationPacket> packet);
     virtual void handleContainerButtonClick(boost::shared_ptr<ServerboundContainerButtonClickPacket> packet);

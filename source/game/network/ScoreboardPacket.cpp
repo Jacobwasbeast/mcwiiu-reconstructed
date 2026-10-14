@@ -4,9 +4,13 @@
 #include "game/network/PacketListener.hpp"
 #include "game/core/StatsUID.hpp"
 
-ScoreboardPacket::ScoreboardPacket() : mData(0) {}
+ScoreboardPacket::ScoreboardPacket() : mData(0)
+{
+}
 
-ScoreboardPacket::ScoreboardPacket(EMessage message, Data* data) : mMessage(message), mData(data) {}
+ScoreboardPacket::ScoreboardPacket(EMessage message, Data* data) : mMessage(message), mData(data)
+{
+}
 
 ScoreboardPacket::~ScoreboardPacket()
 {
@@ -67,14 +71,26 @@ int ScoreboardPacket::getPacketId()
     return 206;
 }
 
-ScoreboardPacket::Data::~Data() {}
-void ScoreboardPacket::Data::read(DataInputStream*) {}
-void ScoreboardPacket::Data::write(DataOutputStream*) const {}
+ScoreboardPacket::Data::~Data()
+{
+}
+void ScoreboardPacket::Data::read(DataInputStream*)
+{
+}
+void ScoreboardPacket::Data::write(DataOutputStream*) const
+{
+}
 
-ScoreboardPacket::AddPlayerStatsData::AddPlayerStatsData() : mStats(0), mRound(-1), mLife(-1) {}
+ScoreboardPacket::AddPlayerStatsData::AddPlayerStatsData() : mStats(0), mRound(-1), mLife(-1)
+{
+}
 
 ScoreboardPacket::AddPlayerStatsData::AddPlayerStatsData(Scoreboard::PlayerStats* stats, int round, int life)
-    : mStats(stats), mRound(round), mLife(life) {}
+    : mStats(stats),
+      mRound(round),
+      mLife(life)
+{
+}
 
 ScoreboardPacket::AddPlayerStatsData::~AddPlayerStatsData()
 {
@@ -108,8 +124,14 @@ ScoreboardPacket::UpdatePlayerStatsData::UpdatePlayerStatsData()
     mLife = -1;
 }
 
-ScoreboardPacket::UpdatePlayerStatsData::UpdatePlayerStatsData(Scoreboard::PlayerStats* stats, Scoreboard::PlayerStats* other, int round, int life)
-    : mStats(stats), mRound(round), mLife(life), mChanged(stats->getChangedBitfield(other, round, life) | 1ULL) {}
+ScoreboardPacket::UpdatePlayerStatsData::UpdatePlayerStatsData(Scoreboard::PlayerStats* stats,
+                                                               Scoreboard::PlayerStats* other, int round, int life)
+    : mStats(stats),
+      mRound(round),
+      mLife(life),
+      mChanged(stats->getChangedBitfield(other, round, life) | 1ULL)
+{
+}
 
 ScoreboardPacket::UpdatePlayerStatsData::~UpdatePlayerStatsData()
 {
@@ -149,7 +171,9 @@ ScoreboardPacket::RemovePlayerStatsData::RemovePlayerStatsData(StatsUID uid)
     mUID = uid;
 }
 
-ScoreboardPacket::RemovePlayerStatsData::~RemovePlayerStatsData() {}
+ScoreboardPacket::RemovePlayerStatsData::~RemovePlayerStatsData()
+{
+}
 
 void ScoreboardPacket::RemovePlayerStatsData::read(DataInputStream* input)
 {

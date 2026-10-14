@@ -27,12 +27,19 @@ ClientboundLevelParticlesPacket::ClientboundLevelParticlesPacket()
     zAux = 0.0f;
 }
 
-ClientboundLevelParticlesPacket::ClientboundLevelParticlesPacket(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count, arrayWithLength<int> params)
+ClientboundLevelParticlesPacket::ClientboundLevelParticlesPacket(const ParticleType* type, bool overrideLimiter,
+                                                                 float x, float y, float z, float xDist, float yDist,
+                                                                 float zDist, float maxSpeed, int count,
+                                                                 arrayWithLength<int> params)
 {
     Init(type, overrideLimiter, x, y, z, xDist, yDist, zDist, maxSpeed, count, params, false, 0.0f, 0.0f, 0.0f);
 }
 
-ClientboundLevelParticlesPacket::ClientboundLevelParticlesPacket(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count, arrayWithLength<int> params, float xAux, float yAux, float zAux)
+ClientboundLevelParticlesPacket::ClientboundLevelParticlesPacket(const ParticleType* type, bool overrideLimiter,
+                                                                 float x, float y, float z, float xDist, float yDist,
+                                                                 float zDist, float maxSpeed, int count,
+                                                                 arrayWithLength<int> params, float xAux, float yAux,
+                                                                 float zAux)
 {
     Init(type, overrideLimiter, x, y, z, xDist, yDist, zDist, maxSpeed, count, params, true, xAux, yAux, zAux);
 }
@@ -45,7 +52,9 @@ ClientboundLevelParticlesPacket::~ClientboundLevelParticlesPacket()
     }
 }
 
-void ClientboundLevelParticlesPacket::Init(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count, arrayWithLength<int> params, bool hasAux, float xAux, float yAux, float zAux)
+void ClientboundLevelParticlesPacket::Init(const ParticleType* type, bool overrideLimiter, float x, float y, float z,
+                                           float xDist, float yDist, float zDist, float maxSpeed, int count,
+                                           arrayWithLength<int> params, bool hasAux, float xAux, float yAux, float zAux)
 {
     this->type = type;
     this->overrideLimiter = overrideLimiter;

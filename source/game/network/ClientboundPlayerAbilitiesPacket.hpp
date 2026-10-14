@@ -11,7 +11,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundPlayerAbilitiesPacket : public Packet, public boost::enable_shared_from_this<ClientboundPlayerAbilitiesPacket>
+class ClientboundPlayerAbilitiesPacket : public Packet,
+                                         public boost::enable_shared_from_this<ClientboundPlayerAbilitiesPacket>
 {
 public:
     ClientboundPlayerAbilitiesPacket();
@@ -42,6 +43,7 @@ public:
     {
         return boost::shared_ptr<Packet>(new ClientboundPlayerAbilitiesPacket());
     }
+
 private:
     bool mInvulnerable;
     bool mFlying;

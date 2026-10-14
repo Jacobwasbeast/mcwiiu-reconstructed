@@ -13,7 +13,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundCustomPayloadPacket : public Packet, public boost::enable_shared_from_this<ClientboundCustomPayloadPacket>
+class ClientboundCustomPayloadPacket : public Packet,
+                                       public boost::enable_shared_from_this<ClientboundCustomPayloadPacket>
 {
 public:
     ClientboundCustomPayloadPacket();

@@ -26,12 +26,14 @@ ClientboundAddMobPacket::ClientboundAddMobPacket()
     additionalContructionDataTag = NULL;
 }
 
-ClientboundAddMobPacket::ClientboundAddMobPacket(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z, int yHeadRot)
+ClientboundAddMobPacket::ClientboundAddMobPacket(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x,
+                                                 int y, int z, int yHeadRot)
 {
     init(entity, yRot, xRot, x, y, z, yHeadRot, NULL);
 }
 
-ClientboundAddMobPacket::ClientboundAddMobPacket(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z, int yHeadRot, CompoundTag* additionalContructionDataTag)
+ClientboundAddMobPacket::ClientboundAddMobPacket(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x,
+                                                 int y, int z, int yHeadRot, CompoundTag* additionalContructionDataTag)
 {
     init(entity, yRot, xRot, x, y, z, yHeadRot, additionalContructionDataTag);
 }
@@ -51,7 +53,8 @@ ClientboundAddMobPacket::~ClientboundAddMobPacket()
     delete additionalContructionDataTag;
 }
 
-void ClientboundAddMobPacket::init(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z, int yHeadRot, CompoundTag* additionalContructionDataTag)
+void ClientboundAddMobPacket::init(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z,
+                                   int yHeadRot, CompoundTag* additionalContructionDataTag)
 {
     id = entity->getId();
     uuid = entity->getUUID();
@@ -108,7 +111,8 @@ void ClientboundAddMobPacket::init(boost::shared_ptr<LivingEntity> entity, int y
     {
         subIds.reserve(subEntities->size());
 
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = subEntities->begin(); it != subEntities->end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = subEntities->begin(); it != subEntities->end();
+             ++it)
         {
             subIds.push_back((*it)->getId());
         }

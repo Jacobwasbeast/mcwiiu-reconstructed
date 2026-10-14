@@ -10,7 +10,8 @@ ClientboundCustomPayloadPacket::ClientboundCustomPayloadPacket()
 {
 }
 
-ClientboundCustomPayloadPacket::ClientboundCustomPayloadPacket(const std::wstring& identifier, arrayWithLength<unsigned char> data)
+ClientboundCustomPayloadPacket::ClientboundCustomPayloadPacket(const std::wstring& identifier,
+                                                               arrayWithLength<unsigned char> data)
 {
     this->identifier = identifier;
     this->data = data;

@@ -6,7 +6,6 @@ class ClientboundHelloPacket
 public:
     ClientboundHelloPacket();
     ~ClientboundHelloPacket();
-
 };
 
 #endif

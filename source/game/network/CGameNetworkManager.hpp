@@ -14,7 +14,13 @@ class ClientPacketListener;
 class ClientboundPreLoginPacket;
 class C4JEventImpl;
 struct FriendSessionInfo;
-namespace nn { namespace fp { struct FriendPresence; } }
+namespace nn
+{
+namespace fp
+{
+struct FriendPresence;
+}
+}
 class GameSessionData;
 class Minecraft;
 
@@ -68,7 +74,8 @@ public:
     bool IsInGameplay();
     void SetPrivateGame(bool privateGame);
     bool IsPrivateGame();
-    void HostGame(int userIndexMask, bool onlineGame, bool privateGame, unsigned char gameMode, EMiniGameId miniGameId, unsigned int worldId, unsigned int* attributes);
+    void HostGame(int userIndexMask, bool onlineGame, bool privateGame, unsigned char gameMode, EMiniGameId miniGameId,
+                  unsigned int worldId, unsigned int* attributes);
     bool IsInStatsEnabledSession();
     bool IsMatchmakingEnabled();
     bool IsInPublicJoinableGame();
@@ -83,7 +90,8 @@ public:
     void ForceFriendsSessionRefresh();
     void ClearFriendsSessions();
     int JoinGame(FriendSessionInfo* info, int userIndex, bool matchmaking);
-    int FindAndJoinGame(int userIndex, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributes, unsigned int* ids);
+    int FindAndJoinGame(int userIndex, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributes,
+                        unsigned int* ids);
     static void CancelJoinGame(void* data);
     bool LeaveGame(bool error);
     void UpdateAndSetGameSessionData(INetworkPlayer* player);
@@ -143,7 +151,9 @@ public:
     bool ModeAllowsUGC(EMiniGameId miniGameId);
     bool IsUGCRestrictedMode(int userIndex, EMiniGameId miniGameId);
     bool IsFriendsOnlyUGC(int userIndex);
-    void CheckFriendsCanPlay(int userIndex, int& friendCount, boost::shared_ptr<ClientboundPreLoginPacket> packet, int titleVersion, int& canPlayCount, int& cannotPlayCount, int& blockedCount, int& unknownCount);
+    void CheckFriendsCanPlay(int userIndex, int& friendCount, boost::shared_ptr<ClientboundPreLoginPacket> packet,
+                             int titleVersion, int& canPlayCount, int& cannotPlayCount, int& blockedCount,
+                             int& unknownCount);
     unsigned int GetMaxPlayers(EMiniGameId miniGameId, unsigned int worldId);
     int GetMaxPlayers(GameSessionData* data);
     unsigned int GetMaxPlayers();

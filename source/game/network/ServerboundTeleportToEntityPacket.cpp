@@ -6,8 +6,7 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/world/generation/Player.hpp"
 
-ServerboundTeleportToEntityPacket::ServerboundTeleportToEntityPacket()
-    : mPlayerUID(0)
+ServerboundTeleportToEntityPacket::ServerboundTeleportToEntityPacket() : mPlayerUID(0)
 {
     mPlayerUID = PlayerUID(0);
 }

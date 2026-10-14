@@ -22,14 +22,8 @@ public:
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
     virtual int getPacketId();
-    arrayWithLength<unsigned char> getData() const
-    {
-        return mData;
-    }
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new MapSelectInfoPacket());
-    }
+    arrayWithLength<unsigned char> getData() const { return mData; }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new MapSelectInfoPacket()); }
 
 private:
     friend class ClientPacketListener;

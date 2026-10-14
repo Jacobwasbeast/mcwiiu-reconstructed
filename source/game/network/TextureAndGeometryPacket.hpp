@@ -21,7 +21,8 @@ class TextureAndGeometryPacket : public Packet, public boost::enable_shared_from
 public:
     TextureAndGeometryPacket();
     TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data, unsigned int length);
-    TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data, unsigned int length, DLCSkinFile* skinFile);
+    TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data, unsigned int length,
+                             DLCSkinFile* skinFile);
     TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data, unsigned int length,
                              std::vector<SKIN_BOX*>* additionalBoxes, _SkinAdjustments skinAdjustments);
     virtual ~TextureAndGeometryPacket();
@@ -32,10 +33,7 @@ public:
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new TextureAndGeometryPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new TextureAndGeometryPacket()); }
 
 public:
     std::wstring textureName;

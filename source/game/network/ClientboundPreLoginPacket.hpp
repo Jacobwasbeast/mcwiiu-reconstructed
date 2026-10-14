@@ -20,10 +20,9 @@ class ClientboundPreLoginPacket : public Packet, public boost::enable_shared_fro
 {
 public:
     ClientboundPreLoginPacket();
-    ClientboundPreLoginPacket(std::wstring name, PlayerUID* players, unsigned int playerCount,
-                              unsigned char gameMode, unsigned int seed, char* uniqueMapName,
-                              unsigned int hostPlayer, unsigned int maxPlayers, unsigned char difficulty,
-                              unsigned int gameType, bool hardcore, EMiniGameId miniGameId);
+    ClientboundPreLoginPacket(std::wstring name, PlayerUID* players, unsigned int playerCount, unsigned char gameMode,
+                              unsigned int seed, char* uniqueMapName, unsigned int hostPlayer, unsigned int maxPlayers,
+                              unsigned char difficulty, unsigned int gameType, bool hardcore, EMiniGameId miniGameId);
     virtual ~ClientboundPreLoginPacket();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

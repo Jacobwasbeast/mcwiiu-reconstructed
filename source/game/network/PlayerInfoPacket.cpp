@@ -8,14 +8,17 @@
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayer.hpp"
 
-PlayerInfoPacket::PlayerInfoPacket()
-    : mPlayerId(0), mPlayerIndex(-1), mPrivileges(0), mEntityId(-1), mGameType(0)
+PlayerInfoPacket::PlayerInfoPacket() : mPlayerId(0), mPlayerIndex(-1), mPrivileges(0), mEntityId(-1), mGameType(0)
 {
 }
 
 PlayerInfoPacket::PlayerInfoPacket(unsigned char playerId, short playerIndex, unsigned int privileges,
                                    unsigned char gameType)
-    : mPlayerId(playerId), mPlayerIndex(playerIndex), mPrivileges(privileges), mEntityId(-1), mGameType(gameType)
+    : mPlayerId(playerId),
+      mPlayerIndex(playerIndex),
+      mPrivileges(privileges),
+      mEntityId(-1),
+      mGameType(gameType)
 {
 }
 

@@ -14,7 +14,8 @@ ClientboundSetHealthPacket::ClientboundSetHealthPacket()
     damageSource.challenges = eTelemetryChallenges_None;
 }
 
-ClientboundSetHealthPacket::ClientboundSetHealthPacket(float health, int food, float saturation, TelemetryDamageSource damageSource)
+ClientboundSetHealthPacket::ClientboundSetHealthPacket(float health, int food, float saturation,
+                                                       TelemetryDamageSource damageSource)
 {
     this->health = health;
     this->food = food;

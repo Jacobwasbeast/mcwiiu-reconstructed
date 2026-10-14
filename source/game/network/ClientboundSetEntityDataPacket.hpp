@@ -14,11 +14,13 @@ class DataOutputStream;
 class PacketListener;
 class SynchedEntityData;
 
-class ClientboundSetEntityDataPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetEntityDataPacket>
+class ClientboundSetEntityDataPacket : public Packet,
+                                       public boost::enable_shared_from_this<ClientboundSetEntityDataPacket>
 {
 public:
     ClientboundSetEntityDataPacket();
-    ClientboundSetEntityDataPacket(int id, int entityType, boost::shared_ptr<SynchedEntityData> entityData, bool sendAll);
+    ClientboundSetEntityDataPacket(int id, int entityType, boost::shared_ptr<SynchedEntityData> entityData,
+                                   bool sendAll);
     virtual ~ClientboundSetEntityDataPacket();
 
     virtual int getPacketId();

@@ -4,8 +4,7 @@
 #include "game/network/PacketListener.hpp"
 #include "game/world/LevelType.hpp"
 
-ClientboundLoginPacket::ClientboundLoginPacket()
-    : mPlayerUID(0), mPlayerUID2(0)
+ClientboundLoginPacket::ClientboundLoginPacket() : mPlayerUID(0), mPlayerUID2(0)
 {
     mLevelName = L"";
     mEntityId = 0;
@@ -41,11 +40,14 @@ ClientboundLoginPacket::ClientboundLoginPacket()
 }
 
 ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, int entityId, LevelType* levelType,
-    long long seed, int gameType, int dimension, int difficulty, char gameMode, unsigned char difficultyValue,
-    unsigned char maxPlayers, char playerFlag, int chunkDistance, unsigned char reducedDebugInfo, bool isFlat,
-    unsigned int currentTick, int xzSize, int hellScale, int maxTick, bool isFlatWorld,
-    unsigned char playerFlags, int spawnProtection, int simulationDistance, int unknownValue3)
-    : mPlayerUID(0), mPlayerUID2(0)
+                                               long long seed, int gameType, int dimension, int difficulty,
+                                               char gameMode, unsigned char difficultyValue, unsigned char maxPlayers,
+                                               char playerFlag, int chunkDistance, unsigned char reducedDebugInfo,
+                                               bool isFlat, unsigned int currentTick, int xzSize, int hellScale,
+                                               int maxTick, bool isFlatWorld, unsigned char playerFlags,
+                                               int spawnProtection, int simulationDistance, int unknownValue3)
+    : mPlayerUID(0),
+      mPlayerUID2(0)
 {
     mLevelName = levelName;
     mEntityId = entityId;
@@ -81,9 +83,11 @@ ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, in
 }
 
 ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, int entityId, PlayerUID playerUID,
-    PlayerUID playerUID2, bool hardcore, unsigned int viewDistance, unsigned int worldHeight, unsigned int seaLevel,
-    bool allowCommands, bool hasAchievements)
-    : mPlayerUID(0), mPlayerUID2(0)
+                                               PlayerUID playerUID2, bool hardcore, unsigned int viewDistance,
+                                               unsigned int worldHeight, unsigned int seaLevel, bool allowCommands,
+                                               bool hasAchievements)
+    : mPlayerUID(0),
+      mPlayerUID2(0)
 {
     mLevelName = levelName;
     mEntityId = entityId;

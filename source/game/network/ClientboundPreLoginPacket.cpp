@@ -25,10 +25,11 @@ ClientboundPreLoginPacket::ClientboundPreLoginPacket()
     mHardcore = false;
 }
 
-ClientboundPreLoginPacket::ClientboundPreLoginPacket(std::wstring name, PlayerUID* players,
-    unsigned int playerCount, unsigned char gameMode, unsigned int seed, char* uniqueMapName,
-    unsigned int hostPlayer, unsigned int maxPlayers, unsigned char difficulty, unsigned int gameType,
-    bool hardcore, EMiniGameId miniGameId)
+ClientboundPreLoginPacket::ClientboundPreLoginPacket(std::wstring name, PlayerUID* players, unsigned int playerCount,
+                                                     unsigned char gameMode, unsigned int seed, char* uniqueMapName,
+                                                     unsigned int hostPlayer, unsigned int maxPlayers,
+                                                     unsigned char difficulty, unsigned int gameType, bool hardcore,
+                                                     EMiniGameId miniGameId)
 {
     mName = name;
     mPlayers = players;

@@ -19,22 +19,20 @@ class ClientboundLoginPacket : public Packet, public boost::enable_shared_from_t
     friend class ClientPacketListener;
     friend class ServerConnectionListener;
     friend class PlayerList;
-public:
 
+public:
     ClientboundLoginPacket();
     ClientboundLoginPacket(const std::wstring&, int, LevelType*, long long, int, int, int, char, unsigned char,
-        unsigned char, char, int, unsigned char, bool, unsigned int, int, int, int, bool, unsigned char, int, int, int);
+                           unsigned char, char, int, unsigned char, bool, unsigned int, int, int, int, bool,
+                           unsigned char, int, int, int);
     ClientboundLoginPacket(const std::wstring&, int, PlayerUID, PlayerUID, bool, unsigned int, unsigned int,
-        unsigned int, bool, bool);
+                           unsigned int, bool, bool);
     virtual int getPacketId();
     virtual void read(DataInputStream*);
     virtual void write(DataOutputStream*);
     virtual void handle(PacketListener*);
     virtual int getEstimatedSize();
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundLoginPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundLoginPacket()); }
 
 private:
     int mEntityId;

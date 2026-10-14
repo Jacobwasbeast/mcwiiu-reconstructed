@@ -11,7 +11,8 @@ ClientboundRemoveMobEffectPacket::ClientboundRemoveMobEffectPacket()
 }
 
 ClientboundRemoveMobEffectPacket::ClientboundRemoveMobEffectPacket(int entityId, MobEffect* effect)
-    : entityId(entityId), effect(effect)
+    : entityId(entityId),
+      effect(effect)
 {
 }
 

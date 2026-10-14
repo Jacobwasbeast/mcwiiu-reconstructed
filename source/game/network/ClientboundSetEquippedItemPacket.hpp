@@ -12,7 +12,8 @@ class DataOutputStream;
 class ItemInstance;
 class PacketListener;
 
-class ClientboundSetEquippedItemPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetEquippedItemPacket>
+class ClientboundSetEquippedItemPacket : public Packet,
+                                         public boost::enable_shared_from_this<ClientboundSetEquippedItemPacket>
 {
 public:
     ClientboundSetEquippedItemPacket();

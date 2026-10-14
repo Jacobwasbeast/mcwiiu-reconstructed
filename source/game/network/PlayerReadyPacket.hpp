@@ -25,10 +25,7 @@ public:
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new PlayerReadyPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new PlayerReadyPacket()); }
 
 private:
     friend class ServerGamePacketListenerImpl;

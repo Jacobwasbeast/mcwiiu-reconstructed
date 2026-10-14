@@ -5,7 +5,6 @@
 
 class ServerboundClientInformationPacket : public Packet
 {
-
 };
 
 #endif

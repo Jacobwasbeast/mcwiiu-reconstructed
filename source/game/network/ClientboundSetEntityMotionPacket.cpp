@@ -142,7 +142,8 @@ bool ClientboundSetEntityMotionPacket::canBeInvalidated()
 
 bool ClientboundSetEntityMotionPacket::isInvalidatedBy(boost::shared_ptr<Packet> packet)
 {
-    boost::shared_ptr<ClientboundSetEntityMotionPacket> other = boost::dynamic_pointer_cast<ClientboundSetEntityMotionPacket>(packet);
+    boost::shared_ptr<ClientboundSetEntityMotionPacket> other =
+        boost::dynamic_pointer_cast<ClientboundSetEntityMotionPacket>(packet);
 
     return other->id == id;
 }

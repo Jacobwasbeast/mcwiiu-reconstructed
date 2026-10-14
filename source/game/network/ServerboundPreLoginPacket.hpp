@@ -16,6 +16,7 @@ class ServerConnectionListener;
 class ServerboundPreLoginPacket : public Packet, public boost::enable_shared_from_this<ServerboundPreLoginPacket>
 {
     friend class ServerConnectionListener;
+
 public:
     ServerboundPreLoginPacket();
     ServerboundPreLoginPacket(const std::wstring& name);
@@ -26,10 +27,7 @@ public:
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundPreLoginPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundPreLoginPacket()); }
 
 private:
     short protocolVersion;

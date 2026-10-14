@@ -14,13 +14,11 @@ void GameModePacket::EmptyData::WritePacket(boost::shared_ptr<GameModePacket> pa
 {
 }
 
-GameModePacket::IntData::IntData()
-    : value(0)
+GameModePacket::IntData::IntData() : value(0)
 {
 }
 
-GameModePacket::IntData::IntData(int value)
-    : value(value)
+GameModePacket::IntData::IntData(int value) : value(value)
 {
 }
 
@@ -34,13 +32,11 @@ void GameModePacket::IntData::WritePacket(boost::shared_ptr<GameModePacket> pack
     packet->ints.push_back(value);
 }
 
-GameModePacket::FollowData::FollowData()
-    : follow(false), teleport(false)
+GameModePacket::FollowData::FollowData() : follow(false), teleport(false)
 {
 }
 
-GameModePacket::FollowData::FollowData(bool follow, bool teleport)
-    : follow(follow), teleport(teleport)
+GameModePacket::FollowData::FollowData(bool follow, bool teleport) : follow(follow), teleport(teleport)
 {
 }
 
@@ -56,13 +52,15 @@ void GameModePacket::FollowData::WritePacket(boost::shared_ptr<GameModePacket> p
     packet->bools.push_back(teleport);
 }
 
-GameModePacket::TransitionData::TransitionData()
-    : transition(0), level(0), x(0), y(0)
+GameModePacket::TransitionData::TransitionData() : transition(0), level(0), x(0), y(0)
 {
 }
 
 GameModePacket::TransitionData::TransitionData(int transition, int level, int x, int y)
-    : transition(transition), level(level), x(x), y(y)
+    : transition(transition),
+      level(level),
+      x(x),
+      y(y)
 {
 }
 
@@ -82,13 +80,12 @@ void GameModePacket::TransitionData::WritePacket(boost::shared_ptr<GameModePacke
     packet->ints.push_back(y);
 }
 
-GameModePacket::TransitionToRoundData::TransitionToRoundData()
-    : TransitionData(), round(0), seed(-1), mapSize(-1)
+GameModePacket::TransitionToRoundData::TransitionToRoundData() : TransitionData(), round(0), seed(-1), mapSize(-1)
 {
 }
 
-GameModePacket::TransitionToRoundData::TransitionToRoundData(
-    int round, int seed, int mapSize, int transition, int level, int x, int y)
+GameModePacket::TransitionToRoundData::TransitionToRoundData(int round, int seed, int mapSize, int transition,
+                                                             int level, int x, int y)
     : TransitionData(transition, level, x, y),
       round(round),
       seed(seed),
@@ -112,14 +109,13 @@ void GameModePacket::TransitionToRoundData::WritePacket(boost::shared_ptr<GameMo
     packet->ints.push_back(mapSize);
 }
 
-GameModePacket::ChangeCustomGameMode::ChangeCustomGameMode()
-    : gameMode(0), customGameMode(0)
+GameModePacket::ChangeCustomGameMode::ChangeCustomGameMode() : gameMode(0), customGameMode(0)
 {
 }
 
-GameModePacket::ChangeCustomGameMode::ChangeCustomGameMode(int gameMode,
-                                                            int customGameMode)
-    : gameMode(gameMode), customGameMode(customGameMode)
+GameModePacket::ChangeCustomGameMode::ChangeCustomGameMode(int gameMode, int customGameMode)
+    : gameMode(gameMode),
+      customGameMode(customGameMode)
 {
 }
 
@@ -135,13 +131,11 @@ void GameModePacket::ChangeCustomGameMode::WritePacket(boost::shared_ptr<GameMod
     packet->ints.push_back(customGameMode);
 }
 
-GameModePacket::UpdateStartTimeData::UpdateStartTimeData()
-    : startTime(0)
+GameModePacket::UpdateStartTimeData::UpdateStartTimeData() : startTime(0)
 {
 }
 
-GameModePacket::UpdateStartTimeData::UpdateStartTimeData(long long startTime)
-    : startTime(startTime)
+GameModePacket::UpdateStartTimeData::UpdateStartTimeData(long long startTime) : startTime(startTime)
 {
 }
 
@@ -155,13 +149,11 @@ void GameModePacket::UpdateStartTimeData::WritePacket(boost::shared_ptr<GameMode
     packet->ints.push_back(static_cast<int>(startTime));
 }
 
-GameModePacket::LockPlayerLocation::LockPlayerLocation()
-    : locked(false)
+GameModePacket::LockPlayerLocation::LockPlayerLocation() : locked(false)
 {
 }
 
-GameModePacket::LockPlayerLocation::LockPlayerLocation(bool locked)
-    : locked(locked)
+GameModePacket::LockPlayerLocation::LockPlayerLocation(bool locked) : locked(locked)
 {
 }
 
@@ -191,9 +183,7 @@ void GameModePacket::ChestRefill::ReadPacket(boost::shared_ptr<GameModePacket> p
 
     for (int index = 1; index < coordinateCount + 1; index += 3)
     {
-        positions.push_back(BlockPos(packet->ints[index],
-                                     packet->ints[index + 1],
-                                     packet->ints[index + 2]));
+        positions.push_back(BlockPos(packet->ints[index], packet->ints[index + 1], packet->ints[index + 2]));
     }
 }
 
@@ -209,8 +199,7 @@ void GameModePacket::ChestRefill::WritePacket(boost::shared_ptr<GameModePacket> 
     }
 }
 
-GameModePacket::PlayerData::PlayerData()
-    : playerName()
+GameModePacket::PlayerData::PlayerData() : playerName()
 {
 }
 
@@ -241,8 +230,7 @@ void GameModePacket::SetCameraData::WritePacket(boost::shared_ptr<GameModePacket
     packet->ints.push_back(target);
 }
 
-GameModePacket::SyncTeamInviteData::SyncTeamInviteData()
-    : invite(0)
+GameModePacket::SyncTeamInviteData::SyncTeamInviteData() : invite(0)
 {
 }
 
@@ -263,13 +251,11 @@ void GameModePacket::SyncTeamInviteData::WritePacket(boost::shared_ptr<GameModeP
     packet->strings.push_back(invite->m_sTeamName);
 }
 
-GameModePacket::TeamIDData::TeamIDData()
-    : teamId(-1)
+GameModePacket::TeamIDData::TeamIDData() : teamId(-1)
 {
 }
 
-GameModePacket::TeamIDData::TeamIDData(int teamId)
-    : teamId(teamId)
+GameModePacket::TeamIDData::TeamIDData(int teamId) : teamId(teamId)
 {
 }
 
@@ -296,8 +282,7 @@ GameModePacket::AddAreaBoundsData::AddAreaBoundsData()
     minX = minY = minZ = maxX = maxY = maxZ = 0;
 }
 
-GameModePacket::AddAreaBoundsData::AddAreaBoundsData(
-    int minX, int minY, int minZ, int maxX, int maxY, int maxZ)
+GameModePacket::AddAreaBoundsData::AddAreaBoundsData(int minX, int minY, int minZ, int maxX, int maxY, int maxZ)
     : minX(minX),
       minY(minY),
       minZ(minZ),
@@ -327,13 +312,11 @@ void GameModePacket::AddAreaBoundsData::WritePacket(boost::shared_ptr<GameModePa
     packet->ints.push_back(maxZ);
 }
 
-GameModePacket::StateChangeData::StateChangeData()
-    : state(eGameModeState_None)
+GameModePacket::StateChangeData::StateChangeData() : state(eGameModeState_None)
 {
 }
 
-GameModePacket::StateChangeData::StateChangeData(EGameModeState state)
-    : state(state)
+GameModePacket::StateChangeData::StateChangeData(EGameModeState state) : state(state)
 {
 }
 
@@ -347,8 +330,7 @@ void GameModePacket::StateChangeData::WritePacket(boost::shared_ptr<GameModePack
     packet->ints.push_back(static_cast<int>(state));
 }
 
-GameModePacket::TutorialGameModeData::TutorialGameModeData()
-    : tutorial(0)
+GameModePacket::TutorialGameModeData::TutorialGameModeData() : tutorial(0)
 {
 }
 
@@ -362,14 +344,13 @@ void GameModePacket::TutorialGameModeData::WritePacket(boost::shared_ptr<GameMod
     packet->ints.push_back(tutorial);
 }
 
-GameModePacket::UpdateSeedGameModeData::UpdateSeedGameModeData()
-    : seed(0), mapSizeMultiplier(1.0f)
+GameModePacket::UpdateSeedGameModeData::UpdateSeedGameModeData() : seed(0), mapSizeMultiplier(1.0f)
 {
 }
 
-GameModePacket::UpdateSeedGameModeData::UpdateSeedGameModeData(
-    long long seed, float mapSizeMultiplier)
-    : seed(seed), mapSizeMultiplier(mapSizeMultiplier)
+GameModePacket::UpdateSeedGameModeData::UpdateSeedGameModeData(long long seed, float mapSizeMultiplier)
+    : seed(seed),
+      mapSizeMultiplier(mapSizeMultiplier)
 {
 }
 
@@ -395,13 +376,11 @@ double GameModePacket::UpdateSeedGameModeData::getMapSizeMultiplier() const
     return mapSizeMultiplier;
 }
 
-GameModePacket::UpdateThemeGameModeData::UpdateThemeGameModeData()
-    : themeData(-1)
+GameModePacket::UpdateThemeGameModeData::UpdateThemeGameModeData() : themeData(-1)
 {
 }
 
-GameModePacket::UpdateThemeGameModeData::UpdateThemeGameModeData(int themeData)
-    : themeData(themeData)
+GameModePacket::UpdateThemeGameModeData::UpdateThemeGameModeData(int themeData) : themeData(themeData)
 {
 }
 
@@ -425,8 +404,7 @@ GameModePacket::SoundPositionData::SoundPositionData()
     x = y = z = 0.0f;
 }
 
-GameModePacket::SoundPositionData::SoundPositionData(float x, float y, float z)
-    : x(x), y(y), z(z)
+GameModePacket::SoundPositionData::SoundPositionData(float x, float y, float z) : x(x), y(y), z(z)
 {
 }
 
@@ -444,14 +422,13 @@ void GameModePacket::SoundPositionData::WritePacket(boost::shared_ptr<GameModePa
     packet->floats.push_back(z);
 }
 
-GameModePacket::UpdateThemeIdData::UpdateThemeIdData()
-    : themeId(-1), previousThemeId(-1)
+GameModePacket::UpdateThemeIdData::UpdateThemeIdData() : themeId(-1), previousThemeId(-1)
 {
 }
 
-GameModePacket::UpdateThemeIdData::UpdateThemeIdData(int themeId,
-                                                      int previousThemeId)
-    : themeId(themeId), previousThemeId(previousThemeId)
+GameModePacket::UpdateThemeIdData::UpdateThemeIdData(int themeId, int previousThemeId)
+    : themeId(themeId),
+      previousThemeId(previousThemeId)
 {
 }
 
@@ -467,14 +444,14 @@ void GameModePacket::UpdateThemeIdData::WritePacket(boost::shared_ptr<GameModePa
     packet->ints.push_back(previousThemeId);
 }
 
-GameModePacket::RoundStartGameModeData::RoundStartGameModeData()
-    : roundId(L""), subRoundId(L"")
+GameModePacket::RoundStartGameModeData::RoundStartGameModeData() : roundId(L""), subRoundId(L"")
 {
 }
 
-GameModePacket::RoundStartGameModeData::RoundStartGameModeData(
-    const std::wstring& roundId, const std::wstring& subRoundId)
-    : roundId(roundId), subRoundId(subRoundId)
+GameModePacket::RoundStartGameModeData::RoundStartGameModeData(const std::wstring& roundId,
+                                                               const std::wstring& subRoundId)
+    : roundId(roundId),
+      subRoundId(subRoundId)
 {
 }
 
@@ -504,8 +481,7 @@ GameModePacket::GameModePacket()
 {
 }
 
-GameModePacket::GameModePacket(EMessage message)
-    : message(message)
+GameModePacket::GameModePacket(EMessage message) : message(message)
 {
 }
 
@@ -541,8 +517,7 @@ void GameModePacket::WritePacket(const Data& data)
     data.WritePacket(shared_from_this());
 }
 
-boost::shared_ptr<GameModePacket> GameModePacket::Create(EMessage message,
-                                                         const Data& data)
+boost::shared_ptr<GameModePacket> GameModePacket::Create(EMessage message, const Data& data)
 {
     boost::shared_ptr<GameModePacket> packet(new GameModePacket(message));
     packet->WritePacket(data);

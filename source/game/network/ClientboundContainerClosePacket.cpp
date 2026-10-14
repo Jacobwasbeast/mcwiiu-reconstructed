@@ -4,13 +4,11 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundContainerClosePacket::ClientboundContainerClosePacket()
-    : containerId(0)
+ClientboundContainerClosePacket::ClientboundContainerClosePacket() : containerId(0)
 {
 }
 
-ClientboundContainerClosePacket::ClientboundContainerClosePacket(int containerId)
-    : containerId(containerId)
+ClientboundContainerClosePacket::ClientboundContainerClosePacket(int containerId) : containerId(containerId)
 {
 }
 

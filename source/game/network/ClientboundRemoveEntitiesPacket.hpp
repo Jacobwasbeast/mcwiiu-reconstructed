@@ -11,7 +11,8 @@ class DataOutputStream;
 class PacketListener;
 class ClientPacketListener;
 
-class ClientboundRemoveEntitiesPacket : public Packet, public boost::enable_shared_from_this<ClientboundRemoveEntitiesPacket>
+class ClientboundRemoveEntitiesPacket : public Packet,
+                                        public boost::enable_shared_from_this<ClientboundRemoveEntitiesPacket>
 {
 public:
     ClientboundRemoveEntitiesPacket();

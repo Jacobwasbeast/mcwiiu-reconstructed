@@ -30,8 +30,7 @@ enum EGameModeState
     eGameModeState_LoadingSubRound
 };
 
-class GameModePacket : public FlexiblePacket,
-                       public boost::enable_shared_from_this<GameModePacket>
+class GameModePacket : public FlexiblePacket, public boost::enable_shared_from_this<GameModePacket>
 {
 public:
     enum EMessage
@@ -127,8 +126,7 @@ public:
     {
     public:
         TransitionToRoundData();
-        TransitionToRoundData(int round, int seed, int mapSize,
-                              int transition, int level, int x, int y);
+        TransitionToRoundData(int round, int seed, int mapSize, int transition, int level, int x, int y);
         virtual ~TransitionToRoundData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
@@ -256,8 +254,7 @@ public:
     {
     public:
         AddAreaBoundsData();
-        AddAreaBoundsData(int minX, int minY, int minZ,
-                          int maxX, int maxY, int maxZ);
+        AddAreaBoundsData(int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
         virtual ~AddAreaBoundsData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
@@ -353,8 +350,7 @@ public:
     {
     public:
         RoundStartGameModeData();
-        RoundStartGameModeData(const std::wstring& roundId,
-                               const std::wstring& subRoundId);
+        RoundStartGameModeData(const std::wstring& roundId, const std::wstring& subRoundId);
         virtual ~RoundStartGameModeData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
@@ -374,14 +370,10 @@ public:
     virtual int getEstimatedSize();
 
     void WritePacket(const Data& data);
-    static boost::shared_ptr<GameModePacket> Create(EMessage message,
-                                                    const Data& data);
+    static boost::shared_ptr<GameModePacket> Create(EMessage message, const Data& data);
     void ReadPacket(Data& data);
     unsigned int GetMessage();
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new GameModePacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new GameModePacket()); }
 
 private:
     EMessage message;

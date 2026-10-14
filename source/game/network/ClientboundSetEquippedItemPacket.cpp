@@ -5,15 +5,16 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundSetEquippedItemPacket::ClientboundSetEquippedItemPacket()
-    : m_item(), m_entity(0), m_slot(0)
+ClientboundSetEquippedItemPacket::ClientboundSetEquippedItemPacket() : m_item(), m_entity(0), m_slot(0)
 {
     m_item = ItemInstance::EMPTY;
 }
 
 ClientboundSetEquippedItemPacket::ClientboundSetEquippedItemPacket(int entity, const EquipmentSlot* slot,
                                                                    not_null_ptr<ItemInstance> item)
-    : m_item(), m_entity(entity), m_slot(slot)
+    : m_item(),
+      m_entity(entity),
+      m_slot(slot)
 {
     m_item = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
 }

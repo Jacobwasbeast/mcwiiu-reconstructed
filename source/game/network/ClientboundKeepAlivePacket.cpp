@@ -4,8 +4,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundKeepAlivePacket::ClientboundKeepAlivePacket()
-    : mId(0)
+ClientboundKeepAlivePacket::ClientboundKeepAlivePacket() : mId(0)
 {
 }
 

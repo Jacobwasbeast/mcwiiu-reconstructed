@@ -12,7 +12,8 @@ class DataOutputStream;
 class Level;
 class PacketListener;
 
-class ClientboundChunkBlocksUpdatePacket : public Packet, public boost::enable_shared_from_this<ClientboundChunkBlocksUpdatePacket>
+class ClientboundChunkBlocksUpdatePacket : public Packet,
+                                           public boost::enable_shared_from_this<ClientboundChunkBlocksUpdatePacket>
 {
 public:
     ClientboundChunkBlocksUpdatePacket();

@@ -5,12 +5,12 @@
 #include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundSetTitlesPacket::ClientboundSetTitlesPacket()
-    : text()
+ClientboundSetTitlesPacket::ClientboundSetTitlesPacket() : text()
 {
 }
 
-ClientboundSetTitlesPacket::ClientboundSetTitlesPacket(Type type, const std::wstring& text, int fadeIn, int stay, int fadeOut)
+ClientboundSetTitlesPacket::ClientboundSetTitlesPacket(Type type, const std::wstring& text, int fadeIn, int stay,
+                                                       int fadeOut)
 {
     this->type = type;
     this->text = text;

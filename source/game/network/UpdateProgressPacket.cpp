@@ -4,13 +4,11 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-UpdateProgressPacket::UpdateProgressPacket()
-    : mProgress(0)
+UpdateProgressPacket::UpdateProgressPacket() : mProgress(0)
 {
 }
 
-UpdateProgressPacket::UpdateProgressPacket(int progress)
-    : mProgress(progress)
+UpdateProgressPacket::UpdateProgressPacket(int progress) : mProgress(progress)
 {
 }
 

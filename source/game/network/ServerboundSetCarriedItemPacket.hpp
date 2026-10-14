@@ -10,7 +10,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ServerboundSetCarriedItemPacket : public Packet, public boost::enable_shared_from_this<ServerboundSetCarriedItemPacket>
+class ServerboundSetCarriedItemPacket : public Packet,
+                                        public boost::enable_shared_from_this<ServerboundSetCarriedItemPacket>
 {
 public:
     ServerboundSetCarriedItemPacket();

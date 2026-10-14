@@ -28,10 +28,7 @@ public:
     int getData();
     BlockPos getPos();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundLevelEventPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundLevelEventPacket()); }
 
 private:
     int type;

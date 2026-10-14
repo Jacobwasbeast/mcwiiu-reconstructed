@@ -6,8 +6,7 @@
 #include "game/network/PacketListener.hpp"
 #include "game/world/generation/Player.hpp"
 
-ClientboundAddPlayerPacket::ClientboundAddPlayerPacket()
-    : mPlayerId(0), mProfileId(0)
+ClientboundAddPlayerPacket::ClientboundAddPlayerPacket() : mPlayerId(0), mProfileId(0)
 {
     mEntityId = 0xffffffff;
     mName = L"";
@@ -27,9 +26,10 @@ ClientboundAddPlayerPacket::ClientboundAddPlayerPacket()
 }
 
 ClientboundAddPlayerPacket::ClientboundAddPlayerPacket(boost::shared_ptr<Player> player, PlayerUID playerId,
-                                                       PlayerUID profileId, int x, int y, int z,
-                                                       int yRot, int xRot, int yHeadRot)
-    : mPlayerId(0), mProfileId(0)
+                                                       PlayerUID profileId, int x, int y, int z, int yRot, int xRot,
+                                                       int yHeadRot)
+    : mPlayerId(0),
+      mProfileId(0)
 {
     mEntityId = player->getId();
     mName = player->getName();

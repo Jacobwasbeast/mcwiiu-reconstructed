@@ -10,7 +10,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundSetExperiencePacket : public Packet, public boost::enable_shared_from_this<ClientboundSetExperiencePacket>
+class ClientboundSetExperiencePacket : public Packet,
+                                       public boost::enable_shared_from_this<ClientboundSetExperiencePacket>
 {
 public:
     ClientboundSetExperiencePacket();

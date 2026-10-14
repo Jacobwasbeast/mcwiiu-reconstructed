@@ -6,8 +6,7 @@
 #include <boost/pointer_cast.hpp>
 #include "game/core/Mth.hpp"
 
-ClientboundTeleportEntityPacket::ClientboundTeleportEntityPacket()
-    : mId(-1), mX(0), mY(0), mZ(0), myRot(0), mxRot(0)
+ClientboundTeleportEntityPacket::ClientboundTeleportEntityPacket() : mId(-1), mX(0), mY(0), mZ(0), myRot(0), mxRot(0)
 {
 }
 
@@ -65,7 +64,8 @@ bool ClientboundTeleportEntityPacket::canBeInvalidated()
 
 bool ClientboundTeleportEntityPacket::isInvalidatedBy(boost::shared_ptr<Packet> packet)
 {
-    boost::shared_ptr<ClientboundTeleportEntityPacket> other = boost::dynamic_pointer_cast<ClientboundTeleportEntityPacket>(packet);
+    boost::shared_ptr<ClientboundTeleportEntityPacket> other =
+        boost::dynamic_pointer_cast<ClientboundTeleportEntityPacket>(packet);
     return other->mId == mId;
 }
 

@@ -11,17 +11,13 @@ class DataOutputStream;
 class PacketListener;
 class ClientPacketListener;
 
-class UpdateProgressPacket : public Packet,
-                             public boost::enable_shared_from_this<UpdateProgressPacket>
+class UpdateProgressPacket : public Packet, public boost::enable_shared_from_this<UpdateProgressPacket>
 {
 public:
     UpdateProgressPacket();
     UpdateProgressPacket(int progress);
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new UpdateProgressPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new UpdateProgressPacket()); }
 
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

@@ -10,7 +10,9 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ServerboundContainerButtonClickPacket : public Packet, public boost::enable_shared_from_this<ServerboundContainerButtonClickPacket>
+class ServerboundContainerButtonClickPacket
+    : public Packet,
+      public boost::enable_shared_from_this<ServerboundContainerButtonClickPacket>
 {
 public:
     ServerboundContainerButtonClickPacket();

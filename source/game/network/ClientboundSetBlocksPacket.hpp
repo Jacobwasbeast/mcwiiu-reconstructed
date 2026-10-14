@@ -6,7 +6,6 @@ class ClientboundSetBlocksPacket
 public:
     ClientboundSetBlocksPacket();
     ~ClientboundSetBlocksPacket();
-
 };
 
 #endif

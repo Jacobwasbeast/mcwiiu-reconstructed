@@ -100,6 +100,7 @@ public:
     virtual void handleClientboundSetPlayerTeamPacket(boost::shared_ptr<ClientboundSetPlayerTeamPacket> packet);
     virtual bool isServerPacketListener();
     virtual Connection* getConnection();
+
 private:
     bool m_hasPosition;
     double m_x;

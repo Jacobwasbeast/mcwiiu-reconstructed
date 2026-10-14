@@ -70,7 +70,8 @@ void FakeClientPacketListener::handleRemoveEntity(boost::shared_ptr<ClientboundR
 
 void FakeClientPacketListener::handleMovePlayer(boost::shared_ptr<ClientboundPlayerPositionPacket> packet)
 {
-    ClientPacketListener::getConnection()->send(boost::shared_ptr<ServerboundAcceptTeleportationPacket>(new ServerboundAcceptTeleportationPacket(packet->getId())));
+    ClientPacketListener::getConnection()->send(boost::shared_ptr<ServerboundAcceptTeleportationPacket>(
+        new ServerboundAcceptTeleportationPacket(packet->getId())));
     m_hasPosition = true;
     m_x = packet->getX();
     m_y = packet->getY();
@@ -126,8 +127,9 @@ void FakeClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLo
     PlayerUID playerUid(0);
     std::wstring name;
     name.assign(L"FakeName");
-    send(boost::shared_ptr<ClientboundLoginPacket>(new ClientboundLoginPacket(name, 316, playerUid, playerUid, false,
-        packet->mSeed, GameSettings::GetPlayerSkinId(0), GameSettings::GetPlayerCapeId(0), false, false)));
+    send(boost::shared_ptr<ClientboundLoginPacket>(
+        new ClientboundLoginPacket(name, 316, playerUid, playerUid, false, packet->mSeed,
+                                   GameSettings::GetPlayerSkinId(0), GameSettings::GetPlayerCapeId(0), false, false)));
 }
 
 void FakeClientPacketListener::handleAddMob(boost::shared_ptr<ClientboundAddMobPacket> packet)
@@ -321,7 +323,8 @@ void FakeClientPacketListener::handleTextureAndGeometryChange(boost::shared_ptr<
 {
 }
 
-void FakeClientPacketListener::handleUpdateGameRuleProgressPacket(boost::shared_ptr<UpdateGameRuleProgressPacket> packet)
+void FakeClientPacketListener::handleUpdateGameRuleProgressPacket(
+    boost::shared_ptr<UpdateGameRuleProgressPacket> packet)
 {
 }
 
@@ -333,7 +336,8 @@ void FakeClientPacketListener::handleScoreboardPacket(boost::shared_ptr<Scoreboa
 {
 }
 
-void FakeClientPacketListener::handleClientboundSetPlayerTeamPacket(boost::shared_ptr<ClientboundSetPlayerTeamPacket> packet)
+void FakeClientPacketListener::handleClientboundSetPlayerTeamPacket(
+    boost::shared_ptr<ClientboundSetPlayerTeamPacket> packet)
 {
 }
 

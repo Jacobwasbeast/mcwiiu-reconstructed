@@ -22,7 +22,8 @@ ServerboundCustomPayloadPacket::ServerboundCustomPayloadPacket()
 {
 }
 
-ServerboundCustomPayloadPacket::ServerboundCustomPayloadPacket(const std::wstring& identifier, arrayWithLength<unsigned char> data)
+ServerboundCustomPayloadPacket::ServerboundCustomPayloadPacket(const std::wstring& identifier,
+                                                               arrayWithLength<unsigned char> data)
 {
     this->identifier = identifier;
     this->data = data;

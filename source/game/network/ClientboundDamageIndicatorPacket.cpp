@@ -4,12 +4,20 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundDamageIndicatorPacket::ClientboundDamageIndicatorPacket()
-    : Packet(), boost::enable_shared_from_this<ClientboundDamageIndicatorPacket>(), x(0.0f), z(0.0f), allDirections(true)
+    : Packet(),
+      boost::enable_shared_from_this<ClientboundDamageIndicatorPacket>(),
+      x(0.0f),
+      z(0.0f),
+      allDirections(true)
 {
 }
 
 ClientboundDamageIndicatorPacket::ClientboundDamageIndicatorPacket(float xValue, float zValue)
-    : Packet(), boost::enable_shared_from_this<ClientboundDamageIndicatorPacket>(), x(xValue), z(zValue), allDirections(false)
+    : Packet(),
+      boost::enable_shared_from_this<ClientboundDamageIndicatorPacket>(),
+      x(xValue),
+      z(zValue),
+      allDirections(false)
 {
 }
 

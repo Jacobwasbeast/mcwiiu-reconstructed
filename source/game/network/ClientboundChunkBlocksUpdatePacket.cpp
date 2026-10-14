@@ -18,8 +18,8 @@ ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket()
     count = 0;
 }
 
-ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket(
-    int x, int z, arrayWithLength<short> changes, unsigned char count, Level* level)
+ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket(int x, int z, arrayWithLength<short> changes,
+                                                                       unsigned char count, Level* level)
 {
     shouldDelay = true;
     this->x = x;
@@ -105,8 +105,7 @@ void ClientboundChunkBlocksUpdatePacket::read(DataInputStream* input)
                 part = input->readByte();
                 previousElement |= (part & 127) << shift;
                 shift += 7;
-            }
-            while ((part & 128) != 0);
+            } while ((part & 128) != 0);
         }
         else
         {
@@ -176,8 +175,7 @@ void ClientboundChunkBlocksUpdatePacket::write(DataOutputStream* output)
                     part |= 128;
                 }
                 output->write(part);
-            }
-            while (remaining != 0);
+            } while (remaining != 0);
             output->write(xz);
         }
 

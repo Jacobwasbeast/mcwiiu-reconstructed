@@ -4,13 +4,17 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientIntentionPacket::ClientIntentionPacket()
-    : Packet(), protocolVersion(0), hostName(), port(0), intention(NULL)
+ClientIntentionPacket::ClientIntentionPacket() : Packet(), protocolVersion(0), hostName(), port(0), intention(NULL)
 {
 }
 
-ClientIntentionPacket::ClientIntentionPacket(int protocolVersionValue, std::wstring hostNameValue, int portValue, ConnectionProtocol* intentionValue)
-    : Packet(), protocolVersion(protocolVersionValue), hostName(hostNameValue), port(portValue), intention(intentionValue)
+ClientIntentionPacket::ClientIntentionPacket(int protocolVersionValue, std::wstring hostNameValue, int portValue,
+                                             ConnectionProtocol* intentionValue)
+    : Packet(),
+      protocolVersion(protocolVersionValue),
+      hostName(hostNameValue),
+      port(portValue),
+      intention(intentionValue)
 {
 }
 

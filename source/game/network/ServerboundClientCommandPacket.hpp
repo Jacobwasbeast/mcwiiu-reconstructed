@@ -10,7 +10,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ServerboundClientCommandPacket : public Packet, public boost::enable_shared_from_this<ServerboundClientCommandPacket>
+class ServerboundClientCommandPacket : public Packet,
+                                       public boost::enable_shared_from_this<ServerboundClientCommandPacket>
 {
 public:
     enum Action

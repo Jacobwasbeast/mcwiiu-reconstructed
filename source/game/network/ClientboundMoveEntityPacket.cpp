@@ -63,17 +63,42 @@ bool ClientboundMoveEntityPacket::canBeInvalidated()
 }
 bool ClientboundMoveEntityPacket::isInvalidatedBy(boost::shared_ptr<Packet> packet)
 {
-    boost::shared_ptr<ClientboundMoveEntityPacket> other = boost::dynamic_pointer_cast<ClientboundMoveEntityPacket>(packet);
+    boost::shared_ptr<ClientboundMoveEntityPacket> other = boost::dynamic_pointer_cast<ClientboundMoveEntityPacket>(
+        packet);
     return other && other->mEntityId == mEntityId;
 }
-int ClientboundMoveEntityPacket::getEntityId() { return mEntityId; }
-int ClientboundMoveEntityPacket::getXa() { return mXa; }
-int ClientboundMoveEntityPacket::getYa() { return mYa; }
-int ClientboundMoveEntityPacket::getZa() { return mZa; }
-unsigned char ClientboundMoveEntityPacket::getyRot() { return mYRot; }
-unsigned char ClientboundMoveEntityPacket::getxRot() { return mXRot; }
-bool ClientboundMoveEntityPacket::hasRotation() { return mHasRotation; }
-bool ClientboundMoveEntityPacket::isOnGround() { return mOnGround; }
+int ClientboundMoveEntityPacket::getEntityId()
+{
+    return mEntityId;
+}
+int ClientboundMoveEntityPacket::getXa()
+{
+    return mXa;
+}
+int ClientboundMoveEntityPacket::getYa()
+{
+    return mYa;
+}
+int ClientboundMoveEntityPacket::getZa()
+{
+    return mZa;
+}
+unsigned char ClientboundMoveEntityPacket::getyRot()
+{
+    return mYRot;
+}
+unsigned char ClientboundMoveEntityPacket::getxRot()
+{
+    return mXRot;
+}
+bool ClientboundMoveEntityPacket::hasRotation()
+{
+    return mHasRotation;
+}
+bool ClientboundMoveEntityPacket::isOnGround()
+{
+    return mOnGround;
+}
 
 boost::shared_ptr<Packet> ClientboundMoveEntityPacket::create()
 {
@@ -174,8 +199,8 @@ ClientboundMoveEntityPacket::PosRot::PosRot() : ClientboundMoveEntityPacket()
 {
     mHasRotation = true;
 }
-ClientboundMoveEntityPacket::PosRot::PosRot(int entityId, int xa, int ya, int za,
-                                             unsigned char yRot, unsigned char xRot, bool onGround)
+ClientboundMoveEntityPacket::PosRot::PosRot(int entityId, int xa, int ya, int za, unsigned char yRot,
+                                            unsigned char xRot, bool onGround)
     : ClientboundMoveEntityPacket(entityId)
 {
     mXa = xa;

@@ -13,7 +13,8 @@ class Level;
 class MobEffect;
 class PacketListener;
 
-class ClientboundRemoveMobEffectPacket : public Packet, public boost::enable_shared_from_this<ClientboundRemoveMobEffectPacket>
+class ClientboundRemoveMobEffectPacket : public Packet,
+                                         public boost::enable_shared_from_this<ClientboundRemoveMobEffectPacket>
 {
 public:
     ClientboundRemoveMobEffectPacket();

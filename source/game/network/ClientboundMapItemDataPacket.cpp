@@ -6,12 +6,17 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundMapItemDataPacket::ClientboundMapItemDataPacket()
-    : Packet(), boost::enable_shared_from_this<ClientboundMapItemDataPacket>()
+    : Packet(),
+      boost::enable_shared_from_this<ClientboundMapItemDataPacket>()
 {
 }
 
-ClientboundMapItemDataPacket::ClientboundMapItemDataPacket(int mapId, unsigned char scale, bool trackingPosition, const std::vector<MapDecoration>& decorations, arrayWithLength<unsigned char> colors, int startX, int startY, int width, int height)
-    : Packet(), boost::enable_shared_from_this<ClientboundMapItemDataPacket>()
+ClientboundMapItemDataPacket::ClientboundMapItemDataPacket(int mapId, unsigned char scale, bool trackingPosition,
+                                                           const std::vector<MapDecoration>& decorations,
+                                                           arrayWithLength<unsigned char> colors, int startX,
+                                                           int startY, int width, int height)
+    : Packet(),
+      boost::enable_shared_from_this<ClientboundMapItemDataPacket>()
 {
     mMapId = mapId;
     mScale = scale;
@@ -63,7 +68,8 @@ void ClientboundMapItemDataPacket::read(DataInputStream* input)
         int idHigh = input->readByte() << 16;
         unsigned char flags = input->readByte();
         char rot = input->readByte();
-        mDecorations[i] = MapDecoration(MapDecoration::Type::byIcon(icon), x, y, rot, idLow | idMid | idHigh | ((flags & 7) << 24), (flags >> 7) & 1);
+        mDecorations[i] = MapDecoration(MapDecoration::Type::byIcon(icon), x, y, rot,
+                                        idLow | idMid | idHigh | ((flags & 7) << 24), (flags >> 7) & 1);
     }
 
     mWidth = input->readByte();
@@ -136,16 +142,22 @@ void ClientboundMapItemDataPacket::applyToMap(MapItemSavedData* mapData)
 
 bool ClientboundMapItemDataPacket::isDuplicatePacket(boost::shared_ptr<ClientboundMapItemDataPacket> packet)
 {
-    return packet->mMapId == mMapId && packet->mStartX == mStartX && packet->mStartY == mStartY && packet->mWidth == mWidth && packet->mHeight == mHeight && packet->mDecorations.size() == mDecorations.size();
+    return packet->mMapId == mMapId && packet->mStartX == mStartX && packet->mStartY == mStartY
+           && packet->mWidth == mWidth && packet->mHeight == mHeight
+           && packet->mDecorations.size() == mDecorations.size();
 }
 
-bool ClientboundMapItemDataPacket::tryReplaceDuplicatePacket(std::deque<boost::shared_ptr<Packet>, std::allocator<boost::shared_ptr<Packet> > >* queuedPackets)
+bool ClientboundMapItemDataPacket::tryReplaceDuplicatePacket(
+    std::deque<boost::shared_ptr<Packet>, std::allocator<boost::shared_ptr<Packet> > >* queuedPackets)
 {
-    for (std::deque<boost::shared_ptr<Packet>, std::allocator<boost::shared_ptr<Packet> > >::iterator it = queuedPackets->begin(); it != queuedPackets->end(); ++it)
+    for (std::deque<boost::shared_ptr<Packet>, std::allocator<boost::shared_ptr<Packet> > >::iterator it =
+             queuedPackets->begin();
+         it != queuedPackets->end(); ++it)
     {
         if ((*it)->getPacketId() == getPacketId())
         {
-            boost::shared_ptr<ClientboundMapItemDataPacket> packet = boost::static_pointer_cast<ClientboundMapItemDataPacket>(*it);
+            boost::shared_ptr<ClientboundMapItemDataPacket> packet =
+                boost::static_pointer_cast<ClientboundMapItemDataPacket>(*it);
             if (isDuplicatePacket(packet))
             {
                 it = queuedPackets->erase(it, it + 1);

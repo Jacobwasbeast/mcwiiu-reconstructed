@@ -14,8 +14,7 @@ class Entity;
 class PacketListener;
 class ServerGamePacketListenerImpl;
 
-class TextureChangePacket : public Packet,
-                            public boost::enable_shared_from_this<TextureChangePacket>
+class TextureChangePacket : public Packet, public boost::enable_shared_from_this<TextureChangePacket>
 {
     friend class ServerGamePacketListenerImpl;
     friend class ClientPacketListener;
@@ -28,13 +27,9 @@ public:
     };
 
     TextureChangePacket();
-    TextureChangePacket(boost::shared_ptr<Entity> entity, ETextureChangeType type,
-                        const std::wstring& textureName);
+    TextureChangePacket(boost::shared_ptr<Entity> entity, ETextureChangeType type, const std::wstring& textureName);
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new TextureChangePacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new TextureChangePacket()); }
 
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

@@ -20,22 +20,22 @@ class ClientboundMapItemDataPacket : public Packet, public boost::enable_shared_
 {
 public:
     ClientboundMapItemDataPacket();
-    ClientboundMapItemDataPacket(int mapId, unsigned char scale, bool trackingPosition, const std::vector<MapDecoration>& decorations, arrayWithLength<unsigned char> colors, int startX, int startY, int width, int height);
+    ClientboundMapItemDataPacket(int mapId, unsigned char scale, bool trackingPosition,
+                                 const std::vector<MapDecoration>& decorations, arrayWithLength<unsigned char> colors,
+                                 int startX, int startY, int width, int height);
     virtual ~ClientboundMapItemDataPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
-    virtual bool tryReplaceDuplicatePacket(std::deque<boost::shared_ptr<Packet>, std::allocator<boost::shared_ptr<Packet> > >* queuedPackets);
+    virtual bool tryReplaceDuplicatePacket(
+        std::deque<boost::shared_ptr<Packet>, std::allocator<boost::shared_ptr<Packet> > >* queuedPackets);
 
     int getMapId();
     void applyToMap(MapItemSavedData* mapData);
     bool isDuplicatePacket(boost::shared_ptr<ClientboundMapItemDataPacket> packet);
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundMapItemDataPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundMapItemDataPacket()); }
     unsigned char getScale();
     int getWidth();
     int getHeight();

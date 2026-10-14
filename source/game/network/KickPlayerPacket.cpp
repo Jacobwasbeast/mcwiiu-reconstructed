@@ -4,13 +4,11 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-KickPlayerPacket::KickPlayerPacket()
-    : reason(0)
+KickPlayerPacket::KickPlayerPacket() : reason(0)
 {
 }
 
-KickPlayerPacket::KickPlayerPacket(unsigned char reason)
-    : reason(reason)
+KickPlayerPacket::KickPlayerPacket(unsigned char reason) : reason(reason)
 {
 }
 

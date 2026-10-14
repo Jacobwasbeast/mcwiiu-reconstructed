@@ -25,10 +25,7 @@ public:
 
     int getCameraId();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundSetCameraPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundSetCameraPacket()); }
 
 private:
     int cameraId;

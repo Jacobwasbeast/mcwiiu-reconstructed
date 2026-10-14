@@ -15,12 +15,15 @@ class DataOutputStream;
 class ItemInstance;
 class PacketListener;
 
-class ServerboundContainerClickPacket : public Packet, public boost::enable_shared_from_this<ServerboundContainerClickPacket>
+class ServerboundContainerClickPacket : public Packet,
+                                        public boost::enable_shared_from_this<ServerboundContainerClickPacket>
 {
 public:
     ServerboundContainerClickPacket();
-    ServerboundContainerClickPacket(int containerId, int slotNum, int buttonNum, ClickType::eClickType clickType, not_null_ptr<ItemInstance> item, short uid);
-    ServerboundContainerClickPacket(int containerId, int slotNum, int buttonNum, ClickType::eClickType clickType, std::vector<not_null_ptr<ItemInstance> > items, short uid, int numSlots);
+    ServerboundContainerClickPacket(int containerId, int slotNum, int buttonNum, ClickType::eClickType clickType,
+                                    not_null_ptr<ItemInstance> item, short uid);
+    ServerboundContainerClickPacket(int containerId, int slotNum, int buttonNum, ClickType::eClickType clickType,
+                                    std::vector<not_null_ptr<ItemInstance> > items, short uid, int numSlots);
     virtual ~ServerboundContainerClickPacket();
 
     virtual int getPacketId();

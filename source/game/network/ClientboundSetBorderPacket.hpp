@@ -11,9 +11,18 @@ class DataOutputStream;
 class PacketListener;
 class WorldBorder;
 
-class ClientboundSetBorderPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetBorderPacket> {
+class ClientboundSetBorderPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetBorderPacket>
+{
 public:
-    enum Type { SET_SIZE, LERP_SIZE, SET_CENTER, INITIALIZE, SET_WARNING_TIME, SET_WARNING_BLOCKS };
+    enum Type
+    {
+        SET_SIZE,
+        LERP_SIZE,
+        SET_CENTER,
+        INITIALIZE,
+        SET_WARNING_TIME,
+        SET_WARNING_BLOCKS
+    };
 
     ClientboundSetBorderPacket();
     ClientboundSetBorderPacket(WorldBorder* border, Type type);

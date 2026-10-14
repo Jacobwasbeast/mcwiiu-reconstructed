@@ -15,15 +15,19 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundUpdateAttributesPacket : public Packet, public boost::enable_shared_from_this<ClientboundUpdateAttributesPacket> {
+class ClientboundUpdateAttributesPacket : public Packet,
+                                          public boost::enable_shared_from_this<ClientboundUpdateAttributesPacket>
+{
 public:
-    class AttributeSnapshot {
+    class AttributeSnapshot
+    {
     public:
         AttributeSnapshot(eATTRIBUTE_ID id, double base, boost::unordered_set<AttributeModifier*>* modifiers);
         ~AttributeSnapshot();
         boost::unordered_set<AttributeModifier*>* getModifiers();
         eATTRIBUTE_ID getId();
         double getBase();
+
     private:
         eATTRIBUTE_ID id;
         double base;
@@ -31,7 +35,8 @@ public:
     };
 
     ClientboundUpdateAttributesPacket();
-    ClientboundUpdateAttributesPacket(int entityId, int entityType, boost::unordered_set<AttributeInstance*>* attributes);
+    ClientboundUpdateAttributesPacket(int entityId, int entityType,
+                                      boost::unordered_set<AttributeInstance*>* attributes);
     virtual ~ClientboundUpdateAttributesPacket();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
@@ -42,6 +47,7 @@ public:
     boost::unordered_set<AttributeSnapshot*> getValues();
     virtual int getPacketId();
     static boost::shared_ptr<Packet> create();
+
 private:
     int entityId;
     int entityType;

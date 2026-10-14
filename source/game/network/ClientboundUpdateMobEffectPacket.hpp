@@ -11,7 +11,8 @@ class DataOutputStream;
 class MobEffectInstance;
 class PacketListener;
 
-class ClientboundUpdateMobEffectPacket : public Packet, public boost::enable_shared_from_this<ClientboundUpdateMobEffectPacket>
+class ClientboundUpdateMobEffectPacket : public Packet,
+                                         public boost::enable_shared_from_this<ClientboundUpdateMobEffectPacket>
 {
 public:
     ClientboundUpdateMobEffectPacket();

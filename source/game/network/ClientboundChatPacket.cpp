@@ -24,7 +24,8 @@ ClientboundChatPacket::ClientboundChatPacket(EChatPacketMessage message, int ent
     }
 }
 
-ClientboundChatPacket::ClientboundChatPacket(EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams)
+ClientboundChatPacket::ClientboundChatPacket(EChatPacketMessage message, int* intParams, unsigned int numIntParams,
+                                             std::wstring* stringParams, unsigned int numStringParams)
 {
     this->message = message;
 
@@ -57,7 +58,8 @@ ClientboundChatPacket::ClientboundChatPacket(const std::wstring& text, EChatPack
     strings.push_back(text);
 }
 
-ClientboundChatPacket::ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, boost::shared_ptr<Entity> entity, const std::wstring& entityName)
+ClientboundChatPacket::ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message,
+                                             boost::shared_ptr<Entity> entity, const std::wstring& entityName)
 {
     int entityType = (int)entity->GetType();
 
@@ -74,7 +76,9 @@ ClientboundChatPacket::ClientboundChatPacket(const std::wstring& text, EChatPack
     ints.push_back(entity->getId());
 }
 
-ClientboundChatPacket::ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, boost::shared_ptr<Entity> entity, const std::wstring& entityName, const std::wstring& killerName)
+ClientboundChatPacket::ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message,
+                                             boost::shared_ptr<Entity> entity, const std::wstring& entityName,
+                                             const std::wstring& killerName)
 {
     int entityType = (int)entity->GetType();
 

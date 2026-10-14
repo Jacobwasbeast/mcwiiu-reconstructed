@@ -12,7 +12,8 @@ ClientboundSetExperiencePacket::ClientboundSetExperiencePacket()
     experienceLevel = 0;
 }
 
-ClientboundSetExperiencePacket::ClientboundSetExperiencePacket(float experienceProgress, int totalExperience, int experienceLevel)
+ClientboundSetExperiencePacket::ClientboundSetExperiencePacket(float experienceProgress, int totalExperience,
+                                                               int experienceLevel)
 {
     this->experienceProgress = experienceProgress;
     this->totalExperience = totalExperience;

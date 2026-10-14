@@ -4,15 +4,13 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-MapSelectInfoPacket::MapSelectInfoPacket()
-    : mData()
+MapSelectInfoPacket::MapSelectInfoPacket() : mData()
 {
     mOwnsData = false;
     mSize = 0;
 }
 
-MapSelectInfoPacket::MapSelectInfoPacket(arrayWithLength<unsigned char> data, bool ownsData)
-    : mData()
+MapSelectInfoPacket::MapSelectInfoPacket(arrayWithLength<unsigned char> data, bool ownsData) : mData()
 {
     mOwnsData = ownsData;
     mData = data;

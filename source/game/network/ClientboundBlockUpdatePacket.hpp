@@ -30,10 +30,7 @@ public:
     const BlockState* getExtraBlock();
     unsigned int getLevelIdx();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket()); }
 
 private:
     BlockPos pos;

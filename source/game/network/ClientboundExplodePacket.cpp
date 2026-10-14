@@ -17,7 +17,8 @@ ClientboundExplodePacket::ClientboundExplodePacket()
     knockbackZ = 0.0f;
 }
 
-ClientboundExplodePacket::ClientboundExplodePacket(double x, double y, double z, float power, Explosion::ToBlowSet* toBlow, Vec3* knockback, bool knockbackOnly)
+ClientboundExplodePacket::ClientboundExplodePacket(double x, double y, double z, float power,
+                                                   Explosion::ToBlowSet* toBlow, Vec3* knockback, bool knockbackOnly)
 {
     this->x = x;
     this->y = y;
@@ -75,7 +76,8 @@ void ClientboundExplodePacket::write(DataOutputStream* output)
         int baseX = (int)x;
         int baseY = (int)y;
         int baseZ = (int)z;
-        for (std::vector<BlockPos, std::allocator<BlockPos> >::const_iterator it = toBlow.begin(); it != toBlow.end(); ++it)
+        for (std::vector<BlockPos, std::allocator<BlockPos> >::const_iterator it = toBlow.begin(); it != toBlow.end();
+             ++it)
         {
             int offsetX = it->x - baseX;
             int offsetY = it->y - baseY;

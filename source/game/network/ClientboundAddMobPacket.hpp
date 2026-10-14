@@ -20,8 +20,10 @@ class ClientboundAddMobPacket : public Packet, public boost::enable_shared_from_
 {
 public:
     ClientboundAddMobPacket();
-    ClientboundAddMobPacket(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z, int yHeadRot);
-    ClientboundAddMobPacket(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z, int yHeadRot, CompoundTag* additionalContructionDataTag);
+    ClientboundAddMobPacket(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z,
+                            int yHeadRot);
+    ClientboundAddMobPacket(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z,
+                            int yHeadRot, CompoundTag* additionalContructionDataTag);
     virtual ~ClientboundAddMobPacket();
 
     virtual int getPacketId();
@@ -46,13 +48,11 @@ public:
     std::vector<int> getSubIds();
     CompoundTag* getAdditionalContructionDataTag();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundAddMobPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundAddMobPacket()); }
 
 private:
-    void init(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z, int yHeadRot, CompoundTag* additionalContructionDataTag);
+    void init(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z, int yHeadRot,
+              CompoundTag* additionalContructionDataTag);
 
     int id;
     std::wstring uuid;

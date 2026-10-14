@@ -12,7 +12,7 @@ ClientboundContainerSetSlotPacket::ClientboundContainerSetSlotPacket()
 }
 
 ClientboundContainerSetSlotPacket::ClientboundContainerSetSlotPacket(int containerId, int slot,
-                                                                       not_null_ptr<ItemInstance> item)
+                                                                     not_null_ptr<ItemInstance> item)
 {
     this->containerId = containerId;
     this->slot = slot;

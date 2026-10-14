@@ -179,10 +179,13 @@ public:
 
     ClientboundChatPacket();
     ClientboundChatPacket(EChatPacketMessage message, int entityType);
-    ClientboundChatPacket(EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams);
+    ClientboundChatPacket(EChatPacketMessage message, int* intParams, unsigned int numIntParams,
+                          std::wstring* stringParams, unsigned int numStringParams);
     ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, int entityType);
-    ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, boost::shared_ptr<Entity> entity, const std::wstring& entityName);
-    ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, boost::shared_ptr<Entity> entity, const std::wstring& entityName, const std::wstring& killerName);
+    ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, boost::shared_ptr<Entity> entity,
+                          const std::wstring& entityName);
+    ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, boost::shared_ptr<Entity> entity,
+                          const std::wstring& entityName, const std::wstring& killerName);
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
@@ -194,10 +197,7 @@ public:
 
     EChatPacketMessage getMessage() const { return message; }
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundChatPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundChatPacket()); }
 
 private:
     friend class ClientPacketListener;

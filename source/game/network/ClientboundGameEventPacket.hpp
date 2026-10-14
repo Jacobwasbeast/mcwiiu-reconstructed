@@ -43,10 +43,7 @@ public:
     float getParam();
     int getPlayerIndex();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundGameEventPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundGameEventPacket()); }
 
 private:
     int mEvent;

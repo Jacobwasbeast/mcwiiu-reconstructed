@@ -4,13 +4,11 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundRemoveEntitiesPacket::ClientboundRemoveEntitiesPacket()
-    : entityIds()
+ClientboundRemoveEntitiesPacket::ClientboundRemoveEntitiesPacket() : entityIds()
 {
 }
 
-ClientboundRemoveEntitiesPacket::ClientboundRemoveEntitiesPacket(int entityId)
-    : entityIds()
+ClientboundRemoveEntitiesPacket::ClientboundRemoveEntitiesPacket(int entityId) : entityIds()
 {
     entityIds = arrayWithLength<int>(1, true);
     entityIds.data[0] = entityId;

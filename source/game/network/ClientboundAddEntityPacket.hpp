@@ -56,8 +56,10 @@ public:
     ClientboundAddEntityPacket();
     ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data);
     ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int yRot, int xRot, int xa, int ya, int za);
-    ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data, int yRot, int xRot, int xa, int ya, int za);
-    ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data, const BlockPos& pos, int yRot, int xRot, int xa, int ya, int za);
+    ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data, int yRot, int xRot, int xa, int ya,
+                               int za);
+    ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data, const BlockPos& pos, int yRot,
+                               int xRot, int xa, int ya, int za);
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
@@ -83,10 +85,7 @@ public:
     void setZa(int za);
     void setData(int data);
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket()); }
 
 private:
     int mId;

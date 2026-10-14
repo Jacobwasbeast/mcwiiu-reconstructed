@@ -5,14 +5,28 @@
 #include "game/network/PacketListener.hpp"
 
 ServerboundMovePlayerPacket::ServerboundMovePlayerPacket()
-    : x(0.0), y(0.0), z(0.0), yRot(0.0f), xRot(0.0f), onGround(false),
-      hasPositionValue(false), hasRotationValue(false), flying(false)
+    : x(0.0),
+      y(0.0),
+      z(0.0),
+      yRot(0.0f),
+      xRot(0.0f),
+      onGround(false),
+      hasPositionValue(false),
+      hasRotationValue(false),
+      flying(false)
 {
 }
 
 ServerboundMovePlayerPacket::ServerboundMovePlayerPacket(bool onGround, bool isFlying)
-    : x(0.0), y(0.0), z(0.0), yRot(0.0f), xRot(0.0f), onGround(onGround),
-      hasPositionValue(false), hasRotationValue(false), flying(isFlying)
+    : x(0.0),
+      y(0.0),
+      z(0.0),
+      yRot(0.0f),
+      xRot(0.0f),
+      onGround(onGround),
+      hasPositionValue(false),
+      hasRotationValue(false),
+      flying(isFlying)
 {
 }
 
@@ -114,14 +128,12 @@ boost::shared_ptr<Packet> ServerboundMovePlayerPacket::create()
     return boost::shared_ptr<Packet>(new ServerboundMovePlayerPacket());
 }
 
-ServerboundMovePlayerPacket::Pos::Pos()
-    : ServerboundMovePlayerPacket()
+ServerboundMovePlayerPacket::Pos::Pos() : ServerboundMovePlayerPacket()
 {
     hasPositionValue = true;
 }
 
-ServerboundMovePlayerPacket::Pos::Pos(double x, double y, double unused, double z,
-                                     bool onGround, bool isFlying)
+ServerboundMovePlayerPacket::Pos::Pos(double x, double y, double unused, double z, bool onGround, bool isFlying)
     : ServerboundMovePlayerPacket()
 {
     this->x = x;
@@ -163,15 +175,14 @@ boost::shared_ptr<Packet> ServerboundMovePlayerPacket::Pos::create()
     return boost::shared_ptr<Packet>(new ServerboundMovePlayerPacket::Pos());
 }
 
-ServerboundMovePlayerPacket::PosRot::PosRot()
-    : ServerboundMovePlayerPacket()
+ServerboundMovePlayerPacket::PosRot::PosRot() : ServerboundMovePlayerPacket()
 {
     hasRotationValue = true;
     hasPositionValue = true;
 }
 
-ServerboundMovePlayerPacket::PosRot::PosRot(double x, double y, double z, float yRot, float xRot,
-                                           bool onGround, bool isFlying)
+ServerboundMovePlayerPacket::PosRot::PosRot(double x, double y, double z, float yRot, float xRot, bool onGround,
+                                            bool isFlying)
     : ServerboundMovePlayerPacket()
 {
     this->x = x;
@@ -220,8 +231,7 @@ boost::shared_ptr<Packet> ServerboundMovePlayerPacket::PosRot::create()
     return boost::shared_ptr<Packet>(new ServerboundMovePlayerPacket::PosRot());
 }
 
-ServerboundMovePlayerPacket::Rot::Rot()
-    : ServerboundMovePlayerPacket()
+ServerboundMovePlayerPacket::Rot::Rot() : ServerboundMovePlayerPacket()
 {
     hasRotationValue = true;
 }

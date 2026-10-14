@@ -7,8 +7,7 @@
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundContainerOpenPacket::ClientboundContainerOpenPacket()
-    : mNameData(L"", L"", true, false)
+ClientboundContainerOpenPacket::ClientboundContainerOpenPacket() : mNameData(L"", L"", true, false)
 {
     mContainerId = 0;
     mType = 0;
@@ -17,19 +16,22 @@ ClientboundContainerOpenPacket::ClientboundContainerOpenPacket()
     mHasCustomName = false;
 }
 
-ClientboundContainerOpenPacket::ClientboundContainerOpenPacket(int containerId, int type, InteractionObject::NameData data)
+ClientboundContainerOpenPacket::ClientboundContainerOpenPacket(int containerId, int type,
+                                                               InteractionObject::NameData data)
     : mNameData(L"", L"", true, false)
 {
     _init(containerId, type, data, 0, 0);
 }
 
-ClientboundContainerOpenPacket::ClientboundContainerOpenPacket(int containerId, int type, InteractionObject::NameData data, int size)
+ClientboundContainerOpenPacket::ClientboundContainerOpenPacket(int containerId, int type,
+                                                               InteractionObject::NameData data, int size)
     : mNameData(L"", L"", true, false)
 {
     _init(containerId, type, data, size, 0);
 }
 
-ClientboundContainerOpenPacket::ClientboundContainerOpenPacket(int containerId, int type, InteractionObject::NameData data, int size, int entityId)
+ClientboundContainerOpenPacket::ClientboundContainerOpenPacket(int containerId, int type,
+                                                               InteractionObject::NameData data, int size, int entityId)
     : mNameData(L"", L"", true, false)
 {
     _init(containerId, type, data, size, entityId);
@@ -39,7 +41,8 @@ ClientboundContainerOpenPacket::~ClientboundContainerOpenPacket()
 {
 }
 
-void ClientboundContainerOpenPacket::_init(int containerId, int type, InteractionObject::NameData data, int size, int entityId)
+void ClientboundContainerOpenPacket::_init(int containerId, int type, InteractionObject::NameData data, int size,
+                                           int entityId)
 {
     mContainerId = containerId;
     mType = type;
@@ -116,8 +119,8 @@ bool ClientboundContainerOpenPacket::hasCustomName()
     if (mHasCustomName)
     {
         bool censored = gApp.IsConsoleChatCensored() || mNameData.createdByRestrictedPlayer;
-        if (!censored || gApp.IsUUIDLocal(mNameData.ownerUuid) ||
-            (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost))
+        if (!censored || gApp.IsUUIDLocal(mNameData.ownerUuid)
+            || (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost))
         {
             return true;
         }
@@ -129,9 +132,9 @@ std::wstring ClientboundContainerOpenPacket::getTitle()
 {
     if (hasCustomName())
     {
-        bool canShow = (!gApp.IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer) ||
-                       gApp.IsUUIDLocal(mNameData.ownerUuid) ||
-                       (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost);
+        bool canShow = (!gApp.IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer)
+                       || gApp.IsUUIDLocal(mNameData.ownerUuid)
+                       || (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost);
         if (!canShow)
         {
             return L"";

@@ -6,7 +6,6 @@ class ClientboundLoginCompressionPacket
 public:
     ClientboundLoginCompressionPacket();
     ~ClientboundLoginCompressionPacket();
-
 };
 
 #endif

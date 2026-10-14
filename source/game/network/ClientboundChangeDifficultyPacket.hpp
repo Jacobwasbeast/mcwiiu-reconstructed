@@ -11,7 +11,8 @@ class DataOutputStream;
 class Difficulty;
 class PacketListener;
 
-class ClientboundChangeDifficultyPacket : public Packet, public boost::enable_shared_from_this<ClientboundChangeDifficultyPacket>
+class ClientboundChangeDifficultyPacket : public Packet,
+                                          public boost::enable_shared_from_this<ClientboundChangeDifficultyPacket>
 {
 public:
     ClientboundChangeDifficultyPacket();

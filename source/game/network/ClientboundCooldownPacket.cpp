@@ -5,13 +5,11 @@
 #include "game/item/Item.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundCooldownPacket::ClientboundCooldownPacket()
-    : item(NULL), duration(0)
+ClientboundCooldownPacket::ClientboundCooldownPacket() : item(NULL), duration(0)
 {
 }
 
-ClientboundCooldownPacket::ClientboundCooldownPacket(Item* item, int duration)
-    : item(item), duration(duration)
+ClientboundCooldownPacket::ClientboundCooldownPacket(Item* item, int duration) : item(item), duration(duration)
 {
 }
 

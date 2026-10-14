@@ -11,7 +11,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundOpenSignEditorPacket : public Packet, public boost::enable_shared_from_this<ClientboundOpenSignEditorPacket>
+class ClientboundOpenSignEditorPacket : public Packet,
+                                        public boost::enable_shared_from_this<ClientboundOpenSignEditorPacket>
 {
 public:
     ClientboundOpenSignEditorPacket();
@@ -26,6 +27,7 @@ public:
     {
         return boost::shared_ptr<Packet>(new ClientboundOpenSignEditorPacket());
     }
+
 private:
     BlockPos pos;
 };

@@ -7,10 +7,10 @@ class NQRNetworkPlayer;
 
 namespace nn
 {
-    namespace fp
-    {
-        struct FriendPresence;
-    }
+namespace fp
+{
+struct FriendPresence;
+}
 }
 
 class INQRNetworkManagerListener
@@ -18,10 +18,12 @@ class INQRNetworkManagerListener
 public:
     virtual ~INQRNetworkManagerListener() {}
 
-    virtual void HandleDataReceived(NQRNetworkPlayer* pFrom, NQRNetworkPlayer* pTo, unsigned char* pData, unsigned int uiSize) = 0;
+    virtual void HandleDataReceived(NQRNetworkPlayer* pFrom, NQRNetworkPlayer* pTo, unsigned char* pData,
+                                    unsigned int uiSize) = 0;
     virtual void HandlePlayerJoined(NQRNetworkPlayer* pPlayer) = 0;
     virtual void HandlePlayerLeaving(NQRNetworkPlayer* pPlayer) = 0;
-    virtual void HandleStateChange(NQRNetworkManager::eNQRNetworkManagerState eOldState, NQRNetworkManager::eNQRNetworkManagerState eNewState, bool bError) = 0;
+    virtual void HandleStateChange(NQRNetworkManager::eNQRNetworkManagerState eOldState,
+                                   NQRNetworkManager::eNQRNetworkManagerState eNewState, bool bError) = 0;
     virtual void HandleResyncPlayerRequest(NQRNetworkPlayer** ppPlayers) = 0;
     virtual void HandleAddLocalPlayerFailed(int iUserIndex) = 0;
     virtual void HandleDisconnect(bool bError) = 0;

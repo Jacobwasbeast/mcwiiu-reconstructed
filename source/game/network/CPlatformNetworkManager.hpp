@@ -13,7 +13,13 @@
 
 class CGameNetworkManager;
 class ClientboundPreLoginPacket;
-namespace nn { namespace fp { struct FriendPresence; } }
+namespace nn
+{
+namespace fp
+{
+struct FriendPresence;
+}
+}
 
 struct FriendSessionSearchResult
 {
@@ -34,8 +40,7 @@ struct FriendSessionInfo
     GameSessionData m_gameSessionData;
     bool m_statusFlag;
 
-    FriendSessionInfo()
-        : m_gameSessionData()
+    FriendSessionInfo() : m_gameSessionData()
     {
         m_displayNameLength = 0;
         m_statusFlag = false;
@@ -90,11 +95,10 @@ public:
     virtual bool IsAddingPlayer() = 0;
     virtual void HostGame(int iUserIndexMask, bool bOnlineGame, bool bPrivateGame, unsigned char ucGameMode,
                           EMiniGameId eMiniGameId, unsigned int uiWorldId, unsigned int* puiAttributes) = 0;
-    virtual int JoinGame(FriendSessionInfo* pSessionInfo, int iUserIndex, int iUserIndexMask,
-                         bool bMatchmaking) = 0;
+    virtual int JoinGame(FriendSessionInfo* pSessionInfo, int iUserIndex, int iUserIndexMask, bool bMatchmaking) = 0;
     virtual int FindAndJoinGame(int iUserIndexMask, int iSearchFlags, EMiniGameId eMiniGameId,
-                                 unsigned int uiAttributeCount, unsigned int* puiAttributeValues,
-                                 unsigned int* puiAttributeIds) = 0;
+                                unsigned int uiAttributeCount, unsigned int* puiAttributeValues,
+                                unsigned int* puiAttributeIds) = 0;
     virtual void CancelJoinGame();
     virtual bool SetLocalGame(bool bLocalGame) = 0;
     virtual bool IsLocalGame() = 0;
@@ -102,11 +106,9 @@ public:
     virtual bool IsPrivateGame() = 0;
     virtual bool IsLeavingGame() = 0;
     virtual void ResetLeavingGame() = 0;
-    virtual void RegisterPlayerChangedCallback(int iUserIndex,
-                                               void (*pCallback)(void*, INetworkPlayer*, bool),
+    virtual void RegisterPlayerChangedCallback(int iUserIndex, void (*pCallback)(void*, INetworkPlayer*, bool),
                                                void* pCallbackData) = 0;
-    virtual void UnRegisterPlayerChangedCallback(int iUserIndex,
-                                                 void (*pCallback)(void*, INetworkPlayer*, bool),
+    virtual void UnRegisterPlayerChangedCallback(int iUserIndex, void (*pCallback)(void*, INetworkPlayer*, bool),
                                                  void* pCallbackData) = 0;
     virtual void HandleSignInChange() = 0;
     virtual bool _RunNetworkGame() = 0;
@@ -126,10 +128,8 @@ public:
     virtual void SetSessionSubTexturePackId(int iSubTexturePackId) = 0;
     virtual void SetSessionGameModeId(int iGameModeId) = 0;
     virtual void Notify(int iNotification, unsigned long ulParam) = 0;
-    virtual std::vector<FriendSessionInfo*>* GetSessionList(int iUserIndex, int iMaxSessions,
-                                                            bool bFriendsOnly) = 0;
-    virtual bool GetGameSessionInfo(int iUserIndex, unsigned int uiSessionId,
-                                    FriendSessionInfo* pSessionInfo) = 0;
+    virtual std::vector<FriendSessionInfo*>* GetSessionList(int iUserIndex, int iMaxSessions, bool bFriendsOnly) = 0;
+    virtual bool GetGameSessionInfo(int iUserIndex, unsigned int uiSessionId, FriendSessionInfo* pSessionInfo) = 0;
     virtual void SetSessionsUpdatedCallback(void (*pCallback)(void*), void* pCallbackData) = 0;
     virtual void GetFullFriendSessionInfo(FriendSessionInfo* pSessionInfo, void (*pCallback)(bool, void*),
                                           void* pCallbackData) = 0;
@@ -143,8 +143,7 @@ public:
     virtual bool isAdhocConnected() = 0;
     virtual bool connectToAdhoc() = 0;
     virtual bool isAdhocModeChangeInProgress() = 0;
-    virtual void AttemptAdhocSignIn(int (*pCallback)(void*, bool, int), void* pCallbackData,
-                                    bool bShowProgress) = 0;
+    virtual void AttemptAdhocSignIn(int (*pCallback)(void*, bool, int), void* pCallbackData, bool bShowProgress) = 0;
     virtual bool setLanMode(bool bLanMode) = 0;
     virtual bool usingLanMode() = 0;
     virtual bool isLanConnected() = 0;
@@ -155,15 +154,14 @@ public:
     virtual void FakeLocalPlayerJoined();
     virtual std::wstring GetDisplayNameByGamertag(std::wstring gamertag) = 0;
     virtual int GetOutstandingAckCount(INetworkPlayer* pPlayer) = 0;
-    virtual void TryToConnectOnline(int (*pCallback)(void*, bool, int), void* pCallbackData,
-                                    bool bShowProgress) = 0;
+    virtual void TryToConnectOnline(int (*pCallback)(void*, bool, int), void* pCallbackData, bool bShowProgress) = 0;
     virtual void AttemptPSNSignIn(int (*pCallback)(void*, bool, int), void* pCallbackData, bool bShowProgress,
                                   int iUserIndex) = 0;
     virtual void RecvInviteGUI() = 0;
     virtual bool UpdateInviteData(void* pInviteData) = 0;
     virtual void CheckFriendsCanPlay(int iUserIndex, int& iFriendCount,
-                                     boost::shared_ptr<ClientboundPreLoginPacket> pPreLoginPacket,
-                                     int iTitleVersion, int& iCanPlayCount, int& iCannotPlayCount,
-                                     int& iBlockedCount, int& iUnknownCount) = 0;
+                                     boost::shared_ptr<ClientboundPreLoginPacket> pPreLoginPacket, int iTitleVersion,
+                                     int& iCanPlayCount, int& iCannotPlayCount, int& iBlockedCount,
+                                     int& iUnknownCount) = 0;
 };
 #endif

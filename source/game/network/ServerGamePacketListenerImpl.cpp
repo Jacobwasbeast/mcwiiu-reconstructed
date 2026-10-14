@@ -110,20 +110,40 @@
 #include "game/world/WorldBorder.hpp"
 #include "game/server/ServerLevel.hpp"
 
-ServerGamePacketListenerImpl::ServerGamePacketListenerImpl(
-    MinecraftServer* server, Connection* connection,
-    boost::shared_ptr<ServerPlayer> player)
-    : mConnection(connection), mDisconnected(false), mPlayerUID(0),
-      mOldPlayerUID(0), mServer(server), mTickCount(0),
-      mKeepAliveId(0), mKeepAliveTime(0), mKeepAlivePending(0), mChatSpamTickCount(0),
-      mDropSpamTickCount(0), mFirstGoodX(0.0), mFirstGoodY(0.0),
-      mFirstGoodZ(0.0), mLastGoodX(0.0), mLastGoodY(0.0), mLastGoodZ(0.0),
-      mVehicleFirstGoodX(0.0), mVehicleFirstGoodY(0.0), mVehicleFirstGoodZ(0.0),
-      mVehicleLastGoodX(0.0), mVehicleLastGoodY(0.0), mVehicleLastGoodZ(0.0),
-      mPendingTeleportPosition(NULL), mTeleportId(0), mTeleportTime(0),
-      mClientIsFloating(false), mAboveGroundTickCount(0),
-      mClientVehicleIsFloating(false), mAboveGroundVehicleTickCount(0),
-      mReceivedMovePacketCount(0), mKnownMovePacketCount(0)
+ServerGamePacketListenerImpl::ServerGamePacketListenerImpl(MinecraftServer* server, Connection* connection,
+                                                           boost::shared_ptr<ServerPlayer> player)
+    : mConnection(connection),
+      mDisconnected(false),
+      mPlayerUID(0),
+      mOldPlayerUID(0),
+      mServer(server),
+      mTickCount(0),
+      mKeepAliveId(0),
+      mKeepAliveTime(0),
+      mKeepAlivePending(0),
+      mChatSpamTickCount(0),
+      mDropSpamTickCount(0),
+      mFirstGoodX(0.0),
+      mFirstGoodY(0.0),
+      mFirstGoodZ(0.0),
+      mLastGoodX(0.0),
+      mLastGoodY(0.0),
+      mLastGoodZ(0.0),
+      mVehicleFirstGoodX(0.0),
+      mVehicleFirstGoodY(0.0),
+      mVehicleFirstGoodZ(0.0),
+      mVehicleLastGoodX(0.0),
+      mVehicleLastGoodY(0.0),
+      mVehicleLastGoodZ(0.0),
+      mPendingTeleportPosition(NULL),
+      mTeleportId(0),
+      mTeleportTime(0),
+      mClientIsFloating(false),
+      mAboveGroundTickCount(0),
+      mClientVehicleIsFloating(false),
+      mAboveGroundVehicleTickCount(0),
+      mReceivedMovePacketCount(0),
+      mKnownMovePacketCount(0)
 {
     connection->setListener(this);
     mPlayer = player;
@@ -145,8 +165,8 @@ ServerGamePacketListenerImpl::~ServerGamePacketListenerImpl()
 
 void ServerGamePacketListenerImpl::send(boost::shared_ptr<Packet> packet)
 {
-    if (mConnection->m_socket != 0 &&
-        (mServer->getPlayers()->canReceiveAllPackets(mPlayer) || Packet::canSendToAnyClient(packet)))
+    if (mConnection->m_socket != 0
+        && (mServer->getPlayers()->canReceiveAllPackets(mPlayer) || Packet::canSendToAnyClient(packet)))
         mConnection->send(packet);
 }
 
@@ -180,8 +200,8 @@ void ServerGamePacketListenerImpl::disconnect(DisconnectPacket::eDisconnectReaso
         send(boost::shared_ptr<Packet>(new DisconnectPacket(reason)));
         mConnection->sendAndQuit();
         ClientboundChatPacket::EChatPacketMessage message = mUseAltLeaveMessage
-            ? ClientboundChatPacket::eChatPacketMessage_PlayerKicked
-            : ClientboundChatPacket::eChatPacketMessage_PlayerLeft;
+                                                                ? ClientboundChatPacket::eChatPacketMessage_PlayerKicked
+                                                                : ClientboundChatPacket::eChatPacketMessage_PlayerLeft;
         mServer->getPlayers()->broadcastAll(
             boost::shared_ptr<Packet>(new ClientboundChatPacket(mPlayer->getName(), message, -1)));
         mServer->getPlayers()->remove(mPlayer);
@@ -209,8 +229,8 @@ uint32_t ServerGamePacketListenerImpl::countDelayedPackets()
 
 void ServerGamePacketListenerImpl::queueSend(boost::shared_ptr<Packet> packet)
 {
-    if (mConnection->m_socket != 0 &&
-        (mServer->getPlayers()->canReceiveAllPackets(mPlayer) || Packet::canSendToAnyClient(packet)))
+    if (mConnection->m_socket != 0
+        && (mServer->getPlayers()->canReceiveAllPackets(mPlayer) || Packet::canSendToAnyClient(packet)))
         mConnection->queueSend(packet);
 }
 
@@ -245,21 +265,20 @@ void ServerGamePacketListenerImpl::teleport(
     {
         if (includeRotation)
         {
-            send(boost::shared_ptr<Packet>(new ClientboundPlayerPositionPacket(
-                x, y, z, yRot, xRot, relativeArguments, mTeleportId)));
+            send(boost::shared_ptr<Packet>(
+                new ClientboundPlayerPositionPacket(x, y, z, yRot, xRot, relativeArguments, mTeleportId)));
         }
         else
         {
-            send(boost::shared_ptr<Packet>(new ClientboundPlayerPositionPacket(
-                x, y, z, relativeArguments, mTeleportId)));
+            send(boost::shared_ptr<Packet>(
+                new ClientboundPlayerPositionPacket(x, y, z, relativeArguments, mTeleportId)));
         }
     }
     resetPosition();
 }
 
-void ServerGamePacketListenerImpl::teleport(
-    double x, double y, double z, float yRot, float xRot,
-    bool sendPacket, bool includeRotation)
+void ServerGamePacketListenerImpl::teleport(double x, double y, double z, float yRot, float xRot, bool sendPacket,
+                                            bool includeRotation)
 {
     boost::unordered_set<const ClientboundPlayerPositionPacket::RelativeArgument*> relativeArguments;
     teleport(x, y, z, yRot, xRot, relativeArguments, sendPacket, includeRotation);
@@ -277,8 +296,7 @@ void ServerGamePacketListenerImpl::tick()
 
     resetPosition();
     mPlayer->doTick(false, false, false);
-    mPlayer->absMoveTo(mFirstGoodX, mFirstGoodY, mFirstGoodZ,
-                       mPlayer->mYRot, mPlayer->mXRot);
+    mPlayer->absMoveTo(mFirstGoodX, mFirstGoodY, mFirstGoodZ, mPlayer->mYRot, mPlayer->mXRot);
     ++mTickCount;
     mKnownMovePacketCount = mReceivedMovePacketCount;
 
@@ -387,7 +405,8 @@ void ServerGamePacketListenerImpl::handleMoveVehicle(boost::shared_ptr<Serverbou
         return;
     }
 
-    int oldCollisions = level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->size();
+    int oldCollisions =
+        level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->size();
     dx = x - mVehicleLastGoodX;
     dy = y - mVehicleLastGoodY - 1.0E-6;
     dz = z - mVehicleLastGoodZ;
@@ -400,7 +419,8 @@ void ServerGamePacketListenerImpl::handleMoveVehicle(boost::shared_ptr<Serverbou
         dy = 0.0;
     dz = z - vehicle->mZ;
     vehicle->absMoveTo(x, y, z, yRot, xRot);
-    int newCollisions = level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->size();
+    int newCollisions =
+        level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->size();
     if (oldCollisions == 0 && (dx * dx + dy * dy + dz * dz > 0.0625 || newCollisions != 0))
     {
         vehicle->absMoveTo(oldX, oldY, oldZ, yRot, xRot);
@@ -412,17 +432,19 @@ void ServerGamePacketListenerImpl::handleMoveVehicle(boost::shared_ptr<Serverbou
     players->move(mPlayer);
     mPlayer->checkMovementStatistiscs(mPlayer->mX - oldX, mPlayer->mY - oldY, mPlayer->mZ - oldZ);
     mClientVehicleIsFloating = movedY >= -0.03125 && !mServer->isFlightAllowed()
-                            && !level->containsAnyBlocks(vehicle->mBoundingBox->grow(0.0625)->expand(0.0, -0.55, 0.0));
+                               && !level->containsAnyBlocks(
+                                   vehicle->mBoundingBox->grow(0.0625)->expand(0.0, -0.55, 0.0));
     mVehicleLastGoodX = vehicle->mX;
     mVehicleLastGoodY = vehicle->mY;
     mVehicleLastGoodZ = vehicle->mZ;
 }
-void ServerGamePacketListenerImpl::handleAcceptTeleportPacket(boost::shared_ptr<ServerboundAcceptTeleportationPacket> packet)
+void ServerGamePacketListenerImpl::handleAcceptTeleportPacket(
+    boost::shared_ptr<ServerboundAcceptTeleportationPacket> packet)
 {
     if (packet->getId() == mTeleportId)
     {
-        mPlayer->absMoveTo(mPendingTeleportPosition->x, mPendingTeleportPosition->y,
-                           mPendingTeleportPosition->z, mPlayer->mYRot, mPlayer->mXRot);
+        mPlayer->absMoveTo(mPendingTeleportPosition->x, mPendingTeleportPosition->y, mPendingTeleportPosition->z,
+                           mPlayer->mYRot, mPlayer->mXRot);
         if (mPlayer->isChangingDimension())
         {
             mLastGoodX = mPendingTeleportPosition->x;
@@ -520,7 +542,7 @@ void ServerGamePacketListenerImpl::handleMovePlayer(boost::shared_ptr<Serverboun
     mClientIsFloating = dy >= -0.03125;
     mClientIsFloating &= !mServer->isFlightAllowed() && !mPlayer->mAbilities.mMayfly;
     mClientIsFloating &= !mPlayer->hasEffect(MobEffects::LEVITATION) && !mPlayer->isFallFlying()
-                      && !level->containsAnyBlocks(mPlayer->mBoundingBox->grow(0.0625)->expand(0.0, -0.55, 0.0));
+                         && !level->containsAnyBlocks(mPlayer->mBoundingBox->grow(0.0625)->expand(0.0, -0.55, 0.0));
     mPlayer->mOnGround = packet->isOnGround();
 
     PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
@@ -590,7 +612,8 @@ void ServerGamePacketListenerImpl::handlePlayerAction(boost::shared_ptr<Serverbo
         if (level->getWorldBorder()->isWithinBounds(pos))
             mPlayer->mGameMode->startDestroyBlock(pos, packet->getDirection());
         else
-            mPlayer->mConnection->send(boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos)));
+            mPlayer->mConnection->send(
+                boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos)));
         return;
     }
 
@@ -604,7 +627,8 @@ void ServerGamePacketListenerImpl::handlePlayerAction(boost::shared_ptr<Serverbo
         mPlayer->mGameMode->abortDestroyBlock();
     }
     if (level->getBlockState(pos)->getBlock()->mMaterial != Material::AIR)
-        mPlayer->mConnection->send(boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos)));
+        mPlayer->mConnection->send(
+            boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos)));
 }
 void ServerGamePacketListenerImpl::handleUseItemOn(boost::shared_ptr<ServerboundUseItemOnPacket> packet)
 {
@@ -618,20 +642,19 @@ void ServerGamePacketListenerImpl::handleUseItemOn(boost::shared_ptr<Serverbound
 
     mPlayer->resetLastActionTime();
 
-    if ((pos.y < mServer->getMaxBuildHeight() - 1
-         || (face != Direction::UP && pos.y < mServer->getMaxBuildHeight()))
-        && mPendingTeleportPosition == NULL
-        && mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5) < 64.0
+    if ((pos.y < mServer->getMaxBuildHeight() - 1 || (face != Direction::UP && pos.y < mServer->getMaxBuildHeight()))
+        && mPendingTeleportPosition == NULL && mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5) < 64.0
         && level->getWorldBorder()->isWithinBounds(pos))
     {
-        mPlayer->mGameMode->useItemOn(mPlayer, level, item, hand, pos, face, packet->getClickX(),
-                                      packet->getClickY(), packet->getClickZ(), false, NULL);
+        mPlayer->mGameMode->useItemOn(mPlayer, level, item, hand, pos, face, packet->getClickX(), packet->getClickY(),
+                                      packet->getClickZ(), false, NULL);
     }
 
-    mPlayer->mConnection->send(boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos)));
+    mPlayer->mConnection->send(
+        boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos)));
     if (level->getBlockState(pos)->getBlock() != Blocks::piston_head)
-        mPlayer->mConnection->send(
-            boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos.relative(face))));
+        mPlayer->mConnection->send(boost::shared_ptr<ClientboundBlockUpdatePacket>(
+            new ClientboundBlockUpdatePacket(level, pos.relative(face))));
 }
 void ServerGamePacketListenerImpl::handleUseItem(boost::shared_ptr<ServerboundUseItemPacket> packet)
 {
@@ -673,21 +696,12 @@ void ServerGamePacketListenerImpl::handleTeleportToEntityPacket(
         mPlayer->mDimension = target->mDimension;
 
         send(boost::shared_ptr<ClientboundRespawnPacket>(new ClientboundRespawnPacket(
-            (char)mPlayer->mDimension,
-            oldLevel->getLevelData()->getSeed(),
-            mPlayer->GetGameType(),
-            oldLevel->getDifficulty(),
-            oldLevel->getLevelData()->getGeneratorType(),
-            targetLevel->useNewSeaLevel(),
-            mPlayer->getId(),
-            oldLevel->getLevelData()->getXZSize(),
-            oldLevel->getLevelData()->getHellScale(),
-            oldLevel->getLevelData()->getCloudHeight(),
-            oldLevel->getLevelData()->getModernEnd(),
-            (unsigned char)oldLevel->getLevelData()->getBiomeScale(),
-            oldLevel->getLevelData()->getBiomeCentreXChunk(),
-            oldLevel->getLevelData()->getBiomeCentreZChunk(),
-            true,
+            (char)mPlayer->mDimension, oldLevel->getLevelData()->getSeed(), mPlayer->GetGameType(),
+            oldLevel->getDifficulty(), oldLevel->getLevelData()->getGeneratorType(), targetLevel->useNewSeaLevel(),
+            mPlayer->getId(), oldLevel->getLevelData()->getXZSize(), oldLevel->getLevelData()->getHellScale(),
+            oldLevel->getLevelData()->getCloudHeight(), oldLevel->getLevelData()->getModernEnd(),
+            (unsigned char)oldLevel->getLevelData()->getBiomeScale(), oldLevel->getLevelData()->getBiomeCentreXChunk(),
+            oldLevel->getLevelData()->getBiomeCentreZChunk(), true,
             targetLevel->useNewSeaLevel() ? targetLevel->getSeaLevel() : -1)));
 
         oldLevel->removeEntityImmediately(mPlayer);
@@ -726,7 +740,9 @@ void ServerGamePacketListenerImpl::handleSetCarriedItem(boost::shared_ptr<Server
         mPlayer->resetLastActionTime();
     }
 }
-void ServerGamePacketListenerImpl::handleChat(boost::shared_ptr<ClientboundChatPacket> packet) {}
+void ServerGamePacketListenerImpl::handleChat(boost::shared_ptr<ClientboundChatPacket> packet)
+{
+}
 void ServerGamePacketListenerImpl::handleAnimate(boost::shared_ptr<ServerboundSwingPacket> packet)
 {
     mPlayer->resetLastActionTime();
@@ -791,8 +807,7 @@ void ServerGamePacketListenerImpl::handlePlayerCommand(boost::shared_ptr<Serverb
     }
     case ServerboundPlayerCommandPacket::START_FALL_FLYING:
     {
-        if (!mPlayer->mOnGround && mPlayer->mYd < 0.0 && !mPlayer->isFallFlying() &&
-            !mPlayer->isInWater())
+        if (!mPlayer->mOnGround && mPlayer->mYd < 0.0 && !mPlayer->isFallFlying() && !mPlayer->isInWater())
         {
             not_null_ptr<ItemInstance> chest = mPlayer->getItemSlot(EquipmentSlot::CHEST);
             if (chest->getItem() == Items::elytra && ElytraItem::isFlyEnabled(chest))
@@ -833,9 +848,9 @@ void ServerGamePacketListenerImpl::handleInteract(boost::shared_ptr<ServerboundI
                 target->interactAt(mPlayer, packet->getLocation(), packet->getHand());
             else if (packet->getAction() == ServerboundInteractPacket::ATTACK)
             {
-                if (target->GetType() != EntityType::ITEM_ENTITY && target->GetType() != EntityType::EXPERIENCE_ORB &&
-                    target->GetType() != EntityType::ARROW && target->GetType() != EntityType::TIPPABLE_ARROW &&
-                    target != mPlayer)
+                if (target->GetType() != EntityType::ITEM_ENTITY && target->GetType() != EntityType::EXPERIENCE_ORB
+                    && target->GetType() != EntityType::ARROW && target->GetType() != EntityType::TIPPABLE_ARROW
+                    && target != mPlayer)
                     mPlayer->attack(target);
             }
         }
@@ -945,17 +960,19 @@ void ServerGamePacketListenerImpl::handleContainerClick(boost::shared_ptr<Server
     }
     mPlayer->refreshContainer(mPlayer->mContainerMenu, &items);
 }
-void ServerGamePacketListenerImpl::handleContainerButtonClick(boost::shared_ptr<ServerboundContainerButtonClickPacket> packet)
+void ServerGamePacketListenerImpl::handleContainerButtonClick(
+    boost::shared_ptr<ServerboundContainerButtonClickPacket> packet)
 {
     mPlayer->resetLastActionTime();
-    if (mPlayer->mContainerMenu->m_containerId == packet->getContainerId() &&
-        mPlayer->mContainerMenu->isSynched(mPlayer) && !mPlayer->isSpectator())
+    if (mPlayer->mContainerMenu->m_containerId == packet->getContainerId()
+        && mPlayer->mContainerMenu->isSynched(mPlayer) && !mPlayer->isSpectator())
     {
         mPlayer->mContainerMenu->clickMenuButton(mPlayer, packet->getButtonId());
         mPlayer->mContainerMenu->broadcastChanges();
     }
 }
-void ServerGamePacketListenerImpl::handleSetCreativeModeSlot(boost::shared_ptr<ServerboundSetCreativeModeSlotPacket> packet)
+void ServerGamePacketListenerImpl::handleSetCreativeModeSlot(
+    boost::shared_ptr<ServerboundSetCreativeModeSlotPacket> packet)
 {
     if (!mPlayer->mGameMode->isCreative())
         return;
@@ -980,9 +997,9 @@ void ServerGamePacketListenerImpl::handleSetCreativeModeSlot(boost::shared_ptr<S
         }
     }
 
-    bool validSlot = packet->getSlotNum() >= InventoryMenu::CRAFT_SLOT_START && packet->getSlotNum() <= InventoryMenu::USE_ROW_SLOT_END;
-    bool validItem = item->isEmpty()
-                  || (item->getAuxValue() >= 0 && item->getCount() <= 64 && item->getCount() > 0);
+    bool validSlot = packet->getSlotNum() >= InventoryMenu::CRAFT_SLOT_START
+                     && packet->getSlotNum() <= InventoryMenu::USE_ROW_SLOT_END;
+    bool validItem = item->isEmpty() || (item->getAuxValue() >= 0 && item->getCount() <= 64 && item->getCount() > 0);
     if (validSlot && validItem)
     {
         if (item->isEmpty())
@@ -1009,11 +1026,11 @@ void ServerGamePacketListenerImpl::handleSetCreativeModeSlot(boost::shared_ptr<S
 }
 void ServerGamePacketListenerImpl::handleContainerAck(boost::shared_ptr<ServerboundContainerAckPacket> packet)
 {
-    boost::unordered_map<int, short, IntKeyHash, IntKeyEq>::iterator transaction =
-        mContainerType.find(mPlayer->mContainerMenu->m_containerId);
-    if (transaction != mContainerType.end() && transaction->second == packet->getUid() &&
-        mPlayer->mContainerMenu->m_containerId == packet->getContainerId() &&
-        !mPlayer->mContainerMenu->isSynched(mPlayer) && !mPlayer->isSpectator())
+    boost::unordered_map<int, short, IntKeyHash, IntKeyEq>::iterator transaction = mContainerType.find(
+        mPlayer->mContainerMenu->m_containerId);
+    if (transaction != mContainerType.end() && transaction->second == packet->getUid()
+        && mPlayer->mContainerMenu->m_containerId == packet->getContainerId()
+        && !mPlayer->mContainerMenu->isSynched(mPlayer) && !mPlayer->isSpectator())
         mPlayer->mContainerMenu->setSynched(mPlayer, true);
 }
 void ServerGamePacketListenerImpl::handleSignUpdate(boost::shared_ptr<ServerboundSignUpdatePacket> packet)
@@ -1056,8 +1073,8 @@ void ServerGamePacketListenerImpl::handlePlayerInfo(boost::shared_ptr<PlayerInfo
 
     boost::shared_ptr<ServerPlayer> target;
     std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator player = players->begin();
-         player != players->end(); ++player)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator player = players->begin(); player != players->end();
+         ++player)
     {
         INetworkPlayer* networkPlayer = (*player)->mConnection->getNetworkPlayer();
         if (networkPlayer != 0 && networkPlayer->GetSmallId() == packet->mPlayerId)
@@ -1078,34 +1095,27 @@ void ServerGamePacketListenerImpl::handlePlayerInfo(boost::shared_ptr<PlayerInfo
     {
         if (allowPlayerPrivileges)
         {
-            if (Player::getPlayerGamePrivilege(
-                    privileges, Player::ePlayerGamePrivilege_CanToggleInvisible) != 0)
+            if (Player::getPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_CanToggleInvisible) != 0)
             {
                 target->setPlayerGamePrivilege(
                     Player::ePlayerGamePrivilege_Invisible,
-                    Player::getPlayerGamePrivilege(
-                        packet->mPrivileges, Player::ePlayerGamePrivilege_Invisible));
+                    Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_Invisible));
                 target->setPlayerGamePrivilege(
                     Player::ePlayerGamePrivilege_Invulnerable,
-                    Player::getPlayerGamePrivilege(
-                        packet->mPrivileges, Player::ePlayerGamePrivilege_Invulnerable));
+                    Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_Invulnerable));
             }
 
-            if (Player::getPlayerGamePrivilege(
-                    privileges, Player::ePlayerGamePrivilege_CreativeMode) == 0)
+            if (Player::getPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_CreativeMode) == 0)
             {
-                if (Player::getPlayerGamePrivilege(
-                        privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0)
+                if (Player::getPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_CanToggleFly) != 0)
                     target->setPlayerGamePrivilege(
                         Player::ePlayerGamePrivilege_CanFly,
-                        Player::getPlayerGamePrivilege(
-                            packet->mPrivileges, Player::ePlayerGamePrivilege_CanFly));
-                if (Player::getPlayerGamePrivilege(
-                        privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0)
+                        Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CanFly));
+                if (Player::getPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0)
                     target->setPlayerGamePrivilege(
                         Player::ePlayerGamePrivilege_ExhaustionDisabled,
-                        Player::getPlayerGamePrivilege(
-                            packet->mPrivileges, Player::ePlayerGamePrivilege_ExhaustionDisabled));
+                        Player::getPlayerGamePrivilege(packet->mPrivileges,
+                                                       Player::ePlayerGamePrivilege_ExhaustionDisabled));
             }
         }
     }
@@ -1116,17 +1126,26 @@ void ServerGamePacketListenerImpl::handlePlayerInfo(boost::shared_ptr<PlayerInfo
             INetworkPlayer* targetNetworkPlayer = target->mConnection->getNetworkPlayer();
             if (targetNetworkPlayer != 0 && !targetNetworkPlayer->IsHost())
             {
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CannotMine,
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CannotMine,
                     Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CannotMine));
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CannotBuild,
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CannotBuild,
                     Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CannotBuild));
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CannotAttackPlayers,
-                    Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CannotAttackPlayers));
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CannotAttackAnimals,
-                    Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CannotAttackAnimals));
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CanUseDoorsAndSwitches,
-                    Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CanUseDoorsAndSwitches));
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CanUseContainers,
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CannotAttackPlayers,
+                    Player::getPlayerGamePrivilege(packet->mPrivileges,
+                                                   Player::ePlayerGamePrivilege_CannotAttackPlayers));
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CannotAttackAnimals,
+                    Player::getPlayerGamePrivilege(packet->mPrivileges,
+                                                   Player::ePlayerGamePrivilege_CannotAttackAnimals));
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CanUseDoorsAndSwitches,
+                    Player::getPlayerGamePrivilege(packet->mPrivileges,
+                                                   Player::ePlayerGamePrivilege_CanUseDoorsAndSwitches));
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CanUseContainers,
                     Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CanUseContainers));
             }
         }
@@ -1135,27 +1154,32 @@ void ServerGamePacketListenerImpl::handlePlayerInfo(boost::shared_ptr<PlayerInfo
         {
             if (allowPlayerPrivileges)
             {
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CanToggleInvisible,
-                    Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CanToggleInvisible));
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CanToggleFly,
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CanToggleInvisible,
+                    Player::getPlayerGamePrivilege(packet->mPrivileges,
+                                                   Player::ePlayerGamePrivilege_CanToggleInvisible));
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CanToggleFly,
                     Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CanToggleFly));
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CanToggleExhaustion,
-                    Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CanToggleExhaustion));
-                target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CanTeleport,
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CanToggleExhaustion,
+                    Player::getPlayerGamePrivilege(packet->mPrivileges,
+                                                   Player::ePlayerGamePrivilege_CanToggleExhaustion));
+                target->setPlayerGamePrivilege(
+                    Player::ePlayerGamePrivilege_CanTeleport,
                     Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_CanTeleport));
             }
-            target->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_Op,
+            target->setPlayerGamePrivilege(
+                Player::ePlayerGamePrivilege_Op,
                 Player::getPlayerGamePrivilege(packet->mPrivileges, Player::ePlayerGamePrivilege_Op));
         }
     }
 
-    mServer->getPlayers()->broadcastAll(
-        boost::shared_ptr<Packet>(new PlayerInfoPacket(target)));
+    mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(new PlayerInfoPacket(target)));
 }
 void ServerGamePacketListenerImpl::handlePlayerAbilities(boost::shared_ptr<ServerboundPlayerAbilitiesPacket> packet)
 {
-    mPlayer->mAbilities.mFlying = packet->isFlying() &&
-        (mPlayer->mAbilities.mMayfly || mPlayer->isAllowedToFly());
+    mPlayer->mAbilities.mFlying = packet->isFlying() && (mPlayer->mAbilities.mMayfly || mPlayer->isAllowedToFly());
 }
 
 void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<ServerboundCustomPayloadPacket> packet)
@@ -1188,10 +1212,14 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         if (book->getItem() == Items::writableBook && book->getItem() == held->getItem())
         {
             CompoundTag* bookTag = book->getTag()->copy();
-            held->addTagElement(WrittenBookItem::TAG_PAGES, bookTag->getList(WrittenBookItem::TAG_PAGES, Tag::TAG_STRING));
-            held->getTag()->putString(WrittenBookItem::TAG_OWNER_UUID, bookTag->getString(WrittenBookItem::TAG_OWNER_UUID));
-            held->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER, bookTag->getByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER));
-            held->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_HOST, bookTag->getByte(WrittenBookItem::TAG_CREATED_BY_HOST));
+            held->addTagElement(WrittenBookItem::TAG_PAGES,
+                                bookTag->getList(WrittenBookItem::TAG_PAGES, Tag::TAG_STRING));
+            held->getTag()->putString(WrittenBookItem::TAG_OWNER_UUID,
+                                      bookTag->getString(WrittenBookItem::TAG_OWNER_UUID));
+            held->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER,
+                                    bookTag->getByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER));
+            held->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_HOST,
+                                    bookTag->getByte(WrittenBookItem::TAG_CREATED_BY_HOST));
         }
         bytes.reset();
         input.close();
@@ -1225,14 +1253,18 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
             {
                 not_null_ptr<ItemInstance> signedBook(new ItemInstance(Items::writtenBook));
                 signedBook->addTagElement(WrittenBookItem::TAG_AUTHOR, new StringTag(mPlayer->getName()));
-                signedBook->addTagElement(WrittenBookItem::TAG_TITLE, new StringTag(book->getTag()->getString(WrittenBookItem::TAG_TITLE)));
+                signedBook->addTagElement(WrittenBookItem::TAG_TITLE,
+                                          new StringTag(book->getTag()->getString(WrittenBookItem::TAG_TITLE)));
                 Tag* pages = book->getTag()->getList(WrittenBookItem::TAG_PAGES, Tag::TAG_STRING)->copy();
                 signedBook->addTagElement(WrittenBookItem::TAG_PAGES, pages);
                 mPlayer->setItemInHand(InteractionHand::eInteractionHand_MainHand, signedBook);
-                signedBook->getTag()->putString(WrittenBookItem::TAG_OWNER_UUID, book->getTag()->getString(WrittenBookItem::TAG_OWNER_UUID));
-                signedBook->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER,
-                                              book->getTag()->getByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER));
-                signedBook->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_HOST, book->getTag()->getByte(WrittenBookItem::TAG_CREATED_BY_HOST));
+                signedBook->getTag()->putString(WrittenBookItem::TAG_OWNER_UUID,
+                                                book->getTag()->getString(WrittenBookItem::TAG_OWNER_UUID));
+                signedBook->getTag()->putByte(
+                    WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER,
+                    book->getTag()->getByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER));
+                signedBook->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_HOST,
+                                              book->getTag()->getByte(WrittenBookItem::TAG_CREATED_BY_HOST));
             }
         }
         bytes.reset();
@@ -1308,18 +1340,15 @@ void ServerGamePacketListenerImpl::handleCraftItem(boost::shared_ptr<CraftItemPa
     boost::shared_ptr<ItemInstance> craftedItem;
     if (packet->mStackedItems.size() == 1 && packet->mStackedItems[0].second == -1)
     {
-        craftedItem = mPlayer->mGameMode->handleCraftItem(
-            packet->mStackedItems[0].first, packet->mCraftType, mPlayer);
+        craftedItem = mPlayer->mGameMode->handleCraftItem(packet->mStackedItems[0].first, packet->mCraftType, mPlayer);
     }
     else if (packet->mItemIds.empty())
     {
-        craftedItem = mPlayer->mGameMode->handleStackedCraftItem(
-            packet->mStackedItems, packet->mCraftType, mPlayer);
+        craftedItem = mPlayer->mGameMode->handleStackedCraftItem(packet->mStackedItems, packet->mCraftType, mPlayer);
     }
     else
     {
-        craftedItem = mPlayer->mGameMode->handleCustomCraftItem(
-            packet->mItemIds, mPlayer);
+        craftedItem = mPlayer->mGameMode->handleCustomCraftItem(packet->mItemIds, mPlayer);
     }
 
     if (craftedItem->getItem() == Items::map)
@@ -1346,8 +1375,7 @@ void ServerGamePacketListenerImpl::handleTradeItem(boost::shared_ptr<TradeItemPa
     MerchantMenu* menu = static_cast<MerchantMenu*>(mPlayer->mContainerMenu);
     boost::shared_ptr<Merchant> merchant = menu->getMerchant();
     MerchantRecipeList* offers = merchant->getOffers(mPlayer);
-    if (offers == 0 || packet->itemIndex < 0 ||
-        (unsigned int)packet->itemIndex >= (unsigned int)offers->size())
+    if (offers == 0 || packet->itemIndex < 0 || (unsigned int)packet->itemIndex >= (unsigned int)offers->size())
         return;
 
     MerchantRecipe* recipe = offers->at(packet->itemIndex);
@@ -1358,8 +1386,7 @@ void ServerGamePacketListenerImpl::handleTradeItem(boost::shared_ptr<TradeItemPa
     not_null_ptr<ItemInstance> buyB = recipe->getBuyBItem();
     int buyACount = mPlayer->mInventory->countMatches(buyA);
     int buyBCount = mPlayer->mInventory->countMatches(buyB);
-    if (buyA->isEmpty() || buyA->getCount() > buyACount ||
-        (!buyB->isEmpty() && buyB->getCount() > buyBCount))
+    if (buyA->isEmpty() || buyA->getCount() > buyACount || (!buyB->isEmpty() && buyB->getCount() > buyBCount))
         return;
 
     menu->getMerchant()->notifyTrade(recipe);
@@ -1367,8 +1394,7 @@ void ServerGamePacketListenerImpl::handleTradeItem(boost::shared_ptr<TradeItemPa
     mPlayer->mInventory->removeResources(buyB);
 
     not_null_ptr<ItemInstance> sell = recipe->getSellItem()->copy();
-    mPlayer->awardStat(GenericStats::itemsBought(sell->getItem()),
-                       GenericStats::param_itemsBought(sell));
+    mPlayer->awardStat(GenericStats::itemsBought(sell->getItem()), GenericStats::param_itemsBought(sell));
     if (!mPlayer->mInventory->add(sell))
         mPlayer->drop(sell, false);
 }
@@ -1400,21 +1426,20 @@ void ServerGamePacketListenerImpl::handleTextureAndGeometry(boost::shared_ptr<Te
         unsigned char* data = 0;
         unsigned int length = 0;
         gApp.GetMemFileDetails(packet->textureName, &data, &length);
-        DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(
-            gApp.mDLCManager.getSkinFile(packet->textureName));
+        DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(gApp.mDLCManager.getSkinFile(packet->textureName));
         if (length != 0)
         {
             if (skinFile != 0)
             {
-                send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
-                    packet->textureName, data, length, skinFile)));
+                send(boost::shared_ptr<TextureAndGeometryPacket>(
+                    new TextureAndGeometryPacket(packet->textureName, data, length, skinFile)));
             }
             else
             {
                 std::vector<SKIN_BOX*>* boxes = gApp.GetAdditionalSkinBoxes(packet->geometryId);
                 _SkinAdjustments adjustments = gApp.GetSkinAdjustments(packet->geometryId);
-                send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
-                    packet->textureName, data, length, boxes, adjustments)));
+                send(boost::shared_ptr<TextureAndGeometryPacket>(
+                    new TextureAndGeometryPacket(packet->textureName, data, length, boxes, adjustments)));
             }
         }
         else
@@ -1426,8 +1451,8 @@ void ServerGamePacketListenerImpl::handleTextureAndGeometry(boost::shared_ptr<Te
     {
         gApp.AddMemoryTextureFile(packet->textureName, packet->data, packet->length);
         if (packet->additionalBoxCount != 0)
-            gApp.SetAdditionalSkinBoxes(packet->geometryId, packet->additionalBoxes,
-                                           packet->additionalBoxCount, packet->skinAdjustments);
+            gApp.SetAdditionalSkinBoxes(packet->geometryId, packet->additionalBoxes, packet->additionalBoxCount,
+                                        packet->skinAdjustments);
         gApp.SetSkinAdjustments(packet->geometryId, packet->skinAdjustments);
         mPlayer->setCustomSkin(packet->geometryId);
         mServer->mConnection->handleTextureAndGeometryReceived(packet->textureName);
@@ -1440,40 +1465,35 @@ void ServerGamePacketListenerImpl::handleTextureChange(boost::shared_ptr<Texture
     else if (packet->mChangeType == TextureChangePacket::eTextureChangeType_Cape)
         mPlayer->setCustomCape(Player::getCapeIdFromPath(packet->mTextureName));
 
-    if (!packet->mTextureName.empty() &&
-        packet->mTextureName.substr(0, 3).compare(L"def") != 0 &&
-        !gApp.IsFileInMemoryTextures(packet->mTextureName))
+    if (!packet->mTextureName.empty() && packet->mTextureName.substr(0, 3).compare(L"def") != 0
+        && !gApp.IsFileInMemoryTextures(packet->mTextureName))
     {
         if (mServer->mConnection->addPendingTextureRequest(packet->mTextureName))
             send(boost::shared_ptr<Packet>(new TexturePacket(packet->mTextureName, 0, 0)));
     }
-    else if (!packet->mTextureName.empty() &&
-             gApp.IsFileInMemoryTextures(packet->mTextureName))
+    else if (!packet->mTextureName.empty() && gApp.IsFileInMemoryTextures(packet->mTextureName))
     {
         gApp.AddMemoryTextureFile(packet->mTextureName, 0, 0);
     }
 
     boost::shared_ptr<Entity> player = mPlayer;
     mServer->getPlayers()->broadcastAll(
-        boost::shared_ptr<Packet>(new TextureChangePacket(
-            player, packet->mChangeType, packet->mTextureName)),
+        boost::shared_ptr<Packet>(new TextureChangePacket(player, packet->mChangeType, packet->mTextureName)),
         mPlayer->mDimension);
 }
-void ServerGamePacketListenerImpl::handleTextureAndGeometryChange(boost::shared_ptr<TextureAndGeometryChangePacket> packet)
+void ServerGamePacketListenerImpl::handleTextureAndGeometryChange(
+    boost::shared_ptr<TextureAndGeometryChangePacket> packet)
 {
     mPlayer->setCustomSkin(CMinecraftApp::getSkinIdFromPath(packet->geometryName));
 
-    bool requestGeometry = !packet->geometryName.empty() &&
-        packet->geometryName.substr(0, 3).compare(L"def") != 0 &&
-        !gApp.IsFileInMemoryTextures(packet->geometryName);
+    bool requestGeometry = !packet->geometryName.empty() && packet->geometryName.substr(0, 3).compare(L"def") != 0
+                           && !gApp.IsFileInMemoryTextures(packet->geometryName);
     if (requestGeometry)
     {
         if (mServer->mConnection->addPendingTextureRequest(packet->geometryName))
-            send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
-                packet->geometryName, 0, 0)));
+            send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(packet->geometryName, 0, 0)));
     }
-    else if (!packet->geometryName.empty() &&
-             gApp.IsFileInMemoryTextures(packet->geometryName))
+    else if (!packet->geometryName.empty() && gApp.IsFileInMemoryTextures(packet->geometryName))
     {
         gApp.AddMemoryTextureFile(packet->geometryName, 0, 0);
         mPlayer->setCustomSkin(packet->geometryId);
@@ -1481,8 +1501,7 @@ void ServerGamePacketListenerImpl::handleTextureAndGeometryChange(boost::shared_
 
     boost::shared_ptr<Entity> player = mPlayer;
     mServer->getPlayers()->broadcastAll(
-        boost::shared_ptr<Packet>(new TextureAndGeometryChangePacket(
-            player, packet->geometryName)),
+        boost::shared_ptr<Packet>(new TextureAndGeometryChangePacket(player, packet->geometryName)),
         mPlayer->mDimension);
 }
 void ServerGamePacketListenerImpl::handleServerSettingsChanged(boost::shared_ptr<ServerSettingsChangedPacket> packet)
@@ -1492,19 +1511,16 @@ void ServerGamePacketListenerImpl::handleServerSettingsChanged(boost::shared_ptr
         INetworkPlayer* networkPlayer = getNetworkPlayer();
         if ((networkPlayer != 0 && networkPlayer->IsHost()) || mPlayer->isModerator())
         {
-            const eGameHostOption options[] = {
-                eGameHostOption_FireSpreads, eGameHostOption_TNT, eGameHostOption_MobGriefing,
-                eGameHostOption_KeepInventory, eGameHostOption_DoMobSpawning, eGameHostOption_DoMobLoot,
-                eGameHostOption_DoTileDrops, eGameHostOption_DoDaylightCycle, eGameHostOption_NaturalRegeneration,
-                eGameHostOption_DoWeatherCycle
-            };
+            const eGameHostOption options[] = {eGameHostOption_FireSpreads,         eGameHostOption_TNT,
+                                               eGameHostOption_MobGriefing,         eGameHostOption_KeepInventory,
+                                               eGameHostOption_DoMobSpawning,       eGameHostOption_DoMobLoot,
+                                               eGameHostOption_DoTileDrops,         eGameHostOption_DoDaylightCycle,
+                                               eGameHostOption_NaturalRegeneration, eGameHostOption_DoWeatherCycle};
             for (unsigned int i = 0; i < sizeof(options) / sizeof(options[0]); ++i)
-                gApp.SetGameHostOption(
-                    options[i], gApp.GetGameHostOption(packet->mValue, options[i]));
+                gApp.SetGameHostOption(options[i], gApp.GetGameHostOption(packet->mValue, options[i]));
 
             unsigned int value = gApp.GetGameHostOption(eGameHostOption_All);
-            mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(
-                new ServerSettingsChangedPacket(1, value)));
+            mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ServerSettingsChangedPacket(1, value)));
             CGameNetworkManager::sInstance.UpdateAndSetGameSessionData(0);
         }
     }
@@ -1562,15 +1578,17 @@ void ServerGamePacketListenerImpl::handleGameMode(boost::shared_ptr<GameModePack
         break;
     }
 }
-void ServerGamePacketListenerImpl::handleClientboundSetPlayerTeamPacket(boost::shared_ptr<ClientboundSetPlayerTeamPacket> packet) {}
+void ServerGamePacketListenerImpl::handleClientboundSetPlayerTeamPacket(
+    boost::shared_ptr<ClientboundSetPlayerTeamPacket> packet)
+{
+}
 void ServerGamePacketListenerImpl::handleSoundEvent(boost::shared_ptr<ClientboundSoundPacket> packet)
 {
-    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcast(mPlayer, packet->getX(), packet->getY(), packet->getZ(),
-                                     30.0, mPlayer->mDimension, packet);
+    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)
+        ->broadcast(mPlayer, packet->getX(), packet->getY(), packet->getZ(), 30.0, mPlayer->mDimension, packet);
 }
 
-void ServerGamePacketListenerImpl::onDisconnect(
-    DisconnectPacket::eDisconnectReason, void*)
+void ServerGamePacketListenerImpl::onDisconnect(DisconnectPacket::eDisconnectReason, void*)
 {
     EnterCriticalSection(&mDisconnectMutex);
     if (!mDisconnected)
@@ -1600,8 +1618,8 @@ uint64_t ServerGamePacketListenerImpl::getMilliseconds()
     return System::processTimeInMilliSecs();
 }
 
-void ServerGamePacketListenerImpl::NameItemOnAnvil(
-    const boost::shared_ptr<ServerboundCustomPayloadPacket>& packet, bool censored)
+void ServerGamePacketListenerImpl::NameItemOnAnvil(const boost::shared_ptr<ServerboundCustomPayloadPacket>& packet,
+                                                   bool censored)
 {
     AnvilMenu* menu = dynamic_cast<AnvilMenu*>(mPlayer->mContainerMenu);
     if (menu != 0)
@@ -1630,8 +1648,7 @@ void ServerGamePacketListenerImpl::NameItemOnAnvil(
 
 void ServerGamePacketListenerImpl::handleTextureReceived(const std::wstring& name)
 {
-    std::vector<std::wstring>::iterator request =
-        std::find(mNames.begin(), mNames.end(), name);
+    std::vector<std::wstring>::iterator request = std::find(mNames.begin(), mNames.end(), name);
     if (request == mNames.end())
         return;
 
@@ -1647,8 +1664,7 @@ void ServerGamePacketListenerImpl::handleTextureReceived(const std::wstring& nam
 
 void ServerGamePacketListenerImpl::handleTextureAndGeometryReceived(const std::wstring& name)
 {
-    std::vector<std::wstring>::iterator request =
-        std::find(mNames.begin(), mNames.end(), name);
+    std::vector<std::wstring>::iterator request = std::find(mNames.begin(), mNames.end(), name);
     if (request == mNames.end())
         return;
 
@@ -1664,8 +1680,8 @@ void ServerGamePacketListenerImpl::handleTextureAndGeometryReceived(const std::w
     {
         std::vector<SKIN_BOX*>* boxes = gApp.GetAdditionalSkinBoxes(skinId);
         _SkinAdjustments adjustments = gApp.GetSkinAdjustments(skinId);
-        send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
-            name, data, length, boxes, adjustments)));
+        send(boost::shared_ptr<TextureAndGeometryPacket>(
+            new TextureAndGeometryPacket(name, data, length, boxes, adjustments)));
     }
     else
     {

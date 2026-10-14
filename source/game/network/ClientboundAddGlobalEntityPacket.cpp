@@ -7,8 +7,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundAddGlobalEntityPacket::ClientboundAddGlobalEntityPacket()
-    : mId(-1), mX(0), mY(0), mZ(0), mType(0)
+ClientboundAddGlobalEntityPacket::ClientboundAddGlobalEntityPacket() : mId(-1), mX(0), mY(0), mZ(0), mType(0)
 {
 }
 

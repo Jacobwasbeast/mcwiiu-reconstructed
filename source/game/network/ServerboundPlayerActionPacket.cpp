@@ -5,8 +5,7 @@
 #include "game/core/Direction.hpp"
 #include "game/network/PacketListener.hpp"
 
-ServerboundPlayerActionPacket::ServerboundPlayerActionPacket()
-    : mPos(), mDirection(NULL), mUseTime(0)
+ServerboundPlayerActionPacket::ServerboundPlayerActionPacket() : mPos(), mDirection(NULL), mUseTime(0)
 {
 }
 

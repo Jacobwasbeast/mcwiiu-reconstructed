@@ -6,7 +6,14 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundPlayerAbilitiesPacket::ClientboundPlayerAbilitiesPacket()
-    : mInvulnerable(false), mFlying(false), mCanFly(false), mInstabuild(false), mFlyingSpeed(0.0f), mWalkingSpeed(0.0f), mCanBuild(true), mPlayerId(0)
+    : mInvulnerable(false),
+      mFlying(false),
+      mCanFly(false),
+      mInstabuild(false),
+      mFlyingSpeed(0.0f),
+      mWalkingSpeed(0.0f),
+      mCanBuild(true),
+      mPlayerId(0)
 {
 }
 
@@ -22,13 +29,34 @@ ClientboundPlayerAbilitiesPacket::ClientboundPlayerAbilitiesPacket(Abilities* ab
     mPlayerId = playerId;
 }
 
-void ClientboundPlayerAbilitiesPacket::setInvulnerable(bool value) { mInvulnerable = value; }
-void ClientboundPlayerAbilitiesPacket::setFlying(bool value) { mFlying = value; }
-void ClientboundPlayerAbilitiesPacket::setCanFly(bool value) { mCanFly = value; }
-void ClientboundPlayerAbilitiesPacket::setInstabuild(bool value) { mInstabuild = value; }
-void ClientboundPlayerAbilitiesPacket::setFlyingSpeed(float value) { mFlyingSpeed = value; }
-void ClientboundPlayerAbilitiesPacket::setWalkingSpeed(float value) { mWalkingSpeed = value; }
-void ClientboundPlayerAbilitiesPacket::setCanBuild(bool value) { mCanBuild = value; }
+void ClientboundPlayerAbilitiesPacket::setInvulnerable(bool value)
+{
+    mInvulnerable = value;
+}
+void ClientboundPlayerAbilitiesPacket::setFlying(bool value)
+{
+    mFlying = value;
+}
+void ClientboundPlayerAbilitiesPacket::setCanFly(bool value)
+{
+    mCanFly = value;
+}
+void ClientboundPlayerAbilitiesPacket::setInstabuild(bool value)
+{
+    mInstabuild = value;
+}
+void ClientboundPlayerAbilitiesPacket::setFlyingSpeed(float value)
+{
+    mFlyingSpeed = value;
+}
+void ClientboundPlayerAbilitiesPacket::setWalkingSpeed(float value)
+{
+    mWalkingSpeed = value;
+}
+void ClientboundPlayerAbilitiesPacket::setCanBuild(bool value)
+{
+    mCanBuild = value;
+}
 
 void ClientboundPlayerAbilitiesPacket::read(DataInputStream* input)
 {
@@ -43,20 +71,40 @@ void ClientboundPlayerAbilitiesPacket::read(DataInputStream* input)
     mPlayerId = input->readInt();
 }
 
-bool ClientboundPlayerAbilitiesPacket::isInvulnerable() { return mInvulnerable; }
-bool ClientboundPlayerAbilitiesPacket::isFlying() { return mFlying; }
-bool ClientboundPlayerAbilitiesPacket::canFly() { return mCanFly; }
-bool ClientboundPlayerAbilitiesPacket::canInstabuild() { return mInstabuild; }
-bool ClientboundPlayerAbilitiesPacket::canBuild() { return mCanBuild; }
+bool ClientboundPlayerAbilitiesPacket::isInvulnerable()
+{
+    return mInvulnerable;
+}
+bool ClientboundPlayerAbilitiesPacket::isFlying()
+{
+    return mFlying;
+}
+bool ClientboundPlayerAbilitiesPacket::canFly()
+{
+    return mCanFly;
+}
+bool ClientboundPlayerAbilitiesPacket::canInstabuild()
+{
+    return mInstabuild;
+}
+bool ClientboundPlayerAbilitiesPacket::canBuild()
+{
+    return mCanBuild;
+}
 
 void ClientboundPlayerAbilitiesPacket::write(DataOutputStream* output)
 {
     unsigned char flags = 0;
-    if (isInvulnerable()) flags |= 1;
-    if (isFlying()) flags |= 2;
-    if (canFly()) flags |= 4;
-    if (canInstabuild()) flags |= 8;
-    if (canBuild()) flags |= 16;
+    if (isInvulnerable())
+        flags |= 1;
+    if (isFlying())
+        flags |= 2;
+    if (canFly())
+        flags |= 4;
+    if (canInstabuild())
+        flags |= 8;
+    if (canBuild())
+        flags |= 16;
     output->writeByte(flags);
     output->writeFloat(mFlyingSpeed);
     output->writeFloat(mWalkingSpeed);
@@ -68,10 +116,31 @@ void ClientboundPlayerAbilitiesPacket::handle(PacketListener* listener)
     listener->handlePlayerAbilities(shared_from_this());
 }
 
-int ClientboundPlayerAbilitiesPacket::getEstimatedSize() { return 13; }
-float ClientboundPlayerAbilitiesPacket::getFlyingSpeed() { return mFlyingSpeed; }
-float ClientboundPlayerAbilitiesPacket::getWalkingSpeed() { return mWalkingSpeed; }
-bool ClientboundPlayerAbilitiesPacket::canBeInvalidated() { return true; }
-bool ClientboundPlayerAbilitiesPacket::isInvalidatedBy(boost::shared_ptr<Packet>) { return true; }
-int ClientboundPlayerAbilitiesPacket::getPlayerId() { return mPlayerId; }
-int ClientboundPlayerAbilitiesPacket::getPacketId() { return 202; }
+int ClientboundPlayerAbilitiesPacket::getEstimatedSize()
+{
+    return 13;
+}
+float ClientboundPlayerAbilitiesPacket::getFlyingSpeed()
+{
+    return mFlyingSpeed;
+}
+float ClientboundPlayerAbilitiesPacket::getWalkingSpeed()
+{
+    return mWalkingSpeed;
+}
+bool ClientboundPlayerAbilitiesPacket::canBeInvalidated()
+{
+    return true;
+}
+bool ClientboundPlayerAbilitiesPacket::isInvalidatedBy(boost::shared_ptr<Packet>)
+{
+    return true;
+}
+int ClientboundPlayerAbilitiesPacket::getPlayerId()
+{
+    return mPlayerId;
+}
+int ClientboundPlayerAbilitiesPacket::getPacketId()
+{
+    return 202;
+}

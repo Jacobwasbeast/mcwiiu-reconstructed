@@ -11,7 +11,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ServerboundPlayerAbilitiesPacket : public Packet, public boost::enable_shared_from_this<ServerboundPlayerAbilitiesPacket>
+class ServerboundPlayerAbilitiesPacket : public Packet,
+                                         public boost::enable_shared_from_this<ServerboundPlayerAbilitiesPacket>
 {
 public:
     ServerboundPlayerAbilitiesPacket();

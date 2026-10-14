@@ -18,12 +18,10 @@ class UpdateGameRuleProgressPacket : public Packet, public boost::enable_shared_
 {
 public:
     UpdateGameRuleProgressPacket();
-    UpdateGameRuleProgressPacket(ConsoleGameRules::EGameRuleType ruleType, const std::wstring& description, int itemId, int auxValue, int dataTag, void* payload, int payloadLength);
+    UpdateGameRuleProgressPacket(ConsoleGameRules::EGameRuleType ruleType, const std::wstring& description, int itemId,
+                                 int auxValue, int dataTag, void* payload, int payloadLength);
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new UpdateGameRuleProgressPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new UpdateGameRuleProgressPacket()); }
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

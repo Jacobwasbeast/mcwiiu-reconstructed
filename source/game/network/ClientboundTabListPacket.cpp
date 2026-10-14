@@ -4,8 +4,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundTabListPacket::ClientboundTabListPacket()
-    : header(), footer()
+ClientboundTabListPacket::ClientboundTabListPacket() : header(), footer()
 {
 }
 

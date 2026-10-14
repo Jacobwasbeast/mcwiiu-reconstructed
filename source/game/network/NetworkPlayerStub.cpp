@@ -31,7 +31,8 @@ void NetworkPlayerStub::SendData(INetworkPlayer* pTo, const void* pData, int iSi
         data[0] = 0;
     }
     std::memcpy(data + 1, pData, static_cast<size_t>(iSize));
-    m_qNetPlayer->SendData(static_cast<NetworkPlayerStub*>(pTo)->m_qNetPlayer, data, static_cast<unsigned int>(iSize + 1), 0);
+    m_qNetPlayer->SendData(static_cast<NetworkPlayerStub*>(pTo)->m_qNetPlayer, data,
+                           static_cast<unsigned int>(iSize + 1), 0);
     std::free(data);
 }
 

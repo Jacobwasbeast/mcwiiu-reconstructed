@@ -19,17 +19,20 @@ ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity>
           (unsigned char)std::floor(entity->mYRot * 256.0f / 360.0f));
 }
 
-ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int yRot, int xRot, int xa, int ya, int za)
+ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int yRot, int xRot,
+                                                       int xa, int ya, int za)
 {
     _init(entity, type, -1, xa, ya, za, yRot, xRot);
 }
 
-ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data, int yRot, int xRot, int xa, int ya, int za)
+ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data, int yRot,
+                                                       int xRot, int xa, int ya, int za)
 {
     _init(entity, type, data, xa, ya, za, yRot, xRot);
 }
 
-ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data, const BlockPos& pos, int yRot, int xRot, int xa, int ya, int za)
+ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data,
+                                                       const BlockPos& pos, int yRot, int xRot, int xa, int ya, int za)
 {
     _init(entity, type, data, xa, ya, za, yRot, xRot);
     mX = pos.x * 32;
@@ -37,7 +40,8 @@ ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity>
     mZ = pos.z * 32;
 }
 
-void ClientboundAddEntityPacket::_init(boost::shared_ptr<Entity> entity, int type, int data, int xa, int ya, int za, int yRot, int xRot)
+void ClientboundAddEntityPacket::_init(boost::shared_ptr<Entity> entity, int type, int data, int xa, int ya, int za,
+                                       int yRot, int xRot)
 {
     mId = entity->getId();
     mUUID = entity->getUUID();

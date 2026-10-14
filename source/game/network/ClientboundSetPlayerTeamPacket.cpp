@@ -5,8 +5,7 @@
 #include "game/network/PacketListener.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
 
-ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket()
-    : mName(), mPlayers()
+ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket() : mName(), mPlayers()
 {
     mName = L"";
     mMethod = 0;
@@ -14,8 +13,7 @@ ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket()
     mNameTagVisibility = 0;
 }
 
-ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket(PlayerTeam* team, int method)
-    : mName(), mPlayers()
+ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket(PlayerTeam* team, int method) : mName(), mPlayers()
 {
     mName = team->getName();
     mMethod = method;
@@ -28,8 +26,10 @@ ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket(PlayerTeam* team,
     }
 }
 
-ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket(PlayerTeam* team, std::vector<PlayerUID>* players, int method)
-    : mName(), mPlayers()
+ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket(PlayerTeam* team, std::vector<PlayerUID>* players,
+                                                               int method)
+    : mName(),
+      mPlayers()
 {
     mMethod = method;
     mName = team->getName();

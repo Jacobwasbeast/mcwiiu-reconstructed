@@ -12,8 +12,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/util/AABB.hpp"
 
-PathNavigationListener::PathNavigationListener()
-    : mPathNavigations()
+PathNavigationListener::PathNavigationListener() : mPathNavigations()
 {
     InitializeCriticalSection(&mMutex);
 }
@@ -23,7 +22,8 @@ PathNavigationListener::~PathNavigationListener()
     DeleteCriticalSection(&mMutex);
 }
 
-bool PathNavigationListener::didBlockChange(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState)
+bool PathNavigationListener::didBlockChange(Level* level, const BlockPos& pos, const BlockState* oldState,
+                                            const BlockState* newState)
 {
     const AABB* oldShape = oldState->getClipAABB((LevelSource*)level, pos);
     const AABB* newShape = newState->getClipAABB((LevelSource*)level, pos);
@@ -33,7 +33,8 @@ bool PathNavigationListener::didBlockChange(Level* level, const BlockPos& pos, c
     return !same;
 }
 
-void PathNavigationListener::blockChanged(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int, bool)
+void PathNavigationListener::blockChanged(Level* level, const BlockPos& pos, const BlockState* oldState,
+                                          const BlockState* newState, int, bool)
 {
     if (!didBlockChange(level, pos, oldState, newState))
         return;
@@ -88,14 +89,39 @@ void PathNavigationListener::entityRemoved(boost::shared_ptr<Entity> entity)
     }
 }
 
-void PathNavigationListener::blockLightChanged(const BlockPos&) {}
-void PathNavigationListener::setBlocksDirty(int, int, int, int, int, int, Level*) {}
-void PathNavigationListener::allChanged() {}
-void PathNavigationListener::playStreamingMusic(const SoundEvent*, const BlockPos&, bool) {}
-void PathNavigationListener::playSound(boost::shared_ptr<Player>, const SoundEvent*, SoundSource::ESoundSource, double, double, double, float, float, float) {}
-void PathNavigationListener::addParticle(Level*, ePARTICLE_TYPE, bool, double, double, double, double, double, double, arrayWithLength<int>) {}
-void PathNavigationListener::addParticle(Level*, ePARTICLE_TYPE, bool, bool, double, double, double, double, double, double, arrayWithLength<int>) {}
-void PathNavigationListener::playerRemoved(boost::shared_ptr<Entity>) {}
-void PathNavigationListener::globalLevelEvent(int, const BlockPos&, int) {}
-void PathNavigationListener::levelEvent(boost::shared_ptr<Player>, int, const BlockPos&, int) {}
-void PathNavigationListener::destroyBlockProgress(int, const BlockPos&, int) {}
+void PathNavigationListener::blockLightChanged(const BlockPos&)
+{
+}
+void PathNavigationListener::setBlocksDirty(int, int, int, int, int, int, Level*)
+{
+}
+void PathNavigationListener::allChanged()
+{
+}
+void PathNavigationListener::playStreamingMusic(const SoundEvent*, const BlockPos&, bool)
+{
+}
+void PathNavigationListener::playSound(boost::shared_ptr<Player>, const SoundEvent*, SoundSource::ESoundSource, double,
+                                       double, double, float, float, float)
+{
+}
+void PathNavigationListener::addParticle(Level*, ePARTICLE_TYPE, bool, double, double, double, double, double, double,
+                                         arrayWithLength<int>)
+{
+}
+void PathNavigationListener::addParticle(Level*, ePARTICLE_TYPE, bool, bool, double, double, double, double, double,
+                                         double, arrayWithLength<int>)
+{
+}
+void PathNavigationListener::playerRemoved(boost::shared_ptr<Entity>)
+{
+}
+void PathNavigationListener::globalLevelEvent(int, const BlockPos&, int)
+{
+}
+void PathNavigationListener::levelEvent(boost::shared_ptr<Player>, int, const BlockPos&, int)
+{
+}
+void PathNavigationListener::destroyBlockProgress(int, const BlockPos&, int)
+{
+}

@@ -10,8 +10,7 @@ ServerboundPreLoginPacket::ServerboundPreLoginPacket()
     protocolVersion = 0;
 }
 
-ServerboundPreLoginPacket::ServerboundPreLoginPacket(const std::wstring& name)
-    : name(name)
+ServerboundPreLoginPacket::ServerboundPreLoginPacket(const std::wstring& name) : name(name)
 {
     protocolVersion = 0;
 }

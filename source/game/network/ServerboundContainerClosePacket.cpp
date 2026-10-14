@@ -8,8 +8,7 @@ ServerboundContainerClosePacket::ServerboundContainerClosePacket()
 {
 }
 
-ServerboundContainerClosePacket::ServerboundContainerClosePacket(int containerId)
-    : mContainerId(containerId)
+ServerboundContainerClosePacket::ServerboundContainerClosePacket(int containerId) : mContainerId(containerId)
 {
 }
 

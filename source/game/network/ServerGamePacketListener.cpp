@@ -54,7 +54,8 @@ void ServerGamePacketListener::handleContainerAck(boost::shared_ptr<ServerboundC
     onUnhandledPacket(packet);
 }
 
-void ServerGamePacketListener::handleContainerButtonClick(boost::shared_ptr<ServerboundContainerButtonClickPacket> packet)
+void ServerGamePacketListener::handleContainerButtonClick(
+    boost::shared_ptr<ServerboundContainerButtonClickPacket> packet)
 {
     onUnhandledPacket(packet);
 }

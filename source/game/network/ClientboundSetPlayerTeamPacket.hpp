@@ -14,7 +14,8 @@ class DataOutputStream;
 class PacketListener;
 class PlayerTeam;
 
-class ClientboundSetPlayerTeamPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetPlayerTeamPacket>
+class ClientboundSetPlayerTeamPacket : public Packet,
+                                       public boost::enable_shared_from_this<ClientboundSetPlayerTeamPacket>
 {
 public:
     ClientboundSetPlayerTeamPacket();

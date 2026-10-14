@@ -13,7 +13,10 @@ VotePacket::VotePacket()
 }
 
 VotePacket::VotePacket(int voteableId, char vote, int playerId, int voteId)
-    : voteableId(voteableId), vote(vote), playerId(playerId), voteId(voteId)
+    : voteableId(voteableId),
+      vote(vote),
+      playerId(playerId),
+      voteId(voteId)
 {
 }
 
@@ -38,5 +41,11 @@ void VotePacket::handle(PacketListener* listener)
     listener->handleVote(shared_from_this());
 }
 
-int VotePacket::getEstimatedSize() { return 6; }
-int VotePacket::getPacketId() { return 169; }
+int VotePacket::getEstimatedSize()
+{
+    return 6;
+}
+int VotePacket::getPacketId()
+{
+    return 169;
+}

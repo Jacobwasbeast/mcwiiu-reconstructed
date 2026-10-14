@@ -15,7 +15,7 @@ class DataOutputStream;
 class PacketListener;
 
 class ClientboundContainerSetContentPacket : public Packet,
-                                              public boost::enable_shared_from_this<ClientboundContainerSetContentPacket>
+                                             public boost::enable_shared_from_this<ClientboundContainerSetContentPacket>
 {
 public:
     ClientboundContainerSetContentPacket();

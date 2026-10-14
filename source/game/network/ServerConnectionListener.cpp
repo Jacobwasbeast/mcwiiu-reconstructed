@@ -78,12 +78,10 @@ void ServerConnectionListener::sendPreLoginResponse()
     gStorage->GetSaveUniqueFilename(uniqueMapName);
 
     std::vector<boost::shared_ptr<ServerPlayer> >* players = gMinecraftServer->getPlayers()->getPlayers();
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
-         it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> serverPlayer = *it;
-        if (serverPlayer != NULL
-            && serverPlayer->mConnection->mPlayerUID != PlayerUID(0)
+        if (serverPlayer != NULL && serverPlayer->mConnection->mPlayerUID != PlayerUID(0)
             && serverPlayer->mConnection->mOldPlayerUID != PlayerUID(0))
         {
             if (serverPlayer->mConnection->mFriendsOnly)
@@ -102,17 +100,10 @@ void ServerConnectionListener::sendPreLoginResponse()
     accountName = convStringToWstring(std::string(gProfile->GetNetworkAccountID()));
 
     m_connection->send(boost::shared_ptr<ClientboundPreLoginPacket>(new ClientboundPreLoginPacket(
-        accountName,
-        playerUids,
-        playerCount,
-        guestFlags,
-        m_server->ugcPlayersVersion,
-        uniqueMapName,
+        accountName, playerUids, playerCount, guestFlags, m_server->ugcPlayersVersion, uniqueMapName,
         gApp.GetGameHostOption(eGameHostOption_All),
-        Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_All),
-        hostPlayerIndex,
-        m_server->getGameModeId(),
-        CGameNetworkManager::sInstance.IsMatchmakingEnabled(),
+        Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_All), hostPlayerIndex,
+        m_server->getGameModeId(), CGameNetworkManager::sInstance.IsMatchmakingEnabled(),
         Minecraft::GetInstance()->GetMiniGame()->GetId())));
 }
 
@@ -167,8 +158,8 @@ void ServerConnectionListener::handleAcceptedLogin(boost::shared_ptr<Clientbound
     if (uid == PlayerUID(0))
         uid = packet->mPlayerUID2;
 
-    boost::shared_ptr<ServerPlayer> player = m_server->getPlayers()->getPlayerForLogin(
-        this, m_name, uid, packet->mPlayerUID2);
+    boost::shared_ptr<ServerPlayer> player = m_server->getPlayers()->getPlayerForLogin(this, m_name, uid,
+                                                                                       packet->mPlayerUID2);
     if (player)
     {
         player->setMainArm(packet->mHasAchievements ? HumanoidArm::LEFT : HumanoidArm::RIGHT);
@@ -187,7 +178,8 @@ void ServerConnectionListener::onDisconnect(DisconnectPacket::eDisconnectReason,
 
 void ServerConnectionListener::handleGetInfo(boost::shared_ptr<GetInfoPacket>)
 {
-    m_connection->send(boost::shared_ptr<DisconnectPacket>(new DisconnectPacket(DisconnectPacket::eDisconnectReason_GameFull)));
+    m_connection->send(
+        boost::shared_ptr<DisconnectPacket>(new DisconnectPacket(DisconnectPacket::eDisconnectReason_GameFull)));
     m_connection->sendAndQuit();
     m_disconnected = true;
 }

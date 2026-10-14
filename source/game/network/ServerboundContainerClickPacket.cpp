@@ -15,7 +15,9 @@ ServerboundContainerClickPacket::ServerboundContainerClickPacket()
     numSlots = 0;
 }
 
-ServerboundContainerClickPacket::ServerboundContainerClickPacket(int containerId, int slotNum, int buttonNum, ClickType::eClickType clickType, not_null_ptr<ItemInstance> item, short uid)
+ServerboundContainerClickPacket::ServerboundContainerClickPacket(int containerId, int slotNum, int buttonNum,
+                                                                 ClickType::eClickType clickType,
+                                                                 not_null_ptr<ItemInstance> item, short uid)
 {
     this->containerId = containerId;
     this->slotNum = slotNum;
@@ -26,7 +28,10 @@ ServerboundContainerClickPacket::ServerboundContainerClickPacket(int containerId
     numSlots = 1;
 }
 
-ServerboundContainerClickPacket::ServerboundContainerClickPacket(int containerId, int slotNum, int buttonNum, ClickType::eClickType clickType, std::vector<not_null_ptr<ItemInstance> > items, short uid, int numSlots)
+ServerboundContainerClickPacket::ServerboundContainerClickPacket(int containerId, int slotNum, int buttonNum,
+                                                                 ClickType::eClickType clickType,
+                                                                 std::vector<not_null_ptr<ItemInstance> > items,
+                                                                 short uid, int numSlots)
 {
     this->containerId = containerId;
     this->slotNum = slotNum;

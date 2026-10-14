@@ -65,8 +65,7 @@ class MoveEntityPacketSmall::PosRot : public MoveEntityPacketSmall
 {
 public:
     PosRot();
-    PosRot(int entityId, char xa, char ya, char za, char yRot, char xRot,
-           bool onGround);
+    PosRot(int entityId, char xa, char ya, char za, char yRot, char xRot, bool onGround);
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

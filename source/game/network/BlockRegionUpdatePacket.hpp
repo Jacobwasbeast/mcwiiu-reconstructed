@@ -18,8 +18,7 @@ class BlockRegionUpdatePacket : public Packet, public boost::enable_shared_from_
 {
 public:
     BlockRegionUpdatePacket();
-    BlockRegionUpdatePacket(int x, int y, int z, int width, int height, int depth,
-                            Level* level, bool hasBlockChanges,
+    BlockRegionUpdatePacket(int x, int y, int z, int width, int height, int depth, Level* level, bool hasBlockChanges,
                             const std::vector<short>* blockChanges);
     virtual ~BlockRegionUpdatePacket();
 
@@ -32,10 +31,7 @@ public:
     void SetChanges(std::vector<LevelChunk::BlockChange>* changes);
     std::vector<LevelChunk::BlockChange>* GetChanges() const;
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new BlockRegionUpdatePacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new BlockRegionUpdatePacket()); }
 
 private:
     friend class ClientPacketListener;

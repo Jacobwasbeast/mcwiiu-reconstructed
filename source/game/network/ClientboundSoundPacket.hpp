@@ -23,9 +23,11 @@ public:
     };
 
     ClientboundSoundPacket();
-    ClientboundSoundPacket(const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch);
+    ClientboundSoundPacket(const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z,
+                           float volume, float pitch);
     ClientboundSoundPacket(const SoundEvent* sound, float volume, float pitch);
-    ClientboundSoundPacket(ESoundInstances soundInstance, const SoundEvent* sound, float volume, float pitch, bool looping, int entityId);
+    ClientboundSoundPacket(ESoundInstances soundInstance, const SoundEvent* sound, float volume, float pitch,
+                           bool looping, int entityId);
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
@@ -42,10 +44,8 @@ public:
     int getEntityId();
     bool getLooping() const;
     int getSoundInstance();
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundSoundPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundSoundPacket()); }
+
 private:
     const SoundEvent* sound;
     SoundSource::ESoundSource source;

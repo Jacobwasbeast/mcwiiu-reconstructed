@@ -24,7 +24,8 @@ ServerboundInteractPacket::ServerboundInteractPacket(boost::shared_ptr<Entity> t
     location = NULL;
 }
 
-ServerboundInteractPacket::ServerboundInteractPacket(boost::shared_ptr<Entity> target, InteractionHand::EInteractionHand hand)
+ServerboundInteractPacket::ServerboundInteractPacket(boost::shared_ptr<Entity> target,
+                                                     InteractionHand::EInteractionHand hand)
 {
     entityId = target->getId();
     action = INTERACT;
@@ -32,7 +33,8 @@ ServerboundInteractPacket::ServerboundInteractPacket(boost::shared_ptr<Entity> t
     location = NULL;
 }
 
-ServerboundInteractPacket::ServerboundInteractPacket(boost::shared_ptr<Entity> target, InteractionHand::EInteractionHand hand, Vec3* location)
+ServerboundInteractPacket::ServerboundInteractPacket(boost::shared_ptr<Entity> target,
+                                                     InteractionHand::EInteractionHand hand, Vec3* location)
 {
     entityId = target->getId();
     action = INTERACT_AT;

@@ -14,8 +14,7 @@ class DataOutputStream;
 class Painting;
 class PacketListener;
 
-class ClientboundAddPaintingPacket : public Packet,
-                                     public boost::enable_shared_from_this<ClientboundAddPaintingPacket>
+class ClientboundAddPaintingPacket : public Packet, public boost::enable_shared_from_this<ClientboundAddPaintingPacket>
 {
 public:
     ClientboundAddPaintingPacket();
@@ -32,10 +31,7 @@ public:
     const Direction* getDirection();
     std::wstring getMotive();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundAddPaintingPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundAddPaintingPacket()); }
 
 private:
     int id;

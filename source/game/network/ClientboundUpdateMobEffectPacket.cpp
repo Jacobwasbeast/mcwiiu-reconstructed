@@ -70,7 +70,8 @@ bool ClientboundUpdateMobEffectPacket::canBeInvalidated()
 
 bool ClientboundUpdateMobEffectPacket::isInvalidatedBy(boost::shared_ptr<Packet> packet)
 {
-    boost::shared_ptr<ClientboundUpdateMobEffectPacket> other = boost::dynamic_pointer_cast<ClientboundUpdateMobEffectPacket>(packet);
+    boost::shared_ptr<ClientboundUpdateMobEffectPacket> other =
+        boost::dynamic_pointer_cast<ClientboundUpdateMobEffectPacket>(packet);
 
     return other->entityId == entityId && other->effectId == effectId;
 }

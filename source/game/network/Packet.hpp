@@ -28,12 +28,15 @@ public:
     virtual bool canBeInvalidated();
     virtual bool isInvalidatedBy(boost::shared_ptr<Packet> packet);
     virtual bool isAync();
-    virtual bool tryReplaceDuplicatePacket(std::deque<boost::shared_ptr<Packet>, std::allocator<boost::shared_ptr<Packet> > >* queuedPackets);
+    virtual bool tryReplaceDuplicatePacket(
+        std::deque<boost::shared_ptr<Packet>, std::allocator<boost::shared_ptr<Packet> > >* queuedPackets);
 
     static void staticCtor();
 
-    static boost::shared_ptr<Packet> readPacket(DataInputStream* input, bool isServer, unsigned int& packetsRead, bool& protocolError);
-    static void writePacket(boost::shared_ptr<Packet> packet, DataOutputStream* output, bool isServer, unsigned int& packetsWritten);
+    static boost::shared_ptr<Packet> readPacket(DataInputStream* input, bool isServer, unsigned int& packetsRead,
+                                                bool& protocolError);
+    static void writePacket(boost::shared_ptr<Packet> packet, DataOutputStream* output, bool isServer,
+                            unsigned int& packetsWritten);
     static bool canSendToAnyClient(boost::shared_ptr<Packet> packet);
 
     static void writeUtf(const std::wstring& text, DataOutputStream* output);
@@ -44,7 +47,8 @@ public:
     bool shouldDelay;
 
 private:
-    static void map(int packetId, bool clientbound, bool serverbound, bool sendToAnyClient, bool canBeDelayed, const std::type_info& type, boost::shared_ptr<Packet> (*create)(), std::wstring name);
+    static void map(int packetId, bool clientbound, bool serverbound, bool sendToAnyClient, bool canBeDelayed,
+                    const std::type_info& type, boost::shared_ptr<Packet> (*create)(), std::wstring name);
     static boost::shared_ptr<Packet> getPacket(int packetId);
 };
 

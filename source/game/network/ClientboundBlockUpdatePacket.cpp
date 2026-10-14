@@ -38,7 +38,8 @@ ClientboundBlockUpdatePacket::ClientboundBlockUpdatePacket(Level* level, const B
 void ClientboundBlockUpdatePacket::read(DataInputStream* input)
 {
     unsigned int packedPos = input->readInt();
-    pos = BlockPos(static_cast<int>(packedPos) >> 22, (packedPos >> 14) & 0xFF, static_cast<int>(packedPos << 18) >> 22);
+    pos = BlockPos(static_cast<int>(packedPos) >> 22, (packedPos >> 14) & 0xFF,
+                   static_cast<int>(packedPos << 18) >> 22);
     short blockId = input->readShort();
     IdMapper<const BlockState*>* registry = Block::blockStateRegistry;
     block = registry->byId(blockId);
@@ -48,10 +49,10 @@ void ClientboundBlockUpdatePacket::read(DataInputStream* input)
 
 void ClientboundBlockUpdatePacket::write(DataOutputStream* output)
 {
-    unsigned int packedPos = (levelIdx & 0xF)
+    unsigned int packedPos =
+        (levelIdx & 0xF)
         | (((static_cast<unsigned int>(pos.z) & 0x3FF) << 4)
-        | (((static_cast<unsigned int>(pos.y) & 0xFF) << 14)
-        | (static_cast<unsigned int>(pos.x) << 22)));
+           | (((static_cast<unsigned int>(pos.y) & 0xFF) << 14) | (static_cast<unsigned int>(pos.x) << 22)));
     output->writeInt(packedPos);
     IdMapper<const BlockState*>* registry = Block::blockStateRegistry;
     output->writeShort(static_cast<short>(registry->getId(block)));

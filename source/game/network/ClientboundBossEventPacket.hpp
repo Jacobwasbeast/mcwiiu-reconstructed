@@ -47,10 +47,7 @@ public:
     bool shouldPlayMusic();
     bool shouldCreateWorldFog();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundBossEventPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundBossEventPacket()); }
 
 private:
     void decodeProperties(int properties);

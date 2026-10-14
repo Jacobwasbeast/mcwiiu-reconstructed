@@ -51,7 +51,9 @@ static int sWriteSizes[PACKET_ID_COUNT];
 static char sConnectionName[256];
 
 Connection::Connection(Socket* socket, const std::wstring& name, PacketListener* listener)
-    : m_incoming(), m_outgoing(), m_outgoingSlow()
+    : m_incoming(),
+      m_outgoing(),
+      m_outgoingSlow()
 {
     _init();
     m_socket = socket;
@@ -151,8 +153,8 @@ bool Connection::readTick()
     if (m_input == NULL || m_readError)
         return false;
 
-    boost::shared_ptr<Packet> packet =
-        Packet::readPacket(m_input, m_listener->isServerPacketListener(), m_packetsRead, m_readError);
+    boost::shared_ptr<Packet> packet = Packet::readPacket(m_input, m_listener->isServerPacketListener(), m_packetsRead,
+                                                          m_readError);
     if (packet != NULL)
     {
         sReadSizes[packet->getPacketId()] += packet->getEstimatedSize() + 1;
@@ -181,8 +183,8 @@ int Connection::runRead(void* argument)
         ++sReadThreadCount;
         LeaveCriticalSection(threadCountLock);
         MemSect(19);
-        while (connection->m_running && !connection->m_quitting &&
-               ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionRead))
+        while (connection->m_running && !connection->m_quitting
+               && ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionRead))
         {
             while (connection->readTick())
             {
@@ -203,9 +205,8 @@ bool Connection::writeTick()
     if (m_bufferedOutput == NULL || m_byteArrayOutput == NULL)
         return didSomething;
 
-    if (!m_outgoing.empty() &&
-        (m_fakeLag == 0 ||
-         System::processTimeInMilliSecs() - m_outgoing.front()->creationTime >= m_fakeLag))
+    if (!m_outgoing.empty()
+        && (m_fakeLag == 0 || System::processTimeInMilliSecs() - m_outgoing.front()->creationTime >= m_fakeLag))
     {
         boost::shared_ptr<Packet> packet;
         EnterCriticalSection(&m_writeLock);
@@ -219,9 +220,8 @@ bool Connection::writeTick()
         didSomething = true;
     }
 
-    if (m_slowWriteDelay-- <= 0 && !m_outgoingSlow.empty() &&
-        (m_fakeLag == 0 ||
-         System::processTimeInMilliSecs() - m_outgoingSlow.front()->creationTime >= m_fakeLag))
+    if (m_slowWriteDelay-- <= 0 && !m_outgoingSlow.empty()
+        && (m_fakeLag == 0 || System::processTimeInMilliSecs() - m_outgoingSlow.front()->creationTime >= m_fakeLag))
     {
         boost::shared_ptr<Packet> packet;
         EnterCriticalSection(&m_writeLock);
@@ -263,8 +263,8 @@ int Connection::runWrite(void* argument)
         LeaveCriticalSection(threadCountLock);
 
         unsigned int waitResult = WAIT_TIMED_OUT;
-        while ((connection->m_running || waitResult == WAIT_SIGNALLED) &&
-               ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionWrite))
+        while ((connection->m_running || waitResult == WAIT_SIGNALLED)
+               && ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionWrite))
         {
             long long start = System::processTimeInMilliSecs();
             bool keepWriting;
@@ -308,8 +308,7 @@ void Connection::send(boost::shared_ptr<Packet> packet)
             packet->shouldDelay = false;
             m_outgoingSlow.push_back(packet);
         }
-        else if (packet->getPacketId() != MAP_ITEM_DATA_PACKET_ID ||
-                 !packet->tryReplaceDuplicatePacket(&m_outgoing))
+        else if (packet->getPacketId() != MAP_ITEM_DATA_PACKET_ID || !packet->tryReplaceDuplicatePacket(&m_outgoing))
         {
             m_outgoing.push_back(packet);
         }
@@ -405,8 +404,8 @@ void Connection::tick()
     int remaining = MAX_PACKETS_PER_TICK;
     EnterCriticalSection(&m_incomingLock);
     std::deque<boost::shared_ptr<Packet> > packets;
-    while (!CGameNetworkManager::sInstance.IsLeavingGame() && CGameNetworkManager::sInstance.IsInSession() &&
-           !m_incoming.empty() && remaining-- >= 0)
+    while (!CGameNetworkManager::sInstance.IsLeavingGame() && CGameNetworkManager::sInstance.IsInSession()
+           && !m_incoming.empty() && remaining-- >= 0)
     {
         boost::shared_ptr<Packet> packet = m_incoming.front();
         if (!m_disconnected)
@@ -415,8 +414,8 @@ void Connection::tick()
             {
                 ServerboundPlayerActionPacket::Action action =
                     boost::static_pointer_cast<ServerboundPlayerActionPacket>(packet)->getAction();
-                if (action == ServerboundPlayerActionPacket::DROP_ALL_ITEMS ||
-                    action == ServerboundPlayerActionPacket::DROP_ITEM)
+                if (action == ServerboundPlayerActionPacket::DROP_ALL_ITEMS
+                    || action == ServerboundPlayerActionPacket::DROP_ITEM)
                 {
                     packets.push_front(packet);
                     m_incoming.pop_front();

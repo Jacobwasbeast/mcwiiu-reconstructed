@@ -6,13 +6,11 @@
 
 const int XZPacket::STRONGHOLD = 0;
 
-XZPacket::XZPacket()
-    : mMode(0), mX(0), mZ(0)
+XZPacket::XZPacket() : mMode(0), mX(0), mZ(0)
 {
 }
 
-XZPacket::XZPacket(char mode, int x, int z)
-    : mMode(mode), mX(x), mZ(z)
+XZPacket::XZPacket(char mode, int x, int z) : mMode(mode), mX(x), mZ(z)
 {
 }
 

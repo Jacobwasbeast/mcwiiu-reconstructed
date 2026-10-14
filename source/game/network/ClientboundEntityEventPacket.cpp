@@ -13,7 +13,8 @@ ClientboundEntityEventPacket::ClientboundEntityEventPacket()
     data = 0;
 }
 
-ClientboundEntityEventPacket::ClientboundEntityEventPacket(boost::shared_ptr<Entity> entity, unsigned char eventId, int data)
+ClientboundEntityEventPacket::ClientboundEntityEventPacket(boost::shared_ptr<Entity> entity, unsigned char eventId,
+                                                           int data)
 {
     entityId = entity->getId();
     this->eventId = eventId;

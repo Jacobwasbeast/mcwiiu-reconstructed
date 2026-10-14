@@ -20,8 +20,7 @@
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 
-ServerLevelListener::ServerLevelListener(MinecraftServer* server, ServerLevel* level)
-    : mServer(server), mLevel(level)
+ServerLevelListener::ServerLevelListener(MinecraftServer* server, ServerLevel* level) : mServer(server), mLevel(level)
 {
 }
 
@@ -29,13 +28,13 @@ ServerLevelListener::~ServerLevelListener()
 {
 }
 
-void ServerLevelListener::addParticle(Level*, ePARTICLE_TYPE, bool, double, double, double,
-                                       double, double, double, arrayWithLength<int>)
+void ServerLevelListener::addParticle(Level*, ePARTICLE_TYPE, bool, double, double, double, double, double, double,
+                                      arrayWithLength<int>)
 {
 }
 
-void ServerLevelListener::addParticle(Level*, ePARTICLE_TYPE, bool, bool, double, double, double,
-                                       double, double, double, arrayWithLength<int>)
+void ServerLevelListener::addParticle(Level*, ePARTICLE_TYPE, bool, bool, double, double, double, double, double,
+                                      double, arrayWithLength<int>)
 {
 }
 
@@ -55,8 +54,8 @@ void ServerLevelListener::playStreamingMusic(const SoundEvent*, const BlockPos&,
 {
 }
 
-void ServerLevelListener::blockChanged(Level*, const BlockPos& pos, const BlockState*,
-                                       const BlockState*, int, bool immediate)
+void ServerLevelListener::blockChanged(Level*, const BlockPos& pos, const BlockState*, const BlockState*, int,
+                                       bool immediate)
 {
     if (immediate)
         mLevel->getChunkMap()->blockChanged(pos);
@@ -84,16 +83,15 @@ void ServerLevelListener::entityRemoved(boost::shared_ptr<Entity> entity)
 
 void ServerLevelListener::playerRemoved(boost::shared_ptr<Entity> player)
 {
-    boost::shared_ptr<ServerPlayer> serverPlayer =
-        boost::dynamic_pointer_cast<ServerPlayer>(player);
+    boost::shared_ptr<ServerPlayer> serverPlayer = boost::dynamic_pointer_cast<ServerPlayer>(player);
     serverPlayer->getLevel()->getTracker()->removePlayer(player);
 }
 
-void ServerLevelListener::playSoundToAllPlayers(const SoundEvent* sound,
-                                                 SoundSource::ESoundSource, double, double,
-                                                 double, float volume, float pitch, float)
+void ServerLevelListener::playSoundToAllPlayers(const SoundEvent* sound, SoundSource::ESoundSource, double, double,
+                                                double, float volume, float pitch, float)
 {
-    boost::shared_ptr<Packet> packet = boost::shared_ptr<ClientboundSoundPacket>(new ClientboundSoundPacket(sound, volume, pitch));
+    boost::shared_ptr<Packet> packet = boost::shared_ptr<ClientboundSoundPacket>(
+        new ClientboundSoundPacket(sound, volume, pitch));
 
     std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
     std::vector<boost::shared_ptr<ServerPlayer> > sentPlayers;
@@ -127,29 +125,31 @@ void ServerLevelListener::playSoundToAllPlayers(const SoundEvent* sound,
 }
 
 void ServerLevelListener::playSound(boost::shared_ptr<Player> player, const SoundEvent* sound,
-                                    SoundSource::ESoundSource source, double x, double y,
-                                    double z, float volume, float pitch, float)
+                                    SoundSource::ESoundSource source, double x, double y, double z, float volume,
+                                    float pitch, float)
 {
     if (volume <= 0.02f)
         return;
 
-    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcast(player, x, y, z, volume > 1.0f ? 16.0f * volume : 16.0,
-                                              mLevel->mDimension->getType()->getId(),
-                                              boost::shared_ptr<ClientboundSoundPacket>(new ClientboundSoundPacket(sound, source, x, y, z, volume, pitch)));
+    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)
+        ->broadcast(player, x, y, z, volume > 1.0f ? 16.0f * volume : 16.0, mLevel->mDimension->getType()->getId(),
+                    boost::shared_ptr<ClientboundSoundPacket>(
+                        new ClientboundSoundPacket(sound, source, x, y, z, volume, pitch)));
 }
 
-void ServerLevelListener::levelEvent(boost::shared_ptr<Player> player, int type,
-                                     const BlockPos& pos, int data)
+void ServerLevelListener::levelEvent(boost::shared_ptr<Player> player, int type, const BlockPos& pos, int data)
 {
-    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcast(player, pos.x, pos.y, pos.z, 64.0,
-                                              mLevel->mDimension->getType()->getId(),
-                                              boost::shared_ptr<ClientboundLevelEventPacket>(new ClientboundLevelEventPacket(type, pos, data, false)));
+    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)
+        ->broadcast(
+            player, pos.x, pos.y, pos.z, 64.0, mLevel->mDimension->getType()->getId(),
+            boost::shared_ptr<ClientboundLevelEventPacket>(new ClientboundLevelEventPacket(type, pos, data, false)));
 }
 
 void ServerLevelListener::globalLevelEvent(int type, const BlockPos& pos, int data)
 {
-    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcastAll(
-        boost::shared_ptr<ClientboundLevelEventPacket>(new ClientboundLevelEventPacket(type, pos, data, true)));
+    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)
+        ->broadcastAll(
+            boost::shared_ptr<ClientboundLevelEventPacket>(new ClientboundLevelEventPacket(type, pos, data, true)));
 }
 
 void ServerLevelListener::destroyBlockProgress(int breakerId, const BlockPos& pos, int progress)

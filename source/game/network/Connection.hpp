@@ -39,6 +39,7 @@ public:
     Socket* getSocket() { return m_socket; }
     static int runClose(void*);
     static int runSendAndQuit(void*);
+
 private:
     friend class ServerGamePacketListenerImpl;
     friend class ClientPacketListener;

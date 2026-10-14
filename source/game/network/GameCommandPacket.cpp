@@ -4,8 +4,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-GameCommandPacket::GameCommandPacket()
-    : dataLength(0), data()
+GameCommandPacket::GameCommandPacket() : dataLength(0), data()
 {
 }
 

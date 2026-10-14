@@ -13,7 +13,8 @@ class DataOutputStream;
 class Entity;
 class PacketListener;
 
-class TextureAndGeometryChangePacket : public Packet, public boost::enable_shared_from_this<TextureAndGeometryChangePacket>
+class TextureAndGeometryChangePacket : public Packet,
+                                       public boost::enable_shared_from_this<TextureAndGeometryChangePacket>
 {
 public:
     TextureAndGeometryChangePacket();

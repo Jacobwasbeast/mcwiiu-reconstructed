@@ -29,10 +29,7 @@ public:
     std::wstring* getLines();
     bool isCreatedByRestrictedPlayer();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundSignUpdatePacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundSignUpdatePacket()); }
 
 private:
     BlockPos pos;

@@ -6,7 +6,6 @@ class ClientboundGameProfilePacket
 public:
     ClientboundGameProfilePacket();
     ~ClientboundGameProfilePacket();
-
 };
 
 #endif

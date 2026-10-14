@@ -11,8 +11,7 @@ class DataOutputStream;
 class Entity;
 class PacketListener;
 
-class ClientboundMoveVehiclePacket : public Packet,
-    public boost::enable_shared_from_this<ClientboundMoveVehiclePacket>
+class ClientboundMoveVehiclePacket : public Packet, public boost::enable_shared_from_this<ClientboundMoveVehiclePacket>
 {
 public:
     ClientboundMoveVehiclePacket();
@@ -29,10 +28,7 @@ public:
     double getYRot();
     double getXRot();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundMoveVehiclePacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundMoveVehiclePacket()); }
 
 private:
     double x;

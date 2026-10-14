@@ -4,8 +4,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundSetCameraPacket::ClientboundSetCameraPacket()
-    : cameraId(0)
+ClientboundSetCameraPacket::ClientboundSetCameraPacket() : cameraId(0)
 {
 }
 

@@ -11,7 +11,8 @@ class DataOutputStream;
 class Entity;
 class PacketListener;
 
-class ClientboundSetEntityLinkPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetEntityLinkPacket>
+class ClientboundSetEntityLinkPacket : public Packet,
+                                       public boost::enable_shared_from_this<ClientboundSetEntityLinkPacket>
 {
 public:
     ClientboundSetEntityLinkPacket();

@@ -18,7 +18,8 @@ class ClientboundExplodePacket : public Packet, public boost::enable_shared_from
 {
 public:
     ClientboundExplodePacket();
-    ClientboundExplodePacket(double x, double y, double z, float power, Explosion::ToBlowSet* toBlow, Vec3* knockback, bool knockbackOnly);
+    ClientboundExplodePacket(double x, double y, double z, float power, Explosion::ToBlowSet* toBlow, Vec3* knockback,
+                             bool knockbackOnly);
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
@@ -35,10 +36,7 @@ public:
     double getKnockbackY();
     double getKnockbackZ();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundExplodePacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundExplodePacket()); }
 
 private:
     double x;
@@ -46,6 +44,7 @@ private:
     double z;
     float power;
     std::vector<BlockPos, std::allocator<BlockPos> > toBlow;
+
 public:
     bool knockbackOnly;
 

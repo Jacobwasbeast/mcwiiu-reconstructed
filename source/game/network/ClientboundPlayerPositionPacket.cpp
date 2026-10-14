@@ -26,24 +26,28 @@ bool ClientboundPlayerPositionPacket::RelativeArgument::isSet(int flags) const
     return (flags & getMask()) != 0;
 }
 
-boost::unordered_set<const ClientboundPlayerPositionPacket::RelativeArgument*> ClientboundPlayerPositionPacket::RelativeArgument::unpack(int flags)
+boost::unordered_set<const ClientboundPlayerPositionPacket::RelativeArgument*> ClientboundPlayerPositionPacket::
+    RelativeArgument::unpack(int flags)
 {
     boost::unordered_set<const RelativeArgument*> result;
-    const RelativeArgument* arguments[5] = { &X, &Y, &Z, &Y_ROT, &X_ROT };
+    const RelativeArgument* arguments[5] = {&X, &Y, &Z, &Y_ROT, &X_ROT};
     for (int i = 0; i < 5; ++i)
     {
-        if (arguments[i]->isSet(flags)) result.insert(arguments[i]);
+        if (arguments[i]->isSet(flags))
+            result.insert(arguments[i]);
     }
     return result;
 }
 
-int ClientboundPlayerPositionPacket::RelativeArgument::pack(const boost::unordered_set<const ClientboundPlayerPositionPacket::RelativeArgument*>& relativeArguments)
+int ClientboundPlayerPositionPacket::RelativeArgument::pack(
+    const boost::unordered_set<const ClientboundPlayerPositionPacket::RelativeArgument*>& relativeArguments)
 {
     int flags = 0;
     boost::unordered_set<const RelativeArgument*>::const_iterator it;
     for (it = relativeArguments.begin(); it != relativeArguments.end(); ++it)
     {
-        if (*it != NULL) flags |= (*it)->getMask();
+        if (*it != NULL)
+            flags |= (*it)->getMask();
     }
     return flags;
 }
@@ -59,7 +63,9 @@ ClientboundPlayerPositionPacket::ClientboundPlayerPositionPacket()
     id = 0;
 }
 
-ClientboundPlayerPositionPacket::ClientboundPlayerPositionPacket(double x, double y, double z, float yRot, float xRot, const boost::unordered_set<const RelativeArgument*>& relativeArguments, int id)
+ClientboundPlayerPositionPacket::ClientboundPlayerPositionPacket(
+    double x, double y, double z, float yRot, float xRot,
+    const boost::unordered_set<const RelativeArgument*>& relativeArguments, int id)
 {
     this->x = x;
     this->y = y;
@@ -71,7 +77,8 @@ ClientboundPlayerPositionPacket::ClientboundPlayerPositionPacket(double x, doubl
     this->id = id;
 }
 
-ClientboundPlayerPositionPacket::ClientboundPlayerPositionPacket(double x, double y, double z, const boost::unordered_set<const RelativeArgument*>& relativeArguments, int id)
+ClientboundPlayerPositionPacket::ClientboundPlayerPositionPacket(
+    double x, double y, double z, const boost::unordered_set<const RelativeArgument*>& relativeArguments, int id)
 {
     this->x = x;
     this->y = y;
@@ -162,7 +169,8 @@ bool ClientboundPlayerPositionPacket::hasRot()
     return hasRotation;
 }
 
-const boost::unordered_set<const ClientboundPlayerPositionPacket::RelativeArgument*>& ClientboundPlayerPositionPacket::getRelativeArguments()
+const boost::unordered_set<const ClientboundPlayerPositionPacket::RelativeArgument*>& ClientboundPlayerPositionPacket::
+    getRelativeArguments()
 {
     return relativeArguments;
 }

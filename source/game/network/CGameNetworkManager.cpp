@@ -99,11 +99,23 @@ CGameNetworkManager::CGameNetworkManager()
 {
     InitializeCriticalSection(&m_connectionsMutex);
 }
-CGameNetworkManager::~CGameNetworkManager() { DeleteCriticalSection(&m_connectionsMutex); }
+CGameNetworkManager::~CGameNetworkManager()
+{
+    DeleteCriticalSection(&m_connectionsMutex);
+}
 
-INetworkPlayer* CGameNetworkManager::GetLocalPlayerByUserIndex(int userIndex) { return g_pPlatformNetworkManager->GetLocalPlayerByUserIndex(userIndex); }
-void CGameNetworkManager::ServerStoppedCreate(bool create) { m_serverStoppedEvent = create ? new C4JEventImpl(C4JEvent::Mode0) : 0; }
-void CGameNetworkManager::ServerReadyCreate(bool create) { m_serverReadyEvent = create ? new C4JEventImpl(C4JEvent::Mode0) : 0; }
+INetworkPlayer* CGameNetworkManager::GetLocalPlayerByUserIndex(int userIndex)
+{
+    return g_pPlatformNetworkManager->GetLocalPlayerByUserIndex(userIndex);
+}
+void CGameNetworkManager::ServerStoppedCreate(bool create)
+{
+    m_serverStoppedEvent = create ? new C4JEventImpl(C4JEvent::Mode0) : 0;
+}
+void CGameNetworkManager::ServerReadyCreate(bool create)
+{
+    m_serverReadyEvent = create ? new C4JEventImpl(C4JEvent::Mode0) : 0;
+}
 void CGameNetworkManager::Initialise()
 {
     ServerStoppedCreate(false);
@@ -113,9 +125,19 @@ void CGameNetworkManager::Initialise()
     m_networkThreadRunning = false;
     m_initialised = true;
 }
-void CGameNetworkManager::Terminate() { if (m_initialised) g_pPlatformNetworkManager->Terminate(); }
-int CGameNetworkManager::GetLocalPlayerMask(int userIndex) { return g_pPlatformNetworkManager ? g_pPlatformNetworkManager->GetLocalPlayerMask(userIndex) : 0; }
-bool CGameNetworkManager::IsInSession() { return g_pPlatformNetworkManager->IsInSession(); }
+void CGameNetworkManager::Terminate()
+{
+    if (m_initialised)
+        g_pPlatformNetworkManager->Terminate();
+}
+int CGameNetworkManager::GetLocalPlayerMask(int userIndex)
+{
+    return g_pPlatformNetworkManager ? g_pPlatformNetworkManager->GetLocalPlayerMask(userIndex) : 0;
+}
+bool CGameNetworkManager::IsInSession()
+{
+    return g_pPlatformNetworkManager->IsInSession();
+}
 bool CGameNetworkManager::JoinGameFromInviteInfo(int userIndex, int mask, const nn::fp::FriendPresence* presence)
 {
     bool joining = g_pPlatformNetworkManager->JoinGameFromInviteInfo(userIndex, mask, presence);
@@ -126,7 +148,10 @@ bool CGameNetworkManager::JoinGameFromInviteInfo(int userIndex, int mask, const 
     }
     return joining;
 }
-bool CGameNetworkManager::SetLocalGame(bool localGame) { return g_pPlatformNetworkManager->SetLocalGame(localGame); }
+bool CGameNetworkManager::SetLocalGame(bool localGame)
+{
+    return g_pPlatformNetworkManager->SetLocalGame(localGame);
+}
 int CGameNetworkManager::JoinFromInvite_SignInReturned(void* data, bool result, int userIndex)
 {
     if (result && gProfile->IsSignedIn(userIndex) && gProfile->IsSignedInLive(userIndex))
@@ -135,29 +160,33 @@ int CGameNetworkManager::JoinFromInvite_SignInReturned(void* data, bool result, 
         bool notAllowed = false;
         if (gProfile->IsSignedIn(0))
         {
-            if (!gProfile->AllowedToPlayMultiplayer(0)) notAllowed = true;
+            if (!gProfile->AllowedToPlayMultiplayer(0))
+                notAllowed = true;
             mask = GetLocalPlayerMask(0);
         }
         if (gProfile->IsSignedIn(1))
         {
-            if (!gProfile->AllowedToPlayMultiplayer(1)) notAllowed = true;
+            if (!gProfile->AllowedToPlayMultiplayer(1))
+                notAllowed = true;
             mask |= GetLocalPlayerMask(1);
         }
         if (gProfile->IsSignedIn(2))
         {
-            if (!gProfile->AllowedToPlayMultiplayer(2)) notAllowed = true;
+            if (!gProfile->AllowedToPlayMultiplayer(2))
+                notAllowed = true;
             mask |= GetLocalPlayerMask(2);
         }
         if (gProfile->IsSignedIn(3))
         {
-            if (!gProfile->AllowedToPlayMultiplayer(3)) notAllowed = true;
+            if (!gProfile->AllowedToPlayMultiplayer(3))
+                notAllowed = true;
             mask |= GetLocalPlayerMask(3);
         }
         if (notAllowed)
         {
             int messageParams = IDS_CONFIRM_OK;
             gConsoleUIController.RequestErrorMessage(0x252ab13f, 0xcc5a590f, &messageParams, 1,
-                                                      gProfile->GetPrimaryPad(), 0, 0, 0, true);
+                                                     gProfile->GetPrimaryPad(), 0, 0, 0, true);
         }
         else
         {
@@ -166,7 +195,8 @@ int CGameNetworkManager::JoinFromInvite_SignInReturned(void* data, bool result, 
             sInstance.SetLocalGame(false);
             gProfile->QuerySigninStatus();
             Minecraft::GetInstance()->clearConnectionFailed();
-            Minecraft::GetInstance()->mUser->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
+            Minecraft::GetInstance()->mUser->name = convStringToWstring(
+                gProfile->GetGamertag(gProfile->GetPrimaryPad()));
             sInstance.JoinGameFromInviteInfo(userIndex, mask, static_cast<const nn::fp::FriendPresence*>(data));
         }
     }
@@ -188,7 +218,7 @@ void CGameNetworkManager::HandleInviteWhenInMenus(int userIndex, const nn::fp::F
         {
             int messageParams = IDS_CONFIRM_OK;
             gConsoleUIController.RequestErrorMessage(0x252ab13f, 0xcc5a590f, &messageParams, 1,
-                                                      gProfile->GetPrimaryPad(), 0, 0, 0, true);
+                                                     gProfile->GetPrimaryPad(), 0, 0, 0, true);
         }
         else
         {
@@ -198,7 +228,8 @@ void CGameNetworkManager::HandleInviteWhenInMenus(int userIndex, const nn::fp::F
             gProfile->QuerySigninStatus();
             Minecraft::GetInstance()->clearConnectionFailed();
             sInstance.SetLocalGame(false);
-            Minecraft::GetInstance()->mUser->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
+            Minecraft::GetInstance()->mUser->name = convStringToWstring(
+                gProfile->GetGamertag(gProfile->GetPrimaryPad()));
             sInstance.JoinGameFromInviteInfo(userIndex, mask, presence);
         }
     }
@@ -238,22 +269,26 @@ void CGameNetworkManager::GameInviteReceived(int userIndex, nn::fp::FriendPresen
     bool notAllowed = false;
     if (gProfile->IsSignedIn(0) && (userIndex == 0 || minecraft->mLocalPlayers[0] != NULL))
     {
-        if (!gProfile->AllowedToPlayMultiplayer(0)) notAllowed = true;
+        if (!gProfile->AllowedToPlayMultiplayer(0))
+            notAllowed = true;
         mask = GetLocalPlayerMask(0);
     }
     if (gProfile->IsSignedIn(1) && (userIndex == 1 || minecraft->mLocalPlayers[1] != NULL))
     {
-        if (!gProfile->AllowedToPlayMultiplayer(1)) notAllowed = true;
+        if (!gProfile->AllowedToPlayMultiplayer(1))
+            notAllowed = true;
         mask |= GetLocalPlayerMask(1);
     }
     if (gProfile->IsSignedIn(2) && (userIndex == 2 || minecraft->mLocalPlayers[2] != NULL))
     {
-        if (!gProfile->AllowedToPlayMultiplayer(2)) notAllowed = true;
+        if (!gProfile->AllowedToPlayMultiplayer(2))
+            notAllowed = true;
         mask |= GetLocalPlayerMask(2);
     }
     if (gProfile->IsSignedIn(3) && (userIndex == 3 || minecraft->mLocalPlayers[3] != NULL))
     {
-        if (!gProfile->AllowedToPlayMultiplayer(3)) notAllowed = true;
+        if (!gProfile->AllowedToPlayMultiplayer(3))
+            notAllowed = true;
         mask |= GetLocalPlayerMask(3);
     }
     if (notAllowed)
@@ -276,12 +311,21 @@ void CGameNetworkManager::TickInvitePending()
 {
     if (m_deferredInviteUserIndex >= 0 && !gConsoleUIController.IsShowingErrorMessage(m_deferredInviteUserIndex))
     {
-        GameInviteReceived(m_deferredInviteUserIndex, reinterpret_cast<nn::fp::FriendPresence*>(m_deferredInvitePresence));
+        GameInviteReceived(m_deferredInviteUserIndex,
+                           reinterpret_cast<nn::fp::FriendPresence*>(m_deferredInvitePresence));
         m_deferredInviteUserIndex = -1;
     }
 }
-void CGameNetworkManager::DoWork() { if (g_pPlatformNetworkManager) g_pPlatformNetworkManager->DoWork(); TickInvitePending(); }
-bool CGameNetworkManager::IsHost() { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->IsHost(); }
+void CGameNetworkManager::DoWork()
+{
+    if (g_pPlatformNetworkManager)
+        g_pPlatformNetworkManager->DoWork();
+    TickInvitePending();
+}
+bool CGameNetworkManager::IsHost()
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->IsHost();
+}
 int CGameNetworkManager::ServerThreadProc(void* data)
 {
     _NetworkGameInitData* initData = static_cast<_NetworkGameInitData*>(data);
@@ -292,11 +336,11 @@ int CGameNetworkManager::ServerThreadProc(void* data)
         gApp.SetGameHostOption(eGameHostOption_All, initData->m_hostOptions);
         const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         miniGame->SetHostOption(eCustomGameModeHostOption_All, initData->m_miniGameHostOptions);
-        if (initData->m_levelGenerationOptions != 0 &&
-            initData->m_levelGenerationOptions->getParentPackId() != initData->m_texturePackId)
+        if (initData->m_levelGenerationOptions != 0
+            && initData->m_levelGenerationOptions->getParentPackId() != initData->m_texturePackId)
         {
-            while (Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate() ||
-                   gConsoleUIController.IsReloadingSkin())
+            while (Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate()
+                   || gConsoleUIController.IsReloadingSkin())
                 C4JThread::Sleep(1);
             initData->m_levelGenerationOptions->loadBaseSaveData();
         }
@@ -328,14 +372,40 @@ int CGameNetworkManager::ServerThreadProc(void* data)
         free(data);
     return 0;
 }
-void CGameNetworkManager::ServerReadyWait() { if (m_serverReadyEvent) m_serverReadyEvent->WaitForSignal(-1); }
-void CGameNetworkManager::ServerReadyDestroy() { delete m_serverReadyEvent; m_serverReadyEvent = 0; }
-bool CGameNetworkManager::IsReadyToPlayOrIdle() { return g_pPlatformNetworkManager->IsReadyToPlayOrIdle(); }
-int CGameNetworkManager::CorrectErrorIDS(int ids) { return g_pPlatformNetworkManager->CorrectErrorIDS(ids); }
-int CGameNetworkManager::GetJoiningReadyPercentage() { return g_pPlatformNetworkManager->GetJoiningReadyPercentage(); }
-bool CGameNetworkManager::IsLeavingGame() { return g_pPlatformNetworkManager->IsLeavingGame(); }
-int CGameNetworkManager::GetPlayerCount() { return g_pPlatformNetworkManager->GetPlayerCount(); }
-bool CGameNetworkManager::IsLocalGame() { return g_pPlatformNetworkManager->IsLocalGame(); }
+void CGameNetworkManager::ServerReadyWait()
+{
+    if (m_serverReadyEvent)
+        m_serverReadyEvent->WaitForSignal(-1);
+}
+void CGameNetworkManager::ServerReadyDestroy()
+{
+    delete m_serverReadyEvent;
+    m_serverReadyEvent = 0;
+}
+bool CGameNetworkManager::IsReadyToPlayOrIdle()
+{
+    return g_pPlatformNetworkManager->IsReadyToPlayOrIdle();
+}
+int CGameNetworkManager::CorrectErrorIDS(int ids)
+{
+    return g_pPlatformNetworkManager->CorrectErrorIDS(ids);
+}
+int CGameNetworkManager::GetJoiningReadyPercentage()
+{
+    return g_pPlatformNetworkManager->GetJoiningReadyPercentage();
+}
+bool CGameNetworkManager::IsLeavingGame()
+{
+    return g_pPlatformNetworkManager->IsLeavingGame();
+}
+int CGameNetworkManager::GetPlayerCount()
+{
+    return g_pPlatformNetworkManager->GetPlayerCount();
+}
+bool CGameNetworkManager::IsLocalGame()
+{
+    return g_pPlatformNetworkManager->IsLocalGame();
+}
 bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
 {
     _NetworkGameInitData* initData = static_cast<_NetworkGameInitData*>(data);
@@ -374,8 +444,8 @@ bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
             if (initData->m_levelGenerationOptions->isLocal())
             {
                 bool hasBaseSave = false;
-                if (initData->m_levelGenerationOptions->requiresBaseSave() &&
-                    !initData->m_levelGenerationOptions->getBaseSavePath().empty())
+                if (initData->m_levelGenerationOptions->requiresBaseSave()
+                    && !initData->m_levelGenerationOptions->getBaseSavePath().empty())
                 {
                     hasBaseSave = true;
                 }
@@ -422,8 +492,7 @@ bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
     {
         ServerStoppedCreate(true);
         ServerReadyCreate(true);
-        C4JThreadImpl* serverThread =
-            new C4JThreadImpl(ServerThreadProc, initData, "Server", 0x100000);
+        C4JThreadImpl* serverThread = new C4JThreadImpl(ServerThreadProc, initData, "Server", 0x100000);
         serverThread->SetProcessor(0);
         serverThread->Run();
         serverThread->SetDeleteOnExit(true);
@@ -517,16 +586,16 @@ bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
         SparseLightStorage::tick();
         SparseDataStorage::tick();
         Sleep(50);
-        if (IsInSession() && !primaryListener->isStarted() && !primaryListener->isClosed() &&
-            !sInstance.IsLeavingGame())
+        if (IsInSession() && !primaryListener->isStarted() && !primaryListener->isClosed()
+            && !sInstance.IsLeavingGame())
         {
             continue;
         }
         if (selectedTexturePack->isLoadingData())
             continue;
 
-        if (!Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate() &&
-            !gConsoleUIController.IsReloadingSkin())
+        if (!Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate()
+            && !gConsoleUIController.IsReloadingSkin())
         {
             break;
         }
@@ -624,8 +693,8 @@ bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
             {
                 EnterCriticalSection(&m_connectionsMutex);
                 listener->close();
-                std::vector<ClientPacketListener*>::iterator it =
-                    std::find(m_connections.begin(), m_connections.end(), listener);
+                std::vector<ClientPacketListener*>::iterator it = std::find(m_connections.begin(), m_connections.end(),
+                                                                            listener);
                 if (it != m_connections.end())
                 {
                     delete *it;
@@ -691,14 +760,38 @@ bool CGameNetworkManager::_RunNetworkGame(void* data)
     }
     return result;
 }
-int CGameNetworkManager::GetOnlinePlayerCount() { return g_pPlatformNetworkManager->GetOnlinePlayerCount(); }
-bool CGameNetworkManager::AddLocalPlayerByUserIndex(int index) { return g_pPlatformNetworkManager->AddLocalPlayerByUserIndex(index); }
-bool CGameNetworkManager::RemoveLocalPlayerByUserIndex(int index) { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->RemoveLocalPlayerByUserIndex(index); }
-INetworkPlayer* CGameNetworkManager::GetPlayerByIndex(int index) { return g_pPlatformNetworkManager->GetPlayerByIndex(index); }
-INetworkPlayer* CGameNetworkManager::GetPlayerByXuid(PlayerUID uid) { return g_pPlatformNetworkManager ? g_pPlatformNetworkManager->GetPlayerByXuid(uid) : 0; }
-INetworkPlayer* CGameNetworkManager::GetPlayerBySmallId(unsigned char id) { return g_pPlatformNetworkManager->GetPlayerBySmallId(id); }
-std::wstring CGameNetworkManager::GetDisplayNameByGamertag(std::wstring name) { return g_pPlatformNetworkManager ? g_pPlatformNetworkManager->GetDisplayNameByGamertag(name) : name; }
-INetworkPlayer* CGameNetworkManager::GetHostPlayer() { return g_pPlatformNetworkManager->GetHostPlayer(); }
+int CGameNetworkManager::GetOnlinePlayerCount()
+{
+    return g_pPlatformNetworkManager->GetOnlinePlayerCount();
+}
+bool CGameNetworkManager::AddLocalPlayerByUserIndex(int index)
+{
+    return g_pPlatformNetworkManager->AddLocalPlayerByUserIndex(index);
+}
+bool CGameNetworkManager::RemoveLocalPlayerByUserIndex(int index)
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->RemoveLocalPlayerByUserIndex(index);
+}
+INetworkPlayer* CGameNetworkManager::GetPlayerByIndex(int index)
+{
+    return g_pPlatformNetworkManager->GetPlayerByIndex(index);
+}
+INetworkPlayer* CGameNetworkManager::GetPlayerByXuid(PlayerUID uid)
+{
+    return g_pPlatformNetworkManager ? g_pPlatformNetworkManager->GetPlayerByXuid(uid) : 0;
+}
+INetworkPlayer* CGameNetworkManager::GetPlayerBySmallId(unsigned char id)
+{
+    return g_pPlatformNetworkManager->GetPlayerBySmallId(id);
+}
+std::wstring CGameNetworkManager::GetDisplayNameByGamertag(std::wstring name)
+{
+    return g_pPlatformNetworkManager ? g_pPlatformNetworkManager->GetDisplayNameByGamertag(name) : name;
+}
+INetworkPlayer* CGameNetworkManager::GetHostPlayer()
+{
+    return g_pPlatformNetworkManager->GetHostPlayer();
+}
 void CGameNetworkManager::RegisterPlayerChangedCallback(int i, void (*cb)(void*, INetworkPlayer*, bool), void* d)
 {
     if (g_pPlatformNetworkManager)
@@ -713,40 +806,93 @@ void CGameNetworkManager::UnRegisterPlayerChangedCallback(int i, void (*cb)(void
         g_pPlatformNetworkManager->UnRegisterPlayerChangedCallback(i, cb, d);
     }
 }
-void CGameNetworkManager::HandleSignInChange() { g_pPlatformNetworkManager->HandleSignInChange(); }
-bool CGameNetworkManager::ShouldMessageForFullSession() { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->ShouldMessageForFullSession(); }
-bool CGameNetworkManager::IsInGameplay() { return g_pPlatformNetworkManager->IsInGameplay(); }
-void CGameNetworkManager::SetPrivateGame(bool value) { g_pPlatformNetworkManager->SetPrivateGame(value); }
-bool CGameNetworkManager::IsPrivateGame() { return g_pPlatformNetworkManager->IsPrivateGame(); }
-void CGameNetworkManager::HostGame(int a, bool b, bool c, unsigned char d, EMiniGameId e, unsigned int f, unsigned int* g)
+void CGameNetworkManager::HandleSignInChange()
+{
+    g_pPlatformNetworkManager->HandleSignInChange();
+}
+bool CGameNetworkManager::ShouldMessageForFullSession()
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->ShouldMessageForFullSession();
+}
+bool CGameNetworkManager::IsInGameplay()
+{
+    return g_pPlatformNetworkManager->IsInGameplay();
+}
+void CGameNetworkManager::SetPrivateGame(bool value)
+{
+    g_pPlatformNetworkManager->SetPrivateGame(value);
+}
+bool CGameNetworkManager::IsPrivateGame()
+{
+    return g_pPlatformNetworkManager->IsPrivateGame();
+}
+void CGameNetworkManager::HostGame(int a, bool b, bool c, unsigned char d, EMiniGameId e, unsigned int f,
+                                   unsigned int* g)
 {
     Minecraft::GetInstance()->clearConnectionFailed();
     if (g_pPlatformNetworkManager)
         g_pPlatformNetworkManager->HostGame(a, b, c, d, e, f, g);
 }
-bool CGameNetworkManager::IsInStatsEnabledSession() { return g_pPlatformNetworkManager->IsInStatsEnabledSession(); }
-bool CGameNetworkManager::IsMatchmakingEnabled() { return g_pPlatformNetworkManager->IsMatchmakingEnabled(); }
-bool CGameNetworkManager::IsInPublicJoinableGame() { return (m_publicJoinable || g_pPlatformNetworkManager->IsMatchmakingEnabled()) && !IsLocalGame(); }
-void CGameNetworkManager::SetIsInPublicJoinableGame(bool value) { m_publicJoinable = value; }
+bool CGameNetworkManager::IsInStatsEnabledSession()
+{
+    return g_pPlatformNetworkManager->IsInStatsEnabledSession();
+}
+bool CGameNetworkManager::IsMatchmakingEnabled()
+{
+    return g_pPlatformNetworkManager->IsMatchmakingEnabled();
+}
+bool CGameNetworkManager::IsInPublicJoinableGame()
+{
+    return (m_publicJoinable || g_pPlatformNetworkManager->IsMatchmakingEnabled()) && !IsLocalGame();
+}
+void CGameNetworkManager::SetIsInPublicJoinableGame(bool value)
+{
+    m_publicJoinable = value;
+}
 bool CGameNetworkManager::IsInActiveCoopOrCompetitive(int)
 {
     ClientMasterGameMode* mode = Minecraft::GetInstance()->GetClientMasterGameMode();
-    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) &&
-        (!mode->IsInActiveRoundState() || mode->IsRoundEnding() ||
-         mode->IsRoundStarting() || mode->IsRoundRestarting()))
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame)
+        && (!mode->IsInActiveRoundState() || mode->IsRoundEnding() || mode->IsRoundStarting()
+            || mode->IsRoundRestarting()))
     {
         return false;
     }
     return true;
 }
-bool CGameNetworkManager::SessionHasSpace(unsigned int n) { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->SessionHasSpace(n); }
-bool CGameNetworkManager::SessionHasMii(int n) { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->SessionHasMii(n); }
-std::vector<FriendSessionInfo*>* CGameNetworkManager::GetSessionList(int a, int b, bool c) { return g_pPlatformNetworkManager->GetSessionList(a,b,c); }
-bool CGameNetworkManager::GetGameSessionInfo(int a, unsigned int b, FriendSessionInfo* c) { return g_pPlatformNetworkManager->GetGameSessionInfo(a,b,c); }
-void CGameNetworkManager::SetSessionsUpdatedCallback(void (*cb)(void*), void* d) { if (g_pPlatformNetworkManager) g_pPlatformNetworkManager->SetSessionsUpdatedCallback(cb,d); }
-void CGameNetworkManager::GetFullFriendSessionInfo(FriendSessionInfo* a, void (*cb)(bool,void*), void* d) { g_pPlatformNetworkManager->GetFullFriendSessionInfo(a,cb,d); }
-void CGameNetworkManager::ForceFriendsSessionRefresh() { g_pPlatformNetworkManager->ForceFriendsSessionRefresh(); }
-void CGameNetworkManager::ClearFriendsSessions() { g_pPlatformNetworkManager->ClearFriendsSessions(); }
+bool CGameNetworkManager::SessionHasSpace(unsigned int n)
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->SessionHasSpace(n);
+}
+bool CGameNetworkManager::SessionHasMii(int n)
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->SessionHasMii(n);
+}
+std::vector<FriendSessionInfo*>* CGameNetworkManager::GetSessionList(int a, int b, bool c)
+{
+    return g_pPlatformNetworkManager->GetSessionList(a, b, c);
+}
+bool CGameNetworkManager::GetGameSessionInfo(int a, unsigned int b, FriendSessionInfo* c)
+{
+    return g_pPlatformNetworkManager->GetGameSessionInfo(a, b, c);
+}
+void CGameNetworkManager::SetSessionsUpdatedCallback(void (*cb)(void*), void* d)
+{
+    if (g_pPlatformNetworkManager)
+        g_pPlatformNetworkManager->SetSessionsUpdatedCallback(cb, d);
+}
+void CGameNetworkManager::GetFullFriendSessionInfo(FriendSessionInfo* a, void (*cb)(bool, void*), void* d)
+{
+    g_pPlatformNetworkManager->GetFullFriendSessionInfo(a, cb, d);
+}
+void CGameNetworkManager::ForceFriendsSessionRefresh()
+{
+    g_pPlatformNetworkManager->ForceFriendsSessionRefresh();
+}
+void CGameNetworkManager::ClearFriendsSessions()
+{
+    g_pPlatformNetworkManager->ClearFriendsSessions();
+}
 int CGameNetworkManager::JoinGame(FriendSessionInfo* info, int userIndex, bool matchmaking)
 {
     gApp.SetTutorialMode(false, boost::shared_ptr<Player>());
@@ -761,7 +907,8 @@ int CGameNetworkManager::JoinGame(FriendSessionInfo* info, int userIndex, bool m
     g_pPlatformNetworkManager->JoinGame(info, userIndex | localMask, lockedProfile, matchmaking);
     return 0;
 }
-int CGameNetworkManager::FindAndJoinGame(int userIndexMask, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributeValues, unsigned int* attributeIds)
+int CGameNetworkManager::FindAndJoinGame(int userIndexMask, EMiniGameId miniGameId, unsigned int attributeCount,
+                                         unsigned int* attributeValues, unsigned int* attributeIds)
 {
     if (!gProfile->IsSignedInLive(gProfile->GetPrimaryPad()))
     {
@@ -779,7 +926,11 @@ void CGameNetworkManager::CancelJoinGame(void*)
 {
     return;
 }
-bool CGameNetworkManager::LeaveGame(bool e) { Minecraft::GetInstance()->mGui->clearMessages(-1); return g_pPlatformNetworkManager->LeaveGame(e); }
+bool CGameNetworkManager::LeaveGame(bool e)
+{
+    Minecraft::GetInstance()->mGui->clearMessages(-1);
+    return g_pPlatformNetworkManager->LeaveGame(e);
+}
 void CGameNetworkManager::UpdateAndSetGameSessionData(INetworkPlayer* player)
 {
     TexturePack* texturePack = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
@@ -787,10 +938,23 @@ void CGameNetworkManager::UpdateAndSetGameSessionData(INetworkPlayer* player)
     g_pPlatformNetworkManager->SetSessionSubTexturePackId(texturePack->getDLCSubPackId());
     g_pPlatformNetworkManager->UpdateAndSetGameSessionData(player);
 }
-void CGameNetworkManager::SendInviteGUI(int i) { if (g_pPlatformNetworkManager) g_pPlatformNetworkManager->SendInviteGUI(i); }
-void CGameNetworkManager::ResetLeavingGame() { g_pPlatformNetworkManager->ResetLeavingGame(); }
-bool CGameNetworkManager::AlreadyInSession(const nn::fp::FriendPresence* p) { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->AlreadyInSession(p); }
-bool CGameNetworkManager::IsNetworkThreadRunning() { return m_networkThreadRunning; }
+void CGameNetworkManager::SendInviteGUI(int i)
+{
+    if (g_pPlatformNetworkManager)
+        g_pPlatformNetworkManager->SendInviteGUI(i);
+}
+void CGameNetworkManager::ResetLeavingGame()
+{
+    g_pPlatformNetworkManager->ResetLeavingGame();
+}
+bool CGameNetworkManager::AlreadyInSession(const nn::fp::FriendPresence* p)
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->AlreadyInSession(p);
+}
+bool CGameNetworkManager::IsNetworkThreadRunning()
+{
+    return m_networkThreadRunning;
+}
 int CGameNetworkManager::RunNetworkGameThreadProc(void* data)
 {
     AABB::UseDefaultThreadStorage();
@@ -814,14 +978,12 @@ int CGameNetworkManager::RunNetworkGameThreadProc(void* data)
         {
             if (!selected->isLoadingData())
             {
-                if (!minecraft->mTexturePackRepository->needsUIUpdate() &&
-                    !gConsoleUIController.IsReloadingSkin())
+                if (!minecraft->mTexturePackRepository->needsUIUpdate() && !gConsoleUIController.IsReloadingSkin())
                 {
                     gConsoleUIController.CleanUpSkinReload();
                     if (gApp.GetDisconnectReason() == 0)
                     {
-                        gApp.SetDisconnectReason(
-                            DisconnectPacket::eDisconnectReason_Banned);
+                        gApp.SetDisconnectReason(DisconnectPacket::eDisconnectReason_Banned);
                     }
                     if (gMinecraftServer == 0)
                     {
@@ -868,17 +1030,15 @@ int CGameNetworkManager::ExitAndJoinFromInviteThreadProc(void* data)
     if (!hasAudio)
     {
         gStorage->UnmountInstalledDLC("TPACK");
-        minecraft->mSoundEngine->SetStreamingSounds(
-            0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x1c, 0x1f, 0x20, 0x29, 0x2a,
-            0x2a, 0x3e, 0x44, 0x57);
+        minecraft->mSoundEngine->SetStreamingSounds(0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x1c, 0x1f,
+                                                    0x20, 0x29, 0x2a, 0x2a, 0x3e, 0x44, 0x57);
         minecraft->mSoundEngine->playStreaming(NULL, 0.f, 0.f, 0.f, 1.f, 1.f, false, false,
                                                ConsoleSoundEngine::eAudioDelayType_Random);
     }
     else
     {
-        minecraft->mSoundEngine->SetStreamingSounds(
-            0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x1c, 0x1f, 0x20, 0x29, 0x2a,
-            0x2a, 0x3e, 0x44, 0x57);
+        minecraft->mSoundEngine->SetStreamingSounds(0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x1c, 0x1f,
+                                                    0x20, 0x29, 0x2a, 0x2a, 0x3e, 0x44, 0x57);
         minecraft->mSoundEngine->playStreaming(NULL, 0.f, 0.f, 0.f, 1.f, 1.f, false, false,
                                                ConsoleSoundEngine::eAudioDelayType_Random);
         gStorage->UnmountInstalledDLC("TPACK");
@@ -891,8 +1051,16 @@ int CGameNetworkManager::ExitAndJoinFromInviteThreadProc(void* data)
     gApp.SetAction(player, eXuiAction_JoinInvitedGame, data);
     return 0;
 }
-int CGameNetworkManager::TryToConnectOnline(int (*cb)(void*,bool,int), void* d, bool p) { if (g_pPlatformNetworkManager) g_pPlatformNetworkManager->TryToConnectOnline(cb,d,p); return 0; }
-bool CGameNetworkManager::_LeaveGame() { return g_pPlatformNetworkManager->_LeaveGame(false, true); }
+int CGameNetworkManager::TryToConnectOnline(int (*cb)(void*, bool, int), void* d, bool p)
+{
+    if (g_pPlatformNetworkManager)
+        g_pPlatformNetworkManager->TryToConnectOnline(cb, d, p);
+    return 0;
+}
+bool CGameNetworkManager::_LeaveGame()
+{
+    return g_pPlatformNetworkManager->_LeaveGame(false, true);
+}
 int CGameNetworkManager::ChangeSessionTypeThreadProc(void*)
 {
     AABB::UseDefaultThreadStorage();
@@ -907,8 +1075,7 @@ int CGameNetworkManager::ChangeSessionTypeThreadProc(void*)
     while (gApp.GetXuiServerAction(gProfile->GetPrimaryPad()) != 0 && !MinecraftServer::s_haltRequested)
         Sleep(10);
 
-    gApp.SetXuiServerAction(gProfile->GetPrimaryPad(), eXuiServerAction_PauseServer,
-                             reinterpret_cast<void*>(1));
+    gApp.SetXuiServerAction(gProfile->GetPrimaryPad(), eXuiServerAction_PauseServer, reinterpret_cast<void*>(1));
 
     server->serverPausedEvent->WaitForSignal(-1);
 
@@ -979,8 +1146,8 @@ int CGameNetworkManager::ChangeSessionTypeThreadProc(void*)
                     continue;
                 }
 
-                if (minecraft->mConnectionFailed[userIndex] &&
-                    minecraft->mDisconnectReasons[userIndex] == DisconnectPacket::eDisconnectReason_Banned)
+                if (minecraft->mConnectionFailed[userIndex]
+                    && minecraft->mDisconnectReasons[userIndex] == DisconnectPacket::eDisconnectReason_Banned)
                 {
                     minecraft->removeLocalPlayerIdx(userIndex);
                     gProfile->SignOutUser(userIndex);
@@ -1000,8 +1167,7 @@ int CGameNetworkManager::ChangeSessionTypeThreadProc(void*)
         for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
         {
             boost::shared_ptr<ServerPlayer> serverPlayer = *it;
-            serverPlayer->mLoadedChunks.insert(serverPlayer->mLoadedChunks.end(),
-                                               serverPlayer->mTrackedChunks.begin(),
+            serverPlayer->mLoadedChunks.insert(serverPlayer->mLoadedChunks.end(), serverPlayer->mTrackedChunks.begin(),
                                                serverPlayer->mTrackedChunks.end());
         }
     }
@@ -1017,11 +1183,28 @@ int CGameNetworkManager::ChangeSessionTypeThreadProc(void*)
     gApp.SetReallyChangingSessionType(false);
     return 0;
 }
-void CGameNetworkManager::SystemFlagSet(INetworkPlayer* p, int f) { if (g_pPlatformNetworkManager) g_pPlatformNetworkManager->SystemFlagSet(p,f); }
-bool CGameNetworkManager::SystemFlagGet(INetworkPlayer* p, int f) { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->SystemFlagGet(p,f); }
-void CGameNetworkManager::SystemFlagClearAll(INetworkPlayer* p) { if (g_pPlatformNetworkManager) g_pPlatformNetworkManager->SystemFlagClearAll(p); }
-void CGameNetworkManager::ServerReady() { m_serverReadyEvent->Set(); }
-void CGameNetworkManager::ServerStopped() { m_serverStoppedEvent->Set(); }
+void CGameNetworkManager::SystemFlagSet(INetworkPlayer* p, int f)
+{
+    if (g_pPlatformNetworkManager)
+        g_pPlatformNetworkManager->SystemFlagSet(p, f);
+}
+bool CGameNetworkManager::SystemFlagGet(INetworkPlayer* p, int f)
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->SystemFlagGet(p, f);
+}
+void CGameNetworkManager::SystemFlagClearAll(INetworkPlayer* p)
+{
+    if (g_pPlatformNetworkManager)
+        g_pPlatformNetworkManager->SystemFlagClearAll(p);
+}
+void CGameNetworkManager::ServerReady()
+{
+    m_serverReadyEvent->Set();
+}
+void CGameNetworkManager::ServerStopped()
+{
+    m_serverStoppedEvent->Set();
+}
 void CGameNetworkManager::ServerStoppedWait()
 {
     if (!C4JThread::isMainThread())
@@ -1043,8 +1226,15 @@ void CGameNetworkManager::ServerStoppedWait()
         gRenderer->Present();
     } while (result == C4JEvent::WaitTimeout);
 }
-void CGameNetworkManager::ServerStoppedDestroy() { delete m_serverStoppedEvent; m_serverStoppedEvent = 0; }
-bool CGameNetworkManager::ServerStoppedValid() { return m_serverStoppedEvent != 0; }
+void CGameNetworkManager::ServerStoppedDestroy()
+{
+    delete m_serverStoppedEvent;
+    m_serverStoppedEvent = 0;
+}
+bool CGameNetworkManager::ServerStoppedValid()
+{
+    return m_serverStoppedEvent != 0;
+}
 void CGameNetworkManager::RemoveCreatedConnection(ClientPacketListener* p)
 {
     EnterCriticalSection(&m_connectionsMutex);
@@ -1059,17 +1249,38 @@ void CGameNetworkManager::RemoveCreatedConnection(ClientPacketListener* p)
     }
     LeaveCriticalSection(&m_connectionsMutex);
 }
-bool CGameNetworkManager::usingLanMode() { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->usingLanMode(); }
-bool CGameNetworkManager::setLanMode(bool v) { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->setLanMode(v); }
-bool CGameNetworkManager::isLanConnected() { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->isLanConnected(); }
-bool CGameNetworkManager::isLanModeChangeInProgress() { return g_pPlatformNetworkManager && g_pPlatformNetworkManager->isLanModeChangeInProgress(); }
-std::wstring CGameNetworkManager::GatherStats() { return g_pPlatformNetworkManager->GatherStats(); }
+bool CGameNetworkManager::usingLanMode()
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->usingLanMode();
+}
+bool CGameNetworkManager::setLanMode(bool v)
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->setLanMode(v);
+}
+bool CGameNetworkManager::isLanConnected()
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->isLanConnected();
+}
+bool CGameNetworkManager::isLanModeChangeInProgress()
+{
+    return g_pPlatformNetworkManager && g_pPlatformNetworkManager->isLanModeChangeInProgress();
+}
+std::wstring CGameNetworkManager::GatherStats()
+{
+    return g_pPlatformNetworkManager->GatherStats();
+}
 void CGameNetworkManager::renderQueueMeter()
 {
     return;
 }
-std::wstring CGameNetworkManager::GatherRTTStats() { return g_pPlatformNetworkManager->GatherRTTStats(); }
-void CGameNetworkManager::SetSessionGameModeId(int id) { g_pPlatformNetworkManager->SetSessionGameModeId(id); }
+std::wstring CGameNetworkManager::GatherRTTStats()
+{
+    return g_pPlatformNetworkManager->GatherRTTStats();
+}
+void CGameNetworkManager::SetSessionGameModeId(int id)
+{
+    g_pPlatformNetworkManager->SetSessionGameModeId(id);
+}
 void CGameNetworkManager::StateChange_AnyToHosting()
 {
     XEnableGuestSignin(0);
@@ -1089,8 +1300,8 @@ void CGameNetworkManager::StateChange_AnyToJoining(bool)
         params->m_miniGameId = gApp.GetFirstMiniGameType();
     params->m_timerTime = 500;
     gConsoleUIController.CloseUIScenes(gProfile->GetPrimaryPad(), false);
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_ConnectingProgress, params,
-                                         EUILayer_Scene, EUIGroup_PlayerDefault);
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_ConnectingProgress, params, EUILayer_Scene,
+                                         EUIGroup_PlayerDefault);
 }
 void CGameNetworkManager::StateChange_JoiningToIdle(CPlatformNetworkManager::eJoinFailedReason reason)
 {
@@ -1135,8 +1346,8 @@ void CGameNetworkManager::StateChange_AnyToStarting()
     {
         params->m_miniGameId = gApp.GetFirstMiniGameType();
     }
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
-                                          EUILayer_Scene, EUIGroup_PlayerDefault);
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params, EUILayer_Scene,
+                                         EUIGroup_PlayerDefault);
 }
 void CGameNetworkManager::StateChange_AnyToEnding(bool wasPlaying, bool)
 {
@@ -1188,7 +1399,8 @@ void CGameNetworkManager::CreateSocket(INetworkPlayer* player, bool localPlayer)
             ClientPacketListener* connection = new ClientPacketListener(minecraft, socket, userIndex);
             if (connection->m_createdOk)
             {
-                connection->send(boost::shared_ptr<ServerboundPreLoginPacket>(new ServerboundPreLoginPacket(player->GetOnlineName())));
+                connection->send(boost::shared_ptr<ServerboundPreLoginPacket>(
+                    new ServerboundPreLoginPacket(player->GetOnlineName())));
                 minecraft->addPendingLocalConnection(userIndex, connection);
             }
             else
@@ -1237,17 +1449,29 @@ void CGameNetworkManager::PlayerLeaving(INetworkPlayer* player)
         telemetryManagerInstance->RecordPlayerSessionExit(player->GetUserIndex(), gApp.GetDisconnectReason());
     }
 }
-void CGameNetworkManager::HostChanged() { gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_ExitWorld, (void*)1); }
-void CGameNetworkManager::WriteStats(INetworkPlayer* player) { Minecraft::GetInstance()->forceStatsSave(player->GetUserIndex()); }
+void CGameNetworkManager::HostChanged()
+{
+    gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_ExitWorld, (void*)1);
+}
+void CGameNetworkManager::WriteStats(INetworkPlayer* player)
+{
+    Minecraft::GetInstance()->forceStatsSave(player->GetUserIndex());
+}
 void CGameNetworkManager::AddLocalPlayerFailed(int userIndex, bool full)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     minecraft->mConnectionFailed[userIndex] = true;
-    minecraft->mDisconnectReasons[userIndex] =
-        full ? DisconnectPacket::eDisconnectReason_GameFull : DisconnectPacket::eDisconnectReason_Banned;
+    minecraft->mDisconnectReasons[userIndex] = full ? DisconnectPacket::eDisconnectReason_GameFull
+                                                    : DisconnectPacket::eDisconnectReason_Banned;
 }
-int CGameNetworkManager::GetPrimaryPad() { return gProfile->GetPrimaryPad(); }
-int CGameNetworkManager::GetLockedProfile() { return gProfile->GetLockedProfile(); }
+int CGameNetworkManager::GetPrimaryPad()
+{
+    return gProfile->GetPrimaryPad();
+}
+int CGameNetworkManager::GetLockedProfile()
+{
+    return gProfile->GetLockedProfile();
+}
 void CGameNetworkManager::HandleDisconnect(bool error)
 {
     int primaryPad = GetPrimaryPad();
@@ -1261,24 +1485,52 @@ void CGameNetworkManager::HandleDisconnect(bool error)
         m_disconnectError = false;
     }
 }
-bool CGameNetworkManager::IsSignedInLive(int userIndex) { return gProfile->IsSignedInLive(userIndex); }
-bool CGameNetworkManager::AllowedToPlayMultiplayer(int userIndex) { return gProfile->AllowedToPlayMultiplayer(userIndex); }
-void CGameNetworkManager::FakeLocalPlayerJoined() { g_pPlatformNetworkManager->FakeLocalPlayerJoined(); }
-bool CGameNetworkManager::IsHandlingBootInvite() { return g_pPlatformNetworkManager->IsHandlingBootInvite(); }
-void CGameNetworkManager::WiiU_ClearIsHandlingBootInvite() { NQRNetworkManager_WiiU::ClearIsHandlingBootInvite(); }
-void CGameNetworkManager::WiiU_ShowErrorViewer() { NQRNetworkManager_WiiU::ShowErrorViewer(); }
-void CGameNetworkManager::ShowConnectOnlineNintendoProgress(int i, int (*cb)(void*,bool,int,int), void* d) { NQRNetworkManager_WiiU::ShowConnectOnlineNintendoProgress(i, cb, d); }
-void CGameNetworkManager::WiiU_ReleaseForeground() { NintendoVoiceChat_WiiU::ReleaseForeground(); NQRNetworkManager_WiiU::SetAppSuspended(true); }
+bool CGameNetworkManager::IsSignedInLive(int userIndex)
+{
+    return gProfile->IsSignedInLive(userIndex);
+}
+bool CGameNetworkManager::AllowedToPlayMultiplayer(int userIndex)
+{
+    return gProfile->AllowedToPlayMultiplayer(userIndex);
+}
+void CGameNetworkManager::FakeLocalPlayerJoined()
+{
+    g_pPlatformNetworkManager->FakeLocalPlayerJoined();
+}
+bool CGameNetworkManager::IsHandlingBootInvite()
+{
+    return g_pPlatformNetworkManager->IsHandlingBootInvite();
+}
+void CGameNetworkManager::WiiU_ClearIsHandlingBootInvite()
+{
+    NQRNetworkManager_WiiU::ClearIsHandlingBootInvite();
+}
+void CGameNetworkManager::WiiU_ShowErrorViewer()
+{
+    NQRNetworkManager_WiiU::ShowErrorViewer();
+}
+void CGameNetworkManager::ShowConnectOnlineNintendoProgress(int i, int (*cb)(void*, bool, int, int), void* d)
+{
+    NQRNetworkManager_WiiU::ShowConnectOnlineNintendoProgress(i, cb, d);
+}
+void CGameNetworkManager::WiiU_ReleaseForeground()
+{
+    NintendoVoiceChat_WiiU::ReleaseForeground();
+    NQRNetworkManager_WiiU::SetAppSuspended(true);
+}
 void CGameNetworkManager::WiiU_AcquiredForeground()
 {
     NintendoVoiceChat_WiiU::AcquiredForeground();
     NQRNetworkManager_WiiU::SetAppSuspended(false);
     MasterGameMode::ResetLobbyTimerAfterSuspend();
 }
-void CGameNetworkManager::WiiU_ReleaseCallback() { NintendoVoiceChat_WiiU::ReleaseCallback(); }
+void CGameNetworkManager::WiiU_ReleaseCallback()
+{
+    NintendoVoiceChat_WiiU::ReleaseCallback();
+}
 void CGameNetworkManager::WiiU_SetBootFromFriendList()
 {
-    SYSArgDataBlock args[2] = { { SYS_ARG_ID_JOIN_PID }, { SYS_ARG_ID_END } };
+    SYSArgDataBlock args[2] = {{SYS_ARG_ID_JOIN_PID}, {SYS_ARG_ID_END}};
     SYSCallerInfo callerInfo;
     if (SYSGetArguments(args, &callerInfo) == 0 && args[0].type == SYS_ARG_TYPE_UINT32)
     {
@@ -1305,7 +1557,10 @@ bool CGameNetworkManager::ModeAllowsUGC(EMiniGameId miniGameId)
     MiniGameDef* mode = MiniGameDef::GetCustomGameModeById(miniGameId, true);
     return mode != 0 && mode->AllowsUGC();
 }
-bool CGameNetworkManager::IsUGCRestrictedMode(int i, EMiniGameId m) { return IsUGCRestricted(i) && ModeAllowsUGC(m); }
+bool CGameNetworkManager::IsUGCRestrictedMode(int i, EMiniGameId m)
+{
+    return IsUGCRestricted(i) && ModeAllowsUGC(m);
+}
 bool CGameNetworkManager::IsFriendsOnlyUGC(int userIndex)
 {
     int allowed = 0;
@@ -1314,14 +1569,13 @@ bool CGameNetworkManager::IsFriendsOnlyUGC(int userIndex)
     return allowed != 1 && friendsOnly == 1;
 }
 void CGameNetworkManager::CheckFriendsCanPlay(int userIndex, int& friends,
-                                               boost::shared_ptr<ClientboundPreLoginPacket> packet,
-                                               int titleVersion, int& can, int& cannot,
-                                               int& blocked, int& unknown)
+                                              boost::shared_ptr<ClientboundPreLoginPacket> packet, int titleVersion,
+                                              int& can, int& cannot, int& blocked, int& unknown)
 {
     if (g_pPlatformNetworkManager)
     {
-        g_pPlatformNetworkManager->CheckFriendsCanPlay(userIndex, friends, packet, titleVersion,
-                                        can, cannot, blocked, unknown);
+        g_pPlatformNetworkManager->CheckFriendsCanPlay(userIndex, friends, packet, titleVersion, can, cannot, blocked,
+                                                       unknown);
     }
 }
 unsigned int CGameNetworkManager::GetMaxPlayers(EMiniGameId miniGameId, unsigned int)
@@ -1351,8 +1605,14 @@ unsigned int CGameNetworkManager::GetMaxPlayers()
     }
     return players;
 }
-void CGameNetworkManager::AttemptPSNSignIn(int (*cb)(void*,bool,int), void* d, bool p, int i) { g_pPlatformNetworkManager->AttemptPSNSignIn(cb,d,p,i); }
-void CGameNetworkManager::RecvInviteGUI() { g_pPlatformNetworkManager->RecvInviteGUI(); }
+void CGameNetworkManager::AttemptPSNSignIn(int (*cb)(void*, bool, int), void* d, bool p, int i)
+{
+    g_pPlatformNetworkManager->AttemptPSNSignIn(cb, d, p, i);
+}
+void CGameNetworkManager::RecvInviteGUI()
+{
+    g_pPlatformNetworkManager->RecvInviteGUI();
+}
 void CGameNetworkManager::ClearInviteInfo()
 {
     m_joiningMiniGameId = eMiniGameId_Lobby;
@@ -1397,8 +1657,7 @@ unsigned int CallbackReleaseForeground(void*)
 
 void closeSocketForLockedProfile()
 {
-    INetworkPlayer* player = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(
-        gProfile->GetLockedProfile());
+    INetworkPlayer* player = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(gProfile->GetLockedProfile());
     if (player != 0)
     {
         Socket* socket = player->GetSocket();

@@ -10,10 +10,26 @@ class DataOutputStream;
 class Entity;
 class PacketListener;
 
-class ServerboundPlayerCommandPacket : public Packet, public boost::enable_shared_from_this<ServerboundPlayerCommandPacket>
+class ServerboundPlayerCommandPacket : public Packet,
+                                       public boost::enable_shared_from_this<ServerboundPlayerCommandPacket>
 {
 public:
-    enum Action { PRESS_SHIFT_KEY = 0, RELEASE_SHIFT_KEY = 1, STOP_SLEEPING = 2, START_SPRINTING = 3, STOP_SPRINTING = 4, RIDING_JUMP = 5, STOP_RIDING_JUMP = 6, OPEN_INVENTORY = 7, START_FALL_FLYING = 8, START_SWIMMING = 9, STOP_SWIMMING = 10, START_SPIN_ATTACK = 11, STOP_SPIN_ATTACK = 12 };
+    enum Action
+    {
+        PRESS_SHIFT_KEY = 0,
+        RELEASE_SHIFT_KEY = 1,
+        STOP_SLEEPING = 2,
+        START_SPRINTING = 3,
+        STOP_SPRINTING = 4,
+        RIDING_JUMP = 5,
+        STOP_RIDING_JUMP = 6,
+        OPEN_INVENTORY = 7,
+        START_FALL_FLYING = 8,
+        START_SWIMMING = 9,
+        STOP_SWIMMING = 10,
+        START_SPIN_ATTACK = 11,
+        STOP_SPIN_ATTACK = 12
+    };
     ServerboundPlayerCommandPacket();
     ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action);
     ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action, int data);
@@ -26,6 +42,7 @@ public:
     int getId();
     virtual int getPacketId();
     static boost::shared_ptr<Packet> create();
+
 private:
     int id;
     Action action;

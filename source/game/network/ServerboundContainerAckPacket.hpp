@@ -11,7 +11,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ServerboundContainerAckPacket : public Packet, public boost::enable_shared_from_this<ServerboundContainerAckPacket>
+class ServerboundContainerAckPacket : public Packet,
+                                      public boost::enable_shared_from_this<ServerboundContainerAckPacket>
 {
 public:
     ServerboundContainerAckPacket();
@@ -27,10 +28,7 @@ public:
     int getUid();
     bool isAccepted();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundContainerAckPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundContainerAckPacket()); }
 
 private:
     int containerId;

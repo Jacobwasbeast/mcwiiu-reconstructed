@@ -26,10 +26,8 @@ public:
     virtual bool isAync();
     int getCount();
     arrayWithLength<unsigned char> getParamData();
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundAwardStatPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundAwardStatPacket()); }
+
 private:
     friend class ClientPacketListener;
     int statId;

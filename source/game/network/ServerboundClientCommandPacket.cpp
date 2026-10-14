@@ -4,13 +4,11 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ServerboundClientCommandPacket::ServerboundClientCommandPacket()
-    : action(PERFORM_RESPAWN)
+ServerboundClientCommandPacket::ServerboundClientCommandPacket() : action(PERFORM_RESPAWN)
 {
 }
 
-ServerboundClientCommandPacket::ServerboundClientCommandPacket(Action action)
-    : action(action)
+ServerboundClientCommandPacket::ServerboundClientCommandPacket(Action action) : action(action)
 {
 }
 

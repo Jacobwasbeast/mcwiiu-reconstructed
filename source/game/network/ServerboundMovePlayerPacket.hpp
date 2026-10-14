@@ -52,11 +52,11 @@ protected:
 
 public:
     class Pos;
-    typedef class Pos *PosPtr;
+    typedef class Pos* PosPtr;
     class PosRot;
-    typedef class PosRot *PosRotPtr;
+    typedef class PosRot* PosRotPtr;
     class Rot;
-    typedef class Rot *RotPtr;
+    typedef class Rot* RotPtr;
 };
 
 class ServerboundMovePlayerPacket::Pos : public ServerboundMovePlayerPacket

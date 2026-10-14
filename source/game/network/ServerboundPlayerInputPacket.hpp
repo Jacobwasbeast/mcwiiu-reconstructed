@@ -27,10 +27,7 @@ public:
     bool isJumping();
     bool isSneaking();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundPlayerInputPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundPlayerInputPacket()); }
 
 private:
     float xxa;

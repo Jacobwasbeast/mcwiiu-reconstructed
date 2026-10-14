@@ -29,10 +29,7 @@ public:
     int getFood();
     float getSaturation();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundSetHealthPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundSetHealthPacket()); }
 
     TelemetryDamageSource damageSource;
 

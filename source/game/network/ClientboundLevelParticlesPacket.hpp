@@ -12,12 +12,17 @@ class DataOutputStream;
 class PacketListener;
 class ParticleType;
 
-class ClientboundLevelParticlesPacket : public Packet, public boost::enable_shared_from_this<ClientboundLevelParticlesPacket>
+class ClientboundLevelParticlesPacket : public Packet,
+                                        public boost::enable_shared_from_this<ClientboundLevelParticlesPacket>
 {
 public:
     ClientboundLevelParticlesPacket();
-    ClientboundLevelParticlesPacket(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count, arrayWithLength<int> params);
-    ClientboundLevelParticlesPacket(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count, arrayWithLength<int> params, float xAux, float yAux, float zAux);
+    ClientboundLevelParticlesPacket(const ParticleType* type, bool overrideLimiter, float x, float y, float z,
+                                    float xDist, float yDist, float zDist, float maxSpeed, int count,
+                                    arrayWithLength<int> params);
+    ClientboundLevelParticlesPacket(const ParticleType* type, bool overrideLimiter, float x, float y, float z,
+                                    float xDist, float yDist, float zDist, float maxSpeed, int count,
+                                    arrayWithLength<int> params, float xAux, float yAux, float zAux);
     virtual ~ClientboundLevelParticlesPacket();
 
     virtual int getPacketId();
@@ -48,7 +53,9 @@ public:
     }
 
 private:
-    void Init(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count, arrayWithLength<int> params, bool hasAux, float xAux, float yAux, float zAux);
+    void Init(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist,
+              float zDist, float maxSpeed, int count, arrayWithLength<int> params, bool hasAux, float xAux, float yAux,
+              float zAux);
 
     const ParticleType* type;
     float x;

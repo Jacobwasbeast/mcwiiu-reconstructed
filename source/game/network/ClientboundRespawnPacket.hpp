@@ -16,19 +16,18 @@ class ClientPacketListener;
 class ClientboundRespawnPacket : public Packet, public boost::enable_shared_from_this<ClientboundRespawnPacket>
 {
     friend class ClientPacketListener;
+
 public:
     ClientboundRespawnPacket();
     ClientboundRespawnPacket(char dimension, long long mapSeed, const GameType* playerGameType,
-                             const Difficulty* difficulty, LevelType* levelType, bool newSeaLevel,
-                             int newEntityId, int xzSize, int hellScale, int cloudHeight, bool modernEnd,
-                             unsigned char biomeScale, int biomeCentreXChunk, int biomeCentreZChunk,
+                             const Difficulty* difficulty, LevelType* levelType, bool newSeaLevel, int newEntityId,
+                             int xzSize, int hellScale, int cloudHeight, bool modernEnd, unsigned char biomeScale,
+                             int biomeCentreXChunk, int biomeCentreZChunk, bool keepOldEntityData, int seaLevel);
+    ClientboundRespawnPacket(double x, double y, double z, float yRot, float xRot, char dimension, long long mapSeed,
+                             const GameType* playerGameType, const Difficulty* difficulty, LevelType* levelType,
+                             bool newSeaLevel, int newEntityId, int xzSize, int hellScale, int cloudHeight,
+                             bool modernEnd, unsigned char biomeScale, int biomeCentreXChunk, int biomeCentreZChunk,
                              bool keepOldEntityData, int seaLevel);
-    ClientboundRespawnPacket(double x, double y, double z, float yRot, float xRot, char dimension,
-                             long long mapSeed, const GameType* playerGameType, const Difficulty* difficulty,
-                             LevelType* levelType, bool newSeaLevel, int newEntityId, int xzSize,
-                             int hellScale, int cloudHeight, bool modernEnd, unsigned char biomeScale,
-                             int biomeCentreXChunk, int biomeCentreZChunk, bool keepOldEntityData,
-                             int seaLevel);
     virtual void handle(PacketListener* listener);
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
@@ -40,10 +39,7 @@ public:
     bool shouldKeepOldEntityData() const;
     bool hasPositionAndRotation() const;
     virtual int getPacketId();
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundRespawnPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundRespawnPacket()); }
 
 private:
     long long m_mapSeed;

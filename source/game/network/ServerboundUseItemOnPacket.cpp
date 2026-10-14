@@ -10,8 +10,8 @@ ServerboundUseItemOnPacket::ServerboundUseItemOnPacket()
 }
 
 ServerboundUseItemOnPacket::ServerboundUseItemOnPacket(const BlockPos& pos, const Direction* face,
-                                                       InteractionHand::EInteractionHand hand,
-                                                       float clickX, float clickY, float clickZ)
+                                                       InteractionHand::EInteractionHand hand, float clickX,
+                                                       float clickY, float clickZ)
 {
     this->pos = pos;
     this->face = face;

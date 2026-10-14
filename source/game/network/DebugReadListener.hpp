@@ -9,7 +9,8 @@ class DebugReadListener : public LeaderboardReadListener
 public:
     virtual ~DebugReadListener();
 
-    virtual bool OnStatsReadComplete(LeaderboardManager::eStatsReturn eResult, int iUserIndex, LeaderboardManager::ReadView readView);
+    virtual bool OnStatsReadComplete(LeaderboardManager::eStatsReturn eResult, int iUserIndex,
+                                     LeaderboardManager::ReadView readView);
 };
 
 #endif

@@ -26,10 +26,7 @@ public:
     ServerboundResourcePackPacket(Action action);
     virtual ~ServerboundResourcePackPacket();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundResourcePackPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundResourcePackPacket()); }
 
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

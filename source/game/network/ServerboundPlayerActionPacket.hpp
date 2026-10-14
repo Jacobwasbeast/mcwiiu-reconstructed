@@ -30,10 +30,7 @@ public:
     ServerboundPlayerActionPacket();
     ServerboundPlayerActionPacket(Action action, const BlockPos& pos, const Direction* direction, int useTime);
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket()); }
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);

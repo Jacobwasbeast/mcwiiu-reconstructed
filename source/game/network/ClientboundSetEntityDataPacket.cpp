@@ -12,7 +12,9 @@ ClientboundSetEntityDataPacket::ClientboundSetEntityDataPacket()
     id = -1;
 }
 
-ClientboundSetEntityDataPacket::ClientboundSetEntityDataPacket(int id, int entityType, boost::shared_ptr<SynchedEntityData> entityData, bool sendAll)
+ClientboundSetEntityDataPacket::ClientboundSetEntityDataPacket(int id, int entityType,
+                                                               boost::shared_ptr<SynchedEntityData> entityData,
+                                                               bool sendAll)
 {
     this->id = id;
     this->entityType = entityType;

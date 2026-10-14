@@ -197,7 +197,8 @@ void PacketListener::handleBlockDestruction(boost::shared_ptr<ClientboundBlockDe
     onUnhandledPacket(packet);
 }
 
-void PacketListener::handleBlockCollectionDestruction(boost::shared_ptr<ClientboundBlockCollectionDestructionPacket> packet)
+void PacketListener::handleBlockCollectionDestruction(
+    boost::shared_ptr<ClientboundBlockCollectionDestructionPacket> packet)
 {
     onUnhandledPacket(packet);
 }
@@ -641,7 +642,8 @@ void PacketListener::handleDamageIndicator(boost::shared_ptr<ClientboundDamageIn
     onUnhandledPacket(packet);
 }
 
-void PacketListener::handleMiniGamePlayerSettingsUpdatePacket(boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket> packet)
+void PacketListener::handleMiniGamePlayerSettingsUpdatePacket(
+    boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket> packet)
 {
     onUnhandledPacket(packet);
 }

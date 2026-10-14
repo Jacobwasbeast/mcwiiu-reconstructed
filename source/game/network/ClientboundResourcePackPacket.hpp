@@ -12,7 +12,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundResourcePackPacket : public Packet, public boost::enable_shared_from_this<ClientboundResourcePackPacket>
+class ClientboundResourcePackPacket : public Packet,
+                                      public boost::enable_shared_from_this<ClientboundResourcePackPacket>
 {
 public:
     ClientboundResourcePackPacket();
@@ -27,10 +28,7 @@ public:
     std::wstring getUrl();
     std::wstring getHash();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundResourcePackPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundResourcePackPacket()); }
 
 private:
     std::wstring url;

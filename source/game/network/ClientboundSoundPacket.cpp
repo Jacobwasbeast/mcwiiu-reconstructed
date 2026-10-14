@@ -23,7 +23,8 @@ ClientboundSoundPacket::ClientboundSoundPacket()
     looping = false;
 }
 
-ClientboundSoundPacket::ClientboundSoundPacket(const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch)
+ClientboundSoundPacket::ClientboundSoundPacket(const SoundEvent* sound, SoundSource::ESoundSource source, double x,
+                                               double y, double z, float volume, float pitch)
 {
     this->sound = sound;
     this->source = source;
@@ -49,8 +50,14 @@ ClientboundSoundPacket::ClientboundSoundPacket(const SoundEvent* sound, float vo
     soundInstance = eSoundInstances_None;
 }
 
-ClientboundSoundPacket::ClientboundSoundPacket(ESoundInstances soundInstance, const SoundEvent* sound, float volume, float pitch, bool looping, int entityId)
-    : sound(sound), volume(volume), pitch(pitch), playUI(false), soundInstance((int)soundInstance), entityId(entityId)
+ClientboundSoundPacket::ClientboundSoundPacket(ESoundInstances soundInstance, const SoundEvent* sound, float volume,
+                                               float pitch, bool looping, int entityId)
+    : sound(sound),
+      volume(volume),
+      pitch(pitch),
+      playUI(false),
+      soundInstance((int)soundInstance),
+      entityId(entityId)
 {
     this->looping = looping;
 }
@@ -86,22 +93,61 @@ void ClientboundSoundPacket::write(DataOutputStream* output)
     output->writeInt(entityId);
 }
 
-const SoundEvent* ClientboundSoundPacket::getSound() { return sound; }
-SoundSource::ESoundSource ClientboundSoundPacket::getSource() { return source; }
-double ClientboundSoundPacket::getX() { return (float)x * 0.125f; }
-double ClientboundSoundPacket::getY() { return (float)y * 0.125f; }
-double ClientboundSoundPacket::getZ() { return (float)z * 0.125f; }
-double ClientboundSoundPacket::getVolume() { return (double)volume; }
-double ClientboundSoundPacket::getPitch() { return (double)pitch; }
-bool ClientboundSoundPacket::getPlayUI() { return playUI; }
-int ClientboundSoundPacket::getEntityId() { return entityId; }
-bool ClientboundSoundPacket::getLooping() const { return looping; }
-int ClientboundSoundPacket::getSoundInstance() { return soundInstance; }
+const SoundEvent* ClientboundSoundPacket::getSound()
+{
+    return sound;
+}
+SoundSource::ESoundSource ClientboundSoundPacket::getSource()
+{
+    return source;
+}
+double ClientboundSoundPacket::getX()
+{
+    return (float)x * 0.125f;
+}
+double ClientboundSoundPacket::getY()
+{
+    return (float)y * 0.125f;
+}
+double ClientboundSoundPacket::getZ()
+{
+    return (float)z * 0.125f;
+}
+double ClientboundSoundPacket::getVolume()
+{
+    return (double)volume;
+}
+double ClientboundSoundPacket::getPitch()
+{
+    return (double)pitch;
+}
+bool ClientboundSoundPacket::getPlayUI()
+{
+    return playUI;
+}
+int ClientboundSoundPacket::getEntityId()
+{
+    return entityId;
+}
+bool ClientboundSoundPacket::getLooping() const
+{
+    return looping;
+}
+int ClientboundSoundPacket::getSoundInstance()
+{
+    return soundInstance;
+}
 
 void ClientboundSoundPacket::handle(PacketListener* listener)
 {
     listener->handleSoundEvent(shared_from_this());
 }
 
-int ClientboundSoundPacket::getEstimatedSize() { return 24; }
-int ClientboundSoundPacket::getPacketId() { return 62; }
+int ClientboundSoundPacket::getEstimatedSize()
+{
+    return 24;
+}
+int ClientboundSoundPacket::getPacketId()
+{
+    return 62;
+}

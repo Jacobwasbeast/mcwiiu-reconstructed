@@ -12,7 +12,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundBlockEntityDataPacket : public Packet, public boost::enable_shared_from_this<ClientboundBlockEntityDataPacket>
+class ClientboundBlockEntityDataPacket : public Packet,
+                                         public boost::enable_shared_from_this<ClientboundBlockEntityDataPacket>
 {
 public:
     ClientboundBlockEntityDataPacket();

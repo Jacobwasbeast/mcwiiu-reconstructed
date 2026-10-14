@@ -11,7 +11,8 @@ class DataOutputStream;
 class PacketListener;
 class Entity;
 
-class ClientboundAddGlobalEntityPacket : public Packet, public boost::enable_shared_from_this<ClientboundAddGlobalEntityPacket>
+class ClientboundAddGlobalEntityPacket : public Packet,
+                                         public boost::enable_shared_from_this<ClientboundAddGlobalEntityPacket>
 {
 public:
     ClientboundAddGlobalEntityPacket();

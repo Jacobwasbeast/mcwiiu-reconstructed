@@ -13,17 +13,13 @@ class ChunkVisibilityAreaPacket : public Packet, public boost::enable_shared_fro
 {
 public:
     ChunkVisibilityAreaPacket();
-    ChunkVisibilityAreaPacket(int minX, int maxX, int minZ, int maxZ,
-                              bool visible, bool loaded, bool outside);
+    ChunkVisibilityAreaPacket(int minX, int maxX, int minZ, int maxZ, bool visible, bool loaded, bool outside);
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
     virtual int getPacketId();
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket()); }
 
     friend class ClientPacketListener;
 

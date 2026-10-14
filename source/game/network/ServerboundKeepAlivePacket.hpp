@@ -22,10 +22,7 @@ public:
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundKeepAlivePacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundKeepAlivePacket()); }
 
 private:
     friend class ServerGamePacketListenerImpl;

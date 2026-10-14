@@ -14,7 +14,8 @@ class DataOutputStream;
 class LivingEntity;
 class PacketListener;
 
-class ClientboundPlayerCombatPacket : public Packet, public boost::enable_shared_from_this<ClientboundPlayerCombatPacket>
+class ClientboundPlayerCombatPacket : public Packet,
+                                      public boost::enable_shared_from_this<ClientboundPlayerCombatPacket>
 {
 public:
     enum Event
@@ -34,10 +35,7 @@ public:
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ClientboundPlayerCombatPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ClientboundPlayerCombatPacket()); }
 
 private:
     void _init(CombatTracker* combatTracker, Event event, bool includeKiller);

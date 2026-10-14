@@ -41,10 +41,7 @@ public:
     InteractionHand::EInteractionHand getHand();
     Vec3* getLocation();
 
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ServerboundInteractPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ServerboundInteractPacket()); }
 
 private:
     int entityId;

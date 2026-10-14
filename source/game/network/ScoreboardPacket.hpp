@@ -16,7 +16,13 @@ class PacketListener;
 class ScoreboardPacket : public Packet, public boost::enable_shared_from_this<ScoreboardPacket>
 {
 public:
-    enum EMessage { ADD_PLAYER_STATS, UPDATE_PLAYER_STATS, REMOVE_PLAYER_STATS, CLEAR_PLAYER_STATS };
+    enum EMessage
+    {
+        ADD_PLAYER_STATS,
+        UPDATE_PLAYER_STATS,
+        REMOVE_PLAYER_STATS,
+        CLEAR_PLAYER_STATS
+    };
 
     class Data
     {
@@ -67,10 +73,7 @@ public:
     ScoreboardPacket();
     ScoreboardPacket(EMessage message, Data* data);
     virtual ~ScoreboardPacket();
-    static boost::shared_ptr<Packet> create()
-    {
-        return boost::shared_ptr<Packet>(new ScoreboardPacket());
-    }
+    static boost::shared_ptr<Packet> create() { return boost::shared_ptr<Packet>(new ScoreboardPacket()); }
     EMessage GetMessage();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

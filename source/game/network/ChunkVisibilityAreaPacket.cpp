@@ -5,13 +5,25 @@
 #include "game/network/PacketListener.hpp"
 
 ChunkVisibilityAreaPacket::ChunkVisibilityAreaPacket()
-    : minX(0), maxX(0), minZ(0), maxZ(0), visible(true), loaded(false), outside(false)
+    : minX(0),
+      maxX(0),
+      minZ(0),
+      maxZ(0),
+      visible(true),
+      loaded(false),
+      outside(false)
 {
 }
 
-ChunkVisibilityAreaPacket::ChunkVisibilityAreaPacket(int minX, int maxX, int minZ, int maxZ,
-                                                     bool visible, bool loaded, bool outside)
-    : minX(minX), maxX(maxX), minZ(minZ), maxZ(maxZ), visible(visible), loaded(loaded), outside(outside)
+ChunkVisibilityAreaPacket::ChunkVisibilityAreaPacket(int minX, int maxX, int minZ, int maxZ, bool visible, bool loaded,
+                                                     bool outside)
+    : minX(minX),
+      maxX(maxX),
+      minZ(minZ),
+      maxZ(maxZ),
+      visible(visible),
+      loaded(loaded),
+      outside(outside)
 {
 }
 

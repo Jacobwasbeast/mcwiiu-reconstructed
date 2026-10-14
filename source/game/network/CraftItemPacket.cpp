@@ -4,13 +4,11 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-CraftItemPacket::CraftItemPacket()
-    : mStackedItems(), mItemIds(), mContainerId(0), mCraftType(0)
+CraftItemPacket::CraftItemPacket() : mStackedItems(), mItemIds(), mContainerId(0), mCraftType(0)
 {
 }
 
-CraftItemPacket::CraftItemPacket(int recipe, int craftType, short containerId)
-    : mStackedItems(), mItemIds()
+CraftItemPacket::CraftItemPacket(int recipe, int craftType, short containerId) : mStackedItems(), mItemIds()
 {
     mStackedItems.push_back(std::make_pair(recipe, -1));
     mContainerId = containerId;
@@ -18,12 +16,14 @@ CraftItemPacket::CraftItemPacket(int recipe, int craftType, short containerId)
 }
 
 CraftItemPacket::CraftItemPacket(std::vector<std::pair<int, int> >& stackedItems, int craftType, short containerId)
-    : mStackedItems(stackedItems), mItemIds(), mContainerId(containerId), mCraftType(static_cast<unsigned char>(craftType))
+    : mStackedItems(stackedItems),
+      mItemIds(),
+      mContainerId(containerId),
+      mCraftType(static_cast<unsigned char>(craftType))
 {
 }
 
-CraftItemPacket::CraftItemPacket(std::vector<int>& itemIds, short containerId)
-    : mStackedItems(), mItemIds()
+CraftItemPacket::CraftItemPacket(std::vector<int>& itemIds, short containerId) : mStackedItems(), mItemIds()
 {
     for (std::vector<int>::iterator it = itemIds.begin(); it != itemIds.end(); ++it)
     {

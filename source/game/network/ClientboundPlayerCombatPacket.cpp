@@ -15,7 +15,8 @@ ClientboundPlayerCombatPacket::ClientboundPlayerCombatPacket(CombatTracker* comb
     _init(combatTracker, event, true);
 }
 
-ClientboundPlayerCombatPacket::ClientboundPlayerCombatPacket(CombatTracker* combatTracker, Event event, bool includeKiller)
+ClientboundPlayerCombatPacket::ClientboundPlayerCombatPacket(CombatTracker* combatTracker, Event event,
+                                                             bool includeKiller)
 {
     _init(combatTracker, event, includeKiller);
 }

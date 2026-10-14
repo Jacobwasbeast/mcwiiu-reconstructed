@@ -188,7 +188,8 @@ public:
     virtual void handleContainerClose(boost::shared_ptr<ClientboundContainerClosePacket> packet);
     virtual void handleBlockEvent(boost::shared_ptr<ClientboundBlockEventPacket> packet);
     virtual void handleBlockDestruction(boost::shared_ptr<ClientboundBlockDestructionPacket> packet);
-    virtual void handleBlockCollectionDestruction(boost::shared_ptr<ClientboundBlockCollectionDestructionPacket> packet);
+    virtual void handleBlockCollectionDestruction(
+        boost::shared_ptr<ClientboundBlockCollectionDestructionPacket> packet);
     virtual bool canHandleAsyncPackets();
     virtual void handleGameEvent(boost::shared_ptr<ClientboundGameEventPacket> packet);
     virtual void handleMapItemData(boost::shared_ptr<ClientboundMapItemDataPacket> packet);

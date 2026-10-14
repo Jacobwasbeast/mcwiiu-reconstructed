@@ -8,8 +8,7 @@ ServerboundResourcePackPacket::ServerboundResourcePackPacket()
 {
 }
 
-ServerboundResourcePackPacket::ServerboundResourcePackPacket(Action action)
-    : mAction(action)
+ServerboundResourcePackPacket::ServerboundResourcePackPacket(Action action) : mAction(action)
 {
 }
 

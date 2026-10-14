@@ -4,13 +4,13 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ServerSettingsChangedPacket::ServerSettingsChangedPacket()
-    : mSetting(0), mValue(1)
+ServerSettingsChangedPacket::ServerSettingsChangedPacket() : mSetting(0), mValue(1)
 {
 }
 
 ServerSettingsChangedPacket::ServerSettingsChangedPacket(char setting, unsigned int value)
-    : mSetting(setting), mValue(value)
+    : mSetting(setting),
+      mValue(value)
 {
 }
 

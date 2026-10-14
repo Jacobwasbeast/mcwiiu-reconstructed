@@ -12,7 +12,8 @@ ServerboundSignUpdatePacket::ServerboundSignUpdatePacket()
     createdByRestrictedPlayer = false;
 }
 
-ServerboundSignUpdatePacket::ServerboundSignUpdatePacket(const BlockPos& pos, std::wstring* lines, bool createdByRestrictedPlayer)
+ServerboundSignUpdatePacket::ServerboundSignUpdatePacket(const BlockPos& pos, std::wstring* lines,
+                                                         bool createdByRestrictedPlayer)
 {
     this->pos = pos;
     this->createdByRestrictedPlayer = createdByRestrictedPlayer;

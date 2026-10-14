@@ -14,7 +14,8 @@ const int MAX_CLIENT_LOADED_CHANGES = 20;
 }
 
 BlockChangeListener::BlockChangeListener(ServerLevel* level)
-    : mLevel(level), mChunks(new boost::unordered_map<long long, Chunk>())
+    : mLevel(level),
+      mChunks(new boost::unordered_map<long long, Chunk>())
 {
 }
 
@@ -25,8 +26,7 @@ BlockChangeListener::~BlockChangeListener()
 
 long long BlockChangeListener::GetChunkKey(int x, int z)
 {
-    return (static_cast<long long>(x) + 0x7fffffffLL) |
-           ((static_cast<long long>(z) + 0x7fffffffLL) << 32);
+    return (static_cast<long long>(x) + 0x7fffffffLL) | ((static_cast<long long>(z) + 0x7fffffffLL) << 32);
 }
 
 bool BlockChangeListener::HasChunk(long long key) const
@@ -75,7 +75,8 @@ int BlockChangeListener::GetBlockKey(const BlockPos& pos)
     return LevelChunk::PackBlockPos(pos);
 }
 
-void BlockChangeListener::blockChanged(Level*, const BlockPos& pos, const BlockState*, const BlockState* newState, int, bool)
+void BlockChangeListener::blockChanged(Level*, const BlockPos& pos, const BlockState*, const BlockState* newState, int,
+                                       bool)
 {
     int chunkX = pos.x >> 4;
     int chunkZ = pos.z >> 4;
@@ -100,22 +101,50 @@ void BlockChangeListener::invalidateChunksOutsideArea(int minChunkX, int minChun
     }
 }
 
-void BlockChangeListener::allChanged() {}
-void BlockChangeListener::blockLightChanged(const BlockPos&) {}
-void BlockChangeListener::setBlocksDirty(int, int, int, int, int, int, Level*) {}
-void BlockChangeListener::playStreamingMusic(const SoundEvent*, const BlockPos&, bool) {}
-void BlockChangeListener::playSound(boost::shared_ptr<Player>, const SoundEvent*, SoundSource::ESoundSource, double, double, double, float, float, float) {}
-void BlockChangeListener::addParticle(Level*, ePARTICLE_TYPE, bool, double, double, double, double, double, double, arrayWithLength<int>) {}
-void BlockChangeListener::addParticle(Level*, ePARTICLE_TYPE, bool, bool, double, double, double, double, double, double, arrayWithLength<int>) {}
-void BlockChangeListener::entityAdded(boost::shared_ptr<Entity>) {}
-void BlockChangeListener::entityRemoved(boost::shared_ptr<Entity>) {}
-void BlockChangeListener::playerRemoved(boost::shared_ptr<Entity>) {}
-void BlockChangeListener::globalLevelEvent(int, const BlockPos&, int) {}
-void BlockChangeListener::levelEvent(boost::shared_ptr<Player>, int, const BlockPos&, int) {}
-void BlockChangeListener::destroyBlockProgress(int, const BlockPos&, int) {}
+void BlockChangeListener::allChanged()
+{
+}
+void BlockChangeListener::blockLightChanged(const BlockPos&)
+{
+}
+void BlockChangeListener::setBlocksDirty(int, int, int, int, int, int, Level*)
+{
+}
+void BlockChangeListener::playStreamingMusic(const SoundEvent*, const BlockPos&, bool)
+{
+}
+void BlockChangeListener::playSound(boost::shared_ptr<Player>, const SoundEvent*, SoundSource::ESoundSource, double,
+                                    double, double, float, float, float)
+{
+}
+void BlockChangeListener::addParticle(Level*, ePARTICLE_TYPE, bool, double, double, double, double, double, double,
+                                      arrayWithLength<int>)
+{
+}
+void BlockChangeListener::addParticle(Level*, ePARTICLE_TYPE, bool, bool, double, double, double, double, double,
+                                      double, arrayWithLength<int>)
+{
+}
+void BlockChangeListener::entityAdded(boost::shared_ptr<Entity>)
+{
+}
+void BlockChangeListener::entityRemoved(boost::shared_ptr<Entity>)
+{
+}
+void BlockChangeListener::playerRemoved(boost::shared_ptr<Entity>)
+{
+}
+void BlockChangeListener::globalLevelEvent(int, const BlockPos&, int)
+{
+}
+void BlockChangeListener::levelEvent(boost::shared_ptr<Player>, int, const BlockPos&, int)
+{
+}
+void BlockChangeListener::destroyBlockProgress(int, const BlockPos&, int)
+{
+}
 
-BlockChangeListener::Chunk::Chunk(int x, int z)
-    : mChangeCount(0), mChanges(), mX(x), mZ(z)
+BlockChangeListener::Chunk::Chunk(int x, int z) : mChangeCount(0), mChanges(), mX(x), mZ(z)
 {
     mChanges.reserve(20);
 }

@@ -15,7 +15,9 @@ UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket()
     mDataTag = 0;
 }
 
-UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket(ConsoleGameRules::EGameRuleType ruleType, const std::wstring& description, int itemId, int auxValue, int dataTag, void* payload, int payloadLength)
+UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket(ConsoleGameRules::EGameRuleType ruleType,
+                                                           const std::wstring& description, int itemId, int auxValue,
+                                                           int dataTag, void* payload, int payloadLength)
 {
     mRuleType = ruleType;
     mDescription = description;

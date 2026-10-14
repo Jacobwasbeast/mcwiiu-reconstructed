@@ -11,12 +11,12 @@ class DataOutputStream;
 class ExperienceOrb;
 class PacketListener;
 
-class ClientboundAddExperienceOrbPacket : public Packet, public boost::enable_shared_from_this<ClientboundAddExperienceOrbPacket>
+class ClientboundAddExperienceOrbPacket : public Packet,
+                                          public boost::enable_shared_from_this<ClientboundAddExperienceOrbPacket>
 {
 public:
     ClientboundAddExperienceOrbPacket();
-    ClientboundAddExperienceOrbPacket(boost::shared_ptr<ExperienceOrb> entity, int, int,
-                                      int x, int y, int z);
+    ClientboundAddExperienceOrbPacket(boost::shared_ptr<ExperienceOrb> entity, int, int, int x, int y, int z);
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

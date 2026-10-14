@@ -14,7 +14,7 @@ class DataOutputStream;
 class PacketListener;
 
 class ServerboundChatAutoCompletePacket : public Packet,
-                                           public boost::enable_shared_from_this<ServerboundChatAutoCompletePacket>
+                                          public boost::enable_shared_from_this<ServerboundChatAutoCompletePacket>
 {
 public:
     ServerboundChatAutoCompletePacket();

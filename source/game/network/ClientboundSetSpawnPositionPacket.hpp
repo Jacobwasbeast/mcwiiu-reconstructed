@@ -11,7 +11,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundSetSpawnPositionPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetSpawnPositionPacket>
+class ClientboundSetSpawnPositionPacket : public Packet,
+                                          public boost::enable_shared_from_this<ClientboundSetSpawnPositionPacket>
 {
 public:
     friend class ClientPacketListener;
@@ -29,6 +30,7 @@ public:
     virtual int getPacketId();
     BlockPos getPos() { return mPos; }
     static boost::shared_ptr<Packet> create();
+
 private:
     BlockPos mPos;
 };

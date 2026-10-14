@@ -11,7 +11,8 @@ class DataOutputStream;
 class Entity;
 class PacketListener;
 
-class ClientboundSetEntityMotionPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetEntityMotionPacket>
+class ClientboundSetEntityMotionPacket : public Packet,
+                                         public boost::enable_shared_from_this<ClientboundSetEntityMotionPacket>
 {
 public:
     ClientboundSetEntityMotionPacket();

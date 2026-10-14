@@ -5,11 +5,12 @@
 #include "game/network/PacketListener.hpp"
 #include "game/world/WorldBorder.hpp"
 
-ClientboundSetBorderPacket::ClientboundSetBorderPacket() {
+ClientboundSetBorderPacket::ClientboundSetBorderPacket()
+{
 }
 
-ClientboundSetBorderPacket::ClientboundSetBorderPacket(WorldBorder* border, Type packetType)
-    : type(packetType) {
+ClientboundSetBorderPacket::ClientboundSetBorderPacket(WorldBorder* border, Type packetType) : type(packetType)
+{
     centerX = border->getCenterX();
     centerZ = border->getCenterZ();
     oldSize = border->getSize();
@@ -20,16 +21,20 @@ ClientboundSetBorderPacket::ClientboundSetBorderPacket(WorldBorder* border, Type
     warningTime = border->getWarningTime();
 }
 
-ClientboundSetBorderPacket::~ClientboundSetBorderPacket() {
+ClientboundSetBorderPacket::~ClientboundSetBorderPacket()
+{
 }
 
-void ClientboundSetBorderPacket::handle(PacketListener* listener) {
+void ClientboundSetBorderPacket::handle(PacketListener* listener)
+{
     listener->handleSetBorder(shared_from_this());
 }
 
-void ClientboundSetBorderPacket::read(DataInputStream* input) {
+void ClientboundSetBorderPacket::read(DataInputStream* input)
+{
     type = static_cast<Type>(input->readInt());
-    switch (type) {
+    switch (type)
+    {
     case SET_SIZE:
         newSize = input->readDouble();
         break;
@@ -61,9 +66,11 @@ void ClientboundSetBorderPacket::read(DataInputStream* input) {
     }
 }
 
-void ClientboundSetBorderPacket::write(DataOutputStream* output) {
+void ClientboundSetBorderPacket::write(DataOutputStream* output)
+{
     output->writeInt(static_cast<int>(type));
-    switch (type) {
+    switch (type)
+    {
     case SET_SIZE:
         output->writeDouble(newSize);
         break;
@@ -95,8 +102,10 @@ void ClientboundSetBorderPacket::write(DataOutputStream* output) {
     }
 }
 
-void ClientboundSetBorderPacket::applyChanges(WorldBorder* border) {
-    switch (type) {
+void ClientboundSetBorderPacket::applyChanges(WorldBorder* border)
+{
+    switch (type)
+    {
     case SET_SIZE:
         border->setSize(newSize);
         break;
@@ -108,9 +117,12 @@ void ClientboundSetBorderPacket::applyChanges(WorldBorder* border) {
         break;
     case INITIALIZE:
         border->setCenter(centerX, centerZ);
-        if (lerpTime > 0) {
+        if (lerpTime > 0)
+        {
             border->lerpSizeBetween(oldSize, newSize, lerpTime);
-        } else {
+        }
+        else
+        {
             border->setSize(newSize);
         }
         border->setAbsoluteMaxSize(absoluteMaxSize);
@@ -126,8 +138,12 @@ void ClientboundSetBorderPacket::applyChanges(WorldBorder* border) {
     }
 }
 
-int ClientboundSetBorderPacket::getPacketId() { return 217; }
+int ClientboundSetBorderPacket::getPacketId()
+{
+    return 217;
+}
 
-boost::shared_ptr<Packet> ClientboundSetBorderPacket::create() {
+boost::shared_ptr<Packet> ClientboundSetBorderPacket::create()
+{
     return boost::shared_ptr<Packet>(new ClientboundSetBorderPacket());
 }

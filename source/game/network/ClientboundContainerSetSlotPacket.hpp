@@ -12,12 +12,11 @@ class DataOutputStream;
 class PacketListener;
 
 class ClientboundContainerSetSlotPacket : public Packet,
-                                           public boost::enable_shared_from_this<ClientboundContainerSetSlotPacket>
+                                          public boost::enable_shared_from_this<ClientboundContainerSetSlotPacket>
 {
 public:
     ClientboundContainerSetSlotPacket();
-    ClientboundContainerSetSlotPacket(int containerId, int slot,
-                                      not_null_ptr<ItemInstance> item);
+    ClientboundContainerSetSlotPacket(int containerId, int slot, not_null_ptr<ItemInstance> item);
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

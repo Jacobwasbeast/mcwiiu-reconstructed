@@ -35,6 +35,7 @@ public:
     class Pos;
     class Rot;
     class PosRot;
+
 protected:
     int mEntityId;
     int mXa;

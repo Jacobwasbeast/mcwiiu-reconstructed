@@ -11,7 +11,8 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 
-class ClientboundPlayerPositionPacket : public Packet, public boost::enable_shared_from_this<ClientboundPlayerPositionPacket>
+class ClientboundPlayerPositionPacket : public Packet,
+                                        public boost::enable_shared_from_this<ClientboundPlayerPositionPacket>
 {
 public:
     class RelativeArgument
@@ -36,8 +37,10 @@ public:
     };
 
     ClientboundPlayerPositionPacket();
-    ClientboundPlayerPositionPacket(double x, double y, double z, float yRot, float xRot, const boost::unordered_set<const RelativeArgument*>& relativeArguments, int id);
-    ClientboundPlayerPositionPacket(double x, double y, double z, const boost::unordered_set<const RelativeArgument*>& relativeArguments, int id);
+    ClientboundPlayerPositionPacket(double x, double y, double z, float yRot, float xRot,
+                                    const boost::unordered_set<const RelativeArgument*>& relativeArguments, int id);
+    ClientboundPlayerPositionPacket(double x, double y, double z,
+                                    const boost::unordered_set<const RelativeArgument*>& relativeArguments, int id);
     virtual ~ClientboundPlayerPositionPacket();
 
     virtual int getPacketId();

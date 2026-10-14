@@ -34,11 +34,10 @@ ClientboundRespawnPacket::ClientboundRespawnPacket()
 }
 
 ClientboundRespawnPacket::ClientboundRespawnPacket(char dimension, long long mapSeed, const GameType* playerGameType,
-                                                   const Difficulty* difficulty, LevelType* levelType,
-                                                   bool newSeaLevel, int newEntityId, int xzSize, int hellScale,
-                                                   int cloudHeight, bool modernEnd, unsigned char biomeScale,
-                                                   int biomeCentreXChunk, int biomeCentreZChunk,
-                                                   bool keepOldEntityData, int seaLevel)
+                                                   const Difficulty* difficulty, LevelType* levelType, bool newSeaLevel,
+                                                   int newEntityId, int xzSize, int hellScale, int cloudHeight,
+                                                   bool modernEnd, unsigned char biomeScale, int biomeCentreXChunk,
+                                                   int biomeCentreZChunk, bool keepOldEntityData, int seaLevel)
 {
     m_dimension = dimension;
     m_mapSeed = mapSeed;
@@ -64,12 +63,11 @@ ClientboundRespawnPacket::ClientboundRespawnPacket(char dimension, long long map
     m_levelType = levelType;
 }
 
-ClientboundRespawnPacket::ClientboundRespawnPacket(double x, double y, double z, float yRot, float xRot,
-                                                   char dimension, long long mapSeed,
-                                                   const GameType* playerGameType, const Difficulty* difficulty,
-                                                   LevelType* levelType, bool newSeaLevel, int newEntityId,
-                                                   int xzSize, int hellScale, int cloudHeight, bool modernEnd,
-                                                   unsigned char biomeScale, int biomeCentreXChunk,
+ClientboundRespawnPacket::ClientboundRespawnPacket(double x, double y, double z, float yRot, float xRot, char dimension,
+                                                   long long mapSeed, const GameType* playerGameType,
+                                                   const Difficulty* difficulty, LevelType* levelType, bool newSeaLevel,
+                                                   int newEntityId, int xzSize, int hellScale, int cloudHeight,
+                                                   bool modernEnd, unsigned char biomeScale, int biomeCentreXChunk,
                                                    int biomeCentreZChunk, bool keepOldEntityData, int seaLevel)
 {
     m_keepOldEntityData = keepOldEntityData;
@@ -169,10 +167,31 @@ int ClientboundRespawnPacket::getEstimatedSize()
     return levelTypeLength + 18;
 }
 
-int ClientboundRespawnPacket::getDimension() { return m_dimension; }
-const Difficulty* ClientboundRespawnPacket::getDifficulty() { return m_difficulty; }
-const GameType* ClientboundRespawnPacket::getPlayerGameType() { return m_playerGameType; }
-LevelType* ClientboundRespawnPacket::getLevelType() { return m_levelType; }
-bool ClientboundRespawnPacket::shouldKeepOldEntityData() const { return m_keepOldEntityData == 1; }
-bool ClientboundRespawnPacket::hasPositionAndRotation() const { return m_hasPositionAndRotation; }
-int ClientboundRespawnPacket::getPacketId() { return 9; }
+int ClientboundRespawnPacket::getDimension()
+{
+    return m_dimension;
+}
+const Difficulty* ClientboundRespawnPacket::getDifficulty()
+{
+    return m_difficulty;
+}
+const GameType* ClientboundRespawnPacket::getPlayerGameType()
+{
+    return m_playerGameType;
+}
+LevelType* ClientboundRespawnPacket::getLevelType()
+{
+    return m_levelType;
+}
+bool ClientboundRespawnPacket::shouldKeepOldEntityData() const
+{
+    return m_keepOldEntityData == 1;
+}
+bool ClientboundRespawnPacket::hasPositionAndRotation() const
+{
+    return m_hasPositionAndRotation;
+}
+int ClientboundRespawnPacket::getPacketId()
+{
+    return 9;
+}

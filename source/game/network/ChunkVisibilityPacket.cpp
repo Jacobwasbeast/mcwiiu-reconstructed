@@ -33,7 +33,8 @@ void ChunkVisibilityPacket::read(DataInputStream* input)
 
 void ChunkVisibilityPacket::write(DataOutputStream* output)
 {
-    unsigned int packed = ((static_cast<unsigned int>(x) & 0x7fff) << 15) | (static_cast<unsigned int>(z) & 0x7fff) | (static_cast<unsigned int>(visible) << 30) | (static_cast<unsigned int>(loaded) << 31);
+    unsigned int packed = ((static_cast<unsigned int>(x) & 0x7fff) << 15) | (static_cast<unsigned int>(z) & 0x7fff)
+                          | (static_cast<unsigned int>(visible) << 30) | (static_cast<unsigned int>(loaded) << 31);
     output->writeInt(static_cast<int>(packed));
 }
 
