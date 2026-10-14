@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/ISerializable.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMessage : public common::ISerializable
 {
@@ -20,6 +25,8 @@ public:
     unsigned char m_payload[11];
 };
 
-}}}
+}
+}
+}
 
 #endif

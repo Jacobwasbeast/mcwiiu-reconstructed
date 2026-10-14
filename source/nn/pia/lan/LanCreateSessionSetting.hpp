@@ -4,11 +4,20 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/session/CreateSessionSetting.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
-enum LanSessionType { cLanSessionTypeInvalid = 0 };
+enum LanSessionType
+{
+    cLanSessionTypeInvalid = 0
+};
 
-enum LanCreateSettingFlag {
+enum LanCreateSettingFlag
+{
     cLanSettingGameMode = 1u,
     cLanSettingSessionType = 2u,
     cLanSettingApplicationData = 0x100u,
@@ -55,6 +64,8 @@ private:
     unsigned int stateFlags;
 };
 
-}}}
+}
+}
+}
 
 #endif

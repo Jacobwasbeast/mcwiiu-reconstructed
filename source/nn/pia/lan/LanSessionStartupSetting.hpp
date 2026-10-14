@@ -6,13 +6,17 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/transport/Station.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanSessionStartupSetting : public session::Session::StartupSetting
 {
 public:
-    LanSessionStartupSetting()
-        : m_playersCountedAsParticipants(true)
+    LanSessionStartupSetting() : m_playersCountedAsParticipants(true)
     {
         m_cryptoSetting.m_mode = common::Crypto::cModeAesGcm;
         m_field04 = cDefaultField04;
@@ -35,6 +39,8 @@ private:
     };
 };
 
-}}}
+}
+}
+}
 
 #endif

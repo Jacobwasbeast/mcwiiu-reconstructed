@@ -7,20 +7,27 @@
 #include "nn/pia/common/Socket.hpp"
 #include "nn/pia/common/SocketStreamBase.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanProtocol;
 
 class LanInputStream : public common::SocketStreamBase, public common::IPacketInput
 {
 public:
-    enum { cIgnoreAddressMax = 4 };
+    enum
+    {
+        cIgnoreAddressMax = 4
+    };
 
     LanInputStream();
     virtual ~LanInputStream();
     virtual Result Read(common::Packet* packet);
-    virtual Result CalculateCryptoParameter(unsigned char* parameter, unsigned int size,
-                                            common::Packet* packet);
+    virtual Result CalculateCryptoParameter(unsigned char* parameter, unsigned int size, common::Packet* packet);
     virtual Result ImportBroadcastSocket(common::Socket* socket);
     Result readFromSocket(common::Socket* socket, common::Packet* packet);
     void RegisterLanProtocol(LanProtocol* protocol);
@@ -36,6 +43,8 @@ private:
     LanProtocol* m_protocol;
 };
 
-}}}
+}
+}
+}
 
 #endif

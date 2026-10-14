@@ -1,6 +1,11 @@
 #include "nn/pia/lan/LanHostMessage.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -12,15 +17,14 @@ enum
 };
 }
 
-LanHostMessage::LanHostMessage()
-    : m_sessionId(0), m_connectionInfo()
+LanHostMessage::LanHostMessage() : m_sessionId(0), m_connectionInfo()
 {
     m_messageType = cMessageType;
 }
 
-LanHostMessage::LanHostMessage(unsigned int sessionId,
-                               const transport::StationConnectionInfo& connectionInfo)
-    : m_sessionId(sessionId), m_connectionInfo(connectionInfo)
+LanHostMessage::LanHostMessage(unsigned int sessionId, const transport::StationConnectionInfo& connectionInfo)
+    : m_sessionId(sessionId),
+      m_connectionInfo(connectionInfo)
 {
     m_messageType = cMessageType;
 }
@@ -70,4 +74,6 @@ unsigned int LanHostMessage::GetSerializedSize() const
     return m_connectionInfo.GetSerializedSize() + cHeaderSize;
 }
 
-}}}
+}
+}
+}

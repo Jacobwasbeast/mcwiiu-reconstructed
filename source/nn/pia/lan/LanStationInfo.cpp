@@ -1,6 +1,11 @@
 #include "nn/pia/lan/LanStationInfo.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 LanStationInfo::LanStationInfo()
 {
@@ -38,4 +43,6 @@ unsigned int LanStationInfo::GetSerializedSize()
     return session::SessionStationInfo::GetSerializedSize() + 0x31;
 }
 
-}}}
+}
+}
+}

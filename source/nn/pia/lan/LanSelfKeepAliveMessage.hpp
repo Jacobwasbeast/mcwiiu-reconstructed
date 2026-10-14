@@ -3,7 +3,12 @@
 
 #include "nn/pia/lan/LanMessage.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanSelfKeepAliveMessage : public LanMessage
 {
@@ -15,6 +20,8 @@ public:
     virtual unsigned int GetSerializedSize() const;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -8,7 +8,12 @@
 #include "nn/pia/common/common.hpp"
 #include "nn/pia/lan/LanProtocol.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -19,8 +24,7 @@ inline void traceAddress(const common::InetAddress& address)
 }
 }
 
-LanInputStream::LanInputStream()
-    : common::SocketStreamBase(), common::IPacketInput()
+LanInputStream::LanInputStream() : common::SocketStreamBase(), common::IPacketInput()
 {
     m_protocol = 0;
     m_broadcastSocket = 0;
@@ -37,8 +41,8 @@ Result LanInputStream::readFromSocket(common::Socket* socket, common::Packet* pa
     common::InetAddress source;
     unsigned char ancillary = 0;
     Result result;
-    result = socket->RecvFrom(packet->m_packetData.m_data, common::Packet::cDataSizeMax, &source,
-                              &ancillary, reinterpret_cast<int*>(&packet->m_size));
+    result = socket->RecvFrom(packet->m_packetData.m_data, common::Packet::cDataSizeMax, &source, &ancillary,
+                              reinterpret_cast<int*>(&packet->m_size));
     if (result != 0)
     {
         if (!m_started)
@@ -105,8 +109,7 @@ Result LanInputStream::Read(common::Packet* packet)
     return result;
 }
 
-Result LanInputStream::CalculateCryptoParameter(unsigned char* parameter, unsigned int size,
-                                                common::Packet* packet)
+Result LanInputStream::CalculateCryptoParameter(unsigned char* parameter, unsigned int size, common::Packet* packet)
 {
     if (size < 12)
         return transport::cResultInvalidArgument;
@@ -171,4 +174,6 @@ void LanInputStream::RemoveIgnoreAddess(const common::InetAddress& address)
     }
 }
 
-}}}
+}
+}
+}

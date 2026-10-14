@@ -2,7 +2,12 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -13,8 +18,7 @@ enum
 };
 }
 
-LanMessage::LanMessage()
-    : m_messageType(0)
+LanMessage::LanMessage() : m_messageType(0)
 {
     OSBlockSet(m_payload, 0, sizeof(m_payload));
 }
@@ -56,4 +60,6 @@ void LanMessage::Trace(unsigned long long)
 {
 }
 
-}}}
+}
+}
+}

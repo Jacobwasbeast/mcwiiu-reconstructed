@@ -1,11 +1,22 @@
 #include "nn/pia/lan/LanLeaveWithHostMigrationJob.hpp"
 #include "nn/pia/session/Mesh.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
-LanLeaveWithHostMigrationJob::LanLeaveWithHostMigrationJob() : session::LeaveWithHostMigrationJob() {}
-LanLeaveWithHostMigrationJob::~LanLeaveWithHostMigrationJob() {}
-void LanLeaveWithHostMigrationJob::Trace(unsigned long long) const {}
+LanLeaveWithHostMigrationJob::LanLeaveWithHostMigrationJob() : session::LeaveWithHostMigrationJob()
+{
+}
+LanLeaveWithHostMigrationJob::~LanLeaveWithHostMigrationJob()
+{
+}
+void LanLeaveWithHostMigrationJob::Trace(unsigned long long) const
+{
+}
 int LanLeaveWithHostMigrationJob::DecideNextHost()
 {
     int local = session::g_piaMesh->GetLocalStationIndex();
@@ -18,4 +29,6 @@ int LanLeaveWithHostMigrationJob::DecideNextHost()
     return cStationIndexInvalid;
 }
 
-}}}
+}
+}
+}

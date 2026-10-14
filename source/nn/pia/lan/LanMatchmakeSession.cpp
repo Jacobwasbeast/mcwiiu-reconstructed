@@ -11,7 +11,12 @@
 #include "nn/pia/transport/StationManager.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -149,8 +154,8 @@ bool LanMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, 
                 bool isHit = false;
                 for (int i = 0; i < m_searchCriteriaCount; ++i)
                     isHit |= m_searchCriteria[i].IsHit(sessionInfo);
-                if (isHit && sessionInfo->IsOpened() &&
-                    sessionInfo->GetCurrentParticipantNum() + participantNum <= sessionInfo->GetMaxParticipantNum())
+                if (isHit && sessionInfo->IsOpened()
+                    && sessionInfo->GetCurrentParticipantNum() + participantNum <= sessionInfo->GetMaxParticipantNum())
                 {
                     found = true;
                     break;
@@ -163,11 +168,12 @@ bool LanMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, 
         for (session::ISessionInfo** it = m_sessionInfoList->Begin(); it != m_sessionInfoList->End(); ++it)
         {
             sessionInfo = static_cast<LanSessionInfo*>(*it);
-            if (m_searchCriteria[i].IsHit(sessionInfo) && sessionInfo->IsOpened() &&
-                sessionInfo->GetSessionId() != m_ignoredSessionId &&
-                sessionInfo->GetSystemCommunicationVersion() == m_sessionInfo.GetSystemCommunicationVersion() &&
-                sessionInfo->GetApplicationCommunicationVersion() == m_sessionInfo.GetApplicationCommunicationVersion() &&
-                sessionInfo->GetCurrentParticipantNum() + participantNum <= sessionInfo->GetMaxParticipantNum())
+            if (m_searchCriteria[i].IsHit(sessionInfo) && sessionInfo->IsOpened()
+                && sessionInfo->GetSessionId() != m_ignoredSessionId
+                && sessionInfo->GetSystemCommunicationVersion() == m_sessionInfo.GetSystemCommunicationVersion()
+                && sessionInfo->GetApplicationCommunicationVersion()
+                       == m_sessionInfo.GetApplicationCommunicationVersion()
+                && sessionInfo->GetCurrentParticipantNum() + participantNum <= sessionInfo->GetMaxParticipantNum())
             {
                 found = true;
                 break;
@@ -179,9 +185,9 @@ bool LanMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, 
         for (session::ISessionInfo** it = m_sessionInfoList->Begin(); it != m_sessionInfoList->End(); ++it)
         {
             sessionInfo = static_cast<LanSessionInfo*>(*it);
-            if (m_searchCriteria[i].IsHit(sessionInfo) && sessionInfo->IsOpened() &&
-                sessionInfo->GetSessionId() != m_ignoredSessionId &&
-                sessionInfo->GetCurrentParticipantNum() + participantNum <= sessionInfo->GetMaxParticipantNum())
+            if (m_searchCriteria[i].IsHit(sessionInfo) && sessionInfo->IsOpened()
+                && sessionInfo->GetSessionId() != m_ignoredSessionId
+                && sessionInfo->GetCurrentParticipantNum() + participantNum <= sessionInfo->GetMaxParticipantNum())
             {
                 found = true;
                 break;
@@ -192,9 +198,13 @@ bool LanMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, 
     {
         m_matchmakeOwner = true;
         sessionInfo = &m_sessionInfo;
-        m_gatheringId =
-            (LanFacade::GetInstance()->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_address << 16) |
-            LanFacade::GetInstance()->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_port;
+        m_gatheringId = (LanFacade::GetInstance()
+                             ->GetLocalStationConnectionInfo()
+                             .m_stationLocation.m_stationAddress.m_inetAddress.m_address
+                         << 16)
+                        | LanFacade::GetInstance()
+                              ->GetLocalStationConnectionInfo()
+                              .m_stationLocation.m_stationAddress.m_inetAddress.m_port;
         m_sessionInfo.SetStationConnectionInfo(LanFacade::GetInstance()->GetLocalStationConnectionInfo());
         m_sessionInfo.SetCurrentParticipantNum(participantNum);
         pead::Random random;
@@ -203,12 +213,13 @@ bool LanMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, 
     }
     else
     {
-        if (sessionInfo->GetSystemCommunicationVersion() != m_sessionInfo.GetSystemCommunicationVersion() ||
-            sessionInfo->GetApplicationCommunicationVersion() != m_sessionInfo.GetApplicationCommunicationVersion())
+        if (sessionInfo->GetSystemCommunicationVersion() != m_sessionInfo.GetSystemCommunicationVersion()
+            || sessionInfo->GetApplicationCommunicationVersion() != m_sessionInfo.GetApplicationCommunicationVersion())
         {
             Result failure;
-            if (sessionInfo->GetSystemCommunicationVersion() > m_sessionInfo.GetSystemCommunicationVersion() ||
-                sessionInfo->GetApplicationCommunicationVersion() > m_sessionInfo.GetApplicationCommunicationVersion())
+            if (sessionInfo->GetSystemCommunicationVersion() > m_sessionInfo.GetSystemCommunicationVersion()
+                || sessionInfo->GetApplicationCommunicationVersion()
+                       > m_sessionInfo.GetApplicationCommunicationVersion())
                 failure = cResultRemoteVersionNewer;
             else
                 failure = cResultRemoteVersionOlder;
@@ -300,9 +311,13 @@ bool LanMatchmakeSession::WaitCreateMatchmakeSession(unsigned int* gatheringId)
         m_callContext = 0;
         return true;
     }
-    m_gatheringId =
-        (LanFacade::GetInstance()->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_address << 16) |
-        LanFacade::GetInstance()->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_port;
+    m_gatheringId = (LanFacade::GetInstance()
+                         ->GetLocalStationConnectionInfo()
+                         .m_stationLocation.m_stationAddress.m_inetAddress.m_address
+                     << 16)
+                    | LanFacade::GetInstance()
+                          ->GetLocalStationConnectionInfo()
+                          .m_stationLocation.m_stationAddress.m_inetAddress.m_port;
     *gatheringId = m_gatheringId;
     m_sessionInfo.SetStationConnectionInfo(LanFacade::GetInstance()->GetLocalStationConnectionInfo());
     m_sessionInfo.SetSessionId(m_gatheringId);
@@ -681,12 +696,14 @@ void LanMatchmakeSession::UpdateStationInfoList()
             continue;
         LanStationInfo stationInfo;
         station->Trace(cTraceFlagStation);
-        if (station->m_field10 == static_cast<unsigned int>(transport::StationManager::s_pInstance->m_invalidStationIndex))
+        if (station->m_field10
+            == static_cast<unsigned int>(transport::StationManager::s_pInstance->m_invalidStationIndex))
             stationInfo.SetRole(static_cast<session::SessionStationInfo::StationInfoRole>(cStationInfoRoleHost));
         else
             stationInfo.SetRole(static_cast<session::SessionStationInfo::StationInfoRole>(cStationInfoRoleClient));
         transport::IdentificationInfo identificationInfo;
-        Result result = transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(station, &identificationInfo);
+        Result result = transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(station,
+                                                                                                 &identificationInfo);
         if (result == 0)
         {
             stationInfo.SetUserName(identificationInfo.m_fieldC8[0]);
@@ -821,7 +838,13 @@ void LanMatchmakeSession::ReflectSettingToMatchmakeSession(const session::Create
     m_sessionInfo.Clear();
     if (createSetting->IsSetGameMode())
         m_sessionInfo.SetGameMode(createSetting->GetGameMode());
-    m_sessionInfo.SetSessionId(LanFacade::GetInstance()->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_port | (LanFacade::GetInstance()->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_address << 16));
+    m_sessionInfo.SetSessionId(LanFacade::GetInstance()
+                                   ->GetLocalStationConnectionInfo()
+                                   .m_stationLocation.m_stationAddress.m_inetAddress.m_port
+                               | (LanFacade::GetInstance()
+                                      ->GetLocalStationConnectionInfo()
+                                      .m_stationLocation.m_stationAddress.m_inetAddress.m_address
+                                  << 16));
     for (unsigned int i = 0; i < LanSessionInfo::cAttributeCount; ++i)
     {
         if (createSetting->IsSetAttribute(i))
@@ -900,7 +923,8 @@ void LanMatchmakeSession::ReflectSettingToMatchmakeSession(const session::Update
     }
 }
 
-unsigned int LanMatchmakeSession::RegisterSearchCriteria(const session::SessionSearchCriteria* criteria, unsigned char count)
+unsigned int LanMatchmakeSession::RegisterSearchCriteria(const session::SessionSearchCriteria* criteria,
+                                                         unsigned char count)
 {
     m_searchCriteriaCount = count > 2 ? 2 : count;
     const LanSessionSearchCriteria* source = static_cast<const LanSessionSearchCriteria*>(criteria);
@@ -941,4 +965,6 @@ void LanMatchmakeSession::Trace(unsigned long long value) const
 {
 }
 
-}}}
+}
+}
+}

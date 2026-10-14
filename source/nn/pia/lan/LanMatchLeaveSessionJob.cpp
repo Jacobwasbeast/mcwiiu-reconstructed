@@ -2,10 +2,14 @@
 
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
-LanMatchLeaveSessionJob::LanMatchLeaveSessionJob()
-    : session::LeaveSessionJob()
+LanMatchLeaveSessionJob::LanMatchLeaveSessionJob() : session::LeaveSessionJob()
 {
 }
 
@@ -22,4 +26,6 @@ void LanMatchLeaveSessionJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

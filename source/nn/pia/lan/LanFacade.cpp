@@ -8,7 +8,12 @@
 
 #include <new>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -26,9 +31,7 @@ LanFacade* g_lanFacade = 0;
 
 unsigned char* g_lanFacadeStorage = 0;
 
-LanFacade::LanFacade()
-    : m_lanProtocol(0),
-      m_networkSetting()
+LanFacade::LanFacade() : m_lanProtocol(0), m_networkSetting()
 {
 }
 
@@ -166,4 +169,6 @@ LanFacade* LanFacade::GetInstance()
     return g_lanFacade;
 }
 
-}}}
+}
+}
+}

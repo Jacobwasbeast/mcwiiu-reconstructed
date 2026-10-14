@@ -11,7 +11,12 @@
 #include "platform/wiiu/pead.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -34,8 +39,7 @@ enum
 };
 }
 
-LanMatchMeshLayerController::LanMatchMeshLayerController()
-    : session::MeshLayerController()
+LanMatchMeshLayerController::LanMatchMeshLayerController() : session::MeshLayerController()
 {
     m_matchmakeSession = 0;
 }
@@ -117,8 +121,7 @@ void LanMatchMeshLayerController::Cleanup()
     session::MeshLayerController::Cleanup();
 }
 
-Result LanMatchMeshLayerController::MeshStartup(session::IMatchmakeSession* matchmakeSession,
-                                                bool skipBandwidthCheck)
+Result LanMatchMeshLayerController::MeshStartup(session::IMatchmakeSession* matchmakeSession, bool skipBandwidthCheck)
 {
     m_matchmakeSession = matchmakeSession;
     return session::MeshLayerController::MeshStartup(matchmakeSession, false);
@@ -176,4 +179,6 @@ void LanMatchMeshLayerController::SetConnectionStatusDisconnected()
     m_connectionStatus = session::Session::cConnectionStatusDisconnectedNetwork;
 }
 
-}}}
+}
+}
+}

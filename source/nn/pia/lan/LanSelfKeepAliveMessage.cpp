@@ -1,6 +1,11 @@
 #include "nn/pia/lan/LanSelfKeepAliveMessage.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -39,4 +44,6 @@ unsigned int LanSelfKeepAliveMessage::GetSerializedSize() const
     return cSerializedSize;
 }
 
-}}}
+}
+}
+}

@@ -7,8 +7,18 @@
 #include "nn/pia/common/SocketAddress.hpp"
 #include "nn/pia/Transport.hpp"
 
-namespace nn { namespace pia { namespace common { class Packet; class InetAddress; struct SockAddrIn; }
-namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class Packet;
+class InetAddress;
+struct SockAddrIn;
+}
+namespace lan
+{
 class LanProtocol;
 
 class LanOutputStream : public common::SocketStreamBase, public common::IPacketOutput
@@ -33,6 +43,8 @@ private:
     LanProtocol* m_protocol;
 };
 
-}}}
+}
+}
+}
 
 #endif

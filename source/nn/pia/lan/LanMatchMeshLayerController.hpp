@@ -5,9 +5,23 @@
 #include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session { class IMatchmakeSession; }}}
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
+class IMatchmakeSession;
+}
+}
+}
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchMeshLayerController : public session::MeshLayerController
 {
@@ -31,6 +45,8 @@ private:
     session::Session::ConnectionStatus m_connectionStatus;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -2,7 +2,12 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -14,16 +19,17 @@ enum
 };
 }
 
-LanSessionMessage::LanSessionMessage()
-    : m_sessionId(0), m_sequence(0), m_index(0), m_count(0), m_fragmentSize(0)
+LanSessionMessage::LanSessionMessage() : m_sessionId(0), m_sequence(0), m_index(0), m_count(0), m_fragmentSize(0)
 {
     m_messageType = cMessageType;
 }
 
-LanSessionMessage::LanSessionMessage(unsigned int sessionId, unsigned short sequence,
-                                     unsigned char index, unsigned char count,
-                                     const unsigned char* fragment, unsigned int fragmentSize)
-    : m_sessionId(sessionId), m_sequence(sequence), m_index(index), m_count(count),
+LanSessionMessage::LanSessionMessage(unsigned int sessionId, unsigned short sequence, unsigned char index,
+                                     unsigned char count, const unsigned char* fragment, unsigned int fragmentSize)
+    : m_sessionId(sessionId),
+      m_sequence(sequence),
+      m_index(index),
+      m_count(count),
       m_fragmentSize(fragmentSize)
 {
     m_messageType = cMessageType;
@@ -89,4 +95,6 @@ unsigned int LanSessionMessage::GetSerializedSize() const
     return m_fragmentSize + cHeaderSize;
 }
 
-}}}
+}
+}
+}

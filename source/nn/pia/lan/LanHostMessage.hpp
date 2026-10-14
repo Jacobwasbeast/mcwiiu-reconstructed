@@ -4,7 +4,12 @@
 #include "nn/pia/lan/LanMessage.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanHostMessage : public LanMessage
 {
@@ -20,6 +25,8 @@ public:
     transport::StationConnectionInfo m_connectionInfo;
 };
 
-}}}
+}
+}
+}
 
 #endif

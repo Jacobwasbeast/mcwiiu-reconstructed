@@ -3,7 +3,12 @@
 
 #include "nn/pia/session/LeaveSessionJob.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchLeaveSessionJob : public session::LeaveSessionJob
 {
@@ -12,9 +17,10 @@ public:
     ~LanMatchLeaveSessionJob();
     bool IsNeedSkipLeaveCurrentMatchmakeSession();
     void Trace(unsigned long long value) const;
-
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -1,8 +1,14 @@
 #include "nn/pia/lan/LanMatchJointSessionJob.hpp"
 
 
-namespace nn { namespace pia { namespace lan {
-namespace {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
+namespace
+{
 typedef common::Job::ExecuteResult (LanMatchJointSessionJob::*Step)();
 
 enum LanMatchResult
@@ -19,13 +25,13 @@ enum
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, Step function, const char* name)
 {
-    const common::StepSequenceJob::Step step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 }
 
-LanMatchJointSessionJob::LanMatchJointSessionJob()
-    : session::JointSessionJob(), m_stationConnectionInfo()
+LanMatchJointSessionJob::LanMatchJointSessionJob() : session::JointSessionJob(), m_stationConnectionInfo()
 {
 }
 
@@ -37,30 +43,40 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::CallSessionEvent
 {
     NoticeStartingEventByProcessType();
     session::g_piaSession->m_postponeNotice = true;
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::WaitNextSessionId), "LanMatchJointSessionJob::WaitNextSessionId"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::WaitNextSessionId),
+             "LanMatchJointSessionJob::WaitNextSessionId"));
     switch (m_processType)
     {
     case session::Session::cProcessTypeJoinJointSession:
         if (m_field9c != 0)
         {
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::StartJoinMatchmakeSession), "LanMatchJointSessionJob::StartJoinMatchmakeSession"));
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                    &LanMatchJointSessionJob::StartJoinMatchmakeSession),
+                                "LanMatchJointSessionJob::StartJoinMatchmakeSession"));
         }
         break;
     case session::Session::cProcessTypeJoinRandomJointSession:
         if (m_field9c != 0)
         {
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::StartRandomMatchmake), "LanMatchJointSessionJob::StartRandomMatchmake"));
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                    &LanMatchJointSessionJob::StartRandomMatchmake),
+                                "LanMatchJointSessionJob::StartRandomMatchmake"));
         }
         break;
     case session::Session::cProcessTypeDestroyJointSession:
     case session::Session::cProcessTypeLeaveJointSession:
         if (m_field9c == 0)
         {
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::SendAnswerToInvitation), "LanMatchJointSessionJob::SendAnswerToInvitation"));
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                    &LanMatchJointSessionJob::SendAnswerToInvitation),
+                                "LanMatchJointSessionJob::SendAnswerToInvitation"));
         }
         else
         {
-            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::SendInvitationAsCompanion), "LanMatchJointSessionJob::SendInvitationAsCompanion"));
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                    &LanMatchJointSessionJob::SendInvitationAsCompanion),
+                                "LanMatchJointSessionJob::SendInvitationAsCompanion"));
         }
         break;
     default:
@@ -81,7 +97,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::SendInvitationAs
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitForAnswerToInvitation, "LanMatchJointSessionJob::WaitForAnswerToInvitation");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitForAnswerToInvitation,
+               "LanMatchJointSessionJob::WaitForAnswerToInvitation");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -102,7 +119,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitForAnswerToI
 
 LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartRandomMatchmake()
 {
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitRandomMatchmake, "LanMatchJointSessionJob::WaitRandomMatchmake");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitRandomMatchmake,
+               "LanMatchJointSessionJob::WaitRandomMatchmake");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -118,13 +136,15 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitRandomMatchm
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::SendNextSessionId, "LanMatchJointSessionJob::SendNextSessionId");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::SendNextSessionId,
+               "LanMatchJointSessionJob::SendNextSessionId");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartJoinMatchmakeSession()
 {
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitJoinMatchmakeSession, "LanMatchJointSessionJob::WaitJoinMatchmakeSession");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitJoinMatchmakeSession,
+               "LanMatchJointSessionJob::WaitJoinMatchmakeSession");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -140,7 +160,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitJoinMatchmak
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::SendNextSessionId, "LanMatchJointSessionJob::SendNextSessionId");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::SendNextSessionId,
+               "LanMatchJointSessionJob::SendNextSessionId");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -156,7 +177,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::SendNextSessionI
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCompanionStationPrepared, "LanMatchJointSessionJob::WaitCompanionStationPrepared");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCompanionStationPrepared,
+               "LanMatchJointSessionJob::WaitCompanionStationPrepared");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -172,7 +194,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitCompanionSta
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartLeavePreviousMesh, "LanMatchJointSessionJob::StartLeavePreviousMesh");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartLeavePreviousMesh,
+               "LanMatchJointSessionJob::StartLeavePreviousMesh");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -188,7 +211,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::SendAnswerToInvi
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitNextSessionId, "LanMatchJointSessionJob::WaitNextSessionId");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitNextSessionId,
+               "LanMatchJointSessionJob::WaitNextSessionId");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -204,13 +228,15 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitNextSessionI
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartUpdateSessionKey, "LanMatchJointSessionJob::StartUpdateSessionKey");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartUpdateSessionKey,
+               "LanMatchJointSessionJob::StartUpdateSessionKey");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartUpdateSessionKey()
 {
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitUpdateSessionKey, "LanMatchJointSessionJob::WaitUpdateSessionKey");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitUpdateSessionKey,
+               "LanMatchJointSessionJob::WaitUpdateSessionKey");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -226,7 +252,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitUpdateSessio
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::SendPreparedForMigrateSession, "LanMatchJointSessionJob::SendPreparedForMigrateSession");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::SendPreparedForMigrateSession,
+               "LanMatchJointSessionJob::SendPreparedForMigrateSession");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -242,7 +269,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::SendPreparedForM
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh, "LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh,
+               "LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -258,13 +286,15 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitUntilLeaderL
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartLeavePreviousMesh, "LanMatchJointSessionJob::StartLeavePreviousMesh");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartLeavePreviousMesh,
+               "LanMatchJointSessionJob::StartLeavePreviousMesh");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartLeavePreviousMesh()
 {
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitLeavePreviousMesh, "LanMatchJointSessionJob::WaitLeavePreviousMesh");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitLeavePreviousMesh,
+               "LanMatchJointSessionJob::WaitLeavePreviousMesh");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -280,13 +310,15 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitLeavePreviou
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession, "LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession,
+               "LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession()
 {
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession, "LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession,
+               "LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -310,18 +342,23 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::MeshRestart()
 {
     if (m_field9d != 0)
     {
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::StartCreateNextMesh), "LanMatchJointSessionJob::StartCreateNextMesh"));
+        SetCurrentStep(Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::StartCreateNextMesh),
+            "LanMatchJointSessionJob::StartCreateNextMesh"));
     }
     else
     {
-        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo), "LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo"));
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                &LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo),
+                            "LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo"));
     }
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartCreateNextMesh()
 {
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCreateNextMesh, "LanMatchJointSessionJob::WaitCreateNextMesh");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCreateNextMesh,
+               "LanMatchJointSessionJob::WaitCreateNextMesh");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -337,13 +374,15 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitCreateNextMe
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCompanionStation, "LanMatchJointSessionJob::WaitCompanionStation");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCompanionStation,
+               "LanMatchJointSessionJob::WaitCompanionStation");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo()
 {
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo, "LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo,
+               "LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -359,7 +398,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitGetNextMeshH
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartJoinNextMesh, "LanMatchJointSessionJob::StartJoinNextMesh");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::StartJoinNextMesh,
+               "LanMatchJointSessionJob::StartJoinNextMesh");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -381,7 +421,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitJoinNextMesh
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCompanionStation, "LanMatchJointSessionJob::WaitCompanionStation");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCompanionStation,
+               "LanMatchJointSessionJob::WaitCompanionStation");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -397,7 +438,8 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitCompanionSta
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitHostStationId, "LanMatchJointSessionJob::WaitHostStationId");
+    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitHostStationId,
+               "LanMatchJointSessionJob::WaitHostStationId");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -434,20 +476,17 @@ void LanMatchJointSessionJob::Trace(unsigned long long value) const
 {
 }
 
-Result LanMatchJointSessionJob::StartupJoinRandomJointSessionImpl(
-    const session::JoinRandomSessionSetting* setting)
+Result LanMatchJointSessionJob::StartupJoinRandomJointSessionImpl(const session::JoinRandomSessionSetting* setting)
 {
     return cResultNotSupported;
 }
 
-Result LanMatchJointSessionJob::StartupCreateJointSessionImpl(
-    const session::CreateSessionSetting* setting)
+Result LanMatchJointSessionJob::StartupCreateJointSessionImpl(const session::CreateSessionSetting* setting)
 {
     return cResultNotSupported;
 }
 
-Result LanMatchJointSessionJob::StartupJoinJointSessionImpl(
-    const session::JoinSessionSetting* setting)
+Result LanMatchJointSessionJob::StartupJoinJointSessionImpl(const session::JoinSessionSetting* setting)
 {
     return cResultNotSupported;
 }
@@ -462,12 +501,11 @@ Result LanMatchJointSessionJob::StartupDestroyJointSessionImpl()
     return cResultNotSupported;
 }
 
-Result LanMatchJointSessionJob::StartupPassiveProcessImpl(
-    session::Session::ProcessType processType,
-    session::SessionProtocol::MessageType messageType,
-    const unsigned long long* stationIds,
-    unsigned short stationIdNum,
-    unsigned long long senderStationId)
+Result LanMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::ProcessType processType,
+                                                          session::SessionProtocol::MessageType messageType,
+                                                          const unsigned long long* stationIds,
+                                                          unsigned short stationIdNum,
+                                                          unsigned long long senderStationId)
 {
     if (m_companionStationIdList.GetNodeNum() != 0)
         m_companionStationIdList.Clear();
@@ -517,8 +555,7 @@ unsigned int LanMatchJointSessionJob::GetJointSessionStateForDebug() const
 }
 
 Result LanMatchJointSessionJob::ReceiveNextSessionIdImpl(session::Session::ProcessType processType,
-                                                         unsigned int sessionId,
-                                                         const unsigned char* applicationData,
+                                                         unsigned int sessionId, const unsigned char* applicationData,
                                                          unsigned char applicationDataSize,
                                                          unsigned long long senderStationId)
 {
@@ -541,4 +578,6 @@ void LanMatchJointSessionJob::CleanupImpl()
 {
 }
 
-}}}
+}
+}
+}

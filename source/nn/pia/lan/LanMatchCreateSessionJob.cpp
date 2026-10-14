@@ -8,7 +8,12 @@
 #include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -19,7 +24,8 @@ enum
     cResultCancelled = 0x6c05
 };
 
-inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (LanMatchCreateSessionJob::*function)(), const char* name)
+inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (LanMatchCreateSessionJob::*function)(),
+                       const char* name)
 {
     const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
@@ -27,7 +33,10 @@ inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (LanMa
 }
 
 LanMatchCreateSessionJob::LanMatchCreateSessionJob()
-    : session::CreateSessionJob(), m_result(0), m_matchmakeSession(0), m_isOpenSession(true)
+    : session::CreateSessionJob(),
+      m_result(0),
+      m_matchmakeSession(0),
+      m_isOpenSession(true)
 {
 }
 
@@ -40,7 +49,8 @@ LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::CreateMatchmak
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &LanMatchCreateSessionJob::CompleteFailure, "nn::pia::lan::LanMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &LanMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::lan::LanMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
@@ -56,7 +66,8 @@ LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::CreateMatchmak
         m_callerContext->SignalFailure(result);
         m_callerContext = 0;
     }
-    SelectStep(m_currentStep, &LanMatchCreateSessionJob::WaitCreateMatchmake, "LanMatchCreateSessionJob::WaitCreateMatchmake");
+    SelectStep(m_currentStep, &LanMatchCreateSessionJob::WaitCreateMatchmake,
+               "LanMatchCreateSessionJob::WaitCreateMatchmake");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -85,12 +96,14 @@ LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::WaitCreateMatc
             if (session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] == sessionId)
             {
                 session::g_piaSession->SetCurrentSessionOpenStatus(
-                    m_isOpenSession ? session::Session::cSessionOpenStatusOpen : session::Session::cSessionOpenStatusParticipationClosed);
+                    m_isOpenSession ? session::Session::cSessionOpenStatusOpen
+                                    : session::Session::cSessionOpenStatusParticipationClosed);
             }
             else if (session::g_piaSession->GetJointSessionId() == sessionId)
             {
                 session::g_piaSession->SetBufferSessionOpenStatus(
-                    m_isOpenSession ? session::Session::cSessionOpenStatusOpen : session::Session::cSessionOpenStatusParticipationClosed);
+                    m_isOpenSession ? session::Session::cSessionOpenStatusOpen
+                                    : session::Session::cSessionOpenStatusParticipationClosed);
             }
             SelectStep(m_currentStep, &LanMatchCreateSessionJob::MeshStartup, "CreateSessionJob::MeshStartup");
             return MakeExecuteResult(cExecuteKindContinue);
@@ -104,7 +117,8 @@ LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::OpenParticipat
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &LanMatchCreateSessionJob::CompleteFailure, "nn::pia::lan::LanMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &LanMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::lan::LanMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     const Result result = m_matchmakeSession->OpenParticipate(
@@ -116,7 +130,8 @@ LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::OpenParticipat
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchCreateSessionJob::WaitOpenParticipate, "LanMatchCreateSessionJob::WaitOpenParticipate");
+    SelectStep(m_currentStep, &LanMatchCreateSessionJob::WaitOpenParticipate,
+               "LanMatchCreateSessionJob::WaitOpenParticipate");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -128,7 +143,8 @@ LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::WaitOpenPartic
         {
             session::g_piaSession->m_meshLayerController->MeshCleanup();
             m_result = m_callContext.m_result;
-            SelectStep(m_currentStep, &LanMatchCreateSessionJob::UnregisterGathering, "LanMatchCreateSessionJob::UnregisterGathering");
+            SelectStep(m_currentStep, &LanMatchCreateSessionJob::UnregisterGathering,
+                       "LanMatchCreateSessionJob::UnregisterGathering");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
@@ -145,7 +161,8 @@ LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::UnregisterGath
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &LanMatchCreateSessionJob::CompleteFailure, "nn::pia::lan::LanMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &LanMatchCreateSessionJob::CompleteFailure,
+                   "nn::pia::lan::LanMatchCreateSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     const Result result = m_matchmakeSession->UnregisterMatchmakeSession(
@@ -157,13 +174,15 @@ LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::UnregisterGath
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchCreateSessionJob::WaitUnregisterGathering, "LanMatchCreateSessionJob::WaitUnregisterGathering");
+    SelectStep(m_currentStep, &LanMatchCreateSessionJob::WaitUnregisterGathering,
+               "LanMatchCreateSessionJob::WaitUnregisterGathering");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::WaitUnregisterGathering()
 {
-    if (session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->WaitUnregisterMatchmakeSession())
+    if (session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]
+            ->WaitUnregisterMatchmakeSession())
     {
         session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
         if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
@@ -188,7 +207,8 @@ void LanMatchCreateSessionJob::Trace(unsigned long long) const
 Result LanMatchCreateSessionJob::StartupImpl(const session::CreateSessionSetting* setting)
 {
     session::Session* piaSession = session::g_piaSession;
-    m_matchmakeSession = static_cast<LanMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
+    m_matchmakeSession = static_cast<LanMatchmakeSession*>(
+        piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
     if (m_matchmakeSession == 0)
         return transport::cResultInvalidState;
     if (setting->GetMaxParticipantNum() == 0)
@@ -196,7 +216,8 @@ Result LanMatchCreateSessionJob::StartupImpl(const session::CreateSessionSetting
     m_matchmakeSession->ReflectSettingToMatchmakeSession(setting);
     m_isOpenSession = static_cast<const LanCreateSessionSetting*>(setting)->IsOpenSession();
     session::g_piaSession->m_fieldc2[session::g_piaSession->m_currentSessionIndex] = setting->GetMaxParticipantNum();
-    SelectStep(m_currentStep, &LanMatchCreateSessionJob::CreateMatchmakeSession, "LanMatchCreateSessionJob::CreateMatchmakeSession");
+    SelectStep(m_currentStep, &LanMatchCreateSessionJob::CreateMatchmakeSession,
+               "LanMatchCreateSessionJob::CreateMatchmakeSession");
     return 0;
 }
 
@@ -205,7 +226,8 @@ void LanMatchCreateSessionJob::SetNextStepAtWaitCreateMesh()
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        SelectStep(m_currentStep, &LanMatchCreateSessionJob::CompleteFailure, "LanMatchCreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &LanMatchCreateSessionJob::CompleteFailure,
+                   "LanMatchCreateSessionJob::CompleteFailure");
     }
     else
     {
@@ -218,8 +240,11 @@ void LanMatchCreateSessionJob::SetNextStepAtWaitCreateMesh()
 LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::SetNextStepAtFailedCreateMesh(Result result)
 {
     m_result = result;
-    SelectStep(m_currentStep, &LanMatchCreateSessionJob::UnregisterGathering, "LanMatchCreateSessionJob::UnregisterGathering");
+    SelectStep(m_currentStep, &LanMatchCreateSessionJob::UnregisterGathering,
+               "LanMatchCreateSessionJob::UnregisterGathering");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-}}}
+}
+}
+}

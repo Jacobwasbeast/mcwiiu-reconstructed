@@ -3,7 +3,12 @@
 #include "nn/pia/lan/LanMatchmakeSession.hpp"
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -20,9 +25,7 @@ enum
 };
 
 template <class T>
-inline void setStep(common::StepSequenceJob::Step& slot,
-                    common::Job::ExecuteResult (T::*function)(),
-                    const char* name)
+inline void setStep(common::StepSequenceJob::Step& slot, common::Job::ExecuteResult (T::*function)(), const char* name)
 {
     const common::StepSequenceJob::Step step(
         static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
@@ -31,7 +34,9 @@ inline void setStep(common::StepSequenceJob::Step& slot,
 }
 
 LanMatchBrowseMatchmakeJob::LanMatchBrowseMatchmakeJob()
-    : session::BrowseMatchmakeJob(), m_callContext(), m_matchmakeSession(0)
+    : session::BrowseMatchmakeJob(),
+      m_callContext(),
+      m_matchmakeSession(0)
 {
 }
 
@@ -135,13 +140,11 @@ Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* match
     m_matchmakeSession = static_cast<LanMatchmakeSession*>(matchmakeSession);
     if (m_matchmakeSession->RegisterSearchCriteria(criteria, cBrowseSearchCriteriaNum) == 0)
         return cResultInvalidArgument;
-    setStep(m_currentStep, &LanMatchBrowseMatchmakeJob::BrowseMatchmake,
-            "LanMatchBrowseMatchmakeJob::BrowseMatchmake");
+    setStep(m_currentStep, &LanMatchBrowseMatchmakeJob::BrowseMatchmake, "LanMatchBrowseMatchmakeJob::BrowseMatchmake");
     return 0;
 }
 
-Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmakeSession,
-                                               unsigned int sessionId)
+Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmakeSession, unsigned int sessionId)
 {
     m_matchmakeSession = static_cast<LanMatchmakeSession*>(matchmakeSession);
     const Result result = m_matchmakeSession->RequestSessionInfo(&m_callContext, sessionId);
@@ -152,4 +155,6 @@ Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* match
     return 0;
 }
 
-}}}
+}
+}
+}

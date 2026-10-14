@@ -18,7 +18,12 @@ enum
 };
 }
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 Result Initialize()
 {
@@ -90,4 +95,6 @@ void EmbedModuleInfo()
     SetModuleId("[SDK+Nintendo:PIA_LAN_5_9_0]");
 }
 
-}}}
+}
+}
+}

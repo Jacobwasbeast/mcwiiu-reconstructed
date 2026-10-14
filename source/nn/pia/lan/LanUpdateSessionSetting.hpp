@@ -3,8 +3,14 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/session/UpdateSessionSetting.hpp"
 #include "nn/pia/lan/LanCreateSessionSetting.hpp"
-namespace nn { namespace pia { namespace lan {
-class LanUpdateSessionSetting : public session::UpdateSessionSetting {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
+class LanUpdateSessionSetting : public session::UpdateSessionSetting
+{
 public:
     LanUpdateSessionSetting();
     virtual ~LanUpdateSessionSetting();
@@ -28,6 +34,7 @@ public:
     LanUpdateSessionSetting& operator=(const LanUpdateSessionSetting& other);
     void Reset();
     void Trace(unsigned long long value) const;
+
 private:
     unsigned short m_minParticipantNum;
     unsigned short m_maxParticipantNum;
@@ -36,5 +43,7 @@ private:
     unsigned char m_applicationData[0x180];
     unsigned int m_applicationDataSize;
 };
-}}}
+}
+}
+}
 #endif

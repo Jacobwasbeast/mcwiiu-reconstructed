@@ -4,7 +4,12 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/String.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanStationInfo : public session::SessionStationInfo
 {
@@ -22,6 +27,8 @@ public:
     unsigned long long m_stationId;
 };
 
-}}}
+}
+}
+}
 
 #endif

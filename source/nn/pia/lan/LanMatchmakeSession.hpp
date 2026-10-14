@@ -9,19 +9,33 @@
 #include "nn/pia/session/ISessionInfoList.hpp"
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class CreateSessionSetting;
 class JoinSessionSetting;
 class UpdateSessionSetting;
 
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class StationConnectionInfo;
 
-}}}
+}
+}
+}
 
 namespace nn
 {

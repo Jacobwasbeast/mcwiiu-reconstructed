@@ -3,7 +3,12 @@
 
 #include "nn/pia/session/LeaveWithHostMigrationJob.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanLeaveWithHostMigrationJob : public session::LeaveWithHostMigrationJob
 {
@@ -14,6 +19,8 @@ public:
     int DecideNextHost();
 };
 
-}}}
+}
+}
+}
 
 #endif

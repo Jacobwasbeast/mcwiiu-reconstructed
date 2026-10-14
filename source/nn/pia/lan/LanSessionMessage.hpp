@@ -3,17 +3,24 @@
 
 #include "nn/pia/lan/LanMessage.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanSessionMessage : public LanMessage
 {
 public:
-    enum { cFragmentSizeMax = 800 };
+    enum
+    {
+        cFragmentSizeMax = 800
+    };
 
     LanSessionMessage();
-    LanSessionMessage(unsigned int sessionId, unsigned short sequence, unsigned char index,
-                      unsigned char count, const unsigned char* fragment,
-                      unsigned int fragmentSize);
+    LanSessionMessage(unsigned int sessionId, unsigned short sequence, unsigned char index, unsigned char count,
+                      const unsigned char* fragment, unsigned int fragmentSize);
     virtual ~LanSessionMessage() {}
     virtual Result Serialize(unsigned char* buffer, unsigned int* size) const;
     virtual Result Deserialize(const unsigned char* buffer);
@@ -27,6 +34,8 @@ public:
     unsigned int m_fragmentSize;
 };
 
-}}}
+}
+}
+}
 
 #endif

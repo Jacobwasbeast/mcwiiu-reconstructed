@@ -4,7 +4,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/JoinSessionJob.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchmakeSession;
 
@@ -37,6 +42,8 @@ private:
     Result m_startupResult;
 };
 
-}}}
+}
+}
+}
 
 #endif

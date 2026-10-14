@@ -3,7 +3,12 @@
 
 #include "nn/pia/session/JoinSessionSetting.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanJoinSessionSetting : public session::JoinSessionSetting
 {
@@ -16,6 +21,8 @@ public:
 private:
 };
 
-}}}
+}
+}
+}
 
 #endif

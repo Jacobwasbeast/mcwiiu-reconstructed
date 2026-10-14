@@ -9,7 +9,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/lan/LanSessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanProtocol;
 
@@ -32,9 +37,8 @@ public:
 
     void NotifyDisconnectToMeshLayerController();
     Result SendBrowseReplyMessage(const common::InetAddress& address, unsigned char* keyParam,
-                                  unsigned int keyParamSize, unsigned char* token,
-                                  unsigned int tokenSize, bool isAuthenticated,
-                                  bool omitSessionParam);
+                                  unsigned int keyParamSize, unsigned char* token, unsigned int tokenSize,
+                                  bool isAuthenticated, bool omitSessionParam);
     Result SendBrowseMessage(unsigned char index);
     ExecuteResult Update();
     bool RequestBrowseMessage(unsigned char count);
@@ -57,6 +61,8 @@ private:
     unsigned char m_browseToken[cBrowseTokenSize];
 };
 
-}}}
+}
+}
+}
 
 #endif

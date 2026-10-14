@@ -2,7 +2,12 @@
 #include "nn/pia/session/Mesh.hpp"
 #include "nn/pia/transport/StationConnectionInfoTable.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -19,8 +24,8 @@ LanConnectStationJob::~LanConnectStationJob()
 {
 }
 
-Result LanConnectStationJob::StartupImpl(common::CallContext* context,
-    transport::Station* station, const transport::StationConnectionInfo& info, bool secure)
+Result LanConnectStationJob::StartupImpl(common::CallContext* context, transport::Station* station,
+                                         const transport::StationConnectionInfo& info, bool secure)
 {
     m_station = station;
     m_secure = secure;
@@ -59,10 +64,13 @@ LanConnectStationJob::ExecuteResult LanConnectStationJob::TryCurrentAddress()
 {
     m_station->GetStationAddress() = m_currentLocation.m_stationAddress;
     m_station->Trace(cTraceStationLocation);
-    Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&transport::ConnectStationJob::SendConnectionRequest),
-              "ConnectStationJob::SendConnectionRequest");
+    Step step(
+        static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&transport::ConnectStationJob::SendConnectionRequest),
+        "ConnectStationJob::SendConnectionRequest");
     m_currentStep = step;
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
-}}}
+}
+}
+}

@@ -26,11 +26,22 @@
 #include "nn/pia/session/LeaveMeshJob.hpp"
 #include "nn/pia/session/SessionInfoList.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
-namespace {
+namespace
+{
 
-enum { cMaxStationNum = 16, cHeaderSize = 28, cMtuSize = 1364 };
+enum
+{
+    cMaxStationNum = 16,
+    cHeaderSize = 28,
+    cMtuSize = 1364
+};
 
 }
 
@@ -99,15 +110,13 @@ common::IPacketOutput* LanNetworkFactory::CreateOutputStream()
 void LanNetworkFactory::DeleteInputStream(common::IPacketInput* stream)
 {
     if (stream != 0)
-        transport::DestroyObject(static_cast<common::SocketStreamBase*>(
-            static_cast<LanInputStream*>(stream)));
+        transport::DestroyObject(static_cast<common::SocketStreamBase*>(static_cast<LanInputStream*>(stream)));
 }
 
 void LanNetworkFactory::DeleteOutputStream(common::IPacketOutput* stream)
 {
     if (stream != 0)
-        transport::DestroyObject(static_cast<common::SocketStreamBase*>(
-            static_cast<LanOutputStream*>(stream)));
+        transport::DestroyObject(static_cast<common::SocketStreamBase*>(static_cast<LanOutputStream*>(stream)));
 }
 
 transport::ConnectStationJob* LanNetworkFactory::CreateConnectStationJob()
@@ -330,4 +339,6 @@ void LanNetworkFactory::DeleteMatchMeshLayerController(session::MeshLayerControl
     transport::DestroyObject(controller);
 }
 
-}}}
+}
+}
+}

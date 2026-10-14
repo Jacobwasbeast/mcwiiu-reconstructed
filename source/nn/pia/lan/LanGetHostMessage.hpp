@@ -3,12 +3,20 @@
 
 #include "nn/pia/lan/LanMessage.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanGetHostMessage : public LanMessage
 {
 public:
-    enum { cSerializedSize = 16 };
+    enum
+    {
+        cSerializedSize = 16
+    };
 
     LanGetHostMessage();
     explicit LanGetHostMessage(unsigned int sessionId);
@@ -20,6 +28,8 @@ public:
     unsigned int m_sessionId;
 };
 
-}}}
+}
+}
+}
 
 #endif

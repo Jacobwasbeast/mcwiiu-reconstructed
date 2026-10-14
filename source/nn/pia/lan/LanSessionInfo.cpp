@@ -5,7 +5,12 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -332,12 +337,11 @@ const unsigned long long cTraceSessionInfo = 0x0100000000000000ULL;
 
 unsigned int LanSessionInfo::GetSerializedSize() const
 {
-    return (m_stationConnectionInfo.GetSerializedSize() >> 1) + cSerializedFixedSize +
-           LanStationInfo::GetSerializedSize() * cMaxStationInfo;
+    return (m_stationConnectionInfo.GetSerializedSize() >> 1) + cSerializedFixedSize
+           + LanStationInfo::GetSerializedSize() * cMaxStationInfo;
 }
 
-Result LanSessionInfo::Serialize(unsigned char* buffer, unsigned int* size,
-                                         unsigned int bufferSize) const
+Result LanSessionInfo::Serialize(unsigned char* buffer, unsigned int* size, unsigned int bufferSize) const
 {
     if (buffer == 0)
         return cResultInvalidArgument;
@@ -379,7 +383,8 @@ Result LanSessionInfo::Serialize(unsigned char* buffer, unsigned int* size,
     cursor += 1;
 
     unsigned int written;
-    m_stationConnectionInfo.m_stationLocation.m_stationAddress.Serialize(cursor, &written, bufferSize - (cursor - buffer));
+    m_stationConnectionInfo.m_stationLocation.m_stationAddress.Serialize(cursor, &written,
+                                                                         bufferSize - (cursor - buffer));
     cursor += m_stationConnectionInfo.m_stationLocation.m_stationAddress.GetSerializedSize();
     common::serializeU64(cursor, m_stationConnectionInfo.m_stationLocation.m_principalId);
     cursor += 8;
@@ -416,8 +421,7 @@ Result LanSessionInfo::Serialize(unsigned char* buffer, unsigned int* size,
             cursor += 1;
             if (stationInfo.GetUserName().GetEncodingType() == common::String::EncodingType_Utf16)
             {
-                const unsigned short* name =
-                    static_cast<const unsigned short*>(stationInfo.GetUserName().GetBuffer());
+                const unsigned short* name = static_cast<const unsigned short*>(stationInfo.GetUserName().GetBuffer());
                 for (unsigned int unit = 0; unit < cUserNameUtf16Units; ++unit)
                 {
                     common::serializeU16(cursor, name[unit]);
@@ -523,8 +527,8 @@ Result LanSessionInfo::Deserialize(const unsigned char* buffer, unsigned int buf
     m_stationInfoCount = 0;
     for (unsigned int index = 0; index < cMaxStationInfo; ++index)
     {
-        m_stationInfo[index].SetRole(static_cast<session::SessionStationInfo::StationInfoRole>(
-            common::deserializeU8(cursor)));
+        m_stationInfo[index].SetRole(
+            static_cast<session::SessionStationInfo::StationInfoRole>(common::deserializeU8(cursor)));
         cursor += 1;
         if (common::deserializeU8(cursor) == common::String::EncodingType_Utf16)
         {
@@ -557,8 +561,8 @@ Result LanSessionInfo::Deserialize(const unsigned char* buffer, unsigned int buf
         m_stationInfo[index].SetStationId(common::deserializeU64(cursor));
         cursor += 8;
         m_stationInfo[index].GetUserName().Trace(cTraceSessionInfo);
-        if (m_stationInfo[index].GetRole() != session::SessionStationInfo::cStationInfoRole_Invalid ||
-            m_stationInfo[index].GetUserName().GetStringLength() != 0)
+        if (m_stationInfo[index].GetRole() != session::SessionStationInfo::cStationInfoRole_Invalid
+            || m_stationInfo[index].GetUserName().GetStringLength() != 0)
             ++m_stationInfoCount;
     }
 
@@ -570,4 +574,6 @@ Result LanSessionInfo::Deserialize(const unsigned char* buffer, unsigned int buf
     return 0;
 }
 
-}}}
+}
+}
+}

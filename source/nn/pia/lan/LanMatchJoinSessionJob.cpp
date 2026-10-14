@@ -11,7 +11,12 @@
 #include "nn/pia/session/MeshProtocol.hpp"
 #include "nn/pia/session/StationIdStatusTable.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -41,9 +46,7 @@ enum
 };
 
 template <class T>
-inline void setStep(common::StepSequenceJob::Step& slot,
-                    common::Job::ExecuteResult (T::*function)(),
-                    const char* name)
+inline void setStep(common::StepSequenceJob::Step& slot, common::Job::ExecuteResult (T::*function)(), const char* name)
 {
     const common::StepSequenceJob::Step step(
         static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
@@ -54,14 +57,13 @@ inline common::Time makeRetryTime()
 {
     const int waitMsec = session::g_piaMesh->GetMeshProtocol()->GetUnknown24() + cRetryMarginMsec;
     common::Time time;
-    time.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                  common::TimeSpan::GetTicksPerMSec().m_tick * waitMsec;
+    time.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick
+                  + common::TimeSpan::GetTicksPerMSec().m_tick * waitMsec;
     return time;
 }
 }
 
-LanMatchJoinSessionJob::LanMatchJoinSessionJob()
-    : session::JoinSessionJob(), m_retryTime(), m_startupResult(0)
+LanMatchJoinSessionJob::LanMatchJoinSessionJob() : session::JoinSessionJob(), m_retryTime(), m_startupResult(0)
 {
 }
 
@@ -102,8 +104,7 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::JoinMatchmakeSessi
         return MakeExecuteResult(cExecuteKindFinished);
     }
     m_joinState = cJoinStateMatchmakeJoining;
-    setStep(m_currentStep, &LanMatchJoinSessionJob::WaitJoinMatchmake,
-            "LanMatchJoinSessionJob::WaitJoinMatchmake");
+    setStep(m_currentStep, &LanMatchJoinSessionJob::WaitJoinMatchmake, "LanMatchJoinSessionJob::WaitJoinMatchmake");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -189,8 +190,7 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::WaitGetStationConn
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            setStep(m_currentStep, &session::JoinSessionJob::MeshStartup,
-                    "JoinSessionJob::MeshStartup");
+            setStep(m_currentStep, &session::JoinSessionJob::MeshStartup, "JoinSessionJob::MeshStartup");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -216,8 +216,7 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::LeaveMatchmakeSess
     }
     else
     {
-        setStep(m_currentStep, &session::JoinSessionJob::CompleteFailure,
-                "LanMatchJoinSessionJob::CompleteFailure");
+        setStep(m_currentStep, &session::JoinSessionJob::CompleteFailure, "LanMatchJoinSessionJob::CompleteFailure");
         session->m_sessionId[session->m_currentSessionIndex] = 0;
     }
     return MakeExecuteResult(cExecuteKindNextStep);
@@ -230,8 +229,7 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::WaitLeaveMatchmake
         session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
         if (session::g_piaSession->GetStatus() == cStatusDisconnectedSession)
             m_result = cResultSessionDisconnected;
-        setStep(m_currentStep, &session::JoinSessionJob::CompleteFailure,
-                "LanMatchJoinSessionJob::CompleteFailure");
+        setStep(m_currentStep, &session::JoinSessionJob::CompleteFailure, "LanMatchJoinSessionJob::CompleteFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     return MakeExecuteResult(cExecuteKindNextStep);
@@ -249,8 +247,7 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::WaitForRetryJoinMa
     m_joinState = cJoinStateRetryWait;
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup,
-                "LanMatchJoinSessionJob::MeshCleanup");
+        setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup, "LanMatchJoinSessionJob::MeshCleanup");
         m_result = cResultCancelled;
         return MakeExecuteResult(cExecuteKindContinue);
     }
@@ -275,12 +272,10 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::WaitRequestSession
         m_result = cResultJoinFailed;
         if (session::g_piaMesh->GetStationNum() > cStationNumRetryThreshold)
             m_sessionInfoRetry = true;
-        setStep(m_currentStep, &session::JoinSessionJob::LeaveMesh,
-                "LanMatchJoinSessionJob::LeaveMesh");
+        setStep(m_currentStep, &session::JoinSessionJob::LeaveMesh, "LanMatchJoinSessionJob::LeaveMesh");
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    setStep(m_currentStep, &session::JoinSessionJob::CompleteProcess,
-            "LanMatchJoinSessionJob::CompleteProcess");
+    setStep(m_currentStep, &session::JoinSessionJob::CompleteProcess, "LanMatchJoinSessionJob::CompleteProcess");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -324,8 +319,7 @@ void LanMatchJoinSessionJob::SetNextStepAtWaitJoinMesh()
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
     {
         m_result = cResultJoinFailed;
-        setStep(m_currentStep, &session::JoinSessionJob::LeaveMesh,
-                "LanMatchJoinSessionJob::LeaveMesh");
+        setStep(m_currentStep, &session::JoinSessionJob::LeaveMesh, "LanMatchJoinSessionJob::LeaveMesh");
     }
     else if (session::g_piaSession->GetStatus() == cStatusDisconnectedSession)
     {
@@ -340,8 +334,7 @@ void LanMatchJoinSessionJob::SetNextStepAtWaitJoinMesh()
         if (result != 0)
         {
             m_result = cResultJoinFailed;
-            setStep(m_currentStep, &session::JoinSessionJob::LeaveMesh,
-                    "LanMatchJoinSessionJob::LeaveMesh");
+            setStep(m_currentStep, &session::JoinSessionJob::LeaveMesh, "LanMatchJoinSessionJob::LeaveMesh");
         }
         else
         {
@@ -362,16 +355,14 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::SetNextStepAtFaile
     }
     if (result == cResultUnknown6838)
     {
-        setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup,
-                "LanMatchJoinSessionJob::MeshCleanup");
+        setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup, "LanMatchJoinSessionJob::MeshCleanup");
         m_result = result;
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     if (result == cResultUnknown6c3d)
     {
         m_result = cResultUnknown6c4c;
-        setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup,
-                "LanMatchJoinSessionJob::MeshCleanup");
+        setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup, "LanMatchJoinSessionJob::MeshCleanup");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     m_result = result;
@@ -389,8 +380,7 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::SetNextStepAtFaile
             return MakeExecuteResult(cExecuteKindNextStep);
         }
     }
-    setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup,
-            "LanMatchJoinSessionJob::MeshCleanup");
+    setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup, "LanMatchJoinSessionJob::MeshCleanup");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -417,8 +407,7 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::SetNextStepAtWaitL
             return MakeExecuteResult(cExecuteKindNextStep);
         }
     }
-    setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup,
-            "LanMatchJoinSessionJob::MeshCleanup");
+    setStep(m_currentStep, &session::JoinSessionJob::MeshCleanup, "LanMatchJoinSessionJob::MeshCleanup");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -432,14 +421,12 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::SetNextStepAtMeshC
 Result LanMatchJoinSessionJob::StartupImpl(const session::JoinSessionSetting* setting)
 {
     session::Session* session = session::g_piaSession;
-    m_matchmakeSession = static_cast<LanMatchmakeSession*>(
-        session->m_matchmakeSession[session->m_currentSessionIndex]);
+    m_matchmakeSession = static_cast<LanMatchmakeSession*>(session->m_matchmakeSession[session->m_currentSessionIndex]);
     if (m_matchmakeSession == 0)
         return cResultInvalidState;
     if (setting == 0)
         return cResultInvalidArgument;
-    const LanSessionInfo* sessionInfo =
-        static_cast<const LanSessionInfo*>(setting->GetSessionInfoPtr());
+    const LanSessionInfo* sessionInfo = static_cast<const LanSessionInfo*>(setting->GetSessionInfoPtr());
     if (sessionInfo->GetSystemCommunicationVersion() < cSystemCommunicationVersionMin)
     {
         m_startupResult = cResultRemoteVersionOlder;
@@ -448,13 +435,13 @@ Result LanMatchJoinSessionJob::StartupImpl(const session::JoinSessionSetting* se
     {
         m_startupResult = cResultRemoteVersionNewer;
     }
-    else if (sessionInfo->GetApplicationCommunicationVersion() <
-             LanFacade::GetInstance()->GetApplicationCommunicationVersion())
+    else if (sessionInfo->GetApplicationCommunicationVersion()
+             < LanFacade::GetInstance()->GetApplicationCommunicationVersion())
     {
         m_startupResult = cResultRemoteVersionOlder;
     }
-    else if (sessionInfo->GetApplicationCommunicationVersion() >
-             LanFacade::GetInstance()->GetApplicationCommunicationVersion())
+    else if (sessionInfo->GetApplicationCommunicationVersion()
+             > LanFacade::GetInstance()->GetApplicationCommunicationVersion())
     {
         m_startupResult = cResultRemoteVersionNewer;
     }
@@ -469,4 +456,6 @@ Result LanMatchJoinSessionJob::StartupImpl(const session::JoinSessionSetting* se
     return 0;
 }
 
-}}}
+}
+}
+}

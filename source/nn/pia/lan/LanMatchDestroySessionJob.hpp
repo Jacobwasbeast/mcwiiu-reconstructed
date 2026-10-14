@@ -3,7 +3,12 @@
 
 #include "nn/pia/session/DestroySessionJob.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchDestroySessionJob : public session::DestroySessionJob
 {
@@ -21,6 +26,8 @@ protected:
     virtual void SetNextStepAtMeshCleanup();
 };
 
-}}}
+}
+}
+}
 
 #endif

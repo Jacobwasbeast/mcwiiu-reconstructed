@@ -4,7 +4,12 @@
 
 #include "nn/pia/lan/LanSessionInfo.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -98,17 +103,17 @@ bool LanSessionSearchCriteria::IsHit(const LanSessionInfo* sessionInfo)
     {
         hit = false;
     }
-    else if (IsSetMinParticipantNum() && m_minParticipantRangeMin != cParticipantNumUnset &&
-             m_minParticipantRangeMax != cParticipantNumUnset &&
-             (m_minParticipantRangeMin > sessionInfo->GetMinParticipantNum() ||
-              m_minParticipantRangeMax < sessionInfo->GetMinParticipantNum()))
+    else if (IsSetMinParticipantNum() && m_minParticipantRangeMin != cParticipantNumUnset
+             && m_minParticipantRangeMax != cParticipantNumUnset
+             && (m_minParticipantRangeMin > sessionInfo->GetMinParticipantNum()
+                 || m_minParticipantRangeMax < sessionInfo->GetMinParticipantNum()))
     {
         hit = false;
     }
-    else if (IsSetMaxParticipantNum() && m_maxParticipantRangeMin != cParticipantNumUnset &&
-             m_maxParticipantRangeMax != cParticipantNumUnset &&
-             (m_maxParticipantRangeMin > sessionInfo->GetMaxParticipantNum() ||
-              m_maxParticipantRangeMax < sessionInfo->GetMaxParticipantNum()))
+    else if (IsSetMaxParticipantNum() && m_maxParticipantRangeMin != cParticipantNumUnset
+             && m_maxParticipantRangeMax != cParticipantNumUnset
+             && (m_maxParticipantRangeMin > sessionInfo->GetMaxParticipantNum()
+                 || m_maxParticipantRangeMax < sessionInfo->GetMaxParticipantNum()))
     {
         hit = false;
     }
@@ -120,8 +125,7 @@ bool LanSessionSearchCriteria::IsHit(const LanSessionInfo* sessionInfo)
     {
         hit = false;
     }
-    else if (m_vacantOnly &&
-             sessionInfo->GetCurrentParticipantNum() == sessionInfo->GetMaxParticipantNum())
+    else if (m_vacantOnly && sessionInfo->GetCurrentParticipantNum() == sessionInfo->GetMaxParticipantNum())
     {
         hit = false;
     }
@@ -135,9 +139,8 @@ bool LanSessionSearchCriteria::IsHit(const LanSessionInfo* sessionInfo)
             if (m_attributeRangeUsed[index])
             {
                 unsigned int value = 0;
-                if (sessionInfo->GetAttribute(static_cast<unsigned char>(index), &value) != 0 ||
-                    value < m_attributeRangeMin[index] ||
-                    value > m_attributeRangeMax[index])
+                if (sessionInfo->GetAttribute(static_cast<unsigned char>(index), &value) != 0
+                    || value < m_attributeRangeMin[index] || value > m_attributeRangeMax[index])
                 {
                     hit = false;
                     break;
@@ -184,8 +187,7 @@ unsigned int LanSessionSearchCriteria::GetSerializedSize() const
     return size;
 }
 
-Result LanSessionSearchCriteria::Serialize(unsigned char* buffer, unsigned int* size,
-                                           unsigned int bufferSize) const
+Result LanSessionSearchCriteria::Serialize(unsigned char* buffer, unsigned int* size, unsigned int bufferSize) const
 {
     if (buffer == 0)
         return cResultInvalidArgument;
@@ -350,8 +352,7 @@ void LanSessionSearchCriteria::Copy(const LanSessionSearchCriteria& other)
     m_setFlags = other.m_setFlags;
     for (unsigned int index = 0; index < cAttributeCount; ++index)
     {
-        OSBlockMove(m_attributeList[index], other.m_attributeList[index],
-                    sizeof(m_attributeList[index]), FALSE);
+        OSBlockMove(m_attributeList[index], other.m_attributeList[index], sizeof(m_attributeList[index]), FALSE);
         m_attributeListSize[index] = other.m_attributeListSize[index];
         m_attributeRangeMin[index] = other.m_attributeRangeMin[index];
         m_attributeRangeMax[index] = other.m_attributeRangeMax[index];
@@ -365,4 +366,6 @@ LanSessionSearchCriteria& LanSessionSearchCriteria::operator=(const LanSessionSe
     return *this;
 }
 
-}}}
+}
+}
+}

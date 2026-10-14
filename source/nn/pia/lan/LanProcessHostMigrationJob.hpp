@@ -5,7 +5,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/ProcessHostMigrationJob.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanProcessHostMigrationJob : public session::ProcessHostMigrationJob
 {
@@ -53,6 +58,8 @@ public:
     common::Time m_lastConfirmationTime;
 };
 
-}}}
+}
+}
+}
 
 #endif

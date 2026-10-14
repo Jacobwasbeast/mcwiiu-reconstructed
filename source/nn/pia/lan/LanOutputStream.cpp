@@ -9,7 +9,12 @@
 #include "nn/pia/lan/LanProtocol.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -23,8 +28,7 @@ const unsigned long long cTraceInvalidArgument = 0x1ULL;
 const unsigned long long cTraceSendFailure = 0x0200000000000000ULL;
 }
 
-LanOutputStream::LanOutputStream()
-    : common::SocketStreamBase(), common::IPacketOutput(), m_protocol(0)
+LanOutputStream::LanOutputStream() : common::SocketStreamBase(), common::IPacketOutput(), m_protocol(0)
 {
 }
 
@@ -57,8 +61,7 @@ Result LanOutputStream::OnStationConnectionEvent()
     return 0;
 }
 
-Result LanOutputStream::CalculateCryptoParameter(unsigned char* output, unsigned int size,
-                                                  common::Packet* packet)
+Result LanOutputStream::CalculateCryptoParameter(unsigned char* output, unsigned int size, common::Packet* packet)
 {
     if (size < 12)
         return transport::cResultInvalidArgument;
@@ -92,8 +95,8 @@ int LanOutputStream::CreateMulticastAddressArray(common::SockAddrIn* output, uns
     return count;
 }
 
-Result LanOutputStream::SendTo(const void* data, unsigned int size,
-                               const common::InetAddress& address, unsigned char ttl)
+Result LanOutputStream::SendTo(const void* data, unsigned int size, const common::InetAddress& address,
+                               unsigned char ttl)
 {
     int sent = 0;
     Result result;
@@ -144,8 +147,7 @@ bool LanOutputStream::IsDestinationAddressIndividual(common::SockAddrIn* address
     return true;
 }
 
-Result LanOutputStream::SendToMulti(const void* data, unsigned int size,
-                                    const common::SockAddrIn* addresses, int count)
+Result LanOutputStream::SendToMulti(const void* data, unsigned int size, const common::SockAddrIn* addresses, int count)
 {
     int sent = 0;
     Result result = m_socket->SendToMulti(data, static_cast<int>(size), addresses, count, &sent);
@@ -175,7 +177,8 @@ Result LanOutputStream::Write(const common::Packet& packet)
         result = SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600);
         if (result != 0)
         {
-            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure, false);
+            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure,
+                         false);
             return result;
         }
         return 0;
@@ -195,7 +198,8 @@ Result LanOutputStream::Write(const common::Packet& packet)
         result = SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600);
         if (result != 0)
         {
-            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure, false);
+            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure,
+                         false);
             return result;
         }
         return 0;
@@ -209,7 +213,8 @@ Result LanOutputStream::Write(const common::Packet& packet)
         result = SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600);
         if (result != 0)
         {
-            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure, false);
+            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure,
+                         false);
             return result;
         }
         return 0;
@@ -221,7 +226,8 @@ Result LanOutputStream::Write(const common::Packet& packet)
         result = SendToMulti(packet.m_packetData.m_data, packet.m_size, addresses, count);
         if (result != 0)
         {
-            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure, false);
+            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure,
+                         false);
             return result;
         }
         return 0;
@@ -248,4 +254,6 @@ unsigned int LanOutputStream::IsBroadcastSupported() const
     return true;
 }
 
-}}}
+}
+}
+}

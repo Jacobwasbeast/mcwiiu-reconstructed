@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/session/CreateSessionJob.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchmakeSession;
 
@@ -33,6 +38,8 @@ private:
     bool m_isOpenSession;
 };
 
-}}}
+}
+}
+}
 
 #endif

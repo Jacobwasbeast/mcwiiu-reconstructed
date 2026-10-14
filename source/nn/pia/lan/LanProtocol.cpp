@@ -33,7 +33,12 @@
 #include "nn/pia/transport/ThreadStreamManager.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -95,13 +100,11 @@ void LanProtocol::ReceivedFragmentData::Clear()
     m_source.Clear();
 }
 
-void LanProtocol::ReceivedFragmentData::Receive(const void* data, unsigned int size,
-                                                unsigned int id, unsigned short sequence,
-                                                unsigned char index, unsigned char count,
+void LanProtocol::ReceivedFragmentData::Receive(const void* data, unsigned int size, unsigned int id,
+                                                unsigned short sequence, unsigned char index, unsigned char count,
                                                 const common::StationAddress& source)
 {
-    if (m_id != id || m_sequence != sequence || m_fragmentCount != count ||
-        !(source == m_source))
+    if (m_id != id || m_sequence != sequence || m_fragmentCount != count || !(source == m_source))
     {
         Clear();
         m_id = id;
@@ -120,30 +123,43 @@ bool LanProtocol::ReceivedFragmentData::IsReceivedAll() const
 
 LanProtocol::LanProtocol()
     : transport::Protocol(),
-      m_started(0), m_address(0), m_broadcastAddress(0), m_port(0), m_filterPort(0),
-      m_unknown24(0), m_socket(0), m_broadcastSocket(0), m_broadcastSocketBound(0),
-      m_outputStream(0), m_inputStream(0), m_matchmakeUpdateJob(0), m_unknown618(0),
-      m_receivedSessionInfo(), m_sessionMessageId(0), m_getHostContext(), m_getHostDeadline(),
-      m_getSessionContext(), m_getSessionDeadline(), m_updateSessionContext(),
-      m_selfKeepAliveTime(), m_cryptoSetting(), m_random()
+      m_started(0),
+      m_address(0),
+      m_broadcastAddress(0),
+      m_port(0),
+      m_filterPort(0),
+      m_unknown24(0),
+      m_socket(0),
+      m_broadcastSocket(0),
+      m_broadcastSocketBound(0),
+      m_outputStream(0),
+      m_inputStream(0),
+      m_matchmakeUpdateJob(0),
+      m_unknown618(0),
+      m_receivedSessionInfo(),
+      m_sessionMessageId(0),
+      m_getHostContext(),
+      m_getHostDeadline(),
+      m_getSessionContext(),
+      m_getSessionDeadline(),
+      m_updateSessionContext(),
+      m_selfKeepAliveTime(),
+      m_cryptoSetting(),
+      m_random()
 {
     LanFacade::GetInstance()->RegisterLanProtocol(this);
-    static_cast<LanInputStream*>(transport::g_piaThreadStreamManager->m_packetInput)
-        ->RegisterLanProtocol(this);
-    static_cast<LanOutputStream*>(transport::g_piaThreadStreamManager->m_packetOutput)
-        ->RegisterLanProtocol(this);
+    static_cast<LanInputStream*>(transport::g_piaThreadStreamManager->m_packetInput)->RegisterLanProtocol(this);
+    static_cast<LanOutputStream*>(transport::g_piaThreadStreamManager->m_packetOutput)->RegisterLanProtocol(this);
 }
 
 LanProtocol::~LanProtocol()
 {
     if (transport::g_piaThreadStreamManager != 0)
     {
-        LanOutputStream* output = static_cast<LanOutputStream*>(
-            transport::g_piaThreadStreamManager->m_packetOutput);
+        LanOutputStream* output = static_cast<LanOutputStream*>(transport::g_piaThreadStreamManager->m_packetOutput);
         if (output != 0)
             output->UnregisterLanProtocol();
-        LanInputStream* input = static_cast<LanInputStream*>(
-            transport::g_piaThreadStreamManager->m_packetInput);
+        LanInputStream* input = static_cast<LanInputStream*>(transport::g_piaThreadStreamManager->m_packetInput);
         if (input != 0)
             input->UnregisterLanProtocol();
     }
@@ -156,8 +172,7 @@ Result LanProtocol::Initialize()
     m_started = 0;
     m_socket = newObject<common::Socket>();
     m_broadcastSocket = newObject<common::Socket>();
-    void* storage = pead::allocateFromSeadHeap(cMatchmakeUpdateJobSize,
-                                               common::HeapManager::GetHeap());
+    void* storage = pead::allocateFromSeadHeap(cMatchmakeUpdateJobSize, common::HeapManager::GetHeap());
     if (storage != 0)
         m_matchmakeUpdateJob = new (storage) LanMatchmakeUpdateJob(this);
     else
@@ -241,11 +256,10 @@ bool LanProtocol::IsCryptoEnabled() const
     return m_cryptoSetting.m_mode != 0;
 }
 
-void LanProtocol::SendMessage(LanPayload* payload, const common::StationAddress& address,
-                              bool isPriority, bool field602, unsigned long long)
+void LanProtocol::SendMessage(LanPayload* payload, const common::StationAddress& address, bool isPriority,
+                              bool field602, unsigned long long)
 {
-    if (!IsCryptoEnabled() || m_sessionKeyRegistered != 0 ||
-        payload->m_type == cSelfKeepAliveMessageType)
+    if (!IsCryptoEnabled() || m_sessionKeyRegistered != 0 || payload->m_type == cSelfKeepAliveMessageType)
     {
         transport::ProtocolMessageWriter* writer = mStationPacketHandler->AssignByStationAddress(
             transport::ProtocolId(cProtocolType, 0), address, payload->m_size, isPriority, field602);
@@ -348,9 +362,9 @@ bool LanProtocol::RequestGetHostMessage()
 
 bool LanProtocol::IsGetHostMessageCompleted() const
 {
-    return m_getHostContext.m_state == common::CallContext::cStateSuccess ||
-           m_getHostContext.m_state == common::CallContext::cStateFailure ||
-           m_getHostContext.m_state == common::CallContext::cStateCancelled;
+    return m_getHostContext.m_state == common::CallContext::cStateSuccess
+           || m_getHostContext.m_state == common::CallContext::cStateFailure
+           || m_getHostContext.m_state == common::CallContext::cStateCancelled;
 }
 
 bool LanProtocol::RequestUpdateSessionMessage()
@@ -366,9 +380,9 @@ bool LanProtocol::RequestUpdateSessionMessage()
 
 bool LanProtocol::IsUpdateSessionMessageCompleted() const
 {
-    return m_updateSessionContext.m_state == common::CallContext::cStateSuccess ||
-           m_updateSessionContext.m_state == common::CallContext::cStateFailure ||
-           m_updateSessionContext.m_state == common::CallContext::cStateCancelled;
+    return m_updateSessionContext.m_state == common::CallContext::cStateSuccess
+           || m_updateSessionContext.m_state == common::CallContext::cStateFailure
+           || m_updateSessionContext.m_state == common::CallContext::cStateCancelled;
 }
 
 bool LanProtocol::RequestGetSessionMessage()
@@ -389,9 +403,9 @@ bool LanProtocol::RequestGetSessionMessage()
 
 bool LanProtocol::IsGetSessionMessageCompleted() const
 {
-    return m_getSessionContext.m_state == common::CallContext::cStateSuccess ||
-           m_getSessionContext.m_state == common::CallContext::cStateFailure ||
-           m_getSessionContext.m_state == common::CallContext::cStateCancelled;
+    return m_getSessionContext.m_state == common::CallContext::cStateSuccess
+           || m_getSessionContext.m_state == common::CallContext::cStateFailure
+           || m_getSessionContext.m_state == common::CallContext::cStateCancelled;
 }
 
 Result LanProtocol::GetSessionMessageResult() const
@@ -399,8 +413,7 @@ Result LanProtocol::GetSessionMessageResult() const
     return m_getSessionContext.m_result;
 }
 
-Result LanProtocol::CalculateCryptionKeyForBrowse(const unsigned char* input,
-                                                  unsigned int inputSize, void* output,
+Result LanProtocol::CalculateCryptionKeyForBrowse(const unsigned char* input, unsigned int inputSize, void* output,
                                                   unsigned int outputSize)
 {
     if (input == 0 || inputSize != cKeySize || output == 0 || outputSize != cKeySize)
@@ -416,8 +429,7 @@ Result LanProtocol::CalculateCryptionKeyForBrowse(const unsigned char* input,
 
 unsigned long long LanProtocol::GetLocalPrincipalId() const
 {
-    return transport::g_stationConnectionInfoTable->m_localStationConnectionInfo.m_stationLocation
-        .m_principalId;
+    return transport::g_stationConnectionInfoTable->m_localStationConnectionInfo.m_stationLocation.m_principalId;
 }
 
 Result LanProtocol::BindRandomPort()
@@ -448,8 +460,7 @@ Result LanProtocol::BindRandomPort()
             info.m_stationLocation.m_field23 = 1;
             info.m_stationLocation.m_field25 = 3;
             info.m_stationLocation.m_field18 = transport::g_piaTransport->GenerateConnectionId();
-            info.m_stationLocation.m_principalId =
-                (static_cast<unsigned long long>(m_address) << 32) | m_port;
+            info.m_stationLocation.m_principalId = (static_cast<unsigned long long>(m_address) << 32) | m_port;
             info.m_stationLocation.m_field1c = (m_address << 16) | m_port;
             info.m_localStationLocation.SetStationLocation(info.m_stationLocation);
             info.m_localStationLocation.m_field25 = 0;
@@ -556,9 +567,8 @@ Result LanProtocol::RegisterSessionKey()
         common::CryptoSetting setting;
         setting.m_mode = m_cryptoSetting.m_mode;
         if (setting.m_mode != 0)
-            CalculateCryptionKeyForSession(
-                matchmakeSession->GetSessionInfoPtr()->GetSessionParam(),
-                LanSessionInfo::cSessionParamSize, setting.m_key, cKeySize);
+            CalculateCryptionKeyForSession(matchmakeSession->GetSessionInfoPtr()->GetSessionParam(),
+                                           LanSessionInfo::cSessionParamSize, setting.m_key, cKeySize);
         session::g_piaSession->m_meshLayerController->UpdateCryptoSetting(setting);
         m_sessionKeyRegistered = 1;
     }
@@ -615,8 +625,7 @@ void LanProtocol::SendGetSessionMessage()
 
 void LanProtocol::SendHostMessage(const common::StationAddress& address)
 {
-    LanHostMessage message(GetCurrentMatchmakeSession()->GetGatheringId(),
-                           GetLocalStationConnectionInfo());
+    LanHostMessage message(GetCurrentMatchmakeSession()->GetGatheringId(), GetLocalStationConnectionInfo());
     unsigned int size = 0;
     message.Serialize(m_messageBuffer, &size);
     LanPayload payload(m_messageBuffer, size, message.m_messageType);
@@ -646,12 +655,10 @@ void LanProtocol::StopLanSession()
     m_inputStream->ResetIgnoreAddress();
 }
 
-Result LanProtocol::CalculateCryptionKeyForSession(const unsigned char* input,
-                                                   unsigned int inputSize, void* output,
+Result LanProtocol::CalculateCryptionKeyForSession(const unsigned char* input, unsigned int inputSize, void* output,
                                                    unsigned int outputSize)
 {
-    if (input == 0 || inputSize != LanSessionInfo::cSessionParamSize || output == 0 ||
-        outputSize != cKeySize)
+    if (input == 0 || inputSize != LanSessionInfo::cSessionParamSize || output == 0 || outputSize != cKeySize)
         return cResultInvalidArgument;
     if (m_randomSeedSet == 0)
         return cResultInvalidState;
@@ -670,12 +677,10 @@ Result LanProtocol::CalculateCryptionKeyForSession(const unsigned char* input,
     return 0;
 }
 
-Result LanProtocol::CalculateCryptionKeyForBrowseReply(const unsigned char* input,
-                                                       unsigned int inputSize, void* output,
+Result LanProtocol::CalculateCryptionKeyForBrowseReply(const unsigned char* input, unsigned int inputSize, void* output,
                                                        unsigned int outputSize)
 {
-    if (input == 0 || inputSize != LanSessionInfo::cSessionParamSize || output == 0 ||
-        outputSize != cKeySize)
+    if (input == 0 || inputSize != LanSessionInfo::cSessionParamSize || output == 0 || outputSize != cKeySize)
         return cResultInvalidArgument;
     if (m_randomSeedSet == 0)
         return cResultInvalidState;
@@ -693,11 +698,10 @@ Result LanProtocol::CalculateCryptionKeyForBrowseReply(const unsigned char* inpu
     return 0;
 }
 
-Result LanProtocol::CalculateTokenHash(const unsigned char* input, unsigned int inputSize,
-                                       void* output, unsigned int outputSize)
+Result LanProtocol::CalculateTokenHash(const unsigned char* input, unsigned int inputSize, void* output,
+                                       unsigned int outputSize)
 {
-    if (input == 0 || inputSize != LanMatchmakeUpdateJob::cBrowseTokenSize || output == 0 ||
-        outputSize != cKeySize)
+    if (input == 0 || inputSize != LanMatchmakeUpdateJob::cBrowseTokenSize || output == 0 || outputSize != cKeySize)
         return ResultInvalidArgument();
     if (m_cryptoSetting.m_mode == 0)
         return 0;
@@ -724,11 +728,10 @@ Result LanProtocol::Dispatch()
     }
 
     session::Session* currentSession = session::g_piaSession;
-    if (currentSession->GetStatus() == session::Session::cConnectionStatusConnected ||
-        currentSession->GetStatus() == session::Session::cConnectionStatusDisconnectedNetwork ||
-        currentSession->GetStatus() == session::Session::cConnectionStatusDisconnectedSession)
-        matchmakeSession->GetSessionInfoPtr()->SetCurrentParticipantNum(
-            currentSession->GetParticipantNum());
+    if (currentSession->GetStatus() == session::Session::cConnectionStatusConnected
+        || currentSession->GetStatus() == session::Session::cConnectionStatusDisconnectedNetwork
+        || currentSession->GetStatus() == session::Session::cConnectionStatusDisconnectedSession)
+        matchmakeSession->GetSessionInfoPtr()->SetCurrentParticipantNum(currentSession->GetParticipantNum());
 
     ReceiveMessages();
 
@@ -754,8 +757,7 @@ Result LanProtocol::Dispatch()
             for (int index = 0; index < cPortCount; ++index)
             {
                 common::StationAddress address;
-                address.SetInetAddress(
-                    common::InetAddress(m_broadcastAddress, cPortBase + index));
+                address.SetInetAddress(common::InetAddress(m_broadcastAddress, cPortBase + index));
                 SendSessionMessage(address);
             }
         }
@@ -797,8 +799,7 @@ void LanProtocol::ReceiveMessages()
         const transport::ProtocolMessageReader* reader = iterator.GetMessageReader();
         LanMessage message;
         message.Deserialize(reader->m_message + transport::ProtocolMessageReader::cMessageHeaderSize);
-        OSBlockMove(m_messageBuffer,
-                    reader->m_message + transport::ProtocolMessageReader::cMessageHeaderSize,
+        OSBlockMove(m_messageBuffer, reader->m_message + transport::ProtocolMessageReader::cMessageHeaderSize,
                     reader->m_messageSize, FALSE);
         LanPayload payload;
         payload.m_data = m_messageBuffer;
@@ -813,19 +814,16 @@ void LanProtocol::SendSessionMessage(const common::StationAddress& address)
 {
     LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
     unsigned int infoSize;
-    matchmakeSession->GetSessionInfoPtr()->Serialize(m_sessionInfoBuffer, &infoSize,
-                                                     sizeof(m_sessionInfoBuffer));
-    const unsigned char fragmentCount =
-        static_cast<unsigned char>((infoSize - 1) / cSessionFragmentSize + 1);
+    matchmakeSession->GetSessionInfoPtr()->Serialize(m_sessionInfoBuffer, &infoSize, sizeof(m_sessionInfoBuffer));
+    const unsigned char fragmentCount = static_cast<unsigned char>((infoSize - 1) / cSessionFragmentSize + 1);
     pead::Random random;
     const unsigned int id = random.getU32();
     unsigned int offset = 0;
     for (unsigned char index = 0; index < fragmentCount; ++index)
     {
-        const unsigned int fragmentSize =
-            index == fragmentCount - 1 ? infoSize - offset : cSessionFragmentSize;
-        LanSessionMessage message(id, m_sessionMessageId, index, fragmentCount,
-                                  m_sessionInfoBuffer + offset, fragmentSize);
+        const unsigned int fragmentSize = index == fragmentCount - 1 ? infoSize - offset : cSessionFragmentSize;
+        LanSessionMessage message(id, m_sessionMessageId, index, fragmentCount, m_sessionInfoBuffer + offset,
+                                  fragmentSize);
         unsigned int size = 0;
         message.Serialize(m_messageBuffer, &size);
         LanPayload payload;
@@ -841,23 +839,20 @@ void LanProtocol::SendSessionMessage(const common::StationAddress& address)
     matchmakeSession->GetSessionInfoPtr()->Trace(cTraceDetail);
 }
 
-void LanProtocol::ParseGetHostMessage(const LanPayload* payload,
-                                      const common::StationAddress& source)
+void LanProtocol::ParseGetHostMessage(const LanPayload* payload, const common::StationAddress& source)
 {
     LanGetHostMessage message;
     message.Deserialize(payload->m_data);
     if (payload->m_size == LanGetHostMessage::cSerializedSize)
     {
         LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
-        if (session::g_piaMesh->GetMeshState() == cMeshStateEstablished &&
-            message.m_sessionId == matchmakeSession->GetGatheringId() &&
-            matchmakeSession->IsMatchmakeOwner())
+        if (session::g_piaMesh->GetMeshState() == cMeshStateEstablished
+            && message.m_sessionId == matchmakeSession->GetGatheringId() && matchmakeSession->IsMatchmakeOwner())
             SendHostMessage(source);
     }
 }
 
-void LanProtocol::ParseGetSessionMessage(const LanPayload* payload,
-                                         const common::StationAddress& source)
+void LanProtocol::ParseGetSessionMessage(const LanPayload* payload, const common::StationAddress& source)
 {
     LanGetSessionMessage message;
     message.Deserialize(payload->m_data);
@@ -866,15 +861,13 @@ void LanProtocol::ParseGetSessionMessage(const LanPayload* payload,
         LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
         const unsigned int meshState = session::g_piaMesh->GetMeshState();
         const bool leavingMesh = session::g_piaMesh->IsProcessingLeaveMesh();
-        if (meshState == cMeshStateEstablished && !leavingMesh &&
-            message.m_sessionId == matchmakeSession->GetGatheringId() &&
-            matchmakeSession->IsMatchmakeOwner())
+        if (meshState == cMeshStateEstablished && !leavingMesh
+            && message.m_sessionId == matchmakeSession->GetGatheringId() && matchmakeSession->IsMatchmakeOwner())
             SendSessionMessage(source);
     }
 }
 
-void LanProtocol::ParseHostMessage(const LanPayload* payload,
-                                   const common::StationAddress&)
+void LanProtocol::ParseHostMessage(const LanPayload* payload, const common::StationAddress&)
 {
     LanHostMessage message;
     message.Deserialize(payload->m_data);
@@ -887,18 +880,15 @@ void LanProtocol::ParseHostMessage(const LanPayload* payload,
             const unsigned long long ownerId = matchmakeSession->GetMatchmakeOwnerUniqueId();
             matchmakeSession->SetMatchmakeOwnerUniqueId(hostId);
             matchmakeSession->SetMatchmakeOwner(GetLocalPrincipalId() == hostId);
-            matchmakeSession->GetSessionInfoPtr()->SetStationConnectionInfo(
-                message.m_connectionInfo);
+            matchmakeSession->GetSessionInfoPtr()->SetStationConnectionInfo(message.m_connectionInfo);
             if (ownerId != hostId && ownerId != 0)
-                session::g_piaSession->NotifyOwnershipChange(matchmakeSession->GetGatheringId(),
-                                                             hostId);
+                session::g_piaSession->NotifyOwnershipChange(matchmakeSession->GetGatheringId(), hostId);
             m_getHostContext.SignalSuccess(0);
         }
     }
 }
 
-void LanProtocol::ParseSessionMessage(const LanPayload* payload,
-                                      const common::StationAddress& source)
+void LanProtocol::ParseSessionMessage(const LanPayload* payload, const common::StationAddress& source)
 {
     LanSessionMessage message;
     message.Deserialize(payload->m_data);
@@ -907,19 +897,17 @@ void LanProtocol::ParseSessionMessage(const LanPayload* payload,
         LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
         if (!session::g_piaMesh->IsProcessingLeaveMesh())
         {
-            m_receivedSessionInfo.Receive(message.m_fragment, message.m_fragmentSize,
-                                          message.m_sessionId, message.m_sequence,
-                                          message.m_index, message.m_count, source);
+            m_receivedSessionInfo.Receive(message.m_fragment, message.m_fragmentSize, message.m_sessionId,
+                                          message.m_sequence, message.m_index, message.m_count, source);
             if (m_receivedSessionInfo.IsReceivedAll())
             {
-                matchmakeSession->GetSessionInfoBufferPtr()->Deserialize(
-                    m_receivedSessionInfo.m_data, sizeof(m_receivedSessionInfo.m_data));
-                if (matchmakeSession->GetSessionInfoBufferPtr()->GetSessionId() ==
-                        matchmakeSession->GetGatheringId() &&
-                    !matchmakeSession->IsMatchmakeOwner())
+                matchmakeSession->GetSessionInfoBufferPtr()->Deserialize(m_receivedSessionInfo.m_data,
+                                                                         sizeof(m_receivedSessionInfo.m_data));
+                if (matchmakeSession->GetSessionInfoBufferPtr()->GetSessionId() == matchmakeSession->GetGatheringId()
+                    && !matchmakeSession->IsMatchmakeOwner())
                 {
-                    matchmakeSession->GetSessionInfoPtr()->Deserialize(
-                        m_receivedSessionInfo.m_data, sizeof(m_receivedSessionInfo.m_data));
+                    matchmakeSession->GetSessionInfoPtr()->Deserialize(m_receivedSessionInfo.m_data,
+                                                                       sizeof(m_receivedSessionInfo.m_data));
                     matchmakeSession->GetSessionInfoPtr()->Trace(cTraceBrief);
                     if (m_getSessionContext.m_state == common::CallContext::cStateInProgress)
                         m_getSessionContext.SignalSuccess(0);
@@ -937,8 +925,7 @@ bool LanProtocol::RequestUpdateHostMessage()
     if (established && !leavingMesh)
     {
         LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
-        matchmakeSession->GetSessionInfoPtr()->SetStationConnectionInfo(
-            GetLocalStationConnectionInfo());
+        matchmakeSession->GetSessionInfoPtr()->SetStationConnectionInfo(GetLocalStationConnectionInfo());
         matchmakeSession->SetMatchmakeOwnerUniqueId(GetLocalPrincipalId());
         matchmakeSession->SetMatchmakeOwner(true);
         for (int index = 0; index < cPortCount; ++index)
@@ -947,8 +934,7 @@ bool LanProtocol::RequestUpdateHostMessage()
             address.SetInetAddress(common::InetAddress(m_broadcastAddress, cPortBase + index));
             SendHostMessage(address);
         }
-        session::g_piaSession->NotifyOwnershipChange(matchmakeSession->GetGatheringId(),
-                                                     GetLocalPrincipalId());
+        session::g_piaSession->NotifyOwnershipChange(matchmakeSession->GetGatheringId(), GetLocalPrincipalId());
     }
     return true;
 }
@@ -974,4 +960,6 @@ void LanProtocol::RequestRegisterSessionKey()
     m_sessionKeyRequested = 1;
 }
 
-}}}
+}
+}
+}

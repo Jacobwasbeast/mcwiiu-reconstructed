@@ -4,9 +4,23 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/common/CryptoSetting.hpp"
 
-namespace nn { namespace pia { namespace transport { class StationConnectionInfo; }}}
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
+class StationConnectionInfo;
+}
+}
+}
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanProtocol;
 
@@ -16,10 +30,7 @@ public:
     class LanNetworkSetting
     {
     public:
-        LanNetworkSetting()
-            : m_field00(0), m_field04(cDefaultSubnetMask), m_field08(0)
-        {
-        }
+        LanNetworkSetting() : m_field00(0), m_field04(cDefaultSubnetMask), m_field08(0) {}
 
         static const unsigned int cDefaultSubnetMask = 0xffffff00;
 
@@ -60,6 +71,8 @@ public:
 
 extern LanFacade* g_lanFacade;
 
-}}}
+}
+}
+}
 
 #endif

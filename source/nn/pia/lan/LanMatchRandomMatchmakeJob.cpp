@@ -12,7 +12,12 @@
 #include "nn/pia/session/MeshProtocol.hpp"
 #include "nn/pia/session/StationIdStatusTable.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -44,8 +49,8 @@ inline common::Time makeRetryTime()
 {
     const int waitMsec = session::g_piaMesh->GetMeshProtocol()->GetUnknown24() + cRetryMarginMsec;
     common::Time time;
-    time.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * waitMsec +
-                  common::g_piaJobScheduler->m_dispatchTime.m_tick;
+    time.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * waitMsec
+                  + common::g_piaJobScheduler->m_dispatchTime.m_tick;
     return time;
 }
 
@@ -99,8 +104,7 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::RandomMatc
         return MakeExecuteResult(cExecuteKindFinished);
     }
     m_joinState = cJoinStateRandomMatchmaking;
-    setStep(&LanMatchRandomMatchmakeJob::WaitRandomMatchmake,
-            "LanMatchRandomMatchmakeJob::WaitRandomMatchmake");
+    setStep(&LanMatchRandomMatchmakeJob::WaitRandomMatchmake, "LanMatchRandomMatchmakeJob::WaitRandomMatchmake");
     return MakeExecuteResult(cExecuteKindWait, cWaitIntervalMsec);
 }
 
@@ -150,8 +154,8 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::Unregister
     }
     session::Session* session = session::g_piaSession;
     const unsigned int index = session->m_currentSessionIndex;
-    const Result result = session->m_matchmakeSession[index]->UnregisterMatchmakeSession(
-        &m_callContext, session->m_sessionId[index]);
+    const Result result = session->m_matchmakeSession[index]->UnregisterMatchmakeSession(&m_callContext,
+                                                                                         session->m_sessionId[index]);
     if (result != 0)
     {
         session::g_piaSession->m_meshLayerController->MeshCleanup();
@@ -192,8 +196,8 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::LeaveMatch
     }
     session::Session* session = session::g_piaSession;
     const unsigned int index = session->m_currentSessionIndex;
-    const Result result = session->m_matchmakeSession[index]->LeaveMatchmakeSession(
-        &m_callContext, session->m_sessionId[index]);
+    const Result result = session->m_matchmakeSession[index]->LeaveMatchmakeSession(&m_callContext,
+                                                                                    session->m_sessionId[index]);
     if (result != 0)
     {
         session::g_piaSession->m_meshLayerController->MeshCleanup();
@@ -315,12 +319,12 @@ Result LanMatchRandomMatchmakeJob::StartupImpl(const session::JoinRandomSessionS
 {
     const session::CreateSessionSetting* createSetting = setting->GetCreateSessionSetting();
     session::Session* session = session::g_piaSession;
-    m_matchmakeSession = static_cast<LanMatchmakeSession*>(
-        session->m_matchmakeSession[session->m_currentSessionIndex]);
+    m_matchmakeSession = static_cast<LanMatchmakeSession*>(session->m_matchmakeSession[session->m_currentSessionIndex]);
     if (m_matchmakeSession == 0)
         return cResultInvalidState;
     if (m_matchmakeSession->RegisterSearchCriteria(setting->GetSessionSearchCriteria(0),
-                                                   setting->GetSessionSearchCriteriaSize()) == 0)
+                                                   setting->GetSessionSearchCriteriaSize())
+        == 0)
         return cResultInvalidArgument;
     if (createSetting->GetMaxParticipantNum() == 0)
         return cResultInvalidArgument;
@@ -337,8 +341,7 @@ void LanMatchRandomMatchmakeJob::SetNextStepAtWaitCreateMesh()
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        setStep(&session::RandomMatchmakeJob::CompleteFailure,
-                "LanMatchRandomMatchmakeJob::CompleteFailure");
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, "LanMatchRandomMatchmakeJob::CompleteFailure");
     }
     else
     {
@@ -358,8 +361,7 @@ void LanMatchRandomMatchmakeJob::SetNextStepAtWaitJoinMesh()
     else if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
         m_result = session::Session::cResultStatusDisconnectedNetwork;
-        setStep(&session::RandomMatchmakeJob::CompleteFailure,
-                "LanMatchRandomMatchmakeJob::CompleteFailure");
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, "LanMatchRandomMatchmakeJob::CompleteFailure");
     }
     else
     {
@@ -388,8 +390,7 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::SetNextSte
     }
     m_result = result;
     m_matchmakeSession->UnregisterSearchCriteria();
-    setStep(&LanMatchRandomMatchmakeJob::UnregisterGathering,
-            "LanMatchRandomMatchmakeJob::UnregisterGathering");
+    setStep(&LanMatchRandomMatchmakeJob::UnregisterGathering, "LanMatchRandomMatchmakeJob::UnregisterGathering");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -412,8 +413,7 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::SetNextSte
             if (result == cResultSessionIgnored)
             {
                 m_matchmakeSession->SetIgnoredSessionId(m_sessionId);
-                setStep(&LanMatchRandomMatchmakeJob::RandomMatchmake,
-                        "LanMatchRandomMatchmakeJob::RandomMatchmake");
+                setStep(&LanMatchRandomMatchmakeJob::RandomMatchmake, "LanMatchRandomMatchmakeJob::RandomMatchmake");
                 return MakeExecuteResult(cExecuteKindNextStep);
             }
             if (m_retryCount == 1)
@@ -425,16 +425,14 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::SetNextSte
                 return MakeExecuteResult(cExecuteKindNextStep);
             }
             m_matchmakeSession->SetIgnoredSessionId(m_sessionId);
-            setStep(&LanMatchRandomMatchmakeJob::RandomMatchmake,
-                    "LanMatchRandomMatchmakeJob::RandomMatchmake");
+            setStep(&LanMatchRandomMatchmakeJob::RandomMatchmake, "LanMatchRandomMatchmakeJob::RandomMatchmake");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (m_result == cResultSessionIgnored)
             m_result = cResultSessionIgnoredRetryOver;
     }
     m_matchmakeSession->UnregisterSearchCriteria();
-    setStep(&LanMatchRandomMatchmakeJob::LeaveMatchmakeSession,
-            "LanMatchRandomMatchmakeJob::LeaveMatchmakeSession");
+    setStep(&LanMatchRandomMatchmakeJob::LeaveMatchmakeSession, "LanMatchRandomMatchmakeJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -462,15 +460,15 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::SetNextSte
                 return MakeExecuteResult(cExecuteKindNextStep);
             }
             m_matchmakeSession->SetIgnoredSessionId(m_sessionId);
-            setStep(&LanMatchRandomMatchmakeJob::RandomMatchmake,
-                    "LanMatchRandomMatchmakeJob::RandomMatchmake");
+            setStep(&LanMatchRandomMatchmakeJob::RandomMatchmake, "LanMatchRandomMatchmakeJob::RandomMatchmake");
             return MakeExecuteResult(cExecuteKindNextStep);
         }
     }
     m_matchmakeSession->UnregisterSearchCriteria();
-    setStep(&LanMatchRandomMatchmakeJob::LeaveMatchmakeSession,
-            "LanMatchRandomMatchmakeJob::LeaveMatchmakeSession");
+    setStep(&LanMatchRandomMatchmakeJob::LeaveMatchmakeSession, "LanMatchRandomMatchmakeJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-}}}
+}
+}
+}

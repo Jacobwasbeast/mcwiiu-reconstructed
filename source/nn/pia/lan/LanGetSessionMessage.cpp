@@ -1,6 +1,11 @@
 #include "nn/pia/lan/LanGetSessionMessage.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -10,14 +15,12 @@ enum
 };
 }
 
-LanGetSessionMessage::LanGetSessionMessage()
-    : m_sessionId(0)
+LanGetSessionMessage::LanGetSessionMessage() : m_sessionId(0)
 {
     m_messageType = cMessageType;
 }
 
-LanGetSessionMessage::LanGetSessionMessage(unsigned int sessionId)
-    : m_sessionId(sessionId)
+LanGetSessionMessage::LanGetSessionMessage(unsigned int sessionId) : m_sessionId(sessionId)
 {
     m_messageType = cMessageType;
 }
@@ -45,10 +48,8 @@ Result LanGetSessionMessage::Deserialize(const unsigned char* buffer)
     if (result != 0)
         return result;
 
-    m_sessionId = (static_cast<unsigned int>(buffer[12]) << 24) |
-                  (static_cast<unsigned int>(buffer[13]) << 16) |
-                  (static_cast<unsigned int>(buffer[14]) << 8) |
-                  static_cast<unsigned int>(buffer[15]);
+    m_sessionId = (static_cast<unsigned int>(buffer[12]) << 24) | (static_cast<unsigned int>(buffer[13]) << 16)
+                  | (static_cast<unsigned int>(buffer[14]) << 8) | static_cast<unsigned int>(buffer[15]);
     return 0;
 }
 
@@ -57,4 +58,6 @@ unsigned int LanGetSessionMessage::GetSerializedSize() const
     return cSerializedSize;
 }
 
-}}}
+}
+}
+}

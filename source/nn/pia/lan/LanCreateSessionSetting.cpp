@@ -1,7 +1,12 @@
 #include "nn/pia/lan/LanCreateSessionSetting.hpp"
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -13,8 +18,7 @@ enum
 };
 }
 
-LanCreateSessionSetting::LanCreateSessionSetting()
-    : session::CreateSessionSetting()
+LanCreateSessionSetting::LanCreateSessionSetting() : session::CreateSessionSetting()
 {
     gameMode = 0;
     sessionType = cLanSessionTypeInvalid;
@@ -25,13 +29,35 @@ LanCreateSessionSetting::LanCreateSessionSetting()
     OSBlockSet(applicationData, 0, sizeof(applicationData));
 }
 
-LanCreateSessionSetting::~LanCreateSessionSetting() {}
-void LanCreateSessionSetting::SetGameMode(unsigned int value) { gameMode = value; stateFlags |= cLanSettingGameMode; }
-unsigned int LanCreateSessionSetting::GetGameMode() const { return gameMode; }
-bool LanCreateSessionSetting::IsSetGameMode() const { return (stateFlags & cLanSettingGameMode) != 0; }
-void LanCreateSessionSetting::SetSessionType(LanSessionType value) { sessionType = value; stateFlags |= cLanSettingSessionType; }
-LanSessionType LanCreateSessionSetting::GetSessionType() const { return sessionType; }
-bool LanCreateSessionSetting::IsSetSessionType() const { return (stateFlags & cLanSettingSessionType) != 0; }
+LanCreateSessionSetting::~LanCreateSessionSetting()
+{
+}
+void LanCreateSessionSetting::SetGameMode(unsigned int value)
+{
+    gameMode = value;
+    stateFlags |= cLanSettingGameMode;
+}
+unsigned int LanCreateSessionSetting::GetGameMode() const
+{
+    return gameMode;
+}
+bool LanCreateSessionSetting::IsSetGameMode() const
+{
+    return (stateFlags & cLanSettingGameMode) != 0;
+}
+void LanCreateSessionSetting::SetSessionType(LanSessionType value)
+{
+    sessionType = value;
+    stateFlags |= cLanSettingSessionType;
+}
+LanSessionType LanCreateSessionSetting::GetSessionType() const
+{
+    return sessionType;
+}
+bool LanCreateSessionSetting::IsSetSessionType() const
+{
+    return (stateFlags & cLanSettingSessionType) != 0;
+}
 Result LanCreateSessionSetting::SetAttribute(unsigned int index, unsigned int value)
 {
     if (index >= cLanAttributeCount)
@@ -40,7 +66,10 @@ Result LanCreateSessionSetting::SetAttribute(unsigned int index, unsigned int va
     stateFlags |= 1 << (index + cLanAttributeFlagShift);
     return Result(0);
 }
-unsigned int LanCreateSessionSetting::GetAttribute(unsigned int index) const { return index < cLanAttributeCount ? attributes[index] : 0; }
+unsigned int LanCreateSessionSetting::GetAttribute(unsigned int index) const
+{
+    return index < cLanAttributeCount ? attributes[index] : 0;
+}
 bool LanCreateSessionSetting::IsSetAttribute(unsigned int index) const
 {
     return (stateFlags >> (index + cLanAttributeFlagShift) & 1) != 0;
@@ -67,11 +96,27 @@ Result LanCreateSessionSetting::GetApplicationData(void* output, unsigned int si
     OSBlockMove(output, applicationData, applicationDataSize, FALSE);
     return Result(0);
 }
-unsigned int LanCreateSessionSetting::GetApplicationDataSize() const { return applicationDataSize; }
-bool LanCreateSessionSetting::IsSetApplicationData() const { return (stateFlags & cLanSettingApplicationData) != 0; }
-void LanCreateSessionSetting::SetOpenSession(bool value) { openSession = value; stateFlags |= cLanSettingOpenSession; }
-bool LanCreateSessionSetting::IsOpenSession() const { return openSession; }
-bool LanCreateSessionSetting::IsSetOpenSession() const { return (stateFlags & cLanSettingOpenSession) != 0; }
+unsigned int LanCreateSessionSetting::GetApplicationDataSize() const
+{
+    return applicationDataSize;
+}
+bool LanCreateSessionSetting::IsSetApplicationData() const
+{
+    return (stateFlags & cLanSettingApplicationData) != 0;
+}
+void LanCreateSessionSetting::SetOpenSession(bool value)
+{
+    openSession = value;
+    stateFlags |= cLanSettingOpenSession;
+}
+bool LanCreateSessionSetting::IsOpenSession() const
+{
+    return openSession;
+}
+bool LanCreateSessionSetting::IsSetOpenSession() const
+{
+    return (stateFlags & cLanSettingOpenSession) != 0;
+}
 void LanCreateSessionSetting::Reset()
 {
     session::CreateSessionSetting::Reset();
@@ -86,7 +131,23 @@ void LanCreateSessionSetting::Reset()
 void LanCreateSessionSetting::Trace(unsigned long long value) const
 {
 }
-void LanCreateSessionSetting::Copy(const LanCreateSessionSetting& other) { gameMode = other.gameMode; sessionType = other.sessionType; OSBlockMove(attributes, other.attributes, sizeof(attributes), FALSE); OSBlockMove(applicationData, other.applicationData, sizeof(applicationData), FALSE); applicationDataSize = other.applicationDataSize; openSession = other.openSession; stateFlags = other.stateFlags; }
-LanCreateSessionSetting& LanCreateSessionSetting::operator=(const LanCreateSessionSetting& other) { if (this != &other) Copy(other); return *this; }
+void LanCreateSessionSetting::Copy(const LanCreateSessionSetting& other)
+{
+    gameMode = other.gameMode;
+    sessionType = other.sessionType;
+    OSBlockMove(attributes, other.attributes, sizeof(attributes), FALSE);
+    OSBlockMove(applicationData, other.applicationData, sizeof(applicationData), FALSE);
+    applicationDataSize = other.applicationDataSize;
+    openSession = other.openSession;
+    stateFlags = other.stateFlags;
+}
+LanCreateSessionSetting& LanCreateSessionSetting::operator=(const LanCreateSessionSetting& other)
+{
+    if (this != &other)
+        Copy(other);
+    return *this;
+}
 
-}}}
+}
+}
+}

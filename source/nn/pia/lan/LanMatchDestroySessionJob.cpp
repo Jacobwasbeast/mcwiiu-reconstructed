@@ -3,10 +3,14 @@
 #include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
-LanMatchDestroySessionJob::LanMatchDestroySessionJob()
-    : session::DestroySessionJob()
+LanMatchDestroySessionJob::LanMatchDestroySessionJob() : session::DestroySessionJob()
 {
 }
 
@@ -16,9 +20,10 @@ LanMatchDestroySessionJob::~LanMatchDestroySessionJob()
 
 LanMatchDestroySessionJob::ExecuteResult LanMatchDestroySessionJob::UnregisterCurrentMatchmakeSession()
 {
-    const Result result =
-        session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->UnregisterMatchmakeSession(
-            &m_callContext, session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex]);
+    const Result result = session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]
+                              ->UnregisterMatchmakeSession(
+                                  &m_callContext,
+                                  session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex]);
     if (result != 0)
     {
         setStep(&session::DestroySessionJob::SendMonitoringData, "DestroySessionJob::SendMonitoringData");
@@ -32,7 +37,8 @@ LanMatchDestroySessionJob::ExecuteResult LanMatchDestroySessionJob::UnregisterCu
 
 LanMatchDestroySessionJob::ExecuteResult LanMatchDestroySessionJob::WaitUnregisterCurrentMatchmakeSession()
 {
-    const bool isCompleted = session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->WaitUnregisterMatchmakeSession();
+    const bool isCompleted = session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]
+                                 ->WaitUnregisterMatchmakeSession();
     if (isCompleted)
     {
         session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
@@ -68,4 +74,6 @@ void LanMatchDestroySessionJob::SetNextStepAtMeshCleanup()
             "LanMatchDestroySessionJob::UnregisterCurrentMatchmakeSession");
 }
 
-}}}
+}
+}
+}

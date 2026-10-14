@@ -7,7 +7,12 @@
 #include "nn/pia/session/ISessionInfo.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanSessionInfo : public session::ISessionInfo
 {
@@ -81,6 +86,8 @@ public:
     unsigned int m_stationInfoCount;
 };
 
-}}}
+}
+}
+}
 
 #endif

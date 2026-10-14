@@ -4,7 +4,12 @@
 #include "nn/pia/transport/ConnectStationJob.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanConnectStationJob : public transport::ConnectStationJob
 {
@@ -21,6 +26,8 @@ private:
     transport::StationConnectionInfo m_connectionInfo;
 };
 
-}}}
+}
+}
+}
 
 #endif

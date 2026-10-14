@@ -4,7 +4,12 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/session/BrowseMatchmakeJob.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchmakeSession;
 
@@ -30,6 +35,8 @@ private:
     LanMatchmakeSession* m_matchmakeSession;
 };
 
-}}}
+}
+}
+}
 
 #endif

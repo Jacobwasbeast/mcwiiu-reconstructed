@@ -6,7 +6,12 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/session/UpdateSessionSetting.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -17,7 +22,8 @@ enum
     cResultCancelled = 0x6c05
 };
 
-inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (LanMatchUpdateSessionSettingJob::*function)(), const char* name)
+inline void SelectStep(common::StepSequenceJob::Step& slot,
+                       ExecuteResult (LanMatchUpdateSessionSettingJob::*function)(), const char* name)
 {
     const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
@@ -25,7 +31,8 @@ inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (LanMa
 }
 
 LanMatchUpdateSessionSettingJob::LanMatchUpdateSessionSettingJob()
-    : session::UpdateSessionSettingJob(), m_matchmakeSession(0)
+    : session::UpdateSessionSettingJob(),
+      m_matchmakeSession(0)
 {
 }
 
@@ -33,7 +40,8 @@ LanMatchUpdateSessionSettingJob::~LanMatchUpdateSessionSettingJob()
 {
 }
 
-Result LanMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, session::IMatchmakeSession* matchmakeSession,
+Result LanMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId,
+                                                    session::IMatchmakeSession* matchmakeSession,
                                                     const session::UpdateSessionSetting* setting, bool isJointSession)
 {
     m_matchmakeSession = static_cast<LanMatchmakeSession*>(matchmakeSession);
@@ -41,7 +49,8 @@ Result LanMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, sess
         return transport::cResultInvalidArgument;
     m_isJointSession = isJointSession;
     m_matchmakeSession->ReflectSettingToMatchmakeSession(setting, isJointSession);
-    SelectStep(m_currentStep, &LanMatchUpdateSessionSettingJob::UpdateSessionSetting, "LanMatchUpdateSessionSettingJob::UpdateSessionSetting");
+    SelectStep(m_currentStep, &LanMatchUpdateSessionSettingJob::UpdateSessionSetting,
+               "LanMatchUpdateSessionSettingJob::UpdateSessionSetting");
     return 0;
 }
 
@@ -68,7 +77,8 @@ LanMatchUpdateSessionSettingJob::ExecuteResult LanMatchUpdateSessionSettingJob::
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &LanMatchUpdateSessionSettingJob::WaitUpdateSessionSetting, "LanMatchUpdateSessionSettingJob::WaitUpdateSessionSetting");
+    SelectStep(m_currentStep, &LanMatchUpdateSessionSettingJob::WaitUpdateSessionSetting,
+               "LanMatchUpdateSessionSettingJob::WaitUpdateSessionSetting");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -98,10 +108,11 @@ LanMatchUpdateSessionSettingJob::ExecuteResult LanMatchUpdateSessionSettingJob::
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            if (m_isJointSession &&
-                m_sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
+            if (m_isJointSession
+                && m_sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
                 SetCurrentSessionOpenStatus(session::Session::cSessionOpenStatusOpen);
-            SelectStep(m_currentStep, &LanMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+            SelectStep(m_currentStep, &LanMatchUpdateSessionSettingJob::CompleteProcess,
+                       "UpdateSessionSettingJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -118,4 +129,6 @@ void LanMatchUpdateSessionSettingJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

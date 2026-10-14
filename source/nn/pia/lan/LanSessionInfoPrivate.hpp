@@ -3,7 +3,12 @@
 
 #include "nn/pia/lan/LanSessionInfo.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanSessionInfoPrivate : public LanSessionInfo
 {
@@ -11,6 +16,8 @@ public:
     virtual ~LanSessionInfoPrivate() {}
 };
 
-}}}
+}
+}
+}
 
 #endif

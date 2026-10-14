@@ -9,11 +9,34 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/lan/LanFacade.hpp"
 
-namespace nn { namespace pia { namespace common { class Socket; }}}
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class Socket;
+}
+}
+}
 
-namespace nn { namespace pia { namespace transport { class StationConnectionInfo; }}}
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
+class StationConnectionInfo;
+}
+}
+}
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanInputStream;
 class LanMatchmakeUpdateJob;
@@ -24,7 +47,9 @@ class LanPayload
 public:
     LanPayload() {}
     LanPayload(const unsigned char* data, unsigned short size, unsigned int type)
-        : m_data(data), m_size(size), m_type(type)
+        : m_data(data),
+          m_size(size),
+          m_type(type)
     {
     }
 
@@ -36,21 +61,20 @@ public:
 class LanProtocol : public transport::Protocol
 {
 public:
-    enum { cProtocolType = 0x44, cProtocolId = cProtocolType << 8 };
+    enum
+    {
+        cProtocolType = 0x44,
+        cProtocolId = cProtocolType << 8
+    };
 
     class ReceivedFragmentData
     {
     public:
-        ReceivedFragmentData()
-            : m_fragmentSize(800), m_source()
-        {
-            Clear();
-        }
+        ReceivedFragmentData() : m_fragmentSize(800), m_source() { Clear(); }
 
         void Clear();
-        void Receive(const void* data, unsigned int size, unsigned int id, unsigned short sequence,
-                     unsigned char index, unsigned char count,
-                     const common::StationAddress& source);
+        void Receive(const void* data, unsigned int size, unsigned int id, unsigned short sequence, unsigned char index,
+                     unsigned char count, const common::StationAddress& source);
         bool IsReceivedAll() const;
 
         unsigned int m_fragmentSize;
@@ -75,12 +99,12 @@ public:
 
     void ResetSelfKeepAliveTime();
     bool IsCryptoEnabled() const;
-    Result CalculateCryptionKeyForSession(const unsigned char* input, unsigned int inputSize,
-                                          void* output, unsigned int outputSize);
+    Result CalculateCryptionKeyForSession(const unsigned char* input, unsigned int inputSize, void* output,
+                                          unsigned int outputSize);
     Result RegisterSessionKey();
     transport::StationConnectionInfo& GetLocalStationConnectionInfo();
-    void SendMessage(LanPayload* payload, const common::StationAddress& address, bool isPriority,
-                     bool field602, unsigned long long traceLevel);
+    void SendMessage(LanPayload* payload, const common::StationAddress& address, bool isPriority, bool field602,
+                     unsigned long long traceLevel);
     void SendHostMessage(const common::StationAddress& address);
     void ParseGetHostMessage(const LanPayload* payload, const common::StationAddress& source);
     unsigned long long GetLocalPrincipalId() const;
@@ -111,10 +135,10 @@ public:
     bool RequestGetSessionMessage();
     bool IsGetSessionMessageCompleted() const;
     Result GetSessionMessageResult() const;
-    Result CalculateCryptionKeyForBrowse(const unsigned char* input, unsigned int inputSize,
-                                         void* output, unsigned int outputSize);
-    Result CalculateCryptionKeyForBrowseReply(const unsigned char* input, unsigned int inputSize,
-                                              void* output, unsigned int outputSize);
+    Result CalculateCryptionKeyForBrowse(const unsigned char* input, unsigned int inputSize, void* output,
+                                         unsigned int outputSize);
+    Result CalculateCryptionKeyForBrowseReply(const unsigned char* input, unsigned int inputSize, void* output,
+                                              unsigned int outputSize);
     Result CalculateTokenHash(const unsigned char* input, unsigned int inputSize, void* output,
                               unsigned int outputSize);
     unsigned char IsCryptoSettingRegistered() const;
@@ -161,6 +185,8 @@ private:
     common::CryptoSecurePseudoRandomGenerator m_random;
 };
 
-}}}
+}
+}
+}
 
 #endif

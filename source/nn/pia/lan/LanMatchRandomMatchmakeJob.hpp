@@ -5,7 +5,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/RandomMatchmakeJob.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanMatchmakeSession;
 
@@ -40,6 +45,8 @@ private:
     bool m_isOpenSession;
 };
 
-}}}
+}
+}
+}
 
 #endif

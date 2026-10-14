@@ -3,7 +3,12 @@
 
 #include "nn/pia/Reconstruction.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 Result Initialize();
 Result BeginSetup();
@@ -13,6 +18,8 @@ unsigned char IsInitialized();
 unsigned char IsInSetupMode();
 void EmbedModuleInfo();
 
-}}}
+}
+}
+}
 
 #endif

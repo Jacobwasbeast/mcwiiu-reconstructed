@@ -3,7 +3,12 @@
 
 #include "nn/pia/Reconstruction.hpp"
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 class LanSessionInfo;
 
@@ -63,6 +68,8 @@ public:
     unsigned int m_setFlags;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -18,25 +18,20 @@ public:
     virtual ~LanMatchJointSessionJob();
     virtual void Trace(unsigned long long value) const;
     virtual unsigned int GetJointSessionStateForDebug() const;
-    virtual Result StartupJoinRandomJointSessionImpl(
-        const session::JoinRandomSessionSetting* setting);
+    virtual Result StartupJoinRandomJointSessionImpl(const session::JoinRandomSessionSetting* setting);
     virtual Result StartupCreateJointSessionImpl(const session::CreateSessionSetting* setting);
     virtual Result StartupJoinJointSessionImpl(const session::JoinSessionSetting* setting);
     virtual Result StartupLeaveJointSessionImpl();
     virtual Result StartupDestroyJointSessionImpl();
     virtual Result StartupPassiveProcessImpl(session::Session::ProcessType processType,
                                              session::SessionProtocol::MessageType messageType,
-                                             const unsigned long long* stationIds,
-                                             unsigned short stationIdNum,
+                                             const unsigned long long* stationIds, unsigned short stationIdNum,
                                              unsigned long long senderStationId);
-    virtual Result ReceiveNextSessionIdImpl(session::Session::ProcessType processType,
-                                            unsigned int sessionId,
-                                            const unsigned char* applicationData,
-                                            unsigned char applicationDataSize,
+    virtual Result ReceiveNextSessionIdImpl(session::Session::ProcessType processType, unsigned int sessionId,
+                                            const unsigned char* applicationData, unsigned char applicationDataSize,
                                             unsigned long long senderStationId);
     virtual Result ReceiveLeaveInvitationImpl(session::Session::ProcessType processType,
-                                              const unsigned long long* stationIds,
-                                              unsigned short stationIdNum,
+                                              const unsigned long long* stationIds, unsigned short stationIdNum,
                                               unsigned long long senderStationId);
     virtual Result ReceiveLeaveMeshInvitationImpl(session::Session::ProcessType processType,
                                                   unsigned long long senderStationId);

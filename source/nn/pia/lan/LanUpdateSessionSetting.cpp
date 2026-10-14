@@ -1,7 +1,12 @@
 #include "nn/pia/lan/LanUpdateSessionSetting.hpp"
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace lan {
+namespace nn
+{
+namespace pia
+{
+namespace lan
+{
 
 namespace
 {
@@ -22,11 +27,25 @@ LanUpdateSessionSetting::LanUpdateSessionSetting()
     OSBlockSet(m_applicationData, 0, sizeof(m_applicationData));
 }
 
-LanUpdateSessionSetting::~LanUpdateSessionSetting() {}
-unsigned short LanUpdateSessionSetting::GetMinParticipantNum() const { return m_minParticipantNum; }
-unsigned short LanUpdateSessionSetting::GetMaxParticipantNum() const { return m_maxParticipantNum; }
-LanSessionType LanUpdateSessionSetting::GetSessionType() const { return m_sessionType; }
-unsigned int LanUpdateSessionSetting::GetAttribute(unsigned int index) const { return index < cLanAttributeCount ? m_attributes[index] : 0; }
+LanUpdateSessionSetting::~LanUpdateSessionSetting()
+{
+}
+unsigned short LanUpdateSessionSetting::GetMinParticipantNum() const
+{
+    return m_minParticipantNum;
+}
+unsigned short LanUpdateSessionSetting::GetMaxParticipantNum() const
+{
+    return m_maxParticipantNum;
+}
+LanSessionType LanUpdateSessionSetting::GetSessionType() const
+{
+    return m_sessionType;
+}
+unsigned int LanUpdateSessionSetting::GetAttribute(unsigned int index) const
+{
+    return index < cLanAttributeCount ? m_attributes[index] : 0;
+}
 Result LanUpdateSessionSetting::SetApplicationData(const void* data, unsigned int size)
 {
     if (data == 0)
@@ -50,7 +69,10 @@ Result LanUpdateSessionSetting::GetApplicationData(void* output, unsigned int si
     OSBlockMove(output, m_applicationData, m_applicationDataSize, FALSE);
     return Result(0);
 }
-unsigned int LanUpdateSessionSetting::GetApplicationDataSize() const { return m_applicationDataSize; }
+unsigned int LanUpdateSessionSetting::GetApplicationDataSize() const
+{
+    return m_applicationDataSize;
+}
 void LanUpdateSessionSetting::Reset()
 {
     session::UpdateSessionSetting::Reset();
@@ -61,6 +83,10 @@ void LanUpdateSessionSetting::Reset()
     OSBlockSet(m_applicationData, 0, sizeof(m_applicationData));
     m_applicationDataSize = 0;
 }
-void LanUpdateSessionSetting::Trace(unsigned long long) const {}
+void LanUpdateSessionSetting::Trace(unsigned long long) const
+{
+}
 
-}}}
+}
+}
+}
