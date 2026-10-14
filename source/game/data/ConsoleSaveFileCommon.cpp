@@ -21,7 +21,7 @@ ConsoleSaveFileCommon::ConsoleSaveFileCommon()
     : mFileHeader()
 {
     InitializeCriticalSectionAndSpinCount(&mSaveAccessMutex, 0x1400);
-    mFilename = L"Growing file";
+    mFilename = L"";
 }
 
 ConsoleSaveFileCommon::~ConsoleSaveFileCommon()
