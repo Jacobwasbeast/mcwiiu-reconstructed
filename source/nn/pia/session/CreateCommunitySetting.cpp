@@ -1,10 +1,13 @@
 #include "nn/pia/session/CreateCommunitySetting.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
-CreateCommunitySetting::CreateCommunitySetting()
-    : m_minParticipantNum(0),
-      m_maxParticipantNum(0)
+CreateCommunitySetting::CreateCommunitySetting() : m_minParticipantNum(0), m_maxParticipantNum(0)
 {
 }
 
@@ -28,4 +31,6 @@ void CreateCommunitySetting::Reset()
     m_maxParticipantNum = 0;
 }
 
-}}}
+}
+}
+}

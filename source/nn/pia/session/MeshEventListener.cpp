@@ -18,7 +18,12 @@
 #include "nn/pia/transport/StationConnectionInfoTable.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -70,8 +75,7 @@ Result MeshEventListener::RemoveStationId(unsigned long long stationId)
     if (session->m_stationIdStatusTable->CheckEventNotifiedStatus(stationId))
     {
         if (session->m_sessionEventCallback != 0)
-            session->m_sessionEventCallback(Session::cEventTypeLeave, stationId,
-                                            session->m_sessionEventCallbackParam);
+            session->m_sessionEventCallback(Session::cEventTypeLeave, stationId, session->m_sessionEventCallbackParam);
         session->invalidateStationId(stationId);
     }
     result = transport::g_piaTransport->m_stationIdTable->RemoveByStationId(stationId);
@@ -100,8 +104,7 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
     Session* session = g_piaSession;
     transport::StationIdTable* stationIdTable = transport::g_piaTransport->m_stationIdTable;
     unsigned long long uniqueId = 0;
-    transport::Station* station =
-        transport::StationManager::s_pInstance->GetStation(event.stationIndex);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(event.stationIndex);
     if (station != 0)
         uniqueId = transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(station);
 
@@ -117,8 +120,8 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
         findByUniqueIdResult = stationIdTable->FindByUniqueId(&entryByUniqueId, uniqueId);
         if (findByUniqueIdResult == 0 && event.stationIndex != entryByUniqueId.stationIndex)
         {
-            if (!session->m_stationIdStatusTable->CheckConnectStatus(entryByUniqueId.stationId) &&
-                !session->m_stationIdStatusTable->CheckEventNotifiedStatus(entryByUniqueId.stationId))
+            if (!session->m_stationIdStatusTable->CheckConnectStatus(entryByUniqueId.stationId)
+                && !session->m_stationIdStatusTable->CheckEventNotifiedStatus(entryByUniqueId.stationId))
             {
                 stationIdTable->RemoveByStationId(entryByUniqueId.stationId);
                 session->m_stationIdStatusTable->RemoveElement(entryByUniqueId.stationId);
@@ -127,17 +130,15 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
 
         if (findByIndexResult == 0 && entryByIndex.uniqueId != uniqueId && uniqueId != 0)
         {
-            transport::StationIdTable::Entry* entry =
-                stationIdTable->FindByStationIndexCore(event.stationIndex);
+            transport::StationIdTable::Entry* entry = stationIdTable->FindByStationIndexCore(event.stationIndex);
             entry->uniqueId = uniqueId;
             entry->stationIndex = event.stationIndex;
             entry->stationId = uniqueId;
-            StationIdStatusTable::Element* element =
-                session->m_stationIdStatusTable->FindElement(entryByIndex.stationId);
+            StationIdStatusTable::Element* element = session->m_stationIdStatusTable->FindElement(
+                entryByIndex.stationId);
             transport::IdentificationInfo identificationInfo;
             const Result identificationResult =
-                transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(
-                    station, &identificationInfo);
+                transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(station, &identificationInfo);
             unsigned int sessionId = 0;
             if (identificationResult == 0)
                 sessionId = identificationInfo.m_field10c;
@@ -165,17 +166,15 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
 
         if (g_piaMesh->GetLocalStationIndex() == event.stationIndex)
         {
-            const unsigned long long localUniqueId =
-                transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
-                    transport::StationManager::s_pInstance->m_localStation);
+            const unsigned long long localUniqueId = transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
+                transport::StationManager::s_pInstance->m_localStation);
             if (localUniqueId == 0)
                 break;
             transport::StationIdTable::Entry entry;
             if (stationIdTable->FindByUniqueId(&entry, localUniqueId) == 0)
             {
                 if (entry.stationIndex != event.stationIndex)
-                    stationIdTable->FindByStationIdCore(entry.stationId)->stationIndex =
-                        event.stationIndex;
+                    stationIdTable->FindByStationIdCore(entry.stationId)->stationIndex = event.stationIndex;
                 if (session->m_matchmakeStatus != cMatchmakeStatusUnknown3)
                     break;
                 session->m_stationIdStatusTable->SetConnect(entry.stationId, true);
@@ -184,8 +183,7 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
             {
                 transport::IdentificationInfo identificationInfo;
                 const Result identificationResult =
-                    transport::IdentificationInfoTable::GetInstance()->GetLocalIdentificationInfo(
-                        &identificationInfo);
+                    transport::IdentificationInfoTable::GetInstance()->GetLocalIdentificationInfo(&identificationInfo);
                 unsigned int sessionId = 0;
                 if (identificationResult == 0)
                     sessionId = identificationInfo.m_field10c;
@@ -204,15 +202,14 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                 if (session->m_matchmakeStatus == cMatchmakeStatusUnknown3)
                 {
                     transport::IdentificationInfo identificationInfo;
-                    transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(
-                        station, &identificationInfo);
+                    transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(station,
+                                                                                             &identificationInfo);
                     unsigned int statusSessionId;
                     session->m_stationIdStatusTable->GetSessionId(entry.stationId, &statusSessionId);
                     if (statusSessionId == identificationInfo.m_field10c)
                     {
                         if (entry.stationIndex != event.stationIndex)
-                            stationIdTable->FindByStationIdCore(entry.stationId)->stationIndex =
-                                event.stationIndex;
+                            stationIdTable->FindByStationIdCore(entry.stationId)->stationIndex = event.stationIndex;
                         session->m_stationIdStatusTable->SetConnect(entry.stationId, true);
                         addStation = false;
                     }
@@ -233,14 +230,12 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                             RemoveStationIndex(static_cast<StationIndex>(entry.stationIndex));
                         if (!session->IsProcessingJoin())
                         {
-                            session->RemoveStationId(entry.stationId,
-                                                     static_cast<StationIndex>(entry.stationIndex),
+                            session->RemoveStationId(entry.stationId, static_cast<StationIndex>(entry.stationIndex),
                                                      entry.uniqueId, 0);
                         }
                         else
                         {
-                            session->LeaveNoticeToWaitingStationIndex(
-                                static_cast<StationIndex>(entry.stationIndex));
+                            session->LeaveNoticeToWaitingStationIndex(static_cast<StationIndex>(entry.stationIndex));
                             RemoveStationId(entry.stationId);
                         }
                     }
@@ -251,12 +246,10 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
             if (addStation)
             {
                 transport::IdentificationInfo identificationInfo;
-                transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(
-                    station, &identificationInfo);
-                if (!session->AddNewStationId(uniqueId, event.stationIndex, uniqueId,
-                                              identificationInfo.m_field10c) &&
-                    session->m_matchmakeStatus == cMatchmakeStatusUnknown3 &&
-                    session->m_jointSessionJob != 0 && session->m_jointSessionJob->m_processType != 0)
+                transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(station, &identificationInfo);
+                if (!session->AddNewStationId(uniqueId, event.stationIndex, uniqueId, identificationInfo.m_field10c)
+                    && session->m_matchmakeStatus == cMatchmakeStatusUnknown3 && session->m_jointSessionJob != 0
+                    && session->m_jointSessionJob->m_processType != 0)
                 {
                     session->m_jointSessionJob->m_failurePending = 1;
                     session->m_jointSessionJob->m_pendingFailureResult = cResultOwnerChanged;
@@ -268,14 +261,13 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
     case cMeshEventKindLeave:
     {
         transport::StationIdTable::Entry entry;
-        if (session->m_matchmakeStatus == cMatchmakeStatusUnknown3 &&
-            stationIdTable->FindByStationIndex(&entry, event.stationIndex) == 0)
+        if (session->m_matchmakeStatus == cMatchmakeStatusUnknown3
+            && stationIdTable->FindByStationIndex(&entry, event.stationIndex) == 0)
         {
             session->m_stationIdStatusTable->SetConnect(entry.stationId, false);
             unsigned int statusSessionId;
             session->m_stationIdStatusTable->GetSessionId(entry.stationId, &statusSessionId);
-            stationIdTable->FindByStationIndexCore(event.stationIndex)->stationIndex =
-                cStationIndexInvalid;
+            stationIdTable->FindByStationIndexCore(event.stationIndex)->stationIndex = cStationIndexInvalid;
             if (statusSessionId == session->m_sessionId[session->m_currentSessionIndex])
             {
                 if (session->m_fieldc0 != 0)
@@ -319,13 +311,12 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
             }
             else if (session->m_disconnectStatus == 1)
             {
-                if (!g_piaMesh->GetProcessDestroyMeshJobPtr()->m_started &&
-                    session->m_jointSessionJob != 0 &&
-                    session->m_jointSessionJob->m_processType == Session::cProcessTypeDestroyJointSession)
+                if (!g_piaMesh->GetProcessDestroyMeshJobPtr()->m_started && session->m_jointSessionJob != 0
+                    && session->m_jointSessionJob->m_processType == Session::cProcessTypeDestroyJointSession)
                 {
                     unsigned int jointHostSessionId;
-                    if (!session->m_stationIdStatusTable->GetSessionId(
-                            session->m_jointSessionHostStationId, &jointHostSessionId))
+                    if (!session->m_stationIdStatusTable->GetSessionId(session->m_jointSessionHostStationId,
+                                                                       &jointHostSessionId))
                         jointHostSessionId = 0;
                     if (session->m_sessionId[session->m_currentSessionIndex] != jointHostSessionId)
                     {
@@ -334,8 +325,7 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                         const unsigned long long hostStationId = session->m_hostStationId;
                         if (matchmakeSession->GetMatchmakeOwnerUniqueId() != hostStationId)
                         {
-                            const unsigned long long ownerUniqueId =
-                                matchmakeSession->GetMatchmakeOwnerUniqueId();
+                            const unsigned long long ownerUniqueId = matchmakeSession->GetMatchmakeOwnerUniqueId();
                             if (ownerUniqueId == session->m_localStationId)
                                 matchmakeSession->UpdateMatchmakeSessionHost(
                                     session->m_sessionId[session->m_currentSessionIndex]);
@@ -357,10 +347,9 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
         {
             entry.stationId = 0;
             entry.stationIndex = cStationIndexInvalid;
-            transport::Station* leavingStation =
-                transport::StationManager::s_pInstance->GetStation(event.stationIndex);
-            if (leavingStation != 0 &&
-                transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(leavingStation) != 0)
+            transport::Station* leavingStation = transport::StationManager::s_pInstance->GetStation(event.stationIndex);
+            if (leavingStation != 0
+                && transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(leavingStation) != 0)
                 stationIdTable->FindByUniqueId(&entry, uniqueId);
             if (entry.stationIndex != event.stationIndex)
             {
@@ -376,9 +365,8 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                     restorePostponeNotice = true;
                 if (restorePostponeNotice)
                     session->m_postponeNotice = false;
-                session->RemoveStationId(entry.stationId,
-                                         static_cast<StationIndex>(entry.stationIndex),
-                                         entry.uniqueId, 0);
+                session->RemoveStationId(entry.stationId, static_cast<StationIndex>(entry.stationIndex), entry.uniqueId,
+                                         0);
                 if (restorePostponeNotice)
                     session->m_postponeNotice = true;
             }
@@ -388,8 +376,7 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                 RemoveStationId(entry.stationId);
             }
 
-            if (entry.stationId == session->m_hostStationId ||
-                entry.stationId == session->m_jointSessionHostStationId)
+            if (entry.stationId == session->m_hostStationId || entry.stationId == session->m_jointSessionHostStationId)
             {
                 if (!session->IsHostMigrationEnabled())
                 {
@@ -402,16 +389,15 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                     if (!g_piaMesh->GetProcessDestroyMeshJobPtr()->m_started)
                     {
                         unsigned int jointHostSessionId;
-                        if (!session->m_stationIdStatusTable->GetSessionId(
-                                session->m_jointSessionHostStationId, &jointHostSessionId))
+                        if (!session->m_stationIdStatusTable->GetSessionId(session->m_jointSessionHostStationId,
+                                                                           &jointHostSessionId))
                             jointHostSessionId = 0;
                         const unsigned long long hostStationId = session->m_hostStationId;
-                        if (entry.stationId != session->m_jointSessionHostStationId &&
-                            jointHostSessionId != 0 &&
-                            jointHostSessionId != session->m_sessionId[session->m_currentSessionIndex] &&
-                            (!g_piaMesh->GetProcessHostMigrationJobPtr()->m_started ||
-                             (g_piaMesh->GetProcessHostMigrationJobPtr()->m_started &&
-                              g_piaMesh->GetProcessHostMigrationJobPtr()->m_unknownB8)))
+                        if (entry.stationId != session->m_jointSessionHostStationId && jointHostSessionId != 0
+                            && jointHostSessionId != session->m_sessionId[session->m_currentSessionIndex]
+                            && (!g_piaMesh->GetProcessHostMigrationJobPtr()->m_started
+                                || (g_piaMesh->GetProcessHostMigrationJobPtr()->m_started
+                                    && g_piaMesh->GetProcessHostMigrationJobPtr()->m_unknownB8)))
                         {
                             const unsigned long long ownerUniqueId =
                                 session->m_matchmakeSession[session->m_currentSessionIndex]
@@ -437,15 +423,15 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
         break;
     }
     case cMeshEventKind2:
-        if (!session->IsProcessingJoin() && !session->m_leaveSessionJob->IsRunning() &&
-            session->m_disconnectStatus - cConnectionStatusDisconnectedSession > 4)
+        if (!session->IsProcessingJoin() && !session->m_leaveSessionJob->IsRunning()
+            && session->m_disconnectStatus - cConnectionStatusDisconnectedSession > 4)
         {
             const unsigned int matchmakeStatus = session->m_matchmakeStatus;
             if (matchmakeStatus == cMatchmakeStatusUnknown3)
             {
                 transport::StationIdTable::Entry entry;
-                if (stationIdTable->FindByStationIndex(&entry, event.stationIndex) == 0 &&
-                    session->m_jointSessionJob != 0 && session->m_jointSessionJob->m_processType != 0)
+                if (stationIdTable->FindByStationIndex(&entry, event.stationIndex) == 0
+                    && session->m_jointSessionJob != 0 && session->m_jointSessionJob->m_processType != 0)
                 {
                     session->m_jointSessionJob->NoticeHostChangeEventImpl(entry.stationId);
                     if (session->m_localStationId == entry.stationId)
@@ -469,14 +455,13 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                     {
                         session->m_hostStationId = entry.stationId;
                         hostChanged = true;
-                        if (session->m_localStationId == entry.stationId &&
-                            !session->m_matchmakeSession[session->m_currentSessionIndex]
-                                 ->IsMatchmakeOwner())
+                        if (session->m_localStationId == entry.stationId
+                            && !session->m_matchmakeSession[session->m_currentSessionIndex]->IsMatchmakeOwner())
                             hostChanged = false;
                     }
                 }
-                else if (matchmakeStatus == cMatchmakeStatusUnknown4 &&
-                         stationIdTable->FindByUniqueId(&entry, uniqueId) == 0)
+                else if (matchmakeStatus == cMatchmakeStatusUnknown4
+                         && stationIdTable->FindByUniqueId(&entry, uniqueId) == 0)
                 {
                     session->m_jointSessionHostStationId = entry.stationId;
                     unsigned int hostSessionId;
@@ -488,17 +473,16 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                     if (jointHostStationId == session->m_localStationId)
                     {
                         jointHostChanged =
-                            session->m_matchmakeSession[bufferIndex]->GetMatchmakeOwnerUniqueId() ==
-                                jointHostStationId &&
-                            session->m_matchmakeSession[session->m_currentSessionIndex]
-                                    ->GetMatchmakeOwnerUniqueId() ==
-                                session->m_jointSessionHostStationId;
+                            session->m_matchmakeSession[bufferIndex]->GetMatchmakeOwnerUniqueId() == jointHostStationId
+                            && session->m_matchmakeSession[session->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId()
+                                   == session->m_jointSessionHostStationId;
                     }
                     if (session->m_field110 != session->m_sessionId[session->m_currentSessionIndex])
                     {
                         transport::StationIdTable::Entry hostEntry;
-                        if (transport::g_piaTransport->m_stationIdTable->FindByStationId(
-                                &hostEntry, session->m_hostStationId) != 0)
+                        if (transport::g_piaTransport->m_stationIdTable->FindByStationId(&hostEntry,
+                                                                                         session->m_hostStationId)
+                            != 0)
                         {
                             IMatchmakeSession* matchmakeSession =
                                 session->m_matchmakeSession[session->m_currentSessionIndex];
@@ -520,9 +504,10 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                         if (session->m_hostStationId != session->m_localStationId)
                         {
                             StationIndex hostStationIndex;
-                            if (transport::g_piaTransport->ConvertToStationIndex(
-                                    &hostStationIndex, session->m_hostStationId) == 0 &&
-                                g_piaMesh->IsValidStationIndex(hostStationIndex))
+                            if (transport::g_piaTransport->ConvertToStationIndex(&hostStationIndex,
+                                                                                 session->m_hostStationId)
+                                    == 0
+                                && g_piaMesh->IsValidStationIndex(hostStationIndex))
                                 RemoveStationIndex(hostStationIndex);
                             session->m_hostStationId = entry.stationId;
                             hostChanged = true;
@@ -533,8 +518,7 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                                 matchmakeSession->UpdateMatchmakeSessionHost(
                                     session->m_sessionId[session->m_currentSessionIndex]);
                                 const unsigned long long hostStationId = session->m_hostStationId;
-                                hostChanged =
-                                    matchmakeSession->GetMatchmakeOwnerUniqueId() == hostStationId;
+                                hostChanged = matchmakeSession->GetMatchmakeOwnerUniqueId() == hostStationId;
                             }
                         }
                         else
@@ -550,12 +534,11 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                     session->CallSessionEventCallback(Session::cEventTypeUnknown04,
                                                       session->m_jointSessionHostStationId);
                 if (hostChanged)
-                    session->CallSessionEventCallback(Session::cEventTypeUnknown02,
-                                                      session->m_hostStationId);
-                if (g_piaMesh != 0 && g_piaMesh->GetProcessHostMigrationJobPtr() != 0 &&
-                    g_piaMesh->GetProcessHostMigrationJobPtr()->m_started &&
-                    ((session->m_matchmakeStatus == cMatchmakeStatusUnknown2 && hostChanged) ||
-                     (session->m_matchmakeStatus == cMatchmakeStatusUnknown4 && jointHostChanged)))
+                    session->CallSessionEventCallback(Session::cEventTypeUnknown02, session->m_hostStationId);
+                if (g_piaMesh != 0 && g_piaMesh->GetProcessHostMigrationJobPtr() != 0
+                    && g_piaMesh->GetProcessHostMigrationJobPtr()->m_started
+                    && ((session->m_matchmakeStatus == cMatchmakeStatusUnknown2 && hostChanged)
+                        || (session->m_matchmakeStatus == cMatchmakeStatusUnknown4 && jointHostChanged)))
                 {
                     session->m_postponeNotice = false;
                     session->m_stationIdStatusTable->ClearDisconnectedStationId();
@@ -593,12 +576,10 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
     case cMeshEventKind21:
     {
         const StationIndex hostStationIndex = g_piaMesh->GetHostStationIndex();
-        if (session->m_matchmakeSession[session->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId() ==
-                uniqueId &&
-            hostStationIndex != event.stationIndex)
+        if (session->m_matchmakeSession[session->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId() == uniqueId
+            && hostStationIndex != event.stationIndex)
         {
-            transport::Station* hostStation =
-                transport::StationManager::s_pInstance->GetStation(hostStationIndex);
+            transport::Station* hostStation = transport::StationManager::s_pInstance->GetStation(hostStationIndex);
             if (hostStation != 0)
             {
                 if (hostStation->m_field20 == cStationLeaveStateRequested)
@@ -625,9 +606,9 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                 session->m_fieldc2[session->m_currentSessionIndex] = availableNum;
             session->m_fieldc2[session->m_currentSessionIndex == 0 ? 1 : 0] = playerNum;
             const Session::ProcessType processType = session->m_jointSessionJob->m_processType;
-            if (processType == Session::cProcessTypeCreateJointSession ||
-                processType == Session::cProcessTypeJoinJointSession ||
-                processType == Session::cProcessTypeJoinRandomJointSession)
+            if (processType == Session::cProcessTypeCreateJointSession
+                || processType == Session::cProcessTypeJoinJointSession
+                || processType == Session::cProcessTypeJoinRandomJointSession)
                 transport::g_piaTransport->m_stationIdTable->SetAvailableEntryNum(
                     g_piaSession->m_fieldc2[g_piaSession->m_currentSessionIndex == 0 ? 1 : 0]);
             else
@@ -653,8 +634,7 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
                 if (joiningStation != 0 && joiningStation->GetParticipantCount(&count) == 0)
                     participantCount = (participantCount + count) & 0xffff;
             }
-            if (session->m_fieldc2[session->m_currentSessionIndex] <
-                participantCount + (event.stationId & 0xffff))
+            if (session->m_fieldc2[session->m_currentSessionIndex] < participantCount + (event.stationId & 0xffff))
                 g_piaMesh->SetDenyJoinRequestBySessionIsFull(true);
         }
         break;
@@ -668,17 +648,16 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
             {
                 if (session->GetStatus() != cStatusUnknown2)
                     break;
-                useCurrentSession =
-                    session->GetJointSessionProcessType() != Session::cProcessTypeCreateJointSession &&
-                    session->GetJointSessionProcessType() != Session::cProcessTypeJoinJointSession &&
-                    session->GetJointSessionProcessType() != Session::cProcessTypeJoinRandomJointSession;
+                useCurrentSession = session->GetJointSessionProcessType() != Session::cProcessTypeCreateJointSession
+                                    && session->GetJointSessionProcessType() != Session::cProcessTypeJoinJointSession
+                                    && session->GetJointSessionProcessType()
+                                           != Session::cProcessTypeJoinRandomJointSession;
             }
         }
-        const unsigned int sessionId =
-            useCurrentSession ? session->m_sessionId[session->m_currentSessionIndex]
-                              : session->m_sessionId[session->m_currentSessionIndex == 0 ? 1 : 0];
-        if (sessionId != 0 &&
-            !session->m_meshLayerController->IsParticipated(sessionId, event.stationId))
+        const unsigned int sessionId = useCurrentSession
+                                           ? session->m_sessionId[session->m_currentSessionIndex]
+                                           : session->m_sessionId[session->m_currentSessionIndex == 0 ? 1 : 0];
+        if (sessionId != 0 && !session->m_meshLayerController->IsParticipated(sessionId, event.stationId))
             g_piaMesh->SetDenyJoinRequestByInvalidState(true);
         break;
     }
@@ -719,4 +698,6 @@ void MeshEventListener::NoticeEvent(const MeshEvent& event)
     }
 }
 
-}}}
+}
+}
+}

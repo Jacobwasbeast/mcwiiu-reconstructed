@@ -1,7 +1,12 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_ICOMMUNITYINFOLIST_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_ICOMMUNITYINFOLIST_HPP
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class ICommunityInfo;
 
@@ -18,6 +23,8 @@ public:
     virtual void Clear() = 0;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/session/IMatchmakeSession.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class CommonMatchmakeSession : public IMatchmakeSession
 {
@@ -29,6 +34,8 @@ protected:
     bool m_matchmakeOwner;
 };
 
-}}}
+}
+}
+}
 
 #endif

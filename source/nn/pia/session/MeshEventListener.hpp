@@ -3,7 +3,12 @@
 
 #include "nn/pia.h"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class MeshEventListener
 {
@@ -23,6 +28,8 @@ public:
     void Trace(unsigned long long value) const;
 };
 
-}}}
+}
+}
+}
 
 #endif

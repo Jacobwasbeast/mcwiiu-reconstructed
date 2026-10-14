@@ -18,7 +18,12 @@
 #include "nn/pia/transport/StationProtocol.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -79,8 +84,12 @@ const unsigned int cUnlimitedDispatchSize = 0xffffffffu;
 }
 
 SessionProtocol::SessionProtocol()
-    : transport::Protocol(), m_stationIndex(cStationIndexNone), m_stationId(0), m_windowNum(0),
-      m_windows(0), m_dispatchWindowIndex(0)
+    : transport::Protocol(),
+      m_stationIndex(cStationIndexNone),
+      m_stationId(0),
+      m_windowNum(0),
+      m_windows(0),
+      m_dispatchWindowIndex(0)
 {
 }
 
@@ -177,8 +186,8 @@ unsigned long long SessionProtocol::DeserializeStationId(const unsigned char* bu
     return common::deserializeU64(buffer);
 }
 
-unsigned int SessionProtocol::SerializeStationId(unsigned long long stationId,
-                                                 unsigned char* buffer, unsigned int bufferSize)
+unsigned int SessionProtocol::SerializeStationId(unsigned long long stationId, unsigned char* buffer,
+                                                 unsigned int bufferSize)
 {
     if (bufferSize < cStationIdSize)
         return 0;
@@ -186,14 +195,13 @@ unsigned int SessionProtocol::SerializeStationId(unsigned long long stationId,
     return cStationIdSize;
 }
 
-Result SessionProtocol::SendPreparedForMigrateSession(unsigned char processType,
-                                                      unsigned long long stationId,
+Result SessionProtocol::SendPreparedForMigrateSession(unsigned char processType, unsigned long long stationId,
                                                       unsigned int sessionId, bool value)
 {
     transport::StationIdTable::Entry entry;
     Result result;
-    result = transport::g_piaTransport->m_stationIdTable->FindByStationIndex(
-        &entry, static_cast<StationIndex>(m_stationIndex));
+    result = transport::g_piaTransport->m_stationIdTable->FindByStationIndex(&entry,
+                                                                             static_cast<StationIndex>(m_stationIndex));
     if (result != 0)
         return result;
     unsigned long long localStationId = entry.stationId;
@@ -212,8 +220,7 @@ Result SessionProtocol::SendPreparedForMigrateSession(unsigned char processType,
     m_messageBuffer[cMessageTypeOffset] = cMessageTypePreparedForMigrateSession;
     m_messageBuffer[cPreparedResultOffset] = value;
     common::serializeU32(m_messageBuffer + cPreparedSessionIdOffset, sessionId);
-    unsigned int size = SerializeStationId(localStationId,
-                                           m_messageBuffer + cPreparedStationIdOffset,
+    unsigned int size = SerializeStationId(localStationId, m_messageBuffer + cPreparedStationIdOffset,
                                            sizeof(m_messageBuffer) - cPreparedStationIdOffset);
     if (sessionId == 0 || size == 0)
         return cResultInvalidState;
@@ -244,8 +251,7 @@ void SessionProtocol::ParseNextSessionId(const transport::ReceivedMessageAccesso
     }
 
     transport::StationIdTable::Entry entry;
-    Result result =
-        transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
+    Result result = transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
     if (result != 0 || sessionIndex == 0)
         return;
 
@@ -259,10 +265,10 @@ void SessionProtocol::ParseNextSessionId(const transport::ReceivedMessageAccesso
     {
         if (job->m_field60 == messageType)
         {
-            g_piaSession->m_fieldc2[g_piaSession->m_currentSessionIndex == 0 ? 1 : 0] =
-                static_cast<unsigned char>(sessionIndex);
-            job->ReceiveNextSessionId(processType, nextSessionId, matchmakeOwnerUniqueId,
-                                      applicationData, applicationDataSize, stationId);
+            g_piaSession->m_fieldc2[g_piaSession->m_currentSessionIndex == 0 ? 1 : 0] = static_cast<unsigned char>(
+                sessionIndex);
+            job->ReceiveNextSessionId(processType, nextSessionId, matchmakeOwnerUniqueId, applicationData,
+                                      applicationDataSize, stationId);
         }
     }
     else
@@ -284,30 +290,28 @@ void SessionProtocol::ParsePreparedForMigrateSession(const transport::ReceivedMe
     unsigned long long stationId = DeserializeStationId(data + cPreparedStationIdOffset);
 
     transport::StationIdTable::Entry entry;
-    Result result =
-        transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
+    Result result = transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
     if (result != 0)
         return;
 
     unsigned int expectedSessionId;
-    if (processType == Session::cProcessTypeDestroyJointSession ||
-        processType == Session::cProcessTypeLeaveJointSession)
+    if (processType == Session::cProcessTypeDestroyJointSession
+        || processType == Session::cProcessTypeLeaveJointSession)
         expectedSessionId = g_piaSession->m_sessionId[g_piaSession->m_currentSessionIndex];
     else
-        expectedSessionId =
-            g_piaSession->m_sessionId[g_piaSession->m_currentSessionIndex == 0 ? 1 : 0];
+        expectedSessionId = g_piaSession->m_sessionId[g_piaSession->m_currentSessionIndex == 0 ? 1 : 0];
     if (sessionId != expectedSessionId)
         return;
     g_piaSession->m_stationIdStatusTable->SetPrepareStatus(stationId, prepared);
 }
 
-Result SessionProtocol::SendAnswerToInvitationCore(MessageType messageType,
-                                                   unsigned char processType,
+Result SessionProtocol::SendAnswerToInvitationCore(MessageType messageType, unsigned char processType,
                                                    unsigned long long stationId, bool result)
 {
     transport::StationIdTable::Entry entry;
     Result findResult;
-    findResult = transport::g_piaTransport->m_stationIdTable->FindByStationIndex(&entry, static_cast<StationIndex>(m_stationIndex));
+    findResult = transport::g_piaTransport->m_stationIdTable->FindByStationIndex(
+        &entry, static_cast<StationIndex>(m_stationIndex));
     if (findResult != 0)
         return findResult;
     unsigned long long localStationId = entry.stationId;
@@ -336,11 +340,9 @@ Result SessionProtocol::SendAnswerToInvitationCore(MessageType messageType,
     return window->PushData(message, messageSize);
 }
 
-Result SessionProtocol::SendAnswerToInvitation(unsigned char processType,
-                                               unsigned long long stationId, bool result)
+Result SessionProtocol::SendAnswerToInvitation(unsigned char processType, unsigned long long stationId, bool result)
 {
-    return SendAnswerToInvitationCore(cMessageTypeAnswerToInvitation, processType, stationId,
-                                      result);
+    return SendAnswerToInvitationCore(cMessageTypeAnswerToInvitation, processType, stationId, result);
 }
 
 void SessionProtocol::ParseInvitationAsCompanion(const transport::ReceivedMessageAccessor& message)
@@ -366,8 +368,7 @@ void SessionProtocol::ParseInvitationAsCompanion(const transport::ReceivedMessag
     {
         if (job->m_processType == processType)
         {
-            if (processType == Session::cProcessTypeDestroyJointSession &&
-                job->m_leaveStationId == 0)
+            if (processType == Session::cProcessTypeDestroyJointSession && job->m_leaveStationId == 0)
             {
                 if (stationIdNum <= cInvitationStationIdMax)
                 {
@@ -376,8 +377,7 @@ void SessionProtocol::ParseInvitationAsCompanion(const transport::ReceivedMessag
                         stationIds[index] = DeserializeStationId(data + offset);
                         offset += cStationIdSize;
                     }
-                    Result result = job->ReceiveLeaveInvitation(processType, stationIds,
-                                                                stationIdNum, hostStationId);
+                    Result result = job->ReceiveLeaveInvitation(processType, stationIds, stationIdNum, hostStationId);
                     if (result == 0)
                         return;
                 }
@@ -396,8 +396,7 @@ void SessionProtocol::ParseInvitationAsCompanion(const transport::ReceivedMessag
             stationIds[index] = DeserializeStationId(data + offset);
             offset += cStationIdSize;
         }
-        Result result = job->StartupPassiveProcess(processType, messageType, stationIds,
-                                                   stationIdNum, hostStationId);
+        Result result = job->StartupPassiveProcess(processType, messageType, stationIds, stationIdNum, hostStationId);
         if (result == 0)
         {
             job->Ready(false);
@@ -417,11 +416,10 @@ void SessionProtocol::ParseInvitationAsCompanion(const transport::ReceivedMessag
         g_piaSession->ChangeStatusToDisconnectedSession();
 }
 
-Result SessionProtocol::SendAnswerToDestroyInvitation(unsigned char processType,
-                                                      unsigned long long stationId, bool result)
+Result SessionProtocol::SendAnswerToDestroyInvitation(unsigned char processType, unsigned long long stationId,
+                                                      bool result)
 {
-    return SendAnswerToInvitationCore(cMessageTypeAnswerToDestroyInvitation, processType,
-                                      stationId, result);
+    return SendAnswerToInvitationCore(cMessageTypeAnswerToDestroyInvitation, processType, stationId, result);
 }
 
 void SessionProtocol::ParseDestroyInvitation(const transport::ReceivedMessageAccessor& message)
@@ -444,8 +442,8 @@ void SessionProtocol::ParseDestroyInvitation(const transport::ReceivedMessageAcc
 
     if (job->m_processType != 0)
     {
-        if (job->m_processType == Session::cProcessTypeDestroyJointSession ||
-            job->m_processType == Session::cProcessTypeLeaveJointSession)
+        if (job->m_processType == Session::cProcessTypeDestroyJointSession
+            || job->m_processType == Session::cProcessTypeLeaveJointSession)
         {
             if (g_piaSession->GetJointSessionHostStationId() != hostStationId)
                 return;
@@ -461,8 +459,7 @@ void SessionProtocol::ParseDestroyInvitation(const transport::ReceivedMessageAcc
             stationIds[index] = DeserializeStationId(data + offset);
             offset += cStationIdSize;
         }
-        Result result = job->StartupPassiveProcess(processType, messageType, stationIds,
-                                                   stationIdNum, hostStationId);
+        Result result = job->StartupPassiveProcess(processType, messageType, stationIds, stationIdNum, hostStationId);
         if (result == 0)
         {
             job->Ready(false);
@@ -501,9 +498,8 @@ void SessionProtocol::ParseLeaveMeshInvitation(const transport::ReceivedMessageA
     }
 
     JointSessionJob* job = g_piaSession->m_jointSessionJob;
-    if (job != 0 && !job->m_failurePending && job->m_processType != 0 &&
-        job->m_processType == processType && job->m_leaveStationId == hostStationId &&
-        job->m_field60 == messageType)
+    if (job != 0 && !job->m_failurePending && job->m_processType != 0 && job->m_processType == processType
+        && job->m_leaveStationId == hostStationId && job->m_field60 == messageType)
     {
         job->ReceiveLeaveMeshInvitation(processType, hostStationId);
         for (unsigned int index = 0; index < stationIdNum; ++index)
@@ -525,8 +521,7 @@ void SessionProtocol::ParseAnswerToInvitation(const transport::ReceivedMessageAc
     unsigned long long stationId = DeserializeStationId(data + cAnswerStationIdOffset);
 
     transport::StationIdTable::Entry entry;
-    Result result =
-        transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
+    Result result = transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
     if (result != 0)
         return;
     JointSessionJob* job = g_piaSession->m_jointSessionJob;
@@ -538,10 +533,8 @@ void SessionProtocol::ParseAnswerToInvitation(const transport::ReceivedMessageAc
 }
 
 Result SessionProtocol::SendInvitationCore(MessageType messageType, unsigned char processType,
-                                           unsigned long long* stationIds,
-                                           unsigned short stationIdNum,
-                                           unsigned long long stationId,
-                                           unsigned long long* companionStationIds,
+                                           unsigned long long* stationIds, unsigned short stationIdNum,
+                                           unsigned long long stationId, unsigned long long* companionStationIds,
                                            unsigned short companionStationIdNum)
 {
     m_messageBuffer[cMessageTypeOffset] = messageType;
@@ -571,7 +564,7 @@ Result SessionProtocol::SendInvitationCore(MessageType messageType, unsigned cha
     }
 
     transport::StationIdTable* table = transport::g_piaTransport->m_stationIdTable;
-    transport::ReliableSlidingWindow* windows[cStationNumMax] = { 0 };
+    transport::ReliableSlidingWindow* windows[cStationNumMax] = {0};
     unsigned short windowNum = 0;
     Result result;
     for (unsigned int index = 0; index < targetNum; ++index)
@@ -622,25 +615,21 @@ Result SessionProtocol::SendInvitationCore(MessageType messageType, unsigned cha
     return cResultInvitationSendFailed;
 }
 
-Result SessionProtocol::SendCompletionInvitation(unsigned char processType,
-                                                 unsigned long long* stationIds,
-                                                 unsigned short stationIdNum,
-                                                 unsigned long long stationId,
+Result SessionProtocol::SendCompletionInvitation(unsigned char processType, unsigned long long* stationIds,
+                                                 unsigned short stationIdNum, unsigned long long stationId,
                                                  unsigned long long* companionStationIds,
                                                  unsigned short companionStationIdNum)
 {
-    return SendInvitationCore(cMessageTypeCompletionInvitation, processType, stationIds,
-                              stationIdNum, stationId, companionStationIds,
-                              companionStationIdNum);
+    return SendInvitationCore(cMessageTypeCompletionInvitation, processType, stationIds, stationIdNum, stationId,
+                              companionStationIds, companionStationIdNum);
 }
 
-Result SessionProtocol::SendCompletionFailureResponse(unsigned char processType,
-                                                      unsigned long long stationId)
+Result SessionProtocol::SendCompletionFailureResponse(unsigned char processType, unsigned long long stationId)
 {
     transport::StationIdTable::Entry entry;
     Result result;
-    result = transport::g_piaTransport->m_stationIdTable->FindByStationIndex(
-        &entry, static_cast<StationIndex>(m_stationIndex));
+    result = transport::g_piaTransport->m_stationIdTable->FindByStationIndex(&entry,
+                                                                             static_cast<StationIndex>(m_stationIndex));
     if (result != 0)
         return result;
     unsigned long long localStationId = entry.stationId;
@@ -657,15 +646,12 @@ Result SessionProtocol::SendCompletionFailureResponse(unsigned char processType,
 
     m_messageBuffer[cProcessTypeOffset] = processType;
     m_messageBuffer[cMessageTypeOffset] = cMessageTypeCompletionFailureResponse;
-    unsigned int size = SerializeStationId(localStationId,
-                                           m_messageBuffer + cCompletionFailureStationIdOffset,
-                                           sizeof(m_messageBuffer) -
-                                               cCompletionFailureStationIdOffset);
+    unsigned int size = SerializeStationId(localStationId, m_messageBuffer + cCompletionFailureStationIdOffset,
+                                           sizeof(m_messageBuffer) - cCompletionFailureStationIdOffset);
     return window->PushData(m_messageBuffer, size + cCompletionFailureHeaderSize);
 }
 
-void SessionProtocol::ParseCompletionForMigrateSession(
-    const transport::ReceivedMessageAccessor& message)
+void SessionProtocol::ParseCompletionForMigrateSession(const transport::ReceivedMessageAccessor& message)
 {
     unsigned long long sourceStationId = message.m_sourceStationId;
     if (sourceStationId == 0)
@@ -677,8 +663,7 @@ void SessionProtocol::ParseCompletionForMigrateSession(
     unsigned long long stationId = DeserializeStationId(data + cCompletionMigrateStationIdOffset);
 
     transport::StationIdTable::Entry entry;
-    Result result =
-        transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
+    Result result = transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
     if (result != 0)
         return;
 
@@ -690,11 +675,10 @@ void SessionProtocol::ParseCompletionForMigrateSession(
     if (job->m_processType != 0)
     {
         if (job->m_fielda0 != 0)
-            SendCompletionInvitation(processType, &stationId, 1, g_piaSession->m_localStationId, 0,
-                                     0);
+            SendCompletionInvitation(processType, &stationId, 1, g_piaSession->m_localStationId, 0, 0);
     }
-    else if (g_piaSession->GetStatus() == Session::cConnectionStatusDisconnectedNetwork ||
-             g_piaSession->GetStatus() == Session::cConnectionStatusConnected)
+    else if (g_piaSession->GetStatus() == Session::cConnectionStatusDisconnectedNetwork
+             || g_piaSession->GetStatus() == Session::cConnectionStatusConnected)
     {
         SendCompletionInvitation(processType, &stationId, 1, g_piaSession->m_localStationId, 0, 0);
     }
@@ -704,8 +688,7 @@ void SessionProtocol::ParseCompletionForMigrateSession(
     }
 }
 
-void SessionProtocol::ParseCompletionFailureResponse(
-    const transport::ReceivedMessageAccessor& message)
+void SessionProtocol::ParseCompletionFailureResponse(const transport::ReceivedMessageAccessor& message)
 {
     unsigned long long sourceStationId = message.m_sourceStationId;
     if (sourceStationId == 0)
@@ -713,8 +696,7 @@ void SessionProtocol::ParseCompletionFailureResponse(
 
     DeserializeStationId(message.m_message + cCompletionFailureStationIdOffset);
     transport::StationIdTable::Entry entry;
-    Result result =
-        transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
+    Result result = transport::g_piaTransport->m_stationIdTable->FindByStationId(&entry, sourceStationId);
     if (result != 0)
         return;
     JointSessionJob* job = g_piaSession->m_jointSessionJob;
@@ -725,12 +707,10 @@ void SessionProtocol::ParseCompletionFailureResponse(
     }
 }
 
-Result SessionProtocol::SendAnswerToCompletionInvitation(unsigned char processType,
-                                                         unsigned long long stationId,
+Result SessionProtocol::SendAnswerToCompletionInvitation(unsigned char processType, unsigned long long stationId,
                                                          bool result)
 {
-    return SendAnswerToInvitationCore(cMessageTypeAnswerToCompletionInvitation, processType,
-                                      stationId, result);
+    return SendAnswerToInvitationCore(cMessageTypeAnswerToCompletionInvitation, processType, stationId, result);
 }
 
 void SessionProtocol::ParseCompletionInvitation(const transport::ReceivedMessageAccessor& message)
@@ -739,15 +719,13 @@ void SessionProtocol::ParseCompletionInvitation(const transport::ReceivedMessage
         return;
 
     unsigned char messageType = message.m_message[cMessageTypeOffset];
-    Session::ProcessType processType =
-        static_cast<Session::ProcessType>(message.m_message[cProcessTypeOffset]);
-    unsigned long long hostStationId =
-        DeserializeStationId(message.m_message + cInvitationStationIdOffset);
+    Session::ProcessType processType = static_cast<Session::ProcessType>(message.m_message[cProcessTypeOffset]);
+    unsigned long long hostStationId = DeserializeStationId(message.m_message + cInvitationStationIdOffset);
     JointSessionJob* job = g_piaSession->m_jointSessionJob;
     if (job != 0 && !job->m_failurePending)
     {
-        if (job->m_processType != 0 && job->m_processType == processType &&
-            job->m_leaveStationId == hostStationId && job->m_field60 == messageType)
+        if (job->m_processType != 0 && job->m_processType == processType && job->m_leaveStationId == hostStationId
+            && job->m_field60 == messageType)
             job->ReceiveCompletionResponse(processType, hostStationId);
         SendAnswerToCompletionInvitation(processType, hostStationId, true);
     }
@@ -802,17 +780,15 @@ Result SessionProtocol::Dispatch()
         return 0;
 
     transport::ReceivedMessageAccessor message;
-    transport::StationPacketHandler* handler =
-        static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
+    transport::StationPacketHandler* handler = static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
     transport::ProtocolId protocolId(static_cast<unsigned char>(GetProtocolType()), 1);
     transport::PacketHandler::Iterator& iterator = handler->GetIterator(protocolId);
     iterator.BeginIteration();
     for (; !iterator.IsEndIteration(); iterator.NextIteration())
     {
         transport::ProtocolMessageReader* reader = iterator.GetMessageReader();
-        transport::Station* station =
-            transport::StationManager::s_pInstance->GetStationByStationIdWithoutConvert(
-                reader->m_header.m_source);
+        transport::Station* station = transport::StationManager::s_pInstance->GetStationByStationIdWithoutConvert(
+            reader->m_header.m_source);
         if (station == 0 || static_cast<int>(station->m_field10) > cStationIndexMax)
             continue;
         int stationIndex = static_cast<int>(station->m_field10);
@@ -832,9 +808,8 @@ Result SessionProtocol::Dispatch()
         transport::ReliableSlidingWindow* window = m_windows + index;
         if (!window->IsInCommunication())
             continue;
-        transport::Station* station =
-            transport::StationManager::s_pInstance->GetStationByStationIdWithoutConvert(
-                window->m_remoteStationId);
+        transport::Station* station = transport::StationManager::s_pInstance->GetStationByStationIdWithoutConvert(
+            window->m_remoteStationId);
         if (station == 0 || station->m_field20 != cStationStateConnected)
             continue;
         unsigned int size;
@@ -859,16 +834,14 @@ Result SessionProtocol::Dispatch()
     for (unsigned short index = m_dispatchWindowIndex; index < m_windowNum; ++index)
     {
         if (m_windows[index].IsInCommunication())
-            m_windows[index].Dispatch(
-                static_cast<transport::StationPacketHandler*>(GetStationPacketHandler()), 0,
-                cUnlimitedDispatchSize);
+            m_windows[index].Dispatch(static_cast<transport::StationPacketHandler*>(GetStationPacketHandler()), 0,
+                                      cUnlimitedDispatchSize);
     }
     for (unsigned short index = 0; index < m_dispatchWindowIndex; ++index)
     {
         if (m_windows[index].IsInCommunication())
-            m_windows[index].Dispatch(
-                static_cast<transport::StationPacketHandler*>(GetStationPacketHandler()), 0,
-                cUnlimitedDispatchSize);
+            m_windows[index].Dispatch(static_cast<transport::StationPacketHandler*>(GetStationPacketHandler()), 0,
+                                      cUnlimitedDispatchSize);
     }
     return 0;
 }
@@ -899,9 +872,8 @@ Result SessionProtocol::UpdateProtocolEvent(const transport::ProtocolEvent& even
     case 0:
     {
         transport::ProtocolId protocolId(static_cast<unsigned char>(GetProtocolType()), 1);
-        Result result = window->Startup(
-            static_cast<transport::StationPacketHandler*>(GetStationPacketHandler()), protocolId,
-            m_stationId, station->m_stationId);
+        Result result = window->Startup(static_cast<transport::StationPacketHandler*>(GetStationPacketHandler()),
+                                        protocolId, m_stationId, station->m_stationId);
         return result;
     }
     case 1:
@@ -912,13 +884,10 @@ Result SessionProtocol::UpdateProtocolEvent(const transport::ProtocolEvent& even
     }
 }
 
-Result SessionProtocol::SendNextSessionId(unsigned char processType, unsigned int sessionId,
-                                          unsigned int nextSessionId,
+Result SessionProtocol::SendNextSessionId(unsigned char processType, unsigned int sessionId, unsigned int nextSessionId,
                                           unsigned long long matchmakeOwnerUniqueId,
-                                          const unsigned char* applicationData,
-                                          unsigned int applicationDataSize,
-                                          unsigned long long* stationIds,
-                                          unsigned short stationIdNum)
+                                          const unsigned char* applicationData, unsigned int applicationDataSize,
+                                          unsigned long long* stationIds, unsigned short stationIdNum)
 {
     transport::StationIdTable::Entry entry;
     transport::StationIdTable* table = transport::g_piaTransport->m_stationIdTable;
@@ -931,13 +900,12 @@ Result SessionProtocol::SendNextSessionId(unsigned char processType, unsigned in
     m_messageBuffer[cMessageTypeOffset] = cMessageTypeNextSessionId;
     common::serializeU32(m_messageBuffer + cNextSessionIdSessionIdOffset, sessionId);
     common::serializeU32(m_messageBuffer + cNextSessionIdNextSessionIdOffset, nextSessionId);
-    unsigned int size = SerializeStationId(localStationId,
-                                           m_messageBuffer + cNextSessionIdStationIdOffset,
+    unsigned int size = SerializeStationId(localStationId, m_messageBuffer + cNextSessionIdStationIdOffset,
                                            sizeof(m_messageBuffer) - cNextSessionIdStationIdOffset);
 
     unsigned int messageSize = cNextSessionIdStationIdOffset + size;
-    if (processType >= Session::cProcessTypeCreateJointSession &&
-        processType <= Session::cProcessTypeJoinRandomJointSession)
+    if (processType >= Session::cProcessTypeCreateJointSession
+        && processType <= Session::cProcessTypeJoinRandomJointSession)
         m_messageBuffer[messageSize] = static_cast<unsigned char>(
             g_piaSession->m_fieldc2[g_piaSession->m_currentSessionIndex == 0 ? 1 : 0]);
     else
@@ -957,7 +925,7 @@ Result SessionProtocol::SendNextSessionId(unsigned char processType, unsigned in
     if (sessionId == 0 || nextSessionId == 0 || size == 0)
         return cResultInvalidState;
 
-    transport::ReliableSlidingWindow* windows[cStationNumMax] = { 0 };
+    transport::ReliableSlidingWindow* windows[cStationNumMax] = {0};
     unsigned short windowNum = 0;
     for (unsigned int index = 0; index < stationIdNum; ++index)
     {
@@ -1006,51 +974,41 @@ Result SessionProtocol::SendNextSessionId(unsigned char processType, unsigned in
     return cResultInvitationSendFailed;
 }
 
-Result SessionProtocol::SendInvitationAsCompanion(unsigned char processType,
-                                                  unsigned long long* stationIds,
-                                                  unsigned short stationIdNum,
-                                                  unsigned long long stationId,
+Result SessionProtocol::SendInvitationAsCompanion(unsigned char processType, unsigned long long* stationIds,
+                                                  unsigned short stationIdNum, unsigned long long stationId,
                                                   unsigned long long* companionStationIds,
                                                   unsigned short companionStationIdNum)
 {
-    return SendInvitationCore(cMessageTypeInvitationAsCompanion, processType, stationIds,
-                              stationIdNum, stationId, companionStationIds,
-                              companionStationIdNum);
+    return SendInvitationCore(cMessageTypeInvitationAsCompanion, processType, stationIds, stationIdNum, stationId,
+                              companionStationIds, companionStationIdNum);
 }
 
-Result SessionProtocol::SendDestroyInvitation(unsigned char processType,
-                                              unsigned long long* stationIds,
-                                              unsigned short stationIdNum,
-                                              unsigned long long stationId,
+Result SessionProtocol::SendDestroyInvitation(unsigned char processType, unsigned long long* stationIds,
+                                              unsigned short stationIdNum, unsigned long long stationId,
                                               unsigned long long* companionStationIds,
                                               unsigned short companionStationIdNum)
 {
-    return SendInvitationCore(cMessageTypeDestroyInvitation, processType, stationIds,
-                              stationIdNum, stationId, companionStationIds,
-                              companionStationIdNum);
+    return SendInvitationCore(cMessageTypeDestroyInvitation, processType, stationIds, stationIdNum, stationId,
+                              companionStationIds, companionStationIdNum);
 }
 
-Result SessionProtocol::SendLeaveMeshInvitation(unsigned char processType,
-                                                unsigned long long* stationIds,
-                                                unsigned short stationIdNum,
-                                                unsigned long long stationId,
+Result SessionProtocol::SendLeaveMeshInvitation(unsigned char processType, unsigned long long* stationIds,
+                                                unsigned short stationIdNum, unsigned long long stationId,
                                                 unsigned long long* companionStationIds,
                                                 unsigned short companionStationIdNum)
 {
-    return SendInvitationCore(cMessageTypeLeaveMeshInvitation, processType, stationIds,
-                              stationIdNum, stationId, companionStationIds,
-                              companionStationIdNum);
+    return SendInvitationCore(cMessageTypeLeaveMeshInvitation, processType, stationIds, stationIdNum, stationId,
+                              companionStationIds, companionStationIdNum);
 }
 
-Result SessionProtocol::SendAnswerToLeaveMeshInvitation(unsigned char processType,
-                                                        unsigned long long stationId, bool result)
+Result SessionProtocol::SendAnswerToLeaveMeshInvitation(unsigned char processType, unsigned long long stationId,
+                                                        bool result)
 {
-    return SendAnswerToInvitationCore(cMessageTypeAnswerToLeaveMeshInvitation, processType,
-                                      stationId, result);
+    return SendAnswerToInvitationCore(cMessageTypeAnswerToLeaveMeshInvitation, processType, stationId, result);
 }
 
-Result SessionProtocol::SendCompletionForMigrateSession(unsigned char processType,
-                                                        unsigned long long stationId, bool result)
+Result SessionProtocol::SendCompletionForMigrateSession(unsigned char processType, unsigned long long stationId,
+                                                        bool result)
 {
     transport::StationIdTable::Entry entry;
     Result findResult;
@@ -1073,15 +1031,12 @@ Result SessionProtocol::SendCompletionForMigrateSession(unsigned char processTyp
     m_messageBuffer[cProcessTypeOffset] = processType;
     m_messageBuffer[cMessageTypeOffset] = cMessageTypeCompletionForMigrateSession;
     m_messageBuffer[cCompletionMigrateResultOffset] = result;
-    unsigned int size = SerializeStationId(localStationId,
-                                           m_messageBuffer + cCompletionMigrateStationIdOffset,
-                                           sizeof(m_messageBuffer) -
-                                               cCompletionMigrateStationIdOffset);
+    unsigned int size = SerializeStationId(localStationId, m_messageBuffer + cCompletionMigrateStationIdOffset,
+                                           sizeof(m_messageBuffer) - cCompletionMigrateStationIdOffset);
     return window->PushData(m_messageBuffer, size + cCompletionMigrateHeaderSize);
 }
 
-Result SessionProtocol::CheckIsAbleToSendReliableMessage(StationIndex stationIndex,
-                                                         unsigned int size)
+Result SessionProtocol::CheckIsAbleToSendReliableMessage(StationIndex stationIndex, unsigned int size)
 {
     int windowIndex = stationIndex;
     if (windowIndex >= m_stationIndex)
@@ -1107,4 +1062,6 @@ unsigned short SessionProtocol::GetProtocolType() const
     return cProtocolType;
 }
 
-}}}
+}
+}
+}

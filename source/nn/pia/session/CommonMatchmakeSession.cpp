@@ -1,9 +1,13 @@
 #include "nn/pia/session/CommonMatchmakeSession.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
-CommonMatchmakeSession::CommonMatchmakeSession()
-    : m_matchmakeOwnerUniqueId(0), m_matchmakeOwner(false)
+CommonMatchmakeSession::CommonMatchmakeSession() : m_matchmakeOwnerUniqueId(0), m_matchmakeOwner(false)
 {
 }
 
@@ -60,4 +64,6 @@ void CommonMatchmakeSession::UpdateStationInfoList()
 {
 }
 
-}}}
+}
+}
+}

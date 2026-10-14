@@ -2,7 +2,12 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_CREATE_COMMUNITY_SETTING_HPP
 
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class CreateCommunitySetting
 {
@@ -20,6 +25,8 @@ private:
     unsigned short m_maxParticipantNum;
 };
 
-}}}
+}
+}
+}
 
 #endif

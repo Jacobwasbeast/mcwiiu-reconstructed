@@ -5,7 +5,12 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class IMatchmakeSession;
 
@@ -15,8 +20,7 @@ public:
     CloseParticipationJob();
     virtual ~CloseParticipationJob();
 
-    Result Startup(common::CallContext* callerContext, unsigned int sessionId,
-                   IMatchmakeSession* matchmakeSession);
+    Result Startup(common::CallContext* callerContext, unsigned int sessionId, IMatchmakeSession* matchmakeSession);
     ExecuteResult CloseParticipation();
     ExecuteResult WaitCloseParticipation();
     ExecuteResult WaitP2pStable();
@@ -31,6 +35,8 @@ private:
     common::Time m_startTime;
 };
 
-}}}
+}
+}
+}
 
 #endif

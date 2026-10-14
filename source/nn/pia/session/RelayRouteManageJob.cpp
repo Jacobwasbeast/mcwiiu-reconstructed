@@ -16,7 +16,12 @@
 #include "nn/pia/transport/StationManager.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -36,14 +41,15 @@ enum
 
 typedef common::Job::ExecuteResult (common::StepSequenceJob::*StepFunction)();
 
-const char* const cStepNameWaitAllDirectConnectionReport =
-    "RelayRouteManageJob::WaitAllDirectConnectionReport";
-const char* const cStepNameSendRelayRouteDirections =
-    "RelayRouteManageJob::SendRelayRouteDirections";
+const char* const cStepNameWaitAllDirectConnectionReport = "RelayRouteManageJob::WaitAllDirectConnectionReport";
+const char* const cStepNameSendRelayRouteDirections = "RelayRouteManageJob::SendRelayRouteDirections";
 }
 
 RelayRouteManageJob::RelayRouteManageJob()
-    : common::StepSequenceJob(), m_generation(0), m_sequenceNumber(0), m_resendTime()
+    : common::StepSequenceJob(),
+      m_generation(0),
+      m_sequenceNumber(0),
+      m_resendTime()
 {
     m_stationNum = transport::g_piaTransport->m_stationNum;
     m_connectionReports = common::NewArray<unsigned char>(m_stationNum * m_stationNum);
@@ -67,12 +73,10 @@ void RelayRouteManageJob::Trace(unsigned long long) const
 {
 }
 
-bool RelayRouteManageJob::Startup(StationIndex stationIndex, unsigned int generation,
-                                  unsigned int reportSerial)
+bool RelayRouteManageJob::Startup(StationIndex stationIndex, unsigned int generation, unsigned int reportSerial)
 {
-    if (IsRunning() || stationIndex < 0 || stationIndex >= m_stationNum || generation == 0 ||
-        generation < m_generation ||
-        (generation == m_generation && m_reportSerials[stationIndex] >= reportSerial))
+    if (IsRunning() || stationIndex < 0 || stationIndex >= m_stationNum || generation == 0 || generation < m_generation
+        || (generation == m_generation && m_reportSerials[stationIndex] >= reportSerial))
         return false;
 
     m_resendTime = common::g_piaJobScheduler->m_dispatchTime;
@@ -82,14 +86,13 @@ bool RelayRouteManageJob::Startup(StationIndex stationIndex, unsigned int genera
     return true;
 }
 
-void RelayRouteManageJob::UpdateConnectionReport(StationIndex stationIndex,
-                                                 const unsigned char* report, unsigned int size)
+void RelayRouteManageJob::UpdateConnectionReport(StationIndex stationIndex, const unsigned char* report,
+                                                 unsigned int size)
 {
     if (stationIndex < 0 || stationIndex >= m_stationNum || size <= cReportHeaderSize)
         return;
 
-    const unsigned int generation =
-        common::deserializeU32(report + cReportGenerationOffset);
+    const unsigned int generation = common::deserializeU32(report + cReportGenerationOffset);
     const unsigned int reportSerial = common::deserializeU32(report + cReportSerialOffset);
     if (generation == 0 || generation < m_generation)
         return;
@@ -107,8 +110,8 @@ void RelayRouteManageJob::UpdateConnectionReport(StationIndex stationIndex,
         m_sequenceNumber = 1;
     }
 
-    OSBlockMove(m_connectionReports + stationIndex * m_stationNum, report + cReportHeaderSize,
-                size - cReportHeaderSize, FALSE);
+    OSBlockMove(m_connectionReports + stationIndex * m_stationNum, report + cReportHeaderSize, size - cReportHeaderSize,
+                FALSE);
     m_reportSerials[stationIndex] = reportSerial;
 }
 
@@ -144,8 +147,8 @@ RelayRouteManageJob::ExecuteResult RelayRouteManageJob::WaitAllDirectConnectionR
         for (index = 0; index < m_stationNum; ++index, ++reportIndex)
         {
             unsigned short rtt = 0;
-            transport::Station* station =
-                transport::StationManager::s_pInstance->GetStation(static_cast<StationIndex>(index));
+            transport::Station* station = transport::StationManager::s_pInstance->GetStation(
+                static_cast<StationIndex>(index));
             if (station != 0 && station->m_field20 == cStationStateConnected)
                 rtt = transport::NetworkRttManager::sInstance->GetAverage(station->m_stationAddress);
 
@@ -158,8 +161,7 @@ RelayRouteManageJob::ExecuteResult RelayRouteManageJob::WaitAllDirectConnectionR
                         if (isResendTime)
                         {
                             g_piaMesh->GetMeshProtocol()->SendDummyMessage(static_cast<StationIndex>(index));
-                            const common::TimeSpan interval =
-                                common::TimeSpan::FromMSec(cDummyMessageIntervalMsec);
+                            const common::TimeSpan interval = common::TimeSpan::FromMSec(cDummyMessageIntervalMsec);
                             m_resendTime = common::g_piaJobScheduler->m_dispatchTime + interval;
                         }
                         allReported = false;
@@ -194,9 +196,9 @@ RelayRouteManageJob::ExecuteResult RelayRouteManageJob::SendRelayRouteDirections
     Trace(cTraceRelayRouteLevel);
     transport::RelayRouteManager* manager = transport::g_piaTransport->m_relayRouteManager;
     manager->Trace(cTraceRelayRouteLevel);
-    if (manager->UpdateDirectConnectionData(
-            m_connectionReports, m_stationNum * m_stationNum, m_stationBitmap,
-            &m_refusedStationBitmap, localStation, m_failureReasons) == 0)
+    if (manager->UpdateDirectConnectionData(m_connectionReports, m_stationNum * m_stationNum, m_stationBitmap,
+                                            &m_refusedStationBitmap, localStation, m_failureReasons)
+        == 0)
     {
         manager->m_unknown20 = m_generation;
         manager->m_unknown1c = m_sequenceNumber;
@@ -204,9 +206,8 @@ RelayRouteManageJob::ExecuteResult RelayRouteManageJob::SendRelayRouteDirections
         manager->Trace(cTraceRelayRouteLevel);
         if (!g_piaMesh->GetMeshProtocol()->SendRelayRouteDirections())
         {
-            m_currentStep =
-                Step(static_cast<StepFunction>(&RelayRouteManageJob::WaitAllDirectConnectionReport),
-                     cStepNameWaitAllDirectConnectionReport);
+            m_currentStep = Step(static_cast<StepFunction>(&RelayRouteManageJob::WaitAllDirectConnectionReport),
+                                 cStepNameWaitAllDirectConnectionReport);
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         ++m_sequenceNumber;
@@ -229,4 +230,6 @@ void RelayRouteManageJob::PrepareForBecomingNewHost()
     m_stationBitmap = 0;
 }
 
-}}}
+}
+}
+}

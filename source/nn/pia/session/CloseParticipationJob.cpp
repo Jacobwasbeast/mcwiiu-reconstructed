@@ -6,7 +6,12 @@
 #include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -18,9 +23,11 @@ enum
 const int cWaitP2pStableMinMsec = 1000;
 const int cWaitP2pStableTimeoutMsec = 15000;
 
-inline void SelectStep(common::StepSequenceJob::Step& slot, common::Job::ExecuteResult (CloseParticipationJob::*function)(), const char* name)
+inline void SelectStep(common::StepSequenceJob::Step& slot,
+                       common::Job::ExecuteResult (CloseParticipationJob::*function)(), const char* name)
 {
-    const common::StepSequenceJob::Step step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 
@@ -33,8 +40,12 @@ inline int GetElapsedMsec(const common::Time& startTime)
 }
 
 CloseParticipationJob::CloseParticipationJob()
-    : common::StepSequenceJob(), m_callerContext(0), m_callContext(),
-      m_sessionId(0), m_matchmakeSession(0), m_startTime()
+    : common::StepSequenceJob(),
+      m_callerContext(0),
+      m_callContext(),
+      m_sessionId(0),
+      m_matchmakeSession(0),
+      m_startTime()
 {
 }
 
@@ -42,8 +53,7 @@ CloseParticipationJob::~CloseParticipationJob()
 {
 }
 
-Result CloseParticipationJob::Startup(common::CallContext* callerContext,
-                                      unsigned int sessionId,
+Result CloseParticipationJob::Startup(common::CallContext* callerContext, unsigned int sessionId,
                                       IMatchmakeSession* matchmakeSession)
 {
     if (callerContext == 0 || matchmakeSession == 0)
@@ -114,7 +124,8 @@ CloseParticipationJob::ExecuteResult CloseParticipationJob::CloseParticipation()
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SelectStep(m_currentStep, &CloseParticipationJob::WaitCloseParticipation, "CloseParticipationJob::WaitCloseParticipation");
+    SelectStep(m_currentStep, &CloseParticipationJob::WaitCloseParticipation,
+               "CloseParticipationJob::WaitCloseParticipation");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -259,4 +270,6 @@ void CloseParticipationJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

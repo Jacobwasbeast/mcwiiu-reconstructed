@@ -5,7 +5,12 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class SessionStatusCheckJob : public common::StepSequenceJob
 {
@@ -23,6 +28,8 @@ public:
     bool m_field55;
 };
 
-}}}
+}
+}
+}
 
 #endif

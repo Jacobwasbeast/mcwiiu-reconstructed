@@ -6,7 +6,12 @@
 #include "nn/pia/session/Mesh.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -21,20 +26,20 @@ enum
 }
 
 MeshLayerController::MeshLayerController()
-    : m_playerInfoSize(0)
-    , m_registeredPlayerInfo(false)
-    , m_playersCountedAsParticipants(false)
-    , m_field84(0)
-    , m_field88(0)
-    , m_hostMigrationEnabled(false)
-    , m_bandwidthCheckMeasurementTime(0)
-    , m_bandwidthCheckIpPacketSize(0)
-    , m_skipBandwidthCheck(true)
-    , m_bandwidthCheckMeasurementCount(0)
-    , m_cryptoSetting()
-    , m_payloadSize(0)
-    , m_recentPlayRecordEnabled(false)
-    , m_startedUp(false)
+    : m_playerInfoSize(0),
+      m_registeredPlayerInfo(false),
+      m_playersCountedAsParticipants(false),
+      m_field84(0),
+      m_field88(0),
+      m_hostMigrationEnabled(false),
+      m_bandwidthCheckMeasurementTime(0),
+      m_bandwidthCheckIpPacketSize(0),
+      m_skipBandwidthCheck(true),
+      m_bandwidthCheckMeasurementCount(0),
+      m_cryptoSetting(),
+      m_payloadSize(0),
+      m_recentPlayRecordEnabled(false),
+      m_startedUp(false)
 {
     ResetPlayerInfo();
     m_fielde0 = 0;
@@ -45,16 +50,15 @@ MeshLayerController::MeshLayerController()
 
 Result MeshLayerController::Startup(const Session::StartupSetting& setting)
 {
-    if (!m_skipBandwidthCheck &&
-        !g_piaMesh->IsBandwidthCheckProtocolSetupParamValid(
-            m_bandwidthCheckMeasurementTime, m_bandwidthCheckIpPacketSize,
-            m_bandwidthCheckMeasurementCount))
+    if (!m_skipBandwidthCheck
+        && !g_piaMesh->IsBandwidthCheckProtocolSetupParamValid(
+            m_bandwidthCheckMeasurementTime, m_bandwidthCheckIpPacketSize, m_bandwidthCheckMeasurementCount))
         return cResultInvalidArgument;
 
     if (m_recentPlayRecordEnabled && g_piaMesh->IsRecentPlayRecordEnabled())
     {
-        const Result result = g_piaMesh->CheckPlayerInfoSetting(
-            m_registeredPlayerInfo ? m_playerInfo : 0, m_playerInfoSize);
+        const Result result = g_piaMesh->CheckPlayerInfoSetting(m_registeredPlayerInfo ? m_playerInfo : 0,
+                                                                m_playerInfoSize);
         if (result != 0)
             return result;
     }
@@ -63,10 +67,8 @@ Result MeshLayerController::Startup(const Session::StartupSetting& setting)
     m_field88 = setting.m_field04;
     OSBlockSet(&m_identificationToken, 0, cIdentificationTokenSize);
     if (setting.m_identificationToken != 0)
-        OSBlockMove(&m_identificationToken, setting.m_identificationToken,
-                    cIdentificationTokenSize, FALSE);
-    transport::g_piaTransport->m_disconnectionEventListener =
-        g_piaSession->GetDisconnectionEventListener();
+        OSBlockMove(&m_identificationToken, setting.m_identificationToken, cIdentificationTokenSize, FALSE);
+    transport::g_piaTransport->m_disconnectionEventListener = g_piaSession->GetDisconnectionEventListener();
     m_startedUp = true;
     return 0;
 }
@@ -94,14 +96,12 @@ void MeshLayerController::Cleanup()
     OSBlockSet(&m_identificationToken, 0, cIdentificationTokenSize);
 }
 
-Result MeshLayerController::MeshStartup(IMatchmakeSession* matchmakeSession,
-                                        bool skipBandwidthCheck)
+Result MeshLayerController::MeshStartup(IMatchmakeSession* matchmakeSession, bool skipBandwidthCheck)
 {
     g_piaMesh->RegisterEventListener(g_piaSession->GetMeshEventListenerPtr());
     g_piaMesh->RegisterJoiningMeshApprovalCallback(Session::SessionJoiningApprovalCallback);
     if (g_piaMesh->GetHostMigrationMode() == cHostMigrationModeRanking)
-        g_piaMesh->RegisterCheckHostCandidateRankingCallback(
-            Session::CheckHostCandidateRankingCallback);
+        g_piaMesh->RegisterCheckHostCandidateRankingCallback(Session::CheckHostCandidateRankingCallback);
     g_piaMesh->RegisterGetSessionIdCallback(Session::GetSessionIdCallback);
 
     Mesh::StartupSetting setting;
@@ -232,4 +232,6 @@ bool MeshLayerController::IsStartedUp() const
     return m_startedUp;
 }
 
-}}}
+}
+}
+}

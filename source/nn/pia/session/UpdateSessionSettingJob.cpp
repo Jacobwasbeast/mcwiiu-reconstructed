@@ -4,12 +4,14 @@
 #include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
-UpdateSessionSettingJob::UpdateSessionSettingJob()
-    : common::StepSequenceJob(),
-      m_callerContext(0),
-      m_callContext()
+UpdateSessionSettingJob::UpdateSessionSettingJob() : common::StepSequenceJob(), m_callerContext(0), m_callContext()
 {
 }
 
@@ -17,10 +19,8 @@ UpdateSessionSettingJob::~UpdateSessionSettingJob()
 {
 }
 
-Result UpdateSessionSettingJob::Startup(common::CallContext* callerContext,
-                                        unsigned int sessionId,
-                                        IMatchmakeSession* matchmakeSession,
-                                        const UpdateSessionSetting* setting,
+Result UpdateSessionSettingJob::Startup(common::CallContext* callerContext, unsigned int sessionId,
+                                        IMatchmakeSession* matchmakeSession, const UpdateSessionSetting* setting,
                                         bool isJointSession)
 {
     if (callerContext == 0)
@@ -77,4 +77,6 @@ void UpdateSessionSettingJob::Trace(unsigned long long value) const
 {
 }
 
-}}}
+}
+}
+}

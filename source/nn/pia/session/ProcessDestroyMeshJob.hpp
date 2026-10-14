@@ -4,7 +4,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class ProcessDestroyMeshJob : public common::StepSequenceJob
 {
@@ -23,6 +28,8 @@ public:
     bool m_started;
 };
 
-}}}
+}
+}
+}
 
 #endif

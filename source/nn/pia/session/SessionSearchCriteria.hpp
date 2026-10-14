@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class SessionSearchCriteria
 {
@@ -32,6 +37,8 @@ public:
     SearchCriteriaKey m_keyType;
 };
 
-}}}
+}
+}
+}
 
 #endif

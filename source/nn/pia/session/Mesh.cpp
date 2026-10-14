@@ -40,7 +40,12 @@
 #include <coreinit/memory.h>
 #include <new>
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 Mesh* g_piaMesh = 0;
 
@@ -300,17 +305,14 @@ Result Mesh::Initialize(const Setting& setting, bool relayEmulationEnabled)
 
     m_syncClockProtocolId = transport->m_protocolManager.CreateProtocol<SyncClockProtocol>(0);
     m_bitRateCheckMode = setting.m_bitRateCheckMode;
-    common::g_sessionBeginMonitoringContent.m_metric132 =
-        static_cast<unsigned char>(m_bitRateCheckMode);
+    common::g_sessionBeginMonitoringContent.m_metric132 = static_cast<unsigned char>(m_bitRateCheckMode);
 
     if (m_bitRateCheckMode != 0)
     {
-        m_bandwidthCheckProtocolId =
-            transport->m_protocolManager.CreateProtocol<transport::BandwidthCheckProtocol>(
-                cBandwidthCheckProtocolPort);
-        m_bandwidthCheckProtocol =
-            transport->m_protocolManager.GetProtocol<transport::BandwidthCheckProtocol>(
-                m_bandwidthCheckProtocolId);
+        m_bandwidthCheckProtocolId = transport->m_protocolManager.CreateProtocol<transport::BandwidthCheckProtocol>(
+            cBandwidthCheckProtocolPort);
+        m_bandwidthCheckProtocol = transport->m_protocolManager.GetProtocol<transport::BandwidthCheckProtocol>(
+            m_bandwidthCheckProtocolId);
         m_bandwidthCheckProtocol->Initialize();
     }
 
@@ -359,10 +361,9 @@ Result Mesh::Initialize(const Setting& setting, bool relayEmulationEnabled)
 
     if (m_hostMigrationMode == cHostMigrationModeSingle || m_hostMigrationMode == cHostMigrationModeMulti)
     {
-        m_processHostMigrationJob =
-            static_cast<ProcessHostMigrationJob*>(factory->CreateProcessHostMigrationJob());
-        m_leaveWithHostMigrationJob =
-            static_cast<LeaveWithHostMigrationJob*>(factory->CreateLeaveWithHostMigrationJob());
+        m_processHostMigrationJob = static_cast<ProcessHostMigrationJob*>(factory->CreateProcessHostMigrationJob());
+        m_leaveWithHostMigrationJob = static_cast<LeaveWithHostMigrationJob*>(
+            factory->CreateLeaveWithHostMigrationJob());
     }
     else
     {
@@ -427,8 +428,7 @@ Result Mesh::CreateInstance(const Setting& setting)
             return result;
         }
 
-        common::g_sessionBeginMonitoringContent.m_metric45 =
-            static_cast<unsigned char>(setting.m_networkTopologyType);
+        common::g_sessionBeginMonitoringContent.m_metric45 = static_cast<unsigned char>(setting.m_networkTopologyType);
         return 0;
     }
     return static_cast<Result>(cResultAlreadyInitialized);
@@ -596,8 +596,7 @@ void Mesh::CleanupStatus()
     m_unknown5c = static_cast<StationIndex>(cStationUnused);
     m_unknown58 = static_cast<StationIndex>(cStationUnused);
     SyncClockProtocol* syncClockProtocol = static_cast<SyncClockProtocol*>(
-        transport::g_piaTransport->m_protocolManager.SearchProtocol(syncClockProtocolId,
-                                                                    cSyncClockProtocolType));
+        transport::g_piaTransport->m_protocolManager.SearchProtocol(syncClockProtocolId, cSyncClockProtocolType));
     if (syncClockProtocol != 0)
         syncClockProtocol->m_syncClock.ClearBaseTime();
 
@@ -633,8 +632,8 @@ void Mesh::Cleanup()
 
 Result Mesh::CheckPlayerInfo(const transport::Station::PlayerInfo& info) const
 {
-    if (info.m_name.GetStringLength() == 0 && info.m_name.GetEncodingType() == 0 &&
-        info.m_language == transport::Station::PlayerInfo::cLanguageUnset)
+    if (info.m_name.GetStringLength() == 0 && info.m_name.GetEncodingType() == 0
+        && info.m_language == transport::Station::PlayerInfo::cLanguageUnset)
         return static_cast<Result>(0x10c07);
     if (info.m_name.GetStringLength() >= 21)
         return static_cast<Result>(0x10c07);
@@ -648,8 +647,7 @@ Result Mesh::CheckPlayerInfo(const transport::Station::PlayerInfo& info) const
     return 0;
 }
 
-Result Mesh::CheckPlayerInfoSetting(const transport::Station::PlayerInfo* infos,
-                                    unsigned char count) const
+Result Mesh::CheckPlayerInfoSetting(const transport::Station::PlayerInfo* infos, unsigned char count) const
 {
     if (infos == 0)
         return static_cast<Result>(0x10c07);
@@ -678,15 +676,15 @@ Result Mesh::Startup(StartupSetting& setting)
         return static_cast<Result>(cResultInvalidState);
     if (transport::IdentificationInfoTable::GetInstance() == 0)
         return static_cast<Result>(cResultInvalidState);
-    if (sDebugSetting.m_checkStartupSettingRange != 0 &&
-        setting.m_field00 - cStationTimeoutMsecMin > cStationTimeoutMsecMax - cStationTimeoutMsecMin)
+    if (sDebugSetting.m_checkStartupSettingRange != 0
+        && setting.m_field00 - cStationTimeoutMsecMin > cStationTimeoutMsecMax - cStationTimeoutMsecMin)
         return static_cast<Result>(cResultInvalidArgument);
 
     if (m_bitRateCheckMode != 0)
     {
         const Result result = m_bandwidthCheckProtocol->Activate(
-            setting.m_bandwidthCheckMeasurementTime, setting.m_bandwidthCheckIpPacketSize,
-            setting.m_skipBandwidthCheck, setting.m_bandwidthCheckMeasurementCount);
+            setting.m_bandwidthCheckMeasurementTime, setting.m_bandwidthCheckIpPacketSize, setting.m_skipBandwidthCheck,
+            setting.m_bandwidthCheckMeasurementCount);
         if (result != 0)
             return result;
     }
@@ -708,15 +706,13 @@ Result Mesh::Startup(StartupSetting& setting)
     {
         if (m_processHostMigrationJob != 0 && !m_processHostMigrationJob->IsValidHostMigrationSetting())
             return static_cast<Result>(cResultInvalidState);
-        common::g_sessionBeginMonitoringContent.m_metric46 =
-            static_cast<unsigned char>(m_hostMigrationMode);
+        common::g_sessionBeginMonitoringContent.m_metric46 = static_cast<unsigned char>(m_hostMigrationMode);
         m_hostMigrationEnabled = setting.m_hostMigrationEnabled;
     }
 
     transport::IdentificationInfo info;
     if (setting.m_identificationToken != 0)
-        OSBlockMove(&info.m_field00, setting.m_identificationToken,
-                    sizeof(transport::Station::IdentificationToken), 0);
+        OSBlockMove(&info.m_field00, setting.m_identificationToken, sizeof(transport::Station::IdentificationToken), 0);
     else
         OSBlockSet(&info.m_field00, 0, sizeof(transport::Station::IdentificationToken));
 
@@ -772,8 +768,7 @@ Result Mesh::Startup(StartupSetting& setting)
     }
     m_meshProtocol->m_unknown24 = stationTimeout;
     m_meshProtocol->m_unknown28 = static_cast<int>(stationTimeout) / 2;
-    static_cast<transport::StationProtocol*>(m_stationProtocol)->m_timeoutMsec =
-        cStationProtocolTimeoutMsec;
+    static_cast<transport::StationProtocol*>(m_stationProtocol)->m_timeoutMsec = cStationProtocolTimeoutMsec;
     transport->SetKeepAliveInterval(setting.m_field04);
     common::g_sessionBeginMonitoringContent.m_metric43 = static_cast<unsigned short>(setting.m_field00);
     common::g_sessionBeginMonitoringContent.m_metric44 = setting.m_field04;
@@ -814,8 +809,8 @@ Result Mesh::CreateMesh(common::CallContext* callerContext)
         return static_cast<Result>(cResultInvalidState);
     if (transport::StationManager::s_pInstance->m_localStation != 0)
         return static_cast<Result>(cResultInvalidState);
-    if (m_createMeshJob->GetState() != common::Job::cStateNotEntried &&
-        m_createMeshJob->GetState() != common::Job::cStateCompleted)
+    if (m_createMeshJob->GetState() != common::Job::cStateNotEntried
+        && m_createMeshJob->GetState() != common::Job::cStateCompleted)
         return static_cast<Result>(cResultInvalidState);
     const Result result = m_createMeshJob->Startup(callerContext);
     if (result == 0)
@@ -848,8 +843,7 @@ bool Mesh::IsCreateMeshCompleted()
 
 Result Mesh::GetAsyncProcessResult(AsyncProcessingName process)
 {
-    if (m_asyncProcess == static_cast<unsigned int>(process) &&
-        m_callContext.m_state - 2u < 3u)
+    if (m_asyncProcess == static_cast<unsigned int>(process) && m_callContext.m_state - 2u < 3u)
         return m_callContext.m_result;
     return static_cast<Result>(cResultInvalidState);
 }
@@ -861,8 +855,8 @@ Result Mesh::GetCreateMeshResult()
 
 Result Mesh::CancelAsyncProcess(AsyncProcessingName process)
 {
-    if (m_asyncProcess != static_cast<unsigned int>(process) ||
-        m_callContext.m_state != common::CallContext::cStateInProgress)
+    if (m_asyncProcess != static_cast<unsigned int>(process)
+        || m_callContext.m_state != common::CallContext::cStateInProgress)
         return static_cast<Result>(cResultInvalidState);
     m_callContext.Cancel();
     return 0;
@@ -888,9 +882,8 @@ void Mesh::SetSyncClockPulseInterval(int interval)
     if (transport::g_piaTransport == 0)
         return;
 
-    transport::Protocol* protocol =
-        transport::g_piaTransport->m_protocolManager.SearchProtocol(
-            m_syncClockProtocolId, SyncClockProtocol::cProtocolType);
+    transport::Protocol* protocol = transport::g_piaTransport->m_protocolManager.SearchProtocol(
+        m_syncClockProtocolId, SyncClockProtocol::cProtocolType);
     if (protocol != 0)
         static_cast<SyncClockProtocol*>(protocol)->m_pulseInterval = interval;
 }
@@ -1212,15 +1205,15 @@ void Mesh::AddPlayHistory(transport::Station* station, transport::Station::Playe
         return;
     if (stationInfo.m_field109 != cIdentificationInfoPlayersCounted)
         return;
-    if (stationInfo.m_field60[0].GetStringLength() == 0 ||
-        stationInfo.m_field60[0].GetStringLength() > cRecentPlayNameLengthMax)
+    if (stationInfo.m_field60[0].GetStringLength() == 0
+        || stationInfo.m_field60[0].GetStringLength() > cRecentPlayNameLengthMax)
         return;
     if (transport::g_stationConnectionInfoTable->GetStationConnectionInfo(station, &connectionInfo) != 0)
         return;
     if (transport::IdentificationInfoTable::GetInstance()->GetLocalIdentificationInfo(&localInfo) != 0)
         return;
-    if (localInfo.m_field60[0].GetStringLength() == 0 ||
-        localInfo.m_field60[0].GetStringLength() > cRecentPlayNameLengthMax)
+    if (localInfo.m_field60[0].GetStringLength() == 0
+        || localInfo.m_field60[0].GetStringLength() > cRecentPlayNameLengthMax)
         return;
 
     const wchar_t* stationName = static_cast<const wchar_t*>(stationInfo.m_field60[0].GetBuffer());
@@ -1376,8 +1369,8 @@ Result Mesh::LeaveMesh(common::CallContext* callerContext)
         return static_cast<Result>(cResultInvalidState);
     if (m_leaveMeshJob->Startup(callerContext))
         m_leaveMeshJob->Ready(false);
-    else if ((!m_kickoutManageJob->IsRunning() || !m_kickoutManageJob->AssociateKickoutWith(callerContext)) &&
-             m_leaveMeshJob->RegisterExtraCallback(callerContext) == 0)
+    else if ((!m_kickoutManageJob->IsRunning() || !m_kickoutManageJob->AssociateKickoutWith(callerContext))
+             && m_leaveMeshJob->RegisterExtraCallback(callerContext) == 0)
         return static_cast<Result>(cResultInvalidState);
     return 0;
 }
@@ -1447,8 +1440,7 @@ unsigned char Mesh::CheckApprovalJoin(transport::Station* station)
     return cJoinApproved;
 }
 
-Result Mesh::JoinMeshCore(const transport::StationConnectionInfo& info,
-                          common::CallContext* callerContext)
+Result Mesh::JoinMeshCore(const transport::StationConnectionInfo& info, common::CallContext* callerContext)
 {
     if (m_meshState == cStateCreated)
         return static_cast<Result>(cResultInvalidState);
@@ -1461,8 +1453,8 @@ Result Mesh::JoinMeshCore(const transport::StationConnectionInfo& info,
     m_unknown80 = 0;
     m_unknowncc = 0;
     m_unknownc8 = 0;
-    if (m_joinMeshJob->GetState() != common::Job::cStateNotEntried &&
-        m_joinMeshJob->GetState() != common::Job::cStateCompleted)
+    if (m_joinMeshJob->GetState() != common::Job::cStateNotEntried
+        && m_joinMeshJob->GetState() != common::Job::cStateCompleted)
         m_joinMeshJob->Reset(true);
     if (m_joinMeshJob->Startup(info, callerContext))
         m_joinMeshJob->Ready(true);
@@ -1517,8 +1509,7 @@ void Mesh::SetSkipReport(bool skip)
 void Mesh::SendReport(unsigned char reason)
 {
     if (m_monitoringDataSender != 0)
-        m_monitoringDataSender->RequestSendReport(
-            static_cast<common::MonitoringDataSender::DataType>(reason));
+        m_monitoringDataSender->RequestSendReport(static_cast<common::MonitoringDataSender::DataType>(reason));
 }
 
 unsigned int Mesh::GetMeshState() const
@@ -1546,9 +1537,8 @@ unsigned int Mesh::GetDisconnectReason() const
     return cMonitoringReasonKickout;
 }
 
-bool Mesh::IsBandwidthCheckProtocolSetupParamValid(int measurementTime,
-                                                    unsigned int ipPacketSize,
-                                                    int measurementCount) const
+bool Mesh::IsBandwidthCheckProtocolSetupParamValid(int measurementTime, unsigned int ipPacketSize,
+                                                   int measurementCount) const
 {
     if (m_bitRateCheckMode == 0)
         return true;
@@ -1614,9 +1604,8 @@ long long Mesh::GetTime() const
     if (transport::g_piaTransport == 0)
         return cTimeTransportUnavailable;
 
-    transport::Protocol* protocol =
-        transport::g_piaTransport->m_protocolManager.SearchProtocol(
-            m_syncClockProtocolId, SyncClockProtocol::cProtocolType);
+    transport::Protocol* protocol = transport::g_piaTransport->m_protocolManager.SearchProtocol(
+        m_syncClockProtocolId, SyncClockProtocol::cProtocolType);
     if (protocol == 0)
         return cTimeSyncClockUnavailable;
     return static_cast<SyncClockProtocol*>(protocol)->m_syncClock.GetTime();
@@ -1653,8 +1642,7 @@ void Mesh::MonitoringProcess(DisconnectReason reason, unsigned char dataType)
         relayVersion = cMonitoringUnset32;
 
     common::SessionStateMonitoringContent& content = common::g_sessionStateMonitoringContent;
-    content.m_metric179 =
-        static_cast<unsigned int>(elapsed.m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
+    content.m_metric179 = static_cast<unsigned int>(elapsed.m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
     content.m_metric180 = static_cast<unsigned char>(monitoredReason);
     content.m_metric181 = stationNum;
     content.m_metric182 = version;
@@ -1670,8 +1658,7 @@ void Mesh::MonitoringProcess(DisconnectReason reason, unsigned char dataType)
     transport::g_piaThreadStreamManager->SetMonitoringData();
     if (!m_skipReport && m_monitoringDataSender != 0)
     {
-        m_monitoringDataSender->RequestSendReport(
-            static_cast<common::MonitoringDataSender::DataType>(dataType));
+        m_monitoringDataSender->RequestSendReport(static_cast<common::MonitoringDataSender::DataType>(dataType));
     }
     if (dataType == cMonitoringSessionBeginReport)
         m_meshStartTimeValid = false;
@@ -1702,4 +1689,6 @@ Result Mesh::SetupLocalPlayerInfo()
     return 0;
 }
 
-}}}
+}
+}
+}

@@ -7,16 +7,31 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/SyncClock.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 class ProtocolMessageReader;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class SyncClockProtocol : public transport::Protocol
 {
 public:
-    enum { cProtocolType = 0x1c };
+    enum
+    {
+        cProtocolType = 0x1c
+    };
 
     class Data : public common::ISerializable
     {
@@ -57,6 +72,8 @@ public:
     common::LatestMedian<int, 10> m_latencyMedian;
 };
 
-}}}
+}
+}
+}
 
 #endif

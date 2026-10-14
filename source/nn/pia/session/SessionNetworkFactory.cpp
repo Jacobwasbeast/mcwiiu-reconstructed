@@ -4,7 +4,12 @@
 #include "nn/pia/transport/DisconnectStationJob.hpp"
 #include "nn/pia/transport/StationPacketHandler.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 SessionNetworkFactory::SessionNetworkFactory()
 {
@@ -154,4 +159,6 @@ void SessionNetworkFactory::DeleteMatchmakeSessionSystemPassword(common::String*
 {
 }
 
-}}}
+}
+}
+}

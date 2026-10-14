@@ -3,7 +3,12 @@
 #include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -14,8 +19,7 @@ enum
 };
 }
 
-BrowseMatchmakeJob::BrowseMatchmakeJob()
-    : common::StepSequenceJob(), m_callerContext(0)
+BrowseMatchmakeJob::BrowseMatchmakeJob() : common::StepSequenceJob(), m_callerContext(0)
 {
 }
 
@@ -23,8 +27,7 @@ BrowseMatchmakeJob::~BrowseMatchmakeJob()
 {
 }
 
-Result BrowseMatchmakeJob::Startup(common::CallContext* callerContext,
-                                   IMatchmakeSession* matchmakeSession,
+Result BrowseMatchmakeJob::Startup(common::CallContext* callerContext, IMatchmakeSession* matchmakeSession,
                                    const SessionSearchCriteria* criteria)
 {
     if (callerContext == 0 || criteria == 0)
@@ -44,8 +47,7 @@ Result BrowseMatchmakeJob::Startup(common::CallContext* callerContext,
     return 0;
 }
 
-Result BrowseMatchmakeJob::Startup(common::CallContext* callerContext,
-                                   IMatchmakeSession* matchmakeSession,
+Result BrowseMatchmakeJob::Startup(common::CallContext* callerContext, IMatchmakeSession* matchmakeSession,
                                    unsigned int sessionId)
 {
     if (callerContext == 0)
@@ -88,4 +90,6 @@ void BrowseMatchmakeJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

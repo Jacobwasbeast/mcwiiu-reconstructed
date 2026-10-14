@@ -3,7 +3,12 @@
 
 #include "nn/pia/session/ISessionInfo.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class JoinSessionSetting
 {
@@ -25,6 +30,8 @@ public:
     unsigned short m_maxParticipantNum;
 };
 
-}}}
+}
+}
+}
 
 #endif

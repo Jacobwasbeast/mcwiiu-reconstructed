@@ -6,9 +6,23 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace transport { class StationConnectionInfo; }}}
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
+class StationConnectionInfo;
+}
+}
+}
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class ProcessUpdateMeshJob : public common::StepSequenceJob
 {
@@ -33,8 +47,7 @@ public:
     int Startup(const unsigned char* data, unsigned int size, bool relay);
     void UpdateJoinMeshFailureResult(StationIndex stationIndex, unsigned char failure, bool relay);
     ExecuteResult WaitDirectConnection();
-    bool SendConnectionReport(StationIndex stationIndex, unsigned int version,
-                              unsigned int* stationBitmap);
+    bool SendConnectionReport(StationIndex stationIndex, unsigned int version, unsigned int* stationBitmap);
     ExecuteResult SendConnectionReport();
     ExecuteResult StartRelayConnection();
     ExecuteResult CheckConnectionAll();
@@ -85,5 +98,7 @@ public:
     common::CallContext m_callContext;
 };
 
-}}}
+}
+}
+}
 #endif

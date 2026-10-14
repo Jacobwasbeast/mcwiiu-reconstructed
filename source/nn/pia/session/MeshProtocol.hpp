@@ -7,16 +7,28 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ProtocolEvent;
 class ReceivedMessageAccessor;
 class ReliableSlidingWindow;
 class Station;
 
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class ProcessJoinRequestJob;
 
@@ -26,7 +38,10 @@ class MeshProtocol : public transport::Protocol
     friend class Mesh;
 
 public:
-    enum { cProtocolType = 0x18 };
+    enum
+    {
+        cProtocolType = 0x18
+    };
 
     enum MessageType
     {
@@ -76,10 +91,8 @@ public:
     unsigned int GetUnknown24() const { return m_unknown24; }
     unsigned int GetJoinRequestDataSize() const;
     void MakeJoinRequestData(unsigned char* buffer);
-    unsigned char GetSystemMessagePartitionNum(unsigned char messageType,
-                                               unsigned char stationCount);
-    unsigned char MakeJoinResponseData(StationIndex stationIndex, unsigned char** buffers,
-                                       unsigned int* sizes);
+    unsigned char GetSystemMessagePartitionNum(unsigned char messageType, unsigned char stationCount);
+    unsigned char MakeJoinResponseData(StationIndex stationIndex, unsigned char** buffers, unsigned int* sizes);
 
     void ParseJoinRequest(const transport::ReceivedMessageAccessor& message);
     void ParseJoinResponse(const transport::ReceivedMessageAccessor& message);
@@ -114,18 +127,16 @@ public:
     bool SendMigrationFinish(bool succeeded);
     bool SendMigrationStart(StationIndex stationIndex, StationIndex newHostIndex);
     bool SendMigrationResponse(StationIndex stationIndex);
-    bool SendConnectionReport(StationIndex stationIndex, unsigned int versionHigh,
-                              unsigned int versionLow, unsigned int* stationBitmap);
+    bool SendConnectionReport(StationIndex stationIndex, unsigned int versionHigh, unsigned int versionLow,
+                              unsigned int* stationBitmap);
     bool SendRelayRouteDirections();
     bool SendMultiMigrationStart(bool* sent);
-    bool SendMultiMigrationRankDecision(StationIndex stationIndex, long long timeout,
-                                        unsigned int* ackId);
+    bool SendMultiMigrationRankDecision(StationIndex stationIndex, long long timeout, unsigned int* ackId);
     bool SendKickoutNotice(StationIndex stationIndex, unsigned char reason);
     bool SendDummyMessage(StationIndex stationIndex);
     bool SendDummyAck(StationIndex stationIndex);
-    void SendConnectionFailureNotice(StationIndex destination, StationIndex reporter,
-                                     StationIndex failed, unsigned char reason,
-                                     unsigned int version);
+    void SendConnectionFailureNotice(StationIndex destination, StationIndex reporter, StationIndex failed,
+                                     unsigned char reason, unsigned int version);
 
 private:
     common::StepSequenceJob* m_waitingJoinRequestJob;
@@ -149,6 +160,8 @@ private:
     unsigned char m_broadcastSupported;
 };
 
-}}}
+}
+}
+}
 
 #endif

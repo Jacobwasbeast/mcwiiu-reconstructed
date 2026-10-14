@@ -5,19 +5,34 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/common/StationAddress.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class ReceivedMessageAccessor;
 class ReliableSlidingWindow;
 
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class SessionProtocol : public transport::Protocol
 {
 public:
-    enum { cProtocolType = 0x94 };
+    enum
+    {
+        cProtocolType = 0x94
+    };
 
     enum MessageType
     {
@@ -47,41 +62,31 @@ public:
     Result Initialize(unsigned short stationNum);
     void Finalize();
     unsigned long long DeserializeStationId(const unsigned char* buffer);
-    unsigned int SerializeStationId(unsigned long long stationId, unsigned char* buffer,
-                                    unsigned int bufferSize);
+    unsigned int SerializeStationId(unsigned long long stationId, unsigned char* buffer, unsigned int bufferSize);
     Result SendPreparedForMigrateSession(unsigned char processType, unsigned long long stationId,
                                          unsigned int sessionId, bool value);
-    Result SendNextSessionId(unsigned char processType, unsigned int sessionId,
-                             unsigned int nextSessionId, unsigned long long matchmakeOwnerUniqueId,
-                             const unsigned char* applicationData, unsigned int applicationDataSize,
-                             unsigned long long* stationIds, unsigned short stationIdNum);
-    Result SendAnswerToInvitation(unsigned char processType, unsigned long long stationId,
-                                  bool result);
-    Result SendAnswerToDestroyInvitation(unsigned char processType, unsigned long long stationId,
-                                         bool result);
-    Result SendAnswerToLeaveMeshInvitation(unsigned char processType,
-                                           unsigned long long stationId, bool result);
-    Result SendAnswerToCompletionInvitation(unsigned char processType,
-                                            unsigned long long stationId, bool result);
+    Result SendNextSessionId(unsigned char processType, unsigned int sessionId, unsigned int nextSessionId,
+                             unsigned long long matchmakeOwnerUniqueId, const unsigned char* applicationData,
+                             unsigned int applicationDataSize, unsigned long long* stationIds,
+                             unsigned short stationIdNum);
+    Result SendAnswerToInvitation(unsigned char processType, unsigned long long stationId, bool result);
+    Result SendAnswerToDestroyInvitation(unsigned char processType, unsigned long long stationId, bool result);
+    Result SendAnswerToLeaveMeshInvitation(unsigned char processType, unsigned long long stationId, bool result);
+    Result SendAnswerToCompletionInvitation(unsigned char processType, unsigned long long stationId, bool result);
     Result SendInvitationAsCompanion(unsigned char processType, unsigned long long* stationIds,
                                      unsigned short stationIdNum, unsigned long long stationId,
-                                     unsigned long long* companionStationIds,
-                                     unsigned short companionStationIdNum);
-    Result SendDestroyInvitation(unsigned char processType, unsigned long long* stationIds,
-                                 unsigned short stationIdNum, unsigned long long stationId,
-                                 unsigned long long* companionStationIds,
+                                     unsigned long long* companionStationIds, unsigned short companionStationIdNum);
+    Result SendDestroyInvitation(unsigned char processType, unsigned long long* stationIds, unsigned short stationIdNum,
+                                 unsigned long long stationId, unsigned long long* companionStationIds,
                                  unsigned short companionStationIdNum);
     Result SendLeaveMeshInvitation(unsigned char processType, unsigned long long* stationIds,
                                    unsigned short stationIdNum, unsigned long long stationId,
-                                   unsigned long long* companionStationIds,
-                                   unsigned short companionStationIdNum);
+                                   unsigned long long* companionStationIds, unsigned short companionStationIdNum);
     Result SendCompletionInvitation(unsigned char processType, unsigned long long* stationIds,
                                     unsigned short stationIdNum, unsigned long long stationId,
-                                    unsigned long long* companionStationIds,
-                                    unsigned short companionStationIdNum);
+                                    unsigned long long* companionStationIds, unsigned short companionStationIdNum);
     Result SendCompletionFailureResponse(unsigned char processType, unsigned long long stationId);
-    Result SendCompletionForMigrateSession(unsigned char processType,
-                                           unsigned long long stationId, bool result);
+    Result SendCompletionForMigrateSession(unsigned char processType, unsigned long long stationId, bool result);
     Result CheckIsAbleToSendReliableMessage(StationIndex stationIndex, unsigned int size);
     void ParseNextSessionId(const transport::ReceivedMessageAccessor& message);
     void ParsePreparedForMigrateSession(const transport::ReceivedMessageAccessor& message);
@@ -95,13 +100,11 @@ public:
     void ParseHelper(const transport::ReceivedMessageAccessor& message);
 
 private:
-    Result SendAnswerToInvitationCore(MessageType messageType, unsigned char processType,
-                                      unsigned long long stationId, bool result);
-    Result SendInvitationCore(MessageType messageType, unsigned char processType,
-                              unsigned long long* stationIds, unsigned short stationIdNum,
-                              unsigned long long stationId,
-                              unsigned long long* companionStationIds,
-                              unsigned short companionStationIdNum);
+    Result SendAnswerToInvitationCore(MessageType messageType, unsigned char processType, unsigned long long stationId,
+                                      bool result);
+    Result SendInvitationCore(MessageType messageType, unsigned char processType, unsigned long long* stationIds,
+                              unsigned short stationIdNum, unsigned long long stationId,
+                              unsigned long long* companionStationIds, unsigned short companionStationIdNum);
 
     int m_stationIndex;
     unsigned long long m_stationId;
@@ -111,6 +114,8 @@ private:
     unsigned char m_messageBuffer[256];
 };
 
-}}}
+}
+}
+}
 
 #endif

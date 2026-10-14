@@ -10,7 +10,12 @@
 #include "nn/pia/transport/StationConnectionInfoTable.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -28,13 +33,13 @@ enum
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, Step function, const char* name)
 {
-    const common::StepSequenceJob::Step step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 }
 
-CreateMeshJob::CreateMeshJob()
-    : common::StepSequenceJob(), m_callerContext(0)
+CreateMeshJob::CreateMeshJob() : common::StepSequenceJob(), m_callerContext(0)
 {
 }
 
@@ -243,4 +248,6 @@ void CreateMeshJob::SetHostInfoToMonitoringDataImpl()
 {
 }
 
-}}}
+}
+}
+}

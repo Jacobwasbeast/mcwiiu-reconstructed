@@ -11,7 +11,12 @@
 #include "nn/pia/transport/StationManager.hpp"
 #include "nn/pia/transport/StationPacketHandler.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -19,10 +24,8 @@ const unsigned int cPayloadSize = 16;
 
 inline unsigned int readU32(const unsigned char* buffer)
 {
-    return (static_cast<unsigned int>(buffer[0]) << 24) |
-           (static_cast<unsigned int>(buffer[1]) << 16) |
-           (static_cast<unsigned int>(buffer[2]) << 8) |
-           static_cast<unsigned int>(buffer[3]);
+    return (static_cast<unsigned int>(buffer[0]) << 24) | (static_cast<unsigned int>(buffer[1]) << 16)
+           | (static_cast<unsigned int>(buffer[2]) << 8) | static_cast<unsigned int>(buffer[3]);
 }
 
 inline unsigned long long readU64(const unsigned char* buffer)
@@ -72,9 +75,13 @@ Result SyncClockProtocol::Data::Deserialize(const unsigned char* buffer)
 
 SyncClockProtocol::SyncClockProtocol()
     : transport::Protocol(),
-      m_syncClock(), m_hostStationIndex(static_cast<StationIndex>(0xfd)),
-      m_pulseInterval(2000), m_lastRequestTime(), m_hostConnected(false),
-      m_requestSent(false), m_latencyMedian()
+      m_syncClock(),
+      m_hostStationIndex(static_cast<StationIndex>(0xfd)),
+      m_pulseInterval(2000),
+      m_lastRequestTime(),
+      m_hostConnected(false),
+      m_requestSent(false),
+      m_latencyMedian()
 {
 }
 
@@ -115,8 +122,7 @@ Result SyncClockProtocol::Request()
         return 0x10c08;
     if (mesh->IsHost())
         return 0x10c08;
-    transport::StationPacketHandler* handler =
-        static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
+    transport::StationPacketHandler* handler = static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
     if (handler == 0)
         return 0x10c08;
 
@@ -130,8 +136,8 @@ Result SyncClockProtocol::Request()
     const StationIndex hostIndex = mesh->GetHostStationIndex();
     if (hostIndex != 0xfd)
     {
-        transport::ProtocolMessageWriter* writer =
-            handler->AssignByStationIndex(protocolId, hostIndex, cPayloadSize, false, false, true);
+        transport::ProtocolMessageWriter* writer = handler->AssignByStationIndex(protocolId, hostIndex, cPayloadSize,
+                                                                                 false, false, true);
         if (writer != 0)
         {
             writer->SetPayload(payload);
@@ -148,8 +154,7 @@ Result SyncClockProtocol::Response(unsigned long long stationId, unsigned long l
 {
     if (stationId == 0)
         return 0x10c07;
-    transport::StationPacketHandler* handler =
-        static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
+    transport::StationPacketHandler* handler = static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
     if (handler == 0)
         return 0x10c08;
     if (m_syncClock.GetTime() == static_cast<unsigned long long>(-1))
@@ -160,8 +165,8 @@ Result SyncClockProtocol::Response(unsigned long long stationId, unsigned long l
     unsigned char payload[cPayloadSize];
     writeU64(payload, requestTime);
     writeU64(payload + 8, syncTime);
-    transport::ProtocolMessageWriter* writer =
-        handler->AssignByStationId(protocolId, stationId, cPayloadSize, false, false, true);
+    transport::ProtocolMessageWriter* writer = handler->AssignByStationId(protocolId, stationId, cPayloadSize, false,
+                                                                          false, true);
     if (writer == 0)
         return 0;
     writer->SetPayload(payload);
@@ -170,24 +175,21 @@ Result SyncClockProtocol::Response(unsigned long long stationId, unsigned long l
 
 void SyncClockProtocol::ProcessByHost(const transport::ProtocolMessageReader* reader)
 {
-    const unsigned char* payload =
-        reader->m_message + transport::ProtocolMessageReader::cMessageHeaderSize;
+    const unsigned char* payload = reader->m_message + transport::ProtocolMessageReader::cMessageHeaderSize;
     Response(reader->m_header.m_source, readU64(payload));
 }
 
 void SyncClockProtocol::ProcessByClient(const transport::ProtocolMessageReader* reader)
 {
-    const unsigned char* payload =
-        reader->m_message + transport::ProtocolMessageReader::cMessageHeaderSize;
+    const unsigned char* payload = reader->m_message + transport::ProtocolMessageReader::cMessageHeaderSize;
     const unsigned long long requestTime = readU64(payload);
     const unsigned long long syncTime = readU64(payload + 8);
     const unsigned long long syncTicks = syncTime * common::TimeSpan::GetTicksPerMSec().m_tick;
 
     common::Time now;
     now.SetNow();
-    const int latency = static_cast<int>(
-        static_cast<long long>(now.m_tick - requestTime) /
-        common::TimeSpan::GetTicksPerMSec().m_tick);
+    const int latency = static_cast<int>(static_cast<long long>(now.m_tick - requestTime)
+                                         / common::TimeSpan::GetTicksPerMSec().m_tick);
     m_latencyMedian.m_values[(m_latencyMedian.m_index + m_latencyMedian.m_count) % 10] = latency;
     if (m_latencyMedian.m_count == 10)
         m_latencyMedian.m_index = (m_latencyMedian.m_index + 1) % 10;
@@ -196,8 +198,7 @@ void SyncClockProtocol::ProcessByClient(const transport::ProtocolMessageReader* 
 
     const int halfLatency = m_latencyMedian.GetMedian() / 2;
     common::Time baseTime;
-    baseTime.m_tick = now.m_tick - syncTicks -
-                      common::TimeSpan::GetTicksPerMSec().m_tick * halfLatency;
+    baseTime.m_tick = now.m_tick - syncTicks - common::TimeSpan::GetTicksPerMSec().m_tick * halfLatency;
     m_syncClock.SetBaseTime(baseTime);
 }
 
@@ -217,9 +218,9 @@ Result SyncClockProtocol::Dispatch()
         }
         else
         {
-            const long long elapsed = static_cast<long long>(
-                transport::g_piaTransport->m_time.m_tick - m_lastRequestTime.m_tick) /
-                common::TimeSpan::GetTicksPerMSec().m_tick;
+            const long long elapsed = static_cast<long long>(transport::g_piaTransport->m_time.m_tick
+                                                             - m_lastRequestTime.m_tick)
+                                      / common::TimeSpan::GetTicksPerMSec().m_tick;
             if (m_pulseInterval < elapsed)
             {
                 Request();
@@ -228,8 +229,7 @@ Result SyncClockProtocol::Dispatch()
         }
     }
 
-    transport::StationPacketHandler* handler =
-        static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
+    transport::StationPacketHandler* handler = static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
     if (handler == 0)
         return 0x10c08;
 
@@ -284,4 +284,6 @@ void SyncClockProtocol::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

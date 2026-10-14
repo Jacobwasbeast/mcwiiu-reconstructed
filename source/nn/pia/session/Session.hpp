@@ -8,9 +8,25 @@
 #include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/transport/Station.hpp"
 
-namespace nn { namespace pia { namespace common { class Job; class StepSequenceJob; class String; }}}
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+class Job;
+class StepSequenceJob;
+class String;
+}
+}
+}
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class BrowseMatchmakeJob;
 class ClearMatchmakeSystemPasswordJob;
@@ -128,19 +144,14 @@ public:
         cAsyncProcessingNameUnknown19 = 0x19
     };
 
-    typedef void (*SessionEventCallback)(EventType eventType,
-                                         unsigned long long stationId,
-                                         void* param);
+    typedef void (*SessionEventCallback)(EventType eventType, unsigned long long stationId, void* param);
 
     typedef common::PooledList<unsigned long long> StationIdList;
 
     class StartupSetting
     {
     public:
-        StartupSetting()
-            : m_field00(10000), m_field04(1000), m_identificationToken(0)
-        {
-        }
+        StartupSetting() : m_field00(10000), m_field04(1000), m_identificationToken(0) {}
 
         unsigned int m_field00;
         unsigned int m_field04;
@@ -159,11 +170,7 @@ public:
 
     struct DebugSetting
     {
-        DebugSetting()
-            : m_relayEmulationEnabled(0), m_matchmakeAnalysisEnabled(0),
-              m_checkStartupSettingRange(1)
-        {
-        }
+        DebugSetting() : m_relayEmulationEnabled(0), m_matchmakeAnalysisEnabled(0), m_checkStartupSettingRange(1) {}
 
         unsigned char m_relayEmulationEnabled;
         unsigned char m_matchmakeAnalysisEnabled;
@@ -226,13 +233,12 @@ public:
     bool IsPlayersCountedAsParticipants() const;
     unsigned char GetLocalPlayerCount() const;
     unsigned int IsPreparedForCleanup() const;
-    bool AddNewStationId(unsigned long long stationId, StationIndex stationIndex,
-                         unsigned long long uniqueId, unsigned int sessionId);
+    bool AddNewStationId(unsigned long long stationId, StationIndex stationIndex, unsigned long long uniqueId,
+                         unsigned int sessionId);
 
     typedef int (*DisconnectionEventListener)(void* event);
 
-    typedef bool (*JoiningApprovalCallback)(
-        const transport::Station::IdentificationToken* identificationToken);
+    typedef bool (*JoiningApprovalCallback)(const transport::Station::IdentificationToken* identificationToken);
 
     Result Startup(const StartupSetting& setting);
     void SetSyncClockPulseInterval(int interval);
@@ -262,8 +268,8 @@ public:
     void CancelJoinProcessByFatalError();
     bool IsPostponeNotice() const;
     void invalidateStationId(unsigned long long stationId);
-    bool RemoveStationId(unsigned long long stationId, StationIndex stationIndex,
-                         unsigned long long uniqueId, unsigned int);
+    bool RemoveStationId(unsigned long long stationId, StationIndex stationIndex, unsigned long long uniqueId,
+                         unsigned int);
     void JoinNotice(unsigned long long stationId);
     void validateStationId(unsigned long long stationId);
     void UpdateSessionStationInfo();
@@ -275,16 +281,13 @@ public:
     unsigned int GetJoinRandomSessionStateForDebug() const;
     void CallSessionEventCallback(EventType eventType, unsigned long long stationId);
     transport::Station::IdentificationToken* GetMatchmakeAnalysisToken();
-    static bool SessionJoiningApprovalCallback(
-        const transport::Station::IdentificationToken* identificationToken);
+    static bool SessionJoiningApprovalCallback(const transport::Station::IdentificationToken* identificationToken);
 
     void ResetInternalAsyncState();
     Result JoinSessionAsync(const JoinSessionSetting* setting);
     Result UpdateSessionSettingAsync(const UpdateSessionSetting* setting);
-    Result UpdateSessionSettingAsyncCore(unsigned int sessionId,
-                                         IMatchmakeSession* matchmakeSession,
-                                         const UpdateSessionSetting* setting,
-                                         bool isJointSession);
+    Result UpdateSessionSettingAsyncCore(unsigned int sessionId, IMatchmakeSession* matchmakeSession,
+                                         const UpdateSessionSetting* setting, bool isJointSession);
 
     bool m_selectionPriorityEnabled;
     MeshLayerController* m_meshLayerController;
@@ -353,6 +356,8 @@ int DisconnectionEventListenerForSession(void* event);
 
 extern Session* g_piaSession;
 
-}}}
+}
+}
+}
 
 #endif

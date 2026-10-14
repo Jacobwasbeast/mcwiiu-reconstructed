@@ -3,7 +3,12 @@
 
 #include "nn/pia.h"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 unsigned char IsInitialized();
 unsigned char IsDuringSetup();
@@ -13,6 +18,8 @@ void Finalize();
 Result BeginSetup();
 Result EndSetup();
 
-}}}
+}
+}
+}
 
 #endif

@@ -5,7 +5,12 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/common/CallContext.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 class CreateSessionSetting;
 class CreateSessionJob : public common::StepSequenceJob
 {
@@ -32,6 +37,8 @@ protected:
     common::CallContext m_callContext;
     Result m_result;
 };
-}}}
+}
+}
+}
 
 #endif

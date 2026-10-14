@@ -1,6 +1,11 @@
 #include "nn/pia/session/JoinCommunitySetting.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 JoinCommunitySetting::~JoinCommunitySetting()
 {
@@ -16,4 +21,6 @@ void JoinCommunitySetting::Reset()
     m_communityId = 0;
 }
 
-}}}
+}
+}
+}

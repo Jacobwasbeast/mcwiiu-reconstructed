@@ -8,7 +8,12 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/session/SessionInfo.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -37,7 +42,10 @@ enum MeshDisconnectReason
 }
 
 SessionStatusCheckJob::SessionStatusCheckJob()
-    : common::StepSequenceJob(), m_callContext(), m_field54(false), m_field55(false)
+    : common::StepSequenceJob(),
+      m_callContext(),
+      m_field54(false),
+      m_field55(false)
 {
 }
 
@@ -64,17 +72,16 @@ Result SessionStatusCheckJob::Startup()
     }
     else
     {
-        m_currentStep = Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
-                                 &SessionStatusCheckJob::CheckSessionStatus),
-                             "SessionStatusCheckJob::CheckSessionStatus");
+        m_currentStep = Step(
+            static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&SessionStatusCheckJob::CheckSessionStatus),
+            "SessionStatusCheckJob::CheckSessionStatus");
     }
     return 0;
 }
 
 SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus()
 {
-    const Result connectedStatus =
-        g_piaSession->m_meshLayerController->CheckConnectedStatus();
+    const Result connectedStatus = g_piaSession->m_meshLayerController->CheckConnectedStatus();
     if (connectedStatus == Session::cResultStatusDisconnectedNetwork)
     {
         g_piaSession->m_disconnectStatus = Session::cConnectionStatusDisconnectedNetwork;
@@ -139,8 +146,8 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus()
         return MakeExecuteResult(cExecuteKindFinished);
     }
 
-    if (g_piaSession->m_matchmakeStatus == Session::cMatchmakeStatusMatched &&
-        g_piaMesh->CheckConnectionError() == cResultConnectionError)
+    if (g_piaSession->m_matchmakeStatus == Session::cMatchmakeStatusMatched
+        && g_piaMesh->CheckConnectionError() == cResultConnectionError)
     {
         const unsigned int disconnectReason = g_piaMesh->GetDisconnectReason();
         switch (disconnectReason)
@@ -166,8 +173,7 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus()
 
     if (Session::s_debugSetting.m_matchmakeAnalysisEnabled != 0 && g_piaSession->IsHost())
     {
-        IMatchmakeSession* matchmakeSession =
-            g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex];
+        IMatchmakeSession* matchmakeSession = g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex];
         if (!Session::SessionJoiningApprovalCallback(0))
             matchmakeSession->GetSessionInfo()->IsOpened();
     }
@@ -224,8 +230,7 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus4J
     const unsigned int currentSessionId = session->m_sessionId[sessionIndex];
     const unsigned int bufferSessionId = session->m_sessionId[sessionIndex == 0 ? 1 : 0];
 
-    if (matchmakeStatus == Session::cMatchmakeStatusMatched ||
-        matchmakeStatus == cMatchmakeStatusJointSessionProcessed)
+    if (matchmakeStatus == Session::cMatchmakeStatusMatched || matchmakeStatus == cMatchmakeStatusJointSessionProcessed)
     {
         if (g_piaMesh->CheckConnectionError() == cResultConnectionError)
         {
@@ -255,40 +260,34 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus4J
         }
         else if (matchmakeStatus == Session::cMatchmakeStatusMatched)
         {
-            if (currentSessionId == 0 ||
-                session->m_meshLayerController->IsJoinedUnknownSession(currentSessionId, 0))
+            if (currentSessionId == 0 || session->m_meshLayerController->IsJoinedUnknownSession(currentSessionId, 0))
             {
                 session->m_disconnectStatus = Session::cConnectionStatusDisconnectedSession;
                 if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
                     g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
             }
-            if (Session::s_debugSetting.m_matchmakeAnalysisEnabled != 0 && g_piaSession->IsHost() &&
-                !Session::SessionJoiningApprovalCallback(g_piaSession->GetMatchmakeAnalysisToken()))
+            if (Session::s_debugSetting.m_matchmakeAnalysisEnabled != 0 && g_piaSession->IsHost()
+                && !Session::SessionJoiningApprovalCallback(g_piaSession->GetMatchmakeAnalysisToken()))
                 session->m_matchmakeSession[session->m_currentSessionIndex]->GetSessionInfo()->IsOpened();
         }
         else if (matchmakeStatus == cMatchmakeStatusJointSessionProcessed)
         {
-            if (currentSessionId == 0 || bufferSessionId == 0 ||
-                session->m_meshLayerController->IsJoinedUnknownSession(currentSessionId,
-                                                                      bufferSessionId))
+            if (currentSessionId == 0 || bufferSessionId == 0
+                || session->m_meshLayerController->IsJoinedUnknownSession(currentSessionId, bufferSessionId))
             {
                 session->m_disconnectStatus = Session::cConnectionStatusDisconnectedSession;
                 if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
                     g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
             }
-            if (Session::s_debugSetting.m_matchmakeAnalysisEnabled != 0 &&
-                g_piaSession->IsJointSessionHost() &&
-                !Session::SessionJoiningApprovalCallback(g_piaSession->GetMatchmakeAnalysisToken()))
-                session->m_matchmakeSession[session->m_currentSessionIndex == 0 ? 1 : 0]
-                    ->GetSessionInfo()
-                    ->IsOpened();
+            if (Session::s_debugSetting.m_matchmakeAnalysisEnabled != 0 && g_piaSession->IsJointSessionHost()
+                && !Session::SessionJoiningApprovalCallback(g_piaSession->GetMatchmakeAnalysisToken()))
+                session->m_matchmakeSession[session->m_currentSessionIndex == 0 ? 1 : 0]->GetSessionInfo()->IsOpened();
         }
     }
     else if (matchmakeStatus == cMatchmakeStatusJointSessionProcessing)
     {
-        if ((session->m_jointSessionJob == 0 ||
-             !session->m_jointSessionJob->m_sessionDisconnectDetected) &&
-            currentSessionId == 0 && bufferSessionId == 0)
+        if ((session->m_jointSessionJob == 0 || !session->m_jointSessionJob->m_sessionDisconnectDetected)
+            && currentSessionId == 0 && bufferSessionId == 0)
         {
             g_piaSession->m_disconnectStatus = Session::cConnectionStatusDisconnectedNetwork;
             if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
@@ -315,4 +314,6 @@ void SessionStatusCheckJob::Cleanup()
     Reset(true);
 }
 
-}}}
+}
+}
+}

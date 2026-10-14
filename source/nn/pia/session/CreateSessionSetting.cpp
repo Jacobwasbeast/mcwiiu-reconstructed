@@ -1,6 +1,11 @@
 #include "nn/pia/session/CreateSessionSetting.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 CreateSessionSetting::CreateSessionSetting()
 {
@@ -60,4 +65,6 @@ void CreateSessionSetting::Copy(const CreateSessionSetting& other)
     mMaxParticipantNumSet = other.mMaxParticipantNumSet;
 }
 
-} } }
+}
+}
+}

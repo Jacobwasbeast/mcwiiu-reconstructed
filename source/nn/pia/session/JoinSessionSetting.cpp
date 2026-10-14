@@ -1,11 +1,13 @@
 #include "nn/pia/session/JoinSessionSetting.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
-JoinSessionSetting::JoinSessionSetting()
-    : m_sessionInfo(0),
-      m_sessionId(0),
-      m_maxParticipantNum(0)
+JoinSessionSetting::JoinSessionSetting() : m_sessionInfo(0), m_sessionId(0), m_maxParticipantNum(0)
 {
 }
 
@@ -56,4 +58,6 @@ unsigned int JoinSessionSetting::GetMaxParticipantNum() const
     return m_maxParticipantNum;
 }
 
-}}}
+}
+}
+}

@@ -4,7 +4,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/CallContext.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class CommunitySearchCriteria;
 class CreateCommunitySetting;
@@ -38,6 +43,8 @@ protected:
     common::CallContext m_callContext;
 };
 
-}}}
+}
+}
+}
 
 #endif

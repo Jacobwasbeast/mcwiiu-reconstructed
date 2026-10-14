@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class SyncClock
 {
@@ -21,6 +26,8 @@ private:
     bool m_hasBaseTime;
 };
 
-}}}
+}
+}
+}
 
 #endif

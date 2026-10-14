@@ -5,7 +5,12 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class CreateMeshJob : public common::StepSequenceJob
 {
@@ -29,6 +34,8 @@ public:
     common::CallContext* m_callerContext;
 };
 
-}}}
+}
+}
+}
 
 #endif

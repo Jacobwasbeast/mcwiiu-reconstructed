@@ -4,7 +4,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/CallContext.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class IMatchmakeSession;
 
@@ -14,8 +19,7 @@ public:
     OpenParticipationJob();
     virtual ~OpenParticipationJob();
 
-    Result Startup(common::CallContext* callerContext, unsigned int sessionId,
-                   IMatchmakeSession* matchmakeSession);
+    Result Startup(common::CallContext* callerContext, unsigned int sessionId, IMatchmakeSession* matchmakeSession);
     ExecuteResult OpenParticipation();
     ExecuteResult WaitOpenParticipation();
     void Cleanup();
@@ -28,6 +32,8 @@ private:
     IMatchmakeSession* m_matchmakeSession;
 };
 
-}}}
+}
+}
+}
 
 #endif

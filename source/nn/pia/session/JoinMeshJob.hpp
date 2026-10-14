@@ -7,7 +7,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class JoinMeshJob : public common::StepSequenceJob
 {
@@ -80,5 +85,7 @@ public:
     common::CallContext m_callContext;
 };
 
-}}}
+}
+}
+}
 #endif

@@ -6,7 +6,12 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/transport/Station.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class IMatchmakeSession;
 
@@ -14,9 +19,7 @@ class MeshLayerController
 {
 public:
     MeshLayerController();
-    virtual ~MeshLayerController()
-    {
-    }
+    virtual ~MeshLayerController() {}
     virtual Result Startup(const Session::StartupSetting& setting);
     virtual void Cleanup();
     virtual Result MeshStartup(IMatchmakeSession* matchmakeSession, bool skipBandwidthCheck);
@@ -51,7 +54,6 @@ protected:
     }
 
 public:
-
     transport::Station::PlayerInfo m_playerInfo[1];
     unsigned char m_playerInfoSize;
     bool m_registeredPlayerInfo;
@@ -71,6 +73,8 @@ public:
     unsigned long long m_fielde0;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -6,14 +6,21 @@
 #include "nn/pia/session/ISessionInfo.hpp"
 #include "nn/pia/session/ISessionInfoList.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 template <typename T>
 class SessionInfoList : public ISessionInfoList
 {
 public:
     explicit SessionInfoList(unsigned short maxSize)
-        : m_size(0), m_maxSize(maxSize), m_items(common::NewArray<ISessionInfo*>(maxSize))
+        : m_size(0),
+          m_maxSize(maxSize),
+          m_items(common::NewArray<ISessionInfo*>(maxSize))
     {
         for (unsigned short index = 0; index < m_maxSize; ++index)
             m_items[index] = transport::CreateObject<T>();
@@ -89,6 +96,8 @@ void SessionInfoList<T>::Clear()
     }
 }
 
-}}}
+}
+}
+}
 
 #endif

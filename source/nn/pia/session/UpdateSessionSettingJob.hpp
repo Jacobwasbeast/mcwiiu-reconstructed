@@ -6,7 +6,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class IMatchmakeSession;
 class UpdateSessionSetting;
@@ -18,9 +23,8 @@ public:
     virtual ~UpdateSessionSettingJob();
     virtual void Trace(unsigned long long value) const;
 
-    Result Startup(common::CallContext* callerContext, unsigned int sessionId,
-                   IMatchmakeSession* matchmakeSession, const UpdateSessionSetting* setting,
-                   bool isJointSession);
+    Result Startup(common::CallContext* callerContext, unsigned int sessionId, IMatchmakeSession* matchmakeSession,
+                   const UpdateSessionSetting* setting, bool isJointSession);
     ExecuteResult CompleteProcess();
     virtual void Cleanup();
     virtual Result StartupImpl(unsigned int sessionId, IMatchmakeSession* matchmakeSession,
@@ -34,6 +38,8 @@ public:
 };
 
 
-}}}
+}
+}
+}
 
 #endif

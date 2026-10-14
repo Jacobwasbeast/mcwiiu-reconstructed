@@ -5,15 +5,19 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/session/IMatchmakeSession.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class GenerateMatchmakeSystemPasswordJob : public common::StepSequenceJob
 {
 public:
     GenerateMatchmakeSystemPasswordJob();
     virtual ~GenerateMatchmakeSystemPasswordJob();
-    Result Startup(common::CallContext* callerContext, unsigned int sessionId,
-                   IMatchmakeSession* session);
+    Result Startup(common::CallContext* callerContext, unsigned int sessionId, IMatchmakeSession* session);
     ExecuteResult CompleteProcess();
     ExecuteResult FailureProcess();
     virtual void Cleanup();
@@ -26,6 +30,8 @@ protected:
     common::CallContext m_callContext;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -5,7 +5,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class DestroySessionJob : public common::StepSequenceJob
 {
@@ -41,6 +46,8 @@ protected:
     bool m_hasWaitedJointSessionJob;
 };
 
-}}}
+}
+}
+}
 
 #endif

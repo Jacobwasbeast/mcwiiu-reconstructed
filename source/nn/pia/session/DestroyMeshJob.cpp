@@ -10,10 +10,18 @@
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 DestroyMeshJob::DestroyMeshJob()
-    : common::StepSequenceJob(), m_callerContext(0), m_deadline(), m_timeoutMsec(cResponseTimeoutMsec)
+    : common::StepSequenceJob(),
+      m_callerContext(0),
+      m_deadline(),
+      m_timeoutMsec(cResponseTimeoutMsec)
 {
     OSBlockSet(m_stationResponses, 0, sizeof(m_stationResponses));
     m_waitingResponses = false;
@@ -125,7 +133,9 @@ void DestroyMeshJob::CleanupStatus()
 DestroyMeshJob::ExecuteResult DestroyMeshJob::CleanupMesh()
 {
     for (transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
-         station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size;
+         station
+         != transport::StationManager::s_pInstance->m_stations.data
+                + transport::StationManager::s_pInstance->m_stations.size;
          ++station)
     {
         (*station)->m_disconnectStationJob->ProcessDisconnection(*station);
@@ -169,4 +179,6 @@ void DestroyMeshJob::Trace(unsigned long long value) const
 {
 }
 
-}}}
+}
+}
+}

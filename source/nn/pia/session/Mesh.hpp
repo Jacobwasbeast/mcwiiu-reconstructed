@@ -11,14 +11,26 @@
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 
 class BandwidthCheckProtocol;
 class MissingStationHandler;
 
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class KickoutManageJob;
 class SessionNetworkFactory;
@@ -94,8 +106,7 @@ public:
         cEmulationTypeNone = 0
     };
 
-    typedef bool (*JoiningMeshApprovalCallback)(
-        const transport::Station::IdentificationToken*);
+    typedef bool (*JoiningMeshApprovalCallback)(const transport::Station::IdentificationToken*);
     typedef unsigned char (*HostCandidateRankingCallback)(StationIndex, bool);
     typedef void (*MeshEventCallback)(EventType, unsigned long long);
     typedef unsigned int (*GetSessionIdCallback)();
@@ -110,8 +121,7 @@ public:
     };
     unsigned int GetHostMigrationMode() const;
     bool IsRecentPlayRecordEnabled() const;
-    bool IsBandwidthCheckProtocolSetupParamValid(int measurementTime,
-                                                 unsigned int ipPacketSize,
+    bool IsBandwidthCheckProtocolSetupParamValid(int measurementTime, unsigned int ipPacketSize,
                                                  int measurementCount) const;
     void SetSyncClockPulseInterval(int interval);
     void SetSkipCleanupReport(bool skip);
@@ -173,9 +183,7 @@ public:
     void ProcessingAtMeshBegin();
     void ProcessingAtEndHM();
     void NotifyLeaveStationAddress(const common::StationAddress& address);
-    void AddPlayHistory(transport::Station* station,
-                        transport::Station::PlayerInfo* info,
-                        unsigned int count);
+    void AddPlayHistory(transport::Station* station, transport::Station::PlayerInfo* info, unsigned int count);
     void NoticeMeshEvent(EventType type, StationIndex index);
     bool IsHost() const;
     unsigned short GetStationNum() const;
@@ -189,8 +197,7 @@ public:
     bool IsProcessingLeaveMesh() const;
     StationIndex GetUsableStationIndex();
     unsigned char CheckApprovalJoin(transport::Station* station);
-    Result JoinMeshCore(const transport::StationConnectionInfo& info,
-                        common::CallContext* callerContext);
+    Result JoinMeshCore(const transport::StationConnectionInfo& info, common::CallContext* callerContext);
     Result LeaveMesh(common::CallContext* callerContext);
     long long GetTime() const;
     ProcessHostMigrationJob* GetProcessHostMigrationJobPtr();
@@ -201,8 +208,7 @@ public:
     void TraceStationConnectionInfoList(unsigned long long value);
     void Trace(unsigned long long value) const;
 
-    void JoinMesh(const transport::StationConnectionInfo& info,
-                  common::CallContext* callerContext);
+    void JoinMesh(const transport::StationConnectionInfo& info, common::CallContext* callerContext);
     void KickoutStationByIndex(StationIndex index);
     void KickoutStation(unsigned long long stationId);
     unsigned long long GetHostStationId() const;
@@ -240,8 +246,7 @@ public:
     void CleanupStatus();
     void Cleanup();
     Result CheckPlayerInfo(const transport::Station::PlayerInfo& info) const;
-    Result CheckPlayerInfoSetting(const transport::Station::PlayerInfo* infos,
-                                  unsigned char count) const;
+    Result CheckPlayerInfoSetting(const transport::Station::PlayerInfo* infos, unsigned char count) const;
     Result Startup(StartupSetting& setting);
     Result CreateMesh(common::CallContext* callerContext);
     Result CreateMeshAsync();
@@ -318,6 +323,8 @@ extern Mesh* g_piaMesh;
 #if !defined(RECON_NATIVE)
 #endif
 
-}}}
+}
+}
+}
 
 #endif

@@ -4,7 +4,12 @@
 #include "nn/pia.h"
 #include "nn/pia/common/PooledList.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class StationIdStatusTable
 {
@@ -33,9 +38,13 @@ public:
     };
 
 private:
-    enum StationIndexValue { cStationIndexInvalid = 0xfd };
+    enum StationIndexValue
+    {
+        cStationIndexInvalid = 0xfd
+    };
 
-    struct Element {
+    struct Element
+    {
         PrepareStatus prepare;
         AnswerStatus answer;
         bool connect;
@@ -127,6 +136,8 @@ private:
     unsigned long long* m_storage;
 };
 
-}}}
+}
+}
+}
 
 #endif

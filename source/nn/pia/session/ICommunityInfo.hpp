@@ -3,14 +3,26 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class DateTime;
 class String;
 
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class ICommunityInfo
 {
@@ -33,6 +45,8 @@ public:
     virtual void Clear() = 0;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class CreateSessionSetting
 {
@@ -34,6 +39,8 @@ private:
     uint8_t mMaxParticipantNumSet;
 };
 
-} } }
+}
+}
+}
 
 #endif

@@ -8,7 +8,12 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class JoinRandomSessionSetting;
 
@@ -76,6 +81,8 @@ public:
     common::Time m_startTime;
 };
 
-}}}
+}
+}
+}
 
 #endif

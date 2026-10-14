@@ -1,9 +1,13 @@
 #include "nn/pia/Reconstruction.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
-SessionStationInfo::SessionStationInfo()
-    : m_role(cStationInfoRole_Invalid)
+SessionStationInfo::SessionStationInfo() : m_role(cStationInfoRole_Invalid)
 {
 }
 
@@ -31,4 +35,6 @@ unsigned int SessionStationInfo::GetSerializedSize()
     return 1;
 }
 
-}}}
+}
+}
+}

@@ -5,12 +5,20 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class KickoutManageJob : public common::StepSequenceJob
 {
 public:
-    enum { cKickoutStationNumMax = 32 };
+    enum
+    {
+        cKickoutStationNumMax = 32
+    };
 
     enum KickoutReason
     {
@@ -56,6 +64,8 @@ public:
     Result m_joinCancelResult;
 };
 
-}}}
+}
+}
+}
 
 #endif

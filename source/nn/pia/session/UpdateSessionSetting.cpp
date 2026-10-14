@@ -1,9 +1,13 @@
 #include "nn/pia/session/UpdateSessionSetting.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
-UpdateSessionSetting::UpdateSessionSetting()
-    : m_modificationFlag(0)
+UpdateSessionSetting::UpdateSessionSetting() : m_modificationFlag(0)
 {
 }
 
@@ -31,4 +35,6 @@ bool UpdateSessionSetting::IsSetApplicationData() const
     return IsModificationFlagSet(cModificationFlag_ApplicationData);
 }
 
-}}}
+}
+}
+}

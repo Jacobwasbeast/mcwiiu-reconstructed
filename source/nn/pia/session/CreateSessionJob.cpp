@@ -9,11 +9,19 @@
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/StationIdTable.hpp"
 
-namespace nn { namespace pia { namespace session {
-namespace {
-inline void SelectStep(common::StepSequenceJob::Step& slot, CreateSessionJob::ExecuteResult (CreateSessionJob::*function)(), const char* name)
+namespace nn
 {
-    const common::StepSequenceJob::Step step(static_cast<CreateSessionJob::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+namespace pia
+{
+namespace session
+{
+namespace
+{
+inline void SelectStep(common::StepSequenceJob::Step& slot,
+                       CreateSessionJob::ExecuteResult (CreateSessionJob::*function)(), const char* name)
+{
+    const common::StepSequenceJob::Step step(
+        static_cast<CreateSessionJob::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 }
@@ -45,19 +53,23 @@ CreateSessionJob::ExecuteResult CreateSessionJob::MeshStartup()
     switch (status)
     {
     case Session::cStatusDisconnectedNetwork:
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure,
+                   "nn::pia::session::CreateSessionJob::CompleteFailure");
         m_result = Session::cResultStatusDisconnectedNetwork;
         return MakeExecuteResult(cExecuteKindContinue);
     case Session::cStatusUnknown6:
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure,
+                   "nn::pia::session::CreateSessionJob::CompleteFailure");
         m_result = Session::cResultStatusUnknown6;
         return MakeExecuteResult(cExecuteKindContinue);
     case Session::cStatusUnknown7:
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure,
+                   "nn::pia::session::CreateSessionJob::CompleteFailure");
         m_result = Session::cResultStatusUnknown7;
         return MakeExecuteResult(cExecuteKindContinue);
     case Session::cStatusUnknown8:
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure,
+                   "nn::pia::session::CreateSessionJob::CompleteFailure");
         m_result = Session::cResultStatusUnknown8;
         return MakeExecuteResult(cExecuteKindContinue);
     default:
@@ -94,19 +106,23 @@ CreateSessionJob::ExecuteResult CreateSessionJob::WaitCreateMesh()
     switch (status)
     {
     case Session::cStatusDisconnectedNetwork:
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure,
+                   "nn::pia::session::CreateSessionJob::CompleteFailure");
         m_result = Session::cResultStatusDisconnectedNetwork;
         return MakeExecuteResult(cExecuteKindContinue);
     case Session::cStatusUnknown6:
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure,
+                   "nn::pia::session::CreateSessionJob::CompleteFailure");
         m_result = Session::cResultStatusUnknown6;
         return MakeExecuteResult(cExecuteKindContinue);
     case Session::cStatusUnknown7:
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure,
+                   "nn::pia::session::CreateSessionJob::CompleteFailure");
         m_result = Session::cResultStatusUnknown7;
         return MakeExecuteResult(cExecuteKindContinue);
     case Session::cStatusUnknown8:
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure,
+                   "nn::pia::session::CreateSessionJob::CompleteFailure");
         m_result = Session::cResultStatusUnknown8;
         return MakeExecuteResult(cExecuteKindContinue);
     default:
@@ -114,8 +130,8 @@ CreateSessionJob::ExecuteResult CreateSessionJob::WaitCreateMesh()
     }
     if (m_callContext.m_state != common::CallContext::cStateFailure)
     {
-        if (m_callContext.m_state == common::CallContext::cStateSuccess ||
-            m_callContext.m_state == common::CallContext::cStateCancelled)
+        if (m_callContext.m_state == common::CallContext::cStateSuccess
+            || m_callContext.m_state == common::CallContext::cStateCancelled)
         {
             const Result result = m_callContext.m_result;
             Session* session = g_piaSession;
@@ -145,8 +161,7 @@ CreateSessionJob::ExecuteResult CreateSessionJob::WaitCreateMesh()
 CreateSessionJob::ExecuteResult CreateSessionJob::CompleteFailure()
 {
     g_piaSession->m_meshLayerController->MeshCleanup();
-    if (m_result == transport::cResultInvalidState ||
-        m_result == Session::cResultStatusDisconnectedNetwork)
+    if (m_result == transport::cResultInvalidState || m_result == Session::cResultStatusDisconnectedNetwork)
     {
         g_piaSession->ChangeStatusToDisconnectedNetwork();
         m_callerContext->SignalFailure(Session::cResultStatusDisconnectedNetwork);
@@ -201,4 +216,6 @@ void CreateSessionJob::SetConnectionStatus(Session::ConnectionStatus status)
     g_piaSession->m_disconnectStatus = status;
 }
 
-}}}
+}
+}
+}

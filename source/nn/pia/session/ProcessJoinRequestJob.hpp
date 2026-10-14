@@ -6,7 +6,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class ProcessJoinRequestJob : public common::StepSequenceJob
 {
@@ -49,6 +54,8 @@ public:
     bool m_joinCancelRequested;
 };
 
-}}}
+}
+}
+}
 
 #endif

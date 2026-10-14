@@ -1,6 +1,11 @@
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 SessionSearchCriteria::SessionSearchCriteria()
     : m_resultRangeOffset(0),
@@ -58,4 +63,6 @@ void SessionSearchCriteria::SetKeyType(SearchCriteriaKey keyType)
     m_keyType = keyType;
 }
 
-}}}
+}
+}
+}

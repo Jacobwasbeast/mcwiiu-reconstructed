@@ -10,7 +10,12 @@
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -21,16 +26,22 @@ enum
     cTraceStationLevel = 0x10000000
 };
 
-inline void SelectStep(common::StepSequenceJob::Step& slot, LeaveMeshJob::ExecuteResult (LeaveMeshJob::*function)(), const char* name)
+inline void SelectStep(common::StepSequenceJob::Step& slot, LeaveMeshJob::ExecuteResult (LeaveMeshJob::*function)(),
+                       const char* name)
 {
-    const common::StepSequenceJob::Step step(static_cast<LeaveMeshJob::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    const common::StepSequenceJob::Step step(
+        static_cast<LeaveMeshJob::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 }
 
 LeaveMeshJob::LeaveMeshJob()
-    : common::StepSequenceJob(), m_deadline(), m_timeoutMsec(cLeaveResponseTimeoutMsec), m_callerContext(0),
-      m_extraContext(0), m_disconnectStarted(false)
+    : common::StepSequenceJob(),
+      m_deadline(),
+      m_timeoutMsec(cLeaveResponseTimeoutMsec),
+      m_callerContext(0),
+      m_extraContext(0),
+      m_disconnectStarted(false)
 {
 }
 
@@ -124,7 +135,9 @@ LeaveMeshJob::ExecuteResult LeaveMeshJob::StartDisconnectStations()
                     (*station)->Trace(cTraceStationLevel);
             }
             ++station;
-        } while (station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size);
+        } while (station
+                 != transport::StationManager::s_pInstance->m_stations.data
+                        + transport::StationManager::s_pInstance->m_stations.size);
     }
     SelectStep(m_currentStep, &LeaveMeshJob::WaitLeavingProcess, "LeaveMeshJob::WaitLeavingProcess");
     return MakeExecuteResult(cExecuteKindContinue);
@@ -134,9 +147,13 @@ LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeavingProcess()
 {
     bool connected = false;
     for (transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
-         station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size; ++station)
+         station
+         != transport::StationManager::s_pInstance->m_stations.data
+                + transport::StationManager::s_pInstance->m_stations.size;
+         ++station)
     {
-        if ((*station)->m_field20 == cConnectedStationState && *station != transport::StationManager::s_pInstance->m_localStation)
+        if ((*station)->m_field20 == cConnectedStationState
+            && *station != transport::StationManager::s_pInstance->m_localStation)
         {
             connected = true;
             break;
@@ -151,7 +168,10 @@ LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeavingProcess()
 LeaveMeshJob::ExecuteResult LeaveMeshJob::LeaveSuccess()
 {
     for (transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
-         station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size; ++station)
+         station
+         != transport::StationManager::s_pInstance->m_stations.data
+                + transport::StationManager::s_pInstance->m_stations.size;
+         ++station)
         (*station)->m_disconnectStationJob->ProcessDisconnection(*station);
     g_piaMesh->CleanupStationsJobs();
     g_piaMesh->m_disconnectReason = cDisconnectReasonLeave;
@@ -203,4 +223,6 @@ void LeaveMeshJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

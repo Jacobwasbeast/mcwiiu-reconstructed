@@ -5,15 +5,19 @@
 #include "nn/pia/session/CreateSessionSetting.hpp"
 #include "nn/pia/session/SessionSearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class JoinRandomSessionSetting
 {
 public:
     virtual ~JoinRandomSessionSetting() {}
     virtual Result SetCreateSessionSetting(const CreateSessionSetting* setting) = 0;
-    virtual Result SetSessionSearchCriteria(const SessionSearchCriteria* criteria,
-                                            unsigned int count) = 0;
+    virtual Result SetSessionSearchCriteria(const SessionSearchCriteria* criteria, unsigned int count) = 0;
     virtual void Reset() = 0;
     virtual void Trace(unsigned long long value) const = 0;
     virtual CreateSessionSetting* GetCreateSessionSetting() = 0;
@@ -23,6 +27,8 @@ public:
     virtual unsigned int GetSessionSearchCriteriaSize() const = 0;
 };
 
-}}}
+}
+}
+}
 
 #endif

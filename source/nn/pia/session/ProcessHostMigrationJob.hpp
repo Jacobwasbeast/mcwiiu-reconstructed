@@ -8,7 +8,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class ProcessHostMigrationJob : public common::StepSequenceJob
 {
@@ -26,25 +31,15 @@ public:
     virtual void Trace(unsigned long long value) const;
     virtual unsigned int CleanupOldHostInfoCommonProc();
     virtual unsigned int PreprocessForSendingMigrationFinish() = 0;
-    virtual unsigned int IsFatalErrorOccur()
-    {
-        return 0;
-    }
-    virtual void CheckWhetherNewHostIsUnknown(unsigned long long)
-    {
-    }
+    virtual unsigned int IsFatalErrorOccur() { return 0; }
+    virtual void CheckWhetherNewHostIsUnknown(unsigned long long) {}
     virtual unsigned int IsValidHostMigrationSetting() = 0;
     virtual unsigned int StartupImpl(bool multi, StationIndex station) = 0;
-    virtual void CleanupImpl()
-    {
-    }
+    virtual void CleanupImpl() {}
     virtual void CleanupStatus();
     virtual void DisconnectStation(StationIndex station);
     virtual unsigned int StartupMultiImpl(bool multi, unsigned short count);
-    virtual unsigned int CheckWhetherReselectNewHost()
-    {
-        return 0;
-    }
+    virtual unsigned int CheckWhetherReselectNewHost() { return 0; }
 
     void ProcessingAtEndHM(bool stationCountValid);
     void SearchRefugeRelayRoute();
@@ -66,9 +61,8 @@ public:
     void ReceiveFinish(bool success);
     void Cleanup();
     bool StartupMulti(bool multi, const unsigned char* ranking, unsigned int a, unsigned int b);
-    Result MakeHostCandidateRanking(StationIndex station, unsigned char* ranking,
-                                    unsigned int* meshValue, unsigned int* relayValue,
-                                    bool fromConnectionInfo);
+    Result MakeHostCandidateRanking(StationIndex station, unsigned char* ranking, unsigned int* meshValue,
+                                    unsigned int* relayValue, bool fromConnectionInfo);
     Result CheckHostCandidateRanking(StationIndex first, StationIndex second, bool* firstIsHigher,
                                      unsigned int* valueE0, unsigned int* valueE4) const;
     void SetRankDecision(StationIndex station, bool value);
@@ -76,13 +70,10 @@ public:
     void SetMonitoringData();
     StationIndex GetStationIndexByPrincipalID(unsigned long long principalId);
 
-    unsigned int GetHostMigrationSequence() const
-    {
-        return m_hostMigrationSequence;
-    }
+    unsigned int GetHostMigrationSequence() const { return m_hostMigrationSequence; }
 
-    void SetHostCandidateRanking(const unsigned char* ranking, unsigned int count,
-                                 unsigned int valueE0, unsigned int valueE4)
+    void SetHostCandidateRanking(const unsigned char* ranking, unsigned int count, unsigned int valueE0,
+                                 unsigned int valueE4)
     {
         OSBlockMove(m_candidateRanking, ranking, count, FALSE);
         m_unknownE0 = valueE0;
@@ -120,6 +111,8 @@ public:
     unsigned int m_hostMigrationSequence;
 };
 
-}}}
+}
+}
+}
 
 #endif

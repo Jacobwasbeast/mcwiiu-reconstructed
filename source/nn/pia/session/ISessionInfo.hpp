@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class ISessionInfo
 {
@@ -21,6 +26,8 @@ public:
     virtual void Trace(unsigned long long value) const = 0;
 };
 
-}}}
+}
+}
+}
 
 #endif

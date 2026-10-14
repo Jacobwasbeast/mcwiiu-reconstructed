@@ -6,7 +6,12 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class LeaveSessionJob : public common::StepSequenceJob
 {
@@ -56,6 +61,8 @@ protected:
     }
 };
 
-}}}
+}
+}
+}
 
 #endif

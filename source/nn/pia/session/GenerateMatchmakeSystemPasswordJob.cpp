@@ -1,7 +1,12 @@
 #include "nn/pia/session/GenerateMatchmakeSystemPasswordJob.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -14,7 +19,10 @@ enum
 }
 
 GenerateMatchmakeSystemPasswordJob::GenerateMatchmakeSystemPasswordJob()
-    : common::StepSequenceJob(), m_sessionId(0), m_callerContext(0), m_callContext()
+    : common::StepSequenceJob(),
+      m_sessionId(0),
+      m_callerContext(0),
+      m_callContext()
 {
 }
 
@@ -22,9 +30,8 @@ GenerateMatchmakeSystemPasswordJob::~GenerateMatchmakeSystemPasswordJob()
 {
 }
 
-Result GenerateMatchmakeSystemPasswordJob::Startup(common::CallContext* callerContext,
-                                                    unsigned int sessionId,
-                                                    IMatchmakeSession* session)
+Result GenerateMatchmakeSystemPasswordJob::Startup(common::CallContext* callerContext, unsigned int sessionId,
+                                                   IMatchmakeSession* session)
 {
     if (callerContext == 0 || session == 0)
         return cResultInvalidArgument;
@@ -77,4 +84,6 @@ void GenerateMatchmakeSystemPasswordJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

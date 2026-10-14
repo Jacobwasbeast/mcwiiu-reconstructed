@@ -4,11 +4,19 @@
 #include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 OpenParticipationJob::OpenParticipationJob()
-    : common::StepSequenceJob(), m_callerContext(0), m_callContext(),
-      m_sessionId(0), m_matchmakeSession(0)
+    : common::StepSequenceJob(),
+      m_callerContext(0),
+      m_callContext(),
+      m_sessionId(0),
+      m_matchmakeSession(0)
 {
 }
 
@@ -27,7 +35,9 @@ Result OpenParticipationJob::Startup(common::CallContext* callerContext, unsigne
     m_sessionId = sessionId;
     m_matchmakeSession = matchmakeSession;
     Reset(true);
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&OpenParticipationJob::OpenParticipation), "OpenParticipationJob::OpenParticipation"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&OpenParticipationJob::OpenParticipation),
+             "OpenParticipationJob::OpenParticipation"));
     return 0;
 }
 
@@ -85,7 +95,9 @@ OpenParticipationJob::ExecuteResult OpenParticipationJob::OpenParticipation()
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&OpenParticipationJob::WaitOpenParticipation), "OpenParticipationJob::WaitOpenParticipation"));
+    SetCurrentStep(
+        Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&OpenParticipationJob::WaitOpenParticipation),
+             "OpenParticipationJob::WaitOpenParticipation"));
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -173,4 +185,6 @@ void OpenParticipationJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

@@ -5,7 +5,12 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class IMatchmakeSession;
 class SessionSearchCriteria;
@@ -16,21 +21,16 @@ public:
     BrowseMatchmakeJob();
     virtual ~BrowseMatchmakeJob();
 
-    Result Startup(common::CallContext* callerContext,
-                   IMatchmakeSession* matchmakeSession,
+    Result Startup(common::CallContext* callerContext, IMatchmakeSession* matchmakeSession,
                    const SessionSearchCriteria* criteria);
-    Result Startup(common::CallContext* callerContext,
-                   IMatchmakeSession* matchmakeSession,
-                   unsigned int sessionId);
+    Result Startup(common::CallContext* callerContext, IMatchmakeSession* matchmakeSession, unsigned int sessionId);
     ExecuteResult CompleteProcess();
     virtual void Cleanup();
     virtual void Trace(unsigned long long value) const;
 
 protected:
-    virtual Result StartupImpl(IMatchmakeSession* matchmakeSession,
-                               const SessionSearchCriteria* criteria) = 0;
-    virtual Result StartupImpl(IMatchmakeSession* matchmakeSession,
-                               unsigned int sessionId) = 0;
+    virtual Result StartupImpl(IMatchmakeSession* matchmakeSession, const SessionSearchCriteria* criteria) = 0;
+    virtual Result StartupImpl(IMatchmakeSession* matchmakeSession, unsigned int sessionId) = 0;
 
     template <class T>
     void SetStep(ExecuteResult (T::*function)(), const char* name)
@@ -43,6 +43,8 @@ protected:
     common::CallContext* m_callerContext;
 };
 
-}}}
+}
+}
+}
 
 #endif

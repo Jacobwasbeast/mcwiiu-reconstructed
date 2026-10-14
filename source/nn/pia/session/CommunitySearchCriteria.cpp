@@ -1,6 +1,11 @@
 #include "nn/pia/session/CommunitySearchCriteria.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 CommunitySearchCriteria::~CommunitySearchCriteria()
 {
@@ -35,4 +40,6 @@ void CommunitySearchCriteria::Reset()
     m_resultRangeSize = 20;
 }
 
-}}}
+}
+}
+}

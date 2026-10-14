@@ -42,7 +42,12 @@
 #include "nn/pia/session/StationIdStatusTable.hpp"
 #include "nn/pia/session/UpdateSessionSettingJob.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -74,30 +79,64 @@ enum
 
 unsigned char* s_sessionStorage = 0;
 
-const unsigned char s_joinRandomStateByJoinMeshState[4] = { 4, 5, 6, 7 };
-const unsigned char s_joinSessionStateByJoinMeshState[4] = { 4, 5, 6, 7 };
+const unsigned char s_joinRandomStateByJoinMeshState[4] = {4, 5, 6, 7};
+const unsigned char s_joinSessionStateByJoinMeshState[4] = {4, 5, 6, 7};
 }
 
 Session* g_piaSession = 0;
 Session::DebugSetting Session::s_debugSetting;
 
 Session::Session(const Setting&)
-    : m_selectionPriorityEnabled(false), m_meshLayerController(0), m_sessionStatusCheckJob(0),
-      m_createSessionJob(0), m_randomMatchmakeJob(0), m_browseMatchmakeJob(0), m_joinSessionJob(0),
-      m_leaveSessionJob(0), m_destroySessionJob(0), m_openParticipationJob(0),
-      m_closeParticipationJob(0), m_generateMatchmakeSystemPasswordJob(0),
-      m_clearMatchmakeSystemPasswordJob(0), m_matchmakeSystemPassword(0), m_jointSessionJob(0),
-      m_updateSessionSettingJob(0), m_communityManagementJob(0), m_sessionEventCallback(0),
-      m_sessionEventCallbackParam(0), m_joiningApprovalCallback(0), m_stationIdStatusTable(0),
-      m_protocolId(0), m_sessionProtocol(0), m_startupState(0), m_matchmakeStatus(0),
-      m_disconnectStatus(0), m_localStationId(0), m_hostStationId(0),
-      m_jointSessionHostStationId(0), m_field90(0), m_callContext(),
-      m_asyncProcessingName(cAsyncProcessingNameNone), m_meshEventListener(0),
-      m_waitingStationIndex(0), m_fieldb8(0), m_sessionDisconnectReason(0), m_fieldc0(0),
-      m_postponeNotice(false), m_currentSessionIndex(0), m_sessionInfoList(0),
-      m_communityInfoList(0), m_validStationIdList(),
-      m_validStationIdBuffer(0), m_hostMigrationOccurred(false), m_playerNum(0),
-      m_participantNum(0), m_field13c(0), m_field140(0), m_field144(0), m_field148(0)
+    : m_selectionPriorityEnabled(false),
+      m_meshLayerController(0),
+      m_sessionStatusCheckJob(0),
+      m_createSessionJob(0),
+      m_randomMatchmakeJob(0),
+      m_browseMatchmakeJob(0),
+      m_joinSessionJob(0),
+      m_leaveSessionJob(0),
+      m_destroySessionJob(0),
+      m_openParticipationJob(0),
+      m_closeParticipationJob(0),
+      m_generateMatchmakeSystemPasswordJob(0),
+      m_clearMatchmakeSystemPasswordJob(0),
+      m_matchmakeSystemPassword(0),
+      m_jointSessionJob(0),
+      m_updateSessionSettingJob(0),
+      m_communityManagementJob(0),
+      m_sessionEventCallback(0),
+      m_sessionEventCallbackParam(0),
+      m_joiningApprovalCallback(0),
+      m_stationIdStatusTable(0),
+      m_protocolId(0),
+      m_sessionProtocol(0),
+      m_startupState(0),
+      m_matchmakeStatus(0),
+      m_disconnectStatus(0),
+      m_localStationId(0),
+      m_hostStationId(0),
+      m_jointSessionHostStationId(0),
+      m_field90(0),
+      m_callContext(),
+      m_asyncProcessingName(cAsyncProcessingNameNone),
+      m_meshEventListener(0),
+      m_waitingStationIndex(0),
+      m_fieldb8(0),
+      m_sessionDisconnectReason(0),
+      m_fieldc0(0),
+      m_postponeNotice(false),
+      m_currentSessionIndex(0),
+      m_sessionInfoList(0),
+      m_communityInfoList(0),
+      m_validStationIdList(),
+      m_validStationIdBuffer(0),
+      m_hostMigrationOccurred(false),
+      m_playerNum(0),
+      m_participantNum(0),
+      m_field13c(0),
+      m_field140(0),
+      m_field144(0),
+      m_field148(0)
 {
     m_sessionId[0] = 0;
     m_sessionId[1] = 0;
@@ -110,8 +149,8 @@ Session::Session(const Setting&)
 
 Session::~Session()
 {
-    SessionNetworkFactory* factory =
-        static_cast<SessionNetworkFactory*>(transport::g_piaTransport->GetNetworkFactory());
+    SessionNetworkFactory* factory = static_cast<SessionNetworkFactory*>(
+        transport::g_piaTransport->GetNetworkFactory());
     if (m_createSessionJob != 0)
     {
         factory->DeleteMatchCreateSessionJob(m_createSessionJob);
@@ -257,14 +296,11 @@ Result Session::CreateInstance(const Setting& setting)
         return static_cast<Result>(transport::cResultAlreadyExists);
     if (setting.m_networkFactory == 0)
         return static_cast<Result>(transport::cResultInvalidArgument);
-    if (setting.m_networkTopologyType != 0 &&
-        !setting.m_networkFactory->IsClientRelayConnectionPermitted())
+    if (setting.m_networkTopologyType != 0 && !setting.m_networkFactory->IsClientRelayConnectionPermitted())
         return static_cast<Result>(transport::cResultInvalidArgument);
-    if (setting.m_networkFactory->GetBrowseSessionInfoListSizeMax() <
-        setting.m_browseSessionInfoListSize)
+    if (setting.m_networkFactory->GetBrowseSessionInfoListSizeMax() < setting.m_browseSessionInfoListSize)
         return static_cast<Result>(transport::cResultInvalidArgument);
-    if (setting.m_networkFactory->GetBrowseCommunityInfoListSizeMax() <
-        setting.m_browseCommunityInfoListSize)
+    if (setting.m_networkFactory->GetBrowseCommunityInfoListSizeMax() < setting.m_browseCommunityInfoListSize)
         return static_cast<Result>(transport::cResultInvalidArgument);
     if (setting.m_bitRateCheckMode == 1 && !setting.m_networkFactory->IsBitRateCheckPermitted())
         return static_cast<Result>(transport::cResultInvalidArgument);
@@ -286,8 +322,8 @@ Result Session::CreateInstance(const Setting& setting)
 
     if (g_piaSession == 0)
     {
-        s_sessionStorage = static_cast<unsigned char*>(pead::allocateFromSeadHeap(
-            sizeof(Session), common::HeapManager::GetHeap(), cSessionStorageAlignment));
+        s_sessionStorage = static_cast<unsigned char*>(
+            pead::allocateFromSeadHeap(sizeof(Session), common::HeapManager::GetHeap(), cSessionStorageAlignment));
         if (s_sessionStorage != 0)
         {
             unsigned char* bytes = s_sessionStorage;
@@ -305,16 +341,15 @@ Result Session::CreateInstance(const Setting& setting)
         g_piaSession = new (s_sessionStorage) Session(setting);
 
         g_piaSession->m_currentSessionIndex = 0;
-        g_piaSession->m_sessionInfoList =
-            setting.m_networkFactory->CreateSessionInfoList(setting.m_browseSessionInfoListSize);
+        g_piaSession->m_sessionInfoList = setting.m_networkFactory->CreateSessionInfoList(
+            setting.m_browseSessionInfoListSize);
         g_piaSession->m_communityInfoList = setting.m_networkFactory->CreateCommunityInfoList(
             setting.m_browseCommunityInfoListSize);
         g_piaSession->m_matchmakeSession[0] = setting.m_networkFactory->CreateMatchmakeSession();
         const unsigned short stationNum = transport::g_piaTransport->m_stationNum;
         if (setting.m_networkFactory->IsJointSessionPermitted())
         {
-            g_piaSession->m_matchmakeSession[1] =
-                setting.m_networkFactory->CreateMatchmakeSession();
+            g_piaSession->m_matchmakeSession[1] = setting.m_networkFactory->CreateMatchmakeSession();
             if (g_piaSession->m_jointSessionJob == 0)
                 g_piaSession->m_jointSessionJob = static_cast<JointSessionJob*>(
                     setting.m_networkFactory->CreateMatchJointSessionJob());
@@ -328,10 +363,9 @@ Result Session::CreateInstance(const Setting& setting)
         if (g_piaSession->m_stationIdStatusTable == 0)
             g_piaSession->m_stationIdStatusTable = transport::CreateObject<StationIdStatusTable>();
 
-        g_piaSession->m_protocolId =
-            transport::g_piaTransport->m_protocolManager.CreateProtocol<SessionProtocol>(0);
-        g_piaSession->m_sessionProtocol =
-            transport::g_piaTransport->m_protocolManager.GetProtocol<SessionProtocol>(g_piaSession->m_protocolId);
+        g_piaSession->m_protocolId = transport::g_piaTransport->m_protocolManager.CreateProtocol<SessionProtocol>(0);
+        g_piaSession->m_sessionProtocol = transport::g_piaTransport->m_protocolManager.GetProtocol<SessionProtocol>(
+            g_piaSession->m_protocolId);
         g_piaSession->m_stationIdStatusTable->Initialize(stationNum);
         g_piaSession->m_sessionProtocol->Initialize(stationNum);
 
@@ -360,16 +394,13 @@ Result Session::CreateInstance(const Setting& setting)
         if (g_piaSession->m_closeParticipationJob == 0)
             g_piaSession->m_closeParticipationJob = transport::CreateObject<CloseParticipationJob>();
         if (g_piaSession->m_generateMatchmakeSystemPasswordJob == 0)
-            g_piaSession->m_generateMatchmakeSystemPasswordJob =
-                static_cast<GenerateMatchmakeSystemPasswordJob*>(
-                    setting.m_networkFactory->CreateGenerateMatchmakeSystemPasswordJob());
+            g_piaSession->m_generateMatchmakeSystemPasswordJob = static_cast<GenerateMatchmakeSystemPasswordJob*>(
+                setting.m_networkFactory->CreateGenerateMatchmakeSystemPasswordJob());
         if (g_piaSession->m_clearMatchmakeSystemPasswordJob == 0)
-            g_piaSession->m_clearMatchmakeSystemPasswordJob =
-                static_cast<ClearMatchmakeSystemPasswordJob*>(
-                    setting.m_networkFactory->CreateClearMatchmakeSystemPasswordJob());
+            g_piaSession->m_clearMatchmakeSystemPasswordJob = static_cast<ClearMatchmakeSystemPasswordJob*>(
+                setting.m_networkFactory->CreateClearMatchmakeSystemPasswordJob());
         if (g_piaSession->m_matchmakeSystemPassword == 0)
-            g_piaSession->m_matchmakeSystemPassword =
-                setting.m_networkFactory->CreateMatchmakeSessionSystemPassword();
+            g_piaSession->m_matchmakeSystemPassword = setting.m_networkFactory->CreateMatchmakeSessionSystemPassword();
         if (g_piaSession->m_updateSessionSettingJob == 0)
             g_piaSession->m_updateSessionSettingJob = static_cast<UpdateSessionSettingJob*>(
                 setting.m_networkFactory->CreateMatchUpdateSessionSettingJob());
@@ -377,8 +408,7 @@ Result Session::CreateInstance(const Setting& setting)
             g_piaSession->m_communityManagementJob = static_cast<CommunityManagementJob*>(
                 setting.m_networkFactory->CreateCommunityManagementJob());
         if (g_piaSession->m_meshLayerController == 0)
-            g_piaSession->m_meshLayerController =
-                setting.m_networkFactory->CreateMatchMeshLayerController();
+            g_piaSession->m_meshLayerController = setting.m_networkFactory->CreateMatchMeshLayerController();
         g_piaSession->m_selectionPriorityEnabled = setting.m_networkFactory->IsServerRequired();
 
         if (g_piaSession->m_meshEventListener == 0)
@@ -386,10 +416,9 @@ Result Session::CreateInstance(const Setting& setting)
         if (g_piaSession->m_validStationIdBuffer == 0)
         {
             g_piaSession->m_validStationIdBuffer = common::NewArray<unsigned long long>(
-                (sizeof(StationIdList::Node) * stationNum + cStationIdListBufferAlignment - 1) /
-                cStationIdListBufferAlignment);
-            g_piaSession->m_validStationIdList.Initialize(g_piaSession->m_validStationIdBuffer,
-                                                         stationNum);
+                (sizeof(StationIdList::Node) * stationNum + cStationIdListBufferAlignment - 1)
+                / cStationIdListBufferAlignment);
+            g_piaSession->m_validStationIdList.Initialize(g_piaSession->m_validStationIdBuffer, stationNum);
         }
     }
     g_piaSession->m_startupState = 0;
@@ -423,16 +452,13 @@ void Session::CleanupStatus(bool keepStationIds)
     m_postponeNotice = false;
     if (m_localStationId != 0)
     {
-        transport::StationIdTable::EntryList& entries =
-            transport::g_piaTransport->m_stationIdTable->m_entries;
+        transport::StationIdTable::EntryList& entries = transport::g_piaTransport->m_stationIdTable->m_entries;
         unsigned long long stationIds[transport::cStationNumMax];
         unsigned short stationIdNum = 0;
         bool localStationFound = false;
-        for (common::ListNode* node = entries.Sentinel()->next; node != entries.Sentinel();
-             node = node->next)
+        for (common::ListNode* node = entries.Sentinel()->next; node != entries.Sentinel(); node = node->next)
         {
-            const unsigned long long stationId =
-                transport::StationIdTable::EntryList::ValueOf(node)->stationId;
+            const unsigned long long stationId = transport::StationIdTable::EntryList::ValueOf(node)->stationId;
             if (stationId == m_localStationId)
                 localStationFound = true;
             else if (stationId != 0)
@@ -441,8 +467,7 @@ void Session::CleanupStatus(bool keepStationIds)
         if (localStationFound)
             stationIds[stationIdNum++] = m_localStationId;
         for (unsigned short i = 0; i < stationIdNum; ++i)
-            RemoveStationId(stationIds[i], static_cast<StationIndex>(transport::cStationIndexInvalid),
-                            0, 0);
+            RemoveStationId(stationIds[i], static_cast<StationIndex>(transport::cStationIndexInvalid), 0, 0);
         transport::g_piaTransport->m_stationIdTable->Trace(cTraceMaskStationTable);
         m_stationIdStatusTable->Trace(cTraceMaskStationTable);
     }
@@ -606,17 +631,16 @@ bool Session::LeaveNoticeToWaitingStationIndex(StationIndex stationIndex)
 bool Session::IsAsyncProcessCompleted(AsyncProcessingName name) const
 {
     if (m_asyncProcessingName == name)
-        return m_callContext.m_state == common::CallContext::cStateSuccess ||
-               m_callContext.m_state == common::CallContext::cStateFailure ||
-               m_callContext.m_state == common::CallContext::cStateCancelled;
+        return m_callContext.m_state == common::CallContext::cStateSuccess
+               || m_callContext.m_state == common::CallContext::cStateFailure
+               || m_callContext.m_state == common::CallContext::cStateCancelled;
     return false;
 }
 
 Result Session::GetAsyncProcessResult(AsyncProcessingName name) const
 {
-    if (m_asyncProcessingName == name &&
-        m_callContext.m_state >= common::CallContext::cStateSuccess &&
-        m_callContext.m_state <= common::CallContext::cStateCancelled)
+    if (m_asyncProcessingName == name && m_callContext.m_state >= common::CallContext::cStateSuccess
+        && m_callContext.m_state <= common::CallContext::cStateCancelled)
         return m_callContext.m_result;
     return static_cast<Result>(transport::cResultInvalidState);
 }
@@ -668,14 +692,13 @@ Result Session::BrowseSessionAsync(const SessionSearchCriteria* criteria)
         return static_cast<Result>(transport::cResultInvalidState);
     if (m_sessionInfoList->GetMaxSize() == 0)
         return static_cast<Result>(transport::cResultInvalidState);
-    if (criteria->GetKeyType() != SessionSearchCriteria::cKeyTypeParticipant &&
-        criteria->GetKeyType() != SessionSearchCriteria::cKeyTypeSessionId &&
-        m_sessionInfoList->GetMaxSize() < criteria->GetResultRangeSize())
+    if (criteria->GetKeyType() != SessionSearchCriteria::cKeyTypeParticipant
+        && criteria->GetKeyType() != SessionSearchCriteria::cKeyTypeSessionId
+        && m_sessionInfoList->GetMaxSize() < criteria->GetResultRangeSize())
         return static_cast<Result>(transport::cResultInvalidArgument);
 
     ResetInternalAsyncState();
-    Result result = m_browseMatchmakeJob->Startup(
-        &m_callContext, m_matchmakeSession[m_currentSessionIndex], criteria);
+    Result result = m_browseMatchmakeJob->Startup(&m_callContext, m_matchmakeSession[m_currentSessionIndex], criteria);
     if (result == 0)
     {
         m_browseMatchmakeJob->Ready(false);
@@ -696,8 +719,8 @@ Result Session::GetBrowseSessionResult() const
 
 Result Session::BrowseCommunityAsync(const CommunitySearchCriteria* criteria)
 {
-    if (m_matchmakeSession[m_currentSessionIndex] != 0 &&
-        m_matchmakeSession[m_currentSessionIndex]->GetBrowsedCommunityResult() != 0)
+    if (m_matchmakeSession[m_currentSessionIndex] != 0
+        && m_matchmakeSession[m_currentSessionIndex]->GetBrowsedCommunityResult() != 0)
         m_matchmakeSession[m_currentSessionIndex]->GetBrowsedCommunityResult()->Clear();
     if (criteria == 0)
         return static_cast<Result>(transport::cResultInvalidArgument);
@@ -848,8 +871,7 @@ Result Session::UpdateSelectionPriority(unsigned char selectionPriority) const
     IMatchmakeSession* matchmakeSession = m_matchmakeSession[m_currentSessionIndex];
     if (matchmakeSession == 0)
         return static_cast<Result>(transport::cResultInvalidState);
-    return matchmakeSession->UpdateSelectionPriority(m_sessionId[m_currentSessionIndex],
-                                                     selectionPriority);
+    return matchmakeSession->UpdateSelectionPriority(m_sessionId[m_currentSessionIndex], selectionPriority);
 }
 
 bool Session::IsUpdatableSelectionPriority(unsigned char selectionPriority) const
@@ -865,14 +887,12 @@ bool Session::IsUpdatableSelectionPriority(unsigned char selectionPriority) cons
 
 unsigned long long Session::ConvertCommunityIdToCommunityCode(unsigned int communityId)
 {
-    return m_matchmakeSession[m_currentSessionIndex]->ConvertGatheringIdToPersistentGatheringCode(
-        communityId);
+    return m_matchmakeSession[m_currentSessionIndex]->ConvertGatheringIdToPersistentGatheringCode(communityId);
 }
 
 unsigned int Session::ConvertCommunityCodeToCommunityId(unsigned long long communityCode)
 {
-    return m_matchmakeSession[m_currentSessionIndex]->ConvertPersistentGatheringCodeToGatheringId(
-        communityCode);
+    return m_matchmakeSession[m_currentSessionIndex]->ConvertPersistentGatheringCodeToGatheringId(communityCode);
 }
 
 bool Session::IsOwner() const
@@ -915,10 +935,10 @@ Result Session::CheckConnectionError() const
 
 const ISessionInfo* Session::GetSessionInfo() const
 {
-    if (IsAsyncProcessCompleted(cAsyncProcessingNameCreateSession) ||
-        IsAsyncProcessCompleted(cAsyncProcessingNameJoinRandomSession) ||
-        IsAsyncProcessCompleted(cAsyncProcessingNameJoinSession) ||
-        IsAsyncProcessCompleted(cAsyncProcessingNameUnknown18))
+    if (IsAsyncProcessCompleted(cAsyncProcessingNameCreateSession)
+        || IsAsyncProcessCompleted(cAsyncProcessingNameJoinRandomSession)
+        || IsAsyncProcessCompleted(cAsyncProcessingNameJoinSession)
+        || IsAsyncProcessCompleted(cAsyncProcessingNameUnknown18))
     {
         IMatchmakeSession* matchmakeSession = m_matchmakeSession[m_currentSessionIndex];
         if (matchmakeSession != 0)
@@ -1003,8 +1023,7 @@ void Session::NotifyLeave(unsigned int sessionId, unsigned long long stationId)
         return;
     if (m_jointSessionJob != 0 && m_jointSessionJob->IsRunning())
         m_jointSessionJob->NoticeLeaveEventImpl(sessionId, stationId);
-    if (m_sessionId[m_currentSessionIndex == 0 ? 1 : 0] != sessionId &&
-        m_sessionId[m_currentSessionIndex] != sessionId)
+    if (m_sessionId[m_currentSessionIndex == 0 ? 1 : 0] != sessionId && m_sessionId[m_currentSessionIndex] != sessionId)
         return;
     if (m_matchmakeStatus == cMatchmakeStatusNone && stationId != m_localStationId)
         return;
@@ -1018,9 +1037,9 @@ void Session::NotifyLeave(unsigned int sessionId, unsigned long long stationId)
     {
         for (; station != end; ++station)
         {
-            if ((*station)->m_stationId == stationId ||
-                info.m_stationLocation.m_stationAddress == (*station)->m_stationAddress ||
-                info.m_localStationLocation.m_stationAddress == (*station)->m_stationAddress)
+            if ((*station)->m_stationId == stationId
+                || info.m_stationLocation.m_stationAddress == (*station)->m_stationAddress
+                || info.m_localStationLocation.m_stationAddress == (*station)->m_stationAddress)
             {
                 found = true;
                 if ((*station)->m_field20 == cStationLeaveStateRequested)
@@ -1060,9 +1079,9 @@ void Session::NotifyUnregister(unsigned int sessionId)
         m_randomMatchmakeJob->NoticeUnregisterEvent(sessionId);
         return;
     }
-    if ((m_leaveSessionJob == 0 || !m_leaveSessionJob->IsRunning()) &&
-        m_disconnectStatus - cConnectionStatusDisconnectedSession >= 5 &&
-        m_jointSessionJob != 0 && m_jointSessionJob->IsRunning())
+    if ((m_leaveSessionJob == 0 || !m_leaveSessionJob->IsRunning())
+        && m_disconnectStatus - cConnectionStatusDisconnectedSession >= 5 && m_jointSessionJob != 0
+        && m_jointSessionJob->IsRunning())
         m_jointSessionJob->NoticeUnregisterEventImpl(sessionId);
 }
 
@@ -1087,15 +1106,15 @@ unsigned int Session::IsPreparedForCleanup() const
     return true;
 }
 
-bool Session::AddNewStationId(unsigned long long stationId, StationIndex stationIndex,
-                              unsigned long long uniqueId, unsigned int sessionId)
+bool Session::AddNewStationId(unsigned long long stationId, StationIndex stationIndex, unsigned long long uniqueId,
+                              unsigned int sessionId)
 {
     Result result = transport::g_piaTransport->m_stationIdTable->Add(stationId, stationIndex, uniqueId);
     if (result == 0)
     {
         const bool postponeNotice = IsPostponeNotice();
-        result = m_stationIdStatusTable->AddElement(
-            stationId, sessionId, StationIdStatusTable::cPrepareStatusNone, !postponeNotice);
+        result = m_stationIdStatusTable->AddElement(stationId, sessionId, StationIdStatusTable::cPrepareStatusNone,
+                                                    !postponeNotice);
         if (!postponeNotice)
         {
             validateStationId(stationId);
@@ -1174,8 +1193,7 @@ bool Session::IsJointSessionHost() const
     if (m_localStationId != m_jointSessionHostStationId)
         return false;
 
-    const IMatchmakeSession* bufferSession =
-        m_matchmakeSession[m_currentSessionIndex == 0 ? 1 : 0];
+    const IMatchmakeSession* bufferSession = m_matchmakeSession[m_currentSessionIndex == 0 ? 1 : 0];
     if (bufferSession != 0 && bufferSession->IsMatchmakeOwner())
         return true;
     return false;
@@ -1278,9 +1296,8 @@ bool Session::UpdateStationIdToBecomeHost()
     if (m_sessionId[0] == 0)
         return false;
     g_piaMesh->GetLocalStationIndex();
-    const unsigned long long principalId =
-        transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
-            transport::StationManager::s_pInstance->m_localStation);
+    const unsigned long long principalId = transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
+        transport::StationManager::s_pInstance->m_localStation);
     if (principalId == 0)
         return false;
     m_localStationId = principalId;
@@ -1357,8 +1374,8 @@ unsigned char Session::CheckHostCandidateRankingCallback(StationIndex index, boo
     JointSessionJob* jointSessionJob = g_piaSession->m_jointSessionJob;
     if (jointSessionJob == 0)
         return 0;
-    if (g_piaSession->m_matchmakeStatus != cMatchmakeStatusUnknown4 &&
-        (g_piaSession->m_matchmakeStatus != cMatchmakeStatusUnknown3 || jointSessionJob->m_fielda3 == 0))
+    if (g_piaSession->m_matchmakeStatus != cMatchmakeStatusUnknown4
+        && (g_piaSession->m_matchmakeStatus != cMatchmakeStatusUnknown3 || jointSessionJob->m_fielda3 == 0))
         return 0;
     transport::g_piaTransport->m_stationIdTable->Trace(cTraceMaskStationTable);
     g_piaSession->m_stationIdStatusTable->Trace(cTraceMaskStationTable);
@@ -1459,8 +1476,8 @@ void Session::NotifyOwnershipChange(unsigned int sessionId, unsigned long long s
                 ChangeStatusToDisconnectedSession();
                 return;
             }
-            if (m_jointSessionJob->m_processType != cProcessTypeDestroyJointSession &&
-                m_jointSessionJob->m_processType != cProcessTypeLeaveJointSession)
+            if (m_jointSessionJob->m_processType != cProcessTypeDestroyJointSession
+                && m_jointSessionJob->m_processType != cProcessTypeLeaveJointSession)
             {
                 m_jointSessionJob->m_failurePending = 1;
                 m_jointSessionJob->m_pendingFailureResult = cResultOwnerChanged;
@@ -1587,8 +1604,8 @@ void Session::NotifyOwnershipChange(unsigned int sessionId, unsigned long long s
                 }
                 if (needsNotice)
                 {
-                    if (stationIdTable->FindByStationId(&entry, m_hostStationId) != 0 ||
-                        !m_stationIdStatusTable->CheckConnectStatus(m_hostStationId))
+                    if (stationIdTable->FindByStationId(&entry, m_hostStationId) != 0
+                        || !m_stationIdStatusTable->CheckConnectStatus(m_hostStationId))
                     {
                         if (m_localStationId == stationId)
                             m_matchmakeSession[m_currentSessionIndex]->UpdateMatchmakeSessionHost(sessionId);
@@ -1645,8 +1662,8 @@ void Session::invalidateStationId(unsigned long long stationId)
     UpdateSessionStationInfo();
 }
 
-bool Session::RemoveStationId(unsigned long long stationId, StationIndex stationIndex,
-                              unsigned long long uniqueId, unsigned int)
+bool Session::RemoveStationId(unsigned long long stationId, StationIndex stationIndex, unsigned long long uniqueId,
+                              unsigned int)
 {
     if (uniqueId != 0)
     {
@@ -1704,15 +1721,13 @@ void Session::validateStationId(unsigned long long stationId)
 void Session::UpdateSessionStationInfo()
 {
     const unsigned int status = GetStatus();
-    if ((status != cStatusMatchedCurrent && status != cStatusMatchedBuffer) ||
-        m_leaveSessionJob->IsRunning())
+    if ((status != cStatusMatchedCurrent && status != cStatusMatchedBuffer) || m_leaveSessionJob->IsRunning())
         return;
     common::ListNode* sentinel = m_validStationIdList.Sentinel();
     unsigned short playerNum = 0;
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
-        transport::Station* station = transport::StationManager::s_pInstance->GetStation(
-            *StationIdList::ValueOf(node));
+        transport::Station* station = transport::StationManager::s_pInstance->GetStation(*StationIdList::ValueOf(node));
         unsigned char count;
         if (station != 0 && station->GetPlayerCount(&count) == 0)
             playerNum += count;
@@ -1721,8 +1736,7 @@ void Session::UpdateSessionStationInfo()
     unsigned short participantNum = 0;
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
-        transport::Station* station = transport::StationManager::s_pInstance->GetStation(
-            *StationIdList::ValueOf(node));
+        transport::Station* station = transport::StationManager::s_pInstance->GetStation(*StationIdList::ValueOf(node));
         unsigned char count;
         if (station != 0 && station->GetParticipantCount(&count) == 0)
             participantNum += count;
@@ -1752,16 +1766,14 @@ unsigned int Session::GetJointSessionStateForDebug() const
 bool Session::UpdateStationIdToBecomeClient()
 {
     g_piaMesh->GetLocalStationIndex();
-    const unsigned long long localPrincipalId =
-        transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
-            transport::StationManager::s_pInstance->m_localStation);
+    const unsigned long long localPrincipalId = transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
+        transport::StationManager::s_pInstance->m_localStation);
     if (localPrincipalId == 0)
         return false;
 
     m_localStationId = localPrincipalId;
-    const unsigned long long hostPrincipalId =
-        transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
-            transport::StationManager::s_pInstance->GetStation(g_piaMesh->GetHostStationIndex()));
+    const unsigned long long hostPrincipalId = transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
+        transport::StationManager::s_pInstance->GetStation(g_piaMesh->GetHostStationIndex()));
     if (hostPrincipalId == 0)
         return false;
 
@@ -1784,9 +1796,8 @@ void Session::ChangeStatusToDisconnectedNetwork()
 
 void Session::CallSessionEventCallback(EventType eventType, unsigned long long stationId)
 {
-    if ((eventType != cEventTypeUnknown03 && eventType != cEventTypeUnknown02) ||
-        (!IsProcessingJoin() && !m_leaveSessionJob->IsRunning() &&
-         m_disconnectStatus - 2 > 4))
+    if ((eventType != cEventTypeUnknown03 && eventType != cEventTypeUnknown02)
+        || (!IsProcessingJoin() && !m_leaveSessionJob->IsRunning() && m_disconnectStatus - 2 > 4))
     {
         if (m_sessionEventCallback != 0)
             m_sessionEventCallback(eventType, stationId, m_sessionEventCallbackParam);
@@ -1798,8 +1809,7 @@ transport::Station::IdentificationToken* Session::GetMatchmakeAnalysisToken()
     return &m_matchmakeAnalysisToken;
 }
 
-bool Session::SessionJoiningApprovalCallback(
-    const transport::Station::IdentificationToken* identificationToken)
+bool Session::SessionJoiningApprovalCallback(const transport::Station::IdentificationToken* identificationToken)
 {
     if (g_piaSession->m_joiningApprovalCallback == 0)
         return true;
@@ -1852,10 +1862,8 @@ Result Session::UpdateSessionSettingAsync(const UpdateSessionSetting* setting)
     return result;
 }
 
-Result Session::UpdateSessionSettingAsyncCore(unsigned int sessionId,
-                                              IMatchmakeSession* matchmakeSession,
-                                              const UpdateSessionSetting* setting,
-                                              bool isJointSession)
+Result Session::UpdateSessionSettingAsyncCore(unsigned int sessionId, IMatchmakeSession* matchmakeSession,
+                                              const UpdateSessionSetting* setting, bool isJointSession)
 {
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
         return static_cast<Result>(0x10c08);
@@ -1868,11 +1876,13 @@ Result Session::UpdateSessionSettingAsyncCore(unsigned int sessionId,
     if (m_updateSessionSettingJob == 0)
         return static_cast<Result>(0x10c08);
 
-    Result result = m_updateSessionSettingJob->Startup(
-        &m_callContext, sessionId, matchmakeSession, setting, isJointSession);
+    Result result = m_updateSessionSettingJob->Startup(&m_callContext, sessionId, matchmakeSession, setting,
+                                                       isJointSession);
     if (result == 0)
         m_updateSessionSettingJob->Ready(false);
     return result;
 }
 
-}}}
+}
+}
+}

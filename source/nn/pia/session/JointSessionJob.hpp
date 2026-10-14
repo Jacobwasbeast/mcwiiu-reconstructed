@@ -8,7 +8,12 @@
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/session/SessionProtocol.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class CreateSessionSetting;
 class JoinRandomSessionSetting;
@@ -25,65 +30,44 @@ public:
     virtual unsigned int GetJointSessionStateForDebug() const = 0;
     virtual void InitializeImpl();
     virtual void FinalizeImpl();
-    virtual Result StartupJoinRandomJointSessionImpl(
-        const JoinRandomSessionSetting* setting) = 0;
+    virtual Result StartupJoinRandomJointSessionImpl(const JoinRandomSessionSetting* setting) = 0;
     virtual Result StartupCreateJointSessionImpl(const CreateSessionSetting* setting) = 0;
     virtual Result StartupJoinJointSessionImpl(const JoinSessionSetting* setting) = 0;
     virtual Result StartupLeaveJointSessionImpl() = 0;
     virtual Result StartupDestroyJointSessionImpl() = 0;
-    virtual Result StartupPassiveProcessImpl(Session::ProcessType processType,
-                                             SessionProtocol::MessageType messageType,
-                                             const unsigned long long* stationIds,
-                                             unsigned short stationIdNum,
+    virtual Result StartupPassiveProcessImpl(Session::ProcessType processType, SessionProtocol::MessageType messageType,
+                                             const unsigned long long* stationIds, unsigned short stationIdNum,
                                              unsigned long long senderStationId) = 0;
-    virtual Result ReceiveNextSessionIdImpl(Session::ProcessType processType,
-                                            unsigned int sessionId,
-                                            const unsigned char* applicationData,
-                                            unsigned char applicationDataSize,
+    virtual Result ReceiveNextSessionIdImpl(Session::ProcessType processType, unsigned int sessionId,
+                                            const unsigned char* applicationData, unsigned char applicationDataSize,
                                             unsigned long long senderStationId) = 0;
-    virtual Result ReceiveLeaveInvitationImpl(Session::ProcessType processType,
-                                              const unsigned long long* stationIds,
-                                              unsigned short stationIdNum,
-                                              unsigned long long senderStationId) = 0;
+    virtual Result ReceiveLeaveInvitationImpl(Session::ProcessType processType, const unsigned long long* stationIds,
+                                              unsigned short stationIdNum, unsigned long long senderStationId) = 0;
     virtual Result ReceiveLeaveMeshInvitationImpl(Session::ProcessType processType,
                                                   unsigned long long senderStationId) = 0;
     virtual Result ReceiveCompletionResponseImpl(Session::ProcessType processType,
                                                  unsigned long long senderStationId) = 0;
     virtual void NoticeHostChangeEventImpl(unsigned long long hostStationId);
-    virtual void NoticeOwnerChangeEventImpl(unsigned int sessionId,
-                                            unsigned long long ownerStationId);
-    virtual void NoticeLeaveEventImpl(unsigned int sessionId,
-                                      unsigned long long stationId);
+    virtual void NoticeOwnerChangeEventImpl(unsigned int sessionId, unsigned long long ownerStationId);
+    virtual void NoticeLeaveEventImpl(unsigned int sessionId, unsigned long long stationId);
     virtual void NoticeUnregisterEventImpl(unsigned int sessionId);
     virtual void CleanupImpl() = 0;
 
-    Result StartupJoinRandomJointSession(common::CallContext* callerContext,
-                                         const JoinRandomSessionSetting* setting);
-    Result StartupCreateJointSession(common::CallContext* callerContext,
-                                     const CreateSessionSetting* setting);
-    Result StartupJoinJointSession(common::CallContext* callerContext,
-                                   const JoinSessionSetting* setting);
+    Result StartupJoinRandomJointSession(common::CallContext* callerContext, const JoinRandomSessionSetting* setting);
+    Result StartupCreateJointSession(common::CallContext* callerContext, const CreateSessionSetting* setting);
+    Result StartupJoinJointSession(common::CallContext* callerContext, const JoinSessionSetting* setting);
     Result StartupLeaveJointSession(common::CallContext* callerContext);
     Result StartupDestroyJointSession(common::CallContext* callerContext);
-    Result StartupPassiveProcess(Session::ProcessType processType,
-                                 SessionProtocol::MessageType messageType,
-                                 const unsigned long long* stationIds,
-                                 unsigned short stationIdNum,
+    Result StartupPassiveProcess(Session::ProcessType processType, SessionProtocol::MessageType messageType,
+                                 const unsigned long long* stationIds, unsigned short stationIdNum,
                                  unsigned long long senderStationId);
-    Result ReceiveNextSessionId(Session::ProcessType processType,
-                                unsigned int sessionId,
-                                unsigned long long matchmakeOwnerUniqueId,
-                                const unsigned char* applicationData,
-                                unsigned char applicationDataSize,
-                                unsigned long long senderStationId);
-    Result ReceiveLeaveInvitation(Session::ProcessType processType,
-                                  const unsigned long long* stationIds,
-                                  unsigned short stationIdNum,
-                                  unsigned long long senderStationId);
-    Result ReceiveLeaveMeshInvitation(Session::ProcessType processType,
-                                      unsigned long long senderStationId);
-    Result ReceiveCompletionResponse(Session::ProcessType processType,
-                                     unsigned long long senderStationId);
+    Result ReceiveNextSessionId(Session::ProcessType processType, unsigned int sessionId,
+                                unsigned long long matchmakeOwnerUniqueId, const unsigned char* applicationData,
+                                unsigned char applicationDataSize, unsigned long long senderStationId);
+    Result ReceiveLeaveInvitation(Session::ProcessType processType, const unsigned long long* stationIds,
+                                  unsigned short stationIdNum, unsigned long long senderStationId);
+    Result ReceiveLeaveMeshInvitation(Session::ProcessType processType, unsigned long long senderStationId);
+    Result ReceiveCompletionResponse(Session::ProcessType processType, unsigned long long senderStationId);
     void Cleanup();
     bool AcceptLeaveStationId(unsigned long long stationId);
     bool IsMigrateSessionToJointSession() const;
@@ -121,6 +105,8 @@ public:
     unsigned char m_fieldc8;
 };
 
-}}}
+}
+}
+}
 
 #endif

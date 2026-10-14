@@ -11,7 +11,12 @@
 #include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/StationIdStatusTable.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -68,8 +73,7 @@ RandomMatchmakeJob::~RandomMatchmakeJob()
 {
 }
 
-Result RandomMatchmakeJob::Startup(common::CallContext* callerContext,
-                                   const JoinRandomSessionSetting* setting)
+Result RandomMatchmakeJob::Startup(common::CallContext* callerContext, const JoinRandomSessionSetting* setting)
 {
     if (callerContext == 0 || setting == 0)
         return ResultInvalidArgument();
@@ -269,8 +273,7 @@ RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::WaitGetStationConnection()
         return MakeExecuteResult(cExecuteKindContinue);
     default:
     {
-        IMatchmakeSession* matchmakeSession =
-            g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex];
+        IMatchmakeSession* matchmakeSession = g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex];
         if (matchmakeSession->WaitGetStationConnectionInfo(&m_stationConnectionInfo))
         {
             if (m_callContext.m_state == common::CallContext::cStateFailure)
@@ -314,8 +317,8 @@ RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::JoinMesh()
     const Result result = g_piaMesh->JoinMeshAsync(m_stationConnectionInfo);
     if (result != 0)
     {
-        common::g_sessionBeginMonitoringContent.m_joinMeshState =
-            static_cast<unsigned char>(g_piaSession->GetJoinMeshState());
+        common::g_sessionBeginMonitoringContent.m_joinMeshState = static_cast<unsigned char>(
+            g_piaSession->GetJoinMeshState());
         g_piaSession->m_meshLayerController->MeshCleanup();
         return SetNextStepAtFailedJoinMesh(result);
     }
@@ -355,12 +358,12 @@ RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::WaitJoinMesh()
 
     if (!g_piaMesh->IsJoinMeshCompleted())
     {
-        if (!m_sessionInvalidated && !m_ownerChanged && !m_sessionInfoRetry && !m_retryReasonB && !m_retryReasonA &&
-            !CheckContextCallCancelled())
+        if (!m_sessionInvalidated && !m_ownerChanged && !m_sessionInfoRetry && !m_retryReasonB && !m_retryReasonA
+            && !CheckContextCallCancelled())
         {
-            if (g_piaMesh->IsHostMigrationEnabled() &&
-                (g_piaMesh->IsHostMigrationStarted() || g_piaMesh->IsProcessingHostMigration()) &&
-                g_piaMesh->GetJoinMeshState() != cJoinMeshStateUnknown3)
+            if (g_piaMesh->IsHostMigrationEnabled()
+                && (g_piaMesh->IsHostMigrationStarted() || g_piaMesh->IsProcessingHostMigration())
+                && g_piaMesh->GetJoinMeshState() != cJoinMeshStateUnknown3)
             {
                 m_ownerChanged = true;
                 g_piaMesh->CancelJoinMeshAsync();
@@ -386,8 +389,8 @@ RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::WaitJoinMesh()
         SetNextStepAtWaitJoinMesh();
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    if (result == cResultCancelled &&
-        (m_sessionInvalidated || m_ownerChanged || m_sessionInfoRetry || m_retryReasonB || m_retryReasonA))
+    if (result == cResultCancelled
+        && (m_sessionInvalidated || m_ownerChanged || m_sessionInfoRetry || m_retryReasonB || m_retryReasonA))
         result = cResultJoinFailed;
     g_piaSession->m_meshLayerController->MeshCleanup();
     return SetNextStepAtFailedJoinMesh(result);
@@ -429,8 +432,8 @@ RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::WaitLeaveMesh()
 void RandomMatchmakeJob::CalcProcessingTimeOfJoin() const
 {
     const int elapsedMsec = static_cast<int>(
-        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_startTime.m_tick) /
-        common::TimeSpan::GetTicksPerMSec().m_tick);
+        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_startTime.m_tick)
+        / common::TimeSpan::GetTicksPerMSec().m_tick);
     if (elapsedMsec >= 0)
         common::g_sessionBeginMonitoringContent.m_joinProcessingTime = elapsedMsec;
 }
@@ -443,9 +446,9 @@ RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::CompleteProcess()
         m_result = cResultCancelled;
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    if (m_sessionInvalidated || m_ownerChanged || m_sessionInfoRetry ||
-        (g_piaMesh->IsHostMigrationEnabled() &&
-         (g_piaMesh->IsHostMigrationStarted() || g_piaMesh->IsProcessingHostMigration())))
+    if (m_sessionInvalidated || m_ownerChanged || m_sessionInfoRetry
+        || (g_piaMesh->IsHostMigrationEnabled()
+            && (g_piaMesh->IsHostMigrationStarted() || g_piaMesh->IsProcessingHostMigration())))
     {
         setStep(&RandomMatchmakeJob::LeaveMesh, "RandomMatchmakeJob::LeaveMesh");
         m_result = cResultJoinFailed;
@@ -467,8 +470,8 @@ RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::CompleteProcess()
     if (!session->UpdateStationIdToBecomeClient())
     {
         m_result = cResultJoinFailed;
-        common::g_sessionBeginMonitoringContent.m_joinMeshState =
-            static_cast<unsigned char>(session->GetJoinMeshState());
+        common::g_sessionBeginMonitoringContent.m_joinMeshState = static_cast<unsigned char>(
+            session->GetJoinMeshState());
         setStep(&RandomMatchmakeJob::LeaveMesh, "RandomMatchmakeJob::LeaveMesh");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
@@ -510,10 +513,10 @@ RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::CompleteFailure()
     }
     m_callerContext = 0;
     CalcProcessingTimeOfJoin();
-    common::g_sessionBeginMonitoringContent.m_metric130 =
-        static_cast<unsigned char>(g_piaSession->GetJoinRandomSessionStateForDebug());
-    common::g_sessionBeginMonitoringContent.m_joinMeshState =
-        static_cast<unsigned char>(g_piaSession->GetJoinMeshState());
+    common::g_sessionBeginMonitoringContent.m_metric130 = static_cast<unsigned char>(
+        g_piaSession->GetJoinRandomSessionStateForDebug());
+    common::g_sessionBeginMonitoringContent.m_joinMeshState = static_cast<unsigned char>(
+        g_piaSession->GetJoinMeshState());
     common::g_sessionBeginMonitoringContent.m_joinResult = m_result;
     m_joinState = cJoinStateComplete;
     g_piaMesh->SetSkipReport(false);
@@ -603,4 +606,6 @@ void RandomMatchmakeJob::CleanupImpl()
 {
 }
 
-}}}
+}
+}
+}

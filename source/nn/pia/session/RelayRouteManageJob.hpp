@@ -5,7 +5,12 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class RelayRouteManageJob : public common::StepSequenceJob
 {
@@ -15,8 +20,7 @@ public:
     virtual void Trace(unsigned long long value) const;
 
     bool Startup(StationIndex stationIndex, unsigned int generation, unsigned int reportSerial);
-    void UpdateConnectionReport(StationIndex stationIndex, const unsigned char* report,
-                                unsigned int size);
+    void UpdateConnectionReport(StationIndex stationIndex, const unsigned char* report, unsigned int size);
     ExecuteResult WaitAllDirectConnectionReport();
     ExecuteResult SendRelayRouteDirections();
     void Cleanup();
@@ -33,6 +37,8 @@ public:
     common::Time m_resendTime;
 };
 
-}}}
+}
+}
+}
 
 #endif

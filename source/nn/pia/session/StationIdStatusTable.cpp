@@ -8,16 +8,27 @@
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
 const unsigned short s_maxStationNum = 0x20;
 const unsigned int s_maxSessionIdNum = 0x20;
 
-enum StationIndexValue { cStationIndexReserved = 0xfe };
+enum StationIndexValue
+{
+    cStationIndexReserved = 0xfe
+};
 
-enum StationStateValue { cConnectedStationState = 5 };
+enum StationStateValue
+{
+    cConnectedStationState = 5
+};
 
 struct DisconnectedStation
 {
@@ -26,9 +37,14 @@ struct DisconnectedStation
 };
 }
 
-StationIdStatusTable::StationIdStatusTable() : m_storage(0) {}
+StationIdStatusTable::StationIdStatusTable() : m_storage(0)
+{
+}
 
-StationIdStatusTable::~StationIdStatusTable() { Finalize(); }
+StationIdStatusTable::~StationIdStatusTable()
+{
+    Finalize();
+}
 
 void StationIdStatusTable::Finalize()
 {
@@ -48,8 +64,8 @@ Result StationIdStatusTable::Initialize(unsigned short stationNum)
 
     if (m_storage == 0)
     {
-        m_storage = common::NewArray<unsigned long long>(
-            (sizeof(Entry) * stationNum + sizeof(unsigned long long) - 1) / sizeof(unsigned long long));
+        m_storage = common::NewArray<unsigned long long>((sizeof(Entry) * stationNum + sizeof(unsigned long long) - 1)
+                                                         / sizeof(unsigned long long));
         m_elements.Initialize(m_storage, stationNum);
     }
     return 0;
@@ -60,7 +76,8 @@ void StationIdStatusTable::ClearAllElements()
     m_elements.Clear();
 }
 
-Result StationIdStatusTable::AddElement(unsigned long long stationId, unsigned int sessionId, PrepareStatus status, bool eventNotified)
+Result StationIdStatusTable::AddElement(unsigned long long stationId, unsigned int sessionId, PrepareStatus status,
+                                        bool eventNotified)
 {
     Element* element = m_elements.Alloc();
     if (element == 0)
@@ -131,7 +148,8 @@ void StationIdStatusTable::SetPrepareStatus(unsigned long long stationId, bool v
     }
 }
 
-StationIdStatusTable::PrepareCheck StationIdStatusTable::CheckAllPrepareStatus(unsigned long long* stationIds, unsigned short count) const
+StationIdStatusTable::PrepareCheck StationIdStatusTable::CheckAllPrepareStatus(unsigned long long* stationIds,
+                                                                               unsigned short count) const
 {
     bool filtered = false;
     if (stationIds != 0 && count != 0)
@@ -392,8 +410,8 @@ void StationIdStatusTable::ClearDisconnectedStationId()
         else
             disconnectedStationIds[disconnectedNum++] = element->stationId;
 
-        transport::StationIdTable::Entry* entry =
-            transport::g_piaTransport->m_stationIdTable->FindByStationIdCore(element->stationId);
+        transport::StationIdTable::Entry* entry = transport::g_piaTransport->m_stationIdTable->FindByStationIdCore(
+            element->stationId);
         if (entry != 0 && entry->stationIndex == cStationIndexInvalid)
             entry->stationIndex = element->stationIndex;
     }
@@ -420,10 +438,10 @@ bool StationIdStatusTable::DisconnectionEventListenerForJointSession(void* event
     const JointSessionJob* jointSessionJob = session->m_jointSessionJob;
     if (jointSessionJob == 0)
         return false;
-    if ((jointSessionJob->m_processType == Session::cProcessTypeCreateJointSession ||
-         jointSessionJob->m_processType == Session::cProcessTypeJoinJointSession ||
-         jointSessionJob->m_processType == Session::cProcessTypeJoinRandomJointSession) &&
-        entry->value.prepare != cPrepareStatusPrepared)
+    if ((jointSessionJob->m_processType == Session::cProcessTypeCreateJointSession
+         || jointSessionJob->m_processType == Session::cProcessTypeJoinJointSession
+         || jointSessionJob->m_processType == Session::cProcessTypeJoinRandomJointSession)
+        && entry->value.prepare != cPrepareStatusPrepared)
         return false;
     return true;
 }
@@ -561,7 +579,9 @@ bool StationIdStatusTable::GetStationIndex(unsigned long long stationId, Station
     return false;
 }
 
-void StationIdStatusTable::Trace(unsigned long long) const {}
+void StationIdStatusTable::Trace(unsigned long long) const
+{
+}
 
 unsigned int StationIdStatusTable::GetValidStationIdNum() const
 {
@@ -591,4 +611,6 @@ bool StationIdStatusTable::CheckSessionHost(unsigned int sessionId) const
     return false;
 }
 
-}}}
+}
+}
+}

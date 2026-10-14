@@ -27,7 +27,12 @@
 #include "nn/pia/transport/StationProtocol.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -114,8 +119,7 @@ inline void SelectStep(common::StepSequenceJob::Step& slot, StepFunction functio
 inline common::Time timeAfterNow(int msec)
 {
     common::Time time;
-    time.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                  msec * common::TimeSpan::GetTicksPerMSec().m_tick;
+    time.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick + msec * common::TimeSpan::GetTicksPerMSec().m_tick;
     return time;
 }
 
@@ -134,9 +138,8 @@ inline bool isFinished(const common::CallContext& context)
     return context.m_state - common::CallContext::cStateSuccess < 3;
 }
 
-void readStationEntries(transport::StationConnectionInfo* infos, StationIndex* indices,
-                        const unsigned char* data, unsigned int infoSize, unsigned int stride,
-                        unsigned int start, unsigned int count)
+void readStationEntries(transport::StationConnectionInfo* infos, StationIndex* indices, const unsigned char* data,
+                        unsigned int infoSize, unsigned int stride, unsigned int start, unsigned int count)
 {
     for (unsigned int entry = 0; entry < count; ++entry)
     {
@@ -149,9 +152,14 @@ void readStationEntries(transport::StationConnectionInfo* infos, StationIndex* i
 }
 
 ProcessUpdateMeshJob::ProcessUpdateMeshJob()
-    : common::StepSequenceJob(), m_updateDeadline(), m_updateTimeLimitMsec(cDefaultTimeLimitMsec),
-      m_updateExtraTimeMsec(cDefaultTimeLimitMsec), m_reportDeadline(),
-      m_reportTimeLimitMsec(cDefaultReportTimeLimitMsec), m_failureNoticeTime(), m_callContext()
+    : common::StepSequenceJob(),
+      m_updateDeadline(),
+      m_updateTimeLimitMsec(cDefaultTimeLimitMsec),
+      m_updateExtraTimeMsec(cDefaultTimeLimitMsec),
+      m_reportDeadline(),
+      m_reportTimeLimitMsec(cDefaultReportTimeLimitMsec),
+      m_failureNoticeTime(),
+      m_callContext()
 {
     OSBlockSet(m_contextIndex, cContextIndexNone, sizeof(m_contextIndex));
     m_started = false;
@@ -245,8 +253,8 @@ int ProcessUpdateMeshJob::SetStationDataList(const unsigned char* data, unsigned
     }
     else
     {
-        if (m_partStationCount != stationCount || m_partHostSlot != hostSlot ||
-            m_partVersion != version || m_partCount != cMessagePartialList)
+        if (m_partStationCount != stationCount || m_partHostSlot != hostSlot || m_partVersion != version
+            || m_partCount != cMessagePartialList)
         {
             if (m_partVersion >= version)
                 return cUpdateMeshResultOld;
@@ -266,8 +274,7 @@ int ProcessUpdateMeshJob::SetStationDataList(const unsigned char* data, unsigned
     for (unsigned int entry = 0; entry < entryCount; ++entry)
     {
         const unsigned char index = data[cMessageHeaderSize + stride * entry + infoSize];
-        m_stationConnectionInfos[entryStart + entry].Deserialize(data + cMessageHeaderSize +
-                                                                 stride * entry);
+        m_stationConnectionInfos[entryStart + entry].Deserialize(data + cMessageHeaderSize + stride * entry);
         m_stationIndices[entryStart + entry] = static_cast<StationIndex>(index);
     }
     m_partReceived[partIndex] = true;
@@ -291,8 +298,8 @@ int ProcessUpdateMeshJob::SetStationDataList(const unsigned char* data, unsigned
 void ProcessUpdateMeshJob::CalcTimeLimit(bool relay)
 {
     const int localStationIndex = g_piaMesh->GetLocalStationIndex();
-    const int stationTimeMsec =
-        (transport::g_piaTransport->m_stationNum - localStationIndex) * cTimeLimitPerStationMsec;
+    const int stationTimeMsec = (transport::g_piaTransport->m_stationNum - localStationIndex)
+                                * cTimeLimitPerStationMsec;
     if (!relay)
     {
         int topologyExtraMsec = 0;
@@ -324,8 +331,7 @@ void ProcessUpdateMeshJob::CalcTimeLimit(bool relay)
 
     if (!relay && !m_leaveMeshOnFailure)
     {
-        const common::TimeSpan extraTime(m_updateExtraTimeMsec *
-                                         common::TimeSpan::GetTicksPerMSec().m_tick);
+        const common::TimeSpan extraTime(m_updateExtraTimeMsec * common::TimeSpan::GetTicksPerMSec().m_tick);
         m_updateDeadline.m_tick += extraTime.m_tick;
     }
 }
@@ -375,8 +381,8 @@ bool ProcessUpdateMeshJob::UpdateMesh()
 
     const int localIndex = g_piaMesh->GetLocalStationIndex();
     const int hostIndex = g_piaMesh->GetHostStationIndex();
-    if (localIndex > cStationIndexMax || hostIndex > cStationIndexMax ||
-        transport::StationManager::s_pInstance->m_localStation == 0)
+    if (localIndex > cStationIndexMax || hostIndex > cStationIndexMax
+        || transport::StationManager::s_pInstance->m_localStation == 0)
         return false;
 
     const bool connectDirect = !m_relayRequested;
@@ -424,15 +430,16 @@ bool ProcessUpdateMeshJob::UpdateMesh()
             {
                 station = transport::StationManager::s_pInstance->GetStation(
                     m_stationConnectionInfos[entry].m_stationLocation.m_stationAddress);
-                if (station == 0 ||
-                    (station == transport::StationManager::s_pInstance->m_localStation &&
-                     m_stationIndices[entry] != g_piaMesh->GetLocalStationIndex()) ||
-                    table->GetStationConnectionInfo(station, &info) == 0)
+                if (station == 0
+                    || (station == transport::StationManager::s_pInstance->m_localStation
+                        && m_stationIndices[entry] != g_piaMesh->GetLocalStationIndex())
+                    || table->GetStationConnectionInfo(station, &info) == 0)
                 {
                     station = table->GetStation(
                         static_cast<unsigned int>(m_stationConnectionInfos[entry].m_stationLocation.m_field1c));
-                    if (station != 0 && (station->m_field20 == cStationStateConnected ||
-                                         station->m_field20 == cStationStateReconnect))
+                    if (station != 0
+                        && (station->m_field20 == cStationStateConnected
+                            || station->m_field20 == cStationStateReconnect))
                     {
                         station->Trace(cTraceStationLevel);
                         if (GetContextIndex(m_stationIndices[entry]) < m_stationNum)
@@ -466,8 +473,8 @@ bool ProcessUpdateMeshJob::UpdateMesh()
             {
                 if (station->m_field20 == cStationStateConnected && stationIndex > cStationIndexMax)
                     changed = true;
-                station->SetStationIdAndIndex(
-                    m_stationConnectionInfos[entry].m_stationLocation.m_principalId, m_stationIndices[entry]);
+                station->SetStationIdAndIndex(m_stationConnectionInfos[entry].m_stationLocation.m_principalId,
+                                              m_stationIndices[entry]);
                 continue;
             }
         }
@@ -490,14 +497,13 @@ bool ProcessUpdateMeshJob::UpdateMesh()
             return false;
 
         transport::Station* newStation = transport::StationManager::s_pInstance->CreateStation();
-        newStation->Startup(m_stationConnectionInfos[entry].m_stationLocation.m_principalId,
-                            m_stationIndices[entry],
+        newStation->Startup(m_stationConnectionInfos[entry].m_stationLocation.m_principalId, m_stationIndices[entry],
                             m_stationConnectionInfos[entry].m_stationLocation.m_stationAddress);
         transport::ConnectStationJob* connectJob = newStation->m_connectStationJob;
         const unsigned char contextIndex = GetUsableContextIndex();
-        if (connectJob->Startup(m_connectContexts + contextIndex, newStation,
-                                m_stationConnectionInfos[entry], false,
-                                newStation->m_field28->m_timeoutMsec) != 0)
+        if (connectJob->Startup(m_connectContexts + contextIndex, newStation, m_stationConnectionInfos[entry], false,
+                                newStation->m_field28->m_timeoutMsec)
+            != 0)
             return false;
         table->AddToTable(newStation, m_stationConnectionInfos[entry]);
         newStation->m_field20 = cStationStateConnecting;
@@ -521,8 +527,8 @@ bool ProcessUpdateMeshJob::UpdateMesh()
             else
             {
                 mesh->UnfixDisconnectedId(static_cast<StationIndex>(index));
-                transport::Station* station =
-                    transport::StationManager::s_pInstance->GetStation(static_cast<StationIndex>(index));
+                transport::Station* station = transport::StationManager::s_pInstance->GetStation(
+                    static_cast<StationIndex>(index));
                 if (station != 0)
                     destroyStation(station);
                 transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
@@ -564,14 +570,13 @@ bool ProcessUpdateMeshJob::UpdateMesh()
     {
         transport::Station* station = extraStations[index];
         station->Trace(cTraceStationLevel);
-        if (!station->m_connectStationJob->IsRunning() && !station->m_processConnectionRequestJob->IsRunning() &&
-            station->m_field20 != cStationStateConnected)
+        if (!station->m_connectStationJob->IsRunning() && !station->m_processConnectionRequestJob->IsRunning()
+            && station->m_field20 != cStationStateConnected)
         {
             const int stationIndex = station->m_field10;
             destroyStation(station);
             transport::Station* remaining = stationManager->GetStation(static_cast<StationIndex>(stationIndex));
-            if (stationIndex <= cStationIndexMax &&
-                (remaining == 0 || remaining->m_field20 == cStationStateConnected))
+            if (stationIndex <= cStationIndexMax && (remaining == 0 || remaining->m_field20 == cStationStateConnected))
             {
                 if (GetContextIndex(static_cast<StationIndex>(stationIndex)) < m_stationNum)
                     ClearContextIndex(static_cast<StationIndex>(stationIndex));
@@ -626,8 +631,7 @@ int ProcessUpdateMeshJob::Startup(const unsigned char* data, unsigned int size, 
     return result;
 }
 
-void ProcessUpdateMeshJob::UpdateJoinMeshFailureResult(StationIndex stationIndex,
-                                                       unsigned char failure, bool relay)
+void ProcessUpdateMeshJob::UpdateJoinMeshFailureResult(StationIndex stationIndex, unsigned char failure, bool relay)
 {
     JoinMeshJob* joinMeshJob = g_piaMesh->m_joinMeshJob;
     const unsigned int current = joinMeshJob->m_joinResult;
@@ -635,14 +639,14 @@ void ProcessUpdateMeshJob::UpdateJoinMeshFailureResult(StationIndex stationIndex
     {
     case cFailureCode643f:
     case cFailureCode643f + cFailureRelayOffset:
-        if (current != cResultCode6442 && current != cResultCode6445 && current != cResultCode644a &&
-            current != cResultCode6443 && current != cResultCode6444)
+        if (current != cResultCode6442 && current != cResultCode6445 && current != cResultCode644a
+            && current != cResultCode6443 && current != cResultCode6444)
             joinMeshJob->m_joinResult = cResultCode643f;
         break;
     case cFailureCode6442:
     case cFailureCode6442 + cFailureRelayOffset:
-        if (current != cResultCode6445 && current != cResultCode644a && current != cResultCode6443 &&
-            current != cResultCode6444)
+        if (current != cResultCode6445 && current != cResultCode644a && current != cResultCode6443
+            && current != cResultCode6444)
             joinMeshJob->m_joinResult = cResultCode6442;
         break;
     case 4:
@@ -672,21 +676,21 @@ void ProcessUpdateMeshJob::UpdateJoinMeshFailureResult(StationIndex stationIndex
         break;
     case cFailureCode6467:
     case cFailureCode6467 + cFailureRelayOffset:
-        if (current != cResultCode6442 && current != cResultCode6445 && current != cResultCode6443 &&
-            current != cResultCode6444 && current != cResultCode644a && current != cResultCode646a &&
-            current != cResultCode6468 && current != cResultCode6469)
+        if (current != cResultCode6442 && current != cResultCode6445 && current != cResultCode6443
+            && current != cResultCode6444 && current != cResultCode644a && current != cResultCode646a
+            && current != cResultCode6468 && current != cResultCode6469)
             joinMeshJob->m_joinResult = cResultCode6467;
         break;
     case cFailureCode6468:
     case cFailureCode6468 + cFailureRelayOffset:
-        if (current != cResultCode6442 && current != cResultCode6445 && current != cResultCode6443 &&
-            current != cResultCode6444 && current != cResultCode646a && current != cResultCode644a)
+        if (current != cResultCode6442 && current != cResultCode6445 && current != cResultCode6443
+            && current != cResultCode6444 && current != cResultCode646a && current != cResultCode644a)
             joinMeshJob->m_joinResult = relay ? cResultCode6469 : cResultCode6468;
         break;
     case cFailureCode6469:
     case cFailureCode6469 + cFailureRelayOffset:
-        if (current != cResultCode6442 && current != cResultCode6445 && current != cResultCode6443 &&
-            current != cResultCode6444 && current != cResultCode646a && current != cResultCode644a)
+        if (current != cResultCode6442 && current != cResultCode6445 && current != cResultCode6443
+            && current != cResultCode6444 && current != cResultCode646a && current != cResultCode644a)
             joinMeshJob->m_joinResult = relay ? cResultCode6468 : cResultCode6469;
         break;
     case cFailureCode646a:
@@ -702,8 +706,8 @@ void ProcessUpdateMeshJob::UpdateJoinMeshFailureResult(StationIndex stationIndex
     if (station == 0)
         g_piaMesh->m_joinMeshJob->m_principalId = cPrincipalIdInvalid;
     else
-        g_piaMesh->m_joinMeshJob->m_principalId =
-            transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(station);
+        g_piaMesh->m_joinMeshJob->m_principalId = transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
+            station);
 }
 
 ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::WaitDirectConnection()
@@ -746,8 +750,8 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::WaitDirectConnection()
             {
                 if (station->m_field20 == cStationStateConnected && station->m_field10 > cStationIndexMax)
                     changed = true;
-                station->SetStationIdAndIndex(
-                    m_stationConnectionInfos[entry].m_stationLocation.m_principalId, m_stationIndices[entry]);
+                station->SetStationIdAndIndex(m_stationConnectionInfos[entry].m_stationLocation.m_principalId,
+                                              m_stationIndices[entry]);
             }
         }
 
@@ -830,8 +834,7 @@ bool ProcessUpdateMeshJob::SendConnectionReport(StationIndex stationIndex, unsig
                                                 unsigned int* stationBitmap)
 {
     const unsigned int reportCount = m_reportCount + 1;
-    if (g_piaMesh->GetMeshProtocol()->SendConnectionReport(stationIndex, version, reportCount,
-                                                           stationBitmap))
+    if (g_piaMesh->GetMeshProtocol()->SendConnectionReport(stationIndex, version, reportCount, stationBitmap))
     {
         m_reportCount = reportCount;
         return true;
@@ -897,8 +900,7 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::StartRelayConnection()
     transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
     transport::StationManager* stationManager = transport::StationManager::s_pInstance;
     transport::StationConnectionInfoTable* table = transport::g_stationConnectionInfoTable;
-    if (relayRouteManager->m_unknown20 != m_updateVersion ||
-        relayRouteManager->m_unknown1c <= m_relayRouteVersion)
+    if (relayRouteManager->m_unknown20 != m_updateVersion || relayRouteManager->m_unknown1c <= m_relayRouteVersion)
     {
         const common::Time noticeTime = m_failureNoticeTime;
         const common::Time now = common::g_piaJobScheduler->m_dispatchTime;
@@ -937,8 +939,8 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::StartRelayConnection()
             if (noticeTime < now)
             {
                 g_piaMesh->GetMeshProtocol()->SendConnectionFailureNotice(
-                    g_piaMesh->GetHostStationIndex(), m_stationIndices[entry],
-                    static_cast<StationIndex>(localIndex), failure, m_updateVersion);
+                    g_piaMesh->GetHostStationIndex(), m_stationIndices[entry], static_cast<StationIndex>(localIndex),
+                    failure, m_updateVersion);
                 m_failureNoticeTime = timeAfterNow(cFailureNoticeIntervalMsec);
             }
         }
@@ -975,9 +977,8 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::StartRelayConnection()
                 {
                     if (station->m_field20 == cStationStateConnected && station->m_field10 > cStationIndexMax)
                         changed = true;
-                    station->SetStationIdAndIndex(
-                        m_stationConnectionInfos[entry].m_stationLocation.m_principalId,
-                        m_stationIndices[entry]);
+                    station->SetStationIdAndIndex(m_stationConnectionInfos[entry].m_stationLocation.m_principalId,
+                                                  m_stationIndices[entry]);
                 }
                 else
                 {
@@ -1026,8 +1027,7 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::StartRelayConnection()
             if (stationManager->GetValidStationNum() >= transport::g_piaTransport->m_stationNum)
                 continue;
             station = stationManager->CreateStation();
-            station->Startup(m_stationConnectionInfos[entry].m_stationLocation.m_principalId,
-                             m_stationIndices[entry],
+            station->Startup(m_stationConnectionInfos[entry].m_stationLocation.m_principalId, m_stationIndices[entry],
                              m_stationConnectionInfos[entry].m_stationLocation.m_stationAddress);
             stationIndex = m_stationIndices[entry];
         }
@@ -1038,8 +1038,8 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::StartRelayConnection()
             common::CallContext& existing = m_connectContexts[existingContext];
             if (!isFinished(existing))
             {
-                if (station->m_field20 == cStationStateConnecting || station->m_field20 == 4 ||
-                    station->m_field20 == cStationStateConnected)
+                if (station->m_field20 == cStationStateConnecting || station->m_field20 == 4
+                    || station->m_field20 == cStationStateConnected)
                     continue;
                 existing.SignalCancel();
                 existing.Reset();
@@ -1048,9 +1048,9 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::StartRelayConnection()
 
         transport::ConnectStationJob* connectJob = station->m_connectStationJob;
         const unsigned char newContext = GetUsableContextIndex();
-        Result startResult = connectJob->StartupRelayConnection(
-            m_connectContexts + newContext, station, m_stationConnectionInfos[entry], false,
-            station->m_field28->m_timeoutMsec);
+        Result startResult = connectJob->StartupRelayConnection(m_connectContexts + newContext, station,
+                                                                m_stationConnectionInfos[entry], false,
+                                                                station->m_field28->m_timeoutMsec);
         if (startResult == 0)
         {
             table->AddToTable(station, m_stationConnectionInfos[entry]);
@@ -1110,8 +1110,8 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::CheckConnectionAll()
             {
                 if (station->m_field20 == cStationStateConnected && station->m_field10 > cStationIndexMax)
                     changed = true;
-                station->SetStationIdAndIndex(
-                    m_stationConnectionInfos[entry].m_stationLocation.m_principalId, m_stationIndices[entry]);
+                station->SetStationIdAndIndex(m_stationConnectionInfos[entry].m_stationLocation.m_principalId,
+                                              m_stationIndices[entry]);
             }
         }
 
@@ -1169,8 +1169,8 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::CheckConnectionAll()
         if (noticeDue)
         {
             g_piaMesh->GetMeshProtocol()->SendConnectionFailureNotice(
-                g_piaMesh->GetHostStationIndex(), m_stationIndices[entry],
-                static_cast<StationIndex>(localIndex), failure, m_updateVersion);
+                g_piaMesh->GetHostStationIndex(), m_stationIndices[entry], static_cast<StationIndex>(localIndex),
+                failure, m_updateVersion);
             m_failureNoticeTime = timeAfterNow(cFailureNoticeIntervalMsec);
         }
     }
@@ -1211,8 +1211,8 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::UpdateFailed()
         g_piaMesh->ProcessingAtMeshEnd(static_cast<Mesh::DisconnectReason>(cDisconnectReasonUpdateFailed));
         SelectStep(m_currentStep, &ProcessUpdateMeshJob::CleanupByProcessFailure, cStepNameCleanupByProcessFailure);
     }
-    else if (m_callContext.m_state == common::CallContext::cStateInProgress ||
-             g_piaMesh->m_leaveMeshJob->Startup(&m_callContext) == 0)
+    else if (m_callContext.m_state == common::CallContext::cStateInProgress
+             || g_piaMesh->m_leaveMeshJob->Startup(&m_callContext) == 0)
     {
         g_piaMesh->m_disconnectReason = cDisconnectReasonLeave;
         g_piaMesh->ProcessingAtMeshEnd(static_cast<Mesh::DisconnectReason>(cDisconnectReasonLeave));
@@ -1296,8 +1296,8 @@ void ProcessUpdateMeshJob::UpdateDataTakeover(unsigned short stationCount)
         if (matched && m_stationConnectionInfos[previous] == m_partConnectionInfos[match])
         {
             transport::Station* station = stationManager->GetStation(previousIndex);
-            if (((station == 0 && table->GetStation(m_stationConnectionInfos[previous]) == 0) ||
-                 (station != 0 && station->m_field20 == cStationStateReconnect)))
+            if (((station == 0 && table->GetStation(m_stationConnectionInfos[previous]) == 0)
+                 || (station != 0 && station->m_field20 == cStationStateReconnect)))
             {
                 const unsigned short contextIndex = GetContextIndex(previousIndex);
                 if (contextIndex < m_stationNum && isFinished(m_connectContexts[contextIndex]))
@@ -1364,8 +1364,7 @@ int ProcessUpdateMeshJob::UpdateStationDataList(const unsigned char* data, unsig
             m_partReceived[1] = false;
             m_partReceived[0] = false;
         }
-        readStationEntries(m_partConnectionInfos, m_partStationIndices, data, infoSize, stride, 0,
-                           stationCount);
+        readStationEntries(m_partConnectionInfos, m_partStationIndices, data, infoSize, stride, 0, stationCount);
         complete = true;
     }
     else if (data[8] == cMessagePartialList)
@@ -1430,8 +1429,7 @@ int ProcessUpdateMeshJob::UpdateStationDataList(const unsigned char* data, unsig
                 return cUpdateMeshResultPartial;
         }
 
-        readStationEntries(m_partConnectionInfos, m_partStationIndices, data, infoSize, stride, data[11],
-                           data[10]);
+        readStationEntries(m_partConnectionInfos, m_partStationIndices, data, infoSize, stride, data[11], data[10]);
         m_partReceived[partIndex] = true;
         if (!m_partReceived[0] || !m_partReceived[1])
             return cUpdateMeshResultPartial;
@@ -1556,4 +1554,6 @@ void ProcessUpdateMeshJob::ClearStationIndex(StationIndex stationIndex)
     ClearContextIndex(stationIndex);
 }
 
-}}}
+}
+}
+}

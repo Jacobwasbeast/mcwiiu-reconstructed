@@ -2,7 +2,12 @@
 #include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -15,7 +20,10 @@ enum
 }
 
 ClearMatchmakeSystemPasswordJob::ClearMatchmakeSystemPasswordJob()
-    : common::StepSequenceJob(), m_sessionId(0), m_callerContext(0), m_callContext()
+    : common::StepSequenceJob(),
+      m_sessionId(0),
+      m_callerContext(0),
+      m_callContext()
 {
 }
 
@@ -23,9 +31,8 @@ ClearMatchmakeSystemPasswordJob::~ClearMatchmakeSystemPasswordJob()
 {
 }
 
-Result ClearMatchmakeSystemPasswordJob::Startup(common::CallContext* callerContext,
-                                                 unsigned int sessionId,
-                                                 IMatchmakeSession* session)
+Result ClearMatchmakeSystemPasswordJob::Startup(common::CallContext* callerContext, unsigned int sessionId,
+                                                IMatchmakeSession* session)
 {
     if (callerContext == 0 || session == 0)
         return cResultInvalidArgument;
@@ -78,4 +85,6 @@ void ClearMatchmakeSystemPasswordJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

@@ -8,7 +8,12 @@
 #include "nn/pia/session/ProcessUpdateMeshJob.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -32,8 +37,8 @@ enum
 
 inline unsigned int joinCancelResult(unsigned int kickoutReason)
 {
-    if (kickoutReason < KickoutManageJob::cKickoutReasonRelayFailureBase ||
-        kickoutReason > cKickoutReasonRelayFailureLast)
+    if (kickoutReason < KickoutManageJob::cKickoutReasonRelayFailureBase
+        || kickoutReason > cKickoutReasonRelayFailureLast)
         return cResultJoinCancelledUnknown;
     switch (kickoutReason)
     {
@@ -50,8 +55,7 @@ inline unsigned int joinCancelResult(unsigned int kickoutReason)
 
 }
 
-KickoutManageJob::KickoutManageJob()
-    : m_joinCancelResult(0)
+KickoutManageJob::KickoutManageJob() : m_joinCancelResult(0)
 {
     m_kickoutReason = cKickoutReasonNone;
     m_kickoutCallContext = 0;
@@ -117,8 +121,7 @@ bool KickoutManageJob::StartupClient(KickoutReason kickoutReason)
         if (!g_piaMesh->m_processUpdateMeshJob->IsRunning())
         {
             if (g_piaMesh->GetJoinMeshState() == cDisconnectReasonKickedOut)
-                setStep(&KickoutManageJob::ClientStartLeaveMesh,
-                        "KickoutManageJob::ClientStartLeaveMesh");
+                setStep(&KickoutManageJob::ClientStartLeaveMesh, "KickoutManageJob::ClientStartLeaveMesh");
             else
                 setStep(&KickoutManageJob::ClientFinalize, "KickoutManageJob::ClientFinalize");
             return true;
@@ -134,8 +137,8 @@ bool KickoutManageJob::StartupClient(KickoutReason kickoutReason)
 KickoutManageJob::ExecuteResult KickoutManageJob::ClientStartLeaveMesh()
 {
     Mesh* mesh = g_piaMesh;
-    if (mesh->GetLocalStationIndex() > cStationIndexMax ||
-        (mesh->CheckConnectionError() == Result(cResultLeaveMeshNotNeeded) && !m_joinCancelRequested))
+    if (mesh->GetLocalStationIndex() > cStationIndexMax
+        || (mesh->CheckConnectionError() == Result(cResultLeaveMeshNotNeeded) && !m_joinCancelRequested))
     {
         setStep(&KickoutManageJob::ClientFinalize, "KickoutManageJob::ClientFinalize");
         return MakeExecuteResult(cExecuteKindContinue);
@@ -186,16 +189,15 @@ Result KickoutManageJob::StartKickout(StationIndex stationIndex, KickoutReason k
     {
         if (m_kickoutStations[i].m_stationIndex == stationIndex)
             return Result(0);
-        if (static_cast<int>(m_kickoutStations[i].m_stationIndex) > cStationIndexMax &&
-            freeSlot == cKickoutStationNumMax)
+        if (static_cast<int>(m_kickoutStations[i].m_stationIndex) > cStationIndexMax
+            && freeSlot == cKickoutStationNumMax)
             freeSlot = i;
     }
 
     if (freeSlot >= cKickoutStationNumMax)
         return Result(cResultKickoutNoSlot);
 
-    if (!g_piaMesh->GetMeshProtocol()->SendKickoutNotice(
-            stationIndex, static_cast<unsigned char>(kickoutReason)))
+    if (!g_piaMesh->GetMeshProtocol()->SendKickoutNotice(stationIndex, static_cast<unsigned char>(kickoutReason)))
         return Result(cResultKickoutNoSlot);
 
     m_kickoutStations[freeSlot].m_stationIndex = stationIndex;
@@ -233,4 +235,6 @@ bool KickoutManageJob::AssociateKickoutWith(common::CallContext* callContext)
     return true;
 }
 
-}}}
+}
+}
+}

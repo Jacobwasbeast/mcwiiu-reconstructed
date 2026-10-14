@@ -17,7 +17,12 @@
 #include "nn/pia/transport/StationManager.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -42,9 +47,15 @@ unsigned char s_refusedJoinCount;
 }
 
 ProcessJoinRequestJob::ProcessJoinRequestJob()
-    : common::StepSequenceJob(), m_deadline(), m_timeoutMsec(cDefaultTimeoutMsec), m_unknown4c(0),
-      m_joiningStationAddress(), m_stationIndex(static_cast<StationIndex>(cStationIndexInvalid)),
-      m_unknown78(false), m_denyReason(cDenyReasonNone), m_joinCancelRequested(false)
+    : common::StepSequenceJob(),
+      m_deadline(),
+      m_timeoutMsec(cDefaultTimeoutMsec),
+      m_unknown4c(0),
+      m_joiningStationAddress(),
+      m_stationIndex(static_cast<StationIndex>(cStationIndexInvalid)),
+      m_unknown78(false),
+      m_denyReason(cDenyReasonNone),
+      m_joinCancelRequested(false)
 {
     const unsigned int perPart = g_piaMesh->m_unknown75 != 0 ? cStationsPerPartWithFlag : cStationsPerPart;
     const unsigned char partCount = static_cast<unsigned char>(
@@ -125,8 +136,8 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::CheckApprovalJoin()
     }
     {
         transport::IdentificationInfo identificationInfo;
-        Result identificationResult =
-            transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(station, &identificationInfo);
+        Result identificationResult = transport::IdentificationInfoTable::GetInstance()->GetIdentificationInfo(
+            station, &identificationInfo);
         if (identificationResult != 0)
         {
             setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
@@ -136,8 +147,7 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::CheckApprovalJoin()
         {
             m_denyReason = cDenyReasonRefused;
             s_refusedJoinCount = s_refusedJoinCount == cRefusedJoinCountWrap ? 1 : s_refusedJoinCount + 1;
-            setStep(&ProcessJoinRequestJob::SendDenyingJoinResponse,
-                    "ProcessJoinRequestJob::SendDenyingJoinResponse");
+            setStep(&ProcessJoinRequestJob::SendDenyingJoinResponse, "ProcessJoinRequestJob::SendDenyingJoinResponse");
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
@@ -190,24 +200,26 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendJoinResponse()
         {
             stationId = joiningInfo.m_stationLocation.m_principalId;
             transport::Station** current = transport::StationManager::s_pInstance->m_stations.data;
-            if (joiningInfo.m_stationLocation.m_stationAddress.IsValid() != 0 &&
-                current != current + transport::StationManager::s_pInstance->m_stations.size)
+            if (joiningInfo.m_stationLocation.m_stationAddress.IsValid() != 0
+                && current != current + transport::StationManager::s_pInstance->m_stations.size)
             {
                 do
                 {
                     if (*current != station)
                     {
-                        result = transport::g_stationConnectionInfoTable->GetStationConnectionInfo(*current, &otherInfo);
-                        if (result == 0 &&
-                            joiningInfo.m_stationLocation.m_field1c == otherInfo.m_stationLocation.m_field1c)
+                        result = transport::g_stationConnectionInfoTable->GetStationConnectionInfo(*current,
+                                                                                                   &otherInfo);
+                        if (result == 0
+                            && joiningInfo.m_stationLocation.m_field1c == otherInfo.m_stationLocation.m_field1c)
                         {
                             staleStations[staleCount] = *current;
                             ++staleCount;
                         }
                     }
                     ++current;
-                } while (current != transport::StationManager::s_pInstance->m_stations.data +
-                                        transport::StationManager::s_pInstance->m_stations.size);
+                } while (current
+                         != transport::StationManager::s_pInstance->m_stations.data
+                                + transport::StationManager::s_pInstance->m_stations.size);
                 if (staleCount != 0)
                 {
                     bool meshChanged = false;
@@ -243,12 +255,9 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendJoinResponse()
     common::Time now;
     now.SetNow();
     m_deadline.m_tick = now.m_tick + m_timeoutMsec * common::TimeSpan::GetTicksPerMSec().m_tick;
-    unsigned char* messages[cResponsePartMax] = {
-        m_responseBuffers[0], m_responseBuffers[1], m_responseBuffers[2]
-    };
+    unsigned char* messages[cResponsePartMax] = {m_responseBuffers[0], m_responseBuffers[1], m_responseBuffers[2]};
     unsigned int sizes[cResponsePartMax] = {};
-    const unsigned int partCount =
-        g_piaMesh->GetMeshProtocol()->MakeJoinResponseData(m_stationIndex, messages, sizes);
+    const unsigned int partCount = g_piaMesh->GetMeshProtocol()->MakeJoinResponseData(m_stationIndex, messages, sizes);
     if (partCount < 1 || partCount > cResponsePartMax)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
@@ -340,4 +349,6 @@ void ProcessJoinRequestJob::Cleanup()
     m_deadline.m_tick = 0;
 }
 
-}}}
+}
+}
+}

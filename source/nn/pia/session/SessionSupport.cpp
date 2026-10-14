@@ -7,7 +7,12 @@
 #include "nn/pia/session/Mesh.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -88,4 +93,6 @@ void Finalize()
     ModuleStackChecker::Unregister(cModuleType_Session);
 }
 
-}}}
+}
+}
+}

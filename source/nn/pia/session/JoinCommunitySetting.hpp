@@ -1,7 +1,12 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_JOIN_COMMUNITY_SETTING_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_JOIN_COMMUNITY_SETTING_HPP
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class JoinCommunitySetting
 {
@@ -16,6 +21,8 @@ private:
     unsigned int m_communityId;
 };
 
-}}}
+}
+}
+}
 
 #endif

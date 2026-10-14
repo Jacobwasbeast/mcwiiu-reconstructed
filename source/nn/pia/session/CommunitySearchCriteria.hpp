@@ -3,7 +3,12 @@
 
 #include "nn/pia/Reconstruction.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class CommunitySearchCriteria
 {
@@ -34,6 +39,8 @@ protected:
     unsigned int m_reserved;
 };
 
-}}}
+}
+}
+}
 
 #endif

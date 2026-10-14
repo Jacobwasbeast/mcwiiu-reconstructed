@@ -8,7 +8,12 @@
 #include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/Session.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -25,8 +30,7 @@ enum
 };
 }
 
-DestroySessionJob::DestroySessionJob()
-    : common::StepSequenceJob(), m_callerContext(0), m_callContext(), m_startTime()
+DestroySessionJob::DestroySessionJob() : common::StepSequenceJob(), m_callerContext(0), m_callContext(), m_startTime()
 {
 }
 
@@ -167,4 +171,6 @@ void DestroySessionJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

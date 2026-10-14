@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 class UpdateSessionSetting
 {
@@ -14,9 +19,7 @@ public:
     };
 
     UpdateSessionSetting();
-    virtual ~UpdateSessionSetting()
-    {
-    }
+    virtual ~UpdateSessionSetting() {}
 
     virtual Result SetApplicationData(const void* data, unsigned int size) = 0;
     virtual Result GetApplicationData(void* buffer, unsigned int bufferSize) const = 0;
@@ -31,6 +34,8 @@ public:
     unsigned int m_modificationFlag;
 };
 
-}}}
+}
+}
+}
 
 #endif

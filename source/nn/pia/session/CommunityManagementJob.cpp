@@ -1,10 +1,14 @@
 #include "nn/pia/session/CommunityManagementJob.hpp"
 #include "nn/pia/Transport.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
-CommunityManagementJob::CommunityManagementJob()
-    : common::StepSequenceJob(), m_callerContext(0), m_callContext()
+CommunityManagementJob::CommunityManagementJob() : common::StepSequenceJob(), m_callerContext(0), m_callContext()
 {
 }
 
@@ -13,7 +17,7 @@ CommunityManagementJob::~CommunityManagementJob()
 }
 
 Result CommunityManagementJob::BrowseCommunityStartup(common::CallContext* callerContext,
-                                                       const CommunitySearchCriteria* criteria)
+                                                      const CommunitySearchCriteria* criteria)
 {
     if (callerContext == 0 || criteria == 0)
         return static_cast<Result>(transport::cResultInvalidArgument);
@@ -27,7 +31,7 @@ Result CommunityManagementJob::BrowseCommunityStartup(common::CallContext* calle
 }
 
 Result CommunityManagementJob::CreateCommunityStartup(common::CallContext* callerContext,
-                                                       const CreateCommunitySetting* setting)
+                                                      const CreateCommunitySetting* setting)
 {
     if (callerContext == 0 || setting == 0)
         return static_cast<Result>(transport::cResultInvalidArgument);
@@ -41,7 +45,7 @@ Result CommunityManagementJob::CreateCommunityStartup(common::CallContext* calle
 }
 
 Result CommunityManagementJob::JoinCommunityStartup(common::CallContext* callerContext,
-                                                     const JoinCommunitySetting* setting)
+                                                    const JoinCommunitySetting* setting)
 {
     if (callerContext == 0)
         return static_cast<Result>(transport::cResultInvalidArgument);
@@ -55,7 +59,7 @@ Result CommunityManagementJob::JoinCommunityStartup(common::CallContext* callerC
 }
 
 Result CommunityManagementJob::UpdateCommunityStartup(common::CallContext* callerContext,
-                                                       const UpdateCommunitySetting* setting)
+                                                      const UpdateCommunitySetting* setting)
 {
     if (callerContext == 0)
         return static_cast<Result>(transport::cResultInvalidArgument);
@@ -68,8 +72,7 @@ Result CommunityManagementJob::UpdateCommunityStartup(common::CallContext* calle
     return 0;
 }
 
-Result CommunityManagementJob::DestroyCommunityStartup(common::CallContext* callerContext,
-                                                        unsigned int communityId)
+Result CommunityManagementJob::DestroyCommunityStartup(common::CallContext* callerContext, unsigned int communityId)
 {
     if (callerContext == 0)
         return static_cast<Result>(transport::cResultInvalidArgument);
@@ -82,8 +85,7 @@ Result CommunityManagementJob::DestroyCommunityStartup(common::CallContext* call
     return 0;
 }
 
-Result CommunityManagementJob::LeaveCommunityStartup(common::CallContext* callerContext,
-                                                      unsigned int communityId)
+Result CommunityManagementJob::LeaveCommunityStartup(common::CallContext* callerContext, unsigned int communityId)
 {
     if (callerContext == 0)
         return static_cast<Result>(transport::cResultInvalidArgument);
@@ -113,4 +115,6 @@ void CommunityManagementJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}

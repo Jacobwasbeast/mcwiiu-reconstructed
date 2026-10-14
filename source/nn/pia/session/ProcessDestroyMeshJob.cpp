@@ -13,7 +13,12 @@
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 
-namespace nn { namespace pia { namespace session {
+namespace nn
+{
+namespace pia
+{
+namespace session
+{
 
 namespace
 {
@@ -36,7 +41,10 @@ inline void SelectStep(common::StepSequenceJob::Step& slot, StepFunction functio
 }
 
 ProcessDestroyMeshJob::ProcessDestroyMeshJob()
-    : common::StepSequenceJob(), m_endTime(), m_timeoutMsec(cDefaultTimeoutMsec), m_started(false)
+    : common::StepSequenceJob(),
+      m_endTime(),
+      m_timeoutMsec(cDefaultTimeoutMsec),
+      m_started(false)
 {
 }
 
@@ -90,9 +98,9 @@ bool ProcessDestroyMeshJob::Startup()
 ProcessDestroyMeshJob::ExecuteResult ProcessDestroyMeshJob::SendDestroyResponse()
 {
     const int hostStationIndex = g_piaMesh->GetHostStationIndex();
-    if (hostStationIndex > cStationIndexMax ||
-        g_piaMesh->GetMeshProtocol()->SendDestroyResponse(static_cast<StationIndex>(hostStationIndex)) ||
-        m_endTime <= common::g_piaJobScheduler->m_dispatchTime)
+    if (hostStationIndex > cStationIndexMax
+        || g_piaMesh->GetMeshProtocol()->SendDestroyResponse(static_cast<StationIndex>(hostStationIndex))
+        || m_endTime <= common::g_piaJobScheduler->m_dispatchTime)
     {
         SelectStep(m_currentStep, &ProcessDestroyMeshJob::CleanupMesh, "ProcessDestroyMeshJob::CleanupMesh");
     }
@@ -123,4 +131,6 @@ void ProcessDestroyMeshJob::Trace(unsigned long long) const
 {
 }
 
-}}}
+}
+}
+}
