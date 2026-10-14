@@ -327,7 +327,7 @@ Result Transport::initialize(const Setting& setting)
                                                  g_sendLatencyEntryNum, g_receiveLatencyEntryNum,
                                                  g_isPacketLossEnabled);
     ThreadStreamManager* threadStreamManager = g_piaThreadStreamManager;
-    m_packetHandler = m_networkFactory->CreatePacketHandler();
+    m_packetHandler = factory->CreatePacketHandler();
     const bool isStationHandler = m_packetHandler != 0 &&
         m_packetHandler->checkDerivedRuntimeTypeInfo(StationPacketHandler::getRuntimeTypeInfoStatic());
     if (isStationHandler == m_networkFactory->IsStarConnection())

@@ -101,6 +101,7 @@ public:
     virtual unsigned short GetProtocolType() const;
     virtual Result StartupWithStationAddress(const common::StationAddress& address);
     virtual void CleanupWithStationAddress();
+    virtual Result Dispatch();
     virtual Result UpdateProtocolEvent(const ProtocolEvent& event);
 
     void Finalize();
@@ -114,16 +115,16 @@ public:
     bool IsInCommunication(StationIndex stationIndex) const;
     bool IsInCommunication(unsigned long long stationId) const;
     void SetThroughputLimit(unsigned int limit);
-    static void RegisterResendTimeCallback(int (*callback)(int, int), int arg);
+    static void RegisterResendTimeCallback(int (*callback)(int, int));
 
 private:
     int m_field14;
     unsigned long long m_localStationId;
     unsigned int m_field20;
     unsigned char* m_field24;
-    unsigned int m_field28;
-    unsigned int m_field2c;
-    unsigned int m_field30;
+    unsigned int m_dispatchIndex;
+    unsigned int m_throughputLimit;
+    unsigned int m_sendBudget;
 };
 
 }

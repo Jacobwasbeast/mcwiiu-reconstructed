@@ -13,13 +13,16 @@ pead::Heap* g_heaps[21] = {};
 
 unsigned int HeapManager::convert(ModuleType moduleType)
 {
-    static const unsigned char moduleHeaps[20] =
-        { 0, 1, 3, 5, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 0, 0 };
-    if (moduleType < 2)
+    static const unsigned char moduleHeaps[18] =
+        { 0, 1, 3, 5, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
+    unsigned int type = moduleType;
+    if (type < cModuleType_Common)
         return 20;
-    if (moduleType > 19)
-        return moduleType == 22 ? 19 : 20;
-    return moduleHeaps[moduleType];
+    if (type <= 19)
+        return moduleHeaps[type - cModuleType_Common];
+    if (type == 22)
+        return 19;
+    return 20;
 }
 
 pead::Heap* HeapManager::GetHeap(ModuleType moduleType)
@@ -53,10 +56,9 @@ void HeapManager::Setup(ModuleType moduleType, unsigned int size,
 void HeapManager::Cleanup(ModuleType moduleType)
 {
     const unsigned int heapIndex = convert(moduleType);
-    pead::Heap* heap = g_heaps[heapIndex];
-    if (!heap)
-        return;
-    heap->destroy();
+    if (!g_heaps[heapIndex]->isEmpty())
+        g_heaps[heapIndex]->dump();
+    g_heaps[heapIndex]->destroy();
     g_heaps[heapIndex] = 0;
 }
 
