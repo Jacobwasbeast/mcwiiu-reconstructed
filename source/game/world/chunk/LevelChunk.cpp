@@ -77,24 +77,29 @@ LevelChunk::LevelChunk(Level* level, int x, int z)
     mElements = new ElementStorage(level->mIsClientSide);
 }
 LevelChunk::LevelChunk(Level* level, ChunkPrimer* primer, int x, int z)
-    : mEntitySectionCount(16), mElements(NULL), level(NULL), mSkyLight(NULL), mSkyLightUpper(NULL), mBlockLight(NULL),
-      mBlockLightUpper(NULL), mEntitySections(NULL)
+    : mEntitySectionCount(16)
 {
     init(level, x, z);
     arrayWithLength<unsigned short> elements = primer->getElementIds();
     mEmissiveMaxHeight = primer->getEmissiveMaxHeight();
-    if (elements.data != NULL)
+    if (elements.data == NULL)
     {
-        mElements = new ElementStorage(level->mIsClientSide, elements, 4);
-        mSkyLight = new SparseLightStorage(true);
-        mBlockLight = new SparseLightStorage(false);
+        mSkyLight = new SparseLightStorage(true, true);
+        mBlockLight = new SparseLightStorage(false, true);
+        mElements = new ElementStorage(level->mIsClientSide);
+        mSkyLightUpper = new SparseLightStorage(true, true);
+        mBlockLightUpper = new SparseLightStorage(false, true);
+        mServerChunkFlags = NULL;
     }
     else
     {
-        mElements = new ElementStorage(level->mIsClientSide);
+        mSkyLight = new SparseLightStorage(true);
+        mBlockLight = new SparseLightStorage(false);
+        mElements = new ElementStorage(level->mIsClientSide, elements, 4);
+        mSkyLightUpper = new SparseLightStorage(true, true);
+        mBlockLightUpper = new SparseLightStorage(false, true);
+        mServerChunkFlags = NULL;
     }
-    mSkyLightUpper = new SparseLightStorage(true, true);
-    mBlockLightUpper = new SparseLightStorage(false, true);
 }
 LevelChunk::LevelChunk(Level* level, int x, int z, LevelChunk* source)
     : mEntitySectionCount(16)
@@ -161,7 +166,7 @@ bool LevelChunk::isReady()
 }
 int LevelChunk::getBlockId(int x, int y, int z)
 {
-    return (int)(mElements->get(x, y, z, NULL) >> 4);
+    return (int)(mElements->get(x, y & 0xff, z, NULL) >> 4);
 }
 unsigned int LevelChunk::getLowestHeightmap()
 {
@@ -169,35 +174,35 @@ unsigned int LevelChunk::getLowestHeightmap()
 }
 unsigned short LevelChunk::getElement(int x, int y, int z)
 {
-    return (unsigned short)mElements->get(x, y, z, NULL);
+    return (unsigned short)mElements->get(x, y & 0xff, z, NULL);
 }
 bool LevelChunk::sectionContainsBlockId(int x, int y, int z, int blockId)
 {
-    return mElements->sectionContainsElementData(x, y, z, (unsigned short)((blockId & 0xfff) << 4), 0x7ff0);
+    return mElements->sectionContainsElementData(x, y & 0xff, z, (unsigned short)((blockId & 0xfff) << 4), 0x7ff0);
 }
 int LevelChunk::getExtraBlockId(int x, int y, int z)
 {
-    return (int)(mElements->getExtraElement(x, y, z) >> 4);
+    return (int)(mElements->getExtraElement(x, y & 0xff, z) >> 4);
 }
 void LevelChunk::getBlockAndExtraId(int x, int y, int z, int* blockId, int* extraBlockId)
 {
     unsigned short element = 0;
     unsigned short extra = 0;
-    mElements->getElementAndExtraElement(x, y, z, &element, &extra);
+    mElements->getElementAndExtraElement(x, y & 0xff, z, &element, &extra);
     *blockId = element >> 4;
     *extraBlockId = extra >> 4;
 }
 unsigned int LevelChunk::getData(int x, int y, int z)
 {
-    return mElements->get(x, y, z, NULL) & 15;
+    return mElements->get(x, y & 0xff, z, NULL) & 15;
 }
 unsigned int LevelChunk::getExtraBlockData(int x, int y, int z)
 {
-    return mElements->getExtraElement(x, y, z) & 15;
+    return mElements->getExtraElement(x, y & 0xff, z) & 15;
 }
 unsigned short LevelChunk::getElement(int x, int y, int z, bool* present)
 {
-    return (unsigned short)mElements->get(x, y, z, present);
+    return (unsigned short)mElements->get(x, y & 0xff, z, present);
 }
 int LevelChunk::getHighestSectionPosition()
 {
@@ -211,37 +216,36 @@ int LevelChunk::getHighestSectionPosition()
 }
 BlockPos LevelChunk::getTopRainBlock(const BlockPos& pos)
 {
-    int columnIndex = ((pos.z & 0xf) << 4) | (pos.x & 0xf);
-    int cached = mPrecipitationHeightmap[columnIndex];
-    if (cached != 255)
-        return BlockPos(pos.x, cached, pos.z);
-    int top = getHighestSectionPosition();
-    BlockPos current(pos.x, top + 15, pos.z);
-    int found = -1;
-    while (current.y >= 0 && found == -1)
+    int columnIndex = (pos.x & 0xf) | ((pos.z & 0xf) << 4);
+    BlockPos current(pos.x, mPrecipitationHeightmap[columnIndex], pos.z);
+    if (current.y == 255)
     {
-        if (current.y < 256)
+        int top = getHighestSectionPosition();
+        current = BlockPos(pos.x, top + 15, pos.z);
+        int found = -1;
+        while (current.y >= 0 && found == -1)
         {
-            const BlockState* state = getBlockState(current);
-            const BlockState* extraState = getExtraBlockState(current);
-            Material* material = state->getMaterial();
-            Material* extraMaterial = extraState->getMaterial();
-            bool passable = !material->blocksMotion() && !material->isLiquid() &&
-                            !extraMaterial->blocksMotion() && !extraMaterial->isLiquid();
-            if (passable)
-                current = current.below();
+            if (current.y < 256)
+            {
+                const BlockState* state = getBlockState(current);
+                Material* material = state->getMaterial();
+                const BlockState* extraState = getExtraBlockState(current);
+                Material* extraMaterial = extraState->getMaterial();
+                if (!material->blocksMotion() && !material->isLiquid() && !extraMaterial->isLiquid())
+                    current = current.below();
+                else
+                    found = current.y + 1;
+            }
             else
-                found = current.y + 1;
+            {
+                current = current.below();
+            }
         }
-        else
-        {
-            current = current.below();
-        }
+        if (found == 255)
+            found = 254;
+        mPrecipitationHeightmap[columnIndex] = (unsigned char)found;
     }
-    if (found == 255)
-        found = 254;
-    mPrecipitationHeightmap[columnIndex] = (unsigned char)found;
-    return BlockPos(pos.x, found & 0xff, pos.z);
+    return BlockPos(pos.x, mPrecipitationHeightmap[columnIndex], pos.z);
 }
 void LevelChunk::updateBiomeFlags(int x, int z)
 {
@@ -305,7 +309,8 @@ void LevelChunk::getAllElements(arrayWithLength<unsigned char> elements, arrayWi
 }
 void LevelChunk::getElementRange(arrayWithLength<unsigned short> elements, int start, int end)
 {
-    mElements->getData(elements, start, end);
+    if (mElements != NULL)
+        mElements->getData(elements, start, end);
 }
 void LevelChunk::getElementRange(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> data,
                                  int start, int end)
@@ -390,29 +395,40 @@ void LevelChunk::setFromRawData(arrayWithLength<unsigned char> data)
 }
 void LevelChunk::getDataData(arrayWithLength<unsigned char> data)
 {
-    mElements->getData(data, data, 0, 256);
+    arrayWithLength<unsigned char> elements;
+    mElements->getData(elements, data, 0, 64);
 }
 void LevelChunk::getSkyLightData(arrayWithLength<unsigned char> data)
 {
-    if (mSkyLight != NULL)
-        mSkyLight->getData(data, 0);
+    mSkyLight->getData(data, 0);
+    if (data.length > LIGHT_SECTION_BYTES)
+        mSkyLightUpper->getData(data, LIGHT_SECTION_BYTES);
 }
 void LevelChunk::getBlockLightData(arrayWithLength<unsigned char> data)
 {
-    if (mBlockLight != NULL)
-        mBlockLight->getData(data, 0);
+    mBlockLight->getData(data, 0);
+    if (data.length > LIGHT_SECTION_BYTES)
+        mBlockLightUpper->getData(data, LIGHT_SECTION_BYTES);
 }
 void LevelChunk::setSkyLightData(arrayWithLength<unsigned char> data)
 {
     if (mSkyLight == NULL)
-        mSkyLight = new SparseLightStorage(false);
+        mSkyLight = new SparseLightStorage(true);
+    if (mSkyLightUpper == NULL)
+        mSkyLightUpper = new SparseLightStorage(true, true);
     mSkyLight->setData(data, 0);
+    if (data.length > LIGHT_SECTION_BYTES)
+        mSkyLightUpper->setData(data, LIGHT_SECTION_BYTES);
 }
 void LevelChunk::setBlockLightData(arrayWithLength<unsigned char> data)
 {
     if (mBlockLight == NULL)
         mBlockLight = new SparseLightStorage(false);
+    if (mBlockLightUpper == NULL)
+        mBlockLightUpper = new SparseLightStorage(false, true);
     mBlockLight->setData(data, 0);
+    if (data.length > LIGHT_SECTION_BYTES)
+        mBlockLightUpper->setData(data, LIGHT_SECTION_BYTES);
 }
 void LevelChunk::setSkyLightDataAllBright()
 {
@@ -421,7 +437,7 @@ void LevelChunk::setSkyLightDataAllBright()
 }
 bool LevelChunk::isLowerBlockLightStorageCompressed()
 {
-    return mBlockLight != NULL && mBlockLight->isCompressed();
+    return mBlockLight->isCompressed();
 }
 void LevelChunk::writeCompressedElements(DataOutputStream* stream)
 {
@@ -450,17 +466,13 @@ void LevelChunk::readCompressedElementsFromBlockAndData(DataInputStream* stream)
 }
 void LevelChunk::writeCompressedSkyLightData(DataOutputStream* stream)
 {
-    if (mSkyLight != NULL)
-        mSkyLight->write(stream);
-    if (mSkyLightUpper != NULL)
-        mSkyLightUpper->write(stream);
+    mSkyLight->write(stream);
+    mSkyLightUpper->write(stream);
 }
 void LevelChunk::writeCompressedBlockLightData(DataOutputStream* stream)
 {
-    if (mBlockLight != NULL)
-        mBlockLight->write(stream);
-    if (mBlockLightUpper != NULL)
-        mBlockLightUpper->write(stream);
+    mBlockLight->write(stream);
+    mBlockLightUpper->write(stream);
 }
 unsigned char* LevelChunk::GetTempLightingStorage()
 {
@@ -533,10 +545,10 @@ void LevelChunk::reSyncLighting()
     }
     LeaveCriticalSection(&m_csLighting);
 }
-bool LevelChunk::reSyncLightingNearby()
+void LevelChunk::reSyncLightingNearby()
 {
     reSyncLighting();
-    if (level->mDimension->getType() == DimensionType::NETHER)
+    if (level->mDimension->getType() == DimensionType::THE_END)
     {
         level->getChunk(x - 1, z - 1)->reSyncLighting();
         level->getChunk(x, z - 1)->reSyncLighting();
@@ -547,7 +559,6 @@ bool LevelChunk::reSyncLightingNearby()
         level->getChunk(x, z + 1)->reSyncLighting();
         level->getChunk(x + 1, z + 1)->reSyncLighting();
     }
-    return true;
 }
 void LevelChunk::dropLighting()
 {
@@ -1172,7 +1183,7 @@ Block* LevelChunk::getBlock(const BlockPos& pos)
 }
 Block* LevelChunk::getExtraBlock(const BlockPos& pos)
 {
-    return Block::byId(getExtraBlockId(pos.x & 15, pos.y, pos.z & 15));
+    return Block::byId(getExtraBlockId(pos.x, pos.y, pos.z));
 }
 const BlockState* LevelChunk::getBlockState(int x, int y, int z)
 {
@@ -1184,7 +1195,7 @@ const BlockState* LevelChunk::getBlockState(int x, int y, int z)
 }
 const BlockState* LevelChunk::getBlockState(const BlockPos& pos)
 {
-    return getBlockState(pos.x & 15, pos.y, pos.z & 15);
+    return getBlockState(pos.x, pos.y, pos.z);
 }
 const BlockState* LevelChunk::getExtraBlockState(const BlockPos& pos)
 {
@@ -1198,7 +1209,7 @@ void LevelChunk::getBlockAndExtraId_NoLock(int x, int y, int z, int* blockId, in
 {
     unsigned short element = 0;
     unsigned short extra = 0;
-    mElements->getElementAndExtraElement_NoLock(x, y, z, &element, &extra);
+    mElements->getElementAndExtraElement_NoLock(x, y & 0xff, z, &element, &extra);
     *blockId = element >> 4;
     *extraBlockId = extra >> 4;
 }
@@ -1522,15 +1533,24 @@ bool LevelChunk::setBlockAndData(int x, int y, int z, int blockId, int data, boo
 }
 void LevelChunk::setExtraElement(int x, int y, int z, unsigned short element)
 {
-    mElements->setExtraElement(x, y, z, element);
+    if (mElements != NULL)
+        mElements->setExtraElement(x, y, z, element);
 }
 unsigned short LevelChunk::getExtraElement(int x, int y, int z)
 {
+    if (mElements == NULL)
+        return 0;
     return mElements->getExtraElement(x, y, z);
 }
 void LevelChunk::getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement)
 {
-    mElements->getElementAndExtraElement(x, y, z, element, extraElement);
+    if (mElements != NULL)
+    {
+        mElements->getElementAndExtraElement(x, y, z, element, extraElement);
+        return;
+    }
+    *element = 0;
+    *extraElement = 0;
 }
 int LevelChunk::getBrightness(LightLayer::variety layer, const BlockPos& pos)
 {
@@ -2186,7 +2206,7 @@ void LevelChunk::flagPostProcessComplete(short value)
     {
         gApp.processSchematicsLighting(this);
         PIXBeginNamedEvent(0.0f, "Recheck gaps");
-        if (level->mDimension->getType() != DimensionType::NETHER)
+        if (level->mDimension->getType() != DimensionType::THE_END)
             recheckGaps(true);
         PIXEndNamedEvent();
         PIXBeginNamedEvent(0.0f, "Light lava (this)");
@@ -2240,8 +2260,12 @@ void LevelChunk::checkPostProcess(ChunkSource* source, ChunkGenerator* generator
     {
         if (east != NULL && source->getChunkIfLoaded(x + 1, z - 1) != NULL)
             north->doPostProcess(source, generator);
-        if (west != NULL && source->getChunkIfLoaded(x - 1, z - 1) != NULL)
-            source->getChunkIfLoaded(x - 1, z - 1)->doPostProcess(source, generator);
+        if (west != NULL)
+        {
+            LevelChunk* northWest = source->getChunkIfLoaded(x - 1, z - 1);
+            if (northWest != NULL)
+                northWest->doPostProcess(source, generator);
+        }
     }
 }
 void LevelChunk::checkChests(ChunkSource* source, int chunkX, int chunkZ)
@@ -2489,14 +2513,10 @@ void LevelChunk::setInhabitedTime(long long value)
 }
 void LevelChunk::compressLighting()
 {
-    if (mSkyLight != NULL)
-        mSkyLight->compress();
-    if (mSkyLightUpper != NULL)
-        mSkyLightUpper->compress();
-    if (mBlockLight != NULL)
-        mBlockLight->compress();
-    if (mBlockLightUpper != NULL)
-        mBlockLightUpper->compress();
+    mSkyLight->compress();
+    mSkyLightUpper->compress();
+    mBlockLight->compress();
+    mBlockLightUpper->compress();
 }
 void LevelChunk::compressBlocks()
 {

@@ -35,7 +35,7 @@ McRegionChunkStorage::McRegionChunkStorage(ConsoleSaveFile* saveFile,
 {
     mFixer = fixer;
     mSaveFile = saveFile;
-    if (directory == L"DIM-1r")
+    if (directory == L"")
     {
         mSaveFile->createFile(ConsoleSavePath(L"DIM-1r.-1.-1.mcr"));
         mSaveFile->createFile(ConsoleSavePath(L"DIM-1r.0.-1.mcr"));

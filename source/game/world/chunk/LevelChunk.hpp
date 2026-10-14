@@ -51,6 +51,7 @@ public:
     typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
     enum EntityCreationType { IMMEDIATE, QUEUED, NO_CREATE };
     static const int CURRENT_CHUNK_VERSION = 12;
+    static const unsigned int LIGHT_SECTION_BYTES = 16 * 16 * 128 / 2;
 
     enum BiomePresentFlag
     {
@@ -146,7 +147,7 @@ public:
     bool getHasGapsToCheck();
     unsigned int getBiomePresentFlag();
     virtual void reSyncLighting();
-    virtual bool reSyncLightingNearby();
+    virtual void reSyncLightingNearby();
     virtual void dropLighting();
     void SetInvalid(bool invalid);
     bool hasLightingBeenDropped();
