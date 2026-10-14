@@ -7,8 +7,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-FlyingMob::FlyingMob(Level* level)
-    : Mob(level)
+FlyingMob::FlyingMob(Level* level) : Mob(level)
 {
 }
 
@@ -46,7 +45,11 @@ void FlyingMob::travel(float xxa, float yya, float zza)
 
         if (mOnGround)
         {
-            friction = mLevel->getBlockState(BlockPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY) - 1, Mth::floor(mZ)))->getBlock()->mFriction * 0.91f;
+            friction =
+                mLevel->getBlockState(BlockPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY) - 1, Mth::floor(mZ)))
+                    ->getBlock()
+                    ->mFriction
+                * 0.91f;
         }
 
         float friction3 = 0.16277136f / (friction * friction * friction);
@@ -64,7 +67,11 @@ void FlyingMob::travel(float xxa, float yya, float zza)
 
         if (mOnGround)
         {
-            friction = mLevel->getBlockState(BlockPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY) - 1, Mth::floor(mZ)))->getBlock()->mFriction * 0.91f;
+            friction =
+                mLevel->getBlockState(BlockPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY) - 1, Mth::floor(mZ)))
+                    ->getBlock()
+                    ->mFriction
+                * 0.91f;
         }
 
         move(eMoverType_Self, mXd, mYd, mZd, false);

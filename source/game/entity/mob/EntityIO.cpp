@@ -103,10 +103,10 @@
 
 namespace
 {
-    typedef boost::unordered_map<unsigned long long, EntityIO::Creator> Creators;
+typedef boost::unordered_map<unsigned long long, EntityIO::Creator> Creators;
 
-    ResourceLocation sLightningBolt(std::wstring(L"LightningBolt"));
-    ResourceLocation sPlayer(std::wstring(L"Player"));
+ResourceLocation sLightningBolt(std::wstring(L"LightningBolt"));
+ResourceLocation sPlayer(std::wstring(L"Player"));
 }
 
 EntityIO::EntityRegistry EntityIO::sRegistry;
@@ -114,17 +114,16 @@ EntityIO::SpawnInfo EntityIO::sSpawnInfo;
 
 namespace
 {
-    boost::unordered_set<ResourceLocation> sEntityTypes;
-    std::vector<std::wstring> sTranslationNames;
-    Creators sCreators;
+boost::unordered_set<ResourceLocation> sEntityTypes;
+std::vector<std::wstring> sTranslationNames;
+Creators sCreators;
 
 }
 
 
 EntityIO::SpawnableMobInfo::SpawnableMobInfo(int infoId, const ResourceLocation& infoLocation,
-                                              eMinecraftColour infoColour,
-                                              eMinecraftColour infoSecondaryColour,
-                                              eMinecraftIconOverride infoIcon)
+                                             eMinecraftColour infoColour, eMinecraftColour infoSecondaryColour,
+                                             eMinecraftIconOverride infoIcon)
 {
     id = infoId;
     location = ResourceLocation(infoLocation);
@@ -136,8 +135,13 @@ EntityIO::SpawnableMobInfo::SpawnableMobInfo(int infoId, const ResourceLocation&
 }
 
 EntityIO::SpawnableMobInfo::SpawnableMobInfo(const SpawnableMobInfo& other)
-    : id(other.id), location(other.location), colour(other.colour), secondaryColour(other.secondaryColour),
-      icon(other.icon), type(other.type), flags(other.flags)
+    : id(other.id),
+      location(other.location),
+      colour(other.colour),
+      secondaryColour(other.secondaryColour),
+      icon(other.icon),
+      type(other.type),
+      flags(other.flags)
 {
 }
 
@@ -270,10 +274,8 @@ int EntityIO::eTypeToIoid(unsigned long long entityType)
     return sRegistry.getId(entityType);
 }
 
-EntityIO::SpawnableMobInfo EntityIO::addSpawnInfo(int id, std::wstring name,
-                                                  eMinecraftColour colour,
-                                                  eMinecraftColour secondaryColour,
-                                                  eMinecraftIconOverride icon)
+EntityIO::SpawnableMobInfo EntityIO::addSpawnInfo(int id, std::wstring name, eMinecraftColour colour,
+                                                  eMinecraftColour secondaryColour, eMinecraftIconOverride icon)
 {
     ResourceLocation location(name);
     SpawnableMobInfo* info = new SpawnableMobInfo(id, location, colour, secondaryColour, icon);
@@ -281,8 +283,7 @@ EntityIO::SpawnableMobInfo EntityIO::addSpawnInfo(int id, std::wstring name,
     return *sSpawnInfo[location];
 }
 
-void EntityIO::Register(Creator creator, int id, const std::wstring& name,
-                        unsigned long long entityType,
+void EntityIO::Register(Creator creator, int id, const std::wstring& name, unsigned long long entityType,
                         const std::wstring& translationName)
 {
     sCreators.find(entityType);
@@ -314,14 +315,16 @@ void EntityIO::bootStrap()
     Register(LargeFireball::create, 12, L"fireball", EntityType::LARGE_FIREBALL, L"Fireball");
     Register(SmallFireball::create, 13, L"small_fireball", EntityType::SMALL_FIREBALL, L"SmallFireball");
     Register(ThrownEnderpearl::create, 14, L"ender_pearl", EntityType::THROWN_ENDERPEARL, L"ThrownEnderpearl");
-    Register(EyeOfEnderSignal::create, 15, L"eye_of_ender_signal", EntityType::EYE_OF_ENDER_SIGNAL, L"EyeOfEnderSignal");
+    Register(EyeOfEnderSignal::create, 15, L"eye_of_ender_signal", EntityType::EYE_OF_ENDER_SIGNAL,
+             L"EyeOfEnderSignal");
     Register(ThrownPotion::create, 16, L"potion", EntityType::THROWN_POTION, L"ThrownPotion");
     Register(ThrownExpBottle::create, 17, L"xp_bottle", EntityType::THROWN_EXP_BOTTLE, L"ThrownExpBottle");
     Register(ItemFrame::create, 18, L"item_frame", EntityType::ITEM_FRAME, L"ItemFrame");
     Register(WitherSkull::create, 19, L"wither_skull", EntityType::WITHER_SKULL, L"WitherSkull");
     Register(PrimedTnt::create, 20, L"tnt", EntityType::PRIMED_TNT, L"PrimedTnt");
     Register(FallingBlockEntity::create, 21, L"falling_block", EntityType::FALLING_BLOCK_ENTITY, L"FallingSand");
-    Register(FireworksRocketEntity::create, 22, L"fireworks_rocket", EntityType::FIREWORKS_ROCKET_ENTITY, L"FireworksRocketEntity");
+    Register(FireworksRocketEntity::create, 22, L"fireworks_rocket", EntityType::FIREWORKS_ROCKET_ENTITY,
+             L"FireworksRocketEntity");
     Register(Husk::create, 23, L"husk", EntityType::HUSK, L"Husk");
     Register(SpectralArrow::create, 24, L"spectral_arrow", EntityType::SPECTRAL_ARROW, L"SpectralArrow");
     Register(ShulkerBullet::create, 25, L"shulker_bullet", EntityType::SHULKER_BULLET, L"ShulkerBullet");
@@ -335,17 +338,23 @@ void EntityIO::bootStrap()
     Register(EvocationFangs::create, 33, L"evocation_fangs", EntityType::EVOCATION_FANGS, L"EvocationFangs");
     Register(EvocationIllager::create, 34, L"evocation_illager", EntityType::EVOCATION_ILLAGER, L"EvocationIllager");
     Register(Vex::create, 35, L"vex", EntityType::VEX, L"Vex");
-    Register(VindicationIllager::create, 36, L"vindication_illager", EntityType::VINDICATION_ILLAGER, L"VindicationIllager");
+    Register(VindicationIllager::create, 36, L"vindication_illager", EntityType::VINDICATION_ILLAGER,
+             L"VindicationIllager");
     Register(IllusionIllager::create, 37, L"illusion_illager", EntityType::ILLUSION_ILLAGER, L"IllusionIllager");
     Register(ThrownTrident::create, 38, L"trident", EntityType::THROWN_TRIDENT, L"Trident");
     Register(Dolphin::create, 39, L"dolphin", EntityType::DOLPHIN, L"Dolphin");
     Register(Boat::create, 41, L"boat", EntityType::BOAT, L"Boat");
-    Register(MinecartRideable::create, 42, L"minecart", EntityType::MINECART_RIDEABLE, Minecart::Type::RIDEABLE->getName());
-    Register(MinecartChest::create, 43, L"chest_minecart", EntityType::MINECART_CHEST, Minecart::Type::CHEST->getName());
-    Register(MinecartFurnace::create, 44, L"furnace_minecart", EntityType::MINECART_FURNACE, Minecart::Type::FURNACE->getName());
+    Register(MinecartRideable::create, 42, L"minecart", EntityType::MINECART_RIDEABLE,
+             Minecart::Type::RIDEABLE->getName());
+    Register(MinecartChest::create, 43, L"chest_minecart", EntityType::MINECART_CHEST,
+             Minecart::Type::CHEST->getName());
+    Register(MinecartFurnace::create, 44, L"furnace_minecart", EntityType::MINECART_FURNACE,
+             Minecart::Type::FURNACE->getName());
     Register(MinecartTNT::create, 45, L"tnt_minecart", EntityType::MINECART_TNT, Minecart::Type::TNT->getName());
-    Register(MinecartHopper::create, 46, L"hopper_minecart", EntityType::MINECART_HOPPER, Minecart::Type::HOPPER->getName());
-    Register(MinecartSpawner::create, 47, L"spawner_minecart", EntityType::MINECART_SPAWNER, Minecart::Type::SPAWNER->getName());
+    Register(MinecartHopper::create, 46, L"hopper_minecart", EntityType::MINECART_HOPPER,
+             Minecart::Type::HOPPER->getName());
+    Register(MinecartSpawner::create, 47, L"spawner_minecart", EntityType::MINECART_SPAWNER,
+             Minecart::Type::SPAWNER->getName());
     Register(Creeper::create, 50, L"creeper", EntityType::CREEPER, L"Creeper");
     Register(Skeleton::create, 51, L"skeleton", EntityType::SKELETON, L"Skeleton");
     Register(Spider::create, 52, L"spider", EntityType::SPIDER, L"Spider");
@@ -392,158 +401,110 @@ void EntityIO::bootStrap()
     Register(Villager::create, 120, L"villager", EntityType::VILLAGER, L"Villager");
     Register(EnderCrystal::create, 200, L"ender_crystal", EntityType::ENDER_CRYSTAL, L"EnderCrystal");
 
-    addSpawnInfo(static_cast<int>(IDS_BAT), L"bat",
-                 eMinecraftColour_Mob_Bat_Colour1, eMinecraftColour_Mob_Bat_Colour2,
+    addSpawnInfo(static_cast<int>(IDS_BAT), L"bat", eMinecraftColour_Mob_Bat_Colour1, eMinecraftColour_Mob_Bat_Colour2,
                  eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_BLAZE), L"blaze",
-                 eMinecraftColour_Mob_Blaze_Colour1, eMinecraftColour_Mob_Blaze_Colour2,
+    addSpawnInfo(static_cast<int>(IDS_BLAZE), L"blaze", eMinecraftColour_Mob_Blaze_Colour1,
+                 eMinecraftColour_Mob_Blaze_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_CAVE_SPIDER), L"cave_spider", eMinecraftColour_Mob_CaveSpider_Colour1,
+                 eMinecraftColour_Mob_CaveSpider_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_CHICKEN), L"chicken", eMinecraftColour_Mob_Chicken_Colour1,
+                 eMinecraftColour_Mob_Chicken_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_COW), L"cow", eMinecraftColour_Mob_Cow_Colour1, eMinecraftColour_Mob_Cow_Colour2,
                  eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_CAVE_SPIDER), L"cave_spider",
-                 eMinecraftColour_Mob_CaveSpider_Colour1, eMinecraftColour_Mob_CaveSpider_Colour2,
+    addSpawnInfo(static_cast<int>(IDS_CREEPER), L"creeper", eMinecraftColour_Mob_Creeper_Colour1,
+                 eMinecraftColour_Mob_Creeper_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_DONKEY), L"donkey", eMinecraftColour_Mob_Donkey_Colour1,
+                 eMinecraftColour_Mob_Donkey_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_ELDER_GUARDIAN), L"elder_guardian", eMinecraftColour_Mob_Elder_Guardian_Colour1,
+                 eMinecraftColour_Mob_Elder_Guardian_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_ENDERMAN), L"enderman", eMinecraftColour_Mob_Enderman_Colour1,
+                 eMinecraftColour_Mob_Enderman_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_ENDERMITE), L"endermite", eMinecraftColour_Mob_Endermite_Color1,
+                 eMinecraftColour_Mob_Endermite_Color2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(0xD9AA9869U), L"evocation_illager", eMinecraftColour_Mob_Evocation_Illager_Colour1,
+                 eMinecraftColour_Mob_Evocation_Illager_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_GHAST), L"ghast", eMinecraftColour_Mob_Ghast_Colour1,
+                 eMinecraftColour_Mob_Ghast_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_GUARDIAN), L"guardian", eMinecraftColour_Mob_Guardian_Color1,
+                 eMinecraftColour_Mob_Guardian_Color2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_HORSE), L"horse", eMinecraftColour_Mob_Horse_Colour1,
+                 eMinecraftColour_Mob_Horse_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_HUSK), L"husk", eMinecraftColour_Mob_Husk_Colour1,
+                 eMinecraftColour_Mob_Husk_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_LLAMA), L"llama", eMinecraftColour_Mob_Llama_Colour1,
+                 eMinecraftColour_Mob_Llama_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(0x9E8D900FU), L"magma_cube", eMinecraftColour_Mob_LavaSlime_Colour1,
+                 eMinecraftColour_Mob_LavaSlime_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(0x2775807CU), L"mooshroom", eMinecraftColour_Mob_MushroomCow_Colour1,
+                 eMinecraftColour_Mob_MushroomCow_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_MULE), L"mule", eMinecraftColour_Mob_Mule_Colour1,
+                 eMinecraftColour_Mob_Mule_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(0xAA44AD8BU), L"ocelot", eMinecraftColour_Mob_Ocelot_Colour1,
+                 eMinecraftColour_Mob_Ocelot_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_PARROT), L"parrot", eMinecraftColour_Mob_Parrot_Colour1,
+                 eMinecraftColour_Mob_Parrot_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_PIG), L"pig", eMinecraftColour_Mob_Pig_Colour1, eMinecraftColour_Mob_Pig_Colour2,
                  eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_CHICKEN), L"chicken",
-                 eMinecraftColour_Mob_Chicken_Colour1, eMinecraftColour_Mob_Chicken_Colour2,
+    addSpawnInfo(static_cast<int>(IDS_POLARBEAR), L"polar_bear", eMinecraftColour_Mob_PolarBear_Colour1,
+                 eMinecraftColour_Mob_PolarBear_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_RABBIT), L"rabbit", eMinecraftColour_Mob_Rabbit_Colour1,
+                 eMinecraftColour_Mob_Rabbit_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_SHEEP), L"sheep", eMinecraftColour_Mob_Sheep_Colour1,
+                 eMinecraftColour_Mob_Sheep_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_SHULKER), L"shulker", eMinecraftColour_Mob_Shulker_Colour1,
+                 eMinecraftColour_Mob_Shulker_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_SILVERFISH), L"silverfish", eMinecraftColour_Mob_Silverfish_Colour1,
+                 eMinecraftColour_Mob_Silverfish_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_SKELETON), L"skeleton", eMinecraftColour_Mob_Skeleton_Colour1,
+                 eMinecraftColour_Mob_Skeleton_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_SKELETON_HORSE), L"skeleton_horse", eMinecraftColour_Mob_Skeleton_Horse_Colour1,
+                 eMinecraftColour_Mob_Skeleton_Horse_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_SLIME), L"slime", eMinecraftColour_Mob_Slime_Colour1,
+                 eMinecraftColour_Mob_Slime_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_SPIDER), L"spider", eMinecraftColour_Mob_Spider_Colour1,
+                 eMinecraftColour_Mob_Spider_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_SQUID), L"squid", eMinecraftColour_Mob_Squid_Colour1,
+                 eMinecraftColour_Mob_Squid_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(0xC9DE5707U), L"stray", eMinecraftColour_Mob_Stray_Colour1,
+                 eMinecraftColour_Mob_Stray_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_TURTLE), L"turtle", eMinecraftColour_Mob_Turtle_Colour1,
+                 eMinecraftColour_Mob_Turtle_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_DOLPHIN), L"dolphin", eMinecraftColour_Mob_Dolphin_Colour1,
+                 eMinecraftColour_Mob_Dolphin_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_VEX), L"vex", eMinecraftColour_Mob_Vex_Colour1, eMinecraftColour_Mob_Vex_Colour2,
                  eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_COW), L"cow",
-                 eMinecraftColour_Mob_Cow_Colour1, eMinecraftColour_Mob_Cow_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_CREEPER), L"creeper",
-                 eMinecraftColour_Mob_Creeper_Colour1, eMinecraftColour_Mob_Creeper_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_DONKEY), L"donkey",
-                 eMinecraftColour_Mob_Donkey_Colour1, eMinecraftColour_Mob_Donkey_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_ELDER_GUARDIAN), L"elder_guardian",
-                 eMinecraftColour_Mob_Elder_Guardian_Colour1, eMinecraftColour_Mob_Elder_Guardian_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_ENDERMAN), L"enderman",
-                 eMinecraftColour_Mob_Enderman_Colour1, eMinecraftColour_Mob_Enderman_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_ENDERMITE), L"endermite",
-                 eMinecraftColour_Mob_Endermite_Color1, eMinecraftColour_Mob_Endermite_Color2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(0xD9AA9869U), L"evocation_illager",
-                 eMinecraftColour_Mob_Evocation_Illager_Colour1, eMinecraftColour_Mob_Evocation_Illager_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_GHAST), L"ghast",
-                 eMinecraftColour_Mob_Ghast_Colour1, eMinecraftColour_Mob_Ghast_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_GUARDIAN), L"guardian",
-                 eMinecraftColour_Mob_Guardian_Color1, eMinecraftColour_Mob_Guardian_Color2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_HORSE), L"horse",
-                 eMinecraftColour_Mob_Horse_Colour1, eMinecraftColour_Mob_Horse_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_HUSK), L"husk",
-                 eMinecraftColour_Mob_Husk_Colour1, eMinecraftColour_Mob_Husk_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_LLAMA), L"llama",
-                 eMinecraftColour_Mob_Llama_Colour1, eMinecraftColour_Mob_Llama_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(0x9E8D900FU), L"magma_cube",
-                 eMinecraftColour_Mob_LavaSlime_Colour1, eMinecraftColour_Mob_LavaSlime_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(0x2775807CU), L"mooshroom",
-                 eMinecraftColour_Mob_MushroomCow_Colour1, eMinecraftColour_Mob_MushroomCow_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_MULE), L"mule",
-                 eMinecraftColour_Mob_Mule_Colour1, eMinecraftColour_Mob_Mule_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(0xAA44AD8BU), L"ocelot",
-                 eMinecraftColour_Mob_Ocelot_Colour1, eMinecraftColour_Mob_Ocelot_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_PARROT), L"parrot",
-                 eMinecraftColour_Mob_Parrot_Colour1, eMinecraftColour_Mob_Parrot_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_PIG), L"pig",
-                 eMinecraftColour_Mob_Pig_Colour1, eMinecraftColour_Mob_Pig_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_POLARBEAR), L"polar_bear",
-                 eMinecraftColour_Mob_PolarBear_Colour1, eMinecraftColour_Mob_PolarBear_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_RABBIT), L"rabbit",
-                 eMinecraftColour_Mob_Rabbit_Colour1, eMinecraftColour_Mob_Rabbit_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_SHEEP), L"sheep",
-                 eMinecraftColour_Mob_Sheep_Colour1, eMinecraftColour_Mob_Sheep_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_SHULKER), L"shulker",
-                 eMinecraftColour_Mob_Shulker_Colour1, eMinecraftColour_Mob_Shulker_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_SILVERFISH), L"silverfish",
-                 eMinecraftColour_Mob_Silverfish_Colour1, eMinecraftColour_Mob_Silverfish_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_SKELETON), L"skeleton",
-                 eMinecraftColour_Mob_Skeleton_Colour1, eMinecraftColour_Mob_Skeleton_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_SKELETON_HORSE), L"skeleton_horse",
-                 eMinecraftColour_Mob_Skeleton_Horse_Colour1, eMinecraftColour_Mob_Skeleton_Horse_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_SLIME), L"slime",
-                 eMinecraftColour_Mob_Slime_Colour1, eMinecraftColour_Mob_Slime_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_SPIDER), L"spider",
-                 eMinecraftColour_Mob_Spider_Colour1, eMinecraftColour_Mob_Spider_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_SQUID), L"squid",
-                 eMinecraftColour_Mob_Squid_Colour1, eMinecraftColour_Mob_Squid_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(0xC9DE5707U), L"stray",
-                 eMinecraftColour_Mob_Stray_Colour1, eMinecraftColour_Mob_Stray_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_TURTLE), L"turtle",
-                 eMinecraftColour_Mob_Turtle_Colour1, eMinecraftColour_Mob_Turtle_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_DOLPHIN), L"dolphin",
-                 eMinecraftColour_Mob_Dolphin_Colour1, eMinecraftColour_Mob_Dolphin_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_VEX), L"vex",
-                 eMinecraftColour_Mob_Vex_Colour1, eMinecraftColour_Mob_Vex_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_VILLAGER), L"villager",
-                 eMinecraftColour_Mob_Villager_Colour1, eMinecraftColour_Mob_Villager_Colour2,
-                 eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_VILLAGER), L"villager", eMinecraftColour_Mob_Villager_Colour1,
+                 eMinecraftColour_Mob_Villager_Colour2, eMinecraftIconOverride_NONE);
     addSpawnInfo(static_cast<int>(0xF3D4F291U), L"vindication_illager",
                  eMinecraftColour_Mob_Vindication_Illager_Colour1, eMinecraftColour_Mob_Vindication_Illager_Colour2,
                  eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_WITCH), L"witch",
-                 eMinecraftColour_Mob_Witch_Colour1, eMinecraftColour_Mob_Witch_Colour2,
-                 eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_WITCH), L"witch", eMinecraftColour_Mob_Witch_Colour1,
+                 eMinecraftColour_Mob_Witch_Colour2, eMinecraftIconOverride_NONE);
     addSpawnInfo(static_cast<int>(IDS_WITHER_SKELETON), L"wither_skeleton",
                  eMinecraftColour_Mob_Wither_Skeleton_Colour1, eMinecraftColour_Mob_Wither_Skeleton_Colour2,
                  eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_WOLF), L"wolf",
-                 eMinecraftColour_Mob_Wolf_Colour1, eMinecraftColour_Mob_Wolf_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_ZOMBIE), L"zombie",
-                 eMinecraftColour_Mob_Zombie_Colour1, eMinecraftColour_Mob_Zombie_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_ZOMBIE_HORSE), L"zombie_horse",
-                 eMinecraftColour_Mob_Zombie_Horse_Colour1, eMinecraftColour_Mob_Zombie_Horse_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(0xF566D3CCU), L"zombie_pigman",
-                 eMinecraftColour_Mob_PigZombie_Colour1, eMinecraftColour_Mob_PigZombie_Colour2,
-                 eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_WOLF), L"wolf", eMinecraftColour_Mob_Wolf_Colour1,
+                 eMinecraftColour_Mob_Wolf_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_ZOMBIE), L"zombie", eMinecraftColour_Mob_Zombie_Colour1,
+                 eMinecraftColour_Mob_Zombie_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_ZOMBIE_HORSE), L"zombie_horse", eMinecraftColour_Mob_Zombie_Horse_Colour1,
+                 eMinecraftColour_Mob_Zombie_Horse_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(0xF566D3CCU), L"zombie_pigman", eMinecraftColour_Mob_PigZombie_Colour1,
+                 eMinecraftColour_Mob_PigZombie_Colour2, eMinecraftIconOverride_NONE);
     addSpawnInfo(static_cast<int>(IDS_ZOMBIE_VILLAGER), L"zombie_villager",
                  eMinecraftColour_Mob_Zombie_Villager_Colour1, eMinecraftColour_Mob_Zombie_Villager_Colour2,
                  eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_TROPICALFISH), L"tropicalfish",
-                 eMinecraftColour_Mob_Tropical_Colour1, eMinecraftColour_Mob_Tropical_Colour2,
+    addSpawnInfo(static_cast<int>(IDS_TROPICALFISH), L"tropicalfish", eMinecraftColour_Mob_Tropical_Colour1,
+                 eMinecraftColour_Mob_Tropical_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_COD), L"fish", eMinecraftColour_Mob_Cod_Colour1, eMinecraftColour_Mob_Cod_Colour2,
                  eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_COD), L"fish",
-                 eMinecraftColour_Mob_Cod_Colour1, eMinecraftColour_Mob_Cod_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_PUFFERFISH), L"pufferfish",
-                 eMinecraftColour_Mob_Pufferfish_Colour1, eMinecraftColour_Mob_Pufferfish_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_SALMON), L"salmon",
-                 eMinecraftColour_Mob_Salmon_Colour1, eMinecraftColour_Mob_Salmon_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_DROWNED), L"drowned",
-                 eMinecraftColour_Mob_Drowned_Colour1, eMinecraftColour_Mob_Drowned_Colour2,
-                 eMinecraftIconOverride_NONE);
-    addSpawnInfo(static_cast<int>(IDS_PHANTOM), L"phantom",
-                 eMinecraftColour_Mob_Phantom_Colour1, eMinecraftColour_Mob_Phantom_Colour2,
-                 eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_PUFFERFISH), L"pufferfish", eMinecraftColour_Mob_Pufferfish_Colour1,
+                 eMinecraftColour_Mob_Pufferfish_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_SALMON), L"salmon", eMinecraftColour_Mob_Salmon_Colour1,
+                 eMinecraftColour_Mob_Salmon_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_DROWNED), L"drowned", eMinecraftColour_Mob_Drowned_Colour1,
+                 eMinecraftColour_Mob_Drowned_Colour2, eMinecraftIconOverride_NONE);
+    addSpawnInfo(static_cast<int>(IDS_PHANTOM), L"phantom", eMinecraftColour_Mob_Phantom_Colour1,
+                 eMinecraftColour_Mob_Phantom_Colour2, eMinecraftIconOverride_NONE);
     sEntityTypes.insert(sLightningBolt);
 }

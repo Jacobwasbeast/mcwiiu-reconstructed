@@ -27,14 +27,12 @@ int gHangingEntityRenderCount = 0;
 
 Predicate<boost::shared_ptr<Entity> >* HangingEntity::HANGING_ENTITY_SELECTOR = new HangingEntitySelector();
 
-HangingEntity::HangingEntity(Level* level)
-    : Entity(level, true), mPos()
+HangingEntity::HangingEntity(Level* level) : Entity(level, true), mPos()
 {
     _init(level);
 }
 
-HangingEntity::HangingEntity(Level* level, const BlockPos& pos)
-    : Entity(level, true), mPos()
+HangingEntity::HangingEntity(Level* level, const BlockPos& pos) : Entity(level, true), mPos()
 {
     _init(level);
     mPos = pos;
@@ -94,8 +92,8 @@ void HangingEntity::recalculateBoundingBox()
     halfWidth *= 0.03125f;
     halfHeight *= 0.03125f;
     halfDepth *= 0.03125f;
-    setBoundingBox(AABB::newTemp(x - halfWidth, y - halfHeight, z - halfDepth,
-                                 x + halfWidth, y + halfHeight, z + halfDepth));
+    setBoundingBox(
+        AABB::newTemp(x - halfWidth, y - halfHeight, z - halfDepth, x + halfWidth, y + halfHeight, z + halfDepth));
 }
 
 void HangingEntity::tick()
@@ -217,11 +215,9 @@ void HangingEntity::readAdditionalSaveData(CompoundTag* tag)
 
 boost::shared_ptr<ItemEntity> HangingEntity::spawnAtLocation(not_null_ptr<ItemInstance> itemInstance, float yOffset)
 {
-    boost::shared_ptr<ItemEntity> item(new ItemEntity(mLevel,
-        mX + (double)((float)mDirection->getStepX() * 0.15f),
-        mY + static_cast<double>(yOffset),
-        mZ + (double)((float)mDirection->getStepZ() * 0.15f),
-        itemInstance));
+    boost::shared_ptr<ItemEntity> item(
+        new ItemEntity(mLevel, mX + (double)((float)mDirection->getStepX() * 0.15f), mY + static_cast<double>(yOffset),
+                       mZ + (double)((float)mDirection->getStepZ() * 0.15f), itemInstance));
     item->setDefaultPickUpDelay();
     mLevel->addEntity(item);
     return item;
@@ -273,10 +269,14 @@ float HangingEntity::rotate(Rotation* rotation)
     float result = Mth::wrapDegrees(mYRot);
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90: return result + 270.0f;
-    case Rotation::eTYPE_Clockwise180: return result + 180.0f;
-    case Rotation::eTYPE_CounterClockwise90: return result + 90.0f;
-    default: return result;
+    case Rotation::eTYPE_Clockwise90:
+        return result + 270.0f;
+    case Rotation::eTYPE_Clockwise180:
+        return result + 180.0f;
+    case Rotation::eTYPE_CounterClockwise90:
+        return result + 90.0f;
+    default:
+        return result;
     }
 }
 

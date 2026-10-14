@@ -14,8 +14,7 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 
-PathfinderMob::PathfinderMob(Level* level)
-    : Mob(level)
+PathfinderMob::PathfinderMob(Level* level) : Mob(level)
 {
     mPath = NULL;
     mAttackTarget = boost::shared_ptr<Entity>();
@@ -63,8 +62,7 @@ bool PathfinderMob::isWithinRestriction(const BlockPos& pos)
 {
     if (mRestrictionRadius != -1.0f)
     {
-        return mRestrictionCenter.distSqr(pos) <
-            (double)mRestrictionRadius * (double)mRestrictionRadius;
+        return mRestrictionCenter.distSqr(pos) < (double)mRestrictionRadius * (double)mRestrictionRadius;
     }
 
     return true;
@@ -102,13 +100,14 @@ void PathfinderMob::tickLeash()
     if (isLeashed() && getLeashHolder() != NULL && getLeashHolder()->mLevel == mLevel)
     {
         boost::shared_ptr<Entity> holder = getLeashHolder();
-        restrictTo(BlockPos(static_cast<int>(holder->mX), static_cast<int>(holder->mY), static_cast<int>(holder->mZ)), 5);
+        restrictTo(BlockPos(static_cast<int>(holder->mX), static_cast<int>(holder->mY), static_cast<int>(holder->mZ)),
+                   5);
         float distance = distanceTo(holder);
 
-        boost::shared_ptr<TamableAnimal> tamable
-            = eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, shared_from_this()->GetType())
-                  ? boost::dynamic_pointer_cast<TamableAnimal>(shared_from_this())
-                  : boost::shared_ptr<TamableAnimal>();
+        boost::shared_ptr<TamableAnimal> tamable = eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL,
+                                                                      shared_from_this()->GetType())
+                                                       ? boost::dynamic_pointer_cast<TamableAnimal>(shared_from_this())
+                                                       : boost::shared_ptr<TamableAnimal>();
 
         if (tamable != NULL && tamable->isSitting())
         {
@@ -137,7 +136,9 @@ void PathfinderMob::tickLeash()
         else
         {
             mGoalSelector.enableControlFlag(1);
-            Vec3* offset = Vec3::newTemp(holder->mX - mX, holder->mY - mY, holder->mZ - mZ)->normalize()->scale(std::max(distance - 2.0f, 0.0f));
+            Vec3* offset = Vec3::newTemp(holder->mX - mX, holder->mY - mY, holder->mZ - mZ)
+                               ->normalize()
+                               ->scale(std::max(distance - 2.0f, 0.0f));
             getNavigation()->moveTo(mX + offset->x, mY + offset->y, mZ + offset->z, followLeashSpeed());
         }
     }

@@ -23,8 +23,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 
-WitherSkeleton::WitherSkeleton(Level* level)
-    : AbstractSkeleton(level), mWitherParent()
+WitherSkeleton::WitherSkeleton(Level* level) : AbstractSkeleton(level), mWitherParent()
 {
     fjDerivedCtorCalls();
     setSize(0.7f, 2.4f);
@@ -51,7 +50,7 @@ void WitherSkeleton::registerGoals()
 }
 
 MobGroupData* WitherSkeleton::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                                const std::wstring& dataString)
+                                               const std::wstring& dataString)
 {
     MobGroupData* result = AbstractSkeleton::finalizeMobSpawn(difficulty, data, std::wstring(L""));
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(4.0);

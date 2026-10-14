@@ -4,10 +4,9 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-void DragonRespawnAnimation_START::tick(ServerLevel* level,
-    EndDragonFight* dragonFight,
-    std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
-    const BlockPos& portalLocation)
+void DragonRespawnAnimation_START::tick(ServerLevel* level, EndDragonFight* dragonFight,
+                                        std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
+                                        const BlockPos& portalLocation)
 {
     BlockPos beamTarget(0, 128, 0);
 

@@ -70,8 +70,7 @@ template <class T> class not_null_ptr;
 class Entity;
 
 
-int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities,
-            const boost::shared_ptr<Entity>& entity);
+int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities, const boost::shared_ptr<Entity>& entity);
 
 class Entity : public boost::enable_shared_from_this<Entity>, public CommandSender
 {
@@ -125,7 +124,8 @@ public:
     virtual void clearFire();
     virtual void outOfWorld();
     virtual void move(MoverType type, double x, double y, double z, bool pushedByPiston);
-    virtual void updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY, double& movedZ);
+    virtual void updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY,
+                                      double& movedZ);
     virtual void setLocationFromBoundingbox();
     virtual const SoundEvent* getSwimSound();
     virtual const SoundEvent* getSwimSplashSound();
@@ -285,7 +285,8 @@ public:
     virtual void setViewScale(double viewScale);
     virtual std::wstring getDisplayName();
     virtual std::wstring getNetworkName();
-    virtual void setCustomName(const std::wstring& customName, const std::wstring& ownerUUID, bool namedByRestrictedPlayer);
+    virtual void setCustomName(const std::wstring& customName, const std::wstring& ownerUUID,
+                               bool namedByRestrictedPlayer);
     virtual std::wstring getCustomName();
     virtual bool hasCustomName();
     virtual void setCustomNameVisible(bool customNameVisible);
@@ -301,7 +302,8 @@ public:
     AABB* getBoundingBox() { return mBoundingBox; }
     virtual float getEyeHeight();
     virtual bool setSlot(int slot, const not_null_ptr<ItemInstance>& itemInstance);
-    virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams);
+    virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams,
+                             unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams);
     virtual bool hasPermission(EGameCommand command);
     virtual BlockPos getCommandSenderBlockPosition();
     virtual Vec3* getCommandSenderWorldPosition();

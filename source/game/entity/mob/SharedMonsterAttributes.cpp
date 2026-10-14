@@ -9,16 +9,16 @@
 
 Attribute* SharedMonsterAttributes::MAX_HEALTH =
     (new RangedAttribute(NULL, eATTRIBUTE_ID_MaxHealth, 20.0, 0.0, 2014.0))->setSyncable(true);
-Attribute* SharedMonsterAttributes::FOLLOW_RANGE =
-    new RangedAttribute(NULL, eATTRIBUTE_ID_FollowRange, 32.0, 0.0, 2048.0);
-Attribute* SharedMonsterAttributes::KNOCKBACK_RESISTANCE =
-    new RangedAttribute(NULL, eATTRIBUTE_ID_KnockbackResistance, 0.0, 0.0, 1.0);
+Attribute* SharedMonsterAttributes::FOLLOW_RANGE = new RangedAttribute(NULL, eATTRIBUTE_ID_FollowRange, 32.0, 0.0,
+                                                                       2048.0);
+Attribute* SharedMonsterAttributes::KNOCKBACK_RESISTANCE = new RangedAttribute(NULL, eATTRIBUTE_ID_KnockbackResistance,
+                                                                               0.0, 0.0, 1.0);
 Attribute* SharedMonsterAttributes::MOVEMENT_SPEED =
     (new RangedAttribute(NULL, eATTRIBUTE_ID_MovementSpeed, 0.7f, 0.0, 1024.0))->setSyncable(true);
 Attribute* SharedMonsterAttributes::FLYING_SPEED =
     (new RangedAttribute(NULL, eATTRIBUTE_ID_FlyingSpeed, 0.4f, 0.0, 1024.0))->setSyncable(true);
-Attribute* SharedMonsterAttributes::ATTACK_DAMAGE =
-    new RangedAttribute(NULL, eATTRIBUTE_ID_AttackDamage, 2.0, 0.0, 1024.0);
+Attribute* SharedMonsterAttributes::ATTACK_DAMAGE = new RangedAttribute(NULL, eATTRIBUTE_ID_AttackDamage, 2.0, 0.0,
+                                                                        1024.0);
 Attribute* SharedMonsterAttributes::ATTACK_SPEED =
     (new RangedAttribute(NULL, eATTRIBUTE_ID_AttackSpeed, 4.0, 0.0, 1024.0))->setSyncable(true);
 Attribute* SharedMonsterAttributes::ARMOR =
@@ -53,9 +53,7 @@ CompoundTag* SharedMonsterAttributes::saveAttribute(AttributeInstance* instance)
     {
         ListTag* list = new ListTag();
 
-        for (boost::unordered_set<AttributeModifier*>::iterator it = modifiers.begin();
-             it != modifiers.end();
-             ++it)
+        for (boost::unordered_set<AttributeModifier*>::iterator it = modifiers.begin(); it != modifiers.end(); ++it)
         {
             AttributeModifier* modifier = *it;
 
@@ -90,9 +88,7 @@ AttributeModifier* SharedMonsterAttributes::loadAttributeModifier(CompoundTag* t
 {
     eMODIFIER_ID id = (eMODIFIER_ID)tag->getInt(std::wstring(L"UUID"));
 
-    return new AttributeModifier(id,
-                                 tag->getDouble(std::wstring(L"Amount")),
-                                 tag->getInt(std::wstring(L"Operation")));
+    return new AttributeModifier(id, tag->getDouble(std::wstring(L"Amount")), tag->getInt(std::wstring(L"Operation")));
 }
 
 void SharedMonsterAttributes::loadAttribute(AttributeInstance* instance, CompoundTag* tag)
@@ -128,8 +124,7 @@ void SharedMonsterAttributes::loadAttributes(BaseAttributeMap* attributes, ListT
     {
         CompoundTag* tag = tags->getCompound(i);
 
-        AttributeInstance* instance =
-            attributes->getInstance((eATTRIBUTE_ID)tag->getInt(std::wstring(L"ID")));
+        AttributeInstance* instance = attributes->getInstance((eATTRIBUTE_ID)tag->getInt(std::wstring(L"ID")));
 
         if (instance != NULL)
         {

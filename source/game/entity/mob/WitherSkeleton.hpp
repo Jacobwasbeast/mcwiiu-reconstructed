@@ -25,7 +25,7 @@ public:
 
     virtual void registerGoals();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                            const std::wstring& dataString);
+                                           const std::wstring& dataString);
     virtual float getEyeHeight();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     void setWitherParent(const boost::shared_ptr<WitherBoss>& parent);

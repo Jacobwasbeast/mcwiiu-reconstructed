@@ -6,10 +6,11 @@
 #include "game/entity/mob/MultiEntityMob.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 
-MultiEntityMobPart::MultiEntityMobPart(boost::shared_ptr<MultiEntityMob> parentMob, const std::wstring& name, float width, float height)
-    : Entity(parentMob->getLevel(), true)
-    , mParentMob(parentMob)
-    , mName(name)
+MultiEntityMobPart::MultiEntityMobPart(boost::shared_ptr<MultiEntityMob> parentMob, const std::wstring& name,
+                                       float width, float height)
+    : Entity(parentMob->getLevel(), true),
+      mParentMob(parentMob),
+      mName(name)
 {
     setSize(width, height);
 }
@@ -65,6 +66,5 @@ bool MultiEntityMobPart::canRide(boost::shared_ptr<Entity> vehicle)
 
 bool MultiEntityMobPart::is(boost::shared_ptr<Entity> entity)
 {
-    return shared_from_this() == entity
-        || mParentMob.lock() == boost::dynamic_pointer_cast<MultiEntityMob>(entity);
+    return shared_from_this() == entity || mParentMob.lock() == boost::dynamic_pointer_cast<MultiEntityMob>(entity);
 }

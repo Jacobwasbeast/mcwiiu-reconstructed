@@ -15,15 +15,13 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/SpikeFeature.hpp"
 
-void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
-    EndDragonFight* dragonFight,
-    std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
-    const BlockPos& portalLocation)
+void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level, EndDragonFight* dragonFight,
+                                                    std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
+                                                    const BlockPos& portalLocation)
 {
     if (tick % 40 == 0 || tick % 40 == 39)
     {
-        arrayWithLength<SpikeFeature::EndSpike> spikes =
-            TheEndBiomeDecorator::getSpikesForLevel(level);
+        arrayWithLength<SpikeFeature::EndSpike> spikes = TheEndBiomeDecorator::getSpikesForLevel(level);
 
         if (tick / 40 < static_cast<int>(spikes.length))
         {
@@ -31,30 +29,25 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
 
             if (tick % 40 == 0)
             {
-                std::vector<boost::shared_ptr<EnderCrystal> >::iterator it =
-                    crystals->begin();
+                std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = crystals->begin();
                 while (it != crystals->end())
                 {
                     it->get()->setBeamTarget(new BlockPos(static_cast<int>(spike.getCenterX()),
-                        static_cast<int>(spike.getHeight()) + 1,
-                        static_cast<int>(spike.getCenterZ())));
+                                                          static_cast<int>(spike.getHeight()) + 1,
+                                                          static_cast<int>(spike.getCenterZ())));
                     ++it;
                 }
             }
             else
             {
-                BlockPos from(static_cast<int>(spike.getCenterX()) - 10,
-                    static_cast<int>(spike.getHeight()) - 10,
-                    static_cast<int>(spike.getCenterZ()) - 10);
-                BlockPos to(static_cast<int>(spike.getCenterX()) + 10,
-                    static_cast<int>(spike.getHeight()) + 10,
-                    static_cast<int>(spike.getCenterZ()) + 10);
+                BlockPos from(static_cast<int>(spike.getCenterX()) - 10, static_cast<int>(spike.getHeight()) - 10,
+                              static_cast<int>(spike.getCenterZ()) - 10);
+                BlockPos to(static_cast<int>(spike.getCenterX()) + 10, static_cast<int>(spike.getHeight()) + 10,
+                            static_cast<int>(spike.getCenterZ()) + 10);
                 AABB* box = AABB::newTemp(from, to);
 
-                std::vector<boost::shared_ptr<Entity> >* entities =
-                    level->getEntitiesOfClass(typeid(Entity), box);
-                std::vector<boost::shared_ptr<Entity> >::iterator entity =
-                    entities->begin();
+                std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(Entity), box);
+                std::vector<boost::shared_ptr<Entity> >::iterator entity = entities->begin();
                 while (entity != entities->end())
                 {
                     entity->get()->setInvulnerable(false);
@@ -62,8 +55,7 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
                 }
                 delete entities;
 
-                Iterator<MutableBlockPos*>* positions =
-                    BlockPos::mutablesBetween(from, to);
+                Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(from, to);
                 while (positions->hasNext())
                 {
                     level->removeBlock(*positions->next());
@@ -71,10 +63,10 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
                 delete positions;
 
                 level->explode(boost::shared_ptr<Entity>(),
-                    static_cast<double>(static_cast<float>(spike.getCenterX()) + 0.5f),
-                    static_cast<double>(spike.getHeight()),
-                    static_cast<double>(static_cast<float>(spike.getCenterZ()) + 0.5f),
-                    5.0f, true, true, false, false, false, -1.0f);
+                               static_cast<double>(static_cast<float>(spike.getCenterX()) + 0.5f),
+                               static_cast<double>(spike.getHeight()),
+                               static_cast<double>(static_cast<float>(spike.getCenterZ()) + 0.5f), 5.0f, true, true,
+                               false, false, false, -1.0f);
 
                 SpikeFeature feature;
                 SpikeFeature::EndSpike featureSpike(spike);
@@ -85,8 +77,7 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
                 feature.setCrystalBeamTarget(crystalBeamTarget);
 
                 Random random;
-                BlockPos placement(static_cast<int>(spike.getCenterX()), 45,
-                    static_cast<int>(spike.getCenterZ()));
+                BlockPos placement(static_cast<int>(spike.getCenterX()), 45, static_cast<int>(spike.getCenterZ()));
                 feature.place(level, random, placement);
             }
         }

@@ -26,8 +26,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual ResourceLocation* getDefaultLootTable();
-    virtual bool mobInteract(const boost::shared_ptr<Player>& player,
-                             InteractionHand::EInteractionHand hand);
+    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual bool breathesWater();
     virtual unsigned long long GetType();

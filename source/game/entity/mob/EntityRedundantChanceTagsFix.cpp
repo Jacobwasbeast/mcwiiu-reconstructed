@@ -20,9 +20,8 @@ CompoundTag* EntityRedundantChanceTagsFix::fix(CompoundTag* tag)
     {
         ListTag* handDropChances = tag->getList(L"HandDropChances", Tag::TAG_FLOAT);
 
-        if (handDropChances->size() == 2 &&
-            handDropChances->getFloat(0) == 0.0f &&
-            handDropChances->getFloat(1) == 0.0f)
+        if (handDropChances->size() == 2 && handDropChances->getFloat(0) == 0.0f
+            && handDropChances->getFloat(1) == 0.0f)
         {
             delete tag->get(L"HandDropChances");
             tag->remove(L"HandDropChances");
@@ -33,11 +32,9 @@ CompoundTag* EntityRedundantChanceTagsFix::fix(CompoundTag* tag)
     {
         ListTag* armorDropChances = tag->getList(L"ArmorDropChances", Tag::TAG_FLOAT);
 
-        if (armorDropChances->size() == 4 &&
-            armorDropChances->getFloat(0) == 0.0f &&
-            armorDropChances->getFloat(1) == 0.0f &&
-            armorDropChances->getFloat(2) == 0.0f &&
-            armorDropChances->getFloat(3) == 0.0f)
+        if (armorDropChances->size() == 4 && armorDropChances->getFloat(0) == 0.0f
+            && armorDropChances->getFloat(1) == 0.0f && armorDropChances->getFloat(2) == 0.0f
+            && armorDropChances->getFloat(3) == 0.0f)
         {
             delete tag->get(L"ArmorDropChances");
             tag->remove(L"ArmorDropChances");

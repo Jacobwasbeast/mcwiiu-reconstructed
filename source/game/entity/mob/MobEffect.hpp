@@ -70,8 +70,7 @@ public:
     virtual void applyEffectTick(const boost::shared_ptr<LivingEntity>& entity, int amplifier);
     virtual void applyInstantenousEffect(const boost::shared_ptr<Entity>& source,
                                          const boost::shared_ptr<Entity>& indirectSource,
-                                         const boost::shared_ptr<LivingEntity>& entity,
-                                         int amplifier, double health);
+                                         const boost::shared_ptr<LivingEntity>& entity, int amplifier, double health);
     virtual bool isDurationEffectTick(int duration, int amplifier);
     virtual bool isInstantenous();
     int getDescriptionId(int auxiliaryValue);
@@ -82,13 +81,12 @@ public:
     virtual MobEffect* setBeneficial();
     virtual bool isBeneficial() const;
     virtual eMinecraftColour getColor() const;
-    virtual MobEffect* addAttributeModifier(Attribute* attribute, eMODIFIER_ID id,
-                                             double amount, int operation);
+    virtual MobEffect* addAttributeModifier(Attribute* attribute, eMODIFIER_ID id, double amount, int operation);
     virtual boost::unordered_map<Attribute*, AttributeModifier*>* getAttributeModifiers();
-    virtual void removeAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
-                                          BaseAttributeMap* attributes, int amplifier);
-    virtual void addAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
-                                       BaseAttributeMap* attributes, int amplifier);
+    virtual void removeAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity, BaseAttributeMap* attributes,
+                                          int amplifier);
+    virtual void addAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity, BaseAttributeMap* attributes,
+                                       int amplifier);
     virtual double getAttributeModifierValue(int amplifier, AttributeModifier* modifier);
     virtual ~MobEffect() {}
     static std::wstring formatDuration(MobEffectInstance* effect, float durationFactor);

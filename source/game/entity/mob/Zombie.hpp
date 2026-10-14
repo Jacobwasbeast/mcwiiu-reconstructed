@@ -85,7 +85,7 @@ public:
     virtual bool breathesWater();
     virtual bool canHoldItem(not_null_ptr<ItemInstance> item);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                            const std::wstring& dataString);
+                                           const std::wstring& dataString);
     bool isConverting();
     void startConverting(int conversionTime);
     void waterCheck();

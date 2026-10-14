@@ -20,13 +20,12 @@
 #include "game/world/block/Material.hpp"
 #include "game/item/Items.hpp"
 
-HangingEntityItem::HangingEntityItem(unsigned long long entityType)
-    : Item(), mEntityType(entityType)
+HangingEntityItem::HangingEntityItem(unsigned long long entityType) : Item(), mEntityType(entityType)
 {
 }
 
 boost::shared_ptr<HangingEntity> HangingEntityItem::createEntity(Level* level, const BlockPos& pos,
-                                                                  const Direction* direction, int auxValue)
+                                                                 const Direction* direction, int auxValue)
 {
     if (mEntityType == EntityType::PAINTING)
     {
@@ -43,16 +42,17 @@ boost::shared_ptr<HangingEntity> HangingEntityItem::createEntity(Level* level, c
     return boost::shared_ptr<HangingEntity>();
 }
 
-InteractionResult::EInteractionResult HangingEntityItem::useOn(
-    boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
-    InteractionHand::EInteractionHand hand, const Direction* direction,
-    float hitX, float hitY, float hitZ, bool simulate)
+InteractionResult::EInteractionResult HangingEntityItem::useOn(boost::shared_ptr<Player> player, Level* level,
+                                                               const BlockPos& pos,
+                                                               InteractionHand::EInteractionHand hand,
+                                                               const Direction* direction, float hitX, float hitY,
+                                                               float hitZ, bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     BlockPos placePos = pos.relative(direction);
 
-    if (direction == Direction::DOWN || direction == Direction::UP ||
-        !player->mayUseItemAt(placePos, direction, itemInstance))
+    if (direction == Direction::DOWN || direction == Direction::UP
+        || !player->mayUseItemAt(placePos, direction, itemInstance))
         return InteractionResult::eInteractionResult_Fail;
 
     if (simulate)
@@ -95,8 +95,7 @@ InteractionResult::EInteractionResult HangingEntityItem::useOn(
     return InteractionResult::eInteractionResult_Success;
 }
 
-void HangingEntityItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                        boost::shared_ptr<Player> player,
+void HangingEntityItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
                                         std::vector<HtmlString>* lines, bool advanced)
 {
 }

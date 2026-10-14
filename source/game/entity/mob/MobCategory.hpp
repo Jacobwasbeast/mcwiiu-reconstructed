@@ -29,8 +29,8 @@ public:
 
     static arrayWithLength<MobCategory*> CATEGORIES;
 
-    MobCategory(int maxInstancesPerChunk, Material* spawnPositionMaterial, bool friendly,
-                bool persistent, unsigned long long enumBaseClass, bool singleType);
+    MobCategory(int maxInstancesPerChunk, Material* spawnPositionMaterial, bool friendly, bool persistent,
+                unsigned long long enumBaseClass, bool singleType);
 
     static void staticCtor();
 

@@ -19,13 +19,11 @@ class Entity;
 class PigZombie : public Zombie
 {
 public:
-
     class PigZombieHurtByOtherGoal : public HurtByTargetGoal
     {
     public:
         PigZombieHurtByOtherGoal(PigZombie* mob);
-        virtual void alertOther(boost::shared_ptr<PathfinderMob> mob,
-                                boost::shared_ptr<LivingEntity> target);
+        virtual void alertOther(boost::shared_ptr<PathfinderMob> mob, boost::shared_ptr<LivingEntity> target);
     };
 
     static AttributeModifier* SPEED_MODIFIER_ATTACKING;
@@ -50,8 +48,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual ResourceLocation* getDefaultLootTable();
     virtual ResourceLocation* getDefaultGearTable();
-    virtual bool mobInteract(const boost::shared_ptr<Player>& player,
-                             InteractionHand::EInteractionHand hand);
+    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     virtual not_null_ptr<ItemInstance> getSkull();
     virtual bool isPreventingPlayerRest(boost::shared_ptr<Player> player);

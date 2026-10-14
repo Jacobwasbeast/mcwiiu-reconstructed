@@ -16,8 +16,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 
-Skeleton::Skeleton(Level* level)
-    : AbstractSkeleton(level)
+Skeleton::Skeleton(Level* level) : AbstractSkeleton(level)
 {
     Mob::fjDerivedCtorCalls();
 }
@@ -75,8 +74,7 @@ void Skeleton::die(const DamageSource* source)
 
     if (source->getEntity() && eTYPE_DERIVED_FROM(EntityType::CREEPER, source->getEntity()->GetType()))
     {
-        boost::shared_ptr<Creeper> creeper =
-            boost::static_pointer_cast<Creeper>(source->getEntity());
+        boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(source->getEntity());
         if (creeper->isPowered() && creeper->canDropMobsSkull())
         {
             creeper->increaseDroppedSkulls();

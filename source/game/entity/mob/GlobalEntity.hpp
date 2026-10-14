@@ -6,10 +6,7 @@
 class GlobalEntity : public Entity
 {
 public:
-    GlobalEntity(Level* level)
-        : Entity(level, true)
-    {
-    }
+    GlobalEntity(Level* level) : Entity(level, true) {}
 
     virtual ~GlobalEntity() {}
 };

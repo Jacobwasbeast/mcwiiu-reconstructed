@@ -60,14 +60,17 @@ public:
     void makeFakeItem();
     virtual unsigned long long GetType();
     int getAge() { return mAge; }
+
 private:
     int mAge;
     int mPickupDelay;
     int mHealth;
     std::wstring mThrower;
     std::wstring mOwner;
+
 public:
     float mBobOffs;
+
 private:
     static const EntityDataAccessor<not_null_ptr<ItemInstance> >* DATA_ITEM;
 };

@@ -3,8 +3,7 @@
 #include "game/core/BaseAttributeMap.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 
-HealthBoostMobEffect::HealthBoostMobEffect(bool harmful, eMinecraftColour color)
-    : MobEffect(harmful, color)
+HealthBoostMobEffect::HealthBoostMobEffect(bool harmful, eMinecraftColour color) : MobEffect(harmful, color)
 {
 }
 

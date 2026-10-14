@@ -113,14 +113,9 @@ void TamableAnimal::spawnTamingParticles(bool success)
         double xa = mRandom->nextGaussian() * 0.02;
         double ya = mRandom->nextGaussian() * 0.02;
         double za = mRandom->nextGaussian() * 0.02;
-        mLevel->addParticle(particle,
-                            mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
+        mLevel->addParticle(particle, mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                             mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                            mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
-                            xa,
-                            ya,
-                            za,
-                            arrayWithLength<int>());
+                            mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth, xa, ya, za, arrayWithLength<int>());
     }
 }
 
@@ -199,8 +194,7 @@ SitGoal* TamableAnimal::getSitGoal()
     return mSitGoal;
 }
 
-bool TamableAnimal::wantsToAttack(boost::shared_ptr<LivingEntity> target,
-                                  boost::shared_ptr<LivingEntity> owner)
+bool TamableAnimal::wantsToAttack(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<LivingEntity> owner)
 {
     return true;
 }
@@ -236,21 +230,21 @@ bool TamableAnimal::isAlliedTo(boost::shared_ptr<Entity> entity)
 
 void TamableAnimal::die(const DamageSource* source)
 {
-    if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(GameRules::RULE_SHOWDEATHMESSAGES) && hasCustomName())
+    if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(GameRules::RULE_SHOWDEATHMESSAGES)
+        && hasCustomName())
     {
         if (getOwner() != NULL && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, getOwner()->GetType()))
         {
-            boost::dynamic_pointer_cast<ServerPlayer>(getOwner())->mConnection->send(
-                getCombatTracker()->getDeathMessagePacket());
+            boost::dynamic_pointer_cast<ServerPlayer>(getOwner())
+                ->mConnection->send(getCombatTracker()->getDeathMessagePacket());
         }
     }
 
     LivingEntity::die(source);
 }
 
-InteractionResult::EInteractionResult TamableAnimal::interactAt(
-    const boost::shared_ptr<Player>& player, Vec3* pos, InteractionHand::EInteractionHand hand)
+InteractionResult::EInteractionResult TamableAnimal::interactAt(const boost::shared_ptr<Player>& player, Vec3* pos,
+                                                                InteractionHand::EInteractionHand hand)
 {
-    return isTame() ? InteractionResult::eInteractionResult_Success
-                    : InteractionResult::eInteractionResult_Pass;
+    return isTame() ? InteractionResult::eInteractionResult_Success : InteractionResult::eInteractionResult_Pass;
 }

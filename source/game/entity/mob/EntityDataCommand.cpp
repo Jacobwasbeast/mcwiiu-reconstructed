@@ -28,6 +28,5 @@ boost::shared_ptr<GameCommandPacket> EntityDataCommand::preparePacket(unsigned c
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
     static_cast<void>(stream);
-    return boost::shared_ptr<GameCommandPacket>(
-        new GameCommandPacket());
+    return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket());
 }

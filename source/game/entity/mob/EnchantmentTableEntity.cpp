@@ -10,8 +10,7 @@
 #include "game/core/Mth.hpp"
 #include "game/world/Level.hpp"
 
-EnchantmentTableEntity::EnchantmentTableEntity()
-    : BlockEntity(), InteractionObject()
+EnchantmentTableEntity::EnchantmentTableEntity() : BlockEntity(), InteractionObject()
 {
     mRandom = new Random();
     mTime = 0;
@@ -68,7 +67,7 @@ std::wstring EnchantmentTableEntity::getDisplayName()
 }
 
 AbstractContainerMenu* EnchantmentTableEntity::createMenu(boost::shared_ptr<Inventory> inventory,
-                                                            boost::shared_ptr<Player> player)
+                                                          boost::shared_ptr<Player> player)
 {
     return new EnchantmentMenu(inventory, mLevel, mPos);
 }
@@ -80,11 +79,12 @@ int EnchantmentTableEntity::getTypeId(bool large)
 
 InteractionObject::NameData EnchantmentTableEntity::GetNetworkNameData()
 {
-    return InteractionObject::NameData(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isUUIDLocal(), mCustomName->isChatCensored());
+    return InteractionObject::NameData(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isUUIDLocal(),
+                                       mCustomName->isChatCensored());
 }
 
-void EnchantmentTableEntity::setCustomName(const std::wstring& name, const std::wstring& uuid,
-                                            bool chatCensored, bool uuidLocal)
+void EnchantmentTableEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored,
+                                           bool uuidLocal)
 {
     mCustomName->set(name, uuid, chatCensored, uuidLocal);
 }
@@ -106,9 +106,9 @@ void EnchantmentTableEntity::tick()
 {
     mOpenOld = mOpen;
     mRotOld = mRot;
-    boost::shared_ptr<Player> player = mLevel->getNearestPlayer(
-        (double)((float)mPos.x + 0.5F), (double)((float)mPos.y + 0.5F), (double)((float)mPos.z + 0.5F),
-        3.0, false, -1.0);
+    boost::shared_ptr<Player> player = mLevel->getNearestPlayer((double)((float)mPos.x + 0.5F),
+                                                                (double)((float)mPos.y + 0.5F),
+                                                                (double)((float)mPos.z + 0.5F), 3.0, false, -1.0);
 
     if (player.get() != NULL)
     {
@@ -169,7 +169,8 @@ boost::shared_ptr<BlockEntity> EnchantmentTableEntity::clone()
     copy->mRot = mRot;
     copy->mRotOld = mRotOld;
     copy->mRotTarget = mRotTarget;
-    copy->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    copy->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(),
+                           mCustomName->isUUIDLocal());
     return copy;
 }
 

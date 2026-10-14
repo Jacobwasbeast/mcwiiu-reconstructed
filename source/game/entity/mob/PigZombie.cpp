@@ -24,8 +24,7 @@
 AttributeModifier* PigZombie::SPEED_MODIFIER_ATTACKING =
     (new AttributeModifier(eMODIFIER_ID_PigZombieAttackingSpeedBoost, 0.05, 0))->setSerialize(false);
 
-PigZombie::PigZombie(Level* level)
-    : Zombie(level, false)
+PigZombie::PigZombie(Level* level) : Zombie(level, false)
 {
     fjDerivedCtorCalls();
     _init();
@@ -91,9 +90,9 @@ void PigZombie::customServerAiStep()
 
 bool PigZombie::checkSpawnRules()
 {
-    return mLevel->getDifficulty() != Difficulty::PEACEFUL && mLevel->isUnobstructed(mBoundingBox) &&
-           mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty() &&
-           !mLevel->containsAnyLiquid(mBoundingBox);
+    return mLevel->getDifficulty() != Difficulty::PEACEFUL && mLevel->isUnobstructed(mBoundingBox)
+           && mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty()
+           && !mLevel->containsAnyLiquid(mBoundingBox);
 }
 
 void PigZombie::addDataWalkers(DataFixerUpper* fixer)
@@ -187,8 +186,8 @@ PigZombie::PigZombieHurtByOtherGoal::PigZombieHurtByOtherGoal(PigZombie* mob)
 {
 }
 
-void PigZombie::PigZombieHurtByOtherGoal::alertOther(
-    boost::shared_ptr<PathfinderMob> mob, boost::shared_ptr<LivingEntity> target)
+void PigZombie::PigZombieHurtByOtherGoal::alertOther(boost::shared_ptr<PathfinderMob> mob,
+                                                     boost::shared_ptr<LivingEntity> target)
 {
     HurtByTargetGoal::alertOther(mob, target);
     if (eTYPE_DERIVED_FROM(EntityType::PIG_ZOMBIE, mob->GetType()))

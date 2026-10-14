@@ -37,11 +37,14 @@ const int Horse::MARKING_TEXTURES[5] = {-1, 96, 98, 97, 95};
 const std::wstring Horse::MARKING_HASHES[5] = {L"", L"wo_", L"wmo", L"wdo", L"bdo"};
 HorseArmorItem* Horse::ARMOR_NONE = new HorseArmorItem(0, 0);
 
-Horse::HorseGroupData::HorseGroupData(int variant) : MobGroupData(), mVariant(variant) { }
-Horse::HorseGroupData::~HorseGroupData() { }
+Horse::HorseGroupData::HorseGroupData(int variant) : MobGroupData(), mVariant(variant)
+{
+}
+Horse::HorseGroupData::~HorseGroupData()
+{
+}
 
-Horse::Horse(Level* level)
-    : AbstractHorse(level)
+Horse::Horse(Level* level) : AbstractHorse(level)
 {
     fjDerivedCtorCalls();
     mLayeredTextureHashName = L"";
@@ -84,13 +87,12 @@ void Horse::containerChanged(Container* container)
 void Horse::addDataWalkers(DataFixerUpper* fixer)
 {
     AbstractHorse::addDataWalkers(fixer, EntityType::HORSE);
-    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
-                     new ItemDataWalker(EntityType::HORSE, L"ArmorItem"));
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity, new ItemDataWalker(EntityType::HORSE, L"ArmorItem"));
 }
 void Horse::staticCtor()
 {
     DATA_VARIANT = SynchedEntityData::defineId<int>(EntityType::HORSE, EntityType::ABSTRACT_HORSE,
-                                                     EntityDataSerializers::INT);
+                                                    EntityDataSerializers::INT);
     DATA_ARMOR = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(EntityType::HORSE, EntityType::ABSTRACT_HORSE,
                                                                           EntityDataSerializers::ITEM_INSTANCE);
 }
@@ -100,7 +102,10 @@ void Horse::defineSynchedData()
     mEntityData->define(DATA_VARIANT, 0);
     mEntityData->define(DATA_ARMOR, ItemInstance::EMPTY);
 }
-int Horse::getVariant() { return mEntityData->get(DATA_VARIANT); }
+int Horse::getVariant()
+{
+    return mEntityData->get(DATA_VARIANT);
+}
 
 void Horse::addAdditonalSaveData(CompoundTag* tag)
 {
@@ -162,13 +167,15 @@ void Horse::rebuildLayeredTextureInfo()
 
 std::wstring Horse::getLayeredTextureHashName()
 {
-    if (mLayeredTextureHashName.empty()) rebuildLayeredTextureInfo();
+    if (mLayeredTextureHashName.empty())
+        rebuildLayeredTextureInfo();
     return mLayeredTextureHashName;
 }
 
 arrayWithLength<int> Horse::getLayeredTextureLayers()
 {
-    if (mLayeredTextureHashName.empty()) rebuildLayeredTextureInfo();
+    if (mLayeredTextureHashName.empty())
+        rebuildLayeredTextureInfo();
     return mLayeredTextureLayers;
 }
 
@@ -206,7 +213,8 @@ void Horse::setArmorType(const not_null_ptr<ItemInstance>& item)
         if (protection != 0)
         {
             getAttribute(SharedMonsterAttributes::ARMOR)
-                ->addModifier((new AttributeModifier(eMODIFIER_ID_ArmorBonus, (double)protection, 0))->setSerialize(false));
+                ->addModifier(
+                    (new AttributeModifier(eMODIFIER_ID_ArmorBonus, (double)protection, 0))->setSerialize(false));
         }
     }
 }
@@ -252,11 +260,30 @@ void Horse::tick()
     PIXEndNamedEvent();
 }
 
-const SoundEvent* Horse::getAmbientSound() { AbstractHorse::getAmbientSound(); return SoundEvents::HORSE_AMBIENT; }
-const SoundEvent* Horse::getDeathSound() { AbstractHorse::getDeathSound(); return SoundEvents::HORSE_DEATH; }
-const SoundEvent* Horse::getHurtSound(const DamageSource* source) { AbstractHorse::getHurtSound(source); return SoundEvents::HORSE_HURT; }
-const SoundEvent* Horse::getAngrySound() { AbstractHorse::getAngrySound(); return SoundEvents::HORSE_ANGRY; }
-ResourceLocation* Horse::getDefaultLootTable() { return &BuiltInLootTables::HORSE; }
+const SoundEvent* Horse::getAmbientSound()
+{
+    AbstractHorse::getAmbientSound();
+    return SoundEvents::HORSE_AMBIENT;
+}
+const SoundEvent* Horse::getDeathSound()
+{
+    AbstractHorse::getDeathSound();
+    return SoundEvents::HORSE_DEATH;
+}
+const SoundEvent* Horse::getHurtSound(const DamageSource* source)
+{
+    AbstractHorse::getHurtSound(source);
+    return SoundEvents::HORSE_HURT;
+}
+const SoundEvent* Horse::getAngrySound()
+{
+    AbstractHorse::getAngrySound();
+    return SoundEvents::HORSE_ANGRY;
+}
+ResourceLocation* Horse::getDefaultLootTable()
+{
+    return &BuiltInLootTables::HORSE;
+}
 
 bool Horse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
@@ -284,9 +311,7 @@ bool Horse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand
                 item->shrink(1);
             return true;
         }
-        if (item->interactEnemy(player,
-                                boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-                                hand))
+        if (item->interactEnemy(player, boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand))
             return true;
         if (!isTamed())
         {
@@ -314,7 +339,7 @@ unsigned int Horse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
 
     unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
     bool food = itemId == BlockId::HAY_BLOCK || itemId == ItemId::APPLE || itemId == ItemId::WHEAT
-             || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR || itemId == ItemId::GOLDEN_CARROT;
+                || itemId == ItemId::GOLDEN_APPLE || itemId == ItemId::SUGAR || itemId == ItemId::GOLDEN_CARROT;
     bool breedFood = itemId == ItemId::GOLDEN_CARROT || itemId == ItemId::GOLDEN_APPLE;
     bool horseArmor = itemId >= 417 && (itemId <= 419 || itemId == ItemId::LEATHER_HORSE_ARMOR);
 
@@ -366,8 +391,7 @@ unsigned int Horse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
         return IDS_NONE;
     }
 
-    if ((tooltipData.m_pPlayer->isSneaking()
-         && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed())
+    if ((tooltipData.m_pPlayer->isSneaking() && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed())
         || (itemId == ItemId::SADDLE && !isSaddled()) || (wearsArmor() && horseArmor))
         return IDS_TOOLTIPS_OPEN;
 
@@ -382,7 +406,10 @@ unsigned int Horse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
     return IDS_NONE;
 }
 
-bool Horse::HideUseTooltips() { return true; }
+bool Horse::HideUseTooltips()
+{
+    return true;
+}
 
 bool Horse::canMate(const boost::shared_ptr<Animal>& other)
 {
@@ -390,7 +417,8 @@ bool Horse::canMate(const boost::shared_ptr<Animal>& other)
     {
         return false;
     }
-    if (eTYPE_DERIVED_FROM(EntityType::DONKEY, other->GetType()) || eTYPE_DERIVED_FROM(EntityType::HORSE, other->GetType()))
+    if (eTYPE_DERIVED_FROM(EntityType::DONKEY, other->GetType())
+        || eTYPE_DERIVED_FROM(EntityType::HORSE, other->GetType()))
     {
         return canParent() && boost::static_pointer_cast<AbstractHorse>(other)->canParent();
     }
@@ -444,14 +472,18 @@ boost::shared_ptr<AgableMob> Horse::getBreedOffspring(boost::shared_ptr<AgableMo
     return child;
 }
 
-bool Horse::wearsArmor() { return true; }
+bool Horse::wearsArmor()
+{
+    return true;
+}
 
 bool Horse::isArmor(const not_null_ptr<ItemInstance>& item)
 {
     return HorseArmorItem::isHorseArmor(item->getItem());
 }
 
-MobGroupData* Horse::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
+MobGroupData* Horse::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                      const std::wstring& name)
 {
     MobGroupData* result = AbstractHorse::finalizeMobSpawn(difficulty, data, name);
     if (result != NULL && dynamic_cast<HorseGroupData*>(result) != NULL)
@@ -470,4 +502,7 @@ bool Horse::removeWhenFarAway()
     return AbstractHorse::removeWhenFarAway() && getArmorType() == ARMOR_NONE;
 }
 
-unsigned long long Horse::GetType() { return EntityType::HORSE; }
+unsigned long long Horse::GetType()
+{
+    return EntityType::HORSE;
+}

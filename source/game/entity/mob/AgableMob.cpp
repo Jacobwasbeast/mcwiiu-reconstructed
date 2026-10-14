@@ -27,8 +27,7 @@
 const EntityDataAccessor<bool>* AgableMob::DATA_BABY_ID = NULL;
 const EntityDataAccessor<bool>* AgableMob::DATA_BABY_ID_2 = NULL;
 
-AgableMob::AgableMob(Level* level)
-    : PathfinderMob(level)
+AgableMob::AgableMob(Level* level) : PathfinderMob(level)
 {
     mBaseWidth = -1.0f;
     mBaseHeight = 0.0f;
@@ -54,12 +53,12 @@ bool AgableMob::mobInteract(const boost::shared_ptr<Player>& player, Interaction
         if ((type != 0 ? eTYPE_DERIVED_FROM(EntityType::AGABLE_MOB, type) : false) && type == GetType())
         {
             int error = -1;
-            boost::shared_ptr<Entity> spawnCheck =
-                SpawnEggItem::canSpawn(SpawnEggItem::getNamedIdFrom(itemInstance), mLevel, &error);
+            boost::shared_ptr<Entity> spawnCheck = SpawnEggItem::canSpawn(SpawnEggItem::getNamedIdFrom(itemInstance),
+                                                                          mLevel, &error);
             if (spawnCheck != NULL && mLevel->canCreateMore(GetType(), Level::eSpawnType_Egg))
             {
-                boost::shared_ptr<AgableMob> child =
-                    getBreedOffspring(boost::static_pointer_cast<AgableMob>(shared_from_this()));
+                boost::shared_ptr<AgableMob> child = getBreedOffspring(
+                    boost::static_pointer_cast<AgableMob>(shared_from_this()));
                 if (child != NULL)
                 {
                     child->setAge(-24000);
@@ -195,11 +194,10 @@ void AgableMob::aiStep()
         {
             if ((mForcedAgeTimer & 3) == 0)
             {
-                mLevel->addParticle(PARTICLE_HAPPY_VILLAGER,
-                                    mX + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
+                mLevel->addParticle(PARTICLE_HAPPY_VILLAGER, mX + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
                                     mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                                    mZ + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
-                                    0.0, 0.0, 0.0, arrayWithLength<int>());
+                                    mZ + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth, 0.0, 0.0, 0.0,
+                                    arrayWithLength<int>());
             }
             --mForcedAgeTimer;
         }

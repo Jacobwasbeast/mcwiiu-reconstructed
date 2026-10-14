@@ -19,8 +19,8 @@ public:
     static DragonRespawnAnimation* END;
 
     virtual void tick(ServerLevel* level, EndDragonFight* dragonFight,
-        std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
-        const BlockPos& portalLocation) = 0;
+                      std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
+                      const BlockPos& portalLocation) = 0;
 };
 
 #endif

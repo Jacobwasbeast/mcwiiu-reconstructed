@@ -239,8 +239,7 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
 
     bool boundsChanged = true;
 
-    if (mMinX == minX && mMinY == minY && mMinZ == minZ && mMaxX == maxX && mMaxY == maxY &&
-        mMaxZ == maxZ)
+    if (mMinX == minX && mMinY == minY && mMinZ == minZ && mMaxX == maxX && mMaxY == maxY && mMaxZ == maxZ)
     {
         boundsChanged = false;
     }

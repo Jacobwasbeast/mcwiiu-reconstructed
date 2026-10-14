@@ -18,12 +18,15 @@ class Block;
 class FireworksRocketEntity : public Entity
 {
 public:
-    FireworksRocketEntity(Level* level, const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item);
+    FireworksRocketEntity(Level* level, const boost::shared_ptr<Player>& player,
+                          const not_null_ptr<ItemInstance>& item);
     FireworksRocketEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item);
-    FireworksRocketEntity(Level* level, const not_null_ptr<ItemInstance>& item, const boost::shared_ptr<LivingEntity>& entity);
+    FireworksRocketEntity(Level* level, const not_null_ptr<ItemInstance>& item,
+                          const boost::shared_ptr<LivingEntity>& entity);
     explicit FireworksRocketEntity(Level* level);
     FireworksRocketEntity(Level* level, double x, double y, double z, double xd, double yd, double zd,
-                          not_null_ptr<ItemInstance> item, bool hasDirectionalData, const boost::shared_ptr<Player>& owner);
+                          not_null_ptr<ItemInstance> item, bool hasDirectionalData,
+                          const boost::shared_ptr<Player>& owner);
 
     void _init(double x, double y, double z, const not_null_ptr<ItemInstance>& item);
     static void staticCtor();
@@ -41,7 +44,8 @@ public:
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual bool isAttackable();
     boost::shared_ptr<LivingEntity> getOwner() const;
-    virtual void updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY, double& movedZ);
+    virtual void updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY,
+                                      double& movedZ);
     virtual void defineSynchedData();
     static Entity* create(Level* level);
     virtual unsigned long long GetType();

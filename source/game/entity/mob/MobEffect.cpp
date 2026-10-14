@@ -66,13 +66,13 @@ void MobEffect::staticCtor()
 {
     effectCount = 0;
 
-    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"speed"),
-                                       (new MobEffect(false, eMinecraftColour_Effect_MovementSpeed))
-                                           ->setDescriptionId(IDS_EFFECT_MOVESPEED)
-                                           ->setIcon(EMobEffectIcon_Speed)
-                                           ->addAttributeModifier(SharedMonsterAttributes::MOVEMENT_SPEED,
-                                                                  eMODIFIER_ID_PotionMoveSpeed, 0.2f, 2)
-                                           ->setBeneficial());
+    mobEffectRegistry->registerMapping(
+        ++effectCount, ResourceLocation(L"minecraft", L"speed"),
+        (new MobEffect(false, eMinecraftColour_Effect_MovementSpeed))
+            ->setDescriptionId(IDS_EFFECT_MOVESPEED)
+            ->setIcon(EMobEffectIcon_Speed)
+            ->addAttributeModifier(SharedMonsterAttributes::MOVEMENT_SPEED, eMODIFIER_ID_PotionMoveSpeed, 0.2f, 2)
+            ->setBeneficial());
 
     mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"slowness"),
                                        (new MobEffect(true, eMinecraftColour_Effect_MovementSlowDown))
@@ -81,29 +81,29 @@ void MobEffect::staticCtor()
                                            ->addAttributeModifier(SharedMonsterAttributes::MOVEMENT_SPEED,
                                                                   eMODIFIER_ID_PotionMoveSlowdown, -0.15f, 2));
 
-    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"haste"),
-                                       (new MobEffect(false, eMinecraftColour_Effect_DigSpeed))
-                                           ->setDescriptionId(IDS_EFFECT_DIGSPEED)
-                                           ->setDurationModifier(1.5)
-                                           ->setIcon(EMobEffectIcon_Haste)
-                                           ->setBeneficial()
-                                           ->addAttributeModifier(SharedMonsterAttributes::ATTACK_SPEED,
-                                                                  eMODIFIER_ID_PotionDigSpeed, 0.1f, 2));
+    mobEffectRegistry->registerMapping(
+        ++effectCount, ResourceLocation(L"minecraft", L"haste"),
+        (new MobEffect(false, eMinecraftColour_Effect_DigSpeed))
+            ->setDescriptionId(IDS_EFFECT_DIGSPEED)
+            ->setDurationModifier(1.5)
+            ->setIcon(EMobEffectIcon_Haste)
+            ->setBeneficial()
+            ->addAttributeModifier(SharedMonsterAttributes::ATTACK_SPEED, eMODIFIER_ID_PotionDigSpeed, 0.1f, 2));
 
-    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"mining_fatigue"),
-                                       (new MobEffect(true, eMinecraftColour_Effect_DigSlowdown))
-                                           ->setDescriptionId(IDS_EFFECT_DIGSLOWDOWN)
-                                           ->setIcon(EMobEffectIcon_MiningFatigue)
-                                           ->addAttributeModifier(SharedMonsterAttributes::ATTACK_SPEED,
-                                                                  eMODIFIER_ID_PotionDigSpeed, -0.1f, 2));
+    mobEffectRegistry->registerMapping(
+        ++effectCount, ResourceLocation(L"minecraft", L"mining_fatigue"),
+        (new MobEffect(true, eMinecraftColour_Effect_DigSlowdown))
+            ->setDescriptionId(IDS_EFFECT_DIGSLOWDOWN)
+            ->setIcon(EMobEffectIcon_MiningFatigue)
+            ->addAttributeModifier(SharedMonsterAttributes::ATTACK_SPEED, eMODIFIER_ID_PotionDigSpeed, -0.1f, 2));
 
-    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"strength"),
-                                       (new AttackDamageMobEffect(false, eMinecraftColour_Effect_DamageBoost, 3.0))
-                                           ->setDescriptionId(IDS_EFFECT_DAMAGEBOOST)
-                                           ->setIcon(EMobEffectIcon_Strength)
-                                           ->addAttributeModifier(SharedMonsterAttributes::ATTACK_DAMAGE,
-                                                                  eMODIFIER_ID_PotionDamageBoost, 0.0, 0)
-                                           ->setBeneficial());
+    mobEffectRegistry->registerMapping(
+        ++effectCount, ResourceLocation(L"minecraft", L"strength"),
+        (new AttackDamageMobEffect(false, eMinecraftColour_Effect_DamageBoost, 3.0))
+            ->setDescriptionId(IDS_EFFECT_DAMAGEBOOST)
+            ->setIcon(EMobEffectIcon_Strength)
+            ->addAttributeModifier(SharedMonsterAttributes::ATTACK_DAMAGE, eMODIFIER_ID_PotionDamageBoost, 0.0, 0)
+            ->setBeneficial());
 
     mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"instant_health"),
                                        (new InstantenousMobEffect(false, eMinecraftColour_Effect_Heal))
@@ -175,12 +175,12 @@ void MobEffect::staticCtor()
                                            ->setDescriptionId(IDS_EFFECT_HUNGER)
                                            ->setIcon(EMobEffectIcon_Hunger));
 
-    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"weakness"),
-                                       (new AttackDamageMobEffect(true, eMinecraftColour_Effect_Weakness, -4.0))
-                                           ->setDescriptionId(IDS_EFFECT_WEAKNESS)
-                                           ->setIcon(EMobEffectIcon_Weakness)
-                                           ->addAttributeModifier(SharedMonsterAttributes::ATTACK_DAMAGE,
-                                                                  eMODIFIER_ID_PotionWeakness, 0.0, 0));
+    mobEffectRegistry->registerMapping(
+        ++effectCount, ResourceLocation(L"minecraft", L"weakness"),
+        (new AttackDamageMobEffect(true, eMinecraftColour_Effect_Weakness, -4.0))
+            ->setDescriptionId(IDS_EFFECT_WEAKNESS)
+            ->setIcon(EMobEffectIcon_Weakness)
+            ->addAttributeModifier(SharedMonsterAttributes::ATTACK_DAMAGE, eMODIFIER_ID_PotionWeakness, 0.0, 0));
 
     mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"poison"),
                                        (new MobEffect(true, eMinecraftColour_Effect_Poison))
@@ -194,13 +194,13 @@ void MobEffect::staticCtor()
                                            ->setIcon(EMobEffectIcon_Wither)
                                            ->setDurationModifier(0.25));
 
-    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"health_boost"),
-                                       (new HealthBoostMobEffect(false, eMinecraftColour_Effect_HealthBoost))
-                                           ->setDescriptionId(IDS_EFFECT_HEALTHBOOST)
-                                           ->setIcon(EMobEffectIcon_HealthBoost)
-                                           ->addAttributeModifier(SharedMonsterAttributes::MAX_HEALTH,
-                                                                  eMODIFIER_ID_PotionHealthBoost, 4.0, 0)
-                                           ->setBeneficial());
+    mobEffectRegistry->registerMapping(
+        ++effectCount, ResourceLocation(L"minecraft", L"health_boost"),
+        (new HealthBoostMobEffect(false, eMinecraftColour_Effect_HealthBoost))
+            ->setDescriptionId(IDS_EFFECT_HEALTHBOOST)
+            ->setIcon(EMobEffectIcon_HealthBoost)
+            ->addAttributeModifier(SharedMonsterAttributes::MAX_HEALTH, eMODIFIER_ID_PotionHealthBoost, 4.0, 0)
+            ->setBeneficial());
 
     mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"absorption"),
                                        (new AbsoptionMobEffect(false, eMinecraftColour_Effect_Absorption))
@@ -223,20 +223,20 @@ void MobEffect::staticCtor()
                                            ->setDescriptionId(IDS_EFFECT_LEVITATION)
                                            ->setIcon(EMobEffectIcon_Levitation));
 
-    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"luck"),
-                                       (new MobEffect(false, eMinecraftColour_Effect_Luck))
-                                           ->setDescriptionId(IDS_EFFECT_LUCK)
-                                           ->setIcon(EMobEffectIcon_Luck)
-                                           ->setBeneficial()
-                                           ->addAttributeModifier(SharedMonsterAttributes::LUCK,
-                                                                  eMODIFIER_ID_PotionLuck, 1.0, 0));
+    mobEffectRegistry->registerMapping(
+        ++effectCount, ResourceLocation(L"minecraft", L"luck"),
+        (new MobEffect(false, eMinecraftColour_Effect_Luck))
+            ->setDescriptionId(IDS_EFFECT_LUCK)
+            ->setIcon(EMobEffectIcon_Luck)
+            ->setBeneficial()
+            ->addAttributeModifier(SharedMonsterAttributes::LUCK, eMODIFIER_ID_PotionLuck, 1.0, 0));
 
-    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"unluck"),
-                                       (new MobEffect(true, eMinecraftColour_Effect_BadLuck))
-                                           ->setDescriptionId(IDS_EFFECT_UNLUCK)
-                                           ->setIcon(EMobEffectIcon_Unluck)
-                                           ->addAttributeModifier(SharedMonsterAttributes::LUCK,
-                                                                  eMODIFIER_ID_PotionLuck, -1.0, 0));
+    mobEffectRegistry->registerMapping(
+        ++effectCount, ResourceLocation(L"minecraft", L"unluck"),
+        (new MobEffect(true, eMinecraftColour_Effect_BadLuck))
+            ->setDescriptionId(IDS_EFFECT_UNLUCK)
+            ->setIcon(EMobEffectIcon_Unluck)
+            ->addAttributeModifier(SharedMonsterAttributes::LUCK, eMODIFIER_ID_PotionLuck, -1.0, 0));
 
     mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"conduit_power"),
                                        (new MobEffect(false, eMinecraftColour_Effect_ConduitPower))
@@ -304,13 +304,13 @@ void MobEffect::applyEffectTick(const boost::shared_ptr<LivingEntity>& entity, i
             player->getFoodData()->eat(amplifier + 1, FoodConstants::FOOD_SATURATION_MAX);
         }
     }
-    else if ((this == MobEffects::HEAL && !entity->isInvertedHealAndHarm()) ||
-             (this == MobEffects::HARM && entity->isInvertedHealAndHarm()))
+    else if ((this == MobEffects::HEAL && !entity->isInvertedHealAndHarm())
+             || (this == MobEffects::HARM && entity->isInvertedHealAndHarm()))
     {
         entity->heal((float)std::max(4 << amplifier, 0));
     }
-    else if ((this == MobEffects::HARM && !entity->isInvertedHealAndHarm()) ||
-             (this == MobEffects::HEAL && entity->isInvertedHealAndHarm()))
+    else if ((this == MobEffects::HARM && !entity->isInvertedHealAndHarm())
+             || (this == MobEffects::HEAL && entity->isInvertedHealAndHarm()))
     {
         entity->hurt(DamageSource::INSTANT_DAMAGE, (float)(6 << amplifier));
     }
@@ -318,17 +318,16 @@ void MobEffect::applyEffectTick(const boost::shared_ptr<LivingEntity>& entity, i
 
 void MobEffect::applyInstantenousEffect(const boost::shared_ptr<Entity>& source,
                                         const boost::shared_ptr<Entity>& indirectSource,
-                                        const boost::shared_ptr<LivingEntity>& entity,
-                                        int amplifier, double health)
+                                        const boost::shared_ptr<LivingEntity>& entity, int amplifier, double health)
 {
-    if ((this == MobEffects::HEAL && !entity->isInvertedHealAndHarm()) ||
-        (this == MobEffects::HARM && entity->isInvertedHealAndHarm()))
+    if ((this == MobEffects::HEAL && !entity->isInvertedHealAndHarm())
+        || (this == MobEffects::HARM && entity->isInvertedHealAndHarm()))
     {
         float amount = (float)(health * (double)(4 << amplifier) + 0.5);
         entity->heal(amount);
     }
-    else if ((this == MobEffects::HARM && !entity->isInvertedHealAndHarm()) ||
-             (this == MobEffects::HEAL && entity->isInvertedHealAndHarm()))
+    else if ((this == MobEffects::HARM && !entity->isInvertedHealAndHarm())
+             || (this == MobEffects::HEAL && entity->isInvertedHealAndHarm()))
     {
         float amount = (float)(health * (double)(6 << amplifier) + 0.5);
         if (source == NULL)
@@ -337,8 +336,8 @@ void MobEffect::applyInstantenousEffect(const boost::shared_ptr<Entity>& source,
         }
         else
         {
-            DamageSource* damage =
-                DamageSource::CreateIndirectMagic(source, indirectSource, DamageSource::INSTANT_DAMAGE);
+            DamageSource* damage = DamageSource::CreateIndirectMagic(source, indirectSource,
+                                                                     DamageSource::INSTANT_DAMAGE);
             entity->hurt(damage, amount);
             delete damage;
         }
@@ -386,7 +385,7 @@ bool MobEffect::isInstantenous()
     return false;
 }
 
-int MobEffect::getDescriptionId(int) 
+int MobEffect::getDescriptionId(int)
 {
     return descriptionId;
 }
@@ -427,8 +426,7 @@ eMinecraftColour MobEffect::getColor() const
     return color;
 }
 
-MobEffect* MobEffect::addAttributeModifier(Attribute* attribute, eMODIFIER_ID id,
-                                            double amount, int operation)
+MobEffect* MobEffect::addAttributeModifier(Attribute* attribute, eMODIFIER_ID id, double amount, int operation)
 {
     attributeModifiers.insert(boost::unordered_map<Attribute*, AttributeModifier*>::value_type(
         attribute, new AttributeModifier(id, amount, operation)));
@@ -440,8 +438,7 @@ boost::unordered_map<Attribute*, AttributeModifier*>* MobEffect::getAttributeMod
     return &attributeModifiers;
 }
 
-void MobEffect::removeAttributeModifiers(const boost::shared_ptr<LivingEntity>&,
-                                         BaseAttributeMap* attributes, int)
+void MobEffect::removeAttributeModifiers(const boost::shared_ptr<LivingEntity>&, BaseAttributeMap* attributes, int)
 {
     for (boost::unordered_map<Attribute*, AttributeModifier*>::iterator it = attributeModifiers.begin();
          it != attributeModifiers.end(); ++it)
@@ -454,8 +451,8 @@ void MobEffect::removeAttributeModifiers(const boost::shared_ptr<LivingEntity>&,
     }
 }
 
-void MobEffect::addAttributeModifiers(const boost::shared_ptr<LivingEntity>&,
-                                      BaseAttributeMap* attributes, int amplifier)
+void MobEffect::addAttributeModifiers(const boost::shared_ptr<LivingEntity>&, BaseAttributeMap* attributes,
+                                      int amplifier)
 {
     for (boost::unordered_map<Attribute*, AttributeModifier*>::iterator it = attributeModifiers.begin();
          it != attributeModifiers.end(); ++it)
@@ -465,9 +462,8 @@ void MobEffect::addAttributeModifiers(const boost::shared_ptr<LivingEntity>&,
         {
             AttributeModifier* modifier = it->second;
             instance->removeModifier(modifier);
-            instance->addModifier(new AttributeModifier(modifier->getId(),
-                                                        getAttributeModifierValue(amplifier, modifier),
-                                                        modifier->getOperation()));
+            instance->addModifier(new AttributeModifier(
+                modifier->getId(), getAttributeModifierValue(amplifier, modifier), modifier->getOperation()));
         }
     }
 }

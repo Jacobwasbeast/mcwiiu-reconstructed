@@ -23,10 +23,6 @@ template <class T> class EntityDataAccessor;
 class Animal : public AgableMob, public Creature
 {
 public:
-    
-    
-    
-    
     static const unsigned int MESSAGE_ANIMAL_LIMIT = 0x00FE5875U;
     static const unsigned int MESSAGE_WOLF_LIMIT = 0xEC344E3DU;
     static const unsigned int MESSAGE_CHICKEN_LIMIT = 0x99326383U;
@@ -65,6 +61,7 @@ public:
     virtual bool isDespawnProtected();
     virtual void dropLeash(bool dropLeash, bool suppressDrops);
     virtual boost::shared_ptr<Entity> changeDimension(int dimension);
+
 protected:
     Block* mSpawnableBlock;
     std::wstring mLoveCause;

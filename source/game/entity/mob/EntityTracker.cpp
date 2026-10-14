@@ -23,8 +23,7 @@
 #include "game/world/generation/PlayerList.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 
-EntityTracker::EntityTracker(ServerLevel* level)
-    : mTrackedEntities(), mEntityMap()
+EntityTracker::EntityTracker(ServerLevel* level) : mTrackedEntities(), mEntityMap()
 {
     mLevel = level;
     mMaxRange = level->getServer()->getPlayers()->getMaxRange();
@@ -54,7 +53,10 @@ void EntityTracker::addEntity(boost::shared_ptr<Entity> entity)
     {
         addEntity(entity, 512, 2);
         boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(entity);
-        for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin(); it != mTrackedEntities.end(); ++it)
+        for (boost::unordered_set<boost::shared_ptr<TrackedEntity>,
+                                  boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it =
+                 mTrackedEntities.begin();
+             it != mTrackedEntities.end(); ++it)
         {
             if ((*it)->getEntity() != player)
                 (*it)->updatePlayer(this, player);
@@ -139,14 +141,16 @@ void EntityTracker::addEntity(boost::shared_ptr<Entity> entity)
         addEntity(entity, 160, 2, false);
     else if (eTYPE_DERIVED_FROM(EntityType::PHANTOM, entity->GetType()))
         addEntity(entity, 160, 1, true);
-    else if (boost::dynamic_pointer_cast<Creature>(entity) != NULL || eTYPE_DERIVED_FROM(EntityType::SHULKER, entity->GetType()))
+    else if (boost::dynamic_pointer_cast<Creature>(entity) != NULL
+             || eTYPE_DERIVED_FROM(EntityType::SHULKER, entity->GetType()))
         addEntity(entity, 80, 3, true);
 }
 
 void EntityTracker::removeEntity(boost::shared_ptr<Entity> entity)
 {
     int id = entity->getId();
-    boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq>::iterator it = mEntityMap.find(id);
+    boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq>::iterator it = mEntityMap.find(
+        id);
     if (it != mEntityMap.end())
     {
         boost::shared_ptr<TrackedEntity> tracker = it->second;
@@ -161,7 +165,10 @@ void EntityTracker::removePlayer(boost::shared_ptr<Entity> entity)
     if (entity->GetType() == EntityType::SERVER_PLAYER)
     {
         boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(entity);
-        for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin(); it != mTrackedEntities.end(); ++it)
+        for (boost::unordered_set<boost::shared_ptr<TrackedEntity>,
+                                  boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it =
+                 mTrackedEntities.begin();
+             it != mTrackedEntities.end(); ++it)
         {
             (*it)->removePlayer(this, player);
         }
@@ -172,7 +179,9 @@ void EntityTracker::removePlayer(boost::shared_ptr<Entity> entity)
 void EntityTracker::tick(boost::shared_ptr<ServerPlayer> player)
 {
     std::vector<boost::shared_ptr<ServerPlayer> > movedPlayers;
-    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin(); it != mTrackedEntities.end(); ++it)
+    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>,
+                              boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin();
+         it != mTrackedEntities.end(); ++it)
     {
         boost::shared_ptr<TrackedEntity> tracker = *it;
         tracker->tick(this, &mLevel->mPlayers);
@@ -215,7 +224,10 @@ void EntityTracker::tick(boost::shared_ptr<ServerPlayer> player)
         boost::shared_ptr<ServerPlayer> movedPlayer = movedPlayers[i];
         if (movedPlayer->mConnection == NULL)
             continue;
-        for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin(); it != mTrackedEntities.end(); ++it)
+        for (boost::unordered_set<boost::shared_ptr<TrackedEntity>,
+                                  boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it =
+                 mTrackedEntities.begin();
+             it != mTrackedEntities.end(); ++it)
         {
             boost::shared_ptr<TrackedEntity> tracker = *it;
             if (tracker->mEntity != movedPlayer)
@@ -234,7 +246,9 @@ void EntityTracker::tick(boost::shared_ptr<ServerPlayer> player)
 
 void EntityTracker::updateVisibility(boost::shared_ptr<ServerPlayer> player)
 {
-    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin(); it != mTrackedEntities.end(); ++it)
+    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>,
+                              boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin();
+         it != mTrackedEntities.end(); ++it)
     {
         boost::shared_ptr<TrackedEntity> tracker = *it;
         if (tracker->getEntity() == player)
@@ -246,7 +260,8 @@ void EntityTracker::updateVisibility(boost::shared_ptr<ServerPlayer> player)
 
 void EntityTracker::broadcast(boost::shared_ptr<Entity> entity, boost::shared_ptr<Packet> packet)
 {
-    boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq>::iterator it = mEntityMap.find(entity->getId());
+    boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq>::iterator it = mEntityMap.find(
+        entity->getId());
     if (it != mEntityMap.end())
     {
         boost::shared_ptr<TrackedEntity> tracker = it->second;
@@ -256,7 +271,8 @@ void EntityTracker::broadcast(boost::shared_ptr<Entity> entity, boost::shared_pt
 
 void EntityTracker::broadcastAndSend(boost::shared_ptr<Entity> entity, boost::shared_ptr<Packet> packet)
 {
-    boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq>::iterator it = mEntityMap.find(entity->getId());
+    boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq>::iterator it = mEntityMap.find(
+        entity->getId());
     if (it != mEntityMap.end())
     {
         boost::shared_ptr<TrackedEntity> tracker = it->second;
@@ -266,7 +282,9 @@ void EntityTracker::broadcastAndSend(boost::shared_ptr<Entity> entity, boost::sh
 
 void EntityTracker::clear(boost::shared_ptr<ServerPlayer> player)
 {
-    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin(); it != mTrackedEntities.end(); ++it)
+    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>,
+                              boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin();
+         it != mTrackedEntities.end(); ++it)
     {
         boost::shared_ptr<TrackedEntity> tracker = *it;
         tracker->clear(player);
@@ -277,7 +295,8 @@ void EntityTracker::playerLoadedChunk(boost::shared_ptr<ServerPlayer> player, Le
 {
     std::vector<boost::shared_ptr<Entity> > leashedEntities;
     std::vector<boost::shared_ptr<Entity> > vehicles;
-    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin();
+    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>,
+                              boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin();
          it != mTrackedEntities.end(); ++it)
     {
         boost::shared_ptr<TrackedEntity> tracker = *it;
@@ -285,10 +304,10 @@ void EntityTracker::playerLoadedChunk(boost::shared_ptr<ServerPlayer> player, Le
         if (entity != player && entity->mChunkX == chunk->x && entity->mChunkZ == chunk->z)
         {
             tracker->updatePlayer(this, player);
-            if ((eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()) &&
-                 boost::static_pointer_cast<Mob>(entity)->getLeashHolder() != NULL) ||
-                (eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType()) &&
-                 boost::static_pointer_cast<Boat>(entity)->getLeashHolder() != NULL))
+            if ((eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType())
+                 && boost::static_pointer_cast<Mob>(entity)->getLeashHolder() != NULL)
+                || (eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType())
+                    && boost::static_pointer_cast<Boat>(entity)->getLeashHolder() != NULL))
                 leashedEntities.push_back(entity);
             if (!entity->getPassengers()->empty())
                 vehicles.push_back(entity);
@@ -296,13 +315,18 @@ void EntityTracker::playerLoadedChunk(boost::shared_ptr<ServerPlayer> player, Le
     }
     if (!leashedEntities.empty())
     {
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = leashedEntities.begin(); it != leashedEntities.end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = leashedEntities.begin();
+             it != leashedEntities.end(); ++it)
         {
             boost::shared_ptr<Entity> leashed = *it;
             if (eTYPE_DERIVED_FROM(EntityType::MOB, leashed->GetType()))
-                player->mConnection->send(boost::shared_ptr<ClientboundSetEntityLinkPacket>(new ClientboundSetEntityLinkPacket(leashed, boost::static_pointer_cast<Mob>(leashed)->getLeashHolder())));
+                player->mConnection->send(
+                    boost::shared_ptr<ClientboundSetEntityLinkPacket>(new ClientboundSetEntityLinkPacket(
+                        leashed, boost::static_pointer_cast<Mob>(leashed)->getLeashHolder())));
             else if (eTYPE_DERIVED_FROM(EntityType::BOAT, leashed->GetType()))
-                player->mConnection->send(boost::shared_ptr<ClientboundSetEntityLinkPacket>(new ClientboundSetEntityLinkPacket(leashed, boost::static_pointer_cast<Boat>(leashed)->getLeashHolder())));
+                player->mConnection->send(
+                    boost::shared_ptr<ClientboundSetEntityLinkPacket>(new ClientboundSetEntityLinkPacket(
+                        leashed, boost::static_pointer_cast<Boat>(leashed)->getLeashHolder())));
         }
     }
     if (!vehicles.empty())
@@ -310,7 +334,8 @@ void EntityTracker::playerLoadedChunk(boost::shared_ptr<ServerPlayer> player, Le
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = vehicles.begin(); it != vehicles.end(); ++it)
         {
             boost::shared_ptr<Entity> vehicle = *it;
-            player->mConnection->send(boost::shared_ptr<ClientboundSetPassengersPacket>(new ClientboundSetPassengersPacket(vehicle)));
+            player->mConnection->send(
+                boost::shared_ptr<ClientboundSetPassengersPacket>(new ClientboundSetPassengersPacket(vehicle)));
         }
     }
 }
@@ -318,7 +343,9 @@ void EntityTracker::playerLoadedChunk(boost::shared_ptr<ServerPlayer> player, Le
 void EntityTracker::setViewDistance(int distance)
 {
     mMaxRange = distance * 16 - 16;
-    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin(); it != mTrackedEntities.end(); ++it)
+    for (boost::unordered_set<boost::shared_ptr<TrackedEntity>,
+                              boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin();
+         it != mTrackedEntities.end(); ++it)
     {
         boost::shared_ptr<TrackedEntity> tracker = *it;
         tracker->setMaxRange(mMaxRange);
@@ -332,7 +359,8 @@ void EntityTracker::updateMaxRange()
 
 boost::shared_ptr<TrackedEntity> EntityTracker::getTracker(boost::shared_ptr<Entity> entity)
 {
-    boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq>::const_iterator it = mEntityMap.find(entity->getId());
+    boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq>::const_iterator it =
+        mEntityMap.find(entity->getId());
     if (it != mEntityMap.end())
     {
         return it->second;

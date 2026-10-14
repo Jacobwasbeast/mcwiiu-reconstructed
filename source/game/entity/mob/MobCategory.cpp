@@ -14,27 +14,24 @@ struct MobSpawnLimits
     int extraInstancesForSpawnEgg;
 };
 
-static MobSpawnLimits SPAWN_LIMITS[NUM_MOB_CATEGORIES] =
-{
-    { 0x40ULL,        50,  0, 20 },
-    { EntityType::CREATURE_CATEGORY,  50, 20, 20 },
-    { EntityType::AMBIENT_CREATURE,  20,  0,  8 },
-    { EntityType::WATER_ANIMAL,  20,  0,  8 },
-    { EntityType::SQUID,   8,  0,  6 },
-    { EntityType::WOLF,   8,  8, 10 },
-    { EntityType::CHICKEN,   8,  8, 10 },
-    { EntityType::MUSHROOM_COW,   2, 10,  8 },
-    { EntityType::SLIME,  25,  0,  0 },
-    { EntityType::GUARDIAN,  35,  0,  0 },
-    { EntityType::VILLAGER,  35,  0, 15 },
-    { EntityType::SNOW_MAN,  16,  0,  0 },
-    { EntityType::VILLAGER_GOLEM,  16,  0,  0 },
-    { EntityType::WITHER_BOSS,   5,  0,  0 },
-    { EntityType::ARMOR_STAND,  16,  0,  0 },
-    { EntityType::ENDER_CRYSTAL,  64,  0,  0 },
-    { EntityType::DOLPHIN,  15,  5,  5 },
-    { EntityType::PHANTOM,   5,  0,  0 }
-};
+static MobSpawnLimits SPAWN_LIMITS[NUM_MOB_CATEGORIES] = {{0x40ULL, 50, 0, 20},
+                                                          {EntityType::CREATURE_CATEGORY, 50, 20, 20},
+                                                          {EntityType::AMBIENT_CREATURE, 20, 0, 8},
+                                                          {EntityType::WATER_ANIMAL, 20, 0, 8},
+                                                          {EntityType::SQUID, 8, 0, 6},
+                                                          {EntityType::WOLF, 8, 8, 10},
+                                                          {EntityType::CHICKEN, 8, 8, 10},
+                                                          {EntityType::MUSHROOM_COW, 2, 10, 8},
+                                                          {EntityType::SLIME, 25, 0, 0},
+                                                          {EntityType::GUARDIAN, 35, 0, 0},
+                                                          {EntityType::VILLAGER, 35, 0, 15},
+                                                          {EntityType::SNOW_MAN, 16, 0, 0},
+                                                          {EntityType::VILLAGER_GOLEM, 16, 0, 0},
+                                                          {EntityType::WITHER_BOSS, 5, 0, 0},
+                                                          {EntityType::ARMOR_STAND, 16, 0, 0},
+                                                          {EntityType::ENDER_CRYSTAL, 64, 0, 0},
+                                                          {EntityType::DOLPHIN, 15, 5, 5},
+                                                          {EntityType::PHANTOM, 5, 0, 0}};
 
 MobCategory* MobCategory::MONSTER;
 MobCategory* MobCategory::CREATURE;
@@ -59,8 +56,8 @@ int MobCategory::TOTAL_MAX_INSTANCES;
 
 arrayWithLength<MobCategory*> MobCategory::CATEGORIES(NUM_MOB_CATEGORIES, true);
 
-MobCategory::MobCategory(int maxInstancesPerChunk, Material* spawnPositionMaterial, bool friendly,
-                         bool persistent, unsigned long long enumBaseClass, bool singleType)
+MobCategory::MobCategory(int maxInstancesPerChunk, Material* spawnPositionMaterial, bool friendly, bool persistent,
+                         unsigned long long enumBaseClass, bool singleType)
 {
     this->maxInstancesPerChunk = maxInstancesPerChunk;
     this->spawnPositionMaterial = spawnPositionMaterial;
@@ -74,8 +71,10 @@ MobCategory::MobCategory(int maxInstancesPerChunk, Material* spawnPositionMateri
         if (enumBaseClass == SPAWN_LIMITS[i].entityType)
         {
             this->maxInstancesPerLevel = SPAWN_LIMITS[i].maxInstancesPerLevel;
-            this->maxInstancesPerLevelWithBreeding = this->maxInstancesPerLevel + SPAWN_LIMITS[i].extraInstancesForBreeding;
-            this->maxInstancesPerLevelWithSpawnEgg = this->maxInstancesPerLevelWithBreeding + SPAWN_LIMITS[i].extraInstancesForSpawnEgg;
+            this->maxInstancesPerLevelWithBreeding = this->maxInstancesPerLevel
+                                                     + SPAWN_LIMITS[i].extraInstancesForBreeding;
+            this->maxInstancesPerLevelWithSpawnEgg = this->maxInstancesPerLevelWithBreeding
+                                                     + SPAWN_LIMITS[i].extraInstancesForSpawnEgg;
         }
     }
 }

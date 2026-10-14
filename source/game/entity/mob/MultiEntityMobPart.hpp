@@ -16,7 +16,8 @@ class MultiEntityMob;
 class MultiEntityMobPart : public Entity
 {
 public:
-    MultiEntityMobPart(boost::shared_ptr<MultiEntityMob> parentMob, const std::wstring& name, float width, float height);
+    MultiEntityMobPart(boost::shared_ptr<MultiEntityMob> parentMob, const std::wstring& name, float width,
+                       float height);
 
     virtual unsigned long long GetType();
     virtual void defineSynchedData();

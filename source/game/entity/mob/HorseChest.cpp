@@ -2,8 +2,7 @@
 
 #include "game/core/StringIds.hpp"
 
-HorseChest::HorseChest(const std::wstring& name, int size)
-    : SimpleContainer(IDS_CONTAINER_ANIMAL, name, false, size)
+HorseChest::HorseChest(const std::wstring& name, int size) : SimpleContainer(IDS_CONTAINER_ANIMAL, name, false, size)
 {
 }
 

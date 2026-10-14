@@ -59,8 +59,7 @@ static boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placeme
     return placements;
 }
 
-static boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placementType =
-    placementTypeCtor();
+static boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placementType = placementTypeCtor();
 
 Mob::SpawnPlacementType MobSpawnPlacements::getPlacementType(unsigned long long entityType)
 {

@@ -41,7 +41,8 @@ public:
 
 private:
     ServerLevel* mLevel;
-    boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > > mTrackedEntities;
+    boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >
+        mTrackedEntities;
     boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq> mEntityMap;
     int mMaxRange;
 };

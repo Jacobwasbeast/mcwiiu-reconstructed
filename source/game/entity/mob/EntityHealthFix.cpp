@@ -4,43 +4,12 @@
 
 #include "game/data/CompoundTag.hpp"
 
-static const std::wstring sEntityIDs[] =
-{
-    L"ArmorStand",
-    L"Bat",
-    L"Blaze",
-    L"CaveSpider",
-    L"Chicken",
-    L"Cow",
-    L"Creeper",
-    L"EnderDragon",
-    L"Enderman",
-    L"Endermite",
-    L"EntityHorse",
-    L"Ghast",
-    L"Giant",
-    L"Guardian",
-    L"LavaSlime",
-    L"MushroomCow",
-    L"Ozelot",
-    L"Pig",
-    L"PigZombie",
-    L"Rabbit",
-    L"Sheep",
-    L"Shulker",
-    L"Silverfish",
-    L"Skeleton",
-    L"Slime",
-    L"SnowMan",
-    L"Spider",
-    L"Squid",
-    L"Villager",
-    L"VillagerGolem",
-    L"Witch",
-    L"WitherBoss",
-    L"Wolf",
-    L"Zombie"
-};
+static const std::wstring sEntityIDs[] = {
+    L"ArmorStand",  L"Bat",           L"Blaze",     L"CaveSpider",  L"Chicken",   L"Cow",    L"Creeper",
+    L"EnderDragon", L"Enderman",      L"Endermite", L"EntityHorse", L"Ghast",     L"Giant",  L"Guardian",
+    L"LavaSlime",   L"MushroomCow",   L"Ozelot",    L"Pig",         L"PigZombie", L"Rabbit", L"Sheep",
+    L"Shulker",     L"Silverfish",    L"Skeleton",  L"Slime",       L"SnowMan",   L"Spider", L"Squid",
+    L"Villager",    L"VillagerGolem", L"Witch",     L"WitherBoss",  L"Wolf",      L"Zombie"};
 
 EntityHealthFix::~EntityHealthFix()
 {

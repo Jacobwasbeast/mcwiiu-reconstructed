@@ -33,20 +33,20 @@
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ItemEntity::DATA_ITEM = NULL;
 
 ItemEntity::ItemEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item)
-    : Entity(level, true), mThrower(), mOwner()
+    : Entity(level, true),
+      mThrower(),
+      mOwner()
 {
     _init(level, x, y, z);
     setItem(item);
 }
 
-ItemEntity::ItemEntity(Level* level, double x, double y, double z)
-    : Entity(level, true), mThrower(), mOwner()
+ItemEntity::ItemEntity(Level* level, double x, double y, double z) : Entity(level, true), mThrower(), mOwner()
 {
     _init(level, x, y, z);
 }
 
-ItemEntity::ItemEntity(Level* level)
-    : Entity(level, true), mThrower(), mOwner()
+ItemEntity::ItemEntity(Level* level) : Entity(level, true), mThrower(), mOwner()
 {
     _init();
     setItem(ItemInstance::EMPTY);
@@ -92,15 +92,13 @@ void ItemEntity::setDefaultPickUpDelay()
 
 void ItemEntity::addDataWalkers(DataFixerUpper* dataFixerUpper)
 {
-    dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity,
-                              new ItemDataWalker(EntityType::ITEM_ENTITY, L"Item"));
+    dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity, new ItemDataWalker(EntityType::ITEM_ENTITY, L"Item"));
 }
 
 void ItemEntity::staticCtor()
 {
-    DATA_ITEM = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(
-        EntityType::ITEM_ENTITY, EntityType::ENTITY,
-        EntityDataSerializers::ITEM_INSTANCE);
+    DATA_ITEM = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(EntityType::ITEM_ENTITY, EntityType::ENTITY,
+                                                                         EntityDataSerializers::ITEM_INSTANCE);
 }
 
 bool ItemEntity::makeStepSound()
@@ -162,7 +160,8 @@ bool ItemEntity::merge(boost::shared_ptr<ItemEntity> entity)
 
 void ItemEntity::mergeWithNeighbours()
 {
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(*this), mBoundingBox->grow(0.5, 0.0, 0.5));
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(*this),
+                                                                                   mBoundingBox->grow(0.5, 0.0, 0.5));
     std::vector<boost::shared_ptr<Entity> >::iterator it;
     for (it = entities->begin(); it != entities->end(); ++it)
     {
@@ -249,8 +248,8 @@ void ItemEntity::tick()
 
     updateInWaterState();
     bool clientSide = mLevel->mIsClientSide;
-    if (!clientSide &&
-        (mXd - oldXd) * (mXd - oldXd) + (mYd - oldYd) * (mYd - oldYd) + (mZd - oldZd) * (mZd - oldZd) > 0.01)
+    if (!clientSide
+        && (mXd - oldXd) * (mXd - oldXd) + (mYd - oldYd) * (mYd - oldYd) + (mZd - oldZd) * (mZd - oldZd) > 0.01)
     {
         mHasImpulse = true;
     }

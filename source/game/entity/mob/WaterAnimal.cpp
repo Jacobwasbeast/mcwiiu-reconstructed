@@ -18,8 +18,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 
-WaterAnimal::WaterAnimal(Level* level)
-    : PathfinderMob(level)
+WaterAnimal::WaterAnimal(Level* level) : PathfinderMob(level)
 {
     mSwimAmplitude = 0.0f;
     mSwimFrequency = 0.0f;
@@ -44,8 +43,7 @@ bool WaterAnimal::checkSpawnRules()
     spawnPosition.setY(currentY < y ? y : currentY);
     setPos(spawnPosition.x, spawnPosition.y, spawnPosition.z);
 
-    return !mLevel->containsAnysolidBlocking(mBoundingBox)
-        && mLevel->containsMaterial(mBoundingBox, Material::WATER);
+    return !mLevel->containsAnysolidBlocking(mBoundingBox) && mLevel->containsMaterial(mBoundingBox, Material::WATER);
 }
 
 bool WaterAnimal::checkSpawnObstruction()

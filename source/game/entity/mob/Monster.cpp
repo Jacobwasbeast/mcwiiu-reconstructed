@@ -23,8 +23,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-Monster::Monster(Level* level)
-    : PathfinderMob(level)
+Monster::Monster(Level* level) : PathfinderMob(level)
 {
     mExperienceReward = 5;
     mCategories |= EntityCategory::eEntityCategory_Monster;
@@ -112,8 +111,8 @@ bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
     {
         if (knockback > 0 && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
         {
-            boost::static_pointer_cast<LivingEntity>(target)->knockback(attacker, knockback * 0.5f, Mth::sin(mYRot * 0.017453292f),
-                                                                        -Mth::cos(mYRot * 0.017453292f));
+            boost::static_pointer_cast<LivingEntity>(target)->knockback(
+                attacker, knockback * 0.5f, Mth::sin(mYRot * 0.017453292f), -Mth::cos(mYRot * 0.017453292f));
             mXd *= 0.6;
             mZd *= 0.6;
         }
@@ -154,8 +153,7 @@ bool Monster::isDarkEnoughToSpawn()
 
 bool Monster::checkSpawnRules()
 {
-    return mLevel->getDifficulty() != Difficulty::PEACEFUL &&
-           isDarkEnoughToSpawn() && PathfinderMob::checkSpawnRules();
+    return mLevel->getDifficulty() != Difficulty::PEACEFUL && isDarkEnoughToSpawn() && PathfinderMob::checkSpawnRules();
 }
 
 void Monster::registerAttributes()

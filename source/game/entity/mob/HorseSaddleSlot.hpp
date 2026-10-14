@@ -8,11 +8,7 @@ class HorseInventoryMenu;
 class HorseSaddleSlot : public Slot
 {
 public:
-    HorseSaddleSlot(HorseInventoryMenu* menu,
-                    boost::shared_ptr<Container> container,
-                    int index,
-                    int x,
-                    int y)
+    HorseSaddleSlot(HorseInventoryMenu* menu, boost::shared_ptr<Container> container, int index, int x, int y)
         : Slot(container, index, x, y),
           mMenu(menu)
     {

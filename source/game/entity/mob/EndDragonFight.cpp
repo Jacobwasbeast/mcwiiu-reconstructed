@@ -40,10 +40,7 @@
 
 struct EndGatewaySorter
 {
-    bool operator()(int first, int second) const
-    {
-        return first != 0 && second == 0;
-    }
+    bool operator()(int first, int second) const { return first != 0 && second == 0; }
 };
 
 Predicate<boost::shared_ptr<Player> >* EndDragonFight::VALID_PLAYER =
@@ -141,8 +138,8 @@ void EndDragonFight::spawnExitPortal(bool active)
     {
         BlockPos* location = new BlockPos(EndPodiumFeature::END_PODIUM_LOCATION);
         exitPortalLocation = location;
-        while (level->getBlockState(*exitPortalLocation)->getBlock() == Blocks::bedrock &&
-               exitPortalLocation->y > level->getSeaLevel())
+        while (level->getBlockState(*exitPortalLocation)->getBlock() == Blocks::bedrock
+               && exitPortalLocation->y > level->getSeaLevel())
         {
             *exitPortalLocation = exitPortalLocation->below();
         }
@@ -168,8 +165,8 @@ void EndDragonFight::updateCrystalCount()
 
 void EndDragonFight::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const DamageSource* source)
 {
-    std::vector<boost::shared_ptr<EnderCrystal> >::iterator tracked =
-        std::find(respawnCrystals.begin(), respawnCrystals.end(), crystal);
+    std::vector<boost::shared_ptr<EnderCrystal> >::iterator tracked = std::find(respawnCrystals.begin(),
+                                                                                respawnCrystals.end(), crystal);
 
     bool isTracked = tracked != respawnCrystals.end();
     if (respawnStage != NULL && isTracked)
@@ -326,8 +323,8 @@ void EndDragonFight::updatePlayers()
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator player = current.begin(); player != current.end();
          ++player)
     {
-        std::vector<boost::shared_ptr<ServerPlayer> >::iterator found =
-            std::find(departed->begin(), departed->end(), *player);
+        std::vector<boost::shared_ptr<ServerPlayer> >::iterator found = std::find(departed->begin(), departed->end(),
+                                                                                  *player);
         if (found != departed->end())
             departed->erase(found);
     }
@@ -417,8 +414,8 @@ void EndDragonFight::tick()
                     spawnExitPortal(false);
                 }
 
-                std::vector<boost::shared_ptr<Entity> >* dragons =
-                    level->getEntitiesOfClass(typeid(EnderDragon), arena, EntitySelector::ENTITY_STILL_ALIVE, false);
+                std::vector<boost::shared_ptr<Entity> >* dragons = level->getEntitiesOfClass(
+                    typeid(EnderDragon), arena, EntitySelector::ENTITY_STILL_ALIVE, false);
                 if (dragons->empty())
                 {
                     dragonKilled = true;
@@ -455,8 +452,8 @@ void EndDragonFight::tick()
             if (dragonUUID.empty() || ++ticksSinceDragonSeen >= 1200)
             {
                 ensureArenaLoaded();
-                const std::vector<boost::shared_ptr<Entity> >* dragons =
-                    level->getEntitiesOfClass(typeid(EnderDragon), arena, EntitySelector::ENTITY_STILL_ALIVE, false);
+                const std::vector<boost::shared_ptr<Entity> >* dragons = level->getEntitiesOfClass(
+                    typeid(EnderDragon), arena, EntitySelector::ENTITY_STILL_ALIVE, false);
                 if (dragons->empty())
                     createNewDragon();
                 else

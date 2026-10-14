@@ -6,10 +6,8 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/Level.hpp"
 
-bool EntityHasScoreCondition::hasScore(const boost::shared_ptr<Entity>& entity,
-                                       Scoreboard* scoreboard,
-                                       const std::wstring& scoreName,
-                                       RandomValueBounds bounds)
+bool EntityHasScoreCondition::hasScore(const boost::shared_ptr<Entity>& entity, Scoreboard* scoreboard,
+                                       const std::wstring& scoreName, RandomValueBounds bounds)
 {
     return true;
 }

@@ -54,7 +54,7 @@ public:
     virtual void die(const DamageSource* source);
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                            const std::wstring& dataString);
+                                           const std::wstring& dataString);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> itemInstance);
     virtual float getEyeHeight();

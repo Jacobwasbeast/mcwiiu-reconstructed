@@ -29,8 +29,7 @@
 #include "game/world/generation/EndGatewayFeature.hpp"
 #include "game/world/generation/EndIslandFeature.hpp"
 
-TheEndGatewayEntity::TheEndGatewayEntity()
-    : mAge(0), mCooldown(0), mExitPortal(NULL), mExactTeleport(false)
+TheEndGatewayEntity::TheEndGatewayEntity() : mAge(0), mCooldown(0), mExitPortal(NULL), mExactTeleport(false)
 {
 }
 
@@ -124,7 +123,8 @@ void TheEndGatewayEntity::createExitPortal(const BlockPos& position)
         bool isGateway = eTYPE_DERIVED_FROM(BlockEntityType::THE_END_GATEWAY_ENTITY, blockEntity->GetType());
         if (isGateway)
         {
-            boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);
+            boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(
+                blockEntity);
             gateway->SetExitPortal(new BlockPos(getBlockPos()));
             gateway->setChanged();
         }
@@ -159,7 +159,8 @@ void TheEndGatewayEntity::findExitPortal()
             {
                 if (it->second->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY)
                 {
-                    boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(it->second);
+                    boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(
+                        it->second);
                     SetExitPortal(new BlockPos(gateway->getBlockPos()));
                     setChanged();
                     return;
@@ -292,7 +293,8 @@ void TheEndGatewayEntity::tick()
     }
     else if (!mLevel->mIsClientSide)
     {
-        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Entity), AABB::newTemp(getBlockPos()));
+        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Entity),
+                                                                                       AABB::newTemp(getBlockPos()));
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
             bool isCrystal = (*it)->GetType() == EntityType::ENDER_CRYSTAL;
@@ -325,7 +327,8 @@ float TheEndGatewayEntity::getCooldownPercent(float partialTick)
 
 boost::shared_ptr<Packet> TheEndGatewayEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 8, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return boost::shared_ptr<Packet>(
+        new ClientboundBlockEntityDataPacket(mPos, 8, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* TheEndGatewayEntity::getUpdateTag()
@@ -358,8 +361,7 @@ bool TheEndGatewayEntity::shouldRenderFace(const Direction* direction)
 int TheEndGatewayEntity::getParticleAmount()
 {
     int amount = 0;
-    for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin();
-         it != Direction::VALUES.end(); ++it)
+    for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
     {
         amount += shouldRenderFace(*it) ? 1 : 0;
     }

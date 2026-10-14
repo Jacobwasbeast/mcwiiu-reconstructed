@@ -71,7 +71,8 @@ public:
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual bool wearsArmor();
     virtual bool isArmor(const not_null_ptr<ItemInstance>& item);
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& name);
     virtual bool removeWhenFarAway();
     virtual unsigned long long GetType();
     bool hasTexture();

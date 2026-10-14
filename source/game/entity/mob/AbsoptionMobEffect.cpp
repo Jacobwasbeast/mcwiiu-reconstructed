@@ -3,8 +3,7 @@
 #include "game/core/BaseAttributeMap.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 
-AbsoptionMobEffect::AbsoptionMobEffect(bool harmful, eMinecraftColour color)
-    : MobEffect(harmful, color)
+AbsoptionMobEffect::AbsoptionMobEffect(bool harmful, eMinecraftColour color) : MobEffect(harmful, color)
 {
 }
 

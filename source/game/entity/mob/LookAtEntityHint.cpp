@@ -8,11 +8,12 @@
 #include "game/item/Items.hpp"
 #include "game/minigame/Tutorial.hpp"
 
-LookAtEntityHint::LookAtEntityHint(eTutorial_Hint hint, Tutorial* tutorialValue,
-                                   int description, int id,
+LookAtEntityHint::LookAtEntityHint(eTutorial_Hint hint, Tutorial* tutorialValue, int description, int id,
                                    unsigned long long typeValue)
     : TutorialHint(hint, tutorialValue, description, HINT_LOOK_AT_ENTITY, true, true, -1),
-      entityType(typeValue), entityId(id), entityPredicate(NULL)
+      entityType(typeValue),
+      entityId(id),
+      entityPredicate(NULL)
 {
 }
 

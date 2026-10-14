@@ -63,7 +63,7 @@ namespace
 
 namespace
 {
-    const Predicate<boost::shared_ptr<Entity> >* PARENT_HORSE_SELECTOR = new ParentHorseSelector();
+const Predicate<boost::shared_ptr<Entity> >* PARENT_HORSE_SELECTOR = new ParentHorseSelector();
 }
 
 const EntityDataAccessor<unsigned char>* AbstractHorse::DATA_FLAGS = NULL;
@@ -71,8 +71,7 @@ const EntityDataAccessor<std::wstring>* AbstractHorse::DATA_OWNER_UUID = NULL;
 Attribute* AbstractHorse::JUMP_STRENGTH =
     (new RangedAttribute(NULL, eATTRIBUTE_ID_HorseJumpStrength, 0.7, 0.0, 2.0))->setSyncable(true);
 
-AbstractHorse::AbstractHorse(Level* level)
-    : Animal(level)
+AbstractHorse::AbstractHorse(Level* level) : Animal(level)
 {
     mPanicGoal = 0;
     mFloatGoal = 0;
@@ -99,8 +98,14 @@ AbstractHorse::AbstractHorse(Level* level)
     mMaxUpStep = 1.0f;
 }
 
-bool AbstractHorse::getFlag(int flag) { return (mEntityData->get(DATA_FLAGS) & flag) != 0; }
-bool AbstractHorse::isSaddled() { return getFlag(4); }
+bool AbstractHorse::getFlag(int flag)
+{
+    return (mEntityData->get(DATA_FLAGS) & flag) != 0;
+}
+bool AbstractHorse::isSaddled()
+{
+    return getFlag(4);
+}
 
 void AbstractHorse::containerChanged(Container*)
 {
@@ -119,7 +124,10 @@ void AbstractHorse::setFlag(int flag, bool value)
         mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags & ~flag), true);
 }
 
-void AbstractHorse::setEating(bool eating) { setFlag(16, eating); }
+void AbstractHorse::setEating(bool eating)
+{
+    setFlag(16, eating);
+}
 
 void AbstractHorse::setStanding(bool standing)
 {
@@ -161,27 +169,35 @@ bool AbstractHorse::canJump()
 {
     return isSaddled() || eTYPE_DERIVED_FROM(EntityType::SKELETON_HORSE, GetType());
 }
-double AbstractHorse::getJumpRidingScale() { return mJumpRidingScale; }
-void AbstractHorse::setJumpRidingScale(float scale) { mJumpRidingScale = scale; }
+double AbstractHorse::getJumpRidingScale()
+{
+    return mJumpRidingScale;
+}
+void AbstractHorse::setJumpRidingScale(float scale)
+{
+    mJumpRidingScale = scale;
+}
 
 void AbstractHorse::handleStartJump(int)
 {
     boost::shared_ptr<Entity> passenger = getControllingPassenger();
     if (eTYPE_DERIVED_FROM(EntityType::PLAYER, passenger->GetType()))
     {
-        mLevel->playSound(boost::static_pointer_cast<Player>(passenger), BlockPos(mX, mY, mZ),
-                          getJumpSound(), SoundSource::eSoundSource_Players, 0.4f, 1.0f, 16.0f);
+        mLevel->playSound(boost::static_pointer_cast<Player>(passenger), BlockPos(mX, mY, mZ), getJumpSound(),
+                          SoundSource::eSoundSource_Players, 0.4f, 1.0f, 16.0f);
     }
     else
     {
-        mLevel->playSound(boost::shared_ptr<Player>(), BlockPos(mX, mY, mZ),
-                          getJumpSound(), SoundSource::eSoundSource_Players, 0.4f, 1.0f, 16.0f);
+        mLevel->playSound(boost::shared_ptr<Player>(), BlockPos(mX, mY, mZ), getJumpSound(),
+                          SoundSource::eSoundSource_Players, 0.4f, 1.0f, 16.0f);
     }
     mAllowStandSliding = true;
     stand();
 }
 
-void AbstractHorse::handleStopJump() { }
+void AbstractHorse::handleStopJump()
+{
+}
 
 std::wstring AbstractHorse::getOwnerUUID()
 {
@@ -196,7 +212,10 @@ boost::shared_ptr<Entity> AbstractHorse::getOwner()
     return mLevel->getPlayerByUUID(uuid);
 }
 
-int AbstractHorse::getTailCounter() const { return mTailCounter; }
+int AbstractHorse::getTailCounter() const
+{
+    return mTailCounter;
+}
 
 void AbstractHorse::staticCtor()
 {
@@ -236,14 +255,20 @@ void AbstractHorse::defineSynchedData()
     mEntityData->define(DATA_OWNER_UUID, std::wstring(L""));
 }
 
-bool AbstractHorse::isTamed() { return getFlag(2); }
+bool AbstractHorse::isTamed()
+{
+    return getFlag(2);
+}
 
 void AbstractHorse::setOwnerUUID(const std::wstring& uuid)
 {
     mEntityData->set(DATA_OWNER_UUID, uuid, true);
 }
 
-float AbstractHorse::getFoalScale() const { return 0.5f; }
+float AbstractHorse::getFoalScale() const
+{
+    return 0.5f;
+}
 
 void AbstractHorse::updateSize(bool baby)
 {
@@ -253,16 +278,28 @@ void AbstractHorse::updateSize(bool baby)
         internalSetSize(1.0f);
 }
 
-bool AbstractHorse::isJumping() const { return mJumping; }
-void AbstractHorse::setTamed(bool tamed) { setFlag(2, tamed); }
-void AbstractHorse::setIsJumping(bool jumping) { mJumping = jumping; }
+bool AbstractHorse::isJumping() const
+{
+    return mJumping;
+}
+void AbstractHorse::setTamed(bool tamed)
+{
+    setFlag(2, tamed);
+}
+void AbstractHorse::setIsJumping(bool jumping)
+{
+    mJumping = jumping;
+}
 
 bool AbstractHorse::canBeLeashed(const boost::shared_ptr<Player>& player)
 {
     return Mob::canBeLeashed(player);
 }
 
-bool AbstractHorse::isEating() { return getFlag(16); }
+bool AbstractHorse::isEating()
+{
+    return getFlag(16);
+}
 
 void AbstractHorse::onLeashDistance(float distance)
 {
@@ -270,9 +307,18 @@ void AbstractHorse::onLeashDistance(float distance)
         setEating(false);
 }
 
-bool AbstractHorse::isStanding() { return getFlag(32); }
-bool AbstractHorse::isBred() { return getFlag(8); }
-void AbstractHorse::setBred(bool bred) { setFlag(8, bred); }
+bool AbstractHorse::isStanding()
+{
+    return getFlag(32);
+}
+bool AbstractHorse::isBred()
+{
+    return getFlag(8);
+}
+void AbstractHorse::setBred(bool bred)
+{
+    setFlag(8, bred);
+}
 
 void AbstractHorse::setSaddled(bool saddled)
 {
@@ -281,8 +327,14 @@ void AbstractHorse::setSaddled(bool saddled)
     setFlag(4, saddled);
 }
 
-int AbstractHorse::getTemper() const { return mTemper; }
-void AbstractHorse::setTemper(int temper) { mTemper = temper; }
+int AbstractHorse::getTemper() const
+{
+    return mTemper;
+}
+void AbstractHorse::setTemper(int temper)
+{
+    mTemper = temper;
+}
 
 int AbstractHorse::modifyTemper(int amount)
 {
@@ -332,8 +384,7 @@ void AbstractHorse::eating(int animation)
     openMouth();
     if (!isSilent())
     {
-        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::HORSE_EAT,
-                          getSoundSource(), 1.0f,
+        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::HORSE_EAT, getSoundSource(), 1.0f,
                           (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f, 16.0f);
     }
     mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::EAT_ITEM_PARTICLES, animation);
@@ -358,8 +409,7 @@ void AbstractHorse::causeFallDamage(float fallDistance, float damageMultiplier)
     if (isVehicle())
     {
         std::set<boost::shared_ptr<Entity> >* passengers = getIndirectPassengers();
-        for (std::set<boost::shared_ptr<Entity> >::iterator it = passengers->begin();
-             it != passengers->end(); ++it)
+        for (std::set<boost::shared_ptr<Entity> >::iterator it = passengers->begin(); it != passengers->end(); ++it)
         {
             (*it)->hurt(DamageSource::FALL, static_cast<float>(damage));
         }
@@ -370,9 +420,8 @@ void AbstractHorse::causeFallDamage(float fallDistance, float damageMultiplier)
         return;
 
     const SoundType* soundType = block->mSoundType;
-    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, soundType->getStepSound(),
-                      getSoundSource(), soundType->getVolume() * 0.5f,
-                      soundType->getPitch() * 0.75f, 16.0f);
+    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, soundType->getStepSound(), getSoundSource(),
+                      soundType->getVolume() * 0.5f, soundType->getPitch() * 0.75f, 16.0f);
 }
 
 bool AbstractHorse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
@@ -388,7 +437,10 @@ bool AbstractHorse::mobInteract(const boost::shared_ptr<Player>& player, Interac
     return Animal::mobInteract(player, hand);
 }
 
-int AbstractHorse::getInventorySize() { return 2; }
+int AbstractHorse::getInventorySize()
+{
+    return 2;
+}
 
 void AbstractHorse::createInventory()
 {
@@ -427,11 +479,9 @@ boost::shared_ptr<AbstractHorse> AbstractHorse::getClosestMommy(const boost::sha
 {
     double best = 1.7976931348623157e+308;
     boost::shared_ptr<Entity> closest;
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(entity, entity->mBoundingBox->expand(distance, distance, distance),
-                            PARENT_HORSE_SELECTOR, NULL);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+        entity, entity->mBoundingBox->expand(distance, distance, distance), PARENT_HORSE_SELECTOR, NULL);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         const double distanceSqr = (*it)->distanceToSqr(entity->mX, entity->mY, entity->mZ);
         if (distanceSqr < best)
@@ -446,14 +496,35 @@ boost::shared_ptr<AbstractHorse> AbstractHorse::getClosestMommy(const boost::sha
     return boost::static_pointer_cast<AbstractHorse>(closest);
 }
 
-double AbstractHorse::getCustomJump() { return getAttribute(JUMP_STRENGTH)->getValue(); }
+double AbstractHorse::getCustomJump()
+{
+    return getAttribute(JUMP_STRENGTH)->getValue();
+}
 
-const SoundEvent* AbstractHorse::getJumpSound() { return SoundEvents::HORSE_JUMP; }
-const SoundEvent* AbstractHorse::getDeathSound() { return NULL; }
-const SoundEvent* AbstractHorse::getHurtSound(const DamageSource*) { return NULL; }
-const SoundEvent* AbstractHorse::getAmbientSound() { return NULL; }
-const SoundEvent* AbstractHorse::getAngrySound() { return NULL; }
-bool AbstractHorse::canBeSaddled() const { return true; }
+const SoundEvent* AbstractHorse::getJumpSound()
+{
+    return SoundEvents::HORSE_JUMP;
+}
+const SoundEvent* AbstractHorse::getDeathSound()
+{
+    return NULL;
+}
+const SoundEvent* AbstractHorse::getHurtSound(const DamageSource*)
+{
+    return NULL;
+}
+const SoundEvent* AbstractHorse::getAmbientSound()
+{
+    return NULL;
+}
+const SoundEvent* AbstractHorse::getAngrySound()
+{
+    return NULL;
+}
+bool AbstractHorse::canBeSaddled() const
+{
+    return true;
+}
 
 void AbstractHorse::playStepSound(const BlockPos& pos, Block* block)
 {
@@ -494,10 +565,22 @@ void AbstractHorse::registerAttributes()
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.22499999403953552);
 }
 
-int AbstractHorse::getMaxSpawnClusterSize() { return 6; }
-int AbstractHorse::getMaxTemper() const { return 100; }
-float AbstractHorse::getSoundVolume() { return 0.8f; }
-int AbstractHorse::getAmbientSoundInterval() { return 400; }
+int AbstractHorse::getMaxSpawnClusterSize()
+{
+    return 6;
+}
+int AbstractHorse::getMaxTemper() const
+{
+    return 100;
+}
+float AbstractHorse::getSoundVolume()
+{
+    return 0.8f;
+}
+int AbstractHorse::getAmbientSoundInterval()
+{
+    return 400;
+}
 
 void AbstractHorse::openInventory(const boost::shared_ptr<Player>& player)
 {
@@ -616,9 +699,15 @@ bool AbstractHorse::isImmobile()
     return (LivingEntity::isImmobile() && isVehicle() && isSaddled()) || isEating() || isStanding();
 }
 
-bool AbstractHorse::isFood(const not_null_ptr<ItemInstance>&) { return false; }
+bool AbstractHorse::isFood(const not_null_ptr<ItemInstance>&)
+{
+    return false;
+}
 
-void AbstractHorse::moveTail() { mTailCounter = 1; }
+void AbstractHorse::moveTail()
+{
+    mTailCounter = 1;
+}
 
 void AbstractHorse::die(const DamageSource* source)
 {
@@ -652,13 +741,12 @@ void AbstractHorse::aiStep()
         {
             if ((mForcedAgeTimer & 3) == 0)
             {
-                mLevel->addParticle(PARTICLE_HAPPY_VILLAGER,
-                                    mX + static_cast<double>(mRandom->nextFloat() * mBbWidth * 2.0f)
-                                        - static_cast<double>(mBbWidth),
-                                    mY + 0.5 + static_cast<double>(mRandom->nextFloat() * mBbHeight),
-                                    mZ + static_cast<double>(mRandom->nextFloat() * mBbWidth * 2.0f)
-                                        - static_cast<double>(mBbWidth),
-                                    0.0, 0.0, 0.0, arrayWithLength<int>());
+                mLevel->addParticle(
+                    PARTICLE_HAPPY_VILLAGER,
+                    mX + static_cast<double>(mRandom->nextFloat() * mBbWidth * 2.0f) - static_cast<double>(mBbWidth),
+                    mY + 0.5 + static_cast<double>(mRandom->nextFloat() * mBbHeight),
+                    mZ + static_cast<double>(mRandom->nextFloat() * mBbWidth * 2.0f) - static_cast<double>(mBbWidth),
+                    0.0, 0.0, 0.0, arrayWithLength<int>());
             }
             --mForcedAgeTimer;
         }
@@ -666,11 +754,10 @@ void AbstractHorse::aiStep()
 
     if (canEatGrass())
     {
-        if (!isEating() && !isVehicle() && mRandom->nextInt(300) == 0
-            && !mGoalSelector.isUsingGoal(mPanicGoal))
+        if (!isEating() && !isVehicle() && mRandom->nextInt(300) == 0 && !mGoalSelector.isUsingGoal(mPanicGoal))
         {
-            Block* block = mLevel->getBlockState(BlockPos(std::floor(mX), std::floor(mY) - 1.0,
-                                                          std::floor(mZ)))->getBlock();
+            Block* block =
+                mLevel->getBlockState(BlockPos(std::floor(mX), std::floor(mY) - 1.0, std::floor(mZ)))->getBlock();
             if (block == Blocks::grass)
                 setEating(true);
         }
@@ -693,7 +780,10 @@ void AbstractHorse::followMommy()
         mNavigation->createPath(mommy);
 }
 
-bool AbstractHorse::canEatGrass() const { return true; }
+bool AbstractHorse::canEatGrass() const
+{
+    return true;
+}
 
 void AbstractHorse::tick()
 {
@@ -804,8 +894,7 @@ void AbstractHorse::travel(float x, float y, float z)
 
     PIXBeginNamedEvent(0.0f, "Horse::travel");
 
-    boost::shared_ptr<LivingEntity> rider =
-        boost::static_pointer_cast<LivingEntity>(getControllingPassenger());
+    boost::shared_ptr<LivingEntity> rider = boost::static_pointer_cast<LivingEntity>(getControllingPassenger());
 
     mYRotO = mYRot;
     mYRot = rider->mYRot;
@@ -842,8 +931,8 @@ void AbstractHorse::travel(float x, float y, float z)
         }
         if (eTYPE_DERIVED_FROM(EntityType::PLAYER, rider->GetType()))
         {
-            mLevel->playLocalSound(mX, mY, mZ, getJumpSound(), SoundSource::eSoundSource_Players,
-                                   0.4f, 1.0f, false, 16.0f);
+            mLevel->playLocalSound(mX, mY, mZ, getJumpSound(), SoundSource::eSoundSource_Players, 0.4f, 1.0f, false,
+                                   16.0f);
         }
         mJumpRidingScale = 0.0f;
     }
@@ -946,7 +1035,10 @@ void AbstractHorse::readAdditionalSaveData(CompoundTag* tag)
     updateEquipment();
 }
 
-bool AbstractHorse::canMate(const boost::shared_ptr<Animal>&) { return false; }
+bool AbstractHorse::canMate(const boost::shared_ptr<Animal>&)
+{
+    return false;
+}
 
 bool AbstractHorse::canParent()
 {
@@ -967,16 +1059,14 @@ double AbstractHorse::generateRandomMaxHealth()
 
 double AbstractHorse::generateRandomJumpStrength()
 {
-    return mRandom->nextDouble() * 0.2 + 0.4000000059604645
-           + mRandom->nextDouble() * 0.2
-           + mRandom->nextDouble() * 0.2;
+    return mRandom->nextDouble() * 0.2 + 0.4000000059604645 + mRandom->nextDouble() * 0.2 + mRandom->nextDouble() * 0.2;
 }
 
 double AbstractHorse::generateRandomSpeed()
 {
-    return (mRandom->nextDouble() * 0.3 + 0.44999998807907104
-            + mRandom->nextDouble() * 0.3
-            + mRandom->nextDouble() * 0.3) * 0.25;
+    return (mRandom->nextDouble() * 0.3 + 0.44999998807907104 + mRandom->nextDouble() * 0.3
+            + mRandom->nextDouble() * 0.3)
+           * 0.25;
 }
 
 void AbstractHorse::setOffspringAttributes(const boost::shared_ptr<AgableMob>& other,
@@ -987,8 +1077,7 @@ void AbstractHorse::setOffspringAttributes(const boost::shared_ptr<AgableMob>& o
                           + generateRandomMaxHealth();
     offspring->getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(health / 3.0);
 
-    const double jump = getAttribute(JUMP_STRENGTH)->getBaseValue()
-                        + other->getAttribute(JUMP_STRENGTH)->getBaseValue()
+    const double jump = getAttribute(JUMP_STRENGTH)->getBaseValue() + other->getAttribute(JUMP_STRENGTH)->getBaseValue()
                         + generateRandomJumpStrength();
     offspring->getAttribute(JUMP_STRENGTH)->setBaseValue(jump / 3.0);
 
@@ -1001,7 +1090,7 @@ void AbstractHorse::setOffspringAttributes(const boost::shared_ptr<AgableMob>& o
 bool AbstractHorse::canBeControlledByRider()
 {
     return ((isTamed() && isSaddled()) || eTYPE_DERIVED_FROM(EntityType::SKELETON_HORSE, GetType()))
-        && Entity::instanceof(getControllingPassenger(), EntityType::LIVING_ENTITY);
+           && Entity::instanceof(getControllingPassenger(), EntityType::LIVING_ENTITY);
 }
 
 float AbstractHorse::getEatAnim(float partialTick) const
@@ -1027,13 +1116,11 @@ void AbstractHorse::spawnTamingParticles(bool success)
         const double xa = mRandom->nextGaussian() * 0.02;
         const double ya = mRandom->nextGaussian() * 0.02;
         const double za = mRandom->nextGaussian() * 0.02;
-        mLevel->addParticle(particle,
-                            mX + static_cast<double>(mRandom->nextFloat() * mBbWidth * 2.0f)
-                                - static_cast<double>(mBbWidth),
-                            mY + 0.5 + static_cast<double>(mRandom->nextFloat() * mBbHeight),
-                            mZ + static_cast<double>(mRandom->nextFloat() * mBbWidth * 2.0f)
-                                - static_cast<double>(mBbWidth),
-                            xa, ya, za, arrayWithLength<int>());
+        mLevel->addParticle(
+            particle, mX + static_cast<double>(mRandom->nextFloat() * mBbWidth * 2.0f) - static_cast<double>(mBbWidth),
+            mY + 0.5 + static_cast<double>(mRandom->nextFloat() * mBbHeight),
+            mZ + static_cast<double>(mRandom->nextFloat() * mBbWidth * 2.0f) - static_cast<double>(mBbWidth), xa, ya,
+            za, arrayWithLength<int>());
     }
 }
 
@@ -1071,10 +1158,22 @@ void AbstractHorse::positionRider(const boost::shared_ptr<Entity>& passenger)
         boost::dynamic_pointer_cast<LivingEntity>(passenger)->mYBodyRot = mYBodyRot;
 }
 
-bool AbstractHorse::onLadder() { return false; }
-float AbstractHorse::getEyeHeight() { return mBbHeight; }
-bool AbstractHorse::wearsArmor() { return false; }
-bool AbstractHorse::isArmor(const not_null_ptr<ItemInstance>&) { return false; }
+bool AbstractHorse::onLadder()
+{
+    return false;
+}
+float AbstractHorse::getEyeHeight()
+{
+    return mBbHeight;
+}
+bool AbstractHorse::wearsArmor()
+{
+    return false;
+}
+bool AbstractHorse::isArmor(const not_null_ptr<ItemInstance>&)
+{
+    return false;
+}
 
 bool AbstractHorse::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
 {
@@ -1122,4 +1221,7 @@ bool AbstractHorse::removeWhenFarAway()
     return Animal::removeWhenFarAway() && !isTamed() && !isSaddled() && !isPassenger();
 }
 
-unsigned long long AbstractHorse::GetType() { return EntityType::ABSTRACT_HORSE; }
+unsigned long long AbstractHorse::GetType()
+{
+    return EntityType::ABSTRACT_HORSE;
+}

@@ -38,6 +38,7 @@ template <class T> class EntityDataAccessor;
 class Mob : public LivingEntity
 {
     friend class FollowFlockLeaderGoal;
+
 public:
     enum SpawnPlacementType
     {
@@ -123,7 +124,8 @@ public:
     virtual int getMaxSpawnClusterSize();
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     virtual void populateDefaultEquipmentEnchantments(const DifficultyInstance& difficulty);
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& dataString);
     float rotlerp(float from, float to, float max);
     void lookAt(boost::shared_ptr<Entity> entity, float maxHeadXRot, float maxHeadYRot);
     virtual void finalizeSpawnEggSpawn(int type);

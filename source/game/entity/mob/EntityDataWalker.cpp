@@ -18,9 +18,7 @@ CompoundTag* EntityDataWalker::walk(DataFixer* fixer, CompoundTag* tag, int vers
 
         for (int i = 0; i < passengers->size(); i++)
         {
-            passengers->set(i,
-                fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                    passengers->getCompound(i), version));
+            passengers->set(i, fixer->update(DataFixTypes::eDataFixTypes_Entity, passengers->getCompound(i), version));
         }
     }
 

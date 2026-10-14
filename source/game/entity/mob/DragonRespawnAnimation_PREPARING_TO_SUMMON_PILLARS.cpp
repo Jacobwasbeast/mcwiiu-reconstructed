@@ -5,10 +5,9 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-void DragonRespawnAnimation_PREPARING_TO_SUMMON_PILLARS::tick(
-    ServerLevel* level, EndDragonFight* dragonFight,
-    std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
-    const BlockPos& portalLocation)
+void DragonRespawnAnimation_PREPARING_TO_SUMMON_PILLARS::tick(ServerLevel* level, EndDragonFight* dragonFight,
+                                                              std::vector<boost::shared_ptr<EnderCrystal> >* crystals,
+                                                              int tick, const BlockPos& portalLocation)
 {
     if (tick < 100)
     {

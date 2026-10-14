@@ -1,7 +1,8 @@
 #include "game/entity/mob/AttackDamageMobEffect.hpp"
 
 AttackDamageMobEffect::AttackDamageMobEffect(bool harmful, eMinecraftColour color, double damage)
-    : MobEffect(harmful, color), damage(damage)
+    : MobEffect(harmful, color),
+      damage(damage)
 {
 }
 

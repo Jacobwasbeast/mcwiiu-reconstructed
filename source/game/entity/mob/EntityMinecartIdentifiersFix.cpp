@@ -4,16 +4,9 @@
 
 #include "game/data/CompoundTag.hpp"
 
-static const std::wstring MINECART_IDS[] =
-{
-    L"MinecartRideable",
-    L"MinecartChest",
-    L"MinecartFurnace",
-    L"MinecartTNT",
-    L"MinecartSpawner",
-    L"MinecartHopper",
-    L"MinecartCommandBlock"
-};
+static const std::wstring MINECART_IDS[] = {L"MinecartRideable",    L"MinecartChest",   L"MinecartFurnace",
+                                            L"MinecartTNT",         L"MinecartSpawner", L"MinecartHopper",
+                                            L"MinecartCommandBlock"};
 
 EntityMinecartIdentifiersFix::~EntityMinecartIdentifiersFix()
 {

@@ -13,7 +13,8 @@ class MultiEntityMob
 public:
     virtual Level* getLevel() = 0;
     virtual bool hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageSource* source, float amount) = 0;
-    virtual void GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart> part, const EntityTooltipDataHolder& holder) = 0;
+    virtual void GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart> part,
+                                    const EntityTooltipDataHolder& holder) = 0;
 };
 
 #endif

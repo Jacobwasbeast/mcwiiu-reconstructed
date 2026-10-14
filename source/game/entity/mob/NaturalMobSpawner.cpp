@@ -98,8 +98,8 @@ bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType,
     if (placementType == Mob::SPAWN_PLACEMENT_TYPE_IN_WATER)
     {
         return state->getMaterial() == Material::WATER
-            && level->getBlockState(pos.below())->getMaterial() == Material::WATER
-            && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource();
+               && level->getBlockState(pos.below())->getMaterial() == Material::WATER
+               && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource();
     }
     else if (placementType == Mob::SPAWN_PLACEMENT_TYPE_IN_OPEN_WATER)
     {
@@ -125,7 +125,7 @@ bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType,
         }
 
         return state->getMaterial()->isLiquid() && surrounded
-            && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource();
+               && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource();
     }
     else if (placementType == Mob::SPAWN_PLACEMENT_TYPE_ON_WATER_FLOOR)
     {
@@ -135,7 +135,7 @@ bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType,
         Block* floor = level->getBlock(below);
         bool validFloor = floor != Blocks::bedrock && floor != Blocks::barrier;
         return validFloor && isValidEmptyUnderWaterSpawnBlock(state)
-            && isValidEmptyUnderWaterSpawnBlock(level->getBlockState(pos.above()));
+               && isValidEmptyUnderWaterSpawnBlock(level->getBlockState(pos.above()));
     }
     else
     {
@@ -145,14 +145,13 @@ bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType,
             Block* floor = level->getBlock(below);
             bool validFloor = floor != Blocks::bedrock && floor != Blocks::barrier;
             return validFloor && isValidEmptySpawnBlock(state)
-                && isValidEmptySpawnBlock(level->getBlockState(pos.above()));
+                   && isValidEmptySpawnBlock(level->getBlockState(pos.above()));
         }
     }
     return false;
 }
 
-unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool spawnFriendlies,
-                                     bool spawnPersistent)
+unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool spawnFriendlies, bool spawnPersistent)
 {
     if (!spawnEnemies && !spawnFriendlies && !spawnPersistent)
         return 0;
@@ -233,8 +232,8 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
             continue;
 
         PIXBeginNamedEvent(0.0f, "Count instance of");
-        unsigned int instanceCount
-            = level->countInstanceOf(category->getEnumBaseClass(), category->isSingleType(), NULL, NULL);
+        unsigned int instanceCount = level->countInstanceOf(category->getEnumBaseClass(), category->isSingleType(),
+                                                            NULL, NULL);
         PIXEndNamedEvent();
         if (instanceCount >= category->getMaxInstancesPerLevel())
             continue;
@@ -248,8 +247,7 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
             packSize = 1;
             groupCount = 1;
         }
-        PIXBeginNamedEvent(0.0f, "Poll %d ch, dd %d ll %d, cat %d", chunkCount, groupCount, packSize,
-                           categoryIndex);
+        PIXBeginNamedEvent(0.0f, "Poll %d ch, dd %d ll %d, cat %d", chunkCount, groupCount, packSize, categoryIndex);
 
         bool categoryFull = false;
         for (iterator chunkEnd = end(), chunk = begin(); chunk != chunkEnd; ++chunk)
@@ -316,8 +314,8 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
                         continue;
                     if (sharedSpawn.distSqr(spawnX, y, spawnZ) < 24.0 * 24.0)
                         continue;
-                    if (!isSpawnPositionOk(MobSpawnPlacements::getPlacementType(spawnerData->mEntityBaseClass),
-                                           level, pos, group, attempt))
+                    if (!isSpawnPositionOk(MobSpawnPlacements::getPlacementType(spawnerData->mEntityBaseClass), level,
+                                           pos, group, attempt))
                         continue;
 
                     boost::shared_ptr<Mob> mob;
@@ -343,8 +341,7 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
                         else if (mobType == EntityType::ENDER_MAN
                                  && level->mDimension->getType() == DimensionType::THE_END)
                         {
-                            unsigned int maxEndermen
-                                = Mth::floor(category->getMaxInstancesPerLevel() * 0.5f);
+                            unsigned int maxEndermen = Mth::floor(category->getMaxInstancesPerLevel() * 0.5f);
                             if (level->countInstanceOf(EntityType::ENDER_MAN, false, NULL, NULL) >= maxEndermen)
                                 continue;
                         }
@@ -372,9 +369,8 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
                         {
                             mMobCache.removeFromCache(mob);
                             mob->setDespawnProtected();
-                            groupData = mob->finalizeMobSpawn(
-                                level->getCurrentDifficultyAt(BlockPos(mob)),
-                                groupData, L"");
+                            groupData = mob->finalizeMobSpawn(level->getCurrentDifficultyAt(BlockPos(mob)), groupData,
+                                                              L"");
                             groupDatas.insert(groupData);
                             if (mob->checkSpawnObstruction())
                             {
@@ -427,8 +423,8 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
     return spawned;
 }
 
-void NaturalMobSpawner::spawnMobsForChunkGeneration(Level* level, Biome* biome, int x, int y,
-                                                    int z, int count, Random* random)
+void NaturalMobSpawner::spawnMobsForChunkGeneration(Level* level, Biome* biome, int x, int y, int z, int count,
+                                                    Random* random)
 {
     return;
 }

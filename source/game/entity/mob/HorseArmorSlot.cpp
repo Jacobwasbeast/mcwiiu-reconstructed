@@ -17,4 +17,3 @@ int HorseArmorSlot::getMaxStackSize()
 {
     return 1;
 }
-

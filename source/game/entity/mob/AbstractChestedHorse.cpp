@@ -25,8 +25,7 @@
 
 const EntityDataAccessor<bool>* AbstractChestedHorse::DATA_CHEST = NULL;
 
-AbstractChestedHorse::AbstractChestedHorse(Level* level)
-    : AbstractHorse(level)
+AbstractChestedHorse::AbstractChestedHorse(Level* level) : AbstractHorse(level)
 {
     mCanGallop = false;
 }
@@ -131,8 +130,7 @@ void AbstractChestedHorse::readAdditionalSaveData(CompoundTag* tag)
             unsigned int slot = itemTag->getByte(L"Slot");
             if (slot >= 2 && slot < (unsigned int)mInventory->getContainerSize())
             {
-                mInventory->setItem((unsigned int)slot,
-                                    not_null_ptr<ItemInstance>(new ItemInstance(itemTag)));
+                mInventory->setItem((unsigned int)slot, not_null_ptr<ItemInstance>(new ItemInstance(itemTag)));
             }
         }
     }
@@ -189,9 +187,7 @@ bool AbstractChestedHorse::mobInteract(const boost::shared_ptr<Player>& player, 
 
         if (!isTamed())
         {
-            if (!item->interactEnemy(player,
-                                     boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-                                     hand))
+            if (!item->interactEnemy(player, boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand))
                 makeMad();
             return true;
         }
@@ -223,16 +219,14 @@ bool AbstractChestedHorse::mobInteract(const boost::shared_ptr<Player>& player, 
     if (isBaby())
         return AbstractHorse::mobInteract(player, hand);
 
-    if (!item->interactEnemy(player,
-                             boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand))
+    if (!item->interactEnemy(player, boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand))
         doPlayerRide(player);
     return true;
 }
 
 void AbstractChestedHorse::playChestEquipsSound()
 {
-    playSound(SoundEvents::DONKEY_CHEST, 1.0f,
-              1.0f + (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f);
+    playSound(SoundEvents::DONKEY_CHEST, 1.0f, 1.0f + (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f);
 }
 
 int AbstractChestedHorse::getInventoryColumns()

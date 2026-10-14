@@ -19,20 +19,14 @@ class HangingEntityItem : public Item
 public:
     explicit HangingEntityItem(unsigned long long entityType);
 
-    boost::shared_ptr<HangingEntity> createEntity(Level* level, const BlockPos& pos, const Direction* direction, int auxValue);
-    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
-                                                        Level* level,
-                                                        const BlockPos& pos,
-                                                        InteractionHand::EInteractionHand hand,
-                                                        const Direction* direction,
-                                                        float hitX,
-                                                        float hitY,
-                                                        float hitZ,
+    boost::shared_ptr<HangingEntity> createEntity(Level* level, const BlockPos& pos, const Direction* direction,
+                                                  int auxValue);
+    virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
+                                                        const BlockPos& pos, InteractionHand::EInteractionHand hand,
+                                                        const Direction* direction, float hitX, float hitY, float hitZ,
                                                         bool simulate);
-    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                 boost::shared_ptr<Player> player,
-                                 std::vector<HtmlString>* lines,
-                                 bool advanced);
+    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player,
+                                 std::vector<HtmlString>* lines, bool advanced);
 
 private:
     unsigned long long mEntityType;

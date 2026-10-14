@@ -20,8 +20,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/item/ItemId.hpp"
 
-ZombieHorse::ZombieHorse(Level* level)
-    : AbstractHorse(level)
+ZombieHorse::ZombieHorse(Level* level) : AbstractHorse(level)
 {
     fjDerivedCtorCalls();
 }
@@ -85,8 +84,7 @@ ResourceLocation* ZombieHorse::getDefaultLootTable()
     return &BuiltInLootTables::ZOMBIE_HORSE;
 }
 
-bool ZombieHorse::mobInteract(const boost::shared_ptr<Player>& player,
-                              InteractionHand::EInteractionHand hand)
+bool ZombieHorse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
     bool notEmpty = !item->isEmpty();
@@ -110,9 +108,7 @@ bool ZombieHorse::mobInteract(const boost::shared_ptr<Player>& player,
             openInventory(player);
             return true;
         }
-        if (item->interactEnemy(player,
-                                boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-                                hand))
+        if (item->interactEnemy(player, boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand))
             return true;
     }
     doPlayerRide(player);
@@ -145,21 +141,18 @@ unsigned int ZombieHorse::GetInteractTooltip(const EntityTooltipDataHolder& tool
             }
             else
             {
-                if (itemId == ItemId::NAME_TAG
-                    && !(tooltipData.m_pPlayer->isSneaking() && isTamed()))
+                if (itemId == ItemId::NAME_TAG && !(tooltipData.m_pPlayer->isSneaking() && isTamed()))
                 {
                     if (!tooltipData.m_pItemInstance->hasCustomHoverName())
                         return IDS_NONE;
-                    if (!hasCustomName()
-                        || tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) != 0)
+                    if (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) != 0)
                         return IDS_TOOLTIPS_NAME;
                     return IDS_NONE;
                 }
 
                 if (isTamed())
                 {
-                    if (tooltipData.m_pPlayer->isSneaking()
-                        || itemId == ItemId::SADDLE && !isSaddled()
+                    if (tooltipData.m_pPlayer->isSneaking() || itemId == ItemId::SADDLE && !isSaddled()
                         || wearsArmor() && horseArmor)
                         return IDS_TOOLTIPS_OPEN;
                     if (getPassengers()->empty())

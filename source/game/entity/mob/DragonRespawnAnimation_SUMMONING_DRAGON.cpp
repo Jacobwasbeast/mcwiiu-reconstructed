@@ -6,10 +6,9 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-void DragonRespawnAnimation_SUMMONING_DRAGON::tick(ServerLevel* level,
-    EndDragonFight* dragonFight,
-    std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
-    const BlockPos& portalLocation)
+void DragonRespawnAnimation_SUMMONING_DRAGON::tick(ServerLevel* level, EndDragonFight* dragonFight,
+                                                   std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
+                                                   const BlockPos& portalLocation)
 {
     if (tick < 100)
     {
@@ -46,8 +45,7 @@ void DragonRespawnAnimation_SUMMONING_DRAGON::tick(ServerLevel* level,
     {
         boost::shared_ptr<EnderCrystal> crystal = *it;
         crystal->setBeamTarget(NULL);
-        level->explode(crystal, crystal->mX, crystal->mY, crystal->mZ, 6.0f, false, true, false, false, false,
-                       -1.0f);
+        level->explode(crystal, crystal->mX, crystal->mY, crystal->mZ, 6.0f, false, true, false, false, false, -1.0f);
         crystal->remove();
         ++it;
     }

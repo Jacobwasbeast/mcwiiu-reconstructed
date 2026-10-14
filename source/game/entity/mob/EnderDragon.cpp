@@ -50,8 +50,7 @@
 static const EntityDataAccessor<int>* DATA_DRAGON_PHASE = NULL;
 static double SITTING_TARGET_RANGE = 20.0;
 
-EnderDragon::EnderDragon(Level* level)
-    : Mob(level)
+EnderDragon::EnderDragon(Level* level) : Mob(level)
 {
     _init();
     setSize(16.0f, 8.0f);
@@ -89,10 +88,22 @@ std::wstring EnderDragon::getDisplayName()
     return std::wstring(L10N::GetString(IDS_ENDERDRAGON));
 }
 
-float EnderDragon::getMaxHealth() { return LivingEntity::getMaxHealth(); }
-float EnderDragon::getHealth() { return LivingEntity::getHealth(); }
-int EnderDragon::getDimension() { return mDimension; }
-Level* EnderDragon::getLevel() { return mLevel; }
+float EnderDragon::getMaxHealth()
+{
+    return LivingEntity::getMaxHealth();
+}
+float EnderDragon::getHealth()
+{
+    return LivingEntity::getHealth();
+}
+int EnderDragon::getDimension()
+{
+    return mDimension;
+}
+Level* EnderDragon::getLevel()
+{
+    return mLevel;
+}
 
 unsigned int EnderDragon::getSynchedAction()
 {
@@ -281,7 +292,10 @@ unsigned int EnderDragon::findClosestNode()
     return findClosestNode(mX, mY, mZ);
 }
 
-double EnderDragon::getHeadYRotDiff(float) { return 0.0; }
+double EnderDragon::getHeadYRotDiff(float)
+{
+    return 0.0;
+}
 
 Vec3* EnderDragon::getHeadLookVector(float partialTicks)
 {
@@ -631,8 +645,7 @@ bool EnderDragon::hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageS
     if (amount < 0.01f)
         return false;
 
-    if ((source->getEntity() != NULL
-         && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
+    if ((source->getEntity() != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
         || source->isExplosion())
     {
         const int healthBefore = static_cast<int>(getHealth());
@@ -701,7 +714,8 @@ void EnderDragon::AddParts()
     mSubEntities.push_back(mWing2);
 }
 
-void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const BlockPos& pos, const DamageSource* source)
+void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const BlockPos& pos,
+                                     const DamageSource* source)
 {
     boost::shared_ptr<Player> player;
     if (Entity::instanceof(source->getEntity(), EntityType::PLAYER))
@@ -727,8 +741,7 @@ void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, co
             }
             mActionTicks = 1;
         }
-        else if (source->getEntity() != NULL
-                 && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
+        else if (source->getEntity() != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
         {
             if (setSynchedAction(ACTION_STRAFE_PLAYER, false))
             {
@@ -793,7 +806,10 @@ void EnderDragon::defineSynchedData()
     mEntityData->createDateItem(DATA_DRAGON_PHASE, 0);
 }
 
-bool EnderDragon::canRide(boost::shared_ptr<Entity>) { return false; }
+bool EnderDragon::canRide(boost::shared_ptr<Entity>)
+{
+    return false;
+}
 
 void EnderDragon::getLatencyPos(arrayWithLength<double> positions, int index, float partialTicks)
 {
@@ -871,8 +887,8 @@ void EnderDragon::checkCrystals()
     if (mRandom->nextInt(10) != 0)
         return;
 
-    std::vector<boost::shared_ptr<Entity> >* crystals =
-        mLevel->getEntitiesOfClass(typeid(EnderCrystal), mBoundingBox->grow(32.0, 32.0, 32.0));
+    std::vector<boost::shared_ptr<Entity> >* crystals = mLevel->getEntitiesOfClass(
+        typeid(EnderCrystal), mBoundingBox->grow(32.0, 32.0, 32.0));
     boost::shared_ptr<EnderCrystal> closest;
     double closestDistance = std::numeric_limits<double>::max();
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = crystals->begin(); it != crystals->end(); ++it)
@@ -914,8 +930,8 @@ void EnderDragon::hurt(std::vector<boost::shared_ptr<Entity> >* entities)
             continue;
 
         boost::shared_ptr<LivingEntity> target = boost::dynamic_pointer_cast<LivingEntity>(*it);
-        EntityDamageSource* source =
-            DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
+        EntityDamageSource* source = DamageSource::CreateMobAttack(
+            boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
         target->hurt(source, 10.0f);
         delete source;
     }
@@ -1193,14 +1209,16 @@ void EnderDragon::aiStep()
                 {
                     Vec3* toTarget = Vec3::newTemp(mAttackTarget->mX - mX, 0.0, mAttackTarget->mZ - mZ)->normalize();
                     Vec3* facing = Vec3::newTemp(std::sin(mYRot * 3.1415927f / 180.0f), 0.0,
-                                                 -std::cos(mYRot * 3.1415927f / 180.0f))->normalize();
-                    const float angle =
-                        std::acos(static_cast<float>(facing->dot(toTarget))) * 180.0f / 3.1415927f + 0.5f;
+                                                 -std::cos(mYRot * 3.1415927f / 180.0f))
+                                       ->normalize();
+                    const float angle = std::acos(static_cast<float>(facing->dot(toTarget))) * 180.0f / 3.1415927f
+                                        + 0.5f;
                     if (angle < 0.0f || angle > 10.0f)
                     {
                         double yRotDelta = Mth::wrapDegrees(
                             180.0
-                            - std::atan2(mAttackTarget->mX - mHead->mX, mAttackTarget->mZ - mHead->mZ) * 180.0 / 3.1415927f
+                            - std::atan2(mAttackTarget->mX - mHead->mX, mAttackTarget->mZ - mHead->mZ) * 180.0
+                                  / 3.1415927f
                             - mYRot);
                         if (yRotDelta > 50.0)
                             yRotDelta = 50.0;
@@ -1263,7 +1281,8 @@ void EnderDragon::aiStep()
 
                 Vec3* direction = Vec3::newTemp(mXTarget - mX, mYTarget - mY, mZTarget - mZ)->normalize();
                 Vec3* facing = Vec3::newTemp(std::sin(mYRot * 3.1415927f / 180.0f), mYd,
-                                             -std::cos(mYRot * 3.1415927f / 180.0f))->normalize();
+                                             -std::cos(mYRot * 3.1415927f / 180.0f))
+                                   ->normalize();
                 float alignment = static_cast<float>(facing->dot(direction) + 0.5) / 1.5f;
                 if (alignment < 0.0f)
                     alignment = 0.0f;
@@ -1353,10 +1372,10 @@ void EnderDragon::aiStep()
     mHead->tick();
     mNeck->tick();
     const double headYOffset = getHeadYOffset(1.0f);
-    mHead->moveTo(mX + sinHead * 6.5f * cosTilt, mY + headYOffset + sinTilt * 6.5f, mZ - cosHead * 6.5f * cosTilt,
-                  0.0f, 0.0f);
-    mNeck->moveTo(mX + sinHead * 5.5f * cosTilt, mY + headYOffset + sinTilt * 5.5f, mZ - cosHead * 5.5f * cosTilt,
-                  0.0f, 0.0f);
+    mHead->moveTo(mX + sinHead * 6.5f * cosTilt, mY + headYOffset + sinTilt * 6.5f, mZ - cosHead * 6.5f * cosTilt, 0.0f,
+                  0.0f);
+    mNeck->moveTo(mX + sinHead * 5.5f * cosTilt, mY + headYOffset + sinTilt * 5.5f, mZ - cosHead * 5.5f * cosTilt, 0.0f,
+                  0.0f);
 
     for (int i = 0; i < 3; ++i)
     {
@@ -1371,7 +1390,8 @@ void EnderDragon::aiStep()
         double partLatency[3];
         getLatencyPos(arrayWithLength<double>(partLatency, 3), 12 + i * 2, 1.0f);
         const float partYRot = mYRot * 3.1415927f / 180.0f
-            + static_cast<float>(rotWrap(partLatency[0] - bodyLatency[0])) * 3.1415927f / 180.0f * 1.0f;
+                               + static_cast<float>(rotWrap(partLatency[0] - bodyLatency[0])) * 3.1415927f / 180.0f
+                                     * 1.0f;
         const float sinPart = std::sin(partYRot);
         const float cosPart = std::cos(partYRot);
         const float spacing = static_cast<float>(i + 1) * 2.0f;
@@ -1394,7 +1414,8 @@ void EnderDragon::aiStep()
             ++mFireballCharge;
             Vec3* toTarget = Vec3::newTemp(mAttackTarget->mX - mX, 0.0, mAttackTarget->mZ - mZ)->normalize();
             Vec3* facing = Vec3::newTemp(std::sin(mYRot * 3.1415927f / 180.0f), 0.0,
-                                         -std::cos(mYRot * 3.1415927f / 180.0f))->normalize();
+                                         -std::cos(mYRot * 3.1415927f / 180.0f))
+                               ->normalize();
             const float angle = std::acos(static_cast<float>(facing->dot(toTarget))) * 180.0f / 3.1415927f + 0.5f;
             if (mFireballCharge >= 20 && angle >= 0.0f && angle < 10.0f)
             {
@@ -1404,7 +1425,7 @@ void EnderDragon::aiStep()
                 const double headZ = mHead->mZ - look->z;
                 const double xa = mAttackTarget->mX - headX;
                 const double ya = mAttackTarget->mBoundingBox->mMinY + mAttackTarget->mBbHeight * 0.5f
-                    - (headY + mHead->mBbHeight * 0.5f);
+                                  - (headY + mHead->mBbHeight * 0.5f);
                 const double za = mAttackTarget->mZ - headZ;
                 mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_FIREBALL,
                                    BlockPos(static_cast<int>(mX), static_cast<int>(mY), static_cast<int>(mZ)), 0);
@@ -1445,7 +1466,10 @@ void EnderDragon::aiStep()
     }
 }
 
-ResourceLocation* EnderDragon::getDefaultLootTable() { return &BuiltInLootTables::ENDER_DRAGON; }
+ResourceLocation* EnderDragon::getDefaultLootTable()
+{
+    return &BuiltInLootTables::ENDER_DRAGON;
+}
 
 bool EnderDragon::hurt(const DamageSource* source, float amount)
 {
@@ -1458,15 +1482,17 @@ bool EnderDragon::hurt(const DamageSource* source, float amount)
     return false;
 }
 
-void EnderDragon::reallyHurt(const DamageSource* source, float amount) { LivingEntity::hurt(source, amount); }
+void EnderDragon::reallyHurt(const DamageSource* source, float amount)
+{
+    LivingEntity::hurt(source, amount);
+}
 
 void EnderDragon::kill()
 {
     remove();
     if (mDragonFight != NULL)
     {
-        boost::shared_ptr<EnderDragon> self =
-            boost::static_pointer_cast<EnderDragon>(shared_from_this());
+        boost::shared_ptr<EnderDragon> self = boost::static_pointer_cast<EnderDragon>(shared_from_this());
         mDragonFight->updateDragon(self);
         mDragonFight->setDragonKilled(self);
     }
@@ -1536,12 +1562,29 @@ void EnderDragon::tickDeath()
     }
 }
 
-void EnderDragon::checkDespawn() {}
-std::vector<boost::shared_ptr<Entity> >* EnderDragon::getSubEntities() { return &mSubEntities; }
-bool EnderDragon::isPickable() { return false; }
-const SoundEvent* EnderDragon::getAmbientSound() { return SoundEvents::ENDERDRAGON_GROWL; }
-const SoundEvent* EnderDragon::getHurtSound(const DamageSource*) { return SoundEvents::ENDERDRAGON_HURT; }
-float EnderDragon::getSoundVolume() { return 5.0f; }
+void EnderDragon::checkDespawn()
+{
+}
+std::vector<boost::shared_ptr<Entity> >* EnderDragon::getSubEntities()
+{
+    return &mSubEntities;
+}
+bool EnderDragon::isPickable()
+{
+    return false;
+}
+const SoundEvent* EnderDragon::getAmbientSound()
+{
+    return SoundEvents::ENDERDRAGON_GROWL;
+}
+const SoundEvent* EnderDragon::getHurtSound(const DamageSource*)
+{
+    return SoundEvents::ENDERDRAGON_HURT;
+}
+float EnderDragon::getSoundVolume()
+{
+    return 5.0f;
+}
 
 void EnderDragon::addAdditonalSaveData(CompoundTag* tag)
 {
@@ -1588,8 +1631,14 @@ double EnderDragon::getHeadPartYRotDiff(int, arrayWithLength<double> first, arra
     return second.data[0] - first.data[0];
 }
 
-unsigned int EnderDragon::GetInteractTooltip(const EntityTooltipDataHolder&) { return 0xffffffffU; }
-unsigned long long EnderDragon::GetType() { return EntityType::ENDER_DRAGON; }
+unsigned int EnderDragon::GetInteractTooltip(const EntityTooltipDataHolder&)
+{
+    return 0xffffffffU;
+}
+unsigned long long EnderDragon::GetType()
+{
+    return EntityType::ENDER_DRAGON;
+}
 
 Entity* EnderDragon::create(Level* level)
 {

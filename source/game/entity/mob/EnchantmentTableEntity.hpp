@@ -28,12 +28,10 @@ public:
     virtual std::wstring getCustomName();
     virtual bool hasCustomName();
     virtual std::wstring getDisplayName();
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
     virtual int getTypeId(bool large);
     virtual InteractionObject::NameData GetNetworkNameData();
-    void setCustomName(const std::wstring& name, const std::wstring& uuid,
-                       bool chatCensored, bool uuidLocal);
+    void setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal);
     virtual CompoundTag* save(CompoundTag* tag);
     virtual void load(CompoundTag* tag);
     virtual void tick();

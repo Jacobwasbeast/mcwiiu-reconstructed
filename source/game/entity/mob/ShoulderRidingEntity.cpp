@@ -4,8 +4,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-ShoulderRidingEntity::ShoulderRidingEntity(Level* level)
-    : TamableAnimal(level), mShoulderTick(0)
+ShoulderRidingEntity::ShoulderRidingEntity(Level* level) : TamableAnimal(level), mShoulderTick(0)
 {
 }
 

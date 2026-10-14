@@ -28,11 +28,13 @@ boost::shared_ptr<Entity> EntityDamageSource::getEntity() const
     return entity;
 }
 
-boost::shared_ptr<ClientboundChatPacket> EntityDamageSource::getDeathMessagePacket(boost::shared_ptr<LivingEntity> victim) const
+boost::shared_ptr<ClientboundChatPacket> EntityDamageSource::getDeathMessagePacket(
+    boost::shared_ptr<LivingEntity> victim) const
 {
-    not_null_ptr<ItemInstance> item = (entity != NULL && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity.get()->GetType()))
-        ? boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem()
-        : ItemInstance::EMPTY;
+    not_null_ptr<ItemInstance> item = (entity != NULL
+                                       && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity.get()->GetType()))
+                                          ? boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem()
+                                          : ItemInstance::EMPTY;
     std::wstring attackerName = L"";
 
     if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType()))
@@ -47,14 +49,16 @@ boost::shared_ptr<ClientboundChatPacket> EntityDamageSource::getDeathMessagePack
     }
 
     if (item->hasCustomHoverName())
-        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victim->getNetworkName(), deathMessage, entity, attackerName, item->getHoverName()));
-    return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victim->getNetworkName(), message, entity, attackerName));
+        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+            victim->getNetworkName(), deathMessage, entity, attackerName, item->getHoverName()));
+    return boost::shared_ptr<ClientboundChatPacket>(
+        new ClientboundChatPacket(victim->getNetworkName(), message, entity, attackerName));
 }
 
 bool EntityDamageSource::scalesWithDifficulty() const
 {
     return entity && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity.get()->GetType())
-        && (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER;
+           && (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER;
 }
 
 Vec3* EntityDamageSource::getSourcePosition() const

@@ -117,8 +117,7 @@ int Entity::sWanderingCount;
 int Entity::sWanderingTick;
 int Entity::sWanderingIds[3];
 
-int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities,
-            const boost::shared_ptr<Entity>& entity)
+int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities, const boost::shared_ptr<Entity>& entity)
 {
     for (unsigned int i = 0; i < entities.size(); ++i)
     {
@@ -133,16 +132,24 @@ int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities,
 
 void Entity::staticCtor()
 {
-    DATA_SHARED_FLAGS_ID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
-    DATA_AIR_SUPPLY_ID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
-    DATA_CUSTOM_NAME = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::STRING);
-    DATA_CUSTOM_NAME_VISIBLE = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_SHARED_FLAGS_ID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY,
+                                                       EntityDataSerializers::INT);
+    DATA_AIR_SUPPLY_ID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY,
+                                                     EntityDataSerializers::INT);
+    DATA_CUSTOM_NAME = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY,
+                                                   EntityDataSerializers::STRING);
+    DATA_CUSTOM_NAME_VISIBLE = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY,
+                                                           EntityDataSerializers::BOOLEAN);
     DATA_SILENT = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_NO_GRAVITY = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_NO_GRAVITY = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY,
+                                                  EntityDataSerializers::BOOLEAN);
     DATA_MOVING = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_OWNER_UUID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::STRING);
-    DATA_CREATED_ON_HOST = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_NAMED_BY_RESTRICTED_PLAYER = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_OWNER_UUID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY,
+                                                  EntityDataSerializers::STRING);
+    DATA_CREATED_ON_HOST = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY,
+                                                       EntityDataSerializers::BOOLEAN);
+    DATA_NAMED_BY_RESTRICTED_PLAYER = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY,
+                                                                  EntityDataSerializers::BOOLEAN);
 }
 
 void Entity::useSmallIds()
@@ -527,7 +534,8 @@ bool Entity::hasCategory(EntityCategory::E_EntityCategory category) const
     return (mCategories & category) == category;
 }
 
-void Entity::sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams)
+void Entity::sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams,
+                         std::wstring* stringParams, unsigned int numStringParams)
 {
 }
 
@@ -570,7 +578,8 @@ void Entity::setCommandStats(CommandStats::CommandStatType statType, int value)
 {
     if (mLevel != NULL && !mLevel->mIsClientSide)
     {
-        mCommandStats->setCommandStats(mLevel->getServer(), boost::dynamic_pointer_cast<CommandSender>(shared_from_this()), statType, value);
+        mCommandStats->setCommandStats(mLevel->getServer(),
+                                       boost::dynamic_pointer_cast<CommandSender>(shared_from_this()), statType, value);
     }
 }
 
@@ -636,16 +645,15 @@ void Entity::setSize(float width, float height)
     {
         double halfWidth = (double)width * 0.5;
 
-        setBoundingBox(AABB::newTemp(mX - halfWidth, mY, mZ - halfWidth,
-                                     mX + halfWidth, mY + (double)height, mZ + halfWidth));
+        setBoundingBox(
+            AABB::newTemp(mX - halfWidth, mY, mZ - halfWidth, mX + halfWidth, mY + (double)height, mZ + halfWidth));
         return;
     }
 
     AABB* box = mBoundingBox;
 
-    setBoundingBox(AABB::newTemp(box->mMinX, box->mMinY, box->mMinZ,
-                                 box->mMinX + (double)mBbWidth, box->mMinY + (double)mBbHeight,
-                                 box->mMinZ + (double)mBbWidth));
+    setBoundingBox(AABB::newTemp(box->mMinX, box->mMinY, box->mMinZ, box->mMinX + (double)mBbWidth,
+                                 box->mMinY + (double)mBbHeight, box->mMinZ + (double)mBbWidth));
 
     if (oldWidth < mBbWidth && !mFirstTick && !mLevel->mIsClientSide)
     {
@@ -662,8 +670,7 @@ void Entity::setPos(double x, double y, double z)
     float halfWidth = mBbWidth / 2.0f;
     float height = mBbHeight;
 
-    setBoundingBox(AABB::newTemp(x - halfWidth, y, z - halfWidth,
-                                 x + halfWidth, y + height, z + halfWidth));
+    setBoundingBox(AABB::newTemp(x - halfWidth, y, z - halfWidth, x + halfWidth, y + height, z + halfWidth));
 }
 
 void Entity::setRot(float yRot, float xRot)
@@ -723,13 +730,12 @@ void Entity::interpolateTurn(float yRotDelta, float xRotDelta)
 
 void Entity::DamageNearbyMobs()
 {
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox->grow(1.0, 1.0, 1.0), NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(),
+                                                                            mBoundingBox->grow(1.0, 1.0, 1.0), NULL);
 
     if (!entities->empty())
     {
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-             it != entities->end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
             DoAutoAttackOnTouch(*it);
 
@@ -816,8 +822,7 @@ bool Entity::isInWaterOrBubble()
 
 bool Entity::isInLava()
 {
-    return mLevel->isInLava(this, mBoundingBox->grow(-0.10000000149011612, -0.4000000059604645,
-                                                     -0.10000000149011612));
+    return mLevel->isInLava(this, mBoundingBox->grow(-0.10000000149011612, -0.4000000059604645, -0.10000000149011612));
 }
 
 void Entity::lavaHurt()
@@ -1051,7 +1056,7 @@ void Entity::outOfWorld()
 bool Entity::isFree(AABB* box)
 {
     return mLevel->getCollisionAABBs(shared_from_this(), box, false, false, false)->empty()
-        && !mLevel->containsAnyLiquid(box);
+           && !mLevel->containsAnyLiquid(box);
 }
 
 bool Entity::isFree(double x, double y, double z)
@@ -1068,15 +1073,14 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
 {
     std::vector<boost::weak_ptr<Entity> > passengers = *getPassengers();
 
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers.begin();
-         it != passengers.end(); ++it)
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers.begin(); it != passengers.end(); ++it)
     {
         boost::shared_ptr<Entity> passenger = it->lock();
 
         if (passenger && eTYPE_DERIVED_FROM(EntityType::LOCAL_PLAYER, passenger->GetType()))
         {
-            if (!boost::static_pointer_cast<LocalPlayer>(passenger)->canMoveOrBeMovedFromTo(
-                    mX, mY, mZ, mX + x, mY + y, mZ + z, NULL))
+            if (!boost::static_pointer_cast<LocalPlayer>(passenger)->canMoveOrBeMovedFromTo(mX, mY, mZ, mX + x, mY + y,
+                                                                                            mZ + z, NULL))
             {
                 return;
             }
@@ -1175,9 +1179,10 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
         && eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()))
     {
         while (x != 0.0
-               && mLevel->getCollisionAABBs(shared_from_this(),
-                                            mBoundingBox->move(x, -(double)mMaxUpStep, 0.0),
-                                            false, false, false)->empty())
+               && mLevel
+                      ->getCollisionAABBs(shared_from_this(), mBoundingBox->move(x, -(double)mMaxUpStep, 0.0), false,
+                                          false, false)
+                      ->empty())
         {
             if (x < 0.05 && x >= -0.05)
             {
@@ -1196,9 +1201,10 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
         }
 
         while (z != 0.0
-               && mLevel->getCollisionAABBs(shared_from_this(),
-                                            mBoundingBox->move(0.0, -(double)mMaxUpStep, z),
-                                            false, false, false)->empty())
+               && mLevel
+                      ->getCollisionAABBs(shared_from_this(), mBoundingBox->move(0.0, -(double)mMaxUpStep, z), false,
+                                          false, false)
+                      ->empty())
         {
             if (z < 0.05 && z >= -0.05)
             {
@@ -1217,9 +1223,10 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
         }
 
         while (x != 0.0 && z != 0.0
-               && mLevel->getCollisionAABBs(shared_from_this(),
-                                            mBoundingBox->move(x, -(double)mMaxUpStep, z),
-                                            false, false, false)->empty())
+               && mLevel
+                      ->getCollisionAABBs(shared_from_this(), mBoundingBox->move(x, -(double)mMaxUpStep, z), false,
+                                          false, false)
+                      ->empty())
         {
             if (x < 0.05 && x >= -0.05)
             {
@@ -1256,8 +1263,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     PIXBeginNamedEvent(0.0f, "Get cubes");
 
     std::vector<AABB*>* cubes = mLevel->getCollisionAABBs(
-        shared_from_this(),
-        mBoundingBox->expand(x, y, z)->expand(0.0, -y, 0.0)->expand(0.0, (double)mMaxUpStep, 0.0),
+        shared_from_this(), mBoundingBox->expand(x, y, z)->expand(0.0, -y, 0.0)->expand(0.0, (double)mMaxUpStep, 0.0),
         pushedByPiston, true, false);
 
     PIXEndNamedEvent();
@@ -1497,11 +1503,9 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     mOnGround = mVerticalCollision && wantedY < 0.0;
     mCollision = mHorizontalCollision || mVerticalCollision;
 
-    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, GetType()) && mCollision
-        && !gApp.IsAppPaused())
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, GetType()) && mCollision && !gApp.IsAppPaused())
     {
-        boost::shared_ptr<LivingEntity> living =
-            boost::static_pointer_cast<LivingEntity>(shared_from_this());
+        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(shared_from_this());
 
         if (living->isFallFlying())
         {
@@ -1523,8 +1527,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
         Block* below = mLevel->getBlock(landingPos.below());
 
         if (below != NULL
-            && (dynamic_cast<FenceBlock*>(below) != NULL
-                || dynamic_cast<WallBlock*>(below) != NULL
+            && (dynamic_cast<FenceBlock*>(below) != NULL || dynamic_cast<WallBlock*>(below) != NULL
                 || dynamic_cast<FenceGateBlock*>(below) != NULL))
         {
             landingPos = landingPos.below();
@@ -1539,8 +1542,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
 
     updateDeltaAfterMove(landingBlock, wantedX, wantedY, wantedZ, x, y, z);
 
-    if (makeStepSound()
-        && (!mOnGround || !isSneaking() || (GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    if (makeStepSound() && (!mOnGround || !isSneaking() || (GetType() & EntityType::PLAYER) != EntityType::PLAYER)
         && !isPassenger())
     {
         PIXBeginNamedEvent(0.0f, "Make step sound");
@@ -1593,8 +1595,8 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     PIXEndNamedEvent();
 }
 
-void Entity::updateDeltaAfterMove(Block* block, double x, double y, double z,
-                                  double& movedX, double& movedY, double& movedZ)
+void Entity::updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY,
+                                  double& movedZ)
 {
     if (x != movedX)
     {
@@ -1699,20 +1701,17 @@ void Entity::playStepSound(const BlockPos& pos, Block* block)
 
     MemSect(31);
 
-    if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType())
-        || (getSkinAdjustments().mAnimFlags & 0x4) == 0)
+    if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()) || (getSkinAdjustments().mAnimFlags & 0x4) == 0)
     {
         if (mLevel->getBlockState(mTickCache, pos.above())->getBlock() == Blocks::snow_layer)
         {
             soundType = Blocks::snow_layer->getSoundType();
 
-            playSound(soundType->getStepSound(), soundType->getVolume() * 0.15f,
-                      soundType->getPitch());
+            playSound(soundType->getStepSound(), soundType->getVolume() * 0.15f, soundType->getPitch());
         }
         else if (!block->defaultBlockState()->getMaterial()->isLiquid())
         {
-            playSound(soundType->getStepSound(), soundType->getVolume() * 0.15f,
-                      soundType->getPitch());
+            playSound(soundType->getStepSound(), soundType->getVolume() * 0.15f, soundType->getPitch());
         }
 
         MemSect(0);
@@ -1721,12 +1720,12 @@ void Entity::playStepSound(const BlockPos& pos, Block* block)
 
 void Entity::playUnderwaterSound(const BlockPos& pos, Block* block)
 {
-    boost::shared_ptr<Entity> source = (isVehicle() && getControllingPassenger()) ? getControllingPassenger() : shared_from_this();
+    boost::shared_ptr<Entity> source = (isVehicle() && getControllingPassenger()) ? getControllingPassenger()
+                                                                                  : shared_from_this();
 
     float volume = source == shared_from_this() ? 0.55f : 0.6f;
 
-    float speed = (float)sqrt(source->mXd * source->mXd * 0.20000000298023224
-                              + source->mYd * source->mYd
+    float speed = (float)sqrt(source->mXd * source->mXd * 0.20000000298023224 + source->mYd * source->mYd
                               + source->mZd * source->mZd * 0.20000000298023224);
 
     float amount = speed * volume;
@@ -1736,8 +1735,7 @@ void Entity::playUnderwaterSound(const BlockPos& pos, Block* block)
         amount = 1.0f;
     }
 
-    playSound(getSwimSound(), amount,
-              (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
+    playSound(getSwimSound(), amount, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
 }
 
 float Entity::playFlySound(float moveDist)
@@ -1767,8 +1765,7 @@ void Entity::playSound(const SoundEvent* sound, float volume, float pitch)
         return;
     }
 
-    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, sound, getSoundSource(), volume,
-                      pitch, 16.0f);
+    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, sound, getSoundSource(), volume, pitch, 16.0f);
 }
 
 bool Entity::isSilent()
@@ -1855,8 +1852,7 @@ void Entity::causeFallDamage(float fallDistance, float damageMultiplier)
 
     std::vector<boost::weak_ptr<Entity> > passengers = *getPassengers();
 
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers.begin();
-         it != passengers.end(); ++it)
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers.begin(); it != passengers.end(); ++it)
     {
         boost::shared_ptr<Entity> passenger = it->lock();
 
@@ -1879,8 +1875,8 @@ bool Entity::headInWater()
 
 bool Entity::isOverWater()
 {
-    return mLevel->checkAndHandleWater(
-        mBoundingBox->grow(0.0, -20.0, 0.0)->shrink(0.001), Material::WATER, shared_from_this());
+    return mLevel->checkAndHandleWater(mBoundingBox->grow(0.0, -20.0, 0.0)->shrink(0.001), Material::WATER,
+                                       shared_from_this());
 }
 
 Vec3* Entity::getEyePosition(float partialTicks)
@@ -1897,8 +1893,8 @@ Vec3* Entity::getEyePosition(float partialTicks)
 
 bool Entity::updateInWaterState()
 {
-    mHeadInWater = mLevel->getLiquidBlock(BlockPos(getEyePosition(1.0f)))->defaultBlockState()
-                       ->getMaterial()->isLiquid();
+    mHeadInWater =
+        mLevel->getLiquidBlock(BlockPos(getEyePosition(1.0f)))->defaultBlockState()->getMaterial()->isLiquid();
 
     AABB* box = mBoundingBox->grow(0.0, -0.4000000059604645, 0.0)->shrink(0.001, 0.001, 0.001);
 
@@ -1911,12 +1907,9 @@ bool Entity::updateInWaterState()
         int minZ = Mth::absFloor(box->mMinZ);
         int maxZ = Mth::ceil(box->mMaxZ);
 
-        if (Mth::absFloor(mWaterCheckBox->mMinX) == minX
-            && Mth::ceil(mWaterCheckBox->mMaxX) == maxX
-            && Mth::absFloor(mWaterCheckBox->mMinY) == minY
-            && Mth::ceil(mWaterCheckBox->mMaxY) == maxY
-            && Mth::absFloor(mWaterCheckBox->mMinZ) == minZ
-            && Mth::ceil(mWaterCheckBox->mMaxZ) == maxZ)
+        if (Mth::absFloor(mWaterCheckBox->mMinX) == minX && Mth::ceil(mWaterCheckBox->mMaxX) == maxX
+            && Mth::absFloor(mWaterCheckBox->mMinY) == minY && Mth::ceil(mWaterCheckBox->mMaxY) == maxY
+            && Mth::absFloor(mWaterCheckBox->mMinZ) == minZ && Mth::ceil(mWaterCheckBox->mMaxZ) == maxZ)
         {
             mWaterCheckBox->set(box);
             return false;
@@ -1936,9 +1929,8 @@ bool Entity::updateInWaterState()
     {
         bool inWater = true;
 
-        if (!mLevel->checkAndHandleWater(
-                mBoundingBox->grow(0.0, -0.4000000059604645, 0.0)->shrink(0.001, 0.001, 0.001),
-                Material::WATER, shared_from_this()))
+        if (!mLevel->checkAndHandleWater(mBoundingBox->grow(0.0, -0.4000000059604645, 0.0)->shrink(0.001, 0.001, 0.001),
+                                         Material::WATER, shared_from_this()))
         {
             if (!isInLiquid(Material::WATER, getAttachPos(ENTITY_LOCATION_FEET, 0.0f)))
             {
@@ -1979,9 +1971,9 @@ void Entity::doWaterSplashEffect()
 
     float volume = source == shared_from_this() ? 0.2f : 0.9f;
 
-    float speed = (float)sqrt(source->mXd * source->mXd * 0.2f
-                              + source->mYd * source->mYd
-                              + source->mZd * source->mZd * 0.2f) * volume;
+    float speed = (float)sqrt(source->mXd * source->mXd * 0.2f + source->mYd * source->mYd
+                              + source->mZd * source->mZd * 0.2f)
+                  * volume;
 
     MemSect(31);
 
@@ -1992,13 +1984,11 @@ void Entity::doWaterSplashEffect()
 
     if (speed < 0.25f)
     {
-        playSound(getSwimSplashSound(), speed + 0.25f,
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
+        playSound(getSwimSplashSound(), speed + 0.25f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
     }
     else
     {
-        playSound(getHeavySplashSound(), speed + 0.25f,
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
+        playSound(getHeavySplashSound(), speed + 0.25f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
     }
 
     MemSect(0);
@@ -2007,20 +1997,15 @@ void Entity::doWaterSplashEffect()
 
     for (int i = 0; (float)i < mBbWidth * 20.0f + 1.0f; i++)
     {
-        mLevel->addParticle(PARTICLE_BUBBLE,
-                            mX + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
-                            (double)(surfaceY + 1.0f),
-                            mZ + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
-                            mXd, mYd - (double)(mRandom->nextFloat() * 0.2f), mZd,
-                            arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_BUBBLE, mX + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
+                            (double)(surfaceY + 1.0f), mZ + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
+                            mXd, mYd - (double)(mRandom->nextFloat() * 0.2f), mZd, arrayWithLength<int>());
     }
 
     for (int i = 0; (float)i < mBbWidth * 20.0f + 1.0f; i++)
     {
-        mLevel->addParticle(PARTICLE_SPLASH,
-                            mX + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
-                            (double)(surfaceY + 1.0f),
-                            mZ + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
+        mLevel->addParticle(PARTICLE_SPLASH, mX + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
+                            (double)(surfaceY + 1.0f), mZ + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
                             mXd, mYd, mZd, arrayWithLength<int>());
     }
 }
@@ -2049,11 +2034,9 @@ void Entity::doSprintParticleEffect()
     int stateId = Block::getIdWithData(state);
 
     arrayWithLength<int> particleData(&stateId, 1);
-    mLevel->addParticle(PARTICLE_BLOCK_CRACK,
-                        ((double)mRandom->nextFloat() - 0.5) * mBbWidth + mX,
-                        mBoundingBox->mMinY + 0.1,
-                        ((double)mRandom->nextFloat() - 0.5) * mBbWidth + mZ,
-                        -(mXd * 4.0), 1.5, -(mZd * 4.0), particleData);
+    mLevel->addParticle(PARTICLE_BLOCK_CRACK, ((double)mRandom->nextFloat() - 0.5) * mBbWidth + mX,
+                        mBoundingBox->mMinY + 0.1, ((double)mRandom->nextFloat() - 0.5) * mBbWidth + mZ, -(mXd * 4.0),
+                        1.5, -(mZd * 4.0), particleData);
 }
 
 bool Entity::isUnderLiquid(Material* material)
@@ -2427,8 +2410,7 @@ Vec3* Entity::calculateViewVector(float xRot, float yRot)
     float cosPitch = Mth::cos(pitch);
     float sinPitch = Mth::sin(pitch);
 
-    return Vec3::newTemp((double)(sinYaw * -cosPitch), (double)sinPitch,
-                         (double)(cosYaw * -cosPitch));
+    return Vec3::newTemp((double)(sinYaw * -cosPitch), (double)sinPitch, (double)(cosYaw * -cosPitch));
 }
 
 Vec3* Entity::getViewVector(float partialTicks)
@@ -2611,8 +2593,7 @@ CompoundTag* Entity::saveWithoutId(CompoundTag* tag)
     if (!getCustomName().empty())
     {
         tag->putString(std::wstring(L"CustomName"), getCustomName());
-        tag->putBoolean(std::wstring(L"namedByRestrictedPlayer"),
-                        mEntityData->get(DATA_NAMED_BY_RESTRICTED_PLAYER));
+        tag->putBoolean(std::wstring(L"namedByRestrictedPlayer"), mEntityData->get(DATA_NAMED_BY_RESTRICTED_PLAYER));
         tag->putString(std::wstring(L"ownerUUID"), mEntityData->get(DATA_OWNER_UUID));
         tag->putBoolean(std::wstring(L"createdOnHost"), mEntityData->get(DATA_CREATED_ON_HOST));
     }
@@ -2657,8 +2638,7 @@ CompoundTag* Entity::saveWithoutId(CompoundTag* tag)
 
         std::vector<boost::weak_ptr<Entity> > riders = *getPassengers();
 
-        for (std::vector<boost::weak_ptr<Entity> >::iterator it = riders.begin();
-             it != riders.end(); ++it)
+        for (std::vector<boost::weak_ptr<Entity> >::iterator it = riders.begin(); it != riders.end(); ++it)
         {
             boost::shared_ptr<Entity> passenger = it->lock();
 
@@ -2800,11 +2780,9 @@ void Entity::load(CompoundTag* tag)
     setPos(mX, mY, mZ);
     setRot(mYRot, mXRot);
 
-    if (tag->contains(std::wstring(L"CustomName"), 8)
-        && !tag->getString(std::wstring(L"CustomName")).empty())
+    if (tag->contains(std::wstring(L"CustomName"), 8) && !tag->getString(std::wstring(L"CustomName")).empty())
     {
-        setCustomName(tag->getString(std::wstring(L"CustomName")),
-                      tag->getString(std::wstring(L"ownerUUID")),
+        setCustomName(tag->getString(std::wstring(L"CustomName")), tag->getString(std::wstring(L"ownerUUID")),
                       tag->getBoolean(std::wstring(L"namedByRestrictedPlayer")));
 
         mEntityData->set(DATA_CREATED_ON_HOST, tag->getBoolean(std::wstring(L"createdOnHost")), true);
@@ -2892,16 +2870,14 @@ boost::shared_ptr<ItemEntity> Entity::spawnAtLocation(Item* item, int count, flo
     return spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(item, count, 0)), yOffset);
 }
 
-boost::shared_ptr<ItemEntity> Entity::spawnAtLocation(not_null_ptr<ItemInstance> itemInstance,
-                                                      float yOffset)
+boost::shared_ptr<ItemEntity> Entity::spawnAtLocation(not_null_ptr<ItemInstance> itemInstance, float yOffset)
 {
     if (itemInstance->isEmpty())
     {
         return boost::shared_ptr<ItemEntity>();
     }
 
-    boost::shared_ptr<ItemEntity> itemEntity(
-        new ItemEntity(mLevel, mX, mY + (double)yOffset, mZ, itemInstance));
+    boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, mY + (double)yOffset, mZ, itemInstance));
 
     itemEntity->setDefaultPickUpDelay();
 
@@ -2922,8 +2898,8 @@ bool Entity::isInWall()
         return false;
     }
 
-    if (!mTickCache.mCacheChanged && mInWallCacheX == mX && mInWallCacheY == mY
-        && mInWallCacheZ == mZ && mInWallCacheYRot == mYRot && mInWallCacheXRot == mXRot)
+    if (!mTickCache.mCacheChanged && mInWallCacheX == mX && mInWallCacheY == mY && mInWallCacheZ == mZ
+        && mInWallCacheYRot == mYRot && mInWallCacheXRot == mXRot)
     {
         return mInWallCacheResult;
     }
@@ -2941,8 +2917,7 @@ bool Entity::isInWall()
     for (int i = 0; i < 8; i++)
     {
         int x = Mth::floor(mX + (double)(((float)((i / 2) % 2) - 0.5f) * mBbWidth * 0.8f));
-        int y = Mth::floor(mY + (double)(((float)(i % 2) - 0.5f) * 0.1f)
-                           + (double)eyeHeight);
+        int y = Mth::floor(mY + (double)(((float)(i % 2) - 0.5f) * 0.1f) + (double)eyeHeight);
         int z = Mth::floor(mZ + (double)(((float)((i / 4) % 2) - 0.5f) * mBbWidth * 0.8f));
 
         BlockPos pos(x, y, z);
@@ -3110,8 +3085,7 @@ bool Entity::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
 
 unsigned int Entity::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pItemInstance
-        && Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::NAME_TAG
+    if (tooltipData.m_pItemInstance && Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::NAME_TAG
         && tooltipData.m_pItemInstance->hasCustomHoverName()
         && (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName() != getCustomName()))
     {
@@ -3171,11 +3145,9 @@ void Entity::fjImmediateBroadcastPassengerPacket(const boost::shared_ptr<Entity>
         return;
     }
 
-    boost::shared_ptr<ClientboundSetPassengersPacket> packet(
-        new ClientboundSetPassengersPacket(vehicle));
+    boost::shared_ptr<ClientboundSetPassengersPacket> packet(new ClientboundSetPassengersPacket(vehicle));
 
-    boost::shared_ptr<TrackedEntity> tracked =
-        dynamic_cast<ServerLevel*>(mLevel)->getTracker()->getTracker(vehicle);
+    boost::shared_ptr<TrackedEntity> tracked = dynamic_cast<ServerLevel*>(mLevel)->getTracker()->getTracker(vehicle);
 
     tracked->broadcast(packet);
 }
@@ -3207,10 +3179,7 @@ struct weakPtrEqualsShared
 {
     weakPtrEqualsShared(boost::shared_ptr<Entity> shared) : mShared(shared) {}
 
-    bool operator()(boost::weak_ptr<Entity> weak)
-    {
-        return weak.lock() == mShared;
-    }
+    bool operator()(boost::weak_ptr<Entity> weak) { return weak.lock() == mShared; }
 
     boost::shared_ptr<Entity> mShared;
 };
@@ -3233,8 +3202,8 @@ void Entity::removePassenger(boost::shared_ptr<Entity> passenger)
 
     if (passenger)
     {
-        std::vector<boost::weak_ptr<Entity> >::iterator it =
-            std::find_if(mPassengers.begin(), mPassengers.end(), weakPtrEqualsShared(passenger));
+        std::vector<boost::weak_ptr<Entity> >::iterator it = std::find_if(mPassengers.begin(), mPassengers.end(),
+                                                                          weakPtrEqualsShared(passenger));
         if (it != mPassengers.end())
         {
             mPassengers.erase(it);
@@ -3290,9 +3259,8 @@ void Entity::handleInsidePortal(const BlockPos& pos)
         BlockPattern::BlockPatternMatch* portal =
             static_cast<PortalBlock*>(Blocks::portal)->getPortalShape(mLevel, mPortalEntrancePos);
 
-        double axis = portal->getForwards()->getAxis() == Direction::Axis::X
-                          ? (double)portal->getFrontTopLeft().z
-                          : (double)portal->getFrontTopLeft().x;
+        double axis = portal->getForwards()->getAxis() == Direction::Axis::X ? (double)portal->getFrontTopLeft().z
+                                                                             : (double)portal->getFrontTopLeft().x;
         double position = portal->getForwards()->getAxis() == Direction::Axis::X ? mZ : mX;
         double edge = portal->getForwards()->getClockWise()->getAxisDirection() == Direction::AxisDirection::NEGATIVE
                           ? 1.0
@@ -3354,7 +3322,8 @@ NonNullList<not_null_ptr<ItemInstance> > Entity::getAllSlots()
     if (mAllSlots.size() == 0)
     {
         delete[] mAllSlots.items.data;
-        mAllSlots = NonNullList<not_null_ptr<ItemInstance> >::withSize(hands.size() + armor.size(), ItemInstance::EMPTY);
+        mAllSlots = NonNullList<not_null_ptr<ItemInstance> >::withSize(hands.size() + armor.size(),
+                                                                       ItemInstance::EMPTY);
     }
 
     unsigned int index = 0;
@@ -3556,30 +3525,30 @@ Vec3* Entity::getAttachPos(EEntityLocation location, float partialTicks)
 {
     switch (location)
     {
-        case ENTITY_LOCATION_FEET:
-        case ENTITY_LOCATION_EXPLOSION_POINT:
-            return getPos(partialTicks);
+    case ENTITY_LOCATION_FEET:
+    case ENTITY_LOCATION_EXPLOSION_POINT:
+        return getPos(partialTicks);
 
-        case ENTITY_LOCATION_BODY:
-        case ENTITY_LOCATION_WEAPON_ATTACH_POINT:
-            return mBoundingBox->getCenter();
+    case ENTITY_LOCATION_BODY:
+    case ENTITY_LOCATION_WEAPON_ATTACH_POINT:
+        return mBoundingBox->getCenter();
 
-        case ENTITY_LOCATION_HEAD:
-            return getPos(partialTicks)->add(
-                Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
+    case ENTITY_LOCATION_HEAD:
+        return getPos(partialTicks)
+            ->add(Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
 
-        case ENTITY_LOCATION_EYES:
-            return getPos(partialTicks)->add(
-                Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
+    case ENTITY_LOCATION_EYES:
+        return getPos(partialTicks)
+            ->add(Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
 
-        case ENTITY_LOCATION_DROP_ATTACH_POINT:
-        case ENTITY_LOCATION_BREATHING_POINT:
-        case ENTITY_LOCATION_MOUTH:
-            return getPos(partialTicks)->add(
-                Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
+    case ENTITY_LOCATION_DROP_ATTACH_POINT:
+    case ENTITY_LOCATION_BREATHING_POINT:
+    case ENTITY_LOCATION_MOUTH:
+        return getPos(partialTicks)
+            ->add(Vec3::newTemp(0.0, getEyeHeight(), 0.0)->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
 
-        default:
-            return getPos(partialTicks);
+    default:
+        return getPos(partialTicks);
     }
 }
 
@@ -3718,7 +3687,7 @@ std::wstring Entity::getName()
 bool Entity::isInvulnerableTo(const DamageSource* source)
 {
     return getSharedFlag(FLAG_INVULNERABLE) && source != DamageSource::OUT_OF_WORLD
-        && source != DamageSource::CREATIVE_PLAYER && !source->isCreativePlayer();
+           && source != DamageSource::CREATIVE_PLAYER && !source->isCreativePlayer();
 }
 
 bool Entity::isInvulnerable()
@@ -4000,11 +3969,9 @@ std::wstring Entity::getNetworkName()
     return getName();
 }
 
-void Entity::setCustomName(const std::wstring& customName, const std::wstring& ownerUUID,
-                           bool namedByRestrictedPlayer)
+void Entity::setCustomName(const std::wstring& customName, const std::wstring& ownerUUID, bool namedByRestrictedPlayer)
 {
-    bool createdOnHost = CGameNetworkManager::sInstance.IsHost()
-        && gApp.IsUUIDLocal(ownerUUID) != 0;
+    bool createdOnHost = CGameNetworkManager::sInstance.IsHost() && gApp.IsUUIDLocal(ownerUUID) != 0;
 
     mEntityData->set(DATA_CREATED_ON_HOST, createdOnHost, true);
     mEntityData->set(DATA_NAMED_BY_RESTRICTED_PLAYER, namedByRestrictedPlayer, true);
@@ -4139,8 +4106,7 @@ bool Entity::setSlot(int slot, const not_null_ptr<ItemInstance>& itemInstance)
     return false;
 }
 
-InteractionResult::EInteractionResult Entity::interactAt(const boost::shared_ptr<Player>& player,
-                                                         Vec3* pos,
+InteractionResult::EInteractionResult Entity::interactAt(const boost::shared_ptr<Player>& player, Vec3* pos,
                                                          InteractionHand::EInteractionHand hand)
 {
     return InteractionResult::eInteractionResult_Pass;
@@ -4151,14 +4117,12 @@ bool Entity::ignoreExplosion()
     return false;
 }
 
-void Entity::doEnchantDamageEffects(boost::shared_ptr<LivingEntity> attacker,
-                                    boost::shared_ptr<Entity> target)
+void Entity::doEnchantDamageEffects(boost::shared_ptr<LivingEntity> attacker, boost::shared_ptr<Entity> target)
 {
     if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
     {
-        EnchantmentHelper::doPostHurtEffects(
-            boost::dynamic_pointer_cast<LivingEntity>(target),
-            boost::static_pointer_cast<Entity>(attacker));
+        EnchantmentHelper::doPostHurtEffects(boost::dynamic_pointer_cast<LivingEntity>(target),
+                                             boost::static_pointer_cast<Entity>(attacker));
     }
 
     EnchantmentHelper::doPostDamageEffects(attacker, target);
@@ -4178,17 +4142,17 @@ float Entity::rotate(Rotation* rotation)
 
     switch (rotation->getType())
     {
-        case Rotation::eTYPE_Clockwise90:
-            return yRot + 90.0f;
+    case Rotation::eTYPE_Clockwise90:
+        return yRot + 90.0f;
 
-        case Rotation::eTYPE_Clockwise180:
-            return yRot + 180.0f;
+    case Rotation::eTYPE_Clockwise180:
+        return yRot + 180.0f;
 
-        case Rotation::eTYPE_CounterClockwise90:
-            return yRot + 270.0f;
+    case Rotation::eTYPE_CounterClockwise90:
+        return yRot + 270.0f;
 
-        default:
-            return yRot;
+    default:
+        return yRot;
     }
 }
 
@@ -4237,8 +4201,7 @@ bool Entity::hasPassenger(boost::shared_ptr<Entity> passenger)
 {
     std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
 
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin();
-         it != passengers->end(); ++it)
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin(); it != passengers->end(); ++it)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
@@ -4255,8 +4218,7 @@ bool Entity::hasPassenger(unsigned long long type)
 {
     std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
 
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin();
-         it != passengers->end(); ++it)
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin(); it != passengers->end(); ++it)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
@@ -4285,11 +4247,9 @@ bool Entity::hasPassenger(unsigned long long type)
     return false;
 }
 
-void Entity::fillIndirectPassengers(unsigned long long type,
-                                    std::set<boost::shared_ptr<Entity> >* passengers)
+void Entity::fillIndirectPassengers(unsigned long long type, std::set<boost::shared_ptr<Entity> >* passengers)
 {
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin();
-         it != mPassengers.end(); ++it)
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin(); it != mPassengers.end(); ++it)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
@@ -4359,8 +4319,7 @@ bool Entity::hasIndirectPassenger(boost::shared_ptr<Entity> passenger)
 {
     std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
 
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin();
-         it != passengers->end(); ++it)
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin(); it != passengers->end(); ++it)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
@@ -4382,8 +4341,7 @@ bool Entity::hasIndirectPassenger(unsigned long long type)
 {
     std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
 
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin();
-         it != passengers->end(); ++it)
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin(); it != passengers->end(); ++it)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
@@ -4554,14 +4512,11 @@ void Entity::dropLeash(bool broadcast, bool dropItem)
         spawnAtLocation(Items::lead, 1);
     }
 
-    if (!mLevel->mIsClientSide && broadcast
-        && dynamic_cast<ServerLevel*>(mLevel) != NULL)
+    if (!mLevel->mIsClientSide && broadcast && dynamic_cast<ServerLevel*>(mLevel) != NULL)
     {
         dynamic_cast<ServerLevel*>(mLevel)->getTracker()->broadcast(
-            shared_from_this(),
-            boost::shared_ptr<ClientboundSetEntityLinkPacket>(
-                new ClientboundSetEntityLinkPacket(shared_from_this(),
-                                                   boost::shared_ptr<Entity>())));
+            shared_from_this(), boost::shared_ptr<ClientboundSetEntityLinkPacket>(new ClientboundSetEntityLinkPacket(
+                                    shared_from_this(), boost::shared_ptr<Entity>())));
     }
 }
 
@@ -4595,9 +4550,8 @@ void Entity::setLeashedTo(boost::shared_ptr<Entity> leashHolder, bool broadcast)
     if (serverLevel != NULL && !mLevel->mIsClientSide && broadcast)
     {
         serverLevel->getTracker()->broadcast(
-            shared_from_this(),
-            boost::shared_ptr<ClientboundSetEntityLinkPacket>(
-                new ClientboundSetEntityLinkPacket(2, shared_from_this(), leashHolder)));
+            shared_from_this(), boost::shared_ptr<ClientboundSetEntityLinkPacket>(
+                                    new ClientboundSetEntityLinkPacket(2, shared_from_this(), leashHolder)));
     }
 
     if (isPassenger())
@@ -4617,8 +4571,7 @@ void Entity::restoreLeashFromSave()
             std::vector<boost::shared_ptr<Entity> >* nearby = mLevel->getEntitiesOfClass(
                 typeid(LivingEntity), mBoundingBox->grow(10.0, 10.0, 10.0));
 
-            for (std::vector<boost::shared_ptr<Entity> >::iterator it = nearby->begin();
-                 it != nearby->end(); ++it)
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = nearby->begin(); it != nearby->end(); ++it)
             {
                 boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(*it);
 
@@ -4631,16 +4584,13 @@ void Entity::restoreLeashFromSave()
 
             delete nearby;
         }
-        else if (mLeashInfoTag->contains(std::wstring(L"X"), 99)
-                 && mLeashInfoTag->contains(std::wstring(L"Y"), 99)
+        else if (mLeashInfoTag->contains(std::wstring(L"X"), 99) && mLeashInfoTag->contains(std::wstring(L"Y"), 99)
                  && mLeashInfoTag->contains(std::wstring(L"Z"), 99))
         {
-            BlockPos pos(mLeashInfoTag->getInt(std::wstring(L"X")),
-                         mLeashInfoTag->getInt(std::wstring(L"Y")),
+            BlockPos pos(mLeashInfoTag->getInt(std::wstring(L"X")), mLeashInfoTag->getInt(std::wstring(L"Y")),
                          mLeashInfoTag->getInt(std::wstring(L"Z")));
 
-            boost::shared_ptr<LeashFenceKnotEntity> knot =
-                LeashFenceKnotEntity::findKnotAt(mLevel, pos);
+            boost::shared_ptr<LeashFenceKnotEntity> knot = LeashFenceKnotEntity::findKnotAt(mLevel, pos);
 
             if (!knot)
             {

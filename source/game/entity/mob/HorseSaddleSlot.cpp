@@ -15,4 +15,3 @@ bool HorseSaddleSlot::isActive()
 {
     return mMenu->horse->canBeSaddled();
 }
-

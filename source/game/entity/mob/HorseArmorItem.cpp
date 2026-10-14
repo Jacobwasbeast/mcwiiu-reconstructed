@@ -11,7 +11,9 @@ const std::wstring HorseArmorItem::HORSE_ARMOR_DETAIL_ICON = L"leather_horse_arm
 static const std::wstring HORSE_ARMOR_COLOR = L"customColor";
 
 HorseArmorItem::HorseArmorItem(int tier, int protection, int texture, const wchar_t* hash)
-    : Item(), mTier(tier), mProtection(protection)
+    : Item(),
+      mTier(tier),
+      mProtection(protection)
 {
     mTextures.push_back(texture);
     mHash.assign(hash);
@@ -20,7 +22,9 @@ HorseArmorItem::HorseArmorItem(int tier, int protection, int texture, const wcha
 }
 
 HorseArmorItem::HorseArmorItem(int tier, int protection, const int* textures, int textureCount, const wchar_t* hash)
-    : Item(), mTier(tier), mProtection(protection)
+    : Item(),
+      mTier(tier),
+      mProtection(protection)
 {
     for (int i = 0; i < textureCount; ++i)
     {
@@ -31,8 +35,7 @@ HorseArmorItem::HorseArmorItem(int tier, int protection, const int* textures, in
     mArmorIcon = NULL;
 }
 
-HorseArmorItem::HorseArmorItem(int tier, int protection)
-    : Item(), mTier(tier), mProtection(protection)
+HorseArmorItem::HorseArmorItem(int tier, int protection) : Item(), mTier(tier), mProtection(protection)
 {
     mTextures.push_back(-1);
     mHash.assign(L"");
@@ -43,7 +46,7 @@ HorseArmorItem::HorseArmorItem(int tier, int protection)
 bool HorseArmorItem::isHorseArmor(Item* item)
 {
     return item == Items::leatherHorseArmor || item == Items::ironHorseArmor || item == Items::goldenHorseArmor
-        || item == Items::diamondHorseArmor;
+           || item == Items::diamondHorseArmor;
 }
 
 bool HorseArmorItem::isDyeable() const

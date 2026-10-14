@@ -7,8 +7,8 @@ class DragonRespawnAnimation_PREPARING_TO_SUMMON_PILLARS : public DragonRespawnA
 {
 public:
     virtual void tick(ServerLevel* level, EndDragonFight* dragonFight,
-        std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
-        const BlockPos& portalLocation);
+                      std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
+                      const BlockPos& portalLocation);
 };
 
 #endif

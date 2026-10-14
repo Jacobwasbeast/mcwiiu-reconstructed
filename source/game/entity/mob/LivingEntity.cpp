@@ -123,15 +123,19 @@ const EntityDataAccessor<int>* LivingEntity::DATA_ARROW_COUNT_ID;
 
 void LivingEntity::staticCtor()
 {
-    DATA_LIVING_ENTITY_FLAGS = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::BYTE);
-    DATA_HEALTH_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::FLOAT);
-    DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
-    DATA_EFFECT_AMBIENCE_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_ARROW_COUNT_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_LIVING_ENTITY_FLAGS = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY,
+                                                           EntityDataSerializers::BYTE);
+    DATA_HEALTH_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY,
+                                                 EntityDataSerializers::FLOAT);
+    DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY,
+                                                       EntityDataSerializers::INT);
+    DATA_EFFECT_AMBIENCE_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY,
+                                                          EntityDataSerializers::BOOLEAN);
+    DATA_ARROW_COUNT_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY,
+                                                      EntityDataSerializers::INT);
 }
 
-LivingEntity::LivingEntity(Level* level)
-    : Entity(level, true)
+LivingEntity::LivingEntity(Level* level) : Entity(level, true)
 {
     MemSect(56);
     _init();
@@ -150,8 +154,7 @@ LivingEntity::LivingEntity(Level* level)
 LivingEntity::~LivingEntity()
 {
     for (boost::unordered_map<MobEffect*, MobEffectInstance*>::iterator it = mActiveEffects.begin();
-         it != mActiveEffects.end();
-         ++it)
+         it != mActiveEffects.end(); ++it)
     {
         delete it->second;
     }
@@ -354,9 +357,8 @@ void LivingEntity::checkFallDamage(double y, bool onGround, Block* block, const 
             int blockData = Block::getIdWithData(state);
             arrayWithLength<int> particleData(&blockData, 1);
 
-            static_cast<ServerLevel*>(mLevel)->sendParticles(PARTICLE_BLOCK_DUST, mX, mY, mZ,
-                                                             count, 0.0, 0.0, 0.0, 0.15f,
-                                                             particleData);
+            static_cast<ServerLevel*>(mLevel)->sendParticles(PARTICLE_BLOCK_DUST, mX, mY, mZ, count, 0.0, 0.0, 0.0,
+                                                             0.15f, particleData);
         }
     }
 
@@ -572,11 +574,10 @@ void LivingEntity::baseTick()
                 for (int i = 0; i < 8; ++i)
                 {
                     Vec3* eyePos = getAttachPos(ENTITY_LOCATION_BREATHING_POINT, 0.0f);
-                    mLevel->addParticle(PARTICLE_BUBBLE,
-                                        (float)eyePos->x + mRandom->nextGaussianFloat(),
+                    mLevel->addParticle(PARTICLE_BUBBLE, (float)eyePos->x + mRandom->nextGaussianFloat(),
                                         (float)eyePos->y + mRandom->nextGaussianFloat(),
-                                        (float)eyePos->z + mRandom->nextGaussianFloat(),
-                                        mXd, mYd, mZd, arrayWithLength<int>());
+                                        (float)eyePos->z + mRandom->nextGaussianFloat(), mXd, mYd, mZd,
+                                        arrayWithLength<int>());
                 }
             }
 
@@ -662,8 +663,8 @@ void LivingEntity::baseTick()
 
 void LivingEntity::onChangedBlock(const BlockPos& pos)
 {
-    int level = EnchantmentHelper::getEnchantmentLevel(
-        Enchantments::FROST_WALKER, boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+    int level = EnchantmentHelper::getEnchantmentLevel(Enchantments::FROST_WALKER,
+                                                       boost::static_pointer_cast<LivingEntity>(shared_from_this()));
 
     if (level > 0)
     {
@@ -683,10 +684,8 @@ void LivingEntity::tickDeath()
 
     if (mDeathTime == 20)
     {
-        if (!mLevel->mIsClientSide
-            && (mLastHurtByPlayerTime > 0 || isAlwaysExperienceDropper())
-            && shouldDropExperience()
-            && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
+        if (!mLevel->mIsClientSide && (mLastHurtByPlayerTime > 0 || isAlwaysExperienceDropper())
+            && shouldDropExperience() && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
         {
             int reward = getExperienceReward(mLastHurtByPlayer);
 
@@ -877,8 +876,7 @@ void LivingEntity::addAdditonalSaveData(CompoundTag* tag)
         ListTag* effects = new ListTag();
 
         for (boost::unordered_map<MobEffect*, MobEffectInstance*>::iterator it = mActiveEffects.begin();
-             it != mActiveEffects.end();
-             ++it)
+             it != mActiveEffects.end(); ++it)
         {
             effects->add(it->second->save(new CompoundTag()));
         }
@@ -932,8 +930,7 @@ void LivingEntity::readAdditionalSaveData(CompoundTag* tag)
         std::wstring teamName = tag->getString(std::wstring(L"Team"));
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
 
-        mLevel->GetScoreboard()->addPlayerToTeam(player->mXuid,
-                                                 mLevel->GetScoreboard()->getPlayerTeam(teamName));
+        mLevel->GetScoreboard()->addPlayerToTeam(player->mXuid, mLevel->GetScoreboard()->getPlayerTeam(teamName));
     }
 
     if (tag->getBoolean(std::wstring(L"FallFlying")))
@@ -1023,11 +1020,10 @@ void LivingEntity::tickEffects()
             double green = (double)((colour >> 8) & 255) / 255.0;
             double blue = (double)(colour & 255) / 255.0;
 
-            mLevel->addParticle(ambient ? PARTICLE_MOB_SPELL_AMBIENT : PARTICLE_MOB_SPELL,
-                                mX + (mRandom->nextDouble() - 0.5) * (double)mBbWidth,
-                                mY + mRandom->nextDouble() * (double)mBbHeight,
-                                mZ + (mRandom->nextDouble() - 0.5) * (double)mBbWidth,
-                                red, green, blue, arrayWithLength<int>());
+            mLevel->addParticle(
+                ambient ? PARTICLE_MOB_SPELL_AMBIENT : PARTICLE_MOB_SPELL,
+                mX + (mRandom->nextDouble() - 0.5) * (double)mBbWidth, mY + mRandom->nextDouble() * (double)mBbHeight,
+                mZ + (mRandom->nextDouble() - 0.5) * (double)mBbWidth, red, green, blue, arrayWithLength<int>());
         }
     }
 }
@@ -1059,8 +1055,7 @@ void LivingEntity::updateInvisibilityStatus()
     std::vector<MobEffectInstance*> effects;
 
     for (boost::unordered_map<MobEffect*, MobEffectInstance*>::iterator it = mActiveEffects.begin();
-         it != mActiveEffects.end();
-         ++it)
+         it != mActiveEffects.end(); ++it)
     {
         effects.push_back(it->second);
     }
@@ -1101,8 +1096,7 @@ std::vector<MobEffectInstance*>* LivingEntity::getActiveEffects()
     std::vector<MobEffectInstance*>* effects = new std::vector<MobEffectInstance*>();
 
     for (boost::unordered_map<MobEffect*, MobEffectInstance*>::iterator it = mActiveEffects.begin();
-         it != mActiveEffects.end();
-         ++it)
+         it != mActiveEffects.end(); ++it)
     {
         effects->push_back(it->second);
     }
@@ -1224,8 +1218,8 @@ void LivingEntity::onEffectAdded(MobEffectInstance* effectInstance)
     if (!mLevel->mIsClientSide)
     {
         MobEffect* effect = effectInstance->getEffect();
-        effect->addAttributeModifiers(boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-                                      getAttributes(), effectInstance->getAmplifier());
+        effect->addAttributeModifiers(boost::static_pointer_cast<LivingEntity>(shared_from_this()), getAttributes(),
+                                      effectInstance->getAmplifier());
     }
 }
 
@@ -1236,10 +1230,10 @@ void LivingEntity::onEffectUpdated(MobEffectInstance* effectInstance, bool reapp
     if (reapply && !mLevel->mIsClientSide)
     {
         MobEffect* effect = effectInstance->getEffect();
-        effect->removeAttributeModifiers(boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-                                         getAttributes(), effectInstance->getAmplifier());
-        effect->addAttributeModifiers(boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-                                      getAttributes(), effectInstance->getAmplifier());
+        effect->removeAttributeModifiers(boost::static_pointer_cast<LivingEntity>(shared_from_this()), getAttributes(),
+                                         effectInstance->getAmplifier());
+        effect->addAttributeModifiers(boost::static_pointer_cast<LivingEntity>(shared_from_this()), getAttributes(),
+                                      effectInstance->getAmplifier());
     }
 }
 
@@ -1250,8 +1244,8 @@ void LivingEntity::onEffectRemoved(MobEffectInstance* effectInstance)
     if (!mLevel->mIsClientSide)
     {
         MobEffect* effect = effectInstance->getEffect();
-        effect->removeAttributeModifiers(boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-                                         getAttributes(), effectInstance->getAmplifier());
+        effect->removeAttributeModifiers(boost::static_pointer_cast<LivingEntity>(shared_from_this()), getAttributes(),
+                                         effectInstance->getAmplifier());
     }
 }
 
@@ -1278,8 +1272,7 @@ void LivingEntity::setHealth(float health)
 
 bool LivingEntity::hurt(const DamageSource* source, float damage)
 {
-    if ((isInvulnerableTo(source) && !source->isBypassInvul())
-        || gApp.IsAppPaused()
+    if ((isInvulnerableTo(source) && !source->isBypassInvul()) || gApp.IsAppPaused()
         || (mLevel->mIsClientSide && dynamic_cast<const EntityDamageSource*>(source) == NULL))
     {
         return false;
@@ -1317,9 +1310,9 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
 
     if (helmetHit)
     {
-        getItemSlot(EquipmentSlot::HEAD)->hurtAndBreak(
-            (int)(damage * 4.0f + mRandom->nextFloat() * damage * 2.0f),
-            boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+        getItemSlot(EquipmentSlot::HEAD)
+            ->hurtAndBreak((int)(damage * 4.0f + mRandom->nextFloat() * damage * 2.0f),
+                           boost::static_pointer_cast<LivingEntity>(shared_from_this()));
         damage *= 0.75f;
     }
 
@@ -1574,8 +1567,7 @@ void LivingEntity::breakItem(not_null_ptr<ItemInstance> itemInstance)
 {
     if (!mLevel->mIsClientSide)
     {
-        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::ITEM_BREAK,
-                          getSoundSource(), 0.8f,
+        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::ITEM_BREAK, getSoundSource(), 0.8f,
                           (float)(mLevel->mRandom->nextFloat() * 0.4000000059604645 + 0.800000011920929), 16.0f);
     }
 
@@ -1590,9 +1582,9 @@ void LivingEntity::breakItem(not_null_ptr<ItemInstance> itemInstance)
         offset = offset->yRot(-(mYRot * Mth::DEG_TO_RAD));
         offset = offset->add(mX, mY + (double)getEyeHeight(), mZ);
 
-        int particleData[1] = { Item::VALIDgetId(itemInstance->getItem()) };
-        mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
-                            velocity->x, velocity->y + 0.05, velocity->z, arrayWithLength<int>(particleData, 1));
+        int particleData[1] = {Item::VALIDgetId(itemInstance->getItem())};
+        mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z, velocity->x, velocity->y + 0.05,
+                            velocity->z, arrayWithLength<int>(particleData, 1));
     }
 }
 
@@ -1637,10 +1629,9 @@ void LivingEntity::die(const DamageSource* source)
 
         if (player)
         {
-            player->awardStat(gStats->get_killMob(),
-                              GenericStats::param_mobKill(player,
-                                                          boost::dynamic_pointer_cast<Mob>(shared_from_this()),
-                                                          source));
+            player->awardStat(
+                gStats->get_killMob(),
+                GenericStats::param_mobKill(player, boost::dynamic_pointer_cast<Mob>(shared_from_this()), source));
         }
     }
 
@@ -1740,8 +1731,7 @@ bool LivingEntity::onLadder()
     int y = Mth::floor(mBoundingBox->mMinY);
     int z = Mth::floor(mZ);
 
-    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType())
-        && static_cast<Player*>(this)->isSpectator())
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()) && static_cast<Player*>(this)->isSpectator())
     {
         return false;
     }
@@ -1842,8 +1832,7 @@ float LivingEntity::getDamageAfterMagicAbsorb(const DamageSource* source, float 
         return damage;
     }
 
-    if (hasEffect(MobEffects::DAMAGE_RESISTANCE)
-        && source != DamageSource::OUT_OF_WORLD
+    if (hasEffect(MobEffects::DAMAGE_RESISTANCE) && source != DamageSource::OUT_OF_WORLD
         && source != DamageSource::CREATIVE_PLAYER)
     {
         int amplifier = getEffect(MobEffects::DAMAGE_RESISTANCE)->getAmplifier();
@@ -1913,8 +1902,8 @@ void LivingEntity::spawnEatParticles(const ItemInstance& itemInstance, int count
         int itemId = Item::getId(itemInstance.getItem());
         arrayWithLength<int> particleData(&itemId, 1);
 
-        mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
-                            velocity->x, velocity->y, velocity->z, particleData);
+        mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z, velocity->x, velocity->y, velocity->z,
+                            particleData);
     }
 }
 
@@ -2017,9 +2006,9 @@ bool LivingEntity::swing(InteractionHand::EInteractionHand hand)
 
     if (serverLevel != NULL)
     {
-        serverLevel->getTracker()->broadcast(shared_from_this(),
-                                             boost::shared_ptr<Packet>(new ClientboundAnimatePacket(shared_from_this(),
-                                                                                                    hand == InteractionHand::eInteractionHand_MainHand ? 0 : 3)));
+        serverLevel->getTracker()->broadcast(
+            shared_from_this(), boost::shared_ptr<Packet>(new ClientboundAnimatePacket(
+                                    shared_from_this(), hand == InteractionHand::eInteractionHand_MainHand ? 0 : 3)));
     }
 
     return true;
@@ -2035,8 +2024,7 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
 
         if (deathSound != NULL)
         {
-            playSound(deathSound, getSoundVolume(),
-                      (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
+            playSound(deathSound, getSoundVolume(), (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
         }
 
         MemSect(0);
@@ -2053,7 +2041,8 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
         return;
     }
 
-    if (event != EntityEvent::HURT && event != EntityEvent::ATTACK_BLOCKED && event != EntityEvent::THORNED && event != EntityEvent::DROWNED && event != EntityEvent::BURNED)
+    if (event != EntityEvent::HURT && event != EntityEvent::ATTACK_BLOCKED && event != EntityEvent::THORNED
+        && event != EntityEvent::DROWNED && event != EntityEvent::BURNED)
     {
         Entity::handleEntityEvent(event, data);
         return;
@@ -2093,8 +2082,7 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
 
     if (hurtSound != NULL)
     {
-        playSound(hurtSound, getSoundVolume(),
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
+        playSound(hurtSound, getSoundVolume(), (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
     }
 
     MemSect(0);
@@ -2288,8 +2276,7 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
         if (forward != NULL)
         {
             const Direction* side = forward->getClockWise();
-            const int offsets[9][2] = { { 0, 0 }, { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 },
-                                        { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } };
+            const int offsets[9][2] = {{0, 0}, {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, -1}, {-1, 1}, {1, 1}};
 
             double baseX = floor(mX) + 0.5;
             double baseZ = floor(mZ) + 0.5;
@@ -2297,9 +2284,8 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
             double width = mBoundingBox->mMaxX - mBoundingBox->mMinX;
             double depth = mBoundingBox->mMaxZ - mBoundingBox->mMinZ;
 
-            AABB* box = AABB::newPermanent(baseX - width * 0.5, vehicle->mBoundingBox->mMinY,
-                                           baseZ - depth * 0.5, baseX + width * 0.5,
-                                           floor(vehicle->mBoundingBox->mMinY) + (double)mBbHeight,
+            AABB* box = AABB::newPermanent(baseX - width * 0.5, vehicle->mBoundingBox->mMinY, baseZ - depth * 0.5,
+                                           baseX + width * 0.5, floor(vehicle->mBoundingBox->mMinY) + (double)mBbHeight,
                                            baseZ + depth * 0.5);
 
             for (int i = 0; i < 9; ++i)
@@ -2330,7 +2316,7 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
 
                 if (mLevel->getBlockState(mTickCache, BlockPos(blockX, (int)mY - 1, blockZ))->isTopSolidBlocking()
                     || mLevel->getBlockState(mTickCache, BlockPos(blockX, (int)mY - 1, blockZ))->getMaterial()
-                        == Material::WATER)
+                           == Material::WATER)
                 {
                     standX = mX + dx;
                     standY = floor(mY) + 1.0;
@@ -2417,8 +2403,7 @@ float LivingEntity::getFrictionForTravel()
 
 bool LivingEntity::shouldApplyWaterGravity()
 {
-    if ((GetType() & EntityType::WATER_ANIMAL) != EntityType::WATER_ANIMAL
-        && GetType() != EntityType::DOLPHIN
+    if ((GetType() & EntityType::WATER_ANIMAL) != EntityType::WATER_ANIMAL && GetType() != EntityType::DOLPHIN
         && GetType() != EntityType::TURTLE)
     {
         return true;
@@ -2480,7 +2465,8 @@ void LivingEntity::CheckThermalAreas()
                         {
                             if (eTYPE_DERIVED_FROM(EntityType::LOCAL_PLAYER, GetType()))
                             {
-                                Minecraft::GetInstance()->mSoundEngine->playUI(SoundEvents::MG03_THERMAL_BOOST, 1.0f, 1.0f);
+                                Minecraft::GetInstance()->mSoundEngine->playUI(SoundEvents::MG03_THERMAL_BOOST, 1.0f,
+                                                                               1.0f);
                             }
                         }
 
@@ -2493,8 +2479,8 @@ void LivingEntity::CheckThermalAreas()
                                     SoundEvents::MG03_THERMAL_BOOST, 1.0f, 1.0f, false, getId()));
 
                                 PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->mPlayers : NULL;
-                                players->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()), mX,
-                                                   mY, mZ, 30.0, mDimension, packet);
+                                players->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()), mX, mY,
+                                                   mZ, 30.0, mDimension, packet);
                             }
                         }
                     }
@@ -2513,13 +2499,13 @@ void LivingEntity::CheckThermalAreas()
                         {
                             if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, GetType()))
                             {
-                                boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(
-                                    ClientboundSoundPacket::eSoundInstances_FollowEntity, SoundEvents::MG03_BOOST,
-                                    1.0f, 1.0f, false, getId()));
+                                boost::shared_ptr<Packet> packet(
+                                    new ClientboundSoundPacket(ClientboundSoundPacket::eSoundInstances_FollowEntity,
+                                                               SoundEvents::MG03_BOOST, 1.0f, 1.0f, false, getId()));
 
                                 PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->mPlayers : NULL;
-                                players->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()), mX,
-                                                   mY, mZ, 30.0, mDimension, packet);
+                                players->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()), mX, mY,
+                                                   mZ, 30.0, mDimension, packet);
                             }
                         }
                     }
@@ -2554,7 +2540,8 @@ void LivingEntity::CheckThermalAreas()
 
                 if (mThermalArea != *it && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, GetType()))
                 {
-                    boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(shared_from_this());
+                    boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(
+                        shared_from_this());
                     player->GetGameMode()->RecordThermalEntered();
                 }
 
@@ -2675,9 +2662,8 @@ void LivingEntity::CheckThermalAreas()
     }
 }
 
-void LivingEntity::fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lookAngle,
-                                    float& xRot, float& liftFactor, double& horizontalSpeed,
-                                    double lookHorizontal)
+void LivingEntity::fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lookAngle, float& xRot, float& liftFactor,
+                                    double& horizontalSpeed, double lookHorizontal)
 {
     if (yd > -0.5)
     {
@@ -2806,8 +2792,8 @@ void LivingEntity::travel(float xxa, float yya, float zza)
             {
                 mWaterTravelCheckTicks = 60;
                 AABB* searchBox = mBoundingBox->grow(5.0);
-                std::vector<boost::shared_ptr<Entity> >* drownedEntities =
-                    mLevel->getEntitiesOfClass(typeid(Drowned), searchBox);
+                std::vector<boost::shared_ptr<Entity> >* drownedEntities = mLevel->getEntitiesOfClass(typeid(Drowned),
+                                                                                                      searchBox);
                 mWaterTravelSpeedFactor = drownedEntities->empty() ? 1.0f : 2.0f;
                 delete drownedEntities;
 
@@ -3096,8 +3082,8 @@ void LivingEntity::takeFallFlyingCollisionDamage()
             playSound(getFallDamageSound((int)damage), 1.0f, 1.0f);
         }
     }
-    else if (mVerticalCollision && Minecraft::InMiniGame(eMiniGameId_Glide, true)
-             && TakeGlideCollisionDamage() && hurt(DamageSource::FALL, 1.0f))
+    else if (mVerticalCollision && Minecraft::InMiniGame(eMiniGameId_Glide, true) && TakeGlideCollisionDamage()
+             && hurt(DamageSource::FALL, 1.0f))
     {
         playSound(getFallDamageSound(1), 1.0f, 1.0f);
     }
@@ -3375,8 +3361,9 @@ void LivingEntity::updateEquipmentSlots()
             continue;
         }
 
-        static_cast<ServerLevel*>(mLevel)->getTracker()->broadcast(shared_from_this(),
-                                                                   boost::shared_ptr<Packet>(new ClientboundSetEquippedItemPacket(getId(), slot, current)));
+        static_cast<ServerLevel*>(mLevel)->getTracker()->broadcast(
+            shared_from_this(),
+            boost::shared_ptr<Packet>(new ClientboundSetEquippedItemPacket(getId(), slot, current)));
 
         if (!previous->isEmpty())
         {
@@ -3701,8 +3688,8 @@ void LivingEntity::aiStep()
             AABB* checkBox = mBoundingBox->shrink(0.1, 0.0, 0.1);
             checkBox->mMaxY = checkBox->mMinY + 0.1;
 
-            std::vector<AABB*>* collisions =
-                mLevel->getCollisionAABBs(shared_from_this(), checkBox, false, false, false);
+            std::vector<AABB*>* collisions = mLevel->getCollisionAABBs(shared_from_this(), checkBox, false, false,
+                                                                       false);
 
             if (!collisions->empty())
             {
@@ -3812,7 +3799,6 @@ void LivingEntity::aiStep()
     }
 
     PIXEndNamedEvent();
-
 }
 
 void LivingEntity::serverAiStep()
@@ -3822,9 +3808,8 @@ void LivingEntity::serverAiStep()
 void LivingEntity::pushEntities()
 {
     PushableBySelector selector(shared_from_this());
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.20000000298023224, 0.0, 0.20000000298023224),
-                            &selector, NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+        shared_from_this(), mBoundingBox->grow(0.20000000298023224, 0.0, 0.20000000298023224), &selector, NULL);
 
     if (entities == NULL || entities->empty())
     {
@@ -3897,7 +3882,8 @@ void LivingEntity::take(boost::shared_ptr<Entity> entity, int count)
             || eTYPE_DERIVED_FROM(EntityType::ARROW, entity->GetType())
             || eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, entity->GetType()))
         {
-            tracker->broadcast(entity, boost::shared_ptr<ClientboundTakeItemEntityPacket>(new ClientboundTakeItemEntityPacket(entity->getId(), getId(), count)));
+            tracker->broadcast(entity, boost::shared_ptr<ClientboundTakeItemEntityPacket>(
+                                           new ClientboundTakeItemEntityPacket(entity->getId(), getId(), count)));
         }
     }
 }
@@ -4016,9 +4002,8 @@ bool LivingEntity::isUsingItem()
 
 InteractionHand::EInteractionHand LivingEntity::getUsedItemHand()
 {
-    return (mEntityData->get(DATA_LIVING_ENTITY_FLAGS) & 2) != 0
-               ? InteractionHand::eInteractionHand_OffHand
-               : InteractionHand::eInteractionHand_MainHand;
+    return (mEntityData->get(DATA_LIVING_ENTITY_FLAGS) & 2) != 0 ? InteractionHand::eInteractionHand_OffHand
+                                                                 : InteractionHand::eInteractionHand_MainHand;
 }
 
 int LivingEntity::getUseItemRemainingTicks()
@@ -4070,8 +4055,7 @@ void LivingEntity::startUsingItem(InteractionHand::EInteractionHand hand)
     if (!mLevel->mIsClientSide)
     {
         mEntityData->set(DATA_LIVING_ENTITY_FLAGS,
-                         (unsigned char)(hand == InteractionHand::eInteractionHand_OffHand ? 3 : 1),
-                         true);
+                         (unsigned char)(hand == InteractionHand::eInteractionHand_OffHand ? 3 : 1), true);
     }
 }
 
@@ -4128,15 +4112,15 @@ void LivingEntity::spawnItemUseParticles(not_null_ptr<ItemInstance> itemInstance
 
         if (itemInstance->isStackedByData())
         {
-            int particleData[2] = { Item::getId(itemInstance->getItem()), itemInstance->getAuxValue() };
-            mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
-                                velocity->x, velocity->y + 0.05, velocity->z, arrayWithLength<int>(particleData, 2));
+            int particleData[2] = {Item::getId(itemInstance->getItem()), itemInstance->getAuxValue()};
+            mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z, velocity->x, velocity->y + 0.05,
+                                velocity->z, arrayWithLength<int>(particleData, 2));
         }
         else
         {
-            int particleData[1] = { Item::getId(itemInstance->getItem()) };
-            mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
-                                velocity->x, velocity->y + 0.05, velocity->z, arrayWithLength<int>(particleData, 1));
+            int particleData[1] = {Item::getId(itemInstance->getItem())};
+            mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z, velocity->x, velocity->y + 0.05,
+                                velocity->z, arrayWithLength<int>(particleData, 1));
         }
     }
 
@@ -4296,8 +4280,7 @@ bool LivingEntity::randomTeleport(double x, double y, double z)
             double py = oldY + (mY - oldY) * progress + random->nextDouble() * (double)mBbHeight;
             double pz = oldZ + (mZ - oldZ) * progress + (random->nextDouble() - 0.5) * (double)mBbWidth * 2.0;
 
-            level->addParticle(PARTICLE_PORTAL, px, py, pz, (double)xd, (double)yd, (double)zd,
-                                arrayWithLength<int>());
+            level->addParticle(PARTICLE_PORTAL, px, py, pz, (double)xd, (double)yd, (double)zd, arrayWithLength<int>());
         }
 
         if (eTYPE_DERIVED_FROM(EntityType::PATHFINDER_MOB, GetType()))

@@ -6,8 +6,7 @@ static ZombieType villagerZombieType(1, 1, true);
 static ZombieType huskZombieType(2, 2, false);
 static ZombieType drownedZombieType(3, 3, false);
 
-ZombieType::ZombieType(int id, int name, bool villagerZombie)
-    : id(id), villagerZombie(villagerZombie), name(name)
+ZombieType::ZombieType(int id, int name, bool villagerZombie) : id(id), villagerZombie(villagerZombie), name(name)
 {
 }
 
@@ -32,11 +31,16 @@ ZombieType* ZombieType::byId(int id)
 {
     switch (id)
     {
-    case 0: return &normalZombieType;
-    case 1: return &villagerZombieType;
-    case 2: return &huskZombieType;
-    case 3: return &drownedZombieType;
-    default: return 0;
+    case 0:
+        return &normalZombieType;
+    case 1:
+        return &villagerZombieType;
+    case 2:
+        return &huskZombieType;
+    case 3:
+        return &drownedZombieType;
+    default:
+        return 0;
     }
 }
 
@@ -59,28 +63,36 @@ bool ZombieType::isSunSensitive() const
 
 const SoundEvent* ZombieType::getAmbientSound() const
 {
-    if (id == 2) return SoundEvents::HUSK_AMBIENT;
-    if (id == 3) return SoundEvents::DROWNED_AMBIENT;
+    if (id == 2)
+        return SoundEvents::HUSK_AMBIENT;
+    if (id == 3)
+        return SoundEvents::DROWNED_AMBIENT;
     return SoundEvents::ZOMBIE_AMBIENT;
 }
 
 const SoundEvent* ZombieType::getHurtSound() const
 {
-    if (id == 2) return SoundEvents::HUSK_HURT;
-    if (id == 3) return SoundEvents::DROWNED_HURT;
+    if (id == 2)
+        return SoundEvents::HUSK_HURT;
+    if (id == 3)
+        return SoundEvents::DROWNED_HURT;
     return SoundEvents::ZOMBIE_HURT;
 }
 
 const SoundEvent* ZombieType::getDeathSound() const
 {
-    if (id == 2) return SoundEvents::HUSK_DEATH;
-    if (id == 3) return SoundEvents::DROWNED_DEATH;
+    if (id == 2)
+        return SoundEvents::HUSK_DEATH;
+    if (id == 3)
+        return SoundEvents::DROWNED_DEATH;
     return SoundEvents::ZOMBIE_DEATH;
 }
 
 const SoundEvent* ZombieType::getStepSound() const
 {
-    if (id == 2) return SoundEvents::HUSK_STEP;
-    if (id == 3) return SoundEvents::DROWNED_STEP;
+    if (id == 2)
+        return SoundEvents::HUSK_STEP;
+    if (id == 3)
+        return SoundEvents::DROWNED_STEP;
     return SoundEvents::ZOMBIE_STEP;
 }

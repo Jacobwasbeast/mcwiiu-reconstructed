@@ -28,11 +28,12 @@ boost::shared_ptr<Entity> IndirectEntityDamageSource::getEntity() const
     return owner;
 }
 
-boost::shared_ptr<ClientboundChatPacket> IndirectEntityDamageSource::getDeathMessagePacket(boost::shared_ptr<LivingEntity> victim) const
+boost::shared_ptr<ClientboundChatPacket> IndirectEntityDamageSource::getDeathMessagePacket(
+    boost::shared_ptr<LivingEntity> victim) const
 {
     not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
-        ? boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem()
-        : ItemInstance::EMPTY;
+                                          ? boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem()
+                                          : ItemInstance::EMPTY;
     std::wstring attackerName = L"";
 
     boost::shared_ptr<Entity> attacker;
@@ -53,11 +54,13 @@ boost::shared_ptr<ClientboundChatPacket> IndirectEntityDamageSource::getDeathMes
 
     if (!item->isEmpty() && item->hasCustomHoverName())
     {
-        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victim->getNetworkName(), deathMessage, attacker, attackerName, item->getHoverName()));
+        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+            victim->getNetworkName(), deathMessage, attacker, attackerName, item->getHoverName()));
     }
     else
     {
-        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victim->getNetworkName(), message, attacker, attackerName));
+        return boost::shared_ptr<ClientboundChatPacket>(
+            new ClientboundChatPacket(victim->getNetworkName(), message, attacker, attackerName));
     }
 }
 

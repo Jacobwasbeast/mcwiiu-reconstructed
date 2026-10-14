@@ -230,7 +230,8 @@ public:
 
     static void staticCtor();
     static bool areAllEffectsAmbient(std::vector<MobEffectInstance*>* effects);
-    static void fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lookAngle, float& xRot, float& liftFactor, double& horizontalSpeed, double lookHorizontal);
+    static void fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lookAngle, float& xRot, float& liftFactor,
+                                 double& horizontalSpeed, double lookHorizontal);
 
     void _init();
     void ResetThermalVariables();

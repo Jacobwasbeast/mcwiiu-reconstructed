@@ -32,7 +32,8 @@ BaseMobSpawner::BaseMobSpawner()
 
 BaseMobSpawner::~BaseMobSpawner()
 {
-    std::vector<SpawnData*>::iterator found = std::find(mSpawnPotentials.begin(), mSpawnPotentials.end(), mNextSpawnData);
+    std::vector<SpawnData*>::iterator found = std::find(mSpawnPotentials.begin(), mSpawnPotentials.end(),
+                                                        mNextSpawnData);
     if (found == mSpawnPotentials.end())
         delete mNextSpawnData;
     for (std::vector<SpawnData*>::iterator it = mSpawnPotentials.begin(); it != mSpawnPotentials.end(); ++it)
@@ -53,8 +54,7 @@ void BaseMobSpawner::setEntityId(const ResourceLocation& entityId)
 bool BaseMobSpawner::isNearPlayer()
 {
     BlockPos pos = getPos();
-    return getLevel()->hasNearPlayer(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
-                                static_cast<double>(mRequiredPlayerRange));
+    return getLevel()->hasNearPlayer(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, static_cast<double>(mRequiredPlayerRange));
 }
 
 bool BaseMobSpawner::hasMob()
@@ -101,18 +101,20 @@ void BaseMobSpawner::tick()
         ListTag* position = spawnTag->fjSafeGetListTag(L"Pos", Tag::TAG_DOUBLE);
         Level* level = getLevel();
         int count = position->size();
-        double x = count >= 1 ? position->getDouble(0)
-                              : origin.x + (level->mRandom->nextDouble() - level->mRandom->nextDouble()) * mSpawnRange + 0.5;
+        double x = count >= 1
+                       ? position->getDouble(0)
+                       : origin.x + (level->mRandom->nextDouble() - level->mRandom->nextDouble()) * mSpawnRange + 0.5;
         double y = count >= 2 ? position->getDouble(1) : static_cast<double>(origin.y + level->mRandom->nextInt(3) - 1);
-        double z = count >= 3 ? position->getDouble(2)
-                              : origin.z + (level->mRandom->nextDouble() - level->mRandom->nextDouble()) * mSpawnRange + 0.5;
+        double z = count >= 3
+                       ? position->getDouble(2)
+                       : origin.z + (level->mRandom->nextDouble() - level->mRandom->nextDouble()) * mSpawnRange + 0.5;
         boost::shared_ptr<Entity> entity = OldChunkStorage::loadEntity(spawnTag, level, x, y, z, false);
         if (entity == NULL)
             return;
 
-        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(*entity.get()),
-            AABB::newTemp(origin.x, origin.y, origin.z, origin.x + 1, origin.y + 1, origin.z + 1)
-                ->grow(mSpawnRange, mSpawnRange, mSpawnRange));
+        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(
+            typeid(*entity.get()), AABB::newTemp(origin.x, origin.y, origin.z, origin.x + 1, origin.y + 1, origin.z + 1)
+                                       ->grow(mSpawnRange, mSpawnRange, mSpawnRange));
         int nearby = static_cast<int>(entities->size());
         delete entities;
         if (nearby >= mMaxNearbyEntities || !getLevel()->canCreateMore(entity->GetType(), Level::eSpawnType_Egg))
@@ -123,7 +125,8 @@ void BaseMobSpawner::tick()
         }
 
         boost::shared_ptr<Mob> mob = eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType())
-            ? boost::static_pointer_cast<Mob>(entity) : boost::shared_ptr<Mob>();
+                                         ? boost::static_pointer_cast<Mob>(entity)
+                                         : boost::shared_ptr<Mob>();
         entity->moveTo(entity->mX, entity->mY, entity->mZ, level->mRandom->nextFloat() * 360.0f, 0.0f);
         if (mob == NULL || (mob->checkSpawnRules() && mob->checkSpawnObstruction()))
         {
@@ -157,7 +160,8 @@ void BaseMobSpawner::delay()
     }
     if (!mSpawnPotentials.empty())
     {
-        SpawnData* data = static_cast<SpawnData*>(WeighedRandom::getRandomItem(getLevel()->mRandom, reinterpret_cast<std::vector<WeighedRandomItem*>*>(&mSpawnPotentials)));
+        SpawnData* data = static_cast<SpawnData*>(WeighedRandom::getRandomItem(
+            getLevel()->mRandom, reinterpret_cast<std::vector<WeighedRandomItem*>*>(&mSpawnPotentials)));
         setNextSpawnData(data);
     }
     broadcastEvent(1);
@@ -179,7 +183,8 @@ void BaseMobSpawner::load(CompoundTag* tag)
     }
     else if (!mSpawnPotentials.empty())
     {
-        setNextSpawnData(static_cast<SpawnData*>(WeighedRandom::getRandomItem(getLevel()->mRandom, reinterpret_cast<std::vector<WeighedRandomItem*>*>(&mSpawnPotentials))));
+        setNextSpawnData(static_cast<SpawnData*>(WeighedRandom::getRandomItem(
+            getLevel()->mRandom, reinterpret_cast<std::vector<WeighedRandomItem*>*>(&mSpawnPotentials))));
     }
     for (std::vector<SpawnData*>::iterator it = mSpawnPotentials.begin(); it != mSpawnPotentials.end(); ++it)
     {

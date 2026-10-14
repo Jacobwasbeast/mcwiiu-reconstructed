@@ -23,17 +23,21 @@ MobEffectInstance::MobEffectInstance(MobEffect* effect, int duration, int amplif
     _init(effect, duration, amplifier, true);
 }
 
-MobEffectInstance::MobEffectInstance(MobEffect* effect, int duration, int amplifier,
-                                     bool ambient, bool visible)
+MobEffectInstance::MobEffectInstance(MobEffect* effect, int duration, int amplifier, bool ambient, bool visible)
 {
     _init(effect, duration, amplifier, visible);
     this->ambient = ambient;
 }
 
 MobEffectInstance::MobEffectInstance(MobEffectInstance* effect)
-    : effect(effect->effect), duration(effect->duration), amplifier(effect->amplifier),
-      reserved(effect->reserved), ambient(effect->ambient), noCounter(effect->noCounter),
-      visible(effect->visible), durationEffectId(effect->durationEffectId)
+    : effect(effect->effect),
+      duration(effect->duration),
+      amplifier(effect->amplifier),
+      reserved(effect->reserved),
+      ambient(effect->ambient),
+      noCounter(effect->noCounter),
+      visible(effect->visible),
+      durationEffectId(effect->durationEffectId)
 {
 }
 

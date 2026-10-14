@@ -40,8 +40,11 @@
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* FireworksRocketEntity::DATA_ITEM = NULL;
 const EntityDataAccessor<int>* FireworksRocketEntity::DATA_ATTACHED_TO_ENTITY = NULL;
 
-FireworksRocketEntity::FireworksRocketEntity(Level* level, const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item)
-    : Entity(level, true), mAttachedToEntity(), mOwner()
+FireworksRocketEntity::FireworksRocketEntity(Level* level, const boost::shared_ptr<Player>& player,
+                                             const not_null_ptr<ItemInstance>& item)
+    : Entity(level, true),
+      mAttachedToEntity(),
+      mOwner()
 {
     _init(player->mX, player->mY + player->getEyeHeight(), player->mZ, item);
     mHasDirectionalData = true;
@@ -52,15 +55,21 @@ FireworksRocketEntity::FireworksRocketEntity(Level* level, const boost::shared_p
     mOwner = player;
 }
 
-FireworksRocketEntity::FireworksRocketEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item)
-    : Entity(level, true), mAttachedToEntity(), mOwner()
+FireworksRocketEntity::FireworksRocketEntity(Level* level, double x, double y, double z,
+                                             not_null_ptr<ItemInstance> item)
+    : Entity(level, true),
+      mAttachedToEntity(),
+      mOwner()
 {
     _init(x, y, z, item);
     mOwner = boost::shared_ptr<Player>();
 }
 
-FireworksRocketEntity::FireworksRocketEntity(Level* level, const not_null_ptr<ItemInstance>& item, const boost::shared_ptr<LivingEntity>& entity)
-    : Entity(level, true), mAttachedToEntity(), mOwner()
+FireworksRocketEntity::FireworksRocketEntity(Level* level, const not_null_ptr<ItemInstance>& item,
+                                             const boost::shared_ptr<LivingEntity>& entity)
+    : Entity(level, true),
+      mAttachedToEntity(),
+      mOwner()
 {
     _init(entity->mX, entity->mY, entity->mZ, item);
     mEntityData->set(DATA_ATTACHED_TO_ENTITY, entity->getId(), true);
@@ -69,16 +78,23 @@ FireworksRocketEntity::FireworksRocketEntity(Level* level, const not_null_ptr<It
 }
 
 FireworksRocketEntity::FireworksRocketEntity(Level* level)
-    : Entity(level, true), mLife(0), mLifetime(0), mAttachedToEntity(), mHasDirectionalData(true), mOwner()
+    : Entity(level, true),
+      mLife(0),
+      mLifetime(0),
+      mAttachedToEntity(),
+      mHasDirectionalData(true),
+      mOwner()
 {
     fjDerivedCtorCalls();
     setSize(0.25f, 0.25f);
 }
 
-FireworksRocketEntity::FireworksRocketEntity(Level* level, double x, double y, double z, double xd, double yd, double zd,
-                                             not_null_ptr<ItemInstance> item, bool hasDirectionalData,
+FireworksRocketEntity::FireworksRocketEntity(Level* level, double x, double y, double z, double xd, double yd,
+                                             double zd, not_null_ptr<ItemInstance> item, bool hasDirectionalData,
                                              const boost::shared_ptr<Player>& owner)
-    : Entity(level, true), mAttachedToEntity(), mOwner()
+    : Entity(level, true),
+      mAttachedToEntity(),
+      mOwner()
 {
     _init(x, y, z, item);
     mDirectionalX = static_cast<int>(Math::round(xd));
@@ -134,8 +150,8 @@ void FireworksRocketEntity::_init(double x, double y, double z, const not_null_p
 
 void FireworksRocketEntity::staticCtor()
 {
-    DATA_ATTACHED_TO_ENTITY = SynchedEntityData::defineId<int>(
-        EntityType::FIREWORKS_ROCKET_ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
+    DATA_ATTACHED_TO_ENTITY = SynchedEntityData::defineId<int>(EntityType::FIREWORKS_ROCKET_ENTITY, EntityType::ENTITY,
+                                                               EntityDataSerializers::INT);
     DATA_ITEM = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(
         EntityType::FIREWORKS_ROCKET_ENTITY, EntityType::ENTITY, EntityDataSerializers::ITEM_INSTANCE);
 }
@@ -225,8 +241,8 @@ void FireworksRocketEntity::dealExplosionDamage()
 
     double radius = 5.0;
     Vec3* center = Vec3::newTemp(mX, mY, mZ);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(radius));
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(LivingEntity),
+                                                                                   mBoundingBox->grow(radius));
     if (entities != NULL)
     {
         std::vector<boost::shared_ptr<Entity> >::iterator it;
@@ -247,9 +263,8 @@ void FireworksRocketEntity::dealExplosionDamage()
             bool visible = (hit == NULL || hit->mType == HitResult::MISS);
             if (!visible)
             {
-                Vec3* toMid = Vec3::newTemp(living->mX,
-                    living->mY + static_cast<double>(living->mBbHeight) * 0.5,
-                    living->mZ);
+                Vec3* toMid = Vec3::newTemp(living->mX, living->mY + static_cast<double>(living->mBbHeight) * 0.5,
+                                            living->mZ);
                 hit = mLevel->clip(center, toMid, false, true, false, false, NULL, false);
                 visible = (hit == NULL || hit->mType == HitResult::MISS);
             }
@@ -499,8 +514,7 @@ void FireworksRocketEntity::handleEntityEvent(unsigned char event, int data)
     if (!item->isEmpty())
     {
         fireworksTag = static_cast<CompoundTag*>(item->getTagElement(FireworksItem::TAG_FIREWORKS));
-        if (fireworksTag != NULL
-            && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+        if (fireworksTag != NULL && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
         {
             setExplosionColourToPipColour(fireworksTag);
         }
@@ -552,7 +566,8 @@ boost::shared_ptr<LivingEntity> FireworksRocketEntity::getOwner() const
     return mOwner;
 }
 
-void FireworksRocketEntity::updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY, double& movedZ)
+void FireworksRocketEntity::updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX,
+                                                 double& movedY, double& movedZ)
 {
     bool directional = Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks();
     if (!directional || !mLevel->mIsClientSide)

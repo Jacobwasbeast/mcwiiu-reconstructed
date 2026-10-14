@@ -30,7 +30,9 @@ class AgableMob;
 template <class T> class EntityDataAccessor;
 
 
-class AbstractHorse : public Animal, public net_minecraft_world::ContainerListener, public PlayerRideableJumping,
+class AbstractHorse : public Animal,
+                      public net_minecraft_world::ContainerListener,
+                      public PlayerRideableJumping,
                       public OwnableEntity
 {
 public:
@@ -124,7 +126,8 @@ public:
     double generateRandomMaxHealth();
     double generateRandomJumpStrength();
     double generateRandomSpeed();
-    void setOffspringAttributes(const boost::shared_ptr<AgableMob>& other, const boost::shared_ptr<AbstractHorse>& offspring);
+    void setOffspringAttributes(const boost::shared_ptr<AgableMob>& other,
+                                const boost::shared_ptr<AbstractHorse>& offspring);
     virtual bool canBeControlledByRider();
     float getEatAnim(float partialTick) const;
     float getStandAnim(float partialTick) const;
@@ -136,7 +139,8 @@ public:
     virtual float getEyeHeight();
     virtual bool setSlot(int slot, const not_null_ptr<ItemInstance>& item);
     virtual boost::shared_ptr<Entity> getControllingPassenger();
-    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& name);
     virtual bool removeWhenFarAway();
     virtual unsigned long long GetType();
 

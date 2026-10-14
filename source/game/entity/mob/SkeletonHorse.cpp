@@ -22,8 +22,7 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/item/ItemId.hpp"
 
-SkeletonHorse::SkeletonHorse(Level* level)
-    : AbstractHorse(level), mSkeletonTrapGoal(this), mTrap(false), mTrapTime(0)
+SkeletonHorse::SkeletonHorse(Level* level) : AbstractHorse(level), mSkeletonTrapGoal(this), mTrap(false), mTrapTime(0)
 {
     fjDerivedCtorCalls();
 }
@@ -186,8 +185,7 @@ bool SkeletonHorse::breathesWater()
     return true;
 }
 
-bool SkeletonHorse::mobInteract(const boost::shared_ptr<Player>& player,
-                                InteractionHand::EInteractionHand hand)
+bool SkeletonHorse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
     bool notEmpty = !item->isEmpty();
@@ -289,8 +287,7 @@ unsigned int SkeletonHorse::GetInteractTooltip(const EntityTooltipDataHolder& to
 
     if (!hasPassenger(EntityType::SKELETON)
         && (tooltipData.m_pPlayer->isSneaking() && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed()
-            || itemId == ItemId::SADDLE && !isSaddled()
-            || wearsArmor() && horseArmor))
+            || itemId == ItemId::SADDLE && !isSaddled() || wearsArmor() && horseArmor))
         return IDS_TOOLTIPS_OPEN;
 
     if (getPassengers()->empty())

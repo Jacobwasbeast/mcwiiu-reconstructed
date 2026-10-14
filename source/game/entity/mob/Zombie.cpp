@@ -60,14 +60,15 @@ static const EntityDataAccessor<bool>* gZombieBabyId = NULL;
 static const EntityDataAccessor<bool>* gZombieAggressiveId = NULL;
 static const EntityDataAccessor<bool>* gZombieConvertingId = NULL;
 
-Attribute* Zombie::SPAWN_REINFORCEMENTS_CHANCE =
-    new RangedAttribute(NULL, eATTRIBUTE_ID_ZombieSpawnReinforcements, 0.0, 0.0, 1.0);
+Attribute* Zombie::SPAWN_REINFORCEMENTS_CHANCE = new RangedAttribute(NULL, eATTRIBUTE_ID_ZombieSpawnReinforcements, 0.0,
+                                                                     0.0, 1.0);
 
-AttributeModifier* Zombie::SPEED_MODIFIER_BABY =
-    new AttributeModifier(eMODIFIER_ID_BabyZombieSpeedBoost, 0.5, 1);
+AttributeModifier* Zombie::SPEED_MODIFIER_BABY = new AttributeModifier(eMODIFIER_ID_BabyZombieSpeedBoost, 0.5, 1);
 
 Zombie::ZombieGroupData::ZombieGroupData(bool isBaby, bool isJockey, bool isVillager)
-    : mIsBaby(isBaby), mIsJockey(isJockey), mIsVillager(isVillager)
+    : mIsBaby(isBaby),
+      mIsJockey(isJockey),
+      mIsVillager(isVillager)
 {
 }
 
@@ -75,15 +76,13 @@ Zombie::ZombieGroupData::~ZombieGroupData()
 {
 }
 
-Zombie::Zombie(Level* level)
-    : Monster(level)
+Zombie::Zombie(Level* level) : Monster(level)
 {
     fjDerivedCtorCalls();
     _init();
 }
 
-Zombie::Zombie(Level* level, bool initializeGoals)
-    : Monster(level)
+Zombie::Zombie(Level* level, bool initializeGoals) : Monster(level)
 {
     _init();
     if (initializeGoals)
@@ -102,9 +101,12 @@ Entity* Zombie::create(Level* level)
 
 void Zombie::staticCtor()
 {
-    gZombieBabyId = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
-    gZombieAggressiveId = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
-    gZombieConvertingId = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE, EntityType::MONSTER, EntityDataSerializers::BOOLEAN);
+    gZombieBabyId = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE, EntityType::MONSTER,
+                                                      EntityDataSerializers::BOOLEAN);
+    gZombieAggressiveId = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE, EntityType::MONSTER,
+                                                            EntityDataSerializers::BOOLEAN);
+    gZombieConvertingId = SynchedEntityData::defineId<bool>(EntityType::ZOMBIE, EntityType::MONSTER,
+                                                            EntityDataSerializers::BOOLEAN);
 }
 
 void Zombie::_init()
@@ -117,15 +119,17 @@ void Zombie::_init()
     mIsJockey = false;
     mConversionTime = 0;
     mWaterConversionTime = 0;
-    mCategories |= EntityCategory::eEntityCategory_Zombie | EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
+    mCategories |= EntityCategory::eEntityCategory_Zombie | EntityCategory::eEntityCategory_Humanoid
+                   | EntityCategory::eEntityCategory_Monster;
 }
 
 void Zombie::registerGoals()
 {
     mGoalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false), true);
-    mGoalSelector.addGoal(4, new RemoveBlockGoal(Blocks::turtle_egg, this, 1.0, 16, 2, 1.6,
-                                                 SoundEvents::TURTLE_EGG_HATCH,
-                                                 SoundEvents::TURTLE_EGG_BREAK), true);
+    mGoalSelector.addGoal(4,
+                          new RemoveBlockGoal(Blocks::turtle_egg, this, 1.0, 16, 2, 1.6, SoundEvents::TURTLE_EGG_HATCH,
+                                              SoundEvents::TURTLE_EGG_BREAK),
+                          true);
     mGoalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new SinkInWaterRandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
@@ -143,8 +147,10 @@ void Zombie::addBehaviourGoals()
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Villager), false, false, false), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(VillagerGolem), true, false, false), true);
-    mTargetSelector.addGoal(5, new NearestAttackableTargetGoal(this, typeid(Turtle), 10, true, false,
-                                                               Turtle::BABY_ON_LAND_SELECTOR, false, false), true);
+    mTargetSelector.addGoal(5,
+                            new NearestAttackableTargetGoal(this, typeid(Turtle), 10, true, false,
+                                                            Turtle::BABY_ON_LAND_SELECTOR, false, false),
+                            true);
 }
 
 void Zombie::registerAttributes()
@@ -297,15 +303,17 @@ bool Zombie::hurt(const DamageSource* source, float damage)
                 reinforcement->setPos((double)spawnX, (double)spawnY, (double)spawnZ);
                 if (!mLevel->hasNearPlayer((double)spawnX, (double)spawnY, (double)spawnZ, 7.0)
                     && mLevel->isUnobstructed(reinforcement->mBoundingBox, reinforcement)
-                    && mLevel->getCollisionAABBs(reinforcement, reinforcement->mBoundingBox, false, false, false)->empty()
+                    && mLevel->getCollisionAABBs(reinforcement, reinforcement->mBoundingBox, false, false, false)
+                           ->empty()
                     && !mLevel->containsAnyLiquid(reinforcement->mBoundingBox))
                 {
                     mLevel->addEntity(reinforcement);
                     reinforcement->setTarget(attacker);
-                    reinforcement->finalizeMobSpawn(
-                        mLevel->getCurrentDifficultyAt(BlockPos(reinforcement)), NULL, std::wstring(L""));
+                    reinforcement->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(reinforcement)), NULL,
+                                                    std::wstring(L""));
                     getAttribute(SPAWN_REINFORCEMENTS_CHANCE)->addModifier(new AttributeModifier(-0.05f, 0));
-                    reinforcement->getAttribute(SPAWN_REINFORCEMENTS_CHANCE)->addModifier(new AttributeModifier(-0.05f, 0));
+                    reinforcement->getAttribute(SPAWN_REINFORCEMENTS_CHANCE)
+                        ->addModifier(new AttributeModifier(-0.05f, 0));
                     break;
                 }
             }
@@ -417,8 +425,9 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
 
     if (mLevel->getDifficulty() == Difficulty::NORMAL || mLevel->getDifficulty() == Difficulty::HARD)
     {
-        if (entity->GetType() == EntityType::VILLAGER && mLevel->canCreateMore(EntityType::ZOMBIE, Level::eSpawnType_Egg) &&
-            (mLevel->getDifficulty() == Difficulty::HARD || !mRandom->nextBoolean()))
+        if (entity->GetType() == EntityType::VILLAGER
+            && mLevel->canCreateMore(EntityType::ZOMBIE, Level::eSpawnType_Egg)
+            && (mLevel->getDifficulty() == Difficulty::HARD || !mRandom->nextBoolean()))
         {
             boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
             boost::shared_ptr<ZombieVillager> zombieVillager(new ZombieVillager(mLevel));
@@ -435,7 +444,7 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
             if (villager->hasCustomName())
             {
                 zombieVillager->setCustomName(villager->getCustomName(), villager->getOwnerUUID(),
-                                               wasNamedByRestrictedPlayer());
+                                              wasNamedByRestrictedPlayer());
                 zombieVillager->setCustomNameVisible(villager->isCustomNameVisible());
             }
 
@@ -513,8 +522,9 @@ MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
     bool emptyHead = getItemSlot(EquipmentSlot::HEAD)->isEmpty();
     if (emptyHead && SharedConstants::IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
     {
-        setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(
-                                             mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
+        setItemSlot(EquipmentSlot::HEAD,
+                    not_null_ptr<ItemInstance>(
+                        new ItemInstance(mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
         mArmorDropChances[EquipmentSlot::HEAD->getIndex()] = 0.0f;
     }
 
@@ -523,7 +533,8 @@ MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 
     if (mRandom->nextFloat() < specialMultiplier * 0.05f)
     {
-        getAttribute(SPAWN_REINFORCEMENTS_CHANCE)->addModifier(new AttributeModifier(mRandom->nextDouble() * 0.25 + 0.5, 0));
+        getAttribute(SPAWN_REINFORCEMENTS_CHANCE)
+            ->addModifier(new AttributeModifier(mRandom->nextDouble() * 0.25 + 0.5, 0));
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)
             ->addModifier(new AttributeModifier(mRandom->nextDouble() * 3.0 + 1.0, 2));
         setCanBreakDoors(true);

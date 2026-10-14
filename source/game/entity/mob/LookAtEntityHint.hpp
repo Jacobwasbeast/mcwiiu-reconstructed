@@ -13,11 +13,10 @@ class ItemInstance;
 class LookAtEntityHint : public TutorialHint
 {
 public:
-    LookAtEntityHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
-                     int entityId, unsigned long long entityType);
-    LookAtEntityHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
-                     int entityId, unsigned long long entityType,
-                     bool (*entityPredicate)(boost::shared_ptr<Entity>));
+    LookAtEntityHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId, int entityId,
+                     unsigned long long entityType);
+    LookAtEntityHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId, int entityId,
+                     unsigned long long entityType, bool (*entityPredicate)(boost::shared_ptr<Entity>));
     virtual ~LookAtEntityHint();
 
     not_null_ptr<ItemInstance> GetEntityAsItem(boost::shared_ptr<Entity> entity);

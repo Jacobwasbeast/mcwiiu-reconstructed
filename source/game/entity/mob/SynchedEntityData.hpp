@@ -26,7 +26,8 @@ public:
     ~SynchedEntityData();
 
     template <class T>
-    static const EntityDataAccessor<T>* defineId(unsigned long long entityType, unsigned long long parentEntityType, EntityDataSerializer<T>* serializer)
+    static const EntityDataAccessor<T>* defineId(unsigned long long entityType, unsigned long long parentEntityType,
+                                                 EntityDataSerializer<T>* serializer)
     {
         int id = defineIdInternal(entityType, parentEntityType);
 

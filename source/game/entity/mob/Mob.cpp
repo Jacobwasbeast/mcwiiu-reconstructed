@@ -117,7 +117,7 @@ unsigned long long Mob::GetType()
 void Mob::staticCtor()
 {
     DATA_MOB_FLAGS_ID = SynchedEntityData::defineId(EntityType::MOB, EntityType::LIVING_ENTITY,
-                                                     EntityDataSerializers::BYTE);
+                                                    EntityDataSerializers::BYTE);
 }
 
 void Mob::_init()
@@ -367,8 +367,8 @@ void Mob::tick()
             if (mRandom->nextInt(200) == 1)
             {
                 AABB* searchBox = mBoundingBox->grow(8.0);
-                std::vector<boost::shared_ptr<Entity> >* entities =
-                    mLevel->getEntitiesOfClass(typeid(*this), searchBox);
+                std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(*this),
+                                                                                               searchBox);
                 if (entities->size() < 2)
                 {
                     setLeader(false);
@@ -431,8 +431,8 @@ void Mob::dropEquipment(bool hitByPlayer, int lootingLevel)
             break;
         }
         bool guaranteed = chance > 1.0;
-        if (!item->isEmpty() && !EnchantmentHelper::hasVanishingCurse(item) && (hitByPlayer || guaranteed) &&
-            mRandom->nextFloat() - lootingLevel * 0.01f < chance)
+        if (!item->isEmpty() && !EnchantmentHelper::hasVanishingCurse(item) && (hitByPlayer || guaranteed)
+            && mRandom->nextFloat() - lootingLevel * 0.01f < chance)
         {
             if (!guaranteed && item->isDamageableItem())
             {
@@ -450,8 +450,7 @@ void Mob::addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType)
     std::vector<std::wstring> itemNames;
     itemNames.push_back(L"ArmorItems");
     itemNames.push_back(L"HandItems");
-    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
-                     (DataWalker*)new ItemListDataWalker(entityType, itemNames));
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity, (DataWalker*)new ItemListDataWalker(entityType, itemNames));
 }
 
 bool Mob::isLeftHanded()
@@ -511,8 +510,7 @@ void Mob::addAdditonalSaveData(CompoundTag* tag)
         }
         else if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, leashHolder->GetType()))
         {
-            boost::shared_ptr<HangingEntity> hanging =
-                boost::dynamic_pointer_cast<HangingEntity>(leashHolder);
+            boost::shared_ptr<HangingEntity> hanging = boost::dynamic_pointer_cast<HangingEntity>(leashHolder);
             BlockPos pos = hanging->getPos();
             leashTag->putInt(L"X", pos.x);
             leashTag->putInt(L"Y", pos.y);
@@ -647,9 +645,7 @@ void Mob::dropAllDeathLoot(bool hitByPlayer, int lootingLevel, const DamageSourc
         Random* random = mLootTableSeed == 0 ? mRandom : &seededRandom;
 
         std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(random, context);
-        for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
-             it != items->end();
-             ++it)
+        for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin(); it != items->end(); ++it)
         {
             spawnAtLocation(*it, 0.0f);
         }
@@ -696,11 +692,8 @@ void Mob::aiStep()
         return;
 
     AABB* searchBox = mBoundingBox->grow(1.0, 0.0, 1.0);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end();
-         ++it)
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<ItemEntity> itemEntity = boost::static_pointer_cast<ItemEntity>(*it);
         if (itemEntity->mRemoved || itemEntity->getItem()->isEmpty() || itemEntity->hasPickUpDelay())
@@ -983,8 +976,8 @@ bool Mob::checkSpawnObstruction()
 {
     if (!mLevel->isUnobstructed(mBoundingBox, shared_from_this()))
         return false;
-    return mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty() &&
-           !mLevel->containsAnyLiquid_NoLoad(mBoundingBox);
+    return mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty()
+           && !mLevel->containsAnyLiquid_NoLoad(mBoundingBox);
 }
 
 float Mob::getSizeScale()
@@ -1120,9 +1113,7 @@ void Mob::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
         LootTableContext context = builder.build();
 
         std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(mRandom, context);
-        for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
-             it != items->end();
-             ++it)
+        for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin(); it != items->end(); ++it)
         {
             not_null_ptr<ItemInstance> item = *it;
             if (item.get() == NULL)
@@ -1190,10 +1181,9 @@ void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance& difficu
 
     if (!getMainHandItem()->isEmpty() && mRandom->nextFloat() < 0.25f * specialMultiplier)
     {
-        setItemSlot(EquipmentSlot::MAINHAND,
-                    EnchantmentHelper::enchantItem(mRandom, getMainHandItem(),
-                                                   (int)(specialMultiplier * (float)mRandom->nextInt(18) + 5.0f),
-                                                   false));
+        setItemSlot(EquipmentSlot::MAINHAND, EnchantmentHelper::enchantItem(
+                                                 mRandom, getMainHandItem(),
+                                                 (int)(specialMultiplier * (float)mRandom->nextInt(18) + 5.0f), false));
     }
 
     for (int i = 0; i < 6; ++i)
@@ -1394,17 +1384,13 @@ bool Mob::isEffectiveAi()
 void Mob::setNoAi(bool noAi)
 {
     unsigned char flags = mEntityData->get(DATA_MOB_FLAGS_ID);
-    mEntityData->set(DATA_MOB_FLAGS_ID,
-                         noAi ? (unsigned char)(flags | 1) : (unsigned char)(flags & 0xfe),
-                         true);
+    mEntityData->set(DATA_MOB_FLAGS_ID, noAi ? (unsigned char)(flags | 1) : (unsigned char)(flags & 0xfe), true);
 }
 
 void Mob::setLeftHanded(bool leftHanded)
 {
     unsigned char flags = mEntityData->get(DATA_MOB_FLAGS_ID);
-    mEntityData->set(DATA_MOB_FLAGS_ID,
-                         leftHanded ? (unsigned char)(flags | 2) : (unsigned char)(flags & 0xfd),
-                         true);
+    mEntityData->set(DATA_MOB_FLAGS_ID, leftHanded ? (unsigned char)(flags | 2) : (unsigned char)(flags & 0xfd), true);
 }
 
 bool Mob::isNoAi()

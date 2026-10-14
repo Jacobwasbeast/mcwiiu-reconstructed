@@ -43,13 +43,15 @@
 const EntityDataAccessor<bool>* AbstractSkeleton::DATA_ID_ATTACKING = NULL;
 
 AbstractSkeleton::AbstractSkeleton(Level* level)
-    : Monster(level), mMeleeGoal(new SkeleteMeleeAttackGoal(this)),
+    : Monster(level),
+      mMeleeGoal(new SkeleteMeleeAttackGoal(this)),
       mBowGoal(new RangedBowAttackGoal(this, 1.0, 20, 15.0f))
 {
     setSize(0.6f, 1.99f);
     mReassessWeaponGoal = true;
     mInWater = false;
-    mCategories |= EntityCategory::eEntityCategory_Undead | EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
+    mCategories |= EntityCategory::eEntityCategory_Undead | EntityCategory::eEntityCategory_Humanoid
+                   | EntityCategory::eEntityCategory_Monster;
 }
 
 AbstractSkeleton::~AbstractSkeleton()
@@ -84,9 +86,8 @@ void AbstractSkeleton::setAggressive(bool aggressive)
 
 void AbstractSkeleton::staticCtor()
 {
-    DATA_ID_ATTACKING = SynchedEntityData::defineId<bool>(EntityType::ABSTRACT_SKELETON,
-                                                           EntityType::MONSTER,
-                                                           EntityDataSerializers::BOOLEAN);
+    DATA_ID_ATTACKING = SynchedEntityData::defineId<bool>(EntityType::ABSTRACT_SKELETON, EntityType::MONSTER,
+                                                          EntityDataSerializers::BOOLEAN);
 }
 
 void AbstractSkeleton::reassessWeaponGoal()
@@ -139,8 +140,10 @@ void AbstractSkeleton::registerGoals()
     mGoalSelector.addGoal(6, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Turtle), 10, true, false,
-                                                               Turtle::BABY_ON_LAND_SELECTOR, false, false), true);
+    mTargetSelector.addGoal(3,
+                            new NearestAttackableTargetGoal(this, typeid(Turtle), 10, true, false,
+                                                            Turtle::BABY_ON_LAND_SELECTOR, false, false),
+                            true);
 }
 
 void AbstractSkeleton::registerAttributes()
@@ -171,12 +174,10 @@ void AbstractSkeleton::aiStep()
     {
         float brightness = getBrightness();
         BlockPos pos = Entity::instanceof(getVehicle(), EntityType::BOAT)
-            ? BlockPos(mX, (double)Math::round(mY), mZ).above()
-            : BlockPos(mX, (double)Math::round(mY), mZ);
+                           ? BlockPos(mX, (double)Math::round(mY), mZ).above()
+                           : BlockPos(mX, (double)Math::round(mY), mZ);
 
-        if (brightness > 0.5f
-            && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) * 2.0f
-            && mLevel->canSeeSky(pos))
+        if (brightness > 0.5f && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) * 2.0f && mLevel->canSeeSky(pos))
         {
             not_null_ptr<ItemInstance> item = getItemSlot(EquipmentSlot::HEAD);
             if (!item->isEmpty())
@@ -244,7 +245,7 @@ void AbstractSkeleton::populateDefaultEquipmentSlots(const DifficultyInstance& d
 }
 
 MobGroupData* AbstractSkeleton::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                                  const std::wstring& dataString)
+                                                 const std::wstring& dataString)
 {
     data = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
     populateDefaultEquipmentSlots(difficulty);
@@ -255,8 +256,9 @@ MobGroupData* AbstractSkeleton::finalizeMobSpawn(const DifficultyInstance& diffi
     bool hasNoHelmet = getItemSlot(EquipmentSlot::HEAD) == ItemInstance::EMPTY;
     if (hasNoHelmet && SharedConstants::IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
     {
-        setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(
-                                             mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
+        setItemSlot(EquipmentSlot::HEAD,
+                    not_null_ptr<ItemInstance>(
+                        new ItemInstance(mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
         mArmorDropChances[EquipmentSlot::HEAD->getIndex()] = 0.0f;
     }
     return data;
@@ -264,8 +266,10 @@ MobGroupData* AbstractSkeleton::finalizeMobSpawn(const DifficultyInstance& diffi
 
 boost::shared_ptr<Arrow> AbstractSkeleton::getArrow(float distanceFactor)
 {
-    boost::shared_ptr<TippableArrow> arrow(new TippableArrow(mLevel, boost::static_pointer_cast<LivingEntity>(shared_from_this())));
-    arrow->setEnchantmentEffectsFromEntity(boost::static_pointer_cast<LivingEntity>(shared_from_this()), distanceFactor);
+    boost::shared_ptr<TippableArrow> arrow(
+        new TippableArrow(mLevel, boost::static_pointer_cast<LivingEntity>(shared_from_this())));
+    arrow->setEnchantmentEffectsFromEntity(boost::static_pointer_cast<LivingEntity>(shared_from_this()),
+                                           distanceFactor);
     return arrow;
 }
 

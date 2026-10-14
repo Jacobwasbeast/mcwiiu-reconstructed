@@ -47,8 +47,7 @@ Animal::Animal(Level* level) : AgableMob(level)
 
 void Animal::staticCtor()
 {
-    DATA_IN_LOVE = SynchedEntityData::defineId(EntityType::ANIMAL, EntityType::AGABLE_MOB,
-                                               EntityDataSerializers::INT);
+    DATA_IN_LOVE = SynchedEntityData::defineId(EntityType::ANIMAL, EntityType::AGABLE_MOB, EntityDataSerializers::INT);
     DATA_IN_LOVE_TIME = SynchedEntityData::defineId(EntityType::ANIMAL, EntityType::AGABLE_MOB,
                                                     EntityDataSerializers::INT);
 }
@@ -143,11 +142,9 @@ void Animal::aiStep()
             double xa = mRandom->nextGaussian() * 0.02;
             double ya = mRandom->nextGaussian() * 0.02;
             double za = mRandom->nextGaussian() * 0.02;
-            mLevel->addParticle(PARTICLE_HEART,
-                                mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
+            mLevel->addParticle(PARTICLE_HEART, mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                                 mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                                mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
-                                xa, ya, za,
+                                mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth, xa, ya, za,
                                 arrayWithLength<int>());
         }
     }
@@ -222,9 +219,8 @@ bool Animal::checkSpawnRules()
     int y = Mth::floor(mBoundingBox->mMinY);
     int z = Mth::floor(mZ);
     BlockPos pos(x, y, z);
-    return mLevel->getBlockState(pos.below())->getBlock() == mSpawnableBlock
-        && mLevel->getDaytimeRawBrightness(pos) > 8
-        && PathfinderMob::checkSpawnRules();
+    return mLevel->getBlockState(pos.below())->getBlock() == mSpawnableBlock && mLevel->getDaytimeRawBrightness(pos) > 8
+           && PathfinderMob::checkSpawnRules();
 }
 
 int Animal::getAmbientSoundInterval()
@@ -272,8 +268,7 @@ bool Animal::AgeUpBaby(const boost::shared_ptr<Player>& player, not_null_ptr<Ite
     return false;
 }
 
-bool Animal::mobInteract(const boost::shared_ptr<Player>& player,
-                         InteractionHand::EInteractionHand hand)
+bool Animal::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
@@ -398,11 +393,9 @@ void Animal::handleEntityEvent(unsigned char event, int data)
             double xa = mRandom->nextGaussian() * 0.02;
             double ya = mRandom->nextGaussian() * 0.02;
             double za = mRandom->nextGaussian() * 0.02;
-            mLevel->addParticle(PARTICLE_HEART,
-                                mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
+            mLevel->addParticle(PARTICLE_HEART, mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                                 mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                                mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
-                                xa, ya, za,
+                                mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth, xa, ya, za,
                                 arrayWithLength<int>());
         }
 

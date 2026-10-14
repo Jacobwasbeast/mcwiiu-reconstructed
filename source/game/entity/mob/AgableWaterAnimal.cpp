@@ -13,8 +13,7 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/Material.hpp"
 
-AgableWaterAnimal::AgableWaterAnimal(Level* level)
-    : AgableMob(level)
+AgableWaterAnimal::AgableWaterAnimal(Level* level) : AgableMob(level)
 {
 }
 
@@ -35,8 +34,7 @@ bool AgableWaterAnimal::checkSpawnRules()
     position.setY(std::max(static_cast<int>(getPos(0.0f)->y), y));
     setPos(position.x, position.y, position.z);
 
-    return !mLevel->containsAnysolidBlocking(mBoundingBox)
-        && mLevel->containsMaterial(mBoundingBox, Material::WATER);
+    return !mLevel->containsAnysolidBlocking(mBoundingBox) && mLevel->containsMaterial(mBoundingBox, Material::WATER);
 }
 
 bool AgableWaterAnimal::checkSpawnObstruction()
