@@ -23,6 +23,7 @@ public:
     bool TryLock();
     void Unlock();
     void Trace(unsigned long long value) const;
+
 private:
     OSFastMutex m_mutex;
 };
@@ -34,10 +35,8 @@ public:
     {
         m_criticalSection.Lock();
     }
-    ~ScopedLock()
-    {
-        m_criticalSection.Unlock();
-    }
+    ~ScopedLock() { m_criticalSection.Unlock(); }
+
 private:
     CriticalSection& m_criticalSection;
 };
@@ -51,8 +50,7 @@ Result BeginSetup();
 Result EndSetup();
 void Finalize();
 }
-void Assert(const char* expression, const char* file, unsigned int line,
-            const char* function, ...);
+void Assert(const char* expression, const char* file, unsigned int line, const char* function, ...);
 }
 }
 

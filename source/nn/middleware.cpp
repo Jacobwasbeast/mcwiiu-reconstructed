@@ -1,3 +1,5 @@
 #include <nn/middleware.h>
 
-void SetModuleId(...) {}
+void SetModuleId(...)
+{
+}
