@@ -2,7 +2,12 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 static const unsigned char cUnsetU8 = 0xff;
 static const unsigned short cUnsetU16 = 0xffff;
@@ -98,8 +103,7 @@ unsigned int SessionStateMonitoringContent::GetSerializedSize()
     return MonitoringContentHeader::GetSerializedSize() + 883;
 }
 
-Result SessionStateMonitoringContent::Serialize(unsigned char* buffer, unsigned int* size,
-                                               unsigned int maxSize) const
+Result SessionStateMonitoringContent::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
     if (buffer == 0)
         return 0x10c07;
@@ -328,4 +332,6 @@ Result SessionStateMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     return 0;
 }
 
-}}}
+}
+}
+}

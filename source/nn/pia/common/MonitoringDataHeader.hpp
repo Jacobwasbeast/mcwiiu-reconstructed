@@ -3,14 +3,18 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class MonitoringDataHeader
 {
 public:
     static unsigned int GetSerializedSize();
-    Result Serialize(unsigned char* buffer, unsigned int* size,
-                     unsigned int maxSize) const;
+    Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;
     Result Deserialize(const unsigned char* buffer, unsigned int size);
     void Trace(unsigned long long value) const;
 
@@ -29,6 +33,8 @@ public:
     unsigned char m_reserved2;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -2,7 +2,12 @@
 
 #include <coreinit/time.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 const Time Time::c_Max = Time::Create(0xffffffffffffffffULL);
 const Time Time::c_Min;
@@ -20,4 +25,6 @@ Time Time::Create(unsigned long long tick)
     return time;
 }
 
-}}}
+}
+}
+}

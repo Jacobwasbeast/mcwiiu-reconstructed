@@ -2,7 +2,12 @@
 #include "nn/pia/common/common.hpp"
 
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 
 unsigned int Crypto::GetBlockSize(Mode mode)
@@ -12,9 +17,8 @@ unsigned int Crypto::GetBlockSize(Mode mode)
     return 0;
 }
 
-Result Crypto::Encrypt(void* destination, const void* source, unsigned int size,
-                       void* signature, unsigned int signatureSize,
-                       const Setting& setting)
+Result Crypto::Encrypt(void* destination, const void* source, unsigned int size, void* signature,
+                       unsigned int signatureSize, const Setting& setting)
 {
     if (setting.m_mode == cModeNone)
         return 0;
@@ -45,9 +49,8 @@ Result Crypto::Encrypt(void* destination, const void* source, unsigned int size,
     return cResultInvalidArgument;
 }
 
-Result Crypto::Decrypt(void* destination, const void* source, unsigned int size,
-                       void* signature, unsigned int signatureSize,
-                       const Setting& setting)
+Result Crypto::Decrypt(void* destination, const void* source, unsigned int size, void* signature,
+                       unsigned int signatureSize, const Setting& setting)
 {
     if (setting.m_mode == cModeNone)
         return 0;
@@ -86,4 +89,6 @@ Result Crypto::Decrypt(void* destination, const void* source, unsigned int size,
     return cResultInvalidArgument;
 }
 
-}}}
+}
+}
+}

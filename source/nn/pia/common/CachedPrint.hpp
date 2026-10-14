@@ -5,7 +5,12 @@
 #include "nn/pia.h"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class CachedPrint
 {
@@ -21,6 +26,7 @@ public:
     void Flush();
     void Trace(unsigned long long value) const;
     void Read(char* destination, unsigned int* size, unsigned int capacity);
+
 private:
     char* m_buffer;
     unsigned int m_capacity;
@@ -32,6 +38,8 @@ private:
     static unsigned char* s_storage;
 };
 
-}}}
+}
+}
+}
 
 #endif

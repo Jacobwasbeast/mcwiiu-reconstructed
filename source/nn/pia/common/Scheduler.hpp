@@ -5,7 +5,12 @@
 #include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Job;
 class BackgroundScheduler;
@@ -35,6 +40,8 @@ public:
 
 extern Scheduler* g_piaJobScheduler;
 
-}}}
+}
+}
+}
 
 #endif

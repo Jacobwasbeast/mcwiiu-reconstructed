@@ -1,6 +1,11 @@
 #include "nn/pia/common/MonitoringContentHeader.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -22,8 +27,7 @@ unsigned int MonitoringContentHeader::GetSerializedSize()
     return size;
 }
 
-Result MonitoringContentHeader::Serialize(unsigned char* buffer, unsigned int* size,
-                                         unsigned int maxSize) const
+Result MonitoringContentHeader::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
     if (buffer == 0)
         return cResultInvalidArgument;
@@ -54,4 +58,6 @@ Result MonitoringContentHeader::Serialize(unsigned char* buffer, unsigned int* s
     return 0;
 }
 
-}}}
+}
+}
+}

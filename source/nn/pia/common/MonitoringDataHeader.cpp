@@ -1,6 +1,11 @@
 #include "nn/pia/common/MonitoringDataHeader.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -24,8 +29,7 @@ unsigned int MonitoringDataHeader::GetSerializedSize()
     return size;
 }
 
-Result MonitoringDataHeader::Serialize(unsigned char* buffer, unsigned int* size,
-                                        unsigned int maxSize) const
+Result MonitoringDataHeader::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
     if (buffer == 0)
         return Result(cResultInvalidArgument);
@@ -94,4 +98,6 @@ void MonitoringDataHeader::Trace(unsigned long long value) const
 {
 }
 
-}}}
+}
+}
+}

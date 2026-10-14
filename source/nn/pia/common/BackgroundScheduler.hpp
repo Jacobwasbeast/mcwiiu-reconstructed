@@ -5,7 +5,12 @@
 #include "nn/pia/common/PooledList.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Job;
 
@@ -27,6 +32,8 @@ public:
     OffsetList m_jobList;
 };
 
-}}}
+}
+}
+}
 
 #endif

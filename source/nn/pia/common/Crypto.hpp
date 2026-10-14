@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Crypto
 {
@@ -24,12 +29,10 @@ public:
         unsigned int m_keyLength;
     };
 
-    static Result Encrypt(void* destination, const void* source, unsigned int size,
-                          void* signature, unsigned int signatureSize,
-                          const Setting& setting);
-    static Result Decrypt(void* destination, const void* source, unsigned int size,
-                          void* signature, unsigned int signatureSize,
-                          const Setting& setting);
+    static Result Encrypt(void* destination, const void* source, unsigned int size, void* signature,
+                          unsigned int signatureSize, const Setting& setting);
+    static Result Decrypt(void* destination, const void* source, unsigned int size, void* signature,
+                          unsigned int signatureSize, const Setting& setting);
     static unsigned int GetBlockSize(Mode mode);
 
 private:
@@ -42,14 +45,26 @@ private:
     };
 };
 
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace common { namespace crypto {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+namespace crypto
+{
 
 void ClearMemory(void* destination, unsigned int size);
 unsigned long long GenerateRandomSeed();
 void GenerateRandomParameter(void* destination, unsigned int size);
 
-}}}}
+}
+}
+}
+}
 
 #endif

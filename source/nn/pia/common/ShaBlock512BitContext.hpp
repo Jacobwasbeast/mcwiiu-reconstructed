@@ -5,7 +5,12 @@
 
 #include "nn/pia/common/Hmac.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class ShaBlock512BitContext : public HashContextBase
 {
@@ -23,6 +28,8 @@ protected:
     unsigned int m_blockCountHigh;
 };
 
-}}}
+}
+}
+}
 
 #endif

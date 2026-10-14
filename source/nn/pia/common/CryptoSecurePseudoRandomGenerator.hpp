@@ -3,7 +3,12 @@
 
 #include <stdint.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class CryptoSecurePseudoRandomGenerator
 {
@@ -21,6 +26,8 @@ private:
     uint64_t m_setting1;
 };
 
-}}}
+}
+}
+}
 
 #endif

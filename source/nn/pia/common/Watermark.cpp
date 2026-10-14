@@ -20,7 +20,12 @@ long long minimum(long long lhs, long long rhs)
 
 }
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 Watermark::Watermark()
 {
@@ -36,7 +41,8 @@ Watermark::~Watermark()
 void Watermark::SetName(const char* name)
 {
     unsigned int length = static_cast<unsigned int>(strlen(name));
-    if (length > cNameLengthMax) length = cNameLengthMax;
+    if (length > cNameLengthMax)
+        length = cNameLengthMax;
     OSBlockMove(m_name, name, length, FALSE);
     m_name[length] = '\0';
 }
@@ -61,4 +67,6 @@ void Watermark::Update(long long value)
 }
 
 
-}}}
+}
+}
+}

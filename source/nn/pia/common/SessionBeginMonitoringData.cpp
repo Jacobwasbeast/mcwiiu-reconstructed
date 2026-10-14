@@ -4,7 +4,12 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -57,4 +62,6 @@ Result SessionBeginMonitoringData::Serialize(unsigned char* buffer, unsigned int
     return 0;
 }
 
-}}}
+}
+}
+}

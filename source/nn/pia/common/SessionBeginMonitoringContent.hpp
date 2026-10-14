@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/MonitoringContentHeader.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class SessionBeginMonitoringContent : public MonitoringContentHeader
 {
@@ -207,6 +212,8 @@ public:
 
 extern SessionBeginMonitoringContent g_sessionBeginMonitoringContent;
 
-}}}
+}
+}
+}
 
 #endif

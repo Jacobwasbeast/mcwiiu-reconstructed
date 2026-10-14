@@ -7,18 +7,21 @@ extern "C"
 int mw_socket(int family, int type, int protocol);
 int bind(int handle, const void* address, int addressSize);
 int setsockopt(int handle, int level, int option, const void* value, int valueSize);
-int recvfrom_ex(int handle, void* buffer, int size, int flags, const void* address,
-                int* addressSize, void* ancillary, int ancillarySize);
-int sendto(int handle, const void* buffer, int size, int flags, const void* address,
-           int addressSize);
-int sendto_multi(int handle, const void* buffer, int size, int flags, const void* addresses,
-                 int count);
+int recvfrom_ex(int handle, void* buffer, int size, int flags, const void* address, int* addressSize, void* ancillary,
+                int ancillarySize);
+int sendto(int handle, const void* buffer, int size, int flags, const void* address, int addressSize);
+int sendto_multi(int handle, const void* buffer, int size, int flags, const void* addresses, int count);
 int inet_aton(const char* text, unsigned int* address);
 int socketclose(int handle);
 int socketlasterr();
 }
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -181,8 +184,7 @@ Result Socket::Open(int type, int protocol)
         return convertCommonSocketErrorToResult(GetSocketLastError());
 
     int receiveBufferSize = cReceiveBufferSize;
-    if (setsockopt(handle, cLevelSocket, cOptionReceiveBuffer, &receiveBufferSize,
-                   sizeof(receiveBufferSize)) < 0)
+    if (setsockopt(handle, cLevelSocket, cOptionReceiveBuffer, &receiveBufferSize, sizeof(receiveBufferSize)) < 0)
     {
         const int error = socketlasterr();
         socketclose(handle);
@@ -268,8 +270,8 @@ Result Socket::Bind(unsigned short port, bool reuseAddress)
     return Bind(address, reuseAddress);
 }
 
-Result Socket::RecvFrom(unsigned char* buffer, int size, InetAddress* address,
-                        unsigned char* ancillary, int* receivedSize)
+Result Socket::RecvFrom(unsigned char* buffer, int size, InetAddress* address, unsigned char* ancillary,
+                        int* receivedSize)
 {
     const int handle = m_handle;
     if (handle < 0)
@@ -277,9 +279,8 @@ Result Socket::RecvFrom(unsigned char* buffer, int size, InetAddress* address,
 
     SocketAddress socketAddress;
     int addressSize = cSockAddrInSize;
-    const int received = recvfrom_ex(handle, buffer, size, cReceiveFlags,
-                                     socketAddress.GetSockAddrInPointer(), &addressSize,
-                                     ancillary, cReceiveAncillarySize);
+    const int received = recvfrom_ex(handle, buffer, size, cReceiveFlags, socketAddress.GetSockAddrInPointer(),
+                                     &addressSize, ancillary, cReceiveAncillarySize);
     if (received < 1)
     {
         if (received < 0)
@@ -319,8 +320,7 @@ Result Socket::SendTo(const void* buffer, int size, const InetAddress& address, 
     if (handle < 0)
         return cResultInvalidArgument;
 
-    const int sent = sendto(handle, buffer, size, 0, socketAddress.GetSockAddrInPointer(),
-                            cSockAddrInSize);
+    const int sent = sendto(handle, buffer, size, 0, socketAddress.GetSockAddrInPointer(), cSockAddrInSize);
     if (sent < 0)
     {
         const unsigned int error = GetSocketLastError();
@@ -354,8 +354,7 @@ Result Socket::SendTo(const void* buffer, int size, const InetAddress& address, 
     return 0;
 }
 
-Result Socket::SendToMulti(const void* buffer, int size, const SockAddrIn* addresses, int count,
-                           int* sentSize)
+Result Socket::SendToMulti(const void* buffer, int size, const SockAddrIn* addresses, int count, int* sentSize)
 {
     const int handle = m_handle;
     if (handle < 0)
@@ -433,4 +432,6 @@ Result Socket::InetAtoH(const char* text, InetAddress* address)
     return cResultInvalidArgument;
 }
 
-}}}
+}
+}
+}

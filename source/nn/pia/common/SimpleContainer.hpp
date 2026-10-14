@@ -3,39 +3,34 @@
 
 #include "nn/pia/common/InetAddress.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 template <class T, int N>
 struct SimpleContainer
 {
     typedef T* iterator;
 
-    SimpleContainer() : size(0), data()
-    {
-    }
+    SimpleContainer() : size(0), data() {}
 
-    virtual ~SimpleContainer()
-    {
-    }
+    virtual ~SimpleContainer() {}
 
-    virtual void Trace(unsigned long long) const
-    {
-    }
+    virtual void Trace(unsigned long long) const {}
 
-    iterator begin()
-    {
-        return data;
-    }
+    iterator begin() { return data; }
 
-    iterator end()
-    {
-        return &data[size];
-    }
+    iterator end() { return &data[size]; }
 
     unsigned int size;
     T data[N];
 };
 
-}}}
+}
+}
+}
 
 #endif

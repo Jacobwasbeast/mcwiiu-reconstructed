@@ -1,13 +1,17 @@
 #include "nn/pia/common/StationAddress.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 StationAddress::StationAddress()
 {
 }
 
-StationAddress::StationAddress(const StationAddress& other)
-    : m_inetAddress(other.m_inetAddress)
+StationAddress::StationAddress(const StationAddress& other) : m_inetAddress(other.m_inetAddress)
 {
 }
 
@@ -23,8 +27,7 @@ void StationAddress::Clear()
     m_inetAddress.m_port = 0;
 }
 
-Result StationAddress::Serialize(unsigned char* buffer, unsigned int* size,
-                                 unsigned int maxSize) const
+Result StationAddress::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
     const unsigned int serializedSize = InetAddress::cSerializedSize;
     if (buffer == 0)
@@ -93,4 +96,6 @@ unsigned int StationAddress::GetSerializedSize() const
     return InetAddress::cSerializedSize;
 }
 
-}}}
+}
+}
+}

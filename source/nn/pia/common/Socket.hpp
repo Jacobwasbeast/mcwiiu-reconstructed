@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/InetAddress.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 struct SockAddrIn;
 
@@ -37,6 +42,8 @@ public:
     InetAddress m_address;
 };
 
-}}}
+}
+}
+}
 
 #endif

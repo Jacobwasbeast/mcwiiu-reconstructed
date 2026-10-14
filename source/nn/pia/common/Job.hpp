@@ -4,7 +4,12 @@
 #include "nn/pia/ListBase.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Job
 {
@@ -78,6 +83,8 @@ public:
     ListNode m_listNode;
 };
 
-}}}
+}
+}
+}
 
 #endif

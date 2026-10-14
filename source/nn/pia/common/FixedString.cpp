@@ -2,7 +2,12 @@
 
 #include <cstring>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 template class FixedString<8>;
 template class FixedString<10>;
@@ -12,4 +17,6 @@ template class FixedString<32>;
 template class FixedString<64>;
 template class FixedString<256>;
 
-}}}
+}
+}
+}

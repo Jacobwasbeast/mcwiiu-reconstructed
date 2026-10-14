@@ -7,11 +7,23 @@
 
 #include <new>
 
-namespace nn { namespace pia { namespace transport {
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 common::WatermarkManager* g_piaWatermarkManager = 0;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -82,4 +94,6 @@ Watermark* WatermarkManager::GetWatermark(int index)
     return &m_watermarks[index];
 }
 
-}}}
+}
+}
+}

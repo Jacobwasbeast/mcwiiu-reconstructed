@@ -4,20 +4,23 @@
 
 #include <stddef.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
 const int kThreadStackSize = 0x5000;
 }
 
-BackgroundScheduler::BackgroundScheduler(int threadPriority,
-                                         CriticalSection* criticalSection)
+BackgroundScheduler::BackgroundScheduler(int threadPriority, CriticalSection* criticalSection)
     : m_delegate(this, &BackgroundScheduler::Dispatch),
-      m_thread("Tc@Pia BackgroundScheduler", &m_delegate,
-               common::HeapManager::GetHeap(), threadPriority,
-               pead::MessageQueue::cNoBlock, pead::Thread::cDefaultQuitMsg,
-               kThreadStackSize, pead::Thread::cDefaultMessageQueueSize),
+      m_thread("Tc@Pia BackgroundScheduler", &m_delegate, common::HeapManager::GetHeap(), threadPriority,
+               pead::MessageQueue::cNoBlock, pead::Thread::cDefaultQuitMsg, kThreadStackSize,
+               pead::Thread::cDefaultMessageQueueSize),
       m_criticalSection(criticalSection),
       m_event(false),
       m_finalize(false),
@@ -94,4 +97,6 @@ void BackgroundScheduler::Dispatch(pead::Thread* thread, int)
     }
 }
 
-}}}
+}
+}
+}

@@ -2,12 +2,16 @@
 
 #include <cstdarg>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 Report* g_currentReport;
 
-Report::Report()
-    : m_first(0xffffffffu), m_time(), m_enabled(1)
+Report::Report() : m_first(0xffffffffu), m_time(), m_enabled(1)
 {
     m_time.SetNow();
 }
@@ -28,4 +32,6 @@ void Report::WriteCaption(unsigned int category)
     (void)category;
 }
 
-}}}
+}
+}
+}

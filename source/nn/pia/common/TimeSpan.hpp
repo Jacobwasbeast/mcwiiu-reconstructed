@@ -1,7 +1,12 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_TIME_SPAN_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_TIME_SPAN_HPP
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class TimeSpan
 {
@@ -17,11 +22,18 @@ public:
     static const TimeSpan& GetTicksPerMSec();
     static const TimeSpan& GetTicksPerSec();
 
-    static TimeSpan FromMSec(int msec) { TimeSpan span; span.m_tick = GetTicksPerMSec().m_tick * msec; return span; }
+    static TimeSpan FromMSec(int msec)
+    {
+        TimeSpan span;
+        span.m_tick = GetTicksPerMSec().m_tick * msec;
+        return span;
+    }
 
     long long m_tick;
 };
 
-}}}
+}
+}
+}
 
 #endif

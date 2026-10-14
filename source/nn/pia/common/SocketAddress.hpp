@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/InetAddress.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 struct SockAddrIn
 {
@@ -29,10 +34,7 @@ struct AddrInfo
 class SocketAddress
 {
 public:
-    SocketAddress()
-    {
-        Init();
-    }
+    SocketAddress() { Init(); }
 
     void Init();
     void SetInetAddress(const InetAddress& address);
@@ -50,6 +52,8 @@ private:
     unsigned int m_unknownTail[4];
 };
 
-}}}
+}
+}
+}
 
 #endif

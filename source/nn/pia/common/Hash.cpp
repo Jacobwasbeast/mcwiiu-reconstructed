@@ -1,7 +1,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/Md5Context.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 unsigned int hashWithMd5(unsigned int value)
 {
@@ -28,4 +33,6 @@ unsigned int hashWithMd5(unsigned long long value)
     return deserializeU32(digest);
 }
 
-}}}
+}
+}
+}

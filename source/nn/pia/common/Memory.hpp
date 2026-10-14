@@ -6,7 +6,12 @@
 #include "nn/pia/HeapManager.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 template <typename T> static T* NewObj()
 {
@@ -67,6 +72,8 @@ template <typename T> static void DeleteArray(T* array)
     }
 }
 
-}}}
+}
+}
+}
 
 #endif

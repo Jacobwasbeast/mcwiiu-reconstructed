@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class MonitoringContentHeader
 {
@@ -26,6 +31,8 @@ public:
     unsigned char m_metadata[cMetadataSize];
 };
 
-}}}
+}
+}
+}
 
 #endif

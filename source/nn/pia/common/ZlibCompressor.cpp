@@ -1,8 +1,14 @@
 #include "nn/pia/common/ZlibCompressor.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
-namespace {
+namespace
+{
 
 enum
 {
@@ -93,8 +99,7 @@ void ZlibCompressor::myFree(void* opaque, void*)
     }
 }
 
-Result ZlibCompressor::Startup(unsigned char* output, unsigned int outputSize,
-                               int level, int windowBits, int memLevel)
+Result ZlibCompressor::Startup(unsigned char* output, unsigned int outputSize, int level, int windowBits, int memLevel)
 {
     if (output == 0)
     {
@@ -140,8 +145,7 @@ Result ZlibCompressor::Startup(unsigned char* output, unsigned int outputSize,
         return 0;
     }
 
-    return initResult == Z_MEM_ERROR ? Result(cResultOutOfMemory)
-                                     : Result(cResultNotSupported);
+    return initResult == Z_MEM_ERROR ? Result(cResultOutOfMemory) : Result(cResultNotSupported);
 }
 
 void ZlibCompressor::Cleanup()
@@ -213,4 +217,6 @@ Result ZlibCompressor::FinishDeflate(unsigned int* outputSize)
     return Result(cResultNotSupported);
 }
 
-}}}
+}
+}
+}

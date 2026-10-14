@@ -8,7 +8,12 @@
 #include <stddef.h>
 #include <new>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -28,7 +33,11 @@ Scheduler* g_piaJobScheduler = 0;
 static unsigned char* s_schedulerStorage = 0;
 
 Scheduler::Scheduler(int threadPriority)
-    : m_jobList(), m_nextJobList(), m_dispatchTime(), m_dispatchCount(0), m_criticalSection(6)
+    : m_jobList(),
+      m_nextJobList(),
+      m_dispatchTime(),
+      m_dispatchCount(0),
+      m_criticalSection(6)
 {
     m_nextJobList.SetOffset(offsetof(Job, m_listNode));
     m_jobList.SetOffset(offsetof(Job, m_listNode));
@@ -95,7 +104,8 @@ void Scheduler::Dispatch(unsigned int limitMsec)
         currentTime.SetNow();
         if (!(currentTime <= limitTime))
         {
-            Job* job = static_cast<Job*>(m_jobList.GetNodeNum() > 0 ? m_jobList.FromListNode(m_jobList.Sentinel()->next) : 0);
+            Job* job = static_cast<Job*>(m_jobList.GetNodeNum() > 0 ? m_jobList.FromListNode(m_jobList.Sentinel()->next)
+                                                                    : 0);
             ListNode* node = m_nextJobList.PopFrontNode();
             if (node == 0)
                 return;
@@ -122,7 +132,8 @@ void Scheduler::Dispatch(unsigned int limitMsec)
             return;
         }
 
-        Job* job = static_cast<Job*>(m_jobList.GetNodeNum() > 0 ? m_jobList.FromListNode(m_jobList.Sentinel()->prev) : 0);
+        Job* job = static_cast<Job*>(m_jobList.GetNodeNum() > 0 ? m_jobList.FromListNode(m_jobList.Sentinel()->prev)
+                                                                : 0);
         if (!(job->m_time <= currentTime))
             break;
         m_jobList.PopBackNode();
@@ -184,4 +195,6 @@ void Scheduler::ResetJob(Job* job)
     }
 }
 
-}}}
+}
+}
+}

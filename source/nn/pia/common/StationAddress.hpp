@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/InetAddress.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class StationAddress
 {
@@ -17,10 +22,7 @@ public:
     Result Deserialize(const unsigned char* buffer);
     bool IsValid() const;
     bool operator==(const StationAddress& other) const;
-    bool operator!=(const StationAddress& other) const
-    {
-        return !(*this == other);
-    }
+    bool operator!=(const StationAddress& other) const { return !(*this == other); }
     StationAddress& operator=(const StationAddress& other);
     bool operator<(const StationAddress& other) const;
     bool operator>(const StationAddress& other) const;
@@ -32,6 +34,8 @@ public:
     InetAddress m_inetAddress;
 };
 
-}}}
+}
+}
+}
 
 #endif

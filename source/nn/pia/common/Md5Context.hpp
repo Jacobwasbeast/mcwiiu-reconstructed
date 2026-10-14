@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/Hmac.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Md5Context : public HashContextBase
 {
@@ -34,6 +39,8 @@ private:
     } m_block;
 };
 
-}}}
+}
+}
+}
 
 #endif

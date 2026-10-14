@@ -3,7 +3,12 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -16,8 +21,8 @@ enum
 
 unsigned int SessionEndMonitoringData::GetSerializedSize()
 {
-    return MonitoringDataHeader::GetSerializedSize() + SessionBeginMonitoringContent::GetSerializedSize() +
-           SessionStateMonitoringContent::GetSerializedSize();
+    return MonitoringDataHeader::GetSerializedSize() + SessionBeginMonitoringContent::GetSerializedSize()
+           + SessionStateMonitoringContent::GetSerializedSize();
 }
 
 void SessionEndMonitoringData::Initialize(unsigned char dataType)
@@ -65,4 +70,6 @@ Result SessionEndMonitoringData::Serialize(unsigned char* buffer, unsigned int* 
     return 0;
 }
 
-}}}
+}
+}
+}

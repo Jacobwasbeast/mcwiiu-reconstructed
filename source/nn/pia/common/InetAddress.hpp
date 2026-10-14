@@ -3,14 +3,22 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class String;
 
 class InetAddress
 {
 public:
-    enum { cSerializedSize = 6 };
+    enum
+    {
+        cSerializedSize = 6
+    };
 
     InetAddress();
     InetAddress(unsigned int address, unsigned short port);
@@ -18,10 +26,7 @@ public:
     ~InetAddress();
     void operator=(const InetAddress& other);
     long long GetKey() const;
-    bool operator==(const InetAddress& other) const
-    {
-        return GetKey() == other.GetKey();
-    }
+    bool operator==(const InetAddress& other) const { return GetKey() == other.GetKey(); }
     void GetAddressString(String* string) const;
     void Trace(unsigned long long value) const;
     Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;
@@ -35,6 +40,8 @@ public:
     unsigned short m_port;
 };
 
-}}}
+}
+}
+}
 
 #endif

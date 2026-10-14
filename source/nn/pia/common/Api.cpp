@@ -303,9 +303,8 @@ void serializeU32(unsigned char* buffer, unsigned int value)
 
 unsigned int deserializeU32(const unsigned char* buffer)
 {
-    return (static_cast<unsigned int>(buffer[0]) << 24) |
-           (static_cast<unsigned int>(buffer[1]) << 16) |
-           (static_cast<unsigned int>(buffer[2]) << 8) | buffer[3];
+    return (static_cast<unsigned int>(buffer[0]) << 24) | (static_cast<unsigned int>(buffer[1]) << 16)
+           | (static_cast<unsigned int>(buffer[2]) << 8) | buffer[3];
 }
 
 void serializeU16(unsigned char* buffer, unsigned short value)
@@ -338,8 +337,8 @@ bool isValidSourceStationIndex(StationIndex index)
 
 bool isValidDestinationStationIndex(StationIndex index)
 {
-    if (static_cast<unsigned int>(index) < cStationIndexNum || index == cStationIndexInvalid ||
-        index == cStationIndexSentinelFE || index == cStationIndexSentinelFF)
+    if (static_cast<unsigned int>(index) < cStationIndexNum || index == cStationIndexInvalid
+        || index == cStationIndexSentinelFE || index == cStationIndexSentinelFF)
         return true;
     return false;
 }
@@ -351,4 +350,3 @@ void dump(unsigned long long, const void*, unsigned int)
 }
 }
 }
-

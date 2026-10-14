@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class MonitoringDataSender
 {
@@ -31,6 +36,8 @@ protected:
     virtual void Trace(unsigned long long value) const = 0;
 };
 
-}}}
+}
+}
+}
 
 #endif

@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include <zlib.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class ZlibCompressor
 {
@@ -19,8 +24,7 @@ public:
     static void* myAlloc(void* opaque, unsigned int items, unsigned int size);
     static void myFree(void* opaque, void* address);
 
-    Result Startup(unsigned char* output, unsigned int outputSize,
-                   int level, int windowBits, int memLevel);
+    Result Startup(unsigned char* output, unsigned int outputSize, int level, int windowBits, int memLevel);
     void Cleanup();
     Result Deflate(const unsigned char* input, unsigned int inputSize);
     Result FinishDeflate(unsigned int* outputSize);
@@ -42,6 +46,8 @@ private:
 };
 
 
-}}}
+}
+}
+}
 
 #endif

@@ -3,7 +3,12 @@
 #include <coreinit/memory.h>
 #include <nn/act/client_cpp.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 SessionBeginMonitoringContent g_sessionBeginMonitoringContent;
 
@@ -33,12 +38,10 @@ void SessionBeginMonitoringContent::SetSdkVersion(unsigned int version)
     m_sdkVersion = version;
 }
 
-void SessionBeginMonitoringContent::SetNexVersion(unsigned char major, unsigned char minor,
-                                                 unsigned char patch)
+void SessionBeginMonitoringContent::SetNexVersion(unsigned char major, unsigned char minor, unsigned char patch)
 {
-    m_nexVersion = (static_cast<unsigned int>(major) << 24) |
-                   (static_cast<unsigned int>(minor) << 16) |
-                   (static_cast<unsigned int>(patch) << 8) | 0xff;
+    m_nexVersion = (static_cast<unsigned int>(major) << 24) | (static_cast<unsigned int>(minor) << 16)
+                   | (static_cast<unsigned int>(patch) << 8) | 0xff;
 }
 
 void SessionBeginMonitoringContent::Cleanup()
@@ -155,8 +158,7 @@ unsigned int SessionBeginMonitoringContent::GetSerializedSize()
     return MonitoringContentHeader::GetSerializedSize() + 0x79e;
 }
 
-Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned int* size,
-                                               unsigned int maxSize) const
+Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
     Result result(0x10c07);
     if (buffer == 0)
@@ -270,14 +272,14 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     serializeU8(cursor, m_metric50);
     cursor += 1;
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU32(cursor, m_metric51[index]);
         cursor += 4;
     }
     serializeU8(cursor, m_metric52);
     cursor += 1;
     for (unsigned int index = 0; index < 8; ++index)
-        {
+    {
         serializeU32(cursor, m_metric53[index]);
         cursor += 4;
     }
@@ -338,7 +340,7 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     serializeU32(cursor, m_metric81);
     cursor += 4;
     for (unsigned int index = 0; index < 6; ++index)
-        {
+    {
         serializeU32(cursor, m_metric82[index]);
         cursor += 4;
     }
@@ -355,17 +357,17 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     serializeU8(cursor, m_metric88);
     cursor += 1;
     for (unsigned int index = 0; index < 6; ++index)
-        {
+    {
         serializeU8(cursor, m_metric89[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 6; ++index)
-        {
+    {
         serializeU32(cursor, m_metric90[index]);
         cursor += 4;
     }
     for (unsigned int index = 0; index < 6; ++index)
-        {
+    {
         serializeU32(cursor, m_metric91[index]);
         cursor += 4;
     }
@@ -386,17 +388,17 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     serializeU8(cursor, m_metric99);
     cursor += 1;
     for (unsigned int index = 0; index < 6; ++index)
-        {
+    {
         serializeU8(cursor, m_metric100[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 6; ++index)
-        {
+    {
         serializeU32(cursor, m_metric101[index]);
         cursor += 4;
     }
     for (unsigned int index = 0; index < 6; ++index)
-        {
+    {
         serializeU32(cursor, m_metric102[index]);
         cursor += 4;
     }
@@ -473,47 +475,47 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     serializeU16(cursor, m_metric138);
     cursor += 2;
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU32(cursor, m_metric139[index]);
         cursor += 4;
     }
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU32(cursor, m_metric140[index]);
         cursor += 4;
     }
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU32(cursor, m_metric141[index]);
         cursor += 4;
     }
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU32(cursor, m_metric142[index]);
         cursor += 4;
     }
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU32(cursor, m_metric143[index]);
         cursor += 4;
     }
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU8(cursor, m_metric144[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU8(cursor, m_metric145[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU8(cursor, m_metric146[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU8(cursor, m_metric147[index]);
         cursor += 1;
     }
@@ -532,7 +534,7 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     serializeU16(cursor, m_metric154);
     cursor += 2;
     for (unsigned int index = 0; index < 15; ++index)
-        {
+    {
         serializeU8(cursor, m_metric155[index]);
         cursor += 1;
     }
@@ -547,102 +549,102 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     serializeU8(cursor, m_metric160);
     cursor += 1;
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric161[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric162[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric163[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric164[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 150; ++index)
-        {
+    {
         serializeU8(cursor, m_metric165[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 150; ++index)
-        {
+    {
         serializeU8(cursor, m_metric166[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric167[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric168[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 150; ++index)
-        {
+    {
         serializeU8(cursor, m_metric169[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric170[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric171[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric172[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric173[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric174[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric175[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric176[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric177[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric178[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric179[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 16; ++index)
-        {
+    {
         serializeU8(cursor, m_metric180[index]);
         cursor += 1;
     }
@@ -651,12 +653,12 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     serializeU32(cursor, m_metric182);
     cursor += 4;
     for (unsigned int index = 0; index < 300; ++index)
-        {
+    {
         serializeU8(cursor, m_metric183[index]);
         cursor += 1;
     }
     for (unsigned int index = 0; index < 8; ++index)
-        {
+    {
         serializeU8(cursor, m_metric184[index]);
         cursor += 1;
     }
@@ -666,4 +668,6 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     return 0;
 }
 
-}}}
+}
+}
+}

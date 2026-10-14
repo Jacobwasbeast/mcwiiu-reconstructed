@@ -1,6 +1,11 @@
 #include "nn/pia/common/Sha256Context.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -12,8 +17,7 @@ unsigned int s_roundConstants[64] = {
     0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
     0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-};
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
 
 inline unsigned int rotateRight(unsigned int value, unsigned int count)
 {
@@ -58,18 +62,19 @@ void Sha256Context::ProcessBlock()
         words[index] = reinterpret_cast<const unsigned int*>(m_block)[index];
     for (; index < 64; ++index)
     {
-        words[index] = words[index - 16] +
-                       (rotateRight(words[index - 15], 7) ^ rotateRight(words[index - 15], 18) ^ (words[index - 15] >> 3)) +
-                       words[index - 7] +
-                       (rotateRight(words[index - 2], 17) ^ rotateRight(words[index - 2], 19) ^ (words[index - 2] >> 10));
+        words[index] =
+            words[index - 16]
+            + (rotateRight(words[index - 15], 7) ^ rotateRight(words[index - 15], 18) ^ (words[index - 15] >> 3))
+            + words[index - 7]
+            + (rotateRight(words[index - 2], 17) ^ rotateRight(words[index - 2], 19) ^ (words[index - 2] >> 10));
     }
 
     for (index = 0; index < 64; ++index)
     {
-        const unsigned int temp1 = h + (rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25)) +
-                                   ((e & f) ^ (g & ~e)) + s_roundConstants[index] + words[index];
-        const unsigned int temp2 = (rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22)) +
-                                   ((a & (b ^ c)) ^ (b & c));
+        const unsigned int temp1 = h + (rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25))
+                                   + ((e & f) ^ (g & ~e)) + s_roundConstants[index] + words[index];
+        const unsigned int temp2 = (rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22))
+                                   + ((a & (b ^ c)) ^ (b & c));
         h = g;
         g = f;
         f = e;
@@ -108,4 +113,6 @@ unsigned int Sha256Context::GetHashSize() const
     return 32;
 }
 
-}}}
+}
+}
+}

@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/ShaBlock512BitContext.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Sha256Context : public ShaBlock512BitContext
 {
@@ -18,6 +23,8 @@ private:
     unsigned int m_state[8];
 };
 
-}}}
+}
+}
+}
 
 #endif

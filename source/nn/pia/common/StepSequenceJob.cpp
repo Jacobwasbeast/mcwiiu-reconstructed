@@ -1,14 +1,18 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "platform/wiiu/pead.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 void StepSequenceJob::Step::Trace(unsigned long long value) const
 {
 }
 
-StepSequenceJob::StepSequenceJob()
-    : Job(), m_currentStep(), m_cancelRequested(false), m_traceFlag(0)
+StepSequenceJob::StepSequenceJob() : Job(), m_currentStep(), m_cancelRequested(false), m_traceFlag(0)
 {
 }
 
@@ -65,11 +69,12 @@ void StepSequenceJob::WaitForCompletion(unsigned int intervalMsec)
 
 void StepSequenceJob::CancelCleanup()
 {
-
 }
 
 void StepSequenceJob::Trace(unsigned long long value) const
 {
 }
 
-}}}
+}
+}
+}

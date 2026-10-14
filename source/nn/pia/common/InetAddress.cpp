@@ -2,15 +2,18 @@
 
 #include "nn/pia/String.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
-InetAddress::InetAddress()
-    : m_address(0), m_port(0)
+InetAddress::InetAddress() : m_address(0), m_port(0)
 {
 }
 
-InetAddress::InetAddress(unsigned int address, unsigned short port)
-    : m_address(address), m_port(port)
+InetAddress::InetAddress(unsigned int address, unsigned short port) : m_address(address), m_port(port)
 {
 }
 
@@ -42,16 +45,15 @@ void InetAddress::GetAddressString(String* string) const
     const unsigned int address = m_address;
     const unsigned short port = m_port;
     string->Clear();
-    string->Format("%d.%d.%d.%d:%d", address >> 24, (address >> 16) & 0xff,
-                   (address >> 8) & 0xff, address & 0xff, port);
+    string->Format("%d.%d.%d.%d:%d", address >> 24, (address >> 16) & 0xff, (address >> 8) & 0xff, address & 0xff,
+                   port);
 }
 
 void InetAddress::Trace(unsigned long long value) const
 {
 }
 
-Result InetAddress::Serialize(unsigned char* buffer, unsigned int* size,
-                              unsigned int maxSize) const
+Result InetAddress::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
     const Result invalid = 0x10c07;
     if (buffer == 0)
@@ -100,16 +102,23 @@ unsigned int InetAddress::IsPrivate() const
     const unsigned int second = (m_address >> 16) & 0xff;
     unsigned int result = 0;
 
-    if (first == 10) {
+    if (first == 10)
+    {
         result = 1;
-    } else if (first == 172) {
+    }
+    else if (first == 172)
+    {
         if (second >= 16 && second <= 31)
             result = 1;
-    } else if (first == 192) {
+    }
+    else if (first == 192)
+    {
         if (second == 168)
             result = 1;
     }
     return result;
 }
 
-}}}
+}
+}
+}

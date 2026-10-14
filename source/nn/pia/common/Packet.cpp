@@ -4,9 +4,15 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
-namespace {
+namespace
+{
 
 enum
 {
@@ -93,9 +99,9 @@ void Packet::Reset()
 
 unsigned char Packet::IsValid() const
 {
-    return m_packetData.m_header.m_signature == cSignature &&
-           (m_packetData.m_header.m_version == 1 || m_packetData.m_header.m_version == 2) &&
-           m_size >= cHeaderSize && m_size <= cDataSizeMax;
+    return m_packetData.m_header.m_signature == cSignature
+           && (m_packetData.m_header.m_version == 1 || m_packetData.m_header.m_version == 2) && m_size >= cHeaderSize
+           && m_size <= cDataSizeMax;
 }
 
 unsigned char* Packet::AssignPayload(unsigned int size)
@@ -149,9 +155,9 @@ Result Packet::Encrypt(const Crypto::Setting& setting)
     if (paddingSize > 0)
         OSBlockSet(source + payloadSize, 0xff, paddingSize);
 
-    const Result result = Crypto::Encrypt(
-        m_packetData.GetPayload(), source, encryptedSize,
-        m_packetData.m_header.m_cryptoSignature, sizeof(m_packetData.m_header.m_cryptoSignature), setting);
+    const Result result = Crypto::Encrypt(m_packetData.GetPayload(), source, encryptedSize,
+                                          m_packetData.m_header.m_cryptoSignature,
+                                          sizeof(m_packetData.m_header.m_cryptoSignature), setting);
     if (result != 0)
         return result;
 
@@ -185,9 +191,9 @@ Result Packet::Decrypt(const Crypto::Setting& setting)
         return cResultDecryptInvalidPacket;
 
     unsigned char destination[cPayloadSizeMax];
-    const Result result = Crypto::Decrypt(
-        destination, m_packetData.GetPayload(), encryptedSize,
-        m_packetData.m_header.m_cryptoSignature, sizeof(m_packetData.m_header.m_cryptoSignature), setting);
+    const Result result = Crypto::Decrypt(destination, m_packetData.GetPayload(), encryptedSize,
+                                          m_packetData.m_header.m_cryptoSignature,
+                                          sizeof(m_packetData.m_header.m_cryptoSignature), setting);
     if (result != 0)
         return result;
 
@@ -202,11 +208,12 @@ void Packet::Trace(unsigned long long value, bool isVerbose) const
 
 int Packet::GetPacketNumInNetwork() const
 {
-    const int packetNum =
-        static_cast<int>(pead::BitFlagUtil::countOnBit(m_stationBitmap));
+    const int packetNum = static_cast<int>(pead::BitFlagUtil::countOnBit(m_stationBitmap));
     if (packetNum < 1)
         return 1;
     return packetNum;
 }
 
-}}}
+}
+}
+}

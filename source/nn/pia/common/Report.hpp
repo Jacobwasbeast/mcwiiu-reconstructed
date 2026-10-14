@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Report
 {
@@ -23,6 +28,8 @@ public:
 
 extern Report* g_currentReport;
 
-}}}
+}
+}
+}
 
 #endif

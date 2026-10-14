@@ -3,7 +3,12 @@
 
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Socket;
 
@@ -21,6 +26,8 @@ protected:
     Socket* m_socket;
 };
 
-}}}
+}
+}
+}
 
 #endif

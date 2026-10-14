@@ -4,17 +4,26 @@
 #include <stdint.h>
 #include "nn/pia/Common.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Watermark
 {
 public:
-    enum { cNameLengthMax = 63 };
+    enum
+    {
+        cNameLengthMax = 63
+    };
     Watermark();
     ~Watermark();
     void SetName(const char*);
     void Reset();
     void Update(long long);
+
 private:
     friend class WatermarkManager;
     long long m_minimum;
@@ -28,7 +37,10 @@ private:
 class WatermarkManager
 {
 public:
-    enum { cWatermarkNum = 10 };
+    enum
+    {
+        cWatermarkNum = 10
+    };
     WatermarkManager();
     ~WatermarkManager();
     static Result CreateInstance();
@@ -39,22 +51,39 @@ public:
     const Watermark* GetWatermark(int) const;
     void EnableAllWatermark();
     void Trace(unsigned long) const;
+
 private:
     Watermark m_watermarks[cWatermarkNum];
 };
 
-}}}
-namespace nn { namespace pia { namespace transport {
+}
+}
+}
+namespace nn
+{
+namespace pia
+{
+namespace transport
+{
 extern common::WatermarkManager* g_piaWatermarkManager;
-}}}
+}
+}
+}
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 inline WatermarkManager* WatermarkManager::GetInstance()
 {
     return transport::g_piaWatermarkManager;
 }
 
-}}}
+}
+}
+}
 
 #endif

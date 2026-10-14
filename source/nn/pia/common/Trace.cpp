@@ -5,7 +5,12 @@
 
 #include <new>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -55,4 +60,6 @@ void Trace::DestroyInstance()
     }
 }
 
-}}}
+}
+}
+}

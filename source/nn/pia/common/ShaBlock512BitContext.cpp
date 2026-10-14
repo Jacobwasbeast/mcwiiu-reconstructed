@@ -2,11 +2,16 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
-unsigned char s_padding[64] = { 0x80 };
+unsigned char s_padding[64] = {0x80};
 }
 
 unsigned int ShaBlock512BitContext::GetBlockSize() const
@@ -53,4 +58,6 @@ void ShaBlock512BitContext::ProcessBlock()
 {
 }
 
-}}}
+}
+}
+}

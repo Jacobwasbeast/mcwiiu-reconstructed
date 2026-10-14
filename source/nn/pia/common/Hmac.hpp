@@ -1,7 +1,12 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_HMAC_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_HMAC_HPP
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class HashContextBase
 {
@@ -27,6 +32,8 @@ private:
     unsigned int m_outerPad[16];
 };
 
-}}}
+}
+}
+}
 
 #endif

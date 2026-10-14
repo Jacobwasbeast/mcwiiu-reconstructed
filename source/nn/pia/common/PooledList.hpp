@@ -6,7 +6,12 @@
 
 #include "nn/pia/ListBase.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class OffsetList : public ListBase
 {
@@ -156,7 +161,10 @@ public:
         Free(node);
     }
 
-    static Node* NodeOf(T* value) { return reinterpret_cast<Node*>(reinterpret_cast<char*>(value) - offsetof(Node, value)); }
+    static Node* NodeOf(T* value)
+    {
+        return reinterpret_cast<Node*>(reinterpret_cast<char*>(value) - offsetof(Node, value));
+    }
     static T* ValueOf(ListNode* node) { return &static_cast<Node*>(node)->value; }
     static const T* ValueOf(const ListNode* node) { return &static_cast<const Node*>(node)->value; }
 
@@ -193,6 +201,8 @@ private:
     unsigned char m_nodeBuffer[sizeof(typename PooledList<T>::Node) * N];
 };
 
-}}}
+}
+}
+}
 
 #endif

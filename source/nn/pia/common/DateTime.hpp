@@ -1,19 +1,27 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_DATE_TIME_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_DATE_TIME_HPP
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class DateTime
 {
 public:
-    DateTime()
-        : m_year(0), m_month(0), m_day(0), m_hour(0), m_minute(0), m_second(0), m_isValid(false)
-    {
-    }
+    DateTime() : m_year(0), m_month(0), m_day(0), m_hour(0), m_minute(0), m_second(0), m_isValid(false) {}
 
     DateTime(unsigned short year, unsigned char month, unsigned char day, unsigned char hour, unsigned char minute,
              unsigned char second)
-        : m_year(year), m_month(month), m_day(day), m_hour(hour), m_minute(minute), m_second(second), m_isValid(true)
+        : m_year(year),
+          m_month(month),
+          m_day(day),
+          m_hour(hour),
+          m_minute(minute),
+          m_second(second),
+          m_isValid(true)
     {
     }
 
@@ -28,46 +36,23 @@ public:
         m_isValid = false;
     }
 
-    unsigned short GetYear() const
-    {
-        return m_year;
-    }
+    unsigned short GetYear() const { return m_year; }
 
-    unsigned char GetMonth() const
-    {
-        return m_month;
-    }
+    unsigned char GetMonth() const { return m_month; }
 
-    unsigned char GetDay() const
-    {
-        return m_day;
-    }
+    unsigned char GetDay() const { return m_day; }
 
-    unsigned char GetHour() const
-    {
-        return m_hour;
-    }
+    unsigned char GetHour() const { return m_hour; }
 
-    unsigned char GetMinute() const
-    {
-        return m_minute;
-    }
+    unsigned char GetMinute() const { return m_minute; }
 
-    unsigned char GetSecond() const
-    {
-        return m_second;
-    }
+    unsigned char GetSecond() const { return m_second; }
 
-    bool IsValid() const
-    {
-        return m_isValid;
-    }
+    bool IsValid() const { return m_isValid; }
 
     DateTime& operator=(const DateTime& other);
 
-    virtual ~DateTime()
-    {
-    }
+    virtual ~DateTime() {}
 
 private:
     unsigned short m_year;
@@ -91,6 +76,8 @@ inline DateTime& DateTime::operator=(const DateTime& other)
     return *this;
 }
 
-}}}
+}
+}
+}
 
 #endif

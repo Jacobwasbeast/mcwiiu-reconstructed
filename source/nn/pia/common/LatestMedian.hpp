@@ -3,7 +3,12 @@
 
 #include <algorithm>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 template <typename T, T N>
 class LatestMedian
@@ -40,6 +45,8 @@ T LatestMedian<T, N>::GetMedian() const
     return (values[middle - 1] + values[middle]) / 2;
 }
 
-}}}
+}
+}
+}
 
 #endif

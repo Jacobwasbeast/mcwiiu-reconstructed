@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/TimeSpan.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Time
 {
@@ -31,6 +36,8 @@ public:
     unsigned long long m_tick;
 };
 
-}}}
+}
+}
+}
 
 #endif

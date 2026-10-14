@@ -1,6 +1,11 @@
 #include "nn/pia/common/SocketStreamBase.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 SocketStreamBase::SocketStreamBase() : m_started(false), m_socket(0)
 {
@@ -28,4 +33,6 @@ Result SocketStreamBase::ImportSocket(Socket* socket)
     return 0;
 }
 
-}}}
+}
+}
+}

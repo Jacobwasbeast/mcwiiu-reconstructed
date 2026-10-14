@@ -14,15 +14,15 @@ struct GcmModeGenericHelper
 {
 };
 
-template<unsigned int Index> struct GcmReduction
+template <unsigned int Index> struct GcmReduction
 {
-    static const uint32_t value = (((Index & 1) != 0) ? 0xe1000000u >> 3 : 0) ^
-        (((Index & 2) != 0) ? 0xe1000000u >> 2 : 0) ^
-        (((Index & 4) != 0) ? 0xe1000000u >> 1 : 0) ^
-        (((Index & 8) != 0) ? 0xe1000000u : 0);
+    static const uint32_t value = (((Index & 1) != 0) ? 0xe1000000u >> 3 : 0)
+                                  ^ (((Index & 2) != 0) ? 0xe1000000u >> 2 : 0)
+                                  ^ (((Index & 4) != 0) ? 0xe1000000u >> 1 : 0)
+                                  ^ (((Index & 8) != 0) ? 0xe1000000u : 0);
 };
 
-template<typename Helper> class GcmModeImpl
+template <typename Helper> class GcmModeImpl
 {
 public:
     union Block
@@ -33,8 +33,8 @@ public:
     };
     typedef void (*BlockFunction)(void*, const void*, const void*);
     GcmModeImpl() : m_state(0) {}
-    template<typename Cipher> static void BlockCallback(void*, const void*, const void*);
-    template<typename Cipher> void Initialize(const Cipher&);
+    template <typename Cipher> static void BlockCallback(void*, const void*, const void*);
+    template <typename Cipher> void Initialize(const Cipher&);
     ~GcmModeImpl();
     void GfMultH(Block*);
     void Reset(const void*, unsigned int);
@@ -65,23 +65,22 @@ private:
     uint32_t m_table[16][4];
 };
 
-template<typename Helper>
+template <typename Helper>
 const uint32_t GcmModeImpl<Helper>::s_reduction[16] = {
-    GcmReduction<0>::value, GcmReduction<1>::value, GcmReduction<2>::value, GcmReduction<3>::value,
-    GcmReduction<4>::value, GcmReduction<5>::value, GcmReduction<6>::value, GcmReduction<7>::value,
-    GcmReduction<8>::value, GcmReduction<9>::value, GcmReduction<10>::value, GcmReduction<11>::value,
-    GcmReduction<12>::value, GcmReduction<13>::value, GcmReduction<14>::value, GcmReduction<15>::value
-};
+    GcmReduction<0>::value,  GcmReduction<1>::value,  GcmReduction<2>::value,  GcmReduction<3>::value,
+    GcmReduction<4>::value,  GcmReduction<5>::value,  GcmReduction<6>::value,  GcmReduction<7>::value,
+    GcmReduction<8>::value,  GcmReduction<9>::value,  GcmReduction<10>::value, GcmReduction<11>::value,
+    GcmReduction<12>::value, GcmReduction<13>::value, GcmReduction<14>::value, GcmReduction<15>::value};
 
-template<typename Helper>
-template<typename Cipher>
+template <typename Helper>
+template <typename Cipher>
 void GcmModeImpl<Helper>::BlockCallback(void* output, const void* input, const void* context)
 {
     static_cast<const Cipher*>(context)->EncryptBlock(output, input);
 }
 
-template<typename Helper>
-template<typename Cipher>
+template <typename Helper>
+template <typename Cipher>
 void GcmModeImpl<Helper>::Initialize(const Cipher& cipher)
 {
     m_cipher = &cipher;
@@ -90,13 +89,13 @@ void GcmModeImpl<Helper>::Initialize(const Cipher& cipher)
     m_state = 1;
 }
 
-template<typename Helper>
+template <typename Helper>
 GcmModeImpl<Helper>::~GcmModeImpl()
 {
     OSBlockSet(this, 0, sizeof(*this));
 }
 
-template<typename Helper>
+template <typename Helper>
 void GcmModeImpl<Helper>::GfMultH(Block* block)
 {
     for (int index = 15; index >= 0; --index)
@@ -142,7 +141,7 @@ void GcmModeImpl<Helper>::GfMultH(Block* block)
     block->words[3] = m_work.words[3];
 }
 
-template<typename Helper>
+template <typename Helper>
 void GcmModeImpl<Helper>::Reset(const void* iv, unsigned int size)
 {
     m_counter.words[3] = 0;
@@ -190,9 +189,8 @@ void GcmModeImpl<Helper>::Reset(const void* iv, unsigned int size)
     }
 }
 
-template<typename Helper>
-unsigned int GcmModeImpl<Helper>::EncryptUpdate(void* output, unsigned int, const void* input,
-                                                unsigned int size)
+template <typename Helper>
+unsigned int GcmModeImpl<Helper>::EncryptUpdate(void* output, unsigned int, const void* input, unsigned int size)
 {
     unsigned int total = size;
     uint8_t* destination = static_cast<uint8_t*>(output);
@@ -224,9 +222,8 @@ unsigned int GcmModeImpl<Helper>::EncryptUpdate(void* output, unsigned int, cons
     return total;
 }
 
-template<typename Helper>
-unsigned int GcmModeImpl<Helper>::DecryptUpdate(void* output, unsigned int, const void* input,
-                                                unsigned int size)
+template <typename Helper>
+unsigned int GcmModeImpl<Helper>::DecryptUpdate(void* output, unsigned int, const void* input, unsigned int size)
 {
     unsigned int total = size;
     uint8_t* destination = static_cast<uint8_t*>(output);
@@ -258,7 +255,7 @@ unsigned int GcmModeImpl<Helper>::DecryptUpdate(void* output, unsigned int, cons
     return total;
 }
 
-template<typename Helper>
+template <typename Helper>
 void GcmModeImpl<Helper>::GenerateMac()
 {
     if (m_keystreamOffset != 0 || m_partialSize != 0)
@@ -276,7 +273,7 @@ void GcmModeImpl<Helper>::GenerateMac()
     m_hash.words[3] ^= m_mac.words[3];
 }
 
-template<typename Helper>
+template <typename Helper>
 void GcmModeImpl<Helper>::GetMac(void* output, unsigned int)
 {
     if (m_state != 5)
@@ -287,7 +284,7 @@ void GcmModeImpl<Helper>::GetMac(void* output, unsigned int)
     OSBlockMove(output, m_hash.bytes, sizeof(m_hash.bytes), FALSE);
 }
 
-template<typename Helper>
+template <typename Helper>
 void GcmModeImpl<Helper>::InitializeHashKey()
 {
     m_work.words[0] = 0;

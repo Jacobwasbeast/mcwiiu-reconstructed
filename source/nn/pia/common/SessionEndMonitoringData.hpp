@@ -6,7 +6,12 @@
 #include "nn/pia/common/SessionBeginMonitoringContent.hpp"
 #include "nn/pia/common/SessionStateMonitoringContent.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class SessionEndMonitoringData : public MonitoringDataHeader
 {
@@ -22,6 +27,8 @@ public:
     SessionStateMonitoringContent m_stateContent;
 };
 
-}}}
+}
+}
+}
 
 #endif

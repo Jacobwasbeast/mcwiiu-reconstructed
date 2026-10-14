@@ -5,7 +5,12 @@
 #include <cstdio>
 #include <new>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -22,7 +27,11 @@ CachedPrint* CachedPrint::s_instance = 0;
 unsigned char* CachedPrint::s_storage = 0;
 
 CachedPrint::CachedPrint(unsigned int capacity)
-    : m_buffer(0), m_capacity(capacity), m_start(0), m_position(0), m_end(0),
+    : m_buffer(0),
+      m_capacity(capacity),
+      m_start(0),
+      m_position(0),
+      m_end(0),
       m_criticalSection(7)
 {
     m_buffer = NewArray<char>(capacity);
@@ -133,4 +142,6 @@ void CachedPrint::Flush()
     Clear();
 }
 
-}}}
+}
+}
+}

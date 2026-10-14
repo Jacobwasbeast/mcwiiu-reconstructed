@@ -5,7 +5,12 @@
 #include "nn/pia/common/ISerializable.hpp"
 #include "nn/pia/common/StationAddress.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Packet
 {
@@ -73,9 +78,8 @@ public:
                 return cResultInvalidArgument;
 
             const unsigned char* cursor = buffer;
-            m_signature = (static_cast<unsigned int>(cursor[0]) << 24) |
-                          (static_cast<unsigned int>(cursor[1]) << 16) |
-                          (static_cast<unsigned int>(cursor[2]) << 8) | cursor[3];
+            m_signature = (static_cast<unsigned int>(cursor[0]) << 24) | (static_cast<unsigned int>(cursor[1]) << 16)
+                          | (static_cast<unsigned int>(cursor[2]) << 8) | cursor[3];
             cursor += sizeof(m_signature);
             m_version = *cursor++;
             m_passId = *cursor++;
@@ -94,10 +98,7 @@ public:
             return 0;
         }
 
-        virtual unsigned int GetSerializedSize() const
-        {
-            return cSerializedSize;
-        }
+        virtual unsigned int GetSerializedSize() const { return cSerializedSize; }
 
         unsigned int m_signature;
         unsigned char m_version;
@@ -149,6 +150,8 @@ public:
     unsigned char m_field614;
 };
 
-}}}
+}
+}
+}
 
 #endif

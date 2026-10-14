@@ -3,7 +3,12 @@
 
 #include "nn/pia/common/Job.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class StepSequenceJob : public Job
 {
@@ -35,6 +40,8 @@ public:
     unsigned long long m_traceFlag;
 };
 
-}}}
+}
+}
+}
 
 #endif

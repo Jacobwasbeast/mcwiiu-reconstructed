@@ -4,7 +4,12 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/Time.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 class Trace
 {
@@ -31,6 +36,8 @@ private:
     bool m_enabled;
 };
 
-}}}
+}
+}
+}
 
 #endif

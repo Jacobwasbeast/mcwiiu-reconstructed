@@ -12,7 +12,12 @@ void freeaddrinfo(nn::pia::common::AddrInfo* info);
 const char* gai_strerror(int error);
 }
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 namespace
 {
@@ -87,8 +92,8 @@ void SocketAddress::Trace(unsigned long long value) const
 {
     FixedString<cFormattedLength> text;
     const unsigned int address = m_pointer->address;
-    text.Format("%d.%d.%d.%d:%d", address >> 24, (address >> 16) & 0xff, (address >> 8) & 0xff,
-                address & 0xff, m_pointer->port);
+    text.Format("%d.%d.%d.%d:%d", address >> 24, (address >> 16) & 0xff, (address >> 8) & 0xff, address & 0xff,
+                m_pointer->port);
 }
 
 const SockAddrIn* SocketAddress::GetSockAddrInPointer() const
@@ -96,4 +101,6 @@ const SockAddrIn* SocketAddress::GetSockAddrInPointer() const
     return m_pointer;
 }
 
-}}}
+}
+}
+}

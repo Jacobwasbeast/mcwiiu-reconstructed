@@ -2,7 +2,14 @@
 
 #include "nn/crypto/Random.hpp"
 
-namespace nn { namespace pia { namespace common { namespace crypto {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
+namespace crypto
+{
 
 void ClearMemory(void* destination, unsigned int size)
 {
@@ -23,4 +30,7 @@ void GenerateRandomParameter(void* destination, unsigned int size)
     nn::crypto::GenerateRandomBytes(destination, size);
 }
 
-}}}}
+}
+}
+}
+}

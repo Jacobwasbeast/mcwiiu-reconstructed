@@ -11,7 +11,12 @@ long long GetFrequency()
 }
 }
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 void TimeSpan::Trace(unsigned long long) const
 {
@@ -29,4 +34,6 @@ const TimeSpan& TimeSpan::GetTicksPerSec()
     return s_ticksPerSec;
 }
 
-}}}
+}
+}
+}

@@ -2,7 +2,12 @@
 
 #include <coreinit/memory.h>
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 void Hmac::Initialize(HashContextBase* context, const void* key, unsigned int keySize)
 {
@@ -56,4 +61,6 @@ void Hmac::Calc(void* hash, const void* data, unsigned int size)
     m_context->GetHash(hash);
 }
 
-}}}
+}
+}
+}

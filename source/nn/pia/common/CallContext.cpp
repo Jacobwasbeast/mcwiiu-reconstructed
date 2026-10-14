@@ -1,10 +1,14 @@
 #include "nn/pia/common/CallContext.hpp"
 
-namespace nn { namespace pia { namespace common {
+namespace nn
+{
+namespace pia
+{
+namespace common
+{
 
 
-CallContext::CallContext()
-    : m_state(cStateNotCalled), m_result(0)
+CallContext::CallContext() : m_state(cStateNotCalled), m_result(0)
 {
     Reset();
 }
@@ -77,4 +81,6 @@ void CallContext::Cancel()
     m_cancelRequested = true;
 }
 
-}}}
+}
+}
+}
