@@ -6,6 +6,13 @@
 
 #ifdef __ghs__
 #include <ppc_ghs.h>
+#elif defined(__powerpc__) || defined(__PPC__)
+static inline float NegativeMultiplySubtract(float a, float c, float b)
+{
+    float result;
+    __asm__("fnmsubs %0, %1, %2, %3" : "=f"(result) : "f"(a), "f"(c), "f"(b));
+    return result;
+}
 #endif
 
 #include "nn/pia/HeapManager.hpp"
@@ -40,6 +47,10 @@ static inline float FastSqrt(float value)
 #ifdef __ghs__
     const float guess = __FRSQRTEF(value);
     return __FNMSUBS(guess * guess, value, 3.0F) * (guess * 0.5F) * value;
+#elif defined(__powerpc__) || defined(__PPC__)
+    float guess;
+    __asm__("frsqrte %0, %1" : "=f"(guess) : "f"(value));
+    return NegativeMultiplySubtract(guess * guess, value, 3.0F) * (guess * 0.5F) * value;
 #else
     return std::sqrt(value);
 #endif
