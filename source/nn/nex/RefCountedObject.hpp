@@ -40,6 +40,14 @@ private:
         } while (!__STWCX(reinterpret_cast<unsigned int*>(const_cast<int32_t*>(pValue)), 0, uiPrevious + iDelta));
 
         return static_cast<int32_t>(uiPrevious + iDelta);
+#elif defined(__powerpc__) || defined(__PPC__)
+        int32_t iPrevious;
+        int32_t iNext;
+        __asm__ __volatile__("1:\n\tlwarx %0, 0, %2\n\tdcbst 0, %2\n\tadd %1, %0, %3\n\tstwcx. %1, 0, %2\n\tbne- 1b"
+                             : "=&r"(iPrevious), "=&r"(iNext)
+                             : "r"(pValue), "r"(iDelta)
+                             : "cr0", "memory");
+        return iNext;
 #else
         return OSAddAtomic(pValue, iDelta) + iDelta;
 #endif
