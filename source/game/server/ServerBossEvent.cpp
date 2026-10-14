@@ -10,8 +10,7 @@
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayer.hpp"
 
-ServerBossEvent::ServerBossEvent(int nameId, const std::wstring& name,
-                                 BossBarColor color, BossBarOverlay overlay)
+ServerBossEvent::ServerBossEvent(int nameId, const std::wstring& name, BossBarColor color, BossBarOverlay overlay)
     : BossEvent(Mth::createInsecureUUID(), nameId, name, color, overlay),
       visible(true)
 {
@@ -108,8 +107,7 @@ void ServerBossEvent::addPlayer(boost::shared_ptr<ServerPlayer> player, int part
     if (!existed && visible && player->mConnection != 0)
     {
         ServerGamePacketListenerImpl* connection = player->mConnection.operator->();
-        boost::shared_ptr<Packet> packet(
-            new ClientboundBossEventPacket(ClientboundBossEventPacket::ADD, this));
+        boost::shared_ptr<Packet> packet(new ClientboundBossEventPacket(ClientboundBossEventPacket::ADD, this));
         connection->send(packet);
     }
 }
@@ -122,8 +120,7 @@ void ServerBossEvent::removePlayer(boost::shared_ptr<ServerPlayer> player)
         if (visible && player->mConnection != 0)
         {
             ServerGamePacketListenerImpl* connection = player->mConnection.operator->();
-            boost::shared_ptr<Packet> packet(
-                new ClientboundBossEventPacket(ClientboundBossEventPacket::REMOVE, this));
+            boost::shared_ptr<Packet> packet(new ClientboundBossEventPacket(ClientboundBossEventPacket::REMOVE, this));
             connection->send(packet);
         }
     }
@@ -149,8 +146,8 @@ void ServerBossEvent::setVisible(bool visible)
             if (player->mConnection != 0)
             {
                 ServerGamePacketListenerImpl* connection = player->mConnection.operator->();
-                boost::shared_ptr<ClientboundBossEventPacket> packet(
-                    new ClientboundBossEventPacket(visible ? ClientboundBossEventPacket::ADD : ClientboundBossEventPacket::REMOVE, this));
+                boost::shared_ptr<ClientboundBossEventPacket> packet(new ClientboundBossEventPacket(
+                    visible ? ClientboundBossEventPacket::ADD : ClientboundBossEventPacket::REMOVE, this));
                 connection->send(packet);
             }
         }

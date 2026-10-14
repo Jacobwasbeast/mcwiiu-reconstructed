@@ -84,12 +84,12 @@ namespace
 C4JEventArrayImpl* sBlockUpdateEvents = 0;
 OSFastMutex sBlockUpdateMutex[3];
 C4JThreadImpl* sBlockUpdateThread = 0;
-ServerLevel* sBlockUpdateLevels[3] = { 0, 0, 0 };
-int sBlockUpdateChunkCounts[3] = { 0, 0, 0 };
+ServerLevel* sBlockUpdateLevels[3] = {0, 0, 0};
+int sBlockUpdateChunkCounts[3] = {0, 0, 0};
 int sBlockUpdateChunkX[3][0xB48];
 int sBlockUpdateChunkZ[3][0xB48];
-int sBlockUpdateTickCounts[3] = { 0, 0, 0 };
-int sBlockUpdateRandom[3] = { 0, 0, 0 };
+int sBlockUpdateTickCounts[3] = {0, 0, 0};
+int sBlockUpdateRandom[3] = {0, 0, 0};
 int sBlockUpdateTickX[3][256];
 int sBlockUpdateTickY[3][256];
 int sBlockUpdateTickZ[3][256];
@@ -197,7 +197,7 @@ ChunkSource* ServerLevel::getChunkSource()
 }
 
 std::vector<boost::shared_ptr<BlockEntity> >* ServerLevel::getBlockEntitiesInRegion(int x0, int y0, int z0, int x1,
-                                                                                   int y1, int z1)
+                                                                                    int y1, int z1)
 {
     std::vector<boost::shared_ptr<BlockEntity> >* result = new std::vector<boost::shared_ptr<BlockEntity> >();
     for (unsigned int i = 0; i < mBlockEntities.size(); ++i)
@@ -308,8 +308,7 @@ int ServerLevel::runUpdate(void* param)
                     {
                         Block* block = Block::byId(id);
                         if (block != 0 && block->isTicking()
-                            && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
-                                || miniGame->shouldTickBlock(id)))
+                            && (!Minecraft::InMiniGame(eMiniGameId_Any, true) || miniGame->shouldTickBlock(id)))
                         {
                             const BlockState* state = block->getBlockState(chunk->getData(x, y, z));
                             int worldX = x + chunkX * 16;
@@ -333,11 +332,9 @@ int ServerLevel::runUpdate(void* param)
                         continue;
                     Block* extraBlock = Block::byId(extraId);
                     if (extraBlock != 0 && extraBlock->isTicking()
-                        && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
-                            || miniGame->shouldTickBlock(extraId)))
+                        && (!Minecraft::InMiniGame(eMiniGameId_Any, true) || miniGame->shouldTickBlock(extraId)))
                     {
-                        const BlockState* state =
-                            extraBlock->getBlockState(chunk->getExtraBlockData(x, y, z));
+                        const BlockState* state = extraBlock->getBlockState(chunk->getExtraBlockData(x, y, z));
                         int worldX = x + chunkX * 16;
                         int worldZ = z + chunkZ * 16;
                         if (extraBlock->shouldBlockTick(level, BlockPos(worldX, y, worldZ), state))
@@ -384,8 +381,8 @@ Level* ServerLevel::postConstruct()
 {
     mSavedDataStorage = new SavedDataStorage(mLevelStorage.get());
     std::wstring id = Villages::getFileId(mDimension);
-    boost::shared_ptr<Villages> villages =
-        boost::static_pointer_cast<Villages>(mSavedDataStorage->get(typeid(Villages), id));
+    boost::shared_ptr<Villages> villages = boost::static_pointer_cast<Villages>(
+        mSavedDataStorage->get(typeid(Villages), id));
     if (!villages)
     {
         mVillages = boost::shared_ptr<Villages>(new Villages(this));
@@ -469,8 +466,8 @@ void ServerLevel::runBlockEvents()
     {
         int current = activeBlockEventList;
         activeBlockEventList ^= 1;
-        for (std::vector<BlockEventData>::iterator it = blockEvents[current].begin();
-             it != blockEvents[current].end(); ++it)
+        for (std::vector<BlockEventData>::iterator it = blockEvents[current].begin(); it != blockEvents[current].end();
+             ++it)
         {
             if (!doBlockEvent(&*it))
                 continue;
@@ -478,8 +475,7 @@ void ServerLevel::runBlockEvents()
             serverPlayers()->broadcast(event.getPos().x, event.getPos().y, event.getPos().z, 64.0,
                                        mDimension->getType()->getId(),
                                        boost::shared_ptr<ClientboundBlockEventPacket>(new ClientboundBlockEventPacket(
-                                           event.getPos(), event.getBlock(), event.getParamA(),
-                                           event.getParamB())));
+                                           event.getPos(), event.getBlock(), event.getParamA(), event.getParamB())));
         }
         blockEvents[current].clear();
     }
@@ -666,12 +662,11 @@ BlockPos ServerLevel::findLightingTargetAround(const BlockPos& pos)
     AABB* box = AABB::newTemp(target, BlockPos(target.x, getMaxBuildHeight(), target.z))->grow(3.0, 3.0, 3.0);
     static Predicate<boost::shared_ptr<Entity> >* canSeeSky =
         new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(canSeeSkyFunction);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        getEntitiesOfClass(typeid(LivingEntity), box, canSeeSky, false);
+    std::vector<boost::shared_ptr<Entity> >* entities = getEntitiesOfClass(typeid(LivingEntity), box, canSeeSky, false);
     if (!entities->empty())
     {
-        BlockPos result = entities->at(mRandom->nextInt(static_cast<int>(entities->size())))
-                              ->getCommandSenderBlockPosition();
+        BlockPos result =
+            entities->at(mRandom->nextInt(static_cast<int>(entities->size())))->getCommandSenderBlockPosition();
         delete entities;
         return result;
     }
@@ -759,13 +754,13 @@ void ServerLevel::tickBlocks()
                     horse->setAge(0);
                     horse->setPos(target.x, target.y, target.z);
                     addEntity(horse);
-                    addGlobalEntity(boost::shared_ptr<Entity>(
-                        new LightningBolt(this, target.x, target.y, target.z, true)));
+                    addGlobalEntity(
+                        boost::shared_ptr<Entity>(new LightningBolt(this, target.x, target.y, target.z, true)));
                 }
                 else
                 {
-                    addGlobalEntity(boost::shared_ptr<Entity>(
-                        new LightningBolt(this, target.x, target.y, target.z, false)));
+                    addGlobalEntity(
+                        boost::shared_ptr<Entity>(new LightningBolt(this, target.x, target.y, target.z, false)));
                 }
             }
         }
@@ -932,8 +927,8 @@ void ServerLevel::tickServerPlayers()
             int chunkZ = player->mChunkZ;
             if (player->mInChunk && hasChunk(chunkX, chunkZ, true))
                 getChunk(chunkX, chunkZ)->removeEntity(player);
-            std::vector<boost::shared_ptr<Entity> >::iterator it =
-                std::find(mEntities.begin(), mEntities.end(), player);
+            std::vector<boost::shared_ptr<Entity> >::iterator it = std::find(mEntities.begin(), mEntities.end(),
+                                                                             player);
             if (it != mEntities.end())
                 mEntities.erase(it);
             entityRemoved(player);
@@ -1067,7 +1062,8 @@ bool ServerLevel::isNpcsAllowed()
 void ServerLevel::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
 {
     if (!isAnimalsAllowed()
-        && (eTYPE_DERIVED_FROM(EntityType::ANIMAL, entity->GetType()) || eTYPE_DERIVED_FROM(EntityType::WATER_ANIMAL, entity->GetType())
+        && (eTYPE_DERIVED_FROM(EntityType::ANIMAL, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::WATER_ANIMAL, entity->GetType())
             || eTYPE_DERIVED_FROM(EntityType::AGABLE_WATER_ANIMAL, entity->GetType())))
         entity->remove();
     if (!isNpcsAllowed() && boost::dynamic_pointer_cast<Npc>(entity))
@@ -1122,8 +1118,8 @@ void ServerLevel::generateBonusItemsNearSpawn()
             BlockPos pos = getTopSolidBlockPos(BlockPos(spawnX + dx, 0, spawnZ + dz)).below();
             if (getBlock(pos) != Blocks::chest)
                 continue;
-            boost::shared_ptr<ChestBlockEntity> chest =
-                boost::dynamic_pointer_cast<ChestBlockEntity>(getBlockEntity(pos));
+            boost::shared_ptr<ChestBlockEntity> chest = boost::dynamic_pointer_cast<ChestBlockEntity>(
+                getBlockEntity(pos));
             if (chest && chest->mIsBonusChest)
                 return;
         }
@@ -1206,7 +1202,8 @@ void ServerLevel::saveToDisc(ProgressListener* progressListener, bool autosave)
     if (gStorage->GetSaveDisabled())
         return;
     TexturePack* selected = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
-    if (selected != TexturePackRepository::defaultTexturePack && !static_cast<DLCTexturePack*>(selected)->getDLCInfoParentPack()->hasPurchasedPack())
+    if (selected != TexturePackRepository::defaultTexturePack
+        && !static_cast<DLCTexturePack*>(selected)->getDLCInfoParentPack()->hasPurchasedPack())
         return;
     if (progressListener != NULL)
         progressListener->progressStage(static_cast<int>(0xaebf0574u));
@@ -1342,7 +1339,8 @@ void ServerLevel::entityAdded(boost::shared_ptr<Entity> entity)
     std::vector<boost::shared_ptr<Entity> >* subEntities = entity->getSubEntities();
     if (subEntities != NULL)
     {
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = subEntities->begin(); it != subEntities->end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = subEntities->begin(); it != subEntities->end();
+             ++it)
             mEntityMap[(*it)->getId()] = *it;
     }
     entityAddedExtra(entity);
@@ -1353,7 +1351,8 @@ void ServerLevel::entityRemovedExtra(boost::shared_ptr<Entity> entity)
     if (eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, entity->GetType()))
     {
         EnterCriticalSection(&entityLimitMutex);
-        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(itemEntities.begin(), itemEntities.end(), entity);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(itemEntities.begin(), itemEntities.end(),
+                                                                       entity);
         if (it != itemEntities.end())
             itemEntities.erase(it);
         LeaveCriticalSection(&entityLimitMutex);
@@ -1361,7 +1360,8 @@ void ServerLevel::entityRemovedExtra(boost::shared_ptr<Entity> entity)
     else if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, entity->GetType()))
     {
         EnterCriticalSection(&entityLimitMutex);
-        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(hangingEntities.begin(), hangingEntities.end(), entity);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(hangingEntities.begin(), hangingEntities.end(),
+                                                                       entity);
         if (it != hangingEntities.end())
             hangingEntities.erase(it);
         LeaveCriticalSection(&entityLimitMutex);
@@ -1369,7 +1369,8 @@ void ServerLevel::entityRemovedExtra(boost::shared_ptr<Entity> entity)
     else if (eTYPE_DERIVED_FROM(EntityType::ARROW, entity->GetType()))
     {
         EnterCriticalSection(&entityLimitMutex);
-        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(arrowEntities.begin(), arrowEntities.end(), entity);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(arrowEntities.begin(), arrowEntities.end(),
+                                                                       entity);
         if (it != arrowEntities.end())
             arrowEntities.erase(it);
         LeaveCriticalSection(&entityLimitMutex);
@@ -1377,7 +1378,8 @@ void ServerLevel::entityRemovedExtra(boost::shared_ptr<Entity> entity)
     else if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, entity->GetType()))
     {
         EnterCriticalSection(&entityLimitMutex);
-        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(experienceOrbs.begin(), experienceOrbs.end(), entity);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(experienceOrbs.begin(), experienceOrbs.end(),
+                                                                       entity);
         if (it != experienceOrbs.end())
             experienceOrbs.erase(it);
         LeaveCriticalSection(&entityLimitMutex);
@@ -1403,7 +1405,8 @@ void ServerLevel::entityRemovedExtra(boost::shared_ptr<Entity> entity)
     else if (eTYPE_DERIVED_FROM(EntityType::AREA_EFFECT_CLOUD, entity->GetType()))
     {
         EnterCriticalSection(&entityLimitMutex);
-        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(areaEffectClouds.begin(), areaEffectClouds.end(), entity);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(areaEffectClouds.begin(), areaEffectClouds.end(),
+                                                                       entity);
         if (it != areaEffectClouds.end())
             areaEffectClouds.erase(it);
         LeaveCriticalSection(&entityLimitMutex);
@@ -1418,7 +1421,8 @@ void ServerLevel::entityRemoved(boost::shared_ptr<Entity> entity)
     std::vector<boost::shared_ptr<Entity> >* subEntities = entity->getSubEntities();
     if (subEntities != NULL)
     {
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = subEntities->begin(); it != subEntities->end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = subEntities->begin(); it != subEntities->end();
+             ++it)
             mEntityMap.erase((*it)->getId());
     }
     entityRemovedExtra(entity);
@@ -1453,8 +1457,8 @@ boost::shared_ptr<Explosion> ServerLevel::explode(boost::shared_ptr<Entity> sour
                                                   float radius, bool fire, bool breaksBlocks, bool playersOnly,
                                                   bool noBlockDrops, bool silent, float damageRadius)
 {
-    boost::shared_ptr<Explosion> explosion(new Explosion(this, source, x, y, z, radius, fire, breaksBlocks,
-                                                         playersOnly, noBlockDrops, silent, damageRadius, false));
+    boost::shared_ptr<Explosion> explosion(new Explosion(this, source, x, y, z, radius, fire, breaksBlocks, playersOnly,
+                                                         noBlockDrops, silent, damageRadius, false));
     explosion->explode();
     explosion->finalizeExplosion(false, NULL);
     if (!breaksBlocks)
@@ -1516,25 +1520,29 @@ void ServerLevel::tickWeather(bool blockEvents)
     Level::tickWeather(blockEvents);
 
     if (mOldRainLevel != mRainLevel)
-        serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(ClientboundGameEventPacket::RAIN_LEVEL_CHANGE, mRainLevel)),
+        serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(
+                                          ClientboundGameEventPacket::RAIN_LEVEL_CHANGE, mRainLevel)),
                                       mDimension->getType()->getId());
     if (wasThundering != isThundering() || mOldThunderLevel != mThunderLevel)
-        serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(ClientboundGameEventPacket::THUNDER_LEVEL_CHANGE, mThunderLevel)),
+        serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(
+                                          ClientboundGameEventPacket::THUNDER_LEVEL_CHANGE, mThunderLevel)),
                                       mDimension->getType()->getId());
 
     if (wasRaining == isRaining())
         return;
     if (wasRaining)
-        serverPlayers()->broadcastAll(
-            boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(ClientboundGameEventPacket::STOP_RAINING, blockEvents ? 1.0f : 0.0f)),
-            mDimension->getType()->getId());
+        serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(
+                                          ClientboundGameEventPacket::STOP_RAINING, blockEvents ? 1.0f : 0.0f)),
+                                      mDimension->getType()->getId());
     else
-        serverPlayers()->broadcastAll(
-            boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(ClientboundGameEventPacket::START_RAINING, blockEvents ? 1.0f : 0.0f)),
-            mDimension->getType()->getId());
-    serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(ClientboundGameEventPacket::RAIN_LEVEL_CHANGE, mRainLevel)),
+        serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(
+                                          ClientboundGameEventPacket::START_RAINING, blockEvents ? 1.0f : 0.0f)),
+                                      mDimension->getType()->getId());
+    serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(
+                                      ClientboundGameEventPacket::RAIN_LEVEL_CHANGE, mRainLevel)),
                                   mDimension->getType()->getId());
-    serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(ClientboundGameEventPacket::THUNDER_LEVEL_CHANGE, mThunderLevel)),
+    serverPlayers()->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(
+                                      ClientboundGameEventPacket::THUNDER_LEVEL_CHANGE, mThunderLevel)),
                                   mDimension->getType()->getId());
 }
 
@@ -1574,13 +1582,12 @@ void ServerLevel::sendParticles(boost::shared_ptr<ServerPlayer> player, bool lon
 }
 
 void ServerLevel::sendParticles(const ParticleType* type, bool longDistance, double x, double y, double z, int count,
-                                double xDist, double yDist, double zDist, double maxSpeed,
-                                arrayWithLength<int> params)
+                                double xDist, double yDist, double zDist, double maxSpeed, arrayWithLength<int> params)
 {
-    boost::shared_ptr<ClientboundLevelParticlesPacket> packet(new ClientboundLevelParticlesPacket(
-        type, longDistance, static_cast<float>(x), static_cast<float>(y), static_cast<float>(z),
-        static_cast<float>(xDist), static_cast<float>(yDist), static_cast<float>(zDist),
-        static_cast<float>(maxSpeed), count, params));
+    boost::shared_ptr<ClientboundLevelParticlesPacket> packet(
+        new ClientboundLevelParticlesPacket(type, longDistance, static_cast<float>(x), static_cast<float>(y),
+                                            static_cast<float>(z), static_cast<float>(xDist), static_cast<float>(yDist),
+                                            static_cast<float>(zDist), static_cast<float>(maxSpeed), count, params));
     for (unsigned int i = 0; i < mPlayers.size(); ++i)
         sendParticles(boost::dynamic_pointer_cast<ServerPlayer>(mPlayers.at(i)), longDistance, packet);
 }
@@ -1592,8 +1599,8 @@ void ServerLevel::sendParticles(const ParticleType* type, double x, double y, do
 }
 
 void ServerLevel::sendParticles(const ParticleType* type, double x, double y, double z, int count, double xDist,
-                                double yDist, double zDist, double maxSpeed, arrayWithLength<int> params,
-                                double xAux, double yAux, double zAux)
+                                double yDist, double zDist, double maxSpeed, arrayWithLength<int> params, double xAux,
+                                double yAux, double zAux)
 {
     boost::shared_ptr<ClientboundLevelParticlesPacket> packet(new ClientboundLevelParticlesPacket(
         type, false, static_cast<float>(x), static_cast<float>(y), static_cast<float>(z), static_cast<float>(xDist),
@@ -1607,10 +1614,10 @@ void ServerLevel::sendParticles(boost::shared_ptr<ServerPlayer> player, const Pa
                                 double x, double y, double z, int count, double xDist, double yDist, double zDist,
                                 double maxSpeed, arrayWithLength<int> params)
 {
-    boost::shared_ptr<ClientboundLevelParticlesPacket> packet(new ClientboundLevelParticlesPacket(
-        type, longDistance, static_cast<float>(x), static_cast<float>(y), static_cast<float>(z),
-        static_cast<float>(xDist), static_cast<float>(yDist), static_cast<float>(zDist),
-        static_cast<float>(maxSpeed), count, params));
+    boost::shared_ptr<ClientboundLevelParticlesPacket> packet(
+        new ClientboundLevelParticlesPacket(type, longDistance, static_cast<float>(x), static_cast<float>(y),
+                                            static_cast<float>(z), static_cast<float>(xDist), static_cast<float>(yDist),
+                                            static_cast<float>(zDist), static_cast<float>(maxSpeed), count, params));
     sendParticles(player, longDistance, packet);
 }
 
@@ -1828,8 +1835,8 @@ ServerScoreboard* ServerLevel::GetServerScoreboard()
 
 void ServerLevel::invalidateChunksOutsideArea(int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ)
 {
-    static_cast<ServerChunkCache*>(getChunkSource())->invalidateChunksOutsideArea(minChunkX, minChunkZ, maxChunkX,
-                                                                                   maxChunkZ);
+    static_cast<ServerChunkCache*>(getChunkSource())
+        ->invalidateChunksOutsideArea(minChunkX, minChunkZ, maxChunkX, maxChunkZ);
     std::vector<LevelListener*>::iterator end = mListeners.end();
     for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
         (*it)->invalidateChunksOutsideArea(minChunkX, minChunkZ, maxChunkX, maxChunkZ);

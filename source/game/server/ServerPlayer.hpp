@@ -96,18 +96,16 @@ public:
     int32_t mPlayerWeaponId;
     int32_t mChunkRadius;
 
-    ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name,
-                 ServerPlayerGameMode* gameMode);
+    ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name, ServerPlayerGameMode* gameMode);
     ~ServerPlayer();
 
-    void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams,
-                     uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams);
+    void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams, uint32_t numIntParams,
+                     std::wstring* stringParams, uint32_t numStringParams);
     bool hasPermission(EGameCommand command);
     BlockPos getCommandSenderBlockPosition();
     virtual int openFireworks(int32_t x, int32_t y, int32_t z);
     virtual void slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item);
-    virtual void refreshContainer(AbstractContainerMenu* menu,
-                                  std::vector<not_null_ptr<ItemInstance> >* items);
+    virtual void refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items);
     virtual void setContainerData(AbstractContainerMenu* menu, int32_t dataIndex, int32_t value);
     virtual void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);
     void flagEntitiesToBeRemoved(uint32_t* removedFlags, bool* flagsInitialised);
@@ -122,15 +120,13 @@ public:
     void initMenu();
     boost::shared_ptr<ServerPlayer> SpectatePlayerChange(bool previous);
     void updateClientsCameras();
-    void notifyPlayerRespawn(boost::shared_ptr<ServerPlayer> oldPlayer,
-                             boost::shared_ptr<ServerPlayer> newPlayer);
+    void notifyPlayerRespawn(boost::shared_ptr<ServerPlayer> oldPlayer, boost::shared_ptr<ServerPlayer> newPlayer);
     void flushEntitiesToRemove();
     void markAttributesDirty();
     void refreshContainer(AbstractContainerMenu* menu);
     void resetSentInfo();
     static int32_t getFlagIndexForChunk(int32_t x, int32_t z, int32_t dimension);
-    void resetChunkFlagsOutsideArea(int32_t minX, int32_t minZ, int32_t maxX, int32_t maxZ,
-                                    int32_t dimension);
+    void resetChunkFlagsOutsideArea(int32_t minX, int32_t minZ, int32_t maxX, int32_t maxZ, int32_t dimension);
     void readAdditionalSaveData(CompoundTag* tag);
     static void addWalkers(DataFixerUpper* dataFixer);
     void addAdditonalSaveData(CompoundTag* tag);
@@ -164,8 +160,7 @@ public:
     virtual int startBlockInteraction(InteractionObject& interaction);
     virtual int openContainer(boost::shared_ptr<Container> container);
     virtual int openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int entityId);
-    virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> horse,
-                                   boost::shared_ptr<Container> container);
+    virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container);
     virtual void openItemInstanceGui(not_null_ptr<ItemInstance> item, InteractionHand::EInteractionHand hand);
     void doCloseContainer();
     virtual void closeContainer();

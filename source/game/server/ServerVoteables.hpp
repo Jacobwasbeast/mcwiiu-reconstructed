@@ -3,7 +3,8 @@
 
 #include "game/core/Voteables.hpp"
 
-class ServerVoteables : public Voteables {
+class ServerVoteables : public Voteables
+{
 public:
     ServerVoteables();
     virtual ~ServerVoteables();

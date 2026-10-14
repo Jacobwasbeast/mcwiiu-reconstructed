@@ -24,8 +24,7 @@
 
 extern MinecraftServer* gMinecraftServer;
 
-ServerCommandDispatcher::ServerCommandDispatcher()
-    : CommandDispatcher(), AdminLogCommand()
+ServerCommandDispatcher::ServerCommandDispatcher() : CommandDispatcher(), AdminLogCommand()
 {
     addCommand(new TimeCommand());
     addCommand(new GameModeCommand());
@@ -50,9 +49,9 @@ ServerCommandDispatcher::~ServerCommandDispatcher()
 }
 
 void ServerCommandDispatcher::logAdminCommand(boost::shared_ptr<CommandSender> sender,
-                                              ClientboundChatPacket::EChatPacketMessage message,
-                                              int* intParams, unsigned int numIntParams,
-                                              std::wstring* stringParams, unsigned int numStringParams)
+                                              ClientboundChatPacket::EChatPacketMessage message, int* intParams,
+                                              unsigned int numIntParams, std::wstring* stringParams,
+                                              unsigned int numStringParams)
 {
     PlayerList* players = gMinecraftServer->getPlayers();
     std::vector<boost::shared_ptr<ServerPlayer> >* playerList = players->getPlayers();
@@ -60,11 +59,10 @@ void ServerCommandDispatcher::logAdminCommand(boost::shared_ptr<CommandSender> s
     for (it = playerList->begin(); it != playerList->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
-        if (message == ClientboundChatPacket::eChatPacketMessage_GameModeSuccessSelf &&
-            player != sender)
+        if (message == ClientboundChatPacket::eChatPacketMessage_GameModeSuccessSelf && player != sender)
         {
-            player->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther,
-                                intParams, numIntParams, stringParams, numStringParams);
+            player->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther, intParams, numIntParams,
+                                stringParams, numStringParams);
             continue;
         }
         player->sendMessage(message, intParams, numIntParams, stringParams, numStringParams);

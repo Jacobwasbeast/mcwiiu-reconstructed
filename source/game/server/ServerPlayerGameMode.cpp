@@ -64,7 +64,10 @@ ServerPlayerGameMode::~ServerPlayerGameMode()
     delete mGameRules;
 }
 
-void ServerPlayerGameMode::setLevel(ServerLevel* level) { mLevel = level; }
+void ServerPlayerGameMode::setLevel(ServerLevel* level)
+{
+    mLevel = level;
+}
 void ServerPlayerGameMode::updateGameMode(const GameType* gameType)
 {
     if (mGameType == GameType::NOT_SET)
@@ -77,9 +80,18 @@ void ServerPlayerGameMode::setGameRules(GameRulesInstance* gameRules)
     delete mGameRules;
     mGameRules = gameRules;
 }
-void ServerPlayerGameMode::nullifyGameRules() { mGameRules = NULL; }
-void ServerPlayerGameMode::setLastCheckpoint(int checkpoint) { mLastCheckpoint = checkpoint; }
-unsigned int ServerPlayerGameMode::getLastCheckpoint() { return mLastCheckpoint; }
+void ServerPlayerGameMode::nullifyGameRules()
+{
+    mGameRules = NULL;
+}
+void ServerPlayerGameMode::setLastCheckpoint(int checkpoint)
+{
+    mLastCheckpoint = checkpoint;
+}
+unsigned int ServerPlayerGameMode::getLastCheckpoint()
+{
+    return mLastCheckpoint;
+}
 void ServerPlayerGameMode::RestoreFromOld(ServerPlayerGameMode* oldMode)
 {
     SetDeaths(oldMode->GetDeaths());
@@ -118,8 +130,8 @@ int ServerPlayerGameMode::destroyBlock(const BlockPos& pos)
 
     if (GetGameType()->isBlockPlacingRestricted())
     {
-        if (GetGameType() != GameType::SPECTATOR ||
-            !Minecraft::GetInstance()->GetMiniGame()->HasSpectatorParticipation())
+        if (GetGameType() != GameType::SPECTATOR
+            || !Minecraft::GetInstance()->GetMiniGame()->HasSpectatorParticipation())
         {
             if (GetGameType() == GameType::SPECTATOR)
                 return 0;
@@ -149,8 +161,7 @@ int ServerPlayerGameMode::destroyBlock(const BlockPos& pos)
 
     if (isCreative())
     {
-        boost::shared_ptr<ClientboundBlockUpdatePacket> packet(
-            new ClientboundBlockUpdatePacket(mLevel, pos));
+        boost::shared_ptr<ClientboundBlockUpdatePacket> packet(new ClientboundBlockUpdatePacket(mLevel, pos));
         mPlayer->mConnection->send(packet);
     }
     else
@@ -186,10 +197,12 @@ void ServerPlayerGameMode::abortDestroyBlock()
     mDestroying = false;
     mLevel->destroyBlockProgress(mPlayer->getId(), mDestroyPos, -1);
 }
-InteractionResult::EInteractionResult ServerPlayerGameMode::useItemOn(
-    boost::shared_ptr<Player> player, Level* level, not_null_ptr<ItemInstance> item,
-    InteractionHand::EInteractionHand hand, const BlockPos& pos, const Direction* direction,
-    float hitX, float hitY, float hitZ, bool simulate, bool* result)
+InteractionResult::EInteractionResult ServerPlayerGameMode::useItemOn(boost::shared_ptr<Player> player, Level* level,
+                                                                      not_null_ptr<ItemInstance> item,
+                                                                      InteractionHand::EInteractionHand hand,
+                                                                      const BlockPos& pos, const Direction* direction,
+                                                                      float hitX, float hitY, float hitZ, bool simulate,
+                                                                      bool* result)
 {
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
@@ -201,9 +214,10 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItemOn(
         {
             if (eTYPE_DERIVED_FROM(BlockEntityType::LOCKABLE_CONTAINER, blockEntity->GetType()))
             {
-                boost::shared_ptr<LockableContainer> container =
-                    boost::dynamic_pointer_cast<LockableContainer>(blockEntity);
-                if (eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()) && dynamic_cast<ChestBlock*>(block) != NULL)
+                boost::shared_ptr<LockableContainer> container = boost::dynamic_pointer_cast<LockableContainer>(
+                    blockEntity);
+                if (eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType())
+                    && dynamic_cast<ChestBlock*>(block) != NULL)
                     container = static_cast<ChestBlock*>(block)->getContainer(level, pos);
                 if (container)
                     player->openContainer(container);
@@ -255,15 +269,15 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItemOn(
         return InteractionResult::eInteractionResult_Pass;
 
     BlockItem* blockItem = dynamic_cast<BlockItem*>(item->getItem());
-    if (blockItem != NULL && dynamic_cast<CommandBlock*>(blockItem->getBlock()) != NULL &&
-        !player->canUseCommandBlocks())
+    if (blockItem != NULL && dynamic_cast<CommandBlock*>(blockItem->getBlock()) != NULL
+        && !player->canUseCommandBlocks())
         return InteractionResult::eInteractionResult_Fail;
 
     const bool restoreCreativeItem = isCreative() && !isLobby();
     const int savedAuxValue = restoreCreativeItem ? item->getAuxValue() : 0;
     const int savedCount = restoreCreativeItem ? item->getCount() : 0;
-    const InteractionResult::EInteractionResult itemResult =
-        item->useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
+    const InteractionResult::EInteractionResult itemResult = item->useOn(player, level, pos, hand, direction, hitX,
+                                                                         hitY, hitZ, simulate);
 
     if (itemResult == InteractionResult::eInteractionResult_Success)
     {
@@ -369,8 +383,9 @@ bool ServerPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Directio
 
     return true;
 }
-InteractionResult::EInteractionResult ServerPlayerGameMode::useItem(boost::shared_ptr<Player> player,
-    Level* level, InteractionHand::EInteractionHand hand, bool simulate)
+InteractionResult::EInteractionResult ServerPlayerGameMode::useItem(boost::shared_ptr<Player> player, Level* level,
+                                                                    InteractionHand::EInteractionHand hand,
+                                                                    bool simulate)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
 
@@ -409,8 +424,7 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItem(boost::share
         && item->getAuxValue() == savedAux)
         return result;
 
-    if (result == InteractionResult::eInteractionResult_Fail && item->getUseDuration() > 0
-        && !player->isUsingItem())
+    if (result == InteractionResult::eInteractionResult_Fail && item->getUseDuration() > 0 && !player->isUsingItem())
         return result;
 
     player->setItemInHand(hand, resultItem);
@@ -430,8 +444,7 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItem(boost::share
 
     if (!player->isUsingItem())
     {
-        boost::shared_ptr<ServerPlayer> serverPlayer =
-            boost::static_pointer_cast<ServerPlayer>(player);
+        boost::shared_ptr<ServerPlayer> serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
         serverPlayer->refreshContainer(serverPlayer->mInventoryMenu);
     }
 
@@ -448,13 +461,15 @@ void ServerPlayerGameMode::SetGameType(const GameType* gameType)
     const int playerIndex = mPlayer->mPlayerIndex;
     PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->mPlayers : NULL;
 
-    players->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(
-        new ClientboundGameEventPacket(ClientboundGameEventPacket::CHANGE_GAME_MODE,
-                                       static_cast<float>(mGameType->getId()), playerIndex)));
+    players->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(
+        ClientboundGameEventPacket::CHANGE_GAME_MODE, static_cast<float>(mGameType->getId()), playerIndex)));
 
     mLevel->updateSleepingPlayerList();
 }
-const GameType* ServerPlayerGameMode::GetGameType() { return mGameType; }
+const GameType* ServerPlayerGameMode::GetGameType()
+{
+    return mGameType;
+}
 bool ServerPlayerGameMode::IsNearCentreOf(const AABB* box, ServerPlayer* player, double x, double y, double z)
 {
     if (player != NULL && box != NULL)
@@ -483,9 +498,9 @@ void ServerPlayerGameMode::tick()
             return;
         }
 
-        const float fractionalProgress =
-            state->getDestroyProgress(getServerPlayer(), mPlayer->mLevel, mPreviousDestroyPos) *
-            static_cast<float>(elapsedTicks + 1);
+        const float fractionalProgress = state->getDestroyProgress(getServerPlayer(), mPlayer->mLevel,
+                                                                   mPreviousDestroyPos)
+                                         * static_cast<float>(elapsedTicks + 1);
         const int sentProgress = static_cast<int>(fractionalProgress * 10.0f);
         if (sentProgress != mLastSentProgress)
         {
@@ -511,9 +526,9 @@ void ServerPlayerGameMode::tick()
         }
 
         const int elapsedTicks = mGameModeTicks - mDestroyStartTick;
-        const float fractionalProgress =
-            state->getDestroyProgress(getServerPlayer(), mPlayer->mLevel, mPreviousDestroyPos) *
-            static_cast<float>(elapsedTicks + 1);
+        const float fractionalProgress = state->getDestroyProgress(getServerPlayer(), mPlayer->mLevel,
+                                                                   mPreviousDestroyPos)
+                                         * static_cast<float>(elapsedTicks + 1);
         const int sentProgress = static_cast<int>(fractionalProgress * 10.0f);
         if (sentProgress != mLastSentProgress)
         {
@@ -528,10 +543,21 @@ void ServerPlayerGameMode::OnDeath(boost::shared_ptr<ServerPlayer> player)
     if (mMasterGameMode != NULL)
         mMasterGameMode->OnDeath(player);
 }
-unsigned int ServerPlayerGameMode::GetDeaths() { return mDeaths; }
-void ServerPlayerGameMode::SetDeaths(int deaths) { mDeaths = deaths; }
-unsigned int ServerPlayerGameMode::GetKills() { return 0; }
-void ServerPlayerGameMode::SetKills(int) {}
+unsigned int ServerPlayerGameMode::GetDeaths()
+{
+    return mDeaths;
+}
+void ServerPlayerGameMode::SetDeaths(int deaths)
+{
+    mDeaths = deaths;
+}
+unsigned int ServerPlayerGameMode::GetKills()
+{
+    return 0;
+}
+void ServerPlayerGameMode::SetKills(int)
+{
+}
 
 void ServerPlayerGameMode::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry,
                                         boost::shared_ptr<ClientboundChatPacket> packet)
@@ -613,8 +639,8 @@ bool ServerPlayerGameMode::RecordSecondaryTargetReached(const std::wstring& name
 {
     MasterGameMode* masterGameMode = gMinecraftServer->mMasterGameMode;
     if (masterGameMode != NULL && !isSpectator())
-        return masterGameMode->mGameStats.RecordSecondaryTargetReached(getServerPlayer()->getSUID(), name,
-                                                                       target, size);
+        return masterGameMode->mGameStats.RecordSecondaryTargetReached(getServerPlayer()->getSUID(), name, target,
+                                                                       size);
     return false;
 }
 bool ServerPlayerGameMode::RecordLastCheckpoint(int checkpoint, int lap, bool first, bool second, bool third)
@@ -622,14 +648,13 @@ bool ServerPlayerGameMode::RecordLastCheckpoint(int checkpoint, int lap, bool fi
     MasterGameMode* masterGameMode = gMinecraftServer->mMasterGameMode;
     if (masterGameMode != NULL && !isSpectator())
     {
-        if (third ||
-            masterGameMode->mGameStats.GetLastCheckpointSequenceID(getServerPlayer()->getSUID()) == lap - 1)
+        if (third || masterGameMode->mGameStats.GetLastCheckpointSequenceID(getServerPlayer()->getSUID()) == lap - 1)
         {
             if (second)
                 setLastCheckpoint(checkpoint);
 
-            bool result = masterGameMode->mGameStats.RecordLastCheckpoint(
-                getServerPlayer()->getSUID(), checkpoint, lap, first);
+            bool result = masterGameMode->mGameStats.RecordLastCheckpoint(getServerPlayer()->getSUID(), checkpoint, lap,
+                                                                          first);
 
             if (result && second && !third)
                 mPlayer->sendMessage(ClientboundChatPacket::eChatPacketMessage_Checkpoint, NULL, 0, NULL, 0);
@@ -659,8 +684,7 @@ bool ServerPlayerGameMode::RecordProgress(double first, double second, double th
 {
     MasterGameMode* masterGameMode = gMinecraftServer->mMasterGameMode;
     if (masterGameMode != NULL && !isSpectator())
-        return masterGameMode->mGameStats.RecordProgress(
-            getServerPlayer()->getSUID(), first, second, third, fourth);
+        return masterGameMode->mGameStats.RecordProgress(getServerPlayer()->getSUID(), first, second, third, fourth);
     return false;
 }
 void ServerPlayerGameMode::RecordSpawnedAtCheckpoint(int checkpoint)
@@ -694,8 +718,7 @@ void ServerPlayerGameMode::RecordLayerTime()
         return;
 
     const long long elapsedMs = static_cast<long long>(System::processTimeInMilliSecs() - mLayerTimeMs);
-    const bool waitedLongEnough =
-        static_cast<unsigned int>(std::floor(static_cast<double>(elapsedMs)) / 1000.0) > 1;
+    const bool waitedLongEnough = static_cast<unsigned int>(std::floor(static_cast<double>(elapsedMs)) / 1000.0) > 1;
 
     const int layer = masterGameMode->GetLayer(static_cast<int>(mPlayer->mY));
     if (masterGameMode != NULL && waitedLongEnough && layer != -1)
@@ -724,16 +747,22 @@ void ServerPlayerGameMode::RecordLanding(const BlockPos& pos)
     if (masterGameMode != NULL && !isSpectator())
     {
         int layer = masterGameMode->GetLayer(pos.y);
-        if (layer == gMinecraftServer->mMasterGameMode->GetLayerCount() - 1 &&
-            masterGameMode->IsOnGeneratedLayer(layer, pos.y))
+        if (layer == gMinecraftServer->mMasterGameMode->GetLayerCount() - 1
+            && masterGameMode->IsOnGeneratedLayer(layer, pos.y))
         {
             masterGameMode->mGameStats.RecordLanding(mPlayer->getSUID());
         }
     }
 }
-const MiniGameDef* ServerPlayerGameMode::GetMiniGame() { return CommonMasterGameMode::GetMiniGame(); }
+const MiniGameDef* ServerPlayerGameMode::GetMiniGame()
+{
+    return CommonMasterGameMode::GetMiniGame();
+}
 boost::shared_ptr<Player> ServerPlayerGameMode::GetPlayer()
 {
     return boost::static_pointer_cast<Player>(mPlayer->shared_from_this());
 }
-Level* ServerPlayerGameMode::GetLevel() { return mLevel; }
+Level* ServerPlayerGameMode::GetLevel()
+{
+    return mLevel;
+}

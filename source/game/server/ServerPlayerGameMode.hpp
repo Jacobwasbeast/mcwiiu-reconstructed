@@ -23,6 +23,7 @@ class ServerPlayerGameMode : public GameMode
 {
     friend class PlayerList;
     friend class ServerPlayer;
+
 public:
     ServerPlayerGameMode(Level* level, MasterGameMode* masterGameMode);
     virtual ~ServerPlayerGameMode();
@@ -41,16 +42,12 @@ public:
     void abortDestroyBlock();
     InteractionResult::EInteractionResult useItemOn(boost::shared_ptr<Player> player, Level* level,
                                                     not_null_ptr<ItemInstance> item,
-                                                    InteractionHand::EInteractionHand hand,
-                                                    const BlockPos& pos,
-                                                    const Direction* direction, float hitX,
-                                                    float hitY, float hitZ, bool simulate,
-                                                    bool* result);
+                                                    InteractionHand::EInteractionHand hand, const BlockPos& pos,
+                                                    const Direction* direction, float hitX, float hitY, float hitZ,
+                                                    bool simulate, bool* result);
     virtual bool startDestroyBlock(const BlockPos& pos, const Direction* direction);
-    virtual InteractionResult::EInteractionResult useItem(boost::shared_ptr<Player> player,
-                                                           Level* level,
-                                                           InteractionHand::EInteractionHand hand,
-                                                           bool simulate);
+    virtual InteractionResult::EInteractionResult useItem(boost::shared_ptr<Player> player, Level* level,
+                                                          InteractionHand::EInteractionHand hand, bool simulate);
     virtual void SetGameType(const GameType* gameType);
     virtual const GameType* GetGameType();
     bool IsNearCentreOf(const AABB* box, ServerPlayer* player, double x, double y, double z);

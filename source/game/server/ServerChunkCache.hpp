@@ -56,7 +56,8 @@ public:
     virtual bool shouldSave();
     virtual std::wstring gatherStats();
     virtual std::vector<Biome::MobSpawnerData*>* getMobsAt(MobCategory* category, const BlockPos& pos);
-    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool takeBlock);
+    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos,
+                                            bool takeBlock);
     virtual void recreateLogicStructuresForChunk(LevelChunk* chunk, int x, int z);
     virtual LevelChunk* getChunkAt(const BlockPos& pos);
     static unsigned int runSaveThreadProc(void* data);

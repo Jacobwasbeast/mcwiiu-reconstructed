@@ -6,9 +6,7 @@
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayer.hpp"
 
-ServerItemCooldowns::ServerItemCooldowns(ServerPlayer* player)
-    : ItemCooldowns()
-    , mPlayer(player)
+ServerItemCooldowns::ServerItemCooldowns(ServerPlayer* player) : ItemCooldowns(), mPlayer(player)
 {
 }
 
@@ -18,7 +16,8 @@ void ServerItemCooldowns::onCooldownStarted(Item* item, int duration)
 
     if (mPlayer != 0)
     {
-        mPlayer->mConnection->send(boost::shared_ptr<ClientboundCooldownPacket>(new ClientboundCooldownPacket(item, duration)));
+        mPlayer->mConnection->send(
+            boost::shared_ptr<ClientboundCooldownPacket>(new ClientboundCooldownPacket(item, duration)));
     }
 }
 
@@ -28,6 +27,7 @@ void ServerItemCooldowns::onCooldownEnded(Item* item)
 
     if (mPlayer != 0)
     {
-        mPlayer->mConnection->send(boost::shared_ptr<ClientboundCooldownPacket>(new ClientboundCooldownPacket(item, 0)));
+        mPlayer->mConnection->send(
+            boost::shared_ptr<ClientboundCooldownPacket>(new ClientboundCooldownPacket(item, 0)));
     }
 }

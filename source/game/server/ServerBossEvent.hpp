@@ -15,8 +15,7 @@ class ServerPlayer;
 class ServerBossEvent : public BossEvent
 {
 public:
-    ServerBossEvent(int nameId, const std::wstring& name, BossBarColor color,
-                    BossBarOverlay overlay);
+    ServerBossEvent(int nameId, const std::wstring& name, BossBarColor color, BossBarOverlay overlay);
 
     void broadcast(ClientboundBossEventPacket::Operation operation);
 

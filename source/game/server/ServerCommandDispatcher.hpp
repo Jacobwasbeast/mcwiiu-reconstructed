@@ -10,9 +10,8 @@ public:
     virtual ~ServerCommandDispatcher();
 
     virtual void logAdminCommand(boost::shared_ptr<CommandSender> sender,
-                                 ClientboundChatPacket::EChatPacketMessage message,
-                                 int* intParams, unsigned int numIntParams,
-                                 std::wstring* stringParams, unsigned int numStringParams);
+                                 ClientboundChatPacket::EChatPacketMessage message, int* intParams,
+                                 unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams);
 };
 
 #endif

@@ -1,12 +1,14 @@
 #include "game/server/ServerVoteables.hpp"
 
-ServerVoteables::ServerVoteables()
-    : Voteables() {
+ServerVoteables::ServerVoteables() : Voteables()
+{
 }
 
-ServerVoteables::~ServerVoteables() {
+ServerVoteables::~ServerVoteables()
+{
 }
 
-bool ServerVoteables::isServer() {
+bool ServerVoteables::isServer()
+{
     return true;
 }

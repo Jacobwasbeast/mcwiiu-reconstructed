@@ -11,10 +11,11 @@
 #include "game/world/WorldBorder.hpp"
 #include "game/world/generation/Villages.hpp"
 
-DerivedServerLevel::DerivedServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage,
-                                       int dimension, ServerLevel* level)
+DerivedServerLevel::DerivedServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage, int dimension,
+                                       ServerLevel* level)
     : ServerLevel(server, storage, new DerivedLevelData(level->getLevelData()), dimension),
-      mLevel(level), mBorderListener(new DerivedLevelBorderChangeListener(this))
+      mLevel(level),
+      mBorderListener(new DerivedLevelBorderChangeListener(this))
 {
     level->getWorldBorder()->addListener(mBorderListener);
 }
@@ -38,8 +39,8 @@ Level* DerivedServerLevel::postConstruct()
     mLootTables = mLevel->getLootTables();
 
     std::wstring id = Villages::getFileId(mDimension);
-    boost::shared_ptr<Villages> villages =
-        boost::dynamic_pointer_cast<Villages>(mSavedDataStorage->get(typeid(Villages), id));
+    boost::shared_ptr<Villages> villages = boost::dynamic_pointer_cast<Villages>(
+        mSavedDataStorage->get(typeid(Villages), id));
     if (!villages)
     {
         mVillages = boost::shared_ptr<Villages>(new Villages(this));
@@ -73,13 +74,13 @@ void DerivedServerLevel::DerivedLevelBorderChangeListener::onBorderSizeSet(World
 }
 
 void DerivedServerLevel::DerivedLevelBorderChangeListener::onBorderSizeLerping(WorldBorder*, double oldSize,
-                                                                                double newSize, long long timeMs)
+                                                                               double newSize, long long timeMs)
 {
     mLevel->getWorldBorder()->lerpSizeBetween(oldSize, newSize, timeMs);
 }
 
 void DerivedServerLevel::DerivedLevelBorderChangeListener::onBorderCenterSet(WorldBorder*, double centerX,
-                                                                               double centerZ)
+                                                                             double centerZ)
 {
     mLevel->getWorldBorder()->setCenter(centerX, centerZ);
 }
@@ -95,13 +96,13 @@ void DerivedServerLevel::DerivedLevelBorderChangeListener::onBorderSetWarningBlo
 }
 
 void DerivedServerLevel::DerivedLevelBorderChangeListener::onBorderSetDamagePerBlock(WorldBorder*,
-                                                                                       double damagePerBlock)
+                                                                                     double damagePerBlock)
 {
     mLevel->getWorldBorder()->setDamagePerBlock(damagePerBlock);
 }
 
 void DerivedServerLevel::DerivedLevelBorderChangeListener::onBorderSetDamageSafeZOne(WorldBorder*,
-                                                                                      double damageSafeZone)
+                                                                                     double damageSafeZone)
 {
     mLevel->getWorldBorder()->setDamageSafeZone(damageSafeZone);
 }

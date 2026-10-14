@@ -66,7 +66,8 @@ public:
     ServerLevel* getLevel(int dimension);
     void saveGameRules();
     void endProgress();
-    bool loadLevel(LevelStorageSource* storageSource, const std::wstring& name, long long seed, LevelType* levelType, _NetworkGameInitData* initData);
+    bool loadLevel(LevelStorageSource* storageSource, const std::wstring& name, long long seed, LevelType* levelType,
+                   _NetworkGameInitData* initData);
     bool initServer(long long seed, _NetworkGameInitData* initData, unsigned int hostSettings, bool findSeed);
     void saveAllChunks();
     void stopServer(bool didInit);
@@ -150,8 +151,10 @@ private:
     int unusedValue0;
     bool running;
     bool initialised;
+
 public:
     bool shuttingDown;
+
 private:
     int tickCount;
     std::wstring progressName;
@@ -169,22 +172,27 @@ private:
     int playerIdleTimeout;
     bool forceGameType;
     const GameType* defaultGameType;
+
 public:
     int ugcPlayersVersion;
     int texturePackId;
+
 private:
     C4JThreadImpl* postProcessThread;
     bool postProcessTerminating;
     std::vector<postProcessRequest> postProcessRequests;
     OSFastMutex postProcessCritSec;
+
 public:
     C4JEventImpl* serverPausedEvent;
 
 private:
     bool serverPaused;
     long long serverPauseTime;
+
 public:
     bool saveOnExit;
+
 private:
     bool suspending;
 

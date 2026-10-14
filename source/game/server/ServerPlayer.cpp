@@ -131,18 +131,44 @@ const int MAX_DELAYED_CHUNK_PACKETS = 3;
 const int MAX_REMOVED_ENTITIES_PER_PACKET = INT_MAX;
 }
 
-ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name, ServerPlayerGameMode* gameMode)
-    : Player((Level*)level, name), mConnection(), mServer(server), mGameMode(gameMode),
-      mLoadedChunks(), mEntitiesToRemove(), mTrackedChunks(), mState(0), mChunkRequestTime(0),
-      mLevitationSourceY(NULL), mLastRecordedHealth(std::numeric_limits<float>::min()),
-      mLastRecordedFood(std::numeric_limits<int>::min()), mLastRecordedAir(std::numeric_limits<int>::min()),
-      mLastRecordedArmor(std::numeric_limits<int>::min()), mLastRecordedExperienceLevel(std::numeric_limits<int>::min()),
-      mLastRecordedTotalExperience(std::numeric_limits<int>::min()), mLastSentHealth(-100000000.0f),
-      mLastSentFood(-99999999), mLastSentSaturationWasZero(true), mLastSentTotalExperience(-99999999),
-      mSpawnInvulnerableTime(0), mLastActionTime(0), mLastChunkSendingTick(0), mSharedState(),
-      mChangingDimension(0), mFallStartPosition(NULL), mDisconnected(false), mContainerCounter(0),
-      mIsChangingQuantityOnly(false), latency(0), mRespawnState(false), mWonGame(false),
-      mChangedDimension(0), mCauseOfDeathId(-1), mPlayerWeaponId(-1), mChunkRadius(0)
+ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name,
+                           ServerPlayerGameMode* gameMode)
+    : Player((Level*)level, name),
+      mConnection(),
+      mServer(server),
+      mGameMode(gameMode),
+      mLoadedChunks(),
+      mEntitiesToRemove(),
+      mTrackedChunks(),
+      mState(0),
+      mChunkRequestTime(0),
+      mLevitationSourceY(NULL),
+      mLastRecordedHealth(std::numeric_limits<float>::min()),
+      mLastRecordedFood(std::numeric_limits<int>::min()),
+      mLastRecordedAir(std::numeric_limits<int>::min()),
+      mLastRecordedArmor(std::numeric_limits<int>::min()),
+      mLastRecordedExperienceLevel(std::numeric_limits<int>::min()),
+      mLastRecordedTotalExperience(std::numeric_limits<int>::min()),
+      mLastSentHealth(-100000000.0f),
+      mLastSentFood(-99999999),
+      mLastSentSaturationWasZero(true),
+      mLastSentTotalExperience(-99999999),
+      mSpawnInvulnerableTime(0),
+      mLastActionTime(0),
+      mLastChunkSendingTick(0),
+      mSharedState(),
+      mChangingDimension(0),
+      mFallStartPosition(NULL),
+      mDisconnected(false),
+      mContainerCounter(0),
+      mIsChangingQuantityOnly(false),
+      latency(0),
+      mRespawnState(false),
+      mWonGame(false),
+      mChangedDimension(0),
+      mCauseOfDeathId(-1),
+      mPlayerWeaponId(-1),
+      mChunkRadius(0)
 {
     LivingEntity::fjDerivedCtorCalls();
     mGameMode->mPlayer = this;
@@ -152,13 +178,12 @@ ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const st
     mSpawnInvulnerableTime = Minecraft::InMiniGame(eMiniGameId_Glide, true) ? 0 : 60;
 
     BlockPos spawn = level->getSharedSpawnPos();
-    if (!level->mDimension->isHasCeiling() &&
-        level->getLevelData()->getGameType() != GameType::ADVENTURE)
+    if (!level->mDimension->isHasCeiling() && level->getLevelData()->getGameType() != GameType::ADVENTURE)
     {
         level->setFindingSpawn(true);
         int radius = std::max(0, server->getSpawnRadius(level));
-        int borderDistance = static_cast<int>(std::floor(
-            level->getWorldBorder()->getDistanceToBorder(spawn.x, spawn.z)));
+        int borderDistance = static_cast<int>(
+            std::floor(level->getWorldBorder()->getDistanceToBorder(spawn.x, spawn.z)));
         radius = std::min(radius, borderDistance);
         if (borderDistance < 2)
             radius = 1;
@@ -177,8 +202,8 @@ ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const st
                 int dx = mRandom->nextInt(radius * 2 + 1) - radius;
                 int dz = mRandom->nextInt(radius * 2 + 1) - radius;
                 spawn = level->getTopSolidBlockPos(spawn.offset(dx, 0, dz));
-            } while (spawn.x < minCoordinate || spawn.x > maxCoordinate ||
-                     spawn.z < minCoordinate || spawn.z > maxCoordinate);
+            } while (spawn.x < minCoordinate || spawn.x > maxCoordinate || spawn.z < minCoordinate
+                     || spawn.z > maxCoordinate);
             waterDepth = 0;
             while (waterDepth < 128)
             {
@@ -204,10 +229,11 @@ ServerPlayer::~ServerPlayer()
     delete mLevitationSourceY;
 }
 
-void ServerPlayer::sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams, uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams)
+void ServerPlayer::sendMessage(ClientboundChatPacket::EChatPacketMessage message, int32_t* intParams,
+                               uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams)
 {
-    mConnection->send(boost::shared_ptr<Packet>(new ClientboundChatPacket(
-        message, intParams, numIntParams, stringParams, numStringParams)));
+    mConnection->send(boost::shared_ptr<Packet>(
+        new ClientboundChatPacket(message, intParams, numIntParams, stringParams, numStringParams)));
 }
 
 bool ServerPlayer::hasPermission(EGameCommand)
@@ -224,7 +250,8 @@ BlockPos ServerPlayer::getCommandSenderBlockPosition()
 void ServerPlayer::refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items)
 {
     mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetContentPacket(menu->m_containerId, items)));
-    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(-1, -1, mInventory->getCarried())));
+    mConnection->send(
+        boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(-1, -1, mInventory->getCarried())));
 }
 
 void ServerPlayer::slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item)
@@ -233,20 +260,22 @@ void ServerPlayer::slotChanged(AbstractContainerMenu* menu, int32_t slot, not_nu
     {
         return;
     }
-    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(menu->m_containerId, slot, item)));
+    mConnection->send(
+        boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(menu->m_containerId, slot, item)));
 }
 
 void ServerPlayer::setContainerData(AbstractContainerMenu* menu, int32_t dataIndex, int32_t value)
 {
-    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetDataPacket(menu->m_containerId, dataIndex, value)));
+    mConnection->send(
+        boost::shared_ptr<Packet>(new ClientboundContainerSetDataPacket(menu->m_containerId, dataIndex, value)));
 }
 
 void ServerPlayer::setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container)
 {
     for (int index = 0; index < container->getContainerDataCount(); ++index)
     {
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetDataPacket(
-            menu->m_containerId, index, container->getContainerData(index))));
+        mConnection->send(boost::shared_ptr<Packet>(
+            new ClientboundContainerSetDataPacket(menu->m_containerId, index, container->getContainerData(index))));
     }
 }
 
@@ -300,8 +329,9 @@ void ServerPlayer::doTickA()
         not_null_ptr<ItemInstance> item = mInventory->getItem(slot);
         if (!item->isEmpty() && item->getItem()->isComplex())
         {
-            boost::shared_ptr<Packet> packet = dynamic_cast<ComplexItem*>(item->getItem())->getUpdatePacket(
-                item, mLevel, boost::static_pointer_cast<Player>(shared_from_this()));
+            boost::shared_ptr<Packet> packet =
+                dynamic_cast<ComplexItem*>(item->getItem())
+                    ->getUpdatePacket(item, mLevel, boost::static_pointer_cast<Player>(shared_from_this()));
             if (packet != NULL)
                 mConnection->send(packet);
         }
@@ -374,8 +404,9 @@ void ServerPlayer::doChunkSendingTick(bool dontDelay, bool historyOnly)
             if (!dontDelay)
             {
                 canSend = clientReady && mConnection->countDelayedPackets() <= MAX_DELAYED_CHUNK_PACKETS
-                    && CGameNetworkManager::sInstance.GetHostPlayer()->GetSendQueueSizeMessages(NULL, true) <= MAX_DELAYED_CHUNK_PACKETS
-                    && !mConnection->mDisconnected;
+                          && CGameNetworkManager::sInstance.GetHostPlayer()->GetSendQueueSizeMessages(NULL, true)
+                                 <= MAX_DELAYED_CHUNK_PACKETS
+                          && !mConnection->mDisconnected;
             }
             if (canSend)
             {
@@ -392,7 +423,8 @@ void ServerPlayer::doChunkSendingTick(bool dontDelay, bool historyOnly)
         {
             ServerLevel* level = mServer->getLevel(mDimension);
             const int flagIndex = getFlagIndexForChunk(closestChunk, mLevel->mDimension->getType()->getId());
-            const bool clientHasChunk = CGameNetworkManager::sInstance.SystemFlagGet(mConnection->getNetworkPlayer(), flagIndex);
+            const bool clientHasChunk = CGameNetworkManager::sInstance.SystemFlagGet(mConnection->getNetworkPlayer(),
+                                                                                     flagIndex);
             LevelChunk* chunk = level->getChunk(closestChunk.x, closestChunk.z);
             if (chunk->getHasGapsToCheck() && level->mDimension->isHasSkyLight())
                 chunk->recheckGaps(false);
@@ -406,16 +438,19 @@ void ServerPlayer::doChunkSendingTick(bool dontDelay, bool historyOnly)
                     BlockRegionUpdatePacket* regionPacket = NULL;
                     if (!sendChanges)
                     {
-                        regionPacket = new BlockRegionUpdatePacket(closestChunk.x << 4, 0, closestChunk.z << 4, CHUNK_SIZE,
-                                                                   CHUNK_HEIGHT, CHUNK_SIZE, level, false, NULL);
+                        regionPacket = new BlockRegionUpdatePacket(closestChunk.x << 4, 0, closestChunk.z << 4,
+                                                                   CHUNK_SIZE, CHUNK_HEIGHT, CHUNK_SIZE, level, false,
+                                                                   NULL);
                     }
                     else
                     {
-                        std::vector<short>* changes = masterGameMode->GetChunkHistory()->GetChangesForChunk(closestChunk.x, closestChunk.z);
+                        std::vector<short>* changes = masterGameMode->GetChunkHistory()->GetChangesForChunk(
+                            closestChunk.x, closestChunk.z);
                         if (changes != NULL && !changes->empty())
                         {
-                            regionPacket = new BlockRegionUpdatePacket(closestChunk.x << 4, 0, closestChunk.z << 4, CHUNK_SIZE,
-                                                                       CHUNK_HEIGHT, CHUNK_SIZE, level, true, changes);
+                            regionPacket = new BlockRegionUpdatePacket(closestChunk.x << 4, 0, closestChunk.z << 4,
+                                                                       CHUNK_SIZE, CHUNK_HEIGHT, CHUNK_SIZE, level,
+                                                                       true, changes);
                         }
                     }
 
@@ -434,7 +469,8 @@ void ServerPlayer::doChunkSendingTick(bool dontDelay, bool historyOnly)
             }
             else
             {
-                MultiPlayerLevel* clientLevel = Minecraft::GetInstance()->getLevel(level->mDimension->getType()->getId());
+                MultiPlayerLevel* clientLevel = Minecraft::GetInstance()->getLevel(
+                    level->mDimension->getType()->getId());
                 if (clientLevel == NULL)
                 {
                     sendBlockEntities = false;
@@ -468,15 +504,14 @@ void ServerPlayer::doChunkSendingTick(bool dontDelay, bool historyOnly)
 
 void ServerPlayer::doTickB()
 {
-    if (getHealth() != mLastSentHealth || mLastSentFood != mFoodData.getFoodLevel() ||
-        (mFoodData.getSaturationLevel() == 0.0f) != mLastSentSaturationWasZero)
+    if (getHealth() != mLastSentHealth || mLastSentFood != mFoodData.getFoodLevel()
+        || (mFoodData.getSaturationLevel() == 0.0f) != mLastSentSaturationWasZero)
     {
         if ((getKillCredit() != NULL && !eTYPE_DERIVED_FROM(EntityType::PLAYER, getKillCredit()->GetType()))
             || getKillCredit() == NULL)
             mCauseOfDeathId = -1;
-        TelemetryDamageSource damageSource = {
-            static_cast<ETelemetryChallenges>(mPvpState), mCauseOfDeathId, mPlayerWeaponId
-        };
+        TelemetryDamageSource damageSource = {static_cast<ETelemetryChallenges>(mPvpState), mCauseOfDeathId,
+                                              mPlayerWeaponId};
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetHealthPacket(
             getHealth(), mFoodData.getFoodLevel(), mFoodData.getSaturationLevel(), damageSource)));
         mLastSentHealth = getHealth();
@@ -500,8 +535,8 @@ void ServerPlayer::doTickB()
     if (mTotalExperience != mLastSentTotalExperience)
     {
         mLastSentTotalExperience = mTotalExperience;
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetExperiencePacket(
-            mExperienceProgress, mTotalExperience, mExperienceLevel)));
+        mConnection->send(boost::shared_ptr<Packet>(
+            new ClientboundSetExperiencePacket(mExperienceProgress, mTotalExperience, mExperienceLevel)));
     }
 }
 
@@ -547,7 +582,8 @@ boost::shared_ptr<ServerPlayer> ServerPlayer::SpectatePlayerChange(bool previous
     std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = playerList->getPlayers();
     for (unsigned int index = 0; index < allPlayers->size(); ++index)
     {
-        if (index >= mLevel->mPlayers.size() || mLevel->mPlayers[index] == NULL || mLevel->mPlayers[index]->isSpectator())
+        if (index >= mLevel->mPlayers.size() || mLevel->mPlayers[index] == NULL
+            || mLevel->mPlayers[index]->isSpectator())
             continue;
 
         candidates.push_back(allPlayers->at(index));
@@ -568,7 +604,7 @@ boost::shared_ptr<ServerPlayer> ServerPlayer::SpectatePlayerChange(bool previous
 
         target = candidates[nextIndex];
         std::wstring name = target->getName();
-        int messageParams[2] = { nextIndex + 1, static_cast<int>(candidates.size()) };
+        int messageParams[2] = {nextIndex + 1, static_cast<int>(candidates.size())};
         sendMessage(ClientboundChatPacket::eChatPacketMessage_NowSpectating, messageParams, 2, &name, 1);
     }
 
@@ -585,7 +621,8 @@ void ServerPlayer::updateClientsCameras()
     players->broadcastAll(GameModePacket::Create(GameModePacket::eMessage_SetCamera, data));
 }
 
-void ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer> oldPlayer, boost::shared_ptr<ServerPlayer> newPlayer)
+void ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer> oldPlayer,
+                                       boost::shared_ptr<ServerPlayer> newPlayer)
 {
     if (mCamera && mCamera->getId() == oldPlayer->getId())
     {
@@ -623,11 +660,9 @@ void ServerPlayer::markAttributesDirty()
     BaseAttributeMap* attributes = getAttributes();
     std::vector<AttributeInstance*> instances;
     attributes->getAttributes(instances);
-    for (std::vector<AttributeInstance*>::iterator it = instances.begin();
-         it != instances.end(); ++it)
+    for (std::vector<AttributeInstance*>::iterator it = instances.begin(); it != instances.end(); ++it)
     {
-        ModifiableAttributeInstance* instance =
-            dynamic_cast<ModifiableAttributeInstance*>(*it);
+        ModifiableAttributeInstance* instance = dynamic_cast<ModifiableAttributeInstance*>(*it);
         if (instance != NULL)
             instance->setDirty();
     }
@@ -662,8 +697,8 @@ void ServerPlayer::resetChunkFlagsOutsideArea(int32_t minX, int32_t minZ, int32_
         for (int z = minZ; z < maxZ; ++z)
         {
             const int flagIndex = getFlagIndexForChunk(x, z, dimension);
-            snapshot[(x - minX) * width + (z - minZ)] =
-                static_cast<unsigned char>(CGameNetworkManager::sInstance.SystemFlagGet(mConnection->getNetworkPlayer(), flagIndex));
+            snapshot[(x - minX) * width + (z - minZ)] = static_cast<unsigned char>(
+                CGameNetworkManager::sInstance.SystemFlagGet(mConnection->getNetworkPlayer(), flagIndex));
         }
     }
 
@@ -721,8 +756,8 @@ void ServerPlayer::addWalkers(DataFixerUpper* dataFixer)
                 const std::wstring entity(L"Entity");
                 if (root->contains(entity, Tag::TAG_COMPOUND))
                 {
-                    root->put(entity, fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                                                    root->getCompound(entity), version));
+                    root->put(entity,
+                              fixer->update(DataFixTypes::eDataFixTypes_Entity, root->getCompound(entity), version));
                 }
             }
             return tag;
@@ -749,7 +784,8 @@ void ServerPlayer::addAdditonalSaveData(CompoundTag* tag)
     boost::shared_ptr<Entity> vehicle = getVehicle();
     if (vehicle != NULL && rootVehicle.get() != this)
     {
-        std::set<boost::shared_ptr<Entity> >* passengers = rootVehicle->getIndirectPassengers(EntityType::SERVER_PLAYER);
+        std::set<boost::shared_ptr<Entity> >* passengers = rootVehicle->getIndirectPassengers(
+            EntityType::SERVER_PLAYER);
         const size_t passengerCount = passengers->size();
         delete passengers;
 
@@ -780,13 +816,15 @@ void ServerPlayer::onEnchantmentPerformed(int32_t cost)
 void ServerPlayer::onEnterCombat()
 {
     LivingEntity::onEnterCombat();
-    mConnection->send(boost::shared_ptr<ClientboundPlayerCombatPacket>(new ClientboundPlayerCombatPacket(getCombatTracker(), ClientboundPlayerCombatPacket::ENTER_COMBAT)));
+    mConnection->send(boost::shared_ptr<ClientboundPlayerCombatPacket>(
+        new ClientboundPlayerCombatPacket(getCombatTracker(), ClientboundPlayerCombatPacket::ENTER_COMBAT)));
 }
 
 void ServerPlayer::onLeaveCombat()
 {
     LivingEntity::onLeaveCombat();
-    mConnection->send(boost::shared_ptr<ClientboundPlayerCombatPacket>(new ClientboundPlayerCombatPacket(getCombatTracker(), ClientboundPlayerCombatPacket::END_COMBAT)));
+    mConnection->send(boost::shared_ptr<ClientboundPlayerCombatPacket>(
+        new ClientboundPlayerCombatPacket(getCombatTracker(), ClientboundPlayerCombatPacket::END_COMBAT)));
 }
 
 void ServerPlayer::ResetSpawnInvulnerableTime()
@@ -815,8 +853,7 @@ void ServerPlayer::tick()
         mLastBiome = biome;
     }
 
-    if (!mLevel->mIsClientSide
-        && !mContainerMenu->stillValid(boost::dynamic_pointer_cast<Player>(shared_from_this())))
+    if (!mLevel->mIsClientSide && !mContainerMenu->stillValid(boost::dynamic_pointer_cast<Player>(shared_from_this())))
     {
         closeContainer();
         mContainerMenu = mInventoryMenu;
@@ -865,16 +902,13 @@ void ServerPlayer::die(const DamageSource* source)
     const bool includeKiller = mLevel->getGameRules()->getBoolean(GameRules::RULE_SHOWDEATHMESSAGES);
     CombatTracker* combatTracker = getCombatTracker();
     boost::shared_ptr<ClientboundPlayerCombatPacket> combatPacket(
-        new ClientboundPlayerCombatPacket(combatTracker,
-                                          ClientboundPlayerCombatPacket::ENTITY_DIED,
-                                          includeKiller));
+        new ClientboundPlayerCombatPacket(combatTracker, ClientboundPlayerCombatPacket::ENTITY_DIED, includeKiller));
     mConnection->send(boost::static_pointer_cast<Packet>(combatPacket));
 
     if (includeKiller)
     {
         boost::shared_ptr<ClientboundChatPacket> deathMessage = combatTracker->getDeathMessagePacket();
-        boost::shared_ptr<ServerPlayer> self =
-            boost::static_pointer_cast<ServerPlayer>(shared_from_this());
+        boost::shared_ptr<ServerPlayer> self = boost::static_pointer_cast<ServerPlayer>(shared_from_this());
         Team* team = getTeam();
         if (team == NULL)
             mServer->getPlayers()->broadcastAll(boost::static_pointer_cast<Packet>(deathMessage));
@@ -887,14 +921,12 @@ void ServerPlayer::die(const DamageSource* source)
                 mServer->getPlayers()->broadcastAll(boost::static_pointer_cast<Packet>(deathMessage));
                 break;
             case Team::HIDE_FOR_OTHER_TEAMS:
-                mServer->getPlayers()->broadcastToTeam(
-                    boost::static_pointer_cast<Player>(self),
-                    boost::static_pointer_cast<Packet>(deathMessage));
+                mServer->getPlayers()->broadcastToTeam(boost::static_pointer_cast<Player>(self),
+                                                       boost::static_pointer_cast<Packet>(deathMessage));
                 break;
             case Team::HIDE_FOR_OWN_TEAM:
-                mServer->getPlayers()->broadcastToAllExceptTeam(
-                    boost::static_pointer_cast<Player>(self),
-                    boost::static_pointer_cast<Packet>(deathMessage));
+                mServer->getPlayers()->broadcastToAllExceptTeam(boost::static_pointer_cast<Player>(self),
+                                                                boost::static_pointer_cast<Packet>(deathMessage));
                 break;
             case Team::NEVER:
                 break;
@@ -914,8 +946,7 @@ void ServerPlayer::die(const DamageSource* source)
         killCredit->awardKillScore(shared_from_this(), mDeathScore, source);
     }
 
-    boost::shared_ptr<ServerPlayer> self =
-        boost::static_pointer_cast<ServerPlayer>(shared_from_this());
+    boost::shared_ptr<ServerPlayer> self = boost::static_pointer_cast<ServerPlayer>(shared_from_this());
     mGameMode->OnDeath(self);
     clearFire();
     setSharedFlag(FLAG_ONFIRE, false);
@@ -924,27 +955,26 @@ void ServerPlayer::die(const DamageSource* source)
 
 bool ServerPlayer::hurt(const DamageSource* source, float damage)
 {
-    if (isInvulnerableTo(source) ||
-        ((!mServer->isPvpAllowed() || Minecraft::InMiniGame(eMiniGameId_Battle, false)) &&
-         mSpawnInvulnerableTime > 0 &&
-         source != DamageSource::OUT_OF_WORLD && source != DamageSource::CREATIVE_PLAYER))
+    if (isInvulnerableTo(source)
+        || ((!mServer->isPvpAllowed() || Minecraft::InMiniGame(eMiniGameId_Battle, false)) && mSpawnInvulnerableTime > 0
+            && source != DamageSource::OUT_OF_WORLD && source != DamageSource::CREATIVE_PLAYER))
         return false;
 
     if (source != NULL && dynamic_cast<const EntityDamageSource*>(source) != NULL)
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
 
-        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()) &&
-            !boost::static_pointer_cast<Player>(attacker)->canHarmPlayer(
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType())
+            && !boost::static_pointer_cast<Player>(attacker)->canHarmPlayer(
                 boost::dynamic_pointer_cast<Player>(shared_from_this())))
             return false;
 
-        if (attacker != NULL && eTYPE_DERIVED_FROM(EntityType::ARROW, attacker->GetType()) &&
-            !Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
+        if (attacker != NULL && eTYPE_DERIVED_FROM(EntityType::ARROW, attacker->GetType())
+            && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
         {
             boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
-            if (arrow->mOwner != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, arrow->mOwner->GetType()) &&
-                !canHarmPlayer(boost::dynamic_pointer_cast<Player>(arrow->mOwner)))
+            if (arrow->mOwner != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, arrow->mOwner->GetType())
+                && !canHarmPlayer(boost::dynamic_pointer_cast<Player>(arrow->mOwner)))
                 return false;
         }
     }
@@ -1145,14 +1175,13 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
             mLevel->removeEntity(shared_from_this());
             mRespawnState = true;
             mWonGame = true;
-                        mConnection->send(boost::shared_ptr<Packet>(
-                new ClientboundGameEventPacket(ClientboundGameEventPacket::WIN_GAME,
-                    static_cast<float>(networkPlayer->GetUserIndex()))));
+            mConnection->send(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(
+                ClientboundGameEventPacket::WIN_GAME, static_cast<float>(networkPlayer->GetUserIndex()))));
 
             PlayerList* playerList = mServer->getPlayers();
             std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
-            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
-                 it != players->end(); ++it)
+            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end();
+                 ++it)
             {
                 boost::shared_ptr<ServerPlayer> player = *it;
                 assert(player != NULL);
@@ -1165,9 +1194,8 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
                 if (player->mRespawnState != false)
                     continue;
                 player->mRespawnState = true;
-                player->mConnection->send(boost::shared_ptr<Packet>(
-                    new ClientboundGameEventPacket(ClientboundGameEventPacket::WIN_GAME,
-                    static_cast<float>(networkPlayer->GetUserIndex()))));
+                player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(
+                    ClientboundGameEventPacket::WIN_GAME, static_cast<float>(networkPlayer->GetUserIndex()))));
             }
         }
         return shared_from_this();
@@ -1184,13 +1212,11 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
             const double spawnX = static_cast<double>(spawn->x);
             const double spawnY = static_cast<double>(spawn->y);
             const double spawnZ = static_cast<double>(spawn->z);
-            mConnection->teleport(spawnX, spawnY, spawnZ,
-                                  0.0f, 0.0f, true, true);
+            mConnection->teleport(spawnX, spawnY, spawnZ, 0.0f, 0.0f, true, true);
         }
     }
 
-    boost::shared_ptr<ServerPlayer> self =
-        boost::dynamic_pointer_cast<ServerPlayer>(shared_from_this());
+    boost::shared_ptr<ServerPlayer> self = boost::dynamic_pointer_cast<ServerPlayer>(shared_from_this());
     mServer->getPlayers()->toggleDimension(self, dimension);
 
     assert(mConnection != NULL);
@@ -1229,8 +1255,8 @@ uint32_t ServerPlayer::startSleepInBed(const BlockPos& position, bool force)
     if (result != BED_SLEEPING_OK)
         return result;
 
-    boost::shared_ptr<Packet> packet(new ClientboundPlayerSleepPacket(
-        boost::dynamic_pointer_cast<Player>(shared_from_this()), position));
+    boost::shared_ptr<Packet> packet(
+        new ClientboundPlayerSleepPacket(boost::dynamic_pointer_cast<Player>(shared_from_this()), position));
     getLevel()->getTracker()->broadcast(shared_from_this(), packet);
     mConnection->teleport(mX, mY, mZ, mYRot, mXRot, true, true);
     mConnection->send(packet);
@@ -1243,14 +1269,13 @@ void ServerPlayer::stopSleepInBed(bool resetTimer, bool updateLevel, bool setSpa
     {
         boost::shared_ptr<Entity> self = shared_from_this();
         getLevel()->getTracker()->broadcastAndSend(self,
-            boost::shared_ptr<Packet>(new ClientboundAnimatePacket(self, 2)));
+                                                   boost::shared_ptr<Packet>(new ClientboundAnimatePacket(self, 2)));
     }
 
     Player::stopSleepInBed(resetTimer, updateLevel, setSpawn);
 
     if (mConnection != NULL)
         mConnection->teleport(mX, mY, mZ, mYRot, mXRot, true, true);
-
 }
 
 bool ServerPlayer::startRiding(boost::shared_ptr<Entity> vehicle)
@@ -1291,8 +1316,8 @@ uint8_t ServerPlayer::isChangingDimension()
 
 bool ServerPlayer::isInvulnerableTo(const DamageSource* source)
 {
-    if (Minecraft::InMiniGame(eMiniGameId_Glide, true) &&
-        ((source->isFire() && !Entity::isInLava()) || !TakeGlideCollisionDamage()))
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true)
+        && ((source->isFire() && !Entity::isInLava()) || !TakeGlideCollisionDamage()))
     {
         return true;
     }
@@ -1330,10 +1355,9 @@ void ServerPlayer::doCheckFallDamage(double yMovement, bool onGround)
     {
         BlockPos belowPos = pos.below();
         Block* belowBlock = mLevel->getBlock(belowPos);
-        if (belowBlock != NULL &&
-            (dynamic_cast<FenceBlock*>(belowBlock) != NULL ||
-             dynamic_cast<WallBlock*>(belowBlock) != NULL ||
-             dynamic_cast<FenceGateBlock*>(belowBlock) != NULL))
+        if (belowBlock != NULL
+            && (dynamic_cast<FenceBlock*>(belowBlock) != NULL || dynamic_cast<WallBlock*>(belowBlock) != NULL
+                || dynamic_cast<FenceGateBlock*>(belowBlock) != NULL))
         {
             pos = belowPos;
             block = belowBlock;
@@ -1376,11 +1400,10 @@ int ServerPlayer::startBlockInteraction(InteractionObject& interaction)
         nextContainerCounter();
 
         InteractionObject::NameData nameData = interaction.GetNetworkNameData();
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-            mContainerCounter, interaction.getTypeId(false), nameData)));
+        mConnection->send(boost::shared_ptr<Packet>(
+            new ClientboundContainerOpenPacket(mContainerCounter, interaction.getTypeId(false), nameData)));
 
-        mContainerMenu = interaction.createMenu(mInventory,
-                                                boost::dynamic_pointer_cast<Player>(shared_from_this()));
+        mContainerMenu = interaction.createMenu(mInventory, boost::dynamic_pointer_cast<Player>(shared_from_this()));
         mContainerMenu->m_containerId = mContainerCounter;
         mContainerMenu->addSlotListener(this);
     }
@@ -1437,8 +1460,7 @@ int ServerPlayer::openContainer(boost::shared_ptr<Container> container)
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
             mContainerCounter, interaction->getTypeId(false), nameData, container->getContainerSize())));
 
-        mContainerMenu = interaction->createMenu(mInventory,
-                                                 boost::static_pointer_cast<Player>(shared_from_this()));
+        mContainerMenu = interaction->createMenu(mInventory, boost::static_pointer_cast<Player>(shared_from_this()));
     }
     else
     {
@@ -1447,18 +1469,19 @@ int ServerPlayer::openContainer(boost::shared_ptr<Container> container)
         if (enderChest != NULL)
         {
             InteractionObject::NameData nameData = enderChest->GetNetworkNameData();
-            mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-                mContainerCounter, ClientboundContainerOpenPacket::ENDER_CHEST, nameData, container->getContainerSize())));
+            mConnection->send(boost::shared_ptr<Packet>(
+                new ClientboundContainerOpenPacket(mContainerCounter, ClientboundContainerOpenPacket::ENDER_CHEST,
+                                                   nameData, container->getContainerSize())));
         }
         else
         {
             InteractionObject::NameData nameData(container->getDisplayName(), std::wstring(L""), true, false);
-            mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-                mContainerCounter, ClientboundContainerOpenPacket::CONTAINER, nameData, container->getContainerSize())));
+            mConnection->send(boost::shared_ptr<Packet>(
+                new ClientboundContainerOpenPacket(mContainerCounter, ClientboundContainerOpenPacket::CONTAINER,
+                                                   nameData, container->getContainerSize())));
         }
 
-        mContainerMenu = new ChestMenu(mInventory, container,
-                                       boost::static_pointer_cast<Player>(shared_from_this()));
+        mContainerMenu = new ChestMenu(mInventory, container, boost::static_pointer_cast<Player>(shared_from_this()));
     }
 
     mContainerMenu->m_containerId = mContainerCounter;
@@ -1480,20 +1503,18 @@ int ServerPlayer::openTrading(boost::shared_ptr<Merchant> merchant, const std::w
 
     boost::shared_ptr<MerchantContainer> tradeContainer = menu->getTradeContainer();
 
-    InteractionObject::NameData nameData(name.empty() ? std::wstring(L"") : name,
-                                         std::wstring(L""), true, false);
+    InteractionObject::NameData nameData(name.empty() ? std::wstring(L"") : name, std::wstring(L""), true, false);
 
     boost::shared_ptr<Entity> entity = mLevel->getEntity(entityId);
     if (entity != NULL)
     {
-        nameData = InteractionObject::NameData(name.empty() ? std::wstring(L"") : name,
-                                               entity->getOwnerUUID(),
-                                               entity->wasNamedOnHost(),
-                                               entity->wasNamedByRestrictedPlayer());
+        nameData = InteractionObject::NameData(name.empty() ? std::wstring(L"") : name, entity->getOwnerUUID(),
+                                               entity->wasNamedOnHost(), entity->wasNamedByRestrictedPlayer());
     }
 
-    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-        mContainerCounter, ClientboundContainerOpenPacket::TRADER_NPC, nameData, tradeContainer->getContainerSize(), entityId)));
+    mConnection->send(boost::shared_ptr<Packet>(
+        new ClientboundContainerOpenPacket(mContainerCounter, ClientboundContainerOpenPacket::TRADER_NPC, nameData,
+                                           tradeContainer->getContainerSize(), entityId)));
 
     MerchantRecipeList* offers = merchant->getOffers(boost::dynamic_pointer_cast<Player>(shared_from_this()));
     if (offers != NULL)
@@ -1502,8 +1523,8 @@ int ServerPlayer::openTrading(boost::shared_ptr<Merchant> merchant, const std::w
         DataOutputStream output(&bytes);
         output.writeInt(mContainerCounter);
         offers->writeToStream(&output);
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundCustomPayloadPacket(
-            std::wstring(L"MC|TrList"), bytes.toByteArray())));
+        mConnection->send(boost::shared_ptr<Packet>(
+            new ClientboundCustomPayloadPacket(std::wstring(L"MC|TrList"), bytes.toByteArray())));
     }
 
     return 1;
@@ -1516,10 +1537,11 @@ int ServerPlayer::openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boo
 
     nextContainerCounter();
 
-    InteractionObject::NameData nameData(horse->getCustomName(), horse->getOwnerUUID(),
-                                         horse->wasNamedOnHost(), horse->wasNamedByRestrictedPlayer());
-    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
-        mContainerCounter, ClientboundContainerOpenPacket::HORSE, nameData, container->getContainerSize(), horse->getId())));
+    InteractionObject::NameData nameData(horse->getCustomName(), horse->getOwnerUUID(), horse->wasNamedOnHost(),
+                                         horse->wasNamedByRestrictedPlayer());
+    mConnection->send(boost::shared_ptr<Packet>(
+        new ClientboundContainerOpenPacket(mContainerCounter, ClientboundContainerOpenPacket::HORSE, nameData,
+                                           container->getContainerSize(), horse->getId())));
 
     mContainerMenu = new HorseInventoryMenu(mInventory, container, horse,
                                             boost::dynamic_pointer_cast<Player>(shared_from_this()));
@@ -1536,8 +1558,8 @@ void ServerPlayer::openItemInstanceGui(not_null_ptr<ItemInstance> item, Interact
     ByteArrayOutputStream bytes;
     DataOutputStream output(&bytes);
     output.write(static_cast<unsigned int>(hand));
-    mConnection->send(boost::shared_ptr<Packet>(new ClientboundCustomPayloadPacket(
-        std::wstring(L"MC|BOpen"), bytes.toByteArray())));
+    mConnection->send(
+        boost::shared_ptr<Packet>(new ClientboundCustomPayloadPacket(std::wstring(L"MC|BOpen"), bytes.toByteArray())));
 }
 
 void ServerPlayer::doCloseContainer()
@@ -1560,7 +1582,8 @@ void ServerPlayer::closeContainer()
 void ServerPlayer::broadcastCarriedItem()
 {
     if (!mIsChangingQuantityOnly)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(-1, -1, mInventory->getCarried())));
+        mConnection->send(
+            boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(-1, -1, mInventory->getCarried())));
 }
 
 void ServerPlayer::setPlayerInput(float xxa, float zza, bool jumping, bool sneaking)
@@ -1621,8 +1644,8 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
                 player->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(
                     new ClientboundChatPacket(name, ClientboundChatPacket::eChatPacketMessage_BedMeSleep, -1)));
             else
-                player->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(
-                    new ClientboundChatPacket(name, packetMessage, -1)));
+                player->mConnection->send(
+                    boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(name, packetMessage, -1)));
         }
         break;
     case IDS_TILE_BED_OCCUPIED:
@@ -1842,8 +1865,7 @@ void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEve
     mLastSentFood = -1;
     mLastSentTotalExperience = -1;
 
-    const boost::shared_ptr<ServerPlayer> oldServerPlayer =
-        boost::dynamic_pointer_cast<ServerPlayer>(oldPlayer);
+    const boost::shared_ptr<ServerPlayer> oldServerPlayer = boost::dynamic_pointer_cast<ServerPlayer>(oldPlayer);
     mEntitiesToRemove = oldServerPlayer->mEntitiesToRemove;
 
     setShoulderEntityLeft(oldPlayer->getShoulderEntityLeft()->copy());
@@ -1855,19 +1877,22 @@ void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEve
 void ServerPlayer::onEffectAdded(MobEffectInstance* effect)
 {
     LivingEntity::onEffectAdded(effect);
-    mConnection->send(boost::shared_ptr<ClientboundUpdateMobEffectPacket>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
+    mConnection->send(
+        boost::shared_ptr<ClientboundUpdateMobEffectPacket>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
 }
 
 void ServerPlayer::onEffectUpdated(MobEffectInstance* effect, bool attributesChanged)
 {
     LivingEntity::onEffectUpdated(effect, attributesChanged);
-    mConnection->send(boost::shared_ptr<ClientboundUpdateMobEffectPacket>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
+    mConnection->send(
+        boost::shared_ptr<ClientboundUpdateMobEffectPacket>(new ClientboundUpdateMobEffectPacket(getId(), effect)));
 }
 
 void ServerPlayer::onEffectRemoved(MobEffectInstance* effect)
 {
     LivingEntity::onEffectRemoved(effect);
-    mConnection->send(boost::shared_ptr<ClientboundRemoveMobEffectPacket>(new ClientboundRemoveMobEffectPacket(getId(), effect->getEffect())));
+    mConnection->send(boost::shared_ptr<ClientboundRemoveMobEffectPacket>(
+        new ClientboundRemoveMobEffectPacket(getId(), effect->getEffect())));
 }
 
 void ServerPlayer::teleportTo(double x, double y, double z)
@@ -1884,14 +1909,14 @@ void ServerPlayer::crit(boost::shared_ptr<Entity> entity)
 {
     boost::shared_ptr<Entity> self = shared_from_this();
     getLevel()->getTracker()->broadcastAndSend(self,
-        boost::shared_ptr<Packet>(new ClientboundAnimatePacket(entity, 4)));
+                                               boost::shared_ptr<Packet>(new ClientboundAnimatePacket(entity, 4)));
 }
 
 void ServerPlayer::magicCrit(boost::shared_ptr<Entity> entity)
 {
     boost::shared_ptr<Entity> self = shared_from_this();
     getLevel()->getTracker()->broadcastAndSend(self,
-        boost::shared_ptr<Packet>(new ClientboundAnimatePacket(entity, 5)));
+                                               boost::shared_ptr<Packet>(new ClientboundAnimatePacket(entity, 5)));
 }
 
 void ServerPlayer::onUpdateAbilities()
@@ -1906,8 +1931,7 @@ void ServerPlayer::onUpdateAbilities()
 void ServerPlayer::setGameMode(const GameType* gameType)
 {
     mGameMode->SetGameType(gameType);
-    setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CreativeMode,
-                           mGameMode->isCreative());
+    setPlayerGamePrivilege(Player::ePlayerGamePrivilege_CreativeMode, mGameMode->isCreative());
     if (gameType == GameType::SPECTATOR)
     {
         removeEntitiesOnShoulder();
@@ -2051,8 +2075,8 @@ void ServerPlayer::OnEquipArmor(not_null_ptr<ItemInstance> item)
         sound = SoundEvents::ARMOR_EQUIP_LEATHER;
     }
 
-    mConnection->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
-        sound, SoundSource::eSoundSource_Neutral, mX, mY, mZ, 1.0f, 1.0f)));
+    mConnection->send(boost::shared_ptr<Packet>(
+        new ClientboundSoundPacket(sound, SoundSource::eSoundSource_Neutral, mX, mY, mZ, 1.0f, 1.0f)));
 }
 
 bool ServerPlayer::checkTotemDeathProtection(const DamageSource* source)
@@ -2063,8 +2087,7 @@ bool ServerPlayer::checkTotemDeathProtection(const DamageSource* source)
     Stat* totemUsedStat = gStats->get_itemsUsed(Item::VALIDgetId(Items::totemOfUndying));
     boost::shared_ptr<Player> self = boost::static_pointer_cast<Player>(shared_from_this());
     not_null_ptr<ItemInstance> totemInstance(new ItemInstance(Items::totemOfUndying));
-    arrayWithLength<unsigned char> totemUsedParameters =
-        GenericStats::param_itemsUsed(self, totemInstance);
+    arrayWithLength<unsigned char> totemUsedParameters = GenericStats::param_itemsUsed(self, totemInstance);
     awardStat(totemUsedStat, totemUsedParameters);
     return true;
 }

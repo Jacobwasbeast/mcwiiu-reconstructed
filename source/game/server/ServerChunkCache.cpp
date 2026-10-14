@@ -63,7 +63,8 @@ ServerChunkCache::~ServerChunkCache()
     }
     delete m_unloadedCache;
 
-    for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(), end = m_loadedChunkList.end(); it != end; ++it)
+    for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(), end = m_loadedChunkList.end(); it != end;
+         ++it)
     {
         delete *it;
     }
@@ -236,8 +237,8 @@ LevelChunk* ServerChunkCache::updateCacheAndPostProcess(int x, int z, LevelChunk
 
     int idx = computeIdx(x, z);
     if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]),
-                                          reinterpret_cast<long>(chunk),
-                                          reinterpret_cast<long>(previous)) == reinterpret_cast<long>(previous))
+                                          reinterpret_cast<long>(chunk), reinterpret_cast<long>(previous))
+        == reinterpret_cast<long>(previous))
     {
         EnterCriticalSection(&m_csLoadCreate);
 
@@ -254,28 +255,27 @@ LevelChunk* ServerChunkCache::updateCacheAndPostProcess(int x, int z, LevelChunk
 
         if (allowEmpty)
         {
-            if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 && hasChunk(x + 1, z + 1) &&
-                hasChunk(x, z + 1) && hasChunk(x + 1, z))
+            if ((chunk->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 && hasChunk(x + 1, z + 1)
+                && hasChunk(x, z + 1) && hasChunk(x + 1, z))
             {
                 gMinecraftServer->addPostProcessRequest(this, m_source, x, z);
             }
-            if (hasChunk(x - 1, z) && (getChunk(x - 1, z)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
-                hasChunk(x - 1, z + 1) && hasChunk(x, z + 1) && hasChunk(x - 1, z))
+            if (hasChunk(x - 1, z) && (getChunk(x - 1, z)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0
+                && hasChunk(x - 1, z + 1) && hasChunk(x, z + 1) && hasChunk(x - 1, z))
             {
                 gMinecraftServer->addPostProcessRequest(this, m_source, x - 1, z);
             }
-            if (hasChunk(x, z - 1) && (getChunk(x, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
-                hasChunk(x + 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x + 1, z))
+            if (hasChunk(x, z - 1) && (getChunk(x, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0
+                && hasChunk(x + 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x + 1, z))
             {
                 gMinecraftServer->addPostProcessRequest(this, m_source, x, z - 1);
             }
-            if (hasChunk(x - 1, z - 1) &&
-                (getChunk(x - 1, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0 &&
-                hasChunk(x - 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x - 1, z))
+            if (hasChunk(x - 1, z - 1)
+                && (getChunk(x - 1, z - 1)->mChunkFlags & LevelChunk::TERRAIN_POPULATED_SELF) == 0
+                && hasChunk(x - 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x - 1, z))
             {
                 gMinecraftServer->addPostProcessRequest(this, m_source, x - 1, z - 1);
             }
-        
         }
         else
         {
@@ -536,7 +536,8 @@ bool ServerChunkCache::save(bool force, ProgressListener* progressListener)
     int saveTotal = 0;
     if (progressListener != NULL)
     {
-        for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(), end = m_loadedChunkList.end(); it != end; ++it)
+        for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(), end = m_loadedChunkList.end();
+             it != end; ++it)
         {
             if ((*it)->shouldSave(force))
             {
@@ -649,7 +650,8 @@ bool ServerChunkCache::tick()
             saveEntities(chunk);
             chunk->unload(true, true);
 
-            std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(), chunk);
+            std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(),
+                                                              chunk);
             if (it != m_loadedChunkList.end())
             {
                 m_loadedChunkList.erase(it);

@@ -55,10 +55,7 @@ struct TickNextTickDataKeyCompare
 
 struct TickNextTickDataKeyHash
 {
-    std::size_t operator()(const TickNextTickData& data) const
-    {
-        return TickNextTickData::hash_fnct(data);
-    }
+    std::size_t operator()(const TickNextTickData& data) const { return TickNextTickData::hash_fnct(data); }
 };
 
 struct TickNextTickDataKeyEq
@@ -145,7 +142,7 @@ public:
     EntityTracker* getTracker();
     ChunkSource* getChunkSource();
     std::vector<boost::shared_ptr<BlockEntity> >* getBlockEntitiesInRegion(int x0, int y0, int z0, int x1, int y1,
-                                                                          int z1);
+                                                                           int z1);
     PlayerChunkMap* getChunkMap();
     BlockPos* getDimensionSpecificSpawn();
     PortalForcer* getPortalForcer();
@@ -176,14 +173,14 @@ public:
                        boost::shared_ptr<ClientboundLevelParticlesPacket> packet);
     void sendParticles(const ParticleType* type, bool longDistance, double x, double y, double z, int count,
                        double xDist, double yDist, double zDist, double maxSpeed, arrayWithLength<int> params);
-    void sendParticles(const ParticleType* type, double x, double y, double z, int count, double xDist,
-                       double yDist, double zDist, double maxSpeed, arrayWithLength<int> params);
-    void sendParticles(const ParticleType* type, double x, double y, double z, int count, double xDist,
-                       double yDist, double zDist, double maxSpeed, arrayWithLength<int> params, double xAux,
-                       double yAux, double zAux);
-    void sendParticles(boost::shared_ptr<ServerPlayer> player, const ParticleType* type, bool longDistance,
-                       double x, double y, double z, int count, double xDist, double yDist, double zDist,
-                       double maxSpeed, arrayWithLength<int> params);
+    void sendParticles(const ParticleType* type, double x, double y, double z, int count, double xDist, double yDist,
+                       double zDist, double maxSpeed, arrayWithLength<int> params);
+    void sendParticles(const ParticleType* type, double x, double y, double z, int count, double xDist, double yDist,
+                       double zDist, double maxSpeed, arrayWithLength<int> params, double xAux, double yAux,
+                       double zAux);
+    void sendParticles(boost::shared_ptr<ServerPlayer> player, const ParticleType* type, bool longDistance, double x,
+                       double y, double z, int count, double xDist, double yDist, double zDist, double maxSpeed,
+                       arrayWithLength<int> params);
     boost::shared_ptr<Entity> getEntityByUUID(const std::wstring& uuid);
     bool isEntityIdInUse(int id);
     boost::shared_ptr<Player> getPlayer(const PlayerUID& uid) const;
