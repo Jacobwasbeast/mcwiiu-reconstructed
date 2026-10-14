@@ -252,19 +252,19 @@ void ServerPlayer::setAllContainerData(AbstractContainerMenu* menu, boost::share
 
 void ServerPlayer::flagEntitiesToBeRemoved(uint32_t* removedFlags, bool* flagsInitialised)
 {
-    if (removedFlags == NULL || flagsInitialised == NULL || mEntitiesToRemove.empty())
-        return;
-    if (!*flagsInitialised)
+    if (!mEntitiesToRemove.empty())
     {
-        *flagsInitialised = true;
-        std::memset(removedFlags, 0, 0x40);
-    }
-    for (std::vector<int32_t>::const_iterator it = mEntitiesToRemove.begin();
-         it != mEntitiesToRemove.end(); ++it)
-    {
-        const uint32_t id = static_cast<uint32_t>(*it);
-        if (id < 0x800)
-            removedFlags[id >> 5] |= 0x80000000U >> (id & 0x1f);
+        if (!*flagsInitialised)
+        {
+            *flagsInitialised = true;
+            std::memset(removedFlags, 0, sizeof(Entity::sSmallIdsToRemove));
+        }
+        for (std::vector<int32_t>::iterator it = mEntitiesToRemove.begin(); it != mEntitiesToRemove.end(); ++it)
+        {
+            int id = *it;
+            if (id < 2048)
+                removedFlags[id / 32] |= 0x80000000 >> (id % 32);
+        }
     }
 }
 
@@ -468,14 +468,8 @@ void ServerPlayer::doChunkSendingTick(bool dontDelay, bool historyOnly)
 
 void ServerPlayer::doTickB()
 {
-    processDimensionDelay();
-
-    const float health = getHealth();
-    const int food = mFoodData.getFoodLevel();
-    const float saturation = mFoodData.getSaturationLevel();
-    const bool saturationIsZero = saturation == 0.0f;
-    if (health != mLastSentHealth || food != mLastSentFood ||
-        saturationIsZero != mLastSentSaturationWasZero)
+    if (getHealth() != mLastSentHealth || mLastSentFood != mFoodData.getFoodLevel() ||
+        (mFoodData.getSaturationLevel() == 0.0f) != mLastSentSaturationWasZero)
     {
         if ((getKillCredit() != NULL && !eTYPE_DERIVED_FROM(EntityType::PLAYER, getKillCredit()->GetType()))
             || getKillCredit() == NULL)
@@ -483,19 +477,25 @@ void ServerPlayer::doTickB()
         TelemetryDamageSource damageSource = {
             static_cast<ETelemetryChallenges>(mPvpState), mCauseOfDeathId, mPlayerWeaponId
         };
-        mConnection->send(boost::shared_ptr<Packet>(
-            new ClientboundSetHealthPacket(health, food, saturation, damageSource)));
-        mLastSentHealth = health;
-        mLastSentFood = food;
-        mLastSentSaturationWasZero = saturationIsZero;
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetHealthPacket(
+            getHealth(), mFoodData.getFoodLevel(), mFoodData.getSaturationLevel(), damageSource)));
+        mLastSentHealth = getHealth();
+        mLastSentFood = mFoodData.getFoodLevel();
+        mLastSentSaturationWasZero = mFoodData.getSaturationLevel() == 0.0f;
     }
 
-    mLastRecordedHealth = health + getAbsorptionAmount();
-    mLastRecordedFood = food;
-    mLastRecordedAir = getAirSupply();
-    mLastRecordedArmor = getArmorValue();
-    mLastRecordedTotalExperience = mTotalExperience;
-    mLastRecordedExperienceLevel = mExperienceLevel;
+    if (getHealth() + getAbsorptionAmount() != mLastRecordedHealth)
+        mLastRecordedHealth = getHealth() + getAbsorptionAmount();
+    if (mFoodData.getFoodLevel() != mLastRecordedFood)
+        mLastRecordedFood = mFoodData.getFoodLevel();
+    if (getAirSupply() != mLastRecordedAir)
+        mLastRecordedAir = getAirSupply();
+    if (getArmorValue() != mLastRecordedArmor)
+        mLastRecordedArmor = getArmorValue();
+    if (mTotalExperience != mLastRecordedTotalExperience)
+        mLastRecordedTotalExperience = mTotalExperience;
+    if (mExperienceLevel != mLastRecordedExperienceLevel)
+        mLastRecordedExperienceLevel = mExperienceLevel;
 
     if (mTotalExperience != mLastSentTotalExperience)
     {
@@ -1098,14 +1098,11 @@ uint32_t ServerPlayer::canHarmPlayer(boost::shared_ptr<Player> wstring)
 
 bool ServerPlayer::canHarmPlayer(std::wstring wstring)
 {
-    const bool permittedByBase = Player::canHarmPlayer(wstring);
-    boost::shared_ptr<ServerPlayer> target =
-        mServer->getPlayers()->getPlayerByName(wstring);
-    if (target == NULL)
-        return false;
-    if (!permittedByBase)
-        return false;
-    return canHarmPlayer(boost::static_pointer_cast<Player>(target));
+    bool canHarm = Player::canHarmPlayer(wstring);
+    boost::shared_ptr<ServerPlayer> target = mServer->getPlayers()->getPlayerByName(wstring);
+    if (target != NULL)
+        canHarm = canHarm && canHarmPlayer(boost::shared_ptr<Player>(target));
+    return canHarm;
 }
 
 void ServerPlayer::addEffect(MobEffectInstance* effectInstance, const boost::shared_ptr<Entity>& source)

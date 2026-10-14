@@ -432,7 +432,7 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItem(boost::share
     {
         boost::shared_ptr<ServerPlayer> serverPlayer =
             boost::static_pointer_cast<ServerPlayer>(player);
-        serverPlayer->refreshContainer(serverPlayer->mContainerMenu);
+        serverPlayer->refreshContainer(serverPlayer->mInventoryMenu);
     }
 
     return result;
