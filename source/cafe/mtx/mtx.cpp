@@ -134,11 +134,11 @@ u32 ASM_MTXInvXpose(const Mtx src, Mtx invX)
     {
         m = invX;
     }
-    det = ((((src[2][1] * (src[0][2] * src[1][0])) +
-             ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2])))) -
-            (src[0][2] * (src[2][0] * src[1][1]))) -
-           (src[2][2] * (src[1][0] * src[0][1]))) -
-          (src[1][2] * (src[0][0] * src[2][1]));
+    det = ((((src[2][1] * (src[0][2] * src[1][0]))
+             + ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2]))))
+            - (src[0][2] * (src[2][0] * src[1][1])))
+           - (src[2][2] * (src[1][0] * src[0][1])))
+          - (src[1][2] * (src[0][0] * src[2][1]));
     if (0 == det)
     {
         return 0;
@@ -181,11 +181,11 @@ u32 ASM_MTXInverse(const Mtx src, Mtx inv)
     {
         m = inv;
     }
-    det = ((((src[2][1] * (src[0][2] * src[1][0])) +
-             ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2])))) -
-            (src[0][2] * (src[2][0] * src[1][1]))) -
-           (src[2][2] * (src[1][0] * src[0][1]))) -
-          (src[1][2] * (src[0][0] * src[2][1]));
+    det = ((((src[2][1] * (src[0][2] * src[1][0]))
+             + ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2]))))
+            - (src[0][2] * (src[2][0] * src[1][1])))
+           - (src[2][2] * (src[1][0] * src[0][1])))
+          - (src[1][2] * (src[0][0] * src[2][1]));
     if (0 == det)
     {
         return 0;
@@ -556,11 +556,11 @@ u32 C_MTXInvXpose(const Mtx src, Mtx invX)
     {
         m = invX;
     }
-    det = ((((src[2][1] * (src[0][2] * src[1][0])) +
-             ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2])))) -
-            (src[0][2] * (src[2][0] * src[1][1]))) -
-           (src[2][2] * (src[1][0] * src[0][1]))) -
-          (src[1][2] * (src[0][0] * src[2][1]));
+    det = ((((src[2][1] * (src[0][2] * src[1][0]))
+             + ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2]))))
+            - (src[0][2] * (src[2][0] * src[1][1])))
+           - (src[2][2] * (src[1][0] * src[0][1])))
+          - (src[1][2] * (src[0][0] * src[2][1]));
     if (0 == det)
     {
         return 0;
@@ -603,11 +603,11 @@ u32 C_MTXInverse(const Mtx src, Mtx inv)
     {
         m = inv;
     }
-    det = ((((src[2][1] * (src[0][2] * src[1][0])) +
-             ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2])))) -
-            (src[0][2] * (src[2][0] * src[1][1]))) -
-           (src[2][2] * (src[1][0] * src[0][1]))) -
-          (src[1][2] * (src[0][0] * src[2][1]));
+    det = ((((src[2][1] * (src[0][2] * src[1][0]))
+             + ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2]))))
+            - (src[0][2] * (src[2][0] * src[1][1])))
+           - (src[2][2] * (src[1][0] * src[0][1])))
+          - (src[1][2] * (src[0][0] * src[2][1]));
     if (0 == det)
     {
         return 0;
@@ -636,8 +636,7 @@ u32 C_MTXInverse(const Mtx src, Mtx inv)
     return 1;
 }
 
-void C_MTXLightFrustum(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 scaleS, f32 scaleT, f32 transS,
-                       f32 transT)
+void C_MTXLightFrustum(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 scaleS, f32 scaleT, f32 transS, f32 transT)
 {
     f32 tmp;
 
@@ -1057,11 +1056,11 @@ u32 PSMTXInvXpose(const Mtx src, Mtx invX)
     {
         m = invX;
     }
-    det = ((((src[2][1] * (src[0][2] * src[1][0])) +
-             ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2])))) -
-            (src[0][2] * (src[2][0] * src[1][1]))) -
-           (src[2][2] * (src[1][0] * src[0][1]))) -
-          (src[1][2] * (src[0][0] * src[2][1]));
+    det = ((((src[2][1] * (src[0][2] * src[1][0]))
+             + ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2]))))
+            - (src[0][2] * (src[2][0] * src[1][1])))
+           - (src[2][2] * (src[1][0] * src[0][1])))
+          - (src[1][2] * (src[0][0] * src[2][1]));
     if (0 == det)
     {
         return 0;
@@ -1104,11 +1103,11 @@ u32 PSMTXInverse(const Mtx src, Mtx inv)
     {
         m = inv;
     }
-    det = ((((src[2][1] * (src[0][2] * src[1][0])) +
-             ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2])))) -
-            (src[0][2] * (src[2][0] * src[1][1]))) -
-           (src[2][2] * (src[1][0] * src[0][1]))) -
-          (src[1][2] * (src[0][0] * src[2][1]));
+    det = ((((src[2][1] * (src[0][2] * src[1][0]))
+             + ((src[2][2] * (src[0][0] * src[1][1])) + (src[2][0] * (src[0][1] * src[1][2]))))
+            - (src[0][2] * (src[2][0] * src[1][1])))
+           - (src[2][2] * (src[1][0] * src[0][1])))
+          - (src[1][2] * (src[0][0] * src[2][1]));
     if (0 == det)
     {
         return 0;
