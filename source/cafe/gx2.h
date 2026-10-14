@@ -18,14 +18,13 @@ void GX2InitDepthBufferRegs(GX2DepthBuffer* depthBuffer);
 void GX2InitSampler(GX2Sampler* sampler, GX2TexClampMode clampAll, GX2TexXYFilterType minMagFilter);
 void GX2InitSamplerLOD(GX2Sampler* sampler, f32 minLod, f32 maxLod, f32 lodBias);
 u32 GX2CalcFetchShaderSizeEx(u32 numAttribs, GX2FetchShaderType type, GX2TessellationMode tessellationMode);
-void GX2InitFetchShaderEx(GX2FetchShader* fetchShader, void* shaderPtr, u32 numAttribs,
-                          const GX2AttribStream* attribs, GX2FetchShaderType type,
-                          GX2TessellationMode tessellationMode);
+void GX2InitFetchShaderEx(GX2FetchShader* fetchShader, void* shaderPtr, u32 numAttribs, const GX2AttribStream* attribs,
+                          GX2FetchShaderType type, GX2TessellationMode tessellationMode);
 void GX2SetupContextStateEx(GX2ContextState* contextState, GX2Boolean enableProfiling);
 void GX2SetContextState(const GX2ContextState* contextState);
 void GX2SetDefaultState(void);
-void GX2SetShaderModeEx(GX2ShaderMode mode, u32 numVsGprs, u32 numVsStackEntries, u32 numGsGprs,
-                        u32 numGsStackEntries, u32 numPsGprs, u32 numPsStackEntries);
+void GX2SetShaderModeEx(GX2ShaderMode mode, u32 numVsGprs, u32 numVsStackEntries, u32 numGsGprs, u32 numGsStackEntries,
+                        u32 numPsGprs, u32 numPsStackEntries);
 void GX2SetFetchShader(const GX2FetchShader* fetchShader);
 void GX2SetVertexShader(const GX2VertexShader* vertexShader);
 void GX2SetPixelShader(const GX2PixelShader* pixelShader);
@@ -41,14 +40,12 @@ void GX2SetDepthBuffer(const GX2DepthBuffer* depthBuffer);
 void GX2SetViewport(f32 originX, f32 originY, f32 width, f32 height, f32 nearZ, f32 farZ);
 void GX2SetScissor(u32 left, u32 top, u32 width, u32 height);
 void GX2SetAlphaTest(GX2Boolean alphaTestEnable, GX2CompareFunction alphaFunc, f32 ref);
-void GX2SetDepthOnlyControl(GX2Boolean depthEnable, GX2Boolean depthWriteEnable,
-                            GX2CompareFunction depthFunc);
+void GX2SetDepthOnlyControl(GX2Boolean depthEnable, GX2Boolean depthWriteEnable, GX2CompareFunction depthFunc);
 void GX2SetCullOnlyControl(GX2FrontFaceMode frontFaceMode, GX2Boolean cullFront, GX2Boolean cullBack);
 void GX2SetColorControl(GX2LogicOp logicOp, u8 blendEnableMask, GX2Boolean multiWriteEnable,
                         GX2Boolean colorBufferEnable);
-void GX2SetBlendControl(GX2RenderTarget target, GX2BlendFunction colorSrcBlend,
-                        GX2BlendFunction colorDstBlend, GX2BlendCombine colorCombine,
-                        GX2Boolean separateAlphaBlend, GX2BlendFunction alphaSrcBlend,
+void GX2SetBlendControl(GX2RenderTarget target, GX2BlendFunction colorSrcBlend, GX2BlendFunction colorDstBlend,
+                        GX2BlendCombine colorCombine, GX2Boolean separateAlphaBlend, GX2BlendFunction alphaSrcBlend,
                         GX2BlendFunction alphaDstBlend, GX2BlendCombine alphaCombine);
 void GX2SetTargetChannelMasks(GX2ChannelMask target0, GX2ChannelMask target1, GX2ChannelMask target2,
                               GX2ChannelMask target3, GX2ChannelMask target4, GX2ChannelMask target5,
@@ -57,8 +54,7 @@ void GX2DrawEx(GX2PrimitiveType mode, u32 count, u32 firstVertex, u32 numInstanc
 void GX2DrawIndexedEx(GX2PrimitiveType mode, u32 count, GX2IndexFormat indexFormat, const void* indexPtr,
                       u32 baseVertex, u32 numInstances);
 void GX2ClearColor(GX2ColorBuffer* colorBuffer, f32 red, f32 green, f32 blue, f32 alpha);
-void GX2ClearDepthStencilEx(GX2DepthBuffer* depthBuffer, f32 depthValue, u8 stencilValue,
-                            GX2ClearMode clearMode);
+void GX2ClearDepthStencilEx(GX2DepthBuffer* depthBuffer, f32 depthValue, u8 stencilValue, GX2ClearMode clearMode);
 void GX2Init(u32* initAttribs);
 void GX2Shutdown(void);
 void GX2Flush(void);
@@ -68,8 +64,8 @@ void GX2SetSwapInterval(u32 swapInterval);
 u64 GX2GetLastSubmittedTimeStamp(void);
 GX2Boolean GX2WaitTimeStamp(u64 timeStamp);
 GX2TVScanMode GX2GetSystemTVScanMode(void);
-void GX2CalcTVSize(GX2TVRenderMode tvRenderMode, GX2SurfaceFormat format, GX2BufferingMode bufferingMode,
-                   u32* size, GX2Boolean* scaleNeeded);
+void GX2CalcTVSize(GX2TVRenderMode tvRenderMode, GX2SurfaceFormat format, GX2BufferingMode bufferingMode, u32* size,
+                   GX2Boolean* scaleNeeded);
 void GX2CalcDRCSize(GX2DRCMode drcMode, GX2SurfaceFormat format, GX2BufferingMode bufferingMode, u32* size,
                     GX2Boolean* scaleNeeded);
 void GX2SetTVBuffer(void* buffer, u32 size, GX2TVRenderMode tvRenderMode, GX2SurfaceFormat format,
@@ -89,15 +85,13 @@ void GX2InitSamplerXYFilter(GX2Sampler* sampler, GX2TexXYFilterType magFilter, G
 void GX2InitSamplerZMFilter(GX2Sampler* sampler, GX2TexZFilterType zFilter, GX2TexMipFilterType mipFilter);
 void GX2SetVertexTexture(const GX2Texture* texture, u32 unit);
 void GX2SetVertexSampler(const GX2Sampler* sampler, u32 unit);
-void GX2SetDepthStencilControl(GX2Boolean depthEnable, GX2Boolean depthWriteEnable,
-                               GX2CompareFunction depthFunc, GX2Boolean stencilTestEnable,
-                               GX2Boolean backStencilEnable, GX2CompareFunction frontStencilFunc,
-                               GX2StencilFunction frontStencilZPass, GX2StencilFunction frontStencilZFail,
-                               GX2StencilFunction frontStencilFail, GX2CompareFunction backStencilFunc,
-                               GX2StencilFunction backStencilZPass, GX2StencilFunction backStencilZFail,
-                               GX2StencilFunction backStencilFail);
-void GX2SetStencilMask(u8 preMaskFront, u8 writeMaskFront, u8 refFront, u8 preMaskBack, u8 writeMaskBack,
-                       u8 refBack);
+void GX2SetDepthStencilControl(GX2Boolean depthEnable, GX2Boolean depthWriteEnable, GX2CompareFunction depthFunc,
+                               GX2Boolean stencilTestEnable, GX2Boolean backStencilEnable,
+                               GX2CompareFunction frontStencilFunc, GX2StencilFunction frontStencilZPass,
+                               GX2StencilFunction frontStencilZFail, GX2StencilFunction frontStencilFail,
+                               GX2CompareFunction backStencilFunc, GX2StencilFunction backStencilZPass,
+                               GX2StencilFunction backStencilZFail, GX2StencilFunction backStencilFail);
+void GX2SetStencilMask(u8 preMaskFront, u8 writeMaskFront, u8 refFront, u8 preMaskBack, u8 writeMaskBack, u8 refBack);
 void GX2SetPolygonControl(GX2FrontFaceMode frontFaceMode, GX2Boolean cullFront, GX2Boolean cullBack,
                           GX2Boolean enablePolygonModes, GX2PolygonMode polygonModeFront,
                           GX2PolygonMode polygonModeBack, GX2Boolean polyOffsetFrontEnable,
@@ -119,8 +113,8 @@ inline GX2InvalidateType operator|(GX2InvalidateType a, GX2InvalidateType b)
 }
 #endif
 
-inline void GX2InitTexture(GX2Texture* texture, u32 width, u32 height, u32 depth, u32 numMips,
-                           GX2SurfaceFormat format, GX2SurfaceDim dim)
+inline void GX2InitTexture(GX2Texture* texture, u32 width, u32 height, u32 depth, u32 numMips, GX2SurfaceFormat format,
+                           GX2SurfaceDim dim)
 {
     const u32 compSel[54] = {
         GX2_COMP_SEL_NONE, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE,
@@ -245,11 +239,11 @@ inline void GX2InitDepthBufferPtr(GX2DepthBuffer* depthBuffer, void* ptr)
 inline void GX2InitAttribStream(GX2AttribStream* attribStream, u32 location, u32 buffer, u32 offset,
                                 GX2AttribFormat format)
 {
-    const u32 destSel[20] = {
-        GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01,
-        GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZ1,
-        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZW,
-        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW};
+    const u32 destSel[20] = {GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001,
+                             GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01,
+                             GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW,
+                             GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW,
+                             GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW};
     attribStream->location = location;
     attribStream->buffer = buffer;
     attribStream->offset = offset;
@@ -262,8 +256,7 @@ inline void GX2InitAttribStream(GX2AttribStream* attribStream, u32 location, u32
 
 inline u32 GX2CalcFetchShaderSize(u32 numAttribs)
 {
-    return GX2CalcFetchShaderSizeEx(numAttribs, GX2_FETCH_SHADER_TESSELATION_NONE,
-                                    GX2_TESSELLATION_MODE_DISCRETE);
+    return GX2CalcFetchShaderSizeEx(numAttribs, GX2_FETCH_SHADER_TESSELATION_NONE, GX2_TESSELLATION_MODE_DISCRETE);
 }
 
 inline void GX2InitFetchShader(GX2FetchShader* fetchShader, void* shaderPtr, u32 numAttribs,
@@ -298,8 +291,7 @@ inline void GX2DrawIndexed(GX2PrimitiveType mode, u32 count, GX2IndexFormat inde
 
 inline void GX2ClearDepthStencil(GX2DepthBuffer* depthBuffer, GX2ClearMode clearMode)
 {
-    GX2ClearDepthStencilEx(depthBuffer, depthBuffer->clearDepth, static_cast<u8>(depthBuffer->clearStencil),
-                           clearMode);
+    GX2ClearDepthStencilEx(depthBuffer, depthBuffer->clearDepth, static_cast<u8>(depthBuffer->clearStencil), clearMode);
 }
 
 inline GX2UniformBlock* GX2GetVertexUniformBlock(const GX2VertexShader* shader, const char* name)

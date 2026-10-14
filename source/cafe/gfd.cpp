@@ -62,8 +62,7 @@ GX2Boolean _GFDCheckBlockHeaderMagicVersions(const GFDBlockHeader* blockHeader)
 
     if (blockHeader->majorVersion != GFD_BLOCK_HEADER_MAJOR_VERSION)
     {
-        COSWarn(COS_REPORT_MODULE_UNKNOWN_1, "Warning: Unsupported block version %d. \n",
-                blockHeader->majorVersion);
+        COSWarn(COS_REPORT_MODULE_UNKNOWN_1, "Warning: Unsupported block version %d. \n", blockHeader->majorVersion);
         return GX2_FALSE;
     }
 
@@ -159,8 +158,7 @@ u32 GFDCleanTag(u32 tag)
     return tag & GFD_TAG_MASK;
 }
 
-GX2Boolean _GFDRelocateBlockEx(GFDBlockRelocationHeader* relocationHeader, u32 fromOffset, u32 toOffset,
-                               u8* data)
+GX2Boolean _GFDRelocateBlockEx(GFDBlockRelocationHeader* relocationHeader, u32 fromOffset, u32 toOffset, u8* data)
 {
     u32 patchTableOffset = GFDCleanTag(relocationHeader->patchTableOffset);
     u32 patchTableSize = relocationHeader->patchTableSize;
