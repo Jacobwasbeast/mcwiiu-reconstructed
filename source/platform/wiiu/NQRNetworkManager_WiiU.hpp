@@ -38,6 +38,24 @@ namespace nn
     }
 }
 
+class CMatchMakeSearchParam
+{
+public:
+    enum EComparison
+    {
+        eComparison_Equal,
+        eComparison_NotEqual,
+        eComparison_LessThan,
+        eComparison_LessThanOrEqual,
+        eComparison_GreaterThan,
+        eComparison_GreaterThanOrEqual
+    };
+
+    unsigned int id;
+    unsigned int value;
+    unsigned int comparison;
+};
+
 class NQRNetworkManager_WiiU : public NQRNetworkManager
 {
     friend class NintendoVoiceChat_WiiU;
@@ -89,16 +107,12 @@ public:
 
     struct FriendSearchResult
     {
-        unsigned int ownerPrincipalId;
-        unsigned int ownerLocalFriendIndex;
-        char ownerName[17];
-        PresenceSyncInfo presence;
+        unsigned int friendPrincipalId;
+        unsigned int hostPrincipalId;
+        char friendAccountId[34];
         unsigned int sessionId;
         bool joinable;
-        unsigned char status[3];
         void* extData;
-
-        FriendSearchResult();
     };
 
     struct ConnectedStation
@@ -191,7 +205,7 @@ public:
     void UpdateRoomSyncUIDsFromPlayers();
     void RemoteDataSend(unsigned long long stationId, unsigned char channel, const void* data, unsigned int size);
     void SyncRoomData();
-    void RemoveRemotePlayersAndSync(unsigned long long stationId, int localIndex);
+    void RemoveRemotePlayersAndSync(unsigned long long stationId, int playerMask);
     void ClearSendQueue();
     void SetState(eNQRNetworkManagerInternalState state);
     void TickSendQueue();
@@ -233,6 +247,7 @@ public:
     void SetLocalPlayersAndSync();
     static void ClearIsHandlingBootInvite();
     static bool s_applicationConnected;
+    static bool s_piaShutdownPending;
     void SetNQRPresenceInfoFromExtData(PresenceSyncInfo* presenceInfo, void* extData);
     void UpdateRichPresenceCustomData(void* extData, unsigned int extDataSize);
     static void MatchmakingExtDataUpdatedCallback(bool success, void* context);
@@ -246,17 +261,17 @@ public:
     void SendJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason);
     void PollReceiveData();
     static void ShowErrorViewer();
-    void RemoveLocalClientPlayers(int userIndex);
+    void RemoveLocalClientPlayers(int playerMask);
     void ErrorHandlingTick();
     void TryToConnectOnline();
     void TickFromThread();
     void RunTickThread();
     static int TickThreadProc(void* context);
     void MallocAndSetExtDataFromNQRPresenceInfo(void** extData, PresenceSyncInfo* presenceInfo);
-    void UpdateFriendFromPresence(unsigned int friendIndex);
-    static void UpdateFriendFromPresence_callback(unsigned int friendIndex, void* context);
+    void UpdateFriendFromPresence(unsigned int principalId);
+    static void UpdateFriendFromPresence_callback(unsigned int principalId, void* context);
     unsigned int GetFriendsFromPresence();
-    static void GetFriendsThreadProc(void* context);
+    static int GetFriendsThreadProc(void* context);
     void ClearRichPresenceCustomData();
     void UpdateRemotePlay();
     void SendLeaveData(unsigned int playerMask);
@@ -336,12 +351,12 @@ private:
     int m_pendingUserMask;
     unsigned char m_unknown120C[0x10];
     OSFastMutex m_playerConnectionMutex;
-    int m_friendSearchBusy;
+    eNQRNetworkManagerFriendSearchState m_friendSearchState;
     unsigned char m_unknown124C[4];
     bool m_unknown1250;
     unsigned char m_unknown1251[7];
-    int m_unknown1258;
-    int m_unknown125C;
+    unsigned int m_friendPresenceCount;
+    C4JThreadImpl* m_friendSearchThread;
     OSFastMutex m_friendSearchMutex;
     unsigned char m_unknown128C[4];
     void (*m_extDataCallback)(bool, void*);
@@ -362,7 +377,7 @@ private:
     int m_unknown1378;
     bool m_unknown137C;
     bool m_updateRequested;
-    unsigned long long m_unknown1380;
+    long long m_lastSessionUpdateTime;
     bool m_createRequested;
     bool m_joinRequested;
     bool m_joinMatchmakeRequested;
@@ -379,14 +394,6 @@ private:
     unsigned long long m_lastRateControlledEvent;
     void* m_matchmakingExtData;
     unsigned char m_gameMode;
-    int m_lastNetworkError;
-    bool m_online;
-    int m_sessionId;
-    unsigned int m_roomPlayerMask;
-    int m_maxPlayers;
-    bool m_running;
-    unsigned int m_friendPresenceCount;
-    void* m_nexContext;
 };
 
 extern bool g_bGameBootInvitePending;

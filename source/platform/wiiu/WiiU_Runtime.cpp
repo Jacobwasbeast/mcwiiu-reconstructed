@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <new>
 
 #include <coreinit/filesystem.h>
 #include <coreinit/memdefaultheap.h>
@@ -90,49 +89,6 @@ void GetLocalTime(SYSTEMTIME* systemTime)
 {
     GetSystemTime(systemTime);
 }
-
-#if !defined(RECON_NATIVE)
-void* operator new(std::size_t size)
-{
-    if (size == 0)
-    {
-        size = 1;
-    }
-    for (;;)
-    {
-        void* address = std::malloc(size);
-        if (address != 0)
-        {
-            return address;
-        }
-        std::new_handler handler = std::set_new_handler(0);
-        std::set_new_handler(handler);
-        if (handler == 0)
-        {
-            return 0;
-        }
-        handler();
-    }
-}
-
-void operator delete(void* address) throw()
-{
-    if (address != 0)
-    {
-        std::free(address);
-    }
-}
-
-void* operator new[](std::size_t size)
-{
-    return ::operator new(size);
-}
-
-void operator delete[](void* address) throw()
-{
-    ::operator delete(address);
-}
-#endif
 
 void EnterCriticalSection(OSFastMutex* criticalSection)
 {

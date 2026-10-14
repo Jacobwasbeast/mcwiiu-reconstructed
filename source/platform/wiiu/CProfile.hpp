@@ -35,6 +35,14 @@ enum eUpsellResponse
     eUpsellResponse_None = 0
 };
 
+struct ProfileSignInEntry
+{
+    int quadrant;
+    MiiDataEntry* mii;
+    bool online;
+    bool guest;
+};
+
 class C_4JProfile
 {
 public:
@@ -51,14 +59,6 @@ public:
     typedef int (*RichPresenceSettingHandler)(const void*);
     typedef void (*UpsellHandler)(void*, eUpsellType, eUpsellResponse, int);
     typedef int (*SignInChoicesHandler)(int);
-
-    struct ProfileSignInEntry
-    {
-        int quadrant;
-        MiiDataEntry* mii;
-        bool online;
-        bool guest;
-    };
 
     virtual void Initialise(const void*, const void*, unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*) = 0;
     virtual int GetLockedProfile() = 0;
@@ -179,8 +179,6 @@ public:
 
     struct PROFILE_DETAILS
     {
-        static const unsigned int SIGN_OUT_CLEAR_SIZE = 20;
-
         PROFILE_DETAILS();
 
         bool signedIn;
@@ -486,7 +484,7 @@ private:
     UpsellHandler mUpsellHandler;
     void* mUpsellContext;
     eUpsellType mUpsellType;
-    int mUpsellQuadrant;
+    int mUpsellParam;
     unsigned int mRichPresenceData[14];
     boost::unordered_map<int, int> mPresenceContexts;
     boost::unordered_map<int, int> mPresenceStrings;

@@ -83,7 +83,7 @@ const char* SCIGetCountryCodeA2(unsigned int country)
 {
     if (country < 0x100 && SCIGetISOResource(sCountryCodeData, sizeof(sCountryCodeData), "country.txt") == 1)
     {
-        const char* end = sCountryCodeData + country * 3 + 2;
+        const char* end = sCountryCodeData + country * 3 - 1;
         while (*++end != '\0')
         {
         }
@@ -156,104 +156,73 @@ CProfile::CONTEXTVAL::CONTEXTVAL()
 }
 
 CProfile::CProfile()
-    : mMiiData(new MiiData()),
+    : mMiiData(new MiiData),
       mLoadedMiiData(mMiiData),
-      mFatalTrophyErrorId(0),
-      mProfileProcessState(eProfileProcessState_Idle),
-      mInitialisationData(0),
-      mPrimaryProfileReady(true),
-      mSignInChange(false),
-      mPrimaryPlayerChanged(false),
-      mSignInCountdown(0.0f),
-      mLastSignInTick(GetTickCount()),
-      mSignedInUserCount(0),
-      mSignedInUsersMask(0),
-      mRequestOnline(false),
-      mRequestGuest(false),
-      mRequestSubAccount(false),
-      mRequestForce(false),
-      mRequestTrial(false),
-      mRequestFromGame(false),
-      mRequestExtra(false),
-      mLockedProfile(-1),
-      mSignInUIHandler(NULL),
-      mSignInUIContext(NULL),
-      mSignInChoicesHandler(NULL),
-      mSignInChoicesPending(false),
-      mSignInChoicesAccepted(false),
-      mSignInChoice(0),
-      mSignInChoiceExtra(0),
-      mOfflineProfileHandler(NULL),
-      mOfflineProfileContext(NULL),
-      mOfflineProfileQuadrant(0),
-      mGetStringHandler(NULL),
-      mPlayerListTitleId(0),
-      mServiceId(NULL),
-      mMinimumAge(99),
-      mAccountReady(false),
-      mProfileReady(false),
-      mNetworkTicketReady(false),
-      mNetworkAvailable(false),
-      mNetworkStatus(false),
-      mNetworkStatusPending(false),
-      mFriendPresenceOnline(false),
-      mNetworkStateReserved(false),
-      mNetworkAccount(false),
-      mPrincipalId(0),
-      mFullVersion(false),
-      mLicenseState(false),
-      mUpsellFromTrial(false),
-      mSystemUIShowing(false),
-      mLeaderboardDisable(false),
-      mDebugFullOverride(false),
-      mPrimaryPad(0),
-      mLiveConnectionStatus(0),
-      mSignInChangeHandler(NULL),
-      mSignInChangeContext(NULL),
-      mProfileReadErrorHandler(NULL),
-      mProfileReadErrorContext(NULL),
-      mNotificationsHandler(NULL),
-      mNotificationsContext(NULL),
-      mUpsellHandler(NULL),
-      mUpsellContext(NULL),
-      mUpsellType(eUpsellType_None),
-      mUpsellQuadrant(0),
       mPresenceContexts(11),
       mPresenceStrings(11),
       mPresenceContextStrings(11),
-      mPresenceReserved(0),
-      mLastPresenceUpdate(0),
-      mLastGameModeUpdate(0),
-      mPresenceUpdatePending(false),
-      mPresenceUpdateDelay(false),
-      mGameModeUpdateReady(false),
-      mRichPresenceTitleId(0),
-      mRichPresenceState(0),
-      mRichPresenceSettingHandler(NULL),
-      mFriendPresenceHandler(NULL),
-      mFriendPresenceContext(NULL),
-      mRichPresenceStringHandler(NULL),
-      mAwardHandler(NULL),
-      mAwardContext(NULL),
-      mInitialisedSaveDirectories(0),
-      mAwardThreadStack(NULL),
-      mAwardThreadStackTop(NULL)
+      mInitialisedSaveDirectories(0)
 {
-    std::memset(&mAccountCreateId, 0, sizeof(mAccountCreateId));
-    std::memset(mNetworkAccountId, 0, sizeof(mNetworkAccountId));
+    gProfileInstance = this;
+    mProfileProcessState = eProfileProcessState_Idle;
+    mInitialisationData = 0;
+    mPrimaryProfileReady = true;
+    mPrimaryPlayerChanged = false;
+    mProfileFlowState[0] = 0;
+    mProfileFlowState[1] = 0;
+    mProfileFlowState[2] = 0;
+    mProfileFlowState[3] = 0;
+    SetSignInChange(false);
+    mSignInCountdown = 0.0f;
+    mLastSignInTick = GetTickCount();
+    mSignedInUserCount = 0;
+    mSignedInUsersMask = 0;
+    mRequestExtra = false;
+    mRequestOnline = false;
+    mRequestGuest = false;
+    mRequestSubAccount = false;
+    mRequestFromGame = false;
+    mLockedProfile = -1;
+    mProfileResult[0] = -1;
+    mProfileResult[1] = -1;
+    mProfileResult[2] = -1;
+    mProfileResult[3] = -1;
+    mProfileResult[5] = -1;
+    mProfileResult[6] = -1;
+    mProfileResult[7] = -1;
+    mProfileResult[8] = -1;
+    mProfileResult[9] = -1;
+    mProfileResult[10] = -1;
+    mProfileResult[11] = -1;
+    mProfileResult[12] = -1;
+    mGetStringHandler = NULL;
+    mParentalControlPending = false;
+    mParentalControlState[0] = 0;
+    mParentalControlState[1] = 0;
+    mParentalControlState[2] = 0;
+    mAccountSelectionPending = false;
+    mAccountSelectionState[0] = 0;
+    mAccountSelectionState[1] = 0;
+    mAccountSelectionState[2] = 0;
+    mAccountResult[0] = 0;
+    mAccountResult[1] = 0;
+    mAccountResult[2] = 0;
+    mAccountResult[3] = 0;
     std::memset(mParentalControls, 0, sizeof(mParentalControls));
-    std::memset(mProfileResult, 0, sizeof(mProfileResult));
-    std::memset(mPrimaryState, 0, sizeof(mPrimaryState));
-    std::memset(mRichPresenceData, 0, sizeof(mRichPresenceData));
-    std::memset(&mGameMode, 0, sizeof(mGameMode));
-    std::memset(mCurrentGameActivity, 0, sizeof(mCurrentGameActivity));
-    std::memset(mAchievementsByPad, 0, sizeof(mAchievementsByPad));
+    mSignInChoicesPending = false;
+    mSignInChoice = 0;
+    mSignInChoiceExtra = 0;
+    mServiceId = NULL;
+    mMinimumAge = 99;
+    mAccountReady = false;
+    mProfileReady = false;
+    mNetworkAvailable = false;
+    mNetworkStatus = false;
+    mFriendPresenceOnline = false;
     InitializeCriticalSection(&mProfileCriticalSection);
     InitializeCriticalSection(&mInitSaveDirCriticalSection);
-    mLoadedMiiData->mSysUserMiis = mMiiData->mSysUserMiis;
-    mLoadedMiiData->mGuestMiis = mMiiData->mGuestMiis;
-    mLoadedMiiData->mMiiMakerMiis = mMiiData->mMiiMakerMiis;
-    gProfileInstance = this;
+    mMiiData = new MiiData;
+    *mLoadedMiiData = *mMiiData;
     SystemOnCreate();
     AwardManagerOnCreate();
     RichPresenceOnCreate();
@@ -490,15 +459,21 @@ void CProfile::StartTrialGame()
 
 void CProfile::AllowedPlayerCreatedContent(int quadrant, bool singlePlayer, int* allowed, int* communicationAllowed)
 {
-    bool result = true;
-    int first = singlePlayer ? quadrant : 0;
-    int last = singlePlayer ? quadrant + 1 : 4;
-    for (int player = first; player < last && result; ++player)
+    int result = true;
+    for (int player = 0; player < 4; ++player)
     {
-        if (IsSignedIn(player) && !IsSignedInLive(player))
+        if (!singlePlayer || player == quadrant)
         {
-            checkParentalControl(player);
-            result = !mParentalControls[player].communicationBlocked;
+            if (IsSignedIn(player) && !IsGuest(player))
+            {
+                bool contentRestricted = false;
+                GetChatAndContentRestrictions(player, true, NULL, &contentRestricted, NULL);
+                result = !contentRestricted;
+            }
+            if (!result)
+            {
+                break;
+            }
         }
     }
     *allowed = result;
@@ -507,17 +482,22 @@ void CProfile::AllowedPlayerCreatedContent(int quadrant, bool singlePlayer, int*
 
 bool CProfile::CanViewPlayerCreatedContent(int quadrant, bool singlePlayer, PlayerUID*, unsigned int)
 {
-    int first = singlePlayer ? quadrant : 0;
-    int last = singlePlayer ? quadrant + 1 : 4;
-    for (int player = first; player < last; ++player)
+    bool result = true;
+    for (int player = 0; player < 4; ++player)
     {
-        bool chat = true;
-        bool content = true;
-        GetChatAndContentRestrictions(player, true, &chat, &content, NULL);
-        if (!chat && !content)
-            return false;
+        if (!singlePlayer || player == quadrant)
+        {
+            int allowed = 1;
+            int communicationAllowed = 1;
+            AllowedPlayerCreatedContent(player, true, &allowed, &communicationAllowed);
+            if (!allowed && !communicationAllowed)
+            {
+                result = false;
+                break;
+            }
+        }
     }
-    return true;
+    return result;
 }
 
 bool CProfile::GetProfileAvatar(int quadrant, AvatarHandler handler, void* context)
@@ -653,7 +633,7 @@ void CProfile::Tick()
             if (mProfiles[quadrant].signedIn)
             {
                 mProfiles[quadrant].signedIn = false;
-                std::memset(&mProfiles[quadrant], 0, PROFILE_DETAILS::SIGN_OUT_CLEAR_SIZE);
+                std::memset(&mProfiles[quadrant], 0, sizeof(PROFILE_DETAILS));
                 g_pInputInstance->UnlockPad(quadrant);
             }
             SetSignInChange(true);
@@ -774,7 +754,7 @@ void CProfile::SetSignInChoicesCallback(SignInChoicesHandler handler)
     mSignInChoicesHandler = handler;
 }
 
-std::vector<CProfile::ProfileSignInEntry>* CProfile::GetSignInEntries()
+std::vector<ProfileSignInEntry>* CProfile::GetSignInEntries()
 {
     return &mSignInEntries;
 }
@@ -1145,18 +1125,18 @@ void CProfile::SetProfileReadErrorCallback(ProfileReadErrorHandler handler, void
     mProfileReadErrorContext = context;
 }
 
-void CProfile::SetUpsellType(eUpsellType type, int quadrant)
+void CProfile::SetUpsellType(eUpsellType type, int upsellParam)
 {
     mUpsellType = type;
-    mUpsellQuadrant = quadrant;
+    mUpsellParam = upsellParam;
 }
 
-void CProfile::DisplayFullVersionPurchase(bool fromTrial, int quadrant, int)
+void CProfile::DisplayFullVersionPurchase(bool fromTrial, int, int upsellParam)
 {
-    SetUpsellType(eUpsellType_None, quadrant);
+    SetUpsellType(eUpsellType_None, upsellParam);
     if (fromTrial)
         mUpsellFromTrial = true;
-    SetProfileProcessState(eProfileProcessState_Upsell);
+    gProfileInstance->SetProfileProcessState(eProfileProcessState_Upsell);
 }
 
 void CProfile::SetUpsellCallback(UpsellHandler handler, void* context)

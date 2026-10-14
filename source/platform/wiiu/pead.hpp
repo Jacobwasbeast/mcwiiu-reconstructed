@@ -2,11 +2,13 @@
 #define PLATFORM_WIIU_PEAD_HPP
 
 #include <climits>
+#include <limits>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
 
 #include <coreinit/core.h>
+#include <coreinit/fastmutex.h>
 #include <coreinit/memory.h>
 #include <coreinit/messagequeue.h>
 
@@ -50,6 +52,17 @@ public:
     {
         return OSBlockMove(destination, source, size, FALSE);
     }
+    static void* fill(void* destination, unsigned char value, unsigned int size)
+    {
+        return OSBlockSet(destination, value, size);
+    }
+};
+
+template<typename T> class MathCalcCommon
+{
+public:
+    static T maxNumber() { return std::numeric_limits<T>::max(); }
+    static T minNumber() { return std::numeric_limits<T>::is_integer ? std::numeric_limits<T>::min() : -std::numeric_limits<T>::max(); }
 };
 
 struct Endian
@@ -68,19 +81,21 @@ public:
     class iterator
     {
     public:
-        iterator(const T* current = 0) : mCurrent(current) {}
-        const T& operator*() const { return *mCurrent; }
+        explicit iterator(const SafeStringBase* string) : mString(string), mIndex(0) {}
+        iterator(const SafeStringBase* string, int index) : mString(string), mIndex(index) {}
+        const T& operator*() const { return mString->at(mIndex); }
         iterator& operator++()
         {
-            ++mCurrent;
+            ++mIndex;
             return *this;
         }
-        bool operator==(const iterator& other) const { return mCurrent == other.mCurrent; }
-        bool operator!=(const iterator& other) const { return mCurrent != other.mCurrent; }
-        const T* get() const { return mCurrent; }
+        bool operator==(const iterator& other) const { return mString == other.mString && mIndex == other.mIndex; }
+        bool operator!=(const iterator& other) const { return !(*this == other); }
+        int getIndex() const { return mIndex; }
 
     private:
-        const T* mCurrent;
+        const SafeStringBase* mString;
+        int mIndex;
     };
 
     SafeStringBase() : mStringTop(&cNullChar) {}
@@ -93,14 +108,8 @@ public:
         assureTerminationImpl_();
         return mStringTop;
     }
-    iterator begin() const { return iterator(mStringTop); }
-    iterator end() const
-    {
-        const T* end = mStringTop;
-        while (*end)
-            ++end;
-        return iterator(end);
-    }
+    iterator begin() const { return iterator(this, 0); }
+    iterator end() const { return iterator(this, calcLength()); }
     int calcLength() const
     {
         assureTerminationImpl_();
@@ -292,6 +301,19 @@ private:
 template<typename T> class BufferedSafeStringBase : public SafeStringBase<T>
 {
 public:
+    BufferedSafeStringBase(BufferedSafeStringBase<T>* original, int position)
+        : SafeStringBase<T>(original->getBuffer() + position), mBufferSize(0)
+    {
+        if (position < original->mBufferSize && position >= 0)
+        {
+            mBufferSize = original->mBufferSize - position;
+            assureTerminationImpl_();
+        }
+        else
+        {
+            this->mStringTop = 0;
+        }
+    }
     BufferedSafeStringBase(T* buffer, int size) : SafeStringBase<T>(buffer), mBufferSize(size)
     {
         if (size <= 0)
@@ -324,7 +346,7 @@ public:
         return this->mStringTop;
     }
     void clear() { getMutableStringTop_()[0] = SafeStringBase<T>::cNullChar; }
-    void copy(const SafeStringBase<T>& source, int length = -1);
+    int copy(const SafeStringBase<T>& source, int length = -1);
     int copyAt(int index, const SafeStringBase<T>& source, int length)
     {
         int currentLength = this->calcLength();
@@ -387,18 +409,19 @@ protected:
     int mBufferSize;
 };
 
-template<typename T> inline void BufferedSafeStringBase<T>::copy(const SafeStringBase<T>& source, int length)
+template<typename T> inline int BufferedSafeStringBase<T>::copy(const SafeStringBase<T>& source, int length)
 {
     T* buffer = getMutableStringTop_();
     const T* text = source.cstr();
     if (buffer == text)
-        return;
+        return 0;
     if (length < 0)
         length = source.calcLength();
     if (length >= mBufferSize)
         length = mBufferSize - 1;
     MemUtil::copy(buffer, text, length * sizeof(T));
     buffer[length] = SafeStringBase<T>::cNullChar;
+    return length;
 }
 
 template<> BufferedSafeStringBase<char>& BufferedSafeStringBase<char>::operator=(const SafeStringBase<char>& other);
@@ -689,7 +712,9 @@ public:
     int compare(const PtrArrayImpl&, int (*)(const void*, const void*)) const;
     void uniq(int (*)(const void*, const void*));
     int size() const { return mPtrNum; }
+    int maxSize() const { return mPtrNumMax; }
     bool isEmpty() const { return mPtrNum == 0; }
+    bool isBufferReady() const { return mPtrs != 0; }
 
 protected:
     int mPtrNum;
@@ -706,6 +731,7 @@ public:
             return static_cast<T*>(mPtrs[index]);
         return 0;
     }
+    T* unsafeAt(int index) const { return static_cast<T*>(mPtrs[index]); }
     T* back() const { return at(mPtrNum - 1); }
     void pushBack(T* value)
     {
@@ -719,6 +745,10 @@ public:
     {
         if (mPtrNum > 0)
             --mPtrNum;
+    }
+    template<typename Key> int binarySearch(const Key* key, int (*compare)(const T*, const Key*)) const
+    {
+        return PtrArrayImpl::binarySearch(key, reinterpret_cast<int (*)(const void*, const void*)>(compare));
     }
     T** begin() const { return reinterpret_cast<T**>(mPtrs); }
     T** end() const { return reinterpret_cast<T**>(mPtrs) + mPtrNum; }
@@ -776,10 +806,11 @@ public:
     virtual ~BufferReadStreamSrc();
 
 private:
-    const unsigned char* mBuffer;
-    unsigned int mSize;
-    unsigned int mPosition;
-    StreamSrc* mOriginalSrc;
+    StreamSrc* mSrc;
+    unsigned char* mBuffer;
+    unsigned int mBufferSize;
+    unsigned int mBufferEndPos;
+    unsigned int mBufferPos;
 };
 
 class BufferWriteStreamSrc : public StreamSrc
@@ -795,24 +826,43 @@ public:
     virtual ~BufferWriteStreamSrc();
 
 protected:
+    StreamSrc* mSrc;
     unsigned char* mBuffer;
     unsigned int mBufferSize;
-    unsigned int mPosition;
-    StreamSrc* mOriginalSrc;
+    unsigned int mBufferPos;
 };
 
 class BufferMultiByteTextWriteStreamSrc : public BufferWriteStreamSrc
 {
 public:
     BufferMultiByteTextWriteStreamSrc(StreamSrc*, void*, unsigned int);
-    virtual ~BufferMultiByteTextWriteStreamSrc();
+    virtual ~BufferMultiByteTextWriteStreamSrc() {}
     virtual unsigned int write(const void*, unsigned int);
+
+private:
+    enum
+    {
+        cUtf8MultiByteBit = 0x80,
+        cUtf8TrailMask = 0xc0,
+        cUtf8TrailBits = 0x80,
+        cUtf8Lead2Mask = 0xe0,
+        cUtf8Lead2Bits = 0xc0,
+        cUtf8Lead3Mask = 0xf0,
+        cUtf8Lead3Bits = 0xe0,
+        cUtf8Lead4Mask = 0xf8,
+        cUtf8Lead4Bits = 0xf0,
+        cUtf8MaxSequenceLength = 4
+    };
 };
 
 class BufferMultiByteNullTerminatedTextWriteStreamSrc : public BufferMultiByteTextWriteStreamSrc
 {
 public:
-    virtual ~BufferMultiByteNullTerminatedTextWriteStreamSrc();
+    BufferMultiByteNullTerminatedTextWriteStreamSrc(StreamSrc* src, void* buffer, unsigned int size)
+        : BufferMultiByteTextWriteStreamSrc(src, buffer, size)
+    {
+    }
+    virtual ~BufferMultiByteNullTerminatedTextWriteStreamSrc() {}
     virtual bool flush();
 };
 
@@ -921,6 +971,11 @@ public:
     virtual void flush(StreamSrc*);
 
 private:
+    enum
+    {
+        cValueTextLength = 32
+    };
+
     void getNextData_(StreamSrc*);
     FixedSafeString128 mSeparator;
 };
@@ -951,7 +1006,6 @@ protected:
     StreamFormat* mFormat;
     StreamSrc* mSrc;
     Endian::Types mEndian;
-    Modes mMode;
 };
 
 class ReadStream : public Stream
@@ -1070,6 +1124,14 @@ class Base64
 public:
     static void encode(char*, const void*, unsigned int, bool);
     static bool decode(void*, unsigned int, const char*, unsigned int, unsigned int*);
+
+private:
+    enum
+    {
+        cEncodedBlockSize = 4,
+        cPadding = 64,
+        cValueMask = cPadding - 1
+    };
 };
 
 class BitFlagUtil
@@ -1294,13 +1356,14 @@ public:
     void dump(StackSymbolResolver*);
 
 private:
-    unsigned int mStorage[11];
+    OSFastMutex mCriticalSectionInner;
 };
 
 class Heap : public IDisposer
 {
     friend class ExpHeap;
     friend class HeapMgr;
+    friend class PrintFormatter;
 
 public:
     enum HeapDirection
@@ -1406,6 +1469,8 @@ public:
 
 class ExpHeap : public Heap
 {
+    friend class PrintFormatter;
+
 public:
     enum FindMode
     {
@@ -1651,7 +1716,7 @@ public:
     bool tryLock();
 
 private:
-    unsigned int mStorage[11];
+    OSFastMutex mCriticalSectionInner;
 };
 
 template<typename Lock> class ScopedLock
@@ -1924,19 +1989,24 @@ public:
 class BufferingPrintOutput : public PrintOutput
 {
 public:
+    BufferingPrintOutput(StreamSrc* src, void* buffer, unsigned int size) : mStreamSrc(src, buffer, size) {}
     virtual ~BufferingPrintOutput();
     virtual void write(const char*, int);
+
+private:
+    BufferMultiByteNullTerminatedTextWriteStreamSrc mStreamSrc;
 };
 
 class StringPrintOutput : public PrintOutput
 {
 public:
-    StringPrintOutput(BufferedSafeStringBase<char>* string) : mString(string) {}
+    StringPrintOutput(BufferedSafeStringBase<char>* string) : mString(string), mPosition(0) {}
     virtual ~StringPrintOutput();
     virtual void write(const char*, int);
 
 protected:
     BufferedSafeStringBase<char>* mString;
+    int mPosition;
 };
 
 class StringCutOffPrintOutput : public StringPrintOutput
@@ -1978,7 +2048,12 @@ public:
     template<typename T> static void out(const T*, const char*, PrintOutput*);
 
 private:
-    void proceedToFormatMark_(char*);
+    enum
+    {
+        cMaxSpecifierLength = 30
+    };
+
+    bool proceedToFormatMark_(char*);
     const char* mFormat;
     PrintOutput* mOutput;
     int mPosition;
@@ -2094,9 +2169,31 @@ namespace StringUtil
     {
         struct OutBuffer16
         {
+            OutBuffer16(wchar_t* text, int size) : buffer(text), capacity(size), length(0), overflow(false) {}
+            void put(wchar_t character)
+            {
+                if (length < capacity)
+                    buffer[length++] = character;
+                else
+                    overflow = true;
+            }
+            void put(wchar_t character, unsigned int count)
+            {
+                for (; count != 0; --count)
+                {
+                    if (length >= capacity)
+                    {
+                        overflow = true;
+                        break;
+                    }
+                    buffer[length++] = character;
+                }
+            }
+
             wchar_t* buffer;
             int capacity;
             int length;
+            bool overflow;
         };
 
         class FormatParser16
@@ -2118,6 +2215,20 @@ namespace StringUtil
                 cSizeLong = 3,
                 cSizeLongLong = 4
             };
+            enum
+            {
+                cBaseOctal = 8,
+                cBaseDecimal = 10,
+                cBaseHexadecimal = 16,
+                cOctalDigitBits = 3,
+                cOctalDigitMask = 7,
+                cHexDigitBits = 4,
+                cHexDigitMask = 15,
+                cIntegerDigitBufferLength = 32,
+                cIntegerDigitCapacity = cIntegerDigitBufferLength - 1,
+                cPointerPrecision = 8,
+                cDefaultFloatPrecision = 6
+            };
 
             FormatParser16(va_list);
             void clear_();
@@ -2131,7 +2242,7 @@ namespace StringUtil
             void printFloat_(OutBuffer16*, wchar_t, bool);
             int execute(OutBuffer16*, const wchar_t*);
             template<typename T> static void printIntegerInverseString_(OutBuffer16*, unsigned int, bool, T);
-            template<typename T>
+            template<typename U, typename S, typename A>
             void printIntegerInverseStringFromArg_(OutBuffer16*, bool*, bool, unsigned int, bool);
             template<typename T> void printStringCore_(OutBuffer16*, const T*);
 
@@ -2141,7 +2252,28 @@ namespace StringUtil
             int mWidth;
             int mPrecision;
             bool mHasPrecision;
-            int mSize;
+            Size mSize;
+        };
+
+        template<typename T> struct UnsignedType
+        {
+            typedef T Type;
+        };
+        template<> struct UnsignedType<long long>
+        {
+            typedef unsigned long long Type;
+        };
+        template<> struct UnsignedType<int>
+        {
+            typedef unsigned int Type;
+        };
+        template<> struct UnsignedType<short>
+        {
+            typedef unsigned short Type;
+        };
+        template<> struct UnsignedType<signed char>
+        {
+            typedef unsigned char Type;
         };
 
         int checkAndConvertDecChar_(char);
@@ -2177,10 +2309,15 @@ void PrintV(const char*, va_list);
 void Print(const char*, ...);
 }
 
-int replaceStringImpl(char*, int*, int, const char*, int, const SafeStringBase<char>&,
-                      const SafeStringBase<char>&, bool*);
-int replaceStringImpl(wchar_t*, int*, int, const wchar_t*, int, const SafeStringBase<wchar_t>&,
-                      const SafeStringBase<wchar_t>&, bool*);
+template<typename T> inline bool isMatchString_(const T* text, const T* pattern, int length)
+{
+    for (int index = 0; index < length; ++index)
+    {
+        if (text[index] != pattern[index])
+            return false;
+    }
+    return true;
+}
 template<typename T>
 int replaceStringImpl_(T*, int*, int, const T*, int, const SafeStringBase<T>&, const SafeStringBase<T>&,
                        bool*);

@@ -40,6 +40,52 @@ static void ConnectCallbackAdapter(WPADChan channel, WPADError result)
 extern "C" int _SCIReadSysConfig(const char* key, unsigned int type, unsigned int size, void* value);
 int SCIGetSystemSettings(void* settings);
 
+enum
+{
+    SCI_CAFE_LANGUAGE_JAPANESE = 0,
+    SCI_CAFE_LANGUAGE_ENGLISH = 1,
+    SCI_CAFE_LANGUAGE_FRENCH = 2,
+    SCI_CAFE_LANGUAGE_GERMAN = 3,
+    SCI_CAFE_LANGUAGE_ITALIAN = 4,
+    SCI_CAFE_LANGUAGE_SPANISH = 5,
+    SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE = 6,
+    SCI_CAFE_LANGUAGE_KOREAN = 7,
+    SCI_CAFE_LANGUAGE_DUTCH = 8,
+    SCI_CAFE_LANGUAGE_PORTUGUESE = 9,
+    SCI_CAFE_LANGUAGE_RUSSIAN = 10,
+    SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE = 11
+};
+
+enum
+{
+    SCI_PLATFORM_REGION_JPN = 1,
+    SCI_PLATFORM_REGION_USA = 2,
+    SCI_PLATFORM_REGION_EUR = 4,
+    SCI_PLATFORM_REGION_CHN = 0x10,
+    SCI_PLATFORM_REGION_KOR = 0x20,
+    SCI_PLATFORM_REGION_TWN = 0x40
+};
+
+enum
+{
+    KEYBOARD_FLAG_QWERTY_US_ENG = 1 << 1,
+    KEYBOARD_FLAG_QWERTY_US_FRA = 1 << 2,
+    KEYBOARD_FLAG_QWERTY_US_SPA = 1 << 3,
+    KEYBOARD_FLAG_QWERTY_EU_ENG = 1 << 5,
+    KEYBOARD_FLAG_QWERTY_EU_FRA = 1 << 6,
+    KEYBOARD_FLAG_QWERTY_EU_DEU = 1 << 7,
+    KEYBOARD_FLAG_QWERTY_EU_ITA = 1 << 8,
+    KEYBOARD_FLAG_QWERTY_EU_SPA = 1 << 9,
+    KEYBOARD_FLAG_QWERTY_EU_NLD = 1 << 10,
+    KEYBOARD_FLAG_QWERTY_EU_POR = 1 << 11,
+    KEYBOARD_FLAG_ALL = (1 << 19) - 1
+};
+
+enum
+{
+    TOUCH_INPUT_BUTTONS = 0x00c03cff
+};
+
 double multiBreak(double first, double second, double third)
 {
     if (first < second)
@@ -102,25 +148,25 @@ extern "C" int SCIGetCafeLanguage(unsigned int* language)
                 *language = 1;
                 return result;
             }
-            if (platformRegion == 1)
+            if (platformRegion == SCI_PLATFORM_REGION_JPN)
             {
-                *language = 0;
+                *language = SCI_CAFE_LANGUAGE_JAPANESE;
             }
-            else if (platformRegion == 0x10)
+            else if (platformRegion == SCI_PLATFORM_REGION_CHN)
             {
-                *language = 6;
+                *language = SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE;
             }
-            else if (platformRegion == 0x20)
+            else if (platformRegion == SCI_PLATFORM_REGION_KOR)
             {
-                *language = 7;
+                *language = SCI_CAFE_LANGUAGE_KOREAN;
             }
-            else if (platformRegion == 0x40)
+            else if (platformRegion == SCI_PLATFORM_REGION_TWN)
             {
-                *language = 0xb;
+                *language = SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE;
             }
             else
             {
-                *language = 1;
+                *language = SCI_CAFE_LANGUAGE_ENGLISH;
             }
         }
         if (result == 1)
@@ -143,6 +189,7 @@ extern "C" int SCIGetPlatformRegion(unsigned int* region)
 static KPADError s_connectionResults[4];
 static KPADStatus s_kpadStatus[4][16];
 static VPADStatus s_vpadStatus[16];
+static int s_vpadSampleCount;
 static VPADReadError s_vpadReadError;
 static unsigned char s_fontStack[0x20000];
 static OSThread s_fontThread;
@@ -155,24 +202,9 @@ static OSMessageQueue s_predictQueue;
 CInput* g_pInputInstance = 0;
 unsigned int g_inputPlatformFlag = 0;
 
-enum
-{
-    SCI_CAFE_LANGUAGE_JAPANESE = 0,
-    SCI_CAFE_LANGUAGE_ENGLISH = 1,
-    SCI_CAFE_LANGUAGE_FRENCH = 2,
-    SCI_CAFE_LANGUAGE_GERMAN = 3,
-    SCI_CAFE_LANGUAGE_ITALIAN = 4,
-    SCI_CAFE_LANGUAGE_SPANISH = 5,
-    SCI_CAFE_LANGUAGE_SIMPLIFIED_CHINESE = 6,
-    SCI_CAFE_LANGUAGE_KOREAN = 7,
-    SCI_CAFE_LANGUAGE_DUTCH = 8,
-    SCI_CAFE_LANGUAGE_PORTUGUESE = 9,
-    SCI_CAFE_LANGUAGE_RUSSIAN = 10,
-    SCI_CAFE_LANGUAGE_TRADITIONAL_CHINESE = 11
-};
-
 static unsigned int s_xLanguage = 0xff;
 static unsigned int s_xLocale = 0xff;
+static const char* s_errorViewerJumpArgument = "my app";
 
 extern "C" int _SCIReadSysConfig(const char* key, unsigned int type, unsigned int size, void* value)
 {
@@ -399,7 +431,7 @@ void CInput::Initialise(int count, unsigned char gameMapCount, unsigned char alt
 }
 void CInput::ReadAllPads()
 {
-    VPADRead(static_cast<VPADChan>(0), s_vpadStatus, 16, &s_vpadReadError);
+    s_vpadSampleCount = VPADRead(static_cast<VPADChan>(0), s_vpadStatus, 16, &s_vpadReadError);
     if (s_vpadReadError == VPAD_READ_SUCCESS || s_vpadReadError == VPAD_READ_NO_SAMPLES)
     {
         VPADGetTPCalibratedPoint(static_cast<VPADChan>(0), &s_vpadStatus[0].tpNormal, &s_vpadStatus[0].tpNormal);
@@ -448,14 +480,14 @@ void CInput::ReadAllPads()
         }
         if (!connected)
         {
-            std::memset(&status, 0, 0x3c);
+            std::memset(&status, 0, sizeof(KPADStatus));
         }
         joypad.setConnected(connected);
     }
 }
 void CInput::ClearJoypadValues(JOYPAD* joypad)
 {
-    joypad->fakeValue = 0;
+    joypad->touchValue = 0;
     joypad->rawValue = 0;
     joypad->pressedValue = 0;
     joypad->releasedValue = 0;
@@ -588,8 +620,8 @@ bool CInput::UpdateDRCPad()
 
         controllerCount = 1;
         SetJoypadValuesDRC(&joypad);
-        joypad.rawValue |= joypad.fakeValue;
-        joypad.fakeValue = 0;
+        joypad.rawValue |= joypad.touchValue;
+        joypad.touchValue = 0;
         joypad.pressedValue = joypad.rawValue & ~joypad.previousValue;
         joypad.releasedValue = joypad.previousValue & ~joypad.rawValue;
         for (int button = 0; button < 24; ++button)
@@ -618,7 +650,7 @@ void CInput::SetClassicJoypadValue(JOYPAD* joypad, unsigned int sourceMask, unsi
 void CInput::SetFreestyleJoypadValue(JOYPAD* joypad, unsigned int sourceMask, unsigned int mappedMask)
 {
     KPADStatus* status = static_cast<KPADStatus*>(joypad->statusStorage.kpad.statuses) + joypad->statusIndex;
-    if ((status->hold & sourceMask) == sourceMask)
+    if ((status->nunchuk.hold & sourceMask) == sourceMask)
     {
         joypad->rawValue |= mappedMask;
     }
@@ -711,14 +743,14 @@ bool CInput::UpdateJoypads()
     {
         JOYPAD& joypad = joypads[pad];
         joypad.previousValue = joypad.rawValue;
-        joypad.rawValue = joypad.pendingValue;
+        joypad.rawValue = joypad.fakeValue;
         if (joypad.fakeTimer)
         {
             --joypad.fakeTimer;
         }
         else
         {
-            joypad.pendingValue = 0;
+            joypad.fakeValue = 0;
         }
         joypad.rawRightStickX = 0;
         joypad.rawRightStickY = 0;
@@ -750,8 +782,8 @@ bool CInput::UpdateJoypads()
         if (joypad.connected)
         {
             SetJoypadValues(&joypad);
-            joypad.rawValue |= joypad.fakeValue;
-            joypad.fakeValue = 0;
+            joypad.rawValue |= joypad.touchValue;
+            joypad.touchValue = 0;
             if (!joypad.previousSampleIndex)
             {
                 joypad.pressedValue = joypad.rawValue & ~joypad.previousValue;
@@ -813,23 +845,21 @@ void CInput::SetGameControllerTypeJoypadMaps(int controllerType, unsigned char m
 }
 bool CInput::RemapIpad(int& pad)
 {
-    if (pad > 3)
+    bool result = false;
+    if (static_cast<unsigned int>(pad) < 4)
     {
-        if (pad > 8)
+        if (padRemap[pad] >= 0)
         {
-            return false;
+            pad = padRemap[pad];
+            result = true;
         }
-        pad -= 4;
-        return true;
     }
-
-    int mappedPad = padRemap[pad];
-    if (mappedPad < 0)
+    else if (static_cast<unsigned int>(pad - 4) < 5)
     {
-        return false;
+        pad -= 4;
+        result = true;
     }
-    pad = mappedPad;
-    return true;
+    return result;
 }
 void CInput::SetGameJoypadMaps(int pad, unsigned char map, unsigned int value)
 {
@@ -962,7 +992,11 @@ unsigned int CInput::GetValue(int pad, unsigned char map, bool repeated)
 }
 void CInput::SetFakePadValue(int pad, unsigned char map)
 {
-    bool menuOpen = pad < 4 && menuDisplayed[pad];
+    unsigned char menuOpen = 0;
+    if (pad < 4)
+    {
+        menuOpen = menuDisplayed[pad];
+    }
     int mappedPad = pad;
     if (RemapIpad(mappedPad) && (!menuOpen || map <= controllerConfiguration[2]))
     {
@@ -1000,8 +1034,11 @@ bool CInput::ButtonPressed(int pad, unsigned char map, unsigned int mask)
 bool CInput::ButtonReleased(int pad, unsigned char map)
 {
     int mappedPad = pad;
-    return RemapIpad(mappedPad) && (!(pad < 4 && menuDisplayed[pad]) || map <= controllerConfiguration[2]) &&
-           (joypads[mappedPad].releasedValue & GetGameJoypadMaps(pad, map)) != 0;
+    if (RemapIpad(mappedPad) && (!menuDisplayed[pad] || map <= controllerConfiguration[2]))
+    {
+        return (joypads[mappedPad].releasedValue & GetGameJoypadMaps(pad, map)) != 0;
+    }
+    return false;
 }
 bool CInput::ButtonDown(int pad, unsigned char map)
 {
@@ -1085,12 +1122,11 @@ double CInput::GetIdleSeconds(int pad)
 }
 unsigned char CInput::IsPadConnected(int pad)
 {
-    int mappedPad = pad;
-    if (RemapIpad(mappedPad))
+    if (RemapIpad(pad))
     {
-        return joypads[mappedPad].connected;
+        return joypads[pad].connected;
     }
-    return pad < static_cast<int>(controllerCount);
+    return pad < controllerCount;
 }
 void CInput::SetCircleCrossSwapped(bool value)
 {
@@ -1102,7 +1138,7 @@ unsigned char CInput::IsCircleCrossSwapped()
 }
 void CInput::MapTouchInput(int pad, unsigned int mask)
 {
-    joypads[pad].fakeValue = joypads[pad].fakeValue & 0xff3fc300u | mask;
+    joypads[pad].touchValue = joypads[pad].touchValue & ~TOUCH_INPUT_BUTTONS | mask;
 }
 float CInput::GetJoypadStick_LX(int pad, bool checkMenu)
 {
@@ -1294,12 +1330,15 @@ unsigned char CInput::IsPadDRCController(int pad)
 }
 unsigned int CInput::IsPadClassicController(int pad)
 {
-    if (!RemapIpad(pad) || pad == 0)
+    if (RemapIpad(pad) && pad != 0)
     {
-        return 0;
+        KPADStatus* status = joypads[pad].statusStorage.kpad.statuses;
+        if (status->extensionType == WPAD_EXT_CLASSIC || status->extensionType == WPAD_EXT_MPLUS_CLASSIC)
+        {
+            return 1;
+        }
     }
-    KPADStatus* status = static_cast<KPADStatus*>(joypads[pad].statusStorage.kpad.statuses) + joypads[pad].statusIndex;
-    return status->extensionType == 2 || status->extensionType == 7;
+    return 0;
 }
 unsigned char CInput::IsDRCConnected()
 {
@@ -1312,15 +1351,11 @@ void CInput::AcquiredForeground()
 bool CInput::IsSet(int pad, unsigned char map)
 {
     int mappedPad = pad;
-    if (!RemapIpad(mappedPad))
+    if (RemapIpad(mappedPad) && (!menuDisplayed[pad] || map <= controllerConfiguration[2]))
     {
-        return false;
+        return (joypads[mappedPad].rawValue & GetGameJoypadMaps(pad, map)) != 0;
     }
-    if (pad < 4 && menuDisplayed[pad] && map > controllerConfiguration[2])
-    {
-        return false;
-    }
-    return (joypads[mappedPad].rawValue & GetGameJoypadMaps(pad, map)) != 0;
+    return false;
 }
 float CInput::GetJoypadStick_Menu_LX(int pad)
 {
@@ -1457,40 +1492,66 @@ unsigned int CInput::GetKeyboardControllerType()
 }
 unsigned int CInput::GetKeyboardMode()
 {
-    unsigned int mode = static_cast<unsigned int>(keyboardMode);
-    if (mode == 1 || mode == 6 || mode == 7)
+    switch (static_cast<unsigned int>(keyboardMode))
     {
-        keyboardControllerType = 0x7ffff;
+    case 1:
+    case 6:
+    case 7:
+        keyboardControllerType = KEYBOARD_FLAG_ALL;
         return 1;
-    }
-    keyboardControllerType = 0x7ffff;
-    if (mode != 3 && mode != 5)
-    {
+    case 3:
+    case 5:
+        break;
+    default:
+        keyboardControllerType = KEYBOARD_FLAG_ALL;
         return 0;
     }
-    if (keyboardLanguage == 1 || keyboardLanguage == 0x10 || keyboardLanguage == 0x20)
+    switch (keyboardLanguage)
     {
-        keyboardControllerType = 2;
+    case SCI_PLATFORM_REGION_JPN:
+    case SCI_PLATFORM_REGION_CHN:
+    case SCI_PLATFORM_REGION_KOR:
+        keyboardControllerType = KEYBOARD_FLAG_QWERTY_US_ENG;
+        return 0;
+    case 2:
+        switch (keyboardRegion)
+        {
+        case SCI_CAFE_LANGUAGE_FRENCH:
+            keyboardControllerType = KEYBOARD_FLAG_QWERTY_US_FRA;
+            return 0;
+        case SCI_CAFE_LANGUAGE_SPANISH:
+            keyboardControllerType = KEYBOARD_FLAG_QWERTY_US_SPA;
+            return 0;
+        default:
+            keyboardControllerType = KEYBOARD_FLAG_QWERTY_US_ENG;
+            return 0;
+        }
+    case 4:
+    {
+        static const unsigned short accessFlags[] = { KEYBOARD_FLAG_QWERTY_EU_FRA, KEYBOARD_FLAG_QWERTY_EU_DEU, KEYBOARD_FLAG_QWERTY_EU_ITA, KEYBOARD_FLAG_QWERTY_EU_SPA };
+        if (keyboardRegion < SCI_CAFE_LANGUAGE_FRENCH)
+        {
+            keyboardControllerType = KEYBOARD_FLAG_QWERTY_EU_ENG;
+            return 0;
+        }
+        if (keyboardRegion <= SCI_CAFE_LANGUAGE_SPANISH)
+        {
+            keyboardControllerType = accessFlags[keyboardRegion - SCI_CAFE_LANGUAGE_FRENCH];
+            return 0;
+        }
+        if (keyboardRegion == SCI_CAFE_LANGUAGE_DUTCH)
+        {
+            keyboardControllerType = KEYBOARD_FLAG_QWERTY_EU_NLD;
+            return 0;
+        }
+        if (keyboardRegion == SCI_CAFE_LANGUAGE_PORTUGUESE)
+        {
+            keyboardControllerType = KEYBOARD_FLAG_QWERTY_EU_POR;
+            return 0;
+        }
+        keyboardControllerType = KEYBOARD_FLAG_QWERTY_EU_ENG;
+        return 0;
     }
-    else if (keyboardLanguage == 2)
-    {
-        if (keyboardRegion == 2)
-        {
-            keyboardControllerType = 4;
-        }
-        else if (keyboardRegion == 5)
-        {
-            keyboardControllerType = 8;
-        }
-        else
-        {
-            keyboardControllerType = 2;
-        }
-    }
-    else if (keyboardLanguage == 4)
-    {
-        static const unsigned short accessFlags[] = { 0x20, 0x20, 0x40, 0x80, 0x100, 0x200 };
-        keyboardControllerType = keyboardRegion < 6 ? accessFlags[keyboardRegion] : keyboardRegion == 8 ? 0x400 : keyboardRegion == 9 ? 0x800 : 0x20;
     }
     return 0;
 }
@@ -1513,6 +1574,12 @@ void CInput::TickKeyboard()
     if (keyboardState == eKeyboardProcessState_1)
     {
         nn::swkbd::AppearArg appearArg;
+        appearArg.keyboardArg.receiverArg.unk_0x00 = 0;
+        appearArg.keyboardArg.receiverArg.unk_0x04 = 0;
+        appearArg.keyboardArg.receiverArg.unk_0x08 = 0;
+        appearArg.keyboardArg.receiverArg.unk_0x0C = -1;
+        appearArg.keyboardArg.receiverArg.unk_0x10 = 0;
+        appearArg.keyboardArg.receiverArg.unk_0x14 = -1;
         appearArg.keyboardArg.configArg.controllerType = static_cast<nn::swkbd::ControllerType>(GetKeyboardControllerType());
         appearArg.keyboardArg.configArg.keyboardMode = static_cast<nn::swkbd::KeyboardMode>(GetKeyboardMode());
         appearArg.keyboardArg.configArg.accessFlags = keyboardControllerType;
@@ -1524,6 +1591,10 @@ void CInput::TickKeyboard()
         appearArg.inputFormArg.hintText = 0;
         appearArg.inputFormArg.maxTextLength = keyboardMaximumLength;
         appearArg.inputFormArg.passwordMode = static_cast<nn::swkbd::PasswordMode>(0);
+        appearArg.inputFormArg.unk_0x18 = 0;
+        appearArg.inputFormArg.drawInput0Cursor = false;
+        appearArg.inputFormArg.higlightInitialText = false;
+        appearArg.inputFormArg.showCopyPasteButtons = false;
         nn::swkbd::AppearInputForm(appearArg);
         SetKeyboardMode(eKeyboardProcessState_2);
         return;
@@ -1538,7 +1609,7 @@ void CInput::TickKeyboard()
         {
             controllerInfo.vpad = (VPADStatus*)g_pInputInstance->GetVPadStatus();
         }
-        else if (keyboardPad < 5)
+        else
         {
             controllerInfo.kpad[keyboardPad - 1] = (KPADStatus*)g_pInputInstance->GetKPadStatus(keyboardPad);
         }
@@ -1586,21 +1657,30 @@ void CInput::InitialiseKeyboard()
     keyboardErrorViewerWorkMemory = new unsigned char[nn::swkbd::GetWorkMemorySize(0)];
     createArg.workMemory = keyboardErrorViewerWorkMemory;
     createArg.fsClient = keyboardFileClient;
-    unsigned int platformRegion = 4;
+    unsigned int platformRegion;
     if (SCIGetPlatformRegion(&platformRegion) == 1)
     {
-        if (platformRegion == 1)
+        switch (platformRegion)
+        {
+        case SCI_PLATFORM_REGION_JPN:
             keyboardLanguage = 0;
-        else if (platformRegion == 2)
+            break;
+        case SCI_PLATFORM_REGION_USA:
             keyboardLanguage = 1;
-        else if (platformRegion == 0x10)
+            break;
+        case SCI_PLATFORM_REGION_CHN:
             keyboardLanguage = 3;
-        else if (platformRegion == 0x20)
+            break;
+        case SCI_PLATFORM_REGION_KOR:
             keyboardLanguage = 4;
-        else if (platformRegion == 0x40)
+            break;
+        case SCI_PLATFORM_REGION_TWN:
             keyboardLanguage = 5;
-        else
+            break;
+        default:
             keyboardLanguage = 2;
+            break;
+        }
     }
     createArg.regionType = static_cast<nn::swkbd::RegionType>(keyboardLanguage);
     if (SCIGetCafeLanguage(&keyboardRegion) != 1)
@@ -1665,15 +1745,17 @@ void CInput::InitialiseErrorViewer()
     keyboardErrorViewerWorkMemory = std::malloc(nn::erreula::GetWorkMemorySize());
     createArg.workMemory = keyboardErrorViewerWorkMemory;
     createArg.fsClient = errorViewerFileClient;
-    unsigned int platformRegion = 4;
+    createArg.region = static_cast<nn::erreula::RegionType>(0);
+    createArg.language = static_cast<nn::erreula::LangType>(0);
+    unsigned int platformRegion = SCI_PLATFORM_REGION_EUR;
     if (SCIGetPlatformRegion(&platformRegion) == 1)
     {
-        createArg.region = static_cast<nn::erreula::RegionType>(platformRegion == 4 ? 2 : platformRegion == 2 ? 1 : 0);
+        createArg.region = platformRegion == SCI_PLATFORM_REGION_EUR ? static_cast<nn::erreula::RegionType>(2) : static_cast<nn::erreula::RegionType>(platformRegion == SCI_PLATFORM_REGION_USA);
     }
-    unsigned int language = 1;
-    if (SCIGetCafeLanguage(&language) == 1 && language < 12)
+    unsigned int language;
+    if (SCIGetCafeLanguage(&language) == 1)
     {
-        createArg.language = static_cast<nn::erreula::LangType>(language);
+        createArg.language = static_cast<int>(language) > 11 ? static_cast<nn::erreula::LangType>(1) : static_cast<nn::erreula::LangType>(language);
     }
     nn::erreula::Create(createArg);
 }
@@ -1747,7 +1829,7 @@ void CInput::TickErrorViewer()
             return;
         }
         SetErrorViewerMode(ERROR_VIEWER_NONE);
-        int jumpResult = nn::erreula::Jump("my app", 6);
+        int jumpResult = nn::erreula::Jump(s_errorViewerJumpArgument, std::strlen(s_errorViewerJumpArgument) + 1);
         std::printf("nn::erreula::Jump returned %d\n", jumpResult);
         return;
     }

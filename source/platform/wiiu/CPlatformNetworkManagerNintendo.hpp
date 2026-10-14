@@ -82,7 +82,7 @@ public:
     virtual bool IsAddingPlayer();
     virtual void HostGame(int userIndexMask, bool onlineGame, bool privateGame, unsigned char gameMode, EMiniGameId miniGameId, unsigned int worldId, unsigned int* attributes);
     virtual int JoinGame(FriendSessionInfo* sessionInfo, int userIndex, int userIndexMask, bool matchmaking);
-    virtual bool FindAndJoinGame(int userIndexMask, int searchFlags, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributeValues, unsigned int* attributeIds);
+    virtual int FindAndJoinGame(int userIndexMask, int searchFlags, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributeValues, unsigned int* attributeIds);
     virtual bool SetLocalGame(bool localGame);
     virtual bool IsLocalGame();
     virtual void SetPrivateGame(bool privateGame);

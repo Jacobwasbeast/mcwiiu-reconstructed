@@ -112,9 +112,9 @@ public:
         unsigned char disconnected;
         unsigned char newlyConnected;
         unsigned char connectionPadding[3];
-        unsigned int fakeValue;
+        unsigned int touchValue;
         unsigned int rawValue;
-        unsigned int pendingValue;
+        unsigned int fakeValue;
         unsigned int fakeTimer;
         unsigned int previousValue;
         unsigned int pressedValue;

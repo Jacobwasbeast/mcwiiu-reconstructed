@@ -8,6 +8,7 @@
 #include <wchar.h>
 #include <new>
 
+#include <coreinit/cache.h>
 #include <coreinit/time.h>
 #include <coreinit/core.h>
 #include <coreinit/mutex.h>
@@ -23,6 +24,8 @@ TextStreamFormat sTextFormat;
 FixedSafeString1024 sTextBuffer;
 Mutex sMutex;
 IDelegate1<const PrintConfig::PrintEventArg&>* sFinalPrintCallback;
+bool sPrintEventEnabled = false;
+DelegateEvent<const PrintConfig::PrintEventArg&> sPrintEvent;
 
 template <typename T>
 T byteSwap(T value)
@@ -56,11 +59,6 @@ int appendText(char* destination, unsigned int capacity, const char* source, int
     return static_cast<int>(copied);
 }
 
-void appendWide(StringUtil::__N_18_peadStringUtil_cpp_6714fef4::OutBuffer16* output, wchar_t character)
-{
-    if (output->length + 1 < output->capacity) output->buffer[output->length] = character;
-    ++output->length;
-}
 }
 
 void ListNode::insertBack_(ListNode* node)
@@ -213,17 +211,24 @@ void PtrArrayImpl::insert(int index, void* value)
 
 int PtrArrayImpl::binarySearch(const void* value, int (*compare)(const void*, const void*)) const
 {
+    if (mPtrNum == 0)
+        return -1;
     int low = 0;
-    int high = mPtrNum;
+    int high = mPtrNum - 1;
     while (low < high)
     {
         int middle = (low + high) / 2;
-        int result = compare(value, mPtrs[middle]);
-        if (result == 0) return middle;
-        if (result < 0) high = middle;
-        else low = middle + 1;
+        int result = compare(mPtrs[middle], value);
+        if (result == 0)
+            return middle;
+        if (result < 0)
+            low = middle + 1;
+        else
+            high = middle;
     }
-    return -low - 1;
+    if (compare(mPtrs[low], value) == 0)
+        return low;
+    return -1;
 }
 
 void pead::Random::init(unsigned int seed)
@@ -254,29 +259,65 @@ unsigned long long Random::getU64()
     return static_cast<unsigned long long>(getU32()) << 32 | getU32();
 }
 
+BufferReadStreamSrc::BufferReadStreamSrc(StreamSrc* src, void* buffer, unsigned int size)
+    : mSrc(src), mBuffer(static_cast<unsigned char*>(buffer)), mBufferSize(size), mBufferEndPos(0), mBufferPos(0)
+{
+}
+
 BufferReadStreamSrc::~BufferReadStreamSrc() {}
 
-int BufferReadStreamSrc::skip(int amount)
+int BufferReadStreamSrc::skip(int size)
 {
-    int next = static_cast<int>(mPosition) + amount;
-    if (next < 0) next = 0;
-    if (static_cast<unsigned int>(next) > mSize) next = static_cast<int>(mSize);
-    mPosition = static_cast<unsigned int>(next);
-    return next;
+    const int buffered = mBufferEndPos - mBufferPos;
+    if (size <= buffered)
+    {
+        mBufferPos += size;
+        return size;
+    }
+    mBufferPos = 0;
+    mBufferEndPos = 0;
+    return buffered + mSrc->skip(size - buffered);
 }
 
 unsigned int BufferReadStreamSrc::read(void* destination, unsigned int size)
 {
-    unsigned int remaining = mSize - mPosition;
-    unsigned int readSize = size < remaining ? size : remaining;
-    if (readSize) memcpy(destination, mBuffer + mPosition, readSize);
-    mPosition += readSize;
+    unsigned int readSize = 0;
+    while (true)
+    {
+        if (mBufferPos < mBufferEndPos)
+        {
+            unsigned int copySize = size - readSize;
+            if (mBufferEndPos - mBufferPos < copySize)
+                copySize = mBufferEndPos - mBufferPos;
+            MemUtil::copy(static_cast<unsigned char*>(destination) + readSize, mBuffer + mBufferPos, copySize);
+            readSize += copySize;
+            mBufferPos += copySize;
+        }
+        if (readSize >= size)
+            break;
+        mBufferEndPos = mSrc->read(mBuffer, mBufferSize);
+        mBufferPos = 0;
+        if (mBufferEndPos == 0)
+            break;
+    }
     return readSize;
 }
 
 unsigned int BufferReadStreamSrc::write(const void*, unsigned int) { return 0; }
-void BufferReadStreamSrc::rewind() { mPosition = 0; }
-bool BufferReadStreamSrc::isEOF() { return mPosition >= mSize; }
+
+void BufferReadStreamSrc::rewind()
+{
+    mSrc->rewind();
+    mBufferPos = 0;
+    mBufferEndPos = 0;
+}
+
+bool BufferReadStreamSrc::isEOF() { return mSrc->isEOF() && mBufferPos >= mBufferEndPos; }
+
+BufferWriteStreamSrc::BufferWriteStreamSrc(StreamSrc* src, void* buffer, unsigned int size)
+    : mSrc(src), mBuffer(static_cast<unsigned char*>(buffer)), mBufferSize(size), mBufferPos(0)
+{
+}
 
 BufferWriteStreamSrc::~BufferWriteStreamSrc() {}
 int BufferWriteStreamSrc::skip(int) { return 0; }
@@ -284,48 +325,115 @@ unsigned int BufferWriteStreamSrc::read(void*, unsigned int) { return 0; }
 
 unsigned int BufferWriteStreamSrc::write(const void* source, unsigned int size)
 {
-    unsigned int remaining = mBufferSize - mPosition;
-    unsigned int writeSize = size < remaining ? size : remaining;
-    if (writeSize) memcpy(mBuffer + mPosition, source, writeSize);
-    mPosition += writeSize;
-    return writeSize;
+    unsigned int writtenSize = 0;
+    do
+    {
+        if (mBufferPos < mBufferSize)
+        {
+            unsigned int copySize = size - writtenSize;
+            if (mBufferSize - mBufferPos < copySize)
+                copySize = mBufferSize - mBufferPos;
+            MemUtil::copy(mBuffer + mBufferPos, static_cast<const unsigned char*>(source) + writtenSize, copySize);
+            writtenSize += copySize;
+            mBufferPos += copySize;
+        }
+    } while (writtenSize < size && flush());
+    return writtenSize;
 }
 
-void BufferWriteStreamSrc::rewind() { mPosition = 0; }
-bool BufferWriteStreamSrc::isEOF() { return mPosition >= mBufferSize; }
+void BufferWriteStreamSrc::rewind()
+{
+    flush();
+    mSrc->rewind();
+}
+
+bool BufferWriteStreamSrc::isEOF() { return mSrc->isEOF(); }
 
 bool BufferWriteStreamSrc::flush()
 {
-    if (!mOriginalSrc) return true;
-    unsigned int written = mOriginalSrc->write(mBuffer, mPosition);
-    if (written != mPosition) return false;
-    mPosition = 0;
-    return mOriginalSrc->flush();
+    if (mBufferPos == 0)
+        return true;
+    const unsigned int writtenSize = mSrc->write(mBuffer, mBufferPos);
+    const unsigned int bufferedSize = mBufferPos;
+    mBufferPos = 0;
+    return writtenSize >= bufferedSize;
 }
 
-BufferMultiByteTextWriteStreamSrc::~BufferMultiByteTextWriteStreamSrc() {}
+BufferMultiByteTextWriteStreamSrc::BufferMultiByteTextWriteStreamSrc(StreamSrc* src, void* buffer, unsigned int size)
+    : BufferWriteStreamSrc(src, buffer, size)
+{
+}
 
 unsigned int BufferMultiByteTextWriteStreamSrc::write(const void* source, unsigned int size)
 {
     const unsigned char* bytes = static_cast<const unsigned char*>(source);
-    unsigned int total = 0;
-    while (total < size)
+    unsigned int writtenSize = 0;
+    while (true)
     {
-        if (mPosition == mBufferSize && !flush()) break;
-        unsigned int remaining = mBufferSize - mPosition;
-        unsigned int part = size - total < remaining ? size - total : remaining;
-        memcpy(mBuffer + mPosition, bytes + total, part);
-        mPosition += part;
-        total += part;
+        if (mBufferPos < mBufferSize)
+        {
+            const unsigned int space = mBufferSize - mBufferPos;
+            unsigned int copySize = size - writtenSize;
+            if (space < copySize)
+            {
+                copySize = space;
+                const unsigned char last = bytes[writtenSize + space - 1];
+                if (last & cUtf8MultiByteBit)
+                {
+                    if ((last & cUtf8TrailMask) == cUtf8TrailBits)
+                    {
+                        const int searchLength = static_cast<int>(space) > cUtf8MaxSequenceLength ? static_cast<int>(cUtf8MaxSequenceLength) : static_cast<int>(space);
+                        int tailLength = 2;
+                        if (searchLength > 1)
+                        {
+                            const unsigned char* lead = bytes + writtenSize + space - 2;
+                            bool leadFound = true;
+                            while ((*lead & cUtf8TrailMask) == cUtf8TrailBits)
+                            {
+                                ++tailLength;
+                                if (tailLength > searchLength)
+                                {
+                                    leadFound = false;
+                                    break;
+                                }
+                                --lead;
+                            }
+                            if (leadFound)
+                            {
+                                int sequenceLength = 0;
+                                if ((*lead & cUtf8Lead2Mask) == cUtf8Lead2Bits)
+                                    sequenceLength = 2;
+                                else if ((*lead & cUtf8Lead3Mask) == cUtf8Lead3Bits)
+                                    sequenceLength = 3;
+                                else if ((*lead & cUtf8Lead4Mask) == cUtf8Lead4Bits)
+                                    sequenceLength = cUtf8MaxSequenceLength;
+                                if (tailLength < sequenceLength && tailLength > 0)
+                                {
+                                    mBuffer[mBufferSize - tailLength] = 0;
+                                    copySize = space - tailLength;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        copySize = space - 1;
+                        mBuffer[mBufferSize - 1] = 0;
+                    }
+                }
+            }
+            MemUtil::copy(mBuffer + mBufferPos, bytes + writtenSize, copySize);
+            writtenSize += copySize;
+            mBufferPos += copySize;
+        }
+        if (writtenSize >= size || !flush())
+            return writtenSize;
     }
-    return total;
 }
-
-BufferMultiByteNullTerminatedTextWriteStreamSrc::~BufferMultiByteNullTerminatedTextWriteStreamSrc() {}
 
 bool BufferMultiByteNullTerminatedTextWriteStreamSrc::flush()
 {
-    mBuffer[mPosition] = 0;
+    mBuffer[mBufferPos] = 0;
     return BufferWriteStreamSrc::flush();
 }
 
@@ -396,18 +504,23 @@ void BinaryStreamFormat::writeS32(StreamSrc* src, Endian::Types e, int v) { writ
 void BinaryStreamFormat::writeS64(StreamSrc* src, Endian::Types e, long long v) { writeBinary(src, e, v); }
 void BinaryStreamFormat::writeF32(StreamSrc* src, Endian::Types e, float v) { writeBinary(src, e, v); }
 
-void BinaryStreamFormat::writeBit(StreamSrc* src, const void* data, unsigned int bits)
+void BinaryStreamFormat::writeBit(StreamSrc* src, const void* data, unsigned int bitNum)
 {
-    unsigned int bytes = (bits + 7) / 8;
-    src->write(data, bytes);
+    const unsigned char byteNum = bitNum / 8;
+    src->write(data, byteNum);
+    if (bitNum != byteNum * 8u)
+        src->write(static_cast<const unsigned char*>(data) + byteNum, 1);
 }
 
 void BinaryStreamFormat::writeString(StreamSrc* src, const SafeStringBase<char>& string, unsigned int size)
 {
     unsigned int length = static_cast<unsigned int>(string.calcLength());
-    if (length > size) length = size;
-    writeU32(src, Endian::cHost, length);
+    if (length > size)
+        length = size;
     src->write(string.cstr(), length);
+    const char padding = 0;
+    for (unsigned int index = length; index < size; ++index)
+        src->write(&padding, 1);
 }
 
 void BinaryStreamFormat::writeMemBlock(StreamSrc* src, const void* data, unsigned int size) { src->write(data, size); }
@@ -632,25 +745,106 @@ void TextStreamFormat::readMemBlock(StreamSrc* src, void* dst, unsigned int size
     Base64::decode(dst, size, sTextBuffer.cstr(), sTextBuffer.calcLength(), &decodedSize);
 }
 
-void TextStreamFormat::writeU8(StreamSrc* s, Endian::Types, unsigned char v) { char b[16]; ::snprintf(b, sizeof(b), "%u", v); s->write(b, strlen(b)); }
-void TextStreamFormat::writeU16(StreamSrc* s, Endian::Types, unsigned short v) { char b[16]; ::snprintf(b, sizeof(b), "%u", v); s->write(b, strlen(b)); }
-void TextStreamFormat::writeU32(StreamSrc* s, Endian::Types, unsigned int v) { char b[16]; ::snprintf(b, sizeof(b), "%u", v); s->write(b, strlen(b)); }
-void TextStreamFormat::writeU64(StreamSrc* s, Endian::Types, unsigned long long v) { char b[32]; ::snprintf(b, sizeof(b), "%llu", v); s->write(b, strlen(b)); }
-void TextStreamFormat::writeS8(StreamSrc* s, Endian::Types, signed char v) { char b[16]; ::snprintf(b, sizeof(b), "%d", v); s->write(b, strlen(b)); }
-void TextStreamFormat::writeS16(StreamSrc* s, Endian::Types, short v) { char b[16]; ::snprintf(b, sizeof(b), "%d", v); s->write(b, strlen(b)); }
-void TextStreamFormat::writeS32(StreamSrc* s, Endian::Types, int v) { char b[16]; ::snprintf(b, sizeof(b), "%d", v); s->write(b, strlen(b)); }
-void TextStreamFormat::writeS64(StreamSrc* s, Endian::Types, long long v) { char b[32]; ::snprintf(b, sizeof(b), "%lld", v); s->write(b, strlen(b)); }
-void TextStreamFormat::writeF32(StreamSrc* s, Endian::Types, float v) { char b[32]; ::snprintf(b, sizeof(b), "%g", v); s->write(b, strlen(b)); }
-void TextStreamFormat::writeBit(StreamSrc* source, const void* data, unsigned int bitCount)
+void TextStreamFormat::writeU8(StreamSrc* src, Endian::Types, unsigned char value)
 {
-    const unsigned char* bytes = static_cast<const unsigned char*>(data);
-    for (unsigned int bit = 0; bit < bitCount; ++bit)
-    {
-        char value = bytes[bit / 8] & (1u << (bit & 7)) ? '1' : '0';
-        source->write(&value, 1);
-    }
+    FixedSafeString<cValueTextLength> text;
+    text.format("%u", value);
+    src->write(text.cstr(), text.calcLength());
+    src->write(mSeparator.cstr(), 1);
 }
-void TextStreamFormat::writeString(StreamSrc* s, const SafeStringBase<char>& v, unsigned int n) { unsigned int l = v.calcLength(); if (l > n) l = n; s->write(v.cstr(), l); }
+void TextStreamFormat::writeU16(StreamSrc* src, Endian::Types, unsigned short value)
+{
+    FixedSafeString<cValueTextLength> text;
+    text.format("%u", value);
+    src->write(text.cstr(), text.calcLength());
+    src->write(mSeparator.cstr(), 1);
+}
+void TextStreamFormat::writeU32(StreamSrc* src, Endian::Types, unsigned int value)
+{
+    FixedSafeString<cValueTextLength> text;
+    text.format("%u", value);
+    src->write(text.cstr(), text.calcLength());
+    src->write(mSeparator.cstr(), 1);
+}
+void TextStreamFormat::writeU64(StreamSrc* src, Endian::Types, unsigned long long value)
+{
+    FixedSafeString<cValueTextLength> text;
+    text.format("%llu", value);
+    src->write(text.cstr(), text.calcLength());
+    src->write(mSeparator.cstr(), 1);
+}
+void TextStreamFormat::writeS8(StreamSrc* src, Endian::Types, signed char value)
+{
+    FixedSafeString<cValueTextLength> text;
+    text.format("%d", value);
+    src->write(text.cstr(), text.calcLength());
+    src->write(mSeparator.cstr(), 1);
+}
+void TextStreamFormat::writeS16(StreamSrc* src, Endian::Types, short value)
+{
+    FixedSafeString<cValueTextLength> text;
+    text.format("%d", value);
+    src->write(text.cstr(), text.calcLength());
+    src->write(mSeparator.cstr(), 1);
+}
+void TextStreamFormat::writeS32(StreamSrc* src, Endian::Types, int value)
+{
+    FixedSafeString<cValueTextLength> text;
+    text.format("%d", value);
+    src->write(text.cstr(), text.calcLength());
+    src->write(mSeparator.cstr(), 1);
+}
+void TextStreamFormat::writeS64(StreamSrc* src, Endian::Types, long long value)
+{
+    FixedSafeString<cValueTextLength> text;
+    text.format("%lld", value);
+    src->write(text.cstr(), text.calcLength());
+    src->write(mSeparator.cstr(), 1);
+}
+void TextStreamFormat::writeF32(StreamSrc* src, Endian::Types, float value)
+{
+    FixedSafeString<cValueTextLength> text;
+    text.format("%.8f", value);
+    src->write(text.cstr(), text.calcLength());
+    src->write(mSeparator.cstr(), 1);
+}
+void TextStreamFormat::writeBit(StreamSrc* src, const void* data, unsigned int bitNum)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    sTextBuffer.copy("0b");
+    const unsigned char* bytes = static_cast<const unsigned char*>(data);
+    unsigned int restBitNum = bitNum;
+    for (unsigned int byteIndex = 0; byteIndex < (bitNum + 7) / 8; ++byteIndex)
+    {
+        unsigned int byteBitNum = restBitNum > 8 ? 8 : restBitNum;
+        for (int bit = static_cast<int>(byteBitNum) - 1; bit >= 0; --bit)
+        {
+            if (bytes[byteIndex] & (1 << bit))
+                sTextBuffer.append('1');
+            else
+                sTextBuffer.append('0');
+        }
+        restBitNum -= 8;
+    }
+    src->write(sTextBuffer.cstr(), bitNum + 2);
+    src->write(mSeparator.cstr(), 1);
+}
+void TextStreamFormat::writeString(StreamSrc* src, const SafeStringBase<char>& string, unsigned int size)
+{
+    unsigned int length = string.calcLength();
+    if (size > length)
+        size = length;
+    const char quote = '"';
+    const char escape = '\\';
+    src->write(&quote, 1);
+    for (int index = 0; size != 0; --size, ++index)
+    {
+        if (string.at(index) == '"' || ((index == 0 || !__N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(string.at(index - 1))) && string.at(index) == '"'))
+            src->write(&escape, 1);
+        src->write(string.cstr() + index, 1);
+    }
+    src->write(&quote, 1);
+}
 void TextStreamFormat::writeMemBlock(StreamSrc* src, const void* data, unsigned int size)
 {
     ScopedLock<Mutex> lock(&sMutex);
@@ -668,10 +862,18 @@ void TextStreamFormat::writeMemBlock(StreamSrc* src, const void* data, unsigned 
     }
 }
 void TextStreamFormat::writeDecorationText(StreamSrc* s, const SafeStringBase<char>& v) { s->write(v.cstr(), v.calcLength()); }
-void TextStreamFormat::writeNullChar(StreamSrc* s) { static const char zero = 0; s->write(&zero, 1); }
-void TextStreamFormat::skip(StreamSrc* s, unsigned int n) { s->skip(n); }
+void TextStreamFormat::writeNullChar(StreamSrc* src)
+{
+    const char nullChar = 0;
+    src->write(&nullChar, 1);
+}
+void TextStreamFormat::skip(StreamSrc* src, unsigned int)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    getNextData_(src);
+}
 void TextStreamFormat::rewind(StreamSrc* s) { s->rewind(); }
-void TextStreamFormat::flush(StreamSrc* s) { s->flush(); }
+void TextStreamFormat::flush(StreamSrc*) {}
 
 Stream::~Stream() {}
 void Stream::skip(unsigned int size) { mFormat->skip(mSrc, size); }
@@ -692,7 +894,11 @@ void ReadStream::readBit(void* d, unsigned int n) { mFormat->readBit(mSrc, d, n)
 void ReadStream::readString(BufferedSafeStringBase<char>* s, unsigned int n) { mFormat->readString(mSrc, s, n); }
 void ReadStream::readMemBlock(void* d, unsigned int n) { mFormat->readMemBlock(mSrc, d, n); }
 
-WriteStream::~WriteStream() {}
+inline WriteStream::~WriteStream()
+{
+    if (mSrc)
+        flush();
+}
 void WriteStream::flush() { mFormat->flush(mSrc); mSrc->flush(); }
 void WriteStream::writeU8(unsigned char v) { mFormat->writeU8(mSrc, mEndian, v); }
 void WriteStream::writeU16(unsigned short v) { mFormat->writeU16(mSrc, mEndian, v); }
@@ -711,16 +917,28 @@ void WriteStream::writeLineComment(const SafeStringBase<char>& s) { mFormat->wri
 void WriteStream::writeDecorationText(const SafeStringBase<char>& s) { mFormat->writeDecorationText(mSrc, s); }
 void WriteStream::writeNullChar() { mFormat->writeNullChar(mSrc); }
 
-BufferReadStream::~BufferReadStream() {}
-BufferWriteStream::~BufferWriteStream() { mBufferSrc.flush(); }
-BufferMultiByteTextWriteStream::~BufferMultiByteTextWriteStream() { mBufferSrc.flush(); }
+BufferReadStream::~BufferReadStream() { mSrc = NULL; }
+BufferWriteStream::~BufferWriteStream()
+{
+    flush();
+    mSrc = NULL;
+}
+BufferMultiByteTextWriteStream::~BufferMultiByteTextWriteStream()
+{
+    flush();
+    mSrc = NULL;
+}
 
 unsigned int PrintStreamSrc::read(void*, unsigned int) { return 0; }
 unsigned int PrintStreamSrc::write(const void*, unsigned int size) { return size; }
 int PrintStreamSrc::skip(int) { return 0; }
 void PrintStreamSrc::rewind() {}
 bool PrintStreamSrc::isEOF() { return false; }
-PrintWriteStream::~PrintWriteStream() {}
+PrintWriteStream::~PrintWriteStream()
+{
+    flush();
+    mSrc = NULL;
+}
 
 void Base64::encode(char* destination, const void* source, unsigned int size, bool urlSafe)
 {
@@ -751,30 +969,59 @@ void Base64::encode(char* destination, const void* source, unsigned int size, bo
 bool Base64::decode(void* destination, unsigned int capacity, const char* source, unsigned int size, unsigned int* resultSize)
 {
     unsigned char* output = static_cast<unsigned char*>(destination);
+    const unsigned char* input = reinterpret_cast<const unsigned char*>(source);
     unsigned int written = 0;
-    unsigned int accumulator = 0;
-    int bits = 0;
-    for (unsigned int index = 0; index < size; ++index)
+    unsigned int index = 0;
+    while (index < size)
     {
-        unsigned char character = static_cast<unsigned char>(source[index]);
-        if (character <= 0x20) continue;
-        if (character == '=') break;
-        int value = character >= 'A' && character <= 'Z' ? character - 'A' :
-                    character >= 'a' && character <= 'z' ? character - 'a' + 26 :
-                    character >= '0' && character <= '9' ? character - '0' + 52 :
-                    character == '+' || character == '-' ? 62 :
-                    character == '/' || character == '_' ? 63 : -1;
-        if (value < 0) return false;
-        accumulator = accumulator << 6 | static_cast<unsigned int>(value);
-        bits += 6;
-        if (bits >= 8)
+        if (input[index] < ' ')
         {
-            bits -= 8;
-            if (written >= capacity) return false;
-            output[written++] = static_cast<unsigned char>(accumulator >> bits);
+            ++index;
+            if (index >= size)
+                break;
+            if (input[index] < ' ')
+            {
+                ++index;
+                if (index >= size)
+                    break;
+            }
+        }
+        if (index + cEncodedBlockSize > size)
+            return false;
+        unsigned int values[cEncodedBlockSize];
+        for (int position = 0; position < cEncodedBlockSize; ++position)
+        {
+            const unsigned char character = input[index + position];
+            values[position] = character >= 'A' && character <= 'Z' ? character - 'A'
+                             : character >= 'a' && character <= 'z' ? character - 'a' + 26
+                             : character >= '0' && character <= '9' ? character - '0' + 52
+                             : character == '+' || character == '-' ? 62
+                             : character == '/' || character == '_' ? 63
+                             : cPadding;
+        }
+        const unsigned int first = values[0] & cValueMask;
+        const unsigned int second = values[1] & cValueMask;
+        const unsigned int third = values[2];
+        const unsigned int fourth = values[3];
+        index += cEncodedBlockSize;
+        if (written >= capacity)
+            return false;
+        output[written++] = static_cast<unsigned char>(first << 2 | second >> 4);
+        if (third < cPadding)
+        {
+            if (written >= capacity)
+                return false;
+            output[written++] = static_cast<unsigned char>(second << 4 | third >> 2);
+            if (fourth < cPadding)
+            {
+                if (written >= capacity)
+                    return false;
+                output[written++] = static_cast<unsigned char>(third << 6 | fourth);
+            }
         }
     }
-    if (resultSize) *resultSize = written;
+    if (resultSize)
+        *resultSize = written;
     return true;
 }
 
@@ -1182,6 +1429,7 @@ unsigned int ExpHeap::adjustFront_()
         if (start)
         {
             mSize = size;
+            OSMemoryBarrier();
             mStart = start;
             return size;
         }
@@ -1951,31 +2199,32 @@ unsigned int getArraySize(void* address)
     return MemBlock::findManageArea(address)->mSize;
 }
 
-CriticalSection::CriticalSection() : IDisposer()
+CriticalSection::CriticalSection() : IDisposer(), mCriticalSectionInner()
 {
-    memset(mStorage, 0, sizeof(mStorage));
-    OSInitMutexEx(reinterpret_cast<OSMutex*>(mStorage), 0);
+    OSFastMutex_Init(&mCriticalSectionInner, NULL);
 }
-CriticalSection::CriticalSection(Heap* heap) : IDisposer(heap, cHeapNullOption_UseSpecifiedOrContainHeap)
+CriticalSection::CriticalSection(Heap* heap) : IDisposer(heap, cHeapNullOption_UseSpecifiedOrContainHeap), mCriticalSectionInner()
 {
-    memset(mStorage, 0, sizeof(mStorage));
-    OSInitMutexEx(reinterpret_cast<OSMutex*>(mStorage), 0);
+    OSFastMutex_Init(&mCriticalSectionInner, NULL);
 }
 CriticalSection::~CriticalSection() {}
-void CriticalSection::lock() { OSLockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
-void CriticalSection::unlock() { OSUnlockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
+void CriticalSection::lock() { OSFastMutex_Lock(&mCriticalSectionInner); }
+void CriticalSection::unlock() { OSFastMutex_Unlock(&mCriticalSectionInner); }
 
-pead::Mutex::Mutex() : IDisposer() { OSInitMutex(reinterpret_cast<OSMutex*>(mStorage)); }
+pead::Mutex::Mutex() : IDisposer(), mCriticalSectionInner()
+{
+    OSFastMutex_Init(&mCriticalSectionInner, NULL);
+}
 Mutex::~Mutex() {}
-void Mutex::lock() { OSLockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
-void Mutex::unlock() { OSUnlockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
+void Mutex::lock() { OSFastMutex_Lock(&mCriticalSectionInner); }
+void Mutex::unlock() { OSFastMutex_Unlock(&mCriticalSectionInner); }
 
 long long TickSpan::toNanoSeconds() const { return OSTicksToNanoseconds(mTicks); }
 void TickSpan::setNanoSeconds(long long nanoSeconds) { mTicks = OSNanosecondsToTicks(nanoSeconds); }
 
 pead::Event::Event(bool manualReset) : IDisposer() { initialize(manualReset); }
 Event::~Event() {}
-void Event::initialize(bool manualReset) { OSInitEvent(reinterpret_cast<OSEvent*>(mStorage), false, static_cast<OSEventMode>(manualReset)); }
+void Event::initialize(bool manualReset) { OSInitEvent(reinterpret_cast<OSEvent*>(mStorage), false, manualReset ? OS_EVENT_MODE_MANUAL : OS_EVENT_MODE_AUTO); }
 void Event::wait() { OSWaitEvent(reinterpret_cast<OSEvent*>(mStorage)); }
 bool Event::wait(TickSpan timeout) { return OSWaitEventWithTimeout(reinterpret_cast<OSEvent*>(mStorage), timeout.toNanoSeconds()); }
 void Event::setSignal() { OSSignalEvent(reinterpret_cast<OSEvent*>(mStorage)); }
@@ -2252,7 +2501,7 @@ void ThreadMgr::deleteInstance()
 void ThreadMgr::initMainThread_(Heap* heap)
 {
     OSThread* thread = OSGetCurrentThread();
-    mMainThread = new (allocateFromSeadHeap(sizeof(MainThread), heap)) MainThread(heap, thread);
+    mMainThread = new (heap) MainThread(heap, thread);
 }
 unsigned int ThreadMgr::getCurrentThreadID_()
 {
@@ -2280,63 +2529,120 @@ Thread* ThreadMgr::getCurrentThread() const
     }
     return mMainThread;
 }
-void ThreadMgr::waitDoneMultipleThread(Thread* const* threads, int count) { for (int index = 0; index < count; ++index) threads[index]->waitDone(); }
+void ThreadMgr::waitDoneMultipleThread(Thread* const* threads, int count)
+{
+    bool allDone;
+    do
+    {
+        allDone = true;
+        for (int index = 0; index < count; ++index)
+            allDone &= threads[index]->isDone();
+        Thread::yield();
+    } while (!allDone);
+    for (int index = 0; index < count; ++index)
+        threads[index]->waitDone();
+}
 void ThreadMgr::quitAndWaitDoneMultipleThread(Thread** threads, int count, bool jam) { for (int index = 0; index < count; ++index) threads[index]->quit(jam); waitDoneMultipleThread(threads, count); }
 
 PrintOutput::~PrintOutput() {}
 void PrintOutput::writeLineBreak() { write("\n", 1); }
-BufferingPrintOutput::~BufferingPrintOutput() {}
-void BufferingPrintOutput::write(const char*, int) {}
+BufferingPrintOutput::~BufferingPrintOutput()
+{
+    mStreamSrc.BufferMultiByteTextWriteStreamSrc::write(&SafeStringBase<char>::cNullChar, sizeof(char));
+    mStreamSrc.BufferMultiByteNullTerminatedTextWriteStreamSrc::flush();
+}
+void BufferingPrintOutput::write(const char* text, int length) { mStreamSrc.BufferMultiByteTextWriteStreamSrc::write(text, length); }
 StringPrintOutput::~StringPrintOutput() {}
-void StringPrintOutput::write(const char* text, int length) { if (mString) appendText(mString->getBuffer(), mString->getBufferSize(), text, length); }
+void StringPrintOutput::write(const char* text, int length)
+{
+    BufferedSafeStringBase<char> buffer(mString, mPosition);
+    mPosition += buffer.copy(SafeStringBase<char>(text), length);
+}
 StringCutOffPrintOutput::~StringCutOffPrintOutput() {}
-void StringCutOffPrintOutput::write(const char* text, int length) { StringPrintOutput::write(text, length); }
-StreamPrintOutput::~StreamPrintOutput() {}
-void StreamPrintOutput::write(const char* text, int length) { if (mSrc) mSrc->write(text, length); }
+void StringCutOffPrintOutput::write(const char* text, int length)
+{
+    BufferedSafeStringBase<char> buffer(mString, mPosition);
+    mPosition += buffer.copy(SafeStringBase<char>(text), length);
+}
+StreamPrintOutput::~StreamPrintOutput() { mSrc->flush(); }
+void StreamPrintOutput::write(const char* text, int length) { mSrc->write(text, length); }
 
-void PrintFormatter::proceedToFormatMark_(char* specifier)
+bool PrintFormatter::proceedToFormatMark_(char* specifier)
 {
     specifier[0] = 0;
-    if (!mFormat || mPassThrough || mPosition >= mLength) return;
-    const char* begin = mFormat + mPosition;
-    const char* current = begin;
-    while (*current)
+    if (!mFormat)
+        return false;
+    if (mPassThrough)
+        return true;
+    if (mPosition >= mLength)
+        return false;
+    const char* segment = mFormat + mPosition;
+    int count = 0;
+    while (segment[count] != 0)
     {
-        if (*current++ != '%') continue;
-        if (*current == '%')
+        if (segment[count] != '%')
         {
-            mOutput->write(begin, static_cast<int>(current - begin));
-            ++current;
-            mPosition = static_cast<int>(current - mFormat);
-            begin = current;
+            ++count;
             continue;
         }
-        if (current - 1 > begin) mOutput->write(begin, static_cast<int>(current - begin - 1));
-        if (*current == '@')
+        if (segment[count + 1] == '%')
         {
-            mPosition = static_cast<int>(current - mFormat + 1);
-            return;
+            mOutput->write(segment, count + 1);
+            segment += count + 2;
+            mPosition += count + 2;
+            count = 0;
+            continue;
         }
-        if (*current == '<')
+        if (count > 0)
+        {
+            mOutput->write(segment, count);
+            mPosition += count;
+            segment += count;
+        }
+        if (segment[1] == '@')
+        {
+            mPosition += 2;
+            return true;
+        }
+        if (segment[1] == '<')
         {
             mPassThrough = true;
-            mPosition = static_cast<int>(current - mFormat + 1);
-            return;
+            mPosition += 2;
+            return true;
         }
-        int length = 0;
-        specifier[length++] = '%';
-        while (*current && length < 31)
+        specifier[0] = '%';
+        for (int index = 1;; ++index)
         {
-            char character = *current++;
-            specifier[length++] = character;
-            if (!(character == '+' || character == '-' || character == ' ' || character == '#' || character == 'h' || character == 'l' || character == 'L' || character == '.' || (character >= '0' && character <= '9'))) break;
+            const char character = segment[index];
+            if (character != '+' && character != '-' && character != ' ' && character != '#' && character != 'h' &&
+                character != 'l' && character != 'L' && character != '.' && !(character >= '0' && character <= '9'))
+            {
+                if (character != 0)
+                {
+                    specifier[index] = character;
+                    specifier[index + 1] = 0;
+                    mPosition += index + 1;
+                    return true;
+                }
+                specifier[0] = 0;
+                mPosition = mLength;
+                return true;
+            }
+            if (index > cMaxSpecifierLength)
+            {
+                specifier[0] = 0;
+                mPosition = mLength;
+                return true;
+            }
+            specifier[index] = character;
         }
-        specifier[length] = 0;
-        mPosition = static_cast<int>(current - mFormat);
-        return;
     }
-    if (current > begin) mOutput->write(begin, static_cast<int>(current - begin));
-    mPosition = mLength;
+    if (count > 0)
+    {
+        mOutput->write(segment, count);
+        mPosition += count;
+    }
+    return false;
 }
 void PrintFormatter::outputString_(const char* option, PrintOutput* output, const char* text, int length)
 {
@@ -2598,6 +2904,48 @@ void PrintFormatter::OutImpl<char, BufferedSafeStringBase>::out(const BufferedSa
 }
 
 template <>
+void PrintFormatter::out<Heap>(const Heap& heap, const char*, PrintOutput* output)
+{
+    ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&heap.mCS), heap.isEnableLock());
+    FixedSafeString128 text;
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("\n"), 0, output);
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("==================================================\n"), 0, output);
+    text.format("              Name: %s\n", heap.mName.cstr());
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    text.format("             Range: [0x%08X - 0x%08X)\n", heap.getStartAddress(), heap.getEndAddress());
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    if (!heap.mParent)
+        text.format("            Parent: %s (0x%08X)\n", "--", 0);
+    else
+        text.format("            Parent: %s (0x%08X)\n", heap.mParent->mName.cstr(), heap.mParent);
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    text.format("         Direction: %s\n", heap.mDirection == Heap::cHeapDirection_Forward ? "Forward" : "Reverse");
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    text.format("              Size: %u\n", heap.getSize());
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    text.format("          FreeSize: %u\n", heap.getFreeSize());
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    text.format("MaxAllocatableSize: %u\n", heap.getMaxAllocatableSize(4));
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("--------------------------------------------------\n"), 0, output);
+}
+
+template <>
+void PrintFormatter::out<ExpHeap>(const ExpHeap& heap, const char*, PrintOutput* output)
+{
+    ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&heap.mCS), heap.isEnableLock());
+    out<Heap>(heap, 0, output);
+    FixedSafeString128 text;
+    text.format("         AllocMode: %s\n", heap.getAllocMode() == ExpHeap::cAllocMode_FirstFit ? "First Fit" : "Best Fit");
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    text.format("      UseList size: %d\n", heap.mUseList.size());
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    text.format("     FreeList size: %d\n", heap.mFreeList.size());
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>(text.cstr()), 0, output);
+    OutImpl<char, SafeStringBase>::out(SafeStringBase<char>("==================================================\n"), 0, output);
+}
+
+template <>
 void PrintFormatter::OutImpl<unsigned char, BitFlag>::out(const BitFlag<unsigned char>& value, const char* option, PrintOutput* output)
 {
     unsigned char bits = value.getDirect();
@@ -2650,7 +2998,15 @@ void PrintFormatter::OutImpl<unsigned long long, BitFlag>::out(const BitFlag<uns
 }
 
 void PrintConfig::registerFinalCallback(IDelegate1<const PrintEventArg&>* callback) { sFinalPrintCallback = callback; }
-void PrintConfig::execCallbacks(const PrintEventArg& event) { if (sFinalPrintCallback) sFinalPrintCallback->invoke(event); }
+void PrintConfig::execCallbacks(const PrintEventArg& event)
+{
+    if (sPrintEventEnabled)
+        sPrintEvent.invoke(event);
+    if (sFinalPrintCallback)
+        sFinalPrintCallback->invoke(event);
+    else
+        system::PrintStringImpl(event.text, event.level);
+}
 
 int StringUtil::__N_18_peadStringUtil_cpp_6714fef4::checkAndConvertDecChar_(char character)
 {
@@ -2668,25 +3024,32 @@ int StringUtil::__N_18_peadStringUtil_cpp_6714fef4::checkAndConvertHexChar_(char
 void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseSignImpl_(int* sign, SafeStringBase<char>::iterator& current)
 {
     *sign = 1;
-    if (*current == '-') { *sign = -1; ++current; }
-    else if (*current == '+') ++current;
+    char character = *current;
+    if (character == '+')
+    {
+        ++current;
+    }
+    else if (character == '-')
+    {
+        *sign = -1;
+        ++current;
+    }
 }
 
-bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParsePrefixImpl_(int* base, SafeStringBase<char>::iterator& current, const SafeStringBase<char>&)
+bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParsePrefixImpl_(int* base, SafeStringBase<char>::iterator& current, const SafeStringBase<char>& text)
 {
     char character = *current;
     if (character < '0' || character > '9') return false;
     if (character == '0')
     {
-        SafeStringBase<char>::iterator next = current;
-        ++next;
-        if (*next == 'b')
+        char next = text.at(current.getIndex() + 1);
+        if (next == 'b')
         {
             *base = 2;
             ++current;
             ++current;
         }
-        else if (*next == 'x')
+        else if (next == 'x')
         {
             *base = 16;
             ++current;
@@ -2707,43 +3070,75 @@ bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParsePrefixImpl_(int* ba
 template <typename T>
 bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseNumberImpl_(T* value, SafeStringBase<char>::iterator& current, int base)
 {
-    T parsed = 0;
-    bool found = false;
-    for (;; ++current)
+    T result = 0;
+    bool parsed = false;
+    for (;;)
     {
-        char character = *current;
-        if (!character) break;
-        int digit = checkAndConvertHexChar_(character);
-        if (digit < 0 || digit >= base) break;
-        parsed = static_cast<T>(parsed * base + digit);
-        found = true;
+        int digit = checkAndConvertHexChar_(*current);
+        if (digit < 0 || digit >= base)
+            break;
+        if (result > MathCalcCommon<T>::maxNumber() / base)
+            return false;
+        if (result * base > MathCalcCommon<T>::maxNumber() - digit)
+            return false;
+        result = result * base + digit;
+        parsed = true;
+        ++current;
     }
-    if (found) *value = parsed;
-    return found;
+    if (!parsed)
+        return false;
+    if (value)
+        *value = result;
+    return true;
 }
 
 template <typename T>
 bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseDecImpl_(T* value, SafeStringBase<char>::iterator& current, int sign)
 {
-    T parsed = 0;
-    if (!tryParseNumberImpl_(&parsed, current, 10)) return false;
-    if (value) *value = static_cast<T>(parsed * sign);
+    T result = 0;
+    bool parsed = false;
+    for (;;)
+    {
+        int digit = checkAndConvertDecChar_(*current);
+        if (digit < 0)
+            break;
+        if (result < MathCalcCommon<T>::minNumber() / 10 || result > MathCalcCommon<T>::maxNumber() / 10)
+            return false;
+        result *= 10;
+        if (sign < 0)
+        {
+            if (result < MathCalcCommon<T>::minNumber() + digit)
+                return false;
+        }
+        else if (result > MathCalcCommon<T>::maxNumber() - digit)
+        {
+            return false;
+        }
+        result += sign * digit;
+        parsed = true;
+        ++current;
+    }
+    if (!parsed)
+        return false;
+    if (value)
+        *value = result;
     return true;
 }
 
 template <typename T>
 bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseImpl_(T* value, const SafeStringBase<char>& text, int base)
 {
-    SafeStringBase<char>::iterator current = text.begin();
+    SafeStringBase<char>::iterator current(&text);
     int sign;
     tryParseSignImpl_(&sign, current);
     if (base > 0 || tryParsePrefixImpl_(&base, current, text))
     {
-        if (base == 10) return tryParseDecImpl_(value, current, sign);
-        T parsed;
-        if (tryParseNumberImpl_(&parsed, current, base))
+        if (base == 10)
+            return tryParseDecImpl_(value, current, sign);
+        typename UnsignedType<T>::Type result;
+        if (tryParseNumberImpl_(&result, current, base))
         {
-            *value = static_cast<T>(parsed * sign);
+            *value = result * sign;
             return true;
         }
     }
@@ -2751,26 +3146,36 @@ bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseImpl_(T* value, con
 }
 
 template <typename T>
-void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseUnderDecimalPointImpl_(T* value, SafeStringBase<char>::iterator& current, T place, T sign)
+void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseUnderDecimalPointImpl_(T* value, SafeStringBase<char>::iterator& current, T sign, T integer)
 {
-    while (*current)
+    T numerator = 0;
+    T denominator = 1;
+    for (;;)
     {
         int digit = checkAndConvertDecChar_(*current);
-        if (digit < 0 || digit > 9) break;
-        *value += static_cast<T>(digit) * place * sign;
-        place /= static_cast<T>(10);
+        if (digit < 0)
+            break;
+        denominator *= 10;
         ++current;
+        numerator = numerator * 10 + sign * digit;
     }
+    if (denominator != 1 && value)
+        *value = numerator / denominator + integer;
 }
 
 template <typename T>
 bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseDecimalFractionImpl_(T* value, const SafeStringBase<char>& text)
 {
-    if (!value) return false;
-    char* end = 0;
-    double parsed = strtod(text.cstr(), &end);
-    if (end == text.cstr() || *end) return false;
-    *value = static_cast<T>(parsed);
+    SafeStringBase<char>::iterator current(&text);
+    int sign;
+    tryParseSignImpl_(&sign, current);
+    if (!tryParseDecImpl_(value, current, sign))
+        return false;
+    if (*current == '.')
+    {
+        ++current;
+        tryParseUnderDecimalPointImpl_(value, current, static_cast<T>(sign), *value);
+    }
     return true;
 }
 
@@ -2788,6 +3193,76 @@ T StringUtil::__N_18_peadStringUtil_cpp_6714fef4::parseDecimalFractionImpl_(cons
     T value = 0;
     tryParseDecimalFractionImpl_(&value, text);
     return value;
+}
+
+namespace
+{
+enum
+{
+    cByteBits = 8,
+    cByteMask = 0xff,
+    cAsciiEnd = 0x80,
+    cHalfwidthKatakanaFirst = 0xff61,
+    cHalfwidthKatakanaCount = 0x3f,
+    cHalfwidthKatakanaToSjis = 0xfec0,
+    cSurrogateFirst = 0xd800,
+    cSurrogateToPrivateEndSpan = 0x20ff,
+    cPrivateUseFirst = 0xe000,
+    cPrivateUseCount = 0x758,
+    cSjisRowLength = 0xbc,
+    cSjisUserDefinedLeadFirst = 0xf0,
+    cSjisTrailFirst = 0x40,
+    cSjisTrailGap = 0x3f,
+    cSjisSpecialA0Source = 0xf8f0,
+    cSjisSpecialA0 = 0xa0,
+    cSjisSpecialFdSource = 0xf8f1,
+    cSjisSpecialFdCount = 3,
+    cSjisSpecialFdOffset = 0xf7f4,
+    cSjisEntryUtf16High = 0,
+    cSjisEntryLead = 1,
+    cSjisEntryTrail = 2,
+    cSjisEntrySize = 3,
+    cSjisCodeCount = 7415,
+    cSjisIndexCount = 257,
+    cSjisIndexSize = 2,
+    cUtf8Lead3First = 0xe0,
+    cUtf8Lead4First = 0xf0,
+    cUtf8Lead2Payload = 0x1f,
+    cUtf8TrailPayload = 0x3f,
+    cUtf8TrailBits = 6,
+    cUtf8ConvertBufferLength = 4,
+    cDoubleMantissaBits = 52,
+    cDoubleMantissaShift = 11,
+    cDoubleExponentMask = 0x7ff,
+    cFloatDigitRecordCount = 2098,
+    cFloatDigitRecordSize = 24,
+    cFloatDigitOffset = 4,
+    cFloatAccumulatorLength = 21,
+    cFloatMaxSignificantDigits = 17,
+    cFloatMaxPrecision = 512,
+    cFloatRoundHalf = 4,
+    cFloatZeroExponent = 1,
+    cFloatGeneralMinExponent = -3,
+    cFloatExponentTextLength = 5,
+    cFloatExponentDigits = 3
+};
+
+const unsigned long long cDoubleHiddenBit = 1ULL << cDoubleMantissaBits;
+const unsigned long long cDoubleFractionMask = cDoubleHiddenBit - 1;
+const unsigned long long cDoubleSignBit = 1ULL << (cDoubleMantissaBits + cDoubleMantissaShift);
+
+const unsigned char sSjisCodeTable[cSjisCodeCount][cSjisEntrySize] = {
+#include "platform/wiiu/shaders/PeadSjisCodeTable.inc"
+};
+
+const unsigned char sSjisIndexTable[cSjisIndexCount * cSjisIndexSize] = {
+#include "platform/wiiu/shaders/PeadSjisIndexTable.inc"
+};
+
+const unsigned char sFloatDigitTable[cFloatDigitRecordCount][cFloatDigitRecordSize] = {
+#include "platform/wiiu/shaders/PeadFloatDigitTable.inc"
+};
+
 }
 
 namespace StringUtilImpl = StringUtil::__N_18_peadStringUtil_cpp_6714fef4;
@@ -2870,70 +3345,565 @@ const wchar_t* FormatParser16::parseSize_(const wchar_t* format)
 template <typename T>
 void FormatParser16::printIntegerInverseString_(OutBuffer16* output, unsigned int base, bool upper, T value)
 {
-    wchar_t reverse[65];
-    int length = 0;
-    do { unsigned int digit = static_cast<unsigned int>(value % base); reverse[length++] = static_cast<wchar_t>(digit < 10 ? L'0' + digit : (upper ? L'A' : L'a') + digit - 10); value = static_cast<T>(value / base); } while (value);
-    while (length) appendWide(output, reverse[--length]);
+    if (value == 0)
+    {
+        output->put(L'0');
+        return;
+    }
+    if (base == cBaseOctal)
+    {
+        while (value != 0)
+        {
+            output->put(static_cast<wchar_t>(L'0' + (value & cOctalDigitMask)));
+            value >>= cOctalDigitBits;
+        }
+    }
+    else if (base == cBaseDecimal)
+    {
+        while (value != 0)
+        {
+            output->put(static_cast<wchar_t>(L'0' + value % cBaseDecimal));
+            value /= cBaseDecimal;
+        }
+    }
+    else if (base == cBaseHexadecimal)
+    {
+        const wchar_t letter = upper ? L'A' : L'a';
+        while (value != 0)
+        {
+            const unsigned int digit = static_cast<unsigned int>(value & cHexDigitMask);
+            if (digit < cBaseDecimal)
+                output->put(static_cast<wchar_t>(L'0' + digit));
+            else
+                output->put(static_cast<wchar_t>(letter - cBaseDecimal + digit));
+            value >>= cHexDigitBits;
+        }
+    }
 }
 
-template <typename T>
+template <typename U, typename S, typename A>
 void FormatParser16::printIntegerInverseStringFromArg_(OutBuffer16* output, bool* negative, bool signedValue, unsigned int base, bool upper)
 {
-    T value = va_arg(mArgs, T);
-    if (signedValue && value < 0) { *negative = true; printIntegerInverseString_(output, base, upper, static_cast<unsigned long long>(-(long long)value)); }
-    else printIntegerInverseString_(output, base, upper, static_cast<unsigned long long>(value));
+    if (!signedValue)
+    {
+        printIntegerInverseString_<U>(output, base, upper, static_cast<typename UnsignedType<S>::Type>(va_arg(mArgs, A)));
+        return;
+    }
+    const S value = static_cast<S>(va_arg(mArgs, A));
+    if (value >= 0)
+    {
+        printIntegerInverseString_<U>(output, base, upper, value);
+        return;
+    }
+    printIntegerInverseString_<U>(output, base, upper, -value);
+    *negative = true;
 }
 
 template <typename T>
 void FormatParser16::printStringCore_(OutBuffer16* output, const T* text)
 {
-    if (!text) return;
-    int count = 0;
-    while (*text && (!mHasPrecision || count < mPrecision)) { appendWide(output, static_cast<wchar_t>(*text++)); ++count; }
+    static const T cEmpty[1] = { 0 };
+    if (!text)
+        text = cEmpty;
+    unsigned int length = 0;
+    if (mFlags & cFlagLeftJustify)
+    {
+        if (!mHasPrecision)
+        {
+            const T* current = text;
+            while (*current != 0)
+                output->put(static_cast<wchar_t>(static_cast<typename UnsignedType<T>::Type>(*current++)));
+            length = current - text;
+        }
+        else
+        {
+            while (*text != 0 && length < static_cast<unsigned int>(mPrecision))
+            {
+                output->put(static_cast<wchar_t>(static_cast<typename UnsignedType<T>::Type>(*text++)));
+                ++length;
+            }
+        }
+        if (length < static_cast<unsigned int>(mWidth))
+            output->put(L' ', mWidth - length);
+        return;
+    }
+    if (!mHasPrecision)
+    {
+        const T* current = text;
+        while (*current != 0)
+            ++current;
+        length = current - text;
+    }
+    else
+    {
+        while (text[length] != 0 && length < static_cast<unsigned int>(mPrecision))
+            ++length;
+    }
+    if (length < static_cast<unsigned int>(mWidth))
+        output->put((mFlags & cFlagZeroPad) ? L'0' : L' ', mWidth - length);
+    for (unsigned int index = 0; index < length; ++index)
+        output->put(static_cast<wchar_t>(static_cast<typename UnsignedType<T>::Type>(text[index])));
 }
 
 void FormatParser16::printInteger_(OutBuffer16* output, unsigned int base, bool signedValue, bool upper)
 {
-    wchar_t text[96];
-    wchar_t format[24];
-    wchar_t type = base == 16 ? (upper ? L'X' : L'x') : base == 8 ? L'o' : L'd';
-    ::swprintf(format, 24, L"%%%s%s%s%s%s%d.%d%c", (mFlags & cFlagLeftJustify) ? L"-" : L"", (mFlags & cFlagForceSign) ? L"+" : (mFlags & cFlagBlankSign) ? L" " : L"", (mFlags & cFlagAlternate) ? L"#" : L"", (mFlags & cFlagZeroPad) ? L"0" : L"", mSize == cSizeLongLong ? L"ll" : mSize == cSizeLong ? L"l" : L"", mWidth, mHasPrecision ? mPrecision : 1, type);
-    if (mSize == cSizeLongLong) ::swprintf(text, 96, format, signedValue ? va_arg(mArgs, long long) : static_cast<long long>(va_arg(mArgs, unsigned long long)));
-    else ::swprintf(text, 96, format, signedValue ? va_arg(mArgs, int) : static_cast<int>(va_arg(mArgs, unsigned int)));
-    printStringCore_(output, text);
+    wchar_t digitBuffer[cIntegerDigitBufferLength];
+    OutBuffer16 digits(digitBuffer, cIntegerDigitCapacity);
+    bool negative = false;
+    switch (mSize)
+    {
+    case cSizeChar:
+        printIntegerInverseStringFromArg_<unsigned int, signed char, int>(&digits, &negative, signedValue, base, upper);
+        break;
+    case cSizeShort:
+        printIntegerInverseStringFromArg_<unsigned int, short, int>(&digits, &negative, signedValue, base, upper);
+        break;
+    case cSizeInt:
+    case cSizeLong:
+        printIntegerInverseStringFromArg_<unsigned int, int, int>(&digits, &negative, signedValue, base, upper);
+        break;
+    case cSizeLongLong:
+        printIntegerInverseStringFromArg_<unsigned long long, long long, long long>(&digits, &negative, signedValue, base, upper);
+        break;
+    }
+    const unsigned int digitCount = digits.length;
+    unsigned int totalLength = digitCount;
+    unsigned int zeroCount = 0;
+    if (mHasPrecision && digitCount < static_cast<unsigned int>(mPrecision))
+    {
+        zeroCount = mPrecision - digitCount;
+        totalLength = mPrecision;
+    }
+    unsigned int leftSpaceCount = 0;
+    unsigned int rightSpaceCount = 0;
+    if (signedValue)
+    {
+        if (negative || (mFlags & (cFlagForceSign | cFlagBlankSign)))
+            ++totalLength;
+    }
+    else if (mFlags & cFlagAlternate)
+    {
+        if (base == cBaseOctal)
+            ++totalLength;
+        else if (base == cBaseHexadecimal)
+            totalLength += 2;
+    }
+    if (totalLength < static_cast<unsigned int>(mWidth))
+    {
+        if (mFlags & cFlagLeftJustify)
+            rightSpaceCount = mWidth - totalLength;
+        else if ((mFlags & cFlagZeroPad) && !mHasPrecision)
+            zeroCount += mWidth - totalLength;
+        else
+            leftSpaceCount = mWidth - totalLength;
+    }
+    output->put(L' ', leftSpaceCount);
+    if (signedValue)
+    {
+        if (negative)
+            output->put(L'-');
+        else if (mFlags & cFlagForceSign)
+            output->put(L'+');
+        else if (mFlags & cFlagBlankSign)
+            output->put(L' ');
+    }
+    else if (mFlags & cFlagAlternate)
+    {
+        if (base == cBaseOctal)
+        {
+            output->put(L'0');
+        }
+        else if (base == cBaseHexadecimal)
+        {
+            output->put(L'0');
+            output->put(upper ? L'X' : L'x');
+        }
+    }
+    output->put(L'0', zeroCount);
+    for (int index = static_cast<int>(digitCount) - 1; index >= 0; --index)
+        output->put(digitBuffer[index]);
+    output->put(L' ', rightSpaceCount);
+    digitBuffer[digitCount] = 0;
 }
-void FormatParser16::printCharacter_(OutBuffer16* output) { appendWide(output, static_cast<wchar_t>(va_arg(mArgs, int))); }
-void FormatParser16::printString_(OutBuffer16* output) { if (mSize == cSizeLong) printStringCore_(output, va_arg(mArgs, const wchar_t*)); else printStringCore_(output, va_arg(mArgs, const char*)); }
-void FormatParser16::printFloat_(OutBuffer16* output, wchar_t type, bool)
+
+void FormatParser16::printCharacter_(OutBuffer16* output)
 {
-    wchar_t text[128];
-    wchar_t format[24];
-    ::swprintf(format, 24, L"%%%s%s%s%s%d.%d%c", (mFlags & cFlagLeftJustify) ? L"-" : L"", (mFlags & cFlagForceSign) ? L"+" : (mFlags & cFlagBlankSign) ? L" " : L"", (mFlags & cFlagAlternate) ? L"#" : L"", (mFlags & cFlagZeroPad) ? L"0" : L"", mWidth, mHasPrecision ? mPrecision : 6, type);
-    ::swprintf(text, 128, format, va_arg(mArgs, double));
-    printStringCore_(output, text);
+    wchar_t character = 0;
+    if (mSize < cSizeInt)
+        character = static_cast<unsigned char>(va_arg(mArgs, int));
+    else if (mSize <= cSizeLongLong)
+        character = static_cast<unsigned short>(va_arg(mArgs, int));
+    const unsigned int length = character != 0 ? 1 : 0;
+    if (length >= static_cast<unsigned int>(mWidth))
+    {
+        if (character != 0)
+            output->put(character);
+        return;
+    }
+    const unsigned int padCount = mWidth - length;
+    if (!(mFlags & cFlagLeftJustify))
+        output->put((mFlags & cFlagZeroPad) ? L'0' : L' ', padCount);
+    if (character != 0)
+        output->put(character);
+    if (mFlags & cFlagLeftJustify)
+        output->put(L' ', padCount);
 }
+
+void FormatParser16::printString_(OutBuffer16* output)
+{
+    if (mSize < cSizeInt)
+        printStringCore_(output, va_arg(mArgs, const char*));
+    else if (mSize <= cSizeLongLong)
+        printStringCore_(output, va_arg(mArgs, const wchar_t*));
+}
+
+void FormatParser16::printFloat_(OutBuffer16* output, wchar_t type, bool upper)
+{
+    union
+    {
+        double value;
+        unsigned long long bits;
+    } number;
+    number.value = va_arg(mArgs, double);
+    const bool positive = (number.bits & cDoubleSignBit) == 0;
+    const unsigned int biasedExponent = static_cast<unsigned int>(number.bits >> cDoubleMantissaBits) & cDoubleExponentMask;
+    const unsigned long long fraction = number.bits & cDoubleFractionMask;
+    if (biasedExponent == cDoubleExponentMask)
+    {
+        mHasPrecision = false;
+        if (fraction == 0)
+        {
+            if (!positive)
+                printStringCore_(output, "-Inf");
+            else if (mFlags & cFlagForceSign)
+                printStringCore_(output, "+Inf");
+            else if (mFlags & cFlagBlankSign)
+                printStringCore_(output, " Inf");
+            else
+                printStringCore_(output, "Inf");
+            return;
+        }
+        if (!positive)
+            printStringCore_(output, "-NaN");
+        else if (mFlags & cFlagForceSign)
+            printStringCore_(output, "+NaN");
+        else if (mFlags & cFlagBlankSign)
+            printStringCore_(output, " NaN");
+        else
+            printStringCore_(output, "NaN");
+        return;
+    }
+    unsigned int precision = cDefaultFloatPrecision;
+    if (mHasPrecision)
+    {
+        precision = mPrecision;
+        if (precision > cFloatMaxPrecision)
+            precision = cFloatMaxPrecision;
+    }
+    unsigned int accumulator[cFloatAccumulatorLength + 1];
+    unsigned int* const digitBase = accumulator + 1;
+    int exponent = cFloatZeroExponent;
+    unsigned long long mantissa = 0;
+    int tableIndex = 0;
+    if (biasedExponent != 0)
+    {
+        mantissa = (fraction | cDoubleHiddenBit) << cDoubleMantissaShift;
+        tableIndex = biasedExponent + cDoubleMantissaBits - 1;
+    }
+    else if (fraction != 0)
+    {
+        mantissa = fraction << cDoubleMantissaShift;
+        tableIndex = cDoubleMantissaBits;
+        do
+        {
+            mantissa <<= 1;
+            --tableIndex;
+        } while ((mantissa & cDoubleSignBit) == 0);
+    }
+    const unsigned char* record = sFloatDigitTable[tableIndex];
+    if (mantissa != 0)
+        exponent = static_cast<int>(static_cast<unsigned int>(record[0]) << (cByteBits * 3) | record[1] << (cByteBits * 2) | record[2] << cByteBits | record[3]);
+    MemUtil::fill(digitBase, 0, cFloatAccumulatorLength * sizeof(unsigned int));
+    while (mantissa != 0)
+    {
+        if (mantissa & cDoubleSignBit)
+        {
+            const int recordExponent = static_cast<int>(static_cast<unsigned int>(record[0]) << (cByteBits * 3) | record[1] << (cByteBits * 2) | record[2] << cByteBits | record[3]);
+            const int shift = exponent - recordExponent + 1;
+            for (int position = shift; position < cFloatAccumulatorLength; ++position)
+                digitBase[position] += record[cFloatDigitOffset + position - shift];
+            if (shift > 0 && shift >= cFloatAccumulatorLength && record[cFloatDigitOffset + cFloatAccumulatorLength - shift] > cFloatRoundHalf)
+                ++digitBase[cFloatAccumulatorLength - 1];
+        }
+        mantissa <<= 1;
+        record -= cFloatDigitRecordSize;
+    }
+    for (int position = cFloatAccumulatorLength - 1; position > 0; --position)
+    {
+        digitBase[position - 1] += digitBase[position] / cBaseDecimal;
+        digitBase[position] %= cBaseDecimal;
+    }
+    unsigned int* digits = digitBase + 1;
+    if (digitBase[0] != 0)
+    {
+        digits = digitBase;
+        ++exponent;
+    }
+    int significant = 0;
+    bool round = false;
+    if (type == L'e')
+    {
+        significant = precision + 1;
+        round = true;
+    }
+    else if (type == L'f')
+    {
+        significant = precision + exponent;
+        if (significant >= 0)
+            round = true;
+        else
+            significant = 0;
+    }
+    else if (type == L'g')
+    {
+        significant = precision;
+        if (significant < 1)
+            significant = 1;
+        round = true;
+    }
+    if (round)
+    {
+        if (significant > cFloatMaxSignificantDigits)
+            significant = cFloatMaxSignificantDigits;
+        if (digits[significant] > cFloatRoundHalf)
+        {
+            unsigned int* carry = digits + (significant - 1);
+            while (*carry + 1 > cBaseDecimal - 1 && carry >= digitBase)
+            {
+                *carry -= cBaseDecimal - 1;
+                --carry;
+            }
+            ++*carry;
+            if (carry == digits - 1)
+            {
+                ++exponent;
+                --digits;
+            }
+        }
+    }
+    unsigned int length = 0;
+    if (!positive || (mFlags & (cFlagForceSign | cFlagBlankSign)))
+        length = 1;
+    unsigned int integerDigits = 0;
+    unsigned int integerZeros = 0;
+    unsigned int leadingZeros = 0;
+    unsigned int fractionDigits = 0;
+    unsigned int trailingZeros = 0;
+    bool point = false;
+    bool exponentForm = false;
+    const bool alternate = (mFlags & cFlagAlternate) != 0;
+    if (type == L'e')
+    {
+        exponentForm = true;
+        integerDigits = 1;
+        fractionDigits = significant - 1;
+        trailingZeros = precision - fractionDigits;
+        point = precision != 0 || alternate;
+    }
+    else if (type == L'f')
+    {
+        if (significant <= exponent)
+        {
+            integerDigits = significant;
+            integerZeros = exponent - significant;
+            trailingZeros = precision;
+            point = precision != 0 || alternate;
+        }
+        else if (exponent >= 0)
+        {
+            integerDigits = exponent;
+            fractionDigits = significant - exponent;
+            trailingZeros = precision + exponent - significant;
+            point = true;
+        }
+        else
+        {
+            integerZeros = 1;
+            point = true;
+            leadingZeros = -exponent;
+            if (static_cast<int>(leadingZeros) < static_cast<int>(precision))
+            {
+                if (leadingZeros + significant < precision)
+                {
+                    fractionDigits = significant;
+                    trailingZeros = precision - significant + exponent;
+                }
+                else
+                {
+                    fractionDigits = precision + exponent;
+                }
+            }
+            else
+            {
+                leadingZeros = precision;
+            }
+        }
+    }
+    else if (type == L'g')
+    {
+        if (!alternate)
+        {
+            while (significant != 0 && digits[significant - 1] == 0)
+                --significant;
+        }
+        if (exponent < cFloatGeneralMinExponent || static_cast<int>(precision) < exponent)
+        {
+            exponentForm = true;
+            integerDigits = 1;
+            point = precision >= 2 || alternate;
+            fractionDigits = significant - 1;
+            if (alternate)
+                trailingZeros = precision - significant;
+        }
+        else if (exponent < significant)
+        {
+            point = true;
+            if (exponent < 1)
+            {
+                leadingZeros = -exponent;
+                integerZeros = 1;
+                fractionDigits = significant;
+                if (alternate)
+                    trailingZeros = precision - significant;
+            }
+            else
+            {
+                integerDigits = exponent;
+                fractionDigits = significant - exponent;
+                if (alternate)
+                    trailingZeros = precision - exponent - fractionDigits;
+            }
+        }
+        else
+        {
+            integerDigits = significant;
+            integerZeros = exponent - significant;
+            if (static_cast<int>(precision) <= exponent)
+            {
+                point = alternate;
+            }
+            else if (alternate)
+            {
+                point = true;
+                trailingZeros = precision - exponent;
+            }
+        }
+    }
+    length += integerDigits + integerZeros + (point ? 1 : 0) + leadingZeros + fractionDigits + trailingZeros;
+    if (exponentForm)
+        length += cFloatExponentTextLength;
+    unsigned int padZeros = 0;
+    unsigned int rightSpaces = 0;
+    if (length < static_cast<unsigned int>(mWidth))
+    {
+        const unsigned int padding = mWidth - length;
+        if (mFlags & cFlagLeftJustify)
+            rightSpaces = padding;
+        else if (mFlags & cFlagZeroPad)
+            padZeros = padding;
+        else
+            output->put(L' ', padding);
+    }
+    if (!positive)
+        output->put(L'-');
+    else if (mFlags & cFlagForceSign)
+        output->put(L'+');
+    else if (mFlags & cFlagBlankSign)
+        output->put(L' ');
+    output->put(L'0', padZeros);
+    for (unsigned int position = 0; position < integerDigits; ++position)
+        output->put(static_cast<wchar_t>(L'0' + digits[position]));
+    output->put(L'0', integerZeros);
+    if (point)
+        output->put(L'.');
+    output->put(L'0', leadingZeros);
+    for (unsigned int position = 0; position < fractionDigits; ++position)
+        output->put(static_cast<wchar_t>(L'0' + digits[integerDigits + position]));
+    output->put(L'0', trailingZeros);
+    if (exponentForm)
+    {
+        output->put(upper ? L'E' : L'e');
+        const bool positiveExponent = exponent >= 1;
+        unsigned int value = positiveExponent ? exponent - 1 : 1 - exponent;
+        unsigned int exponentDigits[cFloatExponentDigits];
+        for (int position = 0; position < cFloatExponentDigits; ++position)
+        {
+            exponentDigits[position] = value % cBaseDecimal;
+            value /= cBaseDecimal;
+        }
+        output->put(positiveExponent ? L'+' : L'-');
+        for (int position = cFloatExponentDigits - 1; position >= 0; --position)
+            output->put(static_cast<wchar_t>(L'0' + exponentDigits[position]));
+    }
+    output->put(L' ', rightSpaces);
+}
+
 int FormatParser16::execute(OutBuffer16* output, const wchar_t* format)
 {
-    output->length = 0;
-    while (*format)
+    clear_();
+    const wchar_t* conversion = parseSize_(parsePrecision_(parseWidth_(parseFlag_(format))));
+    switch (*conversion)
     {
-        if (*format != L'%') { appendWide(output, *format++); continue; }
-        ++format;
-        if (*format == L'%') { appendWide(output, *format++); continue; }
-        clear_();
-        format = parseSize_(parsePrecision_(parseWidth_(parseFlag_(format))));
-        wchar_t type = *format ? *format++ : 0;
-        if (type == L'd' || type == L'i') printInteger_(output, 10, true, false);
-        else if (type == L'u') printInteger_(output, 10, false, false);
-        else if (type == L'x' || type == L'X') printInteger_(output, 16, false, type == L'X');
-        else if (type == L'o') printInteger_(output, 8, false, false);
-        else if (type == L'c') printCharacter_(output);
-        else if (type == L's') printString_(output);
-        else if (type == L'f' || type == L'e' || type == L'E' || type == L'g' || type == L'G') printFloat_(output, type, type == L'E' || type == L'G');
+    case L'%':
+        output->put(L'%');
+        break;
+    case L'E':
+        printFloat_(output, L'e', true);
+        break;
+    case L'G':
+        printFloat_(output, L'g', true);
+        break;
+    case L'X':
+        printInteger_(output, cBaseHexadecimal, false, true);
+        break;
+    case L'c':
+        printCharacter_(output);
+        break;
+    case L'd':
+    case L'i':
+        printInteger_(output, cBaseDecimal, true, false);
+        break;
+    case L'e':
+        printFloat_(output, L'e', false);
+        break;
+    case L'f':
+        printFloat_(output, L'f', false);
+        break;
+    case L'g':
+        printFloat_(output, L'g', false);
+        break;
+    case L'o':
+        printInteger_(output, cBaseOctal, false, false);
+        break;
+    case L'p':
+        mPrecision = cPointerPrecision;
+        mSize = cSizeInt;
+        mFlags &= ~cFlagZeroPad;
+        printInteger_(output, cBaseHexadecimal, false, false);
+        break;
+    case L's':
+        printString_(output);
+        break;
+    case L'u':
+        printInteger_(output, cBaseDecimal, false, false);
+        break;
+    case L'x':
+        printInteger_(output, cBaseHexadecimal, false, false);
+        break;
+    default:
+        return 0;
     }
-    int termination = output->length < output->capacity ? output->length : output->capacity - 1;
-    if (output->capacity > 0) output->buffer[termination] = 0;
-    return output->length;
+    return conversion - format + 1;
 }
 
 template bool StringUtilImpl::tryParseNumberImpl_<unsigned long long>(unsigned long long*, SafeStringBase<char>::iterator&, int);
@@ -2965,10 +3935,10 @@ template bool StringUtilImpl::tryParseDecimalFractionImpl_<double>(double*, cons
 template int StringUtilImpl::parseImpl_<int>(const SafeStringBase<char>&, CardinalNumber);
 template void FormatParser16::printIntegerInverseString_<unsigned int>(OutBuffer16*, unsigned int, bool, unsigned int);
 template void FormatParser16::printIntegerInverseString_<unsigned long long>(OutBuffer16*, unsigned int, bool, unsigned long long);
-template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int>(OutBuffer16*, bool*, bool, unsigned int, bool);
-template void FormatParser16::printIntegerInverseStringFromArg_<int>(OutBuffer16*, bool*, bool, unsigned int, bool);
-template void FormatParser16::printIntegerInverseStringFromArg_<long long>(OutBuffer16*, bool*, bool, unsigned int, bool);
-template void FormatParser16::printIntegerInverseStringFromArg_<unsigned long long>(OutBuffer16*, bool*, bool, unsigned int, bool);
+template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int, signed char, int>(OutBuffer16*, bool*, bool, unsigned int, bool);
+template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int, short, int>(OutBuffer16*, bool*, bool, unsigned int, bool);
+template void FormatParser16::printIntegerInverseStringFromArg_<unsigned int, int, int>(OutBuffer16*, bool*, bool, unsigned int, bool);
+template void FormatParser16::printIntegerInverseStringFromArg_<unsigned long long, long long, long long>(OutBuffer16*, bool*, bool, unsigned int, bool);
 template void FormatParser16::printStringCore_<char>(OutBuffer16*, const char*);
 template void FormatParser16::printStringCore_<wchar_t>(OutBuffer16*, const wchar_t*);
 
@@ -2981,41 +3951,178 @@ bool StringUtil::tryParseS16(short* v, const SafeStringBase<char>& s, CardinalNu
 bool StringUtil::tryParseU8(unsigned char* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
 bool StringUtil::tryParseS8(signed char* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
 int StringUtil::parseS32(const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::parseImpl_<int>(s, c); }
-int StringUtil::vsw16printf(wchar_t* b, unsigned int n, const wchar_t* f, va_list a) { return ::vswprintf(b, n, f, a); }
-int StringUtil::vsnprintf(char* b, unsigned int n, const char* f, va_list a) { return ::vsnprintf(b, n, f, a); }
+int StringUtil::vsw16printf(wchar_t* buffer, unsigned int size, const wchar_t* format, va_list args)
+{
+    if (size == 0)
+        return -1;
+    OutBuffer16 output(buffer, size - 1);
+    FormatParser16 parser(args);
+    int index = 0;
+    for (;;)
+    {
+        const wchar_t character = format[index++];
+        if (character == 0)
+        {
+            output.buffer[output.length] = 0;
+            return output.length;
+        }
+        if (character == L'%')
+        {
+            index += parser.execute(&output, format + index);
+        }
+        else
+        {
+            if (output.length >= output.capacity)
+                break;
+            output.buffer[output.length++] = character;
+        }
+        if (output.overflow)
+            break;
+    }
+    output.buffer[output.length] = 0;
+    return -1;
+}
+int StringUtil::vsnprintf(char* buffer, unsigned int size, const char* format, va_list args)
+{
+    if (size == 0)
+        return -1;
+    int result = ::vsnprintf(buffer, size, format, args);
+    if (result < 0 || static_cast<unsigned int>(result) >= size)
+        buffer[size - 1] = SafeStringBase<char>::cNullChar;
+    if (static_cast<unsigned int>(result) >= size)
+        result = size - 1;
+    return result;
+}
 int StringUtil::convertUtf16ToSjis(char* destination, unsigned int capacity, const wchar_t* source, int length)
 {
-    if (!destination || capacity == 0) return 0;
+    if (capacity == 0 || length < -1)
+        return 0;
     unsigned int written = 0;
-    for (int index = 0; source && source[index] && (length < 0 || index < length) && written + 1 < capacity; ++index)
-        destination[written++] = source[index] <= 0x7f ? static_cast<char>(source[index]) : '?';
+    int index = 0;
+    for (;;)
+    {
+        if (length != -1 && index >= length)
+            break;
+        const unsigned int character = static_cast<unsigned short>(source[index]);
+        if (character == 0)
+            break;
+        ++index;
+        if (written >= capacity - 1)
+        {
+            written = capacity - 1;
+            break;
+        }
+        unsigned char lead = 0;
+        unsigned char trail = 0;
+        if (character < cAsciiEnd)
+        {
+            lead = static_cast<unsigned char>(character);
+        }
+        else if (character - cHalfwidthKatakanaFirst < cHalfwidthKatakanaCount)
+        {
+            lead = static_cast<unsigned char>(character - cHalfwidthKatakanaToSjis);
+        }
+        else if (character - cSurrogateFirst > cSurrogateToPrivateEndSpan)
+        {
+            const unsigned int lowByte = character & cByteMask;
+            const unsigned char* range = sSjisIndexTable + lowByte * cSjisIndexSize;
+            int first = range[0] << cByteBits | range[1];
+            int last = (range[cSjisIndexSize] << cByteBits | range[cSjisIndexSize + 1]) - 1;
+            const unsigned int highByte = character >> cByteBits;
+            while (first <= last)
+            {
+                const int middle = (first + last) / 2;
+                const unsigned char* entry = sSjisCodeTable[middle];
+                if (highByte < entry[cSjisEntryUtf16High])
+                {
+                    last = middle - 1;
+                }
+                else if (highByte > entry[cSjisEntryUtf16High])
+                {
+                    first = middle + 1;
+                }
+                else
+                {
+                    lead = entry[cSjisEntryLead];
+                    trail = entry[cSjisEntryTrail];
+                    break;
+                }
+            }
+        }
+        else if (character - cPrivateUseFirst < cPrivateUseCount)
+        {
+            const unsigned int offset = character - cPrivateUseFirst;
+            const unsigned int column = offset % cSjisRowLength;
+            lead = static_cast<unsigned char>((offset - column) / cSjisRowLength + cSjisUserDefinedLeadFirst);
+            trail = static_cast<unsigned char>(column + (column < cSjisTrailGap ? cSjisTrailFirst : cSjisTrailFirst + 1));
+        }
+        else if (character == cSjisSpecialA0Source)
+        {
+            destination[written++] = static_cast<char>(cSjisSpecialA0);
+            continue;
+        }
+        else if (character - cSjisSpecialFdSource < cSjisSpecialFdCount)
+        {
+            lead = static_cast<unsigned char>(character - cSjisSpecialFdOffset);
+        }
+        if (lead == 0)
+            break;
+        if (trail == 0)
+        {
+            destination[written++] = static_cast<char>(lead);
+            continue;
+        }
+        if (written >= capacity - 2)
+        {
+            written = capacity - 2;
+            break;
+        }
+        destination[written] = static_cast<char>(lead);
+        destination[written + 1] = static_cast<char>(trail);
+        written += 2;
+    }
     destination[written] = 0;
     return static_cast<int>(written);
 }
 int StringUtil::convertUtf16ToUtf8(char* destination, unsigned int capacity, const wchar_t* source, int length)
 {
-    if (!destination || capacity == 0) return 0;
+    if (capacity == 0 || length < -1)
+        return 0;
     unsigned int written = 0;
-    for (int index = 0; source && source[index] && (length < 0 || index < length); ++index)
+    if (length == -1)
+        length = INT_MAX;
+    for (int index = 0; index < length && source[index] != 0; ++index)
     {
-        unsigned int character = static_cast<unsigned int>(source[index]);
+        const unsigned int character = static_cast<unsigned short>(source[index]);
         if (character < 0x80)
         {
-            if (written + 1 >= capacity) break;
             destination[written++] = static_cast<char>(character);
         }
         else if (character < 0x800)
         {
-            if (written + 2 >= capacity) break;
+            if (written + 1 >= capacity)
+            {
+                destination[written - 1] = 0;
+                return static_cast<int>(written - 1);
+            }
             destination[written++] = static_cast<char>(0xc0 | character >> 6);
             destination[written++] = static_cast<char>(0x80 | character & 0x3f);
         }
         else
         {
-            if (written + 3 >= capacity) break;
+            if (written + 2 >= capacity)
+            {
+                destination[written - 1] = 0;
+                return static_cast<int>(written - 1);
+            }
             destination[written++] = static_cast<char>(0xe0 | character >> 12);
             destination[written++] = static_cast<char>(0x80 | character >> 6 & 0x3f);
             destination[written++] = static_cast<char>(0x80 | character & 0x3f);
+        }
+        if (written >= capacity)
+        {
+            destination[written - 1] = 0;
+            return static_cast<int>(written - 1);
         }
     }
     destination[written] = 0;
@@ -3023,20 +4130,106 @@ int StringUtil::convertUtf16ToUtf8(char* destination, unsigned int capacity, con
 }
 int StringUtil::convertUtf8ToSjis(char* destination, unsigned int capacity, const char* source, int length)
 {
-    if (!destination || capacity == 0) return 0;
+    if (capacity == 0 || length < -1)
+        return 0;
     unsigned int written = 0;
-    for (int index = 0; source && source[index] && (length < 0 || index < length) && written + 1 < capacity; ++index)
+    int index = 0;
+    for (;;)
     {
-        unsigned char character = static_cast<unsigned char>(source[index]);
-        if (character < 0x80) destination[written++] = static_cast<char>(character);
+        if (length != -1 && index >= length)
+            break;
+        unsigned char bytes[cUtf8ConvertBufferLength];
+        bytes[0] = source[index];
+        if (bytes[0] == 0)
+            break;
+        if (written >= capacity - 1)
+        {
+            written = capacity - 1;
+            break;
+        }
+        if (bytes[0] < cAsciiEnd)
+        {
+            destination[written++] = bytes[0];
+            ++index;
+            continue;
+        }
+        bytes[1] = source[index + 1];
+        if (bytes[1] == 0)
+            break;
+        wchar_t utf16[2];
+        int converted;
+        if (bytes[0] < cUtf8Lead3First)
+        {
+            utf16[0] = static_cast<wchar_t>((bytes[0] & cUtf8Lead2Payload) << cUtf8TrailBits | (bytes[1] & cUtf8TrailPayload));
+            utf16[1] = 0;
+            converted = convertUtf16ToSjis(reinterpret_cast<char*>(bytes), cUtf8ConvertBufferLength, utf16, -1);
+            index += 2;
+        }
         else
         {
-            destination[written++] = '?';
-            while ((static_cast<unsigned char>(source[index + 1]) & 0xc0) == 0x80) ++index;
+            if (bytes[0] >= cUtf8Lead4First)
+                break;
+            bytes[2] = source[index + 2];
+            if (bytes[2] == 0)
+                break;
+            utf16[1] = 0;
+            utf16[0] = static_cast<wchar_t>(bytes[0] << (cUtf8TrailBits * 2) | (bytes[1] & cUtf8TrailPayload) << cUtf8TrailBits | (bytes[2] & cUtf8TrailPayload));
+            converted = convertUtf16ToSjis(reinterpret_cast<char*>(bytes), cUtf8ConvertBufferLength, utf16, -1);
+            index += 3;
         }
+        if (converted == 0)
+            break;
+        if (written >= capacity - converted)
+        {
+            written = capacity - converted;
+            break;
+        }
+        for (int position = 0; position < converted; ++position)
+            destination[written++] = bytes[position];
     }
     destination[written] = 0;
     return static_cast<int>(written);
+}
+namespace
+{
+const StringUtil::Char16Pair cToUpperCapitalPairs[] =
+{
+    { L'a', L'A' }, { L'b', L'B' }, { L'c', L'C' }, { L'd', L'D' }, { L'e', L'E' }, { L'f', L'F' },
+    { L'g', L'G' }, { L'h', L'H' }, { L'i', L'I' }, { L'j', L'J' }, { L'k', L'K' }, { L'l', L'L' },
+    { L'm', L'M' }, { L'n', L'N' }, { L'o', L'O' }, { L'p', L'P' }, { L'q', L'Q' }, { L'r', L'R' },
+    { L's', L'S' }, { L't', L'T' }, { L'u', L'U' }, { L'v', L'V' }, { L'w', L'W' }, { L'x', L'X' },
+    { L'y', L'Y' }, { L'z', L'Z' }, { L'\x00e0', L'\x00c0' }, { L'\x00e1', L'\x00c1' }, { L'\x00e2', L'\x00c2' }, { L'\x00e3', L'\x00c3' },
+    { L'\x00e4', L'\x00c4' }, { L'\x00e6', L'\x00c6' }, { L'\x00e7', L'\x00c7' }, { L'\x00e8', L'\x00c8' }, { L'\x00e9', L'\x00c9' }, { L'\x00ea', L'\x00ca' },
+    { L'\x00eb', L'\x00cb' }, { L'\x00ec', L'\x00cc' }, { L'\x00ed', L'\x00cd' }, { L'\x00ee', L'\x00ce' }, { L'\x00ef', L'\x00cf' }, { L'\x00f1', L'\x00d1' },
+    { L'\x00f2', L'\x00d2' }, { L'\x00f3', L'\x00d3' }, { L'\x00f4', L'\x00d4' }, { L'\x00f5', L'\x00d5' }, { L'\x00f6', L'\x00d6' }, { L'\x00f9', L'\x00d9' },
+    { L'\x00fa', L'\x00da' }, { L'\x00fb', L'\x00db' }, { L'\x00fc', L'\x00dc' }, { L'\x00ff', L'\x0178' }, { L'\x0153', L'\x0152' }, { L'\x0430', L'\x0410' },
+    { L'\x0431', L'\x0411' }, { L'\x0432', L'\x0412' }, { L'\x0433', L'\x0413' }, { L'\x0434', L'\x0414' }, { L'\x0435', L'\x0415' }, { L'\x0436', L'\x0416' },
+    { L'\x0437', L'\x0417' }, { L'\x0438', L'\x0418' }, { L'\x0439', L'\x0419' }, { L'\x043a', L'\x041a' }, { L'\x043b', L'\x041b' }, { L'\x043c', L'\x041c' },
+    { L'\x043d', L'\x041d' }, { L'\x043e', L'\x041e' }, { L'\x043f', L'\x041f' }, { L'\x0440', L'\x0420' }, { L'\x0441', L'\x0421' }, { L'\x0442', L'\x0422' },
+    { L'\x0443', L'\x0423' }, { L'\x0444', L'\x0424' }, { L'\x0445', L'\x0425' }, { L'\x0446', L'\x0426' }, { L'\x0447', L'\x0427' }, { L'\x0448', L'\x0428' },
+    { L'\x0449', L'\x0429' }, { L'\x044a', L'\x042a' }, { L'\x044b', L'\x042b' }, { L'\x044c', L'\x042c' }, { L'\x044d', L'\x042d' }, { L'\x044e', L'\x042e' },
+    { L'\x044f', L'\x042f' }, { L'\x0451', L'\x0401' }
+};
+const StringUtil::Char16Pair cToLowerCapitalPairs[] =
+{
+    { L'A', L'a' }, { L'B', L'b' }, { L'C', L'c' }, { L'D', L'd' }, { L'E', L'e' }, { L'F', L'f' },
+    { L'G', L'g' }, { L'H', L'h' }, { L'I', L'i' }, { L'J', L'j' }, { L'K', L'k' }, { L'L', L'l' },
+    { L'M', L'm' }, { L'N', L'n' }, { L'O', L'o' }, { L'P', L'p' }, { L'Q', L'q' }, { L'R', L'r' },
+    { L'S', L's' }, { L'T', L't' }, { L'U', L'u' }, { L'V', L'v' }, { L'W', L'w' }, { L'X', L'x' },
+    { L'Y', L'y' }, { L'Z', L'z' }, { L'\x00c0', L'\x00e0' }, { L'\x00c1', L'\x00e1' }, { L'\x00c2', L'\x00e2' }, { L'\x00c3', L'\x00e3' },
+    { L'\x00c4', L'\x00e4' }, { L'\x00c6', L'\x00e6' }, { L'\x00c7', L'\x00e7' }, { L'\x00c8', L'\x00e8' }, { L'\x00c9', L'\x00e9' }, { L'\x00ca', L'\x00ea' },
+    { L'\x00cb', L'\x00eb' }, { L'\x00cc', L'\x00ec' }, { L'\x00cd', L'\x00ed' }, { L'\x00ce', L'\x00ee' }, { L'\x00cf', L'\x00ef' }, { L'\x00d1', L'\x00f1' },
+    { L'\x00d2', L'\x00f2' }, { L'\x00d3', L'\x00f3' }, { L'\x00d4', L'\x00f4' }, { L'\x00d5', L'\x00f5' }, { L'\x00d6', L'\x00f6' }, { L'\x00d9', L'\x00f9' },
+    { L'\x00da', L'\x00fa' }, { L'\x00db', L'\x00fb' }, { L'\x00dc', L'\x00fc' }, { L'\x0152', L'\x0153' }, { L'\x0178', L'\x00ff' }, { L'\x0401', L'\x0451' },
+    { L'\x0410', L'\x0430' }, { L'\x0411', L'\x0431' }, { L'\x0412', L'\x0432' }, { L'\x0413', L'\x0433' }, { L'\x0414', L'\x0434' }, { L'\x0415', L'\x0435' },
+    { L'\x0416', L'\x0436' }, { L'\x0417', L'\x0437' }, { L'\x0418', L'\x0438' }, { L'\x0419', L'\x0439' }, { L'\x041a', L'\x043a' }, { L'\x041b', L'\x043b' },
+    { L'\x041c', L'\x043c' }, { L'\x041d', L'\x043d' }, { L'\x041e', L'\x043e' }, { L'\x041f', L'\x043f' }, { L'\x0420', L'\x0440' }, { L'\x0421', L'\x0441' },
+    { L'\x0422', L'\x0442' }, { L'\x0423', L'\x0443' }, { L'\x0424', L'\x0444' }, { L'\x0425', L'\x0445' }, { L'\x0426', L'\x0446' }, { L'\x0427', L'\x0447' },
+    { L'\x0428', L'\x0448' }, { L'\x0429', L'\x0449' }, { L'\x042a', L'\x044a' }, { L'\x042b', L'\x044b' }, { L'\x042c', L'\x044c' }, { L'\x042d', L'\x044d' },
+    { L'\x042e', L'\x044e' }, { L'\x042f', L'\x044f' }
+};
+const Buffer<const StringUtil::Char16Pair> cToUpperCapitalTable(sizeof(cToUpperCapitalPairs) / sizeof(cToUpperCapitalPairs[0]), cToUpperCapitalPairs);
+const Buffer<const StringUtil::Char16Pair> cToLowerCapitalTable(sizeof(cToLowerCapitalPairs) / sizeof(cToLowerCapitalPairs[0]), cToLowerCapitalPairs);
 }
 int StringUtil::compareChar16Pair(const Char16Pair& pair, const wchar_t& value) { return value < pair.from ? 1 : value > pair.from ? -1 : 0; }
 wchar_t StringUtil::replace(wchar_t value, const Buffer<const Char16Pair>& pairs)
@@ -3053,10 +4246,24 @@ wchar_t StringUtil::replace(wchar_t value, const Buffer<const Char16Pair>& pairs
     }
     return value;
 }
-wchar_t StringUtil::toUpperCapital(wchar_t value) { return value >= L'a' && value <= L'z' ? value - (L'a' - L'A') : value; }
-void StringUtil::toUpperCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>* text) { if (text && text->getBufferSize()) text->getBuffer()[0] = toUpperCapital(text->getBuffer()[0]); }
-wchar_t StringUtil::toLowerCapital(wchar_t value) { return value >= L'A' && value <= L'Z' ? value + (L'a' - L'A') : value; }
-void StringUtil::toLowerCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>* text) { if (text && text->getBufferSize()) text->getBuffer()[0] = toLowerCapital(text->getBuffer()[0]); }
+wchar_t StringUtil::toUpperCapital(wchar_t value) { return replace(value, cToUpperCapitalTable); }
+void StringUtil::toUpperCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>* text)
+{
+    wchar_t* buffer = text->getBuffer();
+    if (buffer[0] != L' ')
+    {
+        buffer[0] = toUpperCapital(buffer[0]);
+    }
+}
+wchar_t StringUtil::toLowerCapital(wchar_t value) { return replace(value, cToLowerCapitalTable); }
+void StringUtil::toLowerCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>* text)
+{
+    wchar_t* buffer = text->getBuffer();
+    if (buffer[0] != L' ')
+    {
+        buffer[0] = toLowerCapital(buffer[0]);
+    }
+}
 
 namespace system
 {
@@ -3064,62 +4271,146 @@ void PrintStringImpl(const char*, int) {}
 void PrintString(const char* text, int level) { PrintConfig::execCallbacks(PrintConfig::PrintEventArg(text, level)); }
 }
 
-int replaceStringImpl(char* destination, int* resultLength, int capacity, const char* source, int sourceLength, const SafeStringBase<char>& from, const SafeStringBase<char>& to, bool* overflow)
-{
-    if (overflow) *overflow = false;
-    if (!destination || capacity <= 0) return 0;
-    int replacements = 0;
-    int written = 0;
-    int matchLength = from.calcLength();
-    int replacementLength = to.calcLength();
-    for (int index = 0; index < sourceLength && written < capacity - 1;)
-    {
-        bool match = matchLength > 0 && index + matchLength <= sourceLength && memcmp(source + index, from.cstr(), matchLength) == 0;
-        const char* text = match ? to.cstr() : source + index;
-        int length = match ? replacementLength : 1;
-        int available = capacity - 1 - written;
-        int copyLength = length < available ? length : available;
-        memcpy(destination + written, text, copyLength);
-        written += copyLength;
-        index += match ? matchLength : 1;
-        if (match) ++replacements;
-        if (copyLength != length && overflow) *overflow = true;
-    }
-    destination[written] = 0;
-    if (resultLength) *resultLength = written;
-    return replacements;
-}
-
-int replaceStringImpl(wchar_t* destination, int* resultLength, int capacity, const wchar_t* source, int sourceLength, const SafeStringBase<wchar_t>& from, const SafeStringBase<wchar_t>& to, bool* overflow)
-{
-    if (overflow) *overflow = false;
-    if (!destination || capacity <= 0) return 0;
-    int replacements = 0;
-    int written = 0;
-    int matchLength = from.calcLength();
-    int replacementLength = to.calcLength();
-    for (int index = 0; index < sourceLength && written < capacity - 1;)
-    {
-        bool match = matchLength > 0 && index + matchLength <= sourceLength && wmemcmp(source + index, from.cstr(), matchLength) == 0;
-        const wchar_t* text = match ? to.cstr() : source + index;
-        int length = match ? replacementLength : 1;
-        int available = capacity - 1 - written;
-        int copyLength = length < available ? length : available;
-        wmemcpy(destination + written, text, copyLength);
-        written += copyLength;
-        index += match ? matchLength : 1;
-        if (match) ++replacements;
-        if (copyLength != length && overflow) *overflow = true;
-    }
-    destination[written] = 0;
-    if (resultLength) *resultLength = written;
-    return replacements;
-}
-
 template <typename T>
-int replaceStringImpl_(T* destination, int* resultLength, int capacity, const T* source, int sourceLength, const SafeStringBase<T>& from, const SafeStringBase<T>& to, bool* overflow)
+int replaceStringImpl_(T* dst, int* length, int dstSize, const T* src, int srcSize, const SafeStringBase<T>& oldString,
+                       const SafeStringBase<T>& newString, bool* isBufferOverflow)
 {
-    return replaceStringImpl(destination, resultLength, capacity, source, sourceLength, from, to, overflow);
+    *isBufferOverflow = false;
+    const int dstMax = dstSize - 1;
+    const T* oldText = oldString.cstr();
+    const int oldLength = oldString.calcLength();
+    if (oldLength == 0)
+    {
+        if (dst != src)
+        {
+            *isBufferOverflow = dstSize < srcSize + 1;
+            if (*isBufferOverflow)
+            {
+                MemUtil::copy(dst, src, dstMax * sizeof(T));
+                dst[dstMax] = 0;
+                if (length)
+                    *length = dstMax;
+            }
+            else
+            {
+                MemUtil::copy(dst, src, (srcSize + 1) * sizeof(T));
+                if (length)
+                    *length = srcSize;
+            }
+        }
+        return 0;
+    }
+    const T* newText = newString.cstr();
+    const int newLength = newString.calcLength();
+    if (dst != src || newLength <= oldLength)
+    {
+        int replaceCount = 0;
+        int srcIndex = 0;
+        int dstIndex = 0;
+        while (srcIndex < srcSize)
+        {
+            if (isMatchString_(src + srcIndex, oldText, oldLength))
+            {
+                int copyLength = dstMax - dstIndex;
+                if (newLength < copyLength)
+                    copyLength = newLength;
+                if (copyLength > 0)
+                {
+                    MemUtil::copy(dst + dstIndex, newText, copyLength * sizeof(T));
+                    ++replaceCount;
+                }
+                else if (newLength == 0)
+                {
+                    ++replaceCount;
+                }
+                if (copyLength < newLength)
+                {
+                    *isBufferOverflow = true;
+                    dst[dstMax] = 0;
+                    if (length)
+                        *length = dstMax;
+                    return replaceCount;
+                }
+                srcIndex += oldLength;
+                dstIndex += newLength;
+            }
+            else
+            {
+                if (dstIndex >= dstMax)
+                {
+                    *isBufferOverflow = true;
+                    dst[dstMax] = 0;
+                    if (length)
+                        *length = dstMax;
+                    return replaceCount;
+                }
+                dst[dstIndex++] = src[srcIndex++];
+            }
+        }
+        dst[dstIndex] = 0;
+        if (length)
+            *length = dstIndex;
+        return replaceCount;
+    }
+    int srcIndex = 0;
+    int dstIndex = 0;
+    while (srcIndex < srcSize)
+    {
+        if (isMatchString_(src + srcIndex, oldText, oldLength))
+        {
+            dstIndex += newLength;
+            srcIndex += oldLength;
+        }
+        else
+        {
+            ++srcIndex;
+            ++dstIndex;
+        }
+        if (dstIndex > dstMax)
+        {
+            *isBufferOverflow = true;
+            break;
+        }
+    }
+    if (*isBufferOverflow)
+    {
+        dst[dstMax] = 0;
+        if (length)
+            *length = dstMax;
+    }
+    else
+    {
+        dst[dstIndex] = 0;
+        if (length)
+            *length = dstIndex;
+    }
+    int replaceCount = 0;
+    --srcIndex;
+    --dstIndex;
+    while (srcIndex >= 0)
+    {
+        if (isMatchString_(src + srcIndex - oldLength + 1, oldText, oldLength))
+        {
+            int copyLength = dstMax - (dstIndex - newLength + 1);
+            if (newLength < copyLength)
+                copyLength = newLength;
+            if (copyLength > 0)
+            {
+                MemUtil::copy(dst + dstIndex - newLength + 1, newText, copyLength * sizeof(T));
+                ++replaceCount;
+            }
+            srcIndex -= oldLength;
+            dstIndex -= newLength;
+        }
+        else
+        {
+            if (dstIndex < dstMax)
+                dst[dstIndex] = src[srcIndex];
+            --srcIndex;
+            --dstIndex;
+        }
+    }
+    return replaceCount;
 }
 
 template int replaceStringImpl_<char>(char*, int*, int, const char*, int, const SafeStringBase<char>&, const SafeStringBase<char>&, bool*);

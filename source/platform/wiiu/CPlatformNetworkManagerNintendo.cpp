@@ -57,25 +57,13 @@ int CommerceAppletGetReturnCode()
     return nn::ec::applet::GetReturnCode();
 }
 
-class CMatchMakeSearchParam
-{
-public:
-    struct SearchEntry
-    {
-        unsigned int id;
-        unsigned int value;
-        unsigned int comparison;
-    };
-
-    SearchEntry entries[5];
-};
-
 NQRNetworkManager_Lan_WiiU* gLanNetworkManager;
 
 namespace
 {
 CPlatformNetworkManagerNintendo* s_platformNetworkManager;
 const eGameHostOption kGameHostOption3 = eGameHostOption_FriendsOfFriends;
+const int cMaxSearchParams = 5;
 
 inline int countLocalPlayers(int mask)
 {
@@ -328,7 +316,7 @@ void CPlatformNetworkManagerNintendo::HandleStateChange(NQRNetworkManager::eNQRN
     }
     else if (error && newState == NQRNetworkManager::eNQRNetworkManagerState_Idle && oldState == NQRNetworkManager::eNQRNetworkManagerState_Ending)
     {
-        gApp.SetDisconnectReason(DisconnectPacket::eDisconnectReason_ContentNotOwned);
+        gApp.SetDisconnectReason(DisconnectPacket::eDisconnectReason_NoSuitableGame);
     }
 }
 
@@ -611,23 +599,23 @@ int CPlatformNetworkManagerNintendo::JoinGame(FriendSessionInfo* sessionInfo, in
     return m_networkManager->JoinRoom(result, userIndexMask) ^ 1;
 }
 
-bool CPlatformNetworkManagerNintendo::FindAndJoinGame(int userIndexMask, int, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributeValues, unsigned int* attributeIds)
+int CPlatformNetworkManagerNintendo::FindAndJoinGame(int userIndexMask, int, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributeValues, unsigned int* attributeIds)
 {
     unsigned int localPlayerCount = countLocalPlayers(userIndexMask);
-    CMatchMakeSearchParam search;
-    search.entries[0].id = 0;
-    search.entries[0].value = ((unsigned int)miniGameId << 24) | 0x30881;
-    search.entries[0].comparison = 0;
-    search.entries[1].id = 1;
-    search.entries[1].value = localPlayerCount;
-    search.entries[1].comparison = 5;
+    CMatchMakeSearchParam search[cMaxSearchParams];
+    search[0].id = 0;
+    search[0].value = ((unsigned int)miniGameId << 24) | 0x30881;
+    search[0].comparison = CMatchMakeSearchParam::eComparison_Equal;
+    search[1].id = 1;
+    search[1].value = localPlayerCount;
+    search[1].comparison = CMatchMakeSearchParam::eComparison_GreaterThanOrEqual;
     for (int index = 0; index < attributeCount; ++index)
     {
-        search.entries[index + 2].id = attributeIds[index] + 2;
-        search.entries[index + 2].value = attributeValues[index];
-        search.entries[index + 2].comparison = 0;
+        search[index + 2].id = attributeIds[index] + 2;
+        search[index + 2].value = attributeValues[index];
+        search[index + 2].comparison = CMatchMakeSearchParam::eComparison_Equal;
     }
-    return m_networkManager->FindAndJoinRoom(userIndexMask, attributeCount + 2, &search, (unsigned char)miniGameId) ^ 1;
+    return m_networkManager->FindAndJoinRoom(userIndexMask, attributeCount + 2, search, (unsigned char)miniGameId) ^ 1;
 }
 
 bool CPlatformNetworkManagerNintendo::SetLocalGame(bool localGame)
@@ -899,7 +887,7 @@ bool CPlatformNetworkManagerNintendo::setLanMode(bool mode)
                 m_onlineNetworkManager->Pia_ShutdownForLan();
                 m_enteringLanMode = true;
             }
-            else
+            else if (!NQRNetworkManager_WiiU::s_piaShutdownPending)
             {
                 gLanNetworkManager->SignalInitialiseAfterOnline();
                 m_enteringLanMode = false;
@@ -914,11 +902,11 @@ bool CPlatformNetworkManagerNintendo::setLanMode(bool mode)
                 gLanNetworkManager->Pia_ShutdownForOnline();
                 m_leavingLanMode = true;
             }
-            else
+            else if (!NQRNetworkManager_Lan_WiiU::s_shutdownTickPending)
             {
                 m_leavingLanMode = false;
-                m_networkManager = m_onlineNetworkManager;
                 m_lanMode = false;
+                m_networkManager = m_onlineNetworkManager;
             }
         }
     }
