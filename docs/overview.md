@@ -54,11 +54,11 @@ committed to this repository, and none should ever be.
 ## Status
 
 `tools/build.py` compiles the whole tree and links `Minecraft.Client.rpx`
-without any code from the original executable, and it runs on a stock
-Cemu 2.6: it
-boots to the menus, creates and loads worlds, and the server runs at the
-full 20 ticks per second. Online play needs a real Nintendo Network account
-and has not been tested.
+without any code from the original executable. It runs in a stock Cemu 2.6:
+it boots to the menus, creates and loads worlds, and its server has run at
+the full 20 ticks per second in testing. It has not been tried on a Wii U
+console. Nintendo ended the Wii U's online services in April 2024, and the
+online features have not been tested.
 
 The reconstruction is still being refined toward the original function by
-function. A behaviour difference you find is a bug worth reporting.
+function, and a behaviour difference you find is a bug worth reporting.
